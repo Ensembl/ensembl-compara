@@ -188,15 +188,12 @@ sub generate_full_url {
   my ($self, $object) = @_;
   
   my $remove = $self->param('remove_alignment');
-  my (%species, @missing);
-  
-  foreach ($self->param) {
-    push @missing, $1 if /^s(\d+)$/ && !defined $self->param("r$1");
-  }
   
   # Remove species duplicated in the url
   $self->remove_species_and_generate_url($object, $remove) if $remove;
   
+  my @missing = grep { s/^s(\d+)$/$1/ && $self->param("s$_") && !defined $self->param("r$_") } $self->param;
+   
   # Add species missing r parameters
   $self->find_missing_locations($object, \@missing) if scalar @missing;
 }
@@ -269,6 +266,7 @@ sub find_missing_locations {
   my ($self, $object, $ids) = @_;
   
   my $slice = $object->slice;
+  my @no_alignment;
   
   foreach (@$ids) {
     my $chrom = ''; # get chr argument for self compara
@@ -280,15 +278,23 @@ sub find_missing_locations {
     # }
     
     if (!$self->_best_guess($slice, $_, $chrom)) {
-      my $session = $self->session->add_data(
-        type     => 'message',
-        function => '_warning',
-        code     => 'missing_species',
-        message  => 'There is no alignment in this region for ' . $self->species_defs->species_label($self->param("s$_"))
-      );
+      push @no_alignment, $self->species_defs->species_label($self->param("s$_"));
       
       $self->param("s$_", '');
     }
+  }
+  
+  if (scalar @no_alignment) {
+    my $msg = scalar @no_alignment > 1 ? 
+             'There are no alignments in this region for the following species: <ul><li>' . join('</li><li>', @no_alignment) . '</li></ul>' :
+             'There is no alignment in this region for ' . $no_alignment[0];
+    
+    $self->session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'missing_species',
+      message  => $msg
+    );
   }
   
   $self->problem('redirect', $self->_url($object->multi_params));
