@@ -11,9 +11,17 @@ sub new {
 sub seqname { my $self = shift; (my $T = $self->_seqname) =~s/^chr//; return $T; }
 sub start   { my $self = shift; return $self->{'start'}; }
 sub end     { my $self = shift; return $self->{'end'}; }
-sub hstart  { return undef; }
-sub hend    { return undef; }
-sub hstrand { return undef; }
+sub strand        { return undef; }
+sub cigar_string  { return undef; }
+sub hstart        { return undef; }
+sub hend          { return undef; }
+sub hstrand       { return undef; }
+sub type          { return undef; }
+sub note          { return undef ;}
+sub score         { return undef; }  
+sub link          { return undef; }  
+
+sub extra_data { return $_[0]{__extra__}; }
 
 sub coords {
   ## Default parser for raw data - this is the commonest format
@@ -54,17 +62,5 @@ sub slide    {
   $self->{'end'}   = $self->rawend + $offset;
 }
 
-
-sub strand { return undef; }
-
-sub type { return undef; }
-
-sub note { return undef ;}
-
-sub score { return undef; }  
-
-sub link { return undef; }  
-
-sub extra_data { return $_[0]{__extra__}; }
 
 1;
