@@ -103,8 +103,8 @@ sub _nav_url {
   ($s, $e) = ($max - ($e - $s), $max) if $e > $max;
   
   return $object->_url({ 
+    %{$object->multi_params},
     'r' => $object->seq_region_name . ':' . $s . '-' . $e,
-    %{$object->multi_params}
   });
 }
 

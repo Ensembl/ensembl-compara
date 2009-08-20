@@ -15,7 +15,8 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $url = $object->_url({%{$object->multi_params}, ( align => undef )}, 1);
+  my $params = $object->can('multi_params') ? $object->multi_params : {};
+  my $url = $object->_url({%$params, ( align => undef )}, 1);
   my $extra_inputs;
   
   foreach (sort keys %{$url->[1]||{}}) {
