@@ -127,7 +127,7 @@ sub get_attributes {
     
     if (defined $attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
-        $actions{'title'} = $actions{'alt'} = CGI::escapeHTML($attr);
+        $actions{$_} = escapeHTML($attr);
       } else {
         $actions{$_} = $attr;
       }
