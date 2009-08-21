@@ -95,6 +95,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       } else {
         myself.clicking = true;
       }
+    }).parent().mousemove(function (e) {
+      var area = myself.getArea(myself.getMapCoords(e));
+      
+      if (area && area.a) {
+        myself.elLk.img.attr({ title: area.a.alt });
+      }
+      
+      area = null;
     });
   },
   
@@ -108,7 +116,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // Have to use this instead of the map coords because IE can't cope with offsetX/Y and relative positioned elements
     this.dragCoords.offset = { x: e.pageX - this.dragCoords.map.x, y: e.pageY - this.dragCoords.map.y }; 
     
-    this.dragRegion = this.getArea(this.dragCoords.map.x, this.dragCoords.map.y, true);
+    this.dragRegion = this.getArea(this.dragCoords.map, true);
     
     if (this.dragRegion) {
       this.elLk.img.mousemove(function (e2) {
@@ -170,11 +178,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       coords.b = this.dragRegion.b;
     }
     
-    this.highlight(coords, 'rubberband');
+    this.highlight(coords, 'rubberband', this.dragRegion.a.href.split('|')[3]);
   },
   
   makeZMenu: function (e, coords) {
-    var area = coords.r ? this.dragRegion : this.getArea(coords.x, coords.y);
+    var area = coords.r ? this.dragRegion : this.getArea(coords);
     
     if (!area) {
       return;
@@ -191,10 +199,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var species = Ensembl.species;
       
       if (this.speciesCount > 1) {
-        var dragArea = this.getArea(coords.x, coords.y, true);
+        var dragArea = this.getArea(coords, true);
         
         if (dragArea) {
-          species = dragArea.a.href.split('|')[3]
+          species = dragArea.a.href.split('|')[3];
         }
         
         dragArea = null;
@@ -338,7 +346,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     };
   },
   
-  getArea: function (x, y, draggables) {
+  getArea: function (coords, draggables) {
     var test = false;
     var areas = draggables ? this.draggables : this.areas;
     var c;
@@ -347,9 +355,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       c = areas[i];
       
       switch (c.a.shape.toLowerCase()) {
-        case 'circle': test = this.inCircle(c.c, x, y); break;
-        case 'poly':   test = this.inPoly(c.c, x, y); break;
-        default:       test = this.inRect(c, x, y); break;
+        case 'circle': test = this.inCircle(c.c, coords); break;
+        case 'poly':   test = this.inPoly(c.c, coords); break;
+        default:       test = this.inRect(c, coords); break;
       }
       
       if (test === true) {
@@ -358,24 +366,24 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
   
-  inRect: function (c, x, y) {
-    return x >= c.l && x <= c.r && y >= c.t && y <= c.b;
+  inRect: function (c, coords) {
+    return coords.x >= c.l && coords.x <= c.r && coords.y >= c.t && coords.y <= c.b;
   },
   
-  inCircle: function (c, x, y) {
-    return (x - c[0]) * (x - c[0]) + (y - c[1]) * (y - c[1]) <= c[2] * c[2];
+  inCircle: function (c, coords) {
+    return (coords.x - c[0]) * (coords.x - c[0]) + (coords.y - c[1]) * (coords.y - c[1]) <= c[2] * c[2];
   },
 
-  inPoly: function (c, x, y) {
+  inPoly: function (c, coords) {
     var n = c.length;
     var t = 0;
     var x1, x2, y1, y2;
     
     for (var i = 0; i < n; i += 2) {
-      x1 = c[i % n] - x;
-      y1 = c[(i + 1) % n] - y;
-      x2 = c[(i + 2) % n] - x;
-      y2 = c[(i + 3) % n] - y;
+      x1 = c[i % n] - coords.x;
+      y1 = c[(i + 1) % n] - coords.y;
+      x2 = c[(i + 2) % n] - coords.x;
+      y2 = c[(i + 3) % n] - coords.y;
       t += Math.atan2(x1*y2 - y1*x2, x1*x2 + y1*y2);
     }
     
