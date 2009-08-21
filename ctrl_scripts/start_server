@@ -144,7 +144,8 @@ warn "==========================================================================
 # LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
 my $cmd = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
 
-$cmd .= $SiteDefs::APACHE_DIR."/bin/httpd -d ".$SiteDefs::APACHE_DIR." -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
+my $exe =  defined ($SiteDefs::APACHE_BIN) ? $SiteDefs::APACHE_BIN : ($SiteDefs::APACHE_DIR."/bin/httpd");
+$cmd .= "$exe -d $SiteDefs::APACHE_DIR -f $serverroot/$confdir/httpd.conf" . ($single ? " -X &" : "");
 
 require $_ for @start_before;
 system($cmd) == 0 or die " Could not start server: $!.\n[FATAL] Server start failed.\n";
