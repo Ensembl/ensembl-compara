@@ -15,6 +15,7 @@ $Text::Wrap::columns = 75;
 
 use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $APACHE_DIR
+ $APACHE_BIN
 	$BIOPERL_DIR
   $ENSEMBL_RELEASE_DATE $ENSEMBL_MIN_SPARE_SERVERS $ENSEMBL_MAX_SPARE_SERVERS $ENSEMBL_START_SERVERS
   $ENSEMBL_HELPDESK_EMAIL
@@ -151,6 +152,8 @@ while( ($CONF_DIR = pop @clean_directory) !~ /^conf/) { 1; }     ## Remove up to
 $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_directory ) );
 $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 $APACHE_DIR         = "$ENSEMBL_SERVERROOT/apache2";
+$APACHE_BIN = "APACHE_DIR/bin/httpd";
+
 $BIOPERL_DIR        = "$ENSEMBL_SERVERROOT/bioperl-live";
 #warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
