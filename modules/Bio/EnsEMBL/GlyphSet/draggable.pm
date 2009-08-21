@@ -41,6 +41,7 @@ sub _init {
     'style' => 'fill',
     'z'     => -10,
     'href'  => $href,
+    'alt' => 'Click and drag to select a region',
     'class' => 'drag' . ($self->get_parameter('multi') ? ' multi' : $self->get_parameter('compara') ? ' align' : '')
   );
   

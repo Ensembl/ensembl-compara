@@ -35,32 +35,34 @@ sub _init {
     'nav'   => [ 
       -10 - $sprite_size, 
       -$sprite_step,
-      [ 'zoom_out' => 'out' ],
-      [ 'realign'  => 'realign' ],
-      [ 'zoom_in'  => 'in' ]
+      [ 'zoom_out', 'out' ],
+      [ 'realign',  'realign' ],
+      [ 'zoom_in',  'in' ]
     ],
     'left'  => [ 
       0, 
       $sprite_step,
-      [ 'left'       => 'left2' ],
-      [ 'nudge_left' => 'left' ]
+      [ 'left',       'left2' ],
+      [ 'nudge_left', 'left' ]
     ],
     'right' => [ 
       $self->image_width - $sprite_size + 1, 
       -$sprite_step,
-      [ 'right'       => 'right2' ],
-      [ 'nudge_right' => 'right' ]
+      [ 'right',       'right2' ],
+      [ 'nudge_right', 'right' ]
     ]
   };
 
   if (!$self->{'config'}->{'align_slice'}) {
     # in case of AlignSlice - don't display navigation buttons
-    push @{$sprites->{'nav'}}, [ 'flip_strand' => 'flip' ], [ 'set_as_primary' => 'primary' ] if $self->get_parameter('compara') eq 'secondary';
+    push @{$sprites->{'nav'}}, [ 'flip_strand', 'flip' ], [ 'set_as_primary', 'primary' ] if $self->get_parameter('compara') eq 'secondary';
 
     foreach my $key (keys %$sprites) {
       my ($pos, $step,  @sprite_array) = @{$sprites->{$key}};
       
-      foreach my $sprite (@sprite_array) {        
+      foreach my $sprite (@sprite_array) {
+        (my $alt = $sprite->[0]) =~ s/_/ /g;
+        
         $self->push($self->Sprite({
           'z'             => 1000,
           'x'             => $pos,
@@ -72,7 +74,8 @@ sub _init {
           'absolutewidth' => 1,
           'absolutey'     => 1,
           'href'          => sprintf($href, $sprite->[1]),
-          'class'         => 'nav'
+          'class'         => 'nav',
+          'alt'           => ucfirst $alt
         }));
         
         $pos += $step;
