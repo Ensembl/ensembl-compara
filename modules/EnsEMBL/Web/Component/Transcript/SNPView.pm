@@ -163,7 +163,6 @@ sub content {
   return if $self->_export_image($image, 'no_text');
 
   $image->imagemap = 'yes';
-  $image->set_extra( $object );
   $image->{'panel_number'} = 'top';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 

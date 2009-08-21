@@ -247,7 +247,6 @@ sub new_image {
   my $timer = $species_defs->timer;
   my $image = EnsEMBL::Web::Document::Image->new( $species_defs );
      $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
-     $image->set_extra( $object );
      if ($object->prefix) {
        $image->prefix($object->prefix);
      }
@@ -259,7 +258,6 @@ sub new_vimage {
   my $object = $self->object;
   my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
      $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new( @_ );
-     $image->set_extra( $object );
   return $image;
 }
 
@@ -267,7 +265,6 @@ sub new_karyotype_image {
   my $self = shift;
   my $object = $self->object;
   my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
-     $image->set_extra( $object );
      $image->{'object'} = $object;
   return $image;
 }
