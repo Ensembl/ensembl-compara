@@ -62,6 +62,9 @@ homology
 protein_tree_node
 protein_tree_member
 protein_tree_tag
+super_protein_tree_node
+super_protein_tree_member
+super_protein_tree_tag
 protein_tree_stable_id
 mapping_session
 stable_id_history
