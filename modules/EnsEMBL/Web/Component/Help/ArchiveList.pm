@@ -26,7 +26,7 @@ sub content {
   $url =~ s#^/##;
   
   # is this a species page?
-  my ($path, $param) = split '\?', $object->param('url');
+  my ($path, $params) = split '\?', $object->param('url');
   my @check = split '/', $path;
   my ($part1, $part2, $part3, $part4, $species, $type, $action);
   
@@ -58,7 +58,6 @@ sub content {
       
       my $missing = 0;
       
-      # can this go?
       if ($type =~ /\.html/ || $action =~ /\.html/) {
         foreach my $release (reverse sort keys %archive) {
           next if $release == $object->species_defs->ENSEMBL_VERSION;
@@ -80,7 +79,8 @@ sub content {
         }
       } else {
         my $releases = get_archive_redirect($type, $action, $object);
-        
+        my ($old_params, $old_url) = get_old_params($params, $type, $action);
+
         foreach my $poss_release (reverse sort keys %archive) {
           my $release_happened = 0;
           
@@ -95,53 +95,8 @@ sub content {
             }
             
             $release_happened = 1;
-
-            # Transform parameters
-            if ($poss_release < 51) {
-              $url = "$species/$old_view";
-              
-              my @params = split ';', $param;
-              my (%parameter, @new_params);
-              
-              foreach my $pair (@params) {
-                my @a = split '=', $pair;
-                $parameter{$a[0]} = unescape($a[1]); 
-              }
-              
-              if ($type eq 'Location') {
-                my $location = $parameter{'r'};
-                my ($chr, $start, $end) = $location =~ /^([a-zA-Z0-9]+):([0-9]+)\-([0-9]+)$/;
-                
-                if ($action eq 'Marker') {
-                  if (my $m = $parameter{'m'}) {
-                    @new_params = ("marker=$m");
-                  } else {
-                    $url = "$species/contigview";
-                    @new_params = ("chr=$chr", "start=$start", "end=$end");
-                  }
-                } else {
-                  @new_params = ("chr=$chr", "start=$start", "end=$end");
-                }
-              } elsif ($type eq 'Gene') {
-                @new_params = ("gene=$parameter{'g'}");
-              } elsif ($type eq 'Variation') {
-                @new_params = ("snp=$parameter{'v'}");
-              } elsif ($type eq 'Transcript') {
-                if ($action eq 'Idhistory/Protein') {
-                  @new_params = ("peptide=$parameter{'t'}");
-                } elsif ($action eq 'SupportingEvidence/Alignment' || $action eq 'Similarity/Align') {
-                  @new_params = ("transcript=$parameter{'t'}", "exon=$parameter{'exon'}", "sequence=$parameter{'sequence'}");
-                } elsif ($action eq 'Domains/Genes') {
-                  @new_params = ("domainentry=$parameter{'domain'}");
-                } else {
-                  @new_params = ("transcript=$parameter{'t'}");
-                }
-              } else {
-                @new_params = @params;
-              }
-              
-              $url .= '?' . join ';', @new_params if scalar @new_params;
-            }
+            
+            $url = "$species/" . ($old_url || $old_view) . $old_params if $poss_release < 51;
           }
           
           $html .= $self->_output_link(\%archive, $poss_release, $url) if $release_happened;
@@ -183,6 +138,53 @@ sub _output_link {
   my $year  = substr $date, 3, 4;
   
   return qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a></li>};
+}
+
+# Map new parameters to old 
+sub get_old_params {
+  my ($new_params, $type, $action) = @_;
+  
+  my %parameters = map { $_->[0] => unescape($_->[1]) } map {[ split '=' ]} split ';', $new_params;
+  
+  my $old_params;
+  
+  if ($type eq 'Location') {
+    my $location = $parameters{'r'};
+    my ($chr, $start, $end) = $location =~ /^([a-zA-Z0-9]+):([0-9]+)\-([0-9]+)$/;
+    
+    if ($action eq 'Marker') {
+      if (my $m = $parameters{'m'}) {
+        $old_params = "marker=$m";
+      } else {        
+        return ("chr=$chr;start=$start;end=$end", 'contigview');
+      }
+    } elsif ($action eq 'Multi') {
+      $old_params = "c=$chr:" . ($start+$end)/2 . ';w=' . ($end-$start+1);
+      $old_params .= ";$_=$parameters{$_}" for grep { /s\d+/ } keys %parameters;
+    } else {
+      $old_params = "chr=$chr;start=$start;end=$end";
+    }
+  } elsif ($type eq 'Gene') {
+    $old_params = "gene=$parameters{'g'}";
+  } elsif ($type eq 'Variation') {
+    $old_params = "snp=$parameters{'v'}";
+  } elsif ($type eq 'Transcript') {
+    if ($action eq 'Idhistory/Protein') {
+      $old_params = "peptide=$parameters{'t'}";
+    } elsif ($action eq 'SupportingEvidence/Alignment' || $action eq 'Similarity/Align') {
+      $old_params = "transcript=$parameters{'t'};exon=$parameters{'exon'};sequence=$parameters{'sequence'}";
+    } elsif ($action eq 'Domains/Genes') {
+      $old_params = "domainentry=$parameters{'domain'}";
+    } else {
+      $old_params = "transcript=$parameters{'t'}";
+    }
+  } else {
+    $old_params = $new_params;
+  }
+  
+  $old_params = "?$old_params" if $old_params;
+  
+  return $old_params;
 }
 
 1;
