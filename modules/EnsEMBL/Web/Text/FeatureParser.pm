@@ -109,19 +109,16 @@ sub parse {
           $columns = $self->parse_row($row);
         }
         if ($columns && scalar(@$columns)) {
-=pod
           ## Optional - filter content by location
-          if ($filter) {
+          my $filter = $self->filter;
+          if ($filter->{'chr'}) {
             my ($chr, $start, $end) = $empty->coords($columns);
-            if ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}) {
-              if ($filter->{'start'} && $filter->{'end'}) {
-                next unless $start >= $filter->{'start'} && $end <= $filter->{'end'};
-              }
-            }
-            else {
-              next;
+            next unless ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}); 
+            if ($filter->{'start'} && $filter->{'end'}) {
+              next unless $start >= $filter->{'start'} && $end <= $filter->{'end'};
             }
           }
+=pod
           ## Check the coordinates are valid for this assembly
 =cut
           ## Everything OK, so store
