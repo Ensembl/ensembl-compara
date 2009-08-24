@@ -66,27 +66,31 @@ sub content {
   return sprintf ('
     <div class="autocenter navbar" style="width:%spx; text-align:left">
       <form action="%s" method="get">
-        <div class="alignment_selector">
+        <div class="alignment_selector%s">
           <label for="align">Add an alignment:</label>
           <select name="s%s">
             %s
           </select>
           <input value="Go&gt;" type="submit" class="go-button" />
         </div>
-        <div class="alignment_selector">
+        <div class="alignment_selector%s">
           <label for="align">Remove an alignment:</label>
           <select name="remove_alignment">
             %s
           </select>
+          %s
         </div>
         %s
       </form>
     </div>',
     $self->image_width,
     $url->[0],
+    scalar @add ? '' : ' hide',
     $next_id, 
     $add_options,
+    scalar @remove ? '' : ' hide',
     $remove_options,
+    scalar @add ? '' : '<input value="Go&gt;" type="submit" class="go-button" />',
     $extra_inputs
   );
 }
