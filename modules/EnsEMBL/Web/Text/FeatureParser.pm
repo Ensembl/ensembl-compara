@@ -10,7 +10,7 @@ use EnsEMBL::Web::Root;
 use Data::Dumper;
 
 sub new {
-  my $class = shift;
+  my ($class, $species_defs) = @_;
   my $data = {
   'format'            => '',
   'feature_count'     => 0,
@@ -20,6 +20,11 @@ sub new {
   'filter'            => undef,
   '_current_key'      => 'default',
   };
+  my $drawn_chrs = $species_defs->ENSEMBL_CHROMOSOMES;
+  my $all_chrs = $species_defs->ALL_CHROMOSOMES;
+  foreach my $chr (@$drawn_chrs) {
+    $data->{'valid_coords'}{$chr} = $all_chrs->{$chr};  
+  }
   bless $data, $class;
   return $data;
 }
@@ -80,6 +85,7 @@ sub parse {
     my $count;
     my $current_max = 0;
     my $current_min = 0;
+    my $valid_coords = $self->{'valid_coords'};
 
     foreach my $row ( split /\n/, $data ) {
       ## Skip crap and clean up what's left
@@ -109,18 +115,21 @@ sub parse {
           $columns = $self->parse_row($row);
         }
         if ($columns && scalar(@$columns)) {
+          my ($chr, $start, $end) = $empty->coords($columns);
+
+          ## Check the coordinates are valid for this assembly
+          next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
+          next unless $start > 0 && $end <= $valid_coords->{$chr};
+          
           ## Optional - filter content by location
           my $filter = $self->filter;
           if ($filter->{'chr'}) {
-            my ($chr, $start, $end) = $empty->coords($columns);
             next unless ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}); 
             if ($filter->{'start'} && $filter->{'end'}) {
               next unless $start >= $filter->{'start'} && $end <= $filter->{'end'};
             }
           }
-=pod
-          ## Check the coordinates are valid for this assembly
-=cut
+
           ## Everything OK, so store
           if ($self->no_of_bins) {
             $self->store_density_feature($empty->coords($columns));
