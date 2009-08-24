@@ -37,7 +37,7 @@ sub context_panel {
   my $self   = shift;
   my $object = $self->object;
   
-  if ($object->action eq 'Comparison') {
+  if ($object->action eq 'Multi') {
     my $panel  = $self->new_panel('Summary',
       'code'    => 'summary_panel',
       'object'  => $object,
@@ -148,7 +148,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
   ));
   
-  $align_menu->append($self->create_node('Comparison', 'Multi-species comp. ([[counts::pairwise_alignments]])',
+  $align_menu->append($self->create_node('Multi', 'Multi-species comp. ([[counts::pairwise_alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Location::SelectAlignment
       top      EnsEMBL::Web::Component::Location::MultiTop
