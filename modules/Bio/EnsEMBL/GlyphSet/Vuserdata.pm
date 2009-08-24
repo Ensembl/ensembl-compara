@@ -40,7 +40,7 @@ sub data {
  
   if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
     ## Parse data and store by chromosome
-    my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->{'config'}->species_defs);
     $parser->no_of_bins($bins);
     $parser->bin_size($bin_size);
     unless ($self->{'config'}{'all_chromosomes'} eq 'yes') {
