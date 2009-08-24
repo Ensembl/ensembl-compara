@@ -212,21 +212,25 @@ sub _summarise_core_tables {
 # * Co-ordinate systems..
 #
 
-    my $row =  $dbh->selectrow_arrayref(
+    my $aref =  $dbh->selectall_arrayref(
       'select sr.name, sr.length 
          from seq_region as sr, coord_system as cs 
         where cs.name in( "chromosome", "group" ) and
-              cs.coord_system_id = sr.coord_system_id 
-        order by sr.length
-         desc limit 1'
+              cs.coord_system_id = sr.coord_system_id' 
     );
-    if( $row ) {
-      $self->db_tree->{'MAX_CHR_NAME'  } = $row->[0];
-      $self->db_tree->{'MAX_CHR_LENGTH'} = $row->[1];
-    } else {
-      $self->db_tree->{'MAX_CHR_NAME'  } = undef;
-      $self->db_tree->{'MAX_CHR_LENGTH'} = undef;
+    $self->db_tree->{'MAX_CHR_NAME'  } = undef;
+    $self->db_tree->{'MAX_CHR_LENGTH'} = undef;
+    my $max_length = 0;
+    my $max_name;
+    foreach my $row (@$aref) {
+      $self->db_tree->{'ALL_CHROMOSOMES'}{$row->[0]} = $row->[1];
+      if( $row->[1] > $max_length ) {
+        $max_name = $row->[0];
+        $max_length = $row->[1];
+      }
     }
+    $self->db_tree->{'MAX_CHR_NAME'  } = $max_name;
+    $self->db_tree->{'MAX_CHR_LENGTH'} = $max_length;
   }
 
 #---------------
