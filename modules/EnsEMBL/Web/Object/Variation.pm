@@ -63,7 +63,9 @@ sub counts {
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'populations'} = $self->count_populations;
     $counts->{'individuals'} = $self->count_individuals;
-    $counts->{'ega'} = $self->count_ega;
+    $counts->{'ega'}         = $self->count_ega;
+    $counts->{'alignments'}  = $self->count_alignments->{'multi'};
+    
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
 

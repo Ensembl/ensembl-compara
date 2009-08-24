@@ -71,7 +71,7 @@ sub populate_tree {
     [qw(summary EnsEMBL::Web::Component::Variation::ExternalData)],
     { 'availability' => 'variation', 'concise' => 'Phenotype Data' }
   );
-  $self->create_node( 'Compara_Alignments', "Phylogenetic Context",
+  $self->create_node( 'Compara_Alignments', "Phylogenetic Context ([[counts::alignments]])",
     [qw(selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
         summary EnsEMBL::Web::Component::Variation::Compara_Alignments)],
     { 'availability' => 'variation database:compara', 'concise' => 'Evolutionary or Phylogenetic Context' }
