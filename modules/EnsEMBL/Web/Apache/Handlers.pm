@@ -19,7 +19,7 @@ use SiteDefs qw(:APACHE);
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::BlastAdaptor;
-use EnsEMBL::Web::OldLinks;
+use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
 
@@ -399,7 +399,7 @@ sub transHandler_species {
     if ($real_script_name eq 'action' || $real_script_name eq 'modal') {
       $r->subprocess_env->{'ENSEMBL_ACTION'}   = $t2 = shift @$path_segments;
       $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $t3 = shift @$path_segments;
-      $r->subprocess_env->{'ENSEMBL_FACTORY'}  = 'MultipleLocation' if $script eq 'Location' && $t2 eq 'Comparison';
+      $r->subprocess_env->{'ENSEMBL_FACTORY'}  = 'MultipleLocation' if $script eq 'Location' && $t2 eq 'Multi';
     } elsif ($real_script_name eq 'zmenu' || $real_script_name eq 'config') {
       $type     = shift @$path_segments;
       $action   = shift @$path_segments;
@@ -446,8 +446,7 @@ sub transHandler_species {
     return HTTP_TEMPORARY_REDIRECT;
   }
   
-  my $OL = new EnsEMBL::Web::OldLinks;
-  my $t = $OL->get_redirect($script);
+  my $t = get_redirect($script);
   
   if ($t) {
     my $newfile = join '/', '', $species, $t;
