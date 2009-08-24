@@ -53,13 +53,13 @@ sub draw_features {
 
 sub features {
   my ($self) = @_;
-  ## Get the features from the URL or from the database...
+  ## Get the features from the URL or session...
   my $sub_type = $self->my_config('sub_type');
   $self->{_default_colour} = $self->SUPER::my_colour( $sub_type );
 ## Initialise the parser and set the region!
   my $parser = EnsEMBL::Web::Text::FeatureParser->new();
   my $features = [];
-  #$parser->set_filter( $self->{'container'}->seq_region_name, $self->{'container'}->start, $self->{'container'}->end );
+  $parser->filter( $self->{'container'}->seq_region_name, $self->{'container'}->start, $self->{'container'}->end );
   $self->{'parser'} = $parser;
   if( $sub_type eq 'url' ) {
     my $data = EnsEMBL::Web::Tools::Misc::get_url_content($self->my_config('url') );
@@ -67,12 +67,10 @@ sub features {
   }
   else {
     my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('file') );
-
     return $self->errorTrack("The file ".$self->my_config('caption')." could not be found") if !$file->exists && $self->
 strand < 0;
 
     my $data = $file->retrieve;
-
     return [] unless $data;
 
     $parser->parse($data, $self->my_config('format') );
