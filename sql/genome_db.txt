@@ -1,17 +1,15 @@
-3	10116	Rattus norvegicus	RGSC3.4	1	2006-02-Ensembl	
+3	10116	Rattus norvegicus	RGSC3.4	1	2009-03-Ensembl	
 4	31033	Takifugu rubripes	FUGU4	1	2007-11-Ensembl	
-5	7165	Anopheles gambiae	AgamP3	1	2007-06-VectorBase	
 16	8364	Xenopus tropicalis	JGI4.1	1	2005-11-Ensembl	
 18	7719	Ciona intestinalis	JGI2	1	2006-02-Ensembl	
 27	51511	Ciona savignyi	CSAV2.0	1	2006-04-Ensembl	
-29	7159	Aedes aegypti	AaegL1	1	2006-06-VectorBase	
 31	9544	Macaca mulatta	MMUL_1	1	2006-01-Ensembl	
 33	9371	Echinops telfairi	TENREC	1	2006-08-Ensembl	
 34	9986	Oryctolagus cuniculus	RABBIT	1	2006-08-Ensembl	
 36	69293	Gasterosteus aculeatus	BROADS1	1	2006-06-Ensembl	
 37	8090	Oryzias latipes	MEDAKA1	1	2006-05-Ensembl	
 38	9598	Pan troglodytes	CHIMP2.1	1	2008-02-Ensembl	
-39	9615	Canis familiaris	BROADD2	1	2006-12-Ensembl	
+39	9615	Canis familiaris	BROADD2	1	2006-11-Ensembl	
 42	9031	Gallus gallus	WASHUC2	1	2006-08-Ensembl	
 43	9258	Ornithorhynchus anatinus	OANA5	1	2007-01-Ensembl	
 44	4932	Saccharomyces cerevisiae	SGD1.01	1	2007-10-SGD	
@@ -26,7 +24,6 @@
 58	30608	Microcebus murinus	micMur1	1	2007-07-Ensembl	
 60	9600	Pongo pygmaeus	PPYG2	1	2007-10-Ensembl	
 61	9796	Equus caballus	EquCab2	1	2007-09-Ensembl	
-62	7227	Drosophila melanogaster	BDGP5.4	1	2007-10-Ensembl	
 63	0	Ancestral sequences		1		
 64	9913	Bos taurus	Btau_4.0	1	2008-01-Ensembl	
 65	99883	Tetraodon nigroviridis	TETRAODON8	1	2007-11-Ensembl	
@@ -48,4 +45,7 @@
 89	7955	Danio rerio	Zv8	1	2009-01-Ensembl	
 90	9606	Homo sapiens	GRCh37	1	2009-03-Ensembl	
 91	9315	Macropus eugenii	Meug_1.0	1	2009-02-Ensembl	
-92	6239	Caenorhabditis elegans	WS200	1	2009-01-WormBase	NULL
+92	6239	Caenorhabditis elegans	WS200	1	2009-01-WormBase	
+93	9823	Sus scrofa	Sscrofa9	1	2009-04-Ensembl	
+94	9483	Callithrix jacchus	calJac3	1	2009-04-Ensembl	
+95	7227	Drosophila melanogaster	BDGP5.13	1	2009-01-FlyBase	

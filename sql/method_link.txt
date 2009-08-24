@@ -1,5 +1,4 @@
 1	BLASTZ_NET	GenomicAlignBlock.pairwise_alignment
-6	TRANSLATED_BLAT	GenomicAlignBlock.pairwise_alignment
 7	TRANSLATED_BLAT_NET	GenomicAlignBlock.pairwise_alignment
 10	PECAN	GenomicAlignBlock.multiple_alignment
 11	GERP_CONSTRAINED_ELEMENT	ConstrainedElement.constrained_element
