@@ -34,6 +34,8 @@ sub count_alignments {
     $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/;
   }
   
+  $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
+  
   return $c; 
 }
 
