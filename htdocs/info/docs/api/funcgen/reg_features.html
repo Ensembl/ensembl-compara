@@ -1,0 +1,97 @@
+<html>
+<head>
+<title>API Support for Regulatory Features</title>
+</head>
+
+<body>
+
+<h1>API Support for Regulatory Features</h1> 
+
+<p>As of release 49 of Ensembl, support for regulatory features has been migrated
+from the core databases into the functional genomics databases.</p>
+
+<p>This change should be transparent for those of you who access this data via the
+website, but for those of you who use the API or MySQL database access will need
+to note the following changes:</p>
+
+<h2>API</h2>
+
+<p>The following objects and adaptors have been removed from the core API:</p>
+
+<ul>
+<li>RegulatoryFactor.pm</li>
+<li>RegulatoryFeature.pm</li>
+<li>RegulatorySearchRegion.pm</li>
+<li>RegulatoryFactorAdaptor.pm</li>
+<li>RegulatorySearchRegionAdaptor.pm</li>
+<li>RegulatoryFeatureAdaptor.pm</li>
+</ul>
+
+<p>Additionally, all regulatory feature-related calls have been removed from
+BaseAdaptor.pm and its subclasses.</p>
+
+<p>The data can be extracted via the functional genomics API, as follows:</p>
+
+<pre class="code">
+# Grab the eFG DB
+my $efg_db = Bio::EnsEMBL::Registry-&gt;get_DBAdaptor-&gt;('Human','funcgen');
+
+# Get the FeatureSetAdaptor
+my $fset_adaptor = $efg_db-&gt;get_FeatureSetAdaptor();
+
+#External FeatureSet names are:
+# miRanda miRNA         
+# cisRED search regions  
+# VISTA enhancer set     
+# cisRED motifs   
+
+# Get the FeatureSet
+my $fset = $fset_adaptor-&gt;fetch_by_name('cisRED motifs');
+
+my @cisred_features = @{$fset-&gt;get_Features_by_Slice($slice)};
+
+# You can retrieve features from more than one set at a time by using
+# the ExternalFeatureAdaptor directly e.g.
+
+my $ext_feature_Adaptor = $efg_db-&gt;get_ExternalFeatureAdaptor;
+my @mixed_features =
+@{$ext_feature_adaptor-&gt;fetch_all_by_Slice_FeatureSets($slice,
+@feature_sets)};
+</pre>
+
+<h2>Schema</h2>
+
+<p>The following tables have been removed from the core database schema:</p>
+
+<ul>
+<li>regulatory_feature</li>
+<li>regulatory_factor</li>
+<li>regulatory_factor_coding</li>
+<li>regulatory_feature_object</li>
+</ul>
+
+<p>The data is now stored in the functional genomics database, as follows.</p>
+
+<dl>
+<dt>external_feature</dt><dd>contains the individual feature information
+e.g. display label, locus, feature_type etc...</dd>
+<dt>feature_set</dt><dd>contains summary information about a given
+set of features e.g. name, feature_type. The feature sets of the old
+core regulatory features are named as follows:
+<ul>
+<li>miRanda miRNA</li>
+<li>cisRED group motifs</li>
+<li>cisRED search regions</li>
+<li>VISTA enhancer set</li>
+</ul>
+</dd>
+<dt>feature_type</dt><dd>contains detailed information about a given
+feature_type efg xref schema (xref, object_xref, identity_xref,</dd>
+<dt>go_xref, external_db, external_synonym)</dt><dd>Similar to the core xref
+schema, references to entities external to the eFG DB are stored here.
+e.g. Target genes for miRNAs, coding</dd>
+</dl>
+
+</body>
+</html>
+

@@ -1,0 +1,152 @@
+<html>
+<head>
+<title>API Installation</title>
+</head>
+
+<body>
+
+<h1>Perl API Installation</h1>
+
+
+<h2>Introduction</h2>
+
+<p>
+All data sets in the Ensembl system are stored in relational databases
+(MySQL).
+For each of the <a href="./index.html">Ensembl databases</a> the project
+provides a specific Perl API.
+As Ensembl takes also advantage of code provided by the <a
+href="http://www.bioperl.org/" rel="external">BioPerl</a> project;
+installation of the BioPerl package is included in these instructions.
+</p>
+
+<h2>Installation Procedure</h2>
+
+<p>There are two ways of installing the Perl API. You can 
+<a href="/info/docs/api/api_cvs.html">check it out using CVS</a> 
+(Concurrent Versioning System) if you have that available, or you can
+simply download the files in gzipped TAR format from our CVS website,
+as detailed below:</p>
+
+
+<ol>
+<li>
+<p>
+Create an installation directory
+</p>
+
+<pre>
+$ cd
+$ mkdir src
+$ cd src
+</pre>
+</li>
+
+<li>
+<p>
+Download the API packages you need:
+  <ul>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl</a></li>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-compara.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl-compara</a></li>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl-variation</a></li>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-functgenomics.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl-functgenomics</a></li>
+  </ul>
+</p>
+<p><strong>N.B.</strong> We recommend waiting until a few days after a release before downloading
+the new API (or re-downloading after a few days), as there may be post-release bug fixes added to
+the code.</p>
+</li>
+
+<li>
+<p>
+Download <a href="http://bioperl.org/DIST/old_releases/bioperl-1.2.3.tar.gz">BioPerl 1.2.3</a>
+</p>
+</li>
+
+<li>
+<p>
+Unpack the downloaded files. In the Unix command line, type:
+<pre>
+$ tar xvfz filename.tar.gz
+</pre>
+<p>(substituting the name of each file). In Windows, you will need an unzipping utility 
+such as <a href="http://www.7-zip.org/">7-Zip</a>.</p>
+</li>
+
+<li>
+<p>
+Set up your environment
+</p>
+
+<p>
+You have to tell Perl where to find the modules you just installed.
+You can do this by using the <kbd>use lib</kbd> clause in your script
+but if you want to make these modules available for all your scripts,
+the best way is to add them into the <var>PERL5LIB</var> environment
+variable.
+</p>
+
+<ul>
+<li>
+<p>
+Under <kbd>bash</kbd>, <kbd>ksh</kbd>, or any <kbd>sh</kbd>-derived shell:
+</p>
+
+<pre>
+PERL5LIB=${PERL5LIB}:${HOME}/src/bioperl-live
+PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl/modules
+PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl-compara/modules
+PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl-variation/modules
+PERL5LIB=${PERL5LIB}:${HOME}/src/ensembl-functgenomics/modules
+export PERL5LIB
+</pre>
+</li>
+
+<li>
+<p>
+Under <kbd>csh</kbd> or <kbd>tcsh</kbd>:
+</p>
+
+<pre>
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/bioperl-live
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl/modules
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-compara/modules
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-variation/modules
+setenv PERL5LIB ${PERL5LIB}:${HOME}/src/ensembl-functgenomics/modules
+</pre>
+</li>
+
+<li>
+<p>
+Under Windows (assuming you installed the APIs in C:\src\):
+</p>
+
+<pre>
+set PERL5LIB=C:\src\bioperl-live;C:\src\ensembl\modules;C:\src\ensembl-compara\modules;C:\src\ensembl-variation\modules;C:\src\ensembl-functgenomics\modules
+</pre>
+</ul>
+
+</li>
+
+</ol>
+
+<h2 id="win">Additional Tips for Windows users</h2>
+
+<ul>
+<li>You will of course need Perl installed to use the API! This is available free of charge from
+<a href="http://www.activestate.com/Products/activeperl/">ActiveState</a>.</li>
+<li>You will also need to install the DBD::MySQL package using PPM (Perl Package Manager),
+a command-line tool which is bundled with ActivePerl.</li>
+<li>If the existing mysql-driver ("libmysql.dll") doesn't work, replace it - e.g. with the one distributed with "php-5-2-3-win32-installer.msi"</li>
+</ul>
+
+
+<h2>Additional Modules</h2>
+
+<p>Additional modules for accessing GO data may be found here:</p>
+<ul>
+<li><a href="http://search.cpan.org/~cmungall/go-db-perl-0.01/">http://search.cpan.org/~cmungall/go-db-perl-0.01/</a></li>
+</ul>
+
+</body>
+</html>

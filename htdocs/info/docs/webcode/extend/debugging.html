@@ -1,0 +1,52 @@
+<html>
+<head>
+<title>Debugging and profiling the Ensembl website</title>
+</head>
+
+<body>
+
+<h1>Debugging and profiling the Ensembl website</h1>
+
+<h2>$SiteDefs::ENSEMBL_DEBUG_FLAGS</h2>
+<p>
+  In your plugins you can set the value of the EnsEMBL debug flags
+  so that you can control what messages appear in the error logs.
+</p>
+<pre class="code">
+  ## Turn on Perl profiling output.
+  $SiteDefs::ENSEMBL_DEBUG_FLAGS |= $SiteDefs::ENSEMBL_PERL_PROFILER;
+  ## Turn off Long process warnings
+  $SiteDefs::ENSEMBL_DEBUG_FLAGS &amp;= ~$SiteDefs::ENSEMBL_DEBUG_LONG_PROCESS;
+</pre>
+
+<p>
+  A full list of flags are:
+</p>
+<dl>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_JAVASCRIPT_DEBUG</dt>
+  <dd>Include a Debug div in the webpage in which errors warnings and timings are logged.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_MAGIC_MESSAGES</dt>
+  <dd>EnsEMBL::Web::Magic module displays a textual description of each request if this flag is set.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_REFERER</dt>
+  <dd>For debugging AJAX etc - print out the parsed web-request</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_TREE_DUMPS</dt>
+  <dd>Textual dump of the image configuration trees.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_TIMESTAMPED_LOGS</dt>
+  <dd>If set log files are stamped with the time the server is started.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER</dt>
+  <dd>At various points in the code there are in built profiling statements - set this flag to dump them to the logs at the end of the request.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_LONG_PROCESS</dt>
+  <dd>Display information about requests that last more than a certain number of seconds.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS</dt>
+  <dd>Include some detailed error messages while the server is routing the request.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_SD_AUTOLOADER</dt>
+  <dd>Various shouts in the EnsEMBL::Web::SpeciesDefs AUTOLOAD function.</dd>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_DRAWING_CODE</dt>
+  <dd>Informational messages from the drawing code.</dt>
+  <dt>$SiteDefs::ENSEMBL_DEBUG_GENERAL_ERRORS</dt>
+  <dd>Show some general error messages</dd>
+</dl>
+
+<h2>Profiling the code - EnsEMBL::Web::Timer</h2>
+</body>
+</html>

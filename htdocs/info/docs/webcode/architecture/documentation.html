@@ -1,0 +1,205 @@
+<html>
+  <head>
+    <title>Documenting web code in Ensembl</title>
+  </head>
+<body> 
+  
+<h1>Documenting web code in Ensembl</h1>
+  
+<h2>Documenting documents</h2>
+  
+<p>The Ensembl web code is made up of a large number of Perl modules which span a wide range of tasks. The 'architecture' documentation is an attempt at introducing how the Ensembl web site uses some of these modules to maniplulate and display genomic information. In most cases, however, it does not include information on a particular method's function calls, or its inheritance.</p>
+
+<p>Like many Perl projects, the role of documenting the application programming interface of the Ensembl web code has traditionally been handled by <a href="http://en.wikipedia.org/wiki/Plain_Old_Documentation" rel="external">POD</a>. As such, some web code modules contain POD style documentation within the module source code. Others, however, do not. POD's verbosity often leads to a lack of API documentation, and so in September 2006, a simpler documentation format was introduced. </p>
+  
+<h2>Introducing e! doc</h2>
+  
+<p>The Ensembl documentation format (e! doc) is a light weight way of including useful documentation into source code files. The source code itself is parsed automatically to generate a set of HTML pages which contain a large amount of useful information for those working with the Ensembl web code.</p>
+
+<h3>Method documentation</h3>
+  
+<p>e! doc documentation can be placed anywhere inside a module's source code file, and appears prefixed with three hashes. For example:</p>
+  
+<pre class="code">
+  sub set_type {
+    ### Sets data type for object.
+    my $self= shift;
+    $Type_of{$self} = shift if @_;
+  } 
+</pre>
+  
+<p>This would include the <code>set_type</code> method in the documentation, along with the description of the method that appears after the triple hash. Multiple lines are also permitted, so long as each one starts with a triple hash. Lines starting with <strong>returns</strong> are appended to the bottom of the documentation for a method. For example, if the above <code>set_type</code> method was turned into an accessor:</p>
+  
+<pre class="code">
+  sub type {
+    ### Accessor for data type
+    ### Returns data type
+    my $self= shift;
+    $Type_of{$self} = shift if @_;
+    return $Type_iof{$self};
+  } 
+</pre>
+  
+<p>A number of short hand keywords<a href="#footnote1" id="linkback1" class="fn-link">1</a> can also be used for swift documenting:
+  <ul>
+    <li>a: for accessors</li>
+    <li>c: for constructors</li>
+    <li>d: for destructors</li>
+    <li>i: for initialiser</li>
+    <li>x: for deprecated methods</li>
+  </ul>
+  
+<p>For example, the above can be reduced to:</p>
+  
+<pre class="code">
+  sub type {
+    ### a
+    my $self= shift;
+    $Type_of{$self} = shift if @_;
+    return $Type_iof{$self};
+  } 
+</pre>
+
+<p>Keywords can also be combined with an additional description. For example, in a constructor:</p>
+
+<pre class="code">
+  sub new {
+    ### c 
+    ### Creates a new inside-out class representing
+    ### Ensembl data.
+    my $self= shift;
+    $Type_of{$self} = shift if @_;
+    return $Type_iof{$self};
+  } 
+</pre>
+
+<p>Additional HTML formatting can also be included. Empty comments are converted into blank lines.</p>
+
+<pre class="code">
+  sub new {
+    ### c 
+    ### Creates a new inside-out class representing Ensembl data.
+    ###
+    ### This constructor returns a new Ensembl data class.
+    my $self= shift;
+    $Type_of{$self} = shift if @_;
+    return $Type_iof{$self};
+  } 
+</pre>
+  
+
+<h3>Module documentation</h3>
+  
+<p>In addition to providing information relating to individual method calls, documentation can also be added to entire modules. The same triple hash comments can be placed between the package declaration and the first method definition to provide an overview of the functionality of a module.</p>
+  
+<pre class="code">
+  package EnsEMBL::Web::Root;
+
+  ### The root class for web code modules
+  ### in Ensembl. 
+
+  use strict;
+  use warnings;
+
+  sub new {
+    ...
+  }
+  
+  1;
+</pre>
+  
+<h3>Inheritance and subclasses</h3>
+  
+<p>The e! doc system also provides information on inheritance and subclasses. The HTML documentation pages produced include all methods defined in a class, along with any methods made available to it through inheritance. Subclasses of modules are also listed. This information is derived from the <code>@ISA</code> array in the perl module, so no additional documentation markup is required.</p>
+
+<h3>Referencing other modules and methods</h3>
+
+<p>When documenting one method, it is sometimes useful to make reference to associated modules and methods. When placed in double curly braces, other modules or method names become hyperlinks in the resulting HTML documentation pages.</p>
+
+<pre class="code">
+  sub panel {
+    ### Returns the {{EnsEMBL::Web::Document::Panel}} associated with 
+    ### this object. If no panel is found, a new one is created with 
+    ### {{new_panel}}.
+    ...
+  }
+
+  sub new_panel {
+    ### Creates and returns a new panel by calling
+    ### {{EnsEMBL::Web::Document::Panel::new}}.
+    ...
+  }
+</pre>
+
+<h3>Tables</h3>
+
+<p>In addition to standard text documentation, tabulated comments can also be included in the documentation. Tables can appear anywhere within a comment, but should be preceeded and followed by a triple underscore character. For example:</p>
+
+<pre class="code">
+  sub new {
+  ### c
+  ### Inside-out class for z-menus.
+  ### ___
+  ### Arg 1: class name
+  ### Arg 2: parameter hash
+  ### Description: Constructor method for {{EnsEMBL::Web::Interface::ZMenu}}
+  ###              objects. Receives a parameter hash of the following keys:
+  ### Title:       title of the zmenu
+  ### Type:        type of zmenu
+  ### Ident:       unique identifier of zmenu (really should be unique!)
+  ### Add:         array of {{EnsEMBL::Web::Interface::ZMenuItem}} objects
+  ###              add to the ZMenu
+  ### Remove:      array of strings of ZMenuItem objects to remove from
+  ###              the ZMenu
+  ### View:        The {{EnsEMBL::Web::Interface::ZMenuView}} object to
+  ###              use for rendering. A new one is automatically created
+  ###              if no object is specified.
+  ### Returns:    A new {{EnsEMBL::Web::Interface::ZMenu}}.
+  ### ___
+  ###
+    ...
+  }
+</pre>
+
+<p>As with text documentation, references to other modules and methods can also be included in the tables.</p>
+
+<h3>Source code</h3>
+  
+<p>The HTML documentation includes links to view the source code of a module. This information is populated dynamically as it is needed to speed up page loads. Method code is also displayed with a zippy animation. Who says documentation can't be fun?</p>
+
+<h2 id="indexing">Indexing the API</h2>
+  
+<p>A collection of <code>EnsEMBL::Web::Tools::Document</code> classes are responsible for finding and parsing the API modules, and producing the HTML documentation pages. </p>
+
+<p>An <code>EnsEMBL::Web::Tools::Document</code> object is responsible for finding the module files, and creates a series of <code>EnsEMBL::Web::Tools::Document::Module</code> objects. Each of these objects does the heavy lifting of parsing the module source code, and in turn creates a series of <code>EnsEMBL::Web::Tools::Document::Method</code> objects. The <code>Document</code> object then processes these data objects and passes them to the <code>EnsEMBL::Web::Tools::DocumentView</code> object, which actually writes the HTML documentation files.</p>
+  
+<p>Two scripts are included which will automatically perform the index on the web code and the drawing code. They assume a default directory setup, and copy the generated HTML documentation pages to the <code>htdocs/docs</code> directory.</p>
+
+<ul>
+  <li><code>document.pl</code> creates the necessary <code>EnsEMBL::Web::Document</code> classes, performs the index, and writes the HTML output based on a collection of command line parameters.</li>
+  <li><code>update_docs.pl</code> runs <code>document.pl</code> with a default set of command line parameters. This indexes all web code modules, and associated plugins by default, and places the resulting HTML documentation inside a <code>temp</code> directory. This directory should be copied to a web accessible location for viewing. </li>
+</ul>
+  
+<h2>Viewing the documentation</h2>
+  
+<p>A series of HTML files are created by the documentation which are displayed in three frames:</p>
+<ul>
+   <li>A complete list of all modules<li>
+   <li>A complete list of all methods</li>
+   <li>A single page listing all methods for each module</li>
+   <li>Some additional pages of statistics. <a href="#footnote2" id="linkback2" class="fn-link">2</a></li>
+  </ul>
+<p>These pages are viewable in a web browser, and provide easy client side API searches with the browser's built in find function.</p>
+ 
+<div class="footnotes">
+<p>Footnotes:</p>
+
+<ol>
+    <li id="footnote1">Keywords can be added or removed using the <code>keywords</code> accessor of the <code>EnsEMBL::Web::Tools::Document</code> object performing the API indexing (see <a href="#indexing">Indexing the API</a>). <a href='#linkback1' class="notext">&uarr;</a></li>
+    <li id="footnote2">A documentation coverage percentage is calculated for each module based on the ratio between those methods which contain a triple hashed comment, and those that do not. Families of modules are also ranked by documenattion coverage. <a href='#linkback2' class="notext">&uarr;</a></li>
+</ol>
+  
+
+</body>
+</html>
+  

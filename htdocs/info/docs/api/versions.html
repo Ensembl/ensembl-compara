@@ -1,0 +1,90 @@
+<html>
+<head>
+<title>Code versioning scheme</title>
+</head>
+
+<body>
+
+<h1>Ensembl Versions</h1>
+
+<p>
+This page uses release [[SPECIESDEFS::ENSEMBL_VERSION]] as a version example.
+We recommend always using the latest versions of code and data.
+</p>
+
+
+<h2>Ensembl Versioning Scheme</h2>
+            
+<p>
+Each Ensembl release has an integer version number associated with it which is used to 
+identify the correct versions of the API, web code and databases that make up that release.
+The idea is that components with the same release version should work together - i.e. any web site built with
+'version [[SPECIESDEFS::ENSEMBL_VERSION]]' API and web code, and 'version [[SPECIESDEFS::ENSEMBL_VERSION]]' 
+databases should work correctly.
+</p>
+
+<p>
+The BioMart code has its own versioning scheme, since it is independent of the Ensembl code - see the
+<a href="http://www.ebi.ac.uk/biomart/" rel="external">BioMart website</a> for information on using the code 
+separately, e.g. with the MartJ Java interface.
+</p>
+
+
+<h2>Archiv<em><span class="blue">e</span><span class="red">!</span></em> sites</h2>
+
+<p>
+Some previous releases of Ensembl have been archived.
+For more information about the Archiv<em><span class="blue">e</span><span class="red">!</span></em>
+sites and <a href="/info/website/archives/assembly.html">past assemblies</a>, see the
+<a href="/info/website/archives/">list of current archives</a>.
+</p>
+
+
+<h2>Ensembl Code Versioning</h2>
+
+<p>
+For the APIs and the web code, a CVS branch (essentially a named snapshot of the code) is made 
+for each release and named with the release version number.
+The
+<a href="./api_installation.html">Perl API</a> and
+<a href="/info/docs/webcode/install/build.html#cvs_co">web code</a>
+can be checked out of CVS with the tag "branch-ensembl-versionnumber",
+e.g. branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]].
+</p>
+
+
+<h2>Ensembl Data Versioning</h2>
+
+<p>
+The Ensembl database names have the format:
+</p>
+
+<pre>
+&lt;species&gt;&lt;database type&gt;&lt;release number&gt;&lt;data version&gt;
+</pre>
+
+<p>
+As an example, the name of the Human Core database for the Ensembl 32 release would be:
+</p>
+
+<pre>
+homo_sapiens_core_32_35e
+</pre>
+
+<p>
+A letter suffix to the data version indicates a change in data without a change in assembly; e.g. a new gene build.
+</p>
+
+
+<h2>BioMart Versioning</h2>
+
+<p>
+<a href="http://www.ebi.ac.uk/biomart/" rel="external">BioMart</a> will branch less frequently than Ensembl, and the release number bears no relation to that of Ensembl.
+</p>
+
+<p>
+The code can be checked out of CVS - see the <a href="/info/docs/webcode/install/build.html#cvs_cobiomart">installation instructions</a> for the CVS tag format.
+</p>
+
+</body>
+</html>

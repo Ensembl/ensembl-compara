@@ -1,0 +1,226 @@
+<html>
+<head>
+<title>Introduction to Ensembl Functional Genomics</title>
+</head>
+<body>
+
+<h1>Introduction to Ensembl Functional Genomics</h1>
+
+<h2>Installation Requirements</h2>
+<p>Given that you have already followed the instructions for <a href="/info/docs/api/api_installation.html">installation</a> of the Ensembl core and functional genomics APIs, the next step is to set up the eFG specific requirements.  This is an exhaustive list and may not be necessary if you do not intend to use the full functionality of eFG.  Install the following as required:</p>
+<dl>
+<dt>R</dt>
+<dd>Required for normalisation, QC reports and analysis.<br />
+Available from <a href="http://cran.r-project.org/" rel="external">http://cran.r-project.org/</a></dd>
+<dt>RMySQL -  R package</dt>
+<dd>Required for normalisation, QC reports and analysis.<br />
+Available from <a href="http://cran.r-project.org/" rel="external">http://cran.r-project.org/</a></dd>
+<dt>BioConductor - R platform</dt>
+<dd>Required for normalisation, QC reports and analysis.<br />
+Available from <a href="http://www.bioconductor.org/download">http://www.bioconductor.org/download</a></dd>
+<dt>Ringo - BioConductor package</dt>
+<dd>Required for normalisation, QC reports and analysis.<br />
+Available from <a href="http://bioconductor.org/packages/2.1/bioc/html/Ringo.html">http://bioconductor.org/packages/2.1/bioc/html/Ringo.html</a></dd>
+<dt>MAGEstk - Bio::MAGE software tool kit.
+<dd>Pre-requisite for Tab2MAGE. Available from <a href="http://www.mged.org/Workgroups/MAGE/magestk.html">http://www.mged.org/Workgroups/MAGE/magestk.html</a></dd>
+<dt>Tab2MAGE &amp; MAGE.dtd</dt>
+<dd>Required for meta data import and subsequent submission to ArrayExpress.<br />
+Tab2MAGE is available from <a href="http://sourceforge.net/project/showfiles.php?group_id=120325">http://sourceforge.net/project/showfiles.php?group_id=120325</a><br />
+MAGE.dtd v1.1 is available from <a href="http://mged.sourceforge.net/software/docs.php">http://mged.sourceforge.net/software/docs.php</a><br />
+The MAGE.dtd should be placed in the root data directory ($EFG_DATA).</dd>
+</dl>
+
+<h2>Set Up</h2>
+<p>The eFG system uses a shell environment to set global variables and help perform common tasks.  You will need to edit the .efg file accordingly:</p>
+
+<pre class="code">
+efg@bc-9-1-02&gt;more ensembl-functgenomics/scripts/.efg
+#!/usr/local/bin/bash
+
+echo "Setting up the Ensembl Function Genomics environment..."
+
+### ENV VARS ###
+
+#Prompt
+export PS1='efg@$PS1HOST&gt;'
+
+#Code/Data Directories
+export SRC=~/src                                #Root source code directory. EDIT
+export EFG_SRC=$SRC/ensembl-functgenomics       #eFG source directory
+export EFG_SQL=$EFG_SRC/sql                     #eFG SQL
+export EFG_DATA=/your/data/dir/efg              #Data directory. EDIT
+export PATH=$PATH:$EFG_SRC/scripts              #eFG scripts directory
+export PERL5LIB=$EFG_SRC/modules:$PERL5LIB      #Update PERL5LIB. EDIT add ensembl(core) etc. if required
+#Your efg DB connection params
+export WRITE_USER='write_user'                  #EDIT
+export READ_USER='read_user'                    #EDIT
+export HOST='efg-host'                          #EDIT
+export PORT=3306                                #EDIT
+export MYSQL_ARGS="-h${HOST} -P${PORT}"
+
+#Your ensembl core DB connection params, read only
+export CORE_USER='anonymous'                    #EDIT if required
+export CORE_HOST='ensembldb.ensembl.org'        #EDIT if required
+export CORE_PORT=3306                           #EDIT if required
+
+#Default norm and analysis methods
+export NORM_METHOD='VSN_GLOG'                   #EDIT if required e.g. T.Biweight, Loess
+export PEAK_METHOD='Nessie'                     #EDIT if required e.g. TileMap, MPeak, Chipotle
+
+#R config
+export R_LIBS=${R_LIBS:=$SRC/R-modules}         #EDIT if required
+export R_PATH=/software/bin/R                   #Location of local version of R. EDIT
+export R_FARM_PATH=/software/R-2.4.0/bin/R      #Location of farm installed R. EDIT
+export R_BSUB_OPTIONS="-R'select[type==LINUX64 &amp;&amp; mem&gt;6000] rusage[mem=6000]' -q bigmem" #EDIT
+</pre>
+<p>
+As is indicated at the head of the .efg file, to enable easy access to the eFG environment it is useful to add the following to your .*rc login file:</p>
+
+<pre class="code">
+alias efg='. ~/src/ensembl-efg/.efg'
+</pre>
+<p>
+Once this is done simple type 'efg' to enter the envornment, which will give you access to some helper functions such as, CreateDB:</p>
+<pre class="code">
+efg@bc-9-1-02&gt;CreateDB my_homo_sapiens_funcgen_47_36i password
+Creating DB my_homo_sapiens_funcgen_47_36i
+</pre>
+<p>
+It is desirable to maintain the standard Ensembl nomenclature for a database and simply prefix it with some descriptive tag.  Failure to do so may cause problems in dynamically detecting the correct core DB to use.  The CreateDB function also supports overwriting of a particular instance of an eFG DB by specifying a third 'drop' argument:</p>
+<pre class="code">
+efg@bc-9-1-02&gt;CreateDB my_homo_sapiens_funcgen_47_36i password drop
+Dropping DB my_homo_sapiens_funcgen_47_36i
+Creating DB my_homo_sapiens_funcgen_47_36i
+</pre>
+<p>
+Once you have set up the environment, you are now ready to import data or query the central ensembl or a local copy of an eFG DB.  </p>
+<p>
+<strong>Note:</strong>  It is not necessary to set up the environment if you simply want to query a remote eFG DB i.e. The eFG Dbs available at ensembldb.ensembl.org.  However, you may find that some of the tools scripts will require explicit definition of some of the above environment variables via the command line.  
+</p>
+
+<h2>Tools scripts</h2>
+
+<p>There are various types of data import, export and transformation which can be performed using the scripts available in the scripts directory.  These encompass simple cell and feature type imports, through to array design and full experiment imports.  Most of the more common tasks have template shell scripts with required parameters set and others left for editing.   Here follows a list of the main types of tool script:</p>
+
+<dl>	
+<dt>Feature and CellType import</dt>
+<dd>This is done explicitly to avoid propogation of duplicated types through the database.<br />  
+See:	run_import_type.sh</dd>
+<dt>Array design import</dt>
+<dd>Importing arrays prior to receipt of experimental can be beneficial.  During the initial import of an array an exhaustive process is undertaken to resolve replicate probe and build a cache external to the DB. Depending on the size of the array, this process can take quite a few hours.  The benefit of this process apart from the correct handling of replicate probes is that subsequent imports based on the given array are much faster.  eFG also supports import for custom pre-production arrays to facilitate analysis and design turnover during development. <br /> 
+See:	run_import_design.sh and run_import_array_from_fasta.sh</dd>
+<dt>Experiment import</dt>
+<dd>eFG supports import of experiments using the Nimblegen tiling array and Sanger PCR array platforms.  See:	 run_NIMBLEGEN.sh and run_Sanger.sh </dd>
+<dt>Feature level import</dt>
+<dd>It is possible to perform a direct feature import.  This accommodates pre-analysed data or technologies which are not fully supported by eFG. e.g. Hitlists, Wiggletracks, Short reads.<br />
+See:	run_Solexa.sh, run_import_hitlist.sh and run_import_wiggle.sh</dd>
+<dt>Feature mapping</dt>
+<dd>eFG utilises the assembly mapping information in the core DB to remap feature up to new versions of a given genome. <br />
+ See:	 run_remap_features.sh and run_project_feature_set.sh <br />
+<strong>Note:</strong>  This has been shown to give spurious results when remapping probe level features, dependent on the nature of the assembly change.  A more exhaustive full genomic mapping is also possible via the eFG probe mapping pipeline.</dd>
+<dt>Data export</dt>
+<dd>Various flavours of data export including GFF and custom formats.<br />
+See:	run_dump_gff_features.sh and get_data.pl</dd>
+<dt>Data rollback</dt>
+<dd>Removes part or all of an experimental import and its associated data.<br />
+See:	roll_back_experiment.pl</dd>
+</dl>
+
+
+<h2>Importing an experiment</h2>
+
+<p>Prior to running your first experiment import, you will likely need to import the necessary features types first.</p>
+<pre class="code">
+efg@bc-9-1-02&gt;more run_import_type.sh 
+#!/bin/sh
+
+PASS=$1
+shift
+
+$EFG_SRC/scripts/import_type.pl\
+        -type FeatureType\
+        -name H3K4me3\
+        -dbname your_homo_sapiens_funcgen_48_36j\
+        -description 'Histone 3 Lysine 4 Tri-methyl'\
+        -class HISTONE\
+        -pass $PASS
+</pre>
+<p>               
+Feature type names should correspond to a recognised ontology or nomenclature where appropriate e.g. Brno nomenclature for histones.  The class parameter is not required for CellType imports.</p>
+To import an experiment you must first create an input directory for the array vendor and your experiment e.g.</p>
+<pre class="code">
+mkdir $EFG_DATA/input/NIMBLEGEN/EXPERIMENT_NAME
+</pre>    
+<p>The eFG system currently expects only one experiment per input directory.  If your DVD contains more than one experiment, you will need to split the files up, recreating any meta files accordingly e.g. DesignNotes.txt, SampleKey.txt.  A Nimblegen experiment import can be done using the appropriate run script:</p>
+<pre class="code">
+efg@bc-9-1-02&gt;more run_NIMBLEGEN.sh
+#!/bin/sh
+
+PASS=$1
+shift
+
+$EFG_SRC/scripts/parse_and_import.pl\
+       -name 'DVD_OR_EXPERIMENT_NAME'\              #Name of the data directory
+       -format tiled\                               #Array format
+       -vendor NIMBLEGEN\
+       -location Hinxton\                           #Your group location
+       -contact 'your@email.com'\
+       -species homo_sapiens\
+       -fasta\                                      #Flag to dump the array as a fasta file, useful for remapping
+       -port 3306\
+       -host dbhost\
+       -dbname 'your_homo_sapiens_funcgen_47_36i'\
+       -array_set\                                  #Flag to treat every chip/slide as part of one array
+       -array_name "DESIGN_NAME"\
+       -cell_type e.g. U2OS\
+       -feature_type e.g. H3K4me3\
+       -group efg\                                  #Your groupname
+       -data_version 41_36c\                        #The Ensembl data version corresponding to your data
+       -verbose\
+       -tee\
+       -pass $PASS\
+       -recover                                     #Enables recovery mode for failed/partial imports
+</pre>    
+<p>
+Running the above script will perform a preliminary import.  This involves validation checks and import of some basic meta data.  The meta data gleaned from the import parameters and available files is automatically populated within a tab2mage file located in the output directory, at which point the import stops to allow manual curation of the tab2mage file.  Due to the lack of comprehensive meta data associated with an experiment DVD, it is necessary to inspect, correct and annotate the tab2mage file where possible.  Failure to do so may result in permanent loss of meta data, an inability to submit to ArrayExpress and a corrupted import which ultimately may prevent any further analysis.</p>
+<p>
+There are three main areas to be addressed, most of which may have been automatically populated.  Fields which need attention are marked with three question marks e.g. <strong>???</strong></p>
+<ol>
+<li>Experiment section:  This includes information about the laboratory where the experiment was performed along with some field which are required for ArrayExpress submission.</li>
+<li>Protocol section:  This is automatically populated from the defaults present in the vendor definitions package e.g. NimblegenDefs.pm. These should be checked and edited accordingly, propagating the changes to the Hybridisation section.</li>
+<li>Hybridisation section:  This is possibly the most important section to scrutinise, any inconsistencies here may result in import failure or anomalous "ResultSet" generation.   This section provides for capturing information about multi cell or feature type experiments, aswell as the relationship between individual slides or in eFG parlance, "ExperimentalChips".  The submitter should cross reference this section with the meta files supplied by the vendor e.g. SampleKey.txt, DesignNotes.txt.
+<p>The following fields should be checked explicitly:</p>
+
+<table class="ss">
+  <thead><tr><th>tab2mage field</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>BioSource</td><td>CellType or specific source sample name if known.</td></tr>
+	<tr class="bg2"><td>Sample</td><td>Biological replicate name.</td></tr>
+	<tr><td>Extract</td><td>Technical replicate name.</td></tr>
+	<tr class="bg2"><td>LabeledExtract		</td><td>		Control/Experimental channel sample.</td></tr>
+	<tr><td>Immunoprecipitate	</td><td>			Description of IP, blank for control channel.</td></tr>
+	<tr class="bg2"><td>Hybridization		</td><td>		Description of Hybridisation.</td></tr>
+	<tr><td>BioSourceMaterial	</td><td>			e.g. cell, tissue MGED?</td></tr>
+	<tr class="bg2"><td>Dye				</td><td>		e.g. Cy3/5</td></tr>
+	<tr><td>BioMaterialCharacteristics[StrainOrLine]</td><td></td></tr>
+	<tr class="bg2"><td>BioMaterialCharacteristics[CellType]</td><td></td></tr>
+	<tr><td>FactorValue[StrainOrLine]</td><td></td></tr>
+	<tr class="bg2"><td>FactorValue[Immunoprecipitate]	</td><td>	e.g. anti-H3ac antibody</td></tr>
+</tbody>
+</table>
+<p>
+Some standard naming formats have been put in place to aid validation. Primarily these are the replicate names which have been given the BRN and TRN denominations for biological replicates and techniocal replicates respectively e.g. </p>
+<p>EXPERIMENT_BR1_TR1<br />
+EXPERIMENT_BR1_TR2<br />
+EXPERIMENT_BR2_TR1</p>
+<p>
+Here we see two biological replicate for "EXPERIMENT", the first having two technical replicates and the second having just one.  The other naming convention adopted is that of the "FactorValue[Immunoprecipitate]" field.  This must follow the format of the example above i.e. anti-"FeatureType Name" antibody  </p>
+<p>
+This is parsed during validation and used to store chip/slide level information.  Replicates with mismatching feature type names in this field will fail validation.</p>
+<p><strong>Note:</strong>  The autogenerated tab2mage file is simply a template, you may add further valid fields to any section of the file, or supply your own tab2mage file.  However, the validation checks will still be necessary for correct import, therefore it is advised to follow the standard naming rules given above.</p>
+</li>
+</ol>
+
+</body>
+</html>
+

@@ -1,0 +1,368 @@
+<html>
+<head>
+<title>Variation API Tutorial</title>
+</head>
+
+<body>
+
+<h1>Variation API Tutorial</h1>
+
+
+<h2>Introduction</h2>
+
+<p>
+This tutorial is an introduction to the
+<a href="./index.html">Ensembl Variation API</a>.
+Knowledge of the 
+<a href="/info/docs/api/core/index.html">Ensembl Core API</a> and of the concepts and conventions in the
+<a href="/info/docs/api/core/core_tutorial.html">Ensembl Core API tutorial</a> is assumed.
+
+Documentation about the Variation database schema is available at
+<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/schema/?root=ensembl">
+http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/schema/?root=ensembl</a> 
+, and while not necessary for this tutorial, an understanding of the database tables may help as many of the adaptor modules are table-specific.
+</p>
+
+<h2>Code Conventions (and unconventions)</h2>
+
+<p>
+Refer to the Ensembl core tutorial for a good description of the coding conventions normally used in Ensembl. Please note that there may be exceptions to these rules in variation.
+</p>
+
+
+<h2>Connecting an Ensembl variation database</h2>
+
+<p>
+Connecting to an Ensembl variation database is made simple by using the Bio::EnsEMBL::Registry module:
+</p>
+
+<pre class="code">
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+</pre>
+
+<p> The use of the registry ensures you will load the correct versions of the
+Ensembl databases for the software release it can find on a database instance.
+Using the registry object, you can then create any of number of database
+adaptors. Each of these adaptors is responsible for generating an object of one
+type. The Ensembl variation API uses a number of object types that relate to the
+data stored in the database. For example, in order to generate variation
+objects, you should first create a variation adaptor: </p>
+
+<pre class="code">
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $variation_adaptor = $registry-&gt;get_adaptor(
+	'human',	# species
+	'variation',	# database
+	'variation'	# object type
+);
+
+my $variation = $variation_adaptor-&gt;fetch_by_name('rs1333049');
+</pre>
+
+<p>
+	The get_adaptor method will automatically create a connection to the
+	relevant database; in the example above, a connection will be made to the
+	variation database for human. The three parameters passed specify the
+	species, database and object type you require. Below is a non exhaustive
+	list of Ensembl variation adaptors that are most often used
+</p>
+
+<ul>
+<li>IndividualAdaptor to fetch Bio::EnsEMBL::Variation::Individual objects</li>
+<li>LDFeatureContainerAdaptor to fetch Bio::EnsEMBL::Variation::LDFeatureContainer objects</li>
+<li>PopulationAdaptor to fetch Bio::EnsEMBL::Variation::Population objects</li>
+<li>ReadCoverageAdaptor to fetch Bio::EnsEMBL::Variation::ReadCoverage objects</li>
+<li>TranscriptVariationAdaptor to fetch Bio::EnsEMBL::Variation::TranscriptVariation objects</li>
+<li>VariationAdaptor to fetch Bio::EnsEMBL::Variation::Variation objects</li>
+<li>VariationFeatureAdaptor to fetch Bio::EnsEMBL::Variation::VariationFeature objects</li>
+</ul>
+
+<p>
+Only some of these adaptors will be used for illustration as part of this tutorial through commented perl scripts code.
+</p>
+
+
+<h2>Variations in the genome</h2>
+
+<p>
+One of the most important uses for the variation database is to be able to get all variations in a certain region in the genome.
+Below it is a simple commented perl script to illustrate how to get all variations in chromosome 25 in zebrafish.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $slice_adaptor = $registry-&gt;get_adaptor('danio_rerio', 'core', 'slice'); #get the database adaptor for Slice objects
+my $slice = $slice_adaptor-&gt;fetch_by_region('chromosome',25); #get chromosome 25 in zebrafish
+
+my $vf_adaptor = $registry-&gt;get_adaptor('danio_rerio', 'variation', 'variationfeature'); #get adaptor to VariationFeature object
+my $vfs = $vf_adaptor-&gt;fetch_all_by_Slice($slice); #return ALL variations defined in $slice
+
+foreach my $vf (@{$vfs}){
+  print "Variation: ", $vf-&gt;variation_name, " with alleles ", $vf-&gt;allele_string, 
+        " in chromosome ", $slice-&gt;seq_region_name, " and position ", $vf-&gt;start,"-",$vf-&gt;end,"\n";
+}
+</pre>
+
+
+<h2>Consequence type of variations</h2>
+
+<p>
+Another common use of the variation database is to retrieve the effects that variations have on a transcript. In the example below,
+it is explained how to get all variations in a particular chicken transcript and see what is the effect of that variation in
+the transcript.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $stable_id = 'ENSGALT00000007843'; #this is the stable_id of a chicken transcript
+my $transcript_adaptor = $registry-&gt;get_adaptor('gallus_gallus', 'core', 'transcript'); #get the adaptor to get the Transcript from the database
+my $transcript = $transcript_adaptor-&gt;fetch_by_stable_id($stable_id); #get the Transcript object
+
+my $trv_adaptor = $registry-&gt;get_adaptor('gallus_gallus', 'variation', 'transcriptvariation'); #get the adaptor to get TranscriptVariation objects
+my $trvs = $trv_adaptor-&gt;fetch_all_by_Transcripts([$transcript]); #get ALL effects of Variations in the Transcript
+
+foreach my $tv (@{$trvs}){
+  print "SNP :",$tv-&gt;variation_feature-&gt;variation_name, " has a consequence/s ", 
+    join(",",@{$tv-&gt;consequence_type}), " in transcript ", $stable_id, "\n";
+  #print the name of the variation and the effect (consequence_type) of the variation in the Transcript
+}
+</pre>
+
+
+<p>
+It is also possible to calculate consequence types for variations not currently in the database. In the example below, we create a VariationFeature object from scratch, given a slice and VariationFeatureAdaptor object, and use this to calculate the consequence of our new SNP.
+</p>
+
+<pre class="code">
+use strict;
+use Bio::EnsEMBL::Registry;
+
+# get registry
+my $reg = 'Bio::EnsEMBL::Registry';
+$reg->load_registry_from_db(-host => 'ensembldb.ensembl.org',-user => 'anonymous');
+
+my $vfa = $reg->get_adaptor('human', 'variation', 'variationfeature');
+my $sa = $reg->get_adaptor('human', 'core', 'slice');
+
+# get a slice for the new feature to be attached to
+my $slice = $sa->fetch_by_region('chromosome', 13);
+
+# create a new VariationFeature object
+my $new_vf = Bio::EnsEMBL::Variation::VariationFeature->new(
+  -start => 31798639,
+  -end => 31798639,
+  -slice => $slice,           # the variation must be attached to a slice
+  -allele_string => 'C/T',    # the first allele should be the reference allele
+  -strand => 1,
+  -map_weight => 1,
+  -adaptor => $vfa,           # we must attach a variation feature adaptor
+  -variation_name => 'newSNP',
+);
+
+# get the consequence types
+my $cons = $new_vf->get_all_TranscriptVariations();
+
+foreach my $con(@{$new_vf->get_all_TranscriptVariations}) {
+  foreach my $string(@{$con->consequence_type}) {
+    print
+      "Variation ", $new_vf->variation_name,
+      " at position ", $new_vf->seq_region_start,
+      " on chromosome ", $new_vf->seq_region_name,
+      " has consequence ", $string,
+      " in transcript ", $con->transcript->stable_id, "\n";
+  }
+}
+</pre>
+
+
+<h2>Variations, Flanking sequences and Genes</h2>
+
+<p>
+Below is a complete example on how to use the variation API to retrieve different data from the database. In this particular example, 
+we want to get, for a list of variation names, information about alleles, flanking sequences, locations, effects of variations
+in transcripts, position in the transcript (in case it has a coding effect) and genes containing the transcripts.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $va_adaptor = $registry-&gt;get_adaptor('human', 'variation', 'variation'); #get the different adaptors for the different objects needed
+my $vf_adaptor = $registry-&gt;get_adaptor('human', 'variation', 'variationfeature');
+my $gene_adaptor = $registry-&gt;get_adaptor('human', 'core', 'gene');
+
+my @rsIds = qw(rs1367827 rs1367830);
+foreach my $id (@rsIds){
+# get Variation object
+  my $var = $va_adaptor-&gt;fetch_by_name($id); #get the Variation from the database using the name
+  &amp;get_VariationFeatures($var);
+}
+
+sub get_VariationFeatures{
+  my $var = shift;
+  # get all VariationFeature objects: might be more than 1 !!!
+  foreach my $vf (@{$vf_adaptor-&gt;fetch_all_by_Variation($var)}){
+      print $vf-&gt;variation_name(),","; # print rsID
+      print $vf-&gt;allele_string(),","; # print alleles
+      print join(",",@{$vf-&gt;get_consequence_type()}),","; # print consequenceType
+      print substr($var-&gt;five_prime_flanking_seq,-10) , "[",$vf-&gt;allele_string,"]"; #print the allele string
+      print substr($var-&gt;three_prime_flanking_seq,0,10), ","; # print RefSeq
+      print $vf-&gt;seq_region_name, ":", $vf-&gt;start,"-",$vf-&gt;end; # print position in Ref in format Chr:start-end
+      &amp;get_TranscriptVariations($vf); # get Transcript information
+  }
+}
+
+sub get_TranscriptVariations{
+  my $vf = shift; 
+  
+  # get all TranscriptVariation objects: might be more than 1 !!!
+  my $transcript_variations = $vf-&gt;get_all_TranscriptVariations; #get ALL the effects of the variation in 
+                                                                    # different Transcripts
+  if (defined $transcript_variations){
+    foreach my $tv (@{$transcript_variations}){
+      print ",", $tv-&gt;pep_allele_string if (defined $tv-&gt;pep_allele_string);
+                                              # the AA change, but only if it is in a coding region
+      my $gene = $gene_adaptor-&gt;fetch_by_transcript_id($tv-&gt;transcript-&gt;dbID);
+      print ",",$gene-&gt;stable_id if (defined $gene-&gt;external_name); # and the external gene name
+    }
+  }
+  print "\n";
+}
+</pre>
+
+
+
+<h2>LD calculation</h2>
+
+<p>
+In order to be able to use the LD calculation, you need to compile the C source code and install a module, called IPC::Run. There is more information
+on how to do this in <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation/C_code/README.txt?root=ensembl&view=markup" rel="external"> Use LD calculation </a>
+In the example below, it calculates the LD in a region in human chromosome 6 for a HAPMAP population, but only prints when there is a high LD
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+my $chr = 6;  #defining the region in chromosome 6
+my $start = 25_834_000;
+my $end = 25_854_000;
+my $population_name = 'CSHL-HAPMAP:HapMap-CEU'; #we only want LD in this population
+
+my $slice_adaptor = $registry-&gt;get_adaptor('human', 'core', 'slice'); #get adaptor for Slice object
+my $slice = $slice_adaptor-&gt;fetch_by_region('chromosome',$chr,$start,$end); #get slice of the region
+
+
+my $population_adaptor = $registry-&gt;get_adaptor('human', 'variation', 'population'); #get adaptor for Population object
+my $population = $population_adaptor-&gt;fetch_by_name($population_name); #get population object from database
+
+my $ldFeatureContainerAdaptor = $registry-&gt;get_adaptor('human', 'variation', 'ldfeaturecontainer'); #get adaptor for LDFeatureContainer object
+my $ldFeatureContainer = $ldFeatureContainerAdaptor-&gt;fetch_by_Slice($slice,$population); #retrieve all LD values in the region
+
+foreach my $r_square (@{$ldFeatureContainer-&gt;get_all_r_square_values}){
+  if ($r_square-&gt;{r2} &gt; 0.8){ #only print high LD, where high is defined as r2 &gt; 0.8
+    print "High LD between variations ", $r_square-&gt;{variation1}-&gt;variation_name,"-", $r_square-&gt;{variation2}-&gt;variation_name, "\n";
+  }
+}
+</pre>
+
+<h2>Specific strain information</h2>
+
+<p>
+With the apparition of the new technologies, one of the new functionalities that the variation API has is the possibility to
+work with your specific strain as if it was the reference one, and compare it against others. In the example, we create a StrainSlice
+object for a region in Craig Venter's sequence and compare it against the reference sequence.
+</p>
+
+<pre class="code">
+use strict;
+use warnings;
+
+use Bio::EnsEMBL::Registry;
+
+my $reg = 'Bio::EnsEMBL::Registry';
+my $host= 'ensembldb.ensembl.org';
+my $user= 'anonymous';
+
+$reg-&gt;load_registry_from_db(
+	-host =&gt; $host,
+    -user =&gt; $user
+);
+
+# get exon adaptor from core
+my $sa = $reg-&gt;get_adaptor("human", "core", "slice");
+
+my $slice = $sa-&gt;fetch_by_region('chromosome', 8, 9213000, 9216000);
+
+# get strainSlice from the slice
+my $venter = $slice-&gt;get_by_strain("Venter");
+
+my @differences = @{$venter-&gt;get_all_AlleleFeatures_Slice()};
+
+foreach my $diff (@differences){
+  print "Locus ", $diff-&gt;seq_region_start, "-", $diff-&gt;seq_region_end, ", Venter's alleles: ",$diff-&gt;allele_string, "\n";
+}
+</pre>
+
+<h2>Further help</h2>
+
+<p>
+For additional information or help mail the <a href="mailto:ensemb-dev&#64;ebi.ac.uk">ensembl-dev</a> mailing list.
+You will need to subscribe to this mailing list to use it.
+More information on subscribing to any Ensembl mailing list is available from the 
+<a href="http://www.ensembl.org/info/about/contact/">Ensembl Contacts</a> page.
+</p>
+
+</body>
+</html>

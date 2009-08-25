@@ -1,0 +1,51 @@
+<html>
+<head>
+<title>Customizing and Extending Ensembl</title>
+</head>
+
+<body>
+
+<h1>Customizing and Extending Ensembl</h1>
+
+<p>
+The Ensembl webcode is designed to extensible, so that other projects
+can customize their own installation without their changes being
+overwritten when they update to a new release.
+</p>
+
+<p>The Ensembl system of plugins allow a range of customizations:</p>
+<ul>
+<li>The <code>public-plugins/mirror</code> plugin enables you to apply your own server
+settings (domain name, admin email address, database names and passwords)
+to a standard install of Ensembl</li>
+<li>You can further use this plugin to operate a cut-down version of Ensembl
+with fewer species</li>
+<li>By creating your own plugin, you can completely change the available
+species, alter the colour scheme or page template, or add your own views 
+and static content.</li>
+</ul>
+
+<p>Some tutorials on customizing your site are given below - if you have any 
+further questions, please do contact us via the development 
+<a href="/info/about/contact/mailing.html">mailing list</a>.</p>
+
+<p><a href="plugins.html">More about plugins &rarr;</a></p>
+
+<div class="notice"><strong>Important note</strong>: Regardless of any changes you may
+make to your Ensembl website, you <em>must</em> check out all the 
+api code, as it is not pluggable. The web code will not work if you only have some of 
+the API sections installed..</div>
+
+
+<h2>Tutorials</h2>
+
+<ul>
+<li><a href="makeovers.html">Changing the appearance of your Ensembl site</a></li>
+<li><a href="static.html">Adding static content</a> (documentation, etc)</li>
+<li><a href="species.html">Adding or removing species</a></li>
+<li><a href="specieslist.html">Customising the species list on the home page</a></li>
+<!--<li><a href="advanced/index.html">Advanced customization</a></li>-->
+</ul>
+
+</body>
+</html>

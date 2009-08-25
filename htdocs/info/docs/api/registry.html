@@ -1,0 +1,199 @@
+<html>
+<head>
+<title>API Registry</title>
+</head>
+
+<body>
+
+<h1>EnsEMBL Registry</h1>
+
+
+<h2>Introduction</h2>
+
+<p>
+The Registry system allows to tell your programs where to find the EnsEMBL databases and how to connect to them.
+</p>
+
+<h2>Use</h2>
+
+<p>
+The following call will load all the "latest" databases from the public EnsEMBL MySQL server ensembldb.ensembl.org:
+</p>
+
+<pre class="code">
+Bio::EnsEMBL::Registry-&gt;load_registry_from_db(
+  -host    =&gt; 'ensembldb.ensembl.org',
+  -user    =&gt; 'anonymous',
+  -verbose =&gt; '1'
+);
+</pre>
+
+<p>
+Port and Password are the other allowed parameters to this subroutine.
+The latest database is the one with the highest release for each species.
+</p>
+
+<p>
+Alternatively, a custom registry configuration file could be typically loaded at the beginning of the script using the command:
+</p>
+
+<pre class="code">
+Bio::EnsEMBL::Registry-&gt;load_all();
+</pre>
+
+<p>
+This method loads the Registry from the configuration file passed as an argument.
+If no argument is supplied, it tries to use the file defined in the environment variable ENSEMBL_REGISTRY.
+It uses the file .ensembl_init if all the previous fail.
+</p>
+
+
+<h2>Registry Configuration File</h2>
+
+<p>
+The Registry configuration file for the Perl API is a Perl file which defines the DBAdaptors you will need in your scripts.
+You should start with a:
+</p>
+
+<pre class="code">
+use strict;
+</pre>
+
+<p>
+clause. You will have to import some modules:
+</p>
+
+<pre class="code">
+use Bio::EnsEMBL::Utils::ConfigRegistry;
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+</pre>
+
+<p>
+The first one will allow you to define some aliases for the databases.
+The second module is needed if you want to configure EnsEMBL core databases and the third one is needed for the EnsEMBL Compara databases.
+You may need other DBAdaptors for connecting to an EnsEMBL Variation database for instance.</p>
+<p>Next, you have to declare your DBAdaptors.
+For each database you will need to create a new object: Bio::EnsEMBL::DBSQL::DBAdaptor objects for the core database, Bio::EnsEMBL::Compara::DBSQL::DBAdaptor objects for compara databases and so on.
+You will have to define the database host, the port (3306 is the default value), the name of the database, the type of database (core, compara, variation, vega...) and the species to which this database refers.
+You may also add some aliases of the name using the Bio::EnsEMBL::Utils::ConfigRegistry module.
+Here is an example for the public human core database (release 30):
+</p>
+
+<pre class="code">
+new Bio::EnsEMBL::DBSQL::DBAdaptor(
+  -host    =&gt; 'ensembldb.ensembl.org',
+  -user    =&gt; 'anonymous',
+  -port    =&gt; '3306',
+  -species =&gt; 'Homo sapiens',
+  -group   =&gt; 'core',
+  -dbname  =&gt; 'homo_sapiens_core_30_35c'
+);
+
+my @aliases = ( 'H_Sapiens', 'human' );
+
+Bio::EnsEMBL::Utils::ConfigRegistry-&gt;add_alias(
+  -species =&gt; 'Homo sapiens',
+  -alias   =&gt; \@aliases
+);
+</pre>
+
+<p>
+From release to release, you will have to change the dbname parameter.
+In order to find out the exact name of the new database you can use the
+"SHOW DATABASES" command of MySQL:
+</p>
+
+<pre class="code">
+shell&gt; mysql -u anonymous -h ensembldb.ensembl.org -P 3306
+mysql&gt; SHOW DATABASES LIKE "homo_sapiens_core_%";
+</pre>
+
+<p>
+The species name can be whatever you want and you may add as many aliases as you want,
+BUT:
+</p>
+
+<ol>
+
+<li>
+You should not have two databases with the same name or alias.
+</li>
+
+<li>
+If you intend to use the compara API, you need to use the standard binomial name as the species name and any aliases, as the API relies on this in order to connect to the correct core database.
+</li>
+
+</ol>
+
+<p>
+For connecting to the EnsEMBL Compara database, you will have to create a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor. Here is an example:
+</p>
+
+<pre class="code">
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+  -host    =&gt; 'ensembldb.ensembl.org',
+  -user    =&gt; 'anonymous',
+  -port    =&gt; 3306,
+  -species =&gt; 'Compara30',
+  -dbname  =&gt; 'ensembl_compara_30'
+);
+
+@aliases = ( 'ensembl_compara_30', 'compara30', 'compara' );
+
+Bio::EnsEMBL::Utils::ConfigRegistry-&gt;add_alias(
+  -species =&gt; 'Compara30',
+  -alias   =&gt; \@aliases
+);
+</pre>
+
+<p>
+Finally, you have to end with a 1 for the import to be successful:
+</p>
+
+<pre class="code">
+1;
+</pre>
+
+
+<h2>Save the File</h2>
+
+<p>
+If you want this file to be your default configuration file, you probably want to save it as .ensembl_init in your home directory.
+You can also save it elsewhere and point the ENSEMBL_REGISTRY environment variable to that location.
+Here are a couple of examples of how to configure your environment depending on your shell:
+</p>
+
+<ul>
+
+<li>
+Under bash:
+
+<pre class="code">
+ENSEMBL_REGISTRY="/usr/local/share/ensembl_registry.conf"
+export ENSEMBL_REGISTRY
+</pre>
+</li>
+
+<li>
+Under csh or tcsh:
+
+<pre class="code">
+setenv ENSEMBL_REGISTRY "/usr/local/share/ensembl_registry.conf"
+</pre>
+</li>
+
+</ul>
+
+
+<h2 id="support">EnsEMBL Software Support</h2>
+
+<p>
+EnsEMBL is an open project and we would like to encourage correspondence and discussions on any subject on any aspect of EnsEMBL.
+Please see the
+<a href="http://www.ensembl.org/info/about/contact/">EnsEMBL Contacts</a> page for suitable options for getting in touch with us.
+</p>
+
+
+</body>
+</html>

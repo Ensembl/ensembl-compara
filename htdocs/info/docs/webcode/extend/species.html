@@ -1,0 +1,112 @@
+<html>
+<head>
+<title>Changing the species in Ensembl</title>
+</head>
+
+<body>
+
+<h1>Changing the species in Ensembl</h1>
+
+<h2>Removing species</h2>
+
+<p>It is obviously simpler to omit species from your Ensembl mirror 
+than to add new ones, so we'll look at this first. Simply add the
+required <kbd>delete</kbd> lines to the <kbd>update_conf</kbd> method in
+<kbd>/public-plugins/mirror/conf/SiteDefs.pm</kbd>:</p>
+
+<pre class="code">
+delete($SiteDefs::__species_aliases{'Mus_musculus'});
+delete($SiteDefs::__species_aliases{'Rattus_norvegicus'});
+</pre>
+
+<p><strong>Important note</strong>: if you are deleting either Human
+or Mouse, you need to specify a new primary or secondary species
+(these are used as defaults when generating links to examples). E.g.:</p>
+
+<pre class="code">
+$SiteDefs::ENSEMBL_SECONDARY_SPECIES  = 'Canis_familiaris'; 
+</pre>
+
+<h2>Adding species</h2>
+
+<p>To add a species, you obviously need a complete Ensembl database
+in the same schema as the rest of your site, which is outside the 
+scope of this tutorial. However assuming you have the data already,
+the following changes will add it to the website (substituting the
+details of your own species for the ones in the examples, obviously!).</p>
+
+<h3>Configuration files</h3>
+
+<p>Firstly, add it to the species aliases in the <kbd>update_conf</kbd> 
+method in <kbd>/public-plugins/mirror/conf/SiteDefs.pm</kbd>:</p>
+
+<pre class="code">
+$SiteDefs::__species_aliases{'Canis_latrans'}           = [qw(cl coyote)];
+$SiteDefs::__species_aliases{'Geococcyx_californianus'} = [qw(gc roadrunner)];
+</pre>
+
+<p>Note that all aliases should be unique, so check in 
+<kbd>/public-plugins/ensembl/conf/SiteDefs.pm</kbd> to see which 
+are already in use. These aliases allow quick access to pages, so that users
+can type, e.g. www.ensembl.org/worm/Transcript?t=ZK792.7 instead of
+www.ensembl.org/Caenorhabditis_elegans/Transcript?t=ZK792.7</p>
+
+<p>You will also need a .ini file for the new species. Copy one of the 
+existing files from <kbd>/public-plugins/ensembl/conf/ini-files/</kbd>
+to <kbd>/public-plugins/mirror/conf/ini-files/</kbd> and edit it to
+reflect the relevant settings. Add sample data points to the species ini file 
+to get links into the data - see the [SAMPLE_DATA] section at the bottom of any 
+ini file for examples of the correct format</p>
+
+<p>If your species has chromosomes, make sure you have the correct names
+in the array ENSEMBL_CHROMOSOMES, as this is used to draw karyotypes.</p>
+
+<p>If your new species lies in a taxonomic group outside the standard Ensembl
+eukaryote tree, or if you simply wish to alter the groupings in the dropdown
+species list on the home page, see the instructions on 
+<a href="specieslist.html">customising the species list on the home page</a>.</p>
+
+<h3>Website database</h3>
+
+<p>Whilst the genomic databases provide the bulk of the data about species
+in Ensembl, news and some static content is provided from a separate small
+database, <kbd>ensembl_website</kbd>.
+
+<p>Using a MySQL client program, update the ensembl_website database as follows:</p>
+
+<pre class="code">
+insert into species values (1001, 'cl', 'Canis_latrans', 'Coyote');
+</pre>
+
+<p>N.B. We suggest using a high primary key value so as to avoid conflict with 
+future releases of Ensembl.</p>
+
+<p>A second insert is needed to link your new species to the current release and
+make the assembly details available to the species home page:</p>
+
+<pre class="code">
+insert into release_species set release_species_id = null, release_id = 56, 
+species_id = 1001, assembly_code = 'CanLat1.0', assembly_name = 'CanLat 1.0';
+</pre>
+
+<p>Note that 'assembly_code' is the exact value used in your database to identify the
+assembly, wherease 'assembly_name' can be a more human-readable version (if required).</p>
+
+
+<h3>Static content</h3>
+
+<p>Species home pages are now dynamically generated, so only a minimum of maintenance
+is required. Much of the content is now generated from the databases and ini files.</p>
+
+<p>You can optionally display a piece of static HTML with information about the species -
+create a directory <kbd>public-plugins/mirror/htdocs/ssi/species</kbd> and in it a file
+about_Canis_latrans.html. This file does not need &lt;html&gt; or  &lt;body&gt; tags, just the
+content (including images such as photos or logos) you want to display.</p>
+
+<img src="/img/info/thumb_Canis_latrans.png" style="float:left;width:40px;height:40px;margin-right:10px" />
+<p>Finally, you need some kind of species image for the favourites list on the
+home page. This should be a 40x40 pixel PNG file named thumb_Canis_latrans.png and
+placed in <kbd>/public-plugins/mirror/htdocs/img/species/</kbd>.</p>
+
+</body>
+</html>

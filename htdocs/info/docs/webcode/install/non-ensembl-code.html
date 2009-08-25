@@ -1,0 +1,450 @@
+<html>
+  <head>
+    <title>Installing non-Ensembl code - Perl/Apache/MysQL/SQLite/Dotter/CVS</title>
+  </head>
+<body> 
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+<h1>Non-Ensembl Applications Build/Install</h1>
+
+<p>Ensembl is built on the following applications:</p>
+<ul>
+  <li><a href="#cvs">CVS</a> - versioning system to allow you to download the Ensembl code</li>
+  <li><a href="#perl">Perl</a> - Open source scripting language</li>
+  <li><a href="#apache">Apache and mod_perl</a> - Open source web server</li>
+  <li><a href="#mysql">MySQL</a> - Open source database server</li>
+  <li><a href="#sqlite">SQLite</a> - alternative open source database server for session information (if not installing MySQL)</li>
+  <li><a href="#dotter">Dotter</a> - Graphical alignment package</li>
+</ul> 
+<p>These applications are not version-specific for Ensembl; that is, if you upgrade your Ensembl installation
+to a newer version when one becomes available, you probably won't need to install new versions of
+these applications.</p>
+
+<p>All of this software, like all of Ensembl, is Open Source software and can be downloaded and used free
+of charge. You should, however, check the documentation for each application to see what license it
+has been released under, particularly if you are installing Ensembl in a commercial environment.</p>
+
+<p>The following instructions assume you have root access to the installation machine. If you do not, get
+your systems administrator to install this software for you.</p>
+
+<p>You may have some or all of this software installed already. If you have any problems getting the site
+running with pre-installed software (in particular Apache with mod_perl installed from RPMs), we
+recommend simply installing the latest version using the following instructions.</p>
+
+<h2 id="cvs">CVS</h2>
+<p>CVS is a software version control system that we use for storing the source code to Ensembl. You will
+need CVS installed if you want to download the Ensembl source code. It will also help you keep up to
+date with any bug fixes.  We also have a  
+<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/?root=ensembl">Web-based CVS</a> repository.
+</p>
+
+<h3>To install CVS:</h3>
+<ol>
+<li>Download the latest source from <a href="http://ftp.gnu.org/non-gnu/cvs/source/stable/1.11.23/" rel="external">http://ftp.gnu.org/non-gnu/cvs/source/stable/1.11.23/</a> (you may be
+able to download binaries from here instead if you prefer). At the time of writing this is version
+1.11.23 and the file to download is cvs-1.11.23.tar.gz
+</li>
+<li>Unpack the source in a working directory with:
+  <pre class="code">
+  gunzip &lt; cvs-1.11.23.tar.gz | tar xvf -
+  cd cvs-1.11.23
+  ./configure
+  make
+  make install</pre>
+</li>
+</ol>
+
+<h2 id="perl">Perl</h2>
+<p>You will probably already have Perl installed. You need Perl5, version 5.8.0 or higher to run the website.
+We run the site under Perl 5.8.7. To see if you have Perl installed, and/or to check it's version number,
+type:</p>
+<pre class="code">perl -v</pre>
+<p>
+  If you don't have Perl installed, or need to upgrade, go to <a rel="external" href="http://www.cpan.org/">http://www.cpan.org/</a> and
+  choose the 'source code' install. Follow the installation instructions on the web site.
+</p>
+
+<h2 id="sqlite">SQLite</h2>
+<ul>
+  <li>Install SQLite - can be downloaded from <a rel="external" href="http://www.sqlite.org/download.html">http://www.sqlite.org/download.html</a>.</li>
+  <li>Install the DBD::SQLite (can be found at <a rel="external" href="http://search.cpan.org/dist/DBD-SQLite/">http://search.cpan.org/dist/DBD-SQLite/</a>.</li>
+</ul>
+
+<h2 id="mysql">MySQL</h2>
+<p>MySQL is a very popular Open Source relational database system. The easiest way to install MySQL is
+to use the pre-compiled binaries from <a href="http://dev.mysql.com" rel="external">http://dev.mysql.com</a>. You can also get source from
+<a href="http://dev.mysql.com" rel="external">http://dev.mysql.com</a> if you wish to compile MySQL yourself.</p>
+<h3>To install MySQL:</h3>
+<ol>
+<li>Download the appropriate standard binaries from <a href="http://dev.mysql.com/downloads/mysql" rel="external">http://dev.mysql.com/downloads/mysql</a>. Get the
+current stable version - at the time of writing, this is 5.0.51.</li>
+<li>Create a directory for MySQL to be installed into. A subdirectory of this will hold the databases, so
+choose somewhere that has sufficient space free - at least 600 GB for the complete set. We will use
+/data/ as an example. Again, when following these instructions, replace /data/ with whatever path
+you choose.</li>
+<li>Move the binary tarball to /data/</li>
+<li>Unpack the tarball with:
+<pre class="code">$ gunzip &lt; mysql-WHATEVER.tar.gz | tar xvf -</pre>
+Follow the straightforward setup instructions in the INSTALL-BINARY file that comes with MySQL. It
+should be located in the "mysql-WHATEVER" directory you just unpacked.
+</li>
+</ol>
+
+<h2 id="apache">Apache &amp; mod_perl</h2>
+<p>Apache is the web server that the Ensembl site runs on. mod_perl is a module for Apache that enables
+it to compile perl scripts once rather than each time they are requested, and so makes everything run a
+lot faster.</p>
+
+<p><strong>Please follow these instructions precisely as often the default version of Apache or mod-perl does not work correctly for Ensembl.</strong></p>
+
+<h3>To Install Apache with mod_perl:</h3>
+<ol>
+<li>
+  Download the Apache2 source tarball from <a href="http://httpd.apache.org/dist/httpd/" rel="external">http://httpd.apache.org/dist/httpd/</a>. Get the current stable
+version - at the time of writing, this is 2.2.8, and the file to download is httpd-2.2.8.tar.gz.
+</li>
+<li>
+  Download the mod_perl source from <a href="http://www.cpan.org/modules/by-module/Apache2/" rel="external">http://www.cpan.org/modules/by-module/Apache2/</a> . Again, get
+the latest version, currently this is 2.0.3 and the file to download is mod_perl-2.0.3.tar.gz.
+</li>
+<li>
+  Unpack all the sources in a working directory with:
+  <pre class="code">
+tar zxf httpd-2.2.4.tar.gz
+tar zxf mod_perl-2.0.3.tar.gz | tar xvf -
+cd httpd-2.2.4
+./configure --enable-deflate --prefix=<var>Apache directory</var>
+cd ../mod_perl-2.0.3</pre>
+The httpd.conf files etc assume you install this in an apache2 subdirectory of your website's server root.
+</li>
+<li>
+  Build the perl makefile:
+  <pre class="code">perl Makefile.PL PREFIX=<var>Apache directory</var> MP_APXS=<var>Apache directory</var>/bin/apxs</pre>
+</li>
+<li>
+  Run the 'make' utility:
+  <pre class="code">make</pre>
+</li>
+<li>
+  ...and install
+  <pre class="code">make install</pre>
+</li>
+</ol>
+
+<h2>Perl modules</h2>
+<p>The Ensembl website needs quite a few Perl modules to be installed in order for it to run. These
+modules can all be downloaded from www.cpan.org, and are all installed in much the same way:
+Download the module tarball, unpack in a working directory, and install the module:</p>
+<pre class="code">
+gunzip < module.tar.gz | tar xvf -
+cd module
+perl Makefile.PL
+make
+make test
+make install
+</pre>
+<p>The modules that are required are listed below, along with their URLs. The file part of the URL is
+current at the time of writing - you should install whatever is the latest version of the module.</p>
+
+  <dl>
+    <dt>Bio::Das::Lite</dt>
+    <dd><p>Lightweight DAS fetcher</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Bio/Bio-Das-Lite-1.061.tar.gz">http://www.cpan.org/modules/by-module/Bio/Bio-Das-Lite-1.061.tar.gz</a></p></dd>
+  
+    <dt>Cache::Memcached</dt>
+    <dd><p>A distributed-memory object caching system, for performance enhancement</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Cache/Cache-Memcached-1.24.tar.gz">http://www.cpan.org/modules/by-module/Cache/Cache-Memcached-1.24.tar.gz</a></p></dd>
+  
+    <dt>CGI</dt>
+    <dd><p>Enables Perl scripts to easily parse cgi</p>
+    <p><a href="http://www.cpan.org/modules/by-module/CGI/CGI.pm-3.27.tar.gz">http://www.cpan.org/modules/by-module/CGI/CGI.pm-3.27.tar.gz</a><br />
+      NOTE: you need to install the latest version to make sure it is compatible with mod_perl2</p></dd>
+  
+    <dt>CGI::Ajax</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/CGI/CGI-Ajax-0.697.tar.gz">http://www.cpan.org/modules/by-module/CGI/CGI-Ajax-0.697.tar.gz</a></p></dd>
+  
+    <dt>CGI::Session</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/CGI/CGI-Session-4.40.tar.gz">http://www.cpan.org/modules/by-module/CGI/CGI-Session-4.40.tar.gz</a></p></dd>
+  
+    <dt>Class::Accessor</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Class/Class-Accessor-0.31.tar.gz">http://www.cpan.org/modules/by-module/Class/Class-Accessor-0.31.tar.gz</a></p></dd>
+  
+    <dt>Class::Data::Inheritable</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Class/Class-Data-Inheritable-0.06.tar.gz">http://www.cpan.org/modules/by-module/Class/Class-Data-Inheritable-0.06.tar.gz</a></p></dd>
+  
+    <dt>Class::DBI::Sweet</dt>
+    <dd><p>Database abstraction layer, used to access non-genomic databases such as ensembl_website</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Class/Class-DBI-Sweet-0.09.tar.gz">http://www.cpan.org/modules/by-module/Class/Class-DBI-Sweet-0.09.tar.gz</a></p></dd>
+  
+    <dt>Class::Std</dt>
+    <dd><p>Used by BioMart and new session code</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Class/Class-Std-v0.0.8.tar.gz">http://www.cpan.org/modules/by-module/Class/Class-Std-v0.0.8.tar.gz</a></p></dd>
+  
+    <dt>Class::Std::Utils</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Class/Class-Std-Utils-0.0.2.tar.gz">http://www.cpan.org/modules/by-module/Class/Class-Std-Utils-0.0.2.tar.gz</a></p></dd>
+  
+    <dt>Compress::Zlib</dt>
+    <dd><p>A compression module for DAS.</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Compress/Compress-Zlib-1.34.tar.gz">http://www.cpan.org/modules/by-module/Compress/Compress-Zlib-1.34.tar.gz</a></p></dd>
+  
+    <dt>Compress::Raw::Zlib</dt>
+    <dd><p>A compression module for Mart.</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Compress/Compress-Raw-Zlib-2.003.tar.gz">http://www.cpan.org/modules/by-module/Compress/Compress-Raw-Zlib-2.003.tar.gz</a></p></dd>
+  
+    <dt>Config::Inifiles</dt>
+    <dd><p>Used by the registry</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Config/Config-IniFiles-2.38.tar.gz">http://www.cpan.org/modules/by-module/Config/Config-IniFiles-2.38.tar.gz</a></p></dd>
+  
+    <dt>Data::UUID</dt>
+    <dd><p>Creates a unique ID</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz">http://www.cpan.org/modules/by-module/Data/Data-UUID-0.11.tar.gz</a></p></dd>
+  
+    <dt>DB_File</dt>
+    <dd><p>Used by Mart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/DB_File/DB_File-1.814.tar.gz">http://www.cpan.org/modules/by-module/DB_File/DB_File-1.814.tar.gz</a></p></dd>
+  
+    <dt>DBI</dt>
+    <dd><p>A common database interface for Perl</p>
+      <p><a href="http://www.cpan.org/modules/by-module/DBI/DBI-1.54.tar.gz">http://www.cpan.org/modules/by-module/DBI/DBI-1.54.tar.gz</a></p></dd>
+  
+    <dt>DBD::Mysql</dt>
+    <dd><p>The MySQL drivers for the DBI interface</p>
+      <p><a href="http://www.cpan.org/modules/by-module/DBD/DBD-mysql-4.001.tar.gz">http://www.cpan.org/modules/by-module/DBD/DBD-mysql-4.001.tar.gz</a></p></dd>
+  
+    <dt>Devel::StackTrace</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Devel/Devel-StackTrace-1.13.tar.gz">http://www.cpan.org/modules/by-module/Devel/Devel-StackTrace-1.13.tar.gz</a></p></dd>
+  
+    <dt>Digest::MD5</dt>
+    <dd><p>calculates a unique checksum for a file</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Digest/Digest-MD5-2.38.tar.gz">http://www.cpan.org/modules/by-module/Digest/Digest-MD5-2.38.tar.gz</a></p></dd>
+  
+    <dt>Exception::Class</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Exception/Exception-Class-1.23.tar.gz">http://www.cpan.org/modules/by-module/Exception/Exception-Class-1.23.tar.gz</a></p></dd>
+  
+    <dt>File::Temp</dt>
+    <dd><p>Used by MartView</p>
+      <p><a href="http://www.cpan.org/modules/by-module/File/File-Temp-0.21.tar.gz">http://www.cpan.org/modules/by-module/File/File-Temp-0.21.tar.gz</a></p></dd>
+  
+    <dt>GD</dt>
+    <dd><p>A Graphics library</p>
+      <p>Note: may require additional modules. Please read install docs.</p>
+      <p><a href="http://www.cpan.org/modules/by-module/GD/GD-2.35.tar.gz">http://www.cpan.org/modules/by-module/GD/GD-2.35.tar.gz</a></p></dd>
+  
+    <dt>Hash::Merge</dt>
+    <dd><p>Used to merge data from multiple configuration files</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Hash/Hash-Merge-0.10.tar.gz">http://www.cpan.org/modules/by-module/Hash/Hash-Merge-0.10.tar.gz</a></p></dd>
+  
+    <dt>HTML::Template</dt>
+    <dd><p>Used by BlastView</p>
+      <p><a href="http://www.cpan.org/modules/by-module/HTML/HTML-Template-2.7.tar.gz">http://www.cpan.org/modules/by-module/HTML/HTML-Template-2.7.tar.gz</a></p></dd>
+  
+    <dt>Image::Size</dt>
+    <dd><p>Used for getting size of images</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Image/Image-Size-2.992.tar.gz">http://www.cpan.org/modules/by-module/Image/Image-Size-2.992.tar.gz</a></p></dd>
+  
+    <dt>IO::String</dt>
+    <dd><p>Used for sequence handling</p>
+      <p><a href="http://www.cpan.org/modules/by-module/IO/IO-String-1.06.tar.gz">http://www.cpan.org/modules/by-module/IO/IO-String-1.06.tar.gz</a></p></dd>
+  
+    <dt>libxml</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/XML/libxml-perl-0.08.tar.gz">http://www.cpan.org/modules/by-module/XML/libxml-perl-0.08.tar.gz</a></p></dd>
+  
+    <dt>List::MoreUtils</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/List/List-MoreUtils-0.22.tar.gz">http://www.cpan.org/modules/by-module/List/List-MoreUtils-0.22.tar.gz</a></p></dd>
+  
+    <dt>Log::Log4perl</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Log/Log-Log4perl-1.07.tar.gz">http://www.cpan.org/modules/by-module/Log/Log-Log4perl-1.07.tar.gz</a></p></dd>
+  
+    <dt>LWP</dt>
+    <dd><p>used by DAS to communicate with DAS sources</p>
+      <p>Note: may require additional modules. Please read install docs.</p>
+      <p><a href="http://www.cpan.org/modules/by-module/LWP/libwww-perl-5.805.tar.gz">http://www.cpan.org/modules/by-module/LWP/libwww-perl-5.805.tar.gz</a></p></dd>
+  
+    <dt>LWP::ParallelUserAgent</dt>
+    <dd><p>Allows for parallel requests</p>
+      <p><a href="http://www.cpan.org/modules/by-module/LWP/ParallelUserAgent-2.57.tar.gz">http://www.cpan.org/modules/by-module/LWP/ParallelUserAgent-2.57.tar.gz</a></p></dd>
+  
+    <dt>Mail::Mailer</dt>
+    <dd><p>Used by web forms to send email</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Mail/MailTools-2.04.tar.gz">http://www.cpan.org/modules/by-module/Mail/MailTools-2.04.tar.gz</a></p></dd>
+  
+    <dt>Math::Bezier</dt>
+    <dd><p>Used by drawing code</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Math/Math-Bezier-0.01.tar.gz">http://www.cpan.org/modules/by-module/Math/Math-Bezier-0.01.tar.gz</a></p></dd>
+  
+    <dt>Number::Format</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Number/Number-Format-1.52.tar.gz">http://www.cpan.org/modules/by-module/Number/Number-Format-1.52.tar.gz</a></p></dd>
+  
+    <dt>OLE::Storage_Lite</dt>
+    <dd><p>Used for exporting Excel spreadsheets</p>
+      <p><a href="http://www.cpan.org/modules/by-module/OLE/OLE-Storage_Lite-0.11.tar.gz">http://www.cpan.org/modules/by-module/OLE/OLE-Storage_Lite-0.11.tar.gz</a></p></dd>
+  
+    <dt>Parse-RecDescent</dt>
+    <dd><p>used by Excel exporter</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Parse/Parse-RecDescent-1.94.tar.gz">http://www.cpan.org/modules/by-module/Parse/Parse-RecDescent-1.94.tar.gz</a></p></dd>
+  
+    <dt>PathTools</dt>
+    <dd><p>Used for architecture independent file path manipulation</p>
+      <p><a href="http://www.cpan.org/modules/by-module/File/PathTools-3.29.tar.gz">http://www.cpan.org/modules/by-module/File/PathTools-3.29.tar.gz</a></p></dd>
+  
+    <dt>PDF::API2</dt>
+    <dd><p>used by Image exporter for exporting as PDF</p>
+      <p><a href="http://www.cpan.org/modules/by-module/PDF/PDF-API2-0.72.003.tar.gz">http://www.cpan.org/modules/by-module/PDF/PDF-API2-0.72.003.tar.gz</a></p></dd>
+  
+    <dt>Readonly</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Readonly/Readonly-1.03.tar.gz">http://www.cpan.org/modules/by-module/Readonly/Readonly-1.03.tar.gz</a></p></dd>
+  
+    <dt>SOAP::Lite</dt>
+    <dd><p>used by DAS to communicate with DAS sources</p>
+      <p>Note: may require additional modules. Please read install docs.</p>
+      <p><a href="http://www.cpan.org/modules/by-module/SOAP/SOAP-Lite-0.60a.tar.gz">http://www.cpan.org/modules/by-module/SOAP/SOAP-Lite-0.60a.tar.gz</a></p>
+  
+    <dt>Spreadsheet::WriteExcel</dt>
+    <dd><p>used for exporting Excel spreadsheets</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Spreadsheet/Spreadsheet-WriteExcel-2.12.tar.gz">http://www.cpan.org/modules/by-module/Spreadsheet/Spreadsheet-WriteExcel-2.12.tar.gz</a></p></dd>
+  
+    <dt>Storable</dt>
+    <dd><p>used to store and restore data structures (part of standard Perl distribution)</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Storable/Storable-2.18.tar.gz   ">http://www.cpan.org/modules/by-module/Storable/Storable-2.18.tar.gz</a></p></dd>
+  
+    <dt>Sub::Uplevel</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Sub/Sub-Uplevel-0.14.tar.gz">http://www.cpan.org/modules/by-module/Sub/Sub-Uplevel-0.14.tar.gz</a></p></dd>
+  
+    <dt>Sys::Hostname::Long</dt>
+    <dd><p>Used by website startup process</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Sys/Sys-Hostname-Long-1.4.tar.gz">http://www.cpan.org/modules/by-module/Sys/Sys-Hostname-Long-1.4.tar.gz</a></p></dd>
+  
+    <dt>Template::Plugin::Number::Format</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Template/Template-Plugin-Number-Format-1.01.tar.gz">http://www.cpan.org/modules/by-module/Template/Template-Plugin-Number-Format-1.01.tar.gz</a></p></dd>
+  
+    <dt>Template::Toolkit</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Template/Template-Toolkit-2.15.tar.gz">http://www.cpan.org/modules/by-module/Template/Template-Toolkit-2.15.tar.gz</a></p></dd>
+  
+    <dt>Test::Exception</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Test/Test-Exception-0.27.tar.gz">http://www.cpan.org/modules/by-module/Test/Test-Exception-0.27.tar.gz</a></p></dd>
+  
+    <dt>Test::Simple</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/Test/Test-Simple-0.86.tar.gz">http://www.cpan.org/modules/by-module/Test/Test-Simple-0.86.tar.gz</a></p></dd>
+  
+    <dt>Time::HiRes</dt>
+    <dd><p>Used for code profiling</p>
+      <p><a href="http://www.cpan.org/modules/by-module/Time/Time-HiRes-1.9719.tar.gz">http://www.cpan.org/modules/by-module/Time/Time-HiRes-1.9719.tar.gz</a></p></dd>
+  
+    <dt>version</dt>
+    <dd><p>Required by Class::Std</p>
+    <p><a href="http://search.cpan.org/CPAN/authors/id/J/JP/JPEACOCK/version-0.76.tar.gz">http://search.cpan.org/CPAN/authors/id/J/JP/JPEACOCK/version-0.76.tar.gz</a></p></dd>
+  
+    <dt>XML::DOM</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/XML/XML-DOM-1.44.tar.gz">http://www.cpan.org/modules/by-module/XML/XML-DOM-1.44.tar.gz</a></p></dd>
+  
+    <dt>XML::Parser</dt>
+    <dd><p>used by DAS to parse DAS sources</p>
+    <p>Note: module is a wrapper around the expat library, which should be installed
+first:</p>
+<p>Download the expat source from http://sourceforge.net/projects/expat/. Get the
+latest version (currently expat-1.95.8.tar.gz). Run the following commands:</p>
+  <pre class="code">
+gunzip &lt; expat-1.95.8.tar.gz | tar xvf -
+cd expat-1.95.8
+./configure
+make
+make install
+</pre>
+    <p><a href="http://www.cpan.org/modules/by-module/XML/XML-Parser-2.34.tar.gz">http://www.cpan.org/modules/by-module/XML/XML-Parser-2.34.tar.gz</a></p></dd>
+  
+    <dt>XML::RegExp</dt>
+    <dd><p>Used by BioMart</p>
+    <p><a href="http://www.cpan.org/modules/by-module/XML/XML-RegExp-0.03.tar.gz">http://www.cpan.org/modules/by-module/XML/XML-RegExp-0.03.tar.gz</a></p></dd>
+  
+    <dt>XML::RSS</dt>
+    <dd><p>RSS parser, used to embed Ensembl blog entries on home page</p>
+    <p><a href="http://www.cpan.org/modules/by-module/XML/XML-RSS-1.33.tar.gz">http://www.cpan.org/modules/by-module/XML/XML-RSS-1.33.tar.gz</a></p></dd>
+  
+    <dt>XML::Simple</dt>
+    <dd><p>used by Mart to parse configuration</p>
+      <p><a href="http://www.cpan.org/modules/by-module/XML/XML-Simple-2.18.tar.gz">http://www.cpan.org/modules/by-module/XML/XML-Simple-2.18.tar.gz</a></p></dd>
+</dl>
+
+<!--
+<h2 id="dotter">Dotter</h2>
+<p>The Ensembl website contains a page called DotterView which displays a graphical dotplot comparison
+of two sequences, using the application Dotter. If you wish to use this page on a local installation you
+will need a local Dotter binary:</p>
+<p>Dotter is part of the AceDB package available at:</p>
+<blockquote><a href="http://www.acedb.org/Software/Downloads/supported.shtml" rel="external">http://www.acedb.org/Software/Downloads/supported.shtml</a></blockquote>
+<p>Pre-built binaries are available for alpha/Tru64 unix and intel/linux. All other flavours will have to be built
+from sources.</p>
+<p>The acedb code makes use of the GTK graphics and GNU readline packages. If you don't have these
+on your system you can either install them yourself or use the copies distributed with the acedb source.</p>
+<p>To install them go to</p>
+  <a rel="external" href="http://www.gtk.org">www.gtk.org</a>
+<p>for the GTK package and</p>
+  <a href="ftp://ftp.cwru.edu/pub/bash/readline-4.3.tar.gz">ftp://ftp.cwru.edu/pub/bash/readline-4.3.tar.gz</a>
+<p>for readline.</p>
+<p>Follow the GTK and GNU instructions for installing these packages.</p>
+
+<p>If you want to use the versions distributed with the acedb source then follow the instructions for making
+them in the next section.</p>
+<p>Next ungzip/untar the acedb package into an temporary directory:</p>
+<pre class="code">mkdir acedb
+mv ACEDB-source.4_9l.tar.gz ./acedb/
+cd ./acedb
+gzip -d &lt; ACEDB-source.4_9l.tar.gz | tar xvf -
+</pre>
+<p>Set an environment variable to tell the build process what platform you are building on - one of:</p>
+<kbd>ALPHA_4 ALPHA_4_GCC ALPHA_4_GCC_OPT ALPHA_4_LINUX ALPHA_4_OLDSTYLE ALPHA_4_OPT ALPHA_5 ALPHA_CHRONO_4<br />
+DARWIN_4<br />
+FreeBSD<br />
+FUJITSU_4<br />
+HP_4 HP_4_GCC HP_4_OPT<br />
+IBM_4_3 IBM_4<br />
+IRIX4_4<br />
+LINUX_4 LINUX_MAC_4<br />
+MACOSX_4_DEF<br />
+NEC_4 NEC_4_R10 NEC_4_R11<br />
+NEXT_4<br />
+POSIX_4 POSIX_4_GCC<br />
+SGI_4 SGI_4_GCC SGI_4_IRIX5 SGI_4_PURE SGI_5_GCC SGI_65_GCC_DEF
+SOLARIS_4 SOLARIS_4_OPT SOLARIS_4_RELEASE SUN_4_DEF
+WIN32_4</kbd>
+<p>For example (in csh):</p>
+<pre class="code">setenv ACEDB_MACHINE SOLARIS_4</pre>
+<p>Consult the AceDB documentation if you need more help.</p>
+
+<p>If you wish to use the GTK/readline packages distributed with acedb you should build them before
+building any acedb code:</p>
+<pre class="code">make gnulibs</pre>
+<p>To build the dotter binary issue the command:</p>
+<pre class="code">make dotter</pre>
+<p>(If you just run "make" you will build the whole of AceDB - which is unnecessary).</p>
+<p>The build will place the executable at:</p>
+<pre class="code">./bin.${ACEDB_MACHINE}/dotter</pre>
+<p>Check that the binary runs properly and then copy it to your Ensembl shared binaries directory.
+DotterView should now work.</p>
+-->
+
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+</body>
+</html>
+  

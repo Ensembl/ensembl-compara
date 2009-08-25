@@ -1,0 +1,130 @@
+<html>
+  <head>
+    <title>Installing Ensembl/BioMart code</title>
+  </head>
+<body> 
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+<h1>Installing the Ensembl, BioPerl, and BioMart modules</h1>
+
+<p>If you review the Site Structure part of this document, you will recall that the site is based around a
+single server-root directory. The Ensembl, BioPerl and BioMart modules are all installed into this
+directory. Choose a suitable location, and create your server-root directory. For the purposes of
+illustration, we will use /usr/local/ensembl. When following these instructions, replace /usr/local/ensembl 
+with your chosen server-root.</p>
+
+<ol>
+<li>Go to the server-root directory:
+<code>cd /usr/local/ensembl</code>
+</li>
+
+<li id="cvs_co"><strong>Install the Ensembl modules</strong>
+  <ol>
+  <li>Log into the Sanger CVS server (using a password of "CVSUSER"):
+  <pre class="code">
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl  login
+Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
+CVS password: CVSUSER 
+</pre>
+  </li>
+  <li>To check out the most recent stable version of the ensembl API and web code from CVS (i.e. to download the code from the Sanger CVS server onto your local machine) you need to use the latest branch of the code.  Please note the code on the CVS HEAD is under development and unstable.  Use the following command making sure you use the code that matches your databases:
+  <pre class="code">
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl co -r branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]] ensembl-api ensembl-website 
+</pre>
+  </li>
+  </ol>
+
+  <p>A listing of your server-root should now look something like:</p>
+  <table cellpadding="10">
+    <tr>
+      <td>
+      apache2/<br />
+      conf/<br />
+      ensembl/
+      </td>
+      <td>
+      ensembl-compara/<br />
+      ensembl-draw/<br />
+      ensembl-external/
+      </td>
+      <td>
+      ensembl-funcgen/<br />
+      ensembl-variation/<br />
+      htdocs/<br />
+      </td>
+      <td>
+      modules/<br />
+      perl/<br />
+      public-plugins/
+      </td>
+      <td>
+      utils/
+      </td>
+    </tr>
+  </table>
+
+  <p>N.B. You can also <a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/?root=ensembl" rel="external">view the Ensembl CVS repository</a> in your web browser.</p>
+</li>
+
+<li id="cvs_cobiomart"><strong>Install the BioMart modules (BioMart 0.6)</strong>
+  <p>If you haven't already done so, log into the Sanger CVS server as per the instructions above.</p>
+  <p>Check the BioMart code out of CVS (downloads the code from the Sanger CVS server onto your local
+machine):</p>
+  <pre class="code">
+$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/biomart co -r release-0_6 biomart-perl</pre>
+
+<p>More information on  <a href="biomart.html">tweaking and configuring BioMart to work within the Ensembl website</a> is available; for general instructions on installing biomart (including creating the cached configuration file and templates) see the <a href="http://www.biomart.org/install.html" rel="external">biomart website</a>.</p>
+</li>
+
+<li><strong>Install the BioPerl modules (BioPerl 1.2.3)</strong>
+
+<p class="notice">Important note: you must install <strong>version 1.2.3</strong>, not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API which have made it incompatible with Ensembl</p> 
+
+  <ol>
+  <li>Log into the BioPerl CVS server (using a password of: cvs):
+  <pre class="code">cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl login</pre>
+  </li>
+  <li>Check-out the BioPerl code:
+  <pre class="code">cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl \
+&nbsp; co -r bioperl-release-1-2-3 bioperl-live</pre>
+  </li>
+  </ol>
+  <p>A listing of your server-root should now look something like:</p>
+  <table cellpadding="10">
+    <tr>
+      <td>
+      apache2/<br />
+      bioperl-live/<br />
+      biomart-perl/
+      </td>
+      <td>
+      conf/<br />
+      ensembl/<br />
+      ensembl-compara/
+      </td>
+      <td>
+      ensembl-draw/<br />
+      ensembl-external/<br />
+      ensembl-variation/
+      </td>
+      <td>
+      htdocs/<br />
+      modules/<br />
+      perl/
+      </td>
+      <td>
+      public-plugins/<br />
+      utils/
+      </td>
+    </tr>
+  </table>
+</li>
+</ol>
+
+<p>You should now have all the Ensembl website code and data installed and ready to configure.</p>
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+</body>
+</html>
+  

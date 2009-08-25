@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <title>Troubleshooting your Ensembl installation</title>
+  </head>
+<body> 
+  
+<h1>Issues installing Ensembl Website</h1>
+
+<h2 id="whichfile">Which configuration files do I edit?</h2>
+<p>
+  Ensembl contains a number of ini-files with the same name - why?
+</p>
+<p>
+  Ensembl uses a system of "plugins" to make site configuration and extension
+  easier. These are listed in conf/Plugins - generally only the top one, which
+  configures your mirror, should be edited. Leave the others alone, as they
+   will only be overwritten next time you update the Ensembl webcode.
+</p>
+
+<p><a href="/info/docs/webcode/extend/">How plugins work</a>...</p>
+
+<h2 id="accounts">The main Ensembl website has user accounts - can we enable them on our mirror?</h2>
+<p>
+  To enable accounts set the following to your SiteDefs.pm:
+</p>
+<pre>
+  $SiteDefs::ENSEMBL_LOGINS                 = 1;
+</pre>
+
+<p>Also make sure that your mail server name and mail command are set correctly,
+otherwise your users will not receive their activation emails, group invitations, etc.</p>
+
+<p>Note that you will need a MySQL server to store user account information - SQLite is not 
+supported for user accounts.</p>
+
+<h2 id="sqlite">Configurations are not stored if I don't have a local MySQL server?</h2>
+<p>
+  If you to not need to install a local MySQL server (because you are pointing to the ensembldb.ensembl.org databases,
+  then you can use SQLite. Install SQLite as outlined in the non-Ensembl code page and then include the SQLite plugin in your conf/Plugins.pm file. <strong>NOTE:</strong> only session storage (not user/group) is supported in this case.
+</p>
+</body>
+</html>

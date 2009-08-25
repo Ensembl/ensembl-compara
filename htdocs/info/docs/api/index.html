@@ -1,0 +1,129 @@
+<html>
+<head>
+<meta name="order" content="3" />
+<title>API Documentation</title>
+</head>
+
+<body>
+
+<h1>Perl API Documentation</h1>
+
+
+<h2>Databases and Application Programme Interfaces (APIs)</h2>
+
+<p>Ensembl uses <a href="http://www.mysql.com/"
+rel="external">MySQL</a> relational databases to store its
+information. A comprehensive set of Application Programme Interfaces
+(APIs) serve as a middle-layer between underlying database schemes and
+more specific application programmes. The APIs aim to encapsulate the
+database layout by providing efficient high-level access to data
+tables and isolate applications from data layout changes.</p>
+
+<p>Ensembl's API is written in Perl
+- <a href="./api_installation.html">installation instructions</a>
+and <a href="http://www.ensembl.org/info/docs/Pdoc/">full
+documentation</a> of all modules are available online.</p>
+
+<p>The main Ensembl databases are introduced below. Data releases for
+these databases can be obtained from the
+Ensembl <a href="ftp://ftp.ensembl.org/pub/" rel="external">FTP
+site</a>.</p>
+
+<dl>
+<dt>Core databases and APIs</dt>
+<dd>
+<p>The species-specific Core databases store genome sequences and most
+of the annotation information. This includes the gene, transcript and
+protein models annotated by the Ensembl automated genome analysis and
+<a href="/info/docs/genebuild/genome_annotation.html">annotation</a>
+pipeline.</p>
+
+<p>Core databases also store assembly information, cDNA and protein
+alignments, external references, markers and repeat regions data
+sets.</p>
+
+<p><a href="./core/index.html">More about the Core databases and
+APIs...</a></p>
+</dd>
+
+<dt>OtherFeatures databases and APIs</dt>
+<dd>
+<p>Species-specific OtherFeatures databases hold an independent EST
+gene set provided for all well-characterised species with a suitable
+amount of biological evidence.</p>
+
+<p>The layout of OtherFeatures Databases is identical to the Core
+Database schema so that schema descriptions and API access are equally
+applicable.</p>
+
+<p><a href="./core/index.html#est">More about the OtherFeatures
+databases and APIs...</a></p>
+</dd>
+
+<dt>Compara database and APIs</dt>
+<dd>
+<p>The Compara multi-species database stores the results of
+genome-wide species comparisons re-calculated for each release.</p>
+
+<p>The comparative genomics set includes pairwise whole genome
+alignments and synteny regions. The comparative proteomics data set
+contains orthologue predictions and protein family clusters.</p>
+
+<p><a href="./compara/index.html">More about the Compara database and
+API...</a></p>
+</dd>
+
+<dt>Variation databases and APIs</dt>
+<dd>
+<p>The large amount of genetic variation information is organised in a
+set of species-specific Variation databases.</p>
+
+<p><a href="./variation/index.html">More about the Variation databases
+and APIs...</a></p>
+</dd>
+
+<dt>FuncGen databases and APIs</dt>
+<dd>
+<p>The funcgen databases store genome-wide functional genomics and
+regulatory information. These data are used to produce the Ensembl
+'Regulatory Build'.
+</p>
+
+<p><a href="./funcgen/index.html">More about the Funcgen databases and
+APIs...</a></p>
+</dd>
+
+</dl>
+
+<h2>Ensembl Registry</h2>
+
+<p>
+The Registry system allows to tell your programs where to find the
+EnsEMBL databases and how to connect to them. It has been implemented
+for the Ensembl Core and Compara APIs. 
+</p>
+
+<p><a href="./registry.html">More about the Registry...</a></p>
+
+
+<h2 id="support">Ensembl Software Support</h2>
+
+<p>
+Ensembl is an open project and we would like to encourage
+correspondence and discussions on any subject on any aspect of
+Ensembl. Please see the <a href="/info/about/contact/">Ensembl
+Contacts</a> page for suitable options for getting in touch with us.
+</p>
+
+<p>
+If you are interested in undertaking a short-term collaborative
+project, our &quot;<a href="/info/about/outreach/geek4aweek.html">Geek
+for a Week</a>&quot; scheme allows developers and researchers to work
+alongside Ensembl team
+members. <a href="/info/about/outreach/geek4aweek.html">More
+information ...</a>
+</p>
+
+
+</body>
+</html>

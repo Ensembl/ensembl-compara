@@ -1,0 +1,242 @@
+<html>
+<head>
+<meta name="order" content="1" />
+<title>Linking in to Ensembl</title>
+</head>
+
+<body>
+
+<h1>Linking in to Ensembl</h1>
+
+<h2>URL structure</h2>
+
+<p>
+  URLs for Ensembl views take the format:
+</p>
+
+<kbd>
+  http://www.ensembl.org/<em>species</em>/<em>section</em>/<em>page</em>?g=<em>gene</em>;t=<em>transcript</em>;r=<em>seq_region</em>:<em>start</em>-<em>end</em>
+</kbd>
+
+<h3>Location-based views</h3>
+
+<p>
+  Any combination of the gene, transcript and genomic region may be specified.
+  For example, the following all take the user to the genomic region surrounding
+  the human gene BRCA1:
+</p>
+
+<ul>
+  <li><a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048</a></li>
+  <li><a href="http://www.ensembl.org/Homo_sapiens/Location/View?t=ENST00000309486">http://www.ensembl.org/Homo_sapiens/Location/View?t=ENST00000309486</a></li>
+  <li><a href="http://www.ensembl.org/Homo_sapiens/Location/View?r=17:38449840-38530994">http://www.ensembl.org/Homo_sapiens/Location/View?r=17:38449840-38530994</a></li>
+</ul>
+
+<h3>Feature-based views</h3>
+
+<p>Views based on a gene, transcript or variation need the parameter of that type in their URL - a location alone is insufficient:</p>
+
+<ul>
+<li><strong>RIGHT</strong>: <a href="http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000012048">http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000012048</a></li>
+<li><strong>WRONG!</strong> http://www.ensembl.org/Homo_sapiens/Gene/Summary?r=17:38449840-38530994</li>
+</ul>
+
+
+<h2>Customising via links</h2>
+
+<p>
+  Many of the customisation options available to users of the website in the
+  <a href="/info/website/help/control_panel.html">Control Panel</a> can be
+  manipulated using specially constructed URLs. This allows configuration
+  settings to be shared with colleagues, for example to highlight a particular
+  data track. This includes:
+</p>
+
+<ul>
+  <li>Configuring options for a page</li>
+  <li>Configuring a panel/image (changing the way tracks are rendered)</li>
+  <li>Attaching external DAS or UCSC-style data without using the Control Panel</li>
+</ul>
+
+<p>
+  These are accomplished in a similar, systematic way. Extra parameters are
+  appended to the URL for the relevant page:
+</p>
+
+<kbd>
+  context=key=value
+</kbd>
+
+<p>
+  Or when setting multiple values:
+</p>
+
+<kbd>
+  context=key1=value1,key2=value2,key2=value2
+</kbd>
+
+<p>
+  Or when setting multiple different types of parameter:
+</p>
+
+<kbd>
+  context1=key1=value1,key2=value2,key2=value2;context2=key3=value3
+</kbd>
+
+<h3>Global Page Settings</h3>
+
+<p>
+  Global page settings are changed using the <strong>config</strong> key. For
+  example, to turn off the top image on Location &gt; Region in detail:
+</p>
+
+<kbd>
+  config=panel_top=no
+</kbd>
+
+<p>
+  Appending this to the URL for the <em>Region in detail</em> page, the final
+  URL is:
+</p>
+
+<kbd>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?r=1:1000-2000;config=panel_top=no">http://www.ensembl.org/Homo_sapiens/Location/View?r=1:1000-2000;config=panel_top=no</a>
+</kbd>
+
+<p>
+  To link directly to the <em>Exon Intron markup</em> panel (Transcript &gt;
+  Exons), to show full introns, only 60bp flanking sequence AND turn the display
+  to be 60bp wide:
+</p>
+
+<kbd>
+  <a href="http://www.ensembl.org/Homo_sapiens/Transcript/Exons?t=ENST00000309255;config=flanking=60,seq_cols=60,fullseq=yes">http://www.ensembl.org/Homo_sapiens/Transcript/Exons?t=ENST00000309255;config=flanking=60,seq_cols=60,fullseq=yes</a>
+</kbd>
+
+<h3>Configuring Panels</h3>
+
+<p>
+  To change configuration for an individual panel add a parameter referring to
+  the panel:
+</p>
+
+<ul>
+  <li>
+    Location &gt; Region in detail: <em>contigviewtop</em> and 
+    <em>contigviewbottom</em>
+  </li>
+  <li>
+    Location &gt; Region overview: <em>cytoview</em>
+  </li>
+</ul>
+
+<p>
+  Options are again specificed in a comma separated list, where the left hand
+  side of each "=" is the name of the track, and the right hand side is the name
+  of the "renderer" to use - the latter depends on the type of track.
+</p>
+
+<h4>Track names</h4>
+
+<p>
+  Track names are systematically named. The following example identifies a track
+  with Ensembl transcripts from the core Ensembl database:
+</p>
+
+<kbd>
+  transcript_core_ensembl
+</kbd>
+
+<h4>Renderers</h4>
+
+<p>
+  Renderers depend on the type of track:
+</p>
+
+<ul>
+  <li>
+    Transcripts: <em>transcript_label</em>, <em>transcript_nolabel</em>,
+    <em>collapsed_label</em>, <em>collapsed_nolabel</em> or <em>off</em>
+  </li>
+  <li>
+    Alignment features: <em>normal</em>, <em>half_height</em>, <em>stack</em>,
+    <em>unlimited</em>, <em>ungrouped</em> or <em>off</em>
+  </li>
+</ul>
+
+<h4>Example - configure a track</h4>
+
+<p>
+  To collapse the Ensembl genes track down to a single line per
+  gene AND turn off the top panel in <em>Location &gt; Region in detail</em>:
+</p>
+
+<kbd>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=transcript_core_ensembl=collapsed_nolabel;config=panel_top=no">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=transcript_core_ensembl=collapsed_nolabel;config=panel_top=no</a>
+</kbd>
+
+<h3>Attaching External Data</h3>
+
+<p>
+  To attach DAS or UCSC-style URL data, follow the procedure above for
+  configuring the appropriate panel, using special track names to identify the
+  data source. These special names are of the format:
+</p>
+
+<kbd>
+  type:source
+</kbd>
+
+<p>
+  Where <em>type</em> is either of <em>das</em> or <em>url</em>, and
+  <em>source</em> is the location of the external data.
+</p>
+
+<h4>Renderers</h4>
+
+<p>
+  Renderers for URL data are the same as for alignment tracks (see above. For
+  DAS tracks, currently supported are <em>labels</em> (normal),
+  <em>nolabels</em> (hide labels) and <em>off</em>.
+</p>
+
+<h4>Examples - attach external data</h4>
+
+<p>
+  To attach an example data file by URL and display the features in an ungrouped
+  style:
+</p>
+
+<kbd>
+  <a href="http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/using/external_data/examples/url_bed.txt=ungrouped">http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=url:http://www.ensembl.org/info/using/external_data/examples/url_bed.txt=ungrouped</a>
+</kbd>
+
+<p>
+  To attach the Ensembl transcripts DAS source and display the features
+  according to the server's instructions (stylesheet):
+</p>
+
+<kbd>
+  http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.ensembl.org/das/Homo_sapiens.NCBI36.transcript=labels
+</kbd>
+
+<p>
+  To attach a DAS source from the DAS registry, in this case human SNPs from ASTD:
+</p>
+
+<kbd>
+  http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.dasregistry.org/das/sources/DS_560=labels
+</kbd>
+
+<h4>Important Note</h4>
+
+<p>
+  It is <strong>only</strong> possible to add a DAS track that is
+  self-configuring. That is, it provides all of the information Ensembl needs to
+  query it automatically via the <em>sources</em> or <em>dsn</em> command. This
+  behaviour is by design. See <a href="/info/docs/das/das_server.html">setting
+  up a DAS server</a> for more details.
+</p>
+
+</body>
+</html>

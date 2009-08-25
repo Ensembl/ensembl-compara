@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <title>Installing the Ensembl Data</title>
+  </head>
+<body> 
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+<h1>Installing the Ensembl Data</h1>
+
+<p>
+  The Ensembl data is provided on the Ensembl FTP site in the form of tab-delimited text files for
+  importing into MySQL. ftp://ftp.ensembl.org/pub contains a directory for each release for each species.
+  From Version 47 onwards the data per release is sub-divided into sub-directories of different data:
+</p>
+<ul>
+  <li>mysql - MySQL dumps of databases for release</li>
+  <li>fasta - cDNA, DNA (masked/unmasked chromosome sequence dumps), RNA and peptide dumps</li>
+  <li>embl - EMBL format dumps</li>
+  <li>genbank - GenBank format dumps</li>
+  <li>emf - Ensembl Meta Format - dumps of variation and comparative data</li>
+  <li>gtf - GTF dumps of transcripts</li>
+</ul>
+
+<h2>The MySQL data</h2>
+<p>Each database directory contains a data file for each table in that database an SQL file that contains the SQL commands necessary to build that database's table structure and a checksum file (using a UNIX "sum" utility) so you can verify that the data has downloaded correctly.</p>
+
+<p>Regardless of which species you choose to install, for a full installation you will probably want to install
+the multi-species databases as well. i.e. compara, ensembl_website and ensembl_web_user_db_[[SPECIESDEFS::ENSEMBL_VERSION]].</p>
+
+<p>NB: The FTP site will ideally be laid out as described. If, however, for reasons of space or
+maintainability, files are not located as described then check the ftp site for README files which should
+explain where the data can be found.</p>
+
+<h3>To install the Ensembl Data:</h3>
+<ol>
+<li>
+Download the directories in ftp.ensembl.org/pub/current_mysql for
+whatever organism you want to install. Note that the ensembl directory contains several files for the
+DNA and feature tables - these are very large tables, so the dump file is split into smaller chunks for
+easier downloading.
+</li>
+<li>Each table file is gzipped so unpack the data into working directories, keeping separate directories for
+each database.
+<p>For each database you have downloaded, cd into the database directory and perform steps 3-5. For
+illustration, we will use homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] as the database - you need to change this
+appropriately for each database you install. Remember, you also need to download and install the
+multi-species databases.</p>
+</li>
+<li>Start a MySQL console session (see the Installing MySQL section above if necessary) and issue the
+command:
+<pre>create database homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]]</pre>
+</li>
+<li>
+Exit the console session, and issue the following command to run the ensembl SQL file, which should
+be in the directory where you unpacked the downloaded data. This creates the schema for the empty
+database you created in step 3.
+<p>Note that we are using the example MySQL settings of /data/mysql as the install directory, and
+mysqldba as the database user. Note that here mysqldba is a MySQL account with file access to the
+database, which is not the same as a system user. See the MySQL documentation for instructions
+on creating/administering users.</p>
+<pre>/data/mysql/bin/mysql -u mysqldba homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] &lt; homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]].sql</pre>
+</li>
+<li>Load the data into the database structure you have just built with the following command.
+<pre>/data/mysql/bin/mysqlimport -u mysqldba homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] -L *.txt</pre>
+</li>
+</ol>
+
+<p>You have now created and loaded the core Ensembl database for human.</p>
+
+<p>Note that all the databases except the ensembl_web_user_db database only require read access for the
+website to work. The ensembl_web_user_db requires a MySQL user with delete/insert/update
+permissions. Also note that because its the only database that the website writes data into, the
+ensembl_web_user_db has no .table (data) files to download.</p>
+
+<p>NB MySQL needs quite a lot of temporary space to load the databases. It is quite possible that your /
+tmp directory (which MySQL uses by default) is too small, in which case you might see an Error 28 (use
+the MySQL tool perror to see what these error numbers mean). Fortunately, you can force MySQL to
+write temporary files to another location. See the MySQL docs for details:
+
+<a href="http://www.mysql.com/doc/T/e/Temporary_files.html" rel="external">http://www.mysql.com/doc/T/e/Temporary_files.html</a>. The simplest solution is to start mysqld with the
+argument --tmpdir my_spacious_tmp_location.</p>
+
+<h3>GO data</h3>
+<p>The Ensembl ftp site now includes a copy of the GO database as ensembl_go_[[SPECIESDEFS::ENSEMBL_VERSION]]. Install this if you
+want local GO information.</p>
+
+<p><strong>Back to</strong>: <a href="/info/docs/webcode/install/build.html">&larr; Installing the code components</a></p>
+
+</body>
+</html>
+  

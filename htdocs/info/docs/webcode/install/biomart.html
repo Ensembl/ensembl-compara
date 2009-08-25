@@ -1,0 +1,162 @@
+<html>
+  <head>
+    <title>Installing and Running BioMart</title>
+  </head>
+<body> 
+  
+<h1>Installing and Running BioMart within Ensembl</h1>
+
+<p>Since the 0.6 version of BioMart, installation within external websites
+has become much harder as the code is not suited for such integrations without
+a number of post CVS checkout modifications. These you will find listed at the
+end.</p>
+
+<h2>Modifications to Ensembl code base</h2>
+<p>
+  To enable BioMart in your checkout - include in your Plugins.pm directory the
+  following line (directly above the EnsEMBL::Ensembl plugin line:
+</p>
+<pre class="code">
+'EnsEMBL::Mart' =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mart',
+</pre>
+
+<h2>Considerations when running BioMart within Ensembl</h2>
+<p>
+  <strong>NOTE:</strong> We do not run the BioMart application within the same Apache instances as
+  the rest of the Ensembl site AND we use a secondary MySQL server for the
+  BioMart databases.
+</p>
+<p>
+  There are a number of reasons for this - mainly due to the size of the
+  Apache processes Mart produces (these are all 0.5G) and the number of tables
+  in the Mart database. These both have adverse effects on the performance of
+  the Ensembl website, so we have ring-fenced hardware specifically for
+  running BioMart.
+</p>
+<p>
+One solution is to use a reverse proxy to dispatch in-bound network
+traffic to a set of servers, while presenting a single interface to the caller (see Apache's
+<a href="http://httpd.apache.org/docs/2.0/mod/mod_proxy.html">mod-proxy documentation</a>),
+and <a href="http://httpd.apache.org/docs/2.0/mod/mod_rewrite.html">mod_rewrite</a> 
+to redirect users to the separate Mart machine.</p>
+
+<pre class="code">
+  RewriteEngine     on
+  ProxyPreserveHost On
+
+# requests going to the server
+  RewriteRule  ^/biomart/(martview.*)      http://your.mart.server/biomart/$1  [P,L]
+  RewriteRule  ^/biomart/(martservice.*)   http://your.mart.server/biomart/$1  [P,L]
+  RewriteRule  ^/biomart/(martresults.*)   http://your.mart.server/biomart/$1  [P,L]
+
+# requests coming back from server
+  ProxyPassReverse  / http://your.mart.server/
+</pre>
+
+<p>If you decide to do this, you also need to:</p>
+ 
+<ul>
+<li>Remove EnsEMBL::Mart from Plugins.pm to remove Biomart from the
+Ensembl Webserver</li> 
+<li>Keep the changes as described below to achieve the Ensembl look'n'feel and 
+temporary file management</li> 
+<li>Copy modules/EnsEMBL/Web/Document/HTML/ToolLinks.pm to your plugin and comment out the line:
+<pre class="code">if ($ENV{'ENSEMBL_MART_ENABLED'}) {
+</pre>
+and the closing curly bracket two lines below it.
+</li>
+</ul> 
+</p>
+
+<h2>Changes to code post CVS checkout</h2>
+<h3>cgi-bin/martresults.PLS</h3>
+<ul>
+  <li>Delete the line [TAG:lib] (currently line 16)</li>
+  <li>Replace the following (near line 35)
+  <pre class="code">
+foreach(keys %$hash) {
+  if($_ eq "background") {
+    foreach my $param (keys %{$hash-&gt;{$_}}) {
+      if($param eq "resultsDir1") {
+        $background_dir = $hash-&gt;{$_}-&gt;{$param};
+      }
+    }
+  }
+}
+$background_dir.='/';
+  </pre>
+  With:
+  <pre class="code">
+## Let us do a nasty little hack (see BioMart.pm) to sensbily and
+## in a working manner allow for heirarchical file saving to stop filesystems
+## barfing really badly...
+$background_file =~ s/^[\.\\\/]+//;
+use Digest::MD5 qw(md5_hex);
+(my $background_directory = md5_hex($background_file) ) =~ s/^(\w)(\w\w).*$/$1\/$2/;
+my $background_dir = $hash-&gt;{'background'}{'resultsDir1'}.'/'.$background_directory.'/';
+  </pre>
+  </li>
+</ul>
+
+<h3>cgi-bin/martservices.PLS</h3>
+<ul>
+  <li>Delete the line [TAG:lib] (currently line 12)</li>
+</ul>
+
+<h3>cgi-bin/martview.PLS</h3>
+<ul>
+  <li>Delete the line [TAG:lib] (currently line 26)</li>
+</ul>
+
+<h3>conf/settings.conf</h3>
+<ul>
+  <li>Replace the colour configuration with:
+<pre class="code">
+colour_saturation0=#000000
+colour_saturation20=#efefef
+colour_saturation40=#fff9af
+colour_saturation60=#fff9af
+colour_saturation80=#ffffdd
+colour_saturation100=#ffffff
+</pre>
+</li>
+<li>
+  Set the exturl line to your server
+</li>
+<li>
+  Set an appropriate results dir: (resultsDir1 ), and set enable = yes
+</li>
+<li>
+  Set "subject" to "Your Ensembl BioMart results are ready" and "from" to "no-reply@your.domain.tld"
+</li>
+<li>
+  Set "expire" to "12h"
+</li>
+</ul>
+
+<h3>lib/BioMart/Web.pm</h3>
+<ul>
+  <li>Replace
+<pre class="code">my $background_file_hash = int(rand($background_file_dirCount)) + 1;</pre>
+  with
+<pre class="code">
+my $background_file_hash = 1;
+## Hack (see martresults.PLS) to allow for heirarchical file saving 
+## to stop filesystems barfing really badly...
+use Digest::MD5 qw(md5_hex);
+use File::Path;
+(my $background_directory = md5_hex( $background_file )) =~ s/^(\w)(\w\w).*$/$1\/$2/;
+$background_file_dir .= $background_directory.'/';
+mkpath( $background_file_dir, 0, 0777 );
+</pre>
+  </li>
+</ul>
+
+<h3>conf/templates/custom</h3>
+<p>
+  Copy the .tt files from public-plugins/mart/templates to biomart-perl/conf/templates/custom.
+</p>
+
+</body>
+</html>
+  

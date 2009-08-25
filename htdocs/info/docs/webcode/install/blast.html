@@ -1,0 +1,432 @@
+<html>
+<head>
+<title>BlastView Configuration</title>
+</head>
+<body>
+
+<h1>Ensembl BlastView Configuration</h1>
+
+<h2>Contents</h2>
+
+<ol>
+<li><a href="#Intro">Introduction</a>
+<ul>
+<li><a href="#EnsConfig">Ensembl Configuration Overview</a></li>
+<li><a href="#BlastViewConfig">BlastView Configuration</a></li>
+</ul>
+</li>
+<li><a href="#seq">Registering Sequence Databases</a></li>
+<li><a href="#methods">Registering Search Methods</a></li>
+<li><a href="#links">Registering Method vs. Database Links</a></li>
+<li><a href="#db">Configuring the ENSEMBL BLAST Database</a></li> 
+<li><a href="#conc">Conclusion</a></li>
+</ol>
+
+<h2 id="Intro">Introduction</h2>
+
+<p>
+This document provides details for
+configuring the Ensembl BlastView web interface.
+</p>
+
+<h3 id="EnsConfig">Ensembl Configuration Overview</h3>
+
+<p>
+The Ensembl distribution is usually stored within a filesystem
+directory (hereafter refered to as $ENSEMBL ROOT), e.g.:
+</p>
+<blockquote><pre>$ setenv ENSEMBL_ROOT
+/usr/local/ensembl</pre></blockquote>
+
+
+<p>
+Ensembl web site configuration data are stored in text files
+within $ENSEMBL ROOT, in the following directory;
+</p>
+<blockquote><pre>$ENSEMBL_ROOT/conf</pre></blockquote>
+
+<p>
+Species-independent configuration are stored in  (hereafter refered
+to as MULTI.ini):
+</p>
+<blockquote><pre>$ENSEMBL_ROOT/conf/ini-files/MULTI.ini</pre></blockquote>
+
+<p>
+Species-default configuration are stored in (hereafter refered to
+as <code>DEFAULTS.ini</code>):
+</p>
+<blockquote><pre>$ENSEMBL_ROOT/conf/ini-files/DEFAULTS.ini</pre></blockquote>
+
+<p>
+Species-specific configuration are stored in (hereafter refered to
+as &lt;SPECIES&gt;.ini), for example:<br />
+</p>
+<blockquote><pre>$ENSEMBL_ROOT/conf/ini-files/Homo_sapiens.ini
+$ENSEMBL_ROOT/conf/ini-files/Danio_rerio.ini</pre></blockquote>
+
+<p>
+The .ini files are separated into sections containing key-value
+pairs using the format:
+</p>
+<pre class="code">
+[SECTION_HEADING] key1 = value1 key2 = value2
+</pre>
+
+<h3 id="BlastViewConfig">BlastView Configuration</h3>
+
+<p>BlastView configuration consists of the following components:</p>
+
+<ul>
+<li>Register of sequence databases to search against</li>
+<li>Register of methods (executables) that run the search</li>
+<li>Register of search method vs. sequence database linkage</li>
+<li>Location of MySQL database for search report storage (ENSEMBL
+BLAST)</li>
+</ul>
+
+<p>
+Databases and methods are generally species independent, and  their
+configurations are therefore stored in the DEFAULTS.ini file.  Method
+vs. sequence database linkage, however, is species specific,  and
+stored in the &lt;SPECIES&gt;.ini files.
+</p>
+
+<p>
+For interface responsiveness search reports are parsed once and the
+results stored in a database.  The location of this database is
+configured in the MULTI.ini file.
+</p>
+
+<h2 id="seq">Registering Sequence Databases</h2>
+
+<p>Sequence database configuration requires the following data;</p>
+
+<ul>
+<li>A "type" string, used for grouping of databases across species and
+methods, (e.g. CDNA ALL, PEP ALL)</li>
+<li>A "label" string, used for display in the interface,
+(e.g. "Ensembl cDNAs", "Ensembl Peptides").</li>
+</ul>
+
+<p>
+To register databases, type/label pairs must be entered in the 
+<code>BLAST DATASOURCES</code>  configuration section of
+<code>DEFAULTS.ini</code>. An additional DEFAULT key sets the type of
+the default database e.g.:
+</p>
+
+<pre class="code">
+[BLAST_DATASOURCES] # Register of BlastView sequence databases. Use
+format; # DB_TYPE = DB_LABEL # DB_TYPE is the internal identifier (no
+whitespace)
+
+# DB_LABEL is the human-readable label.  LATESTGP = Genomic sequence
+CDNA_ALL = Ensembl cDNAs CDNA_GENSCAN = Genscan cDNAs PEP_ALL =
+Ensembl Peptides PEP_GENSCAN = Genscan Peptides # Default sequence
+database. Use format; # DEFAULT = DB_TYPE DEFAULT = LATESTGP
+</pre>
+
+<p>
+As for all Ensembl configuration sections, DEFAULTS.ini section
+headers must also be included in each relevent &lt;SPECIES&gt;.ini
+file. For example, Homo_sapiens.ini contains the following:
+</p>
+
+<pre class="code">
+[BLAST_DATASOURCES] # Register of BlastView sequence databases.  #
+Accept defaults
+</pre>
+
+<p>
+It is also possible to register species-specific database types in
+the corresponding &lt;SPECIES&gt;.ini files.  However, as non-empty
+sections in &lt;SPECIES&gt; take precedence over those in
+DEFAULTS.ini, one must copy all other types relevent to the
+species. For example, in Homo_sapiens.ini:
+</p>
+
+<pre class="code">
+[BLAST_DATASOURCES] # Homo_sapiens-specific database type: HAPLO =
+Haplotype blocks # Standard types copied from DEFAULTS.ini LATESTGP =
+Genomic sequence CDNA_ALL = Ensembl cDNAs ...
+</pre>
+
+<p>
+Given the problems with registering species-specific database
+types,  it is probably best to simply register all types in
+DEFAULTS.ini - there is an alternative way of per-species database
+type selection, which is covered later.
+</p>
+
+
+<h2 id="methods">Registering Search Methods</h2>
+
+<p>
+Within the context of BlastView, a search method is an
+algorithm/executable that takes a query sequence of a particular type
+(DNA/peptide), and a sequence database of a particular type
+(DNA/peptide), and computes some measure of sequence similarity
+between the two. This means that BLASTN, TBLASTX, BLASTP, SSAHA
+etc. are entirely seperate at the configuration level. Before use with
+BlastView, code must be written to "wrap" each executable in a perl
+module with a "runnable" interface. These wrapper modules hide the
+differences in calling and report handling between methods from the
+BlastView interface code. Coding of these wrappers for different
+methods/system configurations is covered in the BlastView tech
+document.  The key attributes of BlastView methods are therefore:
+</p>
+
+<ul>
+<li>A "type" string used for grouping methods across species, also
+used as human-readable label</li>
+<li>A "module" string used to identify the appropriate wrapper
+class.</li>
+</ul>
+
+<p>
+To register methods, type/module pairs must be entered in
+the <code>ENSEMBL BLAST METHODS</code> configuration section of
+DEFAULTS.ini e.g.:
+</p>
+
+<pre class="code">
+[ENSEMBL_BLAST_METHODS] # Register of BlastView methods. Use format: #
+ME_TYPE = ME_WRAP # ME_TYPE is the internal identifier (no whitespace)
+# ME_WRAP is the Bio::Tools::Run::Search wrapper class BLASTN =
+ensembl_wublastn BLASTX = ensembl_wublastx BLASTP = ensembl_wublastp
+TBLASTN = ensembl_wutblastn TBLASTX = ensembl_wutblastx SSAHA =
+ensembl_ssaha
+</pre>
+
+<p>
+For example, the ensembl wublastn wrapper contains the logic to run
+a wu-blastn search using the Compaq BSUB job submission system as used
+for the Ensembl Blast cluster. Conversly, the ensembl ssaha wrapper
+runs SSAHA searches over TCP-IP uising a client-server model. Further
+wrappers are being developed to, for example, run blast searches on
+the same machine as the web server.
+</p>
+
+<p>
+Unfortunately, it is not currently possible to override the blast
+method wrappers on a per-species basis. This is a known limitation of
+the system, and may be addressed in the future. However, you still
+need to add a "stub" <code>ENSEMBL BLAST METHODS</code> section for
+each species, e.g. within Homo_sapiens.ini:
+</p>
+
+<pre class="code">
+[ENSEMBL_BLAST_METHODS] # Register of BlastView sequence databases.  #
+Accept defaults
+</pre>
+
+<p>
+In addition to the ENSEMBL BLAST METHODS section, there are several
+attributes in the general section that also affect method
+configuration. These are:
+</p>
+
+<pre class="code">
+# Path to binaries on local machine ENSEMBL_BINARIES_PATH =
+/usr/local/bin # Path to binaries on remote machine
+ENSEMBL_BLAST_BIN_PATH = /usr/remote/bin # Path to blast databases
+ENSEMBL_BLAST_DATA_PATH = /usr/remote/data # Path to blast filter
+directory ENSEMBL_BLAST_FILTER = /usr/remote/blast/filter # Path to
+blast matrix directory ENSEMBL_BLAST_MATRIX = /usr/remote/blast/matrix
+# Path to RepeatMasker executable ENSEMBL_REPEATMASKER =
+/usr/remote/RepeatMasker # Names of method executables. Names
+correspond to method types in ENSEMBL_BLAST_METHODS
+ENSEMBL_SSAHA_PROGRAM_NAME = ssahaClient3.1
+ENSEMBL_BLASTN_PROGRAM_NAME = wublastn ENSEMBL_BLASTX_PROGRAM_NAME =
+wublastx ENSEMBL_BLASTP_PROGRAM_NAME = wublastp
+ENSEMBL_TBLASTN_PROGRAM_NAME = wutblastn ENSEMBL_TBLASTX_PROGRAM_NAME
+= wutblastx
+</pre>
+
+<h2 id="links">Registering Method vs. Database Links</h2>
+
+<p>
+As the blast/ssaha databases are species-specific they must be
+configured in their corresponding &lt;Genus_species&gt;.ini
+files.
+</p>
+
+<p>
+Each of the method types registered in DEFAULTS.ini (e.g. BLASTN,
+SSAHA etc.) must have  must have a corresponding section
+named <code>[&lt;METHOD&gt;_DATASOURCES]</code> in the
+&lt;Genus_species&gt;.ini e.g. <code>[BLASTN_DATASOURCES]</code>.
+</p>
+
+<p>The <code>[&lt;METHOD&gt;_DATASOURCES]</code> section contains:</p>
+
+<ol>
+<li>A <code>DATASOURCE_TYPE = dna</code> or <code>DATASOURCE_TYPE =
+peptide</code> key=value pair  to specify the query type (dna/peptide)
+that the search method expects as input (see example below).</li>
+<li>  <code>&lt;DATABASE&gt; = &lt;LOCATOR&gt;</code> (KEY = value)
+pairs which are links to one or more sequence databases. 
+<ul>
+<li><code>&lt;DATABASE&gt;</code> is one of the database types
+registered in DEFAULTS.ini (e.g. CDNA_ALL, LATESTGP, PEP_KNOWN)</li>
+<li><code>&lt;LOCATOR&gt;</code> refers to the filesystem or TCP-IP
+location of the database.  For  the blast databases the
+&lt;LOCATOR&gt;   can either be the full name of the file (see example
+below), or the file name can be replaced with 
+<code>&lt;DATABASE&gt;    =  %_</code> e.g.
+<pre class="code">
+LATESTGP      = %_
+</pre>
+
+<p>
+In the latter case, the file name will be autogenerated on
+server start up to use the files with the name 
+<code>Genus_species.Assembly.Release.sequencetype.subset.fa</code>
+</p>
+</li>
+</ul>
+</li>
+</ol>
+
+<h3>Example:</h3>
+
+<pre class="code">
+[BLASTN_DATASOURCES] DATASOURCE_TYPE = dna LATESTGP      =
+Homo_sapiens.NCBI36.40.dna.seqlevel.fa  CDNA_ALL      =
+Homo_sapiens.NCBI36.40.cdna.all.fa CDNA_ABINITIO =
+Homo_sapiens.NCBI36.40.cdna.abinitio.fa
+
+[TBLASTX_DATASOURCES] DATASOURCE_TYPE = dna LATESTGP      =
+Homo_sapiens.NCBI36.40.dna.seqlevel.fa  CDNA_ALL      =
+Homo_sapiens.NCBI36.40.cdna.all.fa CDNA_ABINITIO =
+Homo_sapiens.NCBI36.40.cdna.abinitio.fa
+
+[TBLASTN_DATASOURCES] DATASOURCE_TYPE = peptide LATESTGP      =
+Homo_sapiens.NCBI36.40.dna.seqlevel.fa  CDNA_ALL      =
+Homo_sapiens.NCBI36.40.cdna.all.fa CDNA_ABINITIO =
+Homo_sapiens.NCBI36.40.cdna.abinitio.fa
+
+[BLASTP_DATASOURCES] DATASOURCE_TYPE = peptide PEP_ALL       =
+Homo_sapiens.NCBI36.40.pep.all.fa PEP_ABINITIO  =
+Homo_sapiens.NCBI36.40.pep.abinitio.fa
+
+[BLASTX_DATASOURCES] DATASOURCE_TYPE = dna PEP_ALL       =
+Homo_sapiens.NCBI36.40.pep.all.fa PEP_ABINITIO  =
+Homo_sapiens.NCBI36.40.pep.abinitio.fa
+
+[SSAHA_DATASOURCES] DATASOURCE_TYPE = dna LATESTGP = ssaha01:50001
+</pre>
+
+<h2 id="db">Configuring the ENSEMBL BLAST Database</h2>
+
+<p>
+To improve interface responsiveness, search reports are parsed
+once, and the results stored in a database.  The location of this
+database is configured in the MULTI.ini file. Configuration is similar
+to that of all other Ensembl databases, with the name of the database
+being ENSEMBL BLAST. The main difference between ENSEMBL BLAST and
+other Ensembl databases, however, is that ENSEMBL BLAST is a
+read/write database, so the configured database user must have write
+permission. For example:
+</p>
+
+<pre class="code">
+[databases] ENSEMBL_BLAST = ensembl_blast [ENSEMBL_BLAST] HOST =
+localhost PORT = 3306 USER = admin_user PASS = secret
+</pre>
+
+<p>
+The database schema of the ENSEMBL BLAST database is distributed
+within the perl code, rather than available by FTP download. Firstly,
+an empty database should be created. E.g.
+</p>
+
+<pre class="code">$ mysql -u admin_user -p secret -e "create database
+ensembl_blast"</pre>
+
+<p>
+Next, a script can be run that creates the database
+automatically. E.g.
+</p>
+
+<pre class="code">$ $ENSEMBL_ROOT/utils/utils/blast_database.pl</pre>
+
+<p>The correct execution of this script can be checked as follows:</p>
+
+<pre class="code">$ mysqldump -u admin_user -p secret
+ensembl_blast</pre>
+
+<p>
+The above should result in output similar to the following. Note
+that the blast result, blast hit and blast hsp tables are
+timestamped. Re-running the blast database.pl script will cause the
+blast result, blast hit and blast hsp tables to be rotated, meaning
+that, whilst old results/hsps/hits will still be available, new
+searches will be stored in the new tables. It is simple, therefore, to
+maintain the ENSEMBL BLAST database by dropping old tables. See the
+$ENSEMBL ROOT/utils/blast cleaner.pl script for an example of how this
+is done.
+</p>
+
+<pre class="code">
+-- -- Table structure for table "blast_table_log" -- CREATE TABLE
+blast_table_log ( table_id int(10) unsigned NOT NULL auto_increment,
+table_name varchar(32) default NULL, table_type
+enum("TICKET","RESULT","HIT","HSP") default NULL, table_status
+enum("CURRENT","FILLED","DELETED") default NULL, use_date date default
+NULL, create_time datetime default NULL, delete_time datetime default
+NULL, num_objects int(10) default NULL, PRIMARY KEY (table_id), KEY
+table_name (table_name), KEY table_type (table_type), KEY use_date
+(use_date), KEY table_status (table_status) ) TYPE=MyISAM;
+
+-- -- Table structure for table "blast_ticket" -- CREATE TABLE
+blast_ticket ( ticket_id int(10) unsigned NOT NULL auto_increment,
+create_time datetime NOT NULL default "0000-00-00 00:00:00",
+update_time datetime NOT NULL default "0000-00-00 00:00:00", ticket
+varchar(32) NOT NULL default "", object longblob, PRIMARY KEY
+(ticket_id), UNIQUE KEY ticket (ticket), KEY create_time
+(create_time), KEY update_time (update_time) ) TYPE=MyISAM;
+
+-- -- Table structure for table "blast_result20030821" -- CREATE TABLE
+blast_result20030821 ( result_id int(10) unsigned NOT NULL
+auto_increment, ticket varchar(32) default NULL, object longblob,
+PRIMARY KEY (result_id), KEY ticket (ticket) ) TYPE=MyISAM; CREATE
+TABLE blast_hit20030821 ( hit_id int(10) unsigned NOT NULL
+auto_increment, ticket varchar(32) default NULL, object longblob,
+PRIMARY KEY (hit_id), KEY ticket (ticket) ) TYPE=MyISAM;
+
+-- -- Table structure for table "blast_hsp20030821" -- CREATE TABLE
+blast_hsp20030821 ( hsp_id int(10) unsigned NOT NULL auto_increment,
+ticket varchar(32) default NULL, object longblob, chr_name varchar(32)
+default NULL, chr_start int(10) unsigned default NULL, chr_end int(10)
+unsigned default NULL, PRIMARY KEY (hsp_id), KEY ticket (ticket) )
+TYPE=MyISAM MAX_ROWS=705032704 AVG_ROW_LENGTH=4000;
+</pre>
+
+<h2 id="conc">Conclusion</h2>
+
+<p>
+By following the above steps, the BlastView interface should be
+available for use on the next restart of the Ensembl web
+server. Nowever, if the configuration .ini files have been changed,
+the following file should be deleted before server restart (this is a
+filesystem cache of the config):
+<code>$ENSEMBL_ROOT/conf/config.packed</code>
+</p>
+
+<p>
+For further details about how BlastView works, please see the
+BlastView technical documentation.  (In
+preparation. Contact <a href="mailto:whs@sanger.ac.uk">whs@sanger.ac.uk</a>
+for a draft.)
+</p>
+
+<p>
+Please address all comments/suggestions on this document, or on
+BlastView in general
+to: <a href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a>
+(cc <a href="mailto:whs@sanger.ac.uk">whs@sanger.ac.uk</a>).
+</p>
+
+</body>
+</html>

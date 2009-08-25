@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <title>Running an Ensembl Website</title>
+  </head>
+<body> 
+  
+<h1>Running an Ensembl Website</h1>
+
+<p>This section outlines how to go about the day-to-day running of an Ensembl website.</p>
+
+<h2>Starting the Ensembl website</h2>
+<ol>
+<li>Check that MySQL is running. If not, you can start it:
+<pre class="code">/data/mysql/bin/mysqld_safe --user=mysqldba &amp;</pre>
+You should change the /data/mysql and mysqldba in the command above to the install path and user
+you chose when you installed MySQL.</li>
+<li>Start the web server:
+<pre class="code">/usr/local/apache2/bin/httpd -d /usr/local/ensembl</pre>
+where /usr/local/ensembl is your server-root.
+<p>Note that it is important that you start MySQL before you start the website. The startup scripts for the
+site rely on the databases being available, as they compile lists of available data at this point.
+You should now be able to point a web-browser at your server and see the Ensembl homepage.</p>
+<p>
+  If you have already started the site - and then reconfigured it you will
+  need to delete the config.packed file (and if you change mart configuration
+  martconf.packed and martRegistry.xml files) in the conf directory before
+  restarting.
+</p>
+</li>
+</ol>
+
+<h2>Stopping the Ensembl website</h2>
+
+<ol>
+<li>To stop the web server:
+<pre class="code">kill `cat /usr/local/ensembl/logs/HOSTNAME.httpd.pid`</pre>
+where /usr/local/ensembl is your server-root, and HOSTNAME is whatever the hostname is of the
+machine you are running the server on. Note the punctuation marks are backticks and not singlequotes.
+</li>
+<li>To stop MySQL:
+<pre class="code">/data/mysql/bin/mysqladmin shutdown</pre>
+</li>
+</ol>
+
+<h2>Troubleshooting</h2>
+<p>The best way of troubleshooting is to watch the Apache error_log and look for exactly what the problem
+is. You can do this with the command:</p>
+
+<pre class="code">$ tail -f logs/error_log</pre>
+
+<p>from the server-root. It is often obvious what the error is, especially if it is due to file permissions or a
+missing Perl module.</p>
+
+<p>If you have email errors turned on, then you will be receiving some additional information via that route.
+Please <a href="/Site/Help/Contact">contact HelpDesk</a> if you need assistance. Any details of the error, relevant
+sections from the error_log, etc, will be of help in tracking down your problem.</p>
+
+</body>
+</html>
+  

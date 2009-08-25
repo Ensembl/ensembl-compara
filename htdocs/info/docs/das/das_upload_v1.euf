@@ -1,0 +1,119 @@
+[annotations]
+Similarity	AL137655.1.1    homology	wutblastn	13	31787660	31787740	+	    .	        373.0000	
+Similarity	AK024248.1.1	homology_two	wutblastn	13	31787660        31787740	+	     .	        373.0000	
+Similarity	BC006361.1.1	homology_three	wutblastn	13	31787660	31787740	+	    .	        384.0000	
+Similarity	AL137733.1.1	homology_two_2	wutblastn	13	31787660	31787740	+	    .	        384.0000	
+Similarity	Hs.326048.1	homology_five	wutblastn	13	31787660	31787740	+	    .	        373.0000	
+Similarity	AL137655.1.2	homology	wutblastn	13	31788406    	31788934	+	    .	        373.0000	
+Similarity	AK024248.1.2	homology_two	wutblastn	13	31788406    	31788934	+	    .	        373.0000	
+Similarity	BC006361.1.2	homology_three	wutblastn	13      31788406    	31788934	+	    .	        384.0000	
+Similarity	AL137733.1.2	homology_two_2	wutblastn	13	31788406    	31788934	+	    .	        384.0000	
+Similarity	Hs.326048.2	homology_four	wutblastn	13	31788406    	31788934	+	    .	        373.0000
+
+[stylesheet]
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE DASSTYLE SYSTEM "http://www.biodas.org/dtd/dasstyle.dtd">
+<DASSTYLE>
+<STYLESHEET version="1.0">
+  <CATEGORY id="similarity">
+    <TYPE id="homology">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>25</HEIGHT>
+              <BGCOLOR>darkgreen</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+     <TYPE id="homology_two_2">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>20</HEIGHT>
+              <BGCOLOR>palegreen4</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+     <TYPE id="homology_three_2">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>15</HEIGHT>
+              <BGCOLOR>palegreen1</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+     <TYPE id="homology_four">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>10</HEIGHT>
+              <BGCOLOR>palegreen1</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+     <TYPE id="homology_five">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>5</HEIGHT>
+              <BGCOLOR>palegreen4</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+     <TYPE id="homology_two">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>20</HEIGHT>
+              <BGCOLOR>deeppink3</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+     <TYPE id="homology_three">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>25</HEIGHT>
+              <BGCOLOR>slateblue4</BGCOLOR>
+              <FGCOLOR>black</FGCOLOR>
+              <BUMP>0</BUMP>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+  </CATEGORY>
+  <CATEGORY id="default">
+     <TYPE id="default">
+        <GLYPH>
+           <ANCHORED_ARROW>
+	      <HEIGHT>10</HEIGHT>
+              <BGCOLOR>lightblue</BGCOLOR>
+              <FGCOLOR>blue</FGCOLOR>
+	      <NO_ANCHOR>1</NO_ANCHOR>
+              <BUMP>0</BUMP>
+              <FONT>sanserif</FONT>
+           </ANCHORED_ARROW>
+        </GLYPH>
+     </TYPE>
+  </CATEGORY>
+</STYLESHEET>
+</DASSTYLE>

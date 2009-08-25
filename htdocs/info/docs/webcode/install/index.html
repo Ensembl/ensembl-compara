@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <title>Installing an Ensembl website</title>
+  </head>
+<body> 
+
+<h1>Ensembl Website Installation Instructions - Version [[SPECIESDEFS::ENSEMBL_VERSION]]</h1>
+
+<p>These pages provide step-by-step instructions for installing your own version of the Ensembl web
+site. They are intended to be complete; that is, if you install the site simply by following these
+instructions, it should work.</p>
+
+<p>If you need to customize your Ensembl installation in any way, we recommend you install a
+normal Ensembl website first and then experiment with 
+<a href="/info/docs/webcode/extend/">customization options</a>.</p>
+
+<p>This document is updated with each new release. If you find any omissions, errors, or just 
+confusing bits in the instructions, please send an email to
+<a href="mailto:ensembl-webteam@sanger.ac.uk">ensembl-webteam@sanger.ac.uk</a>, and we'll try 
+to fix things.</p>
+  
+<h2>Summary of Instructions</h2>
+  <p>There are four main sections to these instructions:</p>
+  <dl>
+  <dt><a href="structure.html">Site Structure</a></dt>
+  <dd>Describes the directory structure of the site, and what the various sections do.</dd>
+  <dt><a href="build.html">Build/Install</a></dt>
+  <dd>How to install all the components that make up the site.</dd>
+  <dt><a href="configure.html">Configuration</a></dt>
+  <dd>Instructions for configuring the site for your local set-up.</dd>
+  <dt><a href="running.html">Running the site</a></dt>
+  <dd>How to start up, shut down, and generally maintain the site.</dd>
+  </dl>
+
+<p>If you are installing Ensembl on a Windows machine, you may find the tips in the 
+<a href="/info/data/api/api-installation.html">API documentation</a> useful. Please note
+however that Windows is not a supported platform - if you require further
+help, you may find it useful to contact the Ensembl developer community
+via our <a href="http://www.ensembl.org/info/about/contact/mailing.html">mailing list</a>.</p>
+
+<h2>Troubleshooting an Ensembl install</h2>
+<p>
+  There are a number of common issues with an Ensembl installation. Below are listed some
+  frequently asked questions.
+</p>
+<dl>
+  <dt>Why does text missing from some images?</dt>
+  <dd>Truetype fonts have not been correctly installed or configured. <a href="configure.html#fonts">More...</a></dd>
+  <dt>Which configuration files do I edit?</dt>
+  <dd>Ensembl uses a plugin system which makes life easier to configure mirrors, by merging configuration files. <a href="problems.html#whichfile">More...</a></dd>
+  <dt>Configurations are not stored if I don't have a local MySQL server?</dt>
+  <dd>Ensembl can now store (limited) configuration settings against a SQLite database. <a href="problems.html#sqlite">More...</a></dd>
+  <dt>Mart isn't currently installed in the Ensembl mirror. How can I enable it?</dt>
+  <dd>Mart requires some post CVS checkout changes and so we don't configure it by default - it requires a plugin to enable it. <a href="biomart.html">More...</a></dd>
+  <dt>The main Ensembl website has user accounts - can we enable them on our mirror?</dt>
+  <dd>Yes, there are minor configuration changes required. <a href="problems.html#accounts">More...</a></dd>
+</dl>
+
+</body>
+</html>
+  

@@ -1,0 +1,147 @@
+<html>
+
+<head>
+  <meta name="author" content="DAS:AndyJenkinson" />
+  <title>Setting up a DAS server</title>
+</head>
+
+<body>
+
+<h1>DAS Servers</h1>
+
+<p>
+  This documentation is aimed at those wishing to set up DAS servers to work
+  with Ensembl. It contains some technical information, and it is assumed you
+  are already familiar with <a href="/info/data/ensembl_das.html">how Ensembl uses DAS</a>.
+</p>
+
+<h2>Choice of DAS server</h2>
+
+<p>
+  Although Ensembl works with older DAS servers, there are additional benefits
+  to using a server that supports the latest extensions to the DAS protocol. In
+  particular, the <strong>sources</strong> command allows a DAS server to
+  function in a similar way to the <a href="http://www.dasregistry.org">
+  DAS Registry</a>, providing all the information necessary for Ensembl to
+  interact with the server without the user needing to provide any technical
+  information (e.g. the types of identifiers to query it with). Any server
+  supporting <a href="http://www.dasregistry.org/spec_1.53E.jsp">DAS 1.53E</a>
+  or later should work. There are three main open source server libraries, all
+  of which are exensible to work with what whatever kind of data you may have.
+</p>
+
+<h3>ProServer</h3>
+
+<p>
+  <a href="http://www.sanger.ac.uk/Software/analysis/proserver/">ProServer</a>
+  is a Perl-based DAS server developed at the
+  <a href="http://www.sanger.ac.uk/">Wellcome Trust Sanger Institute</a> and
+  <a href="http://www.ebi.ac.uk/">European Bioinformatics Institute</a>. The
+  server can operate standalone (i.e. without an HTTP server), and is supplied
+  with extensions for common data formats such as flat files (e.g. GFF) and
+  relational databases.
+</p>
+
+<p>
+  We recommend you try ProServer first, especially if you have Perl expertise.
+  It is the most commonly used server.
+</p>
+
+<h3>Dazzle</h3>
+
+<p>
+  <a href="http://www.biojava.org/wiki/Dazzle">Dazzle</a> is a DAS servlet for
+  the <a href="http://www.biojava.org">BioJava</a> framework, developed at the
+  Sanger Institute. It operates inside a servlet container such as Resin or
+  Tomcat.
+</p>
+
+<p>
+  Dazzle is a good choice if you are already familiar with Java and BioJava,
+  and is the most commonly used Java server.
+</p>
+
+<h3>MyDas</h3>
+
+<p>
+  Developed in 2007 at the European Bioinformatics Institute, the
+  <a href="http://code.google.com/p/mydas/">MyDas</a> Java servlet uses a
+  minimal custom data model and therefore is not dependent on the BioJava
+  framework. Like Dazzle, it operates within a servlet container.
+</p>
+
+<p>
+  MyDas is a good choice if you are building a custom DAS server, or do not
+  wish to use BioJava.
+</p>
+
+<h2>Attaching sources</h2>
+
+<p>
+  Once your server is set up (see the relevant documentation provided with the
+  server software), you should ensure it is configured correctly to work with
+  Ensembl. To do this, it is best to understand how Ensembl will query your
+  server when you try to attach it.
+</p>
+
+<ol>
+<li>First, the DAS server is queried using the <em>sources</em> command:<br/>
+  <i>http://yourserver/das/sources</i><br/>
+Along with the label, description and other textual information, Ensembl extracts from each source details of the supported coordinate systems and the URL that should be used to query the source for features.</li>
+<li>If the server does not support the sources command (or if coordinates information is not provided), Ensembl queries using the older <i>dsn</i> command:<br/>
+  <i>http://yourserver/das/dsn</i><br/>
+Ensembl will then try to find coordinates information from the mapmaster, if one is specified.</li>
+</ol>
+
+<p>
+  This behaviour is more "intelligent" than in previous versions of Ensembl,
+  but relies on the information provided by the server. Because of this, you
+  should check that this is accurate. In particular, make sure of the following:
+</p>
+
+<ul>
+<li>The source supports the "features" command/capability.</li>
+<li>The source provides a mapmaster. Note that a source may support multiple coordinate systems - Ensembl will query the source in the most efficient manner.</li>
+</ul>
+
+<p>Additionally, if your server supports the <em>sources</em> command:</p>
+<ul>
+<li>The query URL for each source must be accessible from the Ensembl server. Check the "query_uri" in your server's XML response to the sources command. You will often need to manually set the hostname in your server's configuration. For example in ProServer, set the "hostname" or "response_hostname" property to a fully-qualified host (e.g. myhost.mycompany.com).</li>
+<li>The server must provide complete and accurate coordinate system data for each source. See the server documentation for further detail.</li>
+</ul>
+
+<h2>Controlling appearance</h2>
+
+<p><em>Note: this section only applies to "positional" features rendered on the graphical displays. Gene-based annotations are not rendered graphically.</em></p>
+
+<p>
+  Previous versions of Ensembl required the user to specify how the features
+  returned by a DAS source should be rendered. Now, Ensembl defaults to using
+  the DAS stylesheet unless it is explicitly overridden by the user. Ensembl has
+  a very flexible rendering engine, making it possible to build complex and
+  attractive tracks. See the
+  <a href="http://www.biodas.org/documents/spec.html">DAS specification</a> and
+  <a href="http://www.dasregistry.org/extension_stylesheet_histogram.jsp">
+  Histogram extension</a> for reference. Examples are available
+  <a href="http://www.baggy.me.uk/das/dsn">here</a>.
+</p>
+
+<h2>Tips</h2>
+
+<p>Here are some tips to improving the user experience of your DAS source(s):</p>
+
+<ul>
+<li><strong>Register the source in the <a href="http://www.dasregistry.org">DAS registry</a>.</strong><br/>
+  In addition to making your source more visible to the community, the registry provides monitoring functions, notifying your if your source is not functioning correctly.</li>
+<li><strong>Supply a stylesheet.</strong><br/>
+  There are many different ways of rendering DAS features. A stylesheet enables you to specify how the data should look, without the user needing to worry about it.</li>
+<li><strong>Provide as much metadata as possible.</strong><br/>
+  Be as informative about your source as possible. What type of data does it offer? Where did it come from? Who generated it? Is there a publication or webpage offering further details? In future, Ensembl may also make use of the maintainer's email address.</li>
+<li><strong>Optimise performance</strong><br/>
+  Response time for a webpage is a very important usability issue. Make sure your source is as fast as it can be - if your server is backed by a flat file consider using a relational database. If you already use one, make sure any indices are present (and being used), and that the engine has up-to-date statistics.</li>
+<li><strong>Use the <em>maxbins</em> extension.</strong><br/>
+  Especially for dense quantitative data, response time can be a big problem. The --maxbins-- DAS extension allows you to control the number of features returned according to the available rendering space (i.e. the number of horizontol pixels in the image).</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<html>
+  <head>
+    <title>Website Structure</title>
+  </head>
+  <body>
+  <h1>Site structure</h1>
+  <p>
+The site structure that we are going to build is self-contained within a server-root directory. It doesn't
+matter where this server-root directory is situated on your system; as long as the files within it are
+located as described here then everything should work OK.
+  </p>
+  <p>
+    The site structure is as follows (using "/usr/local/ensembl" as an example server-root):
+  </p>
+  <table>
+  <tr>
+    <td colspan="4"><kbd>`--&nbsp;/usr/local/ensembl</kbd></td>
+  </tr>
+  <tr>
+    <td rowspan="20" style="width: 3em">&nbsp; &nbsp;</td>
+    <td colspan="3"><kbd>|--&nbsp;bioperl-live</kbd></td>
+    <td>bio-modelling tools that Ensembl is based upon</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;biomart-perl</kbd></td>
+    <td>Code to access the mart data-retrieval system</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl</kbd> </td>
+    <td>Ensembl core module</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-compara</kbd> </td>
+    <td>Code for handling cross-species comparisons</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-draw</kbd> </td>
+    <td>Drawing code for the website</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-external</kbd> </td>
+    <td>Code for data outside the core database</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-functgenomics</kbd> </td>
+    <td>Code to access the functional genomics data</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;ensembl-variation</kbd> </td>
+    <td>Code to access the variation (SNP) data</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;perl</kbd> </td>
+    <td>Website mod_perl modules</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;modules</kbd> </td>
+    <td>Website accessory modules</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;conf</kbd> </td>
+    <td>Website configuration files</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;htdocs</kbd> </td>
+    <td>Website HTML and image files</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>|--&nbsp;utils</kbd> </td>
+    <td>Utility scripts</td>
+  </tr>
+  <tr>
+    <td colspan="3"><kbd>`--&nbsp;public-plugins</kbd></td>
+    <td>Public plugin modules</td>
+  </tr>
+</table>
+
+<p><strong>Next</strong>: <a href="build.html">Installing the code components &rarr;</a></p>
+
+</body>
+</html>

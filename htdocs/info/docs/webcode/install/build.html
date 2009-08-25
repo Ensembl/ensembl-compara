@@ -1,0 +1,67 @@
+<html>
+  <head>
+    <title>Building an Ensembl Mirror</title>
+  </head>
+<body> 
+  <h1>Building an Ensembl Mirror</h1>
+
+<p>
+The build instructions are split into three sections:
+</p>
+<ul>
+  <li>How to install other applications required by Ensembl: CVS, Perl, MySQL, Apache 2, Dotter</li>
+  <li>How to install the Ensembl and BioMart software</li>
+  <li>How to install the Ensembl data</li>
+</ul>
+
+<h2>Ensembl and MySQL</h2>
+<p>
+  PLEASE NOTE - even if you do not wish to download all the Ensembl data - for the website to function
+  you will need:
+</p>
+<ul>
+  <li>a local database server to manage display settings and user accounts (if these are enabled).</li>
+  <li>the mysql client software installed on your machine.</li>
+</ul>
+<p>
+  If you do not wish to run MySQL (or cannot run a MySQL server locally) <strong>AND</strong> you do not
+  wish to enable user accounts then you can alternatively install SQLite as an alternative server.
+</p>
+
+<h2>Ensembl Version Numbers...</h2>
+<p>
+  Each Ensembl release has an integer version number associated with it, and that version number is
+  used to identify the correct versions of API, Web code and databases (see below) that make up that
+  release.
+</p>
+<p>
+  For the API and Web code, a CVS branch (essentially a named snapshot of the code) is made for each
+  release, named with the release version number. The current release is version [[SPECIESDEFS::ENSEMBL_VERSION]],
+  and the CVS tag for identifying the API and Web code for this release is 'branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]'.
+</p>
+
+<p>
+  The Ensembl database names consist of the species, the database type, the release number, and the
+  data version. The current human 'core' database is named homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]]. i.e. a
+  human core database, release [[SPECIESDEFS::ENSEMBL_VERSION]], data version [[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] built on the NCBI 36 assembly. Subsequent data
+  releases on the same assembly are suffixed with a lower case letter (a, b, etc.).
+</p>
+
+<p>
+  The idea is that components with the same release version should work together - i.e. any web site built
+  with 'version 31' API and web code, and 'version 31' databases should work correctly.
+</p>
+
+<ol>
+  <li><a href="non-ensembl-code.html">How to install applications required by Ensembl</a></li>
+  <li><a href="ensembl-code.html">How to install the Ensembl and BioMart software</a></li>
+  <li><a href="ensembl-data.html">How to install the Ensembl data</a></li>
+</ol>
+
+<p>Once you have completed all these steps, you are ready to configure your installation.
+
+<p><strong>Next</strong>: <a href="configure.html">Configuration &rarr;</a></p>
+
+</body>
+</html>
+  

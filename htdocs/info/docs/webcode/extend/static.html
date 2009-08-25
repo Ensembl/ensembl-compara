@@ -1,0 +1,104 @@
+<html>
+<head>
+<title>Adding HTML pages to your Ensembl website</title>
+</head>
+
+<body>
+
+<h1>Adding HTML pages to your Ensembl website</h1>
+
+<p>The public-plugins/ensembl/htdocs/info directory contains all the
+documentation needed for an Ensembl mirror. If however you are setting
+up a site with your own species, you may want to add your own pages, 
+such as contact information for your project or general documentation
+that applies to all species.</p>
+
+<h2>Navigation</h2>
+
+<p>In order to avoid spending time maintaining navigation of static
+pages, the Ensembl code includes automated navigation. This is implemented
+as follows:</p>
+
+<ol>
+<li>At server startup, the module EnsEMBL::Web::ConfigPacker parses the
+entire document tree for htdocs/info/ in all plugins, to produce a
+combined tree for the whole site</li>
+<li>This tree is then used to generate site navigation:
+  <ul>
+  <li>The left-hand menu on static pages includes an expandable version of the document tree</li>
+  <li>On each static page, a "breadcrumb trail" is constructed from the
+relevant path through the tree</li>
+  </ul>
+</li>
+</ol>
+
+<p>In order to take advantage of this functionality, you simply need to make
+sure that you place your documentation in the htdocs/info directory of your
+plugin, and follow these simple rules when formatting your HTML files:</p>
+
+<ul>
+<li>Use the file extension .html - other file types are ignored</li>
+<li>Use XHTML in preference to HTML - <a href="xhtml.html">XHTML Quick Reference</a></li>
+<li>Omit templating and navigation - that is all handled by the web code</li>
+<li>Include a &lt;title&gt; tag</li>
+<li>On index pages, if the title is longer than a couple of words, consider using
+a "navigation" meta tag (see below)</li>
+</ul>
+
+<p>Sample file:</p>
+
+<pre class="code">
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;About This Project&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+&lt;h1&gt;About This Project&lt;/h1&gt;
+
+[Your content here]
+
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+<div class="tinted-box embedded-box">Note that if you add or remove a static page, 
+or change anything within the &lt;head&gt; tag, you need to delete 
+<code>/conf/packed/web_tree.packed</code> and restart the server.</div>
+
+<h3>Omitting content from the navigation</h3>
+
+<p>There may be instances where you do not wish to have ConfigPacker parse sections of the tree.
+For example, we do not include the contents of 'Pdocs' in the Ensembl documentation tree as it
+contains many hundreds of files and has its own navigation menu.</p>
+
+<p>To omit part or all of a directory from the tree, use the "index" meta tag as follows:</p>
+
+<ul>
+<li>To omit an entire directory, put the "index" meta tag in the index.html file header
+and set its value to "NO INDEX"</li>
+<li>To include the index file but not other HTML files or subdirectories, put the "index" 
+meta tag in the index.html file and set its value to "NO FOLLOW"</li>
+<li>To omit an individual HTML file, put the "index" meta tag in its header and
+set the value to "NO INDEX"</li>
+</ul> 
+
+<p>Sample file:</p>
+
+<pre class="code">
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;PDoc Documentation&lt;/title&gt;
+&lt;meta name="index" content="NO FOLLOW" /&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+&lt;h1&gt;Ensembl PDoc Documentation&lt;/h1&gt;
+
+[rest of page]
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+</body>
+</html>

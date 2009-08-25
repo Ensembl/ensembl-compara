@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <title>Webcode configuration files</title>
+  </head>
+<body> 
+
+<h1>Configuration and sessions</h1>
+  
+<p>Ensembl has two different types of configuration: system and user.</p>
+  
+<h2>System configuration</h2>
+  
+<p>System settings are controlled by the administrator of Ensembl.</p>
+   
+<h3>Apache web server configuration</h3>
+    
+<p>The <code>SiteDefs.pm</code> Perl module holds the information required to build the <code>httpd.conf</code> file to configure Apache (i.e. port number, modules etc). Some knowledge of Perl is required to edit and maintain this file.</p>
+
+<p>A SiteDefs object is instantiated by the parent Apache process, and is made available to all scripts served by a child process. The role of Apache in serving pages is discussed in <a href="apache_loop.html">Apache Loop</a>.</p>
+   
+<h3>Site configuration and species definitions</h3>
+   
+<p>A series of <code>.ini</code> files are used to specify virtually every other configurable section of Ensembl. These are easier to configure than a perl module and are only needed by the child processes. The <code>DEFAULTS.ini</code> and <code>MULTI.ini</code> files contains a set of default settings for all species, but each species appearing in Ensembl can augment or overwrite these settings with its own <code>.ini</code> file. All these files are located and parsed at server startup by <code>EnsEMBL::Web::SpeciesDefs.pm</code>.</p> 
+   
+<p>Configuration options specified in the <code>.ini</code> files include (but are in no way limited to):</p>
+
+<ul>
+   <li>Default database connection settings</li>
+   <li>Homology search settings</li>
+   <li>Paths to utilities used by the site</li>
+   <li>Parameters that control the look and feel of the site</li>
+</ul>
+
+<h3>Accessing system configurations</h3>
+
+<p>As the information from <code>SiteDefs.pm</code> is pulled into <code>SpeciesDefs.pm</code>, all these settings (be they server, site or species) are accessible from the global package <code>SpeciesDefs</code>. No instantiation should be necessary to access the settings as the SpeciesDefs object is instantiated early by <code>EnsEMBL::Web::Page</code> and then passed around. </p>
+
+<h2>User configuration</h2>
+
+<p>Seperate from the actual system configuration, it is often helpful to store additional configuration information on a per user basis. For example, should a user elect to hide a number of tracks, it makes for a better user experience if Ensembl remembers those changes for subsequent visits to the site. Ensembl does this based on user sessions.</p>
+
+<h3>Sessions</h3>
+  
+<p>Any time a user makes a configuration change to a view in Ensembl, a new user session is started. This links a particular browser to a particular Ensembl configuration, by storing a cookie containing a unique identification number in the browser.
+The cookies are only created when needed, by <code>EnsEMBL::Document::WebPage</code>.  They store an encrypted
+version of the session ID from the <code>%ENV</code> variable (instantiated by the Post Read Request handler).</p>
+  
+<p>When a new session is started, a new entry is made in the optional WebUser database and all configuration changes are stored against it. This ensures that configuration changes are persistant per session. </p>
+
+
+<h3>Accessing user configurations</h3>
+  
+<p>Two modules are used to maintain state in this way: <code>UserConfig</code> and <code>ScriptConfig</code>. Both use the same WebUser database for storing and trieving information, and both check and create session identifiers if necessary.</p> 
+  
+<ul>
+  <li><code>UserConfig</code> is used to store information about a particular view's images. For example, which tracks are active.</li> 
+  <li><code>ScriptConfig</code> stores options for a particular script or page. For example, the width of the page, which panels are visible and which are collapsed.
+</ul>
+
+<p>Instead of saving all configuration options in the databse, these configuration modules actually store the difference from the default settings. With this implementation new default options will not be overridden by older session information. 
+</p>
+
+<h2>Footnotes on ensembl_web_user_db</h2>
+<ul>
+   <li>The <code>UserConfig</code> reads the session ID from the cookie and then looks up the session data in the 
+ensembl web user database (ensembl_web_user_db).  If this database goes down, session data requests back up and 
+eventually the whole site does down.</li>
+   <li>Data is not deleted from the ensembl_web_user_db database.</li>
+   <li>The user logins system uses the same database but different tables.</li>
+</ul>
+
+</body>
+</html>
+  
