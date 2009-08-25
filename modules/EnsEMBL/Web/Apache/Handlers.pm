@@ -42,6 +42,7 @@ our %OBJECT_TO_SCRIPT = qw(
   Transcript  action
   Location    action
   Variation   action
+  Regulation  action
   Server      action
   Info        action
   Search      action
@@ -475,7 +476,7 @@ sub transHandler_species {
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
   
   unless ($to_execute) {
-    foreach my $dir (@PERL_TRANS_DIRS){
+    foreach my $dir (reverse @PERL_TRANS_DIRS){
       last unless $script;
       
       my $filename = sprintf($dir, $species) . "/$script";
