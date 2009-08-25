@@ -27,7 +27,7 @@ sub init {
   my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
   
   foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
-    $view_config->_set_defaults(map {( lc("species_$row_key"."_$_"), 'yes' )} grep { $_ !~ /Ancestral/ } keys %{$hash->{$row_key}{'species'}});
+    $view_config->_set_defaults(map {( lc("species_$row_key"."_$_"), /Ancestral/ ? 'no' : 'yes' )} keys %{$hash->{$row_key}{'species'}});
   }
 }
 
