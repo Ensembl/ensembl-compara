@@ -39,11 +39,21 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use File::Basename qw( dirname );
 use FindBin qw($Bin);
 use Getopt::Long;
 
-my ($help, $rmconfig, $delay, $single, $tail, $flush);
+my $serverroot;
+
+BEGIN {
+  $serverroot = dirname($Bin);
+  unshift @INC, "$serverroot/conf";
+};
+
+
+my ($help, $rmconfig, $delay, $single, $tail, $flush, $species);
 &GetOptions(
+    "sp=s"           => \$species,
     "rmconfig"      => \$rmconfig,
     "r"             => \$rmconfig,
     "f"             => \$flush,
@@ -64,16 +74,38 @@ if ($help) {
         [-X|--single]
         [-h|--help]
         [-t|--taillog]
-        
+        [-sp=species_name,species_name|all]        
+
 Options:
     -r, --rmconfig  : remove conf/config.packed before restarting the server
     -d N, --delay N : wait N seconds before restart \(to allow proper shutdown\)
     -X, --single    : start Apache in single server mode
     -h, --help      : print this help message
+    -sp             : rm conf/packed/species_name.*, or rm conf/packed/* if -s eq all
     -t, --taillog   : end the command with ./ctrl/taillog
 );
     exit;
 }
+
+if ($species) {
+    warn "SPECIES [$species]\n";
+    if ($species eq 'all') {
+	my $cmd = "rm $serverroot/conf/packed/\*";
+	`$cmd`;
+    } else {
+	foreach my $sp (split /,/, $species) {
+	    my $f = "$serverroot/conf/packed/$sp.db.packed";
+	    if (-e $f) {
+		`rm $f`;
+		warn " Removed $f ....\n";
+	    } else {
+		warn " WARNING: $sp not found ...\n";
+	    }
+	}
+    }
+    $rmconfig = 1;
+}
+
 
 my $stop_args = $delay ? "-d $delay" : "";
 my $start_args = join(" ", $rmconfig ? "-r" : "", $single ? "-X" : "", $flush ? "-f" : "");
