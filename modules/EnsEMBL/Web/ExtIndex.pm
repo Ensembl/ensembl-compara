@@ -6,6 +6,7 @@ use EnsEMBL::Web::Root;
 our @ISA = qw(EnsEMBL::Web::Root);
 
 use strict;
+use Data::Dumper;
 
 sub new {
   my( $class, $species_defs ) = @_;
@@ -18,14 +19,14 @@ sub get_indexer {
 
     unless( $self->{'databases'}{$db} ) {
 	my ($indexer,$exe);
-
 	#get data from e! databases
 	if ($db =~ /^ENS/) {
 	    $indexer = 'ENSEMBL_RETRIEVE';
 	    $exe     = 1;
 	}
 	else {
-	    $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 'PFETCH';
+	    $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 
+		$self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ 'DEFAULT'  } || 'PFETCH' ;
 	    $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
 	}
 	if( $exe ) {
@@ -68,7 +69,9 @@ sub _get_seq{
   # retrieve the indexer and executable names
   ############################################
   my $db = $args->{'DB'} || 'DEFAULT';
+
   my $indexer = $self->get_indexer( $db );
+
   if( $indexer && defined $args->{$type} ) {
     my $function='get_seq_by_'.lc($type);
     $self->{'indexers'}{$db}{'module'} || new
