@@ -297,8 +297,8 @@ sub get_ext_seq{
 	$seq_ary = $indexer->get_seq_by_id(\%args);
     };
     if ( ! $seq_ary) {
-	$self->problem( 'fatal', "Unable to fetch sequence",  "The $ext_db server is unavailable $@");
-	return;
+	warn "The $ext_db server is unavailable: $@";
+	return '';
     }
     else {
 	my $list = join " ", @$seq_ary;
