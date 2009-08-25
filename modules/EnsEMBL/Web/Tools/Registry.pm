@@ -27,6 +27,7 @@ sub configure {
     'VEGA_ENSEMBL'     => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'CORE'             => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'COMPARA'          => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    'COMPARA_PAN_ENSEMBL' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     'USERDATA'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     'COMPARA_MULTIPLE' => undef,
     'WEBSITE'          => undef,
