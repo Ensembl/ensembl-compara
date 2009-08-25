@@ -110,9 +110,9 @@ use Sys::Hostname::Long;
 use Exporter();
 @ISA=qw(Exporter);
 
-$VERSION                   = 55;
-$ARCHIVE_VERSION           = "Jul2009";    # Change this to the archive site for this version
-$ENSEMBL_RELEASE_DATE      = 'July 2009';
+$VERSION                   = 56;
+$ARCHIVE_VERSION           = "Sep2009";    # Change this to the archive site for this version
+$ENSEMBL_RELEASE_DATE      = 'Sept 2009';
 
 $ENSEMBL_MIN_SPARE_SERVERS =  5;
 $ENSEMBL_MAX_SPARE_SERVERS = 20;
@@ -152,7 +152,7 @@ while( ($CONF_DIR = pop @clean_directory) !~ /^conf/) { 1; }     ## Remove up to
 $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_directory ) );
 $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 $APACHE_DIR         = "$ENSEMBL_SERVERROOT/apache2";
-$APACHE_BIN = "APACHE_DIR/bin/httpd";
+$APACHE_BIN = "$APACHE_DIR/bin/httpd";
 
 $BIOPERL_DIR        = "$ENSEMBL_SERVERROOT/bioperl-live";
 #warn "$ENSEMBL_SERVERROOT";
