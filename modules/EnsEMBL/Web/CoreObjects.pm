@@ -15,11 +15,12 @@ sub new {
     'input'      => $input,
     'dbc'        => $dbconnection,
     'objects' => {
-      'transcript' => undef,
-      'gene'       => undef,
-      'location'   => undef,
-      'variation'  => undef,
-      'search'     => undef,
+      'transcript'  => undef,
+      'gene'        => undef,
+      'location'    => undef,
+      'variation'   => undef,
+      'search'      => undef,
+      'regulation' => undef,
     },
     'parameters' => {}
   };
@@ -146,6 +147,21 @@ sub variation_long_caption {
   return $self->variation->name;
 }
 
+sub regulation {
+### a
+  my $self = shift;
+  $self->{objects}{regulation} = shift if @_;
+  return $self->{objects}{regulation};
+}
+
+sub regulation_short_caption {
+### a
+  my $self = shift;
+  return '-' unless $self->regulation;
+  my $label = $self->regulation->stable_id;
+  return "Regulation: $label";
+}
+
 sub param {
   my $self = shift;
   return $self->{input}->param(@_);
@@ -155,7 +171,7 @@ sub _generate_objects_lw {
   my $self = shift;
   my $action = '_generate_objects_'.$ENV{'ENSEMBL_TYPE'};
   $self->timer_push( 'Lightweight core objects call' );
-  foreach (qw(pt t g r db v vdb source _referer)) {
+  foreach (qw(pt t g r rf db v vdb source _referer)) {
     $self->{'parameters'}{$_} = $self->param($_);
   }
   $self->$action;
@@ -214,10 +230,19 @@ sub _generate_objects_Variation {
   $self->{'parameters'}{'vdb'} ||= 'variation';
   my $db_adaptor = $self->database($self->{'parameters'}{'vdb'});
   my $t = $db_adaptor->getVariationAdaptor->fetch_by_name( $self->{'parameters'}{'v'}, $self->{'parameters'}{'source'} );
-  $self->timer_push( 'Gene fetched', undef, 'fetch' );
+  $self->timer_push( 'Variation fetched', undef, 'fetch' );
   $self->variation( $t );
   $self->timer_push( 'Fetching location', undef );
   $self->_generate_objects_Location;
+}
+
+sub _generate_objects_Regulation {
+  my $self = shift;
+  $self->{'parameters'}{'fdb'} ||= 'funcgen'; 
+  my $db_adaptor = $self->database($self->{'parameters'}{'fdb'});
+  my $t = $db_adaptor->getRegulatoryFeatureAdaptor->fetch_by_stable_id($self->{'parameters'}{'rf'});
+  $self->timer_push('Regulatory feature fetched', undef, 'fetch');
+  $self->regulation($t);
 }
 
 sub _generate_objects {
@@ -225,12 +250,17 @@ sub _generate_objects {
 
   return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
 
-#  if( $self->param('variation')) {
-#    $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('variation'), $self->param('source')));
-#    unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
+  if ($self->param('rf')){ 
+    my $funcgen_db = $self->{'parameters'}{'fdb'} = $self->param('fdb') || 'funcgen';
+    my $funcdb_adaptor = $self->database($funcgen_db); 
+    if ( $funcdb_adaptor ){ 
+      $self->regulation($funcdb_adaptor->get_RegulatoryFeatureAdaptor->fetch_by_stable_id($self->param('rf')));  
+      $self->_get_regulation_location;
+    } 
+  }
   if( $self->param('v')) { 
     my $vardb = $self->{'parameters'}{'vdb'} = $self->param('vdb') || 'variation';
-    my $vardb_adaptor = $self->database('variation');
+    my $vardb_adaptor = $self->database($vardb);
     if( $vardb_adaptor ) {
     $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source')));
     unless ($self->param('r')){ $self->_check_if_snp_unique_location; }
@@ -403,6 +433,11 @@ sub _generate_objects {
       $self->{'parameters'}{'g'} = $self->gene->stable_id;
     }
   }
+  if( $self->regulation ){
+    if( $self->regulation->isa( 'Bio::EnsEMBL::Funcgen::RegulatoryFeature' ) ){
+      $self->{'parameters'}{'rf'} = $self->regulation->stable_id;
+    }
+  }
   $self->{'parameters'}{'v'} = $self->variation->name       if $self->variation;
   unless( keys %{$self->{'parameters'}} ) {
     $self->{'parameters'}{'_referer'} = $self->param('_referer') if $self->param('_referer');
@@ -450,6 +485,32 @@ sub _get_location_from_gene {
 
 sub _get_gene_transcript_from_location {
   my( $self ) = @_;
+}
+
+sub _get_regulation_location {
+  my $self = shift;
+  return unless $self->regulation;
+  my $db_adaptor= $self->database('core');
+  my $r = $self->regulation->slice->seq_region_name;
+  my $s = $self->regulation->start;
+  my $e = $self->regulation->end;
+
+  my $t = undef;
+  eval {
+    $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+  };
+  if($t && $s < 1 || $e > $t->seq_region_length ) {
+    $s = 1 if $s<1;
+    $e = 1 if $e<1;
+    $s = $t->seq_region_length if $s > $t->seq_region_length;
+    $e = $t->seq_region_length if $e > $t->seq_region_length;
+    $t = undef;
+    eval {
+      $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( 'toplevel', $r, $s, $e );
+    };
+  }
+  $self->timer_push( 'Location fetched', undef, 'fetch' );
+  $self->location( $t );
 }
 
 sub _check_if_snp_unique_location {
