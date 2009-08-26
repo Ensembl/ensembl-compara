@@ -9,7 +9,7 @@
 
 
 <p>
-This document refers to the schema of EnsEMBL Compara version <strong>51</strong>.
+This document refers to the schema of EnsEMBL Compara version <strong>56</strong>.
 </p>
 
 
@@ -90,10 +90,15 @@ protein coding Ensembl gene. Homologies are derived from them.
       <li><a href="#family_member">family_member</a></li>
       <li><a href="#domain">domain</a></li>
       <li><a href="#domain_member">domain_member</a></li>
-      <li><a href="#protein_tree_node">protein_tree_node</a></li>
-      <li><a href="#protein_tree_member">protein_tree_member</a></li>
-      <li><a href="#protein_tree_tag">protein_tree_tag</a></li>
+      <li><a href="#protein_tree_node">protein_tree_node / super_protein_tree_node</a></li>
+      <li><a href="#protein_tree_tag">protein_tree_tag / super_protein_tree_tag</a></li>
+      <li><a href="#protein_tree_member">protein_tree_member / super_protein_tree_member</a></li>
+      <li><a href="#protein_tree_member_score">protein_tree_member_score</a></li>
       <li><a href="#sitewise_aln">sitewise_aln</a></li>
+
+      <li><a href="#mapping_session">mapping_session</a></li>
+      <li><a href="#stable_id_history">stable_id_history</a></li>
+      <li><a href="#protein_tree_stable_id">protein_tree_stable_id</a></li>
     </ul>
   </li>
 
@@ -462,7 +467,7 @@ assemblies used in this database.</p>
     </tr>
     <tr>
       <td>locator</td>
-      <td>varchar(255)</td>
+      <td>varchar(400)</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -858,7 +863,7 @@ TABLE ANALYSIS
     </tr>
     <tr>
       <td>parameters</td>
-      <td>varchar(255)</td>
+      <td>text</td>
       <td>YES</td>
       <td></td>
       <td>NULL</td>
@@ -1848,6 +1853,15 @@ TABLE CONSTRAINED ELEMENT
       <td></td>
       <td>score derived from Gerp</td>
     </tr>
+    <tr>
+      <td>dnafrag_strand</td>
+      <td>int(2)</td>
+      <td></td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>Strand of the sequence in the alignment</td>
+    </tr>
   </tbody>
 </table>
 
@@ -2104,7 +2118,7 @@ external DBs.</p>
     </tr>
     <tr>
       <td>stable_id</td>
-      <td>varchar(40)</td>
+      <td>varchar(128)</td>
       <td>NO</td>
       <td>MUL</td>
       <td></td>
@@ -2122,12 +2136,12 @@ external DBs.</p>
     </tr>
     <tr>
       <td>source_name</td>
-      <td>varchar(40)</td>
+  <td>enum('ENSEMBLGENE', 'ENSEMBLPEP', 'Uniprot/SPTREMBL', 'Uniprot/SWISSPROT', 'ENSEMBLTRANS', 'EXTERNALCDS')</td>
       <td>NO</td>
       <td>MUL</td>
+      <td>NULL</td>
       <td></td>
-      <td></td>
-      <td>describe the source of the member (Uniprot/SWISSPROT, Uniprot/SPTREMBL, ENSEMBLGENE, ENSEMBLPEP)</td>
+      <td>the source of the member</td>
     </tr>
     <tr>
       <td>taxon_id</td>
@@ -3100,6 +3114,15 @@ for each family entry.
       <td>stable family ID</td>
     </tr>
     <tr>
+      <td>version</td>
+      <td>int(10)</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>version of the stable_id (may only change when members migrate between this family and another one; stays the same otherwise)</td>
+    </tr>
+    <tr>
       <td>method_link_species_set_id</td>
       <td>int(10) unsigned</td>
       <td>NO</td>
@@ -3363,7 +3386,7 @@ TABLE DOMAIN_MEMBER
 TABLE PROTEIN_TREE_NODE
 #####################################################################
 -->
-<h4 id="protein_tree_node">protein_tree_node</h4>
+<h4 id="protein_tree_node">protein_tree_node / super_protein_tree_node</h4>
 
 
 <p>
@@ -3371,7 +3394,7 @@ Contains the data structure of each tree.</p>
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_node table description</caption>
+  <caption>protein_tree_node / super_protein_tree_node table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3411,6 +3434,15 @@ Contains the data structure of each tree.</p>
       <td>link to the root node</td>
     </tr>
     <tr>
+      <td>clusterset_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>node id of the set of clusters</td>
+    </tr>
+    <tr>
       <td>left_index</td>
       <td>int(10)</td>
       <td></td>
@@ -3442,6 +3474,8 @@ Contains the data structure of each tree.</p>
 
 <br>
 
+FIXME: the following explanation may need updating/extending because of introduction of clustreset_id.
+
 <p>When parent_id=0, then node_id is the root. In our data structure, all trees are arbitrarily connected to the same root. This allows storing in the same database the data from independant tree building analysis. Hence the "biological root" of each tree are the children nodes of the main root. For instance the following SQL query</p>
 
 <pre>mysql&gt; SELECT COUNT(*) FROM protein_tree_node WHERE parent_id = root_id;
@@ -3454,7 +3488,13 @@ Contains the data structure of each tree.</p>
 
 <p>will return the number of independant trees stored in the database.</p>
 
-<h4 id="protein_tree_member">protein_tree_member</h4>
+
+<!--
+#####################################################################
+TABLE PROTEIN_TREE_MEMBER
+#####################################################################
+-->
+<h4 id="protein_tree_member">protein_tree_member / super_protein_tree_member</h4>
 
 
 <p>
@@ -3469,7 +3509,7 @@ multiple alignment, then cigar_start/cigar_end should be set to their
 correct value.</p>
 
 <table class="spreadsheet">
-  <caption>protein_tree_member table description</caption>
+  <caption>protein_tree_member / super_protein_tree_member table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3488,7 +3528,16 @@ correct value.</p>
       <td>PRI</td>
       <td></td>
       <td></td>
-      <td>external reference to protein_tree_node.node_id</td>
+      <td>the id of node associated with this name</td>
+    </tr>
+    <tr>
+      <td>root_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>NUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>the id of the tree root</td>
     </tr>
     <tr>
       <td>member_id</td>
@@ -3515,7 +3564,7 @@ correct value.</p>
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td></td>
+      <td>compressed alignment information</td>
     </tr>
     <tr>
       <td>cigar_start</td>
@@ -3524,7 +3573,7 @@ correct value.</p>
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td></td>
+      <td>protein start (0 if the whole protein is in the alignment)</td>
     </tr>
     <tr>
       <td>cigar_end</td>
@@ -3533,7 +3582,98 @@ correct value.</p>
       <td></td>
       <td>NULL</td>
       <td></td>
+      <td>protein end (0 if the whole protein is in the alignment)</td>
+    </tr>
+  </tbody>
+</table>
+
+<!--
+#####################################################################
+TABLE PROTEIN_TREE_MEMBER_SCORE
+#####################################################################
+-->
+<h4 id="protein_tree_member_score">protein_tree_member_score</h4>
+
+
+<p>
+to allow certain nodes (leaves) to have aligned protein member_scores attached to them
+</p>
+
+<table class="spreadsheet">
+  <caption>protein_tree_member_score table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
       <td></td>
+      <td></td>
+      <td>the id of node associated with this name</td>
+    </tr>
+    <tr>
+      <td>root_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>NUL</td>
+      <td>NULL</td>
+      <td></td>
+      <td>the id of the tree root</td>
+    </tr>
+    <tr>
+      <td>member_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td></td>
+      <td></td>
+      <td>link to member.member_id in many-1 relation (single member per node)</td>
+    </tr>
+    <tr>
+      <td>method_link_species_set_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>external reference to method_link_species_set.method_link_species_set_id</td>
+    </tr>
+    <tr>
+      <td>cigar_line</td>
+      <td>mediumtext</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>string with the alignment score values</td>
+    </tr>
+    <tr>
+      <td>cigar_start</td>
+      <td>int(10)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>protein start (0 if the whole protein is in the alignment)</td>
+    </tr>
+    <tr>
+      <td>cigar_end</td>
+      <td>int(10)</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>protein end (0 if the whole protein is in the alignment)</td>
     </tr>
   </tbody>
 </table>
@@ -3544,7 +3684,7 @@ correct value.</p>
 TABLE PROTEIN_TREE_TAG
 #####################################################################
 -->
-<h4 id="protein_tree_tag">protein_tree_tag</h4>
+<h4 id="protein_tree_tag">protein_tree_tag / super_protein_tree_tag</h4>
 
 
 <p>
@@ -3553,7 +3693,7 @@ Contains several tag/value data attached to node_ids
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_tag table description</caption>
+  <caption>protein_tree_tag / super_protein_tree_tag table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3610,7 +3750,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
 
 
 <table class="spreadsheet">
-  <caption>protein_tree_tag table description</caption>
+  <caption>sitewise_aln table description</caption>
   <thead><tr>
     <th>Field</th>
     <th>Type</th>
@@ -3638,7 +3778,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td></td>
+      <td>the position in the whole GeneTree alignment, even if it is all_gaps in the subtree</td>
     </tr>
     <tr>
       <td>node_id</td>
@@ -3647,7 +3787,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td>MUL</td>
       <td></td>
       <td></td>
-      <td></td>
+      <td>the root of the subtree for which the sitewise is calculated</td>
     </tr>
     <tr>
       <td>tree_node_id</td>
@@ -3656,7 +3796,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td></td>
       <td></td>
       <td></td>
-      <td></td>
+      <td>the root of the tree. it will be equal to node_id if we are calculating sitewise for the whole tree</td>
     </tr>
     <tr>
       <td>omega</td>
@@ -3665,7 +3805,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td></td>
+      <td>the estimated omega value at the position</td>
     </tr>
     <tr>
       <td>omega_lower</td>
@@ -3674,7 +3814,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td></td>
+      <td>the lower bound of the confidence interval</td>
     </tr>
     <tr>
       <td>omega_upper</td>
@@ -3683,7 +3823,7 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td></td>
+      <td>the upper bound of the confidence interval</td>
     </tr>
     <tr>
       <td>threshold_on_branch_ds</td>
@@ -3692,16 +3832,244 @@ Contains site-wise omega values found in the multiple alignments underlining the
       <td></td>
       <td>NULL</td>
       <td></td>
-      <td></td>
+      <td>the used threshold to break a tree into subtrees when the dS value of a given branch is too big. This is defined in the configuration file for the genetree pipeline</td>
     </tr>
     <tr>
       <td>type</td>
-      <td>varchar(10)</td>
+      <td>enum('single_character', 'random', 'all_gaps', 'constant', 'default', 'negative1', 'negative2', 'negative3', 'negative4', 'positive1', 'positive2', 'positive3', 'positive4', 'synonymous')</td>
       <td>NO</td>
       <td></td>
       <td></td>
       <td></td>
+      <td>the predicted type for the codon/aminoacid</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+<!--
+#####################################################################
+TABLE MAPPING_SESSION
+#####################################################################
+-->
+<h4 id="mapping_session">mapping_session</h4>
+
+
+<p>
+Contains one entry per stable_id mapping session (either for Families or for Protein Trees),
+which contains the type, the date of the mapping, and which releases were linked together.
+</p>
+
+
+<table class="spreadsheet">
+  <caption>mapping_session table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>mapping_session_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td>NULL</td>
+      <td>auto_increment</td>
+      <td>internal unique ID</td>
+    </tr>
+    <tr>
+      <td>type</td>
+      <td>enum('family', 'tree')</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
       <td></td>
+      <td>Type of stable_ids that were mapped during this session</td>
+    </tr>
+    <tr>
+      <td>when mapped</td>
+      <td>timestamp</td>
+      <td>NO</td>
+      <td></td>
+      <td>CURRENT_TIMESTAMP</td>
+      <td></td>
+      <td>Normally, we use the date of creation of the mapping file being loaded. This prevents the date from chaging even if we accidentally remove the entry and have to re-load it.</td>
+    </tr>
+    <tr>
+      <td>rel_from</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>rel.number from which the stable_ids were mapped during this session. rel_from &lt; rel_to </td>
+    </tr>
+    <tr>
+      <td>rel_to</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>rel.number to which the stable_ids were mapped during this session. rel_from &lt; rel_to </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!--
+#####################################################################
+TABLE STABLE_ID_HISTORY
+#####################################################################
+-->
+<h4 id="stable_id_history">stable_id_history</h4>
+
+
+<p>
+stable_id_history' table keeps the history of stable_id changes from one release to another.
+
+The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to.
+Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field.
+
+Since both stable_ids are listed in the primary key,
+they are not allowed to be NULLs. We shall treat empty strings as NULLs.
+
+If stable_id_from is empty, it means these members are newcomers into the new release.
+If stable_id_to is empty, it means these previously known members are disappearing in the new release.
+If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
+</p>
+
+
+<table class="spreadsheet">
+  <caption>stable_id_history table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>mapping_session_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>stable_id_from</td>
+      <td>varchar(40)</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>version_from</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>stable_id_to</td>
+      <td>varchar(40)</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>version_to</td>
+      <td>int(10) unsigned</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>contribution</td>
+      <td>float</td>
+      <td>YES</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!--
+#####################################################################
+TABLE PROTEIN_TREE_STABLE_ID
+#####################################################################
+-->
+<h4 id="protein_tree_stable_id">protein_tree_stable_id</h4>
+
+
+<p>
+to allow protein trees have trackable stable_ids
+</p>
+
+
+<table class="spreadsheet">
+  <caption>protein_tree_stable_id table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>node_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>PRI</td>
+      <td>NULL</td>
+      <td></td>
+      <td>node_id of the root of the tree</td>
+    </tr>
+    <tr>
+      <td>stable_id</td>
+      <td>varchar(40)</td>
+      <td>NO</td>
+      <td>UNI</td>
+      <td>NULL</td>
+      <td></td>
+      <td>the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10)</td>
+    </tr>
+    <tr>
+      <td>version</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td></td>
+      <td>NULL</td>
+      <td></td>
+      <td>numeric version of the stable_id (changes only when members move to/from existing trees)</td>
     </tr>
   </tbody>
 </table>
