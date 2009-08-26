@@ -69,7 +69,7 @@ $ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
 our $SPECIES_DEFS = $ENSEMBL_WEB_REGISTRY->species_defs;
 
 $SPECIES_DEFS || pod2usage("$0: SpeciesDefs config not found");
-my @species_inconf = @{$SiteDefs::ENSEMBL_SPECIES};
+my @species_inconf = @{$SiteDefs::ENSEMBL_DATASETS};
 my $path = "$SERVERROOT/perl";
 
 ## Species to create examples for:

@@ -126,7 +126,7 @@ my %queries = (
 
 #%queries = map { ($_=>$queries{$_}) } ('Gene features');
 
-my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
+my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_DATASETS};
 
 my $x = XHTML::Validator->new();
 

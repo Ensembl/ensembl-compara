@@ -28,10 +28,10 @@ sub all_species {
 
   ### Example     : my @all_species = @{ utils::Tool::all_species };
   ### Description : returns a list of all the species configured in SiteDefs
-  ###                ENSEMBL_SPECIES
+  ###                ENSEMBL_DATASETS
   ### Returns arrayref
 
-  return $SiteDefs::ENSEMBL_SPECIES || [];
+  return $SiteDefs::ENSEMBL_DATASETS || [];
 }
 
 #------------------------------------------------------------------------

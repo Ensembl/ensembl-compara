@@ -18,7 +18,7 @@ use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Root;
 
 my $SD = new EnsEMBL::Web::SpeciesDefs;
-my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_SPECIES};
+my @species = @ARGV ? @ARGV : @{$SD->ENSEMBL_DATASETS};
 my $root = new EnsEMBL::Web::Root;
 my @modules;
 

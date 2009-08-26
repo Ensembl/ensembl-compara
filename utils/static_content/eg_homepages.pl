@@ -66,7 +66,7 @@ foreach my $species (@valid_species) {
 #  warn Dumper \%species_info;
 #  warn Dumper \%group_info;
 #exit 0;
-my @species_inconf = @{$SiteDefs::ENSEMBL_SPECIES};
+my @species_inconf = @{$SiteDefs::ENSEMBL_DATASETS};
 
 my ($help, @species, $site_type, $mirror);
 our $id_count = 0;

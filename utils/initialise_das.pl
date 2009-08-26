@@ -115,7 +115,7 @@ my $hash = $species_defs;
 
 my $das_coords = _get_das_coords();
 
-my $species = $SiteDefs::ENSEMBL_SPECIES || [];
+my $species = $SiteDefs::ENSEMBL_DATASETS || [];
 my $shash;
 $| = 1;
 

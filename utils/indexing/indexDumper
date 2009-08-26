@@ -35,7 +35,7 @@ my @species;
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
 
 if( $SPECIES_STRING eq 'ALL' ) {
-  @species = @{$SD->ENSEMBL_SPECIES}
+  @species = @{$SD->ENSEMBL_DATASETS}
 } else {
   @species = grep {$_} map { $X{lc($_)} } split /:/, $SPECIES_STRING;
 }
