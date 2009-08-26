@@ -214,39 +214,39 @@ sub populate_tree {
 
 sub ajax_zmenu {
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
-  my $obj = $self->object;
-  my $action = $obj->[1]{'_action'} || 'Summary';
+  
+  my $action = $self->object->[1]{'_action'} || 'Summary';
   
   if ($action =~ /Regulation/) {
-    return $self->_ajax_zmenu_regulation($panel, $obj);
+    return $self->_ajax_zmenu_regulation;
   } elsif ($action =~ /Variation/) {
-    return $self->ajax_zmenu_variation($panel, $obj);
+    return $self->ajax_zmenu_variation;
   } elsif ($action =~ /Genome/) {
-    return $self->_ajax_zmenu_alignment($panel, $obj);
+    return $self->_ajax_zmenu_alignment;
   } elsif ($action =~ /Marker/) {
-    return $self->_ajax_zmenu_marker($panel, $obj);
+    return $self->_ajax_zmenu_marker;
   } elsif ($action eq 'ComparaGenomicAlignment') {
-    return $self->_ajax_zmenu_ga($panel, $obj);
+    return $self->_ajax_zmenu_ga;
   } elsif ($action eq 'Compara_Alignments') {
-    return $self->_ajax_zmenu_av($panel, $obj);
+    return $self->_ajax_zmenu_av;
   } elsif ($action =~ /View|Overview/) {
-    return $self->_ajax_zmenu_view($panel, $obj);
+    return $self->_ajax_zmenu_view;
   } elsif ($action eq 'coverage') {
-    return $self->ajax_zmenu_read_coverage($panel, $obj);
+    return $self->ajax_zmenu_read_coverage;
   } elsif ($action =~ /Supercontigs/) {
-    return $self->_ajax_zmenu_supercontig($panel, $obj);
+    return $self->_ajax_zmenu_supercontig;
   } elsif ($action eq 'Das') {
-    return $self->_ajax_zmenu_das($panel, $obj);
+    return $self->_ajax_zmenu_das;
   } elsif ($action eq 'Align') {
-    return $self->_ajax_zmenu_alignslice($panel, $obj);
+    return $self->_ajax_zmenu_alignslice;
   }
 }
 
 sub _ajax_zmenu_view {
   my $self  = shift;
-  my $panel = shift;
-  my $obj   = shift;
+  
+  my $panel = $self->_ajax_zmenu;
+  my $obj   = $self->object;
   
   if ($obj->param('mfid')) {
     return $self->_ajax_zmenu_misc_feature($panel,$obj);
@@ -310,8 +310,9 @@ sub _ajax_zmenu_view {
 
 sub _ajax_zmenu_supercontig {
   my $self  = shift;
-  my $panel = shift;
-  my $obj   = shift;
+  
+  my $panel = $self->_ajax_zmenu;
+  my $obj   = $self->object;
 
   $panel->{'caption'} = $obj->param('ctg') ." " . $obj->param('r');
   my $url = $obj->_url({
@@ -605,8 +606,9 @@ sub _ajax_zmenu_misc_feature {
 
 sub _ajax_zmenu_av {
   my $self = shift;
-  my $panel = shift;
-  my $obj  = shift;
+  
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
   my $id = $obj->param('id');
   my $obj_type  = $obj->param('ftype');
   my $align = $obj->param('align');
@@ -672,8 +674,9 @@ sub _ajax_zmenu_av {
 
 sub _ajax_zmenu_ga {
   my $self   = shift;
-  my $panel  = shift;
-  my $obj    = shift;
+  
+  my $panel  = $self->_ajax_zmenu;
+  my $obj    = $self->object;
   my $sp1    = $obj->param('s1');
   my $orient = $obj->param('orient');
   my $disp_method = $obj->param('method');
@@ -733,9 +736,11 @@ sub _ajax_zmenu_ga {
 
 sub _ajax_zmenu_marker {
   my $self = shift;
-  my $panel = shift;
-  my $obj  = shift;
+  
+  my $panel   = $self->_ajax_zmenu;
+  my $obj     = $self->object;
   my $caption = $obj->param('m');
+  
   $panel->{'caption'} = $caption;
   my $url = $obj->_url({'type'=>'Location','action'=>'Marker','m'=>$caption});
   $panel->add_entry({
@@ -749,8 +754,9 @@ sub _ajax_zmenu_marker {
 # zmenu for aligments (directed to /Location/Genome)
 sub _ajax_zmenu_alignment {
   my $self = shift;
-  my $panel = shift;
-  my $obj  = shift;
+  
+  my $panel     = $self->_ajax_zmenu;
+  my $obj       = $self->object;
   my $id        = $obj->param('id');
   my $obj_type  = $obj->param('ftype');
   my $db        = $obj->param('fdb') || $obj->param('db') || 'core'; 
@@ -1015,10 +1021,12 @@ sub _ajax_zmenu_regulation {
 }
 
 sub _ajax_zmenu_alignslice {
-  my ($self, $panel, $object) = @_;
+  my $self = shift;
   
-  my $r     = $object->param('r');
-  my $break = $object->param('break');
+  my $panel  = $self->_ajax_zmenu;
+  my $object = $self->object;
+  my $r      = $object->param('r');
+  my $break  = $object->param('break');
   
   my @location = split /\b/, $r;
   my ($start, $end) = ($location[2], $location[4]);

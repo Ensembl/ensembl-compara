@@ -30,17 +30,14 @@ sub context_panel  { return $_[0]->_context_panel;  }
 
 sub ajax_zmenu {
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
-  my $obj  = $self->object; 
-  my $action = $obj->action(); 
+  
+  my $action = $self->object->action;
    
-  if( $action eq 'Variation'){
-    return $self->ajax_zmenu_variation($panel, $obj);
-  }  elsif( $action eq 'Variation_protein'){
-    return $self->ajax_zmenu_variation_protein($panel, $obj);
+  if ($action eq 'Variation') {
+    return $self->ajax_zmenu_variation;
+  }  elsif ($action eq 'Variation_protein') {
+    return $self->ajax_zmenu_variation_protein;
   }
-
- return;
 }
 
 sub populate_tree {

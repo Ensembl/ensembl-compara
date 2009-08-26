@@ -228,11 +228,11 @@ sub configurator {
 
 sub ajax_zmenu {
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
+  
   my $obj = $self->object;
 
   my $action = $obj->[1]{'_action'} || 'Summary'; 
-
+  
   if ($action =~ /Idhistory_Node/) {
     return $self->ajax_zmenu_id_history_tree_node;
   } elsif ($action =~ /Idhistory_Branch/) {
@@ -240,17 +240,19 @@ sub ajax_zmenu {
   } elsif ($action =~ /Idhistory_Label/) {
     return $self->ajax_zmenu_id_history_tree_label;
   } elsif ($action =~ /Regulation/) {
-    return $self->_ajax_zmenu_regulation($panel, $obj);
+    return $self->_ajax_zmenu_regulation;
   } elsif ($action eq 'Variation') {
-    return $self->ajax_zmenu_variation($panel, $obj);
+    return $self->ajax_zmenu_variation;
   } elsif ($action eq 'Variation_transcript') {
-    return $self->ajax_zmenu_variation_transcript($panel, $obj);
+    return $self->ajax_zmenu_variation_transcript;
   } elsif ($action =~ /Compara_Tree_Node/) {
-    return $self->_ajax_zmenu_compara_tree_node($panel);
+    return $self->_ajax_zmenu_compara_tree_node;
   } elsif ($action eq 'Das') {
-    return $self->_ajax_zmenu_das($panel, $obj);
+    return $self->_ajax_zmenu_das;
   }
 
+  my $panel = $self->_ajax_zmenu;
+  
   my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
   $panel->{'caption'} = $disp_id ? "$db_label: $disp_id" : 'Novel transcript';
 
@@ -357,7 +359,8 @@ sub ajax_zmenu {
 sub _ajax_zmenu_compara_tree_node{
   # Specific zmenu for compara tree nodes
   my $self = shift;
-  my $panel = shift;
+  
+  my $panel = $self->_ajax_zmenu;
   my $obj = $self->object;
 
   my $collapse = $obj->param('collapse');
@@ -480,7 +483,6 @@ sub _ajax_zmenu_compara_tree_node{
     }
 
     if( my $tree_stable_id = $node->stable_id ) {
-      warn("$tree_stable_id\n");
       # GeneTree StableID
       $panel->add_entry({
         'type' => 'GeneTree_StableID',

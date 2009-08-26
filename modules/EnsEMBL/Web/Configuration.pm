@@ -1354,7 +1354,9 @@ sub ajax_zmenu_id_history_tree_label {
 
 sub _ajax_zmenu_das {
   my $self = shift;
-  my ($panel, $object) = @_;
+  
+  my $panel  = $self->_ajax_zmenu;
+  my $object = $self->object;
   
   my $logic_name = $object->param('logic_name') || die 'No logic name in params';
   
@@ -1503,7 +1505,8 @@ sub _archive_link {
 
 sub ajax_zmenu_read_coverage {
   my $self = shift;
-  my $panel = shift;
+  
+  my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
   return unless $obj->param('disp_level');
   $panel->{'caption'} = "Resequencing read coverage: ". $obj->param('disp_level');

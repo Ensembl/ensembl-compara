@@ -35,13 +35,13 @@ sub context_panel  { return $_[0]->_context_panel;  }
 
 sub ajax_zmenu      {
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
+  
   my $obj  = $self->object;
   my $action = $obj->action;
   my $dest = "$action/" . $obj->function;
   
   if ($dest eq 'SupportingEvidence/Alignment') {
-    return $self->do_SE_align_menu($panel,$obj);
+    return $self->do_SE_align_menu;
   } elsif ($action eq 'Idhistory_Node') {
     return $self->ajax_zmenu_id_history_tree_node;
   } elsif ($action eq 'Idhistory_Branch') {
@@ -49,21 +49,23 @@ sub ajax_zmenu      {
   } elsif ($action eq 'Idhistory_Label') {
     return $self->ajax_zmenu_id_history_tree_label;
   } elsif ($action eq 'Variation') {
-    return $self->ajax_zmenu_variation($panel, $obj);
+    return $self->ajax_zmenu_variation;
   } elsif ($action eq 'Variation_transcript') {
-    return $self->ajax_zmenu_variation_transcript($panel, $obj);
+    return $self->ajax_zmenu_variation_transcript;
   } elsif ($action eq 'Transcript_Variation') { 
-    return $self->_ajax_zmenu_transcript_variation($panel, $obj);
+    return $self->_ajax_zmenu_transcript_variation;
   } elsif ($action eq 'ref') {
-    return $self->_ajax_zmenu_change_reference($panel, $obj);
+    return $self->_ajax_zmenu_change_reference;
   } elsif ($action eq 'coverage') {
-    return $self->ajax_zmenu_read_coverage($panel, $obj);
+    return $self->ajax_zmenu_read_coverage;
   } elsif ($action eq 'ProteinSummary') {
-    return $self->_ajax_zmenu_protein_feature($panel, $obj);
+    return $self->_ajax_zmenu_protein_feature;
   } elsif ($action eq 'Das') {
-    return $self->_ajax_zmenu_das($panel, $obj);
+    return $self->_ajax_zmenu_das;
   } else {
+    my $panel = $self->_ajax_zmenu;
     my( $disp_id, $X,$Y, $db_label ) = $obj->display_xref;
+    
     $panel->{'caption'} = $disp_id ? "$db_label: $disp_id"
       : (! $obj->gene ) ? $obj->Obj->stable_id
 	: 'Novel transcript';
@@ -147,7 +149,8 @@ sub ajax_zmenu      {
 
 sub _ajax_zmenu_protein_feature {
   my $self = shift;
-  my $panel = shift;
+  
+  my $panel = $self->_ajax_zmenu;
   my $obj   = $self->object;
   my $id    = $obj->param('pf_id');
   my $db    = $obj->param('db')  || 'core';
@@ -181,7 +184,8 @@ sub _ajax_zmenu_protein_feature {
 
 sub _ajax_zmenu_change_reference {
   my $self = shift;
-  my $panel = shift;
+  
+  my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
   return unless $obj->param('reference');
 
@@ -197,7 +201,8 @@ sub _ajax_zmenu_change_reference {
 
 sub _ajax_zmenu_transcript_variation {
   my $self = shift;
-  my $panel = shift;
+  
+  my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
   my $db_adaptor = $obj->database('variation');
   my $var_adaptor = $db_adaptor->get_VariationAdaptor();
@@ -299,7 +304,8 @@ sub _ajax_zmenu_transcript_variation {
 
 sub do_SE_align_menu {
   my $self = shift;
-  my $panel = shift;
+  
+  my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
   my $hit_name   = $obj->param('id');
   my $hit_db     = $obj->get_sf_hit_db_name($hit_name);
