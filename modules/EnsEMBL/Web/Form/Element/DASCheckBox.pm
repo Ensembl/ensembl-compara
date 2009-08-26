@@ -30,7 +30,7 @@ sub _short_das_desc {
     $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
   }
   $self->{'notes'} = CGI::escapeHTML($desc);
-  $self->{'notes'} .= sprintf ' [<a target="_new" href="%s">Homepage</a>]', $source->homepage if $source->homepage;
+  $self->{'notes'} .= sprintf ' [<a target="_new" href="%s" rel="external">Homepage</a>]', $source->homepage if $source->homepage;
 }
 
 sub render {

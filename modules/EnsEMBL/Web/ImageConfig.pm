@@ -658,7 +658,7 @@ sub add_das_track {
   my $desc    =  $source->description;
   my $homepage = $source->homepage;
   if ($homepage) {
-    $desc .= sprintf ' [<a href="%s">Homepage</a>]', $homepage;
+    $desc .= sprintf ' [<a href="%s" rel="external">Homepage</a>]', $homepage;
   }
   my $t = $self->create_track( "das_".$source->logic_name,$source->label, {
     @extra,
