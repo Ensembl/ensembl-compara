@@ -8,7 +8,7 @@ sub my_label { return "Reg. Features"; }
 
 sub features {
   my ($self) = @_;
-   my $slice = $self->{'container'};
+  my $slice = $self->{'container'};
   my $Config = $self->{'config'};
   my $type = $self->check();
  
@@ -99,13 +99,32 @@ sub tag {
 
 }
 
+sub highlight {
+  my ($self, $f, $composite,$pix_per_bp, $h) = @_;
+  my $id = $f->stable_id;
+  ## Get highlights...
+  my %highlights;
+  @highlights{$self->highlights()} = (1);
+
+  return unless $highlights{$id};
+  $self->unshift( $self->Rect({  # First a black box!
+    'x'         => $composite->x() - 2/$pix_per_bp,
+    'y'         => $composite->y() -2, ## + makes it go down
+    'width'     => $composite->width() + 4/$pix_per_bp,
+    'height'    => $h + 4,
+    'colour'    => 'highlight2',
+    'absolutey' => 1,
+  }));
+}
+
 sub href {
   my ($self, $f) = @_;
   my $id = $f->stable_id;
   my $href = $self->_url
-  ({'action'  => 'Regulation',
-    'fid'   => $id,
-    'ftype'    =>  'ensembl_reg_feat',
+  ({ 
+    'action'  => 'Regulation',
+    'rf'      => $id,
+    'fdb'     => 'funcgen' 
   });
 
   return $href; 
