@@ -56,39 +56,42 @@ sub content {
 
   my $data = 0;
   ## First process Ensembl Funcgen Reg. Factors ##
-  foreach my $feature_obj (@reg_feats){
-   my $row = {};
-   my ($position, $feature_link, $length, $type);
+  foreach my $obj (@reg_feats){
+    my $feature_obj = new EnsEMBL::Web::Proxy::Object( 'Regulation', $obj, $object->__data );
+    my $row = {};
+    my ($position, $feature_link, $length, $type);
 
-   my $seq_name = $feature_obj->slice->seq_region_name;
-   $position = $object->thousandify($feature_obj->start) ."-" . $object->thousandify($feature_obj->end) ;
-   $position = qq(<a href="/@{[$object->species]}/Location/Summary?db=core;r=$seq_name:).$feature_obj->start . qq(-).$feature_obj->end .qq(">$seq_name:$position</a>);
+    $position = $feature_obj->location_string;
+    my $position_link = $feature_obj->get_location_url;
 
-   $length = ($feature_obj->end - $feature_obj->start) +1;
-   $length = $object->thousandify( $length ). "bp";
+    $position = qq(<a href=$position_link>$position</a>);
+
+    $length = $feature_obj->length;
+    $length = $object->thousandify( $length ). "bp";
  
-   my $feature_name = $feature_obj->stable_id;
+    my $feature_name = $feature_obj->stable_id;
     $type = $feature_obj->feature_type->name;
     my $analysis = $feature_obj->analysis->logic_name;
-   $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/Location/Genome?id=$feature_name;ftype=RegulatoryFactor;analysis=$analysis;name=$type">$feature_name</a>) : "unknown";
+    my $summary_url = $feature_obj->get_summary_page_url;
+    $feature_link = qq(<a href=$summary_url>$feature_name</a>);
  
-   $type = $feature_obj->feature_type->name;
+    $type = $feature_obj->feature_type->name;
 
-   $feature_obj->{'strand'} = $object_strand;
-   my $seq = $feature_obj->seq();
-   $seq =~ s/([\.\w]{60})/$1<br \/>/g;
+#   $feature_obj->strand = $object_strand;
+    my $seq = $feature_obj->get_seq($object_slice->strand);
+    $seq =~ s/([\.\w]{60})/$1<br \/>/g;
   
-   my $analysis  = qq(<a rel="external" href="http://www.ensembl.org/@{[$object->species]}/helpview?se=1&kw=contigview#fg_regulatory_features">Ensembl Regulatory Build</a>);
-   $row = {
-     'location'  => $position,
-     'length'    => $length,
-     'seq'       => qq(<span class="sequence">$seq</span>),
-     'feature'    => $feature_link,
-     'type'   => $type,
-     'analysis'  => $analysis
-   };
-   $data = 1;
-   $table->add_row($row);
+    my $analysis  = qq(<a rel="external" href="/info/docs/funcgen/index.html">Ensembl Regulatory Build</a>);
+    $row = {
+      'location'  => $position,
+      'length'    => $length,
+      'seq'       => qq(<span class="sequence">$seq</span>),
+      'feature'    => $feature_link,
+      'type'   => $type,
+      'analysis'  => $analysis
+    };
+    $data = 1;
+    $table->add_row($row);
   }
 
   ## Now process external factors ##
