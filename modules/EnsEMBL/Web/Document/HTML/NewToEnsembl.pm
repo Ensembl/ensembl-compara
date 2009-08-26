@@ -63,13 +63,13 @@ sub render {
           my $tweet = $details->{'text'};
           my $miniad;
           ## Add an image
-          if ($tweet =~ /($regex)/) {
-            (my $species = $1) =~ s/ /_/;
-            $miniad .= qq(<img src="/img/species/thumb_$species.png" alt="" class="float-right" />);
-          }
-          elsif ($tweet =~ s/(\[\w+\])// ) { ## File name (sans extension) in square brackets
+          if ($tweet =~ s/(\[\w+\])// ) { ## File name (sans extension) in square brackets
             (my $image = $1) =~ s/\[|\]//g;
             $miniad .= qq(<img src="/img/miniad/$image.gif" alt="" class="float-right" />);
+          }
+          elsif ($tweet =~ /($regex)/) {
+            (my $species = $1) =~ s/ /_/;
+            $miniad .= qq(<img src="/img/species/thumb_$species.png" alt="" class="float-right" />);
           }
           else {
             my $random = int(rand(scalar(@generic_images)));
