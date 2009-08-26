@@ -6,6 +6,9 @@ use strict;
 use warnings;
 
 #use Net::Twitter::Lite;
+use LWP::UserAgent;
+use HTTP::Request;
+use XML::Simple;
 use Data::Dumper;
 
 use EnsEMBL::Web::RegObj;
@@ -18,6 +21,7 @@ our $MEMD = EnsEMBL::Web::Cache->new(
   compress_threshold => 10_000,
 );
 
+srand;
 
 {
 
@@ -26,8 +30,8 @@ sub render {
   ## Ensembl twitter feet (twitter.com/ensembl)
 
   my $html = '<h2 class="first">New to Ensembl?</h2>'; 
+  my @generic_images = qw(new data help);
 
-=pod
   my @tweets;
   my $cached;# = $MEMD && $MEMD->get('::TWEETS') || '';
   
@@ -38,31 +42,69 @@ sub render {
   else {
     my $username = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_USER;
     my $password = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_PASS;
+    my $since_id = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_SINCE_ID;
+
+    my @species = map { local $_ = $_; s/_/ /g; $_ } $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->valid_species;
+    my $regex = join('|', @species);
+
     if ($username && $password) {
-      my $nt = Net::Twitter->new(
-        traits    => [qw/API::REST/],
-        username  => $username,
-        password  => $password,
-      );
-    
-      my $response = eval {$nt->friends_timeline({count => 5)};
-      foreach my $update (@$responses) {
-        warn "TWEET! ".$update->{'text'};  
+      ## Fetch our own Twitter feed
+      my $ua = new LWP::UserAgent;
+      my $proxy = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
+      $ua->proxy( 'http', $proxy ) if $proxy;
+      $ua->credentials('twitter.com:80', 'Twitter API', $username, $password);
+
+      my $url = 'http://twitter.com/statuses/user_timeline.xml?count=5';
+      if ($since_id) {
+        $url .= '&since_id='.$since_id;
       }
-  
+      my $request = HTTP::Request->new(GET => $url);
+      my $response = $ua->request($request);
+      my $parser = new XML::Simple;
+      my $tweet;
+
+      ## Parse feed
+      if ($response->is_success) {
+        my $xml = $parser->XMLin($response->content);        
+        my $update = $xml->{'status'};
+        while (my ($id, $details) = each (%$update)) {
+          my $tweet = $details->{'text'};
+          my $miniad;
+          ## Add an image
+          if ($tweet =~ /($regex)/) {
+            (my $species = $1) =~ s/ /_/;
+            $miniad .= qq(<img src="/img/species/thumb_$species.png" alt="" class="float-right" />);
+          }
+          elsif ($tweet =~ s/(\[\w+\])// ) { ## File name (sans extension) in square brackets
+            (my $image = $1) =~ s/\[|\]//g;
+            $miniad .= qq(<img src="/img/miniad/$image.gif" alt="" class="float-right" />);
+          }
+          else {
+            my $random = int(rand(scalar(@generic_images)));
+            my $image = $generic_images[$random];
+            $miniad .= qq(<img src="/img/miniad/$image.gif" alt="" class="float-right" />);
+          }
+          ## Turn URLs into links
+          $tweet =~ s/(http:\/\/[\w|-|\.|\/]+)/<a href="$1">$1<\/a>/g;
+          $miniad .= $tweet;
+          push @tweets, $miniad;
+        }
+      }
+
       #$MEMD->set('::TWEETS', $tweets, 3600, qw(STATIC BLOG)) if $MEMD;
     }
   }
 
   ## Now pick a random Tweet and display it
-  if ($tweets) {
-    $html = qq(<div class="info-box embedded-box float-right">);
+  if (scalar(@tweets)) {
+    $html .= qq(<div class="info-box embedded-box float-right">
+<h3 class="first">Did you know...?</h3>);
 
+    my $random = int(rand(scalar(@tweets)));
+    $html .= $tweets[$random];
 
-    $html .= qq(<a href="http://twitter.com/ensembl">More updates from Twitter &rarr;</a>
-    </div>);
+    $html .= qq(\n</div>\n);
   }
-=cut
 
   $html .= qq(
   <p>
