@@ -27,7 +27,7 @@ sub content {
   my $das_link    = qq(<a href="/info/docs/das/index.html">Distributed Annotation System</a>);
   my $url_link    = qq(<a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">URL</a>);
   my $upload_link = qq(<a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload</a>);
-  my $action_url  = "/$current_species/UserData/DasSources";
+  my $action_url  = "/$current_species/UserData/CheckServer";
 
   my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE; 
   my $form = $self->modal_form('select_server', $action_url, {'wizard' => 1, 'back_button' => 0});

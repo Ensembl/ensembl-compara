@@ -87,6 +87,9 @@ sub populate_tree {
   # Component:     SelectServer
   #                    |
   #                    V
+  # Command:        CheckServer
+  #                    |
+  #                    V
   # Component:     DasSources                
   #                   |                        
   #                   V                        
@@ -106,6 +109,10 @@ sub populate_tree {
   $self->create_node( 'SelectServer', "Attach DAS",
    [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)], 
     { 'availability' => $is_configurable }
+  );
+  $self->create_node( 'CheckServer', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::CheckServer',
+    'availability' => 1, 'no_menu_entry' => 1 }
   );
   $self->create_node( 'DasSources', '',
    [qw(das_sources EnsEMBL::Web::Component::UserData::DasSources)], 
