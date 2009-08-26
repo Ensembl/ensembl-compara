@@ -240,9 +240,9 @@ sub ajax_zmenu {
   } elsif ($action =~ /Idhistory_Label/) {
     return $self->ajax_zmenu_id_history_tree_label;
   } elsif ($action =~ /RegFeature/) {
-    return $self->ajax_zmenu_reg_feature($panel, $obj);
+    return $self->ajax_zmenu_reg_feature;
   } elsif ($action =~ /Regulation/) {
-    return $self->ajax_zmenu_regulation($panel, $obj);
+    return $self->ajax_zmenu_regulation;
   } elsif ($action eq 'Variation') {
     return $self->ajax_zmenu_variation;
   } elsif ($action eq 'Variation_transcript') {
