@@ -215,12 +215,12 @@ sub populate_tree {
 sub ajax_zmenu {
   my $self = shift;
 
-  my $action = $obj->[1]{'_action'} || 'Summary';
+  my $action = $self->obj->[1]{'_action'} || 'Summary';
 
   if( $action =~ 'Regulation'){
-    return $self->ajax_zmenu_regulation($panel, $obj);
+    return $self->ajax_zmenu_regulation;
   } elsif( $action =~/RegFeature/){
-    return $self->ajax_zmenu_reg_feature($panel, $obj); 
+    return $self->ajax_zmenu_reg_feature; 
   } elsif ($action =~ /Variation/) {
     return $self->ajax_zmenu_variation;
   } elsif ($action =~ /Genome/) {
