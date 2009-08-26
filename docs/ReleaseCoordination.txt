@@ -353,7 +353,8 @@ EOF
 
 
 19. Update the schema and tutorial documentation files compara_schema.html and compara_tutorial.html in this directory:
-    public-plugins/ensembl/htdocs/info/docs/api/compara
+    ensembl-webcode/htdocs/info/docs/api/compara/
+    (previously - public-plugins/ensembl/htdocs/info/docs/api/compara )
 
 CVS commit the changes.
 
