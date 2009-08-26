@@ -269,7 +269,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       // Don't draw the redbox on the first imagemap on the page
       if (parseInt(r[2]) != 1) {
-        this.highlight(highlight.region, 'redbox', species);
+        this.highlight(highlight.region, 'redbox', species, i);
       }
       
       // Highlighting base on self. Take start and end from Ensembl core parameters
@@ -302,7 +302,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
   
-  highlight: function (coords, cl, species) {  
+  highlight: function (coords, cl, species, multi) {  
     var w = coords.r - coords.l + 1;
     var h = coords.b - coords.t + 1;
     var originalClass;
@@ -316,19 +316,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (species) {
       originalClass = cl;
-      cl = cl + '_' + species;
+      cl = cl + '_' + species + (multi || '');
     }
     
-    if (!$('.' + cl, this.el).length) {
-      this.elLk.img.after(
+    var els = $('.' + cl, this.el);
+    
+    if (!els.length) {
+      els = $(
         '<div class="' + cl + ' l"></div>' + 
         '<div class="' + cl + ' r"></div>' + 
         '<div class="' + cl + ' t"></div>' + 
         '<div class="' + cl + ' b"></div>'
-      );
+      ).insertAfter(this.elLk.img);
     }
     
-    var els = $('.' + cl, this.el).each(function () {
+    els.each(function () {
       $(this).css(style[this.className.split(' ')[1]]);
     });
     
