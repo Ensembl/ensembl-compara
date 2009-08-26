@@ -88,7 +88,7 @@ sub href {
   my $analysis =  $f->analysis->logic_name;
 
   my $href = $self->_url
-  ({'action'   => 'Regulation',
+  ({'action'   => 'RegFeature',
     'fid'      => $id,
     'ftype'    => $analysis,
     'dbid'     => $dbid, 
