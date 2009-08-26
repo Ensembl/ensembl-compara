@@ -105,9 +105,9 @@ of mysqldump.
   mysql -u USER -pPASSWD -h compara1 -P 3306 \
       -e "CREATE DATABASE avilella_ensembl_compara_48"
   mysql -u USER -pPASSWD -h compara1 -P 3306 \
-      avilella_ensembl_compara_48 < ~/src/ensembl-compara/sql/table.sql
-  populate_new_database.pl --master compara_master
-      --old compara_52 --new compara_53
+      avilella_ensembl_compara_48 < ~lg4/work/ensembl-compara/sql/table.sql
+
+  populate_new_database.pl --master compara_master --old compara_55 --new compara_56
 
 If new method_link_species_sets are added in the master after this, you use this
 script again to copy the new relevant data. In such case, you will have to skip
@@ -141,11 +141,7 @@ like this:
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-#  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
-#      -d2 .+_core_48_.+ compara_external_foreign_keys
-
-  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
-      -d2 .+_core_48_.+ compara_external_foreign_keys
+  ./run-healthcheck.sh -d lg4_ensembl_compara_56 -type compara -d2 .+_core_56_.+ compara_external_foreign_keys
 
 ...and correct mismatches if any!
 
@@ -223,18 +219,20 @@ perl ~kb3/src/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensemb
 12. Update the max_alignment_length. You can use the corresponding healthcheck
 with the -repair option:
 
-    ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara -repair Meta
+    ./run-healthcheck.sh -d lg4_ensembl_compara_56 -type compara -repair Meta
+
 
 13. Run the healthchecks:
 
-  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
-      -d2 .+_core_48_.+ compara_external_foreign_keys
+    ./run-healthcheck.sh -d lg4_ensembl_compara_56 -type compara -d2 .+_core_56_.+ compara_external_foreign_keys
+# in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
 
-  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
-      compara_db_constraints
+    ./run-healthcheck.sh -d lg4_ensembl_compara_56 -type compara compara_db_constraints
+# in rel.56 the following tests failed: ForeignKeyMethodLinkSpeciesSetIdGenomicAlignBlock (the test itself needs updating) and CheckSynteny (human-platypus missing - it is ok)
 
-  ./run-healthcheck.sh -d avilella_ensembl_compara_48 -type compara \
-      protein_db_constraints
+
+    ./run-healthcheck.sh -d lg4_ensembl_compara_56 -type compara protein_db_constraints
+# in rel.56 all passed
 
 ...and correct mismatches if any!
 
@@ -246,16 +244,31 @@ This means that I wouldn't worry about this anymore, knowing that is going to ra
 
 13.5. Run ANALYZE TABLE and OPTIMIZE TABLE commands
 
-eg
-mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases kb3_ensembl_compara_52
+mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_56
 
-mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases kb3_ensembl_compara_52
+# took 12 min. in rel.56
+
+mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_56
+
+# took 2.5 hours in rel.56
+
 
 14. Ask the release coordinator to point the test web server to the compara DB.
 
-15. Create a patch to convert a compara DB from the previous release to the new
-one. The patch should include at least an update of the schema_version in the
-meta table!
+14.5  Upon confirmation from the release coordinator ask other members of Compara to go to
+    http://staging.ensembl.org/
+and check their data.
+
+
+15. Dump both the current and the previous release schemas (using mysqldump -d) and compare them.
+
+Create a patch to convert a compara DB from the previous release to the new one.
+The patch should include at least an update of the schema_version in the meta table!
+
+Generate an empty database from the old schema, apply the patch, dump it, and check that you get the new schema.
+
+CVS commit the patch.
+
 
 16. Update the files in the ~ensembl-compara/sql directory:
 
@@ -266,103 +279,87 @@ mysql -h ens-staging -uensro -N -e "SELECT * FROM method_link order by method_li
 
 You will have to change the default schema_version in the table.sql file (last line of the file)
 
-17. Apply patches to the test databases and verify that they work fine.
-Recompile the test database.
+CVS commit these files.
 
-Don't forget to commit these changes into the repository!
 
-18. Update files in public-plugins/ensembl/htdocs/info/docs/compara
+17. Update files in public-plugins/ensembl/htdocs/info/docs/compara
 
-You might need to update the create_mlss_table.conf file with new species added. Or you can use the order of species given in the species tree
+You might need to update the create_mlss_table.conf file with new species added.
+Or you can use the order of species given in the species tree:
 
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link PECAN \
-    --list > pecan.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link PECAN \
+    --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > pecan.inc
 
-or
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link PECAN \
-    --list --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > pecan.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link EPO \
+    --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo.inc
 
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link ORTHEUS \
-    --list --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link EPO_LOW_COVERAGE \
+    --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo_lc.inc
 
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link TRANSLATED_BLAT \
-    --trim --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link TRANSLATED_BLAT_NET \
+    --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat_net.inc
 
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link TRANSLATED_BLAT_NET \
-    --trim --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat_net.inc
-
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link BLASTZ_NET \
-    --trim > blastz_net.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link BLASTZ_NET \
+    --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > blastz_net.inc
 
 or to produce a simple list because the table is getting too big
 
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link BLASTZ_NET \
-    --species_tree ~/src/ensembl_main/ensembl-compara/scripts/pipeline/species_tree_blength.nh --blastz_list > blastz_net.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link BLASTZ_NET \
+    --blastz_list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > blastz_net.inc
 
 
-  perl ~/src/ensembl_main/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/.ensembl_init --dbname Compara48 --method_link SYNTENY \
-     --trim  > synteny.inc
+  ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
+    --reg_conf ~/release_56/reg_conf.pl --dbname compara_56 --method_link SYNTENY \
+    --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > synteny.inc
 
  ==> The resulting blastz-net table is huge. In order to make it slightly smaller,
    you can divide it into amniota vertebrates and other chordates (see latest
    release for an example) but you'll have to do it manually as the current
    script doesn't know how to do it.
 
-The copy to ens-staging took about 1h 10 min for v53:
 
-[mysqlens@ensdb-2-10 ~]$ tail -f /tmp/avilella_ensembl_compara_53.copy.err
-//
-// rcp Copying  compara1:/mysql/data_3306/databases/avilella_ensembl_compara_53...DONE (6:54:24)
-// Checking /mysql/data_3306/tmp/ensembl_compara_53/*.MYI in progress...
-//
-myisamchk: MyISAM file conservation_score.MYI
-myisamchk: warning: 1 client is using or hasn't closed the table properly
-myisamchk: MyISAM file dnafrag.MYI
-myisamchk: warning: 1 client is using or hasn't closed the table properly
-myisamchk: MyISAM file genomic_align.MYI
-myisamchk: warning: 1 client is using or hasn't closed the table properly
-//
-// Checking /mysql/data_3306/tmp/ensembl_compara_53/*.MYI DONE
-// moving /mysql/data_3306/tmp/ensembl_compara_53 to /mysql/data_3306/databases DONE
-//
-// End of all copy processes (8:7:11)
-//
-// Processes summary
-// SUCCEEDED copy of avilella_ensembl_compara_53 on compara1 to ensembl_compara_53 on ens-staging
+CVS commit these files.
+
+18. When everybody is happy about the databases, actually copy them to the staging server.
+This is done by a strange script with a clumsy interface, but take heart:
+
+18.1. First, ssh into the DESTINATION machine:
+
+    # NB: ask for the password on staging well in advance - there may be noone around you at the right moment!
+ssh mysqlens@ens-staging
+
+18.2. Create a file that will contain one line with the source/destination parameters, like this:
+
+cat <<EOF >/tmp/lg4_ensembl_compara_56.copy_options
+#from_host      from_port   from_dbname                 to_host         to_port     to_dbname
+#
+compara1        3306        lg4_ensembl_compara_56      ens-staging     3306        ensembl_compara_56
+compara1        3306        lg4_ensembl_ancestral_56    ens-staging     3306        ensembl_ancestral_56
+EOF
 
 
-19. Update files in sanger-plugins/htdocs/info/software/compara
+18.3. Run the script to actually copy the data:
 
-This used to be ensembl-webcode but all the static content information was changed to sanger-plugins. 
+    perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
+        -noflush /tmp/lg4_ensembl_compara_56.copy_options > /tmp/lg4_ensembl_compara_56.copy.err 2>&1 &
 
-Update for schema change and tutorial
+# copying of rel_56 took 2 hours (SUCCESSFUL for both databases - you should check the output file)
 
-20. Once the final compara db has been copied to ens-staging MySQL server, there
-is one last thing to do, update the display_label in member table as well as the gene
-description.
 
-Once the copy is in ens-staging, we apply this insert that makes joins
-between core and compara dbs for the member table:
+19. Update the schema and tutorial documentation files compara_schema.html and compara_tutorial.html in this directory:
+    public-plugins/ensembl/htdocs/info/docs/api/compara
 
-mysql -hens-staging -uensro -N -e 'show databases like "%core\_54\_%"'|awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
+CVS commit the changes.
 
-mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_54 < update_display_label.sql
 
-mysql -hens-staging -uensro -N -e 'show databases like "%core\_54\_%"'|awk '{ print "UPDATE "$1".gene_stable_id gs, "$1".gene g, member m SET m.description=g.description WHERE g.gene_id=gs.gene_id and gs.stable_id=m.stable_id and m.source_name=\"ENSEMBLGENE\";"}' > update_gene_description.sql
+20. (deleted, now being done by Albert before integration of Compara components)
 
-mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_54 < update_gene_description.sql
-
-Ensure that the indexes in all tables in ens-staging are correct. This will do it as yesterday jobs, which are limited to 10 concurrently running:
-
-mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_53 -N -e "show tables" | while read i ; do echo $i===; bsub -q yesterday -o /dev/null -Janalyze.$i mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_53 -N -e "ANALYZE TABLE $i"; done
 
 21. Don't forget to dump the EMF files to go on the FTP sites, for multiple alignment, and protein trees.
 
