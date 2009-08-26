@@ -12,7 +12,7 @@ use base qw(EnsEMBL::Web::ConfigPacker_base);
 sub _munge_databases {
   my $self = shift;
   my @tables = qw(core cdna vega otherfeatures vega_ensembl );
-  foreach my $db ( @tables ) {
+  foreach my $db ( @tables ) { 
     $self->_summarise_core_tables( $db, 'DATABASE_'.uc($db) );
   }
 
@@ -88,9 +88,9 @@ sub _summarise_generic {
 sub _summarise_core_tables {
   my $self   = shift;
   my $db_key = shift;
-  my $db_name = shift;
-  my $dbh    = $self->db_connect( $db_name );
-  return unless $dbh;
+  my $db_name = shift; 
+  my $dbh    = $self->db_connect( $db_name ); 
+  return unless $dbh; 
   
   push @{ $self->db_tree->{'core_like_databases'} }, $db_name;
 
@@ -105,7 +105,7 @@ sub _summarise_core_tables {
        from analysis a left join analysis_description as ad on a.analysis_id=ad.analysis_id'
   );
   my $analysis = {};
-  foreach my $a_aref (@$t_aref) {
+  foreach my $a_aref (@$t_aref) { 
 ## Strip out "crap" at front and end! probably some q(')s...
     ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
        $A =~ s/[^}]+$//;
@@ -130,7 +130,7 @@ sub _summarise_core_tables {
   foreach my $a_aref (@$r_aref){
     $date = $a_aref->[0];
   } 
-  if ($date) { $self->db_tree->{'REPEAT_MASK_DATE'} = $date; }
+  if ($date) { $self->db_tree->{'REPEAT_MASK_DATE'} = $date; } 
 
   #get website version the db was first released on - needed for Vega BLAST auto configuration
   (my $initial_release) = $dbh->selectrow_array(qq(SELECT meta_value FROM meta WHERE meta_key = 'initial_release.version'));
@@ -144,7 +144,7 @@ sub _summarise_core_tables {
         protein_feature marker_feature qtl_feature
 	repeat_feature ditag_feature 
         transcript gene prediction_transcript unmapped_object
-  )) {
+  )) { 
     my $res_aref = $dbh->selectall_arrayref(
       "select analysis_id,count(*) from $table group by analysis_id"
     );
@@ -405,7 +405,22 @@ sub _summarise_funcgen_db {
 #
 # * functional genomics tracks
 #
- 
+
+  my $f_aref = $dbh->selectall_arrayref(
+    'select ft.name, ct.name 
+       from supporting_set ss, data_set ds, feature_set fs, feature_type ft, cell_type ct  
+       where ds.data_set_id=ss.data_set_id and ds.name="RegulatoryFeatures" 
+       and fs.feature_set_id = ss.supporting_set_id and fs.feature_type_id=ft.feature_type_id 
+       and fs.cell_type_id=ct.cell_type_id 
+       order by ft.name;
+    '
+  );   
+  foreach my $row (@$f_aref) {
+    my $feature_type_key =  $row->[0] .':'. $row->[1];
+    $self->db_details($db_name)->{'tables'}{'feature_type'}{'analyses'}{$feature_type_key} = 2;   
+  }
+
+
   $dbh->disconnect();
 }
 
