@@ -74,6 +74,11 @@ sub content {
     push @entries, "{link: '$link'$type}";
   }
   
+  foreach ($self->{'caption'}, @entries) {
+    s/\n/\\n/g;
+    s/\r//g;
+  }
+  
   $self->printf("{caption: '%s', entries: [%s]}", escapeHTML($self->{'caption'}), join ',', @entries);
 }
 
