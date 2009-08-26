@@ -1532,7 +1532,7 @@ sub ajax_zmenu_read_coverage {
 
 sub ajax_zmenu_regulation {
   my $self = shift;
-  my $panel = shift;
+  my $panel = $self->_ajax_zmenu;;
   my $object = $self->object; 
   return unless $object->param('rf'); 
   my $reg_obj;
@@ -1571,7 +1571,7 @@ sub ajax_zmenu_regulation {
 sub ajax_zmenu_reg_feature {
  # Specific zmenu for functional genomics features
   my $self = shift; 
-  my $panel = shift;
+  my $panel = $self->_ajax_zmenu;
   my $obj = $self->object; 
   my $fid = $obj->param('fid') || die( "No feature ID value in params" );
   my $ftype = $obj->param('ftype')  || die( "No feature type value in params" );
