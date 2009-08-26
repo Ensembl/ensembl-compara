@@ -178,10 +178,10 @@ if( Apache2::ServerUtil::restart_count == 1 ){ # Only parse the config on first 
  Species'.join(  "\n        ", map {
     sprintf '%4d  %-6.6s %-32.32s %s',
       ++$i,
-      $conf->other_species($_,'SPECIES_RELEASE_VERSION'),
+      $conf->get_config($_,'SPECIES_RELEASE_VERSION'),
       $_,
-      $conf->other_species($_,'SPECIES_COMMON_NAME')
-    } @{$conf->ENSEMBL_SPECIES}  );
+      $conf->get_config($_,'SPECIES_COMMON_NAME')
+    } @{$conf->ENSEMBL_DATASETS}  );
     
   }
   warn sprintf '
