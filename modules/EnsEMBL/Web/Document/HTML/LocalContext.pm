@@ -128,7 +128,7 @@ $pad    </dd>";
           $url .= '/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
           my @ok_params;
           my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
-          if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation/) { 
+          if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation|Regulation/) { 
             foreach my $param (@cgi_params) {
               ## Minimal parameters, or it screws up the non-genomic pages!
               next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
