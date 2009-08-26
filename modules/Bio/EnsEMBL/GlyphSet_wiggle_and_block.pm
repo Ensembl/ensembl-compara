@@ -192,7 +192,7 @@ sub draw_wiggle_plot {
       'absolutewidth' => 1,
     }));
 
-    if ($parameters->{'min_score'} < 0) {
+    if ($parameters->{'min_score'} <= 0) {
       my $display_min_score = sprintf("%.2f", $N_MIN); 
       my @res_min = $self->get_text_width(
         0, $display_min_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
@@ -304,7 +304,10 @@ sub draw_track_name {
   ### Arg2: colour of the track
   ### Returns 1
 
-  my ( $self, $name, $colour ) = @_;
+  my ( $self, $name, $colour, $x_offset, $y_offset   ) = @_;
+  my $x = $x_offset || 1;
+  my $y = $self->_offset;
+  if ($y_offset) {$y += $y_offset;}
   my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
   my @res_analysis = $self->get_text_width(
     0, $name, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
@@ -318,8 +321,8 @@ sub draw_track_name {
     'halign'    => 'left',
     'valign'    => 'bottom',
     'colour'    => $colour,
-    'y'         => $self->_offset,
-    'x'         => 1,
+    'y'         => $y,
+    'x'         => $x,
     'absolutey' => 1,
     'absolutex' => 1,
   }));
@@ -327,7 +330,6 @@ sub draw_track_name {
   $self->_offset($res_analysis[3]);
   return 1;
 }
-
 
 sub draw_space_glyph {
 
