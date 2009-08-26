@@ -29,7 +29,7 @@ sub rebuild_das {
   info('Calculating checksum for existing DAS packed files');
   
   # Calculate a checksum for all the packed files, and remove them
-  foreach my $species ( @$ENSEMBL_SPECIES ) {
+  foreach my $species ( @$ENSEMBL_DATASETS ) {
     $packed_filename = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed',"$species.das.packed");
     if ( open (FH, '<', $packed_filename) ) {
       $digest->addfile( *FH );
@@ -50,7 +50,7 @@ sub rebuild_das {
   
   # Go back through the species' and calculate the new checksum
   $digest->reset;
-  foreach my $species ( @$ENSEMBL_SPECIES ) {
+  foreach my $species ( @$ENSEMBL_DATASETS ) {
     $packed_filename = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0],'packed',"$species.das.packed");
     if ( open (FH, '<', $packed_filename) ) {
       $digest->addfile( *FH );
