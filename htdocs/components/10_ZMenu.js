@@ -28,7 +28,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       var n = parseInt(params[1]) - 1;
       
-      this.multi = area.hasClass('multi') ? n || '' : ''; // Empty string for primary species, 1 for s1 etc.
+      this.multi = area.hasClass('multi') ? n : false;
     }
     
     area = null;
@@ -46,7 +46,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   init: function () {
     var myself = this;
     
-    var r = new RegExp('([\\?;]r' + this.multi + '=)[^;]+;?', 'g'); // The r parameter to remove from the current URL for this.baseURL
+    var r = new RegExp('([\\?;]r' + (this.multi || '') + '=)[^;]+;?', 'g'); // The r parameter to remove from the current URL for this.baseURL
     
     this.base();
     
@@ -247,7 +247,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         '<a href="' + this.zoomURL(1) + '">Centre here</a>'
       ];
       
-      caption = 'Region: ' + start + '-' + end;
+      caption = (this.multi === false ? 'Region' : this.species.replace(/_/g, ' ')) + ': ' + start + '-' + end;
     } else {
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
