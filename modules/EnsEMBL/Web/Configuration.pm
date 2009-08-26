@@ -193,10 +193,11 @@ sub _global_context {
   return unless $co;
 
   my @data = (
-    ['location',        'Location',   'View',    $co->location_short_caption,   $co->location,   0 ],
-    ['gene',            'Gene',       'Summary', $co->gene_short_caption,       $co->gene,       1 ],
-    ['transcript',      'Transcript', 'Summary', $co->transcript_short_caption, $co->transcript, 1 ],
-    ['variation',       'Variation',  'Summary', $co->variation_short_caption,  $co->variation,  0 ],
+    ['location',        'Location',   'View',    $co->location_short_caption,     $co->location,    0 ],
+    ['gene',            'Gene',       'Summary', $co->gene_short_caption,         $co->gene,        1 ],
+    ['transcript',      'Transcript', 'Summary', $co->transcript_short_caption,   $co->transcript,  1 ],
+    ['variation',       'Variation',  'Summary', $co->variation_short_caption,    $co->variation,   0 ],
+    ['regulation',      'Regulation', 'Summary', $co->regulation_short_caption,   $co->regulation,  1 ],
   );
   my $qs = $self->query_string;
   foreach my $row ( @data ) {
@@ -1529,5 +1530,141 @@ sub ajax_zmenu_read_coverage {
   return;
 }
 
+sub ajax_zmenu_regulation {
+  my $self = shift;
+  my $panel = shift;
+  my $object = $self->object; 
+  return unless $object->param('rf'); 
+  my $reg_obj;
+  if ($object->type eq 'Regulation'){ 
+    $reg_obj = $object;
+  } else {
+    $reg_obj = new EnsEMBL::Web::Proxy::Object( 'Regulation', $object->core_objects->regulation, $object->__data );   
+  }
+  
+  $panel->{'caption'} = "Regulatory Feature";
+  $panel->add_entry({
+    'type'      => 'Stable ID:',
+    'label'     => $reg_obj->stable_id,
+    'link'      => $reg_obj->get_summary_page_url,
+    'priority'  => 12,
+  });
+  $panel->add_entry({
+    'type'      => 'Type:',
+    'label'     => $reg_obj->feature_type->name,
+    'priority'  => 10,
+  });
+  $panel->add_entry({
+    'type'      => 'bp:',
+    'label'     => $reg_obj->location_string,
+    'link'      => $reg_obj->get_location_url,
+    'priority'  => 8,
+  });
+  $panel->add_entry({
+    'type'      => 'Attributes',
+    'label'     => $reg_obj->get_attribute_list,
+    'priority'  => 6,
+  });
+  return;
+}
+
+sub ajax_zmenu_reg_feature {
+ # Specific zmenu for functional genomics features
+  my $self = shift; 
+  my $panel = shift;
+  my $obj = $self->object; 
+  my $fid = $obj->param('fid') || die( "No feature ID value in params" );
+  my $ftype = $obj->param('ftype')  || die( "No feature type value in params" );
+  my $db_adaptor = $obj->database('funcgen');
+  my $ext_adaptor =  $db_adaptor->get_ExternalFeatureAdaptor();
+  my $species= $obj->species;
+
+  my $feature = $ext_adaptor->fetch_by_dbID($obj->param('dbid'));
+  my $location = $feature->slice->seq_region_name .":". $feature->start ."-" . $feature->end;
+  my $location_link = $obj->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+  my ($feature_link, $factor_link);
+  my $factor = $obj->param('fid'); 
+  $panel->{'caption'} = "Regulatory Region"; 
+
+  if ($ftype eq 'cisRED'){
+    $factor =~s/\D*//g;
+    $feature_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'}; 
+    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;dbid=".$obj->param('dbid').";id=" . $obj->param('fid');
+    $feature_link =~s/###ID###/$factor/;
+  } elsif ($ftype eq 'miRanda'){
+    my $name = $obj->param('fid');
+    $name =~/\D+(\d+)/;
+    my $temp_factor = $name;
+    my @temp = split (/\:/, $temp_factor);
+    $factor = $temp[1];
+    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+  } elsif ($ftype eq 'vista_enhancer'){
+    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+  } elsif ($ftype eq 'NestedMICA'){
+    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=" . $obj->param('fid');
+    $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=".$obj->param('fid');
+  } elsif ($ftype eq 'cisred_search'){
+    my ($id, $type, $analysis_link, $associated_link, $gene_reg_link);
+    my $db_ent = $feature->get_all_DBEntries;
+    foreach my $dbe (@$db_ent){
+      $id = $dbe->primary_id;
+      my $dbname = $dbe->dbname;
+      if ($dbname =~/gene/i){
+        $associated_link = $obj->_url({'type' => 'Gene', 'action'=> 'Summary', 'g' => $id });
+        $gene_reg_link = $obj->_url({'type' => 'Gene', 'action'=> 'Regulation', 'g' => $id });
+        $analysis_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'};
+        $analysis_link =~s/siteseq\?fid=###ID###/gene_view?ensembl_id=$id/;
+      } elsif ($dbname =~/transcript/i){
+        $associated_link = $obj->_url({'type' => 'Transcript', 'action'=> 'Summary', 't' => $id });
+      } elsif ($dbname =~/transcript/i){
+        $associated_link = $obj->_url({'type' => 'Transcript', 'action'=> 'Summary', 'p' => $id });
+      }
+    }
+
+    $panel->{'caption'} = "Regulatory Search Region";
+    $panel->add_entry({
+      'type'        =>  'Analysis:',
+      'label_html'  =>  $obj->param('ftype'),
+      'link'        =>  $analysis_link,
+      'priority'    =>  7,
+    });
+    $panel->add_entry({
+      'type'        =>  'Target Gene:',
+      'label_html'  =>  $id,
+      'link'        =>  $associated_link,
+      'priority' =>  6,
+    });
+    unless ($obj->referer =~/Regulation/){
+      $panel->add_entry({
+        'label_html'  =>  'View Gene Regulation',
+        'link'        =>  $gene_reg_link,
+        'priority' =>  4,
+      });
+    }
+
+  }
+
+  ## add zmenu items that apply to all external regulatory features
+  unless ($ftype eq 'cisred_search'){ 
+    $panel->add_entry({
+      'type'        =>  'Feature:',
+      'label_html'  =>  $obj->param('fid'),
+      'link'        =>  $feature_link,
+      'priority'    =>  10,
+    });
+    $panel->add_entry({
+      'type'        =>  'Factor:',
+      'label_html'  =>  $factor,
+      'link'        =>  $factor_link,
+      'priority'    =>  9,
+    }) ;
+  }
+  $panel->add_entry({
+    'type'        =>  'bp:',
+    'label_html'  =>  $location,
+    'link'        =>  $location_link,
+    'priority'    =>  8,
+  });
+}
 
 1;
