@@ -53,7 +53,6 @@ sub add_unmapped_ids {
 }
 
 sub format_mapped_ids { 
- # my ($self, $super_tree, $ids) = @_;
   my ($self, $ids) = @_;
   my %stable_ids = %$ids; 
   if (scalar keys %stable_ids < 1) { return '<p>No IDs were succesfully converted</p>';}
