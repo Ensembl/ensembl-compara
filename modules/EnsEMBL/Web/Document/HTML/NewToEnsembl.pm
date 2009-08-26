@@ -5,7 +5,6 @@ package EnsEMBL::Web::Document::HTML::NewToEnsembl;
 use strict;
 use warnings;
 
-#use Net::Twitter::Lite;
 use LWP::UserAgent;
 use HTTP::Request;
 use XML::Simple;
@@ -16,10 +15,7 @@ use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Root);
 
-our $MEMD = EnsEMBL::Web::Cache->new(
-  enable_compress    => 1,
-  compress_threshold => 10_000,
-);
+our $MEMD = EnsEMBL::Web::Cache->new();
 
 srand;
 
@@ -32,14 +28,10 @@ sub render {
   my $html = '<h2 class="first">New to Ensembl?</h2>'; 
   my @generic_images = qw(new data help);
 
-  my @tweets;
-  my $cached;# = $MEMD && $MEMD->get('::TWEETS') || '';
+  my $tweets = $MEMD && $MEMD->get('::TWEETS') || [];
   
   ## Check the cache, then fetch new tweets
-  if ($cached) {
-    @tweets = split('\n', $cached);
-  }
-  else {
+  unless (@$tweets) {
     my $username = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_USER;
     my $password = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_PASS;
     my $since_id = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_SINCE_ID;
@@ -87,21 +79,21 @@ sub render {
           ## Turn URLs into links
           $tweet =~ s/(http:\/\/[\w|-|\.|\/]+)/<a href="$1">$1<\/a>/g;
           $miniad .= $tweet;
-          push @tweets, $miniad;
+          push @$tweets, $miniad;
         }
       }
 
-      #$MEMD->set('::TWEETS', $tweets, 3600, qw(STATIC BLOG)) if $MEMD;
+      $MEMD->set('::TWEETS', $tweets, 3600, qw(STATIC TWEETS)) if $MEMD;
     }
   }
 
   ## Now pick a random Tweet and display it
-  if (scalar(@tweets)) {
+  if (scalar(@$tweets)) {
     $html .= qq(<div class="info-box embedded-box float-right">
 <h3 class="first">Did you know...?</h3>);
 
-    my $random = int(rand(scalar(@tweets)));
-    $html .= $tweets[$random];
+    my $random = int(rand(scalar(@$tweets)));
+    $html .= $tweets->[$random];
 
     $html .= qq(\n</div>\n);
   }
