@@ -100,11 +100,11 @@ CREATE TABLE method_link (
 
 
 #
-# Table structure for table 'method_link_species_set'
+# Table structure for table 'species_set'
 #
 -- KEY species_set_id is a multiple key. It defines a set of species
 --   (genome_db_ids).
-CREATE TABLE `species_set` (
+CREATE TABLE species_set (
   species_set_id              int(10) unsigned NOT NULL auto_increment,
   genome_db_id                int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (species_set_id,genome_db_id)
@@ -754,7 +754,7 @@ CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 --    root_id                  -- the id of the tree root
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- compressed alignment information
+--    cigar_line               -- string with the alignment score values 
 --    cigar_start              -- protein start (0 if the whole protein is in the alignment)
 --    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
