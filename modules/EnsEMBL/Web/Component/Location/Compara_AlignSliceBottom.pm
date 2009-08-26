@@ -84,9 +84,9 @@ sub content {
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
   $html .= $image->render;
-
+  
   if (@skipped) {
-    $html .= $self->_warning('Species hidden by configuration', sprintf(
+    $html .= $self->_info('Species hidden by configuration', sprintf(
       '<p>The following %d species in the alignment are not shown in the image: %s. Use the "<strong>Configure this page</strong>" on the left to show them.</p>%s', 
       scalar(@skipped), join ', ', sort map $object->species_defs->species_label($_), @skipped
     ));
