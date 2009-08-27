@@ -62,24 +62,13 @@ sub init {
 }
 
 sub multi {
-  my ($self, $methods, $i, $total, @species) = @_;
+  my ($self, $methods, $pos, $total, @species) = @_;
   
   my $species = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
   my %alignments;
   my @strands;
-  
-  if ($i == 1) {
-    @strands = $total == 2 ? qw(r) : qw(f r); # The primary species
-  } elsif ($i == $total) {
-    @strands = qw(f); # Last species - show alignments on forward strand.
-    unshift @species, undef if $total > 2; # Pad @species to match the track key with that of the primary species for this alignment
-  } elsif ($i == 2) {
-    @strands = qw(r); # First species where $total > 2
-  } else {
-    @strands = qw(r f); # Secondary species in the middle of the image
-  }
-  
+    
   foreach my $db (@{$self->species_defs->compara_like_databases||[]}) {
     next unless exists $multi_hash->{$db};
     
@@ -89,7 +78,7 @@ sub multi {
       next unless $align->{'species'}->{$species};
       next unless grep $align->{'species'}->{$_}, @species;
       
-      my $i = 1;
+      my $i = $pos == $total && $total > 2 ? 2 : 1;
       
       foreach (@species) {
         $align->{'order'} = $i and last if $align->{'species'}->{$_};
@@ -101,8 +90,18 @@ sub multi {
     }
   }
   
+  if ($pos == 1) {
+    @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
+  } elsif ($pos == $total) {
+    @strands = qw(f); # Last species - show alignments on forward strand.
+  } elsif ($pos == 2) {
+    @strands = qw(r); # First species where $total > 2
+  } else {
+    @strands = qw(r f); # Secondary species in the middle of the image
+  }
+  
   # Double up for non primary species in the middle of the image
-  $alignments{2} = $alignments{1} if scalar @strands == 2 && scalar keys %alignments == 1;
+  $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
   
   foreach (sort keys %alignments) {
     my $align = $alignments{$_};

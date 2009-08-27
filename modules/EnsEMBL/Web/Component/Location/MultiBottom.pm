@@ -28,9 +28,9 @@ sub content {
   my @images;
   
   my $methods = {
-    BLASTZ_NET      => $object->param('pairwise_blastz'),
-    TRANSLATED_BLAT => $object->param('pairwise_tblat'),
-    OTHER           => $object->param('pairwise_align')
+    BLASTZ_NET          => $object->param('pairwise_blastz'),
+    TRANSLATED_BLAT_NET => $object->param('pairwise_tblat'),
+    OTHER               => $object->param('pairwise_align')
   };
   
   my $multi = grep /yes/, values %$methods;
