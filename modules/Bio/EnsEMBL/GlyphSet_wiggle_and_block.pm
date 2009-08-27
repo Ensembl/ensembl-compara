@@ -111,7 +111,6 @@ sub draw_block_features {
   return 1;
 }
 
-
 sub draw_wiggle_plot {
   ### Wiggle plot
   ### Args: array_ref of features in score order, colour, min score for features, max_score for features, display label
@@ -304,7 +303,7 @@ sub draw_track_name {
   ### Arg2: colour of the track
   ### Returns 1
 
-  my ( $self, $name, $colour, $x_offset, $y_offset   ) = @_;
+  my ( $self, $name, $colour, $x_offset, $y_offset, $no_offset   ) = @_;
   my $x = $x_offset || 1;
   my $y = $self->_offset;
   if ($y_offset) {$y += $y_offset;}
@@ -327,7 +326,7 @@ sub draw_track_name {
     'absolutex' => 1,
   }));
 
-  $self->_offset($res_analysis[3]);
+  $self->_offset($res_analysis[3]) unless $no_offset; 
   return 1;
 }
 
