@@ -17,6 +17,7 @@ sub init {
   )});
   
   $view_config->default_config = 'alignsliceviewbottom';
+  $view_config->storable       = 1;
 }
 
 sub form {
