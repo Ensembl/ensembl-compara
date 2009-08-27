@@ -30,6 +30,13 @@ Ensembl.LayoutManager.extend({
       return false;
     });
     
+    $('.popup').live('click', function () {
+      var w = window.open(this.href, 'popup_' + window.name, 'width=950,height=500,resizable,scrollbars');
+      w.focus();
+      
+      return false;
+    });
+    
     $('a[rel="external"]').live('click', function () { 
       this.target = '_blank';
     });
@@ -40,7 +47,7 @@ Ensembl.LayoutManager.extend({
       var rtn = form.parents('#modal_panel').length ? 
                 Ensembl.EventManager.trigger('modalFormSubmit', form) : 
                 Ensembl.FormValidator.submit(form);
-                
+      
       form = null;
       return rtn;
     });
