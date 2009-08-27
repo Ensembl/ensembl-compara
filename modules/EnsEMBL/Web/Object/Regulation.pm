@@ -55,6 +55,8 @@ sub seq_region_strand     { my $self = shift; return $self->Obj->strand;        
 sub feature_set           { my $self = shift; return $self->Obj->feature_set;               }   
 sub feature_type          { my $self = shift; return $self->Obj->feature_type;              }
 sub slice                 { my $self = shift; return $self->Obj->slice;                     }           
+sub seq_region_length     { my $self = shift; return $self->Obj->slice->seq_region_length;  }
+
 
 sub get_attribute_list {
   my $self = shift;
@@ -145,6 +147,21 @@ sub get_summary_page_url {
     'fdb'   => 'funcgen',
   });
   return $url;
+}
+
+sub get_bound_context_slice {
+  my $self = shift;
+  my $padding = shift || 1000;
+  my $slice = $self->Obj->feature_Slice;
+  my $offset_start = $self->bound_start -200;
+  my $offset_end = $self->bound_end + 200;
+  
+  my $padding_start = $slice->start - $offset_start;
+  my $padding_end = $offset_end - $slice->end;
+  my $expanded_slice =  $slice->expand( $padding_start, $padding_end ); 
+
+  return $expanded_slice;
+
 }
 
 sub get_context_slice {
