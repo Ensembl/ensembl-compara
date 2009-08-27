@@ -21,7 +21,7 @@ sub draw_features {
     }
   }  
   if ($Config->{'attribute'}) {
-    my %histone_mod;
+    my (%histone_mod);
     if ($Config->{'attribute'}->{'data'}->{'wiggle_features'}) {
       %histone_mod = %{$Config->{'attribute'}->{'data'}->{'wiggle_features'}};
     }
@@ -34,7 +34,7 @@ sub draw_features {
       my $block_data = $Config->{'attribute'}->{'data'}->{'block_features'}->{$_};
       my $label = 'Other evidence';  
       if ($_ =~/H\d/){
-        $label = 'Histone ' . substr($_,1,1);
+        $label = 'Histone H' . substr($_,1,1);
       }
       $self->draw_blocks($block_data, $label);          
     }
@@ -52,14 +52,14 @@ sub draw_wiggle {
 }
 
 sub draw_blocks {
-  my ($self, $fs_data, $display_label) = @_; 
-  $self->draw_track_name($display_label, 'black', -118, 10);
+  my ($self, $fs_data, $display_label, $bg_colour) = @_; 
+  $self->draw_track_name($display_label, 'black', -118, 0);
+  $self->draw_space_glyph();
   foreach my $f_set (sort { $a cmp $b  } keys %$fs_data){ 
     my $colour = $self->my_colour($f_set);
     my $features = $fs_data->{$f_set};
-    $self->draw_block_features ($features, $colour);
-    $self->draw_track_name($f_set, $colour);  
-    $self->draw_space_glyph();
+    $self->draw_track_name($f_set, $colour, -108, 0, 'no_offset');
+    $self->draw_block_features ($features, $colour, $f_set);
   }   
   $self->draw_space_glyph();
 }
@@ -85,11 +85,6 @@ sub process_wiggle_data {
 
 sub block_features_zmenu {
   return;
-}
-
-sub render_text {
-  my ($self, $display_label, $wiggle) = @_;
-  
 }
 
 1;
