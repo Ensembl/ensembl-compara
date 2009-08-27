@@ -11,119 +11,122 @@ sub mergeable_config {
 }
 
 sub init {
-  my ($self ) = @_;
+  my $self = shift;
 
   $self->set_parameters({
-    'title'             => 'Main panel',
-    'show_buttons'      => 'no',   # show +/- buttons
-    'button_width'      => 8,       # width of red "+/-" buttons
-    'show_labels'       => 'yes',   # show track names on left-hand side
-    'label_width'       => 113,     # width of labels on left-hand side
-    'margin'            => 5,       # margin
-    'spacing'           => 2,       # spacing
-
-## Now let us set some of the optional parameters....
-    'opt_halfheight'    => 0,    # glyphs are half-height [ probably removed when this becomes a track config ]
-    'opt_lines'         => 1,    # draw registry lines
-    'opt_restrict_zoom' => 1,   # when we get "zoom" working draw restriction enzyme info on it!!
-
-    'spritelib' => { 'default' => $self->{'species_defs'}->ENSEMBL_SERVERROOT.'/htdocs/img/sprites' },
+    title        => 'Main panel',
+    show_buttons => 'no',  # show +/- buttons
+    button_width => 8,     # width of red "+/-" buttons
+    show_labels  => 'yes', # show track names on left-hand side
+    label_width  => 113,   # width of labels on left-hand side
+    margin       => 5,     # margin
+    spacing      => 2,     # spacing
+    spritelib    => { default => $self->{'species_defs'}->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
   });
 
-## First add menus in the order you want them for this display....
+  # Add menus in the order you want them for this display
   $self->create_menus(
-    'sequence'        => 'Sequence',
-    'marker'          => 'Markers',
-    'trans_associated'=> 'Transcript Features',
-    'transcript'      => 'Genes',
-    'prediction'      => 'Prediction Transcripts',
-    'protein_align'   => 'Protein alignments',
-    'protein_feature' => 'Protein features',
-    'dna_align_cdna'  => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs...
-    'dna_align_est'   => 'EST alignments',
-    'dna_align_rna'   => 'RNA alignments',
-    'dna_align_other' => 'Other DNA alignments', 
-    'oligo'           => 'Oligo features',
-    'ditag'           => 'Ditag features',
-    'external_data'   => 'External data',
-    'user_data'       => 'User attached data', # DAS/URL tracks/uploaded data/blast responses
-    'simple'          => 'Simple features',
-    'misc_feature'    => 'Misc. regions',
-    'repeat'          => 'Repeats',
-    'variation'       => 'Variation features',
-    'functional'      => 'Functional genomics',
-    'multiple_align'  => 'Multiple alignments',
-    'pairwise_blastz' => 'BLASTZ alignments',
-    'pairwise_tblat'  => 'Translated blat alignments',
-    'pairwise_other'  => 'Pairwise alignment',
-    'decorations'     => 'Additional decorations',
-    'options'         => 'Options'
+    sequence         => 'Sequence',
+    marker           => 'Markers',
+    compara          => 'Compara',
+    transcript       => 'Genes',
+    prediction       => 'Prediction Transcripts',
+    protein_align    => 'Protein alignments',
+    dna_align_cdna   => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs...
+    dna_align_est    => 'EST alignments',
+    dna_align_rna    => 'RNA alignments',
+    dna_align_other  => 'Other DNA alignments', 
+    oligo            => 'Oligo features',
+    simple           => 'Simple features',
+    misc_feature     => 'Misc. regions',
+    repeat           => 'Repeats',
+    variation        => 'Variation features',
+    functional       => 'Functional genomics',
+    decorations      => 'Additional decorations'
   );
 
-## Add in additional
+  # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_das;
-  $self->add_track( 'sequence',    'contig',    'Contigs',             'stranded_contig', { 'display' => 'normal', 'strand' => 'f' } );
-
-  $self->add_tracks( 'decorations',
-   [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler',     'description' => 'Shows the length of the region being displayed'    } ],
-   [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar', 'description' => 'Track ', 'menu' => 'no' } ],
-   [ 'draggable', '',            'draggable',       { 'display' => 'normal',  'strand' => 'b', 'menu' => 'no'         } ],
-   [ 'nav',       '',            'navigation',      { 'display' => 'normal',  'strand' => 'r', 'menu' => 'no' } ],
+  
+  $self->add_tracks('sequence', 
+    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
   );
-
-## Finally add details of the options to the options menu...
-  $self->add_options(
-#    [ 'opt_empty_tracks',  'Show empty tracks?'           ],
-    [ 'opt_lines',         'Show registry lines?'         ],
-#    [ 'opt_restrict_zoom', 'Restriction enzymes on zoom?' ],
+  
+  $self->add_tracks('decorations',
+    [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler', description => 'Shows the length of the region being displayed' }],
+    [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', menu => 'no' }],
+    [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
+    [ 'nav',       '', 'navigation', { display => 'normal', strand => 'r', menu => 'no' }],
   );
-
-  #use Data::Dumper; local $Data::Dumper::Indent = 1; warn Data::Dumper::Dumper( $self->tree );
 }
 
-sub mult {
-  my $self = shift;
-  my @species = $self->{'species_defs'}->valid_species;
-  my $compara = 3000;
-  my @methods = (
-    [ 'BLASTZ_NET'           ,'pink',  'cons',  'darkseagreen1', -20  ],
-    [ 'BLASTZ_NET_TIGHT'     ,'pink3', 'high cons','darkolivegreen2', -19   ],
-    [ 'BLASTZ_GROUP'         ,'pink',  'cons', 'darkseagreen1', -20  ],
-    [ 'BLASTZ_GROUP_TIGHT'   ,'pink3', 'high cons','darkolivegreen2', -19   ],
-    [ 'PHUSION_BLASTN'       ,'pink',  'cons', 'darkseagreen1', -20  ],
-    [ 'PHUSION_BLASTN_TIGHT' ,'pink3', 'high cons','darkolivegreen2', -19   ],
-    [ 'BLASTZ_RECIP_NET'     ,'pink',  'cons', 'darkseagreen1', -20  ],
-    [ 'TRANSLATED_BLAT'      ,'orchid1', 'trans BLAT','chartreuse', -18 ],
-  );
-
-  foreach my $METHOD (@methods) {
-    foreach my $SPECIES (@species) {
-      (my $species = $SPECIES ) =~ s/_\d+//;
-      (my $short = $species ) =~ s/^(\w)\w+_(\w)\w+$/$1$2/g;
-      $compara++;
-      my $KEY = lc($SPECIES).'_'.lc($METHOD->[0]).'_match';
-      $self->{'general'}->{'MultiBottom'}{$KEY} = {
-        'glyphset' => 'generic_alignment',
-        'species'  => $species,
-        'on'       => 'off',
-        'compact'  => 'yes',
-        'dep'      => 6,
-        'pos'      => $compara+300,
-        'col'      => $METHOD->[1],
-        'join' => 0,
-        'join_col' => $METHOD->[3],
-        'join_z'   => $METHOD->[4],
-        'str'      => 'f',
-        'available'=> "multi ".$METHOD->[0]."|$species",
-        'method'   => $METHOD->[0],
-        'label'    => "$short $METHOD->[2]",
+sub multi {
+  my ($self, $methods, $i, $total, @species) = @_;
+  
+  my $species = $self->{'species'};
+  my $multi_hash = $self->species_defs->multi_hash;
+  my %alignments;
+  my @strands;
+  
+  if ($i == 1) {
+    @strands = $total == 2 ? qw(r) : qw(f r); # The primary species
+  } elsif ($i == $total) {
+    @strands = qw(f); # Last species - show alignments on forward strand.
+    unshift @species, undef if $total > 2; # Pad @species to match the track key with that of the primary species for this alignment
+  } elsif ($i == 2) {
+    @strands = qw(r); # First species where $total > 2
+  } else {
+    @strands = qw(r f); # Secondary species in the middle of the image
+  }
+  
+  foreach my $db (@{$self->species_defs->compara_like_databases||[]}) {
+    next unless exists $multi_hash->{$db};
+    
+    foreach my $align (values %{$multi_hash->{$db}->{'ALIGNMENTS'}}) {
+      next if $methods->{$align->{'type'}} eq 'no';
+      next unless $align->{'class'} =~ /pairwise_alignment/;
+      next unless $align->{'species'}->{$species};
+      next unless grep $align->{'species'}->{$_}, @species;
+      
+      my $i = 1;
+      
+      foreach (@species) {
+        $align->{'order'} = $i and last if $align->{'species'}->{$_};
+        $i++;
       };
-      push @{ $self->{'general'}->{'MultiBottom'}{ '_artefacts'} }, $KEY;
+      
+      $align->{'db'} = lc(substr $db, 9);
+      $alignments{$align->{'order'}} = $align;
     }
   }
+  
+  # Double up for non primary species in the middle of the image
+  $alignments{2} = $alignments{1} if scalar @strands == 2 && scalar keys %alignments == 1;
+  
+  foreach (sort keys %alignments) {
+    my $align = $alignments{$_};
+    my ($other_species) = grep !/^$species|merged/, keys %{$align->{'species'}};
+    my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
+    (my $other_species_hr = $other_species) =~ s/_/ /g;
+    
+    $self->get_node('decorations')->add_before(
+      $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
+        db             => $align->{'db'},
+        glyphset       => '_alignment_pairwise',
+        name           => $other_label,
+        caption        => $align->{'name'},
+        type           => $align->{'type'},
+        species_set_id => $align->{'species_set_id'},
+        species        => $other_species,
+        species_hr     => $other_species_hr,
+        _assembly      => $self->species_defs->get_config($other_species, 'ENSEMBL_GOLDEN_PATH'),
+        colourset      => 'pairwise',
+        strand         => shift @strands,
+        join           => 1
+      })
+    );
+  }
 }
-
-
 
 1;
