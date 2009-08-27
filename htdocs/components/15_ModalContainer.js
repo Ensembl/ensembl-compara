@@ -48,6 +48,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       var li = $(this).parent();
       
       if (!li.hasClass('active')) {
+        Ensembl.EventManager.trigger('updateConfiguration', true);
+        
         myself.elLk.tabs.removeClass('active');
         li.addClass('active');
         
@@ -112,8 +114,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         myself.elLk.closeButton.html(json.panelType == 'Configurator' ? 'Save and close' : 'Close');
         
         // TODO: remove once config reseting is working without content being completely regenerated
-        if (url.match('reset=1') || $('.modal_reload', this.el).length) {
-          Ensembl.EventManager.trigger('queuePageReload');
+        if (url.match('reset=1') || $('.modal_reload', myself.el).length) {
+          myself.setPageReload();
         }
         
         Ensembl.EventManager.trigger('createPanel', myself.elLk.content.attr('id'), json.panelType);

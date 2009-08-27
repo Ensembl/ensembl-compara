@@ -83,7 +83,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.showTracks();
   },
   
-  updateConfiguration: function () {
+  updateConfiguration: function (delayReload) {
     var myself = this;
     
     var d = false;
@@ -109,13 +109,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $.extend(this.initialConfig, diff);
       diff.submit = 1;
       
-      this.updatePage(diff);
+      this.updatePage(diff, delayReload);
       
       return true;
     }
   },
   
-  updatePage: function (diff) {
+  updatePage: function (diff, delayReload) {
     var myself = this;
     
     if (Ensembl.ajax == 'enabled') {
@@ -128,7 +128,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           if (html == 'SUCCESS') {            
             // Reload the page
             // TODO: could reload only one section - would need panel id to be the same as diff.config, which it currently isn't
-            Ensembl.EventManager.trigger('reloadPage');
+            Ensembl.EventManager.trigger(delayReload === true ? 'queuePageReload' : 'reloadPage');
           } else {
             // TODO: show message on main page
           }
