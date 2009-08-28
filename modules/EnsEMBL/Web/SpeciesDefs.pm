@@ -937,5 +937,72 @@ sub species_dropdown {
   return @options;
 }
 
+### This function will return the path including URL to all known ( by Compara) species.
+### Some species in genetree can be from other EG units, and some can be from external sources
+### At the moment the mapping between species name and its source ( full url ) is stored in DEFAULTs.ini
+### But it really should come from compara db
+
+sub species_path {
+    my ($self, $species) = @_;
+
+    my $sd = $self;
+    my $current_species = $sd->SYSTEM_NAME($ENV{ENSEMBL_SPECIES}) || $ENV{ENSEMBL_SPECIES};
+    my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species);
+    my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
+
+    ( my $nospaces = $species ) =~ s/ /_/g;
+
+    my $spsite = uc($site_hash->{$nospaces});
+    my $cssite = uc($site_hash->{$current_species});
+
+    my $base_url = $url_hash->{$spsite} || '';
+    (my $URL = $base_url) =~ s/\#\#\#SPECIES\#\#\#/$nospaces/;
+
+    if ($base_url =~ /\#\#\#SPECIES\#\#\#/) {
+        if ($spsite ne $cssite) {
+        } else {
+            $URL =~ s/^http\:\/\/.+\//\//;
+        }
+    }
+
+    return $URL;
+}
+
+### This function will return the display name of all known ( by Compara) species.
+### Some species in genetree can be from other EG units, and some can be from external sources
+### species_label function above will only work with species of the current site
+### At the moment the mapping in DEFAULTs.ini
+### But it really should come from compara db
+
+sub species_display_label {
+    my ($self, $species, $no_formatting) = @_;
+
+    my $sd = $self;
+    (my $ss = $species) =~ s/_/ /g;
+
+
+
+    my $current_species = $sd->SYSTEM_NAME($ENV{ENSEMBL_SPECIES}) || $ENV{ENSEMBL_SPECIES};
+    my $sdhash = $sd->SPECIES_DISPLAY_NAME($current_species);
+    my $slb = $sdhash->{$species} || $sdhash->{$ss} || '';
+    return $slb if ($slb);
+#    warn Dumper $sdhash;
+
+    my $label = $self->species_label($species);
+#    warn "L:$species * $label";
+    return $label unless ($label =~ /Ancestral/);
+
+    my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species);
+    my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
+
+    ( my $nospaces = $species ) =~ s/ /_/g;
+
+    my $spsite = uc($site_hash->{$nospaces});
+    return $species if ($spsite);
+    return "Ancestral sequence";
+}
+
+
 1;
+
 
