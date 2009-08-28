@@ -219,7 +219,12 @@ sub content {
   my %mappings = %{$object->variation_feature_mapping}; 
   my $v = keys %mappings == 1 ? [values %mappings]->[0] : $mappings{$object->param('vf')};
   
-  return $self->_info('Unable to draw SNP neighbourhood', "<p>Unable to draw SNP neighbourhood as we cannot uniquely determine the SNP's location</p>") unless $v;
+  if ( $object->has_location ){
+    return $self->_info(
+      'Unable to draw SNP neighbourhood',
+      $object->has_location
+    );
+  }
   
   my $defaults = { 
     snp_display => 1, 
