@@ -125,6 +125,22 @@ sub caption {
 
 # Location ----------------------------------------------------------------------
 
+sub has_location {
+  my $self = shift;
+  unless ($self->core_objects->{'parameters'}{'vf'} ){
+    my %mappings = %{ $self->variation_feature_mapping };
+    my $count = scalar (keys %mappings);
+    my $html;
+    if ($count < 1) {
+      $html = "<p>This feature has not been mapped.<p>";
+    } else { 
+      $html = "<p>You must select a location from the panel above to see this information</p>";
+    }
+    return  $html;
+  }
+  return;
+}
+
 sub location_string {
 
   ### Variation_location
@@ -256,7 +272,6 @@ sub name {
   }
   return $self->vari->name;
 }
-
 
 sub source {
 
