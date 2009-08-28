@@ -18,11 +18,10 @@ sub content {
   my $object = $self->object;
 
   ## Check we have uniquely determined variation
-  unless ($object->core_objects->{'parameters'}{'vf'} ){
-    my $html = "<p>You must select a location from the panel above to see this information</p>";
+  if ( $object->has_location ){
     return $self->_info(
-    'A unique location can not be determined for this Variation',
-    $html
+      'A unique location can not be determined for this Variation',
+      $object->has_location
     );
   }
  

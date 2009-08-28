@@ -17,13 +17,12 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
-  ## first check we have uniquely determined variation
-  unless ($object->core_objects->{'parameters'}{'vf'} ){
-  my  $html = "<p>You must select a location from the panel above to see this information</p>";
-   return $self->_info(
-   'A unique location can not be determined for this Variation',
-   $html
-   );
+  ## first check we have a location
+  if ( $object->has_location ){
+    return $self->_info(
+      'A unique location can not be determined for this Variation',
+      $object->has_location
+    );
   }
 
   my $width = $object->param('context') || "30000";
