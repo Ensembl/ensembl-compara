@@ -392,21 +392,45 @@ sub dumpOligoProbe {
   my $FUNCDB = $conf->{'dbs'}->{'DATABASE_FUNCGEN'};
   if ($FUNCDB) {
     my $sth    = $conf->{'dbh'}->prepare(
-      "select ps.name, count(*) as hits, a.vendor, sr.name, pf.seq_region_start, pf.seq_region_end
-         from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.seq_region sr, $FUNCDB.array_chip ac, $FUNCDB.array a
-        where ps.probe_set_id = p.probe_set_id
-          and p.probe_id  = pf.probe_id
-          and pf.seq_region_id = sr.seq_region_id
-          and p.array_chip_id = ac.array_chip_id
-          and ac.array_id = a.array_id
-        group by ps.name"
+      "select ps.name, count(distinct pf.probe_feature_id) as hits, a.vendor
+        from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
+      where sn.name='MART_DISPLAYABLE'
+        and sn.status_name_id=s.status_name_id
+        and s.table_name='array'
+        and s.table_id=a.array_id
+        and ps.probe_set_id = p.probe_set_id
+        and p.probe_id = pf.probe_id
+        and p.array_chip_id = ac.array_chip_id
+        and ac.array_id = a.array_id
+      group by ps.name, a.vendor"
     );
     $sth->execute();
-    while( my( $hid, $count, $type, $sr_name, $sr_start, $sr_end ) = $sth->fetchrow_array ) {
+    while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
       next unless $hid;
       print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
-	$hid, "/$species/Location/Genome?ftype=OligoFeature;id=$hid",
+	$hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=pset;id=$hid;",
 	  $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
+    }
+
+    my $sth    = $conf->{'dbh'}->prepare(
+      "select group_concat(distinct p.name), count(distinct pf.probe_feature_id) as hits, a.vendor
+        from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
+      where sn.name='MART_DISPLAYABLE'
+        and sn.status_name_id=s.status_name_id
+        and s.table_name='array'
+        and s.table_id=a.array_id
+        and p.probe_set_id is NULL
+        and p.probe_id = pf.probe_id
+        and p.array_chip_id = ac.array_chip_id
+        and ac.array_id = a.array_id
+      group by p.probe_id, a.vendor"
+    );
+    $sth->execute();
+    while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
+      next unless $hid;
+      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
+  $hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=probet;id=$hid;",
+    $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
     }
   }
   close A;
