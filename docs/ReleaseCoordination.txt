@@ -427,6 +427,8 @@ wget ftp://ftp.ensembl.org/pub/current_emf/ensembl-compara/homologies/README.pro
 cp /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_56/dumps/README.* /warehouse/ensembl02/avilella/hive/avilella_compara_homology_56/dumps/
 cp /lustre/scratch1/ensembl/avilella/hive/avilella_compara_homology_56/dumps/*.gz /warehouse/ensembl02/avilella/hive/avilella_compara_homology_56/dumps/
 
-21.8 - Send an email to the release coordinator pointing to the files.
+21.8 - Send an email to the release coordinator pointing to the files:
+
+ls -l /warehouse/ensembl02/avilella/hive/avilella_compara_homology_56/dumps/
 
 22. Once the final compara db has been copied, and everyone is happy with the data, and the Compara Coordinator survived his task, well the Compara Coordinator could buy some drinks at the Red Lion after handover. Special clause for Mart related coordinator, the drinks will be after the mart release. 
