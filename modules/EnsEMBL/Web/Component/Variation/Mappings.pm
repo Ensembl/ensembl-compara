@@ -19,7 +19,6 @@ sub content {
   my $html = '';
 
   ## first check we have uniquely determined variation
-  unless ($object->core_objects->{'parameters'}{'vf'} ){
   if ( $object->has_location ){
     return $self->_info(
       'A unique location can not be determined for this Variation',
