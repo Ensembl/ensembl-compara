@@ -464,9 +464,22 @@ sub _created_merged_table_hash {
               my $x2 = $x1->{$k2};
               if( ref($x2) eq 'HASH' ) {
                 foreach my $k3 ( keys %$x2 ) {
+		  my $name_overwrite;
                   $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x2->{$k3};
 #warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $tb eq 'gene';
-                }
+		  my $x3 = $x2->{$k3};
+		  if ( ref($x3) eq 'HASH') {
+		    foreach my $k4 ( keys %$x3 ) {
+		      #do we overwite the display name in the merged species with the multicaption entry ?
+		      if ($k4 eq 'multi_caption') {
+			$name_overwrite = $x3->{$k4};
+#warn "resetting name to $name_overwrite";
+		      }
+		    }
+		  }
+		  $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{'name'} = $name_overwrite if $name_overwrite;
+#warn sprintf "A1:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, 'name', $name_overwrite if $name_overwrite;
+		}
               } else {
                 $databases->{$db}{'tables'}{$tb}{$k1}{$k2} ||= $x2;
 #warn sprintf "B:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, " ", $x2 if $tb eq 'gene';
