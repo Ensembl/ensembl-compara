@@ -293,7 +293,7 @@ sub features {
     my @dbs = ('core');
     push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
     push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
-  
+    
     foreach my $db (@dbs) {
       foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
         foreach my $t (@{$g->get_all_Transcripts}) {
@@ -326,7 +326,21 @@ sub gff3_features {
     delim              => "\t",
     ordered_attributes => {},
     feature_order      => {},
-    feature_type_count => 0
+    feature_type_count => 0,
+    
+    # TODO: feature types
+    #    feature_map => {
+    #      dna_align          => { func => 'get_all_DnaAlignFeatures',          type => 'nucleotide_match' },
+    #      marker             => { func => 'get_all_MarkerFeatures',            type => 'region' },
+    #      repeat             => { func => 'get_all_RepeatFeatures',            type => 'repeat_region' },
+    #      assembly_exception => { func => 'get_all_AssemblyExceptionFeatures', type => '' },
+    #      ditag              => { func => 'get_all_DitagFeatures',             type => '' },
+    #      external           => { func => 'get_all_ExternalFeatures',          type => '' },
+    #      oligo              => { func => 'get_all_OligoFeatures',             type => 'oligo' },
+    #      qtl                => { func => 'get_all_QtlFeatures',               type => 'region' },
+    #      simple             => { func => 'get_all_SimpleFeatures',            type => '' },
+    #      protein_align      => { func => 'get_all_ProteinAlignFeatures',      type => 'protein_match' }
+    #    }
   };
   
   
@@ -344,7 +358,7 @@ sub gff3_features {
         $g_id = $g->stable_id;
         $self->feature('gene', $g, { ID => $g_id, Name => $g_id, biotype => $g->biotype }, $properties);
       }
-    
+      
       foreach my $t (@{$g->get_all_Transcripts}) {
         if ($params->{'transcript'}) {
           $t_id = $t->stable_id;
@@ -452,16 +466,17 @@ sub misc_sets {
   my $self = shift;
   
   my $object = $self->object;
+  my $slice  = $self->slice;
   
   my $sets = $object->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
   my @misc_sets = sort { $sets->{$a}->{'name'} cmp $sets->{$b}->{'name'} } @_;
   
-  my $region = $object->seq_region_name;
-  my $start  = $object->seq_region_start;
-  my $end    = $object->seq_region_end;
+  my $region = $slice->seq_region_name;
+  my $start  = $slice->start;
+  my $end    = $slice->end;
   my $db     = $object->database('core');
   my $delim  = $self->{'config'}->{'delim'};
-    
+  
   my $header_map = {
     _gene   => { 
       title   => "Genes in Chromosome $region $start - $end",
