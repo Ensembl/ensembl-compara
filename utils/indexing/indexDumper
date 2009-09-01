@@ -1069,25 +1069,71 @@ sub dumpSequence {
     print O &seqLine( $conf->{'species'},$TYPE,$NAME,$oldchr,$old_start,$old_end,$emblaccs,$oldlen,$sanger) if $old_ID;
   }
 
+  #identify current default top level
+  (my $current_cs_id) = $conf->{'dbh'}->selectrow_array(
+     "select cs.coord_system_id
+        from coord_system cs, meta m
+       where cs.version = m.meta_value
+         and cs.name = 'chromosome'
+         and m.meta_key = 'assembly.default'");
+
+  #get mappings between toplevel assemblies
   my $sth = $conf->{'dbh'}->prepare(
-    "select c.name, c.length, cs.name
+     "select distinct sr1.name, sr1.length, sr2.name, cs2.coord_system_id
+        from coord_system cs1, seq_region sr1, assembly a, seq_region sr2, coord_system cs2
+       where cs1.coord_system_id = sr1.coord_system_id
+         and sr1.seq_region_id = a.asm_seq_region_id
+         and a.cmp_seq_region_id = sr2.seq_region_id
+         and sr2.coord_system_id = cs2.coord_system_id
+         and cs1.name = 'chromosome'
+         and cs2.name = 'chromosome'");
+  my $mapped_ids;
+  $sth->execute;
+  while (my ($new_name, $new_length, $prev_name, $prev_coord_system_id) =  $sth->fetchrow_array() ) {
+    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'name'} = $new_name;
+    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
+  }
+
+  #get all seq_regions
+  $sth = $conf->{'dbh'}->prepare(
+    "select c.name, c.length, cs.name, cs.coord_system_id
        from seq_region as c, coord_system as cs
       where c.coord_system_id = cs.coord_system_id" );
   $sth->execute();
-  while( my($name,$length,$type) = $sth->fetchrow_array() ) {
+  while( my($name,$length,$type,$cs_id) = $sth->fetchrow_array() ) {
+    my ($prev_name,$prev_length);
+    if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
+      # if an old seq_region is mapped to a new one use it...
+      if ($mapped_ids->{$cs_id}{$name}) {
+	$prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
+	$prev_length = $mapped_ids->{$cs_id}{$name}{'length'};
+	if ($prev_name ne $name) { #don't dump identically named regions
+	  warn "dumping assembly mapped seq_region $prev_name instead of $name, please check it's correct since this hasn't been checked yet";
+	  $name = $prev_name;
+	  $length = $prev_length;
+	}
+      }
+      else {
+	#...otherwise ignore
+#	warn "not dumping $name on coord_system $cs_id since it's an old assembly with no mapping";
+	next;
+      }
+    }
     my $extra_IDS = ''; my $extra_desc = '';
     if( %{$sanger->{$name}||{}} ) {
       $extra_IDS  = join ' ', '',sort keys %{$sanger->{$name}};
       $extra_desc = " and corresponds to the following Sanger projects: ".join( ', ',sort keys %{$sanger->{$name}});
     }
-    my $r = "$name:1-$length";
+    my $r   = "$name:1-$length";
+    my $ids = $prev_name ? "$prev_name$extra_IDS" : "$name$extra_IDS";
     print O join "\t",
-      (INC_SPECIES?"$conf->{'species'}\t":"").ucfirst($type),       $name,
-      ($type eq 'chromosome' && length( $name ) < 5) ?
-        "/$conf->{'species'}/Location/Chromosome?r=$r" :
-        ($length > 0.5e6 ? "/$conf->{'species'}/Location/Overview?r=$r" :
-              "/$conf->{'species'}/Location/View?r=$r" ),
-      "$name$extra_IDS", "$name is a @{[ucfirst($type)]} (of length $length)$extra_desc\n";
+      (INC_SPECIES?"$conf->{'species'}\t":"").ucfirst($type), 
+      $prev_name ? $prev_name : $name,
+      ($type eq 'chromosome' && length( $name ) < 5) ? "/$conf->{'species'}/Location/Chromosome?r=$r" 
+         : ($length > 0.5e6) ? "/$conf->{'species'}/Location/Overview?r=$r" 
+         : "/$conf->{'species'}/Location/View?r=$r",
+      "$ids",
+      "$name is a @{[ucfirst($type)]} (of length $length)$extra_desc\n";
   }
   close O;
 }
