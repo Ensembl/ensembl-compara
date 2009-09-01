@@ -46,7 +46,7 @@ sub get_formats {
   if ($new_region) {
     my $s = $object->param('new_start'); 
     my $e = $object->param('new_end');
-
+    
     # Flip start and end if end is less than start
     if ($e < $s) {
       my $t = $e;
@@ -168,7 +168,7 @@ sub pip_seq_file {
   my $self = shift;
   my $file = shift;
   
-  my $slice = $self->object->slice;
+  my $slice = $self->slice;
   
   (my $seq = $slice->seq) =~ s/(.{60})/$1\r\n/g;
   my $name = $slice->name;
@@ -189,7 +189,7 @@ sub pip_anno_file {
   my $self = shift;
   my ($file, $o) = @_;
   
-  my $slice = $self->object->slice;
+  my $slice = $self->slice;  
   my $slice_length = $slice->length;
   my $content = 0;
   my $fh;
@@ -271,6 +271,23 @@ sub pip_anno_file_pipmaker {
   $out .= join ' ', $_->start, $_->end, "\r\n" for @$exons; # exon lines
   
   return "$out\r\n";
+}
+
+# Returns the slice, expanded or flipped as required
+sub slice {
+  my $self = shift;
+  
+  my $object = $self->object;
+  my $flank5 = $object->param('flank5_display');
+  my $flank3 = $object->param('flank3_display');
+  my $strand = $object->param('strand');
+ $strand = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
+  
+  my $slice = $object->slice;
+  $slice = $slice->invert if $strand && $strand != $slice->strand;
+  $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
+  
+  return $slice;
 }
 
 }
