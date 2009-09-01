@@ -17,6 +17,14 @@ sub caption {
 }
 
 
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  $hash->{'database.variation'} =
+    exists $self->species_defs->databases->{'DATABASE_VARIATION'}  ? 1 : 0;
+  return $hash;
+}
+
 sub short_caption { return 'About this species'; }
 sub counts        { return undef; }
 
