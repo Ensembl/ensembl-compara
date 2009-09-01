@@ -476,6 +476,7 @@ sub _created_merged_table_hash {
 #warn "resetting name to $name_overwrite";
 		      }
 		    }
+		    delete $x3->{'name'} if $name_overwrite; #remove name from web_data so that the merged name is picked up instead
 		  }
 		  $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{'name'} = $name_overwrite if $name_overwrite;
 #warn sprintf "A1:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, 'name', $name_overwrite if $name_overwrite;
