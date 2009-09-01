@@ -1239,6 +1239,16 @@ sub get_similarity_hash{
   return $DBLINKS  || [];
 }
 
+sub get_gene_similarity_hash{
+    my($self,$recurse) = @_;
+    $recurse = 1 unless defined $recurse;
+    my $DBLINKS;
+    eval { $DBLINKS = $recurse ? $self->gene->get_all_DBLinks
+	       : $self->gene->get_all_DBEntries; };
+    warn ("SIMILARITY_MATCHES Error on retrieving gene DB links $@") if ($@);
+    return $DBLINKS  || [];
+}
+
 =head2 get_go_list
 
  Arg[1]      : none

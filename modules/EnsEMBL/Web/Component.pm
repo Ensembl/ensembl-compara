@@ -1,5 +1,3 @@
-# $Id$
-
 package EnsEMBL::Web::Component;
 
 use strict;
@@ -18,6 +16,7 @@ use Text::Wrap qw(wrap);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
+use EnsEMBL::Web::Component::Export;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Form;
@@ -112,16 +111,10 @@ sub image_width {
 }
 
 sub new {
-  my ($class, $object) = shift;
-  
-  my $self = {
-    'object' => shift,
-    'id' => [split /::/, $class]->[-1] . 'Panel'
-  };
-  
-  bless $self, $class;
-  $self->_init;
-  
+  my( $class, $object ) = shift;
+  my $self = { 'object' => shift, };
+  bless $self,$class;
+  $self->_init();
   return $self;
 }
 
@@ -129,12 +122,6 @@ sub object {
   my $self = shift;
   $self->{'object'} = shift if @_;
   return $self->{'object'};
-}
-
-sub id {
-  my $self = shift;
-  $self->{'id'} = shift if @_;
-  return $self->{'id'};
 }
 
 sub cacheable {
@@ -183,7 +170,7 @@ sub cache_print {
 
 sub site_name {
   my $self = shift;
-  our $sitename = $SiteDefs::ENSEMBL_SITETYPE;
+  our $sitename = $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE;
   return $sitename;
 }
 
@@ -247,6 +234,7 @@ sub new_image {
   my $timer = $species_defs->timer;
   my $image = EnsEMBL::Web::Document::Image->new( $species_defs );
      $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
+     $image->set_extra( $object );
      if ($object->prefix) {
        $image->prefix($object->prefix);
      }
@@ -258,6 +246,7 @@ sub new_vimage {
   my $object = $self->object;
   my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
      $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new( @_ );
+     $image->set_extra( $object );
   return $image;
 }
 
@@ -265,6 +254,7 @@ sub new_karyotype_image {
   my $self = shift;
   my $object = $self->object;
   my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
+     $image->set_extra( $object );
      $image->{'object'} = $object;
   return $image;
 }
@@ -280,6 +270,12 @@ sub _matches {
     my @similarity_links = @{$object->get_similarity_hash($obj)};
     return unless (@similarity_links);
     $self->_sort_similarity_links( @similarity_links);
+
+    unless (@similarity_links) {
+# No GO terms attached to the transcript - check if they are attached to the gene
+	@similarity_links = @{$object->get_gene_similarity_hash($obj)};
+	$self->_sort_similarity_links( @similarity_links);
+    }
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
@@ -378,8 +374,8 @@ sub _sort_similarity_links {
 	    ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {
 	my $seq_arg = $display_id;
 	$seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-	$text .= sprintf( ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ',
-			  $object->species, $object->stable_id, $seq_arg, $db );
+	$text .= sprintf( ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s;extdb=%s">align</a>] ',
+			  $object->species, $object->stable_id, $seq_arg, $db, lc($externalDB) );
       }
     }
     if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link
@@ -413,12 +409,18 @@ sub _sort_similarity_links {
 	'id'     => $link_name,
 	'ftype'  => $link_type,
     });
-    $text .= qq(  [<a href="$k_url">view all locations</a>]);
+
+### Skip EG internal IDs
+    unless ( uc($externalDB) eq 'EMBL_DNA' || uc($externalDB) eq 'REFSEQ_DNA') {
+	$text .= qq(  [<a href="$k_url">view all locations</a>]);
+    }
 
     $text .= '</div>';
     push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
   }
 }
+
+sub _export { return EnsEMBL::Web::Component::Export::export(@_); }
 
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;
@@ -1176,6 +1178,7 @@ sub build_sequence {
   # Temporary patch because Firefox doesn't copy/paste anything but inline styles
   # If we remove this patch, look at version 1.79 for the correct code to revert to
   my $styles = $self->object->species_defs->colour('sequence_markup');
+
   my %class_to_style = (
     con =>  [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}->{'default'}" } ],
     dif =>  [ 2,  { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}->{'default'}" } ],

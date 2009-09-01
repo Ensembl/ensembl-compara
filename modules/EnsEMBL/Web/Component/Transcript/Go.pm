@@ -25,6 +25,11 @@ sub content {
     my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
     return unless (@similarity_links);
     $self->_sort_similarity_links(@similarity_links);
+
+    unless ($object->__data->{'links'}{'go'}) {
+	@similarity_links = @{$object->get_gene_similarity_hash($object->Obj)};
+	$self->_sort_similarity_links( @similarity_links);
+    }
   }
   my $no_data = "<p>No GO terms have been mapped to this entry via UniProt and/or RefSeq.</p>"; 
   return $no_data unless $object->__data->{'links'}{'go'}; 
