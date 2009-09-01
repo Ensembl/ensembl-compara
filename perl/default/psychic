@@ -76,13 +76,13 @@ foreach my $sp ( sort keys %sp_hash ) {
 chop $query;
 
 my $feature_maps = {qw(
-		       gene       Gene
-		       affyprobe  OligoProbe
-		       oliogprobe OligoProbe
-		       affy       OligoProbe
-		       oligo      OligoProbe
-		       snp        SNP
-		       variaton   SNP
+		       gene        Gene
+		       affyprobe   OligoProbe
+		       oliogprobe  OligoProbe
+		       affy        OligoProbe
+		       oligo       OligoProbe
+		       snp         SNP
+		       variaton    SNP
 		       chr         Chromosome
 		       clone       Sequence
 		       contig      Sequence
@@ -90,7 +90,7 @@ my $feature_maps = {qw(
 		       supercontig Sequence
 		       region      Sequence
 		       sequence    Sequence
-		       disease     Disease
+		       disease     Gene
 		       domain      Domain
 		       peptide     Gene
 		       transcript  Gene
@@ -109,6 +109,7 @@ my $feature_maps = {qw(
 ## of the index....
 
 my $index_t = '';
+
 if( $query=~/^(\w+)\b/ ) {
   $index_t = $feature_maps->{lc($1)};
   if( $index_t ) {
