@@ -407,9 +407,9 @@ sub dumpOligoProbe {
     $sth->execute();
     while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
       next unless $hid;
-      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
+      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Probe set",
 	$hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=pset;id=$hid;",
-	  $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
+	  $hid, qq($type probeset $hid hits the genome in $count locations.\n);
     }
 
     my $sth    = $conf->{'dbh'}->prepare(
@@ -428,9 +428,9 @@ sub dumpOligoProbe {
     $sth->execute();
     while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
       next unless $hid;
-      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Oligo Probe set",
-  $hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=probet;id=$hid;",
-    $hid, qq($type oligo probeset $hid hits the genome in $count locations.\n);
+      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Probet",
+  $hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=probe;id=$hid;",
+    $hid, qq($type probe $hid hits the genome in $count locations.\n);
     }
   }
   close A;
