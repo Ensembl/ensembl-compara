@@ -35,7 +35,7 @@ sub content {
   
   my $multi = grep /yes/, values %$methods;
   
-  foreach (@$slices) {  
+  foreach (@$slices) {
     my $image_config = $object->image_config_hash("contigview_bottom_$i", 'MultiBottom', $_->{'species'});
     
     $image_config->set_parameters({
@@ -50,10 +50,8 @@ sub content {
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'});
     
     if ($i == 1) {
-      if ($max == 2) {
-        $image_config->multi($methods, $i, $max, $slices->[$i]->{'species'}) if $multi;
-        push @images, $slice, $image_config;
-      }
+      $image_config->multi($methods, $i, $max, $slices->[$i]->{'species'}) if $multi && $max == 2;
+      push @images, $slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
