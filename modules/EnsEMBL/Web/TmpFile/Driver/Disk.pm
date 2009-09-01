@@ -2,7 +2,7 @@ package EnsEMBL::Web::TmpFile::Driver::Disk;
 
 use strict;
 
-use Compress::Zlib;
+use Compress::Zlib qw(gzopen $gzerrno);
 use File::Path;
 use File::Spec::Functions qw(splitpath);
 
