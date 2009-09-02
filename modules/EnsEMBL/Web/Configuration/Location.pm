@@ -200,7 +200,7 @@ sub populate_tree {
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
       marker EnsEMBL::Web::Component::Location::MarkerDetails
     )],
-    { 'availability' => 'has_markers' }
+    { 'availability' => 'slice has_markers' }
   );
 
   my $export_label = $object->action eq 'LD' ? 'Export Linkage Disequilibrium Data Data' : 'Export Location Data';
