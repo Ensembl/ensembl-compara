@@ -542,6 +542,8 @@ sub freqs_hack {
         push (@{ $data{$pop_id}{Genotypes} }, $self->pop_genotypes($pop_gt_object));
         next if $data{$pop_id}{pop_info};
         $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);  
+        $data{$pop_id}{ssid} = $pop_gt_object->subsnp();
+        $data{$pop_id}{submitter} = $pop_gt_object->subsnp_handle();
       } 
       
       ## Now work out allele frequencys 
