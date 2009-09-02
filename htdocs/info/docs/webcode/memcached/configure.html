@@ -1,0 +1,115 @@
+<html>
+<head>
+<title>Memcached - how to enable</title>
+</head>
+
+<body>
+
+<h1>How to enable memcached caching in EnsEMBL</h1>
+
+<p>
+Enabling memcached caching for your EnsEMBL website installation is
+quite easy.<br />  The only hard bit you have to do is compile and
+install our version of memcached server, which could be found
+either <a href="http://code.google.com/p/memcached-tags/">here</a><br />
+or in <i>public-plugins/memcached/src</i>
+</p>
+
+<p>
+Basic memcached server installation instruction:
+</p>
+
+<pre class="code">
+cd [/to/your/src/of/memcached-tags.1.2.6/]
+./configure --prefix=[/where/you/want/to/put/binaries]
+make
+make install
+</pre>
+
+<p>
+If anything goes wrong with the installation, please refer to <a href="http://code.google.com/p/memcached/wiki/Start">memcached wiki page</a> for complete installation instructions.
+</p>
+
+<p>
+Once that's done you can start memcached server, e.g.:
+</p>
+
+<pre class="code">
+[/where/you/have/installed/]bin/memcached -p [PORT] &amp;
+</pre>
+
+<p>
+and test it:
+</p>
+
+<pre class="code">
+<b>telnet localhost [PORT]</b>
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+<b>version</b>
+VERSION 1.2.6.tags
+<b>quit</b> Connection closed by foreign host.
+</pre>
+
+<p>
+Once you have memcached server(s) up and running you need to configure
+EnsEMBL website.<br />  Include public memcached plugin to your
+plugins list: in [ensembl root]/conf/Plugins.pm:
+</p>
+
+<pre class="code">
+$SiteDefs::ENSEMBL_PLUGINS = [ 'EnsEMBL::Memcached' =>
+  $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/memcached', ...  ];
+</pre>
+
+<p>
+and configure memcached plugin (especially SERVER(s) and PORT(s))
+in [ensembl root]/public-plugins/memcached/conf/SiteDefs.pm:
+</p>
+
+<pre class="code">
+package EnsEMBL::Memcached::SiteDefs;
+use strict;
+
+sub update_conf {
+  $SiteDefs::ENSEMBL_MEMCACHED = {
+    servers => [ qw(SERVER1:PORT1 SERVER2:PORT2) ],
+    flags   => [ qw(
+      PLUGGABLE_PATHS
+      STATIC_PAGES_CONTENT
+      WEBSITE_DB_DATA
+      DYNAMIC_PAGES_CONTENT
+      TMP_IMAGES
+      ORDERED_TREE
+      OBJECTS_COUNTS
+      IMAGE_CONFIG
+    ) ],
+
+    ## This setting switches cpan Cache::Memcached debug option,
+    ## ... which is a bit useless
+    debug   => 0,
+
+  };
+  
+  ## Use flags to enable what you would like to cache:
+  ## PLUGGABLE_PATHS       - paths to pluggable scripts and static files
+  ## STATIC_PAGES_CONTENT  - .html pages content, any pages which SendDecPafe handler is responsible for
+  ## WEBSITE_DB_DATA       - website db data queries results
+  ## USER_DB_DATA          - user and group db data queries results (records, etc.)
+  ## DYNAMIC_PAGES_CONTENT - all dynamic ajax responses
+  ## TMP_IMAGES            - temporary images (the one you see actual genomic data on) and their image-maps
+  ## ORDERED_TREE          - navigation tree
+  ## OBJECTS_COUNTS        - different counts for objects like gene, transcript, location, etc...
+  ## IMAGE_CONFIG          - Image configurations
+
+  ## Use this to switch on ensembl caching debug messages:
+  ## $SiteDefs::ENSEMBL_DEBUG_FLAGS |= $SiteDefs::ENSEMBL_DEBUG_MEMCACHED;
+
+}
+
+1;
+</pre>
+
+</body>
+</html>

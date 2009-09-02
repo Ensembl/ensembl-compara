@@ -1,0 +1,50 @@
+<html>
+<head>
+<title>Memcached integration</title>
+</head>
+
+<body>
+
+<h1>Ensembl Memcached integration</h1>
+
+<p>
+Memcached is a distributed memory object caching system.<br />  We are
+using memcached to speed up website by caching lots of things in
+EnsEMBL, such as paths to pluggable static files, semi-static rendered
+html pages, generated images, image-maps, some database query results
+and a lot more.<br />  To get to know more about memcached in general
+apply here:
+<a href="http://www.danga.com/memcached/">http://www.danga.com/memcached</a>
+</p>
+
+<div class="notice"><strong>Important note</strong>: EnsEMBL would not
+run with standard memcached installation, we slightly changed
+memcached server to suit our needs.<br />  Major idea of this
+modification is to be able to apply tags for the items stored in
+memory, so that there's a way to delete lots of items at once by tags.
+</div>
+
+<p>
+new functions: <br />
+<b>tag_add <i>tag</i> <i>key</i></b> - adds tag for the key <br />
+<b>tag_delete <i>tag</i></b> - deletes all keys with given tag <br />
+<b>tags_delete <i>tag1</i> <i>tag2</i> ...</b> - deletes keys which
+have all given tags <br />
+</p>
+
+<p>
+The modified source code for memcached server could be found in
+public-plugins/memceched/src, alternatively you
+can <a href="http://code.google.com/p/memcached-tags/">download it
+here</a>.
+</p>
+
+<h2>Tutorials</h2>
+
+<ul>
+<li><a href="configure.html">How do I enable memcached in my EnsEMBL
+installation</a></li>
+</ul>
+
+</body>
+</html>
