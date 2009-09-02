@@ -274,11 +274,12 @@ sub _matches {
   my $object = $self->object;
   my $label  = $object->species_defs->translate( $caption );
   my $obj    = $object->Obj;
-
+  my @similarity_links;
+  
   # Check cache
   unless ($object->__data->{'links'}){
-    my @similarity_links = @{$object->get_similarity_hash($obj)};
-    return unless (@similarity_links);
+    @similarity_links = @{$object->get_similarity_hash($obj)};
+    return unless @similarity_links;
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
@@ -286,7 +287,7 @@ sub _matches {
   # No XREFs attached to the transcript - check if they are attached to the gene
   unless (@links) {
       @similarity_links = @{$object->get_gene_similarity_hash($obj)};
-      return unless (@similarity_links);
+      return unless @similarity_links;
       $self->_sort_similarity_links(@similarity_links);
       @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
   }
