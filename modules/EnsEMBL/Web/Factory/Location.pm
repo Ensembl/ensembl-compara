@@ -63,8 +63,11 @@ sub __set_species {
 sub createObjects {
   my $self = shift;
   
-  return $self->_create_object_from_core if $self->core_objects->location && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') && !$self->core_objects->gene;
-  
+  return $self->_create_object_from_core
+    if   $self->core_objects->location
+     && !$self->core_objects->location->isa('EnsEMBL::Web::Fake')
+     && !$self->core_objects->gene;
+
   $self->get_databases($self->__gene_databases, 'compara', 'blast');
   
   my $database = $self->database('core');
@@ -539,7 +542,7 @@ sub fastCreateObjects {
   # Only takes one set of parameters, and this has additional useful information included
   # /Homo_sapiens/fragment/contigviewbottom?l=chr:st-end;strand=1;type=chromosome
   $self->get_databases($self->__gene_databases, 'compara', 'blast');
-  
+    
   if ($self->param('l') =~ /^([-\w\.]+):(-?\d+)-(\d+)$/) {
     eval {
       my $seq_region        = $1;
@@ -575,6 +578,19 @@ sub _create_object_from_core {
   
   my $l = $self->core_objects->location;
   my $data = undef;
+
+  ## Map old assembly to the current one, if 'ass' param is there
+  if (my $ass = $self->param('a')) {
+    $self->delete_param('a');
+    
+    return $self->_map_assembly(
+           $l->seq_region_name,
+           $l->start,
+           $l->end,
+           1,
+           $ass,
+    );
+  }
   
   if ($l->isa('EnsEMBL::Web::Fake')) {
     $data = EnsEMBL::Web::Proxy::Object->new('Location', { 
@@ -803,6 +819,264 @@ sub _marker_adaptor {
   return $self->__species_hash->{'adaptors'}{'marker'} ||=
     $self->database('core',$self->__species)->get_MarkerAdaptor;
 }
+
+
+#------------------------------------------------------------------------------
+
+
+sub _map_assembly {
+  my ($self, $seq_region, $start, $end, $strand, $ass) = @_;
+
+  ## Check if we have this assembly in the list
+  ## Get chromosome:XXXX->chromosome:CURRENT_ASSEMBLY  mappings
+  my %params = map {
+                 $_ => $self->{'data'}{'_input'}->param($_)
+               } $self->{'data'}{'_input'}->param;
+
+  my %mappings = map {
+                   reverse (/^chromosome:(.+)#chromosome:(.+)$/)
+                 } @{ $self->species_defs->ASSEMBLY_MAPPINGS };
+
+  my @mappings = keys %mappings;
+  
+  ## Check if requested assembly is in %mappings
+  if ( grep { uc($_) eq uc($ass) } @mappings ) {
+    my $old_slice = $self->_slice_adaptor->fetch_by_region(
+      'chromosome',
+      $seq_region,
+      $start, $end, $strand,
+      $ass
+    );
+
+    my $segments = $old_slice->project('chromosome', $self->species_defs->ASSEMBLY_NAME);
+
+    if (@$segments == 1) {
+      
+      my $new_slice = shift(@$segments)->to_Slice;
+      
+      $self->session->add_data(
+        type     => 'message',
+        function => '_info',
+        code     => 'new_coordinates',
+        message  => "Your request for $seq_region:$start-$end in <b>$ass</b> has been mapped to the new <b>"  .
+                     $self->species_defs->ASSEMBLY_NAME . "</b> coordinates $seq_region:". $new_slice->start ."-". $new_slice->end,
+      );
+      
+      %params = (
+        %params,
+        r => "$seq_region:". $new_slice->start .'-'. $new_slice->end,
+      );
+      
+      return $self->problem('redirect', $self->_url(\%params));
+      
+    } elsif (@$segments) {
+      
+      my $message;
+
+      my $new_start = $segments->[0]->to_Slice->start;
+      my $new_end   = $segments->[0]->to_Slice->end;
+      my $prev_end  = 0;
+      my $count     = @$segments;
+      
+      foreach my $segment (@$segments) {
+        my $new_slice = $segment->to_Slice;
+        $new_start    = $new_slice->start if $new_slice->start < $new_start;
+        $new_end      = $new_slice->end   if $new_slice->end   > $new_end;
+        
+        my %new_params = (
+          %params,
+          r => "$seq_region:". $new_slice->start .'-'. $new_slice->end . '<br />',
+        );
+        
+        if ($prev_end && ($old_slice->start + $segment->from_start - $prev_end > 2)) {
+          $message .= ($prev_end + 1) .'-'. ($old_slice->start + $segment->from_start - 2) .
+                      ' - GAP <br />'; 
+        }
+        
+        $prev_end = $old_slice->start + $segment->from_end - 1;
+        $message .= ($old_slice->start + $segment->from_start - 1) .'-'. ($old_slice->start + $segment->from_end - 1) .
+                    ' projects to <a href="'. $self->_url(\%new_params) .'">' .
+                    $new_slice->start . ' - ' . $new_slice->end . '</a><br />'; 
+      }
+
+      $self->session->add_data(
+        type     => 'message',
+        function => '_info',
+        code     => 'several_new_coordinates',
+        message  => "Your request for $seq_region:$start-$end in <b>$ass</b> has been mapped to $count locations within new <b>" .
+                    $self->species_defs->ASSEMBLY_NAME . "</b> coordinates " .
+                    "$seq_region:$new_start-$new_end <br />" .
+                    "<strong>Mapped segments:</strong> <br />" . $message,
+      );
+
+      %params = (
+        %params,
+        r => "$seq_region:$new_start-$new_end",
+      );      
+
+      return $self->problem('redirect', $self->_url(\%params));
+      
+    } else {
+        $self->session->add_data(
+          type     => 'message',
+          function => '_info',
+          code     => 'no_mappings_for_assembly',
+          message  => "No changes in coordinates of this slice since <b>$ass</b>",
+        );
+    }
+    
+    return $self->problem('redirect', $self->_url(\%params));
+    
+  } elsif (@mappings) {
+    ## Assembly is not recognised among list of possible ones
+    ## Put warning message and redirect
+    $self->session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'assembly_not_recognised',
+      message  => "Sorry, assembly <b><i>$ass</i></b> was not recognised, we currently map " .
+                  (scalar(@mappings) > 1
+                   ? join(' and ', reverse (pop @mappings,  join(', ', @mappings))) . ' assemblies only'
+                   : "@mappings assembly only"),
+    );
+    return $self->problem('redirect', $self->_url(\%params));
+  } else {
+    ## We do not have any assemblies to map
+    $self->session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'no_assemblies',
+      message  => "Sorry we currently don't have any other assemblies to map",
+    );
+    return $self->problem('redirect', $self->_url(\%params));
+  }
+  
+}
+
+
+#sub _map_assembly {
+#  my ($self, $seq_region, $start, $end, $strand, $ass) = @_;
+#
+#  ## Check if we have this assembly in the list
+#  ## Get chromosome:XXXX->chromosome:CURRENT_ASSEMBLY  mappings
+#  warn "checking compatability for give assembly: $ass";
+#  my %params = map {
+#                 $_ => $self->{'data'}{'_input'}->param($_)
+#               } $self->{'data'}{'_input'}->param;
+#
+#  my %mappings = map {
+#                   reverse (/^chromosome:(.+)#chromosome:(.+)$/)
+#                 } @{ $self->species_defs->ASSEMBLY_MAPPINGS };
+#
+#  my @mappings = keys %mappings;
+#  
+#  ## Check if requested assembly is in %mappings
+#  if ( grep { uc($_) eq uc($ass) } @mappings ) {
+#    my $csa    = $self->database('core', $self->species)->get_CoordSystemAdaptor;
+#    my $ama    = $self->database('core', $self->species)->get_AssemblyMapperAdaptor;
+#    my $old_cs = $csa->fetch_by_name('chromosome', $ass);
+#    my $new_cs = $csa->fetch_by_name('chromosome', $self->species_defs->ASSEMBLY_NAME);
+#    my $mapper = $ama->fetch_by_CoordSystems($old_cs, $new_cs);      
+#
+#    my @coords = $mapper->map($seq_region, $start, $end, $strand, $old_cs);
+#    
+#    if (@coords == 1) {
+#      
+#      my ($c) = @coords;
+#      
+#      $self->session->add_data(
+#        type     => 'message',
+#        function => '_info',
+#        code     => 'new_coordinates',
+#        message  => "Your request for $seq_region:$start-$end in <b>$ass</b> has been mapped to the new <b>"  .
+#                     $self->species_defs->ASSEMBLY_NAME . "</b> coordinates $seq_region:". $c->start ."-". $c->end,
+#      );
+#      
+#      %params = (
+#        %params,
+#        r => "$seq_region:". $c->start .'-'. $c->end,
+#      );
+#      
+#      return $self->problem('redirect', $self->_url(\%params));
+#      
+#    } elsif (@coords) {
+#      
+#      my $message;
+#
+#      my $new_start = $coords[0]->start;
+#      my $new_end   = $coords[0]->end;
+#      my $count     = @coords;
+#      
+#      foreach my $c (@coords) {
+#        $new_start = $c->start if $c->start < $new_start;
+#        $new_end = $c->end if $c->end > $new_end;
+#        warn Dumper($c);
+#        if (ref($c) =~ /Gap/) {
+#          $message .= 'GAP: '. $c->start . ' - ' . $c->end . '<br />'; 
+#        } else {
+#          my %new_params = (
+#            %params,
+#            r => "$seq_region:". $c->start .'-'. $c->end . '<br />',
+#          );
+#          $message .= 'New coordinates: <a href="'. $self->_url(\%new_params) .'">'. $c->start . ' - ' . $c->end . '</a><br />'; 
+#        }
+#      }
+#
+#      $self->session->add_data(
+#        type     => 'message',
+#        function => '_info',
+#        code     => 'several_new_coordinates',
+#        message  => "Your request for $seq_region:$start-$end in <b>$ass</b> has been mapped to $count locations within new <b>" .
+#                    $self->species_defs->ASSEMBLY_NAME . "</b> coordinates " .
+#                    "$seq_region:$new_start-$new_end <br />" .
+#                    "<strong>Mapped segments:</strong> <br />" . $message,
+#      );
+#
+#      %params = (
+#        %params,
+#        r => "$seq_region:$new_start-$new_end",
+#      );      
+#
+#      return $self->problem('redirect', $self->_url(\%params));
+#      
+#    } else {
+#        $self->session->add_data(
+#          type     => 'message',
+#          function => '_info',
+#          code     => 'no_mappings_for_assembly',
+#          message  => "No changes in coordinates of this slice since <b>$ass</b>",
+#        );
+#    }
+#    
+#    return $self->problem('redirect', $self->_url(\%params));
+#    
+#  } elsif (@mappings) {
+#    ## Assembly is not recognised among list of possible ones
+#    ## Put warning message and redirect
+#    warn "Assembly $ass is not regognized";
+#    $self->session->add_data(
+#      type     => 'message',
+#      function => '_warning',
+#      code     => 'assembly_not_recognised',
+#      message  => "Sorry, assembly <b><i>$ass</i></b> was not recognised, we currently map " .
+#                  (scalar(@mappings) > 1
+#                   ? join(' and ', reverse (pop @mappings,  join(', ', @mappings))) . ' assemblies only'
+#                   : "@mappings assembly only"),
+#    );
+#    return $self->problem('redirect', $self->_url(\%params));
+#  } else {
+#    ## We do not have any assemblies to map
+#    $self->session->add_data(
+#      type     => 'message',
+#      function => '_warning',
+#      code     => 'no_assemblies',
+#      message  => "Sorry we currently don't have any other assemblies to map",
+#    );
+#    return $self->problem('redirect', $self->_url(\%params));
+#  }
+#  
+#}
+
 
 1;
   
