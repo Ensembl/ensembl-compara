@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component;
 
 use strict;
@@ -16,7 +18,6 @@ use Text::Wrap qw(wrap);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use EnsEMBL::Web::Component::Export;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Form;
@@ -79,26 +80,26 @@ sub _hint    {
 
 sub _export_image {
   my( $self, $image, $flag ) = @_;
-	$image->{export} = 'iexport' . ($flag ? " $flag" : '');
-	my( $format,$scale ) = $self->object->param('export' ) ? split( /-/, $self->object->param('export'),2) : ('',1);
-	$scale eq 1 if $scale <= 0;
-	my %FORMATS = EnsEMBL::Web::Constants::FORMATS;
-	if( $FORMATS{ $format } ) {  	
-  	$image->drawable_container->{'config'}->set_parameter('sf',$scale);
-		( my $comp = ref($self) ) =~ s/[^\w\.]+/_/g;
-		my $filename = "$comp-".$self->object->_filename().'-'.$scale.'.'.$FORMATS{$format}{'extn'};
-		if( $self->object->param( 'download' ) ) {
-  		$self->object->input->header( -type => $FORMATS{$format}{'mime'}, -attachment => $filename );
-		} else {
-  		$self->object->input->header( -type => $FORMATS{$format}{'mime'}, -inline => $filename );
-		}
-		
+        $image->{export} = 'iexport' . ($flag ? " $flag" : '');
+        my( $format,$scale ) = $self->object->param('export' ) ? split( /-/, $self->object->param('export'),2) : ('',1);
+        $scale eq 1 if $scale <= 0;
+        my %FORMATS = EnsEMBL::Web::Constants::FORMATS;
+        if( $FORMATS{ $format } ) {          
+          $image->drawable_container->{'config'}->set_parameter('sf',$scale);
+                ( my $comp = ref($self) ) =~ s/[^\w\.]+/_/g;
+                my $filename = "$comp-".$self->object->_filename().'-'.$scale.'.'.$FORMATS{$format}{'extn'};
+                if( $self->object->param( 'download' ) ) {
+                  $self->object->input->header( -type => $FORMATS{$format}{'mime'}, -attachment => $filename );
+                } else {
+                  $self->object->input->header( -type => $FORMATS{$format}{'mime'}, -inline => $filename );
+                }
+                
         if ($FORMATS{$format}{'extn'} eq 'txt') {
           print $image->drawable_container->{'export'};
           return 1;
         }
-		
-  	$image->render( $format );
+                
+          $image->render( $format );
     return 1;
   }
   
@@ -111,10 +112,16 @@ sub image_width {
 }
 
 sub new {
-  my( $class, $object ) = shift;
-  my $self = { 'object' => shift, };
-  bless $self,$class;
-  $self->_init();
+  my ($class, $object) = shift;
+  
+  my $self = {
+    'object' => shift,
+    'id' => [split /::/, $class]->[-1] . 'Panel'
+  };
+  
+  bless $self, $class;
+  $self->_init;
+  
   return $self;
 }
 
@@ -122,6 +129,12 @@ sub object {
   my $self = shift;
   $self->{'object'} = shift if @_;
   return $self->{'object'};
+}
+
+sub id {
+  my $self = shift;
+  $self->{'id'} = shift if @_;
+  return $self->{'id'};
 }
 
 sub cacheable {
@@ -234,7 +247,6 @@ sub new_image {
   my $timer = $species_defs->timer;
   my $image = EnsEMBL::Web::Document::Image->new( $species_defs );
      $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
-     $image->set_extra( $object );
      if ($object->prefix) {
        $image->prefix($object->prefix);
      }
@@ -246,7 +258,6 @@ sub new_vimage {
   my $object = $self->object;
   my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
      $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new( @_ );
-     $image->set_extra( $object );
   return $image;
 }
 
@@ -254,7 +265,6 @@ sub new_karyotype_image {
   my $self = shift;
   my $object = $self->object;
   my $image = EnsEMBL::Web::Document::Image->new( $object->species_defs );
-     $image->set_extra( $object );
      $image->{'object'} = $object;
   return $image;
 }
@@ -269,12 +279,11 @@ sub _matches {
   unless ($object->__data->{'links'}){
     my @similarity_links = @{$object->get_similarity_hash($obj)};
     return unless (@similarity_links);
-    $self->_sort_similarity_links( @similarity_links);
-
-    unless (@similarity_links) {
-# No GO terms attached to the transcript - check if they are attached to the gene
-	@similarity_links = @{$object->get_gene_similarity_hash($obj)};
-	$self->_sort_similarity_links( @similarity_links);
+    
+    # No GO terms attached to the transcript - check if they are attached to the gene
+    unless (@{$object->__data->{'links'}{'go'}||[]}) {
+      @similarity_links = @{$object->get_gene_similarity_hash($obj)};
+      $self->_sort_similarity_links(@similarity_links);
     }
   }
 
@@ -311,116 +320,118 @@ sub _matches {
 }
 
 sub _sort_similarity_links {
-  my $self             = shift;
-  my $object           = $self->object;
+  my $self = shift;
   my @similarity_links = @_;
+  
+  my $object   = $self->object;
   my $database = $object->database;
-  my $db       = $object->get_db() ;
+  my $db       = $object->get_db;
   my $urls     = $object->ExtURL;
-  my @links ;
+  my @links;
 
-  #default link to featureview is to retrieve an Xref
+  # default link to featureview is to retrieve an Xref
   my $fv_type = $object->action eq 'Oligos' ? 'OligoFeature' : 'Xref';
 
   my (%affy, %exdb);
+  
   # @ice names
   foreach my $type (sort {
     $b->priority        <=> $a->priority ||
     $a->db_display_name cmp $b->db_display_name ||
     $a->display_id      cmp $b->display_id
-  } @similarity_links ) {
-    my $link = "";
+  } @similarity_links) {
     my $join_links = 0;
-    my $externalDB = $type->database();
-    my $display_id = $type->display_id();
-    my $primary_id = $type->primary_id();
-    next if ($type->status() eq 'ORTH');               # remove all orthologs
-    next if lc($externalDB) eq "medline";              # ditch medline entries - redundant as we also have pubmed
-    next if ($externalDB =~ /^flybase/i && $display_id =~ /^CG/ ); # Ditch celera genes from FlyBase
-    next if $externalDB eq "Vega_gene";                # remove internal links to self and transcripts
-    next if $externalDB eq "Vega_transcript";
-    next if $externalDB eq "Vega_translation";
-    next if ($externalDB eq 'OTTP') && $display_id =~ /^\d+$/; #don't show vega translation internal IDs
-    if( $externalDB eq "GO" ){
-      push @{$object->__data->{'links'}{'go'}} , $display_id;
+    my $externalDB = $type->database;
+    my $display_id = $type->display_id;
+    my $primary_id = $type->primary_id;
+    
+    next if $type->status eq 'ORTH';                            # remove all orthologs
+    next if lc($externalDB) eq 'medline';                       # ditch medline entries - redundant as we also have pubmed
+    next if $externalDB =~ /^flybase/i && $display_id =~ /^CG/; # Ditch celera genes from FlyBase
+    next if $externalDB eq 'Vega_gene';                         # remove internal links to self and transcripts
+    next if $externalDB eq 'Vega_transcript';
+    next if $externalDB eq 'Vega_translation';
+    next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
+    
+    if ($externalDB eq 'GO') {
+      push @{$object->__data->{'links'}{'go'}}, $display_id;
       next;
-    } elsif ($externalDB eq "GKB") {
+    } elsif ($externalDB eq 'GKB') {
       my ($key, $primary_id) = split ':', $display_id;
-      push @{$object->__data->{'links'}{'gkb'}->{$key}} , $type ;
+      push @{$object->__data->{'links'}{'gkb'}->{$key}}, $type;
       next;
     }
+    
     my $text = $display_id;
-    (my $A = $externalDB ) =~ s/_predicted//;
-    if( $urls and $urls->is_linked( $A ) ) {
+    (my $A = $externalDB) =~ s/_predicted//;
+    
+    if ($urls && $urls->is_linked($A)) {
       my $link;
-      $link = $urls->get_url( $A, $primary_id );
+      $link = $urls->get_url($A, $primary_id);
 
       my $word = $display_id;
-      if( $A eq 'MARKERSYMBOL' ) {
-        $word = "$display_id ($primary_id)";
-      }
-      if( $link ) {
-        $text = qq(<a href="$link">$word</a>);
-      } else {
-        $text = qq($word);
-      }
+      $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
+      
+      $text = $link ? qq{<a href="$link">$word</a>} : $word;
     }
-    if( $type->isa('Bio::EnsEMBL::IdentityXref') ) {
-      $text .=' <span class="small"> [Target %id: '.$type->target_identity().'; Query %id: '.$type->query_identity().']</span>';
+    
+    if ($type->isa('Bio::EnsEMBL::IdentityXref')) {
+      $text .= ' <span class="small"> [Target %id: ' . $type->target_identity . '; Query %id: ' . $type->query_identity . ']</span>';
       $join_links = 1;
     }
-    unless ($object->Obj->isa("Bio::EnsEMBL::Gene")) {
-      if( ( $object->species_defs->ENSEMBL_PFETCH_SERVER ) &&
-	    ( $externalDB =~/^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i ) ) {
-	my $seq_arg = $display_id;
-	$seq_arg = "LL_$seq_arg" if $externalDB eq "LocusLink";
-	$text .= sprintf( ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s;extdb=%s">align</a>] ',
-			  $object->species, $object->stable_id, $seq_arg, $db, lc($externalDB) );
+    
+    unless ($object->Obj->isa('Bio::EnsEMBL::Gene')) {
+      if ($object->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i) {
+        my $seq_arg = $display_id;
+        $seq_arg = "LL_$seq_arg" if $externalDB eq 'LocusLink';
+
+        $text .= sprintf(
+          ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s;extdb=%s">align</a>] ', 
+          $object->species, 
+          $object->stable_id, 
+          $seq_arg, 
+          $db, 
+          lc $externalDB
+        );
       }
     }
-    if($externalDB =~/^(SWISS|SPTREMBL)/i) { # add Search GO link
-      $text .= ' [<a href="'.$urls->get_url('GOSEARCH',$primary_id).'">Search GO</a>]';
-    }
-    if( $type->description ) {
-      ( my $D = $type->description ) =~ s/^"(.*)"$/$1/;
-      $text .= "<br />".CGI::escapeHTML($D);
+    
+    $text .= ' [<a href="' . $urls->get_url('GOSEARCH', $primary_id) . '">Search GO</a>]' if $externalDB =~ /^(SWISS|SPTREMBL)/i; # add Search GO link
+
+    if ($type->description) {
+      (my $D = $type->description) =~ s/^"(.*)"$/$1/;
+      $text .= '<br />' . CGI::escapeHTML($D);
       $join_links = 1;
     }
-    if( $join_links  ) {
-      $text = qq(\n <div>$text);
-    } else {
-      $text = qq(\n <div class="multicol">$text);
-    }
+    
+    $text = $join_links ? "\n <div>$text" : qq{\n <div class="multicol">$text};
+    
     # override for Affys - we don't want to have to configure each type, and
     # this is an internal link anyway.
-    if( $externalDB =~ /^AFFY_/i) {
-      next if ($affy{$display_id} && $exdb{$type->db_display_name}); ## remove duplicates
-      $text = "\n".'  <div class="multicol"> '.$display_id;
+    if ($externalDB =~ /^AFFY_/i) {
+      next if $affy{$display_id} && $exdb{$type->db_display_name}; # remove duplicates
+      
+      $text = qq{\n <div class="multicol">$display_id};
       $affy{$display_id}++;
       $exdb{$type->db_display_name}++;
     }
 
-    #add link to featureview
-    my $link_name = ($fv_type eq 'OligoFeature') ? $display_id : $primary_id;
-    my $link_type = ($fv_type eq 'OligoFeature') ? $fv_type : $fv_type . "_$externalDB";
+    # add link to featureview
+    my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
+    my $link_type = $fv_type eq 'OligoFeature' ? $fv_type : $fv_type . "_$externalDB";
     my $k_url = $object->_url({
-	'type'   => 'Location',
-	'action' => 'Genome',
-	'id'     => $link_name,
-	'ftype'  => $link_type,
+      'type'   => 'Location',
+      'action' => 'Genome',
+      'id'     => $link_name,
+      'ftype'  => $link_type
     });
-
-### Skip EG internal IDs
-    unless ( uc($externalDB) eq 'EMBL_DNA' || uc($externalDB) eq 'REFSEQ_DNA') {
-	$text .= qq(  [<a href="$k_url">view all locations</a>]);
-    }
-
+    
+    $text .= qq{  [<a href="$k_url">view all locations</a>]} unless uc($externalDB) eq 'EMBL_DNA' || uc($externalDB) eq 'REFSEQ_DNA'; # Skip EG internal IDs
     $text .= '</div>';
-    push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ] ;
+    
+    push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ];
   }
 }
-
-sub _export { return EnsEMBL::Web::Component::Export::export(@_); }
 
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;
@@ -1178,7 +1189,6 @@ sub build_sequence {
   # Temporary patch because Firefox doesn't copy/paste anything but inline styles
   # If we remove this patch, look at version 1.79 for the correct code to revert to
   my $styles = $self->object->species_defs->colour('sequence_markup');
-
   my %class_to_style = (
     con =>  [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}->{'default'}" } ],
     dif =>  [ 2,  { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}->{'default'}" } ],
