@@ -17,6 +17,7 @@ sub render_normal {
   return if $strand_flag eq 'r' && $strand != -1;
   return if $strand_flag eq 'f' && $strand !=  1;
   
+  my $self_species   = $container->{'web_species'};
   my $length         = $container->length;
   my $pix_per_bp     = $self->scalex;
   my $draw_cigar     = $pix_per_bp > 0.2;
@@ -29,9 +30,7 @@ sub render_normal {
   my $join_col       = $self->my_colour($feature_key, 'join')   || 'gold'; 
   my $join_z         = $self->my_colour($feature_key, 'join_z') || 100;
   my $h              = $self->get_parameter('opt_halfheight') ? 4 : 8;
-  my $compara        = $self->get_parameter('compara');
-  my $self_species   = $container->{'web_species'};
-  my $link           = $compara ? $self->my_config('join') : 0;
+  my $link           = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $block          = 0;
   my $c              = 0; # Diagnostic counter
   my $k              = 0; # Diagnostic counter
@@ -96,7 +95,7 @@ sub render_normal {
           absolutey => 1
         });
         
-        if ($link && $join_col) {
+        if ($link) {
           $self->join_tag($box, 'BLOCK_' . $self->_type . $block, {
             x     => $strand == -1 ? 0 : 1,
             y     => $strand == -1 ? 1 : 0,
