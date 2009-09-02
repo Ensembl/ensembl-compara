@@ -18,11 +18,12 @@ sub init {
   ));
   
   $view_config->add_image_configs({qw(
-    MultiIdeogram    nodas
-    MultiTop         nodas
-    MultiBottom      nodas
+    MultiIdeogram nodas
+    MultiTop      nodas
+    MultiBottom   nodas
   )});
   
+  $view_config->default_config = 'MultiBottom';
   $view_config->storable = 1;
 }
 
