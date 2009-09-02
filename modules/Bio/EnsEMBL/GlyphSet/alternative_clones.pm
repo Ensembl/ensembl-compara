@@ -17,10 +17,10 @@ sub my_label {
 }
 
 sub features {
-  my $self = shift;
-  my $slice = $self->{'container'};
+  my $self       = shift;
+  my $slice      = $self->{'container'};
   my $das_source =  $self->my_config('das_source');
-  my $conf = $self->species_defs->$das_source;
+  my $conf       = $self->species_defs->$das_source;
   my $res;
   return unless $conf;
   my $source = Bio::EnsEMBL::ExternalData::DAS::Source->new(
@@ -36,17 +36,20 @@ sub features {
   foreach my $segment (@{ $slice->project($projection_type) }){
     my $clone = $segment->to_Slice->seq_region_name;
     my ($clone_name,$clone_version) = split(/\./, $clone);
-#    warn "looking for $ clone_name,$clone_version"; 
+#    warn "looking for $ clone_name,$clone_version";
+#    warn "looking at this part of the clone ",$segment->to_Slice->start;
     my $struct = $c->fetch_Features( $segment->to_Slice );
+
     foreach my $logic_name ( keys %{ $struct } ) {
       foreach my $proj_segment ( keys %{ $struct->{$logic_name}{'features'} } ) {
 	foreach my $proj (@{$struct->{$logic_name}{'features'}{$proj_segment}{'objects'}}) {
 	  if ($proj->type_label eq $projection_type) {
 	    my ($proj_name, $proj_version) = split(/\./, $proj->display_id);
 #	    warn "  found $proj_name,$proj_version";
+#	    warn "from start = ",$proj->slice->start;
 	    if ($clone_name eq $proj_name) {
 	      my $f = Bio::EnsEMBL::SimpleFeature->new(
-		-display_label  => $proj->display_id.':'.$proj->start.'-'.$proj->end,
+		-display_label  => $proj->display_id.':'.$proj->slice->start.'-'.$proj->slice->end,
 		-start          => $segment->from_start,
 		-end            => $segment->from_end,
 		-strand         => $segment->to_Slice->strand,
