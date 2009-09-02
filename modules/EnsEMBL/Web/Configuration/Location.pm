@@ -219,7 +219,6 @@ sub ajax_zmenu {
 
   my $action = $obj->[1]{'_action'} || 'Summary';
 
-
   if( $action =~ /Regulation/){
     return $self->ajax_zmenu_regulation;
   } elsif( $action =~/RegFeature/){
@@ -276,10 +275,11 @@ sub _ajax_zmenu_view {
    
     my $caption = $r;
     my $link_title = $r;
-    # code for alternative asembly zemnu
+
+    # code for alternative assembly zmenu
     if ($obj->param('assembly')) {
       my $this_assembly = $obj->species_defs->ASSEMBLY_NAME;
-      my $alt_assembly = $obj->param('assembly');
+      my $alt_assembly  = $obj->param('assembly');
       $caption = $alt_assembly.':'.$r;
 
       # choose where to jump to
@@ -292,17 +292,18 @@ sub _ajax_zmenu_view {
       } else {
         # TODO: put URL to the latest archive site showing the other assembly (from mapping_session table)
       }
-
       $panel->add_entry({ 'label' => 'Assembly: '.$alt_assembly, 'priority' => 100});
-    } elsif (my $status = $obj->param('status')) { # code for alternative clones zmenu
-      ($caption) = split ':', $r;
+
+    } elsif (my $loc = $obj->param('jump_loc')) { # code for alternative clones zmenu
+      ($caption) = split ':', $loc;
+      my $status = $obj->param('status');
       if ( $obj->species_defs->ASSEMBLY_NAME eq 'VEGA') {
         $link_title = 'Jump to Ensembl';
-        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
+        $url = sprintf("%s%s/%s/%s?r=%s", $obj->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $loc);
       }
       else {
         $link_title = 'Jump to Vega';
-        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
+        $url = sprintf("%s%s/%s/%s?r=%s", $obj->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $loc);
       }
       $status =~ s/_clone/ version/g;
       $panel->add_entry({ 'label' => 'Status: '.$status, 'priority' => 100});
