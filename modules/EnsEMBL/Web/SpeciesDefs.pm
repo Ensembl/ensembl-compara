@@ -463,6 +463,7 @@ sub _created_merged_table_hash {
             foreach my $k2 ( keys %$x1 ) {
               my $x2 = $x1->{$k2};
               if( ref($x2) eq 'HASH' ) {
+		$k2 = lc($k2);
                 foreach my $k3 ( keys %$x2 ) {
 		  my $name_overwrite;
                   $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x2->{$k3};
