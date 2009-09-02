@@ -53,9 +53,11 @@ sub format_frequencies {
     my %pop_row;
 
     # SSID + Submitter  -----------------------------------------
-    $pop_row{ssid} = $freq_data{$pop_id}{ssid};
-    my $submitter = $freq_data{$pop_id}{submitter};
-    $pop_row{submitter} = "<a href=http://www.ncbi.nlm.nih.gov/projects/SNP/snp_viewTable.cgi?handle=".$submitter.">".$submitter."</a>";
+    if ($freq_data{$pop_id}{ssid} ){
+      $pop_row{ssid} = $freq_data{$pop_id}{ssid};
+      my $submitter = $freq_data{$pop_id}{submitter};
+      $pop_row{submitter} = "<a href=http://www.ncbi.nlm.nih.gov/projects/SNP/snp_viewTable.cgi?handle=".$submitter.">".$submitter."</a>";
+    }
     # Freqs alleles ---------------------------------------------
     my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} }; 
     foreach my $gt (  @{ $freq_data{$pop_id}{Alleles} } ) { 
@@ -105,8 +107,10 @@ sub format_frequencies {
       push (@header_row, {key  =>$col, 'align'=>'left', title => "&nbsp;$col&nbsp;"  });
     }
   }
-  unshift (@header_row,  {key  =>"submitter",'align'=>'left',  title =>"Submitter"} );
-  unshift (@header_row,  {key  =>"ssid",'align'=>'left',  title =>"ssID"} );
+  if (exists $columns{ssid}){
+    unshift (@header_row,  {key  =>"submitter",'align'=>'left',  title =>"Submitter"} );
+    unshift (@header_row,  {key  =>"ssid",'align'=>'left',  title =>"ssID"} );
+  }
   unshift (@header_row,  {key  =>"pop",'align'=>'left',  title =>"Population"} );
 
 
