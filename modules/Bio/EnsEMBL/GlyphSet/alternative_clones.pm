@@ -84,8 +84,8 @@ sub href {
   my ($loc) = split (/\./, $f->display_id);
   $loc = $f->display_id;
   my $url = $self->_url({
-    'r'      => $loc,
-    'status' => $f->{'status'},
+    'jump_loc' => $loc,
+    'status'   => $f->{'status'},
   });
   return $url;
 }
