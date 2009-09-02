@@ -21,6 +21,7 @@ sub init {
     label_width  => 113,   # width of labels on left-hand side
     margin       => 5,     # margin
     spacing      => 2,     # spacing
+    opt_lines    => 1,     # register lines
     spritelib    => { default => $self->{'species_defs'}->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
   });
 
@@ -64,18 +65,18 @@ sub init {
 sub multi {
   my ($self, $methods, $pos, $total, @species) = @_;
   
-  my $species = $self->{'species'};
+  my $sp = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
   my %alignments;
   my @strands;
-    
+  
   foreach my $db (@{$self->species_defs->compara_like_databases||[]}) {
     next unless exists $multi_hash->{$db};
     
     foreach my $align (values %{$multi_hash->{$db}->{'ALIGNMENTS'}}) {
       next if $methods->{$align->{'type'}} eq 'no';
       next unless $align->{'class'} =~ /pairwise_alignment/;
-      next unless $align->{'species'}->{$species};
+      next unless $align->{'species'}->{$sp};
       next unless grep $align->{'species'}->{$_}, @species;
       
       my $i = $pos == $total && $total > 2 ? 2 : 1;
@@ -105,7 +106,7 @@ sub multi {
   
   foreach (sort keys %alignments) {
     my $align = $alignments{$_};
-    my ($other_species) = grep !/^$species|merged/, keys %{$align->{'species'}};
+    my ($other_species) = grep !/^$sp|merged/, keys %{$align->{'species'}};
     my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
     (my $other_species_hr = $other_species) =~ s/_/ /g;
     
@@ -125,6 +126,18 @@ sub multi {
         join           => 1
       })
     );
+  }
+  
+  foreach ($self->get_node('transcript')->nodes) {
+    my ($prev_species) = grep !/^$sp|merged/, keys %{$alignments{1}->{'species'}} if exists $alignments{1};
+    my ($next_species) = grep !/^$sp|merged/, keys %{$alignments{2}->{'species'}} if exists $alignments{2};
+    
+    ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
+    ($prev_species, $next_species) = ($next_species, '') if $pos == $total && $total > 2;
+    
+    $_->set('previous_species', $prev_species) if $prev_species;
+    $_->set('next_species', $next_species) if $next_species;
+    $_->set('join', 1);
   }
 }
 
