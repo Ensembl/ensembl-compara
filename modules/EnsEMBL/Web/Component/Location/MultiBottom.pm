@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::DBSQL::DBConnection;
+
 use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
@@ -34,6 +36,7 @@ sub content {
   };
   
   my $multi = grep /yes/, values %$methods;
+  my $compara_db = new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database if $multi;
   
   foreach (@$slices) {
     my $image_config = $object->image_config_hash("contigview_bottom_$i", 'MultiBottom', $_->{'species'});
@@ -48,6 +51,8 @@ sub content {
     });
     
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'});
+    
+    $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
       $image_config->multi($methods, $i, $max, $slices->[$i]->{'species'}) if $multi && $max == 2;
