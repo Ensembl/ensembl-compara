@@ -11,7 +11,7 @@ use base qw(EnsEMBL::Web::ConfigPacker_base);
 
 sub _munge_databases {
   my $self = shift;
-  my @tables = qw(core cdna vega otherfeatures vega_ensembl );
+  my @tables = qw(core cdna vega otherfeatures );
   foreach my $db ( @tables ) { 
     $self->_summarise_core_tables( $db, 'DATABASE_'.uc($db) );
   }
