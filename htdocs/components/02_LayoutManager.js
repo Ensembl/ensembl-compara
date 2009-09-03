@@ -63,15 +63,25 @@ Ensembl.LayoutManager.extend({
     });
     
     // For non ajax support - popup window close button
-    $('.popup_close').html('Save and close').click(function () {      
-      if (Ensembl.EventManager.trigger('updateConfiguration') || window.location.search.match('reset=1')) {
-        window.open(Ensembl.replaceTimestamp(this.href), window.name.replace(/^cp_/, '')); // Reload the main page
+    var close = $('.popup_close');
+    
+    if (close.length) {
+      if ($('input.panel_type[value=Configurator]').length) {
+        close.html('Save and close').click(function () {      
+          if (Ensembl.EventManager.trigger('updateConfiguration') || window.location.search.match('reset=1')) {
+            window.open(Ensembl.replaceTimestamp(this.href), window.name.replace(/^cp_/, '')); // Reload the main page
+          }
+          
+          window.close();
+          
+          return false;
+        });
+      } else {
+        close.hide();
       }
-      
-      window.close();
-      
-      return false;
-    });
+    }
+    
+    close = null;
     
     // Close modal window if the escape key is pressed
     $(document).keyup(function (event) {
