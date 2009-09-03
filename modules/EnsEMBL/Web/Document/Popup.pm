@@ -3,18 +3,15 @@
 package EnsEMBL::Web::Document::Popup;
 
 use strict;
-use EnsEMBL::Web::Document::Common;
 
-our @ISA = qw(EnsEMBL::Web::Document::Common);
-
-use Data::Dumper qw(Dumper);
+use base qw(EnsEMBL::Web::Document::Common);
 
 sub _initialize_HTML {
   my $self = shift;
 
   $self->include_navigation(1);
-## General layout for popup pages...
-
+  
+  # General layout for popup pages
   $self->add_head_elements qw(
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
@@ -36,22 +33,23 @@ sub _initialize_HTML {
     footerlinks     EnsEMBL::Web::Document::HTML::Empty
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   );
-  $self->call_child_functions( 'common_page_elements' );
+  
+  $self->call_child_functions('common_page_elements');
 
-  $self->timer_push( "page elements configured" );
-  $self->_common_HTML();
-  $self->timer_push( "common HTML called" );
-  $self->_script_HTML();
-  $self->timer_push( "script HTML called" );
-  $self->timer_push( "page decs configured" );
+  $self->timer_push('page elements configured');
+  $self->_common_HTML;
+  $self->timer_push('common HTML called');
+  $self->_script_HTML;
+  $self->timer_push('script HTML called');
+  $self->timer_push('page decs configured');
 
-  $self->call_child_functions( 'extra_configuration' );
+  $self->call_child_functions('extra_configuration');
 
-  $self->timer_push( "menu items configured" );
+  $self->timer_push('menu items configured');
 }
 
 sub panel_type {
-  return '<input type="hidden" class="panel_type" value="ModalContent" />';
+  return '<input type="hidden" class="panel_type" value="ModalContent" />' if $_[0]->renderer->{'_modal_dialog_'};
 }
 
 1;
