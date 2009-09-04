@@ -42,9 +42,8 @@ sub content {
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
-#    my $multicv_link = sprintf "/%s/multicontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
+    my $multicv_link = sprintf "/%s/Location/Multimulticontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
 #    my $FULL_URL     = $multicv_link;
-
     my $orthologues_skipped_count   = 0;
     my @orthologues_skipped_species = ();
     foreach my $species (sort keys %orthologue_list) {
@@ -82,13 +81,12 @@ sub content {
 	my $link = qq(/$spp/Gene/Summary?g=$stable_id;db=$db);   ### USE _url
 	my $gene_stable_id_link = sprintf '<a href="%s">%s</a>', $link, $stable_id;
         my $percent_ids  = '';
-        my $target_links = '';
-#        my $target_links = qq(<br />
-#          <span class="small">[<a href="$multicv_link;s1=$spp;g1=$stable_id">MultiContigView</a>]</span>);
-#          $mcv_species .= ";s$C_species=$spp;g$C_species=$stable_id";
-#          $FULL_URL    .= ";s$C=$spp;g$C=$stable_id";
-#          $C_species++;
-#          $C++;
+	my $multicv_link = $gene->_url({
+	  'type'   => 'Location',
+	  'action' => 'Multi',
+	  'g1'     => $stable_id,
+	});
+        my $target_links = qq(<br /><span class="small">[<a href="$multicv_link">Multi-species comp.</a>]</span>);
         if( $orthologue_desc ne 'DWGA' ) {
           my $url = $gene->_url({ 'action' => 'Compara_Ortholog/Alignment', 'g1' => $stable_id });
 	  $target_links .= qq(
@@ -124,13 +122,6 @@ sub content {
 	</td>
       </tr>);
       }
-#     if( $rowspan > 1) {
-#        $html .= qq(
-#      <tr>
-#        <td colspan="2">&nbsp;</td>
-#	<td colspan="2"><a href="$mcv_species">MultiContigView showing all $species orthologues</a></td>
-#      </tr>);
-#      }
     }
     $html .= '
     </table>';

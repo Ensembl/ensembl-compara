@@ -59,16 +59,18 @@ sub content {
           'g' => $stable_id,
           'r' => undef
         });
-				my $EXTRA;
-#        my $EXTRA = sprintf '<span class="small">[<a href="%s;s1=%s;g1=%s;context=1000">MultiContigView</a>]</span>',
-#          $MCV_STUB, $spp, CGI::escapeHTML( $stable_id );
+	my $multicv_link = $gene->_url({
+	  'type'   => 'Location',
+	  'action' => 'Multi',
+	  'g1'     => $stable_id,
+	});
+        my $EXTRA = qq(<span class="small">[<a href="$multicv_link">Multi-species comp.</a>]</span>);
         if( $paralogue_desc ne 'DWGA' ) {
           my $url = $gene->_url({ 'action' => 'Compara_Paralog/Alignment', 'g1' => $stable_id });
           $EXTRA .= sprintf '&nbsp;<span class="small">[<a href="%s">Align</a>]</span>', $url;
           $EXTRA2 = qq(<br /><span class="small">[Target &#37id: $OBJ->{'target_perc_id'}; Query &#37id: $OBJ->{'query_perc_id'}]</span>);
           $ALIGNVIEW = 1;
         }
-        $FULL_URL .= ";s$C=$spp;g$C=$stable_id";$C++;
         if( $description =~ s/\[\w+:([-\w\/]+)\;\w+:(\w+)\]//g ) {
           my ($edb, $acc) = ($1, $2);
           if( $acc ) {
