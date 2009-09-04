@@ -42,8 +42,6 @@ sub content {
     my $ALIGNVIEW = 0;
     my $matching_orthologues = 0;
     my %SP = ();
-    my $multicv_link = sprintf "/%s/Location/Multimulticontigview?gene=%s;context=10000", $gene->species, $gene->stable_id;
-#    my $FULL_URL     = $multicv_link;
     my $orthologues_skipped_count   = 0;
     my @orthologues_skipped_species = ();
     foreach my $species (sort keys %orthologue_list) {
@@ -62,7 +60,6 @@ sub content {
       <tr>
         <th rowspan="$rowspan">%s</th>), $label );
       my $start = '';
-#      my $mcv_species = $multicv_link;
       foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
         my $OBJ = $orthologue_list{$species}{$stable_id};
         $matching_orthologues = 1;
@@ -85,6 +82,7 @@ sub content {
 	  'type'   => 'Location',
 	  'action' => 'Multi',
 	  'g1'     => $stable_id,
+	  's1'     => $species,
 	});
         my $target_links = qq(<br /><span class="small">[<a href="$multicv_link">Multi-species comp.</a>]</span>);
         if( $orthologue_desc ne 'DWGA' ) {

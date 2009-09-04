@@ -63,6 +63,7 @@ sub content {
 	  'type'   => 'Location',
 	  'action' => 'Multi',
 	  'g1'     => $stable_id,
+	  's1'     => $species,
 	});
         my $EXTRA = qq(<span class="small">[<a href="$multicv_link">Multi-species comp.</a>]</span>);
         if( $paralogue_desc ne 'DWGA' ) {
