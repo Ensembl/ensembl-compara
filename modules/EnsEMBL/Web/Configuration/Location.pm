@@ -148,7 +148,9 @@ sub populate_tree {
     { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
   ));
   
-  $align_menu->append($self->create_node('Multi', 'Multi-species comp. ([[counts::pairwise_alignments]])',
+  $caption = $availability->{'slice'} ? 'Multi-species comp. ([[counts::pairwise_alignments]])' : 'Multi-species comp.';
+  
+  $align_menu->append($self->create_node('Multi', $caption,
     [qw(
       selector EnsEMBL::Web::Component::Location::SelectAlignment
       top      EnsEMBL::Web::Component::Location::MultiTop
