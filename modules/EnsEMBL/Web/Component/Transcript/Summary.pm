@@ -36,7 +36,7 @@ sub content {
       }
       else {
         $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-        $description =~ s/\[\w+:([\w\/]+)\;\w+:(\w+)\]//g;
+        $description =~ s/\[\w+:([\w\/\_]+)\;\w+:(\w+)\]//g;
         ($edb, $acc) = ($1, $2);
         $description .= qq( <span class="small">@{[ $object->get_ExtURL_link("Source: $edb $acc",$edb, $acc) ]}</span>) if ($acc ne 'content') ;
       }
