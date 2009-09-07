@@ -523,137 +523,223 @@ sub check {
   return $self->{'my_config'}{'_key'};
 }
 
-## Stuff copied out of scalebar.pm so that contig.pm can use it!
-
+# Stuff copied out of scalebar.pm so that contig.pm can use it!
 sub ID_URL {
-  my($self,$db,$id) = @_;
+  my ($self, $db, $id) = @_;
+  
   return undef unless $self->species_defs;
   return undef if $db eq 'NULL';
-  if (exists( $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db})) {
+  
+  if (exists($self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db})) {
     my $url = $self->species_defs->ENSEMBL_EXTERNAL_URLS->{$db};
     $url =~ s/###ID###/$id/;
+    
     return $url;
-  }
-  else {
+  } else {
     return '';
   }
 }
 
 sub draw_cigar_feature {
-  my( $self, $Composite, $f, $h, $feature_colour, $delete_colour, $pix_per_bp, $DO_NOT_FLIP ) = @_;
-## Find the 5' end of the feature.. (start if on forward strand of forward feature....)
-  #return unless $f;
-  my $Q = ref($f); $Q="$Q";
-    if($Q eq '') { warn("DRAWINGCODE_CIGAR < $f > ",$self->label->text," not a feature!"); }
-    if($Q eq 'SCALAR') { warn("DRAWINGCODE_CIGAR << ",$$f," >> ",$self->label->text," not a feature!"); }
-    if($Q eq 'HASH') { warn("DRAWINGCODE_CIGAR { ",join( "; ", keys %$f)," }  ",$self->label->text," not a feature!"); }
-    if($Q eq 'ARRAY') { warn("DRAWINGCODE_CIGAR [ ", join( "; ", @$f ), " ] ",$self->label->text," not a feature!"); }
-  my $S = (my $O = $DO_NOT_FLIP ? 1 : $self->strand ) == 1 ? $f->start : $f->end;
-  my $length = $self->{'container'}->length;
+  my ($self, $params) = @_;
+  
+  my ($composite, $f, $h) = map $params->{$_}, qw(composite feature height);
+  
+  my $ref = ref $f;
+  
+  if (!$ref) {
+    warn sprintf 'DRAWINGCODE_CIGAR < %s > %s not a feature', $f, $self->label->text;
+  } elsif ($ref eq 'SCALAR') {
+    warn sprintf 'DRAWINGCODE_CIGAR << %s >> %s not a feature', $$f, $self->label->text;
+  } elsif ($ref eq 'HASH') {
+    warn sprintf 'DRAWINGCODE_CIGAR { %s } %s not a feature', join('; ', keys %$f), $self->label->text;
+  } elsif ($ref eq 'ARRAY') { 
+    warn sprintf 'DRAWINGCODE_CIGAR [ %s ] %s not a feature', join('; ', @$f), $self->label->text;
+  }
+  
+  my $strand      = $self->strand;
+  my $o           = $params->{'do_not_flip'} ? 1 : $strand;
+  my $start       = $o == 1 ? $f->start : $f->end;
+  my $hstart      = $o == 1 ? $f->hstart : $f->hend;
+  my $hend        = $o == 1 ? $f->hend : $f->hstart;
+  my $length      = $self->{'container'}->length;
+  my $slice_start = $f->slice->start;
+  my $slice_end   = $f->slice->end;
+  my $fstrand     = $f->strand;
+  my $hstrand     = $f->hstrand;
+  my $tag1        = join ':', $f->species, $f->slice->seq_region_name;
+  my $tag2        = join ':', $f->hspecies, $f->hseqname;
   my @delete;
-
   my $cigar;
+  
   eval { $cigar = $f->cigar_string; };
-  if($@ || !$cigar) {
-    my($s,$e) = ($f->start,$f->end);
-    $s = 1 if $s<1;
-    $e = $length if $e>$length; 
-    $Composite->push($self->Rect({
-      'x'          => $s-1,            'y'          => 0,
-      'width'      => $e-$s+1,         'height'     => $h,
-      'colour'     => $feature_colour, 'absolutey'  => 1,
+  
+  if ($@ || !$cigar) {
+    my ($s, $e) = ($f->start, $f->end);
+    $s = 1 if $s < 1;
+    $e = $length if $e > $length; 
+    
+    $composite->push($self->Rect({
+      x         => $s - 1,
+      y         => 0,
+      width     => $e - $s + 1,
+      height    => $h,
+      colour    => $params->{'feature_colour'},
+      absolutey => 1
     }));
+    
     return;
   }
-
-## Parse the cigar string, splitting up into an array
-## like ('10M','2I','30M','I','M','20M','2D','2020M');
-## original string - "10M2I30MIM20M2D2020M"
-  foreach( $f->cigar_string=~/(\d*[MDImU])/g ) {
-## Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
-## representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
-## If there is no number convert it to [ 1, {letter} ] as no-number implies a single base pair...
-    my ($l,$type) = /^(\d+)([MDImU])/ ? ($1,$2):(1,$_);
-## If it is a D (this is a deletion) and so we note it as a feature between the end
-## of the current and the start of the next feature...
-##                      ( current start, current start - ORIENTATION )
-## otherwise it is an insertion or match/mismatch
-##  we compute next start sa ( current start, next start - ORIENTATION ) 
-##  next start is current start + (length of sub-feature) * ORIENTATION 
-    my $s = $S;
-    my $e = ( $S += ( $type eq 'D' ? 0 : $l*$O ) ) - $O;
-## If a match/mismatch - draw box....
-    if($type eq 'M' || $type eq 'm' || $type eq 'U') {
-      ($s,$e) = ($e,$s) if $s>$e;      ## Sort out flipped features...
-      next if $e < 1 || $s > $length;  ## Skip if all outside the box...
-      $s = 1       if $s<1;            ## Trim to area of box...
-      $e = $length if $e>$length;
-
-      $Composite->push($self->Rect({
-        'x'          => $s-1,            'y'          => 0, 
-        'width'      => $e-$s+1,         'height'     => $h,
-        'colour'     => $feature_colour, 'absolutey'  => 1,
-      }));
-## If a deletion temp store it so that we can draw after all matches....
-    } elsif($type eq 'D') {
-      ($s,$e) = ($e,$s) if $s<$e;
-      next if $e < 1 || $s > $length || $pix_per_bp < 1 ;  ## Skip if all outside box
+  
+  # Parse the cigar string, splitting up into an array
+  # like ('10M','2I','30M','I','M','20M','2D','2020M');
+  # original string - "10M2I30MIM20M2D2020M"
+  my @cigar = $f->cigar_string =~ /(\d*[MDImU])/g;
+  @cigar = reverse @cigar if $fstrand == -1;
+  
+  foreach (@cigar) {
+    # Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
+    # representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
+    # If there is no number convert it to [ 1, {letter} ] as no-number implies a single base pair...
+    my ($l, $type) = /^(\d+)([MDImU])/ ? ($1, $2) : (1, $_);
+    
+    # If it is a D (this is a deletion) and so we note it as a feature between the end
+    # of the current and the start of the next feature (current start, current start - ORIENTATION)
+    # otherwise it is an insertion or match/mismatch
+    # we compute next start sa (current start, next start - ORIENTATION) 
+    # next start is current start + (length of sub-feature) * ORIENTATION 
+    my $s = $start;
+    my $e = ($start += ($type eq 'D' ? 0 : $l * $o)) - $o;
+    
+    my $s1 = $fstrand == 1 ? $slice_start + $s - 1 : $slice_end - $e + 1;
+    my $e1 = $fstrand == 1 ? $slice_start + $e - 1 : $slice_end - $s + 1;
+    
+    my ($hs, $he);
+    
+    if ($fstrand == 1) {
+      $hs = $hstart;
+      $he = ($hstart += ($type eq 'I' ? 0 : $l * $o)) - $o;
+    } else {
+      $he = $hend;
+      $hs = ($hend -= ($type eq 'I' ? 0 : $l * $o)) + $o;
+    }
+    
+    # If a match/mismatch - draw box
+    if ($type =~ /^[MmU]$/) {
+      ($s, $e) = ($e, $s) if $s > $e; # Sort out flipped features
+      
+      next if $e < 1 || $s > $length; # Skip if all outside the box
+      
+      $s = 1       if $s < 1;         # Trim to area of box
+      $e = $length if $e > $length;
+      
+      my $box = $self->Rect({
+        x         => $s - 1,
+        y         => 0,
+        width     => $e - $s + 1,
+        height    => $h,
+        colour    => $params->{'feature_colour'},
+        absolutey => 1
+      });
+      
+      if ($params->{'link'}) {
+        my $tag = $strand == 1 ? "$tag1:$s1:$e1#$tag2:$hs:$he" : "$tag2:$hs:$he#$tag1:$s1:$e1";
+        my $x;
+        
+        if ($params->{'other_ori'} == $hstrand && $params->{'other_ori'} == 1) {
+          $x = $strand == -1 ? 0 : 1; # Use the opposite value to normal to ensure alignments which are between different orientations by default do not display a cross-over join
+        } else {
+          $x = $strand == -1 ? 1 : 0;
+        }
+        
+        $x ||= 1 if $fstrand == 1 && $hstrand * $params->{'other_ori'} == -1; # the feature has been flipped, so force x to the same value each time to achieve a cross-over join
+        
+        $self->join_tag($box, $tag, {
+          x     => $x,
+          y     => $strand == -1 ? 1 : 0,
+          z     => $params->{'join_z'},
+          col   => $params->{'join_col'},
+          style => 'fill'
+        });
+        
+        $self->join_tag($box, $tag, {
+          x     => !$x,
+          y     => $strand == -1 ? 1 : 0,
+          z     => $params->{'join_z'},
+          col   => $params->{'join_col'},
+          style => 'fill'
+        });
+      }
+      
+      $composite->push($box);
+    } elsif ($type eq 'D') { # If a deletion temp store it so that we can draw after all matches
+      ($s, $e) = ($e, $s) if $s < $e;
+      
+      next if $e < 1 || $s > $length || $params->{'scalex'} < 1 ;  # Skip if all outside box
+      
       push @delete, $e;
     }
   }
 
-## Draw deletion markers....
+  # Draw deletion markers
   foreach (@delete) {
-    $Composite->push($self->Rect({
-      'x'          => $_,              'y'          => 0, 
-      'width'      => 0,               'height'     => $h,
-      'colour'     => $delete_colour,  'absolutey'  => 1,
+    $composite->push($self->Rect({
+      x         => $_,
+      y         => 0,
+      width     => 0,
+      height    => $h,
+      colour    => $params->{'delete_colour'},
+      absolutey => 1
     }));
   }
 }
 
 sub no_features {
   my $self = shift;
-  $self->errorTrack( "No ".$self->my_label." in this region" ) if $self->{'config'}->get_parameter( 'opt_empty_tracks')==1;
+  $self->errorTrack(sprintf 'No %s in this region', $self->my_label) if $self->{'config'}->get_parameter('opt_empty_tracks') == 1;
 }
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;
-  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
-  my $font = $ST->{'GRAPHIC_FONT'};
-  my $fsze = $ST->{'GRAPHIC_FONTSIZE'} * $ST->{'GRAPHIC_TEXT'};
-  my @res = $self->get_text_width( 0, $message, '', $font, $fsze );
-
-  my $length = $self->{'config'}->image_width();
-  $self->push( $self->Text({
-    'x'         => $x || int(($length - $res[2])/2 ),
-    'y'         => $y || 2,
-    'width'     => $res[2],
-    'textwidth' => $res[2],
-    'height'    => $res[3],
-    'halign'    => 'center',
-    'font'      => $font,
-    'ptsize'    => $fsze,
-    'colour'    => "red",
-    'text'      => $message,
-    'absolutey' => 1,
-    'absolutex' => 1,
-    'absolutewidth' => 1,
-    'pixperbp'  => $self->{'config'}->{'transform'}->{'scalex'} ,
-  }) );
+  
+  my ($fontname, $fontsize) = $self->get_font_details('text');
+  
+  my $length = $self->{'config'}->image_width;
+  my $style  = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my @res    = $self->get_text_width(0, $message, '', 'ptsize' => $fontsize, 'font' => $fontname);
+  
+  $self->push($self->Text({
+    x             => $x || int(($length - $res[2]) / 2),
+    y             => $y || 2,
+    width         => $res[2],
+    textwidth     => $res[2],
+    height        => $res[3],
+    halign        => 'center',
+    font          => $fontname,
+    ptsize        => $fontsize,
+    colour        => 'red',
+    text          => $message,
+    absolutey     => 1,
+    absolutex     => 1,
+    absolutewidth => 1,
+    pixperbp      => $self->{'config'}->{'transform'}->{'scalex'}
+  }));
 
   return $res[3];
 }
 
 sub get_featurestyle {
   my ($self, $f, $configuration) = @_;
+  
   my $style;
-  if($configuration->{'use_style'}) {
+  
+  if ($configuration->{'use_style'}) {
     $style = $configuration->{'styles'}{$f->das_type_category}{$f->das_type_id};
     $style ||= $configuration->{'styles'}{'default'}{$f->das_type_id};
     $style ||= $configuration->{'styles'}{$f->das_type_category}{'default'};
     $style ||= $configuration->{'styles'}{'default'}{'default'};
   }
+  
   $style ||= {};
   $style->{'attrs'} ||= {};
 
@@ -661,6 +747,7 @@ sub get_featurestyle {
   my $colour = $style->{'attrs'}{'fgcolor'} || $configuration->{'colour'} || $configuration->{'color'} || 'blue';
   $style->{'attrs'}{'height'} ||= $configuration->{'h'};
   $style->{'attrs'}{'colour'} ||= $colour;
+  
   return $style;
 }
 
@@ -669,25 +756,26 @@ sub get_featuredata {
   my ($self, $f, $configuration, $y_offset) = @_;
 
   # keep within the window we're drawing
-  my $START = $f->das_start() < 1 ? 1 : $f->das_start();
-  my $END   = $f->das_end()   > $configuration->{'length'}  ? $configuration->{'length'} : $f->das_end();
+  my $start = $f->das_start < 1 ? 1 : $f->das_start;
+  my $end   = $f->das_end   > $configuration->{'length'} ? $configuration->{'length'} : $f->das_end;
   my $row_height = $configuration->{'h'};
 
   # truncation flags
-  my $trunc_start = ($START ne $f->das_start()) ? 1 : 0;
-  my $trunc_end   = ($END ne $f->das_end())        ? 1 : 0;
+  my $trunc_start = $start ne $f->das_start ? 1 : 0;
+  my $trunc_end   = $end ne $f->das_end     ? 1 : 0;
   my $orientation = $f->das_orientation;
 
   my $featuredata = {
-    'row_height'    => $row_height,
-    'start'         => $START,
-    'end'           => $END ,
-    'pix_per_bp'    => $self->{'pix_per_bp'},
-    'y_offset'      => $y_offset,
-    'trunc_start'   => $trunc_start,
-    'trunc_end'     => $trunc_end,
-    'orientation'   => $orientation,
+    row_height    => $row_height,
+    start         => $start,
+    end           => $end ,
+    pix_per_bp    => $self->{'pix_per_bp'},
+    y_offset      => $y_offset,
+    trunc_start   => $trunc_start,
+    trunc_end     => $trunc_end,
+    orientation   => $orientation
   };
+  
   return $featuredata;
 }
 
@@ -697,64 +785,71 @@ sub get_featuredata {
 
 
 #==============================================================================================================
-# Bumping code support!
+# Bumping code support!=
 #==============================================================================================================
 
-### _init_bump <- initialise the bumping code to be able to pack track...
-### moved from separate Bump module so that it can be used in an OO way!!
-### parameter passed is the maximum number of rows to bump... (optional)
+# _init_bump <- initialise the bumping code to be able to pack track...
+# moved from separate Bump module so that it can be used in an OO way!!
+# parameter passed is the maximum number of rows to bump... (optional)
 
+# Initialize bumping - single parameter - max depth - if undefined it is "infinite"
 sub _init_bump {
-### Initialize bumping - single parameter - max depth - if undefined it is "infinite"
   my $self = shift;
   my $key  = shift || '_bump';
+  
   $self->{$key} = {
-    'length' => $self->{'config'}->image_width(),
-    'rows'   => @_ ? shift : 1e8,
-    'array'  => []
+    length => $self->{'config'}->image_width,
+    rows   => @_ ? shift : 1e8,
+    array  => []
   };
 }
 
 sub _max_bump_row {
-  my( $self, $key ) = @_;
-  $key||='_bump';
+  my ($self, $key) = @_;
+  
+  $key ||= '_bump';
+  
   return scalar @{$self->{$key}{'array'}||[]};
 }
 
+# compute the row to bump the feature to.. parameters are start/end in drawing (pixel co-ordinates)
 sub bump_row {
-### compute the row to bump the feature to.. parameters are start/end in
-### drawing (pixel co-ordinates)
-  my( $self, $start, $end, $truncate_if_outside, $key ) = @_;
-  $key||='_bump';
+  my ($self, $start, $end, $truncate_if_outside, $key) = @_;
+  
+  $key ||= '_bump';
 
-  ($end,$start) = ($start,$end) if $end < $start;
+  ($end, $start) = ($start, $end) if $end < $start;
 
   $start = 1 if $start < 1;
+  
   return -1 if $end > $self->{$key}{'length'} && $truncate_if_outside; # used to not display partial text labels
-  $end   = $self->{$key}{'length'} if $end > $self->{$key}{'length'};
+  
+  $end = $self->{$key}{'length'} if $end > $self->{$key}{'length'};
 
-  my $row = 0;
   $start = floor($start);
   $end   = ceil($end);
-  my $len = $end-$start + 1 ;
+  
+  my $length  = $end - $start + 1;
+  my $element = '0' x $self->{$key}{'length'};
+  my $row     = 0;
 
-  my $element = '0' x $self->{$key}{length};
-
-  substr ($element,$start,$len) = '1' x $len;
-
-  LOOP:{
-    if($self->{$key}{array}[$row]) {
-      if( ( $self->{$key}{array}[$row] & $element ) == 0 ) {
-        $self->{$key}{array}[$row] |= $element;
+  substr($element, $start, $length) = '1' x $length;
+  
+  while ($row < $self->{$key}{'rows'}) {
+    if ($self->{$key}{'array'}[$row]) {
+      if (($self->{$key}{'array'}[$row] & $element) == 0) {
+        $self->{$key}{'array'}[$row] |= $element;
+        last;
       } else {
         $row++;
-        return 1e9 if $row > $self->{$key}{rows};
-        redo LOOP;
+        return 1e9 if $row > $self->{$key}{'rows'};
       }
     } else {
-      $self->{$key}{array}[$row] |= $element;
+      $self->{$key}{'array'}[$row] |= $element;
+      last;
     }
   }
+  
   return $row;
 }
 
@@ -763,33 +858,32 @@ sub bump_row {
 #==============================================================================================================
 
 sub de_camel { 
-  my( $self, $string ) = @_;
+  my ($self, $string) = @_;
   $string =~ s/([a-z])([A-Z])/$1_$2/g;
-  return lc($string);
+  return lc $string;
 }
 
 sub human_readable {
-  my($self,$species) = @_;
+  my ($self, $species) = @_;
   $species =~ s/_/ /g;
   return $species
 }
 
 sub readable_strand {
-  my( $self, $strand ) = @_;
+  my ($self, $strand) = @_;
   return $strand < 0 ? 'rev' : 'fwd';
 }
 
 sub cache {
   my $self = shift;
   my $key  = shift;
-  $self->{'config'}{'_cache'}{ $key } = shift if @_;
+  $self->{'config'}{'_cache'}{$key} = shift if @_;
   return $self->{'config'}{'_cache'}{$key};
 }
 
 sub legend {
-  my($self,$key,$priority);
-
-  $self->{'config'}{'legends'}{ $key } ||= { 'priority' => $priority, 'legend' => [] }
+  my ($self, $key, $priority);
+  $self->{'config'}{'legends'}{$key} ||= { priority => $priority, legend => [] };
 }
 
 sub scalex {
@@ -799,22 +893,27 @@ sub scalex {
 
 sub image_width {
   my $self = shift;
-  return $self->{'config'}->get_parameter('panel_width')||$self->{'config'}->image_width;
+  return $self->{'config'}->get_parameter('panel_width') || $self->{'config'}->image_width;
 }
 
 sub das_link {
-  my $self     = shift;
+  my $self = shift;
+  
   my $slice    = $self->{'container'};
   my $das_type = $self->_das_type;
   my $species  = $self->species;
+  
   return undef unless $das_type;
-  return sprintf "/das/%s.%s.%s/features?segment=%s:%d-%d",
+  
+  return sprintf(
+    '/das/%s.%s.%s/features?segment=%s:%d-%d',
     $slice->seq_region_name,
     $slice->species,
-    $self->species_defs->get_config($species,'ENSEMBL_GOLDEN_PATH'),
-    join('-',$das_type,$self->my_config('db'),@{$self->my_config('logicnames')||[]}),
+    $self->species_defs->get_config($species, 'ENSEMBL_GOLDEN_PATH'),
+    join('-', $das_type,$self->my_config('db'), @{$self->my_config('logicnames')||[]}),
     $slice->start,
-    $slice->end;
+    $slice->end
+  );
 }
 
 #==============================================================================================================
@@ -822,27 +921,28 @@ sub das_link {
 # approach of "context sensitive" track displays.
 #==============================================================================================================
 
+# Update parameters of the display based on the size of the
+# slice... threshold_array contains a hash of values:
+# 'threshold_array' => { 
+#   slice_length_1 => { k=>v, .... } # hash 1
+#   slice_length_2 => { k=>v, .... } # hash 2
+# }
+# If slice_length <= slice_length_1 - do nothing
+# If slice_length_1 < slice_length <= slice_length_2 - update configuration values from - hash 1
+# If slice_length_2 < slice_length ...               - update configuration values from - hash 2
+# etc...
 sub _threshold_update {
-### Update parameters of the display based on the size of the
-### slice... threshold_array contains a hash of values:
-### 'threshold_array' => { 
-###   slice_length_1 => { k=>v, .... } # hash 1
-###   slice_length_2 => { k=>v, .... } # hash 2
-### }
-### If slice_length <= slice_length_1 - do nothing
-### If slice_length_1 < slice_length <= slice_length_2 - update configuration values from - hash 1
-### If slice_length_2 < slice_length ...               - update configuration values from - hash 2
-### etc...
-
   my $self = shift;
-  my $thresholds = $self->my_config( 'threshold_array' );
+  
+  my $thresholds = $self->my_config('threshold_array');
+  
   return unless $thresholds;
-  my $container_length = $self->{'container'}->length();
-  foreach my $th ( sort { $a<=>$b} keys %$thresholds ) {
-    if( $container_length > $th * 1000 ) {
-      foreach (keys %{$thresholds->{$th}}) {
-        $self->set_my_config( $_, $thresholds->{$th}{$_} );
-      }
+  
+  my $container_length = $self->{'container'}->length;
+  
+  foreach my $th (sort { $a <=> $b } keys %$thresholds) {
+    if ($container_length > $th * 1000) {
+      $self->set_my_config($_, $thresholds->{$th}{$_}) for keys %{$thresholds->{$th}};
     }
   }
 }
@@ -852,39 +952,53 @@ sub _threshold_update {
 #==============================================================================================================
 
 sub transcript_label {
-  my( $self, $transcript, $gene ) = @_;
+  my ($self, $transcript, $gene) = @_;
+  
   my $pattern = $self->my_config('label_key') || '[text_label]';
+  
   return '' if $pattern eq '-';
-  $pattern =~ s/\[text_label\]/$self->my_colour($self->transcript_key($transcript,$gene),'text')/eg;
+  
+  $pattern =~ s/\[text_label\]/$self->my_colour($self->transcript_key($transcript, $gene), 'text')/eg;
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $gene->$1/eg;
-  $pattern;
+  
+  return $pattern;
 }
 
 sub gene_label {
-  my( $self, $gene ) = @_;
+  my ($self, $gene) = @_;
+  
   my $pattern = $self->my_config('label_key') || '[text_label]';
+  
   return '' if $pattern eq '-';
-  $pattern =~ s/\[text_label\]/$self->my_colour($self->gene_key($gene),'text')/eg;
+  
+  $pattern =~ s/\[text_label\]/$self->my_colour($self->gene_key($gene), 'text')/eg;
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern;
+  
+  return $pattern;
 }
 
 sub transcript_key {
-  my( $self, $transcript, $gene ) = @_;
+  my ($self, $transcript, $gene) = @_;
+  
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
+  
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $gene->$1/eg;
-  return lc( $pattern );
+  
+  return lc$pattern;
 }
 
 sub gene_key {
-  my( $self, $gene ) = @_;
+  my ($self, $gene) = @_;
+  
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
+  
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  return lc( $pattern );
+  
+  return lc $pattern;
 }
 
 1;
