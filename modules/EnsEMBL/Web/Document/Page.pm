@@ -434,13 +434,8 @@ sub render {
   
   $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax || $ENV{'ENSEMBL_AJAX_VALUE'} eq 'none';
   
-<<<<<<< Page.pm
-  if ($self->can('panel_type') && $self->panel_type) {
-    $html = sprintf ('
-=======
   if ($self->can('panel_type') && $self->panel_type) {
     $html = sprintf('
->>>>>>> 1.63
       <div class="js_panel">
         %s
         %s
