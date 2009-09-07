@@ -79,7 +79,7 @@ sub draw_features {
 
       # Don't link to AlignSliceView from constrained elements! - doesn't work in 51
       if ($jump_to_alignslice) {
-	$zmenu->{'align'}  => $METHOD_ID,
+        $zmenu->{'align'}  => $METHOD_ID,
       }
 
       my $block_start = $rs;
@@ -88,15 +88,15 @@ sub draw_features {
       #use 'score' param to identify constrained elements track - 
       #in which case we show coordinates just for the block
       if ($self->my_config('constrained_element')) {
-	  $zmenu->{'score'} = $f->{'score'};
-	  $zmenu->{'ftype'} = "ConstrainedElement";
+          $zmenu->{'score'} = $f->{'score'};
+          $zmenu->{'ftype'} = "ConstrainedElement";
           $zmenu->{'id'} = $f->{'dbID'};
-	  $block_start = $START+$chr_start-1;
-	  $block_end   = $END  +$chr_start-1;
+          $block_start = $START+$chr_start-1;
+          $block_end   = $END  +$chr_start-1;
       } else {
-	  my $class = $self->my_config( 'class' );
+          my $class = $self->my_config( 'class' );
           $zmenu->{'ftype'} = "GenomicAlignBlock";
-	  $zmenu->{'id'} = $f->{'dbID'};
+          $zmenu->{'id'} = $f->{'dbID'};
           $zmenu->{'ref_id'} = $f->{'ref_id'} if ($f->{'ref_id'});
       }
       $zmenu->{'r'}     = "$chr:$block_start-$block_end";
@@ -110,9 +110,19 @@ sub draw_features {
           'x'     => $START-1,
           'width' => 0,
           'y'     => 0,
-	  'bordercolour' => $feature_colour
+          'bordercolour' => $feature_colour
         });
-        $self->draw_cigar_feature( $TO_PUSH, $f, $h, $feature_colour, 'black', $pix_per_bp, 1 );
+        
+        $self->draw_cigar_feature({
+          composite      => $TO_PUSH, 
+          feature        => $f, 
+          height         => $h, 
+          feature_colour => $feature_colour, 
+          delete_colour  => 'black', 
+          scalex         => $pix_per_bp, 
+          do_not_flip    => 1
+        });
+        
         $self->push( $TO_PUSH );
       } else {
         $self->push( $self->Rect({

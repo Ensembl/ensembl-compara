@@ -224,7 +224,16 @@ sub render_normal {
              'height'     => $h,
              'absolutey'  => 1,
           }));
-          $self->draw_cigar_feature($Composite, $feat, $h, $feature_colour, 'black', $pix_per_bp, $strand_flag eq 'r'  );
+          
+          $self->draw_cigar_feature({
+            composite      => $Composite, 
+            feature        => $feat, 
+            height         => $h, 
+            feature_colour => $feature_colour, 
+            delete_colour  => 'black', 
+            scalex         => $pix_per_bp, 
+            do_not_flip    => $strand_flag eq 'r'
+          });
         } else {
           my $START = $s < 1 ? 1 : $s;
           my $END   = $e > $length ? $length : $e;
@@ -356,9 +365,18 @@ sub render_ungrouped {
       $features_drawn++;
       my $cigar;
       eval { $cigar = $feat->cigar_string; };
-$flag++;
-      if($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
-        $self->draw_cigar_feature( $self, $feat, $h, $feature_colour, 'black', $pix_per_bp, $strand_flag eq 'r' );
+      $flag++;
+      
+      if ($DRAW_CIGAR || $cigar =~ /$regexp/ ) {
+        $self->draw_cigar_feature({
+          composite      => $self, 
+          feature        => $feat, 
+          height         => $h, 
+          feature_colour => $feature_colour, 
+          delete_colour  => 'black', 
+          scalex         => $pix_per_bp, 
+          do_not_flip    => $strand_flag eq 'r'
+        });
       } else {
         $self->push($self->Rect({
           'x'          => $X-1,
