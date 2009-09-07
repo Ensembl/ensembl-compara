@@ -24,7 +24,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.species = params[3];
       this.chr     = params[4];
       this.start   = parseInt(params[5]);
-      this.end     = parseInt(params[6])
+      this.end     = parseInt(params[6]);
+      this.strand  = parseInt(params[7]);
       
       var n = parseInt(params[1]) - 1;
       
@@ -70,13 +71,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     if (this.multi) {
-      var r = new RegExp('\/' + Ensembl.species + '\/');
+      var s = new RegExp('\/' + Ensembl.species + '\/');
       
       this.baseURL = this.baseURL
-        .replace(this.species, Ensembl.species).replace(r, '/' + this.species + '/') // Switch species
+        .replace(this.species, Ensembl.species).replace(s, '/' + this.species + '/') // Switch species
         .replace(/%s/, Ensembl.coreParams.r).replace(/r=[^&;]*([&;]?)/, 'r=%s$1')    // Switch r for new species' region
         .replace(/align=\d+;*/, '').replace(/;$/, ''); // Remove align parameter when changing species
     }
+    
+    this.baseURL = this.baseURL.replace(/r\d+=[^;]+;?/, ''); // Clear secondary regions so all species will be realigned
     
     this.getContent();
   },
@@ -234,7 +237,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         end = max;
       }
       
-      this.location = (start + end) / 2;
+      if (this.strand == 1) {
+        this.location = (start + end) / 2;
+      } else {
+        this.location = (2 * this.start + 2 * this.end - start - end) / 2;
+        
+        var temp = start;
+        start = this.end + this.start - end;
+        end   = this.end + this.start - temp;
+      }
       
       if (this.align) {
         url = url.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start));
