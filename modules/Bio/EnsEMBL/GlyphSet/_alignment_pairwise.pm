@@ -24,6 +24,7 @@ sub render_normal {
   my $feature_key    = lc $self->my_config('type');
   my $other_species  = $self->my_config('species');
   my $species_2      = $self->my_config('species_hr');
+  my $other_ori      = $self->my_config('ori');
   my $method         = $self->my_config('method');
   my $depth          = $self->my_config('depth') || 6;
   my $feature_colour = $self->my_colour($feature_key);
@@ -31,7 +32,6 @@ sub render_normal {
   my $join_z         = $self->my_colour($feature_key, 'join_z') || 100;
   my $h              = $self->get_parameter('opt_halfheight') ? 4 : 8;
   my $link           = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $block          = 0;
   my $c              = 0; # Diagnostic counter
   my $k              = 0; # Diagnostic counter
   my %ids;
@@ -51,8 +51,8 @@ sub render_normal {
     my ($seqregion) = split /:/, $i;
     
     my @features   = sort { $a->[0] <=> $b->[0] } @{$ids{$i}};
-    my $start      = $features[0][1]->hstart;
-    my $end        = $features[0][1]->hend;
+    my $hs         = $features[0][1]->hstart;
+    my $he         = $features[0][1]->hend;
     my $bump_start = (($features[0][0] < 1 ? 1 : $features[0][0]) * $pix_per_bp) - 1;
     my $bump_end   = ($features[-1][1]->end > $length ? $length : $features[-1][1]->end) * $pix_per_bp;
     my $row        = $self->bump_row(int $bump_start, int $bump_end);
@@ -63,23 +63,35 @@ sub render_normal {
     my $x = -1000000;
     
     my $composite = $self->Composite({
-      'x'     => $features[0][0] > 1 ? $features[0][0] - 1 : 0,
-      'y'     => 0,
-      'width' => 0
+      x     => $features[0][0] > 1 ? $features[0][0] - 1 : 0,
+      y     => 0,
+      width => 0
     });
     
     foreach (@features) {
       my $f = $_->[1];
       
-      $start = $f->hstart if $f->hstart < $start;
-      $end   = $f->hend   if $f->hend   > $end;
+      $hs = $f->hstart if $f->hstart < $hs;
+      $he = $f->hend   if $f->hend   > $he;
       
       next if int($f->end * $pix_per_bp) <= int($x * $pix_per_bp);
       
       $c++;
       
       if ($draw_cigar) {
-        $self->draw_cigar_feature($composite, $f, $h, $feature_colour, 'black', $pix_per_bp, 1);
+        $self->draw_cigar_feature({
+          composite      => $composite, 
+          feature        => $f, 
+          height         => $h, 
+          feature_colour => $feature_colour, 
+          delete_colour  => 'black', 
+          scalex         => $pix_per_bp, 
+          do_not_flip    => 1,
+          link           => $link,
+          join_col       => $join_col,
+          join_z         => $join_z,
+          other_ori      => $other_ori
+        });
       } else {
         my $s = $_->[0] < 1 ? 1 : $_->[0];
         my $e = $f->end > $length ? $length : $f->end;
@@ -96,23 +108,40 @@ sub render_normal {
         });
         
         if ($link) {
-          $self->join_tag($box, 'BLOCK_' . $self->_type . $block, {
-            x     => $strand == -1 ? 0 : 1,
+          my $slice_start = $f->slice->start;
+          my $slice_end   = $f->slice->end;
+          my $fstrand     = $f->strand;
+          my $hstrand     = $f->hstrand;
+          my $s1          = $fstrand == 1 ? $slice_start + $f->start - 1 : $slice_end - $f->end   + 1;
+          my $e1          = $fstrand == 1 ? $slice_start + $f->end   - 1 : $slice_end - $f->start + 1;
+          my $tag1        = join ':', $f->species, $f->slice->seq_region_name, $s1, $e1;
+          my $tag2        = join ':', $f->hspecies, $f->hseqname, $f->hstart, $f->hend;
+          my $tag         = $strand == 1 ? "$tag1#$tag2" : "$tag2#$tag1";
+          my $x;
+          
+          if ($other_ori == $hstrand && $other_ori == 1) {
+            $x = $strand == -1 ? 0 : 1; # Use the opposite value to normal to ensure alignments which are between different orientations by default do not display a cross-over join
+          } else {
+            $x = $strand == -1 ? 1 : 0;
+          }
+          
+          $x ||= 1 if $fstrand == 1 && $hstrand * $other_ori == -1; # the feature has been flipped, so force x to the same value each time to achieve a cross-over join
+          
+          $self->join_tag($box, $tag, {
+            x     => $x,
             y     => $strand == -1 ? 1 : 0,
             z     => $join_z,
             col   => $join_col,
             style => 'fill'
           });
           
-          $self->join_tag($box, 'BLOCK_' . $self->_type . $block, {
-            x     => $strand == -1 ? 1 : 0,
+          $self->join_tag($box, $tag, {
+            x     => !$x,
             y     => $strand == -1 ? 1 : 0,
             z     => $join_z,
             col   => $join_col,
             style => 'fill'
           });
-          
-          $block++;
         }
         
         $composite->push($box);
@@ -122,50 +151,10 @@ sub render_normal {
     $composite->y($composite->y + $y_pos);
     $composite->bordercolour($feature_colour);
     
-    # add more detailed links for non chained alignments
-    # CURRENTLY APPEARS TO BE REDUNDANT - Something for dotter view?
-    #    if (scalar @features == 1) {
-    #      my $chr_2 = $features[0][1]->hseqname;
-    #      my $s_2   = $features[0][1]->hstart;
-    #      my $e_2   = $features[0][1]->hend;
-    #      my $END   = $features[0][1]->end;
-    #      my $START = $features[0][0];
-    #      
-    #      ($START, $END) = ($END, $START) if $END < $START; # Flip start end
-    #      
-    #      my ($rs, $re)     = $self->slice2sr($START, $END);
-    #      my $jump_type     = $species_2;
-    #      my $short_self    = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{$self_species};
-    #      my $short_other   = $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{$other_species};
-    #      my $href_template = "/$short_self/dotterview?c=$chr:%d;s1=$other_species;c1=%s:%d";
-    #      my $compara_html_extra;
-    #      
-    #      $zmenu->{'method'} = $self->my_config('type');
-    #      
-    #      my $href = sprintf $href_template, ($rs + $re)/2, $chr_2, ($s_2 + $e_2)/2;
-    #      my $method = $self->my_config('method');
-    #      my $link = 0;
-    #      my $tag_prefix;
-    #      
-    #      if ($compara) {
-    #        $link = $self->my_config('join');
-    #        $tag_prefix  = uc($compara eq 'primary' ? join ('_', $method, $self_species, $other_species) : join ('_', $method, $other_species, $self_species));
-    #        
-    #        my $c = 1;
-    #        
-    #        foreach my $T (@{$self->{'config'}{'other_slices'}||[]}) {
-    #          if ($T->{'species'} ne $self_species && $T->{'species'} ne $other_species) {
-    #            $c++;
-    #            $compara_html_extra .=" ;s$c=" . $self->species_defs->ENSEMBL_SHORTEST_ALIAS->{$T->{'species'}};
-    #          }
-    #        }
-    #      }
-    #    }
-    
     $composite->href($self->_url({
       type   => 'Location',
       action => 'ComparaGenomicAlignment',
-      r1     => $features[0][1]->hseqname . ":$start-$end",
+      r1     => $features[0][1]->hseqname . ":$hs-$he",
       s1     => $other_species,
       orient => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
     }));
@@ -268,7 +257,16 @@ sub render_compact {
         y     => 0
       });
       
-      $self->draw_cigar_feature($to_push, $f, $h, $feature_colour, 'black', $pix_per_bp, 1);
+      $self->draw_cigar_feature({
+        composite      => $to_push, 
+        feature        => $f, 
+        height         => $h, 
+        feature_colour => $feature_colour, 
+        delete_colour  => 'black', 
+        scalex         => $pix_per_bp, 
+        do_not_flip    => 1
+      });
+      
       $to_push->bordercolour($feature_colour);
     } else {
       $to_push = $self->Rect({
