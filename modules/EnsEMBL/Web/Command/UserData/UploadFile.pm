@@ -117,7 +117,7 @@ sub upload {
         if (!$format) {
           ## Final attempt to work out format!
           my $data = $file->retrieve;
-          my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+          my $parser = EnsEMBL::Web::Text::FeatureParser->new($object->species_defs);
           $parser->check_format($data);
           $format = $parser->format;
           if (!$format) {

@@ -70,7 +70,7 @@ sub save_to_db {
   my $format = $tmpdata->{'format'};
   my $report;
 
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new;
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
   $parser->parse($data, $format);
 
   my $config = {
@@ -519,13 +519,13 @@ sub _save_genomic_features {
     $shash->{ $seqname } ||= $slice_adaptor->fetch_by_region( undef,$seqname, undef, undef, undef, $assembly );
     if (my $slice = $shash->{$seqname}) {
       eval {
-          my($s,$e) = $f->rawstart<$f->rawend?($f->rawstart,$f->rawend):($f->rawend,$f->rawstart);
-	  my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
+        my($s,$e) = $f->rawstart < $f->rawend ? ($f->rawstart,$f->rawend) : ($f->rawend,$f->rawstart);
+	      my $feat = new Bio::EnsEMBL::DnaDnaAlignFeature(
                   -slice        => $slice,
                   -start        => $s,
                   -end          => $e,
                   -strand       => $f->strand,
-                  -hseqname   => ($f->id."" eq "") ? '-' : $f->id,
+                  -hseqname     => ($f->id."" eq "") ? '-' : $f->id,
                   -hstart       => $f->hstart,
                   -hend         => $f->hend,
                   -hstrand      => $f->hstrand,
@@ -533,19 +533,18 @@ sub _save_genomic_features {
                   -analysis     => $datasource,
                   -cigar_string => $f->cigar_string || ($e-$s+1).'M', #$f->{_attrs} || '1M',
                   -extra_data   => $f->extra_data,
-	  );
-	  push @feat_array, $feat;
+	      );
+	      push @feat_array, $feat;
 
       };
       if ($@) {
-	  push @$errors, "Invalid feature: $@.";
+	      push @$errors, "Invalid feature: $@.";
       }
     }
     else {
       push @$errors, "Invalid segment: $seqname.";
     }
   }
-
   $feature_adaptor->save(\@feat_array) if (@feat_array);
   push @$feedback, scalar(@feat_array).' saved.';
   if (my $fdiff = scalar(@$features) - scalar(@feat_array)) {
