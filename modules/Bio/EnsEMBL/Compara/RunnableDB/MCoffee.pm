@@ -140,10 +140,11 @@ sub fetch_input {
   }
   # Auto-switch to fmcoffee if gene count is too big.
   if ($self->{'method'} eq 'cmcoffee') {
-    if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
+  	my $auto_switch_count = 200;
+    if (@{$self->{'protein_tree'}->get_all_leaves} > $auto_switch_count) {
       $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
       #       $self->{'method'} = 'fmcoffee';
-      print "MCoffee, auto-switch method to mafft because gene count > 100 \n";
+      print "MCoffee, auto-switch method to mafft because gene count > ${auto_switch_count}\n";
     }
   }
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
@@ -196,7 +197,7 @@ sub fetch_input {
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
     $self->DESTROY;
-    throw("Mcoffee job failed >=3 times: try something else and FAIL it");
+    throw("Mcoffee job failed >=5 times: try something else and FAIL it");
   }
 
   return 1;
