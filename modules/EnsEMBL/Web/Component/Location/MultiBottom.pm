@@ -18,14 +18,19 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
-  my $slice = $object->slice;
+  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  
+  return $self->_warning('Region too large','<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
+  
+  my $image_width     = $self->image_width;
+  my $primary_slice   = $object->slice;
   my $primary_species = $object->species;
-  my $image_width = $self->image_width;
-  my $slices = $object->multi_locations;
-  my $short_name = $slices->[0]->{'short_name'};
-  my $max = scalar @$slices;
-  my $base_url = $object->_url($object->multi_params);
-  my $i = 1;
+  my $primary_strand  = $primary_slice->strand;
+  my $slices          = $object->multi_locations;
+  my $short_name      = $slices->[0]->{'short_name'};
+  my $max             = scalar @$slices;
+  my $base_url        = $object->_url($object->multi_params);
+  my $i               = 1;
   my $primary_image_config;
   my @images;
   
@@ -55,23 +60,23 @@ sub content {
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
-      $image_config->multi($methods, $i, $max, $slices->[$i]->{'species'}) if $multi && $max == 2;
-      push @images, $slice, $image_config if $max < 3;
+      $image_config->multi($methods, $i, $max, { species => $slices->[$i]->{'species'}, ori => $slices->[$i]->{'strand'} }) if $multi && $max == 2;
+      push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
-      $image_config->multi($methods, $i, $max, $primary_species) if $multi;
+      $image_config->multi($methods, $i, $max, { species => $primary_species, ori => $primary_strand }) if $multi;
       push @images, $_->{'slice'}, $image_config;
       
       if ($max > 2 && $i < $max) {
         # Make new versions of the primary image config because the alignments required will be different each time
         if ($multi) {
-          my @species = map $slices->[$_]->{'species'}, $i-1, $i;
+          my @sl = map { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }, $i-1, $i;
           
           $primary_image_config = $object->image_config_hash("contigview_bottom_1_$i", 'MultiBottom', $primary_species);
           
           $primary_image_config->set_parameters({
-            container_width => $slice->length,
+            container_width => $primary_slice->length,
             image_width     => $image_width,
             slice_number    => '1|3',
             multi           => 1,
@@ -80,10 +85,10 @@ sub content {
           });
           
           $primary_image_config->get_node('scalebar')->set('caption', $short_name);
-          $primary_image_config->multi($methods, 1, $max, @species);
+          $primary_image_config->multi($methods, 1, $max, @sl);
         }
         
-        push @images, $slice, $primary_image_config;
+        push @images, $primary_slice, $primary_image_config;
       }
     }
     
