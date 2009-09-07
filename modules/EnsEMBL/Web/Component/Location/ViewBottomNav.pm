@@ -21,9 +21,9 @@ sub content_region {
 sub content {
   my $self = shift;
   my $ramp_entries = shift || [ [4,1e3], [6,5e3], [8,1e4], [10,5e4], [12,1e5], [14,2e5], [16,5e5], [18,1e6] ];
+  
   my $object = $self->object;
-
-  my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $scale = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
   my $image_width = $self->image_width;
   my $seq_region_start = $object->seq_region_start;
   my $seq_region_end = $object->seq_region_end;
@@ -31,11 +31,12 @@ sub content {
   my $extra_html = '';
   my $cp = int(($seq_region_end + $seq_region_start) / 2);
   my $wd = $seq_region_end - $seq_region_start + 1;
-  my $url = $object->_url({%{$object->multi_params}, ( r => undef )}, 1);
+  my $url = $object->_url({%{$object->multi_params(0)}, ( r => undef )}, 1);
   my @mp;
   my $x = 0;
   
   foreach (@$ramp_entries) {
+    $_->[1] *= $scale;
     push @mp, sqrt($x * $_->[1]);
     $x = $_->[1];
   }
@@ -103,8 +104,8 @@ sub _nav_url {
   ($s, $e) = ($max - ($e - $s), $max) if $e > $max;
   
   return $object->_url({ 
-    %{$object->multi_params},
-    'r' => $object->seq_region_name . ':' . $s . '-' . $e,
+    %{$object->multi_params(0)},
+    r => $object->seq_region_name . ':' . $s . '-' . $e,
   });
 }
 
