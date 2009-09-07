@@ -85,6 +85,7 @@ sub createObjects {
       short_name => $object->chr_short_name($slice, $species),
       start      => $slice->start,
       end        => $slice->end,
+      strand     => $slice->strand,
       length     => $slice->seq_region_length
     };
   }

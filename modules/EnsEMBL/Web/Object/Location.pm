@@ -1484,6 +1484,7 @@ sub multi_locations {
       short_name => $self->chr_short_name,
       start      => $slice->start,
       end        => $slice->end,
+      strand     => $slice->strand,
       length     => $slice->seq_region_length
     }
   }
