@@ -127,7 +127,7 @@ Did you know you can:
 <dd>and export sequences or tables in text, html, or Excel format</dd>
 </dl>
 
-<p>Still got questions? <a href="/Help/Faq" class="modal_link">Try our FAQs</a></p>
+<p>Still got questions? <a href="/Help/Faq" class="popup">Try our FAQs</a></p>
   );
   
   return $html;

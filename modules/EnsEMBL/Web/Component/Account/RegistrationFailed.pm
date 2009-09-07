@@ -30,7 +30,7 @@ sub content {
   elsif ($self->object->param('error') eq 'spam') {
     $html .= ' Your details were identified as spam by our web filter. Please remove any URLs from your input and try again.';
   }
-  $html .= '</p><p>If you require any further assistance, please <a href="/Help/Contact" class="modal_link">contact our HelpDesk</a></p>';
+  $html .= '</p><p>If you require any further assistance, please <a href="/Help/Contact" class="popup">contact our HelpDesk</a></p>';
   return $html;
 }
 

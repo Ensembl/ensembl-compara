@@ -39,7 +39,7 @@ for ease of maintenance</a>. If you are unable to access YouTube, please accept 
 
   foreach my $movie (@movies) {
     next unless $movie->youtube_id;
-    my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s" class="modal_link">%s</a>\n), $movie->id, $movie->title);
+    my $title_link = sprintf(qq(<a href="/Help/Movie?id=%s" class="popup">%s</a>\n), $movie->id, $movie->title);
     $table->add_row( { 'title'  => $title_link, 'mins' => $movie->length } );
 
   }

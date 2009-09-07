@@ -73,7 +73,7 @@ sub content {
         }
       }
       elsif ($help->type eq 'movie') {
-        $title  = '<p class="space-below"><strong><a href="/Help/Movie?id='.$help->id.'">'.$help->title.'</a></strong></p>';
+        $title  = '<p class="space-below"><strong><a href="/Help/Movie?id='.$help->id.'" class="popup">'.$help->title.'</a></strong></p>';
         $text   = '';
       }
       if ($object->param('hilite') eq 'yes') {
@@ -88,7 +88,7 @@ sub content {
   else {
     $html = qq(<p>Sorry, no results were found in the help database matching your query.</p>
 <ul>
-<li><a href="/Help/Search" class="modal_link">Search again</a></li>
+<li><a href="/Help/Search" class="popup">Search again</a></li>
 <li><a href="/info/" class="cp-external">Browse non-searchable pages</a></li>
 </ul>);
   }

@@ -52,7 +52,7 @@ sub content {
       ## Link to movie-specific feedback form
       my $title = $movie->title;
       my $extra = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
-      $html .= qq(<div class="info-box" style="float:right;width:50%;padding:10px;margin:5px">If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$title;$extra" class="modal_link">provide feedback</a> that will help us improve our service. Thank you.</div>);
+      $html .= qq(<div class="info-box" style="float:right;width:50%;padding:10px;margin:5px">If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$title;$extra" class="popup">provide feedback</a> that will help us improve our service. Thank you.</div>);
     }
   }
   elsif (scalar(@movies) > 0 && $movies[0]) {

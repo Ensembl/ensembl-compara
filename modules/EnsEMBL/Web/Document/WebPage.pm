@@ -410,12 +410,13 @@ sub add_error_panels {
 
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
-        caption => $problem->name,
-        content => qq{
-          $desc
-          $eg_html
-          <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="modal_link">contact our HelpDesk team</a></p>
-        }
+        'caption' => $problem->name,
+        'content' => qq(
+  $desc
+  $eg_html
+  <p>
+    If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.
+  </p>) 
       )
     );
     

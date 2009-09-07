@@ -29,13 +29,13 @@ sub render {
 
     foreach my $faq (@faqs) {
 
-      $html .= sprintf(qq(<li><strong>%s</strong><br /><a href="/Help/Faq?id=%s" class="modal_link">See answer &rarr;</a></li>\n),
+      $html .= sprintf(qq(<li><strong>%s</strong><br /><a href="/Help/Faq?id=%s" class="popup">See answer &rarr;</a></li>\n),
               $faq->question, $faq->help_record_id);
 
     }
 
     $html .= qq(</ul>
-<p><a href="/Help/Faq" class="modal_link">More...</a></p>\n);
+<p><a href="/Help/Faq" class="popup">More...</a></p>\n);
   }
 
   return $html;
