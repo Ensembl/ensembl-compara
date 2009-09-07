@@ -1046,7 +1046,7 @@ sub _configure_blast {
       elsif ($source_type eq 'PEP_KNOWN') { ## Does this species have species-specific protein data?
         next unless 1;
       }
-      my $assembly = $tree->{'ASSEMBLY_NAME'};
+      my $assembly = $tree->{$species}{'ASSEMBLY_NAME'}; warn $assembly;
       (my $type = lc($source_type)) =~ s/_/\./ ;
       if ($type =~ /latestgp/) {
         if ($search_type ne 'BLAT') {
