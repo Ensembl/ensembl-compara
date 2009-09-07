@@ -60,10 +60,12 @@ sub init {
     [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'nav',       '', 'navigation', { display => 'normal', strand => 'r', menu => 'no' }],
   );
+  
+  $_->set('display', 'off') for grep $_->key =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
 sub multi {
-  my ($self, $methods, $pos, $total, @species) = @_;
+  my ($self, $methods, $pos, $total, @slices) = @_;
   
   my $sp = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
@@ -77,12 +79,17 @@ sub multi {
       next if $methods->{$align->{'type'}} eq 'no';
       next unless $align->{'class'} =~ /pairwise_alignment/;
       next unless $align->{'species'}->{$sp};
-      next unless grep $align->{'species'}->{$_}, @species;
+      next unless grep $align->{'species'}->{$_->{'species'}}, @slices;
       
       my $i = $pos == $total && $total > 2 ? 2 : 1;
       
-      foreach (@species) {
-        $align->{'order'} = $i and last if $align->{'species'}->{$_};
+      foreach (@slices) {
+        if ($align->{'species'}->{$_->{'species'}}) {
+          $align->{'order'} = $i;
+          $align->{'other_ori'} = $_->{'ori'};
+          last;
+        }
+        
         $i++;
       };
       
@@ -120,6 +127,7 @@ sub multi {
         species_set_id => $align->{'species_set_id'},
         species        => $other_species,
         species_hr     => $other_species_hr,
+        ori            => $align->{'other_ori'},
         _assembly      => $self->species_defs->get_config($other_species, 'ENSEMBL_GOLDEN_PATH'),
         colourset      => 'pairwise',
         strand         => shift @strands,
