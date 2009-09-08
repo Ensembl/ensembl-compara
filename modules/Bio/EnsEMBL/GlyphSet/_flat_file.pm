@@ -57,7 +57,7 @@ sub features {
   my $sub_type = $self->my_config('sub_type');
   $self->{_default_colour} = $self->SUPER::my_colour( $sub_type );
 ## Initialise the parser and set the region!
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new();
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->{'config'}->species_defs);
   my $features = [];
   $parser->filter( $self->{'container'}->seq_region_name, $self->{'container'}->start, $self->{'container'}->end );
   $self->{'parser'} = $parser;
