@@ -51,7 +51,7 @@ sub new {
     hm_stats        => $memcached->{hm_stats},
     default_exptime => $memcached->{default_exptime},
     namespace       => $SiteDefs::ENSEMBL_BASE_URL,
-    @,
+    @_,
   );
 
   my $default_exptime = delete $args{default_exptime};
