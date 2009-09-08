@@ -36,9 +36,6 @@ sub content {
     $form->add_element('type'=>'SubHeader', 'value'=>'Change your password');
   }
 
-  $form->add_element('type' => 'Information',
-    'value' => 'Passwords should be at least 6 characters long and include both letters and numbers.');
-
   if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
     ## Logged-in user, changing own password
     my $email = $user->email;
