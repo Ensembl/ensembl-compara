@@ -209,7 +209,7 @@ sub populate_tree {
     );
     $self->create_node( 'ResetPassword', '', [],
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SavePassword',
-        'filters' => [qw(PasswordValid PasswordSecure)]}
+        'filters' => [qw(PasswordValid)]}
     );
 
   } else {
@@ -250,8 +250,7 @@ sub populate_tree {
     { 'no_menu_entry' => 1 }
   );
   $self->create_node( 'SavePassword', '', [],
-    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SavePassword',
-      'filters' => [qw(PasswordSecure)]}
+    { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SavePassword'}
   );
   $self->create_node( 'Accept', '', [],
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::AcceptInvitation',
