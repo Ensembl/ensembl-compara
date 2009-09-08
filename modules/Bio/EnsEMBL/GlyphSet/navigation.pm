@@ -30,6 +30,7 @@ sub _init {
   my $sprite_size = 20;
   my $sprite_pad = 3;
   my $sprite_step = $sprite_size + $sprite_pad;
+  my $compara = $self->get_parameter('compara');
 
   my $sprites = {
     'nav'   => [ 
@@ -55,7 +56,8 @@ sub _init {
 
   if (!$self->{'config'}->{'align_slice'}) {
     # in case of AlignSlice - don't display navigation buttons
-    push @{$sprites->{'nav'}}, [ 'flip_strand', 'flip' ], [ 'set_as_primary', 'primary' ] if $self->get_parameter('compara') eq 'secondary';
+    push @{$sprites->{'nav'}}, [ 'flip_strand', 'flip' ], if $compara ne 'primary';
+    push @{$sprites->{'nav'}}, [ 'set_as_primary', 'primary' ] if $compara eq 'secondary'; # Not available for paralogues
 
     foreach my $key (keys %$sprites) {
       my ($pos, $step,  @sprite_array) = @{$sprites->{$key}};
@@ -97,7 +99,7 @@ sub _init {
   
   $self->join_tag($line, 'bracket', 0, 0, 'black');
   
-  if ($self->get_parameter('compara') eq 'primary') {
+  if ($compara eq 'primary') {
     $self->join_tag($line, 'bracket2', 0.9, 0, 'rosybrown1', 'fill', -40);
     $self->join_tag($line, 'bracket2', 0,   0, 'rosybrown1', 'fill', -40);
   }
