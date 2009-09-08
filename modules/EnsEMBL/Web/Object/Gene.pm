@@ -1201,22 +1201,13 @@ return $fg_db;
 
 sub feature_sets {
   my $self = shift;
-  my $fg_db = $self->get_fg_db;
-  my @fsets; 
+
+  my $available_sets = $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'};
+  my $fg_db = $self->get_fg_db; 
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
+  my @fsets;
 
-  my @sources;
-  my $spp = $ENV{'ENSEMBL_SPECIES'};
-  if ($spp eq 'Homo_sapiens'){
-   @sources = ('RegulatoryFeatures', 'miRanda miRNA targets', 'cisRED search regions', 'cisRED motifs', 'VISTA enhancer set'); 
-  } elsif ($spp eq 'Mus_musculus'){
-   @sources = ('cisRED search regions', 'cisRED motifs');
-  } 
-  elsif ($spp eq 'Drosophila_melanogaster'){ 
-   @sources = ('BioTIFFIN motifs', 'REDfly CRMs', 'REDfly TFBSs'); 
-  }
-
-  foreach my $name ( @sources){
+  foreach my $name ( @$available_sets){ 
     push @fsets, $feature_set_adaptor->fetch_by_name($name);
   } 
   return \@fsets; 
