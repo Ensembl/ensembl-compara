@@ -205,7 +205,6 @@ sub input_genes {
     my $slice = $self->slice_adaptor->fetch_by_gene_stable_id($g);
     
     $self->check_slice_exists($_, $slice->seq_region_name, $slice->start, $slice->end, $slice->strand);
-    $self->param("g$_", '');
     
     $gene = 1;
   }
@@ -290,6 +289,11 @@ sub change_primary_species {
   $self->param('g', $inputs->{$id}->{'g'}) if $inputs->{$id}->{'g'};
   $self->param('s99999', $inputs->{0}->{'s'}); # Set arbitrarily high - will be recuded by remove_species_and_generate_url
   $self->param('align', ''); # Remove the align parameter because it may not be applicable for the new species
+  
+  # Remove parameters if one of the secondary species is the same as the primary (looking at an paralogue)
+  foreach my $i (grep { $_ && $inputs->{$_}->{'s'} eq $self->species } keys %$inputs) {
+    $self->param($_ . $i, '') for keys %{$inputs->{$i}};
+  }
   
   $self->remove_species_and_generate_url($id, $inputs->{$id}->{'s'});
 }
