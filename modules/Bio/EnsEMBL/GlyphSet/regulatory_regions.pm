@@ -11,17 +11,7 @@ sub get_feature_sets {
   my @fsets;
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
 
-  my @sources;
-  my $spp = $ENV{'ENSEMBL_SPECIES'};
-  if ($spp eq 'Homo_sapiens'){
-   @sources = ('miRanda miRNA', 'cisRED motifs', 'VISTA enhancer set');
-  } elsif ($spp eq 'Mus_musculus'){
-   @sources = ('cisRED motifs');
-  }
-  elsif ($spp eq 'Drosophila_melanogaster'){
-   @sources = ('BioTIFFIN motifs', 'REDfly CRMs', 'REDfly TFBSs');
-  }
-
+  my @sources = @{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'}};
   foreach my $name ( @sources){
     push @fsets, $feature_set_adaptor->fetch_by_name($name);
   }
