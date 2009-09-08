@@ -72,10 +72,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
               myself.speciesCount++;
             }
             
-            myself.highlightRegions[species].push({ region: c, linked: false });
+            myself.highlightRegions[species].push({ region: c, chr: r[4] });
             myself.imageNumber = parseInt(r[2]);
             
-            Ensembl.EventManager.trigger('highlightImage', myself.imageNumber, species, parseInt(r[5]), parseInt(r[6]));
+            Ensembl.EventManager.trigger('highlightImage', myself.imageNumber, species, r[4], parseInt(r[5]), parseInt(r[6]));
           }
         }
       }
@@ -243,7 +243,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
    *          If there is only one image, or the next image has an invalid coordinate system 
    *          (eg AlignSlice or whole chromosome), highlighting is taken from the r parameter in the url.
    */
-  highlightImage: function (imageNumber, species, start, end) {
+  highlightImage: function (imageNumber, species, chr, start, end) {
     // Make sure each image is highlighted based only on the next image on the page
     if (imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
       return;
@@ -260,6 +260,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         break;
       }
       
+      if (highlight.chr != chr) {
+        continue;
+      }
+      
       // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
       var r = highlight.region.a.href.split('|');
       
@@ -274,7 +278,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       // Highlighting base on self. Take start and end from Ensembl core parameters
       if (this.imageNumber == imageNumber) {
-        if (Ensembl.multiSpecies[species]) {
+        if (Ensembl.multiSpecies[species] && !(species == Ensembl.species && chr == Ensembl.location.name)) {
           start = Ensembl.multiSpecies[species].location.start;
           end = Ensembl.multiSpecies[species].location.end;
         } else {
@@ -294,7 +298,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       // Highlight unless it's the bottom image on the page
       if (start >= min && end <= max && (link === true || !(start == min && end == max))) {
-        this.highlight(coords, 'redbox2', species);
+        this.highlight(coords, 'redbox2', species, i);
       }
       
       // Ok to overwrite because the only time we have more than one highlightRegions is MultiContigView, where each species image is identical
