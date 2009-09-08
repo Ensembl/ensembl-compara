@@ -7,6 +7,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.hideHints();
     this.toggleTable();
+    this.toggleList();
     
     Ensembl.EventManager.trigger('validateForms', this.el);
   },
@@ -144,5 +145,16 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         this.innerHTML = 'show ' + id;
       }
     });
+  },
+
+  toggleList: function () {
+    $('a.collapsible', this.el).click(function () {
+      var img = $(this).children('img');
+      $(this).siblings('ul.shut').toggle(500);
+      img.attr('src', img.attr('src') == '/i/list_open.gif' ? '/i/list_shut.gif' : '/i/list_open.gif');
+      img = null;
+      return false;
+    });
   }
+
 });

@@ -1,0 +1,30 @@
+/* Styling for Exalead search results */
+
+table.search_results {
+  width:100%;
+}
+
+table.search_results th, table.search_results td { 
+  color:[[PANEL_TEXT]]; 
+  background-color:[[TINT_BG]]; 
+  border:1px solid [[TINT_BORDER]]; 
+  padding:2px 4px;
+}
+
+table.search_results th {
+  font-weight:bold;
+}
+
+table.search_results td a {
+  text-decoration:none;
+}
+
+ul.open { display:block; }
+ul.shut { display:none; }
+
+ul.open li, ul.shut li {
+  list-style-image:none;
+  list-style:none;
+}
+
+a.no_arrow    { margin-left:18px; }
