@@ -18,7 +18,8 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
-  my $url = $object->_url($object->multi_params, 1);
+  my $params = $object->multi_params;
+  my $url = $object->_url($params, 1);
   my $alignments = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   my $primary_species = $object->species;
   
@@ -41,7 +42,7 @@ sub content {
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
     foreach (keys %{$alignments->{$i}->{'species'}}) {
       # this will fail for vega intra species compara
-      if ($alignments->{$i}->{'species'}->{$primary_species} && $_ ne $primary_species && $_ ne 'merged') {
+      if ($alignments->{$i}->{'species'}->{$primary_species} && !/^$primary_species|merged$/) {
         my $type = lc $alignments->{$i}->{'type'};
         
         $type =~ s/_net//;
@@ -50,6 +51,11 @@ sub content {
         $species{$_} = $object->species_defs->species_label($_, 1) . "###$type";
       }
     }
+  }
+  
+  if ($shown{$primary_species}) {
+    my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
+    $species{$primary_species} = $object->species_defs->species_label($primary_species, 1) . "###chromosome $chr";
   }
   
   foreach (sort { $species{$a} cmp $species{$b} } keys %species) {
