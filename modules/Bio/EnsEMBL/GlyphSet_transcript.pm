@@ -40,10 +40,10 @@ sub render_collapsed {
   my $config           = $self->{'config'};
   my $container        = $self->{'container'}{'ref'} || $self->{'container'};
   my $length           = $container->length;
-  my $selected_db      = $self->core('db');
-  my $selected_gene    = $self->core('g');
   my $pix_per_bp       = $self->scalex;
   my $strand           = $self->strand;
+  my $selected_db      = $self->core('db');
+  my $selected_gene    = $self->my_config('g') || $self->core('g');
   my $strand_flag      = $self->my_config('strand');
   my $db               = $self->my_config('db');
   my $show_labels      = $self->my_config('show_labels');
@@ -81,7 +81,7 @@ sub render_collapsed {
     my $gene_key       = $self->gene_key($gene);
     my $colour         = $self->my_colour($gene_key);
     my $label          = $self->my_colour($gene_key, 'text');
-    my $highlight      = $selected_db eq $db && $selected_gene eq $gene_stable_id && $gene_stable_id ? 'highlight1' : undef;
+    my $highlight      = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
     
     $used_colours{$label} = $colour;
     
@@ -213,11 +213,11 @@ sub render_transcripts {
   my $config            = $self->{'config'};
   my $container         = $self->{'container'}{'ref'} || $self->{'container'};
   my $length            = $container->length;
-  my $selected_db       = $self->core('db');
-  my $selected_gene     = $self->core('g');
-  my $selected_trans    = $self->core('t');
   my $pix_per_bp        = $self->scalex;
   my $strand            = $self->strand;
+  my $selected_db       = $self->core('db');
+  my $selected_trans    = $self->core('t');
+  my $selected_gene     = $self->my_config('g') || $self->core('g');
   my $strand_flag       = $self->my_config('strand');
   my $db                = $self->my_config('db');
   my $show_labels       = $self->my_config('show_labels');
@@ -805,7 +805,7 @@ sub render_alignslice_collapsed {
     my $colour_key = $self->gene_key($gene);    
     my $colour     = $self->my_colour($colour_key);
     my $label      = $self->my_colour($colour_key, 'text');
-    my $highlight    = $selected_db eq $db && $selected_gene eq $gene_stable_id && $gene_stable_id ? 'highlight1' : undef;
+    my $highlight  = $selected_db eq $db && $selected_gene eq $gene_stable_id ? 'highlight1' : undef;
     
     ($colour, $label) = ('orange', 'Other') unless $colour;
     
@@ -929,9 +929,9 @@ sub render_genes {
   
   my $container        = $self->{'container'}{'ref'} || $self->{'container'};
   my $length           = $container->length;
-  my $selected_gene    = $self->core('g');
   my $pix_per_bp       = $self->scalex;
   my $strand           = $self->strand;
+  my $selected_gene    = $self->my_config('g') || $self->core('g');
   my $strand_flag      = $self->my_config('strand');
   my $database         = $self->my_config('db');
   my $max_length       = $self->my_config('threshold') || 1e6;
@@ -946,7 +946,7 @@ sub render_genes {
   my $join_col         = 'blue';
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
-
+  
   $self->_init_bump;
   
   if ($length > $max_length * 1001) {
@@ -954,7 +954,7 @@ sub render_genes {
     return;
   }
   
-  my $show_navigation = $navigation eq 'on' && $length < $max_length_nav * 1001;
+  my $show_navigation = $navigation eq 'on';
   my $offset = $container->start - 1;
   my %gene_objs;
   my $F = 0;
