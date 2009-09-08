@@ -49,16 +49,16 @@ if ($dest_site eq 'ebi') {
   $URL = 'http://search.sanger.ac.uk/cgi-bin/exasearch?_q='.$query;
 } elsif ($dest_site =~ /Vega/) {
   if ($site_type eq 'Vega') {
-    $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
+    $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
   } else {
-    $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
+    $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
     $other_site_url = 'http://vega.sanger.ac.uk';
   }
 } elsif ($site_type eq 'Vega') {
-  $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
+  $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
   $other_site_url = 'http://www.ensembl.org'; 
 } else {
-  $URL = "/Homo_sapiens/Search/Summary?species=all&idx=All&q=$query";
+  $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
 }
 
 ## Let us parse the first string to see if it is the name of a species or one
@@ -205,7 +205,7 @@ $URL = $other_site_url.$URL;
 
 #hack because live vega is still on the old code
 if ($dest_site eq 'vega' && $site_type ne 'Vega') {
-  $URL =~ s{Search\/Summary}{searchview};
+  $URL =~ s{Search\/Results}{searchview};
 }
 
 $webpage->redirect($URL);
