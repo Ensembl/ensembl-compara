@@ -87,6 +87,7 @@ sub multi {
         if ($align->{'species'}->{$_->{'species'}}) {
           $align->{'order'} = $i;
           $align->{'other_ori'} = $_->{'ori'};
+          $align->{'gene'} = $_->{'g'};
           last;
         }
         
@@ -147,6 +148,12 @@ sub multi {
     $_->set('next_species', $next_species) if $next_species;
     $_->set('join', 1);
   }
+}
+
+sub highlight {
+  my ($self, $gene) = @_;
+  
+  $_->set('g', $gene) for $self->get_node('transcript')->nodes; 
 }
 
 1;

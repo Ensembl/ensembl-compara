@@ -22,6 +22,7 @@ sub content {
   my @images;
   
   foreach (@{$object->multi_locations}) {
+    my $highlight_gene = $object->param('g' . ($i-1));
     my $slice = $_->{'slice'};
     my $expand = ($expansion - $slice->length) / 2;
     my $l = $_->{'start'} - $expand < 1 ? $_->{'start'} : $expand;
@@ -42,6 +43,7 @@ sub content {
     });
     
     $image_config->get_node('ruler')->set('caption', $_->{'short_name'});
+    $image_config->highlight($highlight_gene) if $highlight_gene;
     
     push @images, $slice, $image_config;
     $i++;
