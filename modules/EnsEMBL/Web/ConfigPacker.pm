@@ -362,6 +362,19 @@ sub _summarise_funcgen_db {
     }
   }
 
+###
+### Store the external feature sets available for each species
+###
+  my @feature_sets;
+  my $f_aref = $dbh->selectall_arrayref(
+    "select name
+      from feature_set
+      where type = 'external'"
+  );
+  foreach my $F ( @$f_aref ){ push (@feature_sets, $F->[0]); }  
+  $self->db_tree->{'databases'}{'DATABASE_FUNCGEN'}{'FEATURE_SETS'} = \@feature_sets;
+
+
 #---------- Additional queries - by type...
 
 #
