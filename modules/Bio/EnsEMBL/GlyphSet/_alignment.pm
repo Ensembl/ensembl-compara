@@ -150,11 +150,21 @@ sub render_normal {
     my %id             = ();
     $self->{'track_key'} = $feature_key;
     foreach my $features ( @{$features{$feature_key}} ) {
+      ## Fix for userdata with per-track config
+      my @features;
+      if (ref($features) eq 'ARRAY') {
+        if (ref($features->[0] eq 'ARRAY')) {
+          @features =  @{$features->[0]};
+        }
+        else {
+          @features = @$features;
+        }
+      }
       foreach my $f (
         map { $_->[2] }
         sort{ $a->[0] <=> $b->[0] }
         map { [$_->start,$_->end, $_ ] }
-        @{$features || []}
+        @features
       ){
         my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
         my $fgroup_name = $self->feature_group( $f );
