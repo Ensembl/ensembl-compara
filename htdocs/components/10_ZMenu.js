@@ -72,14 +72,26 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.multi) {
       var s = new RegExp('\/' + Ensembl.species + '\/');
+      var paralogue = this.baseURL.match(new RegExp('s(\\d+)=' + Ensembl.species + '\\b'));
+     
+      // We have the same species as primary and secondary. Remove it as secondary.
+      if (paralogue) {
+        this.baseURL = this.baseURL
+          .replace(new RegExp(paralogue[0] + '[&;]?'), '')
+          .replace(new RegExp('r' + paralogue[1] + '=[^&;]*[&;]?'), '')
+          .replace(new RegExp('g' + paralogue[1] + '=[^&;]*[&;]?'), '');
+      }
       
       this.baseURL = this.baseURL
         .replace(this.species, Ensembl.species).replace(s, '/' + this.species + '/') // Switch species
         .replace(/%s/, Ensembl.coreParams.r).replace(/r=[^&;]*([&;]?)/, 'r=%s$1')    // Switch r for new species' region
-        .replace(/align=\d+;*/, '').replace(/;$/, ''); // Remove align parameter when changing species
+        .replace(/align=\d+[&;]?/, '')                                               // Remove align parameter when changing species
+        .replace(/;$/, '');
     }
     
-    this.baseURL = this.baseURL.replace(/r\d+=[^;]+;?/, ''); // Clear secondary regions so all species will be realigned
+    // Clear secondary regions so all species will be realigned
+    // Do this always (not just when this.multi is true) because any change in location should result in a new alignment
+    this.baseURL = this.baseURL.replace(/r\d+=[^;]+;?/, '');
     
     this.getContent();
   },
@@ -258,7 +270,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         '<a href="' + this.zoomURL(1) + '">Centre here</a>'
       ];
       
-      caption = (this.multi === false ? 'Region' : this.species.replace(/_/g, ' ')) + ': ' + start + '-' + end;
+      caption = (this.multi === false ? 'Region: ' : this.species.replace(/_/g, ' ') + ' ' + this.chr + ':') + start + '-' + end;
     } else {
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
@@ -278,7 +290,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         }
       });
       
-      caption = 'Location: ' + this.location;
+      caption = (this.multi === false ? 'Location: ' : this.species.replace(/_/g, ' ') + ' ' + this.chr + ':') + this.location;
     }
     
     this.buildMenu(arr, caption);
