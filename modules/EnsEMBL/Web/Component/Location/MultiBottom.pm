@@ -20,7 +20,7 @@ sub content {
   my $object = $self->object;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   
-  return $self->_warning('Region too large','<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
+  return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
   my $image_width     = $self->image_width;
   my $primary_slice   = $object->slice;
@@ -45,13 +45,14 @@ sub content {
   
   foreach (@$slices) {
     my $image_config = $object->image_config_hash("contigview_bottom_$i", 'MultiBottom', $_->{'species'});
+    my $highlight_gene = $object->param('g' . ($i-1));
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
       image_width     => $image_width,
       slice_number    => "$i|3",
       multi           => 1,
-      compara         => $i == 1 ? 'primary' : 'secondary',
+      compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
       base_url        => $base_url
     });
     
@@ -61,11 +62,14 @@ sub content {
     
     if ($i == 1) {
       $image_config->multi($methods, $i, $max, { species => $slices->[$i]->{'species'}, ori => $slices->[$i]->{'strand'} }) if $multi && $max == 2;
+      
       push @images, $primary_slice, $image_config if $max < 3;
       
       $primary_image_config = $image_config;
     } else {
       $image_config->multi($methods, $i, $max, { species => $primary_species, ori => $primary_strand }) if $multi;
+      $image_config->highlight($highlight_gene) if $highlight_gene;
+      
       push @images, $_->{'slice'}, $image_config;
       
       if ($max > 2 && $i < $max) {
