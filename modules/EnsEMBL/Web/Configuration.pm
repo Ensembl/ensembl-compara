@@ -594,7 +594,7 @@ sub _local_tools {
     );
   }
   my $caption = 'Manage your data';
-  my $action = 'Upload';
+  my $action = 'SelectFile';
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
     
