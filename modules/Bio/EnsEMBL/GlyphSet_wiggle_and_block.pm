@@ -104,7 +104,7 @@ sub draw_block_features {
       'width'     => $end - $start,
       'absolutey' => 1,          # in pix rather than bp
       'colour'    => $colour,
-      'zmenu'     => $self->block_features_zmenu($f, $score),
+      'href'     => $self->block_features_zmenu($f, $score),
     }));
   }
   $self->_offset( $h+3 );
