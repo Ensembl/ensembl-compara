@@ -181,6 +181,7 @@ sub load_user_vert_tracks {
           'species'     => $entry->species,
           'assembly'    => $entry->assembly,
         };
+        $self->_compare_assemblies($entry, $session);
       }
     }
     if (keys %$user_sources) {
@@ -294,6 +295,7 @@ sub load_user_tracks {
           'source_type' => 'session',
           'assembly'    => $entry->{'assembly'}
         };
+        $self->_compare_assemblies($entry, $session);
       }
     } 
     else {
@@ -331,14 +333,17 @@ sub load_user_tracks {
     }
     @t = $user->uploads;
     foreach my $entry (@t) {
-      next unless  $entry->species eq $self->{'species'};
+      warn "@@@ UPLOAD $entry";
+      next unless $entry->species eq $self->{'species'};
       my @analyses = split /, /, $entry->analyses;
+      warn "@@@ ANALYSES: @analyses";
       foreach my $analysis (@analyses) {
         $user_sources{$analysis} = {
           'source_name' => $entry->name,
           'source_type' => 'user',
-          'assembly'    => $entry->assembly
+          'assembly'    => $entry->assembly,
         };
+        $self->_compare_assemblies($entry, $session);
       }
     }
   }
@@ -396,6 +401,19 @@ sub load_user_tracks {
   }
   
   return;
+}
+
+sub _compare_assemblies {
+  my ($self, $entry, $session) = @_;
+
+  if ($entry->{'assembly'} ne $self->sd_call('ASSEMBLY_NAME')) {
+  $session->add_data(
+      'type'      => 'message',
+      'code'      => 'userdata_assembly_mismatch',
+      'message'   => 'Sorry, track '.$entry->{'name'}.' is on an old assembly ('.$entry->{'assembly'}.') and cannot be shown',
+      'function'  => '_error'
+    );
+  }
 }
 
 sub _add_flat_file_track {
