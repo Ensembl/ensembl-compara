@@ -462,11 +462,10 @@ sub _created_merged_table_hash {
           if( ref($x1) eq 'HASH') {
             foreach my $k2 ( keys %$x1 ) {
               my $x2 = $x1->{$k2};
+	      $k2 = lc($k2);
               if( ref($x2) eq 'HASH' ) {
-		$k2 = lc($k2);
-#		warn "found in $sp--$db--$tb" if ($k2 eq 'ensembl_projection');
                 foreach my $k3 ( keys %$x2 ) {
-		  my $name_overwrite;
+		  my ($name_overwrite,$key);
 		  my $x3 = $x2->{$k3};
 		  if ( ref($x3) eq 'HASH') {
 		    foreach my $k4 ( keys %$x3 ) {
@@ -475,19 +474,28 @@ sub _created_merged_table_hash {
 			$name_overwrite = $x3->{$k4};
 		      }
 		    }
-		    $x3->{'key'} = lc( $x3->{'key'}) if $x3->{'key'};
+		    my $x3 = { %{$x2->{$k3} } };
+#		    %{$databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}} = %{$x2->{$k3} } unless $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3};
+		    $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x3;
+
+		    if (exists($databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'key'})) {
+		      my $key = lc($databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'key'});
+		      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'key'} = $key;
+		    }
+
+
+		    if ($name_overwrite) {
+#		      warn "resetting $k2 ($sp:$db) track name to $name_overwrite";
+		      delete $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'name'};
+		      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{'name'} = $name_overwrite;
+#		      warn Dumper($databases->{$db}{'tables'}{$tb}{$k1}{$k2});
+		    }
 		  }
-                  $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x3;
+		  else {
+		    $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x2->{$k3};
+		  }
 #warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $tb eq 'gene';
-
-		  if ($name_overwrite) {
-		    warn "$db - $tb - $k1 - $k2 - $k3";
-		    warn "resetting $k2 ($sp:$db) track name to $name_overwrite";
-		    delete $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'name'};
-		    $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{'name'};
-		  }
-
-		}
+                }
               } else {
                 $databases->{$db}{'tables'}{$tb}{$k1}{$k2} ||= $x2;
 #warn sprintf "B:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, " ", $x2 if $tb eq 'gene';
