@@ -256,14 +256,14 @@ sub content {
   my $ancestral_seq;
   
   foreach my $s (@$slices) {
-    my $other_species = $species_defs->get_config($s->{'name'});
+    my $other_species_dbs = $species_defs->get_config($s->{'name'}, 'databases');
     my $name = $species_defs->species_label($s->{'name'});
     
     if ($s->{'name'} eq 'Ancestral_sequences') {
       $ancestral_seq = $name;
       $s->{'no_variations'} = 1;
     } else {
-      $s->{'no_variations'} = $other_species && $other_species->{'databases'}->{'DATABASE_VARIATION'} ? 0 : 1;
+      $s->{'no_variations'} = $other_species_dbs && $other_species_dbs->{'DATABASE_VARIATION'} ? 0 : 1;
     }
     
     foreach (@{$s->{'underlying_slices'}}) {
