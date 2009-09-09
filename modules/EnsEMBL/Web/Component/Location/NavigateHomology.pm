@@ -20,9 +20,10 @@ sub content {
 
   ## Don't show this component if the slice covers or exceeds the whole chromosome!
   if( 
-    $object->param('r') =~ /:/ &&
+    $object->chromosome->length < 1e6 ||
+    ($object->param('r') =~ /:/ &&
     $object->seq_region_start < 2 && 
-    $object->seq_region_end > ($object->chromosome->end - 1)) {
+    $object->seq_region_end > ($object->chromosome->end - 1))) {
     return;
   } 
   my $max_len = $object->seq_region_end < 1e6 ? $object->seq_region_end : 1e6;
