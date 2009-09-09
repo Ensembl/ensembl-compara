@@ -486,9 +486,10 @@ sub _created_merged_table_hash {
 
 		    if ($name_overwrite) {
 #		      warn "resetting $k2 ($sp:$db) track name to $name_overwrite";
-		      delete $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'name'};
+#		      delete $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'name'};
+		      #shouldn't have to add new name to both but some were failing without webdata (the second) entry
 		      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{'name'} = $name_overwrite;
-#		      warn Dumper($databases->{$db}{'tables'}{$tb}{$k1}{$k2});
+		      $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3}{'name'} = $name_overwrite;
 		    }
 		  }
 		  else {
