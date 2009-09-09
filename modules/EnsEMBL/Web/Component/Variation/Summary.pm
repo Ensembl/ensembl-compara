@@ -53,7 +53,7 @@ sub content {
     my @ids =  @{ $synonyms{$db} } ;
     my @urls;
 
-    
+     
     if ($db =~ /dbsnp rs/i) {  # Glovar stuff
       @urls  = map {  $object->get_ExtURL_link( $_, 'SNP', $_)  } @ids;
     }
@@ -65,6 +65,10 @@ sub content {
       next unless @urls;
     } elsif( $db =~/HGVbase|TSC/){
       next;
+    }elsif ($db =~/Uniprot/){ 
+      foreach (@ids) {
+        push @urls , $object->get_ExtURL_link( $_, 'UNIPROT_VARIATION', $_ );
+      }
     }  else {
       @urls = @ids;
     }
