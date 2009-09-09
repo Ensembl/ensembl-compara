@@ -8,7 +8,20 @@ use EnsEMBL::Web::RegObj;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);
 
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new( 'title' => undef );
+  return $self;
+}
+
+sub title {
+  my $self = shift;
+  $self->{title} = shift if @_;
+  return $self->{title};
+}
+
 sub render   {
+  my $self = shift;
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $you_are_here = $ENV{'SCRIPT_NAME'};
   my $html = '<span class="print_hide">';
@@ -52,14 +65,19 @@ sub render   {
     $html .= '<span class="print_hide"> &gt; </span>';
     ## Level 2 link
     if ($you_are_here eq '/info/' || $you_are_here eq '/info/index.html') {
-      $html .= qq(<strong>Help &amp; Documentation</strong>);
+      $html .= qq(<strong>Docs & FAQs</strong>);
     }
     else {
-      $html .= qq(<strong><a href="/info/">Help &amp; Documentation</a></strong>);
+      $html .= qq(<strong><a href="/info/">Docs & FAQs</a></strong>);
     }
+    
+    $html .= '<span class="print_hide"> &gt; </span>'.$self->title
+      if $self->title;
 
   }
-  $_[0]->printf($html);
+  
+  
+  $self->printf($html);
 }
 
 1;

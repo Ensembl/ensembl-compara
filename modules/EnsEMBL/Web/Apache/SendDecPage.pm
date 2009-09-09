@@ -183,6 +183,11 @@ sub handler {
       )
     );
     
+    ## Dirty hack to propagate title
+    if ($page->can('breadcrumbs') && $page->title->get) {
+      $page->breadcrumbs->title($page->title->get); 
+    }
+    
     $page->render;
     $pageContent = $renderer->value;
 
