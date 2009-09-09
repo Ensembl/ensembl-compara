@@ -12,7 +12,7 @@ __PACKAGE__->set_primary_key('help_record_id');
 __PACKAGE__->set_type('view');
 
 __PACKAGE__->add_fields(
-  ensembl_object => "enum('Location','Gene','Transcript','Variation')",
+  ensembl_object => "enum('Location','Gene','Transcript','Variation','Regulation')",
   ensembl_action => 'string',
   content    => 'text',
 );
