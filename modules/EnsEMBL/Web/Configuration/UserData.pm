@@ -17,6 +17,7 @@ sub set_default_action {
 }
 
 sub is_configurable {
+  ## Not currently used - seems to me to make sense to have links on all pages
   my $self = shift;
   ## Can we do upload/DAS on this page?
   my $flag = 0;
@@ -66,7 +67,7 @@ sub populate_tree {
   ## Share data "wizard"
   $self->create_node( 'SelectShare', "Share Data",
     [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], 
-    { 'availability' => $is_configurable, 'no_menu_entry' => 1, 'filters' => [qw(Shareable)] }
+    { 'availability' => 1, 'no_menu_entry' => 1, 'filters' => [qw(Shareable)] }
   );
   $self->create_node( 'CheckShare', '',
     [], { 'availability' => 1, 'no_menu_entry' => 1,
@@ -102,7 +103,7 @@ sub populate_tree {
 
   $self->create_node( 'SelectServer', "Attach DAS",
    [qw(select_server EnsEMBL::Web::Component::UserData::SelectServer)], 
-    { 'availability' => $is_configurable }
+    { 'availability' => 1 }
   );
   $self->create_node( 'CheckServer', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::CheckServer',
@@ -136,7 +137,7 @@ sub populate_tree {
   ## URL attachment
   $self->create_node( 'SelectURL', "Attach URL Data",
    [qw(select_url EnsEMBL::Web::Component::UserData::SelectURL)], 
-    { 'availability' => $is_configurable }
+    { 'availability' => 1 }
   );
   $self->create_node( 'AttachURL', '',
     [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachURL', 
