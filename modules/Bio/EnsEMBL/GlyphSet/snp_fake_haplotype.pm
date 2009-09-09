@@ -196,7 +196,7 @@ sub _init {
     my $c = 0;
     foreach my $snp_ref ( @snps ) {  
       my $snp = $snp_ref->[2]; 
-      my $label =  $snp->allele_string; 
+      my $label =  $snp->allele_string;  
       my $start  = $snp->start;
 
       my $allele_string =  $strain_alleles{$strain}{ join "::", $snp->{_variation_id}, $start };  
@@ -225,7 +225,6 @@ sub _init {
             my @alleles = split /\|/, $allele_string; 
 	          my $type = $self->bases_match((split /\|/, $allele_string), "one_allele"); 
 	          $colour = $snp_ref->[3]{ $allele_string } = $conf_colours->{$type}{'default'}; 
-	          #$colours[ scalar(values %{ $snp_ref->[3] } )] || $colours[-1];
 	        }
         }
       }
@@ -308,12 +307,13 @@ sub do_glyphs {
   });
   $self->push( $back_glyph );
 
-  
+
+   
   if ( ($end-$start + 1) > $res[2]/$pix_per_bp) {
     if( $res[0] eq 'A' and $res[0] ne $allele_string ) {
       @res = $self->get_text_width( 0, $allele_string, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     }
-
+    
     my $tmp_width = $res[2]/$pix_per_bp;
     my $textglyph = $self->Text({
       'x'          => ( $end + $start - 1 - $tmp_width)/2,
@@ -324,11 +324,31 @@ sub do_glyphs {
       'font'       => $fontname,
       'ptsize'     => $fontsize,
       'colour'     => $text_colour || "white",
-      'text'       => $allele_string,
+      'text'       => '',
+      'title'      => $allele_string,
+      'alt'        => $allele_string, 
       'absolutey'  => 1,
     }) if $res[0];
     $self->push( $textglyph ) if defined $textglyph;
-  }
+  } else { 
+    @res = $self->get_text_width( 0, '>', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+    my $tmp_width = $res[2]/$pix_per_bp;
+    my $textglyph = $self->Text({
+      'title'      => $allele_string,
+      'alt'        => $allele_string, 
+      'x'          => ( $end + $start - 1 - $tmp_width)/2,
+      'y'          => 1+$offset,
+      'width'      => $tmp_width,
+      'textwidth'  => $res[2],
+      'height'     => $th,
+      'font'       => $fontname,
+      'ptsize'     => $fontsize,
+      'colour'     => $text_colour || "white",
+      'text'       => '',
+      'absolutey'  => 1,
+    }) if $res[0];
+    $self->push( $textglyph ) if defined $textglyph;
+  } 
   return 1;
 }
 
