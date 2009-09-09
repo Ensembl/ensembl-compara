@@ -295,7 +295,7 @@ sub _user_context {
   }
   
   $active = $section eq 'global_context' && $type eq 'UserData';
-  my $module = $vc->can_upload ? 'Upload' : 'ManageData';
+  my $module = $vc->can_upload ? 'SelectFile' : 'ManageData';
   $self->{'page'}->$section->add_entry(
     'type'      => 'UserData',
     'id'        => 'user_data',
