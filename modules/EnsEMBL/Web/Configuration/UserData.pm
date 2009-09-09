@@ -207,8 +207,8 @@ sub populate_tree {
 
   ## Data conversion
   my $convert_menu = $self->create_submenu( 'Conversion', 'Data Converters' );
-  my $mappings = $self->object->species_defs->ASSEMBLY_MAPPINGS;
-  my $available = ref($mappings) eq 'ARRAY' ? $mappings : 0;
+  my $mappings = $self->object->species_defs->get_config($self->object->species, 'ASSEMBLY_MAPPINGS');
+  my $available = ref($mappings) eq 'ARRAY' ? 1 : 0;
   $convert_menu->append(
     $self->create_node( 'SelectFeatures', 'Assembly Converter', 
       [qw(select_features EnsEMBL::Web::Component::UserData::SelectFeatures)],
