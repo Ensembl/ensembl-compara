@@ -138,11 +138,11 @@ sub get_seq {
   return $self->Obj->seq; 
 }
 
-sub get_summary_page_url {
+sub get_details_page_url {
   my $self = shift; 
   my $url = $self->_url({
     'type'  => 'Regulation',
-    'view'  => 'Summary',
+    'view'  => 'Details',
     'rf'    => $self->stable_id,
     'fdb'   => 'funcgen',
   });
