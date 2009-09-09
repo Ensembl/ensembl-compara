@@ -13,13 +13,7 @@ sub tree_cache_key {
 
 sub set_default_action {
   my $self = shift;
-  my $vc  = $self->object->get_viewconfig;
-  if ($self->is_configurable) {
-    $self->{_data}{default} = 'SelectFile';
-  }
-  else {
-    $self->{_data}{default} = 'ManageData';
-  }
+  $self->{_data}{default} = 'ManageData';
 }
 
 sub is_configurable {
@@ -54,7 +48,7 @@ sub populate_tree {
   ## Upload "wizard"
   $self->create_node( 'SelectFile', "Upload Data",
     [qw(select_file EnsEMBL::Web::Component::UserData::SelectFile)], 
-    { 'availability' => $is_configurable }
+    { 'availability' => 1 }
   );
   $self->create_node( 'UploadFile', '',
     [], { 'availability' => 1, 'no_menu_entry' => 1,
