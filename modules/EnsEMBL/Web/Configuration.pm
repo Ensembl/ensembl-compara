@@ -1532,10 +1532,11 @@ sub ajax_zmenu_read_coverage {
 
 sub ajax_zmenu_regulation {
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;;
+  my $panel = $self->_ajax_zmenu;
   my $object = $self->object; 
+ 
   return unless $object->param('rf'); 
-  my $reg_obj;
+  my $reg_obj; 
   if ($object->type eq 'Regulation'){ 
     $reg_obj = $object;
   } else {
@@ -1546,7 +1547,7 @@ sub ajax_zmenu_regulation {
   $panel->add_entry({
     'type'      => 'Stable ID:',
     'label'     => $reg_obj->stable_id,
-    'link'      => $reg_obj->get_summary_page_url,
+    'link'      => $reg_obj->get_details_page_url,
     'priority'  => 12,
   });
   $panel->add_entry({
