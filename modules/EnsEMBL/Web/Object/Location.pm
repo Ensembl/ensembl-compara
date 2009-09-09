@@ -906,7 +906,7 @@ sub get_synteny_local_genes {
   my $flag = @_ ? 1 : 0;
   my $slice = shift || $self->core_objects->location;
   unless( $flag || $self->param('r') =~ /:/) {
-    $slice = $slice->sub_Slice(1,1e6);
+    $slice = $slice->sub_Slice(1,1e6) unless $slice->length < 1e6;
   }
   my $localgenes = [];
 
