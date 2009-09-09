@@ -11,12 +11,12 @@ use base qw(EnsEMBL::Web::Configuration);
 sub set_default_action {
   my $self = shift;
   unless( ref $self->object ){
-    $self->{_data}{default} = 'Summary';
+    $self->{_data}{default} = 'Details';
     return;
   }
   my $x = $self->object->availability || {};
   if( $x->{'regulation'} ) {
-    $self->{_data}{default} = 'Summary';
+    $self->{_data}{default} = 'Details';
   }
 
 }
@@ -31,13 +31,13 @@ sub context_panel  { return $_[0]->_context_panel;  }
 sub populate_tree {
   my $self = shift;
 
-  $self->create_node( 'Summary', "Summary",
-    [qw(summary EnsEMBL::Web::Component::Regulation::FeatureSummary)],
-    { 'availability' => 'regulation' , 'concise' => 'Feature summary' }
-  );
   $self->create_node( 'Details', "Details",
     [qw(summary EnsEMBL::Web::Component::Regulation::FeatureDetails)],
     { 'availability' => 'regulation' , 'concise' => 'Feature in detail' }
+  );
+  $self->create_node( 'Context', "Context",
+    [qw(summary EnsEMBL::Web::Component::Regulation::FeatureSummary)],
+    { 'availability' => 'regulation' , 'concise' => 'Feature context' }
   );
   $self->create_node( 'Evidence', "Evidence",
     [qw(summary EnsEMBL::Web::Component::Regulation::Evidence)],
@@ -50,13 +50,13 @@ sub populate_tree {
 
 sub ajax_zmenu {
   my $self = shift;
-  my $panel = $self->_ajax_zmenu;
   my $obj  = $self->object;
-  my $action = $obj->[1]{'_action'} || 'Summary';
-  if ($action =~/RegFeature/){
-    return $self->ajax_zmenu_reg_feature($panel, $obj);
-  } elsif ($action =~/Regulation/){
-    return $self->ajax_zmenu_regulation($panel, $obj);
+  my $action = $obj->[1]{'_action'} || 'Details'; 
+
+  if ($action =~ /RegFeature/){
+    return $self->ajax_zmenu_reg_feature;
+  } elsif ($action =~ /Regulation/){
+    return $self->ajax_zmenu_regulation;
   } 
   return;
 }
