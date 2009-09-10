@@ -16,6 +16,9 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
+  
+  return if $object->param('panel_top') eq 'no';
+  
   my $expansion = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width = $self->image_width;
   my $i = 1;
