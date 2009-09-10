@@ -116,6 +116,7 @@ sub parse {
         }
         if ($columns && scalar(@$columns)) {
           my ($chr, $start, $end) = $empty->coords($columns);
+          $chr =~ s/chr//;
 
           if (keys %$valid_coords) {
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
