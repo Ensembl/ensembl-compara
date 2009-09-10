@@ -12,13 +12,9 @@ sub init {
     panel_zoom      no
     zoom_width      100
     context         1000
-    pairwise_blastz no
-    pairwise_tblat  no
-    pairwise_align  no
   ));
   
   $view_config->add_image_configs({qw(
-    MultiIdeogram nodas
     MultiTop      nodas
     MultiBottom   nodas
   )});
@@ -30,25 +26,11 @@ sub init {
 sub form {
   my $view_config = shift;
   
-  $view_config->add_form_element({
-    name   => 'pairwise_blastz',
-    label  => 'BLASTz net pairwise alignments',
-    type   => 'YesNo',
-    select => 'select'
-  });
-
-  $view_config->add_form_element({
-    name   => 'pairwise_tblat',
-    label  => 'Trans. BLAT net pairwise alignments',
-    type   => 'YesNo',
-    select => 'select'
-  });
-  
-  $view_config->add_form_element({
-    name   => 'pairwise_align',
-    label  => 'Pairwise alignments',
-    type   => 'YesNo',
-    select => 'select'
+  $view_config->add_form_element({ 
+    type   => 'YesNo', 
+    name   => 'panel_top', 
+    select => 'select', 
+    label  => 'Show overview panel'
   });
 }
 
