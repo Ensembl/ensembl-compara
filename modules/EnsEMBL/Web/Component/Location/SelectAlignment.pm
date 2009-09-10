@@ -34,10 +34,7 @@ sub content {
   my %shown = map { $object->param("s$_") => $_ } grep s/^s(\d+)$/$1/, $object->param;
   my $next_id = 1 + scalar keys %shown;
   
-  foreach (sort keys %{$url->[1]}) {
-    $extra_inputs .= sprintf '
-      <input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_});
-  }
+  $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_}) for sort keys %{$url->[1]};
   
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
     foreach (keys %{$alignments->{$i}->{'species'}}) {
@@ -48,7 +45,11 @@ sub content {
         $type =~ s/_net//;
         $type =~ s/_/ /g;
         
-        $species{$_} = $object->species_defs->species_label($_, 1) . "###$type";
+        if ($species{$_}) {
+          $species{$_} .= "/$type";
+        } else {
+          $species{$_} = $object->species_defs->species_label($_, 1) . "###$type";
+        }
       }
     }
   }
