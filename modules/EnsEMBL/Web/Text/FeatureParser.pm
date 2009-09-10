@@ -305,6 +305,7 @@ sub bin_size {
 
 sub store_density_feature {
   my ( $self, $chr, $start, $end ) = @_;
+  $chr =~ s/chr//;
   unless ($self->{'tracks'}{$self->current_key}) {
     $self->add_track();
   }
