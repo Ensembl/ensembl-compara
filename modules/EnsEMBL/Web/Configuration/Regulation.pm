@@ -57,8 +57,36 @@ sub ajax_zmenu {
     return $self->ajax_zmenu_reg_feature;
   } elsif ($action =~ /Regulation/){
     return $self->ajax_zmenu_regulation;
-  } 
+  } elsif ($action =~/FeatureEvidence/){
+    return $self->_ajax_zmenu_regulation_evidence;
+  }  
+ 
+ return;
+}
+
+sub _ajax_zmenu_regulation_evidence {
+  my $self = shift;
+  my $panel = $self->_ajax_zmenu;
+  my $obj = $self->object;
+  my $db_adaptor = $obj->database($obj->param('fdb'));
+  my $feature_set_adaptor = $db_adaptor->get_FeatureSetAdaptor();
+  my $feature_set = $feature_set_adaptor->fetch_by_name($obj->param('fs'));
+ 
+  $panel->{'caption'} = "Evidence";
+  $panel->add_entry({
+    'type'      => 'Feature:',
+    'label'     => $feature_set->display_label,
+    'priority'  => 10,
+  });
+  $panel->add_entry({
+    'type'      => 'bp:',
+    'label'     => $obj->param('pos'),
+    'priority'  => 8,
+  });
+
+
   return;
+
 }
 
 1;
