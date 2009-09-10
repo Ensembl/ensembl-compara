@@ -438,19 +438,20 @@ sub _add_flat_file_track {
 }
 
 sub update_from_input {
-  my( $self, $input ) = @_;
+  my ($self, $input) = @_;
   
-  if( $input->param('reset') ) {
-    return $self->tree->flush_user;
-  }
+  return $self->tree->flush_user if $input->param('reset');
+  
   my $flag = 0;
+  
   foreach my $node ($self->tree->nodes) {
     my $key = $node->key;
-    if( defined $input->param($key) ) {
-      $flag += $node->set_user( 'display', $input->param( $key ) );
-    }
+
+    $flag += $node->set_user('display', $input->param($key)) if defined $input->param($key);
   }
+  
   $self->altered = 1 if $flag;
+  
   return $flag;
 }
 #=============================================================================
@@ -1225,7 +1226,7 @@ sub add_alignments {
   return unless $self->_check_menus(qw( multiple_align pairwise_tblat pairwise_blastz pairwise_other ));
   
   my $alignments = {};
-  my $self_label = $self->species_defs->species_label($species, "no_formatting");
+  my $self_label = $self->species_defs->species_label($species, 'no_formatting');
   my $regexp = $species =~ /^([A-Z])[a-z]*_([a-z]{3})/ ? "-?$1.$2-?" : 'xxxxxx';
   
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
@@ -1257,11 +1258,8 @@ sub add_alignments {
         'name'           => $other_label,
         'caption'        => $row->{'name'},
         'type'           => $row->{'type'},
-        'species_set_id' => $row->{'species_set_id'},
         'species'        => $other_species,
         'species_hr'     => $other_species_hr,
-        '_assembly'      => $self->species_defs->get_config($other_species, 'ENSEMBL_GOLDEN_PATH'),
-        'class'          => $row->{'class'},
         'description'    => $description,
         'order'          => $other_label,
         'colourset'      => 'pairwise',
@@ -1349,22 +1347,21 @@ sub add_alignments {
 }
 
 sub add_option {
-  my( $self, $key, $caption, $values ) = @_;
-  return;
-  my $menu = $self->get_node( 'options' );
+  my $self = shift;
+  my $menu = $self->get_node('options');
+  
   return unless $menu;
-  $menu->append( $self->create_option( $key, $caption, $values ) );
+  
+  $menu->append($self->create_option(@_));
 }
 
 sub add_options {
   my $self = shift;
-  return;
-  my $menu = $self->get_node( 'options' );
+  my $menu = $self->get_node('options');
+  
   return unless $menu;
-  foreach my $row (@_) {
-    my ($key, $caption, $values ) = @$row;
-    $menu->append( $self->create_option( $key, $caption, $values ) );
-  } 
+  
+  $menu->append($self->create_option(@$_)) for @_;
 }
 
 sub create_track {
@@ -1628,14 +1625,25 @@ sub create_submenu {
 
 
 sub create_option {
-  my ( $self, $code, $caption, $values ) = @_;
-  $values ||= {qw(0 no 1 yes)};
+  my ($self, $code, $caption, $values, $renderers) = @_;
+  
+  $values ||= {qw(off 0 normal 1)};
+  $renderers ||= [qw(off Off normal On)];
+  
   return $self->tree->create_node( $code, {
     'node_type' => 'option',
     'caption'   => $caption,
     'name'      => $caption,
     'values'    => $values,
+    'renderers' => $renderers
   });
+}
+
+sub get_option {
+  my ($self, $code, $key) = @_;
+  my $node = $self->get_node($code);  
+  
+  return $node->get($key)->{$node->get('display')};
 }
 
 sub _set_core { $_[0]->{'_core'} = $_[1]; }
