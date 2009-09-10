@@ -72,12 +72,11 @@ sub content {
     my $feature_name = $feature_obj->stable_id;
     $type = $feature_obj->feature_type->name;
     my $analysis = $feature_obj->analysis->logic_name;
-    my $summary_url = $feature_obj->get_summary_page_url;
-    $feature_link = qq(<a href=$summary_url>$feature_name</a>);
+    my $details_url = $feature_obj->get_details_page_url;
+    $feature_link = qq(<a href=$details_url>$feature_name</a>);
  
     $type = $feature_obj->feature_type->name;
 
-#   $feature_obj->strand = $object_strand;
     my $seq = $feature_obj->get_seq($object_slice->strand);
     $seq =~ s/([\.\w]{60})/$1<br \/>/g;
   
