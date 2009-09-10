@@ -285,6 +285,8 @@ sub realign {
 sub change_primary_species {
   my ($self, $inputs, $id) = @_;
   
+  $inputs->{$id}->{'r'} =~ s/:-?1$//; # Remove strand parameter for the new primary species
+  
   $self->param('r', $inputs->{$id}->{'r'});
   $self->param('g', $inputs->{$id}->{'g'}) if $inputs->{$id}->{'g'};
   $self->param('s99999', $inputs->{0}->{'s'}); # Set arbitrarily high - will be recuded by remove_species_and_generate_url
