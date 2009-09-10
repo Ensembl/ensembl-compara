@@ -47,11 +47,7 @@ sub init {
   }
 
   $self->modify_configs(
-    [qw(regulatory_regions_funcgen_search)],
-    {qw(display normal)}
-  );
-  $self->modify_configs(
-    [qw(regulatory_regions_funcgen)],
+    [qw(functional)],
     {qw(display normal)}
   );
   $self->modify_configs(
@@ -63,7 +59,7 @@ sub init {
     {qw(display compact)}
   );
   $self->modify_configs(
-    [qw(histone_modifications_funcgen)],
+    [qw(histone_modifications_funcgen_VSN_GLOG)],
     {qw(display tiling)}
   );
   $self->modify_configs(
