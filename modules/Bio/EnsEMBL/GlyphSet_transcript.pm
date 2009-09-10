@@ -52,7 +52,7 @@ sub render_collapsed {
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $y                = 0;
   my $h                = 8;
-  my $join_z           = -10;
+  my $join_z           = 100000000;
   my $join_col1        = 'blue';
   my $join_col2        = 'chocolate1';
   my $transcript_drawn = 0;
@@ -228,7 +228,7 @@ sub render_transcripts {
   my $target_gene       = $self->get_parameter('single_Gene');
   my $y                 = 0;
   my $h                 = $self->my_config('height') || ($target ? 30 : 8); # Single transcript mode - set height to 30 - width to 8
-  my $join_z            = -10;
+  my $join_z            = 100000000;
   my $join_col1         = 'blue';
   my $join_col2         = 'chocolate1';
   my $transcript_drawn  = 0;
@@ -942,7 +942,7 @@ sub render_genes {
   my $next_species     = $self->my_config('next_species');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $h                = 8;
-  my $join_z           = -10;
+  my $join_z           = 100000000;
   my $join_col         = 'blue';
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
