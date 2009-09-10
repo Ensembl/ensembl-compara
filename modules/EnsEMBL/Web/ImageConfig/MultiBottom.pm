@@ -27,9 +27,9 @@ sub init {
 
   # Add menus in the order you want them for this display
   $self->create_menus(
+    options          => 'Comparative features',
     sequence         => 'Sequence',
     marker           => 'Markers',
-    compara          => 'Compara',
     transcript       => 'Genes',
     prediction       => 'Prediction Transcripts',
     protein_align    => 'Protein alignments',
@@ -61,6 +61,12 @@ sub init {
     [ 'nav',       '', 'navigation', { display => 'normal', strand => 'r', menu => 'no' }],
   );
   
+  $self->add_options( 
+    [ 'opt_pairwise_blastz', 'BLASTz net pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+    [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+    [ 'opt_join_genes',      'Join genes' ],
+  );
+  
   $_->set('display', 'off') for grep $_->key =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
@@ -69,6 +75,8 @@ sub multi {
   
   my $sp = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
+  my $p = $pos == $total && $total > 2 ? 2 : 1;
+  my $i;
   my %alignments;
   my @strands;
   
@@ -76,12 +84,12 @@ sub multi {
     next unless exists $multi_hash->{$db};
     
     foreach my $align (values %{$multi_hash->{$db}->{'ALIGNMENTS'}}) {
-      next if $methods->{$align->{'type'}} eq 'no';
+      next unless $methods->{$align->{'type'}};
       next unless $align->{'class'} =~ /pairwise_alignment/;
       next unless $align->{'species'}->{$sp};
       next unless grep $align->{'species'}->{$_->{'species'}}, @slices;
       
-      my $i = $pos == $total && $total > 2 ? 2 : 1;
+      $i = $p;
       
       foreach (@slices) {
         if ($align->{'species'}->{$_->{'species'}}) {
@@ -94,17 +102,17 @@ sub multi {
         $i++;
       };
       
-      $align->{'db'} = lc(substr $db, 9);
-      $alignments{$align->{'order'}} = $align;
+      $align->{'db'} = lc substr $db, 9;
+      push @{$alignments{$align->{'order'}}}, $align;
     }
   }
   
   if ($pos == 1) {
     @strands = $total == 2 ? qw(r) : scalar keys %alignments == 2 ? qw(f r) : [keys %alignments]->[0] == 1 ? qw(f) : qw(r); # Primary species
   } elsif ($pos == $total) {
-    @strands = qw(f); # Last species - show alignments on forward strand.
+    @strands = qw(f);   # Last species - show alignments on forward strand.
   } elsif ($pos == 2) {
-    @strands = qw(r); # First species where $total > 2
+    @strands = qw(r);   # First species where $total > 2
   } else {
     @strands = qw(r f); # Secondary species in the middle of the image
   }
@@ -113,37 +121,41 @@ sub multi {
   $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
   
   foreach (sort keys %alignments) {
-    my $align = $alignments{$_};
-    my ($other_species) = grep !/^$sp|merged/, keys %{$align->{'species'}};
-    my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
-    (my $other_species_hr = $other_species) =~ s/_/ /g;
+    my $strand = shift @strands;
     
-    $self->get_node('decorations')->add_before(
-      $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
-        db             => $align->{'db'},
-        glyphset       => '_alignment_pairwise',
-        name           => $other_label,
-        caption        => $align->{'name'},
-        type           => $align->{'type'},
-        species_set_id => $align->{'species_set_id'},
-        species        => $other_species,
-        species_hr     => $other_species_hr,
-        ori            => $align->{'other_ori'},
-        _assembly      => $self->species_defs->get_config($other_species, 'ENSEMBL_GOLDEN_PATH'),
-        colourset      => 'pairwise',
-        strand         => shift @strands,
-        join           => 1
-      })
-    );
+    foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
+      my ($other_species) = grep !/^$sp|merged/, keys %{$align->{'species'}};
+      my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
+      (my $other_species_hr = $other_species) =~ s/_/ /g;
+      
+      $self->get_node('decorations')->add_before(
+        $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
+          glyphset   => '_alignment_pairwise',
+          colourset  => 'pairwise',
+          name       => $other_label,
+          species    => $other_species,
+          species_hr => $other_species_hr,
+          strand     => $strand,
+          display    => $methods->{$align->{'type'}},
+          db         => $align->{'db'},
+          type       => $align->{'type'},
+          ori        => $align->{'other_ori'},
+          join       => 1
+        })
+      );
+    }
   }
+}
+
+sub join_genes {
+  my $self = shift;
+  my ($pos, $total, @species) = @_;
+  
+  my ($prev_species, $next_species) = @species;
+  ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
+  $next_species = $prev_species if $pos > 2 && $total > 3;
   
   foreach ($self->get_node('transcript')->nodes) {
-    my ($prev_species) = grep !/^$sp|merged/, keys %{$alignments{1}->{'species'}} if exists $alignments{1};
-    my ($next_species) = grep !/^$sp|merged/, keys %{$alignments{2}->{'species'}} if exists $alignments{2};
-    
-    ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
-    ($prev_species, $next_species) = ($next_species, '') if $pos == $total && $total > 2;
-    
     $_->set('previous_species', $prev_species) if $prev_species;
     $_->set('next_species', $next_species) if $next_species;
     $_->set('join', 1);
