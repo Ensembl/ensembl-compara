@@ -55,7 +55,8 @@ sub content {
   if ($align_details->{'class'} !~ /pairwise/) {
     foreach (keys %{$align_details->{'species'}}) {
       next if /^($primary_species|merged)$/;
-      push @skipped, $_ if $object->param(sprintf 'species_%d_%s', $align, lc) eq 'no';
+      
+      push @skipped, $_ if $object->param(sprintf 'species_%d_%s', $align, lc) eq 'off';
     }
   }
   
@@ -69,7 +70,7 @@ sub content {
       compara         => $i == 1 ? 'primary' : 'secondary'
     });
     
-    $image_config->get_node('alignscalebar')->set('caption', $_->{'name'});
+    $image_config->get_node('alignscalebar')->set('caption', $object->species_defs->get_config($_->{'name'}, 'SPECIES_COMMON_NAME') || 'Ancestral sequences');
     
     push @images, $_->{'slice'}, $image_config;
     $i++;
