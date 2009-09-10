@@ -13,7 +13,7 @@ sub _init {
   $self->cacheable(1);
   $self->ajaxable(1);
   
-  $self->{'subslice_length'} = $self->object->param('force') || 100 * ($self->object->param('display_width') || 60) if $self->object;
+  $self->{'subslice_length'} = $object->param('force') || 100 * ($object->param('display_width') || 60) if $object;
 }
 
 sub caption {
@@ -49,17 +49,21 @@ sub content {
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     my $base_url = "/$species/Component/$type/Web/Compara_Alignments/sub_slice?padding=$padding;length=$slice_length";
-    if ($object->type eq 'Gene') {
-      my $obj = $object->Obj;
-      my $r = $obj->seq_region_name.':'.$obj->seq_region_start.':'.$obj->seq_region_end;
-      my $asv_link = $object->_url({
-	'type'   => 'Location',
-	'action' => 'Align',
-	'align'  => $align,
-	'r'      => $r,
-      });
-      $html .= qq(<p><strong><a href="$asv_link">Go to a graphical view</a> (Genomic align slice) of this alignment.<br /><br /></p>);
+    
+    if ($type eq 'Gene') {
+      my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
+      
+      $html .= sprintf(
+        '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</p>',
+        $object->_url({
+          type   => 'Location',
+          action => 'Align',
+          align  => $align,
+          r      => $location->seq_region_name . ':' . $location->seq_region_start . '-' . $location->seq_region_end
+        })
+      );
     }
+    
     $html .= $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
     $html = $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
@@ -255,7 +259,7 @@ sub check_for_errors {
 
       next if $species eq $_;
       
-      push @skipped, $_ if ($object->param($key)||'no') eq 'no';
+      push @skipped, $_ if ($object->param($key)||'off') eq 'off';
     }
 
     if (scalar @skipped) {
