@@ -48,7 +48,7 @@ sub content {
   my %archive;
   
   if ($species) {
-    %archive = %{$object->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')};
+    %archive = %{$object->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
     
     if (keys %archive) {
       $html .= '
@@ -150,7 +150,7 @@ sub get_old_params {
   
   if ($type eq 'Location') {
     my $location = $parameters{'r'};
-    my ($chr, $start, $end) = $location =~ /^([a-zA-Z0-9]+):([0-9]+)\-([0-9]+)$/;
+    my ($chr, $start, $end) = $location =~ /^(\w+):(\d+)\-(\d+)$/;
     
     if ($action eq 'Marker') {
       if (my $m = $parameters{'m'}) {
