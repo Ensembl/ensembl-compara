@@ -32,8 +32,7 @@ sub init {
     transcript  => 'Genes',
     synteny     => 'Synteny',
     decorations => 'Additional features',
-    information => 'Information',
-    options     => 'Options'
+    information => 'Information'
   );
 
   $self->add_track('sequence',    'contig', 'Contigs',     'stranded_contig', { display => 'normal', strand => 'f' });
@@ -50,11 +49,6 @@ sub init {
   $self->modify_configs(
     [ 'transcript' ],
     { qw(render gene_label strand r) }
-  );
-
-  $self->add_options(
-    [ 'opt_halfheight',     'Half height glyphs',  { qw(1 Yes 0 No) }],
-    [ 'opt_register_lines', 'Show register lines', { qw(1 Yes 0 No) }]
   );
 }
 
