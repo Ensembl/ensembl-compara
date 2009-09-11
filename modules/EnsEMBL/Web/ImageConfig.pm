@@ -302,7 +302,7 @@ sub load_user_tracks {
       my $display = 'normal';
       my $renderers = $alignment_renderers;
       my $strand = 'b'; 
-      if ($entry->{'format'} eq 'WIG') {
+      if ($entry->{'format'} eq 'WIG' || $entry->{'style'} eq 'wiggle') {
         $display = 'tiling';
         $strand  = 'r';
         $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
@@ -333,10 +333,8 @@ sub load_user_tracks {
     }
     @t = $user->uploads;
     foreach my $entry (@t) {
-      warn "@@@ UPLOAD $entry";
       next unless $entry->species eq $self->{'species'};
       my @analyses = split /, /, $entry->analyses;
-      warn "@@@ ANALYSES: @analyses";
       foreach my $analysis (@analyses) {
         $user_sources{$analysis} = {
           'source_name' => $entry->name,

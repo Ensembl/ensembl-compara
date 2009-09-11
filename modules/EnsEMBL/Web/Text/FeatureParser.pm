@@ -13,6 +13,7 @@ sub new {
   my ($class, $species_defs) = @_;
   my $data = {
   'format'            => '',
+  'style'             => '',
   'feature_count'     => 0,
   'valid_coords'      => {},
   'browser_switches'  => {},
@@ -46,6 +47,12 @@ sub format {
   my $self = shift;
   $self->{format} = shift if @_;
   return $self->{'format'};
+}
+
+sub style {
+  my $self = shift;
+  $self->{style} = shift if @_;
+  return $self->{'style'};
 }
 
 sub filter {
@@ -108,7 +115,7 @@ sub parse {
         my $columns;
         if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') {
           ## 'Normal' format consisting of a straightforward feature
-          ($columns) = $self->split_into_columns($row);
+          ($columns) = $self->split_into_columns($row, $format);
         }
         else {
           ## Complex format requiring special parsing (e.g. WIG)
@@ -159,15 +166,26 @@ sub parse {
 }
 
 sub split_into_columns {
-  my ($self, $row) = @_;
+  my ($self, $row, $format) = @_;
   my @columns;
   my $tabbed = 0;
-  if ($row =~ /\t/) {
-    @columns = split /\t/, $row;
-    $tabbed = 1;
+  if ($format) { ## Parsing a known file
+    if ($format =~ /^GF/) {
+      @columns = split /\t/, $row;
+      $tabbed = 1;
+    }
+    else {
+      @columns = split /\t|\s/, $row;
+    } 
   }
-  else {
-    @columns = split /\s/, $row;
+  else { ## Trying to identify the format
+    if ($row =~ /\t/) {
+      @columns = split /\t/, $row;
+      $tabbed = 1;
+    }
+    else {
+      @columns = split /\s/, $row;
+    }
   }
   @columns = grep /\S/, @columns;
   return (\@columns, $tabbed);
@@ -187,9 +205,12 @@ sub check_format {
         last;
       }
       elsif ($row =~ /^track\s+/i) {
-        if ($row =~ /type = wiggle/) {
+        if ($row =~ /type=wiggle/) {
           $format = 'WIG';
           last;
+        }
+        elsif ($row =~ /useScore=[0-9]+/) {
+          $self->style('wiggle');
         }
         next;
       }
