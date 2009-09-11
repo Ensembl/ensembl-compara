@@ -428,7 +428,7 @@ sub dumpOligoProbe {
     $sth->execute();
     while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
       next unless $hid;
-      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Probet",
+      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Probe",
   $hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=probe;id=$hid;",
     $hid, qq($type probe $hid hits the genome in $count locations.\n);
     }
