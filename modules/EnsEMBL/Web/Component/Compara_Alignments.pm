@@ -225,29 +225,16 @@ sub check_for_errors {
 
   return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
 
-  # Check for errors
-  my $h = $object->species_defs->multi_hash->{'DATABASE_COMPARA'};
-  my $align_details = $h->{'ALIGNMENTS'}->{$align} if exists $h->{'ALIGNMENTS'};
+  my $align_details = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
   
-  if (!$align_details) {
-    return $self->_error(
-      'Unknown alignment',
-      sprintf(
-        '<p>The alignment you have selected "%s" does not exist in the current database.</p>',
-        escapeHTML($align)
-      )
-    );
-  }
+  return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
 
   if (!exists $align_details->{'species'}->{$species}) {
-    return $self->_error(
-      'Unknown alignment',
-      sprintf(
-        '<p>%s is not part of the %s alignment in the database.</p>',
-        $object->species_defs->species_label($species),
-        escapeHTML($align_details->{'name'})
-      )
-    );
+    return $self->_error('Unknown alignment', sprintf(
+      '<p>%s is not part of the %s alignment in the database.</p>',
+      $object->species_defs->species_label($species),
+      escapeHTML($align_details->{'name'})
+    ));
   }
   
   my @skipped;
@@ -266,9 +253,9 @@ sub check_for_errors {
       $warnings = $self->_info(
         'Species hidden by configuration',
         sprintf(
-          '<p>The following %d species in the alignment are not shown in the image: %s. Use the "<strong>Configure this page</strong>" on the left to show them.</p>',
+          '<p>The following %d species in the alignment are not shown. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
           scalar @skipped,
-          join ', ', sort map { $object->species_defs->species_label($_) } @skipped
+          join "</li>\n<li>", sort map { $object->species_defs->species_label($_) } @skipped
         )
       );
     }
