@@ -3,6 +3,7 @@ package Bio::EnsEMBL::GlyphSet::_alignment;
 use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
+use Data::Dumper;
 
 #==============================================================================
 # The following functions can be over-riden if the class does require
@@ -146,36 +147,36 @@ sub render_normal {
   }
   
   foreach my $feature_key ( $strand < 0 ? sort keys %features : reverse sort keys %features ) {
-    $self->_init_bump( undef, $dep );
-    my %id             = ();
     $self->{'track_key'} = $feature_key;
-    foreach my $features ( @{$features{$feature_key}} ) {
-      ## Fix for userdata with per-track config
-      my @features;
-      if (ref($features) eq 'ARRAY') {
-        if (ref($features->[0] eq 'ARRAY')) {
-          @features =  @{$features->[0]};
-        }
-        else {
-          @features = @$features;
-        }
-      }
-      foreach my $f (
-        map { $_->[2] }
-        sort{ $a->[0] <=> $b->[0] }
-        map { [$_->start,$_->end, $_ ] }
-        @features
-      ){
-        my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
-        my $fgroup_name = $self->feature_group( $f );
-        my $s =$f->start;
-        my $e =$f->end;
-        my $db_name = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
-        next if $strand_flag eq 'b' && $strand != ( ($hstrand||1)*$f->strand || -1 ) || $e < 1 || $s > $length ;
-        push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp),$db_name];
-      }
+    $self->_init_bump( undef, $dep );
+    my %id = ();
+    ## Fix for userdata with per-track config
+    my ($config, @features);
+    my @T = @{$features{$feature_key}};
+    if (ref($T[0]) eq 'ARRAY') {
+      @features =  @{$T[0]};
+      $config   = $T[1];
     }
-## Now go through each feature in turn, drawing them
+    else {
+      @features = @T;
+    }
+    foreach my $f (
+      map { $_->[2] }
+      sort{ $a->[0] <=> $b->[0] }
+      map { [$_->start,$_->end, $_ ] }
+      @features
+    ){
+      my $hstrand  = $f->can('hstrand')  ? $f->hstrand : 1;
+      my $fgroup_name = $self->feature_group( $f );
+      my $s =$f->start;
+      my $e =$f->end;
+      my $db_name = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
+      next if $strand_flag eq 'b' && $strand != ( ($hstrand||1)*$f->strand || -1 ) || $e < 1 || $s > $length ;
+      push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp),$db_name];
+    }
+  
+    ## Now go through each feature in turn, drawing them
+    my @greyscale      = (qw/cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000/);
     my $y_pos;
     my $colour_key     = $self->colour_key( $feature_key );
     my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ), undef  );
@@ -196,6 +197,16 @@ sub render_normal {
       my $bump_start = int($START * $pix_per_bp) - 1;
       my $bump_end   = int($END * $pix_per_bp);
 
+      if ($config) {
+        my $f = $F[0][2];
+        if ($config->{'useScore'} > 0) {
+          my $index = int($f->score / scalar(@greyscale));
+          $feature_colour = $greyscale[$index];
+        }
+        elsif ($config->{'itemRgb'} =~ /on/i) {
+          $feature_colour = $f->external_data->{'item_colour'}[0];
+        }
+      }
       if( $self->{'show_labels'} ) {
         my $title = $self->feature_label( $F[0][2],$db_name );
         my( $txt, $bit, $tw,$th ) = $self->get_text_width( 0, $title, '', 'ptsize' => $fontsize, 'font' => $fontname );
