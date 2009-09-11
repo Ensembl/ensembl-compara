@@ -62,7 +62,7 @@ sub render_collapsed {
   
   $self->_init_bump; 
   
-  my ($txt, $bit, $w, $th) = $self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname);
+  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   # For alternate splicing diagram only draw transcripts in gene
   foreach my $gene (@{$self->features}) {
@@ -156,7 +156,7 @@ sub render_collapsed {
         
         for (my $i = 0; $i < @lines; $i++){
           my $line = "$lines[$i] ";
-          my ($txt, $bit, $w,$th2) = $self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname);
+          my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
           
           $composite->push($self->Text({
             x         => $composite->x,
@@ -237,10 +237,9 @@ sub render_transcripts {
   my %used_colours;
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   $self->_init_bump;
-  
-  my ($txt, $bit, $w, $th) = $self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname);
   
   # For alternate splicing diagram only draw transcripts in gene
   foreach my $gene (@{$self->features}) {
@@ -437,7 +436,7 @@ sub render_transcripts {
           
           for (my $i = 0; $i < @lines; $i++) {
             my $line = "$lines[$i] ";
-            my ($txt, $bit, $w, $th2) = $self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname);
+            my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
             
             $composite->push($self->Text({
               x         => $composite->x,
@@ -511,6 +510,7 @@ sub render_alignslice_transcript {
   my %used_colours;
 
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   $self->_init_bump;
   
@@ -674,7 +674,7 @@ sub render_alignslice_transcript {
           
           for (my $i = 0; $i < scalar @lines; $i++) {
             my $line = $lines[$i];
-            my ($txt, $bit, $w, $th) = $self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname);
+            my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
             
             $composite->push($self->Text({
               x         => $composite->x,
@@ -720,13 +720,13 @@ sub render_alignslice_transcript {
           }));
           
           $self->push($self->Poly({
-            points    => [
-               $length - 4/$pix_per_bp, -2,
-               $length,                 -4,
-               $length - 4/$pix_per_bp, -6
-            ],
             absolutey => 1,
-            colour    => $colour
+            colour    => $colour,
+            points    => [
+             $length - 4/$pix_per_bp, -2,
+             $length, -4,
+             $length - 4/$pix_per_bp, -6
+            ]
           }));
         } else {
           $self->push($self->Line({
@@ -739,13 +739,13 @@ sub render_alignslice_transcript {
           }));
             
           $self->push($self->Poly({
+            absolutey => 1,
+            colour    => $colour,
             points    => [ 
               4/$pix_per_bp, $h + 6,
-              0,             $h + 4,
+              0, $h + 4,
               4/$pix_per_bp, $h + 2
-            ],
-            absolutey => 1,
-            colour    => $colour
+            ]
           }));
         }
       }  
@@ -786,6 +786,7 @@ sub render_alignslice_collapsed {
   my %used_colours;
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  my $th = ($self->get_text_width(0, 'Xg', 'Xg', 'ptsize' => $fontsize, 'font' => $fontname))[3];
   
   $self->_init_bump;
   
@@ -877,7 +878,7 @@ sub render_alignslice_collapsed {
         
         for (my $i = 0; $i < scalar @lines; $i++){
           my $line = "$lines[$i] ";
-          my ($txt, $bit, $w, $th) = $self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname);
+          my $w = ($self->get_text_width(0, $line, '', 'ptsize' => $fontsize, 'font' => $fontname))[2];
           
           $composite->push($self->Text({
             x         => $composite->x,
@@ -946,6 +947,7 @@ sub render_genes {
   my $join_col         = 'blue';
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  my $h = ($self->get_text_width(0, 'X_y', '', 'font' => $fontname, 'ptsize' => $fontsize))[3];
   
   $self->_init_bump;
   
@@ -1060,17 +1062,15 @@ sub render_genes {
       my $start_row = $self->_max_bump_row + 1;
       
       $self->_init_bump;
-      
-      my ($a, $b, $c, $H) = $self->get_text_width(0, 'X_y', '', 'font' => $fontname, 'ptsize' => $fontsize);
 
       foreach my $gr (@genes_to_label) {
-        my ($txt, $part, $W, $H2) = $self->get_text_width(0, "$gr->{'label'} ", '', 'font' => $fontname, 'ptsize' => $fontsize);
+        my $w = ($self->get_text_width(0, "$gr->{'label'} ", '', 'font' => $fontname, 'ptsize' => $fontsize))[2];
         
         my $tglyph = $self->Text({
           x         => ($gr->{'start'} - 1) + 4/$pix_per_bp,
           y         => 0,
-          height    => $H,
-          width     => $W / $pix_per_bp,
+          height    => $h,
+          width     => $w / $pix_per_bp,
           font      => $fontname,
           halign    => 'left',
           ptsize    => $fontsize,
@@ -1086,7 +1086,7 @@ sub render_genes {
         
         my $row = $self->bump_row($bump_start, $bump_end);
         
-        $tglyph->y($tglyph->{'y'} + $row * (2 + $H) + ($start_row - 1) * 6);
+        $tglyph->y($tglyph->{'y'} + $row * (2 + $h) + ($start_row - 1) * 6);
         
         # Draw little taggy bit to indicate start of gene
         $self->push(
