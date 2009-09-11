@@ -12,6 +12,7 @@ sub _init {
   my $self = shift;
   $self->cacheable(0);
   $self->ajaxable(1);
+  $self->has_image(1);
 }
 
 sub content {
@@ -23,23 +24,17 @@ sub content {
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   return $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>') unless $align;
   
-  my $h = $object->species_defs->multi_hash->{'DATABASE_COMPARA'};
-  my %c = exists $h->{'ALIGNMENTS'} ? %{$h->{'ALIGNMENTS'}} : ();
+  my $align_details = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
   
-  if (!exists $c{$align}) {
-    return $self->_error('Unknown alignment', sprintf(
-      '<p>The alignment you have select "%s" does not exist in the current database.</p>', 
-      escapeHTML($align)
-    ));
-  }
+  return $self->_error('Unknown alignment', '<p>The alignment you have select does not exist in the current database.</p>') unless $align_details;
   
   my $primary_species = $object->species;
-  my $align_details = $c{$align};
   
   if (!exists $align_details->{'species'}->{$primary_species}) {
     return $self->_error('Unknown alignment', sprintf(
       '<p>%s is not part of the %s alignment in the database.</p>', 
-      $object->species_defs->species_label($primary_species), escapeHTML($align_details->{'name'})
+      $object->species_defs->species_label($primary_species),
+      escapeHTML($align_details->{'name'})
     ));
   }
   
@@ -48,15 +43,20 @@ sub content {
   my ($slices) = $self->get_slices($object, $slice, $align, $primary_species);
   
   my @skipped;
+  my @missing;
   my @images;
   my $i = 1;
   my $html;
+  my $info;
   
   if ($align_details->{'class'} !~ /pairwise/) {
+    my %aligned_species = map { $_->{'name'} => 1 } @$slices;
+    
     foreach (keys %{$align_details->{'species'}}) {
       next if /^($primary_species|merged)$/;
       
-      push @skipped, $_ if $object->param(sprintf 'species_%d_%s', $align, lc) eq 'off';
+      push @skipped, $_ if ($object->param(sprintf 'species_%d_%s', $align, lc)||'off') eq 'off';
+      push @missing, $_ unless $aligned_species{$_} || $_ eq 'Ancestral_sequences';
     }
   }
   
@@ -86,12 +86,23 @@ sub content {
   
   $html .= $image->render;
   
-  if (@skipped) {
-    $html .= $self->_info('Species hidden by configuration', sprintf(
-      '<p>The following %d species in the alignment are not shown in the image: %s. Use the "<strong>Configure this page</strong>" on the left to show them.</p>%s', 
-      scalar(@skipped), join ', ', sort map $object->species_defs->species_label($_), @skipped
-    ));
+  if (scalar @skipped) {
+    $info .= sprintf(
+      '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>', 
+      scalar @skipped, 
+      join "</li>\n<li>", sort map $object->species_defs->species_label($_), @skipped
+    );
   }
+  
+  if (scalar @missing) {
+    $info .= sprintf(
+      '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>', 
+      scalar @missing, 
+      join "</li>\n<li>", sort map $object->species_defs->species_label($_), @missing
+    );
+  }
+  
+  $html .= $self->_info('Notes', $info) if $info;
   
   return $html;
 }

@@ -245,7 +245,7 @@ sub content {
   
   return $error if $error;
   
-  my ($html, $warnings);
+  my ($html, $info);
  
   # Get all slices for the gene
   my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $object->species);
@@ -289,32 +289,34 @@ sub content {
   my $align_species = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align}->{'species'};
   my %aligned_names = map { $_->{'name'} => 1 } @aligned_slices;
   
+  
   foreach (keys %$align_species) {
-    next if $_ eq 'Ancestral_sequences';
+    next if /^Ancestral_sequences|merged$/;
     $non_aligned_slices{$species_defs->species_label($_)} = 1 unless $aligned_names{$_};
   }
   
   $no_variation_slices{$ancestral_seq} = 1 if $ancestral_seq;
   
   if (scalar keys %non_aligned_slices) {    
-    $warnings .= sprintf (
+    $info .= sprintf (
       '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
       scalar keys %non_aligned_slices,
-      join ("</li>\n<li>", sort keys %non_aligned_slices)
+      join "</li>\n<li>", sort keys %non_aligned_slices
     );
   }
   
   if (scalar keys %no_variation_slices) {
-    $warnings .= sprintf (
-      '<p>The following %d ' . (scalar keys %aligned_names != scalar keys %$align_species ? 'displayed' : '') . ' species have no variation database:<ul><li>%s</li></ul></p>',
+    $info .= sprintf (
+      '<p>The following %d%s species have no variation database:<ul><li>%s</li></ul></p>',
       scalar keys %no_variation_slices,
-      join ("</li>\n<li>", sort keys %no_variation_slices)
+      (scalar keys %aligned_names != scalar keys %$align_species ? ' displayed' : ''),
+      join "</li>\n<li>", sort keys %no_variation_slices
     );
   }
   
-  $warnings = $self->_info('Notes', $warnings) if $warnings;  
+  $info = $self->_info('Notes', $info) if $info;  
   
-  return $self->content_sub_slice($slice, \@aligned_slices, $warnings, $defaults);
+  return $self->content_sub_slice($slice, \@aligned_slices, $info, $defaults);
 }
 
 1;
