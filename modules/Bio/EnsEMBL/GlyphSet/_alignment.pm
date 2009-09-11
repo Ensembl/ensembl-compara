@@ -199,8 +199,8 @@ sub render_normal {
 
       if ($config) {
         my $f = $F[0][2];
-        if ($config->{'useScore'} > 0) {
-          my $index = int($f->score / scalar(@greyscale));
+        if ($config->{'useScore'} == 1) {
+          my $index = int(($f->score * scalar(@greyscale)) / 1000);
           $feature_colour = $greyscale[$index];
         }
         elsif ($config->{'itemRgb'} =~ /on/i) {
