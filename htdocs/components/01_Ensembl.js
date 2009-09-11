@@ -25,6 +25,12 @@ Ensembl.extend({
       });
     }
     
+    // Store image panel details for highlighting
+    this.images = {
+      total: $('.image_panel').length,
+      last: $('.image_panel:last')[0]
+    }
+    
     this.setCoreParams();
     
     this.LayoutManager.initialize();
