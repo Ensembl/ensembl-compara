@@ -34,6 +34,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return;
       }
       
+      var params = el.hasClass('image_panel') ? { highlight: (Ensembl.images.total == 1 || !(this == Ensembl.images.last))  } : undefined;
+      
       el.removeAttr('title');
       
       if (title[0].substr(0, 1) != '/') {
@@ -72,7 +74,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
               if (html) {
                 var type = html.match(/<map/) ? 'ImageMap' : 'Content';
                 
-                Ensembl.EventManager.trigger('addPanel', undefined, type, html, content);
+                Ensembl.EventManager.trigger('addPanel', undefined, type, html, content, params);
               } else {
                 content.html('');
               }
@@ -149,12 +151,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
 
   toggleList: function () {
     $('a.collapsible', this.el).click(function () {
-      var img = $(this).children('img');
-      $(this).siblings('ul.shut').toggle(500);
-      img.attr('src', img.attr('src') == '/i/list_open.gif' ? '/i/list_shut.gif' : '/i/list_open.gif');
+      var img = $('img', this);
+      
+      img.attr('src', '/i/list_' + (img.hasClass('shut') ? 'open' : 'shut') + '.gif').toggleClass('shut');
       img = null;
+      
+      $(this).siblings('ul.shut').toggle(500);
+      
       return false;
     });
   }
-
 });
