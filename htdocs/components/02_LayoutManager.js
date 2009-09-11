@@ -10,7 +10,6 @@ Ensembl.LayoutManager.extend({
    */
   initialize: function () {    
     this.id = 'LayoutManager';
-    this.ajaxContent = $('.ajax');
     
     Ensembl.EventManager.register('reloadPage', this, this.reloadPage);
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
