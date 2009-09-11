@@ -4,11 +4,16 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Document::SpreadSheet;
 
 use base 'EnsEMBL::Web::Component';
+
+sub has_image {
+  my $self = shift;
+  $self->{'has_image'} = shift if @_;
+  return $self->{'has_image'} || 0;
+}
 
 sub _configure_display {
   my ($self, $message) = @_;

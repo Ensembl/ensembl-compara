@@ -155,17 +155,10 @@ sub configurable {
   return $self->{'configurable'};
 }
 
-sub cache_key {
-  return undef;
-}
-
-sub _init {
-  return;
-}
-
-sub caption {
-  return undef;
-}
+sub has_image { return 0; }
+sub cache_key { return undef; }
+sub caption   { return undef; }
+sub _init     { return; }
 
 sub cache {
   my( $panel, $obj, $type, $name ) = @_;
