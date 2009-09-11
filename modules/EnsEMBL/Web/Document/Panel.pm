@@ -679,13 +679,15 @@ sub content {
               $URL .= "/$function_name" if $function_name && $comp_obj->can("content_$function_name");
               $URL .= "?$ENV{'QUERY_STRING'}";
               $URL .= ';_rmd=' . substr(Digest::MD5::md5_hex($ENV{'REQUEST_URI'}), 0, 4);
-
+              
+              my $class = 'ajax' . ($comp_obj->has_image ? ' image_panel' : '');
+              
               # Check if ajax enabled
               if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
                 if ($caption) {
-                  $self->printf(qq{<div class="ajax" title="['%s','%s']"></div>}, CGI::escapeHTML($caption), CGI::escapeHTML($URL));
+                  $self->printf(qq{<div class="$class" title="['%s','%s']"></div>}, CGI::escapeHTML($caption), CGI::escapeHTML($URL));
                 } else {
-                  $self->printf(qq{<div class="ajax" title="['%s']"></div>}, CGI::escapeHTML($URL));
+                  $self->printf(qq{<div class="$class" title="['%s']"></div>}, CGI::escapeHTML($URL));
                 }
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
                 # if ajax disabled - we get all content by parallel requests to ourself
