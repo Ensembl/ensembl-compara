@@ -705,19 +705,18 @@ sub _check_menus {
 }
 
 sub _merge {
+#  local $Data::Dumper::Indent=0;
   my( $self, $_sub_tree, $sub_type ) = @_;
   my $data = {};
-  my $tree = $_sub_tree->{'analyses'};  
-  my $config_name = $self->{'type'};  
+  my $tree = $_sub_tree->{'analyses'};
+  my $config_name = $self->{'type'};
 
-  foreach my $analysis (keys %$tree) {  
-    my $sub_tree = $tree->{$analysis};  
+  foreach my $analysis (keys %$tree) {
+    my $sub_tree = $tree->{$analysis};
     next unless $sub_tree->{'disp'}; ## Don't include non-displayable tracks
-#local $Data::Dumper::Indent=0;
-    #warn Data::Dumper::Dumper($sub_tree->{'web'});
-    #warn ".... $sub_type {",$sub_tree->{'web'}{ $sub_type },"}";
+#    warn Data::Dumper::Dumper($sub_tree->{'web'});
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
-    my $key = $sub_tree->{'web'}{'key'} || $analysis; 
+    my $key = $sub_tree->{'web'}{'key'} || $analysis;
     foreach ( keys %{$sub_tree->{'web'}||{}} ) {
 #warn "............ $_ ...............";
       next if $_ eq 'desc';
@@ -779,7 +778,8 @@ sub add_dna_align_feature {
   foreach my $key_2 ( @$keys ) {
     my $K = $data->{$key_2}{'type'}||'other';
     my $menu = $self->tree->get_node( "dna_align_$K" );
-    if( $menu ) { 
+    if( $menu ) {
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
       $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => '_alignment',
@@ -788,7 +788,7 @@ sub add_dna_align_feature {
         'logicnames'  => $data->{$key_2}{'logic_names'},
         'caption'     => $data->{$key_2}{'caption'},
         'description' => $data->{$key_2}{'description'},
-        'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+        'display'     => $display,
         'renderers'   => $alignment_renderers,
         'strand'      => 'b',
         'show_strands'=> $data->{$key_2}{'show_strands'} || '', #show alignments all on one strand if configured as such
@@ -805,9 +805,9 @@ sub add_protein_align_feature {
   my( $self, $key, $hashref ) = @_;
   return unless $self->_check_menus( 'protein_align' );
   my( $keys, $data ) = $self->_merge( $hashref->{'protein_align_feature'}, 'protein_align_feature' );
-  
   my $menu = $self->tree->get_node( "protein_align" );
   foreach my $key_2 ( @$keys ) {
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
     $menu->append( $self->create_track( 'protein_'.$key.'_'.$key_2, $data->{$key_2}{'name'},{
       'db'          => $key,
       'glyphset'    => '_alignment',
@@ -817,7 +817,7 @@ sub add_protein_align_feature {
       'logicnames'  => $data->{$key_2}{'logic_names'},
       'caption'     => $data->{$key_2}{'caption'},
       'description' => $data->{$key_2}{'description'},
-      'display'     => $data->{$key_2}{'display'}||'off', ## Default to on at the moment - change to off by default!
+      'display'     => $display,
       'renderers'   => $alignment_renderers,
       'strand'      => 'b'
     }));
@@ -933,7 +933,7 @@ sub add_gene {
   foreach my $type ( @TRANSCRIPT_TYPES ) {
     my $menu = $self->get_node( $type );
     next unless $menu;
-    foreach my $key_2 ( @$keys ) { 
+    foreach my $key_2 ( @$keys ) {
       $menu->append( $self->create_track( $type.'_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => ($type=~/_/?'':'_').$type, ## QUICK HACK..
