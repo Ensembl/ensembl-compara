@@ -271,13 +271,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var max = parseInt(r[6]);
       var scale = (max - min + 1) / (highlight.region.r - highlight.region.l); // bps per pixel on image
       
-      // Don't draw the redbox on the first imagemap on the page
-      if (parseInt(r[2]) != 1) {
-        this.highlight(highlight.region, 'redbox', species, i);
-      }
-      
       // Highlighting base on self. Take start and end from Ensembl core parameters
       if (this.imageNumber == imageNumber) {
+        // Don't draw the redbox on the first imagemap on the page
+        if (parseInt(r[2]) != 1) {
+          this.highlight(highlight.region, 'redbox', species, i);
+        }
+      
         if (Ensembl.multiSpecies[species] && !(species == Ensembl.species && chr == Ensembl.location.name)) {
           start = Ensembl.multiSpecies[species].location.start;
           end = Ensembl.multiSpecies[species].location.end;
@@ -285,7 +285,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           start = Ensembl.location.start;
           end = Ensembl.location.end;
         }
-          
+        
         link = false;
       }
       
@@ -297,7 +297,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       };
       
       // Highlight unless it's the bottom image on the page
-      if (start >= min && end <= max && (link === true || !(start == min && end == max))) {
+      if (this.params.highlight) {
         this.highlight(coords, 'redbox2', species, i);
       }
       
