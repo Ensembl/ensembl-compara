@@ -169,10 +169,16 @@ print STDERR "Loading clusters in compara\n";
 foreach my $cluster (@clusters) {
     my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
 
-    my $popped = pop @cluster_members;
-    if ($popped ne "\$") {
-        die "problem in the mcl parsing in cluster id $cluster_index\n";
-    }
+  my $popped = pop @cluster_members;
+  if ($popped ne "\$") {
+    die "problem in the mcl parsing in cluster id $cluster_index\n";
+  }
+
+  if( (scalar(@cluster_members) == 0)
+   or ((scalar(@cluster_members) == 1) and ($cluster_members[0] eq '0'))) {
+        print STDERR "Skipping an empty cluster $cluster_index...";
+        next;
+  }
 
     print STDERR "Loading cluster $cluster_index...";
 
