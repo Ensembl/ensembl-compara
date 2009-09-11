@@ -264,8 +264,15 @@ sub draw_wiggle_points {
     } else {
       $score = $f->score || 0;
     }
-    my $y = $score < 0 ? 0 : -$score * $pix_per_score;
-    my $height = $parameters->{'graph_type'} eq 'points' ? 20 : $score;
+    #my $y = $score < 0 ? 0 : -$score * $pix_per_score;
+    my $y = -$score * $pix_per_score;
+    my $height;
+    if (my $graph_type = $parameters->{'graph_type'}) {
+      $height = $graph_type eq 'points' ? 20 : 0; 
+    }
+    else {
+      $height = $score;
+    }
     $height *= $pix_per_score;
 
     # warn(join('*', $f, $START, $END, $score));
