@@ -38,11 +38,12 @@ sub draw_features {
       my ($min_score,$max_score) = split(':', $config->{'viewLimits'});
       $min_score = $config->{'min_score'} unless $min_score;
       $max_score = $config->{'max_score'} unless $max_score;
+      my $graph_type = $config->{'graphType'} || $config->{'useScore'};
       $self->draw_wiggle_plot(
         $features, { 
           'min_score' => $min_score, 'max_score' => $max_score, 
-          'score_colour' => $config->{'color'}, 'axis_colour' => $config->{'color'},
-          'description' => $config->{'description'}, 'graph_type' => $config->{'graphType'},
+          'score_colour' => $config->{'color'}, 'axis_colour' => 'black',
+          'description' => $config->{'description'}, 'graph_type' => $graph_type,
       });
     }
   }

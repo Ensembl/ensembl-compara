@@ -36,11 +36,12 @@ sub draw_features {
       my ($min_score,$max_score) = split(':', $config->{'viewLimits'});
       $min_score = $config->{'min_score'} unless $min_score;
       $max_score = $config->{'max_score'} unless $max_score;
+      my $graph_type = $config->{'graphType'} || $config->{'useScore'};
       $self->draw_wiggle_plot(
         $features->[0], {
           'min_score' => $min_score, 'max_score' => $max_score,
-          'score_colour' => $config->{'color'}, 'axis_colour' => $config->{'color'},
-          'description' => $description, 'graph_type' => $config->{'graphType'},
+          'score_colour' => $config->{'color'}, 'axis_colour' => 'black',
+          'description' => $description, 'graph_type' => $graph_type,
       });
     }
   }
@@ -72,7 +73,7 @@ sub feature_title {
 
 sub features {
   my ($self) = @_;
-## Get the features from the URL or from the database...
+## Get the features from the database...
   return unless $self->my_config('data_type') eq 'DnaAlignFeature';
   my $sub_type   = $self->my_config('sub_type');
   $self->{_default_colour} = $self->SUPER::my_colour( $sub_type );
@@ -86,6 +87,14 @@ sub features {
   my $dafa     = $dba->get_adaptor( 'DnaAlignFeature' );
 
   my $features = $dafa->fetch_all_by_Slice( $self->{'container'}, $logic_name );
+
+  ## Replace feature slice with one from core db, as it may be out of date!
+  my $core_dba = $dbs->get_DBAdaptor('core');
+  my $slice_adaptor = $core_dba->get_adaptor( 'Slice' );
+  foreach my $f (@$features) {
+    my $slice = $slice_adaptor->fetch_by_seq_region_id($f->slice->get_seq_region_id);
+    $f->slice($slice);
+  }
   my %results  = ( $logic_name => [ $features||[] ] );
   return %results;
 }
