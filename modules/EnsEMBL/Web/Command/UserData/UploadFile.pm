@@ -114,16 +114,14 @@ sub upload {
   
     if ($file->content) {
       if ($file->save) {
+        ## Final attempt to work out format!
+        my $data = $file->retrieve;
+        my $parser = EnsEMBL::Web::Text::FeatureParser->new($object->species_defs);
+        $parser->check_format($data);
+        $format = $parser->format unless $format;
         if (!$format) {
-          ## Final attempt to work out format!
-          my $data = $file->retrieve;
-          my $parser = EnsEMBL::Web::Text::FeatureParser->new($object->species_defs);
-          $parser->check_format($data);
-          $format = $parser->format;
-          if (!$format) {
-            $param->{'format'}  = 'unknown';
-          }
-        } 
+          $param->{'format'}  = 'unknown';
+        }
         my $code = $file->md5 . '_' . $object->get_session->get_session_id;
      
         $param->{'species'} = $object->param('species') || $object->species;
@@ -137,6 +135,7 @@ sub upload {
           name      => $name,
           species   => $object->param('species'),
           format    => $format,
+          style     => $parser->style,
           assembly  => $object->param('assembly'),
         );
 
