@@ -67,7 +67,7 @@ Ensembl.extend({
     
     var regex = '[;&?]%s=(.+?)[;&]';
     var url = window.location.search + ';';
-    var tab, match;
+    var tab;
     
     this.coreParams = {};
     this.location = { width: 100000 };
@@ -82,10 +82,10 @@ Ensembl.extend({
       }
     });
     
-    if (this.coreParams.r) {
-      match = this.coreParams.r.split(/\b/);
-      
-      this.location = { name: match[0], start: parseInt(match[2]), end: parseInt(match[4]) };
+    var match = this.coreParams.r ? this.coreParams.r.match(/(\w+):(\d+)-(\d+)/) : false;
+    
+    if (match) {
+      this.location = { name: match[1], start: parseInt(match[2]), end: parseInt(match[3]) };
       this.location.width = this.location.end - this.location.start + 1;
     } else {
       tab = $('a', '#tab_location').html();
