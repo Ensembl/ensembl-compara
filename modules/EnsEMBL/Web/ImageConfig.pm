@@ -302,8 +302,7 @@ sub load_user_tracks {
       my $display = 'normal';
       my $renderers = $alignment_renderers;
       my $strand = 'b'; 
-      #if ($entry->{'format'} eq 'WIG' || $entry->{'style'} eq 'wiggle') {
-      if ($entry->{'format'} eq 'WIG') {
+      if ($entry->{'style'} eq 'wiggle') {
         $display = 'tiling';
         $strand  = 'r';
         $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];

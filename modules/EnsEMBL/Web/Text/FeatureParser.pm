@@ -94,7 +94,7 @@ sub parse {
     my $current_min = 0;
     my $valid_coords = $self->{'valid_coords'};
 
-    foreach my $row ( split /\n/, $data ) {
+    foreach my $row ( split /\n|\r/, $data ) {
       ## Skip crap and clean up what's left
       next unless $row;
       next if $row =~ /^#/;
@@ -195,7 +195,7 @@ sub check_format {
   my ($self, $data, $format) = @_;
 
   unless ($format) {
-    foreach my $row ( split /\n/, $data ) {
+    foreach my $row ( split /\n|\r/, $data ) {
       next unless $row;
       next if $row =~ /^#/;
       next if $row =~ /^browser/; 
@@ -205,12 +205,15 @@ sub check_format {
         last;
       }
       elsif ($row =~ /^track\s+/i) {
-        if ($row =~ /type=wiggle/) {
+        if ($row =~ /type=wiggle0/) {
+          $self->style('wiggle');
           $format = 'WIG';
           last;
         }
-        elsif ($row =~ /useScore=[0-9]+/) {
+        elsif ($row =~ /type=bedGraph/ || $row =~ /type=wiggle_0/) {
           $self->style('wiggle');
+          $format = 'BED';
+          last;
         }
         next;
       }

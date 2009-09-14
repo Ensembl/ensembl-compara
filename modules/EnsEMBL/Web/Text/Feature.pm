@@ -20,6 +20,7 @@ sub type          { return undef; }
 sub note          { return undef ;}
 sub score         { return undef; }  
 sub link          { return undef; }  
+sub slice         { return undef; }  
 
 sub extra_data { return $_[0]{__extra__}; }
 
