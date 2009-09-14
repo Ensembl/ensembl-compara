@@ -16,7 +16,7 @@
  rubberband2 - drag region - bottom and left
 **/
 
-.redbox2, .rubberband, .rubberband2, .redbox { position:absolute; z-index: 100; }
+.redbox2, .rubberband, .rubberband2, .redbox { position:absolute; z-index: 99; }
 .redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px }
 .rubberband  { background-image: url(/i/redants.gif); }
 .rubberband2 { background-image: url(/i/redants2.gif); }
