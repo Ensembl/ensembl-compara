@@ -202,11 +202,12 @@ sub render_align_bar {
       } elsif ($last_s2st ne $s2st) {
         # Same chromosome, different strand (inversion)
         $colour = '3333ff';
-        $title = "AlignSlice Break; Info: There is an inversion in chromosome $s2t";
+        $title = "AlignSlice Break; There is an inversion in chromosome $s2t";
         $legend = 'Inversion in chromosome';
       } elsif ($s3l > 0) {
         # Same chromosome, same strand, gap between the two underlying slices
         my ($from, $to);
+        
         $colour = 'red';
         $legend = 'Gap between two underlying slices';
         
@@ -217,6 +218,8 @@ sub render_align_bar {
           $from = $s2e;
           $to = $last_s2s;
         }
+        
+        ($from, $to) = ($to, $from) if $from > $to;
         
         $href = $self->_url({ species => $species, r => "$s2t:$from-$to", break => 1 });
       } else {
