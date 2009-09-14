@@ -63,9 +63,25 @@
     chunk_size            => 30000000,
     group_set_size        => undef,
     overlap               => 0,
-    # in human, make sure assemblu_excpetion_type_PAR is set to 0; 
+    # in human, make sure assembly_excpetion_type_PAR is set to 0; 
     # this makes sure that the Y PAR is hard-masked
     masking_options       => "{default_soft_masking => 1, assembly_exception_type_PAR => 0}",
+
+    # When working with the human genome, in addition to hard-masking Y PAR, make sure 
+    # include_duplicates is set to 1, or else the compara code would try to skip the PAR regions 
+    # when creating DNA fragments for the Y-chr, and during that process the sequence start/end 
+    # positions of some non-PAR fragments would be reset to a wrong number. Compara jobs would die
+    # for the ChunkAndGroupDna analysis. Setting include_duplicates to 1 results in the Y-chr 
+    # being treated just like any other chrs (without PARs).
+
+    # One technical caveat when including "include_duplicates" parameter: The input ID 
+    # for ChunkAndGroupDna analysis could get too long (>256 chars). Ways to get around this problem: 
+    # Either (i) Set dump_loc path (below) as short as possible to save chars; or (ii) comment out 
+    # "include_duplicates" in this config file and hack compara DB later to reinstate it in the inputID, 
+    # as well as removing redundant quotation marks in the inputID to save chars.
+
+    include_duplicates    => 1,
+
     # set the below to the location of the pre-dumped nib-files; this directory
     # can contain any subset of the top-level sequences. So if it's not practical
     # to dump all top-level sequences (i.e. of there are more than a few hundred)
