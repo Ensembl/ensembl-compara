@@ -7,7 +7,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var area = $(data.area.a);
     
     this.drag   = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
-    this.align  = area.hasClass('align');
+    this.align  = area.hasClass('align'); // TODO: implement alignslice menus
     this.href   = area.attr('href');
     this.title  = area.attr('title');
     this.das    = false;
@@ -260,7 +260,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
       
       if (this.align) {
-        url = url.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start));
+        url = url.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start)); // TODO: currently disabled
       } else {
         url = url.replace(/%s/, this.chr + ':' + start + '-' + end);
       }
@@ -386,7 +386,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     if (this.align === true) {
-      return this.baseURL.replace(/r=%s/, 'c=' + this.chr + ':' + (Ensembl.location.start + this.location) + ';w=' + Math.round(w));
+      return this.baseURL.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (Ensembl.location.start + this.location) + ';w=' + Math.round(w)); // TODO: currently disabled
     } else {
       var start = Math.round(this.location - (w - 1) / 2);
       var end   = Math.round(this.location + (w - 1) / 2); // No constraints on end - can't know how long the chromosome is, and perl will deal with overflow
