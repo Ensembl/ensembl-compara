@@ -150,13 +150,18 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
 
   toggleList: function () {
+    var attrs = {
+      open: { src: '/i/list_open.gif', alt: 'V' },
+      shut: { src: '/i/list_shut.gif', alt: '>' }
+    };
+    
     $('a.collapsible', this.el).click(function () {
       var img = $('img', this);
       
-      img.attr('src', '/i/list_' + (img.hasClass('shut') ? 'open' : 'shut') + '.gif').toggleClass('shut');
+      img.attr(attrs[img.hasClass('open') ? 'shut' : 'open']).toggleClass('open');
       img = null;
       
-      $(this).siblings('ul.shut').toggle(500);
+      $(this).siblings('ul.shut').toggle();
       
       return false;
     });
