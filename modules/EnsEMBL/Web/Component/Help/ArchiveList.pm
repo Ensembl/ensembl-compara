@@ -144,7 +144,7 @@ sub _output_link {
 sub get_old_params {
   my ($new_params, $type, $action) = @_;
   
-  my %parameters = map { $_->[0] => unescape($_->[1]) } map {[ split '=' ]} split ';', $new_params;
+  my %parameters = map { $_->[0] => unescape($_->[1]) } map {[ split '=' ]} split /[;&]/, $new_params;
   
   my $old_params;
   
