@@ -168,26 +168,22 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $('dt', this).each(function () {
         var select = $('select', this);
         
-        var img = $('<img />').attr({
+        $('<img />').attr({
           src: '/i/render/' + select.val() + '.gif',
           title: select.attr('options')[select.attr('selectedIndex')].text
         }).click(function () {
           myself.makeMenu(this);
-        });
+        }).insertAfter(select);
         
-        var span = $('<span class="menu_help">Show info</span>');
-        
-        select.hide().after(img);
+        select.hide();
         
         if ($(this).next().is('dd')) {
-          span.click(function () {
+          $('<span class="menu_help">Show info</span>').click(function () {
             $(this).html(this.innerHTML == 'Show info' ? 'Hide info' : 'Show info').parent().next().toggle();
           }).appendTo(this);
         }
         
         select = null;
-        img = null;
-        span = null;
       });
       
       $('dd', this).hide();
@@ -262,6 +258,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu.append('<dt class="' + this.value + '"><img src="/i/render/' + this.value + '.gif" title="' + this.text + '" />' + this.text + '</dt>');
     });
     
+    menu.css('top', $(img).offset().top + 'px');
     menu.insertBefore(img);
     
     menu = null;

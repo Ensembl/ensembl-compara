@@ -9,7 +9,7 @@ dl.config_menu dt select { margin: 0; border:0; font-size: 80% }
 dl.config_menu dt .menu_help { background-color: #fcc; font-size: 80%; padding: 0 0.5em; margin: 2px 0.5em }
 dl.config_menu dd .menu_help { background-color: #fcc; font-size: 80%; padding: 0 0.5em; margin: 2px 0.5em }
 
-dl.popup_menu { border: 1px solid #666; background-color: #eee; margin: 13px 0 0 11px; padding: 0; border-bottom: 0; color: black; position :absolute; z-index: 1000000; }
+dl.popup_menu { border: 1px solid #666; background-color: #eee; margin: -13px 0 0 11px; padding: 0; border-bottom: 0; color: black; position :absolute; z-index: 1000000; }
 dl.popup_menu dt { padding: 0 0.5em 0 0; border-bottom: 1px solid #666; font-weight: bold }
 dl.popup_menu dt img { padding: 2px }
 
