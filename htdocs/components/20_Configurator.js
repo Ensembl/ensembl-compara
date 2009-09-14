@@ -258,9 +258,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu.append('<dt class="' + this.value + '"><img src="/i/render/' + this.value + '.gif" title="' + this.text + '" />' + this.text + '</dt>');
     });
     
-    menu.css('top', $(img).offset().top + 'px');
-    menu.insertBefore(img);
+    if (this.el.scrollTop) {
+      menu.css({ top: ($(img).offset().top - $(window).scrollTop()) + 'px', marginTop: '-13px' });
+    }
     
+    menu.insertBefore(img);
     menu = null;
   }
 });
