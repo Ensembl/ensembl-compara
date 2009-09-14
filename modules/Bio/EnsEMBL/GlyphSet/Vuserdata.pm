@@ -6,6 +6,7 @@ use base qw(Bio::EnsEMBL::GlyphSet::V_density);
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc;
+use Data::Dumper;
 
 ### Fetches userdata and munges it into a basic format 
 ### for rendering by the parent module
@@ -43,7 +44,7 @@ sub data {
     my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->{'config'}->species_defs);
     $parser->no_of_bins($bins);
     $parser->bin_size($bin_size);
-    unless ($self->{'config'}{'all_chromosomes'} eq 'yes') {
+    unless ($self->{'config'}->get_parameter('all_chromosomes') eq 'yes') {
       $parser->filter($chr);
     }
 
@@ -78,7 +79,6 @@ sub data {
       $count++ unless $track->{'config'}{'color'};
       $sort++;
     }
-
 
   }
   else {
