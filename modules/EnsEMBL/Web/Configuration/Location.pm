@@ -125,7 +125,7 @@ sub populate_tree {
 
   my $align_menu = $self->create_submenu('Compara', 'Comparative Genomics');
   
-  $caption = $availability->{'slice'} ? 'Genomic align slice ([[counts::alignments]])' : 'Genomic align slice';
+  $caption = $availability->{'slice'} ? 'Alignments (image) ([[counts::alignments]])' : 'Alignments (image)';
   
   $align_menu->append($self->create_node('Align', $caption, 
     [qw(
@@ -134,10 +134,10 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
     )],
-    { 'availability' => 'slice database:compara', 'concise' => 'Genomic align slice' }
+    { 'availability' => 'slice database:compara', 'concise' => 'Alignments (image)' }
   ));
   
-  $caption = $availability->{'slice'} ? 'Genomic alignments ([[counts::alignments]])' : 'Genomic alignments';
+  $caption = $availability->{'slice'} ? 'Alignments (text) ([[counts::alignments]])' : 'Alignments (text)';
   
   $align_menu->append($self->create_node('Compara_Alignments', $caption,
     [qw(
@@ -145,10 +145,10 @@ sub populate_tree {
       botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
       alignments EnsEMBL::Web::Component::Location::Compara_Alignments
     )],
-    { 'availability' => 'slice database:compara', 'concise' => 'Genomic alignments' }
+    { 'availability' => 'slice database:compara', 'concise' => 'Alignments (text)' }
   ));
   
-  $caption = $availability->{'slice'} ? 'Multi-species comp. ([[counts::pairwise_alignments]])' : 'Multi-species comp.';
+  $caption = $availability->{'slice'} ? 'Multi-species view ([[counts::pairwise_alignments]])' : 'Multi-species view';
   
   $align_menu->append($self->create_node('Multi', $caption,
     [qw(
@@ -157,7 +157,7 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
     )],
-    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species comparison' }
+    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species view' }
   ));
   
   $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
