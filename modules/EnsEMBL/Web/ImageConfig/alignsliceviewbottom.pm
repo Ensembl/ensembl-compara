@@ -36,7 +36,7 @@ sub init {
   $self->add_tracks('information', 
     [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
-    [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }],
+#   [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
     [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r' }]
   );
   
