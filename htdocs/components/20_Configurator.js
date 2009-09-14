@@ -250,7 +250,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
 
   makeMenu: function (img) {
+    var off = $(img).prev('.popup_menu').length;
+    
     $('.popup_menu', this.el).remove();
+    
+    if (off) {
+      return;
+    }
     
     var menu = $('<dl class="popup_menu"></dl>');   
     
