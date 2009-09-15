@@ -17,7 +17,7 @@ our %mapping = (
   'markerview'            => [{ 'type' => 'Location',   'action' => 'Marker',                       'initial_release' => 1  }],
   'ldview'                => [{ 'type' => 'Location',   'action' => 'LD',                           'initial_release' => 50 }],
   'multicontigview'       => [{ 'type' => 'Location',   'action' => 'Multi',                        'initial_release' => 1 , 'missing_releases' => [51..55] }],
-  'alignsliceview'        => [{ 'type' => 'Location',   'action' => 'Align',                        'initial_release' => 34, 'missing_releases' => [51..55] }],
+  'alignsliceview'        => [{ 'type' => 'Location',   'action' => 'Compara_Alignments/Image',     'initial_release' => 34, 'missing_releases' => [51..55] }],
   'geneview'              => [{ 'type' => 'Gene',       'action' => 'Summary',                      'initial_release' => 1  },
                               { 'type' => 'Gene',       'action' => 'Matches',                      'initial_release' => 1  },
                               { 'type' => 'Gene',       'action' => 'Compara_Ortholog',             'initial_release' => 1  },
