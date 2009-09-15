@@ -424,10 +424,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.position = data.position;
     this.coords = data.coords;
     
-   if (this.das == 'group' || this.das == 'pseudogroup' || this.drag) {
-     this.elLk.tbody.empty();
-     this.elLk.caption.empty();
-      
+    if (this.das == 'group' || this.das == 'pseudogroup' || this.drag) {
+      this.elLk.tbody.empty();
+      this.elLk.caption.empty();
+      this.hide();
       this.getContent();
     } else {
       this.show();
