@@ -46,26 +46,24 @@ sub content {
       $already_added = 1;
       $count_added++;
     }
-
     push @$elements, { 'type'     => 'DASCheckBox',
                        'das'      => $source,
                        'disabled' => $already_added,
                        'checked'  => $already_added  };
-
-    if ( $count_added ) {
-      my $noun    = $count_added > 1 ? 'sources' : 'source';
-      my $verb    = $count_added > 1 ? 'are' : 'is';
-      my $subject = $count_added > 1 ? 'they' : 'it';
-      my $note = sprintf '%d DAS %s %s cannot be selected here because %s %3$s already configured within %s.',
-                         $count_added, $noun, $verb, $subject,
-                         $self->object->species_defs->ENSEMBL_SITETYPE;
-      $form->add_notes( {'heading'=>'Note', 'text'=> $note } );
-    }
-
     $fieldset->{'elements'} = $elements;
-    $form->add_fieldset(%$fieldset);
-    $form->add_element('type'  => 'Hidden','name'  => 'das_server','value' => $object->param('das_server'));
   }
+  if ( $count_added ) {
+    my $noun    = $count_added > 1 ? 'sources' : 'source';
+    my $verb    = $count_added > 1 ? 'are' : 'is';
+    my $subject = $count_added > 1 ? 'they' : 'it';
+    my $note = sprintf '%d DAS %s %s cannot be selected here because %s %3$s already configured within %s.',
+                       $count_added, $noun, $verb, $subject,
+                       $self->object->species_defs->ENSEMBL_SITETYPE;
+    $form->add_notes( {'heading'=>'Note', 'text'=> $note } );
+  }
+
+  $form->add_fieldset(%$fieldset);
+  $form->add_element('type'  => 'Hidden','name'  => 'das_server','value' => $object->param('das_server'));
   return $form->render;
 }
 
