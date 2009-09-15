@@ -138,7 +138,7 @@ sub populate_tree {
   
   $caption = $availability->{'slice'} ? 'Alignments (image) ([[counts::alignments]])' : 'Alignments (image)';
   
-  $align_menu->append($self->create_node('Align', $caption, 
+  $align_menu->append($self->create_node('Compara_Alignments/Image', $caption, 
     [qw(
       top      EnsEMBL::Web::Component::Location::ViewTop
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
