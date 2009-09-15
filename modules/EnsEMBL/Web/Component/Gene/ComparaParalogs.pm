@@ -20,7 +20,7 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
-  my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'th\S+paralog|gene_split')};
+  my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'between_species_paralog')};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   
