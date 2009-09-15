@@ -611,25 +611,26 @@ sub get_alternative_locations {
   return \@alt_locs;
 }
 
-sub get_homology_matches{
-  my( $self,$homology_source,$homology_description,$compara_db ) = @_;
-  $homology_source      = "ENSEMBL_HOMOLOGUES" unless defined $homology_source;
-  $homology_description = "ortholog"           unless defined $homology_description;
-  $compara_db ||= 'compara';
-
-  unless( $self->{'homology_matches'}{$homology_source.'::'.$homology_description} ) { 
-    my %homologues = %{$self->fetch_homology_species_hash($homology_source, $homology_description, $compara_db)};
-    unless( keys %homologues ) {
-      $self->{'homology_matches'}{$homology_source.'::'.$homology_description} = {};
-      return {};
-    }
+sub get_homology_matches {
+  my ($self, $homology_source, $homology_description, $disallowed_homology, $compara_db) = @_;
+  
+  $homology_source      ||= 'ENSEMBL_HOMOLOGUES';
+  $homology_description ||= 'ortholog';
+  $compara_db           ||= 'compara';
+  
+  my $key = $homology_source . '::' . $homology_description;
+  
+  if (!$self->{'homology_matches'}{$key}) {
+    my $homologues = $self->fetch_homology_species_hash($homology_source, $homology_description, $compara_db);
+    
+    return $self->{'homology_matches'}{$key} = {} unless keys %$homologues;
+    
     my $gene          = $self->Obj;
     my $geneid        = $gene->stable_id;
-    my %homology_list;
     my $adaptor_call  = $self->param('gene_adaptor') || 'get_GeneAdaptor';
+    my %homology_list;
 
-  # hash to convert descriptions into more readable form
-
+    # Convert descriptions into more readable form
     my %desc_mapping = (
       'ortholog_one2one'          => '1-to-1',
       'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
@@ -641,35 +642,38 @@ sub get_homology_matches{
       'putative_gene_split'       => 'putative gene split',
       'contiguous_gene_split'     => 'contiguous gene split'
     );
-
-    foreach my $displayspp (keys (%homologues)){
-      ( my $spp = $displayspp ) =~ tr/ /_/;
-      my $order=0;
-      foreach my $homology (@{$homologues{$displayspp}}){ 
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio) = @{$homology};
+    
+    foreach my $display_spp (keys %$homologues){
+      my $order = 0;
+      
+      foreach my $homology (@{$homologues->{$display_spp}}){ 
+        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio) = @$homology;
   
-        next unless ($homology_desc =~ /$homology_description/);
-        my $homologue_id  = $homologue->stable_id;        
-        $homology_desc = $desc_mapping{$homology_desc};   # mapping to more readable form
-        $homology_desc = "no description" unless (defined $homology_desc);
-        $homology_list{$displayspp}{$homologue_id}{'homology_desc'}       = $homology_desc ;
-        $homology_list{$displayspp}{$homologue_id}{'homology_subtype'}    = $homology_subtype ;
-        $homology_list{$displayspp}{$homologue_id}{'spp'}                 = $displayspp ;
-        $homology_list{$displayspp}{$homologue_id}{'sp_common'}           = $homologue->taxon ? $homologue->taxon->common_name : '';
-        $homology_list{$displayspp}{$homologue_id}{'description'}         = $homologue->description || 'No description';
-        $homology_list{$displayspp}{$homologue_id}{'order'}               = $order ;
-        $homology_list{$displayspp}{$homologue_id}{'query_perc_id'}       = $query_perc_id ;
-        $homology_list{$displayspp}{$homologue_id}{'target_perc_id'}      = $target_perc_id ;
-        $homology_list{$displayspp}{$homologue_id}{'homology_dnds_ratio'} = $dnds_ratio; 
-        $homology_list{$displayspp}{$homologue_id}{'display_id'}          = $homologue->display_label || 'Novel Ensembl prediction';
+        next unless $homology_desc =~ /$homology_description/;
+        next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
+        
+        my $homologue_id = $homologue->stable_id;
+        
+        $homology_list{$display_spp}{$homologue_id}{'homology_desc'}       = $desc_mapping{$homology_desc} || 'no description';
+        $homology_list{$display_spp}{$homologue_id}{'homology_subtype'}    = $homology_subtype;
+        $homology_list{$display_spp}{$homologue_id}{'spp'}                 = $display_spp;
+        $homology_list{$display_spp}{$homologue_id}{'sp_common'}           = $homologue->taxon ? $homologue->taxon->common_name : '';
+        $homology_list{$display_spp}{$homologue_id}{'description'}         = $homologue->description || 'No description';
+        $homology_list{$display_spp}{$homologue_id}{'order'}               = $order;
+        $homology_list{$display_spp}{$homologue_id}{'query_perc_id'}       = $query_perc_id;
+        $homology_list{$display_spp}{$homologue_id}{'target_perc_id'}      = $target_perc_id;
+        $homology_list{$display_spp}{$homologue_id}{'homology_dnds_ratio'} = $dnds_ratio; 
+        $homology_list{$display_spp}{$homologue_id}{'display_id'}          = $homologue->display_label || 'Novel Ensembl prediction';
+        
         $order++;
       }
     }
-    $self->{'homology_matches'}{$homology_source.'::'.$homology_description} = \%homology_list;
+    
+    $self->{'homology_matches'}{$key} = \%homology_list;
   }
-  return $self->{'homology_matches'}{$homology_source.'::'.$homology_description};
+  
+  return $self->{'homology_matches'}{$key};
 }
-
 
 sub fetch_homology_species_hash {
   my $self = shift;
