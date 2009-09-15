@@ -86,7 +86,7 @@ sub content {
             $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
             push @$g_elements, { 
               'type'    => 'CheckBox',
-              'name'    => $source->logic_name.'coords',
+              'name'    => $source->logic_name.'_coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
             };
@@ -102,7 +102,7 @@ sub content {
             $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
             push @$p_elements, { 
               'type'    => 'CheckBox',
-              'name'    => $source->logic_name.'coords',
+              'name'    => $source->logic_name.'_coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
             };
@@ -116,6 +116,11 @@ sub content {
         'type' => 'Hidden',
         'name' => 'das_server',
         'value' => $object->param('das_server'),
+      );
+      $form->add_element(
+        'type' => 'Hidden',
+        'name' => 'species',
+        'value' => $object->param('species'),
       );
       for my $v ($object->param('logic_name')) {
         $form->add_element(
