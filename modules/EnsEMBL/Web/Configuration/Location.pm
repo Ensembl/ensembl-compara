@@ -64,14 +64,25 @@ sub extra_populate_tree {
   my $url;
   my $browser_menu = $self->create_submenu('OtherBrowsers', 'Other genome browsers');
   if ($browsers{'UCSC_DB'}) {
-    $url = $object->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
+    if ($object->seq_region_name) {
+      $url = $object->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
+    }
+    else {
+      $url = $object->get_ExtURL( 'EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => '1', 'START' => '1', 'END' => '1000000'} );
+    }
     $browser_menu->append( $self->create_node('UCSC_DB', 'UCSC',
       [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }
     ));
     delete($browsers{'UCSC_DB'});
   }
   if ($browsers{'NCBI_DB'}) {
-    $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
+    if ($object->seq_region_name) { 
+      $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int( $object->seq_region_start ), 'END' => int( $object->seq_region_end )} );
+    }
+    else {
+      my $taxid = $object->species_defs->get_config($object->species, 'TAXONOMY_ID'); 
+      $url = 'http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid='.$taxid;
+    }
     $browser_menu->append( $self->create_node('NCBI_DB', 'NCBI',
       [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }
     ));
