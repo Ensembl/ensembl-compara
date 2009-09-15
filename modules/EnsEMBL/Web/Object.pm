@@ -360,10 +360,12 @@ sub fetch_userdata_by_id {
     my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
     my @records = $user->uploads($id);
     my $record = $records[0];
-    my @analyses = ($record->analyses);
-    foreach (@analyses) {
-      next unless $_;
-      $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
+    if ($record) {
+      my @analyses = ($record->analyses);
+      foreach (@analyses) {
+        next unless $_;
+        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
+      }
     }
   }
 
