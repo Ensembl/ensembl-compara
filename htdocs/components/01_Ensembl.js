@@ -95,26 +95,25 @@ Ensembl.extend({
     match = url.match(/s\d+=.+?[;&]/g);
     
     if (match) {      
-      var m, i, s, r;
+      var m, i, r;
       
       $.each(match, function () {
         m = this.split('=');
         i = m[0].substr(1);
-        s = m[1].replace(/[;&]/, '');
         
-        myself.multiSpecies[s] = {};
+        myself.multiSpecies[i] = {};
         
         $.each(['r', 'g'], function () {
-          myself.multiSpecies[s][this] = url.match(regex.replace('%s', this + i));
+          myself.multiSpecies[i][this] = url.match(regex.replace('%s', this + i));
           
-          if (myself.multiSpecies[s][this]) {
-            myself.multiSpecies[s][this] = unescape(myself.multiSpecies[s][this][1]);
+          if (myself.multiSpecies[i][this]) {
+            myself.multiSpecies[i][this] = unescape(myself.multiSpecies[i][this][1]);
           }
           
-          if (this == 'r' && myself.multiSpecies[s].r) {
-            r = myself.multiSpecies[s].r.split(/\b/);
+          if (this == 'r' && myself.multiSpecies[i].r) {
+            r = myself.multiSpecies[i].r.split(/\b/);
             
-            myself.multiSpecies[s].location = { name: r[0], start: parseInt(r[2]), end: parseInt(r[4]) };
+            myself.multiSpecies[i].location = { name: r[0], start: parseInt(r[2]), end: parseInt(r[4]) };
           }
         });
       });

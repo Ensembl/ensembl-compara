@@ -45,7 +45,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vdrag);
     var rect = [ 'l', 't', 'r', 'b' ];
-    var species, r, c;
+    var speciesNumber, r, c;
     
     this.elLk.areas.each(function () {
       c = { a: this };
@@ -64,18 +64,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         if (highlight === true) {
           r = this.href.split('|');
-          species = r[3];
+          speciesNumber = parseInt(r[1]) - 1;
           
-          if (myself.multi || species == Ensembl.species) {
-            if (!myself.highlightRegions[species]) {
-              myself.highlightRegions[species] = [];
+          if (myself.multi || !speciesNumber) {
+            if (!myself.highlightRegions[speciesNumber]) {
+              myself.highlightRegions[speciesNumber] = [];
               myself.speciesCount++;
             }
             
-            myself.highlightRegions[species].push({ region: c, chr: r[4] });
+            myself.highlightRegions[speciesNumber].push({ region: c });
             myself.imageNumber = parseInt(r[2]);
             
-            Ensembl.EventManager.trigger('highlightImage', myself.imageNumber, species, r[4], parseInt(r[5]), parseInt(r[6]));
+            Ensembl.EventManager.trigger('highlightImage', myself.imageNumber, speciesNumber, parseInt(r[5]), parseInt(r[6]));
           }
         }
       }
@@ -196,19 +196,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
     
     if ($(area.a).hasClass('das') && this.highlightRegions) {
-      var species = Ensembl.species;
+      var speciesNumber = 0;
       
       if (this.speciesCount > 1) {
         var dragArea = this.getArea(coords, true);
         
         if (dragArea) {
-          species = dragArea.a.href.split('|')[3];
+          speciesNumber = parseInt(dragArea.a.href.split('|')[1]) - 1;
         }
         
         dragArea = null;
       }
       
-      var range = this.highlightRegions[species][0].range;
+      var range = this.highlightRegions[speciesNumber][0].range;
       var location, fuzziness;
       
       if (range) {
@@ -243,25 +243,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
    *          If there is only one image, or the next image has an invalid coordinate system 
    *          (eg AlignSlice or whole chromosome), highlighting is taken from the r parameter in the url.
    */
-  highlightImage: function (imageNumber, species, chr, start, end) {
+  highlightImage: function (imageNumber, speciesNumber, start, end) {
     // Make sure each image is highlighted based only on the next image on the page
     if (imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
       return;
     }
     
     var highlight;
-    var i = this.highlightRegions[species].length;
+    var i = this.highlightRegions[speciesNumber].length;
     var link = true; // Defines if the highlighted region has come from another image or the url
     
     while (i--) {
-      highlight = this.highlightRegions[species][i];
+      highlight = this.highlightRegions[speciesNumber][i];
       
       if (!highlight.region.a) {
         break;
-      }
-      
-      if (highlight.chr != chr) {
-        continue;
       }
       
       // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
@@ -274,16 +270,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       // Highlighting base on self. Take start and end from Ensembl core parameters
       if (this.imageNumber == imageNumber) {
         // Don't draw the redbox on the first imagemap on the page
-        if (parseInt(r[2]) != 1) {
-          this.highlight(highlight.region, 'redbox', species, i);
+        if (this.imageNumber != 1) {
+          this.highlight(highlight.region, 'redbox', speciesNumber, i);
         }
-      
-        if (Ensembl.multiSpecies[species] && !(species == Ensembl.species && chr == Ensembl.location.name)) {
-          start = Ensembl.multiSpecies[species].location.start;
-          end = Ensembl.multiSpecies[species].location.end;
+        
+        if (speciesNumber && Ensembl.multiSpecies[speciesNumber]) {
+          start = Ensembl.multiSpecies[speciesNumber].location.start;
+          end   = Ensembl.multiSpecies[speciesNumber].location.end;
         } else {
           start = Ensembl.location.start;
-          end = Ensembl.location.end;
+          end   = Ensembl.location.end;
         }
         
         link = false;
@@ -298,7 +294,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       // Highlight unless it's the bottom image on the page
       if (this.params.highlight) {
-        this.highlight(coords, 'redbox2', species, i);
+        this.highlight(coords, 'redbox2', speciesNumber, i);
       }
       
       // Ok to overwrite because the only time we have more than one highlightRegions is MultiContigView, where each species image is identical
@@ -306,7 +302,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
   
-  highlight: function (coords, cl, species, multi) {  
+  highlight: function (coords, cl, speciesNumber, multi) {  
     var w = coords.r - coords.l + 1;
     var h = coords.b - coords.t + 1;
     var originalClass;
@@ -318,9 +314,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       b: { left: coords.l, width: w, top: coords.b, height: 1 }
     };
     
-    if (species) {
+    if (typeof speciesNumber != 'undefined') {
       originalClass = cl;
-      cl = cl + '_' + species + (multi || '');
+      cl = cl + '_' + speciesNumber + (multi || '');
     }
     
     var els = $('.' + cl, this.el);
@@ -338,7 +334,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $(this).css(style[this.className.split(' ')[1]]);
     });
     
-    if (species) {
+    if (typeof speciesNumber != 'undefined') {
       els.addClass(originalClass);
     }
     
