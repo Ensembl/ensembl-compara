@@ -19,6 +19,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       $.extend(ajax, $(this.el));
     }    
     
+    $('.navbar', this.el).width(Ensembl.width);
+    
     ajax.each(function () {
       var el = $(this);
       var content, caption, component, node;
@@ -34,7 +36,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return;
       }
       
-      var params = el.hasClass('image_panel') ? { highlight: (Ensembl.images.total == 1 || !(this == Ensembl.images.last))  } : undefined;
+      var params = el.hasClass('image_panel') ? { highlight: (Ensembl.images.total == 1 || !(this == Ensembl.images.last)) } : undefined;
       
       el.removeAttr('title');
       
