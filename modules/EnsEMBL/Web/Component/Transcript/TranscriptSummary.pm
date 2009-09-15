@@ -99,7 +99,7 @@ sub content {
   my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
   if ($temp) {
       $table->add_row('Alternative transcripts',
-		      "$temp",
+		      "<p>$temp</p>",
 		      1 );
   }
 
