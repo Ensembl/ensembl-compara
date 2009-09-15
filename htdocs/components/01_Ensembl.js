@@ -14,8 +14,8 @@ Ensembl.extend({
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
-    this.ajax  = this.cookie.get('ENSEMBL_AJAX')  || this.setAjax();
-    this.width = this.cookie.get('ENSEMBL_WIDTH') || this.setWidth();
+    (this.ajax  = this.cookie.get('ENSEMBL_AJAX'))  || this.setAjax();
+    (this.width = this.cookie.get('ENSEMBL_WIDTH')) || this.setWidth();
     
     this.hideHints = {};
     
