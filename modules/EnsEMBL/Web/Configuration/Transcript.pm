@@ -384,7 +384,7 @@ sub populate_tree {
    [qw(evidence       EnsEMBL::Web::Component::Transcript::SupportingEvidence)],
     { 'availability' => 'transcript', 'concise' => 'Supporting evidence'}
   );
-  $T->append($self->create_subnode( 'SupportingEvidenceAlignment', '',
+  $T->append($self->create_subnode( 'SupportingEvidence/Alignment', '',
     [qw(alignment      EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment)],
     { 'no_menu_entry' => 'transcript' }
   ));
