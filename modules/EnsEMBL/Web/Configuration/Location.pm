@@ -216,10 +216,8 @@ sub populate_tree {
     { 'availability' => 'slice has_markers' }
   );
 
-  my $export_label = $object->action eq 'LD' ? 'Export Linkage Disequilibrium Data Data' : 'Export Location Data';
-  
   $self->create_subnode(
-    'Export', $export_label,
+    'Export', '',
     [qw( export EnsEMBL::Web::Component::Export::Location )],
     { 'availability' => 'slice', 'no_menu_entry' => 1 }
   );

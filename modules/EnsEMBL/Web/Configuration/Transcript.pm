@@ -479,10 +479,8 @@ sub populate_tree {
       { 'availability' => 'history_protein', 'concise' => 'ID History' }
   ));
   
-  my $export_label = $self->object->function eq 'Population' ? 'Export Genetic Variation Data' : 'Export Transcript Data';
-  
   $self->create_subnode(
-    'Export', $export_label,
+    'Export', '',
     [qw( export EnsEMBL::Web::Component::Export::Transcript )],
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
