@@ -25,6 +25,24 @@ sub HOMOLOGY_TYPES {
   };
 }
 
+sub GENE_JOIN_TYPES {
+  return {
+    'ortholog_one2one'          => 'orthologue',
+    'apparent_ortholog_one2one' => 'orthologue_multi',
+    'ortholog_one2many'         => 'orthologue_multi',
+    'ortholog_many2many'        => 'orthologue_multi',
+    'UBRH'                      => 'orthologue',
+    'BRH'                       => 'orthologue',
+    'MBRH'                      => 'orthologue',
+    'RHS'                       => 'orthologue',
+    'within_species_paralog'    => 'paralogue',
+    'other_paralog'             => 'paralogue',
+    'between_species_paralog'   => 'paralogue',
+    'putative_gene_split'       => 'hidden',
+    'contiguous_gene_split'     => 'hidden'
+  }
+}
+
 sub ALIGNMENT_FORMATS {
   return (
     'fasta'    => 'FASTA',
