@@ -98,18 +98,21 @@ sub form {
     
   my $species = $view_config->species;
   my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
-
+  
   # From release to release the alignment ids change so we need to check that the passed id is still valid.
   foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
     my $row = $hash->{$row_key};
+    my $sp = $row->{'species'};
     
-    next unless $row->{'species'}{$species};
+    next unless $sp->{$species};
+    
+    $sp->{$_} = $view_config->_species_label($_) for keys %$sp;
     
     $view_config->add_fieldset("Options for $row->{'name'}");
     
-    foreach (sort keys %{$row->{'species'}}) {
+    foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
       next if /merged/;
-      
+      warn $_;
       my $name = 'species_'.$row_key.'_'.lc($_);
       
       if ($_ eq $species) {
@@ -120,7 +123,7 @@ sub form {
       } else {
         $view_config->add_form_element({
           'type'  => 'CheckBox', 
-          'label' => $view_config->_species_label($_),
+          'label' => $row->{'species'}->{$_},
           'name'  => $name,
           'value' => 'yes',
           'raw'   => 1
