@@ -650,7 +650,7 @@ sub get_sequence_data {
   foreach my $sl (@$slices) {
     my $mk = {};
     my $slice = $sl->{'slice'};
-    my $name = $sl->{'name'};
+    my $name =  $sl->{'name'};
     my $seq = uc $slice->seq(1);
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
@@ -1062,7 +1062,7 @@ sub markup_comparisons {
   my $title_check = ($comparison->{'insert'} && $config->{'title_display'});
   
   foreach (@{$config->{'slices'}}) {
-    $species = $_->{'name'};
+    $species = $_->{'display_name'} || $_->{'name'};
     
     push (@{$config->{'seq_order'}}, $species);
     
@@ -1367,7 +1367,7 @@ sub build_sequence {
     foreach my $seq (@$lines) {
       $previous_title = $title;
       $title = $seq->{'title'} ? qq{title="$seq->{'title'}"} : '';
-      
+
       $previous_class = $class;
       
       if ($seq->{'class'}) {
