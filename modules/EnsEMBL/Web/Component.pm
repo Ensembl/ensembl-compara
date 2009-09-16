@@ -1027,7 +1027,7 @@ sub markup_variation {
     
     foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
       $variation = $data->{'variations'}->{$_};
-      $ambiguity = ambiguity_code($variation->{'alleles'}) || undef;
+      ($ambiguity = ambiguity_code($variation->{'alleles'}) || undef) =~ s/-//g;
 
       $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
