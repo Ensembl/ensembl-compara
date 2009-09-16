@@ -23,17 +23,29 @@ sub content {
   
   my $object = $self->object;
   
-  my %orthologue_list = (
-    %{$object->get_homology_matches('ENSEMBL_ORTHOLOGUES')}, 
-    %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'between_species_paralog')}
+  my @orthologues = (
+    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
+    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'between_species_paralog')
   );
+  
+  my %orthologue_list;
+  my %skipped;
+  
+  foreach my $homology_type (@orthologues) {
+    foreach (keys %$homology_type) {
+      (my $species = $_) =~ tr/ /_/;
+      my $label = $object->species_defs->species_label($species);
+      
+      $orthologue_list{$label} = {%{$orthologue_list{$label}||{}}, %{$homology_type->{$_}}};
+      
+      $skipped{$label} += keys %{$homology_type->{$_}} if $object->param('species_' . lc $species) eq 'off';
+    }
+  }
   
   return '<p>No orthologues have been identified for this gene</p>' unless keys %orthologue_list;
   
-  my %orthologue_map            = qw(SEED BRH PIP RHS);
-  my $alignview                 = 0;
-  my $orthologues_skipped_count = 0;
-  my @orthologues_skipped_species;
+  my %orthologue_map = qw(SEED BRH PIP RHS);
+  my $alignview      = 0;
   
   my $html = '
   <table class="orthologues">
@@ -45,22 +57,14 @@ sub content {
       <th>External ref.</th>
     </tr>';
   
-  foreach my $species (sort keys %orthologue_list) {
-    (my $spp = $species) =~ tr/ /_/ ;
-    my $label = $object->species_defs->species_label($spp);
-
-    if ($object->param('species_' . lc $spp) eq 'no') {
-      $orthologues_skipped_count += keys %{$orthologue_list{$species}};
-      push @orthologues_skipped_species, $label;
-      
-      next;
-    }
+  foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
+    next if $skipped{$species};
     
     $html .= sprintf('
       <tr>
         <th rowspan="%s">%s</th>',
         scalar keys %{$orthologue_list{$species}},
-        $label
+        $species
     );
     
     my $start;
@@ -171,14 +175,18 @@ sub content {
     );
   }
   
-  if ($orthologues_skipped_count) {
-    $html .= $self->_warning('Orthologues hidden by configuration', sprintf('
-      <p>
-        %d orthologues not shown in the table above from the following species: %s. Use the "<strong>Configure this page</strong>" on the left to show them.
-      </p>',
-      $orthologues_skipped_count, 
-      join (', ', sort map "<i>$_</i>", @orthologues_skipped_species)
-    ));
+  if (scalar keys %skipped) {
+    my $count;
+    $count += $_ for values %skipped;
+    
+    $html .= '<br />' . $self->_info(
+      'Orthologues hidden by configuration',
+      sprintf(
+        '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+        $count,
+        join "</li>\n<li>", map "$_ ($skipped{$_})", sort keys %skipped
+      )
+    );
   }
   
   return $html;
