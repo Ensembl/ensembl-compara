@@ -46,30 +46,30 @@ sub content {
   
   my $html;
   
+  if ($type eq 'Gene') {
+    my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
+    
+    $html .= sprintf(
+      '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</strong></p>',
+      $object->_url({
+        type   => 'Location',
+        action => 'Compara_Alignments/Image',
+        align  => $align,
+        r      => $location->seq_region_name . ':' . $location->seq_region_start . '-' . $location->seq_region_end
+      })
+    );
+  }
+  
   # Get all slices for the gene
-  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $species);
+  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align_param, $species);
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     my $base_url = "/$species/Component/$type/Web/Compara_Alignments/sub_slice?padding=$padding;length=$slice_length";
     
-    if ($type eq 'Gene') {
-      my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
-      
-      $html .= sprintf(
-        '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</strong></p>',
-        $object->_url({
-          type   => 'Location',
-          action => 'Align',
-          align  => $align_param,
-          r      => $location->seq_region_name . ':' . $location->seq_region_start . '-' . $location->seq_region_end
-        })
-      );
-    }
-    
     $html .= $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
-    $html = $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
+    $html .= $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
   }
   
   return $html;
@@ -167,12 +167,14 @@ sub get_slices {
   }
 
   foreach (@slices) {
-    my $name = $vega_compara ? $self->get_full_name($_) : $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
     
     push @formatted_slices, { 
       slice => $_,
       underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
-      name => $name
+      name              => $name,
+      display_name      => $display_name
     };
     
     $length ||= $_->length; # Set the slice length value for the reference slice only
