@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Compara_Alignments;
 
 use strict;
@@ -35,9 +37,9 @@ sub content {
     );
   }
   
-  my $params = $object->param('align');
-  my ($align,$target_slice_name);
-  ($align,undef,$target_slice_name) = split '--', $params;
+  my $align_param = $object->param('align');
+  my ($align) = split '--', $align_param;
+  
   my ($error, $warnings) = $self->check_for_errors($object, $align, $species);
 
   return $error if $error;
@@ -45,7 +47,7 @@ sub content {
   my $html;
   
   # Get all slices for the gene
-  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $species, undef, undef );
+  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $species);
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
@@ -55,11 +57,11 @@ sub content {
       my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
       
       $html .= sprintf(
-        '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</p>',
+        '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</strong></p>',
         $object->_url({
           type   => 'Location',
           action => 'Align',
-          align  => $params,
+          align  => $align_param,
           r      => $location->seq_region_name . ':' . $location->seq_region_start . '-' . $location->seq_region_end
         })
       );
@@ -67,7 +69,7 @@ sub content {
     
     $html .= $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
-    $html = $self->content_sub_slice($slice, $slices, $warnings ); # Direct call if the sequence length is short enough
+    $html = $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
   }
   
   return $html;
@@ -75,7 +77,7 @@ sub content {
 
 sub content_sub_slice {
   my $self = shift;
-  my ($slice, $slices, $warnings, $defaults ) = @_;
+  my ($slice, $slices, $warnings, $defaults) = @_;
   
   my $object = $self->object;
   
@@ -97,8 +99,8 @@ sub content_sub_slice {
     sub_slice_start => $start,
     sub_slice_end   => $end
   };
-
-  for ('exon_display', 'exon_ori', 'snp_display', 'line_numbering', 'conservation_display', 'codons_display', 'region_change_display', 'title_display', 'align') {
+  
+  for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {
     $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
   }
   
@@ -110,9 +112,7 @@ sub content_sub_slice {
   $config = {%$config, %$defaults} if $defaults;
   
   # Requesting data from a sub slice
-  if ($start && $end) {
-    ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end );
-  }
+  ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end) if $start && $end;
   
   $config->{'slices'} = $slices;
   
@@ -132,16 +132,14 @@ sub content_sub_slice {
   my $template = "<p>$config->{'key'}</p>" . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
-  my $style = ($start == 1) ? "margin-bottom:0px;" : ($end == $slice_length) ? "margin-top:0px;" : "margin-top:0px; margin-bottom:0px" if $start && $end;
+  my $style = $start == 1 ? "margin-bottom:0px;" : $end == $slice_length ? "margin-top:0px;" : "margin-top:0px; margin-bottom:0px" if $start && $end;
   
   $config->{'html_template'} = qq{$template<pre style="$style">%s</pre>};
   
   if ($padding) {
-    my @pad = split /,/, $padding;
+    my @pad = split ',', $padding;
     
-    foreach (keys %{$config->{'padded_species'}}) {
-      $config->{'padded_species'}->{$_} = $_ . (' ' x ($pad[0] - length $_));
-    }
+    $config->{'padded_species'}->{$_} = $_ . (' ' x ($pad[0] - length $_)) for keys %{$config->{'padded_species'}};
     
     if ($config->{'line_numbering'} eq 'slice') {
       $config->{'padding'}->{'pre_number'} = $pad[1];
@@ -155,7 +153,7 @@ sub content_sub_slice {
 
 sub get_slices {
   my $self = shift;
-  my ($object, $slice, $align, $species, $start, $end ) = @_;
+  my ($object, $slice, $align, $species, $start, $end) = @_;
 
   my @slices;
   my @formatted_slices;
@@ -185,33 +183,29 @@ sub get_slices {
 
 sub get_alignments {
   my $self = shift;
-  my ($object, $slice, $selected_alignment, $species, $start, $end ) = @_;
-
-  my $params = $object->param('align');
-  my ($align,$target_species,$target_slice_name) = split '--', $params;
-
+  my ($object, $slice, $selected_alignment, $species, $start, $end) = @_;
+  
   my $target_slice;
+  my ($align, $target_species, $target_slice_name) = split '--', $selected_alignment;
+  $align ||= 'NONE';
+  
   if ($target_slice_name) {
-    my $target_slice_adaptor =  $object->DBConnection->get_DBAdaptor('core',$target_species)->get_SliceAdaptor;
-    $target_slice = $target_slice_adaptor->fetch_by_region('toplevel',$target_slice_name);
+    my $target_slice_adaptor = $object->DBConnection->get_DBAdaptor('core', $target_species)->get_SliceAdaptor;
+    $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name);
   }
-
-  ($selected_alignment) = split '--', $selected_alignment;
-  $selected_alignment ||= 'NONE';
   
   my $func = $self->{'alignments_function'} || 'get_all_Slices';
-  
   my $compara_db = $object->database('compara');
   my $as_adaptor = $compara_db->get_adaptor('AlignSlice');
   my $mlss_adaptor = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-  my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($selected_alignment);
+  my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
   my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, 'expanded', 'restrict', $target_slice);
   
   my @selected_species;
   
-  foreach (grep { /species_$selected_alignment/ } $object->param) {
+  foreach (grep { /species_$align/ } $object->param) {
     if ($object->param($_) eq 'yes') {
-      /species_${selected_alignment}_(.+)/;
+      /species_${align}_(.+)/;
       push @selected_species, ucfirst $1 unless $1 =~ /$species/i;
     }
   }
@@ -311,9 +305,7 @@ sub get_key {
   foreach my $param (@map) {
     next if ($object->param($param->[0])||'off') eq 'off';
     
-    foreach (split /,/, $param->[1]) {
-      $rtn .= sprintf $key_template, $_, $key->{$_};
-    }
+    $rtn .= sprintf $key_template, $_, $key->{$_} for split ',', $param->[1];
   }
   
   if ($object->param('line_numbering') eq 'slice' && $object->param('align')) {
@@ -332,6 +324,7 @@ sub get_slice_table {
 
   foreach (@$slices) {
     my $species = $_->{'name'};
+    
     next unless $species;
 
     $species .= " $_->{'chrom_name'}" if $_->{'chrom_name'};    
@@ -342,13 +335,13 @@ sub get_slice_table {
       <th>$species &gt;&nbsp;</th>
       <td>};
 
-    my ($species_link) =  split ':', $species;
+    my ($species_link) = split ':', $species;
 
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
 
       my $slice_name = $slice->name;
-      my ($stype, $assembly, $region, $start, $end, $strand) = split /:/ , $slice_name;
+      my ($stype, $assembly, $region, $start, $end, $strand) = split ':' , $slice_name;
 
       if ($return_padding) {
         $region_padding = length $region if length $region > $region_padding;
@@ -399,10 +392,8 @@ sub markup_region_change {
     
     $i++;
   }
-
-  if ($change && $config->{'key_template'}) {
-    $config->{'key'} .= sprintf $config->{'key_template'}, 'end', 'Location of start/end of aligned regions';
-  }
+  
+  $config->{'key'} .= sprintf $config->{'key_template'}, 'end', 'Location of start/end of aligned regions' if $change && $config->{'key_template'};
 }
 
 # get full name of seq-region from which the alignment comes
