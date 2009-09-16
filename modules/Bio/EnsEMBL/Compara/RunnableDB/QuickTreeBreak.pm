@@ -3,7 +3,7 @@
 #
 # POD documentation - main docs before the code
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -56,7 +56,7 @@ input_id/parameters format eg: "{'protein_tree_id'=>1234,'clusterset_id'=>1}"
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
+The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
@@ -200,13 +200,13 @@ sub get_params {
       print("  $key : ", $params->{$key}, "\n");
     }
   }
-  
+
   if(defined($params->{'protein_tree_id'})) {
-    $self->{'protein_tree'} =  
+    $self->{'protein_tree'} =
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
   }
-  
+
   foreach my $key (qw[max_gene_count use_genomedb_id clusterset_id sreformat_exe]) {
     my $value = $params->{$key};
     $self->{$key} = $value if defined $value;
@@ -243,7 +243,7 @@ sub run_quicktreebreak {
     $quicktreebreak_executable = "/nfs/acari/avilella/src/quicktree/quicktree_1.1/bin/quicktree";
   }
 
-  throw("can't find a quicktree executable to run. Tried $quicktreebreak_executable \n") 
+  throw("can't find a quicktree executable to run. Tried $quicktreebreak_executable \n")
     unless(-e $quicktreebreak_executable);
 
   my $cmd = $quicktreebreak_executable;
@@ -300,12 +300,12 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   $self->{original_leafcount} = scalar(@{$tree->get_all_leaves});
   if($self->{original_leafcount}<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", 
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n",
            $tree->node_id);
     return undef;
   }
 
-  $self->{'file_root'} = 
+  $self->{'file_root'} =
     $self->worker_temp_directory. "proteintree_". $tree->node_id;
   $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
 
@@ -341,10 +341,10 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
   my $stk_file = $self->{'file_root'} . ".stk";
-  
+
   my $sreformat_exe = $self->{sreformat_exe};
   $sreformat_exe = '/usr/local/ensembl/bin/sreformat' unless -e $sreformat_exe;
-  
+
   my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
 
   unless( system("$cmd") == 0) {
@@ -396,9 +396,9 @@ sub store_clusters {
     print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
     # Dataflow clusters
-    my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
+    my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}",
        $node_id, $clusterset->node_id);
-    $self->dataflow_output_id($output_id, 2);
+    $self->dataflow_output_id($output_id, 1);
     print STDERR "Created QuickTreeBreak job for $node_id\n";
   }
 }
@@ -453,7 +453,7 @@ sub delete_old_orthotree_tags {
       @list_ids = ();
     }
   }
-  
+
   if (scalar @list_ids) {
     my $sql = "delete from protein_tree_tag where node_id in (".join(",",@list_ids).") and tag in ('duplication_confidence_score','taxon_id','taxon_name','OrthoTree_runtime_msec','OrthoTree_types_hashstr')";
     my $sth = $self->dbc->prepare($sql);
@@ -470,7 +470,7 @@ sub generate_subtrees {
   my $newick =  $self->{'quicktree_newick_string'};
   my $tree = $self->{'protein_tree'};
 
-  #cleanup old tree structure- 
+  #cleanup old tree structure-
   #  flatten and reduce to only AlignedMember leaves
   $tree->flatten_tree;
   $tree->print_tree(20) if($self->debug);
@@ -480,7 +480,7 @@ sub generate_subtrees {
   }
 
   #parse newick into a new tree object structure
-  my $newtree = 
+  my $newtree =
     Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   $newtree->print_tree(20) if($self->debug > 1);
   # get rid of the taxon_id needed by njtree -- name tag
