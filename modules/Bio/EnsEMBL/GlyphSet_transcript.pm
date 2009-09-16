@@ -49,11 +49,11 @@ sub render_collapsed {
   my $show_labels      = $self->my_config('show_labels');
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
+  my $join_types       = $self->get_parameter('join_types');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $y                = 0;
   my $h                = 8;
-  my $join_z           = 100000000;
-  my $join_col1        = 'blue';
+  my $join_z           = 1000;
   my $join_col2        = 'chocolate1';
   my $transcript_drawn = 0;
   my %used_colours;
@@ -130,12 +130,12 @@ sub render_collapsed {
         my $alt_alleles = $gene->get_all_alt_alleles;
         
         if ($previous_species) {
-          $self->join_tag($composite2, "$gene_stable_id:$_", 0.5, 0.5, $join_col1, 'line', $join_z) for $self->get_homologous_gene_ids($gene, $previous_species);
+          $self->join_tag($composite2, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $previous_species, $join_types);
           push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @$alt_alleles;
         }
         
         if ($next_species) {
-          $self->join_tag($composite2, "$_:$gene_stable_id", 0.5, 0.5, $join_col1, 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species);
+          $self->join_tag($composite2, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species, $join_types);
           push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @$alt_alleles;
         }
       }
@@ -223,13 +223,13 @@ sub render_transcripts {
   my $show_labels       = $self->my_config('show_labels');
   my $previous_species  = $self->my_config('previous_species');
   my $next_species      = $self->my_config('next_species');
+  my $join_types        = $self->get_parameter('join_types');
   my $link              = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $target            = $self->get_parameter('single_Transcript');
   my $target_gene       = $self->get_parameter('single_Gene');
   my $y                 = 0;
   my $h                 = $self->my_config('height') || ($target ? 30 : 8); # Single transcript mode - set height to 30 - width to 8
-  my $join_z            = 100000000;
-  my $join_col1         = 'blue';
+  my $join_z            = 1000;
   my $join_col2         = 'chocolate1';
   my $transcript_drawn  = 0;
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
@@ -269,18 +269,18 @@ sub render_transcripts {
       }
       
       if ($previous_species) {
-        my ($sid, $pid, $homologues, $homologue_genes) = $self->get_homologous_peptide_ids_from_gene($gene, $previous_species);
+        my ($sid, $pid, $homologues, $homologue_genes) = $self->get_homologous_peptide_ids_from_gene($gene, $previous_species, $join_types);
         
-        push @{$tags{$sid}}, map "$_:$pid", @$homologues if $sid && $pid;
-        push @{$tags{$sid}}, map "$gene_stable_id:$_", @$homologue_genes if $sid;
+        push @{$tags{$sid}}, map {[ "$_->[0]:$pid", $_->[1] ]} @$homologues if $sid && $pid;
+        push @{$tags{$sid}}, map {[ "$gene_stable_id:$_->[0]", $_->[1] ]} @$homologue_genes if $sid;
         push @gene_tags, map { join '=', $_->stable_id, $tsid } @transcripts;
       }
       
       if ($next_species) {
-        my ($sid, $pid, $homologues, $homologue_genes) = $self->get_homologous_peptide_ids_from_gene($gene, $next_species);
+        my ($sid, $pid, $homologues, $homologue_genes) = $self->get_homologous_peptide_ids_from_gene($gene, $next_species, $join_types);
         
-        push @{$tags{$sid}}, map "$pid:$_", @$homologues if $sid && $pid;
-        push @{$tags{$sid}}, map "$_:$gene_stable_id", @$homologue_genes if $sid;
+        push @{$tags{$sid}}, map {[ "$pid:$_->[0]", $_->[1] ]} @$homologues if $sid && $pid;
+        push @{$tags{$sid}}, map {[ "$_->[0]:$gene_stable_id", $_->[1] ]} @$homologue_genes if $sid;
         push @gene_tags, map { join '=', $tsid, $_->stable_id } @transcripts;
       }
     }
@@ -324,7 +324,7 @@ sub render_transcripts {
       my $composite2 = $self->Composite({ y => $y, height => $h });
             
       if ($transcript->translation) {
-        $self->join_tag($composite2, $_, 0.5, 0.5, $join_col1, 'line', $join_z) for @{$tags{$transcript->translation->stable_id}||[]};
+        $self->join_tag($composite2, $_->[0], 0.5, 0.5, $_->[1], 'line', $join_z) for @{$tags{$transcript->translation->stable_id}||[]};
       }
       
       if ($transcript->stable_id eq $tsid) {
@@ -941,10 +941,10 @@ sub render_genes {
   my $navigation       = $self->my_config('navigation') || 'on';
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
+  my $join_types       = $self->get_parameter('join_types');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $h                = 8;
-  my $join_z           = 100000000;
-  my $join_col         = 'blue';
+  my $join_z           = 1000;
   
   my ($fontname, $fontsize) = $self->get_font_details('outertext');
   my $h = ($self->get_text_width(0, 'X_y', '', 'font' => $fontname, 'ptsize' => $fontsize))[3];
@@ -1027,11 +1027,11 @@ sub render_genes {
     
     if ($link) {
       if ($previous_species) {
-        $self->join_tag($rect, "$gene_stable_id:$_", 0.5, 0.5, $join_col, 'line', $join_z) for $self->get_homologous_gene_ids($gene, $previous_species);
+        $self->join_tag($rect, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $previous_species, $join_types);
       }
       
       if ($next_species) {
-        $self->join_tag($rect, "$_:$gene_stable_id", 0.5, 0.5, $join_col, 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species);
+        $self->join_tag($rect, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species, $join_types);
       }
     }
     
@@ -1192,7 +1192,7 @@ sub render_text {
 
 # Get homologous gene ids for given gene
 sub get_homologous_gene_ids {
-  my ($self, $gene, $species) = @_;
+  my ($self, $gene, $species, $join_types) = @_;
   
   my $compara_db = $gene->adaptor->db->get_adaptor('compara');
   return unless $compara_db;
@@ -1207,12 +1207,18 @@ sub get_homologous_gene_ids {
   my @homologues;
   
   foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $species)}) {
+    my $colour_key = $join_types->{$homology->description};
+    
+    next if $colour_key eq 'hidden';
+    
+    my $colour = $self->my_colour($colour_key . '_join');
+    
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @$member_attribute;
       
       next if $member->stable_id eq $qy_member->stable_id;
       
-      push @homologues, $member->stable_id;
+      push @homologues, [ $member->stable_id, $colour ];
     }
   }
   
@@ -1221,7 +1227,7 @@ sub get_homologous_gene_ids {
 
 # Get homologous protein ids for given gene
 sub get_homologous_peptide_ids_from_gene {
-  my ($self, $gene, $species) = @_;
+  my ($self, $gene, $species, $join_types) = @_;
   
   my $compara_db = $gene->adaptor->db->get_adaptor('compara');
   return unless $compara_db;
@@ -1240,6 +1246,12 @@ sub get_homologous_peptide_ids_from_gene {
   my $peptide_id = undef;
   
   foreach my $homology (@{$ha->fetch_by_Member_paired_species($qy_member, $species)}) {
+    my $colour_key = $join_types->{$homology->description};
+    
+    next if $colour_key eq 'hidden';
+    
+    my $colour = $self->my_colour($colour_key . '_join');
+    
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
       my ($member, $attribute) = @$member_attribute;
       
@@ -1249,8 +1261,8 @@ sub get_homologous_peptide_ids_from_gene {
           $stable_id = $T->stable_id;
         }
       } else {
-        push @homologues, $attribute->peptide_member_id;
-        push @homologue_genes, $member->stable_id;
+        push @homologues, [ $attribute->peptide_member_id, $colour ];
+        push @homologue_genes, [ $member->stable_id, $colour ];
       }
     }
   }
