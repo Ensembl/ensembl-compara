@@ -357,10 +357,10 @@ sub loadMembersFromCoreSlices
       # somatically so is considered as a different biotype in EnsEMBL
       # D and J are very short or have no translation at all
       if (lc($gene->biotype) eq 'protein_coding' || 
-          lc($gene->biotype) eq 'IG_V_gene'      || 
-          lc($gene->biotype) eq 'IG_C_gene'      || 
-          lc($gene->biotype) eq 'C_segment'      || 
-          lc($gene->biotype) eq 'V_segment') {
+          lc($gene->biotype) eq 'ig_v_gene'      || 
+          lc($gene->biotype) eq 'ig_c_gene'      || 
+          lc($gene->biotype) eq 'c_segment'      || 
+          lc($gene->biotype) eq 'v_segment') {
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
         print STDERR $self->{'realGeneCount'} , " genes stored\n" if ($self->debug && (0 == ($self->{'realGeneCount'} % 100)));
@@ -435,7 +435,7 @@ sub store_gene_and_all_transcripts
     print(" => member " . $pep_member->stable_id) if($self->{'verbose'});
 
     unless($pep_member->sequence) {
-      print("  => NO SEQUENCE!\n") if($self->{'verbose'});
+      print "  => NO SEQUENCE for member " . $pep_member->stable_id;
       next;
     }
     print(" len=",$pep_member->seq_length ) if($self->{'verbose'});
