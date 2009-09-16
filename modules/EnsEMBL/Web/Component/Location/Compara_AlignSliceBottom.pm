@@ -19,13 +19,15 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $align = $object->param('align');
+  my $params = $object->param('align');
+  my ($align,$target_slice_name);
+  ($align,undef,$target_slice_name) = split '--', $params;
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   return $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>') unless $align;
   
   my $align_details = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
-  
+
   return $self->_error('Unknown alignment', '<p>The alignment you have select does not exist in the current database.</p>') unless $align_details;
   
   my $primary_species = $object->species;
@@ -70,7 +72,11 @@ sub content {
       compara         => $i == 1 ? 'primary' : 'secondary'
     });
     
-    $image_config->get_node('alignscalebar')->set('caption', $object->species_defs->get_config($_->{'name'}, 'SPECIES_COMMON_NAME') || 'Ancestral sequences');
+    my ($species_name,$slice_name) = split ':',$_->{'display_name'};
+    my $panel_caption = $object->species_defs->get_config($species_name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
+    $panel_caption .= " $slice_name" if $slice_name;
+
+    $image_config->get_node('alignscalebar')->set('caption', $panel_caption);
     
     push @images, $_->{'slice'}, $image_config;
     $i++;
@@ -78,7 +84,7 @@ sub content {
   
   my $image = $self->new_image(\@images);
   
-	return if $self->_export_image($image);
+  return if $self->_export_image($image);
   
   $image->{'panel_number'} = 'bottom';
   $image->imagemap = 'yes';
