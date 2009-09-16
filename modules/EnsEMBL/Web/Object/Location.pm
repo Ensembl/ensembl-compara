@@ -42,7 +42,7 @@ sub availability {
   $hash->{'slice'}       = $self->Obj->{'seq_region_name'} && 
                            $self->Obj->{'seq_region_name'} ne $self->core_objects->{'parameters'}{'r'} ? 1 : 0;
   my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-  
+  $hash->{'compara_species'} = $self->check_compara_species_and_locations; #vega only, should really go somewhere else
   $hash->{'has_synteny'} = scalar( keys %{ $synteny_hash{$self->species}||{} } ) ? 1 : 0;
   $hash->{'has_LD'} =   exists $self->species_defs->databases->{'DATABASE_VARIATION'} && 
     $self->param('opt_pop') &&
@@ -69,7 +69,8 @@ sub counts {
     $counts = {
       synteny             => scalar keys %{$synteny{$species}||{}},
       alignments          => $alignments->{'all'},
-      pairwise_alignments => $alignments->{'pairwise'}
+      pairwise_alignments => $alignments->{'pairwise'},
+      self_alignments     => $self->count_self_alignments         # vega only, should really go somewhere else
     };
     
     $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
@@ -79,6 +80,69 @@ sub counts {
 
   return $counts;
 }
+
+##vega
+sub count_self_alignments {
+  my $self = shift;
+  my $species = $self->species;
+#  my $object   = $self->Obj; #this is the only difference from the gene method
+  my $sd = $self->species_defs;
+
+  ## Get the compara database hash!
+  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  my $matches = $hash->{'BLASTZ_RAW'}->{$species};
+
+  ## Get details of the primary slice
+  my $ps_name  = $self->seq_region_name;
+  my $ps_start = $self->seq_region_start;
+  my $ps_end   = $self->seq_region_end;
+
+  ## Identify alignments that match the primary slice
+  my $matching = 0;
+  foreach my $other_species (sort keys %{$matches}) {
+    foreach my $alignment (keys %{$matches->{$other_species}}) {
+      my $this_name = $matches->{$other_species}{$alignment}{'source_name'};
+      #only use alignments that include the primary slice
+      next unless ($ps_name eq $this_name);
+      my $start = $matches->{$other_species}{$alignment}{'source_start'};
+      my $end = $matches->{$other_species}{$alignment}{'source_end'};
+      #only create entries for alignments that overlap the current slice
+      if ($end > $ps_start && $start < $ps_end) {
+	$matching++;
+      }
+    }
+  }
+  return $matching;
+}
+
+##vega
+sub check_compara_species_and_locations {
+  #check if genomic_alignments of this location would have been found
+  my $self = shift;
+  my $species = $self->species;
+  my $sd = $self->species_defs;
+  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  return 0 unless $hash;
+  unless ($hash->{'BLASTZ_RAW'}{$species}) {
+    return 0; #if this species is not in compara
+  }
+  my $regions  = $hash->{'REGION_SUMMARY'}{$species};
+#  my $object   = $self->Obj; #this is the only difference from the gene method
+  my $sr_name  = $self->seq_region_name;
+  unless ($regions->{$sr_name}) {
+    return 0; #if this seq_region is not in compara
+  }
+  my $sr_start = $self->seq_region_start;
+  my $sr_end   = $self->seq_region_end;
+  my $matching = 0;
+  foreach my $compara_region (@{$regions->{$sr_name}}) {
+    if ( ($sr_start < $compara_region->{'end'}) && ($sr_end > $compara_region->{'start'}) ) {
+      $matching = 1; #if the seq_region overlaps the region in compara
+    }
+  }
+  return $matching;
+}
+
 
 sub short_caption {
   my $self = shift;
