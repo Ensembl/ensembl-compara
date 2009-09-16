@@ -18,7 +18,8 @@ sub content {
   my $object = $self->object; 
   my $Configs;
 
-  my $object_slice = $object->get_bound_context_slice(200);
+  my $context      = $object->param( 'context' ) || 200; 
+  my $object_slice = $object->get_bound_context_slice($context);
      $object_slice = $object_slice->invert if $object_slice->strand < 1;
 
   my $wuc = $object->get_imageconfig( 'reg_detail' );
