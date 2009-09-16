@@ -336,14 +336,14 @@ sub do_SE_align_menu {
     });
     if (my $gap = $obj->param('five_end_mismatch')) {
       $panel->add_entry({
-        'type'     => '5\' mismatch',
+        'type'     => "5' mismatch",
         'label'    => $gap.' bp',
         'priority' => 40,
       });
     }
     if (my $gap = $obj->param('three_end_mismatch')) {
       $panel->add_entry({
-        'type'     => '3\' mismatch',
+        'type'     => "3' mismatch",
         'label'    => $gap.' bp',
         'priority' => 35,
       });
