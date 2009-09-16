@@ -1266,7 +1266,7 @@ sub add_alignments {
         'renderers'      => [qw( off Off compact Compact normal Normal )],
       };
     } else {
-      my $n_species = grep { $_ ne 'Ancestral_sequences' } keys %{$row->{'species'}};
+      my $n_species = grep { !/^Ancestral_sequences|merged$/ } keys %{$row->{'species'}};
       
       if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
