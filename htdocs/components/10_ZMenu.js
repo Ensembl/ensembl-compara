@@ -126,7 +126,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populate: function (link, extra) {
-    var arr = this.title.split(';');
+    var arr = this.title.split('; ');
     var caption = arr.shift();
     
     this.buildMenu(arr, caption, link, extra);
@@ -141,7 +141,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var url = window.location.pathname.replace(/\/(\w+)\/\w+$/, '/Zmenu/$1/Das') +
       '?logic_name=' + this.logicName +
-      ';' + this.das + '_id=' + this.title.split(';')[0] +
+      ';' + this.das + '_id=' + this.title.split('; ')[0] +
       ';start=' + start + 
       ';end=' + end + 
       ';strand=' + strandMap[strand] + 
@@ -361,7 +361,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     extra = extra || '';
     
     if (link === true && this.href) {
-      title = this.title ? this.title.split(';')[0] : caption;
+      title = this.title ? this.title.split('; ')[0] : caption;
       extra = '<tr><th>Link</th><td><a href="' + this.href + '">' + title + '</a></td></tr>' + extra;
     }
     
