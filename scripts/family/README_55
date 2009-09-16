@@ -8,9 +8,9 @@ ensembl-compara
 
 executables
 ~~~~~~~~~~~
-blastall
-    /software/ensembl/compara/blast-2.2.6/blastall
+blastall & formatdb
     /software/ensembl/compara/blast-2.2.21/bin/blastall
+    /software/ensembl/compara/blast-2.2.21/bin/formatdb
 
 mcl (source can be obtained from http://micans.org/mcl/src/)
 	using /nfs/acari/avilella/bin/mcxassemble
@@ -99,7 +99,6 @@ grep '>' metazoa_56.pep | wc -l
 time /software/ensembl/compara/blast-2.2.21/bin/formatdb -p T -l metazoa_56.pep.formatdb.log -i metazoa_56.pep
 #
 # rel.56    (blast 2.2.21)  2m19
-# rel.55    (blast 2.2.20)  2m10
 # rel.55    (blast 2.2.6)   ~5m
 
 # check metazoa_56.pep.formatdb.log if it is ok delete it
@@ -121,7 +120,7 @@ mysql --host compara2 --port 3306 --user ensadmin --password=ensembl  lg4_compar
 
 # Load the analysis using the cmd_hive.pl script with somewhat extended functionality:
 
-time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/lustre/scratch103/ensembl/lg4/family_56/metazoa_56.pep", "blast_version" => "blast-2.2.21", "idprefixed" => 1 }' -suffix_a 1 -suffix_b 2467787 -step 100 -hive_capacity 1000 -logic_name family_blast_56 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+time /nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_56 -input_id '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' -parameters '{ "fastadb" => "/lustre/scratch103/ensembl/lg4/family_56/metazoa_56.pep", "idprefixed" => 1 }' -suffix_a 1 -suffix_b 2467787 -step 100 -hive_capacity 1000 -logic_name family_blast_56 -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
 #
 # rel.56    0m23
 # rel.55    ~1m
