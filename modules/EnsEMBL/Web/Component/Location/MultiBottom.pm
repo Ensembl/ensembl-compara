@@ -3,6 +3,7 @@ package EnsEMBL::Web::Component::Location::MultiBottom;
 use strict;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Component::Location);
 
@@ -30,6 +31,7 @@ sub content {
   my $max             = scalar @$slices;
   my $base_url        = $object->_url($object->multi_params);
   my $s               = $object->param('panel_top') eq 'yes' ? 3 : 2;
+  my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $i               = 1;
   my $methods         = {};
   my $join_genes;
@@ -60,7 +62,8 @@ sub content {
       slice_number    => "$i|$s",
       multi           => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
-      base_url        => $base_url
+      base_url        => $base_url,
+      join_types      => $gene_join_types
     });
     
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'});
@@ -94,7 +97,8 @@ sub content {
             slice_number    => "1|$s",
             multi           => 1,
             compara         => 'primary',
-            base_url        => $base_url
+            base_url        => $base_url,
+            join_types      => $gene_join_types
           });
           
           $primary_image_config->get_node('scalebar')->set('caption', $short_name);
