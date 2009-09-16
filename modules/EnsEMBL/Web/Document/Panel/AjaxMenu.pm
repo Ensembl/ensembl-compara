@@ -52,8 +52,8 @@ sub content {
   my @entries;
   
   foreach (sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'label'} cmp $b->{'label'} } @{$self->{'entries'}||[]}) {
+    my $type = escapeHTML($_->{'type'});
     my $link;
-    my $type = sprintf ", type: '%s'", escapeHTML($_->{'type'}) if $_->{'type'};
     
     if ($_->{'link'}) {
       if ($_->{'extra'}->{'abs_url'}) {
@@ -71,7 +71,10 @@ sub content {
       $link = escapeHTML($_->{'label'}) . $_->{'label_html'};
     }
     
-    push @entries, "{link: '$link'$type}";
+    s/'/&#39;/g for $type, $link;
+    $type = ", 'type': '$type'" if $type;
+    
+    push @entries, "{'link': '$link'$type}";
   }
   
   foreach ($self->{'caption'}, @entries) {
@@ -79,7 +82,7 @@ sub content {
     s/\r//g;
   }
   
-  $self->printf("{caption: '%s', entries: [%s]}", escapeHTML($self->{'caption'}), join ',', @entries);
+  $self->printf("{'caption': '%s', 'entries': [%s]}", escapeHTML($self->{'caption'}), join ',', @entries);
 }
 
 sub render {
