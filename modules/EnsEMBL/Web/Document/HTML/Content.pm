@@ -156,7 +156,7 @@ sub get_json {
   
   $content =~ s/\n/\\n/g;
   $content =~ s/\r//g;
-  $content =~ s/'/&#39/g;
+  $content =~ s/'/&#39;/g;
   
   return qq{'content':'$content','wrapper':'<div class="$wrapper"></div>','panelType':'$panel_type'};
 }
