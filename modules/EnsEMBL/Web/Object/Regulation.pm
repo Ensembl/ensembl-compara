@@ -151,10 +151,10 @@ sub get_details_page_url {
 
 sub get_bound_context_slice {
   my $self = shift;
-  my $padding = shift || 1000;
+  my $padding = shift || 1000; 
   my $slice = $self->Obj->feature_Slice;
-  my $offset_start = $self->bound_start -200;
-  my $offset_end = $self->bound_end + 200;
+  my $offset_start = $self->bound_start -$padding;
+  my $offset_end = $self->bound_end + $padding;
   
   my $padding_start = $slice->start - $offset_start;
   my $padding_end = $offset_end - $slice->end;
