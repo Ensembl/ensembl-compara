@@ -112,7 +112,7 @@ sub form {
     
     foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
       next if /merged/;
-      warn $_;
+      
       my $name = 'species_'.$row_key.'_'.lc($_);
       
       if ($_ eq $species) {
