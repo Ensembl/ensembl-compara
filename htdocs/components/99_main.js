@@ -22,8 +22,6 @@ function addLoadEvent(func) {
   });
 }
 
-$.ajaxSetup({ timeout: 60000 });
-
 $(function () {
   Ensembl.initialize();
 });
