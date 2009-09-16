@@ -197,7 +197,7 @@ sub run {
     my $fastadb                 = $self->param('fastadb')   || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch') || 1;
 
-    my $blast_version           = $self->param('blast_version') || 'blast-2.2.6';
+    my $blast_version           = $self->param('blast_version') || 'blast-2.2.21';
     my $blast_root              = $self->param('blast_root')    || ( '/software/ensembl/compara/' . $blast_version );
     my $blastmat_directory      = $self->param('blastmat_dir')  || ( $blast_root . '/data' );
     my $blastall_executable     = $self->param('blastall_exec') || ( $blast_root . '/bin/blastall' ); # a soft link introduced into the directory structure of version 2.2.6 to conform with the pattern
