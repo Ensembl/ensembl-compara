@@ -82,7 +82,7 @@ sub init {
   
   # show versions of clones from other sites
   if ($self->species_defs->das_VEGACLONES) {
-    $self->add_track('misc_feature', 'v_clones', 'Vega clones', 'alternative_clones', { 
+    $self->add_track('misc_feature', 'v_clones', 'Vega clones', 'alternative_clones', {
       display     => 'off', 
       strand      => 'f', 
       description => 'Vega clones', 
@@ -92,7 +92,7 @@ sub init {
   }
   
   if ($self->species_defs->das_ENSEMBLCLONES) {
-    $self->add_tracks('misc_feature', 'e_clones', 'Ensembl clones', 'alternative_clones', { 
+    $self->add_track('misc_feature', 'e_clones', 'Ensembl clones', 'alternative_clones', {
       display     => 'off', 
       strand      => 'f', 
       description => 'Ensembl clones', 
