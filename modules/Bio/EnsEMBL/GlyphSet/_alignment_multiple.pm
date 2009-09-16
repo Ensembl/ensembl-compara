@@ -23,11 +23,12 @@ sub draw_features {
   my $strand = $self->strand;
   my $strand_flag    = $self->my_config( 'strand' );
   my $drawn_block    = 0;
-  my $caption        = $self->my_config('caption');
+  my $caption        = $self->my_config('caption'); 
   my %highlights;      @highlights{$self->highlights()} = ();
   my $length         = $self->{'container'}->length;
   my $pix_per_bp     = $self->scalex;
-  my $DRAW_CIGAR     = $pix_per_bp > 0.2 ;
+  my $DRAW_CIGAR     = $pix_per_bp > 0.2 ; 
+  if ( $self->check() =~/constrained/) { $DRAW_CIGAR = undef;}
 
   my $feature_type   = $self->my_config( 'constrained_element' ) ?  'element' : 'feature';
 
