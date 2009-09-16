@@ -86,27 +86,31 @@ sub counts {
     my $compara_db = $self->database('compara');
     
     if ($compara_db) {
+      my $vega = $self->species_defs->ENSEMBL_SITETYPE eq 'Vega';
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
       
       if ($compara_dbh) {
-        my %res = map { @$_ } @{$compara_dbh->selectall_arrayref('
-          select ml.type, count(*) as N
+        my $res = $compara_dbh->selectall_arrayref(
+          'select ml.type, h.description, count(*) as N
             from member as m, homology_member as hm, homology as h,
                  method_link as ml, method_link_species_set as mlss
            where m.stable_id = ? and hm.member_id = m.member_id and
                  h.homology_id = hm.homology_id and 
                  mlss.method_link_species_set_id = h.method_link_species_set_id and
                  ml.method_link_id = mlss.method_link_id and
-                 ( ml.type = "ENSEMBL_ORTHOLOGUES" or
-                   ml.type = "ENSEMBL_PARALOGUES" and
-                   h.description in ("within_species_paralog","other_paralog","contiguous_gene_split","putative_gene_split") )
-           group by type', {}, $obj->stable_id
-        )};
+                 ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" )
+           group by description', {}, $obj->stable_id
+        );
         
-        $counts->{'orthologs'} = $res{'ENSEMBL_ORTHOLOGUES'};
-        $counts->{'paralogs'}  = $res{'ENSEMBL_PARALOGUES'};
+        foreach (@$res) {
+          if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'between_species_paralog') {
+            $counts->{'paralogs'} += $_->[2];
+          } elsif ($vega || $_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
+            $counts->{'orthologs'} += $_->[2];
+          }
+        }
         
-        my ($res) = $compara_dbh->selectrow_array(
+        ($res) = $compara_dbh->selectrow_array(
           'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
           {}, $obj->stable_id
         );
