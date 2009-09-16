@@ -43,7 +43,8 @@ sub init {
     repeat           => 'Repeats',
     variation        => 'Variation features',
     functional       => 'Functional genomics',
-    decorations      => 'Additional decorations'
+    decorations      => 'Additional decorations',
+    information      => 'Information'
   );
 
   # Add in additional tracks
