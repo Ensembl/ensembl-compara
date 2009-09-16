@@ -28,7 +28,7 @@ sub createObjects {
   
   my %inputs = (
     0 => { 
-      s => $self->__species,
+      s => $self->species,
       r => $self->param('r')
     }
   );
@@ -136,26 +136,44 @@ sub remove_species_and_generate_url {
 sub find_missing_locations {
   my ($self, $slice, $ids) = @_;
   
+  my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
   my @no_alignment;
+  my @no_species;
   
-  foreach (@$ids) {    
-    if (!$self->best_guess($slice, $_)) {
-      push @no_alignment, $self->species_defs->species_label($self->param("s$_"));
+  foreach (@$ids) {
+    my ($species, $seq_region_name) = split '--', $self->param("s$_");
+    
+    if (!$self->best_guess($slice, $_, $species, $seq_region_name)) {
+      
+      if ($valid_species{$species}) {
+        push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
+      } else {
+        push @no_species, $species;
+      }
       
       $self->param("s$_", '');
     }
   }
+    
+  if (scalar @no_species) {
+    $self->session->add_data(
+      type     => 'message',
+      function => '_error',
+      code     => 'invalid_species',
+      message  => scalar @no_species > 1 ? 
+        'The following species do not exist in the database: <ul><li>' . join('</li><li>', @no_species) . '</li></ul>' :
+        'The following species does not exist in the database:' . $no_species[0]
+    );
+  }
   
   if (scalar @no_alignment) {
-    my $msg = scalar @no_alignment > 1 ? 
-      'There are no alignments in this region for the following species: <ul><li>' . join('</li><li>', @no_alignment) . '</li></ul>' :
-      'There is no alignment in this region for ' . $no_alignment[0];
-    
     $self->session->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
-      message  => $msg
+      message  => scalar @no_alignment > 1 ? 
+        'There are no alignments in this region for the following species: <ul><li>' . join('</li><li>', @no_alignment) . '</li></ul>' :
+        'There is no alignment in this region for ' . $no_alignment[0]
     );
   }
   
@@ -163,19 +181,18 @@ sub find_missing_locations {
 }
 
 sub best_guess {
-  my ($self, $slice, $id) = @_;
+  my ($self, $slice, $id, $species, $seq_region_name) = @_;
   
-  # Given an s param, get locations
-  my $species = $self->map_alias_to_species($self->param("s$id"));
   my $width = $slice->end - $slice->start + 1;
-  
   (my $sp = $species) =~ s/_/ /g;
+  
+  $self->param("s$id", $species) if $seq_region_name;
   
   foreach my $method (qw( BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
     my ($seq_region, $cp, $strand);
     
     eval {
-      ($seq_region, $cp, $strand) = $self->dna_align_feature_adaptor->interpolate_best_location($slice, $sp, $method);
+      ($seq_region, $cp, $strand) = $self->dna_align_feature_adaptor->interpolate_best_location($slice, $sp, $method, $seq_region_name);
     };
     
     if ($seq_region) {
@@ -298,15 +315,6 @@ sub change_primary_species {
   }
   
   $self->remove_species_and_generate_url($id, $inputs->{$id}->{'s'});
-}
-
-sub map_alias_to_species {
-  my ($self, $name) = @_;
-  
-  my $esa = $self->species_defs->ENSEMBL_SPECIES_ALIASES;
-  my %map = map { lc, $esa->{$_} } keys %$esa;
-  
-  return $map{lc $name};
 }
 
 sub slice_adaptor {
