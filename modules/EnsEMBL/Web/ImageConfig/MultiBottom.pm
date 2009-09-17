@@ -61,13 +61,17 @@ sub init {
     [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'nav',       '', 'navigation', { display => 'normal', strand => 'r', menu => 'no' }],
   );
-  
-  $self->add_options( 
-    [ 'opt_pairwise_blastz', 'BLASTz net pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
-    [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
-    [ 'opt_join_genes',      'Join genes' ],
-  );
-  
+  if ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+    $self->add_options( 
+    [ 'opt_pairwise_blastz_raw', 'BLASTz RAW pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],);
+  }
+  else {
+    $self->add_options( 
+      [ 'opt_pairwise_blastz', 'BLASTz net pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+      [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+    );
+  } 
+  $self->add_options( [ 'opt_join_genes',      'Join genes' ] );
   $_->set('display', 'off') for grep $_->key =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
