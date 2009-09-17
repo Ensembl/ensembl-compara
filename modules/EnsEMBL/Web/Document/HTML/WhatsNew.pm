@@ -15,7 +15,6 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
-use EnsEMBL::Web::Data::MiniAd;
 use EnsEMBL::Web::Document::HTML::Blog;
 
 use base qw(EnsEMBL::Web::Root);
