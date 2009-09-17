@@ -23,10 +23,11 @@ sub content {
   
   my $object = $self->object;
   
-  my @orthologues = (
-    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
-    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'between_species_paralog')
-  );
+#  my @orthologues = (
+#    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
+#    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'between_species_paralog')
+#  );
+  my @orthologues = $object->get_homology_matches('ENSEMBL_ORTHOLOGUES');
   
   my %orthologue_list;
   my %skipped;
@@ -160,8 +161,7 @@ sub content {
       orthologues:
     </p>
     <p>
-      (N.B. The type "<b>paralogue (between species)</b>" is not a definitive ortholog prediction, 
-      but it is provided as the closest prediction in this gene tree. Please view the <a href="%s">gene tree info</a> to see more.)
+      (N.B. If you don't find a homologue here, it may be a "between-species paralogue". Please view the <a href="%s">gene tree info</a> to see more.)
     </p>
     %s',
     $object->_url({ action => 'Compara_Tree' }), 
