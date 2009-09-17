@@ -58,7 +58,7 @@ sub init {
     {qw(display compact)}
   );
   $self->modify_configs(
-    [qw(histone_modifications_funcgen)],
+    [qw(histone_modifications_funcgen_VSN_GLOG)],
     {qw(display tiling)}
   );
   $self->modify_configs(
