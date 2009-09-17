@@ -26,63 +26,55 @@ sub render {
   my $filtered = 0;
   my $html;
 
-  my $current_release_id = $species_defs->ENSEMBL_VERSION;
-  my $yearago_release_id = $current_release_id - 5;
-  my @releases;
-  for ($yearago_release_id..$current_release_id) {
-    my $r = EnsEMBL::Web::Data::Release->new($_);
-    push @releases, $r if $r;
-  }
-
   my %species_lookup; 
   my @all_species = EnsEMBL::Web::Data::Species->find_all;
   foreach my $sp (@all_species) {
     $species_lookup{$sp->species_id} = $sp->name;
   }
 
-  foreach my $release (reverse @releases) {
+  my $criteria; # = {'last_release' => };
 
-    my $criteria = {'release' => $release->id};
+  my @bugs = EnsEMBL::Web::Data::Bug->fetch_bugs($criteria);
 
-    my @bugs = EnsEMBL::Web::Data::Bug->fetch_bugs($criteria);
+  foreach my $bug (@bugs) {
 
-    if (scalar(@bugs) > 0) {
-
-      my $release_date = $self->pretty_date($release->date);
-      $html .= '<h2>Known bugs in Release '.$release->id." ($release_date)</h2>\n";
-
-      foreach my $bug (@bugs) {
-
-        ## sort out species names
-        my @species = $bug->species; 
-        my (@sp_ids, $sp_id, $sp_name, $sp_count);
-        if (!scalar(@species)) {
-          $sp_name = 'all species';
-        }
-        elsif (scalar(@species) > 5) {
-          $sp_name = 'multiple species';
+    ## sort out species names
+    my @species = $bug->species; 
+    my (@sp_ids, $sp_id, $sp_name, $sp_count);
+    if (!scalar(@species)) {
+      $sp_name = 'all species';
+    }
+    elsif (scalar(@species) > 5) {
+      $sp_name = 'multiple species';
+    }
+    else {
+      my @names;
+      foreach my $sp (@species) {
+        if ($sp->common_name =~ /\./) {
+          push @names, '<i>'.$sp->common_name.'</i>';
         }
         else {
-          my @names;
-          foreach my $sp (@species) {
-            if ($sp->common_name =~ /\./) {
-              push @names, '<i>'.$sp->common_name.'</i>';
-            }
-            else {
-              push @names, $sp->common_name;
-            } 
-          }
-          $sp_name = join(', ', @names);
-        }
-## generate HTML
-        $html .= sprintf(qq(
-<h3>%s (%s)</h3>
-<p>%s</p>
-),
-              $bug->title, $sp_name, $bug->content);
-
+          push @names, $sp->common_name;
+        } 
       }
+      $sp_name = join(', ', @names);
     }
+## generate HTML
+    $html .= sprintf(qq(<h2>%s (%s)</h2>\n<h3>In releases: ), $bug->title, $sp_name);
+    if ($bug->first_release && $bug->last_release) {
+      $html .= $bug->first_release.' - '.$bug->last_release;
+    }
+    elsif (!$bug->first_release) {
+      $html .= 'Up to and including '.$bug->last_release;
+    }
+    elsif (!$bug->last_release) {
+      $html .= $bug->first_release.' - '.$species_defs->ENSEMBL_VERSION;
+    }
+    else {
+      $html .= $species_defs->ENSEMBL_VERSION;
+    }
+    $html .= "</h3>\n<p>".$bug->content.'</p>';
+
   }
 
   return $html;

@@ -9,11 +9,12 @@ __PACKAGE__->table('bug');
 __PACKAGE__->set_primary_key('bug_id');
 
 __PACKAGE__->add_queriable_fields(
-  title       => 'tinytext',
-  content     => 'text',
+  title         => 'tinytext',
+  content       => 'text',
+  first_release => 'int',
+  last_release  => 'int',
 );
 
-__PACKAGE__->has_many(release   => 'EnsEMBL::Web::Data::BugRelease');
 __PACKAGE__->has_many(species   => 'EnsEMBL::Web::Data::BugSpecies');
 
 
@@ -24,8 +25,6 @@ __PACKAGE__->set_sql(bugs => qq{
       __TABLE(=n)__
       LEFT JOIN
       __TABLE(EnsEMBL::Web::Data::BugSpecies=s)__ ON n.bug_id = s.bug_id
-      LEFT JOIN
-      __TABLE(EnsEMBL::Web::Data::BugRelease=r)__ ON n.bug_id = r.bug_id
   WHERE
       %s   
 });
@@ -34,7 +33,9 @@ __PACKAGE__->set_sql(bugs => qq{
 sub fetch_bugs {
   my ($class, $criteria) = @_;
 
-  my @where_strings;
+  my $current_release = $ENV{'VERSION'};
+  my $cutoff = $current_release - 12;
+  my @where_strings = ('last_release > '.$cutoff);
   my @args = ();
   
   foreach my $column ($class->columns) {
@@ -43,12 +44,6 @@ sub fetch_bugs {
     push @args, $criteria->{$column};
   }
   
-  my $rel = $criteria->{'release'};
-  if ($rel) {
-    push @where_strings, ' r.release_id = ? ';
-    push @args, $rel;
-  }
-
   if (exists $criteria->{'species'}) {
     my $sp = $criteria->{'species'};
     if (ref($sp) eq 'ARRAY') { 
