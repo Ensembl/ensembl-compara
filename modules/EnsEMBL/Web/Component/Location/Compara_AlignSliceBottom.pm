@@ -19,9 +19,9 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $params = $object->param('align');
+  my $align_params = $object->param('align');
   my ($align,$target_slice_name);
-  ($align,undef,$target_slice_name) = split '--', $params;
+  ($align,undef,$target_slice_name) = split '--', $align_params;
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   return $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>') unless $align;
@@ -42,7 +42,7 @@ sub content {
   
   my $image_width = $self->image_width;
   my $slice = $object->slice;
-  my ($slices) = $self->get_slices($object, $slice, $align, $primary_species);
+  my ($slices) = $self->get_slices($object, $slice, $align_params, $primary_species);
   
   my @skipped;
   my @missing;
