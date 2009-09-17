@@ -912,10 +912,12 @@ sub _munge_meta {
   my $self = shift;
 
   my %keys = qw(
+    species.taxonomy_id         TAXONOMY_ID
     species.ensembl_alias_name  SPECIES_COMMON_NAME
     assembly.default            ASSEMBLY_NAME
     assembly.name               ASSEMBLY_DISPLAY_NAME
     liftover.mapping            ASSEMBLY_MAPPINGS
+    genebuild.method            GENEBUILD_METHOD
   );
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
@@ -953,11 +955,11 @@ sub _munge_meta {
       foreach my $taxon (@$taxonomy) {
         foreach my $group (@$order) {
           if ($taxon eq $group) {
-            $self->tree->{'SPECIES_GROUP'} = $group;
+            $self->tree->{$species}{'SPECIES_GROUP'} = $group;
             last;
           }
         }
-        last if $self->tree->{'SPECIES_GROUP'};
+        last if $self->tree->{$species}{'SPECIES_GROUP'};
       }
     }
     else {
