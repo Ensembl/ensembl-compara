@@ -106,6 +106,7 @@ sub counts {
           if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'between_species_paralog') {
             $counts->{'paralogs'} += $_->[2];
           } elsif ($vega || $_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
+            next if ($_->[1] eq 'between_species_paralog'); # we will re-add them in the future
             $counts->{'orthologs'} += $_->[2];
           }
         }
