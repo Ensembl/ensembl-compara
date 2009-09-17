@@ -19,10 +19,11 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
 
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
-  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
-  my $current_species = $self->object->data_species;
+  my $referer = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
+  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
+  my $current_species = $object->data_species;
 
   my $form = $self->modal_form('select', "/$current_species/UserData/UploadFile", {'label'=>'Upload'});
   $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.)});
@@ -31,26 +32,49 @@ sub content {
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
 
   ## Species now set automatically for the page you are on
-  $form->add_element( type => 'NoEdit', name => 'show_species', label => 'Species', 'value' => $self->object->species_defs->species_label($current_species));
+  $form->add_element( type => 'NoEdit', name => 'show_species', label => 'Species', 'value' => $object->species_defs->species_label($current_species));
   $form->add_element( type => 'Hidden', name => 'species', 'value' => $current_species);
 
-  ## Work out if multiple assemblies available
-  my $assemblies = $self->get_assemblies($current_species);
-  my %assembly_element = ( name => 'assembly', label => 'Assembly', 'value' => $assemblies->[0]);
-
-  if (scalar(@$assemblies) > 1) {
-    my $assembly_list = [];
-    foreach my $a (@$assemblies) {
-      push @$assembly_list, {'name' => $a, 'value' => $a};
+  ## Are mappings available
+  my $mappings = $object->species_defs->ASSEMBLY_MAPPINGS;
+  my $current_assembly = $object->species_defs->get_config($current_species, 'ASSEMBLY_NAME');
+  $form->add_element(
+      'type'    => 'NoEdit',
+      'label'   => 'Assembly',
+      'name'    => 'assembly',
+      'value'   => $current_assembly,
+  );
+  if ($mappings && ref($mappings) eq 'ARRAY') {
+    $form->add_element(
+        'type'  => 'Information',
+        'value' => 'If your data is not on the current assembly, you should <a href="/'.$current_species.'/UserData/SelectFeatures?_referer='.$object->param('_referer').'" class="modal_link">convert it using our assembly converter</a>',
+    );
+  }
+=pod
+    my @values = {'name' => $current_assembly, 'value' => $current_assembly};
+    foreach my $string (reverse sort @$mappings) { 
+      my @A = split('#|:', $string);
+      my $assembly = $A[3];
+      push @values, {'name' => $assembly, 'value' => $assembly};
     }
-    $assembly_element{'type'}   = 'DropDown';
-    $assembly_element{'select'} = 'select';
-    $assembly_element{'values'} = $assembly_list;
+    $form->add_element(
+      'type'    => 'DropDown',
+      'name'    => 'assembly',
+      'label'   => "Assembly",
+      'values'  => \@values,
+      'select'   => 'select',
+    );
   }
   else {
-    $assembly_element{'type'} = 'Hidden';
+    $form->add_element(
+      'type'    => 'NoEdit',
+      'label'   => 'Assembly',
+      'name'    => 'assembly',
+      'value'   => $current_assembly,
+    );
   }
-  $form->add_element(%assembly_element);
+=cut
+
   $form->add_element( type => 'Text', name => 'text', label => 'Paste file' );
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );
   $form->add_element( type => 'String', name => 'url', label => 'or provide file URL', size => 30 );
