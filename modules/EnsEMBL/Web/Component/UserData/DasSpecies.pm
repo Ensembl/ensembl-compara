@@ -50,7 +50,7 @@ sub content {
 
       my @values = map {
         { 'name' => $_, 'value' => $_, }
-        } @{ $self->object->species_defs->ENSEMBL_SPECIES };
+        } $self->object->species_defs->valid_species;
       unshift @values, { 'name' => 'Not species-specific', 'value' => 'NONE' };
 
       $form->add_element('name'   => 'species',
