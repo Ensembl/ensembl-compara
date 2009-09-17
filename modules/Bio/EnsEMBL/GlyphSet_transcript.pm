@@ -495,11 +495,8 @@ sub render_transcripts {
   if ($transcript_drawn) {
     my $type = $self->_type;
     my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
-    
     $used_colours{$_} = $legend_old{$_} for keys %legend_old;
-
     my @legend = %used_colours;
-    
     $config->{'legend_features'}->{$type} = {
       priority => $self->_pos,
       legend   => \@legend
@@ -775,11 +772,16 @@ sub render_alignslice_transcript {
       }  
     }
   }
-  
+
   if ($transcript_drawn) {
+    my $type = $self->my_config('name');
+    my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
+    
+    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+    
     my @legend = %used_colours;
     
-    $config->{'legend_features'}->{$self->_type} = {
+    $config->{'legend_features'}{$type} = {
       priority => $self->_pos,
       legend   => \@legend
     };
@@ -934,9 +936,11 @@ sub render_alignslice_collapsed {
   }
   
   if ($transcript_drawn) {
+    my $type = $self->my_config('name');
+    my %legend_old = @{$config->{'legend_features'}{$type}{'legend'}||[]};
+    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
     my @legend = %used_colours;
-    
-    $config->{'legend_features'}->{$self->_type} = {
+    $config->{'legend_features'}{$type} = {
       priority => $self->_pos,
       legend   => \@legend
     };
