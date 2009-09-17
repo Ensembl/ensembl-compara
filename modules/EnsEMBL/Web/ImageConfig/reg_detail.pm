@@ -29,14 +29,16 @@ sub init {
     'misc_feature'    => 'Misc. regions',
     'repeat'          => 'Repeats',
     'functional'      => 'Functional Genomics', 
+    'multiple_align'  => 'Multiple alignments',
     'variation'       => 'Variation',
     'other'           => 'Decorations',
     'information'     => 'Information', 
   );
 
   $self->add_tracks( 'other',
-    ['fg_wiggle',   '',           'fg_wiggle',        {'display' => 'tiling', 'colourset' => 'feature_set', 'strand' => 'r', 'menu' => 'no' } ],
+    ['fg_wiggle',   '',           'fg_wiggle',       { 'display' => 'tiling', 'colourset' => 'feature_set', 'strand' => 'r', 'menu' => 'no' } ],
     [ 'scalebar',  '',            'scalebar',        { 'display' => 'normal',  'strand' => 'b', 'name' => 'Scale bar'  } ],
+    [ 'fg_background_regulation', '',     'fg_background_regulation', { 'display' => 'normal', 'colours' => 'bisque', 'strand' => 'b', 'menu' => 'no' } ],
     [ 'ruler',     '',            'ruler',           { 'display' => 'normal',  'strand' => 'b', 'name' => 'Ruler'      } ],
   );
   $self->add_tracks( 'sequence',
@@ -47,13 +49,17 @@ sub init {
   $self->load_configured_das;
 
   $self->modify_configs(
-    [qw(functional_fg_regulatory_features)],
+    [qw(fg_regulatory_features_funcgen_RegulatoryRegion)],
     {qw(display normal)}
   );
   $self->modify_configs(
     [qw(transcript_core_ensembl)],
     {qw(display collapsed_nolabel)}
   );
+  $self->modify_configs(
+    [qw(alignment_compara_431_constrained)], 
+    {qw(display compact)}
+ ); 
 
 }
 1;
