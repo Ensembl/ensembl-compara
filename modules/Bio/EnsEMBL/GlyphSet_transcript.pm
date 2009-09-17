@@ -54,7 +54,7 @@ sub render_collapsed {
   my $y                = 0;
   my $h                = 8;
   my $join_z           = 1000;
-  my $join_col2        = 'chocolate1';
+  my $join_col2        = 'blue';
   my $transcript_drawn = 0;
   my %used_colours;
   
@@ -122,18 +122,17 @@ sub render_collapsed {
       colour    => $colour, 
       absolutey => 1
     }));
-    
+
     if ($link) {
       my @gene_tags;
-      
+
       if ($gene_stable_id) {
         my $alt_alleles = $gene->get_all_alt_alleles;
-        
         if ($previous_species) {
           $self->join_tag($composite2, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $previous_species, $join_types);
           push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @$alt_alleles;
         }
-        
+
         if ($next_species) {
           $self->join_tag($composite2, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species, $join_types);
           push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @$alt_alleles;
@@ -230,7 +229,7 @@ sub render_transcripts {
   my $y                 = 0;
   my $h                 = $self->my_config('height') || ($target ? 30 : 8); # Single transcript mode - set height to 30 - width to 8
   my $join_z            = 1000;
-  my $join_col2         = 'chocolate1';
+  my $join_col2         = 'blue';
   my $transcript_drawn  = 0;
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
   my $non_coding_start  = ($h - $non_coding_height) / 2;
@@ -943,6 +942,7 @@ sub render_genes {
   my $next_species     = $self->my_config('next_species');
   my $join_types       = $self->get_parameter('join_types');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $join_col2        = 'blue';
   my $h                = 8;
   my $join_z           = 1000;
   
@@ -1024,17 +1024,22 @@ sub render_genes {
     
     $rect->y($rect->y + (6 * $row));
     $rect->height(4);
-    
+
     if ($link) {
+      my @gene_tags;
+      my $alt_alleles = $gene->get_all_alt_alleles;
       if ($previous_species) {
         $self->join_tag($rect, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $previous_species, $join_types);
+        push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @$alt_alleles;
       }
       
       if ($next_species) {
-        $self->join_tag($rect, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species, $join_types);
+	$self->join_tag($rect, "$_->[0]:$gene_stable_id", 0.5, 0.5, $_->[1], 'line', $join_z) for $self->get_homologous_gene_ids($gene, $next_species, $join_types);
+	push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @$alt_alleles;
       }
+      # join alt_alleles
+      $self->join_tag($rect, $_, 0.5, 0.5, $join_col2, 'line', $join_z) for @gene_tags;
     }
-    
     $self->push($rect);
     
     if ($high) {
