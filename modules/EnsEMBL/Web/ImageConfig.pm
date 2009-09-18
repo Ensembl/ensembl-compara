@@ -773,11 +773,12 @@ sub add_dna_align_feature {
   return unless $self->_check_menus( 'dna_align_cdna' );
   my( $keys, $data ) = $self->_merge( $hashref->{'dna_align_feature'} , 'dna_align' );
   
+
   foreach my $key_2 ( @$keys ) {
     my $K = $data->{$key_2}{'type'}||'other';
     my $menu = $self->tree->get_node( "dna_align_$K" );
     if( $menu ) {
-    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'on' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
       $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => '_alignment',
@@ -805,7 +806,7 @@ sub add_protein_align_feature {
   my( $keys, $data ) = $self->_merge( $hashref->{'protein_align_feature'}, 'protein_align_feature' );
   my $menu = $self->tree->get_node( "protein_align" );
   foreach my $key_2 ( @$keys ) {
-    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'on' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
     $menu->append( $self->create_track( 'protein_'.$key.'_'.$key_2, $data->{$key_2}{'name'},{
       'db'          => $key,
       'glyphset'    => '_alignment',
@@ -1220,7 +1221,7 @@ sub add_synteny {
 
 sub add_alignments {
   my( $self, $key, $hashref,$species ) = @_;
-  
+
   return unless $self->_check_menus(qw( multiple_align pairwise_tblat pairwise_blastz pairwise_other ));
   
   my $alignments = {};
