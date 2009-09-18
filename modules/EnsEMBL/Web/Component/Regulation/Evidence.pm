@@ -20,7 +20,7 @@ sub content {
 
   my $focus_attributes =  $object->regulation->get_focus_attributes; 
   unless ($focus_attributes) {
-    my $html = "<p>There are no evidence for this regulatory feature </p>";
+    my $html = "<p>There is no evidence for this regulatory feature </p>";
     return $html;
   }
   foreach ( @$focus_attributes){
