@@ -1003,7 +1003,7 @@ sub species_path {
 
     if ($base_url =~ /\#\#\#SPECIES\#\#\#/) {
       if (substr($spsite, 0, 5) eq substr($cssite,0, 5)) {
-	  $URL =~ s/^http\:\/\/.+\//\//;
+	  $URL =~ s/^http\:\/\/[^\/]+\//\//;
       }
   }
 
