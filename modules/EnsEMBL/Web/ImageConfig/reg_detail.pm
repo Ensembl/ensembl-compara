@@ -49,7 +49,7 @@ sub init {
   $self->load_configured_das;
 
   $self->modify_configs(
-    [qw(fg_regulatory_features_funcgen_RegulatoryRegion)],
+    [qw(fg_regulatory_features_funcgen_reg_feats)],
     {qw(display normal)}
   );
   $self->modify_configs(
