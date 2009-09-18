@@ -51,6 +51,7 @@ sub form {
   });
 
   my $reg_object = $object->core_objects->regulation;
+  return unless $reg_object;
   if ($reg_object->get_focus_attributes){
     $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'opt_focus',  'select' => 'select', 'label'  => 'Show Core Evidence track' });
   }
