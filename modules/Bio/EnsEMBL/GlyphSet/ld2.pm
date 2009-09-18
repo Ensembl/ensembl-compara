@@ -151,7 +151,7 @@ warn " [[[ $value, $value1 ]]] ";
         my $snp_names = $snp_m->[1]->variation_name;
         $snp_names.= "-".$snp_n->[1]->variation_name;
         $self->push( Sanger::Graphics::Glyph::Poly->new({
-          'title'  => "$snp_names: ". ($value || "n/a"),
+          'alt'  => "$snp_names: ". ($value || "n/a"),
           'points' => \@p2,
           'colour' => $colour,
           'bordercolour' => 'black'
