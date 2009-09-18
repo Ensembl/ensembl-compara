@@ -1002,13 +1002,10 @@ sub species_path {
 # as the current species - in that case we don't need the host name bit
 
     if ($base_url =~ /\#\#\#SPECIES\#\#\#/) {
-      if (substr($spsite, 0, 5) ne substr($cssite,0, 5)) {
-        if ($spsite ne $cssite) {
-        } else {
-            $URL =~ s/^http\:\/\/.+\//\//;
-        }
+      if (substr($spsite, 0, 5) eq substr($cssite,0, 5)) {
+	  $URL =~ s/^http\:\/\/.+\//\//;
       }
-    }
+  }
 
     return $URL;
 }
