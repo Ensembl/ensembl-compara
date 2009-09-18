@@ -18,7 +18,6 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
-  #my $feature_type = $object->feature_type->name;
   my $feature_type = $object->display_label;  
 
   $html .= qq(<dl class="summary">
