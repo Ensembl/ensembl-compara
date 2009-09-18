@@ -34,8 +34,8 @@ sub _init {
   my $features = $reg_feat_adaptor->fetch_all_by_Slice($slice);
   foreach my $f (@$features){
     next unless $f->stable_id eq  $target_feature_id;
-    $x = $f->bound_start;
-    $width = $f->bound_end - $f->bound_start ;
+    $x = $f->start;
+    $width = $f->end - $f->start ;
   }
    
   my $glyph = $self->Rect({
