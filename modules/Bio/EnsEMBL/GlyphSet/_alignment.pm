@@ -62,11 +62,12 @@ sub href {
   my( $self, $f ) = @_;
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
   return $self->_url({
-    'action' => 'Genome',
-    'ftype'  => $self->my_config('object_type') || 'DnaAlignFeature',
-    'r'      => $r,
-    'id'     => $f->display_id,
-    'db'     => $self->my_config('db'),
+    'action'  => 'Genome',
+    'ftype'   => $self->my_config('object_type') || 'DnaAlignFeature',
+    'r'       => $r,
+    'id'      => $f->display_id,
+    'db'      => $self->my_config('db'),
+    'species' => $self->species,
   });
 }
 
