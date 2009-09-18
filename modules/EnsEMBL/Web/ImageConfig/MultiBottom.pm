@@ -37,7 +37,7 @@ sub init {
     dna_align_est    => 'EST alignments',
     dna_align_rna    => 'RNA alignments',
     dna_align_other  => 'Other DNA alignments', 
-    oligo            => 'Oligo features',
+    oligo            => 'Probe features',
     simple           => 'Simple features',
     misc_feature     => 'Misc. regions',
     repeat           => 'Repeats',
