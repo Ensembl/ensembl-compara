@@ -1007,6 +1007,7 @@ sub species_path {
         } else {
             $URL =~ s/^http\:\/\/.+\//\//;
         }
+      }
     }
 
     return $URL;
