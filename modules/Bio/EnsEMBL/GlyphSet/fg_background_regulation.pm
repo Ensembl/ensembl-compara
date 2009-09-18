@@ -12,7 +12,7 @@ sub _init {
   my $slice = $self->{'container'}; 
   my $target_feature_id = $self->{'config'}->core_objects->regulation->stable_id;  
   my $strand = $self->strand;
-  my $colour = 'beige';
+  my $colour = 'wheat';
   my $x = 10;
   my $width = 40;
   my $pix_per_bp = $Config->transform->{'scalex'};
