@@ -16,12 +16,19 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my %evidence;
 
   my $focus_attributes =  $object->regulation->get_focus_attributes; 
   unless ($focus_attributes) {
     my $html = "<p>There are no evidence for this regulatory feature </p>";
     return $html;
   }
+  foreach ( @$focus_attributes){
+    $evidence{'Core'} = [] unless exists $evidence{'Core'};
+    push @{$evidence{'Core'}}, $_;
+  }
+
+
 
   my $evidence_attributes = $object->regulation->get_nonfocus_attributes;
   my %nonfocus_data;
@@ -29,8 +36,8 @@ sub content {
     my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name . ':' .$_->start; 
     my $histone_mod = substr($unique_feature_set_id, 0, 2);
     unless ($histone_mod =~/H\d/){ $histone_mod = 'Other';}
-    $nonfocus_data{$histone_mod} = {} unless exists $nonfocus_data{$histone_mod};
-    $nonfocus_data{$histone_mod}{$unique_feature_set_id} = $_;
+    $evidence{$histone_mod} = [] unless exists $evidence{$histone_mod};
+    push @{$evidence{$histone_mod}}, $_;
   }
 
 
@@ -44,47 +51,34 @@ sub content {
   ); 
 
   my @rows;
-  my $row = {'type' => 'Core'};
-  $table->add_row($row); 
+  my %seen_evidence_type;
 
-
-
-
-  foreach (@$focus_attributes){ 
-    my $location = $_->slice->seq_region_name .":".$_->start ."-" . $_->end;
-    my $url = $object->_url({'type' => 'Location', 'action' => 'View', 'r' => $location  });
-    my $location_link = qq(<a href=$url>$location</a>);
-    my $cell_type = $_->feature_set->cell_type->name;
-    my $feature_type = $_->feature_set->feature_type->name;
-
-    my $row = {
-      'location'  => $location_link,
-      'feature'   => $feature_type,
-      'cell'      => $cell_type 
-    };
-    push @rows, $row;
-  }
-
-  foreach my $type ( sort keys %nonfocus_data ){
-    my $row  = {'type' => $type};
-    push (@rows, $row); 
-    my $data = $nonfocus_data{$type};
-    foreach (sort keys %$data) {
-      my $f= $data->{$_};
+  foreach (sort keys %evidence ){ 
+    my $features = $evidence{$_};  
+    foreach my $f ( sort { $a->start <=> $b->start } @$features){  
       my $location = $f->slice->seq_region_name .":".$f->start ."-" . $f->end;
       my $url = $object->_url({'type' => 'Location', 'action' => 'View', 'r' => $location  });
       my $location_link = qq(<a href=$url>$location</a>);
       my $cell_type = $f->feature_set->cell_type->name;
       my $feature_type = $f->feature_set->feature_type->name;
+      my $evidence_type;
+      if (exists $seen_evidence_type{$_} ){ 
+        $evidence_type = '';    
+      } else {
+        $evidence_type = $_;
+        if ($evidence_type =~/H\d/){$evidence_type = 'Histone '. $evidence_type;} 
+        $seen_evidence_type{$_} =1;
+      }
 
       my $row = {
-        'location'  => $location_link,
-        'feature'   => $feature_type,
-        'cell'      => $cell_type
+      'type'      => $evidence_type,
+      'location'  => $location_link,
+      'feature'   => $feature_type,
+      'cell'      => $cell_type 
       };
       push @rows, $row;
-    }   
-  } 
+    }
+  }
 
   foreach (@rows){
     $table->add_row($_);
