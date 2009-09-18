@@ -780,7 +780,7 @@ sub add_dna_align_feature {
     my $menu = $self->tree->get_node( "dna_align_$K" );
     if( $menu ) {
     my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
-    warn "$key_2 -- $display";
+#    warn "$key_2 -- $display";
       $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => '_alignment',
