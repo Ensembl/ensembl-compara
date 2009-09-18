@@ -81,7 +81,7 @@ Ensembl.extend({
       }
     });
     
-    var match = (this.coreParams.r ? this.coreParams.r.match(/(\.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
+    var match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
     
     if (match) {
       this.location = { name: match[1], start: parseInt(match[2]), end: parseInt(match[3]) };
@@ -111,7 +111,7 @@ Ensembl.extend({
           }
           
           if (this == 'r' && myself.multiSpecies[i].r) {
-            r = myself.multiSpecies[i].r.match(/(\.+):(\d+)-(\d+)/);
+            r = myself.multiSpecies[i].r.match(/(.+):(\d+)-(\d+)/);
             
             myself.multiSpecies[i].location = { name: r[1], start: parseInt(r[2]), end: parseInt(r[3]) };
           }
