@@ -155,15 +155,15 @@ sub content {
   $html .= '
   </table>';
 
-  $html = sprintf('
-    <p>
+  $html = sprintf(
+    qq{<p>
       The following gene(s) have been identified as putative
       orthologues:
     </p>
     <p>
       (N.B. If you don't find a homologue here, it may be a "between-species paralogue". Please view the <a href="%s">gene tree info</a> to see more.)
     </p>
-    %s',
+    %s},
     $object->_url({ action => 'Compara_Tree' }), 
     $html
   );
