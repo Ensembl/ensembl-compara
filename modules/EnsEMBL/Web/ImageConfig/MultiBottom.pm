@@ -77,14 +77,16 @@ sub init {
 
 sub multi {
   my ($self, $methods, $pos, $total, @slices) = @_;
-  
-  my $sp = $self->{'species'};
+ 
+  my ($sp) = split '--', $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
   my $p = $pos == $total && $total > 2 ? 2 : 1;
   my $i;
   my %alignments;
   my @strands;
-  
+ 
+  my $vega = $self->species_defs->ENSEMBL_SITETYPE eq 'Vega';
+
   foreach my $db (@{$self->species_defs->compara_like_databases||[]}) {
     next unless exists $multi_hash->{$db};
     
@@ -92,20 +94,29 @@ sub multi {
       next unless $methods->{$align->{'type'}};
       next unless $align->{'class'} =~ /pairwise_alignment/;
       next unless $align->{'species'}->{$sp};
-      next unless grep $align->{'species'}->{$_->{'species'}}, @slices;
-      
+      next unless grep $align->{'species'}->{$_}, map [split '--', $_->{'species'}]->[0], @slices;
+
+      my $same_species = 0;
+
       $i = $p;
       
       foreach (@slices) {
-        if ($align->{'species'}->{$_->{'species'}}) {
+        my ($s, $seq_region) = split '--', $_->{'species'};
+
+        $same_species = 1 if $vega && $sp eq $s && scalar keys %{$align->{'species'}} > 2;
+
+        if ($align->{'species'}->{$s}) {
           $align->{'order'} = $i;
           $align->{'other_ori'} = $_->{'ori'};
           $align->{'gene'} = $_->{'g'};
+          $align->{'seq_region'} = $seq_region;
           last;
         }
         
         $i++;
-      };
+      }
+
+      next if $same_species;
       
       $align->{'db'} = lc substr $db, 9;
       push @{$alignments{$align->{'order'}}}, $align;
@@ -127,9 +138,11 @@ sub multi {
   
   foreach (sort keys %alignments) {
     my $strand = shift @strands;
-    
+
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
-      my ($other_species) = grep !/^$sp|merged/, keys %{$align->{'species'}};
+      my ($other_species) = grep !/^$sp|merged|Ancestral_sequences$/, keys %{$align->{'species'}};
+      $other_species ||= $sp if $vega && $align->{'species'}->{$sp} && scalar keys %{$align->{'species'}} == 2;
+
       my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
       (my $other_species_hr = $other_species) =~ s/_/ /g;
       
@@ -145,6 +158,7 @@ sub multi {
           db         => $align->{'db'},
           type       => $align->{'type'},
           ori        => $align->{'other_ori'},
+          seq_region => $align->{'seq_region'},
           join       => 1
         })
       );
