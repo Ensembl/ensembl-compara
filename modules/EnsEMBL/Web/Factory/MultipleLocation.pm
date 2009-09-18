@@ -25,6 +25,7 @@ sub createObjects {
   my @slices;
   my $gene = 0;
   my $action_id = $self->param('id');
+  my $invalid = 0;
   
   my %inputs = (
     0 => { 
@@ -37,10 +38,17 @@ sub createObjects {
     $inputs{$2}->{$1} = $self->param($_) if /^([sgr])(\d+)$/;
   }
   
+  # Strip bad parameters (r/g without s)
+  foreach my $id (grep !$inputs{$_}->{'s'}, keys %inputs) {
+    $self->param("$_$id", '') for keys %{$inputs{$id}};
+    $invalid = 1;
+  }
+  
   $inputs{$action_id}->{'action'} = $self->param('action') if $inputs{$action_id};
   
-  # If we came in an a gene, redirect so that we use the location in the url instead
-  return $self->problem('redirect', $self->_url($self->multi_params)) if $self->input_genes(\%inputs);
+  # If we had bad parameters, redirect to remove them from the url.
+  # If we came in on an a gene, redirect so that we use the location in the url instead.
+  return $self->problem('redirect', $self->_url($self->multi_params)) if $invalid || $self->input_genes(\%inputs);
   
   foreach (sort { $a <=> $b } keys %inputs) {
     my $species = $inputs{$_}->{'s'};
@@ -185,8 +193,6 @@ sub best_guess {
   
   my $width = $slice->end - $slice->start + 1;
   (my $sp = $species) =~ s/_/ /g;
-  
-  $self->param("s$id", $species) if $seq_region_name;
   
   foreach my $method (qw( BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
     my ($seq_region, $cp, $strand);
