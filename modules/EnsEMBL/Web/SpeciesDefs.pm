@@ -961,6 +961,8 @@ sub species_dropdown {
 
 
   foreach my $sp (@sorted_by_common) {
+
+# Get the settings from ini files 
     my $name = $sp->{'name'};
     push @options, {'value' => $sp->{'name'}, 'name' => $sp->{'common'} };
   }
@@ -981,15 +983,26 @@ sub species_path {
     my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species);
     my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
 
-    ( my $nospaces = $species ) =~ s/ /_/g;
+    my $nospaces = $sd->SYSTEM_NAME($species) || $species; 
+    $nospaces =~ s/ /_/g;
 
+# Get the location of the requested species 
     my $spsite = uc($site_hash->{$nospaces});
+
+# Get the location of the current site species
     my $cssite = uc($site_hash->{$current_species});
 
+# Get the URL for the location
     my $base_url = $url_hash->{$spsite} || '';
+
+# Replace ###SPECIES### with the species name
     (my $URL = $base_url) =~ s/\#\#\#SPECIES\#\#\#/$nospaces/;
 
+# If we had to do the substitution let's check the species are not on the same site
+# as the current species - in that case we don't need the host name bit
+
     if ($base_url =~ /\#\#\#SPECIES\#\#\#/) {
+      if (substr($spsite, 0, 5) ne substr($cssite,0, 5)) {
         if ($spsite ne $cssite) {
         } else {
             $URL =~ s/^http\:\/\/.+\//\//;
