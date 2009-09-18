@@ -57,8 +57,6 @@ sub content {
     my $features = $evidence{$_};  
     foreach my $f ( sort { $a->start <=> $b->start } @$features){  
       my $location = $f->slice->seq_region_name .":".$f->start ."-" . $f->end;
-      my $url = $object->_url({'type' => 'Location', 'action' => 'View', 'r' => $location  });
-      my $location_link = qq(<a href=$url>$location</a>);
       my $cell_type = $f->feature_set->cell_type->name;
       my $feature_type = $f->feature_set->feature_type->name;
       my $evidence_type;
@@ -72,7 +70,7 @@ sub content {
 
       my $row = {
       'type'      => $evidence_type,
-      'location'  => $location_link,
+      'location'  => $location,
       'feature'   => $feature_type,
       'cell'      => $cell_type 
       };
