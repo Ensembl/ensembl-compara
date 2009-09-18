@@ -1224,6 +1224,7 @@ sub add_alignments {
   return unless $self->_check_menus(qw( multiple_align pairwise_tblat pairwise_blastz pairwise_other ));
   
   my $alignments = {};
+  my $vega = $self->species_defs->ENSEMBL_SITETYPE eq 'Vega';
   my $self_label = $self->species_defs->species_label($species, 'no_formatting');
   my $regexp = $species =~ /^([A-Z])[a-z]*_([a-z]{3})/ ? "-?$1.$2-?" : 'xxxxxx';
   
@@ -1231,7 +1232,9 @@ sub add_alignments {
     next unless $row->{'species'}{$species};
     
     if ($row->{'class'} =~ /pairwise_alignment/) {
-      my ($other_species) = grep { !/^$species|merged$/ } keys %{$row->{'species'}};
+      my ($other_species) = grep { !/^$species|merged|Ancestral_sequences$/ } keys %{$row->{'species'}};
+      $other_species ||= $species if $vega && $row->{'species'}->{$species} && scalar keys %{$row->{'species'}} == 2;
+      
       my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
       (my $other_species_hr = $other_species) =~ s/_/ /g;
       my $menu_key;
