@@ -90,7 +90,7 @@ sub createObjects {
     
     push @slices, {
       slice      => $slice,
-      species    => $species,
+      species    => $inputs{$_}->{'s'},
       name       => $slice->seq_region_name,
       short_name => $object->chr_short_name($slice, $species),
       start      => $slice->start,
