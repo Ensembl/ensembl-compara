@@ -54,10 +54,11 @@ sub href {
   my $dbid = $f->dbID;
 
   my $href = $self->_url
-  ({'action'    => 'Regulation',
+  ({'action'    => 'RegFeature',
     'fid'       => $id,
     'ftype'     => $analysis,
     'dbid'      => $dbid,
+    'species'   => $self->species,
   });
 
   return $href;
