@@ -51,7 +51,7 @@ sub createObjects {
   return $self->problem('redirect', $self->_url($self->multi_params)) if $invalid || $self->input_genes(\%inputs);
   
   foreach (sort { $a <=> $b } keys %inputs) {
-    my $species = $inputs{$_}->{'s'};
+    my ($species, $chr) = split '--', $inputs{$_}->{'s'};
     my $r = $inputs{$_}->{'r'};
     
     next unless $species && $r;
@@ -59,8 +59,10 @@ sub createObjects {
     $self->__set_species($species);
     
     my $action = $inputs{$_}->{'action'};
-    my ($chr, $s, $e, $strand) = $r =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d+))?/;
+    my ($seq_region_name, $s, $e, $strand) = $r =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d+))?/;
     my $slice;
+    
+    $chr ||= $seq_region_name;
     
     my $modifiers = {
       in      => sub { ($s, $e) = ((3*$s + $e)/4, (3*$e + $s)/4) },     # Half the length
@@ -218,7 +220,7 @@ sub input_genes {
   my $gene = 0;
   
   foreach (grep { $inputs->{$_}->{'g'} && !$inputs->{$_}->{'r'} } keys %$inputs) {
-    my $species = $inputs->{$_}->{'s'};
+    my ($species) = split '--', $inputs->{$_}->{'s'};
     my $g = $inputs->{$_}->{'g'};
     
     next unless $species;
