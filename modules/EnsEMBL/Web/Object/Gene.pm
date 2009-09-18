@@ -90,6 +90,7 @@ sub counts {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
       
       if ($compara_dbh) {
+        # TODO: re-add between_species_paralog
         my $res = $compara_dbh->selectall_arrayref(
           'select ml.type, h.description, count(*) as N
             from member as m, homology_member as hm, homology as h,
@@ -98,15 +99,14 @@ sub counts {
                  h.homology_id = hm.homology_id and 
                  mlss.method_link_species_set_id = h.method_link_species_set_id and
                  ml.method_link_id = mlss.method_link_id and
-                 ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" )
+                 ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "between_species_paralog" )
            group by description', {}, $obj->stable_id
         );
         
         foreach (@$res) {
-          if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'between_species_paralog') {
+          if ($_->[0] eq 'ENSEMBL_PARALOGUES') {
             $counts->{'paralogs'} += $_->[2];
           } elsif ($vega || $_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
-            next if ($_->[1] eq 'between_species_paralog'); # we will re-add them in the future
             $counts->{'orthologs'} += $_->[2];
           }
         }
