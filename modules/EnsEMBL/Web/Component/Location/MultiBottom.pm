@@ -45,13 +45,9 @@ sub content {
     my $highlight_gene = $object->param('g' . ($i-1));
     
     if (!defined $join_alignments) {
-      if ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-	$methods->{'BLASTZ_RAW'}          = $image_config->get_option('opt_pairwise_blastz_raw', 'values');
-      }
-      else {
-	$methods->{'BLASTZ_NET'}          = $image_config->get_option('opt_pairwise_blastz',     'values');
-	$methods->{'TRANSLATED_BLAT_NET'} = $image_config->get_option('opt_pairwise_tblat',      'values');
-      }
+      $methods->{'BLASTZ_NET'}          = $image_config->get_option('opt_pairwise_blastz', 'values');
+      $methods->{'TRANSLATED_BLAT_NET'} = $image_config->get_option('opt_pairwise_tblat', 'values');
+      
       $join_alignments = grep $_, values %$methods;
     }
     
