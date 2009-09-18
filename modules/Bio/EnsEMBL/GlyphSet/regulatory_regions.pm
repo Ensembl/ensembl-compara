@@ -82,6 +82,7 @@ sub href {
     'fid'      => $id,
     'ftype'    => $analysis,
     'dbid'     => $dbid, 
+    'species'  => $self->species, 
   });
 
   return $href;

@@ -121,12 +121,12 @@ sub href {
   my ($self, $f) = @_;
   my $id = $f->stable_id;
   my $href = $self->_url
-  ({ 
+  ({
+    'species' =>  $self->species, 
     'action'  => 'Regulation',
     'rf'      => $id,
     'fdb'     => 'funcgen' 
   });
-
   return $href; 
 }
 
