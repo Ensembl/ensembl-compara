@@ -40,8 +40,8 @@ sub _table_exists {
 
 sub db_details {
   my $self = shift;
-  my $species = $self->{'_species'};
   my $db_name = shift;
+  my $species = shift || $self->{'_species'};
   return $self->{'_db_tree'}{$species}{'databases'}{$db_name}||={};
 }
 
