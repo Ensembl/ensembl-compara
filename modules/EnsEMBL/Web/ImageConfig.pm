@@ -750,6 +750,7 @@ sub _merge {
     push @{$data->{$key}{'logic_names'}}, $analysis;
   }
   foreach my $key (keys %$data) {
+#    if ($key
     $data->{$key}{'name'}       ||= $tree->{$key}{'name'};
     $data->{$key}{'caption'}    ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
     $data->{$key}{'description'} .= '</dl>' if $data->{$key}{'description'} =~ '<dl>';
@@ -778,7 +779,8 @@ sub add_dna_align_feature {
     my $K = $data->{$key_2}{'type'}||'other';
     my $menu = $self->tree->get_node( "dna_align_$K" );
     if( $menu ) {
-    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'on' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
+    warn "$key_2 -- $display";
       $menu->append( $self->create_track( 'dna_align_'.$key.'_'.$key_2, $data->{$key_2}{'name'}, {
         'db'          => $key,
         'glyphset'    => '_alignment',
@@ -806,7 +808,7 @@ sub add_protein_align_feature {
   my( $keys, $data ) = $self->_merge( $hashref->{'protein_align_feature'}, 'protein_align_feature' );
   my $menu = $self->tree->get_node( "protein_align" );
   foreach my $key_2 ( @$keys ) {
-    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'on' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off' ; #needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
     $menu->append( $self->create_track( 'protein_'.$key.'_'.$key_2, $data->{$key_2}{'name'},{
       'db'          => $key,
       'glyphset'    => '_alignment',
