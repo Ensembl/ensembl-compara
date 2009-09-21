@@ -720,7 +720,11 @@ sub _content_panel {
 
   ## Check for help
   my %help = $self->{object}->species_defs->multiX('ENSEMBL_HELP');
-  $params{'help'} = $help{$ENV{'ENSEMBL_TYPE'}}{$ENV{'ENSEMBL_ACTION'}} if keys %help;
+  if (keys %help) {
+    my $page_url = $ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
+    $page_url .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
+    $params{'help'} = $help{$page_url};
+  }
 
   $params{'omit_header'} = $self->{doctype} eq 'Popup' ? 1 : 0;
   

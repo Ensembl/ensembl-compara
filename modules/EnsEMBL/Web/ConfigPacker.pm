@@ -448,16 +448,10 @@ sub _summarise_website_db {
 
   ## Get component-based help
   my $t_aref = $dbh->selectall_arrayref(
-    'select help_record_id, data from help_record where type = "view" and status = "live"'
+    'select hl.page_url, hl.help_record_id from help_record as hr, help_link as hl where hr.help_record_id = hl.help_record_id and status = "live"'
   );
   foreach my $row (@$t_aref) {
-    my $data = $row->[1];
-    $data =~ s/^\$data = //;
-    $data =~ s!\+'!'!g;
-    $data = eval ($data);
-    my $object = $data->{'ensembl_object'};
-    my $action = $data->{'ensembl_action'};
-    $self->db_tree->{'ENSEMBL_HELP'}{$object}{$action} = $row->[0];
+    $self->db_tree->{'ENSEMBL_HELP'}{$row->[0]} = $row->[1];
   }
 
   $t_aref = $dbh->selectall_arrayref(
