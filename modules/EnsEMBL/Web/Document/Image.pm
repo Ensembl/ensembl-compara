@@ -12,7 +12,7 @@ use EnsEMBL::Web::TmpFile::Image;
 
 sub new {
   my ($class, $species_defs, $panel_name) = @_;
-  
+
   my $self = {
     panel              => $panel_name,
     species_defs       => $species_defs,
@@ -30,7 +30,7 @@ sub new {
     format             => 'png',
     prefix             => 'p',
   };
-  
+
   bless $self, $class;
   return $self;
 }
@@ -65,9 +65,9 @@ sub prefix {
 
 sub karyotype {
   my ($self, $object, $highs, $config_name) = @_;
-  
+
   my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
-  
+
   $config_name ||= 'Vkaryotype';
   my $chr_name;
 
@@ -78,64 +78,64 @@ sub karyotype {
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
     my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
     my $rows;
-    
+
     $chr_name = 'ALL';
-    
+
     if ($view_config) {
       my $chr_length = $view_config->get('chr_length') || 200;
       my $total_length = $chr_length + 25;
-      
+
       $rows = $view_config->get('rows');
-      
+
       $image_config->set_parameters({
-        image_height => $chr_length,
-        image_width  => $total_length,
-      });
+          image_height => $chr_length,
+          image_width  => $total_length,
+        });
     }
-    
+
     $rows = ceil($total_chrs / 18) unless $rows;
-    
+
     $image_config->set_parameters({ 
-      container_width => $object->species_defs->MAX_CHR_LENGTH,
-      rows            => $rows,
-      slice_number    => '0|1',
-    });
+        container_width => $object->species_defs->MAX_CHR_LENGTH,
+        rows            => $rows,
+        slice_number    => '0|1',
+      });
   } else {
     $chr_name = $object->seq_region_name;
-    
+
     $image_config->set_parameters({
-      container_width => $object->seq_region_length,
-      slice_number    => '0|1'
-    });
-    
+        container_width => $object->seq_region_length,
+        slice_number    => '0|1'
+      });
+
     $image_config->{'_rows'} = 1;
   }
-  
+
   $image_config->{'_aggregate_colour'} = $object->param('aggregate_colour') if $object->param('aggregate_colour');
-  
+
   # get some adaptors for chromosome data
   my ($sa, $ka, $da);
   my $species = $object->param('species') || undef;
-  
+
   eval {
     $sa = $object->database('core', $species)->get_SliceAdaptor,
     $ka = $object->database('core', $species)->get_KaryotypeBandAdaptor,
     $da = $object->database('core', $species)->get_DensityFeatureAdaptor
   };
-  
+
   return $@ if $@;
 
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer({
-    sa  => $sa, 
-    ka  => $ka, 
-    da  => $da, 
-    chr => $chr_name 
-  }, $image_config, \@highlights);
-  
+      sa  => $sa, 
+      ka  => $ka, 
+      da  => $da, 
+      chr => $chr_name 
+    }, $image_config, \@highlights);
+
   return undef; # successful
 }
-   
+
 sub add_pointers {
   my ($self, $object, $extra) = @_;
   
@@ -148,7 +148,7 @@ sub add_pointers {
   my $high        = { style => $style };
   
   foreach my $row (@data) {
-    my $chr = $row->{'chr'};
+    my $chr = $row->{'chr'} || $row->{'region'};
     
     my $point = {
       start => $row->{'start'},
