@@ -26,6 +26,9 @@ sub content {
   if ($source eq 'dbSNP'){
     $name      = $object->get_ExtURL_link($source, 'SNP', $name); 
     $name = "$class (source $name)"; 
+  } elsif ($source =~ /SGRP/){
+    $name      = $object->get_ExtURL_link($source, 'SGRP', $name);
+    $name = "$class (source $name)";
   } else {
     $name = "$class (source $source)";
   }
