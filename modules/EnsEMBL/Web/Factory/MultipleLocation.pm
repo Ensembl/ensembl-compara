@@ -30,7 +30,8 @@ sub createObjects {
   my %inputs = (
     0 => { 
       s => $self->species,
-      r => $self->param('r')
+      r => $self->param('r'),
+      g => $self->param('g')
     }
   );
   
@@ -77,8 +78,8 @@ sub createObjects {
     };
     
     # We are modifying the url - redirect.
-    if ($action) {
-      $modifiers->{$action}() if exists $modifiers->{$action};
+    if ($action && exists $modifiers->{$action}) {
+      $modifiers->{$action}();
       
       $self->check_slice_exists($_, $chr, $s, $e, $strand);
       
@@ -108,7 +109,7 @@ sub generate_url {
   
   my $remove = $self->param('remove_alignment');
   
-  $self->remove_species_and_generate_url($remove) if $remove; # Remove species duplicated in the url
+  $self->remove_species_and_generate_url($remove) if $remove; # Remove species matching the id given in the url
   
   my @missing = grep { s/^s(\d+)$/$1/ && $self->param("s$_") && !(defined $self->param("r$_") || defined $self->param("g$_")) } $self->param;
   
@@ -120,7 +121,11 @@ sub generate_url {
 sub remove_species_and_generate_url {
   my ($self, $remove, $primary_species) = @_;
   
-  $self->param("$_$remove", '') for qw(s g r);
+  $remove = [ $remove ] unless ref $remove;
+  
+  foreach my $i (@$remove) {
+    $self->param("$_$i", '') for qw(s g r);
+  }
   
   my $new_params = $self->multi_params;
   my $params;
@@ -149,22 +154,29 @@ sub find_missing_locations {
   my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
   my @no_alignment;
   my @no_species;
+  my $paralogues;
+  my @remove;
   
   foreach (@$ids) {
     my ($species, $seq_region_name) = split '--', $self->param("s$_");
     
     if (!$self->best_guess($slice, $_, $species, $seq_region_name)) {
-      
       if ($valid_species{$species}) {
-        push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
+        if ($species eq $self->species) {
+          $paralogues++;
+        } else {
+          push @no_alignment, $self->species_defs->species_label($species) . ($seq_region_name ? " $seq_region_name" : '');
+        }
       } else {
         push @no_species, $species;
       }
       
-      $self->param("s$_", '');
+      push @remove, $_;
     }
   }
-    
+  
+  $self->remove_species_and_generate_url(\@remove) if @remove;
+  
   if (scalar @no_species) {
     $self->session->add_data(
       type     => 'message',
@@ -184,6 +196,15 @@ sub find_missing_locations {
       message  => scalar @no_alignment > 1 ? 
         'There are no alignments in this region for the following species: <ul><li>' . join('</li><li>', @no_alignment) . '</li></ul>' :
         'There is no alignment in this region for ' . $no_alignment[0]
+    );
+  }
+  
+  if ($paralogues) {
+    $self->session->add_data(
+      type     => 'message',
+      function => '_warning',
+      code     => 'missing_species',
+      message  => ($paralogues == 1 ? 'A paralogue has' : 'Paralogues have') . ' been removed for ' . $self->species
     );
   }
   
@@ -317,9 +338,12 @@ sub change_primary_species {
   $self->param('s99999', $inputs->{0}->{'s'}); # Set arbitrarily high - will be recuded by remove_species_and_generate_url
   $self->param('align', ''); # Remove the align parameter because it may not be applicable for the new species
   
-  # Remove parameters if one of the secondary species is the same as the primary (looking at an paralogue)
-  foreach my $i (grep { $_ && $inputs->{$_}->{'s'} eq $self->species } keys %$inputs) {
-    $self->param($_ . $i, '') for keys %{$inputs->{$i}};
+  foreach my $i (grep $_, keys %$inputs) {
+    if ($inputs->{$i}->{'s'} eq $self->species) {
+      $self->param($_ . $i, '') for keys %{$inputs->{$i}}; # Remove parameters if one of the secondary species is the same as the primary (looking at an paralogue)
+    } elsif ($i != $id) {
+      $self->param("$_$i", '') for qw(r g); # Strip location-setting parameters on other non-primary species
+    }
   }
   
   $self->remove_species_and_generate_url($id, $inputs->{$id}->{'s'});
