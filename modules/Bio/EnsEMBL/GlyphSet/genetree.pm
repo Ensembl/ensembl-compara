@@ -20,7 +20,7 @@ sub _init {
   my $current_gene          = $self->{highlights}->[0];
   my $current_genome_db     = $self->{highlights}->[1] || ' ';
   my $collapsed_nodes_str   = $self->{highlights}->[2] || '';
-  my $coloured_nodes        = $self->{highlights}->[3] || {};
+  my $coloured_nodes        = $self->{highlights}->[3] || [];
   my $tree          = $self->{'container'};
   my $Config        = $self->{'config'};
   my $bitmap_width = $Config->image_width(); 
@@ -38,12 +38,15 @@ sub _init {
   # by default.
   $self->{'config'}{_core}{'parameters'}{'collapse'} = $collapsed_nodes_str;
 
-  foreach my $key (sort
-      {scalar(@{$coloured_nodes->{$b}}) <=> scalar(@{$coloured_nodes->{$a}})}
-      keys %$coloured_nodes) {
-    my $value = $coloured_nodes->{$key};
-    my ($clade, $mode, $colour) = split("-", $key);
-    foreach my $node_id (@$value) {
+  # $coloured_nodes is an array. It is sorted such as the largest clades
+  # are used first. In case or a tie (i.e. all the genes are mammals and
+  # vertebrates), the smallest clade overwrites the colour.
+  foreach my $hash (@$coloured_nodes) {
+    my $node_ids = $hash->{'node_ids'};
+    my $mode = $hash->{'mode'};
+    my $colour = $hash->{'colour'};
+    my $clade = $hash->{'clade'};
+    foreach my $node_id (@$node_ids) {
       $self->{"_${mode}_coloured_nodes"}->{$node_id} =
           {'clade' => $clade, 'colour' => $colour};
     }
