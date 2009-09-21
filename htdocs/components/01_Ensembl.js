@@ -103,7 +103,7 @@ Ensembl.extend({
         
         myself.multiSpecies[i] = {};
         
-        $.each(['r', 'g'], function () {
+        $.each(['r', 'g', 's'], function () {
           myself.multiSpecies[i][this] = url.match(regex.replace('%s', this + i));
           
           if (myself.multiSpecies[i][this]) {
