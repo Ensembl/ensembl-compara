@@ -121,32 +121,40 @@ sub content {
   }
 
   my $coloured_nodes;
-  if ($colouring eq "background") {
-    my @clades = grep {$_ =~ /^group_.+_bgcolour/ } $object->param();
-    # print $self->_info("BG colours ",  join(" -- ", split(@clades)));
+  if (($colouring eq "background") or ($colouring eq "foreground")) {
+    my $mode = "bg";
+    $mode = "fg" if ($colouring eq "foreground");
+
+    my @clades = grep {$_ =~ /^group_.+_${mode}colour/ } $object->param();
+
+    # Get all the taxa in each clade
+    my $taxa_by_clade;
     foreach my $clade (@clades) {
-      my ($clade_name) = $clade =~ /group_(.+)_bgcolour/;
-      my $colour = $object->param("group_${clade_name}_bgcolour") || "magenta";
-      my $key = "$clade_name-bg-$colour";
-      my $taxa = [split("_", $object->param("group_${clade_name}_taxa"))];
-      my $these_coloured_nodes = _find_nodes_by_taxa($tree, $taxa);
-      if (%$these_coloured_nodes) {
-        $coloured_nodes->{$key} = [keys %$these_coloured_nodes];
-        # print $self->_info("Coloured nodes ($key)",  join(" -- ", @{$coloured_nodes->{$key}}));
-      }
+      my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
+      $taxa_by_clade->{$clade_name} = [split("_", $object->param("group_${clade_name}_taxa"))]
     }
-  } elsif ($colouring eq "foreground") {
-    my @clades = grep {$_ =~ /^group_.+_fgcolour/ } $object->param();
-    # print $self->_info("FG colours ",  join(" -- ", split(@clades)));
-    foreach my $clade (@clades) {
-      my ($clade_name) = $clade =~ /group_(.+)_fgcolour/;
-      my $colour = $object->param("group_${clade_name}_fgcolour") || "magenta";
-      my $key = "$clade_name-fg-$colour";
-      my $taxa = [split("_", $object->param("group_${clade_name}_taxa"))];
-      my $these_coloured_nodes = _find_nodes_by_taxa($tree, $taxa, "all");
+
+    # Sort the clades by the number of taxa. First the largest clades,
+    # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
+    foreach my $clade_name (sort {
+          scalar(@{$taxa_by_clade->{$b}}) <=> scalar(@{$taxa_by_clade->{$a}})
+	} keys %$taxa_by_clade) {
+      my $taxa = $taxa_by_clade->{$clade_name};
+      my $colour = $object->param("group_${clade_name}_${mode}colour") || "magenta";
+      my $these_coloured_nodes;
+      if ($mode eq "fg") {
+        $these_coloured_nodes = _find_nodes_by_taxa($tree, $taxa, "all");
+      } else {
+        $these_coloured_nodes = _find_nodes_by_taxa($tree, $taxa);
+      }
       if (%$these_coloured_nodes) {
-        $coloured_nodes->{$key} = [keys %$these_coloured_nodes];
-        # print $self->_info("Coloured nodes ($key)",  join(" -- ", @{$coloured_nodes->{$key}}));
+        push(@$coloured_nodes, {
+	    'clade' => $clade_name,
+	    'colour' => $colour,
+	    'mode' => $mode,
+	    'node_ids' => [keys %$these_coloured_nodes],
+	    });
+        # print $self->_info("Coloured nodes ($clade_name - $colour)",  join(" -- ", keys %$these_coloured_nodes));
       }
     }
   }
