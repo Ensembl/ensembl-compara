@@ -3,22 +3,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast;
 use strict;
 use FileHandle;
 
-use base ('Bio::EnsEMBL::Hive::Process');
-
-sub param {
-    my $self = shift @_;
-
-    unless($self->{'_param_hash'}) {
-        $self->{'_param_hash'} = { %{eval($self->parameters())}, %{eval($self->input_id())} };
-    }
-
-    my $param_name = shift @_;
-    if(@_) { # If there is a value (even if undef), then set it!
-        $self->{'_param_hash'}{$param_name} = shift @_;
-    }
-
-    return $self->{'_param_hash'}{$param_name};
-}
+use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
 sub load_fasta_sequences_from_db {
     my ($self, $start_seq_id, $minibatch, $overwrite) = @_;

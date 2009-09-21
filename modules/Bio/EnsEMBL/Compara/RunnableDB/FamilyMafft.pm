@@ -3,27 +3,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft;
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
 sub compara_dba {
     my $self = shift @_;
 
     return $self->{'comparaDBA'} ||= Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-}
-
-sub param {
-    my $self = shift @_;
-
-    unless($self->{'_param_hash'}) {
-        $self->{'_param_hash'} = { %{eval($self->parameters())}, %{eval($self->input_id())} };
-    }
-
-    my $param_name = shift @_;
-    if(@_) { # If there is a value (even if undef), then set it!
-        $self->{'_param_hash'}{$param_name} = shift @_;
-    }
-
-    return $self->{'_param_hash'}{$param_name};
 }
 
 sub fetch_input {
