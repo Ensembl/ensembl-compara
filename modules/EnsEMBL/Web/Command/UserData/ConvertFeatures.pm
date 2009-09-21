@@ -80,13 +80,14 @@ sub process {
       my @coords = $mapper->map($f->seqname, $f->start, $f->end, $f->strand, $old_cs);
 
       foreach my $new (@coords) {
-        unless ($current_slice && $f->seqname eq $current_slice->seq_region_name) {
-          $current_slice = $sa->fetch_by_seq_region_id($new->id);
-        }
-        $f->slice($current_slice);
-
         if (ref($new) =~ /Gap/) {
           $gaps++;
+        }
+        else {
+          unless ($current_slice && $f->seqname eq $current_slice->seq_region_name) {
+            $current_slice = $sa->fetch_by_seq_region_id($new->id);
+          }
+          $f->slice($current_slice);
         }
         $f->start($new->start);
         $f->end($new->end);
