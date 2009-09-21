@@ -39,11 +39,13 @@ sub content {
 
   ## Which conversion?
   my @mappings = reverse sort @{$object->species_defs->ASSEMBLY_MAPPINGS};
-  my @values;
+  my (@forward, @backward);
   foreach my $string (@mappings) {
     my ($to, $from) = split('#', $string);
-    push @values, {'name' => $from.' -> '.$to, 'value' => $from.':'.$to};
+    push @forward, {'name' => $from.' -> '.$to, 'value' => $from.':'.$to};
+    push @backward, {'name' => $to.' -> '.$from, 'value' => $to.':'.$from};
   }
+  my @values = (@forward, @backward);
   $form->add_element(
     'type'    => 'DropDown',
     'name'    => 'conversion',
