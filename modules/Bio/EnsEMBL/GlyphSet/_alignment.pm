@@ -177,11 +177,31 @@ sub render_normal {
     }
   
     ## Now go through each feature in turn, drawing them
+    my ($cgGrades, $score_per_grade, @colour_gradient);
     my @greyscale      = (qw/cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000/);
     my $y_pos;
     my $colour_key     = $self->colour_key( $feature_key );
     my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ), undef  );
     my $join_colour    = $self->my_colour( $self->my_config( 'sub_type' ), 'join' );
+    my $max_score      = $config->{'max_score'} || 1000;
+    my $min_score      = $config->{'min_score'} || 0;
+    if ($config && $config->{'useScore'} == 2) {
+      $cgGrades = $config->{'cgGrades'} || 20;
+      $score_per_grade =  ($max_score - $min_score)/ $cgGrades ;
+      my @cgColours = map { $config->{$_} } 
+                      grep { (($_ =~ /^cgColour/) && $config->{$_}) } 
+                      sort keys %$config;
+      if (my $ccount = scalar(@cgColours)) {
+        if ($ccount == 1) {
+          unshift @cgColours, 'white';
+        }
+      } 
+      else {
+        @cgColours = ('yellow', 'green', 'blue');
+      }
+      my $cm = new Sanger::Graphics::ColourMap;
+      @colour_gradient = $cm->build_linear_gradient($cgGrades, \@cgColours);
+    }
 
     my $regexp = $pix_per_bp > 0.1 ? '\dI' : ( $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI' );
 
@@ -203,6 +223,13 @@ sub render_normal {
         if ($config->{'useScore'} == 1) {
           my $index = int(($f->score * scalar(@greyscale)) / 1000);
           $feature_colour = $greyscale[$index];
+        }
+        elsif ($config->{'useScore'} == 2) {
+          my $score = $f->score || 0;
+          $score = $min_score if ($score < $min_score);
+          $score = $max_score if ($score > $max_score);
+          my $grade = ($score >= $max_score) ? ($cgGrades - 1) : int(($score - $min_score) / $score_per_grade);
+          $feature_colour = $colour_gradient[$grade];
         }
         elsif ($config->{'itemRgb'} =~ /on/i) {
           $feature_colour = $f->external_data->{'item_colour'}[0];
