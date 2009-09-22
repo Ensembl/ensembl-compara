@@ -359,7 +359,56 @@ EOF
 CVS commit the changes.
 
 
-20. (deleted, now being done by Albert before integration of Compara components)
+20. Updating member.display_label and member.description fields for 'ENSEMBLGENE' members.
+
+NB: This step is normally being done by Albert before integration of Compara components.
+So BY DEFAULT YOU SHOULD SKIP IT.
+However if xrefs in any of the core databases have been modified during the production process,
+you should run this step as well.
+
+Once the compara_db is in ens-staging, we apply this insert that makes joins between core and compara dbs for the member table:
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_56\_%"'|awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label.sql
+
+## Or, if you only want to run it with a specific set of databases, you can list them using the 'echo' command below:
+#
+# echo danio_rerio_core_56_8b '\n' xenopus_tropicalis_core_56_41n | awk '{print "UPDATE "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m SET m.display_label=x.display_label WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\";"}' > update_display_label_for_selected_species.sql
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_56 < update_display_label.sql
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_56\_%"'|awk '{ print "UPDATE "$1".gene_stable_id gs, "$1".gene g, member m SET m.description=g.description WHERE g.gene_id=gs.gene_id and gs.stable_id=m.stable_id and m.source_name=\"ENSEMBLGENE\";"}' > update_gene_description.sql
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_56 < update_gene_description.sql
+
+Ensure that the indexes in all tables in ens-staging are correct. This will do it as yesterday jobs, which are limited to 10 concurrently running:
+
+mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_56 -N -e "show tables" | while read i ; do echo $i===; bsub -q yesterday -o /dev/null -Janalyze.$i mysql -hens-staging -uensadmin -pxxxxx ensembl_compara_56 -N -e "
+ANALYZE TABLE $i"; done
+
+
+#################################################
+
+# Here we are creating a 'transferable' patch that is independent of the core databases being present on the same server,
+# so the same patch can be applied on staging and on compara1.
+#
+# Note the important tricks:
+# 1) using the \""$1"\" for inserting strings (outer pair actually adds quotes, inner pair ends awk's quotes to insert $1, $2 values)
+# 2) obligatory usage of -F '\t' in the second awk to parse the tab-separated data that comes out of the mysql (but make sure there are no tabs in the string values!)
+# 3) substitute NULL instead of "NULL" (as they do not differ in their textual representation, but we happen to know which is which)
+# 4) don't forget that member's "stable_id" is not a unique identifier: you should use the (stable_id, source_name) pair.
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_56\_%"' | awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT(m.display_label <=> x.display_label) ;"}' | mysql -hens-staging -uensro -N ensembl_compara_56 | awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | sed 's/"NULL"/NULL/' > gene_dlabel_transferable_patch.sql
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_56\_%"' | awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".transcript t, "$1".translation p, "$1".translation_stable_id psi, member m WHERE t.display_xref_id=x.xref_id AND t.transcript_id=p.transcript_id AND p.translation_id=psi.translation_id AND m.stable_id=psi.stable_id AND m.source_name=\"ENSEMBLPEP\" AND NOT (m.display_label <=> x.display_label) ;"}' | mysql -hens-staging -uensro -N ensembl_compara_56 | awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLPEP\"; "}' | sed 's/"NULL"/NULL/' > transcript_dlabel_transferable_patch.sql
+
+mysql -hens-staging -uensro -N -e 'show databases like "%core\_56\_%"' | awk '{print "SELECT m.stable_id, g.description FROM "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT (m.description <=> g.description) ;"}' | mysql -hens-staging -uensro -N ensembl_compara_56 | awk -F '\t' '{print "UPDATE member SET description=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | sed 's/"NULL"/NULL/' > gene_description_transferable_patch.sql
+
+
+## However, you can simply dump-and-load the display_labels back to compara1 if you wish:
+mysql -hens-staging -uensadmin -pensembl -N -e "SELECT source_name,stable_id,display_label from member where source_name in ('ENSEMBLGENE','ENSEMBLPEP')" ensembl_compara_56 | awk -F '\t' '{print "UPDATE member SET display_label=\""$3"\" WHERE source_name=\""$1"\" AND stable_id=\""$2"\"; "}' | sed 's/"NULL"/NULL/' > staging_dl_update.sql
+
+
+################################################
 
 
 21. Don't forget to dump the EMF files to go on the FTP sites, for multiple alignment, and protein trees.
