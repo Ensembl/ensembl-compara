@@ -82,6 +82,7 @@ sub new {
 
 ## Special code here to set species back to default if cannot merge!!
   $self->{'species'} = $ENV{'ENSEMBL_SPECIES'} if $species eq 'merged' && ! $self->mergeable_config;
+  $species = $self->{'species'};
      
 ## Check to see if we have a user/session saved copy of tree.... 
 ##   Load tree from cache...
@@ -1058,8 +1059,8 @@ sub add_oligo_probe {
   ## Different loop - no analyses - base on probeset query results... = $hashref->{'oligo_feaature'}{'arrays'};
   foreach my $key_2 ( sort keys %$data ) {
     my $key_3 = $key_2;
-    $key_2 =~s/:/__/; 
-    $menu->append( $self->create_track( 'oligo_'.$key.'_'.$key_2, $key_3, {
+    $key_2 =~s/:/__/;
+    $menu->append( $self->create_track( 'oligo_'.$key.'_'.uc($key_2), uc($key_3), {
       'glyphset'    => '_oligo',
       'db'          => $key,
       'sub_type'    => 'oligo',
@@ -1295,10 +1296,7 @@ sub add_alignments {
           'display'        => $row->{'id'} == 352 ? 'tiling' : 'off', ## Default to on at the moment - change to off by default!
           'renderers'      => [ 'off' => 'Off', 'tiling' => 'Tiling array' ]
         };
-      }
-
-      if ($row->{'constrained_element'}) { 
-        my ($program) = $hashref->{'CONSTRAINED_ELEMENTS'}{$row->{'constrained_element'}}{'type'} =~ /(.+)_CONSTRAINED_ELEMENT/;
+        
         $alignments->{'multiple_align'}{$row->{'id'}.'_constrained'} = {
           'db'             => $key,
           'glyphset'       => '_alignment_multiple',
