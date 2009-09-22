@@ -276,7 +276,7 @@ sub ingredient {
     warn "AJAX CONTENT CACHE HIT $ENV{CACHE_KEY}"
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
-         
+    $r->headers_out->set('X-MEMCACHED' => 'yes');     
     $r->content_type('text/html');
   } else { # Cache miss so we will need to generate the content
     warn "AJAX CONTENT CACHE MISS $ENV{CACHE_KEY}"
@@ -389,7 +389,7 @@ sub stuff {
     warn "DYNAMIC CONTENT CACHE HIT $ENV{'CACHE_KEY'}"
       if $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_FLAGS &
          $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEBUG_MEMCACHED;
-    
+    $r->headers_out->set('X-MEMCACHED' => 'yes');     
     $r->content_type('text/html');
   } else { # MISS
     warn "DYNAMIC CONTENT CACHE MISS $ENV{'CACHE_KEY'}"
