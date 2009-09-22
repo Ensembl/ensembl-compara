@@ -245,7 +245,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
    */
   highlightImage: function (imageNumber, speciesNumber, start, end) {
     // Make sure each image is highlighted based only on the next image on the page
-    if (imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
+    if (this.vdrag || imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
       return;
     }
     
