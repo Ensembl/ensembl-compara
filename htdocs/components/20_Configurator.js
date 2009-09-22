@@ -258,17 +258,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var menu = $('<dl class="popup_menu"></dl>');   
+    var menu = $('<dl class="popup_menu"></dl>').css('top', $(img).position().top + 'px');   
     
     $('option', $(img).prev()).each(function () {
       menu.append('<dt class="' + this.value + '"><img src="/i/render/' + this.value + '.gif" title="' + this.text + '" />' + this.text + '</dt>');
     });
     
-    if (this.el.scrollTop) {
-      menu.css({ top: ($(img).offset().top - $(window).scrollTop()) + 'px', marginTop: '-13px' });
-    }
-    
     menu.insertBefore(img);
+    
     menu = null;
   }
 });
