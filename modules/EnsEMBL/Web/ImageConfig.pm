@@ -1295,7 +1295,10 @@ sub add_alignments {
           'display'        => $row->{'id'} == 352 ? 'tiling' : 'off', ## Default to on at the moment - change to off by default!
           'renderers'      => [ 'off' => 'Off', 'tiling' => 'Tiling array' ]
         };
-        
+      }
+
+      if ($row->{'constrained_element'}) { 
+        my ($program) = $hashref->{'CONSTRAINED_ELEMENTS'}{$row->{'constrained_element'}}{'type'} =~ /(.+)_CONSTRAINED_ELEMENT/;
         $alignments->{'multiple_align'}{$row->{'id'}.'_constrained'} = {
           'db'             => $key,
           'glyphset'       => '_alignment_multiple',
