@@ -67,8 +67,13 @@ sub features {
   $parser->filter( $self->{'container'}->seq_region_name, $self->{'container'}->start, $self->{'container'}->end );
   $self->{'parser'} = $parser;
   if( $sub_type eq 'url' ) {
-    my $data = EnsEMBL::Web::Tools::Misc::get_url_content($self->my_config('url') );
-    $parser->parse($data);
+    my $response = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('url') );
+    if (my $data = $response->{'content'}) {
+      $parser->parse($data);
+    }
+    else {
+      warn "!!! ".$response->{'error'};
+    }
   }
   else {
     my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('file') );

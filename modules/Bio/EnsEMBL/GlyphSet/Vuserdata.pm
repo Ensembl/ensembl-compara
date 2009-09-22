@@ -49,8 +49,13 @@ sub data {
     }
 
     if ($type eq 'url') {
-      my $content = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('source') );
-      $parser->parse($content);
+      my $response = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('source') );
+      if (my $content = $response->{'content'}) {
+        $parser->parse($content);
+      }
+      else {
+        warn "!!! ".$response->{'error'};
+      }
     }
     else {
       my $file = new EnsEMBL::Web::TmpFile::Text( filename => $self->my_config('source') );
