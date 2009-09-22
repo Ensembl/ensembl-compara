@@ -210,7 +210,7 @@ sub check_format {
           $format = 'WIG';
           last;
         }
-        elsif ($row =~ /type=bedGraph/ || $row =~ /type=wiggle_0/) {
+        elsif ($row =~ /type=bedGraph/ || $row =~ /type=wiggle_0/ || $row =~ /useScore=[3|4]/) {
           $self->style('wiggle');
           $format = 'BED';
           last;
