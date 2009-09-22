@@ -557,21 +557,8 @@ sub draw_cigar_feature {
     warn sprintf 'DRAWINGCODE_CIGAR [ %s ] %s not a feature', join('; ', @$f), $self->label->text;
   }
   
-  my $strand      = $self->strand;
-  my $o           = $params->{'do_not_flip'} ? 1 : $strand;
-  my $start       = $o == 1 ? $f->start : $f->end;
-  my $hstart      = $o == 1 ? $f->hstart : $f->hend;
-  my $hend        = $o == 1 ? $f->hend : $f->hstart;
   my $length      = $self->{'container'}->length;
-  my $slice_start = $f->slice->start;
-  my $slice_end   = $f->slice->end;
-  my $fstrand     = $f->strand;
-  my $hstrand     = $f->hstrand;
-  my $tag1        = join ':', $f->species, $f->slice->seq_region_name;
-  my $tag2        = join ':', $f->hspecies, $f->hseqname;
-  my @delete;
   my $cigar;
-  
   eval { $cigar = $f->cigar_string; };
   
   if ($@ || !$cigar) {
@@ -590,6 +577,19 @@ sub draw_cigar_feature {
     
     return;
   }
+  
+  my $strand      = $self->strand;
+  my $o           = $params->{'do_not_flip'} ? 1 : $strand;
+  my $start       = $o == 1 ? $f->start : $f->end;
+  my $hstart      = $o == 1 ? $f->hstart : $f->hend;
+  my $hend        = $o == 1 ? $f->hend : $f->hstart;
+  my $slice_start = $f->slice->start;
+  my $slice_end   = $f->slice->end;
+  my $fstrand     = $f->strand;
+  my $hstrand     = $f->hstrand;
+  my $tag1        = join ':', $f->species, $f->slice->seq_region_name;
+  my $tag2        = join ':', $f->hspecies, $f->hseqname;
+  my @delete;
   
   # Parse the cigar string, splitting up into an array
   # like ('10M','2I','30M','I','M','20M','2D','2020M');
