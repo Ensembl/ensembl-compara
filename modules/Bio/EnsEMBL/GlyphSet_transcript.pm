@@ -48,12 +48,14 @@ sub render_collapsed {
   my $show_labels      = $self->my_config('show_labels');
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
+  my $previous_target  = $self->my_config('previous_target');
+  my $next_target      = $self->my_config('next_target');
   my $join_types       = $self->get_parameter('join_types');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
   my $y                = 0;
   my $h                = 8;
   my $join_z           = 1000;
-  my $join_col2        = 'blue';
   my $transcript_drawn = 0;
   my %used_colours;
   
@@ -71,8 +73,6 @@ sub render_collapsed {
     
     # Get all the exons which overlap the region for this gene
     my @exons = map { $_->start > $length || $_->end < 1 ? () : $_ } map { @{$_->get_all_Exons} } @{$gene->get_all_Transcripts};
-    
-    next unless @exons;
     
     $transcript_drawn = 1;
     
@@ -123,10 +123,10 @@ sub render_collapsed {
     }));
 
     if ($link) {
-      my @gene_tags;
-
       if ($gene_stable_id) {
+        my @gene_tags;
         my $alt_alleles = $gene->get_all_alt_alleles;
+        
         if ($previous_species) {
           for ($self->get_homologous_gene_ids($gene, $previous_species, $join_types)) {
             $self->join_tag($composite2, "$gene_stable_id:$_->[0]", 0.5, 0.5, $_->[1], 'line', $join_z);
@@ -136,7 +136,7 @@ sub render_collapsed {
             $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
           }
           
-          push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @$alt_alleles;
+          push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @{$self->filter_by_target($alt_alleles, $previous_target)};
         }
 
         if ($next_species) {
@@ -148,12 +148,17 @@ sub render_collapsed {
             $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
           }
           
-          push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @$alt_alleles;
+          push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
+        }
+        
+        # join alt_alleles
+        $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags;
+        
+        if (@gene_tags) {
+          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
+          $config->{'legend_features'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
         }
       }
-      
-      # join alt_alleles
-      $self->join_tag($composite2, $_, 0.5, 0.5, $join_col2, 'line', $join_z) for @gene_tags;
     }
     
     $composite->push($composite2);
@@ -235,14 +240,16 @@ sub render_transcripts {
   my $show_labels       = $self->my_config('show_labels');
   my $previous_species  = $self->my_config('previous_species');
   my $next_species      = $self->my_config('next_species');
+  my $previous_target  = $self->my_config('previous_target');
+  my $next_target      = $self->my_config('next_target');
   my $join_types        = $self->get_parameter('join_types');
   my $link              = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $target            = $self->get_parameter('single_Transcript');
   my $target_gene       = $self->get_parameter('single_Gene');
+  my $alt_alleles_col   = $self->my_colour('alt_alleles_join');
   my $y                 = 0;
   my $h                 = $self->my_config('height') || ($target ? 30 : 8); # Single transcript mode - set height to 30 - width to 8
   my $join_z            = 1000;
-  my $join_col2         = 'blue';
   my $transcript_drawn  = 0;
   my $non_coding_height = ($self->my_config('non_coding_scale')||0.75) * $h;
   my $non_coding_start  = ($h - $non_coding_height) / 2;
@@ -285,7 +292,7 @@ sub render_transcripts {
         
         push @{$tags{$sid}}, map {[ "$_->[0]:$pid", $_->[1] ]} @$homologues if $sid && $pid;
         push @{$tags{$sid}}, map {[ "$gene_stable_id:$_->[0]", $_->[1] ]} @$homologue_genes if $sid;
-        push @gene_tags, map { join '=', $_->stable_id, $tsid } @transcripts;
+        push @gene_tags, map { join '=', $_->stable_id, $tsid } @{$self->filter_by_target(\@transcripts, $previous_target)};
         
         for (@$homologues) {
           (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
@@ -299,7 +306,7 @@ sub render_transcripts {
         
         push @{$tags{$sid}}, map {[ "$pid:$_->[0]", $_->[1] ]} @$homologues if $sid && $pid;
         push @{$tags{$sid}}, map {[ "$_->[0]:$gene_stable_id", $_->[1] ]} @$homologue_genes if $sid;
-        push @gene_tags, map { join '=', $tsid, $_->stable_id } @transcripts;
+        push @gene_tags, map { join '=', $tsid, $_->stable_id } @{$self->filter_by_target(\@transcripts, $next_target)};
         
         for (@$homologues) {
           (my $legend = $_->[2]) =~ s/_multi/ 1-to-many or many-to-many/;
@@ -352,7 +359,12 @@ sub render_transcripts {
       }
       
       if ($transcript->stable_id eq $tsid) {
-        $self->join_tag($composite2, $_, 0.5, 0.5, $join_col2, 'line', $join_z) for @gene_tags;
+        $self->join_tag($composite2, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags;
+        
+        if (@gene_tags) {
+          $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
+          $config->{'legend_features'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
+        }
       }
       
       for (my $i = 0; $i < @exons; $i++) {
@@ -968,9 +980,11 @@ sub render_genes {
   my $navigation       = $self->my_config('navigation') || 'on';
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
+  my $previous_target  = $self->my_config('previous_target');
+  my $next_target      = $self->my_config('next_target');
   my $join_types       = $self->get_parameter('join_types');
   my $link             = $self->get_parameter('compara') ? $self->my_config('join') : 0;
-  my $join_col2        = 'blue';
+  my $alt_alleles_col  = $self->my_colour('alt_alleles_join');
   my $h                = 8;
   my $join_z           = 1000;
   
@@ -1063,7 +1077,7 @@ sub render_genes {
           $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
         }
         
-        push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @$alt_alleles;
+        push @gene_tags, map { join '=', $_->stable_id, $gene_stable_id } @{$self->filter_by_target($alt_alleles, $previous_target)};
       }
       
       if ($next_species) {
@@ -1075,10 +1089,15 @@ sub render_genes {
           $config->{'legend_features'}{'joins'}{'legend'}{ucfirst $legend} = $_->[1];
         }
         
-        push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @$alt_alleles;
+        push @gene_tags, map { join '=', $gene_stable_id, $_->stable_id } @{$self->filter_by_target($alt_alleles, $next_target)};
       }
       
-      $self->join_tag($rect, $_, 0.5, 0.5, $join_col2, 'line', $join_z) for @gene_tags; # join alt_alleles
+      $self->join_tag($rect, $_, 0.5, 0.5, $alt_alleles_col, 'line', $join_z) for @gene_tags; # join alt_alleles
+      
+      if (@gene_tags) {
+        $config->{'legend_features'}{'joins'}{'priority'} ||= 1000;
+        $config->{'legend_features'}{'joins'}{'legend'}{'Alternative alleles'} = $alt_alleles_col;
+      }
     }
     
     $self->push($rect);
@@ -1323,6 +1342,14 @@ sub get_homologous_peptide_ids_from_gene {
   }
   
   return ($stable_id, $peptide_id, \@homologues, \@homologue_genes);
+}
+
+sub filter_by_target {
+  my ($self, $alt_alleles, $target) = @_;
+  
+  $alt_alleles = [ grep $_->slice->seq_region_name eq $target, @$alt_alleles ] if $target;
+  
+  return $alt_alleles;
 }
 
 #============================================================================#

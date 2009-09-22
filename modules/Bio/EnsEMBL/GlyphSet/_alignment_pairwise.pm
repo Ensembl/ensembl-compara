@@ -219,16 +219,18 @@ sub render_compact {
     $c++;
     
     my $composite;
+    (my $url_species = $f->species) =~ s/ /_/g;
     
     # zmenu links depend on whether jumping within or between species;
     my $zmenu = {
-      type   => 'Location',
-      action => 'ComparaGenomicAlignment',
-      r      => "$chr:$rs-$re",
-      r1     => $f->hseqname . ':' . $f->hstart . '-' . $f->hend,
-      s1     => $other_species,
-      method => $self->my_config('type'),
-      orient => $f->hstrand * $f->strand > 0 ? 'Forward' : 'Reverse'
+      type    => 'Location',
+      action  => 'ComparaGenomicAlignment',
+      species => $url_species,
+      r       => "$chr:$rs-$re",
+      r1      => $f->hseqname . ':' . $f->hstart . '-' . $f->hend,
+      s1      => $other_species,
+      method  => $self->my_config('type'),
+      orient  => $f->hstrand * $f->strand > 0 ? 'Forward' : 'Reverse'
     };
     
     if ($draw_cigar) {
@@ -314,12 +316,18 @@ sub render_compact {
 sub features {
   my $self = shift;
   
-  return $self->{'container'}->get_all_compara_DnaAlignFeatures(
+  my $features = $self->{'container'}->get_all_compara_DnaAlignFeatures(
     $self->my_config('species_hr'),
     $self->my_config('assembly'),
     $self->my_config('type'),
     $self->dbadaptor('multi', $self->my_config('db'))
   );
+  
+  my $target = $self->my_config('target');
+  
+  $features = [ grep $_->hseqname eq $target, @{$features||[]} ] if $target;
+  
+  return $features;
 }
 
 sub render_text {

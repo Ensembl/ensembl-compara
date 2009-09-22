@@ -55,11 +55,13 @@ sub _init {
       
       $seen{"$legend:$colour"} = 1;
       
+      my $join = $legend =~ /orthologue|paralogue|alleles/i;
+      
       $self->push($self->Rect({
         x             => $im_width * $x/$coloums,
-        y             => $y * ($th + 3) + ($legend =~ /orthologue|paralogue/i ? ($th/2) : 2),
+        y             => $y * ($th + 3) + ($join ? ($th/2) : 2),
         width         => $box_width, 
-        height        => $legend =~ /orthologue|paralogue/i ? 0.5 : $th-2,
+        height        => $join ? 0.5 : $th-2,
         colour        => $colour,
         absolutey     => 1,
         absolutex     => 1,
