@@ -399,7 +399,6 @@ sub _create_Gene {
     return {'Gene' => $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db ) };
   }
 }
-
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub _create_RegulatoryFactor {
   my ( $self, $db, $id, $name ) = @_;
@@ -416,9 +415,11 @@ sub _create_RegulatoryFactor {
   my $features;
   my $feats = (); 
 
+
+
   my %fset_types = (
-   "cisRED group motif" => "cisRED group motifs",
-   "miRanda miRNA_target" => "miRanda miRNA",
+   "cisRED group motif" => "cisRED motifs",
+   "miRanda miRNA_target" => "miRanda miRNA targets",
    "BioTIFFIN motif" => "BioTIFFIN motifs",
    "VISTA" => 'VISTA enhancer set'
   );
@@ -441,12 +442,12 @@ sub _create_RegulatoryFactor {
       $features= {'RegulatoryFactor' => \@assoc_features};
     } else {
       my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
-      my $ftype = $feat_type_adaptor->fetch_by_name($id);
+      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor; 
+      my $ftype = $feat_type_adaptor->fetch_by_name($id); 
       my @ftypes = ($ftype); 
-      my $type = $ftype->description; 
-      my $fstype = $fset_types{$type}; 
-      my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
+      my $type = $ftype->description;  
+      my $fstype = $fset_types{$type}; warn $fstype; 
+      my $fset = $feature_set_adaptor->fetch_by_name($fstype); warn $fset; 
       my @fsets = ($fstype);
       my $feats = $fset->get_Features_by_FeatureType($ftype);
       $features = {'RegulatoryFactor'=> $feats};
