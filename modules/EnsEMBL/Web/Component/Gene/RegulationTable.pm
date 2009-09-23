@@ -61,7 +61,7 @@ sub content {
     my $row = {};
     my ($position, $feature_link, $length, $type);
 
-    $position = $feature_obj->location_string;
+    $position = $feature_obj->location_string($offset);
     my $position_link = $feature_obj->get_location_url;
 
     $position = qq(<a href=$position_link>$position</a>);
