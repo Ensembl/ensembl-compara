@@ -346,7 +346,8 @@ sub fetch_userdata_by_id {
     }
     my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
     if ($type eq 'url') {
-      $content = EnsEMBL::Web::Tools::Misc::get_url_content( $tempdata->{'url'} );
+      my $response = EnsEMBL::Web::Tools::Misc::get_url_content( $tempdata->{'url'} );
+      $content = $response->{'content'};
     }
     else {
       my $file = new EnsEMBL::Web::TmpFile::Text( filename => $tempdata->{'filename'} );
