@@ -35,6 +35,7 @@ sub content {
   my $html;
   $html .= '<div class="modal_reload"></div>' if $object->param('reload');
   $html .= '<h3>Your data</h3>'; # Uploads
+  $html .= '<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>';
   
   push @data, $user->uploads if $user;
   push @data, $object->get_session->get_data('type' => 'upload');
