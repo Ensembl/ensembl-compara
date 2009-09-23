@@ -85,7 +85,6 @@ sub parse {
     if (EnsEMBL::Web::Root::dynamic_use(undef, $sub_package)) {
       bless $self, $sub_package;
     }
-
     ## Create an empty feature that gives us access to feature info
     my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format); 
     my $empty = $feature_class->new();
@@ -225,10 +224,12 @@ sub check_format {
   }
 
   ## Sanity check - can we actually parse this?
-  if (!$format || !(EnsEMBL::Web::Root::dynamic_use(undef, 'EnsEMBL::Web::Text::Feature::'.uc($format))) ) {
+  if ($format && !(EnsEMBL::Web::Root::dynamic_use(undef, 'EnsEMBL::Web::Text::Feature::'.uc($format))) ) {
+    return 'Unsupported format';
+  }
+  if (!$format) {
     return 'Unrecognised format';
   }
-
   $self->format($format);
   return undef;
 }
