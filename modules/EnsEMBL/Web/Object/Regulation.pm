@@ -187,7 +187,11 @@ sub length {
 
 sub location_string {
   my $self = shift;
-  return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
+  my $offset = shift || 0;
+  my $start =  $self->seq_region_start + $offset;
+  my $end =  $self->seq_region_end  + $offset;
+
+  return sprintf( "%s:%s-%s", $self->seq_region_name, $start, $end );
 }
 
 ################ Calls for Feature in Detail view ###########################
