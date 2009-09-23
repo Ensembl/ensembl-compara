@@ -74,12 +74,6 @@
     # for the ChunkAndGroupDna analysis. Setting include_duplicates to 1 results in the Y-chr 
     # being treated just like any other chrs (without PARs).
 
-    # One technical caveat when including "include_duplicates" parameter: The input ID 
-    # for ChunkAndGroupDna analysis could get too long (>256 chars). Ways to get around this problem: 
-    # Either (i) Set dump_loc path (below) as short as possible to save chars; or (ii) comment out 
-    # "include_duplicates" in this config file and hack compara DB later to reinstate it in the inputID, 
-    # as well as removing redundant quotation marks in the inputID to save chars.
-
     include_duplicates    => 1,
 
     # set the below to the location of the pre-dumped nib-files; this directory
