@@ -40,11 +40,11 @@ sub content {
   my $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
 
   #$html .= qq(<dl>);
-   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px', 'cellpadding' => '2px'} );
     $table->add_columns(
       {'key' => 'go',   'title' => 'GO Accession', 'width' => '5%', 'align' => 'left'},
-      {'key' => 'evidence', 'title' => 'Evidence','width' => '3%', 'align' => 'centre'},
-      {'key' => 'description', 'title' => 'Go Term', 'width' => '55%', 'align' => 'left'},
+      {'key' => 'description', 'title' => 'GO Term', 'width' => '55%', 'align' => 'left'},
+      {'key' => 'evidence', 'title' => 'Evidence','width' => '3%', 'align' => 'center'},
       {'key' => 'desc', 'title' => 'Annotation Source','width' => '35%', 'align' => 'centre'}
     );
 
