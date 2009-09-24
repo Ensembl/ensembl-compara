@@ -38,7 +38,7 @@ sub content {
       { 'key' => 'end',     'title' => 'End',              'width' => '10%', 'align' => 'center' },
       { 'key' => 'desc',    'title' => 'Description',      'width' => '15%', 'align' => 'center' },
       { 'key' => 'acc',     'title' => 'Accession',        'width' => '10%', 'align' => 'center' },
-      { 'key' => 'interpro','title' => 'Interpro',         'width' => '40%', 'align' => 'center' },
+      { 'key' => 'interpro','title' => 'InterPro',         'width' => '40%', 'align' => 'center' },
     );
     foreach my $domain (
       sort { $a->idesc cmp $b->idesc ||
