@@ -18,8 +18,9 @@ sub import {
   );
   $caller->connection(
     $dsn,
-    $species_defs->DATABASE_WRITE_USER,
-    $species_defs->DATABASE_WRITE_PASS,
+		      $species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'} ||  $species_defs->DATABASE_WRITE_USER,
+		      $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} ||  $species_defs->DATABASE_WRITE_PASS,
+
     {
       RaiseError => 1,
       PrintError => 1,
