@@ -82,7 +82,7 @@ sub _jalview_link {
   my( $self, $family, $type, $refs ) = @_;
   my $count     = @$refs;
   my $url = '/'.$self->object->species.$self->url('/Gene/Family/Alignments');
-  $url .= "?family=$family;".join(';', @{$self->object->core_params});
+  $url .= "family=$family;".join(';', @{$self->object->core_params});
   return qq(
   <p class="space-below">$count $type members of this family <a href="$url">JalView</a></p>
 );
