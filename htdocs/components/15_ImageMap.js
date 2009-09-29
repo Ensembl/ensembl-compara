@@ -75,7 +75,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             myself.highlightRegions[speciesNumber].push({ region: c });
             myself.imageNumber = parseInt(r[2]);
             
-            Ensembl.EventManager.trigger('highlightImage', myself.imageNumber, speciesNumber, parseInt(r[5]), parseInt(r[6]));
+            Ensembl.images[myself.imageNumber] = Ensembl.images[myself.imageNumber] || {};
+            Ensembl.images[myself.imageNumber][speciesNumber] = [ myself.imageNumber, speciesNumber, parseInt(r[5]), parseInt(r[6]) ];
+            
+            myself.prepHighlightImage();
           }
         }
       }
@@ -231,6 +234,27 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area });
   },
   
+  prepHighlightImage: function () {
+    var image = Ensembl.images[this.imageNumber + 1] || Ensembl.images[this.imageNumber];
+    var args, i;
+    
+    for (i in image) {
+      args = image[i];
+      this.highlightImage.apply(this, args);
+    }
+    
+    if (Ensembl.images[this.imageNumber - 1]) {
+      image = Ensembl.images[this.imageNumber];
+      
+      for (i in image) {
+        args = image[i].slice();
+        args.unshift('highlightImage');
+        
+        Ensembl.EventManager.trigger.apply(Ensembl.EventManager, args);
+      }
+    }
+  },
+  
   /**
    * Highlights regions of the image.
    * In MultiContigView, each image can have numerous regions to highlight - one per species
@@ -243,8 +267,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
    *          If there is only one image, or the next image has an invalid coordinate system 
    *          (eg AlignSlice or whole chromosome), highlighting is taken from the r parameter in the url.
    */
-  highlightImage: function (imageNumber, speciesNumber, start, end) {
-    // Make sure each image is highlighted based only on the next image on the page
+  highlightImage: function (imageNumber, speciesNumber, start, end) {    
+    // Make sure each image is highlighted based only on itself or the next image on the page
     if (this.vdrag || imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
       return;
     }

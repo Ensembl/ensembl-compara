@@ -258,7 +258,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var menu = $('<dl class="popup_menu"></dl>').css('top', $(img).position().top + 'px');   
+    var menu = $('<dl class="popup_menu"></dl>').css('top', ($(img).position().top + this.el.scrollTop) + 'px');   
     
     $('option', $(img).prev()).each(function () {
       menu.append('<dt class="' + this.value + '"><img src="/i/render/' + this.value + '.gif" title="' + this.text + '" />' + this.text + '</dt>');
