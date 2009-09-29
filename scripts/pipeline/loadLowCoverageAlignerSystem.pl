@@ -16,6 +16,7 @@ my @speciesList = ();
 my @uniprotList = ();
 my %hive_params ;
 my %conservation_score_params;
+my %engine_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -26,6 +27,9 @@ my $alignment_params;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor, $ensembl_genomes);
 my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
+
+#list of compara tables to be changed to InnoDB
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -78,6 +82,8 @@ if (%hive_params) {
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('name', $hive_params{'name'});
   }
 }
+
+$self->set_storage_engine();
 
 #load analysis_data
 $self->prepareLowCoverageAlignerSystem;
@@ -149,6 +155,9 @@ sub parse_conf {
 	    } 
 	    elsif($type eq 'SET_INTERNAL_IDS') {
 		$self->{'set_internal_ids'} = 1;
+	    }
+	    elsif($type eq 'ENGINE') {
+		%engine_params = %{$confPtr};
 	    }
 	}
     }
@@ -291,6 +300,41 @@ sub submitGenome
     $sth->finish();
     print("done SQL\n") if($verbose);
   };
+}
+
+#####################################################################
+##
+## set_storage_engine
+##
+#####################################################################
+
+sub set_storage_engine {
+    my ($self) = @_;
+
+    if (%engine_params) {
+	if (defined ($engine_params{'dna_pipeline'}) && $engine_params{'dna_pipeline'} ne "") {
+	    #Change tables to ENGINE
+	    my $engine = $engine_params{'dna_pipeline'};
+	    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+		print "engine2 $engine\n";
+		die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	    }
+	    foreach my $table (@dna_pipeline_tables) {
+		my $sql = "ALTER TABLE $table ENGINE=$engine";
+		$self->{'hiveDBA'}->dbc->do($sql);
+	    }
+	}
+	#defined individual tables
+	foreach my $table (keys %engine_params) {
+	    next if ($table eq 'dna_pipeline' || $table eq "" || $table eq "TYPE");
+	    my $engine = $engine_params{$table};
+	    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+		die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	    }
+	    my $sql = "ALTER TABLE $table ENGINE=$engine";
+	    $self->{'hiveDBA'}->dbc->do($sql);
+	}
+    }
 }
 
 #

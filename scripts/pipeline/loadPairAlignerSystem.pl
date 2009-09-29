@@ -30,8 +30,12 @@ GetOptions('help'     => \$help,
 if ($help) { usage(); }
 
 my %hive_params;
+my %engine_params;
 my %compara_conf;
 $compara_conf{'-port'} = 3306;
+
+#list of compara tables to be changed to InnoDB
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -54,6 +58,29 @@ if(%hive_params) {
   }
 }
 
+if (%engine_params) {
+    if (defined ($engine_params{'dna_pipeline'}) && $engine_params{'dna_pipeline'} ne "") {
+	#Change tables to ENGINE
+	my $engine = $engine_params{'dna_pipeline'};
+	if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+	    die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	}
+	foreach my $table (@dna_pipeline_tables) {
+	    my $sql = "ALTER TABLE $table ENGINE=$engine";
+	    $self->{'hiveDBA'}->dbc->do($sql);
+	}
+    }
+    #defined individual tables
+    foreach my $table (keys %engine_params) {
+	next if ($table eq 'dna_pipeline' || $table eq "" || $table eq "TYPE");
+	my $engine = $engine_params{$table};
+	if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+	    die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	}
+	my $sql = "ALTER TABLE $table ENGINE=$engine";
+	$self->{'hiveDBA'}->dbc->do($sql);
+    }
+}
 
 $self->preparePairAlignerSystem;
 
@@ -114,7 +141,9 @@ sub parse_conf {
       }
       elsif($type eq 'DNA_COLLECTION') {
         push @{$self->{'dna_collection_conf_list'}} , $confPtr;
-      }
+    } elsif($type eq 'ENGINE') {
+	%engine_params = %{$confPtr};
+    }
     }
   }
 }
