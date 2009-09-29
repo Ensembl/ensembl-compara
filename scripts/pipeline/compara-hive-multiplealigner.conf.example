@@ -15,6 +15,14 @@
    # name is used to make this pipeline independent from other ones
  },
 
+  #Change the default ENGINE. If dna_pipeline is defined, change a set of 
+  #tables (as defined in loadMultipleAlignerSystem.pl). Can define individual 
+  #tables. 
+  { TYPE => ENGINE,
+    'dna_pipeline' => 'InnoDB',
+  },
+
+
  { TYPE => MEMBER_LOADING,
    'exon_min_length' => 20
  },

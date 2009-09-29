@@ -12,7 +12,15 @@
     'name'  => "EPO_31way",
 #    'hive_output_dir' => "/lustre/scratch1/ensembl/kb3/hive/release_53/kb3_epo_31way_53/workers"
   },
- { TYPE => CONSERVATION_SCORE,
+
+  #Change the default ENGINE. If dna_pipeline is defined, change a set of 
+  #tables (as defined in loadLowCoverageAlignerSystem.pl). Can define 
+  #individual tables 
+  { TYPE => ENGINE,
+    'dna_pipeline' => 'InnoDB',
+  },
+
+  { TYPE => CONSERVATION_SCORE,
    'tree_file' => '/lustre/work1/ensembl/kb3/hive/release_53/kb3_epo_31way_53/31vert.nw',
    'method_links' => [[11, 'GERP_CONSTRAINED_ELEMENT'],
                       [501, 'GERP_CONSERVATION_SCORE']], 

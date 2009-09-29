@@ -23,6 +23,7 @@ my %synteny_map_builder_params;
 my $multiple_aligner_params;
 my %conservation_score_params;
 my %healthcheck_conf;
+my %engine_params;
 
 my %compara_conf = ();
 #$compara_conf{'-user'} = 'ensadmin';
@@ -30,6 +31,10 @@ $compara_conf{'-port'} = 3306;
 
 my ($help, $host, $user, $pass, $dbname, $port, $compara_conf, $adaptor);
 my ($subset_id, $genome_db_id, $prefix, $fastadir, $verbose);
+
+#list of compara tables to be changed to InnoDB
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
+
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -72,6 +77,9 @@ $self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $s
 
 $self->set_hive_metadata();
 
+$self->set_storage_engine();
+
+
 $self->setup_pipeline();
 
 exit(0);
@@ -84,10 +92,10 @@ exit(0);
 #######################
 
 sub usage {
-  print "loadHomologySystem.pl [options]\n";
+  print "loadMultipleAlignerSystem.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
-  print "loadHomologySystem.pl v1.0\n";
+  print "loadMultipleAlignerSystem.pl v1.0\n";
   
   exit(1);  
 }
@@ -144,6 +152,9 @@ sub parse_conf {
       elsif($type eq 'HEALTHCHECKS') {
 	  %healthcheck_conf = %{$confPtr};
       }
+      elsif($type eq 'ENGINE') {
+	  %engine_params = %{$confPtr};
+      }
     }
   }
 }
@@ -170,6 +181,40 @@ sub set_hive_metadata {
       $self->{'comparaDBA'}->get_MetaContainer->store_key_value('name', $hive_params{'name'});
     }
   }
+}
+#####################################################################
+##
+## set_storage_engine
+##
+#####################################################################
+
+sub set_storage_engine {
+    my ($self) = @_;
+
+    if (%engine_params) {
+	if (defined ($engine_params{'dna_pipeline'}) && $engine_params{'dna_pipeline'} ne "") {
+	    #Change tables to ENGINE
+	    my $engine = $engine_params{'dna_pipeline'};
+	    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+		print "engine2 $engine\n";
+		die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	    }
+	    foreach my $table (@dna_pipeline_tables) {
+		my $sql = "ALTER TABLE $table ENGINE=$engine";
+		$self->{'hiveDBA'}->dbc->do($sql);
+	    }
+	}
+	#defined individual tables
+	foreach my $table (keys %engine_params) {
+	    next if ($table eq 'dna_pipeline' || $table eq "" || $table eq "TYPE");
+	    my $engine = $engine_params{$table};
+	    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+		die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	    }
+	    my $sql = "ALTER TABLE $table ENGINE=$engine";
+	    $self->{'hiveDBA'}->dbc->do($sql);
+	}
+    }
 }
 
 

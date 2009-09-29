@@ -103,5 +103,12 @@
     'reference_collection_name'  => 'human chr17',
   },
 
+
+  #Change the default ENGINE. Can define individual tables or if dna_pipeline 
+  #is defined, change a set of tables (as defined in loadPairAlignerSystem.pl). 
+  { TYPE => ENGINE,
+    'dna_pipeline' => 'InnoDB',
+  },
+
   { TYPE => END }
 ]
