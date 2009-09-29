@@ -50,6 +50,8 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
+#comment out to use default faToNib
+my $BIN_DIR = "/software/ensembl/compara/bin";
 
 =head2 fetch_input
 
@@ -198,10 +200,13 @@ sub dumpNibFiles {
       #use this version to solve problem of very large chromosomes eg opossum
       $dna_object->dump_chunks_to_fasta_file($fastafile);
 
-      system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      if (defined $BIN_DIR) {
+	  #use newer version
+	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      } else {
+	  system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      }
 
-      #hack to use newer version of faToNib to dump larger fa files eg cow Un.fa
-      #system("/nfs/team71/phd/klh/progs/kent/bin/i386_64/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
       unlink $fastafile;
       $dna_object = undef;
     }

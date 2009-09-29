@@ -44,6 +44,8 @@ our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
+#comment out to use default faToNib
+my $BIN_DIR = "/software/ensembl/compara/bin";
 
 =head2 fetch_input
 
@@ -160,7 +162,11 @@ sub dumpNibFiles {
 
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
-      system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      if (defined $BIN_DIR) {
+	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      } else {
+	  system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+  }
       unlink $fastafile;
       $dna_object = undef;
     }
