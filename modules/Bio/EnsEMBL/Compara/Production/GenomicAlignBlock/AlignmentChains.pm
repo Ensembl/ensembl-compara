@@ -46,7 +46,12 @@ use Bio::EnsEMBL::DnaDnaAlignFeature;
 our @ISA = qw(Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentProcessing);
 
 my $WORKDIR; # global variable holding the path to the working directory where output will be written
-my $BIN_DIR = "/usr/local/ensembl/bin";
+
+#my $BIN_DIR = "/usr/local/ensembl/bin";
+
+#use newer version
+my $BIN_DIR = "/software/ensembl/compara/bin";
+
 
 ############################################################
 
@@ -77,9 +82,12 @@ sub get_params {
   if(defined($params->{'target_nib_dir'})) {
     $self->TARGET_NIB_DIR($params->{'target_nib_dir'});
   }
-	if(defined($params->{'bin_dir'})) {
-		$self->BIN_DIR($params->{'bin_dir'});
-	}
+  if(defined($params->{'bin_dir'})) {
+      $self->BIN_DIR($params->{'bin_dir'});
+  }
+  if(defined($params->{'linear_gap'})) {
+      $self->linear_gap($params->{'linear_gap'});
+  }
 
   return 1;
 }
@@ -204,7 +212,8 @@ sub fetch_input {
                     -query_nib_dir        => undef,
                     -target_nib_dir       => undef,
                     -features             => $features,
-                    -workdir              => $WORKDIR);
+                    -workdir              => $WORKDIR,
+		    -linear_gap           => $self->linear_gap);
   
   if ($self->QUERY_NIB_DIR and
       -d $self->QUERY_NIB_DIR and
@@ -217,13 +226,13 @@ sub fetch_input {
     $parameters{-target_nib_dir} = $self->TARGET_NIB_DIR;
   }
 
-
   foreach my $program (qw(faToNib lavToAxt axtChain)) {
     $parameters{'-' . $program} = $self->BIN_DIR . "/" . $program;
   }
-  
+
   my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
   $self->runnable($runnable);
+
 }
 
 sub write_output {
@@ -233,6 +242,7 @@ sub write_output {
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   $self->SUPER::write_output;
   $self->compara_dba->dbc->disconnect_when_inactive($disconnect_when_inactive_default);
+
 }
 
 
@@ -278,9 +288,20 @@ sub TARGET_NIB_DIR {
 }
 
 sub BIN_DIR {
-	my ($self, $val) = @_;
-	$self->{_bin_dir} = $val if defined $val;
-	return $self->{_bin_dir} || $BIN_DIR;
+    my ($self, $val) = @_;
+    $self->{_bin_dir} = $val if defined $val;
+    return $self->{_bin_dir} || $BIN_DIR;
 }
+
+sub linear_gap {
+  my ($self, $dir) = @_;
+
+  if (defined $dir) {
+    $self->{_linear_gap} = $dir;
+  }
+
+  return $self->{_linear_gap};
+}
+
 
 1;
