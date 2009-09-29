@@ -51,6 +51,7 @@ sub new {
       $target_slices,
       $target_nib_dir,
       $min_chain_score,
+      $linear_gap,
       $fa_to_nib,
       $lav_to_axt,
       $axt_chain,
@@ -61,6 +62,7 @@ sub new {
                         TARGET_SLICES
                         TARGET_NIB_DIR
                         MIN_CHAIN_SCORE
+                        LINEAR_GAP
                         FATONIB
                         LAVTOAXT
                         AXTCHAIN
@@ -84,8 +86,9 @@ sub new {
   $self->query_slice($query_slice);
   $self->target_slices($target_slices);
   $self->min_chain_score($min_chain_score) if defined $min_chain_score;
+  $self->linear_gap($linear_gap) if defined $linear_gap;
   $self->features($features);
-  
+
   return $self;
 }
 
@@ -199,8 +202,22 @@ sub run {
     $min_parameter .= 1000;
   }
 
-  system($self->axtChain, $min_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
+  #need to specify linearGap for axtChain
+  my $linearGap_parameter = "-linearGap=";
+
+  if (defined $self->linear_gap) {
+    $linearGap_parameter .= $self->linear_gap;
+  } else {
+    # default to medium
+    $linearGap_parameter .= "medium";
+  }
+
+  system($self->axtChain, $min_parameter, $linearGap_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
         and throw("Something went wrong with axtChain\n");
+
+#  system($self->axtChain, $min_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
+#        and throw("Something went wrong with axtChain\n");
+
   unlink $axt_file;
 
   ##################################
@@ -476,6 +493,20 @@ sub min_chain_score {
     return undef;
   } else {
     return $self->{_min_chain_score};
+  }
+}
+
+sub linear_gap {
+  my ($self, $val) = @_;
+
+  if (defined $val) {
+    $self->{_linear_gap} = $val;
+  }
+
+  if (not exists $self->{_linear_gap}) {
+    return undef;
+  } else {
+    return $self->{_linear_gap};
   }
 }
 
