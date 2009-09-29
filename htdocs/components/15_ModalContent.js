@@ -55,7 +55,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         if (e.status != 500 && failures < 3) {
           setTimeout(function () { myself.getContent(link, url, ++failures); }, 2000);
         } else {
-          myself.elLk.content.html('<p class="ajax_error">Failure: The resource failed to load');
+          myself.elLk.content.html('<p class="ajax_error">Failure: The resource failed to load</p>');
         }
       }
     });

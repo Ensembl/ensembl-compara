@@ -5,7 +5,8 @@
 .modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px 2px 0 2px; color: [[PANEL_BG]]; font-weight: bold; clear: both }
 
 .modal_caption { float: left }
-.modal_content { overflow:scroll; height: 100%; }
+.modal_content { overflow: scroll; height: 100%; width: 100%; position: absolute; }
+.modal_content .panel { margin-left: 17.75em; }
 
 .modal_title ul { margin: 0; padding: 0 }
 .modal_title li { list-style: none; padding: 0 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
@@ -16,11 +17,11 @@
 .modal_title li.active a { color:[[PAGE_TEXT]]; }
 .modal_title li.ui-tabs-selected a { color:[[PAGE_TEXT]]; }
 
-.local_modal { width: 14em; margin:0 0.25em; position: absolute; top: 2em; left: 0; border: 1px solid #ccc; padding: 0; background-color: [[PANEL_BG]]; overflow: hidden }
+.local_modal { width: 17em; margin: 0.25em 0.25em 0; position: absolute; left: 0; border: 1px solid #ccc; padding: 0; background-color: [[PANEL_BG]]; overflow: hidden }
 .local_modal dt { font-weight: bold }
-.local_modal dd { margin-left:0; margin-bottom: 0; white-space: nowrap }
+.local_modal dd { margin-left: 0; margin-bottom: 0; white-space: nowrap }
 .local_modal dd dl { border: 0; padding: 0 0 0 14px }
-.local_modal dd img { height: 14px; width: 14px; border: 0; vertical-align: top; padding-right: 5px } /* #nav dd img */
+.local_modal dd img { height: 14px; width: 14px; border: 0; vertical-align: top; padding-right: 5px }
 .local_modal ul { margin: 0 0 0.5em 0; border: 1px solid #ccc; padding: 0.2em 0 0 1.5em; background-color: [[PANEL_BG]] }
 .local_modal ul li { margin-bottom:0; list-style-image :none; color: #933; }
 .local_modal span.fake_link , dl.local_modal a { color: #369; text-decoration: none; }
@@ -29,6 +30,4 @@
 
 .modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]] !important; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
 
-.modal_title .modal_close { float:right; margin:0;padding:0; width: 10em; text-align: center; }
-
-.ui-tabs-hide { display: none; }
+.modal_title .modal_close { float: right; margin: 0; padding: 0; width: 10em; text-align: center; }

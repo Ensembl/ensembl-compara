@@ -82,7 +82,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
               }
             },
             error: function (e) {
-              content.html('<p class="ajax_error">Failure: the resource "' + component + '" failed to load');
+              content.html('<p class="ajax_error">Failure: the resource "' + component + '" failed to load</p>');
             },
             complete: function () {
               content = null;
