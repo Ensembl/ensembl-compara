@@ -93,7 +93,7 @@ CREATE TABLE dnafrag_chunk (
   PRIMARY KEY (dnafrag_chunk_id),
   UNIQUE KEY uniq_chunk (dnafrag_id, seq_start, seq_end, masking_analysis_data_id),
   KEY (sequence_id)
-);
+) ENGINE=InnoDB;
 
 
 ------------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ CREATE TABLE dnafrag_chunk_set (
  dnafrag_chunk_id   int(10) NOT NULL,
 
  UNIQUE(subset_id, dnafrag_chunk_id)
-);
+) ENGINE=InnoDB;
 
 
 ------------------------------------------------------------------------------------
