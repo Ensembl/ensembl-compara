@@ -75,7 +75,8 @@
     'non_reference_collection_name' => 'rat for chain',
               
     'max_gap' => 50,
-    'output_group_type' => 'chain'
+    'output_group_type' => 'chain',
+    'linear_gap' => 'medium' #can be medium, loose or filename. See axtChain for details
   },
 
   { TYPE => NET_CONFIG,

@@ -247,6 +247,13 @@ sub prepareChainSystem
   # AlignmentChains Analysis
   #
   my $max_gap = $chainConf->{'max_gap'};
+  my $linear_gap = $chainConf->{'linear_gap'};
+
+  #set default to medium if not defined.
+  if (!defined $linear_gap) {
+      $linear_gap = "medium";
+  }
+
   my $group_type = $chainConf->{'output_group_type'};
   $group_type = "chain" unless (defined $group_type);
 
@@ -254,6 +261,7 @@ sub prepareChainSystem
 		'input_method_link', $input_method_link_type,
 		'output_method_link', $output_method_link_type,
 		'max_gap', $max_gap,
+		'linear_gap', $linear_gap,
 		'output_group_type', $group_type
 	);
 	push(@parameters_array, ('bin_dir', $chainConf->{'bin_dir'})) if defined $chainConf->{'bin_dir'};
