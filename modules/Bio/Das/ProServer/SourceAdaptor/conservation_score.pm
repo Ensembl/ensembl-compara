@@ -103,24 +103,31 @@ sub init
         Bio::EnsEMBL::Registry->load_all($registry);
     }
 
+}
+
+sub build_features
+{
+    my ($self, $opts) = @_;
+
     my $db      = "Bio::EnsEMBL::Registry";
     $db->no_version_check(1);
     my $dbname  = $self->config()->{'database'};
 
-    $self->{'compara'}{'meta_con'} =
+    #need to put adaptors here and not in init 
+    my $meta_con =
         $db->get_adaptor($dbname, 'compara', 'MetaContainer') or
             die "no metadbadaptor:$dbname, 'compara','MetaContainer' \n";
 
-    $self->{'compara'}{'mlss_adaptor'} =
+    my $mlss_adaptor =
         $db->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet') or
             die "can't get $dbname, 'compara', 'MethodLinkSpeciesSet'\n";
 
-    $self->{'compara'}{'cs_adaptor'} =
+    my $cs_adaptor =
         $db->get_adaptor($dbname, 'compara', 'ConservationScore') or
             die "can't get $dbname, 'compara', 'ConservationScore'\n";
 
     my $species  = $self->config()->{'this_species'};
-    $self->{'compara'}{'slice_adaptor'} =
+    my $slice_adaptor =
         $db->get_adaptor($species, 'core', 'Slice') or
             die "can't get $species, 'core', 'Slice'\n";  
 
@@ -128,12 +135,7 @@ sub init
         $db->get_adaptor($dbname, 'compara', 'GenomeDB') or
             die "can't get $dbname, 'compara', 'GenomeDB'\n";
 
-    $self->{'compara'}{'genomedbs'} = $genome_db_adaptor->fetch_all();
-}
-
-sub build_features
-{
-    my ($self, $opts) = @_;
+    my $genomedbs = $genome_db_adaptor->fetch_all();
 
     my $daschr      = $opts->{'segment'} || return ( );
     my $dasstart    = $opts->{'start'} || return ( );
@@ -147,8 +149,6 @@ sub build_features
 
     my $method_link = $self->config()->{'analysis'};
 
-    my $meta_con    = $self->{'compara'}{'meta_con'};
-
     my $stored_max_alignment_length;
 
     my $values = $meta_con->list_value_by_key("max_alignment_length");
@@ -157,11 +157,6 @@ sub build_features
         $stored_max_alignment_length = $values->[0];
     }
 
-    my $mlss_adaptor                = $self->{'compara'}{'mlss_adaptor'};
-    my $cs_adaptor                  = $self->{'compara'}{'cs_adaptor'};
-    my $slice_adaptor               = $self->{'compara'}{'slice_adaptor'};
-
-    my $genomedbs = $self->{'compara'}{'genomedbs'};
     my $species1_genome_db;
     my @other_species_genome_dbs;
 
@@ -207,15 +202,24 @@ sub build_features
 
     foreach my $score (@$conservation_scores) {
 
-	my $id = $score->genomic_align_block_id;
+	unless (defined $score->diff_score) {
+	    next;
+	}
+
+	#my $id = $score->genomic_align_block_id;
+
+	my $id = $score->genomic_align_block_id ."_" . $score->position;
 	my $label = "Conservation scores";
+
 	# note will contain expected and observed scores and window size 
-	my $note = sprintf("Expected %.3f Observed %.3f Window Size %d Max", $score->expected_score, $score->observed_score, $score->window_size); 
+	my $note = sprintf("Expected %.3f Observed %.3f Diff %.3f Window Size %d Max", $score->expected_score, $score->observed_score, $score->diff_score, $score->window_size); 
 
-	my $start_pos = $start1 + $score->position;
-	my $end_pos = $start1 + $score->position + $score->window_size;
+	#my $start_pos = $start1 + $score->position;
+	#my $end_pos = $start1 + $score->position + $score->window_size;
+	my $start_pos = $start1 + $score->position - 1;
+	my $end_pos = $start_pos + $score->window_size - 1;
 
-	my $new_score = $score->diff_score();
+	my $new_score = $score->diff_score()*-1;
 	push @results, {
 	    'id'    => $id,
 	    'label' => $label,
@@ -226,7 +230,7 @@ sub build_features
 	    'score' => $new_score,
 	    'note'  => $note,
 	    'typecategory' => 'Conservation scores',
-	    'type'  => 'Compara'
+	    'type'  => 'histogram'
 	    };
     }
 
@@ -241,15 +245,16 @@ sub das_stylesheet
 <!DOCTYPE DASSTYLE SYSTEM "http://www.biodas.org/dtd/dasstyle.dtd">
 <DASSTYLE>
     <STYLESHEET version="1.0">
-        <CATEGORY id="Whole genome alignment">
-            <TYPE id="Compara">
-                <GLYPH>
-                    <BOX>
-                        <FGCOLOR>blue</FGCOLOR>
-                        <BGCOLOR>aquamarine2</BGCOLOR>
-                    </BOX>
-                </GLYPH>
-            </TYPE>
+        <CATEGORY id="Conservation scores">
+           <TYPE id="histogram"><GLYPH><HISTOGRAM>
+              <MIN>-3</MIN>
+              <MAX>3</MAX>
+              <HEIGHT>100</HEIGHT>
+              <STEPS>50</STEPS>
+              <COLOR1>red</COLOR1>
+              <COLOR2>yellow</COLOR2>
+              <COLOR3>blue</COLOR3>
+            </HISTOGRAM></GLYPH></TYPE>
         </CATEGORY>
     </STYLESHEET>
 </DASSTYLE>
