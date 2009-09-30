@@ -952,7 +952,7 @@ sub ajax_zmenu_variation {
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor();
   my $v_id = $obj->param('v');
   my $var = $var_adaptor->fetch_by_name($v_id);
-  my @vf = @{$var_feat_adaptor->fetch_all_by_Variation($var)};
+  my @vf = @{$var_feat_adaptor->fetch_all_by_Variation($var)}; 
   my $feature;
   if ( scalar @vf == 1) { $feature = $vf[0];}
   else { 
@@ -979,10 +979,10 @@ sub ajax_zmenu_variation {
 
   
   my $type;
-  if ($obj->param('snp_fake') && $feature) { $type = $feature->display_consequence; }
+  if ( ($obj->param('snp_fake') || $obj->param('var_box')) && $feature) { $type = $feature->display_consequence; }
   elsif ($trans_variation){ $type =  join ", ", @{$trans_variation->consequence_type || [] };}
   elsif ($obj->param('consequence')){$type = $obj->param('consequence') || '';}
-  else  { $type = $feature->display_consequence; }
+  else  { $type = $feature->display_consequence; };
 
   my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name, 'vf' => $feature->dbID, 'source' => $feature->source }); 
 
