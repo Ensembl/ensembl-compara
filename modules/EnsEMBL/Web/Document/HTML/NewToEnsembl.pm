@@ -23,26 +23,28 @@ srand;
 
 sub render {
   my $self  = shift;
-  ## Ensembl twitter feet (twitter.com/ensembl)
+  my $sd = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
 
-  my $html = '<h2 class="first">New to Ensembl?</h2>'; 
+  my $sitename = $sd->ENSEMBL_SITETYPE;
+  my $html = '<h2 class="first">New to '.$sitename.'?</h2>'; 
   my @generic_images = qw(new data help);
 
+  ## Ensembl twitter feed (twitter.com/ensembl_tips)
   my $tweets = $MEMD && $MEMD->get('::TWEETS') || [];
   
   ## Check the cache, then fetch new tweets
   unless (@$tweets) {
-    my $username = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_USER;
-    my $password = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_PASS;
-    my $since_id = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TWITTER_SINCE_ID;
+    my $username = $sd->ENSEMBL_TWITTER_USER;
+    my $password = $sd->ENSEMBL_TWITTER_PASS;
+    my $since_id = $sd->ENSEMBL_TWITTER_SINCE_ID;
 
-    my @species = map { local $_ = $_; s/_/ /g; $_ } $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->valid_species;
+    my @species = map { local $_ = $_; s/_/ /g; $_ } $sd->valid_species;
     my $regex = join('|', @species);
 
     if ($username && $password) {
       ## Fetch our own Twitter feed
       my $ua = new LWP::UserAgent;
-      my $proxy = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
+      my $proxy = $sd->ENSEMBL_WWW_PROXY;
       $ua->proxy( 'http', $proxy ) if $proxy;
       $ua->credentials('twitter.com:80', 'Twitter API', $username, $password);
 
@@ -105,27 +107,41 @@ Did you know you can:
 
 <dl>
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/website/tutorials/">Learn how to use Ensembl</a></dt>
+<a href="/info/website/tutorials/">Learn how to use $sitename</a></dt>
 <dd>with our video tutorials and walk-throughs</dd>
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
 <a href="/info/website/help/control_panel.html#cp-panel">Add custom tracks</a></dt>
 <dd>using our new Control Panel</dd>
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
 <a href="/info/website/help/control_panel.html#cp-data">Upload your own data</a></dt>
-<dd>and save it to your Ensembl account</dd>
+);
+  if ($sd->ENSEMBL_LOGINS) {
+    $html .= qq(<dd>and save it to your $sitename account</dd>);
+  }
+  else {
+    $html .= qq(<dd>and display it alongside $sitename data</dd>);
+  }
+  if ($sd->ENSEMBL_BLAST_ENABLED) {
+    $html .= qq(
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
 <a href="/Multi/blastview">Search for a DNA or protein sequence</a></dt>
-<dd>using BLAST or BLAT</dd>
+<dd>using BLAST or BLAT</dd>);
+  }
+  $html .= qq(
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
 <a href="/info/data/api.html">Fetch only the data you want</a></dt>
-<dd>from our public database, using the Ensembl Perl API</dd>
+<dd>from our public database, using the Perl API</dd>
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
 <a href="/info/data/ftp/">Download our databases via FTP</a></dt>
 <dd>in FASTA, MySQL and other formats</dd>
-<dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/biomart/martview">Mine Ensembl with BioMart</a></dt>
+);
+  if ($sd->ENSEMBL_MART_ENABLED != 0) {
+    $html .= qq(<dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
+<a href="/biomart/martview">Mine $sitename with BioMart</a></dt>
 <dd>and export sequences or tables in text, html, or Excel format</dd>
-</dl>
+);
+  }
+  $html .= qq(</dl>
 
 <p>Still got questions? <a href="/Help/Faq" class="popup">Try our FAQs</a></p>
   );
