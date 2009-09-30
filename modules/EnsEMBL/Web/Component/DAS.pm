@@ -43,13 +43,23 @@ sub types {
 
   foreach my $segment (@{$features || []}) {
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
-      $panel->printf( qq(\n<ERRORSEGMENT id="%s" start="%s" stop="%s" />),
-        $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' );
+      if ($segment->{'START'} && $segment->{'END'}) {
+        $panel->printf( qq(\n<ERRORSEGMENT id="%s" start="%s" stop="%s" />),
+          $segment->{'REGION'}, $segment->{'START'}, $segment->{'STOP'} );
+      }
+      else {
+        $panel->printf( qq(\n<ERRORSEGMENT id="%s" />), $segment->{'REGION'} );
+      }
       next;
     }
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'UNKNOWN') {
-      $panel->printf( qq(\n<UNKNOWNSEGMENT id="%s" start="%s" stop="%s" />),
-        $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' );
+      if ($segment->{'START'} && $segment->{'END'}) {
+        $panel->printf( qq(\n<UNKNOWNSEGMENT id="%s" start="%s" stop="%s" />),
+          $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' );
+      }
+      else {
+        $panel->printf( qq(\n<UNKNOWNSEGMENT id="%s" />), $segment->{'REGION'} );
+      }
       next;
     }
     if( $segment->{'REGION'} ) { 
