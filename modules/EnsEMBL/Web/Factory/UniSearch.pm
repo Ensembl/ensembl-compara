@@ -290,14 +290,14 @@ sub search_SEQUENCE {
 sub search_OLIGOPROBE {
   my $self = shift;
   $self->_fetch_results(
-    [ 'core', 'OligoProbe',
-      "select count(distinct probeset) from oligo_probe where probeset [[COMP]] '[[KEY]]'",
-      "select ap.probeset, group_concat(distinct aa.name order by aa.name separator ' ') from oligo_probe ap, oligo_array as aa
-        where ap.probeset [[COMP]] '[[KEY]]' and ap.oligo_array_id = aa.oligo_array_id group by ap.probeset" ],
+    [ 'funcgen', 'OligoProbe',
+      "select count(distinct name) from probe_set where name [[COMP]] '[[KEY]]'",
+       "select ps.name, group_concat(distinct a.name order by a.name separator ' ') from probe_set ps, array a, array_chip ac, probe p
+     where ps.name [[COMP]] '[[KEY]]' AND a.array_id = ac.array_id AND ac.array_chip_id = p.array_chip_id AND p.probe_set_id = ps.probe_set_id group by ps.name"],
   );
   foreach ( @{$self->{_results}} ) {
     $_ = {
-      'URL'       => "/@{[$self->species]}/featureview?type=OligoProbe;id=$_->[0]",
+      'URL'       => "/@{[$self->species]}/Location/Genome?ftype=OligoProbe;id=$_->[0]",
       'idx'       => 'OligoProbe',
       'subtype'   => 'OligoProbe',
       'ID'        => $_->[0],
