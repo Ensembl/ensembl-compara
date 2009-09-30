@@ -7,7 +7,7 @@ use warnings;
 
 use LWP::UserAgent;
 use HTTP::Request;
-use XML::Simple;
+use XML::Simple qw(:strict);;
 use Data::Dumper;
 
 use EnsEMBL::Web::RegObj;
@@ -58,10 +58,8 @@ sub render {
       my $tweet;
 
       ## Parse feed
-      if ($response->is_success) {
-        my $xml = $parser->XMLin($response->content);        
-        my $update = $xml->{'status'};
-        while (my ($id, $details) = each (%$update)) {
+      if ($response->is_success && (my $xml = $parser->XMLin($response->content, ForceArray => [qw(status)], KeyAttr => []))) {
+        foreach my $details (@{ $xml->{'status'} }) {
           my $tweet = $details->{'text'};
           my $miniad;
           ## Add an image
