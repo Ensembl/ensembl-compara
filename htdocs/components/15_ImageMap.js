@@ -77,12 +77,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             
             Ensembl.images[myself.imageNumber] = Ensembl.images[myself.imageNumber] || {};
             Ensembl.images[myself.imageNumber][speciesNumber] = [ myself.imageNumber, speciesNumber, parseInt(r[5]), parseInt(r[6]) ];
-            
-            myself.prepHighlightImage();
           }
         }
       }
     });
+   
+    if (Ensembl.images.total) {
+      this.prepHighlightImage();
+    }
     
     this.elLk.img.mousedown(function (e) {
       // Only draw the drag box for left clicks.
