@@ -220,6 +220,21 @@ sub fetch_all_by_source_taxon {
 }
 
 
+sub _fetch_all_by_source_taxon_chr_name_start_end_strand {
+  my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand) = @_;
+
+  $self->throw("source_name and taxon_id args are required") 
+    unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand);
+
+#  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
+                    and m.chr_name = \"$chr_name\" 
+                    and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
+                    and m.chr_strand = $chr_strand";
+
+  return $self->_generic_fetch($constraint);
+}
+
 =head2 get_source_taxon_count
 
   Arg [1]    : string $source_name
