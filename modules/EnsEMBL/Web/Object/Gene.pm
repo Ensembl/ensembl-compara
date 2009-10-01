@@ -506,7 +506,7 @@ sub get_all_families {
 }
 
 sub create_family {
-  my ($self, $id) = @_;
+  my ($self, $id) = @_; 
   my $databases = $self->database('compara') ;
   my $family_adaptor;
   eval{ $family_adaptor = $databases->get_FamilyAdaptor };
@@ -1018,18 +1018,24 @@ sub store_TransformedSNPS {
 sub store_TransformedDomains {
   my( $self, $key ) = @_; 
   my %domains;
+  my %seen;
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
-    my $transcript = $trans_obj->Obj;
+    my $transcript = $trans_obj->Obj; 
     next unless $transcript->translation; 
-    foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures($key)} ) {
+    foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures( lc($key) )} ) { 
 ## rach entry is an arry containing the actual pfam hit, and mapped start and end co-ordinates
-      my @A = ($pf);
-      foreach( $transcript->pep2genomic( $pf->start, $pf->end ) ) {
-        my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset; 
-        push @A, $_->start + $O, $_->end + $O;
-      } 
-      push @{$trans_obj->__data->{'transformed'}{lc($key).'_hits'}}, \@A;
+      if (exists $seen{$pf->id}){
+        next; 
+      } else {
+        $seen{$pf->id} = 1; 
+        my @A = ($pf);  
+        foreach( $transcript->pep2genomic( $pf->start, $pf->end ) ) {
+          my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset; 
+          push @A, $_->start + $O, $_->end + $O;
+        } 
+        push @{$trans_obj->__data->{'transformed'}{lc($key).'_hits'}}, \@A;
+      }
     }
   }
 }
