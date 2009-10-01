@@ -1018,17 +1018,17 @@ sub store_TransformedSNPS {
 sub store_TransformedDomains {
   my( $self, $key ) = @_; 
   my %domains;
-  my %seen;
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
+    my %seen;
     my $transcript = $trans_obj->Obj; 
     next unless $transcript->translation; 
     foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures( lc($key) )} ) { 
 ## rach entry is an arry containing the actual pfam hit, and mapped start and end co-ordinates
-      if (exists $seen{$pf->id}){
-        next; 
+      if (exists $seen{$pf->id}{$pf->start}){ 
+        next;
       } else {
-        $seen{$pf->id} = 1; 
+        $seen{$pf->id}->{$pf->start} =1; 
         my @A = ($pf);  
         foreach( $transcript->pep2genomic( $pf->start, $pf->end ) ) {
           my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset; 
