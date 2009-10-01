@@ -75,9 +75,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.baseURL = this.baseURL.replace(/align=\d+;?/, '').replace(/;$/, '') + ';action=primary;id=' + this.multi;
     }
     
-    // Clear secondary regions so all species will be realigned
-    // Do this always (not just in multi species view) because any change in primary species location should result in a new alignment
-    if (!this.multi) {
+    // Clear secondary regions so all species will be realigned - any change in primary species location should result in a new alignment
+    if (this.multi === false) {
       this.baseURL = this.baseURL.replace(/r\d+=[^;]+;?/g, '');
     }
     
@@ -253,12 +252,26 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         url = url.replace(/%s/, this.chr + ':' + start + '-' + end);
       }
       
-      arr = [
-        '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
-        '<a href="' + this.zoomURL(1) + '">Centre here</a>'
-      ];
+      if (this.multi === false) {
+        arr = [
+          '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
+          '<a href="' + this.zoomURL(1) + '">Centre here</a>'
+        ];
       
-      caption = (this.multi === false ? 'Region: ' : this.species.replace(/_/g, ' ') + ' ' + this.chr + ':') + start + '-' + end;
+        caption = 'Region: ' + this.chr + ':' + start + '-' + end;
+      } else {
+        arr = [
+          '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this region (' + (end - start) + ' bp)</a>'
+        ];
+          
+        if (this.multi) {
+          arr.push('<a href="' + url + '">Use region as primary</a>');
+        } else {
+          arr.push('<a href="' + url.replace(/[rg]\d+=[^;]+;?/g, '') + '">Jump to region</a>');
+        }
+      
+        caption = this.species.replace(/_/g, ' ') + ' ' + this.chr + ':' + start + '-' + end;
+      }
     } else {
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
