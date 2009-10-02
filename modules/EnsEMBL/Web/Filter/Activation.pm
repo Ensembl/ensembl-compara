@@ -16,7 +16,7 @@ sub BUILD {
   my ($self, $ident, $args) = @_;
   ## Set the messages hash here
   $self->set_messages({
-    'invalid' => 'Sorry, your activation details could not be validated. Please check your activation link, or <a href="/Help/Contact">contact our Helpdesk</a> for assistance.',
+    'invalid' => 'Sorry, your activation details could not be validated. Please check your activation link, or <a href="/Help/Contact" class="popup">contact our Helpdesk</a> for assistance.',
   });
 }
 
