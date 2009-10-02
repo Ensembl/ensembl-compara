@@ -38,7 +38,9 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
   Arg[2]     : [optional] int clusterset_id (def. 1)
   Example    : $protein_tree = $proteintree_adaptor->fetch_by_Member_root_id($member);
 
-  Description: Fetches from the database the protein_tree that contains the member
+  Description: Fetches from the database the protein_tree that contains the
+               member. If you give it a clusterset id of 0 this will cause
+               the search span across all known clustersets.
   Returntype : Bio::EnsEMBL::Compara::ProteinTree
   Exceptions :
   Caller     :
@@ -47,13 +49,13 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 
 sub fetch_by_Member_root_id {
-  my ($self, $member, $root_id) = @_;
-  $root_id = $root_id || 1;
+  my ($self, $member, $clusterset_id) = @_;
+  $clusterset_id = 1 if ! defined $clusterset_id;
 
   my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
     (
      $member->get_longest_peptide_Member->member_id,
-     $root_id);
+     $clusterset_id);
   return undef unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
   return undef unless (defined $node);
@@ -385,7 +387,7 @@ sub delete_node_and_under {
 sub store_supertree_node_and_under {
   my $self = shift;
   my $node = shift;
-  $DB::single=1;1;
+#  $DB::single=1;1;
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_node like protein_tree_node");
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_member like protein_tree_member");
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_tag like protein_tree_tag");
