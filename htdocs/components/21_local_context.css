@@ -14,4 +14,8 @@
 .local_context dd.active dl { background-color: [[PANEL_BG]] }
 .local_context dd.active dd { font-weight: normal }
 
-#local-tools li.disabled { color:[[PAGE_TEXT]] }
+#local-tools p { background-color:[[BUTTON_BG]]; border:3px double [[PAGE_BG]]; margin:4px 0px; padding:4px; }
+#local-tools p a {color:[[BUTTON_TEXT]];}
+#local-tools p:hover {background-color:[[BUTTON_BG_HOVER]];}
+#local-tools p.disabled { background-color:[[BUTTON_DISABLED]]; color:[[BUTTON_TEXT]]}
+#local-tools p.disabled:hover { background-color:[[BUTTON_DISABLED]];}
