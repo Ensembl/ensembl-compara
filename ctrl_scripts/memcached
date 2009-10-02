@@ -1,0 +1,84 @@
+#!/usr/local/bin/perl
+
+use strict;
+use FindBin qw($Bin);
+use Pod::Usage;
+use Data::Dumper;
+
+BEGIN{
+  unshift @INC, "$Bin/../conf";
+  unshift @INC, "$Bin/../modules";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+
+  eval{ require EnsEMBL::Web::Cache };
+  if ($@){ die "Can't use EnsEMBL::Web::Cache - $@\n"; }
+}
+
+pod2usage if !@ARGV || $ARGV[0] =~ /help/i;
+
+my $MEMD = new EnsEMBL::Web::Cache;
+
+if ($MEMD) {
+  if ($ARGV[0] =~ /(version|check)/i) {
+    if ($MEMD->version_check) {
+      print " all available servers are of correct version\n";
+    } else {
+      print " one or more servers are of incorrect version\n";
+      exit 2;
+    }
+  } if ($ARGV[0] =~ /get/i) {
+    print $MEMD->get($ARGV[1])."\n";
+  } elsif ($ARGV[0] =~ /delete/i) {
+    shift @ARGV;
+    if ($MEMD->delete(@ARGV)) { print "1 item deleted \n"; } else { print "item not found \n"};
+  } elsif ($ARGV[0] =~ /flush[_ ]all/i) {
+    print " Flushing ALL cache:\n";
+    $MEMD->flush_all;
+    print " done\n";
+  } elsif ($ARGV[0] =~ /flush/i) {
+    print " Flushing cache:\n";
+    shift @ARGV;
+    print $MEMD->delete_by_tags(@ARGV) . " cache items deleted\n";
+  } elsif ($ARGV[0] =~ /stats/i) {
+    shift @ARGV;
+    print " Stats:\n";
+    print Dumper($MEMD->stats(@ARGV))."\n";
+  }
+
+} else {
+   print " No memcached server configured or can't connect \n";
+}
+
+__END__
+
+=head1 NAME
+
+memcached - 
+
+=head1 SYNOPSIS
+
+memcached [options] [tags or key]
+
+ Options:
+   check                - checks whether all of your memcached servers alive and compatible
+   version              - same as above
+
+   flush [TAG1 [TAG2]]  - deletes items by tags
+                          use without tags to delete everything for your namespace 
+                          this is useful when memcached servers used by other sites or users
+
+   flush_all            - flushed EVERYTHING from your servers
+                          use this option when you really really want to make sure you cleaned the cache
+                          and when you dont care about other sites or users that might use these memcached servers
+
+   get [KEY]            - prints out contents of your KEY item, if it's there
+   
+   stats                - shows your memecached servers statistics
+
+=head1 DESCRIPTION
+
+B<This program> helps you control your ensembl memcached servers
+
+=cut
