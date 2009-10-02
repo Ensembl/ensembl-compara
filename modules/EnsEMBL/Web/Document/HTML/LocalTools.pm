@@ -28,14 +28,22 @@ sub render {
   my $self = shift;
   return unless @{$self->entries};
   $self->print( q(<div id="local-tools" style="display:none">
-      <ul>) );
+    ) );
+
+  my %icons = (
+    'Configure this page' =>  'config',
+    'Manage your data'    =>  'data',
+    'Export data'         =>  'export',
+    'Bookmark this page'  =>  'bookmark',
+  );
 
   foreach my $link ( @{$self->entries} ) {
+    my $icon = '<img src="/i/'.$icons{$link->{'caption'}}.'.png" alt="" style="vertical-align:middle;padding:0px 4px" />';
     if( $link->{'class'} eq 'disabled' ) {
-      $self->printf('<li class="disabled" title="%s">%s</li>',$link->{'title'},$link->{'caption'});
+      $self->printf('<p class="disabled" title="%s">%s%s</p>',$link->{'title'},$icon,$link->{'caption'});
       next;
     }
-    $self->print('<li><a href="'.$link->{'url'}.'"');
+    $self->print('<p><a href="'.$link->{'url'}.'"');
     my $class = $link->{'class'};
     if( $link->{'type'} eq 'external' ) {
       $class .= ' ' if $class;
@@ -47,11 +55,10 @@ sub render {
     if ($link->{'type'} eq 'external') {
       $self->print(' rel="external"');
     }
-    $self->print('>'.$link->{'caption'}.'</a></li>');
+    $self->print('>'.$icon.$link->{'caption'}.'</a></p>');
   }
 
   $self->print( q(
-      </ul>
       </div>) );
 }
 
