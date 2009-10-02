@@ -113,10 +113,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populate: function (link, extra) {
-    var arr = this.title.split('; ');
-    var caption = arr.shift();
+    var menu = this.title.split('; ');
+    var caption = menu.shift();
     
-    this.buildMenu(arr, caption, link, extra);
+    this.buildMenu(menu, caption, link, extra);
   },
   
   populateDas: function () {
@@ -207,15 +207,40 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateRegion: function () {
     var myself = this;
     
-    var start, end, tmp, href;
-    var arr, caption;
+    var menu, caption, start, end, tmp;
     
     var min = this.start;
     var max = this.end;
     
+    var locationView = !!window.location.pathname.match(/\/Location\//);
     var scale = (max - min + 1) / (this.areaCoords.r - this.areaCoords.l);
     
     var url = this.baseURL;
+    
+    // Gene, transcript views
+    function notLocation() {
+      url = url.replace(/.+\?/, '?');
+      
+      menu = [
+        '<a href="/' + this.species + '/Location/View' + url + '">Jump to location View</a>',
+        '<a href="/' + this.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+      ];
+    }
+    
+    // Multi species view
+    function multi() {
+      var label = start ? 'region' : 'location'
+      
+      menu = [ '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this ' + label + '</a>' ];
+        
+      if (myself.multi) {
+        menu.push('<a href="' + url + '">Use ' + label + ' as primary</a>');
+      } else {
+        menu.push('<a href="' + url.replace(/[rg]\d+=[^;]+;?/g, '') + '">Jump to ' + label + '</a>');
+      }
+    
+      caption = myself.species.replace(/_/g, ' ') + ' ' + myself.chr + ':' + (start ? start + '-' + end : myself.location);
+    }
     
     // Region select
     if (this.coords.r) {
@@ -241,9 +266,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       } else {
         this.location = (2 * this.start + 2 * this.end - start - end) / 2;
         
-        var temp = start;
+        tmp = start;
         start = this.end + this.start - end;
-        end   = this.end + this.start - temp;
+        end   = this.end + this.start - tmp;
       }
       
       if (this.align) {
@@ -252,53 +277,55 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         url = url.replace(/%s/, this.chr + ':' + start + '-' + end);
       }
       
-      if (this.multi === false) {
-        arr = [
+      caption = 'Region: ' + this.chr + ':' + start + '-' + end;
+      
+      if (!locationView) {
+        notLocation();
+      } else if (this.multi !== false) {
+        multi();
+      } else {
+        menu = [
           '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
           '<a href="' + this.zoomURL(1) + '">Centre here</a>'
         ];
-      
-        caption = 'Region: ' + this.chr + ':' + start + '-' + end;
-      } else {
-        arr = [
-          '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this region (' + (end - start) + ' bp)</a>'
-        ];
-          
-        if (this.multi) {
-          arr.push('<a href="' + url + '">Use region as primary</a>');
-        } else {
-          arr.push('<a href="' + url.replace(/[rg]\d+=[^;]+;?/g, '') + '">Jump to region</a>');
-        }
-      
-        caption = this.species.replace(/_/g, ' ') + ' ' + this.chr + ':' + start + '-' + end;
       }
-    } else {
+    } else { // Point select
+      var href;
+      
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
-      arr = [
-        '<a href="' + this.zoomURL(10) + '">Zoom out x10</a>',
-        '<a href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
-        '<a href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
-        '<a href="' + this.zoomURL(1)  + '">Centre here</a>'
-      ];
+      caption = 'Location: ' + this.chr + ':' + this.location;
       
-      // Only add zoom in links if there is space to zoom in to.
-      $.each([2, 5, 10], function () {
-        href = myself.zoomURL(1 / this);
+      url = this.zoomURL(1);
+      
+      if (!locationView) {
+        notLocation();
+      } else if (this.multi !== false) {
+        multi();
+      } else {
+        menu = [
+          '<a href="' + this.zoomURL(10) + '">Zoom out x10</a>',
+          '<a href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
+          '<a href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
+          '<a href="' + url  + '">Centre here</a>'
+        ];
         
-        if (href !== '') {
-          arr.push('<a href="' + href + '">Zoom in x' + this + '</a>');
-        }
-      });
-      
-      caption = (this.multi === false ? 'Location: ' : this.species.replace(/_/g, ' ') + ' ' + this.chr + ':') + this.location;
+        // Only add zoom in links if there is space to zoom in to.
+        $.each([2, 5, 10], function () {
+          href = myself.zoomURL(1 / this);
+          
+          if (href !== '') {
+            menu.push('<a href="' + href + '">Zoom in x' + this + '</a>');
+          }
+        });
+      }
     }
     
-    this.buildMenu(arr, caption);
+    this.buildMenu(menu, caption);
   },
   
   populateVRegion: function () {
-    var start, end, view, arr, caption, tmp, url;
+    var start, end, view, menu, caption, tmp, url;
     
     var min = this.start;
     var max = this.end;
@@ -346,17 +373,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     url = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
     
-    arr = [
+    menu = [
       '<a href="/' + this.species + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
       '<a href="/' + this.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
     ];
     
-    this.buildMenu(arr, caption);
+    this.buildMenu(menu, caption);
   },
   
   buildMenu: function (content, caption, link, extra) {
     var body = '';
-    var arr, title;
+    var menu, title;
     
     caption = caption || 'Menu';
     extra = extra || '';
@@ -367,8 +394,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     $.each(content, function () {
-      arr = this.split(': ');
-      body += '<tr>' + (arr.length == 2 ? '<th>' + arr[0] + '</th><td>' + arr[1] + '</td>' : '<td colspan="2">' + this + '</td>') + '</tr>';
+      menu = this.split(': ');
+      body += '<tr>' + (menu.length == 2 ? '<th>' + menu[0] + '</th><td>' + menu[1] + '</td>' : '<td colspan="2">' + this + '</td>') + '</tr>';
     });
     
     this.populated = true;
