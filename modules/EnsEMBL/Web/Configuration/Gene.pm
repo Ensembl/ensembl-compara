@@ -119,7 +119,7 @@ sub populate_tree {
   );
   $compara_menu->append( $pl_node );
   $pl_node->append( $self->create_subnode(
-    'Compara_Paralog/Alignment', 'Paralog Alignment',
+    'Compara_Paralog/Alignment', 'Paralogue Alignment',
     [qw(alignment EnsEMBL::Web::Component::Gene::HomologAlignment)],
     { 'availability'  => 'gene database:compara core',
       'no_menu_entry' => 1 }
