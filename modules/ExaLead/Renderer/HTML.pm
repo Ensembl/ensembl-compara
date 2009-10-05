@@ -35,6 +35,7 @@ sub render_navigation {
     } elsif( $i < 5 || ($maxpage-$i)<4 || abs($i-$current_page+1)<4 ) {
       my $T = new ExaLead::Link( "_s=".(($i-1)*10), $self->exalead );
       $out .= sprintf( '<a href="%s">%s</a> ', $T->URL, $i );
+      $out =~s/search/Search\/Details/;
     } else {
       $out .= '..';
     }
