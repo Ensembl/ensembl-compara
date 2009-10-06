@@ -1650,14 +1650,14 @@ sub restrict_between_reference_positions {
     warn("restricting outside of boundaries => return undef object: $start-$end (".$reference_genomic_align->dnafrag_start."-".$reference_genomic_align->dnafrag_end.")");
     return wantarray ? (undef, undef, undef) : undef;
   }
-  my $excess_at_the_start = $start - $reference_genomic_align->dnafrag_start;
-  my $excess_at_the_end  = $reference_genomic_align->dnafrag_end - $end;
+  my $number_of_base_pairs_to_trim_from_the_start = $start - $reference_genomic_align->dnafrag_start;
+  my $number_of_base_pairs_to_trim_from_the_end  = $reference_genomic_align->dnafrag_end - $end;
 
   ## Skip if no restriction is needed. Return original object! We are still going on with the
   ## restriction when either excess_at_the_start or excess_at_the_end are 0 as a (multiple)
   ## alignment may start or end with gaps in the reference species. In that case, we want to
   ## trim these gaps from the alignment as they fall just outside of the region of interest
-  if ($excess_at_the_start < 0 and $excess_at_the_end < 0) {
+  if ($number_of_base_pairs_to_trim_from_the_start < 0 and $number_of_base_pairs_to_trim_from_the_end < 0) {
     return wantarray ? ($self, 1, $self->length) : $self;
   }
 
@@ -1672,19 +1672,29 @@ sub restrict_between_reference_positions {
   }
 
   ## Parse start of cigar_line for the reference GenomicAlign
-  my $length_of_truncated_seq_at_the_start = 0; # num. of bp in the alignment to be trimmed
-  if ($excess_at_the_start >= 0) {
-    $length_of_truncated_seq_at_the_start = 0;
-    my $original_seq_length = 0;
-    my $new_cigar_piece = "";
+  my $counter_of_trimmed_columns_from_the_start = 0; # num. of bp in the alignment to be trimmed
+  if ($number_of_base_pairs_to_trim_from_the_start >= 0) {
+    my $counter_of_trimmed_base_pairs = 0; # num of bp in the reference sequence we trim (from the start)
+    ## Loop through the cigar pieces
     while (my $cigar = shift(@reference_cigar)) {
+      # Parse each cigar piece
       my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
       $num = 1 if ($num eq "");
-      $length_of_truncated_seq_at_the_start += $num;
-      if ($type eq "M") {
-        $original_seq_length += $num;
-        if ($original_seq_length > $excess_at_the_start) {
-          my $length = $original_seq_length - $excess_at_the_start;
+
+      # Insertions are not part of the alignment, don't count them
+      if ($type ne "I") {
+        $counter_of_trimmed_columns_from_the_start += $num;
+      }
+
+      # Matches and insertions are actual base pairs in the reference
+      if ($type eq "M" or $type eq "I") {
+        $counter_of_trimmed_base_pairs += $num;
+        # If this cigar piece is too long and we overshoot the number of base pairs we want to trim,
+        # we substitute this cigar piece by a shorter one
+        if ($counter_of_trimmed_base_pairs > $number_of_base_pairs_to_trim_from_the_start) {
+          my $new_cigar_piece = "";
+          # length of the new cigar piece
+          my $length = $counter_of_trimmed_base_pairs - $number_of_base_pairs_to_trim_from_the_start;
           if ($length > 1) {
             $new_cigar_piece = $length.$type;
           } elsif ($length == 1) {
@@ -1692,7 +1702,20 @@ sub restrict_between_reference_positions {
           }
           unshift(@reference_cigar, $new_cigar_piece) if ($new_cigar_piece);
 
-          $length_of_truncated_seq_at_the_start -= ($original_seq_length - $excess_at_the_start);
+          # There is no need to correct the counter of trimmed columns if we are in an insertion
+          # when we overshoot
+          if ($type eq "M") {
+            $counter_of_trimmed_columns_from_the_start -= $length;
+          }
+
+          ## We don't want to start with an insertion or a deletion. Trim them!
+          while (@reference_cigar and $reference_cigar[0] =~ /[DI]/) {
+            my ($num, $type) = ($reference_cigar[0] =~ /^(\d*)([DIGMX])/);
+            $num = 1 if ($num eq "");
+            # only counts deletions, insertions are not part of the aligment
+            $counter_of_trimmed_columns_from_the_start += $num if ($type eq "D");
+            shift(@reference_cigar);
+          }
           last;
         }
       }
@@ -1700,19 +1723,29 @@ sub restrict_between_reference_positions {
   }
 
   ## Parse end of cigar_line for the reference GenomicAlign
-  my $length_of_truncated_seq_at_the_end = 0; # num. of bp in the alignment to be trimmed
-  if ($excess_at_the_end >= 0) {
-    $length_of_truncated_seq_at_the_end = 0;
-    my $original_seq_length = 0;
-    my $new_cigar_piece = "";
+  my $counter_of_trimmed_columns_from_the_end = 0; # num. of bp in the alignment to be trimmed
+  if ($number_of_base_pairs_to_trim_from_the_end >= 0) {
+    my $counter_of_trimmed_base_pairs = 0; # num of bp in the reference sequence we trim (from the end)
+    ## Loop through the cigar pieces
     while (my $cigar = pop(@reference_cigar)) {
+      # Parse each cigar piece
       my ($num, $type) = ($cigar =~ /^(\d*)([DIGMX])/);
       $num = 1 if ($num eq "");
-      $length_of_truncated_seq_at_the_end += $num;
-      if ($type eq "M") {
-        $original_seq_length += $num;
-        if ($original_seq_length > $excess_at_the_end) {
-          my $length = $original_seq_length - $excess_at_the_end;
+
+      # Insertions are not part of the alignment, don't count them
+      if ($type ne "I") {
+        $counter_of_trimmed_columns_from_the_end += $num;
+      }
+
+      # Matches and insertions are actual base pairs in the reference
+      if ($type eq "M" or $type eq "I") {
+        $counter_of_trimmed_base_pairs += $num;
+        # If this cigar piece is too long and we overshoot the number of base pairs we want to trim,
+        # we substitute this cigar piece by a shorter one
+        if ($counter_of_trimmed_base_pairs > $number_of_base_pairs_to_trim_from_the_end) {
+          my $new_cigar_piece = "";
+          # length of the new cigar piece
+          my $length = $counter_of_trimmed_base_pairs - $number_of_base_pairs_to_trim_from_the_end;
           if ($length > 1) {
             $new_cigar_piece = $length.$type;
           } elsif ($length == 1) {
@@ -1720,7 +1753,20 @@ sub restrict_between_reference_positions {
           }
           push(@reference_cigar, $new_cigar_piece) if ($new_cigar_piece);
 
-          $length_of_truncated_seq_at_the_end -= ($original_seq_length - $excess_at_the_end);
+          # There is no need to correct the counter of trimmed columns if we are in an insertion
+          # when we overshoot
+          if ($type eq "M") {
+            $counter_of_trimmed_columns_from_the_end -= $length;
+          }
+
+          ## We don't want to end with an insertion or a deletion. Trim them!
+          while (@reference_cigar and $reference_cigar[-1] =~ /[DI]/) {
+            my ($num, $type) = ($reference_cigar[-1] =~ /^(\d*)([DIGMX])/);
+            $num = 1 if ($num eq "");
+            # only counts deletions, insertions are not part of the aligment
+            $counter_of_trimmed_columns_from_the_end += $num if ($type eq "D");
+            pop(@reference_cigar);
+          }
           last;
         }
       }
@@ -1730,26 +1776,27 @@ sub restrict_between_reference_positions {
   ## Skip if no restriction is needed. Return original object! This may happen when
   ## either excess_at_the_start or excess_at_the_end are 0 but the alignment does not
   ## start or end with gaps in the reference species.
-  if ($length_of_truncated_seq_at_the_start <= 0 and $length_of_truncated_seq_at_the_end <= 0) {
+  if ($counter_of_trimmed_columns_from_the_start <= 0 and $counter_of_trimmed_columns_from_the_end <= 0) {
     return wantarray ? ($self, 1, $self->length) : $self;
   }
 
   my ($aln_start, $aln_end);
   if ($negative_strand) {
-    $aln_start = $length_of_truncated_seq_at_the_end + 1;
-    $aln_end = $self->length - $length_of_truncated_seq_at_the_start;
+    $aln_start = $counter_of_trimmed_columns_from_the_end + 1;
+    $aln_end = $self->length - $counter_of_trimmed_columns_from_the_start;
   } else {
-    $aln_start = $length_of_truncated_seq_at_the_start + 1;
-    $aln_end = $self->length - $length_of_truncated_seq_at_the_end;
+    $aln_start = $counter_of_trimmed_columns_from_the_start + 1;
+    $aln_end = $self->length - $counter_of_trimmed_columns_from_the_end;
   }
+
   $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
   $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
 
-  $genomic_align_block->{'restricted_aln_start'} = $length_of_truncated_seq_at_the_start;
-  $genomic_align_block->{'restricted_aln_end'} = $length_of_truncated_seq_at_the_end;
+  $genomic_align_block->{'restricted_aln_start'} = $counter_of_trimmed_columns_from_the_start;
+  $genomic_align_block->{'restricted_aln_end'} = $counter_of_trimmed_columns_from_the_end;
   $genomic_align_block->{'original_length'} = $self->length;
 
-  #print "length at start $length_of_truncated_seq_at_the_start end $length_of_truncated_seq_at_the_end aln_start $aln_start aln_end $aln_end \n";
+  #print "length at start $counter_of_trimmed_columns_from_the_start end $counter_of_trimmed_columns_from_the_end aln_start $aln_start aln_end $aln_end \n";
 
   if (defined $self->reference_slice) {
     if ($self->reference_slice_strand == 1) {
