@@ -536,7 +536,7 @@ sub get_track_key {
   my $logic_name = $obj->gene ? $obj->gene->analysis->logic_name : $obj->analysis->logic_name;
   my $db         = $obj->get_db();
   my $db_key     = 'DATABASE_'.uc($db);
-  my $key        = $self->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{$logic_name}{'web'}{'key'} || $logic_name;
+  my $key        = $self->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{lc($logic_name)}{'web'}{'key'} || $logic_name;
   return join '_', $prefix, $db, $key;
 }
 
@@ -1528,7 +1528,7 @@ sub add_decorations {
     }));
   }
   if( $key eq 'core' && $hashref->{'misc_feature'}{'sets'}{'NoAnnotation'} ) {
-    $menu->append( $self->create_track( 'annotation_status_'.$key, 'Annotation status',{
+    $menu->append( $self->create_track( 'annotation_status', 'Annotation status',{
       'db'            => $key,
       'glyphset'      => 'annotation_status',
       'height'        => 2,
@@ -1538,7 +1538,7 @@ sub add_decorations {
       'short_labels'  => 0,
       'depth'         => 0,
       'description'   => 'Unannotated regions',
-      'colourset'     => 'annotation_status'
+      'colourset'     => 'annotation_status',
     }));
   }
 }
@@ -1630,17 +1630,18 @@ sub create_submenu {
 
 
 sub create_option {
-  my ($self, $code, $caption, $values, $renderers) = @_;
+  my ($self, $code, $caption, $values, $renderers, $display) = @_;
   
   $values ||= {qw(off 0 normal 1)};
   $renderers ||= [qw(off Off normal On)];
   
-  return $self->tree->create_node( $code, {
+  return $self->tree->create_node($code, {
     'node_type' => 'option',
     'caption'   => $caption,
     'name'      => $caption,
     'values'    => $values,
-    'renderers' => $renderers
+    'renderers' => $renderers,
+    'display'   => $display || 'normal'
   });
 }
 

@@ -225,6 +225,8 @@ sub _global_context {
 sub modal_context {
   my $self = shift;
   
+  return if $self->{'page'}->{'modal_context_called'}++;
+  
   $self->_user_context('modal_context') if $self->{'page'}->{'modal_context'};
 }
 
@@ -982,7 +984,7 @@ sub ajax_zmenu_variation {
   if ( ($obj->param('snp_fake') || $obj->param('var_box')) && $feature) { $type = $feature->display_consequence; }
   elsif ($trans_variation){ $type =  join ", ", @{$trans_variation->consequence_type || [] };}
   elsif ($obj->param('consequence')){$type = $obj->param('consequence') || '';}
-  else  { $type = $feature->display_consequence; };
+  else  { $type = $feature->display_consequence; }
 
   my $var_link = $obj->_url({'type' => 'Variation', 'action' => 'Summary', 'v' => $feature->variation_name, 'vf' => $feature->dbID, 'source' => $feature->source }); 
 
