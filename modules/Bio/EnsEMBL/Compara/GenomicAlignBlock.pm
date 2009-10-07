@@ -1557,16 +1557,17 @@ sub restrict_between_alignment_positions {
   $start = 1 if (!defined($start) or $start < 1);
   $end = $self->length if (!defined($end) or $end > $self->length);
 
-  my $length_of_truncated_seq_at_the_start = $start - 1;
-  my $length_of_truncated_seq_at_the_end = $self->length - $end;
+  my $number_of_columns_to_trim_from_the_start = $start - 1;
+  my $number_of_columns_to_trim_from_the_end = $self->length - $end;
 
   ## Skip if no restriction is needed. Return original object! We are still going on with the
   ## restriction when either excess_at_the_start or excess_at_the_end are 0 as a (multiple)
   ## alignment may start or end with gaps in the reference species. In that case, we want to
   ## trim these gaps from the alignment as they fall just outside of the region of interest
-  return $self if ($length_of_truncated_seq_at_the_start <= 0 and $length_of_truncated_seq_at_the_end <= 0);
+  return $self if ($number_of_columns_to_trim_from_the_start <= 0
+      and $number_of_columns_to_trim_from_the_end <= 0);
 
-  my $final_aligned_length = $end - $start + 1;
+  my $final_alignment_length = $end - $start + 1;
 
   ## Create a new Bio::EnsEMBL::Compara::GenomicAlignBlock object with restricted GenomicAligns
   my $length = $self->{length};
@@ -1589,6 +1590,8 @@ sub restrict_between_alignment_positions {
   }
   $genomic_align_block->reference_slice($self->reference_slice);
 
+  # The restriction might result in empty GenomicAligns. If the
+  # skip_empty_GenomicAligns flag is set, remove them from the block.
   if ($skip_empty_GenomicAligns) {
     my $reference_genomic_align = $genomic_align_block->reference_genomic_align();
     my $genomic_align_array = $genomic_align_block->genomic_align_array;
@@ -1600,7 +1603,7 @@ sub restrict_between_alignment_positions {
     }
     $genomic_align_block->reference_genomic_align($reference_genomic_align) if ($reference_genomic_align);
   }
-  $genomic_align_block->length($final_aligned_length);
+  $genomic_align_block->length($final_alignment_length);
 
   return $genomic_align_block;
 }
