@@ -72,7 +72,7 @@ sub counts {
   return {} unless $obj->isa('Bio::EnsEMBL::Gene');
   
   my $key = "::COUNTS::GENE::$ENV{'ENSEMBL_SPECIES'}::$self->core_objects->{'parameters'}{'db'}::$self->core_objects->{'parameters'}{'g'}::";
-  my $counts = $MEMD->get($key) if $MEMD;
+  my $counts = $MEMD ? $MEMD->get($key) : undef;
   
   if (!$counts) {
     $counts = {

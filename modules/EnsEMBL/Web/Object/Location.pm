@@ -31,24 +31,28 @@ sub _filename {
 
 sub availability {
   my $self = shift;
-  my $hash = $self->_availability;
-  my %chrs = map { $_,1 } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
-  $hash->{'karyotype'}   = 1;
-  $hash->{'chromosome'}  = $chrs{ $self->Obj->{'seq_region_name'} } ? 1 : 0;
-  $hash->{'has_chromosomes'} = @{$self->species_defs->ENSEMBL_CHROMOSOMES || []} ? 1 : 0;
-  $hash->{'has_strains'} = 
-    exists $self->species_defs->databases->{'DATABASE_VARIATION'} &&
-    $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} ? 1 : 0;
-  $hash->{'slice'}       = $self->Obj->{'seq_region_name'} && 
-                           $self->Obj->{'seq_region_name'} ne $self->core_objects->{'parameters'}{'r'} ? 1 : 0;
-  my %synteny_hash = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-  $hash->{'compara_species'} = $self->check_compara_species_and_locations; #vega only, should really go somewhere else
-  $hash->{'has_synteny'} = scalar( keys %{ $synteny_hash{$self->species}||{} } ) ? 1 : 0;
-  $hash->{'has_LD'} =   exists $self->species_defs->databases->{'DATABASE_VARIATION'} && 
-    $self->param('opt_pop') &&
-    $self->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'} ? 1 : 0;
-    my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
-  $hash->{'has_markers'} = $self->table_info( $self->get_db, 'marker_feature' )->{'rows'} ? 1 : 0;
+  
+  my $species_defs    = $self->species_defs;
+  my $variation_db    = $species_defs->databases->{'DATABASE_VARIATION'};
+  my @chromosomes     = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
+  my %chrs            = map { $_, 1 } @chromosomes;
+  my %synteny_hash    = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my $rows            = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+  my $seq_region_name = $self->Obj->{'seq_region_name'};
+  my $counts          = $self->counts;
+  my $hash            = $self->_availability;
+  
+  $hash->{'karyotype'}       = 1;
+  $hash->{'chromosome'}      = exists $chrs{$seq_region_name};
+  $hash->{'has_chromosomes'} = scalar @chromosomes;
+  $hash->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
+  $hash->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
+  $hash->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
+  $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'} && $self->param('opt_pop');
+  $hash->{'has_markers'}     = $self->table_info($self->get_db, 'marker_feature')->{'rows'};
+  $hash->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
+  $hash->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
+  
   return $hash;
 }
 
@@ -59,18 +63,17 @@ sub counts {
   
   my $obj = $self->Obj;
   my $key = "::COUNTS::LOCATION::$ENV{'ENSEMBL_SPECIES'}";
-  my $counts = $MEMD->get($key) if $MEMD;
-  
+  my $counts = $MEMD ? $MEMD->get($key) : undef;
+ 
   if (!$counts) {
-    my $species = $self->species;
     my %synteny = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
     my $alignments = $self->count_alignments;
     
     $counts = {
-      synteny             => scalar keys %{$synteny{$species}||{}},
+      synteny             => scalar keys %{$synteny{$self->species}||{}},
       alignments          => $alignments->{'all'},
       pairwise_alignments => $alignments->{'pairwise'},
-      self_alignments     => $self->count_self_alignments         # vega only, should really go somewhere else
+      self_alignments     => $self->count_self_alignments # vega only, should really go somewhere else
     };
     
     $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
@@ -108,7 +111,7 @@ sub count_self_alignments {
       my $end = $matches->{$other_species}{$alignment}{'source_end'};
       #only create entries for alignments that overlap the current slice
       if ($end > $ps_start && $start < $ps_end) {
-	$matching++;
+        $matching++;
       }
     }
   }
@@ -199,7 +202,7 @@ sub seq_region_length  :lvalue { $_[0]->Obj->{'seq_region_length'};  }
 sub align_species {
     my $self = shift;
     if (my $add_species = shift) {
-	$self->Obj->{'align_species'} = $add_species;
+        $self->Obj->{'align_species'} = $add_species;
     }
     return $self->Obj->{'align_species'};
 }
@@ -399,6 +402,7 @@ sub _create_Gene {
     return {'Gene' => $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db ) };
   }
 }
+
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub _create_RegulatoryFactor {
   my ( $self, $db, $id, $name ) = @_;
@@ -414,8 +418,6 @@ sub _create_RegulatoryFactor {
   }
   my $features;
   my $feats = (); 
-
-
 
   my %fset_types = (
    "cisRED group motif" => "cisRED motifs",
@@ -442,12 +444,12 @@ sub _create_RegulatoryFactor {
       $features= {'RegulatoryFactor' => \@assoc_features};
     } else {
       my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor; 
-      my $ftype = $feat_type_adaptor->fetch_by_name($id); 
+      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
+      my $ftype = $feat_type_adaptor->fetch_by_name($id);
       my @ftypes = ($ftype); 
-      my $type = $ftype->description;  
-      my $fstype = $fset_types{$type}; warn $fstype; 
-      my $fset = $feature_set_adaptor->fetch_by_name($fstype); warn $fset; 
+      my $type = $ftype->description; 
+      my $fstype = $fset_types{$type}; 
+      my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
       my @fsets = ($fstype);
       my $feats = $fset->get_Features_by_FeatureType($ftype);
       $features = {'RegulatoryFactor'=> $feats};
@@ -1229,12 +1231,12 @@ sub current_pop_name {
     foreach( split /\|/, ($self->param('bottom') ) ) {
       next unless $_ =~ /opt_pop_(.*):(.*)/;
       if ($2 eq 'on') {
-	$pops_on{$1} = 1;
-	delete $pops_off{$1};
+        $pops_on{$1} = 1;
+        delete $pops_off{$1};
       }
       elsif ($2 eq 'off') {
-	$pops_off{$1} = 1;
-	delete $pops_on{$1};
+        $pops_off{$1} = 1;
+        delete $pops_on{$1};
       }
     }
     return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
