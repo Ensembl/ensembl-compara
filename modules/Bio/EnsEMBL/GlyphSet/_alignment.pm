@@ -188,14 +188,14 @@ sub render_normal {
     if ($config && $config->{'useScore'} == 2) {
       $cgGrades = $config->{'cgGrades'} || 20;
       $score_per_grade =  ($max_score - $min_score)/ $cgGrades ;
-      my @cgColours = map { $config->{$_} } 
-                      grep { (($_ =~ /^cgColour/) && $config->{$_}) } 
+      my @cgColours = map { $config->{$_} }
+                      grep { (($_ =~ /^cgColour/) && $config->{$_}) }
                       sort keys %$config;
       if (my $ccount = scalar(@cgColours)) {
         if ($ccount == 1) {
           unshift @cgColours, 'white';
         }
-      } 
+      }
       else {
         @cgColours = ('yellow', 'green', 'blue');
       }
@@ -280,8 +280,7 @@ sub render_normal {
             height         => $h, 
             feature_colour => $feature_colour, 
             delete_colour  => 'black', 
-            scalex         => $pix_per_bp, 
-            do_not_flip    => $strand_flag eq 'r'
+            scalex         => $pix_per_bp
           });
         } else {
           my $START = $s < 1 ? 1 : $s;
@@ -423,8 +422,7 @@ sub render_ungrouped {
           height         => $h, 
           feature_colour => $feature_colour, 
           delete_colour  => 'black', 
-          scalex         => $pix_per_bp, 
-          do_not_flip    => $strand_flag eq 'r'
+          scalex         => $pix_per_bp
         });
       } else {
         $self->push($self->Rect({
