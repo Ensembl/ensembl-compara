@@ -2141,7 +2141,7 @@ sub restrict {
   delete($restricted_genomic_align->{cigar_line});
   $restricted_genomic_align->{original_dbID} = $self->dbID if ($self->dbID);
 
-  # Need to calculate the aligned sequence length myself
+  # Need to calculate the original aligned sequence length myself
   if (!$aligned_seq_length) {
     my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
     foreach my $num_type (@cigar) {
@@ -2152,87 +2152,120 @@ sub restrict {
   }
 
   my $final_aligned_length = $end - $start + 1;
-  my $length_of_truncated_seq_at_the_start = $start - 1;
-  my $length_of_truncated_seq_at_the_end = $aligned_seq_length - $end;
-  
-  my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);  
+  my $number_of_columns_to_trim_from_the_start = $start - 1;
+  my $number_of_columns_to_trim_from_the_end = $aligned_seq_length - $end;
+
+  my @cigar = grep {$_} split(/(\d*[GDMXI])/, $self->cigar_line);
 
   ## Trim start of cigar_line if needed
-  if ($length_of_truncated_seq_at_the_start >= 0) {
-    $aligned_seq_length = 0;
-    my $original_seq_length = 0;
-    my $new_cigar_piece = "";
+  if ($number_of_columns_to_trim_from_the_start >= 0) {
+    my $counter_of_trimmed_columns_from_the_start = 0;
+    my $counter_of_trimmed_base_pairs = 0; # num of bp we trim (from the start)
+    ## Loop through the cigar pieces
     while (my $cigar = shift(@cigar)) {
+      # Parse each cigar piece
       my ($num, $type) = ($cigar =~ /^(\d*)([GDMXI])/);
       $num = 1 if ($num eq "");
+
+      # Insertions are not part of the alignment, don't count them
       if ($type ne "I") {
-	  $aligned_seq_length += $num;
+        $counter_of_trimmed_columns_from_the_start += $num;
       }
-      if ($aligned_seq_length >= $length_of_truncated_seq_at_the_start) {
-        my $length = $aligned_seq_length - $length_of_truncated_seq_at_the_start;
+
+      # Matches and insertions are actual base pairs in the sequence
+      if ($type eq "M" || $type eq "I") {
+        $counter_of_trimmed_base_pairs += $num;
+      }
+
+      # If this cigar piece is too long and we overshoot the number of columns we want to trim,
+      # we substitute this cigar piece by a shorter one
+      if ($counter_of_trimmed_columns_from_the_start >= $number_of_columns_to_trim_from_the_start) {
+        my $new_cigar_piece;
+        # length of the new cigar piece
+        my $length = $counter_of_trimmed_columns_from_the_start - $number_of_columns_to_trim_from_the_start;
         if ($length > 1) {
           $new_cigar_piece = $length.$type;
         } elsif ($length == 1) {
           $new_cigar_piece = $type;
         }
         unshift(@cigar, $new_cigar_piece) if ($new_cigar_piece);
-        if ($type eq "M" || $type eq "I") {
-          $original_seq_length += $length_of_truncated_seq_at_the_start - ($aligned_seq_length - $num);
+        if ($type eq "M") {
+          $counter_of_trimmed_base_pairs -= $length;
+        }
+
+        ## We don't want to start with an insertion. Trim it!
+        while (@cigar and $cigar[0] =~ /[I]/) {
+          my ($num, $type) = ($cigar[0] =~ /^(\d*)([DIGMX])/);
+          $num = 1 if ($num eq "");
+          $counter_of_trimmed_base_pairs += $num;
+          shift(@cigar);
         }
         last;
       }
-      $original_seq_length += $num if ($type eq "M" || $type eq "I");
     }
     if ($self->dnafrag_strand == 1) {
-      $restricted_genomic_align->dnafrag_start($self->dnafrag_start + $original_seq_length);
+      $restricted_genomic_align->dnafrag_start($self->dnafrag_start + $counter_of_trimmed_base_pairs);
     } else {
-      $restricted_genomic_align->dnafrag_end($self->dnafrag_end - $original_seq_length);
+      $restricted_genomic_align->dnafrag_end($self->dnafrag_end - $counter_of_trimmed_base_pairs);
     }
   }
 
-  my @final_cigar = ();
-
   ## Trim end of cigar_line if needed
-  if ($length_of_truncated_seq_at_the_end >= 0) {
-    ## Truncate all the GenomicAligns
-    $aligned_seq_length = 0;
-    my $original_seq_length = 0;
-    my $new_cigar_piece = "";
-    while (my $cigar = shift(@cigar)) {
+  if ($number_of_columns_to_trim_from_the_end >= 0) {
+    my $counter_of_trimmed_columns_from_the_end = 0;
+    my $counter_of_trimmed_base_pairs = 0; # num of bp we trim (from the start)
+    ## Loop through the cigar pieces
+    while (my $cigar = pop(@cigar)) {
+      # Parse each cigar piece
       my ($num, $type) = ($cigar =~ /^(\d*)([GDMIX])/);
       $num = 1 if ($num eq "");
+
+      # Insertions are not part of the alignment, don't count them
       if ($type ne "I") {
-	  $aligned_seq_length += $num;
+        $counter_of_trimmed_columns_from_the_end += $num;
       }
-      if ($aligned_seq_length >= $final_aligned_length) {
-        my $length = $num - $aligned_seq_length + $final_aligned_length;
+
+      # Matches and insertions are actual base pairs in the sequence
+      if ($type eq "M" || $type eq "I") {
+        $counter_of_trimmed_base_pairs += $num;
+      }
+
+      # If this cigar piece is too long and we overshoot the number of columns we want to trim,
+      # we substitute this cigar piece by a shorter one
+      if ($counter_of_trimmed_columns_from_the_end >= $number_of_columns_to_trim_from_the_end) {
+        my $new_cigar_piece;
+        # length of the new cigar piece
+        my $length = $counter_of_trimmed_columns_from_the_end - $number_of_columns_to_trim_from_the_end;
         if ($length > 1) {
           $new_cigar_piece = $length.$type;
         } elsif ($length == 1) {
           $new_cigar_piece = $type;
         }
-        push(@final_cigar, $new_cigar_piece) if ($new_cigar_piece);
-        if ($type eq "M" || $type eq "I") {
-          $original_seq_length += $length;
+        push(@cigar, $new_cigar_piece) if ($new_cigar_piece);
+        if ($type eq "M") {
+          $counter_of_trimmed_base_pairs -= $length;
+        }
+
+        ## We don't want to end with an insertion. Trim it!
+        while (@cigar and $cigar[-1] =~ /[I]/) {
+          my ($num, $type) = ($cigar[-1] =~ /^(\d*)([DIGMX])/);
+          $num = 1 if ($num eq "");
+          $counter_of_trimmed_base_pairs += $num;
+          pop(@cigar);
         }
         last;
-      } else {
-        push(@final_cigar, $cigar);
       }
-      $original_seq_length += $num if ($type eq "M" || $type eq "I");
     }
     if ($self->dnafrag_strand == 1) {
-      $restricted_genomic_align->dnafrag_end($restricted_genomic_align->dnafrag_start + $original_seq_length - 1);
+      $restricted_genomic_align->dnafrag_end($restricted_genomic_align->dnafrag_end - $counter_of_trimmed_base_pairs);
     } else {
-      $restricted_genomic_align->dnafrag_start($restricted_genomic_align->dnafrag_end - $original_seq_length + 1);
+      $restricted_genomic_align->dnafrag_start($restricted_genomic_align->dnafrag_start + $counter_of_trimmed_base_pairs);
     }
-  } else {
-    @final_cigar = @cigar;
   }
 
   ## Save genomic_align's cigar_line
   $restricted_genomic_align->aligned_sequence(0);
-  $restricted_genomic_align->cigar_line(join("", @final_cigar));
+  $restricted_genomic_align->cigar_line(join("", @cigar));
 
   return $restricted_genomic_align;
 }
