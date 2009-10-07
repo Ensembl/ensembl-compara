@@ -11,9 +11,20 @@ Ensembl.Panel = Base.extend({
     this.initialised = false;
   },
   
-  destructor: function () {
+  destructor: function (empty) {
     $('*', this.el).unbind();
-    $(this.el).remove();
+    
+    if (empty === true) {
+      $(this.el).empty();
+    } else {
+      $(this.el).remove();
+    }
+    
+    for (var el in this.elLk) {
+      this.elLk[el] = null;
+    }
+    
+    this.el = null;
   },
   
   init: function () {
