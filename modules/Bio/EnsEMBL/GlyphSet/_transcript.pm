@@ -54,26 +54,34 @@ sub legend {
 sub href { 	 
   my ($self, $gene, $transcript) = @_;
   
-  return $self->_url({
+  my $params = {
     species => $self->species,
     type    => 'Transcript',
     action  => 'Summary',
     t       => $transcript->stable_id,
     g       => $gene->stable_id, 
     db      => $self->my_config('db')
-  }); 	 
+  };
+  
+  $params->{'r'} = undef if $self->{'container'}->{'web_species'} ne $self->species;
+  
+  return $self->_url($params); 	 
 } 	 
 
 sub gene_href { 	 
   my ($self, $gene) = @_;
   
-  return $self->_url({
+  my $params = {
     species => $self->species,
-    type   => 'Gene',
-    action => 'Summary',
-    g      => $gene->stable_id, 
-    db     => $self->my_config('db')
-  });
+    type    => 'Gene',
+    action  => 'Summary',
+    g       => $gene->stable_id, 
+    db      => $self->my_config('db')
+  };
+  
+  $params->{'r'} = undef if $self->{'container'}->{'web_species'} ne $self->species;
+  
+  return $self->_url($params);
 }
 
 sub export_feature {

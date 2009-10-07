@@ -53,7 +53,7 @@ sub href {
   my $species = $self->species;
   my $assembly = $self->my_config( 'assembly_name' );
   my $url = $self->_url({
-    'r'        => $location,
+    'new_r'    => $location,
     'assembly' => $self->my_config( 'assembly_name' ),
   });
   return $url;

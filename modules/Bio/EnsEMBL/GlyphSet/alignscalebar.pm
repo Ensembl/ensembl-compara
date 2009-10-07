@@ -151,6 +151,7 @@ sub render_align_bar {
     } else {
       $href = $self->_url({ 
         species  => $species,
+        action   => 'Align',
         r        => "$s2t:$s2s-$s2e",
         strand   => $s2st,
         interval => "$ss-$se"
@@ -221,7 +222,7 @@ sub render_align_bar {
         
         ($from, $to) = ($to, $from) if $from > $to;
         
-        $href = $self->_url({ species => $species, r => "$s2t:$from-$to", break => 1 });
+        $href = $self->_url({ species => $species, action => 'Align', r => "$s2t:$from-$to", break => 1 });
       } else {
         # Same chromosome, same strand, no gap between the two underlying slices (BreakPoint in another species)
         $colour = 'indianred3';

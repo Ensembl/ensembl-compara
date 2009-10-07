@@ -120,8 +120,7 @@ sub draw_features {
           height         => $h, 
           feature_colour => $feature_colour, 
           delete_colour  => 'black', 
-          scalex         => $pix_per_bp, 
-          do_not_flip    => 1
+          scalex         => $pix_per_bp
         });
         
         $self->push( $TO_PUSH );
