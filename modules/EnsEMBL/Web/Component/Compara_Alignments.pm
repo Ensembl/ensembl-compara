@@ -60,6 +60,8 @@ sub content {
     );
   }
   
+  $slice = $slice->invert if $object->param('strand') == -1;
+  
   # Get all slices for the gene
   my ($slices, $slice_length) = $self->get_slices($object, $slice, $align_param, $species);
   
@@ -82,6 +84,7 @@ sub content_sub_slice {
   my $object = $self->object;
   
   $slice ||= $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  $slice = $slice->invert if !$_[0] && $object->param('strand') == -1;
   
   my $start = $object->param('subslice_start');
   my $end = $object->param('subslice_end');
@@ -132,7 +135,7 @@ sub content_sub_slice {
   my $template = "<p>$config->{'key'}</p>" . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
-  my $style = $start == 1 ? "margin-bottom:0px;" : $end == $slice_length ? "margin-top:0px;" : "margin-top:0px; margin-bottom:0px" if $start && $end;
+  my $style = $start == 1 ? 'margin-bottom:0px;' : $end == $slice_length ? 'margin-top:0px;': 'margin-top:0px; margin-bottom:0px' if $start && $end;
   
   $config->{'html_template'} = qq{$template<pre style="$style">%s</pre>};
   
@@ -171,7 +174,7 @@ sub get_slices {
     my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
     
     push @formatted_slices, { 
-      slice => $_,
+      slice             => $_,
       underlying_slices => $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [$_],
       name              => $name,
       display_name      => $display_name
@@ -279,7 +282,7 @@ sub get_key {
   my $object = shift;
   
   my $site_type = ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
-  my $key_template = qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>};
+  my $key_template = '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>';
   
   my $exon_label = ucfirst $object->param('exon_display');
   $exon_label = $site_type if $exon_label eq 'Core';
