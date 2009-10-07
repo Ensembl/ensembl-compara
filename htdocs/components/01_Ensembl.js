@@ -125,7 +125,7 @@ Ensembl.extend({
     var d = new Date();
     var time = d.getTime() + d.getMilliseconds() / 1000;
     
-    url = url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/\?time=[^;]+;?/g, '?').replace(/;time=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
+    url = url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([\?;])time=[^;]+;?/g, '$1').replace(/[\?;]$/g, '');
     url += (url.match(/\?/) ? ';' : '?') + 'time=' + time;
     
     return url;
