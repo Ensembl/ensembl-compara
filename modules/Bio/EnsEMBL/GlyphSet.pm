@@ -222,7 +222,7 @@ sub init_label {
   my $fsze = $ST->{'GRAPHIC_FONTSIZE'} * $ST->{'GRAPHIC_LABEL'};
 
   my @res = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
- 
+
   $self->label($self->Text({
     'text'      => $text,
     'font'      => $font,
@@ -557,8 +557,9 @@ sub draw_cigar_feature {
     warn sprintf 'DRAWINGCODE_CIGAR [ %s ] %s not a feature', join('; ', @$f), $self->label->text;
   }
   
-  my $length      = $self->{'container'}->length;
+  my $length  = $self->{'container'}->length;
   my $cigar;
+  
   eval { $cigar = $f->cigar_string; };
   
   if ($@ || !$cigar) {
@@ -578,28 +579,26 @@ sub draw_cigar_feature {
     return;
   }
   
-  my $strand      = $self->strand;
-  my $o           = $params->{'do_not_flip'} ? 1 : $strand;
-  my $start       = $o == 1 ? $f->start : $f->end;
-  my $hstart      = $o == 1 ? $f->hstart : $f->hend;
-  my $hend        = $o == 1 ? $f->hend : $f->hstart;
-  my $slice_start = $f->slice->start;
-  my $slice_end   = $f->slice->end;
-  my $fstrand     = $f->strand;
-  my $hstrand     = $f->hstrand;
+  my $strand  = $self->strand;
+  my $start   = $f->start;
+  my $hstart  = $f->hstart;
+  my $hend    = $f->hend;
+  my $fstrand = $f->strand;
+  my $hstrand = $f->hstrand;
+  my @delete;
+  
   my ($slice_start, $slice_end, $tag1, $tag2);
+  
   if ($f->slice) {
     $slice_start = $f->slice->start;
     $slice_end   = $f->slice->end;
     $tag1        = join ':', $f->species, $f->slice->seq_region_name;
     $tag2        = join ':', $f->hspecies, $f->hseqname;
-  }
-  else {
+  } else {
     $slice_start = $f->seq_region_start;
     $slice_end   = $f->seq_region_end;
     $tag1        = $f->seqname;
   }
-  my @delete;
   
   # Parse the cigar string, splitting up into an array
   # like ('10M','2I','30M','I','M','20M','2D','2020M');
@@ -619,7 +618,7 @@ sub draw_cigar_feature {
     # we compute next start sa (current start, next start - ORIENTATION) 
     # next start is current start + (length of sub-feature) * ORIENTATION 
     my $s = $start;
-    my $e = ($start += ($type eq 'D' ? 0 : $l * $o)) - $o;
+    my $e = ($start += ($type eq 'D' ? 0 : $l)) - 1;
     
     my $s1 = $fstrand == 1 ? $slice_start + $s - 1 : $slice_end - $e + 1;
     my $e1 = $fstrand == 1 ? $slice_start + $e - 1 : $slice_end - $s + 1;
@@ -628,10 +627,10 @@ sub draw_cigar_feature {
     
     if ($fstrand == 1) {
       $hs = $hstart;
-      $he = ($hstart += ($type eq 'I' ? 0 : $l * $o)) - $o;
+      $he = ($hstart += ($type eq 'I' ? 0 : $l)) - 1;
     } else {
       $he = $hend;
-      $hs = ($hend -= ($type eq 'I' ? 0 : $l * $o)) + $o;
+      $hs = ($hend -= ($type eq 'I' ? 0 : $l)) + 1;
     }
     
     # If a match/mismatch - draw box
