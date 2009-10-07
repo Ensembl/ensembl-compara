@@ -226,7 +226,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $('dt', menu).each(function () {
         var dt = $(this);
         
-        if ($('span', dt).html().match(myself.query, 'i')) {
+        if ($('span', dt).html().match(myself.query, 'i') || dt.next('dd').text().match(myself.query, 'i')) {
           dt.show();
           show = true;
         } else {

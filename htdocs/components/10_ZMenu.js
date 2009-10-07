@@ -222,8 +222,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       url = url.replace(/.+\?/, '?');
       
       menu = [
-        '<a href="/' + this.species + '/Location/View' + url + '">Jump to location View</a>',
-        '<a href="/' + this.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+        '<a href="/' + myself.species + '/Location/View' + url + '">Jump to location View</a>',
+        '<a href="/' + myself.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
       ];
     }
     
