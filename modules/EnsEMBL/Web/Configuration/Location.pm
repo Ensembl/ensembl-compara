@@ -171,11 +171,6 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view' }
   ));
   
-  $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
-    [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )],
-    { 'no_menu_entry' => 1 }
-  ));
-  
   $caption = $availability->{'has_synteny'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
   
   $align_menu->append($self->create_node('Synteny', $caption,
