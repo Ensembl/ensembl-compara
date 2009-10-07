@@ -27,6 +27,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.elLk.closeButton = $('.modal_close', this.el);
     
     this.pageReload = false;
+    this.sectionReload = {};
+    this.activePanel = '';
     
     // TODO: check functionality. myself.open() is probably wrong
     $('.modal_confirm', '#' + this.id).live('click', function () {
@@ -43,6 +45,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     $('.modal_close', '#' + this.id).live('click', function () { myself.close(); });
     
+    // Changing tabs - update configuration and get new content
     $('a', this.elLk.tabs).click(function () {
       var li = $(this).parent();
       
@@ -52,7 +55,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         myself.elLk.tabs.removeClass('active');
         li.addClass('active');
         
-        myself.getContent(this.href);
+        myself.getContent(this.href, this.rel);
       }
       
       li = null;
@@ -72,66 +75,96 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.elLk.menu.hide();
     this.elLk.caption.html(el.title || el.innerHTML).show();
     this.show();
-    this.getContent(el.href);
+    this.getContent(el.href, this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel);
     
     return true;
   },
   
   close: function () {
     this.hide();
-    Ensembl.EventManager.trigger('updateConfiguration');
     
-    if (this.pageReload) {
-      Ensembl.EventManager.trigger('reloadPage');
+    if (!Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) {
+      this.setPageReload(false, true);
     }
   },
   
-  getContent: function (url, failures) {
+  getContent: function (url, id, failures) {
     var myself = this;
     
-    this.elLk.content.html('<div class="spinner">Loading Content</div>').show();
+    id = id || 'modal_default';
+    
+    var contentEl = this.elLk.content.filter('#' + id);
+    var reload = url.match('reset=1') || $('.modal_reload', this.el).length;
+    
+    this.elLk.content.hide();
+    this.activePanel = id;
+    
+    if (!reload && id.match(/config/) && contentEl.children().length) {
+      Ensembl.EventManager.triggerSpecific('showConfiguration', id);
+      this.changeTab(this.elLk.tabs.children().filter('[rel=' + id + ']').parent());
+      this.elLk.closeButton.html('Save and close');
+      
+      return;
+    }
+    
+    contentEl.html('<div class="spinner">Loading Content</div>').show();
     
     $.ajax({
       url: url,
       dataType: 'json',
       success: function (json) {
         if (typeof json.activeTab != 'undefined') {
-          var tab = myself.elLk.tabs.filter(':eq(' + json.activeTab + ')');
-        
-          if (!tab.hasClass('active')) {
-            myself.elLk.tabs.removeClass('active');
-            tab.addClass('active');
-          }
-          
-          myself.elLk.caption.hide();
-          myself.elLk.menu.show();
-          
-          tab = null;
+          myself.changeTab(myself.elLk.tabs.filter(':eq(' + json.activeTab + ')'));
         }
         
-        myself.elLk.content.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
+        Ensembl.EventManager.trigger('destroyPanel', id, true); // clean up handlers, save memory
+        
+        contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
+        
         myself.elLk.closeButton.html(json.panelType == 'Configurator' ? 'Save and close' : 'Close');
         
         // TODO: remove once config reseting is working without content being completely regenerated
-        if (url.match('reset=1') || $('.modal_reload', myself.el).length) {
-          myself.setPageReload();
+        if (reload) {
+          myself.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1]);
         }
         
-        Ensembl.EventManager.trigger('createPanel', myself.elLk.content.attr('id'), json.panelType);
+        Ensembl.EventManager.trigger('createPanel', id, json.panelType);
       },
       error: function (e) {
         failures = failures || 1;
         
         if (e.status != 500 && failures < 3) {
-          setTimeout(function () { myself.getContent(url, ++failures); }, 2000);
+          setTimeout(function () { myself.getContent(url, id, ++failures); }, 2000);
         } else {
-          myself.elLk.content.html('<p class="ajax_error">Failure: The resource failed to load</p>');
+          contentEl.html('<p class="ajax_error">Failure: The resource failed to load</p>');
         }
       }
     });
   },
   
-  setPageReload: function () {
-    this.pageReload = true;
+  changeTab: function (tab) {
+    if (!tab.hasClass('active')) {
+      this.elLk.tabs.removeClass('active');
+      tab.addClass('active');
+    }
+    
+    this.elLk.caption.hide();
+    this.elLk.menu.show();
+    
+    tab = null;
+  },
+  
+  setPageReload: function (section, reload) {
+    if (section) {
+      this.sectionReload[section] = 1;
+      this.sectionReload.count = (this.sectionReload.count || 0) + 1;
+    } else if (section !== false) {
+      this.pageReload = true;
+    }
+    
+    if (reload === true) {
+      Ensembl.EventManager.trigger('reloadPage', this.pageReload || this.sectionReload);
+      this.sectionReload = {};
+    }
   }
 });

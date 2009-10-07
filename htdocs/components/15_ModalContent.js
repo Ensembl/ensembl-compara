@@ -4,7 +4,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   constructor: function (id) {
     this.base(id);
     
-    Ensembl.EventManager.register('getModalContent', this, this.getContent);
     Ensembl.EventManager.register('modalFormSubmit', this, this.formSubmit);
   },
   
@@ -80,6 +79,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       });
     }
     
+    this.elLk.content.html('<div class="spinner">Loading Content</div>');
+    
     if (Ensembl.FormValidator.submit(form)) {
       if (Ensembl.ajax == 'enabled') {
         $.ajax({
@@ -90,7 +91,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           success: function (json) {
             if (json.success === true) {
               Ensembl.EventManager.trigger('reloadPage');
-            } else if (form.is(':visible')) {
+            } else if ($(myself.el).is(':visible')) {
               myself.updateContent(json);
             }
           },

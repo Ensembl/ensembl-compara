@@ -2,6 +2,8 @@
 
 Ensembl.Panel.Content = Ensembl.Panel.extend({
   init: function () {
+    var myself = this;
+    
     this.base();
     this.ajaxLoad();
     
@@ -9,10 +11,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.toggleTable();
     this.toggleList();
     
+    Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.trigger('validateForms', this.el);
   },
   
   ajaxLoad: function () {
+    var myself = this;
     var ajax = $('.ajax', this.el);
     
     if ($(this.el).hasClass('ajax')) {
@@ -36,7 +40,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return;
       }
       
-      var params = el.hasClass('image_panel') ? { highlight: (Ensembl.images.total == 1 || !(this == Ensembl.images.last)) } : undefined;
+      var params = el.hasClass('image_panel') ? { highlight: (Ensembl.images.total == 1 || !(this == Ensembl.images.last)) } : {};
       
       el.removeAttr('title');
       
@@ -50,49 +54,62 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         content = el;
       }
       
-      el = null;
-      
       for (var i = 0; i < title.length; i++) {
         component = title[i];
         
-        if (component.substr(0, 1) == '/') {          
-          switch (content.attr('nodeName')) {
-            case 'DL': node = 'dt'; break;
-            case 'UL': 
-            case 'OL': node = 'li'; break;
-            default  : node = 'p';  break;
-          }
-          
-          content.append('<'+node+' class="spinner">Loading component</'+node+'>');
-          
+        if (component.substr(0, 1) == '/') {
           if (component.match(/\?/)) {
             component = Ensembl.replaceTimestamp(component);
           }
           
-          $.ajax({
-            url: component,
-            dataType: 'html',
-            success: function (html) {
-              if (html) {
-                var type = html.match(/<map/) ? 'ImageMap' : 'Content';
-                
-                Ensembl.EventManager.trigger('addPanel', undefined, type, html, content, params);
-              } else {
-                content.html('');
-              }
-            },
-            error: function (e) {
-              content.html('<p class="ajax_error">Failure: the resource "' + component + '" failed to load</p>');
-            },
-            complete: function () {
-              content = null;
-            }
-          });
+          params.updateURL = component + ';update=1';
+          
+          myself.getContent(component, content, params);
         }
       }
+      
+      el = null;
+      content = null;
     });
     
     ajax = null;
+  },
+  
+  getContent: function (url, el, params) {
+    var node;
+    
+    params = params || this.params;
+    url = url || params.updateURL;
+    el = el || $(this.el).empty();
+    
+    switch (el.attr('nodeName')) {
+      case 'DL': node = 'dt'; break;
+      case 'UL': 
+      case 'OL': node = 'li'; break;
+      default  : node = 'p';  break;
+    }
+    
+    el.append('<'+node+' class="spinner">Loading component</'+node+'>');
+    
+    $.ajax({
+      url: url,
+      dataType: 'html',
+      success: function (html) {
+        if (html) {
+          var type = html.match(/<map/) ? 'ImageMap' : html.match(/<pre.*?class="sequence/) ? 'TextSequence' : 'Content';
+          
+          Ensembl.EventManager.trigger('addPanel', undefined, type, html, el, params);
+        } else {
+          el.html('');
+        }
+      },
+      error: function (e) {
+        el.html('<p class="ajax_error">Failure: the resource "' + url + '" failed to load</p>');
+      },
+      complete: function () {
+        el = null;
+      }
+    });
   },
   
   hideHints: function () {

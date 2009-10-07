@@ -5,6 +5,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.base(id);
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
+    Ensembl.EventManager.register('showConfiguration', this, this.show);
   },
   
   init: function () {
@@ -14,6 +15,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.form = $('form.configuration', this.el);
     this.elLk.search = $('.configuration_search_text', this.el);
+    this.elLk.help = $('.menu_help', this.el);
+    this.elLk.menus = $('.popup_menu', this.el);
+    this.elLk.searchResults = $('a.search_results', this.elLk.links);
     
     this.initialConfig = {};
     this.lastQuery = false;
@@ -22,31 +26,52 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       myself.initialConfig[this.name] = this.value;
     });
     
-    this.styleTracks();
-    this.showTracks();
+    this.getContent();
     
     $('input.submit', this.el).hide();
     
-    $('.popup_menu dt', '#' + this.id).live('click', function () {
-      var menu = $(this).parent();
-      var dt = menu.parent();
-      var select = $('select', dt);
-      var option = $('option[value=' + this.className + ']', select).attr('selected', 'selected');
+    this.elLk.help.click(function () { myself.toggleDescription(this); });
+    
+    $('img.selected', this.elLk.form).click(function () {
+      var menu = $(this).siblings('.popup_menu');
       
-      $('>img', dt).attr({ 
-        src: '/i/render/' + this.className + '.gif', 
-        title: option.text() 
+      myself.elLk.menus.filter(':visible').not(menu).hide();
+      menu.toggle();
+      
+      menu = null;
+    });
+    
+    $('img', this.elLk.menus).click(function () {
+      var menu = $(this).parents('.popup_menu');
+      var dt = menu.parent();
+      var li = $(this).parent();
+      var input = $('input', dt);
+      var val = li.attr('className');
+      var link = myself.elLk.links.children('a.' + this.className);
+      var label = link.html().split(/\b/);
+      
+      $('img.selected', dt).attr({ 
+        src: '/i/render/' + val + '.gif', 
+        title: li.text()
       });
       
-      menu.remove();
+      if (input.val() == 'off' ^ val == 'off') {
+        label[1] = parseInt(label[1]) + (val == 'off' ? -1 : 1);
+        label = label.join('');
+        link.attr('title', label).html(label);
+      }
+      
+      input.val(val);
+      menu.hide();
       
       menu = null;
       dt = null;
-      select = null;
-      option = null;
+      li = null;
+      input = null;
+      link = null;
     });
     
-    $('.configuration_search_text', this.el).keyup(function () {
+    this.elLk.search.keyup(function () {
       if (this.value.length < 3) {
         myself.lastQuery = this.value;
       }
@@ -58,8 +83,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         myself.query = this.value;
         
-        myself.searchTimer = setTimeout(function () { myself.search(); }, 250);
+        myself.searchTimer = setTimeout(function () {
+          myself.elLk.links.removeClass('active');
+          myself.elLk.searchResults.removeClass('disabled').parent().addClass('active');
+          myself.search(); 
+        }, 250);
       }
+    }).focus(function () {
+      this.value = '';
     });
     
     if (Ensembl.ajax != 'enabled') {
@@ -79,8 +110,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
   },
   
-  getContent: function () {
-    this.showTracks();
+  show: function () {
+    this.elLk.menus.hide();
+    this.getContent();
+    this.base();
   },
   
   updateConfiguration: function (delayReload) {
@@ -125,10 +158,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         data: diff,
         dataType: 'html',
         success: function (html) {
-          if (html == 'SUCCESS') {            
-            // Reload the page
-            // TODO: could reload only one section - would need panel id to be the same as diff.config, which it currently isn't
-            Ensembl.EventManager.trigger(delayReload === true ? 'queuePageReload' : 'reloadPage');
+          if (html == 'SUCCESS') {
+            Ensembl.EventManager.trigger('queuePageReload', diff.config, !delayReload);
           } else {
             // TODO: show message on main page
           }
@@ -149,74 +180,52 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       window.close();
     }
   },
-  
-  // TODO: currently only doing this on intial load - might be nicer to style every time we get results
-  styleTracks: function () {
-    var myself = this;
+   
+  getContent: function () {
+    var active = this.elLk.links.filter('.active').children('a').attr('className');
     
+    if (active == 'search_results') {
+      this.elLk.search.val(this.query);
+      this.search();
+    } else {
+      $('div:not(.' + active + ')', this.elLk.form).hide();
+      $('dd', this.elLk.form).hide();
+      this.elLk.help.html('Show info');
+      
+      if (active == 'active_tracks') {
+        $('dl.config_menu input', this.elLk.form).each(function () {
+          if (this.value == 'off') {
+            $(this).parent().hide().next().hide(); // Hide the dt and the dd corresponding to it
+          } else {
+            $(this).parents('dt, div.config').show();
+          }
+        });
+      } else {
+        $('div.' + active, this.elLk.form).show().find('dl.config_menu dt').show();
+      }
+      
+      this.lastQuery = false;
+      this.styleTracks();
+    }
+  },
+  
+  styleTracks: function () {
     var col = { 1: 'col1', '-1': 'col2', f: 1 };
     
-    $('dl.config_menu', this.elLk.form).each(function () {
-      $('dt', this).each(function () {
-        $(this).addClass(col[col.f*=-1]).next('dd').addClass(col[col.f]);
+    $('dl.config_menu:visible', this.elLk.form).each(function () {
+      $('dt:visible', this).each(function () {
+        $(this).removeClass('col1 col2').addClass(col[col.f*=-1])
+          .next('dd').removeClass('col1 col2').addClass(col[col.f]);
       });
       
       col.f = 1;
     });
-    
-    $('dl.config_menu', this.elLk.form).each(function () {      
-      $('dt', this).each(function () {
-        var select = $('select', this);
-        
-        $('<img />').attr({
-          src: '/i/render/' + select.val() + '.gif',
-          title: select.attr('options')[select.attr('selectedIndex')].text
-        }).click(function () {
-          myself.makeMenu(this);
-        }).insertAfter(select);
-        
-        select.hide();
-        
-        if ($(this).next().is('dd')) {
-          $('<span class="menu_help">Show info</span>').click(function () {
-            $(this).html(this.innerHTML == 'Show info' ? 'Hide info' : 'Show info').parent().next().toggle();
-          }).appendTo(this);
-        }
-        
-        select = null;
-      });
-      
-      $('dd', this).hide();
-    });
-  },
-  
-  // TODO: swap link/menu ids for same class names. 
-  showTracks: function () {
-    var active = this.elLk.links.filter('.active').attr('id').replace(/link/, 'menu');
-    
-    $('div:not(#' + active + ')', this.elLk.form).hide();
-    
-    if (active == 'active_tracks') {
-      $('dl.config_menu select', this.elLk.form).each(function () {
-        if (this.value == 'off') {
-          $(this).parent().hide().next().hide(); // Hide the dt and the dd corresponding to it
-        } else {
-          $(this).parents('dt, div.config').show();
-        }
-      });
-    } else {
-      $('#' + active, this.elLk.form).show().find('dl.config_menu dt').show();
-    }
-    
-    this.lastQuery = false;
-    this.elLk.search.val('');
   },
   
   // Filtering from the search box
   search: function () {
     var myself = this;
-    
-    this.elLk.links.removeClass('active');
+    var dts = [];
     
     $('dl.config_menu', this.elLk.form).each(function () {
       var menu = $(this);
@@ -226,8 +235,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $('dt', menu).each(function () {
         var dt = $(this);
         
-        if ($('span', dt).html().match(myself.query, 'i') || dt.next('dd').text().match(myself.query, 'i')) {
+        if ($('span', dt).html().match(myself.query, 'i')) {
           dt.show();
+          show = true;
+        } else if (dt.next('dd').text().match(myself.query, 'i')) {
+          dt.show();
+          dts.push(dt[0]);
           show = true;
         } else {
           dt.hide().next('dd').hide();
@@ -247,25 +260,31 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.lastQuery = this.query;
+    this.styleTracks();
+    this.toggleDescription(dts);
+    
+    dts = null;
   },
-
-  makeMenu: function (img) {
-    var off = $(img).prev('.popup_menu').length;
+  
+  toggleDescription: function (els) {
+    var dd, span;
     
-    $('.popup_menu', this.el).remove();
-    
-    if (off) {
-      return;
+    if (typeof els.length == 'undefined') {
+      els = [ els ];
     }
     
-    var menu = $('<dl class="popup_menu"></dl>').css('top', ($(img).position().top + this.el.scrollTop) + 'px');   
-    
-    $('option', $(img).prev()).each(function () {
-      menu.append('<dt class="' + this.value + '"><img src="/i/render/' + this.value + '.gif" title="' + this.text + '" />' + this.text + '</dt>');
-    });
-    
-    menu.insertBefore(img);
-    
-    menu = null;
+    for (var i in els) {
+      switch (els[i].nodeName) {
+        case 'DT'  : dd = $(els[i]).next(); span = $('.menu_help', els[i]); break;
+        case 'SPAN': dd = $(els[i]).parent().next(); span = $(els[i]); break;
+        default    : return;
+      }
+      
+      dd.toggle();
+      span.html(dd.is(':visible') ? 'Hide info': 'Show info');
+      
+      dd = null;
+      span = null;
+    }
   }
 });
