@@ -12,11 +12,13 @@ sub init {
   $view_config->title = 'Alignments';
   $view_config->storable = 1;
   $view_config->{'no_flanking'} = 1;
+  $view_config->{'strand_option'} = 1;
   
   $view_config->_set_defaults(qw(
     flank5_display  0 
     flank3_display  0
     panel_top       yes
+    strand          1
   ));
   
   $view_config->add_image_configs({qw(
@@ -28,17 +30,15 @@ sub init {
 sub form {
   my ($view_config, $object) = @_;
   
-  my $species_only;
-  
   if ($object->function eq 'Image') { 
     $view_config->default_config = 'alignsliceviewbottom';
     $view_config->add_form_element({ 'type' => 'YesNo', 'name' => 'panel_top',  'select' => 'select', 'label'  => 'Show overview panel' });
-    $species_only = 1;
+    $view_config->{'species_only'} = 1;
   } else {
     $view_config->{'_image_config_names'} = {}; # Removes the image config tabs
   }
   
-  EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments::form($view_config, $object, $species_only);
+  EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments::form($view_config, $object);
 }
 
 1;

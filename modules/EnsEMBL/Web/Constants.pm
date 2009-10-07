@@ -208,6 +208,17 @@ sub OTHER_MARKUP_OPTIONS {
         map { { 'value' => $_, 'name' => "$_ bps" } } map { $_*15 } (2..12)
       ],
     },
+    'strand' => {
+      'type'     => 'DropDown', 
+      'select'   => 'select',
+      'required' => 'yes',    
+      'name'     => 'strand',
+      'label'    => 'Strand',
+      'values'   => [
+        { 'value' => '1',  'name' => 'Forward' },
+        { 'value' => '-1', 'name' => 'Reverse' }
+    ]
+    },
     'codons_display' => {
       'type'     => 'DropDown',
       'select'   => 'select',

@@ -32,35 +32,26 @@ sub init {
 }
 
 sub form {
-  my ($view_config, $object, $species_only) = @_;
+  my ($view_config, $object) = @_;
   
-  if (!$species_only) {
-    my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS; # options shared with marked-up sequence
+  if (!$view_config->{'species_only'}) {
+    my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;    # options shared with marked-up sequence
     my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS; # options shared with resequencing and marked-up sequence
-    my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS; # options shared with resequencing
-
+    my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;   # options shared with resequencing
+    
+    push @{$gene_markup_options{'exon_display'}{'values'}}, { 'value' => 'vega', 'name' => 'Vega exons' } if $object->species_defs->databases->{'DATABASE_VEGA'};
+    push @{$gene_markup_options{'exon_display'}{'values'}}, { 'value' => 'otherfeatures', 'name' => 'EST gene exons' } if $object->species_defs->databases->{'DATABASE_OTHERFEATURES'};
+    
     if (!$view_config->{'no_flanking'}) {
       $view_config->add_form_element($gene_markup_options{'flank5_display'});
       $view_config->add_form_element($gene_markup_options{'flank3_display'});
     }
     
     $view_config->add_form_element($other_markup_options{'display_width'});
-
-    if ($object->species_defs->databases->{'DATABASE_VEGA'}) {
-      push @{$gene_markup_options{'exon_display'}{'values'}}, { 'value' => 'vega', 'name' => 'Vega exons' };
-    }
-    
-    if ($object->species_defs->databases->{'DATABASE_OTHERFEATURES'}) {
-      push @{$gene_markup_options{'exon_display'}{'values'}}, { 'value' => 'otherfeatures', 'name' => 'EST gene exons' };
-    }
-    
+    $view_config->add_form_element($other_markup_options{'strand'}) if $view_config->{'strand_option'};
     $view_config->add_form_element($gene_markup_options{'exon_display'});
     $view_config->add_form_element($general_markup_options{'exon_ori'});
-    
-    if ($object->species_defs->databases->{'DATABASE_VARIATION'}) {
-      $view_config->add_form_element($general_markup_options{'snp_display'});
-    }
-    
+    $view_config->add_form_element($general_markup_options{'snp_display'}) if $object->species_defs->databases->{'DATABASE_VARIATION'};
     $view_config->add_form_element($general_markup_options{'line_numbering'});
     $view_config->add_form_element($other_markup_options{'codons_display'});
 
@@ -97,7 +88,7 @@ sub form {
   }
     
   my $species = $view_config->species;
-  my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
+  my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   
   # From release to release the alignment ids change so we need to check that the passed id is still valid.
   foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
