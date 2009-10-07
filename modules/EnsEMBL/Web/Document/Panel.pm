@@ -716,7 +716,7 @@ sub content {
                   if ($self->_is_ajax_request) {
                     my $id = $ENV{'ENSEMBL_FUNCTION'} eq 'sub_slice' ? '' : $comp_obj->id;
                     
-                    $content = qq{<div class="js_panel" id="$id">$content</div>};
+                    $content = qq{<div class="js_panel" id="$id">$content</div>} unless $object->param('update');
                   } else {
                     my $caption = $comp_obj->caption;
                     $self->printf("<h2>%s</h2>", CGI::escapeHTML($caption)) if $caption;
