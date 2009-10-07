@@ -228,21 +228,20 @@ sub new_image {
   my $object = $self->object;
   
   my %FORMATS = EnsEMBL::Web::Constants::FORMATS;
+  my $image_config = ref $_[0] eq 'ARRAY' ? $_[0][1] : $_[1];
+  
+  $self->id($image_config->{'type'});
   
   # Set text export on image config
-  if ($FORMATS{$object->param('export')}{'extn'} eq 'txt') {
-    my $image_config = ref $_[0] eq 'ARRAY' ? $_[0][1] : $_[1];
-    
-    $image_config->set_parameter('text_export', $object->param('export'));
-  }
+  $image_config->set_parameter('text_export', $object->param('export')) if $FORMATS{$object->param('export')}{'extn'} eq 'txt';
   
   my $species_defs = $object->species_defs;
   my $timer = $species_defs->timer;
-  my $image = EnsEMBL::Web::Document::Image->new( $species_defs );
-     $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new( @_ );
-     if ($object->prefix) {
-       $image->prefix($object->prefix);
-     }
+  
+  my $image = EnsEMBL::Web::Document::Image->new($species_defs);
+  $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new(@_);
+  $image->prefix($object->prefix) if $object->prefix;
+  
   return $image;
 }
 
@@ -1385,7 +1384,7 @@ sub build_sequence {
           $class .= " $1";
         }
       } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
-          $class = $1;
+        $class = $1;
       } else {
         $class = '';
       }
