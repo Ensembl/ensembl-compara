@@ -2,64 +2,69 @@
 
 package EnsEMBL::Web::Document::HTML::LocalContext;
 
-### Generates the local context navigation menu, used in dynamic pages
+# Generates the local context navigation menu, used in dynamic pages
 
 use strict;
+use CGI qw(escapeHTML);
 use base qw(EnsEMBL::Web::Document::HTML);
-use Data::Dumper;
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new( 'counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context' );
+  my $self = $class->SUPER::new('counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context');
   return $self;
 }
 
 sub tree {
-  ### a
   my $self = shift;
-  $self->{tree} = shift if @_;
-  return $self->{tree};
+  $self->{'tree'} = shift if @_;
+  return $self->{'tree'};
 }
 
 sub active {
-  ### a
   my $self = shift;
-  $self->{active} = shift if @_;
-  return $self->{active};
+  $self->{'active'} = shift if @_;
+  return $self->{'active'};
 }
+
 sub class {
-  ### a
   my $self = shift;
-  $self->{class} = shift if @_;
-  return $self->{class};
+  $self->{'class'} = shift if @_;
+  return $self->{'class'};
 }
 
 sub caption {
-  ### a
   my $self = shift;
-  $self->{caption} = shift if @_;
-  return $self->{caption};
+  $self->{'caption'} = shift if @_;
+  return $self->{'caption'};
 }
 
 sub counts {
-  ### a
   my $self = shift;
-  $self->{counts} = shift if @_;
-  return $self->{counts};
+  $self->{'counts'} = shift if @_;
+  return $self->{'counts'};
+}
+
+
+sub availability {
+  my $self = shift;
+  $self->{'availability'} = shift if @_;
+  $self->{'availability'} ||= {};
+  return $self->{'availability'};
 }
 
 sub render_modal {
   my $self = shift;
-  my $t = $self->_content;
-     $t =~ s/class="local_context"/class="local_context local_modal"/;
-  return $self->print( $t );
+  
+  my $content = $self->_content;
+  $content =~ s/class="local_context"/class="local_context local_modal"/;
+  
+  return $self->print($content);
 }
 
 sub get_json {
   my $self = shift;
   
   my $content = $self->_content;
-  
   $content =~ s/class="local_context"/class="local_context local_modal"/;
   $content =~ s/\n//g;
   
@@ -68,122 +73,104 @@ sub get_json {
 
 sub render {
   my $self = shift;
-  return $self->print( $self->_content );
+  return $self->print($self->_content);
 }
 
 sub _content {
   my $self = shift;
-  my $t = $self->tree;
-  return unless $t;
+  my $tree = $self->tree;
+  
+  return unless $tree;
+  
   my $caption = $self->caption;
   $caption =~ s/<\\\w+>//g;
   $caption =~ s/<[^>]+>/ /g;
   $caption =~ s/\s+/ /g;
-  my $content = sprintf( q(
-      <dl class="local_context"%s>
-        <dt>%s</dt>),
-    $self->{'class'} ? qq( class="$self->{class}") : '',
-    CGI::escapeHTML( $caption )
+  
+  my $content = sprintf('
+    <dl class="local_context"%s>
+      <dt>%s</dt>',
+    $self->{'class'} ? qq( class="$self->{'class'}") : '',
+    escapeHTML($caption)
   );
-  return "$content\n      </dl>" unless $t;
-  my $r = 0;
+  
+  my $active      = $self->active;
+  my @nodes       = $tree->nodes;
+  my $active_node = $tree->get_node($active) || $nodes[0];
+  
+  return "$content</dl>" unless $active_node;
+  
+  my $active_l = $active_node->left;
+  my $active_r = $active_node->right;
+  my $counts   = $self->counts;
+  my $r        = 0;
   my $previous_node;
-  my $active = $self->active;
-  my @n = $t->nodes;
-  my $active_node = $t->get_node( $active ) || $n[0];
-  return "$content\n      </dl>" unless $active_node;
-  my $active_l    = $active_node->left;
-  my $active_r    = $active_node->right;
-  my $counts = $self->counts;
-  my $pad = '';
-  foreach my $node ( @n ) {
+  
+  foreach my $node (@nodes) {
     my $no_show = 1 if $node->data->{'no_menu_entry'};
+    
     $r = $node->right if $node->right > $r;
-    if( $previous_node && $node->left > $previous_node->right ) {
-      foreach(1..($node->left - $previous_node->right-1)) {
-        $content .= "
-$pad      </dl>
-$pad    </dd>";
-        substr($pad,0,4)='';
-      }
+    
+    if ($previous_node && $node->left > $previous_node->right) {
+      $content .= '</dl></dd>' for 1..$node->left - $previous_node->right - 1;
     }
-    unless ($no_show) {
-      my $name = $node->data->{caption};
-      $name =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
-      $name = CGI::escapeHTML( $name );
-      my $title = $node->data->{full_caption};
-      if( $title ) {
-        $title =~ s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
-        $title = CGI::escapeHTML( $title );
-      } else {
-        $title = $name;
+    
+    if (!$no_show) {
+      my $title = $node->data->{'full_caption'};
+      my $name  = $node->data->{'caption'};
+      my $id    = $node->data->{'id'};
+      
+      for ($title, $name) {
+        s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
+        $_ = escapeHTML($_);
       }
-      my $referer = ''; #CGI::param('_referer')|| $ENV{'REQUEST_URI'};
-      if( $node->data->{'availability'} && $self->is_available( $node->data->{'availability'} )) {
-        my $url = $node->data->{'url'};
+      
+      $title ||= $name;
+      
+      if ($node->data->{'availability'} && $self->is_available($node->data->{'availability'})) {
+        my $url      = $node->data->{'url'};
+        my $external = $node->data->{'external'} ? ' rel="external"' : '';
+        my $class    = $node->data->{'class'};
+        $class = qq{ class="$class"} if $class;
+        
+        # This is a tmp hack since we do not have an object here
+        # TODO: propagate object here and use object->_url method
         if (!$url) {
-          ## This is a tmp hack since we do not have an object here
-          ## TODO: propagate object here and use object->_url method
-          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : '/'.$ENV{'ENSEMBL_SPECIES'};
-          $url .= '/'.$ENV{'ENSEMBL_TYPE'}.'/'.$node->data->{'code'};
+          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : "/$ENV{'ENSEMBL_SPECIES'}";
+          $url .= "/$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
+          
           my @ok_params;
-          my @cgi_params = split(';|&', $ENV{'QUERY_STRING'});
-          if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation|Regulation/) { 
-            foreach my $param (@cgi_params) {
-              ## Minimal parameters, or it screws up the non-genomic pages!
-              next unless ($param =~ /^_referer/ || $param =~ /^x_requested_with/);
-              push @ok_params, $param;
-            }
+          my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
+          
+          if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation|Regulation/) {
+            @ok_params = grep /^(_referer|x_requested_with)/, @cgi_params;
+          } else {
+            @ok_params = grep !/^time=/, @cgi_params;
           }
-          else {
-            foreach my $param (@cgi_params) {
-              next if $param =~ /^time=/;
-              push @ok_params, $param;
-            }
-          }
-          if (scalar(@ok_params)) {
-            $url .= '?'.join(';', @ok_params);  
-          }
+          
+          $url .= '?' . join ';', @ok_params if scalar @ok_params;
         }
-        $name = sprintf '<a href="%s" title="%s"%s>%s</a>', $url, $title, $node->data->{'external'} ? ' rel="external"' : '', $name;
+        
+        $name = qq{<a href="$url" title="$title"$class$external>$name</a>};
       } else {
-        $name = sprintf('<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name);
+        $name = sprintf '<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name;
       }
-      my $row_content = '';
-      if( $node->is_leaf ) {
-        $content .= sprintf( qq(
-$pad        <dd%s%s>%s</dd>), 
-              $node->data->{'id'} ? ' id="'.$node->data->{'id'}.'"' : '',
-              $node->key eq $active ? ' class="active"' : '', $name );
+      
+      if ($node->is_leaf) {
+        $content .= sprintf '<dd%s%s>%s</dd>', $id ? qq{ id="$id"} : '', $node->key eq $active ? ' class="active"' : '', $name;
       } else {
-        $content .= sprintf( qq(
-$pad        <dd class="%s">%s
-$pad          <dl>),
-        ($node->left <= $active_l && $node->right >= $active_r ? 'open' : 'open').
-        ($node->key eq $active ? ' active' :''),
-        $name );
-        $pad .= '    ';
+        $content .= sprintf '<dd class="open%s">%s<dl>', ($node->key eq $active ? ' active' : ''), $name;
       }
     }
+    
     $previous_node = $node;
   }
-  foreach(($previous_node->right+1)..$r) {
-    $content .= qq(
-$pad      </dl>
-$pad    </dd>);
-    substr($pad,0,4)='';
-  }
-  $content .= q(
-      </dl>);
-  $content =~ s/\s+<dl>\s+<\/dl>//g;
+  
+  $content .= '</dl></dd>' for $previous_node->right + 1..$r;
+  $content .= '</dl>';
+  $content =~ s/\s*<dl>\s*<\/dl>//g;
+  
   return $content;
-}
-
-sub availability {
-  my $self = shift;
-  $self->{'availability'} = shift if @_;
-  $self->{'availability'}||={};
-  return $self->{'availability'};
 }
 
 1;
