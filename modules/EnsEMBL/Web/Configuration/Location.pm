@@ -136,7 +136,7 @@ sub populate_tree {
 
   my $align_menu = $self->create_submenu('Compara', 'Comparative Genomics');
   
-  $caption = $availability->{'slice'} ? 'Alignments (image) ([[counts::alignments]])' : 'Alignments (image)';
+  $caption = $availability->{'has_alignments'} ? 'Alignments (image) ([[counts::alignments]])' : 'Alignments (image)';
   
   $align_menu->append($self->create_node('Compara_Alignments/Image', $caption, 
     [qw(
@@ -145,10 +145,10 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       bottom   EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom
     )],
-    { 'availability' => 'slice database:compara', 'concise' => 'Alignments (image)' }
+    { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (image)' }
   ));
   
-  $caption = $availability->{'slice'} ? 'Alignments (text) ([[counts::alignments]])' : 'Alignments (text)';
+  $caption = $availability->{'has_alignments'} ? 'Alignments (text) ([[counts::alignments]])' : 'Alignments (text)';
   
   $align_menu->append($self->create_node('Compara_Alignments', $caption,
     [qw(
@@ -156,19 +156,19 @@ sub populate_tree {
       botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
       alignments EnsEMBL::Web::Component::Location::Compara_Alignments
     )],
-    { 'availability' => 'slice database:compara', 'concise' => 'Alignments (text)' }
+    { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
-  $caption = $availability->{'slice'} ? 'Multi-species view ([[counts::pairwise_alignments]])' : 'Multi-species view';
+  $caption = $availability->{'has_pairwise_alignments'} ? 'Multi-species view ([[counts::pairwise_alignments]])' : 'Multi-species view';
   
   $align_menu->append($self->create_node('Multi', $caption,
     [qw(
       selector EnsEMBL::Web::Component::Location::SelectAlignment
       top      EnsEMBL::Web::Component::Location::MultiTop
-      botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
+      botnav   EnsEMBL::Web::Component::Location::MultiBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
     )],
-    { 'availability' => 'slice database:compara', 'concise' => 'Multi-species view' }
+    { 'availability' => 'slice database:compara has_pairwise_alignments', 'concise' => 'Multi-species view' }
   ));
   
   $align_menu->append($self->create_subnode('ComparaGenomicAlignment', '',
@@ -176,7 +176,7 @@ sub populate_tree {
     { 'no_menu_entry' => 1 }
   ));
   
-  $caption = $availability->{'chromosome'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
+  $caption = $availability->{'has_synteny'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
   
   $align_menu->append($self->create_node('Synteny', $caption,
     [qw(
@@ -191,7 +191,7 @@ sub populate_tree {
   
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   
-  $caption = $availability->{'slice'} ? 'Resequencing ([[counts::reseq_strains]])' : 'Resequencing';
+  $caption = $availability->{'has_strains'} ? 'Resequencing ([[counts::reseq_strains]])' : 'Resequencing';
   
   $variation_menu->append($self->create_node('SequenceAlignment', $caption,
     [qw(
@@ -291,14 +291,14 @@ sub _ajax_zmenu_view {
     if ($obj->param('assembly')) {
       my $this_assembly = $obj->species_defs->ASSEMBLY_NAME;
       my $alt_assembly  = $obj->param('assembly');
-      $caption = $alt_assembly.':'.$r;
-
+      my $l = $obj->param('new_r');
+      $caption = $alt_assembly.':'.$l;
       # choose where to jump to
       if ($this_assembly eq 'VEGA') {
-        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $r);
+        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $obj->[1]{'_species'}, 'Location', $action, $l);
         $link_title = 'Jump to Ensembl';
       } elsif ($alt_assembly eq 'VEGA') {
-        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $r);
+        $url = sprintf("%s%s/%s/%s?r=%s", $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}   , $obj->[1]{'_species'}, 'Location', $action, $l);
         $link_title = 'Jump to VEGA';
       } else {
         # TODO: put URL to the latest archive site showing the other assembly (from mapping_session table)
@@ -665,28 +665,40 @@ sub _ajax_zmenu_av {
       $end = $feature->{reference_genomic_align}->dnafrag_end;
     }
   }
+  
+  $panel->{'caption'} = $caption;
+  
   $panel->add_entry({
     'type'  => 'start',
     'label' => $start,
     'priority' => 110,
   });
+  
   $panel->add_entry({
     'type'  => 'end',
     'label' => $end,
     'priority' => 109,
   });
+  
   $panel->add_entry({
     'type'  => 'length',
     'label' => ($end-$start+1). " bp",
     'priority' => 108,
   });
-  $panel->{'caption'} = $caption;
+  
   $panel->add_entry({
-    'label' => 'View alignments',
+    'label' => 'View alignments (text)',
     'link'  => $url,
     'priority' => 100, # default
   });
-  return;
+  
+  $url =~ s/Compara_Alignments/Compara_Alignments\/Image/;
+  
+  $panel->add_entry({
+    'label' => 'View alignments (image)',
+    'link'  => $url,
+    'priority' => 101,
+  });
 }
 
 sub _ajax_zmenu_ga {

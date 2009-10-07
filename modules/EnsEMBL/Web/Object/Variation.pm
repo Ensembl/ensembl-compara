@@ -595,7 +595,7 @@ sub freqs {
   }
     
   # Add genotype data;
-  return {} unless $self->pop_genotype_obj;
+  return {} unless scalar @{$self->pop_genotype_obj};
 
   foreach my $pop_gt_obj ( @{ $self->pop_genotype_obj } ) {
     my $pop_obj = $pop_gt_obj->population;

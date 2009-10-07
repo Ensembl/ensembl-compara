@@ -65,10 +65,10 @@ sub render   {
     $html .= '<span class="print_hide"> &gt; </span>';
     ## Level 2 link
     if ($you_are_here eq '/info/' || $you_are_here eq '/info/index.html') {
-      $html .= qq(<strong>Docs & FAQs</strong>);
+      $html .= qq(<strong>Docs &amp; FAQs</strong>);
     }
     else {
-      $html .= qq(<strong><a href="/info/">Docs & FAQs</a></strong>);
+      $html .= qq(<strong><a href="/info/">Docs &amp; FAQs</a></strong>);
     }
     
     $html .= '<span class="print_hide"> &gt; </span>'.$self->title

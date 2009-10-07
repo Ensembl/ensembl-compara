@@ -96,7 +96,7 @@ sub content {
       );
       
       my $target_links = sprintf(
-        '<br /><span class="small">[<a href="%s">Multi-species comp.</a>] </span>',
+        '<br /><span class="small">[<a href="%s">Multi-species view</a>] </span>',
         $object->_url({
           type   => 'Location',
           action => 'Multi',

@@ -64,11 +64,16 @@ sub content {
   }, $object->__data);
 
   $image_config->_update_missing($s_o);
-  
+
+  if ($image_config->get_node('annotation_status')) {
+    $image_config->get_node('annotation_status')->set('caption', '');
+    $image_config->get_node('annotation_status')->set('menu', 'no');
+  };
+
   my $image = $self->new_image($slice, $image_config, $object->highlights);
   
   return if $self->_export_image($image);
-  
+ 
   $image->imagemap = 'yes';
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');

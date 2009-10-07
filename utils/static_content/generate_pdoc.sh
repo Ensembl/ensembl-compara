@@ -35,16 +35,16 @@
 
 #. /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_52"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_56"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
-PDOC_LOC="$PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/Pdoc"    # where you want Pdocs created
+PDOC_LOC="$PERLMOD_LOC/htdocs/info/docs/Pdoc"    # where you want Pdocs created
 HTTP="/info/docs/Pdoc"
 P2WDOC_LOC="/localsw/ensembl_web/pdoc-live"  # Pdoc code location
 P2WDOCER="/localsw/ensembl_web/pdoc-live/scripts/perlmod2www.pl"
 BIOPERL="/localsw/ensembl_web/bioperl-live"
 
-F1=bioperl-live
+#F1=bioperl-live
 F2=ensembl
 F3=ensembl-analysis
 F4=ensembl-compara
@@ -69,22 +69,23 @@ cd $PERLMOD_LOC
 echo "Check out ensembl-pipeline, ensembl-analysis ensembl-hive"
 cvs co ensembl-pipeline ensembl-analysis ensembl-hive
 
-for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
+#for i in bioperl-live ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
+for i in ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-external ensembl-variation ensembl-hive perl biomart-perl public-plugins ensembl-pipeline
 do
   mkdir $PDOC_LOC/$i
   echo "CURRENT MODULE: $i"
   cp $P2WDOC_LOC/Pdoc/Html/Data/perl.css $PDOC_LOC/$i 
  	echo "#CURRENT MODULE: $i" >> $P2WDOC_LOC/make_html_docs.sh 
-  if [$i == 'bioperl-live']
-   then $SOURCE = $BIOPERL.'/'.$i
-  else
-    $SOURCE = $PERLMOD_LOC.'/'.$i
-  fi
-  if test $i = "ensembl"
-   then	echo "$P2WDOCER -skip Collection,Utils,chimp,Lite -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
- else
+#  if [$i == 'bioperl-live']
+#   then $SOURCE = $BIOPERL.'/'.$i
+#  else
+    SOURCE="$PERLMOD_LOC/$i"
+#  fi
+#  if test $i = "ensembl"
+#   then	echo "$P2WDOCER -skip Collection,Utils,chimp,Lite -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+# else
  	echo "$P2WDOCER -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
- fi
+# fi
 
   echo "$PERLMOD_LOC/$F1 $HTTP/$F1
 $PERLMOD_LOC/$F2 $HTTP/$F2
@@ -132,10 +133,10 @@ cd $PERLMOD_LOC
 
 # generate e! docs:
 echo "Generating e! docs:";
-rm -Rf $PERLMOD_LOC/public-plugins/ensembl/htdocs/info/docs/webcode/edoc
+#rm -Rf $PERLMOD_LOC/htdocs/info/docs/webcode/edoc
 perl $PERLMOD_LOC/utils/edoc/update_docs.pl
 echo "Copying temp files to live directory"
-cp -r $PERLMOD_LOC/utils/edoc/temp public-plugins/ensembl/htdocs/info/docs/webcode/edoc
+cp -r $PERLMOD_LOC/utils/edoc/temp htdocs/info/docs/webcode/edoc
 echo "Clearing up e! docs temp files:";
 rm -Rf $PERLMOD_LOC/utils/edoc/temp
 

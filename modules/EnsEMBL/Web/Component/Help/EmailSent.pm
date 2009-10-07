@@ -17,7 +17,8 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $html = qq(<p>Thank you. Your message has been sent to our HelpDesk.</p>);
+  my $html = '<p>Thank you. Your message has been sent to our HelpDesk. You should receive a confirmation email shortly.</p>';
+  $html .= '<p>If you do not receive a confirmation, please email us directly at <a href="mailto:helpdesk@ensembl.org">helpdesk@ensembl.org</a>. Thank you.</p>';
 
   return $html;
 }

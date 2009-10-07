@@ -27,7 +27,7 @@ sub content {
   my $HTML = "
 	  <strong>Exons:</strong> $exons 
 	  <strong>Transcript length:</strong> $basepairs bps";
-     $HTML .= "
+  $HTML .= "
           <strong>Translation length:</strong> $residues residues" if $residues;
   $table->add_row('Statistics',
 		  "<p>$HTML</p>",
@@ -46,23 +46,22 @@ sub content {
 
 ## add some Vega info
   if ($db eq 'vega') {
-      # class
-      my $class = $object->transcript_class;
-      $table->add_row('Class',
-		      qq(<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>),
-		      1);
-      # date
-      my $version = $object->version;
-      my $c_date = $object->created_date;
-      my $m_date = $object->mod_date;
-      $table->add_row('Version & date',
-		      qq(<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>),
-		      1);
-      # author
-      my $auth  = $object->get_author_name;
-      $table->add_row('Author',
-		      "This transcript was annotated by $auth");
-
+    # class
+    my $class = $object->transcript_class;
+    $table->add_row('Class',
+		    qq(<p>$class [<a href="http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html" target="external">Definition</a>]</p>),
+		    1);
+    # date
+    my $version = $object->version;
+    my $c_date = $object->created_date;
+    my $m_date = $object->mod_date;
+    $table->add_row('Version & date',
+		    qq(<p>Version $version</p><p>Modified on $m_date (<span class="small">Created on $c_date</span>)<span></p>),
+		    1);
+    # author
+    my $auth  = $object->get_author_name;
+    $table->add_row('Author',
+		    "This transcript was annotated by $auth");
   }
 
 ## type for core genes
@@ -70,13 +69,13 @@ sub content {
     my $type = $object->transcript_type;
     $table->add_row('Type',$type) if $type;
   }
-## add prediction method
+  ## add prediction method
   my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
   my $text  = "No $label defined in database";
   my $o     = $object->Obj;
   eval {
     if( $o && $o->can( 'analysis' ) && $o->analysis && $o->analysis->description ) {
-    $text = $o->analysis->description;
+      $text = $o->analysis->description;
     } elsif( $object->can('gene') && $object->gene->can('analysis') && $object->gene->analysis && $object->gene->analysis->description ) {
       $text = $object->gene->analysis->description;
     } else {
@@ -95,15 +94,45 @@ sub content {
 		  $text,
 		  1 );
 
-## add alternative transcript info
+  ## add alternative transcript info
   my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
   if ($temp) {
-      $table->add_row('Alternative transcripts',
-		      "<p>$temp</p>",
-		      1 );
+    $table->add_row('Alternative transcripts',
+		    "<p>$temp</p>",
+		    1 );
   }
 
+  #horrible hack to account for missing xrefs in core db. Do not even merge back into the HEAD!
+  elsif ($object->Obj->analysis->logic_name eq 'havana') {
+    my $type = $object->gene_type;
+    my ($id,$url,$dbname);
+    foreach my $xref (@{$object->Obj->get_all_DBEntries}) {
+      $dbname = $xref->dbname;
+      next if ($dbname ne 'Vega_transcript');
+      $id = $xref->display_id;
+      next if ($id !~ /OTT/);
+      $url = $object->get_ExtURL($dbname,$id);
+      last;
+    }
+    if ($url) {
+      my $all_loc_url = $object->_url({
+	ftype => 'Xref_OTTT',
+	type => 'Location',
+	action => 'Genome',
+	id     => $id,
+      });
+      $temp = qq(<strong>This $type entry corresponds to the following database identifiers:</strong></p><table cellpadding="4"><tr><th style="white-space: nowrap; padding-right: 1em">Vega Transcript:</th><td>);
+      $temp .= qq(<div class="multicol"><a href="$url">$id</a>);
+#      $temp .= qq( [<a href="$all_loc_url">view all locations</a>]); #disablealways get 'no mapping found'
+      $temp .= qq(</div></td></tr></table>);
+      $table->add_row('Alternative transcripts',
+		      "<p>$temp</p>",
+		      1,
+		    );
+    }
+  }
   return $table->render;
 }
 
 1;
+

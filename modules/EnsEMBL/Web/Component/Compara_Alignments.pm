@@ -325,11 +325,10 @@ sub get_slice_table {
   my ($table_rows, $species_padding, $region_padding, $number_padding, $ancestral_sequences);
 
   foreach (@$slices) {
-    my $species = $_->{'name'};
+    my $species = $_->{'display_name'} || $_->{'name'};
     
     next unless $species;
-
-    $species .= " $_->{'chrom_name'}" if $_->{'chrom_name'};    
+    
     $species_padding = length $species if $return_padding && length $species > $species_padding;
 
     $table_rows .= qq{

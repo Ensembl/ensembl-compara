@@ -608,7 +608,7 @@ sub hit_type {
 	'Bio::EnsEMBL::DnaDnaAlignFeature' => 'dna_align_feature',
 	'Bio::EnsEMBL::DnaPepAlignFeature' => 'protein_align_feature',
     );
-    my $ln = $evi->analysis->logic_name;
+    my $ln = lc($evi->analysis->logic_name);
     my $evi_object = ref($evi);
     my $evi_type = $evidence_table_types{$evi_object};
     my $type = $info_summary->{$evi_type}{'analyses'}{$ln}{'web'}{'type'} || 'other';

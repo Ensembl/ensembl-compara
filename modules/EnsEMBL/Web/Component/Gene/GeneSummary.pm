@@ -138,22 +138,32 @@ sub content {
   }
 
   ## add prediction method
-    my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
-    my $text = "<p>No $label defined in database</p>";
-    my $o = $object->Obj;
-    eval {
-      if( $o 
+  my $label = ( ($db eq 'vega' or $object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? 'Curation' : 'Prediction' ).' Method';
+  my $text = "<p>No $label defined in database</p>";
+  my $o = $object->Obj;
+  eval {
+    if( $o 
           && $o->can( 'analysis' )
             && $o->analysis 
-            && $o->analysis->description ) {
-          $text = $o->analysis->description;
-      } elsif( $object->can('gene') && $object->gene->can('analysis') && $object->gene->analysis && $object->gene->analysis->description ) {
-          $text = $object->gene->analysis->description;
-      }
-      $table->add_row($label,
-                  "<p>$text</p>",
-                  1);
-      };
+	      && $o->analysis->description ) {
+      $text = $o->analysis->description;
+    } elsif( $object->can('gene') && $object->gene->can('analysis') && $object->gene->analysis && $object->gene->analysis->description ) {
+      $text = $object->gene->analysis->description;
+    }
+    $table->add_row($label,
+		    "<p>$text</p>",
+		    1);
+  };
+
+  ## add alternative transcript info
+  my $temp =  $self->_matches( 'alternative_genes', 'Alternative Genes', 'ALT_TRANS' );
+  if ($temp) {
+    $table->add_row('Alternative genes',
+		    "<p>$temp</p>",
+		    1 );
+  }
+
+
     return $table->render;
 }
 

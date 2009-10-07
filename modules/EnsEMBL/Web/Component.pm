@@ -293,6 +293,7 @@ sub _matches {
   if( $keys[0] eq 'ALT_TRANS' ) {
       @links = $self->remove_redundant_xrefs(@links);
   }
+  return unless @links;
   my $old_key = '';
   foreach my $link (@links) {
     my ( $key, $text ) = @$link;
@@ -580,12 +581,18 @@ sub _sort_similarity_links_ek {
 sub remove_redundant_xrefs {
   my ($self,@links) = @_;
   my %priorities;
+
   foreach my $link (@links) {
     my ( $key, $text ) = @$link;
+    #e56 hack since we have no ALT_GENE type xref
+    if ($key eq 'Havana gene') {
+      return ( [ 'Havana Gene', $text ]);
+    }
     if ($text =~ />OTT|>ENST/) {
       $priorities{$key} = $text;
     }
   }
+  return () if (ref($self->object->Obj) eq 'Bio::EnsEMBL::Gene'); #another hack to deal with mouse which has no 'Havana gene'
   foreach my $type (
     'Transcript having exact match between ENSEMBL and HAVANA',
     'Ensembl transcript having exact match with Havana',

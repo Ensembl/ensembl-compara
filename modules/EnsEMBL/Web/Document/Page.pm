@@ -411,6 +411,8 @@ sub render {
         ';
   }
   
+  $html .= '[[message]]';
+
   $html .= '[[content]]' unless $flag;
       
   if ($flag ne 'start') {

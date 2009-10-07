@@ -6,6 +6,7 @@ use Exporter;
 
 use Apache2::Const qw(:common :http :methods);
 use Apache2::SizeLimit;
+use Apache2::Connection ();
 use Apache2::URI;
 use APR::URI;
 use CGI::Cookie;
@@ -13,6 +14,7 @@ use Data::Dumper;
 use Fcntl ':flock';
 use Sys::Hostname;
 use Time::HiRes qw(time);
+use URI::Escape;
 
 use SiteDefs qw(:APACHE);
 
@@ -23,7 +25,17 @@ use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
 
+our $species_defs = new EnsEMBL::Web::SpeciesDefs;
 our $MEMD = new EnsEMBL::Web::Cache;
+our $GEO;
+
+if ($species_defs->ENSEMBL_MIRRORS) {
+  eval q/
+    use Geo::IP;
+    $GEO = Geo::IP->new( GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE );
+  /;
+  warn $@ if $@;
+};
 
 our $THIS_HOST;
 our $LOG_INFO; 
@@ -148,6 +160,91 @@ sub childInitHandler {
   printf STDERR "Child %9d: - initialised at %30s\n", $$, '' . gmtime if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 }
 
+sub redirect_to_nearest_mirror {
+  my $r = shift;
+
+  if ($species_defs->ENSEMBL_MIRRORS) {
+    my $unparsed_uri = $r->unparsed_uri();
+
+    ## Check url
+    if ($unparsed_uri =~ /redirect=mirror/) {
+      ## Display the redirect message (but only if user comes from other mirror)
+      if (my ($referer) = $unparsed_uri =~ /source=([\w\.-]+)/) {
+       if (grep { $referer =~ /$_/ } values %{ $species_defs->ENSEMBL_MIRRORS }) {
+        if ($referer ne $species_defs->ENSEMBL_SERVERNAME) {
+            my $back = 'http://' . $referer . $unparsed_uri;
+            $back =~ s/source=$referer//;
+
+            my $user_message = qq| You've been redirected to your nearest mirror - | . $species_defs->ENSEMBL_SERVERNAME . "\n";
+            $user_message   .= qq| <ul><li>Take me back to <a href="$back">$referer</a></li></ul> |;
+            
+            my $cookie = CGI::Cookie->new(
+              -name    => 'user_message',
+              -value   => uri_escape($user_message),
+              -expires => '+1m',     
+            );
+            
+            ## Redirecting to same page, but without redirect params in url
+            $r->err_headers_out->add('Set-Cookie' => $cookie);
+            $unparsed_uri =~ s/;?source=$referer//;
+            $unparsed_uri =~ s/;?redirect=mirror//;
+            $unparsed_uri =~ s/\?$//;
+            $r->headers_out->set(Location => $species_defs->ENSEMBL_BASE_URL . $unparsed_uri);
+            
+            return Apache2::Const::REDIRECT;              
+            
+        }
+       }
+      }
+      
+      my $cookie = CGI::Cookie->new(
+        -name    => 'redirect',
+        -value   => 'mirror',
+        -expires => 'Thu, 31-Dec-2037 22:22:22 GMT', ## End of time :)     
+      );
+      $r->err_headers_out->add('Set-Cookie' => $cookie);
+
+      return DECLINED;
+    }
+
+    ## Check "don't redirect me" cookie
+    my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
+    
+    return DECLINED
+      if $cookies{'redirect'} && $cookies{'redirect'}->value eq 'mirror';
+
+    ## Ok, so which country you from
+    if ($GEO) {
+      
+      my $ip = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
+      my $country  = $GEO->country_code_by_addr($ip);
+  
+      if (my $location = $species_defs->ENSEMBL_MIRRORS->{$country} || $species_defs->ENSEMBL_MIRRORS->{'MAIN'}) {
+        return DECLINED
+          if $location eq $species_defs->ENSEMBL_SERVERNAME;
+  
+        ## Deleting cookie for current site
+        my $cookie = CGI::Cookie->new(
+          -name    => 'redirect',
+          -value   => '',
+          -expires => '-1h',         
+        );
+  
+        $unparsed_uri .= $unparsed_uri =~ /\?/ ? ';redirect=mirror' : '?redirect=mirror';
+        $unparsed_uri .= ';source=' . $species_defs->ENSEMBL_SERVERNAME;
+  
+        $r->err_headers_out->add('Set-Cookie' => $cookie);
+        $r->headers_out->set(Location => "http://$location$unparsed_uri");
+        
+        return Apache2::Const::REDIRECT;       
+      }
+      
+    }
+  }
+
+  return DECLINED;
+}
+
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 
@@ -181,11 +278,10 @@ sub postReadRequestHandler {
     r      => $r
   });
   
-  # Ajax cookie
+  ## Ajax cookie
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
-  
   $ENSEMBL_WEB_REGISTRY->check_ajax($cookies{'ENSEMBL_AJAX'});
-  
+
   $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}  = $cookies{'ENSEMBL_AJAX'}  ? $cookies{'ENSEMBL_AJAX'}->value  : 'none';
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'} = $cookies{'ENSEMBL_WIDTH'} ? $cookies{'ENSEMBL_WIDTH'}->value : ($SiteDefs::ENSEMBL_IMAGE_WIDTH || 800);
   
@@ -621,7 +717,7 @@ sub transHandler {
   }
 
   # Search the htdocs dirs for a file to return
-  return DECLINED if$species eq 'biomart' && $script =~ /^mart(service|results|view)/;
+  return DECLINED if $species eq 'biomart' && $script =~ /^mart(service|results|view)/;
 
   my $path = join '/', $species || (), $script || (), $path_info || ();
   
@@ -885,8 +981,6 @@ sub _get_loads {
 sub queue_pending_blast_jobs {
   my $queue_class = 'EnsEMBL::Web::Queue::LSF';
 
-  my $species_defs = new EnsEMBL::Web::SpeciesDefs;
-  
   my $DB = {
     NAME => 'ensembl_blast',
     USER => 'ensadmin',

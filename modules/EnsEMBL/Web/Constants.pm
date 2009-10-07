@@ -28,7 +28,7 @@ sub HOMOLOGY_TYPES {
 sub GENE_JOIN_TYPES {
   return {
     'ortholog_one2one'          => 'orthologue',
-    'apparent_ortholog_one2one' => 'orthologue_multi',
+    'apparent_ortholog_one2one' => 'orthologue',
     'ortholog_one2many'         => 'orthologue_multi',
     'ortholog_many2many'        => 'orthologue_multi',
     'UBRH'                      => 'orthologue',

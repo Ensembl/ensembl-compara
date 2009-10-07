@@ -1,173 +1,181 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML>
+<html>
 <head>
-	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
-	<title>e! Variation schema </title>
+<meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
+<title>e! Variation schema </title>
 </head>
+
 <body>
-<H1>Ensembl Variation Schema Documentation</H1>
-<H2>Introduction</H2>
-<p>This document gives a high-level description of the tables that
+<h1>Ensembl Variation Schema Documentation</h1>
+
+<h2>Introduction</h2>
+
+<p>
+This document gives a high-level description of the tables that
 make up the Ensembl variation schema. Tables are grouped into logical
 groups, and the purpose of each table is explained. It is intended to
 allow people to familiarise themselves with the schema when
 encountering it for the first time, or when they need to use some
 tables that they've not used before. Note that this document
 makes no attempt to enumerate all of the names, types and contents of
-every single table.</p>
-<p>This document refers to version <STRONG>55</STRONG> of the Ensembl
+every single table.
+</p>
+
+<p>
+This document refers to version <strong>55</strong> of the Ensembl
 variation schema. 
 </p>
-<p>A PDF document of the schema is available <a HREF="variation-database-schema.pdf">here</a>.</p>
-<HR>
-<p><B>Samples and populations</B></p>
+
+<p>
+A PDF document of the schema is available <a href="variation-database-schema.pdf">here</a>.</p>
+<hr />
+<p><b>Samples and populations</b></p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_population">individual_population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_type">individual_type</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample">sample</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample_synonym">sample_synonym</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population_structure">population_structure</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_population">individual_population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_type">individual_type</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#sample">sample</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#sample_synonym">sample_synonym</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population_structure">population_structure</a></p></li>
 </ul>
-<p STYLE="margin-bottom: 0cm"><BR></p>
-<p><B>Simple variations</B></p>
+<p style="margin-bottom: 0cm"><br /></p>
+<p><b>Simple variations</b></p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source </a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_synonym">variation_synonym</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#flanking_sequence">flanking_sequence</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#failed_variation">failed_variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#failed_description">failed_description</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele">allele</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_feature">variation_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#transcript_variation">transcript_variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#tagged_variation_feature">tagged_variation_feature</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source </a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_synonym">variation_synonym</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#flanking_sequence">flanking_sequence</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#failed_variation">failed_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#failed_description">failed_description</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele">allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#transcript_variation">transcript_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#tagged_variation_feature">tagged_variation_feature</a></p></li>
 </ul>
-<p STYLE="margin-bottom: 0cm"><BR></p>
-<p><B>Multi-marker variations</B></p>
+<p style="margin-bottom: 0cm"><br /></p>
+<p><b>Multi-marker variations</b></p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group">allele_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group_allele">allele_group_allele</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group">variation_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group_feature">variation_group_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group_variation">variation_group_variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#httag">httag</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group">allele_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group_allele">allele_group_allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group_feature">variation_group_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group_variation">variation_group_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#httag">httag</a></p></li>
 </ul>
-<p STYLE="margin-bottom: 0cm"><BR></p>
-<p><B>Genotypes, read coverage and annotations</B></p>
+<p style="margin-bottom: 0cm"><br /></p>
+<p><b>Genotypes, read coverage and annotations</b></p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#compressed_genotype_single_bp">compressed_genotype_single_bp</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population_genotype">population_genotype</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#read_coverage">read_coverage</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_annotation">variation_annotation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#phenotype">phenotype</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#compressed_genotype_single_bp">compressed_genotype_single_bp</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population_genotype">population_genotype</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#read_coverage">read_coverage</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_annotation">variation_annotation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#phenotype">phenotype</a></p></li>
 </ul>
-<p STYLE="margin-bottom: 0cm"><BR></p>
-<p><B>Miscellaneous</B></p>
+<p style="margin-bottom: 0cm"><br /></p>
+<p><b>Miscellaneous</b></p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#meta">meta</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#meta_coord">meta_coord</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#seq_region">seq_region</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#meta">meta</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#meta_coord">meta_coord</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#seq_region">seq_region</a></p></li>
 </ul>
-<HR>
-<H2>Samples and populations</H2>
-<H3><a NAME="individual"/>individual</H3>
+<hr />
+<h2>Samples and populations</h2>
+<h3><a name="individual"/>individual</h3>
 <p>Stores information about an identifiable individual, including
 gender and the identifiers of the individual's parents (if known).</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample">sample</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_type">individual_type</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_population">individual_population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#compressed_genotype_single_bp">compressed_genotype_single_bp</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#sample">sample</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_type">individual_type</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_population">individual_population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#compressed_genotype_single_bp">compressed_genotype_single_bp</a></p></li>
 </ul>
-<H3><a NAME="individual_population"/>individual_population</H3>
+<h3><a name="individual_population"/>individual_population</h3>
 <p>This table resolves the many-to-many relationship between the
 individual and population tables; i.e. samples may belong to more
 than one population. Hence it is composed of rows of individual and
 population identifiers.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
 </ul>
-<H3><a NAME="individual_type"/>individual_type</H3>
+<h3><a name="individual_type"/>individual_type</h3>
 <p>This table contains a set of common individual types and their
-descriptions. These types are currently: “fully_inbred”,
-“partly_inbred”, “outbred” and “mutant”.</p>
-<p><B>See also:</B></p>
+descriptions. These types are currently: "fully_inbred",
+"partly_inbred", "outbred" and "mutant".</p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
 </ul>
-<H3><a NAME="sample"/>sample</H3>
+<h3><a name="sample"/>sample</h3>
 <p>Sample is used as a generic catch-all term to cover
 individuals, populations and strains; it contains a name and description, as
 well as a size if applicable to the population.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
 </ul>
-<H3><a NAME="sample_synonym"/>sample_synonym</H3>
+<h3><a name="sample_synonym"/>sample_synonym</h3>
 <p>Used to store alternative names for populations when data comes
 from multiple sources.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample">sample</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#sample">sample</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
 </ul>
-<H3><a NAME="population"/>population</H3>
+<h3><a name="population"/>population</h3>
 <p>A table consisting simply of sample_ids representing populations;
 all data relating to the populations are stored in separate tables
 (see below).</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample">sample</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample_synonym">sample_synonym</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_population">individual_population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population_structure">population_structure</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population_genotype">population_genotype</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele">allele</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group">allele_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#tagged_variation_feature">tagged_variation_feature</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#sample">sample</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#sample_synonym">sample_synonym</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_population">individual_population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population_structure">population_structure</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population_genotype">population_genotype</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele">allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group">allele_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#tagged_variation_feature">tagged_variation_feature</a></p></li>
 </ul>
-<H3><a NAME="population_structure"/>population_structure</H3>
+<h3><a name="population_structure"/>population_structure</h3>
 <p>This table stores hierarchical relationships between populations
 by relating them as populations and sub-populations.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p><a HREF="#population">population</a></p>
+  <li><p><a href="#population">population</a></p></li>
 </ul>
-<HR>
-<H2>Simple variations</H2>
-<H3><a NAME="source"/>source</H3>
+<hr />
+<h2>Simple variations</h2>
+<h3><a name="source"/>source</h3>
 <p>This table contains details of the source from which a variation
 is derived. Most commonly this is NCBI's dbSNP; other sources include
 SNPs called by Ensembl.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_synonym">variation_synonym</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_feature">variation_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_annotation">variation_annotation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group">variation_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group">allele_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#sample_synonym">sample_synonym</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#httag">httag</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_synonym">variation_synonym</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_annotation">variation_annotation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group">allele_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#sample_synonym">sample_synonym</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#httag">httag</a></p></li>
 </ul>
-<H3><a NAME="variation"/>variation</H3>
+<h3><a name="variation"/>variation</h3>
 <p>This is the schema's generic representation of a variation,
 defined as a genetic feature that varies between individuals of the
 same species. The most common type is the single nucleotide variation
@@ -178,245 +186,245 @@ variation may in fact have multiple mappings across a genome. This
 table stores a variation's name (commonly an ID of the form e.g.
 rs123456, assigned by dbSNP), along with a validation status and
 ancestral (or reference) allele.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_synonym">variation_synonym</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#flanking_sequence">flanking_sequence</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#failed_variation">failed_variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_feature">variation_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group_variation">variation_group_variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele">allele</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group_allele">allele_group_allele</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_synonym">variation_synonym</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#flanking_sequence">flanking_sequence</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#failed_variation">failed_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group_variation">variation_group_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele">allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group_allele">allele_group_allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#individual_genotype_multiple_bp">individual_genotype_multiple_bp</a></p></li>
 </ul>
-<H3><a NAME="variation_synonym"/>variation_synonym</H3>
+<h3><a name="variation_synonym"/>variation_synonym</h3>
 <p>This table allows for a variation to have multiple IDs, generally
 given by multiple sources.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="flanking_sequence"/>flanking_sequence</H3>
+<h3><a name="flanking_sequence"/>flanking_sequence</h3>
 <p>This table contains the upstream and downstream sequence
 surrounding a variation. Since each variation is defined by its
 flanking sequence, this table has a one-to-one relationship with the
 variation table.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#seq_region">seq_region</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#seq_region">seq_region</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="failed_variation"/>failed_variation</H3>
+<h3><a name="failed_variation"/>failed_variation</h3>
 <p>For various reasons it may be necessary to store information about
 a variation that has failed quality checks in the Variation pipeline.
 This table acts as a flag for such failures.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#failed_description">failed_description</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#failed_description">failed_description</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="failed_description"/>failed_description</H3>
+<h3><a name="failed_description"/>failed_description</h3>
 <p>This table contains descriptions of reasons for a variation being
 flagged as failed.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#failed_description">failed_description</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#failed_description">failed_description</a></p></li>
 </ul>
-<H3><a NAME="allele"/>allele</H3>
+<h3><a name="allele"/>allele</h3>
 <p>This table stores information about each of a variation's alleles,
 along with population frequencies.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
 </ul>
-<H3><a NAME="variation_feature"/>variation_feature</H3>
+<h3><a name="variation_feature"/>variation_feature</h3>
 <p>This table represents mappings of variations to genomic locations.
 It stores an allele string representing the different possible
 alleles that are found at that locus e.g. “A/T” for a SNP, as
 well as a “worst case” consequence of the mutation. It also acts
 as part of the relationship between variations and transcripts.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#tagged_variation_feature">tagged_variation_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#transcript_variation">transcript_variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#tagged_variation_feature">tagged_variation_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#transcript_variation">transcript_variation</a></p></li>
 </ul>
-<H3><a NAME="transcript_variation"/>transcript_variation</H3>
+<h3><a name="transcript_variation"/>transcript_variation</h3>
 <p>This table relates a variation_feature to a transcript (see Core
 documentation). It contains the consequence of the variation e.g.
 intronic, non-synonymous coding, stop etc, along with the change in
 amino acid in the resulting protein if applicable.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_feature">variation_feature</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
 </ul>
-<H3><a NAME="tagged_variation_feature"/>tagged_variation_feature</H3>
+<h3><a name="tagged_variation_feature"/>tagged_variation_feature</h3>
 <p>This table lists variation features that are tagged by another
 variation feature. Tag pairs are defined as having an r&sup2;
 &gt; 0.99.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_feature">variation_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
 </ul>
-<HR>
-<H2>Multi-marker variations</H2>
+<hr />
+<h2>Multi-marker variations</h2>
 <p>These tables are designed to represent alleles and haplotypes that
 consist of more than one variation.</p>
-<H3><a NAME="allele_group"/>allele_group</H3>
+<h3><a name="allele_group"/>allele_group</h3>
 <p>This table, along with allele_group_allele, represents a
 particular multi-marker allele of a given multi-marker variation, or
 haplotype. It stores an associated population frequency.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group_allele">allele_group_allele</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group">variation_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group_allele">allele_group_allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
 </ul>
-<H3><a NAME="allele_group_allele"/>allele_group_allele</H3>
+<h3><a name="allele_group_allele"/>allele_group_allele</h3>
 <p>This table represents an allele of one variation in a multi-marker
 variation, or haplotype. It stores a string of the allele.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group">allele_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group">allele_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="variation_group"/>variation_group</H3>
+<h3><a name="variation_group"/>variation_group</h3>
 <p>This table represents the equivalent of a variation for a
 multi-marker variation.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group_variation">variation_group_variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#allele_group">allele_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#httag">httag</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group_variation">variation_group_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#allele_group">allele_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#httag">httag</a></p></li>
 </ul>
-<H3><a NAME="variation_group_variation"/>variation_group_variation</H3>
+<h3><a name="variation_group_variation"/>variation_group_variation</h3>
 <p>This table represents an individual variation that makes up a
 multi-marker variation, and resolves the many-to-many relationship
 between variation and variation_group.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group">variation_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="variation_group_feature"/>variation_group_feature</H3>
+<h3><a name="variation_group_feature"/>variation_group_feature</h3>
 <p>This table represents the equivalent of a variation_feature for
 multi-marker variations, mapping a haplotype to a chromosomal
 coordinate system.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group">variation_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#seq_region">seq_region</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#seq_region">seq_region</a></p></li>
 </ul>
-<H3><a NAME="httag"/>httag</H3>
+<h3><a name="httag"/>httag</h3>
 <p>This table represents the equivalent of a tagged_variation_feature
 for multi-marker variations, representing an instance where a
 haplotype is tagged by or tags another marker.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group">variation_group</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
 </ul>
-<HR>
-<H2>Genotypes, read coverage and annotations</H2>
-<H3><a NAME="compressed_genotype_single_bp"/>compressed_genotype_single_bp</H3>
+<hr />
+<h2>Genotypes, read coverage and annotations</h2>
+<h3><a name="compressed_genotype_single_bp"/>compressed_genotype_single_bp</h3>
 <p>This table holds genotypes compressed using the pack() method in
 Perl. These genotypes are mapped to particular genomic locations
 rather than variation objects. The data have been compressed to reduce table
 size and increase the speed of the web code.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#seq_region">seq_region</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#seq_region">seq_region</a></p></li>
 </ul>
-<H3><a NAME="individual_genotype_multiple_bp"/>individual_genotype_multiple_bp</H3>
+<h3><a name="individual_genotype_multiple_bp"/>individual_genotype_multiple_bp</h3>
 <p>This table holds uncompressed genotypes for given variations.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
+	<li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="population_genotype"/>population_genotype</H3>
+<h3><a name="population_genotype"/>population_genotype</h3>
 <p>This table stores alleles and frequencies for variations in
 given populations.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#population">population</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
 </ul>
-<H3><a NAME="read_coverage"/>read_coverage</H3>
+<h3><a name="read_coverage"/>read_coverage</h3>
 <p>This table stores the read coverage in the resequencing of
 individuals. Each row contains an individual ID, chromosomal
 coordinates and a read coverage level.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#individual">individual</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#seq_region">seq_region</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#seq_region">seq_region</a></p></li>
 </ul>
-<H3><a NAME="variation_annotation"/>variation_annotation</H3>
+<h3><a name="variation_annotation"/>variation_annotation</h3>
 <p>This table stores information linking genotypes and phenotypes. It
 stores various fields pertaining to the study conducted, along with
 the associated gene, risk allele frequency and a p-value.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation">variation</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#phenotype">phenotype</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#source">source</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#phenotype">phenotype</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
 </ul>
-<H3><a NAME="phenotype"/>phenotype</H3>
+<h3><a name="phenotype"/>phenotype</h3>
 <p>This table stores details of the phenotypes associated with
 variation annotations.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_annotation">variation_annotation</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_annotation">variation_annotation</a></p></li>
 </ul>
-<HR>
-<H2>Miscellaneous</H2>
+<hr />
+<h2>Miscellaneous</h2>
 <p>Tables that don't fit anywhere else.</p>
-<H3><a NAME="seq_region"/>seq_region</H3>
+<h3><a name="seq_region"/>seq_region</h3>
 <p>This table stores the relationship between Ensembl's internal
 coordinate system identifiers and traditional chromosome names.</p>
-<p><B>See also:</B></p>
+<p><b>See also:</b></p>
 <p>Tables:</p>
 <ul>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_feature">variation_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#variation_group_feature">variation_group_feature</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#flanking_sequence">flanking_sequence</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#compressed_genotype_single_bp">compressed_genotype_single_bp</a></p>
-	<li><p STYLE="margin-bottom: 0cm"><a HREF="#read_coverage">read_coverage</a></p>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_group_feature">variation_group_feature</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#flanking_sequence">flanking_sequence</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#compressed_genotype_single_bp">compressed_genotype_single_bp</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#read_coverage">read_coverage</a></p></li>
 </ul>
-<H3><a NAME="seq_region_attrib"/>meta</H3>
+<h3><a name="seq_region_attrib"/>meta</h3>
 <p>This table stores various metadata relating to the database,
 generally used by the Ensembl web code.</p>
-<H3><a NAME="meta_coord"/>meta_coord</H3>
+<h3><a name="meta_coord"/>meta_coord</h3>
 <p>This table gives the coordinate system used by various tables in
 the database.</p>
-<HR>
+
 </body>
-</HTML>
+</html>

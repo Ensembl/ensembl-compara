@@ -15,7 +15,9 @@
   <li><a href="#apache">Apache and mod_perl</a> - Open source web server</li>
   <li><a href="#mysql">MySQL</a> - Open source database server</li>
   <li><a href="#sqlite">SQLite</a> - alternative open source database server for session information (if not installing MySQL)</li>
+  <!--
   <li><a href="#dotter">Dotter</a> - Graphical alignment package</li>
+  -->
 </ul> 
 <p>These applications are not version-specific for Ensembl; that is, if you upgrade your Ensembl installation
 to a newer version when one becomes available, you probably won't need to install new versions of
@@ -137,7 +139,7 @@ The httpd.conf files etc assume you install this in an apache2 subdirectory of y
 modules can all be downloaded from www.cpan.org, and are all installed in much the same way:
 Download the module tarball, unpack in a working directory, and install the module:</p>
 <pre class="code">
-gunzip < module.tar.gz | tar xvf -
+gunzip &lt; module.tar.gz | tar xvf -
 cd module
 perl Makefile.PL
 make
@@ -310,7 +312,7 @@ current at the time of writing - you should install whatever is the latest versi
     <dt>SOAP::Lite</dt>
     <dd><p>used by DAS to communicate with DAS sources</p>
       <p>Note: may require additional modules. Please read install docs.</p>
-      <p><a href="http://www.cpan.org/modules/by-module/SOAP/SOAP-Lite-0.60a.tar.gz">http://www.cpan.org/modules/by-module/SOAP/SOAP-Lite-0.60a.tar.gz</a></p>
+      <p><a href="http://www.cpan.org/modules/by-module/SOAP/SOAP-Lite-0.60a.tar.gz">http://www.cpan.org/modules/by-module/SOAP/SOAP-Lite-0.60a.tar.gz</a></p></dd>
   
     <dt>Spreadsheet::WriteExcel</dt>
     <dd><p>used for exporting Excel spreadsheets</p>
@@ -447,4 +449,3 @@ DotterView should now work.</p>
 
 </body>
 </html>
-  

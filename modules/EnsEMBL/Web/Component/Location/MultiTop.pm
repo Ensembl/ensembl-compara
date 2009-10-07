@@ -20,7 +20,7 @@ sub content {
   
   return if $object->param('panel_top') eq 'no';
   
-  my $expansion = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1); # get a slice corresponding to the region to be shown for Navigational Overview
+  my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1); # get a slice corresponding to the region to be shown for Navigational Overview
   my $image_width = $self->image_width;
   my $i = 1;
   my @images;
@@ -28,14 +28,24 @@ sub content {
   foreach (@{$object->multi_locations}) {
     my $highlight_gene = $object->param('g' . ($i-1));
     my $slice = $_->{'slice'};
-    my $expand = ($expansion - $slice->length) / 2;
-    my $l = $_->{'start'} - $expand < 1 ? $_->{'start'} : $expand;
-    my $r = $_->{'end'} + $expand > $_->{'length'} ? $_->{'length'} - $_->{'end'} : $expand;
     
-    $l += $expand - $r if $r < $expand;
-    $r += $expand - $l if $l < $expand;
-    
-    $slice = $slice->expand($l, $r) if $expand > 0 && $_->{'length'} > $expansion;
+    if ($slice->length <= $threshold) {
+      if ($_->{'length'} < $threshold) {
+        $slice = $slice->adaptor->fetch_by_region($slice->coord_system->name, $slice->seq_region_name, 1, $slice->seq_region_length, 1);
+      } else {
+        my $c = int $slice->centrepoint;
+        my $s = ($c - $threshold/2) + 1;
+        $s = 1 if $s < 1;
+        my $e = $s + $threshold - 1;
+        
+        if ($e > $slice->seq_region_length) {
+          $e = $slice->seq_region_length;
+          $s = $e - $threshold - 1;
+        }
+        
+        $slice = $slice->adaptor->fetch_by_region($slice->coord_system->name, $slice->seq_region_name, $s, $e, 1);
+      }
+    }
     
     my $image_config = $object->image_config_hash('contigviewtop_' . $i, 'MultiTop', $_->{'species'});
     
@@ -45,7 +55,12 @@ sub content {
       slice_number    => "$i|2",
       multi           => 1
     });
-    
+ 
+    if ($image_config->get_node('annotation_status')) {
+      $image_config->get_node('annotation_status')->set('caption', '');
+      $image_config->get_node('annotation_status')->set('menu', 'no');
+    };
+
     $image_config->get_node('ruler')->set('caption', $_->{'short_name'});
     $image_config->highlight($highlight_gene) if $highlight_gene;
     

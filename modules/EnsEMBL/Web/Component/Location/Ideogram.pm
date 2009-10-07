@@ -29,10 +29,10 @@ sub content {
   
   return if $self->_export_image($image);
   
- $image->{'panel_number'} = 'ideogram';
- $image->imagemap = 'yes';
- $image->set_button('drag', 'title' => 'Click or drag to centre display');
- 
+  $image->{'panel_number'} = 'ideogram';
+  $image->imagemap = 'yes';
+  $image->set_button('drag', 'title' => 'Click or drag to centre display');
+
   return '<p>.</p>' . $image->render;
 
 }

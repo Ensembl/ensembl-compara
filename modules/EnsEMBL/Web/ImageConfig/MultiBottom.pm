@@ -52,74 +52,62 @@ sub init {
   $self->load_configured_das;
   
   $self->add_tracks('sequence', 
-    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }],
+    [ 'contig', 'Contigs', 'stranded_contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' }]
   );
   
   $self->add_tracks('decorations',
     [ 'ruler',     '', 'ruler',      { display => 'normal', strand => 'b', name => 'Ruler', description => 'Shows the length of the region being displayed' }],
     [ 'scalebar',  '', 'scalebar',   { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'draggable', '', 'draggable',  { display => 'normal', strand => 'b', menu => 'no' }],
-    [ 'nav',       '', 'navigation', { display => 'normal', strand => 'r', menu => 'no' }],
+    [ 'nav',       '', 'navigation', { display => 'normal', strand => 'r', menu => 'no' }]
   );
-  if ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-    $self->add_options( 
-    [ 'opt_pairwise_blastz_raw', 'BLASTz RAW pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],);
-  }
-  else {
-    $self->add_options( 
-      [ 'opt_pairwise_blastz', 'BLASTz net pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
-      [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
-    );
-  } 
-  $self->add_options( [ 'opt_join_genes',      'Join genes' ] );
+  
+  $self->add_options( 
+    [ 'opt_pairwise_blastz', 'BLASTz net pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+    [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+    [ 'opt_join_genes',      'Join genes', undef, undef, 'off' ]
+  );
+  
   $_->set('display', 'off') for grep $_->key =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
 sub multi {
   my ($self, $methods, $pos, $total, @slices) = @_;
  
-  my ($sp) = split '--', $self->{'species'};
+  my $sp = $self->{'species'};
   my $multi_hash = $self->species_defs->multi_hash;
   my $p = $pos == $total && $total > 2 ? 2 : 1;
   my $i;
   my %alignments;
   my @strands;
- 
-  my $vega = $self->species_defs->ENSEMBL_SITETYPE eq 'Vega';
-
+  
   foreach my $db (@{$self->species_defs->compara_like_databases||[]}) {
     next unless exists $multi_hash->{$db};
     
-    foreach my $align (values %{$multi_hash->{$db}->{'ALIGNMENTS'}}) {
-      next unless $methods->{$align->{'type'}};
-      next unless $align->{'class'} =~ /pairwise_alignment/;
-      next unless $align->{'species'}->{$sp};
-      next unless grep $align->{'species'}->{$_}, map [split '--', $_->{'species'}]->[0], @slices;
-
-      my $same_species = 0;
-
+    foreach (values %{$multi_hash->{$db}->{'ALIGNMENTS'}}) {
+      next unless $methods->{$_->{'type'}};
+      next unless $_->{'class'} =~ /pairwise_alignment/;
+      next unless $_->{'species'}->{$sp};
+      
+      my %align = %$_;
+      
+      next unless grep $align{'species'}->{$_->{'species'}}, @slices;
+      
       $i = $p;
       
       foreach (@slices) {
-        my ($s, $seq_region) = split '--', $_->{'species'};
-
-        $same_species = 1 if $vega && $sp eq $s && scalar keys %{$align->{'species'}} > 2;
-
-        if ($align->{'species'}->{$s}) {
-          $align->{'order'} = $i;
-          $align->{'other_ori'} = $_->{'ori'};
-          $align->{'gene'} = $_->{'g'};
-          $align->{'seq_region'} = $seq_region;
+        if ($align{'species'}->{$_->{'species'}}) {
+          $align{'order'} = $i;
+          $align{'other_ori'} = $_->{'ori'};
+          $align{'gene'} = $_->{'g'};
           last;
         }
         
         $i++;
       }
-
-      next if $same_species;
       
-      $align->{'db'} = lc substr $db, 9;
-      push @{$alignments{$align->{'order'}}}, $align;
+      $align{'db'} = lc substr $db, 9;
+      push @{$alignments{$align{'order'}}}, \%align;
     }
   }
   
@@ -140,9 +128,8 @@ sub multi {
     my $strand = shift @strands;
 
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
-      my ($other_species) = grep !/^$sp|merged|Ancestral_sequences$/, keys %{$align->{'species'}};
-      $other_species ||= $sp if $vega && $align->{'species'}->{$sp} && scalar keys %{$align->{'species'}} == 2;
-
+      my ($other_species) = grep !/^$sp|merged$/, keys %{$align->{'species'}};
+      
       my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
       (my $other_species_hr = $other_species) =~ s/_/ /g;
       
@@ -158,7 +145,6 @@ sub multi {
           db         => $align->{'db'},
           type       => $align->{'type'},
           ori        => $align->{'other_ori'},
-          seq_region => $align->{'seq_region'},
           join       => 1
         })
       );
@@ -172,7 +158,7 @@ sub join_genes {
   
   my ($prev_species, $next_species) = @species;
   ($prev_species, $next_species) = ('', $prev_species) if ($pos == 1 && $total == 2) || ($pos == 2 && $total > 2);
-  $next_species = $prev_species if $pos > 2 && $total > 3;
+  $next_species = $prev_species if $pos > 2 && $pos < $total && $total > 3;
   
   foreach ($self->get_node('transcript')->nodes) {
     $_->set('previous_species', $prev_species) if $prev_species;

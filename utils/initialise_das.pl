@@ -4,6 +4,12 @@
 # for DAS. Unfortunately lots of strange things have to happen to map between
 # Ensembl and DAS coordinate systems, so this does require some maintenance.
 
+# One issue is that the script attempts to add entries to the DAS registry for
+# new species/assemblies (line ~440 but this currently failing with a 400 error from
+# the Registry. Can be worked around by setting $load_registry to zero - this then prints
+# a list of new assemblies to be added which can be done manually by Jonathan Warren (jw12)
+# Don't know how to fix this at present - new version of LWP::UserAgent perhaps ?
+
 use strict;
 use warnings;
 
@@ -17,6 +23,8 @@ use Pod::Usage;
 use DBI;
 use Data::Dumper;
 use Compress::Zlib;
+
+my $load_registry = 1; # set to zero to get output of assemblies to add (not tested)
 
 # --- load libraries needed for reading config ---
 use vars qw( $SERVERROOT );
@@ -101,6 +109,8 @@ my $species_info;
 my $species_defs = EnsEMBL::Web::SpeciesDefs->new();
 my $das_parser   = Bio::EnsEMBL::ExternalData::DAS::SourceParser->new();
 my $sitetype = ucfirst(lc($species_defs->ENSEMBL_SITETYPE)) || 'Ensembl';
+#my $docroot = ($sitetype eq 'Vega') ? $SERVERROOT.'/sanger-plugins/vega' : $SERVERROOT; #tried to use this to compartmentalise vega files but have problems with xsl parsing
+my $docroot = $SERVERROOT;
 my $cdb_info = $species_defs->{_storage}->{MULTI}->{databases}->{DATABASE_COMPARA};
 my $cdb = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
   -dbname => $cdb_info->{'NAME'},
@@ -128,10 +138,10 @@ SPECIES: foreach my $sp (@$species) {
   
   my $type = $species_defs->get_config($sp,'ASSEMBLY_NAME') || die "[FATAL] ASSEMBLY_NAME is missing for $sp";
   my $mapmaster = sprintf("%s.%s.reference", $sp, $type);
-  
-  if (-e "$SERVERROOT/htdocs/das/$mapmaster/entry_points") {
+
+  if (-e "$docroot/htdocs/das/$mapmaster/entry_points") {
     if ($force_update) {
-      unlink "$SERVERROOT/htdocs/das/$mapmaster/entry_points";
+      unlink "$docroot/htdocs/das/$mapmaster/entry_points";
     } else {
       print STDERR "[INFO]  Already processed $sp - skipping\n";
       next SPECIES;
@@ -183,6 +193,7 @@ SPECIES: foreach my $sp (@$species) {
   
   my $toplevel_example  = $toplevel_slices->[0];
   my %coords = ();
+ SLICE:
   for (@$toplevel_slices) {
     # Set up the coordinate system details
     $_->[6] ||= ''; # version
@@ -195,6 +206,7 @@ SPECIES: foreach my $sp (@$species) {
       if (!$cs_xml) {
         # Add to the registry and check it came back OK
         my $tmp = _get_das_coords(_coord_system_as_xml($_->[5], $_->[6], $sp, $taxid), "$_->[5] $_->[6]");
+				next SLICE unless ($load_registry);
         $cs_xml = $tmp->{$sp}{$_->[5]}{$_->[6]};
         if (!$cs_xml) {
           print STDERR "[ERROR] Coordinate system $_->[5] $_->[6] is not in the DAS Registry! Skipping\n";
@@ -215,7 +227,7 @@ SPECIES: foreach my $sp (@$species) {
 # my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
 
-  entry_points( $toplevel_slices, "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster/entry_points", "$SERVERROOT/htdocs/das/$mapmaster" );
+  entry_points( $toplevel_slices, "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster/entry_points", "$docroot/htdocs/das/$mapmaster" );
   foreach my $feature (@feature_types) {
     my $dbn = 'DATABASE_CORE';
     my $table = $featuresMasterTable{$feature};
@@ -230,22 +242,26 @@ SPECIES: foreach my $sp (@$species) {
 #   print STDERR "\t $sp : $feature : $table => ", $rv || 'Off',  "\n";
 #   print STDERR "\t\t\tTEST REGION : ", join('*', @r), "\n";
     next unless @r;
+
     my $dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
     $shash->{$dsn}->{coords} = \%coords;
     $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
     $shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
-	if (   ($sitetype eq 'Vega')
-	    && ($feature =~ /^trans/) ) {
-		$type .= '-clone';
-		$dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
-		$shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
-		$shash->{$dsn}->{description} = sprintf("Annotation source (returns clones) for %s %s", $sp, $feature);
-	}
+    if (   ($sitetype eq 'Vega')
+	&& ($feature =~ /^trans/) ) {
+      my $vega_type = $type;
+      $vega_type .= '-clone';
+      $dsn = sprintf("%s.%s.%s", $sp, $vega_type, $feature);
+#      print STDERR  "--adding another Vega source for feature $feature - $dsn";
+      $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
+      $shash->{$dsn}->{description} = sprintf("Annotation source (returns clones) for %s %s", $sp, $feature);
+      $shash->{$dsn}->{coords} = \%coords;
+    }
   }
 }
 
-sources( $shash, "$SERVERROOT/htdocs/das/sources", $sitetype );
-dsn(     $shash, "$SERVERROOT/htdocs/das/dsn"     );
+sources( $shash, "$docroot/htdocs/das/sources", $sitetype );
+dsn(     $shash, "$docroot/htdocs/das/dsn"     );
 
 print STDERR sprintf("[INFO]  %d sources have been set up\n", scalar(keys %$shash));
 #print STDERR Data::Dumper::Dumper($species_info);
@@ -266,7 +282,9 @@ sub entry_points {
     <SEGMENT type="%s" id="%s" start="%d" stop="%d" orientation="+" subparts="%s">%s</SEGMENT>),
              $s->[5],  $s->[0],1,         $s->[1],                  $s->[4],      $s->[0]
     );
+#  warn "writing". sprintf qq(<SEGMENT type="%s" id="%s" start="%d" stop="%d" orientation="+" subparts="%s">%s</SEGMENT>),$s->[5],$s->[0],1,$s->[1],$s->[4],$s->[0] ;
   }
+
   $gz->gzwrite( qq(
   </ENTRY_POINTS>
 </DASEP>) );
@@ -296,6 +314,9 @@ sub dsn {
 
 sub sources {
   my( $sources, $file, $sitetype ) = @_;
+
+#warn Dumper($sources);
+
   
   open FH, ">$file";
   my ($day, $month, $year) = (localtime)[3,4,5];
@@ -391,6 +412,10 @@ sub _coord_system_as_xml {
   }
   
   ($authority, $version) = $cs_version =~ m/([^\d]+)(.+)/;
+
+  #need to do this whilst Vega has no versions
+  $authority = $authority eq 'VEG' ? 'VEGA' : $authority;
+  $version  = $version eq 'A' ? '' : $version;
   
   my %reverse_types = map { $TYPE_MAPPINGS{$_} => $_ } keys %TYPE_MAPPINGS;
   my %reverse_auths = map { $AUTHORITY_MAPPINGS{$_} => $_ } keys %AUTHORITY_MAPPINGS;
@@ -418,11 +443,15 @@ sub _get_das_coords {
   # If we have XML for a new coordinate system, add it
   if ($add_data) {
     print STDERR "[INFO]  Adding coordinate system '$add_name' to the DAS Registry\n";
+		unless ($load_registry) {
+			print STDERR "Data to be manually added to registry is $add_data";			
+			return;
+		}
     $add_data = qq(<?xml version='1.0' ?>\n<DASCOORDINATESYSTEM>\n  $add_data\n</DASCOORDINATESYSTEM>);
     $req->content($add_data);
     $req->content_length(length $add_data);
   }
-  
+
   my $resp = $ua->request( $req );
   $resp->is_success || die "Unable to retrieve coordinate system list from the DAS Registry: ".$resp->status_line." : ".$resp->content;
   

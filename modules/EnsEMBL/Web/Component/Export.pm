@@ -163,7 +163,7 @@ sub fasta {
     if ($genomic =~ /flanking/) {
       for (5, 3) {
         if ($genomic =~ /$_/) {
-          ($start, $end) = $_ == 3 ? ($slice_length - $object->param('flank3_display'), $slice_length) : (1, $object->param('flank5_display'));
+          ($start, $end) = $_ == 3 ? ($slice_length - $object->param('flank3_display') + 1, $slice_length) : (1, $object->param('flank5_display'));
           $flank_slice = $slice->sub_Slice($start, $end, $strand);
           
           if ($flank_slice) {
@@ -217,7 +217,7 @@ sub alignment {
   my $self = shift;
   
   my $object = $self->object;
-  my $species = $object->species;$object->param('align');
+  my $species = $object->species;
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   

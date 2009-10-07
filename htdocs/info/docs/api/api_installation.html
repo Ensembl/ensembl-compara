@@ -12,21 +12,23 @@
 
 <p>
 All data sets in the Ensembl system are stored in relational databases
-(MySQL).
-For each of the <a href="./index.html">Ensembl databases</a> the project
-provides a specific Perl API.
-As Ensembl takes also advantage of code provided by the <a
-href="http://www.bioperl.org/" rel="external">BioPerl</a> project;
-installation of the BioPerl package is included in these instructions.
+(MySQL). For each of the <a href="./index.html">Ensembl databases</a>
+the project provides a specific Perl API. As Ensembl takes also
+advantage of code provided by
+the <a href="http://www.bioperl.org/wiki/Main_Page"
+rel="external">BioPerl</a> project; installation of the BioPerl
+package is included in these instructions.
 </p>
 
 <h2>Installation Procedure</h2>
 
-<p>There are two ways of installing the Perl API. You can 
-<a href="/info/docs/api/api_cvs.html">check it out using CVS</a> 
+<p>
+There are two ways of installing the Perl API. You can 
+<a href="/info/docs/api/api_cvs.html">check it out using CVS</a>
 (Concurrent Versioning System) if you have that available, or you can
 simply download the files in gzipped TAR format from our CVS website,
-as detailed below:</p>
+as detailed below:
+</p>
 
 
 <ol>
@@ -45,16 +47,20 @@ $ cd src
 <li>
 <p>
 Download the API packages you need:
-  <ul>
-  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl</a></li>
-  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-compara.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl-compara</a></li>
-  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl-variation</a></li>
-  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-functgenomics.tar.gz?root=ensembl&only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&view=tar">ensembl-functgenomics</a></li>
-  </ul>
 </p>
-<p><strong>N.B.</strong> We recommend waiting until a few days after a release before downloading
-the new API (or re-downloading after a few days), as there may be post-release bug fixes added to
-the code.</p>
+
+<ul>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl.tar.gz?root=ensembl&amp;only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&amp;view=tar">ensembl</a></li>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-compara.tar.gz?root=ensembl&amp;only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&amp;view=tar">ensembl-compara</a></li>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-variation.tar.gz?root=ensembl&amp;only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&amp;view=tar">ensembl-variation</a></li>
+  <li><a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-functgenomics.tar.gz?root=ensembl&amp;only_with_tag=branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]]&amp;view=tar">ensembl-functgenomics</a></li>
+</ul>
+
+<p>
+<strong>N.B.</strong> We recommend waiting until a few days after a
+release before downloading the new API (or re-downloading after a few
+days), as there may be post-release bug fixes added to the code.
+</p>
 </li>
 
 <li>
@@ -66,11 +72,16 @@ Download <a href="http://bioperl.org/DIST/old_releases/bioperl-1.2.3.tar.gz">Bio
 <li>
 <p>
 Unpack the downloaded files. In the Unix command line, type:
+</p>
+
 <pre>
 $ tar xvfz filename.tar.gz
 </pre>
-<p>(substituting the name of each file). In Windows, you will need an unzipping utility 
-such as <a href="http://www.7-zip.org/">7-Zip</a>.</p>
+
+<p>
+(substituting the name of each file). In Windows, you will need an
+unzipping utility such as <a href="http://www.7-zip.org/">7-Zip</a>.
+</p>
 </li>
 
 <li>
@@ -124,6 +135,8 @@ Under Windows (assuming you installed the APIs in C:\src\):
 <pre>
 set PERL5LIB=C:\src\bioperl-live;C:\src\ensembl\modules;C:\src\ensembl-compara\modules;C:\src\ensembl-variation\modules;C:\src\ensembl-functgenomics\modules
 </pre>
+</li>
+
 </ul>
 
 </li>
@@ -134,7 +147,7 @@ set PERL5LIB=C:\src\bioperl-live;C:\src\ensembl\modules;C:\src\ensembl-compara\m
 
 <ul>
 <li>You will of course need Perl installed to use the API! This is available free of charge from
-<a href="http://www.activestate.com/Products/activeperl/">ActiveState</a>.</li>
+<a href="http://www.activestate.com/activeperl/">ActiveState</a>.</li>
 <li>You will also need to install the DBD::MySQL package using PPM (Perl Package Manager),
 a command-line tool which is bundled with ActivePerl.</li>
 <li>If the existing mysql-driver ("libmysql.dll") doesn't work, replace it - e.g. with the one distributed with "php-5-2-3-win32-installer.msi"</li>
