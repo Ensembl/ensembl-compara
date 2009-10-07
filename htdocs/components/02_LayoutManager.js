@@ -8,7 +8,7 @@ Ensembl.LayoutManager.extend({
   /**
    * Creates events on elements outside of the domain of panels
    */
-  initialize: function () {    
+  initialize: function () {
     this.id = 'LayoutManager';
     
     Ensembl.EventManager.register('reloadPage', this, this.reloadPage);
@@ -90,14 +90,32 @@ Ensembl.LayoutManager.extend({
     }).mouseup(function (e) {
       Ensembl.EventManager.trigger('dragStop', e);
     });
+    
+    var userMessage = unescape(Ensembl.cookie.get('user_message'));
+    
+    if (userMessage) {
+      userMessage = userMessage.split('\n');
+      
+      $('<div class="hint" style="margin: 10px 25%;">' +
+        ' <h3><img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />' + userMessage[0] + '</h3>' +
+        ' <p>' + userMessage[1] + '</p>' +
+        '</div>').prependTo('#main').find('h3 img, a').click(function () {
+        $(this).parents('div.hint').remove();
+        Ensembl.cookie.set('user_message', '', -1);
+      });
+    }
   },
   
-  reloadPage: function () {
-    var date = new Date();
-    var time = date.getTime() + date.getMilliseconds() / 1000;
-    var url = window.location.href.replace(/&/g, ';').replace(/#.*$/g, '').replace(/\?time=[^;]+;?/g, '?').replace(/;time=[^;]+;?/g, ';').replace(/[\?;]$/g, '');
-    
-    window.location = url + (url.match(/\?/) ? ';' : '?') + 'time=' + time;
+  reloadPage: function (args) {
+    if (typeof args == 'string') {
+      Ensembl.EventManager.triggerSpecific('updatePanel', args);
+    } else if (typeof args == 'object') {
+      for (var i in args) {
+        Ensembl.EventManager.triggerSpecific('updatePanel', i);
+      }
+    } else {
+      window.location = Ensembl.replaceTimestamp(window.location.href);
+    }
   },
   
   validateForms: function (context) {
