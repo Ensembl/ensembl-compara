@@ -76,7 +76,7 @@ Ensembl.PanelManager.extend({
    * Adds a panel's html to the page, or triggers an event and brings the panel to the front if it already exists
    */
   addPanel: function (id, type, html, container, params, event) {
-    if (this.panels[id]) {
+    if (this.panels[id] && event) {
       Ensembl.EventManager.triggerSpecific(event, id, params);
       this.panelToFront(id);
     } else {
@@ -97,7 +97,7 @@ Ensembl.PanelManager.extend({
   /**
    * Creates the panels in the Ensembl object, adds to the panels registry and initializes it
    */
-  createPanel: function (id, type, params) {    
+  createPanel: function (id, type, params) {
     if (type) {
       this.panels[id] = new Ensembl.Panel[type](id, params);
     } else {
@@ -110,9 +110,9 @@ Ensembl.PanelManager.extend({
   /**
    * Cleans up and removes a panel from the registry
    */
-  destroyPanel: function (id) {
+  destroyPanel: function (id, empty) {
     if (this.panels[id] !== undefined) {
-      this.panels[id].destructor();
+      this.panels[id].destructor(empty);
       delete this.panels[id];
       Ensembl.EventManager.remove(id);
     }
