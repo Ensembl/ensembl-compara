@@ -454,9 +454,9 @@ sub stuff {
         my $f = $webpage->factory;
 
         my ($view, $param, $id) = 
-          $f->param('peptide')    ? ('Transcript/Idhistory/Protein', 'protein',    $f->param('peptide'))    :
-          $f->param('transcript') ? ('Transcript/Idhistory',         'transcript', $f->param('transcript')) :
-          ('Gene/Idhistory', 'gene', $f->param('gene'));
+          $f->param('peptide')    ? ('Transcript/Idhistory/Protein', 'p',    $f->param('peptide'))    :
+          $f->param('transcript') ? ('Transcript/Idhistory',         't', $f->param('transcript')) :
+          ('Gene/Idhistory', 'g', $f->param('gene'));
                                   
         my $url = sprintf "/%s/%s?%s=%s", $webpage->factory->species, $view, $param, $id;
         
