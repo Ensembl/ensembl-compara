@@ -1,13 +1,10 @@
 package EnsEMBL::Web::Document::HTML::ModalContext;
 
-### Generates the modal context navigation menu, used in dynamic pages
+# Generates the modal context navigation menu, used in dynamic pages
 
 use strict;
 use CGI qw(escapeHTML);
-use EnsEMBL::Web::Document::HTML;
-
-our @ISA = qw(EnsEMBL::Web::Document::HTML);
-
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub add_entry {
   my $self = shift;
@@ -19,18 +16,14 @@ sub active {
   $self->{'_active'} = shift if @_;
   return $self->{'_active'};
 }
+
 sub entries {
   my $self = shift;
   return $self->{'_entries'}||[];
 }
 
 sub render {
-  my $self = shift;
-  $self->print($self->_content);
-}
-
-sub _content {
-  my $self = shift;
+  my $self = shift; 
   
   # Static pages - add Custom Data and Your account links
   if (!scalar @{$self->entries}) {
@@ -52,6 +45,8 @@ sub _content {
     );
   }
   
+  my $panels;
+  
   my $content = '
   <div id="modal_bg"></div>
   <div id="modal_panel" class="js_panel">
@@ -63,31 +58,37 @@ sub _content {
     my $name = $entry->{'caption'};
     
     if ($name eq '-') {
-      $name = sprintf '<span title="%s">%s</span>', $entry->{'disabled'}, $entry->{'type'};
+      $name = qq{<span title="$entry->{'disabled'}">$entry->{'type'}</span>};
     } else {
-      my $id = lc($entry->{'id'} || $entry->{'type'});
+      my $id = 'modal_' . lc($entry->{'id'} || $entry->{'type'});
       
       $name =~ s/<\\\w+>//g;
       $name =~ s/<[^>]+>/ /g;
       $name =~ s/\s+/ /g;
-      $name = CGI::escapeHTML($name);
-      $name = sprintf '<a rel="%s" href="%s">%s</a>', $id, $entry->{'url'}, $name;
+      $name = escapeHTML($name);
+      
+      if ($id =~ /config/) {
+        $name = qq{<a rel="$id" href="$entry->{'url'}">$name</a>};
+        $panels .= qq{<div id="$id" class="modal_content js_panel" style="display:none"></div>};
+      } else {
+        $name = qq{<a href="$entry->{'url'}">$name</a>};
+      }
     }
     
-    $content .= sprintf '
-        <li class="link %s">%s</li>', $entry->{'class'}, $name;
+    $content .= qq{<li class="link $entry->{'class'}">$name</li>};
   }
   
-  $content .= '
+  $content .= qq{
       </ul>
       <div class="modal_caption"></div>
       <span class="modal_close modal_but">Close</span>
     </div>
-    <div class="modal_content js_panel" style="display:none"></div>
+    $panels
+    <div id="modal_default" class="modal_content js_panel" style="display:none"></div>
   </div>
-  ';
+  };
   
-  return $content;
+  $self->print($content);
 }
 
 1;

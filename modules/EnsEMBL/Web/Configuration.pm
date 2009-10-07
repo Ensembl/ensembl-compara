@@ -288,8 +288,8 @@ sub _user_context {
       $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
         'time' => time, 
         'type'   => 'Config',
-	      'action' => $action,
-	      'config' => $ic_code,
+              'action' => $action,
+              'config' => $ic_code,
         '_referer' => $referer,
       }))
     );
@@ -334,216 +334,242 @@ sub _user_context {
 
 
 sub _reset_config_panel {
-  my( $self, $title, $action, $config ) = @_;
+  my ($self, $title, $action, $config) = @_;
+  
   my $obj = $self->{'object'};
-  my $panel = $self->new_panel( 'Configurator',
+  
+  my $panel = $self->new_panel('Configurator',
     'code' => 'x',
     'object' => $obj
   );
+  
   my $url = $obj->_url({ type => 'Config', action => $action, reset => 1 , config => $config, _referer => $obj->param('_referer') });
-  my $c = sprintf '
-<p>
-  To update this configuration, select your tracks and other options in the box above and close
-  this popup window. Your view will then be updated automatically.
-</p>
-<p>
-  <a class="modal_link reset-button" href="%s">Reset configuration for %s to default settings</a>.
-</p>', $url, CGI::escapeHTML( $title ) || 'this page';
-  if( $title ) {
+  
+  my $c = sprintf('
+    <p>
+      To update this configuration, select your tracks and other options in the box above and close
+      this popup window. Your view will then be updated automatically.
+    </p>
+    <p>
+      <a class="modal_link" href="%s" rel="modal_config_%s">Reset configuration for %s to default settings</a>.
+    </p>', 
+    $url, lc $config, escapeHTML($title) || 'this page'
+  );
+
+  if ($title) {
     $c .= '
-<p>
-  Notes:
-</p>
-<ul>
-  <li>
-    To change whether a track is drawn OR how it is drawn, click on the icon by the track name and
-    then select the way the track is to be rendered.
-  </li>
-  <li>
-    On the left hand side of the page the number of tracks in a menu, and the number of tracks
-    currently turned on from that menu are shown by the two numbers in parentheses <span style="white-space:nowrap">(tracks on/total tracks)</span>.
-  </li>
-  <li>
     <p>
-    Certain tracks displayed come from user-supplied or external data sources, these are clearly
-    marked as <strong><img src="/i/track-das.gif" alt="DAS" style="vertical-align:top; width:40px;height:16px" title="DAS" /></strong> (Distributed Annotation Sources), 
-    <strong><img src="/i/track-url.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /></strong> (UCSC style web resources) or <strong><img src="/i/track-user.gif" alt="User" style="vertical-align:top; width:40px;height:16px" title="User" /></strong> data uploaded by
-    yourself or another user.
+      Notes:
     </p>
-    <p>
-    Please note that the content of these tracks is not the responsibility of the Ensembl project.
-    </p>
-    <p>In the case of URL based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.
-    </p>
-  </li>
-</ul>';
+    <ul>
+      <li>
+        To change whether a track is drawn OR how it is drawn, click on the icon by the track name and
+        then select the way the track is to be rendered.
+      </li>
+      <li>
+        On the left hand side of the page the number of tracks in a menu, and the number of tracks
+        currently turned on from that menu are shown by the two numbers in parentheses <span style="white-space:nowrap">(tracks on/total tracks)</span>.
+      </li>
+      <li>
+        <p>
+        Certain tracks displayed come from user-supplied or external data sources, these are clearly
+        marked as <strong><img src="/i/track-das.gif" alt="DAS" style="vertical-align:top; width:40px;height:16px" title="DAS" /></strong> (Distributed Annotation Sources), 
+        <strong><img src="/i/track-url.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /></strong> (UCSC style web resources) or 
+        <strong><img src="/i/track-user.gif" alt="User" style="vertical-align:top; width:40px;height:16px" title="User" /></strong> data uploaded by
+        yourself or another user.
+        </p>
+        <p>
+        Please note that the content of these tracks is not the responsibility of the Ensembl project.
+        </p>
+        <p>In the case of URL based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.
+        </p>
+      </li>
+    </ul>';
   }
-  $panel->set_content( $c );
-  $self->add_panel( $panel );
+  
+  $panel->set_content($c);
+  $self->add_panel($panel);
 }
 
 sub _configurator {
   my $self = shift;
-  my $obj  = $self->{'object'};
-  my $vc   = $obj->get_viewconfig();
+  
+  my $object     = $self->object;
+  my $vc         = $object->get_viewconfig;
+  my $config_key = $object->param('config');
+  my $referer    = $object->param('_referer') || $ENV{'REQUEST_URI'};
+  my $action     = join '/', map $object->$_ || (), qw(type action function);
+  my $url        = $object->_url({ type => 'Config', action => $action, _referer => $referer }, 1);
   my $conf;
-  my $config_key = $obj->param('config');
+  
   eval {
-    $conf = $obj->image_config_hash( $obj->param('config'), undef, 'merged' ) if $obj->param('config');
+    $conf = $object->image_config_hash($object->param('config'), undef, 'merged') if $object->param('config');
   };
-  my $action = $ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
-     $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
-  my $referer = $obj->param('_referer') || $ENV{'REQUEST_URI'};
-  my $url = $obj->_url({'type'=>'Config','action'=>$action,'_referer'=>$referer},1);
-  unless( $conf ) {
-## This must be the view config....
-    if( $vc->has_form ) {
+  
+  # This must be the view config
+  if (!$conf) {
+    if ($vc->has_form) {
       $vc->get_form->{'_attributes'}{'action'} = $url->[0];
-      if( $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
-        my $vc_2 = $obj->get_viewconfig( undef, 'ExternalData' );
-        if( $vc_2 ) {
+      
+      if ($object->action ne 'ExternalData') {
+        my $vc_2 = $object->get_viewconfig(undef, 'ExternalData');
+        
+        if ($vc_2) {
           $vc_2->{'_form'} = $vc->{'_form'};
-          $vc_2->form( undef, 1 );
+          $vc_2->form(undef, 1);
         }
       }
-      foreach( keys %{$url->[1]}) {
-        $vc->add_form_element({'type'=>'Hidden','name'=>$_,'value' => $url->[1]{$_}});
-      }
-      $self->tree->_flush_tree();
-      $self->create_node( 'form_conf', 'Configure', [],  {
-        'url' => '', 'availability' => 0, 'id' => 'form_conf_id', 'caption' => 'Configure'
-      } );
+      
+      $vc->add_form_element({ type => 'Hidden', name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
+      
       $self->{'page'}->{'_page_type_'} = 'configurator';
-
-      $self->{'page'}->local_context->tree(    $self->{_data}{'tree'} );
-      $self->{'page'}->local_context->active(  'form_conf' );
-      $self->{'page'}->local_context->caption( 'Configure view'     );
-      $self->{'page'}->local_context->class(   'view_configuration' );
-      $self->{'page'}->local_context->counts(  {} );
-
-
-      my $panel = $self->new_panel( 'Configurator',
-        'code'         => 'configurator',
-        'object'       => $obj
+      $self->tree->_flush_tree;
+      $self->create_node('form_conf', 'Configure', [],  { url => '', availability => 0, id => 'form_conf_id', caption => 'Configure' });
+      
+      $self->{'page'}->local_context->tree($self->{'_data'}{'tree'});
+      $self->{'page'}->local_context->active('form_conf');
+      $self->{'page'}->local_context->caption('Configure view');
+      $self->{'page'}->local_context->class('view_configuration');
+      $self->{'page'}->local_context->counts({});
+      
+      my $panel = $self->new_panel('Configurator',
+        'code'   => 'configurator',
+        'object' => $object
       );
-      my $content  = '';
-         $content .= sprintf '<h2>Configuration for: "%s"</h2>', CGI::escapeHTML($vc->title) if $vc->title;
+      
+      my $content = '';
+      $content .= sprintf '<h2>Configuration for: "%s"</h2>', escapeHTML($vc->title) if $vc->title;
       $content .= $vc->get_form->render;
-      $panel->set_content( $content );
-      $self->add_panel( $panel );
-      $self->_reset_config_panel( $vc->title, $action );
+      
+      $panel->set_content($content);
+      $self->add_panel($panel);
+      $self->_reset_config_panel($vc->title, $action);
+      
       return;
     }
-    my %T = $vc->image_configs;
-    my @Q = sort keys %T;
-    if(@Q) {
-      $config_key = $Q[0];
-      $conf = $obj->image_config_hash( $Q[0] );
+    
+    my @image_configs = sort keys %{$vc->image_configs};
+    
+    if (@image_configs) {
+      $config_key = $image_configs[0];
+      $conf = $object->image_config_hash($config_key);
     }
   }
+  
   return unless $conf;
+  
   $self->{'page'}->{'_page_type_'} = 'configurator';
-  $self->tree->_flush_tree();
+  $self->tree->_flush_tree;
 
-  my $rhs_content = sprintf '
-      <form class="configuration" action="%s" method="post">
-        <div>', $url->[0];
-  foreach( keys %{ $url->[1] } ) {
-    $rhs_content .= sprintf '
-          <input type="hidden" name="%s" value="%s" />', $_, CGI::escapeHTML( $url->[1]{$_} );
-  }
-  $rhs_content .= sprintf '
-          <input type="hidden" name="config" value="%s" />
-        </div>', $obj->param('config') ;
-  my $active = '';
-  $self->create_node(
-    'active_tracks',
-    'Active tracks',
-    [], # configurator EnsEMBL::Web::Component::Configurator ],
-    { 'url' => "#active_tracks", 'id' => 'active_tracks', 'availability' => 1 }
+  my $rhs_content = qq{
+    <form class="configuration" action="$url->[0]" method="post">
+      <div>
+  };
+  
+  $rhs_content .= sprintf '<input type="hidden" name="%s" value="%s" />', $_, escapeHTML($url->[1]->{$_}) for keys %{$url->[1]};
+  $rhs_content .= sprintf('
+      <input type="hidden" name="config" value="%s" />
+    </div>', 
+    $object->param('config')
   );
+  
+  my $active = '';
+  
+  $self->create_node('active_tracks',  'Active tracks',  [], { url => "#", class => 'active_tracks',  availability => 1 });
+  $self->create_node('search_results', 'Search Results', [], { url => "#", class => 'search_results disabled', availability => 1 });
 
   foreach my $node ($conf->tree->top_level) {
     next unless $node->get('caption');
     next if $node->is_leaf;
-    my $count = 0;
-    my $link_key = 'link_'.$node->key;
-    my $menu_key = 'menu_'.$node->key;
-    $rhs_content .= sprintf '
-      <div id="%s" class="config">
-      <h2>%s</h2>
-      <dl class="config_menu">', $menu_key, CGI::escapeHTML( $node->get('caption') );
-#      <dl class="config_menu" id="%s">
-#       <dt class="title">%s</dt>', $menu_key, CGI::escapeHTML( $node->get('caption') );
+    
+    my $count     = 0;
     my $available = 0;
     my $on        = 0;
-    foreach my $track_node ( $node->descendants ) {
+    my $key       = $node->key;
+    my $selected;
+    
+    $rhs_content .= sprintf('
+      <div class="config %s">
+        <h2>%s</h2>
+        <dl class="config_menu">', 
+      $key, escapeHTML($node->get('caption'))
+    );
+    
+    foreach my $track_node ($node->descendants) {
       next if $track_node->get('menu') eq 'no';
-      $rhs_content .= sprintf '
-        <dt%s><select id="%s" name="%s">', 
-        '', # $track_node->get('glyphset') =~ /_(prot)?das/ ? ' class="das_menu_entry"' : '',
-        $track_node->key, $track_node->key;
-      my $display = $track_node->get( 'display' ) || 'off';
-      my @states  = @{ $track_node->get( 'renderers' ) || [qw(off Off normal Normal)] };
-      while( my($K,$V) = splice(@states,0,2) ) {
-        $rhs_content .= sprintf '
-          <option value="%s"%s>%s</option>', $K, $K eq $display ? ' selected="selected"' : '',  CGI::escapeHTML($V);
+      
+      $rhs_content .= '<dt><ul class="popup_menu">';
+      
+      my $display = $track_node->get('display') || 'off';
+      my @states  = @{$track_node->get('renderers') || [ qw(off Off normal Normal) ]};
+      
+      my $desc  = $track_node->get('description');
+      my $class = $track_node->get('_class');
+      my $name  = escapeHTML($track_node->get('name'));
+      $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;
+      
+      while (my ($val, $text) = splice(@states, 0, 2)) {
+        $text = escapeHTML($text);
+        $rhs_content .= qq{<li class="$val"><img title="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
+        $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $val if $val eq $display;
       }
-      $count ++;
-      $on    ++ if $display ne 'off';
-      my $t = CGI::escapeHTML( $track_node->get('name') );
-      if( $track_node->get('_class') ) { 
-        my $class = $track_node->get('_class');
-        $t = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc($class), $class, $class, $t;
-      }
-      $rhs_content .= sprintf '
-        </select> <span>%s</span></dt>', $t;
-      my $desc =  $track_node->get('description');
-      if( $desc ) {
+      
+      $count++;
+      $on++ if $display ne 'off';
+      
+      $rhs_content .= qq{</ul>$selected <span>$name</span><span class="menu_help">Show info</span></dt>};
+      
+      if ($desc) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
-	$desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
-	$desc =~ s/<a>/<\/a>/g;
-	$desc =~ s/"[ "]*>/">/g;
-        $rhs_content .= sprintf '
-	<dd>%s</dd>', $desc;
+        $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
+        $desc =~ s/<a>/<\/a>/g;
+        $desc =~ s/"[ "]*>/">/g;
+        
+        $rhs_content .= "<dd>$desc</dd>";
       }
     }
+    
     $rhs_content .= '
-      </dl>
+        </dl>
       </div>';
-    $active    ||= $link_key if $count > 0;
-    $self->create_node(
-      $link_key,
-      ( $count ? "($on/$count) " : '' ).$node->get('caption'),
-      [], # configurator EnsEMBL::Web::Component::Configurator ],
-      { 'url' => "#$menu_key", 'availability' => ($count>0), 'id' => $link_key } 
+      
+    $active ||= $key if $count > 0;
+    
+    $self->create_node($key,
+      ( $count ? "($on/$count) " : '' ) . $node->get('caption'),
+      [],
+      { url => "#", availability => ($count > 0), class => $node->key } 
     );
   }
+  
   $rhs_content .= '
     </form>';
 
-  $self->{'page'}->local_context->tree(    $self->{_data}{'tree'} );
-  $self->{'page'}->local_context->active(  'active_tracks' );
-  $self->{'page'}->local_context->caption( $conf->get_parameter('title') );
-  $self->{'page'}->local_context->class(   'track_configuration' );
-  $self->{'page'}->local_context->counts(  {} );
+  $self->{'page'}->local_context->tree($self->{'_data'}{'tree'});
+  $self->{'page'}->local_context->active('active_tracks');
+  $self->{'page'}->local_context->caption($conf->get_parameter('title'));
+  $self->{'page'}->local_context->class('track_configuration');
+  $self->{'page'}->local_context->counts({});
 
-  my $search_panel = $self->new_panel(
-    'Configurator',
-    'code'         => 'configurator_search',
-    'object'       => $obj
+  my $search_panel = $self->new_panel('Configurator',
+    'code'   => 'configurator_search',
+    'object' => $object
   );
+  
   $search_panel->set_content('<div class="configuration_search">Search display: <input class="configuration_search_text" /></div>');
-  $self->add_panel( $search_panel );
-  my $panel = $self->new_panel(
-    'Configurator',
-    'code'         => 'configurator',
-    'object'       => $obj 
+  
+  $self->add_panel($search_panel);
+  
+  my $panel = $self->new_panel('Configurator',
+    'code'   => 'configurator',
+    'object' => $object 
   );
-  $panel->set_content( $rhs_content );
-
-  $self->add_panel( $panel );
-  $self->_reset_config_panel( $conf->get_parameter('title'), $action, $config_key );
+  
+  $panel->set_content($rhs_content);
+  
+  $self->add_panel($panel);
+  $self->_reset_config_panel($conf->get_parameter('title'), $action, $config_key);
+  
   return $panel;
 }
 
@@ -562,10 +588,11 @@ sub _local_context {
 
 sub _local_tools {
   my $self = shift;
+  
   return unless $self->{'page'}->can('local_tools');
   return unless $self->{'page'}->local_tools;
   
-  my $obj = $self->{object};
+  my $obj = $self->{'object'};
 
   my $referer = $ENV{'REQUEST_URI'};
 
@@ -573,19 +600,29 @@ sub _local_tools {
   my $config = $vc->default_config;
 
   my $vc_2_flag = 0;
-  if( $ENV{'ENSEMBL_TYPE'} eq 'Gene' && $ENV{'ENSEMBL_ACTION'} ne 'ExternalData' ) {
-    my $vc_2 = $obj->get_viewconfig( undef, 'ExternalData' );
+  
+  if ($ENV{'ENSEMBL_TYPE'} eq 'Gene' && $ENV{'ENSEMBL_ACTION'} ne 'ExternalData') {
+    my $vc_2 = $obj->get_viewconfig(undef, 'ExternalData');
     $vc_2_flag = $vc_2 && $vc_2->can_upload;
   }
 
-  if( ($vc->real && $config) || $vc_2_flag ) {
-    my $action = $obj->type.'/'.$obj->action;
-    $action .= '/'.$obj->function if $obj->function;
+  if (($vc->real && $config) || $vc_2_flag) {
+    my $action = $obj->type . '/' . $obj->action;
+    $action .= '/' . $obj->function if $obj->function;
+    
+    (my $rel = $config) =~ s/^_//;
+    
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Configure this page',
       'class'   => 'modal_link',
-      'url'     => $obj->_url({ 'time' => time, 'type' => 'Config', 'action' => $action,
-                                  'config' => $config, '_referer' => $referer })
+      'rel'     => "modal_config_$rel",
+      'url'     => $obj->_url({ 
+        'time'     => time, 
+        'type'     => 'Config', 
+        'action'   => $action,
+        'config'   => $config, 
+        '_referer' => $referer
+      })
     );
   } else {
     $self->{'page'}->local_tools->add_entry(
@@ -595,23 +632,23 @@ sub _local_tools {
       'title'   => 'There are no options for this page'
     );
   }
+  
   my $caption = 'Manage your data';
-  my $action = 'SelectFile';
-
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-    
   my @temp_uploads = $self->object->get_session->get_data(type => 'upload');
   my @user_uploads = $user ? $user->uploads : ();
-
-  if (@temp_uploads || @user_uploads) { 
-    $action = 'ManageData';
-  }
+  my $action = @temp_uploads || @user_uploads ? 'ManageData' : 'SelectFile';
 
   $self->{'page'}->local_tools->add_entry(
     'caption' => $caption,
     'class'   => 'modal_link',
-    'url'     => $obj->_url({'time' => time, 'type' => 'UserData', 'action' => $action,
-                             '_referer' => $referer, '__clear' => 1 })
+    'url'     => $obj->_url({
+      'time'     => time,
+      'type'     => 'UserData',
+      'action'   => $action,
+      '_referer' => $referer,
+      '__clear'  => 1 
+    })
   );
   
   if ($obj->can_export) {       
@@ -628,14 +665,19 @@ sub _local_tools {
       'title'   => 'You cannot export data from this page'
     );
   }
-  if( $ENV{'ENSEMBL_USER_ID'} ) {
+  
+  if ($ENV{'ENSEMBL_USER_ID'}) {
     $self->{'page'}->local_tools->add_entry(
       'caption' => 'Bookmark this page',
       'class'   => 'modal_link',
-      'url'     => $obj->_url({ 'type'     => 'Account', 'action'   => 'Bookmark/Add',
-                                '_referer' => $referer, '__clear'  =>1,
-                                'name'     => $self->{'page'}->title->get,
-                                'url'      => $obj->species_defs->ENSEMBL_BASE_URL.$referer })
+      'url'     => $obj->_url({
+        'type'     => 'Account',
+        'action'   => 'Bookmark/Add',
+        '_referer' => $referer,
+        '__clear'  => 1,
+        'name'     => $self->{'page'}->title->get,
+        'url'      => $obj->species_defs->ENSEMBL_BASE_URL . $referer
+      })
     );
   } else {
     $self->{'page'}->local_tools->add_entry(
@@ -649,22 +691,17 @@ sub _local_tools {
 
 sub _user_tools {
   my $self = shift;
-  my $obj = $self->{object};
 
-  my $sitename = $obj->species_defs->ENSEMBL_SITETYPE;
-  my @data = (
-          ['Back to '.$sitename,   '/index.html'],
-  );
+  my $sitename = $self->{'object'}->species_defs->ENSEMBL_SITETYPE;
+  my @data = ([ "Back to $sitename", '/index.html' ]);
 
-  my $type;
-  foreach my $row ( @data ) {
-    if( $row->[1] =~ /^http/ ) {
-      $type = 'external';
-    }
+  my $rel;
+  
+  foreach (@data) {    
     $self->{'page'}->local_tools->add_entry(
-      'type'      => $type,
-      'caption'   => $row->[0],
-      'url'       => $row->[1],
+      'rel'     => $_->[1] =~ /^http/ ? 'external' : '',
+      'caption' => $_->[0],
+      'url'     => $_->[1]
     );
   }
 }
@@ -1453,6 +1490,7 @@ sub _ajax_zmenu_das {
       $panel->add_entry({ type => 'Strand:', label_html => $strand });
       $panel->add_entry({ type => 'Score:',  label_html => $score }) if $score;
       
+      warn $validator->validate(decode_entities($_->notes->[0]));
       $panel->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'}, extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
       $panel->add_entry({ label_html => $validator->validate($_) ? encode_entities($_) : $_ }) for map decode_entities($_), @{$_->notes};
     }
