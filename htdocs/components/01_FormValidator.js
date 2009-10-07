@@ -19,7 +19,6 @@ Ensembl.FormValidator = {
   isPass:  function (s) { return /^\S{6,32}$/.test(s); },
   isCode:  function (s) { return /^\S+$/.test(s); },
   isAlpha: function (s) { return /^\w+$/.test(s); },
-  isHTML:  function (s) { return !Ensembl.XHTMLValidator.validate(s); },
   
   valid: function (el, s) {
     if (el.is('select')) {
@@ -37,7 +36,6 @@ Ensembl.FormValidator = {
       case 'password'   : return this.isPass(s);
       case 'code'       : return this.isCode(s);
       case 'alpha'      : return this.isAlpha(s);
-      case 'html'       : return this.isHTML(s);
       case 'age'        : return this.isInt(s)   && parseInt(s)   >= 0 && parseInt(s) <= 150;
       case 'posint'     : return this.isInt(s)   && parseInt(s)   >  0;
       case 'nonnegint'  : return this.isInt(s)   && parseInt(s)   >= 0 && (max == null || parseInt(s) <= max[1]);
@@ -97,10 +95,6 @@ Ensembl.FormValidator = {
       } else {
         if  (value === '') {
           template = required ? 'You must enter a value for %s' : '';
-        } else if (input.hasClass('_html')) {         
-          var err = Ensembl.XHTMLValidator.validate(value); // Validate as XHTML
-          
-          template = err ? 'The value of %s is invalid (' + err + ')' : '';
         } else {
           template = myself.valid(input, value) ? '' : 'The value of %s is invalid.'; // Check the types of parameters
         }
