@@ -82,6 +82,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
         
         myself.query = this.value;
+        myself.regex = new RegExp(this.value, 'i');
         
         myself.searchTimer = setTimeout(function () {
           myself.elLk.links.removeClass('active');
@@ -235,10 +236,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $('dt', menu).each(function () {
         var dt = $(this);
         
-        if ($('span', dt).html().match(myself.query, 'i')) {
+        if ($('span', dt).html().match(myself.regex)) {
           dt.show();
           show = true;
-        } else if (dt.next('dd').text().match(myself.query, 'i')) {
+        } else if (dt.next('dd').text().match(myself.regex)) {
           dt.show();
           dts.push(dt[0]);
           show = true;
