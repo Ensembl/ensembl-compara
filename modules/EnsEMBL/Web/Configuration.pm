@@ -1416,10 +1416,9 @@ sub _ajax_zmenu_das {
   
   my %das = %{$ENSEMBL_WEB_REGISTRY->get_all_das($object->species)};
   
-  my ($name, $l) = split ':', $object->parent->{'params'}->{'r'}->[0];
-  my ($region_start, $region_end) = split '-', $l;
+  my @region = map $object->Obj->{$_}, qw(seq_region_name seq_region_start seq_region_end);
   
-  my $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region(undef, $name, $region_start, $region_end, $strand);
+  my $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region(undef, @region, $strand);
   
   my $coordinator = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
     -sources => [ $das{$logic_name} ],
