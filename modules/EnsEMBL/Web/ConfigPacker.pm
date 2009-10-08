@@ -520,7 +520,6 @@ sub _summarise_compara_db {
     $self->db_tree->{ $db_name }{$KEY}{$id}{'class'}             = $class;
     $self->db_tree->{ $db_name }{$KEY}{$id}{'species_set_id'}    = $species_set_id;
     $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{$species} = 1;
-    $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{'merged'} = 1;
   }
   foreach my $species_set_id (keys %$constrained_elements) {
     my $constr_elem_id = $constrained_elements->{$species_set_id};
