@@ -36,12 +36,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.position = data.position;
     this.coords = data.coords;
+    this.imageId = data.imageId;
     this.areaCoords = $.extend({}, data.area);
     this.location = 0;
     
     delete this.areaCoords.a;
     
     Ensembl.EventManager.register('showExistingZMenu', this, this.showExisting);
+    Ensembl.EventManager.register('hideZMenu', this, this.hide);
   },
   
   init: function () {
@@ -460,5 +462,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     } else {
       this.show();
     };
+  },
+  
+  hide: function (imageId) {
+    if (!imageId || imageId == this.imageId) {
+      this.base();
+    }
   }
 });

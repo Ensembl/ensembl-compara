@@ -91,12 +91,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     el.append('<'+node+' class="spinner">Loading component</'+node+'>');
     
+    Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
+    
     $.ajax({
       url: url,
       dataType: 'html',
       success: function (html) {
         if (html) {
-          var type = html.match(/<map/) ? 'ImageMap' : html.match(/<pre.*?class="sequence/) ? 'TextSequence' : 'Content';
+          var type = html.match(/<map/) ? 'ImageMap' : 'Content';
           
           Ensembl.EventManager.trigger('addPanel', undefined, type, html, el, params);
         } else {
