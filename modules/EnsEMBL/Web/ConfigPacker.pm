@@ -106,12 +106,16 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) { 
-## Strip out "crap" at front and end! probably some q(')s...
+    ## Strip out "crap" at front and end! probably some q(')s...
     ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-       $A =~ s/[^}]+$//;
+    $A =~ s/[^}]+$//;
     my $T = eval($A);
-
-       $T = {} unless ref($T) eq 'HASH';
+    if (ref($T) ne 'HASH') {
+      if ($A) {
+	warn "Deleting web_data for $db_key:".$a_aref->[1].", check for syntax error";
+      }
+      $T = {};
+    }
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
