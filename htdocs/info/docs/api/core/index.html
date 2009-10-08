@@ -1,0 +1,149 @@
+<html>
+<head>
+<title>Core databases and API</title>
+</head>
+
+<body>
+
+<h1>Ensembl Core and OtherFeatures databases</h1>
+
+
+<h2>Database Descriptions</h2>
+
+
+<h3>Core database</h3>
+
+<p>
+For each organism supported by Ensembl, a species-specific Ensembl
+Core database stores the bulk of annotation information.  Some of the
+key features are:
+</p>
+
+<ul>
+<li>
+The unmasked genome sequence is stored on the sequence-level i.e. in
+form of BAC clones or whole genome shotgun scaffolds.
+</li>
+
+<li>
+Assembly information the generate top-level sequences like chromosomes
+from sequence-level entities.
+</li>
+
+<li>
+The non-redundant set of Ensembl gene, transcript and protein models
+annotated by the automated genome analysis and
+<a href="/info/docs/genebuild/genome_annotation.html">annotation
+pipeline</a>.
+</li>
+
+<li>
+Sequence tagged sites (STS) marker information on physical sequence
+and genetic map locations.
+</li>
+
+<li>
+Cytogenetic banding patterns if a reliable banding pattern has been
+established for the organism.
+</li>
+
+<li>
+Microarray probe set annotation.
+</li>
+
+<li>
+External references to other databases of biological information.
+</li>
+
+</ul>
+
+<h3><a id="cdna" name="cdna">cDNA database</a></h3>
+
+<p>
+Human and Mouse have a separate cDNA database, containing
+alignments of cDNAs and proteins to the  genome sequence, which serve
+as source of biological evidence in the Ensembl annotation strategy.
+</p>
+
+<h3><a id="est" name="est">OtherFeatures database</a></h3>
+
+<p>
+For well-characterised species with a reasonable amount of biological
+sequence records as supporting evidence Ensembl provides an
+independent EST gene set, which is solely based on EST information.
+The key features stored are:
+</p>
+
+<ul>
+
+<li>
+The non-redundant Ensembl EST gene set.
+</li>
+
+<li>
+A pre-filtered set of EST sequences aligned to the genome sequence.
+This set seved as the biological evidence for EST gene annotation.
+</li>
+
+</ul>
+
+<p>
+Please note that Ensembl OtherFeatures databases do not contain genome
+sequences.  This saves disk space and by connecting to Core and the
+OtherFeatures databases simultaneously, it is still possible to
+retrieve sequence information.
+</p>
+
+
+<h2>Database Schema</h2>
+
+<p>
+The layout of Ensembl Core and OtherFeature databases is identical so
+that schema descriptions and  API access apply similarly. The database
+table layout is explained in the following document:
+</p>
+
+<ul>
+<li><a href="./core_schema.html">Core Schema Description</a></li>
+</ul>
+
+
+<h2>Perl API</h2>
+
+<p>
+A comprehensive Perl Application Programme Interface (API) provides
+efficient access to tables within the Ensembl Core and EST databases.
+</p>
+
+<ul>
+<li>
+<a href="../api_installation.html">Core Perl API Installation</a>: A
+step-by-step installation guide for all Ensembl Perl APIs.
+</li>
+
+<li>
+<a href="/info/docs/Pdoc/ensembl/index.html">Core Perl API
+Documentation</a>: A complete reference to the objects and methods
+used in the Core and EST database API.
+</li>
+
+<li>
+<a href="./core_tutorial.html">Core Perl API Tutorial</a>: An
+introduction to the underlying concepts of the Core and EST database
+API.
+</li>
+
+</ul>
+
+<h2 id="support">Ensembl Software Support</h2>
+
+<p>
+Ensembl is an open project and we would like to encourage
+correspondence and discussions on any subject on any aspect of
+Ensembl.  Please see the
+<a href="http://www.ensembl.org/info/about/contact/">Ensembl
+Contacts</a> page for suitable options getting in touch with us.
+</p>
+
+</body>
+</html>
