@@ -10,7 +10,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.dragRegion = {};
     this.highlightRegions = {};
-    this.areas = []; // TODO: do we need both areas and draggables?
+    this.areas = [];
     this.draggables = [];
     this.speciesCount = 0;
     
@@ -60,6 +60,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       myself.areas.push(c);
       
       if (this.className.match(/drag/)) {
+        // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
+        var r = c.a.href.split('|');
+        var start = parseInt(r[5]);
+        var end = parseInt(r[6]);
+        var scale = (end - start + 1) / (c.r - c.l); // bps per pixel on image
+        
+        c.range = { start: start, end: end, scale: scale };
+        
         myself.draggables.push(c);
         
         if (highlight === true) {
@@ -81,7 +89,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       }
     });
-   
+    
     if (Ensembl.images.total) {
       this.prepHighlightImage();
     }
@@ -213,10 +221,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         dragArea = null;
       }
       
-      var range = this.highlightRegions[speciesNumber][0].range;
-      var location, fuzziness;
+      var range = this.draggables[speciesNumber] ? this.draggables[speciesNumber].range : undefined;
       
       if (range) {
+        var location, fuzziness;
+        
         location = range.start + (range.scale * (coords.x - this.dragRegion.l));
         fuzziness = range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
         
@@ -286,13 +295,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         break;
       }
       
-      // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
-      var r = highlight.region.a.href.split('|');
-      
-      var min = parseInt(r[5]);
-      var max = parseInt(r[6]);
-      var scale = (max - min + 1) / (highlight.region.r - highlight.region.l); // bps per pixel on image
-      
       // Highlighting base on self. Take start and end from Ensembl core parameters
       if (this.imageNumber == imageNumber) {
         // Don't draw the redbox on the first imagemap on the page
@@ -311,20 +313,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         link = false;
       }
       
+      var range = highlight.region.range;
+      
       var coords = {
         t: highlight.region.t + 2,
         b: highlight.region.b - 2,
-        l: ((start - min) / scale) + highlight.region.l,
-        r: ((end - min) / scale) + highlight.region.l
+        l: ((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l,
+        r: ((end - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l
       };
       
       // Highlight unless it's the bottom image on the page
       if (this.params.highlight) {
         this.highlight(coords, 'redbox2', speciesNumber, i);
       }
-      
-      // Ok to overwrite because the only time we have more than one highlightRegions is MultiContigView, where each species image is identical
-      highlight.range = { start: min, end: max, scale: scale };
     }
   },
   
