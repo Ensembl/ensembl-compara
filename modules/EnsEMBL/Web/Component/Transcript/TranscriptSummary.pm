@@ -101,36 +101,6 @@ sub content {
 		    "<p>$temp</p>",
 		    1 );
   }
-
-  #horrible hack to account for missing xrefs in core db. Do not even merge back into the HEAD!
-  elsif ($object->Obj->analysis->logic_name eq 'havana') {
-    my $type = $object->gene_type;
-    my ($id,$url,$dbname);
-    foreach my $xref (@{$object->Obj->get_all_DBEntries}) {
-      $dbname = $xref->dbname;
-      next if ($dbname ne 'Vega_transcript');
-      $id = $xref->display_id;
-      next if ($id !~ /OTT/);
-      $url = $object->get_ExtURL($dbname,$id);
-      last;
-    }
-    if ($url) {
-      my $all_loc_url = $object->_url({
-	ftype => 'Xref_OTTT',
-	type => 'Location',
-	action => 'Genome',
-	id     => $id,
-      });
-      $temp = qq(<strong>This $type entry corresponds to the following database identifiers:</strong></p><table cellpadding="4"><tr><th style="white-space: nowrap; padding-right: 1em">Vega Transcript:</th><td>);
-      $temp .= qq(<div class="multicol"><a href="$url">$id</a>);
-#      $temp .= qq( [<a href="$all_loc_url">view all locations</a>]); #disablealways get 'no mapping found'
-      $temp .= qq(</div></td></tr></table>);
-      $table->add_row('Alternative transcripts',
-		      "<p>$temp</p>",
-		      1,
-		    );
-    }
-  }
   return $table->render;
 }
 

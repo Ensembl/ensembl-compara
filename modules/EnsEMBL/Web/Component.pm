@@ -583,10 +583,6 @@ sub remove_redundant_xrefs {
 
   foreach my $link (@links) {
     my ( $key, $text ) = @$link;
-    #e56 hack since we have no ALT_GENE type xref
-    if ($key eq 'Havana gene') {
-      return ( [ 'Havana Gene', $text ]);
-    }
     if ($text =~ />OTT|>ENST/) {
       $priorities{$key} = $text;
     }
