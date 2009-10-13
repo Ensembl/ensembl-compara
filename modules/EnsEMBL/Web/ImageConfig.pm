@@ -1361,7 +1361,8 @@ sub add_option {
 
 sub add_options {
   my $self = shift;
-  my $menu = $self->get_node('options');
+  
+  my $menu = $self->get_node(ref $_[0] ? 'options' : shift);
   
   return unless $menu;
   
