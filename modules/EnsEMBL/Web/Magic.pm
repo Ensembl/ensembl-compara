@@ -72,13 +72,15 @@ sub carpet {
 # Wrapper around a list of components to produce a zmenu for inclusion via AJAX
 sub menu {
   my $webpage = new EnsEMBL::Web::Document::WebPage(
-    objecttype => shift || $ENV{'ENSEMBL_TYPE'},
+    objecttype => $ENV{'ENSEMBL_TYPE'},
     scriptname => 'zmenu',
     cache      => $MEMD,
+    json       => 1
   );
   
-  $webpage->configure($webpage->dataObjects->[0], 'ajax_zmenu');
-  $webpage->render;
+  CGI::header;
+  
+  $webpage->menu($webpage->dataObjects->[0]);
   
   return "Generated magic menu ($ENV{'ENSEMBL_ACTION'})";
 }
