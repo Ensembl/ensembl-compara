@@ -270,11 +270,6 @@ sub renderer :lvalue { $_[0]->{'_renderer'}; }
 
 sub strip_HTML { my($self,$string) = @_; $string =~ s/<[^>]+>//g; return $string; }
 
-sub render_AjaxMenu {
-  my $self = shift;
-  $self->renderer->print( qq(<$self->{'type'}>) ); 
-}
-
 sub render_Text {
   my $self = shift;
   $self->{'disable_ajax'} = 1;
