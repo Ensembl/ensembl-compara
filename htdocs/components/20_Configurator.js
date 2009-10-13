@@ -276,8 +276,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     for (var i in els) {
       switch (els[i].nodeName) {
-        case 'DT'  : dd = $(els[i]).next(); span = $('.menu_help', els[i]); break;
-        case 'SPAN': dd = $(els[i]).parent().next(); span = $(els[i]); break;
+        case 'DT'  : dd = $(els[i]).next('dd'); span = $('.menu_help', els[i]); break;
+        case 'SPAN': dd = $(els[i]).parent().next('dd'); span = $(els[i]); break;
         default    : return;
       }
       
