@@ -171,7 +171,7 @@ sub content {
   
   if ($alignview && keys %orthologue_list) {
     $html .= sprintf(
-      '<p><a href="%s">View sequence alignments of all homologues</a>.</p>', 
+      '<p><a href="%s">View sequence alignments of these homologues</a>.</p>', 
       $object->_url({ action => 'Compara_Ortholog', function => 'Alignment' })
     );
   }
