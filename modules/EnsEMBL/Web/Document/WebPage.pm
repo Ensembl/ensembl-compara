@@ -81,54 +81,58 @@ sub new {
   
   $| = 1;
   
+  $parameters{'factorytype'} ||= $input->param('factorytype');
+  
   $self->{'cache'}  = $parameters{'cache'};
   $self->{'r'}      = $parameters{'r'};  
   $self->{'script'} = $parameters{'scriptname'} || $ENV{'ENSEMBL_SCRIPT'}; # Input module
   $self->{'parent'} = $self->_parse_referer($input->param('_referer') || $ENV{'HTTP_REFERER'});
   
-  $ENSEMBL_WEB_REGISTRY->get_session->set_input($input);
-  $self->timer_push('Parameters initialised from input');
+  if (!$parameters{'json'}) {
+    $ENSEMBL_WEB_REGISTRY->get_session->set_input($input);
+    $self->timer_push('Parameters initialised from input');
 
-  # Page module. Compile and create renderer [ Apache, File, ... ]
-  my $renderer_type = $parameters{'renderer'} || DEFAULT_RENDERER;
-  my $render_module = "EnsEMBL::Web::Document::Renderer::$parameters{'renderer'}";
-  
-  # If fails to compile try default rendered
-  unless ($self->dynamic_use($render_module)) {
-    $render_module = 'EnsEMBL::Web::Document::Renderer::' . DEFAULT_RENDERER;
-    $self->dynamic_use($render_module); 
+    # Page module. Compile and create renderer [ Apache, File, ... ]
+    my $renderer_type = $parameters{'renderer'} || DEFAULT_RENDERER;
+    my $render_module = "EnsEMBL::Web::Document::Renderer::$parameters{'renderer'}";
+    
+    # If fails to compile try default rendered
+    unless ($self->dynamic_use($render_module)) {
+      $render_module = 'EnsEMBL::Web::Document::Renderer::' . DEFAULT_RENDERER;
+      $self->dynamic_use($render_module); 
+    }
+    
+    $self->timer_push('Renderer object compiled');
+
+    my $rend = new $render_module(
+      r     => $self->{'r'},
+      cache => $self->{'cache'},
+    );
+    
+    $self->timer_push('Renderer initialized');
+
+    # Compile and create "Document" object [ Dynamic, Popup, ... ]
+    $self->{'doctype'} = $parameters{'doctype'} || DEFAULT_DOCUMENT;
+    
+    my $doc_module = "EnsEMBL::Web::Document::$self->{'doctype'}";
+
+    unless ($self->dynamic_use($doc_module)) {
+      $doc_module = 'EnsEMBL::Web::Document::' . DEFAULT_DOCUMENT;
+      $self->dynamic_use($doc_module); 
+    }
+    
+    $self->timer_push('Page object compiled');
+    $self->page = new $doc_module($rend, $self->{'timer'}, $self->{'species_defs'}, $input);          
+    $self->timer_push('Page object initialized');
+
+    # Initialize output type [ HTML, XML, Excel, Txt ]
+    $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
+    
+    my $method = '_initialize_' . ($self->{'format'});
+    $self->{'format_version'} = $input->param('_format_version') || $parameters{'outputtype_version'} || undef;
+    $self->page->$method($self->{'format_version'});
+    $self->timer_push('Output method initialized');
   }
-  
-  $self->timer_push('Renderer object compiled');
-
-  my $rend = new $render_module(
-    r     => $self->{'r'},
-    cache => $self->{'cache'},
-  );
-  
-  $self->timer_push('Renderer initialized');
-
-  # Compile and create "Document" object [ Dynamic, Popup, ... ]
-  $self->{'doctype'} = $parameters{'doctype'} || DEFAULT_DOCUMENT;
-  
-  my $doc_module = "EnsEMBL::Web::Document::$self->{'doctype'}";
-
-  unless ($self->dynamic_use($doc_module)) {
-    $doc_module = 'EnsEMBL::Web::Document::' . DEFAULT_DOCUMENT;
-    $self->dynamic_use($doc_module); 
-  }
-  
-  $self->timer_push('Page object compiled');
-  $self->page = new $doc_module($rend, $self->{'timer'}, $self->{'species_defs'}, $input);          
-  $self->timer_push('Page object initialized');
-
-  # Initialize output type [ HTML, XML, Excel, Txt ]
-  $self->{'format'} = $input->param('_format') || $parameters{'outputtype'} || DEFAULT_OUTPUTTYPE;
-  
-  my $method = '_initialize_' . ($self->{'format'});
-  $self->{'format_version'} = $input->param('_format_version') || $parameters{'outputtype_version'} || undef;
-  $self->page->$method($self->{'format_version'});
-  $self->timer_push('Output method initialized');
   
   my $db_connection = new EnsEMBL::Web::DBSQL::DBConnection($ENV{'ENSEMBL_SPECIES'}, $ENSEMBL_WEB_REGISTRY->species_defs) if $ENV{'ENSEMBL_SPECIES'} ne 'common';
   $self->timer_push('DB connection created');
@@ -138,7 +142,7 @@ sub new {
   
   $self->factory = new EnsEMBL::Web::Proxy::Factory($parameters{'factorytype'} || $parameters{'objecttype'}, {
     _input         => $input,
-    _apache_handle => $rend->r,
+    _apache_handle => $self->{'r'},
     _core_objects  => $core_objects,
     _databases     => $db_connection,
     _parent        => $self->{'parent'}
@@ -308,6 +312,38 @@ sub configure {
   $self->add_error_panels; # Add error panels to end of display
   $self->timer_push("Script configured ($objecttype)");
 }   
+
+sub menu {
+  my ($self, $object) = @_;
+  
+  my $type   = $object->type;
+  my $action = $object->action;
+  my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
+  my $menu;
+  
+  # Check for all possible module permutations.
+  # This way we can have, for example, ZMenu::Contig and ZMenu::Contig::Gene (contig menu with Gene page specific functionality),
+  # and also ZMenu::Gene and ZMenu::Gene::ComparaTree (has a similar menu to that of a gene, but has a different glyph in the drawing code)
+  my @modules = (
+    "::ZMenu::$type",
+    "::ZMenu::$action",
+    "::ZMenu::${type}::$action",
+    "::ZMenu::${action}::$type"
+  );
+  
+  while (my ($module_root) = splice @packages, 0, 2) {    
+    my $module_name = [ map { $self->dynamic_use("$module_root$_") ? "$module_root$_" : () } @modules ]->[-1];
+    
+    if ($module_name) {
+      $menu = $module_name->new($object, $menu);
+    } else {
+      my $error = $self->dynamic_use_failure("$module_root$modules[-1]");
+      warn $error unless $error =~ /^Can't locate/;
+    }
+  }
+  
+  $menu->render if $menu;
+}
 
 # Is this in use?
 sub restrict  { 
