@@ -153,7 +153,6 @@ sub _init_non_assembled_contig {
     my $i = 0;
     $i = $tile->{'haplotype_contig'} ? 1 : 0 if exists $tile->{'haplotype_contig'};
 
-    my $action = 'View';
     my $region = $tile->{'name'};
     my $species = $self->species;
     
@@ -171,7 +170,7 @@ sub _init_non_assembled_contig {
       my $url = $self->_url({
         'species'  => $self->species,
         'type'     => 'Location',
-        'action'   => $action,
+        'action'   => 'Contig',
         'region_n' => $region,
         'r'        => undef
       });

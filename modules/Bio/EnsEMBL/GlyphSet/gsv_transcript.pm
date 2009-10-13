@@ -137,7 +137,7 @@ sub href {
     my $eid =  $exon->stable_id; 
     my $href = $self->_url({
       'type'   => 'Gene',
-      'action' => 'Variation_transcript',
+      'action' => 'VariationTranscript',
       'vt'      => $tid,
       'e'      => $eid, 
     });

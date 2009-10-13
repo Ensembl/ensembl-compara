@@ -151,7 +151,7 @@ sub render_normal {
     
     $composite->href($self->_url({
       type   => 'Location',
-      action => 'ComparaGenomicAlignment',
+      action => 'PairwiseAlignment',
       r1     => $features[0][1]->hseqname . ":$hs-$he",
       s1     => $other_species,
       orient => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
@@ -224,7 +224,7 @@ sub render_compact {
     # zmenu links depend on whether jumping within or between species;
     my $zmenu = {
       type    => 'Location',
-      action  => 'ComparaGenomicAlignment',
+      action  => 'PairwiseAlignment',
       species => $url_species,
       r       => "$chr:$rs-$re",
       r1      => $f->hseqname . ':' . $f->hstart . '-' . $f->hend,

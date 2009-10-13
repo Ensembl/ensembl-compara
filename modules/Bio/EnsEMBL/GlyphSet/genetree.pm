@@ -143,9 +143,10 @@ sub _init {
     $label_colour = "black" if (!$label_colour); # Default colour
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
-    my $node_href = $self->_url
-        ({ 'action'   => 'Compara_Tree_Node',
-           'node'     => $f->{'_id'} });
+    my $node_href = $self->_url({ 
+      'action'   => 'ComparaTreeNode',
+      'node'     => $f->{'_id'}
+    });
 
     my $collapsed_xoffset = 0;
     if ($f->{_bg_colour}) {
@@ -241,7 +242,7 @@ sub _init {
         $species =~ s/\s/_/g;
         my $href = $self->_url( {'species' => $species,
                                  'type'    => 'Gene',
-                                 'action'  => 'Compara_Tree',
+                                 'action'  => 'ComparaTree',
                                  '__clear' => $stable_id != $self->{'config'}{_core}{'parameters'}{'g'}, 
                                  'r'       => undef,
                                  'g'       => $stable_id } );

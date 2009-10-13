@@ -69,7 +69,7 @@ sub _init {
       
       my $c = $ctg->slice->seq_region_name; 
       my $region = "$c:$vc_ctg_start-$vc_ctg_end";
-      my $href = $self->_url ({'type' => 'Location', 'action' => 'Supercontigs', 'r' => $region, 'ctg' => $ctgname });
+      my $href = $self->_url ({'type' => 'Location', 'action' => 'Supercontig', 'r' => $region, 'ctg' => $ctgname });
       ##$HREF =  "/@{[$self->{container}{web_species}]}/cytoview?chr=$chr;vc_start=$vc_ctg_start;vc_end=$vc_ctg_end"
     
       $self->{'_colour_flag'} = $self->{'_colour_flag'}==1 ? 2 : 1;

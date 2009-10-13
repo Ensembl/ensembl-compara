@@ -81,11 +81,13 @@ sub render_normal {
     $yc{$id} = $y_coord;
     $y +=50;
 
-    my $label_href = $self->_url
-    ({'action'  => 'Idhistory_Label',
-      'label'   => $id,
-      'feat_type'    =>  $param2,
-      $param    => $id, 
+    my $label_href = $self->_url({
+      'type'        => 'Idhistory',
+      'action'      => 'Label',
+      'factorytype' => $ENV{'ENSEMBL_TYPE'},
+      'label'       => $id,
+      'feat_type'   => $param2,
+      $param        => $id, 
     });
     
     
@@ -173,11 +175,14 @@ sub render_normal {
   my @sortedx = sort ({$a <=> $b} @x_c);
 
   foreach my $a_id (@{ $history_tree->get_all_ArchiveStableIds }) {
-    my $node_href = $self->_url
-      ({'action'   => 'Idhistory_Node',
-        'node'     => $a_id->stable_id,
-        'db_name'  => $a_id->db_name,
-         $param => $a_id->stable_id  });
+    my $node_href = $self->_url({
+      'type'        => 'Idhistory',
+      'action'      => 'Node',
+      'factorytype' => $ENV{'ENSEMBL_TYPE'},
+      'node'        => $a_id->stable_id,
+      'db_name'     => $a_id->db_name,
+      $param        => $a_id->stable_id
+    });
 
     # only draw node if the version from the next release is different or if
     # this version links to a different id      
@@ -260,15 +265,17 @@ sub render_normal {
     my $escore = $event->score;
 
    
-    my $branch_href = $self->_url
-      ({'action'   => 'Idhistory_Branch',
-        'old'     => $old_id,
-        'new'     => $new_id,
-        'old_db'  => $old_db,
-        'new_db'  => $new_db,
-        'score'   => $escore,
-        $param    => $old_id, 
-      });
+    my $branch_href = $self->_url({
+      'type'        => 'Idhistory',
+      'action'      => 'Branch',
+      'factorytype' => $ENV{'ENSEMBL_TYPE'},
+      'old'         => $old_id,
+      'new'         => $new_id,
+      'old_db'      => $old_db,
+      'new_db'      => $new_db,
+      'score'       => $escore,
+      $param        => $old_id, 
+    });
 
 
     $escore = $escore * 100;

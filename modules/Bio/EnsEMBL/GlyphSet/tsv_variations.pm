@@ -97,9 +97,9 @@ sub _init {
 
     my $allele_id = $allele->variation_name;
     my $dbid = $allele->variation->dbID;
-    my $href_sara = $self->_url
-    ({'type'   => 'Transcript',
-      'action'  => 'Transcript_Variation',
+    my $href_sara = $self->_url({
+      'type'   => 'Transcript',
+      'action'  => 'TranscriptVariation',
       'v'     => $allele_id,
       'vf'    => $dbid,
       'alt_allele' => $conseq_alleles[0],
@@ -145,9 +145,9 @@ sub _init {
     my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = ($res[2]+4)/$pix_per_bp;
 
-    my $href = $self->_url
-    ({'type'   => 'Transcript',
-      'action'  => 'Transcript_Variation',
+    my $href = $self->_url({
+      'type'   => 'Transcript',
+      'action'  => 'TranscriptVariation',
       'v'     => $allele_id,
       'vf'    => $dbid,
       'alt_allele' => $conseq_alleles[0],

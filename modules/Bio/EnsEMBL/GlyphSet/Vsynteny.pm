@@ -116,7 +116,7 @@ sub _init {
     }
     
     my $url = $self->_url({
-      'action'  => 'Overview',
+      'action'  => 'Synteny',
       'species' => $self->{'container'}{'web_species'},
       't'       => undef,
       'r'       => "$chr:" . $main_dfr->dnafrag_start . '-' . $main_dfr->dnafrag_end,
@@ -140,7 +140,7 @@ sub _init {
       my $ori = ($main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand == 1) ? 'forward' : 'reverse';
       
       my $url = $self->_url({
-        'action'  => 'Overview',
+        'action'  => 'Synteny',
         'species' => $OTHER,
         't'       => undef,
         'r1'      => "$chr:" . $main_dfr->dnafrag_start . '-' . $main_dfr->dnafrag_end,
@@ -630,7 +630,7 @@ sub draw_chromosome {
     my $url = $self->_url({
       'type'    => 'Location',
       'action'  => 'View',
-      'r'       =>$r,
+      'r'       => $r,
       'species' => $self->{'container'}{'web_species'}
     });
     

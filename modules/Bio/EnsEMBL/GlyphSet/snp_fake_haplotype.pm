@@ -251,24 +251,24 @@ sub _init {
 sub strain_name_text {
   my ($self, $th, $fontname, $fontsize, $offset, $name, $Config, $fully_inbred) = @_;
   (my $url_name = $name) =~ s/Compare to |^\s+//;
-  my $URL = $self->_url({'action' => 'ref',  'reference' => $url_name});
+  
   my $textglyph = $self->Text({
-      'x'          => -$self->get_parameter('__left_hand_margin'),
-      'y'          => $offset+1,
-      'height'     => $th,
-      'font'       => $fontname,
-      'ptsize'     => $fontsize,
-      'colour'     => 'black',
-      'text'       => $name,
-      'halign'     => 'left',
-      'width'      => 105,
-      'absolutex'  => 1,
-      'absolutey'  => 1,
-      'absolutewidth'  => 1,
-      'href'      => $URL,
+      'x'             => -$self->get_parameter('__left_hand_margin'),
+      'y'             => $offset+1,
+      'height'        => $th,
+      'font'          => $fontname,
+      'ptsize'        => $fontsize,
+      'colour'        => 'black',
+      'text'          => $name,
+      'halign'        => 'left',
+      'width'         => 105,
+      'absolutex'     => 1,
+      'absolutey'     => 1,
+      'absolutewidth' => 1,
+      'href'          => $self->_url({ 'action' => 'Reference', 'reference' => $url_name })
   });
-  $self->push( $textglyph );
-  return 1;
+
+  $self->push($textglyph);
 }
 
 

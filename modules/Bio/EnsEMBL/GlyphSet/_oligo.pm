@@ -64,7 +64,7 @@ sub href {
 
   return $self->_url({
     'type' => 'Location',
-    'action' => 'Genome',
+    'action' => 'Oligo',
     'fdb'    => 'funcgen',
     'ftype'  => 'ProbeFeature',
     'id'     => $probe_name,

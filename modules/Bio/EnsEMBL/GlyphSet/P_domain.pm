@@ -55,7 +55,7 @@ sub _init {
       my $Composite = $self->Composite({
         'x'     => $minx,
         'y'     => 0,
-        'href'  => $self->_url({'Type'=>'Transcript','Action'=>'ProteinSummary','pf_id'=>$dbID}),
+        'href'  => $self->_url({ 'type' => 'Transcript', 'action' => 'ProteinSummary', 'pf_id' => $dbID }),
         'title' => $title
       });
       $Composite->push(@rect,
