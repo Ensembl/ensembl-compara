@@ -79,18 +79,16 @@ sub run {
 	my ($self) = @_;
 	#find all genomic_align_blocks with the minimum size and minimum number of seqs
 	my %sql_statements = (
-		select_gerp_blocks => "SELECT genomic_align_block_id FROM genomic_align_block WHERE length >= ? 
+		select_constrained_elements => "SELECT constrained_element_id, dnafrag_id, dnafrag_start,
+			dnafrag_end, dnafrag_strand FROM constrained_element WHERE (dnafrag_end - dnafrag_start + 1) >= ?  
 				AND method_link_species_set_id = ?",
 		select_analysis_data => "SELECT data FROM analysis_data WHERE analysis_data_id = ?",
-		select_genomic_aligns => "SELECT genomic_align_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand 
-				FROM genomic_align WHERE genomic_align_block_id = ?",
 		select_genome_db_ids => "SELECT ss.genome_db_id, gdb.name FROM genome_db gdb INNER JOIN species_set ss 
 				ON gdb.genome_db_id = ss.genome_db_id WHERE species_set_id = 
 				(SELECT species_set_id FROM method_link_species_set WHERE method_link_species_set_id = ?)",
 		select_dnafrag_info => "SELECT df.genome_db_id, df.dnafrag_id, df.name, df.coord_system_name FROM dnafrag df INNER JOIN 
-				genomic_align ga ON df.dnafrag_id = ga.dnafrag_id INNER JOIN genomic_align_block gab ON 
-				ga.genomic_align_block_id = gab.genomic_align_block_id WHERE gab.method_link_species_set_id = ? 
-				AND gab.length >= ? GROUP BY df.dnafrag_id",
+				constrained_element ce ON df.dnafrag_id = ce.dnafrag_id WHERE ce.method_link_species_set_id = ? 
+				AND (ce.dnafrag_end - ce.dnafrag_start + 1) >= ? GROUP BY df.dnafrag_id",
 		insert_anchor_seq => "INSERT INTO anchor_sequence (method_link_species_set_id, anchor_id, dnafrag_id, start, end, 
 				strand, sequence, length) VALUES (?,?,?,?,?,?,?,?)",
 	);
@@ -109,42 +107,21 @@ sub run {
 	my $analysis_struct = eval ( ($sql_statements{select_analysis_data}->fetchrow_array)[0] );
 	$sql_statements{select_dnafrag_info}->execute($self->previous_mlssid, $analysis_struct->{min_anc_size});
 	$dnafrag_hashref = $sql_statements{select_dnafrag_info}->fetchall_hashref("dnafrag_id");
-	$sql_statements{select_gerp_blocks}->execute($analysis_struct->{min_anc_size}, $self->previous_mlssid);
-	while(my@row = $sql_statements{select_gerp_blocks}->fetchrow_array) {
-		my $genomic_align_block_id = $row[0];
-		$sql_statements{select_genomic_aligns}->execute($genomic_align_block_id);
-		my $ga_ref = $sql_statements{select_genomic_aligns}->fetchall_hashref("genomic_align_id");
-		foreach my $ga_id(sort keys %{$ga_ref}) {
-			my $dnafrag_id = $ga_ref->{$ga_id}->{dnafrag_id};
-			my $slice = $org_hash{ $dnafrag_hashref->{$dnafrag_id}->{genome_db_id} }->fetch_by_region(
-							$dnafrag_hashref->{$dnafrag_id}->{coord_system_name},
-							$dnafrag_hashref->{$dnafrag_id}->{name},
-							$ga_ref->{$ga_id}->{dnafrag_start},
-							$ga_ref->{$ga_id}->{dnafrag_end},
-							$ga_ref->{$ga_id}->{dnafrag_strand});
-			next if $slice->length < $analysis_struct->{min_anc_size};
-			my($new_end, $new_seq);
-			if($slice->length > $analysis_struct->{max_anc_size}) { #shorten the sequence if it's greater that the max length
-				$new_seq = join("", (split("", $slice->seq))[0..$analysis_struct->{max_anc_size}-1]);
-				$new_end = $ga_ref->{$ga_id}->{dnafrag_start} + $analysis_struct->{max_anc_size} - 1;
-			}
-			if($new_seq) { #skip if sequence has too many Ns, insert into db otherwise
-				my $new_seq_Ns_len = length( join("", $new_seq=~/(N)/g));
-				next if ($new_seq_Ns_len && ( $new_seq_Ns_len / length($new_seq) > $self->N_cut_off_ratio ));
-				$sql_statements{insert_anchor_seq}->execute($self->method_link_species_set_id,
-						$genomic_align_block_id, $dnafrag_id, $ga_ref->{$ga_id}->{dnafrag_start}, 
-						$ga_ref->{$ga_id}->{dnafrag_end}, $ga_ref->{$ga_id}->{dnafrag_strand},
-						$new_seq, length($new_seq)); 
-			}
-			else {
-				my $slice_seq_Ns_len = length( join("", $slice->seq=~/(N)/g));
-				next if ($slice_seq_Ns_len && ( $slice_seq_Ns_len / length($slice->seq) > $self->N_cut_off_ratio ));
-				$sql_statements{insert_anchor_seq}->execute($self->method_link_species_set_id,
-						$genomic_align_block_id, $dnafrag_id, $ga_ref->{$ga_id}->{dnafrag_start},
-						$ga_ref->{$ga_id}->{dnafrag_end}, $ga_ref->{$ga_id}->{dnafrag_strand},
-						$slice->seq, length($slice->seq));
-			}
-		}
+	$sql_statements{select_constrained_elements}->execute($analysis_struct->{min_anc_size}, $self->previous_mlssid);
+	while(my($constrained_element_id, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand)
+			 = $sql_statements{select_constrained_elements}->fetchrow_array) {
+		my $slice = $org_hash{ $dnafrag_hashref->{$dnafrag_id}->{genome_db_id} }->fetch_by_region(
+						$dnafrag_hashref->{$dnafrag_id}->{coord_system_name},
+						$dnafrag_hashref->{$dnafrag_id}->{name},
+						$dnafrag_start,
+						$dnafrag_end,
+						$dnafrag_strand,
+		);
+		next if $slice->length < $analysis_struct->{min_anc_size};
+			$sql_statements{insert_anchor_seq}->execute($self->method_link_species_set_id,
+					$constrained_element_id, $dnafrag_id, $dnafrag_start,
+					$dnafrag_end, $dnafrag_strand,
+					$slice->seq, length($slice->seq));
 	}
 	return 1;
 }
@@ -154,15 +131,8 @@ sub write_output {
 	return 1;
 }
 
-sub N_cut_off_ratio {
-	my $self = shift;
-	if (@_) {
-		$self->{_N_cut_off_ratio} = shift;
-	}
-	return $self->{_N_cut_off_ratio};
-}
+sub previous_mlssid { #this should be the constrained_element mlssid
 
-sub previous_mlssid { #this should be the Gerp mlssid
 	my $self = shift;
 	if (@_) {
 		$self->{_previous_mlssid} = shift;
