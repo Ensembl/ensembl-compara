@@ -1,0 +1,130 @@
+# $Id$
+
+package EnsEMBL::Web::ZMenu;
+
+use strict;
+
+use CGI qw(escapeHTML);
+
+use base qw(EnsEMBL::Web::Root);
+
+sub new {
+  my ($class, $object, $existing_menu) = @_;
+  
+  my $self = {
+    object         => $object,
+    entries        => [],
+    stored_entries => \%{$existing_menu->{'stored_entries'}} || {},
+    order          => $existing_menu->{'order'} || 1,
+    caption        => $existing_menu->{'caption'}
+  };
+  
+  bless $self, $class;
+  
+  $self->content;
+  
+  # stored_entries keeps all entries of all plugins in a hash, keyed by order
+  $self->{'stored_entries'}->{$_->{'order'}} = $_ for @{$self->{'entries'}};
+  
+  return $self;
+}
+
+sub content {}
+
+sub object {
+  my $self = shift;
+  $self->{'object'} = shift if @_;
+  return $self->{'object'};
+}
+
+sub caption {
+  my $self = shift;
+  $self->{'caption'} = shift if @_;
+  return $self->{'caption'};
+}
+
+# When adding an entry you can specify ORDER or POSITION.
+# ORDER    is used to set the position of all entries. It is auto generated unless specified,
+#          and as such should be set explicitly on ALL entries, or NONE. Any other scenario
+#          could result in unexpected behaviour. For these cases use POSITION instead.
+# POSITION will insert the entry at that position in the menu. Since it increments all subsequent
+#          entries' orders, it should only be used to insert at existing positions.
+# It is probably best not to use POSITION and ORDER together, just in case something goes wrong.
+#
+# ZMenus are pluggable in such a way that if you specify either ORDER or POSITION for an entry from 
+# a plugin, it will OVERWRITE the existing menu of that position. If you specify neither, the plugin 
+# entry will be added at the bottom of the menu.
+sub add_entry {
+  my ($self, $entry) = @_;
+  
+  if ($entry->{'position'}) {
+    $_->{'order'}++ for grep $_->{'order'} >= $entry->{'position'}, @{$self->{'entries'}}; # increment order for each entry after the given position
+    $entry->{'order'} = $entry->{'position'};
+    $self->{'order'}++;
+  } else {
+    $entry->{'order'} ||= $self->{'order'}++;
+  }
+  
+  push @{$self->{'entries'}}, $entry;
+}
+
+sub add_subheader {
+  my ($self, $label) = @_;
+  
+  return unless defined $label;
+  
+  $self->add_entry({
+    type       => 'subheader',
+    label_html => $label
+  });
+}
+
+# Can be used from plugins to remove entries from previous plugins' menu.
+# Requires a list of entry positions to remove
+sub remove_entries {
+  my $self = shift;
+  delete $self->{'stored_entries'}->{$_} for @_;
+}
+
+# Build and print the JSON response
+sub render {
+  my $self = shift;
+  
+  my @entries;
+  
+  foreach (sort { $a <=> $b } keys %{$self->{'stored_entries'}}) {
+    my $entry = $self->{'stored_entries'}->{$_};
+    my $type  = escapeHTML($entry->{'type'});
+    my $link;
+    
+    if ($entry->{'link'}) {
+      if ($entry->{'extra'}->{'abs_url'}) {
+        $link = $entry->{'link'};
+      } else {
+        $link = sprintf(
+          '<a href="%s"%s %s>%s</a>',
+          escapeHTML($entry->{'link'}),
+          $entry->{'extra'}{'external'} ? ' rel="external"' : '',
+          $entry->{'class'} ? qq{ class="$entry->{'class'}"} : '',
+          escapeHTML($entry->{'label'} . $entry->{'label_html'})
+        );
+      }
+    } else {
+      $link = escapeHTML($entry->{'label'}) . $entry->{'label_html'};
+    }
+    
+    s/'/&#39;/g for $type, $link;
+    $type = ", 'type': '$type'" if $type;
+    
+    push @entries, "{'link': '$link'$type}";
+  }
+  
+  foreach ($self->{'caption'}, @entries) {
+    s/\n/\\n/g;
+    s/\r//g;
+  }
+  
+  printf "{'caption': '%s', 'entries': [%s]}", escapeHTML($self->{'caption'}), join ',', @entries;
+}
+
+1;
