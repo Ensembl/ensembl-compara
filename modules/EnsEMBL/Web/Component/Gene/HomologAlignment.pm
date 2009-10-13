@@ -9,45 +9,37 @@ use EnsEMBL::Web::Document::HTML::TwoCol;
 use EnsEMBL::Web::Constants;
 use POSIX;
 
-
-#use Data::Dumper;
-#$Data::Dumper::Maxdepth = 3;
-
 sub _init {
   my $self = shift;
-  $self->cacheable( 1 );
-  $self->ajaxable(  1 );
+  $self->cacheable(1);
+  $self->ajaxable(1);
 }
 
 sub caption {
   return undef;
 }
 
-sub renderer_type {
-  my $self = shift;
-  my $K = shift;
-  my %T = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-  return $T{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
-}
-
 sub content {
   my $self = shift;
-  my $object = $self->object;
-  my $gene = $object->Obj;
-  my $input = $object->input;
-  my $second_gene = $input->{'g1'}->[0];
-  my $html = '';
-
-  my $databases = $object->database('compara') ;
-  my $ma = $databases->get_MemberAdaptor;
-  my $qm    = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
-  my $homologies;
+  
+  my $object      = $self->object;
+  my $species     = $object->species;
+  my $gene_id     = $object->stable_id;
+  my $input       = $object->input;
+  my $second_gene = $object->param('g1');
+  my $seq         = $object->param('seq');
+  my $text_format = $object->param('text_format');
+  my $databases   = $object->database('compara');
+  my $ma          = $databases->get_MemberAdaptor;
+  my $qm          = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
+  my ($homologies, $html, %skipped);
+  
   eval {
     my $ha = $databases->get_HomologyAdaptor;
     $homologies = $ha->fetch_by_Member($qm);
   };
-
-  my %desc_mapping= (
+  
+  my %desc_mapping = (
     'ortholog_one2one'          => '1 to 1 orthologue',
     'apparent_ortholog_one2one' => '1 to 1 orthologue (apparent)',
     'ortholog_one2many'         => '1 to many orthologue',
@@ -55,85 +47,118 @@ sub content {
     'ortholog_many2many'        => 'many to many orthologue',
     'within_species_paralog'    => 'paralogue (within species)',
   );
-
+  
   foreach my $homology (@{$homologies}) {
     my $sa;
-    eval { $sa = $homology->get_SimpleAlign( $object->param('seq') eq 'cDNA' ? 'cdna' : undef ); };
-    if( $sa ) {
-      my $DATA = [];
-      my $FLAG = ! $second_gene;
+    eval { $sa = $homology->get_SimpleAlign($seq eq 'cDNA' ? 'cdna' : undef); };
+    
+    if ($sa) {
+      my $data = [];
+      my $flag = !$second_gene;
+      
       foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
         my ($member, $attribute) = @{$member_attribute};
-        $FLAG = 1 if $member->stable_id eq $second_gene;
-        my $peptide = $member->{'_adaptor'}->db->get_MemberAdaptor()->fetch_by_dbID( $attribute->peptide_member_id );
-        my $species = $member->genome_db->name;
-        (my $species2 = $species ) =~s/ /_/g;
-        my $location = sprintf('%s:%d-%d',$member->chr_name, $member->chr_start, $member->chr_end);
-        if ($member->stable_id eq $gene->stable_id) {
-          push @$DATA, [
-            $species,
-            sprintf( $member->stable_id ),
-            sprintf( $peptide->stable_id ),
-            sprintf( '%d aa', $peptide->seq_length ),
-            sprintf( $location),
-          ]; 
+        
+        $flag = 1 if $member->stable_id eq $second_gene;
+        
+        my $peptide        = $member->{'_adaptor'}->db->get_MemberAdaptor->fetch_by_dbID($attribute->peptide_member_id);
+        my $member_species = $member->genome_db->name;
+        my $location       = sprintf '%s:%d-%d', $member->chr_name, $member->chr_start, $member->chr_end;
+        
+        (my $species2 = $member_species) =~ s/ /_/g;
+        
+        if (!$second_gene && $species2 ne $species && $object->param('species_' . lc $species2) eq 'off') {
+          $flag = 0;
+          $skipped{$object->species_defs->species_label($species2)}++;
+          next;
         }
-        else {
-          push @$DATA, [
-            $species,
-            sprintf( '<a href="%s">%s</a>',
-              $object->_url({'species'=>$species2,'type'=>'Gene','action'=>'Summary','g'=>$member->stable_id,'r'=>undef}),
+        
+        if ($member->stable_id eq $gene_id) {
+          push @$data, [
+            $member_species,
+            $member->stable_id,
+            $peptide->stable_id,
+            sprintf('%d aa', $peptide->seq_length),
+            $location,
+          ]; 
+        } else {
+          push @$data, [
+            $member_species,
+            sprintf('<a href="%s">%s</a>',
+              $object->_url({ species => $species2, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
               $member->stable_id
             ),
-            sprintf( '<a href="%s">%s</a>',
-              $object->_url({'species'=>$species2,'type'=>'Transcript','action'=>'ProteinSummary',
-                'peptide'=>$peptide->stable_id,'__clear'=>1 }),
+            sprintf('<a href="%s">%s</a>',
+              $object->_url({ species => $species2, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
               $peptide->stable_id
             ),
-            sprintf( '%d aa', $peptide->seq_length ),
-            sprintf( '<a href="%s">%s</a>',
-              $object->_url({'species'=>$species2,'type'=>'Location','action'=>'View',
-                'g'=>$member->stable_id,'r'=>$location,'t'=>undef}),
+            sprintf('%d aa', $peptide->seq_length),
+            sprintf('<a href="%s">%s</a>',
+              $object->_url({ species => $species2, type => 'Location', action => 'View', g => $member->stable_id, r => $location, t => undef }),
               $location
             )
           ];
         }
       }
-      next unless $FLAG;
+      
+      next unless $flag;
+      
       my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
-      my $homology_desc= $homology_types->{$homology->{_description}} || $homology->{_description};
+      my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
+      
+      next if $homology_desc eq 'between_species_paralog'; # filter out the between species paralogs
+      
+      my $homology_desc_mapped = $desc_mapping{$homology_desc} ? $desc_mapping{$homology_desc} : 
+                                 $homology_desc ? $homology_desc : 'no description';
 
-      # filter out the between species paralogs
-      next if($homology_desc eq 'between_species_paralog');
-
-      my $homology_desc_mapped = $desc_mapping{$homology_desc} ? $desc_mapping{$homology_desc}
-	                       : $homology_desc            ? $homology_desc
-	                       : 'no description';
-
-      $html .= sprintf '<h2>Ortholog type: %s</h2>',$homology_desc_mapped;
-
-      my $ss = EnsEMBL::Web::Document::SpreadSheet->new(
-        [ { 'title' => 'Species', 'width'=>'20%' },
-          { 'title' => 'Gene ID', 'width'=>'20%' },
-          { 'title' => 'Peptide ID', 'width'=>'20%' },
-          { 'title' => 'Peptide length', 'width'=>'20%' },
-          { 'title' => 'Genomic location', 'width'=>'20%' } ],
-        $DATA
+      $html .= "<h2>Ortholog type: $homology_desc_mapped</h2>";
+      
+      my $ss = EnsEMBL::Web::Document::SpreadSheet->new([
+          { 'title' => 'Species',          'width' => '20%' },
+          { 'title' => 'Gene ID',          'width' => '20%' },
+          { 'title' => 'Peptide ID',       'width' => '20%' },
+          { 'title' => 'Peptide length',   'width' => '20%' },
+          { 'title' => 'Genomic location', 'width' => '20%' }
+        ],
+        $data
       );
+      
       $html .= $ss->render;
 
       my $alignio = Bio::AlignIO->newFh(
-        -fh   => IO::String->new(my $var),
-        -format => $self->renderer_type($object->param('text_format'))
+        -fh     => new IO::String(my $var),
+        -format => $self->renderer_type($text_format)
       );
+      
       print $alignio $sa;
-      $html .= qq(<pre>$var</pre>);
+      
+      $html .= "<pre>$var</pre>";
     }
   }
+  
+  if (scalar keys %skipped) {
+    my $count;
+    $count += $_ for values %skipped;
+    
+    $html .= '<br />' . $self->_info(
+      'Orthologues hidden by configuration',
+      sprintf(
+        '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+        $count,
+        join "</li>\n<li>", map "$_ ($skipped{$_})", sort keys %skipped
+      )
+    );
+  }
+  
   return $html;
 }        
 
-
+sub renderer_type {
+  my $self = shift;
+  my $K = shift;
+  my %T = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+  return $T{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
+}
 
 1;
 
