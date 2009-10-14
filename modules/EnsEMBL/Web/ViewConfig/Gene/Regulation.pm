@@ -12,6 +12,7 @@ sub init {
   $view_config->add_image_configs({qw(
     generegview nodas
   )});
+  $view_config->default_config = 'generegview';
   $view_config->storable = 1;
 }
 1
