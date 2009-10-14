@@ -20,6 +20,7 @@ sub init {
     genesnpview_transcript      nodas
   )});
 
+  $view_config->default_config = 'genesnpview_transcript';
   $view_config->storable = 1;
 }
 
