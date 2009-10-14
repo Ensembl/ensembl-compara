@@ -184,9 +184,9 @@ CREATE TABLE `anchor_sequence` (
 
 
 CREATE TABLE `anchor_align` (
-  `anchor_align_id` int(20) unsigned NOT NULL auto_increment,
+  `anchor_align_id` bigint(20) unsigned NOT NULL auto_increment,
   `method_link_species_set_id` int(10) unsigned default NULL,
-  `anchor_id` int(20) unsigned default NULL,
+  `anchor_id` bigint(20) unsigned default NULL,
   `dnafrag_id` int(20) unsigned default NULL,
   `dnafrag_start` int(20) default NULL,
   `dnafrag_end` int(20) default NULL,
