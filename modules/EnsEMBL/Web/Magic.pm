@@ -385,7 +385,7 @@ sub stuff {
     );
   }
 
-  my $content = ($MEMD && $r->method ne 'POST') ? $MEMD->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}}) : undef;
+  my $content = ($MEMD && !$modal_dialog && $r->method ne 'POST') ? $MEMD->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}}) : undef;
 
   if ($content) { # HIT
     warn "DYNAMIC CONTENT CACHE HIT $ENV{'CACHE_KEY'}"
@@ -520,7 +520,8 @@ sub stuff {
 
     $content = $webpage->page->renderer->content;
 
-    $MEMD->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, keys %{$ENV{'CACHE_TAGS'}}) if $MEMD && !$webpage->has_a_problem &&  $webpage->format eq 'HTML';
+    $MEMD->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, keys %{$ENV{'CACHE_TAGS'}})
+      if $MEMD && !$modal_dialog && !$webpage->has_a_problem && $webpage->format eq 'HTML';
   }
   
   print $content;
