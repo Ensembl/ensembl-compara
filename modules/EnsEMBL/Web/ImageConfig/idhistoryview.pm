@@ -26,7 +26,7 @@ sub init {
    $self->load_tracks();
 
   $self->add_tracks('ID_History',
-  ['idhistorytree',   '',   'idhistorytree', { 'on' => 'on',   'strand' => 'f'} ]
+  ['idhistorytree',   '',   'idhistorytree', { 'display' => 'on',   'strand' => 'f', 'menu' => 'no'} ]
   );
 }
 1;
