@@ -30,7 +30,7 @@ sub content {
   $dir = '' if $dir !~ /_/;
   
   my $referer = '_referer=' . $self->object->param('_referer');
-  $referer .= ';x_requested_with=XMLHttpRequest' if $ENSEMBL_WEB_REGISTRY->check_ajax;
+  $referer .= ';x_requested_with=' . $self->object->param('x_requested_with') if $ENSEMBL_WEB_REGISTRY->check_ajax;
   
   my $form = EnsEMBL::Web::Form->new( 'login', "$dir/Account/SetCookie", 'post' );
   my $reg_url = $self->url("$dir/Account/User/Add?$referer");
@@ -41,7 +41,7 @@ sub content {
   $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $self->object->param('url'));
   $form->add_element('type'  => 'Hidden',   'name'  => 'popup', 'value' => $self->object->param('popup'));
   $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $self->object->param('_referer'));
-  $form->add_element('type'  => 'Hidden',   'name'  => 'x_requested_with', 'value' => 'XMLHttpRequest');
+  $form->add_element('type'  => 'Hidden',   'name'  => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
   $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in', 'class'=>'cp-refresh');
   $form->add_element('type'  => 'Information',
                      'value' => qq(<p><a href="$reg_url" class="modal_link">Register</a>
