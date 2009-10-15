@@ -299,7 +299,21 @@ sub new {
     foreach my $tree (@$genomic_align_trees) {
         foreach my $block (@$genomic_align_blocks) {
             my $gab_id = $tree->get_all_leaves->[0]->genomic_align_group->get_all_GenomicAligns->[0]->genomic_align_block_id;
-            if ($gab_id == $block->dbID) {
+	    my $block_id = $block->dbID;
+
+	    #if the block has been restricted, need to look at original_dbID
+	    if (!defined $block_id) {
+		$block_id = $block->{original_dbID};
+	    }
+	    my $tree_ref_ga = $tree->{reference_genomic_align};
+	    my $block_ref_ga = $block->{reference_genomic_align};
+
+	    #Need to check the ref_ga details not just the block id because
+	    #the original_dbID is not unique for 2x genome blocks
+            if ($gab_id == $block_id && 
+		$tree_ref_ga->dnafrag_start == $block_ref_ga->dnafrag_start && 
+		$tree_ref_ga->dnafrag_end == $block_ref_ga->dnafrag_end && 
+		$tree_ref_ga->dnafrag_strand == $block_ref_ga->dnafrag_strand) {
                 $block->{_alignslice_from} = $tree->{_alignslice_from};
                 $block->{_alignslice_to} = $tree->{_alignslice_to};
             }
@@ -310,7 +324,6 @@ sub new {
     $self->_create_underlying_Slices($genomic_align_blocks, $self->{expanded},
         $self->{solve_overlapping}, $preserve_blocks, $species_order);
   }
-
   return $self;
 }
 
@@ -646,7 +659,6 @@ sub _get_expanded_conservation_scores {
 
     my $all_conservation_scores = [];
     foreach my $this_genomic_align_block (@{$self->get_all_GenomicAlignBlocks()}) {
-	
 	$this_genomic_align_block->{restricted_aln_start} = $this_genomic_align_block->{_alignslice_from};
 	$this_genomic_align_block->{restricted_aln_end} = $this_genomic_align_block->{_alignslice_to};
 
@@ -844,10 +856,12 @@ sub _create_underlying_Slices {
   } else {
     $last_ref_pos = $self->reference_Slice->end;
   }
+
   my $ref_genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_Slice($self->reference_Slice);
   my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
 
   my $sorted_genomic_align_blocks;
+
   if ($solve_overlapping eq "restrict") {
     $sorted_genomic_align_blocks = _sort_and_restrict_GenomicAlignBlocks($genomic_align_blocks);
   } elsif ($solve_overlapping) {
@@ -892,6 +906,7 @@ sub _create_underlying_Slices {
       $this_pos = $reference_genomic_align->dnafrag_end;
       $this_gap_between_genomic_align_blocks = $last_ref_pos - $this_pos;
     }
+
     if ($this_gap_between_genomic_align_blocks > 0) {
       ## Add mapper info for inter-genomic_align_block space
       if ($strand == 1) {
@@ -943,6 +958,7 @@ sub _create_underlying_Slices {
     $this_pos = $self->reference_Slice->start;
     $this_gap_between_genomic_align_blocks = $last_ref_pos + 1 - $this_pos;
   }
+
   ## $last_ref_pos is the next nucleotide position after the last mapped one.
   if ($this_gap_between_genomic_align_blocks > 0) {
     if ($strand == 1) {
