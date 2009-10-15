@@ -519,7 +519,7 @@ sub fetch_all_by_GenomicAlignBlock {
     my $align_start = $start;
     my $align_end = $end;
 
-    #print "restricted start " . $genomic_align_block->{'restricted_aln_start'} . " end " . $genomic_align_block->{'restricted_aln_end'} . "\n";
+    #print "restricted start " . $genomic_align_block->{'restricted_aln_start'} . " end " . $genomic_align_block->{'restricted_aln_end'} . " gab length " . $genomic_align_block->length . "\n";
 
     #If the GenomicAlignBlock has been restricted, use these values in 
     #align_start and align_end
@@ -592,6 +592,7 @@ sub fetch_all_by_GenomicAlignBlock {
 
     my $conservation_scores = $self->_fetch_all_by_GenomicAlignBlockId_WindowSize($gab_id, $window_size, $PACKED);
 
+
     if (scalar(@$conservation_scores) == 0) {
 	return $scores;
     }
@@ -613,7 +614,7 @@ sub fetch_all_by_GenomicAlignBlock {
     if (scalar(@$scores) == 0) {
 	return $scores;
     }
-    
+
     my $all_scores;
     foreach my $this_conservation_score (@$scores) {
 	$this_conservation_score->position($this_conservation_score->position + $start - 1);
@@ -1077,7 +1078,7 @@ sub _get_aligned_scores_from_cigar_line {
 
 	$current_pos += $cigLength;
 	$total_pos += $cigLength;
-	if( $cigType eq "M" ) {
+	if( $cigType eq "M" || $cigType eq "I") {
 	    $total_chr_pos += $cigLength;
 	}
     }
@@ -1129,9 +1130,12 @@ sub _get_aligned_scores_from_cigar_line {
 	    $cigType = substr( $cigElem, -1, 1 );
 	    $cigLength = substr( $cigElem, 0 ,-1 );
 	    $cigLength = 1 unless ($cigLength =~ /^\d+$/);
-	    
-	    $total_pos += $cigLength;
-	    if( $cigType eq "M" ) {
+
+	    if ($cigType ne "I") {
+		$total_pos += $cigLength;
+	    }
+
+	    if( $cigType eq "M"  || $cigType eq "I") {
 		$total_chr_pos += $cigLength;
 	    }
 	}
@@ -1281,8 +1285,12 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
 
 	$current_pos += $cigLength;
-	$total_pos += $cigLength;
-	if( $cigType eq "M" ) {
+
+	if ($cigType ne "I") {
+	    $total_pos += $cigLength;
+	}
+
+	if( $cigType eq "M" || $cigType eq "I") {
 	    $total_chr_pos += $cigLength;
 	}
     }
@@ -1335,12 +1343,15 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	    $cigLength = substr( $cigElem, 0 ,-1 );
 	    $cigLength = 1 unless ($cigLength =~ /^\d+$/);
 	    
-	    $total_pos += $cigLength;
-	    if( $cigType eq "M" ) {
+	    if ($cigType ne "I") {
+		$total_pos += $cigLength;
+	    }
+	    #if( $cigType eq "M" ) {
+	    if( $cigType eq "M" || $cigType eq "I") {
 		$total_chr_pos += $cigLength;
 	    }
 	}
-
+	
 	#total_pos is > than current_pos, so if in match, must delete this
 	#excess 
 	if ($cigType eq "M") {
