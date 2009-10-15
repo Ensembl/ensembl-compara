@@ -1302,8 +1302,8 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
   return undef if (!defined($original_sequence) or !$cigar_line);
 
   my $seq_pos = 0;
-  
   my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
+
   for my $cigElem ( @cig ) {
     my $cigType = substr( $cigElem, -1, 1 );
     my $cigCount = substr( $cigElem, 0 ,-1 );
@@ -1535,11 +1535,31 @@ sub get_Mapper {
 
   if (!defined($self->{$mode.'_mapper'})) {
     if ($mode eq "condensed") {
+
       $mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
+
       my $rel_strand = $self->dnafrag_strand;
       my $ref_cigar_line = $self->genomic_align_block->reference_genomic_align->cigar_line;
 
       my $aln_pos = (eval{$self->genomic_align_block->reference_slice_start} or 1);
+
+      #if the reference genomic_align, I only need a simple 1 to 1 mapping
+      if ($self eq $self->genomic_align_block->reference_genomic_align) {
+	  $mapper->add_map_coordinates(
+              'sequence',
+              $self->dnafrag_start,
+              $self->dnafrag_end,
+              $self->dnafrag_strand,
+              'alignment',
+	      $self->genomic_align_block->reference_slice_start,
+	      $self->genomic_align_block->reference_slice_end,
+          );
+	  return $mapper if (!$cache);
+
+	  $self->{$mode.'_mapper'} = $mapper;
+	  return $self->{$mode.'_mapper'};
+      }
+
       my $aln_seq_pos = 0;
       my $seq_pos = 0;
 
@@ -1975,7 +1995,7 @@ sub _get_Mapper_from_cigar_line {
       next if ($cigar_count < 1);
   
       if( $cigar_type eq "M" ) {
-        $mapper->add_map_coordinates(
+         $mapper->add_map_coordinates(
                 "sequence", #$self->dbID,
                 $sequence_position,
                 $sequence_position + $cigar_count - 1,
@@ -2229,7 +2249,6 @@ sub restrict {
       if ($type eq "M" || $type eq "I") {
         $counter_of_trimmed_base_pairs += $num;
       }
-
       # If this cigar piece is too long and we overshoot the number of columns we want to trim,
       # we substitute this cigar piece by a shorter one
       if ($counter_of_trimmed_columns_from_the_end >= $number_of_columns_to_trim_from_the_end) {
