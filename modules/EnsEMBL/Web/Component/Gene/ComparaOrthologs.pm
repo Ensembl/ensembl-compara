@@ -90,7 +90,8 @@ sub content {
         $object->_url({
           species => $spp,
           action  => 'Summary',
-          g       => $stable_id
+          g       => $stable_id,
+	  r       => undef,
         }),
         $stable_id
       );
