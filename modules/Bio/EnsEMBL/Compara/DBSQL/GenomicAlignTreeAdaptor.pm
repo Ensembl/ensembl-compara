@@ -305,6 +305,12 @@ sub fetch_by_GenomicAlignBlock {
   my ($self, $genomic_align_block) = @_;
 
   my $genomic_align_block_id = $genomic_align_block->dbID;
+
+  #May have been restricted and not have a dbID. Return the original_dbID
+  if (!defined $genomic_align_block_id) {
+      $genomic_align_block_id = $genomic_align_block->{'original_dbID'};
+  }
+
   return undef unless $genomic_align_block_id;
 
 #  my $join = [
