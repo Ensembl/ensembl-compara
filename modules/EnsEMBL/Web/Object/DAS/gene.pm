@@ -319,7 +319,7 @@ sub Stylesheet {
 	  $stylesheet_structure->{'exon'}{$key ne 'default' ? "exon:$key" : 'default'} =
 		  [{ 'type' => 'box', 'attrs' => { 'BGCOLOR' => $colour, 'FGCOLOR' => $colour, 'HEIGHT' => 10  } }];
 	  $stylesheet_structure->{"group"}{$key ne 'default' ? "gene:$key" : 'default'} =
-		  [{ 'type' => 'line', 'attrs' => { 'STYLE' => 'intron', 'HEIGHT' => 10, 'FGCOLOR' => $colour, 'POINT' => 1 } }];
+		  [{ 'type' => 'line', 'attrs' => { 'STYLE' => 'hat', 'HEIGHT' => 10, 'FGCOLOR' => $colour } }];
   }
   return $self->_Stylesheet( $stylesheet_structure );
 }
