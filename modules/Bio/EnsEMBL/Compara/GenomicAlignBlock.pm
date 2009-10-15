@@ -1656,11 +1656,19 @@ sub restrict_between_reference_positions {
   my $number_of_base_pairs_to_trim_from_the_start = $start - $reference_genomic_align->dnafrag_start;
   my $number_of_base_pairs_to_trim_from_the_end  = $reference_genomic_align->dnafrag_end - $end;
 
+  my $is_ref_low_coverage = 0;
+  if ($reference_genomic_align->cigar_line =~ /X/) {
+      $is_ref_low_coverage = 1;
+  }
+
   ## Skip if no restriction is needed. Return original object! We are still going on with the
   ## restriction when either excess_at_the_start or excess_at_the_end are 0 as a (multiple)
   ## alignment may start or end with gaps in the reference species. In that case, we want to
   ## trim these gaps from the alignment as they fall just outside of the region of interest
-  if ($number_of_base_pairs_to_trim_from_the_start < 0 and $number_of_base_pairs_to_trim_from_the_end < 0) {
+
+  ##Exception if the reference species is low coverage, then need to continue 
+  ##with this routine to find out the correct align positions
+  if ($number_of_base_pairs_to_trim_from_the_start < 0 and $number_of_base_pairs_to_trim_from_the_end < 0 and !$is_ref_low_coverage) {
     return wantarray ? ($self, 1, $self->length) : $self;
   }
 
@@ -1674,8 +1682,17 @@ sub restrict_between_reference_positions {
     @reference_cigar = reverse @reference_cigar;
   }
 
+  #If this is negative, eg when a slice starts in one block and ends in
+  #another, need to set to 0 to ensure we enter the loop below. This
+  #fixes a bug when using a 2x species as the reference and fetching using
+  #an expanded align slice. 
+  if ($number_of_base_pairs_to_trim_from_the_start < 0) {
+      $number_of_base_pairs_to_trim_from_the_start = 0;
+  }
+
   ## Parse start of cigar_line for the reference GenomicAlign
   my $counter_of_trimmed_columns_from_the_start = 0; # num. of bp in the alignment to be trimmed
+
   if ($number_of_base_pairs_to_trim_from_the_start >= 0) {
     my $counter_of_trimmed_base_pairs = 0; # num of bp in the reference sequence we trim (from the start)
     ## Loop through the cigar pieces
@@ -1723,6 +1740,14 @@ sub restrict_between_reference_positions {
         }
       }
     }
+  }
+
+  #If this is negative, eg when a slice starts in one block and ends in
+  #another, need to set to 0 to ensure we enter the loop below. This
+  #fixes a bug when using a 2x species as the reference and fetching using
+  #an expanded align slice. 
+  if ($number_of_base_pairs_to_trim_from_the_end < 0) {
+      $number_of_base_pairs_to_trim_from_the_end = 0;
   }
 
   ## Parse end of cigar_line for the reference GenomicAlign
@@ -1795,11 +1820,17 @@ sub restrict_between_reference_positions {
   $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
   $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
 
-  $genomic_align_block->{'restricted_aln_start'} = $counter_of_trimmed_columns_from_the_start;
-  $genomic_align_block->{'restricted_aln_end'} = $counter_of_trimmed_columns_from_the_end;
-  $genomic_align_block->{'original_length'} = $self->length;
+  $genomic_align_block->{'restricted_aln_start'} = $counter_of_trimmed_columns_from_the_start + $self->{'restricted_aln_start'};
+  $genomic_align_block->{'restricted_aln_end'} = $counter_of_trimmed_columns_from_the_end + $self->{'restricted_aln_end'};
+  #$genomic_align_block->{'original_length'} = $self->length;
 
-  #print "length at start $counter_of_trimmed_columns_from_the_start end $counter_of_trimmed_columns_from_the_end aln_start $aln_start aln_end $aln_end \n";
+  #Need to use original gab length. If original_length is not set, length has
+  #not changed. Needed when use 2X genome as reference. 
+  if (defined $self->{'original_length'}) {
+      $genomic_align_block->{'original_length'} = $self->{'original_length'};
+  } else {
+      $genomic_align_block->{'original_length'} = $self->length;
+  }
 
   if (defined $self->reference_slice) {
     if ($self->reference_slice_strand == 1) {
@@ -1816,6 +1847,7 @@ sub restrict_between_reference_positions {
       $genomic_align_block->reference_slice_strand(-1);
     }
   }
+
   return wantarray ? ($genomic_align_block, $aln_start, $aln_end) : $genomic_align_block;
 }
 
