@@ -29,7 +29,7 @@ sub content {
 ## Now we need to turn on the transcript we wish to draw...
 
   my $key = $wuc->get_track_key( 'transcript', $transcript );
-  my $n = $wuc->get_node($key);
+  my $n = $wuc->get_node(lc($key));
   $n->set('display','transcript_label') if $n->get('display') eq 'off';
   $n->set('show_labels','off');
 
