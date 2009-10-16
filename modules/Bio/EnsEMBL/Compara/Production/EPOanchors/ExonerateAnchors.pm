@@ -119,7 +119,7 @@ sub write_output {
 		$target2dnafrag->{$targ_info}++;
 	}
 	foreach my $target_info (sort keys %{$target2dnafrag}) {
-		my($coord_sys, $dnafrag_name) = (split(":", $target_info))[0,2];
+		my($coord_sys, $dnafrag_name) = (split(":", $target_info))[1,2];
 		$target2dnafrag->{$target_info} = $anchor_align_adaptor->fetch_dnafrag_id(
 							$coord_sys, $dnafrag_name, $self->target_genome_db_id);
 	}
