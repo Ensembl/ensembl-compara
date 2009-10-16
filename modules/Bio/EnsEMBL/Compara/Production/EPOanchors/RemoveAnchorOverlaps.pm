@@ -13,7 +13,7 @@ Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps
 =head1 SYNOPSIS
 
 parameters
-{input_analysis_id=> ?,method_link_species_set_id=> ?,test_method_link_species_set_id=> ?, genome_db_ids => [?],}
+{input_analysis_id=> ?,method_link_species_set_id=> ?,input_method_link_species_set_id=> ?, genome_db_ids => [?],}
 
 =cut
 
@@ -68,9 +68,9 @@ sub fetch_input {
 sub run {
 	my ($self) = @_;
 	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
-	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($self->test_method_link_species_set_id);
+	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($self->input_method_link_species_set_id);
 	my (%Overlappping_anchors, %Anchors_2_remove, %Scores);
-	my $test_mlssid = $self->test_method_link_species_set_id;
+	my $test_mlssid = $self->input_method_link_species_set_id;
 	foreach my $genome_db_id(sort keys %{$dnafrag_ids}) {
 		my %genome_db_dnafrags;
 		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
@@ -128,17 +128,17 @@ sub write_output {
 	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
 	my $current_analysis_id = $self->input_analysis_id();
 	my $Anchors_2_remove = $self->overlapping_ancs_to_remove(); 
-	my $test_mlssid = $self->test_method_link_species_set_id();
+	my $test_mlssid = $self->input_method_link_species_set_id();
 	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $current_analysis_id, $test_mlssid);	
 	return 1;
 }
 
-sub test_method_link_species_set_id {
+sub input_method_link_species_set_id {
 	my $self = shift;
 	if (@_) {
-		$self->{test_method_link_species_set_id} = shift;
+		$self->{input_method_link_species_set_id} = shift;
 	}
-	return $self->{test_method_link_species_set_id};
+	return $self->{input_method_link_species_set_id};
 }	
 
 sub overlapping_ancs_to_remove {
@@ -186,8 +186,8 @@ sub get_params {
   if(defined($params->{'genome_db_ids'})) {
     $self->genome_db_ids($params->{'genome_db_ids'});
   }
-  if(defined($params->{'test_method_link_species_set_id'})) {
-	$self->test_method_link_species_set_id($params->{'test_method_link_species_set_id'});
+  if(defined($params->{'input_method_link_species_set_id'})) {
+	$self->input_method_link_species_set_id($params->{'input_method_link_species_set_id'});
   }
   if(defined($params->{'method_link_species_set_id'})) {
 	$self->method_link_species_set_id($params->{'method_link_species_set_id'});
