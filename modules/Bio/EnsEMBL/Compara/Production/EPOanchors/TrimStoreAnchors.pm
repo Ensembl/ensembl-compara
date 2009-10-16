@@ -58,7 +58,6 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub configure_defaults {
  	my $self = shift;
 	$self->gab_batch_size(1000);
-	$self->N_cut_off_ratio(0.1);
   	return 1;
 }
 
