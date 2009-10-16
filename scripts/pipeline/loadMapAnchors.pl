@@ -10,6 +10,7 @@ use Bio::EnsEMBL::Registry;
 my $post_exonerate_modules = "post_exonerate_modules";
 my $cleanup_logic_name = "Clean_up_genomedb_dumps";
 my $exonerate_logic_name = "Exonerate_anchors";
+my $trim_anchoralign_logic_name = "TrimAnchorAlign";
 
 my %sql_statements = (
 	select_anc_seq => "SELECT MIN(anchor_id) min_anchor_id, MAX(anchor_id) max_anchor_id, COUNT(DISTINCT(anchor_id)) anchor_count
@@ -26,10 +27,10 @@ my %sql_statements = (
 	select_max_analysis_id => "SELECT MAX(analysis_id) FROM analysis",
 	select_analysis_data => "SELECT analysis_data_id, data FROM analysis_data",
 	select_max_analysis_data_id => "SELECT MAX(analysis_data_id) FROM analysis_data",
-	insert_new_analysis => "INSERT INTO analysis (created, logic_name, program, parameters, module) VALUES (NOW(),?,?,?,?)",
+	insert_new_analysis => "REPLACE INTO analysis (created, logic_name, program, parameters, module) VALUES (NOW(),?,?,?,?)",
 	insert_analysis_jobs => "INSERT INTO analysis_job (analysis_id, input_id) VALUES (?,?)",
 	insert_species_set => "INSERT INTO species_set (species_set_id, genome_db_id) VALUES (?,?)",
-	insert_method_link => "INSERT INTO method_link (method_link_id, type) VALUES (?,?)",
+	insert_method_link => "REPLACE INTO method_link (method_link_id, type) VALUES (?,?)",
 	insert_mlssid => "INSERT INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id, name) VALUES (?,?,?,?)",
 	insert_analysis_ctl_rule => "INSERT INTO analysis_ctrl_rule (condition_analysis_url, ctrled_analysis_id) VALUES (?,?)",
 	insert_analysis_data => "INSERT INTO analysis_data (analysis_data_id, data) VALUES (?,?)",
@@ -69,7 +70,36 @@ fill_seq_id_ranges($self->anchor_data("min_anchor_id")->[0], \@anc_seq_id_ranges
 die "no anchor sequences found. Check the config file\n" unless @anc_seq_id_ranges;
 $self->dump_genomes();
 $self->insert_analysis_jobs_data(\@anc_seq_id_ranges); #insert into analysis/analysis_job/analysis_ctrl_rule tables
+$self->insert_trim_anchor_align; #HACK to add in a new analysis
 print "FIN\n";
+
+sub insert_trim_anchor_align {	
+	my $self = shift;
+	my $method_link_id;
+	$sql_statements{select_method_link}->execute();
+	my $existing_method_link_ids = $sql_statements{select_method_link}->fetchall_hashref("type");
+	if(exists($existing_method_link_ids->{uc($trim_anchoralign_logic_name)})) {
+		$method_link_id = $existing_method_link_ids->{uc($trim_anchoralign_logic_name)}->{method_link_id};
+	}
+	else {
+		$sql_statements{select_max_method_link_id}->execute();
+		$method_link_id = ++$sql_statements{select_max_method_link_id}->fetchrow_arrayref()->[0];
+	}
+	$sql_statements{insert_method_link}->execute($method_link_id, uc($trim_anchoralign_logic_name));
+	$sql_statements{select_max_method_link_species_set_id}->execute();
+	my $method_link_species_set_id = ++$sql_statements{select_max_method_link_species_set_id}->fetchrow_arrayref()->[0];
+	$sql_statements{insert_mlssid}->execute($method_link_species_set_id, $method_link_id, 
+		$self->species_set_id, $trim_anchoralign_logic_name);
+
+	$sql_statements{select_analysis_id}->execute($trim_anchoralign_logic_name);
+	my $analysis_id = $sql_statements{select_analysis_id}->fetchrow_arrayref()->[0];
+	my $params = '{"input_method_link_species_set_id" =>' . $self->exonerate_mlssid .
+		', "output_method_link_species_set_id" =>' .  $method_link_species_set_id . ' }';
+	$sql_statements{insert_new_analysis}->execute($trim_anchoralign_logic_name, undef, "$params", 
+		$self->modules->{ $trim_anchoralign_logic_name });	
+	
+}
+
 
 sub dump_genomes {
 	my $self = shift;
@@ -169,7 +199,7 @@ sub insert_analysis_jobs_data {
 	else {
 		$sql_statements{select_max_method_link_species_set_id}->execute();
 		#set exonerate mlssid if it doesnt already exist 
-		$self->exonerate_mlssid( ++$sql_statements{select_max_method_link_species_set_id}->fetchrow_arrayref->[0] );
+		$self->exonerate_mlssid( ++$sql_statements{select_max_method_link_species_set_id}->fetchrow_arrayref()->[0] );
 		$sql_statements{insert_mlssid}->execute( $self->exonerate_mlssid, $self->method_link_id, 
 							$self->species_set_id, $exonerate_logic_name );
 	}
@@ -218,7 +248,7 @@ sub insert_analysis_jobs_data {
 			}	
 			else {
 				$param_list = "{ input_analysis_id=>" . $analysis_id . 
-						",test_method_link_species_set_id=>" . $self->exonerate_mlssid . " }";
+						",input_method_link_species_set_id=>" . $self->exonerate_mlssid . " }";
 			}
 			if(ref($input_id)){ #its the cleanup module
 				foreach my $gdb_id (sort keys %{$input_id}) {
