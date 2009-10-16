@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Compara::DBSQL::AnchorSeqAdaptor;
+package Bio::EnsEMBL::Compara::Production::DBSQL::AnchorSeqAdaptor;
 
 use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
