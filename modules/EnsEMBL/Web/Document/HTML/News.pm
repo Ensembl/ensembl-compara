@@ -6,6 +6,7 @@ package EnsEMBL::Web::Document::HTML::News;
 use strict;
 use warnings;
 
+use CGI;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Data::NewsCategory;
@@ -22,14 +23,40 @@ sub render {
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  my $current_sp = $ENV{'ENSEMBL_SPECIES'} =~ /_/ ? $ENV{'ENSEMBL_SPECIES'} : '';
+  my $current_sp = ($ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} =~ /_/) ? $ENV{'ENSEMBL_SPECIES'} : '';
   my $sitename = $species_defs->ENSEMBL_SITETYPE;
 
-  my $release_id = $species_defs->ENSEMBL_VERSION;
+  my $cgi = new CGI;
+  my $release_id = $cgi->param('id') || $species_defs->ENSEMBL_VERSION;
+  my $html = qq(<h1>What's New in Release $release_id</h1>);
+  
+  ## Form for selecting other releases
+  my @releases = EnsEMBL::Web::Data::Release->find_all;
+  if (@releases) {
+    my $form = EnsEMBL::Web::Form->new('new', '/info/website/news/index.html', 'get');
+    $form->add_attribute('class', 'narrow-labels');
+    my @release_options;
+    foreach my $r (sort {$b->id <=> $a->id} @releases) {
+      next if $r->id > $species_defs->ENSEMBL_VERSION; ## Sanity check - mainly for dev sites!
+      my $date = $self->pretty_date($r->date, 'short');
+      my $r_name = $r->id == $species_defs->ENSEMBL_VERSION 
+          ? 'Current release ('.$r->number." - $date)" : 'Release '.$r->number.' ('.$date.')';
+      push @release_options, {'value' => $r->id, 'name' => $r_name};
+    }
+    $form->add_element(
+        name   => 'id',
+        type   => 'DropDownAndSubmit',
+        select => 'select',
+        label  => 'View news for release',
+        button_value => 'Go',
+        values => \@release_options,
+        value  => $release_id,
+    );
+    $html .= $form->render;
+  }
+
   my $release = EnsEMBL::Web::Data::Release->new($release_id);
   my $release_date = $self->pretty_date($release->date);
-
-  my $html;
 
   ## get news stories
   my @stories = EnsEMBL::Web::Data::NewsItem->fetch_news_items({'release_id' => $release_id});
