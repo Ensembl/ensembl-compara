@@ -177,16 +177,23 @@ sub neat_sr_name {
 
 sub pretty_date {
 ### Converts a MySQL datetime field into something human-readable
-  my ($self, $datetime) = @_;
+  my ($self, $datetime, $format) = @_;
   my ($date, $time) = split(' ', $datetime);
   my ($year, $mon, $day) = split('-', $date);
   return '-' unless ($year > 0);
 
-  my @months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
+  my @long_months = ('', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
                 'September', 'October', 'November', 'December');
+  my @short_months = ('', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+                'Sep', 'Oct', 'Nov', 'Dec');
 
   $day =~ s/^0//;
-  return $day.' '.$months[$mon].' '.$year;
+  if ($format && $format eq 'short') {
+    return $short_months[$mon].' '.$year;
+  }
+  else {
+    return $day.' '.$long_months[$mon].' '.$year;
+  }
 }
 
 sub thousandify {
