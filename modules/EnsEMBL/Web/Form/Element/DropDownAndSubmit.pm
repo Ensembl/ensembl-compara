@@ -25,35 +25,67 @@ sub new {
     %params,
     'render_as' => $params{'select'} ? 'select' : 'radiobutton'
   );
+  $self->{'on_change'} = $params{'on_change'};
+  $self->{'firstline'} = $params{'firstline'};
   $self->button_value = $params{'button_value'};
   return $self;
 }
 
 sub _validate() { return $_[0]->render_as eq 'select'; }
 
-sub button_value :lvalue { $_[0]->{'button_value'}; }
+sub firstline     :lvalue { $_[0]->{'firstline'}; }
+sub button_value  :lvalue { $_[0]->{'button_value'}; }
+
+
 sub render {
   my $self = shift;
   if( $self->render_as eq 'select' ) {
     my $options = '';
-    foreach my $V ( @{$self->values} ) {
-      my %v_hash = %{$V}; 
-      $options .= sprintf( qq(<option value="%s"%s>%s</option>\n),
-        $v_hash{'value'}, $self->value eq $v_hash{'value'} ? ' selected="selected"' : '', $v_hash{'name'}
-      );
+    my $current_group;
+    if( $self->firstline ) {
+      $options .= sprintf qq(<option value="">%s</option>\n), CGI::escapeHTML( $self->firstline );
     }
-    return sprintf( qq(<tr><th><label for="%s">%s</label></th><td><select name="%s" id="%s" class="%s %s autosubmit">\n%s</select>
-      <input type="submit" value="%s" class="input-submit" />%s
-    %s</td></tr>),
+    my $optcount = 0;
+    my @styles = @{$self->styles};
+    foreach my $V ( @{$self->values} ) {
+      if( $V->{'group'} ne $current_group ) {
+        if( $current_group ) {
+          $options.="</optgroup>\n";
+        }
+        if( $V->{'group'}) {
+          $options.= sprintf qq(<optgroup label="%s">\n), CGI::escapeHTML( $V->{'group'} );
+        }
+        $current_group = $V->{'group'};
+      }
+      my $extra = $self->value eq $V->{'value'} ? ' selected="selected"' : '';
+      if ($styles[$optcount]) {
+        $extra .= ' style="'.$styles[$optcount].'"';
+      }
+      $options .= sprintf( qq(<option value="%s"%s>%s</option>\n),
+        $V->{'value'}, $extra, $V->{'name'}
+      );
+      $optcount++;
+    }
+    if( $current_group ) { $options.="</optgroup>\n"; }
+    if ($self->{'on_change'} eq 'submit') {
+      my $classes = $self->classes;
+      push @$classes, 'autosubmit';
+      $self->classes($classes);
+    }
+
+    my $label = $self->label ? CGI::escapeHTML( $self->label ).': ' : '';
+    return sprintf( qq(
+  <tr>
+    <th><label for="%s">%s</label></th>
+    <td><select name="%s" id="%s" %s%s>\n%s</select> <input type="submit" value="%s" class="input-submit" />%s</td>
+  </tr>),
+      CGI::escapeHTML( $self->name ), $label,
+      CGI::escapeHTML( $self->name ),
       CGI::escapeHTML( $self->id ),
-      $self->label,
-      CGI::escapeHTML( $self->name ), 
-      CGI::escapeHTML( $self->id ),
-      $self->style,
-      $self->required eq 'yes' ? 'required' : 'optional',
+      $self->class_attrib,
+      $self->style_attrib,
       $options,
       CGI::escapeHTML( $self->button_value ),
-      $self->required eq 'yes' ? $self->required_string : '',
       $self->notes
     );
   } else {
