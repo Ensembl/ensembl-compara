@@ -33,26 +33,31 @@ sub render {
   ## Form for selecting other releases
   my @releases = EnsEMBL::Web::Data::Release->find_all;
   if (@releases) {
-    my $form = EnsEMBL::Web::Form->new('new', '/info/website/news/index.html', 'get');
-    $form->add_attribute('class', 'narrow-labels');
+    $html .= qq(
+<div class="tinted-box float-right">
+<h3 class="first">View other news</h3>  
+<form action="/info/website/news/index.html" method="get">
+<select name="id">);
     my @release_options;
     foreach my $r (sort {$b->id <=> $a->id} @releases) {
       next if $r->id > $species_defs->ENSEMBL_VERSION; ## Sanity check - mainly for dev sites!
       my $date = $self->pretty_date($r->date, 'short');
       my $r_name = $r->id == $species_defs->ENSEMBL_VERSION 
           ? 'Current release ('.$r->number." - $date)" : 'Release '.$r->number.' ('.$date.')';
-      push @release_options, {'value' => $r->id, 'name' => $r_name};
+      $html .= qq(<option value="$r->id");
+      $html .= ' selected="selected"' if $r->id == $species_defs->ENSEMBL_VERSION;
+      $html .= qq(>$r_name</option>);
     }
-    $form->add_element(
-        name   => 'id',
-        type   => 'DropDownAndSubmit',
-        select => 'select',
-        label  => 'View news for release',
-        button_value => 'Go',
-        values => \@release_options,
-        value  => $release_id,
+    $html .= qq(
+</select> <input type="submit" name="submit" value="Go">
+</form>
     );
-    $html .= $form->render;
+    if ($species_defs->ENSEMBL_ROADMAP) {
+      $html .= qq(<p><a href="/info/website/news/roadmap.html">Ensembl Roadmap</a> - Get a preview of upcoming developments!</p>);
+    }
+    $html .= qq(
+</div>
+    );
   }
 
   my $release = EnsEMBL::Web::Data::Release->new($release_id);
