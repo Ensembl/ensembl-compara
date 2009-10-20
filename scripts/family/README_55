@@ -33,39 +33,98 @@ mafft
 # there are no file arrays, so all of the files can happily coexist in the same directory.
 # It would be ideal that all blades of the farm and turing could have easy access to it.
 #
-# I am using ~/family_56 for this purpose.
+# I am using ~/family_57 for this purpose.
 
-mkdir ~/family_56
+mkdir ~/family_57
 
 # In addition, we will need another directory for the BlastDB files to live in.
 # /data/blastdb on Farm-1 has been compromised during 2 releases (55 and 56),
 # so we are moving to Farm-2 and the proposed place for the BlastDB files is:
 
-mkdir -p /lustre/scratch103/ensembl/lg4/family_56
-cd /lustre/scratch103/ensembl/lg4/family_56
+mkdir -p /lustre/scratch103/ensembl/lg4/family_57
+cd /lustre/scratch103/ensembl/lg4/family_57
 
 
 3- Loading in and dumping the peptides from compara
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# The loading of ensembl peptides/genes and uniprot is now done as a common trunk with the gene homology pipeline.
-# The loading process will identify redundant proteins using a MySQL index trick and assign to them the same 
-# sequence_id. Very clever indeed!
+# From rel.56 gene homology pipeline is run more independently from family pipeline, in different databases.
+# One of the first steps of the gene homology pipeline is loading the EnsEMBL genes from the core database.
+# After we get notified when this has happened, the already loaded EnsEMBL genes will have to be copied over.
+# from the corresponding tables of gene homology pipeline (along with meta, species_link and SOME OTHER TABLES)
 
-# Before loading, make sure that in each core db:
-# a) stable ids are in (look in tables 'exon_stable_id', 'translation_stable_id', 'transcript_stable_id' 
-#    and 'gene_stable_id')
+3.1 Create the empty family pipeline database:
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from exon_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from translation_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from transcript_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from gene_stable_id limit 10"; echo "---"; done | less
+mysql --defaults-group-suffix=_compara2 -e 'DROP DATABASE lg4_compara_families_57'
+mysql --defaults-group-suffix=_compara2 -e 'CREATE DATABASE lg4_compara_families_57'
 
-# b) species data in 'meta' table up to date
+3.2 Copy the contents of some gene homology pipeline tables
+    ( species_link (used for family creation), member, sequence )
+into the new pipeline:
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from meta" | grep species; echo "---"; done | less
+# NB: TESTING ONLY!!!
+#
+time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 < load_uniprot_testdb.sql
 
-# c) check the gene type e.g. pseudogene or RNA that you don't want to load and update the filter out condition if necessary
+# NB: the real query:
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 < ~lg4/work/ensembl-compara/sql/table.sql
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 < ~lg4/work/ensembl-compara/sql/pipeline-tables.sql
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 < ~lg4/work/ensembl-hive/sql/tables.sql
+#
+time mysqldump --defaults-group-suffix=_compara3 avilella_compara_homology_57 -t \
+member sequence ncbi_taxa_name ncbi_taxa_node method_link genome_db species_set method_link_species_set \
+| mysql --defaults-group-suffix=_compara2 lg4_compara_families_57
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE member ENGINE=InnoDB, AUTO_INCREMENT=100000000'
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE sequence ENGINE=InnoDB, AUTO_INCREMENT=100000000'
+# takes about 6 minutes
 
-mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
+3.3 Load the UniProt members using the pipeline itself:
 
+cat <<EOF >srs.params
+"srs" => "SWISSPROT", "tax_div" => "FUN"
+"srs" => "SWISSPROT", "tax_div" => "HUM"
+"srs" => "SWISSPROT", "tax_div" => "MAM"
+"srs" => "SWISSPROT", "tax_div" => "ROD"
+"srs" => "SWISSPROT", "tax_div" => "VRT"
+"srs" => "SWISSPROT", "tax_div" => "INV"
+"srs" => "SPTREMBL", "tax_div" => "FUN"
+"srs" => "SPTREMBL", "tax_div" => "HUM"
+"srs" => "SPTREMBL", "tax_div" => "MAM"
+"srs" => "SPTREMBL", "tax_div" => "ROD"
+"srs" => "SPTREMBL", "tax_div" => "VRT"
+"srs" => "SPTREMBL", "tax_div" => "INV"
+EOF
+
+/nfs/team71/analysis/lg4/work/ensembl-hive_HEAD/scripts/cmd_hive.pl \
+-url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 \
+-input_id '{ $inputfile }' -parameters '{ }' \
+-inputfile srs.params -logic_name family_load_uniprot_57 -module Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt
+
+rm srs.params
+
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 -sync
+
+# Each loading job may take several hours, so it is wise to run them in the long queue:
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 \
+-lsf_options '-q long -R"select[mycompara2<1000] rusage[mycompara2=10:duration=10:decay=1]"' \
+-lifespan 1200 -loop -logic_name family_load_uniprot_57
+
+
+
+## Before loading, make sure that in each core db:
+## a) stable ids are in (look in tables 'exon_stable_id', 'translation_stable_id', 'transcript_stable_id' 
+##    and 'gene_stable_id')
+#
+# mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from exon_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from translation_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from transcript_stable_id limit 10"; echo "---"; mysql -hens-staging -uensro $i -N -e "select * from gene_stable_id limit 10"; echo "---"; done | less
+# 
+# # b) species data in 'meta' table up to date
+# 
+# mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select * from meta" | grep species; echo "---"; done | less
+# 
+# # c) check the gene type e.g. pseudogene or RNA that you don't want to load and update the filter out condition if necessary
+# 
+# mysql -hens-staging -uensro -N -e  "show databases" | grep core | grep "\_56" | grep -v expression | while read i; do echo $i; echo "-----"; mysql -hens-staging -uensro $i -N -e "select count(*) as number, biotype from gene group by biotype order by number desc"; echo "---"; done | less
+# 
 
 # perform the actual dump:
 #
@@ -112,11 +171,13 @@ rm -f metazoa_56.pep.formatdb.log
 6- Run FamilyBlast.pm analysis
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# make sure the database contains mcl_matrix table:
+# The following should now be a part of pipeline-tables.sql
 #
-mysql --host compara2 --port 3306 --user ensadmin --password=ensembl lg4_compara_families_56 -e 'DROP TABLE IF EXISTS mcl_matrix'
-mysql --host compara2 --port 3306 --user ensadmin --password=ensembl  lg4_compara_families_56 -e 'CREATE TABLE mcl_matrix (id int(10) unsigned NOT NULL, rest mediumtext NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB'
-
+## make sure the database contains mcl_matrix table:
+##
+#mysql --host compara2 --port 3306 --user ensadmin --password=ensembl lg4_compara_families_56 -e 'DROP TABLE IF EXISTS mcl_matrix'
+#mysql --host compara2 --port 3306 --user ensadmin --password=ensembl  lg4_compara_families_56 -e 'CREATE TABLE mcl_matrix (id int(10) unsigned NOT NULL, rest mediumtext NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB'
+#
 
 # Load the analysis using the cmd_hive.pl script with somewhat extended functionality:
 
