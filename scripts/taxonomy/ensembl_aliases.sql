@@ -114,6 +114,8 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (9557,"Hamadryas 
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9557,"hamadryas baboon","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (8049,"Atlantic cod","ensembl common name");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (8049,"Cod","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9103,"Turkey","ensembl alias name");
+insert into ncbi_taxa_name (taxon_id, name, name_class) values (9103,"common turkey","ensembl common name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl alias name");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl common name");
 
