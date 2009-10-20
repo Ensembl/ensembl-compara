@@ -56,7 +56,7 @@ sub store {
     dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences)
   VALUES (?,?,?,?,?,?,?,?,?)};
 
-	
+print Dumper $self;	
 
   my $sth = $self->prepare($query);
   my $insertCount =
@@ -84,6 +84,7 @@ sub store {
 sub store_exonerate_hits {
 	my $self = shift;
 	my $batch_records = shift;
+	my $out_put_mlssid = shift;
 	throw() unless($batch_records);
 	
 	my $dcs = $self->dbc->disconnect_when_inactive();
@@ -319,6 +320,30 @@ sub fetch_all_anchors_with_zero_strand {
 	$sth->execute($method_link_species_set_id, @$genome_db_ids) or die $self->errstr;
 	return $sth->fetchall_arrayref;
 }
+
+=head2 setup_jobs_for_TrimAlignAnchor
+
+  Args       : none
+  Example    : 
+  Description: 
+  Returntype : 
+  Exceptions : none
+  Caller     : general
+=cut
+
+sub setup_jobs_for_TrimAlignAnchor {
+ 	my ($self, $input_analysis_id, $input_mlssid) = @_;
+	my $query = "SELECT DISTINCT(anchor_id) FROM anchor_align WHERE method_link_species_set_id = ? AND anchor_status IS NULL";
+	my $sth = $self->prepare($query);
+	my $insert = "INSERT INTO analysis_job (analysis_id, input_id) VALUES (?,?)";
+	my $sthi = $self->prepare($insert);
+	$sth->execute($input_mlssid);
+	foreach my $anchor_id (@{ $sth->fetchall_arrayref }) {	
+		my $input_id = "{'anchor_id'=>" . $anchor_id->[0] . "}";
+		$sthi->execute($input_analysis_id, $input_id);
+	}
+}
+
 
 =head2 update_zero_strand_anchors
 
