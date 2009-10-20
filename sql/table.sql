@@ -112,6 +112,24 @@ CREATE TABLE species_set (
 
 
 #
+# Table structure for table 'species_set_tag'
+#
+# This table is used to store options on clades and group of species. It
+# has been initially developed for the gene tree view.
+#
+
+CREATE TABLE species_set_tag (
+  species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
+  tag                         varchar(50) DEFAULT NULL,
+  value                       mediumtext,
+
+  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+
+  UNIQUE KEY tag_species_set_id (species_set_id,tag)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+#
 # Table structure for table 'method_link_species_set'
 #
 
