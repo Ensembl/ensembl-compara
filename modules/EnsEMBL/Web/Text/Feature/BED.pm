@@ -33,7 +33,7 @@ sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
 sub score    { 
   my $self = shift;
-  if ( $self->{'__raw__'}[4]) {
+  if ( exists($self->{'__raw__'}[4])) {
     return $self->{'__raw__'}[4];
   }
   else { ## bedGraph format
