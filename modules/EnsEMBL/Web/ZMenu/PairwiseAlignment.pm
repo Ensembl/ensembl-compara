@@ -39,7 +39,7 @@ sub content {
   if ($disp_method) {
     $url = $object->_url({
       type   => 'Location',
-      action => 'ComparaGenomicAlignment', # TODO: does this exist anywhere? doesn't look like it
+      action => 'ComparaGenomicAlignment',
       s1     => $sp1,
       r1     => $r1,
       method => $disp_method
