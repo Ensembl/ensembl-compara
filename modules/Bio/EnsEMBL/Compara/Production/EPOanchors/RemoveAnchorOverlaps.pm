@@ -70,11 +70,11 @@ sub run {
 	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
 	my $dnafrag_ids = $anchor_align_adaptor->fetch_all_dnafrag_ids($self->input_method_link_species_set_id);
 	my (%Overlappping_anchors, %Anchors_2_remove, %Scores);
-	my $test_mlssid = $self->input_method_link_species_set_id;
+	my $input_mlssid = $self->input_method_link_species_set_id;
 	foreach my $genome_db_id(sort keys %{$dnafrag_ids}) {
 		my %genome_db_dnafrags;
 		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
-						$genome_db_id, $test_mlssid) }) {
+						$genome_db_id, $input_mlssid) }) {
 			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
 		}
 		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
@@ -126,10 +126,13 @@ sub run {
 sub write_output {
 	my ($self) = @_;
 	my $anchor_align_adaptor = $self->{'comparaDBA'}->get_AnchorAlignAdaptor();
-	my $current_analysis_id = $self->input_analysis_id();
 	my $Anchors_2_remove = $self->overlapping_ancs_to_remove(); 
-	my $test_mlssid = $self->input_method_link_species_set_id();
-	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $current_analysis_id, $test_mlssid);	
+	my $input_mlssid = $self->input_method_link_species_set_id();
+	#set up jobs for TrimAnchorAlign
+	my $trim_anchor_align_analysis_id = $self->analysis->adaptor->fetch_by_logic_name("TrimAnchorAlign")->dbID;
+	my $current_analysis_id = $self->input_analysis_id();
+	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $current_analysis_id, $input_mlssid);	
+	$anchor_align_adaptor->setup_jobs_for_TrimAlignAnchor($trim_anchor_align_analysis_id, $input_mlssid) if ($trim_anchor_align_analysis_id);
 	return 1;
 }
 
