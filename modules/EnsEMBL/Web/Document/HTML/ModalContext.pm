@@ -75,7 +75,7 @@ sub render {
       }
     }
     
-    $content .= qq{<li class="link $entry->{'class'}">$name</li>};
+    $content .= qq{<li class="$entry->{'class'}">$name</li>};
   }
   
   $content .= qq{
