@@ -125,36 +125,33 @@ sub FAMILY_EXTERNAL {
 sub GENERAL_MARKUP_OPTIONS {
   return (
     'snp_display' => {
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes', 
-      'name'     => 'snp_display',
-      'label'    => 'Show variations',
-      'values'   => [
+      'type'   => 'DropDown', 
+      'select' => 'select',
+      'name'   => 'snp_display',
+      'label'  => 'Show variations',
+      'values' => [
         { 'value' => 'off',       'name' => 'No' },
         { 'value' => 'snp',       'name' => 'Yes' },
         { 'value' => 'snp_link' , 'name' => 'Yes and show links' },
       ]
     },
     'line_numbering' => {
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'line_numbering',
-      'label'    => 'Line numbering',
-      'values'   => [
+      'type'   => 'DropDown', 
+      'select' => 'select',
+      'name'   => 'line_numbering',
+      'label'  => 'Line numbering',
+      'values' => [
         { 'value' => 'sequence', 'name' => 'Relative to this sequence' },
         { 'value' => 'slice',    'name' => 'Relative to coordinate systems' },
         { 'value' => 'off',      'name' => 'None' },
       ]
     },
     'exon_ori' => {
-      'type'     => 'DropDown',
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'exon_ori',
-      'label'    => 'Orientation of additional exons',
-      'values'   => [
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'exon_ori',
+      'label'  => 'Orientation of additional exons',
+      'values' => [
         { 'value' => 'fwd', 'name' => 'Display same orientation exons only' },
         { 'value' => 'rev', 'name' => 'Display reverse orientation exons only' },
         { 'value' => 'all', 'name' => 'Display exons in both orientations' },
@@ -181,12 +178,11 @@ sub GENE_MARKUP_OPTIONS {
       'max'      => 1e6
     },
     'exon_display' => {
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes', 
-      'name'     => 'exon_display',
-      'label'    => 'Additional exons to display',
-      'values'   => [
+      'type'   => 'DropDown', 
+      'select' => 'select',
+      'name'   => 'exon_display',
+      'label'  => 'Additional exons to display',
+      'values' => [
         { 'value' => 'off',       'name' => 'No exon markup' },
         { 'value' => 'Ab-initio', 'name' => 'Ab-initio exons' },
         { 'value' => 'core',      'name' => 'Core exons' },
@@ -199,44 +195,40 @@ sub GENE_MARKUP_OPTIONS {
 sub OTHER_MARKUP_OPTIONS {
   return (
     'display_width' => {
-      'type'     => 'DropDown',
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'display_width',
-      'label'    => 'Number of base pairs per row',
-      'values'   => [
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'display_width',
+      'label'  => 'Number of base pairs per row',
+      'values' => [
         map { { 'value' => $_, 'name' => "$_ bps" } } map { $_*15 } (2..12)
       ],
     },
     'strand' => {
-      'type'     => 'DropDown', 
-      'select'   => 'select',
-      'required' => 'yes',    
-      'name'     => 'strand',
-      'label'    => 'Strand',
-      'values'   => [
+      'type'   => 'DropDown', 
+      'select' => 'select',   
+      'name'   => 'strand',
+      'label'  => 'Strand',
+      'values' => [
         { 'value' => '1',  'name' => 'Forward' },
         { 'value' => '-1', 'name' => 'Reverse' }
     ]
     },
     'codons_display' => {
-      'type'     => 'DropDown',
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'codons_display',
-      'label'    => 'Codons',
-      'values'   => [
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'codons_display',
+      'label'  => 'Codons',
+      'values' => [
         { 'value' => 'all', 'name' => 'START/STOP codons' },
         { 'value' => 'off', 'name' => 'Do not show codons' },
       ],
     },
     'title_display' => {
-      'type'     => 'DropDown',
-      'select'   => 'select',
-      'required' => 'yes',
-      'name'     => 'title_display',
-      'label'    => 'Display pop-up information on mouseover',
-      'values'   => [
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'title_display',
+      'label'  => 'Display pop-up information on mouseover',
+      'values' => [
         { 'value' => 'all', 'name' => 'Yes' },
         { 'value' => 'off', 'name' => 'No' },
       ],
