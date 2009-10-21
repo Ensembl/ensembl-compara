@@ -25,11 +25,12 @@ sub content {
     my ($longest) = sort { $b->[1]->length <=> $a->[1]->length } map {[$_, ($_->translation || next) ]} @{$object->Obj->get_all_Transcripts};
     ($ens_tran, $ens_prot) = @{$longest||[]};
   }
-  
+
+  my $species_path = $obj->species_defs->species_path($species);  
   $self->add_entry({
     type     => 'Species',
     label    => $species,
-    link     => "/$species",
+    link     => $species_path,
     position => 1
   });
   
