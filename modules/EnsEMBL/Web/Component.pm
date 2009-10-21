@@ -1533,8 +1533,8 @@ sub chunked_content {
 
     $i = $j + 1;
     $j += $chunk_length;
-
-    $j = $total_length if $j >= $end;
+    
+    $j = $total_length if $j > $end;
   }
 
   if ($renderer) {
