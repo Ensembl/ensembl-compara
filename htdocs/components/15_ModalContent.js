@@ -18,14 +18,16 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     if (Ensembl.ajax == 'enabled') {
       $('a', this.elLk.links).click(function () {
-        var link = $(this).parent();
-        
-        if (!link.hasClass('active')) {
-          myself.elLk.links.removeClass('active');
-          myself.getContent(link.addClass('active'), this.href);
+        if (!$(this).hasClass('disabled')) {
+          var link = $(this).parent();
+          
+          if (!link.hasClass('active')) {
+            myself.elLk.links.removeClass('active');
+            myself.getContent(link.addClass('active'), this.href);
+          }
+          
+          link = null;
         }
-        
-        link = null;
         
         return false;
       });
