@@ -197,10 +197,12 @@ sub populate_tree {
 sub user_populate_tree {
   my $self = shift;
   
-  return unless $self->object && ref $self->object;
+  my $object = $self->object;
+  
+  return unless $object && ref $object;
   
   my $all_das    = $ENSEMBL_WEB_REGISTRY->get_all_das;
-  my $vc         = $self->object->get_viewconfig(undef, 'ExternalData');
+  my $vc         = $object->get_viewconfig(undef, 'ExternalData');
   my @active_das = grep { $vc->get($_) eq 'yes' && $all_das->{$_} } $vc->options;
   my $ext_node   = $self->tree->get_node('ExternalData');
   

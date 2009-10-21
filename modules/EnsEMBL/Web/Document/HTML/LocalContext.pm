@@ -52,15 +52,6 @@ sub availability {
   return $self->{'availability'};
 }
 
-sub render_modal {
-  my $self = shift;
-  
-  my $content = $self->_content;
-  $content =~ s/class="local_context"/class="local_context local_modal"/;
-  
-  return $self->print($content);
-}
-
 sub get_json {
   my $self = shift;
   
@@ -107,7 +98,7 @@ sub _content {
   my $previous_node;
   
   foreach my $node (@nodes) {
-    my $no_show = 1 if $node->data->{'no_menu_entry'};
+    my $no_show = 1 if $node->data->{'no_menu_entry'} || !$node->data->{'caption'};
     
     $r = $node->right if $node->right > $r;
     
