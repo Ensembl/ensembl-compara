@@ -1,10 +1,9 @@
 package EnsEMBL::Web::ViewConfig::Variation::Context;
 
 use strict;
-no strict 'refs';
 
 sub init {
-  my ($view_config ) = @_;
+  my ($view_config) = @_;
 
   $view_config->_set_defaults(qw(
     panel_genotypes  on
@@ -29,7 +28,6 @@ sub init {
     opt_stop_gained            on
     opt_stop_lost              on
 
-
     opt_freq        on
     opt_cluster     on
     opt_doublehit   on
@@ -46,28 +44,28 @@ sub init {
     opt_het       on
     opt_          on
   ));
-  $view_config->add_image_configs({qw(
-    snpview nodas
-  )});
+  
+  $view_config->add_image_configs({ snpview => 'nodas' });
 
   $view_config->storable = 1;
 }
 
 sub form {
-  my( $view_config, $object ) = @_;
+  my ($view_config, $object) = @_;
 
-### Add context selection
+  # Add context selection
   $view_config->add_fieldset('Context');
   $view_config->add_form_element({
-    'type'     => 'DropDown', 'select'   => 'select',
-    'required' => 'yes',      'name'     => 'context',
-    'label'    => 'Context',
-    'values'   => [
-      { 'value' => '1000',   'name' => '1kb' },
-      { 'value' => '5000',   'name' => '5kb' },
-      { 'value' => '10000',  'name' => '10kb' },
-      { 'value' => '20000',  'name' => '20kb' },
-      { 'value' => '30000',  'name' => '30kb' },
+    type   => 'DropDown',
+    select => 'select',
+    name   => 'context',
+    label  => 'Context',
+    values => [
+      { value => '1000',  name => '1kb' },
+      { value => '5000',  name => '5kb' },
+      { value => '10000', name => '10kb' },
+      { value => '20000', name => '20kb' },
+      { value => '30000', name => '30kb' }
     ]
   });
 }
