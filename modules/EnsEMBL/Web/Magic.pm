@@ -490,8 +490,6 @@ sub stuff {
         
         $webpage->redirect($u);
       } else {
-        $webpage->factory->fix_session;
-        
         # Is this a wizard, a data-munging/redirect action or a standard page?
         my $class = $ENV{'ENSEMBL_ACTION'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $webpage->command;
         

@@ -39,7 +39,6 @@ sub simple {
     foreach my $object( @{$self->dataObjects} ) {
       $self->configure($object, 'global_context', 'local_context'); 
     }
-    $self->factory->fix_session;
   }
   return $self;
 }
