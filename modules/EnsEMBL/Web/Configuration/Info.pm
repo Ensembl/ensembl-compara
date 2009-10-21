@@ -63,24 +63,24 @@ sub populate_tree {
 
   ## SAMPLE DATA
   my $sample_data = $sd->SAMPLE_DATA;
-  my $species_path = $self->species;
+  my $species_path = $sd->species_path($self->species);
   if($sample_data && keys %$sample_data) {
     my $data_menu = $self->create_submenu( 'Data', 'Sample entry points' );
     my $karyotype = scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}) ? 'Karyotype' : 'Karyotype (not available)';
     my $karyotype_url = $sample_data->{'KARYOTYPE_PARAM'}
-      ? '/'.$self->species.'/Location/Genome?r='.$sample_data->{'KARYOTYPE_PARAM'}
-      : '/'.$self->species.'/Location/Genome';
+      ? "$species_path/Location/Genome?r=".$sample_data->{'KARYOTYPE_PARAM'}
+      : "$species_path/Location/Genome";
 
-    my $location_url    = "/$species_path/Location/View?r=".$sample_data->{'LOCATION_PARAM'};
+    my $location_url    = "$species_path/Location/View?r=".$sample_data->{'LOCATION_PARAM'};
     my $location_text   = $sample_data->{'LOCATION_TEXT'} || 'not available';
 
-    my $gene_url        = "/$species_path/Gene/Summary?g=".$sample_data->{'GENE_PARAM'};
+    my $gene_url        = "$species_path/Gene/Summary?g=".$sample_data->{'GENE_PARAM'};
     my $gene_text       = $sample_data->{'GENE_TEXT'} || 'not available';
 
-    my $transcript_url  = "/$species_path/Transcript/Summary?t=".$sample_data->{'TRANSCRIPT_PARAM'};
+    my $transcript_url  = "$species_path/Transcript/Summary?t=".$sample_data->{'TRANSCRIPT_PARAM'};
     my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'} || 'not available';
     
-    my $variation_url  = "/$species_path/Variation/Summary?v=".$sample_data->{'VARIATION_PARAM'};
+    my $variation_url  = "$species_path/Variation/Summary?v=".$sample_data->{'VARIATION_PARAM'};
     my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
 
     $data_menu->append( $self->create_node( 'Karyotype', $karyotype,
