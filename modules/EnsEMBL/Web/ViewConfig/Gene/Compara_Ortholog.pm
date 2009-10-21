@@ -27,37 +27,34 @@ sub form {
   
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
 
-  $view_config->add_fieldset('Aligment output options');
-  
+  $view_config->add_fieldset('Aligment output');
   $view_config->add_form_element({
-    'type'     => 'DropDown', 
-    'select'   => 'select',
-    'required' => 'yes',      
-    'name'     => 'seq',
-    'label'    => 'View as cDNA or Protein',
-    'values'   => [ map {{ 'value' => $_, 'name' => $_ }} qw(cDNA Protein) ]
+    type   => 'DropDown', 
+    select => 'select',     
+    name   => 'seq',
+    label  => 'View as cDNA or Protein',
+    values => [ map {{ value => $_, name => $_ }} qw(cDNA Protein) ]
   });
   
   $view_config->add_form_element({
-    'type'     => 'DropDown', 
-    'select'   => 'select',
-    'required' => 'yes',      
-    'name'     => 'text_format',
-    'label'    => 'Output format for sequence alignment',
-    'values'   => [ map {{ 'value' => $_, 'name' => $formats{$_} }} sort keys %formats ]
+    type   => 'DropDown', 
+    select => 'select',      
+    name   => 'text_format',
+    label  => 'Output format for sequence alignment',
+    values => [ map {{ value => $_, name => $formats{$_} }} sort keys %formats ]
   });
   
-  $view_config->add_fieldset('Show alignments from the following species');
+  $view_config->add_fieldset('Selected species');
   
-  my %species = map { $view_config->_species_label($_) => $_ } $view_config->species_defs->valid_species;
+  my %species = map { $view_config->species_label($_) => $_ } $view_config->species_defs->valid_species;
   
   foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
     $view_config->add_form_element({
-      'type'  => 'CheckBox', 
-      'label' => $_,
-      'name'  => 'species_' . lc $species{$_},
-      'value' => 'yes',
-      'raw'   => 1
+      type  => 'CheckBox', 
+      label => $_,
+      name  => 'species_' . lc $species{$_},
+      value => 'yes',
+      raw   => 1
     });
   }
 }
