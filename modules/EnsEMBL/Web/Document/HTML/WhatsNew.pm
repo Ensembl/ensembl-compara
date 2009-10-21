@@ -25,10 +25,19 @@ use base qw(EnsEMBL::Web::Root);
 sub render {
   my $self = shift;
 
+  my $html;
+
+
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $filtered = 0;
-  my $html;
+
+  my $file = '/ssi/whatsnew.html';
+  my $fpath = $species_defs->ENSEMBL_SERVERROOT . $file;
+  if (-e $fpath) {
+      $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
+      return $html;
+  }
 
   my $release_id = $species_defs->ENSEMBL_VERSION;
   my $release = EnsEMBL::Web::Data::Release->new($release_id);
