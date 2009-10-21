@@ -66,13 +66,15 @@ sub content_sub_slice {
   $slice = $slice->sub_Slice($start, $end) if $start && $end;
   
   my $config = {
-    display_width => $object->param('display_width') || 60,
-    site_type     => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
-    gene_name     => $object->Obj->stable_id,
-    species       => $object->species,
-    title_display => 'yes',
-    key_template  => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
-    key           => ''
+    display_width   => $object->param('display_width') || 60,
+    site_type       => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
+    gene_name       => $object->Obj->stable_id,
+    species         => $object->species,
+    title_display   => 'yes',
+    key_template    => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
+    key             => '',
+    sub_slice_start => $start,
+    sub_slice_end   => $end
   };
 
   for (qw(exon_display exon_ori snp_display line_numbering)) {
