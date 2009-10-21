@@ -5,14 +5,6 @@ use Data::Dumper qw(Dumper);
 
 use base qw(EnsEMBL::Web::Document::Panel);
 
-sub _start {
-  my $self = shift;
-}
-
-sub _end   { 
-  my $self = shift;
-}
-
 sub _error {
   my( $self, $caption, $body ) = @_;
   $self->add_row( $caption, $body );
