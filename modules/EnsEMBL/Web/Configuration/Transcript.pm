@@ -11,6 +11,7 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
+sub configurator   { return $_[0]->_configurator;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
