@@ -185,6 +185,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var active = this.elLk.links.filter('.active').children('a').attr('className');
     
+    if (typeof active == 'undefined') {
+      active = this.elLk.links.filter(':first').addClass('active').children('a').attr('className');
+    }
+    
     if (active == 'search_results') {
       this.elLk.search.val(this.query);
       this.search();
