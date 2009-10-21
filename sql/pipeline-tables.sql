@@ -199,3 +199,15 @@ CREATE TABLE `anchor_align` (
   KEY `anchor_id_mlss_id` (`anchor_id`,`method_link_species_set_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
+
+------------------------------------------------------------------------------------------------
+--
+-- This is a temporary table used by family pipeline to hold the blast scores to be fed into MCL
+--
+
+CREATE TABLE mcl_matrix (
+        id int(10) unsigned NOT NULL,   # a non-autoincrementing numeric id
+        rest mediumtext NOT NULL,       # a string of text containing (sequence_id:blast_score) pairs in input MCL format
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
