@@ -103,9 +103,9 @@ sub configurator {
     $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
     $input->param('x_requested_with') eq 'XMLHttpRequest'
   );
-
+  
   my $webpage = new EnsEMBL::Web::Document::WebPage(
-    objecttype => 'Server',
+    objecttype => $objecttype,
     doctype    => 'Configurator',
     scriptname => 'config',
     r          => $r,
