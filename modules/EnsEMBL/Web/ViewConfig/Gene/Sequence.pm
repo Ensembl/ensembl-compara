@@ -18,6 +18,7 @@ sub init {
   ));
   
   $view_config->storable = 1;
+  $view_config->nav_tree = 1;
 }
 
 sub form {
@@ -38,7 +39,6 @@ sub form {
   $view_config->add_form_element($general_markup_options{'exon_ori'});
   $view_config->add_form_element($general_markup_options{'snp_display'}) if $dbs->{'DATABASE_VARIATION'};
   $view_config->add_form_element($general_markup_options{'line_numbering'});
-
 }
-1;
 
+1;

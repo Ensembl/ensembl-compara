@@ -17,6 +17,7 @@ sub init {
   );
   
   $view_config->storable = 1;
+  $view_config->nav_tree = 1;
 }
 
 sub form {
@@ -45,7 +46,6 @@ sub form {
       'value' => 'yes', 
       'raw'   => 1
     });
-
   }
 }
 

@@ -1303,6 +1303,7 @@ sub viewconfig {
     if ($vc_external_data && $vc_external_data->can_upload) {
       $vc_external_data->{'_form'} = $vc->get_form;
       $vc_external_data->{'_tree'} = $vc->{'_tree'};
+      $vc_external_data->nav_tree  = $vc->nav_tree;
       $vc_external_data->form(undef, 1);
       
       $vc->external_data = 1;

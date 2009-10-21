@@ -10,7 +10,7 @@ use EnsEMBL::Web::Form;
 use EnsEMBL::Web::OrderedTree;
 
 sub new {
-  my($class,$type,$action,$adaptor) = @_;
+  my ($class, $type, $action, $adaptor) = @_;
 
   my $self = {
     '_db'                 => $adaptor->get_adaptor,
@@ -20,6 +20,7 @@ sub new {
     'type'                => $type,
     'real'                => 0,
     'external_data'       => 0,
+    'nav_tree'            => 0,
     'action'              => $action,
     'title'               => undef,
     '_classes'            => [],
@@ -41,6 +42,7 @@ sub new {
 sub default_config :lvalue { $_[0]->{'_default_config'}; }
 sub real           :lvalue { $_[0]->{'real'}; }
 sub external_data  :lvalue { $_[0]->{'external_data'}; }
+sub nav_tree       :lvalue { $_[0]->{'nav_tree'}; }
 sub species        :lvalue { $_[0]->{'_species'}; }
 sub species_defs   :lvalue { $_[0]->{'_species_defs'}; }
 sub url            :lvalue { $_[0]->{'_url'}; }
@@ -122,7 +124,7 @@ sub add_fieldset {
   $fieldset->legend($legend);
   $fieldset->class($class);
   
-  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $class });
+  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $class }) if $self->nav_tree;
   
   return $fieldset;
 }
@@ -158,7 +160,7 @@ sub add_form_element {
   
   if ($new_fieldset) {
     $new_fieldset->legend('Display options');
-    $self->tree->create_node(undef, { url => '#', availability => 1, caption => 'Display options', class => 'generic' });
+    $self->tree->create_node(undef, { url => '#', availability => 1, caption => 'Display options', class => 'generic' }) if $self->nav_tree;
   }
 }
 
@@ -207,15 +209,15 @@ sub update_from_config_strings {
   
   if ($input->param('config')) {
     foreach my $v (split /,/, $input->param('config')) {
-      my($k, $t) = split /=/, $v,2;
+      my ($k, $t) = split /=/, $v,2;
       $self->set($k, $t);
     }
     
     $session->add_data(
-      'type'     => 'message',
-      'function' => '_info',
-      'code'     => 'configuration',
-      'message'  => $self->altered ? 'Your configuration has changed for this page' : 'The link you followed requested a change to the configuration of this page but no change occured'
+      type     => 'message',
+      function => '_info',
+      code     => 'configuration',
+      message  => $self->altered ? 'Your configuration has changed for this page' : 'The link you followed requested a change to the configuration of this page but no change occured'
     );
     
     $params_removed = 1;
@@ -263,55 +265,53 @@ sub update_from_config_strings {
           my ($type, $p) = ($1, $2);
           
           if ($type eq 'url') {
-            $p = unescape( $p );
+            $p = unescape($p);
             
             # We have to create a URL upload entry in the session
             my $code = md5_hex("$ENV{'ENSEMBL_SPECIES'}:$p");
             my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
             
             $session->set_data(
-              'type'    => 'url',
-              'url'     => $p,
-              'species' => $ENV{'ENSEMBL_SPECIES'},
-              'code'    => $code, 
-              'name'    => $n
+              type    => 'url',
+              url     => $p,
+              species => $ENV{'ENSEMBL_SPECIES'},
+              code    => $code, 
+              name    => $n
             );
             
             $session->add_data(
-              'type'     => 'message',
-              'function' => '_info',
-              'code'     => 'url_data:' . md5_hex($p),
-              'message'  => sprintf('Data has been attached to your display from the following URL: %s', escapeHTML($p))
+              type     => 'message',
+              function => '_info',
+              code     => 'url_data:' . md5_hex($p),
+              message  => sprintf('Data has been attached to your display from the following URL: %s', escapeHTML($p))
             );
             
             # We then have to create a node in the user_config
             $ic->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-              sprintf ('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', escapeHTML($n), escapeHTML($p)),
+              sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', escapeHTML($n), escapeHTML($p)),
               'url' => $p
             );
             
             my $nd = $ic->get_node("url_$code");
-            
-            # Then we have to set the renderer
-            $flag += $nd->set_user('display', $render) if $nd;
+            $flag += $nd->set_user('display', $render) if $nd; # Then we have to set the renderer
           } elsif ($type eq 'das') {
             $p = unescape($p);
             
             if (my $error = $session->add_das_from_string($p, { 'ENSEMBL_IMAGE' => $name }, {'display' => $render })) {
               $session->add_data(
-                'type'     => 'message',
-                'function' => '_warning',
-                'code'     => 'das:' . md5_hex($p),
-                'message'  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', escapeHTML($p), escapeHTML($error))
+                type     => 'message',
+                function => '_warning',
+                code     => 'das:' . md5_hex($p),
+                message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', escapeHTML($p), escapeHTML($error))
               );
               
               warn $error;
             } else {
              $session->add_data(
-                'type'     => 'message',
-                'function' => '_info',
-                'code'     => 'das:' . md5_hex($p),
-                'message'  => sprintf('You have attached a DAS source with DSN: %s to this display', escapeHTML($p))
+                type     => 'message',
+                function => '_info',
+                code     => 'das:' . md5_hex($p),
+                message  => sprintf('You have attached a DAS source with DSN: %s to this display', escapeHTML($p))
               );
               
               $flag++;
@@ -327,10 +327,10 @@ sub update_from_config_strings {
   
   if ($flag) {
     $session->add_data(
-      'type'     => 'message',
-      'function' => '_info',
-      'code'     => 'image_config',
-      'message'  => 'The link you visited has made changes to the tracks displayed on this page'
+      type     => 'message',
+      function => '_info',
+      code     => 'image_config',
+      message  => 'The link you visited has made changes to the tracks displayed on this page'
     );
   }
   
@@ -360,7 +360,7 @@ sub reset {
 }
 
 sub push_class {
-  my ($self, $class) =@_;
+  my ($self, $class) = @_;
   push @{$self->{'_classes'}}, $class;
 }
 
@@ -397,6 +397,8 @@ sub form {
       ]
     );
   }
+  
+  $self->tree->create_node('form_conf', { availability => 0, caption => 'Configure' }) unless $self->nav_tree;
 }
 
 # Set a key for user settings
@@ -404,7 +406,7 @@ sub set {
   my ($self, $key, $value, $force) = @_;
   
   return unless $force || exists $self->{'_options'}{$key};
-  return if $self->{'_options'}{$key}{'user'}  eq $value;
+  return if $self->{'_options'}{$key}{'user'} eq $value;
   
   $self->altered = 1;
   $self->{'_options'}{$key}{'user'}  = $value;
@@ -439,7 +441,7 @@ sub get_user_settings {
   my $diffs = {};
   
   foreach my $key ($self->options) {
-    $diffs->{$key} = $self->{'_options'}{$key}{'user'} if exists($self->{'_options'}{$key}{'user'}) && $self->{'_options'}{$key}{'user'} ne $self->{'_options'}{$key}{'default'};
+    $diffs->{$key} = $self->{'_options'}{$key}{'user'} if exists $self->{'_options'}{$key}{'user'} && $self->{'_options'}{$key}{'user'} ne $self->{'_options'}{$key}{'default'};
   }
   
   return $diffs;
@@ -449,7 +451,7 @@ sub dump {
   my ($self) = @_;
   local $Data::Dumper::Indent = 1;
   local $Data::Dumper::Terse  = 1;
-  print STDERR Dumper($self), " ";
+  print STDERR Dumper($self), ' ';
 }
 
 sub species_label {

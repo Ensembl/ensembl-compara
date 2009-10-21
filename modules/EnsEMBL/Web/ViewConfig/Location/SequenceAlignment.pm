@@ -25,6 +25,7 @@ sub init {
   $view_config->_set_defaults($_, 'yes') for grep $_ ne $ref, @{$variations->{'DEFAULT_STRAINS'}||[]};
   $view_config->_set_defaults($_, 'no')  for grep $_ ne $ref, @{$variations->{'DISPLAY_STRAINS'}||[]};
   $view_config->storable = 1;
+  $view_config->nav_tree = 1;
 }
 
 sub form {

@@ -9,7 +9,6 @@ sub init {
   
   EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments::init($view_config);
   
-  $view_config->storable = 1;
   $view_config->{'no_flanking'} = 1;
   $view_config->{'strand_option'} = 1;
   

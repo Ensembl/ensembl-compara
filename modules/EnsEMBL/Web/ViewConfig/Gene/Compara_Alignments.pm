@@ -21,7 +21,9 @@ sub init {
     codons_display        off
     title_display         off
   ));
+  
   $view_config->storable = 1;
+  $view_config->nav_tree = 1;
   
   my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
   
