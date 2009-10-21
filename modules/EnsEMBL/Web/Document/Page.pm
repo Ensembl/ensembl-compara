@@ -356,7 +356,7 @@ sub render {
   # If this is an AJAX request then we will not render the page wrapper
   if ($self->renderer->{'_modal_dialog_'}) {    
     # We need to add the dialog tabs and navigation tree here
-    my $json = join ',', map $self->$_->get_json, qw(global_context local_context content);
+    my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content);
     
     $self->print("{$json}");
     return;
