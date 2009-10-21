@@ -573,8 +573,6 @@ sub printf {
   }
 }
 
-sub _start { }
-sub _end   { }
 sub _error {
   my($self, $caption, $message ) = @_;
   $self->print( "<h4>$caption</h4>$message" );
@@ -592,7 +590,6 @@ sub content {
   my $object = $self->{'object'};
   
   $self->reset_buffer;
-  $self->_start;
   
   if ($self->{'content'}) {
     $self->print($self->{'content'});
@@ -737,8 +734,6 @@ sub content {
       }
     }
   }
-  
-  $self->_end;
   
   return $self->buffer;
 }
