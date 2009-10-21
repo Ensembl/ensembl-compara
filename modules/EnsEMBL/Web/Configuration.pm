@@ -217,106 +217,113 @@ sub modal_context {
   $self->_user_context('modal_context') if $self->{'page'}->{'modal_context'};
 }
 
+sub user_context   {
+  my $self = shift;
+  
+  return if $self->{'page'}->{'user_context_called'}++;
+  
+  $self->_user_context;
+}
+
 sub _user_context {
   my $self = shift;
   my $section = shift || 'global_context';
-  my $type = $self->type;
-  my $obj  = $self->{'object'};
-  my $qs = $self->query_string;
   
-  my $referer = $obj->param('_referer') || 
-                $obj->_url({ type   => $type, action => $ENV{'ENSEMBL_ACTION'}, time   => undef });
+  my $object  = $self->object;
+  my $type    = $self->type;
+  my $parent  = $object->parent;
+  my $qs      = $self->query_string;
+  my $referer = $object->param('_referer') || $object->_url({ type => $type, action => $ENV{'ENSEMBL_ACTION'}, time => undef });
+  my $vc      = $object->viewconfig;
+  my $action  = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
 
-  my $vc  = $obj->get_viewconfig;
-  my $action = $type.'/'.$ENV{'ENSEMBL_ACTION'};
-     $action .= '/'.$ENV{'ENSEMBL_FUNCTION'} if $ENV{'ENSEMBL_FUNCTION'};
-
-  if( !$vc->real && $obj->parent->{'ENSEMBL_TYPE'} ) {
-    $vc = $obj->get_viewconfig( $obj->parent->{'ENSEMBL_TYPE'}, $obj->parent->{'ENSEMBL_ACTION'} );
-    $vc->form($obj);
-    $action  = $obj->parent->{'ENSEMBL_TYPE'}.'/'.$obj->parent->{'ENSEMBL_ACTION'};
-    $action .= '/'.$obj->parent->{'ENSEMBL_FUNCTION'} if $obj->parent->{'ENSEMBL_FUNCTION'};
+  if (!$vc->real && $parent->{'ENSEMBL_TYPE'}) {
+    $vc = $object->get_viewconfig($parent->{'ENSEMBL_TYPE'}, $parent->{'ENSEMBL_ACTION'});
+    $action = join '/', map $parent->{$_} || (), qw(ENSEMBL_TYPE ENSEMBL_ACTION ENSEMBL_FUNCTION);
+    
+    $vc->form($object);
   }
+  
+  my %ics           = $vc->image_configs;
+  my $flag          = $object->param('config') ? 0 : 1;
+  my $active_config = $object->param('config') || $vc->default_config;
+  my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
+  my $upload_data   = $vc->can_upload;
 
-  ## Do we have a View Config for this display?
-  # Get view configuration...!
-  ## Do we have any image configs for this display?
-  my %ics = $vc->image_configs;
-  ## Can user data be added to this page?
-  my $flag = $obj->param('config') ? 0 : 1;
-  my $active_config = $obj->param('config') || $vc->default_config();
-
-  my $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
-
-  my $upload_data = $vc->can_upload;
-
-  if( $vc->has_form ) { 
+  if ($vc->has_form) { 
     $self->{'page'}->$section->add_entry(
-      'type'      => 'Config',
-      'id'        => "config_page",
-      'caption'   => 'Configure page',
-      $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
-        'time' => time, 
-        'type'   => 'Config',
-        'action' => $action,
-        'config' => '_page',
+      'type'    => 'Config',
+      'id'      => 'config_page',
+      'caption' => 'Configure page',
+      $active ? ( 'class' => 'active' ) : ( 
+      'url' => $object->_url({
+        'time'     => time, 
+        'type'     => 'Config',
+        'action'   => $action,
+        'config'   => '_page',
         '_referer' => $referer,
       }))
     );
+    
     $flag = 0;
   }
+  
   foreach my $ic_code (sort keys %ics) {
-    my $ic = $obj->get_imageconfig( $ic_code );
+    my $ic  = $object->get_imageconfig($ic_code);
     $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
+    
     $self->{'page'}->$section->add_entry(
-      'type'      => 'Config',
-      'id'        => "config_$ic_code",
-      'caption'   => $ic->get_parameter('title'),
-      $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
-        'time' => time, 
-        'type'   => 'Config',
-              'action' => $action,
-              'config' => $ic_code,
+      'type'    => 'Config',
+      'id'      => "config_$ic_code",
+      'caption' => $ic->get_parameter('title'),
+      $active ? ( 'class' => 'active' ) : ( 
+      'url' => $object->_url({
+        'time'     => time, 
+        'type'     => 'Config',
+        'action'   => $action,
+        'config'   => $ic_code,
         '_referer' => $referer,
       }))
     );
+    
     $flag = 0;
   }
   
   $active = $section eq 'global_context' && $type eq 'UserData';
-  my $module = $vc->can_upload ? 'SelectFile' : 'ManageData';
+  
   $self->{'page'}->$section->add_entry(
-    'type'      => 'UserData',
-    'id'        => 'user_data',
-    'caption'   => 'Custom Data',
-     $active ? ( 'class' => 'active' ) : ( 'url' => $obj->_url({
-        'time' => time,
-        '_referer' => $referer,
-        '__clear' => 1,
-        'type'   => 'UserData',
-        'action' => $module,
+    'type'    => 'UserData',
+    'id'      => 'user_data',
+    'caption' => 'Custom Data',
+     $active ? ( 'class' => 'active' ) : ( 
+     'url' => $object->_url({
+      'time' => time,
+      '_referer' => $referer,
+      '__clear'  => 1,
+      'type'     => 'UserData',
+      'action'   => $vc->can_upload ? 'SelectFile' : 'ManageData',
      }))
   );
-
-  ## Now the user account link - varies depending on whether the user is logged in or not!
-  $active = $section eq 'global_context' && $type eq 'Account';
-  if( $obj->species_defs->ENSEMBL_LOGINS) {
-    my $user_action = $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login';
+  
+  $active = $section eq 'global_context' && $type eq 'Account'; # Now the user account link - varies depending on whether the user is logged in or not
+  
+  if ($object->species_defs->ENSEMBL_LOGINS) {
     $self->{'page'}->$section->add_entry( 
-      'type'      => 'Account',
-      'id'        => 'account',
-      'caption'   => 'Your account',
-      $active ? ( 'class' => 'active') : ( 'url' => $obj->_url({
+      'type'    => 'Account',
+      'id'      => 'account',
+      'caption' => 'Your account',
+      $active ? ( 'class' => 'active') : ( 
+      'url' => $object->_url({
         '_referer' => $referer,
-        'time' => time, 
-        '__clear' => 1,
-        'type'   => 'Account',
-        'action' => $user_action,
+        'time'     => time, 
+        '__clear'  => 1,
+        'type'     => 'Account',
+        'action'   => $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login',
       }))
     );
   }
 
-  $self->{'page'}->$section->active( lc($type) );
+  $self->{'page'}->$section->active(lc $type);
 }
 
 
@@ -382,38 +389,24 @@ sub _configurator {
   my $self = shift;
   
   my $object     = $self->object;
-  my $vc         = $object->get_viewconfig;
+  my $vc         = $object->viewconfig;
   my $config_key = $object->param('config');
   my $referer    = $object->param('_referer') || $ENV{'REQUEST_URI'};
   my $action     = join '/', map $object->$_ || (), qw(type action function);
   my $url        = $object->_url({ type => 'Config', action => $action, _referer => $referer }, 1);
-  my $conf;
-  
-  eval {
-    $conf = $object->image_config_hash($object->param('config'), undef, 'merged') if $object->param('config');
-  };
+  my $conf       = $object->param('config') ? $object->image_config_hash($object->param('config'), undef, 'merged') : undef;
   
   # This must be the view config
   if (!$conf) {
     if ($vc->has_form) {
       $vc->get_form->{'_attributes'}{'action'} = $url->[0];
       
-      if ($object->action ne 'ExternalData') {
-        my $vc_2 = $object->get_viewconfig(undef, 'ExternalData');
-        
-        if ($vc_2) {
-          $vc_2->{'_form'} = $vc->{'_form'};
-          $vc_2->form(undef, 1);
-        }
-      }
-      
       $vc->add_form_element({ type => 'Hidden', name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
       
       $self->{'page'}->{'_page_type_'} = 'configurator';
       $self->tree->_flush_tree;
-      $self->create_node('form_conf', 'Configure', [],  { url => '', availability => 0, id => 'form_conf_id', caption => 'Configure' });
       
-      $self->{'page'}->local_context->tree($self->{'_data'}{'tree'});
+      $self->{'page'}->local_context->tree($vc->tree);
       $self->{'page'}->local_context->active('form_conf');
       $self->{'page'}->local_context->caption('Configure view');
       $self->{'page'}->local_context->class('view_configuration');
@@ -425,7 +418,7 @@ sub _configurator {
       );
       
       my $content = '';
-      $content .= sprintf '<h2>Configuration for: "%s"</h2>', escapeHTML($vc->title) if $vc->title;
+      $content .= sprintf '<h2>Configuration for %s</h2>', escapeHTML($vc->title) if $vc->title;
       $content .= $vc->get_form->render;
       
       $panel->set_content($content);
@@ -435,7 +428,7 @@ sub _configurator {
       return;
     }
     
-    my @image_configs = sort keys %{$vc->image_configs};
+    my @image_configs = sort keys %{$vc->image_configs||{}};
     
     if (@image_configs) {
       $config_key = $image_configs[0];
@@ -583,17 +576,10 @@ sub _local_tools {
 
   my $referer = $ENV{'REQUEST_URI'};
 
-  my $vc = $obj->get_viewconfig;
+  my $vc = $obj->viewconfig;
   my $config = $vc->default_config;
-
-  my $vc_2_flag = 0;
   
-  if ($ENV{'ENSEMBL_TYPE'} eq 'Gene' && $ENV{'ENSEMBL_ACTION'} ne 'ExternalData') {
-    my $vc_2 = $obj->get_viewconfig(undef, 'ExternalData');
-    $vc_2_flag = $vc_2 && $vc_2->can_upload;
-  }
-
-  if (($vc->real && $config) || $vc_2_flag) {
+  if ($vc->real && $config) {
     my $action = $obj->type . '/' . $obj->action;
     $action .= '/' . $obj->function if $obj->function;
     
