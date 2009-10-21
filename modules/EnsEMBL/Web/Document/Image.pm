@@ -421,4 +421,19 @@ sub render {
   return $html
 }
 
+sub static_karyotype {
+    my( $self, $object, $highs, $config ) = @_;
+    my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
+    $image->{'border'} = 1;
+    my $type = 'png';
+    my $filename = $self->image_name;
+    $image->{'token'}      = "$type:$filename";
+    $image->{'filename'}   = $self->image_name;
+    $image->{'format'}   = 'imagemap';
+    $image->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_CACHE .'/../htdocs/img/species/';
+    $image->{'URL_root'}   = '/img/species/';
+    return;
+}
+
+
 1;
