@@ -188,7 +188,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     if (active == 'search_results') {
       this.elLk.search.val(this.query);
       this.search();
-    } else {
+    } else if (typeof active != 'undefined') {
       $('div:not(.' + active + ')', this.elLk.form).hide();
       $('dd', this.elLk.form).hide();
       this.elLk.help.html('Show info');
