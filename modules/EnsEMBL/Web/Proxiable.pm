@@ -107,23 +107,25 @@ sub redirect {
 
 sub param {
   my $self = shift;
-  if( @_ ){ 
-    my @T =  map { _sanitize($_) } $self->{'data'}{'_input'}->param(@_);
-    if( @T ) {
-      return wantarray ? @T : $T[0];
-    }
-    my $wsc = $self->get_viewconfig( );
-    if( $wsc ) {
-      if( @_ > 1 ) { $wsc->set(@_); }
+  
+  if (@_) { 
+    my @T = map { _sanitize($_) } $self->{'data'}{'_input'}->param(@_);
+    return wantarray ? @T : $T[0] if @T;
+    my $wsc = $self->viewconfig;
+    
+    if ($wsc) {
+      $wsc->set(@_) if @_ > 1;
       my @val = $wsc->get(@_);
       return wantarray ? @val : $val[0];
     }
+    
     return wantarray ? () : undef;
   } else {
-    my @params = map { _sanitize($_) } $self->{'data'}{'_input'}->param();
-    my $wsc    = $self->get_viewconfig( ); 
-    push @params, $wsc->options() if $wsc;
-    my %params = map { $_,1 } @params;
+    my @params = map { _sanitize($_) } $self->{'data'}{'_input'}->param;
+    my $wsc    = $self->viewconfig;
+    push @params, $wsc->options if $wsc;
+    my %params = map { $_, 1 } @params; # Remove duplicates
+    
     return keys %params;
   }
 }
@@ -247,6 +249,13 @@ sub image_config_hash {
   return unless $T;
   $T->_set_core( $self->core_objects );
   return $T;
+}
+
+# Store default viewconfig so we don't have to keep getting it from session
+sub viewconfig {
+  my $self = shift;
+  $self->{'data'}->{'_viewconfig'} ||= $self->get_viewconfig;
+  return $self->{'data'}->{'_viewconfig'};
 }
 
 sub get_viewconfig {
