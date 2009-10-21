@@ -114,7 +114,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       dataType: 'json',
       success: function (json) {
         if (typeof json.activeTab != 'undefined') {
-          myself.changeTab(myself.elLk.tabs.filter(':eq(' + json.activeTab + ')'));
+          myself.changeTab(myself.elLk.tabs.filter('[textContent=' + json.activeTab + ']'));
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, true); // clean up handlers, save memory
