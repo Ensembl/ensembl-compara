@@ -119,7 +119,7 @@ sub render_normal {
 ## And now about the drawing configuration
   my $pix_per_bp     = $self->scalex;
   my $DRAW_CIGAR     = ( $self->my_config('force_cigar') eq 'yes' )|| ($pix_per_bp > 0.2) ;
-  warn ">>> $DRAW_CIGAR";
+  
 ## Highlights...
   my %highlights = map { $_,1 } $self->highlights;
   my $hi_colour = 'highlight1';
