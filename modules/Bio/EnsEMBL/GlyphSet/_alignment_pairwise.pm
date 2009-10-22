@@ -19,6 +19,7 @@ sub render_normal {
   
   my $self_species   = $container->{'web_species'};
   my $length         = $container->length;
+  my $chr            = $container->seq_region_name;
   my $pix_per_bp     = $self->scalex;
   my $draw_cigar     = $pix_per_bp > 0.2;
   my $feature_key    = lc $self->my_config('type');
@@ -30,60 +31,84 @@ sub render_normal {
   my $join_z         = $self->my_colour($feature_key, 'join_z') || 100;
   my $h              = $self->get_parameter('opt_halfheight') ? 4 : 8;
   my $link           = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $mlss_id        = $self->my_config( 'method_link_species_set_id' );
   my $c              = 0; # Diagnostic counter
   my $k              = 0; # Diagnostic counter
   my %ids;
-  
+
   $self->_init_bump(undef, $depth); # initialize bumping
-  
+
+  # Group features by hseqname and group_id (create fake group_id if undef)
   foreach my $f (@{$self->features||[]}) {
     next if $strand_flag eq 'b' && $strand != $f->hstrand || $f->end < 1 || $f->start > $length;
-    
-    push @{$ids{$f->hseqname . ':' . ($f->group_id || ('00' . $k++))}}, [ $f->start, $f ];
+    my $key = $f->hseqname . ':' . ($f->group_id || ('00' . $k++));
+
+    $ids{$key}{start} = $f->start if (!$ids{$key} or $f->start < $ids{$key}{start});
+    $ids{$key}{end} = $f->end if (!$ids{$key} or $f->end > $ids{$key}{end});
+    push @{$ids{$key}{features}}, [$f->start, $f];
   }
-  
-  # sort alignments by size
-  my @sorted = sort { ($ids{$b}[0][1]->hend - $ids{$b}[0][1]->hstart) <=> ($ids{$a}[0][1]->hend - $ids{$a}[0][1]->hstart) } keys %ids;
-  
-  foreach my $i (@sorted) {
+
+  # sort alignment groups by size
+  my @sorted_group_ids = sort { ($ids{$b}{end} - $ids{$b}{start}) <=> ($ids{$a}{end} - $ids{$a}{start}) } keys %ids;
+
+  foreach my $i (@sorted_group_ids) {
     my ($seqregion) = split /:/, $i;
-    
-    my @features   = sort { $a->[0] <=> $b->[0] } @{$ids{$i}};
-    my $hs         = $features[0][1]->hstart;
-    my $he         = $features[0][1]->hend;
-    my $bump_start = (($features[0][0] < 1 ? 1 : $features[0][0]) * $pix_per_bp) - 1;
-    my $bump_end   = ($features[-1][1]->end > $length ? $length : $features[-1][1]->end) * $pix_per_bp;
+
+    # Get the features for this net and sort them by start
+    my @features   = sort { $a->[0] <=> $b->[0] } @{$ids{$i}{features}};
+    my $hs_net     = $features[0][1]->hstart; # start on the other species
+    my $he_net     = $features[0][1]->hend; # end on the other species
+    my $bump_start = (($features[0][0] < 1 ? 1 : $features[0][0]) * $pix_per_bp) - 1; # start in pixels
+    my $bump_end   = ($features[-1][1]->end > $length ? $length : $features[-1][1]->end) * $pix_per_bp; # end in pixels
     my $row        = $self->bump_row(int $bump_start, int $bump_end);
-    
+
     next if $row > $depth;
-    
+
+    #######################################################
+    ## Get the big box for the net:
     my $y_pos = -$row * int(1.5 * $h) * $strand;
     my $x = -1000000;
-    
-    my $composite = $self->Composite({
+    my $width = $features[-1][1]->end;
+    if ($width > $length) {
+      $width = $length;
+    }
+    if ($features[0][1]->start > 0) {
+      $width -= $features[0][1]->start - 1;
+    }
+
+    my $n0 = $features[0][1]->seq_region_name . ":" .
+        $features[0][1]->seq_region_start . "-" . $features[-1][1]->seq_region_end;
+
+    my $net_composite = $self->Composite({
       x     => $features[0][0] > 1 ? $features[0][0] - 1 : 0,
-      y     => 0,
-      width => 0
+      y     => $y_pos,
+      width => $width,
+      height => $h,
+      bordercolour => $feature_colour,
     });
-    
+    #######################################################
+
+    my $internal_boxes = [];
     foreach (@features) {
       my $f = $_->[1];
-      
-      $hs = $f->hstart if $f->hstart < $hs;
-      $he = $f->hend   if $f->hend   > $he;
-      
+
+      ## Make sure we have the right start and end of the nets on the other species
+      $hs_net = $f->hstart if $f->hstart < $hs_net;
+      $he_net = $f->hend   if $f->hend   > $he_net;
+
       next if int($f->end * $pix_per_bp) <= int($x * $pix_per_bp);
-      
+
       $c++;
-      
+
       if ($draw_cigar) {
         $self->draw_cigar_feature({
-          composite      => $composite, 
-          feature        => $f, 
-          height         => $h, 
-          feature_colour => $feature_colour, 
-          delete_colour  => 'black', 
-          scalex         => $pix_per_bp, 
+          composite      => $net_composite,
+          feature        => $f,
+          height         => $h,
+          y         => $y_pos,
+          feature_colour => $feature_colour,
+          delete_colour  => 'black',
+          scalex         => $pix_per_bp,
           do_not_flip    => 1,
           link           => $link,
           join_col       => $join_col,
@@ -93,18 +118,24 @@ sub render_normal {
       } else {
         my $s = $_->[0] < 1 ? 1 : $_->[0];
         my $e = $f->end > $length ? $length : $f->end;
-        
+
         $x = $e;
-        
+
+        my $r = "$chr:". $f->seq_region_start . "-" . $f->seq_region_end;
+        my $r1 = $f->hseqname . ':' . $f->hstart . '-' . $f->hend;
+        my $ori = $f->hstrand * $f->strand > 0 ? 'Forward' : 'Reverse';
         my $box = $self->Rect({
           x         => $s - 1,
-          y         => 0,
+          y         => $y_pos,
           width     => $e - $s + 1,
           height    => $h,
           colour    => $feature_colour,
-          absolutey => 1
+#           bordercolour    => "red",
+          absolutey => 1,
         });
-        
+
+        push(@$internal_boxes, [$box, $r, $r1, $ori]);
+
         if ($link) {
           my $slice_start = $f->slice->start;
           my $slice_end   = $f->slice->end;
@@ -142,22 +173,39 @@ sub render_normal {
           });
         }
         
-        $composite->push($box);
       }
     }
-    
-    $composite->y($composite->y + $y_pos);
-    $composite->bordercolour($feature_colour);
-    
-    $composite->href($self->_url({
+    my $n1 = $features[0][1]->hseqname . ":$hs_net-$he_net";
+    $net_composite->href($self->_url({
       type   => 'Location',
-      action => 'PairwiseAlignment',
-      r1     => $features[0][1]->hseqname . ":$hs-$he",
+      'action' => 'PairwiseAlignment',
+      n0     => $n0,
+      n1     => $n1,
       s1     => $other_species,
+      method => $self->my_config('type'),
+      align  => $mlss_id,
       orient => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
     }));
-    
-    $self->push($composite);
+    $self->push($net_composite);
+    foreach my $internal_box (@$internal_boxes) {
+      my ($box, $r, $r1, $ori) = @$internal_box;
+      my $zmenu = {
+        type    => 'Location',
+        action  => 'PairwiseAlignment',
+        species => $self_species,
+        r       => $r,
+        r1      => $r1,
+        n0      => $n0,
+        n1      => $n1,
+        s1      => $other_species,
+        method  => $self->my_config('type'),
+        align   => $mlss_id,
+        orient  => $ori,
+      };
+      $box->href($self->_url($zmenu));
+      $self->push($box);
+    }
+
   }
   
   # No features show "empty track line" if option set
@@ -192,6 +240,7 @@ sub render_compact {
   my $join_z         = $self->my_colour($feature_key, 'join_z') || 100;
   my $h              = $self->get_parameter('opt_halfheight') ? 4 : 8;
   my $link           = $self->get_parameter('compara') ? $self->my_config('join') : 0;
+  my $mlss_id        = $self->my_config( 'method_link_species_set_id' );
   my $c              = 0;
   my $x              = -1e8;
 
@@ -230,6 +279,7 @@ sub render_compact {
       r1      => $f->hseqname . ':' . $f->hstart . '-' . $f->hend,
       s1      => $other_species,
       method  => $self->my_config('type'),
+      align   => $mlss_id,
       orient  => $f->hstrand * $f->strand > 0 ? 'Forward' : 'Reverse'
     };
     
@@ -313,6 +363,27 @@ sub render_compact {
   $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless $c || $self->get_parameter('opt_empty_tracks') == 0;
 }
 
+sub genomic_align_blocks {
+  my $self = shift;
+  
+  my $compara_dba = $self->dbadaptor('multi', $self->my_config('db'));
+
+  my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID(
+      $self->my_config('method_link_species_set_id'));
+  my $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
+  my $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
+      $method_link_species_set, $self->{'container'});
+
+  my $target = $self->my_config('target');
+  if ($target) {
+    $genomic_align_blocks = [
+        grep { $_->get_all_non_reference_genomic_aligns->[0]->dnafrag->name eq $target } @{$genomic_align_blocks || []}];
+  }
+
+  return $genomic_align_blocks;
+}
+
 sub features {
   my $self = shift;
   
@@ -322,7 +393,7 @@ sub features {
     $self->my_config('type'),
     $self->dbadaptor('multi', $self->my_config('db'))
   );
-  
+
   my $target = $self->my_config('target');
   
   $features = [ grep $_->hseqname eq $target, @{$features||[]} ] if $target;
