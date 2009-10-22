@@ -18,6 +18,7 @@ __PACKAGE__->add_fields(
   share_id  => 'int',
   analyses  => 'text',
   browser_switches => 'text',
+  style     => 'text',
 );
 
 1;
