@@ -113,8 +113,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   
   show: function () {
     this.elLk.menus.hide();
-    this.getContent();
     this.base();
+    this.getContent();
   },
   
   updateConfiguration: function (delayReload) {
