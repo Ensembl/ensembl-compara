@@ -92,7 +92,7 @@ sub parse {
     my $current_max = 0;
     my $current_min = 0;
     my $valid_coords = $self->{'valid_coords'};
-
+;
     foreach my $row ( split /\n|\r/, $data ) {
       ## Skip crap and clean up what's left
       next unless $row;
@@ -111,8 +111,8 @@ sub parse {
         $current_min = 0;
       }
       else {
-        my $columns;
-        if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') {
+        my $columns; 
+        if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { ;
           ## 'Normal' format consisting of a straightforward feature
           ($columns) = $self->split_into_columns($row, $format);
         }
@@ -120,11 +120,11 @@ sub parse {
           ## Complex format requiring special parsing (e.g. WIG)
           $columns = $self->parse_row($row);
         }
-        if ($columns && scalar(@$columns)) {
+        if ($columns && scalar(@$columns)) { ;
           my ($chr, $start, $end) = $empty->coords($columns);
           $chr =~ s/chr//;
 
-          if (keys %$valid_coords) {
+          if (keys %$valid_coords && scalar(@$columns) >1) {
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
             next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
             next unless $start > 0 && $end <= $valid_coords->{$chr};
@@ -166,15 +166,15 @@ sub parse {
 
 sub split_into_columns {
   my ($self, $row, $format) = @_;
-  my @columns;
+  my @columns; ;
   my $tabbed = 0;
   if ($format) { ## Parsing a known file
     if ($format =~ /^GF/) {
       @columns = split /\t/, $row;
       $tabbed = 1;
     }
-    else {
-      @columns = split /\t|\s/, $row;
+    else { 
+      @columns = split /\t|\s/, $row; ; 
     } 
   }
   else { ## Trying to identify the format
@@ -246,7 +246,7 @@ sub analyse_row {
   ## Split row into columns by either tabs or whitespaces, then remove empty values 
   my ($columns, $tabbed) = $self->split_into_columns($row);
 
-  if (scalar(@$columns) == 1) {
+  if (scalar(@$columns) == 1) { 
     ## one element per line assume we have list of stable IDs
     $format = 'ID';
   }
