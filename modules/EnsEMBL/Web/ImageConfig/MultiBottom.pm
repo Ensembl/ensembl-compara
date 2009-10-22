@@ -145,6 +145,7 @@ sub multi {
           db         => $align->{'db'},
           type       => $align->{'type'},
           ori        => $align->{'other_ori'},
+          method_link_species_set_id => $align->{'id'},
           join       => 1
         })
       );

@@ -1264,6 +1264,7 @@ sub add_alignments {
         'type'           => $row->{'type'},
         'species'        => $other_species,
         'species_hr'     => $other_species_hr,
+        'method_link_species_set_id' => $row->{'id'},
         'description'    => $description,
         'order'          => $other_label,
         'colourset'      => 'pairwise',
