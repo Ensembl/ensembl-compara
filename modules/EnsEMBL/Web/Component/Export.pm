@@ -17,20 +17,21 @@ sub export {
   my @inputs = @_;
   
   my $object = $self->object;
-  
-  my $o = $object->param('output');
+  my $o      = $object->param('output');
   my $format = $object->param('_format');
   my $flank5 = $object->param('flank5_display');
   my $flank3 = $object->param('flank3_display');
-  
   my $strand = $object->param('strand');
+  
   $strand = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
   
-  my $slice = $object->can('slice') ? $object->slice : $object->get_Slice;
-  $slice = $slice->invert if $strand && $strand != $slice->strand;
+  my $slice = $object->can('slice') ? $object->slice : $object->Obj->feature_Slice;
+  my $feature_strand = $slice->strand;
+  
+  $slice = $slice->invert if $strand && $strand != $feature_strand;
   $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
   
-  my $params = {};
+  my $params = { feature_strand => $feature_strand };
   
   my $html_format = !$format || $format eq 'HTML';
   
@@ -109,15 +110,15 @@ sub fasta {
   my ($trans_objects, $object_id) = @_;
   
   my $object = $self->object;
-  my $slice = $self->slice;
+  my $slice  = $self->slice;
   my $params = $self->params;
   
-  my $genomic = $object->param('genomic');
+  my $genomic         = $object->param('genomic');
   my $seq_region_name = $object->seq_region_name;
   my $seq_region_type = $object->seq_region_type;
-  my $slice_name = $slice->name;
-  my $slice_length = $slice->length;
-  my $strand = $slice->strand;
+  my $slice_name      = $slice->name;
+  my $slice_length    = $slice->length;
+  my $strand          = $slice->strand;
   
   my $fasta;
   
@@ -163,8 +164,13 @@ sub fasta {
     if ($genomic =~ /flanking/) {
       for (5, 3) {
         if ($genomic =~ /$_/) {
-          ($start, $end) = $_ == 3 ? ($slice_length - $object->param('flank3_display') + 1, $slice_length) : (1, $object->param('flank5_display'));
-          $flank_slice = $slice->sub_Slice($start, $end, $strand);
+          if ($strand == $params->{'feature_strand'}) {
+            ($start, $end) = $_ == 3 ? ($slice_length - $object->param('flank3_display') + 1, $slice_length) : (1, $object->param('flank5_display'));
+          } else {
+            ($start, $end) = $_ == 5 ? ($slice_length - $object->param('flank5_display') + 1, $slice_length) : (1, $object->param('flank3_display'));
+          }
+          
+          $flank_slice = $slice->sub_Slice($start, $end);
           
           if ($flank_slice) {
             $seq  = $flank_slice->seq;
