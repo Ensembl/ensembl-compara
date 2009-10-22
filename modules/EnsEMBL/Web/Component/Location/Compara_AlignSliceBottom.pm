@@ -20,8 +20,8 @@ sub content {
   my $object = $self->object;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   my $align_params = $object->param('align');
-  my ($align,$target_slice_name);
-  ($align,undef,$target_slice_name) = split '--', $align_params;
+  
+  my ($align, undef, $target_slice_name) = split '--', $align_params;
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   return $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>') unless $align;
@@ -51,15 +51,13 @@ sub content {
   my $html;
   my $info;
   
-  if ($align_details->{'class'} !~ /pairwise/) {
-    my %aligned_species = map { $_->{'name'} => 1 } @$slices;
+  my %aligned_species = map { $_->{'name'} => 1 } @$slices;
+  
+  foreach (keys %{$align_details->{'species'}}) {
+    next if /^($primary_species|merged)$/;
     
-    foreach (keys %{$align_details->{'species'}}) {
-      next if /^($primary_species|merged)$/;
-      
-      push @skipped, $_ if ($object->param(sprintf 'species_%d_%s', $align, lc)||'off') eq 'off';
-      push @missing, $_ unless $aligned_species{$_} || $_ eq 'Ancestral_sequences';
-    }
+    push @skipped, $_ if $align_details->{'class'} !~ /pairwise/ && ($object->param(sprintf 'species_%d_%s', $align, lc)||'off') eq 'off';
+    push @missing, $_ unless $aligned_species{$_} || $_ eq 'Ancestral_sequences';
   }
   
   foreach (@$slices) {
@@ -92,7 +90,7 @@ sub content {
   
   $html .= $image->render;
   
-  if (scalar @skipped) {
+  if (scalar @skipped) {  
     $info .= sprintf(
       '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>', 
       scalar @skipped, 
@@ -101,11 +99,15 @@ sub content {
   }
   
   if (scalar @missing) {
-    $info .= sprintf(
-      '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>', 
-      scalar @missing, 
-      join "</li>\n<li>", sort map $object->species_defs->species_label($_), @missing
-    );
+    if ($align_details->{'class'} =~ /pairwise/) {
+      $info .= sprintf '<p>%s has no alignment in this region</p>', $object->species_defs->species_label($missing[0]);
+    } else {
+      $info .= sprintf(
+        '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>', 
+        scalar @missing, 
+        join "</li>\n<li>", sort map $object->species_defs->species_label($_), @missing
+      );
+    }
   }
   
   $html .= $self->_info('Notes', $info) if $info;
