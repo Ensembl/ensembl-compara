@@ -980,11 +980,12 @@ sub species_path {
 
     my $sd = $self;
     my $current_species = $sd->SYSTEM_NAME($ENV{ENSEMBL_SPECIES}) || $ENV{ENSEMBL_SPECIES};
-    my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species);
-    my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
 
     my $nospaces = $sd->SYSTEM_NAME($species) || $species; 
     $nospaces =~ s/ /_/g;
+
+    my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species) || return "/$nospaces";
+    my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
 
 # Get the location of the requested species 
     my $spsite = uc($site_hash->{lc($nospaces)});

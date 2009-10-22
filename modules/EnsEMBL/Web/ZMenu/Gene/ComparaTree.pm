@@ -12,7 +12,10 @@ sub content {
   $self->SUPER::content;
   
   my $object       = $self->object;
+
   my $species      = $object->species;
+  my $species_path = $object->species_defs->species_path($species);
+
   my $phy_link     = $object->get_ExtURL('PHYLOMEDB', $object->stable_id);
   my $dyo_link     = $object->get_ExtURL('GENOMICUSSYNTENY', $object->stable_id);
   my $treefam_link = $object->get_ExtURL('TREEFAMSEQ', $object->stable_id);
@@ -29,7 +32,7 @@ sub content {
   $self->add_entry({
     type     => 'Species',
     label    => $species,
-    link     => "/$species",
+    link     => $species_path,
     position => 1
   });
   
