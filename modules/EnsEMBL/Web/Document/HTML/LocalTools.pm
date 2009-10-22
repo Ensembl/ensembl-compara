@@ -18,14 +18,23 @@ sub entries {
 
 sub render {
   my $self = shift;
+
+  my $html = $self->_content;
+  $self->print($html);
+}
+
+sub _content {
+  my $self = shift;
+  warn "@@@ RENDERING TOOL BUTTONS";
   
   return unless @{$self->entries};
   
   my %icons = (
-    'Configure this page' => 'config',
-    'Manage your data'    => 'data',
-    'Export data'         => 'export',
-    'Bookmark this page'  => 'bookmark'
+    'Configure this page'     => 'config',
+    'Manage your data'        => 'data',
+    'Export data'             => 'export',
+    'Bookmark this page'      => 'bookmark'
+    'Save this configuration' => 'bookmark'
   );
   
   my $html = ' 
@@ -55,36 +64,15 @@ sub render {
   
   $self->print($html);
 
-### EG want to acknowledge collaborators. 
-# If you add ACKNOWLEDGEMENT entry to an ini file then you get
-# a box with the ACKNOWLEDGEMENT text at the bottom of LH menu. It will link to /info/acknowledgement.html which 
-# you will have to create
-# If you add DB_BUILDER entry to an ini file then you get
-# a box with the text DB built by XXX at the bottom of LH menu. It will link to the current species' homepage
-
-  if (my $ack_text = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ACKNOWLEDGEMENT) {
-      $self->print( q(<div>
-		      <ul>) );
-      $self->printf('<li style="list-style:none" title="%s"><a href="%s">%s</a></li>',$ack_text,'/info/acknowledgement.html', $ack_text);
-
-      $self->print( q(
-		      </ul>
-		      </div>) );
-  }
-
-  if (my $db_provider = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->DB_BUILDER) {
-      my $spath = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->species_path($ENV{ENSEMBL_SPECIES});
-      
-      $self->print( q(<div>
-		      <ul>) );
-      $self->printf('<li style="list-style:none"><a href="%s/Info/Index">DB built by %s</a></li>', $spath , $db_provider);
-
-      $self->print( q(
-		      </ul>
-		      </div>) );
-  }
-
-
 }
+
+sub get_json {
+  my $self = shift;
+
+  my $content = $self->_content;
+
+  return qq{'tools':'$content'};
+}
+
 
 1;
