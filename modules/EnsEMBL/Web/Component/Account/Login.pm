@@ -26,8 +26,8 @@ sub content {
   my $self = shift;
 
   ## Control panel fixes
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
-  $dir = '' if $dir !~ /_/;
+  my $dir = '';
+  $dir = $self->object->species_defs->species_path($ENV{'ENSEMBL_SPECIES'}) if ($ENV{'ENSEMBL_SPECIES'});
   
   my $referer = '_referer=' . $self->object->param('_referer');
   $referer .= ';x_requested_with=' . $self->object->param('x_requested_with') if $ENSEMBL_WEB_REGISTRY->check_ajax;
