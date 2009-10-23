@@ -350,7 +350,7 @@ sub loadMembersFromCoreSlices
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
     #print("slice " . $slice->name . "\n");
-    foreach my $gene (@{$slice->get_all_Genes}) {
+    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
 
       # LV and C are for the Ig/TcR family, which rearranges
@@ -385,8 +385,9 @@ sub store_gene_and_all_transcripts
   my $self = shift;
   my $gene = shift;
   
-  my @longestPeptideMember;
-  my $maxLength=0;
+  # my @longestPeptideMember;
+  my @canonicalPeptideMember;
+  # my $maxLength=0;
   my $gene_member;
   my $gene_member_not_stored = 1;
 
@@ -484,15 +485,18 @@ sub store_gene_and_all_transcripts
     $self->{memberDBA}->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
     print(" : stored\n") if($self->{'verbose'});
 
-    if($pep_member->seq_length > $maxLength) {
-      $maxLength = $pep_member->seq_length;
-      @longestPeptideMember = ($transcript, $pep_member);
+#     if($pep_member->seq_length > $maxLength) {
+#       $maxLength = $pep_member->seq_length;
+#       @longestPeptideMember = ($transcript, $pep_member);
+#     }
+    if($transcript->stable_id eq $gene->canonical_transcript->stable_id) {
+      @canonicalPeptideMember = ($transcript, $pep_member);
     }
 
   }
 
-  if(@longestPeptideMember) {
-    my ($transcript, $member) = @longestPeptideMember;
+  if(@canonicalPeptideMember) {
+    my ($transcript, $member) = @canonicalPeptideMember;
     $self->{'pepSubset'}->add_member($member);
     $self->{'longestCount'}++;
     # print("     LONGEST " . $transcript->stable_id . "\n");
