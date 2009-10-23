@@ -23,21 +23,14 @@ sub _get_details {
   my $self = shift;
   my $object = $self->object;
   my $member = $object->get_compara_Member;
-  return (undef, $self->_error(
-    'No compara member',
-    q(<p>Unable to render gene tree as gene is not in the Comparative genomics database</p>)
-  )) unless $member;
+  return (undef, "<B>Gene is not in the $cdb database</B>", '') unless $member;
 
   my $tree   = $object->get_ProteinTree;
-  return (undef,$self->_error(
-    'Gene not in protein tree',
-    q(<p>This gene has no orthologues in Ensembl Compara, so a gene tree cannot be built.</p>)
-  )) unless $tree;
+  return (undef, "<B> Gene is not in a $cdb protein tree </B>",     "<p>Could not get protein tree in $cdb for this gene</p>") unless $tree;
+
   my $node   = $tree->get_leaf_by_Member($member);
-  return(undef,$self->_error(
-    'Gene not in tree',
-    sprintf( q(<p>Member %s not in tree %s</p>), $member->stable_id, $tree->node_id )
-  )) unless $node;
+  return(undef,"<B> Gene is not in the $cdb tree </B>", sprintf( q(<p>Member %s not in $cdb tree %s</p>), $member->stable_id, $tree->node_id )) unless $node;
+
   return ($member,$tree,$node);
 }
 
