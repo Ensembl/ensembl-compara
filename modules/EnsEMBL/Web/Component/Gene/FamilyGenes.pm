@@ -15,10 +15,11 @@ sub _init {
 
 sub content {
   my $self = shift;
+
   my $object = $self->object;
   my $species = $object->species;
   my $family_id = $object->param('family');
-
+  my $spath = $object->species_defs->species_path($species);
   my $html = undef;
 
   if ($family_id) {
@@ -39,7 +40,7 @@ sub content {
       $image->image_type = "family";
       $image->image_name = "$species-".$family_id;
       $image->imagemap = 'yes';
-      $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
+      $image->set_button('form', 'id'=>'vclick', 'URL'=>"$spath/jump_to_location_view");
 ##      unless( $image->exists ) {
         my %high = ( 'style' => 'arrow' );
         foreach my $g (@$genes){
@@ -54,8 +55,8 @@ sub content {
             'col'   => $colour,
             'zmenu' => {
             'caption'               => 'Genes',
-            "00:$stable_id"         => "/$species/Gene/Summary?g=$stable_id",
-            '01:Jump to contigview' => "/$species/Location/View?r=$chr:$start-$end;g=$stable_id"
+            "00:$stable_id"         => "$spath/Gene/Summary?g=$stable_id",
+            '01:Jump to contigview' => "$spath/Location/View?r=$chr:$start-$end;g=$stable_id"
             }
           };
           if(exists $high{$chr}) {
@@ -82,9 +83,9 @@ sub content {
                             $a->seq_region_start <=> $b->seq_region_start } @$genes ) {
       
         my $row = {};
-        $row->{'id'} = sprintf '<a href="/%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="/%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small" style="text-decoration:none">%s: %s</a>',
-                $object->species, $gene->stable_id, $gene->stable_id,
-                $object->species, $gene->slice->seq_region_name, $gene->start, $gene->end,
+        $row->{'id'} = sprintf '<a href="%s/Gene/Summary?g=%s" title="More about this gene">%s</a><br /><a href="%s/Location/View?r=%s:%s-%s" title="View this location on the genome" class="small" style="text-decoration:none">%s: %s</a>',
+                $spath, $gene->stable_id, $gene->stable_id,
+                $spath, $gene->slice->seq_region_name, $gene->start, $gene->end,
                 $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name), 
                 $object->round_bp( $gene->start );
         my $xref = $gene->display_xref;
