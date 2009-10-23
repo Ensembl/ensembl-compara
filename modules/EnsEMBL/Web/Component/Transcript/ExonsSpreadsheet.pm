@@ -21,6 +21,7 @@ sub caption {
 sub content {
   my $self = shift;
   my $object   = $self->object;
+  my $species_path = $object->species_defs->species_path($object->species);
 
   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
   $table->add_columns(
@@ -260,7 +261,7 @@ sub content {
     }
     $exon_info = {
       'Number'    => $j,
-      'exint'     => qq(<a href="/@{[$object->species]}/contigview?l=$chr_name:$exonA_start-$exonA_end;context=100">$exonA_ID</a>),
+      'exint'     => qq(<a href="$species_path/contigview?l=$chr_name:$exonA_start-$exonA_end;context=100">$exonA_ID</a>),
     #  'Chr'       => $chr_name, 'Strand'    => $strand,
       'Start'     => $object->thousandify( $exonA_start ),
       'End'       => $object->thousandify( $exonA_end ),
@@ -301,7 +302,7 @@ sub content {
 
       $intron_info = {
         'Number'    => "&nbsp;",
-        'exint'     => qq(<a href="/@{[$object->species]}/contigview?l=$chr_name:$intron_start-$intron_end;context=100">$intron_id</a>),
+        'exint'     => qq(<a href="$species_path/contigview?l=$chr_name:$intron_start-$intron_end;context=100">$intron_id</a>),
       # 'Chr'       => $chr_name, 'Strand'    => $strand,
         'Start'     => $object->thousandify( $intron_start ),
         'End'       => $object->thousandify( $intron_end ),
