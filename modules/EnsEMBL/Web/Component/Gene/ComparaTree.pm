@@ -60,19 +60,19 @@ sub content {
   my @hidden_clades  = grep {$_ =~ /^group_/ and $object->param($_) eq "hide"} $object->param();
   my @collapsed_clades  = grep {$_ =~ /^group_/ and $object->param($_) eq "collapse"} $object->param();
 
-  my $hidden_taxa;
+  my $hidden_genome_db_ids;
   my $hidden_genes_counter = 0;
   if (@hidden_clades) {
-    $hidden_taxa = "_";
+    $hidden_genome_db_ids = "_";
     foreach my $clade (@hidden_clades) {
-      my ($clade_name) = $clade =~ /group_([\w\-]+)/;
-      $hidden_taxa .= $object->param("group_${clade_name}_taxa") . "_";
+      my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
+      $hidden_genome_db_ids .= $object->param("group_${clade_name}_genome_db_ids") . "_";
     }
     my $leaves = $tree->get_all_leaves;
     foreach my $this_leaf (@$leaves) {
-      my $taxon_id = $this_leaf->genome_db->taxon_id;
-      next if ($taxon_id == $member->genome_db->taxon_id);
-      if ($hidden_taxa =~ /_${taxon_id}_/) {
+      my $genome_db_id = $this_leaf->genome_db_id;
+      next if ($genome_db_id == $member->genome_db_id);
+      if ($hidden_genome_db_ids =~ /_${genome_db_id}_/) {
         $hidden_genes_counter++;
         $this_leaf->disavow_parent;
         $tree = $tree->minimize_tree;
@@ -109,9 +109,9 @@ sub content {
   # print $self->_info("Collapsed nodes",  join(" -- ", split(",", $collapsed_nodes)));
   if (@collapsed_clades) {
     foreach my $clade (@collapsed_clades) {
-      my ($clade_name) = $clade =~ /group_([\w\-]+)/;
-      my $extra_collapsed_nodes = _find_nodes_by_taxa($tree,
-          [split("_", $object->param("group_${clade_name}_taxa"))], "internal");
+      my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
+      my $extra_collapsed_nodes = _find_nodes_by_genome_db_ids($tree,
+          [split("_", $object->param("group_${clade_name}_genome_db_ids"))], "internal");
       if (%$extra_collapsed_nodes) {
         $collapsed_nodes .= "," if ($collapsed_nodes);
         $collapsed_nodes .= join(",", keys %$extra_collapsed_nodes);
@@ -127,25 +127,25 @@ sub content {
 
     my @clades = grep {$_ =~ /^group_.+_${mode}colour/ } $object->param();
 
-    # Get all the taxa in each clade
-    my $taxa_by_clade;
+    # Get all the genome_db_ids in each clade
+    my $genome_db_ids_by_clade;
     foreach my $clade (@clades) {
       my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
-      $taxa_by_clade->{$clade_name} = [split("_", $object->param("group_${clade_name}_taxa"))]
+      $genome_db_ids_by_clade->{$clade_name} = [split("_", $object->param("group_${clade_name}_genome_db_ids"))]
     }
 
-    # Sort the clades by the number of taxa. First the largest clades,
+    # Sort the clades by the number of genome_db_ids. First the largest clades,
     # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
     foreach my $clade_name (sort {
-          scalar(@{$taxa_by_clade->{$b}}) <=> scalar(@{$taxa_by_clade->{$a}})
-	} keys %$taxa_by_clade) {
-      my $taxa = $taxa_by_clade->{$clade_name};
+          scalar(@{$genome_db_ids_by_clade->{$b}}) <=> scalar(@{$genome_db_ids_by_clade->{$a}})
+	} keys %$genome_db_ids_by_clade) {
+      my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
       my $colour = $object->param("group_${clade_name}_${mode}colour") || "magenta";
       my $these_coloured_nodes;
       if ($mode eq "fg") {
-        $these_coloured_nodes = _find_nodes_by_taxa($tree, $taxa, "all");
+        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, "all");
       } else {
-        $these_coloured_nodes = _find_nodes_by_taxa($tree, $taxa);
+        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids);
       }
       if (%$these_coloured_nodes) {
         push(@$coloured_nodes, {
@@ -259,19 +259,19 @@ sub _collapsed_nodes{
   return $collapsed_node_ids;
 }
 
-sub _find_nodes_by_taxa {
-  my ($tree, $taxa, $mode) = @_;
+sub _find_nodes_by_genome_db_ids {
+  my ($tree, $genome_db_ids, $mode) = @_;
   my $node_ids = {};
 
   if ($tree->is_leaf()) {
-    my $taxon_id = $tree->genome_db->taxon_id;
-    if (grep {$_ eq $taxon_id} @$taxa) {
+    my $genome_db_id = $tree->genome_db_id;
+    if (grep {$_ eq $genome_db_id} @$genome_db_ids) {
       $node_ids->{$tree->node_id} = 1;
     }
   } else {
     my $tag = 1;
     foreach my $this_child (@{$tree->children}) {
-      my $these_node_ids = _find_nodes_by_taxa($this_child, $taxa, $mode);
+      my $these_node_ids = _find_nodes_by_genome_db_ids($this_child, $genome_db_ids, $mode);
       foreach my $node_id (keys %$these_node_ids) {
         $node_ids->{$node_id} = 1;
       }
