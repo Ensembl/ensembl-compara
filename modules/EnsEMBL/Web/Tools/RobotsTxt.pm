@@ -37,7 +37,7 @@ warn "--------------------------------------------------------------------------
       print FH qq(
 User-agent: *
 Disallow:   /Multi/
-Disallow:   /BioMart/);
+Disallow:   /biomart/);
       foreach( @{$species||[]} ) {
         print FH qq(
 
