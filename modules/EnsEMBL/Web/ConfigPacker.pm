@@ -71,16 +71,35 @@ sub _summarise_generic {
 #---------- Meta table (everything except patches)
 ## Needs tweaking to work with new ensembl_ontology_xx db, which has no species_id in meta table
   if( $self->_table_exists( $db_name, 'meta' ) ) {
+    my $hash = {};
+# With multi species DB there is no way to define the list of chromosomes for the karyotype in the ini file
+# The idea is the people who produce the DB can define the lists in the meta table using region.toplevel met key
+# In case there is no such definition of the karyotype - we just create the lists of toplevel regions for each species.
+
+    if( $db_name =~ /CORE/) {
+        my $t_aref = $dbh->selectall_arrayref(
+					      qq{SELECT cs.species_id, s.name FROM seq_region s, coord_system cs
+WHERE s.coord_system_id = cs.coord_system_id and cs.attrib = 'default_version'
+ORDER by cs.species_id, s.seq_region_id}
+					      );
+
+        foreach my $row ( @$t_aref ) {
+            push @{$hash->{$row->[0]}{'region.toplevel'}}, $row->[1];
+        }
+    }
+
     $t_aref  = $dbh->selectall_arrayref(
       'select meta_key,meta_value,meta_id, species_id
          from meta
         where meta_key != "patch"
         order by meta_key, meta_id'
     );
-    my $hash = {};
+
     foreach my $r( @$t_aref) {
       push @{ $hash->{$r->[3]+0}{$r->[0]}}, $r->[1];
     }
+
+
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
 }
@@ -1045,6 +1064,22 @@ sub _munge_meta {
     my $assembly_date = $meta_hash->{'assembly.date'}[0];
     @A = split('-', $assembly_date);
     $self->tree->{$species}{'ASSEMBLY_DATE'} = $months[$A[1]].' '.$A[0];
+
+# check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
+# they can be overwritten at a later stage  via INI files
+    my @ks = grep { /^sample\./ } keys %{$meta_hash || {}};
+    my $shash;
+
+    foreach my $k (@ks) {
+        (my $k1 = $k) =~ s/^sample\.//;
+        $shash->{ uc($k1) } = $meta_hash->{$k}->[0];
+    }
+
+    $self->tree->{$species}{SAMPLE_DATA} = $shash if ($shash);
+
+# check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
+    @{$self->tree($species)->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
+
   }
 }
 
