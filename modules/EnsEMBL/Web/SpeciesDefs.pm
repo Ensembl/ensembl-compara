@@ -970,43 +970,45 @@ sub species_dropdown {
   return @options;
 }
 
-### This function will return the path including URL to all known ( by Compara) species.
-### Some species in genetree can be from other EG units, and some can be from external sources
-### At the moment the mapping between species name and its source ( full url ) is stored in DEFAULTs.ini
-### But it really should come from compara db
-
 sub species_path {
-    my ($self, $species) = @_;
+### This function will return the path including URL to all known ( by Core & Compara) species.
+### Some species in genetree can be from other EG units, and some can be from external sources
+### URLs returned in the format /species_url (for species local to this installation) or
+### http://www.externaldomain.org/species_url (for external species, e.g. in pan-compara)
 
-    my $sd = $self;
-    my $current_species = $sd->SYSTEM_NAME($ENV{ENSEMBL_SPECIES}) || $ENV{ENSEMBL_SPECIES};
+    my ($sd, $species) = @_;
+    $species = $ENV{ENSEMBL_SPECIES} unless $species;
+    my $URL;
 
-    my $nospaces = $sd->SYSTEM_NAME($species) || $species; 
-    $nospaces =~ s/ /_/g;
+    ## Is this species found on this site?
+    my $local = grep ($species @{$sd->valid_species});
+    if ($local) {
+      $URL = '/'.$species;
+    }
+    else { 
+      ## At the moment the mapping between species name and its source ( full url ) is stored in DEFAULTs.ini
+      ## But it really should come from compara db
+      my $current_species = $sd->SYSTEM_NAME($ENV{ENSEMBL_SPECIES}) || $ENV{ENSEMBL_SPECIES};
 
-    my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species) || return "/$nospaces";
-    my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
+      my $nospaces = $sd->SYSTEM_NAME($species) || $species; 
+      $nospaces =~ s/ /_/g;
 
-# Get the location of the requested species 
-    my $spsite = uc($site_hash->{lc($nospaces)});
+      my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species) || return "/$nospaces";
+      my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
 
-# Get the location of the current site species
-    my $cssite = uc($site_hash->{lc($current_species)});
+      # Get the location of the requested species 
+      my $spsite = uc($site_hash->{lc($nospaces)});
 
-# Get the URL for the location
-    my $base_url = $url_hash->{$spsite} || '';
+      # Get the location of the current site species
+      my $cssite = uc($site_hash->{lc($current_species)});
 
-# Replace ###SPECIES### with the species name
-    (my $URL = $base_url) =~ s/\#\#\#SPECIES\#\#\#/$nospaces/;
+      # Get the URL for the location
+      my $base_url = $url_hash->{$spsite} || '';
 
-# If we had to do the substitution let's check the species are not on the same site
-# as the current species - in that case we don't need the host name bit
+      # Replace ###SPECIES### with the species name
+      ($URL = $base_url) =~ s/\#\#\#SPECIES\#\#\#/$nospaces/;
 
-    if ($base_url =~ /\#\#\#SPECIES\#\#\#/) {
-      if (substr($spsite, 0, 5) eq substr($cssite,0, 5)) {
-	  $URL =~ s/^http\:\/\/[^\/]+\//\//;
-      }
-  }
+    }
 
     return $URL;
 }
