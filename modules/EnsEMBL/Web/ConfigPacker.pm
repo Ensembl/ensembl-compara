@@ -756,6 +756,48 @@ sub _summarise_compara_db {
     $self->db_tree->{ $db_name }{$KEY}{$species1}{$species2} = $valid_species{ $species2 };
   }
 #		  &eprof_dump(\*STDERR);		
+
+  ###################################################################
+  ## Section for colouring and colapsing/hidding genes per species in the GeneTree View
+  # 1. Only use the species_sets that have a genetree_display tag
+  $res_aref = $dbh->selectall_arrayref(q(
+    SELECT species_set_id FROM species_set_tag
+    WHERE tag = 'genetree_display'
+  ));
+  foreach my $row (@$res_aref) {
+    # 2.1 For each set, get all the tags
+    my ($species_set_id) = @$row;
+    my $res_aref2 = $dbh->selectall_arrayref(qq(
+      SELECT tag, value FROM species_set_tag
+      WHERE species_set_id = $species_set_id
+    ));
+    my $res;
+    foreach my $row2 (@$res_aref2) {
+      my ($tag, $value) = @$row2;
+      $res->{$tag} = $value;
+    }
+    # 2.2 Get the name for this set (required)
+    my $name = $res->{'name'};
+    next if (!$name); # Requires a name for the species_set
+    # 2.3 Store the values
+    while (my ($key, $value) = each %$res) {
+      next if ($key eq 'name');
+      $self->db_tree->{ $db_name }{'SPECIES_SET'}{$name}{$key} = $value;
+    }
+
+    # 3. Get the genome_db_ids for each set
+    $res_aref2 = $dbh->selectall_arrayref(qq(
+      SELECT genome_db_id FROM species_set
+      WHERE species_set_id = $species_set_id
+    ));
+    foreach my $row2 (@$res_aref2) {
+      my ($genome_db_id) = @$row2;
+      push @{$self->db_tree->{ $db_name }{'SPECIES_SET'}{$name}{'genome_db_ids'}}, $genome_db_id;
+    }
+  }
+  ## End section about colouring and colapsing/hidding gene in the GeneTree View
+  ###################################################################
+
   $dbh->disconnect();
 }
 
