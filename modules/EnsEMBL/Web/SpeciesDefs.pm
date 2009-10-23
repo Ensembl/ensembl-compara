@@ -975,13 +975,12 @@ sub species_path {
 ### Some species in genetree can be from other EG units, and some can be from external sources
 ### URLs returned in the format /species_url (for species local to this installation) or
 ### http://www.externaldomain.org/species_url (for external species, e.g. in pan-compara)
-
     my ($sd, $species) = @_;
     $species = $ENV{ENSEMBL_SPECIES} unless $species;
     my $URL;
 
     ## Is this species found on this site?
-    my $local = grep ($species @{$sd->valid_species});
+    my $local = grep $species, $sd->valid_species;
     if ($local) {
       $URL = '/'.$species;
     }
