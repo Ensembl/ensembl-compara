@@ -36,6 +36,7 @@ sub get_session       { return $_[0]->{'session'} ||  $ENSEMBL_WEB_REGISTRY->get
 sub delete_param      { my $self = shift; $self->{'data'}{'_input'}->delete(@_); }
 sub get_databases     { my $self = shift; $self->DBConnection->get_databases(@_); }
 sub databases_species { my $self = shift; $self->DBConnection->get_databases_species(@_); }
+sub species_path      { my $self = shift; $self->species_defs->species_path(@_); }
 
 sub table_info {
   my $self = shift;
@@ -74,7 +75,7 @@ sub _url {
     }
   }
   
-  my $url = sprintf '/%s/%s/%s', $species, $type, $action.( $fn ? "/$fn" : '' );
+  my $url = sprintf '%s/%s/%s', $self->species_path($species), $type, $action.( $fn ? "/$fn" : '' );
   my $join = '?';
   
   my $flag = shift;
