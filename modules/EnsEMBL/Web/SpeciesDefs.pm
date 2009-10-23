@@ -979,6 +979,7 @@ sub species_path {
     $species = $ENV{ENSEMBL_SPECIES} unless $species;
     my $URL;
 
+    ## EK :: This bit about local species needs reworking as it will not work for bacteria - they need clade name in front
     ## Is this species found on this site?
     my $local = grep $species, $sd->valid_species;
     if ($local) {
