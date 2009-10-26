@@ -18,14 +18,11 @@ sub entries {
 
 sub render {
   my $self = shift;
-
-  my $html = $self->_content;
-  $self->print($html);
+  $self->print($self->_content);
 }
 
 sub _content {
   my $self = shift;
-  warn "@@@ RENDERING TOOL BUTTONS";
   
   return unless @{$self->entries};
   
@@ -34,35 +31,33 @@ sub _content {
     'Manage your data'        => 'data',
     'Export data'             => 'export',
     'Bookmark this page'      => 'bookmark'
-    'Save this configuration' => 'bookmark'
   );
   
-  my $html = ' 
-  <div id="local-tools" style="display:none">
-  ';
-  
-  foreach (@{$self->entries}) {
+  my $html = '<div id="local-tools">';
+
+  foreach( @{$self->entries} ) {
+
     my $icon = qq{<img src="/i/$icons{$_->{'caption'}}.png" alt="" style="vertical-align:middle;padding:0px 4px" />};
-    
+
     if ($_->{'class'} eq 'disabled') {
       $html .= qq{<p class="disabled" title="$_->{'title'}">$icon$_->{'caption'}</p>};
-    } else {
+    }
+    else {
       my $attrs = $_->{'class'};
       my $rel = lc $_->{'rel'};
       $attrs .= ($attrs ? ' ' : '') . 'external' if $rel eq 'external';
       $attrs = qq{class="$attrs"} if $attrs;
       $attrs .= ' style="display:none"' if $attrs =~ /modal_link/;
       $attrs .= qq{ rel="$rel"} if $rel;
-      
+
       $html .= qq{
         <p><a href="$_->{'url'}" $attrs>$icon$_->{'caption'}</a></p>};
     }
+
   }
-  
-  $html .= '
-  </div>';
-  
-  $self->print($html);
+  $html .= '</div>';
+
+  return $html; 
 
 }
 
