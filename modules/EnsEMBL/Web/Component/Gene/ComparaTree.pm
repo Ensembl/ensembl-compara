@@ -46,6 +46,31 @@ sub content {
   my ( $member,$tree,$node ) = $self->_get_details;
   return $tree if !defined $member;
 
+  my $leaves = $tree->get_all_leaves;
+
+  my $highlight_gene    = $object->param('g1');
+  my $highlight_species;
+  my $highlight_genome_db_id;
+  if ($highlight_gene) {
+    my $highlight_gene_display_label;
+    foreach my $this_leaf (@$leaves) {
+      if ($highlight_gene and $this_leaf->gene_member->stable_id eq $highlight_gene) {
+        $highlight_gene_display_label = $this_leaf->gene_member->display_label;
+        $highlight_species = $this_leaf->gene_member->genome_db->name;
+        $highlight_genome_db_id = $this_leaf->gene_member->genome_db_id;
+        last;
+      }
+    }
+
+    if ($highlight_gene_display_label) {
+      print $self->_info( 'Highlighted genes', "In addition to all <I>".$member->genome_db->name. "</I> genes,".
+          " the $highlight_gene_display_label gene (<I>$highlight_species</I>) and its paralogues have been highlighted. ".
+          "<a href=".$object->_url().">Click here to switch off highlighting</a>." );
+    } else {
+      $highlight_gene = undef;
+    }
+  }
+
   my $wuc          = $object->image_config_hash( 'genetreeview' );
   my $image_width  = $self->image_width || 800;
   my $collapsability = $object->param('collapsability') || 'gene';
@@ -61,9 +86,10 @@ sub content {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
       $hidden_genome_db_ids .= $object->param("group_${clade_name}_genome_db_ids") . "_";
     }
-    my $leaves = $tree->get_all_leaves;
     foreach my $this_leaf (@$leaves) {
       my $genome_db_id = $this_leaf->genome_db_id;
+      next if ($highlight_genome_db_id and $genome_db_id eq $highlight_genome_db_id);
+      next if ($highlight_gene and $this_leaf->gene_member->stable_id eq $highlight_gene);
       next if ($genome_db_id == $member->genome_db_id);
       if ($hidden_genome_db_ids =~ /_${genome_db_id}_/) {
         $hidden_genes_counter++;
@@ -88,9 +114,9 @@ sub content {
 
   my $collapsed_nodes = $object->param('collapse');
   
-  my $collapsed_to_gene = $self->_collapsed_nodes($tree,$node, 'gene');
-  my $collapsed_to_para = $self->_collapsed_nodes($tree,$node, 'paralogs');
-  my $collapsed_to_dups = $self->_collapsed_nodes($tree,$node, 'duplications');
+  my $collapsed_to_gene = $self->_collapsed_nodes($tree,$node, 'gene', $highlight_genome_db_id, $highlight_gene);
+  my $collapsed_to_para = $self->_collapsed_nodes($tree,$node, 'paralogs', $highlight_genome_db_id, $highlight_gene);
+  my $collapsed_to_dups = $self->_collapsed_nodes($tree,$node, 'duplications', $highlight_genome_db_id, $highlight_gene);
 
   unless( defined( $collapsed_nodes ) ){ #Examine collapsabilty
     $collapsed_nodes = $collapsed_to_gene if( $collapsability eq 'gene');
@@ -156,6 +182,10 @@ sub content {
 
   push @highlights, $coloured_nodes || undef;
 
+  push @highlights, $highlight_genome_db_id || undef;
+
+  push @highlights, $highlight_gene || undef;
+
   my $image  = $self->new_image
       ( $tree, $wuc, [@highlights] );
   return if $self->_export_image($image, 'no_text');
@@ -170,26 +200,31 @@ sub content {
   $image->set_button( 'drag', 'title' => 'Drag to select region' );
 
   my $info;
-  my $li_tmpl = qq(
-<li><a href="%s">%s</a></li>);
+  my $li_tmpl = qq(<li><a href="%s">%s</a></li>);
   my @view_links;
 
   push @view_links, sprintf( $li_tmpl,
-                             $object->_url({'collapse'=>$collapsed_to_gene}),
-                             'View current gene only');
+                             $object->_url({'collapse'=>$collapsed_to_gene,'g1'=>$highlight_gene}),
+                             $highlight_gene?'View current genes only':'View current gene only');
 
   push @view_links, sprintf( $li_tmpl,
-                             $object->_url({'collapse'=>$collapsed_to_para}),
-                             'View paralogs of current gene');
+                             $object->_url({'collapse'=>$collapsed_to_para,'g1'=>$highlight_gene}),
+                             $highlight_gene?'View paralogs of current genes':'View paralogs of current gene');
 
   push @view_links, sprintf( $li_tmpl,
-                             $object->_url({'collapse'=>$collapsed_to_dups}),
+                             $object->_url({'collapse'=>$collapsed_to_dups,'g1'=>$highlight_gene}),
                              'View all duplication nodes');
 
   push @view_links, sprintf( $li_tmpl,
-                             $object->_url({'collapse'=>''}),
+                             $object->_url({'collapse'=>'','g1'=>$highlight_gene}),
                              'View fully expanded tree');
-  
+
+  if ($highlight_gene) {
+    push @view_links, sprintf( $li_tmpl,
+                             $object->_url(),
+                             'Switch off highlighting');
+  }
+
   my $view_options_html = sprintf( qq(
 <div style="margin-top:1em"><b>View options:</b><br/>
 <small><ul>%s</ul></small>
@@ -207,6 +242,8 @@ sub _collapsed_nodes{
   my $tree = shift;
   my $node = shift;
   my $action = shift;
+  my $highlight_genome_db_id = shift;
+  my $highlight_gene = shift;
   $tree->isa('Bio::EnsEMBL::Compara::ProteinTree') 
       || die( "Need a ProteinTree, not a $tree" );
   $node->isa('Bio::EnsEMBL::Compara::AlignedMember')
@@ -219,11 +256,27 @@ sub _collapsed_nodes{
     foreach my $adj( @{$node->get_all_adjacent_subtrees} ){
       $collapsed_nodes{$adj->node_id} = $_;
     }
+    if ($highlight_gene) {
+      foreach my $ancestor( @{$node->get_all_ancestors} ){
+        $expanded_nodes{$ancestor->node_id} = $ancestor;
+      }
+      foreach my $leaf( @{$tree->get_all_leaves} ){
+        foreach my $adj( @{$leaf->get_all_adjacent_subtrees} ){
+          $collapsed_nodes{$adj->node_id} = $_;
+        }
+        if( $leaf->gene_member->stable_id eq $highlight_gene ){
+          foreach my $ancestor( @{$leaf->get_all_ancestors} ){
+            $expanded_nodes{$ancestor->node_id} = $ancestor;
+          }
+          last;
+        }
+      }
+    }
   }
   elsif( $action eq 'paralogs' ){ # View all paralogs
     my $gdb_id = $node->genome_db_id;
     foreach my $leaf( @{$tree->get_all_leaves} ){
-      if( $leaf->genome_db_id == $gdb_id ){
+      if( $leaf->genome_db_id == $gdb_id or ($highlight_genome_db_id and $leaf->genome_db_id == $highlight_genome_db_id) ){
         foreach my $ancestor( @{$leaf->get_all_ancestors} ){
           $expanded_nodes{$ancestor->node_id} = $ancestor;
         }
