@@ -398,7 +398,7 @@ sub copy_genomic_align_blocks {
     ## Internal IDs are OK.
     $fix_lower = 0;
   } else {
-    print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
+    die " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
 
   ## Check availability of the internal IDs in the TO database
