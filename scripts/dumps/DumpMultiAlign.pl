@@ -598,10 +598,10 @@ exit(0);
 sub print_header {
   my ($output_format, $method_link_species_set, $date, $release, $num) = @_;
 
-  if ($output_format eq "maf") {
+  if ($output_format =~ /^maf$/i) {
     print "##maf version=1 program=", $method_link_species_set->method_link_type, "\n";
     print "#\n";
-  } elsif ($output_format eq "emf") {
+  } elsif ($output_format =~ /^emf$/i) {
     print
       "##FORMAT (compara)\n",
       "##DATE $date\n",
@@ -639,9 +639,9 @@ sub print_header {
 sub write_genomic_align_block {
   my ($output_format, $this_genomic_align_block) = @_;
 
-  if ($output_format eq "maf") {
+  if ($output_format =~ /^maf$/i) {
     return print_my_maf($this_genomic_align_block);
-  } elsif ($output_format eq "emf") {
+  } elsif ($output_format =~ /^emf$/i) {
     return print_my_emf($this_genomic_align_block);
   }
   my $alignIO = Bio::AlignIO->newFh(
