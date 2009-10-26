@@ -121,6 +121,16 @@ sub content {
         );
       }
       
+      $target_links .= sprintf(
+        '<br /><span class="small">[<a href="%s">Gene Tree (image)</a>] </span>',
+        $object->_url({
+          type   => 'Gene',
+          action => 'Compara_Tree',
+          g1     => $stable_id,
+          r      => undef
+        })
+      );
+      
       # (Column 5) External ref and description
       my $description = escapeHTML($orthologue->{'description'});
          $description = 'No description' if $description eq 'NULL';
