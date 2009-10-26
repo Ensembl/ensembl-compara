@@ -23,6 +23,7 @@ sub _init {
   my $coloured_nodes        = $self->{highlights}->[3] || [];
   my $other_genome_db_id    = $self->{highlights}->[4];
   my $other_gene            = $self->{highlights}->[5];
+  my $highlight_ancestor    = $self->{highlights}->[6];
   my $tree          = $self->{'container'};
   my $Config        = $self->{'config'};
   my $bitmap_width = $Config->image_width(); 
@@ -147,6 +148,9 @@ sub _init {
       $label_colour = $f->{_fg_colour} if (!$label_colour);
       $collapsed_colour = $f->{_fg_colour} if (!$collapsed_colour);
     }
+    if ($highlight_ancestor and $highlight_ancestor == $f->{'_id'}) {
+      $bold = 1;
+    }
     $node_colour = "navyblue" if (!$node_colour); # Default colour
     $label_colour = "black" if (!$label_colour); # Default colour
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
@@ -204,15 +208,28 @@ sub _init {
       # Add a 'collapse' href
       my $node_glyph = Sanger::Graphics::Glyph::Rect->new
           ({
-            'x'         => $f->{x},
-            'y'         => $f->{y},
-            'width'     => 5,
-            'height'    => 5,
+            'x'         => $f->{x} - $bold,
+            'y'         => $f->{y} - $bold,
+            'width'     => 5 + 2 * $bold,
+            'height'    => 5 + 2 * $bold,
             'colour'    => $node_colour,
             'zindex'    => ($f->{_dup} ? 40 : -20),
             'href'      => $node_href
           });
       push @node_glyphs, $node_glyph;
+      if ($bold) {
+        my $node_glyph = Sanger::Graphics::Glyph::Rect->new
+            ({
+              'x'         => $f->{x},
+              'y'         => $f->{y},
+              'width'     => 5,
+              'height'    => 5,
+              'bordercolour' => "white",
+              'zindex'    => ($f->{_dup} ? 40 : -20),
+              'href'      => $node_href
+            });
+        push @node_glyphs, $node_glyph;
+      }
 
     }
     else{ # Leaf node
