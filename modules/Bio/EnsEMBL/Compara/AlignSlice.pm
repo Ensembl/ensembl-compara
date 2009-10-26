@@ -429,13 +429,10 @@ sub get_all_Slices {
 
   if (@species_names) {
     foreach my $slice (@{$self->{_slices}}) {
-    	#Search for underscore in GenomeDB name; if not there (index returned 
-    	#a position less than 0) then allow the "original" behaviour
-    	my $remove_underscore = (index($slice->genome_db->name(),'_') < 0) ? 1 : 0;
       foreach my $this_species_name (@species_names) {
-        $this_species_name =~ s/_/ /g if $remove_underscore;
-        push(@$slices, $slice) if ($this_species_name eq $slice->genome_db->name);
-      }
+	(my $space_species_name = $this_species_name) =~ s/_/ /g; ## supports names containing underscores instead of whitespaces and vice versa
+	push(@$slices, $slice) if (($this_species_name eq $slice->genome_db->name) || ($space_species_name eq $slice->genome_db->name));
+       }
     }
   } else {
     $slices = $self->{_slices};
