@@ -48,25 +48,27 @@ sub content {
 
   my $leaves = $tree->get_all_leaves;
 
-  my $highlight_gene    = $object->param('g1');
+  my $highlight_gene     = $object->param('g1');
+  my $highlight_ancestor = $object->param('anc');
   my $highlight_species;
   my $highlight_genome_db_id;
   if ($highlight_gene) {
     my $highlight_gene_display_label;
     foreach my $this_leaf (@$leaves) {
       if ($highlight_gene and $this_leaf->gene_member->stable_id eq $highlight_gene) {
-        $highlight_gene_display_label = $this_leaf->gene_member->display_label;
+        $highlight_gene_display_label = $this_leaf->gene_member->display_label || $highlight_gene;
         $highlight_species = $this_leaf->gene_member->genome_db->name;
         $highlight_genome_db_id = $this_leaf->gene_member->genome_db_id;
         last;
       }
     }
 
-    if ($highlight_gene_display_label) {
+    if ($highlight_species) {
       print $self->_info( 'Highlighted genes', "In addition to all <I>".$member->genome_db->name. "</I> genes,".
           " the $highlight_gene_display_label gene (<I>$highlight_species</I>) and its paralogues have been highlighted. ".
           "<a href=".$object->_url().">Click here to switch off highlighting</a>." );
     } else {
+      print $self->_warning( 'WARNING', "$highlight_gene gene is not in this Gene Tree" );
       $highlight_gene = undef;
     }
   }
@@ -185,6 +187,8 @@ sub content {
   push @highlights, $highlight_genome_db_id || undef;
 
   push @highlights, $highlight_gene || undef;
+
+  push @highlights, $highlight_ancestor || undef;
 
   my $image  = $self->new_image
       ( $tree, $wuc, [@highlights] );

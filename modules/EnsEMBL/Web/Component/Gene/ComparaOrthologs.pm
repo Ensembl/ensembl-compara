@@ -103,7 +103,7 @@ sub content {
           action => 'Multi',
           g1     => $stable_id,
           s1     => $spp,
-          r      => undef
+          r      => undef,
         })
       );
       
@@ -116,7 +116,7 @@ sub content {
           $object->_url({
             action   => 'Compara_Ortholog', 
             function => 'Alignment',
-            g1       => $stable_id
+            g1       => $stable_id,
           })
         );
       }
@@ -127,7 +127,8 @@ sub content {
           type   => 'Gene',
           action => 'Compara_Tree',
           g1     => $stable_id,
-          r      => undef
+          anc    => $orthologue->{'ancestor_node_id'},
+          r      => undef,
         })
       );
       
