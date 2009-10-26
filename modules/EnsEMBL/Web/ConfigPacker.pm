@@ -817,6 +817,19 @@ sub _summarise_compara_db {
   ## End section about colouring and colapsing/hidding gene in the GeneTree View
   ###################################################################
 
+  ###################################################################
+  ## Section for storing the genome_db_ids <=> species_name
+  $res_aref = $dbh->selectall_arrayref(q(
+    SELECT genome_db_id, name, assembly FROM genome_db WHERE assembly_default = 1
+  ));
+  foreach my $row (@$res_aref) {
+    my ($genome_db_id, $species_name) = @$row;
+    $species_name =~ tr/ /_/;
+    $self->db_tree->{ $db_name }{'GENOME_DB'}{$species_name} = $genome_db_id;
+    $self->db_tree->{ $db_name }{'GENOME_DB'}{$genome_db_id} = $species_name;
+  }
+  ###################################################################
+
   $dbh->disconnect();
 }
 
