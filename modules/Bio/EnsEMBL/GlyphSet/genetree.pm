@@ -18,13 +18,14 @@ sub _init {
   my ($self) = @_;
 
   my $current_gene          = $self->{highlights}->[0];
-  my $current_genome_db     = $self->{highlights}->[1] || ' ';
+  my $current_genome_db_id  = $self->{highlights}->[1] || ' ';
   my $collapsed_nodes_str   = $self->{highlights}->[2] || '';
   my $coloured_nodes        = $self->{highlights}->[3] || [];
+  my $other_genome_db_id    = $self->{highlights}->[4];
+  my $other_gene            = $self->{highlights}->[5];
   my $tree          = $self->{'container'};
   my $Config        = $self->{'config'};
   my $bitmap_width = $Config->image_width(); 
-
 
   $CURRENT_ROW = 1;
   $CURRENT_Y   = 1;
@@ -117,20 +118,27 @@ sub _init {
     }
     
     # Node glyph, coloured for for duplication/speciation
-    my ($node_colour, $label_colour, $collapsed_colour);
+    my ($node_colour, $label_colour, $collapsed_colour, $bold);
+    my $bold_colour = "white";
     if ($f->{_dup}) {
       $node_colour = ($f->{_dubious_dup} ? 'turquoise' : 'red3');
     }
 
     if ($f->{label}) {
-      if( $f->{_genome_dbs}->{$current_genome_db} ){
-        $label_colour     = 'blue';
-        $collapsed_colour = 'royalblue';
-      }
-      if( $f->{_genes}->{$current_gene} ){
+      if( $f->{_genes}->{$other_gene} ){
+        $bold = 1;
+        $bold_colour = "ff6666";
+      } elsif( $f->{_genome_dbs}->{$other_genome_db_id} ){
+        $bold = 1;
+      } elsif( $f->{_genes}->{$current_gene} ){
         $label_colour     = 'red';
         $collapsed_colour = 'red';
         $node_colour = "royalblue";
+        $bold = defined($other_genome_db_id);
+      } elsif( $f->{_genome_dbs}->{$current_genome_db_id} ){
+        $label_colour     = 'blue';
+        $collapsed_colour = 'royalblue';
+        $bold = defined($other_genome_db_id);
       }
     }
     if ($f->{_fg_colour}) {
@@ -237,6 +245,20 @@ sub _init {
             'zindex' => 40,
 	  });
 
+      if ($bold) {
+        for (my $delta_x = -1; $delta_x <= 1; $delta_x++) {
+          for (my $delta_y = -1; $delta_y <= 1; $delta_y++) {
+            next if ($delta_x == 0 and $delta_y == 0);
+            my %txt2 = %$txt;
+            bless(\%txt2, ref($txt));
+            $txt2{x} += $delta_x;
+            $txt2{y} += $delta_y;
+            push(@labels, \%txt2);
+          }
+        }
+        $txt->{colour} = $bold_colour;
+      }
+      
       if( my $stable_id = $f->{_gene} ){ # Add a gene href
         my $species = $f->{'_species'};
         $species =~ s/\s/_/g;
