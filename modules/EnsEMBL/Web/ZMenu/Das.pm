@@ -95,7 +95,7 @@ sub content {
       $self->add_entry({ type => 'Strand:', label_html => $strand });
       $self->add_entry({ type => 'Score:',  label_html => $score }) if $score;
       
-      $self->add_entry({ label_html => $_->{'txt'}, link => $_->{'href'}, extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
+      $self->add_entry({ label_html => $_->{'txt'}, link => decode_entities($_->{'href'}), extra => { external => ($_->{'href'} !~ /^http:\/\/www.ensembl.org/) } }) for @{$_->links};
       $self->add_entry({ label_html => $validator->validate($_) ? encode_entities($_) : $_ }) for map decode_entities($_), @{$_->notes};
     }
   }
