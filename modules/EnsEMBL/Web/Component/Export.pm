@@ -28,8 +28,9 @@ sub export {
   my $slice = $object->can('slice') ? $object->slice : $object->Obj->feature_Slice;
   my $feature_strand = $slice->strand;
   
-  $slice = $slice->invert if $strand && $strand != $feature_strand;
   $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
+  $slice = $slice->invert if $strand && $strand != $feature_strand;
+  
   
   my $params = { feature_strand => $feature_strand };
   
