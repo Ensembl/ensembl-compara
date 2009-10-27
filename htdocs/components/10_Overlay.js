@@ -88,6 +88,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     // hide all selects if we are IE and can not handle selects properly
     if ($.browser.msie) {
       $('select').hide();
+      $('select', this.el).show();
     }
     
     // show overlay on screen
