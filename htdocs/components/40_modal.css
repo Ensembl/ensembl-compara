@@ -2,14 +2,14 @@
 
 #modal_bg { position: absolute; top: 0; z-index:19999; background: [[MH_BORDER]]; margin:0;border:0; padding:0; text-align: center; vertical-align: middle; top:0; left:0; display: none; }
 #modal_panel { text-align: left; position: absolute; background-color: [[PANEL_BG]]; margin: auto; z-index: 20000; padding:0; border: 1px solid [[CONTRAST_TEXT]]; display: none; }
-.modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px 2px 0 2px; color: [[PANEL_BG]]; font-weight: bold; clear: both }
+.modal_title { overflow: hidden; background-color: [[PANEL_TEXT]]; margin: 0; padding: 2px 2px 0 2px; color: [[PANEL_BG]]; font-weight: bold; clear: both; height: 18px; }
 
 .modal_caption { float: left }
 .modal_content { overflow: scroll; height: 100%; width: 100%; position: absolute; }
 .modal_content .panel { margin-left: 17.75em; }
 
 .modal_title ul { margin: 0; padding: 0 }
-.modal_title li { list-style: none; padding: 0 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
+.modal_title li { list-style: none; padding: 0 0.5em 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
 .modal_title li a { color: [[PANEL_BG]]; padding: 0 0.5em; text-decoration: none; }
 .modal_title li a:link, .modal_title a:hover { color: [[PANEL_BG]] }
 .modal_title li.active { color: [[PAGE_TEXT]]; background-color: [[PANEL_BG]] }
@@ -30,4 +30,4 @@
 
 .modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]] !important; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
 
-.modal_title .modal_close { float: right; margin: 0; padding: 0; width: 10em; text-align: center; }
+.modal_title .modal_close { float: right; margin-top: 1px; padding: 0; width: 10em; text-align: center; }
