@@ -114,7 +114,7 @@ Ensembl.LayoutManager.extend({
         Ensembl.EventManager.triggerSpecific('updatePanel', i);
       }
     } else {
-      window.location = Ensembl.replaceTimestamp(window.location.href);
+      Ensembl.redirect();
     }
   },
   

@@ -37,7 +37,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     }
     
     $('select.dropdown_redirect', this.el).change(function () {
-      window.location = this.value;
+      Ensembl.redirect(this.value);
     });
   }
 });

@@ -202,7 +202,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if ($(area.a).hasClass('nav')) {
-      window.location = area.a.href;
+      Ensembl.redirect(area.a.href);
       return;
     }
     

@@ -133,5 +133,13 @@ Ensembl.extend({
     url += (url.match(/\?/) ? ';' : '?') + 'time=' + time;
     
     return url;
+  },
+  
+  redirect: function (url) {
+    for (var p in this.PanelManager.panels) {
+      this.PanelManager.panels[p].destructor('cleanup');
+    }
+    
+    window.location = url || this.replaceTimestamp(window.location.href);
   }
 });
