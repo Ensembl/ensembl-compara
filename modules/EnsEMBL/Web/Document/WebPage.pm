@@ -416,8 +416,12 @@ sub render_error_page {
 
 sub add_error_panels {
   my ($self, @problems) = @_;
-  @problems = @{$self->problem} if !@problems && $self->factory;
-
+  
+  if (!@problems && $self->factory) {
+    my $p = $self->problem;
+    @problems = map @{$p->{$_}}, keys %$p;
+  }
+  
   if (@problems) {
     $self->{'format'} = 'HTML';
     $self->page->set_doc_type('HTML', '4.01 Trans');
@@ -447,12 +451,11 @@ sub add_error_panels {
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
         'caption' => $problem->name,
-        'content' => qq(
-  $desc
-  $eg_html
-  <p>
-    If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.
-  </p>) 
+        'content' => qq{
+          $desc
+          $eg_html
+          <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.</p>
+        }
       )
     );
     
