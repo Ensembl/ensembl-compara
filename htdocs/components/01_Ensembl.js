@@ -120,12 +120,16 @@ Ensembl.extend({
     }
   },
   
+  cleanURL: function (url) {
+    return unescape(url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([\?;])time=[^;]+;?/g, '$1').replace(/[\?;]$/g, ''));
+  },
+  
   // Remove the old time stamp from a URL and replace with a new one
   replaceTimestamp: function (url) {
     var d = new Date();
     var time = d.getTime() + d.getMilliseconds() / 1000;
     
-    url = url.replace(/&/g, ';').replace(/#.*$/g, '').replace(/([\?;])time=[^;]+;?/g, '$1').replace(/[\?;]$/g, '');
+    url = this.cleanURL(url);
     url += (url.match(/\?/) ? ';' : '?') + 'time=' + time;
     
     return url;
