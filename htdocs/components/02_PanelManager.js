@@ -110,9 +110,9 @@ Ensembl.PanelManager.extend({
   /**
    * Cleans up and removes a panel from the registry
    */
-  destroyPanel: function (id, empty) {
+  destroyPanel: function (id, action) {
     if (this.panels[id] !== undefined) {
-      this.panels[id].destructor(empty);
+      this.panels[id].destructor(action);
       delete this.panels[id];
       Ensembl.EventManager.remove(id);
     }

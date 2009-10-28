@@ -11,12 +11,12 @@ Ensembl.Panel = Base.extend({
     this.initialised = false;
   },
   
-  destructor: function (empty) {
+  destructor: function (action) {
     $('*', this.el).unbind();
     
-    if (empty === true) {
+    if (action == 'empty') {
       $(this.el).empty();
-    } else {
+    } else if (action != 'cleanup') {
       $(this.el).remove();
     }
     
