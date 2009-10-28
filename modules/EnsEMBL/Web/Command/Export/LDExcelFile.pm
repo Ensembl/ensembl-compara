@@ -32,6 +32,8 @@ sub make_file {
   my $pop_param = $params->{'opt_pop'}->[0];
   my $zoom = 20000; # Currently non-configurable
   
+  $pop_param =~ s/(%3A|:)on//; # FIXME: Hack to remove :on from opt_pop
+  
   warn 'ERROR: No population defined' and return unless $pop_param;
   
   my @colour_gradient = ('ffffff', $object->image_config_hash('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
