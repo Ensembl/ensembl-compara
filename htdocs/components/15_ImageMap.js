@@ -337,8 +337,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var style = {
       l: { left: coords.l, width: 1, top: coords.t, height: h },
       r: { left: coords.r, width: 1, top: coords.t, height: h },
-      t: { left: coords.l, width: w, top: coords.t, height: 1 },
-      b: { left: coords.l, width: w, top: coords.b, height: 1 }
+      t: { left: coords.l, width: w, top: coords.t, height: 1, overflow: 'hidden' },
+      b: { left: coords.l, width: w, top: coords.b, height: 1, overflow: 'hidden' }
     };
     
     if (typeof speciesNumber != 'undefined') {
