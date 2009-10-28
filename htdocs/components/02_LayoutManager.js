@@ -85,7 +85,7 @@ Ensembl.LayoutManager.extend({
     // Close modal window if the escape key is pressed
     $(document).keyup(function (event) {
       if (event.keyCode == 27) {
-        Ensembl.EventManager.trigger('modalClose');
+        Ensembl.EventManager.trigger('modalClose', true);
       }
     }).mouseup(function (e) {
       Ensembl.EventManager.trigger('dragStop', e);

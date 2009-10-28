@@ -81,10 +81,10 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     return true;
   },
   
-  close: function () {
+  close: function (escape) {
     this.hide();
     
-    if (!Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) {
+    if (escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) {
       this.setPageReload(false, true);
     }
   },
