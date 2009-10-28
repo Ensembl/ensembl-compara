@@ -1,8 +1,6 @@
 package EnsEMBL::Web::Factory::MultipleLocation;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use POSIX qw(floor);
 
@@ -20,7 +18,7 @@ sub createObjects {
   my $object = $self->DataObjects->[0];
   
   # Redirect if we need to generate a new url
-  return $self->problem('redirect', $self->_url($self->multi_params)) if $self->generate_url($object->slice);
+  return if $self->generate_url($object->slice);
   
   my @slices;
   my $gene = 0;
@@ -114,49 +112,15 @@ sub createObjects {
 sub generate_url {
   my ($self, $slice) = @_;
   
-  my $remove = $self->param('remove_alignment');
+  my @add = grep { s/^s(\d+)$/$1/ && $self->param("s$_") && !(defined $self->param("r$_") || defined $self->param("g$_")) } $self->param;
   
-  $self->remove_species_and_generate_url($remove) if $remove; # Remove species matching the id given in the url
+  $self->add_species($slice, \@add) if scalar @add;
   
-  my @missing = grep { s/^s(\d+)$/$1/ && $self->param("s$_") && !(defined $self->param("r$_") || defined $self->param("g$_")) } $self->param;
-  
-  $self->find_missing_locations($slice, \@missing) if scalar @missing; # Add species missing r parameters
-  
-  return 1 if $remove || scalar @missing;
+  return 1 if scalar @add;
 }
 
-sub remove_species_and_generate_url {
-  my ($self, $remove, $primary_species) = @_;
-  
-  $remove = [ $remove ] unless ref $remove;
-  
-  foreach my $i (@$remove) {
-    $self->param("$_$i", '') for qw(s g r);
-  }
-  
-  my $new_params = $self->multi_params;
-  my $params;
-  my $i = 1;
-  
-  # Accounting for missing species, bump the values up to condense the url
-  foreach (sort keys %$new_params) {
-    if (/^s(\d+)$/ && $new_params->{$_}) {
-      $params->{"s$i"} = $new_params->{"s$1"};
-      $params->{"r$i"} = $new_params->{"r$1"};
-      $params->{"g$i"} = $new_params->{"g$1"} if $new_params->{"g$1"};
-      $i++;
-    } elsif (!/^[sgr]\d+$/) {
-      $params->{$_} = $new_params->{$_};
-    }
-  }
-  
-  $params->{'species'} = $primary_species if $primary_species;
-  
-  $self->problem('redirect', $self->_url($params));
-}
-
-sub find_missing_locations {
-  my ($self, $slice, $ids) = @_;
+sub add_species {
+  my ($self, $slice, $add) = @_;
   
   my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
   my @no_alignment;
@@ -164,10 +128,26 @@ sub find_missing_locations {
   my $paralogues;
   my @remove;
   
-  foreach (@$ids) {
-    my ($species, $seq_region_name) = split '--', $self->param("s$_");
+  my ($i) = sort { $b <=> $a } grep { s/^s(\d+)$/$1/ && $self->param("s$_") } $self->param;
+  
+  foreach (@$add) {
+    my $param = $_;
+    my $id;
     
-    if (!$self->best_guess($slice, $_, $species, $seq_region_name)) {
+    $i++;
+    
+    if (int eq $_) {
+      $id = $_;
+      $param = $self->param("s$_");
+    } else {
+      $id = $i;
+    }
+    
+    my ($species, $seq_region_name) = split '--', $param;
+    
+    if ($self->best_guess($slice, $id, $species, $seq_region_name)) {
+      $self->param("s$id", $param);
+    } else {
       if ($valid_species{$species}) {
         if ($species eq $self->species) {
           $paralogues++;
@@ -178,11 +158,11 @@ sub find_missing_locations {
         push @no_species, $species;
       }
       
-      push @remove, $_;
+      push @remove, $id;
     }
   }
   
-  $self->remove_species_and_generate_url(\@remove) if @remove;
+  $self->remove_species(\@remove) if scalar @remove;
   
   if (scalar @no_species) {
     $self->session->add_data(
@@ -215,7 +195,41 @@ sub find_missing_locations {
     );
   }
   
-  $self->problem('redirect', $self->_url($self->multi_params));
+  if (!scalar @remove) {
+    $self->clear_problem_type('redirect');
+    $self->problem('redirect', $self->_url($self->multi_params));
+  }
+}
+
+sub remove_species {
+  my ($self, $remove, $primary_species) = @_;
+  
+  $remove = [ $remove ] unless ref $remove;
+  
+  foreach my $i (@$remove) {
+    $self->param("$_$i", '') for qw(s g r);
+  }
+  
+  my $new_params = $self->multi_params;
+  my $params;
+  my $i = 1;
+  
+  # Accounting for missing species, bump the values up to condense the url
+  foreach (sort keys %$new_params) {
+    if (/^s(\d+)$/ && $new_params->{$_}) {
+      $params->{"s$i"} = $new_params->{"s$1"};
+      $params->{"r$i"} = $new_params->{"r$1"};
+      $params->{"g$i"} = $new_params->{"g$1"} if $new_params->{"g$1"};
+      $i++;
+    } elsif (!/^[sgr]\d+$/) {
+      $params->{$_} = $new_params->{$_};
+    }
+  }
+  
+  $params->{'species'} = $primary_species if $primary_species;
+  
+  $self->clear_problem_type('redirect');
+  $self->problem('redirect', $self->_url($params));
 }
 
 sub best_guess {
@@ -344,7 +358,7 @@ sub change_primary_species {
   
   $self->param('r', $inputs->{$id}->{'r'});
   $self->param('g', $inputs->{$id}->{'g'}) if $inputs->{$id}->{'g'};
-  $self->param('s99999', $old_species); # Set arbitrarily high - will be recuded by remove_species_and_generate_url
+  $self->param('s99999', $old_species); # Set arbitrarily high - will be recuded by remove_species
   $self->param('align', ''); # Remove the align parameter because it may not be applicable for the new species
   
   foreach my $i (grep $_, keys %$inputs) {
@@ -355,7 +369,7 @@ sub change_primary_species {
     }
   }
   
-  $self->remove_species_and_generate_url($id, $inputs->{$id}->{'s'});
+  $self->remove_species($id, $inputs->{$id}->{'s'});
 }
 
 sub change_all_locations {
