@@ -44,7 +44,7 @@ sub new {
     $type, ## Gene / Transcript / Location ...
     {
       '_core_objects'    => $data->{_core_objects}    || undef, 
-      '_problem'         => $data->{_problem}         || [],    
+      '_problem'         => $data->{_problem}         || {},    
       '_species_defs'    => $data->{_species_defs}    || undef, 
       '_ext_url_'        => $data->{_ext_url}         || undef, # EnsEMBL::Web::ExtURL object used to create external links...
       '_parent'          => $data->{_parent}          || undef, # Information about the referer... hash ref...
@@ -177,15 +177,16 @@ sub timer {
   return $self->[1]{'timer'};
 }
 
-sub has_a_problem     { return scalar(                               @{$_[0][1]{'_problem'}} ); }
-sub has_fatal_problem { return scalar( grep {$_->isFatal}            @{$_[0][1]{'_problem'}} ); }
-sub has_problem_type  { return scalar( grep {$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}} ); }
-sub get_problem_type  { return         grep {$_->get_by_type($_[1])} @{$_[0][1]{'_problem'}};   }
-sub clear_problems    {                                                $_[0][1]{'_problem'} = []; }
+sub has_a_problem      { return scalar keys %{$_[0][1]{'_problem'}}; }
+sub has_fatal_problem  { return scalar @{$_[0][1]{'_problem'}{'fatal'}||[]}; }
+sub has_problem_type   { return scalar @{$_[0][1]{'_problem'}{$_[1]}||[]}; }
+sub get_problem_type   { return @{$_[0][1]{'_problem'}{$_[1]}||[]}; }
+sub clear_problem_type { $_[0][1]{'_problem'}{$_[1]} = []; }
+sub clear_problems     { $_[0][1]{'_problem'} = {}; }
 
 sub problem {
   my $self = shift;
-  push @{$self->[1]{'_problem'}}, EnsEMBL::Web::Problem->new(@_) if @_;
+  push @{$self->[1]{'_problem'}{$_[1]}}, new EnsEMBL::Web::Problem(@_) if @_;
   return $self->[1]{'_problem'};
 }
 

@@ -184,15 +184,17 @@ sub database {
   }
 }
 
-sub has_a_problem     { return scalar @{$_[0]->{'data'}{'_problem'}}; }
-sub has_fatal_problem { return scalar grep $_->isFatal, @{$_[0]->{'data'}{'_problem'}}; }
-sub has_problem_type  { my ($self, $type) = @_; return scalar grep $_->get_by_type($type), @{$self->{'data'}{'_problem'}}; }
-sub get_problem_type  { my ($self, $type) = @_; return grep $_->get_by_type($type), @{$self->{'data'}{'_problem'}}; }
-sub clear_problems    { $_[0]{'data'}{'_problem'} = []; }
+sub has_a_problem      { return scalar keys %{$_[0]->{'data'}{'_problem'}}; }
+sub has_fatal_problem  { return scalar @{$_[0]->{'data'}{'_problem'}{'fatal'}||[]}; }
+sub has_problem_type   { return scalar @{$_[0]->{'data'}{'_problem'}{$_[1]}||[]}; }
+sub get_problem_type   { return @{$_[0]->{'data'}{'_problem'}{$_[1]}||[]}; }
+sub clear_problem_type { $_[0]->{'data'}{'_problem'}{$_[1]} = []; }
+sub clear_problems     { $_[0]->{'data'}{'_problem'} = {}; }
 
 sub problem {
-  my $self = shift;
-  push @{$self->{'data'}{'_problem'}}, new EnsEMBL::Web::Problem(@_) if @_;
+  my $self = shift;  
+  
+  push @{$self->{'data'}{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
   return $self->{'data'}{'_problem'};
 }
 
