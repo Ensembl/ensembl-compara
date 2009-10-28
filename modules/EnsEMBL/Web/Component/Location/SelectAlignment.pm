@@ -16,19 +16,38 @@ sub _init {
 
 sub content {
   my $self = shift;
+  
+  my $object = $self->object;
+  my $url = $object->_url({
+    type     => 'Component',
+    action   => $object->type,
+    function => 'Web/SelectAlignment/ajax',
+    update   => 1,
+    %{$object->multi_params}
+  });
+  
+  return sprintf('
+    <div class="autocenter navbar" style="width:%spx; text-align: left; clear: both">
+      <a class="modal_link" href="%s">Select species for comparison</a>
+    </div>',
+    $self->image_width,
+    $url
+  );
+}
+
+sub content_ajax {
+  my $self = shift;
   my $object = $self->object;
   
-  my $params = $object->multi_params;
-  my $url = $object->_url($params, 1);
+  my $params = $object->multi_params;  
+  my $url = $object->_url({ align => $object->param('align') }, 1);
+  
   my $alignments = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   my $primary_species = $object->species;
   
   my %species;
-  my (@add, @remove);
+  my ($include_list, $exclude_list);
   my $extra_inputs;
-  
-  my $add_options = '<option value="">-- Select a species --</option>';
-  my $remove_options = $add_options;
   
   # get species (and parameters) already shown on the page
   my %shown = map { $object->param("s$_") => $_ } grep s/^s(\d+)$/$1/, $object->param;
@@ -59,47 +78,35 @@ sub content {
     $species{$primary_species} = $object->species_defs->species_label($primary_species, 1) . "###chromosome $chr";
   }
   
-  foreach (sort { $species{$a} cmp $species{$b} } keys %species) {
-    if ($shown{$_}) {
-      push @remove, [ $shown{$_}, join ' - ', split /###/, $species{$_} ];
-    } else {
-      push @add, [ $_, join ' - ', split /###/, $species{$_} ];
-    }
-  }
+  $include_list .= sprintf '<li class="%s"><span>%s</span><span class="switch"></span></li>', $_, join ' - ', split /###/, $species{$_} for sort { $shown{$a} <=> $shown{$b} } keys %shown;
+  $exclude_list .= sprintf '<li class="%s"><span>%s</span><span class="switch"></span></li>', $_, join ' - ', split /###/, $species{$_} for sort { $species{$a} cmp $species{$b} } grep !$shown{$_}, keys %species;
   
-  $add_options    .= qq{<option value="$_->[0]">$_->[1]</option>} for @add;
-  $remove_options .= qq{<option value="$_->[0]">$_->[1]</option>} for @remove;
-  
-  return sprintf ('
-    <div class="autocenter navbar" style="width:%spx; text-align:left">
-      <form action="%s" method="get">
-        <div class="alignment_selector%s">
-          <label for="align">Add an alignment:</label>
-          <select name="s%s">
-            %s
-          </select>
-          <input value="Go&gt;" type="submit" class="go-button" />
-        </div>
-        <div class="alignment_selector%s">
-          <label for="align">Remove an alignment:</label>
-          <select name="remove_alignment">
-            %s
-          </select>
+  my $content = sprintf('
+    <div class="content">
+      <form action="%s" method="get">%s</form>
+      <div class="species_list">
+        <h2>Current species</h2>
+        <ul class="included">
           %s
-        </div>
-        %s
-      </form>
+        </ul>
+      </div>
+      <div class="species_list">
+        <h2>Other available species</h2>
+        <ul class="excluded">
+          %s
+        </ul>
+      </div>
+      <p class="invisible">.</p>
     </div>',
-    $self->image_width,
     $url->[0],
-    scalar @add ? '' : ' hide',
-    $next_id, 
-    $add_options,
-    scalar @remove ? '' : ' hide',
-    $remove_options,
-    scalar @add ? '' : '<input value="Go&gt;" type="submit" class="go-button" />',
-    $extra_inputs
+    $extra_inputs,
+    $include_list,
+    $exclude_list,
   );
+  
+  $content =~ s/\n//g;
+  
+  return qq{{'content':'$content','panelType':'SpeciesSelector','wrapper':'<div class="panel modal_wrapper"></div>','nav':''}};
 }
 
 1;
