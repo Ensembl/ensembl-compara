@@ -134,6 +134,8 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     if (this.visible) {
       this.setPosition();
       this.setBackground();
+      
+      Ensembl.EventManager.trigger('modalPanelResize');
     }
   }
 });
