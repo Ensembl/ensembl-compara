@@ -15,7 +15,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     }
     
     var myself = this;
-    var dims = this.getDimensions();    
+    var dims = this.getDimensions();
     
     this.base(dims.w, dims.h);
     
@@ -74,6 +74,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   open: function (el) {
     this.elLk.menu.hide();
     this.elLk.caption.html(el.title || el.innerHTML).show();
+    this.elLk.closeButton.html('Close');
     this.show();
     this.getContent(el.href, this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel);
     
@@ -113,6 +114,14 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       url: url,
       dataType: 'json',
       success: function (json) {
+        var buttonText;
+        
+        switch (json.panelType) {
+          case 'Configurator': buttonText = 'Save and close'; break;
+          case 'SpeciesSelector': buttonText = 'Update species'; break;
+          default: buttonText = 'Close'; break;
+        }
+        
         if (typeof json.activeTab != 'undefined') {
           myself.changeTab(myself.elLk.tabs.filter('[textContent=' + json.activeTab + ']'));
         }
@@ -121,7 +130,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
         
-        myself.elLk.closeButton.html(json.panelType == 'Configurator' ? 'Save and close' : 'Close');
+        myself.elLk.closeButton.html(buttonText);
         
         // TODO: remove once config reseting is working without content being completely regenerated
         if (reload) {
