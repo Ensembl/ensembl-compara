@@ -497,7 +497,7 @@ sub _configurator {
       $count++;
       $on++ if $display ne 'off';
       
-      $rhs_content .= qq{</ul>$selected <span>$name</span><span class="menu_help">Show info</span></dt>};
+      $rhs_content .= "</ul>$selected <span>$name</span>";
       
       if ($desc) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -505,7 +505,9 @@ sub _configurator {
         $desc =~ s/<a>/<\/a>/g;
         $desc =~ s/"[ "]*>/">/g;
         
-        $rhs_content .= "<dd>$desc</dd>";
+        $rhs_content .= qq{<span class="menu_help">Show info</span></dt><dd>$desc</dd>};
+      } else {
+        $rhs_content .= "</dt>";
       }
     }
     
