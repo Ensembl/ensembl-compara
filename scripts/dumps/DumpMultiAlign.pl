@@ -362,6 +362,7 @@ if ($help) {
 # Configure the Bio::EnsEMBL::Registry
 # Uses $reg_conf if supllied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses ~/.ensembl_init
 # if all the previous fail.
+Bio::EnsEMBL::Registry->no_version_check(1);
 if ($reg_conf) {
   Bio::EnsEMBL::Registry->load_all($reg_conf);
 } else {
@@ -905,8 +906,19 @@ sub print_my_maf {
     print " score=", $genomic_align_block->score;
   }
   print "\n";
-  foreach my $this_genomic_align (@{$genomic_align_block->get_all_GenomicAligns()}) {
-    my $seq_name = $this_genomic_align->dnafrag->genome_db->name;
+  my $all_genomic_aligns = [];
+  my $is_a_genomic_align_tree;
+  if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+    $is_a_genomic_align_tree = 1;
+    foreach my $this_genomic_align_tree (@{$genomic_align_block->get_all_sorted_genomic_align_nodes()}) {
+      next if (!$this_genomic_align_tree->genomic_align_group);
+      push(@{$all_genomic_aligns}, $this_genomic_align_tree->genomic_align_group);
+    }
+  } else {
+    $all_genomic_aligns = $genomic_align_block->get_all_GenomicAligns()
+  }
+  foreach my $this_genomic_align (@$all_genomic_aligns) {
+    my $seq_name = $this_genomic_align->genome_db->name;
     $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
     $seq_name .= ".".$this_genomic_align->dnafrag->name;
     my $aligned_sequence;
@@ -920,19 +932,27 @@ sub print_my_maf {
     } else {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
     }
+    my $dnafrag_length = $this_genomic_align->dnafrag->length;
+    if (!$dnafrag_length) {
+      ## This is a composite segment. Just add all the bits together
+      $dnafrag_length = 0;
+      foreach my $this_composite_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
+        $dnafrag_length += $this_composite_genomic_align->length;
+      }
+    }
     if ($this_genomic_align->dnafrag_strand == 1) {
       printf("s %-20s %10d %10d + %10d %s\n",
           $seq_name,
           $this_genomic_align->dnafrag_start-1,
           ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
-          $this_genomic_align->dnafrag->length,
+          $dnafrag_length,
           $aligned_sequence);
     } else {
       printf("s %-20s %10d %10d - %10d %s\n",
           $seq_name,
-          ($this_genomic_align->dnafrag->length - $this_genomic_align->dnafrag_end),
+          ($dnafrag_length - $this_genomic_align->dnafrag_end),
           ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
-          $this_genomic_align->dnafrag->length,
+          $dnafrag_length,
           $aligned_sequence);
     }
   }
