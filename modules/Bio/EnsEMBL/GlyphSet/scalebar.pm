@@ -6,74 +6,7 @@ use POSIX qw(floor);
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub _init {
-  my $self = shift;
-
-  my $config = $self->{'config'};
-  
-  my $compara = $self->get_parameter('compara'); # FIXME!
-  
-  my $highlights = join '|', $self->highlights;
-  $highlights = $highlights ? ";h=$highlights" : '';
-
-  # do stuff here for a multicontigview display (add lhs line and tags for primary compara species). Only display on forward strand
-  if ($compara && $self->strand > 0) {
-    my $line = $self->Rect({
-      'z'             => 11,
-      'x'             => -120,
-      'y'             => 0,
-      'colour'        => 'black',
-      'width'         => 120,
-      'height'        => 0,
-      'absolutex'     => 1,
-      'absolutewidth' => 1,
-      'absolutey'     => 1
-    });
-    
-    $self->join_tag($line, 'bracket', 0, 0, 'black');
-
-    if ($compara eq 'primary') {
-      $self->join_tag($line, 'bracket2', 0,   0, 'rosybrown1', 'fill', -40);
-      $self->join_tag($line, 'bracket2', 0.9, 0, 'rosybrown1', 'fill', -40);
-    }
-    
-    $self->push($line);
-
-    my $C = 0; # doubt this works
-    
-    foreach (@{$config->{'other_slices'}}) {
-      if ($C != $config->{'slice_number'}) {
-        if ($C) {
-          if ($_->{'location'}) {
-            $highlights .= sprintf(
-              ";s$C=%s;c$C=%s:%s:%s;w$C=%s", 
-              $_->{'species'}, 
-              $_->{'location'}->seq_region_name, 
-              $_->{'location'}->centrepoint, 
-              $_->{'ori'}, 
-              $_->{'location'}->length
-            );
-          } else {
-            $highlights .= ";s$C=$_->{'species'}"; 
-          }
-        } else {
-          $highlights .= sprintf(
-            ";c=%s:%s:1;w=%s", 
-            $_->{'location'}->seq_region_name, 
-            $_->{'location'}->centrepoint, 
-            $_->{'location'}->length
-          );
-        }
-      }
-      
-      $C++;
-    }
-  }
-  
-  $self->render_scalebar;
-}
-
-sub render_scalebar {
+sub render {
   my ($self, $y) = @_;
   
   my $container      = $self->{'container'};
@@ -157,8 +90,6 @@ sub render_scalebar {
         'absolutey' => 1
       }));
       
-      #my $label = $minor_unit < 250 ? $self->commify($box_start * $contig_strand) : $self->bp_to_nearest_unit($box_start * $contig_strand, 2); # FIXME - commify?!
-      #my $label = $self->bp_to_nearest_unit($box_start * $contig_strand, 2);
       my $label = $minor_unit < 1000 ? $self->commify($box_start * $contig_strand): $self->bp_to_nearest_unit($box_start * $contig_strand, 2);
       
       my @res = $self->get_text_width(($box_start - $last_text_x) * $pix_per_bp * 1.5, $label, '', 'font' => $fontname, 'ptsize' => $fontsize);
