@@ -58,7 +58,7 @@ my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
 my $default_exonerate = "exonerate-1.0.0";
-my $default_jar_file = "pecan.0.6.jar";
+my $default_jar_file = "pecan.0.8.jar";
 my $default_java_class = "bp.pecan.Pecan";
 my $estimate_tree = "~/pecan/EstimateTree.py";
 
