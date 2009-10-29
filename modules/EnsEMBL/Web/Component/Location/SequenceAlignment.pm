@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::AlignStrainSlice;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Location);
+use base qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
   my $self = shift;

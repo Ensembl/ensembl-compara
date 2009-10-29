@@ -3,9 +3,7 @@ package EnsEMBL::Web::Component::Gene::GeneSeq;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Gene);
-
-use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+use base qw(EnsEMBL::Web::Component::Gene EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
   my $self = shift;

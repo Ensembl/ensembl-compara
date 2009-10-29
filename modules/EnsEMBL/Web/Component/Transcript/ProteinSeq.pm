@@ -3,7 +3,7 @@ package EnsEMBL::Web::Component::Transcript::ProteinSeq;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Transcript);
+use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
   my $self = shift;

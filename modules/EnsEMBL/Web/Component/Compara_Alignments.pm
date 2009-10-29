@@ -5,7 +5,7 @@ package EnsEMBL::Web::Component::Compara_Alignments;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::TextSequence);
 use CGI qw(escapeHTML);
 
 sub _init {
