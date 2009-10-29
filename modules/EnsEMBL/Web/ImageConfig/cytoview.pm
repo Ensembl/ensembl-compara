@@ -68,8 +68,8 @@ sub init {
   );
 
   $self->add_tracks('decorations',
-    [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar' }],
-    [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler' }],
+    [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
+    [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
   );
 }
