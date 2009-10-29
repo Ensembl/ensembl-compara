@@ -9,10 +9,10 @@
 */
 
 /* Number of Trees */
-SELECT count(*) as protein_tree_count
-FROM   protein_tree_node ptn
-WHERE  ptn.parent_id = ptn.root_id
-AND    root_id != 0;
+-- SELECT count(*) as protein_tree_count
+-- FROM   protein_tree_node ptn
+-- WHERE  ptn.node_id = ptn.root_id
+-- AND    root_id != 0;
 # 1sec
 
 /* Alternative count of Trees */
@@ -24,10 +24,10 @@ AND    ptt.tag='gene_count';
 
 /* Number of Species and their Members */
 SELECT gdb.name as species_name, 
-       count(*) as protein_member_count,
-       sum( if( tm.member_id, 1, 0 ) ) as peptide_members_in_tree,
+       count(*) as pmember_cnt,
+       sum( if( tm.member_id, 1, 0 ) ) as in_tree,
        round( sum( if( tm.member_id, 1, 0 ) ) * 100 
-         / count(*) ) as peptide_members_in_tree_pct 
+         / count(*) ) as in_tree_pct 
 FROM   genome_db gdb, 
        member m left join protein_tree_member tm on m.member_id=tm.member_id 
 WHERE  gdb.genome_db_id=m.genome_db_id 
@@ -39,17 +39,17 @@ GROUP  BY gdb.name, m.source_name;
 /* Uses subset_member which is not a release table */
 
 SELECT gdb.name as species_name, 
-       count(*) as protein_member_count,
-       sum( if( tm.member_id, 1, 0 ) ) as members_in_tree,
+       count(*) as member_cnt,
+       sum( if( tm.member_id, 1, 0 ) ) as in_tree,
        sum( if( tm.member_id, 1, 0 ) ) * 100 
-         / count(*) as members_in_tree_pct 
+         / count(*) as in_tree_pct 
 FROM   genome_db gdb,
        member m, subset_member sm left join protein_tree_member tm on sm.member_id=tm.member_id 
 WHERE sm.member_id=m.member_id 
 AND   gdb.genome_db_id=m.genome_db_id 
 AND   m.source_name = 'ENSEMBLPEP' 
 GROUP  BY gdb.name, m.source_name 
-ORDER BY members_in_tree_pct DESC;
+ORDER BY in_tree_pct DESC;
 # 20 sec
 
 /* Breakdown of tree counts and sizes by species of the root node */
@@ -58,14 +58,11 @@ SELECT ptt.value as root_node_species,
        round( avg( cast( ptt2.value as unsigned ) ) ) as avg_proteins,
        min( cast( ptt2.value as unsigned ) ) as min_proteins,
        max( cast( ptt2.value as unsigned ) ) as max_proteins
-FROM   protein_tree_node ptn,
-       protein_tree_tag ptt,
+FROM   protein_tree_tag ptt,
        protein_tree_tag ptt2
-WHERE  ptn.node_id=ptt.node_id
-AND    ptn.node_id=ptt2.node_id
-AND    ptn.parent_id = ptn.root_id and root_id != 0
+WHERE  ptt.node_id=ptt2.node_id
 AND    ptt.tag='taxon_name'
 AND    ptt2.tag='gene_count'
 GROUP  BY ptt.value
 ORDER  BY count(*) DESC;
-# 1min
+# 10sec
