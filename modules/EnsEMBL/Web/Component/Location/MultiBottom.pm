@@ -127,7 +127,7 @@ sub content {
   $html .= $self->_info(
     'Configuring the display',
     '<p>To change the tracks you are displaying, use the "<strong>Configure this page</strong>" link on the left.</p>
-     <p>To add or remove species, use the dropdown menus above.</p>'
+     <p>To add or remove species, click the "<strong>Select species for comparison</strong>" link above.</p>'
   );
   
   return $html;
