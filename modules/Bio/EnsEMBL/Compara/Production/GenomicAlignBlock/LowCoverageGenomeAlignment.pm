@@ -145,7 +145,8 @@ sub fetch_input {
       $self->_dump_fasta_and_mfa;
 
   } else {
-    throw("Cannot start alignment because some information is missing");
+    #throw("Cannot start alignment because some information is missing");
+    print("No valid genomic_aligns left in genomic_align_block. Unable to start alignment\n") if ($self->debug);
   }
   return 1;
 }
@@ -166,6 +167,10 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+
+  #check that have genomic_aligns (may not have if removed some because they
+  #consist entirely of Ns)
+  return if (!$self->genomic_aligns);
 
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment(
       -analysis => $self->analysis,
@@ -212,6 +217,11 @@ sub write_output {
   my ($self) = @_;
 
   print "WRITE OUTPUT\n";
+
+  #check that have genomic_aligns (may not have if removed some because they
+  #consist entirely of Ns)
+  return 1 if (!$self->genomic_aligns);
+
   if ($self->{'_runnable'}->{tree_to_save}) {
     my $meta_container = $self->{'comparaDBA'}->get_MetaContainer;
     $meta_container->store_key_value("synteny_region_tree_".$self->synteny_region_id,
@@ -448,7 +458,7 @@ sub _parse_results {
 
     print "tree_string " . $self->tree_string . "\n";
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->tree_string);
-    $tree->print_tree(100);
+    $tree->print_tree(100) if ($self->debug);
     
     print $tree->newick_format("simple"), "\n";
     print join(" -- ", map {$_->name} @{$tree->get_all_leaves}), "\n";
@@ -1178,10 +1188,23 @@ sub _load_GenomicAligns {
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
 
   foreach my $ga (@{$gab->get_all_GenomicAligns}) {  
-    push(@{$genomic_aligns}, $ga);
+      #check that the genomic_align sequence is not just N's. This causes 
+      #complications with treeBest and we end up with very long branch lengths
+
+      my $slice = $ga->get_Slice();
+      my $seqlevel = $slice->coord_system->adaptor->fetch_sequence_level();
+      my @projection = @{$slice->project($seqlevel->name(), $seqlevel->version())};
+      if (@projection > 0) {
+	  push(@{$genomic_aligns}, $ga);
+      }
   }
 
-  $self->genomic_aligns($genomic_aligns);
+  #only store genomic_aligns if there are more than 1 genomic_align left in the
+  #genomic_align_block
+  if (@$genomic_aligns > 1) {
+      $self->genomic_aligns($genomic_aligns);
+  } 
+
 }
 
 
