@@ -4,26 +4,10 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet);
 
-sub _init {
+sub render {
   my $self = shift;
   
-  if ($self->{'container'}->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
-    my $line = $self->Rect({
-      'z'             => 11,
-      'x'             => -120,
-      'y'             => 4,
-      'colour'        => 'black',
-      'width'         => 20000,
-      'height'        => 0,
-      'absolutex'     => 1,
-      'absolutewidth' => 1,
-      'absolutey'     => 1
-    });
-    
-    $self->push($line);
-    
-    return;
-  }
+  return $self->render_highlighting if $self->strand > 0;
 
   my $href = $self->get_parameter('base_url') . ';action=%s;id=' . --[split '|', $self->get_parameter('slice_number')]->[0];
   
@@ -33,92 +17,93 @@ sub _init {
   my $compara = $self->get_parameter('compara');
 
   my $sprites = {
-    'nav'   => [ 
+    nav   => [ 
       -10 - $sprite_size, 
       -$sprite_step,
-      [ 'zoom_out', 'out' ],
+      [ 'zoom_out', 'out'     ],
       [ 'realign',  'realign' ],
-      [ 'zoom_in',  'in' ]
+      [ 'zoom_in',  'in'      ]
     ],
-    'left'  => [ 
+    left  => [ 
       0, 
       $sprite_step,
       [ 'left',       'left2' ],
-      [ 'nudge_left', 'left' ]
+      [ 'nudge_left', 'left'  ]
     ],
-    'right' => [ 
+    right => [ 
       $self->image_width - $sprite_size + 1, 
       -$sprite_step,
       [ 'right',       'right2' ],
-      [ 'nudge_right', 'right' ]
+      [ 'nudge_right', 'right'  ]
     ]
   };
+  
+  push @{$sprites->{'nav'}}, [ 'flip_strand', 'flip' ],      if $compara ne 'primary';
+  push @{$sprites->{'nav'}}, [ 'set_as_primary', 'primary' ] if $compara eq 'secondary'; # Not available for paralogues
 
-  if (!$self->{'config'}->{'align_slice'}) {
-    # in case of AlignSlice - don't display navigation buttons
-    push @{$sprites->{'nav'}}, [ 'flip_strand', 'flip' ], if $compara ne 'primary';
-    push @{$sprites->{'nav'}}, [ 'set_as_primary', 'primary' ] if $compara eq 'secondary'; # Not available for paralogues
-
-    foreach my $key (keys %$sprites) {
-      my ($pos, $step,  @sprite_array) = @{$sprites->{$key}};
+  foreach my $key (keys %$sprites) {
+    my ($pos, $step,  @sprite_array) = @{$sprites->{$key}};
+    
+    foreach my $sprite (@sprite_array) {
+      (my $alt = $sprite->[0]) =~ s/_/ /g;
       
-      foreach my $sprite (@sprite_array) {
-        (my $alt = $sprite->[0]) =~ s/_/ /g;
-        
-        $self->push($self->Sprite({
-          'z'             => 1000,
-          'x'             => $pos,
-          'y'             => 0,
-          'sprite'        => $sprite->[0],
-          'width'         => $sprite_size,
-          'height'        => $sprite_size,
-          'absolutex'     => 1,
-          'absolutewidth' => 1,
-          'absolutey'     => 1,
-          'href'          => sprintf($href, $sprite->[1]),
-          'class'         => 'nav',
-          'alt'           => ucfirst $alt
-        }));
-        
-        $pos += $step;
-      }
+      $self->push($self->Sprite({
+        z             => 1000,
+        x             => $pos,
+        y             => 0,
+        sprite        => $sprite->[0],
+        width         => $sprite_size,
+        height        => $sprite_size,
+        absolutex     => 1,
+        absolutewidth => 1,
+        absolutey     => 1,
+        href          => sprintf($href, $sprite->[1]),
+        class         => 'nav',
+        alt           => ucfirst($alt)
+      }));
+      
+      $pos += $step;
     }
   }
+  
+  $self->render_highlighting;
+}
 
-  my $line = $self->Rect({
-    'z'             => 11,
-    'x'             => -120,
-    'y'             => 12,
-    'colour'        => 'black',
-    'width'         => 120,
-    'height'        => 0,
-    'absolutex'     => 1,
-    'absolutewidth' => 1,
-    'absolutey'     => 1
+sub render_highlighting {
+  my $self = shift;
+  
+  my $compara = $self->get_parameter('compara'); 
+  my ($y, $tag1, $tag2) = $self->strand > 0 ? (0, 0, 0.9) : (12, 0.9, 0);
+  
+  my $line = $self->Line({
+    x             => -120,
+    y             => $y,
+    width         => 120,
+    height        => 0,
+    absolutex     => 1,
+    absolutewidth => 1,
+    absolutey     => 1
   });
   
-  $self->join_tag($line, 'bracket', 0, 0, 'black');
-  
+ $self->join_tag($line, 'bracket', 0, 0, 'black');
+
   if ($compara eq 'primary') {
-    $self->join_tag($line, 'bracket2', 0.9, 0, 'rosybrown1', 'fill', -40);
-    $self->join_tag($line, 'bracket2', 0,   0, 'rosybrown1', 'fill', -40);
+    $self->join_tag($line, 'bracket2', $tag1, 0, 'rosybrown1', 'fill', -40);
+    $self->join_tag($line, 'bracket2', $tag2, 0, 'rosybrown1', 'fill', -40);
   }
   
   $self->push($line);
   
-  my $line = $self->Rect({
-    'z'             => 11,
-    'x'             => 0,
-    'y'             => 12,
-    'colour'        => 'black',
-    'width'         => 20000,
-    'height'        => 0,
-    'absolutex'     => 1,
-    'absolutewidth' => 1,
-    'absolutey'     => 1
-  });
-
-  $self->push($line);
+  $self->push($self->Line({
+    x             => 0,
+    y             => $y,
+    colour        => 'black',
+    width         => 20000,
+    height        => 0,
+    absolutex     => 1,
+    absolutewidth => 1,
+    absolutey     => 1
+  }));
 }
 
 1;
