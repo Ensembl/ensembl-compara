@@ -40,7 +40,7 @@ sub content_ajax {
   my $object = $self->object;
   
   my $params = $object->multi_params;  
-  my $url = $object->_url({ align => $object->param('align') }, 1);
+  my $url = $object->_url({ function => undef, align => $object->param('align') }, 1);
   
   my $alignments = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   my $primary_species = $object->species;
