@@ -1820,6 +1820,12 @@ sub restrict_between_reference_positions {
   $genomic_align_block = $self->restrict_between_alignment_positions($aln_start, $aln_end, $skip_empty_GenomicAligns);
   $new_reference_genomic_align = $genomic_align_block->reference_genomic_align;
 
+  if (!defined $self->{'restricted_aln_start'}) {
+      $self->{'restricted_aln_start'} = 0;
+  }
+  if (!defined $self->{'restricted_aln_end'}) {
+      $self->{'restricted_aln_end'} = 0;
+  }
   $genomic_align_block->{'restricted_aln_start'} = $counter_of_trimmed_columns_from_the_start + $self->{'restricted_aln_start'};
   $genomic_align_block->{'restricted_aln_end'} = $counter_of_trimmed_columns_from_the_end + $self->{'restricted_aln_end'};
   #$genomic_align_block->{'original_length'} = $self->length;
