@@ -749,8 +749,11 @@ sub print_my_emf {
   print "\n";
   my $aligned_seqs;
   my $all_genomic_aligns;
+  my $is_a_genomic_align_tree;
   if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+    $is_a_genomic_align_tree = 1;
     foreach my $this_genomic_align_tree (@{$genomic_align_block->get_all_sorted_genomic_align_nodes()}) {
+      next if (!$this_genomic_align_tree->genomic_align_group);
       push(@{$all_genomic_aligns}, $this_genomic_align_tree->genomic_align_group);
     }
   } else {
@@ -758,34 +761,19 @@ sub print_my_emf {
   }
   my $reverse = 1 - $genomic_align_block->get_original_strand;
   foreach my $this_genomic_align (@{$all_genomic_aligns}) {
-      my $species_name;
-      next if (!defined($this_genomic_align));
+    next if (!defined($this_genomic_align));
 
-      #find species_name
-      if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
-	  $species_name = $this_genomic_align->get_all_GenomicAligns->[0]->genome_db->name;
-	  $species_name =~ s/ /_/g;
-      } else {
-	  $species_name = $this_genomic_align->genome_db->name;
-	  $species_name =~ s/ /_/g;
-      }
-    if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup") and
-        @{$this_genomic_align->get_all_GenomicAligns} > 1) {
-      my $length = 0;
-      my @names;
-      foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
-        push(@names, $this_sub_genomic_align->get_Slice->name);
-        $length += $this_sub_genomic_align->dnafrag_end - $this_sub_genomic_align->dnafrag_start + 1;
-      }
-      print join(" ", "SEQ", $species_name, "Composite_".$this_genomic_align->dbID,
-          1, $length, ($reverse?-1:1), "(chr_length=".$length.")"), "\n";
-      print "### $species_name Composite_",$this_genomic_align->dbID, " is: ", join(" + ", @names), "\n";
-    } else {
-      print join(" ", "SEQ", $species_name, $this_genomic_align->dnafrag->name,
-          $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
-          $this_genomic_align->dnafrag_strand,
-          "(chr_length=".$this_genomic_align->dnafrag->length.")"), "\n";
-    }
+    #find species_name
+    my $species_name;
+    $species_name = $this_genomic_align->genome_db->name;
+    $species_name =~ s/ /_/g;
+    my $seq_name = $this_genomic_align->dnafrag->name;
+
+    my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand) =
+        get_coordinates($this_genomic_align, $reverse);
+    print join(" ", "SEQ", $species_name, $dnafrag_name,
+        $dnafrag_start, $dnafrag_end, $dnafrag_strand,
+        "(chr_length=".$dnafrag_length.")"), "\n";
     my $aligned_sequence;
     if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
       foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
@@ -917,10 +905,10 @@ sub print_my_maf {
   } else {
     $all_genomic_aligns = $genomic_align_block->get_all_GenomicAligns()
   }
+  my $reverse = 1 - $genomic_align_block->get_original_strand;
   foreach my $this_genomic_align (@$all_genomic_aligns) {
     my $seq_name = $this_genomic_align->genome_db->name;
     $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
-    $seq_name .= ".".$this_genomic_align->dnafrag->name;
     my $aligned_sequence;
     if ($masked_seq == 1) {
       $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
@@ -932,26 +920,20 @@ sub print_my_maf {
     } else {
       $aligned_sequence = $this_genomic_align->aligned_sequence;
     }
-    my $dnafrag_length = $this_genomic_align->dnafrag->length;
-    if (!$dnafrag_length) {
-      ## This is a composite segment. Just add all the bits together
-      $dnafrag_length = 0;
-      foreach my $this_composite_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
-        $dnafrag_length += $this_composite_genomic_align->length;
-      }
-    }
-    if ($this_genomic_align->dnafrag_strand == 1) {
+    my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand) =
+        get_coordinates($this_genomic_align, $reverse);
+    if ($dnafrag_strand == 1) {
       printf("s %-20s %10d %10d + %10d %s\n",
-          $seq_name,
-          $this_genomic_align->dnafrag_start-1,
-          ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
+          "$seq_name.$dnafrag_name",
+          $dnafrag_start-1,
+          ($dnafrag_end - $dnafrag_start + 1),
           $dnafrag_length,
           $aligned_sequence);
     } else {
       printf("s %-20s %10d %10d - %10d %s\n",
-          $seq_name,
-          ($dnafrag_length - $this_genomic_align->dnafrag_end),
-          ($this_genomic_align->dnafrag_end - $this_genomic_align->dnafrag_start + 1),
+          "$seq_name.$dnafrag_name",
+          ($dnafrag_length - $dnafrag_end),
+          ($dnafrag_end - $dnafrag_start + 1),
           $dnafrag_length,
           $aligned_sequence);
     }
@@ -990,4 +972,34 @@ sub deep_clean {
     }
     undef($this_genomic_align_group);
   }
+}
+
+sub get_coordinates {
+  my ($this_genomic_align, $reverse) = @_;
+  my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
+
+  my $species_name = $this_genomic_align->genome_db->name;
+  if ($this_genomic_align->can("get_all_GenomicAligns") and @{$this_genomic_align->get_all_GenomicAligns} > 1) {
+    ## This is a composite segment.
+    ## We need to fix the name and the length
+    my @names;
+    $dnafrag_length = 0;
+    foreach my $this_composite_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
+      push(@names, $this_composite_genomic_align->get_Slice->name);
+      $dnafrag_length += $this_composite_genomic_align->length;
+    }
+    $dnafrag_name = $this_genomic_align->dnafrag->name."_".$this_genomic_align->dbID;
+    print "### $species_name $dnafrag_name is: ", join(" + ", @names), "\n";
+    $dnafrag_start = 1;
+    $dnafrag_end = $dnafrag_length;
+    $dnafrag_strand = ($reverse?-1:1);
+  } else {
+    $dnafrag_name = $this_genomic_align->dnafrag->name;
+    $dnafrag_start = $this_genomic_align->dnafrag_start;
+    $dnafrag_end = $this_genomic_align->dnafrag_end;
+    $dnafrag_length = $this_genomic_align->dnafrag->length;
+    $dnafrag_strand = $this_genomic_align->dnafrag_strand;
+  }
+
+  return ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
 }
