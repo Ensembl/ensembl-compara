@@ -62,7 +62,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
             component = Ensembl.replaceTimestamp(component);
           }
           
-          params.updateURL = component + ';update=1';
+          params.updateURL = component + ';no_wrap=1';
           
           myself.getContent(component, content, params);
         }

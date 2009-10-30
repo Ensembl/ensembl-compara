@@ -22,7 +22,7 @@ sub content {
     type     => 'Component',
     action   => $object->type,
     function => 'Web/SelectAlignment/ajax',
-    update   => 1,
+    no_wrap  => 1,
     %{$object->multi_params}
   });
   

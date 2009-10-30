@@ -702,7 +702,7 @@ sub content {
                   if ($self->_is_ajax_request) {
                     my $id = $ENV{'ENSEMBL_FUNCTION'} eq 'sub_slice' ? '' : $comp_obj->id;
                     
-                    $content = qq{<div class="js_panel" id="$id">$content</div>} unless $object->param('update');
+                    $content = qq{<div class="js_panel" id="$id">$content</div>} unless $object->param('no_wrap');
                   } else {
                     my $caption = $comp_obj->caption;
                     $self->printf("<h2>%s</h2>", escapeHTML($caption)) if $caption;
