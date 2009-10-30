@@ -530,9 +530,8 @@ sub _summarise_compara_db {
              $type =~ /CONSTRAINED_ELEMENT/ ) {
       $KEY = "CONSTRAINED_ELEMENTS";
       $constrained_elements->{$species_set_id} = $id;
-      $name = "Constrained elements";
-    } elsif( $class =~ /tree_alignment/ || $type  =~ /EPO/ ) {
-      unless( $name eq '31 eutherian mammals EPO_LOW_COVERAGE' || exists $self->db_tree->{$db_name}{$KEY}{$id} ) {
+    } elsif( $type !~ /EPO_LOW_COVERAGE/ && ( $class =~ /tree_alignment/ || $type  =~ /EPO/ ) ) {
+      unless( exists $self->db_tree->{$db_name}{$KEY}{$id} ) {
         $self->db_tree->{ $db_name }{$KEY}{$id}{'species'}{"Ancestral_sequences"}=1;
       }
     }
