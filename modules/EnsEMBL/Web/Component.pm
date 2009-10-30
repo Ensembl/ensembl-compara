@@ -13,6 +13,7 @@ our @EXPORT = @EXPORT_OK;
 
 use CGI qw(escapeHTML);
 use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
 use Text::Wrap qw(wrap);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
@@ -157,6 +158,19 @@ sub has_image { return 0; }
 sub cache_key { return undef; }
 sub caption   { return undef; }
 sub _init     { return; }
+
+sub ajax_url {
+  my ($self, $function_name) = @_;
+  
+  my ($ensembl, $plugin, $component, $type, $module) = split '::', ref $self;
+  
+  my $url = join '/', '', $ENV{'ENSEMBL_SPECIES'}, 'Component', $ENV{'ENSEMBL_TYPE'}, $plugin, $module;
+  $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
+  $url .= "?$ENV{'QUERY_STRING'}";
+  $url .= ';_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4;
+  
+  return $url;
+}
 
 sub cache {
   my( $panel, $obj, $type, $name ) = @_;
