@@ -41,7 +41,7 @@ sub content {
   }) . '<br />';
 
   if ($length >= $self->{'subslice_length'}) {
-    my $base_url = "/$species/Component/$type/Web/GeneSeq/sub_slice?length=$length;name=" . $slice->name;
+    my $base_url = $self->ajax_url('sub_slice') . "?$length;name=" . $slice->name;
     
     $html .= $self->get_key($object, $site_type) . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
   } else {
