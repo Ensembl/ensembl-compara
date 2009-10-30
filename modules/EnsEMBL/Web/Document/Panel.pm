@@ -6,7 +6,6 @@ use strict;
 
 use HTTP::Request;
 use Data::Dumper;
-use Digest::MD5 qw();
 use CGI qw(escape escapeHTML);
 
 use EnsEMBL::Web::Root;
@@ -349,7 +348,7 @@ sub render {
           if ($button_text) {
             my $url = $self->{$label}->{'url'} || $self->{'object'}->_url({ 'action' => $self->{$label}->{'code'}, 'function' => undef });
             
-            $html .= sprintf qq{<a href="%s">$_->[2]</a>}, CGI::escapeHTML($url), CGI::escapeHTML($button_text);
+            $html .= sprintf qq{<a href="%s">$_->[2]</a>}, escapeHTML($url), escapeHTML($button_text);
           } else {
             $html .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
           }
@@ -401,9 +400,9 @@ sub _caption_with_helplink {
   my $id = $self->{'help'};
   my $html = '<h2>';
   if ( $id ) {
-    $html .= sprintf(' <a href="/Help/View?id=%s;_referer=%s" class="popup help-header" title="Click for Help">', CGI::escapeHTML($id), CGI::escape($ENV{'REQUEST_URI'}) );
+    $html .= sprintf(' <a href="/Help/View?id=%s;_referer=%s" class="popup help-header" title="Click for Help">', escapeHTML($id), CGI::escape($ENV{'REQUEST_URI'}) );
   }
-  $html .= $self->{'raw_caption'} ? $self->{'caption'} : CGI::escapeHTML($self->{caption});
+  $html .= $self->{'raw_caption'} ? $self->{'caption'} : escapeHTML($self->{caption});
   if ( $id ) {
     $html .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" class="print_hide" /></a>';
   }
@@ -435,7 +434,7 @@ sub _content {
   return unless $output;
   my $output = q(
       <div class="content">$output);
-  my $cap = exists( $self->{'caption'} ) ? CGI::escapeHTML($self->parse($self->{'caption'})) : '';
+  my $cap = exists( $self->{'caption'} ) ? escapeHTML($self->parse($self->{'caption'})) : '';
   if( $self->{'link'} ) {
     $output .= sprintf( q(
         <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
@@ -450,7 +449,7 @@ sub _render_content {
   $self->renderer->print( q(
       <div class="content">));
   $self->content();
-  my $cap = exists( $self->{'caption'} ) ? CGI::escapeHTML($self->parse($self->{'caption'})) : '';
+  my $cap = exists( $self->{'caption'} ) ? escapeHTML($self->parse($self->{'caption'})) : '';
   if( $self->{'link'} ) {
     $self->renderer->printf( q(
         <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
@@ -665,25 +664,20 @@ sub content {
             my $caption = $comp_obj->caption;
             
             if (!$self->{'disable_ajax'} && $comp_obj->ajaxable && !$self->_is_ajax_request) {
-              my ($ensembl, $plugin, $component, $type, $module) = split '::', $module_name;
-              
-              my $URL = join '/', '', $ENV{'ENSEMBL_SPECIES'}, 'Component', $ENV{'ENSEMBL_TYPE'}, $plugin, $module;
-              $URL .= "/$function_name" if $function_name && $comp_obj->can("content_$function_name");
-              $URL .= "?$ENV{'QUERY_STRING'}";
-              $URL .= ';_rmd=' . substr(Digest::MD5::md5_hex($ENV{'REQUEST_URI'}), 0, 4);
+              my $url = $comp_obj->ajax_url($function_name);
               
               my $class = 'ajax' . ($comp_obj->has_image ? ' image_panel' : '');
               
               # Check if ajax enabled
               if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
                 if ($caption) {
-                  $self->printf(qq{<div class="$class" title="['%s','%s']"></div>}, CGI::escapeHTML($caption), CGI::escapeHTML($URL));
+                  $self->printf(qq{<div class="$class" title="['%s','%s']"></div>}, escapeHTML($caption), escapeHTML($url));
                 } else {
-                  $self->printf(qq{<div class="$class" title="['%s']"></div>}, CGI::escapeHTML($URL));
+                  $self->printf(qq{<div class="$class" title="['%s']"></div>}, escapeHTML($url));
                 }
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
                 # if ajax disabled - we get all content by parallel requests to ourself
-                $self->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $URL));
+                $self->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
               }
             } else {
               my $content;
@@ -711,7 +705,7 @@ sub content {
                     $content = qq{<div class="js_panel" id="$id">$content</div>} unless $object->param('update');
                   } else {
                     my $caption = $comp_obj->caption;
-                    $self->printf("<h2>%s</h2>", CGI::escapeHTML($caption)) if $caption;
+                    $self->printf("<h2>%s</h2>", escapeHTML($caption)) if $caption;
                   }
                   
                   $self->print($content);
