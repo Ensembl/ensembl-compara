@@ -497,6 +497,20 @@ create_mlss.pl script as follows;
     --method_link_type PROTEIN_TREES \
     --genome_db_id "$SPECIES_LIST"
 
+7.4. This step is optional to determine the genomes that have and have
+not changed gene sets between releases:
+
+# Run the healthcheck and list the changing species:
+# org.ensembl.healthcheck.testcase.generic.ComparePreviousVersionExonCoords
+
+./run-healthcheck.sh -d '.*core_57.*' ComparePreviousVersionExonCoords
+
+# Build the genome_db list of species that haven't changed:
+mysql -hdbname -uensro compara_master_db -e "select group_concat(genome_db_id order by genome_db_id) from genome_db where assembly_default=1 and taxon_id!=0 and name not in ('Genus species4','Genus species5','Genus species6')"
+
+# Then fill the reuse parameters in BLASTP_TEMPLATE:
+reuse_db=>'mysql://ensro\@server-with-previous-release/compara_prev_release',reuse_gdb=>[1,2,3,7,8,9]
+
 At this point the system is ready to run..
 
 
@@ -658,6 +672,19 @@ aliases can be used in GeneTreeView (v51ss):
      WHERE n.taxon_id=p2.value and p1.node_id=p2.node_id and \
      p2.tag=\"taxon_id\" and p1.tag=\"taxon_name\" \
      and n.name_class=\"ensembl alias name\"
+
+Additionally, if you have "ensembl timetree mya" entries in the
+ensembl_aliases.sql table, you can also add the "(XXX MYA)" tags in
+the taxon_alias, so that they can be used in GeneTreeView:
+
+  $ mysql -N $COMPARA_DBNAME -e \
+    "INSERT INTO protein_tree_tag SELECT p1.node_id, 'taxon_alias_mya', \
+     concat(n.name, ' (', round(n2.name,0), ' MYA)') \
+     FROM protein_tree_tag p1, protein_tree_tag p2, ncbi_taxa_name n, ncbi_taxa_name n2 \
+     WHERE n.taxon_id=p2.value and n2.taxon_id=p2.value and p1.node_id=p2.node_id and \
+     p2.tag=\"taxon_id\" and p1.tag=\"taxon_name\" and n.name_class=\"ensembl alias name\" \
+     and n2.name_class=\"ensembl timetree mya\"
+
 
 11 - Generate basic statistics
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
