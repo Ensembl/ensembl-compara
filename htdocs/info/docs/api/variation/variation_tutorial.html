@@ -275,6 +275,42 @@ sub get_TranscriptVariations{
 
 
 
+<h2>Structural variations</h2>
+
+<p>
+The Ensembl variation database also stores information about structural variations. These data are imported from the DGVa (Database of Genomic Variants archive).</p>
+
+<pre class="code">
+use strict;
+use warnings;
+
+use Bio::EnsEMBL::Registry;
+
+my $reg = 'Bio::EnsEMBL::Registry';
+my $host= 'ensembldb.ensembl.org';
+my $user= 'anonymous';
+
+$reg-&gt;load_registry_from_db(
+	-host =&gt; $host,
+    -user =&gt; $user
+);
+
+# get exon adaptor from core
+my $sa = $reg-&gt;get_adaptor("human", "core", "slice");
+
+my $slice = $sa-&gt;fetch_by_region('chromosome', 5, 1, 1000000);
+
+# get all structural variations on the slice
+my $svs = $slice-&gt;get_all_StructuralVariations();
+
+foreach my $sv(@$svs) {
+	print $sv-&gt;variation_name, " ", $sv-&gt;seq_region_name, ":", $sv-&gt;seq_region_start, "-", $sv-&gt;seq_region_end, " ", $sv-&gt;class, "\n";
+}
+</pre>
+
+
+
+
 <h2>LD calculation</h2>
 
 <p>
