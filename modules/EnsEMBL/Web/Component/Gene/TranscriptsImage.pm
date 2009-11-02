@@ -27,7 +27,7 @@ sub content {
   my $wuc        = $gene->image_config_hash( 'gene_summary' );
      $wuc->set_parameters({
        'container_width'   => $gene_slice->length,
-       'image_width',      => $self->image_width || 800,
+       'image_width',      => $gene->param('image_width') || $self->image_width || 800,
        'slice_number',     => '1|1',
      });
 
