@@ -44,7 +44,7 @@ sub render {
       my $date = $self->pretty_date($r->date, 'short');
       my $r_name = $r->id == $species_defs->ENSEMBL_VERSION 
           ? 'Current release ('.$r->number." - $date)" : 'Release '.$r->number.' ('.$date.')';
-      $html .= qq(<option value="$r->id");
+      $html .= '<option value="'.$r->id.'"';
       $html .= ' selected="selected"' if $r->id == $species_defs->ENSEMBL_VERSION;
       $html .= qq(>$r_name</option>);
     }
