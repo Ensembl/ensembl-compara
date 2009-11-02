@@ -36,6 +36,11 @@ sub content {
   });
   
   $self->add_entry({
+    type  => 'Gene type',
+    label => $object->gene_type
+  });
+  
+  $self->add_entry({
     type  => 'Strand',
     label => $object->seq_region_strand < 0 ? 'Reverse' : 'Forward'
   });
