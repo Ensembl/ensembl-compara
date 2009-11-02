@@ -49,6 +49,11 @@ sub content {
     });
   }
   
+  $self->add_entry({
+    type  => 'Transcript type',
+    label => $object->transcript_type
+  });
+  
   if ($object->get_db eq 'vega' || ($object->Obj->analysis->logic_name =~ /otter/) ) {
     $self->add_entry({
       type  => 'Transcript class',
