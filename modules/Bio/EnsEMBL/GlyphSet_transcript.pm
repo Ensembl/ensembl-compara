@@ -240,8 +240,8 @@ sub render_transcripts {
   my $show_labels       = $self->my_config('show_labels');
   my $previous_species  = $self->my_config('previous_species');
   my $next_species      = $self->my_config('next_species');
-  my $previous_target  = $self->my_config('previous_target');
-  my $next_target      = $self->my_config('next_target');
+  my $previous_target   = $self->my_config('previous_target');
+  my $next_target       = $self->my_config('next_target');
   my $join_types        = $self->get_parameter('join_types');
   my $link              = $self->get_parameter('compara') ? $self->my_config('join') : 0;
   my $target            = $self->get_parameter('single_Transcript');
@@ -316,7 +316,9 @@ sub render_transcripts {
       }
     }
     
-    foreach my $transcript (@{$gene->get_all_Transcripts}) {
+    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->get_all_Transcripts};
+    
+    foreach my $transcript (@sorted_transcripts) {
       my $transcript_stable_id = $transcript->stable_id;
       
       next if $transcript->start > $length || $transcript->end < 1;
@@ -554,7 +556,9 @@ sub render_alignslice_transcript {
     next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand
     next if $target_gene && $gene_stable_id ne $target_gene;
     
-    foreach my $transcript (@{$gene->get_all_Transcripts}) {
+    my @sorted_transcripts = map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->start * $gene_strand, $_ ], @{$gene->get_all_Transcripts};
+    
+    foreach my $transcript (@sorted_transcripts) {
       next if $transcript->start > $length || $transcript->end < 1;
       
       my @exons = $self->map_AlignSlice_Exons($transcript, $length);
