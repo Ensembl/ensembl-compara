@@ -162,9 +162,10 @@ sub _init     { return; }
 sub ajax_url {
   my ($self, $function_name) = @_;
   
+  my $object = $self->object;
   my ($ensembl, $plugin, $component, $type, $module) = split '::', ref $self;
   
-  my $url = join '/', '', $ENV{'ENSEMBL_SPECIES'}, 'Component', $ENV{'ENSEMBL_TYPE'}, $plugin, $module;
+  my $url = join '/', $object->species_path, 'Component', $object->type, $plugin, $module;
   $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
   $url .= "?$ENV{'QUERY_STRING'}";
   $url .= ';_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4;
