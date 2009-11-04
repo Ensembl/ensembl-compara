@@ -1,0 +1,89 @@
+<html>
+<head>
+<title>Creating a custom dynamic page</title>
+</head>
+
+<body>
+
+<h1>Custom Dynamic Pages</h1>
+
+<p>Creating a dynamic page with shows a selection of data from one of the Ensembl databases is fairly straightforward.</p>
+
+<h2>Creating the page</h2>
+
+<ol>
+<li>Create a directory in your plugin to contain your custom code. If you want to put your code in the mirror plugin, it should be<br /><kbd>public-plugins/mirror/modules/EnsEMBL/Mirror</kbd></li>
+<li>Decide on the URL for your new page. For example if you are basing your view around gene information, your URL might be <br />&lt;species&gt;/Gene/MyViewName</li>
+<li>Create a module which will add this URL to the available views. In our example, <kbd>public-plugins/mirror/modules/EnsEMBL/Mirror/Configuration/Gene.pm</kbd> will extend the current set of gene-based displays:
+<pre>
+package EnsEMBL::Mirror::Configuration::Gene;
+
+use strict;
+use base qw( EnsEMBL::Web::Configuration );
+
+sub populate_tree {
+  my $self   = shift;
+  $self-&gt;create_node('MyViewName', 'My Possibly Long Title for this View',
+    [],
+    { 'availability' =&gt; 'gene', 'concise' =&gt; 'My Short Title' }
+  );
+}
+
+1;
+</pre>
+<p>This will add your view to the bottom of the lefthand menu, and provides a framework to which HTML output components will be attached (see below).</p>
+<p>The 'concise' parameter is optional, and is a way of configuring an alternative, short name for your view that will appear in links (e.g. in the lefthand menu).</p>
+</li>
+<li>Create the components that will output the HTML. Let's say you want your page to include an image with a table underneath; you may find it easiest to create two separate components, <kbd>EnsEMBL::Mirror::Component::Gene::MyViewImage</kbd> and <kbd>EnsEMBL::Mirror::Component::Gene::MyViewTable</kbd>. Below is a Component template that can be used as the basis of any simple view:
+<pre>
+package EnsEMBL::Mirror::Component::Gene::MyViewImage;
+
+use strict;
+use warnings;
+no warnings "uninitialized";
+use base qw(EnsEMBL::Web::Component::Gene);
+
+sub _init {
+  my $self = shift;
+  $self-&gt;cacheable( 1 );
+  $self-&gt;ajaxable(  1 );
+  $self-&gt;configurable( 0 );
+}
+
+sub content {
+  my $self = shift;
+  my $object = $self-&gt;object;
+
+  my $html;
+
+  # Write your content-generating code here!
+
+  return $html;
+}
+
+1;
+
+</pre>
+The easiest approach is to look at a page that has a similar display to the one you want, and modify a copy of that code.
+</li>
+<li>Add the list of components to the Configuration::Gene module you created earlier, in the empty arrayref:
+<pre>
+$self-&gt;create_node('MyViewName', 'My Possibly Long Title for this View',
+    [
+      myviewimg     EnsEMBL::Mirror::Component::Gene::MyViewImage
+      myviewtable   EnsEMBL::Mirror::Component::Gene::MyViewTable
+    ],
+    { 'availability' =&gt; 'gene', 'concise' =&gt; 'My Short Title' }
+  );
+</pre>
+</li>
+<li>Restart your server, and your completed page should now be accessible on your Ensembl installation!</li>
+</ol>
+
+
+<h2>Adding configuration options</h2>
+
+<p>To Do</p>
+
+</body>
+</html>
