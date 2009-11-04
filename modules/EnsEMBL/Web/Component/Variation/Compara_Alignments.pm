@@ -289,7 +289,6 @@ sub content {
   my $align_species = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align}->{'species'};
   my %aligned_names = map { $_->{'name'} => 1 } @aligned_slices;
   
-  
   foreach (keys %$align_species) {
     next if /^Ancestral_sequences|merged$/;
     $non_aligned_slices{$species_defs->species_label($_)} = 1 unless $aligned_names{$_};
@@ -299,7 +298,7 @@ sub content {
   
   if (scalar keys %non_aligned_slices) {    
     $info .= sprintf (
-      '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
+      '<p>The following %d species have no alignment in this region:</p><ul><li>%s</li></ul>',
       scalar keys %non_aligned_slices,
       join "</li>\n<li>", sort keys %non_aligned_slices
     );
@@ -307,7 +306,7 @@ sub content {
   
   if (scalar keys %no_variation_slices) {
     $info .= sprintf (
-      '<p>The following %d%s species have no variation database:<ul><li>%s</li></ul></p>',
+      '<p>The following %d%s species have no variation database:</p><ul><li>%s</li></ul>',
       scalar keys %no_variation_slices,
       (scalar keys %aligned_names != scalar keys %$align_species ? ' displayed' : ''),
       join "</li>\n<li>", sort keys %no_variation_slices
