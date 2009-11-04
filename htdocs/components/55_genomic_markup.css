@@ -1,4 +1,3 @@
-
 /* SNP sequence markup */   /* Feature colours - MUST BE FIRST */
 .alt_allele   { color: red; font-weight: bold }
 
@@ -45,3 +44,13 @@ span.siu { background-color: [[SEQ_SNPINSERT_TR_UTR]] } /* Insert in UTR region 
 span.sdu { background-color: [[SEQ_SNPDELETE_TR_UTR]] } /* Delete in UTR region */
 span.sf  { background-color: [[SEQ_FRAMESHIFT]] }       /* Frameshift */
 span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
+
+/* BLAST/Download buttons above sequence */
+div.text_seq_buttons { float: right; width: 35em; margin-bottom: 1em; }
+pre.text_sequence { margin-top: 0; float: left; }
+.sequence_key { margin-bottom: 1em; }
+
+form.seq_blast input, a.seq_export { width: 18em; font-size: 0.9em; font-weight: bold; background-color: [[TINT_BG]]; border: 1px outset [[TINT_BORDER]]; color: [[PAGE_LINK]]; }
+form.seq_blast input:hover, a.seq_export:hover { color: [[PAGE_HOVER]]; }
+form.seq_blast input { float: right; padding: 1px; font-family: inherit; cursor: pointer; }
+a.seq_export         { float: left; padding: 2px; text-decoration: none; text-align: center; }
