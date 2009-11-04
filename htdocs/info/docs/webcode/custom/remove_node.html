@@ -1,0 +1,35 @@
+<html>
+<head>
+<title>Removing unneeded views</title>
+</head>
+
+<body>
+
+<h1>Removing unneeded views</h1>
+
+<p>
+If you have a very basic installation of Ensembl with, say, no compara or functional genomics databases downloaded, you may want to remove the views that rely on that data from your installation. This is easily achieved via your plugin.
+</p>
+
+<p>First, create a directory for the module that will modify the menu, e.g. <kbd>/public-plugins/mirror/modules/EnsEMBL/Mirror</kbd>. Then create the following file:</p>
+
+<pre class="code">
+package EnsEMBL::Mirror::Configuration::Gene;
+
+use strict;
+use base qw( EnsEMBL::Web::Configuration );
+
+sub populate_tree {
+  my $self   = shift;
+  $self-&gt;delete_node('Regulation');
+  $self-&gt;delete_submenu('Compara');
+  $self-&gt;delete_submenu('Variation');
+}
+
+1;
+</pre>
+
+<p>Restart your server, and the unwanted menu items will disappear!</p>
+
+</body>
+</html>
