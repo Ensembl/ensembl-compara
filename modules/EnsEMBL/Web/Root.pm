@@ -170,7 +170,7 @@ sub not_allowed {
 sub neat_sr_name {
 ### Returns seq-region name formatted neatly...
   my( $self, $type, $name ) = @_;
-  return $name if $name =~ /^$type/;
+  return $name if $name =~ /^$type/i;
   (my $neat_type = ucfirst(lc($type)) ) =~ s/contig/Contig/;
   return "$neat_type $name"; 
 }
