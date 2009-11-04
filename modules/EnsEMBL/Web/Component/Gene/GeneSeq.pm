@@ -100,7 +100,7 @@ sub content_sub_slice {
   } elsif ($start && $end) {
     $config->{'html_template'} = '<pre style="margin:0 0 0 1em">%s</pre>';
   } else {
-    $config->{'html_template'} = "<p>$config->{'key'}</p><pre>&gt;" . $slice->name . "\n%s</pre>";
+    $config->{'html_template'} = "<div>$config->{'key'}</div><pre>&gt;" . $slice->name . "\n%s</pre>";
   }
   
   return $self->build_sequence($sequence, $config);
