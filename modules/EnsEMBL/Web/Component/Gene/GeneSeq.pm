@@ -27,7 +27,23 @@ sub content {
   my $type      = $object->type;
   my $site_type = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
-  my $html = $self->_info('Sequence markup', qq{
+  my $html = sprintf qq{
+    <form class="seq_blast external" action="/Multi/blastview" method="post">
+      <input type="submit" value="BLAST/BLAT this sequence" />
+      <input type="hidden" name="species" value="$species" />
+      <input type="hidden" name="_query_sequence" value="%s" />
+    </form>
+  }, uc $slice->seq(1);
+  
+  if ($length >= $self->{'subslice_length'}) {
+    my $base_url = $self->ajax_url('sub_slice') . ";length=$length;name=" . $slice->name;
+    
+    $html .= $self->get_key($object, $site_type) . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
+  } else {
+    $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
+  }
+  
+  $html .= $self->_info('Sequence markup', qq{
     <p>
       $site_type has a number of sequence markup pages on the site. You can view the exon/intron structure
       of individual transcripts by selecting the transcript name in the table above, then clicking
@@ -38,15 +54,7 @@ sub content {
       This view and the transcript based sequence views are configurable by clicking on the "Configure this page"
       link in the left hand menu
     </p>
-  }) . '<br />';
-
-  if ($length >= $self->{'subslice_length'}) {
-    my $base_url = $self->ajax_url('sub_slice') . "?$length;name=" . $slice->name;
-    
-    $html .= $self->get_key($object, $site_type) . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
-  } else {
-    $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
-  }
+  });
   
   return $html;
 }
@@ -94,13 +102,13 @@ sub content_sub_slice {
   $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
   
   if ($start == 1) {
-    $config->{'html_template'} = qq{<pre style="margin-bottom:0">&gt;} . $object->param('name') . "\n%s</pre>";
+    $config->{'html_template'} = qq{<pre class="text_sequence" style="margin-bottom:0">&gt;} . $object->param('name') . "\n%s</pre>";
   } elsif ($end && $end == $length) {
-    $config->{'html_template'} = '<pre style="margin-top:0">%s</pre>';
+    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
-    $config->{'html_template'} = '<pre style="margin:0 0 0 1em">%s</pre>';
+    $config->{'html_template'} = '<pre class="text_sequence" style="margin:0 0 0 1em">%s</pre>';
   } else {
-    $config->{'html_template'} = "<div>$config->{'key'}</div><pre>&gt;" . $slice->name . "\n%s</pre>";
+    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div><pre class="text_sequence">&gt;} . $slice->name . "\n%s</pre>";
   }
   
   return $self->build_sequence($sequence, $config);
@@ -135,7 +143,7 @@ sub get_key {
     $rtn .= sprintf $key_template, $_, $key->{$_} for split ',', $_->[1];
   }
   
-  return $rtn;
+  return qq{<div class="sequence_key">$rtn</div>};
 }
 
 1;

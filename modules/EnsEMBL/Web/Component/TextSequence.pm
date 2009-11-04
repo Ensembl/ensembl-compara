@@ -866,7 +866,7 @@ sub build_sequence {
     $html .= $config->{'v_space'};
   }
   
-  $config->{'html_template'} ||= qq{<pre>%s</pre>};  
+  $config->{'html_template'} ||= qq{<pre class="text_sequence">%s</pre><p class="invisible">.</p>};  
   $config->{'html_template'} = sprintf($config->{'html_template'}, $html);
   
   return $config->{'html_template'};

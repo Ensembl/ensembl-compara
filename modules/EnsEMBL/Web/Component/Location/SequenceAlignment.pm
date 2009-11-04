@@ -33,6 +33,7 @@ sub content {
     display_width  => $object->param('display_width') || 60,
     site_type      => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
     species        => $object->species,
+    species_path   => $object->species_path,
     key_template   => '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>',
     key            => '',
     comparison     => 1,
@@ -121,15 +122,15 @@ sub content {
     my (undef, undef, $region, $start, $end) = split /:/, $slice_name;
     
     my $table = qq{
-    <table>
+    <table class="sequence_key">
       <tr>
         <th>$config->{'species'} &gt;&nbsp;</th>
-        <td><a href="/$config->{'species'}/Location/View?r=$region:$start-$end">$slice_name</a><br /></td>
+        <td><a href="$config->{'species_path'}/Location/View?r=$region:$start-$end">$slice_name</a><br /></td>
       </tr>
     </table>
     };
     
-    $config->{'html_template'} = "<div>$config->{'key'}</div>$table<pre>%s</pre>";
+    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div>$table<pre class="text_sequence">%s</pre>};
   
     $html = $self->build_sequence($sequence, $config);
   } else {
