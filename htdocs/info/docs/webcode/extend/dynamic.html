@@ -1,0 +1,85 @@
+<html>
+<head>
+<title>How a dynamic webpage is put together</title>
+</head>
+
+<body>
+
+<h1>Dynamic (database-driven) web pages</h1>
+
+<p>Ensembl uses a URL routing system and a complex structure of templating modules in order to create its pages.</p>
+
+<p>In the diagram below, E::W is shorthand for EnsEMBL::Web, which is the main namespace within the web code. The example shows the routing for the human karyotype page.</p>
+
+<pre>
+                             www.ensembl.org/Homo_sapiens/Location/Genome
+                                                |
+                                                V
+                                          Apache::Handlers
+                                                |
+                                                V
+                                         perl/default/action
+                                                |
+                                                V
+                                            E::W::Magic  
+                                                |
+                                                V
+                                      E::W::Document::WebPage
+                                                |
+                                      -------------------------------------------------------- 
+                                      |                         |                            |
+                                      V                         V                            V
+                            E::W::Document::Page   E::W::Configuration::Location   E::W::Factory::Location
+                                    |                       |                                |
+                 -------------------------------            |                                |
+                 |                             |            |                                |
+                 V                             V            V                                |
+            template modules                 E::W::Document::Panel                           |
+      (E::W::Document::HTML::Logo, etc)             |                                        |
+                                                    V                                        V
+                                           dynamic content modules  <------------- E::W::Object::Location
+                                     (E::W::Component::Location::Genome)  
+                                                                         
+</pre>                                     
+
+<dl>
+<dt>Apache::Handlers</dt>
+
+<dd>Analyses the URL and redirects to the appropriate script
+
+<dt>perl/default/action</dt>
+
+<dd>One of a number of lightweight wrapper scripts (others are 'modal', 'config', etc) which direct the request to an appropriate method within the Magic module</dd>
+
+<dt>Magic</dt>
+ 
+<dd>Principal Controller module which creates a output object (usually WebPage) and attaches essential helper objects such as CGI</dd>
+
+<dt>Document::WebPage</dt>
+
+<dd>Secondary Controller object, to which are attached any Model objects and which instantiates the main View object (usually Page)</dd>
+
+<dt>Document::Page</dt>
+
+<dd>The principal View object, which instantiates subordinate View objects</dd>
+
+<dt>template modules</dt>
+
+<dd>A series of more-or-less static modules which output HTML for various sections of the page template: logo, search box, footer, etc</dd>
+
+<dt>Configuration::Location</dt>
+
+<dd>Builds a tree of available pages for the current Location, from which the lefthand navigation menu is built. Also defines the set of components that belong to each page</dd>
+
+<dt>Document::Panel</dt>
+
+<dd>A "container" for a set of output modules</dd>
+
+<dt>Components (dynamic content modules)</dt>
+
+<dd>One or more modules attached to a Panel, each of which outputs a chunk of HTML and/or images</dd>
+</dl>
+
+
+</body>
+</html>
