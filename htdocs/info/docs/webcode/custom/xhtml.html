@@ -1,0 +1,397 @@
+<html>
+<head>
+<title>XHTML Quick Reference</title>
+</head>
+
+<body>
+
+<h1>XHTML Quick Reference</h1>
+
+<p>XHTML is basically HTML with a smaller list of allowed tags and stricter syntax - if you know HTML already, it shouldn't take long to master XHTML.</p>
+
+<h2>Syntax</h2>
+
+<ol>
+
+<li>
+<p><strong>All tags and attribute names must be lowercase</strong></p>
+<p>However attribute values can be mixed case if they are not from a pre-defined set.<br />
+e.g. &lt;input type="text" ... /&gt; but not &lt;input type="Text" ... /&gt; 
+(value 'type' belongs to a predefined set); whereas 
+&lt;a href="http://www.sanger.ac.uk/" title="Wellcome Trust Sanger Institute"&gt; is OK (free text value)</p>
+</li>
+
+<li>
+<p><strong>All elements which can have end tags <em>must</em> have end tags</strong></p>
+<p>e.g. &lt;p&gt;Paragraph&lt;/p&gt;&lt;p&gt;More&lt;/p&gt; not &lt;p&gt;Paragraph &lt;p&gt;More</p>
+</li>
+
+<li>
+<p><strong>All elements which do not have end tags ('empty' tags) must have closing slashes</strong></p>
+e.g. &lt;br /&gt; &lt;hr /&gt; &lt;img src="image.gif" width="10" height="10 alt="" /&gt;</p>
+</li>
+
+<li>
+<p><strong>All paired tags must be nested correctly</strong></p>
+<p>e.g. &lt;p&gt;This is some &lt;b&gt;bold text with &lt;i&gt;italics&lt;/i&gt; inside&lt;/b&gt;.&lt;/p&gt;</p>
+
+<p>In addition, there are some tags that cannot contain certain other tags:</p>
+<ul>
+<li>The &lt;a&gt; tag cannot contain another &lt;a&gt; tag.</li>
+<li>The &lt;pre&gt; tag cannot contain &lt;img&gt;, &lt;object&gt;,  &lt;big&gt;, &lt;small&gt;, &lt;sub&gt; or &lt;sup&gt; tags.</li> 
+<li>The &lt;button&gt; tag cannot contain  &lt;input&gt;, &lt;select&gt;, &lt;textarea&gt;, &lt;label&gt;, &lt;button&gt;, &lt;form&gt;, &lt;fieldset&gt;, &lt;iframe&gt; or &lt;isindex&gt; tags.</li> 
+<li>The &lt;label&gt; tag cannot contain other &lt;label&gt; tags.</li>
+<li>The &lt;form&gt; tag cannot contain other &lt;form&gt; tags.</li> 
+</ul>
+</li>
+
+<li>
+<p><strong>Attribute values must always be enclosed in quotes</strong></p>
+<p>e.g. &lt;td colspan="2"&gt; not &lt;td colspan=2&gt;</p>
+</li>
+
+<li>
+<p><strong>All attributes must have values</strong></p>
+<p>e.g. &lt;input type="checkbox" name="choose" checked="checked" /&gt;
+not &lt;input type="checkbox" name="choose" checked /&gt;</p>
+</li>
+
+<li>
+<p><strong>Anchors used for jumping between links should have an id attribute not a name</strong></p>
+<p>&lt;a href="#foo"&gt;Go to foo&lt;/a&gt;  &lt;a id="foo"&gt;Foo&lt;/a&gt;
+Also, ids must match the pattern [A-Za-z][A-Za-z0-9:_.-]*</p> 
+</li>
+
+<li>
+<p><strong>All ampersands should be encoded as &amp;amp;</strong></p>
+<p>This includes alt text, titles and external URLs. E.g. 
+&lt;a href="http://www.misk.edu/genomics.php?project=cthulu&amp;amp;id=hpl"&gt;Interesting Page&lt;/a&gt;</p> 
+
+<p>For internal links, the Ensembl server has been configured to accept a semicolon in URLs instead:
+e.g. &lt;a&nbsp;href="/Homo_sapiens/ldview?snp=rs1154266;pop=936"&gt;</p>
+</li>
+</ol>
+
+<h2>XHTML Elements and Attributes</h2>
+
+<p>There are a number of tags in XHTML Transitional that are deprecated in XHTML Strict and may be removed from later versions of HTML.</p>
+
+<h4>Deprecated presentational tags - use CSS instead!</h4>
+
+<table>
+<tr><td>&lt;basefont&gt;</td><td>&lt;center&gt;</td><td>&lt;s&gt;</td></tr>
+<tr><td>&lt;font&gt;</td><td>&lt;u&gt;</td><td>&lt;strike&gt;</td></tr>
+<tr><td>&lt;big&gt;</td><td>&lt;b&gt;</td><td>&lt;sub&gt;</td></tr>
+<tr><td>&lt;small&gt;</td><td>&lt;i&gt;</td><td>&lt;sup&gt;</td></tr>
+<tr><td>&lt;tt&gt;</td><td>&lt;listing&gt;</td><td>&lt;xmp&gt;</td></tr>
+</table>
+
+<h4>Deprecated structural tags</h4>
+
+<table>
+<tr><td>&lt;applet&gt;</td><td>&lt;dir&gt;</td><td>&lt;menu&gt;</td><td>&lt;embed&gt;</td></tr>
+</table>
+
+<p>In practice, &lt;applet&gt; is the only one likely to be seen on the Ensembl website, and replacing it with the preferred &lt;object&gt; tag can be fiddly!</p>
+
+<h4>Allowed - but not supported by older browsers</h4>
+
+<p>&lt;abbr&gt; and &lt;acronym&gt; don't do much in most browsers and can break older ones, so these are best avoided.</p>
+
+<h4>Allowed tags</h4>
+
+<p>Just about all XHTML elements can take the attributes id, class, style and title; to save typing these out each time, the shorthand [std] is used. </p>
+
+<p>There are two categories of deprecated attributes: presentational ones that can easily be replaced with CSS, which I have denoted with italics, and other attributes for which there is no straightforward replacement.</p>
+
+<table class="ss tint">
+<tr>
+<th>Element</th>
+<th>Allowed attributes</th>
+<th>Deprecated attributes</th>
+</tr>
+<tr><th colspan="3">Principal document elements</th></tr>
+<tr class="bg1">
+<td>html</td>
+<td>xmlns, xml:lang, lang</td>
+<td>version</td>
+</tr>
+<tr class="bg2">
+<td>head</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>body</td>
+<td>[std]</td>
+<td><em>background, bgcolor, text, link, alink, vlink</em></td>
+</tr>
+<tr><th colspan="3">Document head</th></tr>
+<tr class="bg1">
+<td>link</td>
+<td>href, type, rel, rev, media</td>
+<td>target</td>
+</tr>
+<tr class="bg2">
+<td>style</td>
+<td>type (required), media, title</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>meta</td>
+<td>name, content, http_equiv</td>
+<td></td>
+</tr>
+<tr><th colspan="3">Text</th></tr>
+<tr class="bg1">
+<td>div</td>
+<td>[std]</td>
+<td><em>align, nowrap</em></td>
+</tr>
+<tr class="bg2">
+<td>p</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg1">
+<td>span</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr class="bg2">
+<td>br</td>
+<td>[std]</td>
+<td><em>clear</em></td>
+</tr>
+<tr class="bg1">
+<td>pre</td>
+<td>[std]</td>
+<td><em>width, align</em></td>
+</tr>
+<tr class="bg2">
+<td>h1...h6</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg1">
+<td>address</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg2">
+<td>blockquote</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg1">
+<td>q</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr class="bg2">
+<td>cite</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg1">
+<td>em</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr class="bg2">
+<td>strong</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>dfn</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg2">
+<td>kbd</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr><th colspan="3">Rules, images, hyperlinks and image maps</th></tr>
+<tr class="bg1">
+<td>hr</td>
+<td>[std]</td>
+<td><em>align, noshade, size, width</em></td>
+</tr>
+<tr class="bg2">
+<td>img</td>
+<td>[std] + src (required), alt (required), height, width, usemap, longdesc</td>
+<td>name, <em>align, border, vspace, hspace</em></td>
+</tr>
+<tr class="bg1">
+<td>a</td>
+<td>[std] + href, shape, coords, type, accesskey, tabindex</td>
+<td>name, target</td>
+</tr>
+<tr class="bg2">
+<td>area</td>
+<td>[std] + alt (required), href, nohref, shape, coords, accesskey, tabindex</td>
+<td>target</td>
+</tr>
+<tr class="bg1">
+<td>map</td>
+<td>[std] + name</td>
+<td></td>
+</tr>
+<tr><th colspan="3">Lists</th></tr>
+<tr class="bg1">
+<td>ul</td>
+<td>[std]</td>
+<td><em>type, compact</em></td>
+</tr>
+<tr class="bg2">
+<td>ol</td>
+<td>[std]</td>
+<td>start, <em>type, compact</em></td>
+</tr>
+<tr class="bg1">
+<td>li</td>
+<td>[std]</td>
+<td>value, <em>type</em></td>
+</tr>
+<tr class="bg2">
+<td>dl</td>
+<td>[std]</td>
+<td><em>compact</em></td>
+</tr>
+<tr class="bg1">
+<td>dt</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr class="bg2">
+<td>dd</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr><th colspan="3">Tables</th></tr>
+<tr><td colspan="3">N.B. Note that whilst cellpadding, cellspacing and border attributes are
+allowable in tables, a more consistent look can be achieved using CSS.</td></tr>
+<tr class="bg2">
+<td>table</td>
+<td>[std] + width, cellpadding, cellspacing, border, summary</td>
+<td><em>align, valign, bgcolor</em></td>
+</tr>
+<tr class="bg1">
+<td>caption</td>
+<td>[std]</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg2">
+<td>tr</td>
+<td>[std]</td>
+<td><em>align, valign, bgcolor</em></td>
+</tr>
+<tr class="bg1">
+<td>th and td</td>
+<td>[std] + colspan, rowspan</td>
+<td><em>align, valign, bgcolor, width, height, nowrap</em></td>
+</tr>
+<tr class="bg2">
+<td>col</td>
+<td>[std]</td>
+<td><em>align, valign</em></td>
+</tr>
+<tr class="bg1">
+<td>colgroup</td>
+<td>[std]</td>
+<td></td>
+</tr>
+<tr class="bg2">
+<td>thead</td>
+<td>[std]</td>
+<td></td>
+</tr>
+<tr class="bg1">
+<td>tbody</td>
+<td>[std]</td>
+<td></td>
+</tr>
+<tr class="bg2">
+<td>tfoot</td>
+<td>[std]</td>
+<td></td>
+</tr>
+<tr><th colspan="3">Forms</th></tr>
+<tr class="bg1">
+<td>form</td>
+<td>[std] + action (required), method, enctype</td>
+<td>target</td>
+</tr>
+<tr class="bg2">
+<td>fieldset</td>
+<td>[std]</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>legend</td>
+<td>[std] + accesskey</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg2">
+<td>label</td>
+<td>[std] + for, accesskey</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>input</td>
+<td>[std] + type, name, value,  checked, size,, maxlength, src, accesskey, tabindex,
+alt, usemap, accept, disabled, readonly</td>
+<td><em>align</em></td>
+</tr>
+<tr class="bg2">
+<td>select</td>
+<td>[std] + name, size, multiple, tabindex, disabled</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>option</td>
+<td>[std] + value, selected, disabled</td>
+<td>-</td>
+</tr>
+<tr class="bg2">
+<td>optgroup</td>
+<td>[std] + label, disabled</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>textarea</td>
+<td>[std] + rows and cols (required), name, accesskey, tabindex, disabled, readonly</td>
+<td>-</td>
+</tr>
+<tr class="bg2">
+<td>button</td>
+<td>[std] + name, value, type, accesskey, tabindex, disabled</td>
+<td></td>
+</tr>
+<tr><th colspan="3">Executable content</th></tr>
+<tr class="bg1">
+<td>script</td>
+<td>type (required), src, charset, defer</td>
+<td>language</td>
+</tr>
+<tr class="bg2">
+<td>noscript</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr class="bg1">
+<td>object</td>
+<td>[std] + classid, type, data, codebase, archive, codetype, declare, standby</td>
+<td><em>align, width, height, border, hspace, vspace</em></td>
+</tr>
+<tr class="bg2">
+<td>param</td>
+<td>type, value, valuetype</td>
+<td>-</td>
+</tr>
+</table>
+
+</body>
+</html>

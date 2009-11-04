@@ -1,0 +1,40 @@
+<html>
+<head>
+<title>More About Plugins</title>
+</head>
+
+<body>
+
+<h1>More About Plugins</h1>
+
+<p>Plugins are used to complement the normal system of inheritance in 
+object-oriented Perl. Whereas a child object can inherit methods
+from multiple parents, a parent object normally cannot be overridden by
+multiple children. The plugin system "aggregates" the contents
+of several methods into one "master" method that can then be used by
+mod_perl when rendering the webpage.</p>
+
+<p>The module <code>conf/Plugins.pm</code> controls which plugins are
+used by an instance of Ensembl and their order of precedence. In a 
+standard Ensembl mirror, the module will define a plugin array as follows:</p>
+
+<pre class="code">
+$SiteDefs::ENSEMBL_PLUGINS = [
+  'EnsEMBL::Mirror'    =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/mirror',
+  'EnsEMBL::Ensembl'   =&gt; $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
+];
+</pre>
+
+<p>The plugins are processed in reverse order, starting with the last one:</p>
+
+<dl>
+<dt>/public-plugins/ensembl</dt>
+<dd>This is the plugin used by www.ensembl.org to add all Ensembl species
+and site-specific content to the base code</dd>
+<dt>/public-plugins/mirror</dt>
+<dd>This plugin over-rides /public-plugins/ensembl - normally it is used only 
+to configure local server settings</dd>
+</dl>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+<html>
+<head>
+<title>Changing the appearance of your Ensembl website</title>
+</head>
+
+<body>
+
+<h1>Changing the appearance of your Ensembl website</h1>
+
+<p>
+Here at the Ensembl project, in addition to www.ensembl.org  we run many different 
+websites based on Ensembl code, including public sites such as pre!, Vega and 
+the Ensembl archives, and private sites used for internal development.
+In order to distinguish these sites we use plugins to alter the colour scheme
+and/or site logo, in addition to the changes in content. For example, the Vega site 
+is light blue, pre! is green, and the archives are light brown.
+</p>
+
+<p>
+You may find it useful to do something similar with an Ensembl mirror,
+so that your users know they are looking at a local copy and not the actual
+Ensembl site.
+</p>
+
+<p>In the examples below, we'll assume that you are adding these changes
+to the normal <code>/public-plugins/mirror</code> directory.</p>
+
+<p><strong>Important note</strong>: if you make any changes to .ini files,
+you need to remove <code>/conf/config.packed</code> before restarting the
+server, to ensure your changes are recompiled.</p> 
+
+<h2>Changing the site logo</h2>
+
+<p>The Ensembl logo graphic can be found in <code>/htdocs/i/</code> directory.
+First you should make a directory</p>
+
+<p><code>/public-plugins/mirror/htdocs/i/</code></p>
+
+<p>and copy your logo into it. Ideally your logo should be around 
+40 pixels high, so that it does not break the template layout.</p> 
+
+<p>You will then need to add the following lines to 
+your <code>/public-plugins/mirror/conf/ini-files/DEFAULTS.ini</code> file,
+substituting the appropriate parameters:</p>
+
+<pre class="code">
+[ENSEMBL_STYLE]
+SITE_LOGO        = e-ensembl.gif
+SITE_LOGO_ALT    = Ensembl Home
+SITE_LOGO_WIDTH  = 150
+SITE_LOGO_HEIGHT = 40
+SITE_LOGO_HREF   = /
+</pre>
+
+<p>The <code>SITE_LOGO_HREF</code> parameter is only needed if your Ensembl mirror does not occupy the root
+of the host domain - omit this line to use the default link "/"</p>
+
+<h2>Changing the colour scheme</h2>
+
+<p>The colour scheme can be altered by adding the following to
+<code>/public-plugins/mirror/conf/ini-files/DEFAULTS.ini</code>
+(you can omit the [ENSEMBL_STYLE] header if you already have
+a custom logo defined, as above):
+
+<pre class="code">
+[ENSEMBL_STYLE]
+# Main template colours
+
+# General
+PAGE_BG         = ffffff
+PAGE_TEXT       = 555555
+PAGE_HEADER     = 666666
+PAGE_LINK       = 3366bb
+PAGE_VISITED    = 000066
+PAGE_HOVER      = cc0000
+
+# Masthead
+MH_BG           = 333366
+MH_BORDER       = 336699
+MH_TEXT         = ccddff
+MH_LINK         = ffffff
+MH_VISITED      = ffffff
+MH_HOVER        = cc0000
+
+# Extras
+TINT_BG         = eaeeff ; used as 'tint' colour on spreadsheets [1]
+TINT_BORDER     = bbccff
+CONTRAST_TEXT   = 333333
+CONTRAST_BG     = ffffdd ; used as 'tint' colour on spreadsheets [1]
+CONTRAST_BORDER = ffee99 ; [2]
+CONTRAST_HEADER = 993333
+
+# These probably won't need customising on your site unless your
+# colour scheme is very strange!
+
+PANEL_BG        = ffffff ; normally same as PAGE_BG [1]
+PANEL_BORDER    = cccccc ; [2]
+PANEL_TEXT      = 555555 ; normally same as PAGE_TEXT
+
+NEUTRAL_BG      = f0f0f0 ; used for spreadsheet table stripes [1]
+NEUTRAL_BORDER  = cccccc ; [2]
+
+REVERSE_TEXT    = ffffff ; normally white
+
+ALERT_BG        = ffcccc ; [1]
+ALERT_BORDER    = 993333 ; [2]
+ALERT_TEXT      = 333333
+
+# [1] needs to be pale enough for links to show
+# [2] needs to be dark enough for REVERSE_TEXT to show
+
+# Styles for auto-generated images
+
+IMAGE_BG1       = ffffe7 ; default background color for image
+IMAGE_BG2       = ffffcc ; color for alternating stripes..
+
+HIGHLIGHT1      = e8ffcc ; Highlight colour (pale)
+HIGHLIGHT2      = ccff99 ; Highlight colour (vivid)
+
+CONTIGBLUE1     = 368ec9 ; Contig-colours (light)
+CONTIGBLUE2     = 02599c ; Contig-colours (dark)
+
+</pre>
+
+<p>Simply alter the hex values to the colours you want. These placeholder 
+values will be compiled into the Ensembl css files on server startup.</p>
+
+<p>Note: we recommend not changing the font sizes, or you may have problems with your graphics!</p>
+
+<h3>Changing the tab graphics</h3>
+
+<p>If you change the masthead background colour, you will also need to change the images used
+to draw the curved edges of the tabs at the tops of the Location, Gene and Transcript pages.
+First, make a copy of the following files from <code>/htdocs/i/</code>:</p>
+
+<ul>
+<li>tab-l-off.gif</li>
+<li>tab-l.gif</li>
+<li>tab-off.gif</li>
+<li>tab.gif</li>
+</ul>
+
+<p>In a suitable image editor such as The GIMP or Photoshop, use the 'magic wand selector' 
+and 'bucket' tools to change the colours of the tab, tab background and shading 
+(you will need to convert the image from indexed to RGB first!). The background colour
+should be the same as your masthead, and the tab 'off' colour should be an intermediate
+shade that contrasts with the link text.</p>
+
+<p><img src="/img/help/gimp.png" /></p>
+
+<p>Finally, copy the edited files to:</p>
+
+<p><code>/public-plugins/mirror/htdocs/i/</code></p>
+
+<p>and restart your server.</p>
+
+</body>
+</html>
