@@ -132,7 +132,7 @@ sub content_sub_slice {
   $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
   
   # Only if this IS NOT a sub slice - print the key and the slice list
-  my $template = "<p>$config->{'key'}</p>" . $self->get_slice_table($config->{'slices'}) unless $start && $end;
+  my $template = "<div>$config->{'key'}</div>" . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $style = $start == 1 ? 'margin-bottom:0px;' : $end == $slice_length ? 'margin-top:0px;': 'margin-top:0px; margin-bottom:0px' if $start && $end;

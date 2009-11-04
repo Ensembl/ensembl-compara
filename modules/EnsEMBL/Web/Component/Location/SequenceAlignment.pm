@@ -129,7 +129,7 @@ sub content {
     </table>
     };
     
-    $config->{'html_template'} = "<p>$config->{'key'}</p>$table<pre>%s</pre>";
+    $config->{'html_template'} = "<div>$config->{'key'}</div>$table<pre>%s</pre>";
   
     $html = $self->build_sequence($sequence, $config);
   } else {

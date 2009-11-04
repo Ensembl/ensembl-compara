@@ -728,7 +728,9 @@ sub build_sequence {
     end =>  [ 23, { 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'background-color' => "#$styles->{'SEQ_REGION_CHANGE_BG'}->{'default'}" } ],
     bold => [ 24, { 'font-weight' => 'bold' } ]
   );
-
+  
+  my $single_line = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
+  
   foreach my $lines (@$sequence) {
     my ($row, $title, $previous_title, $new_line_title, $class, $previous_class, $new_line_class, $pre, $post);
     my ($count, $i);
@@ -767,20 +769,20 @@ sub build_sequence {
         
         $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
       }
-
+      
       if ($i == 0) {
         $row .= "<span $style $title>";
       } elsif ($class ne $previous_class || $title ne $previous_title) {
         $row .= "</span><span $style $title>";
       }
-  
+      
       $row .= $seq->{'letter'};
-  
+      
       $count++;
       $i++;
-  
+      
       if ($count == $config->{'display_width'} || $i == scalar @$lines) {
-        if ($i == $config->{'display_width'}) {
+        if ($i == $config->{'display_width'} || $single_line) {
           $row = "$row</span>";
         } else {
           my $new_line_style;
@@ -811,7 +813,7 @@ sub build_sequence {
           
           $pre .= '  ';
         }
-         
+        
         push (@{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post });
         
         $new_line_class = $class;
