@@ -11,36 +11,32 @@ sub content {
   
   my $object          = $self->object;
   my $threshold       = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $action          = $object->action;
   my $slice_name      = $object->param('region_n');
   my $db_adaptor      = $object->database('core');
   my $slice           = $db_adaptor->get_SliceAdaptor->fetch_by_region('seqlevel', $slice_name);
   my $slice_type      = $slice->coord_system_name;
   my $top_level_slice = $slice->project('toplevel')->[0]->to_Slice;
-  
-  my $url = $object->_url({ 
-    type   => 'Location', 
-    action => $action, 
-    region => $slice_name 
-  });
-  
-  my $export_URL = $object->_url({ 
-    type   => 'Export',
-    action => "Location/$action",
-    r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
-  });
+  my $action          = $slice->length > $threshold ? 'Overview' : 'View';
   
   $self->caption($slice_name);
   
   $self->add_entry({
     label => "Center on $slice_type $slice_name",
-    link  => $url
+    link  => $object->_url({ 
+      type   => 'Location', 
+      action => $action, 
+      region => $slice_name 
+    })
   });
   
   $self->add_entry({
     label => "Export $slice_type sequence/features",
-    link  => $export_URL,
-    class => 'modal_link'
+    class => 'modal_link',
+    link  => $object->_url({ 
+      type   => 'Export',
+      action => "Location/$action",
+      r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
+    })
   });
   
   foreach my $cs (@{$db_adaptor->get_CoordSystemAdaptor->fetch_all || []}) {
@@ -59,31 +55,27 @@ sub content {
 
     $action = $new_slice_length > $threshold ? 'Overview' : 'View';
     
-    my $new_slice_URL = $object->_url({
-      type   => 'Location', 
-      action => $action, 
-      region => $new_slice_name
-    });
-    
     $self->add_entry({
       label => "Center on $new_slice_type $new_slice_name",
-      link  => $new_slice_URL
+      link  => $object->_url({
+        type   => 'Location', 
+        action => $action, 
+        region => $new_slice_name
+      })
     });
 
     # would be nice if exportview could work with the region parameter, either in the referer or in the real URL
     # since it doesn't we have to explicitly calculate the locations of all regions on top level
     $top_level_slice = $new_slice->project('toplevel')->[0]->to_Slice;
 
-    $export_URL = $object->_url({
-      type   => 'Export',
-      action => "Location/$action",
-      r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
-    });
-
     $self->add_entry({
       label => "Export $new_slice_type sequence/features",
-      link  => $export_URL,
-      class => 'modal_link'
+      class => 'modal_link',
+      link  => $object->_url({
+        type   => 'Export',
+        action => "Location/$action",
+        r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
+      })
     });
     
     if ($cs->name eq 'clone') {
