@@ -42,7 +42,7 @@ sub createObjects {
   
   # Strip bad parameters (r/g without s)
   foreach my $id (grep !$inputs{$_}->{'s'}, keys %inputs) {
-    $self->param("$_$id", '') for keys %{$inputs{$id}};
+    $self->delete_param("$_$id") for keys %{$inputs{$id}};
     $invalid = 1;
   }
   
@@ -207,7 +207,7 @@ sub remove_species {
   $remove = [ $remove ] unless ref $remove;
   
   foreach my $i (@$remove) {
-    $self->param("$_$i", '') for qw(s g r);
+    $self->delete_param("$_$i") for qw(s g r);
   }
   
   my $new_params = $self->multi_params;
@@ -359,13 +359,13 @@ sub change_primary_species {
   $self->param('r', $inputs->{$id}->{'r'});
   $self->param('g', $inputs->{$id}->{'g'}) if $inputs->{$id}->{'g'};
   $self->param('s99999', $old_species); # Set arbitrarily high - will be recuded by remove_species
-  $self->param('align', ''); # Remove the align parameter because it may not be applicable for the new species
+  $self->delete_param('align'); # Remove the align parameter because it may not be applicable for the new species
   
   foreach my $i (grep $_, keys %$inputs) {
     if ($inputs->{$i}->{'s'} eq $self->species && !$inputs->{$i}->{'chr'}) {
-      $self->param($_ . $i, '') for keys %{$inputs->{$i}}; # Remove parameters if one of the secondary species is the same as the primary (looking at an paralogue)
+      $self->delete_param($_ . $i) for keys %{$inputs->{$i}}; # Remove parameters if one of the secondary species is the same as the primary (looking at an paralogue)
     } elsif ($i != $id) {
-      $self->param("$_$i", '') for qw(r g); # Strip location-setting parameters on other non-primary species
+      $self->delete_param("$_$i") for qw(r g); # Strip location-setting parameters on other non-primary species
     }
   }
   
