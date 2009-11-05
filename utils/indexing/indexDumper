@@ -358,13 +358,13 @@ sub dumpGenomicAlignment {
 	print D join "\t",
 	  (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
 	    $hid,
-	      "/$species/Location/Genome?ftype=$source;id=$hid",
-		$hid,
-		  qq($logic_name $hid hits the genome in $count locations.\n);
+	    "/$species/Location/Genome?ftype=$source;id=$hid",
+	    $hid,
+	    qq($logic_name $hid hits the genome in $count locations.\n);
       }
 #      warn "Dumped $c genomic alignments from $DB_NAME $table";
     }
-    if (0) {#$db eq 'cdna') { #don't do these for now
+    if ($db eq 'cdna') { #need to remove url when rendering the page since we have no where to show them!
       my $sth    = $conf->{'dbh'}->prepare(
 	"select uo.identifier, a.logic_name, ur.summary_description, 'Unmapped feature'
                 from $DB_NAME.analysis a, $DB_NAME.unmapped_object uo, $DB_NAME.unmapped_reason ur 
@@ -376,9 +376,9 @@ sub dumpGenomicAlignment {
 	print D join "\t",
 	  (INC_SPECIES?"$species\t":"")."$type: ",
 	    "$ln $name",
-	      "/$species/Location/Genome?ftype=UnmappedObject;id=$name;db=$db",
-		$name,
-		  "Reason: $desc\n";
+	    "/$species/Location/Genome?ftype=UnmappedObject;id=$name;db=$db",
+	    $name,
+	    "Reason: $desc\n";
       }
     }
   }
