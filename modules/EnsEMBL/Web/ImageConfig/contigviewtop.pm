@@ -29,8 +29,9 @@ sub init {
   $self->create_menus(
     sequence    => 'Sequence',
     marker      => 'Markers',
-    transcript  => 'Genes',
+    transcript  => 'Genes', 
     synteny     => 'Synteny',
+    variation   =>  'Variation',
     decorations => 'Additional features',
     information => 'Information'
   );
@@ -50,6 +51,15 @@ sub init {
     [ 'transcript' ],
     { qw(render gene_label strand r) }
   );
+  $self->modify_configs(
+    [ 'variation' ],
+    { qw(display off menu no) }  
+  );
+  $self->modify_configs(
+    [ 'variation_feature_structural' ],
+    { qw(display normal menu yes) }
+  );
+
 }
 
 1;
