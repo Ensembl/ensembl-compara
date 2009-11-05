@@ -1069,7 +1069,7 @@ sub add_oligo_probe {
       'description' => $description,
       'caption'     => $key_3,
       'strand'      => 'b',
-      'display'     => 'off', 
+      'display'     => 'off',
       'renderers'   => $alignment_renderers
     }));
   }
@@ -1576,6 +1576,8 @@ sub add_variation_feature {
     'display'          => 'off'
   }));
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
+   next unless $hashref->{'source'}{'counts'}{$key_2} >> 0; 
+   my $description = $hashref->{'source'}{'descriptions'}{$key_2}; 
     ( my $k = $key_2 ) =~ s/\W/_/g;
     $menu->append( $self->create_track( 'variation_feature_'.$key.'_'.$k, sprintf( "%s variations", $key_2 ), {
       'db'          => $key,
@@ -1586,7 +1588,7 @@ sub add_variation_feature {
       'depth'       => 0.5,
       'bump_width'  => 0,
       'colourset'   => 'variation',
-      'description' => sprintf( 'Variation features from the "%s" source', $key_2 ),
+      'description' => $description,
       'display'          => 'off'
     }));
   }
@@ -1605,8 +1607,37 @@ sub add_variation_feature {
       'description' => 'Read Coverage for '. $strain_name,
       'display'     => 'off'
     }));
-  }
+  } 
   $self->add_track( 'information', 'variation_legend', 'Variation Legend', 'variation_legend', { 'strand' => 'r' } );
+  ## add in structural variations
+  next unless  $hashref->{'structural_variation'}{'rows'} > 0;  
+  $menu->append ( $self->create_track( 'variation_feature_structural', 'All Structural variants',{   
+    'db'          => $key,
+    'glyphset'    => 'structural_variation',
+    'caption'     => 'All Structural variants',
+    'sources'     => undef,
+    'strand'      => 'r', 
+    'depth'       =>  '0.5',
+    'bump_width'  => 0,
+    'colourset'   => 'structural_variant',
+    'description' => 'Structural variants from all sources',
+    'display'     => 'off',
+  }));
+  foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'}||{}}) {
+    my $description = 'Strutural variations from ' .$hashref->{'structural_variation'}{'descriptions'}{$key_2};
+    $menu->append ( $self->create_track( 'variation_feature_structural'. $key_2, $key_2 .' structural variations',{
+      'db'          => $key,
+      'glyphset'    => 'structural_variation',
+      'caption'     => $key_2,
+      'sources'     => [ $key_2 ],
+      'strand'      => 'r',
+      'depth'       =>  '0.5',
+      'bump_width'  => 0,
+      'colourset'   => 'structural_variant',
+      'description' => $description,
+      'display'     => 'off',
+    }));  
+  }
 }
 
 ## return a list of glyphsets...
