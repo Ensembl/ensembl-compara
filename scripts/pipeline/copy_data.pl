@@ -176,9 +176,6 @@ Bio::EnsEMBL::Registry->load_all($reg_conf) if ($from_name or $to_name);
 my $from_dba = get_DBAdaptor($from_url, $from_name);
 my $to_dba = get_DBAdaptor($to_url, $to_name);
 
-my $old_dba;
-my $new_dba;
-
 my $method_link_species_set = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 if (!$method_link_species_set) {
   print " ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID ($mlss_id)\n";
@@ -191,6 +188,7 @@ exit(1) if !check_table("method_link", $from_dba, $to_dba, undef,
     "method_link_id = ".$method_link_species_set->method_link_id);
 exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
+
 if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
   copy_genomic_align_blocks($from_dba, $to_dba, $mlss_id);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
@@ -731,7 +729,7 @@ sub copy_constrained_elements {
     print " ** WARNING **\n";
     copy_data($from_dba, $to_dba,
         "constrained_element",
-        "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, 
+        "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
 	method_link_species_set_id, p_value, taxonomic_level, score".
         " FROM constrained_element".
         " WHERE method_link_species_set_id = $mlss_id");
@@ -739,7 +737,7 @@ sub copy_constrained_elements {
     ## These is only one set of constrained elements. Copy all of them
     copy_data($from_dba, $to_dba,
         "constrained_element",
-        "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end,
+        "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
 	method_link_species_set_id, p_value, taxonomic_level, score".
         " FROM constrained_element");
   }
@@ -822,7 +820,7 @@ sub copy_data_in_text_mode {
     return if (!@$all_rows);
     my$time=time(); 
     my $filename = "/tmp/$table_name.copy_data.$$.$time.txt";
-    open(TEMP, ">$filename") or die;
+    open(TEMP, ">$filename") or die "could not open the file '$filename' for writing";
     foreach my $this_row (@$all_rows) {
       print TEMP join("\t", map {defined($_)?$_:'\N'} @$this_row), "\n";
     }
