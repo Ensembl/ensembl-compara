@@ -47,7 +47,7 @@ sub init {
     simple           => 'Simple features',
     misc_feature     => 'Misc. regions',
     repeat           => 'Repeats',
-    variation        => 'Variation features',
+    variation        => 'Variations',
     functional       => 'Functional genomics',
     multiple_align   => 'Multiple alignments',
     pairwise_blastz  => 'BLASTZ alignments',
