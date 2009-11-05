@@ -273,13 +273,14 @@ sub snpLine {
 sub dumpMarker {
   my $conf = shift;
   my $sth = $conf->{'dbh'}->prepare("
-   select m.marker_id, ms2.name, ms1.name, sr.name, mf.seq_region_start, mf.seq_region_end
-     from (marker_synonym as ms1, marker as m, marker_feature mf, seq_region sr) left join
-          marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id
-    where ms1.marker_id = m.marker_id
-      and m.marker_id = mf.marker_id
-      and mf.seq_region_id = sr.seq_region_id
-    order by m.marker_id
+   SELECT m.marker_id, ms2.name, ms1.name, sr.name, mf.seq_region_start, mf.seq_region_end
+     FROM (((
+           (marker_synonym as ms1, marker as m)
+LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id )
+LEFT JOIN marker_feature as mf on m.marker_id = mf.marker_id )
+LEFT JOIN seq_region as sr on  mf.seq_region_id = sr.seq_region_id )
+    WHERE ms1.marker_id = m.marker_id
+ ORDER BY m.marker_id
   ");
 
   $sth->execute( );
@@ -296,7 +297,7 @@ sub dumpMarker {
       $counter++;
     } else {
       print O &markerLine( $conf->{'species'},$desc,$counter,$r);
-      $r       = "$r_name:$r_start-$r_end";
+      $r       = $r_name ? "$r_name:$r_start-$r_end" : '';
       $desc    = "$synonym";
       $old_ID  = $ID;
       $counter = 1;
@@ -313,9 +314,9 @@ sub markerLine {
   my $key = pop @synonyms;
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Ensembl Marker),    ## Type
-    qq($key),               ## ID
-    qq(/$species/Location/Marker?m=$key;r=$r),
-    qq($IDS),     ## Index locations,
+    qq($key),
+    $r ? qq(/$species/Location/Marker?m=$key;r=$r) : qq(/$species/Location/Marker?m=$key);
+    qq($IDS),
     qq(A marker with $counter synonyms ($IDS)\n);
 }
 
