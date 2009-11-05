@@ -30,6 +30,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
+    this.align = this.elLk.areas.hasClass('align');
     
     this.makeImageMap(); 
     
@@ -254,7 +255,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.highlightImage.apply(this, args);
     }
     
-    if (Ensembl.images[this.imageNumber - 1]) {
+    if (!this.align && Ensembl.images[this.imageNumber - 1]) {
       image = Ensembl.images[this.imageNumber];
       
       for (i in image) {
