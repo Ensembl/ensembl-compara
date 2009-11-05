@@ -288,9 +288,10 @@ sub _summarise_variation_db {
   return unless $dbh;
   push @{ $self->db_tree->{'variation_like_databases'} }, $db_name;
   $self->_summarise_generic( $db_name, $dbh );
-  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name from source' );
+  my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description from source' );
 #---------- Add in information about the sources from the source table
   my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};
+  my $temp_description = {map {$_->[1],$_->[2]} @$t_aref};
   foreach my $t (qw(variation variation_synonym)) {
     my $t_aref = $dbh->selectall_arrayref( "select source_id,count(*) from $t group by source_id" );
     foreach (@$t_aref) {
@@ -298,6 +299,7 @@ sub _summarise_variation_db {
     }
   }
   $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
+  $self->db_details($db_name)->{'tables'}{'source'}{'descriptions'} = \%$temp_description;
 #---------- Add in information about the display type from the sample table
    my $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
    my (@default, $reference, @display);
@@ -327,6 +329,17 @@ sub _summarise_variation_db {
      }
      if (@strains) { $self->db_details($db_name)->{'tables'}{'read_coverage_collection_strains'} = join(',', @strains); } 
   }
+#--------- Add in structural variation information
+  my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id  group by sv.source_id");
+  my %structural_variations;
+  my %sv_descriptions;
+  foreach (@$v_aref) {
+   $structural_variations{$_->[0]} = $_->[1];    
+   $sv_descriptions{$_->[0]} = $_->[2];
+  }
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'counts'} = \%structural_variations;
+  $self->db_details($db_name)->{'tables'}{'structural_variation'}{'descriptions'} = \%sv_descriptions;
+
   $dbh->disconnect();
 }
 
