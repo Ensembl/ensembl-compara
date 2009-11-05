@@ -29,6 +29,7 @@ sub init {
     transcript    => 'Genes',
     misc_feature  => 'Misc. regions',
     synteny       => 'Synteny',
+    variation     => 'Variations', 
     external_data => 'External data',
     user_data     => 'User attached data',
     decorations   => 'Additional decorations',
@@ -65,6 +66,15 @@ sub init {
   $self->modify_configs(
     [ 'marker' ],
     { qw(labels off) }
+  );
+
+  $self->modify_configs(
+    [ 'variation' ],
+    { qw(display off menu no) }
+  );
+  $self->modify_configs(
+    [ 'variation_feature_structural' ],
+    { qw(display normal menu yes) }
   );
 
   $self->add_tracks('decorations',
