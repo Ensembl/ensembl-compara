@@ -26,8 +26,24 @@ sub content {
   my $max_length      = $scale *= 1e6;
   my $description     = $variation->source_description; 
   my $pubmed_link     = '';
+  my $location_link;
 
-  if ($length >> $max_length) { $action = 'Overview'; } 
+  if ($length >> $max_length) { 
+    $action = 'Overview'; 
+    $location_link = $object->_url({
+      type   => 'Location',
+      action => $action,
+      r      => $seq_region .':'.$start.'-'.$end,
+      cytoview => 'variation_feature_structural=normal'
+    });
+  } else {
+    $location_link = $object->_url({
+      type   => 'Location',
+      action => $action,
+      r      => $seq_region .':'.$start.'-'.$end,
+    });
+  }
+  
   if ($description =~/PMID/) {
     my @description_string = split (':', $description);
     my $pubmed_id = pop @description_string;
@@ -55,12 +71,7 @@ sub content {
   $self->add_entry({
     type  => 'Location',
     label => $position,
-    link  => $object->_url({
-      type   => 'Location',
-      action => $action,
-      r      => $seq_region .':'.$start.'-'.$end,
-      cytoview => 'variation_feature_structural=normal', 
-    }) 
+    link  => $location_link,
   });
 
 }
