@@ -44,7 +44,7 @@ my (
 &GetOptions(
   'maxsize:s'     => \$MAX_SIZE,
   'format:s'      => \@user_formats,
-  'species:s{,}'  => \@species,
+  'species:s'     => \@species,
   'logfile:s'     => \$logfile,
   'email:s'       => \$email,
   'no_log'        => \$no_log,
@@ -138,79 +138,66 @@ if ( defined($farm) ) {
     my @new_list;
     my $index = $index_2;
     my $jobid = 0;
+    my $last_species = 0;
 
     while ( $index < scalar(@species) ) {
       #create job file
       my $sp = $species[$index];
-      my $main_job = job_file( $lsf_dir, $species[$index] );
-      my $main_bsub;
+      my $main_job = job_file( $lsf_dir, $sp );
 
       my $megs = 5_000;
       my $queue = ($megs > 15_000 ? 'hugemem' : 'long' );
 
-      $main_bsub =
-        sprintf( 'bsub '
-          . '-R"select[linux] select[mem>%d] rusage[mem=%d]" '
+      my $usage =
+        sprintf(
+            ' -R"select[linux] select[mem>%d] rusage[mem=%d]" '
           . '-M%d000 '
-          . '-E"test -x %s && test -d %s" '
+#          . '-E"test -x %s" '
           . '-q %s '
           . '-J %s '
           . '-e"%s/lsf_scripts/%s.err" '
           . '-o"%s/lsf_scripts/%s.out"',
-        $megs, $megs, $megs, $exe, $dump_directory, $queue, $sp,
+        $megs, $megs, $megs, $queue, $sp,
         $dump_directory, $sp, $dump_directory, $sp );
 
-      if ($jobid) {
-        $main_bsub .= ' -w "ended(' . $jobid . ')"';
+      if ($last_species) {
+        $usage .= ' -w "ended("'. $last_species . '")"';
       }
 
-      print $main_bsub, "\n";
+#      print $usage, $main_job, "\n";
 
-      eval {
-        my $pid;
-        my $reader;
 
-        local *BSUB;
-        local *BSUB_READER;
+      my $exe_file = $lsf_dir."/".$sp.".submit";
+      open(RUN,">$exe_file") || die "Could not open file $exe_file";
+      
+      print RUN ". /usr/local/lsf/conf/profile.lsf\n";
+      print RUN $main_job."\n";
+      close(RUN);
+      
+      chmod 0755, $exe_file;
+      
+      my $com = "bsub $usage $exe_file";
+      
+#      print "$com\n";
 
-        if ( ( $reader = open( BSUB_READER, '-|' ) ) ) {
-          while (<BSUB_READER>) {
-
-            if (/^Job <(\d+)> is submitted/) {
-              $jobid = $1;
-              print "LSF job ID for $sp job: $jobid )\n";
-            }
-          }
-          close(BSUB_READER);
-        } else {
-          die("Could not fork : $!\n") unless ( defined($reader) );
-          open( STDERR, ">&STDOUT" );
-          if ( ( $pid = open( BSUB, '|-' ) ) ) {
-
-            print BSUB $main_job;
-            close BSUB;
-            if ( $? != 0 ) {
-              die(
-                "bsub exited with non-zero status - job not submitted\n"
-              );
-            }
-          } else {
-            if ( defined($pid) ) {
-              exec($main_bsub);
-              die("Could not exec bsub : $!\n");
-            } else {
-              die("Could not fork : $!\n");
-            }
-          }
-          exit(0);
-        }
-      };
-
-      if ($@) {
-        # Something went wrong
-        warn("Job submission failed:\n$@\n");
-        return 0;
+      my $line = `$com`;
+      
+      my $jobid  = 0;
+      if ($line =~ /^Job <(\d+)> is submitted/) {
+	$jobid = $1;
+	print "LSF job ID for $sp is $jobid, dependent on ".($last_species || "NONE")."\n";
       }
+      
+      
+      if (!$jobid) {
+	# Something went wrong
+	warn("Job submission failed:\n$@\n");
+	print STDERR "bsub options used are $com\n"; 
+	print STDERR "bsub command was $main_job\n";
+	print STDERR "line:*".$line."*\n";
+	exit;
+      }
+      $last_species = $sp;
 
       $index += $batch_total;
     } ## end while ( $index < scalar(@species...
