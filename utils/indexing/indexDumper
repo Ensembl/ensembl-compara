@@ -1194,3 +1194,121 @@ sub sanger_project_names {
   }
   return $clones;
 }
+
+########################################################################## Regulatory Features
+
+sub dumpRegulatoryFeature {
+  my $conf = shift;
+  my $FDB = $conf->{'dbs'}->{'DATABASE_FUNCGEN'};
+  return unless $FDB;
+  my $species = $conf->{'species'};
+
+  my $T = $conf->{'dbh'}->selectall_arrayref(
+    "select fs.feature_set_id, fs.name as f_set, fs.display_label as set_label,
+            fts.name as set_type, fts.class as set_class, fts.description as set_desc,
+            a.logic_name, ad.display_label as anal_name, ad.description as anal_desc
+       from ( ($FDB.feature_set as fs left join $FDB.feature_type as fts on fs.feature_type_id = fts.feature_type_id)
+  left join $FDB.analysis as a on a.analysis_id = fs.analysis_id)
+  left join $FDB.analysis_description as ad on ad.analysis_id = a.analysis_id" );
+  my $feature_sets = {};
+  foreach( @$T ) {
+    $feature_sets->{ $_->[0] } = {
+      'name'  => $_->[1],
+      'label' => $_->[2],
+      'type'  => $_->[3],
+      'class' => $_->[4],
+      'desc'  => $_->[5],
+      'logic' => $_->[6],
+      'a_name'=> $_->[7],
+      'a_desc'=> $_->[8]
+    };
+  }
+  $T = $conf->{'dbh'}->selectall_arrayref( "select * from $FDB.feature_type" );
+  my $feature_types = {};
+  foreach( @$T ) {
+    $feature_types->{ $_->[0] } = {
+      'name'  => $_->[1],
+      'class' => $_->[2],
+      'desc'  => $_->[3]
+    };
+  }
+
+
+  open A, ">$conf->{'directory'}/RegulatoryFeature.txt" unless scalar @$T == 0;
+
+
+  my $v = sprintf '%s_%s',
+    $SD->ENSEMBL_VERSION,
+    $SD->get_config( $species, 'SPECIES_RELEASE_VERSION' )
+  ;
+  my $a = $SD->get_config( $species, 'ASSEMBLY_NAME' );
+
+
+## Regulatory features...
+
+  my $prefix = 'ENSR';
+  if ($species =~/Mus/) {$prefix = 'ENSMUSR';}
+  my $d = $conf->{'dbh'}->selectall_arrayref( 
+    "select concat('$prefix', lpad(rf.stable_id, 11, 0)),
+            sr.name, rf.bound_seq_region_start, rf.bound_seq_region_end, ft.name
+       from $FDB.regulatory_feature rf, $FDB.seq_region sr, $FDB.coord_system cs,
+            $FDB.feature_type ft, $FDB.feature_set fs
+      where fs.name='RegulatoryFeatures' and fs.feature_set_id=rf.feature_set_id and
+            rf.feature_type_id=ft.feature_type_id and rf.seq_region_id=sr.seq_region_id and
+            sr.coord_system_id=cs.coord_system_id and cs.is_current=1
+   group by rf.regulatory_feature_id"
+  );
+
+  foreach my $row ( @$d ) {
+    my $r = $row->[1] .":".$row->[2] . "-" . $row->[3];
+    print A join "\t", (INC_SPECIES?"$species\t":"")."Ensembl Regulatory Feature",
+    $row->[0], "/$species/Regulation/Details?rf=$row->[0];r=$r;",
+    $row->[0], qq($row->[4] regulatory feature.\n);
+  }
+
+## External Features...
+
+
+  my $e = $conf->{'dbh'}->selectall_arrayref(
+  "select ef.display_label, group_concat(distinct ft.name), count(distinct ef.external_feature_id),
+          ft.description, ft.class, fs.name, sr.name, ef.seq_region_start, ef.seq_region_end,
+          ef.seq_region_strand
+    from  $FDB.feature_type ft, $FDB.external_feature ef, $FDB.feature_set fs, $FDB.seq_region sr,
+          $FDB.coord_system cs,$FDB.status s, $FDB.status_name sn
+    where ft.feature_type_id=ef.feature_type_id and fs.feature_set_id=ef.feature_set_id and
+          fs.type='external' and ef.seq_region_id=sr.seq_region_id  and sr.coord_system_id=cs.coord_system_id
+          and cs.is_current=1 and  s.table_name='feature_set' and s.table_id=fs.feature_set_id and
+          s.status_name_id=sn.status_name_id and sn.name='MART_DISPLAYABLE'
+ group by ef.display_label"
+  );
+
+  foreach my $f ( @$e) {
+    my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name, $seq_region, $start, $end, $strand) = @$f;
+    my ($description, $link);
+    my $ids = $display_label;
+    $ids .= ' '.$f_name unless $display_label eq $f_name;
+    if ($count >> 1) {
+     $link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$display_label;name=$f_name;";
+    } else {
+      # link miranda features to gene reg view other feats to region in detail
+      if ( $f_class eq 'RNA'){
+          my ($trans_id, $feat) = split(/:/,$display_label);
+          $link = "/$species/Gene/Regulation?t=$trans_id;hid=$display_label";
+      } else {
+        $start = $start -=100;
+        $end = $end +=100;
+        my $region  =$seq_region .':' . $start . "-" . $end;
+        my $renderer;
+        if ($f_class =~/Search/){ $renderer = 'regulatory_regions_funcgen_search';}
+        else {$renderer = 'regulatory_regions_funcgen_feature_set';}
+        $link = "/$species/Location/View?r=$region;hid=$display_label;contigviewbottom=$renderer=normal";
+      }
+    }
+     $description = "$display_label is a $f_class from $fs_name which hits the genome in $count locations\n";
+    print A join "\t", (INC_SPECIES?"$species\t":""). $f_class,
+    $display_label, $link, $ids, $description;
+  }
+
+  close A if scalar @$T >= 1;
+}
+
