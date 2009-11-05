@@ -44,6 +44,11 @@ sub _archive {
 #   Redirect -> now uses code in idhistory
   my $db        = $self->param('db')||'core';
    my $name      = $self->param($parameter) || $self->param('peptide') || $self->param('transcript') || $self->param('gene');
+   my $var = $self->param($parameter) ? lc(substr($parameter,0,1))
+           : $self->param('peptide')  ? 'p'
+           : $self->param('transcript') ? 't'
+           : 'g'
+           ;
    my @features  = undef;
    my $adaptor;
 
@@ -61,6 +66,8 @@ sub _archive {
    #my $output  = '';
    #my $probtype= '';
    #if( @rel ) {
+warn ".... $var - $name ....";
+      $self->param($var,$name);
       $self->problem('archived');
    #}
 #     $caption = 'Archived identifier';
