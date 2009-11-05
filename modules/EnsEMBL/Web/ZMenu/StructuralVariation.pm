@@ -24,11 +24,10 @@ sub content {
   my $action          = 'View';
   my $scale           = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;    
   my $max_length      = $scale *= 1e6;
-  my $description     = '';  
+  my $description     = $variation->source_description; 
   my $pubmed_link     = '';
 
   if ($length >> $max_length) { $action = 'Overview'; } 
-  if ($variation->can('description')) { $description = $variation->description; }
   if ($description =~/PMID/) {
     my @description_string = split (':', $description);
     my $pubmed_id = pop @description_string;
@@ -60,6 +59,7 @@ sub content {
       type   => 'Location',
       action => $action,
       r      => $seq_region .':'.$start.'-'.$end,
+      cytoview => 'variation_feature_structural=normal', 
     }) 
   });
 
