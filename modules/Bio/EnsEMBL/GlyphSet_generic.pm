@@ -916,14 +916,16 @@ sub glyph_anchored_arrow {
   
     return if $mp < 0 || $mp > $l; # Don't draw upwards arrow if mid point out of region
     
-    $w = ($st->{'linewidth'} || $h) * $self->{'bppp'};
+    my $lw = $st->{'linewidth'} || $h;
+    $w = $lw * $self->{'bppp'};
     
-    my $ah = $h < $st->{'linewidth'} ? $h/2 : $st->{'linewidth'}/2;
+    my $ah = $h < $lw ? $h/2 : $lw/2;
     my $top = $y + $h;
     my $bottom = $y;
     my $bar = 0;
     
-    if ($f->strand > 0) {
+    # Forward strand or unstranded features are drawn as "up" arrows
+    if ($f->strand >= 0) {
       $self->push($self->Poly({
         'points'       => [ $mp-$w/2, $bottom+$ah, $mp, $bottom, $mp+$w/2, $bottom+$ah ],
         'absolutey'    => 1,
@@ -933,7 +935,9 @@ sub glyph_anchored_arrow {
       
       $bottom += $ah;
       $bar     = $top;
-    } else {
+    }
+    # Reverse strand features are drawn as "down" arrows
+    else {
       $self->push($self->Poly({
         'points'       => [ $mp-$w/2, $top-$ah, $mp, $top, $mp+$w/2, $top-$ah ],
         'absolutey'    => 1,
@@ -1100,9 +1104,11 @@ sub glyph_arrow {
     my $top = $y + $h;
     my $bottom = $y;
     
-    $w = int(($st->{'linewidth'} || (2*$h/3))/2) * 2 * $self->{'bppp'};
-    
-    if ($st->{'northeast'} ne 'no') {
+    my $lw = $st->{'linewidth'} || (2*$h/3);
+    $w = int($lw/2) * 2 * $self->{'bppp'};
+
+    # Draw the south-pointing arrowhead, unless the stylesheet says not to
+    if ($st->{'southwest'} ne 'no') {
       $self->push($self->Poly({
         'points'       => [ $mp-$w/2, $top-$ah, $mp, $top, $mp+$w/2, $top-$ah ],
         'absolutey'    => 1,
@@ -1112,8 +1118,9 @@ sub glyph_arrow {
       
       $top -= $ah;
     } 
-    
-    if ($st->{'southwest'} ne 'no') {
+
+    # Draw the north-pointing arrowhead, unless the stylesheet says not to
+    if ($st->{'northeast'} ne 'no') {
       $self->push($self->Poly({
         'points'       => [ $mp-$w/2, $bottom+$ah, $mp, $bottom, $mp+$w/2, $bottom+$ah ],
         'absolutey'    => 1,
