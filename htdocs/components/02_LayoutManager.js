@@ -15,7 +15,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
     
-    $('#local-tools').show();
+    $('#local-tools > p').show();
     
     $('.modal_link').show().live('click', function () {
       // If ajax is not enabled, make popup config window
