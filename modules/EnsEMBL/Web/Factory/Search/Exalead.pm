@@ -20,7 +20,7 @@ sub _search_all {
   my $exalead = new ExaLead;
   $exalead->engineURL = $self->species_defs->ENSEMBL_SEARCH_URL;
   $exalead->__timeout = 30;
-  $exalead->rootURL   = "/$ENV{'ENSEMBL_SPECIES'}/search";
+  $exalead->rootURL   = $self->species_path . '/search';
   ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
   my $source = "Top/Source/".$self->species_defs->ENSEMBL_EXALEAD_SITE_INDEX;
   my $q = CGI->new();
