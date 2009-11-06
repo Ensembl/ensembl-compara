@@ -83,12 +83,11 @@ span.sequence { font-family: Courier New, Courier, Monaco, monospace }
 /*----------------------------------------------------------------------
  Links 
 ----------------------------------------------------------------------*/
-a         { color:inherit; } /* neutral style for anchor target */
+a         { color:[[PAGE_LINK]]; } /* neutral style for anchor target */
 span.link { text-decoration: underline; color:[[PAGE_LINK]]; cursor: pointer }
-a:link    { color:[[PAGE_LINK]]; text-decoration:underline; }
-a:visited { color:[[PAGE_VISITED]]; text-decoration:underline; }
-a:hover   { color:[[PAGE_HOVER]]; text-decoration:underline; }
-a:active  { color:[[PAGE_HOVER]]; text-decoration:underline; }
+a:visited { color:[[PAGE_VISITED]]; }
+a:hover   { color:[[PAGE_HOVER]]; }
+a:active  { color:[[PAGE_HOVER]]; }
 a.button  { background-color:[[TINT_BG]]; border: 1px outset [[TINT_BG]]; 
             padding:2px; font-weight:bold; text-decoration:none; }
 
