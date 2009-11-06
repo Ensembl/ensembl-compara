@@ -12,11 +12,14 @@ our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT = @EXPORT_OK;
 
 use CGI qw(escapeHTML);
-use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 use Text::Wrap qw(wrap);
 
+use Bio::EnsEMBL::DrawableContainer;
+use Bio::EnsEMBL::VDrawableContainer;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
+
+use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::RegObj;
