@@ -61,4 +61,17 @@ sub get_all_species {
   return @data;
 }
 
+sub full_URL { 
+  my ($self, %details) = @_;
+  
+  my $extra = join ';', map { /^(script|species)$/ ? () : sprintf '%s=%s', $_, $details{$_} } keys %details;
+  
+  my $url = $self->species_defs->ENSEMBL_BASE_URL;
+  $url .=  '/' . (exists $details{'species'} ? $details{'species'} : $self->species);
+  $url .=  exists $details{'script'}  ? "/$details{'script'}"  : '';
+  $url .= "?$extra" if $extra;
+  
+  return $url;
+}
+
 1;
