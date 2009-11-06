@@ -1610,7 +1610,7 @@ sub add_variation_feature {
   } 
   $self->add_track( 'information', 'variation_legend', 'Variation Legend', 'variation_legend', { 'strand' => 'r' } );
   ## add in structural variations
-  next unless  $hashref->{'structural_variation'}{'rows'} > 0;  
+  return unless  $hashref->{'structural_variation'}{'rows'} > 0;  
   $menu->append ( $self->create_track( 'variation_feature_structural', 'All Structural variants',{   
     'db'          => $key,
     'glyphset'    => 'structural_variation',
