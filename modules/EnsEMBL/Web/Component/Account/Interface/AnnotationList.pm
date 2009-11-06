@@ -22,15 +22,16 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
   my $html;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
 
   ## Control panel fixes
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
-  my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = ';_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
 
   my @notes = $user->annotations;
   my $has_notes = 0;

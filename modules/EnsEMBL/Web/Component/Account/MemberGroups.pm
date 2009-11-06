@@ -22,15 +22,16 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
   my $html;
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
 
   ## Control panel fixes
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
   
   my @groups = $user->find_nonadmin_groups;
 
@@ -55,7 +56,7 @@ sub content {
       $row->{'desc'} = $group->blurb || '&nbsp;';
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
-      if ($self->object->param('id') && $self->object->param('id') == $group->id) {
+      if ($object->param('id') && $object->param('id') == $group->id) {
         $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?$referer" class="modal_link">Hide Details</a>);
       }
       else {

@@ -24,32 +24,31 @@ sub caption {
 
 sub content {
   my $self = shift;
-  return unless $self->object->param('id');
+  my $object = $self->object;
+  return unless $object->param('id');
 
   my $html;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $group = EnsEMBL::Web::Data::Group->new($self->object->param('id')); 
+  my $group = EnsEMBL::Web::Data::Group->new($object->param('id')); 
 
   if ($group) {
-
-    ## Control panel fixes
-    my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+    # Control panel fixes
+    my $dir = $object->species_path;
     $dir = '' if $dir !~ /_/;
-    my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
-
+    
+    my $referer = ';_referer=' . $object->param('_referer') . ';x_requested_with=' . $object->param('x_requested_with');
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
-    $html .= '<p><strong>Group created by</strong>: '.$creator->name;
-    $html .= ' <strong>on</strong> '.$self->pretty_date($group->created_at).'</p>';
-
+    $html .= '<p><strong>Group created by</strong>: ' . $creator->name;
+    $html .= '  <strong>on</strong> ' . $self->pretty_date($group->created_at) . '</p>';
     $html .= '<h3>Bookmarks</h3>';
-    if ($group->bookmarks) {
 
-      my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    if ($group->bookmarks) {
+      my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { 'margin' => '0px' });
 
       $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '30%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '70%', 'align' => 'left' },
+        { 'key' => 'name', 'title' => 'Name',        'width' => '30%', 'align' => 'left' },
+        { 'key' => 'desc', 'title' => 'Description', 'width' => '70%', 'align' => 'left' }
       );
 
       foreach my $bookmark ($group->bookmarks) {
@@ -62,9 +61,9 @@ sub content {
 
         $table->add_row($row);
       }
+
       $html .= $table->render;
-    }
-    else {
+    } else {
       $html .= '<p>No shared bookmarks</p>';
     }
 
