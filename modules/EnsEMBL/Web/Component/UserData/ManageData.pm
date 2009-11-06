@@ -29,7 +29,7 @@ sub content {
   my @data; 
   
   # Control panel fixes
-  my $dir = $object->species_name;
+  my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
   
   my $html;

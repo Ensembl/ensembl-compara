@@ -26,7 +26,7 @@ sub content {
   my $object = $self->object;
 
   ## Use form code for easy, uniform layout and easy linking to edit function
-  my $url = $object->species_name;
+  my $url = $object->species_path;
   $url = '' if $url !~ /_/;
   $url = '/'.$self->script_name.'/Edit';
 
