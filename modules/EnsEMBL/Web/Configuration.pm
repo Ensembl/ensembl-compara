@@ -466,7 +466,6 @@ sub _configurator {
     my $available = 0;
     my $on        = 0;
     my $key       = $node->key;
-    my $selected;
     
     $rhs_content .= sprintf('
       <div class="config %s">
@@ -478,26 +477,26 @@ sub _configurator {
     foreach my $track_node ($node->descendants) {
       next if $track_node->get('menu') eq 'no';
       
-      $rhs_content .= '<dt><ul class="popup_menu">';
+      my $display   = $track_node->get('display') || 'off';
+      my @states    = @{$track_node->get('renderers') || [ qw(off Off normal Normal) ]};
+      my $desc      = $track_node->get('description');
+      my $class     = $track_node->get('_class');
+      my $name      = escapeHTML($track_node->get('name'));
+      my $close_tag = '</dt>';
+      my $selected;
       
-      my $display = $track_node->get('display') || 'off';
-      my @states  = @{$track_node->get('renderers') || [ qw(off Off normal Normal) ]};
-      
-      my $desc  = $track_node->get('description');
-      my $class = $track_node->get('_class');
-      my $name  = escapeHTML($track_node->get('name'));
       $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;
       
+      $rhs_content .= '<dt><ul class="popup_menu">';
+      
       while (my ($val, $text) = splice(@states, 0, 2)) {
-        $text = escapeHTML($text);
+        $text         = escapeHTML($text);
         $rhs_content .= qq{<li class="$val"><img title="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
-        $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $val if $val eq $display;
+        $selected     = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $val if $val eq $display;
       }
       
       $count++;
       $on++ if $display ne 'off';
-      
-      $rhs_content .= "</ul>$selected <span>$name</span>";
       
       if ($desc) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -505,10 +504,11 @@ sub _configurator {
         $desc =~ s/<a>/<\/a>/g;
         $desc =~ s/"[ "]*>/">/g;
         
-        $rhs_content .= qq{<span class="menu_help">Show info</span></dt><dd>$desc</dd>};
-      } else {
-        $rhs_content .= "</dt>";
+        $selected   = qq{<span class="menu_help">Show info</span>$selected};
+        $close_tag .= "<dd>$desc</dd>";
       }
+      
+      $rhs_content .= qq{</ul>$selected <span>$name</span>$close_tag};
     }
     
     $rhs_content .= '
