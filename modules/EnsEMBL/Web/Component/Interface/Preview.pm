@@ -27,7 +27,7 @@ sub content {
 
   ## Create form
   my $function = 'Save';
-  my $url = '/'.$ENV{'ENSEMBL_SPECIES'};
+  my $url = $object->species_name;
   $url = '' if $url !~ /_/;
   $url = '/'.$object->interface->script_name.'/'.$function;
   my $form = EnsEMBL::Web::Form->new('preview', $url, 'post');

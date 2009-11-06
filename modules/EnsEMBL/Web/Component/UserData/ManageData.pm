@@ -29,7 +29,7 @@ sub content {
   my @data; 
   
   # Control panel fixes
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  my $dir = $object->species_name;
   $dir = '' if $dir !~ /_/;
   
   my $html;

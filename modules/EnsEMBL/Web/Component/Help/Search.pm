@@ -21,7 +21,7 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $html = qq(<h3>Search $sitename Help</h3>);
 
-  my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+  my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
   my $form = EnsEMBL::Web::Form->new( 'help_search', "$dir/Help/DoSearch", 'get' );
 

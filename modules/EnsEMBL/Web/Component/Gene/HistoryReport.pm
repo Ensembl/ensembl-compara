@@ -25,39 +25,39 @@ sub content_protein {
 sub content {
   my $self = shift; 
   my $protein = shift; 
-  my $OBJ = $self->object;   
-  my $object;
+  my $object = $self->object;   
+  my $archive_object;
   
    
   if ($protein == 1){ 
     my $translation_object;
-    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId')  ||  $OBJ->transcript->isa('EnsEMBL::Web::Fake') ){ 
+    if ($object->transcript->isa('Bio::EnsEMBL::ArchiveStableId')  ||  $object->transcript->isa('EnsEMBL::Web::Fake') ){ 
        my $p;
        $p = $self->object->param('p') || $self->object->param('protein');       
        unless ($p) {                                                                 
-         my $p_archive = shift @{$OBJ->transcript->get_all_translation_archive_ids};
+         my $p_archive = shift @{$object->transcript->get_all_translation_archive_ids};
          $p = $p_archive->stable_id;
        }
        my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
        my $db_adaptor = $self->object->database($db);
        my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
-       $object = $a->fetch_by_stable_id( $p );
+       $archive_object = $a->fetch_by_stable_id( $p );
     } else { 
-       $translation_object = $OBJ->translation_object;
-       $object = $translation_object->get_archive_object();
+       $translation_object = $object->translation_object;
+       $archive_object = $translation_object->get_archive_object();
     }
   } else {    # retrieve archive object 
-    $object = $OBJ->get_archive_object(); 
+    $archive_object = $object->get_archive_object(); 
   }
 
   my $html = '';
 
-  my $id = $object->stable_id.".".$object->version;
+  my $id = $archive_object->stable_id.".".$archive_object->version;
   my $status;
-  if ($object->is_current) {
+  if ($archive_object->is_current) {
     # this *is* the current version of this stable ID
     $status = "Current";
-  } elsif ($object->current_version) {
+  } elsif ($archive_object->current_version) {
     # there is a current version of this stable ID
     $status = "Old version";
   } else {
@@ -65,12 +65,12 @@ sub content {
     $status = "Retired (see below for possible successors)";
   }
 
-  my $latest = $object->get_latest_incarnation;
-  my $type = $object->type eq 'Translation' ? 'protein' : lc($object->type);
+  my $latest = $archive_object->get_latest_incarnation;
+  my $type = $archive_object->type eq 'Translation' ? 'protein' : lc($archive_object->type);
   $id = $latest->stable_id.".".$latest->version;
   my $version_html;
-  if ($object->release >= $OBJ->species_defs->EARLIEST_ARCHIVE){ 
-    my $url = _archive_link($OBJ, $object); 
+  if ($archive_object->release >= $object->species_defs->EARLIEST_ARCHIVE){ 
+    my $url = $self->_archive_link($archive_object); 
     $version_html = qq(<a href="$url">$id</a>);
   } else {
     $version_html = $id;
@@ -78,7 +78,7 @@ sub content {
  
   $version_html .= "<br />\n";
   $version_html .= "Release: ".$latest->release;
-  $version_html .= " (current)" if ($object->is_current);
+  $version_html .= " (current)" if ($archive_object->is_current);
   $version_html .= "<br />\n";
   $version_html .= "Assembly: ".$latest->assembly."<br />\n";
   $version_html .= "Database: ".$latest->db_name."<br />";
@@ -103,15 +103,16 @@ sub content {
 
 
 sub _archive_link {
-  my ($OBJ, $obj) = @_;
-
+  my ($self, $archive_object) = @_;
+  my $object = $self->object;
+  
   # no archive for old release, return un-linked display_label
-  return $obj->stable_id."." .$obj->version if ($obj->release < $OBJ->species_defs->EARLIEST_ARCHIVE);
+  return $archive_object->stable_id."." .$archive_object->version if ($archive_object->release < $object->species_defs->EARLIEST_ARCHIVE);
 
-  my $type =  $obj->type eq 'Translation' ? 'peptide' : lc($obj->type);
-  my $name = $obj->stable_id . "." . $obj->version;
+  my $type =  $archive_object->type eq 'Translation' ? 'peptide' : lc($archive_object->type);
+  my $name = $archive_object->stable_id . "." . $archive_object->version;
   my $url;
-  my $current =  $OBJ->species_defs->ENSEMBL_VERSION;
+  my $current =  $object->species_defs->ENSEMBL_VERSION;
 
   my $view = $type."view";
   if ($type eq 'peptide') {
@@ -122,7 +123,7 @@ sub _archive_link {
 
   my ($action, $p);
   ### Set parameters for new style URLs post release 50
-  if ($obj->release >= 51 ){
+  if ($archive_object->release >= 51 ){
     if ($type eq 'gene') {
       $type = 'Gene';
       $p = 'g';
@@ -138,17 +139,17 @@ sub _archive_link {
     }
   }
 
-  if ($obj->release == $current){
-     $url = $OBJ->_url({'type' => $type, 'action' => $action, $p => $name });
+  if ($archive_object->release == $current){
+     $url = $object->_url({'type' => $type, 'action' => $action, $p => $name });
      return $url;
   } else {
-    my $release_info = EnsEMBL::Web::Data::Release->new($obj->release);
+    my $release_info = EnsEMBL::Web::Data::Release->new($archive_object->release);
     my $archive_site = $release_info->archive;
     $url = "http://$archive_site.archive.ensembl.org";
-    if ($obj->release >=51){
-      $url .= $OBJ->_url({'type' => $type, 'action' => $action, $p => $name });
+    if ($archive_object->release >=51){
+      $url .= $object->_url({'type' => $type, 'action' => $action, $p => $name });
     } else {
-      $url .= "/".$ENV{'ENSEMBL_SPECIES'};
+      $url .= $object->species_path;
       $url .= "/$view?$type=$name";
     }
   }

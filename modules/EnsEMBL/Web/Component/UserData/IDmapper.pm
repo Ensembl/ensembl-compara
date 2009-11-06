@@ -172,7 +172,7 @@ sub _archive_link {
     if ($release >=51){
       $url .= $self->object->_url({'type' => $type, 'action' => $action, $p => $name });
     } else {
-      $url .= "/".$ENV{'ENSEMBL_SPECIES'};
+      $url .= $self->object->species_path;
       $url .= "/$view?$type=$name";
     }
   }
