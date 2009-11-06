@@ -8,7 +8,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Form;
 
 sub _init {
@@ -24,24 +23,22 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
 
   ## Control panel fixes
-  my $dir = '';
-  $dir = $self->object->species_defs->species_path($ENV{'ENSEMBL_SPECIES'}) if ($ENV{'ENSEMBL_SPECIES'});
+  my $dir = $object->species_path;
   
-  my $referer = '_referer=' . $self->object->param('_referer');
-  $referer .= ';x_requested_with=' . $self->object->param('x_requested_with') if $ENSEMBL_WEB_REGISTRY->check_ajax;
-  
+  my $referer = '_referer=' . $object->param('_referer');
   my $form = EnsEMBL::Web::Form->new( 'login', "$dir/Account/SetCookie", 'post' );
   my $reg_url = $self->url("$dir/Account/User/Add?$referer");
   my $pwd_url = $self->url("$dir/Account/LostPassword?$referer");
-
+  
   $form->add_element('type'  => 'Email',    'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
-  $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $self->object->param('url'));
-  $form->add_element('type'  => 'Hidden',   'name'  => 'popup', 'value' => $self->object->param('popup'));
-  $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $self->object->param('_referer'));
-  $form->add_element('type'  => 'Hidden',   'name'  => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
+  $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $object->param('url'));
+  $form->add_element('type'  => 'Hidden',   'name'  => 'popup', 'value' => $object->param('popup'));
+  $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $object->param('_referer'));
+  $form->add_element('type'  => 'Hidden',   'name'  => 'x_requested_with', 'value' => $object->param('x_requested_with'));
   $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in', 'class'=>'cp-refresh');
   $form->add_element('type'  => 'Information',
                      'value' => qq(<p><a href="$reg_url" class="modal_link">Register</a>
