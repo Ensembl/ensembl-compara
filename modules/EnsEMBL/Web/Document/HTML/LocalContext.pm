@@ -6,6 +6,7 @@ package EnsEMBL::Web::Document::HTML::LocalContext;
 
 use strict;
 use CGI qw(escapeHTML);
+use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
@@ -127,7 +128,7 @@ sub _content {
         # This is a tmp hack since we do not have an object here
         # TODO: propagate object here and use object->_url method
         if (!$url) {
-          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : "/$ENV{'ENSEMBL_SPECIES'}";
+          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $ENSEMBL_WEB_REGISTRY->species_defs->species_path;
           $url .= "/$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
           
           my @ok_params;

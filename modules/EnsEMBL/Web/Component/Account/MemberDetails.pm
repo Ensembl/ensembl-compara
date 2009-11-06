@@ -33,7 +33,7 @@ sub content {
   if ($group) {
 
     ## Control panel fixes
-    my $dir = '/'.$ENV{'ENSEMBL_SPECIES'};
+    my $dir = $self->object->site_path;
     $dir = '' if $dir !~ /_/;
     my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
 
