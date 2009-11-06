@@ -11,6 +11,16 @@ Ensembl.LayoutManager.extend({
   initialize: function () {
     this.id = 'LayoutManager';
     
+    function popup(href, name) {
+      if (window.name.match(/^(cp|popup)_/)) {
+        return true;
+      }
+      
+      var w = window.open(href, name, 'width=950,height=500,resizable,scrollbars');
+      w.focus();
+      return false;
+    }
+    
     Ensembl.EventManager.register('reloadPage', this, this.reloadPage);
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
@@ -20,20 +30,15 @@ Ensembl.LayoutManager.extend({
     $('.modal_link').show().live('click', function () {
       // If ajax is not enabled, make popup config window
       // If ajax is enabled, modalOpen is triggered. If it doesn't returns true then there's no ModalContainer panel, so make popup config window
-      if (Ensembl.ajax != 'enabled' || !Ensembl.EventManager.trigger('modalOpen', this)) {
-        var name = 'cp_' + window.name;
-        var w = window.open(this.href, name.replace(/cp_cp_/, 'cp_'), 'width=950,height=500,resizable,scrollbars');
-        w.focus();
+      if (Ensembl.ajax != 'enabled' || !Ensembl.EventManager.trigger('modalOpen', this)) {        
+        return popup(this.href, 'cp_' + window.name.replace(/^cp_/, ''));
       }
       
       return false;
     });
     
     $('.popup').live('click', function () {
-      var w = window.open(this.href, 'popup_' + window.name, 'width=950,height=500,resizable,scrollbars');
-      w.focus();
-      
-      return false;
+      return popup(this.href, 'popup_' + window.name);
     });
     
     $('a[rel="external"]').live('click', function () { 
