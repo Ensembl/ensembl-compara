@@ -41,7 +41,7 @@ sub content {
   );
   $form->add_element(
     'type'    => 'Hidden',
-    'name'    => 'email',
+    'name'    => 'address',
     'value'   => $object->param('address'),
   );
 
@@ -59,12 +59,12 @@ sub content {
   $form->add_element(
     'type'    => 'NoEdit',
     'label'   => 'Message',
-    'value'   => $object->param('text'),
+    'value'   => $object->param('message'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'message',
-    'value'   => $object->param('text'),
+    'value'   => $object->param('message'),
   );
 
   $form->add_element(
@@ -91,6 +91,11 @@ sub content {
     'value'   => $object->param('comments'),
   );
 
+  $form->add_element(
+    'type'    => 'Submit',
+    'name'    => 'submit',
+    'value'   => 'Back',
+  );
   $form->add_element(
     'type'    => 'Submit',
     'name'    => 'submit',

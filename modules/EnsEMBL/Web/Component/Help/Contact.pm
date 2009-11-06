@@ -33,6 +33,7 @@ sub content {
     'type'    => 'String',
     'name'    => 'name',
     'label'   => 'Your name',
+    'value'   => $object->param('name'),
   );
 
   $form->add_element(
@@ -45,12 +46,14 @@ sub content {
     'type'    => 'Email',
     'name'    => 'address',
     'label'   => 'Your Email',
+    'value'   => $object->param('address'),
   );
 
   $form->add_element(
     'type'    => 'String',
     'name'    => 'subject',
     'label'   => 'Subject',
+    'value'   => $object->param('subject'),
   );
 
  $form->add_element(
@@ -61,8 +64,9 @@ sub content {
 
  $form->add_element(
     'type'    => 'Text',
-    'name'    => 'text',
+    'name'    => 'message',
     'label'   => 'Message',
+    'value'   => $object->param('message'),
   );
 
   $form->add_element(
