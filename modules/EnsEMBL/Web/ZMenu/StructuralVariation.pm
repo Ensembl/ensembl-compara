@@ -5,7 +5,7 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift; warn $self;
+  my $self = shift; 
   my $object = $self->object;
   return unless $object->param('vid');
 
