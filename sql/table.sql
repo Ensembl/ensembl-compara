@@ -479,7 +479,7 @@ CREATE TABLE peptide_align_feature (
 #  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 #  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
-  PRIMARY KEY (peptide_align_feature_id),
+  PRIMARY KEY (peptide_align_feature_id)
 
 #  KEY qmember_id  (qmember_id),
 #  KEY hmember_id  (hmember_id),
@@ -773,7 +773,7 @@ CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 --    root_id                  -- the id of the tree root
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- string with the alignment score values 
+--    cigar_line               -- string with the alignment score values
 --    cigar_start              -- protein start (0 if the whole protein is in the alignment)
 --    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
