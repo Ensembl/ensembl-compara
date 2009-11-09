@@ -473,17 +473,18 @@ CREATE TABLE peptide_align_feature (
   hit_rank                    int(10),
   cigar_line                  mediumtext,
 
-  FOREIGN KEY (qmember_id) REFERENCES member(member_id),
-  FOREIGN KEY (hmember_id) REFERENCES member(member_id),
-  FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
-  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
+#  FOREIGN KEY (qmember_id) REFERENCES member(member_id),
+#  FOREIGN KEY (hmember_id) REFERENCES member(member_id),
+#  FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
+#  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
+#  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
   PRIMARY KEY (peptide_align_feature_id),
-  KEY qmember_id  (qmember_id),
-  KEY hmember_id  (hmember_id),
-  KEY hmember_qgenome  (hmember_id, qgenome_db_id),
-  KEY qmember_hgenome  (qmember_id, hgenome_db_id)
+
+#  KEY qmember_id  (qmember_id),
+#  KEY hmember_id  (hmember_id),
+#  KEY hmember_qgenome  (hmember_id, qgenome_db_id),
+#  KEY qmember_hgenome  (qmember_id, hgenome_db_id)
 ) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci;
 
 CREATE TABLE peptide_align_feature_prod (
@@ -975,4 +976,4 @@ CREATE TABLE protein_tree_hmmprofile (
 
 
 # Auto add schema version to database
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "56");
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "57");
