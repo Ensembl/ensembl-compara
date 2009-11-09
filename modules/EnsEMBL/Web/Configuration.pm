@@ -463,16 +463,12 @@ sub _configurator {
     next if $node->is_leaf;
     
     my $count     = 0;
+    my $das_count = 0;
     my $available = 0;
     my $on        = 0;
     my $key       = $node->key;
-    
-    $rhs_content .= sprintf('
-      <div class="config %s">
-        <h2>%s</h2>
-        <dl class="config_menu">', 
-      $key, escapeHTML($node->get('caption'))
-    );
+    my %renderers;
+    my ($select_all_menu, $config_group);
     
     foreach my $track_node ($node->descendants) {
       next if $track_node->get('menu') eq 'no';
@@ -483,20 +479,29 @@ sub _configurator {
       my $class     = $track_node->get('_class');
       my $name      = escapeHTML($track_node->get('name'));
       my $close_tag = '</dt>';
+      my $das       = lc $class eq 'das' ? qq{ class="das"} : '';
       my $selected;
+      my ($menu, $das_menu);
       
       $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;
       
-      $rhs_content .= '<dt><ul class="popup_menu">';
-      
       while (my ($val, $text) = splice(@states, 0, 2)) {
-        $text         = escapeHTML($text);
-        $rhs_content .= qq{<li class="$val"><img title="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
-        $selected     = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $val if $val eq $display;
+        $text     = escapeHTML($text);
+        $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
+        $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
+        
+        if ($das) {
+          $das_menu .= $text;
+        } else {
+          $menu .= $text;
+          $renderers{$val}++;
+        }
       }
       
       $count++;
       $on++ if $display ne 'off';
+      $das_count++ if $das;
+      $select_all_menu ||= $menu;
       
       if ($desc) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -508,12 +513,41 @@ sub _configurator {
         $close_tag .= "<dd>$desc</dd>";
       }
       
-      $rhs_content .= qq{</ul>$selected <span>$name</span>$close_tag};
+      $config_group .= qq{
+        <dt$das>
+          <ul class="popup_menu">$menu$das_menu</ul>
+          $selected <span>$name</span>
+        $close_tag
+      };
     }
     
-    $rhs_content .= '
+    if ($count - $das_count > 1) {
+      my %counts = reverse %renderers;
+      my $label = 'Enable/disable all' . ($das_count ? ' non DAS' : '') . ' tracks';
+      
+      if (scalar keys %counts != 1) {
+        $select_all_menu = '';
+        $select_all_menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$key" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+      }
+      
+      $config_group = qq{
+        <dt class="select_all">
+          <ul class="popup_menu">$select_all_menu</ul>
+          <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="selected" /> <strong>$label</strong>
+        </dt>
+        $config_group
+      }; 
+    }
+    
+    $rhs_content .= sprintf('
+      <div class="config %s">
+        <h2>%s</h2>
+        <dl class="config_menu">
+          %s
         </dl>
-      </div>';
+      </div>', 
+      $key, escapeHTML($node->get('caption')), $config_group
+    );
       
     $active ||= $key if $count > 0;
     
