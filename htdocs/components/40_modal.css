@@ -35,7 +35,8 @@ div.species_list li { list-style-image: none; list-style-type: none; cursor: poi
 div.species_list ul.included li { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
 div.species_list ul.excluded li { background-color: lightGrey; color: [[CONTRAST_TEXT]]; border: 1px solid; }
 div.species_list ul li span        { position: absolute; margin-top: 7px; }
-div.species_list ul li span.switch { height: 30px; width: 30px; margin: 0; background-image: url(/i/plus_minus.png); right: 0; }
-div.species_list ul.included li span.switch { background-position: 0 30px; }
+div.species_list ul li span.switch { height: 30px; width: 30px; margin: 0; right: 0; }
+div.species_list ul.included li span.switch { background-image: url(/img/sprites/zoom_out.png); }
+div.species_list ul.excluded li span.switch { background-image: url(/img/sprites/zoom_in.png); }
 
 .modal_wrapper { zoom: 1; } /* Filthy IE hack to make the panel border go around the whole content */
