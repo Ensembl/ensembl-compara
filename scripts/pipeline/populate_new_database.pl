@@ -385,8 +385,8 @@ sub get_all_default_genome_dbs {
     for (my $i = 0; $i < @$all_genome_dbs; $i++) {
       my $this_genome_db_name = $all_genome_dbs->[$i]->name;
 
-      if(  ($exact_species_name_match && grep { $this_genome_db_name eq $_ } @species_names) ||
-		   (!$exact_species_name_match && grep { /$this_genome_db_name/ } @species_names) ) {
+      if(  ($exact_species_name_match && grep { $this_genome_db_name eq $_ } @$species_names) ||
+		   (!$exact_species_name_match && grep { /$this_genome_db_name/ } @$species_names) ) {
          $all_species->{$this_genome_db_name} = 1;
          next;
       }
