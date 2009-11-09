@@ -116,6 +116,11 @@ sub fetch_input {
     throw("undefined ProteinTree as input\n");
   }
 
+  # We fetch the mlssID that is later needed for the newly stored leaves
+  $self->{mlssDBA} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  my @protein_trees_mlsses = @{$self->{mlssDBA}->fetch_all_by_method_link_type('PROTEIN_TREES')};
+  $self->{mlssID} = $protein_trees_mlsses[0]->dbID || 0;
+
   return 1;
 }
 
@@ -400,7 +405,7 @@ sub store_clusters {
     # This will create a new MSA alignment job for each of the newly generated clusters
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
                             $node_id, $clusterset->node_id);
-    $DB::single=1;1;
+
     $self->dataflow_output_id($output_id, 1);
     print STDERR "Created new cluster $node_id\n";
   }
@@ -534,12 +539,14 @@ sub generate_subtrees {
       print $leaf->name," leaf disavowing parent\n" if $self->debug;
       $leaf->disavow_parent;
     }
+    $leaf->method_link_species_set_id($self->{mlssID});
   }
   foreach my $leaf (@{$self->{remaining_subtree}->get_all_leaves}) {
     if (defined $subtree_leaves->{$leaf->member_id}) {
       print $leaf->name," leaf disavowing parent\n" if $self->debug;
       $leaf->disavow_parent;
     }
+    $leaf->method_link_species_set_id($self->{mlssID});
   }
   $self->{remaining_subtree} = $self->{remaining_subtree}->minimize_tree;
   $self->{new_subtree} = $self->{new_subtree}->minimize_tree;
