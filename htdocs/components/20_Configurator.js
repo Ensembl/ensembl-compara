@@ -15,8 +15,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.form = $('form.configuration', this.el);
     this.elLk.search = $('.configuration_search_text', this.el);
-    this.elLk.help = $('.menu_help', this.el);
-    this.elLk.menus = $('.popup_menu', this.el);
+    this.elLk.help = $('.menu_help', this.elLk.form);
+    this.elLk.menus = $('.popup_menu', this.elLk.form);
     this.elLk.searchResults = $('a.search_results', this.elLk.links);
     
     this.initialConfig = {};
@@ -45,23 +45,48 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var menu = $(this).parents('.popup_menu');
       var dt = menu.parent();
       var li = $(this).parent();
-      var input = $('input', dt);
       var val = li.attr('className');
       var link = myself.elLk.links.children('a.' + this.className);
       var label = link.html().split(/\b/);
       
-      $('img.selected', dt).attr({ 
-        src: '/i/render/' + val + '.gif', 
-        title: li.text()
-      });
-      
-      if (input.val() == 'off' ^ val == 'off') {
-        label[1] = parseInt(label[1]) + (val == 'off' ? -1 : 1);
-        label = label.join('');
-        link.attr('title', label).html(label);
+      if (dt.hasClass('select_all')) {
+        dt = dt.siblings('dt:not(.das)');
+        
+        if (val == 'all_on') {
+          // First li is off, so use the second (index 1) as default on setting.
+          dt.find('li:eq(1)').each(function () {
+            li = $(this);
+            
+            li.parent().siblings('img.selected').attr({ 
+              src: '/i/render/' + this.className + '.gif', 
+              alt: li.text(),
+              title: li.text()
+            }).siblings('input').attr('newVal', this.className);
+          });
+        }
       }
       
-      input.val(val);
+      var input = dt.children('input');
+      
+      input.each(function () {
+        if (this.value == 'off' ^ val == 'off') {
+          label[1] = parseInt(label[1]) + (val == 'off' ? -1 : 1);
+        }
+        
+        this.value = this.newVal || val;
+        delete this.newVal;
+      });
+      
+      if (val != 'all_on') {
+        dt.children('img.selected').attr({ 
+          src: '/i/render/' + val + '.gif', 
+          alt: li.text(),
+          title: li.text()
+        });
+      }
+      
+      label = label.join('');
+      link.attr('title', label).html(label);
       menu.hide();
       
       menu = null;
@@ -193,18 +218,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.elLk.search.val(this.query);
       this.search();
     } else if (typeof active != 'undefined') {
-      $('div:not(.' + active + ')', this.elLk.form).hide();
-      $('dd', this.elLk.form).hide();
+      $('div:not(.' + active + '), dd', this.elLk.form).hide();
       this.elLk.help.html('Show info');
       
       if (active == 'active_tracks') {
         $('dl.config_menu input', this.elLk.form).each(function () {
           if (this.value == 'off') {
-            $(this).parent().hide().next().hide(); // Hide the dt and the dd corresponding to it
+            $(this).parent().hide().next('dd').hide(); // Hide the dt and the dd corresponding to it
           } else {
             $(this).parents('dt, div.config').show();
           }
         });
+        
+        $('.select_all', this.elLk.form).hide();
       } else {
         $('div.' + active, this.elLk.form).show().find('dl.config_menu dt').show();
       }
@@ -237,16 +263,17 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var div = menu.parent();
       var show = false;
       
-      $('dt', menu).each(function () {
+      menu.children('dt:not(.select_all)').each(function () {
         var dt = $(this);
+        var match = dt.children('span:not(.menu_help)').html().match(myself.regex);
         
-        if ($('span', dt).html().match(myself.regex)) {
+        if (match || dt.next('dd').text().match(myself.regex)) {
           dt.show();
           show = true;
-        } else if (dt.next('dd').text().match(myself.regex)) {
-          dt.show();
-          dts.push(dt[0]);
-          show = true;
+          
+          if (!match) {
+            dts.push(dt[0]);
+          }
         } else {
           dt.hide().next('dd').hide();
         }
@@ -266,12 +293,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.lastQuery = this.query;
     this.styleTracks();
-    this.toggleDescription(dts);
+    this.toggleDescription(dts, 'show');
     
     dts = null;
   },
   
-  toggleDescription: function (els) {
+  toggleDescription: function (els, action) {
     var dd, span;
     
     if (typeof els.length == 'undefined') {
@@ -285,7 +312,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         default    : return;
       }
       
-      dd.toggle();
+      switch (action) {
+        case 'hide': dd.hide(); break;
+        case 'show': dd.show(); break;
+        default    : dd.toggle();
+      }
+      
       span.html(dd.is(':visible') ? 'Hide info': 'Show info');
       
       dd = null;
