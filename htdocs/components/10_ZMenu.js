@@ -244,6 +244,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       caption = myself.species.replace(/_/g, ' ') + ' ' + myself.chr + ':' + (start ? start + '-' + end : myself.location);
     }
     
+    // AlignSlice view
+    function align() {
+      var label = start ? 'region' : 'location';
+      label += myself.species == Ensembl.species ? '' : ' on ' + Ensembl.species.replace(/_/g, ' ');
+      
+      menu = [ '<a href="' + url.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end) + '">Jump to best aligned ' + label + '</a>' ];
+      caption = 'Alignment: ' + (start ? start + '-' + end : myself.location);
+    }
+    
     // Region select
     if (this.coords.r) {
       start = Math.floor(min + (this.coords.s - this.areaCoords.l) * scale);
@@ -273,53 +282,56 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         end   = this.end + this.start - tmp;
       }
       
-      if (this.align) {
-        url = url.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (this.location + Ensembl.location.start) + ';w=' + (end - start)); // TODO: currently disabled
+      if (this.align === true) {
+        align();
       } else {
         url = url.replace(/%s/, this.chr + ':' + start + '-' + end);
-      }
-      
-      caption = 'Region: ' + this.chr + ':' + start + '-' + end;
-      
-      if (!locationView) {
-        notLocation();
-      } else if (this.multi !== false) {
-        multi();
-      } else {
-        menu = [
-          '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
-          '<a href="' + this.zoomURL(1) + '">Centre here</a>'
-        ];
+        caption = 'Region: ' + this.chr + ':' + start + '-' + end;
+        
+        if (!locationView) {
+          notLocation();
+        } else if (this.multi !== false) {
+          multi();
+        } else {
+          menu = [
+            '<a href="' + url + '">Jump to region (' + (end - start) + ' bp)</a>',
+            '<a href="' + this.zoomURL(1) + '">Centre here</a>'
+          ];
+        }
       }
     } else { // Point select
       var href;
       
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
-      caption = 'Location: ' + this.chr + ':' + this.location;
-      
-      url = this.zoomURL(1);
-      
-      if (!locationView) {
-        notLocation();
-      } else if (this.multi !== false) {
-        multi();
+      if (this.align === true) {
+        url = this.zoomURL(1/10);
+        align();
       } else {
-        menu = [
-          '<a href="' + this.zoomURL(10) + '">Zoom out x10</a>',
-          '<a href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
-          '<a href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
-          '<a href="' + url  + '">Centre here</a>'
-        ];
+        url = this.zoomURL(1);
+        caption = 'Location: ' + this.chr + ':' + this.location;
         
-        // Only add zoom in links if there is space to zoom in to.
-        $.each([2, 5, 10], function () {
-          href = myself.zoomURL(1 / this);
+        if (!locationView) {
+          notLocation();
+        } else if (this.multi !== false) {
+          multi();
+        } else {
+          menu = [
+            '<a href="' + this.zoomURL(10) + '">Zoom out x10</a>',
+            '<a href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
+            '<a href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
+            '<a href="' + url  + '">Centre here</a>'
+          ];
           
-          if (href !== '') {
-            menu.push('<a href="' + href + '">Zoom in x' + this + '</a>');
-          }
-        });
+          // Only add zoom in links if there is space to zoom in to.
+          $.each([2, 5, 10], function () {
+            href = myself.zoomURL(1 / this);
+            
+            if (href !== '') {
+              menu.push('<a href="' + href + '">Zoom in x' + this + '</a>');
+            }
+          });
+        }
       }
     }
     
@@ -415,16 +427,16 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       return '';
     }
     
+    var start = Math.round(this.location - (w - 1) / 2);
+    var end   = Math.round(this.location + (w - 1) / 2); // No constraints on end - can't know how long the chromosome is, and perl will deal with overflow
+    
+    if (start < 1) {
+      start = this.start;
+    }
+    
     if (this.align === true) {
-      return this.baseURL.replace(/r=%s/, 'c=' + Ensembl.location.name + ':' + (Ensembl.location.start + this.location) + ';w=' + Math.round(w)); // TODO: currently disabled
+      return this.baseURL.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end);
     } else {
-      var start = Math.round(this.location - (w - 1) / 2);
-      var end   = Math.round(this.location + (w - 1) / 2); // No constraints on end - can't know how long the chromosome is, and perl will deal with overflow
-      
-      if (start < 1) {
-        start = this.start;
-      }
-      
       return this.baseURL.replace(/%s/, this.chr + ':' + start + '-' + end);
     }
   },
