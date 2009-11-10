@@ -1576,7 +1576,7 @@ sub extent_text {
     
     $f->{'tinfo'} = { 'ts' => $ts, 'tw' => $tw, 'bp_tw' => $bp_tw, 'th' => $th, 'fs' => $fh, 'fn' => $fn, 'st' => $str, 'extra' => 'ff' };
     
-    return $self->_extent($g, $f, $ts, $ts+$bp_tw, $h);
+    return $st->{'bgcolor'} ? $self->_extent($g, $f, $f->start, $f->end, $h) : $self->_extent($g, $f, $ts, $ts+$bp_tw, $h);
   } elsif ($mp < 0 || $mp > $l) { # Out of range don't draw
     # If midpoint not in range don't draw the text at all - and just make space for the box if a background colour is set
     return $self->_extent($g, $f, $f->start, $f->end, $h) if $st->{'bgcolor'};
@@ -1664,8 +1664,8 @@ sub glyph_triangle {
   my ($t, $m, $b) = ($y, $y + $h/2, $y + $h);
 
   my $points = $direction eq 's' ? [ $mp - $w/2, $t, $mp,        $b, $mp + $w/2, $t ]  #v
-             : $direction eq 'e' ? [ $mp - $w/2, $m, $mp + $w/2, $t, $mp + $w/2, $b ]  #>
-             : $direction eq 'w' ? [ $mp - $w/2, $b, $mp - $w/2, $t, $mp + $w/2, $m ]  #<
+             : $direction eq 'w' ? [ $mp - $w/2, $m, $mp + $w/2, $t, $mp + $w/2, $b ]  #<
+             : $direction eq 'e' ? [ $mp - $w/2, $b, $mp - $w/2, $t, $mp + $w/2, $m ]  #>
              :                     [ $mp - $w/2, $b, $mp,        $t, $mp + $w/2, $b ]; #^
 
   $self->push($self->Poly({
