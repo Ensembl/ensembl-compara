@@ -130,16 +130,16 @@ sub content {
     </table>
     };
     
-    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div>$table<pre class="text_sequence">%s</pre>};
+    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div>$table<pre>%s</pre>};
   
     $html = $self->build_sequence($sequence, $config);
   } else {
     my $strains = ($object->species_defs->translate('strain') || 'strain') . 's';
     
     if ($ref_slice->get_individuals('reseq')) {
-      $html = "Please select $strains to display from the 'Configure this page' link to the left";
+      $html = $self->_info('No strains specified', qq{<p>Please select $strains to display from the "<strong>Configure this page</strong>" link to the left</p>});
     } else {
-      $html = 'No resequenced $strains available for this species';
+      $html = $self->_warning('No strains available', qq{<p>No resequenced $strains available for this species</p>});
     }
   }
   
