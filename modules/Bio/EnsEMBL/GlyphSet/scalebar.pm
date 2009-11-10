@@ -52,8 +52,8 @@ sub render {
   
   while ($start <= $global_end) { 
     my $end       = $start + $minor_unit - 1;
-    my $box_start = $start < $global_start ? $global_start - 1 : $start;
-    my $box_end   = $end   > $global_end   ? $global_end       : $end;
+    my $box_start = $start < $global_start ? $global_start : $start;
+    my $box_end   = $end   > $global_end   ? $global_end   : $end;
     
     $filled = 1 - $filled;
     
