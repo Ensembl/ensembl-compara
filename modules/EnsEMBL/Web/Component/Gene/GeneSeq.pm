@@ -111,6 +111,8 @@ sub content_sub_slice {
     $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div><pre class="text_sequence">&gt;} . $slice->name . "\n%s</pre>";
   }
   
+  $config->{'html_template'} .= '<p class="invisible">.</p>';
+  
   return $self->build_sequence($sequence, $config);
 }
 
