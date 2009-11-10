@@ -67,7 +67,7 @@ sub content {
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    my $base_url = $self->ajax_url('sub_slice') . "?padding=$padding;length=$slice_length";
+    my $base_url = $self->ajax_url('sub_slice') . ";padding=$padding;length=$slice_length";
     
     $html .= $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
@@ -132,7 +132,7 @@ sub content_sub_slice {
   $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
   
   # Only if this IS NOT a sub slice - print the key and the slice list
-  my $template = "<div>$config->{'key'}</div>" . $self->get_slice_table($config->{'slices'}) unless $start && $end;
+  my $template = qq{<div class="sequence_key">$config->{'key'}</div>} . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $style = $start == 1 ? 'margin-bottom:0px;' : $end == $slice_length ? 'margin-top:0px;': 'margin-top:0px; margin-bottom:0px' if $start && $end;
@@ -314,10 +314,10 @@ sub get_key {
   }
   
   if ($object->param('line_numbering') eq 'slice' && $object->param('align')) {
-    $rtn .= ' NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line';
+    $rtn .= ' NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A, T, G, C or N) basepairs of each line';
   }
   
-  return $rtn;
+  return qq{<div class="sequence_key">$rtn</div>};
 }
 
 # Displays slices for all species above the sequence
@@ -339,7 +339,7 @@ sub get_slice_table {
       <th>$species &gt;&nbsp;</th>
       <td>};
 
-    my ($species_link) = split ':', $species;
+    my $species_path = $self->object->species_path([split ':', $species]->[0]);
 
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
@@ -357,7 +357,7 @@ sub get_slice_table {
         $ancestral_sequences = 1;
       } else {
         $table_rows .= qq{
-          <a href="/$species_link/Location/View?r=$region:$start-$end">$slice_name</a><br />};
+          <a href="$species_path/Location/View?r=$region:$start-$end">$slice_name</a><br />};
       }
     }
 
@@ -369,7 +369,7 @@ sub get_slice_table {
   $region_padding++ if $region_padding;
   
   my $rtn = qq{
-  <table>$table_rows
+  <table class="sequence_key">$table_rows
   </table>
   };
   
@@ -422,4 +422,3 @@ sub get_full_name {
 }
 
 1;
-
