@@ -433,7 +433,7 @@ sub stuff {
         
         my $url = sprintf(
           '/%s/%s/%s?%s',
-          $webpage->factory->species,
+          $webpage->factory->species_path,
           $ENV{'ENSEMBL_TYPE'},
           $ENV{'ENSEMBL_ACTION'},
           join ';', map { "$_=$feature->{$_}" } keys %$feature
@@ -447,7 +447,7 @@ sub stuff {
         my $id   = $f->param('peptide') || $f->param('transcript') || $f->param('gene');
         my $type = $f->param('gene') ? 'Gene' : $f->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
                  
-        my $url = sprintf "/%s/$objecttype/Genome?type=%s;id=%s", $webpage->factory->species, $type, $id;
+        my $url = sprintf "/%s/$objecttype/Genome?type=%s;id=%s", $webpage->factory->species_path, $type, $id;
   
         $webpage->redirect($url);
         
@@ -460,7 +460,7 @@ sub stuff {
           $f->param('transcript') ? ('Transcript/Idhistory',         't', $f->param('transcript')) :
           ('Gene/Idhistory', 'g', $f->param('gene'));
                                   
-        my $url = sprintf "/%s/%s?%s=%s", $webpage->factory->species, $view, $param, $id;
+        my $url = sprintf "/%s/%s?%s=%s", $webpage->factory->species_path, $view, $param, $id;
         
         $webpage->redirect($url);
         
