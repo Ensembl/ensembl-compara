@@ -64,7 +64,7 @@ sub _init {
         'x' => $S,
         'y' => 0,
         'height' => $row_height, 
-        'width' => ($E-$S+1),
+        'width' => ($E-$S),
         'colour' => $feature_colour, 
         'absolutey' => 1,
         'href' => $self->_url($zmenu)
