@@ -186,7 +186,7 @@ sub clear_problems     { $_[0][1]{'_problem'} = {}; }
 
 sub problem {
   my $self = shift;
-  push @{$self->[1]{'_problem'}{$_[1]}}, new EnsEMBL::Web::Problem(@_) if @_;
+  push @{$self->[1]{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
   return $self->[1]{'_problem'};
 }
 
