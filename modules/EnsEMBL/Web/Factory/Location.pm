@@ -63,11 +63,8 @@ sub __set_species {
 sub createObjects {
   my $self = shift;
   
-  return $self->_create_object_from_core
-    if   $self->core_objects->location
-     && !$self->core_objects->location->isa('EnsEMBL::Web::Fake')
-     && !$self->core_objects->gene;
-
+  return $self->_create_object_from_core if $self->core_objects->location && !$self->core_objects->location->isa('EnsEMBL::Web::Fake') && !$self->core_objects->gene;
+  
   $self->get_databases($self->__gene_databases, 'compara', 'blast');
   
   my $database = $self->database('core');
@@ -95,13 +92,13 @@ sub createObjects {
     ($seq_region, $start, $end) = $self->param('r') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
-  } 
+  }
 
   if (defined $self->param('l')) { 
     ($seq_region, $start, $end) = $self->param('l') =~ /^([-\w\.]+):(-?[\.\w,]+)-([\.\w,]+)$/;
     $start = $self->evaluate_bp($start);
     $end   = $self->evaluate_bp($end);
-  } 
+  }
 
   $start = $self->evaluate_bp($start) if defined $start;
   $end   = $self->evaluate_bp($end)   if defined $end;
@@ -579,84 +576,14 @@ sub _create_object_from_core {
   my $l = $self->core_objects->location;
   my $data = undef;
 
-  ## Map old assembly to the current one, if 'ass' param is there
+  # Map old assembly to the current one, if 'ass' param is there
   if (my $ass = $self->param('a')) {
     $self->delete_param('a');
     
-    return $self->_map_assembly(
-           $l->seq_region_name,
-           $l->start,
-           $l->end,
-           1,
-           $ass,
-    );
+    return $self->_map_assembly($l->seq_region_name, $l->start, $l->end, 1, $ass);
   }
   
-  if ($self->param('align_start') && $self->param('align_end') && $self->param('align')) {
-    my $compara_db = $self->database('compara');
-    my $align_slice = $compara_db->get_adaptor('AlignSlice')->fetch_by_Slice_MethodLinkSpeciesSet(
-      $l, 
-      $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($self->param('align')), 
-      'expanded', 
-      'restrict'
-    );
-    
-    my ($align_start, $align_end, $species) = ($self->param('align_start'), $self->param('align_end'), $self->__species);
-    my ($name, $start, $end);
-    my $align_slice_length = $align_end - $align_start;
-    my $step = int($align_slice_length/10);
-    my $gap = 0;
-    my $expired = 0;
-    my $time_limit = 10; # Set arbitrary time limit so we don't end up looping for ages. If the limit is hit, the page will display the previous region with a warning message.
-    my $time = time;
-    
-    while (!($name && $start && $end) || ($align_end - $align_start < $align_slice_length)) {
-      my $sub_align_slices = $align_slice->sub_AlignSlice($align_start, $align_end)->get_all_Slices($species);
-      
-      foreach (@$sub_align_slices) {
-        foreach (@{$_->get_all_underlying_Slices}) {
-          $gap = 1, next if $_->seq_region_name eq 'GAP';
-          
-          $name ||= $_->seq_region_name;
-          $start = $_->start if !$start || $_->start < $start;
-          $end   = $_->end   if $_->end > $end;
-        }
-      }
-      
-      if (!$start) {
-        $align_start -= $step;
-        $align_start = 1 if $align_start < 1;
-      }
-      
-      if (!$end) {
-        $align_end += $step;
-      }
-      
-      if (time - $time > $time_limit) {
-        $self->session->add_data(
-          type     => 'message',
-          function => '_warning',
-          code     => 'align_slice_failure',
-          message  => 'No alignment was found for your selected region'
-        );
-        
-        $expired = 1;
-        
-        last;
-      }
-    }
-    
-    if (!$expired) {
-      $start -= $step, $end += $step if $gap;
-      $self->param('r', sprintf '%s:%s-%s', $name, $start, $end);
-    }
-    
-    $self->delete_param($_) for qw(align_start align_end);
-    
-    my %params = map { $_ => $self->{'data'}{'_input'}->param($_) } $self->{'data'}{'_input'}->param;
-    
-    return $self->problem('redirect', $self->_url(\%params));
-  }
+  return $self->_create_from_sub_align_slice($l) if $self->param('align_start') && $self->param('align_end') && $self->param('align');
   
   if ($l->isa('EnsEMBL::Web::Fake')) {
     $data = EnsEMBL::Web::Proxy::Object->new('Location', { 
@@ -683,6 +610,75 @@ sub _create_object_from_core {
   $self->DataObjects($data);
   
   return 'from core';
+}
+
+sub _create_from_sub_align_slice {
+  my ($self, $slice) = @_;
+  
+  my $compara_db  = $self->database('compara');
+  my $align_slice = $compara_db->get_adaptor('AlignSlice')->fetch_by_Slice_MethodLinkSpeciesSet(
+    $slice, 
+    $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($self->param('align')), 
+    'expanded', 
+    'restrict'
+  );
+  
+  my ($align_start, $align_end, $species) = ($self->param('align_start'), $self->param('align_end'), $self->__species);
+  my ($name, $start, $end);
+  
+  my $align_slice_length = $align_end - $align_start;
+  my $step               = int($align_slice_length/10);
+  my $gap                = 0;
+  my $expired            = 0;
+  my $time_limit         = 10; # Set arbitrary time limit so we don't end up looping for ages. If the limit is hit, the page will display the previous region with a warning message.
+  my $time               = time;
+  
+  while (!($name && $start && $end) || ($align_end - $align_start < $align_slice_length)) {
+    my $sub_align_slices = $align_slice->sub_AlignSlice($align_start, $align_end)->get_all_Slices($species);
+    
+    foreach (@$sub_align_slices) {
+      foreach (@{$_->get_all_underlying_Slices}) {
+        $gap = 1, next if $_->seq_region_name eq 'GAP';
+        
+        $name ||= $_->seq_region_name;
+        $start = $_->start if !$start || $_->start < $start;
+        $end   = $_->end   if $_->end > $end;
+      }
+    }
+    
+    if (!$start) {
+      $align_start -= $step;
+      $align_start = 1 if $align_start < 1;
+    }
+    
+    if (!$end) {
+      $align_end += $step;
+    }
+    
+    if (time - $time > $time_limit) {
+      $self->session->add_data(
+        type     => 'message',
+        function => '_warning',
+        code     => 'align_slice_failure',
+        message  => 'No alignment was found for your selected region'
+      );
+      
+      $expired = 1;
+      
+      last;
+    }
+  }
+  
+  if (!$expired) {
+    $start -= $step, $end += $step if $gap;
+    $self->param('r', sprintf '%s:%s-%s', $name, $start, $end);
+  }
+  
+  $self->delete_param($_) for qw(align_start align_end);
+  
+  my %params = map { $_ => $self->{'data'}{'_input'}->param($_) } $self->{'data'}{'_input'}->param;
+  
+  return $self->problem('redirect', $self->_url(\%params));
 }
 
 sub _create_from_slice {
