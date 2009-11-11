@@ -211,3 +211,39 @@ CREATE TABLE mcl_matrix (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
+------------------------------------------------------------------------------------------------
+--
+-- This is a temporary table used by genetree pipeline as a template for partitioned species-specific peptide_align_features
+--
+
+CREATE TABLE peptide_align_feature_prod (
+
+  peptide_align_feature_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  qmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
+  hmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
+  qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
+  hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
+  analysis_id                 int(10) unsigned NOT NULL, # FK analysis.analysis_id
+  qstart                      int(10) DEFAULT '0' NOT NULL,
+  qend                        int(10) DEFAULT '0' NOT NULL,
+  hstart                      int(11) DEFAULT '0' NOT NULL,
+  hend                        int(11) DEFAULT '0' NOT NULL,
+  score                       double(16,4) DEFAULT '0.0000' NOT NULL,
+  evalue                      double,
+  align_length                int(10),
+  identical_matches           int(10),
+  perc_ident                  int(10),
+  positive_matches            int(10),
+  perc_pos                    int(10),
+  hit_rank                    int(10),
+  cigar_line                  mediumtext,
+
+#   FOREIGN KEY (qmember_id) REFERENCES member(member_id),
+#   FOREIGN KEY (hmember_id) REFERENCES member(member_id),
+#   FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
+#   FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
+#   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
+
+  PRIMARY KEY (peptide_align_feature_id)
+) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
+
