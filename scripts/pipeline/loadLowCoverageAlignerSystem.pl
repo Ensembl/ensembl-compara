@@ -386,12 +386,15 @@ sub prepareLowCoverageAlignerSystem {
     my $pairwise_string;
     if (defined $alignment_params->{'pairwise_string'}) {
 	$pairwise_string = $alignment_params->{'pairwise_string'};
-    } elsif (defined $alignment_params->{'pairwise_file'}) {
+    } 
+    if (defined $alignment_params->{'pairwise_file'}) {
 	my $pairwise_file = $alignment_params->{'pairwise_file'};
         open PAIRWISE_FILE, $pairwise_file || throw("Can not open $pairwise_file");
-        $pairwise_string = join("", <PAIRWISE_FILE>);
+        $pairwise_string .= join("", <PAIRWISE_FILE>);
         close PAIRWISE_FILE;
-    } elsif (defined $alignment_params->{'pairwise_url'}) {
+    } 
+
+    if (defined $alignment_params->{'pairwise_url'}) {
 	throw("Need to define list of method_link_species_set_ids")
 	  if (!defined $alignment_params->{'pairwise_mlss'});
 	foreach my $mlss (split(",", $alignment_params->{'pairwise_mlss'})) {
@@ -458,7 +461,13 @@ sub setup_pipeline() {
 
     #ANALYSIS 8 - CreateNeighbourNodesJobs
     my $createNeighbourNodesJobsAnalysis = $self->createNeighbourNodesJobsAnalysis;
-    $ctrlRuleDBA->create_rule($conservation_score_analysis,$createNeighbourNodesJobsAnalysis);
+
+    #If have conservation scores
+    if (defined $conservation_score_analysis) {
+	$ctrlRuleDBA->create_rule($conservation_score_analysis,$createNeighbourNodesJobsAnalysis);
+    } else {
+	$ctrlRuleDBA->create_rule($updateMaxAlignmentLengthAnalysis,$createNeighbourNodesJobsAnalysis);
+    }
 
     #ANALYSIS 9 - SetNeighbourNodes
     my $createSetNeighbourNodesAnalysis = $self->createSetNeighbourNodesAnalysis;
