@@ -225,6 +225,7 @@ sub run {
     if (!$self->{'run_gerp'}) {
 	return;
     }
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);  
     if ($self->program_version == 1) { 
 	$self->run_gerp;
     } elsif ($self->program_version == 2.1) { 
@@ -232,6 +233,7 @@ sub run {
     } else {
 	throw("Invalid version number. Valid values are 1 or 2 or 2.1\n");
     }
+    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 }
 
 =head2 write_output
