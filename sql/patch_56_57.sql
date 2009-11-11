@@ -10,3 +10,4 @@ ALTER TABLE peptide_align_feature DROP KEY hmember_id;
 ALTER TABLE peptide_align_feature DROP KEY hmember_qgenome;
 ALTER TABLE peptide_align_feature DROP KEY qmember_hgenome;
 
+DROP TABLE peptide_align_feature_prod;
