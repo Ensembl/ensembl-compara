@@ -4,8 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use Bio::EnsEMBL::Registry;
-
 use EnsEMBL::Web::Document::HTML::TwoCol;
 
 use base qw(EnsEMBL::Web::Component);
@@ -18,21 +16,19 @@ sub _init {
 sub content {
 	my $self = shift;
   
-	my $object  = $self->object;
-	my $markers = [];
+	my $object = $self->object;
   my $html;
   
 	if (my $m = $object->param('m')) {
-		my $adap = Bio::EnsEMBL::Registry->get_adaptor($object->species, 'core', 'Marker');
-		$markers = $adap->fetch_all_by_synonym($m);
-    $html = $self->render_marker_details($markers);
+		my $adap = $object->database($object->param('db') || 'core')->get_adaptor('Marker');
+    
+    $html = $self->render_marker_details($adap->fetch_all_by_synonym($m));
 	} else {
 		my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
 		
     return $self->_warning('Region too large', '<p>The region selected is too large to display in this view</p>') if $object->length > $threshold;
     
-    push @$markers, $_ for @{$object->Obj->{'slice'}->get_all_MarkerFeatures};
-    $html = $self->render_marker_features($markers);
+    $html = $self->render_marker_features;
 	}
   
 	return $html
@@ -40,12 +36,13 @@ sub content {
 
 # depending on number print a list of marker_features, or show details for markers
 sub render_marker_features {
-	my ($self, $found_mf)  = @_;
+	my $self = shift;
   
-  my $object = $self->object;
+  my $object   = $self->object;
+  my @found_mf = $object->sorted_marker_features($object->Obj->{'slice'});
   my ($html, %mfs);
   
-	foreach my $mf (@$found_mf) {
+	foreach my $mf (@found_mf) {
 		my $name = $mf->marker->display_MarkerSynonym->name;
 		my $sr_name = $mf->seq_region_name;
 		my $cs = $mf->coord_system_name;
@@ -86,7 +83,7 @@ sub render_marker_features {
     
 		$html .= '</table>';
 	} else { # otherwise print details
-		my @markers = map $_->marker, @$found_mf;
+		my @markers = map $_->marker, @found_mf;
 		$html = $self->render_marker_details(\@markers);
 	}
   
@@ -252,8 +249,8 @@ sub render_location {
 	my $object         = $self->object;
 	my $species        = $object->species;
 	my $sitetype       = $object->species_defs->ENSEMBL_SITETYPE;
-  my $mfs            = $m->get_all_MarkerFeatures || [];
-	my $c              = scalar @$mfs;
+  my @mfs            = $object->sorted_marker_features($m);
+	my $c              = scalar @mfs;
 	my $loc_text       = '<table>';
   my $max_map_weight = 15;
   my $map_weight     = 2;
@@ -265,7 +262,7 @@ sub render_location {
 	    $loc_text .= sprintf '<tr><td>%s is currently mapped to %d different %s locations%s%s%s</td></tr>', $m_name, $c, $sitetype, $extra, ($c > $max_map_weight ? '.' : ':');
 		}
     
-		foreach my $mf (@$mfs){
+		foreach my $mf (@mfs) {
 	    my $sr_name = $mf->seq_region_name;
 	    my $start   = $mf->start;
 	    my $end     = $mf->end;

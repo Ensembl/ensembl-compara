@@ -1588,4 +1588,18 @@ sub chr_short_name {
   return "$abbrev $chr_name";
 }
 
+sub sorted_marker_features {
+  my ($self, $marker) = @_;
+  
+  my $c = 1000;
+  my %sort = map { $_, $c-- } @{$self->species_defs->ENSEMBL_CHROMOSOMES || []};
+  my @marker_features = ref $marker eq 'ARRAY' ? map @{$_->get_all_MarkerFeatures || []}, @$marker : @{$marker->get_all_MarkerFeatures || []};
+  
+  return map $_->[-1], sort { 
+    ($sort{$b->[0]} <=> $sort{$a->[0]} || $a->[0] cmp $b->[0]) || 
+    $a->[1] <=> $b->[1] || 
+    $a->[2] <=> $b->[2] 
+  } map [ $_->seq_region_name, $_->start, $_->end, $_ ], @marker_features;
+}
+
 1;
