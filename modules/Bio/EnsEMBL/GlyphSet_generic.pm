@@ -886,7 +886,7 @@ sub extent_anchored_arrow {
   my ($self, $g, $f, $st) = @_;
 
   # Not an arrow at all
-  if ($st->{'northeast'} eq 'no' && $st->{'soutwest'} eq 'no' ) {
+  if ($st->{'northeast'} eq 'no' && $st->{'southwest'} eq 'no' ) {
     return $self->extent_line($g, $f, $st);
   }
   
@@ -1064,7 +1064,7 @@ sub extent_arrow {
   my ($self, $g, $f, $st) = @_;
 
    # Not an arrow at all
-  if ($st->{'northeast'} eq 'no' && $st->{'soutwest'} eq 'no') {
+  if ($st->{'northeast'} eq 'no' && $st->{'southwest'} eq 'no') {
     return $self->extent_line($g, $f, $st);
   }
   
@@ -1086,7 +1086,7 @@ sub glyph_arrow {
   my ($self, $g, $f, $st) = @_;
   
   # Not an arrow at all
-  if ($st->{'northeast'} eq 'no' && $st->{'soutwest'} eq 'no') {
+  if ($st->{'northeast'} eq 'no' && $st->{'southwest'} eq 'no') {
     return $self->glyph_line($g, $f, $st);
   }
   
