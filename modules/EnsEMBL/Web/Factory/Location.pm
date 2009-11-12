@@ -585,11 +585,23 @@ sub _create_object_from_core {
   
   return $self->_create_from_sub_align_slice($l) if $self->param('align_start') && $self->param('align_end') && $self->param('align');
   
-  if ($l->isa('EnsEMBL::Web::Fake')) {
+  if ($l->isa('EnsEMBL::Web::Fake')) { 
     $data = EnsEMBL::Web::Proxy::Object->new('Location', { 
       type         => $l->type, 
       real_species => $self->__species 
     }, $self->__data);
+    
+    if ($l->type eq 'Marker' && $l->{'markers'}) {
+      my @marker_features = $data->__children->[0]->sorted_marker_features($l->{'markers'});
+      
+      if (scalar @marker_features) {
+        my %params = map { $_ => $self->{'data'}{'_input'}->param($_) } $self->{'data'}{'_input'}->param;
+        $params{'r'} = sprintf '%s:%s-%s', map { $_->seq_region_name, $_->start, $_->end } $marker_features[0];
+        
+        return $self->problem('redirect', $self->_url(\%params));
+      }
+    }
+    
   } else {
     $data = EnsEMBL::Web::Proxy::Object->new('Location', {
       type               => 'Location',
