@@ -93,7 +93,7 @@ sub content {
       if ($leaf->genome_db_id == $gdb_id) {
         $expand_nodes{$_->node_id}   = $_ for @{$leaf->get_all_ancestors};
         $collapse_nodes{$_->node_id} = $_ for @{$leaf->get_all_adjacent_subtrees};
-      }
+      } 
     }
     
     my @collapse_node_ids = grep !$expand_nodes{$_}, keys %collapse_nodes;
@@ -110,9 +110,7 @@ sub content {
         })
       }); 
     }
-  }
-  
-  if (!$is_leaf) {
+  } else {
     # Duplication confidence
     my $dup = $tagvalues->{'Duplication'};
     
@@ -147,7 +145,7 @@ sub content {
         undef;
       
       if (defined $treefam_tree) {
-        foreach my $treefam_id (split ';',$treefam_tree) {
+        foreach my $treefam_id (split ';', $treefam_tree) {
           my $treefam_link = $object->get_ExtURL('TREEFAMTREE', $treefam_id);
           
           if ($treefam_link) {
@@ -196,6 +194,24 @@ sub content {
       });
     }
     
+    if ($leaf_count <= 10) {
+      my $url_params = { type => 'Location', action => 'Multi', r => undef };
+      my $s = 1;
+      
+      for (@{$node->get_all_leaves}) {
+        ($url_params->{"s$s"} = $_->genome_db->name) =~ s/ /_/g;
+        $url_params->{"g$s"} = $_->gene_member->stable_id;
+        $s++;
+      }
+      
+      $self->add_entry({
+        type  => 'Comparison',
+        label => 'Jump to Multi-species view',
+        link  => $object->_url($url_params),
+        order => 8
+      });
+    }
+    
     # Subtree dumps
     my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
     
@@ -204,7 +220,7 @@ sub content {
       label => 'Alignment: FASTA',
       link  => $url_align,
       extra => { external => 1 },
-      order => 8
+      order => 9
     });
     
     $self->add_entry({
@@ -212,7 +228,7 @@ sub content {
       label => 'Tree: New Hampshire',
       link  => $url_tree,
       extra => { external => 1 },
-      order => 9
+      order => 10
     });
     
     # Jalview
@@ -220,7 +236,7 @@ sub content {
       type       => 'View Sub-tree',
       label      => '[Requires Java]',
       label_html => $self->compara_tree_jalview_html($url_align, $url_tree),
-      order      => 10
+      order      => 11
     });
   }
 }
