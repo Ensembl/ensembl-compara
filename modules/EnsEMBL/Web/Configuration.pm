@@ -236,10 +236,12 @@ sub _user_context {
   my $referer = $object->param('_referer') || $object->_url({ type => $type, action => $ENV{'ENSEMBL_ACTION'}, time => undef });
   my $vc      = $object->viewconfig;
   my $action  = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-
-  if (!$vc->real && $parent->{'ENSEMBL_TYPE'}) {
+  my %params;
+  
+  if (!$vc->real && $parent->{'ENSEMBL_TYPE'} && $section eq 'global_context' && !$self->{'page'}->renderer->{'_modal_dialog_'}) {
     $vc = $object->get_viewconfig($parent->{'ENSEMBL_TYPE'}, $parent->{'ENSEMBL_ACTION'});
     $action = join '/', map $parent->{$_} || (), qw(ENSEMBL_TYPE ENSEMBL_ACTION ENSEMBL_FUNCTION);
+    %params = map { $_ => $parent->{'params'}->{$_}->[0] } keys %{$parent->{'params'}};
     
     $vc->form($object);
   }
@@ -250,7 +252,7 @@ sub _user_context {
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
   my $upload_data   = $vc->can_upload;
 
-  if ($vc->has_form) { 
+  if ($vc->has_form) {
     $self->{'page'}->$section->add_entry(
       'type'    => 'Config',
       'id'      => 'config_page',
@@ -262,6 +264,7 @@ sub _user_context {
         'action'   => $action,
         'config'   => '_page',
         '_referer' => $referer,
+        %params
       }))
     );
     
