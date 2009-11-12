@@ -574,7 +574,7 @@ sub _create_object_from_core {
   my $self = shift;
   
   my $l = $self->core_objects->location;
-  my $data = undef;
+  my $data;
 
   # Map old assembly to the current one, if 'ass' param is there
   if (my $ass = $self->param('a')) {
@@ -587,7 +587,7 @@ sub _create_object_from_core {
   
   if ($l->isa('EnsEMBL::Web::Fake')) {
     $data = EnsEMBL::Web::Proxy::Object->new('Location', { 
-      type         => 'Genome', 
+      type         => $l->type, 
       real_species => $self->__species 
     }, $self->__data);
   } else {
@@ -606,7 +606,7 @@ sub _create_object_from_core {
     
     $data->attach_slice($l);
   }
-
+  
   $self->DataObjects($data);
   
   return 'from core';

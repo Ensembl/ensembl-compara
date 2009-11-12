@@ -380,12 +380,12 @@ sub _generate_objects {
     my $tdb_adaptor = $self->database($tdb);
     
     if ($tdb_adaptor) {
-      my $sth = $tdb_adaptor->dbc->db_handle->prepare('select i.interpro_ac,x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac=x.dbprimary_acc where i.interpro_ac = ?');
+      my $sth = $tdb_adaptor->dbc->db_handle->prepare('select i.interpro_ac, x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac = x.dbprimary_acc where i.interpro_ac = ?');
       $sth->execute($self->param('domain'));
       my ($t, $n, $d) = $sth->fetchrow;
       
       if ($t) {
-        $self->transcript(new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type'=>'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }));
+        $self->transcript(new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type' => 'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }));
         $self->{'parameters'}{'domain'} = $self->param('domain');
       }
     }
@@ -419,7 +419,7 @@ sub _generate_objects {
   if (!$self->gene && $self->param('family')) {
     my $compara_db = $self->compara_db('compara');
     
-    if($compara_db) {
+    if ($compara_db) {
       my $fa = $compara_db->get_FamilyAdaptor;
       
       if ($fa) {
@@ -477,7 +477,8 @@ sub _generate_objects {
   }
   
   if (!$self->location) {
-    $self->location( new EnsEMBL::Web::Fake({ 'view' => 'Genome', 'type'=>'Genome' }));
+    my $fake = $self->param('m') ? 'Marker' : 'Genome';
+    $self->location(new EnsEMBL::Web::Fake({ 'view' => $fake, 'type' => $self->param('m') ? 'Marker' : $fake }));
   }
 
   if ($self->transcript) {
