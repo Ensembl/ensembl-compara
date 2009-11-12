@@ -477,8 +477,15 @@ sub _generate_objects {
   }
   
   if (!$self->location) {
-    my $fake = $self->param('m') ? 'Marker' : 'Genome';
-    $self->location(new EnsEMBL::Web::Fake({ 'view' => $fake, 'type' => $self->param('m') ? 'Marker' : $fake }));
+    if ($self->param('m')) {
+      $self->location(new EnsEMBL::Web::Fake({ 
+        'view'    => 'Marker', 
+        'type'    => 'Marker', 
+        'markers' => $self->database($self->param('db') || 'core')->get_adaptor('Marker')->fetch_all_by_synonym($self->param('m'))
+      }));
+    } else {
+      $self->location(new EnsEMBL::Web::Fake({ 'view' => 'Genome', 'type' => 'Genome' }));
+    }
   }
 
   if ($self->transcript) {
