@@ -112,11 +112,6 @@ sub _content {
       my $name  = $node->data->{'caption'};
       my $id    = $node->data->{'id'};
       
-      for ($title, $name) {
-        s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
-        $_ = escapeHTML($_);
-      }
-      
       $title ||= $name;
       
       if ($node->data->{'availability'} && $self->is_available($node->data->{'availability'})) {
@@ -124,6 +119,11 @@ sub _content {
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
         $class = qq{ class="$class"} if $class;
+        
+        for ($title, $name) {
+          s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
+          $_ = escapeHTML($_);
+        }
         
         # This is a tmp hack since we do not have an object here
         # TODO: propagate object here and use object->_url method
@@ -145,6 +145,7 @@ sub _content {
         
         $name = qq{<a href="$url" title="$title"$class$external>$name</a>};
       } else {
+        $name =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
         $name = sprintf '<span class="disabled" title="%s">%s</span>', $node->data->{'disabled'}, $name;
       }
       
