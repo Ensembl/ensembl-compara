@@ -23,6 +23,9 @@ sub content {
   my $ramp_entries = shift || [ [4,1e3], [6,5e3], [8,1e4], [10,5e4], [12,1e5], [14,2e5], [16,5e5], [18,1e6] ];
   
   my $object = $self->object;
+  
+  return unless $object->param('r');
+  
   my $scale = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
   my $image_width = $self->image_width;
   my $seq_region_start = $object->seq_region_start;
