@@ -1018,7 +1018,8 @@ sub glyph_anchored_arrow {
   }
   
   # Now draw the main bar
-  if (lc($st->{'bar_style'}) eq 'line') {
+  my $bar_style = lc ( $st->{'bar_style'} || 'indent' );
+  if ($bar_style eq 'line') {
     $self->push($self->Line({
       'x'         => $o > 0 ? $f->{'extent_start'} - 1 : $f->{'extent_start'} + $tw - 1,
       'width'     => $f->{'extent_end'} - $f->{'extent_start'} + 1 - $tw,
@@ -1029,7 +1030,7 @@ sub glyph_anchored_arrow {
       'y'         => $y + $h/2
     }));
   } else {
-    my $n = lc($st->{'bar_style'}) eq 'full' ? 0 : int($h/4);
+    my $n = $bar_style eq 'full' ? 0 : int($h/4);
     
     $self->push($self->Rect({
       'x'         => $o > 0 ? $f->{'extent_start'} - 1 : $f->{'extent_start'} + $tw - 1,
@@ -1184,8 +1185,9 @@ sub glyph_arrow {
       'height' => $h
     }));
     
-    if (lc($st->{'bar_style'}) eq 'full' || lc($st->{'bar_style'}) eq 'indent') {
-      my $n = lc($st->{'bar_style'}) eq 'full' ? 0 : int($h/4);
+    my $bar_style = lc ( $st->{'bar_style'} || 'line' );
+    if ($bar_style eq 'full' || $bar_style eq 'indent') {
+      my $n = $bar_style eq 'full' ? 0 : int($h/4);
       
       $self->push($self->Rect({
         'x'         => $box_s - 1,
@@ -1436,10 +1438,11 @@ sub glyph_line {
       'strand'    => $f->{'strand'},
       'colour'    => $st->{'fgcolor'},
       'width'     => $f->{'extent_end'} - $f->{'extent_start'} + 1,
-      'dotted'    => ($st->{'style'} eq 'dashed') ? 1 : 0,
+      'dotted'    => 0,
       'absolutey' => 1
     }));
   } else {
+    # style is either dashed or solid
     my $y = ($g ? $g->{'y'} : $f->{'y'}) + $self->{'h'}/2;
     
     $self->push($self->Line({
@@ -1526,8 +1529,9 @@ sub glyph_span {
     }));
   }
   
-  if (lc($st->{'bar_style'}) eq 'full' || lc($st->{'bar_style'}) eq 'indent') {
-    my $n = lc($st->{'bar_style'}) eq 'full' ? 0 : int($h/4);
+  my $bar_style = lc ( $st->{'bar_style'} || 'line' );
+  if ($bar_style eq 'full' || $bar_style eq 'indent') {
+    my $n = $bar_style eq 'full' ? 0 : int($h/4);
     
     $self->push($self->Rect({
       'x'         => $f->{'extent_start'} - 1,
