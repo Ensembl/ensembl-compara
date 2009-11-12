@@ -1,293 +1,285 @@
 package EnsEMBL::Web::Component::Location::MarkerDetails;
 
-# outputs chunks of XHTML for marker-based displays
-
-use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::Document::HTML::TwoCol;
-use Bio::EnsEMBL::Registry;
 use strict;
 use warnings;
 no warnings "uninitialized";
 
-my $MAX_MAP_WEIGHT = 15;
-my $MAP_WEIGHT = 2;
-my $PRIORITY   = 50;
+use Bio::EnsEMBL::Registry;
+
+use EnsEMBL::Web::Document::HTML::TwoCol;
+
+use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
-  $self->ajaxable( 0 );
+  $self->ajaxable(0);
 }
 
 sub content {
 	my $self = shift;
-	my $object = $self->object;
-	my $species = $object->species;
-	my $html;
-	my $to_list = 1;
-	my $mfs = [];
+  
+	my $object  = $self->object;
 	my $markers = [];
-	my $found_mf = [];
+  my $html;
+  
 	if (my $m = $object->param('m')) {
-		my $adap = Bio::EnsEMBL::Registry->get_adaptor($species,'core','Marker');
+		my $adap = Bio::EnsEMBL::Registry->get_adaptor($object->species, 'core', 'Marker');
 		$markers = $adap->fetch_all_by_synonym($m);
-		$html = $self->render_marker_details($markers);
+    $html = $self->render_marker_details($markers);
+	} else {
+		my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+		
+    return $self->_warning('Region too large', '<p>The region selected is too large to display in this view</p>') if $object->length > $threshold;
+    
+    push @$markers, $_ for @{$object->Obj->{'slice'}->get_all_MarkerFeatures};
+    $html = $self->render_marker_features($markers);
 	}
-	else {
-		my $threshold   = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-		if( $object->length > $threshold ) {
-	    return $self->_warning( 'Region too large',
-															'<p>The region selected is too large to display in this view</p>' );
-		}
-		foreach my $mf (@{$object->Obj->{'slice'}->get_all_MarkerFeatures()}) {
-	    push @{$found_mf}, $mf;
-		}
-		$html = $self->render_marker_features($found_mf);
-	}
-	return $html;
+  
+	return $html
 }
 
 # depending on number print a list of marker_features, or show details for markers
 sub render_marker_features {
-	my $self = shift;
-	my ($found_mf)  = @_;
-	my $object   = $self->object;
-	my $species  = $object->species;
-	my %mfs;
+	my ($self, $found_mf)  = @_;
+  
+  my $object = $self->object;
+  my ($html, %mfs);
+  
 	foreach my $mf (@$found_mf) {
 		my $name = $mf->marker->display_MarkerSynonym->name;
 		my $sr_name = $mf->seq_region_name;
 		my $cs = $mf->coord_system_name;
+    
 		push @{$mfs{$name}->{$sr_name}}, {
-																			'cs' => $cs,
-																			'mf' => $mf,
-																			'start'   => $mf->seq_region_start,
-																			'end'     => $mf->seq_region_end, };
+      'cs'    => $cs,
+      'mf'    => $mf,
+      'start' => $mf->seq_region_start,
+      'end'   => $mf->seq_region_end
+    };
 	}
-	my $html;
-	my $c =  keys %mfs;
-	#print a list if we have more than one marker
-	if ($c > 1 ) {
-		$html = qq(<h3>$c mapped markers found:</h3>);
-		$html .= "<table>";
+  
+	my $c = scalar keys %mfs;
+  
+	# print a list if we have more than one marker
+	if ($c > 1) {
+		$html = "
+      <h3>$c mapped markers found:</h3>
+      <table>
+    ";
+    
 		foreach my $name (sort keys %mfs) {
-	    my ($link,$r);
+	    my ($link, $r);
+      
 	    foreach my $chr (keys %{$mfs{$name}}) {
-				my $cs = $mfs{$name}->{$chr}[0]{'cs'};
-				$link .= qq(<td><strong>$cs $chr:</strong></td>);
+				$link .= "<td><strong>$mfs{$name}->{$chr}[0]{'cs'} $chr:</strong></td>";
+        
 				foreach my $det (@{$mfs{$name}->{$chr}}) {
-					$link .= "<td>".$det->{'start'}.'-'.$det->{'end'}."</td>";
-					$r = "$chr:".$det->{'start'}.'-'.$det->{'end'};
+					$link .= "<td>$det->{'start'}-$det->{'end'}</td>";
+					$r = "$chr:$det->{'start'}-$det->{'end'}";
 				}
 	    }
-	    $html .= sprintf(qq(<tr><td><a href="/%s/Location/Marker?m=%s;r=%s">%s</a></td>%s</tr>),
-											 $species,
-											 $name,
-											 $r,
-											 $name,
-											 $link,
-											);
+      
+      my $url = $object->_url({ m => $name, r => $r });
+      
+	    $html .= qq{<tr><td><a href="$url">$name</a></td>$link</tr>};
 		}
-		$html .= "</table>";
-		return $html;
+    
+		$html .= '</table>';
+	} else { # otherwise print details
+		my @markers = map $_->marker, @$found_mf;
+		$html = $self->render_marker_details(\@markers);
 	}
-	#otherwise print details
-	else {
-		my $markers = [];
-		foreach my $mf (@$found_mf) {
-	    push @{$markers}, $mf->marker;
-		}
-		return $self->render_marker_details($markers);
-	}
+  
+  return $html;
 }
 
 sub render_marker_details {
-	my $self = shift;
-	my ($markers)  = @_;
-	my $object   = $self->object;
-	my $species  = $object->species;
+	my ($self, $markers) = @_;
+  
+	my $object  = $self->object;
+	my $species = $object->species;
 	my $html;
-	if (! @$markers) {
-		return qq(<h3>No markers found</h3>);
-	}
+  
+	return '<h3>No markers found</h3>' unless scalar @$markers;
+  
 	foreach my $m (@$markers) {
 		my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
 		my $m_name = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
-		$html .= qq(<h3>Marker $m_name</h3>);
+    
+		$html .= "<h3>Marker $m_name</h3>";
 		
-		#location of marker features
-		my $loc_text = $self->render_location($m);
-		$table->add_row('Location',
-										$loc_text,
-										1);
+    # location of marker features
+		$table->add_row('Location', $self->render_location($m), 1);
 		
-		#synonyms
-		if (my @important_syns = @{$self->markerSynonyms($m,1)}) {
+		# synonyms
+		if (my @important_syns = @{$self->marker_synonyms($m, 1)}) {
 			my $syn_text;
-			foreach my $syn (@important_syns){
-				my $db = $syn->source;
-				my $id = $syn->name;
-				my $url = $object->get_ExtURL($db, $id) ;
-				$id  = sprintf( qq(<a href="%s">%s</a>), $url, $id) if $url;
-				$syn_text .= qq(<table><tr><td>$id ($db)</td></tr></table>);
+      
+			foreach my $syn (@important_syns) {
+				my $db  = $syn->source;
+				my $id  = $syn->name;
+				my $url = $object->get_ExtURL($db, $id);
+        
+				$id = qq{<a href="$url">$id</a>} if $url;
+				$syn_text .= "<table><tr><td>$id ($db)</td></tr></table>";
 			}
-			$table->add_row('Source',
-											$syn_text,
-											1);
+      
+			$table->add_row('Source', $syn_text, 1);
 		}
 		
-		#other synonyms (rows of $max_cols entries)
-		if (my @other_syns = @{$self->markerSynonyms($m,0)}) {
+		# other synonyms (rows of $max_cols entries)
+		if (my @other_syns = @{$self->marker_synonyms($m, 0)}) {
+      my $other_syn_text = '<table><tr>';
 	    my $max_cols = 8;
-	    my $syn_dbs;		
+	    my $syn_dbs;
+      
 	    foreach my $syn (@other_syns) {
 				my $db_name = $syn->source;
-				push @{$syn_dbs->{$db_name}},$syn->name;
+				push @{$syn_dbs->{$db_name}}, $syn->name;
 	    }
-	    my $other_syn_text = qq(<table><tr>);
-	    foreach my $db (keys %{$syn_dbs}) {
+      
+	    foreach my $db (keys %$syn_dbs) {
 				my $c = 0;
-				$other_syn_text .= qq(<td><strong>$db:</strong></td>);
+        
+				$other_syn_text .= "<td><strong>$db:</strong></td>";
+        
 				foreach my $id (@{$syn_dbs->{$db}}) {
-					my $url = $object->get_ExtURL_link( $id, uc($db), $id);
+					my $url = $object->get_ExtURL_link($id, uc $db, $id);
+          
 					if ($c < $max_cols) {
-						$other_syn_text .= qq(<td>$url</td>);
+						$other_syn_text .= "<td>$url</td>";
 						$c++;
-					}
-					else {
-						$other_syn_text .= qq(</tr>
-                                                   <tr><td></td><td>$url</td>);
+					} else {
+						$other_syn_text .= "
+              </tr>
+              <tr>
+                <td></td>
+                <td>$url</td>";
+            
 						$c = 1;
 					}
-				}			
-				$other_syn_text .= qq(</tr>);
+				}
+        
+				$other_syn_text .= '</tr>';
 	    }
-	    $other_syn_text .= qq(</table>);
+      
+	    $other_syn_text .= '</table>';
 	    
-	    $table->add_row('Synonyms',
-											$other_syn_text,
-			    1);
+	    $table->add_row('Synonyms', $other_syn_text, 1);
 		}
 		
-		#primer details
-		my $l = $m->left_primer;
-		my $r = $m->right_primer;
+		# primer details
+		my $l         = $m->left_primer;
+		my $r         = $m->right_primer;
 		my $min_psize = $m->min_primer_dist;
 		my $max_psize = $m->max_primer_dist;
-		my $product_size;
+		my ($product_size, $primer_txt);
+    
 		if (!$min_psize) {
 	    $product_size = "&nbsp";
-		}
-		elsif ($min_psize == $max_psize) {
+		} elsif ($min_psize == $max_psize) {
 	    $product_size = "$min_psize";
-		}
-		else {
+		} else {
 	    $product_size = "$min_psize - $max_psize";
 		}
-		my $primer_txt;
+		
 		if ($r) {
 	    $l =~ s/([\.\w]{30})/$1<br \/>/g;
 	    $r =~ s/([\.\w]{30})/$1<br \/>/g;
-	    $primer_txt .= qq(<table>
-                                    <tr><td><strong>Expected Product Size:</strong></td><td>$product_size</td></tr>
-                                    <tr><td><strong>Left Primer:</strong></td><td>$l</td></tr>
-                                    <tr><td><strong>Right Primer:</strong></td><td>$r</td></tr>
-                                  </table>);
+	    $primer_txt .= "
+      <table>
+        <tr><td><strong>Expected Product Size:</strong></td><td>$product_size</td></tr>
+        <tr><td><strong>Left Primer:</strong></td><td>$l</td></tr>
+        <tr><td><strong>Right Primer:</strong></td><td>$r</td></tr>
+      </table>
+      ";
+		} else {
+	    $primer_txt = "Marker $m_name primers are not in the database";
 		}
-		else {
-	    $primer_txt = qq(Marker $m_name primers are not in the database);
-		}
-		$table->add_row('Primers',
-										$primer_txt,
-										1);
+    
+		$table->add_row('Primers', $primer_txt, 1);
 		
 		$html .= $table->render;
 		
-		if (my @mml = @{$m->get_all_MapLocations()}) {
-	    my $map_table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
-	    $map_table->add_columns({ 'key' => 'map', 'align'=>'left', 'title' => 'Map Name'});
-	    $map_table->add_columns({ 'key' => 'syn', 'align'=>'left', 'title' => 'Synonym'    });
-	    $map_table->add_columns({ 'key' => 'chr', 'align'=>'left', 'title' => 'Chromosome' });
-	    $map_table->add_columns({ 'key' => 'pos', 'align'=>'left', 'title' => 'Position'   });
-	    $map_table->add_columns({ 'key' => 'lod', 'align'=>'left', 'title' => 'LOD Score'  });
+		if (my @mml = @{$m->get_all_MapLocations}) {
+	    my $map_table = new EnsEMBL::Web::Document::SpreadSheet([], [], { 'margin' => '1em 0px' });
+      
+	    $map_table->add_columns({ 'key' => 'map', 'align' => 'left', 'title' => 'Map Name'   });
+	    $map_table->add_columns({ 'key' => 'syn', 'align' => 'left', 'title' => 'Synonym'    });
+	    $map_table->add_columns({ 'key' => 'chr', 'align' => 'left', 'title' => 'Chromosome' });
+	    $map_table->add_columns({ 'key' => 'pos', 'align' => 'left', 'title' => 'Position'   });
+	    $map_table->add_columns({ 'key' => 'lod', 'align' => 'left', 'title' => 'LOD Score'  });
+      
 	    foreach my $ml (@mml) {
-				my $row = {'map' => $ml->map_name,
-									 'syn' => $ml->name || '-',
-									 'chr' => $ml->chromosome_name || '&nbsp;' ,
-									 'pos' => $ml->position || '-',
-									 'lod' => $ml->lod_score || '-',
-									 '_raw' => $ml,};
+				my $row = {
+          'map'  => $ml->map_name,
+          'syn'  => $ml->name || '-',
+          'chr'  => $ml->chromosome_name || '&nbsp;' ,
+          'pos'  => $ml->position || '-',
+          'lod'  => $ml->lod_score || '-',
+          '_raw' => $ml
+        };
+        
 				$map_table->add_row($row);
 			}
+      
 	    $html .= $map_table->render;
 		}		
 	}
+  
 	return $html;
 }
 
-sub markerSynonyms {
-	my $self = shift;
-	my $m = shift;
-	my $important = shift;
-	my $syns = [];
-	my %IS_IMPORTANT = map { $_, 1 } qw( rgd oxford unists mgi:markersymbol );
-	foreach my $ms ( @{ $m->get_all_MarkerSynonyms } ) {
-		if ($important) {
-	    push @{$syns}, $ms if $IS_IMPORTANT{ lc($ms->source) };
-		}
-		else {
-	    push @{$syns}, $ms unless $IS_IMPORTANT{ lc($ms->source) };
-		}
-	}
-	return $syns;
+sub marker_synonyms {
+	my ($self, $m, $important) = @_;
+  
+	my @syns;
+	my %is_important = map { $_, 1 } qw(rgd oxford unists mgi:markersymbol);
+  
+  if ($important) {
+    @syns = grep $is_important{lc $_->source}, @{$m->get_all_MarkerSynonyms};
+  } else {
+    @syns = grep !$is_important{lc $_->source}, @{$m->get_all_MarkerSynonyms};
+  }
+  
+	return \@syns;
 }
 
 sub render_location {
-	my $self = shift;
-	my $m = shift;
-	my $m_name = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
-	my $object   = $self->object;
-	my $species  = $object->species;
-	my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
-	my $mfs;
-	my $c = ($mfs = $m->get_all_MarkerFeatures) ? scalar(@$mfs) : 0;
-	my $loc_text = qq(<table>);
+	my ($self, $m) = @_;
+	
+	my $m_name         = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
+	my $object         = $self->object;
+	my $species        = $object->species;
+	my $sitetype       = $object->species_defs->ENSEMBL_SITETYPE;
+  my $mfs            = $m->get_all_MarkerFeatures || [];
+	my $c              = scalar @$mfs;
+	my $loc_text       = '<table>';
+  my $max_map_weight = 15;
+  my $map_weight     = 2;
+  my $priority       = 50;
+  
 	if ($c) {
 		if ($c > 1) {
-	    my $extra = ($c > $MAP_WEIGHT) ? ' (note that for clarity markers mapped more than twice are not shown on location based views)' : '';
-	    $loc_text .= sprintf (qq(<tr><td>%s is currently mapped to %d different %s locations%s%s%s</td></tr>),
-														$m_name,
-														$c,
-														$sitetype,
-														$extra,
-														( $c > $MAX_MAP_WEIGHT ? '.' : ':' ),
-													 );
+	    my $extra = $c > $map_weight ? ' (note that for clarity markers mapped more than twice are not shown on location based views)' : '';
+	    $loc_text .= sprintf '<tr><td>%s is currently mapped to %d different %s locations%s%s%s</td></tr>', $m_name, $c, $sitetype, $extra, ($c > $max_map_weight ? '.' : ':');
 		}
+    
 		foreach my $mf (@$mfs){
 	    my $sr_name = $mf->seq_region_name;
 	    my $start   = $mf->start;
 	    my $end     = $mf->end;
-	    my $url = sprintf(qq(<a href="%s">%s:%d-%d</a>),
-												"/$species/Location/View?r=$sr_name:$start-$end;h=$m_name",
-												$sr_name,
-												$start,
-												$end,
-											 );
-	    my $extra;
-	    if ($m->priority < $PRIORITY) {
-				$extra = qq([Note that for reasons of clarity this marker is not shown on 'Region in detail']);
-	    }
+	    my $url     = $object->_url({ action => 'View', r => "$sr_name:$start-$end", h => $m_name }); 
+	    my $extra   = $m->priority < $priority ? " [Note that for reasons of clarity this marker is not shown on 'Region in detail']" : '';
 			
-	    $loc_text .= sprintf (qq(<tr><td>%s%s %s %s</td></tr>),
-														($c > 1) ? '&nbsp;' : '',
-														$mf->coord_system_name,
-														$url,
-														$extra);
+	    $loc_text .= sprintf '<tr><td>%s%s <a href="%s">%s:%s-%s</a>%s</td></tr>', $c > 1 ? '&nbsp;' : '', $mf->coord_system_name, $url, $sr_name, $start, $end, $extra;
 		}
+	} else {
+		$loc_text .= "<tr><td>Marker $m_name is not mapped to the assembly in the current $sitetype database</td></tr>";
 	}
-	else {
-		$loc_text .= qq(<tr><td>Marker $m_name is not mapped to the assembly in the current $sitetype database</td></tr>);
-	}
-	$loc_text .= qq(</table>);
+  
+	$loc_text .= '</table>';
+  
 	return $loc_text;
 }
 
