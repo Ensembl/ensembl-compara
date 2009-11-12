@@ -316,6 +316,8 @@ sub configure {
 sub menu {
   my ($self, $object) = @_;
   
+  return unless $object;
+  
   my $type   = $object->type;
   my $action = $object->action;
   my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
