@@ -47,9 +47,10 @@ sub availability {
   $hash->{'has_chromosomes'} = scalar @chromosomes;
   $hash->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
   $hash->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
+  $hash->{'slice_or_marker'} = $hash->{'slice'} || ($self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker');
   $hash->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
   $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'} && $self->param('opt_pop');
-  $hash->{'has_markers'}     = $self->table_info($self->get_db, 'marker_feature')->{'rows'};
+  $hash->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
   $hash->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
   $hash->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
   
