@@ -342,7 +342,6 @@ sub _find_nodes_by_genome_db_ids {
     }
   }
 
-delete($node_ids->{403985}) if ($mode eq "internal");
   return $node_ids;
 }
 
