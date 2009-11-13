@@ -1121,7 +1121,9 @@ sub _munge_variation {
     $total +=  @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} }; 
   }
   $self->tree->{'databases'}{'DATABASE_VARIATION'}{'#STRAINS'} = $total;
-  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}   = $self->_meta_info('DATABASE_VARIATION','pairwise_ld.default_population')->[0];
+  if ($self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}){
+    $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}   = $self->_meta_info('DATABASE_VARIATION','pairwise_ld.default_population')->[0];
+  }
 }
 
 sub _munge_website {
