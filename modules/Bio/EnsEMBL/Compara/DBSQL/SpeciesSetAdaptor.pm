@@ -66,6 +66,103 @@ sub fetch_by_dbID {
   return $species_set;
 }
 
+
+sub fetch_by_tag_value {
+  my ($self, $tag, $value) = @_;
+  my $species_set; # returned object
+
+  my $sql = qq{
+          SELECT
+              species_set_id
+          FROM
+              species_set_tag
+          WHERE
+              tag = ?
+          AND
+              value = ?
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($tag,$value);
+  my $species_set_id;
+  $sth->bind_columns(\$species_set_id);
+  $sth->fetch;
+  $sth->finish;
+
+  ## Create the object
+  if (defined($species_set_id)) {
+    $species_set = $self->fetch_by_dbID($species_set_id);
+  }
+
+  return $species_set;
+
+}
+
+
+sub fetch_all_by_GenomeDBs {
+  my ($self, $genome_dbs) = @_;
+  my $species_set_id;
+
+  my $genome_db_ids;
+  foreach my $genome_db (@$genome_dbs) {
+    throw "[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object or the corresponding dbID"
+        unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    my $genome_db_id = $genome_db->dbID;
+    throw "[$genome_db] must have a dbID" if (!$genome_db_id);
+    push (@$genome_db_ids, $genome_db_id);
+  }
+
+  my $sql = qq{
+          SELECT
+            species_set_id,
+            COUNT(*) as count
+          FROM
+            species_set
+          WHERE
+            genome_db_id in (}.join(",", @$genome_db_ids).qq{)
+          GROUP BY species_set_id
+          HAVING count = }.(scalar(@$genome_db_ids));
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my $all_rows = $sth->fetchall_arrayref();
+  $sth->finish();
+
+  if (!@$all_rows) {
+    return undef;
+  }
+  my $species_set_ids = [map {$_->[0]} @$all_rows];
+
+  ## Keep only the species_set which does not contain any other genome_db_id
+  $sql = qq{
+          SELECT
+            species_set_id,
+            COUNT(*) as count
+          FROM
+            species_set
+          WHERE
+            species_set_id in (}.join(",", @$species_set_ids).qq{)
+          GROUP BY species_set_id
+          HAVING count = }.(scalar(@$genome_db_ids));
+  $sth = $self->prepare($sql);
+  $sth->execute();
+
+  $all_rows = $sth->fetchall_arrayref();
+
+  $sth->finish();
+
+  if (!@$all_rows) {
+    return undef;
+  } elsif (@$all_rows > 1) {
+    warning("Several species_set_ids have been found for genome_db_ids (".
+        join(",", @$genome_db_ids)."): ".join(",", map {$_->[0]} @$all_rows));
+  }
+  $species_set_id = $all_rows->[0]->[0];
+
+  my $species_set = $self->fetch_by_dbID($species_set_id);
+
+  return $species_set;
+}
+
 sub fetch_all {
   my $self = shift;
   my $species_sets = [];
