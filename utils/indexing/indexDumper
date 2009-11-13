@@ -1012,20 +1012,9 @@ sub geneLine {
     qq(/$species/Gene/Summary?g=$gid$extra),
     qq($IDX),
     qq($X gene $gid has $T transcript).($T==1?'':'s').qq(: ).join(', ',sort keys(%$transcripts)).
-    ( $P > 0 ? 
-      qq(, associated peptide).($P==1?'':'s').qq(: ).join(', ',sort keys(%$peptides)) : '').
-    qq( and $E exon).($E==1?'':'s').qq(: ).join(', ',sort keys(%$exons)). 
-    qq(<br />$description).( $EX>0 ?
-      (
-        qq(<br />The gene has the following external identifiers mapped to it:<br />).
-        ( join '<br />',
-          map { s/translation:/protein:/i; s/\n/ /g; $_ }
-		  map { "$_: ".(join ", ", keys %{$external_identifiers->{$_}}) }
-          sort { lc($a) cmp lc($b) } keys %$external_identifiers
-        )
-      ) : ''
-    ).qq(\n)
-  );
+      qq(<br />Description: $description).
+      qq(\n)
+    );
 }
 
 ########################################################################## Sequences
