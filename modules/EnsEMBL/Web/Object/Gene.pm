@@ -1314,7 +1314,7 @@ sub viewconfig {
     }
   }
   
-  $self->{'data'}->{'_viewconfig'} ||= $self->get_viewconfig;
+  $self->{'data'}->{'_viewconfig'} ||= $vc;
   
   return $vc;
 }
