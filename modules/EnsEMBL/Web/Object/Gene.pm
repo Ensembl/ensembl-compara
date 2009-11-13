@@ -1296,6 +1296,8 @@ sub get_similarity_hash {
 sub viewconfig {
   my $self = shift;
   
+  return $self->{'data'}->{'_viewconfig'} if $self->{'data'}->{'_viewconfig'};
+  
   my $vc = $self->get_viewconfig(@_);
   
   if ($self->action ne 'ExternalData' && !$vc->external_data) {
@@ -1311,6 +1313,8 @@ sub viewconfig {
       $vc->real = 1;
     }
   }
+  
+  $self->{'data'}->{'_viewconfig'} ||= $self->get_viewconfig;
   
   return $vc;
 }
