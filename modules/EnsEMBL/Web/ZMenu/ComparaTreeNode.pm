@@ -199,8 +199,12 @@ sub content {
       my $s = 1;
       
       for (@{$node->get_all_leaves}) {
+        my $gene = $_->gene_member->stable_id;
+        
+        next if $gene eq $object->param('g');
+        
         ($url_params->{"s$s"} = $_->genome_db->name) =~ s/ /_/g;
-        $url_params->{"g$s"} = $_->gene_member->stable_id;
+        $url_params->{"g$s"} = $gene;
         $s++;
       }
       
