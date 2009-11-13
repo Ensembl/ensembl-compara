@@ -969,7 +969,7 @@ sub transcript_label {
   
   $pattern =~ s/\[text_label\]/$self->my_colour($self->transcript_key($transcript, $gene), 'text')/eg;
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $transcript->$1/eg;
   
   return $pattern;
 }
@@ -994,9 +994,9 @@ sub transcript_key {
   my $pattern = $self->my_config('colour_key') || '[biotype]_[status]';
   
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $gene->$1/eg;
+  $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
   
-  return lc$pattern;
+  return lc $pattern;
 }
 
 sub gene_key {
