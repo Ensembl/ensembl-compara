@@ -17,6 +17,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.search = $('.configuration_search_text', this.el);
     this.elLk.help = $('.menu_help', this.elLk.form);
     this.elLk.menus = $('.popup_menu', this.elLk.form);
+    this.elLk.selectAll = $('td.select_all input', this.elLk.form);
     this.elLk.searchResults = $('a.search_results', this.elLk.links);
     
     this.initialConfig = {};
@@ -28,7 +29,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.getContent();
     
-    $('input.submit', this.el).hide();
+    $('input.submit', this.elLk.form).hide();
     
     this.elLk.help.click(function () { myself.toggleDescription(this); });
     
@@ -117,6 +118,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     }).focus(function () {
       this.value = '';
+    });
+    
+    this.elLk.selectAll.click(function () {
+      $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
+    }).each(function () {
+      $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
     });
     
     if (Ensembl.ajax != 'enabled') {

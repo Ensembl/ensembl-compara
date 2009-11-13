@@ -380,6 +380,29 @@ sub form {
     warn $@ if $@; # TODO: proper error exception
   }
   
+  foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
+    next if $fieldset->{'select_all'};
+    
+    my %element_types;
+    $element_types{lc $_->type}++ for @{$fieldset->{'_elements'}};
+    delete $element_types{'hidden'};
+    
+    # If the fieldset has only checkboxes, provide a select/deselect all option
+    if ($element_types{'checkbox'} > 1 && scalar keys %element_types == 1) {
+      $fieldset->add_element(
+        type  => 'CheckBox',
+        name  => 'select_all',
+        label => 'Select/deselect all',
+        value => 'select_all',
+        classes => [ 'select_all' ]
+      );
+      
+      unshift @{$fieldset->{'_elements'}}, pop @{$fieldset->{'_elements'}}; # Make it the first checkbox
+      
+      $fieldset->{'select_all'} = 1;
+    }
+  }
+  
   return if $no_extra_bits;
   
   if ($self->has_images) {
