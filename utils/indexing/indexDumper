@@ -319,12 +319,9 @@ sub dumpStructuralVariations {
 sub dumpMarker {
   my $conf = shift;
   my $sth = $conf->{'dbh'}->prepare("
-   SELECT m.marker_id, ms2.name, ms1.name, sr.name, mf.seq_region_start, mf.seq_region_end
-     FROM (((
-           (marker_synonym as ms1, marker as m)
-LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id )
-LEFT JOIN marker_feature as mf on m.marker_id = mf.marker_id )
-LEFT JOIN seq_region as sr on  mf.seq_region_id = sr.seq_region_id )
+   SELECT m.marker_id, ms2.name, ms1.name
+     FROM marker_synonym as ms1, marker as m
+LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id
     WHERE ms1.marker_id = m.marker_id
  ORDER BY m.marker_id
   ");
@@ -335,33 +332,32 @@ LEFT JOIN seq_region as sr on  mf.seq_region_id = sr.seq_region_id )
   my $counter    = 0;
   my $desc       = '';
   my $old_ID = 0;
-  my ($ID,$marker,$synonym,$r_name,$r_start,$r_end,$r);
-  while( ($ID,$marker,$synonym,$r_name,$r_start,$r_end) = $sth->fetchrow_array()){
+  my ($ID,$marker,$synonym);
+  while( ($ID,$marker,$synonym) = $sth->fetchrow_array()){
     $marker = $synonym unless $marker;
     if($ID == $old_ID) {
       $desc .= " $synonym";
       $counter++;
     } else {
-      print O &markerLine( $conf->{'species'},$desc,$counter,$r);
-      $r       = $r_name ? "$r_name:$r_start-$r_end" : '';
+      print O &markerLine( $conf->{'species'},$desc,$counter);
       $desc    = "$synonym";
       $old_ID  = $ID;
       $counter = 1;
     }
   }
-  print O &markerLine( $conf->{'species'},$desc,$counter,$r);
+  print O &markerLine( $conf->{'species'},$desc,$counter);
   close O;
 }
 
 sub markerLine {
-  my( $species, $IDS, $counter, $r ) = @_;
+  my( $species, $IDS, $counter ) = @_;
   return if $counter == 0;
   my @synonyms = sort split /\s+/, $IDS;
   my $key = pop @synonyms;
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Ensembl Marker),    ## Type
     qq($key),
-    $r ? qq(/$species/Location/Marker?m=$key;r=$r) : qq(/$species/Location/Marker?m=$key);
+    qq(/$species/Location/Marker?m=$key);
     qq($IDS),
     qq(A marker with $counter synonyms ($IDS)\n);
 }
