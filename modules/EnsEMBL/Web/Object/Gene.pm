@@ -1296,7 +1296,7 @@ sub get_similarity_hash {
 sub viewconfig {
   my $self = shift;
   
-  return $self->{'data'}->{'_viewconfig'} if $self->{'data'}->{'_viewconfig'};
+  return $self->{'data'}->{'_viewconfig'} if $self->{'data'}->{'_viewconfig'} && !@_;
   
   my $vc = $self->get_viewconfig(@_);
   
@@ -1314,7 +1314,7 @@ sub viewconfig {
     }
   }
   
-  $self->{'data'}->{'_viewconfig'} ||= $vc;
+  $self->{'data'}->{'_viewconfig'} ||= $vc unless @_;
   
   return $vc;
 }
