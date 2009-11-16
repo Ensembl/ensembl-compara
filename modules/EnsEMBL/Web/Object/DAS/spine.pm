@@ -61,15 +61,17 @@ sub Features {
 
 	  my $gene_id = $segment->{REGION} or next;
 	  my $gene = $ga->fetch_by_stable_id($gene_id);
-	  
+
 	  next unless $gene;
 
 	  my $description =  escapeHTML( $gene->description() );
-	  $description =~ s/\(.+//;
+	  $description =~ s/\(.+// if ($description);
+
+	  my $gene_name = $gene->display_xref ? $gene->display_xref->display_id : $gene->stable_id;
 
 	  my $f = {
 	      'ID'          => "description:".$gene->stable_id,
-	      'LABEL'       => $gene->display_xref->display_id,
+	      'LABEL'       => $gene_name,
 	      'TYPE'        => 'description',
 	      'ORIENTATION' => $self->ori($gene->strand),
 	      'NOTE' => [ $description ],
@@ -81,8 +83,6 @@ sub Features {
 	  };
 
 	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $f;
-
-	  my $gene_name = $gene->display_xref->display_id;
 
 	  my $fi = {
 	      'ID'          => "image:".$gene->stable_id,
@@ -220,8 +220,6 @@ sub Features {
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s2;
 	  }
-
-
       }
   }
 
