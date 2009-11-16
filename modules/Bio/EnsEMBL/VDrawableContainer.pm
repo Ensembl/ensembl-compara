@@ -161,6 +161,7 @@ sub new {
         $current_chr = $glyphset->{'chr'};
       }
       $glyphset->{'row_index'} = $row_index;
+      next unless defined($glyphset->minx());
       $min[$row_index] = $glyphset->minx() if(!defined $min[$row_index] || $min[$row_index] > $glyphset->minx() );
     }
     ## Close up gap!
