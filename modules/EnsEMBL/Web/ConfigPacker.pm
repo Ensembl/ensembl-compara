@@ -98,7 +98,29 @@ ORDER by cs.species_id, s.seq_region_id}
     foreach my $r( @$t_aref) {
       push @{ $hash->{$r->[3]+0}{$r->[0]}}, $r->[1];
     }
+    
+    if( $db_name =~ /CORE/) {
+# this bit of code should go as soon there is a new method in Bio::EnsEMBL::Registry that will 
+# tell you the object species and type  based on ID, but meantime
+# there should be species.stable_id_prefix in meta table from release 56
+# in case it's not there ( as is the case for yeast and c elegans ) we build the pattern 
 
+	if (! $hash->{'species.stable_id_prefix'} ) {
+	    my $t_aref = $dbh->selectall_arrayref(
+					      qq{
+SELECT DISTINCT substr(gsid.stable_id, 1, 3) as p, cs.species_id
+FROM gene_stable_id gsid, gene g, seq_region s, coord_system cs
+WHERE gsid.gene_id = g.gene_id and g.seq_region_id = s.seq_region_id and s.coord_system_id = cs.coord_system_id
+ORDER by cs.species_id
+}
+					      );
+
+	    foreach my $row ( @$t_aref ) {
+		push @{$hash->{$row->[1]}{'species.stable_id_prefix'}}, $row->[0];
+	    }
+	    
+	}
+    }
 
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
@@ -1031,6 +1053,7 @@ sub _munge_meta {
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';
 
+
     ## Do species name and group
     my ($species, $bioname, $bioshort);
     my $taxonomy = $meta_hash->{'species.classification'};
@@ -1058,6 +1081,17 @@ sub _munge_meta {
     }
     $self->tree->{$species}{'SPECIES_BIO_NAME'} = $bioname;
     $self->tree->{$species}{'SPECIES_BIO_SHORT'} = $bioshort;
+
+# Now make all meta keys available via species defs, you just need to replace non-alpha numeric characters with underscores, e.g
+# species.stable_id_prefix can be accessed via species_defs->SPECIES_STABLE_ID_PREFIX
+    foreach my $key ( keys %$meta_hash ) {
+	(my $mkey = uc($key)) =~ s/[^\w]/_/g;
+	if( ref $meta_hash->{$key} eq 'ARRAY') {
+	    @{$self->tree($species)->{$mkey}} = @{$meta_hash->{$key}};
+	} else {
+	    $self->tree($species)->{$mkey} = $meta_hash->{$key};
+	}
+    }
 
     if ($self->tree->{'ENSEMBL_SPECIES'}) {
       push @{$self->tree->{'DB_SPECIES'}}, $species;
@@ -1104,7 +1138,6 @@ sub _munge_meta {
 
 # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree($species)->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
-
   }
 }
 
