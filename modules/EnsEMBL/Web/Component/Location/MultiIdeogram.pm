@@ -34,6 +34,11 @@ sub content {
       multi           => 1
     });
     
+    if ($image_config->get_node('annotation_status')) {
+      $image_config->get_node('annotation_status')->set('caption', '');
+      $image_config->get_node('annotation_status')->set('menu', 'no');
+    };
+
     $image_config->get_node('ideogram')->set('caption', $_->{'short_name'});
     
     push @images, $chromosome, $image_config;

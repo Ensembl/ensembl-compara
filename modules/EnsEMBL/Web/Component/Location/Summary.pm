@@ -31,6 +31,11 @@ sub content {
     slice_number    => '1|1'
   });
 
+  if ($image_config->get_node('annotation_status')) {
+    $image_config->get_node('annotation_status')->set('caption', '');
+    $image_config->get_node('annotation_status')->set('menu', 'no');
+  };
+
   $image_config->get_node('ideogram')->set('caption', $object->seq_region_type . ' ' . $object->seq_region_name );
   
   my $image = $self->new_image($slice, $image_config);
