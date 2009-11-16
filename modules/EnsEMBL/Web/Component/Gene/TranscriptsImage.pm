@@ -29,7 +29,7 @@ sub content {
   
   $image_config->set_parameters({
     'container_width' => $gene_slice->length,
-    'image_width',    => $self->image_width || 800,
+    'image_width',    => $gene->param('i_width') || $self->image_width || 800,
     'slice_number'    => '1|1',
   });
   
