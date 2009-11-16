@@ -89,6 +89,7 @@ BEGIN {
 our @PERL_TRANS_DIRS;
 our @HTDOCS_TRANS_DIRS;
 our %SPECIES_MAP;
+
 BEGIN {
   foreach my $dir (@SiteDefs::ENSEMBL_PERL_DIRS) {
     if (-d $dir) {
@@ -128,6 +129,7 @@ BEGIN {
   );
 
   $SPECIES_MAP{lc $_} = $_ for values %SPECIES_MAP; # Self-mapping
+
 };
 
 1;
@@ -332,7 +334,47 @@ sub transHandler_das {
 
   # Map the species to its real value
   $das_species = $SPECIES_MAP{lc($das_species)} || '';
-  
+
+# DAS sources based on ensembl gene ids are species-independent
+# We will have a DAS URL of the form...
+# /das/Multi.Ensembl-GeneID.{feature_type}/command
+# bu you can still call 
+# /das/Homo_sapiens.Ensembl-GeneID.{feature_type}/command
+# then the request will be restricted to Human db
+
+  if ($assembly =~ /ensembl-geneid/i) {  
+      if ($das_species =~ /multi/i) {
+# this a site-wide request - try to figure out the species from the ID
+	  $das_species = '';
+	  if ($querystring =~ /segment=([^\;]+)(\;)?(.+)?$/) {
+	      my $identifier = $1;
+
+# there is work under way to add a new method to the Bio::EnsEMBL::Registry that will 
+# tell you the species and object type based on id.
+# meanwhile we'll do it in a crude way : just check all SPECIES_STABLE_ID_PREFIX 
+	      foreach my $sp ($species_defs->valid_species) {
+#		  warn "SP : $sp\n";
+		  foreach my $prefix (sort @{$species_defs->SPECIES_STABLE_ID_PREFIX($sp)||[]}) {
+# all but c elegans and sacchromises have species.stable_id_prefix set in meta table .e.g for mouse
+# species.stable_id_prefix   ENSMUS
+		      (my $mp = $prefix) =~ s/([^\w])/\\$1/g;
+#		      warn "PFX: $prefix : $mp";
+
+		      if ($identifier =~ /^$mp/) {
+# we have found a match
+			  $das_species = $sp;
+			  last;
+		      }
+		  }
+		  last if $das_species;
+	      }
+	  }
+# in case no macth was found go to the default site species to report the page with no features	  
+	  $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
+      }
+  }
+
+ 
   if (!$das_species) {
     $command = 'das_error';
     $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
