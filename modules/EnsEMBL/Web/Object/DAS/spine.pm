@@ -35,15 +35,18 @@ sub Features {
 
   my @features;
 
-
+  my $base_url = $self->species_defs->ENSEMBL_BASE_URL;
+  if ($base_url =~ /ensembl/) {
+      $base_url =~ s/\:\d+//;
+  }
   #View templates
   $self->{'templates'} ||= {};
-  $self->{'templates'}{'geneview_URL'}  = sprintf( '%s%s/Gene/Summary?g=%%s;db=%%s', $self->species_defs->ENSEMBL_BASE_URL,        $self->species_defs->species_path($self->real_species ));
-  $self->{'templates'}{'location_URL'}  = sprintf( '%s%s/Location/View?g=%%s;db=%%s',    $self->species_defs->ENSEMBL_BASE_URL,      $self->species_defs->species_path($self->real_species ));
-  $self->{'templates'}{'regulation_URL'}  = sprintf( '%s%s/Gene/Regulation?g=%%s;db=%%s',    $self->species_defs->ENSEMBL_BASE_URL,      $self->species_defs->species_path($self->real_species ));
-  $self->{'templates'}{'image_URL'}  = sprintf( '%s%s/Component/Gene/Web/TranscriptsImage?export=png;g=%%s;db=%%s;image_width=400',    $self->species_defs->ENSEMBL_BASE_URL,      $self->species_defs->species_path($self->real_species ));
-  $self->{'templates'}{'varview_URL'}  = sprintf( '%s%s/Gene/Variation_Gene/Image?g=%%s;db=%%s',    $self->species_defs->ENSEMBL_BASE_URL,      $self->species_defs->species_path($self->real_species ));
-  $self->{'templates'}{'compara_URL'}  = sprintf( '%s%s/Gene/Compara_%%s?g=%%s;db=%%s',   $self->species_defs->ENSEMBL_BASE_URL,       $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'geneview_URL'}  = sprintf( '%s%s/Gene/Summary?g=%%s;db=%%s', $base_url,        $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'location_URL'}  = sprintf( '%s%s/Location/View?g=%%s;db=%%s', $base_url,      $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'regulation_URL'}  = sprintf( '%s%s/Gene/Regulation?g=%%s;db=%%s',    $base_url,      $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'image_URL'}  = sprintf( '%s%s/Component/Gene/Web/TranscriptsImage?export=png;g=%%s;db=%%s;i_width=400', $base_url,      $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'varview_URL'}  = sprintf( '%s%s/Gene/Variation_Gene/Image?g=%%s;db=%%s',    $base_url,      $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'compara_URL'}  = sprintf( '%s%s/Gene/Compara_%%s?g=%%s;db=%%s',   $base_url,       $self->species_defs->species_path($self->real_species ));
 
 
   my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen');
