@@ -60,22 +60,27 @@ sub render {
       $sp_name = join(', ', @names);
     }
 ## generate HTML
-    $html .= sprintf(qq(<h2>%s (%s)</h2>\n<h3>In releases: ), $bug->title, $sp_name);
+  $html .= sprintf(qq(<h2>%s (%s)</h2>), $bug->title, $sp_name);
+    my $release_info = 'In releases: ';
     if ($bug->first_release && $bug->last_release) {
-      $html .= $bug->first_release.' - '.$bug->last_release;
+      if ($bug->first_release == $bug->last_release) {
+        $release_info = 'In release: '.$bug->first_release;
+      }
+      else {
+        $release_info .= $bug->first_release.' - '.$bug->last_release;
+      }
     }
     elsif (!$bug->first_release) {
-      $html .= 'Up to and including '.$bug->last_release;
+      $release_info .= 'Up to and including '.$bug->last_release;
     }
     elsif (!$bug->last_release) {
-      $html .= $bug->first_release.' - '.$species_defs->ENSEMBL_VERSION;
+      $release_info .= $bug->first_release.' - '.$species_defs->ENSEMBL_VERSION;
     }
     else {
-      $html .= $species_defs->ENSEMBL_VERSION;
+      $release_info .= $species_defs->ENSEMBL_VERSION;
     }
-    $html .= "</h3>\n<p>".$bug->content.'</p>';
+    $html .= "<h3>$release_info</h3>\n<p>".$bug->content.'</p>';
 
-  }
 
   return $html;
 }
