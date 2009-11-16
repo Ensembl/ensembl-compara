@@ -16,10 +16,11 @@ sub import {
     $species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
     $species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
   );
+
   $caller->connection(
     $dsn,
-		      $species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'} ||  $species_defs->DATABASE_WRITE_USER,
-		      $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} ||  $species_defs->DATABASE_WRITE_PASS,
+    $species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'} || $species_defs->DATABASE_WRITE_USER,
+    defined $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} ? $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} : $species_defs->DATABASE_WRITE_PASS,
 
     {
       RaiseError => 1,
