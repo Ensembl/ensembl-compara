@@ -110,15 +110,16 @@ sub _render_hit {
   $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
   $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
   $URL =~ s{Genome\?ftype=OligoFeature}{Genome\?ftype=ProbeFeature;fdb=funcgen;ptype=pset}; #cope with incorrect oligoprobe feature URLs
+  $URL =~ s{Location/\?ftype=}{Location/Genome\?type=}; #cope with stuffed Vega Genomic alignments (r37 only)
 
   #add extra location link only for index types defined in hit_maps above
   my $add_location_link = 0;
   foreach my $g ($hit->groups) {
-      if ($g->name eq 'answergroup.Feature type') {
-	  foreach my $c ($g->children) {
-	      $add_location_link = $c->name if ( grep {$c->name eq $_ } keys %$hit_maps );
-	  }
+    if ($g->name eq 'answergroup.Feature type') {
+      foreach my $c ($g->children) {
+	$add_location_link = $c->name if ( grep {$c->name eq $_ } keys %$hit_maps );
       }
+    }
   }
   my $extra = '';
   if ($add_location_link) {
