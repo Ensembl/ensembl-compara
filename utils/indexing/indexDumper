@@ -1011,9 +1011,7 @@ sub geneLine {
     qq($gid $altid),
     qq(/$species/Gene/Summary?g=$gid$extra),
     qq($IDX),
-    qq($X gene $gid has $T transcript).($T==1?'':'s').qq(: ).join(', ',sort keys(%$transcripts)).
-      qq(<br />Description: $description).
-      qq(\n)
+    qq($X gene $gid<br />Description: $description\n)
     );
 }
 
