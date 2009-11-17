@@ -274,7 +274,7 @@ sub run_njtree_phyml
       $njtree_phyml_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest/treebest";
     }
   }
-  $DB::single=1;1;
+
   throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
 
   # Defining a species_tree
@@ -290,7 +290,7 @@ sub run_njtree_phyml
     $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string->{value});
     my @leaves = @{$eval_species_tree->get_all_leaves};
   };
-  $DB::single=1;1;
+
   if($@) {
     unless(-e $self->{'species_tree_file'}) {
       $self->throw("can't find species_tree\n");
@@ -857,6 +857,7 @@ sub check_for_split_genes {
     my ($cigar_line1, $perc_id1, $perc_pos1,
         $cigar_line2, $perc_id2, $perc_pos2) = 
         $self->generate_attribute_arguments($protein1, $protein2,$type);
+    print STDERR "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
     # Checking for gene_split cases
     if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
@@ -869,16 +870,19 @@ sub check_for_split_genes {
         push @{$self->{alignment_edits}{contiguous_gene_split}}, $genepairlink;
       }
 
-     # Condition A2: they have to be the only 3 genes in the range:
-     # This should strictly be 2, but in clean perc_id = 0 cases, we
-     # allow for the rare case where one fragment is partially or fully
-     # embedded in another.
+     # Condition A2: there have to be the only 2 or 3 protein coding
+     # genes in the range defined by the gene pair. This should
+     # strictly be 2, only the pair in question, but in clean perc_id
+     # = 0 cases, we allow for 2+1: the rare case where one extra
+     # protein coding gene is partially or fully embedded in another.
         my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
         my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
         if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
         if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
         my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
-        my @genes_in_range = $self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1);
+        # my @genes_in_range = $self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1);
+        print STDERR "Checking split genes overlap\n";
+        my @genes_in_range = $self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4);
         if (3 < scalar @genes_in_range) {
           foreach my $gene (@genes_in_range) {
             print STDERR "More than 2 genes in range...";
