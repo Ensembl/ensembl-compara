@@ -55,7 +55,7 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
-use Bio::EnsEMBL::Hive::Process
+use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
