@@ -33,11 +33,11 @@ sub content {
   } 
 
   if ($object->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$object->species_defs->ENSEMBL_CHROMOSOMES}) && $object->species_defs->MAX_CHR_LENGTH) {
-    my $image    = $self->new_karyotype_image();
+    my $config   = $object->get_imageconfig('Vkaryotype');
+    my $image    = $self->new_karyotype_image($config);
     my $pointers = [];
 
     ## Form with hidden elements for click-through
-    my $config = $object->get_imageconfig('Vkaryotype');
     my $hidden = {
       'karyotype'   => 'yes',
       'max_chr'     => $config->get_parameter('image_height'),

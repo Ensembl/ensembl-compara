@@ -215,6 +215,8 @@ sub new_vimage {
   my $self = shift;
   my $object = $self->object;
   
+  $self->id($_[1]->{'type'}); # $_[1] is image config
+  
   my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
   $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_);
   
@@ -222,8 +224,10 @@ sub new_vimage {
 }
 
 sub new_karyotype_image {
-  my $self = shift;
+  my ($self, $image_config) = @_;
   my $object = $self->object;
+  
+  $self->id($image_config->{'type'}) if $image_config;
   
   my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
   $image->{'object'} = $object;
