@@ -19,6 +19,19 @@ sub fetch_by_dbID {
   return $sequence;
 }
 
+sub fetch_sequence_exon_bounded_by_member_id {
+  my ($self, $member_id) = @_;
+
+  my $sql = "SELECT sequence_exon_bounded.sequence_exon_bounded FROM sequence_exon_bounded WHERE member_id = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($member_id);
+
+  my ($sequence_exon_bounded) = $sth->fetchrow_array();
+  $sth->finish();
+  return $sequence_exon_bounded;
+}
+
+
 #
 # STORE METHODS
 #
