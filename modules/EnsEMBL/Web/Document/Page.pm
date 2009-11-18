@@ -434,7 +434,7 @@ sub render {
   }
   
   
-  $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax || $ENV{'ENSEMBL_AJAX_VALUE'} eq 'none';
+  $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax && $ENV{'ENSEMBL_AJAX_VALUE'} ne 'none';
   
   if ($self->can('panel_type') && $self->panel_type) {
     $html = sprintf('
