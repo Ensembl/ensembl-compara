@@ -676,8 +676,10 @@ sub content {
                   $self->printf(qq{<div class="$class" title="['%s']"></div>}, escapeHTML($url));
                 }
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
+                my @wrapper = $comp_obj->has_image ? ('<div class="image_panel">', '</div>') : ();
+                
                 # if ajax disabled - we get all content by parallel requests to ourself
-                $self->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
+                $self->print($wrapper[0], HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url), $wrapper[1]);
               }
             } else {
               my $content;
