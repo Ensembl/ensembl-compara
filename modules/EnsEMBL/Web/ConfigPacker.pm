@@ -72,21 +72,6 @@ sub _summarise_generic {
 ## Needs tweaking to work with new ensembl_ontology_xx db, which has no species_id in meta table
   if( $self->_table_exists( $db_name, 'meta' ) ) {
     my $hash = {};
-# With multi species DB there is no way to define the list of chromosomes for the karyotype in the ini file
-# The idea is the people who produce the DB can define the lists in the meta table using region.toplevel met key
-# In case there is no such definition of the karyotype - we just create the lists of toplevel regions for each species.
-
-    if( $db_name =~ /CORE/) {
-        my $t_aref = $dbh->selectall_arrayref(
-					      qq{SELECT cs.species_id, s.name FROM seq_region s, coord_system cs
-WHERE s.coord_system_id = cs.coord_system_id and cs.attrib = 'default_version'
-ORDER by cs.species_id, s.seq_region_id}
-					      );
-
-        foreach my $row ( @$t_aref ) {
-            push @{$hash->{$row->[0]}{'region.toplevel'}}, $row->[1];
-        }
-    }
 
     $t_aref  = $dbh->selectall_arrayref(
       'select meta_key,meta_value,meta_id, species_id
