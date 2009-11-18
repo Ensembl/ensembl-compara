@@ -9,6 +9,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use Bio::EnsEMBL::Registry;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::RegObj;
 use CGI qw(escape);
@@ -132,12 +133,8 @@ $index = $index_t if $index_t;
 ## We have a species so we can see if we can generate a mapview/contigview/cytoview
 ## link....
 
-## these are old links that therefore rely on the magic carpet -> need reformatting
-## do this at the same time as rewriting the script
-
 if($species) {
   if(!$query) { ## nothing to search for
-    $URL = "/$script?species=$species;idx=;q=";
     $flag = 1;
   }
   elsif( $index eq 'Sequence' || $index eq 'Chromosome' || ! $index ) {
@@ -149,17 +146,19 @@ if($species) {
       $start = $webpage->evaluate_bp( $start );
       $end   = $webpage->evaluate_bp( $end   );
       ($end,$start)=($start,$end) if $end < $start;
-      my $script = 'contigview';
-      $script = 'cytoview' if  $end - $start > 1000000;
+      my $script = 'Location/View';
+      $script = 'Location/Overview' if  $end - $start > 1000000;
       if($start && $end ) {
-	$URL = URL( "/%s/%s?region=%s;start=%s;end=%s", $species, $script, $seq_region_name, $start, $end );
-	$flag = 1;
-      } elsif( $index eq 'Chromosome' ) {
-	$URL = "/$species/mapview?chr=$seq_region_name";
-	$flag = 1;
-      } else {
-	$URL = URL( "/%s/%s?region=%s", $species, $script, $seq_region_name );
-	$flag = 1;
+	      $URL = URL( "/%s/%s?r=%s:%s-%s", $species, $script, $seq_region_name, $start, $end );
+	      $flag = 1;
+      } 
+      elsif( $index eq 'Chromosome' ) {
+	      $URL = "/$species/Location/Chromosome?r=$seq_region_name";
+	      $flag = 1;
+      } 
+      else {
+	      $URL = URL( "/%s/%s?r=%s", $species, $script, $seq_region_name );
+	      $flag = 1;
       }
 	
 #    } elsif( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)$/i ) {
@@ -171,17 +170,19 @@ if($species) {
 #    $flag = 1;
 #      }
    
-    } else {
+    } 
+    else {
       if( $index eq 'Chromosome' ) {
-	$URL = "/$species/mapview?chr=$query";
-	$flag = 1;
-      } elsif( $index eq 'Sequence' ) {
-	$URL = URL( "/%s/contigview?region=%s", $species, $query );
-	$flag = 1;
+	      $URL = "/$species/Location/Chromosome?r=$query";
+	      $flag = 1;
+      } 
+      elsif( $index eq 'Sequence' ) {
+	      $URL = URL( "/%s/Location/View?r=%s", $species, $query );
+	      $flag = 1;
       }
     }
   }
-  if (  $query =~ /\.\./ && !$flag ) {  ## other pairs of identifiers
+  if ($query =~ /\.\./ && !$flag ) {  ## other pairs of identifiers
     ## str.string..str.string
     ## str.string-str.string
     $query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
@@ -190,6 +191,27 @@ if($species) {
   }
 } else {
   $URL = "/$script?species=;idx=;q=";
+=pod
+  ## Is there a stable ID we can use to get the species?
+  if ($query) {
+    (my $stable_id = $query) =~ /ENS[A-Z0-9]+/;
+    if ($stable_id) {
+      $flag = 1;
+      my $registry = "Bio::EnsEMBL::Registry";
+      my ( $species, $index, $db_type ) = $registry->get_species_and_object_type($stable_id);
+      warn "@@@ STABLE ID! $stable_id = $species, $index, $db_type";
+      if ($index && $index eq 'gene') {
+        $URL = "/$species/Gene/Summary?g=$stable_id";
+      }
+      elsif ($index && $index eq 'transcript') {
+        $URL = "/$species/Transcript/Summary/t=$stable_id";
+      }
+      else {
+        $URL = "/$script?species=$species;idx=;q=$stable_id";
+      }
+    }
+  }
+=cut
 }
 
 unless( $flag ) {
