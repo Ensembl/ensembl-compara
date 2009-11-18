@@ -219,6 +219,20 @@ sub fetch_all_by_source_taxon {
   return $self->_generic_fetch($constraint);
 }
 
+sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
+  my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
+
+  $self->throw("source_name and taxon_id args are required") 
+    unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand && $limit);
+
+#  my $source_id = $self->get_source_id_from_name($source_name);
+  my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
+                    and m.chr_name = \"$chr_name\" 
+                    and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
+                    and m.chr_strand = $chr_strand limit $limit";
+
+  return $self->_generic_fetch($constraint);
+}
 
 sub _fetch_all_by_source_taxon_chr_name_start_end_strand {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand) = @_;
@@ -801,6 +815,11 @@ sub _final_clause {
 sub _fetch_sequence_by_id {
   my ($self, $sequence_id) = @_;
   return $self->db->get_SequenceAdaptor->fetch_by_dbID($sequence_id);
+}
+
+sub _fetch_sequence_exon_bounded_by_member_id {
+  my ($self, $member_id) = @_;
+  return $self->db->get_SequenceAdaptor->fetch_sequence_exon_bounded_by_member_id($member_id);
 }
 
 
