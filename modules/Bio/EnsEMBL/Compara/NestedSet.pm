@@ -900,7 +900,12 @@ sub string_node {
      && $self->get_tagvalue("Duplication") > 0 
      && $self->get_tagvalue("dubious_duplication") ne '1') 
     {
-      $str .= "DUP ";
+      my $taxon_name = $self->get_tagvalue('taxon_name');
+      if ($taxon_name =~ /\S+\ \S+/) {
+        $str .= "Dup ";
+      } else {
+        $str .= "DUP ";
+      }
     } elsif (defined $self->get_tagvalue("Duplication") 
      && $self->get_tagvalue("Duplication") ne '' 
      && $self->get_tagvalue("Duplication") > 0 
@@ -1111,8 +1116,12 @@ sub _internal_newick_format {
       $common =~ s/\ /\./g;
       $common =~ s/\'//g;
       $full_common_name .= " " . $common if (1 < length($common));
-      my $gdb_id = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID;
-      $full_common_name .= ".$gdb_id";
+      my $gdb_id = undef;
+      eval { $gdb_id = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID; };
+      $full_common_name .= ".$gdb_id" if (defined($gdb_id));
+    } else {
+      my $mya = $self->get_tagvalue('ensembl timetree mya');
+      $full_common_name .= "_" . $mya . "_MYA" unless($mya eq '');
     }
     $newick .= sprintf("%s", $full_common_name);
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
@@ -1144,7 +1153,8 @@ sub _internal_newick_format {
     if($self->is_leaf) {
       my $prot_member = $self->get_longest_peptide_Member;
       #my $gene_member = $self->gene_member;
-      my $short_name = $prot_member->genome_db->short_name;
+      my $short_name;
+      eval { $short_name = $prot_member->genome_db->short_name;};
       $display_label = $prot_member->stable_id;
       $display_label = $display_label . '_' . $short_name . '_' ;
     }
@@ -1182,6 +1192,17 @@ sub _internal_newick_format {
     if($self->parent) {
       if($self->is_leaf) {
         $newick .= sprintf("%s", $self->name);
+      }
+      $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+    }
+  }
+  if($format_mode eq 'member_id_taxon_id') { 
+    #simplified: name only on leaves, dist only if has parent
+    if($self->parent) {
+      if($self->is_leaf) {
+        $newick .= $self->member_id;
+        $newick .= "_";
+        $newick .= $self->taxon_id;
       }
       $newick .= sprintf(":%1.4f", $self->distance_to_parent);
     }
