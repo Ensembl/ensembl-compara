@@ -336,7 +336,7 @@ sub render {
     
     if ($self->include_navigation) {
       $html .= '
-      <div id="nav" class="print_hide">
+      <div id="nav" class="print_hide js_panel">
         [[local_context]]
         [[local_tools]]
         <p class="invisible">.</p>
@@ -374,8 +374,6 @@ sub render {
       $self->panel_type,
       $html
     );
-  } else {
-    $html =~ s/(<div id="nav" class="print_hide)">/$1 js_panel"><input type="hidden" class="panel_type" value="LocalContext" \/>/;
   }
   
   $self->timer_push('template generated');
