@@ -33,88 +33,106 @@ sub content {
   } 
 
   if ($object->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$object->species_defs->ENSEMBL_CHROMOSOMES}) && $object->species_defs->MAX_CHR_LENGTH) {
-    my $config   = $object->get_imageconfig('Vkaryotype');
-    my $image    = $self->new_karyotype_image($config);
-    my $pointers = [];
-
-    ## Form with hidden elements for click-through
-    my $hidden = {
-      'karyotype'   => 'yes',
-      'max_chr'     => $config->get_parameter('image_height'),
-      'margin'      => $config->get_parameter('top_margin'),
-      'chr'         => $object->seq_region_name,
-      'start'       => $object->seq_region_start,
-      'end'         => $object->seq_region_end,
-    };
-
-    ## Deal with pointer colours
-    my %used_colour;
-    my %pointer_default = (
-      'DnaAlignFeature'     => ['red', 'rharrow'],
-      'ProteinAlignFeature' => ['red', 'rharrow'],
-      'RegulatoryFactor'    => ['red', 'rharrow'],
-      'ProbeFeature'          => ['red', 'rharrow'],
-      'XRef'                => ['red', 'rharrow'],
-      'Gene'                => ['blue','lharrow'],
-    );
-
-    ## Do internal Ensembl data
-    if (@features) { ## "FeatureView"
-      my $zmenu_config;
-      my $text = @features > 1 ? 'Locations of features' : 'Location of feature';
-      my $data_type = $object->param('type');
-
-      $used_colour{$data_type}++;
-      $html = qq(<strong>$text</strong>);
-      $image->image_name = "feature-$species";
-      $image->imagemap = 'yes';
-
-      foreach my $set  (@features) {
-        my $defaults = $pointer_default{$set->[2]};
-        my $pointer_ref = $image->add_pointers( $object, {
-	        'config_name'   => 'Vkaryotype',
-	        'zmenu_config'  => $zmenu_config,
-          'features'      => $set->[0],
-	        'feature_type'  => $set->[2],
-          'color'         => $defaults->[0],
-          'style'         => $defaults->[1],
-        });
-	      push(@$pointers, $pointer_ref);
+    ## Now check if we have any features mapped to chromosomes
+    my ($draw_karyotype, $not_drawn);
+    my %chromosome = map { $_ => 1 } @{$object->species_defs->ENSEMBL_CHROMOSOMES};
+    foreach (@features) {
+      if (ref($_) eq 'HASH' && $chromosome{$_->{'region'}}) {
+        $draw_karyotype = 1;
+      } 
+      else {
+        $not_drawn++;
       }
     }
 
-    ## Show selected userdata pointers:
+    if ($draw_karyotype) {
+      my $image    = $self->new_karyotype_image();
+      my $pointers = [];
 
-    my $colours = $self->colour_array;
-    my $ok_colours = [];
-    ## Remove any colours being used by features from the highlight colour array
-    foreach my $colour (@$colours) {
-      next if $used_colour{$colour};
-      push @$ok_colours, $colour;
-    }
+      ## Form with hidden elements for click-through
+      my $config = $object->get_imageconfig('Vkaryotype');
+      my $hidden = {
+        'karyotype'   => 'yes',
+        'max_chr'     => $config->get_parameter('image_height'),
+        'margin'      => $config->get_parameter('top_margin'),
+        'chr'         => $object->seq_region_name,
+        'start'       => $object->seq_region_start,
+        'end'         => $object->seq_region_end,
+      };
 
-    my ($user_pointers, $table2) = $self->create_user_set($image, $ok_colours);
+      ## Deal with pointer colours
+      my %used_colour;
+      my %pointer_default = (
+        'DnaAlignFeature'     => ['red', 'rharrow'],
+        'ProteinAlignFeature' => ['red', 'rharrow'],
+        'RegulatoryFactor'    => ['red', 'rharrow'],
+        'ProbeFeature'          => ['red', 'rharrow'],
+        'XRef'                => ['red', 'rharrow'],
+        'Gene'                => ['blue','lharrow'],
+      );
 
-    ## Add some settings, if there is any user data
-    if( @$user_pointers ) {
-      push @$pointers, @$user_pointers; 
-      $image->imagemap = 'no';
-    } 
+      ## Do internal Ensembl data
+      if (@features) { ## "FeatureView"
+        my $zmenu_config;
+        my $text = @features > 1 ? 'Locations of features' : 'Location of feature';
+        my $data_type = $object->param('type');
 
-    if (!@$pointers) { ## Ordinary "KaryoView"
-      $image->image_name = "karyotype-$species";
-      $image->imagemap = 'no';
-    }
+        $used_colour{$data_type}++;
+        $html = qq(<strong>$text</strong>);
+        $image->image_name = "feature-$species";
+        $image->imagemap = 'yes';
+
+        foreach my $set  (@features) {
+          my $defaults = $pointer_default{$set->[2]};
+          my $pointer_ref = $image->add_pointers( $object, {
+	          'config_name'   => 'Vkaryotype',
+	          'zmenu_config'  => $zmenu_config,
+            'features'      => $set->[0],
+	          'feature_type'  => $set->[2],
+            'color'         => $defaults->[0],
+            'style'         => $defaults->[1],
+          });
+	        push(@$pointers, $pointer_ref);
+        }
+      }
+
+      my $colours = $self->colour_array;
+      my $ok_colours = [];
+      ## Remove any colours being used by features from the highlight colour array
+      foreach my $colour (@$colours) {
+        next if $used_colour{$colour};
+        push @$ok_colours, $colour;
+      }
+
+      my ($user_pointers, $table2) = $self->create_user_set($image, $ok_colours);
+
+      ## Add some settings, if there is any user data
+      if( @$user_pointers ) {
+        push @$pointers, @$user_pointers; 
+        $image->imagemap = 'no';
+      } 
+
+      if (!@$pointers) { ## Ordinary "KaryoView"
+        $image->image_name = "karyotype-$species";
+        $image->imagemap = 'no';
+      }
   
 #    $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view", 'hidden'=> $hidden);
-    $image->set_button('drag', 'title' => 'Click on a chromosome' );
-    $image->caption = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
-    $image->imagemap = 'yes';
-    $image->karyotype( $object, $pointers, 'Vkaryotype' );
-#		return if $self->_export_image( $image );
+      $image->set_button('drag', 'title' => 'Click on a chromosome' );
+      $image->caption = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
+      $image->imagemap = 'yes';
+      $image->karyotype( $object, $pointers, 'Vkaryotype' );
+#		  return if $self->_export_image( $image );
 
-    $html .= $image->render;
+      $html .= $image->render;
   #  $html .= $table2->render if $table2; # TODO: User data isn't working properly yet
+    }
+    if ($not_drawn) {
+      my $plural = $not_drawn > 1 ? 's' : '';
+      $not_drawn = 'These' if $not_drawn == @features;
+      my $message = $draw_karyotype ? 'therefore have not been drawn' : 'therefore the karyotype has not been drawn';
+      $html .= $self->_info( 'Undrawn features', "<p>$not_drawn feature$plural do not map to chromosomal coordinates and $message.</p>" );
+    }
   }
   else {
     $html .= $self->_info( 'Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>' );
