@@ -23,6 +23,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.base();
     
+    this.params.highlight = (Ensembl.images.total == 1 || !($(this.el).parents('.image_panel')[0] == Ensembl.images.last));
+    
     this.elLk.map = $('map', this.el);
     this.elLk.img = $('img.imagemap', this.el);
     this.elLk.areas = $('area', this.elLk.map);

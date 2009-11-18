@@ -40,8 +40,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return;
       }
       
-      var params = el.hasClass('image_panel') ? { highlight: (Ensembl.images.total == 1 || !(this == Ensembl.images.last)) } : {};
-      
       el.removeAttr('title');
       
       if (title[0].substr(0, 1) != '/') {
@@ -62,9 +60,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
             component = Ensembl.replaceTimestamp(component);
           }
           
-          params.updateURL = component + ';no_wrap=1';
-          
-          myself.getContent(component, content, params);
+          myself.getContent(component, content, { updateURL: component + ';no_wrap=1' });
         }
       }
       
