@@ -306,8 +306,7 @@ sub dumpStructuralVariations {
     }
     print A join "\t", (INC_SPECIES?"$species\t":"")."Structural Variation",
     $row->[1], "/$species/Location/$action?r=$r;sv=$row->[1];$view_config",
-    $row->[1], qq(A structural variation from $row->[2], identified by $row->[3].\n
-    This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6].\n );
+    $row->[1], qq(A structural variation from $row->[2], identified by $row->[3].<br />This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6].\n );
   }
 
   close A;
