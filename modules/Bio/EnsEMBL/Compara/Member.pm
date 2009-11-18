@@ -622,6 +622,26 @@ sub sequence_exon_cased {
 sub sequence_exon_bounded {
   my $self = shift;
 
+  if(@_) {
+    $self->{'_sequence_exon_bounded'} = shift;
+    return $self->{'_sequence_exon_bounded'};
+  }
+
+  if(!defined($self->{'_sequence_exon_bounded'})) {
+    $self->{'_sequence_exon_bounded'} = $self->adaptor->_fetch_sequence_exon_bounded_by_member_id($self->member_id);
+  }
+
+  if(!defined($self->{'_sequence_exon_bounded'})) {
+    $self->{'_sequence_exon_bounded'} = $self->_compose_sequence_exon_bounded;
+  }
+
+  return $self->{'_sequence_exon_bounded'};
+}
+
+
+sub _compose_sequence_exon_bounded {
+  my $self = shift;
+
   my $sequence = $self->sequence;
   my $trans = $self->transcript;
   my @exons = @{$trans->get_all_translateable_Exons};
