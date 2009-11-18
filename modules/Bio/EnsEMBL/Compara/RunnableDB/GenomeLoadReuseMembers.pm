@@ -191,8 +191,6 @@ sub write_output
 {
   my $self = shift;
 
-  $DB::single=1;1;
-
   # We do the flow for both in the code, only one in loadGeneTreeSystem
   # Anyway, it will do the INSERT IGNORE in AnalysisJobAdaptor and
   # store it only once tried done more than one
@@ -401,6 +399,26 @@ sub store_gene_and_all_transcripts
       warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
       next;
     }
+
+#     if($pep_member->seq_length > $maxLength) {
+#       $maxLength = $pep_member->seq_length;
+#       @longestPeptideMember = ($transcript, $pep_member);
+#     }
+    my $canonical_transcript;    my $canonical_transcript_stable_id;
+    eval {$canonical_transcript = $gene->canonical_transcript;
+          $canonical_transcript_stable_id = $canonical_transcript->stable_id;};
+    if (!defined($canonical_transcript)) {
+      print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n";
+      next;
+    }
+    if ($canonical_transcript->biotype ne $gene->biotype) {
+      print STDERR "WARN: ", $transcript->stable_id, " is labelled as canonical transcript but has wrong biotype\n";
+      next;
+    }
+    if ($transcript->biotype ne $gene->biotype) {
+      print STDERR $transcript->stable_id, " non-matching biotype ", $transcript->biotype, "\n" if ($self->debug);
+    }
+
 #    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
 #    my $next = 0;
 #    try {
@@ -485,11 +503,7 @@ sub store_gene_and_all_transcripts
     $self->{memberDBA}->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
     print(" : stored\n") if($self->{'verbose'});
 
-#     if($pep_member->seq_length > $maxLength) {
-#       $maxLength = $pep_member->seq_length;
-#       @longestPeptideMember = ($transcript, $pep_member);
-#     }
-    if($transcript->stable_id eq $gene->canonical_transcript->stable_id) {
+    if($transcript->stable_id eq $canonical_transcript_stable_id) {
       @canonicalPeptideMember = ($transcript, $pep_member);
     }
 
