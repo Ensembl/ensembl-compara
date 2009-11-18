@@ -80,6 +80,7 @@ sub _content {
   $caption =~ s/\s+/ /g;
   
   my $content = sprintf('
+    <input type="hidden" class="panel_type" value="LocalContext" />
     <dl class="local_context"%s>
       <dt>%s</dt>',
     $self->{'class'} ? qq( class="$self->{'class'}") : '',
