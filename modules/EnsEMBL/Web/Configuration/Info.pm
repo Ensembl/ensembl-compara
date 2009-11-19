@@ -105,6 +105,15 @@ sub populate_tree {
       { 'availability' => 'database.variation', 'url' => $variation_url, 'raw' => 1 }
     ));
 
+    if ($sample_data->{'REGULATION_PARAM'}){
+      my $regulation_url = "$species_path/Regulation/Details?fdb=funcgen;rf=". $sample_data->{'REGULATION_PARAM'};
+      my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
+
+      $data_menu->append( $self->create_node( 'Regulation', "Regulation ($regulation_text)",
+        [qw(location      EnsEMBL::Web::Component::Regulation::FeatureDetails)],
+        { 'availability' => 1, 'url' => $regulation_url, 'raw' => 1 }
+      ));
+    }  
   }
 
   $self->create_node( 'Content', "",
