@@ -24,7 +24,7 @@ sub content {
   my $class  =  uc($object->vari_class);
    
   if ($source eq 'dbSNP'){
-    $name      = $object->get_ExtURL_link($source, 'SNP', $name); 
+    $name      = $object->get_ExtURL_link($source, 'DBSNP', $name); 
     $name = "$class (source $name)"; 
   } elsif ($source =~ /SGRP/){
     $name      = $object->get_ExtURL_link($source, 'SGRP', $name);
