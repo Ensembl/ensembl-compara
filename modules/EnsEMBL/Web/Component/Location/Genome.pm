@@ -34,7 +34,8 @@ sub content {
 
   if ($object->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$object->species_defs->ENSEMBL_CHROMOSOMES}) && $object->species_defs->MAX_CHR_LENGTH) {
     ## Now check if we have any features mapped to chromosomes
-    my ($draw_karyotype, $not_drawn);
+    my $draw_karyotype = @features ? 0 : 1;
+    my $not_drawn;
     my %chromosome = map { $_ => 1 } @{$object->species_defs->ENSEMBL_CHROMOSOMES};
     foreach (@features) {
       if (ref($_) eq 'HASH' && $chromosome{$_->{'region'}}) {
