@@ -132,7 +132,7 @@ sub run {
 	    my $all_nodes = $this_genomic_align_tree->get_all_nodes_from_leaves_to_this();
 	    foreach my $this_node (@{$all_nodes}) {
 		if ($this_node->is_leaf()) {
-		    $genomic_align_tree_adaptor->set_neighbour_nodes_for_leaf($this_node, $genomic_align_block_adaptor, $method_link_species_set);
+		    $genomic_align_tree_adaptor->set_neighbour_nodes_for_leaf($this_node);
 		} else {
 		    set_neighbour_nodes_for_internal_node($this_node);
 		}
@@ -255,45 +255,6 @@ sub set_of_species {
     $self->{'_set_of_species'} = shift if(@_);
     return $self->{'_set_of_species'};
 }
-
-sub set_neighbour_nodes_for_leaf {
-  my ($this_leaf, $genomic_align_block_adaptor, $method_link_species_set) = @_;
-
-  my $this_genomic_align = $this_leaf->get_all_GenomicAligns->[0];
-  my ($left_genomic_align, $right_genomic_align);
-  my @genomic_align_blocks = sort {
-        $a->reference_genomic_align->dnafrag_start <=>
-        $b->reference_genomic_align->dnafrag_start }
-      @{$genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag(
-        $method_link_species_set, $this_genomic_align->dnafrag,
-        $this_genomic_align->dnafrag_start - $flanking_region,
-        $this_genomic_align->dnafrag_end + $flanking_region)};
-  for (my $i = 0; $i < @genomic_align_blocks; $i++) {
-    my $this_2nd_genomic_align = $genomic_align_blocks[$i]->reference_genomic_align;
-    if ($this_2nd_genomic_align->dnafrag_start == $this_genomic_align->dnafrag_start and
-        $this_2nd_genomic_align->dnafrag_end == $this_genomic_align->dnafrag_end) {
-      if ($this_genomic_align->dnafrag_strand == 1) {
-        $left_genomic_align = $genomic_align_blocks[$i-1]->reference_genomic_align if ($i > 0);
-        $right_genomic_align = $genomic_align_blocks[$i+1]->reference_genomic_align
-            if ($i + 1 < @genomic_align_blocks);
-      } elsif ($this_genomic_align->dnafrag_strand == -1) {
-        $right_genomic_align = $genomic_align_blocks[$i-1]->reference_genomic_align if ($i > 0);
-        $left_genomic_align = $genomic_align_blocks[$i+1]->reference_genomic_align
-            if ($i + 1 < @genomic_align_blocks);
-      }
-      last;
-    }
-  }
-  if ($left_genomic_align) {
-    $this_leaf->left_node_id($left_genomic_align->dbID());
-  }
-  if ($right_genomic_align) {
-    $this_leaf->right_node_id($right_genomic_align->dbID());
-  }
-
-  return $this_leaf;
-}
-
 
 sub set_neighbour_nodes_for_internal_node {
   my ($this_node) = @_;
