@@ -16,20 +16,28 @@ use base 'EnsEMBL::Web::Command';
 
 sub process {
   my $self = shift;
+  my $object = $self->object;
+  my $url = '/'.$object->data_species;
+  my $param = {};
+
+  if (my $error = $object->[1]->{'_input'}->cgi_error()) {
+    warn ">>> CGI ERROR $error";
+    if ($error =~ /413/) {
+      $param->{'error'} = 'too_big';
+    }
+  }
 
   my @methods = qw(text file url);
   my $method;
   foreach my $M (@methods) {
-    if ($self->object->param($M)) {
+    if ($object->param($M)) {
       $method = $M;
       last;
     }
   }
 
-  my $url = '/'.$self->object->data_species;
-  my $param = {};
-  if ($self->object->param($method)) {
-    $param = upload($method, $self->object);
+  if ($object->param($method)) {
+    $param = upload($method, $object);
     if ($param->{'format'} eq 'none') {
       $url .= '/UserData/MoreInput';
     }
@@ -40,12 +48,11 @@ sub process {
   else {
     $url .= '/UserData/SelectFile';
   }
-  $param->{'_referer'} = $self->object->param('_referer');
-  $param->{'x_requested_with'} = $self->object->param('x_requested_with');
- 
-  if( $self->object->param('uploadto' ) eq 'iframe' ) {
-    CGI::header( -type=>"text/html",-charset=>'utf-8' );
-    printf q(
+  $param->{'_referer'} = $object->param('_referer');
+  $param->{'x_requested_with'} = $object->param('x_requested_with');
+
+  CGI::header( -type=>"text/html",-charset=>'utf-8' );
+  printf q(
     <html>
     <head>
       <script type="text/javascript">
@@ -54,16 +61,13 @@ sub process {
     </head>
     <body><p>UP</p></body>
     </html>), CGI::escapeHTML($self->url($url, $param));
-  } 
-  else {
-    $self->ajax_redirect($url, $param); 
-  }
 }
 
 sub upload {
 ## Separate out the upload, to make code reuse easier
   my ($method, $object) = @_;
   my $param = {};
+
 
   ## Try to guess the format from the extension
   my ($format, $filename);
