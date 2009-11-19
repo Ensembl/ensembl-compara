@@ -12,11 +12,12 @@ package EnsEMBL::Web::Magic;
 use strict;
 
 use Apache2::RequestUtil;
-use CGI;
 
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::RegObj;
+use CGI;
+$CGI::POST_MAX = $ENSEMBL_WEB_REGISTRY->species_defs->CGI_POST_MAX; ## set max upload size
 
 use base qw(Exporter);
 our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator);
@@ -25,7 +26,6 @@ our $MEMD = EnsEMBL::Web::Cache->new(
   enable_compress    => 1,
   compress_threshold => 10_000,
 );
-
 
 ### Three constants defined and exported to the parent scripts...
 ### To allow unquoted versions of Gene, Transcript and Location
