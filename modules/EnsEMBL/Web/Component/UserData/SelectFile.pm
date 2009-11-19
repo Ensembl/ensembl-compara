@@ -20,14 +20,23 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my $html;
 
   my $referer = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $object->data_species;
 
-  my $form = $self->modal_form('select', "/$current_species/UserData/UploadFile", {'label'=>'Upload'});
-  $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text'=>qq(We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a 5Mb limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.<br /><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>)});
+  ## Should default to 5.0MB :)
+  my $max_upload_size = sprintf("%.1f", $object->species_defs->CGI_POST_MAX / 1048576).'MB';
 
+  my $form = $self->modal_form('select', "/$current_species/UserData/UploadFile", {'label'=>'Upload'});
+
+  if ($object->param('error')) {
+    $html .= $self->_error('File too large', "You tried to upload a file larger than $max_upload_size - please try again.");
+  }
+  else {
+    $html .= $self->_hint('upload_notes', 'IMPORTANT NOTE', qq(We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.<br /><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>));
+  }
 
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
 
@@ -79,7 +88,9 @@ sub content {
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );
   $form->add_element( type => 'String', name => 'url', label => 'or provide file URL', size => 30 );
 
-  return $form->render;
+  $html .= $form->render;
+  #warn "HTML: $html";
+  return $html;
 }
 
 1;
