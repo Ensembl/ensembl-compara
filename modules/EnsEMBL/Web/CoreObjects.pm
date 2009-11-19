@@ -506,7 +506,7 @@ sub _generate_objects {
     }
   }
   
-  $self->{'parameters'}{'rf'}       = $self->regulation->stable_id if $self->regulation && self->regulation->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
+  $self->{'parameters'}{'rf'}       = $self->regulation->stable_id if $self->regulation && $self->regulation->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
   $self->{'parameters'}{'v'}        = $self->variation->name if $self->variation;
   $self->{'parameters'}{'_referer'} = $self->param('_referer') if !keys %{$self->{'parameters'}} && $self->param('_referer');
   $self->{'parameters'}{'h'}        = $self->param('h') if $self->param('h');
