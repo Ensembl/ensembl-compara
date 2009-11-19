@@ -412,7 +412,7 @@ sub _configurator {
       $self->{'page'}->local_context->tree($vc->tree);
       $self->{'page'}->local_context->active('form_conf');
       $self->{'page'}->local_context->caption('Configure view');
-      $self->{'page'}->local_context->class('view_configuration');
+      $self->{'page'}->local_context->configuration(1);
       $self->{'page'}->local_context->counts({});
       
       my $panel = $self->new_panel('Configurator',
@@ -567,7 +567,7 @@ sub _configurator {
   $self->{'page'}->local_context->tree($self->{'_data'}{'tree'});
   $self->{'page'}->local_context->active('active_tracks');
   $self->{'page'}->local_context->caption($conf->get_parameter('title'));
-  $self->{'page'}->local_context->class('track_configuration');
+  $self->{'page'}->local_context->configuration(1);
   $self->{'page'}->local_context->counts({});
 
   my $search_panel = $self->new_panel('Configurator',
