@@ -45,6 +45,11 @@ sub counts {
   return $self->{'counts'};
 }
 
+sub configuration {
+  my $self = shift;
+  $self->{'configuration'} = shift if @_;
+  return $self->{'configuration'};
+}
 
 sub availability {
   my $self = shift;
@@ -56,9 +61,8 @@ sub availability {
 sub get_json {
   my $self = shift;
   
-  my $content = $self->_content;
-  $content =~ s/class="local_context"/class="local_context local_modal"/;
-  $content =~ s/\n//g;
+  $self->class('local_modal');
+  (my $content = $self->_content) =~ s/\n//g;
   
   return qq{'nav':'$content'};
 }
@@ -80,10 +84,11 @@ sub _content {
   $caption =~ s/\s+/ /g;
   
   my $content = sprintf('
-    <input type="hidden" class="panel_type" value="LocalContext" />
-    <dl class="local_context"%s>
+    %s
+    <dl class="local_context %s">
       <dt>%s</dt>',
-    $self->{'class'} ? qq( class="$self->{'class'}") : '',
+    $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
+    $self->class,
     escapeHTML($caption)
   );
   
