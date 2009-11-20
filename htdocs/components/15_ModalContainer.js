@@ -5,7 +5,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.base(id);
     
     Ensembl.EventManager.register('modalOpen', this, this.open);
-    Ensembl.EventManager.register('modalClose', this, this.close);
+    Ensembl.EventManager.register('modalClose', this, this.hide);
     Ensembl.EventManager.register('queuePageReload', this, this.setPageReload);
   },
   
@@ -43,7 +43,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       return false;
     });
     
-    $('.modal_close', '#' + this.id).live('click', function () { myself.close(); });
+    $('.modal_close', '#' + this.id).live('click', function () { myself.hide(); });
     
     // Changing tabs - update configuration and get new content
     $('a', this.elLk.tabs).click(function () {
@@ -81,10 +81,10 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     return true;
   },
   
-  close: function (escape) {
-    this.hide();
+  hide: function (escape) {
+    this.base();
     
-    if (escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) {
+    if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload == 'force') {
       this.setPageReload(false, true);
     }
   },
@@ -95,12 +95,14 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     id = id || 'modal_default';
     
     var contentEl = this.elLk.content.filter('#' + id);
-    var reload = url.match('reset=1') || $('.modal_reload', this.el).length;
+    var reload = url.match('reset=1') || $('.modal_reload', this.el).remove().length;
     
     this.elLk.content.hide();
     this.activePanel = id;
-    
-    if (!reload && id.match(/config/) && contentEl.children().length) {
+        
+    if (reload) {
+      this.elLk.content.empty();
+    } else if (id.match(/config/) && contentEl.children().length) {
       Ensembl.EventManager.triggerSpecific('showConfiguration', id);
       this.changeTab(this.elLk.tabs.children().filter('[rel=' + id + ']').parent());
       this.elLk.closeButton.html('Save and close');
@@ -132,9 +134,11 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         myself.elLk.closeButton.html(buttonText);
         
+        var forceReload = !!$('.modal_reload', contentEl).length;
+        
         // TODO: remove once config reseting is working without content being completely regenerated
-        if (reload) {
-          myself.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1]);
+        if (reload || forceReload) {
+          myself.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
         
         Ensembl.EventManager.trigger('createPanel', id, json.panelType);
@@ -163,7 +167,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     tab = null;
   },
   
-  setPageReload: function (section, reload) {
+  setPageReload: function (section, reload, force) {
     if (section) {
       this.sectionReload[section] = 1;
       this.sectionReload.count = (this.sectionReload.count || 0) + 1;
@@ -171,8 +175,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       this.pageReload = true;
     }
     
+    if (force === true) {
+      this.pageReload = 'force';
+    }
+    
     if (reload === true) {
-      Ensembl.EventManager.trigger('reloadPage', this.pageReload || this.sectionReload);
+      Ensembl.EventManager.trigger('reloadPage', !!this.pageReload || this.sectionReload);
       this.sectionReload = {};
     }
   }
