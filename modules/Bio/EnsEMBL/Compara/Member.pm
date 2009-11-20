@@ -628,7 +628,7 @@ sub sequence_exon_bounded {
   }
 
   if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->adaptor->_fetch_sequence_exon_bounded_by_member_id($self->member_id);
+    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_MemberAdaptor->_fetch_sequence_exon_bounded_by_member_id($self->member_id);
   }
 
   if(!defined($self->{'_sequence_exon_bounded'})) {
