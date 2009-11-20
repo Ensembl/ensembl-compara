@@ -9,10 +9,20 @@ sub fixed {
   return 1;
 }
 
+# Colours of connectors; affected by scaling
+my %connector_colours = (
+                         0 => 'blue',
+                         1 => 'blue',
+                         2 => 'green',
+                         3 => 'red',
+                         );
 
 my $CURRENT_ROW;
 my $CURRENT_Y;
 my $MIN_ROW_HEIGHT = 20;
+my $EXON_TICK_SIZE = 4;
+my $EXON_TICK_COLOUR = "#333333";
+
 sub _init {
   # Populate the canvas with feaures represented as glyphs
   my ($self) = @_;
@@ -24,6 +34,7 @@ sub _init {
   my $other_genome_db_id    = $self->{highlights}->[4];
   my $other_gene            = $self->{highlights}->[5];
   my $highlight_ancestor    = $self->{highlights}->[6];
+  my $show_exons            = $self->{highlights}->[7];
   my $tree          = $self->{'container'};
   my $Config        = $self->{'config'};
   my $bitmap_width = $Config->image_width(); 
@@ -57,7 +68,7 @@ sub _init {
   # Create a sorted list of tree nodes sorted by rank then id
   my @nodes = ( sort { ($a->{_rank} <=> $b->{_rank}) * 10  
                            + ( $a->{_id} <=> $b->{_id}) } 
-                @{$self->features($tree, 0, 0 ) || [] } );
+                @{$self->features($tree, 0, 0, 0, $show_exons ) || [] } );
 
 #  warn ("B-0:".localtime());
 
@@ -92,22 +103,15 @@ sub _init {
   my $nodes_scale = ($nodes_bitmap_width) / ($max_x_offset||1);
   #----------
 
-  # Colours of connectors; affected by scaling
-  my %connector_colours = (
-                           0 => 'blue',
-                           1 => 'blue',
-                           2 => 'green',
-                           3 => 'red',
-                           );
 
   
   # Draw each node
   my %Nodes;
   map { $Nodes{$_->{_id}} = $_} @nodes;
   my @alignments;
-    my @node_glyphs;
-    my @bg_glyphs;
-    my @labels;
+  my @node_glyphs;
+  my @bg_glyphs;
+  my @labels;
   foreach my $f (@nodes) {
      # Ensure connector enters at base of node glyph
     my $parent_node = $Nodes{$f->{_parent}} || {x=>0};
@@ -115,7 +119,7 @@ sub _init {
     ($f->{x}) = sort{$b<=>$a} int($f->{_x_offset} * $nodes_scale), $min_x;
     
     if ($f->{_cigar_line}){
-      push @alignments, [ $f->{y} , $f->{_cigar_line}, $f->{_collapsed} ] ;
+      push @alignments, [ $f->{y} , $f->{_cigar_line}, $f->{_collapsed}, $f->{_aligned_exon_lengths}] ;
     }
     
     # Node glyph, coloured for for duplication/speciation
@@ -301,57 +305,18 @@ sub _init {
 
 #  warn ("MAX X: $max_x" );
 #  warn ("C-0:".localtime());
-  
+
   #----------
-  # Loop through each node again and draw the connectors
-  foreach my $f (keys %Nodes) {
-    if (my $pid = $Nodes{$f}->{_parent}) {
-      my $xc = $Nodes{$f}->{x} + 2;
-      my $yc = $Nodes{$f}->{y} + 2;
-      
-      my $p = $Nodes{$pid};
-      my $xp = $p->{x} + 3;
-      my $yp = $p->{y} + 2;
-      
-      # Connector colour depends on scaling
-      my $col = $connector_colours{ ($Nodes{$f}->{_cut} || 0) } || 'red';
-      $col = $Nodes{$f}->{_fg_colour} if ($Nodes{$f}->{_fg_colour});
+  # DRAW THE TREE CONNECTORS
+  $self->_draw_tree_connectors(%Nodes);
 
-      # Vertical connector
-      my $v_line = $self->Line
-          ({
-            'x'         => $xp,
-            'y'         => $yp,
-            'width'     => 0,
-            'height'    => $yc - $yp,
-            'colour'    => $col,
-            'zindex'    => 0, 
-          });
-      $self->push( $v_line );
-      
-      # Horizontal connector
-      my $width = $xc - $xp - 2;
-      if( $width ){
-        my $h_line = $self->Line
-            ({
-              'x'         => $xp,
-              'y'         => $yc,
-              'width'     => $width,
-              'height'    => 0,
-              'colour'    => $col,
-              'zindex'    => 0,
-              'dotted' => $Nodes{$f}->{_cut} || undef,
-            });
-        $self->push( $h_line );
-      }
-    }
-  }
 
+  # Push the nodes afterwards, so they show above the connectors
   $self->push( @node_glyphs );
   $self->push(@labels);
 
   #----------
-  # Alignments
+  # DRAW THE ALIGNMENTS
   # Display only those gaps that amount to more than 1 pixel on screen, 
   # otherwise screen gets white when you zoom out too much .. 
 
@@ -376,7 +341,23 @@ sub _init {
   #      "WIDTH: $alignment_width, MIN: $min_length");
   
   foreach my $a (@alignments) {
-    my ($yc, $al, $collapsed) = @$a;
+    my ($yc, $al, $collapsed, $exon_lengths) = @$a;
+
+    # Draw the exon splits under the boxes
+    my $exon_end = 0;
+    foreach my $exon_length (@$exon_lengths) {
+      $exon_end += $exon_length;
+      my $e = $self->Line({
+        'x'         => $alignment_start + $exon_end * $alignment_scale,
+        'y'         => $yc - 3 - $EXON_TICK_SIZE,
+        'width'     => 0,
+        'height'    => $font_height + (2 * $EXON_TICK_SIZE),
+        'colour'    => $EXON_TICK_COLOUR,
+        'zindex' => 0,
+      });
+
+      $self->push( $e );
+    }
 
     my $box_colour = $collapsed ? 'darkgreen' : 'yellowgreen';
 
@@ -430,8 +411,55 @@ sub _init {
   }
 
 #  warn ("E-0:".localtime());
-  return 1;}
+  return 1;
+}
 
+sub _draw_tree_connectors {
+  my ($self, %Nodes) = @_;
+
+  foreach my $f (keys %Nodes) {
+    if (my $pid = $Nodes{$f}->{_parent}) {
+      my $xc = $Nodes{$f}->{x} + 2;
+      my $yc = $Nodes{$f}->{y} + 2;
+      
+      my $p = $Nodes{$pid};
+      my $xp = $p->{x} + 3;
+      my $yp = $p->{y} + 2;
+      
+      # Connector colour depends on scaling
+      my $col = $connector_colours{ ($Nodes{$f}->{_cut} || 0) } || 'red';
+      $col = $Nodes{$f}->{_fg_colour} if ($Nodes{$f}->{_fg_colour});
+
+      # Vertical connector
+      my $v_line = $self->Line
+          ({
+            'x'         => $xp,
+            'y'         => $yp,
+            'width'     => 0,
+            'height'    => $yc - $yp,
+            'colour'    => $col,
+            'zindex'    => 0, 
+          });
+      $self->push( $v_line );
+      
+      # Horizontal connector
+      my $width = $xc - $xp - 2;
+      if( $width ){
+        my $h_line = $self->Line
+            ({
+              'x'         => $xp,
+              'y'         => $yc,
+              'width'     => $width,
+              'height'    => 0,
+              'colour'    => $col,
+              'zindex'    => 0,
+              'dotted' => $Nodes{$f}->{_cut} || undef,
+            });
+        $self->push( $h_line );
+      }
+    }
+  }
+}
 
 sub features {
   my $self = shift;
@@ -439,6 +467,7 @@ sub features {
   my $rank = shift || 0;
   my $parent_id  = shift || 0;
   my $x_offset = shift  || 0;
+  my $show_exons = shift || 0;
 
   # Scale the branch length
   my $distance = $tree->distance_to_parent;
@@ -510,7 +539,7 @@ sub features {
     foreach my $child_node (@{$tree->sorted_children}) {  
       $f->{_child_count} ++;
       push( @features, 
-            @{$self->features($child_node, $rank, $node_id,$x_offset)} );
+            @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons)} );
     }
   }
   #----------
@@ -565,6 +594,12 @@ sub features {
                                  $chr_end);
       $f->{_length}  = $chr_end - $chr_start;
       $f->{_cigar_line} = $tree->cigar_line;
+      eval {
+        my $aligned_sequences_bounded_by_exon = $tree->alignment_string_bounded;
+        my (@bounded_exons) = split(' ',$aligned_sequences_bounded_by_exon);
+        pop(@bounded_exons);
+        $f->{_aligned_exon_lengths} = [map {length($_)} @bounded_exons];
+      } if ($show_exons);
       
       if (my $display_label = $member->display_label) {
         $f->{label} 
