@@ -646,6 +646,10 @@ sub load_tracks {
     ## Configure variation features
     $self->add_variation_feature(     $key,$dbs_hash->{$db}{'tables'} ); # To variation_feature tree
   }
+  
+  $self->add_options('information',
+    [ 'opt_empty_tracks', 'Display empty tracks', undef, undef, 'off' ],
+  );
 }
  
 sub load_configured_das {
@@ -1681,7 +1685,7 @@ sub get_option {
   my ($self, $code, $key) = @_;
   my $node = $self->get_node($code);  
   
-  return $node->get($key)->{$node->get('display')};
+  return $node->get($key || 'values')->{$node->get('display')};
 }
 
 sub _set_core { $_[0]->{'_core'} = $_[1]; }
