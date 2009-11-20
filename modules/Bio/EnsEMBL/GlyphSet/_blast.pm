@@ -52,6 +52,9 @@ sub feature_title {
 
 sub features {
   my ($self) = @_;
+  
+  $self->{'no_empty_track_message'} = 1;
+  
   my %results;
   my $ba = $self->_blast_adaptor;
   return unless $ba;
