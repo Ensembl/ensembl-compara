@@ -387,7 +387,7 @@ sub delete_node_and_under {
 sub store_supertree_node_and_under {
   my $self = shift;
   my $node = shift;
-  $DB::single=1;1;
+
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_node like protein_tree_node");
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_member like protein_tree_member");
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_tag like protein_tree_tag");
