@@ -51,7 +51,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var label = link.html().split(/\b/);
       
       if (dt.hasClass('select_all')) {
-        dt = dt.siblings('dt:not(.das)');
+        dt = dt.siblings('dt.internal');
         
         if (val == 'all_on') {
           // First li is off, so use the second (index 1) as default on setting.
@@ -236,27 +236,41 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             $(this).parents('dt, div.config').show();
           }
         });
-        
-        $('.select_all', this.elLk.form).hide();
       } else {
         $('div.' + active, this.elLk.form).show().find('dl.config_menu dt').show();
       }
       
       this.lastQuery = false;
-      this.styleTracks();
+      this.styleTracks(active == 'active_tracks');
     }
   },
   
-  styleTracks: function () {
+  styleTracks: function (special) {
     var col = { 1: 'col1', '-1': 'col2', f: 1 };
+    var margin = '';
+    
+    if (special === true) {
+      $('.select_all, .external', this.elLk.form).hide();
+    } else {
+      margin = '10px';
+    }
     
     $('dl.config_menu:visible', this.elLk.form).each(function () {
-      $('dt:visible', this).each(function () {
-        $(this).removeClass('col1 col2').addClass(col[col.f*=-1])
-          .next('dd').removeClass('col1 col2').addClass(col[col.f]);
-      });
+      var internal = $('dt:visible', this).each(function () {
+        if ($(this).hasClass('external')) {
+          col.f = 1; // Force colour reset for the start of the external section
+        } else {
+          $(this).removeClass('col1 col2').addClass(col[col.f*=-1])
+            .next('dd').removeClass('col1 col2').addClass(col[col.f]);
+        }
+      }).filter('.internal');
+      
+      if (internal.siblings('.select_all').length) {
+        internal.css('marginLeft', margin);
+      }
       
       col.f = 1;
+      internal = null;
     });
   },
   
@@ -270,7 +284,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var div = menu.parent();
       var show = false;
       
-      menu.children('dt:not(.select_all)').each(function () {
+      menu.children('dt:not(.select_all, .external)').each(function () {
         var dt = $(this);
         var match = dt.children('span:not(.menu_help)').html().match(myself.regex);
         
@@ -299,7 +313,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.lastQuery = this.query;
-    this.styleTracks();
+    this.styleTracks(true);
     this.toggleDescription(dts, 'show');
     
     dts = null;
