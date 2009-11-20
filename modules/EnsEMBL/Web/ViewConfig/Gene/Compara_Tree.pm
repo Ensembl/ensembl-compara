@@ -13,6 +13,7 @@ sub init {
     width                800
     collapsability       gene
     colouring            background
+    exons                on
     text_format          msf
     tree_format          newick_mode
     newick_mode          full_web
@@ -110,7 +111,7 @@ sub form {
     });
   } else {
     $view_config->add_fieldset('Image options');
-    
+
     $view_config->add_form_element({
       type   => 'DropDown',
       select => 'select',
@@ -123,7 +124,15 @@ sub form {
         { value => 'all',          name => 'View fully expanded tree' }
       ]
     });
-    
+
+    $view_config->add_form_element({
+      'type'  => 'CheckBox',
+      'label' => "Display exon boundaries",
+      'name'  => 'exons',
+      'value' => 'on',
+      'raw'   => 1,
+    });
+
     if (@groups) {
       $view_config->add_form_element({
         type   => 'DropDown', 
@@ -137,7 +146,7 @@ sub form {
         ]
       });
     }
-    
+
     foreach my $group (@groups) {
       $view_config->add_form_element({
         type   => 'DropDown', 

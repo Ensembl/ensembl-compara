@@ -73,10 +73,11 @@ sub content {
     }
   }
 
-  my $wuc          = $object->image_config_hash( 'genetreeview' );
-  my $image_width  = $self->image_width || 800;
+  my $wuc            = $object->image_config_hash( 'genetreeview' );
+  my $image_width    = $self->image_width || 800;
   my $collapsability = $object->param('collapsability') || 'gene';
-  my $colouring    = $object->param('colouring') || 'background';
+  my $colouring      = $object->param('colouring') || 'background';
+  my $show_exons     = $object->param('exons');
   my @hidden_clades  = grep {$_ =~ /^group_/ and $object->param($_) eq "hide"} $object->param();
   my @collapsed_clades  = grep {$_ =~ /^group_/ and $object->param($_) eq "collapse"} $object->param();
 
@@ -180,6 +181,12 @@ sub content {
     }
   }
 
+  if ($show_exons and $show_exons eq "on") {
+    $show_exons = 1;
+  } else {
+    $show_exons = 0;
+  }
+
   push @highlights, $collapsed_nodes || undef;
 
   push @highlights, $coloured_nodes || undef;
@@ -189,6 +196,8 @@ sub content {
   push @highlights, $highlight_gene || undef;
 
   push @highlights, $highlight_ancestor || undef;
+
+  push @highlights, $show_exons;
 
   my $image  = $self->new_image
       ( $tree, $wuc, [@highlights] );
