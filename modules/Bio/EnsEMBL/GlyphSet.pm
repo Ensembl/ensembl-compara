@@ -705,6 +705,7 @@ sub draw_cigar_feature {
 
 sub no_features {
   my $self = shift;
+  return unless $self->can('my_label');
   $self->errorTrack(sprintf 'No %s in this region', $self->my_label) if $self->{'config'}->get_option('opt_empty_tracks') == 1;
 }
 
