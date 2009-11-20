@@ -466,12 +466,11 @@ sub _configurator {
     next if $node->is_leaf;
     
     my $count     = 0;
-    my $das_count = 0;
+    my $ext_count = 0;
     my $available = 0;
     my $on        = 0;
     my $key       = $node->key;
-    my %renderers;
-    my ($select_all_menu, $config_group);
+    my (%renderers, $select_all_menu, $config_group);
     
     foreach my $track_node ($node->descendants) {
       next if $track_node->get('menu') eq 'no';
@@ -482,19 +481,17 @@ sub _configurator {
       my $class     = $track_node->get('_class');
       my $name      = escapeHTML($track_node->get('name'));
       my $close_tag = '</dt>';
-      my $das       = lc $class eq 'das' ? qq{ class="das"} : '';
-      my $selected;
-      my ($menu, $das_menu);
+      my ($selected, $menu, $external_menu, $external_header);
       
       $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;
       
-      while (my ($val, $text) = splice(@states, 0, 2)) {
+      while (my ($val, $text) = splice @states, 0, 2) {
         $text     = escapeHTML($text);
         $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
         $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
         
-        if ($das) {
-          $das_menu .= $text;
+        if ($class) {
+          $external_menu .= $text;
         } else {
           $menu .= $text;
           $renderers{$val}++;
@@ -503,8 +500,10 @@ sub _configurator {
       
       $count++;
       $on++ if $display ne 'off';
-      $das_count++ if $das;
+      $ext_count++ if $class;
       $select_all_menu ||= $menu;
+      $class = lc $class || 'internal';
+      $external_header = '<dt class="external">External data sources</dt>' if $ext_count == 1;
       
       if ($desc) {
         $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -517,16 +516,17 @@ sub _configurator {
       }
       
       $config_group .= qq{
-        <dt$das>
-          <ul class="popup_menu">$menu$das_menu</ul>
+        $external_header
+        <dt class="$class">
+          <ul class="popup_menu">$menu$external_menu</ul>
           $selected <span>$name</span>
         $close_tag
       };
     }
     
-    if ($count - $das_count > 1) {
+    if ($count - $ext_count > 1) {
       my %counts = reverse %renderers;
-      my $label = 'Enable/disable all' . ($das_count ? ' non DAS' : '') . ' tracks';
+      my $label = 'Enable/disable all tracks';
       
       if (scalar keys %counts != 1) {
         $select_all_menu = '';
@@ -559,7 +559,7 @@ sub _configurator {
       [],
       { url => "#", availability => ($count > 0), class => $node->key } 
     );
-  }
+  }     
   
   $rhs_content .= '
     </form>';
