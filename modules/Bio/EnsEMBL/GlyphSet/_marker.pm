@@ -97,7 +97,7 @@ sub _init {
     $self->push($glyph);
   }    
   ## No features show "empty track line" if option set....  ##
-  if( (scalar(@features) == 0 ) && $Config->get_parameter( 'opt_empty_tracks')==1){
+  if( (scalar(@features) == 0 ) && $Config->get_option('opt_empty_tracks') == 1) {
     $self->errorTrack( "No markers in this region" )
   }
 }

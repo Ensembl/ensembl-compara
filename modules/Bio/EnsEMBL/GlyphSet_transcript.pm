@@ -217,7 +217,7 @@ sub render_collapsed {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_parameter('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -515,7 +515,7 @@ sub render_transcripts {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_parameter('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -801,7 +801,7 @@ sub render_alignslice_transcript {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_parameter('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
@@ -960,7 +960,7 @@ sub render_alignslice_collapsed {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_parameter('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0) {
     $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }

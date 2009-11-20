@@ -342,7 +342,7 @@ sub render_normal {
     $y_offset -= $strand * ( ($self->_max_bump_row ) * ( $h + $gap + $label_h ) + 6 );
   }
   $self->errorTrack( "No features from '".$self->my_config('name')."' in this region" )
-    unless( $features_drawn || $self->get_parameter( 'opt_empty_tracks')==0 );
+    unless( $features_drawn || $self->{'config'}->get_option('opt_empty_tracks') == 0);
 
   if( $self->get_parameter( 'opt_show_bumped') && $features_bumped ) {
     my $y_pos = $strand < 0
@@ -465,7 +465,7 @@ sub render_ungrouped {
     $y_offset -= $strand * ($h+2);# + ( $self->{'show_labels'} ? $label_h+2 : 0 ) ) if $flag;
   }
   $self->errorTrack( "No ".$self->my_config('name')." features in this region" )
-    unless( $features_drawn || $self->get_parameter( 'opt_empty_tracks')==0 );
+    unless( $features_drawn || $self->{'config'}->get_option('opt_empty_tracks') == 0);
 }
 
 sub render_text {

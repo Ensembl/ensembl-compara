@@ -209,7 +209,7 @@ sub render_normal {
   }
   
   # No features show "empty track line" if option set
-  $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless $c || $self->get_parameter('opt_empty_tracks') == 0;
+  $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless $c || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->timer_push('Features drawn');
 }
 
@@ -360,7 +360,7 @@ sub render_compact {
   }
   
   # No features show "empty track line" if option set
-  $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless $c || $self->get_parameter('opt_empty_tracks') == 0;
+  $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless $c || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
 sub genomic_align_blocks {

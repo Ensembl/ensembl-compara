@@ -74,7 +74,7 @@ sub _render { ## Show both map and features
 ## Now we try and draw the features
   my $error = $self->draw_features( @_ );
 
-  return unless $error && $self->{'config'}->get_parameter('opt_empty_tracks')==1;
+  return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
   my $height = $self->errorTrack( "No $error in this region", 0, $self->_offset );
   $self->_offset($height + 4);
   return 1;
