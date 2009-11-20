@@ -15,4 +15,6 @@ ul.popup_menu li img { padding: 2px; }
 dl.config_menu dt.das_menu_entry { font-weight: bold; }
 dl.config_menu img { cursor: pointer; }
 
-.configuration_search { text-align: right }
+div.configuration_search { text-align: right; }
+
+div.config dt.external { font-size: 1.1em; font-weight: bold; color: [[CONTRAST_HEADER]];  margin: 10px 0 5px; }
