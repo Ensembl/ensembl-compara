@@ -169,6 +169,49 @@ sub alignment_string {
   return $self->{'alignment_string'};
 }
 
+sub alignment_string_bounded {
+  my $self = shift;
+
+  unless (defined $self->cigar_line && $self->cigar_line ne "") {
+    throw("To get an alignment_string, the cigar_line needs to be define\n");
+  }
+  unless (defined $self->{'alignment_string_bounded'}) {
+    my $sequence_exon_bounded = $self->sequence_exon_bounded;
+    if (defined $self->cigar_start || defined $self->cigar_end) {
+      throw("method doesnt implement defined cigar_start and cigar_end");
+    }
+    $sequence_exon_bounded =~ s/b|o|j/\ /g;
+    my $cigar_line = $self->cigar_line;
+    $cigar_line =~ s/([MD])/$1 /g;
+
+    my @cigar_segments = split " ",$cigar_line;
+    my $alignment_string_bounded = "";
+    my $seq_start = 0;
+    my $exon_count = 1;
+    foreach my $segment (@cigar_segments) {
+      if ($segment =~ /^(\d*)D$/) {
+        my $length = $1;
+        $length = 1 if ($length eq "");
+        $alignment_string_bounded .= "-" x $length;
+      } elsif ($segment =~ /^(\d*)M$/) {
+        my $length = $1;
+        $length = 1 if ($length eq "");
+        my $substring = substr($sequence_exon_bounded,$seq_start,$length);
+        if ($substring =~ /\ /) {
+          my $num_boundaries = $substring =~ s/(\ )/$1/g;
+          $length += $num_boundaries;
+          $substring = substr($sequence_exon_bounded,$seq_start,$length);
+        }
+        $alignment_string_bounded .= $substring;
+        $seq_start += $length;
+      }
+    }
+    $self->{'alignment_string_bounded'} = $alignment_string_bounded;
+  }
+
+  return $self->{'alignment_string_bounded'};
+}
+
 
 =head2 cdna_alignment_string
 
