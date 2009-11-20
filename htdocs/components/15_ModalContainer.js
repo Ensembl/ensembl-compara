@@ -102,7 +102,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
     if (reload) {
       this.elLk.content.empty();
-    } else if (id.match(/config/) && contentEl.children().length) {
+    } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
       Ensembl.EventManager.triggerSpecific('showConfiguration', id);
       this.changeTab(this.elLk.tabs.children().filter('[rel=' + id + ']').parent());
       this.elLk.closeButton.html('Save and close');
