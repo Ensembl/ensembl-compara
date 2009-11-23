@@ -1685,7 +1685,7 @@ sub get_option {
   my ($self, $code, $key) = @_;
   my $node = $self->get_node($code);  
   
-  return $node->get($key || 'values')->{$node->get('display')};
+  return $node ? $node->get($key || 'values')->{$node->get('display')} : 0;
 }
 
 sub _set_core { $_[0]->{'_core'} = $_[1]; }
