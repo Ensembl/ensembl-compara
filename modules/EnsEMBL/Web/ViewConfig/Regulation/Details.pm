@@ -27,11 +27,11 @@ sub form {
   # Add context selection
   $view_config->add_fieldset('Context');
   $view_config->add_form_element({
-    'type'   => 'DropDown',
-    'select' => 'select',
-    'name'   => 'context',
-    'label'  => 'Context',
-    'values' => [
+    type   => 'DropDown',
+    select => 'select',
+    name   => 'context',
+    label  => 'Context',
+    values => [
       { value => '20',   name => '20bp' },
       { value => '50',   name => '50bp' },
       { value => '100',  name => '100bp' },
@@ -43,7 +43,7 @@ sub form {
     ]
   });
 
-  my $reg_object = $object->core_objects->regulation;
+  my $reg_object = $object->Obj;
   return unless $reg_object;
   
   $view_config->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' }) if $reg_object->get_focus_attributes;
@@ -52,14 +52,14 @@ sub form {
   my %sets_by_type;
   
   foreach my $set (@{$reg_object->get_nonfocus_attributes}) {
-     my $feature_type = $set->feature_set->feature_type->name . ':' . $set->feature_set->cell_type->name;
-     my $histone_mod = substr $feature_type, 0, 2;
-     
-     $histone_mod = 'H1'    if $histone_mod =~ /H\D/;
-     $histone_mod = 'Other' if $histone_mod !~ /H\d/;
-     
-     $sets_by_type{$histone_mod} = {} unless exists $sets_by_type{$histone_mod};
-     $sets_by_type{$histone_mod}{$feature_type} = $set; 
+    my $feature_type = $set->feature_set->feature_type->name . ':' . $set->feature_set->cell_type->name;
+    my $histone_mod = substr $feature_type, 0, 2;
+
+    $histone_mod = 'H1'    if $histone_mod =~ /H\D/;
+    $histone_mod = 'Other' if $histone_mod !~ /H\d/;
+
+    $sets_by_type{$histone_mod} = {} unless exists $sets_by_type{$histone_mod};
+    $sets_by_type{$histone_mod}{$feature_type} = $set; 
   }
 
   # Add each feature set to page config according to histone modification
