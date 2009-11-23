@@ -18,12 +18,9 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
-  my $msg = "Click 'configure this page' to add the DAS sources.";
-  $html = $self->_info('Info', $msg, '100%');
-
   ## first check we have uniquely determined variation
   if ( $object->has_location ){
-    return $html .= $self->_info(
+    return $self->_info(
       'A unique location can not be determined for this Variation',
       $object->has_location
     );
