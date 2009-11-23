@@ -2,6 +2,8 @@ package EnsEMBL::Web::Configuration::Variation;
 
 use strict;
 
+use EnsEMBL::Web::RegObj;
+
 use base qw(EnsEMBL::Web::Configuration);
 
 sub global_context { return $_[0]->_global_context; }
@@ -70,6 +72,41 @@ sub populate_tree {
     )],
     { 'availability' => 'variation database:compara', 'concise' => 'Evolutionary or Phylogenetic Context' }
   );
+
+  # External Data tree, including non-positional DAS sources
+  my $external = $self->create_node('ExternalData', 'External Data',
+    [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
+    { 'availability' => 'variation' }
+  );
+
 }
+
+sub user_populate_tree {
+  my $self = shift;
+  
+  my $object = $self->object;
+  
+  return unless $object && ref $object;
+  
+  my $all_das    = $ENSEMBL_WEB_REGISTRY->get_all_das;
+  my $vc         = $object->get_viewconfig(undef, 'ExternalData');
+  my @active_das = grep { $vc->get($_) eq 'yes' && $all_das->{$_} } $vc->options;
+  my $ext_node   = $self->tree->get_node('ExternalData');
+  
+  for my $logic_name (sort { lc($all_das->{$a}->caption) cmp lc($all_das->{$b}->caption) } @active_das) {
+    my $source = $all_das->{$logic_name};
+    
+    $ext_node->append($self->create_subnode("ExternalData/$logic_name", $source->caption,
+      [qw( textdas EnsEMBL::Web::Component::Variation::TextDAS )],
+      {
+        'availability' => 'variation', 
+        'concise'      => $source->caption, 
+        'caption'      => $source->caption, 
+        'full_caption' => $source->label
+      }
+    ));	 
+  }
+}
+
 
 1;
