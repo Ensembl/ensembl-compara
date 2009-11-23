@@ -129,7 +129,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
     my $root_node_id = $rowhash->{root_id};
     my $reference_genomic_align_id = $rowhash->{genomic_align_id};
     $ref_to_root_hash->{$reference_genomic_align_id} = $root_node_id;
-    print "REF $reference_genomic_align_id} = $root_node_id\n";
+#     print "REF $reference_genomic_align_id} = $root_node_id\n";
   }
   $sth->finish();
   return [] if (!%$ref_to_root_hash);
@@ -245,7 +245,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
     my $top_slice = $this_slice->seq_region_Slice;
     throw if ($top_slice->name ne $this_slice->seq_region_Slice->name);
-    print join("\n", $top_slice->name, $this_slice->seq_region_Slice->name), "\n";
+#     print join("\n", $top_slice->name, $this_slice->seq_region_Slice->name), "\n";
 
     # need to convert features to requested coord system
     # if it was different then the one we used for fetching
