@@ -6,7 +6,7 @@ no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::UserData);
 use EnsEMBL::Web::Filter::DAS;
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@GENE_COORDS @PROT_COORDS);
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(@GENE_COORDS @PROT_COORDS @SNP_COORDS);
 
 sub _init {
   my $self = shift;
@@ -110,6 +110,23 @@ sub content {
           $prot_fieldset->{'elements'} = $p_elements;
           $form->add_fieldset(%$prot_fieldset);
         }
+
+        if (scalar(@SNP_COORDS)) {
+          my $gene_fieldset = {'name' => $source->logic_name.'_snp', 'legend' => 'Variation'};
+          my $g_elements = [];
+          for my $cs (@SNP_COORDS) {
+            $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
+            push @$g_elements, { 
+              'type'    => 'CheckBox',
+              'name'    => $source->logic_name.'_coords',
+              'value'   => $cs->to_string,
+              'label'   => $cs->label 
+            };
+          }
+          $gene_fieldset->{'elements'} = $g_elements;
+          $form->add_fieldset(%$gene_fieldset);
+        }
+
       }
 
       $form->add_element(
