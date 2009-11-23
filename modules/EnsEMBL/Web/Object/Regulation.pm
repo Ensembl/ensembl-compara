@@ -153,10 +153,10 @@ sub get_seq {
 sub get_details_page_url {
   my $self = shift; 
   my $url = $self->_url({
-    'type'  => 'Regulation',
-    'view'  => 'Details',
-    'rf'    => $self->stable_id,
-    'fdb'   => 'funcgen',
+    'type'   => 'Regulation',
+    'action' => 'Details',
+    'rf'     => $self->stable_id,
+    'fdb'    => 'funcgen',
   });
   return $url;
 }
