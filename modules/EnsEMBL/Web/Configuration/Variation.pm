@@ -61,7 +61,7 @@ sub populate_tree {
   );
   
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::ExternalData )],
+    [qw( summary EnsEMBL::Web::Component::Variation::Phenotype )],
     { 'availability' => 'variation', 'concise' => 'Phenotype Data' }
   );
   
@@ -75,7 +75,7 @@ sub populate_tree {
 
   # External Data tree, including non-positional DAS sources
   my $external = $self->create_node('ExternalData', 'External Data',
-    [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
+    [qw( external EnsEMBL::Web::Component::Variation::ExternalData )],
     { 'availability' => 'variation' }
   );
 
