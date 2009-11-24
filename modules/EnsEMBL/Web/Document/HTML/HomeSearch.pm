@@ -76,7 +76,7 @@ sub render {
     }
   }
   if (scalar(@examples)) {
-    $html .= '<p>e.g. ' . join(' or ', map {'<strong>'.$_.'</strong>'} @examples) . '</p>';
+    $html .= '<p>e.g. ' . join(' or ', map {'<strong><a href="'.$search_url.'?q='.$_.'" style="text-decoration:none">'.$_.'</a></strong>'} @examples) . '</p>';
   }
   $html .= qq(
   </div></form>
