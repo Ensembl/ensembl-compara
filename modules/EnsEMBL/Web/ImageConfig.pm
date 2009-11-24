@@ -433,7 +433,7 @@ sub load_user_tracks {
 sub _compare_assemblies {
   my ($self, $entry, $session) = @_;
 
-  if ($entry->{'assembly'} ne $self->sd_call('ASSEMBLY_NAME')) {
+  if ($entry->{'assembly'} && $entry->{'assembly'} ne $self->sd_call('ASSEMBLY_NAME')) {
     $session->add_data(
       type     => 'message',
       code     => 'userdata_assembly_mismatch',
