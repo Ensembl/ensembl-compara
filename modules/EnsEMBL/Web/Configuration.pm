@@ -304,7 +304,7 @@ sub _user_context {
       '_referer' => $referer,
       '__clear'  => 1,
       'type'     => 'UserData',
-      'action'   => $vc->can_upload ? 'SelectFile' : 'ManageData',
+      'action'   => 'ManageData',
      }))
   );
   
@@ -645,19 +645,13 @@ sub _local_tools {
     );
   }
   
-  my $caption = 'Manage your data';
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my @temp_uploads = $self->object->get_session->get_data(type => 'upload');
-  my @user_uploads = $user ? $user->uploads : ();
-  my $action = @temp_uploads || @user_uploads ? 'ManageData' : 'SelectFile';
-
   $self->{'page'}->local_tools->add_entry(
-    'caption' => $caption,
+    'caption' => 'Manage your data',
     'class'   => 'modal_link',
     'url'     => $obj->_url({
       'time'     => time,
       'type'     => 'UserData',
-      'action'   => $action,
+      'action'   => 'ManageData',
       '_referer' => $referer,
       '__clear'  => 1 
     })
