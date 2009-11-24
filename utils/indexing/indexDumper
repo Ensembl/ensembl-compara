@@ -45,7 +45,6 @@ my $conf = {};
 mkdir 'input', 0777 unless -e 'input';
 
 foreach my $species ( @species ) {
-	next unless ($species =~ /^[N-Z]/);
   $conf->{'directory'} = "input/$species";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   $conf->{'species'}   = $species;
@@ -58,7 +57,6 @@ foreach my $species ( @species ) {
   $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
   foreach my $index (@indexes) {
-		next if ($index eq 'Family');
     warn "  Index: $species $index";
     my $function = "dump$index";
     no strict "refs";
@@ -358,7 +356,7 @@ sub markerLine {
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Ensembl Marker),    ## Type
     qq($key),
-    qq(/$species/Location/Marker?m=$key);
+    qq(/$species/Location/Marker?m=$key),
     qq($IDS),
     qq(A marker with $counter synonyms ($IDS)\n);
 }
@@ -1001,7 +999,7 @@ sub geneLine {
   my $P = scalar (keys %$peptides);
   my $E = scalar (keys %$exons);
   my $EX = scalar (keys %$external_identifiers);
-	my $desc = $description ? "Description: $description" : '';
+  my $desc = $description ? "Description: $description" : '';
   $IDX =~ s/\n/ /g;
 #  if ($gid =~ /ENSG00000157399|OTTHUMG00000137358/) {
 #    warn "indexing $gid with ",Data::Dumper::Dumper($IDX);
