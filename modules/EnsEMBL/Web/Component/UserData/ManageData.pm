@@ -35,7 +35,6 @@ sub content {
   my $html;
   $html .= '<div class="modal_reload"></div>' if $object->param('reload');
   $html .= '<h3>Your data</h3>'; # Uploads
-  $html .= '<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>';
   
   push @data, $user->uploads if $user;
   push @data, $object->get_session->get_data('type' => 'upload');
@@ -203,21 +202,18 @@ sub content {
   }
 
   # URL
-  if ($user && $user->find_administratable_groups) {
+  if (@data && $user && $user->find_administratable_groups) {
     $html .= $self->_hint(
       'manage_user_data', 'Sharing with groups',
       qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>),
       '100%',
     );
   }
-  else { 
-    unless ($self->is_configurable) {
-      $html .= $self->_hint(
-        'manage_user_data', 'Adding tracks',
-        qq(<p>Please note that custom data can only be added on pages that allow these tracks to be configured, for example 'Region in detail' images</p>),
-        '100%',
-      );
-    }
+  else {
+    $html .= $self->_hint('user_data_formats', 'Help',
+      qq(<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>),
+      '100%',
+    );
   }
 
   return $html;
