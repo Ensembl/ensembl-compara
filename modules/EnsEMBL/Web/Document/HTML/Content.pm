@@ -119,7 +119,7 @@ sub render {
       $html .= sprintf '<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
       $html .= '</div>';
       
-      $self->print($html);
+      #$self->print($html);
     }
   }
   
@@ -150,19 +150,14 @@ sub get_json {
     if ($class && EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
       $filter = $class->new;
       
-      $content .= '<div class="panel print_hide">';
-      $content .= sprintf '<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
-      $content .= '</div>';
+      $content .= sprintf '<div style="width:80%" class="error print_hide"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
     }
   }
   
   foreach my $panel (@{$self->{'panels'}}) { 
     $panel->{'json'} = 1;
     
-    my $p = $panel->render;
-    $p = qq{<div class="panel">$p</div>} if $filter && $single;
-    
-    $content .= $p;
+    $content .= $panel->render;
     
     $panel_type = 'Configurator' if ref($panel) =~ /Configurator/;
   }
