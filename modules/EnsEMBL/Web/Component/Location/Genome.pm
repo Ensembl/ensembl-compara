@@ -37,11 +37,10 @@ sub content {
     my $draw_karyotype = @features ? 0 : 1;
     my $not_drawn;
     my %chromosome = map { $_ => 1 } @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-    foreach (@features) {
+    foreach (map @{$_->[0]}, @features) {
       if (ref($_) eq 'HASH' && $chromosome{$_->{'region'}}) {
         $draw_karyotype = 1;
-      } 
-      else {
+      } else {
         $not_drawn++;
       }
     }
