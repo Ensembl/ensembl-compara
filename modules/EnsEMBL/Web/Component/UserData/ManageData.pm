@@ -35,15 +35,35 @@ sub content {
   my $html;
   $html .= '<div class="modal_reload"></div>' if $object->param('reload');
   $html .= '<h3>Your data</h3>'; # Uploads
-  
-  push @data, $user->uploads if $user;
-  push @data, $object->get_session->get_data('type' => 'upload');
-
-  push @data, $user->urls if $user;
-  push @data, $object->get_session->get_data('type' => 'url');
-
-  push @data, $user->dases if $user;
-  push @data, values %{$object->get_session->get_all_das};
+ 
+  my ($saved_data, $temp_data);
+  if ($user) { 
+    if ($user->uploads) {
+      push @data, $user->uploads;
+      $saved_data = 1;
+    }
+    if ($user->urls) {
+      push @data, $user->urls;
+      $saved_data = 1;
+    }
+    if ($user->dases) {
+      push @data, $user->dases;
+      $saved_data = 1;
+    } 
+  }
+  my @tmp;
+  if (@tmp = $object->get_session->get_data('type' => 'upload')) {
+    push @data, @tmp;
+    $temp_data = 1;
+  }
+  if (@tmp = $object->get_session->get_data('type' => 'url')) {
+    push @data, @tmp;
+    $temp_data = 1;
+  }
+  if (@tmp = values %{$object->get_session->get_all_das}) {
+    push @data, @tmp;
+    $temp_data = 1;
+  }
 
   if (@data) {
     my $table = EnsEMBL::Web::Document::SpreadSheet->new;
@@ -202,7 +222,7 @@ sub content {
   }
 
   # URL
-  if (@data && $user && $user->find_administratable_groups) {
+  if ($temp_data && $user && $user->find_administratable_groups) {
     $html .= $self->_hint(
       'manage_user_data', 'Sharing with groups',
       qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>),
