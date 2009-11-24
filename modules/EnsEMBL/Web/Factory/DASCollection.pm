@@ -140,7 +140,6 @@ sub createObjects {
   foreach my $src ( $self->param('das_sources')) {
     $config->set($section, $src, "on", 1);
   }
-  $config->save( );
 
   my %DASsel = map {$_ => 1} $self->param('das_sources');
 
