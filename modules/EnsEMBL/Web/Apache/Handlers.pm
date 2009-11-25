@@ -24,6 +24,7 @@ use EnsEMBL::Web::DBSQL::BlastAdaptor;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
+use Bio::EnsEMBL::Registry;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
 our $MEMD = new EnsEMBL::Web::Cache;
@@ -342,39 +343,22 @@ sub transHandler_das {
 # /das/Homo_sapiens.Ensembl-GeneID.{feature_type}/command
 # then the request will be restricted to Human db
 
-  if ($assembly =~ /ensembl-geneid/i) {  
+  if ($assembly =~ /geneid/i) {  
       if ($das_species =~ /multi/i) {
 # this a site-wide request - try to figure out the species from the ID
 	  $das_species = '';
 	  if ($querystring =~ /segment=([^\;]+)(\;)?(.+)?$/) {
 	      my $identifier = $1;
-
-# there is work under way to add a new method to the Bio::EnsEMBL::Registry that will 
-# tell you the species and object type based on id.
-# meanwhile we'll do it in a crude way : just check all SPECIES_STABLE_ID_PREFIX 
-	      foreach my $sp ($species_defs->valid_species) {
-#		  warn "SP : $sp\n";
-		  foreach my $prefix (sort @{$species_defs->SPECIES_STABLE_ID_PREFIX($sp)||[]}) {
-# all but c elegans and sacchromises have species.stable_id_prefix set in meta table .e.g for mouse
-# species.stable_id_prefix   ENSMUS
-		      (my $mp = $prefix) =~ s/([^\w])/\\$1/g;
-#		      warn "PFX: $prefix : $mp";
-
-		      if ($identifier =~ /^$mp/) {
-# we have found a match
-			  $das_species = $sp;
-			  last;
-		      }
-		  }
-		  last if $das_species;
-	      }
+	      my $reg = "Bio::EnsEMBL::Registry";
+	      my ( $s, $ot, $dbt ) = $reg->get_species_and_object_type($identifier);
+	      $das_species = $s if ($s);
 	  }
 # in case no macth was found go to the default site species to report the page with no features	  
 	  $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
+
       }
   }
 
- 
   if (!$das_species) {
     $command = 'das_error';
     $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';

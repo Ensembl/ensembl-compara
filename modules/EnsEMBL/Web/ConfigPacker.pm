@@ -84,29 +84,6 @@ sub _summarise_generic {
       push @{ $hash->{$r->[3]+0}{$r->[0]}}, $r->[1];
     }
     
-    if( $db_name =~ /CORE/) {
-# this bit of code should go as soon there is a new method in Bio::EnsEMBL::Registry that will 
-# tell you the object species and type  based on ID, but meantime
-# there should be species.stable_id_prefix in meta table from release 56
-# in case it's not there ( as is the case for yeast and c elegans ) we build the pattern 
-
-	if (! $hash->{'species.stable_id_prefix'} ) {
-	    my $t_aref = $dbh->selectall_arrayref(
-					      qq{
-SELECT DISTINCT substr(gsid.stable_id, 1, 3) as p, cs.species_id
-FROM gene_stable_id gsid, gene g, seq_region s, coord_system cs
-WHERE gsid.gene_id = g.gene_id and g.seq_region_id = s.seq_region_id and s.coord_system_id = cs.coord_system_id
-ORDER by cs.species_id
-}
-					      );
-
-	    foreach my $row ( @$t_aref ) {
-		push @{$hash->{$row->[1]}{'species.stable_id_prefix'}}, $row->[0];
-	    }
-	    
-	}
-    }
-
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
 }
