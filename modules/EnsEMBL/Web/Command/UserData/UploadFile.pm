@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use Class::Std;
-use CGI qw(escape escapeHTML);
+use CGI qw(escape escapeHTML header);
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Tools::Misc;
@@ -51,16 +51,21 @@ sub process {
   $param->{'_referer'} = $object->param('_referer');
   $param->{'x_requested_with'} = $object->param('x_requested_with');
 
-  CGI::header( -type=>"text/html",-charset=>'utf-8' );
-  printf q(
-    <html>
-    <head>
-      <script type="text/javascript">
-        window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '%s', title: 'File uploaded' });
-      </script>
-    </head>
-    <body><p>UP</p></body>
-    </html>), CGI::escapeHTML($self->url($url, $param));
+  $url = escapeHTML($self->url($url, $param));
+
+  header(-type => 'text/html', -charset => 'utf-8');
+
+  print qq{
+  <html>
+  <head>
+    <script type="text/javascript">
+      if (!window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '$url', title: 'File uploaded' })) {
+        window.parent.location = '$url';
+      }
+    </script>
+  </head>
+  <body><p>UP</p></body>
+  </html>};
 }
 
 sub upload {

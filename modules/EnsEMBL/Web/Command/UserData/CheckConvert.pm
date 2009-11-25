@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use Class::Std;
-
+use CGI qw(header escapeHTML);
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Command::UserData::UploadFile;
 use base 'EnsEMBL::Web::Command';
@@ -60,16 +60,21 @@ sub process {
   $param->{'x_requested_with'} = $object->param('x_requested_with');
 
   if ($self->object->param('uploadto') eq 'iframe') {
-    CGI::header( -type=>"text/html",-charset=>'utf-8' );
-    printf q(
+    $url = escapeHTML($self->url($url, $param));
+
+    header(-type => 'text/html', -charset => 'utf-8');
+
+    print qq{
     <html>
     <head>
       <script type="text/javascript">
-        window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '%s', title: 'File uploaded' });
+        if (!window.parent.Ensembl.EventManager.trigger('modalOpen', { href: '$url', title: 'File uploaded' })) {
+          window.parent.location = '$url';
+        }
       </script>
     </head>
     <body><p>UP</p></body>
-    </html>), CGI::escapeHTML($self->url($url, $param));
+    </html>};
   } else {
     $self->ajax_redirect($url, $param);
   }
