@@ -23,7 +23,8 @@ sub process {
   if (my $error = $object->[1]->{'_input'}->cgi_error()) {
     warn ">>> CGI ERROR $error";
     if ($error =~ /413/) {
-      $param->{'error'} = 'too_big';
+      $param->{'filter_module'} = 'Data';
+      $param->{'filter_code'} = 'too_big';
     }
   }
 
@@ -72,15 +73,23 @@ sub upload {
 ## Separate out the upload, to make code reuse easier
   my ($method, $object) = @_;
   my $param = {};
-
+  my ($error, $format, $filename, $full_ext, %args);
 
   ## Try to guess the format from the extension
-  my ($format, $filename);
   unless ($method eq 'text') {
     my @orig_path = split('/', $object->param($method));
     $filename = $orig_path[-1];
-    $filename =~ /\.(\w{1,4})$/;
-    my $ext = $1;
+    my @parts = split('\.', $filename);
+    my $ext = $parts[-1];
+    $full_ext = $ext;
+    if ($ext =~ /gz/i) {
+      $ext = $parts[-2];
+      $full_ext = $ext.'.'.$full_ext;
+    }
+    else {
+      ## Let's compress all uploads unless they are compressed already!
+      #$args{'compress'} = 1 unless $ext eq 'zip';
+    }
     if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i || $ext =~ /wig/i) {
       $format = uc($ext);
     }
@@ -99,7 +108,6 @@ sub upload {
   $param->{'name'} = $name;
 
   ## Cache data (TmpFile::Text knows whether to use memcached or temp file)
-  my ($error, %args);
   if ($method eq 'url') {
     my $url = $object->param('url');
     $url = 'http://'.$url unless $url =~ /^http/;
@@ -111,10 +119,10 @@ sub upload {
     $args{'content'} = $object->param('text');
   }
   else {
-    $args{tmp_filename} = $object->[1]->{'_input'}->tmpFileName($object->param($method));
+    #$args{'extension'} = $full_ext;
+    $args{'tmp_filename'} = $object->[1]->{'_input'}->tmpFileName($object->param($method));
   }
   if ($error) {
-    ## Put error message into session for display?
     $param->{'filter_module'} = 'Data';
     $param->{'filter_code'} = 'no_response';
   }
@@ -123,14 +131,6 @@ sub upload {
   
     if ($file->content) {
       if ($file->save) {
-        ## Final attempt to work out format!
-        my $data = $file->retrieve;
-        my $parser = EnsEMBL::Web::Text::FeatureParser->new($object->species_defs);
-        $parser->check_format($data);
-        $format = $parser->format unless $format;
-        if (!$format) {
-          $param->{'format'}  = 'unknown';
-        }
         my $code = $file->md5 . '_' . $object->get_session->get_session_id;
      
         $param->{'species'} = $object->param('species') || $object->species;
@@ -144,7 +144,6 @@ sub upload {
           name      => $name,
           species   => $object->param('species'),
           format    => $format,
-          style     => $parser->style,
           assembly  => $object->param('assembly'),
         );
 
