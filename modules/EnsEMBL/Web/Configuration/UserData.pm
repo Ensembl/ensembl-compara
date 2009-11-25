@@ -60,7 +60,10 @@ sub populate_tree {
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
   $self->create_node( 'UploadFeedback', '',
-    [qw(upload_feedback EnsEMBL::Web::Component::UserData::UploadFeedback)], 
+    [qw(
+      upload_feedback EnsEMBL::Web::Component::UserData::UploadFeedback
+      upload_parsed   EnsEMBL::Web::Component::UserData::UploadParsed
+    )], 
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
 

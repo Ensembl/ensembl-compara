@@ -20,23 +20,30 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my $html;
 
-  my $form = EnsEMBL::Web::Form->new('upload_feedback', '', 'post');
-
-  ## Set format if coming via more_input
-  if ($self->object->param('format')) {
-    $self->object->get_session->set_data(
-      type   => 'upload',
-      code   => $self->object->param('code'),
-      format => $self->object->param('format'),
-    );
+  my $upload = $object->get_session->get_data('code' => $object->param('code'));
+  if ($upload) {
+    $html = '<p class="space-below">Thank you. Your file uploaded successfully</p><p class="space-below"><strong>File uploaded</strong>: '.$upload->{'name'}.' (';
+    if (my $format = $upload->{'format'}) {
+      $html .= "$format file";
+    }
+    else {
+      $html .= 'Unknown format';
+    }
+    if (my $species = $upload->{'species'}) {
+      $species =~ s/_/ /;
+      $html .= ", <em>$species</em>";
+    }
+    else {
+      $html .= ', unknown species';
+    }
+    $html .= ')</p>';
   }
-
-  $form->add_element(type => 'Information', value => qq(Thank you - your file was successfully uploaded. Close this Control Panel to view your data));
-  $form->add_element(type => 'Hidden', name => 'md5', value => $self->object->param('md5'));
-  $form->add_element(type => 'ForceReload' );
-
-  return $form->render;
+  else {
+    $html = qq('Sorry, there was a problem uploading your file. Please try again.');
+  }
+  return $html;
 }
 
 1;
