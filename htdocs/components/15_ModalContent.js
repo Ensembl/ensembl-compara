@@ -33,6 +33,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       });
     }
     
+    $('form td.select_all input', this.elLk.content).click(function () {
+      $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
+    }).each(function () {
+      $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
+    });
+    
     Ensembl.EventManager.trigger('validateForms', this.el);
   },
   
