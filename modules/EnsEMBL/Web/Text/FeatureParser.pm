@@ -7,23 +7,28 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Root;
+use List::MoreUtils;
 use Data::Dumper;
 
+our ($nearest_region, $nearest_start, $nearest_end);    
+
 sub new {
-  my ($class, $species_defs) = @_;
+  my ($class, $species_defs, $location) = @_;
   my $data = {
   'format'            => '',
   'style'             => '',
   'feature_count'     => 0,
+  'current_location'  => $location,
+  'nearest'           => undef,
+  'drawn_chrs'        => $species_defs->ENSEMBL_CHROMOSOMES,
   'valid_coords'      => {},
   'browser_switches'  => {},
   'tracks'            => {},
   'filter'            => undef,
   '_current_key'      => 'default',
   };
-  my $drawn_chrs = $species_defs->ENSEMBL_CHROMOSOMES;
   my $all_chrs = $species_defs->ALL_CHROMOSOMES;
-  foreach my $chr (@$drawn_chrs) {
+  foreach my $chr (@{$data->{'drawn_chrs'}}) {
     $data->{'valid_coords'}{$chr} = $all_chrs->{$chr};  
   }
   bless $data, $class;
@@ -53,6 +58,24 @@ sub style {
   my $self = shift;
   $self->{style} = shift if @_;
   return $self->{'style'};
+}
+
+sub feature_count {
+  my $self = shift;
+  $self->{feature_count} = shift if @_;
+  return $self->{'feature_count'};
+}
+
+sub drawn_chrs {
+  my $self = shift;
+  $self->{drawn_chrs} = shift if @_;
+  return $self->{'drawn_chrs'};
+}
+
+sub nearest {
+  my $self = shift;
+  $self->{nearest} = shift if @_;
+  return $self->{'nearest'};
 }
 
 sub filter {
@@ -92,7 +115,14 @@ sub parse {
     my $current_max = 0;
     my $current_min = 0;
     my $valid_coords = $self->{'valid_coords'};
-;
+
+    ## On upload, keep track of current location so we can find nearest feature
+    my ($current_index, $current_region, $current_start, $current_end);    
+    if (@{$self->{'drawn_chrs'}} && (my $location = $self->{'current_location'})) {
+      ($current_region, $current_start, $current_end) = split(':|-', $location);
+      $current_index = List::MoreUtils::first_index {$_ eq $current_region} @{$self->drawn_chrs} if $current_region;
+    }
+
     foreach my $row ( split /\n|\r/, $data ) {
       ## Skip crap and clean up what's left
       next unless $row;
@@ -124,6 +154,10 @@ sub parse {
           my ($chr, $start, $end) = $empty->coords($columns);
           $chr =~ s/chr//;
 
+          ## We currently only do this on initial upload (by passing current location)  
+          $self->_find_nearest($current_index, $current_region, $current_start, $current_end, 
+                    $chr, $start, $end) if $current_region;
+
           if (keys %$valid_coords && scalar(@$columns) >1) {
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
             next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
@@ -132,7 +166,6 @@ sub parse {
           }
 
           ## Optional - filter content by location
-          my $filter = $self->filter;
           if ($filter->{'chr'}) {
             next unless ($chr eq $filter->{'chr'} || $chr eq 'chr'.$filter->{'chr'}); 
             if ($filter->{'start'} && $filter->{'end'}) {
@@ -161,6 +194,13 @@ sub parse {
       }
     }
     $self->{'feature_count'} = $count;
+    ## Extend sample coordinates a bit!
+    if ($nearest_region) {
+      my $midpoint = int(abs($nearest_start - $nearest_end)/2) + $nearest_start;
+      my $start = $midpoint < 50000 ? 0 : ($midpoint - 50000);
+      my $end = $start + 100000;
+      $self->{'nearest'} = $nearest_region.':'.$start.'-'.$end;
+    }
   }
 }
 
@@ -188,6 +228,34 @@ sub split_into_columns {
   }
   @columns = grep /\S/, @columns;
   return (\@columns, $tabbed);
+}
+
+
+sub _find_nearest {
+### Find the feature nearest the current location
+  my ($self, $current_index, $current_region, $current_start, $current_end, $feat_region, $feat_start, $feat_end) = @_;
+  my $feat_index    = List::MoreUtils::first_index {$_ eq $feat_region} @{$self->drawn_chrs};
+  my $nearest_index = List::MoreUtils::first_index {$_ eq $nearest_region} @{$self->drawn_chrs};
+
+  if ($nearest_region) {
+    if ($feat_region eq $current_region) { ## We're getting warm!
+      $nearest_region = $feat_region;
+      ## Is this feature start nearer?
+      if (abs($current_start - $feat_start) < abs($current_start - $nearest_start)) {
+        ($nearest_start, $nearest_end) = ($feat_start, $feat_end);
+      }
+    }
+    else {
+      ## Is this chromosome nearer?
+      if (abs($current_index - $feat_index) < abs($current_index - $nearest_index)) {
+        ($nearest_region, $nearest_start, $nearest_end) = ($feat_region, $feat_start, $feat_end);
+      }
+    }
+  }
+  else {
+    ## Establish a baseline
+    ($nearest_region, $nearest_start, $nearest_end) = ($feat_region, $feat_start, $feat_end);
+  }
 }
 
 sub check_format {
