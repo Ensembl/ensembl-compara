@@ -1645,7 +1645,7 @@ sub add_variation_feature {
   
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
   
-  $menu->append($self->create_track("variation_feature_$key", 'All variations', {
+  $menu->append($self->create_track("variation_feature_$key", 'All variants', {
     db          => $key,
     glyphset    => '_variation',
     sources     => undef,
@@ -1653,11 +1653,11 @@ sub add_variation_feature {
     depth       => 0.5,
     bump_width  => 0,
     colourset   => 'variation',
-    description => 'Variation features from all sources',
+    description => 'Sequence variants from all sources',
     display     => 'off'
   }));
   
-  $menu->append($self->create_track("variation_feature_genotyped_$key", 'Genotyped variations', {
+  $menu->append($self->create_track("variation_feature_genotyped_$key", 'Genotyped variants', {
     db          => $key,
     glyphset    => '_variation',
     sources     => undef,
@@ -1666,11 +1666,12 @@ sub add_variation_feature {
     bump_width  => 0,
     filter      => 'genotyped',
     colourset   => 'variation',
-    description => 'Genotyped variation features from all sources',
+    description => 'Genotyped variants from all sources',
     display     => 'off'
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
+   next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
    next unless $hashref->{'source'}{'counts'}{$key_2} > 0; 
    
     my $description = $hashref->{'source'}{'descriptions'}{$key_2}; 
@@ -1696,7 +1697,6 @@ sub add_variation_feature {
     
     $menu->append($self->create_track('read_wiggle_' . $key . '_' . $strain_name, "RC $strain_name", {
       db          => $key,
-      glyphset    => 'read_coverage',
       sources     => undef,
       strand      => 'r',
       labels      => 'on',
@@ -1726,7 +1726,7 @@ sub add_variation_feature {
   }));
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'}||{}}) {
-    my $description = "Strutural variations from $hashref->{'structural_variation'}{'descriptions'}{$key_2}";
+    my $description = $hashref->{'source'}{'descriptions'}{$key_2};
     
     $menu->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       db          => $key,
