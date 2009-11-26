@@ -42,6 +42,7 @@ form.std fieldset th.checkbox-long { width: 90% }
 form.std fieldset td.checkbox-long { width: 5%; float: right }
 
 form.std fieldset th.no-bold { font-weight:normal; }
+form.std fieldset th.select_all { text-decoration: underline; }
 form.std input.normal { width: 90% }
 form.std input.short  { width: 10em }
 form.std input.narrow { width: 20em }
