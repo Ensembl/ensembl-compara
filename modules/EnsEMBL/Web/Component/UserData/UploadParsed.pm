@@ -23,7 +23,7 @@ sub content {
   my $object = $self->object;
   my $url    = $self->ajax_url('ajax', 1) . ';r=' . $object->parent->{'params'}->{'r'}[0] . ';code=' .  $object->param('code');
   
-  return qq{<div class="ajax" title="['$url']"></div>};
+  return qq{<div class="ajax" title="['$url']"></div><div class="modal_reload"></div>};
 }
 
 sub content_ajax {
