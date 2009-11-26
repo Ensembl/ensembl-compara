@@ -150,8 +150,8 @@ sub parse {
           ## Complex format requiring special parsing (e.g. WIG)
           $columns = $self->parse_row($row);
         }
-        if ($columns && scalar(@$columns)) { ;
-          my ($chr, $start, $end) = $empty->coords($columns);
+        if ($columns && scalar(@$columns)) {  
+          my ($chr, $start, $end) = $empty->coords($columns); 
           $chr =~ s/chr//;
 
           ## We currently only do this on initial upload (by passing current location)  
@@ -328,7 +328,10 @@ sub analyse_row {
     else {
       $format = 'GFF';   
     }
-  } 
+  }
+  elsif ($tabbed && _is_strand($columns->[4])) { # TSV Format required for Consequence Calculator    
+    $format = 'Consequence';
+  }   
   elsif ( _is_strand($columns->[9])) { # DAS format accepted by Ensembl
     $format = 'DAS';   
   } 
@@ -337,7 +340,7 @@ sub analyse_row {
   } 
   elsif (scalar(@$columns) > 2 && scalar(@$columns) < 13 && $columns->[1] =~ /\d+/ && $columns->[2] =~ /\d+/) { 
     $format = 'BED';   
-  }
+  } 
   return $format;
 }
 
