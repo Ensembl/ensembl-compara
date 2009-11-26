@@ -386,7 +386,7 @@ sub gff3_features {
               
               next unless $start || $end;
               
-              $_ += $e->seq_region_start for $start, $end; # why isn't there an API call for this?
+              $_ += $slice->start - 1 for $start, $end; # why isn't there an API call for this?
               
               $self->feature('CDS', $e, { Parent => $t_id, Name => $t->translation->stable_id }, { start => $start, end => $end, %$properties });
             }
