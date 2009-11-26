@@ -29,7 +29,7 @@ sub get {
   my $file = $obj->full_path;
 
   my $content = '';
-  if ($obj->compress) {
+  if ($obj->compress || $obj->extension =~ /gz$/) {
     my $gz = gzopen( $file, 'rb' )
          or warn "GZ Cannot open $file: $gzerrno\n";
     if ($gz) {
@@ -57,7 +57,7 @@ sub save {
       my $gz = gzopen($file, 'wb')
            or die "GZ Cannot open $file: $gzerrno\n";
       $gz->gzwrite($obj->content)
-           or die "GZ Cannot srite content: $gzerrno\n";
+           or die "GZ Cannot write content: $gzerrno\n";
       $gz->gzclose();
     } else {
       open(FILE, ">$file")

@@ -82,14 +82,10 @@ sub upload {
     $filename = $orig_path[-1];
     my @parts = split('\.', $filename);
     my $ext = $parts[-1];
-    $full_ext = $ext;
+    #$full_ext = $ext;
     if ($ext =~ /gz/i) {
       $ext = $parts[-2];
-      $full_ext = $ext.'.'.$full_ext;
-    }
-    else {
-      ## Let's compress all uploads unless they are compressed already!
-      #$args{'compress'} = 1 unless $ext eq 'zip';
+      #$full_ext = $ext.'.'.$full_ext;
     }
     if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i || $ext =~ /wig/i) {
       $format = uc($ext);
@@ -104,11 +100,11 @@ sub upload {
     }
     else {
       $name = $filename;
+      $args{'filename'} = $filename;
     }
   }
   $param->{'name'} = $name;
 
-  ## Cache data (TmpFile::Text knows whether to use memcached or temp file)
   if ($method eq 'url') {
     my $url = $object->param('url');
     $url = 'http://'.$url unless $url =~ /^http/;

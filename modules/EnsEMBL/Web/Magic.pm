@@ -18,6 +18,7 @@ use EnsEMBL::Web::Document::WebPage;
 use EnsEMBL::Web::RegObj;
 use CGI;
 $CGI::POST_MAX = $ENSEMBL_WEB_REGISTRY->species_defs->CGI_POST_MAX; ## set max upload size
+#warn 'MAX UPLOAD = '.$ENSEMBL_WEB_REGISTRY->species_defs->CGI_POST_MAX;
 
 use base qw(Exporter);
 our @EXPORT = our @EXPORT_OK = qw(magic stuff carpet ingredient Gene Transcript Location menu modal_stuff Variation Server configurator);
