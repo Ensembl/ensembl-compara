@@ -21,12 +21,27 @@ sub caption {
 sub content {
   my $self = shift; 
   my $object = $self->object;
-  my $html = "<h2>Stable ID Mapper</h2>";
+  my ($html_target, $text_target, $title);
+  
+
+  if ($object->param('id_mapper') ) {
+    $title = 'Stable ID Mapper';
+    $html_target = 'IDConversion';
+    $text_target = 'MapIDs';       
+  } elsif ($object->param('consequence_mapper') ){
+    $title = 'Consequence Calculator';  
+    $html_target = 'ConsequenceCalculator';
+    $text_target = 'SNPConsequence';
+  }
+
+
+  my $html = "<h2>$title</h2>";
   my $text = "Please select the format you would like your output in:";
   my $referer;
   if ($object->param('_referer')){ 
     $referer =  ';_referer='. $object->param('_referer');
   }
+ 
   my $extra_param = ';x_requested_with='.$object->param('x_requested_with');
   if ($object->param('_time')) { $extra_param.= ';_time='.$object->param('_time'); }                      
   my $convert_file;
@@ -37,8 +52,8 @@ sub content {
     $convert_file .=';id_limit=' .$object->param('id_limit');
   }
   my $species= ';species='.$object->param('species');
-  my $html_url = '/'.$object->data_species.'/UserData/IDConversion?format=html' .$convert_file.$referer.$species;
-  my $text_url = '/'.$object->data_species.'/UserData/MapIDs?format=text' .$convert_file.$referer.$extra_param.$species;
+  my $html_url = '/'.$object->data_species.'/UserData/'.$html_target.'?format=html' .$convert_file.$referer.$species;
+  my $text_url = '/'.$object->data_species.'/UserData/'.$text_target.'?format=text' .$convert_file.$referer.$extra_param.$species;
   my $list =  [
               '<a href='.$html_url.'>HTML</a>',
               '<a class="modal_link" href='.$text_url.'>Text</a> ',
