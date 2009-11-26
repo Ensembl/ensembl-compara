@@ -40,6 +40,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     
     Ensembl.EventManager.trigger('validateForms', this.el);
+    
+    if ($('.ajax', this.elLk.content).length) {
+      var panel = $('.ajax', this.elLk.content).parents('.js_panel');
+      Ensembl.EventManager.trigger('createPanel', panel.attr('id'), 'Content');
+      panel = null;
+    }
   },
   
   getContent: function (link, url, failures) {
