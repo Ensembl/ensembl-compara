@@ -4,6 +4,7 @@ package EnsEMBL::Web::Command::UserData::UploadFile;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use Class::Std;
 use CGI qw(escape escapeHTML header);
