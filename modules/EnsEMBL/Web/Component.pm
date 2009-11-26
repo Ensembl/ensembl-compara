@@ -109,15 +109,15 @@ sub _info_panel {
 }
 
 sub ajax_url {
-  my ($self, $function_name) = @_;
+  my ($self, $function_name, $no_query_string) = @_;
   
   my $object = $self->object;
   my ($ensembl, $plugin, $component, $type, $module) = split '::', ref $self;
   
   my $url = join '/', $object->species_path, 'Component', $object->type, $plugin, $module;
   $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
-  $url .= "?$ENV{'QUERY_STRING'}";
-  $url .= ';_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4;
+  $url .= '?_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4;
+  $url .= ";$ENV{'QUERY_STRING'}" unless $no_query_string;
   
   return $url;
 }
