@@ -17,12 +17,17 @@ sub process {
   my $self = shift;
   my $object = $self->object;
   my $url;
+  my $param;
+
   if ($object->param('id_mapper')){
+    $param->{'id_mapper'} = $object->param('id_mapper');
+    $url = '/'.$object->data_species.'/UserData/SelectOutput';
+  } elsif ($object->param('consequence_mapper')) {
+    $param->{'consequence_mapper'} = $object->param('consequence_mapper');
     $url = '/'.$object->data_species.'/UserData/SelectOutput';
   } else {
     $url = '/'.$object->data_species.'/UserData/ConvertFeatures';
   }
-  my $param;
 
   my @methods = qw(text file url);
   my $method;
@@ -49,7 +54,7 @@ sub process {
     push @$files_to_convert, $object->param('convert_file');
   }
   $param->{'convert_file'} = $files_to_convert;
-  unless ($object->param('id_mapper')){
+  unless ($object->param('id_mapper') || $object->param('consequence_mapper')){
     $param->{'conversion'} = $object->param('conversion');
   }
   if ($object->param('id_limit')) {
