@@ -38,23 +38,29 @@ sub content_ajax {
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($object->species_defs, $object->param('r'));
   
   if ($upload->{'type'} eq 'upload') {
-    #warn "UPLOAD ".$upload->{'filename'}.' = '.$upload->{extension};
-    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $upload->{'filename'}, extension => $upload->{'extension'});
-    my $data = $file->retrieve;
-
-    $parser->parse($data, $upload->{'format'});
-    $upload->{'format'} = $parser->format unless $upload->{'format'};
-    $upload->{'style'}  = $parser->style;
-    $object->get_session->set_data($upload);
-
-    $html .= '<p class="space-below"><strong>Total features found</strong>: ' . $parser->feature_count . '</p>';
-
-    if ($parser->nearest) {
-      $html .= '<p class="space-below"><strong>Go to nearest region with data</strong>: ';
-      $html .= qq{<a href="/$upload->{'species'}/Location/View?r=} . $parser->nearest . '">' . $parser->nearest . '</a></p>';
-      $html .= '<p class="space-below">or</p>';
+    my $size = int($upload->{'filesize'} / (1024 ** 2));
+    if ($size > 10) {
+      $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider uploading a smaller dataset.</p>";
     }
-    $html .= '<p>Close this window to return to current page</p>';
+    else {
+      #warn "UPLOAD ".$upload->{'filename'}.' = '.$upload->{extension};
+      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $upload->{'filename'}, extension => $upload->{'extension'});
+      my $data = $file->retrieve;
+
+      $parser->parse($data, $upload->{'format'});
+      $upload->{'format'} = $parser->format unless $upload->{'format'};
+      $upload->{'style'}  = $parser->style;
+      $object->get_session->set_data($upload);
+
+      $html .= '<p class="space-below"><strong>Total features found</strong>: ' . $parser->feature_count . '</p>';
+
+      if ($parser->nearest) {
+        $html .= '<p class="space-below"><strong>Go to nearest region with data</strong>: ';
+        $html .= qq{<a href="/$upload->{'species'}/Location/View?r=} . $parser->nearest . '">' . $parser->nearest . '</a></p>';
+        $html .= '<p class="space-below">or</p>';
+      }
+      $html .= '<p>Close this window to return to current page</p>';
+    }
   }
 
   return $html;
