@@ -596,7 +596,7 @@ sub calculate_consequence_data {
   my ($self, $file) = @_;
   my $data = $self->fetch_userdata_by_id($file);
   my %slice_hash;      
-  my %consequence_results;  
+  my %consequence_results = ();  
 
   if (my $parser = $data->{'parser'}){ 
     foreach my $track ($parser->{'tracks'}) { 
@@ -630,6 +630,12 @@ sub calculate_consequence_data {
             $strand = 0; 
           }
 
+          unless ($f->can('allele_string')){
+            my $html ='The uploaded data is not in the correct format. 
+              See <a href="/info/website/upload/index.html#Consequence">here</a> for more details.';
+            my $error = 1;
+            return ($html, $error);
+          }
           # Create VariationFeature
           my $vf = Bio::EnsEMBL::Variation::VariationFeature->new(
             -start          => $f->start,
@@ -641,7 +647,12 @@ sub calculate_consequence_data {
             -adaptor        => $vfa,
             -variation_name => $f->seqname.'_'.$pos.'_'.$f->allele_string,  
           );
-
+          unless ($vf->allele_string){
+            my $html ='The uploaded data is not in the correct format.
+              See <a href="/info/website/upload/index.html#Consequence">here</a> for more details.';
+            my $error = 1;
+            return ($html, $error);
+          }
           $consequence_results{$f} = $vf; 
         }    
       }
