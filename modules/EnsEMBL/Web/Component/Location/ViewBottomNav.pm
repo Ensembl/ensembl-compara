@@ -24,7 +24,7 @@ sub content {
   
   my $object = $self->object;
   
-  return unless $object->param('r');
+  return if $object->core_objects->location->isa('EnsEMBL::Web::Fake');
   
   my $scale = $object->species_defs->ENSEMBL_GENOME_SIZE || 1;
   my $image_width = $self->image_width;
