@@ -25,6 +25,7 @@ sub process {
   } elsif ($object->param('consequence_mapper')) {
     $param->{'consequence_mapper'} = $object->param('consequence_mapper');
     $url = $object->species_path($object->data_species).'/UserData/SelectOutput';
+    $param->{'upload_format'} = $object->param('upload_format');
   } else {
     $url = $object->species_path($object->data_species).'/UserData/ConvertFeatures';
   }
