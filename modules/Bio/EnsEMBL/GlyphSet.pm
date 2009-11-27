@@ -846,21 +846,18 @@ sub bump_row {
   substr($element, $start, $length) = '1' x $length;
   
   while ($row < $self->{$key}{'rows'}) {
-    if ($self->{$key}{'array'}[$row]) {
-      if (($self->{$key}{'array'}[$row] & $element) == 0) {
-        $self->{$key}{'array'}[$row] |= $element;
-        last;
-      } else {
-        $row++;
-        return 1e9 if $row > $self->{$key}{'rows'};
-      }
-    } else {
-      $self->{$key}{'array'}[$row] |= $element;
-      last;
+    unless ($self->{$key}{'array'}[$row]) { # We have no entries in this row - so create a new row
+      $self->{$key}{'array'}[$row] = $element;
+      return $row;
     }
+    if (($self->{$key}{'array'}[$row] & $element) == 0) { # We already have a row, but the element fits so include it
+      $self->{$key}{'array'}[$row] |= $element;
+      return $row;
+    }
+    $row++; # Can't fit in on this row go to the next row..
   }
   
-  return $row;
+  return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
 #==============================================================================================================
