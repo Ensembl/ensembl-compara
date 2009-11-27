@@ -21,16 +21,15 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-
-  my $form = $self->modal_form('select_url', '/'.$object->data_species.'/UserData/AttachURL', {'wizard' => 1, 'back_button' => 0});
-
+  
+  my $current_species = $object->species_path($object->data_species);
+  my $form = $self->modal_form('select_url', "$current_species/UserData/AttachURL", {'wizard' => 1, 'back_button' => 0});
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $current_species = $object->data_species;
 
   # URL-based section
-  $form->add_notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).<br /><br />Note also that large files will be parsed into density tracks to avoid overloading our system; if you wish to examine an area in detail, you should attach another file with a more limited set of features.)});
+  $form->add_notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="$current_species/UserData/Upload?$referer" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).<br /><br />Note also that large files will be parsed into density tracks to avoid overloading our system; if you wish to examine an area in detail, you should attach another file with a more limited set of features.)});
 
   $form->add_element('type'  => 'String',
                      'name'  => 'url',

@@ -25,7 +25,7 @@ sub content {
   
   my $form;
 
-  my $url = '/'.$object->data_species.'/UserData/ValidateDAS';
+  my $url = $object->species_path($object->data_species).'/UserData/ValidateDAS';
   my $fieldset = {'name' => 'sources'};
   my $elements = [];
 

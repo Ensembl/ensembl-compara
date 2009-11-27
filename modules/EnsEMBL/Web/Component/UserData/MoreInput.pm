@@ -21,7 +21,7 @@ sub content {
   my $self = shift;
 
   my $species = $self->object->param('species') || $self->object->data_species;
-  my $form = $self->modal_form('more_input', "/$species/UserData/UploadFeedback", {'wizard' => 1});
+  my $form = $self->modal_form('more_input', $object->species_path($species) . "/UserData/UploadFeedback", {'wizard' => 1});
 
   ## Format selector
   my $formats = [

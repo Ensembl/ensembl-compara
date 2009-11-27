@@ -21,13 +21,13 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $current_species = $object->data_species;
+  my $current_species = $object->species_path($object->data_species);
   my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
 
   my $das_link    = qq(<a href="/info/docs/das/index.html">Distributed Annotation System</a>);
-  my $url_link    = qq(<a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">URL</a>);
-  my $upload_link = qq(<a href="/$current_species/UserData/Upload?$referer" class="modal_link">upload</a>);
-  my $action_url  = "/$current_species/UserData/CheckServer";
+  my $url_link    = qq(<a href="$current_species/UserData/AttachURL?$referer" class="modal_link">URL</a>);
+  my $upload_link = qq(<a href="$current_species/UserData/Upload?$referer" class="modal_link">upload</a>);
+  my $action_url  = "$current_species/UserData/CheckServer";
 
   my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE; 
   my $form = $self->modal_form('select_server', $action_url, {'wizard' => 1, 'back_button' => 0});

@@ -24,7 +24,7 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $html;
 
-  my $form = $self->modal_form('share', '/'.$object->data_species.'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
+  my $form = $self->modal_form('share', $object->species_path($object->data_species).'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
 
   my ($has_groups, @groups);
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;

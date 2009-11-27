@@ -29,7 +29,7 @@ sub content {
   ## Should default to 5.0MB :)
   my $max_upload_size = sprintf("%.1f", $object->species_defs->CGI_POST_MAX / 1048576).'MB';
 
-  my $form = $self->modal_form('select', "/$current_species/UserData/UploadFile", {'label'=>'Upload'});
+  my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
 
   unless ($object->param('filter_module')) { ## No errors
     $html .= $self->_hint('upload_notes', 'IMPORTANT NOTE', qq(We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.<br /><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>));

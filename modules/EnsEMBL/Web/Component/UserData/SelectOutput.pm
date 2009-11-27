@@ -52,15 +52,15 @@ sub content {
     $convert_file .=';id_limit=' .$object->param('id_limit');
   }
   my $species= ';species='.$object->param('species');
-  my $html_url = '/'.$object->data_species.'/UserData/'.$html_target.'?format=html' .$convert_file.$referer.$species;
-  my $text_url = '/'.$object->data_species.'/UserData/'.$text_target.'?format=text' .$convert_file.$referer.$extra_param.$species;
+  my $html_url = $object->species_path($object->data_species).'/UserData/'.$html_target.'?format=html' .$convert_file.$referer.$species;
+  my $text_url = $object->species_path($object->data_species).'/UserData/'.$text_target.'?format=text' .$convert_file.$referer.$extra_param.$species;
   my $list =  [
               '<a href='.$html_url.'>HTML</a>',
               '<a class="modal_link" href='.$text_url.'>Text</a> ',
   ];
 
 
-  my $form = $self->modal_form('select', "/$object->data_species/UserData/IDMapper", { no_button => 1 });
+  my $form = $self->modal_form('select', $object->species_path($object->data_species) . "/UserData/IDMapper", { no_button => 1 });
 
   $form->add_fieldset;
   $form->add_notes({ class => undef, text => $text });

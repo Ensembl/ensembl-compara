@@ -23,7 +23,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new('rename_record', '/'.$self->object->data_species.'/UserData/SaveRecord', 'post');
+  my $form = EnsEMBL::Web::Form->new('rename_record', $object->species_path($object->data_species) . '/UserData/SaveRecord', 'post');
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $method = $object->param('accessor');

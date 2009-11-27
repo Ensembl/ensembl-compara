@@ -23,7 +23,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = EnsEMBL::Web::Form->new('rename_tempdata', '/'.$object->data_species.'/UserData/SaveTempData', 'post');
+  my $form = EnsEMBL::Web::Form->new('rename_tempdata', $object->species_path($object->data_species).'/UserData/SaveTempData', 'post');
 
   my $tempdata = $object->get_session->get_data('code' => $object->param('code'));
 

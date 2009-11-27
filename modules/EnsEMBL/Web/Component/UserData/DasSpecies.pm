@@ -23,7 +23,7 @@ sub content {
   my $object = $self->object;
 
   my $server = $object->param('das_server');
-  my $url = '/'.$object->data_species.'/UserData/';
+  my $url = $object->species_path($object->data_species).'/UserData/';
   my $form;
 
   if ($server) {

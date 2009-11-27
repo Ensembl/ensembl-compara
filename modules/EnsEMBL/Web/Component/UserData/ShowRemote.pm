@@ -21,7 +21,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $form = $self->modal_form('show_remote', '/'.$object->data_species.'/UserData/SaveRemote', {'wizard' => 1});
+  my $form = $self->modal_form('show_remote', $object->species_path($object->data_species).'/UserData/SaveRemote', {'wizard' => 1});
 
   my $has_data = 0;
   my $das = $self->object->get_session->get_all_das;

@@ -30,7 +30,7 @@ sub content {
   my $html = qq(<p class="space-below">Map your data to the current assembly. Accepted file formats: GFF, GTF, BED, PSL</p>
 <p class="space-below">N.B. Export is currently in GFF only</p>);
 
-  my $form = $self->modal_form('select', "/$current_species/UserData/CheckConvert");
+  my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/CheckConvert");
   my $subheader = 'Upload file';
 
   ## Species now set automatically for the page you are on
