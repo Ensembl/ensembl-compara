@@ -29,10 +29,14 @@ sub process {
   foreach my $file_name (@files) {
     next unless $file_name;
     my ($file, $name) = split(':', $file_name);
-    my $table = $object->calculate_consequence_data($file);
+    my ($table, $error) = $object->calculate_consequence_data($file);
 
-    $output .= $table->render_Text;    
-      
+    if ($error) {
+      $output .= $table;
+    }
+    else {
+      $output .= $table->render_Text;    
+    }  
   ## Output new data to temp file
     my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
         extension => 'txt',
