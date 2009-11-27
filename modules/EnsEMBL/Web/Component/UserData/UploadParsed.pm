@@ -43,14 +43,13 @@ sub content_ajax {
       $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider uploading a smaller dataset.</p>";
     }
     else {
-      #warn "UPLOAD ".$upload->{'filename'}.' = '.$upload->{extension};
       my $file = new EnsEMBL::Web::TmpFile::Text(filename => $upload->{'filename'}, extension => $upload->{'extension'});
       my $data = $file->retrieve;
 
       $parser->parse($data, $upload->{'format'});
       $upload->{'format'} = $parser->format unless $upload->{'format'};
       $upload->{'style'}  = $parser->style;
-      $object->get_session->set_data($upload);
+      $object->get_session->set_data(%$upload);
 
       $html .= '<p class="space-below"><strong>Total features found</strong>: ' . $parser->feature_count . '</p>';
 
