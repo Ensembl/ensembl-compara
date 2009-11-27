@@ -329,9 +329,6 @@ sub analyse_row {
       $format = 'GFF';   
     }
   }
-  elsif ($tabbed && _is_strand($columns->[4])) { # TSV Format required for Consequence Calculator    
-    $format = 'Consequence';
-  }   
   elsif ( _is_strand($columns->[9])) { # DAS format accepted by Ensembl
     $format = 'DAS';   
   } 
