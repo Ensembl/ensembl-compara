@@ -29,7 +29,7 @@ sub content {
   ## Get assembly info
   my $html;
 
-  my $form = $self->modal_form('select', $object->species_path($current_species) . "UserData/CheckConvert");
+  my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/CheckConvert");
   $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text' => qq(<p>Data should be uploaded as a list of tab or comma separated values for more information on the expected format see <a href="/info/website/upload/snp_consequence.html">here.</a></p>) });
   my $subheader = 'Upload file';
 
