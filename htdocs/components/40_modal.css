@@ -29,14 +29,14 @@
 
 .modal_title .modal_close { float: right; margin-top: 1px; padding: 0; width: 10em; text-align: center; }
 
-div.species_list    { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
-div.species_list ul { padding: 0; margin-left: 5px; margin-right: 5px; }
-div.species_list li { list-style-image: none; list-style-type: none; cursor: pointer; clear: both; height: 30px; padding-left: 10px; position: relative; }
-div.species_list ul.included li { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
-div.species_list ul.excluded li { background-color: lightGrey; color: [[CONTRAST_TEXT]]; border: 1px solid; }
-div.species_list ul li span        { position: absolute; margin-top: 7px; }
-div.species_list ul li span.switch { height: 30px; width: 30px; margin: 0; right: 0; }
-div.species_list ul.included li span.switch { background-image: url(/img/sprites/zoom_out.png); }
-div.species_list ul.excluded li span.switch { background-image: url(/img/sprites/zoom_in.png); }
+div.multi_selector_list    { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
+div.multi_selector_list ul { padding: 0; margin-left: 5px; margin-right: 5px; }
+div.multi_selector_list li { list-style-image: none; list-style-type: none; cursor: pointer; clear: both; height: 30px; padding-left: 10px; position: relative; }
+div.multi_selector_list ul.included li { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
+div.multi_selector_list ul.excluded li { background-color: lightGrey; color: [[CONTRAST_TEXT]]; border: 1px solid; }
+div.multi_selector_list ul li span        { position: absolute; margin-top: 7px; }
+div.multi_selector_list ul li span.switch { height: 30px; width: 30px; margin: 0; right: 0; }
+div.multi_selector_list ul.included li span.switch { background-image: url(/img/sprites/zoom_out.png); }
+div.multi_selector_list ul.excluded li span.switch { background-image: url(/img/sprites/zoom_in.png); }
 
 .modal_wrapper { zoom: 1; } /* Filthy IE hack to make the panel border go around the whole content */
