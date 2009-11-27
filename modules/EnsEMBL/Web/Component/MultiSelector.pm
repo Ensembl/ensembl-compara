@@ -31,17 +31,12 @@ sub content {
 }
 
 sub content_ajax {
-  my $self = shift;
-  my $object = $self->object;
-  
+  my $self     = shift;
+  my $object   = $self->object;
   my %all      = %{$self->{'all_options'}};
   my %included = %{$self->{'included_options'}};
-  use Data::Dumper;
-  warn Dumper \%all;
-  warn "\n\n";
-  warn Dumper \%included;
-  my $params = $object->multi_params;  
-  my $url = $object->_url({ function => undef, align => $object->param('align') }, 1);
+  my $params   = $object->multi_params;  
+  my $url      = $object->_url({ function => undef, align => $object->param('align') }, 1);
   my ($include_list, $exclude_list, $extra_inputs);
   
   $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_}) for sort keys %{$url->[1]};
