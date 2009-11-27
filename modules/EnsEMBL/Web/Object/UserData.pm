@@ -649,7 +649,7 @@ sub calculate_consequence_data {
           );
           unless ($vf->allele_string){
             my $html ='The uploaded data is not in the correct format.
-              See <a href="/info/website/upload/index.html#Consequence">here</a> for more details.';
+              See <a href="/info/website/upload/index.html#Consequence">here</a> for more details about the expected format.';
             my $error = 1;
             return ($html, $error);
           }
