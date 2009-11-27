@@ -37,6 +37,7 @@ sub content {
   $form->add_element( type => 'NoEdit', name => 'show_species', label => 'Species', 'value' => $self->object->species_defs->species_label($current_species));
   $form->add_element( type => 'Hidden', name => 'species', 'value' => $current_species);
   $form->add_element( type => 'Hidden', name => 'consequence_mapper', 'value' => 1);
+  $form->add_element( type => 'Hidden', name => 'upload_format', 'value' => 'consequence');
   $form->add_element('type' => 'SubHeader', 'value' => $subheader);
 
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
