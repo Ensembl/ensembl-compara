@@ -136,6 +136,9 @@ sub parse {
       elsif ($row =~ /^track/) {
         $row =~ s/^track\s+(.*)$/$1/i;
         $self->add_track($row);
+        if ($row =~ /type=bedGraph/ || $row =~ /type=wiggle/ || $row =~ /useScore=[3|4]/) {
+          $self->style('wiggle');
+        }
         ## Reset max and min in case this is a multi-track file
         $current_max = 0;
         $current_min = 0;
@@ -184,6 +187,8 @@ sub parse {
               $current_min = $self->{'tracks'}{$self->current_key}{'config'}{'min_score'};
               $current_max = $feature->score if $feature->score > $current_max;
               $current_min = $feature->score if $feature->score < $current_min;
+              $current_max = 0 unless $current_max; ## Because shit happens...
+              $current_min = 0 unless $current_min;
               $self->{'tracks'}{$self->current_key}{'config'}{'max_score'} = $current_max;
               $self->{'tracks'}{$self->current_key}{'config'}{'min_score'} = $current_min;
             }
@@ -273,12 +278,10 @@ sub check_format {
       }
       elsif ($row =~ /^track\s+/i) {
         if ($row =~ /type=wiggle0/) {
-          $self->style('wiggle');
           $format = 'WIG';
           last;
         }
         elsif ($row =~ /type=bedGraph/ || $row =~ /type=wiggle_0/ || $row =~ /useScore=[3|4]/) {
-          $self->style('wiggle');
           $format = 'BED';
           last;
         }
