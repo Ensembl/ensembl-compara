@@ -21,12 +21,12 @@ sub process {
 
   if ($object->param('id_mapper')){
     $param->{'id_mapper'} = $object->param('id_mapper');
-    $url = '/'.$object->data_species.'/UserData/SelectOutput';
+    $url = $object->species_path($object->data_species).'/UserData/SelectOutput';
   } elsif ($object->param('consequence_mapper')) {
     $param->{'consequence_mapper'} = $object->param('consequence_mapper');
-    $url = '/'.$object->data_species.'/UserData/SelectOutput';
+    $url = $object->species_path($object->data_species).'/UserData/SelectOutput';
   } else {
-    $url = '/'.$object->data_species.'/UserData/ConvertFeatures';
+    $url = $object->species_path($object->data_species).'/UserData/ConvertFeatures';
   }
 
   my @methods = qw(text file url);

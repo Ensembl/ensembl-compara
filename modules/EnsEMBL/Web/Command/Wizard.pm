@@ -24,7 +24,7 @@ sub process {
     my $current_node = 'Summary'; ## Default value to stop Magic from barfing
     my $species = $ENV{'ENSEMBL_TYPE'} eq 'UserData' ? $object->data_species : $object->species;
     if ($species) {
-      $url .= "/$species";
+      $url .= $object->species_path($species);
     }
     $url .= '/'.$ENV{'ENSEMBL_TYPE'};
 

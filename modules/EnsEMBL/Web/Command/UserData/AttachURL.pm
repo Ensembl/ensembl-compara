@@ -14,7 +14,7 @@ use base 'EnsEMBL::Web::Command';
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $redirect = '/'.$object->data_species.'/UserData/';
+  my $redirect = $object->species_path($object->data_species).'/UserData/';
   my $param = {
     '_referer'          => $object->param('_referer'),
     'x_requested_with'  => $object->param('x_requested_with'),

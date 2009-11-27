@@ -14,7 +14,7 @@ use EnsEMBL::Web::Component::Export;
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $url = '/'.$object->data_species.'/UserData/PreviewConvertIDs';
+  my $url = $object->species_path($object->data_species).'/UserData/PreviewConvertIDs';
   my $param;
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');

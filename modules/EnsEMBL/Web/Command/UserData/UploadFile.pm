@@ -18,7 +18,7 @@ use base 'EnsEMBL::Web::Command';
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $url = '/'.$object->data_species;
+  my $url = $object->species_path($object->data_species);
   my $param = {};
 
   if (my $error = $object->[1]->{'_input'}->cgi_error()) {

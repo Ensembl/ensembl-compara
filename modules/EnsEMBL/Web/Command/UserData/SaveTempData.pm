@@ -19,7 +19,7 @@ sub process {
   }
  
   $self->ajax_redirect(
-    '/'.$object->data_species.'/UserData/ManageData', 
+    $object->species_path($object->data_species).'/UserData/ManageData', 
     {'_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with')}
   ); 
 

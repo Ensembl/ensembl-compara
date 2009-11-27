@@ -18,7 +18,7 @@ sub process {
 
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
-  my $url = '/'.$object->data_species.'/';
+  my $url = $object->species_path($object->data_species).'/';
   my $param = {
     '_referer'  => $object->param('_referer'),
     'x_requested_with' => $object->param('x_requested_with'),

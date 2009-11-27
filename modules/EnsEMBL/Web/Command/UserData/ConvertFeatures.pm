@@ -15,7 +15,7 @@ use Bio::EnsEMBL::DnaDnaAlignFeature;
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $url = '/'.$object->data_species.'/UserData/PreviewConvert';
+  my $url = $object->species_path($object->data_species).'/UserData/PreviewConvert';
   my $param;
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
