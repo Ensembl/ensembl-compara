@@ -120,7 +120,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         switch (json.panelType) {
           case 'Configurator': buttonText = 'Save and close'; break;
-          case 'SpeciesSelector': buttonText = 'Update species'; break;
+          case 'MultiSelector': buttonText = 'Update options'; break;
           default: buttonText = 'Close'; break;
         }
         
