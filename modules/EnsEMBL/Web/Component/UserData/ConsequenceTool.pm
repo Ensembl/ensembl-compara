@@ -28,10 +28,22 @@ sub content {
 
   foreach my $file_name (@files) {
     my ($file, $name) = split(':', $file_name);  
-    my $table = $object->calculate_consequence_data($file);
+    my ($table, $error) = $object->calculate_consequence_data($file);
+    if ($error) {  return $self->error($table); }
     $html .= $table->render;
   }
 
   return $html;
 }
+
+sub error {
+  my ($self, $error_text) = (@_);
+  my $html = $self->_info(
+    'Error Parsing the data',
+    $error_text
+  );
+  return $html;
+
+}
+
 1;
