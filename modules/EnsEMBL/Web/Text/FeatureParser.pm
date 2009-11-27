@@ -260,9 +260,6 @@ sub _find_nearest {
 
 sub check_format {
   my ($self, $data, $format) = @_;
-  if ($self->object->param('upload_format')){
-    $format = uc($self->object->param('upload_format'));
-  }    
 
   unless ($format) {
     foreach my $row ( split /\n|\r/, $data ) {
