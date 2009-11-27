@@ -29,7 +29,7 @@ sub content {
   my $url = $self->object->_url({
     'type'   => 'Location',
     'action' => 'View',
-    'r'      => $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end
+    'r'      => $object->seq_region_name.':'.$object->bound_start.'-'.$object->bound_end
   });
 
   my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s.',
