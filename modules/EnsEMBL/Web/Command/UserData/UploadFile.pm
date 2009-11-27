@@ -90,6 +90,9 @@ sub upload {
     if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i || $ext =~ /wig/i) {
       $format = uc($ext);
     }
+    if ($object->param('upload_format')){
+      $format = uc ($object->param('upload_format'));
+    }
   }
 
   ## Get original path, so can save file name as default name for upload
