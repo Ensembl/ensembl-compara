@@ -9,7 +9,7 @@ use base qw(Bio::EnsEMBL::ExternalData::DAS::Source);
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(%GENE_COORDS %PROT_COORDS is_genomic);
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(%GENE_COORDS %PROT_COORDS %SNP_COORDS is_genomic);
 
 # Create a new SourceConfig using a hash reference for parameters.
 # Can also use an existing Bio::EnsEMBL::ExternalData::DAS::Source or
@@ -36,7 +36,7 @@ sub new_from_hashref {
 
   # Convert old-style type & assembly parameters to single coords
   if (my $type = $hash->{type}) {
-    my $c = $GENE_COORDS{$type} || $PROT_COORDS{$type};
+    my $c = $GENE_COORDS{$type} || $PROT_COORDS{$type} || $SNP_COORDS{$type};
     if ( $c ) {
       push @{ $hash->{coords} }, $c;
     } else {
@@ -254,7 +254,8 @@ sub _guess_views {
   
   my $positional    = 0;
   my $nonpositional = 0;
-  
+  my $snp = 0;
+
   for my $cs (@{ $self->coord_systems() }) {
     # assume genomic coordinate systems are always positional
     if ( is_genomic($cs) || $cs->name eq 'toplevel' ) {
@@ -263,6 +264,9 @@ sub _guess_views {
     # assume gene coordinate systems are always non-positional
     elsif ( $GENE_COORDS{ $cs->name } ) {
       $nonpositional = 1;
+    }
+    elsif ( $SNP_COORDS{ $cs->name } ) {
+      $snp = 1;
     } else {
       $positional = 1;
       $nonpositional = 1;
@@ -282,6 +286,10 @@ sub _guess_views {
     Gene/ExternalData
     Transcript/ExternalData
   ) if $nonpositional;
+
+  push @views, qw(
+    Variation/ExternalData
+  ) if $snp;
   
   return \@views;
 }
