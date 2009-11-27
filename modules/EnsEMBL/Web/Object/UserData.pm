@@ -714,10 +714,19 @@ sub format_consequence_data {
           $snp_string = $slices{$slice_name};
         }
         else {
-          my $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
-            $var_feature->seq_region_name, $var_feature->seq_region_start,
-            $var_feature->seq_region_end);
+
+          my $temp_slice;
+          if ($var_feature->start <= $var_feature->end){  
+            $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
+              $var_feature->seq_region_name, $var_feature->seq_region_start,
+              $var_feature->seq_region_end);
+          } else {
+            $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
+              $var_feature->seq_region_name, $var_feature->seq_region_end,
+              $var_feature->seq_region_start);
+          }      
           my $snp_id;
+
           foreach my $vf (@{$temp_slice->get_all_VariationFeatures()}){
             next unless ($vf->seq_region_start == $var_feature->seq_region_start) &&
               ($vf->seq_region_end == $var_feature->seq_region_end);
