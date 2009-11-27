@@ -147,8 +147,26 @@ sub render_normal {
     my( $txt, $bit, $w,$th ) = $self->get_text_width( 0, 'X', '', 'ptsize' => $fontsize, 'font' => $fontname );
     $label_h = $th;
   }
-  
-  foreach my $feature_key ( $strand < 0 ? sort keys %features : reverse sort keys %features ) {
+
+  ## Sort (user tracks) by priority 
+  my $prioritize;
+  while (my ($k, $v) = each (%features)) {
+    if (@$v > 1 && $v->[1]{'priority'}) {
+      $prioritize = 1;
+    }
+  }
+  my @sorted;
+  if ($prioritize) {
+    @sorted = sort { 
+      ($features{$a}->[1]{'priority'} || 0) <=> ($features{$b}->[1]{'priority'} || 0)
+      } keys %features;
+  }
+  else {
+    @sorted = $strand < 0 ? sort keys %features : reverse sort keys %features;
+  }
+  @sorted = keys %features unless @sorted;
+ 
+  foreach my $feature_key (@sorted) {
     $self->{'track_key'} = $feature_key;
     $self->_init_bump( undef, $dep );
     my %id = ();
