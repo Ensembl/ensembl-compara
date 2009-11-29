@@ -309,7 +309,7 @@ sub build_GeneTreeSystem
   # CreateBlastRules
   print STDERR "CreateBlastRules...\n";
   #
-  # Only run the next analysis, CreateHclustePrepareJobs, when all blasts are finished
+  # Only run the next analysis, CreateHclusterPrepareJobs, when all blasts are finished
   $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'CreateHclusterPrepareJobs'}";
   my $blastrules_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -371,6 +371,44 @@ sub build_GeneTreeSystem
     $sth->execute();
   }
 
+  #
+  # CreateStoreSeqExonBoundedJobs
+  print STDERR "CreateStoreSeqExonBoundedJobs...\n";
+  #
+  $parameters = $genetree_params{'cluster_params'};
+  my $CreateStoreSeqExonBoundedJobs = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateStoreSeqExonBoundedJobs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateStoreSeqExonBoundedJobs',
+      -parameters      => $parameters
+  );
+  $analysisDBA->store($CreateStoreSeqExonBoundedJobs);
+
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateStoreSeqExonBoundedJobs->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+  }
+
+  #
+  # StoreSeqExonBounded
+  print STDERR "StoreSeqExonBounded...\n";
+  #
+  my $storeseqexonbounded = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'StoreSeqExonBounded',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::StoreSeqExonBounded',
+      -parameters      => $blast_template->parameters
+    );
+  $analysisDBA->store($storeseqexonbounded);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($storeseqexonbounded->dbID);
+  $stats->batch_size(20);
+  $stats->hive_capacity(200);
+  $stats->update();
+
+  #
   # CreateHclusterPrepareJobs
   print STDERR "CreateHclusterPrepareJobs...\n";
   #
@@ -394,10 +432,6 @@ sub build_GeneTreeSystem
     $stats->hive_capacity(-1);
     $stats->status('BLOCKED');
     $stats->update();
-#     $ctrlRuleDBA->create_rule($orthotree,$CreateHclusterPrepareJobs);
-#     $ctrlRuleDBA->create_rule($njtree_phyml,$CreateHclusterPrepareJobs);
-#     $ctrlRuleDBA->create_rule($muscle,$CreateHclusterPrepareJobs);
-#     $ctrlRuleDBA->create_rule($BreakPAFCluster,$CreateHclusterPrepareJobs);
   }
 
   #
@@ -494,7 +528,7 @@ sub build_GeneTreeSystem
 
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
-  $stats->batch_size(10);
+  $stats->batch_size(4);
   $stats->hive_capacity(600);
   $stats->update();
 
@@ -544,6 +578,9 @@ sub build_GeneTreeSystem
   }
   if (defined $genetree_params{'honeycomb_dir'}) {
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+  }
+  if (defined $genetree_params{'gs_mirror'}) {
+    $parameters .= ",'gs_mirror'=>'".$genetree_params{'gs_mirror'}."'";
   }
 
   $parameters .= ", 'use_genomedb_id'=>1" if defined $genetree_params{use_genomedb_id};
@@ -828,6 +865,8 @@ sub build_GeneTreeSystem
 
   # $ctrlRuleDBA->create_rule($updatepafids_analysis, $paf_cluster);
   $ctrlRuleDBA->create_rule($blastrules_analysis, $CreateHclusterPrepareJobs);
+  $ctrlRuleDBA->create_rule($blastrules_analysis, $CreateStoreSeqExonBoundedJobs);
+  $ctrlRuleDBA->create_rule($CreateStoreSeqExonBoundedJobs, $storeseqexonbounded);
   $ctrlRuleDBA->create_rule($CreateHclusterPrepareJobs, $hclusterprepare);
   $ctrlRuleDBA->create_rule($hclusterprepare, $hclusterrun);
 #   $dataflowRuleDBA->create_rule($hclusterprepare, $hclusterrun, 1);
@@ -873,6 +912,12 @@ sub build_GeneTreeSystem
     (
      -input_id       => 1,
      -analysis       => $CreateHclusterPrepareJobs,
+    );
+
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+    (
+     -input_id       => 1,
+     -analysis       => $CreateStoreSeqExonBoundedJobs,
     );
 
    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
