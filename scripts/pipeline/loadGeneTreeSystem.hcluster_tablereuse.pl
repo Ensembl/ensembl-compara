@@ -404,7 +404,7 @@ sub build_GeneTreeSystem
     );
   $analysisDBA->store($storeseqexonbounded);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($storeseqexonbounded->dbID);
-  $stats->batch_size(20);
+  $stats->batch_size(1);
   $stats->hive_capacity(200);
   $stats->update();
 
@@ -449,7 +449,7 @@ sub build_GeneTreeSystem
     );
   $analysisDBA->store($hclusterprepare);
   $stats = $hclusterprepare->stats;
-  $stats->batch_size(10);
+  $stats->batch_size(1);
   $stats->hive_capacity(4);
   $stats->status('BLOCKED');
   $stats->update();
@@ -528,7 +528,7 @@ sub build_GeneTreeSystem
 
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
-  $stats->batch_size(4);
+  $stats->batch_size(1);
   $stats->hive_capacity(600);
   $stats->update();
 
@@ -743,7 +743,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($homology_dNdS);
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
-    $stats->batch_size(10);
+    $stats->batch_size(1);
     my $homology_dnds_hive_capacity = $hive_params{homology_dnds_hive_capacity};
   	$homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
   	$stats->hive_capacity($homology_dnds_hive_capacity);
