@@ -161,7 +161,7 @@ sub populate_tree {
   
   $align_menu->append($self->create_node('Multi', $caption,
     [qw(
-      selector EnsEMBL::Web::Component::Location::SelectAlignment
+      selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
       top      EnsEMBL::Web::Component::Location::MultiTop
       botnav   EnsEMBL::Web::Component::Location::MultiBottomNav
       bottom   EnsEMBL::Web::Component::Location::MultiBottom
