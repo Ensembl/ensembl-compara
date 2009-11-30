@@ -971,9 +971,6 @@ sub transcript_label {
   $pattern =~ s/\[text_label\]/$ini_entry/g;
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $transcript->analysis->$1 : $transcript->$1/eg;
-  if ($gene->analysis->logic_name !~ /ensembl_projection/ && ($gene->status eq 'KNOWN_BY_PROJECTION' || $transcript->status eq 'KNOWN_BY_PROJECTION')) {
-    $pattern = 'projected '.$pattern;
-  }
   return $pattern;
 }
 
@@ -990,33 +987,28 @@ sub gene_label {
   $pattern =~ s/\[text_label\]/$ini_entry/g;
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' || $1 eq 'display_label' ? $gene->analysis->$1 : $gene->$1/eg;
-  if ($gene->analysis->logic_name !~ /ensembl_projection/ && $gene->status eq 'KNOWN_BY_PROJECTION') {
-    $pattern = 'projected '.$pattern;
-  }
   return $pattern;
 }
 
 sub transcript_key {
   my ($self, $transcript, $gene) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]';
+  if ($transcript->analysis->logic_name =~ /ensembl_havana/) {
+    return 'merged';
+  }
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
-  #hack to get correct key when STATUS is needed
-  if ($gene->analysis->logic_name !~ /ensembl_projection/ && ($gene->status eq 'KNOWN_BY_PROJECTION' || $transcript->status eq 'KNOWN_BY_PROJECTION')) {
-    $pattern = 'known_by_projection_'.$pattern;
-  }
   return lc $pattern;
 }
 
 sub gene_key {
   my ($self, $gene) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]';
+  if ($gene->analysis->logic_name =~ /ensembl_havana/) {
+    return 'merged';
+  }
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
-  #hack to get correct key when STATUS is needed
-  if ($gene->analysis->logic_name !~ /ensembl_projection/ && $gene->status eq 'KNOWN_BY_PROJECTION') {
-    $pattern = 'known_by_projection_'.$pattern;
-  }
   return lc $pattern;
 }
 
