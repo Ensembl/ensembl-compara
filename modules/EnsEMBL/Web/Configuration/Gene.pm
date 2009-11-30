@@ -174,7 +174,7 @@ sub populate_tree {
   
   $external->append($self->create_node('UserAnnotation', 'Personal annotation',
     [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
-    { 'availability' => 'gene' }
+    { 'availability' => 'login gene' }
   ));
   
   my $history_menu = $self->create_submenu('History', 'ID History');
