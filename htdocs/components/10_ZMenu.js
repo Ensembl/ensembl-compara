@@ -408,8 +408,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     $.each(content, function () {
-      menu = this.split(': ');
-      body += '<tr>' + (menu.length == 2 ? '<th>' + menu[0] + '</th><td>' + menu[1] + '</td>' : '<td colspan="2">' + this + '</td>') + '</tr>';
+      menu = this.split(': ');      
+      body += '<tr>' + (menu.length > 1 ? '<th>' + menu.shift() + '</th><td>' + menu.join(': ') + '</td>' : '<td colspan="2">' + this + '</td>') + '</tr>';
     });
     
     this.populated = true;
