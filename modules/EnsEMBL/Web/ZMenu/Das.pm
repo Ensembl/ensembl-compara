@@ -43,7 +43,7 @@ sub content {
   
   $strand = $strand_map{$strand} || '0';
   
-  $self->caption($id);
+  $self->caption($object->param('label'));
   
   foreach (keys %{$features->{$logic_name}->{'features'}}) {
     my $objects = $features->{$logic_name}->{'features'}->{$_}->{'objects'};
@@ -78,15 +78,10 @@ sub content {
     push @feat, $nearest_feature if $nearest_feature && $nearest < 2 * ($click_end - $click_start);
     
     foreach (@feat) {
-      my $label  = $_->display_label;
       my $method = $_->method_label; 
-      my $score  = $_->score; 
+      my $score  = $_->score;
       
-      if ($label ne $id || scalar @feat > 1) {
-        $label = "Nearest feature: $label" if $nearest_feature;
-        
-        $self->add_subheader($label);
-      }
+      $self->add_subheader(($nearest_feature ? 'Nearest feature: ' : '') . $_->display_label) if $_->display_id ne $id || scalar @feat > 1;
       
       $self->add_entry({ type => 'Type:',   label_html => $_->type_label });
       $self->add_entry({ type => 'Method:', label_html => $method }) if $method;
