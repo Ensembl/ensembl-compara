@@ -184,6 +184,7 @@ sub _draw_features {
         }
         
         $title .= '; Type: ' . ($group->{'type_label'} || $group->{'type'}) if $group->{'type'};
+        $title .= '; Id: ' . $group->{'id'} if $group->{'id'};
 
         if ($group->{'extent_end'} > 0 && $group->{'extent_start'} < $seq_len) {
           my $row = $self->bump_row($group->{'start'} * $ppbp, $end * $ppbp) + $self->{'_row_offset'};
@@ -278,12 +279,13 @@ sub _draw_features {
               my $href = @{$f->{'link'}||[]} ? $f->{'link'}->[0]{'href'} : undef;
               
               my $title = sprintf(
-                '%s; Start: %s; End: %s; Strand: %s%s',
+                '%s; Start: %s; End: %s; Strand: %s%s%s',
                 $f->display_label || $f->display_id,
                 $f->seq_region_start,
                 $f->seq_region_end,
                 $ori > $f->seq_region_strand ? '+' : '-',
-                $f->type_id ? '; Type: ' . ($f->type_label || $f->type_id) : ''
+                $f->type_id ? '; Type: ' . ($f->type_label || $f->type_id) : '',
+                $f->display_id ? '; Id: ' . $f->display_id : ''
               );
 
               $self->push($self->Space({
