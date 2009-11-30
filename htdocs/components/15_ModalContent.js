@@ -57,8 +57,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       url: url,
       dataType: 'json',
       success: function (json) {
+        if (json.redirectURL) {
+          return myself.getContent(link, json.redirectURL);
+        }
+        
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
-        if (link.hasClass('active')) {
+        if (typeof link == 'undefined' || link.hasClass('active')) {
           myself.updateContent(json);
         }
       },
@@ -107,6 +111,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           data: data,
           dataType: 'json',
           success: function (json) {
+            if (json.redirectURL) {
+              return myself.getContent(undefined, json.redirectURL);
+            }
+            
             if (json.success === true) {
               Ensembl.EventManager.trigger('reloadPage');
             } else if ($(myself.el).is(':visible')) {
