@@ -10,8 +10,12 @@ use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
+  
   $self->cacheable(0);
   $self->ajaxable(0);
+  
+  $self->{'panel_type'} = 'MultiSelector'; # Default value - can be overridden in child _init function. Determines javascript Ensembl.panel type
+  $self->{'url_param'}  = ''; # This MUST be implemented in the child _init function - it is the name of the parameter you want for the URL, eg if you want to add parameters s1, s2, s3..., $self->{'url_param'} = 's'
 }
 
 sub content {
@@ -33,9 +37,8 @@ sub content {
 sub content_ajax {
   my $self     = shift;
   my $object   = $self->object;
-  my %all      = %{$self->{'all_options'}};
-  my %included = %{$self->{'included_options'}};
-  my $params   = $object->multi_params;  
+  my %all      = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
+  my %included = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => 1 }
   my $url      = $object->_url({ function => undef, align => $object->param('align') }, 1);
   my ($include_list, $exclude_list, $extra_inputs);
   
@@ -62,15 +65,15 @@ sub content_ajax {
     </div>',
     $url->[0],
     $extra_inputs,
-    $self->{'included_header'},
+    $self->{'included_header'}, # Set in child _init function
     $include_list,
-    $self->{'excluded_header'},
+    $self->{'excluded_header'}, # Set in child _init function
     $exclude_list,
   );
   
   $content =~ s/\n//g;
   
-  return qq{{'content':'$content','panelType':'MultiSelector','wrapper':'<div class="panel modal_wrapper"></div>','nav':''}};
+  return qq{{'content':'$content','panelType':'$self->{'panel_type'}','wrapper':'<div class="panel modal_wrapper"></div>','nav':'','urlParam':'$self->{'url_param'}'}};
 }
 
 1;
