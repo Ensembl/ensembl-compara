@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Component::Location::SelectAlignment;
+package EnsEMBL::Web::Component::Location::MultiSpeciesSelector;
 
 use strict;
 use warnings;
