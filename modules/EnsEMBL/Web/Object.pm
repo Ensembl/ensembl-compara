@@ -45,6 +45,7 @@ sub _availability {
   
   my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$self->species_defs->databases} };
   $hash->{'database:compara'} = 1 if $self->species_defs->compara_like_databases;
+  $hash->{'login'} = 1 if $self->species_defs->ENSEMBL_LOGINS;
   
   return $hash;
 }
