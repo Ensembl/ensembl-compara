@@ -479,10 +479,10 @@ sub render_ungrouped {
       }
     }
     
-    $y_offset -= $strand * ($h+2);# + ( $self->{'show_labels'} ? $label_h+2 : 0 ) ) if $flag;
+    $y_offset -= $strand * ($h+2);
   }
-  $self->errorTrack( "No ".$self->my_config('name')." features in this region" )
-    unless( $features_drawn || $self->{'config'}->get_option('opt_empty_tracks') == 0);
+  
+  $self->errorTrack('No ' . $self->my_config('name') . ' features in this region') unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
 sub render_text {
