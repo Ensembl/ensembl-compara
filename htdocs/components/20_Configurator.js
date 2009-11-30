@@ -66,15 +66,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
       
-      var input = dt.children('input');
-      
-      input.each(function () {
+      dt.children('input').each(function () {
         if (this.value == 'off' ^ val == 'off') {
           label[1] = parseInt(label[1]) + (val == 'off' ? -1 : 1);
         }
         
         this.value = this.newVal || val;
-        delete this.newVal;
+        $(this).removeAttr('newVal');
       });
       
       if (val != 'all_on') {
@@ -92,7 +90,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu = null;
       dt = null;
       li = null;
-      input = null;
       link = null;
     });
     
