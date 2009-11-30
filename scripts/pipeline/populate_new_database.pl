@@ -166,8 +166,8 @@ GetOptions(
     "master=s" => \$master,
     "old=s" => \$old,
     "new=s" => \$new,
-    "species=s@" => \$species,
-    "mlss|method_link_species_sets=s@" => \$mlsss,
+    "species=s@" => $species,
+    "mlss|method_link_species_sets=s@" => $mlsss,
     'exact_species_name_match' => \$exact_species_name_match
   );
 
