@@ -144,7 +144,7 @@ sub parse {
         $current_min = 0;
       }
       else {
-        my $columns; 
+        my ($columns, $done); 
         if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { ;
           ## 'Normal' format consisting of a straightforward feature
           ($columns) = $self->split_into_columns($row, $format);
@@ -158,8 +158,15 @@ sub parse {
           $chr =~ s/chr//;
 
           ## We currently only do this on initial upload (by passing current location)  
-          $self->_find_nearest($current_index, $current_region, $current_start, $current_end, 
-                    $chr, $start, $end) if $current_region;
+          if ($current_region) {
+            $self->_find_nearest($current_index, $current_region, $current_start, $current_end, 
+                    $chr, $start, $end);
+          }
+          elsif (!$done) {
+            ## Select first feature as nearest
+            ($nearest_region, $nearest_start, $nearest_end) = ($chr, $start, $end);
+            $done = 1;
+          }
 
           if (keys %$valid_coords && scalar(@$columns) >1) {
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
@@ -252,7 +259,7 @@ sub _find_nearest {
     }
     else {
       ## Is this chromosome nearer?
-      if (abs($current_index - $feat_index) < abs($current_index - $nearest_index)) {
+      if ($feat_index && (abs($current_index - $feat_index) < abs($current_index - $nearest_index))) {
         ($nearest_region, $nearest_start, $nearest_end) = ($feat_region, $feat_start, $feat_end);
       }
     }

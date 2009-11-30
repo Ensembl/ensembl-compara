@@ -54,7 +54,12 @@ sub content_ajax {
       $html .= '<p class="space-below"><strong>Total features found</strong>: ' . $parser->feature_count . '</p>';
 
       if ($parser->nearest) {
-        $html .= '<p class="space-below"><strong>Go to nearest region with data</strong>: ';
+        if ($object->parent->{'params'}{'r'}) {
+          $html .= '<p class="space-below"><strong>Go to nearest region with data</strong>: ';
+        }
+        else {
+          $html .= '<p class="space-below"><strong>Go to first region with data</strong>: ';
+        }
         $html .= qq{<a href="/$upload->{'species'}/Location/View?r=} . $parser->nearest . '">' . $parser->nearest . '</a></p>';
         $html .= '<p class="space-below">or</p>';
       }
