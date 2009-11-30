@@ -224,7 +224,7 @@ sub get_params {
   $self->{'max_gene_count'} = 
     $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
 
-  foreach my $key (qw[cdna max_gene_count species_tree_file honeycomb_dir use_genomedb_id]) {
+  foreach my $key (qw[cdna max_gene_count species_tree_file honeycomb_dir use_genomedb_id gs_mirror]) {
     my $value = $params->{$key};
     $self->{$key} = $value if defined $value;
   }
@@ -468,46 +468,47 @@ sub dumpTreeMultipleAlignmentToWorkdir
   # This will have the effect of grouping the different
   # fragments of a gene split event together in a subtree
   #
-  foreach my $split_type (keys %{$self->{alignment_edits}}) {
-    foreach my $split_event (@{$self->{alignment_edits}{$split_type}}) {
-      my ($protein1,$protein2) = $split_event->get_nodes;
-      my $cdna1 = $protein1->cdna_alignment_string;
-      my $cdna2 = $protein2->cdna_alignment_string;
-      # We start with the original cdna alignment string and add the
-      # position in the other cdna for every gap position
-      # e.g.
-      # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- ---
-      # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT
-      # become
-      # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT
-      # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT
-      $cdna1 =~ s/-/substr($cdna2, pos($cdna1), 1)/eg;
-      $cdna2 =~ s/-/substr($cdna1, pos($cdna2), 1)/eg;
-      # We then directly override the cached cdna_alignment_string
-      # hash, which will be used next time is called for
-      $protein1->{'cdna_alignment_string'} = $cdna1;
-      $protein2->{'cdna_alignment_string'} = $cdna2;
-      print STDERR "$split_type: Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
+  unless ($self->{gs_mirror} =~ /FALSE/) {
+    foreach my $split_type (keys %{$self->{alignment_edits}}) {
+      foreach my $split_event (@{$self->{alignment_edits}{$split_type}}) {
+        my ($protein1,$protein2) = $split_event->get_nodes;
+        my $cdna1 = $protein1->cdna_alignment_string;
+        my $cdna2 = $protein2->cdna_alignment_string;
+        # We start with the original cdna alignment string and add the
+        # position in the other cdna for every gap position
+        # e.g.
+        # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- ---
+        # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT
+        # become
+        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT
+        # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT
+        $cdna1 =~ s/-/substr($cdna2, pos($cdna1), 1)/eg;
+        $cdna2 =~ s/-/substr($cdna1, pos($cdna2), 1)/eg;
+        # We then directly override the cached cdna_alignment_string
+        # hash, which will be used next time is called for
+        $protein1->{'cdna_alignment_string'} = $cdna1;
+        $protein2->{'cdna_alignment_string'} = $cdna2;
+        print STDERR "$split_type: Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
 
-      # In case of more than 2 fragments, the projection is going to
-      # be done incrementally, the closest pairs pairs first.
-      # e.g.
-      # Fragment 1 and 2 are closer together than with 3
-      # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- --- --- --- --- --- --- ---
-      # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-      # become
-      # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-      # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
-      #
-      # and now then paired with 3, they becomes the full gene model:
-      #
-      # Original cdna3 will combine in pairs with previously merged cdna1/cdna2:
-      # cdna3 = --- --- --- --- --- --- --- --- --- --- --- --- CCC CCC CCC CCC CCC
-      # and form:
-      # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-      # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-      # cdna3 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-
+        # In case of more than 2 fragments, the projection is going to
+        # be done incrementally, the closest pairs pairs first.
+        # e.g.
+        # Fragment 1 and 2 are closer together than with 3
+        # cdna1 = AAA AAA AAA AAA AAA --- --- --- --- --- --- --- --- --- --- --- ---
+        # cdna2 = --- --- --- --- --- --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
+        # become
+        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
+        # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- --- --- --- --- ---
+        #
+        # and now then paired with 3, they becomes the full gene model:
+        #
+        # Original cdna3 will combine in pairs with previously merged cdna1/cdna2:
+        # cdna3 = --- --- --- --- --- --- --- --- --- --- --- --- CCC CCC CCC CCC CCC
+        # and form:
+        # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
+        # cdna2 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
+        # cdna3 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
+      }
     }
   }
   ########################################
@@ -765,11 +766,6 @@ sub _store_tree_tags {
 
     my @leaves = @{$tree->get_all_leaves};
     my @nodes = @{$tree->get_all_nodes};
-
-    # Node is leaf node.
-    my $node_is_leaf = 0;
-    $node_is_leaf = 1 if ($tree->is_leaf);
-    $tree->store_tag("node_is_leaf",$node_is_leaf);
 
     # Tree number of leaves.
     my $tree_num_leaves = scalar(@leaves);
