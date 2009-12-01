@@ -930,6 +930,7 @@ sub translation_object {
  Example     : $type = $transdata->db_type
  Description : Gets the db type of ensembl feature
  Return type : string a db type (EnsEMBL, Vega, EST, etc.)
+
 =cut
 
 sub db_type {
@@ -948,19 +949,14 @@ sub gene_type {
   my $self = shift;
   my $db = $self->get_db;
   my $type = '';
-  if ($db eq 'core') {
-    $type = $self->display_label;
-    $type ||= $self->db_type;
-  } else {
-    $type = $self->display_label;
-    $type ||= $self->db_type;
-  }
-  
+  $type = $self->Obj->status.' '.$self->Obj->biotype;
+  $type =~ s/_/ /;
+  $type ||= $self->display_label;
+  $type ||= $self->db_type;
   $type ||= $db;
   $type = ucfirst $type if $type !~ /[A-Z]/; # All lc, so format
-  
   return $type;
-}
+} 
 
 sub gene_stat_and_biotype {
   my $self = shift;
