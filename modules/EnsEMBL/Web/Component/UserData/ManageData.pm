@@ -89,7 +89,7 @@ sub content {
     my $not_found = 0;
      
     foreach my $file (@data) { 
-      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'})->exists) {
+      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'}, extension => $file->{'extension'})->exists) {
         $file->{'name'} .= ' (File could not be found)';
         $not_found++;
       }
@@ -151,8 +151,15 @@ sub content {
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Delete</a>', $dir, $file->logic_name, $referer);
         } elsif ($file->{'url'}) {
           $type = 'URL';
-          $name = "<strong>$file->{'name'}</strong><br />" if $file->{'name'};
-          $name .= "$file->{'url'} ($file->{'species'})";
+          $name = '<strong>';
+          if ($file->{'nearest'}) {
+            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
+                        .'" title="Jump to nearest region with data">'.$file->{'name'}.'</a>';
+          }
+          else {
+            $name .= $file->{'name'};
+          }
+          $name .= "</strong><br />$file->{'url'} ($file->{'species'})";
           
           if ($sd->ENSEMBL_LOGINS && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
@@ -163,9 +170,15 @@ sub content {
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="%s">Delete</a>', $dir, $file->{'code'}, $referer, $delete_class);
         } else {
           $type = 'Upload';
-          $name = '<p>';
-          $name .= "<strong>$file->{'name'}</strong><br />" if $file->{'name'};
-          $name .= "$file->{'format'} file for $file->{'species'}";
+          $name = '<strong>';
+          if ($file->{'nearest'}) {
+            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
+                        .'" title="Jump to nearest region with data">'.$file->{'name'}.'</a>';
+          }
+          else {
+            $name .= $file->{'name'};
+          }
+          $name .= "</strong><br />$file->{'format'} file for $file->{'species'}";
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
           if ($file->{'format'} && $file->{'format'} eq "ID") { 
