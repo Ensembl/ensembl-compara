@@ -89,9 +89,9 @@ sub content {
   if ($object->analysis) {
     $self->add_entry({
       type  => 'Analysis',
-      label => $object->analysis->display_label
+      label => $object->Obj->analysis->display_label
     });
-    
+
     $self->add_entry({
       label_html => $object->analysis->description
     });
