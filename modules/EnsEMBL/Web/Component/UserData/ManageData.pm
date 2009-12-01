@@ -154,7 +154,7 @@ sub content {
           $name = '<strong>';
           if ($file->{'nearest'}) {
             $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
-                        .'" title="Jump to nearest region with data">'.$file->{'name'}.'</a>';
+                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
           }
           else {
             $name .= $file->{'name'};
@@ -173,7 +173,7 @@ sub content {
           $name = '<strong>';
           if ($file->{'nearest'}) {
             $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
-                        .'" title="Jump to nearest region with data">'.$file->{'name'}.'</a>';
+                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
           }
           else {
             $name .= $file->{'name'};
