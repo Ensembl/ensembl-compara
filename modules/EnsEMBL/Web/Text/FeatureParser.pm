@@ -10,7 +10,7 @@ use EnsEMBL::Web::Root;
 use List::MoreUtils;
 use Data::Dumper;
 
-our ($nearest_region, $nearest_start, $nearest_end);    
+our ($nearest_region, $nearest_start, $nearest_end, $done);    
 
 sub new {
   my ($class, $species_defs, $location) = @_;
@@ -144,7 +144,7 @@ sub parse {
         $current_min = 0;
       }
       else {
-        my ($columns, $done); 
+        my $columns; 
         if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { ;
           ## 'Normal' format consisting of a straightforward feature
           ($columns) = $self->split_into_columns($row, $format);
@@ -158,15 +158,20 @@ sub parse {
           $chr =~ s/chr//;
 
           ## We currently only do this on initial upload (by passing current location)  
-          if ($current_region) {
-            $self->_find_nearest($current_index, $current_region, $current_start, $current_end, 
-                    $chr, $start, $end);
-          }
-          elsif (!$done) {
-            ## Select first feature as nearest
-            ($nearest_region, $nearest_start, $nearest_end) = ($chr, $start, $end);
-            $done = 1;
-          }
+          $done = $self->_find_nearest(
+                      {
+                        'region'  => $current_region, 
+                        'start'   => $current_start, 
+                        'end'     => $current_end, 
+                        'index'   => $current_index,
+                      }, 
+                      {
+                        'region'  => $chr, 
+                        'start'   => $start, 
+                        'end'     => $end,
+                        'index'   => List::MoreUtils::first_index {$_ eq $chr} @{$self->drawn_chrs},
+                      }
+            )  unless $done;
 
           if (keys %$valid_coords && scalar(@$columns) >1) {
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
@@ -245,29 +250,40 @@ sub split_into_columns {
 
 sub _find_nearest {
 ### Find the feature nearest the current location
-  my ($self, $current_index, $current_region, $current_start, $current_end, $feat_region, $feat_start, $feat_end) = @_;
-  my $feat_index    = List::MoreUtils::first_index {$_ eq $feat_region} @{$self->drawn_chrs};
+  my ($self, $current, $feature) = @_;
+
+  ## Set first feature as nearest if no location / chromosomes
+  unless (exists($current->{'index'})) {
+    ($nearest_region, $nearest_start, $nearest_end) 
+        = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
+    return 1;
+  }
+
   my $nearest_index = List::MoreUtils::first_index {$_ eq $nearest_region} @{$self->drawn_chrs};
 
   if ($nearest_region) {
-    if ($feat_region eq $current_region) { ## We're getting warm!
-      $nearest_region = $feat_region;
+    if ($feature->{'region'} eq $current->{'region'}) { ## We're getting warm!
+      $nearest_region = $feature->{'region'};
       ## Is this feature start nearer?
-      if (abs($current_start - $feat_start) < abs($current_start - $nearest_start)) {
-        ($nearest_start, $nearest_end) = ($feat_start, $feat_end);
+      if (abs($current->{'start'} - $feature->{'start'}) < abs($current->{'start'} - $nearest_start)) {
+        ($nearest_start, $nearest_end) = ($feature->{'start'}, $feature->{'end'});
       }
     }
     else {
       ## Is this chromosome nearer?
-      if ($feat_index && (abs($current_index - $feat_index) < abs($current_index - $nearest_index))) {
-        ($nearest_region, $nearest_start, $nearest_end) = ($feat_region, $feat_start, $feat_end);
+      if (exists($feature->{'index'}) 
+          && (abs($current->{'index'} - $feature->{'index'}) < abs($current->{'index'} - $nearest_index))) {
+        ($nearest_region, $nearest_start, $nearest_end) 
+          = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
       }
     }
   }
   else {
     ## Establish a baseline
-    ($nearest_region, $nearest_start, $nearest_end) = ($feat_region, $feat_start, $feat_end);
+    ($nearest_region, $nearest_start, $nearest_end) 
+      = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
   }
+  return 0;
 }
 
 sub check_format {
