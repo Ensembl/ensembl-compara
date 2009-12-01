@@ -100,10 +100,11 @@ sub content {
       
       my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
       my $title = ' title="This data is shared with other users"' if $sharers;
+      my ($type, $name, $species, $date, $rename, $share, $delete);
       
       ## FROM USER ACCOUNT -------------------------------------------------------------
       if (ref ($file) =~ /Record/) {
-        my ($type, $name, $date, $rename, $share, $delete);
+        ($species = $file->species) =~ s/_/&nbsp;/;
         if (ref ($file) =~ /Upload/) {
           $type = 'Upload';
           $name = '<strong>';
@@ -114,7 +115,7 @@ sub content {
           else {
             $name .= $file->{'name'};
           }
-          $name .= '</strong><br />'.$file->format.' file for '.$file->species;
+          $name .= '</strong><br />'.$file->format." file for <em>$species</em>";
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s;%s" class="%s"%s>Rename</a>', $dir, $file->id, $referer, $delete_class, $title);
@@ -137,7 +138,7 @@ sub content {
           else {
             $name .= $file->{'name'};
           }
-          $name .= '</strong><br />'.$file->url.' ('.$file->species.')';
+          $name .= '</strong><br />'.$file->url." (<em>$species</em>)";
           $date = '-';
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="%s">Rename</a>', $dir, $file->id, $referer, $delete_class);
           $share = sprintf('<a href="%s/UserData/SelectShare?id=%s;%s" class="modal_link">Share</a>', $dir, $file->id, $referer);
@@ -152,7 +153,7 @@ sub content {
       } else {
       ## TEMP DATA STORED IN SESSION --------------------------------------------
         my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
-        my ($type, $name, $delete, $share, $rename);
+        ($species = $file->{'species'}) =~ s/_/&nbsp;/;
         
         if (ref ($file) =~ /DASConfig/i) {
           $type = 'DAS';
@@ -173,7 +174,7 @@ sub content {
           else {
             $name .= $file->{'name'};
           }
-          $name .= "</strong><br />$file->{'url'} ($file->{'species'})";
+          $name .= "</strong><br />$file->{'url'} (<em>$species</em>)";
           
           if ($sd->ENSEMBL_LOGINS && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
@@ -192,7 +193,7 @@ sub content {
           else {
             $name .= $file->{'name'};
           }
-          $name .= "</strong><br />$file->{'format'} file for $file->{'species'}";
+          $name .= "</strong><br />$file->{'format'} file for <em>$species</em>";
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
           if ($file->{'format'} && $file->{'format'} eq "ID") { 
