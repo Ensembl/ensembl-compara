@@ -25,8 +25,9 @@ sub content {
   my $url    = $self->ajax_url('ajax') . ';no_wrap=1';
   
   return sprintf('
-    <div class="autocenter navbar" style="width:%spx; text-align: left; clear: both">
-      <a class="modal_link" href="%s">%s</a>
+    <div class="autocenter" style="width:%spx; text-align: left; clear: both">
+      <span class="other-tool"><img src="/i/config.png" alt="" style="vertical-align:middle;padding:0px 4px" /> <a class="modal_link" href="%s">%s</a></span>
+    <p class="invisible">.</p>
     </div>',
     $self->image_width,
     $url,
