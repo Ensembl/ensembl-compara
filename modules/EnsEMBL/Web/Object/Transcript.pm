@@ -1018,7 +1018,7 @@ sub transcript_type {
   
   if (ref $self->Obj eq 'Bio::EnsEMBL::PredictionTranscript') {
     return '';
-  } elsif ($db ne 'core') {
+  } elsif ($db !~ /core|vega/i) {
     return '';
   } else {
     $type = ucfirst(lc $self->Obj->status) . ' ' . ucfirst(lc $self->Obj->biotype);
