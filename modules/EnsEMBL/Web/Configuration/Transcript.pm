@@ -148,10 +148,12 @@ sub populate_tree {
     { 'availability' => 'transcript' }
   );
   
-  $external->append($self->create_node('UserAnnotation', 'Personal annotation',
-    [qw( manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation )],
-    { 'availability' => 'login transcript' }
-  ));
+  if ($self->object->species_defs->ENSEMBL_LOGINS) {
+    $external->append($self->create_node('UserAnnotation', 'Personal annotation',
+      [qw( manual_annotation EnsEMBL::Web::Component::Transcript::UserAnnotation )],
+      { 'availability' => 'logged_in transcript' }
+    ));
+  }
   
   my $history_menu = $self->create_submenu('History', 'ID History');
   
