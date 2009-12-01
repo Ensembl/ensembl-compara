@@ -6,7 +6,7 @@
 
 .modal_caption { float: left }
 .modal_content { overflow: scroll; height: 100%; width: 100%; position: absolute; }
-.modal_content .panel { margin-left: 17.75em; }
+.modal_content .panel { margin-left: 17.75em; } 
 
 .modal_title ul { margin: 0; padding: 0 }
 .modal_title li { list-style: none; padding: 0 0.5em 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
@@ -31,12 +31,12 @@
 
 div.multi_selector_list    { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
 div.multi_selector_list ul { padding: 0; margin-left: 5px; margin-right: 5px; }
-div.multi_selector_list li { list-style-image: none; list-style-type: none; cursor: pointer; clear: both; height: 30px; padding-left: 10px; position: relative; }
+div.multi_selector_list li { list-style-image: none; list-style-type: none; cursor: pointer; clear: both; height: 22px; padding-left: 10px; position: relative; }
 div.multi_selector_list ul.included li { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; }
-div.multi_selector_list ul.excluded li { background-color: lightGrey; color: [[CONTRAST_TEXT]]; border: 1px solid; }
-div.multi_selector_list ul li span        { position: absolute; margin-top: 7px; }
-div.multi_selector_list ul li span.switch { height: 30px; width: 30px; margin: 0; right: 0; }
-div.multi_selector_list ul.included li span.switch { background-image: url(/img/sprites/zoom_out.png); }
-div.multi_selector_list ul.excluded li span.switch { background-image: url(/img/sprites/zoom_in.png); }
+div.multi_selector_list ul.excluded li { background-color: #eeeeee; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; }
+div.multi_selector_list ul li span        { position: absolute; margin-top: 3px; }
+div.multi_selector_list ul li span.switch { height: 22px; width: 22px; margin: 0; right: 0; }
+div.multi_selector_list ul.included li span.switch { background-image: url(/i/remove.png); }
+div.multi_selector_list ul.excluded li span.switch { background-image: url(/i/add.png); }
 
 .modal_wrapper { zoom: 1; } /* Filthy IE hack to make the panel border go around the whole content */
