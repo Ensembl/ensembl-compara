@@ -106,8 +106,15 @@ sub content {
         my ($type, $name, $date, $rename, $share, $delete);
         if (ref ($file) =~ /Upload/) {
           $type = 'Upload';
-          $name = '<strong>'.$file->name.'</strong><br />';
-          $name .= $file->format.' file for '.$file->species;
+          $name = '<strong>';
+          if ($file->{'nearest'}) {
+            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
+                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
+          }
+          else {
+            $name .= $file->{'name'};
+          }
+          $name .= '</strong><br />'.$file->format.' file for '.$file->species;
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s;%s" class="%s"%s>Rename</a>', $dir, $file->id, $referer, $delete_class, $title);
@@ -122,8 +129,15 @@ sub content {
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
         } elsif (ref ($file) =~ /URL/) {
           $type = 'URL';
-          $name = '<strong>'.$file->name.'</strong><br />' if $file->name;
-          $name .= $file->url.' ('.$file->species.')';
+          $name = '<strong>';
+          if ($file->{'nearest'}) {
+            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
+                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
+          }
+          else {
+            $name .= $file->{'name'};
+          }
+          $name .= '</strong><br />'.$file->url.' ('.$file->species.')';
           $date = '-';
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="%s">Rename</a>', $dir, $file->id, $referer, $delete_class);
           $share = sprintf('<a href="%s/UserData/SelectShare?id=%s;%s" class="modal_link">Share</a>', $dir, $file->id, $referer);
