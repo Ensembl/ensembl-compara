@@ -12,6 +12,7 @@ __PACKAGE__->add_fields(
   species   => 'text',
   code      => 'text',
   name      => 'text',
+  nearest   => 'text',
 );
 
 1;

@@ -19,6 +19,7 @@ __PACKAGE__->add_fields(
   analyses  => 'text',
   browser_switches => 'text',
   style     => 'text',
+  nearest   => 'text',
 );
 
 1;
