@@ -14,8 +14,8 @@ sub _init {
   $self->SUPER::_init;
 
   $self->{'link_text'}       = 'Select species for comparison';
-  $self->{'included_header'} = 'Current species';
-  $self->{'excluded_header'} = 'Other available species';
+  $self->{'included_header'} = 'Remove a species';
+  $self->{'excluded_header'} = 'Add a species';
   $self->{'panel_type'}      = 'MultiSpeciesSelector';
   $self->{'url_param'}       = 's';
 }
