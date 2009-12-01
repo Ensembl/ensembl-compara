@@ -49,6 +49,7 @@ sub content_ajax {
       $parser->parse($data, $upload->{'format'});
       $upload->{'format'} = $parser->format unless $upload->{'format'};
       $upload->{'style'}  = $parser->style;
+      $upload->{'nearest'} = $parser->nearest;
       $object->get_session->set_data(%$upload);
 
       $html .= '<p class="space-below"><strong>Total features found</strong>: ' . $parser->feature_count . '</p>';
