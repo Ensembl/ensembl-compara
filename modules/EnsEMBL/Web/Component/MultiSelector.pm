@@ -51,13 +51,13 @@ sub content_ajax {
       <form action="%s" method="get">%s</form>
       <div class="multi_selector_list">
         <h2>%s</h2>
-        <ul class="included">
+        <ul class="excluded">
           %s
         </ul>
       </div>
       <div class="multi_selector_list">
         <h2>%s</h2>
-        <ul class="excluded">
+        <ul class="included">
           %s
         </ul>
       </div>
@@ -65,10 +65,10 @@ sub content_ajax {
     </div>',
     $url->[0],
     $extra_inputs,
-    $self->{'included_header'}, # Set in child _init function
-    $include_list,
     $self->{'excluded_header'}, # Set in child _init function
     $exclude_list,
+    $self->{'included_header'}, # Set in child _init function
+    $include_list,
   );
   
   $content =~ s/\n//g;
