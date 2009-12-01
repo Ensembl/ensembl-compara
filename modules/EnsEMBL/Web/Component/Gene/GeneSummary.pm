@@ -24,7 +24,7 @@ sub content {
   my $matches   = $object->get_database_matches;
   my @CCDS      = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
   my $db        = $object->get_db;
-  my $alt_genes = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_TRANS');
+  my $alt_genes = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE');
   my $disp_syn  = 0;
   
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
