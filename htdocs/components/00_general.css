@@ -22,7 +22,7 @@
 
 body { font-family: Luxi Sans, Geneva, Helvetica, Arial, sans-serif;
     color:[[PAGE_TEXT]]; background-color:[[PAGE_BG]]; font-size: 80%; }
-pre, code, kbd {font-family:Courier New, Courier, Monaco, monospace; }
+pre, code, kbd {font-family:Monaco, Courier New, Courier, monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
 
 /*----------------------------------------------------------------------
@@ -78,7 +78,8 @@ span.sequence { font-family: Courier New, Courier, Monaco, monospace }
 .middle     { vertical-align:middle; }
 .bottom     { vertical-align:bottom; }
 .autocenter { margin: 0 auto; }
-.invisible  { font-size:1px; color:#fff; clear:both; overflow:hidden }
+/* Force divs to wrap their contents using an invisible paragraph at the end! */
+.invisible  { font-size:1px; color:#fff; height:5px; clear:both; overflow:hidden }
 
 /*----------------------------------------------------------------------
  Links 
