@@ -11,7 +11,7 @@ use base qw(EnsEMBL::Web::Factory::Location);
 sub createObjects {
   my $self = shift;
   
-  return $self->SUPER::createObjects unless $self->core_objects->location && !$self->core_objects->location->isa('EnsEMBL::Web::Fake');
+  return $self->SUPER::createObjects if !$self->core_objects->location || $self->core_objects->location->isa('EnsEMBL::Web::Fake') || ($self->param('region') && !$self->param('r'));
   
   $self->_create_object_from_core;
   
