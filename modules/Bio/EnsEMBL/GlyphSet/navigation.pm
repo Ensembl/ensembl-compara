@@ -31,9 +31,9 @@ sub render {
     right => [ 
       $sprite_pad * 2, 
       -$sprite_step,
-      [ 'zoom_in',     'in'     ],
-      [ 'nudge_right', 'right'  ],
       [ 'right',       'right2' ],
+      [ 'nudge_right', 'right'  ],
+      [ 'zoom_in',     'in'     ],
       [ 'realign',  'realign' ],
     ]
   };
