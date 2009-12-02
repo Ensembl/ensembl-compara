@@ -152,22 +152,4 @@ sub create_user_set {
   return ($pointers, $table);
 }
 
-# --------------------- OLD FUNCTIONS ---------------------
-
-sub ldview_nav {
-  my ($pops_on, $pops_off) = $_[1]->current_pop_name;
-  my $pop;
-  
-  map { $pop .= "opt_pop_$_:on;" } @$pops_on;
-  map { $pop .= "opt_pop_$_:off;" } @$pops_off;
-
-  return bottom_nav(@_, 'ldview', {
-    'snp'    => $_[1]->param('snp') || undef,
-    'gene'   => $_[1]->param('gene') || undef,
-    'bottom' => $pop || undef,
-    'source' => $_[1]->param('source'),
-    'h'      => $_[1]->highlights_string || undef,
-  });    
-}
-
 1;
