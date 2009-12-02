@@ -17,8 +17,7 @@ sub _init {
   my $width = 40;
   my $pix_per_bp = $Config->transform->{'scalex'};
 
-
-
+  return unless  $Config->get_parameter('opt_highlight') eq 'yes';
 
   my $fg_db = undef; ;
   my $db_type  = $self->my_config('db_type')||'funcgen';
