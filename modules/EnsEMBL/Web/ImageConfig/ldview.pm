@@ -34,7 +34,7 @@ sub init {
   $self->load_tracks;
 
   $self->modify_configs(
-    [' variation_feature_genotyped_variation' ],
+    ['variation_feature_genotyped_variation' ],
     { display => 'normal', strand => 'r', style => 'box', depth => 10000 }
   );
 
