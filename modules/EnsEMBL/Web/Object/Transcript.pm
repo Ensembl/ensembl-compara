@@ -964,20 +964,18 @@ sub gene_stat_and_biotype {
   my $type = '';
   
   if ($db eq 'core') {
-    $type = ucfirst(lc $self->gene->status) . ' ' . ucfirst(lc $self->gene->biotype);
-    $type =~ s/_/ /;
+    $type = ucfirst(lc $self->gene->status) . ' ' . $self->gene->biotype;
     $type ||= $self->db_type;
   } elsif ($db eq 'vega') {
-    my $biotype = ($self->gene->biotype eq 'tec') ? uc $self->gene->biotype : ucfirst(lc $self->gene->biotype);
+    my $biotype = ($self->gene->biotype eq 'tec') ? uc $self->gene->biotype : $self->gene->biotype;
     $type = ucfirst(lc $self->gene->status) . " $biotype";
-    $type =~ s/_/ /g;
     $type =~ s/unknown //i;
     return $type;
   } else {
     $type = $self->logic_name;
   }
-  
   $type ||= $db;
+  $type =~ s/_/ /g;
   $type = ucfirst $type if $type !~ /[A-Z]/; # All lc, so format
   $type =~ s/^Est/EST/;
   
@@ -1021,7 +1019,7 @@ sub transcript_type {
   } elsif ($db !~ /core|vega/i) {
     return '';
   } else {
-    $type = ucfirst(lc $self->Obj->status) . ' ' . ucfirst(lc $self->Obj->biotype);
+    $type = ucfirst(lc $self->Obj->status) . ' ' . $self->Obj->biotype;
     $type =~ s/_/ /g;
     return $type;
   }
@@ -1029,7 +1027,7 @@ sub transcript_type {
 
 sub transcript_class {
   my $self = shift;
-  my $class = ucfirst(lc $self->Obj->status) . ' ' . ucfirst(lc $self->Obj->biotype);
+  my $class = ucfirst(lc $self->Obj->status) . ' ' . $self->Obj->biotype;
   $class =~ s/_/ /g;
   $class =~ s/unknown//i;
   return $class;
