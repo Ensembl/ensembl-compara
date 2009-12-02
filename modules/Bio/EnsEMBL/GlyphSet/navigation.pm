@@ -11,35 +11,42 @@ sub render {
 
   my $href = $self->get_parameter('base_url') . ';action=%s;id=' . --[split '|', $self->get_parameter('slice_number')]->[0];
   
-  my $sprite_size = 20;
+  my $sprite_size = 18;
   my $sprite_pad = 3;
   my $sprite_step = $sprite_size + $sprite_pad;
   my $compara = $self->get_parameter('compara');
 
   my $sprites = {
     nav   => [ 
-      -10 - $sprite_size, 
+      -60 - $sprite_size, 
       -$sprite_step,
       [ 'zoom_out', 'out'     ],
-      [ 'realign',  'realign' ],
-      [ 'zoom_in',  'in'      ]
+      [ 'nudge_left', 'left'  ],
+      [ 'left',       'left2' ],
     ],
     left  => [ 
-      0, 
+      -60, 
       $sprite_step,
-      [ 'left',       'left2' ],
-      [ 'nudge_left', 'left'  ]
     ],
     right => [ 
-      $self->image_width - $sprite_size + 1, 
+      $sprite_pad * 2, 
       -$sprite_step,
+      [ 'zoom_in',     'in'     ],
+      [ 'nudge_right', 'right'  ],
       [ 'right',       'right2' ],
-      [ 'nudge_right', 'right'  ]
+      [ 'realign',  'realign' ],
     ]
   };
   
-  push @{$sprites->{'nav'}}, [ 'flip_strand', 'flip' ],      if $compara ne 'primary';
-  push @{$sprites->{'nav'}}, [ 'set_as_primary', 'primary' ] if $compara eq 'secondary'; # Not available for paralogues
+  if ($compara ne 'primary') {
+    push @{$sprites->{'right'}}, [ 'flip_strand', 'flip' ];
+    $sprites->{'right'}[0] += $sprite_step;
+  }
+  if ($compara eq 'secondary') { 
+    # Not available for paralogues
+    $sprites->{'right'}[0] += $sprite_step;
+    push @{$sprites->{'right'}}, [ 'set_as_primary', 'primary' ];
+  }
 
   foreach my $key (keys %$sprites) {
     my ($pos, $step,  @sprite_array) = @{$sprites->{$key}};
@@ -50,7 +57,7 @@ sub render {
       $self->push($self->Sprite({
         z             => 1000,
         x             => $pos,
-        y             => 0,
+        y             => $sprite_size,,
         sprite        => $sprite->[0],
         width         => $sprite_size,
         height        => $sprite_size,
