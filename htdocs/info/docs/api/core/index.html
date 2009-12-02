@@ -55,43 +55,41 @@ Microarray probe set annotation.
 External references to other databases of biological information.
 </li>
 
+<li>
+cDNA and protein alignments supporting the transcript models that have
+been built. The cDNA alignments found in the core database are a subset
+of the cDNA alignments found in the cDNA database (for human and mouse)
+or otherfeatures database (all other species).
+</li>
+
 </ul>
 
 <h3><a id="cdna" name="cdna">cDNA database</a></h3>
 
 <p>
-Human and Mouse have a separate cDNA database, containing
-alignments of cDNAs and proteins to the  genome sequence, which serve
-as source of biological evidence in the Ensembl annotation strategy.
+Human and Mouse have a separate cDNA database, containing alignments of
+all species-specific cDNAs to the genome sequence, which serve as source
+of biological evidence in the Ensembl annotation strategy. The
+alignments are updated every release and should therefore include even
+the most recently submitted cDNA sequences.
 </p>
 
 <h3><a id="est" name="est">OtherFeatures database</a></h3>
 
 <p>
+For human and mouse, the otherfeatures database contains the full set of
+species-specific EST alignments to the genome.  For all other species
+with enough species-specific data, the otherfeatures database contains
+the full set of species-specific cDNA and EST alignments to the genome.
+
 For well-characterised species with a reasonable amount of biological
-sequence records as supporting evidence Ensembl provides an
-independent EST gene set, which is solely based on EST information.
-The key features stored are:
-</p>
+sequence records as supporting evidence Ensembl provides an independent
+EST gene set, which is solely based on EST information.
 
-<ul>
-
-<li>
-The non-redundant Ensembl EST gene set.
-</li>
-
-<li>
-A pre-filtered set of EST sequences aligned to the genome sequence.
-This set seved as the biological evidence for EST gene annotation.
-</li>
-
-</ul>
-
-<p>
 Please note that Ensembl OtherFeatures databases do not contain genome
-sequences.  This saves disk space and by connecting to Core and the
-OtherFeatures databases simultaneously, it is still possible to
-retrieve sequence information.
+sequences. This saves disk space and by connecting to Core and the
+OtherFeatures databases simultaneously, it is still possible to retrieve
+sequence information.
 </p>
 
 
