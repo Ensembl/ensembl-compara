@@ -11,9 +11,13 @@ sub content {
   
   my $object     = $self->object;
   my $hit_name   = $object->param('id');
+  my $link_name = $hit_name;
   my $hit_db     = $object->get_sf_hit_db_name($hit_name);
+  if ($hit_db eq 'RFAM') {
+    ($link_name) = split '-', $hit_name;
+  }
   my $hit_length = $object->param('hit_length');
-  my $hit_url    = $object->get_ExtURL_link( $hit_name, $hit_db, $hit_name );
+  my $hit_url    = $object->get_ExtURL_link( $link_name, $hit_db, $link_name );
   my $tsid       = $object->param('t');
   my $esid       = $object->param('exon');
   
