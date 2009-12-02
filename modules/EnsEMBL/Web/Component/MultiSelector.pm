@@ -73,8 +73,18 @@ sub content_ajax {
   );
   
   $content =~ s/\n//g;
+
+  my $hint = qq{
+    <div class="multi_selector_hint">
+      <h4>Tip</h4>
+      <p>Click on the plus and minus buttons to select or deselect options.</p>
+      <p>Selected options can be reordered by dragging them to a different position in the list</p>
+    </div>
+  };
   
-  return qq{{'content':'$content','panelType':'$self->{'panel_type'}','wrapper':'<div class="panel modal_wrapper"></div>','nav':'','urlParam':'$self->{'url_param'}'}};
+   $hint =~ s/\n//g;
+  
+  return qq{{'content':'$content','panelType':'$self->{'panel_type'}','wrapper':'<div class="panel modal_wrapper"></div>','nav':'$hint','urlParam':'$self->{'url_param'}'}};
 }
 
 1;
