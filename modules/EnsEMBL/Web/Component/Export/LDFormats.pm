@@ -11,7 +11,7 @@ sub content {
   my $object = $self->object;
 
   my $type = $object->param('type');
-  my $form_action = $object->_url({ opt_pop => $object->param('opt_pop') }, 1);
+  my $form_action = $object->_url({ pop1 => $object->param('pop1') }, 1); 
   my $text = 'Please choose a format for your exported data';
   my (@list, $params);
   
@@ -57,28 +57,35 @@ sub get_formats {
       [ 'Excel', $object->param('excel_file') ]
     );
   } else {
-    my $opt_pop = $object->parent->{'params'}->{'opt_pop'}->[0];
-    $opt_pop =~ s/(%3A|:)on//; # FIXME: Hack to remove :on from opt_pop
+
+    my %params  = %{$object->parent->{'params'}};
+    my %populations;
+    foreach (keys %params) {
+      if ($_ =~/pop\d+/){
+        my $name = $params{$_}->[0];
+        $populations{$_} = $name;
+      }
+    }
     
     my $href = $object->_url({
       type    => $object->function, 
       action  => 'Export', 
       output  => 'ld', 
-      opt_pop => $opt_pop,
+      %populations
     });
     
     my $excel = $object->_url({
       type     => 'Export',
       action   => 'LDExcelFile',
       function => $object->function, 
-      opt_pop  => $opt_pop,
+      %populations
     });
     
     my $haploview = $object->_url({
       type     => 'Export',
       action   => 'HaploviewFiles',
       function => $object->function, 
-      opt_pop  => $opt_pop,
+      %populations
     });
     
     @formats = (
