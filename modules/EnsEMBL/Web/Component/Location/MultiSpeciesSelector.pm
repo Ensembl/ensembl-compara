@@ -4,8 +4,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use CGI qw(escapeHTML);
-
 use base qw(EnsEMBL::Web::Component::MultiSelector);
 
 sub _init {
@@ -14,8 +12,8 @@ sub _init {
   $self->SUPER::_init;
 
   $self->{'link_text'}       = 'Select species for comparison';
-  $self->{'included_header'} = 'Remove a species';
-  $self->{'excluded_header'} = 'Add a species';
+  $self->{'included_header'} = 'Selected species';
+  $self->{'excluded_header'} = 'Unselected species';
   $self->{'panel_type'}      = 'MultiSpeciesSelector';
   $self->{'url_param'}       = 's';
 }
