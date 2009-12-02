@@ -160,8 +160,8 @@ sub multi_params {
   my $input = $self->{'data'}{'_input'};
   
   my %params = defined $realign ? 
-    map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|align)$/ && $input->param($_) } $input->param :
-    map { $_ => $input->param($_) } grep { /^([srg]\d*|align)$/ && $input->param($_) } $input->param;
+    map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
+    map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
   
   return \%params;
 }
