@@ -1105,7 +1105,19 @@ sub ld_pops_for_snp {
 }
 
 
-
+sub ld_location {
+  my $self = shift;
+  my $start = $self->seq_region_start;
+  my $end = $self->seq_region_end;
+  my $length = $end - $start +1;
+  my $offset = (20000 - $length)/2;
+  $start -= $offset;
+  $end += $offset;
+  $start =~s/\.5//;
+  $end =~s/\.5//;
+  my $location = $self->seq_region_name .":". $start .'-'. $end;
+  return $location;
+}
 
 sub find_location {
 
