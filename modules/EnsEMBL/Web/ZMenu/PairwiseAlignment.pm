@@ -17,7 +17,7 @@ sub content {
   my $sp1         = $object->param('s1'); # Name of the 'other' species
   my $orient      = $object->param('orient');
   my $disp_method = $object->param('method');
-  my $mlss_id     = $object->param('align');
+  my $align       = $object->param('align');
 
   my $url;
   my $sp1_display = $sp1;
@@ -41,22 +41,20 @@ sub content {
     });
 
     $self->add_entry({
-      type  => " ",
       label => "Jump to $sp1_display",
       link  => $url,
     });
 
-    if ($n0 and $mlss_id) {
+    if ($n0 and $align) {
       # Link from the net to the Alignment view (in graphic mode)
       $url = $object->_url({
         type    => 'Location',
         action  => 'Compara_Alignments/Image',
         r       => $n0,
-        align   => $mlss_id,
+        align   => $align,
       });
 
       $self->add_entry({
-        type  => " ",
         label => "Alignments (image)",
         link  => $url,
       });
@@ -66,11 +64,10 @@ sub content {
         type    => 'Location',
         action  => 'Compara_Alignments',
         r       => $n0,
-        align   => $mlss_id,
+        align   => $align,
       });
 
       $self->add_entry({
-        type  => " ",
         label => "Alignments (text)",
         link  => $url,
       });
@@ -87,7 +84,6 @@ sub content {
       });
 
       $self->add_entry({
-        type  => " ",
         label => "Multi-species View",
         link  => $url,
       });
@@ -107,22 +103,20 @@ sub content {
     });
 
     $self->add_entry({
-      type  => " ",
       label => "Jump to $sp1_display",
       link  => $url,
     });
 
-    if ($r and $mlss_id) {
+    if ($r and $align) {
       # Link from the block to the Alignment view (in graphic mode)
       $url = $object->_url({
         type    => 'Location',
         action  => 'Compara_Alignments/Image',
         r       => $r,
-        align   => $mlss_id,
+        align   => $align,
       });
 
       $self->add_entry({
-        type  => " ",
         label => "Alignments (image)",
         link  => $url,
       });
@@ -132,11 +126,10 @@ sub content {
         type    => 'Location',
         action  => 'Compara_Alignments',
         r       => $r,
-        align   => $mlss_id,
+        align   => $align,
       });
 
       $self->add_entry({
-        type  => " ",
         label => "Alignments (text)",
         link  => $url,
       });
@@ -152,7 +145,6 @@ sub content {
     });
 
     $self->add_entry({
-      type  => " ",
       label => "Multi-species View",
       link  => $url,
     });
@@ -167,7 +159,6 @@ sub content {
     });
 
     $self->add_entry({
-      type  => " ",
       label => 'View alignment',
       link  => $url
     });
