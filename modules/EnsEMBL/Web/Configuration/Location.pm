@@ -200,7 +200,9 @@ sub populate_tree {
   ));
   $variation_menu->append($self->create_node('LD', 'Linkage Data',
     [qw(
+      pop     EnsEMBL::Web::Component::Location::SelectPopulation
       ld      EnsEMBL::Web::Component::Location::LD
+      ldnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       ldimage EnsEMBL::Web::Component::Location::LDImage
     )],
     { 'availability' => 'slice has_LD', 'concise' => 'Linkage Disequilibrium Data' }
