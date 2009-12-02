@@ -42,7 +42,7 @@ sub render {
 
     my $count = 3;
     if (@entries) {
-      $html .= "<ul>";
+      $blog .= "<ul>";
       for (my $i = 0; $i < $count && $i < scalar(@entries);$i++) {
         my $title  = $entries[$i]->title;
         my ($link) = grep { $_->rel eq 'alternate' } $entries[$i]->link;
