@@ -17,14 +17,22 @@ sub content {
   my $self = shift;
   my $obj = $self->object;
   my $html = '<dl class="summary">';
-  my $focus = $self->focus($obj);  
-  if ($focus) {
-    $html .= qq( <dt>Focus: </dt><dd>$focus</dd>); 
-  }
-  $html .= $self->prediction_method($obj);
+
+  if ($obj->param('pop1')){
+    my $focus = $self->focus($obj);  
+    if ($focus) {
+      $html .= qq( <dt>Focus: </dt><dd>$focus</dd>); 
+    }
+    $html .= $self->prediction_method($obj);
  
-  my $pop_html .= $self->population_info($obj);
-  $html .= qq( <dt>Populations: </dt><dd>$pop_html</dd>);
+    my $pop_html .= $self->population_info($obj);
+    $html .= qq( <dt>Populations: </dt><dd>$pop_html</dd>);
+  } else {
+     $html .= $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations for comparison" link above.</p>'
+  );
+
+  }
+
   $html .= "</dl><br />";
   return $html;
 }
@@ -38,22 +46,23 @@ sub focus {
 
   my ( $self, $obj ) = @_;
   my ( $info, $focus );
-  if ( $obj->param('v') ) {
-    $focus = "Variant";
+  if ( $obj->param('v') && $obj->param('focus')) {
     my $snp = $obj->core_objects->variation;
-    my $name = $snp->name;
+    my $name = $snp->name; 
     my $source = $snp->source;
-    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP'; 
-    $info .= "$link_name ($source ". $snp->adaptor->get_source_version($source).")";
-  }
-  elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
-    $focus = "Gene";
-    my $gene_id = $obj->name;
-    $info = ("Gene ". $gene_id);
+    my $link_name  = $obj->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
+    my $var_url =  $obj->_url({ 'type' => 'Variation', 'action' => 'Summary', 'v' => $obj->param('v'), 'vf' => $obj->param('vf') });
+    $info .= "Variant $link_name ($source ". $snp->adaptor->get_source_version($source).")";
+    $info .= " <a href=$var_url>[View variation]</a>"; 
+  } elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
+    my $gene_id = $obj->core_objects->{'parameters'}{'g'};
     my $url = $obj->_url({ 'type' => 'Gene', 'action' => 'Summary', 'g' => $obj->param('g') });
-    $info .= "  [<a href=$url>View Gene</a>]";
-  }
-  else {
+    $info .= "Gene <a href=$url>$gene_id</a>";
+  } elsif ($obj->core_objects->{'parameters'}{'r'} ){
+    my $location= $obj->core_objects->{'parameters'}{'r'};
+    my $url = $obj->_url({ 'type' => 'Location', 'action' => 'View', 'r' => $obj->param('r') });
+    $info .= "Location <a href=$url>$location</a>";
+  } else {
     return 1;
   }
   return $info;
@@ -103,7 +112,7 @@ sub population_info {
       return $pop_html;
     }
   }
-  foreach my $name (sort {$a cmp $b} @$pop_names) {
+  foreach my $name (sort {$a cmp $b} @$pop_names) { 
     my $pop       = $object->pop_obj_from_name($name); 
     my $super_pop = $object->extra_pop($pop->{$name}{PopObject}, "super"); 
     my $sub_pop   = $object->extra_pop($pop->{$name}{PopObject}, "sub");
@@ -134,7 +143,7 @@ sub print_pop_info {
                $pop->{$pop_name}{PopLink});
     
     my $description = $pop->{$pop_name}{Description} || "unknown";
-    $description =~ s/\.\s+.*//; # descriptions are v. long. Stop after 1st "."
+    $description =~ s/\.\s+.*|\.\,.*/\./; # descriptions are v. long. Stop after 1st "."
   
     my $size = $pop->{$pop_name}{Size}|| "unknown"; 
     $return .= "<th>$label: </th><td>$display_pop &nbsp;[size: $size]</td></tr>";
@@ -147,6 +156,7 @@ sub print_pop_info {
                    <td>$tagged</td>" if $tagged;
     }
   }
+  $return .= "<br />";
   return unless $return;
   $return = "<tr>$return</tr>";
   return $return;
