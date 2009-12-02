@@ -49,7 +49,7 @@ sub availability {
   $hash->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
   $hash->{'slice_or_marker'} = $hash->{'slice'} || ($self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker');
   $hash->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
-  $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'} && $self->param('opt_pop');
+  $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'} ;  
   $hash->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
   $hash->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
   $hash->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
@@ -1014,10 +1014,10 @@ sub pop_obj_from_name {
   ### Returns population object
 
   my $self = shift;
-  my $pop_name = shift;
+  my $pop_name = shift; 
   my $variation_db = $self->database('variation')->get_db_adaptor('variation');
   my $pa  = $variation_db->get_PopulationAdaptor;
-  my $pop = $pa->fetch_by_name($pop_name);
+  my $pop = $pa->fetch_by_name($pop_name); 
   return {} unless $pop;
   my $data = $self->format_pop( [$pop] );
   return $data;
@@ -1208,51 +1208,10 @@ sub slice_cache {
 
 sub current_pop_name {
   my $self = shift; 
-  my %pops_on;
-  my %pops_off;
-  my $view_config = $self->get_viewconfig();
+  
+  my %pops_on = map { $self->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $self->param;
 
-  ## Hack to work with population passed through via url , ability to add more than one population to be added back at a later date. 
-  my $pop =  $self->param('opt_pop');
-  $pop =~s/\:on//;
-  $pops_on{$pop} = 1; 
-
-
-  # Read in all in viewconfig stuff
-  foreach ($view_config->options) {
-    next unless $_ =~ s/opt_pop_//;
-    
-    $pops_on{$_}  = 1 if $view_config->get("opt_pop_$_") eq 'on';
-    $pops_off{$_} = 1 if $view_config->get("opt_pop_$_") eq 'off';
-  }
-
-  # Set options according to bottom
-  # if param bottom   #pop_CSHL-HAPMAP:HapMap-JPT:on;
-  if ( $self->param('bottom') ) {
-    foreach( split /\|/, ($self->param('bottom') ) ) {
-      next unless $_ =~ /opt_pop_(.*):(.*)/;
-      if ($2 eq 'on') {
-        $pops_on{$1} = 1;
-        delete $pops_off{$1};
-      }
-      elsif ($2 eq 'off') {
-        $pops_off{$1} = 1;
-        delete $pops_on{$1};
-      }
-    }
-    return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
-  }
-
-  # Get pops switched on via pop arg if no bottom
-  if ( $self->param('pop') ) {
-    # put all pops_on keys in pops_off
-    map { $pops_off{$_} = 1 } (keys %pops_on);
-    %pops_on = ();
-    map { $pops_on{$_} = 1 if $_ } $self->param('pop');
-  }
-
-  return ( [keys %pops_on], [keys %pops_off] )  if keys %pops_on or keys %pops_off;
-  return [] if $self->param('bottom') or $self->param('pop');
+  return [keys %pops_on]  if keys %pops_on;
   my $default_pop =  $self->get_default_pop_name;
   warn "*****[ERROR]: NO DEFAULT POPULATION DEFINED.\n\n" unless $default_pop;
   return ( [$default_pop], [] );
@@ -1516,7 +1475,7 @@ sub focus {
     my $snp = $obj->core_objects->variation;
     my $name = $snp->name;
     my $source = $snp->source;
-    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';# warn $link_name;
+    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';
     $info .= "$link_name ($source ". $snp->adaptor->get_source_version($source).")";
   }
   elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
