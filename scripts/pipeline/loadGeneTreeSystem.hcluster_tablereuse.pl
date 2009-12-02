@@ -497,7 +497,12 @@ sub build_GeneTreeSystem
   # MCoffee
   print STDERR "MCoffee...\n";
   #
-  $parameters = "{'method'=>'cmcoffee',use_exon_boundaries=>2";
+  $parameters = "{'method'=>'cmcoffee'";
+  
+  my $exon_boundaries = (defined $genetree_params{exon_boundaries}) ? $genetree_params{exon_boundaries} : 2; 
+  if($exon_boundaries) {
+    $parameters .= qq{, use_exon_boundaries => $exon_boundaries};
+  }
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
