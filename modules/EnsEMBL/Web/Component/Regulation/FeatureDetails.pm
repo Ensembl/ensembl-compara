@@ -27,6 +27,7 @@ sub content {
     'container_width'   => $object_slice->length,
     'image_width',      => $self->image_width || 800,
     'slice_number',     => '1|1',
+    'opt_highlight'    => $object->param('opt_highlight')
   });
 
 
