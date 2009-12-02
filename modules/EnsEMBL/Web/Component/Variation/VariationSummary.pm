@@ -113,9 +113,10 @@ sub link_to_ldview {
   $output .="<td> <b>Links to Linkage disequilibrium data  per population:</b></td></tr><tr>";
   my $count = 0; 
   for my $pop_name (sort {$a cmp $b} keys %$pops) {
-    my $tag = $pops->{$pop_name} eq 1 ? "" : " (Tag SNP)";
-    my $pop_on = $pop_name .":on";
-    my $url = $object->_url({ 'type' => 'Location', 'action' =>'LD', 'v' => $object->name, 'vf' =>$object->vari->dbID, 'opt_pop' => $pop_on  });
+    my $tag = $pops->{$pop_name} eq 1 ? "" : " (Tag SNP)"; 
+    # reset r param based on variation feature location and a default context of 20 kb
+    my $ld_region = $object->ld_location;
+    my $url = $object->_url({ 'type' => 'Location', 'action' =>'LD','r' => $ld_region, 'v' => $object->name, 'vf' =>$object->vari->dbID, 'pop1' => $pop_name , 'focus' => 'variation'});
     $count++;
      $output .= "<td><a href=$url>$pop_name</a>$tag</td>";  
     if ($count ==3) {
