@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -43,7 +43,7 @@ sub content_ajax {
   my $url      = $object->_url({ function => undef, align => $object->param('align') }, 1);
   my ($include_list, $exclude_list, $extra_inputs);
   
-  $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_}) for sort keys %{$url->[1]};
+  $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) for sort keys %{$url->[1]};
   $include_list .= sprintf '<li class="%s"><span>%s</span><span class="switch"></span></li>', $_, $all{$_} for sort { $included{$a} <=> $included{$b} } keys %included;
   $exclude_list .= sprintf '<li class="%s"><span>%s</span><span class="switch"></span></li>', $_, $all{$_} for sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
   
@@ -52,13 +52,13 @@ sub content_ajax {
       <form action="%s" method="get">%s</form>
       <div class="multi_selector_list">
         <h2>%s</h2>
-        <ul class="excluded">
+        <ul class="included">
           %s
         </ul>
       </div>
       <div class="multi_selector_list">
         <h2>%s</h2>
-        <ul class="included">
+        <ul class="excluded">
           %s
         </ul>
       </div>
@@ -66,10 +66,10 @@ sub content_ajax {
     </div>',
     $url->[0],
     $extra_inputs,
-    $self->{'excluded_header'}, # Set in child _init function
-    $exclude_list,
     $self->{'included_header'}, # Set in child _init function
     $include_list,
+    $self->{'excluded_header'}, # Set in child _init function
+    $exclude_list,
   );
   
   $content =~ s/\n//g;
@@ -82,7 +82,7 @@ sub content_ajax {
     </div>
   };
   
-   $hint =~ s/\n//g;
+  $hint =~ s/\n//g;
   
   return qq{{'content':'$content','panelType':'$self->{'panel_type'}','wrapper':'<div class="panel modal_wrapper"></div>','nav':'$hint','urlParam':'$self->{'url_param'}'}};
 }
