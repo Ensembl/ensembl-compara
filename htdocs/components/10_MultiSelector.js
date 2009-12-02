@@ -82,7 +82,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     });
     
     this.elLk.list.width('');
-    this.elLk.list.width(this.elLk.list.width() < width + this.buttonWidth ? '100%' : '');
+    this.elLk.list.width(this.elLk.list.width() <= width + this.buttonWidth ? '100%' : '');
   },
   
   setSelection: function (init) {
