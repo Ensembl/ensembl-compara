@@ -445,15 +445,13 @@ sub remove_redundant_xrefs {
     my ($key, $text) = @$link;
     $priorities{$key} = $text if $text =~ />OTT|>ENST/;
   }
-  
-  return () if ref $self->object->Obj eq 'Bio::EnsEMBL::Gene'; # another hack to deal with mouse which has no 'Havana gene'
-  
+
   foreach my $type (
     'Transcript having exact match between ENSEMBL and HAVANA',
     'Ensembl transcript having exact match with Havana',
     'Havana transcript having same CDS',
     'Ensembl transcript sharing CDS with Havana',
-    'Havana transcripts'
+    'Havana transcript'
   ) {
     if ($priorities{$type}) {
       my @munged_links;
