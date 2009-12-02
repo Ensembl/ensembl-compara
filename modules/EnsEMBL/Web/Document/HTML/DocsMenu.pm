@@ -85,6 +85,7 @@ sub render {
   }
  
   my $html = qq(
+<input type="hidden" class="panel_type" value="LocalContext" />
 <dl class="local_context">
 <dt>Help &amp; Documentation</dt>
 );
