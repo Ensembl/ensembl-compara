@@ -126,15 +126,21 @@ sub tag {
 }
 
 sub highlight {
-  my $self = shift;
-  my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
-  return if $self->my_config('style') ne 'box';
+  my $self = shift; 
+  my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_; 
+  return if $self->my_config('style') ne 'box'; 
   ## Get highlights...
   my %highlights;
   @highlights{$self->highlights()} = (1);
 
+  if ($self->{'config'}->core_objects->variation){
+   my $var_id = $self->{'config'}->core_objects->variation->name;
+   $var_id =~s/rs//;  
+   $highlights{$var_id} =1;
+  }
+
   # Are we going to highlight self item...
-  my $id = $f->variation_name(); 
+  my $id = $f->variation_name();  
   $id =~ s/^rs//;
  
  return unless $highlights{$id} || $highlights{'rs'.$id};
