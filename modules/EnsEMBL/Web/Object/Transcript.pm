@@ -1096,8 +1096,10 @@ sub display_xref {
   return $self->transcript->name if $self->transcript->isa('EnsEMBL::Web::Fake');
   return unless $self->transcript->can('display_xref');
   my $trans_xref = $self->transcript->display_xref;
-  (my $db_display_name = $trans_xref->db_display_name) =~ s/(.*HGNC).*/$1 Symbol/; #hack for HGNC name labelling, remove in e58
-  return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $db_display_name) if $trans_xref;
+  if ($trans_xref) {
+    (my $db_display_name = $trans_xref->db_display_name) =~ s/(.*HGNC).*/$1 Symbol/; #hack for HGNC name labelling, remove in e58
+    return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $db_display_name);
+  }
 }
 
 =head2 get_contig_location
