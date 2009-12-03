@@ -171,5 +171,9 @@ sub get_json {
   return qq{'content':'$content','wrapper':'<div class="$wrapper"></div>','panelType':'$panel_type'};
 }
 
+## DO NOT REMOVE: needed by Biomart to wrap their code in our template
+sub _start { $_[0]->print(); return 1; }
+sub _end {   $_[0]->print(); }
+
 1;
 
