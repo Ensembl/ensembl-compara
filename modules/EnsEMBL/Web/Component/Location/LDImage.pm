@@ -26,6 +26,11 @@ sub content {
   return unless $object->param('pop1');
   my ($seq_region, $start, $end, $seq_type ) = ($object->seq_region_name, $object->seq_region_start, $object->seq_region_end, $object->seq_region_type);
 
+  my $slice_length = ($end - $start) +1;  
+  if ($slice_length >= 200001) {
+    my $html = "</ br> The region you have selected is too large to display linkage data Please change the region using the naviagation controls above.";
+    return $html;
+  }
 
   ## set path information for LD calculations
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $object->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
