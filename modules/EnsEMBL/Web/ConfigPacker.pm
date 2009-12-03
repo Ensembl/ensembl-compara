@@ -439,7 +439,7 @@ sub _summarise_funcgen_db {
 # * functional genomics tracks
 #
 
-  my $f_aref = $dbh->selectall_arrayref(
+  $f_aref = $dbh->selectall_arrayref(
     'select ft.name, ct.name 
        from supporting_set ss, data_set ds, feature_set fs, feature_type ft, cell_type ct  
        where ds.data_set_id=ss.data_set_id and ds.name="RegulatoryFeatures" 
