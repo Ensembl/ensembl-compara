@@ -54,7 +54,7 @@ sub content {
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   
   foreach (keys %{$align_details->{'species'}}) {
-    next if /^($primary_species|merged)$/;
+    next if $_ eq $primary_species;
     
     push @skipped, $_ if $align_details->{'class'} !~ /pairwise/ && ($object->param(sprintf 'species_%d_%s', $align, lc)||'off') eq 'off';
     push @missing, $_ unless $aligned_species{$_} || $_ eq 'Ancestral_sequences';

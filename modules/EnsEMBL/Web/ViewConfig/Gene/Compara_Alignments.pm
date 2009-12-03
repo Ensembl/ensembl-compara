@@ -101,8 +101,6 @@ sub form {
     $view_config->add_fieldset(ucfirst "$row->{'name'}");
     
     foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
-      next if /merged/;
-      
       my $name = sprintf 'species_%s_%s', $row_key, lc;
       
       if ($_ eq $species) {

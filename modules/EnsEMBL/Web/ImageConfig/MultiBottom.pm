@@ -128,7 +128,7 @@ sub multi {
     my $strand = shift @strands;
 
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
-      my ($other_species) = grep !/^$sp|merged$/, keys %{$align->{'species'}};
+      my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
       
       my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
       (my $other_species_hr = $other_species) =~ s/_/ /g;

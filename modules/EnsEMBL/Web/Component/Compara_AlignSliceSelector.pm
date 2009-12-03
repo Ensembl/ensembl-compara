@@ -58,7 +58,7 @@ sub content {
     
     foreach my $i (grep { $hash->{$_}{'class'} =~ /pairwise/ } keys %$hash) {
       foreach (keys %{$hash->{$i}->{'species'}}) {
-        if ($hash->{$i}->{'species'}->{$species} && $_ ne $species && $_ ne 'merged') {
+        if ($hash->{$i}->{'species'}->{$species} && $_ ne $species) {
           my $type = lc $hash->{$i}->{'type'};
           
           $type =~ s/_net//;

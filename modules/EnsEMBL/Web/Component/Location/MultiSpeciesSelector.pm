@@ -31,7 +31,7 @@ sub content_ajax {
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
     foreach (keys %{$alignments->{$i}->{'species'}}) {
       # this will fail for vega intra species compara
-      if ($alignments->{$i}->{'species'}->{$primary_species} && !/^$primary_species|merged$/) {
+      if ($alignments->{$i}->{'species'}->{$primary_species} && $_ ne $primary_species) {
         my $type = lc $alignments->{$i}->{'type'};
         
         $type =~ s/_net//;

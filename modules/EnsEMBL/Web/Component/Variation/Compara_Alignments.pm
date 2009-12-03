@@ -290,7 +290,7 @@ sub content {
   my %aligned_names = map { $_->{'name'} => 1 } @aligned_slices;
   
   foreach (keys %$align_species) {
-    next if /^Ancestral_sequences|merged$/;
+    next if $_ eq 'Ancestral_sequences';
     $non_aligned_slices{$species_defs->species_label($_)} = 1 unless $aligned_names{$_};
   }
   
