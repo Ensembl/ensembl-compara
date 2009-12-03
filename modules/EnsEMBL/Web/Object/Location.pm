@@ -281,6 +281,16 @@ sub create_features {
   return $features;
 }
 
+sub _create_domain {
+  my $self =shift;
+  my $id = $self->param('id');
+  my $a = $self->get_adaptor('get_GeneAdaptor'); 
+  my $domains = $a->fetch_all_by_domain($id);
+  my %features = ('domain' => $domains);
+
+  return \%features;
+}
+
 sub _create_ProbeFeature {
   # get Oligo hits plus corresponding genes
   my $probe;
@@ -801,6 +811,35 @@ sub retrieve_ProbeFeature {
     }
   }
   return ( $results, ['Mismatches', 'Cigar String'], $type );
+}
+
+sub retrieve_domain {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $f (@$data){
+    if (ref($f) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($f);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $location = $f->seq_region_name .":" .$f->start ."-". $f->end;
+      my $location_url = $self->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+      my $location_link = "<a href=$location_url>$location</a>";
+      push @$results,{
+        'region'    => $f->seq_region_name,
+        'start'     => $f->start,
+        'end'       => $f->end,
+        'strand'    => $f->strand,
+        'length'    => $f->end-$f->start+1,
+        'extname'   => $f->external_name,
+        'label'     => $f->stable_id,
+        'gene_id'   => [$f->stable_id],
+        'extra'     => [$location_link, $f->description, ]
+      }
+    }
+  }
+
+  return ( $results, [ 'Genomic Location', 'Description' ], $type );
 }
 
 sub retrieve_DnaAlignFeature {
