@@ -54,3 +54,6 @@ form.seq_blast input, a.seq_export { width: 18em; font-size: 0.9em; font-weight:
 form.seq_blast input:hover, a.seq_export:hover { color: [[PAGE_HOVER]]; }
 form.seq_blast input { float: right; padding: 1px; font-family: inherit; cursor: pointer; }
 a.seq_export         { float: left; padding: 2px; text-decoration: none; text-align: center; }
+
+div.alignment_list p { margin-top: 1em; }
+div.alignment_list a { text-decoration: none; }
