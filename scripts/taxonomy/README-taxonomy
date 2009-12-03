@@ -63,15 +63,15 @@ exit
 
 # This should take about 60 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_node.txt
+#ncbi_taxonomy.ncbi_taxa_node: Records: 540612  Deleted: 0  Skipped: 0  Warnings: 1621836
+# v56
 #ncbi_taxonomy.ncbi_taxa_node: Records: 518512  Deleted: 0  Skipped: 0  Warnings: 1555536
-# v55
-#ncbi_taxonomy.ncbi_taxa_node: Records: 501241  Deleted: 0  Skipped: 0  Warnings: 1503723
 
 # This should take about 90-120 seconds
 mysqlimport -hens-livemirror -uensadmin -pensembl -L ncbi_taxonomy ncbi_taxa_name.txt
+#ncbi_taxonomy.ncbi_taxa_name: Records: 773164  Deleted: 0  Skipped: 0  Warnings: 0
+# v56
 #ncbi_taxonomy.ncbi_taxa_name: Records: 737626  Deleted: 0  Skipped: 0  Warnings: 0
-# v55
-ncbi_taxonomy.ncbi_taxa_name: Records: 711161  Deleted: 0  Skipped: 0  Warnings: 0
 
 mysql -hens-livemirror -uensadmin -pensembl -N -e "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id" ncbi_taxonomy
 
@@ -115,9 +115,13 @@ mysql -hens-livemirror -uensadmin -pensembl ncbi_taxonomy -e \
 
 # Build the left/right indexes and store them in the database. This indexing help speeding up subtree retrieval if needed.
 
-# This takes about 40 minutes
+# This takes about 2 hours
 # /usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index > leftright_indexing.err 2>&1 &
-bsub -q yesterday -o leftright_indexing.out -e leftright_indexing.err -R"select[mem>15000] rusage[mem=15000]" -M15000000 '/usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index'
+bsub -q yesterday -o leftright_indexing.out -e leftright_indexing.err -R"select[mem>3000] rusage[mem=3000]" -M3000000 '/usr/local/ensembl/bin/perl ~/src/ensembl_main/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url mysql://ensadmin:ensembl@ens-livemirror:3306/ncbi_taxonomy -index'
+
+# Started at Tue Oct 20 11:07:23 2009
+# Results reported at Tue Oct 20 12:49:50 2009
+
 
 # Import 'ensembl common name' and 'ensembl alias name' for Ensembl web team use.
 
@@ -145,6 +149,6 @@ mysql -hens-livemirror -uensro ncbi_taxonomy -e "select * from ncbi_taxa_name wh
 +----------+---------------------+-----------------+
 |        1 | all                 | synonym         | 
 |        1 | root                | scientific name | 
-|        1 | 2009-07-15 11:12:06 | import date     | 
+|        1 | 2009-10-20 11:04:59 | import date     | 
 +----------+---------------------+-----------------+
 
