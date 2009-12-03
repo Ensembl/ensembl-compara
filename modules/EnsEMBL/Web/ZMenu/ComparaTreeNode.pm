@@ -36,7 +36,7 @@ sub content {
   }
   
   $self->caption($caption);
-
+  
   # Branch length
   $self->add_entry({
     type  => 'Branch_Length',
@@ -45,20 +45,18 @@ sub content {
   });
 
   # Bootstrap
-  if ($tagvalues->{'Bootstrap'}){
-    $self->add_entry({
-      type => 'Bootstrap',
-      label => $tagvalues->{'Bootstrap'},
-      order => 4
-    });
-  }
+  $self->add_entry({
+    type => 'Bootstrap',
+    label => $tagvalues->{'Bootstrap'},
+    order => 4
+  });
   
   # Expand all nodes
-  if (%collapsed_ids) {
+  if (grep $_ != $node_id, keys %collapsed_ids) {
     $self->add_entry({
       type  => 'Image',
       label => 'expand all sub-trees',
-      order => 6,
+      order => 8,
       link  => $object->_url({
         type     => 'Gene',
         action   => 'Compara_Tree',
@@ -74,7 +72,7 @@ sub content {
     $self->add_entry({
       type  => 'Image',
       label => 'collapse other nodes',
-      order => 7,
+      order => 10,
       link  => $object->_url({
         type     => 'Gene',
         action   => 'Compara_Tree',
@@ -102,7 +100,7 @@ sub content {
       $self->add_entry({
         type  => 'Image',
         label => 'show all paralogs',
-        order => 5,
+        order => 11,
         link  => $object->_url({
           type     => 'Gene', 
           action   => 'Compara_Tree',
@@ -122,7 +120,7 @@ sub content {
       $self->add_entry({
         type  => 'Type',
         label => $dup ? "Duplication (confidence $con)" : 'Speciation',
-        order => 4
+        order => 5
       });
     }
     
@@ -136,10 +134,10 @@ sub content {
 
       # Link to TreeFam Tree
       my $treefam_tree = 
-        $tagvalues->{'treefam_id'} || 
-        $tagvalues->{'part_treefam_id'} || 
-        $tagvalues->{'cont_treefam_id'} || 
-        $tagvalues->{'dev_treefam_id'} || 
+        $tagvalues->{'treefam_id'}          || 
+        $tagvalues->{'part_treefam_id'}     || 
+        $tagvalues->{'cont_treefam_id'}     || 
+        $tagvalues->{'dev_treefam_id'}      || 
         $tagvalues->{'dev_part_treefam_id'} || 
         $tagvalues->{'dev_cont_treefam_id'} || 
         undef;
@@ -154,7 +152,7 @@ sub content {
               label => $treefam_id,
               link  => $treefam_link,
               extra => { external => 1 },
-              order => 5
+              order => 6
             });
           }
         }
@@ -173,7 +171,7 @@ sub content {
       $self->add_entry({
         type  => 'Image',
         label => 'expand this sub-tree',
-        order => 5,
+        order => 7,
         link  => $object->_url({
           type     => 'Gene', 
           action   => 'Compara_Tree',
@@ -185,7 +183,7 @@ sub content {
       $self->add_entry({
         type  => 'Image',
         label => 'collapse this node',
-        order => 7,
+        order => 9,
         link  => $object->_url({
           type     => 'Gene',
           action   => 'Compara_Tree',
@@ -212,7 +210,7 @@ sub content {
         type  => 'Comparison',
         label => 'Jump to Multi-species view',
         link  => $object->_url($url_params),
-        order => 8
+        order => 12
       });
     }
     
@@ -224,7 +222,7 @@ sub content {
       label => 'Alignment: FASTA',
       link  => $url_align,
       extra => { external => 1 },
-      order => 9
+      order => 13
     });
     
     $self->add_entry({
@@ -232,7 +230,7 @@ sub content {
       label => 'Tree: New Hampshire',
       link  => $url_tree,
       extra => { external => 1 },
-      order => 10
+      order => 14
     });
     
     # Jalview
@@ -240,7 +238,7 @@ sub content {
       type       => 'View Sub-tree',
       label      => '[Requires Java]',
       label_html => $self->compara_tree_jalview_html($url_align, $url_tree),
-      order      => 11
+      order      => 15
     });
   }
 }
