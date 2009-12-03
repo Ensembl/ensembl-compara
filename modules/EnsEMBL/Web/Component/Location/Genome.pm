@@ -66,9 +66,10 @@ sub content {
         'DnaAlignFeature'     => ['red', 'rharrow'],
         'ProteinAlignFeature' => ['red', 'rharrow'],
         'RegulatoryFactor'    => ['red', 'rharrow'],
-        'ProbeFeature'          => ['red', 'rharrow'],
+        'ProbeFeature'        => ['red', 'rharrow'],
         'XRef'                => ['red', 'rharrow'],
         'Gene'                => ['blue','lharrow'],
+        'Domain'              => ['blue','lharrow'], 
       );
 
       ## Do internal Ensembl data
@@ -167,8 +168,14 @@ sub feature_tables {
       : ($feat_type eq 'Transcript') ? 'Transcript Information:'
       : 'Feature Information:';
 
+    if ($feat_type eq 'Domain'){
+      my $domain_id = $object->param('id');
+      my $feature_count = scalar @$features;
+      $data_type = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
+    }
+
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
-    if ($feat_type =~ /Gene|Transcript/) {
+    if ($feat_type =~ /Gene|Transcript|Domain/) {
       $table->add_columns({'key'=>'names',  'title'=>'Ensembl ID',      'width'=>'25%','align'=>'left' });
       $table->add_columns({'key'=>'extname','title'=>'External names',  'width'=>'25%','align'=>'left' });
     }
@@ -198,7 +205,7 @@ sub feature_tables {
 			       $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'label'},
 			       $row->{'region'}, $row->{'start'}, $row->{'end'},
 			       $row->{'strand'});
-	if ($feat_type =~ /Gene|Transcript/ && $row->{'label'}) {
+	if ($feat_type =~ /Gene|Transcript|Domain/ && $row->{'label'}) {
 	  my $t = $feat_type eq 'Gene' ? 'g' : 't';
 	  $names = sprintf('<a href="/%s/%s/Summary?%s=%s;r=%s:%d-%d">%s</a>',
 			   $object->species, $feat_type, $t, $row->{'label'},
