@@ -1645,7 +1645,7 @@ sub add_variation_feature {
   
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
   
-  $menu->append($self->create_track("variation_feature_$key", 'All variants', {
+  $menu->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
     db          => $key,
     glyphset    => '_variation',
     sources     => undef,
@@ -1712,7 +1712,7 @@ sub add_variation_feature {
   # add in structural variations
   return unless $hashref->{'structural_variation'}{'rows'} > 0;
   
-  $menu->append($self->create_track('variation_feature_structural', 'All Structural variants', {   
+  $menu->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
     db          => $key,
     glyphset    => 'structural_variation',
     caption     => 'All Structural variants',
