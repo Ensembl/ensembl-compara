@@ -206,6 +206,7 @@ sub feature_tables {
 			       $row->{'region'}, $row->{'start'}, $row->{'end'},
 			       $row->{'strand'});
 	if ($feat_type =~ /Gene|Transcript|Domain/ && $row->{'label'}) {
+    if ($feat_type eq 'Domain') {$feat_type = 'Gene';}
 	  my $t = $feat_type eq 'Gene' ? 'g' : 't';
 	  $names = sprintf('<a href="/%s/%s/Summary?%s=%s;r=%s:%d-%d">%s</a>',
 			   $object->species, $feat_type, $t, $row->{'label'},
