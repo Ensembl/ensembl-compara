@@ -28,7 +28,7 @@ use Bio::EnsEMBL::Registry;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
 our %species_lookup;
-foreach ($species_defs->valid_species) {
+foreach ($species_defs->valid_species, 'Multi', 'multi') {
   $species_lookup{$_}++;
 }
 
@@ -526,6 +526,8 @@ sub transHandler_species {
     }
     
     $redirect_if_different  = 0;
+  } else {
+    $script = $seg;
   }
  
   my $path_info = join '/', @path_segments;
