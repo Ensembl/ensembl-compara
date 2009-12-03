@@ -10,4 +10,32 @@ ALTER TABLE peptide_align_feature DROP KEY hmember_id;
 ALTER TABLE peptide_align_feature DROP KEY hmember_qgenome;
 ALTER TABLE peptide_align_feature DROP KEY qmember_hgenome;
 
+-- this table is used for production only
 DROP TABLE peptide_align_feature_prod;
+
+-- Adding species_set_tag table. This is used at the moment for definning drawing options
+-- in the GeneTree view, but might be used for other purposes in the future.
+CREATE TABLE IF NOT EXISTS species_set_tag (
+  species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
+  tag                         varchar(50) DEFAULT NULL,
+  value                       mediumtext,
+
+  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+
+  UNIQUE KEY tag_species_set_id (species_set_id,tag)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--   This table holds the sequence exon boundaries information
+CREATE TABLE sequence_exon_bounded (
+  sequence_exon_bounded_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  member_id                   int(10) unsigned NOT NULL, # unique internal id
+  length                      int(10) NOT NULL,
+  sequence_exon_bounded       longtext NOT NULL,
+
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+
+  PRIMARY KEY (sequence_exon_bounded_id),
+  KEY (member_id),
+  KEY sequence_exon_bounded (sequence_exon_bounded(18))
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
+
