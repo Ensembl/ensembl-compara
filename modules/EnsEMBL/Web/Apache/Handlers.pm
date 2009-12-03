@@ -27,6 +27,11 @@ use EnsEMBL::Web::RegObj;
 use Bio::EnsEMBL::Registry;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
+our %species_lookup;
+foreach ($species_defs->valid_species) {
+  $species_lookup{$_}++;
+}
+
 our $MEMD = new EnsEMBL::Web::Cache;
 our $GEO;
 
@@ -90,7 +95,6 @@ BEGIN {
 our @PERL_TRANS_DIRS;
 our @HTDOCS_TRANS_DIRS;
 our %SPECIES_MAP;
-
 BEGIN {
   foreach my $dir (@SiteDefs::ENSEMBL_PERL_DIRS) {
     if (-d $dir) {
@@ -130,7 +134,6 @@ BEGIN {
   );
 
   $SPECIES_MAP{lc $_} = $_ for values %SPECIES_MAP; # Self-mapping
-
 };
 
 1;
@@ -335,30 +338,7 @@ sub transHandler_das {
 
   # Map the species to its real value
   $das_species = $SPECIES_MAP{lc($das_species)} || '';
-
-# DAS sources based on ensembl gene ids are species-independent
-# We will have a DAS URL of the form...
-# /das/Multi.Ensembl-GeneID.{feature_type}/command
-# bu you can still call 
-# /das/Homo_sapiens.Ensembl-GeneID.{feature_type}/command
-# then the request will be restricted to Human db
-
-  if ($assembly =~ /geneid/i) {  
-      if ($das_species =~ /multi/i) {
-# this a site-wide request - try to figure out the species from the ID
-	  $das_species = '';
-	  if ($querystring =~ /segment=([^\;]+)(\;)?(.+)?$/) {
-	      my $identifier = $1;
-	      my $reg = "Bio::EnsEMBL::Registry";
-	      my ( $s, $ot, $dbt ) = $reg->get_species_and_object_type($identifier);
-	      $das_species = $s if ($s);
-	  }
-# in case no macth was found go to the default site species to report the page with no features	  
-	  $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
-
-      }
-  }
-
+  
   if (!$das_species) {
     $command = 'das_error';
     $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
@@ -463,7 +443,7 @@ sub transHandler_no_species {
     species => $species,
     script  => $script,
   });
-
+ 
   unless ($to_execute) {
     foreach my $dir(@PERL_TRANS_DIRS) {
       last unless $script;
@@ -501,89 +481,54 @@ sub transHandler_no_species {
 }
 
 sub transHandler_species {
-  my ($r, $session_cookie, $species, $path_segments, $querystring, $file, $flag) = @_;
+  my ($r, $session_cookie, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
 
   my $redirect_if_different = 1;
-  my $script = shift @$path_segments;
-  my $action = '';
-  my $type = '';
-  my $function = '';
-  my $real_script_name = $OBJECT_TO_SCRIPT{$script};
+  my @path_segments = map { s/\W//g; $_ } @$raw_path_segments; # clean up dodgy characters
+  my $ajax      = '';
+  my $plugin    = '';
+  my $type      = '';
+  my $action    = '';
+  my $function  = '';
+
+  # Parse the initial path segments, looking for valid ENSEMBL_TYPE values
+  my $seg    = shift @path_segments;
+  my $script = $OBJECT_TO_SCRIPT{$seg};
+  
+  if ($seg eq 'Component' || $seg eq 'Zmenu' || $seg eq 'Config') {
+    $ajax   = $seg;
+    $type   = shift @path_segments if $OBJECT_TO_SCRIPT{$path_segments[0]};
+    $plugin = shift @path_segments if $ajax eq 'Component';
+  } else {
+    $type = $seg;
+  }
+  
+  $action   = shift @path_segments;
+  $function = shift @path_segments;
 
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
-  
-  my $t1 = $script;
-  my $t2;
-  my $t3;
-  
-  if ($flag && $real_script_name) {
-    $r->subprocess_env->{'ENSEMBL_TYPE'} = $t1 = $script;
     
-    if ($real_script_name eq 'action' || $real_script_name eq 'modal') {
-      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $t2 = shift @$path_segments;
-      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $t3 = shift @$path_segments;
-      $r->subprocess_env->{'ENSEMBL_FACTORY'}  = 'MultipleLocation' if $script eq 'Location' && $t2 eq 'Multi';
-    } elsif ($real_script_name eq 'zmenu' || $real_script_name eq 'config') {
-      $type     = shift @$path_segments;
-      $action   = shift @$path_segments;
-      $function = shift @$path_segments;
+  # Mess with the environment
+  $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
+  $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
+  $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $function;
+  $r->subprocess_env->{'ENSEMBL_SPECIES'}  = $species;
+  $r->subprocess_env->{'ENSEMBL_SCRIPT'}   = $script;
+
+  if ($flag && $script) {
+    if ($script eq 'action' || $script eq 'modal') {
+      $r->subprocess_env->{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action eq 'Multi';
+    } elsif ($script eq 'component') {
+      $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action;
+      $r->subprocess_env->{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram|Top|Bottom)$/;
       
-      $r->subprocess_env->{'ENSEMBL_TYPE'}     = $t1 = $type;
-      $r->subprocess_env->{'ENSEMBL_ACTION'}   = $t2 = $action;
-      $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $t3 = $function;
-    } elsif ($real_script_name eq 'component') {
-      $type = shift @$path_segments;
-      
-      my @T = map { s/\W//g; $_ } @$path_segments;
-      
-      my $plugin = shift @T;
-      my $Module = shift @T;
-      my $fn     = shift @T;
-      
-      $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $Module;
-      $r->subprocess_env->{'ENSEMBL_FUNCTION'}  = $t3 = $fn;
-      $r->subprocess_env->{'ENSEMBL_TYPE'}      = $t1 = $type;
-      $r->subprocess_env->{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $Module =~ /^Multi(Ideogram|Top|Bottom)$/;
-      
-      $path_segments = [];
-    } else { # This is a user space script - don't do anything - I think!
-      $r->subprocess_env->{'ENSEMBL_ACTION'} = $t2 = shift @$path_segments;
+      @path_segments = ();
     }
     
-    $script = $real_script_name;
     $redirect_if_different  = 0;
   }
-  
-  my $path_info = join '/', @$path_segments;
-  
-  unshift @$path_segments, '', $species, $script;
-  
-  my $newfile = join '/', @$path_segments;
-  
-  # Path is changed; HTTP_TEMPORARY_REDIRECT
-  if (!$flag || ($redirect_if_different && $newfile ne $file)) {
-    $r->uri($newfile);
-    $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
-    $r->child_terminate;
-    
-    return HTTP_TEMPORARY_REDIRECT;
-  }
-  
-  my $t = get_redirect($script);
-  
-  if ($t) {
-    my $newfile = join '/', '', $species, $t;
-    warn "OLD LINK REDIRECT..... $script $newfile" if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
-    
-    $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
-    $r->child_terminate;
-    
-    return HTTP_TEMPORARY_REDIRECT;
-  }
-
-  # Mess with the environment
-  $r->subprocess_env->{'ENSEMBL_SPECIES'} = $species;
-  $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $script;
+ 
+  my $path_info = join '/', @path_segments;
   
   $ENSEMBL_WEB_REGISTRY->initialize_session({
     r       => $r,
@@ -597,7 +542,7 @@ sub transHandler_species {
   # Search the mod-perl dirs for a script to run
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
   
-  unless ($to_execute) {
+  if (!$to_execute) {
     foreach my $dir (reverse @PERL_TRANS_DIRS){
       last unless $script;
       
@@ -616,7 +561,7 @@ sub transHandler_species {
     $r->uri("/perl/$species/$script");
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
     
-    push_script_line($species, "$t1/$t2/$t3", $querystring) if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+    push_script_line($species, "$type/$action/$function", $querystring) if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     
     $r->push_handlers(PerlCleanupHandler => \&cleanupHandler_script);
     $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler);
@@ -675,11 +620,51 @@ sub transHandler {
     }
   });
 
-  my @path_segments = split m|/|, $file;
-  shift @path_segments; # Always empty
-  
-  my $species   = shift @path_segments;
+  my @raw_path = split m|/|, $file;
+  shift @raw_path; # Always empty
 
+  ## Identify the species element, if any
+  my ($species, @path_segments);
+ 
+  if (@raw_path == 1 && $raw_path[0] && $raw_path[0] !~ /\.\w{1,4}$/) {
+    my $uri;
+    ## Stable ID only, so rewrite URL
+    my $stable_id = $raw_path[0];
+    my ( $species, $object_type, $db_type ) =
+                 Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
+    if ($species && $object_type) {
+      $uri = '/'.$species.'/';
+      if ($object_type eq 'Gene') {
+        $uri .= 'Gene/Summary?g='.$stable_id;
+      }
+      elsif ($object_type eq 'Transcript') {
+        $uri .= 'Transcript/Summary?t='.$stable_id;
+      }
+      elsif ($object_type eq 'Translation') {
+        $uri .= 'Transcript/ProteinSummary?t='.$stable_id;
+      }
+      else {
+        $uri .= 'psychic?q='.$stable_id;
+      }
+      $r->uri($uri);
+      $r->headers_out->add('Location' => $r->uri);
+      $r->child_terminate;
+      $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler "REDIRECT"', undef, 'Apache');
+    
+      return HTTP_MOVED_PERMANENTLY;
+    }
+  }
+
+  foreach (@raw_path) {
+    if ($species_lookup{$_}) {
+      $species = $_;
+    } else {
+      push @path_segments, $_;
+    }
+  }
+
+  @path_segments = @raw_path unless $species;
+  
   # Some memcached tags (mainly for statistics)
   my $prefix = '';
   my @tags = map { $prefix = join '/', $prefix, $_; $prefix; } @path_segments;
@@ -695,21 +680,22 @@ sub transHandler {
   
   $ENSEMBL_WEB_REGISTRY->set_species($species_name);
 
-  if ($species eq 'das') {
+  if ($path_segments[0] eq 'das') {
+    shift @path_segments;
     my $return = transHandler_das($r, $session_cookie, \@path_segments, $querystring);
     $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler for DAS scripts finished', undef, 'Apache');
     
     return $return if defined $return;
   }
   
-  if ($OBJECT_TO_SCRIPT{$species} && $path_segments[0] !~ /\./) { # Species-less script?
+  if (!$species) { # Species-less script?
     my $return = transHandler_no_species($r, $session_cookie, $species, \@path_segments, $querystring);
     $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler for non-species scripts finished', undef, 'Apache');
     
     return $return if defined $return;
   }
   
-  if($species && $species_name) { # species script
+  if ($species && $species_name) { # species script
     my $return = transHandler_species(
       $r,
       $session_cookie,
