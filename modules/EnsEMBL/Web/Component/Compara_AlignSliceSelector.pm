@@ -3,8 +3,10 @@ package EnsEMBL::Web::Component::Compara_AlignSliceSelector;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component);
-use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;
@@ -21,7 +23,7 @@ sub content {
   
   foreach (sort keys %{$url->[1]||{}}) {
     $extra_inputs .= sprintf '
-      <input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_});
+      <input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_});
   }
 
   my $align = $object->param('align');
@@ -38,11 +40,13 @@ sub content {
     
     next unless $row->{'species'}->{$species};
     
+    $row->{'name'} =~ s/_/ /g;
+    
     $options .= sprintf '
         <option value="%d"%s>%s</option>',
       $row_key,
       $row_key eq $align ? ' selected="selected"' : '',
-      escapeHTML($row->{'name'});
+      encode_entities($row->{'name'});
   }
   
   # For the variation compara view, only allow multi-way alignments
