@@ -281,12 +281,12 @@ sub create_features {
   return $features;
 }
 
-sub _create_domain {
+sub _create_Domain {
   my $self =shift;
   my $id = $self->param('id');
   my $a = $self->get_adaptor('get_GeneAdaptor'); 
   my $domains = $a->fetch_all_by_domain($id);
-  my %features = ('domain' => $domains);
+  my %features = ('Domain' => $domains);
 
   return \%features;
 }
@@ -813,7 +813,7 @@ sub retrieve_ProbeFeature {
   return ( $results, ['Mismatches', 'Cigar String'], $type );
 }
 
-sub retrieve_domain {
+sub retrieve_Domain {
   my ($self, $data, $type) = @_;
   my $results = [];
   foreach my $f (@$data){
