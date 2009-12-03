@@ -3,16 +3,18 @@ package EnsEMBL::Web::Component::Gene::ComparaTree;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Gene);
 
-use EnsEMBL::Web::Constants;
 use Bio::AlignIO;
 use IO::Scalar;
 
+use EnsEMBL::Web::Constants;
+
+use base qw(EnsEMBL::Web::Component::Gene);
+
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 sub caption {
@@ -23,28 +25,25 @@ sub _get_details {
   my $self = shift;
   my $object = $self->object;
   my $member = $object->get_compara_Member;
-  return (undef, "<B>Gene is not in the compara database</B>", '') unless $member;
+  return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
-  my $tree   = $object->get_ProteinTree;
-  return (undef, "<B> Gene is not in a compara protein tree </B>",     "<p>Could not get protein tree in compara for this gene</p>") unless $tree;
+  my $tree = $object->get_ProteinTree;
+  return (undef, '<strong>Gene is not in a compara protein tree</strong>') unless $tree;
 
-  my $node   = $tree->get_leaf_by_Member($member);
-  return(undef,"<B> Gene is not in the compara tree </B>", sprintf( q(<p>Member %s not in compara tree %s</p>), $member->stable_id, $tree->node_id )) unless $node;
+  my $node = $tree->get_leaf_by_Member($member);
+  return (undef, '<strong>Gene is not in the compara tree</strong>') unless $node;
 
-  return ($member,$tree,$node);
+  return ($member, $tree, $node);
 }
 
 sub content {
-  my $self           = shift;
-  my $object         = $self->object;
+  my $self   = shift;
+  my $object = $self->object;
 
-  #----------
-  # Get the Member and ProteinTree objects 
-  #----------
-  # Draw the tree
+  # Get the Member and ProteinTree objects and draw the tree
 
-  my ( $member,$tree,$node ) = $self->_get_details;
-  return $tree if !defined $member;
+  my ($member, $tree, $node) = $self->_get_details;
+  return $tree . $self->genomic_alignment_links unless defined $member;
 
   my $leaves = $tree->get_all_leaves;
 
@@ -361,7 +360,7 @@ sub content_align {
   #----------
   # Get the ProteinTree object
   my ( $member,$tree,$node ) = $self->_get_details;
-  return $tree if !defined $member;
+  return $tree . $self->genomic_alignment_links unless defined $member;
 
   #----------
   # Return the text representation of the tree
@@ -399,7 +398,7 @@ sub content_text {
   #----------
   # Get the ProteinTree object
   my ( $member,$tree,$node ) = $self->_get_details;
-  return $tree if !defined $member;
+  return $tree . $self->genomic_alignment_links unless defined $member;
 
   #----------
   # Template for the section HTML
@@ -430,6 +429,46 @@ sub content_text {
        ? $string 
        : sprintf( $htmlt, $fmt_caption, $string )
        ;
+}
+
+sub genomic_alignment_links {
+  my $self       = shift;
+  my $object     = $self->object;
+  my $alignments = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
+  my $species    = $object->species;
+  my $url        = $object->_url({ action => 'Compara_Alignments', align => undef });
+  my (%species_hash, $list);
+  
+  foreach my $row_key (grep $alignments->{$_}{'class'} !~ /pairwise/, keys %$alignments) {
+    my $row = $alignments->{$row_key};
+    
+    next unless $row->{'species'}->{$species};
+    
+    $row->{'name'} =~ s/_/ /g;
+    
+    $list .= qq{<li><a href="$url;align=$row_key">$row->{'name'}</a></li>};
+  }
+  
+  foreach my $i (grep $alignments->{$_}{'class'} =~ /pairwise/, keys %$alignments) {
+    foreach (keys %{$alignments->{$i}->{'species'}}) {
+      if ($alignments->{$i}->{'species'}->{$species} && $_ ne $species) {
+        my $type = lc $alignments->{$i}->{'type'};
+        
+        $type =~ s/_net//;
+        $type =~ s/_/ /g;
+        
+        $species_hash{$object->species_defs->species_label($_) . "###$type"} = $i;
+      }
+    } 
+  }
+  
+  foreach (sort { $a cmp $b } keys %species_hash) {
+    my ($name, $type) = split /###/, $_;
+    
+    $list .= qq{<li><a href="$url;align=$species_hash{$_}">$name - $type</a></li>};
+  }
+  
+  return qq{<div class="alignment_list"><p>View genomic alignments for this gene</p><ul>$list</ul></div>};
 }
 
 1;
