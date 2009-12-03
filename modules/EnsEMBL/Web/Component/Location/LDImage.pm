@@ -28,7 +28,7 @@ sub content {
 
   my $slice_length = ($end - $start) +1;  
   if ($slice_length >= 200001) {
-    my $html = "</ br> The region you have selected is too large to display linkage data Please change the region using the naviagation controls above.";
+    my $html = "</ br> The region you have selected is too large to display linkage data, a maximum region of 200kb is allowed. Please change the region using the naviagation controls above.";
     return $html;
   }
 
