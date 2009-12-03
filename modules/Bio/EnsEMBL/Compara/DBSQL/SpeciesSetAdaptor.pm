@@ -112,6 +112,10 @@ sub fetch_all_by_GenomeDBs {
     push (@$genome_db_ids, $genome_db_id);
   }
 
+  if (!defined($genome_db_ids)) {
+    return undef;
+  }
+
   my $sql = qq{
           SELECT
             species_set_id,
