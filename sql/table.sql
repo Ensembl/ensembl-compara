@@ -332,6 +332,21 @@ CREATE TABLE sequence (
   KEY sequence (sequence(18))
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
 
+-- overview:
+--   This table holds the sequence exon boundaries information
+CREATE TABLE sequence_exon_bounded (
+  sequence_exon_bounded_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  member_id                   int(10) unsigned NOT NULL, # unique internal id
+  length                      int(10) NOT NULL,
+  sequence_exon_bounded       longtext NOT NULL,
+
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+
+  PRIMARY KEY (sequence_exon_bounded_id),
+  KEY (member_id),
+  KEY sequence_exon_bounded (sequence_exon_bounded(18))
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
+
 
 #
 # Table structure for table 'member'
@@ -742,7 +757,7 @@ CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 --    root_id                  -- the id of the tree root
 --    member_id                -- link to member.member_id in many-1 relation (single member per node)
 --    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- string with the alignment score values
+--    cigar_line               -- string with the alignment score values 
 --    cigar_start              -- protein start (0 if the whole protein is in the alignment)
 --    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
