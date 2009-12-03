@@ -18,7 +18,7 @@ sub BUILD {
     'no_response' => 'We were unable to access your data file. If you continue to get this message, there may be an network issue, or your file may be too large for us to upload.',
     'invalid_mime_type' => 'Your file does not appear to be in a valid format. Please try again.',
     'empty'   => 'Your file appears to be empty. Please check that it contains correctly-formatted data.',
-    'too_big' => 'Your file is too big to parse. Please select a smaller file.',
+    'too_big' => 'Your file is too big to upload. Please select a smaller file.',
     'no_save' => 'Your data could not be saved. Please check the file contents and try again.',
   });
 }
