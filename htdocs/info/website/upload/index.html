@@ -295,11 +295,14 @@ Alternatively, data sets could be directly pasted into the box provided.
 <p>
 The 'SNP Effect Predictor' tool which appears as an option when you
 click on <strong>Manage your Data</strong> allows you to upload a set of 
-variation data and calculate the effect of the variations. This requires the 
+variation data and predict the effect of the variants. This requires the 
 data to be uploaded in a very simple <strong>tab-separated</strong> format, 
-containing five columns that correspond to chromosome name, chromosome start 
-position, chromosome end position, allele and strand. The data must contain all
-of the columns in the same order as appears below.
+containing five columns that correspond to:
+</p>
+
+<pre> chromosome name, chromosome start position, chromosome end position, allele and strand</pre>
+
+<p> The data must contain all of the columns in the same order as appears below.
 </p>
 <p>
 eg:
@@ -313,11 +316,24 @@ eg:
 19  66520     66520     G/A   +
 8   150029    150029    A/T   +   
 </pre> 
+<!-- 5,140532,140532,T/C,+
+12,1017956,1017956,T/A,+
+2,946507,946507,G/C,+
+14,19584687,19584687,C/T,-
+19,66520,66520,G/A,+
+8,150029,150029,A/T,+ -->
 
 <p>
-This tool is only available for species that have variation databases and all 
-uploaded data is expected to be from the most recent assembly build for that 
-species.
+This tool predicts the consequence of this SNP, the amino acid position and change (if the SNP falls within a protein) and the SNP  identifier of  known SNPs that occur at this position.
+The output columns are: </p>
+<pre> Uploaded Variation, Location, Transcript, Consequence, Relative position in protein, Amino acid change, Corresponding Variation </pre>
+
+
+<p>
+Note, this prediction is only available for species that have variation databases. The SNP Effect predictor will use the data from the current Ensembl assembly and gene build.
+</p>
+<p> It is also possible to use the API to predict the effects of SNPs. This is the best method for large datasets.
+Here is an example in the <a href="info/docs/api/variation/variation_tutorial.html#Consequence"> Variation API Tutorial</a>.
 </p>
 
 <h2 id="Displaying">Displaying Data on Whole Chromosomes</h2>
