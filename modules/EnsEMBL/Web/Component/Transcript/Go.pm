@@ -42,7 +42,8 @@ sub content {
   # then add  GOSlim info
   my $go_slim_hash = $object->get_go_list('goslim_goa');  
   if ($go_slim_hash){
-    $html .= "<p><strong>The following GOSlim terms have been mapped to this entry:</strong></p>";
+    $html .= "<p><strong>The following GO terms are the closest ones in the GOSlim GOA subset
+      for the above terms:</strong></p>";
     my $go_slim_table = $self->table;
     $self->process_data($go_slim_table, $go_slim_hash);
     $html .= $go_slim_table->render;
