@@ -19,8 +19,10 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
-our @ISA = qw(EnsEMBL::Web::Object);
+use EnsEMBL::Web::Cache;
+
+use base qw(EnsEMBL::Web::Object);
+
 our $MEMD = new EnsEMBL::Web::Cache;
 
 sub _filename {
@@ -36,12 +38,27 @@ sub _filename {
 
 sub availability {
   my $self = shift;
-  my $hash = $self->_availability;
-  if ($self->Obj->isa('Bio::EnsEMBL::Variation::Variation')){
-    if ($self->Obj->failed_description) { $hash->{'unmapped'} =1; }
-    else { $hash->{'variation'} = 1; }
+  
+  if (!$self->{'_availability'}) {
+    my $availability = $self->_availability;
+    my $obj = $self->Obj;
+    
+    if ($obj->isa('Bio::EnsEMBL::Variation::Variation')) {
+      my $counts = $self->counts;
+      
+      if ($obj->failed_description) { 
+        $availability->{'unmapped'} = 1; 
+      } else { 
+        $availability->{'variation'} = 1;
+      }
+      
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments);
+    }
+    
+    $self->{'_availability'} = $availability;
   }
-  return $hash;
+  
+  return $self->{'_availability'};
 }
 
 sub counts {
@@ -50,13 +67,12 @@ sub counts {
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
   my $key = '::Counts::Variation::'.
-            $ENV{ENSEMBL_SPECIES}                 .'::'.
+            $self->species                         .'::'.
             $self->core_objects->{parameters}{vdb} .'::'.
-            $self->core_objects->{parameters}{v}  .'::';
+            $self->core_objects->{parameters}{v}   .'::';
 
-  my $counts;
-
-  $counts = $MEMD->get($key) if $MEMD;
+  my $counts = $self->{'_counts'};
+  $counts ||= $MEMD->get($key) if $MEMD;
 
   unless ($counts) {
     $counts = {};
@@ -67,11 +83,10 @@ sub counts {
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
     
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $self->{'_counts'} = $counts;
   }
 
   return $counts;
-
-   
 }
 sub count_ega {
   my $self = shift;

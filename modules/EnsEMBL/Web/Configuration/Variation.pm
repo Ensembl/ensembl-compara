@@ -42,17 +42,17 @@ sub populate_tree {
   
   $self->create_node('Mappings', 'Gene/Transcript  ([[counts::transcripts]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Mappings )],
-    { 'availability' => 'variation', 'concise' => 'Gene/Transcript' }
+    { 'availability' => 'variation has_transcripts', 'concise' => 'Gene/Transcript' }
   );
   
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
     [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
-    { 'availability' => 'variation', 'concise' => 'Population genotypes and allele frequencies' }
+    { 'availability' => 'variation has_populations', 'concise' => 'Population genotypes and allele frequencies' }
   );
   
   $self->create_node('Individual', 'Individual genotypes ([[counts::individuals]])',
     [qw( summary EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
-    { 'availability' => 'variation', 'concise' => 'Individual genotypes' }
+    { 'availability' => 'variation has_individuals', 'concise' => 'Individual genotypes' }
   );
   
   $self->create_node('Context', 'Context',
@@ -62,7 +62,7 @@ sub populate_tree {
   
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Phenotype )],
-    { 'availability' => 'variation', 'concise' => 'Phenotype Data' }
+    { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
   );
   
   $self->create_node('Compara_Alignments', 'Phylogenetic Context ([[counts::alignments]])',
@@ -70,7 +70,7 @@ sub populate_tree {
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
       summary  EnsEMBL::Web::Component::Variation::Compara_Alignments
     )],
-    { 'availability' => 'variation database:compara', 'concise' => 'Evolutionary or Phylogenetic Context' }
+    { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Evolutionary or Phylogenetic Context' }
   );
 
   # External Data tree, including non-positional DAS sources
