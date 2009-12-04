@@ -28,27 +28,33 @@ sub _filename {
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
+  my $obj  = $self->Obj;
   
-  if ($self->Obj->isa('EnsEMBL::Web::Fake')) {
-    $hash->{$self->Obj->type} = 1;
-  } elsif($self->Obj->isa('Bio::EnsEMBL::ArchiveStableId')) { 
+  if ($obj->isa('EnsEMBL::Web::Fake')) {
+    $hash->{$self->feature_type} = 1;
+  } elsif ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) { 
     $hash->{'history'} = 1;
     my $trans_id = $self->param('p') || $self->param('protein'); 
-    my $trans = scalar @{$self->Obj->get_all_translation_archive_ids};
+    my $trans = scalar @{$obj->get_all_translation_archive_ids};
     $hash->{'history_protein'} = 1 if $trans_id || $trans >= 1;
-  } elsif( $self->Obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
+  } elsif( $obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
     $hash->{'either'} = 1;
   } else {
-    my $rows = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-    $hash->{'history'}         = $rows ? 1 : 0;
-    $hash->{'history_protein'} = $rows ? 1 : 0;
-    $hash->{'core'}            = $self->get_db eq 'core' ? 1 : 0;
+    my $counts = $self->counts;
+    my $rows   = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+    
+    $hash->{'history'}         = !!$rows;
+    $hash->{'history_protein'} = !!$rows;
+    $hash->{'core'}            = $self->get_db eq 'core';
     $hash->{'either'}          = 1;
     $hash->{'transcript'}      = 1;
     $hash->{'domain'}          = 1;
-    $hash->{'translation'}     = $self->Obj->translation ? 1 : 0;
-    $hash->{'strains'}         = $self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} ? 1 : 0;
+    $hash->{'translation'}     = !!$obj->translation;
+    $hash->{'strains'}         = !!$self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'};
     $hash->{'history_protein'} = 0 unless $self->translation_object;
+    $hash->{'has_variations'}  = $counts->{'prot_variations'};
+    $hash->{'has_domains'}     = $counts->{'prot_domains'};
+    $hash->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos go);
   }
   
   return $hash;
@@ -60,7 +66,7 @@ sub counts {
 
   my $key = sprintf(
     '::COUNTS::TRANSCRIPT::%s::%s::%s::', 
-    $ENV{'ENSEMBL_SPECIES'}, 
+    $self->species, 
     $self->core_objects->{'parameters'}{'db'}, 
     $self->core_objects->{'parameters'}{'t'}
   );

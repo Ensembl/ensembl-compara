@@ -35,6 +35,7 @@ sub set_default_action {
 
 sub populate_tree {
   my $self = shift;
+  my $availability = $self->object->availability;
   
   $self->create_node('Summary', 'Gene summary',
     [qw(
@@ -46,7 +47,7 @@ sub populate_tree {
 
   $self->create_node('Splice', 'Splice variants ([[counts::transcripts]])',
     [qw( image EnsEMBL::Web::Component::Gene::GeneSpliceImage )],
-    { 'availability' => 'gene', 'concise' => 'Splice variants' }
+    { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
   );
 
   $self->create_node('Evidence', 'Supporting evidence',
@@ -61,7 +62,7 @@ sub populate_tree {
 
   $self->create_node('Matches', 'External references ([[counts::similarity_matches]])',
     [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],
-    { 'availability' => 'gene', 'concise' => 'External references' }
+    { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
   );
 
   $self->create_node('Regulation', 'Regulation',
@@ -79,7 +80,7 @@ sub populate_tree {
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
     )],
-    { 'availability' => 'gene database:compara core', 'concise' => 'Genomic alignments' }
+    { 'availability' => 'gene database:compara core has_alignments', 'concise' => 'Genomic alignments' }
   ));
   
   my $tree_node = $self->create_node('Compara_Tree', 'Gene Tree (image)',
@@ -101,24 +102,24 @@ sub populate_tree {
 
   my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
-    { 'availability' => 'gene database:compara core', 'concise' => 'Orthologues' }
+    { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
   );
   
   $ol_node->append($self->create_subnode('Compara_Ortholog/Alignment', 'Ortholog Alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-    { 'availability'  => 'gene database:compara core', 'no_menu_entry' => 1 }
+    { 'availability'  => 'gene database:compara core has_orthologs', 'no_menu_entry' => 1 }
   ));
   
   $compara_menu->append($ol_node);
   
   my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues ([[counts::paralogs]])',
     [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
-    { 'availability' => 'gene database:compara core', 'concise' => 'Paralogues' }
+    { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
   );
   
   $pl_node->append($self->create_subnode('Compara_Paralog/Alignment', 'Paralogue Alignment',
     [qw( alignment EnsEMBL::Web::Component::Gene::HomologAlignment )],
-    { 'availability' => 'gene database:compara core', 'no_menu_entry' => 1 }
+    { 'availability' => 'gene database:compara core has_paralogs', 'no_menu_entry' => 1 }
   ));
   
   $compara_menu->append($pl_node);

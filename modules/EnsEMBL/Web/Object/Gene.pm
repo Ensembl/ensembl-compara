@@ -21,7 +21,7 @@ sub _filename {
 	  $self->species,
 	  $self->species_defs->ENSEMBL_VERSION,
 	  $self->get_db,
-	  $self->Obj->stable_id;
+	  $self->stable_id;
   $name =~ s/[^-\w\.]/_/g;
   return $name;
 }
@@ -29,34 +29,35 @@ sub _filename {
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
-  if( $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId') ) {
-    $hash->{'history'}    = 1;
-  } elsif( $self->Obj->isa('Bio::EnsEMBL::Gene') ) {
-    my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
-    $hash->{'history'}    = $rows ? 1 : 0;
-    $hash->{'gene'}       = 1;
-    $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
-    $hash->{'compara_species'} = $self->check_compara_species_and_locations;
-    $hash->{'alt_allele'} = $self->table_info( $self->get_db, 'alt_allele' )->{'rows'};
-    my $funcgen_db = $self->database('funcgen');
-    my $funcgen_res = 0;
-    if ($funcgen_db){  
-     $funcgen_res = $self->table_info('funcgen', 'feature_set' )->{'rows'} ? 1 : 0; 
-    }
-    $hash->{'regulation'} = $funcgen_res ? 1 : 0; 
+  my $obj  = $self->Obj;
+  
+  if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
+    $hash->{'history'} = 1;
+  } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
+    my $counts      = $self->counts;
+    my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+    my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
     my $compara_db  = $self->database('compara');
-    my $res = 0;
+    my $res         = 0;
+    
     if ($compara_db) {
-      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-      ($res) = $compara_dbh->selectrow_array(
-        'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1',
-        {}, $self->Obj->stable_id
+      ($res) = $compara_db->get_MemberAdaptor->dbc->db_handle->selectrow_array(
+        'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->stable_id
       );
     }
-    $hash->{'family'}     = $res ? 1 : 0;
-  } elsif( $self->Obj->isa('Bio::EnsEMBL::Compara::Family' ) ) {
-    $hash->{'family'}     = 1;
+    
+    $hash->{'history'}         = !!$rows;
+    $hash->{'gene'}            = 1;
+    $hash->{'core'}            = $self->get_db eq 'core';
+    $hash->{'compara_species'} = $self->check_compara_species_and_locations;
+    $hash->{'alt_allele'}      = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
+    $hash->{'regulation'}      = !!$funcgen_res; 
+    $hash->{'family'}          = !!$res;
+    $hash->{"has_$_"}          = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
+  } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
+    $hash->{'family'} = 1;
   }
+  
   return $hash;
 }
 

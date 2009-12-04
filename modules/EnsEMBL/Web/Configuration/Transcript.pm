@@ -51,7 +51,7 @@ sub populate_tree {
 
   my $T = $self->create_node('SupportingEvidence', 'Supporting evidence ([[counts::evidence]])',
    [qw( evidence EnsEMBL::Web::Component::Transcript::SupportingEvidence )],
-    { 'availability' => 'transcript', 'concise' => 'Supporting evidence' }
+    { 'availability' => 'transcript has_evidence', 'concise' => 'Supporting evidence' }
   );
   
   $T->append($self->create_subnode('SupportingEvidence/Alignment', '',
@@ -63,7 +63,7 @@ sub populate_tree {
   
   $seq_menu->append($self->create_node('Exons', 'Exons ([[counts::exons]])',
     [qw( exons EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet )],
-    { 'availability' => 'either', 'concise' => 'Exons' }
+    { 'availability' => 'either has_exons', 'concise' => 'Exons' }
   ));
   
   $seq_menu->append($self->create_node('Sequence_cDNA', 'cDNA',
@@ -80,7 +80,7 @@ sub populate_tree {
 
   my $sim_node = $self->create_node('Similarity', 'General identifiers ([[counts::similarity_matches]])',
     [qw( similarity EnsEMBL::Web::Component::Transcript::SimilarityMatches )],
-    { 'availability' => 'transcript', 'concise' => 'General identifiers' }
+    { 'availability' => 'transcript has_similarity_matches', 'concise' => 'General identifiers' }
   );
   
   $sim_node->append($self->create_subnode('Similarity/Align', '',
@@ -92,12 +92,12 @@ sub populate_tree {
   
   $record_menu->append($self->create_node('Oligos', 'Oligo probes ([[counts::oligos]])',
     [qw( arrays EnsEMBL::Web::Component::Transcript::OligoArrays )],
-    { 'availability' => 'transcript database:funcgen', 'concise' => 'Oligo probes' }
+    { 'availability' => 'transcript database:funcgen has_oligos', 'concise' => 'Oligo probes' }
   ));
   
   $record_menu->append($self->create_node('GO', 'Gene ontology ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
-    { 'availability' => 'transcript', 'concise' => 'Gene ontology' }
+    { 'availability' => 'transcript has_go', 'concise' => 'Gene ontology' }
   ));
   
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
@@ -127,7 +127,7 @@ sub populate_tree {
   
   my $D = $self->create_node('Domains', 'Domains & features ([[counts::prot_domains]])',
     [qw( domains EnsEMBL::Web::Component::Transcript::DomainSpreadsheet )],
-    { 'availability' => 'transcript', 'concise' => 'Domains & features' }
+    { 'availability' => 'transcript has_domains', 'concise' => 'Domains & features' }
   );
   
   $D->append($self->create_subnode('Domains/Genes', 'Genes in domain',
@@ -139,7 +139,7 @@ sub populate_tree {
   
   $prot_menu->append($self->create_node('ProtVariations', 'Variations ([[counts::prot_variations]])',
     [qw( protvars EnsEMBL::Web::Component::Transcript::ProteinVariations )],
-    { 'availability' => 'either database:variation', 'concise' => 'Variations' }
+    { 'availability' => 'either database:variation has_variations', 'concise' => 'Variations' }
   ));
   
   # External Data tree, including non-positional DAS sources

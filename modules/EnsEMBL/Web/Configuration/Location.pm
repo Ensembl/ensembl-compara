@@ -99,7 +99,6 @@ sub populate_tree {
   my $self = shift;
   my $object = $self->object;
   my $availability = $object->availability;
-  my $caption;
   
   $self->create_node('Genome', 'Whole genome',
     [qw( genome EnsEMBL::Web::Component::Location::Genome )],
@@ -134,9 +133,7 @@ sub populate_tree {
 
   my $align_menu = $self->create_submenu('Compara', 'Comparative Genomics');
   
-  $caption = $availability->{'has_alignments'} ? 'Alignments (image) ([[counts::alignments]])' : 'Alignments (image)';
-  
-  $align_menu->append($self->create_node('Compara_Alignments/Image', $caption, 
+  $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image) ([[counts::alignments]])', 
     [qw(
       top      EnsEMBL::Web::Component::Location::ViewTop
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
@@ -146,9 +143,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (image)' }
   ));
   
-  $caption = $availability->{'has_alignments'} ? 'Alignments (text) ([[counts::alignments]])' : 'Alignments (text)';
-  
-  $align_menu->append($self->create_node('Compara_Alignments', $caption,
+  $align_menu->append($self->create_node('Compara_Alignments', 'Alignments (text) ([[counts::alignments]])',
     [qw(
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       botnav     EnsEMBL::Web::Component::Location::ViewBottomNav
@@ -157,9 +152,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
-  $caption = $availability->{'has_pairwise_alignments'} ? 'Multi-species view ([[counts::pairwise_alignments]])' : 'Multi-species view';
-  
-  $align_menu->append($self->create_node('Multi', $caption,
+  $align_menu->append($self->create_node('Multi', 'Multi-species view ([[counts::pairwise_alignments]])',
     [qw(
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
       top      EnsEMBL::Web::Component::Location::MultiTop
@@ -174,9 +167,7 @@ sub populate_tree {
     { 'no_menu_entry' => 1 }
   ));
   
-  $caption = $availability->{'has_synteny'} ? 'Synteny ([[counts::synteny]])' : 'Synteny';
-  
-  $align_menu->append($self->create_node('Synteny', $caption,
+  $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
     [qw(
       image    EnsEMBL::Web::Component::Location::SyntenyImage
       species  EnsEMBL::Web::Component::Location::ChangeSpecies
@@ -189,9 +180,7 @@ sub populate_tree {
   
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   
-  $caption = $availability->{'has_strains'} ? 'Resequencing ([[counts::reseq_strains]])' : 'Resequencing';
-  
-  $variation_menu->append($self->create_node('SequenceAlignment', $caption,
+  $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing ([[counts::reseq_strains]])',
     [qw(
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
             align  EnsEMBL::Web::Component::Location::SequenceAlignment
@@ -213,7 +202,7 @@ sub populate_tree {
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
       marker EnsEMBL::Web::Component::Location::MarkerDetails
     )],
-    { 'availability' => 'slice_or_marker has_markers' }
+    { 'availability' => 'slice|marker has_markers' }
   );
 
   $self->create_subnode(

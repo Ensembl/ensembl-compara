@@ -47,9 +47,9 @@ sub availability {
   $hash->{'has_chromosomes'} = scalar @chromosomes;
   $hash->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
   $hash->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
-  $hash->{'slice_or_marker'} = $hash->{'slice'} || ($self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker');
   $hash->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
-  $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'} ;  
+  $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
+  $hash->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
   $hash->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
   $hash->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
   $hash->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
@@ -63,7 +63,7 @@ sub counts {
   my $self = shift;
   
   my $obj = $self->Obj;
-  my $key = "::COUNTS::LOCATION::$ENV{'ENSEMBL_SPECIES'}";
+  my $key = '::COUNTS::LOCATION::' . $self->species;
   my $counts = $MEMD ? $MEMD->get($key) : undef;
  
   if (!$counts) {
@@ -950,15 +950,12 @@ sub get_synteny_matches {
   my @data;
   my $OTHER = $self->param('otherspecies') || 
               $self->param('species')      ||
-              ( $ENV{ 'ENSEMBL_SPECIES' } eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens' );
+              ( $self->species eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens' );
   my $gene2_adaptor = $self->database( 'core', $OTHER )->get_GeneAdaptor();
   my $localgenes = $self->get_synteny_local_genes;
   my $offset = $self->seq_region_start;
 
   foreach my $localgene (@$localgenes){
-    my ($sppgene, $separate, $syntenygene);
-    my $data;
-    my $spp = $ENV{ 'ENSEMBL_SPECIES'};
     my $homologues = $self->fetch_homologues_of_gene_in_species($localgene->stable_id, $OTHER);
     my $homol_num = scalar @{$homologues};
     my $gene_synonym = $localgene->external_name || $localgene->stable_id;
