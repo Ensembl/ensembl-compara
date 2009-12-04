@@ -161,6 +161,20 @@ sub fetch_AlignedMember_by_member_id_mlssID {
 }
 
 
+sub gene_member_id_is_in_tree {
+  my ($self, $member_id) = @_;
+
+  my $sth = $self->prepare("SELECT ptm1.root_id FROM member m1, protein_tree_member ptm1 WHERE ptm1.member_id=m1.member_id AND m1.gene_member_id=? LIMIT 1");
+  $sth->execute($member_id);
+  my($root_id) = $sth->fetchrow_array;
+
+  if (defined($root_id)) {
+    return $root_id;
+  } else {
+    return undef;
+  }
+}
+
 ###########################
 # STORE methods
 ###########################
