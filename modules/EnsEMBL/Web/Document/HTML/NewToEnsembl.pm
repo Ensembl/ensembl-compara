@@ -111,7 +111,7 @@ Did you know you can:
 <a href="/info/website/help/control_panel.html#cp-panel">Add custom tracks</a></dt>
 <dd>using our new Control Panel</dd>
 <dt><img src="/i/e-quest.gif" style="width:20px;height:19px;vertical-align:middle;padding-right:4px" alt="(e?)" />
-<a href="/info/website/upload/index.html">Upload and analyze your data</a></dt>
+<a href="/info/website/upload/index.html">Upload and analyse your data</a></dt>
 );
   if ($sd->ENSEMBL_LOGINS) {
     $html .= qq(<dd>and save it to your $sitename account</dd>);
