@@ -433,7 +433,7 @@ sub stuff {
         my $feature = $webpage->factory->__data->{'objects'}[0];
         
         my $url = sprintf(
-          '/%s/%s/%s?%s',
+          '%s/%s/%s?%s',
           $webpage->factory->species_path,
           $ENV{'ENSEMBL_TYPE'},
           $ENV{'ENSEMBL_ACTION'},
