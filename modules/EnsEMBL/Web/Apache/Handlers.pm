@@ -310,7 +310,7 @@ sub transHandler_das {
 
   # These are static content files due to the time to generate...
   # These files are created by utils/initialized_das.pl
-  warn "... ", $SiteDefs::ENSEMBL_SERVERROOT . "/htdocs/das/$DSN/entry_points";
+#  warn "... ", $SiteDefs::ENSEMBL_SERVERROOT . "/htdocs/das/$DSN/entry_points";
   
    # Fall through - this is a static page
   if ($path_segments->[1] eq 'entry_points' && (-e $SiteDefs::ENSEMBL_SERVERROOT . "/htdocs/das/$DSN/entry_points") || $DSN =~  /^(sources|dsn)$/) {
@@ -338,7 +338,28 @@ sub transHandler_das {
 
   # Map the species to its real value
   $das_species = $SPECIES_MAP{lc($das_species)} || '';
-  
+ 
+# DAS sources based on ensembl gene ids are species-independent
+# We will have a DAS URL of the form...
+# /das/Multi.Ensembl-GeneID.{feature_type}/command  but you can still call
+# /das/Homo_sapiens.Ensembl-GeneID.{feature_type}/command
+# then the request will be restricted to Human db
+
+  if ($assembly =~ /geneid/i) {
+      if ($das_species =~ /multi/i) {
+# this a site-wide request - try to figure out the species from the ID
+	  $das_species = '';
+	  if ($querystring =~ /segment=([^\;]+)(\;)?(.+)?$/) {
+	      my $identifier = $1;
+	      my $reg = "Bio::EnsEMBL::Registry";
+	      my ( $s, $ot, $dbt ) = $reg->get_species_and_object_type($identifier);
+	      $das_species = $s if ($s);
+	  }
+# in case no macth was found go to the default site species to report the page with no features
+	  $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
+      }
+  }
+
   if (!$das_species) {
     $command = 'das_error';
     $r->subprocess_env->{'ENSEMBL_DAS_ERROR'} = 'unknown-species';
