@@ -4,12 +4,6 @@
 # for DAS. Unfortunately lots of strange things have to happen to map between
 # Ensembl and DAS coordinate systems, so this does require some maintenance.
 
-# One issue is that the script attempts to add entries to the DAS registry for
-# new species/assemblies (line ~440 but this currently failing with a 400 error from
-# the Registry. Can be worked around by setting $load_registry to zero - this then prints
-# a list of new assemblies to be added which can be done manually by Jonathan Warren (jw12)
-# Don't know how to fix this at present - new version of LWP::UserAgent perhaps ?
-
 use strict;
 use warnings;
 
@@ -24,13 +18,11 @@ use DBI;
 use Data::Dumper;
 use Compress::Zlib;
 
-my $load_registry = 1; # set to zero to get output of assemblies to add (not tested)
 
 # --- load libraries needed for reading config ---
 use vars qw( $SERVERROOT );
 BEGIN{
   $SERVERROOT = dirname( $Bin );
-
   unshift @INC, "$SERVERROOT/conf";
   unshift @INC, "$SERVERROOT";
   eval{ require SiteDefs };
@@ -39,6 +31,12 @@ BEGIN{
   require Bio::EnsEMBL::ExternalData::DAS::SourceParser;
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
+
+my ($force_update,$check_registry) = (0,0);
+GetOptions(
+  "force", \$force_update,
+  "check", \$check_registry,
+);
 
 my $source_types = {
   'karyotype' => {
@@ -129,9 +127,8 @@ my $species = $SiteDefs::ENSEMBL_DATASETS || [];
 my $shash;
 $| = 1;
 
-my $force_update = $ARGV[0] && $ARGV[0] =~ m/^-f|--force$/;
-
-SPECIES: foreach my $sp (@$species) {
+SPECIES:
+foreach my $sp (@$species) {
   my $search_info = $species_defs->get_config($sp, 'SEARCH_LINKS');
   (my $vsp = $sp) =~ s/\_/ /g;
   $species_info->{$sp}->{'species'}  = $vsp;
@@ -161,13 +158,15 @@ SPECIES: foreach my $sp (@$species) {
   );
   my $meta = $db->get_MetaContainer();
   my $taxid = $meta->get_taxonomy_id();
-  
-  # Must have these coordinates for all species' (though we don't create sources for them yet):
+
+  # Must have these coordinates for all species (though we don't create sources for them yet):
   for my $coord_type ('ensembl_gene', 'ensembl_peptide') {
     unless (exists $das_coords->{$sp}{$coord_type}) {
       # Add to the registry and check it came back OK
       my $tmp = _get_das_coords(_coord_system_as_xml($coord_type, '', $sp, $taxid), $coord_type);
-      $tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
+      if (! $check_registry) {
+	$tmp->{$sp}{$coord_type} || die "[FATAL] Unable to create $coord_type $sp coordinates";
+      }
     }
   }
 
@@ -190,7 +189,7 @@ SPECIES: foreach my $sp (@$species) {
          sra.attrib_type_id = at.attrib_type_id and at.code = "toplevel"
    group by sr.seq_region_id
   ));
-  
+
   my $toplevel_example  = $toplevel_slices->[0];
   my %coords = ();
  SLICE:
@@ -206,7 +205,7 @@ SPECIES: foreach my $sp (@$species) {
       if (!$cs_xml) {
         # Add to the registry and check it came back OK
         my $tmp = _get_das_coords(_coord_system_as_xml($_->[5], $_->[6], $sp, $taxid), "$_->[5] $_->[6]");
-				next SLICE unless ($load_registry);
+	next SPECIES if ($check_registry);
         $cs_xml = $tmp->{$sp}{$_->[5]}{$_->[6]};
         if (!$cs_xml) {
           print STDERR "[ERROR] Coordinate system $_->[5] $_->[6] is not in the DAS Registry! Skipping\n";
@@ -258,6 +257,11 @@ SPECIES: foreach my $sp (@$species) {
       $shash->{$dsn}->{coords} = \%coords;
     }
   }
+}
+
+if ($check_registry) {
+  print STDERR "\n[INFO] Rerun without the -check option to create the xml\n";
+  exit;
 }
 
 sources( $shash, "$docroot/htdocs/das/sources", $sitetype );
@@ -442,11 +446,11 @@ sub _get_das_coords {
   
   # If we have XML for a new coordinate system, add it
   if ($add_data) {
+    if ($check_registry) {
+      print STDERR "[WARN]  Data to be manually added to registry is $add_data\n";			
+      return;
+    }
     print STDERR "[INFO]  Adding coordinate system '$add_name' to the DAS Registry\n";
-		unless ($load_registry) {
-			print STDERR "Data to be manually added to registry is $add_data";			
-			return;
-		}
     $add_data = qq(<?xml version='1.0' ?>\n<DASCOORDINATESYSTEM>\n  $add_data\n</DASCOORDINATESYSTEM>);
     $req->content($add_data);
     $req->content_length(length $add_data);
@@ -494,16 +498,22 @@ A script that generates XML file that effectivly is a response to
 /das/dsn and /das/sources commands to this server. The script prints the XML to
 htdocs/dsn and htdocs/sources.
 
-./initialise_das.pl
+One unsolved issue is that although the script should be able to add entries to the
+DAS registry for new assemblies, it currently fails with a 400 error (from line ~440).
+Until this is solved first run the script to report new assemblies and then ask
+Jonathan Warren (jw12) to add them to the registry. When this is done the script
+can then be run to then generate the xml
 
-OR
+./initialise_das.pl --check
 
-./initialise_das.pl --force|-f     (forces processing of previously generated species')
+THEN
 
-If this script complains about coordinate systems, check that they actually exist
-in the DAS registry (http://www.dasregistry.org). If not, request they be added.
+./initialise_das.pl --force
+
+The (optional) --force forces processing of previously generated species
 
 =head1 AUTHOR
+
                                                                                 
 [Eugene Kulesha], Ensembl Web Team
 [Andy Jenkinson], EMBL-EBI
