@@ -404,8 +404,11 @@ sub _expand_database_templates {
   if( exists $tree->{'databases'} ) {
     foreach my $key ( keys %{$tree->{'databases'}} ) {
       my $DB_NAME = $tree->{'databases'}{$key};
-      if( $DB_NAME =~ /^%_(\w+)_%$/ ) {
+      if( $DB_NAME =~ /^%_(\w+)_%_%$/ ) {
+        $DB_NAME = lc(sprintf( '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
+      } elsif( $DB_NAME =~ /^%_(\w+)_%$/ ) {
         $DB_NAME = lc(sprintf( '%s_%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION, $tree->{'general'}{'SPECIES_RELEASE_VERSION'} ));
+
       } elsif( $DB_NAME =~/^%_(\w+)$/ ) {
         $DB_NAME = lc(sprintf( '%s_%s_%s', $filename , $1, $SiteDefs::ENSEMBL_VERSION ));
       } elsif( $DB_NAME =~/^(\w+)_%$/ ) {
