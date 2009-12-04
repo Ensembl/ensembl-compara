@@ -196,7 +196,7 @@ sub content {
           $name .= "</strong><br />$file->{'format'} file for <em>$species</em>";
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
-          if ($file->{'format'} && $file->{'format'} eq "ID") { 
+          if ($file->{'format'} && ( $file->{'format'} eq "ID" || $file->{'format'} eq "CONSEQUENCE") ) { 
             $save = '';
           } else {
             $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
