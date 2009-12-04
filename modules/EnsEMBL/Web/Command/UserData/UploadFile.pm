@@ -32,8 +32,8 @@ sub process {
   my @methods = qw(text file url);
   my $method;
   foreach my $M (@methods) {
-    if ($object->param($M)) {
-      $method = $M;
+    if ($object->param($M)) { 
+      $method = $M; 
       last;
     }
   }
@@ -47,7 +47,7 @@ sub process {
       $url .= '/UserData/UploadFeedback';
     } 
   }
-  else {
+  else { 
     $url .= '/UserData/SelectFile';
   }
   $param->{'_referer'} = $object->param('_referer');
@@ -75,7 +75,6 @@ sub upload {
   my ($method, $object) = @_;
   my $param = {};
   my ($error, $format, $filename, $full_ext, %args);
-
   ## Try to guess the format from the extension
   unless ($method eq 'text') {
     my @orig_path = split('/', $object->param($method));
@@ -90,9 +89,10 @@ sub upload {
     if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i || $ext =~ /wig/i) {
       $format = uc($ext);
     }
-    if ($object->param('upload_format')){
-      $format = uc ($object->param('upload_format'));
-    }
+  }
+
+  if ($object->param('upload_format')){
+    $format = uc ($object->param('upload_format'));
   }
 
   ## Get original path, so can save file name as default name for upload
