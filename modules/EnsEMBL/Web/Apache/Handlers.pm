@@ -28,7 +28,7 @@ use Bio::EnsEMBL::Registry;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
 our %species_lookup;
-foreach ($species_defs->valid_species, 'Multi', 'multi') {
+foreach ($species_defs->valid_species, qw(Multi multi das)) {
   $species_lookup{$_}++;
 }
 
@@ -702,9 +702,8 @@ sub transHandler {
   my $species_name = $SPECIES_MAP{lc $species};
   
   $ENSEMBL_WEB_REGISTRY->set_species($species_name);
-
-  if ($path_segments[0] eq 'das') {
-    shift @path_segments;
+  
+  if ($raw_path[0] eq 'das') {
     my $return = transHandler_das($r, $session_cookie, \@path_segments, $querystring);
     $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler for DAS scripts finished', undef, 'Apache');
     
