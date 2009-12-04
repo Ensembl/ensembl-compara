@@ -28,37 +28,42 @@ sub _filename {
 
 sub availability {
   my $self = shift;
-  my $hash = $self->_availability;
-  my $obj  = $self->Obj;
   
-  if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
-    $hash->{'history'} = 1;
-  } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
-    my $counts      = $self->counts;
-    my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-    my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
-    my $compara_db  = $self->database('compara');
-    my $res         = 0;
+  if (!$self->{'_availability'}) {
+    my $availability = $self->_availability;
+    my $obj = $self->Obj;
     
-    if ($compara_db) {
-      ($res) = $compara_db->get_MemberAdaptor->dbc->db_handle->selectrow_array(
-        'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->stable_id
-      );
+    if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
+      $availability->{'history'} = 1;
+    } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
+      my $counts      = $self->counts;
+      my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+      my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
+      my $compara_db  = $self->database('compara');
+      my $res         = 0;
+      
+      if ($compara_db) {
+        ($res) = $compara_db->get_MemberAdaptor->dbc->db_handle->selectrow_array(
+          'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->stable_id
+        );
+      }
+      
+      $availability->{'history'}         = !!$rows;
+      $availability->{'gene'}            = 1;
+      $availability->{'core'}            = $self->get_db eq 'core';
+      $availability->{'compara_species'} = $self->check_compara_species_and_locations;
+      $availability->{'alt_allele'}      = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
+      $availability->{'regulation'}      = !!$funcgen_res; 
+      $availability->{'family'}          = !!$res;
+      $availability->{"has_$_"}          = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
+    } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
+      $availability->{'family'} = 1;
     }
-    
-    $hash->{'history'}         = !!$rows;
-    $hash->{'gene'}            = 1;
-    $hash->{'core'}            = $self->get_db eq 'core';
-    $hash->{'compara_species'} = $self->check_compara_species_and_locations;
-    $hash->{'alt_allele'}      = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
-    $hash->{'regulation'}      = !!$funcgen_res; 
-    $hash->{'family'}          = !!$res;
-    $hash->{"has_$_"}          = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
-  } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
-    $hash->{'family'} = 1;
+  
+    $self->{'_availability'} = $availability;
   }
   
-  return $hash;
+  return $self->{'_availability'};
 }
 
 sub analysis {
@@ -73,7 +78,8 @@ sub counts {
   return {} unless $obj->isa('Bio::EnsEMBL::Gene');
   
   my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $self->species, $self->core_objects->{'parameters'}{'db'}, $self->core_objects->{'parameters'}{'g'};
-  my $counts = $MEMD ? $MEMD->get($key) : undef;
+  my $counts = $self->{'_counts'};
+  $counts ||= $MEMD->get($key) if $MEMD;
   
   if (!$counts) {
     $counts = {
@@ -124,6 +130,7 @@ sub counts {
     }
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $self->{'_counts'} = $counts;
   }
   
   return $counts;

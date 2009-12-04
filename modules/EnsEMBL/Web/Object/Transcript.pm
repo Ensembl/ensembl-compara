@@ -27,37 +27,42 @@ sub _filename {
 
 sub availability {
   my $self = shift;
-  my $hash = $self->_availability;
-  my $obj  = $self->Obj;
   
-  if ($obj->isa('EnsEMBL::Web::Fake')) {
-    $hash->{$self->feature_type} = 1;
-  } elsif ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) { 
-    $hash->{'history'} = 1;
-    my $trans_id = $self->param('p') || $self->param('protein'); 
-    my $trans = scalar @{$obj->get_all_translation_archive_ids};
-    $hash->{'history_protein'} = 1 if $trans_id || $trans >= 1;
-  } elsif( $obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
-    $hash->{'either'} = 1;
-  } else {
-    my $counts = $self->counts;
-    my $rows   = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+  if (!$self->{'_availability'}) {
+    my $availability = $self->_availability;
+    my $obj = $self->Obj;
     
-    $hash->{'history'}         = !!$rows;
-    $hash->{'history_protein'} = !!$rows;
-    $hash->{'core'}            = $self->get_db eq 'core';
-    $hash->{'either'}          = 1;
-    $hash->{'transcript'}      = 1;
-    $hash->{'domain'}          = 1;
-    $hash->{'translation'}     = !!$obj->translation;
-    $hash->{'strains'}         = !!$self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'};
-    $hash->{'history_protein'} = 0 unless $self->translation_object;
-    $hash->{'has_variations'}  = $counts->{'prot_variations'};
-    $hash->{'has_domains'}     = $counts->{'prot_domains'};
-    $hash->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos go);
+    if ($obj->isa('EnsEMBL::Web::Fake')) {
+      $availability->{$self->feature_type} = 1;
+    } elsif ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) { 
+      $availability->{'history'} = 1;
+      my $trans_id = $self->param('p') || $self->param('protein'); 
+      my $trans = scalar @{$obj->get_all_translation_archive_ids};
+      $availability->{'history_protein'} = 1 if $trans_id || $trans >= 1;
+    } elsif( $obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
+      $availability->{'either'} = 1;
+    } else {
+      my $counts = $self->counts;
+      my $rows   = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+      
+      $availability->{'history'}         = !!$rows;
+      $availability->{'history_protein'} = !!$rows;
+      $availability->{'core'}            = $self->get_db eq 'core';
+      $availability->{'either'}          = 1;
+      $availability->{'transcript'}      = 1;
+      $availability->{'domain'}          = 1;
+      $availability->{'translation'}     = !!$obj->translation;
+      $availability->{'strains'}         = !!$self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'};
+      $availability->{'history_protein'} = 0 unless $self->translation_object;
+      $availability->{'has_variations'}  = $counts->{'prot_variations'};
+      $availability->{'has_domains'}     = $counts->{'prot_domains'};
+      $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos go);
+    }
+  
+    $self->{'_availability'} = $availability;
   }
   
-  return $hash;
+  return $self->{'_availability'};
 }
 
 sub counts {
@@ -71,9 +76,8 @@ sub counts {
     $self->core_objects->{'parameters'}{'t'}
   );
   
-  my $counts;
-
-  $counts = $MEMD->get($key) if $MEMD;
+  my $counts = $self->{'_counts'};
+  $counts ||= $MEMD->get($key) if $MEMD;
 
   unless ($counts) {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
@@ -85,6 +89,7 @@ sub counts {
     $counts->{'prot_variations'}    = $self->count_prot_variations;
     $counts->{'go'}                 = $self->count_go;
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $self->{'_counts'} = $counts;
   }
 
   return $counts;

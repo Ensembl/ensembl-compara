@@ -32,29 +32,33 @@ sub _filename {
 sub availability {
   my $self = shift;
   
-  my $species_defs    = $self->species_defs;
-  my $variation_db    = $species_defs->databases->{'DATABASE_VARIATION'};
-  my @chromosomes     = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
-  my %chrs            = map { $_, 1 } @chromosomes;
-  my %synteny_hash    = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-  my $rows            = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-  my $seq_region_name = $self->Obj->{'seq_region_name'};
-  my $counts          = $self->counts;
-  my $hash            = $self->_availability;
+  if (!$self->{'_availability'}) {
+    my $species_defs    = $self->species_defs;
+    my $variation_db    = $species_defs->databases->{'DATABASE_VARIATION'};
+    my @chromosomes     = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
+    my %chrs            = map { $_, 1 } @chromosomes;
+    my %synteny_hash    = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my $rows            = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+    my $seq_region_name = $self->Obj->{'seq_region_name'};
+    my $counts          = $self->counts;
+    my $availability    = $self->_availability;
+    
+    $availability->{'karyotype'}       = 1;
+    $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
+    $availability->{'has_chromosomes'} = scalar @chromosomes;
+    $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
+    $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
+    $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
+    $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
+    $availability->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
+    $availability->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
+    $availability->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
+    $availability->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
   
-  $hash->{'karyotype'}       = 1;
-  $hash->{'chromosome'}      = exists $chrs{$seq_region_name};
-  $hash->{'has_chromosomes'} = scalar @chromosomes;
-  $hash->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
-  $hash->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
-  $hash->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
-  $hash->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
-  $hash->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
-  $hash->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
-  $hash->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
-  $hash->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
+    $self->{'_availability'} = $availability;
+  }
   
-  return $hash;
+  return $self->{'_availability'};
 }
 
 our $MEMD = new EnsEMBL::Web::Cache;
@@ -64,7 +68,8 @@ sub counts {
   
   my $obj = $self->Obj;
   my $key = '::COUNTS::LOCATION::' . $self->species;
-  my $counts = $MEMD ? $MEMD->get($key) : undef;
+  my $counts = $self->{'_counts'};
+  $counts ||= $MEMD->get($key) if $MEMD;
  
   if (!$counts) {
     my %synteny = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
@@ -80,6 +85,7 @@ sub counts {
     $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
     
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $self->{'_counts'} = $counts;
   }
 
   return $counts;
