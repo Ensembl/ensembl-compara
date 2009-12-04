@@ -28,7 +28,7 @@ use Bio::EnsEMBL::Registry;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
 our %species_lookup;
-foreach ($species_defs->valid_species, qw(Multi multi das)) {
+foreach ($species_defs->valid_species, qw(Multi multi das common default)) {
   $species_lookup{$_}++;
 }
 
@@ -308,13 +308,10 @@ sub transHandler_das {
   my $DSN     = $path_segments->[0];
   my $command = '';
 
-  # These are static content files due to the time to generate...
-  # These files are created by utils/initialized_das.pl
-#  warn "... ", $SiteDefs::ENSEMBL_SERVERROOT . "/htdocs/das/$DSN/entry_points";
-  
+   # These are static content files due to the time to generate.
+   # These files are created by utils/initialized_das.pl
    # Fall through - this is a static page
   if ($path_segments->[1] eq 'entry_points' && (-e $SiteDefs::ENSEMBL_SERVERROOT . "/htdocs/das/$DSN/entry_points") || $DSN =~  /^(sources|dsn)$/) {
-    warn ">>>>>>>";
     return undef;
   }
 
@@ -338,26 +335,27 @@ sub transHandler_das {
 
   # Map the species to its real value
   $das_species = $SPECIES_MAP{lc($das_species)} || '';
- 
-# DAS sources based on ensembl gene ids are species-independent
-# We will have a DAS URL of the form...
-# /das/Multi.Ensembl-GeneID.{feature_type}/command  but you can still call
-# /das/Homo_sapiens.Ensembl-GeneID.{feature_type}/command
-# then the request will be restricted to Human db
-
+   
+  # DAS sources based on ensembl gene ids are species-independent
+  # We will have a DAS URL of the form...
+  # /das/Multi.Ensembl-GeneID.{feature_type}/command  but you can still call
+  # /das/Homo_sapiens.Ensembl-GeneID.{feature_type}/command
+  # then the request will be restricted to Human db
   if ($assembly =~ /geneid/i) {
-      if ($das_species =~ /multi/i) {
-# this a site-wide request - try to figure out the species from the ID
-	  $das_species = '';
-	  if ($querystring =~ /segment=([^\;]+)(\;)?(.+)?$/) {
-	      my $identifier = $1;
-	      my $reg = "Bio::EnsEMBL::Registry";
-	      my ( $s, $ot, $dbt ) = $reg->get_species_and_object_type($identifier);
-	      $das_species = $s if ($s);
-	  }
-# in case no macth was found go to the default site species to report the page with no features
-	  $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
+    if ($das_species =~ /multi/i) {
+      # this a site-wide request - try to figure out the species from the ID
+      $das_species = '';
+      
+      if ($querystring =~ /segment=([^\;]+)(\;)?(.+)?$/) {
+        my $identifier = $1;
+        my $reg = "Bio::EnsEMBL::Registry";
+        my ($s, $ot, $dbt) = $reg->get_species_and_object_type($identifier);
+        $das_species = $s if ($s);
       }
+      
+      # in case no macth was found go to the default site species to report the page with no features
+      $das_species ||= $SiteDefs::ENSEMBL_PRIMARY_SPECIES;
+    }
   }
 
   if (!$das_species) {
@@ -453,7 +451,7 @@ sub transHandler_no_species {
   return undef if $real_script_name =~ /^(component|zmenu)$/;
   
   $r->subprocess_env->{'ENSEMBL_SPECIES'} = 'common';
-  $r->subprocess_env->{'ENSEMBL_SCRIPT' } = $real_script_name;
+  $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $real_script_name;
   
   my $script     = $real_script_name;
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
@@ -503,7 +501,7 @@ sub transHandler_no_species {
 
 sub transHandler_species {
   my ($r, $session_cookie, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
-
+  
   my $redirect_if_different = 1;
   my @path_segments = map { s/\W//g; $_ } @$raw_path_segments; # clean up dodgy characters
   my $ajax      = '';
@@ -526,7 +524,7 @@ sub transHandler_species {
   
   $action   = shift @path_segments;
   $function = shift @path_segments;
-
+  
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
     
   # Mess with the environment
@@ -546,12 +544,37 @@ sub transHandler_species {
       @path_segments = ();
     }
     
-    $redirect_if_different  = 0;
+    $redirect_if_different = 0;
   } else {
     $script = $seg;
   }
  
   my $path_info = join '/', @path_segments;
+  
+  unshift @$raw_path_segments, '', $species;
+  
+  my $newfile = join '/', @$raw_path_segments;
+  
+  # Path is changed; HTTP_TEMPORARY_REDIRECT
+  if (!$flag || ($redirect_if_different && $newfile ne $file)) {
+    $r->uri($newfile);
+    $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
+    $r->child_terminate;
+    
+    return HTTP_TEMPORARY_REDIRECT;
+  }
+  
+  my $redirect = get_redirect($script);
+  
+  if ($redirect) {
+    my $newfile = join '/', '', $species, $redirect;
+    warn "OLD LINK REDIRECT..... $script $newfile" if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+    
+    $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
+    $r->child_terminate;
+    
+    return HTTP_TEMPORARY_REDIRECT;
+  }
   
   $ENSEMBL_WEB_REGISTRY->initialize_session({
     r       => $r,
@@ -677,15 +700,15 @@ sub transHandler {
       return HTTP_MOVED_PERMANENTLY;
     }
   }
-
+  
   foreach (@raw_path) {
-    if ($species_lookup{$_}) {
+    if ($species_lookup{$_} && !$species) {
       $species = $_;
     } else {
       push @path_segments, $_;
     }
   }
-
+  
   @path_segments = @raw_path unless $species;
   
   # Some memcached tags (mainly for statistics)
