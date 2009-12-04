@@ -52,6 +52,8 @@ sub fetch_by_Member_root_id {
   my ($self, $member, $clusterset_id) = @_;
   $clusterset_id = 1 if ! defined $clusterset_id;
 
+  my $root_id = $self->gene_member_id_is_in_tree($member->member_id);
+  return undef unless (defined $root_id);
   my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
     (
      $member->get_longest_peptide_Member->member_id,
@@ -60,6 +62,18 @@ sub fetch_by_Member_root_id {
   my $node = $aligned_member->subroot;
   return undef unless (defined $node);
   my $protein_tree = $self->fetch_node_by_node_id($node->node_id);
+
+  return $protein_tree;
+}
+
+
+sub fetch_by_gene_Member_root_id {
+  my ($self, $member, $clusterset_id) = @_;
+  $clusterset_id = 1 if ! defined $clusterset_id;
+
+  my $root_id = $self->gene_member_id_is_in_tree($member->member_id);
+  return undef unless (defined $root_id);
+  my $protein_tree = $self->fetch_node_by_node_id($root_id);
 
   return $protein_tree;
 }
