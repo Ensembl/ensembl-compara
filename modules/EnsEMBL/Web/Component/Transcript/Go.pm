@@ -26,31 +26,52 @@ sub content {
     return unless (@similarity_links);
     $self->_sort_similarity_links(@similarity_links);
   }
+
   my $no_data = "<p>No GO terms have been mapped to this entry via UniProt and/or RefSeq.</p>"; 
   return $no_data unless $object->__data->{'links'}{'go'}; 
-  my $databases = $object->DBConnection;
-  my $goview    = $object->database('go') ? 1 : 0;
 
+  # First process GO terms
+  my $html;
   my $go_hash  = $object->get_go_list();
+  if ($go_hash){
+    $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
+    my $table = $self->table;
+    $self->process_data($table, $go_hash);
+    $html .= $table->render;
+  }
+  # then add  GOSlim info
+  my $go_slim_hash = $object->get_go_list('goslim_goa');  
+  if ($go_slim_hash){
+    $html .= "<p><strong>The following GOSlim terms have been mapped to this entry:</strong></p>";
+    my $go_slim_table = $self->table;
+    $self->process_data($go_slim_table, $go_slim_hash);
+    $html .= $go_slim_table->render;
+  }
+
+ return $html;
+}
+
+sub table {
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px', 'cellpadding' => '2px'} );
+  $table->add_columns(
+    {'key' => 'go',   'title' => 'GO Accession', 'width' => '5%', 'align' => 'left'},
+    {'key' => 'description', 'title' => 'GO Term', 'width' => '55%', 'align' => 'left'},
+    {'key' => 'evidence', 'title' => 'Evidence','width' => '3%', 'align' => 'center'},
+    {'key' => 'desc', 'title' => 'Annotation Source','width' => '35%', 'align' => 'centre'}
+  );
+  return $table;
+}
+
+sub process_data {
+  my ($self, $table, $data_hash) = @_;
+
+  my $object = $self->object;
+  my $goview    = $object->database('go') ? 1 : 0;
   my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";
-  #my $QUERYURL = "http://amigo.geneontology.org/cgi-bin/amigo/search.cgi?query=";
-  my $URLS     = $object->ExtURL;
 
- return unless ($go_hash);
-  my $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
-
-  #$html .= qq(<dl>);
-   my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px', 'cellpadding' => '2px'} );
-    $table->add_columns(
-      {'key' => 'go',   'title' => 'GO Accession', 'width' => '5%', 'align' => 'left'},
-      {'key' => 'description', 'title' => 'GO Term', 'width' => '55%', 'align' => 'left'},
-      {'key' => 'evidence', 'title' => 'Evidence','width' => '3%', 'align' => 'center'},
-      {'key' => 'desc', 'title' => 'Annotation Source','width' => '35%', 'align' => 'centre'}
-    );
-
-  foreach my $go (sort keys %{$go_hash}){
+  foreach my $go (sort keys %{$data_hash}){
     my $row = {};
-    my @go_data = @{$go_hash->{$go}||[]};
+    my @go_data = @{$data_hash->{$go}||[]};
     my( $evidence, $description, $info_text ) = @go_data;
     my $link_name = $description;
     $link_name =~ s/ /\+/g;
@@ -92,11 +113,7 @@ sub content {
     $row->{'evidence'} = $evidence;
     $row->{'desc'} = $info_text_html;
     $table->add_row($row);
-  #$html .= qq(<dd>$goidurl $info_text_html [$queryurl] <code>$evidence</code></dd>\n);
   }
-  #$html .= qq(</dl>);
-  $html .= $table->render;
- return $html;
+  return $table;  
 }
-
 1;
