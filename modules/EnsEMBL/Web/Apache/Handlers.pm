@@ -752,6 +752,10 @@ sub transHandler {
     $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler for DAS scripts finished', undef, 'Apache');
     
     return $return if defined $return;
+  } elsif ($species eq 'das') {
+    $species = undef;
+    $Tspecies = undef;
+    @path_segments = @raw_path;
   }
   
   if (!$species && $raw_path[-1] !~ /\./) { # Species-less script?
