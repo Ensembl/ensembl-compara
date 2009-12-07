@@ -611,28 +611,7 @@ for more details on controling the hive system do
 9 - Quality Control
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When a big cluster is broken into subclusters, the original big
-cluster needs to be deleted with, for example, the following stanza:
-
-  $ mysql -N $COMPARA_DBNAME -e \
-    "SELECT node_id FROM protein_tree_tag \
-     WHERE tag='cluster_had_to_be_broken_down'" \
-    | awk \
-    '{print "SELECT node_id FROM protein_tree_node WHERE node_id="$1";"; \
-      print "SELECT node_id FROM protein_tree_node WHERE parent_id="$1";"}' \
-    | mysql -N $COMPARA_DBNAME  \
-    | awk \
-    '{print "DELETE FROM protein_tree_node   WHERE node_id="$1";";   \
-      print "DELETE FROM protein_tree_tag    WHERE node_id="$1";";   \
-      print "DELETE FROM protein_tree_member WHERE node_id="$1";";}' \
-    > delete_huge_clusters_protein_tree.sql
-
- $ mysql $COMPARA_DBNAME < delete_huge_clusters_protein_tree.sql
-
-Once this is done, you should have a consistent set of entries in
-homology, homology_member and protein_tree_member,
-protein_tree_node. Consistency of the entries can be tested with the
-following script;
+Consistency of the entries can be tested with the following script;
 
  $ perl ${BASEDIR}/ensembl-compara/scripts/pipeline/check_genetree_data.pl \
    -url $COMPARA_URL -longtests 1
