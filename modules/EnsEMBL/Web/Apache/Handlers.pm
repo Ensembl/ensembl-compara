@@ -28,7 +28,7 @@ use Bio::EnsEMBL::Registry;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
 our %species_lookup;
-foreach ($species_defs->valid_species, qw(Multi multi das common default)) {
+foreach ($species_defs->valid_species) {
   $species_lookup{$_}++;
 }
 
@@ -548,13 +548,6 @@ sub transHandler_species {
   
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
     
-  # Mess with the environment
-  $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
-  $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
-  $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $function;
-  $r->subprocess_env->{'ENSEMBL_SPECIES'}  = $species;
-  $r->subprocess_env->{'ENSEMBL_SCRIPT'}   = $script;
-
   if ($flag && $script) {
     if ($script eq 'action' || $script eq 'modal') {
       $r->subprocess_env->{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action eq 'Multi';
@@ -569,6 +562,13 @@ sub transHandler_species {
   } else {
     $script = $seg;
   }
+
+  # Mess with the environment
+  $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
+  $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
+  $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $function;
+  $r->subprocess_env->{'ENSEMBL_SPECIES'}  = $species;
+  $r->subprocess_env->{'ENSEMBL_SCRIPT'}   = $script;
  
   my $path_info = join '/', @path_segments;
   
@@ -730,6 +730,11 @@ sub transHandler {
     }
   }
   
+  if (!$species && grep /$raw_path[0]/, qw(Multi multi das common default)) {
+    $species = $raw_path[0];
+    shift @path_segments;
+  }
+ 
   @path_segments = @raw_path unless $species;
   
   # Some memcached tags (mainly for statistics)
@@ -752,11 +757,7 @@ sub transHandler {
     $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler for DAS scripts finished', undef, 'Apache');
     
     return $return if defined $return;
-  } elsif ($species eq 'das') {
-    $species = undef;
-    $Tspecies = undef;
-    @path_segments = @raw_path;
-  }
+  } 
   
   if (!$species && $raw_path[-1] !~ /\./) { # Species-less script?
     my $return = transHandler_no_species($r, $session_cookie, \@path_segments, $querystring);
