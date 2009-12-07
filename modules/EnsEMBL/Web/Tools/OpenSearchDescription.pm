@@ -5,10 +5,8 @@ use strict;
 sub create {
   ### Returns: none
   my $sd = shift;
-  my $T = $sd->ENSEMBL_HTDOCS_DIRS||[];
+  my ($root) = grep -e $_, @{$sd->ENSEMBL_HTDOCS_DIRS||[]};
   
-  my $root = $T->[0];
-
   return unless $root;
 
   my $template = sprintf '<?xml version="1.0" encoding="UTF-8"?>
