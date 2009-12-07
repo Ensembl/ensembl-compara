@@ -23,7 +23,7 @@ our $BLK_SIZE = 8192;
 our $TIMEOUT  = 5;
 our $MAX_REQ  = 5;
 our $MAX_HOST = 7;
-our $LINKRE   = qr!<link\s+href="([^"]+)"[^>]*?>([^<]*)</link>!mix;
+our $LINKRE   = qr{<link\s+href="([^"]+)"[^>]*?>([^<]*)</link>|<link\s+href="([^"]+)"[^>]*?/>}mix;
 our $NOTERE   = qr!<note[^>]*>([^<]*)</note>!mix;
 
 #########
@@ -975,7 +975,7 @@ sub _parse_twig {
   $blk =~ s!$LINKRE!{
                      $ref->{'link'} ||= [];
                      push @{$ref->{'link'}}, {
-                                              'href' => $1,
+                                              'href' => $1 || $3,
                                               'txt'  => $2,
                                              };
                      q()
