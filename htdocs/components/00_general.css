@@ -22,7 +22,7 @@
 
 body { font-family: Luxi Sans, Geneva, Helvetica, Arial, sans-serif;
     color:[[PAGE_TEXT]]; background-color:[[PAGE_BG]]; font-size: 80%; }
-pre, code, kbd {font-family:Monaco, Courier New, Courier, monospace; }
+pre, code, kbd {font-family: Courier New, Courier, monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
 
 /*----------------------------------------------------------------------
@@ -65,7 +65,7 @@ h4 { font-size:1em;   color:[[CONTRAST_TEXT]]; }
 .latin    { font-style: italic; }
 .normal   { font-style: normal; font-weight:normal; }
 .small    { font-size: 80%; }
-span.sequence { font-family: Courier New, Courier, Monaco, monospace }
+span.sequence { font-family: Courier New, Courier, monospace }
 
 /*----------------------------------------------------------------------
   Text layout
