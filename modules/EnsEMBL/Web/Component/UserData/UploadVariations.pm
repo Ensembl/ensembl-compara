@@ -30,7 +30,7 @@ sub content {
   my $html;
 
   my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/CheckConvert");
-  $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text' => qq(<p>Data should be uploaded as a list of tab separated values for more information on the expected format see <a href="/info/website/upload/index.html#Consequence">here.</a></p>) });
+  $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text' => qq(<p>Data should be uploaded as a list of tab separated values for more information on the expected format see <a href="/info/website/upload/index.html#Consequence">here.</a> There is also a 5.0MB limit on data uploads.</p>) });
   my $subheader = 'Upload file';
 
    ## Species now set automatically for the page you are on
