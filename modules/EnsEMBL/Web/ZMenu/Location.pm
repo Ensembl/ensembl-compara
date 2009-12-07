@@ -35,10 +35,10 @@ sub content {
     
     $caption = $alt_assembly . ':' . $l;
     
-    if ($this_assembly eq 'VEGA') {
+    if ($this_assembly =~ /VEGA/) {
       $url = sprintf '%s%s/%s/%s?r=%s', $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'ENSEMBL'}, $species, 'Location', $action, $l;
       $link_title = 'Jump to Ensembl';
-    } elsif ($alt_assembly eq 'VEGA') {
+    } elsif ($alt_assembly =~ /VEGA/) {
       $url = sprintf '%s%s/%s/%s?r=%s', $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'VEGA'}, $species, 'Location', $action, $l;
       $link_title = 'Jump to VEGA';
     } else {
