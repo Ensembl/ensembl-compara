@@ -524,13 +524,15 @@ sub transHandler_species {
   my ($r, $session_cookie, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
   
   my $redirect_if_different = 1;
-  my @path_segments = map { s/\W//g; $_ } @$raw_path_segments; # clean up dodgy characters
+  my @path_segments = @$raw_path_segments;
   my $ajax      = '';
   my $plugin    = '';
   my $type      = '';
   my $action    = '';
   my $function  = '';
-
+  
+  s/\W//g for @path_segments; # clean up dodgy characters
+  
   # Parse the initial path segments, looking for valid ENSEMBL_TYPE values
   my $seg    = shift @path_segments;
   my $script = $OBJECT_TO_SCRIPT{$seg};
