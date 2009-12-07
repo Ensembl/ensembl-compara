@@ -444,16 +444,40 @@ sub push_script_line {
 }
 
 sub transHandler_no_species {
-  my ($r, $session_cookie, $species, $path_segments, $querystring) = @_;
-  
-  my $real_script_name = $OBJECT_TO_SCRIPT{$species};
-  
-  return undef if $real_script_name =~ /^(component|zmenu)$/;
-  
-  $r->subprocess_env->{'ENSEMBL_SPECIES'} = 'common';
-  $r->subprocess_env->{'ENSEMBL_SCRIPT'}  = $real_script_name;
-  
-  my $script     = $real_script_name;
+  my ($r, $session_cookie, $raw_path_segments, $querystring) = @_;
+
+  my @path_segments = map { s/\W//g; $_ } @$raw_path_segments; # clean up dodgy characters
+  my $ajax      = '';
+  my $plugin    = '';  
+  my $type      = '';
+  my $action    = '';
+  my $function  = '';
+  my $species   = '';
+    
+  # Parse the initial path segments, looking for valid ENSEMBL_TYPE values
+  my $seg    = shift @path_segments;
+  my $script = $OBJECT_TO_SCRIPT{$seg};
+
+  if ($seg eq 'Component' || $seg eq 'Zmenu' || $seg eq 'Config') {
+    $ajax   = $seg;
+    $type   = shift @path_segments if $OBJECT_TO_SCRIPT{$path_segments[0]};
+    $plugin = shift @path_segments if $ajax eq 'Component';
+  } else {
+    $type = $seg;
+  }
+ 
+  $action   = shift @path_segments;
+  $function = shift @path_segments;
+
+  $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
+
+  # Mess with the environment
+  $r->subprocess_env->{'ENSEMBL_TYPE'}     = $type;
+  $r->subprocess_env->{'ENSEMBL_ACTION'}   = $action;
+  $r->subprocess_env->{'ENSEMBL_FUNCTION'} = $function;
+  $r->subprocess_env->{'ENSEMBL_SPECIES'}  = $species;
+  $r->subprocess_env->{'ENSEMBL_SCRIPT'}   = $script;
+
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
 
   $ENSEMBL_WEB_REGISTRY->initialize_session({
@@ -468,7 +492,7 @@ sub transHandler_no_species {
       last unless $script;
       
       my $filename = sprintf($dir, 'common') . "/$script";
-      
+
       next unless -r $filename;
       
       $to_execute = $filename;
@@ -478,17 +502,14 @@ sub transHandler_no_species {
   }
   
   if ($to_execute) {
-    $r->subprocess_env->{'ENSEMBL_TYPE'}     = my $t1 = $species;
-    $r->subprocess_env->{'ENSEMBL_ACTION'}   = my $t2 = shift @$path_segments;
-    $r->subprocess_env->{'ENSEMBL_FUNCTION'} = my $t3 = shift @$path_segments;
     
-    my $path_info = join '/', @$path_segments;
+    my $path_info = join '/', @$raw_path_segments;
     
     $r->filename($to_execute);
     $r->uri("/perl/common/$script");
     $r->subprocess_env->{'PATH_INFO'} = "/$path_info" if $path_info;
     
-    push_script_line($species, "$t1/$t2/$t3", $querystring) if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
+    push_script_line($species, "$type/$action/$function", $querystring) if $ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
     
     $r->push_handlers(PerlCleanupHandler => \&cleanupHandler_script); 
     $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler);
@@ -733,8 +754,8 @@ sub transHandler {
     return $return if defined $return;
   }
   
-  if (!$species) { # Species-less script?
-    my $return = transHandler_no_species($r, $session_cookie, $species, \@path_segments, $querystring);
+  if (!$species && $raw_path[-1] !~ /\./) { # Species-less script?
+    my $return = transHandler_no_species($r, $session_cookie, \@path_segments, $querystring);
     $ENSEMBL_WEB_REGISTRY->timer_push('Transhandler for non-species scripts finished', undef, 'Apache');
     
     return $return if defined $return;
