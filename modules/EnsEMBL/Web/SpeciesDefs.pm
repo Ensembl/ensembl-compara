@@ -663,7 +663,8 @@ sub timer {
 }
 
 sub timer_push {
-  my $self = shift;
+  my $self = shift; 
+  return;
   return $self->timer->push(@_);
 }
 
@@ -974,46 +975,44 @@ sub species_dropdown {
 }
 
 sub species_path {
-### This function will return the path including URL to all known ( by Core & Compara) species.
-### Some species in genetree can be from other EG units, and some can be from external sources
-### URLs returned in the format /species_url (for species local to this installation) or
-### http://www.externaldomain.org/species_url (for external species, e.g. in pan-compara)
-    my ($sd, $species) = @_;
-    $species = $ENV{ENSEMBL_SPECIES} unless $species;
-    my $URL;
+  ### This function will return the path including URL to all known ( by Core & Compara) species.
+  ### Some species in genetree can be from other EG units, and some can be from external sources
+  ### URLs returned in the format /species_url (for species local to this installation) or
+  ### http://www.externaldomain.org/species_url (for external species, e.g. in pan-compara)
+  my ($sd, $species) = @_;
+  $species ||= $ENV{'ENSEMBL_SPECIES'};
+  
+  return unless $species;
+  
+  my $url;
 
-    ## EK :: This bit about local species needs reworking as it will not work for bacteria - they need clade name in front
-    ## Is this species found on this site?
-    my $local = grep $species, $sd->valid_species;
-    if ($local) {
-      $URL = '/'.$species;
-    }
-    else { 
-      ## At the moment the mapping between species name and its source ( full url ) is stored in DEFAULTs.ini
-      ## But it really should come from compara db
-      my $current_species = $sd->SYSTEM_NAME($ENV{ENSEMBL_SPECIES}) || $ENV{ENSEMBL_SPECIES};
+  ## EK :: This bit about local species needs reworking as it will not work for bacteria - they need clade name in front
+  ## Is this species found on this site?
+  my $local = grep $species, $sd->valid_species;
+  
+  if ($local) {
+    $url = "/$species";
+  } else { 
+    ## At the moment the mapping between species name and its source (full url) is stored in DEFAULTs.ini
+    ## But it really should come from compara db
+    my $current_species = $sd->SYSTEM_NAME($ENV{'ENSEMBL_SPECIES'}) || $ENV{'ENSEMBL_SPECIES'};
 
-      my $nospaces = $sd->SYSTEM_NAME($species) || $species; 
-      $nospaces =~ s/ /_/g;
+    my $nospaces = $sd->SYSTEM_NAME($species) || $species; 
+    $nospaces =~ s/ /_/g;
 
-      my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species) || return "/$nospaces";
-      my $url_hash = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
+    my $site_hash = $sd->ENSEMBL_SPECIES_SITE($current_species) || return "/$nospaces";
+    my $url_hash  = $sd->ENSEMBL_EXTERNAL_URLS($current_species);
+    my $spsite    = uc $site_hash->{lc $nospaces};        # Get the location of the requested species 
+    my $cssite    = uc $site_hash->{lc $current_species}; # Get the location of the current site species
 
-      # Get the location of the requested species 
-      my $spsite = uc($site_hash->{lc($nospaces)});
+    # Get the URL for the location
+    my $base_url = $url_hash->{$spsite} || '';
 
-      # Get the location of the current site species
-      my $cssite = uc($site_hash->{lc($current_species)});
+    # Replace ###SPECIES### with the species name
+    ($url = $base_url) =~ s/###SPECIES###/$nospaces/;
+  }
 
-      # Get the URL for the location
-      my $base_url = $url_hash->{$spsite} || '';
-
-      # Replace ###SPECIES### with the species name
-      ($URL = $base_url) =~ s/\#\#\#SPECIES\#\#\#/$nospaces/;
-
-    }
-
-    return $URL;
+  return $url;
 }
 
 ### This function will return the display name of all known ( by Compara) species.
