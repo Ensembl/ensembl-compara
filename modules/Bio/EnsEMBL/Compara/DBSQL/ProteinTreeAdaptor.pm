@@ -56,7 +56,7 @@ sub fetch_by_Member_root_id {
   return undef unless (defined $root_id);
   my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
     (
-     $member->get_longest_peptide_Member->member_id,
+     $member->get_canonical_peptide_Member->member_id,
      $clusterset_id);
   return undef unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
@@ -88,7 +88,7 @@ sub fetch_by_gene_Member_root_id {
       my $aligned_member = $proteintree_adaptor->
                             fetch_AlignedMember_by_member_id_root_id
                             (
-                             $member->get_longest_peptide_Member->member_id
+                             $member->get_canonical_peptide_Member->member_id
                             );
 
   Description: Fetches from the database the protein_tree that contains the member_id
@@ -154,7 +154,7 @@ sub fetch_first_shared_ancestor_indexed {
       my $aligned_member = $proteintree_adaptor->
                             fetch_AlignedMember_by_member_id_mlssID
                             (
-                             $member->get_longest_peptide_Member->member_id, $mlssID
+                             $member->get_canonical_peptide_Member->member_id, $mlssID
                             );
 
   Description: Fetches from the database the protein_tree that contains the member_id

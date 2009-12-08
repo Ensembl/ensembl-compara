@@ -248,7 +248,7 @@ sub store_clusters {
       my ($pmember_id,$genome_db_id) = split("_",$member_hcluster_id);
       if (defined($self->{retry}) && $self->{retry} >= 20) {
         my $member = $self->{memberDBA}->fetch_by_dbID($pmember_id);
-        my $longest_member = $member->gene_member->get_longest_peptide_Member;
+        my $longest_member = $member->gene_member->get_canonical_peptide_Member;
         next unless ($longest_member->member_id eq $member->member_id);
         next if (defined($already_present->{$member->member_id}));
       }

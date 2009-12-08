@@ -544,9 +544,8 @@ sub dumpProteinTreeToWorkdir {
 
     # Double-check we are only using longest
     my $gene_member; my $longest_member = undef;
-    eval {$gene_member = $member->gene_member; $longest_member = $gene_member->get_longest_peptide_Member; };
+    eval {$gene_member = $member->gene_member; $longest_member = $gene_member->get_canonical_peptide_Member; };
     unless (defined($longest_member) && ($longest_member->member_id eq $member->member_id) ) {
-      $DB::single=1;1;
       $member->disavow_parent;
       $self->{treeDBA}->delete_flattened_leaf($member);
       my $updated_gene_count = scalar(@{$tree->get_all_leaves});
