@@ -586,7 +586,8 @@ sub fetch_all_peptides_for_gene_member_id {
   return $peplist;
 }
 
-=head2 fetch_longest_peptide_member_for_gene_member_id
+
+=head2 fetch_canonical_peptide_member_for_gene_member_id
 
   Arg [1]    : int member_id of a gene member
   Example    : $pepMembers = $memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id);
@@ -598,29 +599,21 @@ sub fetch_all_peptides_for_gene_member_id {
 
 =cut
 
-sub fetch_longest_peptide_member_for_gene_member_id {
+sub fetch_canonical_peptide_member_for_gene_member_id {
   my ($self, $gene_member_id) = @_;
 
   throw() unless (defined $gene_member_id);
 
   my $constraint = "m.gene_member_id = '$gene_member_id'";
+  my $join = [[['subset_member', 'sm'], 'sm.member_id = m.gene_member_id']];
 
-  my $join = [[['sequence', 'seq'], 'm.sequence_id = seq.sequence_id']];
-  my $sql_tmp = "ORDER BY seq.length DESC, member_id ";
-  my $new_sql = $self->dbc->add_limit_clause($sql_tmp,1);
-  $self->_final_clause($new_sql);
-#  $self->_final_clause("ORDER BY seq.length DESC, member_id LIMIT 1");
-
-  #fixed fetch_longest_peptide_member_for_gene_member_id so that it returns
-  #the same longest peptide used in the peptide_align_feature.  There are some
-  #cases where a gene will have multiple transcripts but with the same translation
-  #sequence (and hence the same sequence length). The code that picks the longest
-  #in the production pipeline uses a > test so the first translation that hits
-  #the longest length will be the one picked.  Since the insert is done right away
-  #the member with the smallest member_id (of the equal length translations) is the
-  #one picked as 'longest' for use in the blasting.
-  #so "ORDER BY seq.length DESC, member_id LIMIT 1" picks the right one.
-  #Yeah it is a hack, but it does work.
+  #fixed fetch_canonical_peptide_member_for_gene_member_id so that it
+  #returns the same canonical peptide used in the
+  #peptide_align_feature.  There are some cases where a gene will have
+  #multiple transcripts but with the same translation sequence (and
+  #hence the same sequence length). The information comes from the
+  #ensembl core database and is specified by the canonical_transcript
+  #relationship
 
   my $obj = undef;
   eval {
@@ -1011,6 +1004,15 @@ sub store_gene_peptide_link {
     $sth->execute($gene_member_id, $peptide_member_id);
     $sth->finish;
   };
+}
+
+# DEPRECATED METHODS
+####################
+
+sub fetch_longest_peptide_member_for_gene_member_id {
+  my $self = shift;
+
+  throw("Method deprecated. You can now use the fetch_canonical_peptide_member_for_gene_member_id method\n");
 }
 
 1;
