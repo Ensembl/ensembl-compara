@@ -123,14 +123,17 @@ sub render {
     warn "NO RELEASE INFORMATION found in database ensembl_website!";
   }
 
-  if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
+  if ($ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BLOG_URL) {
+    if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
     $html .= qq(<div class="js_panel ajax" id="blog" title="['/blog.html']"><input type="hidden" class="panel_type" value="Content" /></div>);
-  } else {
-    my $content;
-    eval {
-      $self->dynamic_use('EnsEMBL::Web::Document::HTML::Blog');
-      $html .=  EnsEMBL::Web::Document::HTML::Blog->render;
-    };    
+    } 
+    else {
+      my $content;
+      eval {
+        $self->dynamic_use('EnsEMBL::Web::Document::HTML::Blog');
+        $html .=  EnsEMBL::Web::Document::HTML::Blog->render;
+      };
+    }    
   }
   
   return $html;
