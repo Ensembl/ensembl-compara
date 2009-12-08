@@ -2,14 +2,14 @@ package EnsEMBL::Web::Proxiable;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use EnsEMBL::Web::RegObj;
+use URI::Escape qw(uri_escape);
+
+use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ExtIndex;
-use EnsEMBL::Web::Root;
-use EnsEMBL::Web::DBSQL::DBConnection;
-use CGI qw(escape escapeHTML);
+use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -86,21 +86,17 @@ sub _url {
   foreach (sort keys %pars) {
     next unless defined $pars{$_};
     
-    $url .= sprintf '%s%s=%s', $join, escape($_), $self->hack_escape($pars{$_});
+    $url .= sprintf '%s%s=%s', $join, uri_escape($_), uri_escape($pars{$_}, "^A-Za-z0-9\-_.!~*'():"); # Don't escape :
     $join = ';';
   }
 
   return $url;
 }
 
-sub hack_escape {
-  my ($self, $s) = @_;
-  (my $t = escape($s)) =~ s/%3A/:/g;
-  return $t;
-}
-
 sub timer_push {
   my $self = shift;
+  
+  return unless ref $self->{'data'}{'timer'} eq 'EnsEMBL::Web::Timer';
   return $self->{'data'}{'timer'}->push(@_);
 }
 
@@ -117,7 +113,7 @@ sub _sanitize {
   return $T;
 }
 
-# Does an ordinary CGI redirect
+# Does an ordinary redirect
 sub redirect {
   my ($self, $url) = @_;
   $self->{'data'}{'_input'}->redirect($url);
@@ -129,19 +125,19 @@ sub param {
   if (@_) { 
     my @T = map { _sanitize($_) } $self->{'data'}{'_input'}->param(@_);
     return wantarray ? @T : $T[0] if @T;
-    my $wsc = $self->viewconfig;
+    my $view_config = $self->viewconfig;
     
-    if ($wsc) {
-      $wsc->set(@_) if @_ > 1;
-      my @val = $wsc->get(@_);
+    if ($view_config) {
+      $view_config->set(@_) if @_ > 1;
+      my @val = $view_config->get(@_);
       return wantarray ? @val : $val[0];
     }
     
     return wantarray ? () : undef;
   } else {
     my @params = map { _sanitize($_) } $self->{'data'}{'_input'}->param;
-    my $wsc    = $self->viewconfig;
-    push @params, $wsc->options if $wsc;
+    my $view_config = $self->viewconfig;
+    push @params, $view_config->options if $view_config;
     my %params = map { $_, 1 } @params; # Remove duplicates
     
     return keys %params;
@@ -248,14 +244,14 @@ sub attach_image_config {
 
 sub get_ExtURL {
   my $self = shift;
-  my $new_url = escapeHTML($self->ExtURL) || return;
+  my $new_url = $self->ExtURL || return;
   return $new_url->get_url(@_);
 }
 
 sub get_ExtURL_link {
   my $self = shift;
   my $text = shift;
-  my $url = escapeHTML($self->get_ExtURL(@_));
+  my $url = $self->get_ExtURL(@_);
   return $url ? qq(<a href="$url">$text</a>) : $text;
 }
 
