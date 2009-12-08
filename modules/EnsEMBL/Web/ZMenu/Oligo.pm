@@ -4,7 +4,6 @@ package EnsEMBL::Web::ZMenu::Oligo;
 
 use strict;
 
-use CGI qw(escapeHTML);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
