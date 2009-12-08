@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Document::Renderer::String;
 
 use strict;
-use Apache2::RequestUtil;
+
 use IO::String;
 
 use EnsEMBL::Web::Document::Renderer::Table::Text;

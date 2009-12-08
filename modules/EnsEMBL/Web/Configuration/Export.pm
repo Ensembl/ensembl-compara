@@ -3,8 +3,6 @@ package EnsEMBL::Web::Configuration::Export;
 use strict;
 use base 'EnsEMBL::Web::Configuration';
 
-use EnsEMBL::Web::RegObj;
-
 sub global_context { return undef; }
 sub local_context  { return undef; }
 sub local_tools    { return undef; }
