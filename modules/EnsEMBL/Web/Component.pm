@@ -11,8 +11,8 @@ use Exporter;
 our @EXPORT_OK = qw(cache cache_print);
 our @EXPORT = @EXPORT_OK;
 
-use CGI qw(escapeHTML);
 use Digest::MD5 qw(md5_hex);
+use HTML::Entities qw(encode_entities);
 use Text::Wrap qw(wrap);
 
 use Bio::EnsEMBL::DrawableContainer;
@@ -150,7 +150,7 @@ sub _attach_das {
 }
 
 # Creates a modal-friendly form with hidden elements to automatically pass 
-# _referer and x_requested_with - and to optionally handle wizard buttons
+# _referer and to optionally handle wizard buttons
 sub modal_form {
   my ($self, $name, $action, $options) = @_;
   
@@ -158,17 +158,16 @@ sub modal_form {
   my $form_action = $action;
   
   if ($options->{'wizard'}) {
-    my $species = $ENV{'ENSEMBL_TYPE'} eq 'UserData' ? $object->data_species : $object->species;
+    my $species = $object->type eq 'UserData' ? $object->data_species : $object->species;
     
-    $form_action  = "/$species" if $species;
+    $form_action  = $object->species_path($species) if $species;
     $form_action .= sprintf '/%s/Wizard', $object->type;
   }
   
   my $form = new EnsEMBL::Web::Form($name, $form_action, $options->{'method'} || 'post');
   my $label = $options->{'label'} || 'Next >';
 
-  $form->add_element('type' => 'Hidden', 'name' => '_referer',         'value' => $object->param('_referer'));
-  $form->add_element('type' => 'Hidden', 'name' => 'x_requested_with', 'value' => $object->param('x_requested_with'));
+  $form->add_element('type' => 'Hidden', 'name' => '_referer', 'value' => $object->param('_referer'));
   
   if ($options->{'wizard'}) {
     $form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back') unless defined $options->{'back_button'} && $options->{'back_button'} == 0;
@@ -399,7 +398,7 @@ sub _sort_similarity_links {
     if ($type->description) {
       (my $D = $type->description) =~ s/^"(.*)"$/$1/;
       
-      $text .= '<br />' . escapeHTML($D);
+      $text .= '<br />' . encode_entities($D);
       $join_links = 1;
     }
     
