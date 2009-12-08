@@ -1,11 +1,14 @@
 package EnsEMBL::Web::Proxy;
 
 use strict;
-use EnsEMBL::Web::SpeciesDefs;
+
+use vars qw($AUTOLOAD);
+
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
-use vars qw($AUTOLOAD);
-use base qw( EnsEMBL::Web::Root );
+use EnsEMBL::Web::SpeciesDefs;
+
+use base qw(EnsEMBL::Web::Root);
 
 sub new {
   ### Creates a new Proxy object. Usually called from {{EnsEMBL::Web::Proxy::Object}}.
@@ -39,143 +42,82 @@ sub new {
   ### It is interesting to note that this instantiation process contains all the hall
   ### marks of a good Poirot novel: obfuscation, misdirection, intrege and murder.
 
-  my( $class, $supertype, $type, $data, %extra_elements ) = @_;
-  my $self  = [
-    $type, ## Gene / Transcript / Location ...
+  my ($class, $supertype, $type, $data, %extra_elements) = @_;
+  
+  my $self = [
+    $type, # Gene, Transcript, Location etc
     {
-      '_core_objects'    => $data->{_core_objects}    || undef, 
-      '_problem'         => $data->{_problem}         || {},    
-      '_species_defs'    => $data->{_species_defs}    || undef, 
-      '_ext_url_'        => $data->{_ext_url}         || undef, # EnsEMBL::Web::ExtURL object used to create external links...
-      '_parent'          => $data->{_parent}          || undef, # Information about the referer... hash ref...
-      '_user'            => $data->{_user}            || undef, ##
-      '_input'           => $data->{_input}           || undef, ## extended of CGI
-      '_databases'       => $data->{_databases}       || undef, ## getting database handles
-      '_wsc_adaptor'     => $data->{_wsc_adaptor}     || undef, ## Replaced by Session
-      '_wuc_adaptor'     => $data->{_wuc_adaptor}     || undef, ## Replaced by Session
-      '_view_configs_'   => $data->{_view_configs_}   || {},    ## {}
-      '_user_details'    => $data->{_user_details}    || undef, ## 
-      '_web_user_db'     => $data->{_web_user_db}     || undef,
-      '_apache_handle'   => $data->{_apache_handle}   || undef,
-      '_type'            => $data->{_type}            || $ENV{'ENSEMBL_TYPE'},     ## Parsed from URL... Gene/Transcript/Location
-      '_action'          => $data->{_action}          || $ENV{'ENSEMBL_ACTION'},   ## View/Summary/....
-      '_function'        => $data->{_function}        || $ENV{'ENSEMBL_FUNCTION'}, ## Extra path info...
-      '_species'         => $data->{_species}         || $ENV{'ENSEMBL_SPECIES'},
-      '_script'          => $data->{_script}          || $ENV{'ENSEMBL_SCRIPT'},   ## name of script in this case action... ## deprecated
-#      '_feature_types'   => $data->{_feature_types}   || [],
-#      '_feature_ids'     => $data->{_feature_ids}     || [],
-      'timer'            => $data->{timer}            || [],  ## Diagnostic object....
-#      '_group_ids'       => $data->{_group_ids}      || [],
+      _core_objects  => $data->{'_core_objects'}  || undef, 
+      _problem       => $data->{'_problem'}       || {},    
+      _species_defs  => $data->{'_species_defs'}  || undef, 
+      _ext_url_      => $data->{'_ext_url'}       || undef,                    # EnsEMBL::Web::ExtURL object used to create external links
+      _parent        => $data->{'_parent'}        || undef,                    # Information about the referer
+      _user          => $data->{'_user'}          || undef,                    
+      _input         => $data->{'_input'}         || undef,                    # extension of CGI
+      _databases     => $data->{'_databases'}     || undef,                    # getting database handles
+      _view_configs_ => $data->{'_view_configs_'} || {},
+      _user_details  => $data->{'_user_details'}  || undef,
+      _web_user_db   => $data->{'_web_user_db'}   || undef,
+      _apache_handle => $data->{'_apache_handle'} || undef,
+      _type          => $data->{'_type'}          || $ENV{'ENSEMBL_TYPE'},     # Parsed from URL -  Gene, Transcript, Location etc
+      _action        => $data->{'_action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
+      _function      => $data->{'_function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
+      _species       => $data->{'_species'}       || $ENV{'ENSEMBL_SPECIES'},
+      _script        => $data->{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},   # name of script in this case action... ## deprecated
+      timer          => $data->{'timer'}          || [],                       # Diagnostic object
       %extra_elements
     },
     [], 
-    $supertype ## Factory / Object / ...
+    $supertype # Factory, Object etc
   ];
+  
   bless $self, $class;
-  $ENSEMBL_WEB_REGISTRY->timer_push( "Adding all plugins... $supertype $type" );
-  foreach my $root( @{$self->species_defs->ENSEMBL_PLUGIN_ROOTS}, 'EnsEMBL::Web' ) {
+  
+  $ENSEMBL_WEB_REGISTRY->timer_push("Adding all plugins: $supertype $type");
+  
+  foreach my $root(@{$self->species_defs->ENSEMBL_PLUGIN_ROOTS}, 'EnsEMBL::Web') {
     my $class_name = join '::', $root, $supertype, $type;
-    if( $self->dynamic_use( $class_name ) ) {
-      push @{$self->__children}, ( new $class_name( $self->__data )||() );
+    
+    if ($self->dynamic_use($class_name)) {
+      push @{$self->__children}, (new $class_name($self->__data) || ());
     } else {
-      (my $CS = $class_name ) =~ s/::/\\\//g;
-      my $error = $self->dynamic_use_failure( $class_name );
+      (my $CS = $class_name) =~ s/::/\\\//g;
+      my $error = $self->dynamic_use_failure($class_name);
       my $message = "^Can't locate $CS.pm in ";
-      $self->problem( 'child_proxy_error', "$supertype failure: $class_name", qq(
-<p>Unable to compile $supertype of type $type - due to the following error in the module $class_name:</p>
-<pre>@{[$self->_format_error( $error )]}</pre>) ) unless $error =~ /$message/;
+      
+      if ($error !~ /$message/) {
+        $self->problem('child_proxy_error', "$supertype failure: $class_name", sprintf(
+          '<p>Unable to compile %s of type %s - due to the following error in the module %s:</p><pre>%s</pre>',
+          $supertype, $type, $class_name, $self->_format_error($error)
+        ));
+      }
     }
   }
-  $ENSEMBL_WEB_REGISTRY->timer_push( "Added all plugins... $supertype $type" );
-  unless( @{$self->__children} ) {
-    $self->problem( 'fatal', "$supertype failure: $type",qq( 
-<p>
-  Unable to compile any $supertype modules of type "<b>$type</b>".
-</p>) );
-  }
-  $self->species_defs->{'timer'} = $data->{timer};
+  
+  $ENSEMBL_WEB_REGISTRY->timer_push("Added all plugins: $supertype $type");
+  
+  $self->problem('fatal', "$supertype failure: $type", qq{<p>Unable to compile any $supertype modules of type "<b>$type</b>".</p>}) unless @{$self->__children};
+  $self->species_defs->{'timer'} = $data->{'timer'};
+  
   return $self;
 }
 
-##
-## Accessor functionality
-##
-sub species_defs         { $_[0][1]{'_species_defs'}  ||= EnsEMBL::Web::SpeciesDefs->new(); }
-sub user_details         { $_[0][1]{'_user_details'}  ||= 1; } # EnsEMBL::Web::User::Details->new( $_[0]->{_web_user_db}); }
+# Accessor functionality
+sub species      :lvalue { $_[0][1]{'_species'};  }
+sub parent       :lvalue { $_[0][1]{'_parent'};   }
+sub script       :lvalue { $_[0][1]{'_script'};   }
+sub action       :lvalue { $_[0][1]{'_action'};   }
+sub function     :lvalue { $_[0][1]{'_function'}; }
 
-sub species {
-### a
-### sets/gets species
-  my $self = shift;
-  $self->[1]{_species} = shift if @_;
-  return $self->[1]{_species};
-}
+sub species_defs { return $_[0][1]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
+sub user_details { return $_[0][1]{'_user_details'} ||= 1; }
+sub timer        { return $_[0][1]{'timer'}; }
+sub timer_push   { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
 
-sub parent               { 
-  ### a
-  my $self = shift;
-  $self->[1]{_parent} = shift if @_;
-  return $self->[1]{'_parent'}; 
-}
-
-sub script               { 
-  ### a
-  my $self = shift;
-  $self->[1]{_script} = shift if @_;
-  return $self->[1]{'_script'}; 
-}
-
-sub action               { 
-  ### a
-  my $self = shift;
-  $self->[1]{_action} = shift if @_;
-  return $self->[1]{'_action'}; 
-}
-
-sub function             { 
-  ### a
-  my $self = shift;
-  $self->[1]{_function} = shift if @_;
-  return $self->[1]{'_function'}; 
-}
-
-sub __supertype  :lvalue {
-### a
-### gets supertype of Proxy (i.e. Factory/Object;)
-  my $self = shift;
-  return $self->[3];
-}
-
-sub __objecttype :lvalue {
-### a
-### gets type of Object being proxied (e.g. Gene/Transcript/Location/...)
-  my $self = shift;
-  return $self->[0];
-}
-
-sub __children           {
-### a
-### returns a reference to the array of child (EnsEMBL::*::$supertype::$objecttype) objects
-  my $self = shift;
-  return $self->[2];
-}
-
-sub __data       :lvalue {
-### a
-### return data hash
-  my $self = shift;
-  return $self->[1];
-}
-
-sub timer_push {
-  my $self = shift;
-  return $self->[1]{'timer'}->push(@_);
-}
-
-sub timer {
-  my $self = shift;
-  return $self->[1]{'timer'};
-}
+sub __supertype  :lvalue { $_[0][3]; }
+sub __objecttype :lvalue { $_[0][0]; }
+sub __data       :lvalue { $_[0][1]; }
+sub __children   { return $_[0][2];  } # returns a reference to the array of child (EnsEMBL::*::$supertype::$objecttype) objects
 
 sub has_a_problem      { return scalar keys %{$_[0][1]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0][1]{'_problem'}{'fatal'}||[]}; }
@@ -191,30 +133,32 @@ sub problem {
 }
 
 sub AUTOLOAD {
-### Nasty Voodoo magic
-###
-### Loop through all the plugins and if they can perform the requested function
-### action it on the child objects....
-###
-### If the function sets __data->{'_drop_through_'} to 1 then no further action
-### is taken...
-###
-### If it sets it to a value other than one then this function is called after
-### the function has been called on all the other children
+  ### Nasty Voodoo magic
+  ###
+  ### Loop through all the plugins and if they can perform the requested function
+  ### action it on the child objects....
+  ###
+  ### If the function sets __data->{'_drop_through_'} to 1 then no further action
+  ### is taken...
+  ###
+  ### If it sets it to a value other than one then this function is called after
+  ### the function has been called on all the other children
 
-  my $self   = shift;
-  ( my $fn     = our $AUTOLOAD ) =~ s/.*:://;
-  my @return = ();
-  my @post_process = ();
-  my $flag   = $fn eq 'DESTROY' ? 1 : 0;
-  foreach my $sub ( @{$self->__children} ) {
-    if( $sub->can( $fn ) ) {
+  my $self = shift;
+  
+  (my $fn  = our $AUTOLOAD) =~ s/.*:://;
+  my $flag = $fn eq 'DESTROY' ? 1 : 0;
+  my (@return, @post_process);
+  
+  foreach my $sub (@{$self->__children}) {
+    if ($sub->can($fn)) {
       $self->__data->{'_drop_through_'} = 0;
-      @return = $sub->$fn( @_ );
-      $flag = 1;
-      if( ! $self->__data->{'_drop_through_'} ) {
+      @return = $sub->$fn(@_); # can set $self->__data->{'_drop_through_'} internally
+      $flag   = 1;
+      
+      if (!$self->__data->{'_drop_through_'}) {
         last;
-      } elsif( $self->__data->{'_drop_through_'} !=1 ) {
+      } elsif ($self->__data->{'_drop_through_'} != 1) {
         push @post_process, [ $sub, $self->__data->{'_drop_through_'} ];
       }
     }
@@ -223,43 +167,46 @@ sub AUTOLOAD {
   foreach my $ref (reverse @post_process) {
     my $sub = $ref->[0];
     my $fn  = $ref->[1];
-    if( $sub->can($fn) ) {
-      $sub->$fn( \@return, @_ );
-    }
+    
+    $sub->$fn(\@return, @_) if $sub->can($fn);
   }
-  unless( $flag ) {
+  
+  if (!$flag) {
     my @T = caller(0);
     die "Undefined function $fn on Proxy::$self->[3] of type: $self->[0] at $T[1] line $T[2]\n";
   }
-  return wantarray() ? @return : $return[0];
+  
+  return wantarray ? @return : $return[0];
 }
 
 sub can {
-### Nasty Voodoo magic (part II)
-###
-### Because we have an {{AUTOLOAD}} function all functions are possible and can will always
-### return 1 - so we over-ride can to return 1 if any child can perform this function.
+  ### Nasty Voodoo magic (part II)
+  ###
+  ### Because we have an {{AUTOLOAD}} function all functions are possible and can will always
+  ### return 1 - so we over-ride can to return 1 if any child can perform this function.
+  
   my $self = shift;
   my $fn   = shift;
-  foreach my $sub ( @{$self->__children} ) {
+  
+  foreach my $sub (@{$self->__children}) {
     return 1 if $sub->can($fn);
   }
+  
   return 0;
 }
 
 sub ref {
-### Nasty Voodoo magic (part III)
-###
-### Ref will just return that you have a Proxy object - but we don't want to to do
-### so this function the underlying object type (and also what children are also
+  ### Nasty Voodoo magic (part III)
+  ###
+  ### Core::ref will just return that you have a Proxy object, which is unhelpful
+  ### so this function returns the underlying object type and that of the children
 
-  my $self = shift;
-  my $ref = ref( $self );
-  my $object = join '::', 'EnsEMBL','Web',$self->__supertype,$self->__objecttype;
-  return "$object (@{[map { ref($_) } @{$self->__children}]})";
+  my $self   = shift;
+  my $object = join '::', 'EnsEMBL','Web', $self->__supertype, $self->__objecttype;
+  
+  return sprintf '%s (%s)', $object, join ', ', map ref $_, @{$self->__children};
 };
 
 sub DESTROY {}
-
 
 1;
