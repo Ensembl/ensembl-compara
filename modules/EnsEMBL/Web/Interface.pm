@@ -379,9 +379,9 @@ sub configure {
 
   ## Make interface available from components, by attaching to Object
   $object->interface($self);
-  my $type      = $ENV{'ENSEMBL_TYPE'};
-  my $data      = $ENV{'ENSEMBL_ACTION'};
-  my $function  = $ENV{'ENSEMBL_FUNCTION'} || 'Display';
+  my $type      = $object->type;
+  my $data      = $object->action;
+  my $function  = $object->function || 'Display';
   #warn "@@@ $type / $data / $function";
 
   if ($function eq 'Save' || $function eq 'Delete') { ## Process database command
@@ -486,7 +486,7 @@ sub edit_fields {
   my ($self, $object) = @_;
   my $parameters = [];
   my $data = $self->data;
-  my $dataview = $ENV{'ENSEMBL_FUNCTION'};
+  my $dataview = $object->function;
   my $element_order = $self->element_order;
   my %has_many = %{ $self->data->hasmany_relations };
 

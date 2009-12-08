@@ -96,7 +96,7 @@ sub redirect {
     }
   }
   else {
-    $url = '/'.$ENV{'ENSEMBL_TYPE'}.'/'.$ENV{'ENSEMBL_ACTION'};
+    $url = '/'.$self->type.'/'.$self->action;
     foreach my $p ($self->object->input_param) {
       push @ok_params, $p.'='.$self->object->param($p);
     }
