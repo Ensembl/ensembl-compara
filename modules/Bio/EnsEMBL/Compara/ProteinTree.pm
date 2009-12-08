@@ -61,7 +61,7 @@ sub get_leaf_by_Member {
   if($member->isa('Bio::EnsEMBL::Compara::ProteinTree')) {
     return $self->find_leaf_by_node_id($member->node_id);
   } elsif ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    return $self->find_leaf_by_name($member->get_longest_peptide_Member->stable_id);
+    return $self->find_leaf_by_name($member->get_canonical_peptide_Member->stable_id);
   } else {
     die "Need a Member object!";
   }
@@ -208,5 +208,70 @@ sub stable_id {
 
   return $self->{'_stable_id'};
 }
+
+
+=head2 remove_nodes_by_taxon_ids
+
+  Arg [1]     : arrayref of taxon_ids
+  Example     : my $ret_tree = $tree->remove_nodes_by_taxon_ids($taxon_ids);
+  Description : Returns the tree with removed nodes in taxon_id list.
+  Returntype  : Bio::EnsEMBL::Compara::ProteinTree object
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (behaviour on exceptions could change)
+
+=cut
+
+sub remove_nodes_by_taxon_ids {
+  my $self = shift;
+  my $species_arrayref = shift;
+
+  my @tax_ids = @{$species_arrayref};
+  # Turn the arrayref into a hash.
+  my %tax_hash;
+  map {$tax_hash{$_}=1} @tax_ids;
+
+  foreach my $leaf ($self->leaves) {
+    if (exists $tax_hash{$leaf->taxon_id}) {
+      $self->delete_lineage($leaf);
+      $self->minimize_tree();
+    }
+  }
+
+  return $self;
+}
+
+=head2 keep_nodes_by_taxon_ids
+
+  Arg [1]     : arrayref of taxon_ids
+  Example     : my $ret_tree = $tree->keep_nodes_by_taxon_ids($taxon_ids);
+  Description : Returns the tree with kept nodes in taxon_id list.
+  Returntype  : Bio::EnsEMBL::Compara::ProteinTree object
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (behaviour on exceptions could change)
+
+=cut
+
+sub keep_nodes_by_taxon_ids {
+  my $self = shift;
+  my $species_arrayref = shift;
+
+  my @tax_ids = @{$species_arrayref};
+  # Turn the arrayref into a hash.
+  my %tax_hash;
+  map {$tax_hash{$_}=1} @tax_ids;
+
+
+  foreach my $leaf ($self->leaves) {
+    unless (exists $tax_hash{$leaf->taxon_id}) {
+      $self->delete_lineage($leaf);
+      $self->minimize_tree();
+    }
+  }
+
+  return $self;
+}
+
 
 1;

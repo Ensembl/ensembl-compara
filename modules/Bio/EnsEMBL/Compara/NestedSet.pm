@@ -1031,6 +1031,11 @@ sub _internal_nhx_format {
         $nhx .= ":T=$taxon_id";
 	$nhx .= ":S=$taxon_id" if ($format_mode eq "treebest_ortho");
     }
+    # GJ 2009-02-01 : Add img tags to string if necessary.
+      if ($self->get_tagvalue("img") ne '') {
+	  $nhx .= ":IMG=".$self->get_tagvalue("img");
+      }
+
     $nhx .= "]";
   }
   if($format_mode eq 'simple') { 
@@ -1151,7 +1156,7 @@ sub _internal_newick_format {
     #display_label: external name and distance on all nodes
     my $display_label = $self->name;
     if($self->is_leaf) {
-      my $prot_member = $self->get_longest_peptide_Member;
+      my $prot_member = $self->get_canonical_peptide_Member;
       #my $gene_member = $self->gene_member;
       my $short_name;
       eval { $short_name = $prot_member->genome_db->short_name;};
@@ -1555,6 +1560,40 @@ sub remove_nodes {
 }
 
 
+=head2 delete_lineage
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $node
+  Example     : $tree->delete_lineage($node);
+  Description : Removes $node from tree. Nodes should be in the tree.
+  Returntype  : 
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (behaviour on exceptions could change)
+
+=cut
+
+sub delete_lineage {
+  my $self = shift;
+  my $del_me = shift;
+
+  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$self]") 
+    unless ($self->isa('Bio::EnsEMBL::Compara::NestedSet'));
+
+  my $parent = $del_me->parent;
+  while ($parent) {
+    my $num_children = scalar @{$parent->children};
+    if ($num_children > 1) {
+      $self->remove_nodes([$del_me]);
+      return $self;
+    } elsif ($num_children == 1) {
+      $self->remove_nodes([$del_me]);
+      $del_me = $parent;
+      $parent = $del_me->parent;
+    }
+  }
+  return $self;
+}
+
 =head2 minimize_tree
 
   Arg [1]     : -none-
@@ -1597,6 +1636,29 @@ sub minimize_node {
      $child->disavow_parent;
   }
   return $child
+}
+
+
+sub scale {
+  my $self = shift;
+  my $scale = shift;
+
+  foreach my $node (@{$self->get_all_nodes}) {
+    my $bl = $node->distance_to_parent;
+    $bl = 0 unless (defined $bl);
+    $node->distance_to_parent($bl*$scale);
+  }
+  return $self;
+}
+
+
+sub scale_max_to {
+  my $self = shift;
+  my $new_max = shift;
+
+  my $max_dist = $self->max_distance;
+  my $scale_factor = $new_max / $max_dist;
+  return $self->scale($scale_factor);
 }
 
 
@@ -1774,6 +1836,21 @@ sub find_first_shared_ancestor {
   return $self if($self->equals($node));
   return $node if($self->has_ancestor($node));
   return $self->find_first_shared_ancestor($node->parent);
+}
+
+
+sub find_first_shared_ancestor_from_leaves {
+  my $self = shift;
+  my $leaf_list = shift;
+
+  my @leaves = @{$leaf_list};
+
+  my $ancestor = shift @leaves;
+  while (scalar @leaves > 0) {
+    my $node = shift @leaves;
+    $ancestor = $ancestor->find_first_shared_ancestor($node);
+  }
+  return $ancestor;
 }
 
 
