@@ -55,6 +55,8 @@ unless ($cwd eq "/mysql/data_3306/tmp") {
 
 my @tables_to_merge = qw(
 member
+subset
+subset_member
 sequence
 homology
 protein_tree_node
