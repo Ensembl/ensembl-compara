@@ -4,9 +4,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use CGI qw(escapeHTML);
-
-use EnsEMBL::Web::CoreObjects;
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Proxiable);
 
@@ -22,6 +20,11 @@ sub DataObjects {
   my $self = shift;
   push @{$self->{'data'}{'_dataObjects'}}, @_ if @_;
   return $self->{'data'}{'_dataObjects'};
+}
+
+sub object {
+  my $self = shift;
+  return $self->{'data'}{'_dataObjects'} ? $self->{'data'}{'_dataObjects'}[0] : undef;
 }
 
 sub fastCreateObjects {
@@ -67,7 +70,7 @@ sub _archive {
 
 sub _help {
   my ($self, $string) = @_;
-  return sprintf '<p>%s</p>', escapeHTML($string);
+  return sprintf '<p>%s</p>', encode_entities($string);
 }
 
 sub _known_feature {
@@ -120,6 +123,46 @@ sub _known_feature {
     } else {
       $self->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database. ") )  ;
     }
+  }
+}
+
+# The whole problem handling code possibly needs re-factoring 
+# Especially the stuff that may end up cyclic! (History/UnMapped)
+# where ID's don't exist but we have a "gene" based display
+# for them.
+sub handle_problem {
+  my $self = shift;
+  
+  my $url;
+
+  if ($self->has_problem_type('redirect')) {
+    my ($p) = $self->get_problem_type('redirect');
+    $url  = $p->name;
+  } elsif ($self->has_problem_type('mapped_id')) {
+    my $feature = $self->__data->{'objects'}[0];
+    
+    $url = sprintf '%s/%s/%s?%s', $self->species_path, $self->type, $self->action, join ';', map { "$_=$feature->{$_}" } keys %$feature;
+  } elsif ($self->has_problem_type('unmapped')) {
+    my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
+    my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
+    
+    $url = sprintf '%s/%s/Genome?type=%s;id=%s', $self->species_path, $self->type, $type, $id;
+  } elsif ($self->has_problem_type('archived')) {
+    my ($view, $param, $id) = 
+      $self->param('peptide')    ? ('Transcript/Idhistory/Protein', 'p', $self->param('peptide'))    :
+      $self->param('transcript') ? ('Transcript/Idhistory',         't', $self->param('transcript')) :
+                                   ('Gene/Idhistory',               'g', $self->param('gene'));
+    
+    $url = sprintf '%s/%s?%s=%s', $self->species_path, $view, $param, $id;
+  } else {
+    my $p = $self->problem;
+    my @problems = map @{$p->{$_}}, keys %$p;
+    return \@problems;
+  }
+  
+  if ($url) {
+    $self->redirect($url);
+    return 'redirect';
   }
 }
 
