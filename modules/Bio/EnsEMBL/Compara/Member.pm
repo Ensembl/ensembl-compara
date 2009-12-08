@@ -973,33 +973,34 @@ sub translation {
   return $self->get_Translation;
 }
 
-=head2 get_longest_peptide_Member
+
+=head2 get_canonical_peptide_Member
 
   Args       : none
-  Example    : $longestPepMember = $member->get_longest_peptide_Member
-  Description: if member is an "ENSEMBLGENE" it will return the longest peptide member
+  Example    : $canonicalPepMember = $member->get_canonical_peptide_Member
+  Description: if member is an "ENSEMBLGENE" it will return the canonical peptide member
                if member is an 'ENSEMBLPEP' it will get its gene member and have it
-               return the longest peptide (which could be the same as the starting member)
+               return the canonical peptide (which could be the same as the starting member)
   Returntype : Bio::EnsEMBL::Compara::Member or undef
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub get_longest_peptide_Member {
+sub get_canonical_peptide_Member {
   my $self = shift;
 
   return undef unless($self->adaptor);
-  my $longestPep = undef;
+  my $canonicalPep = undef;
   if($self->source_name eq 'ENSEMBLGENE') {
-    $longestPep = $self->adaptor->fetch_longest_peptide_member_for_gene_member_id($self->dbID);
+    $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
   }
   if($self->source_name eq 'ENSEMBLPEP') {
     my $geneMember = $self->gene_member;
     return undef unless($geneMember);
-    $longestPep = $self->adaptor->fetch_longest_peptide_member_for_gene_member_id($geneMember->dbID);
+    $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
   }
-  return $longestPep;
+  return $canonicalPep;
 }
 
 
@@ -1030,6 +1031,12 @@ sub get_all_peptide_Members {
 sub source_id {
   my $self = shift;
   throw("Method deprecated. You can now get the source_name by directly calling source_name method\n");
+}
+
+sub get_longest_peptide_Member {
+  my $self = shift;
+
+  throw("Method deprecated. You can now use the get_canonical_peptide_Member method\n");
 }
 
 
