@@ -817,7 +817,7 @@ sub get_das_sources {
   #warn "!!! ATTEMPTING TO GET DAS SOURCES";
   my ($self, $server, @logic_names) = @_;
   
-  my $species = $ENV{ENSEMBL_SPECIES};
+  my $species = $self->species;
   if ($species eq 'common') {
     $species = $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
   }

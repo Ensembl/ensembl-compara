@@ -108,7 +108,7 @@ sub get_feature_sets {
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
 
   my @sources;
-  my $spp = $ENV{'ENSEMBL_SPECIES'};
+  my $spp = $self->species;
   if ($spp eq 'Homo_sapiens'){
    @sources = ('RegulatoryFeatures', 'miRanda miRNA targets', 'cisRED search regions', 'cisRED motifs', 'VISTA enhancer set');
   } elsif ($spp eq 'Mus_musculus'){

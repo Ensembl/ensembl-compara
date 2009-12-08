@@ -9,7 +9,7 @@ use base qw(EnsEMBL::Web::Object);
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new( @_ );
-  $self->real_species = $ENV{ENSEMBL_SPECIES};
+  $self->real_species = $self->species;
   $self->{'_slice_hack'} = {};
   $self->{'_features'}   = {};
   return $self; 
