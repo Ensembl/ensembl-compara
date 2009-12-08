@@ -2,15 +2,12 @@ package EnsEMBL::Web::Command::Export::HaploviewFiles;
 
 use strict;
 
-use CGI qw(escape);
-use Class::Std;
+use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::TmpFile::Text;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(nsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -91,13 +88,10 @@ sub make_files {
   $tar_file->save;
   
   return {
-    gen_file   => CGI::escape($gen_file->URL),
-    locus_file => CGI::escape($locus_file->URL),
-    tar_file   => CGI::escape($tar_file->URL)
+    gen_file   => uri_escape($gen_file->URL),
+    locus_file => uri_escape($locus_file->URL),
+    tar_file   => uri_escape($tar_file->URL)
   };
-}
-
-
 }
 
 1;

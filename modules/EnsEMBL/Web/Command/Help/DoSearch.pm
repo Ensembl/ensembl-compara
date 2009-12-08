@@ -1,21 +1,14 @@
 package EnsEMBL::Web::Command::Help::DoSearch;
 
-## Searches the help_record table in the ensembl_website  database 
+# Searches the help_record table in the ensembl_website database 
 
 use strict;
 use warnings;
 
-use Class::Std;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Help;
 
-use base 'EnsEMBL::Web::Command';
-
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-}
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -39,8 +32,6 @@ sub process {
   $new_param->{'_referer'} = $object->param('_referer');
 
   $self->ajax_redirect('/Help/Results', $new_param);
-}
-
 }
 
 1;

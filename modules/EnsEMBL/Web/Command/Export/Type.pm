@@ -2,11 +2,7 @@ package EnsEMBL::Web::Command::Export::Type;
 
 use strict;
 
-use Class::Std;
-
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -33,8 +29,6 @@ sub process {
   my $url = sprintf '/%s/Export/%s/%s', $object->species, $type, $action;
   
   $self->ajax_redirect($url, $params);
-}
-
 }
 
 1;

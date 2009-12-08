@@ -2,15 +2,12 @@ package EnsEMBL::Web::Command::Export::LDExcelFile;
 
 use strict;
 
-use Class::Std;
 use POSIX qw(floor);
 
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::TmpFile::Text;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -108,9 +105,6 @@ sub make_file {
   $file->save;
   
   return $file->URL;
-}
-
-
 }
 
 1;

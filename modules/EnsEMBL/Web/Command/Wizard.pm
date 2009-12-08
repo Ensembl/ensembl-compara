@@ -6,12 +6,8 @@ package EnsEMBL::Web::Command::Wizard;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -22,11 +18,11 @@ sub process {
   my $submit = $object->param('wizard_ajax_submit') || $object->param('wizard_submit');
   if( $submit && $submit =~ /Back/i ) {
     my $current_node = 'Summary'; ## Default value to stop Magic from barfing
-    my $species = $ENV{'ENSEMBL_TYPE'} eq 'UserData' ? $object->data_species : $object->species;
+    my $species = $object->type eq 'UserData' ? $object->data_species : $object->species;
     if ($species) {
       $url .= $object->species_path($species);
     }
-    $url .= '/'.$ENV{'ENSEMBL_TYPE'};
+    $url .= '/'.$object->type;
 
     my @steps = $object->param('_backtrack');
     pop(@steps);
@@ -54,9 +50,6 @@ sub process {
   }
 
   $self->ajax_redirect($url, $param); 
-}
-
-
 }
 
 1;

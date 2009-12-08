@@ -5,18 +5,12 @@ package EnsEMBL::Web::Command::Help::MovieEmail;
 use strict;
 use warnings;
 
-use Class::Std;
+use URI::Escape qw(uri_unescape);
+
 use EnsEMBL::Web::Mailer;
-#use EnsEMBL::Web::Filter::Spam;
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-}
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -46,7 +40,7 @@ sub process {
     my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
     my $url = 'http://'.$species_defs->ENSEMBL_SERVERNAME;
     $url .= ':'.$species_defs->ENSEMBL_PORT if $species_defs->ENSEMBL_PORT != '80';
-    $url .= CGI::unescape($object->param('_referer'));
+    $url .= uri_unescape($object->param('_referer'));
     $url = undef if $url =~ m#Help/SendEmail#; ## Compensate for auto-filling of _referer!
     push @mail_attributes, (
       [ 'Date',         $date ],
@@ -87,8 +81,6 @@ sub process {
   my $new_param = {};
   my $url = $self->url('/Help/EmailSent', $new_param);
   $self->ajax_redirect($url);
-}
-
 }
 
 1;

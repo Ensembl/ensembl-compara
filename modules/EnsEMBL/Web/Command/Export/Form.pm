@@ -2,16 +2,13 @@ package EnsEMBL::Web::Command::Export::Form;
 
 use strict;
 
-use CGI qw(escape);
-use Class::Std;
+use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::TmpFile::Text;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -98,7 +95,7 @@ sub get_formats {
       $href .= ";$param=" . $object->param($_) unless $checked_params->{$_};
     }
     
-    $params = $key eq 'pip' ? $self->make_temp_files : { base_url => CGI::escape($href) };
+    $params = $key eq 'pip' ? $self->make_temp_files : { base_url => uri_escape($href) };
   }
   
   $params->{'slice'} = !!$check_slice; # boolean
@@ -142,9 +139,9 @@ sub make_temp_files {
   $tar_file->save;
   
   return {
-    seq_file  => CGI::escape($seq_file->URL),
-    anno_file => CGI::escape($anno_file->URL),
-    tar_file  => CGI::escape($tar_file->URL)
+    seq_file  => uri_escape($seq_file->URL),
+    anno_file => uri_escape($anno_file->URL),
+    tar_file  => uri_escape($tar_file->URL)
   };
 }
 
@@ -288,8 +285,6 @@ sub slice {
   $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
   
   return $slice;
-}
-
 }
 
 1;

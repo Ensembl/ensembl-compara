@@ -3,15 +3,7 @@ package EnsEMBL::Web::Command::Help::Feedback;
 use strict;
 use warnings;
 
-use Class::Std;
-
-use base 'EnsEMBL::Web::Command';
-
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_; 
-}
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -35,8 +27,6 @@ sub process {
 
   my $param_hash = {'feedback' => $object->param('record_id') };
   $self->ajax_redirect($object->param('return_url'), $param_hash);
-}
-
 }
 
 1;
