@@ -21,10 +21,10 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
-
-  my $server = $self->object->param('das_server');
-  my $url = $object->species_path($object->data_species).'/UserData/';
+  my $object  = $self->object;
+  my $species = $object->species;
+  my $server  = $object->param('das_server');
+  my $url     = $object->species_path($object->data_species).'/UserData/';
   my $form;
 
   if ($server) {
@@ -83,7 +83,7 @@ sub content {
           my $gene_fieldset = {'name' => $source->logic_name.'_gene', 'legend' => 'Gene'};
           my $g_elements = [];
           for my $cs (@GENE_COORDS) {
-            $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
+            $cs->matches_species($species) || next;
             push @$g_elements, { 
               'type'    => 'CheckBox',
               'name'    => $source->logic_name.'_coords',
@@ -99,7 +99,7 @@ sub content {
           my $prot_fieldset = {'name' => $source->logic_name.'_prot', 'legend' => 'Protein'};
           my $p_elements = [];
           for my $cs (@PROT_COORDS) {
-            $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
+            $cs->matches_species($species) || next;
             push @$p_elements, { 
               'type'    => 'CheckBox',
               'name'    => $source->logic_name.'_coords',
@@ -115,7 +115,7 @@ sub content {
           my $gene_fieldset = {'name' => $source->logic_name.'_snp', 'legend' => 'Variation'};
           my $g_elements = [];
           for my $cs (@SNP_COORDS) {
-            $cs->matches_species($ENV{ENSEMBL_SPECIES}) || next;
+            $cs->matches_species($species) || next;
             push @$g_elements, { 
               'type'    => 'CheckBox',
               'name'    => $source->logic_name.'_coords',

@@ -21,7 +21,7 @@ sub content {
   my $object = $self->object;
 
   my $error_messages = \%EnsEMBL::Web::Apache::Error::error_messages;
-  my $error_text     = $error_messages->{$ENV{ENSEMBL_FUNCTION}}->[1];
+  my $error_text     = $error_messages->{$object->function}->[1];
   
   my $html .= "<p>$error_text</p><br>";
   my $file  = '/ssi/species/ERROR_4xx.html';

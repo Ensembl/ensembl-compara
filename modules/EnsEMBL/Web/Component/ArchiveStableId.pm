@@ -335,7 +335,7 @@ sub _archive_link {
 
   }
 
-  $url .=  $ENV{'ENSEMBL_SPECIES'};
+  $url .=  $object->species;
 
   my $view = $type."view";
   if ($type eq 'peptide') {
