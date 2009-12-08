@@ -3,14 +3,16 @@
 package EnsEMBL::Web::Document::Page;
 
 use strict;
-use CGI qw(escapeHTML escape);
-use Data::Dumper qw(Dumper);
+
+use Apache2::Const;
+use HTML::Entities qw(encode_entities);
 
 use constant DEFAULT_DOCTYPE         => 'HTML';
 use constant DEFAULT_DOCTYPE_VERSION => '4.01 Trans';
 use constant DEFAULT_ENCODING        => 'ISO-8859-1';
 use constant DEFAULT_LANGUAGE        => 'en-gb';
 
+use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
 use EnsEMBL::Web::RegObj;
@@ -54,6 +56,8 @@ sub new {
   my $timer        = shift;
   my $species_defs = shift;
   my $input        = shift;
+  my $outputtype   = shift;
+  my $format       = $input ? $input->param('_format') : $outputtype;
   
   my $self = {
     body_attr        => {},
@@ -63,6 +67,7 @@ sub new {
     doc_type_version => DEFAULT_DOCTYPE_VERSION,
     encoding         => DEFAULT_ENCODING,
     language         => DEFAULT_LANGUAGE,
+    format           => $format || DEFAULT_DOCTYPE,
     head_order       => [],
     body_order       => [],
     _renderer        => $renderer,
@@ -117,14 +122,14 @@ sub ajax_redirect {
 
   my $r = $self->renderer->{'r'};
   
-  if ($url !~ /x_requested_with=/) {
-    my $x_requested_with = $r->headers_in->{'X-Requested-With'};
-    $url .= ($url =~ /\?/ ? ';' : '?') . 'x_requested_with=' . escape($x_requested_with) if $x_requested_with;
+  if ($self->renderer->{'_modal_dialog_'}) {
+    $r->content_type('text/plain');
+    print "{redirectURL:'$url'}";
+  } else {
+    $r->headers_out->set('Location' => $url);
+    $r->err_headers_out->set('Location' => $url);
+    $r->status(Apache2::Const::REDIRECT);
   }
-  
-  $r->headers_out->add('Location' => $url);
-  $r->err_headers_out->add('Location' => $url);
-  $r->status(Apache2::Const::REDIRECT);
 }
 
 
@@ -266,6 +271,12 @@ sub _init {
   }
 }
 
+sub initialize {
+  my $self = shift;
+  my $method = '_initialize_' . ($self->{'format'});
+  $self->$method;
+}
+
 sub clear_body_attr {
   my ($self, $key) = @_;
   delete $self->{'body_attr'}{$key};
@@ -282,17 +293,42 @@ sub include_navigation {
   return $self->{'_has_navigation'};
 }
 
+
 sub render {
   my $self = shift;
-  my $flag = shift;
+  my $format = $self->{'format'};
+  my $r = $self->renderer->{'r'};
   
-  my $ajax_request = (
-    $self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' ||
-    $self->{'input'} && $self->{'input'}->param('x_requested_with') eq 'XMLHttpRequest'
-  );
+  if ($format eq 'Text') { 
+    $r->content_type('text/plain'); 
+    $self->render_Text;
+  } elsif ($format eq 'DAS') { 
+    $self->{'subtype'} = $self->{'subtype'};
+    $r->content_type('text/xml');
+    $self->render_DAS;
+  } elsif ($format eq 'XML') { 
+    $r->content_type('text/xml');
+    $self->render_XML;
+  } elsif ($format eq 'Excel') { 
+    $r->content_type('application/x-msexcel');
+    $r->headers_out->add('Content-Disposition' => 'attachment; filename=ensembl.xls');
+    $self->render_Excel;
+  } elsif ($format eq 'TextGz') { 
+    $r->content_type('application/octet-stream');
+    $r->headers_out->add('Content-Disposition' => 'attachment; filename=ensembl.txt.gz');
+    $self->render_TextGz;
+  } else {
+    $r->content_type('text/html; charset=utf-8');
+    $self->render_HTML;
+  }
+}
+
+sub render_HTML {
+  my $self = shift;
+  my $flag = shift;
     
   # If this is an AJAX request then we will not render the page wrapper
-  if ($self->renderer->{'_modal_dialog_'}) {    
+  if ($self->renderer->{'_modal_dialog_'}) {
     my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content); # We need to add the dialog tabs and navigation tree here
     
     $self->print("{$json}");
@@ -300,7 +336,7 @@ sub render {
   }
   
   # and then add in the fact that it is an XMLHttpRequest object to render the content only
-  if ($ajax_request) {
+  if ($self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
     $self->content->render; 
     return;
   }
@@ -363,7 +399,7 @@ sub render {
     [[body_javascript]]};
   }
   
-  $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax && $ENV{'ENSEMBL_AJAX_VALUE'} ne 'none';
+  $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax || $ENV{'ENSEMBL_AJAX_VALUE'} ne 'none';
   
   if ($self->can('panel_type') && $self->panel_type) {
     $html = sprintf('
@@ -487,12 +523,54 @@ sub _render_head_and_body_tag {
   
   foreach (keys %{$self->{'body_attr'}}) {
     next unless $self->{'body_attr'}{$_};
-    $self->printf(' %s="%s"', $_ , escapeHTML($self->{'body_attr'}{$_}));
+    $self->printf(' %s="%s"', $_ , encode_entities($self->{'body_attr'}{$_}));
   }
   
   $self->print('>');
 }
 
 sub _render_close_body_tag { $_[0]->print("\n</body>\n</html>"); }
+
+sub add_error_panels { 
+  my ($self, $problems) = @_;
+  
+  if (scalar @$problems) {
+    $self->{'format'} = 'HTML';
+    $self->set_doc_type('HTML', '4.01 Trans');
+  }
+  
+  foreach my $problem (sort { $b->isFatal <=> $a->isFatal } @$problems) {
+    next if $problem->isRedirect;
+    next if !$problem->isFatal && $self->{'show_fatal_only'};
+    
+    my $desc = $problem->description;
+    
+    $desc = "<p>$desc</p>" unless $desc =~ /<p/;
+    
+    my @eg; # Find an example for the page
+    my $view = uc $ENV{'ENSEMBL_SCRIPT'};
+    my $ini_examples = $self->species_defs->SEARCH_LINKS;
+
+    foreach (map { $_ =~/^$view(\d)_TEXT/ ? [$1, $_] : () } keys %$ini_examples) {
+      my $url = $ini_examples->{"$view$_->[0]_URL"};
+      
+      push @eg, qq{ <a href="$url">$ini_examples->{$_->[1]}</a>};
+    }
+
+    my $eg_html = join ', ', @eg;
+    $eg_html = '<p>Try an example: $eg_html or use the search box.</p>' if $eg_html;
+
+    $self->content->add_panel(
+      new EnsEMBL::Web::Document::Panel(
+        'caption' => $problem->name,
+        'content' => qq{
+          $desc
+          $eg_html
+          <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.</p>
+        }
+      )
+    );
+  }
+}
 
 1;
