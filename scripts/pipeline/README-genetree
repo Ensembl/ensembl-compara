@@ -664,6 +664,9 @@ the taxon_alias, so that they can be used in GeneTreeView:
      p2.tag=\"taxon_id\" and p1.tag=\"taxon_name\" and n.name_class=\"ensembl alias name\" \
      and n2.name_class=\"ensembl timetree mya\"
 
+To obtain MYA estimates for your species, you can do pairwise queries
+using the timetree database (http://www.timetree.org).
+
 
 11 - Generate basic statistics
      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
