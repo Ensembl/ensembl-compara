@@ -4,7 +4,7 @@ package EnsEMBL::Web::ZMenu::Genome;
 
 use strict;
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -43,7 +43,7 @@ sub content {
   
   $self->add_entry({
     label => $hit_db_name eq 'TRACE' ? 'View Trace archive' : $id,
-    link  => escapeHTML($object->get_ExtURL($hit_db_name, $id))
+    link  => encode_entities($object->get_ExtURL($hit_db_name, $id))
   });
   
   $self->add_entry({ 

@@ -18,12 +18,11 @@ Contact the EnsEMBL development mailing list for info <ensembl-dev@ebi.ac.uk>
 
 package EnsEMBL::Web::Component::Server;
 
+use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Component;
-use CGI qw(escapeHTML);
 use Bio::EnsEMBL::ColourMap;
 our $cm;
-our @ISA = qw( EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -33,7 +32,7 @@ sub display_node {
   if( ref( $x ) eq 'HASH' ) {           ## HASH REF....
     $panel->print( '<table class="nested" style="border:1px solid red">' );
     foreach( sort keys %$x ) {
-      $panel->printf( '<tr><th>%s</th><td>', CGI::escapeHTML( $_ ) );
+      $panel->printf( '<tr><th>%s</th><td>', encode_entities( $_ ) );
       display_node( $panel, $x->{$_}, $depth + 1 );
       $panel->print( '</td></tr>' );
     }
@@ -48,7 +47,7 @@ sub display_node {
     }
     $panel->print( '</table>' );
   } else { ## SCALAR
-    $panel->printf( '<div style="border:1px solid green">%s</div>', CGI::escapeHTML( $x ) );
+    $panel->printf( '<div style="border:1px solid green">%s</div>', encode_entities( $x ) );
   }
 }
 
@@ -348,7 +347,7 @@ sub urlsource_form {
   my $form = EnsEMBL::Web::Form->new( 'urlsource', "/@{[$object->species]}/$script", 'get' );
   $form->add_attribute( 'onSubmit', sprintf(
     qq(if(on_submit(%s_vars)) { window.opener.location='/%s/%s?l=%s&c=%s&w=%s&h=%s&data_URL='+this.data_URL.value; window.close(); return 1 } else { return 0 }),
-    'urlsource', $object->species, $script, $object->param('l'), $object->param('c'), $object->param('w'), CGI::escapeHTML( join('|',$object->param('h'),$object->param('highlight') ) )
+    'urlsource', $object->species, $script, $object->param('l'), $object->param('c'), $object->param('w'), encode_entities( join('|',$object->param('h'),$object->param('highlight') ) )
   ) );
   $form->add_element(
     'type'  => 'Information',

@@ -8,8 +8,7 @@ use EnsEMBL::Web::RegObj; # exports web registry
 use EnsEMBL::Web::Document::HTML::TwoCol;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use EnsEMBL::Web::Document::SpreadSheet;
-use CGI qw(escapeHTML);
-use HTML::Entities;
+use HTML::Entities qw(encode_entities decode_entities);
 use XHTML::Validator;
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -42,8 +41,7 @@ sub content {
   my $object = $self->object;
   
   # The DAS source this page represents:
-  my $logic_name = $object->parent->{'ENSEMBL_FUNCTION'} ||
-                   $ENV{'ENSEMBL_FUNCTION'};
+  my $logic_name = $object->parent->{'ENSEMBL_FUNCTION'} || $object->function;
 
   if (! $logic_name ) {
     return $self->_error( 'No DAS source specified',
@@ -201,7 +199,7 @@ sub _validate {
   
   # Check for naughty people trying to do XSS...
   if ( my $warning = $self->{'validator'}->validate( $text ) ) {
-    $text = CGI::escapeHTML( $text );
+    $text = encode_entities( $text );
     return ( $text, $warning );
   }
   

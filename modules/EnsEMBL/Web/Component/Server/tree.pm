@@ -18,12 +18,11 @@ Contact the EnsEMBL development mailing list for info <ensembl-dev@ebi.ac.uk>
 
 package EnsEMBL::Web::Component::Server::tree;
 
+use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Component;
-use CGI qw(escapeHTML);
 use Bio::EnsEMBL::ColourMap;
 our $cm;
-our @ISA = qw( EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -34,7 +33,7 @@ sub display_node {
   if( ref( $x ) eq 'HASH' ) {           ## HASH REF....
     $ret .= '<table class="nested" style="border:1px solid red">';
     foreach( sort keys %$x ) {
-      $ret .= sprintf '<tr><th>%s</th><td>%s</td></tr>', CGI::escapeHTML( $_ ), $self->display_node( $x->{$_}, $depth + 1 );
+      $ret .= sprintf '<tr><th>%s</th><td>%s</td></tr>', encode_entities( $_ ), $self->display_node( $x->{$_}, $depth + 1 );
     }
     $ret .= '</table>';
   } elsif( ref( $x ) eq 'ARRAY' ) {     ## ARRAY REF....
@@ -45,7 +44,7 @@ sub display_node {
     }
     $ret .= '</table>';
   } else { ## SCALAR
-    $ret .= sprintf '<div style="border:1px solid green">%s</div>', CGI::escapeHTML( $x );
+    $ret .= sprintf '<div style="border:1px solid green">%s</div>', encode_entities( $x );
   }
   return $ret;
 }

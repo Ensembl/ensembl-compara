@@ -2,12 +2,11 @@ package EnsEMBL::Web::Factory::Search::Exalead;
 
 use strict;
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
 use ExaLead;
-use CGI;
-use Data::Dumper;
-our @ISA = qw(EnsEMBL::Web::Factory);
+
+use EnsEMBL::Web::Proxy::Object;
+
+use base qw(EnsEMBL::Web::Factory);
 
 sub generic_search {
   my $self = shift;
@@ -21,45 +20,45 @@ sub _search_all {
   $exalead->engineURL = $self->species_defs->ENSEMBL_SEARCH_URL;
   $exalead->__timeout = 30;
   $exalead->rootURL   = $self->species_path . '/search';
-  ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
+  ( my $SPECIES   = $self->species ) =~ s/_/ /g;
   my $source = "Top/Source/".$self->species_defs->ENSEMBL_EXALEAD_SITE_INDEX;
-  my $q = CGI->new();
-  my $not_fresh = $q->param;
+  
+  my $not_fresh = $self->param;
   if (@$species) {
-    $q->param('species',@$species);
+    $self->param('species',@$species);
   }
-  #    else { $q->param('species', ( $ENV{'ENSEMBL_SPECIES'} ) ); }
+
   if( $not_fresh ) {
-    if( $q->param('q') ) {
-      $q->param('_q',$q->param('q'));
+    if( $self->param('q') ) {
+      $self->param('_q',$self->param('q'));
       my $CAT = '';
       my $CAT2 = '';
-      if( $q->param('species') && lc($q->param('species')) ne 'all' ) {
-	$CAT = "Top/Species/".$q->param('species');
-	if ( $q->param('idx') && lc($q->param('idx')) ne 'all' ) {
-	  $CAT .= '/'.$q->param('idx');
-	  $CAT2 = "Top/Feature type/".$q->param('idx').'/'.$q->param('species');
+      if( $self->param('species') && lc($self->param('species')) ne 'all' ) {
+	$CAT = "Top/Species/".$self->param('species');
+	if ( $self->param('idx') && lc($self->param('idx')) ne 'all' ) {
+	  $CAT .= '/'.$self->param('idx');
+	  $CAT2 = "Top/Feature type/".$self->param('idx').'/'.$self->param('species');
 	}
       }
-      elsif( $q->param('idx') && lc($q->param('idx')) ne 'all' ) {
-	$CAT = "Top/Feature type/".$q->param('idx');
+      elsif( $self->param('idx') && lc($self->param('idx')) ne 'all' ) {
+	$CAT = "Top/Feature type/".$self->param('idx');
       }
       if( $CAT ) {
 	$CAT =~ s/_/ /g;
 	if( $CAT2 ) {
 	  $CAT2 =~ s/_/ /g;
-	  $q->param('_q', $q->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$CAT2" corporate/tree:"$source") );
+	  $self->param('_q', $self->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$CAT2" corporate/tree:"$source") );
 	} else {
-	  $q->param('_q', $q->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$source"));
+	  $self->param('_q', $self->param('_q').qq( corporate/tree:"$CAT" corporate/tree:"$source"));
 	}
       }
       else {
-	$q->param('_q', $q->param('_q').qq( corporate/tree:"$source"));
+	$self->param('_q', $self->param('_q').qq( corporate/tree:"$source"));
       }
-    } elsif( $q->param('_q') ){
-      $q->param('_q', $q->param('_q').qq( corporate/tree:"$source")) unless $q->param('_q') =~/ corporate\/tree:"$source"/;
+    } elsif( $self->param('_q') ){
+      $self->param('_q', $self->param('_q').qq( corporate/tree:"$source")) unless $self->param('_q') =~/ corporate\/tree:"$source"/;
     }
-    $exalead->parse( $q );
+    $exalead->parse( $self->{'data'}{'_input'} );
   }
   
   if ($exalead->__error || $exalead->__status eq 'failure') {

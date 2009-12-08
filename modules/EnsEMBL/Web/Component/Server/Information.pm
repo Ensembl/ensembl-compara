@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Server);
 use EnsEMBL::Web::Document::HTML::TwoCol;
-use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Location);
 
@@ -63,7 +63,7 @@ sub content {
   }
   
   my $extra_inputs;
-  $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', escapeHTML($_), escapeHTML($url->[1]{$_}) for sort keys %{$url->[1]||{}};
+  $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) for sort keys %{$url->[1]||{}};
   
   return sprintf ('
     <div class="autocenter navbar print_hide" style="width:%spx">

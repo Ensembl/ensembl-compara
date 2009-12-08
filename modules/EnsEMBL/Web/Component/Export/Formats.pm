@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component::Export::Formats;
 
 use strict;
 
-use CGI qw(unescape);
+use URI::Escape qw(uri_unescape);
 
 use base 'EnsEMBL::Web::Component::Export';
 
@@ -40,7 +40,7 @@ sub content {
     }
         
     foreach (@formats) {
-      my $url = CGI::unescape($_->[1] . ($_->[2] ? ";_format=$_->[2]" : ''));      
+      my $url = uri_unescape($_->[1] . ($_->[2] ? ";_format=$_->[2]" : ''));      
       push @list, qq{<a class="modal_close" href="$url"$_->[3]>$_->[0]</a>$_->[4]};
     }
     

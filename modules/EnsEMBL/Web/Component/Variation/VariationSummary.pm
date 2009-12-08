@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Variation);
-use CGI qw(escapeHTML);
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
 

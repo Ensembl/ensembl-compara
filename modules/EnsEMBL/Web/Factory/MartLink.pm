@@ -4,11 +4,11 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
-our @ISA = qw(  EnsEMBL::Web::Factory );
+use EnsEMBL::Web::Proxy::Object;
+
+use base qw(EnsEMBL::Web::Factory);
 
 sub _link {
   my( $self, $dataset, $attributes, $filters ) =@_;
@@ -18,7 +18,7 @@ sub _link {
   }
   if( keys %$filters ) {
     $URL .= '&FILTERS='.join('|',map {
-      sprintf( '%s.default.filters.%s."%s"',$dataset,$_, CGI::escapeHTML($filters->{$_} ) )
+      sprintf( '%s.default.filters.%s."%s"',$dataset,$_, encode_entities($filters->{$_} ) )
     } keys %$filters );
   }
 warn "MART LINK URL: ",$URL;

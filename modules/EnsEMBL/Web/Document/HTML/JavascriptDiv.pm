@@ -1,6 +1,5 @@
 package EnsEMBL::Web::Document::HTML::JavascriptDiv;
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 
 our @ISA = qw(EnsEMBL::Web::Document::HTML);

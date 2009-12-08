@@ -3,7 +3,6 @@
 package EnsEMBL::Web::Document::Static;
 
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::OrderedTree;
 
 use base qw(EnsEMBL::Web::Document::Common);

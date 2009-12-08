@@ -5,7 +5,7 @@ package EnsEMBL::Web::Document::HTML::LocalContext;
 # Generates the local context navigation menu, used in dynamic pages
 
 use strict;
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -89,7 +89,7 @@ sub _content {
       <dt>%s</dt>',
     $self->configuration ? '' : '<input type="hidden" class="panel_type" value="LocalContext" />',
     $self->class,
-    escapeHTML($caption)
+    encode_entities($caption)
   );
   
   my $active      = $self->active;
@@ -128,7 +128,7 @@ sub _content {
         
         for ($title, $name) {
           s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
-          $_ = escapeHTML($_);
+          $_ = encode_entities($_);
         }
         
         # This is a tmp hack since we do not have an object here
@@ -141,7 +141,7 @@ sub _content {
           my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
           
           if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation|Regulation/) {
-            @ok_params = grep /^(_referer|x_requested_with)/, @cgi_params;
+            @ok_params = grep /^_referer/, @cgi_params;
           } else {
             @ok_params = grep !/^time=/, @cgi_params;
           }

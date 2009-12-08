@@ -7,7 +7,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
-use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );
@@ -31,7 +30,7 @@ sub content {
                           @species;
   my @values;
   foreach my $next (@sorted_by_common) {
-    next if $next->{'name'} eq $ENV{'ENSEMBL_SPECIES'};
+    next if $next->{'name'} eq $object->species;
     push @values, {'name'=>$next->{'common'}, 'value'=>$next->{'name'}} ;
   }
 

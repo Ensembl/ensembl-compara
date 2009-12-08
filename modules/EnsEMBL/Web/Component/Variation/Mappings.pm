@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Variation);

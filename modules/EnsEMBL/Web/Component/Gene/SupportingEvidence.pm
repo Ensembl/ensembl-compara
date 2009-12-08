@@ -18,7 +18,6 @@ sub content {
   my $object  = $self->object;
   my $ln      = $object->logic_name;
   my $o_type  = lc($object->get_db);
-  my $species = $ENV{'ENSEMBL_SPECIES'}; 
   my $gsi     = $object->stable_id;
   my $r       = $object->seq_region_name.':'.$object->seq_region_start.'-'.$object->seq_region_end;
   my $e       = $object->get_gene_supporting_evidence;

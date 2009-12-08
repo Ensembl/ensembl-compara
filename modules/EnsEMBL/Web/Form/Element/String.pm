@@ -1,16 +1,16 @@
 package EnsEMBL::Web::Form::Element::String;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub _is_valid { return 1; }
 
 sub _class { return '_string'; }
 
 sub validate { return 1; }
-
 
 sub render {
   my $self = shift;
@@ -22,11 +22,11 @@ sub render {
     %s
     </td>
   </tr>',
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $self->label ),
+    encode_entities( $self->name ),
+    encode_entities( $self->label ),
     $self->widget_type,
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $self->value ), CGI::escapeHTML( $self->id ),
+    encode_entities( $self->name ),
+    encode_entities( $self->value ), encode_entities( $self->id ),
     $self->_class,
     $self->required eq 'yes' ? 'required' : 'optional',
     $self->size || 20,

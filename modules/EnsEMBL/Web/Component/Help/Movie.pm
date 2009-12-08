@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Data::Movie;
 use EnsEMBL::Web::Document::HTML::MovieList;
 use EnsEMBL::Web::Document::SpreadSheet;
@@ -21,7 +20,7 @@ sub content {
   my $object = $self->object;
 
   my $html;
-  my $referer = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
+  my $referer = '_referer='.$object->param('_referer');
 
   my @movies;
   my @ids = $object->param('id') || $object->param('feedback');
@@ -45,13 +44,11 @@ sub content {
     }
     else {
       ## Feedback form
-      $html .= $self->help_feedback($style, $movie->id, return_url => '/Help/Movie', type => 'Movie',
-          '_referer' => $object->param('_referer'),
-          'x_requested_with' => $object->param('x_requested_with'));
+      $html .= $self->help_feedback($style, $movie->id, return_url => '/Help/Movie', type => 'Movie', '_referer' => $object->param('_referer'));
 
       ## Link to movie-specific feedback form
       my $title = $movie->title;
-      my $extra = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
+      my $extra = '_referer='.$object->param('_referer');
       $html .= qq(<div class="info-box" style="float:right;width:50%;padding:10px;margin:5px">If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$title;$extra" class="popup">provide feedback</a> that will help us improve our service. Thank you.</div>);
     }
   }

@@ -2,8 +2,6 @@ package EnsEMBL::Web::Document::Common;
 
 use strict;
 
-use CGI;
-
 use base qw(EnsEMBL::Web::Document::Page);
 
 sub set_title {
@@ -40,7 +38,7 @@ sub _basic_HTML {
   $self->_init;
   $self->add_body_attr('id' => 'ensembl-webpage');
   
-  if (CGI->new->param('debug') eq 'js') {
+  if ($self->{'input'}->param('debug') eq 'js') {
     foreach my $root (reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
       my $dir = "$root/components";
 

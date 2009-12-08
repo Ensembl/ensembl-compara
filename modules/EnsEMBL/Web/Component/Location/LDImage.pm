@@ -7,7 +7,6 @@ use base qw(EnsEMBL::Web::Component::Location);
 use EnsEMBL::Web::Factory::SNP;
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
-use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
   $self->cacheable( 1 );

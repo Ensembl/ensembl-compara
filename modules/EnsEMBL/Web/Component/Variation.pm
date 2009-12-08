@@ -9,13 +9,12 @@ CONTACT Fiona Cunningham <webmaster@sanger.ac.uk>
 
 =cut
 
-use EnsEMBL::Web::Component;
-our @ISA = qw( EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component);
 use strict;
 use warnings;
 no warnings "uninitialized";
+use HTML::Entities qw(encode_entities);
 use POSIX qw(floor ceil);
-use CGI qw(escapeHTML);
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -338,7 +337,7 @@ sub snpview_image_menu {
 		 'pop'        => $object->get_default_pop_name || '',
 		};
   $image_config->set( '_settings', 'URL', "/".$object->species."/snpview?".
-    join(";", map { "$_=".CGI::escapeHTML($params->{$_}) } keys %$params ).
+    join(";", map { "$_=".encode_entities($params->{$_}) } keys %$params ).
       ";snpview=%7Cbump_", 1);
   $image_config->{'_ld_population'} = $object->get_default_pop_name;
   return 0;

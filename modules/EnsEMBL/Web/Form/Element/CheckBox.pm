@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Form::Element::CheckBox;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub new {
   my $class = shift;
@@ -32,11 +33,11 @@ sub render {
     </td>
   </tr>),
     $self->class_attrib,
-    $self->{'raw'} ? $self->label : CGI::escapeHTML( $self->label ), 
-    $self->notes ? '<div style="font-weight:normal">'.CGI::escapeHTML($self->notes).'</div>':'',
+    $self->{'raw'} ? $self->label : encode_entities( $self->label ), 
+    $self->notes ? '<div style="font-weight:normal">'.encode_entities($self->notes).'</div>':'',
     $self->class_attrib,
-    CGI::escapeHTML( $self->name ), 
-    CGI::escapeHTML( $self->id ),
+    encode_entities( $self->name ), 
+    encode_entities( $self->id ),
     $self->value || 'yes',
     $self->checked ? ' checked="checked" ' : '',
     $self->disabled ? ' disabled="disabled" ' : '',

@@ -4,8 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use Data::Dumper;
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 use POSIX qw(floor ceil);
 
 use Bio::EnsEMBL::Feature;
@@ -507,7 +506,7 @@ sub _location_from_SeqRegion {
       return $self->_create_from_slice($system->name , $chr, $self->expand($TS), '', $chr, $keep_slice) if $TS;
     }
     
-    my $action = $ENV{'ENSEMBL_ACTION'};
+    my $action = $self->action;
     
     if ($chr) {
       $self->problem('fatal', 'Locate error', $self->_help("Cannot locate region $chr on the current assembly."));
@@ -815,7 +814,7 @@ sub _help {
   
   my %sample = %{$self->species_defs->SAMPLE_DATA||{}};
   my $assembly_level = scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES||[]}) ? 'chromosomal' : 'scaffold';
-  my $help_text = $string ? sprintf('<p>%s</p>', escapeHTML($string)) : '';
+  my $help_text = $string ? sprintf('<p>%s</p>', encode_entities($string)) : '';
   my $url = $self->_url({ '__clear' => 1, 'action' => 'View', 'r' => $sample{'LOCATION_PARAM'} });
   
   $help_text .= sprintf('
@@ -826,8 +825,8 @@ sub _help {
       <a href="%s">%s</a>
     </blockquote>',
     $assembly_level,
-    escapeHTML($url),
-    escapeHTML($self->species_defs->ENSEMBL_BASE_URL . $url)
+    encode_entities($url),
+    encode_entities($self->species_defs->ENSEMBL_BASE_URL . $url)
   );
   
   if (scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES})) {
@@ -837,7 +836,7 @@ sub _help {
       <p class="space-below">
         You can also browse this genome via its <a href="%s">karyotype</a>
       </p>', 
-      escapeHTML($url)
+      encode_entities($url)
     );
   }
   

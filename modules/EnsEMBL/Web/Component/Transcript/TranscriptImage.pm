@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use CGI qw(escapeHTML);
 our @ISA = qw( EnsEMBL::Web::Component);
 
 sub _init {

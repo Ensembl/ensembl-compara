@@ -1,11 +1,7 @@
 package EnsEMBL::Web::Document::TextGz::Content;
 use strict;
-use CGI qw(escapeText);
-use Data::Dumper qw(Dumper);
 
-use EnsEMBL::Web::Document::TextGz;
-
-our @ISA = qw(EnsEMBL::Web::Document::TextGz`);
+use base qw(EnsEMBL::Web::Document::TextGz);
 
 sub new { return shift->SUPER::new( 'panels' => [], 'first' => 1, 'form' => '' ); }
 

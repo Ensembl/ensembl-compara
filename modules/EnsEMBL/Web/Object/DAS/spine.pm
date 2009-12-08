@@ -3,12 +3,9 @@ package EnsEMBL::Web::Object::DAS::spine;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Object::DAS;
-our @ISA = qw(EnsEMBL::Web::Object::DAS);
+use HTML::Entities qw(encode_entities);
 
-use CGI qw(escapeHTML);
-
-use Data::Dumper;
+use base qw(EnsEMBL::Web::Object::DAS);
 
 sub Types {
   my $self = shift;
@@ -64,7 +61,7 @@ sub Features {
 
 	  next unless $gene;
 
-	  my $description =  escapeHTML( $gene->description() );
+	  my $description =  encode_entities( $gene->description() );
 	  $description =~ s/\(.+// if ($description);
 
 	  my $gene_name = $gene->display_xref ? $gene->display_xref->display_id : $gene->stable_id;

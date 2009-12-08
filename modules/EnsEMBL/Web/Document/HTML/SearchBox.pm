@@ -5,7 +5,6 @@ package EnsEMBL::Web::Document::HTML::SearchBox;
 ### Generates small search box (used in top left corner of pages)
 
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::RegObj;
                                                                                 
 use base qw(EnsEMBL::Web::Document::HTML);

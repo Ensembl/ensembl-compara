@@ -4,10 +4,11 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Factory);
 
 use EnsEMBL::Web::Proxy::Object;
-use CGI qw(escapeHTML);
 
 sub _help {
   my( $self, $string ) = @_;
@@ -17,7 +18,7 @@ sub _help {
   my $help_text = $string ? sprintf( '
   <p>
     %s
-  </p>', CGI::escapeHTML( $string ) ) : '';
+  </p>', encode_entities( $string ) ) : '';
   my $url = $self->_url({ '__clear' => 1, 'action' => 'Transcript', 't' => $sample{'TRANSCRIPT_PARAM'} });
 
 
@@ -26,8 +27,8 @@ sub _help {
     This view requires a transcript or protein identifier in the URL. For example:
   </p>
   <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
-    CGI::escapeHTML( $url ),
-    CGI::escapeHTML( $self->species_defs->ENSEMBL_BASE_URL. $url )
+    encode_entities( $url ),
+    encode_entities( $self->species_defs->ENSEMBL_BASE_URL. $url )
   );
 
   return $help_text;

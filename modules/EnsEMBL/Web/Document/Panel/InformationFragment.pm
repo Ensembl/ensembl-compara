@@ -3,9 +3,9 @@ package EnsEMBL::Web::Document::Panel::InformationFragment;
 use strict;
 use warnings;
 
-our @ISA = qw(EnsEMBL::Web::Document::Panel);
+use URI::Escape qw(uri_escape);
 
-{
+use base qw(EnsEMBL::Web::Document::Panel);
 
 sub new {
   my $class = shift;
@@ -21,12 +21,9 @@ sub add_row {
 
 sub html {
   my $self = shift;
-  #warn "RETURNING HTML: ";
   my $html = $self->{html};
-  $html = CGI::escape($html);
+  $html = uri_escape($html);
   return $html;
-}
-
 }
 
 1;

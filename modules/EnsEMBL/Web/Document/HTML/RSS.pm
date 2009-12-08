@@ -1,10 +1,8 @@
 package EnsEMBL::Web::Document::HTML::RSS;
 use strict;
-use CGI qw(escapeHTML);
-use EnsEMBL::Web::Document::HTML;
+use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::RegObj;
-
-@EnsEMBL::Web::Document::HTML::RSS::ISA = qw(EnsEMBL::Web::Document::HTML);
+use baseqw(EnsEMBL::Web::Document::HTML);
 
 sub new      {
   return shift->SUPER::new( 'feeds' => {} );
@@ -27,7 +25,7 @@ sub render   {
     $self->printf(
       qq(  <link rel="alternate" type="application/%s+xml" title="%s" href="%s" />\n),
       $self->{'feeds'}{$_}{'type'},
-      CGI::escapeHTML($self->{'feeds'}{$_}{'title'}),
+      encode_entities($self->{'feeds'}{$_}{'title'}),
       $_ 
     );
   }

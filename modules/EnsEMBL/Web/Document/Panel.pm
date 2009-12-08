@@ -4,17 +4,16 @@ package EnsEMBL::Web::Document::Panel;
 
 use strict;
 
+use HTML::Entities qw(encode_entities);
 use HTTP::Request;
-use Data::Dumper;
-use CGI qw(escape escapeHTML);
+use URI::Escape qw(uri_escape);
 
-use EnsEMBL::Web::Root;
 use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::String;
 use EnsEMBL::Web::RegObj;
 
-our @ISA = qw(EnsEMBL::Web::Root);
+use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my $class = shift;
@@ -348,7 +347,7 @@ sub render {
           if ($button_text) {
             my $url = $self->{$label}->{'url'} || $self->{'object'}->_url({ 'action' => $self->{$label}->{'code'}, 'function' => undef });
             
-            $html .= sprintf qq{<a href="%s">$_->[2]</a>}, escapeHTML($url), escapeHTML($button_text);
+            $html .= sprintf qq{<a href="%s">$_->[2]</a>}, encode_entities($url), encode_entities($button_text);
           } else {
             $html .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
           }
@@ -400,9 +399,9 @@ sub _caption_with_helplink {
   my $id = $self->{'help'};
   my $html = '<h2>';
   if ( $id ) {
-    $html .= sprintf(' <a href="/Help/View?id=%s;_referer=%s" class="popup help-header" title="Click for Help">', escapeHTML($id), CGI::escape($ENV{'REQUEST_URI'}) );
+    $html .= sprintf(' <a href="/Help/View?id=%s;_referer=%s" class="popup help-header" title="Click for Help">', encode_entities($id), uri_escape($ENV{'REQUEST_URI'}) );
   }
-  $html .= $self->{'raw_caption'} ? $self->{'caption'} : escapeHTML($self->{caption});
+  $html .= $self->{'raw_caption'} ? $self->{'caption'} : encode_entities($self->{caption});
   if ( $id ) {
     $html .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" class="print_hide" /></a>';
   }
@@ -434,7 +433,7 @@ sub _content {
   return unless $output;
   my $output = q(
       <div class="content">$output);
-  my $cap = exists( $self->{'caption'} ) ? escapeHTML($self->parse($self->{'caption'})) : '';
+  my $cap = exists( $self->{'caption'} ) ? encode_entities($self->parse($self->{'caption'})) : '';
   if( $self->{'link'} ) {
     $output .= sprintf( q(
         <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
@@ -449,7 +448,7 @@ sub _render_content {
   $self->renderer->print( q(
       <div class="content">));
   $self->content();
-  my $cap = exists( $self->{'caption'} ) ? escapeHTML($self->parse($self->{'caption'})) : '';
+  my $cap = exists( $self->{'caption'} ) ? encode_entities($self->parse($self->{'caption'})) : '';
   if( $self->{'link'} ) {
     $self->renderer->printf( q(
         <div class="more"><a href="%s">more about %s ...</a></div>), $self->{'link'}, $cap );
@@ -671,9 +670,9 @@ sub content {
               # Check if ajax enabled
               if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
                 if ($caption) {
-                  $self->printf(qq{<div class="$class" title="['%s','%s']"></div>}, escapeHTML($caption), escapeHTML($url));
+                  $self->printf(qq{<div class="$class" title="['%s','%s']"></div>}, encode_entities($caption), encode_entities($url));
                 } else {
-                  $self->printf(qq{<div class="$class" title="['%s']"></div>}, escapeHTML($url));
+                  $self->printf(qq{<div class="$class" title="['%s']"></div>}, encode_entities($url));
                 }
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
                 my @wrapper = $comp_obj->has_image ? ('<div class="image_panel">', '</div>') : ();
@@ -685,7 +684,7 @@ sub content {
               my $content;
               
               eval {
-                my $FN = $self->_is_ajax_request ? lc($ENV{'ENSEMBL_FUNCTION'}) : $function_name;
+                my $FN = $self->_is_ajax_request ? lc $object->function : $function_name;
                 $FN = $FN ? "content_$FN" : $FN;
                 $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
               };
@@ -702,12 +701,12 @@ sub content {
               } else {
                 if ($content) {
                   if ($self->_is_ajax_request) {
-                    my $id = $ENV{'ENSEMBL_FUNCTION'} eq 'sub_slice' ? '' : $comp_obj->id;
+                    my $id = $object->function eq 'sub_slice' ? '' : $comp_obj->id;
                     
                     $content = qq{<div class="js_panel" id="$id">$content</div>} unless $object->param('no_wrap');
                   } else {
                     my $caption = $comp_obj->caption;
-                    $self->printf("<h2>%s</h2>", escapeHTML($caption)) if $caption;
+                    $self->printf("<h2>%s</h2>", encode_entities($caption)) if $caption;
                   }
                   
                   $self->print($content);

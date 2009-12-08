@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component::Export::Alignments;
 
 use strict;
 
-use CGI qw(unescape);
+use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Web::Constants;
 
@@ -27,7 +27,7 @@ sub content {
   $form->add_fieldset;
   
   if ($align) {
-    my $href = unescape($object->_url($params));
+    my $href = uri_unescape($object->_url($params));
     my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
     
     my @list = map qq{<a class="modal_close" href="$href;format=$_;_format=Text" rel="external">$formats{$_}</a>}, sort keys %formats;

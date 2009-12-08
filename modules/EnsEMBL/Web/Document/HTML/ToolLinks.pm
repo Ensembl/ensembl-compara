@@ -4,7 +4,7 @@ package EnsEMBL::Web::Document::HTML::ToolLinks;
 
 use strict;
 
-use CGI qw(escape);
+use URI::Escape qw(uri_escape);
 use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Document::HTML);
@@ -24,7 +24,7 @@ sub render {
   my $dir = $species_defs->species_path;
   $dir = '' if $dir !~ /_/;
   
-  my $url  = escape($ENV{'REQUEST_URI'});
+  my $url  = uri_escape($ENV{'REQUEST_URI'});
   my $html = '<div class="print_hide">';
 
   my $blast_dir;

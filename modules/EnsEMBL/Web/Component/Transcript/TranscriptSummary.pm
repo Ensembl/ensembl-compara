@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML::TwoCol;
 
 sub _init {

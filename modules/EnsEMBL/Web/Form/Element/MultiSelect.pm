@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Form::Element::MultiSelect;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub new {
   my $class = shift;
@@ -37,7 +38,7 @@ sub render {
 			   $V->{'value'}, $checked eq 'yes' ? ' selected="selected"' : '', $V->{'name'}
       );
     }
-    my $label = $self->label ? CGI::escapeHTML( $self->label ).': ' : '';
+    my $label = $self->label ? encode_entities( $self->label ).': ' : '';
     return sprintf( qq(
     <tr>
       <th><label for="%s">%s</label></th>
@@ -46,10 +47,10 @@ sub render {
       </select>
       %s</td>
     </tr>),
-      CGI::escapeHTML( $self->id ),
+      encode_entities( $self->id ),
       $label, 
       $self->introduction,
-      CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
+      encode_entities( $self->name ), encode_entities( $self->id ),
       $self->size,
       $options,
       $self->notes
@@ -59,7 +60,7 @@ sub render {
     <tr>
     <th><label class="label" for="%s">%s</label></th>
     <td>),
-        CGI::escapeHTML($self->id), CGI::escapeHTML( $self->label ));
+        encode_entities($self->id), encode_entities( $self->label ));
     my $K = 0;
     my $separator = @{$self->values} > 2 ? 1 : 0;
 
@@ -78,11 +79,11 @@ sub render {
       $output .= '<p>' if $separator;
       $output .= sprintf(qq(
 <input type="checkbox" name="%s" id="%s_%d" value="%s" class="input-checkbox" %s /> %s),
-	          CGI::escapeHTML($self->name), 
-            CGI::escapeHTML($self->id), $K, 
-	          CGI::escapeHTML($V->{'value'}),
+	          encode_entities($self->name), 
+            encode_entities($self->id), $K, 
+	          encode_entities($V->{'value'}),
             $checked eq 'yes' ? ' checked="checked"' : '', 
-            CGI::escapeHTML($V->{'name'},
+            encode_entities($V->{'name'},
             )
       );
       $output .= '</p>' if $separator;
@@ -92,9 +93,9 @@ sub render {
     # To deal with the case when all checkboxes get unselected we intoduce a dummy 
     # hidden field that will force CGI to pass the parameter to our script
     $output .= sprintf( "    <input id=\"%s_%d\" type=\"hidden\" name=\"%s\" value=\"\" />\n",
-            CGI::escapeHTML($self->id), 
+            encode_entities($self->id), 
 	    $K, 
-	    CGI::escapeHTML($self->name), 
+	    encode_entities($self->name), 
 			
     );
     $output .= qq(</td>

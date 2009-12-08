@@ -3,7 +3,7 @@ package EnsEMBL::Web::Document::HTML::ModalContext;
 # Generates the modal context navigation menu, used in dynamic pages
 
 use strict;
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub add_entry {
@@ -65,7 +65,7 @@ sub render {
       $name =~ s/<\\\w+>//g;
       $name =~ s/<[^>]+>/ /g;
       $name =~ s/\s+/ /g;
-      $name = escapeHTML($name);
+      $name = encode_entities($name);
       
       if ($id =~ /config/) {
         $name = qq{<a rel="$id" href="$entry->{'url'}">$name</a>};

@@ -2,13 +2,15 @@ package EnsEMBL::Web::Component::Interface::Account;
 
 ### Module to create custom forms for the Account modules
 
-use EnsEMBL::Web::Component::Interface;
-use EnsEMBL::Web::Form;
-
-our @ISA = qw( EnsEMBL::Web::Component::Interface);
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use URI::Escape qw(uri_escape);
+
+use EnsEMBL::Web::Form;
+
+use base qw(EnsEMBL::Web::Component::Interface);
 
 sub add_form {
   ### Builds an empty HTML form for a new record
@@ -44,7 +46,10 @@ sub add_form {
 
 sub duplicate {
   my($panel, $object) = @_;
-  my $html = qq(<p>Sorry, you appear to have registered already. If you have lost your password, we can send you a reactivation link to <a href="/Account/LostPassword?_referer=).CGI::escape($object->param('_referer')).qq(">your registered email address</a>.</p>);
+  my $html = sprintf('
+    <p>Sorry, you appear to have registered already. If you have lost your password, we can send you a reactivation link to <a href="/Account/LostPassword?_referer=%s">your registered email address</a>.</p>',    
+    uri_escape($object->param('_referer'))
+  );
 
   $panel->print($html);
   return 1;

@@ -6,7 +6,6 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use EnsEMBL::Web::Factory::SNP;
 
-use CGI qw(escapeHTML);
 sub _init {
   my $self = shift;
   $self->cacheable( 0 );

@@ -4,9 +4,9 @@ package EnsEMBL::Web::Component::Location::Compara_AlignSliceBottom;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::Compara_Alignments);
+use HTML::Entities qw(encode_entities);
 
-use CGI qw(escapeHTML);
+use base qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::Compara_Alignments);
 
 sub _init {
   my $self = shift;
@@ -36,7 +36,7 @@ sub content {
     return $self->_error('Unknown alignment', sprintf(
       '<p>%s is not part of the %s alignment in the database.</p>', 
       $object->species_defs->species_label($primary_species),
-      escapeHTML($align_details->{'name'})
+      encode_entities($align_details->{'name'})
     ));
   }
   

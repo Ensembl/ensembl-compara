@@ -3,9 +3,9 @@ package EnsEMBL::Web::Document::Panel::Fragment;
 use strict;
 use warnings;
 
-our @ISA = qw(EnsEMBL::Web::Document::Panel);
+use URI::Escape qw(uri_escape uri_unescape);
 
-{
+use base qw(EnsEMBL::Web::Document::Panel);
 
 sub new {
   my $class = shift;
@@ -74,7 +74,7 @@ sub placeholder {
 	     }
 	  }
 	}
-        $html .= CGI::unescape($self->html);
+        $html .= uri_unescape($self->html);
       }
       $html .= "</div>";
       $html .= "<div id='" . $self->code . "_update' style='width: " . $width . "px; text-align: center; margin: 0 auto;'>";
@@ -227,7 +227,7 @@ sub html_collapse_expand_control {
   my $status = $self->{'object'} ? $self->{'object'}->param($self->{'status'}) : undef;
   my $URL = sprintf '/%s/%s?%s=%s', $self->{'object'}->species, $self->{'object'}->script, $self->{'status'}, $status ne 'off' ? 'off' : 'on';
   foreach my $K (keys %{$self->{'params'}||{}} ) {
-    $URL .= sprintf ';%s=%s', CGI::escape( $K ), CGI::escape( $self->{'params'}{$K} );
+    $URL .= sprintf ';%s=%s', uri_escape( $K ), uri_escape( $self->{'params'}{$K} );
   }
 
   my $html = "";
@@ -243,8 +243,6 @@ sub html_footer {
   my $self = shift;
   my $html = "</div>\n";
   return $html;
-}
-
 }
 
 1;

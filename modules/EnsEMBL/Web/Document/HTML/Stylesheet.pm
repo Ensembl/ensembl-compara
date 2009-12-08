@@ -1,6 +1,5 @@
 package EnsEMBL::Web::Document::HTML::Stylesheet;
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 
 @EnsEMBL::Web::Document::HTML::Stylesheet::ISA = qw(EnsEMBL::Web::Document::HTML);

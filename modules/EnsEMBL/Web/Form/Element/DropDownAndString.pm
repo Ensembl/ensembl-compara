@@ -13,9 +13,10 @@ package EnsEMBL::Web::Form::Element::DropDownAndString;
 #--------------------------------------------------------------------
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub new {
   my $class = shift;
@@ -63,10 +64,10 @@ sub render {
       <input type="text" name="%s" value="%s" id="%s" class="%s" />%s
     %s</td></tr>),
       $self->introduction,
-      CGI::escapeHTML( $self->name ), CGI::escapeHTML( $self->id ),
+      encode_entities( $self->name ), encode_entities( $self->id ),
       $self->type, $self->required eq 'yes'?1:0,
       $options,
-      CGI::escapeHTML( $self->string_name ), CGI::escapeHTML( $self->string_value ), CGI::escapeHTML( $self->id.'_string' ), 
+      encode_entities( $self->string_name ), encode_entities( $self->string_value ), encode_entities( $self->id.'_string' ), 
       $self->style, $self->required eq 'yes' ? 1 : 0, $self->required eq 'yes' ? 1 : 0,
       $self->required eq 'yes' ? $self->required_string : '',
       $self->notes
@@ -76,9 +77,9 @@ sub render {
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
       $output .= sprintf( qq(<input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label>\n),
-        CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V['value']),
-        $self->value eq $V['value'] ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
-        CGI::escapeHTML($V['name'])
+        encode_entities($self->id), $K, encode_entities($self->name), encode_entities($V['value']),
+        $self->value eq $V['value'] ? ' checked="checked"' : '', encode_entities($self->id), $K,
+        encode_entities($V['name'])
       );
       $K++;
     }
@@ -86,7 +87,7 @@ sub render {
       sprintf( 
         qq(</td><td><input type="text" name="%s" value="%s" id="%s" class="%s" />%s
         $s</td></tr>),
-        CGI::escapeHTML( $self->string_name ), CGI::escapeHTML( $self->string_value ), CGI::escapeHTML( $self->id.'_string' ),
+        encode_entities( $self->string_name ), encode_entities( $self->string_value ), encode_entities( $self->id.'_string' ),
         $self->style, $self->required eq 'yes' ? 1 : 0, $self->required eq 'yes' ? 1 : 0,
         $self->required eq 'yes' ? $self->required_string : '', 
         $self->notes

@@ -6,7 +6,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use CGI qw(escapeHTML);
 
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::TmpFile::Text;

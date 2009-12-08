@@ -2,13 +2,10 @@ package EnsEMBL::Web::Object::Export;
 
 use strict;
 
-use CGI qw(unescape);
 
-use base 'EnsEMBL::Web::Object';
+use base qw(EnsEMBL::Web::Object);
 
-sub caption {
-  return 'Export Data';
-}
+sub caption { return 'Export Data'; }
 
 sub slice {
   my $self = shift;

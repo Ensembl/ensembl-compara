@@ -6,7 +6,7 @@ package EnsEMBL::Web::Document::HTML::GlobalContext;
 
 use strict;
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -72,7 +72,7 @@ sub _content {
       $name =~ s/<\\\w+>//g;
       $name =~ s/<[^>]+>/ /g;
       $name =~ s/\s+/ /g;
-      $name = escapeHTML($name);
+      $name = encode_entities($name);
       $name = qq{<a href="$entry->{'url'}">$name</a>} if $entry->{'url'};
     }
     

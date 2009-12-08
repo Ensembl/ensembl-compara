@@ -1,7 +1,8 @@
 package EnsEMBL::Web::Document::HTML::TwoCol;
 
 use strict;
-use CGI qw(escapeHTML);
+
+use HTML::Entities qw(encode_entities);
 
 sub new {
   my $class = shift;
@@ -15,12 +16,12 @@ sub _row {
   return sprintf '<dl class="summary">
     <dt>%s</dt>
     <dd>%s</dd>
-  </dl>', escapeHTML($label), $value;
+  </dl>', encode_entities($label), $value;
 }
 
 sub add_row {
   my($self, $label, $value, $raw ) = @_;
-  $value = sprintf( '<p>%s</p>', escapeHTML($value) ) unless $raw;
+  $value = sprintf( '<p>%s</p>', encode_entities($value) ) unless $raw;
   push @{$self->{'content'}}, $self->_row( $label, $value );
 }
 

@@ -5,8 +5,8 @@ package EnsEMBL::Web::Document::HTML::News;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
-use CGI;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Data::NewsCategory;
@@ -15,19 +15,16 @@ use EnsEMBL::Web::Data::Release;
 
 use base qw(EnsEMBL::Web::Root);
 
-
-{
-
 sub render {
-  my $self = shift;
-
+  my ($self, $release_id) = @_;
+  
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
   my $current_sp = ($ENV{'ENSEMBL_SPECIES'} && $ENV{'ENSEMBL_SPECIES'} =~ /_/) ? $ENV{'ENSEMBL_SPECIES'} : '';
   my $sitename = $species_defs->ENSEMBL_SITETYPE;
-
-  my $cgi = new CGI;
-  my $release_id = $cgi->param('id') || $species_defs->ENSEMBL_VERSION;
+  
+  $release_id ||= $ENV{'QUERY_STRING'} =~ /[;&]*id=([^;&]+)/ ? $1 : $species_defs->ENSEMBL_VERSION;
+  
   my $html = qq(<h1>What's New in Release $release_id</h1>);
   
   ## Form for selecting other releases
@@ -184,8 +181,6 @@ sub _output_story {
   }
   $html .= $content."\n\n";
   return $html;
-}
-
 }
 
 1;

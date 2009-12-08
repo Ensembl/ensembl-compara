@@ -18,7 +18,6 @@ use EnsEMBL::Web::RegObj;
 
 use EnsEMBL::Web::Form;
 
-use CGI qw(escapeHTML);
 
 use base qw(EnsEMBL::Web::Component);
 

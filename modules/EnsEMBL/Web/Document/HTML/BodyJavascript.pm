@@ -1,6 +1,5 @@
 package EnsEMBL::Web::Document::HTML::BodyJavascript;
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 use warnings;
 

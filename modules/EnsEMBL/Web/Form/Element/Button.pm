@@ -1,8 +1,9 @@
 package EnsEMBL::Web::Form::Element::Button;
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub new { 
   my $class = shift; 
@@ -15,8 +16,8 @@ sub render {
   my ($self = shift; 
   return sprintf(
     '<input type="button" name="%s" value="%s" class="submit" style="margin-left:0.5em;margin-right:0.5em" />', 
-    CGI::escapeHTML($_[0]->name) || 'submit', 
-    CGI::escapeHTML($_[0]->value), 
+    encode_entities($_[0]->name) || 'submit', 
+    encode_entities($_[0]->value), 
   );
 }  
 1;

@@ -8,7 +8,6 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
 use EnsEMBL::Web::Form;
-use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;

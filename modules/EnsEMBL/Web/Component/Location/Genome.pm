@@ -6,7 +6,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
-use CGI qw(escapeHTML);
 use Data::Dumper;
 use EnsEMBL::Web::RegObj;
 

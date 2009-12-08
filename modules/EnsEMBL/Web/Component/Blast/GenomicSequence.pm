@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Blast);
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Form;
 
 sub _init {

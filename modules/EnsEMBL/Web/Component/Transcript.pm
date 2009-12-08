@@ -11,7 +11,6 @@ use warnings;
 no warnings "uninitialized";
 
 use Data::Dumper;
-use CGI qw(escapeHTML);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Document::SpreadSheet;

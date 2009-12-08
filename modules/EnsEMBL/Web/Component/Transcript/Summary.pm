@@ -6,7 +6,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -23,7 +23,7 @@ sub content {
   return sprintf '<p>%s</p>', $object->Obj->description if $object->Obj->isa('EnsEMBL::Web::Fake');
   return '<p>This transcript is not in the current gene set</p>' unless $object->Obj->isa('Bio::EnsEMBL::Transcript');
   
-  my $description = escapeHTML($object->trans_description);
+  my $description = encode_entities($object->trans_description);
   my ($edb, $acc, $html);
   
   if ($description) {

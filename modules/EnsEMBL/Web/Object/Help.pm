@@ -3,7 +3,6 @@ package EnsEMBL::Web::Object::Help;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use CGI qw(unescape);
 
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Data::Article;

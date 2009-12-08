@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use CGI qw(unescape);
+use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Web::OldLinks qw(get_archive_redirect);
 
@@ -22,7 +22,7 @@ sub content {
   my $object = $self->object;
   
   my $html;
-  my $url = unescape($object->param('url'));
+  my $url = uri_unescape($object->param('url'));
   $url =~ s#^/##;
   
   # is this a species page?
@@ -144,7 +144,7 @@ sub _output_link {
 sub get_old_params {
   my ($new_params, $type, $action) = @_;
   
-  my %parameters = map { $_->[0] => unescape($_->[1]) } map {[ split '=' ]} split /[;&]/, $new_params;
+  my %parameters = map { $_->[0] => uri_unescape($_->[1]) } map {[ split '=' ]} split /[;&]/, $new_params;
   
   my $old_params;
   

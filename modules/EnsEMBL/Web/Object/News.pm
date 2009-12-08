@@ -3,7 +3,6 @@ package EnsEMBL::Web::Object::News;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use CGI qw(escape);
 
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Factory::News;

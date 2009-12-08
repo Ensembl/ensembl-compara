@@ -35,13 +35,12 @@ no warnings "uninitialized";
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 
-use EnsEMBL::Web::Factory;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::Proxy::Object;
 use SOAP::Lite;
 use Data::Dumper;
-use vars qw( @ISA );
-@ISA = qw(  EnsEMBL::Web::Factory );
+
+use base qw(EnsEMBL::Web::Factory);
 
 #----------------------------------------------------------------------
 
@@ -70,7 +69,7 @@ sub createObjects {
     my %valid_scripts = map{ $_, 1 } @{$source_config->{enable} || [] };
     $valid_scripts{$conf_script} || next;
     my $das_species = $source_config->{'species'};
-    next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
+    next if( $das_species && $das_species ne '' && $das_species ne $self->species );
     $source_config->{conftype} ||= 'internal';
     $sources_conf{$source}    = $source_config;
   }
@@ -82,7 +81,7 @@ sub createObjects {
     my %valid_scripts = map{ $_, 1 } @{$source_config->{enable} || [] };
     $valid_scripts{$conf_script} || next;
     my $das_species = $source_config->{'species'};
-    next if( $das_species && $das_species ne '' && $das_species ne $ENV{'ENSEMBL_SPECIES'} );
+    next if( $das_species && $das_species ne '' && $das_species ne $self->species );
     if( $source_config->{url} =~ /\/das$/ ) {
       $source_config->{url} .= "/$source_config->{dsn}";
     }
@@ -399,7 +398,7 @@ sub getRegistrySources {
   my $keyText = $self->param('keyText');
   my $keyMapping = $self->param('keyMapping');
 
-  if (defined (my $dd = CGI::param('_apply_search=registry.x'))) {
+  if (defined (my $dd = $self->param('_apply_search=registry.x'))) {
     if ($keyText) {
       $filterT = sub { 
         my $src = shift; 
@@ -424,7 +423,7 @@ sub getRegistrySources {
   my $source_arr = SOAP::Lite->service("${das_url}/services/das:das_directory?wsdl")->listServices();
   my $i = 0;
   my %registryHash = ();
-  my $spec = $ENV{ENSEMBL_SPECIES};
+  my $spec = $self->species;
   $spec =~ s/\_/ /g;
   while(ref $source_arr->[$i]){
     my $dassource = $source_arr->[$i++];
@@ -470,14 +469,14 @@ sub getServerSources {
 #    foreach my $cs (@{$dassource->{coordinateSystem}}) {
 #      my ($smap, $sp) = $self->getEnsemblMapping($cs);
 
-  my $spec = $ENV{ENSEMBL_SPECIES};
+  my $spec = $self->species;
 
   my $filterT = sub { return 1; };
   my $filterM = sub { my $src = shift;  return 1 unless defined ($src->{species}); return 1 if ($src->{species} eq $spec);  return 0};
   my $keyText = $self->param('keyText');
   my $keyMapping = $self->param('keyMapping');
 
-  if (defined (CGI::param('_apply_search=registry.x')) || defined ($self->param('_das_filter'))) {
+  if (defined ($self->param('_apply_search=registry.x')) || defined ($self->param('_das_filter'))) {
     if ($keyText) {
       $filterT = sub { 
         my $src = shift; 

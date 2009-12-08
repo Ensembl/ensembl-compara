@@ -4,9 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Data::Faq;
-use Apache2::RequestUtil;
 
 sub _init {
   my $self = shift;
@@ -32,8 +30,7 @@ sub content {
   else {
     @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
   }
-
-  my $r = Apache2::RequestUtil->request();
+  
   if (scalar(@faqs) > 0) {
   
     my $style = 'text-align:right;margin-right:2em';
@@ -46,8 +43,7 @@ sub content {
       } else {
         $html .= $self->help_feedback(
           $style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq', 
-          '_referer' => $object->param('_referer'),
-          'x_requested_with' => $object->param('x_requested_with')||$r->headers_in->{'X-Requested-With'}
+          '_referer' => $object->param('_referer')
         );
       }
 

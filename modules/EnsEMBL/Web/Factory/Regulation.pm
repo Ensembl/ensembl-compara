@@ -6,7 +6,6 @@ no warnings "uninitialized";
 use base qw(  EnsEMBL::Web::Factory );
 
 use EnsEMBL::Web::Proxy::Object;
-use CGI qw(escapeHTML);
 
 sub _help {
 

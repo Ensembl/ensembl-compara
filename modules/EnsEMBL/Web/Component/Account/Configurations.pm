@@ -5,9 +5,13 @@ package EnsEMBL::Web::Component::Account::Configurations;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
+
+use URI::Escape qw(uri_escape);
+
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::RegObj;
+
+use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
   my $self = shift;
@@ -115,7 +119,7 @@ sub content {
       foreach my $group (@{$group_configs{$config_id}{'groups'}}) {
         push @group_links, 
           sprintf(qq(<a href="/Account/MemberGroups?id=%s;_referer=%s" class="modal_link">%s</a>), 
-              $group->id, CGI::escape($self->object->param('_referer')), $group->name);
+              $group->id, uri_escape($self->object->param('_referer')), $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);

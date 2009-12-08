@@ -6,8 +6,9 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component::Gene);
-use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;
@@ -21,7 +22,7 @@ sub content {
 
   # Grab the description of the object
   if ($object->Obj->isa('Bio::EnsEMBL::Compara::Family')) {
-    return sprintf '<p>%s</p>', escapeHTML($object->Obj->description);
+    return sprintf '<p>%s</p>', encode_entities($object->Obj->description);
   }
   
   if ($object->Obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
@@ -29,7 +30,7 @@ sub content {
   }
   
   my $html = '';
-  my $description = escapeHTML($object->gene_description);
+  my $description = encode_entities($object->gene_description);
   my ($edb, $acc);
   
   if ($description) {
@@ -173,7 +174,7 @@ sub content {
           action => 'ProteinSummary',
           t      => $_->stable_id
         }),
-        escapeHTML($_->translation->stable_id)
+        encode_entities($_->translation->stable_id)
       );
     }
     
@@ -185,9 +186,9 @@ sub content {
         <td>%s</td>
       </tr>',
       $count == 1 || $_->stable_id eq $transcript ? ' class="active"' : '',
-      escapeHTML($_->display_xref ? $_->display_xref->display_id : 'Novel'),
+      encode_entities($_->display_xref ? $_->display_xref->display_id : 'Novel'),
       $url,
-      escapeHTML($_->stable_id),
+      encode_entities($_->stable_id),
       $protein,
       $_->biotype
     );

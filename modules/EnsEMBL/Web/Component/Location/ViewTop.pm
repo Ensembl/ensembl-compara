@@ -5,7 +5,6 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Location);
 use EnsEMBL::Web::Proxy::Object;
-use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;

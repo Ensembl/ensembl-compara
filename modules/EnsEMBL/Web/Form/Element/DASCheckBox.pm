@@ -1,7 +1,10 @@
 package EnsEMBL::Web::Form::Element::DASCheckBox;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element::CheckBox);
+
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element::CheckBox);
 
 my $DAS_DESC_WIDTH = 120;
 
@@ -29,7 +32,7 @@ sub _short_das_desc {
     $desc = substr $desc, 0, $DAS_DESC_WIDTH;
     $desc =~ s/\s[a-zA-Z0-9]+$/ \.\.\./; # replace final space with " ..."
   }
-  $self->{'notes'} = CGI::escapeHTML($desc);
+  $self->{'notes'} = encode_entities($desc);
   $self->{'notes'} .= sprintf ' [<a target="_new" href="%s" rel="external">Homepage</a>]', $source->homepage if $source->homepage;
 }
 
@@ -37,9 +40,9 @@ sub render {
   my $self   = shift;
   
   my $notes = $self->notes;
-  $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', CGI::escapeHTML($self->comment)) if $self->comment;
+  $notes .= sprintf(' (<span title="%s">Mouseover&#160;for&#160;full&#160;text</span>)', encode_entities($self->comment)) if $self->comment;
   
-  my $label = $self->{'raw'} ? $self->label : '<strong>'.CGI::escapeHTML( $self->label ).'</strong>';
+  my $label = $self->{'raw'} ? $self->label : '<strong>'.encode_entities( $self->label ).'</strong>';
   $label .= '<br />'.$notes if $notes;
   return sprintf(qq(<tr class="%s">
 <td style="width:5%">
@@ -48,8 +51,8 @@ sub render {
 <td style="width:90%">%s</td>
 </tr>),
       $self->bg,
-      CGI::escapeHTML( $self->name ), 
-      CGI::escapeHTML( $self->id ),
+      encode_entities( $self->name ), 
+      encode_entities( $self->id ),
       $self->value || 'yes',
       $self->checked ? ' checked="checked" ' : '',
       $self->disabled ? ' disabled="disabled" ' : '',

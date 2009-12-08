@@ -1,6 +1,5 @@
 package EnsEMBL::Web::Document::HTML::Title;
 use strict;
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML;
 @EnsEMBL::Web::Document::HTML::Title::ISA = qw(EnsEMBL::Web::Document::HTML);
 

@@ -14,9 +14,10 @@ package EnsEMBL::Web::Form::Element::DropDownAndSubmit;
 
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub new {
   my $class = shift;
@@ -43,7 +44,7 @@ sub render {
     my $options = '';
     my $current_group;
     if( $self->firstline ) {
-      $options .= sprintf qq(<option value="">%s</option>\n), CGI::escapeHTML( $self->firstline );
+      $options .= sprintf qq(<option value="">%s</option>\n), encode_entities( $self->firstline );
     }
     my $optcount = 0;
     my @styles = @{$self->styles};
@@ -53,7 +54,7 @@ sub render {
           $options.="</optgroup>\n";
         }
         if( $V->{'group'}) {
-          $options.= sprintf qq(<optgroup label="%s">\n), CGI::escapeHTML( $V->{'group'} );
+          $options.= sprintf qq(<optgroup label="%s">\n), encode_entities( $V->{'group'} );
         }
         $current_group = $V->{'group'};
       }
@@ -73,19 +74,19 @@ sub render {
       $self->classes($classes);
     }
 
-    my $label = $self->label ? CGI::escapeHTML( $self->label ).': ' : '';
+    my $label = $self->label ? encode_entities( $self->label ).': ' : '';
     return sprintf( qq(
   <tr>
     <th><label for="%s">%s</label></th>
     <td><select name="%s" id="%s" %s%s>\n%s</select> <input type="submit" value="%s" class="input-submit" />%s</td>
   </tr>),
-      CGI::escapeHTML( $self->name ), $label,
-      CGI::escapeHTML( $self->name ),
-      CGI::escapeHTML( $self->id ),
+      encode_entities( $self->name ), $label,
+      encode_entities( $self->name ),
+      encode_entities( $self->id ),
       $self->class_attrib,
       $self->style_attrib,
       $options,
-      CGI::escapeHTML( $self->button_value ),
+      encode_entities( $self->button_value ),
       $self->notes
     );
   } else {
@@ -93,16 +94,16 @@ sub render {
     my $K = 0;
     foreach my $V ( @{$self->values} ) {
       $output .= sprintf( qq(<input id="%s_%d" class="radio" type="radio" name="%s" value="%s" %s /><label for="%s_%d">%s</label>\n),
-        CGI::escapeHTML($self->id), $K, CGI::escapeHTML($self->name), CGI::escapeHTML($V->{'value'}),
-        $self->value eq $V->{'value'} ? ' checked="checked"' : '', CGI::escapeHTML($self->id), $K,
-        CGI::escapeHTML($V->{'name'})
+        encode_entities($self->id), $K, encode_entities($self->name), encode_entities($V->{'value'}),
+        $self->value eq $V->{'value'} ? ' checked="checked"' : '', encode_entities($self->id), $K,
+        encode_entities($V->{'name'})
       );
       $K++;
     }
     return sprintf( 
       qq(</td><td>%s%s<input type="submit" class="input-submit" value="%s" />%s\n  %s</td></tr>),
       $self->label, $output,
-      CGI::escapeHTML( $self->button_value ),
+      encode_entities( $self->button_value ),
       $self->required eq 'yes' ? $self->required_string : '',
       $self->notes
     );

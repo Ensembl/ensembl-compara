@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -133,7 +133,7 @@ sub content {
       );
       
       # (Column 5) External ref and description
-      my $description = escapeHTML($orthologue->{'description'});
+      my $description = encode_entities($orthologue->{'description'});
          $description = 'No description' if $description eq 'NULL';
          
       if ($description =~ s/\[\w+:([-\/\w]+)\;\w+:(\w+)\]//g) {

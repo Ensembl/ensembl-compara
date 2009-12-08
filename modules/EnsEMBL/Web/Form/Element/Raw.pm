@@ -4,9 +4,10 @@ package EnsEMBL::Web::Form::Element::Raw;
 ### USE WITH CAUTION!!
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub render {
   my $self = shift;
@@ -17,7 +18,7 @@ sub render {
     %s
     </td>
   </tr>',
-    CGI::escapeHTML( $self->label ),
+    encode_entities( $self->label ),
     $self->raw
   );
 }

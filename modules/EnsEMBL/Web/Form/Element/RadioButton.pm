@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Form::Element::RadioButton;
 
 use strict;
-use base qw(EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub new {
   my $class = shift;
@@ -31,12 +32,12 @@ sub render {
   <th><label class="label-radio"></th>
   <td><input type="radio" name="%s" id="%s" value="%s" class="input-radio"%s%s/> %s %s</label></td>
   </tr>),
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $self->id ),
+    encode_entities( $self->name ),
+    encode_entities( $self->id ),
     $self->value || 'yes', 
     $self->checked ? ' checked="checked" ' : '',
     $self->disabled ? ' disabled="disabled" ' : '',
-    CGI::escapeHTML( $self->label ),
+    encode_entities( $self->label ),
     $self->notes
   );
 }

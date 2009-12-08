@@ -1,11 +1,13 @@
 package EnsEMBL::Web::Form::FieldSet;
 
 use strict;
-use base qw( EnsEMBL::Web::Root );
+
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Root);
 
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Tools::RandomString;
-use CGI qw(escapeHTML);
 
 sub new {
   my ($class, %option) = @_;
@@ -113,7 +115,7 @@ sub render {
   my $self = shift;
   
   my $output = sprintf qq{<div class="%s"><fieldset%s>\n}, $self->class, $self->extra;
-  $output .= sprintf "<h2>%s</h2>\n", escapeHTML($self->legend) if $self->legend;
+  $output .= sprintf "<h2>%s</h2>\n", encode_entities($self->legend) if $self->legend;
   
   if ($self->{'_required'}) {
     $self->add_element(

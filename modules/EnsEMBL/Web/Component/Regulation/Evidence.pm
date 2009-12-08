@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Regulation);
-use CGI qw(escapeHTML);
 
 
 sub _init {

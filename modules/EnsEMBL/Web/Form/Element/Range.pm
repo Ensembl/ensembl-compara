@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Form::Element::Range;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qq(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 ## TODO -  Needs updating - probably doesn't work with current JavaScript
 
@@ -19,13 +20,13 @@ sub render {
   return sprintf
     '%s<input type="text" name="%s_min" value="%s" id="%s_min" %s /> - <input type="text" name="%s_max" value="%s" id="%s_max" %s />%s%s',
     $self->introduction,
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $min ),
-    CGI::escapeHTML( $self->id ),
+    encode_entities( $self->name ),
+    encode_entities( $min ),
+    encode_entities( $self->id ),
     $extra,
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $max ),
-    CGI::escapeHTML( $self->id ),
+    encode_entities( $self->name ),
+    encode_entities( $max ),
+    encode_entities( $self->id ),
     $extra,
     $self->required eq 'yes' ? $self->required_string : '',
     $self->notes;

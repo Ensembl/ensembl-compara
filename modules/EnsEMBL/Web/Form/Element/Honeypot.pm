@@ -3,9 +3,10 @@ package EnsEMBL::Web::Form::Element::Honeypot;
 ### Bogus textarea, hidden using CSS, designed to catch spambots!
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element );
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
+
+use base qw(EnsEMBL::Web::Form::Element);
 
 sub render {
   my $self = shift;
@@ -15,9 +16,9 @@ sub render {
     <td><textarea name="%s"></textarea>
     </td>
   </tr>',
-    CGI::escapeHTML( $self->name ),
-    CGI::escapeHTML( $self->label ),
-    CGI::escapeHTML( $self->name ),
+    encode_entities( $self->name ),
+    encode_entities( $self->label ),
+    encode_entities( $self->name ),
   );
 }
 

@@ -9,7 +9,6 @@ use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Container::HSPContainer;
 use Bio::EnsEMBL::DrawableContainer;
 use Data::Dumper;
-use CGI qw(escapeHTML);
 
 our @colours = qw( gold orange chocolate firebrick darkred );
 

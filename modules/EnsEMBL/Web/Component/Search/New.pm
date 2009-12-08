@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component);
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Document::HTML::HomeSearch;
 
 sub _init {

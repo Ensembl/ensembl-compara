@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component::Export::PopulationFormats;
 
 use strict;
 
-use CGI qw(unescape);
+use URI::Escape qw(uri_unescape);
 
 use base 'EnsEMBL::Web::Component::Export';
 
@@ -24,7 +24,7 @@ sub content {
     $params->{$_} = $option unless $option =~ /^off|no$/;
   }
   
-  my $href = CGI::unescape($object->_url($params));
+  my $href = uri_unescape($object->_url($params));
   
   my @formats = (
     [ 'HTML', 'HTML', ' rel="external"' ],

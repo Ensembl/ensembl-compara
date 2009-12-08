@@ -1,11 +1,8 @@
 package EnsEMBL::Web::Document::Text::Content;
 use strict;
-use CGI qw(escapeText);
-use Data::Dumper qw(Dumper);
 
-use EnsEMBL::Web::Document::Text;
 
-our @ISA = qw(EnsEMBL::Web::Document::Text);
+use base qw(EnsEMBL::Web::Document::Text);
 
 sub new { return shift->SUPER::new( 'panels' => [], 'first' => 1, 'form' => '' ); }
 

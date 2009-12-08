@@ -5,9 +5,12 @@ package EnsEMBL::Web::Component::CommandMessage;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
+
+use URI::Escape qw(uri_unescape);
+
 use EnsEMBL::Web::Tools::Encryption;
-use CGI qw(unescape);
+
+use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
@@ -25,7 +28,7 @@ sub content {
   my $html = '';
   ## Check this is genuinely from the web code, not injection of arbitrary HTML
   my $checksum = $self->object->param('checksum');
-  my $message = CGI::unescape($self->object->param('command_message'));
+  my $message = uri_unescape($self->object->param('command_message'));
   if (EnsEMBL::Web::Tools::Encryption::checksum($message) eq $checksum) {
     $html = $message;
   }
