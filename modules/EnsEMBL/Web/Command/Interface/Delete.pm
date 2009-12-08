@@ -3,13 +3,9 @@ package EnsEMBL::Web::Command::Interface::Delete;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -34,19 +30,11 @@ sub process {
   }
 
   my $param = {
-    '_referer'  => $object->param('_referer'),
-    'x_requested_with'  => $object->param('x_requested_with'),
+    '_referer' => $object->param('_referer'),
   };
 
   my $url = $self->url('/'.$interface->script_name.'/'.$type, $param);
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url);
-  }
-  else {
-    $object->redirect($url);
-  }
-}
-
+  $self->ajax_redirect($url);
 }
 
 1;

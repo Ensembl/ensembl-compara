@@ -3,13 +3,9 @@ package EnsEMBL::Web::Command::Interface::Save;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -18,8 +14,7 @@ sub process {
   my $url = '/'.$interface->script_name.'/';
 
   my $param = {
-    '_referer'  => $object->param('_referer'),
-    'x_requested_with'  => $object->param('x_requested_with'),
+    '_referer' => $object->param('_referer'),
   };
 
   $interface->cgi_populate($object);
@@ -44,14 +39,7 @@ sub process {
     $url .= 'Problem';
   }
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $object->redirect($object->url($url, $param));
-  }
-}
-
+  $self->ajax_redirect($url, $param);
 }
 
 1;
