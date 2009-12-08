@@ -4,7 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
-use CGI qw(escapeHTML);
 use EnsEMBL::Web::Form;
 
 sub _init {
@@ -42,12 +41,6 @@ sub content {
     'name'    => '_referer',
     'value'   => $object->param('_referer'),
   );
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => 'x_requested_with',
-    'value'   => $object->param('x_requested_with'),
-  );
-
 
   $form->add_element(
     'type'    => 'Submit',

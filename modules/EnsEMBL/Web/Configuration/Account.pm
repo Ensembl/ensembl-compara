@@ -37,9 +37,9 @@ sub context_panel  { return undef; }
 
 sub user_populate_tree {
   my $self = shift;
+  my $object = $self->object;  
 
   if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-
     my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
 
     $settings_menu->append(
@@ -50,13 +50,13 @@ sub user_populate_tree {
     );
 
     ## Control panel fixes - custom data section is species-specific
-    my $species = $ENV{'ENSEMBL_SPECIES'};
+    my $species = $object->species;
     $species = '' if $species !~ /_/;
-    $species = $self->object->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
-    my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+    $species = $object->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
+    my $referer = '_referer='.$object->param('_referer');
     $settings_menu->append(
       $self->create_node( 'UserData', "Custom data ([[counts::userdata]])",
-        [], { 'availability' => 1, 'url' => '/'.$species.'/UserData/ManageData?'.$referer, 'raw' => 1 },
+        [], { 'availability' => 1, 'url' => $object->species_path($species).'/UserData/ManageData?'.$referer, 'raw' => 1 },
       )
     );
 
