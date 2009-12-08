@@ -13,51 +13,39 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $input, $dbconnection, $flag) = @_;
+  
   my $self = {
-    'input'      => $input,
-    'dbc'        => $dbconnection,
-    'parameters' => {},
-    'objects'    => {
-      'transcript' => undef,
-      'gene'       => undef,
-      'location'   => undef,
-      'variation'  => undef,
-      'search'     => undef,
-      'regulation' => undef
-    }
+    input      => $input,
+    dbc        => $dbconnection,
+    parameters => {},
+    objects    => {}
   };
   
   bless $self, $class;
   
-  if ($flag) {
-    $self->_generate_objects_lw;
-  } else {
-    $self->_generate_objects;
-  }
+  $self->_generate_objects;
   
   return $self;
 }
 
-sub timer_push {
-  my $self = shift;
-  $ENSEMBL_WEB_REGISTRY->timer->push(@_);
-}
+sub location   :lvalue { $_[0]->{'objects'}{'location'};   }
+sub gene       :lvalue { $_[0]->{'objects'}{'gene'};       }
+sub transcript :lvalue { $_[0]->{'objects'}{'transcript'}; }
+sub variation  :lvalue { $_[0]->{'objects'}{'variation'};  }
+sub regulation :lvalue { $_[0]->{'objects'}{'regulation'}; }
 
-sub compara_db {
-  my $self = shift;
-  my $key  = shift;
-  return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $key);
-}
+sub param    { my $self = shift; return $self->{'input'}->param(@_); }
+sub database { my $self = shift; return $self->{'dbc'}->get_DBAdaptor(@_); }
 
-sub database {
-  my $self = shift;
-  return $self->{'dbc'}->get_DBAdaptor(@_);
-}
-
-sub transcript {
-  my $self = shift;
-  $self->{'objects'}{'transcript'} = shift if @_;
-  return $self->{'objects'}{'transcript'};
+sub long_caption {
+  my ($self, $type) = @_;
+  
+  return '-' unless $self->$type;
+  
+  my $dxr   = $self->$type->can('display_xref') ? $self->$type->display_xref : undef;
+  my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
+  
+  return $self->$type->stable_id . $label;
 }
 
 sub transcript_short_caption {
@@ -72,23 +60,6 @@ sub transcript_short_caption {
   return length $label < 15 ? "Transcript: $label" : "Trans: $label";
 }
 
-sub transcript_long_caption {
-  my $self = shift;
-  
-  return '-' unless $self->transcript;
-  
-  my $dxr   = $self->transcript->can('display_xref') ? $self->transcript->display_xref : undef;
-  my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
-  
-  return $self->transcript->stable_id . $label;
-}
-
-sub gene {
-  my $self = shift;
-  $self->{'objects'}{'gene'} = shift if @_;
-  return $self->{'objects'}{'gene'};
-}
-
 sub gene_short_caption {
   my $self = shift;
   
@@ -98,28 +69,6 @@ sub gene_short_caption {
   my $label = $dxr ? $dxr->display_id : $self->gene->stable_id;
   
   return "Gene: $label";
-}
-
-sub gene_long_caption {
-  my $self = shift;
-  
-  return '-' unless $self->gene;
-  
-  my $dxr   = $self->gene->can('display_xref') ? $self->gene->display_xref : undef;
-  my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
-  
-  return $self->gene->stable_id . $label;
-}
-
-sub location {
-  my $self = shift;
-  $self->{'objects'}{'location'} = shift if @_;
-  return $self->{'objects'}{'location'};
-}
-
-sub _centre_point {
-  my $self = shift;
-  return int(($self->location->end + $self->location->start) / 2);
 }
 
 sub location_short_caption {
@@ -133,20 +82,6 @@ sub location_short_caption {
   return "Location: $label";
 }
 
-sub location_long_caption {
-  my $self = shift;
-  
-  return '-' unless $self->location;
-  return 'Genome' if $self->location->isa('EnsEMBL::Web::Fake');
-  return $self->location->seq_region_name . ':' . $self->thousandify($self->_centre_point);
-}
-
-sub variation {
-  my $self = shift;
-  $self->{'objects'}{'variation'} = shift if @_;
-  return $self->{'objects'}{'variation'};
-}
-
 sub variation_short_caption {
   my $self = shift;
   
@@ -157,19 +92,6 @@ sub variation_short_caption {
   return (length $label > 30 ? 'Var: ' : 'Variation: ') . $label;
 }
 
-sub variation_long_caption {
-  my $self = shift;
-  
-  return '-' unless $self->variation;
-  return $self->variation->name;
-}
-
-sub regulation {
-  my $self = shift;
-  $self->{'objects'}{'regulation'} = shift if @_;
-  return $self->{'objects'}{'regulation'};
-}
-
 sub regulation_short_caption {
   my $self = shift;
   
@@ -177,157 +99,138 @@ sub regulation_short_caption {
   return 'Regulation: ' . $self->regulation->stable_id;
 }
 
-sub param {
-  my $self = shift;
-  return $self->{'input'}->param(@_);
-}
-
-sub _generate_objects_lw {
-  my $self = shift;
-  
-  my $action = "_generate_objects_$ENV{'ENSEMBL_TYPE'}";
-  
-  $self->timer_push('Lightweight core objects call');
-  
-  foreach (qw(pt t g r rf db v vdb source _referer)) {
-    $self->{'parameters'}{$_} = $self->param($_);
-  }
-  
-  $self->$action;
-}
-
-sub _generate_objects_Location {
-  my $self = shift;
-  
-  my ($r, $s, $e) = $self->{'parameters'}{'r'} =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)/;
-  my $db_adaptor  = $self->database('core');
-  my $l           = undef;
-  
-  eval {
-    $l = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s, $e);
-  };
-  
-  if ($l && $s < 1 || $e > $l->seq_region_length) {
-    $s = 1 if $s < 1;
-    $s = $l->seq_region_length if $s > $l->seq_region_length;
-    
-    $e = 1 if $e < 1;
-    $e = $l->seq_region_length if $e > $l->seq_region_length;
-    
-    $l = undef;
-    
-    eval {
-      $l = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s, $e);
-    };
-  }
-  
-  $self->timer_push('Location fetched', undef, 'fetch');
-  $self->location($l);
-}
-
-sub _generate_objects_Transcript {
-  my $self = shift;
-  
-  $self->{'parameters'}{'db'} ||= 'core'; 
-  
-  my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  my $t          = undef;
-  
-  if ($self->{'parameters'}{'t'}) {
-    $t = $db_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->{'parameters'}{'t'});
-  } elsif ($self->{'parameters'}{'pt'}) {
-    $t = $db_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id($self->{'parameters'}{'pt'});
-  }
-  
-  if ($t) {
-    $self->timer_push('Transcript fetched', undef, 'fetch');
-    $self->transcript($t);
-  }
-}
-
-sub _generate_objects_Gene {
-  my $self = shift;
-  
-  $self->{'parameters'}{'db'} ||= 'core';
-  
-  my $db_adaptor = $self->database($self->{'parameters'}{'db'});
-  my $g          = $db_adaptor->get_GeneAdaptor->fetch_by_stable_id($self->{'parameters'}{'g'});
-  
-  $self->timer_push('Gene fetched', undef, 'fetch');
-  $self->gene($g);
-}
-
-sub _generate_objects_Variation {
-  my $self = shift; 
-  
-  $self->{'parameters'}{'vdb'} ||= 'variation';
-  
-  my $db_adaptor = $self->database($self->{'parameters'}{'vdb'});
-  my $v          = $db_adaptor->getVariationAdaptor->fetch_by_name($self->{'parameters'}{'v'}, $self->{'parameters'}{'source'});
-  
-  $self->timer_push('Variation fetched', undef, 'fetch');
-  $self->variation($v);
-  $self->timer_push('Fetching location', undef);
-  $self->_generate_objects_Location;
-}
-
-sub _generate_objects_Regulation {
-  my $self = shift;
-  
-  $self->{'parameters'}{'fdb'} ||= 'funcgen'; 
-  
-  my $db_adaptor = $self->database($self->{'parameters'}{'fdb'});
-  my $rf         = $db_adaptor->getRegulatoryFeatureAdaptor->fetch_by_stable_id($self->{'parameters'}{'rf'});
-  
-  $self->timer_push('Regulatory feature fetched', undef, 'fetch');
-  $self->regulation($rf);
-}
-
 sub _generate_objects {
   my $self = shift;
 
   return if $ENV{'ENSEMBL_SPECIES'} eq 'common';
 
-  if ($self->param('rf')) { 
-    my $funcgen_db     = $self->{'parameters'}{'fdb'} = $self->param('fdb') || 'funcgen';
-    my $funcdb_adaptor = $self->database($funcgen_db);
-    
-    if ($funcdb_adaptor) { 
-      $self->regulation($funcdb_adaptor->get_RegulatoryFeatureAdaptor->fetch_by_stable_id($self->param('rf')));  
-      $self->_get_regulation_location;
-    } 
-  }
+  $self->_generate_regulation if $self->param('rf');
+  $self->_generate_variation  if $self->param('v');
+  $self->_generate_transcript;
+  $self->_generate_gene;
+  $self->_generate_location;
   
-  if ($self->param('v')) { 
-    my $vardb         = $self->{'parameters'}{'vdb'} = $self->param('vdb') || 'variation';
-    my $vardb_adaptor = $self->database($vardb);
+  $self->{'parameters'}{'_referer'} = $self->param('_referer') if !keys %{$self->{'parameters'}} && $self->param('_referer');
+  $self->{'parameters'}{'h'}        = $self->param('h')        if $self->param('h');
+}
+
+sub _generate_location {
+  my $self  = shift;
+  my $slice = shift;
+  
+  if ($slice) {
+    $slice = $slice->invert if $slice->strand < 0;
     
-    if ($vardb_adaptor) {
-      $self->variation($vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source')));
-      $self->_check_if_snp_unique_location unless $self->param('r');
-      $self->_give_snp_unique_identifier($self->param('vf'));
+    if (!$slice->is_toplevel) {
+      my $toplevel_projection = $slice->project('toplevel');
+      
+      if (my $seg = shift @$toplevel_projection) {
+          $slice = $seg->to_Slice;
+      }
+    }
+
+    $self->location = $slice;
+  } elsif ($self->param('r')) {
+    my ($r, $s, $e, $strand) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-\d+))?/;
+    $r ||= $self->param('r');
+    
+    if ($r) {      
+      eval {
+        $slice = $self->_get_slice($r, $s, $e);
+      };
+      
+      if ($slice) {
+        $self->location = $slice;
+        $self->{'parameters'}{'r'} = $slice->seq_region_name;
+        $self->{'parameters'}{'r'} .= ':' . $slice->start . '-' . $slice->end . ($strand ? ":$strand" : '') if $s || $e;
+      }
     }
   }
   
+  $self->{'parameters'}{'r'} ||= $self->location->seq_region_name . ':' . $self->location->start . '-' . $self->location->end if $self->location;
+  
+  if (!$self->location) {
+    if ($self->param('m')) {
+      $self->location = new EnsEMBL::Web::Fake({ 
+        'view'    => 'Marker', 
+        'type'    => 'Marker', 
+        'markers' => $self->database($self->param('db') || 'core')->get_adaptor('Marker')->fetch_all_by_synonym($self->param('m'))
+      });
+    } else {
+      $self->location = new EnsEMBL::Web::Fake({ view => 'Genome', type => 'Genome' });
+    }
+  }
+}
+
+sub _generate_gene {
+  my $self = shift;
+  
+  if (!$self->transcript && $self->param('g')) {
+    my $tdb         = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
+    my $tdb_adaptor = $self->database($tdb);
+    
+    if ($tdb_adaptor) {
+      my $g = $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id($self->param('g'));
+      
+      if ($g) {
+        $self->gene = $g;
+        
+        my $transcripts = $g->get_all_Transcripts;
+        
+        # set the transcript if there is only one;
+        if (scalar @$transcripts == 1) {
+          my $t = $transcripts->[0];
+          $self->transcript = $t;
+          $self->{'parameters'}{'t'} = $t->stable_id;
+        }
+        
+        $self->_generate_location($self->gene->feature_Slice);
+      } else {
+        my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+        $g = $a->fetch_by_stable_id($self->param('g')); 
+        $self->gene = $g if $g;
+      }
+    }
+  }
+  
+  if (!$self->gene && $self->param('family')) {
+    my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor('multi', 'compara');
+    
+    if ($compara_db) {
+      my $fa = $compara_db->get_FamilyAdaptor;
+      
+      if ($fa) {
+        my $f = $fa->fetch_by_stable_id($self->param('family'));
+        $self->gene = $f if $f;
+        $self->{'parameters'}{'family'} = $self->param('family') if $f;
+      }
+    }   
+  }
+  
+  $self->{'parameters'}{'g'} = $self->gene->stable_id if $self->gene && !$self->gene->isa('EnsEMBL::Web::Fake');
+}
+
+sub _generate_transcript {
+  my $self = shift;
+  
   if ($self->param('t')) {
     my $tdb = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-    
-    $self->_get_gene_location_from_transcript;
-
     my $tdb_adaptor = $self->database($tdb);
     
     if ($tdb_adaptor) {
       my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
       
       if ($t) {
-        $self->transcript($t);
-        $self->_get_gene_location_from_transcript;
+        $self->transcript = $t;
+        $self->_get_gene_location_from_transcript($tdb_adaptor);
       } else {
         my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
         
         $t = $a->fetch_by_stable_id($self->param('t')); 
-        $self->transcript($t) if $t;
+        $self->transcript = $t if $t;
       }
+      
+      $self->{'parameters'}{'t'} = $t->stable_id if $t;
     }
   }
   
@@ -339,12 +242,14 @@ sub _generate_objects {
       my $t = $tdb_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id($self->param('pt'));
       
       if ($t) {
-        $self->transcript($t);
+        $self->transcript = $t;
         
         my $slice = $self->transcript->feature_Slice;
         $slice = $slice->invert if $slice->strand < 0;
         
-        $self->location($slice);
+        $self->location = $slice;
+        
+        $self->{'parameters'}{'pt'} = $t->stable_id;
       }
     }
   }
@@ -359,16 +264,16 @@ sub _generate_objects {
     if ($p) {
       if ($p->is_current) {
         my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
-        $self->transcript($t);
-        $self->_get_gene_location_from_transcript;
+        $self->transcript = $t;
+        $self->_get_gene_location_from_transcript($tdb_adaptor);
       } else {
         my $assoc_transcript = shift @{$p->get_all_transcript_archive_ids};
         
         if ($assoc_transcript) {
           my $t = $a->fetch_by_stable_id($assoc_transcript->stable_id);
-          $self->transcript($t);
+          $self->transcript = $t;
         } else { 
-          $self->transcript( new EnsEMBL::Web::Fake({ 'view' => 'Idhistory/Protein', 'type' => 'history_protein', 'id' => $trans_id , 'adaptor' => $a }));
+          $self->transcript = new EnsEMBL::Web::Fake({ view => 'Idhistory/Protein', type => 'history_protein', id => $trans_id , adaptor => $a });
           $self->{'parameters'}{'protein'} = $trans_id; 
         }  
       }
@@ -385,193 +290,99 @@ sub _generate_objects {
       my ($t, $n, $d) = $sth->fetchrow;
       
       if ($t) {
-        $self->transcript(new EnsEMBL::Web::Fake({ 'view' => 'Domains/Genes', 'type' => 'Interpro Domain', 'id' => $t, 'name' => $n, 'description' => $d, 'adaptor' => $tdb_adaptor->get_GeneAdaptor }));
+        $self->transcript = new EnsEMBL::Web::Fake({ view => 'Domains/Genes', type => 'Interpro Domain', id => $t, name => $n, description => $d, adaptor => $tdb_adaptor->get_GeneAdaptor });
         $self->{'parameters'}{'domain'} = $self->param('domain');
       }
     }
   }
-  
-  if (!$self->transcript && $self->param('g')) {
-    my $tdb         = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-    my $tdb_adaptor = $self->database($tdb);
-    
-    if ($tdb_adaptor) {
-      my $g = $tdb_adaptor->get_GeneAdaptor->fetch_by_stable_id($self->param('g'));
-      
-      if ($g) {
-        $self->gene($g);
-        
-        if (scalar @{$g->get_all_Transcripts} == 1) {
-          my $t = $g->get_all_Transcripts->[0];
-          $self->transcript($t);
-          $self->{'parameters'}{'t'} = $t->stable_id;
-        }
-        
-        $self->_get_location_from_gene;
-      } else {
-        my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
-        $g = $a->fetch_by_stable_id($self->param('g')); 
-        $self->gene($g) if $g;
-      }
-    }
-  }
-  
-  if (!$self->gene && $self->param('family')) {
-    my $compara_db = $self->compara_db('compara');
-    
-    if ($compara_db) {
-      my $fa = $compara_db->get_FamilyAdaptor;
-      
-      if ($fa) {
-        my $f = $fa->fetch_by_stable_id($self->param('family'));
-        $self->gene($f) if $f;
-        $self->{'parameters'}{'family'} = $self->param('family') if $f;
-      }
-    }   
-  }
-  
-  $self->{'parameters'}{'r'} = $self->location->seq_region_name . ':' . $self->location->start . '-' . $self->location->end if $self->location;
-  
-  if ($self->param('r')) {
-    my $db_adaptor = $self->database('core');
-    my ($r, $s, $e, $strand) = $self->param('r') =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-\d+))?/;
-    $r ||= $self->param('r');
-    
-    if ($r && $db_adaptor) {
-      my $slice = undef;
-      my @attrib;
-      
-      eval {
-        $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s, $e);
-      };
-      
-      # Check to see if top-level as "toplevel" above is b*ll*cks
-      @attrib = @{$slice->get_all_Attributes('toplevel')||[]} if $slice;
-      
-      if (@attrib) {
-        if ($s || $e) {
-          if ($s < 1 || $e > $slice->seq_region_length) {
-            $s = 1 if $s < 1;
-            $s = $slice->seq_region_length if $s > $slice->seq_region_length;
-            
-            $e = 1 if $e < 1;
-            $e = $slice->seq_region_length if $e > $slice->seq_region_length;
-            
-            $slice = undef;
-            
-            eval {
-              $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s, $e);
-            };
-          }
-          
-          if ($slice) {
-            $self->location($slice);
-            $self->{'parameters'}{'r'} = $slice->seq_region_name . ':' . $slice->start . '-' . $slice->end . ($strand ? ":$strand" : '');
-          }
-        } else {           
-          $self->location($slice);
-          $self->{'parameters'}{'r'} = $slice->seq_region_name;
-        }
-      }
-    }
-  }
-  
-  if (!$self->location) {
-    if ($self->param('m')) {
-      $self->location(new EnsEMBL::Web::Fake({ 
-        'view'    => 'Marker', 
-        'type'    => 'Marker', 
-        'markers' => $self->database($self->param('db') || 'core')->get_adaptor('Marker')->fetch_all_by_synonym($self->param('m'))
-      }));
-    } else {
-      $self->location(new EnsEMBL::Web::Fake({ 'view' => 'Genome', 'type' => 'Genome' }));
-    }
-  }
-
-  if ($self->transcript) {
-    if ($self->transcript->isa('EnsEMBL::Web::Fake')) {
-      # Do nothing
-    } elsif ($self->transcript->isa('Bio::EnsEMBL::StableIdHistoryTree')) {
-      $self->{'parameters'}{'t'} = $self->param('t');
-    } else {
-      $self->{'parameters'}{$self->transcript->isa('Bio::EnsEMBL::PredictionTranscript')? 'pt' : 't'} = $self->transcript->stable_id;
-    }
-  }
-  
-  if ($self->gene) {
-    if ($self->gene->isa('Bio::EnsEMBL::Gene')) {
-      $self->{'parameters'}{'g'} = $self->gene->stable_id;
-    } elsif ($self->gene->isa('Bio::EnsEMBL::ArchiveStableId')) {
-      $self->{'parameters'}{'g'} = $self->gene->stable_id;
-    }
-  }
-  
-  $self->{'parameters'}{'rf'}       = $self->regulation->stable_id if $self->regulation && $self->regulation->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
-  $self->{'parameters'}{'v'}        = $self->variation->name if $self->variation;
-  $self->{'parameters'}{'_referer'} = $self->param('_referer') if !keys %{$self->{'parameters'}} && $self->param('_referer');
-  $self->{'parameters'}{'h'}        = $self->param('h') if $self->param('h');
 }
 
-sub _get_gene_location_from_transcript {
-  my $self = shift;
+sub _generate_variation {
+  my $self = shift; 
+  my $vardb         = $self->{'parameters'}{'vdb'} = $self->param('vdb') || 'variation';
+  my $vardb_adaptor = $self->database($vardb);
   
-  return unless $self->transcript;
+  return unless $vardb_adaptor;
   
-  $self->gene(
-    $self->transcript->adaptor->db->get_GeneAdaptor->fetch_by_transcript_stable_id($self->transcript->stable_id)          
-  );
+  $self->variation = $vardb_adaptor->get_VariationAdaptor->fetch_by_name($self->param('v'), $self->param('source'));
   
-  my $slice = $self->transcript->feature_Slice;
-  $slice = $slice->invert if $slice->strand < 0;
-     
-  # in case genes are attached to contigs or supercontigs we need to get the chromosome coordinates
-  if (!$slice->is_toplevel) {
-    my $toplevel_projection = $slice->project('toplevel');
-    
-    if (my $seg = shift @$toplevel_projection) {
-      $slice = $seg->to_Slice;
-    }
+  return unless $self->variation;
+  
+  $self->{'parameters'}{'v'} = $self->variation->name;
+  
+  my $vf       = $self->param('vf');
+  my @features = @{$vardb_adaptor->get_VariationFeatureAdaptor->fetch_all_by_Variation($self->variation)};
+  
+  return unless @features && (scalar @features == 1 || $vf);
+  
+  my $var_feat;
+  
+  # give snp unique identifier
+  if (scalar @features == 1) {
+    $var_feat = $features[0];
+    $self->{'parameters'}{'vf'} = $var_feat->dbID; 
+    $self->param('vf', $var_feat->dbID);
+  } else {
+    ($var_feat) = map $_->dbID eq $vf ? $_ : (), @features;
+    $self->{'parameters'}{'vf'} = $vf;
   }
   
-  $self->location($slice);          
-}
-
-sub _get_location_from_gene {
-  my $self = shift;
-  
-  return unless $self->gene;
-
-  my $slice = $self->gene->feature_Slice;
-  $slice = $slice->invert if $slice->strand < 0;
-  
-  # in case genes are attached to contigs or supercontigs we need to get the chromosome coordinates
-  if (!$slice->is_toplevel) {
-    my $toplevel_projection = $slice->project('toplevel');
+  if ($self->variation && !$self->param('r') && !$self->param('region')) {
+    my $context    = $self->param('vw') || 500;
+    my $s          = $var_feat->start;
+    my $e          = $var_feat->end;
+    my $r          = $var_feat->seq_region_name;
+    my $slice;
     
-    if (my $seg = shift @$toplevel_projection) {
-        $slice = $seg->to_Slice;
-    }
+    eval {
+      $slice = $self->_get_slice($r, $s - $context, $e + $context);
+    };
+    
+    $self->location = $slice if $slice;
   }
-
-  $self->location($slice);
 }
 
-sub _get_regulation_location {
+sub _generate_regulation {
   my $self = shift;
+  my $funcgen_db     = $self->{'parameters'}{'fdb'} = $self->param('fdb') || 'funcgen';
+  my $funcdb_adaptor = $self->database($funcgen_db);
   
-  return unless $self->regulation;
+  if ($funcdb_adaptor) { 
+    $self->regulation = $funcdb_adaptor->get_RegulatoryFeatureAdaptor->fetch_by_stable_id($self->param('rf'));
+    
+    return unless $self->regulation;
+    
+    $self->{'parameters'}{'rf'} = $self->regulation->stable_id if $self->regulation->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
+    
+    my $r = $self->regulation->slice->seq_region_name;
+    my $s = $self->regulation->start;
+    my $e = $self->regulation->end;
+    my $slice;
+    
+    eval {
+      $slice = $self->_get_slice($r, $s, $e);
+    };
+    
+    $self->location = $slice if $slice;
+  }
+}
+
+sub _get_slice {
+  my $self = shift;
+  my ($r, $s, $e) = @_;
+  my $db_adaptor  = $self->database('core');
   
-  my $db_adaptor = $self->database('core');
-  my $r          = $self->regulation->slice->seq_region_name;
-  my $s          = $self->regulation->start;
-  my $e          = $self->regulation->end;
-  my $slice      = undef;
+  return unless $db_adaptor;
+  
+  my $slice_adaptor = $db_adaptor->get_SliceAdaptor;
+  my $slice;
   
   eval {
-    $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s, $e);
+    $slice = $slice_adaptor->fetch_by_region('toplevel', $r, $s, $e);
   };
   
-  if ($slice && $s < 1 || $e > $slice->seq_region_length) {
+  # Check to see if top-level as "toplevel" above is correct
+  if ($slice && @{$slice->get_all_Attributes('toplevel')||[]} && $s < 1 || $e > $slice->seq_region_length) {
     $s = 1 if $s < 1;
     $s = $slice->seq_region_length if $s > $slice->seq_region_length;
     
@@ -581,83 +392,20 @@ sub _get_regulation_location {
     $slice = undef;
     
     eval {
-      $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s, $e);
+      $slice = $slice_adaptor->fetch_by_region('toplevel', $r, $s, $e);
     };
   }
   
-  $self->timer_push('Location fetched', undef, 'fetch');
-  $self->location($slice);
+  return $slice;
 }
 
-sub _check_if_snp_unique_location {
-  my ($self, $vf) = @_;
+sub _get_gene_location_from_transcript {
+  my ($self, $db_adaptor) = @_;
   
-  return if $self->param('region'); 
-  return unless $self->variation;
+  return unless $self->transcript && $db_adaptor;
   
-  my $db_adaptor = $self->database('core');
-  my $vardb      = $self->database('variation') ; 
-  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor; 
-  my @features   = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
-  my $context    = $self->param('vw') || 500;
-  
-  if (scalar @features == 1) {
-    my $s = $features[0]->start; 
-    my $e = $features[0]->end;
-    my $r = $features[0]->seq_region_name;
-    my $t = undef;
-    
-    eval {
-      $t = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s - $context, $e + $context);
-    };
-    
-    $self->location($t);
-  } elsif (scalar @features > 1 && $vf) {
-    foreach my $var_feat(@features) {
-      if ($var_feat->dbID eq $vf) {
-        my $s = $features[0]->start;
-        my $e = $features[0]->end;
-        my $r = $features[0]->seq_region_name;
-        my $t = undef;
-        
-        eval {
-          $t = $db_adaptor->get_SliceAdaptor->fetch_by_region('toplevel', $r, $s - $context, $e + $context);
-        };
-        
-        $self->location($t);
-      }
-    }
-  } 
-}
-
-sub _give_snp_unique_identifier {
-  my ($self, $vf) = @_;
-  
-  return unless $self->variation;
-  
-  my $db_adaptor = $self->database('core');
-  my $vardb      = $self->database('variation') ;
-  my $vf_adaptor = $vardb->get_VariationFeatureAdaptor;
-  my @features   = @{$vf_adaptor->fetch_all_by_Variation($self->variation)};
-  
-  if (scalar @features == 1) {
-    $self->{'parameters'}{'vf'} = $features[0]->dbID; 
-    $self->param('vf', $features[0]->dbID);
-    
-    return;
-  } elsif (scalar @features > 1 && $vf) {
-    my $flag = 0;
-    
-    foreach my $var_feat(@features) {
-      if ($var_feat->dbID eq $vf) { 
-        $self->{'parameters'}{'vf'} = $var_feat->dbID;
-        $self->_check_if_snp_unique_location($var_feat->dbID) unless $self->param('r');
-        $flag = 1;    
-      }
-    }
-    
-    $self->{'parameters'}{'vf'} if $flag == 0;
-  }
+  $self->gene = $db_adaptor->get_GeneAdaptor->fetch_by_transcript_stable_id($self->transcript->stable_id);
+  $self->_generate_location($self->transcript->feature_Slice);        
 }
 
 1;
