@@ -22,7 +22,7 @@ my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
 
 my $MA = $comparaDBA->get_MemberAdaptor;
 my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
-my $pep = $gene_member->get_longest_peptide_Member;
+my $pep = $gene_member->get_canonical_peptide_Member;
 $pep->print_member("query PEP\n");
 
 my $pafDBA = $comparaDBA-> get_PeptideAlignFeatureAdaptor;

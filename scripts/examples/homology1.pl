@@ -1,40 +1,26 @@
-#!/usr/local/bin/perl
+#!/software/bin/perl
 use strict;
 use Bio::EnsEMBL::Registry;
 
 Bio::EnsEMBL::Registry->load_registry_from_db
     (-host=>"ensembldb.ensembl.org", 
-     -user=>"anonymous");
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Homo sapiens", "core", "Gene");
-my $member_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Compara", "compara", "Member");
-my $homology_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Compara", "compara", "Homology");
+     -user=>"anonymous",
+    -db_version=>56);
+my $human_gene_adaptor =  Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
+my $member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Member");
+my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "Homology");
 
-my $genes = $human_gene_adaptor->
-   fetch_all_by_external_name('CTDP1');
-
+my $external_name = 'BRCA2';
+my $genes = $human_gene_adaptor->fetch_all_by_external_name($external_name);
 foreach my $gene (@$genes) {
   my $member = $member_adaptor->
   fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  next unless defined($member);
   my $all_homologies = $homology_adaptor->fetch_by_Member($member);
-
+  my $biotype = $gene->biotype;
   foreach my $this_homology (@$all_homologies) {
-    my $description = $this_homology->description;
-    next unless ($description =~ /one2one/); # if only one2one wanted
-    my $all_member_attributes = 
-    $this_homology->get_all_Member_Attribute();
-    my $first_found = 0;
-    foreach my $ma (@$all_member_attributes) {
-      1;#??
-      my ($mb, $attr) = @$ma;
-      my $label = $mb->display_label || $mb->stable_id;
-      print $mb->genome_db->short_name, ",", $label, "\t";
-    }
-    print "\n";
+    $this_homology->print_homology;
   }
 }
+
+1;

@@ -28,7 +28,7 @@ foreach my $this_human_gene (@$human_genes) {
   my $gene_member = $member_adaptor->fetch_by_source_stable_id(
       "ENSEMBLGENE", $this_human_gene->stable_id);
   ## Get the longest peptide Member, i.e. the one used for building the trees
-  my $peptide_member = $gene_member->get_longest_peptide_Member;
+  my $peptide_member = $gene_member->get_canonical_peptide_Member;
 
   # Go through all the possible transcripts
   foreach my $this_transcript (@{$this_human_gene->get_all_Transcripts}) {
