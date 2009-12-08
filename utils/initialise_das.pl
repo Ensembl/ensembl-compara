@@ -460,12 +460,13 @@ sub _coord_system_as_xml {
   $authority = $reverse_auths{$authority} || $authority;
   
   CREATE:
-  my $xml = $version ? sprintf q(<COORDINATES source="%s" authority="%s" version="%s" taxid="%s">%2$s_%3$s,%1$s,%s</COORDINATES>),
+  my $xml = $version ? sprintf q(<COORDINATES source="%s" authority="%s" test_range="" uri="" version="%s" taxid="%s">%2$s_%3$s,%1$s,%s</COORDINATES>),
                                $type, $authority, $version, $taxid, $species
                      : sprintf q(<COORDINATES source="%s" authority="%s" taxid="%s">%2$s,%1$s,%s</COORDINATES>),
                                $type, $authority, $taxid, $species;
   return $xml;
 }
+
 
 sub _get_das_coords {
   my ($add_data, $add_name) = @_;
@@ -597,17 +598,12 @@ A script that generates XML file that effectivly is a response to
 /das/dsn and /das/sources commands to this server. The script prints the XML to
 htdocs/dsn and htdocs/sources.
 
-One unsolved issue is that although the script should be able to add entries to the
-DAS registry for new assemblies, it currently fails with a 400 error (from line ~440).
-Until this is solved first run the script to report new assemblies and then ask
-Jonathan Warren (jw12) to add them to the registry. When this is done the script
-can then be run to then generate the xml
+One recently solved issue is that the script failed to add entries to the DAS
+registry for new assemblies. This appears to be fixed but if it reoccurs then 
+the 'check' option can be used to report new assemblies and then Jonathan Warren
+(jw12) asked to add them to the registry.
 
-./initialise_das.pl --check
-
-THEN
-
-./initialise_das.pl --force
+./initialise_das.pl
 
 The (optional) --force forces processing of previously generated species
 
