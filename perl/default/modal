@@ -1,2 +1,2 @@
 use EnsEMBL::Web::Magic;
-magic modal_stuff
+modal_stuff
