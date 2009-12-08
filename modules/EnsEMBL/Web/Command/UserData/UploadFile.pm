@@ -6,34 +6,30 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use Class::Std;
-use CGI qw(escape escapeHTML header);
+use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Tools::Misc;
-use base 'EnsEMBL::Web::Command';
+use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
   my $object = $self->object;
   my $url = $object->species_path($object->data_species);
   my $param = {};
+  my $error = $object->[1]->{'_input'}->cgi_error;
 
-  if (my $error = $object->[1]->{'_input'}->cgi_error()) {
-    warn ">>> CGI ERROR $error";
-    if ($error =~ /413/) {
-      $param->{'filter_module'} = 'Data';
-      $param->{'filter_code'} = 'too_big';
-    }
+  if ($error =~ /413/) {
+    $param->{'filter_module'} = 'Data';
+    $param->{'filter_code'} = 'too_big';
   }
 
   my @methods = qw(text file url);
   my $method;
   foreach my $M (@methods) {
-    if ($object->param($M)) { 
-      $method = $M; 
+    if ($object->param($M)) {
+      $method = $M;
       last;
     }
   }
@@ -47,15 +43,14 @@ sub process {
       $url .= '/UserData/UploadFeedback';
     } 
   }
-  else { 
+  else {
     $url .= '/UserData/SelectFile';
   }
   $param->{'_referer'} = $object->param('_referer');
-  $param->{'x_requested_with'} = $object->param('x_requested_with');
 
-  $url = escapeHTML($self->url($url, $param));
+  $url = encode_entities($self->url($url, $param));
 
-  header(-type => 'text/html', -charset => 'utf-8');
+  $self->r->content_type('text/html; charset=utf-8');
 
   print qq{
   <html>
@@ -75,6 +70,7 @@ sub upload {
   my ($method, $object) = @_;
   my $param = {};
   my ($error, $format, $filename, $full_ext, %args);
+
   ## Try to guess the format from the extension
   unless ($method eq 'text') {
     my @orig_path = split('/', $object->param($method));
@@ -86,22 +82,18 @@ sub upload {
       $ext = $parts[-2];
       #$full_ext = $ext.'.'.$full_ext;
     }
-    if ($ext =~ /bed/i || $ext =~ /psl/i || $ext =~ /gff/i || $ext =~ /gtf/i || $ext =~ /wig/i) {
-      $format = uc($ext);
-    }
+    
+    $format = uc $ext if $ext =~ /(bed|psl|gff|gtf|wig)/i;
   }
-
-  if ($object->param('upload_format')){
-    $format = uc ($object->param('upload_format'));
-  }
+  
+  $format = uc $object->param('upload_format') if $object->param('upload_format');
 
   ## Get original path, so can save file name as default name for upload
   my $name = $object->param('name');
   unless ($name) {
     if ($method eq 'text') {
       $name = 'Data';
-    }
-    else {
+    } else {
       $name = $filename;
       $args{'filename'} = $filename;
     }
@@ -160,8 +152,6 @@ sub upload {
     }
   }
   return $param;
-}
-
 }
 
 1;
