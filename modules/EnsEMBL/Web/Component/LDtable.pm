@@ -2,13 +2,13 @@ package EnsEMBL::Web::Component::LDtable;
 
 # Puts together chunks of XHTML for LD-based displays
 
-use EnsEMBL::Web::Component;
-our @ISA = qw( EnsEMBL::Web::Component);
-use POSIX qw(floor ceil);
-
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use POSIX qw(floor);
+
+use base qw(EnsEMBL::Web::Component);
 
 sub ld_values {
 
