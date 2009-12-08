@@ -4,8 +4,8 @@ use warnings;
 no warnings 'uninitialized';
 use strict;
 
-use CGI qw(escapeHTML);
 use Digest::MD5 qw(md5_hex);
+use HTML::Entities qw(encode_entities);
 
 use Sanger::Graphics::TextHelper;
 use Bio::EnsEMBL::Registry;
@@ -375,7 +375,7 @@ sub load_user_tracks {
     
     $self->_add_flat_file_track($menu, 'url', $k, $url_sources{$_}{'source_name'}, sprintf('
         Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', 
-        escapeHTML($url_sources{$_}{'source_type'}), escapeHTML($_)
+        encode_entities($url_sources{$_}{'source_type'}), encode_entities($_)
       ),
       'url' => $_
     );
@@ -403,7 +403,7 @@ sub load_user_tracks {
         $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
       }
       
-      my $description = escapeHTML($analysis->description) || 'User data from dataset ' . escapeHTML($user_sources{$logic_name}{'source_name'});
+      my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($user_sources{$logic_name}{'source_name'});
       
       push @tracks, [ "user_$logic_name", $analysis->display_label, {
         _class      => 'user',
@@ -781,14 +781,14 @@ sub _merge {
         $data->{$key}{'description'} ||= '';
         $data->{$key}{'html_desc'} .= sprintf(
           "  <dt>%s</dt>\n  <dd>%s</dd>\n",
-          escapeHTML($sub_tree->{'web'}{'name'}),  # Description for pop-help - merger of all descriptions
-          escapeHTML($sub_tree->{'desc'})
+          encode_entities($sub_tree->{'web'}{'name'}),  # Description for pop-help - merger of all descriptions
+          encode_entities($sub_tree->{'desc'})
         );
         $data->{$key}{'description'} .= ($data->{$key}{'description'} ? '; ' : '') . $sub_tree->{'desc'};
       }
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
-      $data->{$key}{'html_desc'}  .= sprintf '<p>%s</p>', escapeHTML($sub_tree->{'desc'});
+      $data->{$key}{'html_desc'}  .= sprintf '<p>%s</p>', encode_entities($sub_tree->{'desc'});
     }
     
     push @{$data->{$key}{'logic_names'}}, $analysis;

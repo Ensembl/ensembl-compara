@@ -4,7 +4,8 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use CGI qw(escape);
+use HTML::Entities qw(encode_entities);
+use URI::Escape qw(uri_escape);
 
 # New now takes a secondary hash which contains a list of additional links!
 sub new {
@@ -35,8 +36,8 @@ sub get_url {
   $data->{'DB'}      = $db;
 ## Sets URL to the the entry for the given name, OR the default value OTHERWISE returns....
   my $url= $self->{'URLS'}{$species}{ uc($db) } || $self->{'URLS'}{$species}{'DEFAULT'};
-  $url =~ s/###(\w+)###/CGI->escape( exists $data->{$1} ? $data->{$1} : "(($1))" )/ge;
-  return CGI->escapeHTML($url);
+  $url =~ s/###(\w+)###/uri_escape( exists $data->{$1} ? $data->{$1} : "(($1))" )/ge;
+  return encode_entities($url);
 }
 
 sub is_linked{ return exists $_[0]->{'URLS'}{$_[0]->{'species'}}{uc($_[1])}; }

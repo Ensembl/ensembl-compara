@@ -4,7 +4,7 @@ package EnsEMBL::Web::Form;
 
 use strict;
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Form::FieldSet;
 
@@ -146,7 +146,7 @@ sub render {
   my $output = '<form';
   
   while (my ($k, $v) = each (%{$self->{'_attributes'}})) {
-    $output .= sprintf ' %s="%s"', escapeHTML($k), escapeHTML($v);
+    $output .= sprintf ' %s="%s"', encode_entities($k), encode_entities($v);
   }
   
   $output .= '>';

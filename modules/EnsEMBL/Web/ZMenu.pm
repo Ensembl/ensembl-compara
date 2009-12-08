@@ -4,7 +4,7 @@ package EnsEMBL::Web::ZMenu;
 
 use strict;
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -94,7 +94,7 @@ sub render {
   
   foreach (sort { $a <=> $b } keys %{$self->{'stored_entries'}}) {
     my $entry = $self->{'stored_entries'}->{$_};
-    my $type  = escapeHTML($entry->{'type'});
+    my $type  = encode_entities($entry->{'type'});
     my $link;
     
     if ($entry->{'link'}) {
@@ -103,14 +103,14 @@ sub render {
       } else {
         $link = sprintf(
           '<a href="%s"%s %s>%s</a>',
-          escapeHTML($entry->{'link'}),
+          encode_entities($entry->{'link'}),
           $entry->{'extra'}{'external'} ? ' rel="external"' : '',
           $entry->{'class'} ? qq{ class="$entry->{'class'}"} : '',
-          escapeHTML($entry->{'label'} . $entry->{'label_html'})
+          encode_entities($entry->{'label'} . $entry->{'label_html'})
         );
       }
     } else {
-      $link = escapeHTML($entry->{'label'}) . $entry->{'label_html'};
+      $link = encode_entities($entry->{'label'}) . $entry->{'label_html'};
     }
     
     s/'/&#39;/g for $type, $link;
@@ -124,7 +124,7 @@ sub render {
     s/\r//g;
   }
   
-  printf "{'caption': '%s', 'entries': [%s]}", escapeHTML($self->{'caption'}), join ',', @entries;
+  printf "{'caption': '%s', 'entries': [%s]}", encode_entities($self->{'caption'}), join ',', @entries;
 }
 
 1;

@@ -2,9 +2,10 @@ package EnsEMBL::Web::ViewConfig;
 
 use strict;
 
-use CGI qw(escape unescape escapeHTML);
 use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
+use HTML::Entities qw(encode_entities);
+use URI::Escape qw(uri_escape uri_unescape);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::OrderedTree;
@@ -237,7 +238,7 @@ sub update_from_config_strings {
     
     if ($name eq 'contigviewbottom' || $name eq 'cytoview') {
       foreach my $v ($input->param('data_URL')) {
-        push @values, sprintf 'url:%s=normal', escape($v);
+        push @values, sprintf 'url:%s=normal', uri_escape($v);
         $params_removed = 1; 
       }
       
@@ -247,7 +248,7 @@ sub update_from_config_strings {
         my $server = $v =~ /url=(https?:[^ +]+)/ ? $1 : '';
         my $dsn    = $v =~ /dsn=(\w+)/ ? $1 : '';
         
-        push @values, sprintf 'das:%s=labels', escape("$server/$dsn") if $r;
+        push @values, sprintf 'das:%s=labels', uri_escape("$server/$dsn") if $r;
         $params_removed = 1;
       }
       
@@ -265,7 +266,7 @@ sub update_from_config_strings {
           my ($type, $p) = ($1, $2);
           
           if ($type eq 'url') {
-            $p = unescape($p);
+            $p = uri_unescape($p);
             
             # We have to create a URL upload entry in the session
             my $code = md5_hex("$ENV{'ENSEMBL_SPECIES'}:$p");
@@ -283,26 +284,26 @@ sub update_from_config_strings {
               type     => 'message',
               function => '_info',
               code     => 'url_data:' . md5_hex($p),
-              message  => sprintf('Data has been attached to your display from the following URL: %s', escapeHTML($p))
+              message  => sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p))
             );
             
             # We then have to create a node in the user_config
             $ic->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-              sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', escapeHTML($n), escapeHTML($p)),
+              sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
               'url' => $p
             );
             
             my $nd = $ic->get_node("url_$code");
             $flag += $nd->set_user('display', $render) if $nd; # Then we have to set the renderer
           } elsif ($type eq 'das') {
-            $p = unescape($p);
+            $p = uri_unescape($p);
             
             if (my $error = $session->add_das_from_string($p, { 'ENSEMBL_IMAGE' => $name }, {'display' => $render })) {
               $session->add_data(
                 type     => 'message',
                 function => '_warning',
                 code     => 'das:' . md5_hex($p),
-                message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', escapeHTML($p), escapeHTML($error))
+                message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', encode_entities($p), encode_entities($error))
               );
               
               warn $error;
@@ -311,7 +312,7 @@ sub update_from_config_strings {
                 type     => 'message',
                 function => '_info',
                 code     => 'das:' . md5_hex($p),
-                message  => sprintf('You have attached a DAS source with DSN: %s to this display', escapeHTML($p))
+                message  => sprintf('You have attached a DAS source with DSN: %s to this display', encode_entities($p))
               );
               
               $flag++;
