@@ -32,7 +32,7 @@ foreach my $gene (@$genes) {
   die "no members" unless (defined $member);
   my $all_homologies = $homology_adaptor->fetch_by_Member($member);
   foreach my $homology (@$all_homologies) {
-    my @two_ids = map { $_->get_longest_peptide_Member->member_id } @{$homology->gene_list};
+    my @two_ids = map { $_->get_canonical_peptide_Member->member_id } @{$homology->gene_list};
     my $leaf_node_id = $homology->node_id;
     my $tree = $proteintree_adaptor->fetch_node_by_node_id($leaf_node_id);
     my $node_a = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id($two_ids[0],1);
