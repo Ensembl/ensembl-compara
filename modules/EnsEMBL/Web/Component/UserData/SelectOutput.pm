@@ -41,8 +41,8 @@ sub content {
   if ($object->param('_referer')){ 
     $referer =  ';_referer='. $object->param('_referer');
   }
- 
-  my $extra_param = ';x_requested_with='.$object->param('x_requested_with');
+  
+  my $extra_param;
   if ($object->param('_time')) { $extra_param.= ';_time='.$object->param('_time'); }                      
   my $convert_file;
   if ($object->param('convert_file')) {

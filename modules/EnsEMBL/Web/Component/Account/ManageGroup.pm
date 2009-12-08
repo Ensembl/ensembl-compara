@@ -30,7 +30,7 @@ sub content {
   my $sitename = $self->site_name;
 
   ## Control panel fixes
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = '_referer='.$self->object->param('_referer');
 
   return '' unless $object->param('id') && int($object->param('id'));
  
@@ -147,8 +147,6 @@ sub content {
 
     $form->add_element(type => 'Hidden', name => 'id', value => $group->id);
     $form->add_element(type => 'Hidden', name => '_referer', value => $object->param('_referer'));
-    $form->add_element(type => 'Hidden', name => 'x_requested_with', value => $object->param('x_requested_with'));
-
     $form->add_element(type => 'Submit', name => 'submit', value => 'Send');
 
     $html .= $form->render;

@@ -5,11 +5,13 @@ package EnsEMBL::Web::Component::UserData::ManageData;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use URI::Escape qw(uri_escape);
+
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::RegObj;
+
 use base qw(EnsEMBL::Web::Component::UserData);
-use Apache2::RequestUtil;
-use CGI qw(escape);
 
 sub _init {
   my $self = shift;
@@ -22,8 +24,7 @@ sub content {
   my $object = $self->object;
   my $sd = $object->species_defs;
 
-  my $r = Apache2::RequestUtil->request;
-  my $referer = '_referer=' . CGI::escape($object->param('_referer')) . ';x_requested_with=' . ($object->param('x_requested_with') || $r->headers_in->{'X-Requested-With'});
+  my $referer = '_referer=' . uri_escape($object->param('_referer'));
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @data; 

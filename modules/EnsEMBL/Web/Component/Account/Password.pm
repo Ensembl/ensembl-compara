@@ -39,7 +39,7 @@ sub content {
   # Logged-in user, changing own password
   if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
     my $email = $user->email;
-    my $species = $ENV{'ENSEMBL_SPECIES'};
+    my $species = $object->species;
     $species = '' if $species !~ /_/;
     
     $form->add_element('type' => 'Hidden', 'name' => 'email', 'value' => $email);
@@ -62,8 +62,7 @@ sub content {
   $form->add_element('type' => 'Password', 'name' => 'new_password_1', 'label' => 'New password', 'required' => 'yes');
   $form->add_element('type' => 'Password', 'name' => 'new_password_2', 'label' => 'Confirm new password', 'required' => 'yes');
   $form->add_element('type' => 'Submit',   'name' => 'submit',   'value' => 'Save', 'class' => 'modal_link');
-  $form->add_element('type' => 'Hidden',   'name' => '_referer', 'value' => $self->object->param('_referer'));
-  $form->add_element('type' => 'Hidden',   'name'  => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
+  $form->add_element('type' => 'Hidden',   'name' => '_referer', 'value' => $object->param('_referer'));
 
   return $form->render;
 }

@@ -29,7 +29,6 @@ sub content {
   $form->add_element( 'type' => 'Information', 'value' => 'Are you sure you want to delete this group?');
   $form->add_element( 'type' => 'Hidden', 'name' => 'id', 'value' => $object->param('id'));
   $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
-  $form->add_element( 'type' => 'Hidden', 'name' => 'x_requested_with', 'value' => $self->object->param('x_requested_with'));
   $form->add_element( 'type' => 'Submit', 'value' => 'Delete');
 
   return $form->render;

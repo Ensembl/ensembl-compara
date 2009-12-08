@@ -32,7 +32,7 @@ sub content {
   my $has_bookmarks = 0;
 
   ## Control panel fixes
-  my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = ';_referer='.$self->object->param('_referer');
 
   my @admin_groups = $user->find_administratable_groups;
   my $has_groups = $#admin_groups > -1 ? 1 : 0;

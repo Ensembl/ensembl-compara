@@ -35,7 +35,7 @@ sub content {
     ## Control panel fixes
     my $dir = $self->object->site_path;
     $dir = '' if $dir !~ /_/;
-    my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+    my $referer = ';_referer='.$self->object->param('_referer');
 
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 

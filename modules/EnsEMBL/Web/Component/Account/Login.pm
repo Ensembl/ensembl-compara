@@ -38,7 +38,6 @@ sub content {
   $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $object->param('url'));
   $form->add_element('type'  => 'Hidden',   'name'  => 'popup', 'value' => $object->param('popup'));
   $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $object->param('_referer'));
-  $form->add_element('type'  => 'Hidden',   'name'  => 'x_requested_with', 'value' => $object->param('x_requested_with'));
   $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in', 'class'=>'cp-refresh');
   $form->add_element('type'  => 'Information',
                      'value' => qq(<p><a href="$reg_url" class="modal_link">Register</a>

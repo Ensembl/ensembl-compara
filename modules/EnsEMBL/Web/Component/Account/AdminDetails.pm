@@ -36,7 +36,7 @@ sub content {
     my $dir = $object->species_path;
     $dir = '' if $dir !~ /_/;
     
-    my $referer = ';_referer=' . $object->param('_referer') . ';x_requested_with=' . $object->param('x_requested_with');
+    my $referer = ';_referer=' . $object->param('_referer');
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
     $html .= '<p><strong>Group created by</strong>: ' . $creator->name;

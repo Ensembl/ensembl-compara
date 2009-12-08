@@ -28,7 +28,7 @@ sub content {
   my $sitename = $self->site_name;
 
   ## Control panel fixes
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = '_referer='.$self->object->param('_referer');
   
   my @groups = $user->find_administratable_groups;
 
@@ -87,7 +87,7 @@ sub _show_group_details {
   my ($self, $group) = @_;
   my $html;
 
-  my $referer = ';_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = ';_referer='.$self->object->param('_referer');
 
   my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 

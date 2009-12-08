@@ -25,7 +25,7 @@ sub content {
   my $current_species = $object->species_path($object->data_species);
   my $form = $self->modal_form('select_url', "$current_species/UserData/AttachURL", {'wizard' => 1, 'back_button' => 0});
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $referer = '_referer='.$self->object->param('_referer').';x_requested_with='.$self->object->param('x_requested_with');
+  my $referer = '_referer='.$self->object->param('_referer');
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 
   # URL-based section

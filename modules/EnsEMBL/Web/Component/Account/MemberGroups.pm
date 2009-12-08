@@ -31,7 +31,7 @@ sub content {
   ## Control panel fixes
   my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
-  my $referer = '_referer='.$object->param('_referer').';x_requested_with='.$object->param('x_requested_with');
+  my $referer = '_referer='.$object->param('_referer');
   
   my @groups = $user->find_nonadmin_groups;
 
