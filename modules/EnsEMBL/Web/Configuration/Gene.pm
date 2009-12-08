@@ -85,17 +85,17 @@ sub populate_tree {
   
   my $tree_node = $self->create_node('Compara_Tree', 'Gene Tree (image)',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
-    { 'availability' => 'gene database:compara core' }
+    { 'availability' => 'gene database:compara core has_gene_tree' }
   );
   
   $tree_node->append($self->create_subnode('Compara_Tree/Text', 'Gene Tree (text)',
     [qw( treetext EnsEMBL::Web::Component::Gene::ComparaTree/text )],
-    { 'availability' => 'gene database:compara core' }
+    { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
   $tree_node->append($self->create_subnode('Compara_Tree/Align', 'Gene Tree (alignment)',
     [qw( treealign EnsEMBL::Web::Component::Gene::ComparaTree/align )],
-    { 'availability' => 'gene database:compara core' }
+    { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
   $compara_menu->append($tree_node);

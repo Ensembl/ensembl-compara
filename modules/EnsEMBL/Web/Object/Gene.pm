@@ -40,6 +40,7 @@ sub availability {
       my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
       my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
       my $compara_db  = $self->database('compara');
+      my $gene_tree   = $self->get_ProteinTree;
       my $res         = 0;
       
       if ($compara_db) {
@@ -55,6 +56,7 @@ sub availability {
       $availability->{'alt_allele'}      = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}      = !!$funcgen_res; 
       $availability->{'family'}          = !!$res;
+      $availability->{'has_gene_tree'}   = $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
       $availability->{"has_$_"}          = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
@@ -823,10 +825,11 @@ sub get_ProteinTree{
         || &$error( "No compara member for this gene" );
     my $tree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')
         || &$error( "Cannot COMPARA->get_adaptor('ProteinTree')" );
-    my $tree = $tree_adaptor->fetch_by_Member_root_id($member, 0) 
+    my $tree = $tree_adaptor->fetch_by_gene_Member_root_id($member) 
         || &$error( "No compara tree for ENSEMBLGENE $member" );
     # Update the cache
     $self->{$cachekey} = $tree;
+    $self->{"_member_$compara_db"} = $member;
   }
   # Return cached value
   return $self->{$cachekey};
