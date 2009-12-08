@@ -74,14 +74,14 @@ sub form {
       type  => 'NoEdit',
       name  => 'gene_to_export',
       label => 'Gene to export',
-      value => $object->core_objects->gene_long_caption
+      value => $object->core_objects->long_caption('gene')
     });
   } elsif ($function eq 'Transcript') {
     $view_config->add_form_element({
       type  => 'NoEdit',
       name  => 'transcript_to_export',
       label => 'Transcript to export',
-      value => $object->core_objects->transcript_long_caption
+      value => $object->core_objects->long_caption('transcript')
     });
   } 
   
