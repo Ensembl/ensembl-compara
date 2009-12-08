@@ -3,14 +3,10 @@ package EnsEMBL::Web::Command::Account::UseBookmark;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -43,8 +39,6 @@ sub process {
     }
   }
   $object->redirect($url);
-}
-
 }
 
 1;

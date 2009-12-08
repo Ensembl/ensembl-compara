@@ -3,15 +3,11 @@ package EnsEMBL::Web::Command::UserData::ConvertFeatures;
 use strict;
 use warnings;
 
-use Class::Std;
-use Data::Dumper;
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
+use base qw(EnsEMBL::Web::Command);
 use EnsEMBL::Web::Component::Export;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
-{
- 
 sub process {
   my $self = shift;
   my $object = $self->object;
@@ -19,7 +15,6 @@ sub process {
   my $param;
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
-  $param->{'x_requested_with'} = $object->param('x_requested_with');
   $param->{'_time'} = $object->param('_time');
   my @ids = ($object->param('convert_file'));
   my ($old_name, $old_version, $new_name, $new_version) = split(':', $object->param('conversion'));
@@ -126,17 +121,7 @@ sub process {
   $param->{'converted'} = $temp_files;
   $param->{'gaps'} = $gaps;
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $object->redirect($self->url($url, $param));
-  }
-
-}
-
-
+  $self->ajax_redirect($url, $param);
 }
 
 1;
-

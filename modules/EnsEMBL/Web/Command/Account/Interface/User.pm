@@ -3,12 +3,9 @@ package EnsEMBL::Web::Command::Account::Interface::User;
 use strict;
 use warnings;
 
-use Class::Std;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -42,8 +39,6 @@ sub process {
 
   ## Render page or munge data, as appropriate
   $interface->configure($self->webpage, $object);
-}
-
 }
 
 1;

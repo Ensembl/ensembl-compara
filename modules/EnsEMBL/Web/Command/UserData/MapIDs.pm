@@ -3,15 +3,12 @@ package EnsEMBL::Web::Command::UserData::MapIDs;
 use strict;
 use warnings;
 
-use Class::Std;
+use Bio::EnsEMBL::StableIdHistoryTree;
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
 use EnsEMBL::Web::Component;
 use EnsEMBL::Web::Component::Export;
-use Bio::EnsEMBL::StableIdHistoryTree;
 
-
-{ 
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -20,7 +17,6 @@ sub process {
   my $param;
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
-  $param->{'x_requested_with'} = $object->param('x_requested_with');
   $param->{'_time'} = $object->param('_time');
   my @files = ($object->param('convert_file'));
   $param->{'species'} = $object->param('species');
@@ -49,12 +45,7 @@ sub process {
   }
   $param->{'converted'} = $temp_files;
 
-  if ($object->param('x_requested_with')) { 
-    $self->ajax_redirect($url, $param);
-  }
-  else { 
-    $object->redirect($self->url($url, $param));
-  }
+  $self->ajax_redirect($url, $param);
 }
 
 sub process_data {
@@ -113,8 +104,6 @@ sub add_unmapped {
     $text .= $id."\n";
   }
   return $text;
-}
-
 }
 
 1;

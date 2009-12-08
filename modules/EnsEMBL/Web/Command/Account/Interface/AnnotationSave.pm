@@ -5,11 +5,8 @@ package EnsEMBL::Web::Command::Account::Interface::AnnotationSave;
 use strict;
 use warnings;
 
-use Class::Std;
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -26,25 +23,19 @@ sub process {
   $interface->data->save;
 
   ## We need to close down the popup window if using AJAX and refresh the page!
-  my $r = Apache2::RequestUtil->request();
-  my $ajax_flag = $r && (
-    $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'||
-    $object->param('x_requested_with') eq 'XMLHttpRequest'
-  );
+  my $r = $self->r;
+  my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
   
   if( $ajax_flag ) {
-    CGI::header( 'text/plain' );
+    $r->content_type('text/plain');
     print "{'success':true}";
   } else {
     my $data = $interface->data;
     my $var = lc(substr($data->type, 0, 1));
-    my $url = '/'.$data->species.'/'.$data->type.'/UserAnnotation';
+    my $url = $object->species_path($data->species).'/'.$data->type.'/UserAnnotation';
     my $param = {$var => $data->stable_id};
     $object->redirect($self->url($url, $param));
   }
-
-}
-
 }
 
 1;

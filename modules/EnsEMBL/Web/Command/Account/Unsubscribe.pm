@@ -3,12 +3,8 @@ package EnsEMBL::Web::Command::Account::Unsubscribe;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -18,8 +14,6 @@ sub process {
   $group->assign_status_to_user($ENV{'ENSEMBL_USER_ID'}, 'inactive');
 
   $self->ajax_redirect('/Account/MemberGroups', {'reload' => 1});
-
-}
 
 }
 

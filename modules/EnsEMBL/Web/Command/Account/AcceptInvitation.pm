@@ -3,15 +3,11 @@ package EnsEMBL::Web::Command::Account::AcceptInvitation;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Record::Invite;
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -43,8 +39,6 @@ sub process {
     }
   }
   $object->redirect($url);
-}
-
 }
 
 1;

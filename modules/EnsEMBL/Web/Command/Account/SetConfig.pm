@@ -5,14 +5,12 @@ package EnsEMBL::Web::Command::Account::SetConfig;
 use strict;
 use warnings;
 
-use Class::Std;
+use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -34,7 +32,7 @@ sub process {
   #$current_config->save;
 
   ## Forward to the appropriate page
-  my $url = CGI::escape($object->param('url'));
+  my $url = uri_escape($object->param('url'));
   my $mode = $object->param('mode');
   my $new_url;
 
@@ -53,8 +51,6 @@ sub process {
     }
   }
   $object->redirect($new_url);
-}
-
 }
 
 1;

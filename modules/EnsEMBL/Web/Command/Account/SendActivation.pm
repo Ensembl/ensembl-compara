@@ -3,15 +3,11 @@ package EnsEMBL::Web::Command::Account::SendActivation;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -21,9 +17,7 @@ sub process {
 
   $mailer->set_to($object->param('email'));
   $mailer->send_activation_email($object);
-  $self->ajax_redirect('/Account/ActivationSent', {'_referer' => $object->param('_referer'), 'x_requested_with' => $object->param('x_requested_with')});
-}
-
+  $self->ajax_redirect('/Account/ActivationSent', {'_referer' => $object->param('_referer')});
 }
 
 1;

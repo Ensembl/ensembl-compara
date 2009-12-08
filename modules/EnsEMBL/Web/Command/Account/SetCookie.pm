@@ -5,15 +5,11 @@ package EnsEMBL::Web::Command::Account::SetCookie;
 use strict;
 use warnings;
 
-use Class::Std;
+use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::RegObj;
-use Apache2::RequestUtil;
-use CGI qw(header);
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -38,8 +34,8 @@ sub process {
           'refresh' => $SD->ENSEMBL_ENCRYPT_REFRESH
         }
       });
-      my $r = Apache2::RequestUtil->request();
-      $user_cookie->create( $r , $user->id );
+      
+      $user_cookie->create( $self->r , $user->id );
     }
   }
 
@@ -52,21 +48,16 @@ sub process {
   }
   else {
     ## We need to close down the popup window if using AJAX and refresh the page!
-    my $r = Apache2::RequestUtil->request();
-    my $ajax_flag = $r && (
-      $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'||
-      $object->param('x_requested_with') eq 'XMLHttpRequest'
-    );
-    #warn "@@@ AJAX $ajax_flag";
+    my $r = $self->r;
+    my $ajax_flag = $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest';
+    
     if( $ajax_flag ) { 
-      CGI::header( 'text/plain' );
+      $r->content_type('text/plain');
       print "{'success':true}";
     } else {
       $object->redirect($self->url('/Account/Links'));
     }
   }
-}
-
 }
 
 1;

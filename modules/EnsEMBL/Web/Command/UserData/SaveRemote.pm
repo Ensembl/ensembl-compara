@@ -3,12 +3,8 @@ package EnsEMBL::Web::Command::UserData::SaveRemote;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -61,9 +57,6 @@ sub process {
   $url .= $node;
   warn ">>> URL = $url";
   $self->ajax_redirect($url, $param); 
-
-}
-
 }
 
 1;

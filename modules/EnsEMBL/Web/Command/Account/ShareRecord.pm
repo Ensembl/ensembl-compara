@@ -3,14 +3,10 @@ package EnsEMBL::Web::Command::Account::ShareRecord;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Group;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -37,7 +33,6 @@ sub process {
   my $param = {
     'id' => $group->id,
     '_referer' => $object->param('_referer'),
-    'x_requested_with' => $object->param('x_requested_with'),
   };
   if ($user->is_administrator_of($group)) {
     $url = '/Account/Group/List';
@@ -46,14 +41,7 @@ sub process {
     $url = '/Account/MemberGroups';
   } 
  
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $object->redirect($url, $param);
-  }
-}
-
+  $self->ajax_redirect($url, $param);
 }
 
 1;

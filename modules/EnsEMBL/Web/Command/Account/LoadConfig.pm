@@ -5,14 +5,10 @@ package EnsEMBL::Web::Command::Account::LoadConfig;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -41,8 +37,7 @@ sub process {
   my $configuration = EnsEMBL::Web::Data::Record::Configuration::User->new($object->param('id'));
 
   my $string = $configuration->viewconfig;
-  my $r = Apache2::RequestUtil->request();
-  $session->create_session_id($r);
+  $session->create_session_id($self->r);
   foreach my $script_name (@scripts) {
     warn "SETTING CONFIG ", $object->param('id'), " FOR SCRIPT: " , $script_name;
     $session->set_view_config_from_string($script_name, $string);
@@ -52,8 +47,6 @@ sub process {
     $new_param->{'url'} = $url;
   }
   $object->redirect($self->url('/Account/SetConfig', $new_param ););
-}
-
 }
 
 1;

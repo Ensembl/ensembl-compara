@@ -3,60 +3,48 @@ package EnsEMBL::Web::Command::UserData::SNPConsequence;
 use strict;
 use warnings;
 
-use Class::Std;
-use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Component::Export;
+use EnsEMBL::Web::TmpFile::Text;
 
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self = shift;
+  my $self   = shift;
   my $object = $self->object;
-  my $url = $object->species_path($object->data_species).'/UserData/PreviewConvertIDs';
-  my $param;
-  ## Set these separately, or they cause an error if undef
-  $param->{'_referer'} = $object->param('_referer');
-  $param->{'x_requested_with'} = $object->param('x_requested_with');
-  $param->{'_time'} = $object->param('_time');
-  my @files = ($object->param('convert_file'));
-  $param->{'species'} = $object->param('species');
-  my $output;
+  my $url    = $object->species_path($object->data_species) . '/UserData/PreviewConvertIDs';
+  my @files  = ($object->param('convert_file'));
   my $temp_files = [];
-
-
+  my $output;
+  
+  my $param  = {
+    _referer => $object->param('_referer'),
+    _time    => $object->param('_time'),
+    species  => $object->param('species')
+  };
+  
   foreach my $file_name (@files) {
     next unless $file_name;
-    my ($file, $name) = split(':', $file_name);
+    
+    my ($file, $name) = split ':', $file_name;
     my ($table, $error) = $object->calculate_consequence_data($file);
-
-    if ($error) {
-      $output .= $table;
-    }
-    else {
-      $output .= $table->render_Text;    
-    }  
-  ## Output new data to temp file
-    my $temp_file = EnsEMBL::Web::TmpFile::Text->new(
-        extension => 'txt',
-        prefix => 'export',
-        content_type => 'text/plain; charset=utf-8',
+    
+    $output .= $error ? $table : $table->render_Text;
+    
+    # Output new data to temp file
+    my $temp_file = new EnsEMBL::Web::TmpFile::Text(
+      extension    => 'txt',
+      prefix       => 'export',
+      content_type => 'text/plain; charset=utf-8',
     );
-
+    
     $temp_file->print($output);
-    my $converted = $temp_file->filename.':'.$name;
-    push @$temp_files, $converted;
+    
+    push @$temp_files, $temp_file->filename . ':' . $name;
   }
-
+  
   $param->{'converted'} = $temp_files;
+  
+  $self->ajax_redirect($url, $param);
+}
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $object->redirect($self->url($url, $param));
-  }
-}
-}
 1;
+

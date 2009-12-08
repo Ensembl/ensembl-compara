@@ -3,12 +3,8 @@ package EnsEMBL::Web::Command::Account::LogOut;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -33,12 +29,9 @@ sub process {
 
   });
 
-  my $r = Apache2::RequestUtil->request();
-  $user_cookie->clear($r);
+  $user_cookie->clear($self->r);
 
   $object->redirect($url);
-}
-
 }
 
 1;

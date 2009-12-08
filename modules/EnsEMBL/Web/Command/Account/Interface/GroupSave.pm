@@ -3,12 +3,9 @@ package EnsEMBL::Web::Command::Account::Interface::GroupSave;
 use strict;
 use warnings;
 
-use Class::Std;
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -16,7 +13,6 @@ sub process {
   my $url = '/Account/Group';
   my $param = {
     '_referer' => $object->param('_referer'),
-    'x_requested_with' => $object->param('x_requested_with'),
   }; 
 
   my $interface = $object->interface;
@@ -47,15 +43,7 @@ sub process {
     }
   }
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $object->redirect($url, $param);
-  }
-  
-}
-
+  $self->ajax_redirect($url, $param);
 }
 
 1;

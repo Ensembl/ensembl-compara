@@ -3,17 +3,13 @@ package EnsEMBL::Web::Command::Account::Invite;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 use EnsEMBL::Web::Tools::RandomString;
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -88,8 +84,6 @@ sub _send_invitation {
   
   my $mailer = EnsEMBL::Web::Mailer::User->new;
   $mailer->send_invitation_email($self->object, $group, $invite);
-}
-
 }
 
 1;

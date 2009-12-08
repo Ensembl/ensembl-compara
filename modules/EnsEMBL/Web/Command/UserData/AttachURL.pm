@@ -3,21 +3,16 @@ package EnsEMBL::Web::Command::UserData::AttachURL;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Tools::Misc;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
   my $object = $self->object;
   my $redirect = $object->species_path($object->data_species).'/UserData/';
   my $param = {
-    '_referer'          => $object->param('_referer'),
-    'x_requested_with'  => $object->param('x_requested_with'),
+    '_referer' => $object->param('_referer'),
   };
 
   my $name = $object->param('name');
@@ -75,14 +70,7 @@ sub process {
     $param->{'filter_code'} = 'no_url';
   }
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($redirect, $param); 
-  }
-  else {
-    $object->redirect($redirect, $param);
-  }
-}
-
+  $self->ajax_redirect($redirect, $param); 
 }
 
 1;

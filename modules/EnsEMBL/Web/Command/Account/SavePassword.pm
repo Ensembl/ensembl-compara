@@ -3,15 +3,11 @@ package EnsEMBL::Web::Command::Account::SavePassword;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -37,8 +33,6 @@ sub process {
   } 
 
   $self->ajax_redirect('/Account/SetCookie', $param);
-}
-
 }
 
 1;

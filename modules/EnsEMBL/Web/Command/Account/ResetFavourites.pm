@@ -2,11 +2,9 @@ package EnsEMBL::Web::Command::Account::ResetFavourites;
 
 use strict;
 use warnings;
-use Class::Std;
-use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Command';
 
-{
+use EnsEMBL::Web::RegObj;
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -14,8 +12,6 @@ sub process {
   $user->specieslists->destroy;
 
   $self->ajax_redirect($ENV{'ENSEMBL_BASE_URL'});
-}
-
 }
 
 1;

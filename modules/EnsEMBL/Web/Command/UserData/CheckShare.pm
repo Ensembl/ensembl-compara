@@ -3,17 +3,10 @@ package EnsEMBL::Web::Command::UserData::CheckShare;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::Record;
-use base 'EnsEMBL::Web::Command';
-
-{
-
-sub BUILD {
-}
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -22,7 +15,6 @@ sub process {
   my $param;
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
-  $param->{'x_requested_with'} = $object->param('x_requested_with');
 
   if (my $group_id = $object->param('webgroup_id')) { ## Share with group
     ## Check if it is already shared
@@ -77,15 +69,7 @@ sub process {
     }
   }
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $object->redirect($url, $param);
-  }
-
-}
-
+  $self->ajax_redirect($url, $param);
 }
 
 1;

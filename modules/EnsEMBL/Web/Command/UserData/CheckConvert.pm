@@ -5,13 +5,11 @@ package EnsEMBL::Web::Command::UserData::CheckConvert;
 use strict;
 use warnings;
 
-use Class::Std;
-use CGI qw(header escapeHTML);
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Command::UserData::UploadFile;
-use base 'EnsEMBL::Web::Command';
+use HTML::Entities qw(encode_entities);
 
-{
+use EnsEMBL::Web::Command::UserData::UploadFile;
+
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -63,13 +61,12 @@ sub process {
   }
   ## Set these separately, or they cause an error if undef
   $param->{'_referer'} = $object->param('_referer');
-  $param->{'x_requested_with'} = $object->param('x_requested_with');
 
   if ($self->object->param('uploadto') eq 'iframe') {
-    $url = escapeHTML($self->url($url, $param));
+    $url = encode_entities($self->url($url, $param));
 
-    header(-type => 'text/html', -charset => 'utf-8');
-
+    $self->r->content_type('text/html; charset=utf-8');
+    
     print qq{
     <html>
     <head>
@@ -87,6 +84,5 @@ sub process {
 
 }
 
-}
-
 1;
+

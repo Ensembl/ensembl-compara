@@ -3,10 +3,7 @@ package EnsEMBL::Web::Command::UserData::SaveUpload;
 use strict;
 use warnings;
 
-use Class::Std;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -20,8 +17,6 @@ sub process {
   }
 
   $self->ajax_redirect($object->species_path($object->data_species).'/UserData/ManageData', $param);
-}
-
 }
 
 1;

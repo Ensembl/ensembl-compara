@@ -3,14 +3,10 @@ package EnsEMBL::Web::Command::Account::Interface::UserSave;
 use strict;
 use warnings;
 
-use Class::Std;
 use EnsEMBL::Web::Data::User;
-#use EnsEMBL::Web::Filter::Spam;
 use EnsEMBL::Web::Filter::DuplicateUser;
 use EnsEMBL::Web::Tools::RandomString;
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -70,16 +66,7 @@ sub process {
     }
   }
 
-  if ($object->param('x_requested_with')) {
-    $self->ajax_redirect($url, $param);
-  }
-  else {
-    $param->{'_referer'} = $object->param('_referer');
-    $object->redirect($url, $param);
-  }
-  
-}
-
+  $self->ajax_redirect($url, $param);
 }
 
 1;

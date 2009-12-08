@@ -3,27 +3,21 @@ package EnsEMBL::Web::Command::UserData::ValidateDAS;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Filter::DAS;
-use base 'EnsEMBL::Web::Command';
-
-{
-
-sub BUILD {
-}
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $url = '/'.$self->object->data_species.'/UserData/';
+  my $object = $self->object;
+  my $url = $object->species_path($object->data_species) . '/UserData/';
   my ($next, $param);
 
-  my $server = $self->object->param('das_server');
+  my $server = $object->param('das_server');
 
   if ($server) {
-    my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$self->object});
-    my $sources = $filter->catch($server, $self->object->param('logic_name'));
+    my $filter = EnsEMBL::Web::Filter::DAS->new({'object'=>$object});
+    my $sources = $filter->catch($server, $object->param('logic_name'));
     $next = 'AttachDAS';
 
     if ($filter->error_code) {
@@ -34,15 +28,15 @@ sub process {
     else {
       my $no_species = 0;
       my $no_coords  = 0;
-      $param->{'das_server'} = $self->object->param('das_server');
-      $param->{'species'} = $self->object->param('species');
+      $param->{'das_server'} = $object->param('das_server');
+      $param->{'species'} = $object->param('species');
 
       my @logic_names = ();
       for my $source (@{ $sources }) {
         # If one or more source has missing details, need to fill them in and resubmit
-        unless (@{ $source->coord_systems } || $self->object->param($source->logic_name.'_coords')) {
+        unless (@{ $source->coord_systems } || $object->param($source->logic_name.'_coords')) {
           $next = 'DasCoords' unless $next eq 'DasSpecies'; ## We have to go to species form first
-          if (!$self->object->param('species')) {
+          if (!$object->param('species')) {
             $next = 'DasSpecies';
           }
         }
@@ -54,10 +48,10 @@ sub process {
 
     ## Pass any coordinate parameters
     if ($next eq 'AttachDAS') {
-      my @params = $self->object->param;
+      my @params = $object->param;
       foreach my $p (@params) {
         next unless $p =~ /coords$/;
-        $param->{$p} = $self->object->param($p);
+        $param->{$p} = $object->param($p);
       }
     }
   }
@@ -68,8 +62,6 @@ sub process {
   }
 
   $self->ajax_redirect($url.$next, $param); 
-}
-
 }
 
 1;

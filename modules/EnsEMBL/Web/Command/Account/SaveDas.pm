@@ -3,13 +3,9 @@ package EnsEMBL::Web::Command::Account::SaveDas;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -28,8 +24,6 @@ sub process {
     print $user_das->name . "<br />";
     warn "DAS: " . $das->get_name . " (" . $das->get_data->{'url'} . ")";
   } 
-}
-
 }
 
 1;

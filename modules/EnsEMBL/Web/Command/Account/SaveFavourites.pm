@@ -3,15 +3,11 @@ package EnsEMBL::Web::Command::Account::SaveFavourites;
 use strict;
 use warnings;
 
-use Class::Std;
-
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
 use EnsEMBL::Web::RegObj;
 
-use base 'EnsEMBL::Web::Command';
-
-{
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
@@ -27,9 +23,7 @@ sub process {
   $species_list->save;
 
   print EnsEMBL::Web::Document::HTML::SpeciesList->render("fragment");
-
 }
 
-}
 
 1;
