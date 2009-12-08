@@ -383,6 +383,32 @@ CREATE TABLE member (
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci;
 
 
+#
+# Table structure for table 'subset'
+#
+
+CREATE TABLE subset (
+ subset_id      int(10) NOT NULL auto_increment,
+ description    varchar(255),
+ dump_loc       varchar(255),
+
+ PRIMARY KEY (subset_id),
+ UNIQUE (description)
+);
+
+#
+# Table structure for table 'subset_member'
+#
+
+CREATE TABLE subset_member (
+ subset_id   int(10) NOT NULL,
+ member_id   int(10) NOT NULL,
+
+ KEY (member_id),
+ UNIQUE subset_member_id (subset_id, member_id)
+);
+
+
 ------------------------------------------------------------------------------------
 --
 -- Table structure for table 'analysis'
