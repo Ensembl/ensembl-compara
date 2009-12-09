@@ -18,7 +18,7 @@ sub new {
 
 sub object :lvalue { $_[0]->{'object'}; }
 sub page   :lvalue { $_[0]->{'page'};   }
-sub r              { return $_[0]->{'page'}->{'renderer'}->{'r'}; }
+sub r              { return $_[0]->page->renderer->r; }
 
 sub script_name {
   my $self = shift;
