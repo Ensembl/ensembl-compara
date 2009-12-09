@@ -7,10 +7,11 @@ ensembl-compara pipeline.
 It is used in the following mappings:
 
 - EnsemblCompara GeneTrees 
-  - stable_ids from release to release
-  - GeneTrees to Treefam families
+  - stable_ids from release to release (ENSGT005600123456)
+  - GeneTrees to external Treefam families
 
-- EnsemblCompara MCL Families stable_ids from release to release
+- EnsemblCompara MCL Families
+  - stable_ids from release to release (ENSFM0056000123456)
 
 The mapping procedure is based on the Maximum_name_reuse algorithm.
 
@@ -84,20 +85,25 @@ make it the name of the "new" class, if it has not been taken yet.
   contributor's names have been used, a completely new name is
   generated and it is a NEWNAME case.
 
-This usually means we are dealing with a split of a big class, where the majority has gone into an MAJORITY, and the rest of it needs a new name.
+This usually means we are dealing with a split of a big class, where
+the majority has gone into an MAJORITY, and the rest of it needs a new
+name.
 
 ** If there was only one SHARED member, we call it NEWNAME_o.
 
-* Finally, if we have a "new" class that only contains NEWBORN members (meaning there were no "old" classes to reuse the names from),
-again a new name is generated, but this is a NEWFAM case. 
-** If the new class has only one (NEWBORN) member, it is a NEWFAM_o case.
+* Finally, if we have a "new" class that only contains NEWBORN members
+(meaning there were no "old" classes to reuse the names from), again a
+new name is generated, but this is a NEWFAM case.
 
-In the diagram:
+** If the new class has only one (NEWBORN) member, it is a NEWFAM_o
+   case.
+
+In the example diagram (compara_stable_id_mapping.png):
 
 * D1 is an EXACT reuse (cyan contributor)
 
-* A2 inherits the name from A1 according to the MAJORITY rule (red
-  contributor)
+* A2 inherits the name from A1 according to the MAJORITY rule (light
+  red contributor)
 
 * B2 inherits the name from B1 (pink contributor), and C1 name
   disappears in the new classification and it is merged into B2
@@ -107,28 +113,28 @@ In the diagram:
 
 * Y1 is an example of NEWNAME (yellow contributor)
 
-########################################
+VERSIONING
+~~~~~~~~~~
 
-A version increase indicates that the SHARED members between both
-releases have changed for that genetree. If the version is kept the
-same, it corresponds to the EXACT name reuse case of the
-algorithm. For example,
+A version increase indicates that the SHARED members have changed for
+that class. The version is kept the same if it is an EXACT reuse
+case. For example, in the GeneTrees:
 
-a) if a genetree with 50 members in release 56 turns into a genetree
+a) If a genetree with 50 members in release 56 turns into a genetree
 with 49+2 members in release 57, 49 being SHARED and 2 being NEWBORN,
 the version will change.
 
-b) if a genetree with 50 members in release 56 turns into a genetree
+b) If a genetree with 50 members in release 56 turns into a genetree
 with 48+2 members in release 57, 48 being SHARED and 2 being NEWBORN,
 the version will change, even though the total number of members is
 the same.
 
-c) if a genetree with 48+2 members in release 56 turns into a genetree
+c) If a genetree with 48+2 members in release 56 turns into a genetree
 with 48 members in release 57, 48 being SHARED and 2 being
 DISAPPEARING (e.g. updated genebuild that deletes some members), the
 version will be the same.
 
-d) if a genetree with 48+2 members in release 56 turns into a genetree
+d) If a genetree with 48+2 members in release 56 turns into a genetree
 with 48+3 members in release 57, 48 being SHARED, 2 being DISAPPEARING
 and 3 being NEWBORN, the version will be the same.
 
