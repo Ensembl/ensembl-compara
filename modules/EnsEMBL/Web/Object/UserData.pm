@@ -622,9 +622,9 @@ sub calculate_consequence_data {
           }  
           
           my $strand;
-          if ($f->strand =~/\+/){
+          if ($f->strand =~/\+|1/){
             $strand =1;
-          } elsif($f->strand =~/\-/){
+          } elsif($f->strand =~/\-|\-1/){
             $strand = -1;
           } else {
             $strand = 0; 
