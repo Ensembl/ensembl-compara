@@ -42,6 +42,11 @@ sub availability {
       my $compara_db  = $self->database('compara');
       my $gene_tree   = $self->get_ProteinTree;
       my $res         = 0;
+      my $has_gene_tree;
+      
+      if ($gene_tree) {
+        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
+      }
       
       if ($compara_db) {
         ($res) = $compara_db->get_MemberAdaptor->dbc->db_handle->selectrow_array(
@@ -56,7 +61,7 @@ sub availability {
       $availability->{'alt_allele'}      = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}      = !!$funcgen_res; 
       $availability->{'family'}          = !!$res;
-      $availability->{'has_gene_tree'}   = $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
+      $availability->{'has_gene_tree'}   = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
       $availability->{"has_$_"}          = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
