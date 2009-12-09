@@ -10,6 +10,8 @@ use CGI::Cookie;
 
 use SiteDefs;
 
+use Bio::EnsEMBL::Registry;
+
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
@@ -416,5 +418,7 @@ sub add_error_panel {
     content => sprintf($template, @content, $error)
   ));
 }
+
+sub DESTROY { Bio::EnsEMBL::Registry->disconnect_all; }
 
 1;
