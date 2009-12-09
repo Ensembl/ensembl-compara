@@ -195,10 +195,14 @@
 <h4>Renderers</h4>
 
 <p>
-  Renderers for URL data are the same as for alignment tracks (see above. For
-  DAS tracks, currently supported are <em>labels</em> (normal),
-  <em>nolabels</em> (hide labels) and <em>off</em>.
+  Renderers depend on the type of track:
 </p>
+
+<ul>
+  <li>URL data: the same as for alignment tracks (see above).</li>
+  <li>DAS tracks: <em>normal</em> (use the DAS server's stylesheet), <em>labels</em> (force display of labels),
+  <em>nolabels</em> (hide labels) and <em>off</em>.</li>
+</ul>
 
 <h4>Examples - attach external data</h4>
 
@@ -217,11 +221,11 @@
 </p>
 
 <kbd>
-  http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.ensembl.org/das/Homo_sapiens.NCBI36.transcript=labels
+  http://www.ensembl.org/Homo_sapiens/Location/View?g=ENSG00000012048;contigviewbottom=das:http://www.ensembl.org/das/Homo_sapiens.NCBI36.transcript=normal
 </kbd>
 
 <p>
-  To attach a DAS source from the DAS registry, in this case human SNPs from ASTD:
+  To attach a DAS source from the DAS registry (in this case human SNPs from ASTD) and force the display of labels:
 </p>
 
 <kbd>
@@ -236,6 +240,14 @@
   query it automatically via the <em>sources</em> or <em>dsn</em> command. This
   behaviour is by design. See <a href="/info/docs/das/das_server.html">setting
   up a DAS server</a> for more details.
+</p>
+
+<p>
+  Due to a limitation of the website, it is currently only possible to attach a
+  DAS source to a <em>panel</em> (i.e. a track on an image) and not to a <em>page</em>.
+  Thus non-positional (text-based) DAS sources such as those annotating genes
+  cannot be attached in this manner. For more information on the different types
+  of DAS source, see <a href="/info/data/ensembl_das.html">how Ensembl uses DAS</a>.
 </p>
 
 </body>
