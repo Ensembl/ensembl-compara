@@ -536,7 +536,7 @@ sub configure_das_views {
   my $this_type   = $referer_hash->{'ENSEMBL_TYPE'  } || $ENV{'ENSEMBL_TYPE'};
   my $this_action = $referer_hash->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
   my $this_image  = $referer_hash->{'ENSEMBL_IMAGE'};
-  $track_options->{'display'} ||= 'labels';
+  $track_options->{'display'} ||= 'normal';
   my $this_vc     = $self->getViewConfig( $this_type, $this_action );
   my %this_ics    = $this_vc->image_configs();
   

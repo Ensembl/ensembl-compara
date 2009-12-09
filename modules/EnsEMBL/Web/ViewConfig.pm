@@ -248,7 +248,7 @@ sub update_from_config_strings {
         my $server = $v =~ /url=(https?:[^ +]+)/ ? $1 : '';
         my $dsn    = $v =~ /dsn=(\w+)/ ? $1 : '';
         
-        push @values, sprintf 'das:%s=labels', uri_escape("$server/$dsn") if $r;
+        push @values, sprintf 'das:%s=normal', uri_escape("$server/$dsn") if $r;
         $params_removed = 1;
       }
       
