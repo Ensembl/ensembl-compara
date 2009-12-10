@@ -135,7 +135,8 @@ sub _content {
         # TODO: propagate object here and use object->_url method
         if (!$url) {
           $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $ENSEMBL_WEB_REGISTRY->species_defs->species_path;
-          $url .= "/$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
+          $url .= '/' unless $url eq '/';
+          $url .= "$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
           
           my @ok_params;
           my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
