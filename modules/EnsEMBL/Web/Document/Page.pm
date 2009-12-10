@@ -504,8 +504,8 @@ sub render_TextGz {
   unlink $renderer->{'filename'};
 }
 
-sub render_start { my $self = shift; $self->render('start'); }
-sub render_end   { my $self = shift; $self->render('end');   }
+sub render_start { my $self = shift; $self->render_HTML('start'); }
+sub render_end   { my $self = shift; $self->render_HTML('end');   }
 
 sub _render_head_and_body_tag {
   my $self = shift;
