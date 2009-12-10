@@ -126,6 +126,9 @@ sub _fetch_results {
 
 sub search_SNP {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results(
    [ 'variation' , 'SNP',
      "select count(*) from variation as v where name = '[[KEY]]'",
@@ -145,9 +148,9 @@ sub search_SNP {
       'idx'     => 'SNP', 
       'subtype' => "$_->[0] SNP",
       'ID'      => $_->[1],
-      'URL'     => "/@{[$self->species]}/snpview?source=$_->[0];snp=$_->[1]",
+      'URL'     => "$species_path/snpview?source=$_->[0];snp=$_->[1]",
       'desc'    => '',
-      'species' => $self->species
+      'species' => $species
     };
   }
   $self->{'results'}{'SNP'} = [ $self->{_results}, $self->{_result_count} ];
@@ -155,6 +158,9 @@ sub search_SNP {
 
 sub search_GENOMICALIGNMENT {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results(
     [
       'core', 'DNA',
@@ -182,9 +188,9 @@ sub search_GENOMICALIGNMENT {
       'idx'     => 'GenomicAlignment',
       'subtype' => "$_->[0] $_->[2] alignment feature",
       'ID'      => $_->[1],
-      'URL'     => "/@{[$self->species]}/featureview?type=$_->[2]AlignFeature;db=$_->[3];id=$_->[1]",
+      'URL'     => "$species_path/featureview?type=$_->[2]AlignFeature;db=$_->[3];id=$_->[1]",
       'desc'    => "This $_->[2] alignment feature hits the genome in $_->[4] place(s).",
-      'species' => $self->species
+      'species' => $species
     };
   }
   $self->{'results'}{'GenomicAlignments'} = [ $self->{_results}, $self->{_result_count} ];
@@ -192,6 +198,9 @@ sub search_GENOMICALIGNMENT {
 
 sub search_DOMAIN {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results(
     [ 'core', 'Domain',
       "select count(*) from xref as x, external_db as e 
@@ -210,12 +219,12 @@ sub search_DOMAIN {
   );
   foreach ( @{$self->{_results}} ) {
     $_ = {
-      'URL'       => "/@{[$self->species]}/domainview?domain=$_->[0]",
+      'URL'       => "$species_path/domainview?domain=$_->[0]",
       'idx'       => 'Domain',
       'subtype'   => 'Domain',
       'ID'        => $_->[0],
       'desc'      => $_->[1],
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{'Domain'} = [ $self->{_results}, $self->{_result_count} ];
@@ -223,6 +232,9 @@ sub search_DOMAIN {
 
 sub search_FAMILY {
   my( $self, $species ) = @_;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results(
     [ 'compara', 'Family',
       "select count(*) from family where stable_id [[COMP]] '[[KEY]]'",
@@ -232,12 +244,12 @@ sub search_FAMILY {
       "select stable_id, description FROM family WHERE description [[COMP]] '[[KEY]]'" ] );
   foreach ( @{$self->{_results}} ) {
     $_ = {
-      'URL'       => "/@{[$self->species]}/familyview?family=$_->[0]",
+      'URL'       => "$species_path/familyview?family=$_->[0]",
       'idx'       => 'Family',
       'subtype'   => 'Family',
       'ID'        => $_->[0],
       'desc'      => $_->[1],
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{ 'Family' }  = [ $self->{_results}, $self->{_result_count} ];
@@ -246,6 +258,9 @@ sub search_FAMILY {
 
 sub search_SEQUENCE {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results( 
     [ 'core', 'Sequence',
       "select count(*) from seq_region where name [[COMP]] '[[KEY]]'",
@@ -275,13 +290,13 @@ sub search_SEQUENCE {
     my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
     $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     $_ = {
-      'URL'       => (lc($_->[1]) eq 'chromosome' && length($_->[0])<10) ? "/@{[$self->species]}/mapview?chr=$_->[0]" :
-                        "/@{[$self->species]}/$KEY?$_->[3]=$_->[0]" ,
+      'URL'       => (lc($_->[1]) eq 'chromosome' && length($_->[0])<10) ? "$species_path/mapview?chr=$_->[0]" :
+                        "$species_path/$KEY?$_->[3]=$_->[0]" ,
       'idx'       => 'Sequence',
       'subtype'   => ucfirst( $_->[1] ),
       'ID'        => $_->[0],
       'desc'      => '',
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{ 'Sequence' }  = [ $self->{_results}, $self->{_result_count} ]
@@ -289,6 +304,9 @@ sub search_SEQUENCE {
 
 sub search_OLIGOPROBE {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results(
     [ 'funcgen', 'OligoProbe',
       "select count(distinct name) from probe_set where name [[COMP]] '[[KEY]]'",
@@ -297,12 +315,12 @@ sub search_OLIGOPROBE {
   );
   foreach ( @{$self->{_results}} ) {
     $_ = {
-      'URL'       => "/@{[$self->species]}/Location/Genome?ftype=OligoProbe;id=$_->[0]",
+      'URL'       => "$species_path/Location/Genome?ftype=OligoProbe;id=$_->[0]",
       'idx'       => 'OligoProbe',
       'subtype'   => 'OligoProbe',
       'ID'        => $_->[0],
       'desc'      => 'Is a member of the following arrays: '.$_->[1],
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{ 'OligoProbe' }  = [ $self->{_results}, $self->{_result_count} ];
@@ -310,6 +328,9 @@ sub search_OLIGOPROBE {
 
 sub search_QTL {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results(
   [ 'core', 'QTL',
 "select count(*)
@@ -331,12 +352,12 @@ sub search_QTL {
 
   foreach ( @{$self->{_results}} ) {
     $_ = {
-      'URL'       => "/@{[$self->species]}/cytoview?l=$_->[1]",
+      'URL'       => "$species_path/cytoview?l=$_->[1]",
       'idx'       => 'QTL',
       'subtype'   => 'QTL',
       'ID'        => $_->[0],
       'desc'      => '',
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{'QTL'} = [ $self->{_results}, $self->{_result_count} ];
@@ -345,6 +366,9 @@ sub search_QTL {
 
 sub search_MARKER {
   my $self = shift;
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   $self->_fetch_results( 
     [ 'core', 'Marker',
       "select count(distinct name) from marker_synonym where name [[COMP]] '[[KEY]]'",
@@ -355,13 +379,13 @@ sub search_MARKER {
     my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
     $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     $_ = {
-      'URL'       => "/@{[$self->species]}/markerview?marker=$_->[0]",
-      'URL_extra' => [ 'C', 'View marker in ContigView', "/@{[$self->species]}/$KEY?marker=$_->[0]" ],
+      'URL'       => "$species_path/markerview?marker=$_->[0]",
+      'URL_extra' => [ 'C', 'View marker in ContigView', "$species_path/$KEY?marker=$_->[0]" ],
       'idx'       => 'Marker',
       'subtype'   => 'Marker',
       'ID'        => $_->[0],
       'desc'      => '',
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{'Marker'} = [ $self->{_results}, $self->{_result_count} ];
@@ -369,7 +393,9 @@ sub search_MARKER {
 
 sub search_GENE {
   my $self = shift;
-
+  my $species = $self->species;
+  my $species_path = $self->species_path;
+  
   my @databases = ('core');
   push @databases, 'vega' if $self->species_defs->databases->{'DATABASE_VEGA'};
   push @databases, 'est' if $self->species_defs->databases->{'DATABASE_OTHERFEATURES'};
@@ -433,13 +459,13 @@ sub search_GENE {
     my $KEY =  $_->[2] < 1e6 ? 'contigview' : 'cytoview';
     $KEY = 'cytoview' if $self->species_defs->NO_SEQUENCE;
     $_ = {
-      'URL'       => "/@{[$self->species]}/$_->[3]?db=$_->[2];$_->[4]=$_->[0]",
-      'URL_extra' => [ 'C', 'View marker in ContigView', "/@{[$self->species]}/$KEY?db=$_->[2];$_->[4]=$_->[0]" ],
+      'URL'       => "$species_path/$_->[3]?db=$_->[2];$_->[4]=$_->[0]",
+      'URL_extra' => [ 'C', 'View marker in ContigView', "$species_path/$KEY?db=$_->[2];$_->[4]=$_->[0]" ],
       'idx'       => 'Gene',
       'subtype'   => ucfirst($_->[4]),
       'ID'        => $_->[0],
       'desc'      => $_->[1],
-      'species'   => $self->species
+      'species'   => $species
     };
   }
   $self->{'results'}{'Gene'} = [ $self->{_results}, $self->{_result_count} ];

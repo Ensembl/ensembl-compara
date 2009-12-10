@@ -9,15 +9,15 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self = shift;
   
-  my $object   = $self->object; 
-  my $species  = $object->species;
-  my $fid      = $object->param('fid')   || die 'No feature ID value in params';
-  my $ftype    = $object->param('ftype') || die 'No feature type value in params';
-  my $dbid     = $object->param('dbid');
-  my $feature  = $object->database('funcgen')->get_ExternalFeatureAdaptor->fetch_by_dbID($dbid);
-  my $location = $feature->slice->seq_region_name . ':' . $feature->start . '-' . $feature->end;
-  my $caption  = 'Regulatory Region';
-  my $factor   = $fid;
+  my $object       = $self->object; 
+  my $species_path = $object->species_path;
+  my $fid          = $object->param('fid')   || die 'No feature ID value in params';
+  my $ftype        = $object->param('ftype') || die 'No feature type value in params';
+  my $dbid         = $object->param('dbid');
+  my $feature      = $object->database('funcgen')->get_ExternalFeatureAdaptor->fetch_by_dbID($dbid);
+  my $location     = $feature->slice->seq_region_name . ':' . $feature->start . '-' . $feature->end;
+  my $caption      = 'Regulatory Region';
+  my $factor       = $fid;
   my ($feature_link, $factor_link);
   
   if ($ftype eq 'cisRED') {
@@ -26,17 +26,17 @@ sub content {
     $feature_link = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{'CISRED'}; 
     $feature_link =~ s/###ID###/$factor/;
     
-    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;dbid=$dbid;id=$fid";
+    $factor_link = "$species_path/Location/Genome?ftype=RegulatoryFactor;dbid=$dbid;id=$fid";
   } elsif ($ftype eq 'miRanda') {
    (my $name = $fid) =~ /\D+(\d+)/;
     my @temp = split /:/, $name;
     
     $factor  = $temp[1];
-    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=$fid";
+    $factor_link = "$species_path/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=$fid";
   } elsif ($ftype eq 'vista_enhancer') {
-    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=$fid";
+    $factor_link = "$species_path/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=$fid";
   } elsif ($ftype eq 'NestedMICA') {
-    $factor_link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=$fid";
+    $factor_link = "$species_path/Location/Genome?ftype=RegulatoryFactor;id=$factor;name=$fid";
     $feature_link = "http://servlet.sanger.ac.uk/tiffin/motif.jsp?acc=$fid";
   } elsif ($ftype eq 'cisred_search') {
     my ($id, $analysis_link, $associated_link, $gene_reg_link);
