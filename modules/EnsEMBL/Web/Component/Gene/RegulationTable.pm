@@ -99,16 +99,16 @@ sub content {
    my $seq_name = $feature_obj->slice->seq_region_name;
     
    $position = $object->thousandify($feature_obj->start) ."-" . $object->thousandify($feature_obj->end) ;
-   $position = qq(<a href="/@{[$object->species]}/Location/Summary?db=core;r=$seq_name:).$feature_obj->start . qq(-).$feature_obj->end .qq(">$seq_name:$position</a>);   
+   $position = qq(<a href="@{[$object->species_path]}/Location/Summary?db=core;r=$seq_name:).$feature_obj->start . qq(-).$feature_obj->end .qq(">$seq_name:$position</a>);   
 
    my $region = $seq_name .":" .$feature_obj->start ."-".$feature_obj->end;
    my $feature_name = $feature_obj->display_label;
    my $logic_name= $feature_obj->analysis->logic_name;
    my $dbid = $feature_obj->dbID;
    if ($logic_name =~/cisRED/){
-    $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/Location/Genome?r=$region;id=$feature_name;dbid=$dbid;ftype=RegulatoryFactor">$feature_name</a>) : "unknown";
+    $feature_link = $feature_name ? qq(<a href="@{[$object->species_path]}/Location/Genome?r=$region;id=$feature_name;dbid=$dbid;ftype=RegulatoryFactor">$feature_name</a>) : "unknown";
    } else {
-    $feature_link = $feature_name ? qq(<a href="/@{[$object->species]}/Location/Genome?r=$region;id=$feature;ftype=RegulatoryFactor;name=$feature_name">$feature_name</a>) : "unknown";
+    $feature_link = $feature_name ? qq(<a href="@{[$object->species_path]}/Location/Genome?r=$region;id=$feature;ftype=RegulatoryFactor;name=$feature_name">$feature_name</a>) : "unknown";
    }
    $desc = $feature_obj->analysis->description;
   next if $feature =~/cisRED\sSearch\sRegion/; 
