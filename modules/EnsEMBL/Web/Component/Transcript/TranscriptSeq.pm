@@ -247,7 +247,7 @@ sub content {
         <div class="other-tool">
           <p>
             <a class="seq_blast" href="#">
-              <img alt="" src="/i/export.png" />
+              <img alt="" src="/i/find.png" />
               BLAST/BLAT this sequence
             </a>
           </p>
@@ -263,7 +263,6 @@ sub content {
       $raw_seq,
       $config->{'species'}
     );
-    
     
     $html .= $self->build_sequence($sequence, $config);
     $html .= '<img src="/i/help/transview_key3.gif" alt="[Key]" border="0" />' if $config->{'codons'} || $config->{'variation'} || $config->{'translation'} || $config->{'coding_seq'};
