@@ -23,7 +23,7 @@ __PACKAGE__->add_queriable_fields(
 __PACKAGE__->columns(TEMP => qw/full_date short_date shorter_date long_date/);
 
 __PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::NewsItem');
-__PACKAGE__->has_many(species    => 'EnsEMBL::Web::Data::ReleaseSpecies');
+__PACKAGE__->has_many(species    => 'EnsEMBL::Web::Data::Species');
 
 __PACKAGE__->add_trigger(select => \&format_time);
 

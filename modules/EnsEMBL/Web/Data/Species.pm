@@ -18,8 +18,8 @@ __PACKAGE__->add_queriable_fields(
   online      => "enum('N','Y')"
 );
 
-__PACKAGE__->has_many(releases   => 'EnsEMBL::Web::Data::ReleaseSpecies');
-__PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::ItemSpecies');
+__PACKAGE__->has_many(releases   => 'EnsEMBL::Web::Data::Release');
+__PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::NewsItem');
 
 __PACKAGE__->set_sql(in_release => qq{
   SELECT
@@ -29,7 +29,6 @@ __PACKAGE__->set_sql(in_release => qq{
   WHERE
       s.species_id = rs.species_id
       %s                   -- where
-  LIMIT 1
 });
 
 
@@ -42,8 +41,7 @@ sub get_lookup_values {
   $release_id = __PACKAGE__->species_defs->ENSEMBL_VERSION unless $release_id;
   my $values;
 
-  my $release = EnsEMBL::Web::Data::Release->new($release_id);
-  my @species = $release->species;
+  my @species = $self->species($release_id);
 
   foreach my $species (sort {$a->name cmp $b->name} @species) {
     push @$values, {'id' => $species->species_id, 
@@ -56,12 +54,17 @@ sub get_lookup_values {
   return $values;
 }
 
-
-=pod
-sub in_release {
+sub species {
   my ($class, $release, $species) = @_;
 
-  my $where = " AND rs.release_id = $release AND s.name = '$species' "; 
+  my $where = " AND rs.release_id = ? ";
+  my @args = ($release);
+ 
+  if ($species) {
+    $where .= " AND s.name = ? ";
+    push @args, $species;
+  }
+
   my $sth = $class->sql_in_release($where);
   $sth->execute(@args);
 
@@ -69,6 +72,7 @@ sub in_release {
   return @results;
 }
 
+=pod
 sub add_to_release {
   my ($class, $release, $species, $gp, $assembly) = @_;
 

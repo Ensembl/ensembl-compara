@@ -9,6 +9,6 @@ __PACKAGE__->table('item_species');
 __PACKAGE__->set_primary_keys(qw/news_item_id species_id/);
 
 __PACKAGE__->has_a(news_item => 'EnsEMBL::Web::Data::NewsItem');
-__PACKAGE__->tie_a(species   => 'EnsEMBL::Web::Data::Species');
+__PACKAGE__->has_a(species   => 'EnsEMBL::Web::Data::Species');
 
 1;

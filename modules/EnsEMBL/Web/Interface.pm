@@ -256,6 +256,7 @@ sub discover {
   
   return unless ref($self->data);
   my %fields = %{ $self->data->get_all_fields };
+  my @A = keys %fields;
   $fields{'id'} = 'int';
   my %hasa_fields = %{ $self->data->hasa_relations };
 
@@ -502,14 +503,18 @@ sub edit_fields {
       $param{'type'} = 'NoEdit';
     }
 
+=pod
     ## Catch 'has_many' fields before doing normal ones
-    if ($has_many{$field}) {
+    if (my $classes = $has_many{$field}) {
+      my $class = $classes->[0];
+      my $obj = $class->new();
       my $value = [];
-      foreach my $many ($data->$field) {
+      foreach my $many ($obj->$field) {
         push @$value, $many->id;
       }
       $param{'value'} = $value;
     }
+=cut
 
     ## Set field values
     my $extra_data = $self->extra_data;
@@ -577,12 +582,20 @@ sub preview_fields {
     ## Don't show extra_data fields, as they are generally used to control underlying logic
     next if exists $extra_data->{$field};
     my %param = %{$element->preview};
+    my $var;
+
     if (ref $data) {
-      my $var = $data->$field;
- 
+      if ($has_many{$field}) {
+        my @ids = $object->param($field);
+        $var = \@ids;
+      }
+      else {
+        $var = $data->$field;
+      }
+=pod 
       ## Catch 'has_many' fields before doing normal ones
       if (my $classes = $has_many{$field}) {
-        my $class = $classes->[1];
+        my $class = $classes->[0];
         my $lookup = $class->get_lookup_values;
         my $order = $lookup->[0]{'order'};
         my $label;
@@ -596,22 +609,27 @@ sub preview_fields {
         my @readable;
         foreach my $id ($object->param($field)) {
           my $obj = $class->new($id);
-          push @readable, $obj->$label;
+          push @readable, $obj->$label if $obj;
         }
         #warn Dumper($data->$field);
         $param{'value'} = join(', ', @readable);
       }
-      elsif ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
+=cut
+      if ($element->type eq 'DropDown' || $element->type eq 'MultiSelect') {
         my @values = @{$param{'values'}};
         my %lookup;
         foreach my $option (@values) {
           $lookup{$option->{'value'}} = $option->{'name'};
         }
+        warn Dumper(\%lookup);
+        warn ">>> VAR $var";
         if (keys %lookup) {
           if (ref($var) eq 'ARRAY') {
+            warn "...DOING ARRAY @$var";
             my @readable;
             foreach my $key (@$var) {
               if ($key ne '') {
+                warn "...ADDING $key = ".$lookup{$key};
                 push @readable, $lookup{$key};
               }
             }
@@ -621,6 +639,7 @@ sub preview_fields {
             $param{'value'} = $lookup{$var};
           }
         } 
+        warn ">>> $field VALUE SET TO ".$param{'value'};
       }
       elsif ($element->type eq 'Text' && $var =~ m#</|/>#) {
         $param{'value'} = '<pre>'.$var.'</pre>';
