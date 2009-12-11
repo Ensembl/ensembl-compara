@@ -94,6 +94,7 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $ARCHIVE_VERSION
   $BIOMART_URL
   $MART_HELP_DESK
+  %OBJECT_TO_SCRIPT
   %ENSEMBL_SETENV
   @ENSEMBL_CONF_DIRS
   @ENSEMBL_PERL_DIRS
@@ -343,6 +344,31 @@ $ENSEMBL_APACHE_RELOAD          = 0; # Debug setting - set to 0 for release
 
 $ENSEMBL_HAS_C_EXTENSIONS       = 1;
 $ENSEMBL_LONGPROCESS_MINTIME    = 10;
+
+## ALLOWABLE DATA OBJECTS
+%OBJECT_TO_SCRIPT = (
+  Config      => 'config',
+  Component   => 'component',
+  Zmenu       => 'zmenu',
+  Blast       => 'blast',
+
+  Gene        => 'action',
+  Transcript  => 'action',
+  Location    => 'action',
+  Variation   => 'action',
+  Regulation  => 'action',
+  Server      => 'action',
+  Info        => 'action',
+  Search      => 'action',
+  UniSearch   => 'action',
+  News        => 'action',
+  
+  Account     => 'modal',
+  UserData    => 'modal',
+  Help        => 'modal',
+  Export      => 'modal',
+);
+
 
 ###############################################################################
 ##
