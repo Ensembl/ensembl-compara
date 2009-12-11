@@ -102,6 +102,8 @@ sub fetch_input {
     (
      -DBCONN=>$self->db->dbc
     );
+    
+  $self->{'memberDBA'} = $self->{'comparaDBA'}->get_MemberAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);

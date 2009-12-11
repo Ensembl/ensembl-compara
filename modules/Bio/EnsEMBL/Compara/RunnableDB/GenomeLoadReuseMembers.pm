@@ -350,7 +350,7 @@ sub loadMembersFromCoreSlices
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
     #print("slice " . $slice->name . "\n");
-    foreach my $gene (@{$slice->get_all_Genes}) {
+    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
       $self->{'geneCount'}++;
 
       # LV and C are for the Ig/TcR family, which rearranges

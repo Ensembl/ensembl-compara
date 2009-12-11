@@ -143,7 +143,7 @@ sub fetch_input {
     if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
       $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
       #       $self->{'method'} = 'fmcoffee';
-      print "MCoffee, auto-switch method to mafft because gene count > 100 \n";
+      print "MCoffee, auto-switch method to mafft because gene count > 200 \n";
     }
   }
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
@@ -191,12 +191,12 @@ sub fetch_input {
 #     $self->DESTROY;
 #     throw("Mcoffee job too big: try something else and FAIL it");
 #   }
-  # Retry count >= 3.
+  # Retry count >= 5.
   if ($self->input_job->retry_count >= 5) {
     $self->dataflow_output_id($self->input_id, 2);
     $self->input_job->update_status('FAILED');
     $self->DESTROY;
-    throw("Mcoffee job failed >=3 times: try something else and FAIL it");
+    throw("Mcoffee job failed >=5 times: try something else and FAIL it");
   }
 
   return 1;
@@ -491,7 +491,7 @@ sub run_mcoffee
 
   unless($rc == 0) {
       $self->DESTROY;
-      throw("MCoffee job, error running executable: $\n");
+      throw("MCoffee job, error running executable: $!\n");
   }
 }
 
