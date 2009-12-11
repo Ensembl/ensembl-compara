@@ -50,30 +50,7 @@ our $BLAST_LAST_RUN;
 our $BIOMART_REGISTRY;
 our %LOOKUP_HASH;
 
-our %OBJECT_TO_SCRIPT = qw(
-  Config      config
-  Component   component
-  Zmenu       zmenu
-  Blast       blast
-
-  Gene        action
-  Transcript  action
-  Location    action
-  Variation   action
-  Regulation  action
-  Server      action
-  Info        action
-  Search      action
-  UniSearch   action
-  Website     action
-  Healthcheck action
-  News        action
-  
-  Account     modal
-  UserData    modal
-  Help        modal
-  Export      modal
-);
+our %OBJECT_TO_SCRIPT = %SiteDefs::OBJECT_TO_SCRIPT;
 
 #======================================================================#
 # Set up apache-size-limit style load commands                         #
@@ -134,9 +111,11 @@ BEGIN {
   );
 
   $SPECIES_MAP{lc $_} = $_ for values %SPECIES_MAP; # Self-mapping
+
 };
 
 1;
+
 
 #======================================================================#
 # Perl apache handlers.... in order they get executed                  #
