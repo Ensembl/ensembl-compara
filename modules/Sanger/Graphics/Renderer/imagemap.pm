@@ -13,7 +13,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities);
 
 use base qw(Sanger::Graphics::Renderer);
 
@@ -127,7 +127,7 @@ sub get_attributes {
     
     if (defined $attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
-        $actions{$_} = escapeHTML($attr);
+        $actions{$_} = encode_entities($attr);
       } else {
         $actions{$_} = $attr;
       }

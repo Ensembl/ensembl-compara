@@ -6,7 +6,7 @@ no warnings 'uninitialized';
 
 use Data::Dumper;
 use HTML::Entities;
-use CGI;
+use HTML::Entities qw(encode_entities decode_entities);
 
 use Bio::EnsEMBL::Feature;
 
@@ -178,9 +178,9 @@ sub _draw_features {
         }
         
         if (@{$group->{'notes'}||[]}) {
-          $title .= join '', map { '; ' . CGI::escapeHTML(HTML::Entities::decode_entities($_)) } @{$group->{'notes'}};
+          $title .= join '', map { '; ' . encode_entities(decode_entities($_)) } @{$group->{'notes'}};
         } elsif (@{$group->{'fnotes'}||[]}) {
-          $title .= join '', map { '; ' . CGI::escapeHTML(HTML::Entities::decode_entities($_)) } @{$group->{'fnotes'}};
+          $title .= join '', map { '; ' . encode_entities(decode_entities($_)) } @{$group->{'fnotes'}};
         }
         
         $title .= '; Type: ' . ($group->{'type_label'} || $group->{'type'}) if $group->{'type'};

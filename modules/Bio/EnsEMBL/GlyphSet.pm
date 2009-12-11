@@ -19,7 +19,7 @@ use Bio::EnsEMBL::Registry;
 use GD;
 use GD::Simple;
 use GD::Text;
-use CGI qw(escapeHTML escape);
+use HTML::Entities qw(encode_entities);
 use POSIX qw(floor ceil);
 
 our $AUTOLOAD;
@@ -189,7 +189,7 @@ sub _url {
 ## Sort the keys so that the URL is the same for a given set of parameters...
   foreach ( sort keys %pars ) {
     if (defined $pars{$_}) {
-      $URL .= sprintf '%s%s=%s', $join, escapeHTML($_), escapeHTML($pars{$_});
+      $URL .= sprintf '%s%s=%s', $join, encode_entities($_), encode_entities($pars{$_});
       $join = ';';
     }
   }
