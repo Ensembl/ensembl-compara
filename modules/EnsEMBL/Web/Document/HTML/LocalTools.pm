@@ -36,13 +36,11 @@ sub _content {
   my $html = '<div id="local-tools">';
 
   foreach( @{$self->entries} ) {
-
-    my $icon = qq{<img src="/i/$icons{$_->{'caption'}}.png" alt="" style="vertical-align:middle;padding:0px 4px" />};
+    my $icon = qq{<img src="/i/$icons{$_->{'caption'}}.png" alt="" />};
 
     if ($_->{'class'} eq 'disabled') {
       $html .= qq{<p class="disabled" title="$_->{'title'}">$icon$_->{'caption'}</p>};
-    }
-    else {
+    } else {
       my $attrs = $_->{'class'};
       my $rel = lc $_->{'rel'};
       $attrs .= ($attrs ? ' ' : '') . 'external' if $rel eq 'external';
