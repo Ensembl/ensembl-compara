@@ -209,14 +209,13 @@ GetOptions(
 
 $| = 0;
 
+$species =~ s/\_/\ /;
+
 # Print Help and exit if help is requested
 if ($help or !$species or !$compara) {
   print $description, $usage;
   exit(0);
 }
-
-my $species_no_underscores = $species;
-$species_no_underscores =~ s/\_/\ /;
 
 ##
 ## Configure the Bio::EnsEMBL::Registry
@@ -225,11 +224,8 @@ $species_no_underscores =~ s/\_/\ /;
 ##
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
-if(! $species_db) {
-  $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
-}
-throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
+my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
+throw ("Cannot connect to database [$species]") if (!$species_db);
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 throw ("Cannot connect to database [$compara]") if (!$compara_db);

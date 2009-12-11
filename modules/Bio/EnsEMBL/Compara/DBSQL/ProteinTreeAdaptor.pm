@@ -38,9 +38,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
   Arg[2]     : [optional] int clusterset_id (def. 1)
   Example    : $protein_tree = $proteintree_adaptor->fetch_by_Member_root_id($member);
 
-  Description: Fetches from the database the protein_tree that contains the
-               member. If you give it a clusterset id of 0 this will cause
-               the search span across all known clustersets.
+  Description: Fetches from the database the protein_tree that contains the member
   Returntype : Bio::EnsEMBL::Compara::ProteinTree
   Exceptions :
   Caller     :
@@ -49,13 +47,13 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 
 sub fetch_by_Member_root_id {
-  my ($self, $member, $clusterset_id) = @_;
-  $clusterset_id = 1 if ! defined $clusterset_id;
+  my ($self, $member, $root_id) = @_;
+  $root_id = $root_id || 1;
 
   my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
     (
      $member->get_longest_peptide_Member->member_id,
-     $clusterset_id);
+     $root_id);
   return undef unless (defined $aligned_member);
   my $node = $aligned_member->subroot;
   return undef unless (defined $node);
@@ -225,7 +223,7 @@ sub store_node {
   $clusterset_id = $node->clusterset_id || 1;
   #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
 
-  my $sth = $self->prepare("INSERT INTO protein_tree_node
+  my $sth = $self->prepare("INSERT INTO protein_tree_node 
                              (parent_id,
                               root_id,
                               clusterset_id,
@@ -240,7 +238,7 @@ sub store_node {
   $sth->finish;
 
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-    $sth = $self->prepare("INSERT ignore INTO protein_tree_member
+    $sth = $self->prepare("INSERT ignore INTO protein_tree_member 
                                (node_id,
                                 root_id,
                                 member_id,
@@ -280,7 +278,7 @@ sub update_node {
                             root_id=?,
                             left_index=?,
                             right_index=?,
-                            distance_to_parent=?
+                            distance_to_parent=? 
                             WHERE node_id=?");
   $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, 
                 $node->distance_to_parent, $node->node_id);
@@ -289,7 +287,7 @@ sub update_node {
   $sth->finish;
 
   if($node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-    my $sql = "UPDATE protein_tree_member SET ".
+    my $sql = "UPDATE protein_tree_member SET ". 
               "cigar_line='". $node->cigar_line . "'";
     $sql .= ", cigar_start=" . $node->cigar_start if($node->cigar_start);
     $sql .= ", cigar_end=" . $node->cigar_end if($node->cigar_end);
@@ -328,7 +326,7 @@ sub delete_flattened_leaf {
 
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
-#   $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ".
+#   $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ". 
 #             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
   $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $node_id");
   $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $node_id");
@@ -341,7 +339,7 @@ sub delete_node {
 
   my $node_id = $node->node_id;
   #print("delete node $node_id\n");
-  $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ".
+  $self->dbc->do("UPDATE protein_tree_node dn, protein_tree_node n SET ". 
             "n.parent_id = dn.parent_id WHERE n.parent_id=dn.node_id AND dn.node_id=$node_id");
   $self->dbc->do("DELETE from protein_tree_node WHERE node_id = $node_id");
   $self->dbc->do("DELETE from protein_tree_tag WHERE node_id = $node_id");
@@ -387,7 +385,7 @@ sub delete_node_and_under {
 sub store_supertree_node_and_under {
   my $self = shift;
   my $node = shift;
-
+  $DB::single=1;1;
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_node like protein_tree_node");
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_member like protein_tree_member");
   $self->dbc->do("CREATE TABLE IF NOT EXISTS super_protein_tree_tag like protein_tree_tag");
@@ -426,7 +424,7 @@ sub _load_tagvalues {
   }
 
   my $sth = $self->prepare("SELECT tag,value from protein_tree_tag where node_id=?");
-  $sth->execute($node->node_id);
+  $sth->execute($node->node_id);  
   while (my ($tag, $value) = $sth->fetchrow_array()) {
     $node->add_tag($tag,$value);
   }
@@ -553,7 +551,7 @@ sub _fetch_sequence_by_id {
   return $self->db->get_MemberAdaptor->_fetch_sequence_by_id(@_);
 }
 
-sub fetch_gene_for_peptide_member_id {
+sub fetch_gene_for_peptide_member_id { 
   my $self = shift;
   return $self->db->get_MemberAdaptor->fetch_gene_for_peptide_member_id(@_);
 }
