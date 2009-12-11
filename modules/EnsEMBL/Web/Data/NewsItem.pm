@@ -5,6 +5,7 @@ use warnings;
 use base qw(EnsEMBL::Web::Data::Trackable);
 use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::ItemSpecies;
 
 __PACKAGE__->table('news_item');
 __PACKAGE__->set_primary_key('news_item_id');

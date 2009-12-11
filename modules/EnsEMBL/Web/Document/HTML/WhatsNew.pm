@@ -64,12 +64,6 @@ sub render {
 
     my @headlines = EnsEMBL::Web::Data::NewsItem->fetch_news_items($criteria, $attr);
 
-    my %species_lookup; 
-    my @all_species = EnsEMBL::Web::Data::Species->find_all;
-    foreach my $sp (@all_species) {
-      $species_lookup{$sp->species_id} = $sp->name;
-    }
-
     if (scalar(@headlines) < 5 && $filtered) {
       delete($criteria->{'species'});
       my $attr = {'limit' => 5 - @headlines, 'order_by' => ' n.priority DESC '};
@@ -84,7 +78,7 @@ sub render {
       foreach my $item (@headlines) {
 
         ## sort out species names
-        my @species = $item->species; 
+        my @species = $item->species_ids; 
         my (@sp_ids, $sp_id, $sp_name, $sp_count);
         if (!scalar(@species)) {
           $sp_name = 'all species';
@@ -94,7 +88,8 @@ sub render {
         }
         else {
           my @names;
-          foreach my $sp (@species) {
+          foreach my $spid (@species) {
+            my $sp = EnsEMBL::Web::Data::Species->new($spid);
             if ($sp->common_name =~ /\./) {
               push @names, '<i>'.$sp->common_name.'</i>';
             }

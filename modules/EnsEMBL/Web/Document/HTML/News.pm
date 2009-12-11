@@ -91,7 +91,7 @@ sub render {
     foreach my $item (@stories) {
       my $matched = 0;
       next unless $item->title && $item->content;
-      my @species = $item->species; 
+      my @species = $item->species_ids; 
       if ($current_sp) {
         if (!@species) {
           push @main, $item;
@@ -151,7 +151,7 @@ sub _output_story {
   my $html = '<h'.$header.' id="'.$item->id.'">'.$item->title;
   if ($show_species) {
     ## sort out species names
-    my @species = $item->species; 
+    my @species = $item->species_ids; 
     my $sp_text;
   
     if (!@species) {
@@ -162,7 +162,8 @@ sub _output_story {
     }
     else {
       my @names;
-      foreach my $sp (@species) {
+      foreach my $spid (@species) {
+        my $sp = EnsEMBL::Web::Data::Species->new($spid);
         if ($sp->common_name =~ /\./) {
           push @names, '<i>'.$sp->common_name.'</i>';
         }
