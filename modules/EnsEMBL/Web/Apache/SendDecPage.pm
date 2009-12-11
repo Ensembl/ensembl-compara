@@ -1,25 +1,21 @@
 package EnsEMBL::Web::Apache::SendDecPage;
        
 use strict;
-# use Apache::File ();
-# use Apache::Log ();
-use SiteDefs qw(:ALL);
-use EnsEMBL::Web::Document::Renderer::Apache;
-use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Document::Static;
-use EnsEMBL::Web::RegObj;
-use Data::Dumper;
-use EnsEMBL::Web::Root;
-use Compress::Zlib;
 
 use Apache2::Const qw(:common :methods :http);
+use CGI;
+use Compress::Zlib;
+
+use SiteDefs qw(:ALL);
 
 use EnsEMBL::Web::Cache;
-
-use Carp qw(cluck);
+use EnsEMBL::Web::Document::Panel;
+use EnsEMBL::Web::Document::Renderer::Apache;
+use EnsEMBL::Web::Document::Static;
+use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Root;
 
 our $MEMD = EnsEMBL::Web::Cache->new;
-
 
 #############################################################
 # Mod_perl request handler all /htdocs pages
@@ -127,7 +123,7 @@ sub handler {
     $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::String( r => $r );
-    my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs);
+    my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs, new CGI);
     $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();
   
