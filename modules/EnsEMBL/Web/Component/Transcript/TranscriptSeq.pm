@@ -233,20 +233,37 @@ sub content {
   
   if ($object->param('export')) {
     $html = $self->export_sequence($sequence, $config, sprintf 'cDNA-Sequence-%s-%s', $config->{'species'}, $object->stable_id);
-  } else {
+  } else {    
     $html = sprintf('
       <div class="text_seq_buttons">
-        <a class="seq_export" href="%s;export=rtf;no_wrap=1">Download sequence as RTF file</a>
-        <form class="seq_blast external" action="/Multi/blastview" method="post">
-          <input type="submit" value="BLAST/BLAT this sequence" />
-          <input type="hidden" name="_query_sequence" value="%s" />
-          <input type="hidden" name="species" value="%s" />
-        </form>
+        <div class="other-tool">
+          <p>
+            <a class="seq_export" href="%s;export=rtf;no_wrap=1">
+              <img alt="" src="/i/export.png" />
+              Download view as RTF file
+            </a>
+          </p>
+        </div>
+        <div class="other-tool">
+          <p>
+            <a class="seq_blast" href="#">
+              <img alt="" src="/i/export.png" />
+              BLAST/BLAT this sequence
+            </a>
+          </p>
+          <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+            <fieldset>
+              <input type="hidden" name="_query_sequence" value="%s" />
+              <input type="hidden" name="species" value="%s" />
+            </fieldset>
+          </form>
+        </div>
       </div>', 
       $self->ajax_url,
       $raw_seq,
       $config->{'species'}
     );
+    
     
     $html .= $self->build_sequence($sequence, $config);
     $html .= '<img src="/i/help/transview_key3.gif" alt="[Key]" border="0" />' if $config->{'codons'} || $config->{'variation'} || $config->{'translation'} || $config->{'coding_seq'};
