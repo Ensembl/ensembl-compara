@@ -125,6 +125,14 @@ the copy to several MLSS_ids.
 
 Do not store DNA-DNA alignments nor synteny data.
 
+=item B<--exact_species_name_match>
+
+Used to control the algorithm used to search for species with. Normally a fuzzy
+match is allowed letting you give partial species names e.g. homo and still
+retrieve the correct species. A more version requiring direct equality
+can be turned on if needed & is necessary when working with very closely related
+species i.e. strains.
+
 =back
 
 =head2 OLD DATA
@@ -149,6 +157,7 @@ my $old = undef;
 my $new = undef;
 my $species = [];
 my $mlsss = [];
+my $exact_species_name_match = 0;
 
 GetOptions(
     "help" => \$help,
@@ -157,8 +166,9 @@ GetOptions(
     "master=s" => \$master,
     "old=s" => \$old,
     "new=s" => \$new,
-    "species=s@" => \$species,
-    "mlss|method_link_species_sets=s@" => \$mlsss,
+    "species=s@" => $species,
+    "mlss|method_link_species_sets=s@" => $mlsss,
+    'exact_species_name_match' => \$exact_species_name_match
   );
 
 
@@ -374,10 +384,13 @@ sub get_all_default_genome_dbs {
   if (@$species_names) {
     for (my $i = 0; $i < @$all_genome_dbs; $i++) {
       my $this_genome_db_name = $all_genome_dbs->[$i]->name;
-      if (grep {/$this_genome_db_name/} @$species_names) {
-        $all_species->{$this_genome_db_name} = 1;
-        next;
+
+      if(  ($exact_species_name_match && grep { $this_genome_db_name eq $_ } @$species_names) ||
+		   (!$exact_species_name_match && grep { /$this_genome_db_name/ } @$species_names) ) {
+         $all_species->{$this_genome_db_name} = 1;
+         next;
       }
+
       ## this_genome_db is not in the list of species_names
       splice(@$all_genome_dbs, $i, 1);
       $i--;
@@ -704,7 +717,7 @@ sub copy_constrained_elements {
     if (!@$all_rows) {
       next;
     }
-    
+
     print "Copying constrained elements for ", $this_method_link_species_set->name,
 	" (", $this_method_link_species_set->dbID, "): ";
 
@@ -766,7 +779,7 @@ sub copy_conservation_scores {
     my $where = "genomic_align_block_id >= $lower_gab_id AND genomic_align_block_id < $upper_gab_id";
     print "Copying conservation scores for ", $this_method_link_species_set->name,
 	" (", $this_method_link_species_set->dbID, "): ";
-    my $pipe = "$mysqldump -w \"$where\" conservation_score | $mysql";  
+    my $pipe = "$mysqldump -w \"$where\" conservation_score | $mysql";
     system($pipe);
     print "ok!\n";
   }

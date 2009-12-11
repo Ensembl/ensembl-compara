@@ -309,7 +309,7 @@ sub build_GeneTreeSystem
   # CreateBlastRules
   print STDERR "CreateBlastRules...\n";
   #
-  # Only run the next analysis, CreateHclustePrepareJobs, when all blasts are finished
+  # Only run the next analysis, CreateHclusterPrepareJobs, when all blasts are finished
   $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'CreateHclusterPrepareJobs'}";
   my $blastrules_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
@@ -415,7 +415,7 @@ sub build_GeneTreeSystem
     );
   $analysisDBA->store($hclusterprepare);
   $stats = $hclusterprepare->stats;
-  $stats->batch_size(10);
+  $stats->batch_size(1);
   $stats->hive_capacity(4);
   $stats->status('BLOCKED');
   $stats->update();
@@ -463,7 +463,12 @@ sub build_GeneTreeSystem
   # MCoffee
   print STDERR "MCoffee...\n";
   #
-  $parameters = "{'method'=>'cmcoffee',use_exon_boundaries=>2";
+  $parameters = "{'method'=>'cmcoffee'";
+  
+  my $exon_boundaries = (defined $genetree_params{exon_boundaries}) ? $genetree_params{exon_boundaries} : 2; 
+  if($exon_boundaries) {
+    $parameters .= qq{, use_exon_boundaries => $exon_boundaries};
+  }
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
@@ -494,7 +499,7 @@ sub build_GeneTreeSystem
 
   $analysisDBA->store($mcoffee);
   $stats = $mcoffee->stats;
-  $stats->batch_size(10);
+  $stats->batch_size(1);
   $stats->hive_capacity(600);
   $stats->update();
 
@@ -706,7 +711,7 @@ sub build_GeneTreeSystem
   $analysisDBA->store($homology_dNdS);
   if(defined($self->{'hiveDBA'})) {
     my $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS->dbID);
-    $stats->batch_size(10);
+    $stats->batch_size(1);
     my $homology_dnds_hive_capacity = $hive_params{homology_dnds_hive_capacity};
   	$homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
   	$stats->hive_capacity($homology_dnds_hive_capacity);

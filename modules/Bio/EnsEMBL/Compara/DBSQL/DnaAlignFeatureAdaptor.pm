@@ -43,9 +43,9 @@ my $CACHE_SIZE = 4;
 
   Arg [1]    : list of args to super class constructor
   Example    : $dafa = new Bio::EnsEMBL::Compara::Genomi
-  Description: Creates a new DnaAlignFeatureAdaptor.  The superclass 
+  Description: Creates a new DnaAlignFeatureAdaptor.  The superclass
                constructor is extended to initialise an internal cache.  This
-               class should be instantiated through the get method on the 
+               class should be instantiated through the get method on the
                DBAdaptor rather than calling this method directory.
   Returntype : none
   Exceptions : none
@@ -131,7 +131,7 @@ sub fetch_all_by_species_region {
       );
   }
   return [] if (!$method_link_species_set);
-  
+
 #   my $gaa = $self->db->get_GenomicAlignAdaptor;
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor;
 
@@ -192,7 +192,7 @@ sub fetch_all_by_species_region {
               The type of alignments to be retrieved
               e.g. WGA or WGA_HCR
  Example    : $gaa->fetch_all_by_Slice($slice, "Mus musculus","WGA");
- Description: find matches of query_species in the region of a slice of a 
+ Description: find matches of query_species in the region of a slice of a
               subject species
  Returntype : an array reference of Bio::EnsEMBL::DnaDnaAlignFeature objects
  Exceptions : none
@@ -201,10 +201,10 @@ sub fetch_all_by_species_region {
 =cut
 
 sub fetch_all_by_Slice {
-  my ($self, $orig_slice, $qy_species, $qy_assembly, $alignment_type, 
+  my ($self, $orig_slice, $qy_species, $qy_assembly, $alignment_type,
       $limit) = @_;
 
-  unless($orig_slice && ref $orig_slice && 
+  unless($orig_slice && ref $orig_slice &&
          $orig_slice->isa('Bio::EnsEMBL::Slice')) {
     throw("Invalid slice argument [$orig_slice]\n");
   }
@@ -217,8 +217,11 @@ sub fetch_all_by_Slice {
 
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor();
   my $cs_genome_db = $genome_db_adaptor->fetch_by_Slice($orig_slice);
-  my $qy_genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-      $qy_species, $qy_assembly);
+  my $qy_genome_db = $genome_db_adaptor->fetch_by_name_assembly($qy_species, $qy_assembly);
+  if(! $qy_genome_db && ! $qy_assembly) {
+  	#Only use the registry if we cannot find one by name & assembly was not defined.
+  	$qy_genome_db = $genome_db_adaptor->fetch_by_registry_name($qy_species);
+  }
   return [] if (!$cs_genome_db or !$qy_genome_db);
 
   my $method_link_species_set_adaptor = $self->db->get_MethodLinkSpeciesSetAdaptor();
@@ -260,11 +263,11 @@ sub fetch_all_by_Slice {
                e.g. "BLASTZ_NET"
   Arg [4]    : string $seq_region_name
                e.g. "6-COX"
-  Example    : 
-  Description: 
+  Example    :
+  Description:
   Returntype : array with 3 elements
-  Exceptions : 
-  Caller     : 
+  Exceptions :
+  Caller     :
 
 =cut
 
@@ -295,14 +298,14 @@ sub interpolate_best_location {
 
     return undef if( !@best_blocks );
     return ($best_blocks[0]->hseqname,
-            $best_blocks[0]->hstart 
+            $best_blocks[0]->hstart
             + int(($best_blocks[-1]->hend - $best_blocks[0]->hstart)/2),
             $best_blocks[0]->hstrand * $slice->strand,
             $best_blocks[0]->hstart,
             $best_blocks[-1]->hend);
 
   } else {
-    
+
     my @refined_clusters;
     foreach my $name_strand (keys %name_strand_clusters) {
       # an array of arrayrefs
@@ -429,7 +432,7 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
     my $cend   = $consensus_genomic_align->dnafrag_end;
 
     #skip features which do not overlap the requested region
-    #next if ($cstart > $end || $cend < $start); 
+    #next if ($cstart > $end || $cend < $start);
 
     my $ga_cigar_line;
     do {
@@ -506,7 +509,7 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
 
     #my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
 
-    my $ga_group_id = ($this_genomic_align_block->group_id() || 
+    my $ga_group_id = ($this_genomic_align_block->group_id() ||
       $consensus_genomic_align->genomic_align_group_id_by_type("default"));
 
     my ($slice, $seq_name, $start, $end, $strand);
