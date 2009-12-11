@@ -27,13 +27,26 @@ sub content {
   my $type      = $object->type;
   my $site_type = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
-  my $html = sprintf qq{
-    <form class="seq_blast external" action="/Multi/blastview" method="post">
-      <input type="submit" value="BLAST/BLAT this sequence" />
-      <input type="hidden" name="species" value="$species" />
-      <input type="hidden" name="_query_sequence" value="%s" />
-    </form>
-  }, uc $slice->seq(1);
+  my $html = sprintf('
+    <div class="text_seq_buttons">
+      <div class="other-tool">
+        <p>
+          <a class="seq_blast" href="#">
+            <img alt="" src="/i/find.png" />
+            BLAST this sequence
+          </a>
+        </p>
+        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+          <fieldset>
+            <input type="hidden" name="_query_sequence" value="%s" />
+            <input type="hidden" name="species" value="%s" />
+          </fieldset>
+        </form>
+      </div>
+    </div>',
+    uc $slice->seq(1),
+    $species
+  );
   
   if ($length >= $self->{'subslice_length'}) {
     my $base_url = $self->ajax_url('sub_slice') . ";length=$length;name=" . $slice->name;

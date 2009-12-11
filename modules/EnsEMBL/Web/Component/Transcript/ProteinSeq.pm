@@ -84,12 +84,23 @@ sub content {
   $self->markup_line_numbers($sequence, $config)       if $config->{'number'};
   
   my $html = sprintf('
-    <form class="seq_blast external" action="/Multi/blastview" method="post">
-      <input type="submit" value="BLAST this sequence" />
-      <input type="hidden" name="_query_sequence" value="%s" />
-      <input type="hidden" name="query" value="peptide" />
-      <input type="hidden" name="species" value="%s" />
-    </form>',
+    <div class="text_seq_buttons">
+      <div class="other-tool">
+        <p>
+          <a class="seq_blast" href="#">
+            <img alt="" src="/i/find.png" />
+            BLAST this sequence
+          </a>
+        </p>
+        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+          <fieldset>
+            <input type="hidden" name="_query_sequence" value="%s" />
+            <input type="hidden" name="query" value="peptide" />
+            <input type="hidden" name="species" value="%s" />
+          </fieldset>
+        </form>
+      </div>
+    </div>',
     $object->Obj->seq,
     $config->{'species'}
   );
