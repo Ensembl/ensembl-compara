@@ -14,10 +14,14 @@
 .local_context dd.active dl { background-color: [[PANEL_BG]] }
 .local_context dd.active dd { font-weight: normal }
 
-#local-tools p, .other-tool { background-color:[[BUTTON_BG]]; border:3px double [[PAGE_BG]]; 
-    margin:4px 0px; padding:4px; }
-#local-tools p { display:none; }
-#local-tools p a, .other-tool a { color:[[BUTTON_TEXT]]; text-decoration:none; }
-#local-tools p:hover, .other-tool:hover  {background-color:[[BUTTON_BG_HOVER]];}
-#local-tools p.disabled { background-color:[[BUTTON_DISABLED]]; color:[[BUTTON_TEXT]]}
-#local-tools p.disabled:hover { background-color:[[BUTTON_DISABLED]];}
+#local-tools p { display: none; margin: 0; }
+#local-tools img, .other-tool img { vertical-align: middle; padding: 0px 4px; }
+#local-tools a, .other-tool a, #local-tools p.disabled { border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px; }
+#local-tools a, .other-tool a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
+#local-tools p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
+#local-tools a:hover, .other-tool a:hover { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
+#local-tools a:visited, .other-tool a:visited { color: [[BUTTON_TEXT]]; }
+.other-tool a { padding-right: 14px; }
+.autocenter .other-tool a { display: inline-block; }
+:first-child+html .autocenter .other-tool a { border: 3px double [[BUTTON_BG]]; } /* IE7 hack */
+* html .autocenter .other-tool a { border: 3px double [[BUTTON_BG]]; }            /* IE6 hack */
