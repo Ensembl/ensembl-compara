@@ -10,6 +10,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.hideHints();
     this.toggleTable();
     this.toggleList();
+    this.blastLink();
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.trigger('validateForms', this.el);
@@ -182,5 +183,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       return false;
     });
+  },
+  
+  blastLink: function () {
+    $('a.seq_blast', this.el).click(function () {
+      $('form.seq_blast', this.el).submit();
+      return false;
+    })
   }
 });
