@@ -14,7 +14,7 @@ sub process {
   my $url = '/Account/User';
   my $param; 
 
-  my $interface = $object->interface;
+  my $interface = $self->interface;
   $interface->cgi_populate($object);
 
   ## Check input for spam content, etc

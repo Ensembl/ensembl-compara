@@ -15,7 +15,7 @@ sub process {
     '_referer' => $object->param('_referer'),
   }; 
 
-  my $interface = $object->interface;
+  my $interface = $self->interface;
   $interface->cgi_populate($object);
 
   if ($interface->data->id) { ## Update group record
@@ -32,7 +32,7 @@ sub process {
     if ($new_id) {
       $url .= '/List';
       ## Add current user as creator and administrator
-      my $group = EnsEMBL::Web::Data::Group->new($new_id);
+      my $group = new EnsEMBL::Web::Data::Group($new_id);
       my $user = $ENSEMBL_WEB_REGISTRY->get_user;
       $group->created_by($user->id);
       $group->save;

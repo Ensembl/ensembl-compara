@@ -11,11 +11,8 @@ sub process {
   my $self = shift;
   my $object = $self->object;
 
-  my $sd = EnsEMBL::Web::SpeciesDefs->new();
-  my $sitetype = $sd->ENSEMBL_SITETYPE;
-
   ## Create interface object, which controls the forms
-  my $interface = new EnsEMBL::Web::Interface;
+  my $interface = $self->interface;
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   $user = new EnsEMBL::Web::Data::User unless $user;
   $interface->data($user);
@@ -23,7 +20,7 @@ sub process {
 
   ## Customization
   $interface->caption({
-    'add'     => 'Register with '.$sitetype, 
+    'add'     => 'Register with ' . $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_SITETYPE, 
     'display' => 'Your details',
     'edit'    => 'Update your account',
   });
@@ -38,7 +35,7 @@ sub process {
   $interface->element_order(['name', 'surname', 'address', 'email', 'organisation']);
 
   ## Render page or munge data, as appropriate
-  $interface->configure($self->webpage, $object);
+  $interface->configure($self->page, $object);
 }
 
 1;

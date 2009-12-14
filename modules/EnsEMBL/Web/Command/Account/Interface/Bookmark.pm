@@ -13,13 +13,13 @@ sub process {
   my $data;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface->new();
+  my $interface = $self->interface;
 
   ## TODO: make new constructor accept 'record_type' parameter 
   if ($object->param('record_type') && $object->param('record_type') eq 'group') {
-    $data = EnsEMBL::Web::Data::Record::Bookmark::Group->new($object->param('id'));
+    $data = new EnsEMBL::Web::Data::Record::Bookmark::Group($object->param('id'));
   } else {
-    $data = EnsEMBL::Web::Data::Record::Bookmark::User->new($object->param('id'));
+    $data = new EnsEMBL::Web::Data::Record::Bookmark::User($object->param('id'));
   }
   
   $interface->data($data);
@@ -38,7 +38,7 @@ sub process {
   $interface->element_order([qw/name description url owner_type click/]);
 
   ## Render page or munge data, as appropriate
-  $interface->configure($self->webpage, $object);
+  $interface->configure($self->page, $object);
 }
 
 1;

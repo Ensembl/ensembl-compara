@@ -12,14 +12,14 @@ sub process {
   my $object = $self->object;
 
   ## Create interface object, which controls the forms
-  my $interface = EnsEMBL::Web::Interface->new;
-  my $data = EnsEMBL::Web::Data::Group->new($object->param('id'));
+  my $interface = $self->interface;
+  my $data = new EnsEMBL::Web::Data::Group($object->param('id'));
   
   $interface->data($data);
   $interface->discover;
 
   ## Customization
-## Form elements
+  ## Form elements
   $interface->caption({add  => 'Save group'});
   $interface->caption({edit => 'Edit group'});
   $interface->permit_delete('yes');
@@ -28,7 +28,7 @@ sub process {
   $interface->element_order([qw/name blurb/]);
 
   ## Render page or munge data, as appropriate
-  $interface->configure($self->webpage, $object);
+  $interface->configure($self->page, $object);
 }
 
 1;
