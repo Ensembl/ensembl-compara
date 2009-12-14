@@ -1,14 +1,27 @@
 package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 
-use strict;
+use strict; 
+use warnings;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump);
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+
+
+
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new(@_);
+
+  $self->{'_member_cache'} = {};
+  return $self;
+}
+
+
 
 =head2 list_internal_ids
 
@@ -56,6 +69,20 @@ sub list_internal_ids {
 
 =cut
 
+
+sub member_cache {  
+  my ($self,$id,$val) = @_; 
+
+  my $result ; 
+  if ( $id ) {  
+    if ( defined $val ) {   
+       $self->{_member_cache}{$id}=$val;
+    }  
+    $result =$self->{_member_cache}{$id};
+  }   
+  return $result ; 
+}  
+
 sub fetch_by_dbID {
   my ($self,$id) = @_;
 
@@ -63,15 +90,42 @@ sub fetch_by_dbID {
     throw("fetch_by_dbID must have an id");
   }
 
-  my ($name, $syn) = @{$self->tables->[0]};
+## adapted function to cache the member 
+  my $obj; 
+  # check if member is cached already  
+  my $member_is_cached = $self->member_cache($id) ; 
 
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
+  if ( defined $member_is_cached ) {   
+    $obj = $member_is_cached;
+  } else { 
+    my ($name, $syn) = @{$self->tables->[0]};
+  
+    #construct a constraint like 't1.table1_id = 1'
+    my $constraint = "${syn}.${name}_id = $id";
+  
+    #return first element of _generic_fetch list
+  
+    ($obj) = @{$self->_generic_fetch($constraint)};  
+    $self->member_cache($id,$obj);  
+  }
   return $obj;
 }
+
+
+
+## previous function 
+#   my ($name, $syn) = @{$self->tables->[0]};
+#   #construct a constraint like 't1.table1_id = 1'
+#   my $constraint = "${syn}.${name}_id = $id";
+  #return first element of _generic_fetch list
+#   my ($obj) = @{$self->_generic_fetch($constraint)};
+#   return $obj;
+#}
+
+
+
+
+
 
 sub fetch_by_dbIDs {
   my $self = shift;
