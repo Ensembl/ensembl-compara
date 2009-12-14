@@ -4,7 +4,11 @@ package EnsEMBL::Web::Component::TextSequence;
 
 use strict;
 
+use HTTP::Request;
+
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
+
+use EnsEMBL::Web::Document::Renderer::Assembler;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -893,7 +897,7 @@ sub chunked_content {
     if ($renderer) {
       map { $url .= ";$_=" . $object->param($_) } $object->param;
 
-      $renderer->print(HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
+      $renderer->print(new HTTP::Request('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
     } else {
       $html .= qq{<div class="ajax" title="['$url']"></div>};
     }
