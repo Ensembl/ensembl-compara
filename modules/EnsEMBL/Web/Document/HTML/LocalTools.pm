@@ -26,30 +26,29 @@ sub _content {
   
   return unless @{$self->entries};
   
-  my %icons = (
-    'Configure this page'     => 'config',
-    'Manage your data'        => 'data',
-    'Export data'             => 'export',
-    'Bookmark this page'      => 'bookmark'
+  my %classes = (
+    'Configure this page' => 'config',
+    'Manage your data'    => 'data',
+    'Export data'         => 'export',
+    'Bookmark this page'  => 'bookmark'
   );
   
   my $html = '<div id="local-tools">';
 
   foreach( @{$self->entries} ) {
-    my $icon = qq{<img src="/i/$icons{$_->{'caption'}}.png" alt="" />};
-
     if ($_->{'class'} eq 'disabled') {
-      $html .= qq{<p class="disabled" title="$_->{'title'}">$icon$_->{'caption'}</p>};
+      $html .= qq{<p class="disabled $classes{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>};
     } else {
       my $attrs = $_->{'class'};
       my $rel = lc $_->{'rel'};
       $attrs .= ($attrs ? ' ' : '') . 'external' if $rel eq 'external';
+      $attrs .= ($attrs ? ' ' : '') . $classes{$_->{'caption'}} if $classes{$_->{'caption'}};
       $attrs = qq{class="$attrs"} if $attrs;
       $attrs .= ' style="display:none"' if $attrs =~ /modal_link/;
       $attrs .= qq{ rel="$rel"} if $rel;
 
       $html .= qq{
-        <p><a href="$_->{'url'}" $attrs>$icon$_->{'caption'}</a></p>};
+        <p><a href="$_->{'url'}" $attrs>$_->{'caption'}</a></p>};
     }
 
   }
