@@ -11,7 +11,7 @@ sub _init {
   
   $self->SUPER::_init;
 
-  $self->{'link_text'}       = 'Select species for comparison';
+  $self->{'link_text'}       = 'Select species';
   $self->{'included_header'} = 'Selected species';
   $self->{'excluded_header'} = 'Unselected species';
   $self->{'panel_type'}      = 'MultiSpeciesSelector';
