@@ -30,12 +30,7 @@ sub content {
   my $html = sprintf('
     <div class="text_seq_buttons">
       <div class="other-tool">
-        <p>
-          <a class="seq_blast" href="#">
-            <img alt="" src="/i/find.png" />
-            BLAST this sequence
-          </a>
-        </p>
+        <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
         <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
           <fieldset>
             <input type="hidden" name="_query_sequence" value="%s" />

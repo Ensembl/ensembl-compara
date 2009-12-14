@@ -237,20 +237,10 @@ sub content {
     $html = sprintf('
       <div class="text_seq_buttons">
         <div class="other-tool">
-          <p>
-            <a class="seq_export" href="%s;export=rtf;no_wrap=1">
-              <img alt="" src="/i/export.png" />
-              Download view as RTF file
-            </a>
-          </p>
+          <p><a class="seq_export export" href="%s;export=rtf;no_wrap=1">Download view as RTF</a></p>
         </div>
         <div class="other-tool">
-          <p>
-            <a class="seq_blast" href="#">
-              <img alt="" src="/i/find.png" />
-              BLAST/BLAT this sequence
-            </a>
-          </p>
+          <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
           <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
             <fieldset>
               <input type="hidden" name="_query_sequence" value="%s" />
