@@ -376,15 +376,14 @@ sub create_select_values {
 
 sub configure {
   ### Determines which interface component/command is required by this step
-  my ($self, $webpage, $object) = @_;
+  my ($self, $page, $object) = @_;
 
   ## Make interface available from components, by attaching to Object
   $object->interface($self);
   my $type      = $object->type;
   my $data      = $object->action;
   my $function  = $object->function || 'Display';
-  #warn "@@@ $type / $data / $function";
-
+  
   if ($function eq 'Save' || $function eq 'Delete') { ## Process database command
     ## Do we have a custom interface module, or shall we use the generic one?
     my $class = 'EnsEMBL::Web::Command::'.$type.'::Interface::'.$data.$function;
@@ -392,7 +391,7 @@ sub configure {
       $class = 'EnsEMBL::Web::Command::Interface::'.$function;
     }
     if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-      my $command = $class->new({'object' => $object, 'webpage' => $webpage});
+      my $command = $class->new({ object => $object, page => $page });
       $command->process;
     }
     else {
@@ -406,9 +405,10 @@ sub configure {
       $class = 'EnsEMBL::Web::Component::Interface::'.$function;
     }
     my $key     = lc($type);
-    my $panel = $webpage->page->content->panel('main');
+    my $panel = $page->content->panel('main');
     $panel->add_components($key, $class);
-    $webpage->render;
+    $page->render;
+    print $page->renderer->content;
   }
 }
 
@@ -553,13 +553,13 @@ sub edit_fields {
         $param{'value'} = '<pre>'.$param{'value'}.'</pre>';
       }
     }
-  } 
-
+  }
+  
   ## Force passing of _referer parameter
   if ($object->param('_referer')) {
     push @$parameters, {'type'=>'Hidden', 'name'=>'_referer', 'value'=> $object->param('_referer')};
   }
-
+  
   return $parameters;
 }
 
