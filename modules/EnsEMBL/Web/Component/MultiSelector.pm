@@ -26,7 +26,7 @@ sub content {
   
   return sprintf('
     <div class="autocenter" style="width:%spx; text-align: left;">
-      <div class="other-tool"><a class="modal_link" href="%s"><img src="/i/config.png" alt="" />%s</a></div>
+      <div class="other-tool"><p><a class="config modal_link" href="%s">%s</a></p></div>
     </div>',
     $self->image_width,
     $url,
