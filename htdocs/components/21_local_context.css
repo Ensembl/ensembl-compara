@@ -14,14 +14,16 @@
 .local_context dd.active dl { background-color: [[PANEL_BG]] }
 .local_context dd.active dd { font-weight: normal }
 
-#local-tools p { display: none; margin: 0; }
-#local-tools img, .other-tool img { vertical-align: middle; padding: 0px 4px; }
-#local-tools a, .other-tool a, #local-tools p.disabled { border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px; }
-#local-tools a, .other-tool a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
+#local-tools p, .other-tool { display: none; margin: 0; }
+#local-tools a, #local-tools p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px 0px; padding: 4px 4px 4px 28px; }
+#local-tools a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 #local-tools p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; }
-#local-tools a:hover, .other-tool a:hover { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
-#local-tools a:visited, .other-tool a:visited { color: [[BUTTON_TEXT]]; }
-.other-tool a { padding-right: 14px; }
-.autocenter .other-tool a { display: inline-block; }
-:first-child+html .autocenter .other-tool a { border: 3px double [[BUTTON_BG]]; } /* IE7 hack */
-* html .autocenter .other-tool a { border: 3px double [[BUTTON_BG]]; }            /* IE6 hack */
+
+#local-tools a:hover   { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
+#local-tools a:visited { color: [[BUTTON_TEXT]]; }
+
+#local-tools .config   { background-image: url(/i/config.png); }
+#local-tools .data     { background-image: url(/i/data.png); }
+#local-tools .export   { background-image: url(/i/export.png); }
+#local-tools .bookmark { background-image: url(/i/bookmark.png); }
+#local-tools .find     { background-image: url(/i/find.png); }
