@@ -7,6 +7,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
+use EnsEMBL::Web::Interface;
 use base qw(EnsEMBL::Web::Root); 
 
 sub new {
@@ -36,6 +37,12 @@ sub ajax_params {
   my ($self, $param) = @_;
   $param->{'_referer'} ||= $self->object->param('_referer') if $self->object->param('_referer');
   return $param;
+}
+
+sub interface {
+  my $self = shift;
+  $self->{'interface'} ||= new EnsEMBL::Web::Interface;
+  return $self->{'interface'};
 }
 
 1;
