@@ -24,8 +24,9 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('reloadPage', this, this.reloadPage);
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
+    Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
     
-    $('#local-tools > p').show();
+    $('#local-tools > p').show().children().show();
     
     $('.modal_link').show().live('click', function () {
       // If ajax is not enabled, make popup config window
@@ -138,5 +139,16 @@ Ensembl.LayoutManager.extend({
       '</table>').draggable({ handle: 'thead' }).appendTo('body');
     
     Ensembl.EventManager.trigger('addPanel', id, 'ZMenu', undefined, undefined, params, 'showExistingZMenu');
+  },
+  
+  relocateTools: function (tools) {
+    tools.each(function () {
+      $('#local-tools').append($(this).children().addClass('additional')).children().show();
+    }).remove();
+    
+    $('a.seq_blast', '#local-tools').click(function () {
+      $('form.seq_blast', '#local-tools').submit();
+      return false;
+    });
   }
 });
