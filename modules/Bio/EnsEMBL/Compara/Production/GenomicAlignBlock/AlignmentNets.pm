@@ -116,6 +116,13 @@ sub fetch_input {
   
   throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->METHOD_LINK_SPECIES_SET_ID)
       if not $mlss;
+
+  #Check if doing self_alignment where the species_set will contain only one
+  #entry
+  my $self_alignment = 0;
+  if (@{$mlss->species_set} == 1) {
+      $self_alignment = 1;
+  }
   
   my $out_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $out_mlss->method_link_type($self->OUTPUT_METHOD_LINK_TYPE);
@@ -158,9 +165,18 @@ sub fetch_input {
       $self->target_DnaFrag_hash->{$tg_ga->dnafrag->name} = $tg_ga->dnafrag;
     }
 
-    my $group_id = $gab->group_id();
+    #for self alignments, need to group on the query genomic_align_id not the
+    #group_id 
+    my $group_id;
+    if ($self_alignment) {
+	$group_id = $qy_ga->dbID();
+    } else {
+	$group_id = $gab->group_id();
+    }
+    #print "gab " . $gab->dbID . " group_id $group_id\n";
 
     push @{$features_by_group{$group_id}}, $gab;
+
     if (! defined $group_score{$group_id} || $gab->score > $group_score{$group_id}) {
       $group_score{$group_id} = $gab->score;
     }
@@ -182,7 +198,6 @@ sub fetch_input {
   foreach my $nm (keys %{$self->target_DnaFrag_hash}) {
     $target_lengths{$nm} = $self->target_DnaFrag_hash->{$nm}->length;
   }
-
   my %parameters = (-analysis             => $self->analysis, 
                     -query_lengths        => \%query_lengths,
                     -target_lengths       => \%target_lengths,
