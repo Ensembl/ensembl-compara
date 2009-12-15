@@ -287,11 +287,10 @@ sub print_stats_for_method_link_species_sets {
       SELECT
         COUNT(*), SUM(dnafrag_end - dnafrag_start + 1)
       FROM
-        genomic_align_block
-        LEFT JOIN genomic_align USING (genomic_align_block_id)
+        genomic_align
         LEFT JOIN dnafrag USING (dnafrag_id)
       WHERE
-        genomic_align_block.method_link_species_set_id = ? AND
+        method_link_species_set_id = ? AND
         dnafrag.genome_db_id = ?
     };
   my $alignment2_sth = $dbc->prepare($sql);
@@ -301,9 +300,8 @@ sub print_stats_for_method_link_species_sets {
       FROM
         dnafrag
         LEFT JOIN genomic_align USING (dnafrag_id)
-        LEFT JOIN genomic_align_block USING (genomic_align_block_id)
       WHERE
-        (genomic_align_block.method_link_species_set_id = ? OR genomic_align.genomic_align_id IS NULL) AND
+        (genomic_align.method_link_species_set_id = ? OR genomic_align.genomic_align_id IS NULL) AND
         dnafrag.genome_db_id = ?
       GROUP BY (dnafrag.dnafrag_id)
     };
