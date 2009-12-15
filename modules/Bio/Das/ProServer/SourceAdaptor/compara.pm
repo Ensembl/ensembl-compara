@@ -184,7 +184,8 @@ sub build_features
     my $method_link = $self->config()->{'analysis'};
 
     my $link_template = $self->config()->{'link_template'} || 'http://www.ensembl.org/';
-    $link_template .= '%s/contigview?chr=%s;vc_start=%d;vc_end=%d';
+
+    $link_template .= '%s/Location/View?r=%s:%d-%d';
     $self->{'compara'}->{'link_template'} = $link_template;
 
     my $stored_max_alignment_length;
