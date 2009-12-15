@@ -1058,16 +1058,13 @@ sub level_id {
   return $self->{'level_id'};
 }
 
+=head2 genomic_align_group
 
-=head2 genomic_align_groups
-
-  Arg [1]    : a ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_groups
-  Example    : $genomic_align_groups = $genomic_align->genomic_align_groups;
-  Example    : $genomic_align->genomic_align_groups($genomic_align_groups);
-  Description: get/set for attribute genomic_align_groups. If no argument is given, the
-               genomic_align_groups are not defined but both the dbID and the adaptor are,
-               it tries to fetch and set teh data from the database using the
-               dbID of the Bio::EnsEMBL::Compara::GenomicAlign object.
+  Arg [2]    : [optional] Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_group
+  Example    : $genomic_align_group = $genomic_align->genomic_align_group();
+  Example    : $genomic_align->genomic_align_group($genomic_align_group);
+  Description: get/set for the Bio::EnsEMBL::Compara::GenomicAlginGroup object
+               corresponding to this Bio::EnsEMBL::Compara::GenomicAlign object 
   Returntype : int
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
@@ -1076,84 +1073,32 @@ sub level_id {
 
 =cut
 
-sub genomic_align_groups {
-  my ($self, $genomic_align_groups) = @_;
+sub genomic_align_group {
+  my ($self, $genomic_align_group) = @_;
 
-  if (defined($genomic_align_groups)) {
-    foreach my $this_genomic_align_group (@$genomic_align_groups) {
-      my $type = $this_genomic_align_group->type;
-      $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
-    }
-
+  if (defined($genomic_align_group)) {
+    $self->{'genomic_align_group'} = $genomic_align_group;
   } elsif (!defined($self->{'genomic_align_group'})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
-      $genomic_align_groups = $self->adaptor->db->get_GenomicAlignGroupAdaptor->fetch_all_by_GenomicAlign($self);
-      foreach my $this_genomic_align_group (@$genomic_align_groups) {
-        my $type = $this_genomic_align_group->type;
-        $self->{'genomic_align_group'}->{$type} = $this_genomic_align_group;
-        $self->{'genomic_align_group_id'}->{$type} = $this_genomic_align_group->dbID;
-      }
-    } else {
-      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_groups".
-          " You either have to specify more information (see perldoc for".
-          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
-    }
-  }
-
-  $genomic_align_groups = [values %{$self->{'genomic_align_group'}}];
-  return $genomic_align_groups;
-}
-
-
-=head2 genomic_align_group_by_type
-
-  Arg [1]    : [mandatory] string $type (genomic_align_group.type)
-  Arg [2]    : [optional] Bio::EnsEMBL::Compara::GenomicAlignGroup $genomic_align_group
-  Example    : $genomic_align_group = $genomic_align->genomic_align_group_by_type("default");
-  Example    : $genomic_align->genomic_align_group_by_type("default", $genomic_align_group);
-  Description: get/set for the Bio::EnsEMBL::Compara::GenomicAlginGroup object
-               corresponding to this Bio::EnsEMBL::Compara::GenomicAlign object and the
-               given type.
-  Returntype : int
-  Exceptions : none
-  Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub genomic_align_group_by_type {
-  my ($self, $type, $genomic_align_group) = @_;
-
-  $type = "default" if (!$type);
-
-  if (defined($genomic_align_group)) {
-    $self->{'genomic_align_group'}->{$type} = $genomic_align_group;
-  } elsif (!defined($self->{'genomic_align_group'}->{$type})) {
-    if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
-      # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
-      my $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($self);
-      foreach my $this_genomic_align_group (@$genomic_align_groups) {
-        $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
-        $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
+      my $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign($self);
+      $self->{'genomic_align_group'} = $genomic_align_group;
+      $self->{'genomic_align_group_id'} = $genomic_align_group->dbID;
 
-      }
     }
   }
-  return $self->{'genomic_align_group'}->{$type};
+  return $self->{'genomic_align_group'};
 }
 
 
-=head2 genomic_align_group_id_by_type
+=head2 genomic_align_group_id
 
-  Arg [1]    : [mandatory] string $type (genomic_align_group.type)
   Arg [2]    : [optional] int $genomic_align_group_id
-  Example    : $genomic_align_group_id = $genomic_align->genomic_align_group_by_type("default");
-  Example    : $genomic_align->genomic_align_group_by_type("default", 18);
+  Example    : $genomic_align_group_id = $genomic_align->genomic_align_group_id();
+  Example    : $genomic_align->genomic_align_group_id(18);
   Description: get/set for the genomic_align_group_id corresponding to this
-               Bio::EnsEMBL::Compara::GenomicAlign object and the given type.
+               Bio::EnsEMBL::Compara::GenomicAlign object
   Returntype : int
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
@@ -1162,22 +1107,18 @@ sub genomic_align_group_by_type {
 
 =cut
 
-sub genomic_align_group_id_by_type {
-  my ($self, $type, $genomic_align_group_id) = @_;
-
-  $type = "default" if (!$type);
+sub genomic_align_group_id {
+  my ($self, $genomic_align_group_id) = @_;
 
   if (defined($genomic_align_group_id)) {
-    $self->{'genomic_align_group_id'}->{$type} = $genomic_align_group_id;
-  } elsif (!defined($self->{'genomic_align_group_id'}->{$type})) {
+    $self->{'genomic_align_group_id'} = $genomic_align_group_id;
+  } elsif (!defined($self->{'genomic_align_group_id'})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::GenomicAlign object
       my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
-      my $genomic_align_groups = $genomic_align_group_adaptor->fetch_all_by_GenomicAlign($self);
-      foreach my $this_genomic_align_group (@$genomic_align_groups) {
-        $self->{'genomic_align_group'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group;
-        $self->{'genomic_align_group_id'}->{$this_genomic_align_group->{'type'}} = $this_genomic_align_group->dbID;
-      }
+      my $genomic_align_group = $genomic_align_group_adaptor->fetch_by_GenomicAlign($self);
+      $self->{'genomic_align_group'} = $genomic_align_group;
+      $self->{'genomic_align_group_id'} = $genomic_align_group->dbID;
     } else {
       warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->genomic_align_group_id_by_type".
           " You either have to specify more information (see perldoc for".
@@ -1185,7 +1126,7 @@ sub genomic_align_group_id_by_type {
     }
   }
 
-  return $self->{'genomic_align_group_id'}->{$type};
+  return $self->{'genomic_align_group_id'};
 }
 
 
