@@ -509,8 +509,7 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
 
     #my $ga_group_id = $consensus_genomic_align->genomic_align_group_id_by_type("default");
 
-    my $ga_group_id = ($this_genomic_align_block->group_id() ||
-      $consensus_genomic_align->genomic_align_group_id_by_type("default"));
+    my $ga_group_id = $this_genomic_align_block->group_id();
 
     my ($slice, $seq_name, $start, $end, $strand);
     if ($this_genomic_align_block->reference_slice) {
