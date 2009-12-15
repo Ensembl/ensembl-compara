@@ -220,7 +220,11 @@ sub write_output {
 
   #check that have genomic_aligns (may not have if removed some because they
   #consist entirely of Ns)
-  return 1 if (!$self->genomic_aligns);
+  if (!$self->genomic_aligns) {
+      #do not produce gerp jobs
+      $self->autoflow_inputjob(0);
+      return 1;
+  }
 
   if ($self->{'_runnable'}->{tree_to_save}) {
     my $meta_container = $self->{'comparaDBA'}->get_MetaContainer;
@@ -1070,9 +1074,41 @@ sub get_species_tree {
   $newick_species_tree =~ s/\s*$//;
   $newick_species_tree =~ s/[\r\n]//g;
 
-  $self->{'_species_tree'} =
+  my $species_tree =
       Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
 
+  #if the tree leaves are species names, need to convert these into genome_db_ids
+  my $genome_dbs = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all();
+
+  my %leaf_name;
+  my %leaf_check;
+  foreach my $genome_db (@$genome_dbs) {
+      my $name = $genome_db->name;
+      $name =~ tr/ /_/;
+      $leaf_name{$name} = $genome_db->dbID;
+      if ($name ne "Ancestral_sequences") {
+	  $leaf_check{$genome_db->dbID} = 2;
+      }
+  }
+  foreach my $leaf (@{$species_tree->get_all_leaves}) {
+      #check have names rather than genome_db_ids
+      if ($leaf->name =~ /\D+/) {
+	  $leaf->name($leaf_name{$leaf->name});
+      }
+      $leaf_check{$leaf->name}++;
+  }
+
+  #Check have one instance in the tree of each genome_db in the database
+  #Don't worry about having extra elements in the tree that aren't in the
+  #genome_db table because these will be removed later
+  foreach my $name (keys %leaf_check) {
+      if ($leaf_check{$name} == 2) {
+	  throw("Unable to find genome_db_id $name in species_tree\n");
+      }
+  }
+  
+
+  $self->{'_species_tree'} = $species_tree;
   return $self->{'_species_tree'};
 }
 
