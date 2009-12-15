@@ -70,7 +70,6 @@ sub fetch_all_by_MethodLinkSpeciesSet {
   return $genomic_align_trees;
 }
 
-
 =head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
@@ -315,7 +314,7 @@ sub fetch_by_GenomicAlignBlock {
 
 #  my $join = [
 #      [["genomic_align_tree","gat2"], "gat2.root_id = gat.node_id", undef],
-#      [["genomic_align_group","gag2"], "gag2.group_id = gat2.node_id", undef],
+#      [["genomic_align_group","gag2"], "gag2.node_id = gat2.node_id", undef],
 #      [["genomic_align","ga2"], "ga2.genomic_align_id = gag2.genomic_align_id", undef],
 #    ];
 #  my $constraint = "WHERE ga2.genomic_align_block_id = $genomic_align_block_id";
@@ -323,7 +322,7 @@ sub fetch_by_GenomicAlignBlock {
 
   my $sql = "SELECT root_id FROM genomic_align
     LEFT JOIN genomic_align_group USING (genomic_align_id)
-    LEFT JOIN genomic_align_tree ON (group_id = node_id)
+    LEFT JOIN genomic_align_tree USING (node_id)
     WHERE genomic_align_block_id = $genomic_align_block_id";
 
   my $sth = $self->prepare($sql);
@@ -331,18 +330,19 @@ sub fetch_by_GenomicAlignBlock {
   my ($root_id) = $sth->fetchrow_array();
   $sth->finish();
 
-  #print "root_id $root_id\n";
+  #print STDERR "root_id $root_id\n";
 
   #whole tree
   $sql = "SELECT " . join(",", @{$self->columns}) .  
-    " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_id";
+    " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_id";
 
   #root only
   #$sql = "SELECT " . join(",", @{$self->columns}) .
-  #  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = $root_id";
+  #  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = $root_id";
 
   $sth = $self->prepare($sql);
   $sth->execute;
+
   my $genomic_align_trees = $self->_objs_from_sth($sth);
   $sth->finish;
 
@@ -646,7 +646,7 @@ sub fetch_node_by_node_id {
   #my ($node) = @{$self->_generic_fetch($constraint)};
 
   my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node_id;
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node_id;
 
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -680,7 +680,7 @@ sub fetch_node_by_node_id {
    #my ($parent) = @{$self->_generic_fetch($constraint)};
 
    my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node->_parent_id;
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.node_id = " . $node->_parent_id;
 
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -710,13 +710,12 @@ sub fetch_all_children_for_node {
   }
 
   my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.parent_id = " . $node->node_id;
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.parent_id = " . $node->node_id;
 
    my $sth = $self->prepare($sql);
    $sth->execute;
    my $kids = $self->_objs_from_sth($sth);
    $sth->finish;
-
   foreach my $child (@{$kids}) { $node->add_child($child); }
 
   return $node;
@@ -753,7 +752,7 @@ sub fetch_all_children_for_node {
 
 
    my $sql = "SELECT " . join(",", @{$self->columns}) .  
-     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.group_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.left_index <= $left_index AND gat.right_index >= $right_index";
+     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.left_index <= $left_index AND gat.right_index >= $right_index";
 
    my $sth = $self->prepare($sql);
    $sth->execute;
@@ -802,7 +801,7 @@ sub delete {
         genomic_align_block.*
       FROM
         genomic_align_tree
-        LEFT JOIN genomic_align_group ON (node_id = group_id)
+        LEFT JOIN genomic_align_group USING (node_id)
         LEFT JOIN genomic_align USING (genomic_align_id)
         LEFT JOIN genomic_align_block USING (genomic_align_block_id)
       WHERE root_id = ?");
@@ -856,93 +855,161 @@ sub update_neighbourhood_data {
   Status     : At risk
 
 =cut
-
 sub set_neighbour_nodes_for_leaf {
-  my ($self, $node, $flanking) = @_;
-  $flanking = 1000000 if (!$flanking);
+  my ($self, $node, $set_flanking) = @_;
+  my $flanking = 1000;
+  my $max_flanking = 1000000;
 
-  next if (!$node->is_leaf());
-  next if (!$node->genomic_align_group);
+  #over-ride defaults if $set_flanking is set
+  if ($set_flanking) {
+      $flanking = $set_flanking;
+      $max_flanking = $set_flanking;
+  }
+
+  return if (!$node->is_leaf());
+  return if (!$node->genomic_align_group);
+
   my $genomic_aligns = $node->genomic_align_group->get_all_GenomicAligns;
 
-  my $sth = $self->prepare("SELECT group_id, dnafrag_start, dnafrag_end, dnafrag_strand
+  my $sth = $self->prepare("SELECT node_id, dnafrag_start, dnafrag_end, dnafrag_strand
       FROM genomic_align LEFT JOIN genomic_align_group USING (genomic_align_id)
-      WHERE type = 'epo'
-        AND dnafrag_id = ?
+      WHERE dnafrag_id = ?
         AND method_link_species_set_id = ?
         AND dnafrag_start <= ?
         AND dnafrag_start > ?
         AND dnafrag_end >= ?
         ORDER BY dnafrag_start");
 
+  #
+  #In order to increaese the speed of this routine, I now look at the left
+  #and right regions separately. For each region I look at first, 1000 bp
+  #away to see if there are neighbouring genomic_aligns. If not, I increase
+  #the flanking region and try again up to $max_flanking
+  #
+
+  #Region to left of genomic_align
   my $genomic_align = $genomic_aligns->[0];
   my $dnafrag_start = $genomic_align->dnafrag_start;
   my $dnafrag_end = $genomic_align->dnafrag_end;
+  my $dnafrag_strand = $genomic_align->dnafrag_strand;
 
-  $sth->execute(
-      $genomic_align->dnafrag_id,
-      $genomic_align->method_link_species_set_id,
-      $dnafrag_end + $flanking,
-      $dnafrag_start - $flanking - $genomic_align->method_link_species_set->max_alignment_length,
-      $dnafrag_start - $flanking,
-      );
-  my $table = $sth->fetchall_arrayref;
+  #forward strand
+  my $table;
+  if ($dnafrag_strand == 1) {
 
-  if (@$genomic_aligns == 1) {
-    for (my $i = 0; $i < @$table; $i++) {
-      my ($this_group_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
-      if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
-        ## $table->[$i] correspond to the query node
-        if ($this_dnafrag_strand == 1) {
-          $node->left_node_id($table->[$i-1]->[0]) if ($i > 0);
-          $node->right_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
-        } elsif ($this_dnafrag_strand == -1) {
-          $node->right_node_id($table->[$i-1]->[0]) if ($i > 0);
-          $node->left_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
-        }
-        last;
+      #find genomic_align to left of current genomic_align
+      while ($flanking <=$max_flanking) {
+	  $sth->execute(
+			$genomic_align->dnafrag_id,
+			$genomic_align->method_link_species_set_id,
+			$dnafrag_start,
+			$dnafrag_start - $flanking - $genomic_align->method_link_species_set->max_alignment_length,
+			$dnafrag_start - $flanking,
+		       );
+	  $table = $sth->fetchall_arrayref;
+	  
+	  #found genomic_align and one to the left
+	  last if (@$table > 1);
+
+	  #not found genomic_align to the left, increase flanking region
+	  $flanking *= 10;
       }
-    }
+      for (my $i = 0; $i < @$table; $i++) {
+	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+	      ## $table->[$i] correspond to the query node
+	      $node->left_node_id($table->[$i-1]->[0]) if ($i > 0);
+	      last;
+	  }
+      }
   } else {
-    ## Use the first GenomicAlign to set the LEFT NODE
-    for (my $i = 0; $i < @$table; $i++) {
-      my ($this_group_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
-      if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
-        ## $table->[$i] correspond to the query node
-        if ($this_dnafrag_strand == 1) {
-          $node->left_node_id($table->[$i-1]->[0]) if ($i > 0);
-        } elsif ($this_dnafrag_strand == -1) {
-          $node->left_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
-        }
-        last;
-      }
-    }
+      #reverse strand, dnafrag_strand == -1
 
-    ## Use the last GenomicAlign to set the RIGHT NODE
-    $genomic_align = $genomic_aligns->[-1];
-    $dnafrag_start = $genomic_align->dnafrag_start;
-    $dnafrag_end = $genomic_align->dnafrag_end;
+      #find genomic_align to left of current genomic_align
+      while ($flanking <=$max_flanking) {
+	  $sth->execute(
+			$genomic_align->dnafrag_id,
+			$genomic_align->method_link_species_set_id,
+			$dnafrag_end + $flanking,
+			$dnafrag_start - 1, #need to find original ga
+			$dnafrag_end,
+		       );
+	  $table = $sth->fetchall_arrayref;
 
-    $sth->execute(
-        $genomic_align->dnafrag_id,
-        $genomic_align->method_link_species_set_id,
-        $dnafrag_end + $flanking,
-        $dnafrag_start - $flanking - $genomic_align->method_link_species_set->max_alignment_length,
-        $dnafrag_start - $flanking,
-        );
-    $table = $sth->fetchall_arrayref;
-    for (my $i = 0; $i < @$table; $i++) {
-      my ($this_group_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
-      if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
-        ## $table->[$i] correspond to the query node
-        if ($this_dnafrag_strand == 1) {
-          $node->right_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
-        } elsif ($this_dnafrag_strand == -1) {
-          $node->right_node_id($table->[$i-1]->[0]) if ($i > 0);
-        }
-        last;
+	  #found genomic_align and one to the left
+	  last if (@$table > 1);
+	  $flanking *= 10;
       }
-    }
+      for (my $i = 0; $i < @$table; $i++) {
+	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+	      ## $table->[$i] correspond to the query node
+	      $node->left_node_id($table->[$i+1]->[0]) if ($i+1 < @$table);
+	      last;
+	  }
+      }
+  }
+  $sth->finish;
+
+  #Region to the right of the genomic_align
+  #reset $flanking
+  $flanking = 1000;
+  if ($set_flanking) {
+      $flanking = $set_flanking;
+  }
+  
+  ## Use the last GenomicAlign to set the RIGHT NODE
+  $genomic_align = $genomic_aligns->[-1];
+  $dnafrag_start = $genomic_align->dnafrag_start;
+  $dnafrag_end = $genomic_align->dnafrag_end;
+  $dnafrag_strand = $genomic_align->dnafrag_strand;
+
+  #forward strand
+  if ($dnafrag_strand == 1) {
+
+      while ($flanking <= $max_flanking) {
+	  $sth->execute(
+			$genomic_align->dnafrag_id,
+			$genomic_align->method_link_species_set_id,
+			$dnafrag_end + $flanking,
+			$dnafrag_start-1, #need to find original ga
+			$dnafrag_end,
+		   );
+	  $table = $sth->fetchall_arrayref;
+	  
+	  last if (@$table > 1);
+	  $flanking *= 10;
+      }
+      for (my $i = 0; $i < @$table; $i++) {
+	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+	      ## $table->[$i] correspond to the query node
+	      $node->right_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
+	      last;
+	  }
+      }
+  } else {
+      #reverse strand, dnafrag_strand == -1
+      while ($flanking <= $max_flanking) {
+	  $sth->execute(
+			$genomic_align->dnafrag_id,
+			$genomic_align->method_link_species_set_id,
+			$dnafrag_start,
+			$dnafrag_start - $flanking - $genomic_align->method_link_species_set->max_alignment_length,
+			$dnafrag_start - $flanking,
+		   );
+	  $table = $sth->fetchall_arrayref;
+	  
+	  last if (@$table > 1);
+	  $flanking *= 10;
+      }
+      for (my $i = 0; $i < @$table; $i++) {
+	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
+	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
+	      $node->right_node_id($table->[$i-1]->[0]) if ($i > 0);
+	      last;
+	  }
+      }
   }
   $sth->finish;
 
@@ -952,6 +1019,7 @@ sub set_neighbour_nodes_for_leaf {
   }
 
   return $node;
+
 }
 
 =head2 columns
@@ -976,8 +1044,6 @@ sub columns {
           'gat.distance_to_parent',
           'gat.left_node_id',
           'gat.right_node_id',
-          'gag.group_id',
-          'gag.type',
           'ga.genomic_align_id',
           'ga.genomic_align_block_id',
           'ga.method_link_species_set_id',
@@ -1042,7 +1108,7 @@ sub left_join_clause {
 =cut
 
 sub default_where_clause {
-  return "gat.node_id = gag.group_id AND gag.genomic_align_id = ga.genomic_align_id";
+  return "gat.node_id = gag.node_id AND gag.genomic_align_id = ga.genomic_align_id";
 #  return "";
 }
 
@@ -1065,17 +1131,19 @@ sub _objs_from_sth {
   my $node_list = [];
   my $genomic_align_groups = {};
   my $genomic_aligns = {};
+
   while(my $rowhash = $sth->fetchrow_hashref) {
-    if (!defined($rowhash->{group_id})) {
+
+    if (!defined($rowhash->{genomic_align_id})) {
        my $node = $self->create_instance_from_rowhash($rowhash);
        push @$node_list, $node;
     } else {
-       my $genomic_align_group = $genomic_align_groups->{$rowhash->{group_id}};
+       my $genomic_align_group = $genomic_align_groups->{$rowhash->{node_id}};
        if (!defined($genomic_align_group)) {
 	  ## This is a new node
 	  my $node = $self->create_instance_from_rowhash($rowhash);
 	  $genomic_align_group = $node->genomic_align_group;
-	  $genomic_align_groups->{$rowhash->{group_id}} = $genomic_align_group;
+	  $genomic_align_groups->{$rowhash->{node_id}} = $genomic_align_group;
 	  push @$node_list, $node;
        }
        if (!defined($genomic_aligns->{$rowhash->{genomic_align_id}})) {
@@ -1160,12 +1228,11 @@ sub init_instance_from_rowhash {
 sub _create_GenomicAlignGroup_object_from_rowhash {
   my ($self, $rowhash) = @_;
 
-  return undef if (!$rowhash->{group_id});
+  return undef if (!$rowhash->{node_id});
 
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
-  $genomic_align_group->dbID($rowhash->{group_id});
+  $genomic_align_group->dbID($rowhash->{node_id});
   $genomic_align_group->adaptor($self->db->get_GenomicAlignGroupAdaptor);
-  $genomic_align_group->type($rowhash->{type});
 
   return $genomic_align_group;
 }
