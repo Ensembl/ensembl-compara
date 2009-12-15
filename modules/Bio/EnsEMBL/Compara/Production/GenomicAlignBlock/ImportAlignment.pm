@@ -124,6 +124,26 @@ sub importAlignment {
     my $analysis_id = $analysis->dbID;
     my $mlss_id = $self->method_link_species_set_id;
 
+     ##Find min and max of the relevant internal IDs in the FROM database
+    my $sth = $self->{'from_comparaDBA'}->dbc->prepare("SELECT
+        MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
+        MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
+        MIN(gag.node_id), MAX(gag.node_id),
+        MIN(gat.root_id), MAX(gat.root_id)
+      FROM genomic_align_block gab
+        LEFT JOIN genomic_align ga using (genomic_align_block_id)
+        LEFT JOIN genomic_align_group gag using (genomic_align_id)
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = gag.node_id
+      WHERE
+        gab.method_link_species_set_id = ?");
+    
+    $sth->execute($mlss_id);
+    my ($min_gab, $max_gab, $min_ga, $max_ga, $min_gag, $max_gag, 
+	$min_root_id, $max_root_id) =
+	  $sth->fetchrow_array();
+    
+    $sth->finish();
+
     #HACK to just copy over one chr (22) for testing purposes
     #my $dnafrag_id = 905407;
     my $dnafrag_id;
@@ -132,10 +152,14 @@ sub importAlignment {
     if ($dnafrag_id) {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align_block",
+		  "genomic_align_block_id",
+		  $min_gab, $max_gab,
 		  "SELECT gab.* FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id) WHERE ga.method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
     } else {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align_block",
+		  "genomic_align_block_id",
+		  $min_gab, $max_gab,
 		  "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id");
     }
 
@@ -143,6 +167,8 @@ sub importAlignment {
     if ($dnafrag_id) {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align",
+		  "genomic_align_id",
+		  $min_ga, $max_ga,
 		  "SELECT ga.*".
 		  " FROM genomic_align ga ".
 		  " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
@@ -150,41 +176,51 @@ sub importAlignment {
     } else {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align",
-		  "SELECT ga.*".
-		  " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
-		  " WHERE gab.method_link_species_set_id = $mlss_id");
+		  "genomic_align_id",
+		  $min_ga, $max_ga,
+		  "SELECT *".
+		  " FROM genomic_align".
+		  " WHERE method_link_species_set_id = $mlss_id");
     }
     #copy genomic_align_group table
     if ($dnafrag_id) {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align_group",
+		  "gag.node_id", 
+		  $min_gag, $max_gag,
 		  "SELECT gag.*".
 		  " FROM genomic_align_group gag LEFT JOIN genomic_align USING (genomic_align_id)".
-		  " WHERE gag.group_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+		  " WHERE gag.node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
     } else {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align_group",
+		  "gag.node_id", 
+		  $min_gag, $max_gag,
 		  "SELECT gag.*".
-		  " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+		  " FROM genomic_align ga ".
 		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-		  " WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+		  " WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id");
     }
     #copy genomic_align_tree table
     if ($dnafrag_id) {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align_tree",
+		  "root_id",
+		  $min_root_id, $max_root_id,
 		  "SELECT gat.*".
-		  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group ON (group_id=node_id)".
+		  " FROM genomic_align_tree gat LEFT JOIN genomic_align_group USING (node_id)".
 		  " LEFT JOIN genomic_align USING (genomic_align_id)".
-		  " WHERE group_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
+		  " WHERE node_id IS NOT NULL AND method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id");
 
     } else {
 	copy_data($self->{'from_comparaDBA'}, $self->{'comparaDBA'},
 		  "genomic_align_tree",
+		  "root_id",
+		  $min_root_id, $max_root_id,
 		  "SELECT gat.*".
-		  " FROM genomic_align_block gab LEFT JOIN genomic_align ga USING (genomic_align_block_id)".
+		  " FROM genomic_align ga".
 		  " LEFT JOIN genomic_align_group gag USING (genomic_align_id)".
-		  " LEFT JOIN genomic_align_tree gat ON (node_id=gag.group_id) WHERE gag.group_id IS NOT NULL AND gab.method_link_species_set_id = $mlss_id");
+		  " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE gag.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id");
     }
 }
 
@@ -204,7 +240,7 @@ sub importAlignment {
 =cut
 
 sub copy_data {
-  my ($from_dba, $to_dba, $table_name, $query) = @_;
+  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query) = @_;
 
   print "Copying data in table $table_name\n";
 
@@ -219,11 +255,14 @@ sub copy_data {
       last;
     }
   }
+  #speed up writing of data by disabling keys, write the data, then enable 
+  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
   if ($binary_mode) {
     #copy_data_in_binary_mode($from_dba, $to_dba, $table_name, $query);
   } else {
-    copy_data_in_text_mode($from_dba, $to_dba, $table_name, $query);
+    copy_data_in_text_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query);
   }
+  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
 }
 
 
@@ -242,20 +281,33 @@ sub copy_data {
 =cut
 
 sub copy_data_in_text_mode {
-  my ($from_dba, $to_dba, $table_name, $query) = @_;
+  my ($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query) = @_;
 
   my $user = $to_dba->dbc->username;
   my $pass = $to_dba->dbc->password;
   my $host = $to_dba->dbc->host;
   my $port = $to_dba->dbc->port;
   my $dbname = $to_dba->dbc->dbname;
+  my $use_limit = 0;
+  my $start = $min_id;
+  my $step = 100000;
 
-  my $start = 0;
-  #my $step = 1000000;
-  my $step = 10000;
+  #If not using BETWEEN, revert back to LIMIT
+  if (!defined $index_name && !defined $min_id && !defined $max_id) {
+      $use_limit = 1;
+      $start = 0;
+  }
+
 
   while (1) {
-    my $sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
+    my $end = $start + $step - 1;
+    my $sth;
+    
+    if (!$use_limit) {
+	$sth = $from_dba->dbc->prepare($query." AND $index_name BETWEEN $start AND $end");
+    } else {
+	$sth = $from_dba->dbc->prepare($query." LIMIT $start, $step");
+    }
     $start += $step;
     $sth->execute();
     my $all_rows = $sth->fetchall_arrayref;
@@ -314,7 +366,7 @@ sub importAlignment_old {
     $sth->execute($dbname, $dbname, $mlss_id);
     $sth->finish();
 
-    $sql = "INSERT INTO genomic_align_tree SELECT genomic_align_tree.* FROM ?.genomic_align_tree LEFT JOIN ?.genomic_align_group ON (node_id=group_id) LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block WHERE genomic_align_block.method_link_species_set_id = ?\n";
+    $sql = "INSERT INTO genomic_align_tree SELECT genomic_align_tree.* FROM ?.genomic_align_tree LEFT JOIN ?.genomic_align_group USING (node_id) LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block WHERE genomic_align_block.method_link_species_set_id = ?\n";
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute($dbname, $dbname, $dbname, $dbname, $mlss_id);
     $sth->finish();
