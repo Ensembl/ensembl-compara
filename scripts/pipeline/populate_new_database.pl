@@ -588,8 +588,8 @@ sub copy_dna_dna_alignements {
     $pipe = "$mysqldump -w \"$where\" genomic_align | $mysql";
     system($pipe);
     print ".";
-    $where = "group_id >= ".
-        ($this_method_link_species_set->dbID * 10**10)." AND group_id < ".
+    $where = "node_id >= ".
+        ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $pipe = "$mysqldump -w \"$where\" genomic_align_group | $mysql";
     system($pipe);
