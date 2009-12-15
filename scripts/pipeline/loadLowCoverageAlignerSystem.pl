@@ -416,23 +416,22 @@ sub setup_pipeline() {
     my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
 
 
-    #ANALYSIS 1 - ImportAlignment
-    my $importAlignmentAnalysis = $self->createImportAlignmentAnalysis;
-
-    #ANALYSIS 2 - SetInternalIds (optional)
+    #ANALYSIS 1 - SetInternalIds (optional)
     my $setInternalIdsAnalysis;
     if ($self->{'set_internal_ids'}) {
 	$setInternalIdsAnalysis = $self->createSetInternalIdsAnalysis;
-	$ctrlRuleDBA->create_rule($importAlignmentAnalysis, $setInternalIdsAnalysis);
     } 
+
+    #ANALYSIS 2 - ImportAlignment
+    my $importAlignmentAnalysis = $self->createImportAlignmentAnalysis;
+    if ($self->{'set_internal_ids'}) {
+	$ctrlRuleDBA->create_rule($setInternalIdsAnalysis,$importAlignmentAnalysis);
+    }
 
     #ANALYSIS 3 - CreateLowCoverageJobs 
     my $lowCoverageJobsAnalysis = $self->createLowCoverageJobsAnalysis;
-    if ($self->{'set_internal_ids'}) {
-	$ctrlRuleDBA->create_rule($setInternalIdsAnalysis,$lowCoverageJobsAnalysis);
-    } else {
-	$ctrlRuleDBA->create_rule($importAlignmentAnalysis,$lowCoverageJobsAnalysis);
-    }
+    $ctrlRuleDBA->create_rule($importAlignmentAnalysis,$lowCoverageJobsAnalysis);
+
     #ANALYSIS 4 - LowCoverageGenomeAlignment
     my $lowCoverageAnalysis = $self->createLowCoverageAnalysis;
     $ctrlRuleDBA->create_rule($lowCoverageJobsAnalysis,$lowCoverageAnalysis);
