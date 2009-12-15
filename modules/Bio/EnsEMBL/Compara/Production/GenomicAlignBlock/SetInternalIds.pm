@@ -125,15 +125,31 @@ sub setInternalIds {
     } else {
 	throw ("Must define either method_link_species_set_id or method_link_type and genome_db_ids");
     }
+    
+    if (!defined $mlss_id) {
+	throw ("Unable to find method_link_species_set_id");
+    }
+
+    #For now, allow both methods but will need to change various load
+    #scripts eventually to pass in table names.
+    my @table_names;
+    if (defined $self->tables) {
+	@table_names = split ":", $self->tables;
+    } else {
+	#throw ("Must define table(s) to set the internal ids for\n");
+
+	#default values to allow previous scripts to work without changing
+	$table_names[0] = "genomic_align_block";
+	$table_names[1] = "genomic_align";
+	$table_names[2] = "genomic_align_group";
+	$table_names[3] = "genomic_align_tree";
+    }
 
     #Set AUTO_INCREMENT to start at the {mlss_id} * 10**10 + 1
     my $index = ($mlss_id * 10**10) + 1;
-    my $sql_gab = "ALTER TABLE genomic_align_block AUTO_INCREMENT=$index";
-    my $sql_ga = "ALTER TABLE genomic_align AUTO_INCREMENT=$index";
-    my $sql_gag = "ALTER TABLE genomic_align_group AUTO_INCREMENT=$index";
-    my $sql_gat = "ALTER TABLE genomic_align_tree AUTO_INCREMENT=$index";
-    
-    foreach my $sql ($sql_gab,$sql_ga,$sql_gag,$sql_gat) {
+
+    foreach my $table (@table_names) {
+	my $sql = "ALTER TABLE $table AUTO_INCREMENT=$index";
 	my $sth = $dba->dbc->prepare($sql);
 	$sth->execute();
 	$sth->finish;
@@ -165,6 +181,12 @@ sub genome_db_ids {
   return $self->{'_genome_db_ids'};
 }
 
+sub tables {
+  my $self = shift;
+  $self->{'_tables'} = shift if(@_);
+  return $self->{'_tables'};
+}
+
 
 ##########################################
 #
@@ -190,6 +212,9 @@ sub get_params {
   }
   if(defined($params->{'genome_db_ids'})) {
     $self->genome_db_ids($params->{'genome_db_ids'});
+  }
+  if(defined($params->{'tables'})) {
+    $self->tables($params->{'tables'});
   }
   return 1;
 }
