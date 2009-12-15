@@ -160,7 +160,7 @@ CREATE TABLE method_link_species_set (
 --   because we store top-level dnafrags only.
 
 CREATE TABLE dnafrag (
-  dnafrag_id                  int(10) unsigned NOT NULL auto_increment, # unique internal id
+  dnafrag_id                  bigint unsigned NOT NULL auto_increment, # unique internal id
   length                      int(11) DEFAULT '0' NOT NULL,
   name                        varchar(40) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned DEFAULT '0' NOT NULL, # FK genome_db.genome_db_id
@@ -212,7 +212,7 @@ CREATE TABLE genomic_align (
   genomic_align_id            bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   genomic_align_block_id      bigint unsigned NOT NULL, # FK genomic_align_block.genomic_align_block_id
   method_link_species_set_id  int(10) unsigned DEFAULT '0' NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
-  dnafrag_id                  int(10) unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
+  dnafrag_id                  bigint unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
   dnafrag_start               int(10) DEFAULT '0' NOT NULL,
   dnafrag_end                 int(10) DEFAULT '0' NOT NULL,
   dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
@@ -226,6 +226,7 @@ CREATE TABLE genomic_align (
 
   PRIMARY KEY genomic_align_id (genomic_align_id),
   KEY genomic_align_block_id (genomic_align_block_id),
+  KEY method_link_species_set_id (method_link_species_set_id),
   KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end)
 ) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci;
 
@@ -237,14 +238,13 @@ CREATE TABLE genomic_align (
 #
 
 CREATE TABLE genomic_align_group (
-  group_id                    bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
-  type                        varchar(40) NOT NULL,
+  node_id                    bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, groups genomic_align_ids
   genomic_align_id            bigint unsigned NOT NULL, # FK genomic_align.genomic_align_id
 
   FOREIGN KEY (genomic_align_id) REFERENCES genomic_align(genomic_align_id),
 
-  KEY group_id (group_id),
-  KEY genomic_align_id (genomic_align_id, type)
+  KEY node_id (node_id),
+  UNIQUE KEY genomic_align_id (genomic_align_id)
 ) COLLATE=latin1_swedish_ci;
 
 
@@ -268,8 +268,8 @@ CREATE TABLE genomic_align_tree (
   right_node_id               bigint(10) NOT NULL default '0',
   distance_to_parent          double NOT NULL default '1',
 
-  # genomic_align_group(group_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (node_id) REFERENCES genomic_align_group(group_id),
+  # genomic_align_group(node_id) is not a unique key. Some RDBMS may complain
+  # FOREIGN KEY (node_id) REFERENCES genomic_align_group(node_id),
 
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
@@ -306,7 +306,7 @@ CREATE TABLE synteny_region (
 
 CREATE TABLE dnafrag_region (
   synteny_region_id           int(10) unsigned DEFAULT '0' NOT NULL, # unique internal id
-  dnafrag_id                  int(10) unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
+  dnafrag_id                  bigint unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
   dnafrag_start               int(10) unsigned DEFAULT '0' NOT NULL,
   dnafrag_end                 int(10) unsigned DEFAULT '0' NOT NULL,
   dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
@@ -682,7 +682,7 @@ CREATE TABLE conservation_score (
 # Table structure for table 'constrained_element'
 CREATE TABLE constrained_element (
   constrained_element_id bigint(20) unsigned NOT NULL,
-  dnafrag_id int(12) unsigned NOT NULL,
+  dnafrag_id bigint unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
   dnafrag_end int(12) unsigned NOT NULL,
   dnafrag_strand int(2),
