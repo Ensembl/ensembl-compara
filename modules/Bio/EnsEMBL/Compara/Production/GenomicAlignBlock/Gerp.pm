@@ -126,8 +126,6 @@ sub fetch_input {
 
   my $gas = $gab->get_all_GenomicAligns;
 
-  #print "NUM GAS " . scalar(@$gas) . "\n";
-
   #only run gerp if there are more than 2 genomic aligns. Gerp requires more
   #than 2 sequences to be represented at a position
   if (scalar(@$gas) > 2) {
@@ -141,6 +139,7 @@ sub fetch_input {
 	  #use GenomicAlignTree 
 	  my $gata = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
 	  my $gat = $gata->fetch_by_GenomicAlignBlock($gab);
+
 	  foreach my $leaf (@{$gat->get_all_leaves}) {
 	      my $genomic_align = (sort {$a->dbID <=> $b->dbID} @{$leaf->genomic_align_group->get_all_GenomicAligns})[0];
 	      my $name = "_" . $genomic_align->genome_db->dbID . "_" .
@@ -462,14 +461,15 @@ sub _writeMultiFastaAlignment {
 }
 
 sub free_aligned_sequence {
-    my ($leaf) = @_;
+    my ($node) = @_;
 
-    return if (!$leaf->can("genomic_align_group"));
-
-    my $genomic_align_group = $leaf->genomic_align_group;
-
-    foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
-	undef($this_genomic_align->{'aligned_sequence'});
+    if (UNIVERSAL::isa($node, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+	my $genomic_align_group = $node->genomic_align_group;
+	foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+	    undef($this_genomic_align->{'aligned_sequence'});
+	}
+    } else {
+	undef($node->{'aligned_sequence'});
     }
 }
 
@@ -871,7 +871,7 @@ sub _parse_rates_file {
 
 sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
-    
+
     my $newick;
     if ($self->tree_analysis_data_id) {
 	my $analysis_data_adaptor = $self->{'comparaDBA'}->get_AnalysisDataAdaptor;
@@ -898,6 +898,36 @@ sub _build_tree_string {
     $newick =~ s/[\r\n]//g;
   
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+
+    #if the tree leaves are species names, need to convert these into genome_db_ids
+    my $genome_dbs = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all();
+    
+    my %leaf_name;
+    my %leaf_check;
+    foreach my $genome_db (@$genome_dbs) {
+	my $name = $genome_db->name;
+	$name =~ tr/ /_/;
+	$leaf_name{$name} = $genome_db->dbID;
+	if ($name ne "Ancestral_sequences") {
+	    $leaf_check{$genome_db->dbID} = 2;
+	} 
+    }  
+    foreach my $leaf (@{$tree->get_all_leaves}) {
+	#check have names rather than genome_db_ids
+	if ($leaf->name =~ /\D+/) {
+	    $leaf->name($leaf_name{$leaf->name});
+	} 
+	$leaf_check{$leaf->name}++;
+    }
+
+    #Check have one instance in the tree of each genome_db in the database
+    #Don't worry about having extra elements in the tree that aren't in the
+    #genome_db table because these will be removed later
+    foreach my $name (keys %leaf_check) {
+	if ($leaf_check{$name} == 2) {
+	    throw("Unable to find genome_db_id $name in tree\n");
+	}
+    }
     
     $tree = $self->_update_tree($tree, $genomic_aligns);
     
@@ -914,6 +944,7 @@ sub _build_tree_string {
     print TREE $tree_string;
     close TREE;
 
+    
     return $tree_string;
 }
 
