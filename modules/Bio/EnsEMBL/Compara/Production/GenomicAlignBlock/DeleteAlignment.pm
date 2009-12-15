@@ -108,21 +108,21 @@ sub deleteAlignment {
     my $self = shift;
 
     #delete genomic_align_tree
-    my $sql = "delete genomic_align_tree from genomic_align_tree left join genomic_align_group on (node_id=group_id) left join genomic_align using (genomic_align_id) left join genomic_align_block using (genomic_align_block_id) where genomic_align_block.method_link_species_set_id=?";
+    my $sql = "DELETE genomic_align_tree FROM genomic_align_tree LEFT JOIN genomic_align_group ON (node_id=group_id) LEFT JOIN genomic_align USING (genomic_align_id) WHERE method_link_species_set_id=?";
 
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute($self->method_link_species_set_id);
     $sth->finish();
 
     #delete genomic_align_group
-    $sql = "delete genomic_align_group from genomic_align_group left join genomic_align using (genomic_align_id) left join genomic_align_block using (genomic_align_block_id) where genomic_align_block.method_link_species_set_id=?";
+    $sql = "DELETE genomic_align_group FROM genomic_align_group LEFT JOIN genomic_align using (genomic_align_id) WHERE method_link_species_set_id=?";
 
     $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute($self->method_link_species_set_id);
     $sth->finish();
 
     #delete genomic_align
-    $sql = "delete genomic_align from genomic_align left join genomic_align_block using (genomic_align_block_id) where genomic_align_block.method_link_species_set_id=?";
+    $sql = "DELETE genomic_align FROM genomic_align WHERE method_link_species_set_id=?";
     $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute($self->method_link_species_set_id);
     $sth->finish();

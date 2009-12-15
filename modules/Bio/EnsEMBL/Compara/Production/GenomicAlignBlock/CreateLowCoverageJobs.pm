@@ -199,7 +199,7 @@ sub createLowCoverageGenomeAlignmentJobs
   my $dbname = $self->{'comparaDBA'}->dbc->dbname;
   my $analysis_id = $analysis->dbID;
 
-  my $sql = "select genomic_align_block_id from genomic_align_block gab left join genomic_align ga using (genomic_align_block_id) left join dnafrag using (dnafrag_id) where gab.method_link_species_set_id=? and genome_db_id <> 63 group by genomic_align_block_id;";
+  my $sql = "SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=? AND genome_db_id <> 63 GROUP BY genomic_align_block_id;";
 
   print "sql $sql " . $self->base_method_link_species_set_id . "\n";
 
