@@ -379,7 +379,8 @@ CREATE TABLE member (
   KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
-  KEY (gene_member_id)
+  KEY (gene_member_id),
+  UNIQUE member_location (member_id, chr_name, chr_start)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci;
 
 
@@ -520,7 +521,8 @@ CREATE TABLE peptide_align_feature (
 #  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 #  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
-  PRIMARY KEY (peptide_align_feature_id)
+  PRIMARY KEY (peptide_align_feature_id),
+  UNIQUE member (hmember_id, hit_rank) 
 
 #  KEY qmember_id  (qmember_id),
 #  KEY hmember_id  (hmember_id),
