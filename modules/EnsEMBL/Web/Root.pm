@@ -24,10 +24,11 @@ sub filters :lvalue { $_[0]->{'filters'}; }
 sub _parse_referer {
   my ($self, $uri) = @_;
   
+  $uri ||= $ENV{'HTTP_REFERER'}; 
+  $uri =~ s/^(https?:\/\/.*?)?\///i;
+  $uri =~ s/[;&]$//;
+  
   my ($url, $query_string) = split /\?/, $uri;
-  
-  $url =~ s/^(https?:\/\/.*?)?\///i;
-  
   my ($sp, $ot, $view, $subview) = split /\//, $url;
 
   my (@pairs) = split /[&;]/, $query_string;
@@ -71,7 +72,7 @@ sub _parse_referer {
     'ENSEMBL_ACTION'   => $view,
     'ENSEMBL_FUNCTION' => $subview,
     'params'           => $params,
-    'uri'              => $uri
+    'uri'              => "/$uri"
   };
 }
 
