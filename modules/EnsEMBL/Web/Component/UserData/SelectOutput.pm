@@ -35,7 +35,7 @@ sub content {
   my $html         = "<h2>$title</h2>";
   my $text         = "Please select the format you would like your output in:";
   my $species      = ';species=' . $object->param('species');
-  my $referer      = ';_referer=' . uri_escape($self->_parse_referer->{'uri'});
+  my $referer      = ';_referer=' . uri_escape($object->parent->{'uri'});
   
   $extra_param .= ';_time=' . $object->param('_time') if $object->param('_time');
   
