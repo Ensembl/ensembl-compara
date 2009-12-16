@@ -115,22 +115,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }).focus(function () {
       this.value = '';
     });
-    
-    if (Ensembl.ajax != 'enabled') {
-      $('a', this.elLk.links).click(function () {
-        var link = $(this).parent();
-        
-        if (!link.hasClass('active')) {
-          myself.elLk.links.removeClass('active');
-          link.addClass('active');
-          myself.getContent();
-        }
-        
-        link = null;
-        
-        return false;
-      });
-    }
   },
   
   show: function () {
@@ -174,34 +158,22 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   updatePage: function (diff, delayReload) {
     var myself = this;
     
-    if (Ensembl.ajax == 'enabled') {
-      $.ajax({
-        url: myself.elLk.form.attr('action'),
-        type: myself.elLk.form.attr('method'),
-        data: diff,
-        dataType: 'html',
-        success: function (html) {
-          if (html == 'SUCCESS') {
-            Ensembl.EventManager.trigger('queuePageReload', diff.config, !delayReload);
-          } else {
-            // TODO: show message on main page
-          }
-        },
-        error: function (e) {
-         // TODO: show message on main page
+    $.ajax({
+      url: myself.elLk.form.attr('action'),
+      type: myself.elLk.form.attr('method'),
+      data: diff,
+      dataType: 'html',
+      success: function (html) {
+        if (html == 'SUCCESS') {
+          Ensembl.EventManager.trigger('queuePageReload', diff.config, !delayReload);
+        } else {
+          // TODO: show message on main page
         }
-      });
-    } else {
-      var queryString = [];
-      var url = this.elLk.form.attr('action') + '?';
-      
-      for (var i in diff) {
-        queryString.push(i + '=' + diff[i]);
+      },
+      error: function (e) {
+       // TODO: show message on main page
       }
-      
-      window.open(url + queryString.join(';'), window.name.replace(/^cp_/, '')); // URL to update configuration
-      window.close();
-    }
+    });
   },
    
   getContent: function () {
