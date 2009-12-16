@@ -29,8 +29,7 @@ sub process {
   });
 
   $user_cookie->clear($self->r);
-
-  $object->redirect('/Account/Login');
+  $object->redirect($object->parent->{'uri'});
 }
 
 1;
