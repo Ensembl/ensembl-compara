@@ -72,7 +72,7 @@ sub content {
       link       => $associated_link
     });
     
-    if ($object->referer !~ /Regulation/) {
+    if ($object->parent->{'ENSEMBL_TYPE'} ne 'Regulation') {
       $self->add_entry({
         label_html => 'View Gene Regulation',
         link       => $gene_reg_link

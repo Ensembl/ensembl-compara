@@ -20,7 +20,7 @@ sub process {
     $record->save;
   }
  
-  $self->ajax_redirect($url, {'_referer' => $object->param('_referer')}); 
+  $self->ajax_redirect($url); 
 }
 
 1;

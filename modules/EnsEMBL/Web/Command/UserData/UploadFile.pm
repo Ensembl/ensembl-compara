@@ -46,7 +46,6 @@ sub process {
   else {
     $url .= '/UserData/SelectFile';
   }
-  $param->{'_referer'} = $object->param('_referer');
 
   $url = encode_entities($self->url($url, $param));
 

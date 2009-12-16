@@ -29,11 +29,7 @@ sub process {
     $type = 'Problem';
   }
 
-  my $param = {
-    '_referer' => $object->param('_referer'),
-  };
-
-  my $url = $self->url('/'.$interface->script_name.'/'.$type, $param);
+  my $url = $self->url('/'.$interface->script_name.'/'.$type);
   $self->ajax_redirect($url);
 }
 

@@ -14,7 +14,6 @@ sub new { return shift->SUPER::new( 'logins' => '?' ); }
 sub logins      :lvalue { $_[0]{'logins'}; }
 sub blast       :lvalue { $_[0]{'blast'}; }
 sub biomart     :lvalue { $_[0]{'biomart'}; }
-sub referer     :lvalue { $_[0]{'referer'}; } # Needed by CloseCP
 sub mirror_icon :lvalue { $_[0]{'mirror_icon'}; }
 
 sub render {
@@ -24,7 +23,6 @@ sub render {
   my $dir = $species_defs->species_path;
   $dir = '' if $dir !~ /_/;
   
-  my $url  = uri_escape($ENV{'REQUEST_URI'});
   my $html = '<div class="print_hide">';
 
   my $blast_dir;
@@ -39,13 +37,13 @@ sub render {
   if ($self->logins) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
       $html .= qq{
-        <a style="display:none" href="$dir/Account/Links?_referer=$url" class="modal_link">Account</a> &nbsp;|&nbsp;
-        <a href="$dir/Account/Logout?_referer=$url">Logout</a> &nbsp;|&nbsp;
+        <a style="display:none" href="$dir/Account/Links" class="modal_link">Account</a> &nbsp;|&nbsp;
+        <a href="$dir/Account/Logout">Logout</a> &nbsp;|&nbsp;
       };
     } else {
       $html .= qq{
-        <a style="display:none" href="$dir/Account/Login?_referer=$url" class="modal_link">Login</a> / 
-        <a style="display:none" href="$dir/Account/User/Add?_referer=$url" class="modal_link">Register</a> &nbsp;|&nbsp;
+        <a style="display:none" href="$dir/Account/Login" class="modal_link">Login</a> / 
+        <a style="display:none" href="$dir/Account/User/Add" class="modal_link">Register</a> &nbsp;|&nbsp;
       };
     }
   }

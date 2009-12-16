@@ -31,8 +31,6 @@ sub content {
   ## Control panel fixes
   my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
-  my $referer = '_referer='.$object->param('_referer');
-  
   my @groups = $user->find_nonadmin_groups;
 
   if (@groups) {
@@ -57,12 +55,12 @@ sub content {
       my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
       $row->{'admin'} = $creator->name;
       if ($object->param('id') && $object->param('id') == $group->id) {
-        $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?$referer" class="modal_link">Hide Details</a>);
+        $row->{'details'} = qq(<a href="$dir/Account/MemberGroups" class="modal_link">Hide Details</a>);
       }
       else {
-        $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Details</a>);
+        $row->{'details'} = qq(<a href="$dir/Account/MemberGroups?id=).$group->id.qq(" class="modal_link">Show Details</a>);
       }
-      $row->{'leave'} = qq(<a href="$dir/Account/Unsubscribe?id=).$group->id.qq(;$referer" class="modal_link">Unsubscribe</a>);;
+      $row->{'leave'} = qq(<a href="$dir/Account/Unsubscribe?id=).$group->id.qq(" class="modal_link">Unsubscribe</a>);;
       $table->add_row($row);
     }
     $html .= $table->render;

@@ -9,7 +9,6 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $url = $object->param('_referer') || '/Account/Login';
 
   ## setting a (blank) expired cookie deletes the current one
   my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
@@ -31,7 +30,7 @@ sub process {
 
   $user_cookie->clear($self->r);
 
-  $object->redirect($url);
+  $object->redirect('/Account/Login');
 }
 
 1;

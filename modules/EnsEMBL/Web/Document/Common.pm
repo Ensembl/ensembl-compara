@@ -104,13 +104,11 @@ sub _common_HTML {
   $self->tools->blast             = $self->species_defs->ENSEMBL_BLAST_ENABLED;
   $self->tools->biomart           = $self->species_defs->ENSEMBL_MART_ENABLED;
   $self->tools->mirror_icon       = $style->{'MIRROR_ICON'};
+  
   if ($self->{'input'}) {
-    $self->tools->referer           = $self->{'input'}->param('_referer');
     $self->content->filter_module   = $self->{'input'}->param('filter_module');
     $self->content->filter_code     = $self->{'input'}->param('filter_code');
-  }
-  else {
-    $self->tools->referer         = undef;
+  } else {
     $self->content->filter_module = undef;
     $self->content->filter_code   = undef;
   }

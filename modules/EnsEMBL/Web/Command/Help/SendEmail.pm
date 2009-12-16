@@ -5,8 +5,6 @@ package EnsEMBL::Web::Command::Help::SendEmail;
 use strict;
 use warnings;
 
-use URI::Escape qw(uri_unescape);
-
 use EnsEMBL::Web::Mailer;
 use EnsEMBL::Web::RegObj;
 
@@ -49,7 +47,7 @@ sub process {
       my @mail_attributes = ();
       my @T = localtime();
       my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
-      my $url = $species_defs->ENSEMBL_BASE_URL . uri_unescape($object->param('_referer'));
+      my $url = $species_defs->ENSEMBL_BASE_URL;
       $url = undef if $url =~ m#Help/SendEmail#; ## Compensate for auto-filling of _referer!
       push @mail_attributes, (
         [ 'Date',         $date ],

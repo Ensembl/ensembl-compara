@@ -14,7 +14,6 @@ sub process {
   my $url = $object->species_path($object->data_species).'/UserData/PreviewConvert';
   my $param;
   ## Set these separately, or they cause an error if undef
-  $param->{'_referer'} = $object->param('_referer');
   $param->{'_time'} = $object->param('_time');
   my @ids = ($object->param('convert_file'));
   my ($old_name, $old_version, $new_name, $new_version) = split(':', $object->param('conversion'));

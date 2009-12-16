@@ -30,13 +30,7 @@ sub script_name {
 
 sub ajax_redirect {
   my ($self, $url, $param) = @_;
-  $self->page->ajax_redirect($self->url($url, $self->ajax_params($param)));
-}
-
-sub ajax_params {
-  my ($self, $param) = @_;
-  $param->{'_referer'} ||= $self->object->param('_referer') if $self->object->param('_referer');
-  return $param;
+  $self->page->ajax_redirect($self->url($url, $param));
 }
 
 sub interface {

@@ -24,8 +24,6 @@ sub content {
   my $object = $self->object;
   my $sd = $object->species_defs;
 
-  my $referer = '_referer=' . uri_escape($object->param('_referer'));
-
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my @data; 
   
@@ -119,16 +117,16 @@ sub content {
           $name .= '</strong><br />'.$file->format." file for <em>$species</em>";
           $date = $file->modified_at || $file->created_at;
           $date = $self->pretty_date($date);
-          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s;%s" class="%s"%s>Rename</a>', $dir, $file->id, $referer, $delete_class, $title);
-          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s;%s" class="modal_link">Share</a>', $dir, $file->id, $referer);
-          $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s;%s" class="%s"%s>Delete</a>', $dir, $file->id, $referer, $delete_class, $title);
+          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s" class="%s"%s>Rename</a>', $dir, $file->id, $delete_class, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s" class="modal_link">Share</a>', $dir, $file->id);
+          $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s" class="%s"%s>Delete</a>', $dir, $file->id, $delete_class, $title);
         } elsif (ref ($file) =~ /DAS/) {
           $type = 'DAS';
           $name = $file->label;
           $date = '-';
           $share = ''; ## No point in sharing DAS?
-          $rename = ''; #sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="modal_link">Rename</a>', $dir, $file->id, $referer);
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s;%s" class="modal_link">Delete</a>', $dir, $file->id, $referer);
+          $rename = ''; #sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s" class="modal_link">Rename</a>', $dir, $file->id);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=das;id=%s" class="modal_link">Delete</a>', $dir, $file->id);
         } elsif (ref ($file) =~ /URL/) {
           $type = 'URL';
           $name = '<strong>';
@@ -141,9 +139,9 @@ sub content {
           }
           $name .= '</strong><br />'.$file->url." (<em>$species</em>)";
           $date = '-';
-          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s;%s" class="%s">Rename</a>', $dir, $file->id, $referer, $delete_class);
-          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s;%s" class="modal_link">Share</a>', $dir, $file->id, $referer);
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s;%s" class="%s">Delete</a>', $dir, $file->id, $referer, $delete_class);
+          $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=urls;id=%s" class="%s">Rename</a>', $dir, $file->id, $delete_class);
+          $share = sprintf('<a href="%s/UserData/SelectShare?id=%s" class="modal_link">Share</a>', $dir, $file->id);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s" class="%s">Delete</a>', $dir, $file->id, $delete_class);
         }
         
         if ($sd->ENSEMBL_LOGINS) {
@@ -153,7 +151,7 @@ sub content {
         }
       } else {
       ## TEMP DATA STORED IN SESSION --------------------------------------------
-        my $save = sprintf('<a href="%s/Account/Login?%s" class="modal_link">Log in to save</a>', $dir, $referer);
+        my $save = sprintf('<a href="%s/Account/Login" class="modal_link">Log in to save</a>', $dir);
         ($species = $file->{'species'}) =~ s/_/&nbsp;/;
         
         if (ref ($file) =~ /DASConfig/i) {
@@ -161,10 +159,10 @@ sub content {
           $name = $file->label;
           
           if ($sd->ENSEMBL_LOGINS && $user) {
-            $save = sprintf('<a href="%s/UserData/SaveRemote?dsn=%s;%s" class="modal_link">Save to account</a>', $dir, $file->logic_name, $referer);
+            $save = sprintf('<a href="%s/UserData/SaveRemote?dsn=%s" class="modal_link">Save to account</a>', $dir, $file->logic_name);
           }
           
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s;%s" class="modal_link">Delete</a>', $dir, $file->logic_name, $referer);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?logic_name=%s" class="modal_link">Delete</a>', $dir, $file->logic_name);
         } elsif ($file->{'url'}) {
           $type = 'URL';
           $name = '<strong>';
@@ -178,12 +176,12 @@ sub content {
           $name .= "</strong><br />$file->{'url'} (<em>$species</em>)";
           
           if ($sd->ENSEMBL_LOGINS && $user) {
-            $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s;%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
+            $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'});
           }
-          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $referer, $delete_class, $title);
-          $share = sprintf('<a href="%s/UserData/SelectShare?code=%s;species=%s;%s" class="modal_link">Share</a>', $dir, $file->{'code'}, $file->{'species'}, $referer);
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $delete_class, $title);
+          $share = sprintf('<a href="%s/UserData/SelectShare?code=%s;species=%s" class="modal_link">Share</a>', $dir, $file->{'code'}, $file->{'species'});
           
-          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s;%s" class="%s">Delete</a>', $dir, $file->{'code'}, $referer, $delete_class);
+          $delete = sprintf('<a href="%s/UserData/DeleteRemote?type=url;code=%s" class="%s">Delete</a>', $dir, $file->{'code'}, $delete_class);
         } else {
           $type = 'Upload';
           $name = '<strong>';
@@ -200,11 +198,11 @@ sub content {
           if ($file->{'format'} && ( $file->{'format'} eq "ID" || $file->{'format'} eq "CONSEQUENCE") ) { 
             $save = '';
           } else {
-            $save = qq{<a href="$dir/UserData/SaveUpload?$extra;$referer" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
+            $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
           }
-          $share = sprintf('<a href="%s/UserData/SelectShare?%s;%s" class="modal_link">Share</a>', $dir, $extra, $referer);
-          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s;%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $referer, $delete_class, $title);
-          $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra;$referer" class="$delete_class"$title>Delete</a></p>};
+          $share = sprintf('<a href="%s/UserData/SelectShare?%s" class="modal_link">Share</a>', $dir, $extra);
+          $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $delete_class, $title);
+          $delete = qq{<a href="$dir/UserData/DeleteUpload?$extra" class="$delete_class"$title>Delete</a></p>};
           
           # Remove save and delete links if the data does not belong to the current user
           if ($file->{'analyses'} =~ /^(session|user)_(\d+)_/) {

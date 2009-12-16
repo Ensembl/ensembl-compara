@@ -6,7 +6,6 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 use HTTP::Request;
-use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Document::Renderer::Excel;
@@ -399,7 +398,7 @@ sub _caption_with_helplink {
   my $id = $self->{'help'};
   my $html = '<h2>';
   if ( $id ) {
-    $html .= sprintf(' <a href="/Help/View?id=%s;_referer=%s" class="popup help-header" title="Click for Help">', encode_entities($id), uri_escape($ENV{'REQUEST_URI'}) );
+    $html .= sprintf(' <a href="/Help/View?id=%s" class="popup help-header" title="Click for Help">', encode_entities($id));
   }
   $html .= $self->{'raw_caption'} ? $self->{'caption'} : encode_entities($self->{caption});
   if ( $id ) {

@@ -36,7 +36,6 @@ sub content {
     my $dir = $object->species_path;
     $dir = '' if $dir !~ /_/;
     
-    my $referer = ';_referer=' . $object->param('_referer');
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
     $html .= '<p><strong>Group created by</strong>: ' . $creator->name;
@@ -54,9 +53,7 @@ sub content {
       foreach my $bookmark ($group->bookmarks) {
         my $row = {};
 
-        $row->{'name'} = sprintf(qq(<a href="%s/Account/UseBookmark?owner_type=group;id=%s%s" title="%s">%s</a>),
-                        $dir, $bookmark->id, $referer, $bookmark->url, $bookmark->name);
-
+        $row->{'name'} = sprintf(qq(<a href="%s/Account/UseBookmark?owner_type=group;id=%s" title="%s">%s</a>), $dir, $bookmark->id, $bookmark->url, $bookmark->name);
         $row->{'desc'} = $bookmark->description || '&nbsp;';
 
         $table->add_row($row);
@@ -66,60 +63,6 @@ sub content {
     } else {
       $html .= '<p>No shared bookmarks</p>';
     }
-
-=pod
-    $html .= '<h3>Configurations</h3>';
-    if ($group->configurations) {
-
-      my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
-
-      $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '30%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '70%', 'align' => 'left' },
-      );
-
-      foreach my $config ($group->configurations) {
-        my $row = {};
-        
-        $row->{'name'} = sprintf(qq(<a href="%s/Account/UseConfig?owner_type=group;id=%s%s" class="modal_link">%s</a>),
-                        $dir, $config->id, $referer, $config->name);
-
-        $row->{'desc'} = $config->description || '&nbsp;';
-
-        $table->add_row($row);
-      }
-      $html .= $table->render;
-    }
-    else {
-      $html .= '<p>No shared configurations</p>';
-    }
-
-    $html .= '<h3>Annotations</h3>';
-    if ($group->annotations) {
-
-      my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
-
-      $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',    'width' => '30%', 'align' => 'left' },
-        { 'key' => 'title',      'title' => 'Title',  'width' => '70%', 'align' => 'left' },
-      );
-
-      foreach my $note ($group->annotations) {
-        my $row = {};
-
-        $row->{'name'} = sprintf(qq(<a href="/Gene/Summary?g=%s%s">%s</a>),
-                        $note->stable_id, $referer, $note->stable_id);
-
-        $row->{'title'} = $note->title || '&nbsp;';
-
-        $table->add_row($row);
-      }
-      $html .= $table->render;
-    }
-    else {
-      $html .= '<p>No shared annotations</p>';
-    }
-=cut
   }
 
   return $html;

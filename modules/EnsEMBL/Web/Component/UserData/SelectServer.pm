@@ -22,11 +22,9 @@ sub content {
   my $object = $self->object;
 
   my $current_species = $object->species_path($object->data_species);
-  my $referer = '_referer='.$self->object->param('_referer');
-
   my $das_link    = qq(<a href="/info/docs/das/index.html">Distributed Annotation System</a>);
-  my $url_link    = qq(<a href="$current_species/UserData/AttachURL?$referer" class="modal_link">URL</a>);
-  my $upload_link = qq(<a href="$current_species/UserData/Upload?$referer" class="modal_link">upload</a>);
+  my $url_link    = qq(<a href="$current_species/UserData/AttachURL" class="modal_link">URL</a>);
+  my $upload_link = qq(<a href="$current_species/UserData/Upload" class="modal_link">upload</a>);
   my $action_url  = "$current_species/UserData/CheckServer";
 
   my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE; 

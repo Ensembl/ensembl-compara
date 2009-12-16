@@ -699,7 +699,6 @@ sub format_consequence_data {
           'type'              => 'Location',
           'action'            => 'View',
           'r'                 =>  $url_location,
-          '_referer'          => undef,
           'contigviewbottom'  => 'variation_feature_variation=normal',
         });
 
@@ -708,7 +707,6 @@ sub format_consequence_data {
           'type'      => 'Transcript',
           'action'    => 'Population',
           't'         =>  $transcript,
-          '_referer'  => undef,
         });
 
         my $translation_position = "N/A";
@@ -750,7 +748,6 @@ sub format_consequence_data {
               'type'      => 'Variation',
               'action'    => 'Summary',
               'v'         =>  $snp_id,
-              '_referer'  =>  undef,
             });
             $snp_string = qq(<a href="$snp_url">$snp_id</a>);
           }

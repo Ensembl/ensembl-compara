@@ -29,7 +29,6 @@ sub process {
     }
   }
   $new_param->{'result'} = \@results;
-  $new_param->{'_referer'} = $object->param('_referer');
 
   $self->ajax_redirect('/Help/Results', $new_param);
 }

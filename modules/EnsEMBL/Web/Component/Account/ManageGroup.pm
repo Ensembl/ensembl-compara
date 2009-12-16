@@ -29,9 +29,6 @@ sub content {
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
 
-  ## Control panel fixes
-  my $referer = '_referer='.$self->object->param('_referer');
-
   return '' unless $object->param('id') && int($object->param('id'));
  
   my $ok_id = $user->is_administrator_of($object->param('id')) ? $object->param('id') : undef;
@@ -83,31 +80,31 @@ sub content {
         }
         my ($remove, $promote);
         if ($m->id == $user->id) {
-          $remove = qq(<a href="/Account/Unsubscribe?id=$ok_id;$referer" class="modal_link">Unsubscribe</a> (N.B. You will no longer have any access to this group!));
+          $remove = qq(<a href="/Account/Unsubscribe?id=$ok_id" class="modal_link">Unsubscribe</a> (N.B. You will no longer have any access to this group!));
         }
         else {
           if ($m->member_status eq 'inactive') {
-            $remove = sprintf(qq(<a href="/Account/RemoveMember?id=$ok_id;user_id=%s;$referer" class="modal_link">Remove from group</a>), $m->user_id);
+            $remove = sprintf(qq(<a href="/Account/RemoveMember?id=$ok_id;user_id=%s" class="modal_link">Remove from group</a>), $m->user_id);
           }
           else { 
-            $remove = sprintf(qq(<a href="/Account/ChangeStatus?id=$ok_id;new_status=inactive;user_id=%s;$referer" class="modal_link">Deactivate membership</a>), $m->user_id);
+            $remove = sprintf(qq(<a href="/Account/ChangeStatus?id=$ok_id;new_status=inactive;user_id=%s" class="modal_link">Deactivate membership</a>), $m->user_id);
           }
         }
         if ($status eq 'Administrator') {
-          $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=member;user_id=%s;$referer" class="modal_link">Demote to standard member</a>), $m->user_id);
+          $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=member;user_id=%s" class="modal_link">Demote to standard member</a>), $m->user_id);
         }
         elsif ($m->member_status ne 'active') {
-          $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=administrator;user_id=%s;$referer" class="modal_link">Promote to administrator</a>), $m->user_id);
+          $promote = sprintf(qq(<a href="/Account/ChangeLevel?id=$ok_id;new_level=administrator;user_id=%s" class="modal_link">Promote to administrator</a>), $m->user_id);
         }
         $table->add_row({'name' => $m->name, 'status' => $status, 'remove' => $remove, 'promote' => $promote});
         #$table->add_row({'name' => 'name', 'status' => $status, 'remove' => $remove, 'promote' => $promote});
       }
       $html .= $table->render;
       if ($show_all) {
-        $html .= qq(<p><a href="/Account/ManageGroup?id=$ok_id;$referer" class="modal_link">Hide non-active members</a> (if any)</p>);
+        $html .= qq(<p><a href="/Account/ManageGroup?id=$ok_id" class="modal_link">Hide non-active members</a> (if any)</p>);
       }
       elsif ($inactive) {
-        $html .= qq(<p><a href="/Account/ManageGroup?id=$ok_id;show_all=yes;$referer" class="modal_link">Show $inactive non-active members</a></p>);
+        $html .= qq(<p><a href="/Account/ManageGroup?id=$ok_id;show_all=yes" class="modal_link">Show $inactive non-active members</a></p>);
       }
     }
     else {
@@ -128,7 +125,7 @@ sub content {
 
       foreach my $invitation (@invites) {
         $table->add_row({'email' => $invitation->email, 
-          'remove' => qq(<a href="/Account/RemoveInvitation?id=).$invitation->id.';group_id='.$group->id.qq(;$referer" class="modal_link">Cancel invitation</a>)});
+          'remove' => qq(<a href="/Account/RemoveInvitation?id=).$invitation->id.';group_id='.$group->id.qq(" class="modal_link">Cancel invitation</a>)});
       }
       $html .= $table->render;
     }
@@ -146,7 +143,6 @@ sub content {
                       'notes' => 'Multiple email addresses should be separated by commas');
 
     $form->add_element(type => 'Hidden', name => 'id', value => $group->id);
-    $form->add_element(type => 'Hidden', name => '_referer', value => $object->param('_referer'));
     $form->add_element(type => 'Submit', name => 'submit', value => 'Send');
 
     $html .= $form->render;

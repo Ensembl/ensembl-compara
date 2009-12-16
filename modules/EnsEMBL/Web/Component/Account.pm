@@ -4,8 +4,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use URI::Escape qw(uri_escape);
-
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Proxy::Object;
@@ -16,22 +14,19 @@ use base qw(EnsEMBL::Web::Component);
 sub edit_link {
   my ($self, $module, $id, $text) = @_;
   $text = 'Edit' if !$text;
-  return sprintf(qq(<a class="modal_link" href="/Account/%s/Edit?id=%s;_referer=%s">%s</a>), 
-          $module, $id, uri_escape($self->object->param('_referer')), $text);
+  return sprintf qq(<a class="modal_link" href="/Account/%s/Edit?id=%s">%s</a>), $module, $id, $text;
 } 
 
 sub delete_link {
   my ($self, $module, $id, $text) = @_;
   $text = 'Delete' if !$text;
-  return sprintf(qq(<a class="modal_link" href="/Account/%s/Delete?id=%s;_referer=%s">%s</a>), 
-          $module, $id, uri_escape($self->object->param('_referer')), $text);
+  return sprintf qq(<a class="modal_link" href="/Account/%s/Delete?id=%s">%s</a>), $module, $id, $text;
 } 
 
 
 sub share_link {
   my ($self, $call, $id) = @_;
-  return sprintf(qq(<a class="modal_link" href="/Account/SelectGroup?id=%s;type=%s;_referer=%s">Share</a>), 
-          $id, $call, uri_escape($self->object->param('_referer')));
+  return sprintf qq(<a class="modal_link" href="/Account/SelectGroup?id=%s;type=%s">Share</a>), $id, $call;
 } 
 
 sub dedupe {

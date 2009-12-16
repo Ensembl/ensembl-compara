@@ -31,7 +31,6 @@ sub content {
   ## Control panel fixes
   my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
-  my $referer = ';_referer='.$object->param('_referer');
 
   my @notes = $user->annotations;
   my $has_notes = 0;
@@ -129,9 +128,7 @@ sub content {
 
       my @group_links;
       foreach my $group (@{$group_notes{$note_id}{'groups'}}) {
-        push @group_links, 
-          sprintf(qq(<a href="%s/Account/MemberGroups?id=%s%s" class="modal_link">%s</a>), 
-            $dir, $group->id, $referer, $group->name);
+        push @group_links, sprintf qq(<a href="%s/Account/MemberGroups?id=%s" class="modal_link">%s</a>), $dir, $group->id, $group->name;
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);

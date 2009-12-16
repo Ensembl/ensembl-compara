@@ -62,7 +62,6 @@ sub content {
   $form->add_element('type' => 'Password', 'name' => 'new_password_1', 'label' => 'New password', 'required' => 'yes');
   $form->add_element('type' => 'Password', 'name' => 'new_password_2', 'label' => 'Confirm new password', 'required' => 'yes');
   $form->add_element('type' => 'Submit',   'name' => 'submit',   'value' => 'Save', 'class' => 'modal_link');
-  $form->add_element('type' => 'Hidden',   'name' => '_referer', 'value' => $object->param('_referer'));
 
   return $form->render;
 }

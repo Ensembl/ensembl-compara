@@ -85,17 +85,8 @@ sub redirect {
   my $self = shift;
   my $url = $self->object->species_path . $self->get_redirect;
   my @ok_params;
-  if ($url && ($url !~ /_referer/ || $url !~ /x_directed_with/)) {
-    ## Automatically add in _referer and x_directed_with, if not present
-    foreach my $p ($self->object->input_param) {
-      next unless $p eq '_referer' || $p eq 'x_directed_with';
-      push @ok_params, $p.'='.$self->object->param($p);
-    }
-    if (@ok_params) {
-      $url .= ($url=~/\?/?';':'?').join(';', @ok_params);
-    }
-  }
-  else {
+  
+  if (!$url) {
     $url = '/'.$self->type.'/'.$self->action;
     foreach my $p ($self->object->input_param) {
       push @ok_params, $p.'='.$self->object->param($p);

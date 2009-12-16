@@ -149,7 +149,7 @@ sub handler {
     _apache_handle => $r,
     _core_objects  => $core_objects,
     _databases     => $db_connection,
-    _parent        => $controller->_parse_referer($input->param('_referer') || $ENV{'HTTP_REFERER'})
+    _parent        => $controller->_parse_referer
   });
   
   if ($factory->has_fatal_problem) {

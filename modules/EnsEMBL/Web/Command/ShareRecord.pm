@@ -15,9 +15,7 @@ sub process {
   my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
 
   my $url = $object->species_path($object->data_species) . '/';
-  my $param = {
-    '_referer'  => $object->param('_referer'),
-  };
+  my $param = {};
 
   my $group = EnsEMBL::Web::Data::Group->new($object->param('webgroup_id'));
   my @ids = ($object->param('id'));

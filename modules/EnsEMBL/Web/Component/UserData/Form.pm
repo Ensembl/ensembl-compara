@@ -25,7 +25,6 @@ sub content {
   my $form = EnsEMBL::Web::Form->new('', '', 'post');
 
   ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element( 'type' => 'Submit', 'value' => 'Next');
 
   return $form->render;

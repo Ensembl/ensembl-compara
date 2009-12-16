@@ -307,7 +307,7 @@ sub update_configuration {
         $r->content_type('text/plain');
         print 'SUCCESS';
       } else {
-        $input->redirect($input->param('_') eq 'close' ? $session->get_species_defs->ENSEMBL_BASE_URL . $input->param('_referer') : $input->param('_'));
+        $input->redirect; # refreshes the page
       }
       
       return 1;

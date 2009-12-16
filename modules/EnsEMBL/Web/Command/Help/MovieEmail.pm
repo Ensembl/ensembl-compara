@@ -5,8 +5,6 @@ package EnsEMBL::Web::Command::Help::MovieEmail;
 use strict;
 use warnings;
 
-use URI::Escape qw(uri_unescape);
-
 use EnsEMBL::Web::Mailer;
 use EnsEMBL::Web::RegObj;
 
@@ -40,7 +38,6 @@ sub process {
     my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d", $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
     my $url = 'http://'.$species_defs->ENSEMBL_SERVERNAME;
     $url .= ':'.$species_defs->ENSEMBL_PORT if $species_defs->ENSEMBL_PORT != '80';
-    $url .= uri_unescape($object->param('_referer'));
     $url = undef if $url =~ m#Help/SendEmail#; ## Compensate for auto-filling of _referer!
     push @mail_attributes, (
       [ 'Date',         $date ],

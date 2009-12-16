@@ -53,10 +53,10 @@ sub user_populate_tree {
     my $species = $object->species;
     $species = '' if $species !~ /_/;
     $species = $object->species_defs->ENSEMBL_PRIMARY_SPECIES unless $species;
-    my $referer = '_referer='.$object->param('_referer');
+    
     $settings_menu->append(
       $self->create_node( 'UserData', "Custom data ([[counts::userdata]])",
-        [], { 'availability' => 1, 'url' => $object->species_path($species).'/UserData/ManageData?'.$referer, 'raw' => 1 },
+        [], { 'availability' => 1, 'url' => $object->species_path($species).'/UserData/ManageData', 'raw' => 1 },
       )
     );
 

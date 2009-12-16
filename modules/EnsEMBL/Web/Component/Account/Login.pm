@@ -28,16 +28,14 @@ sub content {
   ## Control panel fixes
   my $dir = $object->species_path;
   
-  my $referer = '_referer=' . $object->param('_referer');
   my $form = EnsEMBL::Web::Form->new( 'login', "$dir/Account/SetCookie", 'post' );
-  my $reg_url = $self->url("$dir/Account/User/Add?$referer");
-  my $pwd_url = $self->url("$dir/Account/LostPassword?$referer");
+  my $reg_url = $self->url("$dir/Account/User/Add");
+  my $pwd_url = $self->url("$dir/Account/LostPassword");
   
   $form->add_element('type'  => 'Email',    'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Password', 'name'  => 'password', 'label' => 'Password', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden',   'name'  => 'url', 'value' => $object->param('url'));
   $form->add_element('type'  => 'Hidden',   'name'  => 'popup', 'value' => $object->param('popup'));
-  $form->add_element('type'  => 'Hidden',   'name'  => '_referer', 'value' => $object->param('_referer'));
   $form->add_element('type'  => 'Submit',   'name'  => 'submit', 'value' => 'Log in', 'class'=>'cp-refresh');
   $form->add_element('type'  => 'Information',
                      'value' => qq(<p><a href="$reg_url" class="modal_link">Register</a>

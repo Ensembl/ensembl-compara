@@ -28,8 +28,8 @@ sub content {
     map { ($_ =~ /^\d+$/) ? "share_ref=000000$_-". checksum($_) : "share_ref=$_" } @shares
   );
 
-  my $url = $self->object->species_defs->ENSEMBL_BASE_URL . $self->object->param('_referer');
-  $url .= $self->object->param('_referer') =~ /\?/ ? ';' : '?' unless $url =~ /;$/;
+  my $url = $self->object->species_defs->ENSEMBL_BASE_URL;
+  $url .= $url =~ /\?/ ? ';' : '?' unless $url =~ /;$/;
   $url .= $share_ref;
 
   my $html = qq(<p class="space-below">To share this data, use the URL:</p>

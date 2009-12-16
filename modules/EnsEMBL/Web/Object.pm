@@ -21,7 +21,6 @@ sub availability      { return {}; }
 sub can_export        { return 0; }
 sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the underlying Ensembl object wrapped by the web object
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
-sub referer           { return $_[0]->param('ref') || $ENV{'HTTP_REFERER'}; }
 
 sub count_alignments {
   my $self = shift;

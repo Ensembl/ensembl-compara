@@ -13,8 +13,6 @@ sub process {
   my $object = $self->object;
   my $url = $object->species_path($object->data_species).'/UserData/';
   my $param;
-  ## Set these separately, or they cause an error if undef
-  $param->{'_referer'} = $object->param('_referer');
 
   if (my $group_id = $object->param('webgroup_id')) { ## Share with group
     ## Check if it is already shared

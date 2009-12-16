@@ -30,7 +30,6 @@ sub content {
   ## Control panel fixes
   my $dir = $self->object->site_path;
   $dir = '' if $dir !~ /_/;
-  my $referer = '_referer='.$self->object->param('_referer');
   
   my @groups = $user->find_administratable_groups;
 
@@ -54,18 +53,18 @@ sub content {
       my $info = '<strong>'.$group->name.'</strong>';
       $info .= '<br />'.$group->blurb if $group->blurb;
       $row->{'name'} = $info;
-      $row->{'edit'} = qq(<a href="$dir/Account/Group?id=).$group->id.qq(;dataview=edit;$referer" class="modal_link">Edit Name/Description</a>);
+      $row->{'edit'} = qq(<a href="$dir/Account/Group?id=).$group->id.qq(;dataview=edit" class="modal_link">Edit Name/Description</a>);
 
-      $row->{'members'} = qq(<a href="$dir/Account/ManageGroup?id=).$group->id.qq(;$referer" class="modal_link">Manage Member List</a>);
+      $row->{'members'} = qq(<a href="$dir/Account/ManageGroup?id=).$group->id.qq(" class="modal_link">Manage Member List</a>);
   
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?$referer" class="modal_link">Hide Shared Settings</a>);
+        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups" class="modal_link">Hide Shared Settings</a>);
       }
       else {
-        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?id=).$group->id.qq(;$referer" class="modal_link">Show Shared Settings</a>);
+        $row->{'details'} = qq(<a href="$dir/Account/AdminGroups?id=).$group->id.qq(" class="modal_link">Show Shared Settings</a>);
       }
 
-      $row->{'delete'} = qq(<a href="$dir/Account/Group?id=).$group->id.qq(;dataview=confirm_delete;$referer" class="modal_link">Delete Group</a>);
+      $row->{'delete'} = qq(<a href="$dir/Account/Group?id=).$group->id.qq(;dataview=confirm_delete" class="modal_link">Delete Group</a>);
       $table->add_row($row);
     }
     $html .= $table->render;

@@ -26,14 +26,9 @@ sub content {
 
   my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $sitename = $self->site_name;
-
-  ## Control panel fixes
-  my $referer = '_referer='.$self->object->param('_referer');
-  
   my @groups = $user->find_administratable_groups;
 
   if (@groups) {
-
     $html .= qq(<h3>Your groups</h3>);
 
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
@@ -52,18 +47,18 @@ sub content {
       my $info = '<strong>'.$group->name.'</strong>';
       $info .= '<br />'.$group->blurb if $group->blurb;
       $row->{'name'} = $info;
-      $row->{'edit'} = qq(<a href="/Account/Group/Edit?id=).$group->id.qq(;$referer" class="modal_link">Edit Name/Description</a>);
+      $row->{'edit'} = qq(<a href="/Account/Group/Edit?id=).$group->id.qq(" class="modal_link">Edit Name/Description</a>);
 
-      $row->{'members'} = qq(<a href="/Account/ManageGroup?id=).$group->id.qq(;$referer" class="modal_link">Manage Member List</a>);
+      $row->{'members'} = qq(<a href="/Account/ManageGroup?id=).$group->id.qq(" class="modal_link">Manage Member List</a>);
   
       if ($self->object->param('id') && $self->object->param('id') == $group->id) {
-        $row->{'details'} = qq(<a href="/Account/Group/List?$referer" class="modal_link">Hide Shared Settings</a>);
+        $row->{'details'} = qq(<a href="/Account/Group/List" class="modal_link">Hide Shared Settings</a>);
       }
       else {
-        $row->{'details'} = qq(<a href="/Account/Group/List?id=).$group->id.qq(;$referer" class="modal_link">Show Shared Settings</a>);
+        $row->{'details'} = qq(<a href="/Account/Group/List?id=).$group->id.qq(" class="modal_link">Show Shared Settings</a>);
       }
 
-      $row->{'delete'} = qq(<a href="/Account/Group/ConfirmDelete?id=).$group->id.qq(;$referer" class="modal_link">Delete Group</a>);
+      $row->{'delete'} = qq(<a href="/Account/Group/ConfirmDelete?id=).$group->id.qq(" class="modal_link">Delete Group</a>);
       $table->add_row($row);
     }
     $html .= $table->render;
@@ -86,9 +81,6 @@ sub content {
 sub _show_group_details {
   my ($self, $group) = @_;
   my $html;
-
-  my $referer = ';_referer='.$self->object->param('_referer');
-
   my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
 
   $html .= '<h2>'.$group->name.'</h2>';
@@ -108,8 +100,8 @@ sub _show_group_details {
     foreach my $bookmark ($group->bookmarks) {
       my $row = {};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?owner_type=group;id=%s%s" title="%s">%s</a>),
-                      $bookmark->id, $referer, $bookmark->url, $bookmark->name);
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?owner_type=group;id=%s" title="%s">%s</a>),
+                      $bookmark->id, $bookmark->url, $bookmark->name);
 
       $row->{'desc'} = $bookmark->description || '&nbsp;';
 
@@ -136,8 +128,8 @@ sub _show_group_details {
       my $row = {};
       $row->{'type'} = $note->ftype || 'Gene';
       if ($note->species) {
-        $row->{'id'} = sprintf(qq(<a href="/%s/Gene/UserAnnotation?g=%s%s">%s</a>),
-                      $note->species, $note->stable_id, $referer, $note->stable_id);
+        $row->{'id'} = sprintf(qq(<a href="/%s/Gene/UserAnnotation?g=%s">%s</a>),
+                      $note->species, $note->stable_id, $note->stable_id);
       }
       else {
         $row->{'id'} = $note->stable_id; 

@@ -104,12 +104,6 @@ sub content {
     'value'   => $object->param('text'),
   );
 
-  $form->add_element(
-    'type'    => 'Hidden',
-    'name'    => '_referer',
-    'value'   => $object->param('_referer'),
-  );
-
   ## Pass honeypot fields, to weed out any persistent robots!
   $form->add_element(
     'type'    => 'Hidden',

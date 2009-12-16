@@ -184,33 +184,16 @@ sub user_context {
 }
 
 sub _user_context {
-  my $self = shift;
-  my $section = shift || 'global_context';
-  
-  my $object  = $self->object;
-  my $type    = $self->type;
-  my $parent  = $object->parent;
-  my $qs      = $self->query_string;
-  my $referer = $object->param('_referer') || $object->_url({ type => $type, action => $ENV{'ENSEMBL_ACTION'}, time => undef });
-  my $vc      = $object->viewconfig;
-  my $action  = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-  my %params;
-  
-  # If the page is Manage data/Account/something that's normally in the modal window, but is NOT being opened in the modal window,
-  # it won't have a URL capable of generating the correct view config. In this situation, we get the view config from the referer via $parent.
-  if (!$vc->real && $parent->{'ENSEMBL_TYPE'} && $section eq 'global_context' && !$self->page->renderer->{'_modal_dialog_'}) {
-    $vc     = $object->get_viewconfig($parent->{'ENSEMBL_TYPE'}, $parent->{'ENSEMBL_ACTION'});
-    $action = join '/', map $parent->{$_} || (), qw(ENSEMBL_TYPE ENSEMBL_ACTION ENSEMBL_FUNCTION);
-    %params = map { $_ => $parent->{'params'}->{$_}->[0] } keys %{$parent->{'params'}};
-    
-    $vc->form($object);
-  }
-  
+  my $self          = shift;
+  my $section       = shift || 'global_context';
+  my $object        = $self->object;
+  my $type          = $self->type;
+  my $vc            = $object->viewconfig;
+  my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
   my %ics           = $vc->image_configs;
   my $flag          = $object->param('config') ? 0 : 1;
   my $active_config = $object->param('config') || $vc->default_config;
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
-  my $upload_data   = $vc->can_upload;
 
   if ($vc->has_form) {
     $self->page->$section->add_entry(
@@ -222,9 +205,7 @@ sub _user_context {
         time     => time, 
         type     => 'Config',
         action   => $action,
-        config   => '_page',
-        _referer => $referer,
-        %params
+        config   => '_page'
       }))
     );
     
@@ -244,8 +225,7 @@ sub _user_context {
         time     => time, 
         type     => 'Config',
         action   => $action,
-        config   => $ic_code,
-        _referer => $referer,
+        config   => $ic_code
       }))
     );
     
@@ -260,11 +240,10 @@ sub _user_context {
     caption => 'Custom Data',
      $active ? ( class => 'active' ) : ( 
      url => $object->_url({
-      time => time,
-      _referer => $referer,
-      __clear  => 1,
-      type     => 'UserData',
-      action   => 'ManageData',
+       time => time,
+       __clear  => 1,
+       type     => 'UserData',
+       action   => 'ManageData'
      }))
   );
   
@@ -277,11 +256,10 @@ sub _user_context {
       caption => 'Your account',
       $active ? ( class => 'active') : ( 
       url => $object->_url({
-        _referer => $referer,
         time     => time, 
         __clear  => 1,
         type     => 'Account',
-        action   => $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login',
+        action   => $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login'
       }))
     );
   }
@@ -314,8 +292,7 @@ sub _reset_config_panel {
     type     => 'Config', 
     action   => $action, 
     reset    => 1, 
-    config   => $config, 
-    _referer => $object->param('_referer')
+    config   => $config
   });
   
   my $c = sprintf('
@@ -370,9 +347,8 @@ sub _configurator {
   my $object     = $self->object;
   my $vc         = $object->viewconfig;
   my $config_key = $object->param('config');
-  my $referer    = $object->param('_referer') || $ENV{'REQUEST_URI'};
   my $action     = join '/', map $object->$_ || (), qw(type action function);
-  my $url        = $object->_url({ type => 'Config', action => $action, _referer => $referer }, 1);
+  my $url        = $object->_url({ type => 'Config', action => $action }, 1);
   my $conf       = $object->param('config') ? $object->image_config_hash($object->param('config'), undef, 'merged') : undef;
   
   # This must be the view config
@@ -590,7 +566,6 @@ sub _local_tools {
   return unless $self->page->local_tools;
   
   my $object  = $self->object;
-  my $referer = $ENV{'REQUEST_URI'};
   my $vc      = $object->viewconfig;
   my $config  = $vc->default_config;
   
@@ -606,8 +581,7 @@ sub _local_tools {
         time     => time, 
         type     => 'Config', 
         action   => $action,
-        config   => $config, 
-        _referer => $referer
+        config   => $config
       })
     );
   } else {
@@ -623,11 +597,10 @@ sub _local_tools {
     caption => 'Manage your data',
     class   => 'modal_link',
     url     => $object->_url({
-      time     => time,
-      type     => 'UserData',
-      action   => 'ManageData',
-      _referer => $referer,
-      __clear  => 1 
+      time    => time,
+      type    => 'UserData',
+      action  => 'ManageData',
+      __clear => 1 
     })
   );
   
@@ -635,7 +608,7 @@ sub _local_tools {
     $self->page->local_tools->add_entry(
       caption => 'Export data',
       class   => 'modal_link',
-      url     => $object->_url({ type => 'Export', action => $object->type, function => $object->action, _referer => $referer })
+      url     => $object->_url({ type => 'Export', action => $object->type, function => $object->action })
     );
   } else {
     $self->page->local_tools->add_entry(
@@ -651,12 +624,11 @@ sub _local_tools {
       caption => 'Bookmark this page',
       class   => 'modal_link',
       url     => $object->_url({
-        type     => 'Account',
-        action   => 'Bookmark/Add',
-        _referer => $referer,
-        __clear  => 1,
-        name     => $self->page->title->get,
-        url      => $object->species_defs->ENSEMBL_BASE_URL . $referer
+        type    => 'Account',
+        action  => 'Bookmark/Add',
+        __clear => 1,
+        name    => $self->page->title->get,
+        url     => $object->species_defs->ENSEMBL_BASE_URL
       })
     );
   } else {
@@ -770,7 +742,6 @@ sub query_string {
   
   my %parameters = (%{$object->core_objects->{'parameters'}}, @_);
   my @query_string = map "$_=$parameters{$_}", grep defined $parameters{$_}, sort keys %parameters;
-  push @query_string, '_referer=' . uri_escape($object->param('_referer')) if $object->param('_referer');
   
   return join ';', @query_string;
 }

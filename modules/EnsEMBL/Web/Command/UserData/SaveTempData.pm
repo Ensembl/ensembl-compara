@@ -14,10 +14,7 @@ sub process {
     $object->get_session->set_data('code' => $object->param('code'), 'name' => $object->param('name'));
   }
  
-  $self->ajax_redirect(
-    $object->species_path($object->data_species).'/UserData/ManageData', 
-    {'_referer' => $object->param('_referer')}
-  ); 
+  $self->ajax_redirect($object->species_path($object->data_species).'/UserData/ManageData'); 
 }
 
 1;

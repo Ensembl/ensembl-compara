@@ -141,9 +141,7 @@ sub _content {
           my @ok_params;
           my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
           
-          if ($ENV{'ENSEMBL_TYPE'} !~ /Location|Gene|Transcript|Variation|Regulation/) {
-            @ok_params = grep /^_referer/, @cgi_params;
-          } else {
+          if ($ENV{'ENSEMBL_TYPE'} =~ /Location|Gene|Transcript|Variation|Regulation/) {
             @ok_params = grep !/^time=/, @cgi_params;
           }
           

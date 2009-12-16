@@ -22,7 +22,6 @@ sub content {
   my $object = $self->object;
   my $html;
 
-  my $referer = '_referer='.$object->param('_referer');
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $object->data_species;
 
@@ -34,7 +33,7 @@ sub content {
   if (!$object->param('filter_module')) { ## No errors
     $html .= $self->_hint('upload_notes', 'IMPORTANT NOTE', qq{
       We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. 
-      If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL?$referer" class="modal_link">attach it to $sitename</a> without uploading.<br />
+      If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL" class="modal_link">attach it to $sitename</a> without uploading.<br />
       <a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>
     });
   }

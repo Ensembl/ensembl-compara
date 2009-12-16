@@ -59,8 +59,6 @@ sub process {
   if ($object->param('id_limit')) {
     $param->{'id_limit'} = $object->param('id_limit');
   }
-  ## Set these separately, or they cause an error if undef
-  $param->{'_referer'} = $object->param('_referer');
 
   if ($self->object->param('uploadto') eq 'iframe') {
     $url = encode_entities($self->url($url, $param));

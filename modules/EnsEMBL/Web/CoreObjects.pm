@@ -110,8 +110,7 @@ sub _generate_objects {
   $self->_generate_gene;
   $self->_generate_location;
   
-  $self->{'parameters'}{'_referer'} = $self->param('_referer') if !keys %{$self->{'parameters'}} && $self->param('_referer');
-  $self->{'parameters'}{'h'}        = $self->param('h')        if $self->param('h');
+  $self->{'parameters'}{'h'} = $self->param('h') if $self->param('h');
 }
 
 sub _generate_location {

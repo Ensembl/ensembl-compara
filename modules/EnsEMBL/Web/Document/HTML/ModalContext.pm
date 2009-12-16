@@ -27,21 +27,20 @@ sub render {
   
   # Static pages - add Custom Data and Your account links
   if (!scalar @{$self->entries}) {
-    my $referer = $ENV{'REQUEST_URI'};
     my $time = time;
     
     $self->add_entry(
       'type'    => 'UserData',
       'id'      => 'user_data',
       'caption' => 'Custom Data',
-      'url'     => "/UserData/ManageData?_referer=$referer;time=$time"
+      'url'     => "/UserData/ManageData?time=$time"
     );
     
     $self->add_entry(
       'type'    => 'Account',
       'id'      => 'account',
       'caption' => 'Your account',
-      'url'     => "/Account/Login?_referer=$referer;time=$time"
+      'url'     => "/Account/Login?time=$time"
     );
   }
   

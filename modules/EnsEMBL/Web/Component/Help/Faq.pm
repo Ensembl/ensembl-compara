@@ -41,10 +41,7 @@ sub content {
       if ($object->param('feedback') && $object->param('feedback') == $faq->help_record_id) {
         $html .= qq(<div style="$style">Thank you for your feedback</div>);
       } else {
-        $html .= $self->help_feedback(
-          $style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq', 
-          '_referer' => $object->param('_referer')
-        );
+        $html .= $self->help_feedback($style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq');
       }
 
     }

@@ -22,7 +22,6 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
- my $referer = '_referer='.$object->param('_referer');
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $object->data_species;
 

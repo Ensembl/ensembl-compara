@@ -30,18 +30,14 @@ sub process {
   #}
 
   my $url;
-  my $param = {
-    'id' => $group->id,
-    '_referer' => $object->param('_referer'),
-  };
+
   if ($user->is_administrator_of($group)) {
     $url = '/Account/Group/List';
-  }
-  else {
+  } else {
     $url = '/Account/MemberGroups';
   } 
  
-  $self->ajax_redirect($url, $param);
+  $self->ajax_redirect($url, { id => $group->id });
 }
 
 1;

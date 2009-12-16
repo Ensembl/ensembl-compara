@@ -6,8 +6,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use URI::Escape qw(uri_escape);
-
 use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Component::Interface);
@@ -46,11 +44,7 @@ sub add_form {
 
 sub duplicate {
   my($panel, $object) = @_;
-  my $html = sprintf('
-    <p>Sorry, you appear to have registered already. If you have lost your password, we can send you a reactivation link to <a href="/Account/LostPassword?_referer=%s">your registered email address</a>.</p>',    
-    uri_escape($object->param('_referer'))
-  );
-
+  my $html = '<p>Sorry, you appear to have registered already. If you have lost your password, we can send you a reactivation link to <a href="/Account/LostPassword">your registered email address</a>.</p>';    
   $panel->print($html);
   return 1;
 }

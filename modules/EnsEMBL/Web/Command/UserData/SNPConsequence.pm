@@ -16,7 +16,6 @@ sub process {
   my $output;
   
   my $param  = {
-    _referer => $object->param('_referer'),
     _time    => $object->param('_time'),
     species  => $object->param('species')
   };

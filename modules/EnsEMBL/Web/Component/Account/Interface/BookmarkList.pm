@@ -32,8 +32,6 @@ sub content {
   my $has_bookmarks = 0;
 
   ## Control panel fixes
-  my $referer = ';_referer='.$self->object->param('_referer');
-
   my @admin_groups = $user->find_administratable_groups;
   my $has_groups = $#admin_groups > -1 ? 1 : 0;
 
@@ -63,8 +61,8 @@ sub content {
       my $row = {};
 
       my $description = $bookmark->description || '&nbsp;';
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s%s" title="%s" class="cp-external">%s</a>),
-                        $bookmark->id, $referer, $description, $bookmark->name);
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s" title="%s" class="cp-external">%s</a>),
+                        $bookmark->id, $description, $bookmark->name);
 
       $row->{'desc'}    = $description;
       $row->{'edit'}    = $self->edit_link('Bookmark', $bookmark->id);
@@ -78,7 +76,7 @@ sub content {
     $html .= $table->render;
   }
 
-  $html .= $self->_add_bookmark($referer);
+  $html .= $self->_add_bookmark;
 
   ## Get all bookmark records for this user's groups
   my %group_bookmarks = ();
@@ -113,14 +111,14 @@ sub content {
       my $row = {};
       my $bookmark = $group_bookmarks{$bookmark_id}{'bookmark'};
 
-      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s;group=%s%s" class="cp-external">%s</a>),
-                        $bookmark->id, $bookmark->webgroup_id, $referer, $bookmark->name);
+      $row->{'name'} = sprintf(qq(<a href="/Account/UseBookmark?id=%s;group=%s" class="cp-external">%s</a>),
+                        $bookmark->id, $bookmark->webgroup_id, $bookmark->name);
 
       $row->{'desc'} = $bookmark->description || '&nbsp;';
 
       my @group_links;
       foreach my $group (@{$group_bookmarks{$bookmark_id}{'groups'}}) {
-        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s%s" class="modal_link">%s</a>), $group->id, $referer, $group->name);
+        push @group_links, sprintf(qq(<a href="/Account/MemberGroups?id=%s" class="modal_link">%s</a>), $group->id, $group->name);
       }
       $row->{'group'} = join(', ', @group_links);
       $table->add_row($row);
@@ -129,15 +127,15 @@ sub content {
   }
 
   if ($has_bookmarks) {
-    $html .= $self->_add_bookmark($referer);
+    $html .= $self->_add_bookmark;
   }
 
   return $html;
 }
 
 sub _add_bookmark {
-  my ($self, $referer) = @_;
-  return qq(<br /><br /><p><a href="/Account/Bookmark/Add?$referer" class="modal_link"><strong>Add a new bookmark </strong>&rarr;</a></p>);
+  my $self = shift;
+  return qq(<br /><br /><p><a href="/Account/Bookmark/Add" class="modal_link"><strong>Add a new bookmark </strong>&rarr;</a></p>);
 }
 
 1;

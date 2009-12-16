@@ -11,9 +11,6 @@ sub process {
   my $self = shift;
   my $object = $self->object;
   my $url = '/Account/Group';
-  my $param = {
-    '_referer' => $object->param('_referer'),
-  }; 
 
   my $interface = $self->interface;
   $interface->cgi_populate($object);
@@ -43,7 +40,7 @@ sub process {
     }
   }
 
-  $self->ajax_redirect($url, $param);
+  $self->ajax_redirect($url);
 }
 
 1;

@@ -26,7 +26,6 @@ sub content {
   my $form = $self->data_form('add', $action);
 
   ## navigation elements
-  $form->add_element( 'type' => 'Hidden', 'name' => '_referer', 'value' => $self->object->param('_referer'));
   $form->add_element( 'type' => 'Submit', 'value' => 'Next');
 
   return $form->render;

@@ -12,10 +12,7 @@ sub process {
   my $object = $self->object;
   my $interface = $object->interface;
   my $url = '/'.$interface->script_name.'/';
-
-  my $param = {
-    '_referer' => $object->param('_referer'),
-  };
+  my $param = {};
 
   $interface->cgi_populate($object);
   ## Add user ID to new entries in the user/group_record tables

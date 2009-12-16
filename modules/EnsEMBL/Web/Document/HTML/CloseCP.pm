@@ -6,13 +6,11 @@ package EnsEMBL::Web::Document::HTML::CloseCP;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new { return shift->SUPER::new(); }
 
-sub referer     :lvalue { $_[0]{'referer'}; }
 ## Needed to avoid problems in Document::Common
 sub logins      :lvalue { $_[0]{'logins'}; }
 sub blast       :lvalue { $_[0]{'blast'}; }
@@ -21,7 +19,7 @@ sub mirror_icon :lvalue { $_[0]{'mirror_icon'}; }
 
 sub render   {
   my $self = shift;
-  $self->print('<a class="popup_close" href="'.encode_entities($self->referer).'">Close</a>');
+  $self->print('<a class="popup_close" href="#">Close</a>');
 }
 
 1;
