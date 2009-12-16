@@ -149,28 +149,28 @@ sub _attach_das {
   );
 }
 
-# Creates a modal-friendly form with hidden elements to automatically pass 
-# _referer and to optionally handle wizard buttons
+# Creates a modal-friendly form with hidden elements to automatically pass to handle wizard buttons
 sub modal_form {
   my ($self, $name, $action, $options) = @_;
   
-  my $object = $self->object;
+  my $object      = $self->object;
   my $form_action = $action;
+  my $form_class  = 'std check';
   
   if ($options->{'wizard'}) {
     my $species = $object->type eq 'UserData' ? $object->data_species : $object->species;
     
     $form_action  = $object->species_path($species) if $species;
     $form_action .= sprintf '/%s/Wizard', $object->type;
+    
+    $form_class .= ' wizard';
   }
   
-  my $form = new EnsEMBL::Web::Form($name, $form_action, $options->{'method'} || 'post');
+  my $form = new EnsEMBL::Web::Form($name, $form_action, $options->{'method'} || 'post', $form_class);
   my $label = $options->{'label'} || 'Next >';
-
-  $form->add_element('type' => 'Hidden', 'name' => '_referer', 'value' => $object->param('_referer'));
   
   if ($options->{'wizard'}) {
-    $form->add_button('type' => 'Submit', 'name' => 'wizard_submit', 'value' => '< Back') unless defined $options->{'back_button'} && $options->{'back_button'} == 0;
+    $form->add_button('type' => 'Button', 'name' => 'wizard_back', 'value' => '< Back', 'classes' => [ 'back', 'submit' ]) unless defined $options->{'back_button'} && $options->{'back_button'} == 0;
     
     # Include current and former nodes in _backtrack
     if (my @tracks = $object->param('_backtrack')) {
@@ -180,10 +180,9 @@ sub modal_form {
       }
     }
     
-    $form->add_button('type'  => 'Submit', 'name' => 'wizard_submit',      'value' => $label);
-    $form->add_element('type' => 'Hidden', 'name' => '_backtrack',         'value' => $object->action);
-    $form->add_element('type' => 'Hidden', 'name' => 'wizard_next',        'value' => $action);
-    $form->add_element('type' => 'Hidden', 'name' => 'wizard_ajax_submit', 'value' => '');
+    $form->add_button('type'  => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
+    $form->add_element('type' => 'Hidden', 'name' => '_backtrack',    'value' => $object->action);
+    $form->add_element('type' => 'Hidden', 'name' => 'wizard_next',   'value' => $action);
   } elsif (!$options->{'no_button'}) {
     $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => $label);
   }
