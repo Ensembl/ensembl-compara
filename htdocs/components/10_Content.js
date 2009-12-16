@@ -30,11 +30,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var el = $(this);
       var content, caption, component, node;
       
-      if (Ensembl.ajax != 'enabled') {
-        el.append('<p class="ajax_error">AJAX is disabled in this browser</p>');
-        return;
-      }
-      
       var title = eval(this.title); // TODO: use hidden inputs and .each instead of this and the for loop below. Don't eval.
       
       if (!title) {
@@ -58,7 +53,18 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         
         if (component.substr(0, 1) == '/') {
           if (component.match(/\?/)) {
-            component = Ensembl.replaceTimestamp(component);
+            var referer = '';
+            var url = [];
+
+            $.each(component.split(/;/), function () {
+              if (this.match(/^_referer=/)){
+                referer = this;
+              } else {
+                url.push(this);
+              }
+            });
+            
+            component = Ensembl.replaceTimestamp(url.join(';')) + referer;
           }
           
           myself.getContent(component, content, { updateURL: component + ';no_wrap=1' });
