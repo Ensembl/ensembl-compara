@@ -2,41 +2,41 @@ package EnsEMBL::Web::Component::UserData::IDmapper;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::UserData);
+no warnings 'uninitialized';
+
 use Bio::EnsEMBL::StableIdHistoryTree;
+
 use EnsEMBL::Web::Data::Release;
+
+use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
-sub caption {
-  return;
-}
+sub caption { return; }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $html = '<h2>Stable ID Mapper Results:</h2>';
-  my $referer =  $object->param('_referer');
+  my $self       = shift;
+  my $object     = $self->object;
+  my $html       = '<h2>Stable ID Mapper Results:</h2>';
+  my $referer    = $object->param('_referer');
   my $size_limit = $object->param('id_limit'); 
+  
   $html .= qq(<br /><a href="$referer">Back to previous view</a><br />);
   
   my @files = ($object->param('convert_file'));
 
   foreach my $file_name (@files) {
-    my ($file, $name) = split(':', $file_name);
+    my ($file, $name) = split ':', $file_name;
     my ($ids, $unmapped) = @{$object->get_stable_id_history_data($file, $size_limit)}; 
     my $table = $self->format_mapped_ids($ids);
+    
     $html .= $table;
-    $html .= $self->_info('Information',
-    " <p>The numbers in the above table indicate the version of a stable ID present in a particular release.</p>"
-    );
-
-    if (scalar keys %$unmapped > 0) { $html .= $self->add_unmapped_ids($unmapped); }    
+    $html .= $self->_info('Information', '<p>The numbers in the above table indicate the version of a stable ID present in a particular release.</p>');
+    $html .= $self->add_unmapped_ids($unmapped) if scalar keys %$unmapped > 0;
   }
 
   return $html;
@@ -73,7 +73,7 @@ sub format_mapped_ids {
       $releases{$a_id->release} = 1; 
       unless ($a_id->release <= $self->object->species_defs->EARLIEST_ARCHIVE){
         my $archive_link = $self->_archive_link($stable_ids{$req_id}->[0], $a_id->stable_id, $a_id->version, $a_id->release);
-        $linked_text = '<a href='.$archive_link.'>'.$linked_text.'</a>';
+        $linked_text = qq{<a href="$archive_link">$linked_text</a>} if $archive_link;
       }
      $matches->{$a_id->stable_id}->{$a_id->release} = $linked_text; 
     }
@@ -131,26 +131,26 @@ sub _idhistoryview_link {
 sub _archive_link {
   my ($self, $type, $stable_id, $version, $release)  = @_;
 
-  $type =  $type eq 'Translation' ? 'peptide' : lc($type);
-  my $name = $stable_id . "." . $version;
-  my $url;
-  my $current =  $self->object->species_defs->ENSEMBL_VERSION;
-
-  my $view = $type."view";
+  $type = $type eq 'Translation' ? 'peptide' : lc $type;
+  
+  my $name    = $stable_id . '.' . $version;
+  my $current = $self->object->species_defs->ENSEMBL_VERSION;
+  my $view    = $type . 'view';
+  my ($action, $p, $url);
+  
   if ($type eq 'peptide') {
     $view = 'protview';
   } elsif ($type eq 'transcript') {
     $view = 'transview';
   }
-
-  my ($action, $p);
-  ### Set parameters for new style URLs post release 50
-  if ($release >= 51 ){
+  
+  # Set parameters for new style URLs post release 50
+  if ($release >= 51) {
     if ($type eq 'gene') {
       $type = 'Gene';
       $p = 'g';
       $action = 'Summary';
-    } elsif ($type eq 'transcript'){
+    } elsif ($type eq 'transcript') {
       $type = 'Transcript';
       $p = 't';
       $action = 'Summary';
@@ -161,20 +161,28 @@ sub _archive_link {
     }
   }
 
-  if ($release == $current){
-     $url = $self->object->_url({'type' => $type, 'action' => $action, $p => $name });
+  if ($release == $current) {
+     $url = $self->object->_url({ type => $type, action => $action, $p => $name });
      return $url;
   } else {
     my $release_info = EnsEMBL::Web::Data::Release->new($release);
+    
+    return unless $release_info;
+    
     my $archive_site = $release_info->archive;
+    
+    return unless $archive_site && $release_info->online eq 'Y';
+    
     $url = "http://$archive_site.archive.ensembl.org";
-    if ($release >=51){
-      $url .= $self->object->_url({'type' => $type, 'action' => $action, $p => $name });
+    
+    if ($release >= 51) {
+      $url .= $self->object->_url({ type => $type, action => $action, $p => $name });
     } else {
       $url .= $self->object->species_path;
       $url .= "/$view?$type=$name";
     }
   }
+  
   return $url;
 }
 
