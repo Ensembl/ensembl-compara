@@ -115,6 +115,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }).focus(function () {
       this.value = '';
     });
+    
+    // Header on search results and active tracks sections will act like the links on the left
+    $('div.config > h2', this.elLk.form).css('cursor', 'pointer').click(function () {
+      var link = $(this).parent().attr('className').replace(/\s*config\s*/, '');
+      $('a.' + link, myself.elLk.links).click();
+    });
   },
   
   show: function () {
