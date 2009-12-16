@@ -101,16 +101,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.populateRegion();
     } else if (this.drag == 'vdrag') {
       this.populateVRegion();
-    } else if (this.das !== false && Ensembl.ajax == 'enabled') {
+    } else if (this.das !== false) {
       this.populateDas();
     } else if (!this.href) {
       this.populate();
     } else if (this.href.match(/#/)) {
       this.populate(true);
-    } else if (Ensembl.ajax == 'enabled') {
-      this.populateAjax();
     } else {
-      this.populateNoAjax();
+      this.populateAjax();
     }
   },
   

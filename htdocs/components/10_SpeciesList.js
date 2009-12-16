@@ -12,29 +12,25 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       return;
     }
     
-    if (Ensembl.ajax == 'enabled') {
-      $('.toggle_link', this.el).click(function () {
-        reorder.toggle();
-        full.toggle();
-      });
-      
-      $('.favourites, .species', this.el).sortable({
-        connectWith: '.list',
-        containment: this.el,
-        stop: function () {
-          $.ajax({
-            url: '/Account/SaveFavourites',
-            data: { favourites: favourites.sortable('toArray').join(',').replace(/(favourite|species)-/g, '') },
-            dataType: 'html',
-            success: function (html) {
-              container.html(html);
-            }
-          });
-        }
-      });
-    } else {
-      $('.toggle_link', this.el).hide();
-    }
+    $('.toggle_link', this.el).click(function () {
+      reorder.toggle();
+      full.toggle();
+    });
+    
+    $('.favourites, .species', this.el).sortable({
+      connectWith: '.list',
+      containment: this.el,
+      stop: function () {
+        $.ajax({
+          url: '/Account/SaveFavourites',
+          data: { favourites: favourites.sortable('toArray').join(',').replace(/(favourite|species)-/g, '') },
+          dataType: 'html',
+          success: function (html) {
+            container.html(html);
+          }
+        });
+      }
+    });
     
     $('select.dropdown_redirect', this.el).change(function () {
       Ensembl.redirect(this.value);

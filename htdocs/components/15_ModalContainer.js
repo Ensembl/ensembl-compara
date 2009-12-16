@@ -10,10 +10,6 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   init: function () {
-    if (Ensembl.ajax != 'enabled') {
-      return;
-    }
-    
     var myself = this;
     var dims = this.getDimensions();
     

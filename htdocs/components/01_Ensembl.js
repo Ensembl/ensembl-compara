@@ -51,8 +51,7 @@ Ensembl.extend({
   },
   
   setAjax: function () {
-    this.ajax = ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none';
-    this.cookie.set('ENSEMBL_AJAX', this.ajax);
+    this.cookie.set('ENSEMBL_AJAX', ($.ajaxSettings.xhr() || false) ? 'enabled' : 'none');
   },
   
   setWidth: function () {
