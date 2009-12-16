@@ -16,22 +16,6 @@ sub set_default_action {
   $self->{_data}{default} = 'ManageData';
 }
 
-sub is_configurable {
-  ## Not currently used - seems to me to make sense to have links on all pages
-  my $self = shift;
-  ## Can we do upload/DAS on this page?
-  my $flag = 0;
-  my $referer = $self->object->param('_referer');
-  my @path = split(/\//, $referer);
-  my $type = $path[2];
-  if ($type eq 'Location' || $type eq 'Gene' || $type eq 'Transcript') {
-    (my $action = $path[3]) =~ s/\?.*//;
-    my $vc = $self->object->session->getViewConfig( $type, $action);
-    $flag = 1 if $vc && $vc->can_upload;
-  }
-  return $flag;
-}
-
 sub global_context { return $_[0]->_user_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
 sub local_context  { return $_[0]->_local_context;  }
@@ -41,10 +25,6 @@ sub context_panel  { return undef;  }
 
 sub populate_tree {
   my $self = shift;
-
-  my $has_logins = $self->{object}->species_defs->ENSEMBL_LOGINS;
-  my $is_configurable = $self->is_configurable;
-  $has_logins = 0 unless $is_configurable;
 
   ## Upload "wizard"
   $self->create_node( 'SelectFile', "Upload Data",
