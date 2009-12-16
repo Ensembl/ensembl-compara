@@ -12,7 +12,7 @@ Ensembl.LayoutManager.extend({
     this.id = 'LayoutManager';
     
     function popup(href, name) {
-      if (window.name.match(/^(cp|popup)_/)) {
+      if (window.name.match(/^popup_/)) {
         return true;
       }
       
@@ -126,3 +126,4 @@ Ensembl.LayoutManager.extend({
     });
   }
 });
+
