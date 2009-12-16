@@ -16,27 +16,29 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     this.elLk.content = $('.modal_wrapper', this.el);
     
-    if (Ensembl.ajax == 'enabled') {
-      $('a', this.elLk.links).click(function () {
-        if (!$(this).hasClass('disabled')) {
-          var link = $(this).parent();
-          
-          if (!link.hasClass('active')) {
-            myself.elLk.links.removeClass('active');
-            myself.getContent(link.addClass('active'), this.href);
-          }
-          
-          link = null;
+    $('a', this.elLk.links).click(function () {
+      if (!$(this).hasClass('disabled')) {
+        var link = $(this).parent();
+        
+        if (!link.hasClass('active')) {
+          myself.elLk.links.removeClass('active');
+          myself.getContent(link.addClass('active'), this.href);
         }
         
-        return false;
-      });
-    }
+        link = null;
+      }
+      
+      return false;
+    });
     
     $('form td.select_all input', this.elLk.content).click(function () {
       $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
     }).each(function () {
       $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
+    });
+    
+    $('form.wizard input.back', this.elLk.content).live('click', function () {
+      $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
     });
     
     Ensembl.EventManager.trigger('validateForms', this.el);
@@ -104,28 +106,26 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.elLk.content.html('<div class="spinner">Loading Content</div>');
     
     if (Ensembl.FormValidator.submit(form)) {
-      if (Ensembl.ajax == 'enabled') {
-        $.ajax({
-          url: form.attr('action'),
-          type: form.attr('method'),
-          data: data,
-          dataType: 'json',
-          success: function (json) {
-            if (json.redirectURL) {
-              return myself.getContent(undefined, json.redirectURL);
-            }
-            
-            if (json.success === true) {
-              Ensembl.EventManager.trigger('reloadPage');
-            } else if ($(myself.el).is(':visible')) {
-              myself.updateContent(json);
-            }
-          },
-          error: function (e) {
-            myself.elLk.content.html('<p class="ajax_error">Failure: the resource failed to load</p>');
+      $.ajax({
+        url: form.attr('action'),
+        type: form.attr('method'),
+        data: data,
+        dataType: 'json',
+        success: function (json) {
+          if (json.redirectURL) {
+            return myself.getContent(undefined, json.redirectURL);
           }
-        });
-      }
+          
+          if (json.success === true) {
+            Ensembl.EventManager.trigger('reloadPage');
+          } else if ($(myself.el).is(':visible')) {
+            myself.updateContent(json);
+          }
+        },
+        error: function (e) {
+          myself.elLk.content.html('<p class="ajax_error">Failure: the resource failed to load</p>');
+        }
+      });
     }
     
     return false;
