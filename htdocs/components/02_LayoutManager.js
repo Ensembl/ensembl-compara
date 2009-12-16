@@ -29,12 +29,7 @@ Ensembl.LayoutManager.extend({
     $('#local-tools > p').show().children().show();
     
     $('.modal_link').show().live('click', function () {
-      // If ajax is not enabled, make popup config window
-      // If ajax is enabled, modalOpen is triggered. If it doesn't returns true then there's no ModalContainer panel, so make popup config window
-      if (Ensembl.ajax != 'enabled' || !Ensembl.EventManager.trigger('modalOpen', this)) {        
-        return popup(this.href, 'cp_' + window.name.replace(/^cp_/, ''));
-      }
-      
+      Ensembl.EventManager.trigger('modalOpen', this);
       return false;
     });
     
@@ -66,27 +61,6 @@ Ensembl.LayoutManager.extend({
     }).each(function () {
       Ensembl.FormValidator.check($(this));
     });
-    
-    // For non ajax support - popup window close button
-    var close = $('.popup_close');
-    
-    if (close.length) {
-      if ($('input.panel_type[value=Configurator]').length) {
-        close.html('Save and close').click(function () {      
-          if (Ensembl.EventManager.trigger('updateConfiguration') || window.location.search.match('reset=1')) {
-            window.open(Ensembl.replaceTimestamp(this.href), window.name.replace(/^cp_/, '')); // Reload the main page
-          }
-          
-          window.close();
-          
-          return false;
-        });
-      } else {
-        close.hide();
-      }
-    }
-    
-    close = null;
     
     // Close modal window if the escape key is pressed
     $(document).keyup(function (event) {
