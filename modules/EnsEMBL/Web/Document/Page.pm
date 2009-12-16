@@ -119,8 +119,13 @@ sub set_doc_type {
 # AJAX-friendly redirect, for use in control panel
 sub ajax_redirect {
   my ($self, $url) = @_;
-
-  my $r = $self->renderer->{'r'};
+  
+  my $r         = $self->renderer->{'r'};
+  my $back      = $self->{'input'}->param('wizard_back');
+  my @backtrack = map $url =~ /_backtrack=$_\b/ ? () : $_, $self->{'input'}->param('_backtrack');
+  
+  $url .= ($url =~ /\?/ ? ';' : '?') . '_backtrack=' . join ';_backtrack=', @backtrack if scalar @backtrack;
+  $url .= ($url =~ /\?/ ? ';' : '?') . "wizard_back=$back" if $back;
   
   if ($self->renderer->{'_modal_dialog_'}) {
     $r->content_type('text/plain');
@@ -131,7 +136,6 @@ sub ajax_redirect {
     $r->status(Apache2::Const::REDIRECT);
   }
 }
-
 
 sub body_elements { my $self = shift; return map $_->[0], @{$self->{'body_order'}}; }
 sub head_elements { my $self = shift; return map $_->[0], @{$self->{'head_order'}}; }
@@ -326,7 +330,7 @@ sub render {
 sub render_HTML {
   my $self = shift;
   my $flag = shift;
-    
+  
   # If this is an AJAX request then we will not render the page wrapper
   if ($self->renderer->{'_modal_dialog_'}) {
     my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content); # We need to add the dialog tabs and navigation tree here
@@ -399,7 +403,7 @@ sub render_HTML {
     [[body_javascript]]};
   }
   
-  $html .= '[[modal_context]]' if $ENSEMBL_WEB_REGISTRY->check_ajax || $ENV{'ENSEMBL_AJAX_VALUE'} ne 'none';
+  $html .= '[[modal_context]]';
   
   if ($self->can('panel_type') && $self->panel_type) {
     $html = sprintf('
