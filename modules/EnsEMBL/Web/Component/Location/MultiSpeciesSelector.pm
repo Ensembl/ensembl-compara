@@ -25,7 +25,6 @@ sub content_ajax {
   my $alignments      = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   my $primary_species = $object->species;
   my %shown           = map { $object->param("s$_") => $_ } grep s/^s(\d+)$/$1/, $object->param; # get species (and parameters) already shown on the page
-  my $next_id         = 1 + scalar keys %shown;
   my %species;
   
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
