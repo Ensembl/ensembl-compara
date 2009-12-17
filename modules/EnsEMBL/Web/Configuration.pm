@@ -628,7 +628,7 @@ sub _local_tools {
         action  => 'Bookmark/Add',
         __clear => 1,
         name    => $self->page->title->get,
-        url     => $object->species_defs->ENSEMBL_BASE_URL
+        url     => $object->species_defs->ENSEMBL_BASE_URL . $object->_url
       })
     );
   } else {
