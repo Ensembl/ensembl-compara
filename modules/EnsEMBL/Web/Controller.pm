@@ -354,7 +354,7 @@ sub process_command {
   my $r     = $self->{'r'};
   my $class = $self->{'action'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $self->{'command'};
   
-  if ($class && $self->dynamic_use($class) && $self->access_ok($object, $class)) {    
+  if ($class && $self->dynamic_use($class) && $self->access_ok($object, $page)) {    
     my $command = $class->new({
       object => $object,
       page   => $page
@@ -387,10 +387,10 @@ sub _use {
 sub access_ok {
   ### Checks if the given Command module is allowed, and forces a redirect if it isn't
   
-  my ($self, $object, $class) = @_;
+  my ($self, $object, $page) = @_;
   
   my $r      = $self->{'r'};
-  my $filter = $self->not_allowed($object, $class);
+  my $filter = $self->not_allowed($object);
   
   if ($filter) {
     my $url = $filter->redirect;
@@ -400,7 +400,7 @@ sub access_ok {
     $url .= ($url =~ /\?/ ? ';' : '?') . 'filter_module=' . $filter->name       unless $url =~ /filter_module/;
     $url .= ($url =~ /\?/ ? ';' : '?') . 'filter_code='   . $filter->error_code unless $url =~ /filter_code/;
     
-    $self->{'input'}->redirect($url);
+    $page->ajax_redirect($url);
     return 0;
   }
   
