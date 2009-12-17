@@ -364,7 +364,7 @@ sub render_HTML {
     my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content);
     $self->print("{$json}");
     return;
-  } elsif ($flag eq 'component') {
+  } elsif ($self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
     $self->content->render; # Render content only for components
     return;
   }

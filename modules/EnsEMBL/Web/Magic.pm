@@ -82,7 +82,7 @@ sub ingredient {
     $factory->action = $ENV{'ENSEMBL_ACTION'};
     $object->action  = $ENV{'ENSEMBL_ACTION'};
     $controller->build_page($page, 'Dynamic', $object, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-    $page->render('component');
+    $page->render;
     
     my $content = $page->renderer->content;
     print $content;
