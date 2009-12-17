@@ -14,7 +14,6 @@ sub _initialize {
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
     links      EnsEMBL::Web::Document::HTML::Links
-    javascript EnsEMBL::Web::Document::HTML::Javascript
     meta       EnsEMBL::Web::Document::HTML::Meta
   ));
   
