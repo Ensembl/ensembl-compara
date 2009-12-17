@@ -128,8 +128,12 @@ sub ajax_redirect {
   $url .= ($url =~ /\?/ ? ';' : '?') . "wizard_back=$back" if $back;
   
   if ($self->renderer->{'_modal_dialog_'}) {
-    $r->content_type('text/plain');
-    print "{redirectURL:'$url'}";
+    if (!$self->{'ajax_redirect_url'}) {
+      $self->{'ajax_redirect_url'} = $url;
+      
+      $r->content_type('text/plain');
+      print "{redirectURL:'$url'}";
+    }
   } else {
     $r->headers_out->set('Location' => $url);
     $r->err_headers_out->set('Location' => $url);
