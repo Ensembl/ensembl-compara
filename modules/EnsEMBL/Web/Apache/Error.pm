@@ -4,7 +4,7 @@ use strict;
 use Apache2::Const qw(:common :http);
 use EnsEMBL::Web::Document::Renderer::Apache;
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Document::Static;
+use EnsEMBL::Web::Document::Page::Static;
 
 use EnsEMBL::Web::SpeciesDefs;
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
@@ -45,7 +45,7 @@ sub handler {
   warn "$error_number ERROR: $error_subject $error_URL\n";
   
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( r => $r );
-  my $page     = new EnsEMBL::Web::Document::Static( $renderer, undef, $SD );
+  my $page     = new EnsEMBL::Web::Document::Page::Static( $renderer, undef, $SD );
 
   $page->_initialize();
 

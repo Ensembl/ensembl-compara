@@ -11,7 +11,7 @@ use SiteDefs qw(:ALL);
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::Apache;
-use EnsEMBL::Web::Document::Static;
+use EnsEMBL::Web::Document::Page::Static;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Root;
 
@@ -123,7 +123,7 @@ sub handler {
     $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::String( r => $r );
-    my $page     = new EnsEMBL::Web::Document::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs, new CGI);
+    my $page     = new EnsEMBL::Web::Document::Page::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs, new CGI);
     $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();
   
