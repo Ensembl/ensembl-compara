@@ -11,16 +11,6 @@ Ensembl.LayoutManager.extend({
   initialize: function () {
     this.id = 'LayoutManager';
     
-    function popup(href, name) {
-      if (window.name.match(/^popup_/)) {
-        return true;
-      }
-      
-      var w = window.open(href, name, 'width=950,height=500,resizable,scrollbars');
-      w.focus();
-      return false;
-    }
-    
     Ensembl.EventManager.register('reloadPage', this, this.reloadPage);
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
@@ -34,7 +24,12 @@ Ensembl.LayoutManager.extend({
     });
     
     $('.popup').live('click', function () {
-      return popup(this.href, 'popup_' + window.name);
+      if (window.name.match(/^popup_/)) {
+        return true;
+      }
+      
+      window.open(this.href, 'popup_' + window.name, 'width=950,height=500,resizable,scrollbars');
+      return false;
     });
     
     $('a[rel="external"]').live('click', function () { 
