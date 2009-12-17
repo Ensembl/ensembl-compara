@@ -116,6 +116,24 @@ sub set_doc_type {
   $self->{'doc_type_version'} = $version;
 }
 
+sub doc_type {
+  my $self = shift;
+  
+  $self->{'doc_type'}         = DEFAULT_DOCTYPE unless exists $DOCUMENT_TYPES{$self->{'doc_type'}};
+  $self->{'doc_type_version'} = DEFAULT_DOCTYPE_VERSION unless exists $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}};
+  
+  return '' if $self->{'doc_type'} eq 'none';
+  
+  my $doctype = $self->{'doc_type'} eq 'XML' ? "$self->{'doc_type_version'} SYSTEM" : 'html PUBLIC';
+  
+  return "<!DOCTYPE $doctype $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}}>\n";
+}
+
+sub html_tag {
+  my $self = shift;
+  return sprintf qq{<html %slang="%s">\n}, $self->{'doc_type'} eq 'XHTML' ? 'xmlns="http://www.w3.org/1999/xhtml" xml:' : '', $self->{'language'};
+}
+
 # AJAX-friendly redirect, for use in control panel
 sub ajax_redirect {
   my ($self, $url) = @_;
@@ -231,26 +249,6 @@ sub replace_element {
   }
 }
 
-sub doc_type {
-  my $self = shift;
-  
-  $self->{'doc_type'}         = DEFAULT_DOCTYPE unless exists $DOCUMENT_TYPES{$self->{'doc_type'}};
-  $self->{'doc_type_version'} = DEFAULT_DOCTYPE_VERSION unless exists $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}};
-  
-  return '' if $self->{'doc_type'} eq 'none';
-  
-  my $header = $self->{'doc_type'} eq 'XML' ? 
-    "<!DOCTYPE $self->{'doc_type_version'} SYSTEM @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n" : 
-    "<!DOCTYPE html PUBLIC @{[$DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}} ]}>\n";
-
-  return $header;
-}
-
-sub html_line {
-  my $self = shift;
-  return sprintf qq{<html %slang="%s">\n}, $self->{'doc_type'} eq 'XHTML' ? 'xmlns="http://www.w3.org/1999/xhtml" xml:' : '', $self->{'language'};
-}
-
 sub _init {
   my $self = shift;
   
@@ -301,7 +299,6 @@ sub include_navigation {
   return $self->{'_has_navigation'};
 }
 
-
 sub render {
   my $self = shift;
   my $format = $self->{'format'};
@@ -327,59 +324,61 @@ sub render {
     $self->render_TextGz;
   } else {
     $r->content_type('text/html; charset=utf-8');
-    $self->render_HTML;
+    $self->render_HTML(@_);
   }
 }
 
+sub render_start { shift->render_HTML('start'); }
+sub render_end   { shift->render_HTML('end');   }
+
+sub _render_head_and_body_tag {
+  my $self = shift;
+  
+  $self->print(qq{<?xml version="1.0" encoding="utf-8"?>\n}) if $self->{'doc_type'} eq 'XHTML';  
+  $self->print($self->doc_type, $self->html_tag, "<head>\n");
+  
+  foreach my $element (@{$self->{'head_order'}}) {
+    my $attr = $element->[0];
+    $self->$attr->render;
+    $self->timer_push("Rendered $attr");
+  }
+  
+  $self->print("</head>\n<body");
+  
+  foreach (keys %{$self->{'body_attr'}}) {
+    next unless $self->{'body_attr'}{$_};
+    $self->printf(' %s="%s"', $_ , encode_entities($self->{'body_attr'}{$_}));
+  }
+  
+  $self->print('>');
+}
+
 sub render_HTML {
+  ### Main page printing function
+  
   my $self = shift;
   my $flag = shift;
   
   # If this is an AJAX request then we will not render the page wrapper
   if ($self->renderer->{'_modal_dialog_'}) {
-    my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content); # We need to add the dialog tabs and navigation tree here
-    
+    my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content);
     $self->print("{$json}");
     return;
-  }
-  
-  # and then add in the fact that it is an XMLHttpRequest object to render the content only
-  if ($self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
-    $self->content->render; 
+  } elsif ($flag eq 'component') {
+    $self->content->render; # Render content only for components
     return;
   }
   
-  # This is now a full page
-  my $html = '';
+  # This is a full page
+  
+  my $html;
   my $footer_id = 'wide-footer';
   
   if ($flag ne 'end') {
-    $self->_render_head_and_body_tag;
-    
-    $html .= '
-    <table class="mh" summary="layout table">
-      <tr>
-        <td id="mh_lo">[[logo]]</td>
-        <td id="mh_search">[[search_box]]
-        </td>
-      </tr>
-    </table>
-    <table class="mh" summary="layout table">
-      <tr>
-        <td id="mh_bc">[[breadcrumbs]]</td>
-        <td id="mh_lnk">[[tools]]
-        </td>
-      </tr>
-    </table>
-    <table class="mh print_hide" summary="layout table">
-      <tr>
-        <td>[[global_context]]</td>
-      </tr>
-    </table>
-    <div style="position: relative">';
+    my $nav;
     
     if ($self->include_navigation) {
-      $html .= '
+      $nav = '
       <div id="nav" class="print_hide js_panel">
         [[local_context]]
         [[local_tools]]
@@ -389,10 +388,31 @@ sub render_HTML {
       $footer_id = 'footer';
     }
     
-    $html .= '
+    $self->_render_head_and_body_tag;
+    
+    $html .= qq{
+    <table class="mh" summary="layout table">
+      <tr>
+        <td id="mh_lo">[[logo]]</td>
+        <td id="mh_search">[[search_box]]</td>
+      </tr>
+    </table>
+    <table class="mh" summary="layout table">
+      <tr>
+        <td id="mh_bc">[[breadcrumbs]]</td>
+        <td id="mh_lnk">[[tools]]</td>
+      </tr>
+    </table>
+    <table class="mh print_hide" summary="layout table">
+      <tr>
+        <td>[[global_context]]</td>
+      </tr>
+    </table>
+    <div style="position: relative">
+      $nav
       <div id="main">
         <!-- Start of real content --> 
-        ';
+    };
   }
   
   $html .= '[[message]]';
@@ -404,7 +424,8 @@ sub render_HTML {
       </div>
       <div id="$footer_id">[[copyright]][[footerlinks]]</div>
     </div>
-    [[body_javascript]]};
+    [[body_javascript]]
+    };
   }
   
   $html .= '[[modal_context]]';
@@ -435,7 +456,7 @@ sub render_HTML {
   }
   
   $self->print($html);
-  $self->_render_close_body_tag unless $flag eq 'start';
+  $self->print("\n</body>\n</html>") unless $flag eq 'start';
 }
 
 sub render_DAS {
@@ -511,33 +532,6 @@ sub render_TextGz {
   
   unlink $renderer->{'filename'};
 }
-
-sub render_start { my $self = shift; $self->render_HTML('start'); }
-sub render_end   { my $self = shift; $self->render_HTML('end');   }
-
-sub _render_head_and_body_tag {
-  my $self = shift;
-  
-  $self->print(qq{<?xml version="1.0" encoding="utf-8"?>\n}) if $self->{'doc_type'} eq 'XHTML';  
-  $self->print($self->doc_type, $self->html_line, "<head>\n");
-  
-  foreach my $element (@{$self->{'head_order'}}) {
-    my $attr = $element->[0];
-    $self->$attr->render;
-    $self->timer_push("Rendered $attr");
-  }
-  
-  $self->print("</head>\n<body");
-  
-  foreach (keys %{$self->{'body_attr'}}) {
-    next unless $self->{'body_attr'}{$_};
-    $self->printf(' %s="%s"', $_ , encode_entities($self->{'body_attr'}{$_}));
-  }
-  
-  $self->print('>');
-}
-
-sub _render_close_body_tag { $_[0]->print("\n</body>\n</html>"); }
 
 sub add_error_panels { 
   my ($self, $problems) = @_;
