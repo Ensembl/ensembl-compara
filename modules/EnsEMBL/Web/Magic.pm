@@ -82,7 +82,7 @@ sub ingredient {
     $factory->action = $ENV{'ENSEMBL_ACTION'};
     $object->action  = $ENV{'ENSEMBL_ACTION'};
     $controller->build_page($page, 'Dynamic', $object, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-    $page->render;
+    $page->render('component');
     
     my $content = $page->renderer->content;
     print $content;
@@ -91,7 +91,7 @@ sub ingredient {
 }
 
 sub configurator {
-  ### Prints the configuration popup window/modal dialog.
+  ### Prints the configuration modal dialog.
   
   my ($controller, $factory, $page) = handler(shift, 'Configurator', 'modal', 'String');
   
@@ -168,7 +168,7 @@ sub handler {
   }
   
   my $renderer_module = "EnsEMBL::Web::Document::Renderer::$renderertype";
-  my $document_module = "EnsEMBL::Web::Document::$doctype";
+  my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
   
   my ($renderer) = $controller->_use($renderer_module, (r => $r, cache => $cache));
   my ($page)     = $controller->_use($document_module, $renderer, undef, $species_defs, $input, $outputtype);
