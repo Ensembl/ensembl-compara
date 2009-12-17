@@ -119,7 +119,7 @@ sub render {
       $html .= sprintf '<div style="width:80%" class="error"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
       $html .= '</div>';
       
-      #$self->print($html);
+      $self->print($html);
     }
   }
   
