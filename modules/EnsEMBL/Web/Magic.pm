@@ -52,7 +52,7 @@ sub stuff {
     $controller->build_page($page, $doctype, $_, @sections);
   }
   
-  if (!$controller->process_command($object, $page) && $controller->access_ok($object)) {
+  if (!$controller->process_command($object, $page) && $controller->access_ok($object, $page)) {
     $page->render;
     
     my $content = $page->renderer->content;
