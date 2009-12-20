@@ -234,3 +234,29 @@ insert into ncbi_taxa_name (taxon_id, name_class, name) values (359160,"ensembl 
 insert into ncbi_taxa_name (taxon_id, name_class, name) values (71240,"ensembl timetree mya", "119.07");
 # eurosids II,91836, 97.52,97.29,84.85
 insert into ncbi_taxa_name (taxon_id, name_class, name) values (91836,"ensembl timetree mya", "97.52");
+
+# Mya estimates for arthropods from www.timetree.org at 20091220
+# pseudoobscura subgroup,32358, 3.59
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (32358,"ensembl timetree mya", "3.59");
+# Arthropoda,6656, 535.86
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (6656,"ensembl timetree mya", "535.86");
+# Sophophora,32341, 53.51
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (32341,"ensembl timetree mya", "53.51");
+# Diptera,7147, 472.18
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (7147,"ensembl timetree mya", "472.18");
+# Ditrysia,37567, 170.60
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (37567,"ensembl timetree mya", "170.60");
+# Schizophora,43738, 60.30
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (43738,"ensembl timetree mya", "60.30");
+# Neoptera,33340, 378.00,371.90
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (33340,"ensembl timetree mya", "371.90");
+# Cyclorrhapha,480117, 72.32
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (480117,"ensembl timetree mya", "72.32");
+# Culicidae,7157, 147.58
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (7157,"ensembl timetree mya", "147.58");
+# Obtectomera,104431, 143.50
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (104431,"ensembl timetree mya", "143.50");
+# Acalyptratae,43741, 147.50
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (43741,"ensembl timetree mya", "147.50");
+# Endopterygota,33392, 377.00,376.75,295.00
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (33392,"ensembl timetree mya", "295.00");
