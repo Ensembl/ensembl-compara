@@ -206,3 +206,31 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (314293, "45.16",
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9528,   "13.64","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9005,   "47.29","ensembl timetree mya");
 #insert into ncbi_taxa_name (taxon_id, name, name_class) values (,"","ensembl timetree mya");
+
+# Mya estimates for ensembl genomes plants from www.timetree.org at 20091220
+# Lamiales,4143, 90.00,71.00
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (4143,"ensembl timetree mya", "90.00");
+# core eudicotyledons,91827, 114.14,109.15,107.52
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (91827,"ensembl timetree mya", "107.52");
+# rosids,71275, 113.18,112.06,104.23
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (71275,"ensembl timetree mya", "104.23");
+# Magnoliophyta,3398, 198.69,144.34,142.86
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (3398,"ensembl timetree mya", "144.34");
+# Brassicaceae,3700, 10.00
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (3700,"ensembl timetree mya", "10.00");
+# asterids,71274, 90.05
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (71274,"ensembl timetree mya", "90.05");
+# eurosids I,91835, 109.26,106.18,100.71,96.76
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (91835,"ensembl timetree mya", "109.26");
+# Poaceae,4479, 30.51
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (4479,"ensembl timetree mya", "30.51");
+# lamiids,91888, 75.05
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (91888,"ensembl timetree mya", "75.05");
+# Spermatophyta,58024, 337.70
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (58024,"ensembl timetree mya", "337.70");
+# BEP clade,359160, 32.36
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (359160,"ensembl timetree mya", "32.36");
+# eudicotyledons,71240, 119.07
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (71240,"ensembl timetree mya", "119.07");
+# eurosids II,91836, 97.52,97.29,84.85
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (91836,"ensembl timetree mya", "97.52");
