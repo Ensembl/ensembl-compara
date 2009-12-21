@@ -79,6 +79,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'clusterset_id'} = 1;
+  $self->{max_evalue} = 0.05;
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
@@ -129,7 +130,7 @@ sub get_params {
     }
   }
 
-  foreach my $key (qw[protein_tree_id type cdna fastafile analysis_data_id]) {
+  foreach my $key (qw[qtaxon_id protein_tree_id type cdna fastafile analysis_data_id]) {
     my $value = $params->{$key};
     $self->{$key} = $value if defined $value;
   }
@@ -169,6 +170,7 @@ sub run {
 sub write_output {
   my $self = shift;
 
+  $self->search_hmm_store_hits;
 }
 
 
@@ -178,12 +180,6 @@ sub write_output {
 #
 ##########################################
 
-sub run_search_hmm {
-  my $self = shift;
-
-  $DB::single=1;1;#??
-  return 1;
-}
 
 sub fetch_hmmprofile {
   my $self = shift;
@@ -200,6 +196,97 @@ sub fetch_hmmprofile {
   $self->{hmmprofile} = $result->{hmmprofile} if (defined($result->{hmmprofile}));
   $sth->finish;
 
+  return 1;
+}
+
+sub run_search_hmm {
+  my $self = shift;
+
+  my $node_id = $self->{tree}->node_id;
+  my $type = $self->{type};
+  my $hmmprofile = $self->{hmmprofile};
+  my $fastafile = $self->{fastafile};
+
+  my $tempfilename = $self->worker_temp_directory . $node_id . "." . $type . ".hmm";
+  open FILE, ">$tempfilename" or die "$!";
+  print FILE $hmmprofile;
+  close FILE;
+  delete $self->{hmmprofile};
+
+  my $search_hmm_executable = $self->analysis->program_file;
+  unless (-e $search_hmm_executable) {
+    $search_hmm_executable = "/nfs/acari/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmsearch";
+  }
+
+  my $fh;
+  eval { open($fh, "$search_hmm_executable $tempfilename $fastafile |") || die $!; };
+  if ($@) {
+    warn("problem with search_hmm $@ $!");
+    return;
+  }
+
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  my $starttime = time();
+
+  while (<$fh>) {
+    if (/^Scores for complete sequences/) {
+      $_ = <$fh>;
+      <$fh>;
+      <$fh>; # /------- ------ -----    ------- ------ -----   ---- --  --------       -----------/
+      while (<$fh>) {
+        last if (/no hits above thresholds/);
+        last if (/^\s*$/);
+        $_ =~ /\s+(\S+)\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+(\S+)/;
+        my $evalue = $1;
+        my $score = $2;
+        my $id = $3;
+        $score =~ /^\s*(\S+)/;
+        $self->{hits}{$id}{Score} = $1;
+        $evalue =~ /^\s*(\S+)/;
+        $self->{hits}{$id}{Evalue} = $1;
+      }
+      last;
+    }
+  }
+  close($fh);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  print STDERR scalar (keys %{$self->{hits}}), " hits - ",(time()-$starttime)," secs...\n";
+
+  return 1;
+}
+
+sub search_hmm_store_hits {
+  my $self = shift;
+  my $type = $self->{type};
+  my $node_id = $self->{tree}->node_id;
+  my $qtaxon_id = $self->{qtaxon_id} || 0;
+
+  my $sth = $self->{comparaDBA}->dbc->prepare
+    ("INSERT INTO hmmsearch
+       (stable_id,
+        node_id,
+        evalue,
+        score,
+        type,
+        qtaxon_id) VALUES (?,?,?,?,?,?)");
+
+  my $evalue_count = 0;
+  foreach my $stable_id (keys %{$self->{hits}}) {
+    my $evalue = $self->{hits}{$stable_id}{Evalue};
+    my $score = $self->{hits}{$stable_id}{Score};
+    next unless (defined($stable_id) && $stable_id ne '');
+    next unless (defined($score));
+    next unless ($evalue < $self->{max_evalue});
+    $evalue_count++;
+    $sth->execute($stable_id,
+                  $node_id,
+                  $evalue,
+                  $score,
+                  $type,
+                  $qtaxon_id);
+  }
+  $sth->finish();
+  printf("%10d hits stored\n", $evalue_count) if($evalue_count % 10 == 0 && $self->debug);
   return 1;
 }
 
