@@ -3,9 +3,8 @@ package EnsEMBL::Web::Document::HTML::Logo;
 ### Generates the logo wrapped in a link to the homepage
 
 use strict;
-use EnsEMBL::Web::Document::HTML;
 
-our @ISA = qw(EnsEMBL::Web::Document::HTML);
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub image   :lvalue { $_[0]{'image'};   }
 sub width   :lvalue { $_[0]{'width'};   }

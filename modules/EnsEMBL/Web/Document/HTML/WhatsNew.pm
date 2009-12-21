@@ -8,28 +8,20 @@ package EnsEMBL::Web::Document::HTML::WhatsNew;
 use strict;
 use warnings;
 
-use LWP::Simple;
-use XML::RSS;
-
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
 use EnsEMBL::Web::Document::HTML::Blog;
 
-use base qw(EnsEMBL::Web::Root);
-
-
-{
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
 
   my $html;
-
-
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $filtered = 0;
 
   my $file = '/ssi/whatsnew.html';
@@ -132,8 +124,6 @@ sub render {
   }
   
   return $html;
-}
-
 }
 
 1;

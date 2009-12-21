@@ -13,7 +13,7 @@ use EnsEMBL::Web::Data::NewsCategory;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
 
-use base qw(EnsEMBL::Web::Root);
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my ($self, $release_id) = @_;

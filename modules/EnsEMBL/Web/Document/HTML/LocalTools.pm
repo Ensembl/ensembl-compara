@@ -3,8 +3,8 @@ package EnsEMBL::Web::Document::HTML::LocalTools;
 # Generates the local context tools - configuration, data export, etc.
 
 use strict;
+
 use base qw(EnsEMBL::Web::Document::HTML);
-use EnsEMBL::Web::RegObj;
 
 sub add_entry {
   my $self = shift;

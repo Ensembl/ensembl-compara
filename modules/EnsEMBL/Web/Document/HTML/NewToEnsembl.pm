@@ -7,19 +7,15 @@ use warnings;
 
 use LWP::UserAgent;
 use HTTP::Request;
-use XML::Simple qw(:strict);;
+use XML::Simple qw(:strict);
 use Data::Dumper;
 
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Cache;
 
-use base qw(EnsEMBL::Web::Root);
+use base qw(EnsEMBL::Web::Document::HTML);
 
-our $MEMD = EnsEMBL::Web::Cache->new();
-
-srand;
-
-{
+our $MEMD = new EnsEMBL::Web::Cache;
 
 sub render {
   my $self  = shift;
@@ -145,8 +141,6 @@ Did you know you can:
   );
   
   return $html;
-}
-
 }
 
 1;

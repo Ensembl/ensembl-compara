@@ -6,14 +6,10 @@ package EnsEMBL::Web::Document::HTML::MovieList;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Movie;
 use EnsEMBL::Web::Document::SpreadSheet;
 
-use base qw(EnsEMBL::Web::Root);
-
-
-{
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
@@ -46,8 +42,6 @@ for ease of maintenance</a>. If you are unable to access YouTube, please accept 
   $html .= $table->render;
 
   return $html;
-}
-
 }
 
 1;

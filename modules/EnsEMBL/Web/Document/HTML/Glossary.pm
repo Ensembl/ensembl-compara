@@ -8,10 +8,7 @@ use warnings;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Component::Help::Glossary;
 
-use base qw(EnsEMBL::Web::Root);
-
-
-{
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
@@ -19,8 +16,6 @@ sub render {
   my $component = EnsEMBL::Web::Component::Help::Glossary->new;
 
   return $component->content;
-}
-
 }
 
 1;

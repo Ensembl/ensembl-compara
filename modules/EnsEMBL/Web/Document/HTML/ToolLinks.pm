@@ -4,7 +4,6 @@ package EnsEMBL::Web::Document::HTML::ToolLinks;
 
 use strict;
 
-use URI::Escape qw(uri_escape);
 use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Document::HTML);
