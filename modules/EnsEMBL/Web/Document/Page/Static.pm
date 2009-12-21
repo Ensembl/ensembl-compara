@@ -13,6 +13,7 @@ sub _initialize {
   $self->add_head_elements(qw(
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
+    javascript EnsEMBL::Web::Document::HTML::Javascript
     links      EnsEMBL::Web::Document::HTML::Links
     meta       EnsEMBL::Web::Document::HTML::Meta
   ));
