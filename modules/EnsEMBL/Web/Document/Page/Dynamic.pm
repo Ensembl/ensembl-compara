@@ -21,18 +21,19 @@ sub _initialize_HTML {
   ));
   
   $self->add_body_elements(qw(
-    logo            EnsEMBL::Web::Document::HTML::Logo
-    search_box      EnsEMBL::Web::Document::HTML::SearchBox
-    breadcrumbs     EnsEMBL::Web::Document::HTML::BreadCrumbs
-    tools           EnsEMBL::Web::Document::HTML::ToolLinks
-    content         EnsEMBL::Web::Document::HTML::Content
-    global_context  EnsEMBL::Web::Document::HTML::GlobalContext
-    local_context   EnsEMBL::Web::Document::HTML::LocalContext
-    modal_context   EnsEMBL::Web::Document::HTML::ModalContext
-    local_tools     EnsEMBL::Web::Document::HTML::LocalTools
-    copyright       EnsEMBL::Web::Document::HTML::Copyright
-    footerlinks     EnsEMBL::Web::Document::HTML::FooterLinks
-    body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
+    logo             EnsEMBL::Web::Document::HTML::Logo
+    search_box       EnsEMBL::Web::Document::HTML::SearchBox
+    breadcrumbs      EnsEMBL::Web::Document::HTML::BreadCrumbs
+    tools            EnsEMBL::Web::Document::HTML::ToolLinks
+    content          EnsEMBL::Web::Document::HTML::Content
+    global_context   EnsEMBL::Web::Document::HTML::GlobalContext
+    local_context    EnsEMBL::Web::Document::HTML::LocalContext
+    modal_context    EnsEMBL::Web::Document::HTML::ModalContext
+    local_tools      EnsEMBL::Web::Document::HTML::LocalTools
+    acknowledgements EnsEMBL::Web::Document::HTML::Acknowledgements
+    copyright        EnsEMBL::Web::Document::HTML::Copyright
+    footerlinks      EnsEMBL::Web::Document::HTML::FooterLinks
+    body_javascript  EnsEMBL::Web::Document::HTML::BodyJavascript
   ));
 
   $self->call_child_functions('common_page_elements', 'dynamic_page_elements');

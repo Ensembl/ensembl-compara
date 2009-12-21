@@ -382,6 +382,7 @@ sub render_HTML {
       <div id="nav" class="print_hide js_panel">
         [[local_context]]
         [[local_tools]]
+        [[acknowledgements]]
         <p class="invisible">.</p>
       </div>';
       
