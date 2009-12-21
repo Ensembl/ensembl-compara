@@ -106,6 +106,12 @@ sub fetch_input {
   $self->print_params if($self->debug);
   $self->check_if_exit_cleanly;
 
+  if(defined($self->{'protein_tree_id'})) {
+    $self->{'protein_tree'} =
+         $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
+         fetch_node_by_node_id($self->{'protein_tree_id'});
+  }
+
   $self->{'hmm_type'} = 'dna' if     defined($self->{'cdna'});
   $self->{'hmm_type'} = 'aa'  unless defined($self->{'cdna'});
   if (defined($self->{notaxon})) {
@@ -113,8 +119,13 @@ sub fetch_input {
   }
   my $type = 'aa'; $type = 'dna' if defined($self->{'cdna'});
   my $node_id = $self->{'protein_tree'}->node_id;
-  my $table_name = 'protein_tree_hmmprofile' . "_" . $type;
+  my $table_name = 'protein_tree_hmmprofile';
   my $hmm_type = $self->{'hmm_type'};
+  if (defined($self->{taxon_ids})) {
+    my $taxon_ids_string = join(":",@{$self->{taxon_ids}});
+    $hmm_type .= "_" . $taxon_ids_string;
+  }
+  $self->{hmm_type} = $hmm_type;
   my $query = "SELECT hmmprofile FROM $table_name WHERE type=\"$hmm_type\" AND node_id=$node_id";
   print STDERR "$query\n" if ($self->debug);
   my $sth = $self->{comparaDBA}->dbc->prepare($query);
@@ -137,6 +148,34 @@ sub fetch_input {
     $self->{'protein_tree'} = undef;
     throw("BuildHMM : cluster size over threshold and FAIL it");
   }
+
+  my @to_delete;
+
+  my $tree = $self->{protein_tree};
+
+  if (defined($self->{notaxon})) {
+    foreach my $leaf (@{$tree->get_all_leaves}) {
+      next unless ($leaf->taxon_id eq $self->{notaxon});
+      push @to_delete, $leaf;
+    }
+    $tree = $tree->remove_nodes(\@to_delete);
+  }
+
+  if (defined($self->{taxon_ids})) {
+    my $taxon_ids_to_keep;
+    foreach my $taxon_id (@{$self->{taxon_ids}}) {
+      $taxon_ids_to_keep->{$taxon_id} = 1;
+    }
+    foreach my $leaf (@{$tree->get_all_leaves}) {
+      next if (defined($taxon_ids_to_keep->{$leaf->taxon_id}));
+      push @to_delete, $leaf;
+    }
+    $tree = $tree->remove_nodes(\@to_delete);
+  }
+
+  if (!defined($tree)) {$self->{done} = 1; return 1;}
+
+  if (2 > (scalar @{$tree->get_all_leaves})) {$self->{done} = 1;}
 
   return 1;
 }
@@ -220,38 +259,18 @@ sub get_params {
     }
   }
 
+  foreach my $key (qw[protein_tree_id taxon_ids notaxon cdna]) {
+    my $value = $params->{$key};
+    $self->{$key} = $value if defined $value;
+  }
+
   if($self->debug) {
     foreach my $key (keys %$params) {
       print("  $key : ", $params->{$key}, "\n");
     }
   }
 
-  if(defined($params->{'protein_tree_id'})) {
-    $self->{'protein_tree'} =
-         $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
-         fetch_node_by_node_id($params->{'protein_tree_id'});
-  }
-  if(defined($params->{'cdna'})) {
-      $self->{'cdna'} = $params->{'cdna'};
-  }
-
-  if(defined($params->{'notaxon'})) {
-      $self->{'notaxon'} = $params->{'notaxon'};
-  }
-
-  $self->{'max_gene_count'} = 
-    $params->{'max_gene_count'} if(defined($params->{'max_gene_count'}));
-
-  if(defined($params->{'species_tree_file'})) {
-    $self->{'species_tree_file'} = $params->{'species_tree_file'};
-  }
-
-  if(defined($params->{'honeycomb_dir'})) {
-    $self->{'honeycomb_dir'} = $params->{'honeycomb_dir'};
-  }
-
   return;
-
 }
 
 
@@ -274,6 +293,7 @@ sub run_buildhmm
      $self->{'protein_tree'}
     );
   return unless($self->{'input_aln'});
+  return if(defined($self->{done}));
 
   $self->{'hmm_file'} = $self->{'input_aln'} . "_hmmbuild.hmm ";
 
@@ -380,16 +400,6 @@ sub dumpTreeMultipleAlignmentToWorkdir
   open(OUTSEQ, ">$aln_file")
     or $self->throw("Error opening $aln_file for write");
 
-  my @to_delete;
-  $DB::single=1;1;
-  if (defined($self->{notaxon})) {
-    foreach my $leaf (@{$tree->get_all_leaves}) {
-      next unless ($leaf->taxon_id eq $self->{notaxon});
-      push @to_delete, $leaf;
-    }
-    $tree = $tree->remove_nodes(\@to_delete);
-  }
-
   my $sa = $tree->get_SimpleAlign
     (
      -id_type => 'MEMBER',
@@ -397,6 +407,13 @@ sub dumpTreeMultipleAlignmentToWorkdir
      -stop2x => 1
     );
   $sa->set_displayname_flat(1);
+
+  # Pairwise alns can sometimes be empty
+  if (0 == scalar($sa->each_seq)) {
+    $self->{done} = 1;
+    return 1;
+  }
+
   my $alignIO = Bio::AlignIO->newFh
     (
      -fh => \*OUTSEQ,
@@ -432,7 +449,7 @@ sub store_hmmprofile
   close(FH);
 
   my $type = undef; $type = 'dna' if defined($self->{'cdna'});
-  my $table_name = 'protein_tree_hmmprofile' . "_" . $type;
+  my $table_name = 'protein_tree_hmmprofile';
   my $sth = $self->{comparaDBA}->dbc->prepare("INSERT INTO $table_name VALUES (?,?,?)");
   $sth->execute($tree->node_id, $self->{hmm_type},$self->{hmm_text});
 
