@@ -4,8 +4,6 @@ package EnsEMBL::Web::Document::HTML::Content;
 
 use strict;
 
-use EnsEMBL::Web::Root;
-
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
@@ -112,7 +110,7 @@ sub render {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
     my $html;
     
-    if ($class && EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    if ($class && $self->dynamic_use(undef, $class)) {
       my $filter = $class->new;
       
       $html .= '<div class="panel print_hide">';
@@ -147,7 +145,7 @@ sub get_json {
   if ($self->filter_module) {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
     
-    if ($class && EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
+    if ($class && $self->dynamic_use(undef, $class)) {
       $filter = $class->new;
       
       $content .= sprintf '<div style="width:80%" class="error print_hide"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);

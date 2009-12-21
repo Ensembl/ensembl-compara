@@ -1,9 +1,8 @@
 package EnsEMBL::Web::Document::HTML::BodyJavascript;
-use strict;
-use EnsEMBL::Web::Document::HTML;
-use warnings;
 
-our @ISA = qw(EnsEMBL::Web::Document::HTML);
+use strict;
+
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new { return shift->SUPER::new( 'scripts' => '', 'sources' => {}, 'debug' => 0 ); }
 

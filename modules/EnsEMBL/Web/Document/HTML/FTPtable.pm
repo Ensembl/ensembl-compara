@@ -6,10 +6,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::RegObj;
-use base qw(EnsEMBL::Web::Root);
-
-
-{
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
@@ -96,8 +93,6 @@ sub render {
   );
 
   return $html;
-}
-
 }
 
 1;

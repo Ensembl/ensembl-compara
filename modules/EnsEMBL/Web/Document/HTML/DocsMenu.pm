@@ -5,10 +5,10 @@ package EnsEMBL::Web::Document::HTML::DocsMenu;
 ### Generates "local context" menu for documentation (/info/)
 
 use strict;
-use EnsEMBL::Web::Document::HTML;
+
 use EnsEMBL::Web::RegObj;
 
-our @ISA = qw(EnsEMBL::Web::Document::HTML);
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;

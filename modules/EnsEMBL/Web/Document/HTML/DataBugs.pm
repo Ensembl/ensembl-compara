@@ -13,16 +13,13 @@ use EnsEMBL::Web::Data::Bug;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
 
-use base qw(EnsEMBL::Web::Root);
-
-
-{
+use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
   my $filtered = 0;
   my $html;
 
@@ -83,8 +80,6 @@ sub render {
 
 
   return $html;
-}
-
 }
 
 1;
