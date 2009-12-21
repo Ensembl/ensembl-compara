@@ -3,12 +3,8 @@ package EnsEMBL::Web::Document::HTML::SpeciesPage;
 ### Renders the content of the  "Find a species page" linked to from the SpeciesList module
 
 use strict;
-use warnings;
-use Data::Dumper;
 
 use EnsEMBL::Web::RegObj;
-
-{
 
 sub render {
 
@@ -105,9 +101,6 @@ sub render {
   </tr>
 </table>);
   return $html;
-
-}
-
 }
 
 1;
