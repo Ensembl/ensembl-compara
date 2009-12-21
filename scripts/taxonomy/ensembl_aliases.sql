@@ -260,3 +260,11 @@ insert into ncbi_taxa_name (taxon_id, name_class, name) values (104431,"ensembl 
 insert into ncbi_taxa_name (taxon_id, name_class, name) values (43741,"ensembl timetree mya", "147.50");
 # Endopterygota,33392, 377.00,376.75,295.00
 insert into ncbi_taxa_name (taxon_id, name_class, name) values (33392,"ensembl timetree mya", "295.00");
+
+# Mya estimates for sauria from www.timetree.org at 20091221
+# Aves,8782, 110.75
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (8782,"ensembl timetree mya", "110.75");
+# Passeriformes,9126, 77.00,72.60,72.00,48.88
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (9126,"ensembl timetree mya", "72.60");
+# Archosauria,8492, 230.55
+insert into ncbi_taxa_name (taxon_id, name_class, name) values (8492,"ensembl timetree mya", "230.55");
