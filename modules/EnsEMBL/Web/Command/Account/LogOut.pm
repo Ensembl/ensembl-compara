@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::Account::LogOut;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -11,7 +10,7 @@ sub process {
   my $object = $self->object;
 
   ## setting a (blank) expired cookie deletes the current one
-  my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+  my $SD = $object->species_defs;
   my $user_cookie = EnsEMBL::Web::Cookie->new({
         'host'    => $SD->ENSEMBL_COOKIEHOST,
         'name'    => $SD->ENSEMBL_USER_COOKIE,

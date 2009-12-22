@@ -5,14 +5,13 @@ use warnings;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Document::HTML::SpeciesList;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
   print "Content-type:text/html\n\n";
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $objecy->user;
 
   my ($species_list) = $user->specieslists;
   $species_list = EnsEMBL::Web::Data::Record::SpeciesList::User->new

@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::Account::ShareRecord;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Group;
 
 use base qw(EnsEMBL::Web::Command);
@@ -12,7 +11,7 @@ sub process {
   my $self = shift;
   my $object = $self->object;
 
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
 
   my ($records_accessor) = grep { $_ eq $accessor } keys %{ $user->relations };
   ## TODO: this should use abstraction limiting facility rather then grep

@@ -5,7 +5,6 @@ package EnsEMBL::Web::Command::Account::LoadConfig;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 
 use base qw(EnsEMBL::Web::Command);
@@ -32,7 +31,7 @@ sub process {
     $url = $host . $new_params;
   }
 
-  my $session = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_session;
+  my $session = $object->session;
   $session->set_input($object);
   my $configuration = EnsEMBL::Web::Data::Record::Configuration::User->new($object->param('id'));
 

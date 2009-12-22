@@ -7,7 +7,6 @@ use warnings;
 
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -16,7 +15,7 @@ sub process {
   my $object = $self->object;
 
   my $user = EnsEMBL::Web::Data::User->find(email => $object->param('email'));
-  my $SD = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+  my $SD = $object->species_defs;
   
   if (!$ENV{'ENSEMBL_USER_ID'}) {
     if ($user && $user->id) {

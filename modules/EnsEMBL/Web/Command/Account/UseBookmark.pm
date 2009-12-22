@@ -3,8 +3,7 @@ package EnsEMBL::Web::Command::Account::UseBookmark;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Data::Record::Bookmark;
 
 use base qw(EnsEMBL::Web::Command);
 

@@ -3,8 +3,6 @@ package EnsEMBL::Web::Command::Account::SendActivation;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 
 use base qw(EnsEMBL::Web::Command);

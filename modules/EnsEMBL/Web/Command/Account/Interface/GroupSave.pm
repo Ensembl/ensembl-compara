@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -30,7 +29,7 @@ sub process {
       $url .= '/List';
       ## Add current user as creator and administrator
       my $group = new EnsEMBL::Web::Data::Group($new_id);
-      my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+      my $user = $object->user;
       $group->created_by($user->id);
       $group->save;
       $group->add_user($user, 'administrator');

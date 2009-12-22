@@ -7,7 +7,6 @@ use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Mailer::User;
 use EnsEMBL::Web::Tools::RandomString;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Command);
 

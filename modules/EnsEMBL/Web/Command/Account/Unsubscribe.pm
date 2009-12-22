@@ -3,7 +3,7 @@ package EnsEMBL::Web::Command::Account::Unsubscribe;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::Group;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {

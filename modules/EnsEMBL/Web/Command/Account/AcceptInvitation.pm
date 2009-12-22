@@ -5,7 +5,6 @@ use warnings;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Record::Invite;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Command);
 

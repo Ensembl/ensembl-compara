@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::Account::Interface::User;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 use base qw(EnsEMBL::Web::Command);
 
@@ -13,14 +12,14 @@ sub process {
 
   ## Create interface object, which controls the forms
   my $interface = $self->interface;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   $user = new EnsEMBL::Web::Data::User unless $user;
   $interface->data($user);
   $interface->discover;
 
   ## Customization
   $interface->caption({
-    'add'     => 'Register with ' . $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_SITETYPE, 
+    'add'     => 'Register with ' . $object->species_defs->ENSEMBL_SITETYPE, 
     'display' => 'Your details',
     'edit'    => 'Update your account',
   });

@@ -5,7 +5,6 @@ package EnsEMBL::Web::Command::Account::Interface::AnnotationSave;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -17,7 +16,7 @@ sub process {
 
   ## Add user ID to new entries in the user/group_record tables
   if (!$object->param('id') && ref($interface->data) =~ /Record/) {
-    my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+    my $user = $object->user;
     $interface->data->user_id($user->id);
   }
   $interface->data->save;

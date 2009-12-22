@@ -3,9 +3,8 @@ package EnsEMBL::Web::Command::Account::SavePassword;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Tools::Encryption qw(encryptPassword);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -15,7 +14,7 @@ sub process {
 
   my $user = EnsEMBL::Web::Data::User->find(email => $object->param('email'));
 
-  $user->password( EnsEMBL::Web::Tools::Encryption::encryptPassword($object->param('new_password_1')) );
+  $user->password(encryptPassword($object->param('new_password_1')));
   $user->status('active');
   $user->modified_by($user->id);
   $user->save;

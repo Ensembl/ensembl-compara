@@ -7,7 +7,6 @@ use warnings;
 
 use URI::Escape qw(uri_escape);
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 
 use base qw(EnsEMBL::Web::Command);
@@ -17,7 +16,7 @@ sub process {
   my $object = $self->object;
 
   ## Set this config as the current one
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my ($current) = $user->currentconfigs;
   $current ||= $user->add_to_currentconfigs({
     config => $object->param('id'),

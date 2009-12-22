@@ -9,10 +9,10 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->object->user;
   print "Content-type:text/html\n\n";
   print "Saving DAS for " . $user->id . "<br />"; 
-  my @sources = @{ $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted };
+  my @sources = @{$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_das_filtered_and_sorted};
     
   foreach my $das (@sources) {
     $user->add_to_dases({
