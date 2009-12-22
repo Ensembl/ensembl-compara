@@ -6,13 +6,11 @@ package EnsEMBL::Web::Document::HTML::DocsMenu;
 
 use strict;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
-  my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $sd = $self->species_defs;
   my $you_are_here = $ENV{'SCRIPT_NAME'};
   (my $location = $you_are_here) =~ s/index\.html$//;
 

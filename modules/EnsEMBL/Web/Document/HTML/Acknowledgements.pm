@@ -9,14 +9,12 @@ package EnsEMBL::Web::Document::HTML::Acknowledgements;
 
 use strict;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
   
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $self->species_defs;
   my $species_path = $species_defs->species_path;
   my $ack_text     = $species_defs->ACKNOWLEDGEMENT;
   my $db_provider  = $species_defs->DB_BUILDER;

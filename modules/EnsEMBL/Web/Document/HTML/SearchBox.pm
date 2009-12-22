@@ -5,20 +5,13 @@ package EnsEMBL::Web::Document::HTML::SearchBox;
 ### Generates small search box (used in top left corner of pages)
 
 use strict;
-use EnsEMBL::Web::RegObj;
                                                                                 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new {
-  return shift->SUPER::new(
-    '_default'  => $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl',
-  );
-}
-
-sub default_search_code { my $self = shift; return $self->{'_default'}; }
+sub default_search_code { my $self = shift; return $self->{'_default'} ||= $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE || 'ensembl'; }
 
 sub search_url {
-  my $species = $_[0]->home_url.$EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_species;
+  my $species = $_[0]->home_url . $ENV{'ENSEMBL_SPECIES'};
   $species =~ s/^\/$//;
   return $species ? "$species/psychic" : '/common/psychic';
 }

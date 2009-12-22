@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Document::HTML::BreadCrumbs;
 
 use strict;
-use EnsEMBL::Web::RegObj;
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 # Package to generate breadcrumb links (currently incorporated into masthead)
@@ -21,7 +21,7 @@ sub title {
 
 sub render   {
   my $self = shift;
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $self->species_defs;
   my $you_are_here = $ENV{'SCRIPT_NAME'};
   my $html = '<span class="print_hide">';
   my $species = $ENV{'ENSEMBL_SPECIES'};

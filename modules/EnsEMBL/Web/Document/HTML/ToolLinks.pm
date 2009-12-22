@@ -4,8 +4,6 @@ package EnsEMBL::Web::Document::HTML::ToolLinks;
 
 use strict;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new { return shift->SUPER::new( 'logins' => '?' ); }
@@ -18,7 +16,7 @@ sub mirror_icon :lvalue { $_[0]{'mirror_icon'}; }
 sub render {
   my $self = shift;
   
-  my $species_defs = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs;
+  my $species_defs = $self->species_defs;
   my $dir = $species_defs->species_path;
   $dir = '' if $dir !~ /_/;
   

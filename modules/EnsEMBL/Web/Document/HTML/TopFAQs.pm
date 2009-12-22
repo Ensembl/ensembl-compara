@@ -4,15 +4,12 @@ package EnsEMBL::Web::Document::HTML::TopFAQs;
 
 use strict;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Faq;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
-
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
   my $html = '
     <h2 class="first">FAQs</h2>

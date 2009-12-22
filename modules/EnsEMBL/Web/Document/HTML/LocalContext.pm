@@ -5,8 +5,9 @@ package EnsEMBL::Web::Document::HTML::LocalContext;
 # Generates the local context navigation menu, used in dynamic pages
 
 use strict;
+
 use HTML::Entities qw(encode_entities);
-use EnsEMBL::Web::RegObj;
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
@@ -134,7 +135,7 @@ sub _content {
         # This is a tmp hack since we do not have an object here
         # TODO: propagate object here and use object->_url method
         if (!$url) {
-          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $ENSEMBL_WEB_REGISTRY->species_defs->species_path;
+          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $self->species_defs->species_path;
           $url .= '/' unless $url eq '/';
           $url .= "$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
           
