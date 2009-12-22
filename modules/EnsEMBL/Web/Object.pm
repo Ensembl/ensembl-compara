@@ -7,11 +7,11 @@ package EnsEMBL::Web::Object;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::Proxy::Factory;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Proxiable);
@@ -44,7 +44,7 @@ sub _availability {
   
   my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$self->species_defs->databases} };
   $hash->{'database:compara'} = 1 if $self->species_defs->compara_like_databases;
-  $hash->{'logged_in'} = 1 if $ENSEMBL_WEB_REGISTRY->get_user;
+  $hash->{'logged_in'} = 1 if $self->user;
   
   return $hash;
 }
@@ -230,7 +230,7 @@ sub fetch_userdata_by_id {
   
   return unless $record_id;
   
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->user;
   my $data = {};
 
   my ($status, $type, $id) = split '-', $record_id;

@@ -5,7 +5,6 @@ use strict;
 use vars qw($AUTOLOAD);
 
 use EnsEMBL::Web::Problem;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 
 use base qw(EnsEMBL::Web::Root);
@@ -73,7 +72,7 @@ sub new {
   
   bless $self, $class;
   
-  $ENSEMBL_WEB_REGISTRY->timer_push("Adding all plugins: $supertype $type");
+  $self->timer_push("Adding all plugins: $supertype $type");
   
   foreach my $root(@{$self->species_defs->ENSEMBL_PLUGIN_ROOTS}, 'EnsEMBL::Web') {
     my $class_name = join '::', $root, $supertype, $type;
@@ -94,7 +93,7 @@ sub new {
     }
   }
   
-  $ENSEMBL_WEB_REGISTRY->timer_push("Added all plugins: $supertype $type");
+  $self->timer_push("Added all plugins: $supertype $type");
   
   $self->problem('fatal', "$supertype failure: $type", qq{<p>Unable to compile any $supertype modules of type "<b>$type</b>".</p>}) unless @{$self->__children};
   $self->species_defs->{'timer'} = $data->{'timer'};
