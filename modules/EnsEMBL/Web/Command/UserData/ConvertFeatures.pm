@@ -3,10 +3,12 @@ package EnsEMBL::Web::Command::UserData::ConvertFeatures;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-use base qw(EnsEMBL::Web::Command);
-use EnsEMBL::Web::Component::Export;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
+
+use EnsEMBL::Web::Component::Export;
+use EnsEMBL::Web::TmpFile::Text;
+
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;

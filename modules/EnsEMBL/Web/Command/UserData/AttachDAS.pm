@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::UserData::AttachDAS;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use Bio::EnsEMBL::ExternalData::DAS::CoordSystem;
 use EnsEMBL::Web::Filter::DAS;
 

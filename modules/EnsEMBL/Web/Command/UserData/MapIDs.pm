@@ -3,10 +3,8 @@ package EnsEMBL::Web::Command::UserData::MapIDs;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::StableIdHistoryTree;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Component::Export;
+use EnsEMBL::Web::Document::SpreadSheet;
+use EnsEMBL::Web::TmpFile;
 
 use base qw(EnsEMBL::Web::Command);
 

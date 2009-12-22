@@ -3,9 +3,7 @@ package EnsEMBL::Web::Command::UserData::CheckShare;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::Data::Record;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {

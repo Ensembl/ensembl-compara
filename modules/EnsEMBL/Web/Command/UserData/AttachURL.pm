@@ -3,8 +3,7 @@ package EnsEMBL::Web::Command::UserData::AttachURL;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Tools::Misc;
+use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -23,7 +22,7 @@ sub process {
     $url = 'http://'.$url unless $url =~ /^http/;
 
     ## Check file size
-    my $feedback = EnsEMBL::Web::Tools::Misc::get_url_filesize($url);
+    my $feedback = get_url_filesize($url);
     if ($feedback->{'error'}) {
       $redirect .= 'SelectURL';
       if ($feedback->{'error'} eq 'timeout') {

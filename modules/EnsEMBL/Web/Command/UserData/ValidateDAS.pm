@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::UserData::ValidateDAS;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Filter::DAS;
 use base qw(EnsEMBL::Web::Command);
 

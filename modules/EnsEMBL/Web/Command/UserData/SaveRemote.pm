@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::UserData::SaveRemote;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -12,7 +11,7 @@ sub process {
   my $url = $object->species_path($object->data_species).'/UserData/';
   my ($node, $param);
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my @sources = grep {$_} $object->param('dsn');
 
   if ($user && scalar @sources) {

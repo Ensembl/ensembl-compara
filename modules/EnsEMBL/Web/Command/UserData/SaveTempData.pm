@@ -3,7 +3,6 @@ package EnsEMBL::Web::Command::UserData::SaveTempData;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
