@@ -3,9 +3,6 @@ package EnsEMBL::Web::Filter::Member;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Registry;
-
 use base qw(EnsEMBL::Web::Filter);
 
 {
@@ -22,13 +19,13 @@ sub BUILD {
 
 sub catch {
   my $self = shift;
-  my $user  = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $object = $self->object;
+  my $user  = $object->user;
   
   ## TODO: finally decide which param to use
-  my $group_id = $self->object->param('webgroup_id') || $self->object->param('group_id') || $self->object->param('id');
-  unless ($user->is_member_of($group_id)) {
-    $self->set_error_code('not_member');
-  }
+  my $group_id = $object->param('webgroup_id') || $object->param('group_id') || $object->param('id');
+  
+  $self->set_error_code('not_member') unless $user->is_member_of($group_id);
 }
 
 }

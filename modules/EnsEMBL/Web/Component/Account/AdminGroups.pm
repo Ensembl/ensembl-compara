@@ -4,10 +4,11 @@ package EnsEMBL::Web::Component::Account::AdminGroups;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -22,13 +23,13 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $html;
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $object = $self->object;
+  my $user = $object->user;
   my $sitename = $self->site_name;
-
+  my $html;
+  
   ## Control panel fixes
-  my $dir = $self->object->site_path;
+  my $dir = $object->site_path;
   $dir = '' if $dir !~ /_/;
   
   my @groups = $user->find_administratable_groups;
@@ -57,7 +58,7 @@ sub content {
 
       $row->{'members'} = qq(<a href="$dir/Account/ManageGroup?id=).$group->id.qq(" class="modal_link">Manage Member List</a>);
   
-      if ($self->object->param('id') && $self->object->param('id') == $group->id) {
+      if ($object->param('id') && $object->param('id') == $group->id) {
         $row->{'details'} = qq(<a href="$dir/Account/AdminGroups" class="modal_link">Hide Shared Settings</a>);
       }
       else {

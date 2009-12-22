@@ -5,7 +5,6 @@ package EnsEMBL::Web::Command::Help::DoSearch;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::Help;
 
 use base qw(EnsEMBL::Web::Command);

@@ -2,14 +2,13 @@ package EnsEMBL::Web::Factory::Gene;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
-use base qw(EnsEMBL::Web::Factory);
-
 use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::RegObj;
+
+use base qw(EnsEMBL::Web::Factory);
 
 sub _help {
   my( $self, $string ) = @_;
@@ -40,9 +39,9 @@ sub createObjects {
   my $self = shift;
   my ($identifier, @fetch_calls, $geneobj);
   if( $self->core_objects->gene ) {
-    $ENSEMBL_WEB_REGISTRY->timer_push( 'About to create DO' );
+    $self->timer_push( 'About to create DO' );
     $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $self->core_objects->gene, $self->__data ));
-    $ENSEMBL_WEB_REGISTRY->timer_push( 'Created DO' );
+    $self->timer_push( 'Created DO' );
     return;
   }
   my $db        = $self->param('db')  || 'core'; 

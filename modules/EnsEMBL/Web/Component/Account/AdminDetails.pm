@@ -4,12 +4,13 @@ package EnsEMBL::Web::Component::Account::AdimnDetails;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::User;
+no warnings 'uninitialized';
+
 use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Document::SpreadSheet;
+
+use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
   my $self = shift;
@@ -28,7 +29,7 @@ sub content {
   return unless $object->param('id');
 
   my $html;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $group = EnsEMBL::Web::Data::Group->new($object->param('id')); 
 
   if ($group) {

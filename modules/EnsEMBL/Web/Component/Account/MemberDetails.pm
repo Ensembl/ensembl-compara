@@ -4,36 +4,37 @@ package EnsEMBL::Web::Component::Account::MemberDetails;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
+no warnings 'uninitialized';
+
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Document::SpreadSheet;
+
+use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub caption {
-  my $self = shift;
   return undef;
 }
 
 sub content {
   my $self = shift;
-  return unless $self->object->param('id');
+  my $object = $self->object;
+  return unless $object->param('id');
 
   my $html;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $group = EnsEMBL::Web::Data::Group->new($self->object->param('id')); 
+  my $user = $object->user;
+  my $group = EnsEMBL::Web::Data::Group->new($object->param('id')); 
 
   if ($group) {
 
     ## Control panel fixes
-    my $dir = $self->object->site_path;
+    my $dir = $object->site_path;
     $dir = '' if $dir !~ /_/;
 
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);

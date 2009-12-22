@@ -2,14 +2,14 @@ package EnsEMBL::Web::Component::History;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use EnsEMBL::Web::Component;
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
+use Bio::EnsEMBL::StableIdHistoryTree;
+
 use EnsEMBL::Web::Data::Species;
+use EnsEMBL::Web::Form;
 
-our @ISA = qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component);
 
 sub stage1 {
   my ($panel, $object) = @_;
@@ -25,8 +25,7 @@ sub stage1 {
 sub stage1_form {
   my ($panel, $object) = @_;
   
-  my $form = EnsEMBL::Web::Form->new('stage1_form',
-    "/@{[$object->species]}/historyview", 'post' );
+  my $form = EnsEMBL::Web::Form->new('stage1_form', $object->species_path . '/historyview', 'post' );
   
   if ($panel->params('error')) {
     my $error_text = $panel->params->{'error'};

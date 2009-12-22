@@ -2,10 +2,9 @@ package EnsEMBL::Web::Component::UserData::SelectURL;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::UserData);
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -24,11 +23,15 @@ sub content {
   
   my $current_species = $object->species_path($object->data_species);
   my $form = $self->modal_form('select_url', "$current_species/UserData/AttachURL", {'wizard' => 1, 'back_button' => 0});
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
 
   # URL-based section
-  $form->add_notes({'heading'=>'Tip', 'text'=>qq(Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. For faster access, you can <a href="$current_species/UserData/Upload" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).<br /><br />Note also that large files will be parsed into density tracks to avoid overloading our system; if you wish to examine an area in detail, you should attach another file with a more limited set of features.)});
+  $form->add_notes({'heading'=>'Tip', 'text'=> qq(
+    Accessing data via a URL can be slow if the file is large, but the data you see is always the same as the file on your server. 
+    For faster access, you can <a href="$current_species/UserData/Upload" class="modal_link">upload files</a> to $sitename (only suitable for small, single-species datasets).<br /><br />
+    Note also that large files will be parsed into density tracks to avoid overloading our system; if you wish to examine an area in detail, you should attach another file with a more limited set of features.
+  )});
 
   $form->add_element('type'  => 'String',
                      'name'  => 'url',

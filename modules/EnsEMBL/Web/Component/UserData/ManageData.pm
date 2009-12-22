@@ -4,12 +4,11 @@ package EnsEMBL::Web::Component::UserData::ManageData;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use URI::Escape qw(uri_escape);
-
+use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::SpreadSheet;
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -24,7 +23,7 @@ sub content {
   my $object = $self->object;
   my $sd = $object->species_defs;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my @data; 
   
   # Control panel fixes

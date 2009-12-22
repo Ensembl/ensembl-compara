@@ -2,12 +2,11 @@ package EnsEMBL::Web::Component::Location;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Document::SpreadSheet;
 
-use base 'EnsEMBL::Web::Component';
+use base qw(EnsEMBL::Web::Component);
 
 sub has_image {
   my $self = shift;
@@ -94,7 +93,7 @@ sub create_user_set {
   my ($self, $image, $colours) = @_;
   my $object = $self->object;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $image_config = $object->get_session->getImageConfig('Vkaryotype');
   my $pointers = [];
 
@@ -138,15 +137,7 @@ sub create_user_set {
           'style'         => $style,
         });
       }
-
-      ## Add to key
-      #my $label = $data->{'label'};
-      #$table->add_row({
-      #  'colour' => qq(<span style="background-color:$colour;color:#ffffff;padding:2px"><img src="/i/blank.gif" style="width:30px;height:10px" alt="[$colour]" /></span>),
-      #  'track' => $label,
-      #});
-    }
-    else {
+    } else {
       ## TODO - add density tracks to table
     }
   }

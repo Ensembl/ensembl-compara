@@ -4,10 +4,13 @@ package EnsEMBL::Web::Component::Account::Interface::GroupList;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -22,11 +25,11 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $html;
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $object = $self->object;
+  my $user = $object->user;
   my $sitename = $self->site_name;
   my @groups = $user->find_administratable_groups;
+  my $html;
 
   if (@groups) {
     $html .= qq(<h3>Your groups</h3>);
@@ -51,7 +54,7 @@ sub content {
 
       $row->{'members'} = qq(<a href="/Account/ManageGroup?id=).$group->id.qq(" class="modal_link">Manage Member List</a>);
   
-      if ($self->object->param('id') && $self->object->param('id') == $group->id) {
+      if ($object->param('id') && $object->param('id') == $group->id) {
         $row->{'details'} = qq(<a href="/Account/Group/List" class="modal_link">Hide Shared Settings</a>);
       }
       else {
@@ -67,9 +70,9 @@ sub content {
     $html .= qq(<p class="center">You are not an administrator of any $sitename groups.</p>);
   }
 
-  if ($self->object->param('id')) {
-    my $group = EnsEMBL::Web::Data::Group->new($self->object->param('id'));   
-    my $user  = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  if ($object->param('id')) {
+    my $group = EnsEMBL::Web::Data::Group->new($object->param('id'));   
+    my $user  = $object->get_user;
     if ($user->is_administrator_of($group)) {
       $html .= $self->_show_group_details($group);
     }

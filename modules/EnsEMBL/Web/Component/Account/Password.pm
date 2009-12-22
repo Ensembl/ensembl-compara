@@ -7,7 +7,6 @@ use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Account);
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -37,7 +36,7 @@ sub content {
   }
 
   # Logged-in user, changing own password
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+  if (my $user = $object->user) {
     my $email = $user->email;
     my $species = $object->species;
     $species = '' if $species !~ /_/;

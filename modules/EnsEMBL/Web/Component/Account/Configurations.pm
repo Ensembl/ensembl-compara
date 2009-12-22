@@ -4,10 +4,9 @@ package EnsEMBL::Web::Component::Account::Configurations;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -26,7 +25,7 @@ sub content {
   my $self = shift;
   my $html;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->object->user;
   my $sitename = $self->site_name;
   
   my @configs = $user->configurations;

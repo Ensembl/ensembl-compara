@@ -2,9 +2,9 @@ package EnsEMBL::Web::Component::Transcript::UserAnnotation;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::RegObj;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
@@ -14,14 +14,14 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $object = $self->object;
+  my $user = $object->user;
   my $html;
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-
+  
   if ($user) {
-    my $id = $self->object->param('t');
+    my $id = $object->param('t');
     my $type = 'Transcript';
-    my $species = $self->object->species;
+    my $species = $object->species;
 
     my @annotations = $user->annotations;
     my @trans_annotations;

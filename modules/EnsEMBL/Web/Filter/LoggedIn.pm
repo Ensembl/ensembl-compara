@@ -3,9 +3,6 @@ package EnsEMBL::Web::Filter::LoggedIn;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Registry;
-
 use base qw(EnsEMBL::Web::Filter);
 
 {
@@ -22,10 +19,9 @@ sub BUILD {
 
 sub catch {
   my $self = shift;
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
-  unless ($user) {
-    $self->set_error_code('not_logged_in');
-  }
+  my $user = $self->object->user;
+  
+  $self->set_error_code('not_logged_in') unless $user;
 }
 
 }

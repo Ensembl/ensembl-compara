@@ -2,10 +2,9 @@ package EnsEMBL::Web::Component::UserData::SelectFeatures;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::UserData);
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -54,7 +53,7 @@ sub content {
   );
 
   ## Check for uploaded data for this species
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   if ($user) {
     my (@data, @temp);
     foreach my $upload ($user->uploads) {

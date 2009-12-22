@@ -2,16 +2,15 @@ package EnsEMBL::Web::Factory::Blast;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Proxy::Object;
 
 use base qw(EnsEMBL::Web::Factory);
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::DBSQL::BlastAdaptor;
 
 sub blast_adaptor {
   my $self = shift;
-  my $sp = shift || $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $sp = shift || $self->species_defs->ENSEMBL_PRIMARY_SPECIES;
   my $blast_adaptor; 
 
   eval {

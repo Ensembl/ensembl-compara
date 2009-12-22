@@ -2,11 +2,11 @@ package EnsEMBL::Web::Component::UserData::RenameTempData;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Component::UserData);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;

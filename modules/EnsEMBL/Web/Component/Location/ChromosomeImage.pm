@@ -5,9 +5,9 @@ package EnsEMBL::Web::Component::Location::ChromosomeImage;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
 use base qw(EnsEMBL::Web::Component::Location);
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;

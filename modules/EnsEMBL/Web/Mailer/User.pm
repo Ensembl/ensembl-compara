@@ -2,9 +2,8 @@ package EnsEMBL::Web::Mailer::User;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::User;
 use base qw(EnsEMBL::Web::Mailer);
 
@@ -84,7 +83,7 @@ sub send_invitation_email {
     $article = 'an';
   }
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $message = sprintf(qq(Hello,
 
  You have been invited by %s to join the %s group

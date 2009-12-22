@@ -4,10 +4,11 @@ package EnsEMBL::Web::Component::Account::Interface::NewsfilterList;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -22,13 +23,12 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $html;
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $object = $self->object;
+  my $user = $object->user;
   my $sitename = $self->site_name;
-
   my @filters = $user->newsfilters;
   my $has_filters = 0;
+  my $html;
 
   if ($#filters > -1) {
 
@@ -51,11 +51,11 @@ sub content {
       my @species;
       if (ref($filter->species) eq 'ARRAY') {
         foreach my $sp (@{$filter->species}) {
-          push @species, $self->object->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
+          push @species, $object->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
         }
       }
       else {
-        @species = ($self->object->species_defs->get_config($filter->species, 'SPECIES_COMMON_NAME'));
+        @species = ($object->species_defs->get_config($filter->species, 'SPECIES_COMMON_NAME'));
       }
       $row->{'type'} = 'Species';
       $row->{'options'} = sprintf(qq(<a href="/info/website/news/index.html" title="View News" class="cp-external">%s</a>),

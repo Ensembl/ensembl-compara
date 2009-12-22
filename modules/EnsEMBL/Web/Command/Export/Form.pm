@@ -4,7 +4,6 @@ use strict;
 
 use URI::Escape qw(uri_escape);
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::TmpFile::Text;
 
@@ -15,7 +14,7 @@ sub process {
   my $object = $self->object;
 
   my $function = $object->function;  
-  my $session = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $session = $object->session;
   my $conf = $session->getViewConfig($function, 'Export');
   
   $conf->update_from_input($object);

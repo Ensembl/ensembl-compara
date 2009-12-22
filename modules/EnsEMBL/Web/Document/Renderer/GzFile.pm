@@ -1,18 +1,18 @@
 package EnsEMBL::Web::Document::Renderer::GzFile;
 
 use strict;
+
 use Compress::Zlib;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Root;
-our @ISA = qw(EnsEMBL::Web::Root);
+
+use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my $class = shift;
+  my $class    = shift;
+  my $filename = shift;
+
   my $self = { 'exists' => 'yes' };
   bless $self, $class;
-  my $filename = shift || $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_TMP_DIR.'/'.$self->temp_file_name;
-  $filename .= '.gz';
-  $self->{ 'filename' } =  $filename;
+    $self->{ 'filename' } =  $filename;
   return $self if $self->exists( $filename );
   $self->make_directory( $filename );
 

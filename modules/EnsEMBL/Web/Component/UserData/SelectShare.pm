@@ -2,10 +2,9 @@ package EnsEMBL::Web::Component::UserData::SelectShare;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::UserData);
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -27,7 +26,7 @@ sub content {
   my $form = $self->modal_form('share', $object->species_path($object->data_species).'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
 
   my ($has_groups, @groups);
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   if ($user && !$object->param('code')) { ## Can't share temp data with group
     @groups = $user->find_administratable_groups;
     $has_groups = $#groups > -1 ? 1 : 0;

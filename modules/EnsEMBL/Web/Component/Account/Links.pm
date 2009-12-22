@@ -4,10 +4,9 @@ package EnsEMBL::Web::Component::Account::Links;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -24,7 +23,7 @@ sub content {
   my $self = shift;
   my $html;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->object->user;
   
   $html .= qq(
 <!--<div class="twocol-left unpadded">-->
@@ -78,60 +77,6 @@ sub content {
     $html .= 'You have no saved bookmarks.'
   }
 
-=pod
-  $html .= qq(</div>
-
-<div class="twocol-right unpadded">
-<h3>Page configurations:</h3>
-);
-
-  my @configs = $user->configurations;
-  my $has_configs = 0;
-
-  if ($#configs > -1) {
-    $has_configs = 1;
-    $html .= "<dl>\n";
-    foreach my $config (@configs) {
-      $html .= $self->_output_config($config);
-    }
-    $html .= "</dl>\n";
-  }
-
-  my $group_configs = {};
-  foreach my $group (@groups) {
-    if ($group->configurations) {
-      $has_configs = 1;
-      $group_configs->{$group->id}{'group'} = $group;
-      my @configs = $group->configurations;
-      $group_configs->{$group->id}{'configs'} = \@configs;
-    }
-  }
-
-  $group_count = keys %$group_configs;
-  if ($group_count > 1) {
-    foreach my $id (keys %$group_configs) {
-    }
-  }
-  else {
-    foreach my $id (keys %$group_configs) {
-      $html .= '<h4>From subscribed group "'.$group_configs->{$id}{'group'}->name.'":</h4>';
-      my @configs = @{$group_configs->{$id}{'configs'}};
-      $html .= "<dl>\n";
-      foreach my $config (@configs) {
-        $html .= $self->_output_config($config);
-      }
-      $html .= "</dl>\n";
-    }
-  }
-
-  if (!$has_configs) {
-    $html .= 'You have no saved configurations.'
-  }
-  $html .= qq(</div>
-);
-
-=cut
-
   return $html;
 }
 
@@ -148,21 +93,5 @@ sub _output_bookmark {
   $html .= '>'.$bookmark->name."</a></li>\n";
   return $html;
 }
-
-=pod
-sub _output_config {
-  my ($self, $config) = @_;
-  my $html .= '<dt>'.$config->name.'</dt><dd><a href="" class="modal_link"';
-  if ($config->description) {
-    $html .= ' title="'.$config->description.'"';
-  }
-  $html .= '>Load&nbsp;into&nbsp;this&nbsp;page</a> | <a href="" class="cp-external"';
-  if ($config->description) {
-    $html .= ' title="'.$config->description.'"';
-  }
-  $html .= ">Go&nbsp;to&nbsp;saved&nbsp;page</a></dd>\n";
-  return $html;
-}
-=cut
 
 1;

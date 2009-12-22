@@ -2,9 +2,9 @@ package EnsEMBL::Web::Component::Gene::UserAnnotation;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::RegObj;
+no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
@@ -14,14 +14,14 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $html;
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
-
+  my $object = $self->object;
+  my $user = $object->user;
+  my $html;  
+  
   if ($user) {
-    my $id = $self->object->param('g');
+    my $id = $object->param('g');
     my $type = 'Gene';
-    my $species = $self->object->species;
+    my $species = $object->species;
 
     my @annotations = $user->annotations;
     my @gene_annotations;

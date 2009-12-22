@@ -4,11 +4,8 @@ package EnsEMBL::Web::Configuration::Account;
 ### account management 
 
 use strict;
-use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::RegObj;
 
-our @ISA = qw( EnsEMBL::Web::Configuration );
+use  base qw(EnsEMBL::Web::Configuration);
 
 sub _get_valid_action {
   my $self = shift;
@@ -18,12 +15,11 @@ sub _get_valid_action {
 
 sub set_default_action {
   my $self = shift;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->object->user;
   if ($user && $user->id) {
-    $self->{_data}{default} = 'Links';
-  }
-  else {
-    $self->{_data}{default} = 'Login';
+    $self->{'_data'}{'default'} = 'Links';
+  } else {
+    $self->{'_data'}{'default'} = 'Login';
   }
 }
 
@@ -34,12 +30,11 @@ sub local_tools    { return undef; }
 sub content_panel  { return $_[0]->_content_panel;   }
 sub context_panel  { return undef; }
 
-
 sub user_populate_tree {
   my $self = shift;
   my $object = $self->object;  
 
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+  if (my $user = $object->user) {
     my $settings_menu = $self->create_submenu( 'Settings', 'Manage Saved Settings' );
 
     $settings_menu->append(
@@ -59,12 +54,6 @@ sub user_populate_tree {
         [], { 'availability' => 1, 'url' => $object->species_path($species).'/UserData/ManageData', 'raw' => 1 },
       )
     );
-
-    #$settings_menu->append($self->create_node( 'Configurations', "Configurations ([[counts::configurations]])",
-    #[qw(configs EnsEMBL::Web::Component::Account::Configurations
-    #    )],
-    #  { 'availability' => 1, 'concise' => 'Configurations' }
-    #));
 
     $settings_menu->append($self->create_node( 'Annotation/List', "Annotations ([[counts::annotations]])",
     [], { 'command' => 'EnsEMBL::Web::Command::Account::Interface::Annotation',
@@ -194,8 +183,7 @@ sub user_populate_tree {
 sub populate_tree {
   my $self = shift;
 
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
-
+  if (my $user = $self->object->user) {
     $self->create_node( 'Links', 'Quick Links',
       [qw(links EnsEMBL::Web::Component::Account::Links)],
       { 'availability' => 1 },
@@ -211,7 +199,6 @@ sub populate_tree {
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SavePassword',
         'filters' => [qw(PasswordValid)]}
     );
-
   } else {
     $self->create_node( 'Login', "Log in",
       [qw(account EnsEMBL::Web::Component::Account::Login)],
@@ -260,12 +247,13 @@ sub populate_tree {
 }
 
 sub tree_cache_key {
-  my ($class, $user, $session) = @_;
-
+  my ($self, $user, $session) = @_;
+  
   ## Default trees for logged-in users and 
   ## for non logged-in are defferent
   ## but we cache both:
-  my $key = ($ENSEMBL_WEB_REGISTRY->get_user)
+  my $class = ref $self;
+  my $key = ($self->object->user)
              ? "::${class}::TREE::USER"
              : "::${class}::TREE";
 

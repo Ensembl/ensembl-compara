@@ -1,12 +1,11 @@
 package EnsEMBL::Web::Document::Renderer::Assembler;
 
 use strict;
+
 use LWP::Parallel;
 use LWP::Parallel::UserAgent;
-use Data::Dumper;
 
-use EnsEMBL::Web::RegObj;
-use base 'EnsEMBL::Web::Document::Renderer';
+use base qw(EnsEMBL::Web::Document::Renderer);
 
 sub new {
   my $class = shift;
@@ -46,7 +45,7 @@ sub process {
     } else {
       $request->header(
         Cookie  => $self->r->headers_in->{'Cookie'},
-        Referer => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL . $ENV{REQUEST_URI},
+        Referer => $request->uri->scheme . '://' . $request->uri->host_port . $ENV{REQUEST_URI},
       );
       $agent->register($request);
     }

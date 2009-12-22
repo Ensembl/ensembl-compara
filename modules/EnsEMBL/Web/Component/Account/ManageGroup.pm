@@ -4,11 +4,13 @@ package EnsEMBL::Web::Component::Account::ManageGroup;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
+no warnings 'uninitialized';
+
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
-#use EnsEMBL::Web::Data::Membership;
+use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Document::SpreadSheet;
+
+use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
   my $self = shift;
@@ -26,7 +28,7 @@ sub content {
   my $object = $self->object;
   my $html;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $sitename = $self->site_name;
 
   return '' unless $object->param('id') && int($object->param('id'));

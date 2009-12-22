@@ -4,10 +4,11 @@ package EnsEMBL::Web::Component::Account::SelectGroup;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
+no warnings 'uninitialized';
+
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
+
+use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
   my $self = shift;
@@ -22,10 +23,9 @@ sub caption {
 
 sub content {
   my $self = shift;
-
+  my $objcet = $self->object;
   my $form = EnsEMBL::Web::Form->new( 'select_group', "/Account/ShareRecord", 'post' );
-
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my @admin_groups = $user->find_administratable_groups;
 
   my $count = scalar(@admin_groups);
@@ -42,8 +42,8 @@ sub content {
     $form->add_element('type'  => 'RadioButton', 'name'  => 'webgroup_id', 
                       'label' => $group->name, 'value' => $group->id, 'checked' => 'checked');
   }
-  $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $self->object->param('id'));
-  $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $self->object->param('type'));
+  $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $object->param('id'));
+  $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $object->param('type'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Share', 'class' => 'modal_link');
 
   return $form->render;

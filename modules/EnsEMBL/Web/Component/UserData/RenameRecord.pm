@@ -2,11 +2,11 @@ package EnsEMBL::Web::Component::UserData::RenameRecord;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Form;
 
 use base qw(EnsEMBL::Web::Component::UserData);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -25,7 +25,7 @@ sub content {
 
   my $form = EnsEMBL::Web::Form->new('rename_record', $object->species_path($object->data_species) . '/UserData/SaveRecord', 'post');
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $method = $object->param('accessor');
   my ($record) = $user->$method($object->param('id'));
   return unless $record;

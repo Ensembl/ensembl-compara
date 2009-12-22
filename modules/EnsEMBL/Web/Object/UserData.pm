@@ -12,7 +12,6 @@ use Digest::MD5 qw(md5_hex);
 use Bio::EnsEMBL::Utils::Exception qw(try catch);
 
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::Data::Record::Upload;
 use EnsEMBL::Web::Data::Session;
@@ -38,7 +37,7 @@ sub short_caption {
 
 sub counts {
   my $self = shift;
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->user;
   my $counts = {};
   return $counts;
 }
@@ -82,7 +81,7 @@ sub save_to_db {
     default_track_name => $tmpdata->{'name'}
   };
 
-  if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+  if (my $user = $self->user) {
     $config->{'id'} = $user->id;
     $config->{'track_type'} = 'user';
   } else {
@@ -122,7 +121,7 @@ sub move_to_user {
     @_,
   );
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->user;
 
   my $data = $self->get_session->get_data(%args);
   my $record;
@@ -167,7 +166,7 @@ sub store_data {
 
     my $session_id = $session->get_session_id;    
     
-    if (my $user = $ENSEMBL_WEB_REGISTRY->get_user) {
+    if (my $user = $self->user) {
       my $upload = $user->add_to_uploads(
         %$tmp_data,
         type     => 'upload',
@@ -215,7 +214,7 @@ sub delete_upload {
   my $type = $self->param('type');
   my $code = $self->param('code');
   my $id   = $self->param('id');
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->user;
   
   if ($type eq 'upload') { 
     my $upload = $self->get_session->get_data(type => $type, code => $code);
@@ -251,7 +250,7 @@ sub delete_remote {
   my $type = $self->param('type');
   my $code = $self->param('code');
   my $id   = $self->param('id');
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->user;
   
   if ($type eq 'url') { 
     $self->get_session->purge_data(type => $type, code => $code);

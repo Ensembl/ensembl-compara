@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Mailer;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -39,7 +38,7 @@ sub process {
     }
 
     unless ($spam) {
-      my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+      my $species_defs = $object->species_defs;
 
       my $subject = $object->param('subject') || $species_defs->ENSEMBL_SITETYPE.' Helpdesk';
       $subject .= ' - '.$species_defs->ENSEMBL_SERVERNAME;

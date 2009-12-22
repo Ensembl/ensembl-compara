@@ -4,10 +4,12 @@ package EnsEMBL::Web::Component::Account::MemberGroups;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
+
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
 
 sub _init {
   my $self = shift;
@@ -25,7 +27,7 @@ sub content {
   my $object = $self->object;
   my $html;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   my $sitename = $self->site_name;
 
   ## Control panel fixes

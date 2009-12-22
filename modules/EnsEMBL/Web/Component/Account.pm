@@ -2,12 +2,7 @@ package EnsEMBL::Web::Component::Account;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-
-use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::RegObj;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component);
 

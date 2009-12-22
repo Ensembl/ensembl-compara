@@ -2,13 +2,7 @@ package EnsEMBL::Web::Component::Gene;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
-
-use Bio::AlignIO;
-use IO::String;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component);
 

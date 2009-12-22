@@ -2,10 +2,11 @@ package EnsEMBL::Web::Component::Location::ViewBottom;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Location);
+no warnings 'uninitialized';
+
 use Time::HiRes qw(time);
-use EnsEMBL::Web::RegObj;
+
+use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
   my $self = shift;

@@ -6,9 +6,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
@@ -26,7 +23,7 @@ sub content {
   my $self = shift;
   my $html;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $self->object->user;
   $html .= sprintf(qq(<dl class="summary">
                 <dt>User name</dt>
                   <dd>%s</dd>

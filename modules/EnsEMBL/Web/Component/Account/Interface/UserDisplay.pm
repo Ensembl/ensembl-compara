@@ -4,10 +4,11 @@ package EnsEMBL::Web::Component::Account::Interface::UserDisplay;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Account);
+no warnings 'uninitialized';
+
 use EnsEMBL::Web::Form;
-use EnsEMBL::Web::RegObj;
+
+use base qw(EnsEMBL::Web::Component::Account);
 
 sub _init {
   my $self = shift;
@@ -24,7 +25,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
-  my $user = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $object->user;
   return unless $user;
   $object->interface->data($user);
 

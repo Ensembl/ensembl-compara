@@ -3,8 +3,6 @@ package EnsEMBL::Web::Command::Interface::Delete;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
