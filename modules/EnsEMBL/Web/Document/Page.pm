@@ -15,7 +15,6 @@ use constant DEFAULT_LANGUAGE        => 'en-gb';
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Tools::PluginLocator;
 
 use base qw(EnsEMBL::Web::Root);
@@ -520,7 +519,7 @@ sub render_Text {
 sub render_TextGz {
   my $self = shift;
   
-  my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile;
+  my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
   
   foreach my $element (@{$self->{'body_order'}}) {
     my $attr = $element->[0];
