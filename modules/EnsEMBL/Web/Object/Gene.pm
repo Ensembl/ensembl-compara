@@ -511,7 +511,6 @@ sub get_all_families {
         }
         else {
           my @A = keys %$info;
-          warn "INFO @A";
           $families->{$id} = {'info' => $info, 'transcripts' => [$transcript]};
         }
       }
