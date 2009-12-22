@@ -35,23 +35,23 @@ sub new {
   my $session    = $ENSEMBL_WEB_REGISTRY->get_session;
   my $session_id = $session->get_session_id;
   my $user_tree  = $self->can('user_populate_tree') && ($user || $session_id);
-  my $tree       = $user_tree && $MEMD && $class->tree_cache_key($user, $session) ? $MEMD->get($class->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
+  my $tree       = $user_tree && $MEMD && $self->tree_cache_key($user, $session) ? $MEMD->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
 
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
-    $tree = $MEMD->get($class->tree_cache_key) if $MEMD && $class->tree_cache_key; # Try to get default tree from cache
+    $tree = $MEMD->get($self->tree_cache_key) if $MEMD && $self->tree_cache_key; # Try to get default tree from cache
 
     if ($tree) {
       $self->{'_data'}{'tree'} = $tree;
     } else {
       $self->populate_tree; # If no user + session tree found, build one
-      $MEMD->set($class->tree_cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $MEMD && $class->tree_cache_key; # Cache default tree
+      $MEMD->set($self->tree_cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $MEMD && $self->tree_cache_key; # Cache default tree
     }
 
     if ($user_tree) {
       $self->user_populate_tree;
-      $MEMD->set($class->tree_cache_key($user, $session), $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'}||{}}) if $MEMD && $class->tree_cache_key($user, $session); # Cache user + session tree version
+      $MEMD->set($self->tree_cache_key($user, $session), $self->{'_data'}{'tree'}, undef, 'TREE', keys %{$ENV{'CACHE_TAGS'}||{}}) if $MEMD && $self->tree_cache_key($user, $session); # Cache user + session tree version
     }
   }
 
@@ -81,9 +81,9 @@ sub add_form     { my ($self, $panel, @T) = @_; $panel->add_form($self->page, @T
 # Each class might have different tree caching dependences 
 # See Configuration::Account and Configuration::Search for more examples
 sub tree_cache_key {
-  my ($class, $user, $session) = @_;
+  my ($self, $user, $session) = @_;
   
-  my $key = join '::', $class, $class->species, 'TREE';
+  my $key = join '::', ref $self, $self->species, 'TREE';
 
   $key .= '::USER[' . $user->id . ']' if $user;
   $key .= '::SESSION[' . $session->get_session_id . ']' if $session && $session->get_session_id;
