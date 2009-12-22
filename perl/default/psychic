@@ -7,62 +7,61 @@ package psychic;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use EnsEMBL::Web::Document::WebPage;
+use CGI;
+use URI::Escape qw(uri_escape);
+
 use EnsEMBL::Web::RegObj;
-use CGI qw(escape);
+use EnsEMBL::Web::Root;
 
-my $webpage = new EnsEMBL::Web::Document::WebPage;
-my $q = $ENSEMBL_WEB_REGISTRY->get_session->get_input;
-my $site_type = lc($webpage->{'species_defs'}->ENSEMBL_SITETYPE);
-my $script = $webpage->{'species_defs'}->ENSEMBL_SEARCH;
-my $species;
+my $q            = new CGI;
+my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+my $site_type    = lc $species_defs->ENSEMBL_SITETYPE;
+my $script       = $species_defs->ENSEMBL_SEARCH;
+my %sp_hash      = %{$species_defs->ENSEMBL_SPECIES_ALIASES};
+my $dest_site    = $q->param('site') || $site_type;
+my $index        = $q->param('idx')  || undef;
+my $query        = $q->param('q');
+my ($species, $species_path, $url, $other_site_url);
+
+$query =~ s/^\s+//g;
+$query =~ s/\s+$//g;
+$query =~ s/\s+/ /g;
+
 if ($q->param('species')) {
   $species = $q->param('species');
 } elsif ($ENV{'ENSEMBL_SPECIES'} ne 'common') {
   $species = $ENV{'ENSEMBL_SPECIES'};
 }
-my $dest_site = $q->param('site') || $site_type;
-my $index  = $q->param('idx')  || undef;
 
-if( $species eq 'all' && $dest_site eq 'ensembl' ) {
+if ($species eq 'all' && $dest_site eq 'ensembl') {
   $dest_site = 'ensembl_all';
-  $species = $webpage->{'species_defs'}->ENSEMBL_PRIMARY_SPECIES;
+  $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
 }
 
-my $query  = $q->param('q');
-my $URL;
+$species = undef if $dest_site =~ /_all/;
 
-$query=~ s/^\s+//g;
-$query=~ s/\s+$//g;
-$query=~ s/\s+/ /g;
-
-if($dest_site =~ /_all/ ) {
-  $species = undef;
-}
-
-my $other_site_url;
 if ($dest_site eq 'ebi') {
-  $URL = 'http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query='.$query;
-  $webpage->redirect($URL);
+  $url = "http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query";
+  $q->redirect($url);
   exit;
 } elsif ($dest_site eq 'sanger') {
-  $URL = 'http://search.sanger.ac.uk/cgi-bin/exasearch?_q='.$query;
-  $webpage->redirect($URL);
+  $url = "http://search.sanger.ac.uk/cgi-bin/exasearch?_q=$query";
+  $q->redirect($url);
   exit;
 } elsif ($dest_site =~ /vega/) {
   if ($site_type eq 'vega') {
-    $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
+    $url = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
   } else {
-    $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
+    $url = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
     $other_site_url = 'http://vega.sanger.ac.uk';
   }
 } elsif ($site_type eq 'vega') {
-  $URL = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
+  $url = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
   $other_site_url = 'http://www.ensembl.org'; 
 } else {
-  $URL = "/Homo_sapiens/Search/Results?species=$species&idx=All&q=$query";
+  $url = "/Homo_sapiens/Search/Results?species=$species&idx=All&q=$query";
 }
 
 ## Let us parse the first string to see if it is the name of a species or one
@@ -70,147 +69,132 @@ if ($dest_site eq 'ebi') {
 ## down!
 
 $query .= ' ';
-my %sp_hash = %{ $webpage->{'species_defs'}->ENSEMBL_SPECIES_ALIASES };
-foreach my $sp ( sort keys %sp_hash ) {
-  if( lc(substr($query,0,length($sp)+1)) eq lc($sp).' ') {
+
+foreach my $sp (sort keys %sp_hash) {
+  if (lc(substr $query, 0, length ($sp) + 1) eq lc($sp) . ' ') {
     $species = $sp_hash{$sp};
-    $query = substr($query, length($sp)+1 );
+    $query = substr $query, length($sp) + 1;
   }
 }
+
 chop $query;
 
 my $feature_maps = {qw(
-		       gene        Gene
-		       affyprobe   OligoProbe
-		       oliogprobe  OligoProbe
-		       affy        OligoProbe
-		       oligo       OligoProbe
-		       snp         SNP
-		       variaton    SNP
-		       chr         Chromosome
-		       clone       Sequence
-		       contig      Sequence
-		       chromosome  Chromosome
-		       supercontig Sequence
-		       region      Sequence
-		       sequence    Sequence
-		       disease     Gene
-		       domain      Domain
-		       peptide     Gene
-		       transcript  Gene
-		       gene        Gene
-		       translation Gene
-		       cdna        GenomicAlignment
-		       mrna        GenomicAlignment
-		       protein     GenomicAlignment
-		       domain      Domain
-		       marker      Marker
-		       family      Family
-		     )};
+  gene        Gene
+  affyprobe   OligoProbe
+  oliogprobe  OligoProbe
+  affy        OligoProbe
+  oligo       OligoProbe
+  snp         SNP
+  variaton    SNP
+  chr         Chromosome
+  clone       Sequence
+  contig      Sequence
+  chromosome  Chromosome
+  supercontig Sequence
+  region      Sequence
+  sequence    Sequence
+  disease     Gene
+  domain      Domain
+  peptide     Gene
+  transcript  Gene
+  gene        Gene
+  translation Gene
+  cdna        GenomicAlignment
+  mrna        GenomicAlignment
+  protein     GenomicAlignment
+  domain      Domain
+  marker      Marker
+  family      Family
+)};
 
 ## Now we look to see if we can find a feature in the next part
 ## of the search string - if so use that as the provisional name
 ## of the index....
 
-my $index_t = '';
+my $index_t;
+my $flag = 0;
 
-if( $query=~/^(\w+)\b/ ) {
-  $index_t = $feature_maps->{lc($1)};
-  if( $index_t ) {
-    $query=~s/^\w+\W*//;
-  }
-} elsif( $query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i ) {
+if ($query =~ /^(\w+)\b/) {
+  $index_t = $feature_maps->{lc $1};
+  $query   =~ s/^\w+\W*// if $index_t;
+} elsif ($query =~ s/^(chromosome)//i || $query =~ s/^(chr)//i) {
   $index_t = 'Chromosome';
-} elsif( $query =~/^(contig|clone|supercontig|region)/i ) {
+} elsif ($query =~ /^(contig|clone|supercontig|region)/i) {
   $index_t = 'Sequence';
 }
-
-my $flag = 0;
 
 $index = $index_t if $index_t;
 
 ## We have a species so we can see if we can generate a mapview/contigview/cytoview
 ## link....
 
-if($species) {
-  if(!$query) { ## nothing to search for
+if ($species) {
+  $species_path = $species_defs->species_path($species) || "/$species";
+  
+  if (!$query) { ## nothing to search for
     $flag = 1;
-  }
-  elsif( $index eq 'Sequence' || $index eq 'Chromosome' || ! $index ) {
+  } elsif ($index eq 'Sequence' || $index eq 'Chromosome' || !$index) {
     ## match any of the following:
-    if( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i       ||
-	  $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i ) {
-      my( $seq_region_name, $start, $end ) = ( $1, $2, $4 );
+    if ($query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)( |-|\.\.|,)([\d\.]+?[MKG]?)$/i ||
+        $query =~ /^\s*([-\.\w]+)[: ]([\d,]+[MKG]?)( |\.\.|-)([\d,]+[MKG]?)$/i
+    ) {
+      my ($seq_region_name, $start, $end) = ($1, $2, $4);
+      
       $seq_region_name =~ s/chr//;
-      $start = $webpage->evaluate_bp( $start );
-      $end   = $webpage->evaluate_bp( $end   );
-      ($end,$start)=($start,$end) if $end < $start;
+      $start = EnsEMBL::Web::Root::evaluate_bp(undef, $start);
+      $end   = EnsEMBL::Web::Root::evaluate_bp(undef, $end);
+      
+      ($end, $start) = ($start, $end) if $end < $start;
+      
       my $script = 'Location/View';
-      $script = 'Location/Overview' if  $end - $start > 1000000;
-      if( $index eq 'Chromosome' ) {
-	      $URL = "/$species/Location/Chromosome?r=$seq_region_name";
+      $script    = 'Location/Overview' if $end - $start > 1000000;
+      
+      if ($index eq 'Chromosome') {
+	      $url  = "$species_path/Location/Chromosome?r=$seq_region_name";
 	      $flag = 1;
-      } 
-      else {
-	      $URL = "/$species/$script?r=".CGI::escape($seq_region_name);
-        if($start && $end ) {
-          $URL .= ':'.CGI::escape($start.'-'.$end);
-        }
+      } else {
+	      $url  = "$species_path/$script?r=" . uri_escape($seq_region_name);
+        $url .= ':' . uri_escape($start . '-' . $end) if $start && $end;
 	      $flag = 1;
       }
-	
-#    } elsif( $query =~ /^\s*([-\.\w]+)[: ]([\d\.]+?[MKG]?)$/i ) {
-#      my( $seq_region_name, $start, $end ) = ( $1, $2 );
-#      $start = $webpage->evaluate_bp( $start );
-#      my $script = 'contigview';
-#      if( $start ) {
-#        $URL = URL( "/%s/%s?c=%s:%s;w=100000", $species, $script, $seq_region_name, $start );
-#    $flag = 1;
-#      }
-   
-    } 
-    else {
-      if( $index eq 'Chromosome' ) {
-	      $URL = "/$species/Location/Chromosome?r=$query";
+    } else {
+      if ($index eq 'Chromosome') {
+	      $url  = "$species_path/Location/Chromosome?r=$query";
 	      $flag = 1;
-      } 
-      elsif( $index eq 'Sequence' ) {
-	      $URL = URL( "/%s/Location/View?r=%s", $species, $query );
+      } elsif ($index eq 'Sequence') {
+	      $url  = "$species_path/Location/View?r=$query";
 	      $flag = 1;
       }
     }
   }
-  if ($query =~ /\.\./ && !$flag ) {  ## other pairs of identifiers
+  
+  if ($query =~ /\.\./ && !$flag) { ## other pairs of identifiers
     ## str.string..str.string
     ## str.string-str.string
     $query =~ /([\w|\.]*\w)(\.\.)(\w[\w|\.]*)/;
-    $URL = URL( '/%s/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s', $species, $1, $3 );
-    $flag = 1;
+    $url   = url("$species_path/jump_to_contig?type1=all;type2=all;anchor1=%s;anchor2=%s", $1, $3);
+    $flag  = 1;
   }
-  warn ">>> URL $URL";
 } else {
-  $URL = "/$script?species=;idx=;q=";
+  $url = "/$script?species=;idx=;q=";
 }
 
-unless( $flag ) {
-  $URL = $query =~ /^BLA_\w+$/           ? URL( '/Multi/blastview/%s', $query  ) ## Blast ticket
-    : $query =~ /^\s*([ACGT]{20,})\s*$/i ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1 ) ## BLAST seq search
-    : $query =~ /^\s*([A-Z]{20,})\s*$/i  ? URL( '/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1 ) ## BLAST seq search
-    :                                      URL( '/%s/'.$script.'?species=%s;idx=%s;q=%s',
-						( $species eq 'ALL'|| !$species ? 'default' : $species ),
-						$species ? $species : 'all',
-						$index,
-						$query
-					      )
-      ;
+if (!$flag) {
+  $url = 
+    $query =~ /^BLA_\w+$/              ? url('/Multi/blastview/%s', $query) :                                                                 ## Blast ticket
+    $query =~ /^\s*([ACGT]{20,})\s*$/i ? url('/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1) :         ## BLAST seq search
+    $query =~ /^\s*([A-Z]{20,})\s*$/i  ? url('/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1) : ## BLAST seq search
+    url(($species eq 'ALL' || !$species ? '/default' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
 }
 
-$URL = $other_site_url.$URL;
-$webpage->redirect($URL);
+$url = $other_site_url . $url;
 
-sub URL {
-  my( $template, @array ) = @_;
-  return sprintf $template, map { CGI::escape( $_ ) } @array;
+$q->redirect($url);
+
+sub url {
+  my ($template, @array) = @_;
+  return sprintf $template, map uri_escape($_), @array;
 }
 
 1;

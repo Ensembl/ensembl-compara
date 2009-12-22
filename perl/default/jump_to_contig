@@ -9,39 +9,60 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Document::WebPage;
-                                                                                
-my $webpage= new EnsEMBL::Web::Document::WebPage(
-  'renderer'   => 'Apache',
-  'outputtype' => 'HTML',
-  'scriptname' => 'anchorview',
-  'objecttype' => 'Location',
-);
+use CGI;
+use URI::Escape qw(uri_escape);
 
-my $extra_URL = '';
-my $f = $webpage->factory;
-foreach( qw( type1 anchor1 type2 anchor2 downstream upstream chr) ) {
-  $extra_URL .= sprintf( ";%s=%s", $_, $f->escape($f->param($_)) ) if $f->param($_);
-} 
+use EnsEMBL::Web::CoreObjects;
+use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::Proxy::Factory;
+use EnsEMBL::Web::RegObj;
 
-if( $webpage->has_problem_type( 'fatal' ) ) {
-  $webpage->redirect("/$ENV{'ENSEMBL_SPECIES'}/mapview?error=1$extra_URL");
-} elsif( $webpage->has_a_problem ) {
-  $webpage->redirect("/$ENV{'ENSEMBL_SPECIES'}/mapview?error=2$extra_URL"); ## this means not all on same chromosome
+my $input         = new CGI;
+my $species       = $ENV{'ENSEMBL_SPECIES'};
+my $species_defs  = $ENSEMBL_WEB_REGISTRY->species_defs;
+my $species_path  = $species_defs->species_path;
+my $db_connection = $species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef;
+my $core_objects  = new EnsEMBL::Web::CoreObjects($input, $db_connection);
+my $factory       = new EnsEMBL::Web::Proxy::Factory('Location', {
+  _input        => $input,
+  _core_objects => $core_objects,
+  _databases    => $db_connection
+});
+
+eval {
+  $factory->createObjects;
+};
+
+my $extra_url;
+
+foreach (qw( type1 anchor1 type2 anchor2 downstream upstream chr )) {
+  $extra_url .= sprintf ';%s=%s', $_, uri_escape($factory->param($_)) if $factory->param($_);
+}
+
+if ($factory->has_problem_type('fatal')) {
+  $factory->redirect("$species_path/mapview?error=1$extra_url");
+} elsif ($factory->has_a_problem) {
+  $factory->redirect("$species_path/mapview?error=2$extra_url"); ## this means not all on same chromosome
 } else { ## grab the object and check to see if it is less than 5Mb
-  my $object = $webpage->dataObjects->[0]; 
-  my $script =  $object->length < 1.0001e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE || 1) ? 'contigview' : 'cytoview';
-     $script = 'cytoview' if $object->species_defs->NO_SEQUENCE;
-  my $URL = sprintf( "/%s/%s?l=%s:%d-%s",
-    $ENV{'ENSEMBL_SPECIES'},
+  my $object = $factory->object; 
+  my $script = $object->length < 1.0001e6 * ($species_defs->ENSEMBL_GENOME_SIZE || 1) ? 'contigview' : 'cytoview';
+     $script = 'cytoview' if $species_defs->NO_SEQUENCE;
+     
+  my $url = sprintf(
+    '%s/%s?l=%s:%d-%s',
+    $species_path,
     $script,
     $object->seq_region_name,
     $object->seq_region_start,
     $object->seq_region_end
   );
-  $URL .= ';h='.join '|', ( $object->param('type1') eq 'bp' ? () : $object->param('anchor1') ),
-                          ( $object->param('type2') eq 'bp' ? () : $object->param('anchor2') );
-  $webpage->redirect( $URL );
+  
+  $url .= ';h=' . join('|', 
+    ($object->param('type1') eq 'bp' ? () : $object->param('anchor1')),
+    ($object->param('type2') eq 'bp' ? () : $object->param('anchor2'))
+  );
+  
+  $factory->redirect($url);
 }
 
 1;
