@@ -260,7 +260,8 @@ sub _init {
     
     eval { 
       $html_module = $classname->new($self->{'timer'}); # Construct the module
-      $html_module->{'_renderer'} = $self->{'_renderer'};
+      $html_module->{'species_defs'} = $self->species_defs;
+      $html_module->{'_renderer'}    = $self->{'_renderer'};
     };
     
     if ($@) {
