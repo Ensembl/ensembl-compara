@@ -8,15 +8,12 @@ use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 
 use Sanger::Graphics::TextHelper;
-use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Tools::Misc;
-
-my $reg = "Bio::EnsEMBL::Registry";
+use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 
 our @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
 
@@ -29,6 +26,7 @@ our $alignment_renderers = [
   unlimited   => 'Stacked unlimited',
   ungrouped   => 'Ungrouped',
 ];
+
 our $MEMD = EnsEMBL::Web::Cache->new;
 
 #########
@@ -161,7 +159,7 @@ sub load_user_vert_tracks {
         format  => $track->{'format'},
       };
       
-      $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($track->{'filesize'});
+      $track_info->{'render'} = style_by_filesize($track->{'filesize'});
       
       if ($track->{'name'}) {
         $track_info->{'name'} = $track->{'name'};
@@ -213,7 +211,7 @@ sub load_user_vert_tracks {
           style       => $analysis->web_data,
         };
         
-        $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'});
+        $track_info->{'render'} = style_by_filesize($source->{'filesize'});
         push @user_tracks, $track_info;
       }
     }
