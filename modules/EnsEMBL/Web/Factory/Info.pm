@@ -2,9 +2,9 @@ package EnsEMBL::Web::Factory::Info;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Factory);
 use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::RegObj;
+
+use base qw(EnsEMBL::Web::Factory);
 
 sub new {
   my $class = shift;

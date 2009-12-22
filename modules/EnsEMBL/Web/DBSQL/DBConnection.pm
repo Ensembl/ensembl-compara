@@ -32,16 +32,13 @@ Brian Gibbins - bg2@sanger.ac.uk
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 use DBI;
 use Carp;
 
-use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use EnsEMBL::Web::Problem;
 use Bio::EnsEMBL::Registry;
-use EnsEMBL::Web::RegObj;
-my $reg = "Bio::EnsEMBL::Registry";
+
+my $reg = 'Bio::EnsEMBL::Registry';
 
 sub new {
   my( $class, $species, $species_defs ) = @_;

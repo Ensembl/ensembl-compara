@@ -6,8 +6,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Tools::Encryption;
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Tools::Encryption qw(encryptPassword);
 
 use base qw(EnsEMBL::Web::Filter);
 
@@ -30,7 +29,7 @@ sub catch {
     my $user = EnsEMBL::Web::Data::User->find(email => $object->param('email'));
     if ($user) { 
       my $input_password = $object->param('password');
-      my $encrypted = EnsEMBL::Web::Tools::Encryption::encryptPassword($input_password, $user->salt);
+      my $encrypted = encryptPassword($input_password, $user->salt);
       if ($user->password ne $encrypted) {
         $self->set_error_code('invalid_password');
       } 

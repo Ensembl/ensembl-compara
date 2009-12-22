@@ -1,10 +1,8 @@
 package EnsEMBL::Web::Configuration::UserData;
 
 use strict;
-use EnsEMBL::Web::Configuration;
-use EnsEMBL::Web::RegObj;
 
-our @ISA = qw( EnsEMBL::Web::Configuration );
+use base qw(EnsEMBL::Web::Configuration);
 
 ## Don't cache tree for user data
 sub tree_cache_key {

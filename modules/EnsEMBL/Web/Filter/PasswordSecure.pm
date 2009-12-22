@@ -3,8 +3,6 @@ package EnsEMBL::Web::Filter::PasswordSecure;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Filter);
 
 ### Checks if a password is strong enough to satisfy minimum security standards

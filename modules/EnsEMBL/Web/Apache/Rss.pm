@@ -4,9 +4,8 @@ use strict;
 
 use SiteDefs qw(:ALL);
 use Apache2::Const qw(:common :methods :http);
-use Apache2::Util ();
+use Apache2::Util;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Data::NewsItem;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Cache;

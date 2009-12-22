@@ -2,9 +2,6 @@ package EnsEMBL::Web::Filter::EmailAddress;
 
 use strict;
 use warnings;
-use Class::Std;
-
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Filter);
 

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Filter);
 

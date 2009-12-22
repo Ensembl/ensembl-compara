@@ -5,7 +5,6 @@ package EnsEMBL::Web::Document::HTML::Glossary;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Component::Help::Glossary;
 
 use base qw(EnsEMBL::Web::Document::HTML);

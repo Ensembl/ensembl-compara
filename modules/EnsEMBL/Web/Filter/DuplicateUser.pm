@@ -2,9 +2,8 @@ package EnsEMBL::Web::Filter::DuplicateUser;
 
 use strict;
 use warnings;
-use Class::Std;
 
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::User;
 
 use base qw(EnsEMBL::Web::Filter);
 

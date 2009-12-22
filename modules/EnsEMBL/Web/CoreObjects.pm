@@ -6,7 +6,6 @@ no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Registry;
 
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Fake;
 
 use base qw(EnsEMBL::Web::Root);

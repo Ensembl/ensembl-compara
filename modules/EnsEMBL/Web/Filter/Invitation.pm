@@ -3,8 +3,7 @@ package EnsEMBL::Web::Filter::Invitation;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Data::Record::Invite;
 
 use base qw(EnsEMBL::Web::Filter);
 

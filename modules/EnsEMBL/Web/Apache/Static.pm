@@ -5,21 +5,16 @@ package EnsEMBL::Web::Apache::Static;
 #############################################################
 
 use strict;
-# use Apache::File ();
-# use Apache::Log ();
 
-use MIME::Types ();
-use Compress::Zlib ();
-use HTTP::Date ();
-use Data::Dumper;
+use MIME::Types;
+use Compress::Zlib;
+use HTTP::Date;
 
 use Apache2::Const qw(:common :methods :http);
-use Apache2::Util ();
+use Apache2::Util;
 
 use SiteDefs qw(:ALL);
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Root;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Cache;
 
 our $MEMD = EnsEMBL::Web::Cache->new;

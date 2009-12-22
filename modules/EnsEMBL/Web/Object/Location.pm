@@ -2,16 +2,12 @@ package EnsEMBL::Web::Object::Location;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use Data::Dumper;
-use POSIX qw(floor ceil);
+no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
-use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Object);
 
