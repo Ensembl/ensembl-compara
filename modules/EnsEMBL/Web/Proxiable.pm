@@ -33,6 +33,7 @@ sub DBConnection      { return $_[0]->{'data'}{'_databases'}    ||= new EnsEMBL:
 sub ExtURL            { return $_[0]->{'data'}{'_ext_url_'}     ||= new EnsEMBL::Web::ExtURL($_[0]->species, $_[0]->species_defs); } # Handling ExtURLs
 sub session           { return $_[0]->{'session'} ||= $ENSEMBL_WEB_REGISTRY->get_session; }
 sub get_session       { return $_[0]->{'session'} ||  $ENSEMBL_WEB_REGISTRY->get_session; }
+sub user              { return defined $_[0]->{'user'} ? $_[0]->{'user'} : ($_[0]->{'user'} = $ENSEMBL_WEB_REGISTRY->get_user || 0); }
 sub delete_param      { my $self = shift; $self->{'data'}{'_input'}->delete(@_); }
 sub get_databases     { my $self = shift; $self->DBConnection->get_databases(@_); }
 sub databases_species { my $self = shift; $self->DBConnection->get_databases_species(@_); }
