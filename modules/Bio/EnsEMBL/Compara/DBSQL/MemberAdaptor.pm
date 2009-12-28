@@ -273,6 +273,32 @@ sub fetch_all_by_source_taxon {
   return $self->_generic_fetch($constraint);
 }
 
+=head2 fetch_all_by_source_genome_db_id
+
+  Arg [1]    : string $source_name
+  Arg [2]    : int $genome_db_id
+  Example    : my $members = $ma->fetch_all_by_source_genome_db_id(
+                   "Uniprot/SWISSPROT", 9606);
+  Description: Fetches the member corresponding to a source_name and a genome_db_id.
+  Returntype : listref of Bio::EnsEMBL::Compara::Member objects
+  Exceptions : throws if $source_name or $genome_db_id is undef
+  Caller     : 
+
+=cut
+
+sub fetch_all_by_source_genome_db_id {
+  my ($self,$source_name,$genome_db_id) = @_;
+
+  throw("source_name and genome_db_id args are required") 
+    unless($source_name && $genome_db_id);
+
+#  my $source_id = $self->get_source_id_from_name($source_name);    
+  my $constraint = "m.source_name = '$source_name' and m.genome_db_id = $genome_db_id";
+
+  return $self->_generic_fetch($constraint);
+}
+
+
 sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   my ($self,$source_name,$taxon_id,$chr_name,$chr_start,$chr_end,$chr_strand,$limit) = @_;
 
@@ -659,7 +685,7 @@ sub fetch_canonical_peptide_member_for_gene_member_id {
   throw() unless (defined $gene_member_id);
 
   my $constraint = "m.gene_member_id = '$gene_member_id'";
-  my $join = [[['subset_member', 'sm'], 'sm.member_id = m.gene_member_id']];
+  my $join = [[['subset_member', 'sm'], 'sm.member_id = m.member_id']];
 
   #fixed fetch_canonical_peptide_member_for_gene_member_id so that it
   #returns the same canonical peptide used in the
@@ -867,6 +893,11 @@ sub _fetch_sequence_by_id {
 sub _fetch_sequence_exon_bounded_by_member_id {
   my ($self, $member_id) = @_;
   return $self->db->get_SequenceAdaptor->fetch_sequence_exon_bounded_by_member_id($member_id);
+}
+
+sub _fetch_sequence_cds_by_member_id {
+  my ($self, $member_id) = @_;
+  return $self->db->get_SequenceAdaptor->fetch_sequence_cds_by_member_id($member_id);
 }
 
 
