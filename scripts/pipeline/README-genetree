@@ -607,11 +607,64 @@ where ast.analysis_id=a.analysis_id and logic_name='Sitewise_dNdS'"
 for more details on controling the hive system do
   $ beekeeper.pl -help
 
+MCoffee jobs shouldn't fail, since at least MAFFT should be able to do
+tens of thousands of sequences. If they fail, it's usually because
+they need more memory. Once they have failed, one can manually retry
+the jobs with more memory like this (7600MB in this example):
+
+beekeeper.pl -url $COMPARA_URL -failed | grep MCoffee | grep job_id | awk -F\= '{print $2}' | awk '{print $1}' | while read i; do echo $i===; export TIMESTAMP=`date +2%3y%m%d_%H%M%S` && bsub -J7600.MCoffee.$i -q normal -R"select[mem>7600] rusage[mem=7600]" -M7600000 -o $HOME/$TIMESTAMP.out -e /$HOME/$TIMESTAMP.err "perl runWorker.pl -bk LSF -url $COMPARA_URL -outdir '' -debug 1 -job_id $i" && sleep 1; done
+
+Then check how much memory they are taking with something like this:
+while [ 1 ] ; do bjobs -l | grep 'MEM\:' | awk -FMEM\: '{print $2}' | sort -rn; date; sleep 120; done
+
+8a- The last gene tree alignments take too long. What can I do?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have a handful of alignments and are in a hurry to finish, you
+can change from the comprehensive mcoffee to the fast mcoffee option
+dynamically using:
+
+UPDATE analysis SET parameters=replace(parameters,'cmcoffee','fmcoffee');
+
+Or even more:
+
+update analysis set parameters=replace(parameters,'cmcoffee','mafft');
 
 9 - Quality Control
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Consistency of the entries can be tested with the following script;
+There are two QC analysis that are run during the pipeline,
+ClustersetQC and GenetreesetQC:
+
+ClustersetQC calculates the number and percent of orphans for every
+genome and stores the values as protein_tree_tags. Once it's run you
+can check the values running this sql query:
+
+SELECT tag, value, (select name from genome_db where genome_db_id=SUBSTRING_INDEX(tag,'_',1)) as name from protein_tree_tag where node_id=1 and tag like '%ClustersetQC' order by cast(value as decimal)";
+
+GenetreesetQC calculates the number and percent of orphans again for
+every genome after all the alignments, trees and homologies have been
+processed. You can check the values running:
+
+SELECT tag, value, (select name from genome_db where genome_db_id=SUBSTRING_INDEX(tag,'_',1)) as name from protein_tree_tag where node_id=1 and tag like '%ClustersetQC' order by cast(value as decimal)";
+
+If you are re-running the pipeline using the reuse_db feature from the
+previous release, ClustersetQC and GenetreesetQC will also give two
+more numbers:
+
+stable_id_mapping_mapped_clusters
+stable_id_mapping_novel_clusters
+
+Out of these two numbers, a proportion will be calculated, which is
+the proportion of novel clusters. There is a hard-coded default value
+of less than 0.2 for these that will make the analysis fail and the
+pipeline to stop. If you want to increase the tolerance, set your
+preferred value in the BLASTP_TEMPLATE section of the config file:
+
+'unmap_tolerance'=>'0.2'
+
+Once the pipeline is completely finished, consistency of the entries
+can be tested with the following script;
 
  $ perl ${BASEDIR}/ensembl-compara/scripts/pipeline/check_genetree_data.pl \
    -url $COMPARA_URL -longtests 1
