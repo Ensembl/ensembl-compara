@@ -392,6 +392,29 @@ sub build_GeneTreeSystem
     $stats->update();
   }
 
+
+  #
+  # CreateStoreSeqCDSJobs
+  print STDERR "CreateStoreSeqCDSJobs...\n";
+  #
+  $parameters = $genetree_params{'cluster_params'};
+  my $CreateStoreSeqCDSJobs = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateStoreSeqCDSJobs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateStoreSeqCDSJobs',
+      -parameters      => $parameters
+  );
+  $analysisDBA->store($CreateStoreSeqCDSJobs);
+
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateStoreSeqCDSJobs->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('BLOCKED');
+    $stats->update();
+  }
+
+
   #
   # StoreSeqExonBounded
   print STDERR "StoreSeqExonBounded...\n";
@@ -404,6 +427,22 @@ sub build_GeneTreeSystem
     );
   $analysisDBA->store($storeseqexonbounded);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($storeseqexonbounded->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(200);
+  $stats->update();
+
+  #
+  # StoreSeqCDS
+  print STDERR "StoreSeqCDS...\n";
+  #
+  my $storeseqcds = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'StoreSeqCDS',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::StoreSeqCDS',
+      -parameters      => $blast_template->parameters
+    );
+  $analysisDBA->store($storeseqcds);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($storeseqcds->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(200);
   $stats->update();
@@ -476,6 +515,28 @@ sub build_GeneTreeSystem
   $stats = $hclusterrun->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  #
+  # ClustersetQC
+  print STDERR "ClustersetQC...\n";
+  #
+  $parameters = $blast_template->parameters;
+  $parameters =~ s/\A{//;
+  $parameters =~ s/}\Z//;
+  $parameters =  $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'";
+  $parameters = '{' . $parameters . ",groupset_tag=>'" . 'ClustersetQC' . "'}";
+  my $clustersetqc = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'ClustersetQC',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GroupsetQC',
+      -parameters      => $parameters
+    );
+
+  $analysisDBA->store($clustersetqc);
+  $stats = $clustersetqc->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(3);
   $stats->status('BLOCKED');
   $stats->update();
 
@@ -697,6 +758,29 @@ sub build_GeneTreeSystem
   $stats->hive_capacity($quicktreebreak_hive_capacity);
   $stats->update();
 
+  #
+  # GeneTreesetQC
+  print STDERR "GeneTreesetQC...\n";
+  #
+  $parameters = $blast_template->parameters;
+  $parameters =~ s/\A{//;
+  $parameters =~ s/}\Z//;
+  $parameters = $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'";
+  $parameters = '{' . $parameters . ",groupset_tag=>'" . 'GeneTreesetQC' . "'}";
+  my $genetreesetqc = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'GeneTreesetQC',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GroupsetQC',
+      -parameters      => $parameters
+    );
+
+  $analysisDBA->store($genetreesetqc);
+  $stats = $genetreesetqc->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(3);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+
   # turn these two on if you need dnds from the old homology system
   #
   # CreateHomology_dNdSJob
@@ -806,6 +890,46 @@ sub build_GeneTreeSystem
   }
 
   #
+  # BuildHMMaa
+  print STDERR "BuildHMMaa...\n";
+  #
+  my $buildhmm_program = $genetree_params{'buildhmm'} || '/nfs/acari/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmbuild';
+  my $BuildHMMaa = Bio::EnsEMBL::Analysis->new
+    (
+     -db_version      => '1',
+     -logic_name      => 'BuildHMMaa',
+     -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMM',
+     -program_file    => $buildhmm_program,
+    );
+  $analysisDBA->store($BuildHMMaa);
+  $stats = $BuildHMMaa->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(200);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  #
+  # BuildHMMcds
+  print STDERR "BuildHMMcds...\n";
+  #
+  $parameters = '';
+  $parameters = '{cdna=>1}';
+  my $BuildHMMcds = Bio::EnsEMBL::Analysis->new
+    (
+     -db_version      => '1',
+     -logic_name      => 'BuildHMMcds',
+     -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMM',
+     -program_file    => $buildhmm_program,
+     -parameters      => $parameters,
+    );
+  $analysisDBA->store($BuildHMMcds);
+  $stats = $BuildHMMcds->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(200);
+  $stats->status('BLOCKED');
+  $stats->update();
+
+  #
   # Sitewise_dNdS
   print STDERR "Sitewise_dNdS...\n";
   #
@@ -871,9 +995,19 @@ sub build_GeneTreeSystem
   # $ctrlRuleDBA->create_rule($updatepafids_analysis, $paf_cluster);
   $ctrlRuleDBA->create_rule($blastrules_analysis, $CreateHclusterPrepareJobs);
   $ctrlRuleDBA->create_rule($blastrules_analysis, $CreateStoreSeqExonBoundedJobs);
+  $ctrlRuleDBA->create_rule($blastrules_analysis, $CreateStoreSeqCDSJobs);
   $ctrlRuleDBA->create_rule($CreateStoreSeqExonBoundedJobs, $storeseqexonbounded);
+  $ctrlRuleDBA->create_rule($CreateStoreSeqCDSJobs, $storeseqcds);
   $ctrlRuleDBA->create_rule($CreateHclusterPrepareJobs, $hclusterprepare);
   $ctrlRuleDBA->create_rule($hclusterprepare, $hclusterrun);
+  $ctrlRuleDBA->create_rule($hclusterrun, $clustersetqc);
+  $dataflowRuleDBA->create_rule($submit_analysis, $clustersetqc);
+  $dataflowRuleDBA->create_rule($submit_analysis, $genetreesetqc);
+  $ctrlRuleDBA->create_rule($clustersetqc,$mcoffee);
+
+  $ctrlRuleDBA->create_rule($CreateHomology_dNdSJob,$genetreesetqc);
+  $ctrlRuleDBA->create_rule($genetreesetqc,$homology_dNdS);
+
 #   $dataflowRuleDBA->create_rule($hclusterprepare, $hclusterrun, 1);
 #   $dataflowRuleDBA->create_rule($paf_cluster, $clusterset_staging, 1);
 #   $dataflowRuleDBA->create_rule($paf_cluster, $mcoffee, 2);
@@ -890,6 +1024,9 @@ sub build_GeneTreeSystem
   $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $quicktreebreak, 3);
   $dataflowRuleDBA->create_rule($njtree_phyml, $otherparalogs, 3);
+  $DB::single=1;1;
+  $dataflowRuleDBA->create_rule($orthotree, $BuildHMMaa, 1);
+  $dataflowRuleDBA->create_rule($orthotree, $BuildHMMcds, 1);
   $dataflowRuleDBA->create_rule($orthotree, $quicktreebreak, 2);
   $dataflowRuleDBA->create_rule($orthotree, $otherparalogs, 2);
   $dataflowRuleDBA->create_rule($quicktreebreak, $mcoffee, 1);
@@ -925,11 +1062,31 @@ sub build_GeneTreeSystem
      -analysis       => $CreateStoreSeqExonBoundedJobs,
     );
 
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+    (
+     -input_id       => 1,
+     -analysis       => $CreateStoreSeqCDSJobs,
+    );
+
    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
        (
         -input_id       => 1,
  #       -analysis       => $paf_cluster,
         -analysis       => $hclusterrun,
+       );
+
+   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+       (
+        -input_id       => 1,
+ #       -analysis       => $paf_cluster,
+        -analysis       => $clustersetqc,
+       );
+
+   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+       (
+        -input_id       => 1,
+ #       -analysis       => $paf_cluster,
+        -analysis       => $genetreesetqc,
        );
 
   print STDERR "Done.\n";
