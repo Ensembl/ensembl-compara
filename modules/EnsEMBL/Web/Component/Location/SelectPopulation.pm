@@ -13,7 +13,7 @@ sub _init {
  
   $self->SUPER::_init;
  
-  $self->{'link_text'}       = 'Select populations for comparison';
+  $self->{'link_text'}       = 'Select populations';
   $self->{'included_header'} = 'Selected Populations';
   $self->{'excluded_header'} = 'Unselected Populations';
   $self->{'url_param'}       = 'pop';
