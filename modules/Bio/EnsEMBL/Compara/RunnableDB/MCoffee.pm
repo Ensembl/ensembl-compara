@@ -138,13 +138,11 @@ sub fetch_input {
     # maybe in the future we want to use this option in tcoffee:
     #       t_coffee ..... -dp_mode myers_miller_pair_wise
   }
-  # Auto-switch to fmcoffee if gene count is too big.
-  if ($self->{'method'} eq 'cmcoffee') {
-    if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
-      $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
-      #       $self->{'method'} = 'fmcoffee';
-      print "MCoffee, auto-switch method to mafft because gene count > 200 \n";
-    }
+  # Auto-switch to mafft if gene count is too big.
+  if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
+    $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
+    #       $self->{'method'} = 'fmcoffee';
+    print "MCoffee, auto-switch method to mafft because gene count > 200 \n";
   }
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
