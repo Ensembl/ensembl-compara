@@ -26,7 +26,7 @@ sub content {
     $html_target = 'IDConversion';
     $text_target = 'MapIDs';       
   } elsif ($object->param('consequence_mapper')) {
-    $title = 'Consequence Calculator';  
+    $title = 'SNP Effect Predictor';  
     $html_target = 'ConsequenceCalculator';
     $text_target = 'SNPConsequence';
   }
