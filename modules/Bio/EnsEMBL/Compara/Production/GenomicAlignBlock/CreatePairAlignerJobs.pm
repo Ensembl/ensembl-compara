@@ -177,31 +177,53 @@ sub createPairAlignerJobs
   my $query_dna_list  = $self->{'query_collection'}->get_all_dna_objects;
   my $target_dna_list = $self->{'target_collection'}->get_all_dna_objects;
 
+  #get dnafrag adaptors
+  my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
+  my $dnafrag_chunk_adaptor = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor;
+  my $dnafrag_chunk_set_adaptor = $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor;
+  
   my $count=0;
   foreach my $target_dna (@{$target_dna_list}) {
     my $input_hash = {};
+
+    #find the target dnafrag name to check if it is MT - it can only be a 
+    #chunk and not part of a group
+    my $target_dnafrag_name;
 
     $input_hash->{'dbChunk'}      = undef;
     $input_hash->{'dbChunkSetID'} = undef;
 
     if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
       $input_hash->{'dbChunk'} = $target_dna->dbID;
+      my $dnafrag_chunk = $dnafrag_chunk_adaptor->fetch_by_dbID($target_dna->dbID);
+      $target_dnafrag_name = $dnafrag_chunk->dnafrag->name;
     }
     if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
       $input_hash->{'dbChunkSetID'} = $target_dna->dbID;
+
     }
-    
+
     foreach my $query_dna (@{$query_dna_list}) {
       $input_hash->{'qyChunk'}      = undef
       $input_hash->{'qyChunkSetID'} = undef;
 
+      #find the query dnafrag name to check if it is MT - it can only be a 
+      #chunk and not part of a group
+      my $query_dnafrag_name;
+
       if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
         $input_hash->{'qyChunk'} = $query_dna->dbID;
+	my $dnafrag_chunk = $dnafrag_chunk_adaptor->fetch_by_dbID($query_dna->dbID);
+	$query_dnafrag_name = $dnafrag_chunk->dnafrag->name;
       }
       if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
         $input_hash->{'qyChunkSetID'} = $query_dna->dbID;
       }
     
+      #only allow mitochrondria chromosomes to find matches to each other
+      next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 
+	      ($query_dnafrag_name ne "MT" && $target_dnafrag_name eq "MT"));
+
       my $input_id = main::encode_hash($input_hash);
       #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
