@@ -110,7 +110,7 @@ sub render {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
     my $html;
     
-    if ($class && $self->dynamic_use(undef, $class)) {
+    if ($class && $self->dynamic_use($class)) {
       my $filter = $class->new;
       
       $html .= '<div class="panel print_hide">';
@@ -144,8 +144,8 @@ sub get_json {
   # Include any access warning at top of page
   if ($self->filter_module) {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
-    
-    if ($class && $self->dynamic_use(undef, $class)) {
+    warn $class;
+    if ($class && $self->dynamic_use($class)) {
       $filter = $class->new;
       
       $content .= sprintf '<div style="width:80%" class="error print_hide"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
