@@ -27,7 +27,7 @@ sub content {
     my $pop_html .= $self->population_info($obj);
     $html .= qq( <dt>Populations: </dt><dd>$pop_html</dd>);
   } else {
-     $html .= $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations for comparison" link above.</p>'
+     $html .= $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations" link from menu on the left hand side of this page.</p>'
   );
 
   }
