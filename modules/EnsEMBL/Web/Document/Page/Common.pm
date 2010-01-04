@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Document::Common;
+package EnsEMBL::Web::Document::Page::Common;
 
 use strict;
 
