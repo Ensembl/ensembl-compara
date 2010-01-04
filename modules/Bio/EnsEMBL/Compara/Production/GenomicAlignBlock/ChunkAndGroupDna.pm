@@ -415,8 +415,8 @@ sub create_dnafrag_chunks {
 
     $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->store($chunk);
 
-    # do grouping if requested
-    if($self->{'group_set_size'} and ($chunk->length < $self->{'group_set_size'})) {
+    # do grouping if requested but do not group MT chr
+    if($self->{'group_set_size'} and ($chunk->length < $self->{'group_set_size'}) and $chunk->dnafrag->name ne "MT") {
       if(($self->{'current_chunkset'}->count > 0) and 
          (($self->{'current_chunkset'}->total_basepairs + $chunk->length) > $self->{'group_set_size'})) 
       {
