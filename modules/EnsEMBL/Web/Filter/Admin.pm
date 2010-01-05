@@ -5,37 +5,36 @@ use warnings;
 
 use base qw(EnsEMBL::Web::Filter);
 
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_redirect('/Account/Group/List');
-  $self->set_messages({
-    'not_admin' => 'You are not an administrator of this group.',
-    'bogus_id'  => 'No valid record selected.',
-  });
+sub init {
+  my $self = shift;
+  
+  $self->redirect = '/Account/Group/List';
+  $self->messages = {
+    not_admin => 'You are not an administrator of this group.',
+    bogus_id  => 'No valid record selected.'
+  };
 }
 
 
 sub catch {
-  my $self = shift;
+  my $self   = shift;
   my $object = $self->object;
+  my $id     = $object->param('id');
   
-  ## First check we have a sensible value for 'id'
-  if ($object->param('id') && $object->param('id') =~ /\D/) {
-    $self->set_error_code('bogus_id');
+  # First check we have a sensible value for 'id'
+  if ($id && $id =~ /\D/) {
+    $self->error_code = 'bogus_id';
     return;
   }
   
-  my $user  = $object->user;
+  my $user     = $object->user;
+  my $group_id = $object->param('group_id');
   
-  if ($object->param('group_id')) {
-    $self->set_error_code('not_admin') unless $user->is_administrator_of($object->param('group_id'));
-  } elsif ($object->param('id') && !$user->is_administrator_of($object->param('id'))) {
-    $self->set_error_code('not_admin');
+  if ($group_id) {
+    $self->error_code = 'not_admin' unless $user->is_administrator_of($group_id);
+  } elsif ($id && !$user->is_administrator_of($id)) {
+    $self->error_code = 'not_admin';
   }
-}
-
 }
 
 1;

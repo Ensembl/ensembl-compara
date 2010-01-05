@@ -1,68 +1,60 @@
 package EnsEMBL::Web::Filter::Owner;
 
 use strict;
-use warnings;
 
 use EnsEMBL::Web::Data::Group;
 
 use base qw(EnsEMBL::Web::Filter);
 
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_redirect('/Account/Links');
-  ## Set the messages hash here
-  $self->set_messages({
-    'not_owner'  => 'You are not the owner of this record.',
-    'not_member' => 'You are not a member of the group that owns this record.',
-    'bogus_id'   => 'No valid record selected.',
-  });
+sub init {
+  my $self = shift;
+  
+  $self->redirect = '/Account/Links';
+  $self->messages = {
+    not_owner  => 'You are not the owner of this record.',
+    not_member => 'You are not a member of the group that owns this record.',
+    bogus_id   => 'No valid record selected.'
+  };
 }
 
 sub catch {
-  my $self = shift;
+  my $self   = shift;
   my $object = $self->object;
+  my $id     = $object->param('id');
   
-  ## Don't fail if no ID - implies new record
-  if ($object->param('id')) {
-    ## First check we have a sensible value for 'id'
-    if ($object->param('id') =~ /\D/) {
-      $self->set_error_code('bogus_id');
+  # Don't fail if no ID - implies new record
+  if ($id) {
+    # First check we have a sensible value for 'id'
+    if ($id =~ /\D/) {
+      $self->error_code = 'bogus_id';
       return;
     } else {
-      my $user = $object->user;
+      my $user  = $object->user;
+      my $group = $object->param('group');
       
-      if ($object->param('group')) {
+      if ($group) {
         ## First check we have a sensible value for 'id'
-        if ($object->param('group') =~ /\D/) {
-          $self->set_error_code('bogus_id');
+        if ($group =~ /\D/) {
+          $self->error_code = 'bogus_id';
           return;
         } else {
-          my $group = EnsEMBL::Web::Data::Group->new($object->param('group'));
+          my $data_group = new EnsEMBL::Web::Data::Group($group);
           
-          if ($group && $user->is_member_of($group)) {
-            my $record = $group->records($object->param('id')); 
-            
-            if (!$record) {
-              $self->set_error_code('not_owner');
+          if ($data_group && $user->is_member_of($data_group)) {            
+            if (!$data_group->records($id)) {
+              $self->error_code = 'not_owner';
               return;
             }
           } else {
-            $self->set_error_code('not_member');
+            $self->error_code = 'not_member';
             return;
           }
         }
-      } else {
-        my $record = $user->records($object->param('id')); 
-        
-        $self->set_error_code('not_owner') unless $record;
+      } else {        
+        $self->error_code = 'not_owner' unless $user->records($id);
       }
     }
   }
-}
-  
-
 }
 
 1;

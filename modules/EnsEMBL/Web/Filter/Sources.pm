@@ -8,25 +8,23 @@ use base qw(EnsEMBL::Web::Filter);
 
 ### Checks if the user has actually selected one or more DAS sources
 
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  $self->set_messages({
-    'none' => 'No sources selected.',
-  });
+sub init {
+  my $self = shift;
+  
+  $self->messages = {
+    none => 'No sources selected.'
+  };
 }
 
 sub catch {
   my $self = shift;
-  $self->set_redirect('/UserData/SelectDAS');
+  
+  $self->redirect = '/UserData/SelectDAS';
+  
   # Process any errors
   if (!$self->object->param('dsn')) {
-    ## Store the server's message in the session
-    $self->set_error_code('none');
+    $self->error_code = 'none'; # Store the server's message in the session
   }
-}
-
 }
 
 1;

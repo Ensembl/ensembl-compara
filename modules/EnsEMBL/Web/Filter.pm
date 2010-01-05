@@ -7,97 +7,84 @@ package EnsEMBL::Web::Filter;
 ### a redirect URL as this will default to the originating page
 
 use strict;
-use warnings;
 
-use Class::Std;
+use base qw(EnsEMBL::Web::Root);
 
-{
-
-my %Object        :ATTR(:get<object> :set<object>);
-my %Redirect      :ATTR(:get<redirect> :set<redirect>);
-my %ErrorCode     :ATTR(:get<error_code> :set<error_code>);
-my %Messages      :ATTR(:get<messages> :set<messages>);
-my %Exceptions    :ATTR(:get<exceptions> :set<exceptions>);
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  ## Set the messages hash here
-  $self->set_messages({});
-  $self->set_object($args->{object});
+sub new {
+  my ($class, $data) = @_;
+  my $self = $data ? {%$data} : {};
+  
+  bless $self, $class;
+  
+  $self->messages = {}; # Not sure why this is needed
+  $self->init;
+  
+  return $self;
 }
 
-sub object {
-  my $self = shift;
-  return $self->get_object;
-}
+sub init {} # implemented in child modules
 
-sub error_code {
-  my $self = shift;
-  return $self->get_error_code;
-}
+sub object     :lvalue { $_[0]->{'object'};     }
+sub redirect   :lvalue { $_[0]->{'redirect'};   }
+sub error_code :lvalue { $_[0]->{'error_code'}; }
+sub messages   :lvalue { $_[0]->{'messages'};   }
+sub exceptions :lvalue { $_[0]->{'exceptions'}; }
 
+# Function to catch any errors and set the code to be used in the URL
+# N.B. this is a stub: set your error codes in the child module
 sub catch {
-  ## Function to catch any errors and set the code to be used in the URL
-  ## N.B. this is a stub: set your error codes in the child module
   my $self = shift;
   warn "!!! No error codes set in filter $self";
 }
 
+# Returns the name of the filter, i.e. the final section of the namespace
+# N.B. because we do not pass the full filter namespace, filters are not pluggable,
+# though they can be overridden in the normal Perl way 
 sub name {
-  ## Returns the name of the filter, i.e. the final section of the namespace
-  ## N.B. because we do not pass the full filter namespace, filters are not pluggable,
-  ## though they can be overridden in the normal Perl way
   my $self = shift;
-  my @namespace = split('::', ref($self));
+  my @namespace = split '::', ref $self;
   return $namespace[-1];
 }
 
+# Returns an error message, based on the filter_code parameter
+# Note that we set a default message in case there is no match. 
+# The default message has to be very vague because filters are used for 
+# data validation as well as access control. Ideally the user should never 
+# see this message - if it appears on a web page, you know you are 
+# missing a message in your filter!
 sub error_message {
-## Returns an error message, based on the filter_code parameter
-
-## Note that we set a default message in case there is no match. 
-## The default message has to be very vague because filters are used for 
-## data validation as well as access control. Ideally the user should never 
-## see this message - if it appears on a web page, you know you are 
-## missing a message in your filter!
   my ($self, $code) = @_;
   my $message;
+  
+  # Check for temporary messages stored in session
+  # Or return a preset message
   if ($code) {
-    ## Check for temporary messages stored in session
-    ## Or return a preset message
-    $message = $self->get_messages->{$code};
-  }
-  else {
+    $message = $self->messages->{$code};
+  } else {
     $message = 'Sorry, validation failed.';
   }
+  
   return $message;
 }
 
-sub set_tmp_message {
-## Stores a dynamically-generated message in the session
-## Added primarily for use with DAS servers
-  my ($self, $code, $message) = @_;
-}
-
-sub redirect {
-## Defaults to returning the originating URL, unless already set 
-## within the individual Filter's catch method.
+# Defaults to returning the originating URL, unless already set 
+# within the individual Filter's catch method.
+sub redirect_url {
   my $self = shift;
-  my $url = $self->object->species_path . $self->get_redirect;
+  my $url = $self->object->species_path . $self->redirect;
   my @ok_params;
   
   if (!$url) {
-    $url = '/'.$self->type.'/'.$self->action;
+    $url = '/' . $self->type . '/' . $self->action;
+    
     foreach my $p ($self->object->input_param) {
-      push @ok_params, $p.'='.$self->object->param($p);
+      push @ok_params, "$p=" . $self->object->param($p);
     }
-    if (@ok_params) {
-      $url .= '?'.join(';', @ok_params);
-    }
+    
+    $url .= '?' . join ';', @ok_params if @ok_params;
   }
+  
   return $url;
-}
-
 }
 
 1;

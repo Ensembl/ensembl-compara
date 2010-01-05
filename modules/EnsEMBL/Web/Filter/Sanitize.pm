@@ -1,25 +1,18 @@
 package EnsEMBL::Web::Filter::Sanitize;
 
 use strict;
-use warnings;
-use Class::Std;
 
 use base qw(EnsEMBL::Web::Filter);
 
-### Checks form fields for whitespace and quotes that might break things! 
-
-{
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
-  ## Doesn't need a message hash - should just work silently :)
-}
+### Checks form fields for whitespace and quotes that might break things!
 
 sub catch {
-  my $self = shift;
-  foreach my $field ($self->object->param) {
-    my $value = $self->object->param($field);
-    $self->object->param($field, $self->clean($value));
+  my $self   = shift;
+  my $object = $self->object;
+  
+  foreach my $field ($object->param) {
+    my $value = $object->param($field);
+    $object->param($field, $self->clean($value));
   }
 }
 
@@ -29,9 +22,6 @@ sub clean {
   $content =~ s/"//g;
   $content =~ s/''/'/g;
   return $content;
-}
-
-
 }
 
 1;
