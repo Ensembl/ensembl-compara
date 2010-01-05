@@ -4,80 +4,81 @@ package EnsEMBL::Web::Mailer;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
-use Class::Std;
 use Mail::Mailer;
+# use Website::StopIPs;
+
+# use EnsEMBL::Web::Filter::Spam;
+# use EnsEMBL::Web::Filter::Sanitize;
 use EnsEMBL::Web::RegObj;
-#use EnsEMBL::Web::Filter::Spam;
-use EnsEMBL::Web::Filter::Sanitize;
-use Website::StopIPs;
 
-{
-
-my %To            :ATTR(:set<to>             :get<to>) ;
-my %From          :ATTR(:set<from>           :get<from>);
-my %Reply         :ATTR(:set<reply>          :get<reply>);
-my %Subject       :ATTR(:set<subject>        :get<subject>);
-my %Message       :ATTR(:set<message>        :get<message>);
-my %MailServer    :ATTR(:set<mail_server>    :get<mail_server>);
-my %SpamThreshold :ATTR(:set<spam_threshold> :get<spam_threshold>);
-my %SiteName      :ATTR(:set<site_name>      :get<site_name>) ;
-my %BaseUrl       :ATTR(:set<baseurl>        :get<baseurl>) ;
-
-sub BUILD {
-  my ($self, $ident, $args) = @_;
+sub new {
+  my ($class, $data) = @_;
+  
   my $sd = $ENSEMBL_WEB_REGISTRY->species_defs;
-  $From{$ident}           = $args->{from}           || $sd->ENSEMBL_HELPDESK_EMAIL;
-  $Reply{$ident}          = $args->{reply};#          || $args->{from} || $sd->ENSEMBL_HELPDESK_EMAIL;
-  $MailServer{$ident}     = $args->{mail_server}    || $sd->ENSEMBL_MAIL_SERVER;
-  $SpamThreshold{$ident}  = $args->{spam_threshold} || 60;
-  $SiteName{$ident}       = $sd->ENSEMBL_SITETYPE;
-  $BaseUrl{$ident}        = $sd->ENSEMBL_BASE_URL;
+  
+  my $self = {
+    from           => $sd->ENSEMBL_HELPDESK_EMAIL,
+    mail_server    => $sd->ENSEMBL_MAIL_SERVER,
+    spam_threshold => 60,
+    base_url       => $sd->ENSEMBL_BASE_URL,
+    site_name      => $sd->ENSEMBL_SITETYPE,
+    %{$data || {}}
+  };
+  
+  bless $self, $class;
+  return $self;
 }
+
+sub to          :lvalue { $_[0]->{'to'};          }
+sub from        :lvalue { $_[0]->{'from'};        }
+sub reply       :lvalue { $_[0]->{'reply'};       }
+sub subject     :lvalue { $_[0]->{'subject'};     }
+sub message     :lvalue { $_[0]->{'message'};     }
+sub mail_server :lvalue { $_[0]->{'mail_server'}; }
+sub base_url    :lvalue { $_[0]->{'base_url'};    }
+sub site_name   :lvalue { $_[0]->{'site_name'};   }
 
 sub send {
   my ($self, $object, $options) = @_;
-
+  
   ## Sanitize input and fill in any missing values
   if ($object) {
-#    my $spamfilter = EnsEMBL::Web::Filter::Spam->new({'object' => $object, 'threshold'=>$self->get_spam_threshold});
-#    my $sanitizer  = EnsEMBL::Web::Filter::Sanitize->new({'object' => $object});
-#    my $IPcheck    = Website::StopIPs->new( $object->species_defs->ENSEMBL_CHECK_SPAM );
+#    my $spamfilter = new EnsEMBL::Web::Filter::Spam({ object => $object, threshold => $self->{'spam_threshold'} });
+#    my $sanitizer  = new EnsEMBL::Web::Filter::Sanitize({ object => $object });
+#    my $IPcheck    = new Website::StopIPs($object->species_defs->ENSEMBL_CHECK_SPAM);
 
-#    $self->set_message( $spamfilter->check( $self->get_message  )  ) unless $options->{'spam_check'} == 0;
+#    $self->message = $spamfilter->check($self->message)) unless $options->{'spam_check'} == 0;
 
-#    $self->set_from(    $sanitizer->clean( $self->get_from )  );
-#    $self->set_to(      $sanitizer->clean( $self->get_to   )  );
-#    $self->set_reply(   $sanitizer->clean( $self->get_reply || $self->get_from ) );
-  }
-  else {
+#    $self->from  = $sanitizer->clean($self->from));
+#    $self->to    = $sanitizer->clean($self->to));
+#    $self->reply = $sanitizer->clean($self->reply || $self->from));
+  }  else {
     warn '!!! PROXY OBJECT NOT PASSED TO MAILER - CANNOT CHECK FOR SPAM, ETC';
     warn '!!! MESSAGE NOT SENT';
     return undef;
   }
 
-  my $mailer   = new Mail::Mailer 'smtp', Server => $self->get_mail_server;
+
+  my $mailer   = new Mail::Mailer('smtp', Server => $self->mail_server);
   my @months   = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
-  my ($sec, $min, $hour, $day, $month, $year) = gmtime();
+  my ($sec, $min, $hour, $day, $month, $year) = gmtime;
   $year += 1900;
-  my $time_string = sprintf('%s %s %s %s, %02d:%02d:%02d +0000', $weekDays[$day], $day, $months[$month], $year, $hour, $min, $sec); 
+  my $time_string = sprintf '%s %s %s %s, %02d:%02d:%02d +0000', $weekDays[$day], $day, $months[$month], $year, $hour, $min, $sec; 
 
   $mailer->open({
-    'To'      => $self->get_to,
-    'From'    => $self->get_from,
-    'Reply-To'=> $self->get_reply,
-    'Subject' => $self->get_subject,
-    'X-URL'   => $self->get_baseurl,
-    'Date'    => $time_string,
+    'To'       => $self->to,
+    'From'     => $self->from,
+    'Reply-To' => $self->reply,
+    'Subject'  => $self->subject,
+    'X-URL'    => $self->base_url,
+    'Date'     => $time_string
   });
  
-  print $mailer $self->get_message;
-  $mailer->close()
-    or die "couldn't send whole message: $!\n";
-}
-
+  print $mailer $self->message;
+  $mailer->close or die "couldn't send whole message: $!\n";
 }
 
 1;
