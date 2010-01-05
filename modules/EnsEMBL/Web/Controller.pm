@@ -158,6 +158,7 @@ sub build_page {
         
         # Catch any errors and display as a "configuration runtime error"
         if ($@) {
+          warn ">>> FUNCTION $func failed: $@";
           $page->content->add_panel($page,
             'Configuration module runtime error',
             '<p>Unable to execute configuration %s from configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>', 
