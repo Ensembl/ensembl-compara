@@ -393,7 +393,7 @@ sub access_ok {
   my $filter = $self->not_allowed($object);
   
   if ($filter) {
-    my $url = $filter->redirect;
+    my $url = $filter->redirect_url;
     
     # Double-check that a filter name is being passed, since we have the option 
     # of using the default URL (current page) rather than setting it explicitly
