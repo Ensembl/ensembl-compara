@@ -39,7 +39,7 @@ sub content {
       $image->image_type = "family";
       $image->image_name = "$species-".$family_id;
       $image->imagemap = 'yes';
-      $image->set_button('form', 'id'=>'vclick', 'URL'=>"$spath/jump_to_location_view");
+      $image->set_button('drag', 'title' => 'Click or drag to jump to a region' );
 ##      unless( $image->exists ) {
         my %high = ( 'style' => 'arrow' );
         foreach my $g (@$genes){
