@@ -21,12 +21,12 @@ sub new {
   return $self;
 }
 
-sub renderer :lvalue { return $_[0]->{'_renderer'};    }
-sub home_url :lvalue { return $_[0]->{'_home_url'};    }
-sub img_url  :lvalue { return $_[0]->{'_img_url'};     }
+sub renderer :lvalue { $_[0]->{'_renderer'}; }
+sub home_url :lvalue { $_[0]->{'_home_url'}; }
+sub img_url  :lvalue { $_[0]->{'_img_url'};  }
 sub species_defs     { return $_[0]->{'species_defs'}; }
 
-sub printf { my $self = shift; $self->renderer->printf(@_) if $self->{'_renderer'}; }
-sub print  { my $self = shift; $self->renderer->print(@_)  if $self->{'_renderer'}; }
+sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
+sub print  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
 
 1;
