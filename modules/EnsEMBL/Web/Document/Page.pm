@@ -179,7 +179,7 @@ sub add_head_element_after  { shift->add_element_after('head_order', @_);  }
 sub remove_head_element     { shift->remove_element('head_order', @_);     }
 sub replace_head_element    { shift->replace_element('head_order', @_);    }
 
-sub add_element { shift->add_body_elements(@_); }
+sub add_element { shift->add_elements(@_); }
 
 sub add_elements {
   my $self = shift;
@@ -253,6 +253,7 @@ sub _init {
   
   foreach my $entry (@{$self->{'head_order'}}, @{$self->{'body_order'}}) {
     my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::HTML::Content' ]
+    warn ">>> $element, $classname";
     
     next unless $self->dynamic_use($classname); 
     
