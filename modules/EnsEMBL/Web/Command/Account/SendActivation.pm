@@ -11,10 +11,12 @@ sub process {
   my $self = shift;
   my $object = $self->object;
 
-  my $mailer = EnsEMBL::Web::Mailer::User->new;
-
-  $mailer->set_to($object->param('email'));
+  my $mailer = new EnsEMBL::Web::Mailer::User{
+    to => $object->param('email')
+  };
+  
   $mailer->send_activation_email($object);
+  
   $self->ajax_redirect('/Account/ActivationSent');
 }
 
