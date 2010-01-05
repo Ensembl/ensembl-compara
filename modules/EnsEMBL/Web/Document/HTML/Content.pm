@@ -144,7 +144,7 @@ sub get_json {
   # Include any access warning at top of page
   if ($self->filter_module) {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
-    warn $class;
+    
     if ($class && $self->dynamic_use($class)) {
       $filter = $class->new;
       
