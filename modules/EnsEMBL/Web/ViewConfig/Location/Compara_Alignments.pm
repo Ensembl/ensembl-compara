@@ -32,9 +32,9 @@ sub form {
     $view_config->default_config = 'alignsliceviewbottom';
     $view_config->add_form_element({ type => 'YesNo', name => 'panel_top', select => 'select', label => 'Show overview panel' });
     $view_config->{'species_only'} = 1;
-  } else {
+  } elsif (!$view_config->is_custom) {
     $view_config->{'_image_config_names'} = {}; # Removes the image config tabs
-    $view_config->has_images(0);
+    $view_config->has_images = 0;
   }
   
   EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments::form($view_config, $object);

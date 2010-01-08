@@ -17,7 +17,6 @@ sub init {
   $view_config->_set_defaults('opt_highlight' => 'yes');
   $view_config->_set_defaults('opt_ft_' . $_ => 'on') for keys %{$view_config->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'analyses'}}; # Add config for different feature types
   
-  $view_config->has_images(1);
   $view_config->storable = 1;
   $view_config->nav_tree = 1;
 }

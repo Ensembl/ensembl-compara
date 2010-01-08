@@ -86,17 +86,18 @@ sub form {
     $view_config->add_form_element($other_markup_options{'title_display'});
   }
     
-  my $species = $view_config->species;
-  my $hash = $view_config->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
+  my $species      = $view_config->species;
+  my $species_defs = $view_config->species_defs;
+  my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   
   # From release to release the alignment ids change so we need to check that the passed id is still valid.
-  foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
-    my $row = $hash->{$row_key};
+  foreach my $row_key (grep { $alignments->{$_}{'class'} !~ /pairwise/ } keys %$alignments) {
+    my $row = $alignments->{$row_key};
     my $sp = $row->{'species'};
     
     next unless $sp->{$species};
     
-    $sp->{$_} = $view_config->species_label($_) for keys %$sp;
+    $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
     
     $view_config->add_fieldset(ucfirst "$row->{'name'}");
     

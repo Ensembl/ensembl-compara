@@ -24,13 +24,14 @@ sub form {
   my ($view_config, $object) = @_;
   
   my %formats = EnsEMBL::Web::Constants::FAMILY_EXTERNAL;
+  my $species_defs = $view_config->species_defs;
 
   $view_config->add_fieldset('Selected species');
   
-  foreach ($view_config->species_defs->valid_species) {
+  foreach ($species_defs->valid_species) {
     $view_config->add_form_element({
       'type'  => 'CheckBox', 
-      'label' => $view_config->species_label($_),
+      'label' => $species_defs->species_label($_),
       'name'  => 'species_' . lc($_),
       'value' => 'yes', 
       'raw'   => 1

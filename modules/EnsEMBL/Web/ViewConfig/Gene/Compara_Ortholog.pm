@@ -47,7 +47,8 @@ sub form {
   
   $view_config->add_fieldset('Selected species');
   
-  my %species = map { $view_config->species_label($_) => $_ } $view_config->species_defs->valid_species;
+  my $species_defs = $view_config->species_defs;
+  my %species = map { $species_defs->species_label($_) => $_ } $species_defs->valid_species;
   
   foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) {
     $view_config->add_form_element({
