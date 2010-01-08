@@ -32,6 +32,9 @@ sub new {
   );
 
   bless $self, $class;
+  
+  $self->hub->parent = $self->_parse_referer;
+  
   return $self; 
 }
 
@@ -112,7 +115,7 @@ sub _create_proxy_factory {
     _apache_handle => $self->hub->apache_handle,
     _databases     => $self->hub->databases,
     _core_objects  => $self->core_objects,
-    _parent        => $self->_parse_referer,
+    _parent        => $self->parent,
   });
 }
 
