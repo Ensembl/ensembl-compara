@@ -50,18 +50,12 @@ our %DOCUMENT_TYPES = (
 );
 
 sub new {
-  my $class        = shift;
-  my $renderer     = shift;
-  my $timer        = shift;
-  my $species_defs = shift;
-  my $input        = shift;
-  my $outputtype   = shift;
-  my $format       = $input ? $input->param('_format') : $outputtype;
+  my ($class, $data) = @_;
+  
+  my $format = $data->{'input'} ? $data->{'input'}->param('_format') : $data->{'outputtype'};
   
   my $self = {
     body_attr        => {},
-    species_defs     => $species_defs,
-    input            => $input,
     doc_type         => DEFAULT_DOCTYPE,
     doc_type_version => DEFAULT_DOCTYPE_VERSION,
     encoding         => DEFAULT_ENCODING,
@@ -69,13 +63,12 @@ sub new {
     format           => $format || DEFAULT_DOCTYPE,
     head_order       => [],
     body_order       => [],
-    _renderer        => $renderer,
-    timer            => $timer,
     plugin_locator   => EnsEMBL::Web::Tools::PluginLocator->new(
-      locations  => [ 'EnsEMBL::Web', reverse @{$species_defs->ENSEMBL_PLUGIN_ROOTS} ], 
+      locations  => [ 'EnsEMBL::Web', reverse @{$data->{'species_defs'}->ENSEMBL_PLUGIN_ROOTS} ], 
       suffix     => 'Document::Configure',
       method     => 'new'
-    )
+    ),
+    %$data
   };
   
   bless $self, $class;
@@ -85,10 +78,10 @@ sub new {
 
 sub head_order :lvalue { $_[0]{'head_order'} }
 sub body_order :lvalue { $_[0]{'body_order'} }
-sub renderer   :lvalue { $_[0]{'_renderer'}  }
+sub renderer   :lvalue { $_[0]{'renderer'}  }
 sub species_defs       { return $_[0]{'species_defs'}; }
-sub printf             { my $self = shift; $self->renderer->printf(@_) if $self->{'_renderer'}; }
-sub print              { my $self = shift; $self->renderer->print(@_)  if $self->{'_renderer'}; }
+sub printf             { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
+sub print              { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
 sub timer_push         { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
 
 sub plugin_locator {
@@ -253,7 +246,6 @@ sub _init {
   
   foreach my $entry (@{$self->{'head_order'}}, @{$self->{'body_order'}}) {
     my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::HTML::Content' ]
-    warn ">>> $element, $classname";
     
     next unless $self->dynamic_use($classname); 
     
@@ -262,7 +254,7 @@ sub _init {
     eval { 
       $html_module = $classname->new($self->{'timer'}); # Construct the module
       $html_module->{'species_defs'} = $self->species_defs;
-      $html_module->{'_renderer'}    = $self->{'_renderer'};
+      $html_module->{'_renderer'}    = $self->renderer;
     };
     
     if ($@) {
@@ -522,7 +514,7 @@ sub render_TextGz {
   my $self = shift;
   
   my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
-  
+ 
   foreach my $element (@{$self->{'body_order'}}) {
     my $attr = $element->[0];
     $self->$attr->{'_renderer'} = $renderer;
