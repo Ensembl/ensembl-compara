@@ -67,12 +67,18 @@ sub ingredient {
   
   return unless $controller; # Cache hit
   
-  $controller->build_page($page, 'Dynamic', $resource, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-  $page->render;
+  if ($resource->object) {
+    # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
+    $ENV{'ENSEMBL_ACTION'} = $resource->parent->{'ENSEMBL_ACTION'};
     
-  my $content = $page->renderer->content;
-  print $content;
-  $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
+    $resource->object->action = $ENV{'ENSEMBL_ACTION'};
+    $controller->build_page($page, 'Dynamic', $resource, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
+    $page->render;
+    
+    my $content = $page->renderer->content;
+    print $content;
+    $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
+  }
 }
 
 sub configurator {
@@ -99,7 +105,7 @@ sub handler {
   ### Deals with common functionality of all request types.
   ### Returns:
   ### controller (EnsEMBL::Web::Controller)
-  ### resource     (EnsEMBL::Web::Resource)
+  ### resource   (EnsEMBL::Web::Resource)
   ### page       (EnsEMBL::Web::Document::[DOCTYPE]) - will be a child of EnsEMBL::Web::Document::Page. Not returned for calls from menu.
   ### problem    boolean - true if the factory has a problem
   ###
@@ -110,34 +116,27 @@ sub handler {
   my $requesttype  = shift;
   my $renderertype = shift || 'Apache';
   my $input        = new CGI;
-
-  ## The resource object is used throughout the code to store data objects, connections and parameters 
-  my $resource       = new EnsEMBL::Web::Resource({
-    _input         => $input,
-    _apache_handle => $r,
-  });
-  $CGI::POST_MAX = $resource->species_defs->CGI_POST_MAX; # Set max upload size
-
+  my $resource     = new EnsEMBL::Web::Resource({ _input => $input, _apache_handle => $r }); # The resource object is used throughout the code to store data objects, connections and parameters 
   my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || $input->param('factorytype') || $resource->type;
   my $outputtype   = $resource->type eq 'DAS' ? 'DAS' : undef;
   my $controller   = new EnsEMBL::Web::Controller($resource->hub);
   
-  $controller->clear_cached_content if $requesttype eq 'page';  # Conditional - only clears on force refresh of page. 
+  $controller->clear_cached_content if $requesttype eq 'page';                    # Conditional - only clears on force refresh of page. 
+  
+  $CGI::POST_MAX = $resource->species_defs->CGI_POST_MAX;                         # Set max upload size
   
   return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
   
-  my $parent = $input->param('_referer') || $ENV{'HTTP_REFERER'}; 
-  $resource->parent($parent);
   my $problem = $resource->create_models($factorytype);
-
-  return if $problem eq 'redirect';                         # Forcing a redirect - don't need to go any further
+  
+  return if $problem eq 'redirect';                          # Forcing a redirect - don't need to go any further
   return ($controller, $resource) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
   
   my $renderer_module = "EnsEMBL::Web::Document::Renderer::$renderertype";
   my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
   
-  my ($renderer) = $controller->_use($renderer_module, (r => $resource->apache_handle, cache => $resource->cache));
+  my ($renderer) = $controller->_use($renderer_module, (r => $r, cache => $resource->cache));
   my ($page)     = $controller->_use($document_module, { 
     renderer     => $renderer, 
     species_defs => $resource->species_defs, 
@@ -148,22 +147,21 @@ sub handler {
   $renderer->{'_modal_dialog_'} = $requesttype eq 'modal' && $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; # Flag indicating that this is modal dialog panel, loaded by AJAX
   
   $page->initialize; # Adds the components to be rendered to the page module
-
- # FIXME: Configurator can work even if factory has a fatal problem? Stupid.
+  
+  # FIXME: Configurator can work even if factory has a fatal problem? Stupid.
   if ($problem && $doctype ne 'Configurator') {
     $page->add_error_panels($problem);
-    ## Abort page construction if any fatal problems present
-    my $is_fatal;
-    foreach my @$problem {
-      $is_fatal++ if $_->isFatal;
-    }    
-    if ($is_fatal) {
+    
+    # Abort page construction if any fatal problems present
+    if (grep $_->isFatal, @$problem) {
       $page->render;
       print $page->renderer->content;
       return;
     }
-  } 
+  }
+  
   return ($controller, $resource, $page, !!$problem);
 }
+
 
 1;
