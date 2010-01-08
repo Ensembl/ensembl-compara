@@ -2,7 +2,6 @@ package EnsEMBL::Web::ViewConfig;
 
 use strict;
 
-use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use URI::Escape qw(uri_escape uri_unescape);
@@ -10,30 +9,29 @@ use URI::Escape qw(uri_escape uri_unescape);
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::OrderedTree;
 
+use base qw(EnsEMBL::Web::Root);
+
 sub new {
   my ($class, $type, $action, $adaptor) = @_;
 
   my $self = {
-    '_db'                 => $adaptor->get_adaptor,
-    '_species'            => $adaptor->get_species,
-    '_species_defs'       => $adaptor->get_species_defs,
-    '_r'                  => $adaptor->get_request || undef,
-    'type'                => $type,
-    'real'                => 0,
-    'external_data'       => 0,
-    'nav_tree'            => 0,
-    'action'              => $action,
-    'title'               => undef,
-    '_classes'            => [],
-    '_options'            => {},
-    '_image_config_names' => {},
-    '_default_config'     => '_page',
-    '_can_upload'         => 0,
-    '_form'               => undef,
-    '_form_id'            => sprintf('%s_%s_configuration', lc $type, lc $action),
-    '_url'                => undef,
-    'no_load'             => undef,
-    '_tree'               => new EnsEMBL::Web::OrderedTree,
+    _species            => $adaptor->get_species,
+    _species_defs       => $adaptor->get_species_defs,
+    real                => 0,
+    external_data       => 0,
+    nav_tree            => 0,
+    title               => undef,
+    _classes            => [],
+    _options            => {},
+    _image_config_names => {},
+    _default_config     => '_page',
+    _can_upload         => 0,
+    _form               => undef,
+    _form_id            => sprintf('%s_%s_configuration', lc $type, lc $action),
+    _url                => undef,
+    _tree               => new EnsEMBL::Web::OrderedTree,
+    _custom             => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $adaptor->custom_page_config($type) : [],
+    _type               => $type
   };
   
   bless $self, $class;
@@ -51,6 +49,9 @@ sub title          :lvalue { $_[0]->{'title'}; }
 sub can_upload     :lvalue { $_[0]->{'_can_upload'} }
 sub altered        :lvalue { $_[0]->{'altered'}; }  # Set to one if the configuration has been updated
 sub storable       :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
+sub custom         :lvalue { $_[0]->{'_custom'}; }
+sub is_custom              { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
+sub type                   { return $_[0]->{'_type'}; }
 sub tree                   { return $_[0]->{'_tree'}; }
 
 # Value indidates that the track can be configured for DAS (das) or not (nodas)
@@ -169,6 +170,7 @@ sub add_form_element {
 sub update_config_from_parameter {
   my ($self, $string) = @_;
   my @array = split /\|/, $string;
+  
   return unless @array;
   
   foreach (@array) {
@@ -186,7 +188,7 @@ sub update_from_input {
   return $self->reset if $input->param('reset');
   
   foreach my $key ($self->options) {
-    if (defined $input->param($key) && $input->param( $key ) ne $self->{'_options'}{$key}{'user'}) {
+    if (defined $input->param($key) && $input->param($key) ne $self->{'_options'}{$key}{'user'}) {
       $flag = 1;
       my @values = $input->param($key);
       
@@ -210,7 +212,7 @@ sub update_from_config_strings {
   
   if ($input->param('config')) {
     foreach my $v (split /,/, $input->param('config')) {
-      my ($k, $t) = split /=/, $v,2;
+      my ($k, $t) = split /=/, $v, 2;
       $self->set($k, $t);
     }
     
@@ -254,7 +256,7 @@ sub update_from_config_strings {
       
       $input->delete('add_das_source');
     }
-
+    
     if (@values) {
       my $ic = $session->getImageConfig($name, $name);
       next unless $ic;
@@ -360,9 +362,31 @@ sub reset {
   }
 }
 
-sub push_class {
+sub add_class {
   my ($self, $class) = @_;
-  push @{$self->{'_classes'}}, $class;
+  
+  if ($self->dynamic_use($class)) {
+    my $method_name = "${class}::init";
+    
+    eval { no strict 'refs'; &$method_name($self); };
+    
+    if ($@) {
+      my $message = "Undefined subroutine &$method_name called";
+      
+      if ($@ =~ /$message/) {
+        warn "ViewConfig: init not defined in $class\n";
+      } else {
+        warn "ViewConfig: init call on $class failed:\n$@";
+      }
+    } else {
+      push @{$self->{'_classes'}}, $class;
+      $self->real = 1;
+      return 1;
+    }
+  } else {
+    my $error = $self->dynamic_use_failure($class);
+    warn "ViewConfig: failed to require $class:\n  $error" unless $error =~ /^Can't locate/;
+  }
 }
 
 sub has_images {
@@ -391,10 +415,10 @@ sub form {
     # If the fieldset has only checkboxes, provide a select/deselect all option
     if ($element_types{'checkbox'} > 1 && scalar keys %element_types == 1) {
       $fieldset->add_element(
-        type  => 'CheckBox',
-        name  => 'select_all',
-        label => 'Select/deselect all',
-        value => 'select_all',
+        type    => 'CheckBox',
+        name    => 'select_all',
+        label   => 'Select/deselect all',
+        value   => 'select_all',
         classes => [ 'select_all' ]
       );
       
@@ -469,13 +493,6 @@ sub get_user_settings {
   }
   
   return $diffs;
-}
-
-sub dump {
-  my ($self) = @_;
-  local $Data::Dumper::Indent = 1;
-  local $Data::Dumper::Terse  = 1;
-  print STDERR Dumper($self), ' ';
 }
 
 sub species_label {

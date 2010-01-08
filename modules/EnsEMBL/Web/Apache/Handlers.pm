@@ -539,6 +539,9 @@ sub transHandler_species {
       @path_segments = ();
     }
     
+    # Make an ENV flag for custom pages
+    $r->subprocess_env->{'ENSEMBL_CUSTOM_PAGE'} = 1 if $action eq 'Custom' || $script =~ /^(config|component)$/ && $ENV{'HTTP_REFERER'} =~ /\/Custom(\?|(?!.))/;
+    
     $redirect_if_different = 0;
   } else {
     $script = $seg;

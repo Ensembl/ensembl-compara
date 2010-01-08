@@ -322,9 +322,10 @@ sub save_data {
     %args,
     session_id => $self->get_session_id,
   );
-
+  
   foreach my $data ($self->get_data(%args)) {
     next unless $data && %$data;
+    
     EnsEMBL::Web::Data::Session->set_config(
       session_id => $self->get_session_id,
       type       => $args{type},
@@ -661,86 +662,62 @@ sub attachImageConfig {
 }
 
 sub getViewConfig {
-### Create a new {{EnsEMBL::Web::ViewConfig}} object for the script passed
-### Loops through core and all plugins looking for a EnsEMBL::*::ViewConfig::$script
-### package and if it exists calls the function init() on the package to set
-### (a) the default values, (b) whether or not the user can over-ride these settings
-### loaded in the order: core first, followed each of the plugin directories
-### (from bottom to top in the list in conf/Plugins.pm)
-###
-### If a session exists and the code is storable connect to the database and retrieve
-### the data from the session_data table
-###
-### Then loop through the {{EnsEMBL::Web::Input}} object and set anything in this
-### Keep a record of what the user has changed!!
+  ### Create a new {{EnsEMBL::Web::ViewConfig}} object for the script passed
+  ### Loops through core and all plugins looking for a EnsEMBL::*::ViewConfig::$script
+  ### package and if it exists calls the function init() on the package to set
+  ### (a) the default values, (b) whether or not the user can over-ride these settings
+  ### loaded in the order: core first, followed each of the plugin directories
+  ### (from bottom to top in the list in conf/Plugins.pm)
+  ###
+  ### If a session exists and the code is storable connect to the database and retrieve
+  ### the data from the session_data table
+  ###
+  ### Then loop through the {{EnsEMBL::Web::Input}} object and set anything in this
+  ### Keep a record of what the user has changed
+  
   my $self   = shift;
   my $type   = shift;
   my $action = shift;
-  my $do_not_pop_from_params = shift;
+  my $key    = "${type}::$action";
 
-  my $key = $type.'::'.$action;
-
-  ## TODO: get rid of session getters,
+  # TODO: get rid of session getters,
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
     session_id => $self->get_session_id,
     type       => $type,
-    code       => $key,
+    code       => $key
   );  
 
-  unless ($Configs_of{ ident $self }{$key} ) {
-    my $flag = 0;
-    my $view_config = EnsEMBL::Web::ViewConfig->new( $type, $action, $self );
-    foreach my $root ( @{$self->get_path} ) {
-      my $classname = $root."::ViewConfig::$key";
-      unless( $self->dynamic_use( $classname ) ) {
-        ## If the module can't be required throw an error and return undef;
-        (my $message = "Can't locate $classname\.pm in" ) =~ s/::/\//g;
-        my $error = $self->dynamic_use_failure($classname);
-        warn qq(ViewConfig: failed to require $classname:\n  $error) unless $error=~/$message/;
-        next;
-      }
-      $view_config->push_class( $classname );
-      foreach my $part (qw(init)) {
-        my $method_name = $classname."::".$part;
-        eval { no strict 'refs'; &$method_name( $view_config ); };
-        if( $@ ) {
-          my $message = "Undefined subroutine &$method_name called";
-          if( $@ =~ /$message/ ) {
-            warn qq(ViewConfig: $part not defined in $classname\n);
-          } else {
-            warn qq(ViewConfig: $part call on $classname failed:\n$@);
-          }
-        } else {
-          $view_config->real = 1;
-        }
-      }
+  if (!$Configs_of{ident $self}{$key}) {
+    my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $self);
+    
+    foreach my $root (@{$self->get_path}) {
+      $view_config->add_class("${root}::ViewConfig::$key");
     }
+    
     my $image_config_data = {};
-    if( $self->get_session_id && $view_config->storable ) {
-      ## Let us see if there is an entry in the database and load it into the script config!
-      ## and store any other data which comes back....
+    
+    if ($self->get_session_id && $view_config->storable) {
+      # Let us see if there is an entry in the database and load it into the script config and store any other data which comes back
       my $config = EnsEMBL::Web::Data::Session->get_config(
         session_id => $self->get_session_id,
         type       => 'script',
         code       => $key,
       );
-      if( $config && $config->data ) {
-        $view_config->set_user_settings( $config->data->{'diffs'} );
+      
+      if ($config && $config->data) {
+        $view_config->set_user_settings($config->data->{'diffs'});
         $image_config_data = $config->data->{'image_configs'};
       }
     }
-#   unless( $do_not_pop_from_params ) {
-#     warn "CALLED... update_from_input...";
-#      $view_config->update_from_input( $self->input ); ## Needs access to the CGI.pm object...
-#   }
-
-    $Configs_of{ ident $self }{$key} = {
-      'config'            => $view_config,         ## List of attached
-      'image_configs'     => {},                   ## List of attached image configs
-      'image_config_data' => $image_config_data    ## Data retrieved from database to define image config settings.
+    
+    $Configs_of{ident $self}{$key} = {
+      config            => $view_config,
+      image_configs     => {},                # List of attached image configs
+      image_config_data => $image_config_data # Data retrieved from database to define image config settings.
     };
   }
-  return $Configs_of{ ident  $self }{$key}{'config'};
+  
+  return $Configs_of{ident $self}{$key}{'config'};
 }
 
 sub get_view_config_as_string {
@@ -836,6 +813,27 @@ sub get_ImageConfig {
   if( $@ || !$image_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
 ## Return the respectiv config.
   return $image_config;
+}
+
+sub save_custom_page {
+  my ($self, $code, $components) = @_;
+  
+  $self->add_data(
+    type       => 'custom_page', 
+    code       => $code,
+    components => $components
+  );
+}
+
+sub custom_page_config {
+  my ($self, $code) = @_;
+  
+  my $config = $self->get_data(
+    type => 'custom_page',
+    code => $code,
+  );
+  
+  return $config->{'components'} || [];
 }
 
 }
