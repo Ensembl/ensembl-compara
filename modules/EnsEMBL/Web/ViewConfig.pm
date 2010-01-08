@@ -26,6 +26,7 @@ sub new {
     _image_config_names => {},
     _default_config     => '_page',
     _can_upload         => 0,
+    _has_images         => 0,
     _form               => undef,
     _form_id            => sprintf('%s_%s_configuration', lc $type, lc $action),
     _url                => undef,
@@ -42,14 +43,15 @@ sub default_config :lvalue { $_[0]->{'_default_config'}; }
 sub real           :lvalue { $_[0]->{'real'}; }
 sub external_data  :lvalue { $_[0]->{'external_data'}; }
 sub nav_tree       :lvalue { $_[0]->{'nav_tree'}; }
-sub species        :lvalue { $_[0]->{'_species'}; }
-sub species_defs   :lvalue { $_[0]->{'_species_defs'}; }
 sub url            :lvalue { $_[0]->{'_url'}; }
 sub title          :lvalue { $_[0]->{'title'}; }
 sub can_upload     :lvalue { $_[0]->{'_can_upload'} }
+sub has_images     :lvalue { $_[0]->{'_has_images'}; }
 sub altered        :lvalue { $_[0]->{'altered'}; }  # Set to one if the configuration has been updated
 sub storable       :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
 sub custom         :lvalue { $_[0]->{'_custom'}; }
+sub species                { return $_[0]->{'_species'}; }
+sub species_defs           { return $_[0]->{'_species_defs'}; }
 sub is_custom              { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
 sub type                   { return $_[0]->{'_type'}; }
 sub tree                   { return $_[0]->{'_tree'}; }
@@ -61,7 +63,7 @@ sub add_image_configs {
   foreach (keys %$image_config) {
     $self->{'_image_config_names'}->{$_} = $image_config->{$_};
     $self->can_upload = 1 if $image_config->{$_} eq 'das';
-    $self->has_images(1)  if $image_config->{$_} !~ /^V/
+    $self->has_images = 1 if $image_config->{$_} !~ /^V/
   }
 }
 
@@ -389,12 +391,6 @@ sub add_class {
   }
 }
 
-sub has_images {
-  my $self = shift;
-  $self->{'_has_images'} = shift if @_;
-  return $self->{'_has_images'};
-}
-
 sub form {
   my ($self, $object, $no_extra_bits) = @_;
   
@@ -495,8 +491,4 @@ sub get_user_settings {
   return $diffs;
 }
 
-sub species_label {
-  my ($self, $key) = @_;
-  return $self->species_defs->species_label($key);
-}
 1;
