@@ -122,32 +122,17 @@ sub handler {
   my $outputtype   = $resource->type eq 'DAS' ? 'DAS' : undef;
   my $controller   = new EnsEMBL::Web::Controller($resource->hub);
   
-  $controller->clear_cached_content if $requesttype eq 'page';                    # Conditional - only clears on force refresh of page. 
+  $controller->clear_cached_content if $requesttype eq 'page';  # Conditional - only clears on force refresh of page. 
   
   return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
   
-  my $problem;
-
   my $parent = $input->param('_referer') || $ENV{'HTTP_REFERER'}; 
   $resource->parent($parent);
-  my $factory = $resource->create_factory($factorytype);
+  my $problem = $resource->create_models($factorytype);
 
-  if ($factory->has_fatal_problem) {
-    $problem = $factory->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
-  } else {
-    eval {
-      $factory->createObjects;
-      $resource->add_models($factory->DataObjects);
-    };
-    
-    $factory->problem('fatal', "Unable to execute createObject on Factory of type ".$resource->type, $@) if $@;
-    
-    $problem = $factory->handle_problem if $factory->has_a_problem; # $factory->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
-    
-    return if $problem eq 'redirect';                         # Forcing a redirect - don't need to go any further
-    return ($controller, $resource) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
-  }
+  return if $problem eq 'redirect';                         # Forcing a redirect - don't need to go any further
+  return ($controller, $resource) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
   
   my $renderer_module = "EnsEMBL::Web::Document::Renderer::$renderertype";
   my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
@@ -163,19 +148,21 @@ sub handler {
   $renderer->{'_modal_dialog_'} = $requesttype eq 'modal' && $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; # Flag indicating that this is modal dialog panel, loaded by AJAX
   
   $page->initialize; # Adds the components to be rendered to the page module
-  
-  # FIXME: Configurator can work even if factory has a fatal problem? Stupid.
+
+ # FIXME: Configurator can work even if factory has a fatal problem? Stupid.
   if ($problem && $doctype ne 'Configurator') {
     $page->add_error_panels($problem);
-    
-    # Display the error on the page
-    if ($factory->has_fatal_problem) {
+    ## Abort page construction if any fatal problems present
+    my $is_fatal;
+    foreach my @$problem {
+      $is_fatal++ if $_->isFatal;
+    }    
+    if ($is_fatal) {
       $page->render;
       print $page->renderer->content;
       return;
     }
-  }
-  
+  } 
   return ($controller, $resource, $page, !!$problem);
 }
 
