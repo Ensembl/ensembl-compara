@@ -32,7 +32,7 @@ sub handler {
     $r->content_type('text/html; charset=utf-8');
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( r => $r );
-    my $page     = new EnsEMBL::Web::Document::Page::Static( $renderer, undef, $SD );
+    my $page     = new EnsEMBL::Web::Document::Page::Static({ renderer => $renderer, species_defs => $SD });
     $page->_initialize();
     $page->title->set( "500: Internal Server Error" );    
     # unless ($r->err_header_out('ensembl_headers_out')){  

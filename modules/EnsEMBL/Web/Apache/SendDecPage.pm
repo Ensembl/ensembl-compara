@@ -123,7 +123,7 @@ sub handler {
     $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
     my $renderer = new EnsEMBL::Web::Document::Renderer::String( r => $r );
-    my $page     = new EnsEMBL::Web::Document::Page::Static($renderer, undef, $ENSEMBL_WEB_REGISTRY->species_defs, new CGI);
+    my $page     = new EnsEMBL::Web::Document::Page::Static({ renderer => $renderer, species_defs => $ENSEMBL_WEB_REGISTRY->species_defs, input => CGI->new });
     $page->include_navigation( $ENV{'SCRIPT_NAME'} =~ /^\/info/ );
     $page->_initialize();
   

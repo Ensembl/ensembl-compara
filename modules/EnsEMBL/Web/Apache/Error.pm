@@ -45,7 +45,7 @@ sub handler {
   warn "$error_number ERROR: $error_subject $error_URL\n";
   
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( r => $r );
-  my $page     = new EnsEMBL::Web::Document::Page::Static( $renderer, undef, $SD );
+  my $page     = new EnsEMBL::Web::Document::Page::Static({ renderer => $renderer, species_defs => $SD });
 
   $page->_initialize();
 

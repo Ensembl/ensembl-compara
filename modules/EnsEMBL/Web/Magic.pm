@@ -171,7 +171,12 @@ sub handler {
   my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
   
   my ($renderer) = $controller->_use($renderer_module, (r => $r, cache => $cache));
-  my ($page)     = $controller->_use($document_module, $renderer, undef, $species_defs, $input, $outputtype);
+  my ($page)     = $controller->_use($document_module, { 
+    renderer     => $renderer, 
+    species_defs => $species_defs, 
+    input        => $input, 
+    outputtype   => $outputtype
+  });
   
   $renderer->{'_modal_dialog_'} = $requesttype eq 'modal' && $r && $r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; # Flag indicating that this is modal dialog panel, loaded by AJAX
   
