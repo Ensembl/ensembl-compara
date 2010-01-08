@@ -1315,17 +1315,7 @@ sub viewconfig {
   my $vc = $self->get_viewconfig(@_);
   
   if ($self->action ne 'ExternalData' && !$vc->external_data) {
-    my $vc_external_data = $self->get_viewconfig($self->type, 'ExternalData');
-    
-    if ($vc_external_data && $vc_external_data->can_upload) {
-      $vc_external_data->{'_form'} = $vc->get_form;
-      $vc_external_data->{'_tree'} = $vc->{'_tree'};
-      $vc_external_data->nav_tree  = $vc->nav_tree;
-      $vc_external_data->form(undef, 1);
-      
-      $vc->external_data = 1;
-      $vc->real = 1;
-    }
+    $vc->external_data = 1 if $vc->add_class(sprintf 'EnsEMBL::Web::ViewConfig::%s::ExternalData', $self->type);
   }
   
   $self->{'data'}->{'_viewconfig'} ||= $vc unless @_;
@@ -1340,12 +1330,3 @@ sub can_export {
 }
 
 1;
-
-__END__
-
-
-sub features
-  Input:       EnsEMBL::Web::Gene object
-  Description:  Returns all the features that regulate this gene
-  Output:      Array ref
-
