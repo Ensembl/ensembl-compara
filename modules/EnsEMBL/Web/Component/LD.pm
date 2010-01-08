@@ -315,7 +315,7 @@ sub options_form {
   );
 
   my %pop_values;
-  my $view_config = $object->get_viewconfig();
+  my $view_config = $object->viewconfig;
 
   # Read in all in viewconfig stuff
   foreach ($view_config->options) {

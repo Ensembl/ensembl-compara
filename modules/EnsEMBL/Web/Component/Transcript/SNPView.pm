@@ -191,7 +191,7 @@ sub _sample_configs {
 
   # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
   # Only display coverage data if source Sanger is on 
-  my $display_coverage = $object->get_viewconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
+  my $display_coverage = $object->viewconfig->get( "opt_sanger" ) eq 'off' ? 0 : 1;
  
   foreach my $sample ( $object->get_samples ) {  
     my $sample_slice = $transcript_slice->get_by_strain( $sample ); 
