@@ -131,7 +131,7 @@ sub build_page {
   my $object = $resource->object; 
   if (ref $object) { # Actual object
     $type = $object->__objecttype;
-    $object->get_viewconfig->form($object);
+    $object->viewconfig->form($object);
   } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $type = $object;
   } else {
