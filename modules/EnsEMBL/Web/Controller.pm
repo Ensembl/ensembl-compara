@@ -14,29 +14,31 @@ use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::OrderedTree;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $data) = @_;
+  my ($class, $hub) = @_;
     
   my $self = {
-    type     => $ENV{'ENSEMBL_TYPE'},
-    action   => $ENV{'ENSEMBL_ACTION'},
-    function => $ENV{'ENSEMBL_FUNCTION'},
-    command  => undef,
-    filters  => undef,
-    %$data
+    hub        => $hub,
+    r          => $hub->apache_handle,
+    input      => $hub->input,
+    cache      => $hub->cache,
+    type       => $hub->type,
+    action     => $hub->action,
+    function   => $hub->function,
+    command    => undef,
+    filters    => undef,
   };
   
   if ($self->{'cache'}) {
-    my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
+    my $species_defs = $hub->species_defs;
     
     # Add parameters useful for caching functions
     $self = {
       %$self,
-      session_id  => $ENSEMBL_WEB_REGISTRY->get_session->get_session_id,
+      session_id  => $hub->session->get_session_id,
       url_tag     => $species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'},
       cache_debug => $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_MEMCACHED
     }
@@ -46,6 +48,8 @@ sub new {
   
   return $self;
 }
+
+sub hub { return $_[0]->{'hub'}; }
 
 sub get_cached_content {
   ### Attempt to retrieve page and component requests from Memcached
@@ -119,20 +123,22 @@ sub clear_cached_content {
 sub build_page {
   ### Creates Configuration modules and calls relevant functions (determined by @functions) in order to create the page.
   
-  my ($self, $page, $doctype, $object, @functions) = @_;
+  my ($self, $page, $doctype, $resource, @functions) = @_;
   
-  my $objecttype;
-  
+  my $type = $resource->type;
+  return unless $type;
+ 
+  my $object = $resource->object; 
   if (ref $object) { # Actual object
-    $objecttype = $object->__objecttype;
-    $object->viewconfig->form($object);
+    $type = $object->__objecttype;
+    $object->get_viewconfig->form($object);
   } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
-    $objecttype = $object;
+    $type = $object;
   } else {
-    $objecttype = 'Static';
+    $type = 'Static';
   }
   
-  $objecttype = 'DAS' if $objecttype =~ /^DAS::.+/;
+  $type = 'DAS' if $type =~ /^DAS::.+/;
   
   my @plugins = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
   my $functions_called = {};
@@ -146,7 +152,7 @@ sub build_page {
   
   # Loop through the EnsEMBL root directory and plugins
   while (my ($module_root) = splice @plugins, 0, 2) {
-    my $config_module_name = "${module_root}::Configuration::$objecttype"; # First work out what the module name is, to see if it can be used
+    my $config_module_name = "${module_root}::Configuration::$type"; # First work out what the module name is, to see if it can be used
     my ($configuration, $error) = $self->_use($config_module_name, $page, $object, $common_conf);
     
     if ($configuration) {
@@ -189,10 +195,10 @@ sub build_page {
   # Handle errors for functions which failed
   foreach my $func (@functions) {
     if (!$functions_called->{$func}) {
-      if ($objecttype eq 'DAS') {
+      if ($type eq 'DAS') {
         $self->add_error_panel($page, 'Fatal error - bad request', 'Unimplemented');
       } else {
-        warn "Can't do configuration function $func on $objecttype objects, or an error occurred when executing that function.";
+        warn "Can't do configuration function $func on $type objects, or an error occurred when executing that function.";
       }
     }
   }
@@ -201,13 +207,14 @@ sub build_page {
 sub build_menu {
   ### Creates a ZMenu module based on the object type and action of the page (see below), and renders the menu
   
-  my ($self, $object) = @_;
+  my ($self, $resource) = @_;
   
-  return unless $object;
+  return unless $resource;
   
-  my $type   = $object->type;
-  my $action = $object->action;
+  my $type   = $resource->hub->type;
+  my $action = $resource->hub->action;
   my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
+  my $object = $resource->object;
   my $menu;
   
   ### Check for all possible module permutations.
@@ -246,14 +253,14 @@ sub update_configuration {
     
   if ($input->param('submit') || $input->param('reset')) {
     my $r          = $self->{'r'};
-    my $session    = $ENSEMBL_WEB_REGISTRY->get_session;
-    my $objecttype = $self->{'type'};
+    my $session    = $self->hub->session;
+    my $type = $self->{'type'};
     my $action     = $self->{'action'};
     my $config     = $input->param('config');
     
     $session->set_input($input);
     
-    my $view_config = $session->getViewConfig($objecttype, $action);
+    my $view_config = $session->getViewConfig($type, $action);
     
     # Updating an image config
     if ($config && $view_config->has_image_config($config)) {
@@ -265,7 +272,7 @@ sub update_configuration {
       $view_config->update_from_input($input);
       
       if ($action ne 'ExternalData') {
-        my $vc_external_data = $session->getViewConfig($objecttype, 'ExternalData');
+        my $vc_external_data = $session->getViewConfig($type, 'ExternalData');
         $vc_external_data->update_from_input($input) if $vc_external_data;
       }
       
@@ -324,7 +331,7 @@ sub update_configuration_from_url {
   
   my $self      = shift;
   my $input     = $self->{'input'};
-  my $session   = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $session   = $self->hub->session;
   my @share_ref = $input->param('share_ref');
   my $r         = $self->{'r'};
   my $url;
@@ -351,14 +358,14 @@ sub update_configuration_from_url {
 sub process_command {
   ### Handles Command modules. Once the command has been processed, a redirect to a Component page will occur.
   
-  my ($self, $object, $page) = @_;
+  my ($self, $resource, $page) = @_;
   
   my $r     = $self->{'r'};
   my $class = $self->{'action'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $self->{'command'};
   
-  if ($class && $self->dynamic_use($class) && $self->access_ok($object, $page)) {    
+  if ($class && $self->dynamic_use($class) && $self->access_ok($resource, $page)) {    
     my $command = $class->new({
-      object => $object,
+      object => $resource->object,
       page   => $page
     });
     
@@ -389,10 +396,10 @@ sub _use {
 sub access_ok {
   ### Checks if the given Command module is allowed, and forces a redirect if it isn't
   
-  my ($self, $object, $page) = @_;
+  my ($self, $resource, $page) = @_;
   
   my $r      = $self->{'r'};
-  my $filter = $self->not_allowed($object);
+  my $filter = $self->not_allowed($resource->object);
   
   if ($filter) {
     my $url = $filter->redirect_url;

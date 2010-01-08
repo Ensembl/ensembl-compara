@@ -17,10 +17,7 @@ use CGI;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::CoreObjects;
-use EnsEMBL::Web::DBSQL::DBConnection;
-use EnsEMBL::Web::Proxy::Factory;
-use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Resource;
 
 use base qw(Exporter);
 
@@ -34,25 +31,21 @@ sub stuff {
   my $doctype     = shift;
   my $requesttype = shift || 'page';
   
-  my ($controller, $factory, $page, $problem) = handler($r, $doctype, $requesttype, 'String');
+  my ($controller, $resource, $page, $problem) = handler($r, $doctype, $requesttype, 'String');
   
   return unless $controller; # Cache hit or redirecting
   
-  my $object = $factory->object;
-  
-  foreach (@{$factory->DataObjects}) {
-    my @sections;
+  my @sections;
     
-    if ($doctype eq 'Popup') {
-      @sections = qw(global_context local_context content_panel local_tools);
-    } else {
-      @sections = qw(global_context local_context modal_context context_panel content_panel local_tools);
-    }
-    
-    $controller->build_page($page, $doctype, $_, @sections);
+  if ($doctype eq 'Popup') {
+    @sections = qw(global_context local_context content_panel local_tools);
+  } else {
+    @sections = qw(global_context local_context modal_context context_panel content_panel local_tools);
   }
+    
+  $controller->build_page($page, $doctype, $resource, @sections);
   
-  if (!$controller->process_command($object, $page) && $controller->access_ok($object, $page)) {
+  if (!$controller->process_command($resource, $page) && $controller->access_ok($resource, $page)) {
     $page->render;
     
     my $content = $page->renderer->content;
@@ -70,33 +63,25 @@ sub modal_stuff {
 sub ingredient {
   ### Prints the dynamically created components. Loaded either via AJAX (if available) or parallel HTTP requests.
   
-  my ($controller, $factory, $page, $problem) = handler(shift, 'Component', undef, 'String');
+  my ($controller, $resource, $page, $problem) = handler(shift, 'Component', undef, 'String');
   
   return unless $controller; # Cache hit
   
-  my $object = $factory->object;
-
-  if ($object) {
-    $ENV{'ENSEMBL_ACTION'} = $factory->parent->{'ENSEMBL_ACTION'};
+  $controller->build_page($page, 'Dynamic', $resource, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
+  $page->render;
     
-    $factory->action = $ENV{'ENSEMBL_ACTION'};
-    $object->action  = $ENV{'ENSEMBL_ACTION'};
-    $controller->build_page($page, 'Dynamic', $object, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-    $page->render;
-    
-    my $content = $page->renderer->content;
-    print $content;
-    $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
-  } 
+  my $content = $page->renderer->content;
+  print $content;
+  $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
 }
 
 sub configurator {
   ### Prints the configuration modal dialog.
   
-  my ($controller, $factory, $page) = handler(shift, 'Configurator', 'modal', 'String');
+  my ($controller, $resource, $page) = handler(shift, 'Configurator', 'modal', 'String');
   
   if (!$controller->update_configuration) { # else config has updated and redirect is occurring
-    $controller->build_page($page, 'Popup', $factory->object, qw(user_context configurator));    
+    $controller->build_page($page, 'Popup', $resource, qw(user_context configurator));    
     $page->render;
     print $page->renderer->content;
   }
@@ -105,36 +90,37 @@ sub configurator {
 sub menu {
   ### Prints the popup zmenus on the images.
   
-  my ($controller, $factory) = handler(shift, 'Dynamic', 'menu');
+  my ($controller, $resource) = handler(shift, 'Dynamic', 'menu');
   
-  $controller->build_menu($factory->object);
+  $controller->build_menu($resource);
 }
 
 sub handler {
   ### Deals with common functionality of all request types.
   ### Returns:
   ### controller (EnsEMBL::Web::Controller)
-  ### factory    (EnsEMBL::Web::Proxy::Factory) of type dependant on page
+  ### resource     (EnsEMBL::Web::Resource)
   ### page       (EnsEMBL::Web::Document::[DOCTYPE]) - will be a child of EnsEMBL::Web::Document::Page. Not returned for calls from menu.
   ### problem    boolean - true if the factory has a problem
   ###
   ### Will return nothing if the page is retrieved from the cache, or a redirect is required.
-  
-  $CGI::POST_MAX = $ENSEMBL_WEB_REGISTRY->species_defs->CGI_POST_MAX; # Set max upload size
 
   my $r            = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $doctype      = shift || 'Dynamic';
   my $requesttype  = shift;
   my $renderertype = shift || 'Apache';
   my $input        = new CGI;
-  my $species      = $ENV{'ENSEMBL_SPECIES'};
-  my $objecttype   = $ENV{'ENSEMBL_TYPE'};
-  my $action       = $ENV{'ENSEMBL_ACTION'};
-  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || $input->param('factorytype') || $objecttype;
-  my $outputtype   = $objecttype eq 'DAS' ? 'DAS' : undef;
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $cache        = new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000);
-  my $controller   = new EnsEMBL::Web::Controller({ r => $r, input => $input, cache => $cache });
+
+  ## The resource object is used throughout the code to store data objects, connections and parameters 
+  my $resource       = new EnsEMBL::Web::Resource({
+    _input         => $input,
+    _apache_handle => $r,
+  });
+  $CGI::POST_MAX = $resource->species_defs->CGI_POST_MAX; # Set max upload size
+
+  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || $input->param('factorytype') || $resource->type;
+  my $outputtype   = $resource->type eq 'DAS' ? 'DAS' : undef;
+  my $controller   = new EnsEMBL::Web::Controller($resource->hub);
   
   $controller->clear_cached_content if $requesttype eq 'page';                    # Conditional - only clears on force refresh of page. 
   
@@ -142,38 +128,34 @@ sub handler {
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
   
   my $problem;
-  my $db_connection = $species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef;
-  my $core_objects  = new EnsEMBL::Web::CoreObjects($input, $db_connection);
-  my $factory       = new EnsEMBL::Web::Proxy::Factory($factorytype, {
-    _input         => $input,
-    _apache_handle => $r,
-    _core_objects  => $core_objects,
-    _databases     => $db_connection,
-    _parent        => $controller->_parse_referer
-  });
-  
+
+  my $parent = $input->param('_referer') || $ENV{'HTTP_REFERER'}; 
+  $resource->parent($parent);
+  my $factory = $resource->create_factory($factorytype);
+
   if ($factory->has_fatal_problem) {
     $problem = $factory->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
   } else {
     eval {
       $factory->createObjects;
+      $resource->add_models($factory->DataObjects);
     };
     
-    $factory->problem('fatal', "Unable to execute createObject on Factory of type $objecttype.", $@) if $@;
+    $factory->problem('fatal', "Unable to execute createObject on Factory of type ".$resource->type, $@) if $@;
     
     $problem = $factory->handle_problem if $factory->has_a_problem; # $factory->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
     
     return if $problem eq 'redirect';                         # Forcing a redirect - don't need to go any further
-    return ($controller, $factory) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
+    return ($controller, $resource) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
   }
   
   my $renderer_module = "EnsEMBL::Web::Document::Renderer::$renderertype";
   my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
   
-  my ($renderer) = $controller->_use($renderer_module, (r => $r, cache => $cache));
+  my ($renderer) = $controller->_use($renderer_module, (r => $resource->apache_handle, cache => $resource->cache));
   my ($page)     = $controller->_use($document_module, { 
     renderer     => $renderer, 
-    species_defs => $species_defs, 
+    species_defs => $resource->species_defs, 
     input        => $input, 
     outputtype   => $outputtype
   });
@@ -192,11 +174,9 @@ sub handler {
       print $page->renderer->content;
       return;
     }
-    
-    $factory->clear_problems;
   }
   
-  return ($controller, $factory, $page, !!$problem);
+  return ($controller, $resource, $page, !!$problem);
 }
 
 1;
