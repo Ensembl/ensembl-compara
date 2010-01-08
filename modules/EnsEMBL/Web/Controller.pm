@@ -125,10 +125,9 @@ sub build_page {
   
   my ($self, $page, $doctype, $resource, @functions) = @_;
   
-  my $type = $resource->type;
-  return unless $type;
- 
-  my $object = $resource->object; 
+  my $object = $resource->object;
+  my $type;
+  
   if (ref $object) { # Actual object
     $type = $object->__objecttype;
     $object->viewconfig->form($object);
@@ -211,10 +210,14 @@ sub build_menu {
   
   return unless $resource;
   
-  my $type   = $resource->hub->type;
-  my $action = $resource->hub->action;
-  my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
   my $object = $resource->object;
+  
+  return unless $object;
+  
+  my $type     = $resource->hub->type;
+  my $action   = $resource->hub->action;
+  my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
+  
   my $menu;
   
   ### Check for all possible module permutations.
@@ -254,7 +257,7 @@ sub update_configuration {
   if ($input->param('submit') || $input->param('reset')) {
     my $r          = $self->{'r'};
     my $session    = $self->hub->session;
-    my $type = $self->{'type'};
+    my $type       = $self->{'type'};
     my $action     = $self->{'action'};
     my $config     = $input->param('config');
     
