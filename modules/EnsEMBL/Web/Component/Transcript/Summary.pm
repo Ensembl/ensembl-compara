@@ -130,13 +130,23 @@ sub content {
         <tr>
           <th>Name</th>
           <th>Transcript ID</th>
+          <th>Length (bp)</th>
           <th>Protein ID</th>
-          <th>Description</th> 
-        </tr>
-    };
+          <th>Length (aa)</th>
+          <th>Description</th>
+  };
+
+  if ($object->species =~/^Homo|Mus/){
+    $html .= "<th>CCDS</th>";
+  }
+
+  $html .= "</tr>";
     
     foreach (map $_->[2], sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map {[ $_->external_name, $_->stable_id, $_ ]} @$transcripts) {
+      my $transcript_length = $_->length;
       my $protein = 'No protein product';
+      my $protein_length = 'N/A';
+
       
       my $url = $self->object->_url({
         action   => $action eq 'ProteinSummary' ? 'Summary' : $action,
@@ -155,6 +165,12 @@ sub content {
           }),
           $_->translation->stable_id
         );
+        $protein_length = $_->translation->length;
+      }
+
+      my $ccds = "No";
+      if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$_->get_all_DBLinks} ) {
+        $ccds = "Yes";
       }
       
       $html .= sprintf('
@@ -163,14 +179,22 @@ sub content {
           <td><a href="%s">%s</a></td>
           <td>%s</td>
           <td>%s</td>
-        </tr>',
+          <td>%s</td>
+          <td>%s</td>',
         $_->stable_id eq $transcript ? ' class="active"' : '',
         $_->display_xref ? $_->display_xref->display_id : 'Novel',
         $url,
         $_->stable_id,
+        $transcript_length,
         $protein,
+        $protein_length,
         $_->biotype
       );
+
+      if ($object->species =~/^Homo|Mus/){
+        $html .= "<td>$ccds</td>";
+      }
+      $html .= "</tr>";
     }
     
     $html .= '
