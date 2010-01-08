@@ -65,7 +65,44 @@ sub model {
   return $self->{'_models'}{$type}[0];
 }
 
-sub create_factory {
+sub add_models {
+### Adds Models created by the factory to this Resource
+  my ($self, $data) = @_;
+  return unless $data;
+
+  if (ref($data) eq 'ARRAY') {
+    foreach my $proxy_object (@$data) {
+      $self->models($proxy_object->__objecttype, $proxy_object);
+    }
+  }
+  elsif (ref($data) eq 'HASH') {
+    while (my ($key, $object) = each (%$data)) {
+      $self->models($key, $object);
+    }
+  }
+}
+
+sub create_models {
+## Currently uses Proxy::Factory
+  my ($self, $type) = @_;
+  my $factory = $self->_create_proxy_factory($type);
+  my $problem;
+
+  if ($factory->has_fatal_problem) {
+    $problem = $factory->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
+  } else {
+    eval {
+      $factory->createObjects;
+      $self->add_models($factory->DataObjects);
+    };
+    $factory->problem('fatal', "Unable to execute createObject on Factory of type ".$self->type, $@) if $@;
+    # $factory->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
+    $problem = $factory->handle_problem if $factory->has_a_problem; 
+  }
+  return $problem;
+}
+
+sub _create_proxy_factory {
 ### Creates a Factory object which can then generate one or more Models
   my ($self, $type) = @_;
   return unless $type;
@@ -79,21 +116,6 @@ sub create_factory {
   });
 }
 
-sub add_models {
-### Adds Models created by the factory to this Resource
-  my ($self, $data) = @_;
-  return unless $data;
-  if (ref($data) eq 'ARRAY') {
-    foreach my $proxy_object (@$data) {
-      $self->models($proxy_object->__objecttype, $proxy_object);
-    }
-  }
-  elsif (ref($data) eq 'HASH') {
-    while (my ($key, $object) = each (%$data)) {
-      $self->models($key, $object);
-    }
-  }
-}
 ## Backwards compatibility
 sub object {
   my $self = shift;
