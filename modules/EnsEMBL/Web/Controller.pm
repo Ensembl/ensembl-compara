@@ -22,11 +22,11 @@ sub new {
   my ($class, $data) = @_;
     
   my $self = {
-    type       => $ENV{'ENSEMBL_TYPE'},
-    action     => $ENV{'ENSEMBL_ACTION'},
-    function   => $ENV{'ENSEMBL_FUNCTION'},
-    command    => undef,
-    filters    => undef,
+    type     => $ENV{'ENSEMBL_TYPE'},
+    action   => $ENV{'ENSEMBL_ACTION'},
+    function => $ENV{'ENSEMBL_FUNCTION'},
+    command  => undef,
+    filters  => undef,
     %$data
   };
   
@@ -125,7 +125,7 @@ sub build_page {
   
   if (ref $object) { # Actual object
     $objecttype = $object->__objecttype;
-    $object->get_viewconfig->form($object);
+    $object->viewconfig->form($object);
   } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $objecttype = $object;
   } else {
@@ -159,6 +159,7 @@ sub build_page {
         # Catch any errors and display as a "configuration runtime error"
         if ($@) {
           warn ">>> FUNCTION $func failed: $@";
+          
           $page->content->add_panel($page,
             'Configuration module runtime error',
             '<p>Unable to execute configuration %s from configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>', 
