@@ -12,7 +12,7 @@ package EnsEMBL::Web::Proxiable;
 ### DESCRIPTION
 ### A Proxiable object contains both the data object (either
 ### an Object or a Factory) and all the 'connections' (db handles, 
-### cgi parameters, web session, etc) needed to support i
+### cgi parameters, web session, etc) needed to support 
 ### manipulation of that data
 
 use strict;
