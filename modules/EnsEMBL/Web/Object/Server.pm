@@ -1,5 +1,14 @@
 package EnsEMBL::Web::Object::Server;
 
+### NAME: EnsEMBL::Web::Object::Server
+### An empty wrapper object, used by server report pages 
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+
 use strict;
 use warnings;
 no warnings "uninitialized";

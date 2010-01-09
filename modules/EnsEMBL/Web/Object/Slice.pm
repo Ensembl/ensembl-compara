@@ -1,17 +1,27 @@
 package EnsEMBL::Web::Object::Slice;
 
+### NAME: EnsEMBL::Web::Object::Slice
+### Wrapper around a Bio::EnsEMBL::Slice object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### Contains a lot of functionality not directly related to
+### manipulation of the underlying API object 
+
+### DESCRIPTION
+### This is a 'helper' object which is created by other objects
+### when a slice is needed
+### e.g.  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
+
 use strict;
 use warnings;
 no warnings "uninitialized";
-use Data::Dumper;
 
 use EnsEMBL::Web::Object;
 our @ISA = qw(EnsEMBL::Web::Object);
 our %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
 
-### This object is called from a Component object
-### e.g.  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
-### This class consists of methods for calls on a slice object.
 
 
 sub snp_display {

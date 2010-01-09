@@ -1,19 +1,21 @@
 package EnsEMBL::Web::Object::Variation;
 
+### NAME: EnsEMBL::Web::Object::Variation
+### Wrapper around a Bio::EnsEMBL::Variation 
+### or EnsEMBL::Web::VariationFeature object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### Contains a lot of functionality not directly related to
+### manipulation of the underlying API object 
+
+### DESCRIPTION
+
+# FIXME Are these actually used anywhere???
+# Is there a reason they come before 'use strict'?
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump); 
-
-### Purpose: to store and manipulate ensembl Variation and Variation Feature objects
-### it provides a thin wrapper around the ensembl-core-api
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-CONTACT Fiona Cunningham - webmaster@sanger.ac.uk
-
-=cut
 
 use strict;
 use warnings;
@@ -1002,7 +1004,6 @@ sub get_variation_features {
    my $dbs = $self->DBConnection->get_DBAdaptor('variation');
    my $vari_f_adaptor = $dbs->get_VariationFeatureAdaptor;
    my $vari_features = $vari_f_adaptor->fetch_all_by_Variation($self->vari);
-   #   warn Data::Dumper::Dumper($vari_features);
    return $vari_features || [];
 }
 

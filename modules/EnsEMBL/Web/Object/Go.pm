@@ -1,5 +1,13 @@
 package EnsEMBL::Web::Object::Go;
-                                                                                   
+
+### NAME: EnsEMBL::Web::Object::Go
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### Needs rewriting to use new API
+
+### DESCRIPTION                                                                                   
 use strict;
 use warnings;
 no warnings "uninitialized";

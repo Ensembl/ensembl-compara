@@ -1,9 +1,13 @@
 package EnsEMBL::Web::Object::Blast;
 
-### Proxiable Object which wraps around the BLAST back end, analogous
-### to Object::Gene etc which are wrappers around the Ensembl API
+### NAME: EnsEMBL::Web::Object::Blast
+### Object for accessing Ensembl Blast back end 
 
-## Developer note:
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: Under development
+
+### DESCRIPTION
 ## The aim is to create an object which can be updated to
 ## use a different queuing mechanism, without any need to
 ## change the user interface. Where possible, therefore,
@@ -17,7 +21,6 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Object);
 use Bio::Tools::Run::EnsemblSearchMulti;
 use EnsEMBL::Web::ExtIndex;
-use Data::Dumper;
 use IO::Scalar;
 use Bio::SeqIO;
 

@@ -1,23 +1,16 @@
 package EnsEMBL::Web::Object::ArchiveStableId;
 
+### NAME: EnsEMBL::Web::Object::ArchiveStableId
+### Wrapper around a Bio::EnsEMBL::ArchiveStableId object  
 
-=head1 NAME
+### PLUGGABLE: Yes, using Proxy::Object 
 
+### STATUS: At Risk
+### Contains a lot of functionality not directly related to
+### manipulation of the underlying API object 
 
-=head1 DESCRIPTION
+### DESCRIPTION
 
-This object stores ensembl archive ID objects and provides a thin wrapper around the  ensembl-core-api. 
-
-=head1 LICENCE
-
-This code is distributed under an Apache style licence:
-Please see http://www.ensembl.org/code_licence.html for details
-
-=head1 CONTACT
-
-Fiona Cunningham - webmaster@sanger.ac.uk
-
-=cut
 
 use strict;
 use warnings;

@@ -1,9 +1,19 @@
 package EnsEMBL::Web::Object;
 
-### Base object class - all Ensembl web objects are derived from this class,
-### this class is derived from proxiable - as it is usually proxied through an
-### {{EnsEMBL::Web::Proxy}} object to handle the dynamic multiple inheritance 
-### functionality.
+### NAME: EnsEMBL::Web::Object
+### Base class - wrapper around a Bio::EnsEMBL API object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### Contains a lot of functionality not directly related to
+### manipulation of the underlying API object 
+
+### DESCRIPTION
+### All Ensembl web data objects are derived from this class,
+### which is derived from Proxiable - as it is usually proxied 
+### through an {{EnsEMBL::Web::Proxy}} object to handle the dynamic 
+### multiple inheritance functionality.
 
 use strict;
 use warnings;

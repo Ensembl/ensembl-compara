@@ -1,5 +1,16 @@
 package EnsEMBL::Web::Object::Export;
 
+### NAME: EnsEMBL::Web::Object::Export
+### Wrapper around a dynamically generated Bio::EnsEMBL data object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+### An 'empty' wrapper object with on-the-fly creation of 
+### data objects that are to be exported
+
 use strict;
 
 

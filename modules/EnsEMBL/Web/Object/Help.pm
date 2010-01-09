@@ -1,5 +1,17 @@
 package EnsEMBL::Web::Object::Help;
 
+### NAME: EnsEMBL::Web::Object::Help
+### Object for accessing help information 
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+### This is another 'empty' Proxiable object which dynamically
+### loads EnsEMBL::Web::Data objects representing different
+### types of online help (page help, video tutorials, etc)
+
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -9,8 +21,6 @@ use EnsEMBL::Web::Data::Article;
 use EnsEMBL::Web::Data::Category;
 use EnsEMBL::Web::Data::View;
 use EnsEMBL::Web::Data::Glossary;
-
-use Data::Dumper;
 
 our @ISA = qw(EnsEMBL::Web::Object);
 

@@ -1,5 +1,15 @@
 package EnsEMBL::Web::Object::Translation;
 
+### NAME: EnsEMBL::Web::Object::Translation
+### Wrapper around a Bio::EnsEMBL::Translation object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### Required functionality now moved to Object::Transcript
+
+### DESCRIPTION
+
 use strict;
 #use warnings;
 #no warnings "uninitialized";

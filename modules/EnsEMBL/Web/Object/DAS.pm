@@ -1,5 +1,15 @@
 package EnsEMBL::Web::Object::DAS;
 
+### NAME: EnsEMBL::Web::Object::DAS
+### ?? Module used to serve EnsEMBL features as DAS feed
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

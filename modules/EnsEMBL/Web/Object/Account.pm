@@ -1,5 +1,16 @@
 package EnsEMBL::Web::Object::Account;
 
+### NAME: EnsEMBL::Web::Object::Account
+### Object for accessing user account information 
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+### This module does not wrap around a data object, it merely
+### accesses the user object via the session
+
 use strict;
 
 use base qw(EnsEMBL::Web::Object);

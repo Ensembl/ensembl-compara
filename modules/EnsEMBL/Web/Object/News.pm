@@ -1,5 +1,16 @@
 package EnsEMBL::Web::Object::News;
 
+### NAME: EnsEMBL::Web::Object::News
+### Object for accessing Ensembl release news stories 
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+### Usually created empty, so that it can dynamically load
+### any Ensembl::Web::Data::NewsItem records are required
+
 use strict;
 use warnings;
 no warnings "uninitialized";

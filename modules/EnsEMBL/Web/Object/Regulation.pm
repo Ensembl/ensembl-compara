@@ -1,5 +1,17 @@
 package EnsEMBL::Web::Object::Regulation;
 
+### NAME: EnsEMBL::Web::Object::Regulation
+### Wrapper around a Bio::EnsEMBL::Funcgen::RegulatoryFeature object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### Contains a lot of functionality not directly related to
+### manipulation of the underlying API object 
+
+### DESCRIPTION
+
+
 use strict;
 use warnings;
 no warnings "uninitialized";

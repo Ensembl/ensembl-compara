@@ -1,12 +1,21 @@
 package EnsEMBL::Web::Object::UserData;
-                                                                                   
+
+### NAME: EnsEMBL::Web::Object::UserData
+### Object for accessing data uploaded by the user
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+
+### DESCRIPTION
+### This module does not wrap around a data object, it merely
+### accesses user data via the session                                                                                   
 use strict;
 use warnings;
 no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Object);
 
-use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Utils::Exception qw(try catch);

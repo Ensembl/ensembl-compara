@@ -1,5 +1,17 @@
 package EnsEMBL::Web::Object::Marker;
 
+### NAME: EnsEMBL::Web::Object::Marker
+### Wrapper around a Bio::EnsEMBL::Marker object  
+
+### PLUGGABLE: Yes, using Proxy::Object 
+
+### STATUS: At Risk
+### It is not clear if this module is in use any more, though its
+### functionality may be worth reviving!
+
+### DESCRIPTION
+
+
 use strict;
 use warnings;
 no warnings "uninitialized";

@@ -1,7 +1,20 @@
 package EnsEMBL::Web::Root;
 
+### NAME: EnsEMBL::Web::Root
+### Base class for many EnsEMBL::Web objects
+
+### PLUGGABLE: No
+
+### STATUS: Stable
+
+### DESCRIPTION
+### This module contains a lot of generic functionality
+### needed throughout the web code: dynamic module loading,
+### url construction, data formatting, etc.
+
 use strict;
 
+use Data::Dumper;
 use Carp                  qw(cluck);
 use File::Path            qw(mkpath);
 use File::Spec::Functions qw(splitpath);
@@ -76,25 +89,47 @@ sub _parse_referer {
   };
 }
 
-# Assembles a valid URL, adding the site's base URL and CGI-escaping any parameters
-# returns a URL string
+sub url {
+### Assembles a valid URL, adding the site's base URL and CGI-escaping any parameters
+### returns a URL string
+### This is a simple version, that can be extended in children as needed
 # TODO: add site base url
-sub url { 
-  my ($self, $script, $param) = @_;
+  my ($self, $path, $param) = @_;
 
-  my @params;
+  my $clean_params = $self->escape_url_parameters($param);
+  return $self->reassemble_url($path, $clean_params);
+}
+
+sub reassembl_url {
+  my ($self, $path, $param) = @_;
+  $path .= '?' if @$param;
+  return $path . (join ';', @$param);
+}
+
+sub escape_url_parameters {
+  my ($self, $param) = @_;
+  my $clean_params;
   
   while (my ($k, $v) = each (%$param)) {
     if (ref $v eq 'ARRAY') {
-      push @params, "$k=" . encode_entities(uri_escape($_)) for @$v;
+      push @$clean_params, "$k=" . encode_entities(uri_escape($_)) for @$v;
     } else {
-      push @params, "$k=" . encode_entities(uri_escape($v));
+      push @$clean_params, "$k=" . encode_entities(uri_escape($v));
     }
   }
-  
-  $script .= $script =~ /\?/ ? ';' : '?';
-  
-  return $script . (join ';', @params);
+  return $clean_params;
+}
+
+sub make_link_tag {
+  my ($self, %args) = @_;
+  if ($args{'url'}) {
+    my $html = '<a href="'.$args{'url'}.'"';
+    $html .= ' title="'.$args{'title'}.'"' if $args{'title'};
+    $html .= '>'.$args{'text'}.'</a>';
+  }
+  else {
+    return $args{'text'};
+  }
 }
 
 # Format an error message by wrapping text to 120 columns
