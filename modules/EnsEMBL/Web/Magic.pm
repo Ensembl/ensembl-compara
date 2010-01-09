@@ -2,6 +2,15 @@
 
 package EnsEMBL::Web::Magic;
 
+### NAME: Magic.pm
+### Converts Apache requests into web pages or HTML fragments
+
+### PLUGGABLE: No 
+
+### STATUS: Stable
+### Any changes to this module should not affect external users
+
+### DESCRIPTION:
 ### Handles script requests, routed through different functions depending on request type.
 ### Exports:
 ### stuff        - main page

@@ -1,5 +1,20 @@
 package EnsEMBL::Web::Proxiable;
 
+### NAME: Proxiable.pm
+### Base class for data objects and factories
+
+### PLUGGABLE: No - but part of Proxy plugin infrastructure
+
+### STATUS: At Risk
+### * duplicates Resource/Hub functionality 
+### * multiple methods of plugin-handling are confusing!
+
+### DESCRIPTION
+### A Proxiable object contains both the data object (either
+### an Object or a Factory) and all the 'connections' (db handles, 
+### cgi parameters, web session, etc) needed to support i
+### manipulation of that data
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
