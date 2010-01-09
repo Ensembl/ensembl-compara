@@ -1,5 +1,16 @@
 package EnsEMBL::Web::Proxy::Factory;
 
+### NAME: Factory.pm
+### Wrapper around Proxiable Factory
+
+### PLUGGABLE: No - but enables plugins
+
+### STATUS: At Risk
+### (see parent) 
+
+### DESCRIPTION
+### (see parent) 
+
 use strict;
 use EnsEMBL::Web::Proxy;
 our @ISA = qw( EnsEMBL::Web::Proxy );
