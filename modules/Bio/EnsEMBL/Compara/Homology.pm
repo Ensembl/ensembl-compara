@@ -185,12 +185,16 @@ sub get_SimpleAlign {
     if ($member->chr_name =~ /mt/i) {
       # codeml icodes
       #      0:universal code (default)
-      if ($member->taxon->classification =~ /vertebrata/i) {
-        #      1:mamalian mt
-        $sa->{_special_codeml_icode} = 1;
-      } else {
-        #      4:invertebrate mt
-        $sa->{_special_codeml_icode} = 4;
+      my $class;
+      eval {$class = member->taxon->classification;};
+      unless ($@) {
+        if ($class =~ /vertebrata/i) {
+          #      1:mamalian mt
+          $sa->{_special_codeml_icode} = 1;
+        } else {
+          #      4:invertebrate mt
+          $sa->{_special_codeml_icode} = 4;
+        }
       }
     }
     my $peptide_member = $ma->fetch_by_dbID($attribute->peptide_member_id);
