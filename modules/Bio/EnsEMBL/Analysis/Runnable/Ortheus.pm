@@ -81,9 +81,9 @@ my $estimate_tree = "~/pecan/EstimateTree.py";
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters, $jar_file, $java_class, $exonerate, $options) =
+  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $analysis, $parameters, $jar_file, $java_class, $exonerate, $options,) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
-            'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'OPTIONS'], @args);
+            'SPECIES_ORDER', 'ANALYSIS', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'OPTIONS'], @args);
 
   chdir $self->workdir;
   $self->fasta_files($fasta_files) if (defined $fasta_files);
@@ -95,6 +95,11 @@ sub new {
   }
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
+
+  #overwrite default $ORTHEUS location if defined.
+  if (defined $analysis->program_file) {
+      $ORTHEUS = $analysis->program_file;
+  }
 
 # #   $self->jar_file($jar_file) if (defined $jar_file);
 # #   $self->java_class($java_class) if (defined $java_class);
@@ -220,12 +225,17 @@ sub run_ortheus {
   my $self = shift;
 
   chdir $self->workdir;
+  #my $debug = " -a -b";
 
 #   throw("Python [$PYTHON] is not executable") unless ($PYTHON && -x $PYTHON);
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
 
   my $command = "$PYTHON $ORTHEUS";
 #   $command .= " -cp ".$self->jar_file." ".$self->java_class;
+
+  #add debugging
+  #$command .= $debug;
+
   $command .= " -l \"#-j 0\" "; #-R\"select[mem>6000] rusage[mem=6000]\" -M6000000 ";
 
   if (@{$self->fasta_files}) {
