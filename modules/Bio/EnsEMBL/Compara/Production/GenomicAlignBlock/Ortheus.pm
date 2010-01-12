@@ -129,7 +129,8 @@ my $max_pads_percent = 1.0;
 #which method to use for creating the 2X fragments. If this is true (1), use
 #only the pairwise matching blocks. If this is false (0), use the entire net
 #including the inter-block spanning regions aswell. This leads to large regions
-#in the final alignment containing a single sequence.
+#in the final alignment containing a single sequence but was useful for 
+#aligning gorilla in the 5way primate alignment before gorilla had chromosomes
 my $create_block_frag_array = 1;
 
 =head2 fetch_input
@@ -233,6 +234,7 @@ sub write_output {
 
   my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->method_link_species_set_id);
+  my $mlss_id = $mlss->dbID;
   my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
 #   $gaba->use_autoincrement(0);
@@ -278,7 +280,7 @@ sub write_output {
  		  $slice_adaptor->dbc->db_handle->do("LOCK TABLES seq_region WRITE, dna WRITE");
  		  my $last_id = $slice_adaptor->dbc->db_handle->selectrow_array("SELECT max(seq_region_id) FROM seq_region");
  		  $last_id++;
- 		  my $name = "Ancestor$last_id";
+ 		  my $name = "Ancestor_" . $mlss_id . "_$last_id";
  		  my $slice = new Bio::EnsEMBL::Slice(
  						      -seq_region_name   => $name,
  						      -start             => 1,
@@ -535,7 +537,7 @@ sub parse_results {
 	#store ordered fasta_files
 	$ordered_fasta_files = $all_files;
 	$self->fasta_files(@$all_files);
-	print STDERR "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
+	print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
     }
     
     
@@ -684,9 +686,7 @@ sub parse_results {
 		$this_genomic_align->dnafrag_strand(1);
 		bless($this_node, "Bio::EnsEMBL::Compara::GenomicAlignTree");
 		#$this_node->genomic_align($this_genomic_align);
-		$genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-				# -genomic_align_array => [$this_genomic_align],
-				-type => "epo");
+		$genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
 		$genomic_align_group->add_GenomicAlign($this_genomic_align);
 
 		
@@ -903,7 +903,7 @@ sub remove_empty_cols {
 
     ## Trim the sequences to remove gap-only cols.
     foreach my $this_leaf (@{$tree->get_all_nodes}) {
-        foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
+	foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
 
 	    #set adaptor to get the aligned sequence using the dnafrag_id
 	    if (!defined $this_genomic_align->{'adaptor'}) {
@@ -950,7 +950,7 @@ sub _extract_sequence {
 	}
 	$aligned_count += $length;
     }
-    
+
     my $subseq = substr($seq, $aligned_start, ($aligned_end-$aligned_start+1));
     return ($subseq, $aligned_start, $aligned_end);
 }
@@ -1034,9 +1034,40 @@ sub get_species_tree {
   $newick_species_tree =~ s/\s*$//;
   $newick_species_tree =~ s/[\r\n]//g;
 
-  $self->{'_species_tree'} =
+  my $species_tree =
       Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_species_tree);
 
+  #if the tree leaves are species names, need to convert these into genome_db_ids
+  my $genome_dbs = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all();
+
+  my %leaf_name;
+  my %leaf_check;
+  foreach my $genome_db (@$genome_dbs) {
+      my $name = $genome_db->name;
+      $name =~ tr/ /_/;
+      $leaf_name{$name} = $genome_db->dbID;
+      if ($name ne "Ancestral_sequences") {
+	  $leaf_check{$genome_db->dbID} = 2;
+      }
+  }
+  foreach my $leaf (@{$species_tree->get_all_leaves}) {
+      #check have names rather than genome_db_ids
+      if ($leaf->name =~ /\D+/) {
+	  $leaf->name($leaf_name{$leaf->name});
+      }
+      $leaf_check{$leaf->name}++;
+  }
+
+  #Check have one instance in the tree of each genome_db in the database
+  #Don't worry about having extra elements in the tree that aren't in the
+  #genome_db table because these will be removed later
+  foreach my $name (keys %leaf_check) {
+      if ($leaf_check{$name} == 2) {
+	  throw("Unable to find genome_db_id $name in species_tree\n");
+      }
+  }
+  
+  $self->{'_species_tree'} = $species_tree;
   return $self->{'_species_tree'};
 }
 
@@ -1290,7 +1321,7 @@ sub _load_2XGenomes {
 	  print "SIMPLE CASE: longest_region $longest_ref_region length " . $sum_lengths->[$longest_ref_region] . "\n" if $self->debug;
 	  
 	  _build_2x_composite_seq($self, $compara_dba, $ref_slice_adaptor, $target_slice_adaptor, $ga_frag_array->[$longest_ref_region]);
-	  
+
 	  push @{$self->{ga_frag}}, $ga_frag_array->[$longest_ref_region];
 	  push @{$self->{'2x_dnafrag_region'}}, $ga_frag_array->[$longest_ref_region]->[0]->{dnafrag_region};
 	  next;
@@ -1384,7 +1415,7 @@ sub _dump_fasta {
 
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
 
-    print "file $file\n" if $self->debug;
+    print "file $file name " . $dfr->dnafrag->genome_db->name . "\n" if $self->debug;
 
     #Check if I have a DnaFragRegion object or my 2x genome object
     if (!UNIVERSAL::isa($dfr, 'Bio::EnsEMBL::Compara::DnaFragRegion')) {
@@ -1721,13 +1752,29 @@ sub _create_span_frag_array {
 	    if ($prev_group_id == $pairwise_gab->group_id) {
 		if (!defined $min_start || $ga->dnafrag_start < $min_start) {
 		    $min_start = $ga->dnafrag_start;
-		    $ref_min_start = $ga->genomic_align_block->reference_genomic_align->dnafrag_start;
+
+		    #if the ref and non-ref genomic_aligns are on different
+		    #strands, need to swap start and end
+		    if ($ga->dnafrag_strand == $slice->strand) {
+			$ref_min_start = $ga->genomic_align_block->reference_genomic_align->dnafrag_start;
+		    } else {
+			$ref_max_end = $ga->genomic_align_block->reference_genomic_align->dnafrag_end;
+		    }
 		} 
 		if (!defined $max_end || $ga->dnafrag_end > $max_end) {
 		    $max_end = $ga->dnafrag_end;
-		    $ref_max_end = $ga->genomic_align_block->reference_genomic_align->dnafrag_end;
-		    } 
+
+		    #if the ref and non-ref genomic_aligns are on different
+		    #strands, need to swap start and end
+		    if ($ga->dnafrag_strand == $slice->strand) {
+			$ref_max_end = $ga->genomic_align_block->reference_genomic_align->dnafrag_end;
+		    } else { 
+			$ref_min_start = $ga->genomic_align_block->reference_genomic_align->dnafrag_start; 
+		    }
+		} 
 	    } else {
+
+		print "ref_min_start $ref_min_start ref_max_end $ref_max_end\n" if ($self->debug);
 		#need to reverse order of fragments if ref is on reverse strand
 		if ($slice->strand == -1) {
 		    $ref_min_start = $slice->end - $ref_min_start + $slice->start;
