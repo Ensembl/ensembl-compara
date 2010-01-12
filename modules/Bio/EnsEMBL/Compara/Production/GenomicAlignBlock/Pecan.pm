@@ -90,6 +90,8 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Analysis::Config::Compara; #for $PYTHON and $ORTHEUS
+use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
 
 use Bio::EnsEMBL::Hive::Process;
 
@@ -114,6 +116,9 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
+  #set default to 0. Run Ortheus to create the tree if a duplication is found
+  $self->{'found_a_duplication'} = 0;
+
   if (!$self->method_link_species_set_id) {
     throw("MethodLinkSpeciesSet->dbID is not defined for this Pecan job");
   }
@@ -130,6 +135,11 @@ sub fetch_input {
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
     $self->_dump_fasta;
+
+    #if have duplications, run Ortheus.py with -y option to create a tree 
+    if ($self->{'found_a_duplication'}) {
+	$self->_run_ortheus();
+    }  
   } else {
     throw("Cannot start Pecan job because some information is missing");
   }
@@ -515,6 +525,20 @@ sub fasta_files {
   return $self->{'_fasta_files'};
 }
 
+sub species_order {
+  my $self = shift;
+
+  $self->{'_species_order'} = [] unless (defined $self->{'_species_order'});
+
+  if (@_) {
+    my $value = shift;
+    push @{$self->{'_species_order'}}, $value;
+  }
+
+  return $self->{'_species_order'};
+}
+
+
 sub get_species_tree {
   my $self = shift;
 
@@ -732,6 +756,7 @@ sub _dump_fasta {
     close F;
 
     push @{$self->fasta_files}, $file;
+    push @{$self->species_order}, $dfr->dnafrag->genome_db_id;
   }
 
   return 1;
@@ -756,10 +781,13 @@ sub _dump_fasta {
 sub _build_tree_string {
   my $self = shift;
 
-  my $tree = $self->get_species_tree;
+  my $tree = $self->get_species_tree->copy;
   return if (!$tree);
 
   $tree = $self->_update_tree($tree);
+
+  #if duplications found, $tree will not be defined
+  return if (!$tree);
 
   my $tree_string = $tree->newick_simple_format;
   # Remove quotes around node labels
@@ -815,7 +843,12 @@ sub _update_tree {
       push(@$ordered_dnafrag_regions, $these_dnafrag_regions->[0]);
 
     } elsif (@$these_dnafrag_regions > 1) {
+
       ## If more than 1 has been found...
+      $self->{'found_a_duplication'} = 1;
+      return;
+
+      #No longer use code below, call Ortheus to find better tree
       foreach my $this_dnafrag_region (@$these_dnafrag_regions) {
         my $new_node = new Bio::EnsEMBL::Compara::NestedSet;
         $new_node->name("seq".$idx++);
@@ -830,6 +863,7 @@ sub _update_tree {
       $tree = $tree->minimize_tree;
     }
   }
+
   $self->dnafrag_regions($ordered_dnafrag_regions);
 
   if (scalar(@$all_dnafrag_regions) != scalar(@$ordered_dnafrag_regions) or
@@ -845,5 +879,45 @@ sub _update_tree {
 
   return $tree;
 }
+
+sub _run_ortheus {
+    my ($self) = @_;
+
+    #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
+    my $options = " -y";
+    my $ortheus_runnable = new Bio::EnsEMBL::Analysis::Runnable::Ortheus(
+      -workdir => $self->worker_temp_directory,
+      -fasta_files => $self->fasta_files,
+      #-tree_string => $self->tree_string,
+      -species_tree => $self->get_species_tree->newick_simple_format,
+      -species_order => $self->species_order,
+      -analysis => $self->analysis,
+      -parameters => $self->{_java_options},
+      -options => $options,
+      );
+
+    $ortheus_runnable->run_analysis;
+
+    my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
+    if (-e $tree_file) {
+	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
+	open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
+	my ($newick, $files) = <F>;
+	close(F);
+	$newick =~ s/[\r\n]+$//;
+	$self->tree_string($newick);
+	$files =~ s/[\r\n]+$//;
+
+	my $all_files = [split(" ", $files)];
+	
+	#store ordered fasta_files
+	$self->{'_fasta_files'} = $all_files;
+
+	print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
+    } else {
+	throw("Ortheus was unable to create a tree");
+    }
+}
+
 
 1;
