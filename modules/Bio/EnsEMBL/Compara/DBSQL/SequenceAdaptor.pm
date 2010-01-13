@@ -31,6 +31,18 @@ sub fetch_sequence_exon_bounded_by_member_id {
   return $sequence_exon_bounded;
 }
 
+sub fetch_sequence_cds_by_member_id {
+  my ($self, $member_id) = @_;
+
+  my $sql = "SELECT sequence_cds.sequence_cds FROM sequence_cds WHERE member_id = ?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($member_id);
+
+  my ($sequence_cds) = $sth->fetchrow_array();
+  $sth->finish();
+  return $sequence_cds;
+}
+
 
 #
 # STORE METHODS
