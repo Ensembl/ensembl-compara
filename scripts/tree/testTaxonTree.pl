@@ -44,6 +44,7 @@ GetOptions('help'        => \$help,
            'cdna'        => \$self->{'cdna'},
            'draw'        => \$self->{'drawtree'},
            'query_ncbi_name=s'     => \$self->{'query_ncbi_name'},
+           'tag=s'     => \$self->{'tag'},
            'no_previous'             => \$self->{'no_previous'},
            'create_species_tree'     => \$self->{'create_species_tree'},
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
@@ -248,7 +249,9 @@ sub create_species_tree {
   }
   print STDERR "Loading taxa from extrataxon_sequenced...\n" if (0 != scalar(@extrataxon_sequenced));
   foreach my $extra_taxon (@extrataxon_sequenced) {
+    $DB::single=1;1;
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
+    next unless defined($taxon);
     my $taxon_name = $taxon->name;
     my $taxon_id = $taxon->taxon_id;
     print STDERR "  $taxon_name [$taxon_id]\n";
@@ -319,6 +322,7 @@ sub create_species_tree {
   $root->print_tree($self->{'scale'});
 
   my $outname = $self->{'comparaDBA'}->dbc->dbname;
+  $outname .= ".".$self->{'tag'} if (defined($self->{'tag'}));
   my $num_leaves = scalar(@{$root->get_all_leaves});
   $outname = $num_leaves . "." . $outname;
   my $newick_common;
@@ -362,6 +366,9 @@ sub create_species_tree {
   print T $njtree_tree;
   close T;
 
+  my $s = join (":", map {$_->name} (@{$root->get_all_leaves}));
+  $s =~ s/\ /\_/g;
+  print "$s\n";
 
   $self->{'root'} = $root;
   drawPStree($self) if ($self->{'drawtree'});
@@ -434,8 +441,8 @@ sub fetch_protein_tree_with_gene {
 
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
   $member->print_member;
-  $member->get_longest_peptide_Member->print_member;
-  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->get_longest_peptide_Member->member_id);
+  $member->get_canonical_peptide_Member->print_member;
+  my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_peptide_Member->member_id);
   print $aligned_member, "\n";
   $aligned_member->print_member;
   $aligned_member->gene_member->print_member;
