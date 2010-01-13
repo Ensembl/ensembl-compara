@@ -396,7 +396,7 @@ sub store_gene_and_all_transcripts
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     my $translation = $transcript->translation;
     unless (defined $translation) {
-      warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
+       #warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
       next;
     }
 
@@ -408,15 +408,15 @@ sub store_gene_and_all_transcripts
     eval {$canonical_transcript = $gene->canonical_transcript;
           $canonical_transcript_stable_id = $canonical_transcript->stable_id;};
     if (!defined($canonical_transcript)) {
-      print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n";
+      print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n" if ($self->debug);
       next;
     }
     if ($canonical_transcript->biotype ne $gene->biotype) {
-      print STDERR "WARN: ", $transcript->stable_id, " is labelled as canonical transcript but has wrong biotype\n";
+      print STDERR "WARN: ", $transcript->stable_id, " is labelled as canonical transcript but has wrong biotype\n" if ($self->debug);
       next;
     }
     if ($transcript->biotype ne $gene->biotype) {
-      print STDERR $transcript->stable_id, " non-matching biotype ", $transcript->biotype, "\n" if ($self->debug);
+      print STDERR $transcript->stable_id, " non-matching biotype ", $transcript->biotype, "\n" if ($self->debug && $self->{'verbose'});
     }
 
 #    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
