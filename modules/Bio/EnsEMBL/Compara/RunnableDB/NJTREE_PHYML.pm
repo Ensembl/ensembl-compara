@@ -113,7 +113,7 @@ sub fetch_input {
   $self->check_if_exit_cleanly;
 
   unless($self->{'protein_tree'}) {
-    throw("undefined ProteinTree as input\n");
+    $self->throw("undefined ProteinTree as input\n");
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') 
       > $self->{'max_gene_count'}) {
@@ -212,6 +212,7 @@ sub get_params {
   }
 
   if(defined($params->{'protein_tree_id'})) {
+    $DB::single=1;1;
     $self->{'protein_tree'} =  
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
@@ -367,7 +368,7 @@ sub run_njtree_phyml
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
-      throw("error running njtree phyml noboot (step 1 of 2), $!\n");
+      $self->throw("error running njtree phyml noboot (step 1 of 2), $!\n");
     }
     # second part
     # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
@@ -386,11 +387,11 @@ sub run_njtree_phyml
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
-      throw("error running njtree phyml noboot (step 2 of 2), $!\n");
+      $self->throw("error running njtree phyml noboot (step 2 of 2), $!\n");
     }
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   } else {
-    throw("NJTREE PHYML -- wrong bootstrap option");
+    $self->throw("NJTREE PHYML -- wrong bootstrap option");
   }
 
   #parse the tree into the datastucture
@@ -410,7 +411,7 @@ sub check_job_fail_options
 #     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 205 && !defined($self->worker->{HIGHMEM})) {
 #       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
 #       $self->DESTROY;
-#       throw("NJTREE PHYML job too big: try something else and FAIL it");
+#       $self->throw("NJTREE PHYML job too big: try something else and FAIL it");
 #     }
 #   }
 
@@ -420,7 +421,7 @@ sub check_job_fail_options
     $self->input_job->update_status('FAILED');
 
     $self->DESTROY;
-    throw("NJTREE PHYML job failed >=3 times: try something else and FAIL it");
+    $self->throw("NJTREE PHYML job failed >=3 times: try something else and FAIL it");
   }
 }
 
@@ -489,7 +490,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
         $protein1->{'cdna_alignment_string'} = $cdna1;
         $protein2->{'cdna_alignment_string'} = $cdna2;
         print STDERR "$split_type: Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
-
+        $tree->store_tag('msplit_'.$protein1->stable_id."_".$protein2->stable_id,$split_type);
         # In case of more than 2 fragments, the projection is going to
         # be done incrementally, the closest pairs pairs first.
         # e.g.
@@ -707,7 +708,7 @@ sub parse_newick_into_proteintree
   #parse newick into a new tree object structure
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
@@ -748,7 +749,7 @@ sub parse_newick_into_proteintree
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      throw("Phyml tree does not have all leaves as AlignedMember\n");
+      $self->throw("Phyml tree does not have all leaves as AlignedMember\n");
     }
   }
 
