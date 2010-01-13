@@ -682,6 +682,25 @@ sub _compose_sequence_exon_bounded {
   return $seqsplice;
 }
 
+sub sequence_cds {
+  my $self = shift;
+
+  if(@_) {
+    $self->{'_sequence_cds'} = shift;
+    return $self->{'_sequence_cds'};
+  }
+
+  if(!defined($self->{'_sequence_cds'})) {
+    $self->{'_sequence_cds'} = $self->adaptor->db->get_MemberAdaptor->_fetch_sequence_cds_by_member_id($self->member_id);
+  }
+
+  if(!defined($self->{'_sequence_cds'})) {
+    $self->{'_sequence_cds'} = $self->transcript->translateable_seq;
+  }
+
+  return $self->{'_sequence_cds'};
+}
+
 # GJ 2008-11-17
 # Returns the amino acid sequence with exon boundaries denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
 sub get_exon_bounded_sequence {
