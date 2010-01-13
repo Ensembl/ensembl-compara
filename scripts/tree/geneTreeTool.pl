@@ -70,6 +70,7 @@ GetOptions('help'                                     => \$help,
            'cdna'                                     => \$self->{'cdna'},
            'exon_cased'                               => \$self->{'exon_cased'},
            'fasta'                                    => \$self->{'output_fasta'},
+           'boj'                                      => \$self->{'output_boj'},
            'dump'                                     => \$self->{'dump'},
            'align_format=s'                           => \$self->{'align_format'},
            'scale=f'                                  => \$self->{'scale'},
@@ -1636,7 +1637,9 @@ sub dumpTreeFasta
       next if($seq_id_hash->{$member->sequence_id});
       $seq_id_hash->{$member->sequence_id} = 1;
 
-      my $seq = $member->sequence;
+      my $seq;
+      $seq = $member->sequence unless (defined($self->{output_boj}));
+      $seq = $member->sequence_exon_bounded if (defined($self->{output_boj}));
       $seq =~ s/(.{72})/$1\n/g;
       chomp $seq;
 
@@ -1828,25 +1831,25 @@ sub _analysis_job_trace {
   my $input = $self->{_analysis_job_trace};
   my @logic_names = split(":",$input);
   my $root_logic_name = shift @logic_names;
-  my $sql0 = "select (select a.logic_name from analysis a where a.analysis_id=aj.analysis_id) as analysis_name, aj.analysis_job_id, aj.prev_analysis_job_id, aj.completed, aj.runtime_msec from analysis_job aj where aj.analysis_id in (select analysis_id from analysis where logic_name=\"$root_logic_name\")";
+  my $sql0 = "select (select a.logic_name from analysis a where a.analysis_id=aj.analysis_id) as analysis_name, aj.analysis_job_id, aj.prev_analysis_job_id, aj.completed, aj.runtime_msec, aj.retry_count from analysis_job aj where aj.analysis_id in (select analysis_id from analysis where logic_name=\"$root_logic_name\")";
   my $sth0 = $self->{comparaDBA}->dbc->prepare($sql0);
   $sth0->execute();
-  my ($root_analysis_id, $root_analysis_job_id, $root_prev_analysis_job_id, $root_completed, $root_runtime_msec) = $sth0->fetchrow_array();
+  my ($root_analysis_id, $root_analysis_job_id, $root_prev_analysis_job_id, $root_completed, $root_runtime_msec, $root_retry_count) = $sth0->fetchrow_array();
   $sth0->finish;
   exit unless (defined($root_analysis_id));
-  $root->add_tag("completed",$root_completed);
-  $root->add_tag("runtime_msec",$root_runtime_msec);
-  $root->add_tag("analysis_id",$root_analysis_id);
+#   $root->add_tag("completed",$root_completed);
+#   $root->add_tag("runtime_msec",$root_runtime_msec);
+#   $root->add_tag("analysis_id",$root_analysis_id);
   $root->name($root_analysis_id);
 
   my $string = join('","',@logic_names);
-  my $sql1 = "select (select a.logic_name from analysis a where a.analysis_id=aj.analysis_id) as analysis_name, aj.analysis_job_id, aj.prev_analysis_job_id, aj.completed, aj.runtime_msec from analysis_job aj where aj.analysis_id in (select analysis_id from analysis where logic_name  in (\"$string\"))";
+  my $sql1 = "select (select a.logic_name from analysis a where a.analysis_id=aj.analysis_id) as analysis_name, aj.analysis_job_id, aj.prev_analysis_job_id, aj.completed, aj.runtime_msec, aj.retry_count from analysis_job aj where aj.analysis_id in (select analysis_id from analysis where logic_name  in (\"$string\"))";
   my $sth = $self->{comparaDBA}->dbc->prepare($sql1);
   $sth->execute();
-  my ($analysis_id, $analysis_job_id, $prev_analysis_job_id, $completed, $runtime_msec);
+  my ($analysis_id, $analysis_job_id, $prev_analysis_job_id, $completed, $runtime_msec, $retry_count);
   my $max_analysis_job_id = -1;
   print STDERR "[querying] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
-  while (($analysis_id, $analysis_job_id, $prev_analysis_job_id, $completed, $runtime_msec) = $sth->fetchrow_array) {
+  while (($analysis_id, $analysis_job_id, $prev_analysis_job_id, $completed, $runtime_msec, $retry_count) = $sth->fetchrow_array) {
     my $node;
     unless (defined($self->{defined_nodes}{$analysis_job_id})) {
     $node = Bio::EnsEMBL::Compara::NestedSet->new; $node->node_id($analysis_job_id);
@@ -1866,20 +1869,20 @@ sub _analysis_job_trace {
     if ($prev_analysis_job_id == $root_analysis_job_id) {
       $root->add_child($parent_node);
     }
-    $node->distance_to_parent($runtime_msec/1000);
-    $node->add_tag("completed",$completed);
-    $node->add_tag("runtime_msec",$runtime_msec);
-    $node->add_tag("analysis_id",$analysis_id);
+    $node->distance_to_parent(($runtime_msec*(1+$retry_count))/1000);
+#     $node->add_tag("completed",$completed);
+#     $node->add_tag("runtime_msec",$runtime_msec);
+#     $node->add_tag("analysis_id",$analysis_id);
     $node->name($analysis_id);
   }
   $sth->finish;
   print STDERR "[queried] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
 
   print STDERR "[printing graph] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
-  my $scale = 1/60;
+  my $scale = $self->{scale} || 0.005;
   $root->print_tree($scale);
   print STDERR "[printed graph] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
-
+  $DB::single=1;1;#??
 }
 
 
