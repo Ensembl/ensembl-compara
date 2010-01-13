@@ -47,7 +47,8 @@ sub _init {
     my($domain,@pairs) = @$domain_ref;  
     my $Composite3 = $self->Composite({
       'y'         => 0,
-      'height'    => $h
+      'height'    => $h,
+      'href'  => $self->_url({ 'type' => 'Transcript', 'action' => 'ProteinSummary', 'pf_id' => $domain->dbID }),
     });
     while( my($S,$E) = splice( @pairs,0,2 ) ) {  
       $Composite3->push( $self->Rect({
@@ -56,7 +57,7 @@ sub _init {
         'width' => $E-$S,
         'height' => $h,
         'colour' => 'purple4',
-        'absolutey' => 1
+        'absolutey' => 1,
       }));
     }
     $Composite3->push( $self->Rect({
