@@ -104,7 +104,7 @@ sub fetch_input {
   if(defined($self->{protein_tree_id})) {
     $self->{tree} = 
          $self->{treeDBA}->fetch_node_by_node_id($self->{protein_tree_id});
-    printf("  protein_tree_id : %d\n", $self->{protein_tree_id});
+    printf("  protein_tree_id : %d\n", $self->{protein_tree_id}) if ($self->debug);
   }
 
   # Fetch hmm_profile
@@ -286,7 +286,7 @@ sub search_hmm_store_hits {
                   $qtaxon_id);
   }
   $sth->finish();
-  printf("%10d hits stored\n", $evalue_count) if($evalue_count % 10 == 0 && $self->debug);
+  printf("%10d hits stored\n", $evalue_count) if(($evalue_count % 10 == 0) && 0 < $self->debug);
   return 1;
 }
 
