@@ -15,7 +15,7 @@ if [ ! -e $file_prefix.hdr ] ||  [ ! -e $file_prefix.raw ]; then
  exit 2
 fi
 
-bsub -q hugemem -R 'select[mem>=45000] rusage[mem=45000] -M45000000' -o $file_prefix.mcxassemble.err \
+bsub -q turing -R 'select[mem>=45000] rusage[mem=45000] -M45000000' -o $file_prefix.mcxassemble.err \
 <<EOF
 #!/usr/local/bin/bash 
 . /usr/local/lsf/conf/profile.lsf

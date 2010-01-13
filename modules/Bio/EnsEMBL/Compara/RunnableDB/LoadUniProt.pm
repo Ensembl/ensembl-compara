@@ -13,24 +13,24 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt
 
 =head1 DESCRIPTION
 
-This object uses the getz and pfetch command line programs to access
-the SRS database of Uniprot sequences.
-Its purpose is to load protein sequences from Uniprot into the compara 
-database.
-Right now it has hard coded filters of a minimum sequence length of 80
-and taxon in metazoa and distinguishes SWISSPROT from SPTREMBL.
+This object uses the mfetch to get the list of Uniprot accession numbers
+and pfetch or mfetch (selectable) to actually fetch the sequence entries.
+
+Its purpose is to load protein sequences from Uniprot into the compara database.
 
 The format of the input_id follows the format of a Perl hash reference.
 Examples:
-  "{srs=>'swissprot', taxon_id=>4932}" # loads all swissprot for S.cerevisiae
-  "{srs=>'sptrembl'}"                  # loads all sptrembl metazoa
-  "{srs=>'sptrembl', taxon_id=>4932}"  # loads all sptrembl for S.cerevisiae
+  "{'srs' => 'SWISSPROT', taxon_id=>4932}"      # loads all SwissProt for S.cerevisiae
+  "{'srs' => 'SPTREMBL'}"                       # loads all SPTrEMBL Fungi/Metazoa
+  "{'srs' => 'SPTREMBL', taxon_id=>4932}"       # loads all SPTrEMBL for S.cerevisiae
+  "{'srs' => 'SWISSPROT', 'tax_div' => 'FUN'}"  # loads all SwissProt fungi proteins
+  "{'srs' => 'SPTREMBL',  'tax_div' => 'ROD'}"  # loads all SwissProt rodent proteins
 
 supported keys:
   srs => valid values: 'SWISSPROT', 'SPTREMBL'
   taxon_id => <taxon_id>
        optional if one want to load from a specific species
-       if not specified it will load all 'metazoa' from the srs source
+       if not specified it will load all Fungi/Metazoa from the srs source
   genome_db_id => <genome_db_id>
        optional: will associate this loaded set into the specified 
        GenomeDB does not create genome_db entry, assumes it was already 
@@ -76,12 +76,14 @@ sub fetch_input {
     $self->debug(0);
 
     $self->param_init(  # these defaults take the lowest priority after input_id and parameters
-        'srs'               => 'SWISSPROT',
-        'taxon_id'          => undef,   # no ncbi_taxid filter, get all metzoa
-        'genome_db_id'      => undef,
-        'accession_number'  => 1,       # members get their stable_ids from seq->accession_number rather than $seq->display_id
-        'buffer_size'       => 30,      # how many uniprot_ids are fetched per one execution of mfetch
-        'tax_div'           => undef,   # metazoa can be split into 6 parts and loaded in parallel
+        'srs'               => 'SWISSPROT', # either 'SWISSPROT' or 'SPTREMBL'
+        'taxon_id'          => undef,       # no ncbi_taxid filter means get all Fungi/Metazoa
+        'genome_db_id'      => undef,       # a constant to set all members to (YOU MUST KNOW THAT YOU'RE DOING!)
+        'accession_number'  => 1,           # members get their stable_ids from seq->accession_number rather than $seq->display_id
+        'buffer_size'       => 30,          # how many uniprot_ids are fetched per one execution of mfetch
+        'tax_div'           => undef,       # metazoa can be split into 6 parts and loaded in parallel
+        'seq_loader_name'   => 'mfetch',    # you can choose between 'mfetch' and 'pfetch'
+        'min_length'        => 80,          # we don't want to load sequences that are shorter than this (set to 0 to switch off)
     );
 
     $self->compara_dba()->dbc->disconnect_when_inactive(0);
@@ -93,37 +95,15 @@ sub fetch_input {
     $self->param('internal_taxon_ids', \%internal_taxon_ids);
     
     my $subset_name = $self->param('srs');
-    my $taxon_id    = $self->param('taxon_id');
-    my %allowed_taxon_ids = ();
-    if($taxon_id) {
+    if(my $taxon_id = $self->param('taxon_id')) {
         $subset_name .= " ncbi_taxid:$taxon_id";
-        $allowed_taxon_ids{$taxon_id} = 1;
         $self->param('uniprot_ids', $self->mfetch_uniprot_ids($self->param('srs'), $taxon_id) );
     } else {
         my $tax_div = $self->param('tax_div');
         $subset_name .= " metazoa";
         $subset_name .= ", tax_div:$tax_div" if($tax_div);
         $self->param('uniprot_ids', $self->mfetch_uniprot_ids($self->param('srs'),'', $tax_div && [ $tax_div ]) );
-
-        # Fungi/Metazoa group
-        $taxon_id = 33154;
-        my $node = $self->compara_dba()->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
-
-                # The following loop is the performance curse of the whole module.
-                # Every execution spends 20-30 minutes loading the leaves.
-                # It would be great if it could be (internally?) optimized.
-                #
-        #foreach my $leaf ( @{$node->get_all_leaves} ) {
-        foreach my $leaf ( @{$node->get_all_leaves_indexed} ) {
-            # the indexed method should be much faster when data has left and right indexes built
-            $allowed_taxon_ids{$leaf->node_id} = 1;
-            if ($leaf->rank ne 'species') {
-                $allowed_taxon_ids{$leaf->parent->node_id} = 1;
-            }
-        }
-        $node->release_tree;
     }
-    $self->param('allowed_taxon_ids', \%allowed_taxon_ids);
 
     my $subset_adaptor = $self->compara_dba()->get_SubsetAdaptor();
     my $subset;
@@ -208,13 +188,15 @@ sub write_output {
 
 sub mfetch_uniprot_ids {
     my $self     = shift;
-    my $source   = shift;  # 'swissprot' or 'sptrembl'
+    my $source   = shift;  # 'SWISSPROT' or 'SPTREMBL'
     my $taxon_id = shift;  # assume Fungi/Metazoa if not set
     my $tax_divs = shift || [ $taxon_id ? 0 : qw(FUN HUM MAM ROD VRT INV) ];
 
     my @filters = ( 'div:'.(($source=~/sptrembl/i) ? 'PRE' : 'STD') );
     if($taxon_id) {
         push @filters, "txi:$taxon_id";
+    } else {
+        push @filters, "txt:33154"; # anything that belongs to Fungi/Metazoa subtree (clade)
     }
 
     my @all_ids = ();
@@ -235,8 +217,11 @@ sub mfetch_uniprot_ids {
 sub fetch_and_store_a_chunk {
     my ($self, $source_name, $id_string, $total_in_this_batch) = @_;
 
+    my $seq_loader_name = $self->param('seq_loader_name');
+    my $seq_loader_cmd = { 'mfetch' => 'mfetch -d uniprot', 'pfetch' => 'pfetch -F' }->{$seq_loader_name};
+
     ## would be great to detect here the case of mole server being down, but it's tricky to peek into the stream parser
-  open(IN, "mfetch -d uniprot $id_string |") or $self->throw("Error running mfetch for ids ($id_string)");
+  open(IN, "$seq_loader_cmd $id_string |") or $self->throw("Error running $seq_loader_name for ids ($id_string)");
 
   print STDERR "$id_string\n";
   my $fh = Bio::SeqIO->new(-fh=>\*IN, -format=>"swiss");
@@ -244,12 +229,9 @@ sub fetch_and_store_a_chunk {
   my $seen_in_this_batch = 0;
   while (my $seq = $fh->next_seq){
     $seen_in_this_batch++;
-    next if ($seq->length < 80);
+    next if ($seq->length < $self->param('min_length'));
 
     my $ncbi_taxon_id = $seq->species && $seq->species->ncbi_taxid;
-    unless ($self->param('allowed_taxon_ids')->{$ncbi_taxon_id}) { # this will also implicitly check for zero
-        next;
-    }
 
     ####################################################################
     # This bit is to avoid duplicated entries btw Ensembl and Uniprot
