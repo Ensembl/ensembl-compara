@@ -347,6 +347,20 @@ CREATE TABLE sequence_exon_bounded (
   KEY sequence_exon_bounded (sequence_exon_bounded(18))
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
 
+-- overview:
+--   This table holds the sequence cds information
+CREATE TABLE sequence_cds (
+  sequence_cds_id             int(10) unsigned NOT NULL auto_increment, # unique internal id
+  member_id                   int(10) unsigned NOT NULL, # unique internal id
+  length                      int(10) NOT NULL,
+  sequence_cds                longtext NOT NULL,
+
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+
+  PRIMARY KEY (sequence_cds_id),
+  KEY (member_id),
+  KEY sequence_cds (sequence_cds(64))
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci;
 
 #
 # Table structure for table 'member'
