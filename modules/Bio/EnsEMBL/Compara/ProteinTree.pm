@@ -231,7 +231,7 @@ sub remove_nodes_by_taxon_ids {
   my %tax_hash;
   map {$tax_hash{$_}=1} @tax_ids;
 
-  foreach my $leaf ($self->leaves) {
+  foreach my $leaf (@{$self->get_all_leaves}) {
     if (exists $tax_hash{$leaf->taxon_id}) {
       $self->delete_lineage($leaf);
       $self->minimize_tree();
@@ -262,8 +262,7 @@ sub keep_nodes_by_taxon_ids {
   my %tax_hash;
   map {$tax_hash{$_}=1} @tax_ids;
 
-
-  foreach my $leaf ($self->leaves) {
+  foreach my $leaf (@{$self->get_all_leaves}) {
     unless (exists $tax_hash{$leaf->taxon_id}) {
       $self->delete_lineage($leaf);
       $self->minimize_tree();
