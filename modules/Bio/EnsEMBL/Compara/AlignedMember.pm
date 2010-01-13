@@ -237,7 +237,11 @@ sub cdna_alignment_string {
 
   unless (defined $self->{'cdna_alignment_string'}) {
     
-    my $cdna = $self->transcript->translateable_seq;
+    my $cdna;
+    eval { $cdna = $self->sequence_cds;};
+    if ($@) {
+      $cdna = $self->transcript->translateable_seq;
+    }
 
     if (defined $self->cigar_start || defined $self->cigar_end) {
       unless (defined $self->cigar_start && defined $self->cigar_end) {
