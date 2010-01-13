@@ -1,3 +1,7 @@
+select count(*), description from homology group by description;
+
+select count(*) cnt, h.description, mlss.name from homology h, method_link_species_set mlss where h.method_link_species_set_id=mlss.method_link_species_set_id and mlss.method_link_species_set_id in (select method_link_species_set_id from method_link_species_set where name like '%sap%') group by h.description, mlss.name order by h.description, cnt, mlss.name;
+
 SELECT m1.genome_db_id, m2.genome_db_id, gdb1.name, gdb2.name
 ,h.description, count(*)
 ,AVG(hm1.perc_cov), AVG(hm1.perc_id), AVG(hm1.perc_pos),AVG(hm2.perc_cov), AVG(hm2.perc_id), AVG(hm2.perc_pos)
