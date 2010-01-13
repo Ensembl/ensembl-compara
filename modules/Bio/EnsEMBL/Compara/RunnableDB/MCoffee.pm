@@ -112,7 +112,7 @@ sub fetch_input {
 
   $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $id = $self->{'protein_tree_id'};
-  $DB::single=1;1;
+
   $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
 
 #   if ($self->input_job->retry_count >= 1) {
@@ -133,7 +133,7 @@ sub fetch_input {
   }
   # Auto-switch to muscle on a third failure.
   if ($self->input_job->retry_count >= 3) {
-    $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
+    $self->{'method'} = 'mafft';
     # actually, we are going to run mafft directly here, not through mcoffee
     # maybe in the future we want to use this option in tcoffee:
     #       t_coffee ..... -dp_mode myers_miller_pair_wise
@@ -141,11 +141,25 @@ sub fetch_input {
   # Auto-switch to fmcoffee if gene count is too big.
   if ($self->{'method'} eq 'cmcoffee') {
     if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
-      $self->{'method'} = 'mafft'; $self->{'use_exon_boundaries'} = undef;
+      $self->{'method'} = 'mafft';
       #       $self->{'method'} = 'fmcoffee';
       print "MCoffee, auto-switch method to mafft because gene count >= 200 \n";
     }
   }
+
+  # We check if it took more than two hours in the previous release. If
+  # it did, then we go mafft
+  my $reuse_aln_runtime = $self->{'protein_tree'}->get_tagvalue('reuse_aln_runtime');
+  if ($reuse_aln_runtime ne '') {
+    my $hours = $reuse_aln_runtime / 3600000;
+    if ($hours > 2) { 
+      $self->{'method'} = 'mafft';
+    }
+  }
+
+  if ( 'mafft' == $self->{'method'}) { $self->{'use_exon_boundaries'} = undef; }
+
+
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
   print "MCoffee alignment method: ".$self->{'method'}."\n";
@@ -411,7 +425,7 @@ sub run_mcoffee
       print OUTPARAMS "-template_file=$exon_file\n";
     } elsif (2 == $self->{use_exon_boundaries}) {
       $self->{'mcoffee_scores'} = undef;
-      $extra_output .= ',overaln  -overaln_param unalign -overaln_P1 150 -overaln_P2 30';
+      $extra_output .= ',overaln  -overaln_param unalign -overaln_P1 99999 -overaln_P2 1'; # overaln_P1 150 and overaln_P2 30 was dealigning too aggressively
     }
   }
   $method_string .= "\n";
@@ -463,7 +477,7 @@ sub run_mcoffee
   	$prefix .= 'export PATH=$PATH:/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux ;';
   }
   print $prefix.$cmd."\n" if ($self->debug);
-  $DB::single=1;1;
+
   #
   # Run the command.
   #
@@ -519,7 +533,7 @@ sub dumpProteinTreeToWorkdir {
   my $self = shift;
   my $tree = shift;
   my $use_exon_boundaries = shift;
-  $DB::single=1;1;
+
   my $fastafile;
   if (defined($use_exon_boundaries)) {
       $fastafile = $self->worker_temp_directory. "proteintree_exon_". $tree->node_id. ".fasta";
@@ -540,18 +554,28 @@ sub dumpProteinTreeToWorkdir {
   my $member_list = $tree->get_all_leaves;
 
   $self->{'tag_gene_count'} = scalar(@{$member_list});
+  my $has_canonical_issues = 0;
   foreach my $member (@{$member_list}) {
 
-    # Double-check we are only using longest
-    my $gene_member; my $longest_member = undef;
-    eval {$gene_member = $member->gene_member; $longest_member = $gene_member->get_canonical_peptide_Member; };
-    unless (defined($longest_member) && ($longest_member->member_id eq $member->member_id) ) {
-      $member->disavow_parent;
-      $self->{treeDBA}->delete_flattened_leaf($member);
-      my $updated_gene_count = scalar(@{$tree->get_all_leaves});
-      $tree->adaptor->delete_tag($tree->node_id,'gene_count');
-      $tree->store_tag('gene_count', $updated_gene_count);
-      next;
+    # Double-check we are only using canonical
+    my $gene_member; my $canonical_member = undef;
+    eval {
+      $gene_member = $member->gene_member; 
+      $canonical_member = $gene_member->get_canonical_peptide_Member;
+    };
+    unless (defined($canonical_member) && ($canonical_member->member_id eq $member->member_id) ) {
+      $DB::single=1;1;#??
+      my $canonical_member2 = $gene_member->get_canonical_peptide_Member;
+      my $clustered_stable_id = $member->stable_id;
+      my $canonical_stable_id = $canonical_member->stable_id;
+      $tree->store_tag('canon.'.$clustered_stable_id."_".$canonical_stable_id,1);
+      $has_canonical_issues++;
+#       $member->disavow_parent;
+#       $self->{treeDBA}->delete_flattened_leaf($member);
+#       my $updated_gene_count = scalar(@{$tree->get_all_leaves});
+#       $tree->adaptor->delete_tag($tree->node_id,'gene_count');
+#       $tree->store_tag('gene_count', $updated_gene_count);
+#       next;
     }
     ####
 
@@ -572,6 +596,8 @@ sub dumpProteinTreeToWorkdir {
       print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
   }
   close OUTSEQ;
+
+  throw("Cluster has canonical transcript issues: [$has_canonical_issues]\n") if (0 < $has_canonical_issues);
 
   if(scalar keys (%{$seq_id_hash}) <= 1) {
     $self->update_single_peptide_tree($tree);
@@ -602,13 +628,21 @@ sub parse_and_store_alignment_into_proteintree
   # Read in the alignment using Bioperl.
   #
   use Bio::AlignIO;
+  $DB::single=1;1;
   my $alignio = Bio::AlignIO->new(-file => "$mcoffee_output",
 				  -format => "$format");
   my $aln = $alignio->next_aln();
   my %align_hash;
   foreach my $seq ($aln->each_seq) {
-      my $id = $seq->display_id;
-      $align_hash{$id} = $seq->seq;
+    my $id = $seq->display_id;
+    my $sequence = $seq->seq;
+    throw("Error fetching sequence from output alignment") unless(defined($sequence));
+    print STDERR "# ", $sequence, "\n" if ($self->debug);
+    $align_hash{$id} = $sequence;
+    # Lowercase aminoacids in the output alignment -- decaf has found overalignments
+    if (my @overalignments = $sequence =~ /([gastplimvdneqfywkrhcx]+)/g) {
+      eval { $tree->store_tag('decaf.'.$id, join(":",@overalignments));};
+    }
   }
 
   #
