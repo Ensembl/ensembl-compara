@@ -172,8 +172,6 @@ insert into ncbi_taxa_name (taxon_id, name, name_class) values (311790, "93.95",
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (314145, "87.98","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (314146, "106.69","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (376911, "69.22","ensembl timetree mya");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (7147,   "250","ensembl timetree mya");
-insert into ncbi_taxa_name (taxon_id, name, name_class) values (7157,   "200","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (7711,   "550","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9347,   "102.41","ensembl timetree mya");
 insert into ncbi_taxa_name (taxon_id, name, name_class) values (9362,   "67.92","ensembl timetree mya");
