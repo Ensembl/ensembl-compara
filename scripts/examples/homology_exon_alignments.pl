@@ -33,7 +33,7 @@ my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member_paired_species($me
 
 my $aligned_member = $proteintree_adaptor->
   fetch_AlignedMember_by_member_id_root_id
-  ($member->get_longest_peptide_Member->member_id);
+  ($member->get_canonical_peptide_Member->member_id);
 
 foreach my $homology (@mouse_homologies,@rat_homologies) {
   print "\n";
@@ -49,7 +49,7 @@ foreach my $homology (@mouse_homologies,@rat_homologies) {
   my $member2 = $member_adaptor->
   fetch_by_source_stable_id("ENSEMBLGENE",$gene2->stable_id);
   my $aligned_member2 = $proteintree_adaptor->fetch_AlignedMember_by_member_id_root_id
-  ($member2->get_longest_peptide_Member->member_id);
+  ($member2->get_canonical_peptide_Member->member_id);
 
   my $transcript = $aligned_member->transcript;
   my $transcript_stable_id = $transcript->stable_id;
