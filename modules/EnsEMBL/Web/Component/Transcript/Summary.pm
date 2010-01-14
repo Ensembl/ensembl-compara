@@ -133,7 +133,7 @@ sub content {
           <th>Length (bp)</th>
           <th>Protein ID</th>
           <th>Length (aa)</th>
-          <th>Description</th>
+          <th>Biotype</th>
   };
 
   if ($object->species =~/^Homo|Mus/){
@@ -168,9 +168,11 @@ sub content {
         $protein_length = $_->translation->length;
       }
 
-      my $ccds = "No";
+      my $ccds = "N/A";
       if(my @CCDS = grep { $_->dbname eq 'CCDS' } @{$_->get_all_DBLinks} ) {
-        $ccds = "Yes";
+        my %T = map { $_->primary_id,1 } @CCDS;
+        @CCDS = sort keys %T;
+        $ccds = join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS;
       }
       
       $html .= sprintf('
