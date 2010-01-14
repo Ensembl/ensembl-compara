@@ -666,7 +666,7 @@ sub _run_compare_to_previous_db_test {
   #get the current method_link_species_set object from method_link_type and
   #current genome_db_ids
   if (defined $method_link_type && defined $current_genome_db_ids) {
-      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, @{$current_genome_db_ids});
+      my $current_mlss = $current_mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, $current_genome_db_ids);
       if (defined $current_mlss) {
 	  $current_mlss_id = $current_mlss->dbID;
       }
@@ -682,6 +682,10 @@ sub _run_compare_to_previous_db_test {
 	  my $g_db = $current_genome_db_adaptor->fetch_by_dbID($g_db_id);
 
 	  my $previous_gdb = $previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name);
+	  if (!$previous_gdb) {
+	      print $g_db->name, " does not exist in the previous database ($previous_db_url)\n";
+	      return;
+	  }
 	  push @$previous_gdbs, $previous_gdb->dbID;
       }
 
