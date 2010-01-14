@@ -9,6 +9,7 @@
     '-adaptor'  => "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor",
   },
   { TYPE => HIVE,
+    'name'                 => "HsMmBlastz", #used to name the jobs
     'hive_output_dir'      => "/ecs4/work2/ensembl/jessica/data/hive_output/jessica_compara_blastz_HsMm_27i/workers",
 # IMPORTANT: The hive system can generate an awful lot of log outputs that are dumped in
 # the hive_output_dir. When a pipeline runs fine, these are not needed and can take a lot of
