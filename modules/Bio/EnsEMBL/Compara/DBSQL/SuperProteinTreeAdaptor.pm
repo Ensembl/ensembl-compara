@@ -156,12 +156,6 @@ sub fetch_AlignedMember_by_member_id_mlssID {
   return $node;
 }
 
-sub fetch_all_roots {
-  my ($self) = @_;
-  return $self->_generic_fetch('WHERE t.root_id = 1');
-}
-
-
 ###########################
 # STORE methods
 ###########################
