@@ -19,7 +19,7 @@ sub _basic_HTML {
   $self->_init;
   $self->add_body_attr('id' => 'ensembl-webpage');
   
-  if ($self->{'input'}->param('debug') eq 'js') {
+  if ($self->{'input'} && $self->{'input'}->param('debug') eq 'js') {
     foreach my $root (reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
       my $dir = "$root/components";
 
