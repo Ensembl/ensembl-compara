@@ -114,7 +114,7 @@ sub get_sequence_data {
     
     my %snps = %{$trans->get_all_cdna_SNPs($source)};
     my %protein_features = $can_translate == 0 ? () : %{$trans->get_all_peptide_variations($source)};
-
+    
     foreach (values %snps) {
       foreach my $snp (@$_) {
         # Due to some changes start of a variation can be greater than its end - insertion happened
@@ -142,12 +142,12 @@ sub get_sequence_data {
           $st = $snp->start;
         }
         
-        foreach my $r ($st..$en) {               
-          $mk->{'variations'}->{$r-1}->{'alleles'}    .= $alleles;
-          $mk->{'variations'}->{$r-1}->{'url_params'} .= "source=" . $source . ";snp=" . $variation_name. ";";
-          $mk->{'variations'}->{$r-1}->{'transcript'}  = 1;
+        foreach my $r ($st..$en) {
+          $mk->{'variations'}->{$r-1}->{'alleles'}   .= $alleles;
+          $mk->{'variations'}->{$r-1}->{'url_params'} = { v => $variation_name, vf => $snp->dbID, vdb => 'variation' };
+          $mk->{'variations'}->{$r-1}->{'transcript'} = 1;
           
-          my $url = $object->_url({ type => 'Variation', action => 'Summary' }, 1)->[0] . "?$mk->{'variations'}->{$r-1}->{'url_params'}" if $mk->{'variations'}->{$r-1}->{'url_params'};
+          my $url = $mk->{'variations'}->{$r-1}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$r-1}->{'url_params'}} }) : '';
           
           if ($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
             my $aa    = int(($r - $cd_start + 3)/3);
@@ -172,7 +172,7 @@ sub get_sequence_data {
           
           $mk->{'variations'}->{$r-1}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$r-1} && $mk->{'codons'}->{$r-1}->{'class'} eq 'cu';
           
-          $variation_seq->{'seq'}->[$r-1]->{'letter'} = $url ? sprintf '<a href="%s">%s</a>', $url, $ambigcode : $ambigcode;
+          $variation_seq->{'seq'}->[$r-1]->{'letter'} = $url ? qq{<a href="$url">$ambigcode</a>} : $ambigcode;
           $variation_seq->{'seq'}->[$r-1]->{'url'}    = $url;
         }
       }
