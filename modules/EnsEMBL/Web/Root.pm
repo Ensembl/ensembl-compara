@@ -103,7 +103,8 @@ sub url {
 sub reassemble_url {
   my ($self, $path, $param) = @_;
   return $path unless $param;
-  return $path . '?' . (join ';', @$param);
+  $path .= $path =~ /\?/ ? ';' : '?';
+  return $path . (join ';', @$param);
 }
 
 sub escape_url_parameters {
@@ -432,6 +433,23 @@ sub is_available {
   }
   
   return 1;
+}
+
+sub jsonify {
+  my ($self, $content) = @_;
+  my $parsed_content;
+  
+  $content =~ s/\n//g;
+  $content =~ s/\r//g;
+  
+  for (split /(<.+?>)/, $content) {
+    s/"/'/g if /<.+>/;
+    $parsed_content .= $_;
+  }
+  
+  $parsed_content =~ s/"/&quot;/g;
+  
+  return $parsed_content;
 }
 
 1;
