@@ -102,8 +102,8 @@ sub url {
 
 sub reassemble_url {
   my ($self, $path, $param) = @_;
-  $path .= '?' if @{$param||[]};
-  return $path . (join ';', @$param);
+  return $path unless $param;
+  return $path . '?' . (join ';', @$param);
 }
 
 sub escape_url_parameters {
