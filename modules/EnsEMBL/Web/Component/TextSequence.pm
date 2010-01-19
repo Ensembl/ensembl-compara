@@ -16,7 +16,8 @@ use base qw(EnsEMBL::Web::Component);
 sub get_sequence_data {
   my $self = shift;
   my ($slices, $config) = @_;
-
+  
+  my $object = $self->object;
   my @sequence;
   my @markup;
   
@@ -174,7 +175,17 @@ sub get_sequence_data {
         $snp_start = $snp->seq_region_name . ":$snp_start" if (scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice');
         
         my $species = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
-        my $link_text = qq{ <a href="/$species/Variation/Summary?v=$variation_name;vf=$dbID;vdb=variation">$snp_start:$alleles</a>;};
+        
+        my $url = $species eq $object->species ? $object->_url({
+          species => $species,
+          type    => 'Variation',
+          action  => 'Summary',
+          v       => $variation_name,
+          vf      => $dbID,
+          vdb     => 'variation'
+        }) : $object->species_path($species) . "/Variation/Summary?v=$variation_name;vf=$dbID;vdb=variation";
+        
+        my $link_text = qq{ <a href="$url">$snp_start:$alleles</a>;};
         
         for ($s..$e) {
           # FIXME: API currently returns variations when the resequenced individuals match the reference
