@@ -40,9 +40,6 @@ if ($species eq 'all' && $dest_site eq 'ensembl') {
   $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
 }
 
-my $query  = $q->param('q');
-my $URL;
-
 $query=~ s/^\s+//g;
 $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
