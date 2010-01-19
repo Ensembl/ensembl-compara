@@ -102,7 +102,7 @@ sub url {
 
 sub reassemble_url {
   my ($self, $path, $param) = @_;
-  $path .= '?' if @$param;
+  $path .= '?' if @{$param||[]};
   return $path . (join ';', @$param);
 }
 
