@@ -100,7 +100,7 @@ sub url {
   return $self->reassemble_url($path, $clean_params);
 }
 
-sub reassembl_url {
+sub reassemble_url {
   my ($self, $path, $param) = @_;
   $path .= '?' if @$param;
   return $path . (join ';', @$param);
