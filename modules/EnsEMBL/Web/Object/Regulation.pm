@@ -220,6 +220,29 @@ sub location_string {
 
 ################ Calls for Feature in Detail view ###########################
 
+sub get_all_evidence_features {
+  my ($self) = @_;
+  my %all_data;
+
+  unless ($self->param('opt_focus') eq 'no') {
+    my @annotated_features = @{$self->Obj->get_focus_attributes};
+    foreach (@annotated_features ){
+      my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
+      $all_data{$unique_feature_set_id} = 1;
+    }
+  }
+
+  my @attributes = @{$self->Obj->get_nonfocus_attributes};
+  foreach (@attributes) {
+    my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
+    next if $self->param('opt_ft_' .$unique_feature_set_id) eq 'off';
+    $all_data{$unique_feature_set_id} = 1;
+  }
+
+  return \%all_data;
+}
+
+
 sub get_nonfocus_block_features {
   my ($self, $slice) = @_;
   my @attributes = @{$self->Obj->get_nonfocus_attributes};
