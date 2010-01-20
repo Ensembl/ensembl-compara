@@ -71,8 +71,6 @@ sub content_ajax {
     $exclude_list,
   );
   
-  $content =~ s/\n//g;
-
   my $hint = qq{
     <div class="multi_selector_hint">
       <h4>Tip</h4>
@@ -81,9 +79,14 @@ sub content_ajax {
     </div>
   };
   
-  $hint =~ s/\n//g;
   
-  return qq{{'content':'$content','panelType':'$self->{'panel_type'}','wrapper':'<div class="panel modal_wrapper"></div>','nav':'$hint','urlParam':'$self->{'url_param'}'}};
+  return $self->jsonify({
+    content   => $content,
+    panelType => $self->{'panel_type'},
+    wrapper   => '<div class="panel modal_wrapper"></div>',
+    nav       => $hint,
+    urlParam  => $self->{'url_param'}
+  });
 }
 
 1;

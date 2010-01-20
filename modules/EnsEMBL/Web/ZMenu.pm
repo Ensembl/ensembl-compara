@@ -113,18 +113,13 @@ sub render {
       $link = encode_entities($entry->{'label'}) . $entry->{'label_html'};
     }
     
-    s/'/&#39;/g for $type, $link;
-    $type = ", 'type': '$type'" if $type;
-    
-    push @entries, "{'link': '$link'$type}";
+    push @entries, { link => $link, type => $type };
   }
   
-  foreach ($self->{'caption'}, @entries) {
-    s/\n/\\n/g;
-    s/\r//g;
-  }
-  
-  printf "{'caption': '%s', 'entries': [%s]}", encode_entities($self->{'caption'}), join ',', @entries;
+  print $self->jsonify({
+    caption => encode_entities($self->{'caption'}),
+    entries => \@entries
+  });
 }
 
 1;
