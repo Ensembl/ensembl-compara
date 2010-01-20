@@ -485,7 +485,7 @@ sub get_frameshift_introns {
     my $link_text = qq{<a href="$url">$_</a>};
     $frameshift_introns .= $link_text .", ";
   }
-  $frameshift_introns =~s/,\s^//;
+  $frameshift_introns =~s/,\s+$//;
   return $frameshift_introns;
 }
 
