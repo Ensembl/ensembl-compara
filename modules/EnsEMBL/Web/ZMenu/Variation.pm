@@ -76,8 +76,27 @@ sub content {
     [ 'Alleles',        $alleles             ],
     [ 'Source',         $source              ],
     [ 'Type',           $type                ],
-
   );
+
+
+ 
+  my $tc;
+  if ($object->param('t_id')){
+    foreach ( @{$feature->get_all_TranscriptVariations()} ){
+      if ($object->param('t_id') eq $_->transcript->stable_id){
+        my $codon = $_->codons;
+        my @bases = split(//, $codon);
+        foreach my $base (@bases){
+          if( $base =~/[A-Z]/){
+            $base = "<strong>$base</strong>";
+          }
+          $tc .= $base;
+        }
+        next unless $tc =~/\w+/;
+        $tc = "<strong>Codon change </strong> $tc";
+      }
+    }  
+  }
   
   $self->caption('Variation: ' . $feature->variation_name);
   
@@ -96,6 +115,12 @@ sub content {
     $self->add_entry({
       type  => $_->[0],
       label => $_->[1]
+    });
+  }
+
+  if ($tc =~/\w+/) {
+    $self->add_entry({
+      label_html => "$tc"
     });
   }
 
