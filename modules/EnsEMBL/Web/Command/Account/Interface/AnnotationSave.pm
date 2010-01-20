@@ -27,7 +27,7 @@ sub process {
   
   if( $ajax_flag ) {
     $r->content_type('text/plain');
-    print "{'success':true}";
+    print '{"success":true}';
   } else {
     my $data = $interface->data;
     my $var = lc(substr($data->type, 0, 1));

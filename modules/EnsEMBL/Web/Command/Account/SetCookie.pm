@@ -52,7 +52,7 @@ sub process {
     
     if( $ajax_flag ) { 
       $r->content_type('text/plain');
-      print "{'success':true}";
+      print '{"success":true}';
     } else {
       $object->redirect($self->url('/Account/Links'));
     }
