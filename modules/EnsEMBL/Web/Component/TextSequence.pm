@@ -910,7 +910,7 @@ sub chunked_content {
 
       $renderer->print(new HTTP::Request('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
     } else {
-      $html .= qq{<div class="ajax" title="['$url']"></div>};
+      $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div>};
     }
 
     last if $j == $total_length;

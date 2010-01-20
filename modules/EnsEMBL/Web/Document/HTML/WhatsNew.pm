@@ -112,7 +112,7 @@ sub render {
 
   if ($ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BLOG_URL) {
     if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
-    $html .= qq(<div class="js_panel ajax" id="blog" title="['/blog.html']"><input type="hidden" class="panel_type" value="Content" /></div>);
+    $html .= qq(<div class="js_panel ajax" id="blog"><input type="hidden" class="ajax_load" value="/blog.html" /><input type="hidden" class="panel_type" value="Content" /></div>);
     } 
     else {
       my $content;

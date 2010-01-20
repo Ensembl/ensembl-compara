@@ -668,11 +668,7 @@ sub content {
               
               # Check if ajax enabled
               if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
-                if ($caption) {
-                  $self->printf(qq{<div class="$class" title="['%s','%s']"></div>}, encode_entities($caption), encode_entities($url));
-                } else {
-                  $self->printf(qq{<div class="$class" title="['%s']"></div>}, encode_entities($url));
-                }
+                $self->printf(qq{<div class="$class">%s</div>}, join '', map { $_ ? sprintf '<input type="hidden" class="ajax_load" value="%s" />', encode_entities($_) : () } $caption, $url);
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
                 my @wrapper = $comp_obj->has_image ? ('<div class="image_panel">', '</div>') : ();
                 
