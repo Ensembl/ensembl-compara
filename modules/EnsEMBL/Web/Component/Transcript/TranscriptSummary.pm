@@ -100,6 +100,14 @@ sub content {
 		    "<p>$temp</p>",
 		    1 );
   }
+  ## add frameshift introns info
+  my $frameshift_introns = $object->get_frameshift_introns;
+  if ($frameshift_introns){
+    $table->add_row('Frameshift introns',
+        "<p>Frameshift introns occur at intron number(s) $frameshift_introns.\n</p>",  
+        1 );
+  }
+
   return $table->render;
 }
 
