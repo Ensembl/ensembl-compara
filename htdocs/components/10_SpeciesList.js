@@ -3,10 +3,11 @@
 Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({  
   init: function () {
     this.base();
-    var reorder = $('.reorder_species', this.el);
-    var full = $('.full_species', this.el);
+    
+    var reorder    = $('.reorder_species', this.el);
+    var full       = $('.full_species', this.el);
     var favourites = $('.favourites', this.el);
-    var container = $('.species_list_container', this.el);
+    var container  = $('.species_list_container', this.el);
     
     if (!reorder.length || !full.length || !favourites.length) {
       return;

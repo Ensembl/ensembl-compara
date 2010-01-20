@@ -15,16 +15,16 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.base();
     
     this.initialSelection = '';
-    this.selection = [];
+    this.selection        = [];
     
     this.elLk.content = $('.modal_wrapper', this.el);
-    this.elLk.list = $('.multi_selector_list', this.elLk.content);
+    this.elLk.list    = $('.multi_selector_list', this.elLk.content);
     
-    var ul = $('ul', this.elLk.list);
+    var ul    = $('ul', this.elLk.list);
     var spans = $('span', ul)
     
-    this.elLk.spans = spans.filter(':not(.switch)');
-    this.elLk.form = $('form', this.elLk.content);
+    this.elLk.spans    = spans.filter(':not(.switch)');
+    this.elLk.form     = $('form', this.elLk.content);
     this.elLk.included = ul.filter('.included');
     this.elLk.excluded = ul.filter('.excluded');
     

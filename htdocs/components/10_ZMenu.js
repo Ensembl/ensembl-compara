@@ -6,12 +6,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var area = $(data.area.a);
     
-    this.drag   = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
-    this.align  = area.hasClass('align'); // TODO: implement alignslice menus
-    this.href   = area.attr('href');
-    this.title  = area.attr('title');
-    this.das    = false;
-    this.mutli  = '';
+    this.drag       = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
+    this.align      = area.hasClass('align'); // TODO: implement alignslice menus
+    this.href       = area.attr('href');
+    this.title      = area.attr('title');
+    this.das        = false;
+    this.mutli      = '';
+    this.position   = data.position;
+    this.coords     = data.coords;
+    this.imageId    = data.imageId;
+    this.areaCoords = $.extend({}, data.area);
+    this.location   = 0;
     
     if (area.hasClass('das')) {
       this.das = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
@@ -20,25 +25,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.drag) {
       var params = this.href.split('|');
+      var n = parseInt(params[1]) - 1;
       
       this.species = params[3];
       this.chr     = params[4];
       this.start   = parseInt(params[5]);
       this.end     = parseInt(params[6]);
       this.strand  = parseInt(params[7]);
-      
-      var n = parseInt(params[1]) - 1;
-      
-      this.multi = area.hasClass('multi') ? n : false;
+      this.multi   = area.hasClass('multi') ? n : false;
     }
     
     area = null;
-    
-    this.position = data.position;
-    this.coords = data.coords;
-    this.imageId = data.imageId;
-    this.areaCoords = $.extend({}, data.area);
-    this.location = 0;
     
     delete this.areaCoords.a;
     
@@ -54,7 +51,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.base();
     
     this.elLk.caption = $('span.title', this.el);
-    this.elLk.tbody = $('tbody', this.el);
+    this.elLk.tbody   = $('tbody', this.el);
     
     $(this.el).mousedown(function () {
       Ensembl.EventManager.trigger('panelToFront', myself.id);
@@ -113,7 +110,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populate: function (link, extra) {
-    var menu = this.title.split('; ');
+    var menu    = this.title.split('; ');
     var caption = menu.shift();
     
     this.buildMenu(menu, caption, link, extra);
@@ -147,16 +144,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateAjax: function (url) {
-    var myself = this;
-    
     url = url || this.href.replace(/\/(\w+\/\w+)\?/, '/Zmenu/$1?');
     
     if (url) {
       $.ajax({
         url: url,
         dataType: 'json',
+        context: this,
         success: function (json) {
-          myself.populated = true;
+          this.populated = true;
           
           if (json.entries.length) {
             var body = '';
@@ -174,16 +170,16 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
               body += '<tr>' + row + '</tr>';
             }
             
-            myself.elLk.tbody.html(body);
-            myself.elLk.caption.html(json.caption);
+            this.elLk.tbody.html(body);
+            this.elLk.caption.html(json.caption);
             
-            myself.show();
+            this.show();
           } else {
-            myself.populateNoAjax();
+            this.populateNoAjax();
           }
         },
         error: function () {
-          myself.populateNoAjax();
+          this.populateNoAjax();
         }
       });
     } else {
@@ -442,12 +438,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   show: function () {
-    var menuWidth = parseInt(this.width());
+    var menuWidth   = parseInt(this.width());
     var windowWidth = $(window).width() - 10;
     
     var css = {
       left: this.position.left, 
-      top: this.position.top,
+      top:  this.position.top,
       position: 'absolute'
     };
     
@@ -464,7 +460,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
 
   showExisting: function (data) {
     this.position = data.position;
-    this.coords = data.coords;
+    this.coords   = data.coords;
     
     if (this.das == 'group' || this.das == 'pseudogroup' || this.drag) {
       this.elLk.tbody.empty();
