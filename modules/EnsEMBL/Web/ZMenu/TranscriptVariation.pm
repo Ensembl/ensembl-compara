@@ -11,29 +11,41 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self = shift;
   
-  my $object           = $self->object;
+  my $object           = $self->object; 
   my $v_id             = $object->param('v');
   my $vf               = $object->param('vf');
-  my $tc               = $object->param('tc');
   my $alt_allele       = $object->param('alt_allele');
   my $aa_change        = $object->param('aa_change');
   my $cov              = $object->param('cov');
   my $db_adaptor       = $object->database('variation');
   my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
-  my $var              = $var_adaptor->fetch_by_name($v_id);
-  my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);
+  my $var              = $var_adaptor->fetch_by_name($v_id); 
+  my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);  
   my $strain           = $object->species_defs->translate('strain');
   my $feature;
-  
-  $tc =~ s/0|-1/-/;
-  $tc =~ s/1/+/;
-  
+  my $trans_id         = $object->stable_id;
+ 
   if (scalar @$vf == 1) {
     $feature = $vf->[0];
   } else {
     foreach (@$vf) {
       $feature = $_ if $_->dbID eq $object->param('vf');
+    }
+  }
+
+  my $tc;
+  foreach ( @{$feature->get_all_TranscriptVariations()} ){
+    if ($trans_id eq $_->transcript->stable_id){
+      my $codon = $_->codons;
+      my @bases = split(//, $codon);
+      foreach my $base (@bases){
+        if( $base =~/[A-Z]/){
+          $base = "<strong>$base</strong>";
+        }  
+        $tc .= $base;
+      }
+      $tc = "<strong>Codon change </strong> $tc"; 
     }
   }
   
@@ -94,12 +106,6 @@ sub content {
     });
   }
   
-  if ($tc) {
-    $self->add_entry({
-      label_html => $tc
-    });
-  }
-  
   if ($aa_change) {
     $self->add_entry({
       type  => 'Amino acid',
@@ -118,10 +124,17 @@ sub content {
     type  => 'Source',
     label => join ', ', @{$feature->get_all_sources ||[]}
   });
-  
+
   $self->add_entry({
+    type  =>  'Type',
     label => $type
   });
+
+  if ($tc) {
+    $self->add_entry({
+      label_html => "$tc"
+    });
+  }
 }
 
 1;
