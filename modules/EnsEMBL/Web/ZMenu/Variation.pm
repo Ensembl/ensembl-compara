@@ -85,15 +85,9 @@ sub content {
     foreach ( @{$feature->get_all_TranscriptVariations()} ){
       if ($object->param('t_id') eq $_->transcript->stable_id){
         my $codon = $_->codons;
-        my @bases = split(//, $codon);
-        foreach my $base (@bases){
-          if( $base =~/[A-Z]/){
-            $base = "<strong>$base</strong>";
-          }
-          $tc .= $base;
-        }
-        next unless $tc =~/\w+/;
-        $tc = "<strong>Codon change </strong> $tc";
+        $codon =~s/([A-Z])/<strong>$1<\/strong>/g;
+        next unless $codon =~/\w+/;
+        $tc = "<strong>Codon change </strong> ".$codon;
       }
     }  
   }
