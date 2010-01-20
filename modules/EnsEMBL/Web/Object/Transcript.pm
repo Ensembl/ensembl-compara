@@ -471,6 +471,24 @@ sub get_families {
   return $family_hash;
 }
 
+sub get_frameshift_introns {
+  my $self = shift;
+  my $transcript_attribs = $self->Obj->get_all_Attributes('Frameshift'); 
+  my %unique;
+  my $link = $self->_url({ 'type' => 'Transcript', 'action' => 'Exons', 't' => $self->Obj->stable_id });
+  foreach my $attrib (@{$transcript_attribs}) {
+    $unique{$attrib->value} = $link;
+  }
+  my $frameshift_introns;  
+  foreach ( sort { $a <=> $b } keys %unique){
+    my $url = $unique{$_};
+    my $link_text = qq{<a href="$url">$_</a>};
+    $frameshift_introns .= $link_text .", ";
+  }
+  $frameshift_introns =~s/,\s^//;
+  return $frameshift_introns;
+}
+
 sub get_domain_genes {
   my $self = shift;
   my $a = $self->gene ? $self->gene->adaptor : $self->Obj->adaptor;
