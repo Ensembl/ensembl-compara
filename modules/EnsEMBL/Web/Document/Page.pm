@@ -142,7 +142,7 @@ sub ajax_redirect {
       $self->{'ajax_redirect_url'} = $url;
       
       $r->content_type('text/plain');
-      print "{redirectURL:'$url'}";
+      print qq({"redirectURL":"$url"});
     }
   } else {
     $r->headers_out->set('Location' => $url);
@@ -354,8 +354,8 @@ sub render_HTML {
   
   # If this is an AJAX request then we will not render the page wrapper
   if ($self->renderer->{'_modal_dialog_'}) {
-    my $json = join ',', map $self->$_->get_json || (), qw(global_context local_context content);
-    $self->print("{$json}");
+    my %json = map %{$self->$_->get_json}, qw(global_context local_context content);
+    $self->print($self->jsonify(\%json));
     return;
   } elsif ($self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
     $self->content->render; # Render content only for components
