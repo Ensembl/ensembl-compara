@@ -29,7 +29,6 @@ sub content {
     'opt_highlight'    => $object->param('opt_highlight')
   });
 
-
   my $focus_set_blocks = $object->get_focus_set_block_features($object_slice);
   if ($focus_set_blocks ) {
     $wuc->{'focus'}->{'data'}->{'block_features'} = $focus_set_blocks;
@@ -46,8 +45,10 @@ sub content {
   if ($attribute_wiggle ) {
     $wuc->{'attribute'}->{'data'}->{'wiggle_features'} = $attribute_wiggle;
   }
-
-
+  my $all_evidence_features = $object->get_all_evidence_features();
+  if ( $all_evidence_features) { 
+    $wuc->{'evidence'}->{'data'}->{'all_features'} = $all_evidence_features;
+  }
 
   my $image    = $self->new_image( $object_slice, $wuc,[$object->stable_id] );
       $image->imagemap           = 'yes';
