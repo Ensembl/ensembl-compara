@@ -131,16 +131,6 @@ sub _init {
     my $aa;
     $aa = "$aa_change->[0] to $aa_change->[1]"  if $aa_change->[1];
 
-    # Codon - make the letter for the SNP position in the codon bold
-    my $codon = $conseq_type->codon;
-    my $tc;
-    if ( $codon ) {
-      my $pos = ($conseq_type->cds_start % 3 || 3) - 1;
-      $codon =~ s/(\w{$pos})(\w)(.*)/$1<strong>$2<\/strong>$3/;
-      my $strand = $transcript->strand; # > 0 ? "+" : "-";
-      $tc = "transcript codon (". $strand." strand) ".$codon;
-    }
-
     # Draw ------------------------------------------------
     my @res = $self->get_text_width( 0, $label, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = ($res[2]+4)/$pix_per_bp;
@@ -152,7 +142,6 @@ sub _init {
       'vf'    => $dbid,
       'alt_allele' => $conseq_alleles[0],
       'aa_change' => $aa,
-      'tc'        => $tc,
       'cov'       => $c,
     });
 
