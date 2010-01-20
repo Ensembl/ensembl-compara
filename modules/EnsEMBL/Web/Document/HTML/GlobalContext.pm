@@ -28,13 +28,8 @@ sub entries {
 
 sub get_json {
   my $self = shift;
-  
   my ($content, $active) = $self->_content('li');
-  
-  if ($content) {
-    $content = qq{<ul class="tabs">$content</ul>};
-    return qq{'tabs':'$content','activeTab':'$active'};
-  }
+  return $content ? { tabs => qq{<ul class="tabs">$content</ul>}, activeTab => $active } : {};
 }
 
 sub render {

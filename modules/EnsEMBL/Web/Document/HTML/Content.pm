@@ -135,9 +135,8 @@ sub get_json {
   my $self = shift;
   
   my $panel_type = 'ModalContent';
-  my $single = (scalar @{$self->{'panels'}} == 1);
-  my $wrapper = 'modal_wrapper' . ($single ? ' panel' : '');
-  
+  my $single     = scalar @{$self->{'panels'}} == 1;
+  my $wrapper    = 'modal_wrapper' . ($single ? ' panel' : '');
   my $filter;
   my $content;
   
@@ -146,27 +145,24 @@ sub get_json {
     my $class = 'EnsEMBL::Web::Filter::' . $self->filter_module;
     
     if ($class && $self->dynamic_use($class)) {
-      $filter = $class->new;
-      
-      $content .= sprintf '<div style="width:80%" class="error print_hide"><h3>Error</h3><div class="error-pad">%s</div></div>', $filter->error_message($self->filter_code);
+      $filter   = $class->new;
+      $content .= sprintf "<div style='width:80%' class='error print_hide'><h3>Error</h3><div class='error-pad'>%s</div></div>", $filter->error_message($self->filter_code);
     }
   }
   
   foreach my $panel (@{$self->{'panels'}}) { 
     $panel->{'json'} = 1;
-    
-    $content .= $panel->render;
-    
-    $panel_type = 'Configurator' if ref($panel) =~ /Configurator/;
+    $content        .= $panel->render;
+    $panel_type      = 'Configurator' if ref($panel) =~ /Configurator/;
   }
   
   $content = "$self->{'form'}$content</form>" if $self->{'form'};
   
-  $content =~ s/\n/\\n/g;
-  $content =~ s/\r//g;
-  $content =~ s/'/&#39;/g;
-  
-  return qq{'content':'$content','wrapper':'<div class="$wrapper"></div>','panelType':'$panel_type'};
+  return {
+    content   => $content,
+    wrapper   => qq{<div class="$wrapper"></div>},
+    panelType => $panel_type
+  };
 }
 
 ## DO NOT REMOVE: needed by Biomart to wrap their code in our template

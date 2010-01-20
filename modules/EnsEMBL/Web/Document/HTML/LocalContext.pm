@@ -61,11 +61,8 @@ sub availability {
 
 sub get_json {
   my $self = shift;
-  
   $self->class('local_modal');
-  (my $content = $self->_content) =~ s/\n//g;
-  
-  return qq{'nav':'$content'};
+  return { nav => $self->_content };
 }
 
 sub render {
