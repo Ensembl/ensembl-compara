@@ -108,7 +108,7 @@ sub deleteAlignment {
     my $self = shift;
 
     #delete genomic_align_tree
-    my $sql = "DELETE genomic_align_tree FROM genomic_align_tree LEFT JOIN genomic_align_group ON (node_id=group_id) LEFT JOIN genomic_align USING (genomic_align_id) WHERE method_link_species_set_id=?";
+    my $sql = "DELETE genomic_align_tree FROM genomic_align_tree LEFT JOIN genomic_align_group USING (node_id) LEFT JOIN genomic_align USING (genomic_align_id) WHERE method_link_species_set_id=?";
 
     my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
     $sth->execute($self->method_link_species_set_id);
