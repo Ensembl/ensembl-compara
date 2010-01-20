@@ -15,7 +15,6 @@ sub _init {
 
   my $Config = $self->{'config'}; 
   my $transcript =  $Config->{'transcript'}->{'transcript'};
- 
   # Drawing params
   
   my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
@@ -68,12 +67,14 @@ sub _init {
     my $dbid = $cod_snp->dbID;  
     my $variation_id = $snp->variation_name;
     unless ($aa_change =~/^\w+/) {$aa_change = '-';} 
-
+    my $transcript_id = $transcript->stable_id;
+    
     my $href = $self->_url
     ({'action'  => 'Variation',
       'v'     => $variation_id,
       'vf'    => $dbid,
       'var_box' => $aa_change,
+      't_id'  => $transcript_id,
     });
 
     my $type      = join ", ", @{$cod_snp->consequence_type || [] }; 
