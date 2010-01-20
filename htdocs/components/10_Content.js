@@ -36,28 +36,29 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     ajax.each(function () {
       var el = $(this);
+      var urls = [];
       var content, caption, component, node;
       
-      var title = eval(this.title); // TODO: use hidden inputs and .each instead of this and the for loop below. Don't eval.
+      $('input.ajax_load', this).each(function () {
+        urls.push(this.value);
+      });
       
-      if (!title) {
+      if (!urls.length) {
         return;
       }
       
-      el.removeAttr('title');
-      
-      if (title[0].substr(0, 1) != '/') {
-        caption = title.shift();
+      if (urls[0].substr(0, 1) != '/') {
+        caption = urls.shift();
         
         content = $('<div class="content"></div>');
         
-        el.append('<h4>'+caption+'</h4>').append(content);
+        el.append('<h4>' + caption + '</h4>').append(content);
       } else {
         content = el;
       }
       
-      for (var i = 0; i < title.length; i++) {
-        component = title[i];
+      for (var i = 0; i < urls.length; i++) {
+        component = urls[i];
         
         if (component.substr(0, 1) == '/') {
           if (component.match(/\?/)) {
@@ -91,7 +92,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     params = params || this.params;
     url = url || params.updateURL;
-    el = el || $(this.el).empty();
+    el  = el  || $(this.el).empty();
     
     switch (el.attr('nodeName')) {
       case 'DL': node = 'dt'; break;
@@ -100,7 +101,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       default  : node = 'p';  break;
     }
     
-    el.append('<'+node+' class="spinner">Loading component</'+node+'>');
+    el.append('<' + node + ' class="spinner">Loading component</' + node + '>');
     
     Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
     

@@ -15,16 +15,16 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     this.base(dims.w, dims.h);
     
-    this.elLk.content = $('.modal_content', this.el);
-    this.elLk.title = $('.modal_title', this.el);
-    this.elLk.menu = $('ul.tabs', this.el);
-    this.elLk.tabs = $('li', this.elLk.menu);
-    this.elLk.caption = $('.modal_caption', this.el);
+    this.elLk.content     = $('.modal_content', this.el);
+    this.elLk.title       = $('.modal_title', this.el);
+    this.elLk.menu        = $('ul.tabs', this.el);
+    this.elLk.tabs        = $('li', this.elLk.menu);
+    this.elLk.caption     = $('.modal_caption', this.el);
     this.elLk.closeButton = $('.modal_close', this.el);
     
-    this.pageReload = false;
+    this.pageReload    = false;
     this.sectionReload = {};
-    this.activePanel = '';
+    this.activePanel   = '';
     
     // TODO: check functionality. myself.open() is probably wrong
     $('.modal_confirm', '#' + this.id).live('click', function () {
@@ -86,8 +86,6 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   getContent: function (url, id, failures) {
-    var myself = this;
-    
     id = id || 'modal_default';
     
     var contentEl = this.elLk.content.filter('#' + id);
@@ -111,11 +109,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     $.ajax({
       url: url,
       dataType: 'json',
+      context: this,
       success: function (json) {
         var buttonText, params;
         
         if (json.redirectURL) {
-          return myself.getContent(json.redirectURL, id);
+          return this.getContent(json.redirectURL, id);
         }
         
         switch (json.panelType) {
@@ -126,20 +125,20 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         if (typeof json.activeTab != 'undefined') {
-          myself.changeTab(myself.elLk.tabs.filter('[textContent=' + json.activeTab + ']'));
+          this.changeTab(this.elLk.tabs.filter('[textContent=' + json.activeTab + ']'));
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, 'empty'); // clean up handlers, save memory
         
         contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
         
-        myself.elLk.closeButton.html(buttonText);
+        this.elLk.closeButton.html(buttonText);
         
         var forceReload = !!$('.modal_reload', contentEl).length;
         
         // TODO: remove once config reseting is working without content being completely regenerated
         if (reload || forceReload) {
-          myself.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
+          this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
         
         Ensembl.EventManager.trigger('createPanel', id, json.panelType, params);
@@ -148,6 +147,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         failures = failures || 1;
         
         if (e.status != 500 && failures < 3) {
+          var myself = this;
           setTimeout(function () { myself.getContent(url, id, ++failures); }, 2000);
         } else {
           contentEl.html('<p class="ajax_error">Failure: The resource failed to load</p>');

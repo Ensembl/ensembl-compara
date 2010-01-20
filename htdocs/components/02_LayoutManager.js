@@ -16,7 +16,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
     
-    $('#local-tools > p').show().children().show();
+    $('#local-tools > p').show();
     
     $('.modal_link').show().live('click', function () {
       Ensembl.EventManager.trigger('modalOpen', this);
@@ -36,8 +36,7 @@ Ensembl.LayoutManager.extend({
       this.target = '_blank';
     });
     
-    // using livequery plugin because .live doesn't support blur, focus, mouseenter, mouseleave, change or submit in IE
-    $('form.check').livequery('submit', function () {
+    $('form.check').live('submit', function () {
       var form = $(this);
       var rtn = form.parents('#modal_panel').length ? 
                 Ensembl.EventManager.trigger('modalFormSubmit', form) : 
@@ -49,21 +48,22 @@ Ensembl.LayoutManager.extend({
     
     $(':input', 'form.check').live('keyup', function () {
       Ensembl.FormValidator.check($(this));
-    }).livequery('change', function () {
-      Ensembl.FormValidator.check($(this));
-    }).livequery('blur', function () { // IE is stupid, so we need blur as well as change if you select from browser-stored values
+    }).live('change', function () {
       Ensembl.FormValidator.check($(this));
     }).each(function () {
       Ensembl.FormValidator.check($(this));
     });
     
     // Close modal window if the escape key is pressed
-    $(document).keyup(function (event) {
-      if (event.keyCode == 27) {
-        Ensembl.EventManager.trigger('modalClose', true);
+    $(document).bind({
+      keyup: function (event) {
+        if (event.keyCode == 27) {
+          Ensembl.EventManager.trigger('modalClose', true);
+        }
+      },
+      mouseup: function (e) {
+        Ensembl.EventManager.trigger('dragStop', e);
       }
-    }).mouseup(function (e) {
-      Ensembl.EventManager.trigger('dragStop', e);
     });
     
     var userMessage = unescape(Ensembl.cookie.get('user_message'));
@@ -111,12 +111,14 @@ Ensembl.LayoutManager.extend({
   },
   
   relocateTools: function (tools) {
+    var localTools = $('#local-tools');
+    
     tools.each(function () {
-      $('#local-tools').append($(this).children().addClass('additional')).children().show();
+      localTools.append($(this).children().addClass('additional')).children().show();
     }).remove();
     
-    $('a.seq_blast', '#local-tools').click(function () {
-      $('form.seq_blast', '#local-tools').submit();
+    $('a.seq_blast', localTools).click(function () {
+      $('form.seq_blast', localTools).submit();
       return false;
     });
   }

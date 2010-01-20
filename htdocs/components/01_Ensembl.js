@@ -25,11 +25,15 @@ Ensembl.extend({
       });
     }
     
+    var imagePanels = $('.image_panel');
+    
     // Store image panel details for highlighting
     this.images = {
-      total: $('.image_panel').length,
-      last: $('.image_panel:last')[0]
+      total: imagePanels.length,
+      last:  imagePanels.last()[0]
     }
+    
+    imagePanels = null;
     
     this.setCoreParams();
     

@@ -13,14 +13,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.base();
     
-    this.elLk.form = $('form.configuration', this.el);
-    this.elLk.search = $('.configuration_search_text', this.el);
-    this.elLk.help = $('.menu_help', this.elLk.form);
-    this.elLk.menus = $('.popup_menu', this.elLk.form);
+    this.elLk.form          = $('form.configuration', this.el);
+    this.elLk.search        = $('.configuration_search_text', this.el);
+    this.elLk.help          = $('.menu_help', this.elLk.form);
+    this.elLk.menus         = $('.popup_menu', this.elLk.form);
     this.elLk.searchResults = $('a.search_results', this.elLk.links);
     
     this.initialConfig = {};
-    this.lastQuery = false;
+    this.lastQuery     = false;
     
     $.each(this.elLk.form.serializeArray(), function () {
       myself.initialConfig[this.name] = this.value;
@@ -32,6 +32,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.help.click(function () { myself.toggleDescription(this); });
     
+    // Popup menus - displaying
     $('img.selected', this.elLk.form).click(function () {
       var menu = $(this).siblings('.popup_menu');
       
@@ -41,12 +42,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu = null;
     });
     
+    // Popup menus - setting values
     $('img', this.elLk.menus).click(function () {
-      var menu = $(this).parents('.popup_menu');
-      var dt = menu.parent();
-      var li = $(this).parent();
-      var val = li.attr('className');
-      var link = myself.elLk.links.children('a.' + this.className);
+      var menu  = $(this).parents('.popup_menu');
+      var dt    = menu.parent();
+      var li    = $(this).parent();
+      var val   = li.attr('className');
+      var link  = myself.elLk.links.children('a.' + this.className);
       var label = link.html().split(/\b/);
       
       if (dt.hasClass('select_all')) {
@@ -58,8 +60,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             li = $(this);
             
             li.parent().siblings('img.selected').attr({ 
-              src: '/i/render/' + this.className + '.gif', 
-              alt: li.text(),
+              src:   '/i/render/' + this.className + '.gif', 
+              alt:   li.text(),
               title: li.text()
             }).siblings('input').attr('newVal', this.className);
           });
@@ -77,8 +79,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       if (val != 'all_on') {
         dt.children('img.selected').attr({ 
-          src: '/i/render/' + val + '.gif', 
-          alt: li.text(),
+          src:   '/i/render/' + val + '.gif', 
+          alt:   li.text(),
           title: li.text()
         });
       }
@@ -88,32 +90,35 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       menu.hide();
       
       menu = null;
-      dt = null;
-      li = null;
+      dt   = null;
+      li   = null;
       link = null;
     });
     
-    this.elLk.search.keyup(function () {
-      if (this.value.length < 3) {
-        myself.lastQuery = this.value;
-      }
-      
-      if (this.value != myself.lastQuery) {
-        if (myself.searchTimer) {
-          clearTimeout(myself.searchTimer);
+    this.elLk.search.bind({
+      keyup: function () {
+        if (this.value.length < 3) {
+          myself.lastQuery = this.value;
         }
         
-        myself.query = this.value;
-        myself.regex = new RegExp(this.value, 'i');
-        
-        myself.searchTimer = setTimeout(function () {
-          myself.elLk.links.removeClass('active');
-          myself.elLk.searchResults.removeClass('disabled').parent().addClass('active');
-          myself.search(); 
-        }, 250);
+        if (this.value != myself.lastQuery) {
+          if (myself.searchTimer) {
+            clearTimeout(myself.searchTimer);
+          }
+          
+          myself.query = this.value;
+          myself.regex = new RegExp(this.value, 'i');
+          
+          myself.searchTimer = setTimeout(function () {
+            myself.elLk.links.removeClass('active');
+            myself.elLk.searchResults.removeClass('disabled').parent().addClass('active');
+            myself.search(); 
+          }, 250);
+        }
+      },
+      focus: function () {
+        this.value = '';
       }
-    }).focus(function () {
-      this.value = '';
     });
     
     // Header on search results and active tracks sections will act like the links on the left
@@ -130,10 +135,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   updateConfiguration: function (delayReload) {
-    var myself = this;
-    
-    var d = false;
-    var diff = { config: this.initialConfig.config };
+    var myself  = this;
+    var d       = false;
+    var diff    = { config: this.initialConfig.config };
     var checked = $.extend({}, this.initialConfig);
     
     $.each(this.elLk.form.serializeArray(), function () {
@@ -161,12 +165,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
   },
   
-  updatePage: function (diff, delayReload) {
-    var myself = this;
-    
+  updatePage: function (diff, delayReload) {    
     $.ajax({
-      url: myself.elLk.form.attr('action'),
-      type: myself.elLk.form.attr('method'),
+      url:  this.elLk.form.attr('action'),
+      type: this.elLk.form.attr('method'),
       data: diff,
       dataType: 'html',
       success: function (html) {
@@ -185,14 +187,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var active = this.elLk.links.filter('.active').children('a').attr('className');
     
-    if (typeof active == 'undefined') {
-      active = this.elLk.links.filter(':first').addClass('active').children('a').attr('className');
+    if (active == null) {
+      active = this.elLk.links.first().addClass('active').children('a').attr('className');
     }
     
     if (active == 'search_results') {
       this.elLk.search.val(this.query);
       this.search();
-    } else if (typeof active != 'undefined') {
+    } else if (active != null) {
       $('div:not(.' + active + '), dd', this.elLk.form).hide();
       this.elLk.help.html('Show info');
       
@@ -214,7 +216,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   styleTracks: function (special) {
-    var col = { 1: 'col1', '-1': 'col2', f: 1 };
+    var col    = { 1: 'col1', '-1': 'col2', f: 1 };
     var margin = '';
     
     if (special === true) {
@@ -237,7 +239,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         internal.css('marginLeft', margin);
       }
       
-      col.f = 1;
+      col.f    = 1;
       internal = null;
     });
   },
@@ -245,15 +247,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   // Filtering from the search box
   search: function () {
     var myself = this;
-    var dts = [];
+    var dts    = [];
     
     $('dl.config_menu', this.elLk.form).each(function () {
       var menu = $(this);
-      var div = menu.parent();
+      var div  = menu.parent();
       var show = false;
       
       menu.children('dt:not(.select_all, .external)').each(function () {
-        var dt = $(this);
+        var dt    = $(this);
         var match = dt.children('span:not(.menu_help)').html().match(myself.regex);
         
         if (match || dt.next('dd').text().match(myself.regex)) {
@@ -277,7 +279,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
       
       menu = null;
-      div = null;
+      div  = null;
     });
     
     this.lastQuery = this.query;
@@ -309,7 +311,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       span.html(dd.is(':visible') ? 'Hide info': 'Show info');
       
-      dd = null;
+      dd   = null;
       span = null;
     }
   }

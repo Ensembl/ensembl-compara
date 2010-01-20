@@ -40,7 +40,7 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     $('img.toggle', this.el).click(function () {
       var p = $(this).parent(); 
       
-      p.toggleClass('open').toggleClass('_closed');
+      p.toggleClass('open _closed');
       
       this.src = '/i/' + (p.hasClass('_closed') ? 'closed' : 'open') + '.gif';
       

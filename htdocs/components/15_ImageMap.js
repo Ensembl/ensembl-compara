@@ -4,15 +4,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
-    this.dragging = false;
-    this.clicking = true;
-    this.dragCoords = {};
-    
-    this.dragRegion = {};
+    this.dragging         = false;
+    this.clicking         = true;
+    this.dragCoords       = {};
+    this.dragRegion       = {};
     this.highlightRegions = {};
-    this.areas = [];
-    this.draggables = [];
-    this.speciesCount = 0;
+    this.areas            = [];
+    this.draggables       = [];
+    this.speciesCount     = 0;
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
     Ensembl.EventManager.register('dragStop', this, this.dragStop);
@@ -25,9 +24,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.params.highlight = (Ensembl.images.total == 1 || !($(this.el).parents('.image_panel')[0] == Ensembl.images.last));
     
-    this.elLk.map = $('map', this.el);
-    this.elLk.img = $('img.imagemap', this.el);
-    this.elLk.areas = $('area', this.elLk.map);
+    this.elLk.map        = $('map', this.el);
+    this.elLk.img        = $('img.imagemap', this.el);
+    this.elLk.areas      = $('area', this.elLk.map);
     this.elLk.exportMenu = $('.iexport_menu', this.el);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
@@ -64,9 +63,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       if (this.className.match(/drag/)) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
-        var r = c.a.href.split('|');
+        var r     = c.a.href.split('|');
         var start = parseInt(r[5]);
-        var end = parseInt(r[6]);
+        var end   = parseInt(r[6]);
         var scale = (end - start + 1) / (c.r - c.l); // bps per pixel on image
         
         c.range = { start: start, end: end, scale: scale };
@@ -97,19 +96,22 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.prepHighlightImage();
     }
     
-    this.elLk.img.mousedown(function (e) {
-      // Only draw the drag box for left clicks.
-      // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
-      if (!e.which || e.which == 1) {
-        myself.dragStart(e);
-      }
-      
-      return false;
-    }).click(function (e) {
-      if (myself.clicking) {
-        myself.makeZMenu(e, myself.getMapCoords(e));
-      } else {
-        myself.clicking = true;
+    this.elLk.img.bind({
+      mousedown: function (e) {
+        // Only draw the drag box for left clicks.
+        // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
+        if (!e.which || e.which == 1) {
+          myself.dragStart(e);
+        }
+        
+        return false;
+      },
+      click: function (e) {
+        if (myself.clicking) {
+          myself.makeZMenu(e, myself.getMapCoords(e));
+        } else {
+          myself.clicking = true;
+        }
       }
     }).parent().mousemove(function (e) {
       var area = myself.getArea(myself.getMapCoords(e));
@@ -126,11 +128,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var myself = this;
     var i = this.draggables.length;
     
-    this.dragCoords.map = this.getMapCoords(e);
-    this.dragCoords.page = { x: e.pageX, y : e.pageY };
-    
-    // Have to use this instead of the map coords because IE can't cope with offsetX/Y and relative positioned elements
-    this.dragCoords.offset = { x: e.pageX - this.dragCoords.map.x, y: e.pageY - this.dragCoords.map.y }; 
+    this.dragCoords.map    = this.getMapCoords(e);
+    this.dragCoords.page   = { x: e.pageX, y : e.pageY };
+    this.dragCoords.offset = { x: e.pageX - this.dragCoords.map.x, y: e.pageY - this.dragCoords.map.y }; // Have to use this instead of the map coords because IE can't cope with offsetX/Y and relative positioned elements
     
     this.dragRegion = this.getArea(this.dragCoords.map, true);
     
@@ -229,11 +229,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (range) {
         var location, fuzziness;
         
-        location = range.start + (range.scale * (coords.x - this.dragRegion.l));
+        location  = range.start + (range.scale * (coords.x - this.dragRegion.l));
         fuzziness = range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
         
         coords.clickStart = Math.floor(location - fuzziness);
-        coords.clickEnd = Math.ceil(location + fuzziness);
+        coords.clickEnd   = Math.ceil(location + fuzziness);
         
         if (coords.clickStart < range.start) {
           coords.clickStart = range.start;
@@ -322,7 +322,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         t: highlight.region.t + 2,
         b: highlight.region.b - 2,
         l: ((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l,
-        r: ((end - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l
+        r: ((end   - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l
       };
       
       // Highlight unless it's the bottom image on the page
