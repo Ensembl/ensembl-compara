@@ -51,38 +51,36 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   getContent: function (link, url, failures) {
-    var myself = this;
-    
     this.elLk.content.html('<div class="spinner">Loading Content</div>').addClass('panel');
     
     $.ajax({
       url: url,
       dataType: 'json',
+      context: this,
       success: function (json) {
         if (json.redirectURL) {
-          return myself.getContent(link, json.redirectURL);
+          return this.getContent(link, json.redirectURL);
         }
         
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
         if (typeof link == 'undefined' || link.hasClass('active')) {
-          myself.updateContent(json);
+          this.updateContent(json);
         }
       },
       error: function (e) {
         failures = failures || 1;
         
         if (e.status != 500 && failures < 3) {
+          var myself = this;
           setTimeout(function () { myself.getContent(link, url, ++failures); }, 2000);
         } else {
-          myself.elLk.content.html('<p class="ajax_error">Failure: The resource failed to load</p>');
+          this.elLk.content.html('<p class="ajax_error">Failure: The resource failed to load</p>');
         }
       }
     });
   },
   
   formSubmit: function (form) {
-    var myself = this;
-    
     if (!form.parents('#' + this.id).length) {
       return false;
     }
@@ -103,27 +101,28 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       });
     }
     
-    this.elLk.content.html('<div class="spinner">Loading Content</div>');
-    
     if (Ensembl.FormValidator.submit(form)) {
+      this.elLk.content.html('<div class="spinner">Loading Content</div>');
+      
       $.ajax({
         url: form.attr('action'),
         type: form.attr('method'),
         data: data,
         dataType: 'json',
+        context: this,
         success: function (json) {
           if (json.redirectURL) {
-            return myself.getContent(undefined, json.redirectURL);
+            return this.getContent(undefined, json.redirectURL);
           }
           
           if (json.success === true) {
             Ensembl.EventManager.trigger('reloadPage');
-          } else if ($(myself.el).is(':visible')) {
-            myself.updateContent(json);
+          } else if ($(this.el).is(':visible')) {
+            this.updateContent(json);
           }
         },
         error: function (e) {
-          myself.elLk.content.html('<p class="ajax_error">Failure: the resource failed to load</p>');
+          this.elLk.content.html('<p class="ajax_error">Failure: the resource failed to load</p>');
         }
       });
     }
