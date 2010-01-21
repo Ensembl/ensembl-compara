@@ -231,15 +231,16 @@ sub remove_nodes_by_taxon_ids {
   my %tax_hash;
   map {$tax_hash{$_}=1} @tax_ids;
 
+  my @to_delete;
   foreach my $leaf (@{$self->get_all_leaves}) {
     if (exists $tax_hash{$leaf->taxon_id}) {
-      $self->delete_lineage($leaf);
-      $self->minimize_tree();
+      push @to_delete, $leaf;
     }
   }
+  return $self->remove_nodes(\@to_delete);
 
-  return $self;
 }
+
 
 =head2 keep_nodes_by_taxon_ids
 
@@ -253,7 +254,8 @@ sub remove_nodes_by_taxon_ids {
 
 =cut
 
-sub keep_nodes_by_taxon_ids {
+
+sub remove_nodes_by_taxon_ids {
   my $self = shift;
   my $species_arrayref = shift;
 
@@ -262,14 +264,14 @@ sub keep_nodes_by_taxon_ids {
   my %tax_hash;
   map {$tax_hash{$_}=1} @tax_ids;
 
+  my @to_delete;
   foreach my $leaf (@{$self->get_all_leaves}) {
     unless (exists $tax_hash{$leaf->taxon_id}) {
-      $self->delete_lineage($leaf);
-      $self->minimize_tree();
+      push @to_delete, $leaf;
     }
   }
+  return $self->remove_nodes(\@to_delete);
 
-  return $self;
 }
 
 
