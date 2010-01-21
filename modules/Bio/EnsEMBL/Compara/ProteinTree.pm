@@ -255,7 +255,7 @@ sub remove_nodes_by_taxon_ids {
 =cut
 
 
-sub remove_nodes_by_taxon_ids {
+sub keep_nodes_by_taxon_ids {
   my $self = shift;
   my $species_arrayref = shift;
 
