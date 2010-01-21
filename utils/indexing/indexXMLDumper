@@ -1,5 +1,9 @@
 #!/usr/local/bin/perl
 
+#usage:
+# ./indexXMLDumper --species aaa,bbb -indexes xxx,yyy > & index.log
+# 'ALL' can be used as a value for both species and indexes
+
 use strict;
 package indexXMLDumper;
 
@@ -24,9 +28,10 @@ use constant INC_SPECIES => 0;
 use CGI;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
-
-my $release = $SD->ENSEMBL_VERSION;
-my $nogzip = 1; #try setting to 0 for on the fly gzipping ?
+our $release = $SD->ENSEMBL_VERSION;
+our $nogzip = 1; #try setting to 0 for on the fly gzipping ?
+our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly
+our %additional_fields; #summarise additional fields so we can make sure we treat each one correctly
 
 my (@species,@indexes);
 GetOptions('species=s' => \@species,
@@ -46,10 +51,6 @@ if( $species[0] eq 'ALL' ) {
 } else {
   @species = grep {$_} map { $X{lc($_)} } @species;
 }
-
-warn Dumper(\@species);
-warn Dumper(\@indexes);
-exit;
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
@@ -72,18 +73,115 @@ foreach my $index (@indexes) {
     print "Starting: $index $species\n";
     my $function = "dump$index";
     no strict "refs";
-    $total_c += &$function( $conf );
+    eval { $total_c += &$function( $conf ); };
+    print $@ if $@;
   }
 }
 
-print "Dumped $total_c records in total\n";
+print "\nAdditional fields are:\n",Dumper(\%additional_fields);
+print "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
+print "\nDumped $total_c records in total\n";
+
+exit;
 
 ## Now for all the dump functions...............................
+
+########################################################################## Markers
+
+sub dumpMarker {
+  my $conf = shift;
+  my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/Marker_$dbname.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'core';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      || die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) || die "Can't open $file: $!";
+  }
+  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+  my $sth = $conf->{'dbh'}->prepare("
+   SELECT m.marker_id, ms2.name, ms1.name
+     FROM marker_synonym as ms1, marker as m
+LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id
+    WHERE ms1.marker_id = m.marker_id
+ ORDER BY m.marker_id
+  ");
+
+  $sth->execute( );
+  my $names  = [];
+  my $old_ID = 0;
+  my ($ID,$marker,$synonym);
+  while( ($ID,$marker,$synonym) = $sth->fetchrow_array()){
+    $marker = $synonym unless $marker;
+    if($ID == $old_ID) {
+      push @$names, $synonym;
+    } else {
+      if ($old_ID) {
+	&p( markerLine( $dbspecies, $names, $counter ), $nogzip, $fh);
+      }
+      $names    = [ $synonym ];
+      $old_ID  = $ID;
+    }
+  }
+  &p( markerLine( $dbspecies, $names, $counter ), $nogzip, $fh);
+  return footer( $counter->(),$nogzip,$fh);
+}
+
+sub markerLine {
+  my( $species, $IDS, $counter ) = @_;
+  $species =~ s/_/ /;
+  my @synonyms = sort @$IDS;
+  my $key = pop @synonyms;
+  my $xml = qq(
+<entry id="$key">
+  <additional_fields>);
+  foreach my $syn (@synonyms) {
+    $xml .= qq(
+    <field name="synonym">$syn</field>);
+    $additional_fields{'synonym'}++;
+  }
+  $xml .= qq(
+    <field name="species">$species</field>
+    <field name="featuretype">Marker</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'Marker'}++;
+  $counter->();
+  return $xml . '</entry>';
+}
+
 
 ########################################################################## QTLs
 
 sub dumpQTL {
   my $conf = shift;
+  my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/QTL_$dbname.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'core';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      || die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) || die "Can't open $file: $!";
+  }
+  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
   my $sth = $conf->{'dbh'}->prepare("
  select c.name as chr, qf.seq_region_start, qf.seq_region_end,
         a.logic_name as analysis, q.qtl_id,
@@ -103,22 +201,23 @@ sub dumpQTL {
         qf.analysis_id = a.analysis_id and qf.qtl_id = q.qtl_id
   ");
   $sth->execute();
-  open O, ">$conf->{'directory'}/QTL.txt";
-  my $desc       = '';
+  my $desc    = '';
   my $old_qtl = 0;
   my $old_ID  = '';
   my $old_pos = '';
-  my $IDS;
+  my $IDS     = [];
   while( my $T = $sth->fetchrow_hashref() ){
     if($T->{qtl_id} eq $old_qtl) {
-      $IDS  .= " $T->{source_primary_id}";
+      push @$IDS, $T->{source_primary_id};
       $desc .= " $T->{source_database}:$T->{source_primary_id}";
     } else {
-      print O &QTLLine( $conf->{'species'}, $old_ID, $old_pos, $IDS,$desc );
-      $IDS = "$T->{trait} $T->{source_primary_id}";
-      $IDS.= " $T->{fm1_name}" if $T->{fm1_name};
-      $IDS.= " $T->{fm2_name}" if $T->{fm2_name};
-      $IDS.= " $T->{pm_name}" if $T->{pm_name};
+      if ($old_ID) {
+	&p( QTLLine( $dbspecies, $old_ID, $old_pos, $IDS, $desc, $counter ), $nogzip, $fh);
+      }
+      $IDS = [ "$T->{trait} $T->{source_primary_id}" ];
+      push @$IDS, $T->{fm1_name} if $T->{fm1_name};
+      push @$IDS, $T->{fm2_name} if $T->{fm2_name};
+      push @$IDS, $T->{pm_name}  if $T->{pm_name};
       $old_ID = $T->{pm_name};
       $old_pos = "$T->{chr}:".($T->{seq_region_start}-1e4).'-'.($T->{seq_region_end}+1e4);
       $desc       = "QTL exhibiting '$T->{trait}' has ";
@@ -134,16 +233,35 @@ sub dumpQTL {
       $old_qtl = $T->{qtl_id};
     }
   }
-  print O &QTLLine( $conf->{'species'}, $old_ID,$old_pos, $IDS,$desc );
-  close O;
+  &p( QTLLine( $dbspecies, $old_ID, $old_pos, $IDS, $desc, $counter ), $nogzip, $fh);
+  return footer( $counter->(),$nogzip,$fh);
+
 }
 
 sub QTLLine {
-  my ($species, $trait, $pos, $IDS, $desc ) = @_;
-  return if $trait eq '';
-  return join "\t", (INC_SPECIES?"$conf->{'species'}\t":"").qq(QTL),
-    $trait, "/$conf->{'species'}/Location/View?r=$pos", $IDS, "$desc\n";
+  my ($species, $key, $pos, $IDS, $desc, $counter ) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$key">
+  <description>$desc</description>
+  <additional_fields>);
+  foreach my $id (@$IDS) {
+    $xml .= qq(
+    <field name="synonym">$id</field>);
+    $additional_fields{'synonym'}++;
+  }
+  $xml .= qq(
+    <field name="species">$species</field>
+    <field name="featuretype">QTL</field>
+    <field name="location">$pos</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'QTL'}++;
+  $additional_fields{'location'}++;
+  $counter->();
+  return $xml . '</entry>';
 }
+
 
 ########################################################################## SNPs
 
@@ -151,15 +269,29 @@ sub dumpSNP {
   my $conf = shift;
   my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $SNPDB;
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/SNP_$SNPDB.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'variation';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      || die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) || die "Can't open $file: $!";
+  }
+  print "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
+  header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
   `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
 
-  return unless $SNPDB;
-
-
   my %SNP_EXTRA = map { ($_->[0] => $_) }
-    @{$conf->{'dbh'}->selectall_arrayref( 
+    @{$conf->{'dbh'}->selectall_arrayref(
       "select va.variation_id,
               group_concat( distinct va.local_stable_id SEPARATOR '; ') as lsi,
               group_concat( distinct va.study           SEPARATOR '; ') as st,
@@ -177,7 +309,7 @@ sub dumpSNP {
               $SNPDB.phenotype as p on p.phenotype_id = va.phenotype_id
         group by va.variation_id
         order by va.variation_id"
-   )};
+    )};
 
   my $SOURCES = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
 
@@ -223,7 +355,6 @@ sub dumpSNP {
   close $fh2;
   close $fh3;
   open I, 'snps.txt' ;
-  open O, ">$conf->{'directory'}/SNP.txt";
   while(<I>) {
     my($ID,$source,$name,@keywords) = split;
     my @K = map { (my $t=$_)=~ s/^\w+://;$t } @keywords;
@@ -239,23 +370,20 @@ sub dumpSNP {
       if( $x->[2] ) {
         $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
       }
-    } 
-    print O join "\t",
-      "$source SNP",
-      $name,
-      "/$conf->{'species'}/Variation/Summary?source=$source;v=$name",
-      "$name @K",
-      sprintf( "A %s SNP with %s%s\n",
-        $source, 
-          $size > 1 ? " with $size synonyms: @keywords" 
-        : $size     ? " with one synonym: @keywords"
-        :             " with no synonyms",
-        $extra
-      );
+    }
+
+    my $desc = sprintf( "A %s SNP %s%s",
+			$source,
+			$size > 1 ? "with $size synonyms: @keywords"
+		      : $size     ? "with one synonym: @keywords"
+		      :             "with no synonyms",
+			$extra
+		      );
+
+    &p( SNPLine( $dbspecies, $name, \@K, $source, $desc, $counter ), $nogzip, $fh);
   }
-  close O;
   close I;
-  unlink 'snps.txt';
+  return footer( $counter->(),$nogzip,$fh);
 }
 
 sub n {
@@ -270,27 +398,56 @@ sub n {
   return $snp;
 }
 
-sub snpLine {
-  my ($species, $source, $snpid, $IDS, $desc ) =@_;
-  return if $snpid eq '';
-  $desc =~ s/^, //;
-  return join "\t",
-    (INC_SPECIES?"$species\t":"").qq(Ensembl SNP),
-    $snpid,
-    "/$species/snpview?snp=$snpid;source=$source",
-    "$IDS",
-    "SNP $snpid. Alternative IDs: $desc.\n";
+sub SNPLine {
+  my ($species, $name, $IDS, $source, $desc, $counter ) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$name">
+  <description>$desc</description>
+  <additional_fields>);
+  foreach my $id (@$IDS) {
+    $xml .= qq(
+    <field name="synonym">$id</field>);
+  }
+  $additional_fields{'synonym'}++;
+  $xml .= qq(
+    <field name="species">$species</field>
+    <field name="featuretype">SNP</field>
+    <field name="source">$source</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'SNP'}++;
+  $additional_fields{'source'}{$source}++;
+  $counter->();
+  return $xml . '</entry>';
 }
+
+########################################################################## StructuralVariations
 
 sub dumpStructuralVariations {
   my $conf = shift;
   my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $SNPDB;
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/StructuralVariations_$SNPDB.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'variation';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      || die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) || die "Can't open $file: $!";
+  }
+  print "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
+  header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
-  my $species = $conf->{'species'};
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
-
 
   my $T = $conf->{'dbh'}->selectall_arrayref("
     select v.structural_variation_id,
@@ -304,38 +461,242 @@ sub dumpStructuralVariations {
      where s.source_id = v.source_id and r.seq_region_id = v.seq_region_id
      order by v.structural_variation_id"
   );
-
-  open A, ">$conf->{'directory'}/StructuralVariations.txt" unless scalar @$T == 0;
-
   foreach my $row ( @$T ) {
-    my $r = $row->[4] .":" . $row->[5] ."-". $row->[6];
+    my $id = $row->[1];
+    my $location = $row->[4] .":" . $row->[5] ."-". $row->[6];
     my $length = $row->[6] - $row->[7];
-    my $action = 'View';
-    my $view_config = 'contigviewbottom=variation_feature_structural=normal;';
-
-
-    if ($length >> $max_length) {
-      $action = 'Overview';
-      $view_config = 'cytoview=variation_feature_structural=normal;';
-    }
-    print A join "\t", (INC_SPECIES?"$species\t":"")."Structural Variation",
-    $row->[1], "/$species/Location/$action?r=$r;sv=$row->[1];$view_config",
-    $row->[1], qq(A structural variation from $row->[2], identified by $row->[3].<br />This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6].\n );
+    my $action = ($length >> $max_length) ? 'Overview' : 'View';
+    my $view_config = ($length >> $max_length) ? 'cytoview=variation_feature_structural=normal;' : 'contigviewbottom=variation_feature_structural=normal;';
+    my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
+    &p( StrucVarLine( $dbspecies, $id, $location, $desc, $action, $view_config, $counter ), $nogzip, $fh);
   }
+  return footer( $counter->(),$nogzip,$fh);
+}
 
-  close A;
+sub StrucVarLine {
+  my ($species, $id, $location, $desc, $action, $view_config, $counter ) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$id">
+  <description>$desc</description>
+  <additional_fields>);
+  $xml .= qq(
+    <field name="species">$species</field>
+    <field name="featuretype">StructuralVariation</field>
+    <field name="location">$location</field>
+    <field name="action">$action</field>
+    <field name="view_config">$view_config</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'feature_type'}{'StructuralVariation'}++;
+  $additional_fields{'location'}++;
+  $additional_fields{'action'}++;
+  $additional_fields{'view_config'}++;
+  $counter->();
+  return $xml . '</entry>';
 }
 
 
-########################################################################## Markers
+########################################################################## Similarity features
 
-sub dumpMarker {
+sub dumpGenomicAlignment {
+  my $conf    = shift;
+  my $counter = make_counter(0);
+  my $species = $conf->{'species'};
+  my $COREDB  = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $ESTDB   = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my $CDNADB  = $conf->{'dbs'}->{'DATABASE_CDNA'};
+  my %dbs      = ( 'core' => $COREDB );
+  $dbs{'otherfeatures'} =  $ESTDB  if $ESTDB;
+  $dbs{'cdna'}          = $CDNADB if $CDNADB;
+  my %tables = (
+    'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
+    'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
+  );
+  my $total_c;
+  foreach my $db ( sort { $b cmp $a } keys %dbs) {
+    my $dbname    = $dbs{$db};
+    my $dbspecies = $conf->{'species'};
+    my $file      = $conf->{'directory'}."/GenomicAlignment_$dbname.xml";
+    $file .= ".gz" unless $nogzip;
+    my $start_time = time;
+    my $fh;
+    unless ($nogzip) {
+      $fh = new IO::Zlib;
+      $fh->open( "$file", "wb9" ) || die("Can't open compressed stream to $file: $!");
+    }
+    else {
+      open( FILE, ">$file" ) || die "Can't open $file: $!";
+    }
+    print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+
+    foreach my $table ( keys %tables ) {
+      my $source = $tables{ $table }[0];
+      $source .= ";db=$db" unless $db eq 'core';
+      my $type   = $tables{ $table }[1];
+      my $sth    = $conf->{'dbh'}->prepare(
+	"select ad.display_label, t.hit_name, edb.db_name, count(*) as hits
+                from (($dbname.analysis as a, $dbname.$table as t) left join
+                     $dbname.analysis_description ad on a.analysis_id = ad.analysis_id) 
+           left join $dbname.external_db edb on t.external_db_id = edb.external_db_id
+               where a.analysis_id = t.analysis_id
+               group by ad.display_label, t.hit_name");
+      $sth->execute();
+      my $c = 0;
+      while( my( $label, $hid, $db_name, $count  ) = $sth->fetchrow_array ) {
+	$c++;
+	$label ||= '';
+	my $desc = "$label $hid hits the genome in $count locations.";
+	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $table, $counter ), $nogzip, $fh);
+      }
+      print "     Dumped $c $table entries";
+    }
+    if ($db eq 'cdna') {
+      my $sth    = $conf->{'dbh'}->prepare(
+	"select ad.display_label, uo.identifier,  ur.summary_description, 'Unmapped feature'
+           from $dbname.unmapped_object uo, $dbname.unmapped_reason ur, $dbname.analysis a 
+                left join $dbname.analysis_description ad on a.analysis_id = ad.analysis_id
+          where a.analysis_id = uo.analysis_id
+            and uo.unmapped_reason_id = ur.unmapped_reason_id");
+      $sth->execute();
+      my $c++;
+      while (my ($label, $hid, $reason, $type) = $sth->fetchrow_array ) {
+	$c++;
+	$label ||= '';
+	my $desc = "$label $hid fails to map to the genome. Reason: $reason.";
+	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', $counter ), $nogzip, $fh);
+      }
+      print "     Dumped $c Unmapped features";
+    }
+    $total_c += footer( $counter->(),$nogzip,$fh);
+  }
+  return $total_c;
+}
+
+sub GenomicAlignmentLine {
+  my ($species, $id, $desc, $db_name, $db, $ftype, $counter ) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$id">
+  <description>$desc</description>);
+  if ($db_name) {
+    $xml .= qq(
+  <cross_references>
+    <ref dbname="$db_name" dbkey="$id"/>
+  </cross_references>);
+    $cross_references{$db_name}++;
+  }
+  $xml .= qq(
+  <additional_fields>
+    <field name="species">$species</field>
+    <field name="featuretype">$ftype</field>
+    <field name="db">$db</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{$ftype}++;
+  $additional_fields{'db'}++;
+  $counter->();
+  return $xml . '</entry>';
+}
+
+
+########################################################################## OligoProbes
+
+sub dumpOligoProbe {
   my $conf = shift;
-  my $total = 0; ##what should this be, grand total ?
+  my $FUNCDB = $conf->{'dbs'}->{'DATABASE_FUNCGEN'};
+  return unless $FUNCDB;
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/OligoProbe_$FUNCDB.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'fungen';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      || die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) || die "Can't open $file: $!";
+  }
+  print "  Dumping $FUNCDB to $file ... ", format_datetime($start_time), "\n";
+  header( $FUNCDB, $dbspecies, $db, $nogzip, $fh, $release );
+
+  my $sth    = $conf->{'dbh'}->prepare(
+    "select ps.name, count(distinct pf.probe_feature_id) as hits, a.vendor
+        from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
+      where sn.name='MART_DISPLAYABLE'
+        and sn.status_name_id=s.status_name_id
+        and s.table_name='array'
+        and s.table_id=a.array_id
+        and ps.probe_set_id = p.probe_set_id
+        and p.probe_id = pf.probe_id
+        and p.array_chip_id = ac.array_chip_id
+        and ac.array_id = a.array_id
+      group by ps.name, a.vendor"
+  );
+  $sth->execute();
+  while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
+    next unless $hid;
+    my $desc =  qq($type probeset $hid hits the genome in $count locations.);
+    &p( OligoProbeLine($dbspecies,$hid,$desc,'pset',$db,$counter ), $nogzip, $fh);
+  }
+
+  my $sth    = $conf->{'dbh'}->prepare(
+    "select group_concat(distinct p.name), count(distinct pf.probe_feature_id) as hits, a.vendor
+        from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
+      where sn.name='MART_DISPLAYABLE'
+        and sn.status_name_id=s.status_name_id
+        and s.table_name='array'
+        and s.table_id=a.array_id
+        and p.probe_set_id is NULL
+        and p.probe_id = pf.probe_id
+        and p.array_chip_id = ac.array_chip_id
+        and ac.array_id = a.array_id
+      group by p.probe_id, a.vendor"
+  );
+  $sth->execute();
+  while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
+    next unless $hid;
+    my $desc = qq($type probe $hid hits the genome in $count locations.);
+    &p( OligoProbeLine($dbspecies,$hid,$desc,'probe',$db,$counter ), $nogzip, $fh);
+  }
+  return footer( $counter->(),$nogzip,$fh);
+}
+
+sub OligoProbeLine {
+  my ($species,$hid,$desc,$pset,$db,$counter) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$hid">
+  <description>$desc</description>);
+  $xml .= qq(
+  <additional_fields>
+    <field name="species">$species</field>
+    <field name="featuretype">ProbeFeature</field>
+    <field name="db">$db</field>
+    <field name="ptype">$pset</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'ProbeFeature'}++;
+  $additional_fields{'ptype'}++;
+  $additional_fields{'db'}++;
+  $counter->();
+  return $xml . '</entry>';
+}
+
+
+########################################################################## Domains
+
+sub dumpDomain {
+  my $conf = shift;
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/Marker_$dbname.xml";
+  my $file = $conf->{'directory'}."/Domain_$dbname.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
@@ -348,355 +709,410 @@ sub dumpMarker {
   else {
     open( FILE, ">$file" ) || die "Can't open $file: $!";
   }
-  warn "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
-  header( $dbname, $dbspecies, 'core', $nogzip, $fh, $release );
-  my $sth = $conf->{'dbh'}->prepare("
-   SELECT m.marker_id, ms2.name, ms1.name
-     FROM marker_synonym as ms1, marker as m
-LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_synonym_id
-    WHERE ms1.marker_id = m.marker_id
- ORDER BY m.marker_id
-  ");
+  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
-  $sth->execute( );
-  my $names  = [];
-  my $old_ID = 0;
-  my ($ID,$marker,$synonym);
-  while( ($ID,$marker,$synonym) = $sth->fetchrow_array()){
-#    warn "$ID,$marker,$synonym";
-    $marker = $synonym unless $marker;
-    if($ID == $old_ID) {
-      push @$names, $synonym;
-    } else {
-      if ($old_ID) {
-#	warn markerLine( $dbspecies, $desc, $counter );
-	&p( markerLine( $dbspecies, $names, $counter ), $nogzip, $fh);
+  my $sth = $conf->{'dbh'}->prepare(
+    "select x.dbprimary_acc, i.id, x.description
+       from xref as x, interpro as i
+      where x.dbprimary_acc = i.interpro_ac
+      order by x.dbprimary_acc");
+  $sth->execute();
+  my $old_acc     = '';
+  my $IDS         = [];
+  my $description = '';
+  my $count       = 0;
+  my ($acc, $id, $desc, $old_desc );
+  while( ($acc, $id, $desc ) = $sth->fetchrow_array()){
+    if($acc eq $old_acc) {
+      push @$IDS, $id;
+      $count++;
+    }
+    else {
+      if ($old_acc) {
+	$description = "Interpro domain $old_acc [$old_desc] has";
+	&p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $nogzip, $fh);
       }
-      $names    = [ $synonym ];
-      $old_ID  = $ID;
+      $IDS      = [ $id ];
+      $old_acc  = $acc;
+      $old_desc = $desc;
+      $count    = 1;
     }
   }
-  &p( markerLine( $dbspecies, $names, $counter ), $nogzip, $fh);
-  return footer( $counter->(),$nogzip,$fh,$total);
-#  return $counter->();
+  $description = "Interpro domain $old_acc [$old_desc] has";
+  &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $nogzip, $fh);
+  return footer( $counter->(),$nogzip,$fh);
 }
 
-sub markerLine {
-  my( $species, $IDS, $counter ) = @_;
+sub DomainLine {
+  my($species, $acc, $desc, $IDS, $count, $counter) = @_;
   $species =~ s/_/ /;
-  my @synonyms = sort @$IDS;
-  my $key = pop @synonyms;
+  my $ids = join ',', @$IDS;
+  my $description = "$desc $count associated external database identifiers: $ids";
   my $xml = qq(
-<entry id="$key">
+<entry id="$acc">
+  <description>$description</description>
   <additional_fields>);
-  foreach my $syn (@synonyms) {
+  foreach my $id (@$IDS) {
     $xml .= qq(
-    <field name="synonym">$syn</field>);
+    <field name="synonym">$id</field>);
+    $additional_fields{'synonym'}++;
   }
   $xml .= qq(
     <field name="species">$species</field>
-    <field name="featuretype">Marker</field>);
+    <field name="featuretype">Domain</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'Domain'}++;
   $counter->();
   return $xml . '</entry>';
 }
 
-########################################################################## Similarity features
 
-sub dumpGenomicAlignment {
-  my  $conf = shift;
-  open D, ">$conf->{'directory'}/GenomicAlignment.txt";
-
-  my $species = $conf->{'species'};
-  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $ESTDB  = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
-  my $CDNADB = $conf->{'dbs'}->{'DATABASE_CDNA'};
-  my %dbs    = ( 'core' => $COREDB );
-  $dbs{'otherfeatures'}  =  $ESTDB  if $ESTDB;
-  $dbs{'cdna'} = $CDNADB if $CDNADB;
-  my %tables = (
-    'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
-    'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
-  );
-  my %errors = ();
-  my $core_features;
-  foreach my $db ( sort { $b cmp $a } keys %dbs) {
-    my $DB_NAME = $dbs{$db};
-    foreach my $table ( keys %tables ) {
-      my $source = $tables{ $table }[0];
-      $source .= ";db=$db" unless $db eq 'core';
-      my $type   = $tables{ $table }[1];
-      my $sth    = $conf->{'dbh'}->prepare(
-	"select a.logic_name, ad.display_label, t.hit_name, t.seq_region_start, t.seq_region_end, count(*) as hits
-                from ($DB_NAME.analysis as a, $DB_NAME.$table as t) left join
-                     $DB_NAME.analysis_description as ad on ad.analysis_id = a.analysis_id
-               where a.analysis_id = t.analysis_id
-               group by a.logic_name, t.hit_name");
-      $sth->execute();
-      my $c = 0;
-      while( my( $logic_name, $label, $hid, $sr_start, $sr_end, $count  ) = $sth->fetchrow_array ) {
-	$c++;
-	print D join "\t",
-	  (INC_SPECIES?"$species\t":"")."$type: ".($label||$logic_name),
-	    $hid,
-	    "/$species/Location/Genome?ftype=$source;id=$hid",
-	    $hid,
-	    qq($logic_name $hid hits the genome in $count locations.\n);
-      }
-#      warn "Dumped $c genomic alignments from $DB_NAME $table";
-    }
-    if ($db eq 'cdna') { #need to remove url when rendering the page since we have no where to show them!
-      my $sth    = $conf->{'dbh'}->prepare(
-	"select uo.identifier, a.logic_name, ur.summary_description, 'Unmapped feature'
-                from $DB_NAME.analysis a, $DB_NAME.unmapped_object uo, $DB_NAME.unmapped_reason ur 
-               where a.analysis_id = uo.analysis_id
-                 and uo.unmapped_reason_id = ur.unmapped_reason_id");
-      $sth->execute();
-      while (my ($name, $ln, $desc, $type) = $sth->fetchrow_array ) {
-	$ln =~ s/_/ /;
-	print D join "\t",
-	  (INC_SPECIES?"$species\t":"")."$type: ",
-	    "$ln $name",
-	    "/$species/Location/Genome?ftype=UnmappedObject;id=$name;db=$db",
-	    $name,
-	    "Reason: $desc\n";
-      }
-    }
-  }
-  close D;
-}
-
-sub dumpOligoProbe {
-  my $conf = shift;
-  open A, ">$conf->{'directory'}/OligoProbe.txt";
-  my $species = $conf->{'species'};
-  my $FUNCDB = $conf->{'dbs'}->{'DATABASE_FUNCGEN'};
-  if ($FUNCDB) {
-    my $sth    = $conf->{'dbh'}->prepare(
-      "select ps.name, count(distinct pf.probe_feature_id) as hits, a.vendor
-        from $FUNCDB.probe_set ps, $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
-      where sn.name='MART_DISPLAYABLE'
-        and sn.status_name_id=s.status_name_id
-        and s.table_name='array'
-        and s.table_id=a.array_id
-        and ps.probe_set_id = p.probe_set_id
-        and p.probe_id = pf.probe_id
-        and p.array_chip_id = ac.array_chip_id
-        and ac.array_id = a.array_id
-      group by ps.name, a.vendor"
-    );
-    $sth->execute();
-    while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
-      next unless $hid;
-      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Probe set",
-	$hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=pset;id=$hid;",
-	  $hid, qq($type probeset $hid hits the genome in $count locations.\n);
-    }
-
-    my $sth    = $conf->{'dbh'}->prepare(
-      "select group_concat(distinct p.name), count(distinct pf.probe_feature_id) as hits, a.vendor
-        from $FUNCDB.probe p, $FUNCDB.probe_feature pf, $FUNCDB.array_chip ac, $FUNCDB.array a, $FUNCDB.status s, $FUNCDB.status_name sn
-      where sn.name='MART_DISPLAYABLE'
-        and sn.status_name_id=s.status_name_id
-        and s.table_name='array'
-        and s.table_id=a.array_id
-        and p.probe_set_id is NULL
-        and p.probe_id = pf.probe_id
-        and p.array_chip_id = ac.array_chip_id
-        and ac.array_id = a.array_id
-      group by p.probe_id, a.vendor"
-    );
-    $sth->execute();
-    while( my( $hid, $count, $type ) = $sth->fetchrow_array ) {
-      next unless $hid;
-      print A join "\t", (INC_SPECIES?"$species\t":"")."$type Probe",
-  $hid, "/$species/Location/Genome?ftype=ProbeFeature;fdb=funcgen;ptype=probe;id=$hid;",
-    $hid, qq($type probe $hid hits the genome in $count locations.\n);
-    }
-  }
-  close A;
-}
-
-
-########################################################################## Diseases
-
-sub dumpDisease {
-  my $conf = shift;
-  my $DISDB   = $conf->{'dbs'}->{'ENSEMBL_DISEASE'};    
-  return unless $DISDB;
-  my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};    
-  my $sth = $conf->{'dbh'}->prepare(
-    "select distinct concat( g.gene_symbol,':',g.omim_id, ' (',gsi.stable_id,')') as name,
-            d.disease, d.disease
-       from $DISDB.disease as d,
-            $DISDB.gene as g,
-            $COREDB.xref as cx, 
-            $COREDB.object_xref as cox, 
-            $COREDB.translation as tr,
-            $COREDB.transcript as t,
-            $COREDB.gene_stable_id as gsi 
-      where d.id = g.id and cx.display_label = g.omim_id and cx.external_db_id = 1500 and
-            cox.xref_id = cx.xref_id and cox.ensembl_id = tr.translation_id and
-            tr.transcript_id = t.transcript_id and gsi.gene_id = t.gene_id
-      order by disease, g.omim_id, g.gene_symbol"
-  );
-  $sth->execute();
-  open O, ">$conf->{'directory'}/Disease.txt";
-  my $old_omim = '';
-  my $IDS  = '';
-  my $description = '';
-  my $old_desc = '';
-  my ($gene, $omim, $desc );
-  while( ($gene, $omim, $desc ) = $sth->fetchrow_array()){
-    if($omim eq $old_omim) {
-      $IDS .= " $gene";
-      $description .=", $gene";
-    } else {
-      print O &diseaseLine($conf->{'species'}, $old_omim, $IDS, $description );
-      $description = "$desc Genes: $gene";
-      $IDS  = "$gene $desc";
-      $old_omim = $omim;
-    }
-  }
-  print O &diseaseLine($conf->{'species'}, $old_omim, $IDS, $description );
-  close O;
-}
-
-use CGI qw(escape escapeHTML);
-sub diseaseLine {
-  my($species, $did, $IDS, $description) = @_;
-  return if $description eq '';
-  return join "\t",
-    (INC_SPECIES?"$species\t":"").qq(OMIM disease),    ## Type
-    escapeHTML($did),               ## ID
-    qq(/$species/featureview?type=Disease;id=).escape($did),
-    qq($did $IDS),     ## Index locations,
-    qq(OMIM - $description\n);
-}
-
-########################################################################## Domains
-
-sub dumpDomain {
-  my $conf = shift;
-  my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $t_sth = $conf->{'dbh'}->prepare(
-      "select i.interpro_ac, tsi.stable_id
-       from $COREDB.interpro i, $COREDB.protein_feature pf, $COREDB.translation tl, $COREDB.transcript_stable_id tsi
-       where i.id = pf.hit_name
-       and pf.translation_id = tl.translation_id
-       and tl.transcript_id = tsi.transcript_id
-       group by i.interpro_ac");
-  $t_sth->execute;
-  my %t_examples;
-  while( my ($id, $example ) = $t_sth->fetchrow_array()){
-      $t_examples{$id} = $example;
-  }
-  my $sth = $conf->{'dbh'}->prepare(
-    "select x.dbprimary_acc, i.id, x.description
-       from $COREDB.xref as x, $COREDB.interpro as i
-      where x.dbprimary_acc = i.interpro_ac
-      order by x.dbprimary_acc");
-  $sth->execute();
-  open O, ">$conf->{'directory'}/Domain.txt";
-  my $old_acc     = '';
-  my $IDS         = '';
-  my $description = '';
-  my $counter     = 0;
-  my ($acc, $id, $desc, $old_desc, $example  );
-  while( ($acc, $id, $desc ) = $sth->fetchrow_array()){
-    if($acc eq $old_acc) {
-      $IDS         .= " $id";
-      $description .= ", $id";
-      $counter++;
-    }
-    else {
-      $example = $t_examples{$old_acc};
-      print O &domainLine($conf->{'species'}, $old_acc, $IDS, $old_desc, $counter, $description, $example );
-      $description = $id;
-      $IDS         = $id;
-      $old_acc     = $acc;
-      $old_desc    = $desc;
-      $counter     = 1;
-    }
-  }
-  print O &domainLine( $conf->{'species'}, $old_acc, $IDS, $old_desc, $counter, $description, $example );
-  close O;
-}
-
-sub domainLine {
-  my($species, $did, $IDS, $desc, $counter, $description, $example) = @_;
-  return if $did eq '';
-  return unless $example;
-  return join "\t",
-    (INC_SPECIES?"$species\t":"").qq(Interpro domain),    ## Type
-    qq($did),               ## ID
-    qq(/$species/Transcript/Domains/Genes?domain=$did;t=$example), ## URL
-    qq($did $IDS $desc),     ## Index locations
-    qq(InterPro domain $did [$desc] has $counter associated external database identifiers: $description.\n);   ## Description text
-
-}
 ########################################################################## Families
 
 sub dumpFamily {
-  my $conf = shift;
-  my $FAMDB = $conf->{'dbs'}->{'DATABASE_COMPARA'};
-  my $CORE  = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $t_sth = $conf->{'dbh'}->prepare(
-    "select meta_value from $CORE.meta where meta_key='species.taxonomy_id'"
-  );
+  my $conf   = shift;
+  my $FAMDB  = $conf->{'dbs'}->{'DATABASE_COMPARA'};
+  my $dbname = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $t_sth  = $conf->{'dbh'}->prepare("select meta_value from $dbname.meta where meta_key='species.taxonomy_id'");
   $t_sth->execute;
   my $taxon_id = ($t_sth->fetchrow);
   return unless $taxon_id;
 
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/Family_$dbname.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'core';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      || die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) || die "Can't open $file: $!";
+  }
+  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+
  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
 
-  my $sth = $conf->{'dbh_compara'}->prepare( "
-select f.stable_id,
-       f.description,
-       count(*) as N,
-       sum( (source_name = 'ENSEMBLGENE') and (m.genome_db_id = gd.genome_db_id) ) as ensembl_genes_species,
-       sum( (source_name = 'ENSEMBLPEP' ) and (m.genome_db_id = gd.genome_db_id) ) as ensembl_peptides_species,
-       sum(  source_name = 'ENSEMBLGENE'                                         ) as ensembl_genes,
-       sum(  source_name = 'ENSEMBLPEP'                                          ) as ensembl_peptides,
-       sum( (source_name = 'Uniprot/SPTREMBL' ) and (m.taxon_id = gd.taxon_id)   ) as uniprot_sptrembl_species,
-       sum( (source_name = 'Uniprot/SWISSPROT') and (m.taxon_id = gd.taxon_id)   ) as uniprot_swissprot_species,
-       sum(  source_name = 'Uniprot/SPTREMBL'                                    ) as uniprot_sptrembl,
-       sum(  source_name = 'Uniprot/SWISSPROT'                                   ) as uniprot_swissprot
-  from family as f, family_member as fm, member as m, genome_db as gd
- where f.family_id=fm.family_id and fm.member_id=m.member_id and
-       gd.name = '$species'
- group by f.family_id 
-having ensembl_genes_species > 0"
-  );
+  my $sth = $conf->{'dbh_compara'}->prepare(qq(
+    select f.stable_id,
+           f.description,
+           count(*) as N,
+           sum( (source_name = 'ENSEMBLGENE') and (m.genome_db_id = gd.genome_db_id) ) as ensembl_genes_species,
+           sum( (source_name = 'ENSEMBLPEP' ) and (m.genome_db_id = gd.genome_db_id) ) as ensembl_peptides_species,
+           sum(  source_name = 'ENSEMBLGENE'                                         ) as ensembl_genes,
+           sum(  source_name = 'ENSEMBLPEP'                                          ) as ensembl_peptides,
+           sum( (source_name = 'Uniprot/SPTREMBL' ) and (m.taxon_id = gd.taxon_id)   ) as uniprot_sptrembl_species,
+           sum( (source_name = 'Uniprot/SWISSPROT') and (m.taxon_id = gd.taxon_id)   ) as uniprot_swissprot_species,
+           sum(  source_name = 'Uniprot/SPTREMBL'                                    ) as uniprot_sptrembl,
+           sum(  source_name = 'Uniprot/SWISSPROT'                                   ) as uniprot_swissprot
+      from family as f, family_member as fm, member as m, genome_db as gd
+     where f.family_id=fm.family_id and fm.member_id=m.member_id and
+           gd.name = '$species'
+     group by f.family_id 
+    having ensembl_genes_species > 0));
   $sth->execute();
-  open O, ">$conf->{'directory'}/Family.txt";
   my $X = $conf->{'authority'} || 'Ensembl';
   while( my(
-    $fid, $desc, $total, 
+    $fid, $desc, $total,
     $ensembl_genes_species, $ensembl_peptides_species, $ensembl_genes, $ensembl_peptides,
     $uniprot_sptrembl_species, $uniprot_swissprot_species,
     $uniprot_sptrembl, $uniprot_swissprot
   ) = $sth->fetchrow_array()) {
-    print O join "\t",
-(INC_SPECIES?"$species\t":"").qq(Ensembl protein family),    ## Type
-        qq($fid),               ## ID
-        qq(/$conf->{'species'}/Gene/Family/Genes?family=$fid), ## URL,
-        qq($fid $desc), ## keywords...
-        qq(Ensembl protein family $fid [$desc] has $total members: $ensembl_genes $X genes ($ensembl_genes_species in $species); $ensembl_peptides $X proteins ($ensembl_peptides_species in $species); $uniprot_swissprot UniProtKB/Swiss-Prot proteins ($uniprot_swissprot_species in $species); $uniprot_sptrembl UniProtUK/TrEMBL proteins ($uniprot_sptrembl_species in $species).\n); ## Description text
+    my $desc = qq(Ensembl protein family $fid [$desc] has $total members: $ensembl_genes $X genes ($ensembl_genes_species in $species); $ensembl_peptides $X proteins ($ensembl_peptides_species in $species); $uniprot_swissprot UniProtKB/Swiss-Prot proteins ($uniprot_swissprot_species in $species); $uniprot_sptrembl UniProtUK/TrEMBL proteins ($uniprot_sptrembl_species in $species).);
+    &p( FamilyLine($dbspecies,$fid,$desc,$counter ), $nogzip, $fh);
   }
-  close O;
+  return footer( $counter->(),$nogzip,$fh);
 }
 
-sub familyLine {
-    my($species, $fid, $IDS, $desc, $counter, $description) = @_;
-    return if $fid eq '';
-    return join "\t",
-        (INC_SPECIES?"$species\t":"").qq(Ensembl protein family),    ## Type
-        qq($fid),               ## ID
-        qq(/$species/familyview?family=$fid), ## URL
-        qq($fid $IDS $desc),     ## Index locations
-        qq(Ensembl protein family $fid [$desc] has $counter members: $description.\n);   ## Description text
+sub FamilyLine {
+  my($species, $fid, $desc, $counter) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$fid">
+  <description>$desc</description>
+  <additional_fields>);
+  $xml .= qq(
+  <additional_fields>
+    <field name="species">$species</field>
+    <field name="featuretype">Family</field>
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'Family'}++;
+  $counter->();
+  return $xml . '</entry>';
 }
- 
+
+########################################################################## Sequences
+
+sub dumpSequence {
+  my $conf = shift;
+  my $sanger = sanger_project_names( $conf );
+  my @misc_feat_disallowed = (); #features that we know we don't want to dump if we ever decide to do this (not implemented)
+  my @name_order = (qw(name well_name clone_name sanger_project synonym embl_acc)); #defines the order of attribute_type we use to get the name for misc_features (comes from B::E::G::_clone.pm)
+  my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $OTFEATDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my %dbs      = ( 'core' => $COREDB );
+  $dbs{'otherfeatures'} =  $OTFEATDB if $OTFEATDB;
+
+  my $total_c;
+ DB:
+  foreach my $db ( sort { $b cmp $a } keys %dbs) {
+    my $dbname    = $dbs{$db};
+    my $counter   = make_counter(0);
+    my $dbspecies = $conf->{'species'};
+    my $file = $conf->{'directory'}."/Sequence_$dbname.xml";
+    $file .= ".gz" unless $nogzip;
+    my $start_time = time;
+    my $fh;
+    unless ($nogzip) {
+      $fh = new IO::Zlib;
+      $fh->open( "$file", "wb9" )
+	|| die("Can't open compressed stream to $file: $!");
+    }
+    else {
+      open( FILE, ">$file" ) || die "Can't open $file: $!";
+    }
+    print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+    header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
+
+    #get all types of misc features - used for 'type' label
+    my $feat_types = $conf->{'dbh'}->selectall_hashref(qq(
+		  SELECT ms.code, ms.misc_set_id, ma.value as type 
+                    FROM $dbname.attrib_type at, $dbname.misc_attrib ma, $dbname.misc_feature_misc_set mfms, $dbname.misc_set ms
+                   WHERE at.attrib_type_id = ma.attrib_type_id
+                     AND ma.misc_feature_id = mfms.misc_feature_id 
+                     AND mfms.misc_set_id = ms.misc_set_id 
+                     AND at.code = 'type'
+                   GROUP by ms.code, ma.value), 'misc_set_id');
+    if (%$feat_types) {
+      my $mapsets = join ',', keys %$feat_types;
+      #get al misc_features
+      my $sth = $conf->{'dbh'}->prepare(qq(
+       SELECT mf.misc_feature_id, sr.name, cs.name, mf.seq_region_start, mf.seq_region_end,
+              mf.seq_region_end-mf.seq_region_start+1 as len, ms.misc_set_id, at.code, ma.value
+         FROM $dbname.misc_feature_misc_set as ms,
+              $dbname.misc_feature as mf,
+              seq_region as sr,
+              coord_system as cs,
+              $dbname.misc_attrib as ma,
+              $dbname.attrib_type as at
+        WHERE cs.coord_system_id = sr.coord_system_id
+          AND sr.seq_region_id = mf.seq_region_id 
+          AND mf.misc_feature_id = ms.misc_feature_id
+          AND ms.misc_set_id in ($mapsets)
+          AND mf.misc_feature_id = ma.misc_feature_id
+          AND ma.attrib_type_id = at.attrib_type_id
+        ORDER by mf.misc_feature_id, at.code));
+      $sth->execute();
+      my ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$NAMES,$ftype);
+      while( my($ID,$sr,$sr_type,$start,$end,$len,$ms_id,$code,$val) = $sth->fetchrow_array() ) {
+	if($ID == $old_ID) {
+	  if (! $ftype && $code eq 'type') {
+	    $ftype = $feat_types->{$ms_id}{'type'};
+	    #some hacks for the display of the type
+	    $ftype =~ s/_/ /;
+	    $ftype =~ s/arrayclone/clone/;
+	    $ftype = ucfirst($ftype);
+	  }
+	  if (grep {$code eq $_} @name_order) {
+	    push @$NAMES, [$code,$val];
+	  }
+	}
+	else {
+	  if ($old_ID) {
+	    my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
+	    &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
+	    $NAMES = undef;
+	    $ftype = undef;
+	  }
+	  if (! $ftype && $code eq 'type') {
+	    $ftype = $feat_types->{$ms_id}{'type'};
+	    $ftype =~ s/_/ /;
+	    $ftype =~ s/arrayclone/clone/;
+	    $ftype = ucfirst($ftype);
+	  }
+	  if (grep {$code eq $_} @name_order) {
+	    push @$NAMES, [$code,$val];
+	  }
+	  ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len) = ($ID,$sr,$sr_type,$start,$end,$len);
+	}
+      }
+      my ( $name, $synonyms) = sort_mf_names($NAMES,\@name_order);
+      &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
+
+    }
+    if ($db ne 'core') {
+      $total_c += footer( $counter->(),$nogzip,$fh);
+      next DB;
+    };
+
+    #identify current default top level
+    (my $current_cs_id) = $conf->{'dbh'}->selectrow_array(qq(
+       SELECT cs.coord_system_id
+         FROM coord_system cs, meta m
+        WHERE cs.version = m.meta_value
+          AND cs.name = 'chromosome'
+          AND m.meta_key = 'assembly.default'));
+
+    #get mappings between toplevel assemblies
+    my $sth = $conf->{'dbh'}->prepare(qq(
+       SELECT distinct sr1.name, sr1.length, sr2.name, cs2.coord_system_id
+         FROM coord_system cs1, seq_region sr1, assembly a, seq_region sr2, coord_system cs2
+        WHERE cs1.coord_system_id = sr1.coord_system_id
+          AND sr1.seq_region_id = a.asm_seq_region_id
+          AND a.cmp_seq_region_id = sr2.seq_region_id
+          AND sr2.coord_system_id = cs2.coord_system_id
+          AND cs1.name = 'chromosome'
+          AND cs2.name = 'chromosome'));
+    my $mapped_ids;
+    $sth->execute;
+    while (my ($new_name,$new_length,$prev_name,$prev_coord_system_id) =  $sth->fetchrow_array() ) {
+      $mapped_ids->{$prev_coord_system_id}{$prev_name}{'name'}   = $new_name;
+      $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
+    }
+
+    #get all seq_regions
+    $sth = $conf->{'dbh'}->prepare(qq(
+       SELECT sr.name, sr.length, cs.name, cs.coord_system_id
+         FROM seq_region as sr, coord_system as cs
+        WHERE sr.coord_system_id = cs.coord_system_id));
+    $sth->execute();
+    while( my($name,$length,$type,$cs_id) = $sth->fetchrow_array() ) {
+      my ($prev_name,$prev_length);
+      if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
+	# if an old seq_region is mapped to a new one use it...
+	if ($mapped_ids->{$cs_id}{$name}) {
+	  $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
+	  $prev_length = $mapped_ids->{$cs_id}{$name}{'length'};
+	  if ($prev_name ne $name) { #don't dump identically named regions
+	    print "WARNING: dumping assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we havn't come across this before";
+	    $name = $prev_name;
+	    $length = $prev_length;
+	  }
+	}
+	else {
+	  #...otherwise ignore
+	  #	warn "not dumping $name on coord_system $cs_id since it's an old assembly with no mapping";
+	  next;
+	}
+      }
+      my ($prev_name,$extra_IDS);
+      my $ids = $prev_name ? "$prev_name$extra_IDS" : "$name$extra_IDS";
+      &p( SeqLine($dbspecies,$name,$type,1,$length,$length,$name,[],$type,$sanger,$counter), $nogzip, $fh);
+    }
+    $total_c += footer( $counter->(),$nogzip,$fh);
+  }
+  return $total_c;
+}
+
+#decide which of the possible many name entries we should be using, the rest will be synonyms
+sub sort_mf_names {
+  my ($all_names, $name_order) = @_;
+  my $name_to_use;
+  foreach my $name_type ( @$name_order ) {
+    unless ($name_to_use) {
+      foreach my $name (@$all_names) {
+	if ($name->[0] eq $name_type) {
+	  $name_to_use = $name->[1];
+	}
+      }
+    }
+  }
+  my @synonyms = map {$_->[1]} grep { $_->[1] ne $name_to_use } @$all_names;
+  return $name_to_use, \@synonyms ;
+}
+
+sub SeqLine {
+  my($species,$sr,$sr_type,$start,$end,$len,$name,$synonyms,$type,$sanger,$counter) = @_;
+  $species =~ s/_/ /;
+  print "WARNING: no type set for $name" unless $type;
+  my $action = $len > 0.5e6 ? 'Overview' : 'View';
+  my $r = "$sr:$start-$end";
+  my $desc = ($name eq $sr) ? "$type $name has a length of $len bp" : "$type $name (length $len bp) is mapped to $sr_type $sr.";
+  my $extra_desc = '';
+
+  #deal with any synonyms
+  if (@$synonyms) {
+    $extra_desc = " It has EMBL accessions / synonyms of " . join(',',@$synonyms) . ".";
+  }
+
+ #deal with with Sanger Projects
+  my %extra;
+  foreach my $n ($name, @$synonyms) {
+    foreach( keys %{$sanger->{$n}||{}} ) {
+      $extra{$_}=1;
+    }
+  }
+  if (%extra) {
+    foreach my $k (keys %extra) {
+      push @$synonyms, $k unless grep {$_ eq $k} @$synonyms;
+    }
+    $extra_desc .= " It is mapped to the following Sanger projects: ".join( ', ',sort keys %extra ) . ".";
+  }
+
+  $desc .= $extra_desc;
+
+  my $xml = qq(
+<entry id="$name">
+  <description>$desc</description>);
+  $xml .= qq(
+  <additional_fields>
+    <field name="species">$species</field>
+    <field name="featuretype">Sequence</field>
+    <field name="location">$r</field>
+    <field name="action">$action</field>);
+  foreach my $syn (@$synonyms) {
+    $xml .= qq(
+    <field name="synonym">$syn</field>);
+    $additional_fields{'synonym'}++;
+  }
+  $xml .= qq(
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{'Sequence'}++;
+  $additional_fields{'location'}++;
+  $additional_fields{'action'}++;
+  $counter->();
+  return $xml . '</entry>';
+}
+
+sub sanger_project_names {
+  my $conf = shift;
+  my %SPECIES = qw(
+    Homo_sapiens Human Mus_musculus Mouse Danio_rerio Zebrafish
+    Drosophila_melanogaster Drosophila Rattus_norvegicus Rat
+  );
+  my $sanger_species_name = $SPECIES{$conf->{'species'}};
+  return {} unless $sanger_species_name;
+  my $clones = {};
+  my $dbh = DBI->connect("DBI:mysql:host=otterlive;port=3301;database=submissions", 'ottro', undef, {RaiseError => 1});
+  unless( $dbh ) {
+    warn "Can't connect to submissions database as 'read_only' ", DBI::errstr();
+    return $clones;
+  }
+  my $sth = $dbh->prepare(
+    "SELECT distinct a.project_name, a.accession 
+       FROM project_acc a, project_dump d,
+            sequence s, species_chromosome c
+      WHERE a.sanger_id = d.sanger_id AND d.seq_id = s.seq_id
+        AND s.chromosome_id = c.chromosome_id 
+        AND c.species_name = '$sanger_species_name' AND a.accession != 'UNKNOWN'"
+  );
+  $sth->execute(  );
+  while( my ($proj, $acc) = $sth->fetchrow() ) {
+    $clones->{$acc}{$proj}=1;
+  }
+  return $clones;
+}
+
+
 ########################################################################## Genes
 
 sub dumpGene {
@@ -1053,215 +1469,6 @@ sub geneLine {
     );
 }
 
-########################################################################## Sequences
-
-sub dumpSequence {
-  my $conf = shift;
-  my $sanger = sanger_project_names( $conf );
-  my %config = (
-    "Homo_sapiens" => [
-      [ 'Clone',      'tilepath,cloneset_1mb,cloneset_30k,cloneset_32k', 'name,well_name,clone_name,synonym,embl_acc,sanger_project,alt_well_name,bacend_well_name' ],
-      [ 'NT Contig',  'ntctgs',                  'name' ],
-      [ 'Encode region', 'encode', 'name,synonym,description' ],
-    ],
-    "Mus_musculus" => [
-      [ 'BAC',        'cloneset_0_5mb,cloneset_1mb,bac_map,tilingpath_cloneset', 'embl_acc,name,clone_name,well_name,synonym,alt_embl_acc' ],
-      [ 'Fosmid',     'fosmid_map', 'name,clone_name' ],
-      [ 'Supercontig','superctgs', 'name' ],
-    ],
-    "Anopheles_gambiae" => [
-      [ 'BAC' ,       'bacs',        'name,synonym,clone_name' ],
-      [ 'BAC band' ,  'bacs_bands',  'name,synonym,clone_name' ],
-    ],
-    "Gallus_gallus" => [
-      [ 'BAC', 'bac_map', 'name,synonym,clone_name' ],
-      [ 'BAC ends', 'bacends', 'name,synonym,clone_name', 'otherfeatures' ]
-    ]
-  );
-  
-  my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $ESTDB    = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
-  open O, ">$conf->{'directory'}/Sequence.txt";
-  my @types = @{$config{$conf->{'species'}}||[]};
-  foreach my $arrayref ( @types ) {
-    my( $TYPE, $mapsets, $annotationtypes,$DB ) = @$arrayref;
-    my $DB = $DB eq 'otherfeatures' ? $ESTDB : $COREDB;
-    my @temp         = split (',',$mapsets);
-    my @mapsets;
-    foreach my $X ( @temp ) {
-       my $ID = $conf->{'dbh'}->selectrow_array( "select misc_set_id from $DB.misc_set where code = ?", {}, $X );
-      push @mapsets, $ID if($ID);
-    }
-    next unless @mapsets;
-    @temp = split (',',$annotationtypes);
-    my @mapannotationtypes;
-    foreach my $X ( @temp ) {
-      my $ID = $conf->{'dbh'}->selectrow_array( "select attrib_type_id from $DB.attrib_type where code = ?", {}, $X );
-      push @mapannotationtypes, $ID if($ID);
-    }
-    next unless @mapannotationtypes;
-    my $Z = " ma.value";
-    my $MAPSETS = join ',',@mapsets;
-    my $sth = $conf->{'dbh'}->prepare(
-      "select mf.misc_feature_id, sr.name, mf.seq_region_start, mf.seq_region_end,
-              ma.value, mf.seq_region_end-mf.seq_region_start+1 as len, 
-              at.code
-         from $DB.misc_feature_misc_set as ms, 
-              $DB.misc_feature as mf,
-              seq_region   as sr,
-              $DB.misc_attrib  as ma,
-              $DB.attrib_type  as at 
-        where mf.seq_region_id = sr.seq_region_id and mf.misc_feature_id = ms.misc_feature_id and ms.misc_set_id in ($MAPSETS) and
-              mf.misc_feature_id = ma.misc_feature_id and ma.attrib_type_id = at.attrib_type_id
-        order by mf.misc_feature_id, at.code"
-    );
-    $sth->execute();
-    my ($oldtype,$old_ID,$oldchr,$old_start,$old_end,$emblaccs,$oldlen,$synonyms, $NAME );
-    while( my($ID,$chr,$start,$end,$val,$len,$type) = $sth->fetchrow_array() ) {
-      if($ID == $old_ID) {
-        $NAME = $val if $type eq 'well_name' || $type eq 'clone_name' || $type eq 'name' || $type eq 'non_ref';
-        $NAME = $val if !$NAME && $type eq 'embl_acc';
-        $NAME = $val if !$NAME && $type eq 'synonym';
-        $NAME = $val if !$NAME && $type eq 'sanger_project';
-        $emblaccs.=", $val" if $val;
-      } else {
-        print O &seqLine( $conf->{'species'},$TYPE,$NAME,$oldchr,$old_start,$old_end,$emblaccs,$oldlen,$sanger) if $old_ID;
-        $NAME = undef;
-        $NAME = $val if $type eq 'well_name' || $type eq 'clone_name' || $type eq 'name' || $type eq 'non_ref';
-        $NAME = $val if !$NAME && $type eq 'embl_acc';
-        $NAME = $val if !$NAME && $type eq 'synonym';
-        $NAME = $val if !$NAME && $type eq 'sanger_project';
-        ($old_ID,$oldchr,$old_start,$old_end,$emblaccs,$oldlen) = ($ID,$chr,$start,$end,$val,$len);
-      }
-    }
-    print O &seqLine( $conf->{'species'},$TYPE,$NAME,$oldchr,$old_start,$old_end,$emblaccs,$oldlen,$sanger) if $old_ID;
-  }
-
-  #identify current default top level
-  (my $current_cs_id) = $conf->{'dbh'}->selectrow_array(
-     "select cs.coord_system_id
-        from coord_system cs, meta m
-       where cs.version = m.meta_value
-         and cs.name = 'chromosome'
-         and m.meta_key = 'assembly.default'");
-
-  #get mappings between toplevel assemblies
-  my $sth = $conf->{'dbh'}->prepare(
-     "select distinct sr1.name, sr1.length, sr2.name, cs2.coord_system_id
-        from coord_system cs1, seq_region sr1, assembly a, seq_region sr2, coord_system cs2
-       where cs1.coord_system_id = sr1.coord_system_id
-         and sr1.seq_region_id = a.asm_seq_region_id
-         and a.cmp_seq_region_id = sr2.seq_region_id
-         and sr2.coord_system_id = cs2.coord_system_id
-         and cs1.name = 'chromosome'
-         and cs2.name = 'chromosome'");
-  my $mapped_ids;
-  $sth->execute;
-  while (my ($new_name, $new_length, $prev_name, $prev_coord_system_id) =  $sth->fetchrow_array() ) {
-    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'name'} = $new_name;
-    $mapped_ids->{$prev_coord_system_id}{$prev_name}{'length'} = $new_length;
-  }
-
-  #get all seq_regions
-  $sth = $conf->{'dbh'}->prepare(
-    "select c.name, c.length, cs.name, cs.coord_system_id
-       from seq_region as c, coord_system as cs
-      where c.coord_system_id = cs.coord_system_id" );
-  $sth->execute();
-  while( my($name,$length,$type,$cs_id) = $sth->fetchrow_array() ) {
-    my ($prev_name,$prev_length);
-    if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
-      # if an old seq_region is mapped to a new one use it...
-      if ($mapped_ids->{$cs_id}{$name}) {
-	$prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
-	$prev_length = $mapped_ids->{$cs_id}{$name}{'length'};
-	if ($prev_name ne $name) { #don't dump identically named regions
-	  warn "dumping assembly mapped seq_region $prev_name instead of $name, please check it's correct since this hasn't been checked yet";
-	  $name = $prev_name;
-	  $length = $prev_length;
-	}
-      }
-      else {
-	#...otherwise ignore
-#	warn "not dumping $name on coord_system $cs_id since it's an old assembly with no mapping";
-	next;
-      }
-    }
-    my $extra_IDS = ''; my $extra_desc = '';
-    if( %{$sanger->{$name}||{}} ) {
-      $extra_IDS  = join ' ', '',sort keys %{$sanger->{$name}};
-      $extra_desc = " and corresponds to the following Sanger projects: ".join( ', ',sort keys %{$sanger->{$name}});
-    }
-    my $r   = "$name:1-$length";
-    my $ids = $prev_name ? "$prev_name$extra_IDS" : "$name$extra_IDS";
-    print O join "\t",
-      (INC_SPECIES?"$conf->{'species'}\t":"").ucfirst($type), 
-      $prev_name ? $prev_name : $name,
-      ($type eq 'chromosome' && length( $name ) < 5) ? "/$conf->{'species'}/Location/Chromosome?r=$r" 
-         : ($length > 0.5e6) ? "/$conf->{'species'}/Location/Overview?r=$r" 
-         : "/$conf->{'species'}/Location/View?r=$r",
-      "$ids",
-      "$name is a @{[ucfirst($type)]} (of length $length)$extra_desc\n";
-  }
-  close O;
-}
-
-sub seqLine {
-  my($species,$type,$name,$chr,$start,$end,$val,$len,$sanger) = @_;
-  my $Q = $val; $Q=~s/,//g;
-  my $SCRIPT = $len > 0.5e6 ? 'Location/Overview' : 'Location/View';
-  my $r = "$chr:$start-$end";
-  my $extra_IDS = '';
-  my $extra_desc = '';
-  my %HASH;
-  foreach ( split / +/,"$name $val" ) {
-    foreach( keys %{$sanger->{$name}||{}} ) {
-      $HASH{$_}=1;
-    }
-  }
-  if( %HASH ) {
-    $extra_IDS  = join ' ', '',sort keys %HASH;
-    $extra_desc = " and corresponds to the following Sanger projects: ".join( ', ',sort keys %HASH );
-  }
-
-  return join "\t",
-    (INC_SPECIES?"$species\t":"").$type,
-    $name, "/$species/$SCRIPT?r=$r",
-    "$name $Q$extra_IDS",
-    "$type $name is mapped to Chromosome $chr, and has". (($val &&  ($val ne "")) ? " EMBL accession(s)/synonyms $val and " : "").
-    " length $len bps$extra_desc\n";
-}
-
-########################################################################## Sanger Projects
-
-sub sanger_project_names {
-  my $conf = shift;
-  my %SPECIES = qw(
-    Homo_sapiens Human Mus_musculus Mouse Danio_rerio Zebrafish
-    Drosophila_melanogaster Drosophila Rattus_norvegicus Rat
-  );
-  my $sanger_species_name = $SPECIES{$conf->{'species'}};
-  return {} unless $sanger_species_name;
-  my $clones = {};
-  my $dbh = DBI->connect("DBI:mysql:host=otterlive;port=3301;database=submissions", 'ottro', undef, {RaiseError => 1});
-  unless( $dbh ) {
-    warn "Can't connect to submissions database as 'read_only' ", DBI::errstr();
-    return $clones;
-  }
-  my $sth = $dbh->prepare(
-    "SELECT distinct a.project_name, a.accession 
-       FROM project_acc a, project_dump d,
-            sequence s, species_chromosome c
-      WHERE a.sanger_id = d.sanger_id AND d.seq_id = s.seq_id
-        AND s.chromosome_id = c.chromosome_id 
-        AND c.species_name = '$sanger_species_name' AND a.accession != 'UNKNOWN'"
-  );
-  $sth->execute(  );
-  while( my ($proj, $acc) = $sth->fetchrow() ) {
-    $clones->{$acc}{$proj}=1;
-  }
-  return $clones;
-}
 
 ########################################################################## Regulatory Features
 
@@ -1399,7 +1606,7 @@ sub header {
 }
 
 sub footer {
-  my ($ecount,$nogzip, $fh, $release,$total) = @_;
+  my ($ecount,$nogzip, $fh, $release) = @_;
   p("</entries>",$nogzip,$fh);
   p("<entry_count>$ecount</entry_count>",$nogzip,$fh);
   p("</database>",$nogzip,$fh);
@@ -1410,17 +1617,15 @@ sub footer {
   else {
     $fh->close();
   }
-  $total += $ecount;
-  return $total;
+  return $ecount;
 }
-
 
 sub p {
   my ($str,$nogzip,$fh) = @_;
 
-#  warn $str;
-#  warn $nogzip;
-#  warn Data::Dumper::Dumper($fh);
+#  warn "string = $str";
+#  warn "warn nogzip = $nogzip";
+#  warn "fh = ".Data::Dumper::Dumper($fh);
 
   # TODO - encoding
   $str .= "\n";
@@ -1428,6 +1633,8 @@ sub p {
     print FILE $str or die "Can't write to file ", $!;
   }
   else {
+    use Carp qw(cluck);
+    cluck 'erre';
     print $fh $str or die "Can't write string: $str";
   }
 }
