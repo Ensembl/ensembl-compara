@@ -187,10 +187,12 @@ CREATE TABLE `anchor_align` (
 -- This is a temporary table used by family pipeline to hold the blast scores to be fed into MCL
 --
 
-CREATE TABLE mcl_matrix (
-        id int(10) unsigned NOT NULL,   # a non-autoincrementing numeric id
-        rest mediumtext NOT NULL,       # a string of text containing (sequence_id:blast_score) pairs in input MCL format
-    PRIMARY KEY (id)
+CREATE TABLE `mcl_sparse_matrix` (
+    `row_id` int(10) unsigned NOT NULL,     # sequence_id, 1st dimension
+    `column_id` int(10) unsigned NOT NULL,  # sequence_id, 2nd dimension
+    `value` float DEFAULT NULL,             # the blast score (e-value) on the intersection
+    PRIMARY KEY (`row_id`,`column_id`),
+    KEY `row_id` (`row_id`)
 ) ENGINE=InnoDB;
 
 ------------------------------------------------------------------------------------------------
