@@ -1228,7 +1228,7 @@ sub init_instance_from_rowhash {
 sub _create_GenomicAlignGroup_object_from_rowhash {
   my ($self, $rowhash) = @_;
 
-  return undef if (!$rowhash->{node_id});
+  return undef if (!$rowhash->{genomic_align_id});
 
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
   $genomic_align_group->dbID($rowhash->{node_id});
