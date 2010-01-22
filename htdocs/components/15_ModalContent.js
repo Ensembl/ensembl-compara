@@ -101,31 +101,29 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       });
     }
     
-    if (Ensembl.FormValidator.submit(form)) {
-      this.elLk.content.html('<div class="spinner">Loading Content</div>');
-      
-      $.ajax({
-        url: form.attr('action'),
-        type: form.attr('method'),
-        data: data,
-        dataType: 'json',
-        context: this,
-        success: function (json) {
-          if (json.redirectURL) {
-            return this.getContent(undefined, json.redirectURL);
-          }
-          
-          if (json.success === true) {
-            Ensembl.EventManager.trigger('reloadPage');
-          } else if ($(this.el).is(':visible')) {
-            this.updateContent(json);
-          }
-        },
-        error: function (e) {
-          this.elLk.content.html('<p class="ajax_error">Failure: the resource failed to load</p>');
+    this.elLk.content.html('<div class="spinner">Loading Content</div>');
+    
+    $.ajax({
+      url: form.attr('action'),
+      type: form.attr('method'),
+      data: data,
+      dataType: 'json',
+      context: this,
+      success: function (json) {
+        if (json.redirectURL) {
+          return this.getContent(undefined, json.redirectURL);
         }
-      });
-    }
+        
+        if (json.success === true) {
+          Ensembl.EventManager.trigger('reloadPage');
+        } else if ($(this.el).is(':visible')) {
+          this.updateContent(json);
+        }
+      },
+      error: function (e) {
+        this.elLk.content.html('<p class="ajax_error">Failure: the resource failed to load</p>');
+      }
+    });
     
     return false;
   },

@@ -36,22 +36,11 @@ Ensembl.LayoutManager.extend({
       this.target = '_blank';
     });
     
-    $('form.check').live('submit', function () {
+    $('form.check').validate().live('submit', function () {
       var form = $(this);
-      var rtn = form.parents('#modal_panel').length ? 
-                Ensembl.EventManager.trigger('modalFormSubmit', form) : 
-                Ensembl.FormValidator.submit(form);
-      
+      var rtn = form.parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', form) : true;      
       form = null;
       return rtn;
-    });
-    
-    $(':input', 'form.check').live('keyup', function () {
-      Ensembl.FormValidator.check($(this));
-    }).live('change', function () {
-      Ensembl.FormValidator.check($(this));
-    }).each(function () {
-      Ensembl.FormValidator.check($(this));
     });
     
     // Close modal window if the escape key is pressed
@@ -94,9 +83,7 @@ Ensembl.LayoutManager.extend({
   },
   
   validateForms: function (context) {
-    $('form.check', context).find(':input').each(function () {
-      Ensembl.FormValidator.check($(this));
-    });
+    $('form.check', context).validate();
   },
   
   makeZMenu: function (id, params) {
