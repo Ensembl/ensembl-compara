@@ -8,21 +8,26 @@ use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 sub load_fasta_sequences_from_db {
     my ($self, $start_seq_id, $minibatch, $overwrite) = @_;
 
-    my $offset                  = $self->param('offset') || 0;
-    my $idprefixed              = $self->param('idprefixed') || 0;
+    my $offset                  = $self->param('offset')      || 0;
+    my $idprefixed              = $self->param('idprefixed')  || 0;
+    my $debug                   = $self->debug() || $self->param('debug') || 0;
 
     my $sql = qq {
         SELECT s.sequence_id, m.stable_id, s.sequence
           FROM member m, sequence s
-    }.($overwrite ? '' : ' LEFT JOIN mcl_matrix x ON (s.sequence_id+?)=x.id ')
+    }.($overwrite ? '' : ' LEFT JOIN mcl_sparse_matrix x ON (s.sequence_id+?)=x.row_id ')
     .qq{
          WHERE s.sequence_id BETWEEN ? AND ?
            AND m.sequence_id=s.sequence_id
-    }.($overwrite ? '' : ' AND x.id IS NULL ')
+    }.($overwrite ? '' : ' AND x.row_id IS NULL ')
     .qq{
       GROUP BY s.sequence_id
       ORDER BY s.sequence_id
     };
+
+    if($debug) {
+        print "SQL:  $sql\n";
+    }
 
     my $sth = $self->dbc->prepare( $sql );
     $sth->execute( ($overwrite ? () : ($offset)), $start_seq_id, $start_seq_id+$minibatch-1 );
@@ -104,12 +109,16 @@ sub fetch_input {
     my $start_seq_id            = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
     my $minibatch               = $self->param('minibatch')   || 1;
     my $overwrite               = $self->param('overwrite')   || 0; # overwrite=0 means we only fill in holes, overwrite=1 means we rewrite everything
-    my $debug                   = $self->param('debug')       || 0;
+    my $debug                   = $self->debug() || $self->param('debug') || 0;
 
     my $fasta_list = $self->load_fasta_sequences_from_db($start_seq_id, $minibatch, $overwrite);
 
     if($overwrite and scalar(@$fasta_list)<$minibatch) {
         die "Could not load all ($minibatch) sequences, please investigate";
+    }
+
+    if($debug) {
+        print "Loaded ".scalar(@$fasta_list)." sequences\n";
     }
 
     $self->param('fasta_list', $fasta_list);
@@ -118,7 +127,7 @@ sub fetch_input {
 }
 
 sub parse_blast_table_into_matrix_hash {
-    my ($self, $filename) = @_;
+    my ($self, $filename, $min_self_dist) = @_;
 
     my $roundto    = $self->param('roundto') || 0.0001;
 
@@ -126,25 +135,18 @@ sub parse_blast_table_into_matrix_hash {
 
     my $curr_name    = '';
     my $curr_index   = 0;
-    my @dist_accu    = ();
 
     open(BLASTTABLE, "<$filename") || die "Could not open the blast table file '$filename'";
     while(my $line = <BLASTTABLE>) {
 
         if($line=~/^#/) {
-            if($line=~/^#\s+BLASTP/) {
-                if($curr_index) {
-                    $matrix_hash{$curr_index} = join(' ', @dist_accu, '$'); # flush the buffer
-                    @dist_accu = ();
-                }
-            } elsif($line=~/^#\s+Query:\s+(\S+)/) {
+            if($line=~/^#\s+Query:\s+(\S+)/) {
                 $curr_name  = $1;
-                $curr_index = $self->name2index($curr_name);
+                $curr_index = $self->name2index($curr_name)
+                    || die "Parser could not map '$curr_name' to sequence_id";
 
-                # for debugging purposes only:
-                unless($curr_index) {
-                    push @dist_accu, "PARSE_ERROR=($curr_name)";
-                }
+                $matrix_hash{$curr_index}{$curr_index} = $min_self_dist;   # stop losing singletons whose evalue to themselves is *above* 'evalue_limit' threshold
+                                                                           # (that is, the ones that are "not even similar to themselves")
             }
         } else {
             my ($qname, $hname, $identity, $align_length, $mismatches, $gap_openings, $qstart, $qend, $hstart, $hend, $evalue, $bitscore)
@@ -157,11 +159,10 @@ sub parse_blast_table_into_matrix_hash {
                 # do the rounding to prevent the unnecessary growth of tables/files
             $distance = int($distance / $roundto) * $roundto;
 
-            push @dist_accu, $hit_index.':'.$distance;
+            $matrix_hash{$curr_index}{$hit_index} = $distance;
         }
     }
     close BLASTTABLE;
-    $matrix_hash{$curr_index} = join(' ', @dist_accu, '$'); # flush the buffer
 
     return \%matrix_hash;
 }
@@ -170,7 +171,7 @@ sub run {
     my $self = shift @_;
 
     my $fasta_list              = $self->param('fasta_list'); # set by fetch_input()
-    my $debug                   = $self->param('debug')         || 0;
+    my $debug                   = $self->debug() || $self->param('debug') || 0;
 
     unless(scalar(@$fasta_list)) { # if we have no more work to do just exit gracefully
         if($debug) {
@@ -211,7 +212,7 @@ sub run {
     print BLAST @$fasta_list;
     close BLAST;
 
-    my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile);
+    my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile, -log($evalue_limit)/log(10) );
 
     my $incomplete = $self->param('incomplete', (scalar(keys %$matrix_hash) != scalar(@$fasta_list)) );
 
@@ -233,12 +234,14 @@ sub write_output {
 
         my $offset                  = $self->param('offset') || 0;
 
-        my $sql = "REPLACE INTO mcl_matrix (id, rest) VALUES (?, ?)";
+        my $sql = "REPLACE INTO mcl_sparse_matrix (row_id, column_id, value) VALUES (?, ?, ?)";
 
         my $sth = $self->dbc->prepare( $sql );
 
-        while(my($id, $rest) = each %$matrix_hash) {
-            $sth->execute( $id + $offset, $rest );
+        while(my($row_id, $subhash) = each %$matrix_hash) {
+            while(my($column_id, $value) = each %$subhash) {
+                $sth->execute( $row_id + $offset, $column_id + $offset, $value );
+            }
         }
         $sth->finish();
     }
