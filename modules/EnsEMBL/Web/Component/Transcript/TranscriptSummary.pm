@@ -104,7 +104,7 @@ sub content {
   my $frameshift_introns = $object->get_frameshift_introns;
   if ($frameshift_introns){
     $table->add_row('Frameshift introns',
-        '<p><a href="/Help/View?id=151">Frameshift introns</a> occur at intron number(s)  '. $frameshift_introns.'.</p>',  
+        '<p><a  target="external" href="/Help/Glossary?id=231">Frameshift introns</a> occur at intron number(s)  '. $frameshift_introns.'.</p>',  
         1 );
   }
 
