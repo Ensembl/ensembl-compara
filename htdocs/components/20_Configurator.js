@@ -135,6 +135,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   updateConfiguration: function (delayReload) {
+    if ($('input.invalid', this.elLk.form).length) {
+      return;
+    }
+    
     var myself  = this;
     var d       = false;
     var diff    = { config: this.initialConfig.config };
