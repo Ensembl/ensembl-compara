@@ -1825,8 +1825,12 @@ sub _get_all_ref_genomic_aligns {
              length
           FROM 
              genomic_align 
+          LEFT JOIN
+             genomic_align_block
+          USING
+             (genomic_align_block_id)
           WHERE 
-             method_link_species_set_id = ?
+             genomic_align.method_link_species_set_id = ?
              AND dnafrag_id = ?
              AND dnafrag_start <= ?
              AND dnafrag_end >= ?
