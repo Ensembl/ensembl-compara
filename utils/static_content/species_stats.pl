@@ -717,11 +717,11 @@ sub hits2html {
 <tr $class>
   <td><b>$order1</b></td>
   <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name1">$name1</a><br />$descr1</td>
-  <td><a href="/$species/Transcript/Domain?domain=$name1">$gene1</a></td>
+  <td><a href="/$species/Location/Genome?ftype=Domain;id=$name1">$gene1</a></td>
   <td>$count1</td>
   <td><b>$order2</b></td>
   <td><a href="http://www.ebi.ac.uk/interpro/IEntry?ac=$name2">$name2</a><br />$descr2</td>
-  <td><a href="/$species/Transcript/Domain?domain=$name2">$gene2</a></td>
+  <td><a href="/$species/Location/Genome?ftype=Domain;id=$name2">$gene2</a></td>
   <td>$count2</td>
 </tr>
 );
