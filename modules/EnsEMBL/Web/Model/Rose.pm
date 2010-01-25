@@ -1,7 +1,7 @@
 package EnsEMBL::Web::Model::Rose;
 
 ### NAME: EnsEMBL::Web::Model::Rose
-### Base class - wrapper around a Rose::DB::Object object 
+### Base class for a Rose::DB::Object object 
 
 ### PLUGGABLE: TODO
 

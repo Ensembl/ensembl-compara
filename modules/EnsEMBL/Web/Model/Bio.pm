@@ -17,4 +17,17 @@ no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::Model);
 
+
+sub _init {
+  my ($self, $args) = @_;
+
+  ## Create API object from args
+  $self->{'_api_object'} = $self->create_api_object($args);
+}
+
+sub create_api_object { ## Needs to be implemented in each child }
+
+sub set_api_object { $_[0]->{'_api_object'} = $_[1]; }
+sub get_api_object { return $_[0]->{'_api_object'}; }
+
 1;
