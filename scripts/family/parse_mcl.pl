@@ -8,26 +8,86 @@ use Bio::EnsEMBL::Compara::Attribute;
 
 $| = 1;
 
+sub read_mcl_abc_format {
+    my ($mcl_file) = @_;
+
+    my @clusters = ();
+
+    if ($mcl_file =~ /\.gz/) {
+      open MCL, "gunzip -c $mcl_file|" || die "$mcl_file: $!";
+    } else {
+      open MCL, $mcl_file || die "$mcl_file: $!";
+    }
+
+    my $cluster_index = 0;
+
+    while (<MCL>) {
+        chomp;
+        push @clusters, $cluster_index.' '.$_;
+        $cluster_index++;
+    }
+    close MCL || die "$mcl_file: $!";
+
+    return \@clusters;
+}
+
+sub read_mcl_123_format {
+    my ($mcl_file) = @_;
+
+    my @clusters = ();
+
+    if ($mcl_file =~ /\.gz/) {
+      open MCL, "gunzip -c $mcl_file|" || die "$mcl_file: $!";
+    } else {
+      open MCL, $mcl_file || die "$mcl_file: $!";
+    }
+
+    my $headers_off = 0;
+    my $one_line_members = '';
+
+    while (<MCL>) {
+      if (/^begin$/) {
+        $headers_off = 1;
+        next;
+      }
+      next unless ($headers_off);
+      last if (/^\)$/);
+      chomp;
+      $one_line_members .= $_;
+      if (/\$/) {
+        push @clusters, $one_line_members;
+        $one_line_members = "";
+      }
+    }
+    close MCL || die "$mcl_file: $!";
+
+    return \@clusters;
+}
+
+
 my $usage = "
 Usage: $0 options mcl_file dbname [tab_file]
 
 Options:
+-abc_format <0|1> (default:1)
 -prefix <family_stable_id_prefix> (default: ENSF)
 -foffset <family_id_numbering_start> (default:1)
 -reg_conf <config_file.pl>
 
 \n";
 
-my $help = 0 ;
-my $method_link_type = "FAMILY";
-my $family_prefix = "ENSF";
-my $family_offset = 1;
+my $help                = 0;
+my $abc_format          = 1;
+my $method_link_type    = "FAMILY";
+my $family_prefix       = "ENSF";
+my $family_offset       = 1;
 my $reg_conf;
 
-GetOptions('help'   => \$help,
-	   'prefix=s'   => \$family_prefix,
-	   'foffset=i'  => \$family_offset,
-       'reg_conf=s' => \$reg_conf);
+GetOptions('help'     => \$help,
+	   'abc_format=i' => \$abc_format,
+	   'prefix=s'     => \$family_prefix,
+	   'foffset=i'    => \$family_offset,
+       'reg_conf=s'   => \$reg_conf);
 
 if ($help) {
   print $usage;
@@ -46,8 +106,6 @@ my ($mcl_file, $dbname, $tab_file) = @ARGV;
 # if no reg_conf file is given.
 Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-
-my @clusters;
 
 my $dbc   = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
 my $fa    = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Family');
@@ -129,35 +187,13 @@ $sth->finish;
 print STDERR "Done\n";
 
 
-
 print STDERR "Reading mcl file...";
-if ($mcl_file =~ /\.gz/) {
-  open MCL, "gunzip -c $mcl_file|" || die "$mcl_file: $!";
-} else {
-  open MCL, $mcl_file || die "$mcl_file: $!";
-}
 
-my $headers_off = 0;
-my $one_line_members = "";
-
-while (<MCL>) {
-  if (/^begin$/) {
-    $headers_off = 1;
-    next;
-  }
-  next unless ($headers_off);
-  last if (/^\)$/);
-  chomp;
-  $one_line_members .= $_;
-  if (/\$/) {
-    push @clusters, $one_line_members;
-    $one_line_members = "";
-  }
-}
-close MCL || die "$mcl_file: $!";
+my $clusters = $abc_format
+                    ? read_mcl_abc_format($mcl_file)
+                    : read_mcl_123_format($mcl_file);
 
 print STDERR "Done\n";
-
 
 
 print STDERR "Loading clusters in compara\n";
@@ -166,12 +202,14 @@ print STDERR "Loading clusters in compara\n";
 # still print out description for each Uniprot/SWISSPROT and Uniprot/SPTREMBL 
 # entries in the family in order to determinate a consensus description
 
-foreach my $cluster (@clusters) {
+foreach my $cluster (@$clusters) {
     my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
 
-  my $popped = pop @cluster_members;
-  if ($popped ne "\$") {
-    die "problem in the mcl parsing in cluster id $cluster_index\n";
+  unless($abc_format) {
+      my $popped = pop @cluster_members;
+      if ($popped ne "\$") {
+        die "problem in the mcl parsing in cluster id $cluster_index\n";
+      }
   }
 
   if( (scalar(@cluster_members) == 0)
