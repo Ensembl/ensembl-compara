@@ -698,7 +698,8 @@ sub content {
                   if ($self->_is_ajax_request) {
                     my $id = $object->function eq 'sub_slice' ? '' : $comp_obj->id;
                     
-                    $content = qq{<div class="js_panel" id="$id">$content</div>} unless $object->param('no_wrap');
+                    # Only add the wrapper if $content is html, and the update_panel parameter isn't present
+                    $content = qq{<div class="js_panel" id="$id">$content</div>} if !$object->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
                   } else {
                     my $caption = $comp_obj->caption;
                     $self->printf("<h2>%s</h2>", encode_entities($caption)) if $caption;
