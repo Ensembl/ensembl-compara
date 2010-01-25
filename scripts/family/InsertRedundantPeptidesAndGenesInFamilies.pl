@@ -65,6 +65,8 @@ foreach my $sequence_id (keys %sequence_id2member_id) {
   my ($family_id, $member_id, $cigar_line);
   $sth->bind_columns(\$family_id, \$member_id, \$cigar_line);
   
+  next unless($family_id); # do not load the sequences that did not undergo clustering for some reason
+
   my $sql2 = "insert ignore into family_member (family_id, member_id, cigar_line) values (?,?,?)";
   my $sth2 = $dbc->prepare($sql2);
 
