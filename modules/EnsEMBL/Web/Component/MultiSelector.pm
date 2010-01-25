@@ -22,7 +22,7 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
-  my $url    = $self->ajax_url('ajax') . ';no_wrap=1';
+  my $url    = $self->ajax_url('ajax');
   
   return sprintf('
     <div class="autocenter" style="width:%spx; text-align: left;">

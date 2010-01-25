@@ -237,7 +237,7 @@ sub content {
     $html = sprintf('
       <div class="text_seq_buttons">
         <div class="other-tool">
-          <p><a class="seq_export export" href="%s;export=rtf;no_wrap=1">Download view as RTF</a></p>
+          <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
         </div>
         <div class="other-tool">
           <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
