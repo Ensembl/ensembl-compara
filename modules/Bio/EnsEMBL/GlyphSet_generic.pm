@@ -5,7 +5,6 @@ use warnings;
 no warnings 'uninitialized';
 
 use Data::Dumper;
-use HTML::Entities;
 use HTML::Entities qw(encode_entities decode_entities);
 
 use Bio::EnsEMBL::Feature;
@@ -155,7 +154,7 @@ sub _draw_features {
         }
         
         if ($label ne '') {
-          ($T, $TF, $tw, $h) = $self->get_text_width(0, $label, '', { font => $fontname, ptsize => $fontsize });
+          ($T, $TF, $tw, $h) = $self->get_text_width(0, $label, '', 'font' => $fontname, 'ptsize' => $fontsize);
           $end = $group->{'start'} + ($tw + 4) * $self->{'bppp'};
         }
         
@@ -209,7 +208,7 @@ sub _draw_features {
           $self->push($self->Text({
             'absolutey' => 1,
             'x'         => $s - 1 + 2 * $self->{'bppp'},
-            'width'     => $e - $s + 1,
+            'width'     => $tw / $ppbp,
             'y'         => $group->{'y'} + $self->{'h'} + 2,
             'textwidth' => $tw,
             'height'    => $fontsize,
@@ -266,7 +265,7 @@ sub _draw_features {
                 my $end;
                 
                 if ($has_labels && $f->display_label && $f_s->{'style'}{'label'} eq 'yes') {
-                  ($T, $TF, $tw, $h) = $self->get_text_width(0, $f->display_label, '', { font => $fontname, ptsize => $fontsize });
+                  ($T, $TF, $tw, $h) = $self->get_text_width(0, $f->display_label, '', 'font' => $fontname, 'ptsize' => $fontsize);
                   $end = $f->{'extent_start'} + ($tw + 4) * $self->{'bppp'};
                 }
                 
@@ -302,7 +301,7 @@ sub _draw_features {
               $self->push($self->Text({
                 'absolutey' => 1,
                 'x'         => $f->{'extent_start'} - 1 + 2 * $self->{'bppp'},
-                'width'     => $f->{'extent_end'} - $f->{'extent_start'} + 1,
+                'width'     => $tw / $ppbp,
                 'y'         => $f->{'y'} + $self->{'h'} + 2,
                 'halign'    => 'left',
                 'valign'    => 'center',
@@ -1301,7 +1300,7 @@ sub extent_cross {
     return;
   }
   
-  my $w = ($st->{'linewidth'} || $st->{'height'} || $self->{'h'}) * $self->{'bppp'};
+  my $w = ($st->{'linewidth'} || $st->{'height'} || $self->{'h'} || 12) * $self->{'bppp'};
   my $l = $mp - $w/2;
   my $r = $mp + $w/2;
   
