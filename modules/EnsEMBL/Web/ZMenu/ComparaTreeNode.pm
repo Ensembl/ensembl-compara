@@ -276,6 +276,7 @@ sub compara_tree_jalview_html {
     '<applet code="jalview.bin.JalviewLite" width="140" height="35" archive="%s/jalview/jalviewAppletOld.jar">
       <param name="file" value="%s">
       <param name="treeFile" value="%s">
+      <param name="sortByTree" value="true">
       <param name="defaultColour" value="clustal">
     </applet>', 
     $url_site, 
