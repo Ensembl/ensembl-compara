@@ -7,16 +7,21 @@ package EnsEMBL::Web::Model;
 
 ### STATUS: Under development
 ### Currently being developed, along with its associated moduled E::W::Hub,
-### as a replacement for Proxy/Proxiable code
+### as a replacement for Proxy/Proxiable/CoreObjects code
 
 ### DESCRIPTION:
 ### Model is a container for domain objects such as Location, Gene, 
-### and User and for a single helper module, Hub (see separate 
-### documentation on Hub).
+### and User plus a single helper module, Hub (see separate documentation).
 ### Domain objects are stored as a hash of key-arrayref pairs, since 
 ### theoretically a page can have more than one domain object of a 
 ### given type.
-### Note: Currently, domain objects are Proxy::Object objects, but an
+### E.g.
+### $self->{'_objects'} = {
+###   'Location'  => [$x],
+###   'Gene'      => [$a, $b, $c],
+###   'UserData'  => [$bed, $gff],
+### };
+### Note: Currently, most domain objects are Proxy::Object objects, but an
 ### alternative implementation is under development 
 
 use strict;
@@ -138,34 +143,6 @@ sub _create_proxy_factory {
     _parent        => $self->hub->parent,
   });
 }
-
-=pod
-## Direct accessors to hub contents, to make life easier!
-sub apache_handle     :lvalue { return $_[0]->hub->apache_handle; }
-sub type              :lvalue { return $_[0]->hub->type; }
-sub function          :lvalue { return $_[0]->hub->function;  }
-sub script            :lvalue { return $_[0]->hub->script;  }
-sub species           :lvalue { return $_[0]->hub->species; }
-sub species_defs      :lvalue { return $_[0]->hub->species_defs }
-sub DBConnection      :lvalue { return $_[0]->hub->databases; }
-sub ExtURL            :lvalue { return $_[0]->hub->ext_url; } 
-sub session           :lvalue { return $_[0]->hub->session; }
-sub get_session       :lvalue { return $_[0]->session; }
-sub param             :lvalue { return $_[0]->hub->param(@_); }
-sub delete_param      :lvalue { my $self = shift; $self->hub->input->delete(@_); }
-sub get_databases     :lvalue { my $self = shift; $self->hub->DBConnection->get_databases(@_); }
-sub databases_species :lvalue { my $self = shift; $self->hub->DBConnection->get_databases_species(@_); }
-
-sub species_path      :lvalue { my $self = shift; $self->hub->species_defs->species_path(@_); }
-sub core_objects      :lvalue { return $_[0]->hub->core_objects; }
-sub cache             :lvalue { return $_[0]->hub->cache; }
-sub parent            :lvalue { return $_[0]->hub->parent; }
-
-sub url             { return $_[0]->hub->url(@_); }
-sub _url            { return $_[0]->hub->url(@_); }
-sub viewconfig      { return $_[0]->hub->viewconfig; }
-sub get_viewconfig  { return $_[0]->hub->get_viewconfig(@_); }
-=cut
 
 1;
 
