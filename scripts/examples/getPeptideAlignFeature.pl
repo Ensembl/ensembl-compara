@@ -1,14 +1,68 @@
-#!/usr/local/ensembl/bin/perl -w
-
+#!/usr/bin/env perl
 use strict;
-use Getopt::Long;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Time::HiRes qw { time };
+use warnings;
 
-my $reg_conf = shift;
-die("must specify registry conf file on commandline\n") unless($reg_conf);
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+use Bio::EnsEMBL::Registry;
+use Getopt::Long;
+
+my $desc = "
+USAGE: getPeptideAlignFeature [options]
+
+WHERE options are:
+
+--url ensembl_db_url
+    mysql://anonymous\@ensembldb.ensembl.org, for example
+
+--conf|--registry registry_file
+    ensembl registry configuration file
+
+--compara_url compara_db_url
+    mysql://anonymous\@ensembldb.ensembl.org/ensembl_compara_57, for example
+
+--gene_stable_id|--stable_id ensembl_gene_stable_id
+    ENSG00000060069, for example
+
+Only one of url, conf or compara_url are required. If none is provided, the
+script will look for the registry configuration file in the standard place.
+";
+
+my $reg = "Bio::EnsEMBL::Registry";
+
+my $help;
+my $registry_file;
+my $url;
+my $compara_url;
+my $gene_stable_id = "ENSG00000060069";
+
+GetOptions(
+  "help" => \$help,
+  "url=s" => \$url,
+  "compara_url=s" => \$compara_url,
+  "conf|registry=s" => \$registry_file,
+  "gene_stable_id|stable_id=s" => \$gene_stable_id,
+);
+
+if ($help) {
+  print $desc;
+  exit(0);
+}
+
+if ($registry_file) {
+  die if (!-e $registry_file);
+  $reg->load_all($registry_file);
+} elsif ($url) {
+  $reg->load_registry_from_url($url);
+} else {
+  $reg->load_all();
+}
+
+my $compara_dba;
+if ($compara_url) {
+  use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+  $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara_url);
+} else {
+  $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
+}
 
 ###########################
 # 
@@ -17,24 +71,20 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 #
 ###########################
 
-# get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('compara', 'compara');
+my $member_adaptor = $compara_dba->get_MemberAdaptor;
+my $gene_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene_stable_id);
+my $peptide_member = $gene_member->get_canonical_peptide_Member;
+$peptide_member->print_member("query PEP\n");
 
-my $MA = $comparaDBA->get_MemberAdaptor;
-my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000060069");
-my $pep = $gene_member->get_canonical_peptide_Member;
-$pep->print_member("query PEP\n");
-
-my $pafDBA = $comparaDBA-> get_PeptideAlignFeatureAdaptor;
-$pafDBA->final_clause("ORDER BY score desc");
-my $pafs = $pafDBA->fetch_all_RH_by_member($pep->dbID);
-$pafDBA->final_clause("");
+my $peptide_align_feature_adaptor = $compara_dba->get_PeptideAlignFeatureAdaptor;
+$peptide_align_feature_adaptor->final_clause("ORDER BY score desc");
+my $peptide_align_features = $peptide_align_feature_adaptor->fetch_all_RH_by_member($peptide_member->dbID);
+$peptide_align_feature_adaptor->final_clause("");
 
 # loop through and print
-foreach my $paf (@{$pafs}) {
-  $paf->display_short 
+foreach my $this_peptide_align_feature (@{$peptide_align_features}) {
+  $this_peptide_align_feature->display_short;
 }
-
 
 
 exit(0);
