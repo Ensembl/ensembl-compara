@@ -26,10 +26,10 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::TmpFile::Text;
 
 sub new {
-  my ($class, $object) = shift;
+  my $class = shift;
   
   my $self = {
-    'object' => shift,
+    'model' => shift,
     'id' => [split /::/, $class]->[-1] . 'Panel'
   };
   
@@ -45,10 +45,14 @@ sub id {
   return $self->{'id'};
 }
 
+sub model { return $_[0]->{'model'} };
+
 sub object {
+## Tries to be backwards compatible!
   my $self = shift;
   $self->{'object'} = shift if @_;
-  return $self->{'object'};
+  my $object = $self->{'model'}->object || $self->{'object'};
+  return $object;
 }
 
 sub cacheable {

@@ -85,6 +85,9 @@ sub new {
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0].'/'.$ENSEMBL_CONFIG_FILENAME;
   $self->{'_filename'} = $conffile;
 
+  # TODO - these need to be pulled in dynamically from appropriate modules
+  $self->{'_core_params'} = (qw/g h r t v db pt rf vf fdb vdb domain family protein _referer/);
+  
   $self->parse unless $CONF;
   ## Diagnostic - sets up back trace of point at which new was
   ## called - useful for trying to track down where the cacheing

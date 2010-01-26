@@ -20,11 +20,12 @@ use base qw(EnsEMBL::Web::Root);
 our $MEMD = new EnsEMBL::Web::Cache;
 
 sub new {
-  my ($class, $page, $object, $common_conf) = @_;
+  my ($class, $page, $model, $common_conf) = @_;
   
   my $self = {
     page   => $page,
-    object => $object,
+    model  => $model,
+    object => $model->object,
     _data  => $common_conf,
     cl     => {}
   };
@@ -66,6 +67,7 @@ sub new {
 sub populate_tree      {}
 sub set_default_action {}
 
+sub model        { return $_[0]->{'model'}; }
 sub object       { return $_[0]->{'object'}; }
 sub page         { return $_[0]->{'page'}; }
 sub tree         { return $_[0]->{'_data'}{'tree'}; }
@@ -851,7 +853,6 @@ sub update_configs_from_parameter {
 sub new_panel {
   my ($self, $panel_type, %params) = @_;
   
-  my $object      = $self->object;
   my $module_name = 'EnsEMBL::Web::Document::Panel';
   $module_name.= "::$panel_type" if $panel_type;
   
@@ -868,7 +869,8 @@ sub new_panel {
     
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
-        object     => $object,
+        model      => $self->model,
+        object     => $self->model->object,
         code       => "error_$params{'code'}",
         caption    => 'Panel compilation error',
         content    => $error,
@@ -884,14 +886,15 @@ sub new_panel {
   my $panel;
   
   eval {
-    $panel = $module_name->new('object' => $object, %params);
+    $panel = $module_name->new('model' => $self->model, 'object' => $self->model->object, %params);
   };
   
   return $panel unless $@;
   
   $self->page->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
-      object  => $object,
+      model   => $self->model,
+      object  => $self->model->object,
       code    => "error_$params{'code'}",
       caption => "Panel runtime error",
       content => sprintf ('<p>Unable to compile <strong>%s</strong></p><pre>%s</pre>', $module_name, $self->_format_error($@))

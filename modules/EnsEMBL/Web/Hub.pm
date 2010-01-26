@@ -57,6 +57,7 @@ sub new {
                         new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
   $self->{'_databases'} = $db_connection;
   $self->{'_core_objects'}  = new EnsEMBL::Web::CoreObjects($self->input, $db_connection);
+  $self->_set_core_params;
  
   $self->species_defs->{'timer'} = $args{'_timer'};
   
@@ -75,6 +76,8 @@ sub databases    :lvalue { $_[0]{'_databases'}; }
 sub cache        :lvalue { $_[0]{'_cache'};   }
 
 sub core_objects :lvalue { $_[0]{'_core_objects'}; }
+sub core_params  { return $_[0]{'_core_params'}; }
+sub core_param   { return $_[0]{'_core_params'}{$_[1]}; }
 
 sub apache_handle   { return $_[0]{'_apache_handle'}; }
 sub species_defs    { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
@@ -95,11 +98,12 @@ sub problem {
   return $self->[1]{'_problem'};
 }
 
-sub core_params {
+sub _set_core_params {
+### Initialises core parameter hash from CGI parameters
   my $self = shift;
   my @params = $self->species_defs->core_params;
   my %core_params = map { $_ => $self->param($_) } @params;
-  return \%core_params;
+  $self->{'_core_params'} = \%core_params;
 }
 
 sub url {

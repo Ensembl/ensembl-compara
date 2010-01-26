@@ -308,12 +308,13 @@ my $value =  $self->renderer->content;
 
 sub render {
   my ($self, $first) = @_;
-  my $object = $self->{'object'};
+  my $hub = $self->{'model'}->hub;
+  my $object = $self->{'model'}->object;
   
   if (exists $self->{'raw'}) {
     $self->renderer->print($self->{'raw'});
   } else {
-    my $status = $object ? $object->param($self->{'status'}) : undef;
+    my $status = $hub ? $hub->param($self->{'status'}) : undef;
     my $content = '';
     
     if ($status ne 'off' && $self->{'delayed_write'}) {
@@ -584,6 +585,8 @@ sub _is_ajax_request {
 
 sub content {
   my ($self) = @_;
+  my $model = $self->{'model'};
+  my $hub = $model->hub;
   my $object = $self->{'object'};
   
   $self->reset_buffer;
@@ -599,12 +602,13 @@ sub content {
         (my $module_name = $function_name) =~ s/::\w+$//;
         
         if ($self->dynamic_use($module_name)) {
+          my $object = $model->object;
           $object && $object->prefix($self->prefix);
           
           no strict 'refs';
           
           eval {
-            $result = &$function_name($self, $object);
+            $result = &$function_name($self, $model);
           };
           
           if ($@) {
@@ -637,6 +641,7 @@ sub content {
         my $result;
         
         if ($self->dynamic_use($module_name)) {
+          my $object = $model->object;
           $object && $object->prefix($self->prefix);
 
           no strict 'refs';
@@ -644,7 +649,7 @@ sub content {
           my $comp_obj;
           
           eval {
-            $comp_obj = $module_name->new($object);
+            $comp_obj = $module_name->new($model);
           };
           
           $result = $comp_obj->{'_end_processing_'};

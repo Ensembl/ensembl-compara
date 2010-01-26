@@ -152,7 +152,7 @@ sub build_page {
   # Loop through the EnsEMBL root directory and plugins
   while (my ($module_root) = splice @plugins, 0, 2) {
     my $config_module_name = "${module_root}::Configuration::$type"; # First work out what the module name is, to see if it can be used
-    my ($configuration, $error) = $self->_use($config_module_name, $page, $object, $common_conf);
+    my ($configuration, $error) = $self->_use($config_module_name, $page, $model, $common_conf);
     
     if ($configuration) {
       # Loop through the functions to configure
