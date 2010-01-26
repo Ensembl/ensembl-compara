@@ -371,18 +371,25 @@ sub fetch_all_by_genomic_align_block_id {
 
   my $sth = $self->prepare($sql);
   $sth->execute($genomic_align_block_id);
-  while (my @values = $sth->fetchrow_array()) {
+  my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
+      $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
+      $level_id);
+  $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id,
+      \$method_link_species_set_id, \$dnafrag_id, \$dnafrag_start, \$dnafrag_end,
+      \$dnafrag_strand, \$cigar_line, \$level_id);
+  my $genomic_align_groups = {};
+  while ($sth->fetchrow_arrayref()) {
     my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
-            -dbID => $values[0],
+            -dbID => $genomic_align_id,
             -adaptor => $self,
-            -genomic_align_block_id => $values[1],
-            -method_link_species_set_id => $values[2],
-            -dnafrag_id => $values[3],
-            -dnafrag_start => $values[4],
-            -dnafrag_end => $values[5],
-            -dnafrag_strand => $values[6],
-            -cigar_line => $values[7],
-            -level_id => $values[8],
+            -genomic_align_block_id => $genomic_align_block_id,
+            -method_link_species_set_id => $method_link_species_set_id,
+            -dnafrag_id => $dnafrag_id,
+            -dnafrag_start => $dnafrag_start,
+            -dnafrag_end => $dnafrag_end,
+            -dnafrag_strand => $dnafrag_strand,
+            -cigar_line => $cigar_line,
+            -level_id => $level_id,
         );
     push(@$genomic_aligns, $this_genomic_align);
   }
