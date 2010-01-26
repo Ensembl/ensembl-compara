@@ -27,6 +27,7 @@ sub init {
   });
 
   $self->create_menus(
+    options     => 'Comparative features',
     sequence    => 'Sequence',
     marker      => 'Markers',
     transcript  => 'Genes',
@@ -50,6 +51,20 @@ sub init {
     [ 'transcript' ],
     { qw(render gene_label strand r) }
   );
+  
+  $self->add_options( 
+    [ 'opt_join_genes', 'Join genes', undef, undef, 'off' ]
+  );
+}
+
+sub join_genes {
+  my ($self, $prev_species, $next_species) = @_;
+  
+  foreach ($self->get_node('transcript')->nodes) {
+    $_->set('previous_species', $prev_species) if $prev_species;
+    $_->set('next_species', $next_species) if $next_species;
+    $_->set('join', 1);
+  }
 }
 
 sub highlight {
