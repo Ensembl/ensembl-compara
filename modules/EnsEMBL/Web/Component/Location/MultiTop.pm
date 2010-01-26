@@ -1,8 +1,9 @@
 package EnsEMBL::Web::Component::Location::MultiTop;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Component::Location);
 
@@ -18,14 +19,19 @@ sub content {
   
   my $object = $self->object;
   
-  return if $object->param('panel_top') eq 'no';
+  return if $object->param('show_panels') eq 'bottom';
   
-  my $threshold = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1); # get a slice corresponding to the region to be shown for Navigational Overview
-  my $image_width = $self->image_width;
-  my $i = 1;
+  my $threshold       = 1e6 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1); # get a slice corresponding to the region to be shown for Navigational Overview
+  my $image_width     = $self->image_width;
+  my $primary_species = $object->species;
+  my $slices          = $object->multi_locations;
+  my $max             = scalar @$slices;
+  my $i               = 1;
+  my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
+  my $compara_db      = new EnsEMBL::Web::DBSQL::DBConnection($primary_species)->_get_compara_database;
   my @images;
   
-  foreach (@{$object->multi_locations}) {
+  foreach (@$slices) {
     my $highlight_gene = $object->param('g' . ($i-1));
     my $slice = $_->{'slice'};
     
@@ -48,21 +54,27 @@ sub content {
     }
     
     my $image_config = $object->image_config_hash('contigviewtop_' . $i, 'MultiTop', $_->{'species'});
+    my $join_genes   = $image_config->get_option('opt_join_genes', 'values');
     
     $image_config->set_parameters({
       container_width => $slice->length,
       image_width     => $image_width,
       slice_number    => "$i|2",
-      multi           => 1
+      multi           => 1,
+      compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
+      join_types      => $gene_join_types
     });
  
     if ($image_config->get_node('annotation_status')) {
       $image_config->get_node('annotation_status')->set('caption', '');
       $image_config->get_node('annotation_status')->set('menu', 'no');
     };
-
+    
     $image_config->get_node('ruler')->set('caption', $_->{'short_name'});
+    $image_config->join_genes(map $_ >= 0 && $_ < $max ? $slices->[$_]->{'species'} : '', $i-2, $i) if $join_genes;
     $image_config->highlight($highlight_gene) if $highlight_gene;
+    
+    $slice->adaptor->db->set_adaptor('compara', $compara_db) if $join_genes;
     
     push @images, $slice, $image_config;
     $i++;
