@@ -18,6 +18,9 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
+  
+  return if $object->param('show_panels') eq 'top';
+  
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
