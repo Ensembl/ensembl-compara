@@ -14,11 +14,12 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $model = $self->model;
   my $obj = $self->object;
   my $html = '<dl class="summary">';
 
   if ($obj->param('pop1')){
-    my $focus = $self->focus($obj);  
+    my $focus = $self->focus($model);  
     if ($focus) {
       $html .= qq( <dt>Focus: </dt><dd>$focus</dd>); 
     }
@@ -43,7 +44,10 @@ sub focus {
   ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
   ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
 
-  my ( $self, $obj ) = @_;
+  my ( $self, $model ) = @_;
+  my $obj = $model->object;
+  my $hub = $model->hub;
+
   my ( $info, $focus );
   if ( $obj->param('v') && $obj->param('focus')) {
     my $snp = $obj->core_objects->variation;
@@ -53,12 +57,12 @@ sub focus {
     my $var_url =  $obj->_url({ 'type' => 'Variation', 'action' => 'Summary', 'v' => $obj->param('v'), 'vf' => $obj->param('vf') });
     $info .= "Variant $link_name ($source ". $snp->adaptor->get_source_version($source).")";
     $info .= " <a href=$var_url>[View variation]</a>"; 
-  } elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
-    my $gene_id = $obj->core_objects->{'parameters'}{'g'};
+  } elsif ( $hub->core_param('g') ) {
+    my $gene_id = $hub->core_param('g');
     my $url = $obj->_url({ 'type' => 'Gene', 'action' => 'Summary', 'g' => $obj->param('g') });
     $info .= "Gene <a href=$url>$gene_id</a>";
-  } elsif ($obj->core_objects->{'parameters'}{'r'} ){
-    my $location= $obj->core_objects->{'parameters'}{'r'};
+  } elsif ($hub->core_param('r')){
+    my $location = $hub->core_param('r');
     my $url = $obj->_url({ 'type' => 'Location', 'action' => 'View', 'r' => $obj->param('r') });
     $info .= "Location <a href=$url>$location</a>";
   } else {

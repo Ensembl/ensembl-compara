@@ -144,7 +144,7 @@ sub content {
      if ($start == $end ) { $location_string =  $region.":".$start;}
      else { $location_string = $region.":".$start."-".$end; }
      my $location; 
-     if ($varif_id eq $object->core_objects->{'parameters'}{'vf'} ){
+     if ($varif_id eq $self->hub->core_param('vf') ){
        $location = $location_string;
      } else {
        my $link = $object->_url({'v' => $id, 'source' => $source, 'vf' => $varif_id,});
@@ -158,7 +158,7 @@ sub content {
           <td><strong>%s</strong> %s</td>
           <td>%s</td> 
         </tr>',
-       $varif_id eq $object->core_objects->{'parameters'}{'vf'} ? ' class="active"' : '',
+       $varif_id eq self->hub->core_param('vf') ? ' class="active"' : '',
        $location,
        $strand,
        $location_link_html,   
