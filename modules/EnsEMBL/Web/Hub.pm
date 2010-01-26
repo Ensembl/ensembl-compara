@@ -1,7 +1,20 @@
 package EnsEMBL::Web::Hub;
 
-### A centralised object giving access to database connections, 
-### CGI parameters, session, logged-in user, etc
+### NAME: EnsEMBL::Web::Hub 
+### A centralised object giving access to data connections and the web environment 
+
+### STATUS: Under development
+### Currently being developed, along with its associated moduled E::W::Resource,
+### as a replacement for Proxy/Proxiable code
+
+### DESCRIPTION:
+### Hub is intended as a replacement for both the non-object-specific
+### portions of Proxiable and the global variable ENSEMBL_WEB_REGISTRY
+### It uses the Flyweight design pattern to create a single object that is 
+### passed around between all other objects that require data connectivity.
+### The Hub stores information about the current web page and its environment, 
+### including cgi parameters, settings parsed from the URL, browser session, 
+### database connections, and so on.
 
 use strict;
 
@@ -42,9 +55,8 @@ sub new {
  
   my $db_connection = $self->species ne 'common' ? 
                         new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
-  my $core_objects  = new EnsEMBL::Web::CoreObjects($self->input, $db_connection);
-  $self->databases($db_connection);
-  $self->core_objects($core_objects);
+  $self->{'_databases'} = $db_connection;
+  $self->{'_core_objects'}  = new EnsEMBL::Web::CoreObjects($self->input, $db_connection);
  
   $self->species_defs->{'timer'} = $args{'_timer'};
   
@@ -53,29 +65,16 @@ sub new {
 
 # Accessor functionality
 sub species      :lvalue { $_[0]{'_species'};  }
-sub type         :lvalue { $_[0]{'_type'};   }
-sub parent       :lvalue { $_[0]{'_parent'};   }
 sub script       :lvalue { $_[0]{'_script'};   }
+sub type         :lvalue { $_[0]{'_type'};   }
+sub action       :lvalue { $_[0]{'_action'}; }
 sub function     :lvalue { $_[0]{'_function'}; }
+sub parent       :lvalue { $_[0]{'_parent'};   }
 sub session      :lvalue { $_[0]{'_session'}; }
 sub databases    :lvalue { $_[0]{'_databases'}; }
 sub cache        :lvalue { $_[0]{'_cache'};   }
 
-sub action {
-  my ($self, $action) = @_;
-  if ($action) {
-    $self->{'_action'} = $action;
-  }
-  return $self->{'_action'};
-}
-
-sub core_objects {
-  my ($self, $core_objects) = @_;
-  if ($core_objects) {
-    $self->{'_core_objects'} = $core_objects;
-  }
-  return $self->{'_core_objects'};
-}
+sub core_objects :lvalue { $_[0]{'_core_objects'}; }
 
 sub apache_handle   { return $_[0]{'_apache_handle'}; }
 sub species_defs    { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
