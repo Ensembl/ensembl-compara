@@ -123,9 +123,9 @@ sub clear_cached_content {
 sub build_page {
   ### Creates Configuration modules and calls relevant functions (determined by @functions) in order to create the page.
   
-  my ($self, $page, $doctype, $resource, @functions) = @_;
+  my ($self, $page, $doctype, $model, @functions) = @_;
   
-  my $object = $resource->object;
+  my $object = $model->object;
   my $type;
   
   if (ref $object) { # Actual object
@@ -206,16 +206,16 @@ sub build_page {
 sub build_menu {
   ### Creates a ZMenu module based on the object type and action of the page (see below), and renders the menu
   
-  my ($self, $resource) = @_;
+  my ($self, $model) = @_;
   
-  return unless $resource;
+  return unless $model;
   
-  my $object = $resource->object;
+  my $object = $model->object;
   
   return unless $object;
   
-  my $type     = $resource->hub->type;
-  my $action   = $resource->hub->action;
+  my $type     = $model->hub->type;
+  my $action   = $model->hub->action;
   my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
   
   my $menu;
@@ -361,14 +361,14 @@ sub update_configuration_from_url {
 sub process_command {
   ### Handles Command modules. Once the command has been processed, a redirect to a Component page will occur.
   
-  my ($self, $resource, $page) = @_;
+  my ($self, $model, $page) = @_;
   
   my $r     = $self->{'r'};
   my $class = $self->{'action'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $self->{'command'};
   
-  if ($class && $self->dynamic_use($class) && $self->access_ok($resource, $page)) {    
+  if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {    
     my $command = $class->new({
-      object => $resource->object,
+      object => $model->object,
       page   => $page
     });
     
@@ -399,10 +399,10 @@ sub _use {
 sub access_ok {
   ### Checks if the given Command module is allowed, and forces a redirect if it isn't
   
-  my ($self, $resource, $page) = @_;
+  my ($self, $model, $page) = @_;
   
   my $r      = $self->{'r'};
-  my $filter = $self->not_allowed($resource->object);
+  my $filter = $self->not_allowed($model->object);
   
   if ($filter) {
     my $url = $filter->redirect_url;
