@@ -86,7 +86,8 @@ sub new {
   $self->{'_filename'} = $conffile;
 
   # TODO - these need to be pulled in dynamically from appropriate modules
-  $self->{'_core_params'} = (qw/g h r t v db pt rf vf fdb vdb domain family protein _referer/);
+  my @params = qw/g h r t v db pt rf vf fdb vdb domain family protein _referer/;
+  $self->{'_core_params'} = \@params; 
   
   $self->parse unless $CONF;
   ## Diagnostic - sets up back trace of point at which new was
@@ -104,6 +105,8 @@ sub new {
 
   return $self;
 }
+
+sub core_params { return $_[0]->{'_core_params'}; }
 
 sub get_all_das {
   my $self    = shift;
