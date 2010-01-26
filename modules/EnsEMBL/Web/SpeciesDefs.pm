@@ -265,6 +265,7 @@ sub parse {
     $reg_conf->configure();
     return 1;
   }
+  #$self->_get_valid_urls(); # under development 
   $self->_parse();
   $self->store();
   $reg_conf->configure();
@@ -525,6 +526,44 @@ sub _created_merged_table_hash {
   }
   $extra->{'databases'} = $databases;
   return $extra;
+}
+
+sub _get_valid_urls {
+### Searches plugins for children of Command
+### N.B. Not currently used - under development
+  my $self = shift;
+  my %plugin = @{ $self->ENSEMBL_PLUGINS };
+  my @order = @{ $self->ENSEMBL_PLUGIN_ROOTS };
+  my (@subdirs, %children);
+
+  foreach my $namespace (reverse @{$self->ENSEMBL_PLUGIN_ROOTS}) {
+    my $plug_dir = $plugin{$namespace};
+    (my $ns_dir = $namespace) =~ s#::#/#g;
+    @subdirs = ($plug_dir.'/modules/EnsEMBL/Web', $plug_dir.'/modules/'.$ns_dir); 
+    #warn ">>> @subdirs";
+    ## Loop through the plugin directories to find all Command paths
+    foreach my $dir (@subdirs) {
+      opendir(DIR, $dir) || next;
+      my $cmd_dir = grep { $_ eq 'Command' } readdir(DIR);
+      if ($cmd_dir) {
+        opendir(CMD, $cmd_dir) || die "Can't open $cmd_dir";
+        my @subdirs = grep { /^[\.]/ && $_ ne 'CVS' } readdir(CMD);
+        #warn "@@@ FOUND DIRS @subdirs";
+        foreach my $subdir (@subdirs) {
+          my $sub = $dir.'/Command/'.$subdir;
+          #warn "... subdir $sub";
+          opendir(SUB, $sub) || die "Can't open $sub";
+          my @modules = grep { /\.pm$/ } readdir(SUB);
+          foreach my $module (@modules) {
+            #warn "!!! COMMAND $module";
+          }
+          closedir(SUB);
+        }
+        closedir(CMD);
+      }
+      closedir(DIR);
+    }
+  }
 }
 
 sub _parse {
