@@ -56,7 +56,7 @@ sub availability {
     $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
     $availability->{'has_chromosomes'} = scalar @chromosomes;
     $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
-    $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->core_objects->{'parameters'}->{'r'};
+    $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->hub->core_param('r');
     $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
     $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
     $availability->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
@@ -1529,7 +1529,7 @@ sub focus {
     my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';
     $info .= "$link_name ($source ". $snp->adaptor->get_source_version($source).")";
   }
-  elsif ( $obj->core_objects->{'parameters'}{'g'} ) {
+  elsif ( $obj->hub->core_param('g') ) {
     $focus = "Gene";
     my $gene_id = $obj->name;
     $info = ("Gene ". $gene_id);

@@ -308,12 +308,12 @@ my $value =  $self->renderer->content;
 
 sub render {
   my ($self, $first) = @_;
-  my $hub = $self->{'model'}->hub;
-  my $object = $self->{'model'}->object;
   
   if (exists $self->{'raw'}) {
     $self->renderer->print($self->{'raw'});
   } else {
+    my $hub = $self->{'model'}->hub;
+    my $object = $self->{'model'}->object;
     my $status = $hub ? $hub->param($self->{'status'}) : undef;
     my $content = '';
     

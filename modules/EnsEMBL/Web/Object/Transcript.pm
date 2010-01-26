@@ -84,8 +84,8 @@ sub counts {
   my $key = sprintf(
     '::COUNTS::TRANSCRIPT::%s::%s::%s::', 
     $self->species, 
-    $self->core_objects->{'parameters'}{'db'}, 
-    $self->core_objects->{'parameters'}{'t'}
+    $self->hub->core_param('db'), 
+    $self->hub->core_param('t')
   );
   
   my $counts = $self->{'_counts'};

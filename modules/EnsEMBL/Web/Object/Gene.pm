@@ -95,7 +95,7 @@ sub counts {
 
   return {} unless $obj->isa('Bio::EnsEMBL::Gene');
   
-  my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $self->species, $self->core_objects->{'parameters'}{'db'}, $self->core_objects->{'parameters'}{'g'};
+  my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g');
   my $counts = $self->{'_counts'};
   $counts ||= $MEMD->get($key) if $MEMD;
   

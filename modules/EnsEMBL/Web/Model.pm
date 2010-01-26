@@ -38,7 +38,7 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my ($class, $args) = @_;
   my $self = { 
-    '_objects' => {}, 
+    '_objects'      => {}, 
   };
 
   ## Create the hub - a mass of connections to databases, Apache, etc
@@ -136,6 +136,7 @@ sub _create_proxy_factory {
   return unless $type;
   
   return EnsEMBL::Web::Proxy::Factory->new($type, {
+    _hub           => $self->hub,
     _input         => $self->hub->input,
     _apache_handle => $self->hub->apache_handle,
     _databases     => $self->hub->databases,
@@ -143,6 +144,8 @@ sub _create_proxy_factory {
     _parent        => $self->hub->parent,
   });
 }
+
+
 
 1;
 

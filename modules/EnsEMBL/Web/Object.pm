@@ -29,6 +29,7 @@ use base qw(EnsEMBL::Web::Proxiable);
 sub counts            { return {}; }
 sub availability      { return {}; }
 sub can_export        { return 0; }
+sub hub               { return $_[0]{'data'}{'_hub'}; }       # Gets the underlying Ensembl object wrapped by the web object
 sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the underlying Ensembl object wrapped by the web object
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 

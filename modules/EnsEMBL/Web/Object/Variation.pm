@@ -70,8 +70,8 @@ sub counts {
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
   my $key = '::Counts::Variation::'.
             $self->species                         .'::'.
-            $self->core_objects->{parameters}{vdb} .'::'.
-            $self->core_objects->{parameters}{v}   .'::';
+            $self->hub->core_param('vdb') .'::'.
+            $self->hub->core_param('v')   .'::';
 
   my $counts = $self->{'_counts'};
   $counts ||= $MEMD->get($key) if $MEMD;
@@ -144,7 +144,7 @@ sub caption {
 
 sub has_location {
   my $self = shift;
-  unless ($self->core_objects->{'parameters'}{'vf'} ){
+  unless ($self->hub->core_param('vf') ){
     my %mappings = %{ $self->variation_feature_mapping };
     my $count = scalar (keys %mappings);
     my $html;

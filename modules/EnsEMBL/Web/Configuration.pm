@@ -740,9 +740,7 @@ sub query_string {
   my $self   = shift;
   my $object = $self->object;
   
-  return unless defined $object->core_objects;
-  
-  my %parameters = (%{$object->core_objects->{'parameters'}}, @_);
+  my %parameters = (%{$self->model->hub->core_params}, @_);
   my @query_string = map "$_=$parameters{$_}", grep defined $parameters{$_}, sort keys %parameters;
   
   return join ';', @query_string;

@@ -77,7 +77,16 @@ sub cache        :lvalue { $_[0]{'_cache'};   }
 
 sub core_objects :lvalue { $_[0]{'_core_objects'}; }
 sub core_params  { return $_[0]{'_core_params'}; }
-sub core_param   { return $_[0]{'_core_params'}{$_[1]}; }
+
+sub core_param  { 
+  my $self = shift;
+  my $name = shift;
+  return unless $name;
+  if (@_) {
+    $self->{'_core_params'}{$name} = @_;
+  }
+  return $self->{'_core_params'}{$name};
+}
 
 sub apache_handle   { return $_[0]{'_apache_handle'}; }
 sub species_defs    { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }

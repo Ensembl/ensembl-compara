@@ -46,6 +46,7 @@ sub new {
   my $self = [
     $type, # Gene, Transcript, Location etc
     {
+      _hub           => $data->{'_hub'}           || undef,
       _core_objects  => $data->{'_core_objects'}  || undef, 
       _problem       => $data->{'_problem'}       || {},    
       _species_defs  => $data->{'_species_defs'}  || undef, 
@@ -102,6 +103,7 @@ sub new {
 }
 
 # Accessor functionality
+sub hub          :lvalue { $_[0][1]{'_hub'};  }
 sub species      :lvalue { $_[0][1]{'_species'};  }
 sub parent       :lvalue { $_[0][1]{'_parent'};   }
 sub script       :lvalue { $_[0][1]{'_script'};   }

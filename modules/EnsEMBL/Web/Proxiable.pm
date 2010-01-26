@@ -38,6 +38,7 @@ sub new {
 sub apache_handle     { return $_[0]->{'data'}{'_apache_handle'}; }
 sub __data            { return $_[0]->{'data'}; }
 sub core_objects      { return $_[0]->{'data'}{'_core_objects'}; }
+sub hub               { return $_[0]->{'data'}{'_hub'}; }
 sub type              { return $_[0]->{'data'}{'_type'}; }
 sub action            { return $_[0]->{'data'}{'_action'};  }
 sub function          { return $_[0]->{'data'}{'_function'};  }
@@ -69,7 +70,7 @@ sub _url {
   my $type    = exists($params->{'type'})     ? $params->{'type'}     : $self->type;
   my $action  = exists($params->{'action'})   ? $params->{'action'}   : $self->action;
   my $fn      = exists($params->{'function'}) ? $params->{'function'} : ($action eq $self->action ? $self->function : undef);
-  my %pars    = %{$self->core_objects->{'parameters'}};
+  my %pars    = %{$self->hub->core_params};
   
   if ($params->{'__clear'}) {
     %pars = ();
