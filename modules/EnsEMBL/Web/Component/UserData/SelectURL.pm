@@ -33,17 +33,17 @@ sub content {
     Note also that large files will be parsed into density tracks to avoid overloading our system; if you wish to examine an area in detail, you should attach another file with a more limited set of features.
   )});
 
-  $form->add_element('type'  => 'String',
+  $form->add_element('type'  => 'URL',
                      'name'  => 'url',
                      'label' => 'File URL',
-                     'size'   => '30',
+                     'size'  => '30',
                      'value' => $object->param('url'),
                      'notes' => '( e.g. http://www.example.com/MyProject/mydata.gff )');
 
   $form->add_element('type'  => 'String',
                      'name'  => 'name',
                      'label' => 'Name for this track',
-                     'size'   => '30',
+                     'size'  => '30',
                      );
 
   if ($user && $user->id) {

@@ -43,7 +43,7 @@ sub content {
 
   $form->add_element( type => 'Text', name => 'text', label => 'Paste file' );
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );
-  $form->add_element( type => 'String', name => 'url', label => 'or provide file URL', size => 30 );
+  $form->add_element( type => 'URL',  name => 'url',  label => 'or provide file URL', size => 30 );
  
 
   $html .= $form->render;

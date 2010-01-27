@@ -44,7 +44,7 @@ sub content {
                      'label'  => "$sitename DAS sources",
                      'values' => \@preconf_das,
                      'value'  => $object->param('preconf_das'));
-  $form->add_element('type'   => 'String',
+  $form->add_element('type'   => 'URL',
                      'name'   => 'other_das',
                      'label'  => 'or other DAS server',
                      'size'   => '30',
