@@ -50,10 +50,13 @@ sub configure {
 ## Grab the configuration information from the SpeciesDefs object
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{databases}{$type};
 ## Skip if the name hasn't been set (mis-configured database)
-      if(! $TEMP->{NAME}){warn((' 'x10)."[WARN] no NAME for $sp $type") && next}
-      if(! $TEMP->{USER}){warn((' 'x10)."[WARN] no USER for $sp $type") && next}
-      next unless $TEMP->{NAME};
-      next unless $TEMP->{USER};
+      if ($sp ne 'merged' && $sp ne 'Ancestral sequences') {
+        warn (' 'x10) . "[WARN] no NAME for $sp $type" unless $TEMP->{NAME};
+        warn (' 'x10) . "[WARN] no USER for $sp $type" unless $TEMP->{USER};
+      }
+      
+      next unless $TEMP->{NAME} && $TEMP->{USER};
+
      
       my %arg = ( '-species' => $species, '-dbname' => $TEMP->{NAME} );
 ## Copy through the other parameters if defined
