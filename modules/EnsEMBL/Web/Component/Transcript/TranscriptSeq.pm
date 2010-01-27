@@ -53,10 +53,10 @@ sub get_sequence_data {
   # Used to se the initial sequence colour
   $mk->{'exons'}->{0}->{'type'} = [ 'exon0' ] if $config->{'exons'};
   
-  $config->{'length'} = $length;
+  $config->{'length'}    = $length;
   $config->{'numbering'} = [1];
   $config->{'seq_order'} = [ $config->{'species'} ];
-  $config->{'slices'} = [{ slice => $seq, name => $config->{'species'} }];
+  $config->{'slices'}    = [{ slice => $seq, name => $config->{'species'} }];
   
   for (0..$length-1) {
     # Set default vaules
@@ -100,81 +100,63 @@ sub get_sequence_data {
     }
   };
 
-  if ($config->{'variation'}) {    
-    $object->database('variation');
-    
-    my $source = '';
-    
-    if (exists($object->species_defs->databases->{'ENSEMBL_GLOVAR'})) {
-      $source = 'glovar';
-      $object->database('glovar');
-    }
-    
-    $source = 'variation' if $object->database('variation');
-    
-    my %snps = %{$trans->get_all_cdna_SNPs($source)};
-    my %protein_features = $can_translate == 0 ? () : %{$trans->get_all_peptide_variations($source)};
-    
-    foreach (values %snps) {
-      foreach my $snp (@$_) {
-        # Due to some changes start of a variation can be greater than its end - insertion happened
-        my ($st, $en);
+  if ($config->{'variation'}) {
+    foreach my $transcript_variation (@{$object->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts([ $trans ])||[]}) {
+      my ($start, $end) = ($transcript_variation->cdna_start, $transcript_variation->cdna_end);
+      
+      next unless $start && $end;
+      
+      my $var               = $transcript_variation->variation_feature->transfer($trans->feature_Slice);
+      my $var_class         = $var->var_class;
+      my $variation_name    = $var->variation_name;
+      my $dbID              = $var->dbID;
+      my $alleles           = $var->allele_string;
+      my $ambigcode         = $var_class eq 'in-del' ? '*' : $var->ambig_code;
+      my $pep_allele_string = $transcript_variation->pep_allele_string;
+      my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4;
+      my $allele_count      = scalar split /\//, $pep_allele_string;
+      my $insert            = 0;
+      
+      if ($var->strand == -1 && $trans_strand == -1) {
+        $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+        $alleles   =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+      }
+      
+      # Variation is an insert if start > end
+      if ($start > $end) {
+        ($start, $end, $insert) = ($end, $start, 1);
+        $insert = 1;
+      }
+      
+      $_-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
+      
+      foreach ($start..$end) {
+        $mk->{'variations'}->{$_}->{'alleles'}   .= $alleles;
+        $mk->{'variations'}->{$_}->{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
+        $mk->{'variations'}->{$_}->{'transcript'} = 1;
         
-        my $snpclass = $snp->var_class;
-        my $source = $snp->source;
-        my $variation_name = $snp->variation_name;
-        my $strand = $snp->strand;
-        my $alleles = $snp->allele_string;
-        my $ambigcode = $snpclass eq 'in-del' ? '*' : $snp->ambig_code;
-        my $insert = 0;
+        my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
         
-        if ($strand == -1 && $trans_strand == -1) {
-          $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-          $alleles   =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-        }
-        
-        if ($snp->start > $snp->end) {
-          $st = $snp->end;
-          $en = $snp->start;
-          $insert = 1;
-        } else {
-          $en = $snp->end;
-          $st = $snp->start;
-        }
-        
-        foreach my $r ($st..$en) {
-          $mk->{'variations'}->{$r-1}->{'alleles'}   .= $alleles;
-          $mk->{'variations'}->{$r-1}->{'url_params'} = { v => $variation_name, vf => $snp->dbID, vdb => 'variation' };
-          $mk->{'variations'}->{$r-1}->{'transcript'} = 1;
+        if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {          
+          $mk->{'variations'}->{$_}->{'type'} = $mk->{'variations'}->{$_}->{'type'} eq 'snp' || $allele_count != 1 ? 'snp' : 'syn';
           
-          my $url = $mk->{'variations'}->{$r-1}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$r-1}->{'url_params'}} }) : '';
-          
-          if ($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
-            my $aa    = int(($r - $cd_start + 3)/3);
-            my $aa_bp = $aa * 3 + $cd_start - 3;
-            my @feat  = @{$protein_features{$aa}||[]};
-            my $f     = scalar @feat;
-            my $title = join ', ', @feat;
+          if ($config->{'translation'} && $allele_count > 1) {
+            $protein_seq->{'seq'}->[$amino_acid_pos]->{'letter'}     = 
+            $protein_seq->{'seq'}->[$amino_acid_pos + 2]->{'letter'} = '=';
             
-            $mk->{'variations'}->{$r-1}->{'type'} = $mk->{'variations'}->{$r-1}->{'type'} eq 'snp' || $f != 1 ? 'snp' : 'syn';
-            
-            if ($config->{'translation'} && $f > 1) {
-              $protein_seq->{'seq'}->[$aa_bp-1]->{'letter'} = $protein_seq->{'seq'}->[$aa_bp+1]->{'letter'} = '=';
-              
-              for ($aa_bp-1..$aa_bp+1) {
-                $protein_seq->{'seq'}->[$_]->{'class'} = 'aa';
-                $protein_seq->{'seq'}->[$_]->{'title'} = $title;
-              }
+            foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
+              $protein_seq->{'seq'}->[$aa]->{'class'} = 'aa';
+              $protein_seq->{'seq'}->[$aa]->{'title'} = $pep_allele_string;
             }
-          } else {
-            $mk->{'variations'}->{$r-1}->{'type'} = $insert ? 'insert' : 'delete';
           }
-          
-          $mk->{'variations'}->{$r-1}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$r-1} && $mk->{'codons'}->{$r-1}->{'class'} eq 'cu';
-          
-          $variation_seq->{'seq'}->[$r-1]->{'letter'} = $url ? qq{<a href="$url">$ambigcode</a>} : $ambigcode;
-          $variation_seq->{'seq'}->[$r-1]->{'url'}    = $url;
+        } else {
+          $mk->{'variations'}->{$_}->{'type'} = $insert ? 'insert' : 'delete';
         }
+        
+        $mk->{'variations'}->{$_}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$_} && $mk->{'codons'}->{$_}->{'class'} eq 'cu';
+        
+        $variation_seq->{'seq'}->[$_]->{'letter'} = $url ? qq{<a href="$url">$ambigcode</a>} : $ambigcode;
+        $variation_seq->{'seq'}->[$_]->{'url'}    = $url;
       }
     }
   }
