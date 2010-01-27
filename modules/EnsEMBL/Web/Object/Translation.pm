@@ -720,9 +720,7 @@ sub pep_snps{
 
   my $rtn = $rtn_structure eq 'hash' ? {} : [];
 
-  unless ($self->species_defs->databases->{'DATABASE_VARIATION'} || $self->species_defs->databases->{'ENSEMBL_GLOVAR'}) {
-    return $rtn;
-  }
+  return $rtn unless $self->species_defs->databases->{'DATABASE_VARIATION'};
   $self->database('variation');
   my $source = "variation";  # only defined if glovar
 
