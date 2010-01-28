@@ -101,7 +101,7 @@ sub get_sequence_data {
   };
 
   if ($config->{'variation'}) {
-    foreach my $transcript_variation (@{$object->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts([ $trans ])||[]}) {
+    foreach my $transcript_variation (@{$object->get_variation_transcripts}) {
       my ($start, $end) = ($transcript_variation->cdna_start, $transcript_variation->cdna_end);
       
       next unless $start && $end;
@@ -137,7 +137,7 @@ sub get_sequence_data {
         
         my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
         
-        if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {          
+        if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {
           $mk->{'variations'}->{$_}->{'type'} = $mk->{'variations'}->{$_}->{'type'} eq 'snp' || $allele_count != 1 ? 'snp' : 'syn';
           
           if ($config->{'translation'} && $allele_count > 1) {
