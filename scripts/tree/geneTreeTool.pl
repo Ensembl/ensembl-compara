@@ -67,6 +67,7 @@ GetOptions('help'                                     => \$help,
            'reroot=i'                                 => \$self->{'new_root_id'},
            'parent'                                   => \$self->{'parent'},
            'align'                                    => \$self->{'print_align'},
+           'exclude_taxa=s'                           => \$self->{'exclude_taxa'},
            'cdna'                                     => \$self->{'cdna'},
            'exon_cased'                               => \$self->{'exon_cased'},
            'fasta'                                    => \$self->{'output_fasta'},
@@ -156,7 +157,8 @@ GetOptions('help'                                     => \$help,
            'sitewise_alnwithgaps=s'                   => \$self->{'_sitewise_alnwithgaps'},
            'query_sitewise_domains=s'                 => \$self->{'_query_sitewise_domains'},
            'simul_genetrees=s'                        => \$self->{'_simul_genetrees'},
-           'analysis_job_trace=s'                              => \$self->{'_analysis_job_trace'},
+           'analysis_job_trace=s'                           => \$self->{'_analysis_job_trace'},
+           'nytprof_get_homologous_peptide_ids_from_gene=s' => \$self->{'_nytprof_get_homologous_peptide_ids_from_gene'},
            'gblocks_species=s'                        => \$self->{'_gblocks_species'},
            'cafe_genetree=s'                          => \$self->{'_cafe_genetree'},
            'genetree_to_mcl=s'                        => \$self->{'_genetree_to_mcl'},
@@ -180,6 +182,9 @@ GetOptions('help'                                     => \$help,
            'dnds_go=s'                                => \$self->{'_dnds_go'},
            'viral_genes=s'                            => \$self->{'_viral_genes'},
            'canonical_translation_gene_transcript_list' => \$self->{'_canonical_translation_gene_transcript_list'},
+           'binning=s' =>                               \$self->{'_binning'},
+           'member_bin=s' =>                               \$self->{'_member_bin'},
+           'indelible=s'                                => \$self->{'_indelible'},
            'species_intersection'                     => \$self->{'_species_intersection'},
            'hmm_build=s'                              => \$self->{'_hmm_build'},
            'hmm_search=s'                             => \$self->{'_hmm_search'},
@@ -342,6 +347,16 @@ if ($self->{'tree'}) {
 
   if ($self->{'chop_tree'}) {
     Bio::EnsEMBL::Compara::Graph::Algorithms::chop_tree($self->{'tree'});
+  }
+
+  if ($self->{'exclude_taxa'}) {
+    my @to_delete;
+    foreach my $taxon_id (split(":",$self->{'exclude_taxa'})) {
+      push @to_delete, $taxon_id;
+    }
+
+    $self->{tree} = $self->{tree}->remove_nodes_by_taxon_ids(\@to_delete);
+
   }
 
   #
@@ -963,6 +978,28 @@ if ($self->{'clusterset_id'} && $self->{'_canonical_translation_gene_transcript_
 }
 
 # internal purposes
+if ($self->{'clusterset_id'} && $self->{'_binning'}) {
+  _binning($self,$self->{'_species'}) 
+    if (defined($self->{'_binning'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_member_bin'}) {
+  _member_bin($self,$self->{'_species'}) 
+    if (defined($self->{'_member_bin'}));
+
+  exit(0);
+}
+
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_indelible'}) {
+  _indelible($self);
+  exit(0);
+}
+
+# internal purposes
 if ($self->{'clusterset_id'} && $self->{'_species_intersection'}) {
   _species_intersection($self,$self->{'species_list'}) if(defined($self->{'_species_intersection'}));
 
@@ -1104,6 +1141,10 @@ if ($self->{'_species_set_tag'}) {
 
 if ($self->{'_analysis_job_trace'}) {
   _analysis_job_trace($self) if(defined($self->{'_analysis_job_trace'}));
+}
+
+if ($self->{'_nytprof_get_homologous_peptide_ids_from_gene'}) {
+  _nytprof_get_homologous_peptide_ids_from_gene($self) if(defined($self->{'_nytprof_get_homologous_peptide_ids_from_gene'}));
 }
 
 # internal purposes
@@ -1485,8 +1526,8 @@ sub dumpTreeMultipleAlignment
       $sa = $tree->get_SimpleAlign(-id_type => 'STABLE', -UNIQ_SEQ=>1, -cdna=>$self->{'cdna'},-exon_cased=>$self->{'exon_cased'});
     }
     $sa->set_displayname_flat(1);
-    $DB::single=1;1;
     $sa = $sa->remove_gaps(undef,1);
+    $sa->set_displayname_flat(1);
 
     if ($self->{'dump'}) {
       my $aln_file = "proteintree_". $tree->node_id;
@@ -1630,20 +1671,22 @@ sub dumpTreeFasta
       open OUTSEQ, ">&STDOUT";
     }
 
-    my $seq_id_hash = {};
+    # my $seq_id_hash = {};
     my $member_list = $self->{'tree'}->get_all_leaves;
-    $DB::single=1;1;
     foreach my $member (@{$member_list}) {
-      next if($seq_id_hash->{$member->sequence_id});
-      $seq_id_hash->{$member->sequence_id} = 1;
+      $DB::single=1;1;
+      # next if($seq_id_hash->{$member->sequence_id});
+      # $seq_id_hash->{$member->sequence_id} = 1;
 
       my $seq;
       $seq = $member->sequence unless (defined($self->{output_boj}));
       $seq = $member->sequence_exon_bounded if (defined($self->{output_boj}));
+      $seq = $member->sequence_cds if (defined($self->{'cdna'}));
       $seq =~ s/(.{72})/$1\n/g;
       chomp $seq;
 
-      printf OUTSEQ ">%d %s\n$seq\n", $member->sequence_id, $member->stable_id
+      # printf OUTSEQ ">%d %s\n$seq\n", $member->sequence_id, $member->stable_id
+      printf OUTSEQ ">%s\n$seq\n", $member->stable_id
     }
     close OUTSEQ;
 
@@ -1851,6 +1894,7 @@ sub _analysis_job_trace {
   print STDERR "[querying] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
   while (($analysis_id, $analysis_job_id, $prev_analysis_job_id, $completed, $runtime_msec, $retry_count) = $sth->fetchrow_array) {
     my $node;
+    $DB::single=$self->{debug};1;#??
     unless (defined($self->{defined_nodes}{$analysis_job_id})) {
     $node = Bio::EnsEMBL::Compara::NestedSet->new; $node->node_id($analysis_job_id);
     $self->{defined_nodes}{$analysis_job_id} = $node;
@@ -1882,7 +1926,46 @@ sub _analysis_job_trace {
   my $scale = $self->{scale} || 0.005;
   $root->print_tree($scale);
   print STDERR "[printed graph] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
-  $DB::single=1;1;#??
+}
+
+sub _nytprof_get_homologous_peptide_ids_from_gene {
+  ## Get homologous protein ids for given gene....
+  my $self = shift;
+  my $genelist = $self->{_nytprof_get_homologous_peptide_ids_from_gene};
+  my @genes = split(':',`cat $genelist`);
+  my $species_list = $self->{species_list} || "Pan_troglodytes:Macaca_mulatta:Mus_musculus:Rattus_norvegicus";
+  my @species = split(':',$species_list);
+  foreach my $gene_id (@genes) {
+    foreach my $species (@species) {
+      $species =~ s/\_/\ /g;
+      # my $compara_db = $self->{'container'}->adaptor->db->get_db_adaptor('compara');
+      my $compara_db = $self->{comparaDBA};
+      return unless $compara_db;
+      my $ma = $compara_db->get_MemberAdaptor;
+      return () unless $ma;
+      my $qy_member = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+      return () unless (defined $qy_member);
+      my @homologues;
+      my $STABLE_ID = undef;
+      my $peptide_id = undef;
+      my $ta = $compara_db->get_ProteinTreeAdaptor;
+      my $root_id = $ta->gene_member_id_is_in_tree($qy_member->member_id);
+      return () unless (defined($root_id));
+      my $peptide_members_in_tree = $ta->fetch_all_AlignedMembers_by_root_id($root_id);
+      foreach my $member (@$peptide_members_in_tree) {
+        if( $member->gene_member_id eq $qy_member->member_id ) {
+          $STABLE_ID  = $member->stable_id;
+          $peptide_id = $member->member_id;
+        } else {
+          next unless ($member->genome_db->name eq $species);
+          push @homologues, $member->dbID;
+        }
+      }
+#      return ( $STABLE_ID, $peptide_id, \@homologues );
+      print STDERR "$STABLE_ID, $peptide_id, ", join(":",@homologues), "\n" if (0 < scalar(@homologues));
+      undef @homologues;
+    }
+  }
 }
 
 
@@ -2455,6 +2538,177 @@ sub _analysis_job_trace {
 #     }
 #   }
 # }
+
+sub _binning {
+  my $self = shift;
+  my $species = $self->{_binning} || "Homo_sapiens";  $species =~ s/\_/\ /g;
+  # Bin sizes in bps
+  my $bin_sizes = [1000000,500000,250000];
+  # list of seq_regions
+  my $sql1 = 
+    "SELECT distinct chr_name, genome_db_id FROM member m ".
+      "WHERE m.genome_db_id=(select genome_db_id from genome_db where name=\"$species\")";
+  my $sth1 = $self->{comparaDBA}->dbc->prepare($sql1);
+  $sth1->execute();
+  
+  # Temp file for LOAD DATA insert
+  my $io = new Bio::Root::IO();
+  my $tempdir = $io->tempdir;
+  my ($tmpfilefh,$tempfile) = $io->tempfile(-dir => $tempdir); #internal purposes
+  open FILE, ">$tempfile" or die "$!";
+  ###
+  
+  # 1) Foreach my seq_region
+  while (my ($name,$genome_db_id) = $sth1->fetchrow_array()) {
+    my $bin_num = 1;
+    ## Until max chr_end coordinate
+    my $sql4 = "select max(m.chr_end) from member m where m.genome_db_id=$genome_db_id and m.chr_name=\"$name\"";
+    my $sth4 = $self->{comparaDBA}->dbc->prepare($sql4);
+    $sth4->execute();
+    my ($max_end) = $sth4->fetchrow_array;
+    $sth4->finish();
+    ###
+    
+    # 2) Foreach bin_size
+    foreach my $size (@$bin_sizes) {
+      print STDERR "species $species name $name size $size\n";
+      my $offset;
+      if (0 == ($bin_num % 2)) { $offset = -1 * int($size/2);} else {$offset = 0;}
+      while ($offset < $max_end) {
+        ## In this window
+        my $end = $size+$offset;
+        ## Select start end boundaries for features (genes) in this window
+        my $sql2 = "select min(m.chr_start), max(m.chr_end) from member m where m.genome_db_id=$genome_db_id and m.chr_name=\"$name\" and m.chr_start>=$offset and m.chr_end<$end";
+        my $sth2 = $self->{comparaDBA}->dbc->prepare($sql2);
+        $sth2->execute();
+        my ($chr_start, $chr_end) = $sth2->fetchrow_array;
+        $sth2->finish();
+        $offset += $size;
+        next unless (defined($chr_start) && defined($chr_end));
+        ## Define bin, first tab is for AUTO_INCREMENT of seq_region_bin_id
+        print FILE "\t$size\t$genome_db_id\t$name\t$chr_start\t$chr_end\n";
+      }
+      $bin_num++;
+    }
+  }
+  $sth1->finish();
+  close FILE;
+  ## Load bins into table
+  my $sql3 = "LOAD DATA LOCAL INFILE '$tempfile' IGNORE INTO TABLE seq_region_bin";
+  my $sth3 = $self->{comparaDBA}->dbc->prepare($sql3);
+  $sth3->execute();
+  return 1;
+}
+
+sub _member_bin {
+  my $self = shift;
+  my $species = $self->{_member_bin} || "Homo_sapiens";
+  $species =~ s/\_/\ /g;
+  
+  my $sth3 = $self->{comparaDBA}->dbc->prepare
+    ("INSERT IGNORE INTO member_bin
+           (seq_region_bin_id,
+            member_id) VALUES (?,?)");
+  
+  my $sql1 = 
+    "SELECT srb.seq_region_bin_id, srb.genome_db_id, srb.bin_size, srb.chr_name, srb.chr_start, srb.chr_end ".
+      "FROM seq_region_bin srb ".
+        "WHERE srb.genome_db_id=(select genome_db_id from genome_db where name=\"$species\") order by srb.seq_region_bin_id";
+  my $sth1 = $self->{comparaDBA}->dbc->prepare($sql1);
+  $sth1->execute();
+  while (my ($seq_region_bin_id, $genome_db_id, $bin_size, $chr_name, $chr_start, $chr_end) = $sth1->fetchrow_array()) {
+    #     print STDERR "name $chr_name bin_size $bin_size chr_start $chr_start chr_end $chr_end\n";
+    my $sql4 = "select member_id from member m where m.source_name='ENSEMBLGENE' and m.genome_db_id=$genome_db_id and m.chr_name=\"$chr_name\" and m.chr_start>=$chr_start and m.chr_end<=$chr_end";
+    my $sth4 = $self->{comparaDBA}->dbc->prepare($sql4);
+    $sth4->execute();
+    while (my ($member_id) = $sth4->fetchrow_array()) {
+      $sth3->execute($seq_region_bin_id,
+                     $member_id);
+    }
+    $sth4->finish();
+  }
+  $sth1->finish();
+  $sth3->finish();
+}
+
+sub _indelible {
+  my $self = shift;
+  my $tree_id = $self->{_indelible};
+  $self->{treeDBA} = $self->{comparaDBA}->get_ProteinTreeAdaptor;
+  my $tree = $self->{treeDBA}->fetch_node_by_node_id($tree_id);
+  next unless (defined($tree));
+  my $total_branch_length;
+  foreach my $subnode ($tree->get_all_subnodes) {
+    $total_branch_length += $subnode->distance_to_parent;
+  }
+  my $newick = $tree->newick_format;
+  # Add some padding to zero-length branches.
+  $newick =~ s/(:0\.?0+)([;,()])/:0.0005$2/g;
+  # Get rid of branch length on root.
+  $newick =~ s/:\d\.?\d+;/;/g;
+  my $aln_num_residues = $tree->get_tagvalue('aln_num_residues');
+  my $gene_count = $tree->get_tagvalue('gene_count');
+  my $residues_length = int($aln_num_residues/$gene_count);
+  my $aln_length = $tree->get_tagvalue('aln_length');
+  my $length = $residues_length;
+
+  my $substitution_rate = $total_branch_length;
+  my $indel_rate = ($aln_length/$residues_length)/$substitution_rate;
+  $indel_rate = $self->{debug} if ($self->{debug}); # overrides...
+
+  print STDERR "indel_rate $indel_rate\n";
+  my $ins_rate = $indel_rate;
+  my $del_rate = $indel_rate;
+
+  my $io = new Bio::Root::IO();
+  my $tempdir = $io->tempdir;
+  my $output_f = $tempdir."/$tree_id.sim";
+  my $ctrl_f   = $tempdir."/control.txt";
+
+  my $ctrl_str = qq^
+[TYPE] CODON 1
+[SETTINGS]
+  [output] FASTA
+  [printrates] TRUE
+  [randomseed] $tree_id
+
+[MODEL] model1
+  [submodel]     2.5  0.5     //  Substitution model is M0 with kappa=2.5, omega=0.5
+  [insertmodel] POW 2 50
+  [deletemodel] POW 2 50
+  [insertrate] $ins_rate
+  [deleterate] $del_rate
+
+[TREE] tree1 $newick
+
+
+[PARTITIONS] partition1
+  [tree1 model1 $length]
+  [EVOLVE] partition1 1 $output_f
+  ^;
+
+  open(OUT,">$ctrl_f");
+  print OUT $ctrl_str;
+  close(OUT);
+
+  use Cwd;
+  my $cwd = getcwd;
+  chdir($tempdir);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  my $cmd = "/nfs/acari/avilella/src/indelible/latest/INDELibleV1.02/src/indelible $ctrl_f";
+  unless(system("cd $tempdir; $cmd") == 0) {
+    print("## $cmd\n"); $self->throw("error running indelible, $!\n");
+  }
+
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+
+  my $aln_f = $output_f."_TRUE.fas";
+  my $cds_f = $output_f.".fas";
+  print `cp $aln_f /lustre/scratch103/ensembl/avilella/indelible_tests/$tree_id.indl.mfa`;
+  print `cp $cds_f /lustre/scratch103/ensembl/avilella/indelible_tests/$tree_id.indl.cds`;
+  unlink <$tempdir/*>;
+  rmdir $tempdir;
+}
 
 # sub _viral_genes {
 #   my $self = shift;
@@ -3149,7 +3403,7 @@ sub _zmenu_prof {
 #   }
 # }
 
-sub _mxe_metatranscript {
+sub _mxe_metatranscript_reads {
   my $self = shift;
   $self->{starttime} = time();
   my $species_name = $self->{_species};
@@ -3236,7 +3490,7 @@ sub _mxe_metatranscript {
         my $slice; eval { $slice = $slice_adaptor->fetch_by_exon_stable_id($exon->stable_id);};
         my $feats = $slice->get_all_DnaAlignFeatures('solexa_ga') if (defined($slice));
         if (defined $feats) {
-          $DB::single=$self->{debug};1;
+          # $DB::single=$self->{debug};1;
         }
         $gene_genomic_range->check_and_register
           ( $gene_stable_id, ($exon->start + $diff_start), ($exon->end + $diff_end) );
@@ -3290,6 +3544,165 @@ sub _mxe_metatranscript {
       }
     }
     print $self->{_species},",$gene_stable_id,$is_translateable,$is_mod3,$transcript_num,$increase\n";
+  }
+}
+
+sub _mxe_metatranscript {
+  my $self = shift;
+  $self->{starttime} = time();
+  my $species_name = $self->{_species};
+  $species_name =~ s/\_/\ /g;
+  my $farm = $self->{_farm} || undef;
+
+  my ($myuser,$myhost,$mydbversion,$port);
+  eval {
+  $url =~ /mysql\:\/\/(\S+)\@(\S+)\/\S+\_(\d+)$/g;
+  ($myuser,$myhost,$mydbversion) = ($1,$2,$3);
+  $port = 3306;
+  if ($myhost =~ /(\S+)\:(\S+)/) {
+    $port = $2;
+    $myhost = $1;
+  }
+  Bio::EnsEMBL::Registry->load_registry_from_db
+      ( -host => "$myhost",
+        -user => "$myuser",
+        -db_version => "$mydbversion",
+        -port => "$port",
+        -verbose => "0" );
+  ;};
+
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{gdba} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  my $count = 0;
+  print STDERR "[fetching human genes] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
+  my $members = $self->{memberDBA}->fetch_all_by_source_taxon('ENSEMBLGENE',$self->{gdba}->fetch_by_name_assembly($species_name)->taxon_id);
+  print STDERR "[fetched  human genes] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
+  print "species,gene_stable_id,is_translateable,is_mod3,transcript_num,increase\n";
+#   my @members;
+#   push @members, $self->{comparaDBA}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', 'ENSG00000139618'); #brca2
+
+  my $url2 = $self->{_url2} || $url;
+  $url2 =~ /mysql\:\/\/(\S+)\@(\S+)\/(\S+\_(\w+))$/g;
+  ($myuser,$myhost,$mydbversion) = ($1,$2,$3);
+  $port = 3306;
+  if ($myhost =~ /(\S+)\:(\S+)/) {
+    $port = $2;
+    $myhost = $1;
+  }
+  my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor
+    (-host   => $myhost,
+     -user   => $myuser,
+     -dbname => $mydbversion,
+     -port => $port);
+  my $slice_adaptor = $db->get_SliceAdaptor;
+  while (my $member = shift @$members) {
+    # last if ($count++ > $self->{debug});
+    my $gene = $member->get_Gene;
+    my $gene_stable_id = $gene->stable_id;
+    my $transcripts = $gene->get_all_Transcripts;
+    my $transcript_num = scalar @$transcripts;
+    if (1 == $transcript_num) {
+      print $self->{_species},",$gene_stable_id,1,1,1,0\n";
+      next;
+    }
+    my $gene_slice = $gene->slice;
+    my $gene_genomic_range = Bio::EnsEMBL::Mapper::RangeRegistry->new();
+    my $this_transcript_num = 1;
+    # my $ranges;
+    foreach my $transcript (@$transcripts) {
+      my $transcript_stable_id = $transcript->stable_id;
+      my $exons = $transcript->get_all_translateable_Exons;
+      # my $exons = $transcript->get_all_Exons;
+      my $miniexon = 0;
+      my $exon_num = scalar @$exons;
+      my $this_exon = 1;
+      foreach my $exon (@$exons) {
+        if ($exon->end - $exon->start + 1 < 3) {
+          next if (1 == $this_exon);
+          next if ($exon_num == $this_exon);
+          $miniexon = 1;
+          # print STDERR "# $transcript_stable_id miniexon ". $exon->stable_id . " [" . (($exon->end)-($exon->start)+1) . "] " . $member->chr_name . " " .  $exon->end ."-" . $exon->start . "\n";
+        }
+        $this_exon++;
+      }
+      next if ($miniexon);
+      foreach my $exon (@$exons) {
+        my $rel_coding_start = $exon->cdna_coding_start($transcript);
+        my $rel_coding_end = $exon->cdna_coding_end($transcript);
+        my $rel_start = $exon->cdna_start($transcript);
+        my $rel_end = $exon->cdna_end($transcript);
+        my $diff_start = $rel_coding_start - $rel_start;
+        my $diff_end = $rel_end - $rel_coding_end;
+        my $slice; eval { $slice = $slice_adaptor->fetch_by_exon_stable_id($exon->stable_id);};
+        my $feats = $slice->get_all_DnaAlignFeatures('solexa_ga') if (defined($slice));
+        if (0 < scalar @$feats) {
+          # $DB::single=$self->{debug};1;
+        }
+        $gene_genomic_range->check_and_register
+          ( $gene_stable_id, ($exon->start + $diff_start), ($exon->end + $diff_end) );
+
+      }
+      $this_transcript_num++;
+    }
+    # Create exons from ranges
+    #   Deal with exon cdna start for partially coding exons
+    #        end_phase will be -1 if the exon is half-coding and its 3 prime end is UTR.
+    #   Deal with MXEs
+    # Create a transcript using the exons translation using the first and last coding exon
+    # Associate a tranlation with a transcript
+    my $translation;
+
+    my $meta_transcript;
+    my $meta_seq;
+    my @ranges; eval {@ranges = @{$gene_genomic_range->get_ranges($gene_stable_id)};};
+    next if ($@);
+    foreach my $range (@ranges) {
+      my ($start_range, $end_range) = @$range;
+      my $sub_slice = $gene_slice->sub_Slice($start_range,$end_range);
+      $meta_seq .= $sub_slice->seq . "#";
+      my $meta_exon_id = $start_range . "_" . $end_range;
+      $meta_transcript->{$meta_exon_id} = $sub_slice;
+    }
+
+    # Stats
+    # my $meta_seq = join("#",map {$_->seq} values %$meta_transcript);
+    my $is_translateable = '1';
+    my $copy = $meta_seq;
+    $meta_seq =~ s/\#//g;
+    my $is_mod3 = '1';
+    if (0 != (length($meta_seq) % 3)) {
+      $is_mod3 = -1*(length($meta_seq) % 3);
+      # print ">meta_$gene_stable_id\n$meta_seq\n";
+    }
+    my $seq = Bio::Seq->new(); $seq->seq($meta_seq);
+    my $translated_seq = $seq->translate->seq;
+    if ($translated_seq =~ /\*./ && $member->chr_name ne 'MT') {
+      $is_translateable = -1;
+    }
+    my $increase = 0;
+    my $canonical_translation = $member->get_canonical_peptide_Member->sequence;
+    $translated_seq =~ s/\*$//;
+    $increase = ((length($translated_seq) - length($canonical_translation))*100 / length($canonical_translation));
+    if (1 == $is_translateable) {
+      if ($increase>10) {
+        my $rincrease = sprintf("%.1f",$increase);
+        print STDERR "\>$gene_stable_id/$rincrease\%\n$translated_seq\n";
+      }
+    }
+    if ($increase > 0) {
+      print $self->{_species},",$gene_stable_id,$is_translateable,$is_mod3,$transcript_num,$increase\n";
+      if ($farm && $increase > $self->{debug}) {
+        my $tree_id = $self->{treeDBA}->gene_member_id_is_in_tree($member->member_id);
+        open OUTFILE, ">$farm/$tree_id.$gene_stable_id.fasta" or die "$!\n";
+        foreach my $peptide_member (@{$member->get_all_peptide_Members}) {
+          my $stable_id = $peptide_member->stable_id;
+          my $seq = $peptide_member->sequence_cds;
+          print OUTFILE "\>$stable_id\n$seq\n";
+        }
+        close OUTFILE;
+      }
+    }
   }
 }
 
