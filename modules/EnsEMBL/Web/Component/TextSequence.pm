@@ -660,6 +660,9 @@ sub markup_line_numbers {
           }
         }
         
+        # Reference sequence starting with N or NN means the transcript begins mid-codon, so reduce the sequence length accordingly.
+        $seq_length -= length $1 if $segment =~ /^(N+)\w/;
+        
         $end = $e < $config->{'length'} ? $row_start + $seq_length - $data->{'dir'} : $data->{'end'};
         
         $start = $row_start if $seq_length;
@@ -671,7 +674,7 @@ sub markup_line_numbers {
         $row_start = $end + $data->{'dir'} if $start && $end;
         
         # Remove the line number if the sequence doesn't start at the beginning of the line
-        $start = '' if $segment =~ /^\./;
+        $start = '' if $segment =~ /^(\.|N+\w)/;
         
         $s = $e + 1;
       } else { # Single species
