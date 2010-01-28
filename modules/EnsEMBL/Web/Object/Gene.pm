@@ -16,7 +16,6 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::Proxy::Object;
-use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
@@ -210,8 +209,7 @@ sub count_gene_supporting_evidence {
   return scalar(keys(%c));
 }
 
-
-##vega
+## vega
 sub count_self_alignments {
   my $self = shift;
   my $species = $self->species; 
@@ -245,9 +243,9 @@ sub count_self_alignments {
   return $matching;
 }
 
-##vega
+## vega
 sub check_compara_species_and_locations {
-  #check if genomic_alignments and or orthologues of this gene would have been found
+  # check if genomic_alignments and or orthologues of this gene would have been found
   my $self = shift;
   my $species = $self->species;
   my $sd = $self->species_defs;
@@ -271,15 +269,6 @@ sub check_compara_species_and_locations {
     }
   }
   return $matching;
-}
-
-sub get_external_dbs {
-  #retrieve a summary of the external_db table from species defs
-  my $self = shift;
-  my $db   = $self->get_db;
-  my $db_type = 'DATABASE_'.uc($db);
-  my $sd = $self->species_defs;
-  return  $sd->databases->{$db_type}{'external_dbs'};
 }
 
 sub get_gene_supporting_evidence {
@@ -387,7 +376,7 @@ sub get_gene_supporting_evidence {
   return $e;
 }
 
-#generate URLs for evidence links
+# generate URLs for evidence links
 sub add_evidence_links {
   my $self = shift;
   my $ids  = shift;
@@ -423,19 +412,12 @@ sub get_Slice {
   return $slice->expand( $context, $context );
 }
 
-sub gene_name {
-  my $self = shift;
-  my( $disp_id ) = $self->display_xref;
-  return $disp_id || $self->stable_id;
-}
-
 sub short_caption {
   my $self = shift;
   return 'Gene-based displays';
-  #return $self->type_name.': '.$self->gene_name;
 }
 
-sub caption           {
+sub caption {
   my $self = shift;
   my( $disp_id ) = $self->display_xref;
   my $caption = $self->type_name.': ';
@@ -447,30 +429,22 @@ sub caption           {
   return $caption;
 }
 
-sub type_name         { my $self = shift; return $self->species_defs->translate('Gene'); }
-sub gene              { my $self = shift; return $self->Obj;             }
-sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
-sub feature_type      { my $self = shift; return $self->Obj->type;       }
-sub source            { my $self = shift; return $self->Obj->source;     }
-sub version           { my $self = shift; return $self->Obj->version;    }
-sub logic_name        { my $self = shift; return $self->Obj->analysis->logic_name; }
-sub coord_system      { my $self = shift; return $self->Obj->slice->coord_system->name; }
-sub seq_region_type   { my $self = shift; return $self->coord_system;    }
-sub seq_region_name   { my $self = shift; return $self->Obj->slice->seq_region_name; }
-sub seq_region_start  { my $self = shift; return $self->Obj->start;      }
-sub seq_region_end    { my $self = shift; return $self->Obj->end;        }
-sub seq_region_strand { my $self = shift; return $self->Obj->strand;     }
-sub feature_length    { my $self = shift; return $self->Obj->feature_Slice->length; }
-
-sub get_external_id {
-  my( $self, $type ) = @_; 
-  my $links = $self->get_database_matches($self->gene);
-  my $ext_id;
-  foreach my $link (@$links) {
-    $ext_id = $link->primary_id if ($link->database eq $type);
-  }
-  return $ext_id;
-}
+sub gene                        { return $_[0]->Obj;             }
+sub type_name                   { return $_[0]->species_defs->translate('Gene'); }
+sub stable_id                   { return $_[0]->Obj->stable_id;  }
+sub feature_type                { return $_[0]->Obj->type;       }
+sub source                      { return $_[0]->Obj->source;     }
+sub version                     { return $_[0]->Obj->version;    }
+sub logic_name                  { return $_[0]->Obj->analysis->logic_name; }
+sub coord_system                { return $_[0]->Obj->slice->coord_system->name; }
+sub seq_region_type             { return $_[0]->coord_system;    }
+sub seq_region_name             { return $_[0]->Obj->slice->seq_region_name; }
+sub seq_region_start            { return $_[0]->Obj->start;      }
+sub seq_region_end              { return $_[0]->Obj->end;        }
+sub seq_region_strand           { return $_[0]->Obj->strand;     }
+sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
+sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
+sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
 
 sub get_database_matches {
   my $self = shift;
@@ -479,7 +453,7 @@ sub get_database_matches {
   return \@DBLINKS  || [];
 }
 
-sub get_all_transcripts{
+sub get_all_transcripts {
   my $self = shift;
   unless ($self->{'data'}{'_transcripts'}){
     foreach my $transcript (@{$self->gene()->get_all_Transcripts}){
@@ -544,13 +518,6 @@ sub member_by_source {
   return $family->get_Member_Attribute_by_source($source) || [];
 }
 
-
-sub chromosome {
-  my $self = shift;
-  return undef if lc($self->coord_system) ne 'chromosome';
-  return $self->Obj->slice->seq_region_name;
-}
-
 sub display_xref {
   my $self = shift; 
   return undef if $self->Obj->isa('Bio::EnsEMBL::Compara::Family');
@@ -580,13 +547,13 @@ sub get_db {
 }
 
 sub get_author_name {
-    my $self = shift;
-    my $attribs = $self->Obj->get_all_Attributes('author');
-    if (@$attribs) {
-        return $attribs->[0]->value;
-    } else {
-        return undef;
-    }
+  my $self = shift;
+  my $attribs = $self->Obj->get_all_Attributes('author');
+  if (@$attribs) {
+    return $attribs->[0]->value;
+  } else {
+    return undef;
+  }
 }
 
 sub gene_type {
@@ -618,22 +585,6 @@ sub date_format {
   my %S = ('d'=>sprintf('%02d',$d),'m'=>sprintf('%02d',$m+1),'y'=>$y+1900);
   (my $res = $format ) =~s/%(\w)/$S{$1}/ge;
   return $res;
-}
-
-sub location_string {
-  my $self = shift;
-  return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
-}
-
-sub get_contig_location {
-  my $self    = shift;
-  my ($pr_seg) = @{$self->Obj->project('seqlevel')};
-  return undef unless $pr_seg;
-  return (
-    $self->neat_sr_name( $pr_seg->[2]->coord_system->name, $pr_seg->[2]->seq_region_name ),
-    $pr_seg->[2]->seq_region_name,
-    $pr_seg->[2]->start
-  );
 }
 
 sub get_alternative_locations {
@@ -779,26 +730,7 @@ sub fetch_homology_species_hash {
   return \%homologues;
 }
 
-
-sub get_disease_matches{
-  my $self = shift;
-  my %disease_list;
-  my $disease_adaptor;
-  return undef unless ($disease_adaptor = $self->database('disease'));
-  my %omim_disease = ();
-  my @diseases = $disease_adaptor->disease_name_by_ensembl_gene($self->gene());
-  foreach my $disease (@diseases){
-    next unless $disease;
-    my $desc = $disease->name;
-    foreach my $loc ($disease->each_Location){
-      my $omim_id = $loc->db_id;
-      push @{$omim_disease{$desc}}, $omim_id;
-    }
-  }
-  return \%omim_disease ;
-}
-
-sub get_compara_Member{
+sub get_compara_Member {
   # Returns the Bio::EnsEMBL::Compara::Member object
   # corresponding to this gene 
   my $self = shift;
@@ -822,7 +754,7 @@ sub get_compara_Member{
   return $self->{$cachekey};
 }
 
-sub get_ProteinTree{
+sub get_ProteinTree {
   # Returns the Bio::EnsEMBL::Compara::ProteinTree object
   # corresponding to this gene
   my $self = shift;
@@ -847,80 +779,6 @@ sub get_ProteinTree{
   return $self->{$cachekey};
 }
 
-#----------------------------------------------------------------------
-
-sub get_das_factories {
-   my $self = shift;
-   return [ $self->__data->{_object}->adaptor()->db()->_each_DASFeatureFactory ];
-}
-
-sub get_das_features_by_name {
-  my $self = shift;
-  my $name  = shift || die( "Need a source name" );
-  my $scope = shift || '';
-  my $data = $self->__data;     
-  my $cache = $self->Obj;
-  $cache->{_das_features} ||= {}; # Cache
-  my %das_features;
-  foreach my $dasfact( @{$self->get_das_factories} ){
-    my $type = $dasfact->adaptor->type;
-    next if $dasfact->adaptor->type =~ /^ensembl_location/;
-    my $name = $dasfact->adaptor->name;
-    next unless $name;
-    my $dsn = $dasfact->adaptor->dsn;
-    my $url = $dasfact->adaptor->url;
-
-# Construct a cache key : SOURCE_URL/TYPE
-# Need the type to handle sources that serve multiple types of features
-
-    my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
-    if ($key =~ m!/das$!) {
-  $key .= "/$dsn";
-    }
-    $key .= "/$type";
-    unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my $featref = ($dasfact->fetch_all_by_ID($data->{_object}, $data ))[1];
-      $cache->{_das_features}->{$key} = $featref;
-    }
-    $das_features{$name} = $cache->{_das_features}->{$key};
-  }
-  return @{ $das_features{$name} || [] };
-}
-
-sub get_das_features_by_slice {
-  my $self = shift;
-  my $name  = shift || die( "Need a source name" );
-  my $slice = shift || die( "Need a slice" );
-  
-  my $cache = $self->Obj;     
-
-  $cache->{_das_features} ||= {}; # Cache
-  my %das_features;
-    
-  foreach my $dasfact( @{$self->get_das_factories} ){
-    my $type = $dasfact->adaptor->type;
-    next unless $dasfact->adaptor->type =~ /^ensembl_location/;
-    my $name = $dasfact->adaptor->name;
-    next unless $name;
-    my $dsn = $dasfact->adaptor->dsn;
-    my $url = $dasfact->adaptor->url;
-
-# Construct a cache key : SOURCE_URL/TYPE
-# Need the type to handle sources that serve multiple types of features
-
-    my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
-    $key .= "/$dsn/$type";
-
-    unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my $featref = ($dasfact->fetch_all_Features( $slice, $type ))[0];
-      $cache->{_das_features}->{$key} = $featref;
-    }
-    $das_features{$name} = $cache->{_das_features}->{$key};
-  }
-
-  return @{ $das_features{$name} || [] };
-}
-
 sub get_gene_slices {
   my( $self, $master_config, @slice_configs ) = @_;
   foreach my $array ( @slice_configs ) { 
@@ -932,7 +790,6 @@ sub get_gene_slices {
     }
   }
 }
-
 
 # Calls for GeneSNPView
 
@@ -948,36 +805,13 @@ sub valids {
 
 sub getVariationsOnSlice {
   my( $self, $slice, $subslices, $gene ) = @_;
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
-        'Slice', $slice, $self->__data
-       );
+  my $sliceObj = EnsEMBL::Web::Proxy::Object->new('Slice', $slice, $self->__data);
   
   my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);  
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
   $self->__data->{'SNPS'} = $filtered_snps; 
   return ($count_snps, $filtered_snps, $context_count);
 }
-
-
-sub get_source {
-  my $self = shift;
-  my $default = shift;
-
-  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
-  unless ($vari_adaptor) {
-    warn "ERROR: Can't get variation adaptor";
-    return ();
-  }
-
-  if ($default) {
-    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
-  }
-  else {
-    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
-  }
-
-}
-
 
 sub store_TransformedTranscripts {
   my( $self ) = @_;
@@ -1159,15 +993,6 @@ sub get_munged_slice {
 
 }
 
-sub generate_query_hash {
-  my $self = shift;
-  return {
-    'gene' => $self->stable_id,
-    'db'   => $self->get_db,
-  };
-
-}
-
 # Calls for HistoryView
 
 sub get_archive_object {
@@ -1178,29 +1003,6 @@ sub get_archive_object {
 
  return $archive_object;
 }
-
-sub get_latest_incarnation {
-  my $self = shift;
-  return $self->Obj->get_latest_incarnation;
-}
-
-=head2 get_all_associated_archived
-
- Arg1        : data object
- Description : fetches all associated archived IDs
- Return type : Arrayref of
-                  Bio::EnsEMBL::ArchiveStableId archived gene
-                  Bio::EnsEMBL::ArchiveStableId archived transcript
-                  Bio::EnsEMBL::ArchiveStableId archived translation (optional)
-                  String peptide sequence (optional)
-
-=cut
-
-sub get_all_associated_archived {
-  my $self = shift;
-  return $self->Obj->get_all_associated_archived;
-}
-
 
 =head2 history
 
@@ -1222,7 +1024,6 @@ sub history {
   return $history;
 }
 
-
 # Calls for GeneRegulationView 
 
 sub get_fg_db {
@@ -1230,6 +1031,7 @@ sub get_fg_db {
   my $slice = $self->get_Slice( @_ );
   my $fg_db = undef;
   my $db_type  = 'funcgen';
+  
   unless($slice->isa("Bio::EnsEMBL::Compara::AlignSlice::Slice")) {
     $fg_db = $slice->adaptor->db->get_db_adaptor($db_type);
     if(!$fg_db) {
@@ -1237,7 +1039,8 @@ sub get_fg_db {
       return [];
     }
   }
-return $fg_db;
+  
+  return $fg_db;
 }
 
 sub feature_sets {
@@ -1253,8 +1056,6 @@ sub feature_sets {
   } 
   return \@fsets; 
 }
-
-
 
 sub reg_factors {
   my $self = shift;

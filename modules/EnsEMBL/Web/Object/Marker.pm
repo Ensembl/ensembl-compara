@@ -108,14 +108,6 @@ sub _seq_region_ {
   return @{$self->{'_region_array_'}};
 }
 
-sub location_string {
-  my( $type, $sr,$st,$en) = $_[0]->_seq_region_;
-  if( $type ) {
-    return "$sr:@{[$st-1000]}-@{[$en+1000]}";
-  } else {
-    return undef;
-  }
-}
 sub seq_region_type   { return [$_[0]->_seq_region_]->[0]; }
 sub seq_region_name   { return [$_[0]->_seq_region_]->[1]; }
 sub seq_region_start  { return [$_[0]->_seq_region_]->[2]; }

@@ -11,79 +11,28 @@ package EnsEMBL::Web::Object::Translation;
 ### DESCRIPTION
 
 use strict;
-#use warnings;
-#no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
-
-our @ISA = qw(EnsEMBL::Web::Object);
-
-sub get_database_matches {
-  my $self = shift;
-  my @DBLINKS;
-  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks};};
-  return \@DBLINKS  || [];
-}
-
-sub type_name         { my $self = shift; return $self->species_defs->translate('Translation'); }
-sub source            { my $self = shift; return $self->gene ? $self->gene->source : undef;      }
-sub gene_description  { my $self = shift; return $self->gene ? $self->gene->description : undef; }
-sub feature_type      { my $self = shift; return $self->Obj->type;       }
-sub version           { my $self = shift; return $self->Obj->version;    }
-sub logic_name        { my $self = shift;
-                        return $self->gene->analysis ? $self->gene->analysis->logic_name : undef if $self->gene;
-                        return $self->transcript->analysis ? $self->transcript->analysis->logic_name : undef;
-}
-sub coord_system      { my $self = shift; return $self->transcript->slice->coord_system->name; }
-sub seq_region_type   { my $self = shift; return $self->coord_system; }
-sub seq_region_name   { my $self = shift; return $self->transcript->slice->seq_region_name; }
-sub seq_region_start  { my $self = shift; return $self->transcript->coding_region_start; }
-sub seq_region_end    { my $self = shift; return $self->transcript->coding_region_end; }
-sub seq_region_strand { my $self = shift; return $self->transcript->strand; }
+use base qw(EnsEMBL::Web::Object);
 
 sub translation_object { return $_[0]; }
+sub translation        { return $_[0]->Obj; }
+sub type_name          { return $_[0]->species_defs->translate('Translation'); }
+sub source             { return $_[0]->gene ? $_[0]->gene->source : undef;      }
+sub gene_description   { return $_[0]->gene ? $_[0]->gene->description : undef; }
+sub feature_type       { return $_[0]->Obj->type;       }
+sub version            { return $_[0]->Obj->version;    }
+sub coord_system       { return $_[0]->transcript->slice->coord_system->name; }
+sub seq_region_type    { return $_[0]->coord_system; }
+sub seq_region_name    { return $_[0]->transcript->slice->seq_region_name; }
+sub seq_region_start   { return $_[0]->transcript->coding_region_start; }
+sub seq_region_end     { return $_[0]->transcript->coding_region_end; }
+sub seq_region_strand  { return $_[0]->transcript->strand; }
 
-sub feature_length    { 
-	my $self   = shift;
-	my $length = $self->seq_region_end - $self->seq_region_start + 1;
-	return $length;
-}
-
-sub get_contig_location {
+sub logic_name { 
   my $self = shift;
-  my $slice = $self->database('core')->get_SliceAdaptor->fetch_by_region( undef,
-     $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
-  my ($pr_seg) = @{$slice->project('seqlevel')};
-  return undef unless $pr_seg;
-  return (
-    $self->neat_sr_name( $pr_seg->[2]->coord_system->name, $pr_seg->[2]->seq_region_name ),
-    $pr_seg->[2]->seq_region_name,
-    $pr_seg->[2]->start
-  );
+  return $self->gene->analysis ? $self->gene->analysis->logic_name : undef if $self->gene;
+  return $self->transcript->analysis ? $self->transcript->analysis->logic_name : undef;
 }
-
-sub get_alternative_locations {
-  my $self = shift;
-  my @alt_locs = map { $_->cdna_coding_start ? [ $_->slice->seq_region_name, $_->cdna_coding_start, $_->cdna_coding_end, $_->slice->coord_system->name, ] : () }
-                 @{$self->transcript->get_all_alt_locations};
-  return \@alt_locs;
-}
-
-#----------------------------------------------------------------------
-
-=head2 translation
-
- Arg[1]         : none
- Example     : my $ensembl_translation = $pepdata->translation
- Description : Gets the ensembl translation stored on the 
-               transcript data object
- Return type : Bio::EnsEmbl::Translation
-
-=cut
-
-sub translation { return $_[0]->Obj; }
-
-#----------------------------------------------------------------------
 
 =head2 gene
 
@@ -116,8 +65,6 @@ sub gene {
   return $self->__data->{'_gene'};
 }
 
-#----------------------------------------------------------------------
-
 =head2 transcript
 
  Arg[1]         : Bio::EnsEMBL::transcript - (OPTIONAL)
@@ -134,7 +81,7 @@ sub gene {
 
 =cut
 
-sub transcript{
+sub transcript {
   my $self = shift;
   if(@_) {
     $self->__data->{'_transcript'} = shift;
@@ -148,61 +95,6 @@ sub transcript{
   return $self->__data->{'_transcript'} 
 }
 
-#----------------------------------------------------------------------
-
-=head2 get_transcript_object
-
-  Arg[1]      : none
-  Example     : my $transdata = $pepdata->get_transcript_object
-  Description : gets a transcript object from a peptide
-  Return type : Bio::EnsEMBL::Web::Transcript
-
-=cut
-
-sub get_transcript_object {
-  my $self = shift;
-  my $transcript = $self->transcript;
-  unless ($self->__data->{'_transcript_obj'}) {
-    my $transcriptObj = EnsEMBL::Web::Proxy::Object->new( 'Transcript', $transcript, $self->__data );
-    $transcriptObj->gene($self->gene);
-    $self->__data->{'_transcript_obj'} = $transcriptObj;
-  }
-  return $self->__data->{'_transcript_obj'};
-}
-
-#----------------------------------------------------------------------
-
-=head2 protein
-
- Arg[1]         : Bio::EnsEMBL::protein - (OPTIONAL)
- Example     : $ensembl_protein = $pepdata->protein
- Description : returns the ensembl protein object if it exists on the 
-               translation object else it creates it from the core-api. 
-               This call will soon be merged with peptide
- Return type : Bio::EnsEMBL::Protein
-
-=cut
-
-sub protein{ 
-    my $self = shift;  
-    warn( "DEPRECATED - use translation instead " . 
-      join( ', ', (caller(0))[3,1,2] ) );
-    return $self->translation;
-
-# web core api has changed to there is no protein objects
-# however this call is being kept for now for backwards compatability
-#    if (!$self->{'_protein'}){
-#        my $db = $self->get_db() ;
-#        my $pepadaptor = $self->database($db)->get_ProteinAdaptor();
-#        my $protein;
-#        eval {$protein = #$pepadaptor->fetch_by_transcript_stable_id($self->transcript->stable_id);};
-#        $self->{'_protein'} = $protein;         
-#    }
-#    return $self->{'_protein'} || undef;        
-}
-
-#----------------------------------------------------------------------
-
 =head2 db_type
 
  Arg[1]         : none
@@ -213,7 +105,7 @@ sub protein{
 
 =cut
 
-sub db_type{
+sub db_type {
     my $self = shift;
     my $db     = $self->get_db;
     my %db_hash = (  'core'       => 'Ensembl',
@@ -223,8 +115,6 @@ sub db_type{
     
     return $db_hash{$db};
 }
-
-#----------------------------------------------------------------------
 
 =head2 gene_type
 
@@ -253,8 +143,6 @@ sub gene_type {
   return $type;
 }
 
-#----------------------------------------------------------------------
-
 =head2 analysis
 
   Arg [1]   : 
@@ -272,8 +160,6 @@ sub analysis {
   else{ return $self->transcript->analysis } # for things like genscans
 }
 
-#----------------------------------------------------------------------
-
 =head2 stable_id
 
  Arg[1]         : none
@@ -284,112 +170,11 @@ sub analysis {
 
 =cut
 
-sub stable_id{
+sub stable_id {
   my $self = shift;
   return $self->translation ? $self->translation->stable_id : undef;
 }
 
-#----------------------------------------------------------------------
-
-=head2 modified
-
- Description: DEPRECATED - Genes no longer have a modified attribute
-
-=cut
-
-sub modified {
-    warn "DEPRECATED - Genes no longer have a modified attribute";
-    return undef;
-}
-
-=head2 description
-
- Arg[1]         : none
- Example     : $description = $pepdata->description
- Description : Gets the description from the GENE object
- Return type : string
-                The description of a feature
-
-=cut
-
-#
-#----------------------------------------------------------------------
-
-=head2 get_prediction_method
-
- Arg[1]         : none
- Example     : $prediction_method = $pepdata->get_prediction_method
- Description : Gets the prediction method for a gene
- Return type : string
-                The prediction method of a feature
-
-=cut
-
-sub get_prediction_method {
-  my $self = shift ;
-  my $db = $self->get_db() ;
-  my $logic_name = $self->logic_name || '';
-
-  my $prediction_text;
-  if( $logic_name ){
-    my $confkey = "ENSEMBL_PREDICTION_TEXT_".uc($logic_name);
-    $prediction_text = $self->species_defs->$confkey;
-  }
-  if( ! $prediction_text ){
-    my $confkey = "ENSEMBL_PREDICTION_TEXT_".uc($db);
-    $prediction_text   = $self->species_defs->$confkey;
-  }
-  return($prediction_text);
-}
-
-#----------------------------------------------------------------------
-
-=head2 get_author_name
-
- Arg[1]         : none
- Example     : $author = $pepdata->get_author_name
- Description : Gets the author of an annotated gene
- Return type : String
-               The author name
-
-=cut
-
-sub get_author_name {
-    my $self = shift;
-	my $attribs;
-    eval {$attribs = $self->gene->get_all_Attributes('author'); };
-	return undef if $@; 
-    if (@$attribs) {
-        return $attribs->[0]->value;
-    } else {
-        return undef;
-    }
-}
-
-#---------------------------------------------------------------------
-
-=head2 get_author_email
-
- Arg[1]         : String
-               Email address
- Example     : $email = $pepdata->get_author_email
- Description : Gets the author's email address of an annotated gene
- Return type : String
-               The author's email address
-
-=cut
-
-sub get_author_email {
-    my $self = shift;
-    my $attribs = $self->gene->get_all_Attributes('author_email');
-    if (@$attribs) {
-        return $attribs->[0]->value;
-    } else {
-        return undef;
-    }
-}
-
-#----------------------------------------------------------------------
 =head2 display_xref
 
  Arg[1]         : none
@@ -399,122 +184,11 @@ sub get_author_email {
 
 =cut
 
-sub display_xref{
+sub display_xref {
     my $self = shift;
     my $trans_xref = $self->transcript->display_xref;
     return ($trans_xref->display_id, $trans_xref->dbname, $trans_xref->primary_id, $trans_xref->db_display_name ) if $trans_xref;
 }
-
-#----------------------------------------------------------------------
-=head2 get_interpro_object
-
- Arg[1]         : none
- Example     : $interpro = $pepdata->get_interpro_object
- Description : Returns interpro objects
- Return type : arrayref of interpro objects
-
-=cut
-
-sub get_interpro_object {
-    my $self = shift ;
-    my $trans = $self->transcript;
-    my $db = $self->get_db ;
-    my @interpro ;
-
-    eval{@interpro = @{$self->database($db)->get_TranscriptAdaptor->get_Interpro_by_transid($trans->stable_id)};}; 
-    return $@ ? [] :\@interpro;
-}    
-
-#----------------------------------------------------------------------
-
-=head2 get_interpro_links
-
- Arg[1]           : none
- Example     : $interpro = $pepdata->get_interpro_links
- Description : Returns interpro links hash
- Return type : hashref for interpro links
-
-=cut
-
-sub get_interpro_links {
-    my $self = shift ;
-    my @interpro = @{$self->get_interpro_object};
-    return {} unless(@interpro);
-    
-    my %interpro_hash;  
-    foreach (sort @interpro){ 
-        my($accession, $desc) = split(/:/,$_);           
-        $interpro_hash{$accession} = $desc;
-    }   
-    return \%interpro_hash;
-}
-
-## expand pod to give how hash is structured for above and below function
-#----------------------------------------------------------------------
-
-=head2 get_family_object
-
- Arg[1]           : none
- Example     : $family = $pepdata->get_family_object
- Description : Returns family objects
- Return type : arrayref of family objects
-
-=cut
-
-sub get_family_object {
-    my $self = shift ;
-    my $translation = $self->translation;
-    my $databases = $self->database('compara') ;
-    my $family_adaptor;
-
-    return [] unless ($translation && $databases);
-    eval{ $family_adaptor = $databases->get_FamilyAdaptor };
-    if ($@){ warn($@); return [] }
-    my $families;
-    eval{
-      $families = $family_adaptor->fetch_by_Member_source_stable_id
-    ('ENSEMBLPEP',$translation->stable_id)
-    };        
-
-    return $families || [];
-}
-
-#----------------------------------------------------------------------
-
-=head2 get_family_links
-
- Arg[1]           : none
- Example     : $family = $pepdata->get_family_links
- Description : Returns family links
- Return type : hashref for family links
-
-=cut
-
-sub get_family_links {
-  my $self = shift ;    
-  my $taxon_id;    
-    
-  eval {
-    my $meta = $self->database('core')->get_MetaContainer();
-    $taxon_id = $meta->get_taxonomy_id();
-  };
-  if( $@ ){ warn($@) && return {} }
-
-  my $families = $self->get_family_object || [];
-
-  my %family_hash ;
-  foreach my $family( @$families ){
-    $family_hash{$family->stable_id}  = 
-      {
-       'description' => $family->description, 
-       'count' => $family->Member_count_by_source_taxon
-       ('ENSEMBLGENE',$taxon_id) 
-      };
-  }
-  return \%family_hash;
-}
-
-#----------------------------------------------------------------------
 
 =head2 get_protein_domains
 
@@ -525,14 +199,13 @@ sub get_family_links {
 
 =cut
 
-sub get_protein_domains{
+sub get_protein_domains {
     my $self = shift;
     my $translation = $self->translation;
     $translation->dbID || return []; # E.g. PredictionTranscript
     return ( $translation->get_all_DomainFeatures);
 }
 
-#----------------------------------------------------------------------
 =head2 get_all_ProteinFeatures
 
  Arg[1]           : type of feature :string
@@ -542,92 +215,12 @@ sub get_protein_domains{
 
 =cut
 
-sub get_all_ProteinFeatures{
+sub get_all_ProteinFeatures {
     my $self = shift;
     my $translation = $self->translation;
     $translation->dbID || return []; # E.g. PredictionTranscript
     return ( $translation->get_all_ProteinFeatures(shift));
 }
-
-#----------------------------------------------------------------------
-
-=head2 get_pepstats
-
- Arg[1]           : none
- Example     : $pep_stat = $pepdata->get_pepstats
- Description : gives hash of pepstats
- Return type : hashref
-
-=cut
-
-sub get_pepstats {
-  my $self = shift;
-  my $peptide_seq ;
-  eval { $peptide_seq = $self->Obj->seq ; };
-  return {} if ($@ || $peptide_seq =~ m/[BZX]/ig);
-  if( $peptide_seq !~ /\n$/ ){ $peptide_seq .= "\n" }
-  $peptide_seq =~ s/\*$//;
-
-  my $tmpfile = $self->species_defs->ENSEMBL_TMP_DIR."/$$.pep";
-  open( TMP, "> $tmpfile" ) || warn "PEPSTAT: $!";
-  print TMP "$peptide_seq";
-  close(TMP);
-  my $PEPSTATS = $self->species_defs->ENSEMBL_EMBOSS_PATH.'/bin/pepstats';
-  open (OUT, "$PEPSTATS -filter < $tmpfile 2>&1 |") || warn "PEPSTAT: $!";
-  my @lines = <OUT>;
-  close(OUT);
-  unlink($tmpfile);
-  my %pepstats ;
-  foreach my $line (@lines){
-    if($line =~ /^Molecular weight = (\S+)(\s+)Residues = (\d+).*/){
-      $pepstats{'Number of residues'} = $3 ;
-      $pepstats{'Molecular weight'} = $1;
-    }
-    if($line =~ /^Average(\s+)(\S+)(\s+)(\S+)(\s+)=(\s+)(\S+)(\s+)(\S+)(\s+)=(\s+)(\S+)/){
-      $pepstats{'Ave. residue weight'} = $7;
-      $pepstats{'Charge'} = $12;
-    }
-    if($line =~ /^Isoelectric(\s+)(\S+)(\s+)=(\s+)(\S+)/){
-      $pepstats{'Isoelectric point'} = $5;
-    }
-    if ($line =~ /FATAL/){            
-      print STDERR "pepstats: $line\n";
-      return {};
-    }
-  }
-  return \%pepstats;
-}
-
-#----------------------------------------------------------------------
-
-=head2 get_pep_seq
-
- Arg[1]           : none
- Example     : $pep_seq = $pepdata->get_pep_seq
- Description : returns a plain peptide sequence, if option numbers = on then
-                bp numbers are also added
- Return type : a string
-                peptide sequence
-
-=cut
-
-sub get_pep_seq{
-  my $self = shift;
-  my $peptide_seq ;
-  eval {$peptide_seq = $self->translation->seq ;};
-  return undef if (@_);
-  my $wrap   = $self->param('seq_cols') || 60;
-  my $number = $self->param('number');   
-  my $pos    = 1-$wrap; 
-  if($number eq 'yes') {
-    $peptide_seq =~ s|([\w*]{1,$wrap})|sprintf( "%6d %s\n",$pos+=$wrap,"$1")|eg;    
-  } else {
-    $peptide_seq =~ s|([\w*]{1,$wrap})|$1\n|g;    
-  }      
-  return $peptide_seq;
-}
-
-#----------------------------------------------------------------------
 
 =head2 pep_splice_site
 
@@ -692,8 +285,6 @@ sub pep_splice_site {
   return  $self->{'pep_splice'};
 }
 
-#----------------------------------------------------------------------
-
 =head2 pep_snps
 
  Args       : none
@@ -713,7 +304,7 @@ sub pep_splice_site {
 
 =cut
 
-sub pep_snps{
+sub pep_snps {
   my $self  = shift;
   my $rtn_structure = shift;
   return $self->{'pep_snps'} if $self->{'pep_snps'}; 
@@ -832,7 +423,7 @@ sub get_Slice {
 
 =cut
 
-sub get_similarity_hash{
+sub get_similarity_hash {
   my $self = shift;
   my $transl = $self->translation;
   my @DBLINKS;
@@ -841,16 +432,9 @@ sub get_similarity_hash{
   return \@DBLINKS  || [];
 }
 
-sub location_string {
-  my $self = shift;
-  return sprintf( "%s:%s-%s", $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
-}
-
-
 #######################################################################
 ## ID history view stuff............................................ ##
 #######################################################################
-
 
 sub get_archive_object {
   my $self = shift;
@@ -881,81 +465,6 @@ sub history {
   return $history;
 }
 
-#######################################################################
-## DAS collection stuff............................................. ##
-#######################################################################
-
-
-sub get_das_factories {
-  my $self = shift;
-  return [ $self->Obj->adaptor()->db()->_each_DASFeatureFactory ];
-}
-
-sub get_das_features_by_name {
-  my $self = shift;
-  my $name  = shift || die( "Need a source name" );
-  my $scope = shift || '';
-  my $data = $self->__data;     
-  my $cache = $self->Obj;
-
-  $cache->{_das_features} ||= {}; # Cache
-  my %das_features;
-  foreach my $dasfact( @{$self->get_das_factories} ){
-    my $type = $dasfact->adaptor->type;
-    next if $dasfact->adaptor->type =~ /^ensembl_location/;
-    my $name = $dasfact->adaptor->name;
-    next unless $name;
-    my $dsn = $dasfact->adaptor->dsn;
-    my $url = $dasfact->adaptor->url;
-
-# Construct a cache key : SOURCE_URL/TYPE
-# Need the type to handle sources that serve multiple types of features
-
-    my $key = $url || ($dasfact->adaptor->protocol .'://'.join('/', $dasfact->adaptor->domain, $dasfact->adaptor->dsn));
-
-    unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my ($featref, $styleref) = $dasfact->fetch_all_by_ID($data->{_object}, $data );
-      $cache->{_das_features}->{$key} = $featref;
-    }
-    $das_features{$name} = $cache->{_das_features}->{$key};
-  }
-
-  return @{ $das_features{$name} || [] };
-}
-
-sub get_das_features_by_slice {
-  my $self = shift;
-  my $name  = shift || die( "Need a source name" );
-  my $slice = shift || die( "Need a slice" );
-  my $cache = $self->Obj;     
-
-  $cache->{_das_features} ||= {}; # Cache
-  my %das_features;
-  foreach my $dasfact( @{$self->get_das_factories} ){
-    my $type = $dasfact->adaptor->type;
-    next unless $dasfact->adaptor->type =~ /^ensembl_location/;
-    my $name = $dasfact->adaptor->name;
-    next unless $name;
-    my $dsn = $dasfact->adaptor->dsn;
-    my $url = $dasfact->adaptor->url;
-
-# Construct a cache key : SOURCE_URL/TYPE
-# Need the type to handle sources that serve multiple types of features
-
-    my $key = $url || $dasfact->adaptor->protocol .'://'.$dasfact->adaptor->domain;
-    $key .= "/$dsn/$type";
-
-    unless( $cache->{_das_features}->{$key} ) { ## No cached values - so grab and store them!!
-      my $featref = ($dasfact->fetch_all_by_Slice( $slice ))[0];
-      $cache->{_das_features}->{$key} = $featref;
-    }
-    $das_features{$name} = $cache->{_das_features}->{$key};
-  }
-
-  return @{ $das_features{$name} || [] };
-}
-
-
 =head2 vega_projection
 
  Arg[1]	     : EnsEMBL::Web::Proxy::Object
@@ -979,7 +488,5 @@ sub vega_projection {
 	}
 	return \@alt_slices;
 }
-
-
 
 1;

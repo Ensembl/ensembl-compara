@@ -1198,17 +1198,6 @@ sub get_default_pop_name {
 
 sub location { return $_[0]; }
 
-sub generate_query_hash {
-  my $self = shift;
-  return {
-    'h'       => $self->highlights_string,
-    'source'  => $self->source || "dbSNP",
-    'snp'     => $self->name,
-    'c'       => $self->param('c'),
-    'pop'     => $self->get_default_pop_name,
-  };
-}
-
 sub get_source {
   my $self = shift;
   my $default = shift;

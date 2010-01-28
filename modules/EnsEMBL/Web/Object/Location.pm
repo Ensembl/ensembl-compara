@@ -1215,16 +1215,6 @@ sub location {
     return $_[0]; 
 }
 
-sub generate_query_hash {
-  my $self = shift;
-  return {
-    'c'     => $self->seq_region_name.':'.$self->centrepoint.':'.$self->seq_region_strand,
-    'w'     => $self->length,
-    'h'     => $self->highlights_string(),
-    'pop'   => $self->param('pop'),
- };
-}
-
 sub get_variation_features {
 
   ### Example : my @vari_features = $self->get_variation_features;

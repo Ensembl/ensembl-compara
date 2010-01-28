@@ -11,10 +11,9 @@ package EnsEMBL::Web::Object::Transcript;
 
 ### DESCRIPTION
 
-
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Utils::TranscriptAlleles qw(get_all_ConsequenceType);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
@@ -126,30 +125,6 @@ sub count_prot_variations {
     $c++;
   }
   return $c;
-}
-
-sub count_supporting_evidence_old {
-  my $self = shift;
-  my $trans = $self->Obj;
-  my $evi_count = 0;
-  my %c;
-  
-  foreach my $evi (@{$trans->get_all_supporting_features}) {
-    my $hit_name = $evi->hseqname;
-    $c{$hit_name}++;
-  }
-  
-  # only count transcript_supporting_features for vega database genes
-  return scalar keys %c if $self->db_type eq 'Vega';
-  
-  foreach my $exon (@{$trans->get_all_Exons}) {
-    foreach my $evi (@{$exon->get_all_supporting_features}) {
-      my $hit_name = $evi->hseqname;
-      $c{$hit_name}++;
-    }
-  }
-  
-  return scalar keys %c;
 }
 
 sub count_supporting_evidence {
@@ -309,13 +284,6 @@ sub count_go {
   return $c;
 }
 
-sub get_database_matches {
-  my $self = shift;
-  my @DBLINKS;
-  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks};};
-  return \@DBLINKS  || [];
-}
-
 sub default_track_by_gene {
   my $self = shift;
   my $db    = $self->get_db;
@@ -384,7 +352,6 @@ sub short_caption {
   return $self->type_name . ': ' . ($disp_id || $self->stable_id);
 }
 
-
 sub caption {
   my $self = shift;
   my ($disp_id) = $self->display_xref;
@@ -402,20 +369,22 @@ sub type_name {
   return $self->Obj->isa('EnsEMBL::Web::Fake') ? ucfirst $self->Obj->type : $self->species_defs->translate('Transcript');
 }
 
-sub source            { my $self = shift; return $self->gene ? $self->gene->source : undef; }
-sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
-sub feature_type      { my $self = shift; return $self->Obj->type;       }
-sub version           { my $self = shift; return $self->Obj->version;    }
-sub logic_name        { my $self = shift; return $self->gene ? $self->gene->analysis->logic_name : $self->Obj->analysis->logic_name; }
-sub status            { my $self = shift; return $self->Obj->status;  }
-sub display_label     { my $self = shift; return $self->Obj->analysis->display_label || $self->logic_name; }
-sub coord_system      { my $self = shift; return $self->Obj->slice->coord_system->name; }
-sub seq_region_type   { my $self = shift; return $self->coord_system; }
-sub seq_region_name   { my $self = shift; return $self->Obj->slice->seq_region_name; }
-sub seq_region_start  { my $self = shift; return $self->Obj->start; }
-sub seq_region_end    { my $self = shift; return $self->Obj->end; }
-sub seq_region_strand { my $self = shift; return $self->Obj->strand; }
-sub feature_length    { my $self = shift; return $self->Obj->feature_Slice->length; }
+sub transcript             { return $_[0]->Obj; }
+sub source                 { return $_[0]->gene ? $_[0]->gene->source : undef; }
+sub stable_id              { return $_[0]->Obj->stable_id;  }
+sub feature_type           { return $_[0]->Obj->type;       }
+sub version                { return $_[0]->Obj->version;    }
+sub logic_name             { return $_[0]->gene ? $_[0]->gene->analysis->logic_name : $_[0]->Obj->analysis->logic_name; }
+sub status                 { return $_[0]->Obj->status;  }
+sub display_label          { return $_[0]->Obj->analysis->display_label || $_[0]->logic_name; }
+sub coord_system           { return $_[0]->Obj->slice->coord_system->name; }
+sub seq_region_type        { return $_[0]->coord_system; }
+sub seq_region_name        { return $_[0]->Obj->slice->seq_region_name; }
+sub seq_region_start       { return $_[0]->Obj->start; }
+sub seq_region_end         { return $_[0]->Obj->end; }
+sub seq_region_strand      { return $_[0]->Obj->strand; }
+sub feature_length         { return $_[0]->Obj->feature_Slice->length; }
+sub get_latest_incarnation { return $_[0]->Obj->get_latest_incarnation; }
 
 # Returns a hash of family information and associated (API) Gene objects
 # N.B. moved various bits from Translation and Family objects
@@ -493,12 +462,6 @@ sub get_domain_genes {
   my $self = shift;
   my $a = $self->gene ? $self->gene->adaptor : $self->Obj->adaptor;
   return $a->fetch_all_by_domain($self->param('domain')); 
-}
-
-sub get_alternative_locations {
-  my $self = shift;
-  my @alt_locs = map {[ $_->slice->seq_region_name, $_->start, $_->end, $_->slice->coord_system->name ]} @{$self->Obj->get_all_alt_locations};
-  return \@alt_locs;
 }
 
 sub get_Slice {
@@ -639,7 +602,6 @@ sub extent {
   $extent = 1000 if $extent eq 'FULL';
   return $extent;
 }
-
 
 sub getFakeMungedVariationsOnSlice {
   my ($self, $slice, $subslices) = @_;
@@ -797,23 +759,6 @@ sub get_samples {
   return sort @pops;
 }
 
-sub get_source {
-  my $self = shift;
-  my $default = shift;
-
-  my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
-  unless ($vari_adaptor) {
-    warn "ERROR: Can't get variation adaptor";
-    return ();
-  }
-  
-  my $return;
-  $return = $vari_adaptor->get_VariationAdaptor->get_default_source if $default;
-  return $return if $return;        
-  return $vari_adaptor->get_VariationAdaptor->get_all_sources;
-
-}
-
 # TSV and SE
 sub munge_gaps {
   my ($self, $slice_code, $bp, $bp2) = @_;
@@ -891,17 +836,7 @@ sub munge_read_coverage {
   return  \@filtered_obj;
 }
 
-sub generate_query_hash {
-  my $self = shift;
-  return {
-    'transcript' => $self->stable_id,
-    'db'         => $self->get_db,
-  };
-}
-
 #-- end transcript SNP view ----------------------------------------------
-
-sub transcript { return $_[0]->Obj; }
 
 =head2 gene
 
@@ -916,7 +851,7 @@ sub transcript { return $_[0]->Obj; }
 
 =cut
 
-sub gene{
+sub gene {
   my $self = shift;
   
   if (@_) {
@@ -1039,17 +974,6 @@ sub get_author_name {
   }
 }
 
-sub get_author_email {
-  my $self = shift;
-  my $attribs = $self->gene->get_all_Attributes('author_email');
-  
-  if (@$attribs) {
-    return $attribs->[0]->value;
-  } else {
-    return undef;
-  }
-}
-
 sub transcript_type {
   my $self = shift;
   my $db = $self->get_db;
@@ -1095,34 +1019,6 @@ sub trans_description {
   return 'No description';
 }
 
-=head2 get_prediction_method
-
- Arg[1]      : none
- Example     : $prediction_method = $transdata->get_prediction_method
- Description : Gets the prediction method for a transcript
- Return type : string The prediction method of a feature
-
-=cut
-
-sub get_prediction_method {
-  my $self = shift ;
-  my $db = $self->get_db;
-  my $logic_name = $self->logic_name || '';
-
-  my $prediction_text;
-  if ($logic_name) {
-    my $confkey = 'ENSEMBL_PREDICTION_TEXT_' . uc $logic_name;
-    $prediction_text = $self->species_defs->$confkey;
-  }
-  
-  unless ($prediction_text) {
-    my $confkey = 'ENSEMBL_PREDICTION_TEXT_' . uc $db;
-    $prediction_text = $self->species_defs->$confkey;
-  }
-  
-  return $prediction_text;
-}
-
 =head2 display_xref
 
  Arg[1]      : none
@@ -1143,27 +1039,6 @@ sub display_xref {
   }
 }
 
-=head2 get_contig_location
-
- Arg[1]      : none
- Example     : ($chr, $start, $end, $contig, $contig_start) = $transdata->get_genomic_location
- Description : returns the location of a transcript. Returns a list
-                chromosome, chr_start, chr_end, contig, contig_start
- Return type : a list
-
-=cut
-
-sub get_contig_location {
-  my $self = shift;
-  my ($pr_seg) = @{$self->Obj->project('seqlevel')};
-  return undef unless $pr_seg;
-  return (
-    $self->neat_sr_name($pr_seg->[2]->coord_system->name, $pr_seg->[2]->seq_region_name),
-    $pr_seg->[2]->seq_region_name,
-    $pr_seg->[2]->start
-  );
-}
-
 =head2 get_similarity_hash
 
  Arg[1]      : none
@@ -1181,20 +1056,6 @@ sub get_similarity_hash {
   
   eval { 
     $DBLINKS = $recurse ? $self->transcript->get_all_DBLinks : $self->transcript->get_all_DBEntries;
-  };
-  
-  warn "SIMILARITY_MATCHES Error on retrieving gene DB links $@" if $@;
-  return $DBLINKS  || [];
-}
-
-sub get_gene_similarity_hash {
-  my ($self, $recurse) = @_;
-  
-  $recurse = 1 unless defined $recurse;
-  my $DBLINKS;
-  
-  eval {
-    $DBLINKS = $recurse ? $self->gene->get_all_DBLinks : $self->gene->get_all_DBEntries;
   };
   
   warn "SIMILARITY_MATCHES Error on retrieving gene DB links $@" if $@;
@@ -1325,7 +1186,6 @@ sub get_oligo_probe_data {
   $self->sort_oligo_data(\%probe_data); 
 }
 
-
 sub sort_oligo_data {
   my ($self, $data) = @_; 
   my %probe_data = %$data;
@@ -1355,136 +1215,6 @@ sub sort_oligo_data {
     
     push @{$self->__data->{'links'}{'ARRAY'}}, [ $array || $array, $text ]
   }
-}
-
-=head2 get_supporting_evidence
- Arg[1]      : none
- Example     : @supporting_evidence = $transdata->get_supporting_evidence
- Description : Returns a hashref conating supporting evidence hash as follows
- Return type : a hashref
-
-=cut
-
-# USED by alignview as well
-sub get_supporting_evidence { 
-  my $self    = shift;
-  my $transid = $self->stable_id;
-  my $db      =  $self->get_db;
-  my $dbh     = $self->database($db);
-
-  return undef if $self->transcript->isa('Bio::EnsEMBL::PredictionTranscript'); # No evidence for PredictionTranscripts
-
-  # hack because can get exon supp evidence if transformed and
-  # need the main transcript transformed for rest of page
-  my $transcript_adaptor = $dbh->get_TranscriptAdaptor; 
-  my $trans              = $transcript_adaptor->fetch_by_stable_id($transid); 
-  
-  $self->__data->{'_SE_trans'} = $trans;
-  my @dl_seq_list;
-  my $show;
-  my $exon_count = 0; # count the number of exons
-  my $evidence = {
-    'transcript' => { 'ID' => $self->stable_id, 'db' => $db, 'exon_count'=> 0 },
-    'hits'       => {},
-  };
-  
-  # get transcript supporting evidence
-  my %trans_evidence = map { $_->dbID => 1 } @{$trans->get_all_supporting_features};
-  
-  # Retrieve/make Exon data objects    
-  foreach my $exonData (@{$trans->get_all_Exons}) {
-    $exon_count++;
-    my $supporting_features;
-    eval {
-      $supporting_features = $exonData->get_all_supporting_features;
-    };
-    
-    if ($@) {
-      warn "Error fetching Protein_Align_Feature: $@";
-      return;
-    } else {
-      foreach my $this_feature (@{$supporting_features}) {
-        my $dl_seq_name = $this_feature->hseqname;
-
-        # skip evidence for this exon if it doesn't support this particular
-        # transcript (vega only)
-        if (($self->species_defs->ENSEMBL_SITE_NAME eq 'Vega') || ($self->logic_name =~ /otter/)) {
-          next unless ($trans_evidence{$this_feature->dbID});
-        }
-        
-        my $no_version_no;
-        
-        if ($dl_seq_name =~ /^[A-Z]{2}\.\d+/i) {
-          $no_version_no = $dl_seq_name;
-        } else {
-          $no_version_no = $dl_seq_name =~ /^(\w+)\.\d+/ ? $1 : $dl_seq_name;
-        }
-        
-        if ($no_version_no =~ /^JAM_(.*)$/) {
-          $evidence->{'hits'}{$dl_seq_name}{'link'} = $self->get_ExtURL('XT_JAM', $1);
-        } else {
-          $evidence->{'hits'}{$dl_seq_name}{'link'} = $self->get_ExtURL('SRS_FALLBACK', $no_version_no);
-        }
-        
-        $evidence->{'hits'}{$dl_seq_name}{'exon_ids'}[$exon_count - 1] = $exonData->stable_id;
-        
-        if (!defined $evidence->{'hits'}{$dl_seq_name}{'datalib'}) {
-          # Create array to hold the feature top-score for each exon
-          $evidence->{'hits'}{$dl_seq_name}{'scores'} = [];          
-          push @dl_seq_list, $dl_seq_name; # list to get descriptions in one go 
-          # Hold the data library that this feature is from
-          ($evidence->{'hits'}{$dl_seq_name}{'datalib'} = ($this_feature->analysis ? $this_feature->analysis->logic_name : '')) =~ s/swir/Swir/;
-          $show = 1; 
-        }
-        
-        # Compare to see if this is the top-score
-        if ($this_feature->score > $evidence->{'hits'}{$dl_seq_name}{'scores'}[$exon_count - 1]) {      
-          # Adjust the top-score for this hit sequence
-          # Subtract old score for this exon and add new score
-          $evidence->{'hits'}{$dl_seq_name}{'total_score'} = 
-          $evidence->{'hits'}{$dl_seq_name}{'total_score'} - 
-          $this_feature->score > $evidence->{'hits'}{$dl_seq_name}{'scores'}[$exon_count - 1] + $this_feature->score;
-          
-          # Keep this new top-score                   
-          $evidence->{'hits'}{$dl_seq_name}{'scores'}[$exon_count - 1] = $this_feature->score;
-          
-          if ($this_feature->score > $evidence->{'hits'}{$dl_seq_name}{'top_score'}) {
-            $evidence->{'hits'}{$dl_seq_name}{'top_score'} = $this_feature->score;
-          }
-        }
-        
-        $evidence->{'hits'}{$dl_seq_name}{'num_exon_hits'} = 0;
-        
-        for my $each_score (@{$evidence->{'hits'}{$dl_seq_name}{'scores'}}) {
-          $evidence->{'hits'}{$dl_seq_name}{'num_exon_hits'}++ if $each_score;
-        }
-      }
-    }
-  }
-  
-  return unless $show;
-  
-  $evidence->{'transcript'}{'exon_count'} = $exon_count;
-  my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs); 
-  my $result_ref;
-  
-  eval {
-    $result_ref = $indexer->get_seq_by_id({ DB  => 'EMBL', ID  => (join ' ', sort @dl_seq_list), OPTIONS => 'desc' });
-  };
-  
-  my $keyword =  $result_ref || [];
-  my $i = 0 ;
-  
-  for my $id (sort  @dl_seq_list) {
-    my $description = $keyword->[$i];
-    $description =~ s/^DE\s+//g ;
-    $description =~ tr/\n/ /;
-    $evidence->{ 'hits' }{$id}{'description'} =
-    $description =~ /no match/i ? 'No Description' : $description || 'Unable to retrieve description';
-    $i++;
-  }
-  
-  return $evidence;   
 }
 
 sub rna_notation {
@@ -1520,12 +1250,6 @@ sub rna_notation {
   return @strings;
 }
 
-sub location_string {
-  my $self = shift;
-  return sprintf '%s:%s-%s', $self->seq_region_name, $self->seq_region_start, $self->seq_region_end;
-}
-
-
 =head2 vega_projection
 
  Arg[1]      : EnsEMBL::Web::Proxy::Object
@@ -1548,27 +1272,6 @@ sub vega_projection {
   }
   
   return \@alt_slices;
-}
-
-
-=head2 get_exon
-
- Arg[1]      : EnsEMBL::Web::Proxy::Object
- Arg[2]      : exon stable id
- Example     : my $exon = $object->get_exon($id);
- Description : get an exon from the stable_id
- Return type : B::E::Exon
-
-=cut
-
-sub get_exon {
-  my $self    = shift;
-  my $exon_id = shift;
-  my $db      = shift;
-  my $dbs     = $self->DBConnection->get_DBAdaptor($db);
-  my $exon_adaptor = $dbs->get_ExonAdaptor;
-  my $exon    = $exon_adaptor->fetch_by_stable_id($exon_id, 1);
-  return $exon;
 }
 
 sub mod_date {
@@ -1608,11 +1311,6 @@ sub get_archive_object {
   my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
 
   return $archive_object;
-}
-
-sub get_latest_incarnation {
-  my $self = shift;
-  return $self->Obj->get_latest_incarnation;
 }
 
 =head2 history
@@ -1874,6 +1572,12 @@ sub get_genetic_variations {
   }
   
   return $snp_data;
+}
+
+sub get_variation_transcripts {
+  my $self = shift;
+  
+  return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts([ $self->Obj ]) || [];
 }
 
 sub can_export {
