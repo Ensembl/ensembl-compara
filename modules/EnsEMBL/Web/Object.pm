@@ -183,59 +183,6 @@ sub gene_description {
   }
 }
 
-sub generate_query_url {
-  my $self = shift;
-  my $q_hash = $self->generate_query_hash;
-  return join ';', map { "$_=$q_hash->{$_}" } keys %$q_hash;
-}
-
-sub fetch_homologues_of_gene_in_species {
-  my $self = shift;
-  my ($gene_stable_id, $paired_species) = @_;
-  
-  return [] unless $self->database('compara');
-
-  my $ma = $self->database('compara')->get_MemberAdaptor;
-  my $qy_member = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
-  
-  return [] unless defined $qy_member; 
-
-  my $ha = $self->database('compara')->get_HomologyAdaptor;
-  my @homologues;
-  
-  foreach my $homology (@{$ha->fetch_all_by_Member_paired_species($qy_member, $paired_species, ['ENSEMBL_ORTHOLOGUES'])}){
-    foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @$member_attribute;
-      next if $member->stable_id eq $qy_member->stable_id;
-      push @homologues, $member;  
-    }
-  }
-  
-  return \@homologues;
-}
-
-sub bp_to_nearest_unit {
-  my $self = shift ;
-  my ($bp, $dp) = @_;
-  
-  $dp = 2 unless defined $dp;
-  
-  my @units = qw(bp Kb Mb Gb Tb);
-  
-  my $power_ranger = int((length(abs $bp) - 1) / 3);
-  my $unit         = $units[$power_ranger];
-  my $value        = int($bp / (10 ** ($power_ranger * 3)));
-  my $unit_str;
-  
-  if ($unit ne 'bp'){
-    $unit_str = sprintf "%.${dp}f%s", $bp / (10 ** ($power_ranger * 3)), " $unit";
-  } else {
-    $unit_str = "$value $unit";
-  }
-  
-  return $unit_str;
-}
-
 sub fetch_userdata_by_id {
   my ($self, $record_id) = @_;
   
