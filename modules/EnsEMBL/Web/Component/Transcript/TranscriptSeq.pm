@@ -21,32 +21,38 @@ sub get_sequence_data {
   my $trans        = $object->Obj;
   my @exons        = @{$trans->get_all_Exons};
   my $trans_strand = $exons[0]->strand;
+  my $start_phase  = $exons[0]->phase;
+  my $start_pad    = $start_phase > 0 ? $start_phase : 0; # Determines if the transcript starts mid-codon
   my $cd_start     = $trans->cdna_coding_start;
   my $cd_end       = $trans->cdna_coding_end;
+  my $five_prime   = $trans->five_prime_utr;
+  my $three_prime  = $trans->three_prime_utr;
   my $mk           = {};
-  my $length       = 0;
-  my $flip         = 0;
-  my $seq          = '';
+  
+  $_ = $_ ? $_->seq : $_ for $five_prime, $three_prime;
+  
+  my $seq    = join '', $five_prime, $trans->translateable_seq, $three_prime;
+  my $length = length $seq;
   
   my @sequence;
   my @markup;
 
+  my @reference_seq = map {{ letter => $_ }} split //, $seq;
   my $variation_seq = { name => 'variation',   seq => [] };
   my $coding_seq    = { name => 'coding_seq',  seq => [] };
   my $protein_seq   = { name => 'translation', seq => [] };
   my $rna_seq       = { name => 'rna',         seq => [ map {{ letter => $_ }} split //, $object->rna_notation ] };
   
-  my @reference_seq = map { 
-    $length += length $_->seq->seq;
-    $seq .= $_->seq->seq;
-        
-    if ($config->{'exons'}) {
-      $flip = 1 - $flip;
-      push @{$mk->{'exons'}->{$length}->{'type'}}, $mk->{'exons'}->{$length}->{'overlap'} ? 'exon2' : "exon$flip";
-    }
+  if ($config->{'exons'}) {
+    my $flip = 0;
+    my $pos = $start_pad;
     
-    map {{ 'letter' => $_ }} split //, uc $_->seq->seq 
-  } @exons;
+    foreach (@exons) {
+      $pos += length $_->seq->seq;
+      $flip = 1 - $flip;
+      push @{$mk->{'exons'}->{$pos}->{'type'}}, $mk->{'exons'}->{$pos}->{'overlap'} ? 'exon2' : "exon$flip";
+    }
+  }  
   
   delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later 
   
@@ -70,6 +76,8 @@ sub get_sequence_data {
     }
   }
   
+  $_ += $start_pad for $cd_start, $cd_end; # Shift values so that codons and variations appear in the right place
+  
   my $can_translate = 0;
   
   eval {
@@ -83,10 +91,10 @@ sub get_sequence_data {
     
     if ($startphase > 0) {
       $s = 3 - $startphase;
-      $peptide = substr($peptide, 1);
+      $peptide = substr $peptide, 1;
     }
     
-    for (my $i = $cd_start + $s - 1; ($i+2) <= $cd_end; $i+=3) {
+    for (my $i = $cd_start + $s - 1; $i + 2 <= $cd_end; $i += 3) {
       if ($config->{'codons'}) {
         $mk->{'codons'}->{$i}->{'class'} = $mk->{'codons'}->{$i+1}->{'class'} = $mk->{'codons'}->{$i+2}->{'class'} = "c$flip";
         
@@ -95,11 +103,19 @@ sub get_sequence_data {
       
       if ($config->{'translation'}) {        
         $protein_seq->{'seq'}->[$i]->{'letter'} = $protein_seq->{'seq'}->[$i+2]->{'letter'} = '-';
-        $protein_seq->{'seq'}->[$i+1]->{'letter'} = substr($peptide, int(($i+1-$cd_start)/3), 1) || ($i+1 < $cd_end ? '*' : '.');
+        $protein_seq->{'seq'}->[$i+1]->{'letter'} = substr($peptide, int(($i + 1 - $cd_start) / 3), 1) || ($i + 1 < $cd_end ? '*' : '.');
       }
     }
   };
-
+  
+  # If the transcript starts mid-codon, make the protein sequence show -X- at the start
+  if ($config->{'translation'} && $start_pad) {
+    my $pos     = scalar grep $protein_seq->{'seq'}->[$_]->{'letter'} eq '.', 0..2; # Find the number of . characters at the start
+    my @partial = qw(- X -);
+    
+    $protein_seq->{'seq'}->[$pos]->{'letter'} = $partial[$pos] while $pos--; # Replace . with as much of -X- as fits in the space
+  }
+  
   if ($config->{'variation'}) {
     foreach my $transcript_variation (@{$object->get_variation_transcripts}) {
       my ($start, $end) = ($transcript_variation->cdna_start, $transcript_variation->cdna_end);
@@ -113,7 +129,7 @@ sub get_sequence_data {
       my $alleles           = $var->allele_string;
       my $ambigcode         = $var_class eq 'in-del' ? '*' : $var->ambig_code;
       my $pep_allele_string = $transcript_variation->pep_allele_string;
-      my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4;
+      my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
       my $allele_count      = scalar split /\//, $pep_allele_string;
       my $insert            = 0;
       
@@ -128,7 +144,7 @@ sub get_sequence_data {
         $insert = 1;
       }
       
-      $_-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
+      ($_ += $start_pad)-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
       
       foreach ($start..$end) {
         $mk->{'variations'}->{$_}->{'alleles'}   .= $alleles;
