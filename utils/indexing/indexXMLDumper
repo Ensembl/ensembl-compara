@@ -1,8 +1,10 @@
 #!/usr/local/bin/perl
 
 #usage:
-# ./indexXMLDumper --species aaa,bbb -indexes xxx,yyy > & index.log
-# 'ALL' can be used as a value for both species and indexes
+# ./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) >& index.log
+# 'ALL' can be used for both species and indexes
+# The script will retry five times if it loses database connections, unless
+# --debug is specified in which case it will exit
 
 use strict;
 package indexXMLDumper;
@@ -30,27 +32,35 @@ use CGI;
 
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
-our $nogzip = 1; #try setting to 0 for on the fly gzipping ?
+our $nogzip = 1; #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly
 our %additional_fields; #summarise additional fields so we can make sure we treat each one correctly
 
-my (@species,@indexes);
+$| = 1;
+
+my (@species,@indexes,$debug);
 GetOptions('species=s' => \@species,
-	   'indexes=s' => \@indexes,
+	   'index=s'   => \@indexes,
+	   'debug'     => \$debug,
 	  );
 
 (@species) = split ',',@species[0];
-(@indexes) =  split ',',@indexes[0]; 
+(@indexes) = split ',',@indexes[0];
 
 ## HACK 1 - if the INDEX is set to all grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
 
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
 my %X = %{$SD->ENSEMBL_SPECIES_ALIASES};
+my $input_c =  @species;
 if( $species[0] eq 'ALL' ) {
   @species = @{$SD->ENSEMBL_DATASETS}
 } else {
   @species = grep {$_} map { $X{lc($_)} } @species;
+  if (@species ne $input_c) {
+    print "WARNING - one or more of your species names is not recognised, please check your spelling\n";
+    exit;
+  }
 }
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
@@ -59,8 +69,8 @@ mkdir 'input', 0777 unless -e 'input';
 
 my $total_c;
 foreach my $index (@indexes) {
-  $conf->{'directory'} = " /nfs/eureka/data/ensembl/ensembl_$index";
-#  $conf->{'directory'} = "input/ensembl_$index";
+#  $conf->{'directory'} = " /nfs/eureka/data/ensembl/ensembl_$index";
+  $conf->{'directory'} = "input/ensembl_$index";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   foreach my $species ( @species ) {
     $conf->{'species'}   = $species;
@@ -69,14 +79,39 @@ foreach my $index (@indexes) {
     $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
     my $core = $dbs{'DATABASE_CORE'};
-    $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
-    $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
-#    warn join ' ', $species, Data::Dumper::Dumper $conf;
-    print "Starting: $index $species\n";
-    my $function = "dump$index";
-    no strict "refs";
-    eval { $total_c += &$function( $conf ); };
-    print $@ if $@;
+    my $no_success = 1;
+    my $c;
+    while ($no_success) {
+      $c++;
+      $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+      if ($index eq 'Family') {
+	$conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
+      }
+      print "Starting: $index $species\n";
+      my $function = "dump$index";
+      no strict "refs";
+      eval {
+	$total_c += &$function( $conf );
+      };
+      if ($@) {
+	unless ($debug) {
+	  if ($c < 6) {
+	    print "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+	    sleep (5*60);}
+	  else {
+	    print "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
+	    $no_success = 0;
+	  }
+	}
+	else {
+	   print "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+	   exit;
+	 }
+      }
+      else {
+	$no_success = 0;
+      }
+    }
   }
 }
 
@@ -91,6 +126,7 @@ exit;
 ########################################################################## Markers
 
 sub dumpMarker {
+
   my $conf = shift;
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
@@ -468,15 +504,16 @@ sub dumpStructuralVariations {
     my $location = $row->[4] .":" . $row->[5] ."-". $row->[6];
     my $length = $row->[6] - $row->[7];
     my $action = ($length >> $max_length) ? 'Overview' : 'View';
-    my $view_config = ($length >> $max_length) ? 'cytoview=variation_feature_structural=normal;' : 'contigviewbottom=variation_feature_structural=normal;';
+    my $params = ($length >> $max_length) ? { 'cytoview' => 'variation_feature_structural=normal' }
+                                          : { 'contigviewbottom' => 'variation_feature_structural=normal' };
     my $desc = qq(A structural variation from $row->[2], identified by $row->[3]. This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6]. );
-    &p( StrucVarLine( $dbspecies, $id, $location, $desc, $action, $view_config, $counter ), $nogzip, $fh);
+    &p( StrucVarLine( $dbspecies, $id, $location, $desc, $action, $params, $counter ), $nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub StrucVarLine {
-  my ($species, $id, $location, $desc, $action, $view_config, $counter ) = @_;
+  my ($species, $id, $location, $desc, $action, $params, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$id">
@@ -486,14 +523,18 @@ sub StrucVarLine {
     <field name="species">$species</field>
     <field name="featuretype">StructuralVariation</field>
     <field name="location">$location</field>
-    <field name="action">$action</field>
-    <field name="view_config">$view_config</field>
+    <field name="action">$action</field>);
+  while (my ($param,$value) = each %$params) {
+    $xml .= qq(
+    <field name="$param">$value</field>);
+    $additional_fields{'param'}{$param}++;
+  }
+  $xml .= qq(
   </additional_fields>);
   $additional_fields{'species'}{$species}++;
   $additional_fields{'feature_type'}{'StructuralVariation'}++;
   $additional_fields{'location'}++;
   $additional_fields{'action'}++;
-  $additional_fields{'view_config'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -537,19 +578,25 @@ sub dumpGenomicAlignment {
       $source .= ";db=$db" unless $db eq 'core';
       my $type   = $tables{ $table }[1];
       my $sth    = $conf->{'dbh'}->prepare(
-	"select ad.display_label, t.hit_name, edb.db_name, count(*) as hits
+	"select ad.display_label, a.logic_name, t.hit_name, ad.web_data, edb.db_name, count(*) as hits
                 from (($dbname.analysis as a, $dbname.$table as t) left join
                      $dbname.analysis_description ad on a.analysis_id = ad.analysis_id) 
            left join $dbname.external_db edb on t.external_db_id = edb.external_db_id
                where a.analysis_id = t.analysis_id
+                 and ad.displayable = 1
                group by ad.display_label, t.hit_name");
       $sth->execute();
       my $c = 0;
-      while( my( $label, $hid, $db_name, $count  ) = $sth->fetchrow_array ) {
+      while( my( $label, $logic_name, $hid, $webdata, $db_name, $count  ) = $sth->fetchrow_array ) {
+	my $wd = eval($webdata);
+	next if $wd->{$table}{'do_not_display'};
 	$c++;
 	$label ||= '';
 	my $desc = "$label $hid hits the genome in $count locations.";
-	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $counter ), $nogzip, $fh);
+	(my $track_name = $table) =~ s/feature//;
+	my $renderer = $track_name . $db . '_' . lc($logic_name) . '=stack' ;
+	my $params = { 'contigviewbottom' => $renderer };
+	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $params, $counter ), $nogzip, $fh);
       }
       print "  ...Dumped $c $table entries\n";
     }
@@ -566,7 +613,7 @@ sub dumpGenomicAlignment {
 	$c++;
 	$label ||= '';
 	my $desc = "$label $hid fails to map to the genome. Reason: $reason.";
-	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', $counter ), $nogzip, $fh);
+	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', {}, $counter ), $nogzip, $fh);
       }
       print "  ...Dumped $c Unmapped features\n";
     }
@@ -576,7 +623,7 @@ sub dumpGenomicAlignment {
 }
 
 sub GenomicAlignmentLine {
-  my ($species, $id, $desc, $db_name, $db, $ftype, $counter ) = @_;
+  my ($species, $id, $desc, $db_name, $db, $ftype, $params, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$id">
@@ -591,12 +638,21 @@ sub GenomicAlignmentLine {
   $xml .= qq(
   <additional_fields>
     <field name="species">$species</field>
-    <field name="featuretype">$ftype</field>
-    <field name="db">$db</field>
+    <field name="featuretype">$ftype</field>);
+  unless ($db eq 'core') {
+    $xml .= qq(
+    <field name="db">$db</field>);
+    $additional_fields{'db'}++;
+  }
+  while (my ($param,$value) = each %$params) {
+    $xml .= qq(
+    <field name="$param">$value</field>);
+    $additional_fields{'db'}++;
+  }
+  $xml .= qq(
   </additional_fields>);
   $additional_fields{'species'}{$species}++;
   $additional_fields{'featuretype'}{$ftype}++;
-  $additional_fields{'db'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -992,14 +1048,14 @@ sub dumpSequence {
 	  $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
 	  $prev_length = $mapped_ids->{$cs_id}{$name}{'length'};
 	  if ($prev_name ne $name) { #don't dump identically named regions
-	    print "WARNING: dumping assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we havn't come across this before";
+	    print "WARNING: dumping assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
 	    $name = $prev_name;
 	    $length = $prev_length;
 	  }
 	}
 	else {
 	  #...otherwise ignore
-	  #	warn "not dumping $name on coord_system $cs_id since it's an old assembly with no mapping";
+	  print "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
 	  next;
 	}
       }
@@ -1471,11 +1527,11 @@ sub GeneLine {
     my $dbkey  = $xref->{'label'};
     next if $seen_syns{$dbkey}{$dbname};
     $seen_syns{$dbkey}{$dbname} = 1;
+    $dbkey = &clean($dbkey);
     $xml .= qq(
     <ref dbname="$dbname" dbkey="$dbkey"/>);
     foreach my $syn (@{$xref->{'synonyms'}}) {
-      $syn =~ s/>/\&gt;/;
-      $syn =~ s/</\&lt;/;
+      $dbkey = &clean($dbkey);
       $xml .= qq(
     <ref dbname="$dbname" dbkey="$syn"/>);
     }
@@ -1515,6 +1571,16 @@ sub GeneLine {
   $counter->();
   return $xml . qq(
 </entry>);
+}
+
+#deal with those pesky superscritped and italicised rat gene names
+sub clean {
+  my ($dbkey) = @_;
+  $dbkey =~ s/\<sup\>/\&lt;/g;
+  $dbkey =~ s/\<\/sup\>/\&gt;/g;
+  $dbkey =~ s/\<i\>//g;
+  $dbkey =~ s/\<\/i\>//g;
+  return $dbkey;
 }
 
 sub GeneStableIdMappingLine {
@@ -1584,16 +1650,14 @@ sub dumpRegulatoryFeature {
   );
 
   foreach my $row ( @$d ) {
-    my $desc = qq($row->[4] Ensembl regulatory feature);
+    my $desc = qq($row->[4] regulatory feature);
     my $id = $row->[0];
+    my $ids = [ ];
     my $r = $row->[1] .":".$row->[2] . "-" . $row->[3];
     my $params = { 'r' => $r };
-    &p (RegulatoryFeatureLine($dbspecies,$desc,$id,'RegulatoryFeature',$params,$db,$counter),$nogzip, $fh);
-
-#    print A join "\t", (INC_SPECIES?"$species\t":"")."Ensembl Regulatory Feature",
-#    $row->[0], "/$species/Regulation/Details?rf=$row->[0];r=$r;",
-#    $row->[0], qq($row->[4] regulatory feature.\n);
+    &p (RegulatoryFeatureLine($dbspecies,$desc,$id,$ids,'RegulatoryFeature',$params,$db,$counter),$nogzip, $fh);
   }
+
 
 ## External Features...
   my $e = $conf->{'dbh'}->selectall_arrayref(
@@ -1611,12 +1675,13 @@ sub dumpRegulatoryFeature {
 
   foreach my $f ( @$e) {
     my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name, $seq_region, $start, $end, $strand) = @$f;
-    my ($ftype, $link_params);
-    my $ids = $display_label;
-    $ids .= ' '.$f_name unless $display_label eq $f_name;
+ #   warn "$display_label -- $f_name -- $count -- $f_desc -- $f_class -- $fs_name -- $seq_region -- $start -- $end -- $strand";
+ #   exit;
+    my ($ftype, $params);
+    my @ids = split ' ', $f_name;
     if ($count >> 1) {
       $ftype = 'RegulatoryFactor';
-      $link_params = { 'id' => $display_label, 'name' => $f_name };
+      $params = { 'name' => $f_name };
 #	$link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$display_label;name=$f_name;";
     }
     else {
@@ -1624,7 +1689,7 @@ sub dumpRegulatoryFeature {
       if ( $f_class eq 'RNA'){
 	my ($trans_id, $feat) = split(/:/,$display_label);
 	$ftype = 'RegulationGene';
-	$link_params = { 't' => $trans_id, 'hid' => $display_label };
+	$params = { 't' => $trans_id, 'hid' => $display_label };
 #	$link = "/$species/Gene/Regulation?t=$trans_id;hid=$display_label";
       }
       else {
@@ -1639,23 +1704,45 @@ sub dumpRegulatoryFeature {
 	  $renderer = 'regulatory_regions_funcgen_feature_set';
 	}
 	$ftype = 'RegulationLocation';
-	$link_params = { 'r' => $r, 'hid' => $display_label, 'contigviewbottom' => "$renderer=normal" };
+	$params = { 'r' => $r, 'hid' => $display_label, 'contigviewbottom' => "$renderer=normal" };
 #        $link = "/$species/Location/View?r=$region;hid=$display_label;contigviewbottom=$renderer=normal";
       }
     }
-    my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations\n";
-    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,$ids,$ftype,$link_params,$db,$counter),$nogzip, $fh);
+    my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
+    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@ids,$ftype,$params,$db,$counter),$nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
 sub RegulatoryFeatureLine {
-  my ($species,$desc,$id,$ids,$type,$params,$db,$counter) = @_;
-  warn "$species-$desc-$id-$ids-$type-$db";
-  warn Dumper($params);
-  exit;
-}
+  my ($species,$desc,$id,$ids,$ftype,$params,$db,$counter) = @_;
 
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$id">
+  <description>$desc</description>
+  <additional_fields>);
+  $xml .= qq(
+    <field name="species">$species</field>
+    <field name="featuretype">$ftype</field>);
+  foreach my $id (@$ids) {
+    $xml .= qq(
+    <field name="synonym">$id</field>);
+    $additional_fields{'synonym'}{$ftype}++;
+  }
+  while (my ($param,$value) = each %$params) {
+    $xml .= qq(
+    <field name="$param">$value</field>);
+    $additional_fields{$param}{$species}++;
+  }
+  $xml .= qq(
+  </additional_fields>);
+  $additional_fields{'species'}{$species}++;
+  $additional_fields{'featuretype'}{$ftype}++;
+  $counter->();
+  return $xml . qq(
+</entry>);
+}
 
 sub make_counter {
   my $start = shift;
