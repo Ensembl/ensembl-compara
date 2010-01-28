@@ -1,10 +1,13 @@
 #!/usr/local/bin/perl
 
 #usage:
-# ./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) >& index.log
+# ./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) --log index.log
 # 'ALL' can be used for both species and indexes
 # The script will retry five times if it loses database connections, unless
-# --debug is specified in which case it will exit
+# --debug is specified in which case it will exit.
+# --dry_run|n does everything apart from actually write the xml [note that this
+# option will delete any preexisting file]
+# STDOUT and STDERR (the latter only if debug is not ensabled) are sent to a log file (log.log by default)
 
 use strict;
 package indexXMLDumper;
@@ -30,22 +33,32 @@ use POSIX qw(strftime);
 use constant INC_SPECIES => 0;
 use CGI;
 
-our $SD = EnsEMBL::Web::SpeciesDefs->new();
-our $release = $SD->ENSEMBL_VERSION;
-our $nogzip = 1; #try setting to 0 for on the fly gzipping (not tested)?
-our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly
-our %additional_fields; #summarise additional fields so we can make sure we treat each one correctly
-
 $| = 1;
 
-my (@species,@indexes,$debug);
+my (@species,@indexes,$debug,$dry_run,$log);
 GetOptions('species=s' => \@species,
 	   'index=s'   => \@indexes,
 	   'debug'     => \$debug,
-	  );
+	   'dry_run|n' => \$dry_run,
+	   'log=s'     => \$log,
+	 );
 
 (@species) = split ',',@species[0];
 (@indexes) = split ',',@indexes[0];
+
+
+#redirect STDOUT and STDERR to a file
+$log ||= 'log.log';
+open (LOG,    ">$log") or die "Can't open $log: $!";
+unless ($debug) {
+  open (STDERR, ">&LOG") or die "Can't open $log: $!";
+}
+
+our $SD = EnsEMBL::Web::SpeciesDefs->new();
+our $release = $SD->ENSEMBL_VERSION;
+our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
+our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly
+our %additional_fields; #summarise additional fields so we can make sure we treat each one correctly
 
 ## HACK 1 - if the INDEX is set to all grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
@@ -58,7 +71,7 @@ if( $species[0] eq 'ALL' ) {
 } else {
   @species = grep {$_} map { $X{lc($_)} } @species;
   if (@species ne $input_c) {
-    print "WARNING - one or more of your species names is not recognised, please check your spelling\n";
+    print LOG "WARNING - one or more of your species names is not recognised, please check your spelling\n";
     exit;
   }
 }
@@ -87,7 +100,7 @@ foreach my $index (@indexes) {
       if ($index eq 'Family') {
 	$conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
       }
-      print "Starting: $index $species\n";
+      print LOG "Starting: $index $species\n";
       my $function = "dump$index";
       no strict "refs";
       eval {
@@ -96,15 +109,15 @@ foreach my $index (@indexes) {
       if ($@) {
 	unless ($debug) {
 	  if ($c < 6) {
-	    print "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+	    print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
 	    sleep (5*60);}
 	  else {
-	    print "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
+	    print LOG "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
 	    $no_success = 0;
 	  }
 	}
 	else {
-	   print "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+	   print LOG "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
 	   exit;
 	 }
       }
@@ -115,9 +128,9 @@ foreach my $index (@indexes) {
   }
 }
 
-print "\nAdditional fields are:\n",Dumper(\%additional_fields);
-print "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
-print "\nDumped $total_c records in total\n";
+print LOG "\nAdditional fields are:\n",Dumper(\%additional_fields);
+print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
+print LOG "\nDumped $total_c records in total\n";
 
 exit;
 
@@ -139,12 +152,12 @@ sub dumpMarker {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
   my $sth = $conf->{'dbh'}->prepare("
    SELECT m.marker_id, ms2.name, ms1.name
@@ -213,12 +226,12 @@ sub dumpQTL {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
   my $sth = $conf->{'dbh'}->prepare("
  select c.name as chr, qf.seq_region_start, qf.seq_region_end,
@@ -317,12 +330,12 @@ sub dumpSNP {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
   header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
@@ -476,12 +489,12 @@ sub dumpStructuralVariations {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
   header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
@@ -565,12 +578,12 @@ sub dumpGenomicAlignment {
     my $fh;
     unless ($nogzip) {
       $fh = new IO::Zlib;
-      $fh->open( "$file", "wb9" ) || die("Can't open compressed stream to $file: $!");
+      $fh->open( "$file", "wb9" ) or die("Can't open compressed stream to $file: $!");
     }
     else {
-      open( FILE, ">$file" ) || die "Can't open $file: $!";
+      open( FILE, ">$file" ) or die "Can't open $file: $!";
     }
-    print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+    print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
     foreach my $table ( keys %tables ) {
@@ -598,7 +611,7 @@ sub dumpGenomicAlignment {
 	my $params = { 'contigviewbottom' => $renderer };
 	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $params, $counter ), $nogzip, $fh);
       }
-      print "  ...Dumped $c $table entries\n";
+      print LOG "  ...Dumped $c $table entries\n";
     }
     if ($db eq 'cdna') {
       my $sth    = $conf->{'dbh'}->prepare(
@@ -615,7 +628,7 @@ sub dumpGenomicAlignment {
 	my $desc = "$label $hid fails to map to the genome. Reason: $reason.";
 	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', {}, $counter ), $nogzip, $fh);
       }
-      print "  ...Dumped $c Unmapped features\n";
+      print LOG "  ...Dumped $c Unmapped features\n";
     }
     $total_af_c += footer( $counter->(),$nogzip,$fh);
   }
@@ -674,12 +687,12 @@ sub dumpOligoProbe {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $FUNCDB to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $FUNCDB to $file ... ", format_datetime($start_time), "\n";
   header( $FUNCDB, $dbspecies, $db, $nogzip, $fh, $release );
 
   my $sth    = $conf->{'dbh'}->prepare(
@@ -761,12 +774,12 @@ sub dumpDomain {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
   my $sth = $conf->{'dbh'}->prepare(
@@ -847,12 +860,12 @@ sub dumpFamily {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
  ( my $species = $conf->{'species'} ) =~ s/_/ /g;
@@ -930,12 +943,12 @@ sub dumpSequence {
     unless ($nogzip) {
       $fh = new IO::Zlib;
       $fh->open( "$file", "wb9" )
-	|| die("Can't open compressed stream to $file: $!");
+	or die("Can't open compressed stream to $file: $!");
     }
     else {
-      open( FILE, ">$file" ) || die "Can't open $file: $!";
+      open( FILE, ">$file" ) or die "Can't open $file: $!";
     }
-    print "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
+    print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
     #get all types of misc features - used for 'type' label
@@ -1048,14 +1061,14 @@ sub dumpSequence {
 	  $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
 	  $prev_length = $mapped_ids->{$cs_id}{$name}{'length'};
 	  if ($prev_name ne $name) { #don't dump identically named regions
-	    print "WARNING: dumping assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
+	    print LOG "WARNING: dumping assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
 	    $name = $prev_name;
 	    $length = $prev_length;
 	  }
 	}
 	else {
 	  #...otherwise ignore
-	  print "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
+	  print LOG "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
 	  next;
 	}
       }
@@ -1088,7 +1101,7 @@ sub sort_mf_names {
 sub SeqLine {
   my($species,$sr,$sr_type,$start,$end,$len,$name,$synonyms,$type,$sanger,$counter) = @_;
   $species =~ s/_/ /;
-  print "WARNING: no type set for $name" unless $type;
+  print LOG "WARNING: no type set for $name" unless $type;
   my $action = $len > 0.5e6 ? 'Overview' : 'View';
   my $r = "$sr:$start-$end";
   my $desc = ($name eq $sr) ? "$type $name has a length of $len bp" : "$type $name (length $len bp) is mapped to $sr_type $sr.";
@@ -1173,7 +1186,7 @@ sub sanger_project_names {
 ########################################################################## Genes
 
 sub dumpGene {
-#  print "Initial memory usage = ".&date_and_mem()."\n";
+#  print LOG "Initial memory usage = ".&date_and_mem()."\n";
   my $conf      = shift;
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
@@ -1195,12 +1208,12 @@ sub dumpGene {
     unless ($nogzip) {
       $fh = new IO::Zlib;
       $fh->open( "$file", "wb9" )
-	|| die("Can't open compressed stream to $file: $!");
+	or die("Can't open compressed stream to $file: $!");
     }
     else {
-      open( FILE, ">$file" ) || die "Can't open $file: $!";
+      open( FILE, ">$file" ) or die "Can't open $file: $!";
     }
-    print "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
+    print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
@@ -1214,7 +1227,7 @@ sub dumpGene {
     }
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
-#      print "starting memory usage for type $type = ".&date_and_mem()."\n";
+#      print LOG "starting memory usage for type $type = ".&date_and_mem()."\n";
       my $sql = qq(
          SELECT ox.ensembl_id, x.display_label, x.dbprimary_acc,
                 x.description, x.external_db_id, x.xref_id
@@ -1231,7 +1244,7 @@ sub dumpGene {
 	  'xref_id'         => $_->[5],
 	};
       }
-      print "    $type xref query done ".&date_and_mem()."\n";
+      print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
 #    warn Dumper(\%xrefs);
 
@@ -1247,7 +1260,7 @@ sub dumpGene {
       $exons{$r->[0]}{$r->[1]}=1;
     }
     $sth->finish;
-    print "    Exon query done ".&date_and_mem()."\n";
+    print LOG "    Exon query done ".&date_and_mem()."\n";
 
     my $sql = qq(
       SELECT gsi.gene_id, tsi.transcript_id, trsi.translation_id,
@@ -1384,7 +1397,7 @@ sub dumpGene {
 		 $db,
 		 $counter),
 	$nogzip, $fh);
-    print "    Gene info query done ".&date_and_mem()."\n";
+    print LOG "    Gene info query done ".&date_and_mem()."\n";
 
 
     my $other_count = 0;
@@ -1442,7 +1455,7 @@ sub dumpGene {
 	}
       }
     }
-    print "    Stable_id mapping querying done".&date_and_mem()."\n";
+    print LOG "    Stable_id mapping querying done".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
 
     while (0) {
@@ -1573,13 +1586,18 @@ sub GeneLine {
 </entry>);
 }
 
-#deal with those pesky superscritped and italicised rat gene names
+#deal with those pesky superscripted, emphasised and italicised rat gene names
 sub clean {
   my ($dbkey) = @_;
-  $dbkey =~ s/\<sup\>/\&lt;/g;
-  $dbkey =~ s/\<\/sup\>/\&gt;/g;
-  $dbkey =~ s/\<i\>//g;
-  $dbkey =~ s/\<\/i\>//g;
+  $dbkey =~ s/\<sup\>/\&lt;sup\&gt;/g;
+  $dbkey =~ s/\<\/sup\>/\&lt;\/sup\&gt/g;
+  $dbkey =~ s/<i>//g;
+  $dbkey =~ s/<\/i>//g;
+  $dbkey =~ s/<em>//g;
+  $dbkey =~ s/<\/em>//g;
+  if ($dbkey =~ /[<>]/) {
+    print LOG "WARNING: Unsupported character $dbkey in dbkey field\n";
+  }
   return $dbkey;
 }
 
@@ -1629,12 +1647,12 @@ sub dumpRegulatoryFeature {
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
-      || die("Can't open compressed stream to $file: $!");
+      or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) || die "Can't open $file: $!";
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
+  print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
   my $prefix = ($dbspecies =~/Mus/) ? 'ENSMUSR' : 'ENSR';
@@ -1767,7 +1785,7 @@ sub footer {
   p("</entries>",$nogzip,$fh);
   p("<entry_count>$ecount</entry_count>",$nogzip,$fh);
   p("</database>",$nogzip,$fh);
-  print "  ...Dumped $ecount entries\n";
+  print LOG "  ...Dumped $ecount entries\n";
   if ($nogzip) {
     close(FILE) or die $!;
   }
@@ -1780,18 +1798,14 @@ sub footer {
 sub p {
   my ($str,$nogzip,$fh) = @_;
 
-#  warn "string = $str";
-#  warn "warn nogzip = $nogzip";
-#  warn "fh = ".Data::Dumper::Dumper($fh);
-
   # TODO - encoding
   $str .= "\n";
   if ($nogzip) {
-    print FILE $str or die "Can't write to file ", $!;
+    if (! $dry_run) {
+      print FILE $str or die "Can't write to file ", $!;
+    }
   }
   else {
-    use Carp qw(cluck);
-    cluck 'erre';
     print $fh $str or die "Can't write string: $str";
   }
 }
