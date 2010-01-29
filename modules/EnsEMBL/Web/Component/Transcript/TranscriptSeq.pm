@@ -162,8 +162,9 @@ sub get_sequence_data {
             $protein_seq->{'seq'}->[$amino_acid_pos + 2]->{'letter'} = '=';
             
             foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
-              $protein_seq->{'seq'}->[$aa]->{'class'} = 'aa';
-              $protein_seq->{'seq'}->[$aa]->{'title'} = $pep_allele_string;
+              $protein_seq->{'seq'}->[$aa]->{'class'}  = 'aa';
+              $protein_seq->{'seq'}->[$aa]->{'title'} .= ', ' if $protein_seq->{'seq'}->[$aa]->{'title'};
+              $protein_seq->{'seq'}->[$aa]->{'title'} .= $pep_allele_string;
             }
           }
         } else {
