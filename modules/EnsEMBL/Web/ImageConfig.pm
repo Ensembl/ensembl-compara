@@ -752,7 +752,7 @@ sub _merge {
   my $config_name = $self->{'type'};
 
   foreach my $analysis (keys %$tree) {
-    my $sub_tree = $tree->{$analysis};
+    my $sub_tree = $tree->{$analysis}; 
     
     next unless $sub_tree->{'disp'}; # Don't include non-displayable tracks
     next if exists $sub_tree->{'web'}{ $sub_type }{'do_not_display'};
@@ -816,7 +816,7 @@ sub add_dna_align_feature {
   
   return unless $self->_check_menus('dna_align_cdna');
   
-  my ($keys, $data) = $self->_merge($hashref->{'dna_align_feature'}, 'dna_align');
+  my ($keys, $data) = $self->_merge($hashref->{'dna_align_feature'}, 'dna_align_feature');
   
   foreach my $key_2 (@$keys) {
     my $k = $data->{$key_2}{'type'} || 'other';
