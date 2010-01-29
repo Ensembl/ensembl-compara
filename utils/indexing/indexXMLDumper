@@ -1655,6 +1655,10 @@ sub dumpRegulatoryFeature {
   print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
+  my $ftype = 'RegulatoryFeature';
+  my $params;
+
+
   my $prefix = ($dbspecies =~/Mus/) ? 'ENSMUSR' : 'ENSR';
   my $d = $conf->{'dbh'}->selectall_arrayref( 
     "select concat('$prefix', lpad(rf.stable_id, 11, 0)),
@@ -1672,8 +1676,8 @@ sub dumpRegulatoryFeature {
     my $id = $row->[0];
     my $ids = [ ];
     my $r = $row->[1] .":".$row->[2] . "-" . $row->[3];
-    my $params = { 'r' => $r };
-    &p (RegulatoryFeatureLine($dbspecies,$desc,$id,$ids,'RegulatoryFeature',$params,$db,$counter),$nogzip, $fh);
+    $params = { 'r' => $r, 'subtype' => 'RegulatoryFeature' };
+    &p (RegulatoryFeatureLine($dbspecies,$desc,$id,$ids,$ftype,$params,$db,$counter),$nogzip, $fh);
   }
 
 
@@ -1695,19 +1699,16 @@ sub dumpRegulatoryFeature {
     my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name, $seq_region, $start, $end, $strand) = @$f;
  #   warn "$display_label -- $f_name -- $count -- $f_desc -- $f_class -- $fs_name -- $seq_region -- $start -- $end -- $strand";
  #   exit;
-    my ($ftype, $params);
     my @ids = split ' ', $f_name;
     if ($count >> 1) {
-      $ftype = 'RegulatoryFactor';
-      $params = { 'name' => $f_name };
+      $params = { 'name' => $f_name, 'subtype' => 'RegulatoryFactor' };
 #	$link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$display_label;name=$f_name;";
     }
     else {
       # link miranda features to gene reg view other feats to region in detail
       if ( $f_class eq 'RNA'){
 	my ($trans_id, $feat) = split(/:/,$display_label);
-	$ftype = 'RegulationGene';
-	$params = { 't' => $trans_id, 'hid' => $display_label };
+	$params = { 't' => $trans_id, 'subtype' => 'RegulationGene', 'hid' => $display_label };
 #	$link = "/$species/Gene/Regulation?t=$trans_id;hid=$display_label";
       }
       else {
@@ -1721,8 +1722,7 @@ sub dumpRegulatoryFeature {
         else {
 	  $renderer = 'regulatory_regions_funcgen_feature_set';
 	}
-	$ftype = 'RegulationLocation';
-	$params = { 'r' => $r, 'hid' => $display_label, 'contigviewbottom' => "$renderer=normal" };
+	$params = { 'r' => $r, 'subtype' => 'RegulationLocation','hid' => $display_label, 'contigviewbottom' => "$renderer=normal" };
 #        $link = "/$species/Location/View?r=$region;hid=$display_label;contigviewbottom=$renderer=normal";
       }
     }
