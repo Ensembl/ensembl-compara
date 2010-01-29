@@ -78,12 +78,13 @@ if( $species[0] eq 'ALL' ) {
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
-mkdir 'input', 0777 unless -e 'input';
+my $dir = "/nfs/eureka/data/ensembl_$release";
+#my $dir = 'input';
+mkdir $dir, 0777 unless -e 'input';
 
 my $total_c;
 foreach my $index (@indexes) {
-#  $conf->{'directory'} = " /nfs/eureka/data/ensembl/ensembl_$index";
-  $conf->{'directory'} = "input/ensembl_$index";
+  $conf->{'directory'} = "$dir/ensembl_$index";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   foreach my $species ( @species ) {
     $conf->{'species'}   = $species;
@@ -1590,7 +1591,7 @@ sub GeneLine {
 sub clean {
   my ($dbkey) = @_;
   $dbkey =~ s/\<sup\>/\&lt;sup\&gt;/g;
-  $dbkey =~ s/\<\/sup\>/\&lt;\/sup\&gt/g;
+  $dbkey =~ s/\<\/sup\>/\&lt;\/sup\&gt;/g;
   $dbkey =~ s/<i>//g;
   $dbkey =~ s/<\/i>//g;
   $dbkey =~ s/<em>//g;
@@ -1701,7 +1702,7 @@ sub dumpRegulatoryFeature {
  #   exit;
     my @ids = split ' ', $f_name;
     if ($count >> 1) {
-      $params = { 'name' => $f_name, 'subtype' => 'RegulatoryFactor' };
+      $params = { 'f_name' => $f_name, 'subtype' => 'RegulatoryFactor' };
 #	$link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$display_label;name=$f_name;";
     }
     else {
