@@ -67,7 +67,7 @@ sub get_sequence_data {
   for (0..$length-1) {
     # Set default vaules
     $variation_seq->{'seq'}->[$_]->{'letter'} = ' ';
-    $coding_seq->{'seq'}->[$_]->{'letter'} = $protein_seq->{'seq'}->[$_]->{'letter'} = '.';
+    $coding_seq->{'seq'}->[$_]->{'letter'}    = $protein_seq->{'seq'}->[$_]->{'letter'} = '.';
     
     if ($_+1 >= $cd_start && $_+1 <= $cd_end) {         
       $coding_seq->{'seq'}->[$_]->{'letter'} = $reference_seq[$_]->{'letter'} if $config->{'coding_seq'};
@@ -130,7 +130,7 @@ sub get_sequence_data {
       my $ambigcode         = $var_class eq 'in-del' ? '*' : $var->ambig_code;
       my $pep_allele_string = $transcript_variation->pep_allele_string;
       my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
-      my $allele_count      = scalar split /\//, $pep_allele_string;
+      my $allele_count      = $pep_allele_string eq 'n/a' ? 0 : scalar split /\//, $pep_allele_string;
       my $insert            = 0;
       
       if ($var->strand == -1 && $trans_strand == -1) {
@@ -345,7 +345,6 @@ sub export_sequence {
         }
         
         $section = '';
-        
       }
       
       if ($seq->{'url'}) {
