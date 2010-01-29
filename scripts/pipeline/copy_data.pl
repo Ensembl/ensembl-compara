@@ -273,7 +273,8 @@ sub get_DBAdaptor {
 sub check_table {
   my ($table_name, $from_dba, $to_dba, $columns, $where) = @_;
 
-  print "Checking table $table_name...";
+  print "Checking ".($columns ? "columns [$columns] of the" : '')." table $table_name ".($where ? "where [$where]" : '')."...";
+
   throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
       unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
 
@@ -873,11 +874,8 @@ sub copy_data_in_text_mode {
     close(TEMP);
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
 
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
+    system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");
+
     unlink("$filename");
     #print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
   }
@@ -919,13 +917,10 @@ sub copy_data_in_binary_mode {
   #all the data in the table needs to be copied and does not need fixing
   if (!defined $query) {
     my $start_time  = time();
-    if ($to_pass) {
-      system("mysqldump -u$from_user -h$from_host -P$from_port".
-          " --insert-ignore -t $from_dbname $table_name | mysql -u$to_user -p$to_pass -h$to_host -P$to_port $to_dbname");
-    } else {
-      system("mysqldump -u$from_user -h$from_host -P$from_port".
-          " --insert-ignore -t $from_dbname $table_name | mysql -u$to_user -h$to_host -P$to_port $to_dbname");
-    }
+
+    system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." --insert-ignore -t $from_dbname $table_name ".
+           "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
+
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
 
     return;
@@ -973,13 +968,10 @@ sub copy_data_in_binary_mode {
     $from_dba->dbc->db_handle->do("ALTER TABLE temp_$table_name RENAME $table_name");
 
     ## mysqldump data
-    if ($from_pass) {
-      system("mysqldump -u$from_user -p$from_pass -h$from_host -P$from_port".
-          " --insert-ignore -t $from_dbname $table_name | mysql -u$to_user -p$to_pass -h$to_host -P$to_port $to_dbname");
-    } else {
-      system("mysqldump -u$from_user -h$from_host -P$from_port".
-          " --insert-ignore -t $from_dbname $table_name | mysql -u$to_user -h$to_host -P$to_port $to_dbname");
-    }
+
+    system("mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." --insert-ignore -t $from_dbname $table_name ".
+           "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname");
+
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
 
     ## Undo table names change
