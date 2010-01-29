@@ -305,95 +305,98 @@ sub pep_splice_site {
 =cut
 
 sub pep_snps {
-  my $self  = shift;
-  my $rtn_structure = shift;
-  return $self->{'pep_snps'} if $self->{'pep_snps'}; 
-
+  my ($self, $rtn_structure) = @_;
+  
   my $rtn = $rtn_structure eq 'hash' ? {} : [];
 
   return $rtn unless $self->species_defs->databases->{'DATABASE_VARIATION'};
-  $self->database('variation');
-  my $source = "variation";  # only defined if glovar
+  
+  if (!$self->{'pep_snps'}) {
+    my $trans           = $self->transcript;
+    my $cd_start        = $trans->cdna_coding_start;
+    my $cd_end          = $trans->cdna_coding_end ;
+    my $trans_strand    = $trans->get_all_Exons->[0]->strand;
+    my $coding_sequence = substr $trans->seq->seq, $cd_start-1, $cd_end-$cd_start+1;
+    my $j               = 0;
+    my @aas;
 
-  my $trans           = $self->transcript;
-  my $cd_start        = $trans->cdna_coding_start;
-  my $cd_end          = $trans->cdna_coding_end ;
-  my $trans_strand    = $trans->get_all_Exons->[0]->strand;
-  my $coding_sequence = substr($trans->seq->seq, $cd_start-1, $cd_end-$cd_start+1 );
-  my $j = 0;
-  my @aas;
-
-  # add triplicate NTs into array into AA hash
-  while( $coding_sequence =~ /(...)/g ){    
-    $aas[$j]{'nt'} = [split (//, $1)];
-    $j++;  
-  }
-
-  my %snps= %{$trans->get_all_cdna_SNPs($source)};
-  my %protein_features =%{$trans->get_all_peptide_variations($source)};
-  my $coding_snps = $snps{'coding'};            # coding SNP only
-  return $rtn unless @$coding_snps;
-
-  foreach my $snp (@$coding_snps) {
-    foreach my $residue ( $snp->start..$snp->end ) { # gets residues for snps longer than 1... indels
-      my $aa = int(($residue-$cd_start+3)/3); # aminoacid residue number
-      my $aa_bp = ($residue-$cd_start+3) % 3; # NT in codon for that amino acid (0,1,2)
-      my $snpclass;
-      my $alleles;
-      my $id;
-      $id = $snp->dbID; 
-      $aas[$aa-1]{'vdbid'} = $id;
-      $aas[$aa-1]{'snp_id'} = $snp->variation_name();
-      if ( $snp->variation ) {
-       $aas[$aa-1]{'snp_source'} = $snp->variation->source();
-      }
-      else {
-        warn "we have a dodgy SNP -> '", $snp->variation_name,"' $residue!";
-      }
-      $snpclass = $snp->var_class;
-      $alleles  = $snp->allele_string;
-
-      if($snpclass eq 'snp' || $snpclass eq 'SNP - substitution') {
-    # gets all changes to pep by snp
-    my @non_syn_snp = @{$protein_features{ $aa }||[]};
-     $aas[$aa-1]{'allele'} = $alleles;
-    $aas[$aa-1]{'ambigcode'}[($residue-$cd_start)%3] = $snp->ambig_code || $snp->{'_ambiguity_code'};
-
-    if ($snp->strand ne "$trans_strand"){
-      $aas[$aa-1]{'ambigcode'}[($residue-$cd_start)%3] =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-      $aas[$aa-1]{'allele'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-    }        
-    $aas[$aa-1]{'type'} = 'syn';
-    
-    if(@non_syn_snp >1) { 
-      my $alt_residues = join ', ', @non_syn_snp;
-      $aas[$aa-1]{'pep_snp'} = $alt_residues;        # alt AAs
-      $aas[$aa-1]{'type'} = 'snp';
+    # add triplicate NTs into array into AA hash
+    while ($coding_sequence =~ /(...)/g) {    
+      $aas[$j]{'nt'} = [ split //, $1 ];
+      $j++;  
     }
-      } 
-      elsif ($snpclass eq 'in-del') {
-    my $start = $snp->start;
-    my $end = $snp->end;
-    $aas[$aa-1]{'type'} = $start > $end ? 'insert' : 'delete';   
-    $aas[$aa-1]{'type'} = 'frameshift' if (length($alleles) %3); 
-    $alleles =~ s/-\/// ;
-    $aas[$aa-1]{'indel'} = $id;
-    $aas[$aa-1]{'allele'} = $alleles;
-    $aas[$aa-1]{'allele'} =~ tr/ACGTN/TGCAN/d if ($snp->strand ne "$trans_strand");            
+    
+    my $protein_features = $trans->get_all_peptide_variations('variation');
+    my $coding_snps      = $trans->get_all_cdna_SNPs('variation')->{'coding'}; # coding SNP only
+    
+    return $rtn unless @$coding_snps;
+
+    foreach my $snp (@$coding_snps) {
+      my $variation        = $snp->variation;
+      my $variation_name   = $snp->variation_name;
+      my $id               = $snp->dbID;
+      my $var_class        = $snp->var_class;
+      my $allele_string    = $snp->allele_string;
+      my $start            = $snp->start;
+      my $end              = $snp->end;
+      my $ambig_code       = $snp->ambig_code || $snp->{'_ambiguity_code'};
+      my $variation_source = $variation->source;
+      
+      # gets residues for snps longer than 1...indels
+      for my $residue ($start..$end) {
+        my $aa      = int(($residue-$cd_start+3) / 3); # aminoacid residue number
+        my $aa_bp   = ($residue-$cd_start+3) % 3;      # NT in codon for that amino acid (0,1,2)
+        my $alleles = $allele_string;
+        
+        $aas[$aa-1]{'vdbid'} = $id;
+        $aas[$aa-1]{'snp_id'} = $variation_name;
+        
+        if ($variation) {
+         $aas[$aa-1]{'snp_source'} = $variation_source;
+        } else {
+          warn "we have a dodgy SNP -> '$variation_name' $residue!";
+        }
+
+        if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {
+          # gets all changes to pep by snp
+          my @non_syn_snp = @{$protein_features->{$aa}||[]};
+          $aas[$aa-1]{'allele'} = $alleles;
+          $aas[$aa-1]{'ambigcode'}[($residue-$cd_start)%3] = $ambig_code;
+
+          if ($snp->strand ne "$trans_strand"){
+            $aas[$aa-1]{'ambigcode'}[($residue-$cd_start)%3] =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+            $aas[$aa-1]{'allele'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
+          } 
+          
+          $aas[$aa-1]{'type'} = 'syn';
+
+          if (@non_syn_snp > 1) { 
+            my $alt_residues = join ', ', @non_syn_snp;
+            $aas[$aa-1]{'pep_snp'} = $alt_residues; # alt AAs
+            $aas[$aa-1]{'type'}    = 'snp';
+          }
+        } elsif ($var_class eq 'in-del') {
+          $aas[$aa-1]{'type'} = $start > $end ? 'insert' : 'delete';   
+          $aas[$aa-1]{'type'} = 'frameshift' if length($alleles) % 3; 
+          
+          $alleles =~ s/-\///;
+          
+          $aas[$aa-1]{'indel'}  = $id;
+          $aas[$aa-1]{'allele'} = $alleles;
+          $aas[$aa-1]{'allele'} =~ tr/ACGTN/TGCAN/d if $snp->strand ne $trans_strand;            
+        }
       }
-    }  #end $residue
-  }  #end $snp    
-  $self->{'pep_snps'} = \@aas;
+    }
+    
+    $self->{'pep_snps'} = \@aas;
+  }
   
   if ($rtn_structure eq 'hash') {
     my $i = 0;
     
-    for (@aas) {
-      $rtn->{$i} = $_;
-      $i++;
-    }
+    $rtn->{$i++} = $_ for @{$self->{'pep_snps'}};
     
-    $self->{'pep_snps'} = $rtn;
+    return $rtn;
   }
   
   return $self->{'pep_snps'};
@@ -467,8 +470,8 @@ sub history {
 
 =head2 vega_projection
 
- Arg[1]	     : EnsEMBL::Web::Proxy::Object
- Arg[2]	     : Alternative assembly name
+ Arg[1]         : EnsEMBL::Web::Proxy::Object
+ Arg[2]         : Alternative assembly name
  Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
  Description : map an object to an alternative (vega) assembly
  Return type : arrayref
@@ -476,17 +479,17 @@ sub history {
 =cut
 
 sub vega_projection {
-	my $self = shift;
-	my $alt_assembly = shift;
-	my $slice = $self->database('vega')->get_SliceAdaptor->fetch_by_region( undef,
+    my $self = shift;
+    my $alt_assembly = shift;
+    my $slice = $self->database('vega')->get_SliceAdaptor->fetch_by_region( undef,
        $self->seq_region_name, $self->seq_region_start, $self->seq_region_end );
-	my $alt_projection = $slice->project('chromosome', $alt_assembly);
-	my @alt_slices = ();
-	foreach my $seg (@{ $alt_projection }) {
-		my $alt_slice = $seg->to_Slice;
-		push @alt_slices, $alt_slice;
-	}
-	return \@alt_slices;
+    my $alt_projection = $slice->project('chromosome', $alt_assembly);
+    my @alt_slices = ();
+    foreach my $seg (@{ $alt_projection }) {
+        my $alt_slice = $seg->to_Slice;
+        push @alt_slices, $alt_slice;
+    }
+    return \@alt_slices;
 }
 
 1;
