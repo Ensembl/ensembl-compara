@@ -12,19 +12,19 @@ sub _init {
 
 sub get_sequence_data {
   my $self = shift;
-  my ($object, $config) = @_;
+  my ($translation, $config) = @_;
   
-  my $peptide = $object->Obj;
+  my $peptide = $translation->Obj;
   my $pep_seq = $peptide->seq;
 
-  my @sequence = [ map {{'letter' => $_ }} split //, uc $pep_seq ];
+  my @sequence = [ map {{ letter => $_ }} split //, uc $pep_seq ];
   my $markup;
   
   $config->{'slices'} = [{ slice => $pep_seq }];
   $config->{'length'} = length $pep_seq;
   
   if ($config->{'exons'}) {
-    my $exons = $object->pep_splice_site($peptide);
+    my $exons = $translation->pep_splice_site($peptide);
     my $flip  = 0;
     
     foreach (sort {$a <=> $b} keys %$exons) {
@@ -42,9 +42,9 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
-    my $variations = $object->pep_snps('hash');
+    my $variations = $translation->pep_snps('hash');
     
-    foreach (sort {$a <=> $b} keys %$variations) {
+    foreach (sort { $a <=> $b } keys %$variations) {
       last if $_ >= $config->{'length'};
       next unless $variations->{$_}->{'type'}; # Weed out the rubbish returned by pep_snps
       
@@ -62,10 +62,10 @@ sub get_sequence_data {
 sub content {
   my $self = shift;
   
-  my $transcript = $self->object;
-  my $object     = $transcript->translation_object;
+  my $object      = $self->object;
+  my $translation = $object->translation_object;
   
-  return $self->non_coding_error unless $object;
+  return $self->non_coding_error unless $translation;
   
   my $config = { 
     display_width   => $object->param('display_width') || 60,
@@ -77,7 +77,7 @@ sub content {
     $config->{$_} = ($object->param($_) eq 'yes') ? 1 : 0;
   }
 
-  my ($sequence, $markup) = $self->get_sequence_data($object, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($translation, $config);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'variation'};
@@ -96,7 +96,7 @@ sub content {
         </form>
       </div>
     </div>',
-    $object->Obj->seq,
+    $translation->Obj->seq,
     $config->{'species'}
   );
   
