@@ -130,7 +130,8 @@ sub get_sequence_data {
       my $ambigcode         = $var_class eq 'in-del' ? '*' : $var->ambig_code;
       my $pep_allele_string = $transcript_variation->pep_allele_string;
       my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
-      my $allele_count      = $pep_allele_string eq 'n/a' ? 0 : scalar split /\//, $pep_allele_string;
+      my $utr_var           = join('', @{$transcript_variation->consequence_type}) =~ /UTR/;
+      my $allele_count      = scalar split /\//, $pep_allele_string;
       my $insert            = 0;
       
       if ($var->strand == -1 && $trans_strand == -1) {
@@ -154,7 +155,7 @@ sub get_sequence_data {
         my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
         
         if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {
-          $mk->{'variations'}->{$_}->{'type'} = $mk->{'variations'}->{$_}->{'type'} eq 'snp' || $allele_count != 1 ? 'snp' : 'syn';
+          $mk->{'variations'}->{$_}->{'type'} = $utr_var || $allele_count > 1 ? 'snp' : 'syn';
           
           if ($config->{'translation'} && $allele_count > 1) {
             $protein_seq->{'seq'}->[$amino_acid_pos]->{'letter'}     = 
