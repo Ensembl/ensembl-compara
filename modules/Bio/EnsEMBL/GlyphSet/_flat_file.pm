@@ -95,6 +95,9 @@ strand < 0;
       $_->map( $sl );
 #      warn "$track_key -> ",$_->id," (",$_->start,":",$_->end,")\n";
     }
+    ## Set track depth a bit higher if there are lots of user features!
+    my $depth = @{$T->{'features'}} > 20 ? 20 : @{$T->{'features'}};
+    $T->{'config'}{'dep'} = $depth;
     $results{$key} = [$T->{'features'}, $T->{'config'}];
   }
   return %results;
