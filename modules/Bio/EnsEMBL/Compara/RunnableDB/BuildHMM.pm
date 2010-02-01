@@ -439,7 +439,7 @@ sub store_hmmprofile
   $self->{'hmm_text'} = join('', <FH>);
   close(FH);
 
-  my $type = undef; $type = 'dna' if defined($self->{'cdna'});
+  my $type = 'aa'; $type = 'dna' if defined($self->{'cdna'});
   my $table_name = 'protein_tree_hmmprofile' . "_" . $type;
   my $sth = $self->{comparaDBA}->dbc->prepare("INSERT INTO $table_name VALUES (?,?,?)");
   $sth->execute($tree->node_id, $self->{hmm_type},$self->{hmm_text});
