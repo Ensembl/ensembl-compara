@@ -95,13 +95,13 @@ foreach my $index (@indexes) {
     my $core = $dbs{'DATABASE_CORE'};
     my $no_success = 1;
     my $c;
+    print LOG "Starting: $index $species\n";
     while ($no_success) {
       $c++;
       $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
       if ($index eq 'Family') {
 	$conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
       }
-      print LOG "Starting: $index $species\n";
       my $function = "dump$index";
       no strict "refs";
       eval {
@@ -129,7 +129,7 @@ foreach my $index (@indexes) {
   }
 }
 
-print LOG "\nAdditional fields are:\n",Dumper(\%additional_fields);
+#print LOG "\nAdditional fields are:\n",Dumper(\%additional_fields);
 print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
 print LOG "\nDumped $total_c records in total\n";
 
@@ -140,7 +140,6 @@ exit;
 ########################################################################## Markers
 
 sub dumpMarker {
-
   my $conf = shift;
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
@@ -292,6 +291,7 @@ sub dumpQTL {
 
 sub QTLLine {
   my ($species, $key, $pos, $IDS, $desc, $counter ) = @_;
+  return '' unless $key;
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$key">
@@ -1468,7 +1468,7 @@ sub dumpGene {
              'Not mapped'
         from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
              $dbname.unmapped_reason as ur
-       where a.analysis_id = uo.analysis_id and 
+       where a.analysis_id = uo.analysis_id and
              uo.external_db_id = e.external_db_id and
              uo.unmapped_reason_id = ur.unmapped_reason_id and
                uo.ensembl_id = 0
@@ -1480,7 +1480,7 @@ sub dumpGene {
         from $dbname.analysis as a, $dbname.external_db as e, $dbname.unmapped_object as uo,
              $dbname.unmapped_reason as ur, $dbname.transcript_stable_id as tsi,
              $dbname.transcript as t, $dbname.gene_stable_id as gsi
-       where a.analysis_id = uo.analysis_id and 
+       where a.analysis_id = uo.analysis_id and
              uo.external_db_id = e.external_db_id and
              uo.unmapped_reason_id = ur.unmapped_reason_id and
              uo.ensembl_id = t.transcript_id and
@@ -1530,6 +1530,7 @@ sub GeneLine {
   my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $db, $counter) = @_;
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
+  $desc = &clean($desc,'desc');
   my $description = $desc . " [Type: $biotype $ad_label]";
   my $xml = qq(
 <entry id="$gsid">
@@ -1541,11 +1542,11 @@ sub GeneLine {
     my $dbkey  = $xref->{'label'};
     next if $seen_syns{$dbkey}{$dbname};
     $seen_syns{$dbkey}{$dbname} = 1;
-    $dbkey = &clean($dbkey);
+    $dbkey = &clean($dbkey,'dbkey');
     $xml .= qq(
     <ref dbname="$dbname" dbkey="$dbkey"/>);
     foreach my $syn (@{$xref->{'synonyms'}}) {
-      $dbkey = &clean($dbkey);
+      $dbkey = &clean($dbkey,'syn');
       $xml .= qq(
     <ref dbname="$dbname" dbkey="$syn"/>);
     }
@@ -1587,15 +1588,19 @@ sub GeneLine {
 </entry>);
 }
 
-#deal with those pesky superscripted, emphasised and italicised rat gene names
+#deal with those pesky gene names and descriptions
 sub clean {
-  my ($dbkey) = @_;
-  $dbkey =~ s/\<sup\>/\&lt;sup\&gt;/g;
-  $dbkey =~ s/\<\/sup\>/\&lt;\/sup\&gt;/g;
+  my ($dbkey,$field) = @_;
+  $dbkey =~ s/<sup>/\&lt;sup\&gt;/g;
+  $dbkey =~ s/<\/sup>/\&lt;\/sup\&gt;/g;
   $dbkey =~ s/<i>//g;
   $dbkey =~ s/<\/i>//g;
   $dbkey =~ s/<em>//g;
   $dbkey =~ s/<\/em>//g;
+  if ($dbkey eq 'desc') {
+    $dbkey =~ s/\&//g;
+    $dbkey =~ s/<//g;
+  }
   if ($dbkey =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $dbkey in dbkey field\n";
   }
@@ -1735,7 +1740,6 @@ sub dumpRegulatoryFeature {
 
 sub RegulatoryFeatureLine {
   my ($species,$desc,$id,$ids,$ftype,$params,$db,$counter) = @_;
-
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$id">
@@ -1744,10 +1748,10 @@ sub RegulatoryFeatureLine {
   $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">$ftype</field>);
-  foreach my $id (@$ids) {
+  foreach my $syn (@$ids) {
     $xml .= qq(
-    <field name="synonym">$id</field>);
-    $additional_fields{'synonym'}{$ftype}++;
+    <field name="synonym">$syn</field>);
+    $additional_fields{'synonym'}++;
   }
   while (my ($param,$value) = each %$params) {
     $xml .= qq(
@@ -1798,7 +1802,7 @@ sub footer {
 
 sub p {
   my ($str,$nogzip,$fh) = @_;
-
+  return unless $str;
   # TODO - encoding
   $str .= "\n";
   if ($nogzip) {
