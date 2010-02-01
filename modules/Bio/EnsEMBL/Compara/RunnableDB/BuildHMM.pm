@@ -412,7 +412,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   my $stk_file = $self->{'file_root'} . ".stk";
   my $sreformat = $self->{sreformat_exe};
-  if(! $sreformat || ! -e $sreformat) {
+  if(! $sreformat ) {
     $sreformat = '/usr/local/ensembl/bin/sreformat';
   }
   my $cmd = "${sreformat} stockholm $aln_file > $stk_file";
