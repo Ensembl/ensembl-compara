@@ -55,8 +55,9 @@ sub process {
       other     => 'Other (please describe below)'
     };
     
-    my @problems     = $object->param('problem');
-    my $problem_text = "\n\nProblems:\n\n";
+    my @problems  = $object->param('problem');
+    my $title     = $object->param('title');
+    my $problem_text = "\n\nProblem with video $title:\n\n";
     
     if (@problems) {
       foreach my $p (@problems) {
