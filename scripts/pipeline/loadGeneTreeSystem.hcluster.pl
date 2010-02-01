@@ -410,7 +410,9 @@ sub build_GeneTreeSystem
   #
   # Mcoffee
   #
-  $parameters = "{'method'=>'cmcoffee'";
+  my $mcoffee_method = (defined $genetree_params{mcoffee_method}) ? $genetree_params{mcoffee_method} : 'cmcoffee';
+  $parameters = "{'method'=>'${mcoffee_method}'";
+  
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
