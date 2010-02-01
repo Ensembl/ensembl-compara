@@ -249,6 +249,10 @@ sub get_params {
   if(defined($params->{'honeycomb_dir'})) {
     $self->{'honeycomb_dir'} = $params->{'honeycomb_dir'};
   }
+  
+  if(defined($params->{'sreformat_exe'})) {
+    $self->{'sreformat_exe'} = $params->{'sreformat_exe'};
+  }
 
   return;
 
@@ -278,7 +282,7 @@ sub run_buildhmm
   $self->{'hmm_file'} = $self->{'input_aln'} . "_hmmbuild.hmm ";
 
   my $hmmer_dir = "/software/pfam/src/hmmer-3.0.a1/bin/";
-  my $buildhmm_executable;
+  my $buildhmm_executable = $self->program_file();
   unless (-e $buildhmm_executable) {
     if (-e "/proc/version") {
       $buildhmm_executable = $hmmer_dir . "hmmbuild";
@@ -381,7 +385,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
     or $self->throw("Error opening $aln_file for write");
 
   my @to_delete;
-  $DB::single=1;1;
+#  $DB::single=1;1;
   if (defined($self->{notaxon})) {
     foreach my $leaf (@{$tree->get_all_leaves}) {
       next unless ($leaf->taxon_id eq $self->{notaxon});
@@ -407,7 +411,11 @@ sub dumpTreeMultipleAlignmentToWorkdir
   close OUTSEQ;
 
   my $stk_file = $self->{'file_root'} . ".stk";
-  my $cmd = "/usr/local/ensembl/bin/sreformat stockholm $aln_file > $stk_file";
+  my $sreformat = $self->{sreformat_exe};
+  if(! $sreformat || ! -e $sreformat) {
+    $sreformat = '/usr/local/ensembl/bin/sreformat';
+  }
+  my $cmd = "${sreformat} stockholm $aln_file > $stk_file";
   unless( system("$cmd") == 0) {
     print("$cmd\n");
     $self->check_job_fail_options;
