@@ -367,7 +367,7 @@ sub copy_genomic_align_blocks {
         MIN(gag.node_id), MAX(gag.node_id),
 	MIN(gat.node_id), MAX(gat.node_id),
         MIN(gat.root_id), MAX(gat.root_id),
-	MAX(gat.right_index)
+	MIN(gat.left_index)
       FROM genomic_align_block gab
         LEFT JOIN genomic_align ga using (genomic_align_block_id)
         LEFT JOIN genomic_align_group gag using (genomic_align_id)
@@ -377,7 +377,7 @@ sub copy_genomic_align_blocks {
 
   $sth->execute($mlss_id);
   my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, $min_gag, 
-		$max_gag, $min_gat, $max_gat, $min_root_id, $max_root_id, $max_gat_right_index) =
+		$max_gag, $min_gat, $max_gat, $min_root_id, $max_root_id, $from_index_range_start) =
       $sth->fetchrow_array();
 
   $sth->finish();
@@ -388,7 +388,7 @@ sub copy_genomic_align_blocks {
   my $fix_ga;
   my $fix_gab_gid;
   my $fix_gag;
-  my $fix_index_length = 0;
+  my $index_offset = 0;
 
   if ($max_gab < 10**10) {
     $fix_gab = $lower_limit;
@@ -485,14 +485,17 @@ sub copy_genomic_align_blocks {
         " ** ERROR **  convention!\n";
       exit(1);
    }
-   my $sth_index = $to_dba->dbc->prepare("SELECT max(right_index) 
-	FROM genomic_align_tree");
+
+       # make sure the left_index and right_index are unique in the *to* db
+   my $sth_index = $to_dba->dbc->prepare("SELECT max(right_index) FROM genomic_align_tree");
    $sth_index->execute();
-   #make sure the left_index and right_index are unique in the *to* db
-   $fix_index_length = 10 ** ( length( $sth_index->fetchrow_array() ) );
-   if($max_gat_right_index > $fix_index_length) {
-     $fix_index_length = 0;
-   }
+   my ($to_index_prev_range_max) = $sth_index->fetchrow_array();
+   $to_index_prev_range_max    ||= 0;
+
+   my $to_index_magnitude        = 10**(length($to_index_prev_range_max)-1);
+   my $to_index_range_start      = int($to_index_prev_range_max/$to_index_magnitude+1)*$to_index_magnitude+1;
+
+   $index_offset = $to_index_range_start-$from_index_range_start; # may go negative, it's fine
   }
 
   #copy genomic_align table. Need to update dnafrag column
@@ -552,7 +555,7 @@ sub copy_genomic_align_blocks {
         "genomic_align_tree",
         "root_id",
         $min_root_id, $max_root_id,
-        "SELECT node_id+$fix_gag, parent_id+$fix_gag, root_id+$fix_gag, left_index+$fix_index_length, right_index+$fix_index_length, left_node_id+$fix_gag, right_node_id+$fix_gag, distance_to_parent".
+        "SELECT node_id+$fix_gag, parent_id+$fix_gag, root_id+$fix_gag, left_index+$index_offset, right_index+$index_offset, left_node_id+$fix_gag, right_node_id+$fix_gag, distance_to_parent".
         " FROM genomic_align_tree ".
 	"WHERE root_id >= $min_root_id AND root_id <= $max_root_id");
     #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
@@ -634,7 +637,7 @@ sub copy_conservation_scores {
   copy_data($from_dba, $to_dba,
       "meta",
       undef, undef, undef,
-      "SELECT NULL, meta_key, meta_value".
+      "SELECT NULL, species_id, meta_key, meta_value".
         " FROM meta ".
         " WHERE meta_key = \"gerp_$mlss_id\"");
 
