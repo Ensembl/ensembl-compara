@@ -26,12 +26,17 @@ sub process {
     'updated'   => 'yes',
   };
 
-  ## Account activation needs to go to the home page, not the control panel
+  ## Password change is already logged in, so stay in control panel 
+  my $new_url;
   if ($object->param('code')) {
+    $new_url = '/Account/SetCookie';
     $param->{'activated'} = 'yes';
   } 
+  else {
+    $new_url = '/Account/QuickLinks';
+  }
 
-  $self->ajax_redirect('/Account/SetCookie', $param);
+  $self->ajax_redirect($new_url, $param);
 }
 
 1;
