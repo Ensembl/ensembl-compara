@@ -15,6 +15,9 @@ sub process {
   my $param; 
 
   my $interface = $self->interface;
+  my $user = $object->user;
+  $user = new EnsEMBL::Web::Data::User unless $user;
+  $interface->data($user);
   $interface->cgi_populate($object);
 
   ## Check input for spam content, etc
@@ -28,7 +31,7 @@ sub process {
     $param->{'email'} = $object->param('email');
   }
   else {
-    if ($interface->data->id) { ## Update user record
+    if ($interface->data && $interface->data->id) { ## Update user record
       my $success = $interface->data->save;
       if ($success) {
         $url .= '/Display';
