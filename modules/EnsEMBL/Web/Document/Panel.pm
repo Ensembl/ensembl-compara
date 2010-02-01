@@ -312,9 +312,12 @@ sub render {
   if (exists $self->{'raw'}) {
     $self->renderer->print($self->{'raw'});
   } else {
-    my $hub = $self->{'model'}->hub;
-    my $object = $self->{'model'}->object;
-    my $status = $hub ? $hub->param($self->{'status'}) : undef;
+    my ($hub, $object, $status);
+    if ($self->{'model'}) {
+      $hub = $self->{'model'}->hub;
+      $object = $self->{'model'}->object;
+      $status = $hub ? $hub->param($self->{'status'}) : undef;
+    }
     my $content = '';
     
     if ($status ne 'off' && $self->{'delayed_write'}) {
@@ -585,9 +588,6 @@ sub _is_ajax_request {
 
 sub content {
   my ($self) = @_;
-  my $model = $self->{'model'};
-  my $hub = $model->hub;
-  my $object = $self->{'object'};
   
   $self->reset_buffer;
   
@@ -595,6 +595,11 @@ sub content {
     $self->print($self->{'content'});
   }
   
+  my $model = $self->{'model'};
+  return $self->buffer unless $model;
+  my $hub = $model->hub;
+  my $object = $self->{'object'};
+
   foreach my $component ($self->components) {
     if ($component eq 'das_features') {
       foreach my $function_name (@{$self->{'components'}{$component}}) {
