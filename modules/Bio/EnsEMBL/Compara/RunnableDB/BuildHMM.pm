@@ -282,7 +282,7 @@ sub run_buildhmm
   $self->{'hmm_file'} = $self->{'input_aln'} . "_hmmbuild.hmm ";
 
   my $hmmer_dir = "/software/pfam/src/hmmer-3.0.a1/bin/";
-  my $buildhmm_executable = $self->program_file();
+  my $buildhmm_executable = $self->analysis()->program_file();
   unless (-e $buildhmm_executable) {
     if (-e "/proc/version") {
       $buildhmm_executable = $hmmer_dir . "hmmbuild";
