@@ -3,8 +3,6 @@
 package EnsEMBL::Web::Configuration;
 
 use strict;
-use warnings;
-no warnings qw(uninitialized);
 
 use HTML::Entities qw(encode_entities);
 use Time::HiRes qw(time);
