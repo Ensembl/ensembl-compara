@@ -19,18 +19,19 @@ sub content {
 
   ## Add feature type and source
   my $name = $object->name; 
-  my $source = $object->source; 
+  my $source = $object->source;
+  my $source_description = $object->source_description; 
   my $class  =  uc($object->vari_class);
    
   if ($source eq 'dbSNP'){
     $source .= $object->source_version; 
     $name      = $object->get_ExtURL_link($source, 'DBSNP', $name); 
-    $name = "$class (source $name)"; 
+    $name = "$class (source $name $source_description)"; 
   } elsif ($source =~ /SGRP/){
     $name      = $object->get_ExtURL_link($source, 'SGRP', $name);
-    $name = "$class (source $name)";
+    $name = "$class (source $name $source_description)";
   } else {
-    $name = "$class (source $source)";
+    $name = "$class (source $source $source_description)";
   }
 
   my $html  = '';
@@ -90,6 +91,16 @@ sub content {
  
   $html .= qq(<dt>Synonyms</dt>
      <dd>$info</dd>); 
+
+  ## Add variation sets
+  my $sets = $object->get_variation_sets;
+  $html .= qq(<dt>Variation Sets</dt>);
+  my $set_names;
+  foreach my $set  (sort { $a->name cmp $b->name } @$sets){
+    $set_names .= $set->name .", ";
+  }
+  $set_names =~s/\,$//;
+  $html .= qq(<dd>$set_names</dd>);
 
   ## Add Alleles
    my $label = 'Alleles';
