@@ -1643,7 +1643,9 @@ sub add_variation_feature {
   
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
   
-  $menu->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
+  my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants', { submenu => 1 });
+  
+  $sequence_variation->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
     db          => $key,
     glyphset    => '_variation',
     sources     => undef,
@@ -1655,7 +1657,7 @@ sub add_variation_feature {
     display     => 'off'
   }));
   
-  $menu->append($self->create_track("variation_feature_genotyped_$key", 'Genotyped variants', {
+  $sequence_variation->append($self->create_track("variation_feature_genotyped_$key", 'Genotyped variants', {
     db          => $key,
     glyphset    => '_variation',
     sources     => undef,
@@ -1674,7 +1676,7 @@ sub add_variation_feature {
     my $description = $hashref->{'source'}{'descriptions'}{$key_2}; 
     (my $k = $key_2) =~ s/\W/_/g;
     
-    $menu->append($self->create_track('variation_feature_' . $key . '_' . $k, "$key_2 variations", {
+    $sequence_variation->append($self->create_track('variation_feature_' . $key . '_' . $k, "$key_2 variations", {
       db          => $key,
       glyphset    => '_variation',
       caption     => $key_2,
@@ -1692,7 +1694,7 @@ sub add_variation_feature {
   foreach my $strain_info (split /,/, $hashref->{'read_coverage_collection_strains'}) {
     my ($strain_name, $sample_id) =  split /_/, $strain_info;
     
-    $menu->append($self->create_track('read_wiggle_' . $key . '_' . $strain_name, "RC $strain_name", {
+    $sequence_variation->append($self->create_track('read_wiggle_' . $key . '_' . $strain_name, "RC $strain_name", {
       db          => $key,
       sources     => undef,
       strand      => 'r',
@@ -1704,12 +1706,16 @@ sub add_variation_feature {
     }));
   }
   
+  $menu->append($sequence_variation);
+  
   $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
   
   # add in structural variations
   return unless $hashref->{'structural_variation'}{'rows'} > 0;
   
-  $menu->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
+  my $structural_variation = $self->create_submenu('structural_variation', 'Structural variants', { submenu => 1 });
+  
+  $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
     db          => $key,
     glyphset    => 'structural_variation',
     caption     => 'All Structural variants',
@@ -1725,7 +1731,7 @@ sub add_variation_feature {
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'}||{}}) {
     my $description = $hashref->{'source'}{'descriptions'}{$key_2};
     
-    $menu->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
+    $structural_variation->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       db          => $key,
       glyphset    => 'structural_variation',
       caption     => $key_2,
@@ -1738,6 +1744,8 @@ sub add_variation_feature {
       display     => 'off',
     }));  
   }
+  
+  $menu->append($structural_variation);
 }
 
 # return a list of glyphsets
