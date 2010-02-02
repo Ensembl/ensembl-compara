@@ -292,7 +292,6 @@ sub create_features {
     my $create_method = "_create_$feature_type"; 
     $features    = defined &$create_method ? $self->$create_method($db, $subtype) : undef;
   }
-
   return $features;
 }
 
@@ -304,6 +303,26 @@ sub _create_Domain {
   my %features = ('Domain' => $domains);
 
   return \%features;
+}
+
+sub _create_Phenotype {
+	my ($self, $db) = @_;	
+	my $features;
+	my $slice;
+	my $array = [];	
+	my $id = $self->param('id');
+				
+	my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};	
+
+	foreach my $chr (@chrs)
+	{
+		$slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);		
+		my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
+
+		push(@$array,@$array2) if (@$array2);
+	}	
+	$features = {'Variation' => $array};			
+	return $features;
 }
 
 sub _create_ProbeFeature {
@@ -713,7 +732,8 @@ sub retrieve_features {
   while (my ($type, $data) = each (%$features)) { 
     $method = 'retrieve_'.$type; 
     push @$results, [$self->$method($data,$type)] if defined &$method;
-  }
+  }  
+
   return $results;
 }
 
@@ -767,6 +787,32 @@ sub retrieve_Transcript {
       }
     }
   }
+  return ( $results, ['Description'], $type );
+}
+
+sub retrieve_Variation {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+   
+  foreach my $v (@$data) {
+    if (ref($v) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($v);
+      push(@$results, $unmapped);
+    }
+    else {
+      #use Data::Dumper; $Data::Dumper::Maxdepth = 3; warn Dumper $v;
+      push @$results, {
+        'region'   		=> $v->seq_region_name,
+        'start'    		=> $v->start,
+        'end'      		=> $v->end,
+        'strand'   		=> $v->strand,
+        'length'   		=> $v->end-$v->start+1,
+        'label'    		=> $v->variation_name,        
+        'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' })
+      }
+    }
+  }
+  
   return ( $results, ['Description'], $type );
 }
 
