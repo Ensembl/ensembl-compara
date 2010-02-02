@@ -441,4 +441,33 @@ sub jsonify {
   return to_json($content);
 }
 
+sub new_object {
+  my ($self, $module, $api_object, $data) = @_;
+  # $data ||= {};
+  # $data->{'_object'} = $api_object;
+  return $self->new_proxy('Object', $module, $api_object, $data);
+}
+
+sub new_factory {
+  my ($self, $module, $data) = @_;
+  # $data ||= {};
+  # $data->{'_feature_IDs'} = [];
+  # $data->{'_dataObjects'} = [];
+  return $self->new_proxy('Factory', $module, $data);
+}
+
+sub new_proxy {
+  my $self   = shift;
+  my $type   = shift;
+  
+  # my $class = "EnsEMBL::Web::${type}::$module";
+  my $class = "EnsEMBL::Web::Proxy::$type";
+  
+  if ($self->dynamic_use($class)) {
+    return $class->new(@_);
+  } else {
+    warn "COULD NOT USE OBJECT MODULE $class";
+  }
+}
+
 1;
