@@ -111,17 +111,16 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       dataType: 'json',
       context: this,
       success: function (json) {
-        var buttonText, params;
+        var buttonText;
         
         if (json.redirectURL) {
           return this.getContent(json.redirectURL, id);
         }
         
         switch (json.panelType) {
+          case 'ModalContent': buttonText = 'Close'; break;
           case 'Configurator': buttonText = 'Save and close'; break;
-          case 'MultiSelector':
-          case 'MultiSpeciesSelector': buttonText = 'Update options'; params = { urlParam: json.urlParam }; break;
-          default: buttonText = 'Close'; break;
+          default: buttonText = 'Update options'; break;
         }
         
         if (typeof json.activeTab != 'undefined') {
@@ -141,7 +140,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
         
-        Ensembl.EventManager.trigger('createPanel', id, json.panelType, params);
+        Ensembl.EventManager.trigger('createPanel', id, json.panelType, json.params);
       },
       error: function (e) {
         failures = failures || 1;
