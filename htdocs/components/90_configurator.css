@@ -18,3 +18,4 @@ dl.config_menu img { cursor: pointer; }
 div.configuration_search { text-align: right; }
 
 div.config dt.external { font-size: 1.1em; font-weight: bold; color: [[CONTRAST_HEADER]];  margin: 10px 0 5px; }
+div.config dl.submenu { margin-top: 10px; }
