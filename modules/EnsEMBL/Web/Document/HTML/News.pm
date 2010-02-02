@@ -29,6 +29,7 @@ sub render {
   
   ## Form for selecting other releases
   my @releases = EnsEMBL::Web::Data::Release->find_all;
+  warn ">>> RELEASES @releases";
   if (@releases) {
     $html .= qq(
 <div class="tinted-box float-right">
@@ -163,6 +164,7 @@ sub _output_story {
     else {
       my @names;
       foreach my $spid (@species) {
+        next unless $spid > 0;
         my $sp = EnsEMBL::Web::Data::Species->new($spid);
         if ($sp->common_name =~ /\./) {
           push @names, '<i>'.$sp->common_name.'</i>';
