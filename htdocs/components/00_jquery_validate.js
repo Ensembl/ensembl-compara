@@ -105,7 +105,9 @@ $.extend($.validator, {
         'null':  function (el) { $(el).removeClass(validator.settings.validClass + ' ' + validator.settings.invalidClass);   }
       };
       
-      setTimeout(function () {
+      clearTimeout(this.timeout);
+      
+      this.timeout = setTimeout(function () {
         inputs.each(function () {
           var required = $.data(this, 'required')
           var error    = $.data(this, 'error');
