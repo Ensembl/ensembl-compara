@@ -39,7 +39,7 @@ sub content_ajax {
   my $object   = $self->object;
   my %all      = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
   my %included = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
-  my $url      = $object->_url({ function => undef, align => $object->param('align') }, 1);
+  my $url      = $self->{'url'} || $object->_url({ function => undef, align => $object->param('align') }, 1);
   my ($include_list, $exclude_list, $extra_inputs);
   
   $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) for sort keys %{$url->[1]};
@@ -85,7 +85,7 @@ sub content_ajax {
     panelType => $self->{'panel_type'},
     wrapper   => '<div class="panel modal_wrapper"></div>',
     nav       => $hint,
-    urlParam  => $self->{'url_param'}
+    params    => { urlParam => $self->{'url_param'} }
   });
 }
 
