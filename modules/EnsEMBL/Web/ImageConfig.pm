@@ -1670,7 +1670,6 @@ sub add_variation_feature {
   
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
    next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
-   next unless $hashref->{'source'}{'counts'}{$key_2} > 0; 
    
     my $description = $hashref->{'source'}{'descriptions'}{$key_2}; 
     (my $k = $key_2) =~ s/\W/_/g;
