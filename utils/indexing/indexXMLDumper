@@ -46,7 +46,6 @@ GetOptions('species=s' => \@species,
 (@species) = split ',',@species[0];
 (@indexes) = split ',',@indexes[0];
 
-
 #redirect STDOUT and STDERR to a file
 $log ||= 'log.log';
 open (LOG,    ">$log") or die "Can't open $log: $!";
@@ -82,8 +81,10 @@ my $dir = "/nfs/eureka/data/ensembl_$release";
 #my $dir = 'input';
 mkdir $dir, 0777 unless -e 'input';
 
+my $start_time = time;
 my $total_c;
 foreach my $index (@indexes) {
+  my $start = time;
   $conf->{'directory'} = "$dir/ensembl_$index";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   foreach my $species ( @species ) {
@@ -127,12 +128,13 @@ foreach my $index (@indexes) {
       }
     }
   }
+  print LOG "\nTime for $index is " . &elapsed_time($start) . "\n";
 }
 
 #print LOG "\nAdditional fields are:\n",Dumper(\%additional_fields);
 print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
 print LOG "\nDumped $total_c records in total\n";
-
+print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
 exit;
 
 ## Now for all the dump functions...............................
@@ -192,6 +194,7 @@ sub markerLine {
   $species =~ s/_/ /;
   my @synonyms = sort @$IDS;
   my $key = pop @synonyms;
+  return '' unless $key;
   my $xml = qq(
 <entry id="$key">
   <additional_fields>);
@@ -1456,7 +1459,7 @@ sub dumpGene {
 	}
       }
     }
-    print LOG "    Stable_id mapping querying done".&date_and_mem()."\n";
+    print LOG "    Stable_id mapping querying done ".&date_and_mem()."\n";
     $total_c += footer( $counter->(),$nogzip,$fh);
 
     while (0) {
@@ -1591,16 +1594,19 @@ sub GeneLine {
 #deal with those pesky gene names and descriptions
 sub clean {
   my ($dbkey,$field) = @_;
-  $dbkey =~ s/<sup>/\&lt;sup\&gt;/g;
-  $dbkey =~ s/<\/sup>/\&lt;\/sup\&gt;/g;
+ # $dbkey =~ s/<sup>/\&lt;sup\&gt;/g;
+ # $dbkey =~ s/<\/sup>/\&lt;\/sup\&gt;/g;
   $dbkey =~ s/<i>//g;
   $dbkey =~ s/<\/i>//g;
   $dbkey =~ s/<em>//g;
   $dbkey =~ s/<\/em>//g;
-  if ($dbkey eq 'desc') {
-    $dbkey =~ s/\&//g;
-    $dbkey =~ s/<//g;
-  }
+  $dbkey =~ s/</&lt;/g;
+  $dbkey =~ s/>/&gt;/g;
+#  if ($dbkey eq 'desc') {
+#    $dbkey =~ s/\&//g;
+#    $dbkey =~ s/</&lt;/g;
+#    $dbkey =~ s/>/&gt;/g;
+#  }
   if ($dbkey =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $dbkey in dbkey field\n";
   }
@@ -1835,4 +1841,14 @@ sub date_and_mem {
   my $mem = `ps -p $$ -o vsz |tail -1`;
   chomp $mem;
   return "[$date, mem $mem]";
+}
+
+sub elapsed_time {
+  my $start_time = shift;
+  my $diff = time - $start_time;
+  my $sec = $diff % 60;
+  $diff = ($diff - $sec) / 60;
+  my $min = $diff % 60;
+  my $hours = ($diff - $min) / 60;
+  return "${hours}h ${min}min ${sec}sec";
 }
