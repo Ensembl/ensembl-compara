@@ -225,8 +225,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     if (special === true) {
       $('.select_all, .external', this.elLk.form).hide();
+      $('.submenu', this.elLk.form).css('marginTop', 0);
     } else {
       margin = '10px';
+      $('.submenu', this.elLk.form).removeAttr('style');
     }
     
     $('dl.config_menu:visible', this.elLk.form).each(function () {
