@@ -37,7 +37,7 @@ sub new {
   my $session_id = $session->get_session_id;
   my $user_tree  = $self->can('user_populate_tree') && ($user || $session_id);
   my $tree       = $user_tree && $MEMD && $self->tree_cache_key($user, $session) ? $MEMD->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
-
+  
   if ($tree) {
     $self->{'_data'}{'tree'} = $tree;
   } else {
@@ -47,6 +47,7 @@ sub new {
       $self->{'_data'}{'tree'} = $tree;
     } else {
       $self->populate_tree; # If no user + session tree found, build one
+      
       $MEMD->set($self->tree_cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $MEMD && $self->tree_cache_key; # Cache default tree
     }
 
@@ -190,13 +191,13 @@ sub _user_context {
   my $section       = shift || 'global_context';
   my $object        = $self->object;
   my $type          = $self->type;
-  my $vc            = $object->viewconfig;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
+  my $vc            = $object->viewconfig;
   my %ics           = $vc->image_configs;
   my $flag          = $object->param('config') ? 0 : 1;
   my $active_config = $object->param('config') || $vc->default_config;
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
-
+  
   if ($vc->has_form) {
     $self->page->$section->add_entry(
       type    => 'Config',
@@ -424,7 +425,7 @@ sub _configurator {
     my $available = 0;
     my $on        = 0;
     my $key       = $node->key;
-    my (%renderers, $select_all_menu, $config_group);
+    my (%renderers, $select_all_menu, $config_group, $submenu);
     
     foreach my $track_node ($node->descendants) {
       next if $track_node->get('menu') eq 'no';
@@ -434,67 +435,64 @@ sub _configurator {
       my $desc      = $track_node->get('description');
       my $class     = $track_node->get('_class');
       my $name      = encode_entities($track_node->get('name'));
-      my $close_tag = '</dt>';
-      my ($selected, $menu, $external_menu, $external_header);
+      my ($dd, $selected, $menu, $external_menu, $pre_config_group);
       
-      $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;
-      
-      while (my ($val, $text) = splice @states, 0, 2) {
-        $text     = encode_entities($text);
-        $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
-        $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
+      if ($track_node->get('submenu')) {
+        $submenu = lc $track_node->get('caption');
+        $pre_config_group = '</dl><dl class="config_menu submenu">' if $config_group;
+      } else {
+        $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;   
         
-        if ($class) {
-          $external_menu .= $text;
-        } else {
-          $menu .= $text;
-          $renderers{$val}++;
+        while (my ($val, $text) = splice @states, 0, 2) {
+          $text     = encode_entities($text);
+          $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
+          $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
+          
+          if ($class) {
+            $external_menu .= $text;
+          } else {
+            $menu .= $text;
+            $renderers{$val}++;
+          }
+        }
+        
+        $count++;
+        $on++ if $display ne 'off';
+        $ext_count++ if $class;
+        $select_all_menu ||= $menu;
+        $class = lc $class || 'internal';
+        $pre_config_group = '</dl><dl class="config_menu submenu"><dt class="external">External data sources</dt>' if $ext_count == 1;
+        
+        if ($desc) {
+          $desc =~ s/&(?!\w+;)/&amp;/g;
+          $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
+          $desc =~ s/<a>/<\/a>/g;
+          $desc =~ s/"[ "]*>/">/g;
+          
+          $selected = qq{<span class="menu_help">Show info</span>$selected};
+          $dd       = "<dd>$desc</dd>";
+        }
+        
+        if ($submenu && $submenu != 1) {
+          $pre_config_group = $self->build_enable_all_menu($submenu, $key, $select_all_menu, %renderers);
+          $submenu = 1;
         }
       }
       
-      $count++;
-      $on++ if $display ne 'off';
-      $ext_count++ if $class;
-      $select_all_menu ||= $menu;
-      $class = lc $class || 'internal';
-      $external_header = '<dt class="external">External data sources</dt>' if $ext_count == 1;
+      $config_group .= $pre_config_group;
       
-      if ($desc) {
-        $desc =~ s/&(?!\w+;)/&amp;/g;
-        $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
-        $desc =~ s/<a>/<\/a>/g;
-        $desc =~ s/"[ "]*>/">/g;
-        
-        $selected   = qq{<span class="menu_help">Show info</span>$selected};
-        $close_tag .= "<dd>$desc</dd>";
+      if ($name) {
+        $config_group .= qq{
+          <dt class="$class">
+            <ul class="popup_menu">$menu$external_menu</ul>
+            $selected <span>$name</span>
+          </dt>
+          $dd
+        };
       }
-      
-      $config_group .= qq{
-        $external_header
-        <dt class="$class">
-          <ul class="popup_menu">$menu$external_menu</ul>
-          $selected <span>$name</span>
-        $close_tag
-      };
     }
     
-    if ($count - $ext_count > 1) {
-      my %counts = reverse %renderers;
-      my $label = 'Enable/disable all tracks';
-      
-      if (scalar keys %counts != 1) {
-        $select_all_menu = '';
-        $select_all_menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$key" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
-      }
-      
-      $config_group = qq{
-        <dt class="select_all">
-          <ul class="popup_menu">$select_all_menu</ul>
-          <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="selected" /> <strong>$label</strong>
-        </dt>
-        $config_group
-      }; 
-    }
+    $config_group = $self->build_enable_all_menu('tracks', $key, $select_all_menu, %renderers) . $config_group if !$submenu && $count - $ext_count > 1;
     
     $rhs_content .= sprintf('
       <div class="config %s">
@@ -544,6 +542,24 @@ sub _configurator {
   $self->_reset_config_panel($conf->get_parameter('title'), $action, $config_key);
   
   return $panel;
+}
+
+sub build_enable_all_menu {
+  my ($self, $label, $key, $menu, %renderers) = @_;
+  
+  my %counts = reverse %renderers;
+  
+  if (scalar keys %counts != 1) {
+    $menu  = '';
+    $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$key" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+  }
+  
+  return qq{
+    <dt class="select_all">
+      <ul class="popup_menu">$menu</ul>
+      <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="selected" /> <strong>Enable/disable all $label</strong>
+    </dt>
+  };
 }
 
 sub _local_context {
