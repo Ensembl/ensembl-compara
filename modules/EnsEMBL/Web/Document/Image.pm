@@ -124,7 +124,7 @@ sub karyotype {
   };
 
   return $@ if $@;
-
+  
   # create the container object and add it to the image
   $self->drawable_container = new Bio::EnsEMBL::VDrawableContainer({
       sa  => $sa, 
@@ -138,7 +138,7 @@ sub karyotype {
 
 sub add_pointers {
   my ($self, $object, $extra) = @_;
-  
+
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
   my $config      = $object->image_config_hash($config_name);
@@ -146,7 +146,7 @@ sub add_pointers {
   my $color       = lc($object->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
   my $style       = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
-  
+
   foreach my $row (@data) {
     my $chr = $row->{'chr'} || $row->{'region'};
     
@@ -155,6 +155,7 @@ sub add_pointers {
       end   => $row->{'end'},
       id    => $row->{'label'},
       col   => $color,
+      href  => $row->{'href'}
     };
     
     if (exists $high->{$chr}) {
@@ -169,7 +170,7 @@ sub add_pointers {
 
 sub set_button {
   my ($self, $type, %pars) = @_;
-  
+ 
   $self->button           = $type;
   $self->{'button_id'}    = $pars{'id'}     if exists $pars{'id'};
   $self->{'button_name'}  = $pars{'id'}     if exists $pars{'id'};
