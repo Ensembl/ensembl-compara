@@ -301,7 +301,16 @@ sub source {
   $_[0]->vari->source;
 }
 
+sub source_description {
 
+  ### Variation_object_calls
+  ### Args: none
+  ### Example    : my $vari_source_desc = $object->source_description;
+  ### Description: gets the description for the Variation source
+  ### Returns String
+
+  $_[0]->vari->source_description;
+}
 
 sub get_genes {
 
@@ -328,8 +337,7 @@ sub source_version {
   my $version = $self->vari->adaptor->get_source_version($source);
   return $version;
 }
-
-
+ 
 sub dblinks {
 
   ### Variation_object_calls
@@ -928,6 +936,17 @@ sub get_individuals_pops {
 
 
 
+# Variation sets ##############################################################
+
+sub get_variation_sets {
+  my $self = shift;
+
+  my $dbs = $self->DBConnection->get_DBAdaptor('variation');
+  my $vari_set_adaptor = $dbs->get_VariationSetAdaptor;
+  my $sets = $vari_set_adaptor->fetch_all_by_Variation($self->vari); 
+
+  return $sets;
+}
 
 # Variation mapping ###########################################################
 
