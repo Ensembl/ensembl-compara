@@ -87,7 +87,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.populated = false;
     
-    setTimeout(function () {
+    clearTimeout(this.timeout);
+    
+    this.timeout = setTimeout(function () {
       if (myself.populated === false) {
         myself.elLk.caption.html('<p class="spinner" style="font-weight:normal">Loading component</p>');
         myself.show();
@@ -144,6 +146,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateAjax: function (url) {
+    var timeout = this.timeout;
+    
     url = url || this.href.replace(/\/(\w+\/\w+)\?/, '/Zmenu/$1?');
     
     if (url) {
@@ -152,30 +156,32 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         dataType: 'json',
         context: this,
         success: function (json) {
-          this.populated = true;
-          
-          if (json.entries.length) {
-            var body = '';
-            var row;
+          if (timeout == this.timeout) {
+            this.populated = true;
             
-            for (var i in json.entries) {
-              if (json.entries[i].type == 'subheader') {
-                row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
-              } else if (json.entries[i].type) {
-                row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
-              } else {
-                row = '<td colspan="2">' + json.entries[i].link + '</td>';
+            if (json.entries.length) {
+              var body = '';
+              var row;
+              
+              for (var i in json.entries) {
+                if (json.entries[i].type == 'subheader') {
+                  row = '<th class="subheader" colspan="2">' + json.entries[i].link + '</th>';
+                } else if (json.entries[i].type) {
+                  row = '<th>' + json.entries[i].type + '</th><td>' + json.entries[i].link + '</td>';
+                } else {
+                  row = '<td colspan="2">' + json.entries[i].link + '</td>';
+                }
+                
+                body += '<tr>' + row + '</tr>';
               }
               
-              body += '<tr>' + row + '</tr>';
+              this.elLk.tbody.html(body);
+              this.elLk.caption.html(json.caption);
+              
+              this.show();
+            } else {
+              this.populateNoAjax();
             }
-            
-            this.elLk.tbody.html(body);
-            this.elLk.caption.html(json.caption);
-            
-            this.show();
-          } else {
-            this.populateNoAjax();
           }
         },
         error: function () {
