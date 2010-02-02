@@ -16,9 +16,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
-our @ISA = qw(EnsEMBL::Web::Object);
-
+use base qw(EnsEMBL::Web::Object);
 
 sub _filename {
   my $self = shift;
@@ -152,7 +150,7 @@ sub get_regulation_slice {
   my $self = shift;
   my $slice = $self->Obj->feature_Slice;
   return 1 unless $slice;
-  my $T = new EnsEMBL::Web::Proxy::Object( 'Slice', $slice, $self->__data );
+  my $T = $self->new_object( 'Slice', $slice, $self->__data );
   return $T;  
 }
 
@@ -193,7 +191,7 @@ sub get_context_slice {
   my $padding = shift || 25000;
   my $slice = $self->Obj->feature_Slice->expand( $padding, $padding );
   return 1 unless $slice;
-  my $T = new EnsEMBL::Web::Proxy::Object( 'Slice', $slice, $self->__data );
+  my $T = $self->new_object( 'Slice', $slice, $self->__data );
   return $slice;
 }
 

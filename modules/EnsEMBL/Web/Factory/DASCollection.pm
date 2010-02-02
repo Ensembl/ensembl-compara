@@ -11,7 +11,7 @@ Module to create EnsEMBL::Web::Factory::DASCollection objects.
 
 Example:
 
-my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', { '_databases' => $dbc, '_input' => $input } );
+# my $dasfact = EnsEMBL::Web::Proxy::Factory->new( 'DASCollection', { '_databases' => $dbc, '_input' => $input } );
 $dasfact->createObjects();
 my( $das_collection) = @{$dasfact->DataObjects};
 
@@ -35,8 +35,6 @@ no warnings "uninitialized";
 use Bio::EnsEMBL::ExternalData::DAS::DASAdaptor;
 use Bio::EnsEMBL::ExternalData::DAS::DAS;
 
-use EnsEMBL::Web::Problem;
-use EnsEMBL::Web::Proxy::Object;
 use SOAP::Lite;
 use Data::Dumper;
 
@@ -350,7 +348,7 @@ sub createObjects {
   my @selection = grep {$DASsel{$_}} keys %DASsel;
   $self->param('das_sources', @selection);
     # Create the collection object
-  my $dataobject = EnsEMBL::Web::Proxy::Object->new( 'DASCollection', [@das_objs], $self->__data );
+  my $dataobject = $self->new_object( 'DASCollection', [@das_objs], $self->__data );
   $self->DataObjects( $dataobject );
   return 1; #success
 }

@@ -4,10 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-
-our @ISA = qw(  EnsEMBL::Web::Factory );
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects {
   my $self      = shift;
@@ -26,7 +23,7 @@ sub createObjects {
   
    return $self->problem( 'Fatal', "Could not find SNP $snp",
      "Either $snp does not exist in the current Ensembl database, or there was a problem retrieving it." ) unless $snp_obj;
-  my $obj = EnsEMBL::Web::Proxy::Object->new( 'SNP', $snp_obj, $self->__data );
+  my $obj = $self->new_object( 'SNP', $snp_obj, $self->__data );
    $self->DataObjects($obj);
 }
 

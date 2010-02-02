@@ -4,10 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-
-our @ISA = qw(  EnsEMBL::Web::Factory );
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects {   
   my $self = shift;
@@ -75,7 +72,7 @@ sub createObjects {
 
   # Set transcript param to Ensembl Stable ID
   $self->param( 'transcript',$transobj->stable_id  );
-  my $dataobject = EnsEMBL::Web::Proxy::Object->new( 'Translation', $peptide_Obj, $self->__data );
+  my $dataobject = $self->new_object( 'Translation', $peptide_Obj, $self->__data );
      $dataobject->transcript( $transobj );
   $self->DataObjects( $dataobject );
   return 1;

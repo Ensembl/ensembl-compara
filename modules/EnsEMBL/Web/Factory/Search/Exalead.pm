@@ -4,8 +4,6 @@ use strict;
 
 use ExaLead;
 
-use EnsEMBL::Web::Proxy::Object;
-
 use base qw(EnsEMBL::Web::Factory);
 
 sub generic_search {
@@ -69,7 +67,7 @@ sub _search_all {
     return ;
   }
   
-  return EnsEMBL::Web::Proxy::Object->new( 'Search', $exalead, $self->__data );
+  return $self->new_object( 'Search', $exalead, $self->__data );
 }
 
 

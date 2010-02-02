@@ -4,11 +4,10 @@ package EnsEMBL::Web::Factory::News;
 
 use strict;
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Data::Species;
 use EnsEMBL::Web::Data::Release;
-our @ISA = qw(EnsEMBL::Web::Factory);
+
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects {
 ### Creates a lightweight Proxy::Object of type News, containing some basic lists
@@ -31,7 +30,7 @@ sub createObjects {
   my @categories = EnsEMBL::Web::Data::NewsCategory->search({}, {order_by => 'priority'});
   my @releases   = EnsEMBL::Web::Data::Release->search({}, { order_by => 'release_id DESC' });
 
-  $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
+  $self->DataObjects($self->new_object(
     'News', {
       'release_id'  => $release_id,
       'releases'    => \@releases,

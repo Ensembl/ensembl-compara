@@ -3,8 +3,8 @@ package EnsEMBL::Web::Component::Location::ViewTop;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Location);
-use EnsEMBL::Web::Proxy::Object;
 
 sub _init {
   my $self = shift;
@@ -54,14 +54,14 @@ sub content {
     slice_number    => '1|2'
   });
   
-  my $s_o = new EnsEMBL::Web::Proxy::Object('Location', {
+  my $s_o = $self->new_object('Location', {
     seq_region_name   => $slice->seq_region_name,
     seq_region_type   => $slice->coord_system->name,
     seq_region_start  => $slice->start,
     seq_region_end    => $slice->end,
     seq_region_strand => $slice->strand
   }, $object->__data);
-
+  
   $image_config->_update_missing($s_o);
 
   if ($image_config->get_node('annotation_status')) {

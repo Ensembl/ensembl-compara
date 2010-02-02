@@ -3,9 +3,6 @@ package EnsEMBL::Web::Factory::Blast;
 use strict;
 use warnings;
 no warnings 'uninitialized';
-
-use EnsEMBL::Web::Proxy::Object;
-
 use base qw(EnsEMBL::Web::Factory);
 
 sub blast_adaptor {
@@ -29,7 +26,7 @@ sub createObjects {
   my $self = shift;    
 
   ## Create a very lightweight object, as the data required for a blast page is very variable
-  $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
+  $self->DataObjects($self->new_object(
     'Blast', {
       'tickets'    => undef,
       'adaptor'   => $self->blast_adaptor,

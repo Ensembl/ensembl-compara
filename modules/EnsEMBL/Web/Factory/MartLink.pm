@@ -6,8 +6,6 @@ no warnings "uninitialized";
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Proxy::Object;
-
 use base qw(EnsEMBL::Web::Factory);
 
 sub _link {

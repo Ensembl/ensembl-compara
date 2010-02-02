@@ -31,7 +31,6 @@ no warnings 'uninitialized';
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Hub;
-use EnsEMBL::Web::Proxy::Factory;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -135,7 +134,7 @@ sub _create_proxy_factory {
   my ($self, $type) = @_;
   return unless $type;
   
-  return EnsEMBL::Web::Proxy::Factory->new($type, {
+  return $self->new_factory($type, {
     _hub           => $self->hub,
     _input         => $self->hub->input,
     _apache_handle => $self->hub->apache_handle,

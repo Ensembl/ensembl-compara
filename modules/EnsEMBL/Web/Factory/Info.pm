@@ -2,8 +2,6 @@ package EnsEMBL::Web::Factory::Info;
 
 use strict;
 
-use EnsEMBL::Web::Proxy::Object;
-
 use base qw(EnsEMBL::Web::Factory);
 
 sub new {
@@ -17,7 +15,7 @@ sub createObjects {
 
   ## Create a very lightweight object, as the home page doesn't need much
 
-  $self->DataObjects( new EnsEMBL::Web::Proxy::Object(
+  $self->DataObjects($self->new_object(
     'Info', {}, $self->__data
   ) ); 
 }

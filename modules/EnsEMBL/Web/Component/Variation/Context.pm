@@ -53,7 +53,7 @@ sub content {
     $seq_type, $seq_region, $start, $end, 1
   );
 
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new( 'Slice', $slice, $object->__data );
+  my $sliceObj = $self->new_object( 'Slice', $slice, $object->__data );
 
   my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();

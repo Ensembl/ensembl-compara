@@ -13,7 +13,6 @@ package EnsEMBL::Web::Object::Export;
 
 use strict;
 
-
 use base qw(EnsEMBL::Web::Object);
 
 sub caption { return 'Export Data'; }
@@ -29,7 +28,7 @@ sub slice {
 sub get_all_transcripts {
   my $self = shift;
   
-  return EnsEMBL::Web::Proxy::Object->new('Gene', $self->core_objects->gene, $self->__data)->get_all_transcripts || [];
+  return $self->new_object('Gene', $self->core_objects->gene, $self->__data)->get_all_transcripts || [];
 }
 
 sub get_location_object {
@@ -38,7 +37,7 @@ sub get_location_object {
   if (!$self->{'_location'}) {
     my $l = $self->slice;
     
-    $self->{'_location'} = EnsEMBL::Web::Proxy::Object->new('Location', {
+    $self->{'_location'} = $self->new_object('Location', {
       type               => 'Location',
       real_species       => $self->__data->{'__location'}{'species'},
       name               => $l->seq_region_name,

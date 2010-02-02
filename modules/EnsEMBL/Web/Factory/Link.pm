@@ -2,9 +2,7 @@ package EnsEMBL::Web::Factory::Link;
 
 use strict;
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-our @ISA = qw(EnsEMBL::Web::Factory);
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self       = shift;    
@@ -14,7 +12,7 @@ sub createObjects {
   my $URL        = $self->get_ExtURL( $ext_db, \%pars );
 
   if( $URL ) { 
-    $self->DataObjects( new EnsEMBL::Web::Proxy::Object( 'Link', $URL, $self->__data ) ); 
+    $self->DataObjects($self->new_object( 'Link', $URL, $self->__data ) ); 
   } else {
     $self->problem(
       'fatal', "Can't find database",

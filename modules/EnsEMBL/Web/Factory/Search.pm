@@ -2,8 +2,6 @@ package EnsEMBL::Web::Factory::Search;
 
 use strict;
 
-use EnsEMBL::Web::Proxy::Factory;
-use EnsEMBL::Web::Proxy::Object;
 use base qw(EnsEMBL::Web::Factory);
 
 #use Data::Dumper;
@@ -18,7 +16,7 @@ sub createObjects {
 
   ### Parse parameters to get Species names
   my @species  = $self->param('species') || $self->species;
-  my $real_factory = EnsEMBL::Web::Proxy::Factory->new( "Search::$indexer", $self->__data );
+  my $real_factory = $self->new_factory( "Search::$indexer", $self->__data );
   $self->__data->{'factory'}  = $real_factory;
   if( $real_factory->can( 'generic_search' ) ) {
     $self->DataObjects( $real_factory->_search_all( $idx, \@species ) );

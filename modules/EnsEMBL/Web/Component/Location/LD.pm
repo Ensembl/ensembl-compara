@@ -3,8 +3,8 @@ package EnsEMBL::Web::Component::Location::LD;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Location);
-use EnsEMBL::Web::Factory::SNP;
 
 sub _init {
   my $self = shift;
@@ -179,7 +179,8 @@ sub tagged_snp {
 
   my ($object, $pop_name)  = @_;
   my $var = $object->core_objects->variation;
-  my $snp = EnsEMBL::Web::Proxy::Object->new( 'SNP', $var, $object->__data );
+  my $snp = $self->new_object('Variation', $var, $object->__data);
+  
   my $snp_data  = $snp->tagged_snp;
   return unless keys %$snp_data;
 

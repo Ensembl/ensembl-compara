@@ -3,6 +3,7 @@ package EnsEMBL::Web::Component::Gene::RegulationTable;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -56,7 +57,7 @@ sub content {
   my $data = 0;
   ## First process Ensembl Funcgen Reg. Factors ##
   foreach my $obj (@reg_feats){
-    my $feature_obj = new EnsEMBL::Web::Proxy::Object( 'Regulation', $obj, $object->__data );
+    my $feature_obj = $self->new_object('Regulation', $obj, $object->__data);
     my $row = {};
     my ($position, $feature_link, $length, $type);
 

@@ -4,10 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
                                                                                    
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-                                                                                   
-our @ISA = qw(  EnsEMBL::Web::Factory );
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self   = shift;
@@ -71,7 +68,7 @@ sub createObjects {
     $self->problem( 'Non-fatal', 'No results', "Did not find any results for search" );
     return ;
   }
-  $self->DataObjects( new EnsEMBL::Web::Proxy::Object( 
+  $self->DataObjects($self->new_object( 
         'Go', 
         {'acc_id'=>$acc_id, 'terms' => $terms, 'graph' => $graph, 'families' => {} }, 
         $self->__data )

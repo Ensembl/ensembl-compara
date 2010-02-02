@@ -8,8 +8,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Factory);
 
-use EnsEMBL::Web::Proxy::Object;
-
 sub _help {
   my( $self, $string ) = @_;
 
@@ -41,7 +39,7 @@ sub createObjects {
   return $self->problem ('Fatal', 'Database Error', "There is no variation database for this species.") unless $dbh;
    
   if( $self->core_objects->variation ) { 
-    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Variation', $self->core_objects->variation, $self->__data ));
+    $self->DataObjects($self->new_object( 'Variation', $self->core_objects->variation, $self->__data ));
     return;
   }
 
@@ -63,9 +61,6 @@ sub createObjects {
   ) unless $snp_obj;
 
   $self->problem( 'redirect', $self->_url({'vdb'=>'variation','v'=>$snp, 'pt' =>undef,'g'=>undef,'r'=>undef,'t'=>undef}));
-  return;
-  my $obj = EnsEMBL::Web::Proxy::Object->new( 'SNP', $snp_obj, $self->__data );
-   $self->DataObjects($obj);
 }
 
 1;

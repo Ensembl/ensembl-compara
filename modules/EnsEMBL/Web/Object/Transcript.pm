@@ -18,7 +18,6 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::Utils::TranscriptAlleles qw(get_all_ConsequenceType);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
-use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
@@ -606,7 +605,7 @@ sub extent {
 sub getFakeMungedVariationsOnSlice {
   my ($self, $slice, $subslices) = @_;
   
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+  my $sliceObj = $self->new_object(
     'Slice', $slice, $self->__data
   );
 
@@ -886,7 +885,7 @@ sub translation_object {
     my $translation = $self->transcript->translation;
     
     if ($translation) {
-      my $translationObj = EnsEMBL::Web::Proxy::Object->new(
+      my $translationObj = $self->new_object(
         'Translation', $translation, $self->__data
       );
       $translationObj->gene($self->gene);
@@ -1249,16 +1248,6 @@ sub rna_notation {
   
   return @strings;
 }
-
-=head2 vega_projection
-
- Arg[1]      : EnsEMBL::Web::Proxy::Object
- Arg[2]      : Alternative assembly name
- Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
- Description : map an object to an alternative (vega) assembly
- Return type : arrayref
-
-=cut
 
 sub vega_projection {
   my $self = shift;

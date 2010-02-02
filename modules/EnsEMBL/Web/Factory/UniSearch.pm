@@ -2,9 +2,7 @@ package EnsEMBL::Web::Factory::UniSearch;
 
 use strict;
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-our @ISA = qw(EnsEMBL::Web::Factory);
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self       = shift;    
@@ -17,7 +15,7 @@ sub createObjects {
       $self->{_result_count} = 0;
       $self->{_results}      = [];
       $self->$search_method();
-      $self->DataObjects( new EnsEMBL::Web::Proxy::Object( 'UniSearch', { 'idx' => $idx , 'q' => $self->param('q'), 'results' => $self->{results} }, $self->__data ));
+      $self->DataObjects($self->new_object( 'UniSearch', { 'idx' => $idx , 'q' => $self->param('q'), 'results' => $self->{results} }, $self->__data ));
     } else {
       $self->problem( 'fatal', 'Unknown search method', qq(
       <p>
@@ -25,7 +23,7 @@ sub createObjects {
       </p>) );
     }
   } else {
-    $self->DataObjects( new EnsEMBL::Web::Proxy::Object( 'UniSearch', { 'idx' => $idx , 'q' => '', 'results' => {} }, $self->__data ));
+    $self->DataObjects($self->new_object( 'UniSearch', { 'idx' => $idx , 'q' => '', 'results' => {} }, $self->__data ));
   }
 }
 

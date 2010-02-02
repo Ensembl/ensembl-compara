@@ -8,8 +8,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Factory);
 
-use EnsEMBL::Web::Proxy::Object;
-
 sub _help {
   my( $self, $string ) = @_;
 
@@ -38,7 +36,7 @@ sub _help {
 sub fastCreateObjects {
   my $self = shift;
   my $adaptor_call = sprintf( "get_%sAdaptor", $self->param('type') || 'Transcript' );
-  $self->DataObjects( EnsEMBL::Web::Proxy::Object->new(
+  $self->DataObjects($self->new_object(
     'Transcript', 
     $self->database($self->param('db')||'core')->$adaptor_call->fetch_by_stable_id( $self->param('transcript') ),
     $self->__data 
@@ -49,7 +47,7 @@ sub createObjects {
   my $self = shift;
   my ($identifier, @fetch_calls, $transobj);
   if( $self->core_objects->transcript ) {
-    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Transcript', $self->core_objects->transcript, $self->__data ));
+    $self->DataObjects($self->new_object( 'Transcript', $self->core_objects->transcript, $self->__data ));
     return;
   }
 
@@ -116,8 +114,7 @@ sub createObjects {
   } else {
     $self->problem( 'redirect', $self->_url({'db'=>$db, 't' =>$transobj->stable_id,'g'=>undef,'r'=>undef,'pt'=>undef}));
   }
-  return;#
-  $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Transcript', $transobj, $self->__data ) );
+  return;
 }
 
 

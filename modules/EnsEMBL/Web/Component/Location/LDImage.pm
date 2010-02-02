@@ -3,9 +3,10 @@ package EnsEMBL::Web::Component::Location::LDImage;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Location);
-use EnsEMBL::Web::Factory::SNP;
+
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
+
+use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
   my $self = shift;
@@ -17,7 +18,6 @@ sub caption {
   my $self = shift;
   return;
 }
-
 
 sub content {
   my $self = shift;
@@ -40,8 +40,8 @@ sub content {
     $object->database('core')->get_SliceAdaptor()->fetch_by_region(
     $seq_type, $seq_region, $start, $end, 1
   );
-   
-  my $ld_object = EnsEMBL::Web::Proxy::Object->new( 'Slice', $slice, $object->__data );
+  
+  my $ld_object = $self->new_object('Slice', $slice, $object->__data);
 
   my ($count_snps, $snps) = $ld_object->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $ld_object->get_genotyped_VariationFeatures();

@@ -3,11 +3,9 @@ package EnsEMBL::Web::Factory::DAS;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Factory::Location;
-use EnsEMBL::Web::Proxy::Object;
-
-our @ISA = qw(  EnsEMBL::Web::Factory::Location );
 use POSIX qw(floor ceil);
+
+use base qw(EnsEMBL::Web::Factory::Location);
 
 sub new {
   my $class = shift;
@@ -89,7 +87,7 @@ sub createObjects {
 
   my $source = $ENV{ENSEMBL_DAS_TYPE};
   
-  my $T = EnsEMBL::Web::Proxy::Object->new( "DAS::$source", \@locations, $self->__data );
+  my $T = $self->new_object( "DAS::$source", \@locations, $self->__data );
   $T->FeatureIDs(   @feature_ids   );
   $T->FeatureTypes( @feature_types );
   $T->GroupIDs(     @group_ids     );
@@ -141,7 +139,7 @@ sub _location_from_SeqRegion {
 sub _create_from_slice {
   my( $self, $type, $ID, $slice, $synonym, $real_chr, $keep_slice ) = @_;
   return
-  EnsEMBL::Web::Proxy::Object->new(
+  $self->new_object(
     'Location',
     { 
       'slice'              => $slice,

@@ -4,10 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-
-our @ISA = qw(  EnsEMBL::Web::Factory );
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects {
   my $self      = shift;
@@ -47,7 +44,7 @@ sub createObjects {
 
   return $self->problem( 'Fatal', "$id not in Archive",  "$id is not in the ID Archive (or there was a problem retrieving it)." ) unless $archiveStableId;
 
-  my $obj = EnsEMBL::Web::Proxy::Object->new( 'ArchiveStableId', $archiveStableId, $self->__data );
+  my $obj = $self->new_object( 'ArchiveStableId', $archiveStableId, $self->__data );
    return unless $obj;
    $self->DataObjects($obj);
 }

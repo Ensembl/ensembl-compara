@@ -4,17 +4,9 @@ package EnsEMBL::Web::Factory::Search::Unisearch;
 ## Deprecated, please see EnsEMBL::Web::Factory::UniSearch
 ##
 
-
-
-
-
-
-
 use strict;
 
-use EnsEMBL::Web::Factory;
-use EnsEMBL::Web::Proxy::Object;
-our @ISA = qw(EnsEMBL::Web::Factory);
+use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self       = shift;    
@@ -255,7 +247,7 @@ sub search_GENE {
         order by stable_id
     ))};
   }
-  return EnsEMBL::Web::Proxy::Object->new( 'Search', \@RES, $self->__data );
+  return $self->new_object( 'Search', \@RES, $self->__data );
 }
 
 ## Result hash contains the following fields...

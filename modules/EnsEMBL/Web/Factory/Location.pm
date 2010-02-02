@@ -10,7 +10,6 @@ use POSIX qw(floor ceil);
 use Bio::EnsEMBL::Feature;
 
 use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::Proxy::Object;
 
 use base qw(EnsEMBL::Web::Factory);
 
@@ -550,7 +549,7 @@ sub fastCreateObjects {
       
       my $slice = $self->_slice_adaptor->fetch_by_region(undef, $seq_region, $start, $end, $strand);
       
-      my $data = EnsEMBL::Web::Proxy::Object->new('Location', {
+      my $data = $self->new_object('Location', {
         type               => 'Location',
         real_species       => $self->__species,
         name               => $seq_region,
@@ -585,7 +584,7 @@ sub _create_object_from_core {
   return $self->_create_from_sub_align_slice($l) if $self->param('align_start') && $self->param('align_end') && $self->param('align');
   
   if ($l->isa('EnsEMBL::Web::Fake')) { 
-    $data = EnsEMBL::Web::Proxy::Object->new('Location', { 
+    $data = $self->new_object('Location', { 
       type         => $l->type, 
       real_species => $self->__species 
     }, $self->__data);
@@ -602,7 +601,7 @@ sub _create_object_from_core {
     }
     
   } else {
-    $data = EnsEMBL::Web::Proxy::Object->new('Location', {
+    $data = $self->new_object('Location', {
       type               => 'Location',
       real_species       => $self->__species,
       name               => $l->seq_region_name,
@@ -792,7 +791,7 @@ sub merge {
   
   $self->clearDataObjects;
   
-  $self->DataObjects(EnsEMBL::Web::Proxy::Object->new('Location', {
+  $self->DataObjects($self->new_object('Location', {
     type              => 'merge',
     name              => 'merge',
     real_species      => $species,

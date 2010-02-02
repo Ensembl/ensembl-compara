@@ -3,12 +3,10 @@ package EnsEMBL::Web::Factory::Regulation;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(  EnsEMBL::Web::Factory );
 
-use EnsEMBL::Web::Proxy::Object;
+use base qw(EnsEMBL::Web::Factory);
 
 sub _help {
-
   return;
 }
 
@@ -19,7 +17,7 @@ sub createObjects {
  return $self->problem ('Fatal', 'Database Error', "There is no functional genomics database for this species.") unless $dbh;
 
   if( $self->core_objects->regulation ) {
-    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Regulation', $self->core_objects->regulation, $self->__data ));
+    $self->DataObjects( $self->new_object( 'Regulation', $self->core_objects->regulation, $self->__data ));
     return;
   }
 
@@ -40,7 +38,7 @@ sub createObjects {
 
   $self->problem( 'redirect', $self->_url({'fdb'=>'funcgen','rf'=>$reg_feat,'v'=>undef, 'pt' =>undef,'g'=>undef,'r'=>undef,'t'=>undef}));
   return;
-  my $obj = EnsEMBL::Web::Proxy::Object->new( 'Regulaiton', $reg_feat_obj, $self->__data );
+  my $obj = $self->new_object( 'Regulaiton', $reg_feat_obj, $self->__data );
    $self->DataObjects($obj);
 }
 

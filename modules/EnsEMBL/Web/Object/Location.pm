@@ -19,7 +19,6 @@ no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
-use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
@@ -772,7 +771,7 @@ sub retrieve_Transcript {
       push(@$results, $unmapped);
     }
     else {
-      my $trans = EnsEMBL::Web::Proxy::Object->new('Transcript',$t, $self->__data);
+      my $trans = $self->new_object('Transcript',$t, $self->__data);
       my $desc = $trans->trans_description();
       push @$results, {
         'region'   => $t->seq_region_name,
@@ -1380,7 +1379,7 @@ sub pops_for_slice {
 
 sub getVariationsOnSlice {
   my $self = shift;
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+  my $sliceObj = $self->new_object(
         'Slice', $self->slice_cache, $self->__data
        );
 
@@ -1391,7 +1390,7 @@ sub getVariationsOnSlice {
 
 sub get_genotyped_VariationsOnSlice {
   my $self = shift;
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new(
+  my $sliceObj = $self->new_object(
         'Slice', $self->slice_cache, $self->__data
        );
 

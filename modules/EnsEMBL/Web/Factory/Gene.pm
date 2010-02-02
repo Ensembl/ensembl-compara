@@ -6,8 +6,6 @@ no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Proxy::Object;
-
 use base qw(EnsEMBL::Web::Factory);
 
 sub _help {
@@ -40,7 +38,7 @@ sub createObjects {
   my ($identifier, @fetch_calls, $geneobj);
   if( $self->core_objects->gene ) {
     $self->timer_push( 'About to create DO' );
-    $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $self->core_objects->gene, $self->__data ));
+    $self->DataObjects( $self->new_object( 'Gene', $self->core_objects->gene, $self->__data ));
     $self->timer_push( 'Created DO' );
     return;
   }
@@ -123,7 +121,7 @@ sub createObjects {
   
 #  $self->problem('redirect', sprintf( 'db=%s;g=%s',$db,$geneobj->stable_id );
   $self->problem( 'redirect', $self->_url({'db'=>$db, 'g' =>$geneobj->stable_id,'t'=>undef,'r'=>undef,'pt'=>undef}));
-  return;# $self->DataObjects( EnsEMBL::Web::Proxy::Object->new( 'Gene', $geneobj, $self->__data ));
+  return;# $self->DataObjects( $self->new_object( 'Gene', $geneobj, $self->__data ));
 }
 
 #----------------------------------------------------------------------
@@ -132,7 +130,7 @@ sub createGenesByDomain {
   my $self = shift;
   my $domain_id = shift || $self->param('domainentry');
   $self->DataObjects(
-    map { EnsEMBL::Web::Proxy::Object->new( 'Gene', $_, $self->__data ) } 
+    map { $self->new_object( 'Gene', $_, $self->__data ) } 
     @{$self->database('core')->get_GeneAdaptor->fetch_all_by_domain( $domain_id )||[]}
   );
 }
@@ -141,7 +139,7 @@ sub createGenesByFamily {
   my( $self, $family ) = @_;
   my $ga = $self->database( 'core' )->get_GeneAdaptor; 
   $self->DataObjects(
-    map { EnsEMBL::Web::Proxy::Object->new( 'Gene', $_, $self->__data ) }   ## Store them
+    map { $self->new_object( 'Gene', $_, $self->__data ) }   ## Store them
     grep { $_ }                                                             ## Filter any crap ones out!!!
     map { $ga->fetch_by_stable_id( $_->[0]->stable_id ) }                   ## Create Ensembl Genes of these...
     @{ $family->source_taxon( "ENSEMBLGENE", $family->taxonomy_id )||[] }   ## Get all Ensembl Gene members of Family

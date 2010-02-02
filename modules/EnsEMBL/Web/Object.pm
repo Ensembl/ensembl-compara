@@ -19,7 +19,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use EnsEMBL::Web::Proxy::Factory;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
@@ -242,7 +241,7 @@ sub fetch_userdata_by_id {
 sub alternative_object_from_factory {
   my ($self, $type) = @_;
   
-  my $t_fact = new EnsEMBL::Web::Proxy::Factory($type, $self->__data);
+  my $t_fact = $self->new_factory($type, $self->__data);
   
   if ($t_fact->can('createObjects')) {
     $t_fact->createObjects;

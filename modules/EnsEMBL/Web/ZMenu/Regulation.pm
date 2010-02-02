@@ -4,8 +4,6 @@ package EnsEMBL::Web::ZMenu::Regulation;
 
 use strict;
 
-use EnsEMBL::Web::Proxy::Object;
-
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
@@ -20,7 +18,7 @@ sub content {
   if ($object->type eq 'Regulation') { 
     $reg_obj = $object;
   } else {
-    $reg_obj = new EnsEMBL::Web::Proxy::Object('Regulation', $object->core_objects->regulation, $object->__data);   
+    $reg_obj = $self->new_object('Regulation', $object->core_objects->regulation, $object->__data);   
   }
   
   $self->caption('Regulatory Feature');

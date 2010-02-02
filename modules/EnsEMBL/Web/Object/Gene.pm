@@ -15,7 +15,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
@@ -393,7 +392,7 @@ sub get_slice_object {
   my $self = shift;
   my $slice = $self->Obj->feature_Slice->expand( $self->param('flank5_display'), $self->param('flank3_display') );
   return 1 unless $slice;
-  my $T = new EnsEMBL::Web::Proxy::Object( 'Slice', $slice, $self->__data );
+  my $T = $self->new_object( 'Slice', $slice, $self->__data );
   #  $T->highlight_display( $self->Obj->get_all_Exons );
   return $T;
 }
@@ -457,7 +456,7 @@ sub get_all_transcripts {
   my $self = shift;
   unless ($self->{'data'}{'_transcripts'}){
     foreach my $transcript (@{$self->gene()->get_all_Transcripts}){
-      my $transcriptObj = EnsEMBL::Web::Proxy::Object->new(
+      my $transcriptObj = $self->new_object(
         'Transcript', $transcript, $self->__data
       );
       $transcriptObj->gene($self->gene);
@@ -805,7 +804,7 @@ sub valids {
 
 sub getVariationsOnSlice {
   my( $self, $slice, $subslices, $gene ) = @_;
-  my $sliceObj = EnsEMBL::Web::Proxy::Object->new('Slice', $slice, $self->__data);
+  my $sliceObj = $self->new_object('Slice', $slice, $self->__data);
   
   my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);  
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
@@ -1080,16 +1079,6 @@ sub reg_features {
 
 }
 
-=head2 vega_projection
-
- Arg[1]       : EnsEMBL::Web::Proxy::Object
- Arg[2]       : Alternative assembly name
- Example     : my $v_slices = $object->ensembl_projection($alt_assembly)
- Description : map an object to an alternative (vega) assembly
- Return type : arrayref
-
-=cut
-
 sub vega_projection {
   my $self = shift;
   my $alt_assembly = shift;
@@ -1101,15 +1090,6 @@ sub vega_projection {
   }
   return \@alt_slices;
 }
-
-=head2 get_similarity_hash
-
- Arg[1]      : none
- Example     : $similarity_matches = $webobj->get_similarity_hash
- Description : Returns an arrayref of hashes containing similarity matches
- Return type : an array ref
-
-=cut
 
 sub get_similarity_hash {
   my $self = shift;
