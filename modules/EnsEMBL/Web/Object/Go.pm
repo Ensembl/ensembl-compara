@@ -12,10 +12,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
                                                                                    
-use EnsEMBL::Web::Object;
-use EnsEMBL::Web::Proxy::Object;
-                                                                                   
-@EnsEMBL::Web::Object::Go::ISA = qw(EnsEMBL::Web::Object);
+use base qw(EnsEMBL::Web::Object);
 
 sub acc_id  { return $_[0]->Obj->{'acc_id'} if $_[0]->Obj->{'acc_id'}; }
 
