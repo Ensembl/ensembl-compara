@@ -66,7 +66,7 @@ sub table_data {
 
     my $code = $va->phenotype_name;
     my $disease;
-    my $disease_url = $object->_url({ 'species' => $object->species, 'type' => 'Location', 'action' => 'Genome', 'id' => $code, 'ftype' => 'Phenotype', 'phenotype_name'  => '$disorder' });     
+    my $disease_url = $object->_url({ 'species' => $object->species, 'type' => 'Location', 'action' => 'Genome', 'id' => $code, 'ftype' => 'Phenotype', 'phenotype_name'  => $disorder });     
     if ($disorder =~/^\w+/){$disease = $code ? qq{<dt><a href='$disease_url'>$disorder ($code)</a></dt>} : qq{<dt>$disorder</dt>}; }  #if code is pass through then make a link to the phenotype variation else no link
     
     my $source = source_link($object, $va, $code);
