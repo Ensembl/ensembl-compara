@@ -7,9 +7,10 @@ use strict;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
-  my $sd = shift->species_defs;
+  my $self = shift;
+  my $sd = $self->species_defs;
 
-  $_[0]->printf(
+  $self->printf(
     q(
   <div class="twocol-right right unpadded">%s release %d - %s</div>),
     $sd->ENSEMBL_SITE_NAME, $sd->ENSEMBL_VERSION, $sd->ENSEMBL_RELEASE_DATE
