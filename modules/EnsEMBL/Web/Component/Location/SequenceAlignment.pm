@@ -58,7 +58,7 @@ sub content {
   my $original_slice = $object->slice;
   $original_slice = $original_slice->invert if $object->param('strand') == -1;
   
-  my $ref_slice = new EnsEMBL::Web::Proxy::Object('Slice', $original_slice, $object->__data); # Get reference slice
+  my $ref_slice = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
   my $ref_slice_obj = $ref_slice->Obj;
   my $var_hash = $object->species_defs->databases->{'DATABASE_VARIATION'};
   my @individuals;
