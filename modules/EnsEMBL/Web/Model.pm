@@ -109,14 +109,14 @@ sub create_objects {
   my ($self, $type) = @_;
   my $factory = $self->_create_proxy_factory($type);
   my $problem;
-
+  
   if ($factory->has_fatal_problem) {
     $problem = $factory->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
   } else {
     eval {
       $factory->createObjects;
     };
-    $factory->problem('fatal', "Unable to execute createObject on Factory of type ".$self->type, $@) if $@;
+    $factory->problem('fatal', "Unable to execute createObject on Factory of type ".$self->hub->type, $@) if $@;
     # $factory->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
     if ($factory->has_a_problem) {
       $problem = $factory->handle_problem; 
