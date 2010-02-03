@@ -316,20 +316,25 @@ sub print_blastz_net_list {
     #find reference species by parsing name field of mlss table
     foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
 	
-	if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET") {
-	    print "only to be used for BLASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
-	    next;
-	}
+        if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET") {
+            print "only to be used for BLASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
+            next;
+        }
 
-	my ($short_ref_name) = $this_method_link_species_set->name =~ /\(on (.+)\)/;
-	my $ref_genome_db = findGenomeDBFromShortName($short_ref_name); 
+        my $full_ref_name = $this_method_link_species_set->name();
 
-	#store the other species which also have this reference
-	foreach my $this_species (@{$this_method_link_species_set->species_set}) {
-	    if ($this_species->dbID != $ref_genome_db->dbID) {
-		push @{$ref_species->{$ref_genome_db->dbID}}, $this_species->dbID;
-	    }
-	}
+        if(my ($short_ref_name) = $full_ref_name =~ /\(on (.+)\)/) {
+            my $ref_genome_db = findGenomeDBFromShortName($short_ref_name); 
+
+            #store the other species which also have this reference
+            foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+                if ($this_species->dbID != $ref_genome_db->dbID) {
+                    push @{$ref_species->{$ref_genome_db->dbID}}, $this_species->dbID;
+                }
+            }
+        } else {
+            die "Please make sure the name of the MLSS ('$full_ref_name') has the expected format";
+        }
     }
 
     #In order of which species has most mlss entries, write the species and
@@ -337,9 +342,9 @@ sub print_blastz_net_list {
     #be the species_tree if defined
     foreach my $ref_id (sort order_count_tree keys(%$ref_species)) {
 	print "<h4>" . getNameString($ref_id) . "</h4>" . "\r\n";
-	foreach my $other_id (sort order_tree @{$ref_species->{$ref_id}}) {
-	    print getNameString($other_id) . "<br />" . "\r\n";
-	}
+        foreach my $other_id (sort order_tree @{$ref_species->{$ref_id}}) {
+            print getNameString($other_id) . "<br />" . "\r\n";
+        }
     }
 }
 
@@ -377,10 +382,11 @@ sub findGenomeDBFromShortName {
     my $all_genome_dbs = $genome_db_adaptor->fetch_all;
     $short_name =~ tr/\.//d;
     foreach my $genome_db (@$all_genome_dbs) {
-	if ($genome_db->short_name eq $short_name) {
-	    return $genome_db;
-	}
+        if ($genome_db->short_name eq $short_name) {
+            return $genome_db;
+        }
     }
+    die "Could not find genome_db for '$short_name', please investigate";
 }
 
 #Creates a string of the form ncbi ensembl alias name (genome_db->name)
