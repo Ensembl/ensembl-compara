@@ -69,12 +69,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
       
       dt.children('input').each(function () {
-        if (this.value == 'off' ^ val == 'off') {
+        var input = $(this);
+        
+        if (input.val() == 'off' ^ val == 'off') {
           label[1] = parseInt(label[1]) + (val == 'off' ? -1 : 1);
         }
         
-        this.value = this.newVal || val;
-        $(this).removeAttr('newVal');
+        input.val(input.attr('newVal') || val).removeAttr('newVal');
+        input = null;
       });
       
       if (val != 'all_on') {
