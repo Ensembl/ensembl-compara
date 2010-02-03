@@ -71,6 +71,10 @@ sub _url {
   my $action  = exists($params->{'action'})   ? $params->{'action'}   : $self->action;
   my $fn      = exists($params->{'function'}) ? $params->{'function'} : ($action eq $self->action ? $self->function : undef);
   my %pars    = %{$self->hub->core_params};
+  ### Remove any unused params
+  foreach (keys %pars) {
+    delete $pars{$_} unless $pars{$_};
+  }
   
   if ($params->{'__clear'}) {
     %pars = ();
