@@ -590,7 +590,7 @@ sub _create_object_from_core {
     }, $self->__data);
     
     if ($l->type eq 'Marker' && $l->{'markers'}) {
-      my @marker_features = $data->__children->[0]->sorted_marker_features($l->{'markers'});
+      my @marker_features = $data->sorted_marker_features($l->{'markers'});
       
       if (scalar @marker_features) {
         my %params = map { $_ => $self->{'data'}{'_input'}->param($_) } $self->{'data'}{'_input'}->param;
