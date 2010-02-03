@@ -51,7 +51,13 @@ sub object {
 ## Tries to be backwards compatible!
   my $self = shift;
   $self->{'object'} = shift if @_;
-  my $object = $self->{'model'}->object || $self->{'object'};
+  my $object;
+  if ($self->{'model'}) {
+    $object = $self->{'model'}->object;
+  }
+  else { 
+    $self->{'object'};
+  }
   return $object;
 }
 
