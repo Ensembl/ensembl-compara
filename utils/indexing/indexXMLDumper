@@ -1562,12 +1562,15 @@ sub GeneLine {
   <additional_fields>
     <field name="species">$species</field>
     <field name="featuretype">Gene</field>
-    <field name="db">$db</field>
-    <field name="action">Summary</field>
+     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
+  unless ($db eq 'core') {
+    $xml .= qq(
+   <field name="db">$db</field>);
+    $additional_fields{'db'}++;
+  }
   $additional_fields{'species'}{$species}++;
   $additional_fields{'featuretype'}{'Gene'}++;
-  $additional_fields{'db'}++;
   $additional_fields{'source'}++;
   foreach my $tsi (keys %$tsids) {
     $xml .= qq(
@@ -1591,22 +1594,16 @@ sub GeneLine {
 </entry>);
 }
 
-#deal with those pesky gene names and descriptions
+#deal with those pesky gene names and descriptions (order of regexps is important)
 sub clean {
   my ($dbkey,$field) = @_;
- # $dbkey =~ s/<sup>/\&lt;sup\&gt;/g;
- # $dbkey =~ s/<\/sup>/\&lt;\/sup\&gt;/g;
   $dbkey =~ s/<i>//g;
   $dbkey =~ s/<\/i>//g;
   $dbkey =~ s/<em>//g;
   $dbkey =~ s/<\/em>//g;
   $dbkey =~ s/</&lt;/g;
   $dbkey =~ s/>/&gt;/g;
-#  if ($dbkey eq 'desc') {
-#    $dbkey =~ s/\&//g;
-#    $dbkey =~ s/</&lt;/g;
-#    $dbkey =~ s/>/&gt;/g;
-#  }
+  $dbkey =~ s/ & / &amp; /g;
   if ($dbkey =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $dbkey in dbkey field\n";
   }
