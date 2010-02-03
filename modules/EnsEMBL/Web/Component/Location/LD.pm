@@ -119,8 +119,8 @@ sub population_info {
     my $pop       = $object->pop_obj_from_name($name); 
     my $super_pop = $object->extra_pop($pop->{$name}{PopObject}, "super"); 
     my $sub_pop   = $object->extra_pop($pop->{$name}{PopObject}, "sub");
-    my $html = print_pop_info($object, $pop, "Population");
-    $html   .= print_pop_info($object, $super_pop, "Super-population");
+    my $html = $self->print_pop_info($object, $pop, "Population");
+    $html   .= $self->print_pop_info($object, $super_pop, "Super-population");
     $pop_html .= qq(<table>$html</table>);
   }
   return $pop_html;
@@ -137,7 +137,7 @@ sub print_pop_info {
   ### Description : Returns information about the population: name, size, description and whether it is a tagged SNP
   ### Returns HTML string with population data
 
-  my ($object, $pop, $label ) = @_;
+  my ($self, $object, $pop, $label ) = @_;
   my $count;
   my $return;
 
@@ -154,7 +154,7 @@ sub print_pop_info {
       ($description)."</td>";
 
     if ($object->param('v') && $label eq 'Population') {
-      my $tagged = tagged_snp($object, $pop->{$pop_name}{Name});
+      my $tagged = $self->tagged_snp($object, $pop->{$pop_name}{Name});
       $return .= "<tr><th>SNP in tagged set for this population:<br /></th>
                    <td>$tagged</td>" if $tagged;
     }
@@ -177,7 +177,7 @@ sub tagged_snp {
   ### Returns "Yes" if SNP is tagged in the population name supplied, else
   ### returns no
 
-  my ($object, $pop_name)  = @_;
+  my ($self, $object, $pop_name)  = @_;
   my $var = $object->core_objects->variation;
   my $snp = $self->new_object('Variation', $var, $object->__data);
   
