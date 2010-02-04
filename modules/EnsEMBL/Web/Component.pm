@@ -139,8 +139,7 @@ sub glossary_mouseover {
   my %glossary = $self->object->species_defs->multiX('ENSEMBL_GLOSSARY');
   (my $text = $glossary{$entry}) =~ s/<.+?>//g;
 
-  return $text ? '<span title="'.$text.'" class="glossary_mouseover">'.$display_text.'</span>'
-    : $display_text;
+  return $text ? qq{<span class="glossary_mouseover">$display_text<span class="glossary_popup">$text</span></span>} : $display_text;
 }
 
 # Attach all das sources from an image config
