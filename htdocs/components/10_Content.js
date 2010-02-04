@@ -22,6 +22,22 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return false;
       });
     }
+    
+    $('.glossary_mouseover', this.el).bind({
+      mouseover: function () {
+        var el = $(this);
+        
+        var offset = el.offset();
+        offset.top  += 0.75 * el.height();
+        offset.left += 0.25 * el.width();
+        
+        el.children('.glossary_popup').show().offset(offset);
+        el = null;
+      },
+      mouseout: function () {
+        $(this).children('.glossary_popup').hide();
+      }
+    });
   },
   
   ajaxLoad: function () {
