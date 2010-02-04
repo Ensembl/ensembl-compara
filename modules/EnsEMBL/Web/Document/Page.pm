@@ -490,7 +490,7 @@ sub render_Excel {
 
   # Switch in the Excel file renderer
   # requires the filehandle from the current renderer (works with Renderer::Apache and Renderer::File)
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Excel({ fh => $self->renderer->fh });
+  my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($self->renderer->fh);
   
   foreach my $element (@{$self->{'body_order'}}) {
     my $attr = $element->[0];
