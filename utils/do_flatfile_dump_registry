@@ -146,7 +146,7 @@ if ( defined($farm) ) {
       my $main_job = job_file( $lsf_dir, $sp );
 
       my $megs = 5_000;
-      my $queue = ($megs > 15_000 ? 'hugemem' : 'long' );
+      my $queue = ($megs > 15_000 ? 'hugemem' : 'basement' );
 
       my $usage =
         sprintf(
