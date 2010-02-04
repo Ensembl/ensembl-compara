@@ -66,14 +66,14 @@ sub content {
       }
       
       # species home pages
-      if ($type eq 'Info' && $action eq 'Index') {
+      if ($type eq 'Info') {
         foreach my $release (reverse sort keys %archive) {
           next if $release == $object->species_defs->ENSEMBL_VERSION;
           
           if ($release > 50) {
             $html .= $self->_output_link(\%archive, $release, $url);
           } else {
-            $url =~ s/Info\/Index/index\.html/;
+            $url = $species.'/index.html';
             $html .= $self->_output_link(\%archive, $release, $url);
           }
         }
