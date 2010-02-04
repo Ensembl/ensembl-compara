@@ -1,9 +1,10 @@
 package EnsEMBL::Web::DBSQL::MySQLAdaptor;
 
 use strict;
+## N.B. Must turn off warnings in this module, otherwise children 
+## of this class will not compile!
 #use warnings;
 
-use Cache::Memcached;
 use EnsEMBL::Web::SpeciesDefs;
 use base qw(Class::DBI::Sweet);
 
