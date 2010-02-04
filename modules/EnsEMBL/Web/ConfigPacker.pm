@@ -474,6 +474,15 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_HELP'}{$row->[0]} = $row->[1];
   }
 
+  ## Get glossary
+  $t_aref = $dbh->selectall_arrayref(
+    'select data from help_record where type = "glossary" and status = "live"'
+  );
+  foreach my $row (@$t_aref) {
+    my $entry = eval($row->[0]);
+    $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
+  }
+
   $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id,rs.assembly_code
        from species as s, ens_release as r, release_species as rs
@@ -1131,7 +1140,7 @@ sub _munge_website_multi {
   my $self = shift;
 
   $self->tree->{'ENSEMBL_HELP'} = $self->db_tree->{'ENSEMBL_HELP'};
-
+  $self->tree->{'ENSEMBL_GLOSSARY'} = $self->db_tree->{'ENSEMBL_GLOSSARY'};
 }
 
 sub _configure_blast {
