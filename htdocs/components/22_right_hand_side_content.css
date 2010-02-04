@@ -7,7 +7,20 @@ div#content { margin:0 0 0 14em; padding:0; border:none; }
 div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 
 a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
-.glossary_mouseover { border-bottom:1px dotted #c00; cursor:pointer; }
+.glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
+.glossary_popup { 
+  position: absolute; 
+  display: none; 
+  background-color: [[TINT_BG]]; 
+  margin: 0;
+  border: 1px outset [[TINT_BORDER]]; 
+  z-index: 200; 
+  font-weight: bold; 
+  padding: 2px; 
+  font-size: 0.8em; 
+  text-align: left; 
+  width: 20em;
+}
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
