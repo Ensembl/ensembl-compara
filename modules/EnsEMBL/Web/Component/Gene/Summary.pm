@@ -194,7 +194,8 @@ sub content {
       @CCDS = sort keys %T;
       $ccds = join ', ', map {$object->get_ExtURL_link($_,'CCDS', $_)} @CCDS;
     }  
-    
+   
+    (my $biotype = $_->biotype) =~ s/_/ /g; 
     $html .= sprintf('
       <tr%s>      
         <th>%s</th>
@@ -210,7 +211,7 @@ sub content {
       $transcript_length,
       $protein,
       $protein_length,
-      $_->biotype,
+      $self->glossary_mouseover(ucfirst($biotype), $_->biotype),
     );
 
     if ($object->species =~/^Homo|Mus/){
