@@ -169,16 +169,17 @@ sub render_normal {
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
     my ($config, @features);
+    $self->{'track_key'} = $feature_key;
     my @T = @{$features{$feature_key}};
     if (ref($T[0]) eq 'ARRAY') {
       @features =  @{$T[0]};
       $config   = $T[1];
-      $dep      = $T[1]->{'dep'};
+      $dep      ||= $T[1]->{'dep'};
     }
     else {
       @features = @T;
     }
-    $self->{'track_key'} = $feature_key;
+    warn ">>> DEPTH $dep";
     $self->_init_bump( undef, $dep );
     my %id = ();
     foreach my $f (
