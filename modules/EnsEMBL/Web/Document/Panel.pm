@@ -8,7 +8,6 @@ use HTML::Entities qw(encode_entities);
 use HTTP::Request;
 
 use EnsEMBL::Web::Document::Renderer::Assembler;
-use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::String;
 use EnsEMBL::Web::RegObj;
 
@@ -286,14 +285,10 @@ sub render_Excel {
   $self->content_Excel;
 }
 
-
 sub content_Excel { 
   my $self = shift;
-#  $self->renderer = new EnsEMBL::Web::Document::Renderer::Excel();
   $self->content;
-#  $self->renderer->print( qq(<$self->{'caption'}>))
 }
-
 
 sub content_Text { 
   my $self = shift;
@@ -301,7 +296,7 @@ sub content_Text {
   $self->renderer = new EnsEMBL::Web::Document::Renderer::String;
   $self->content;
   my $value = $self->strip_HTML( $self->renderer->content ); 
-my $value =  $self->renderer->content;
+  my $value = $self->renderer->content;
   $self->renderer = $temp_renderer;
   $self->renderer->print( $value )
 }
