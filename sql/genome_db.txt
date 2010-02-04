@@ -5,7 +5,6 @@
 27	51511	Ciona savignyi	CSAV2.0	1	2006-04-Ensembl	
 31	9544	Macaca mulatta	MMUL_1	1	2006-01-Ensembl	
 33	9371	Echinops telfairi	TENREC	1	2006-08-Ensembl	
-34	9986	Oryctolagus cuniculus	RABBIT	1	2006-08-Ensembl	
 36	69293	Gasterosteus aculeatus	BROADS1	1	2006-06-Ensembl	
 37	8090	Oryzias latipes	MEDAKA1	1	2006-05-Ensembl	
 38	9598	Pan troglodytes	CHIMP2.1	1	2008-02-Ensembl	
@@ -47,6 +46,7 @@
 93	9823	Sus scrofa	Sscrofa9	1	2009-04-Ensembl	
 94	9483	Callithrix jacchus	calJac3	1	2009-04-Ensembl	
 95	7227	Drosophila melanogaster	BDGP5.13	1	2009-01-FlyBase	
-96	9103	Meleagris gallopavo	UMD2	1	2009-09-Ensembl	
-97	9593	Gorilla gorilla	gorGor2	1	2009-08-Ensembl	
 98	9785	Loxodonta africana	loxAfr3	1	2009-07-Ensembl	
+99	9986	Oryctolagus cuniculus	oryCun2	1	2009-11-Ensembl	
+100	9103	Meleagris gallopavo	UMD2	1	2009-11-Ensembl	
+101	9593	Gorilla gorilla	gorGor3	1	2009-08-Ensembl	

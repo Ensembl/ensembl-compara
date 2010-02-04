@@ -9,4 +9,5 @@
 202	ENSEMBL_PARALOGUES	Homology.homology
 301	FAMILY	Family.family
 401	PROTEIN_TREES	ProteinTree.protein_tree_node
+402	NC_TREES	NCTree.nc_tree_node
 501	GERP_CONSERVATION_SCORE	ConservationScore.conservation_score
