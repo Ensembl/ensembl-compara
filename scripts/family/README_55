@@ -118,16 +118,25 @@ beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57
 5- Dump all the protein sequences into an external FASTA file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#
-# TODO: change the script to support non-contiguous range of ids (ENSEMBLPEP, (skip NC-RNAs), UniProt[SP+Trembl])
-#
-time ~lg4/work/ensembl-compara/scripts/pipeline/comparaDumpAllPeptides.pl --dbhost compara2 --dbport 3306 --dbuser ensro --dbname lg4_compara_families_57 --idprefixed 1 --noredundancy --fasta metazoa_57.pep > metazoa_57.pep.err 2>&1
-#
-# rel.57    8m   (run in ~/family_57)
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57
+
+INSERT INTO analysis (created, logic_name, module, parameters)
+    VALUES (NOW(), 'dump_member_proteins', 'Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta',
+    "{ 'source_names' => [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL' ], 'idprefixed' => 1  }");
+
+INSERT INTO analysis_job (analysis_id, input_id) VALUES (
+    (SELECT analysis_id FROM analysis WHERE logic_name='dump_member_proteins'),
+    "{ 'fasta_name' => 'metazoa_57.pep' }");
+
+beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 -sync
+
+runWorker.pl -bk LSF -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 -logic_name dump_member_proteins
+
+# rel.57    1h30 (run in ~/family_57 as a RunnableDB module and under heavy MySQL load)
+# rel.57    8m   (run in ~/family_57 as a script)
 # rel.pre57 7m50 (run in ~/family_57)
 # rel.56    4m30 (it was run in ~/family_56 as opposed to lustre mess)
 # rel.55    ~20m (mostly waiting for the MySQL server to fetch the data
-
 
 # HealthCheck: how many protein sequences are we going to cluster?
 #
@@ -193,11 +202,18 @@ beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57
 
 runWorker.pl -bk LSF -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 -logic_name family_blast_factory
 
-# Use the 'long' queue, as the processes will get killed in 8 hours otherwise:
+# Use the 'long' queue, as the processes will get killed in 8 hours otherwise (and you need them to run longer):
 beekeeper.pl -url mysql://ensadmin:ensembl@compara2:3306/lg4_compara_families_57 \
 -lsf_options '-q long -R"select[mycompara2<1000] rusage[mycompara2=10:duration=10:decay=1]"' \
 -lifespan 1200 -loop -logic_name family_blast
 
+# HealthCheck:
+#
+# In rel.57 there were 67 'strange-looking' ENSEMBLPEP proteins (with lots of repeats) that blast-2.2.21 did not like to work with.
+# The corrseponding blast jobs failed. Making a list of the failed entries by querying the mcl_sparse_matrix
+# is very time-consuming and this step definitely needs re-thinking.
+#
+# Please feed the list of the offending proteins back to GeneBuilders - this might help to eliminate the problem in future.
 
 
 8- Build the distance matrix needed for mcl input
@@ -216,23 +232,14 @@ bsub -o family_57.mcxload.out -e family_57.mcxload.err -C0 -M15000000 \
 9- Run mcl
    ~~~~~~~
 
-# There are two alternatives:
-#
-# 8a. running in hugemem Q (potentially faster, but more competition with other users) :
+# running in hugemem Q:
 #
 bsub -o family_57.mcl.out -e family_57.mcl.err -C0 -M50000000 -n 4 -q hugemem \
     -R "select[ncpus>=4 && mem>50000] rusage[mem=50000] span[hosts=1]" \
     "/software/ensembl/compara/mcl/bin/mcl ~/family_57/family_57.tcx -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab ~/family_57/family_57.itab -o ~/family_57/family_57.mcl"
 
-#
-# 8b. running in ia64arch Q (less competition, but it may soon be decommissioned, so beware) :
-#
-bsub -o family_57.mcl_ia64.out -e family_57.mcl_ia64.err -C0 -M50000000 -n 4 -q ia64arch \
-    -R "select[ncpus>=4 && mem>50000] rusage[mem=50000] span[hosts=1]" \
-    "/software/ensembl/compara/mcl/bin/mcl ~/family_57/family_57.tcx -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab ~/family_57/family_57.itab -o ~/family_57/family_57.mcl_ia64"
-
+# rel.57:        [given 4cpus/50Gigs on 'popper', used 15Gigs ]  6.5 hours
 # rel.pre57:    [given 4cpus/50Gigs on 'turing']  9 hours
-# re.57:        [given 4cpus/50Gigs on 'popper', used 15Gigs ]  6.5 hours
 
 
 # to save space
@@ -345,21 +352,21 @@ time mysql --defaults-group-suffix=_compara2 -N -e "select family_id,count(*) as
  mysql --defaults-group-suffix=_compara2 -N lg4_compara_families_57 | \
  awk '{print "update family_member set cigar_line=\""$2"M\" where family_id="$1";"}' | \
  sort -u > update_singletons_cigar_line.sql
-# rel.57    ?
+# rel.57    31m
 # rel.pre57 7m
 # rel.56    5m
 # rel.55    4m
 # rel.54    52m
 
-time mysql -h compara2 -uensadmin -pensembl -P3306 lg4_compara_families_57 < update_singletons_cigar_line.sql
-# rel.57    ?
+time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 < update_singletons_cigar_line.sql
+# rel.57    2m20
 # rel.pre57 3m
 # rel.56    2m50
 # rel.55    5m
 # rel.54    1h
 
 time ~lg4/work/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_57.pl --dbname compara_families_57 > Redundancy_and_Genes_load.err 2>&1
-# rel.57    ?
+# rel.57    16m
 # rel.pre57 23m
 # rel.56     5m
 # rel.55    14m
@@ -367,11 +374,11 @@ time ~lg4/work/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInF
 
 # HealthCheck: do we have NULL cigar lines?
 #
-mysql -hcompara2 -P3306 -uensro lg4_compara_families_57 -e "select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL group by m.source_name"
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e "select m.source_name,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL group by m.source_name"
 
 # This should return count for ENSEMBLGENE:
 #
-mysql -hcompara2 -P3306 -uensro lg4_compara_families_57 -e "select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id"
+mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e "select fm.family_id,count(*) from family_member fm, member m where fm.member_id=m.member_id and fm.cigar_line is NULL and m.source_name!='ENSEMBLGENE' group by fm.family_id"
 
 This should only list the families for which multiple alignment could not be run.
 
