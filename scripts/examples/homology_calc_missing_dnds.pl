@@ -58,11 +58,12 @@ foreach my $gene (@$genes) {
                 my ($seq1id,$seq2id) = map { $_->display_id } $aln->each_seq;
                 my $results;
                 eval { $results = $stats->calc_KaKs_pair($aln, $seq1id, $seq2id);};
-                next if ($@);
-                my $counting_method_dn = $results->[0]{D_n};
-                my $counting_method_ds = $results->[0]{D_s};
-                $dn = $counting_method_dn;
-                $ds = $counting_method_ds;
+                unless ($@) {
+                  my $counting_method_dn = $results->[0]{D_n};
+                  my $counting_method_ds = $results->[0]{D_s};
+                  $dn = $counting_method_dn;
+                  $ds = $counting_method_ds;
+                }
             }
         }
         ##
