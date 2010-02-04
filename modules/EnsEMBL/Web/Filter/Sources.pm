@@ -2,7 +2,6 @@ package EnsEMBL::Web::Filter::Sources;
 
 use strict;
 use warnings;
-use Class::Std;
 
 use base qw(EnsEMBL::Web::Filter);
 
