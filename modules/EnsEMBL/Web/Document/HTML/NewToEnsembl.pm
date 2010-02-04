@@ -137,7 +137,7 @@ Did you know you can:
   }
   $html .= qq(</dl>
 
-<p>Still got questions? <a href="/Help/Faq" class="popup">Try our FAQs</a></p>
+<p>Still got questions? Try our <a href="/Help/Faq" class="popup">FAQs</a> or <a href="/Help/Glossary" class="popup">glossary</a></p>
   );
   
   return $html;
