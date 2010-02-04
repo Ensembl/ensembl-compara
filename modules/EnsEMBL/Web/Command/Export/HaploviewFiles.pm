@@ -7,7 +7,7 @@ use URI::Escape qw(uri_escape);
 use EnsEMBL::Web::TmpFile::Tar;
 use EnsEMBL::Web::TmpFile::Text;
 
-use base qw(nsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
