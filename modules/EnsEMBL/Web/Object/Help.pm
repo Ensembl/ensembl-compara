@@ -18,7 +18,6 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Object;
 use EnsEMBL::Web::Data::Article;
-use EnsEMBL::Web::Data::Category;
 use EnsEMBL::Web::Data::View;
 use EnsEMBL::Web::Data::Glossary;
 
