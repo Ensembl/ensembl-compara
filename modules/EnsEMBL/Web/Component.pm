@@ -139,7 +139,7 @@ sub glossary_mouseover {
   my %glossary = $self->object->species_defs->multiX('ENSEMBL_GLOSSARY');
   (my $text = $glossary{$entry}) =~ s/<.+?>//g;
 
-  return $text ? '<span title="'.$text.'" class="dotted_underline">'.$display_text.'</span>'
+  return $text ? '<span title="'.$text.'" class="glossary_mouseover">'.$display_text.'</span>'
     : $display_text;
 }
 
