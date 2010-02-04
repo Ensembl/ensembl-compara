@@ -35,7 +35,7 @@ foreach ($species_defs->valid_species) {
 our $MEMD = new EnsEMBL::Web::Cache;
 our $GEO;
 
-if ($species_defs->ENSEMBL_MIRRORS) {
+if ($species_defs->ENSEMBL_MIRRORS && keys %{$species_defs->ENSEMBL_MIRRORS}) {
   eval q/
     use Geo::IP;
     $GEO = Geo::IP->new( GEOIP_MEMORY_CACHE | GEOIP_CHECK_CACHE );
