@@ -132,6 +132,16 @@ sub ajax_url {
   return $url;
 }
 
+sub glossary_mouseover {
+  my ($self, $entry, $display_text) = @_;
+  $display_text ||= $entry;
+  
+  my %glossary = $self->object->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my $text = $glossary{$entry};
+  return $text ? '<span title="'.$text.'" class="dotted_underline">'.$display_text.'</span>'
+    : $display_text;
+}
+
 # Attach all das sources from an image config
 sub _attach_das {
   my ($self, $wuc) = @_;
