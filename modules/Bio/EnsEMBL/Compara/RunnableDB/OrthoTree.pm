@@ -1324,7 +1324,7 @@ sub store_gene_link_as_homology
       my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
       $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
-    my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
+    my $stored_homology = $self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2);
     if (defined($stored_homology)) {
       $matching_homology = 1;
       $matching_homology = 0 if ($stored_homology->description ne $homology->description);

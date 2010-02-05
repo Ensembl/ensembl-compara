@@ -279,7 +279,7 @@ sub store_gene_link_as_homology
   # Check is stored as within_species_paralog
   my $member_id1 = $protein1->gene_member->member_id;
   my $member_id2 = $protein2->gene_member->member_id;
-  my $stored_as_within_species_paralog = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
+  my $stored_as_within_species_paralog = $self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2);
   next if (defined($stored_as_within_species_paralog)); # Already stored as within_species_paralog
 
   # create method_link_species_set
