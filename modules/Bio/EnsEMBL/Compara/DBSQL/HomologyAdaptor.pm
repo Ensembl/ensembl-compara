@@ -292,7 +292,11 @@ sub fetch_by_Member_id_Member_id {
   # See in fetch_by_Member what is this internal variable for
   $self->{'_this_one_first'} = $member_id1;
 
-  return $self->generic_fetch($constraint, $join);
+  my $homology = $self->generic_fetch($constraint, $join);
+
+  throw("Returns more than one element") if (1 < scalar @$homology);
+
+  return @{$homology}->[0];
 }
 
 
