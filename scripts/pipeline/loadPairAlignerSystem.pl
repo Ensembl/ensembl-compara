@@ -61,6 +61,9 @@ foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
   print("creating ChunkAndGroup jobs\n");
   $self->storeMaskingOptions($dnaCollectionConf);
   $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
+  
+  print("creating DumpDNACollection jobs\n");
+  $self->createDumpDnaCollectionJobs($dnaCollectionConf);
 }
 
 foreach my $pairAlignerConf (@{$self->{'pair_aligner_conf_list'}}) {
@@ -81,7 +84,7 @@ sub usage {
   print "loadGenomicAlignSystem.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
-  print "loadPairAlignerSystem.pl v1.1\n";
+  print "loadPairAlignerSystem.pl v1.2\n";
   
   exit(1);  
 }
@@ -167,6 +170,24 @@ sub preparePairAlignerSystem
   $self->{'chunkAndGroupDnaAnalysis'} = $chunkAndGroupDnaAnalysis;
 
   $ctrlRuleDBA->create_rule($submit_analysis, $chunkAndGroupDnaAnalysis);
+  
+  #
+  # creating DumpDNA analysis
+  #
+  my $dumpDnaCollectionAnalysis = Bio::EnsEMBL::Analysis->new(
+    -db_version => '1',
+    -logic_name => 'DumpDnaCollection',
+    -module     => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection',
+    -parameters => "{'dump_dna'=>1,'dump_min_size'=>1}"
+  );
+  $self->{hiveDBA}->get_AnalysisAdaptor()->store($dumpDnaCollectionAnalysis);
+  $stats = $dumpDnaCollectionAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(-1); #unlimited
+  $stats->update();
+  $self->{dumpDnaCollectionAnalysis} = $dumpDnaCollectionAnalysis;
+  
+  $ctrlRuleDBA->create_rule($chunkAndGroupDnaAnalysis, $dumpDnaCollectionAnalysis);
 
   #
   # creating CreatePairAlignerJobs analysis
@@ -285,38 +306,9 @@ sub createPairAlignerAnalysis
     $stats->batch_size($pair_aligner_conf->{'batch_size'});
   }
   $stats->update();
-
-  #Dump reference dna as overlapping chunks in multi-fasta file
-  if ($target_dnaCollectionConf->{'dump_loc'}) {
-      ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
-      my $dumpDnaAnalysis = new Bio::EnsEMBL::Analysis(
-						       -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
-						       -parameters => "{'dump_dna'=>1,'dump_min_size'=>1}",
-						      );
-      my $dump_dna_logic_name = "DumpDnaForPairAligner-".$hexkey;
-      $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
-	if (defined $pair_aligner_conf->{'logic_name_prefix'});
-
-      $dumpDnaAnalysis->logic_name($dump_dna_logic_name);
-
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($dumpDnaAnalysis);
-
-      my $stats = $dumpDnaAnalysis->stats;
-      $stats->hive_capacity(1);
-      $stats->batch_size(1);
-      $stats->update();
-      $self->{'dump_dna_analysis'} = $dumpDnaAnalysis;
-
-      if ($target_dnaCollectionConf->{'dump_loc'}) {
-	  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-	      (-input_id       => "{'dna_collection_name'=>'".$pair_aligner_conf->{'target_collection_name'}."'}",
-	       -analysis       => $self->{'dump_dna_analysis'});
-      }
-
-      ## Create new rule: DumpDna before running Blat!!
-      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $dumpDnaAnalysis);
-      $ctrlRuleDBA->create_rule($dumpDnaAnalysis, $pairAlignerAnalysis);
-  }
+  
+  #Block BLAT until the dna collections are dumped
+  $ctrlRuleDBA->create_rule($self->{'dumpDnaCollectionAnalysis'}, $pairAlignerAnalysis);
 
   unless (defined $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}) {
 
@@ -638,6 +630,19 @@ sub createChunkAndGroupDnaJobs
       (-input_id       => $input_id,
        -analysis       => $self->{'chunkAndGroupDnaAnalysis'},
        -input_job_id   => 0);
+}
+
+#Creates a single job per collection found in the config file
+sub createDumpDnaCollectionJobs {
+  my ($self, $dnaCollectionConf) = @_;
+  if ($dnaCollectionConf->{'dump_loc'}) {
+    my $collection_name = $dnaCollectionConf->{collection_name};
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+      -input_id => "{'dna_collection_name'=>'${collection_name}'}",
+      -analysis => $self->{dumpDnaCollectionAnalysis}
+    );
+  }
+  return;
 }
 
 1;
