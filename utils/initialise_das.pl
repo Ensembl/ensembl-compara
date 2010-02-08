@@ -155,7 +155,7 @@ my $species = $SiteDefs::ENSEMBL_DATASETS || [];
 my $shash;
 $| = 1;
 
-publish_multi_species_sources();
+publish_multi_species_sources() unless $species_defs->ENSEMBL_SITETYPE eq 'Vega';
 
 SPECIES:
 foreach my $sp (@$species) {

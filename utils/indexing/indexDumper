@@ -540,17 +540,13 @@ sub dumpDomain {
   my $conf = shift;
   my $COREDB = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $t_sth = $conf->{'dbh'}->prepare(
-      "select i.interpro_ac, tsi.stable_id
+      "select i.interpro_ac
        from $COREDB.interpro i, $COREDB.protein_feature pf, $COREDB.translation tl, $COREDB.transcript_stable_id tsi
        where i.id = pf.hit_name
        and pf.translation_id = tl.translation_id
        and tl.transcript_id = tsi.transcript_id
        group by i.interpro_ac");
   $t_sth->execute;
-  my %t_examples;
-  while( my ($id, $example ) = $t_sth->fetchrow_array()){
-      $t_examples{$id} = $example;
-  }
   my $sth = $conf->{'dbh'}->prepare(
     "select x.dbprimary_acc, i.id, x.description
        from $COREDB.xref as x, $COREDB.interpro as i
@@ -562,7 +558,7 @@ sub dumpDomain {
   my $IDS         = '';
   my $description = '';
   my $counter     = 0;
-  my ($acc, $id, $desc, $old_desc, $example  );
+  my ($acc, $id, $desc, $old_desc );
   while( ($acc, $id, $desc ) = $sth->fetchrow_array()){
     if($acc eq $old_acc) {
       $IDS         .= " $id";
@@ -570,8 +566,7 @@ sub dumpDomain {
       $counter++;
     }
     else {
-      $example = $t_examples{$old_acc};
-      print O &domainLine($conf->{'species'}, $old_acc, $IDS, $old_desc, $counter, $description, $example );
+      print O &domainLine($conf->{'species'}, $old_acc, $IDS, $old_desc, $counter, $description);
       $description = $id;
       $IDS         = $id;
       $old_acc     = $acc;
@@ -579,18 +574,17 @@ sub dumpDomain {
       $counter     = 1;
     }
   }
-  print O &domainLine( $conf->{'species'}, $old_acc, $IDS, $old_desc, $counter, $description, $example );
+  print O &domainLine( $conf->{'species'}, $old_acc, $IDS, $old_desc, $counter, $description );
   close O;
 }
 
 sub domainLine {
-  my($species, $did, $IDS, $desc, $counter, $description, $example) = @_;
+  my($species, $did, $IDS, $desc, $counter, $description ) = @_;
   return if $did eq '';
-  return unless $example;
   return join "\t",
     (INC_SPECIES?"$species\t":"").qq(Interpro domain),    ## Type
     qq($did),               ## ID
-    qq(/$species/Transcript/Domains/Genes?domain=$did;t=$example), ## URL
+    qq(/$species/Location/Genome?ftype=Domain;id=$did), ## URL
     qq($did $IDS $desc),     ## Index locations
     qq(InterPro domain $did [$desc] has $counter associated external database identifiers: $description.\n);   ## Description text
 
