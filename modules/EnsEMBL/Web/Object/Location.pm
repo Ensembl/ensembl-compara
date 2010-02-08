@@ -306,8 +306,8 @@ sub _create_Domain {
 
 sub _create_Phenotype {
 	my ($self, $db) = @_;	
-	my $features;
 	my $slice;
+	my $features;
 	my $array = [];	
 	my $id = $self->param('id');
 				
@@ -315,7 +315,7 @@ sub _create_Phenotype {
 
 	foreach my $chr (@chrs)
 	{
-		$slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);		
+		$slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);				
 		my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
 
 		push(@$array,@$array2) if (@$array2);
@@ -792,14 +792,21 @@ sub retrieve_Transcript {
 sub retrieve_Variation {
   my ($self, $data, $type) = @_;
   my $results = [];
-   
+
   foreach my $v (@$data) {
+  
+    my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);
+    my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
+    my $genes = $slice->get_all_Genes();
+    my $gene_name = $genes->[0]->{'stable_id'};
+    my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});
+    my $gene_link = qq{<a href='$gene_url'>$gene_name</a>};
+    
     if (ref($v) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($v);
       push(@$results, $unmapped);
     }
-    else {
-      #use Data::Dumper; $Data::Dumper::Maxdepth = 3; warn Dumper $v;
+    else {      
       push @$results, {
         'region'   		=> $v->seq_region_name,
         'start'    		=> $v->start,
@@ -807,12 +814,13 @@ sub retrieve_Variation {
         'strand'   		=> $v->strand,
         'length'   		=> $v->end-$v->start+1,
         'label'    		=> $v->variation_name,        
-        'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' })
+        'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
+        'extra'       => [ $gene_link ],
       }
     }
   }
   
-  return ( $results, ['Description'], $type );
+  return ( $results, ['Nearest Gene'], $type );
 }
 
 sub retrieve_Xref {
