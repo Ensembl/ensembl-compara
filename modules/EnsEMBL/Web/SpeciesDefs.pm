@@ -461,6 +461,8 @@ sub _created_merged_table_hash {
   my $databases = {};
   my $extra = {};
   foreach my $sp ( @$ENSEMBL_DATASETS ) {
+    next if ($self->ENSEMBL_SITETYPE eq 'Vega' && $sp eq 'Danio_rerio'); 
+    #v37 hack to exclude Danio - should get it out of multi tree ($self->multi_hash->{'DATABASE_COMPARA'}->{'VEGA_COMPARA'}) but as this has not been created yet need another way
     my $species_dbs = $tree->{ $sp }{'databases'};
     foreach my $db ( keys %$species_dbs ) {
       $databases->{$db} ||= {'tables'=>{}};

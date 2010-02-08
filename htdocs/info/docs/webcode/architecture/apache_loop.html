@@ -27,7 +27,7 @@ mod_perl adds new version
 </pre>
 
 <p>When a new child is required (when the server load is high or the number of children falls below the configured minimum), the Apache parent creates one. The mod_perl environment of the parent is copied to the child, but in Ensembl's case, this is minimal. It is more efficient to put the modules in the parent process at the Apache startup time rather than in each child.  The majority of the Perl modules and configuration settings are loaded by the child init handler. Once the child is up and running, requests are sent to it and handled by the inner request loop.</p>
-<p>The diagram below shows a simplified Ensembl request loop (although more specifically,  this diagram represents a portion of the <a href="http://f-m-c.org/projects/apache/html/4_4Request_Response_Loop.html" rel="external">Apache keep-alive loop</a>).</p>
+<p>The diagram below shows a simplified Ensembl request loop (although more specifically,  this diagram represents a portion of the <a href="http://www.fmc-modeling.org/category/projects/apache/amp/4_4Request_Response_Loop.html" rel="external">Apache keep-alive loop</a>).</p>
 
 <pre>
    Child init handler 

@@ -27,7 +27,10 @@ sub process {
   } else {
     my $spam;
 
-     # Check honeypot fields first
+    # Check honeypot fields first
+    #will prob need a list of these blacklisted addresses, but do this for now to fix Vega spam
+    $spam = 1 if $object->param('address') eq 'neverdiespike@hanmail.net';
+
     if ($object->param('honeypot_1') || $object->param('honeypot_2')) {
       $spam = 1;
     }  else {
