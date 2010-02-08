@@ -10,8 +10,10 @@ use Sys::Hostname;
 use Getopt::Long;
 use Data::Dumper;
 use DBI;
+use Switch;
 
 my $reg_conf;
+my $compara_hive_conf;
 my $master = "compara-master";
 my $to_db;
 my $ortheus_mlss_id;
@@ -21,6 +23,7 @@ my $bl2seq = "/software/bin/bl2seq";
 my $logic_name = "Ortheus";
 my $parameters = "{max_block_size=>1000000,java_options=>'-server -Xmx1000M',}";
 my $module = "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Ortheus";
+my $ancestral_seqs = "Ancestral sequences";
 
 my $description = q'
  PROGRAM: 
@@ -38,6 +41,9 @@ my $description = q'
 	of the species in the enredo.out file (the species names in the enredo.out file
 	must be aliased in the reg-conf file). Also include the master db and the ancestral 
 	core db.
+  --ch-conf <compara-hive cinfiguration file> [default: -none-]
+	This can contain additional information for setting internal IDs, db-engine type 
+	(eg INNODB) and the LSF job name.
 	
   --master <registry name of the master db> [default: compara-master] 
 	This should correspond to "-species" value for the master db in the registry 
@@ -55,8 +61,8 @@ my $description = q'
 	Can be presented as a string or a file
 
  EXAMPLE: 
-  comparaLoadOrtheus.pl --reg-conf <config_file> --master <compara-master> \
-  --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> -i enredo.out
+  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --ch-conf <compara_hive_conf_file> \
+  --master <compara-master> --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> -i enredo.out
 '; 
 
 my $help = sub {
@@ -69,10 +75,12 @@ GetOptions(
     "to_db=s" => \$to_db,
     "mlss_id=s" => \$ortheus_mlss_id,
     "species_tree=s" => \$species_tree,
+    "ch-conf=s" => \$compara_hive_conf,
     "i=s" => \$input_file,
   );
 
-unless(defined($reg_conf) && defined($to_db) && defined($ortheus_mlss_id) && defined($species_tree) && defined($input_file)) {
+unless(( -f $reg_conf) && defined( -f $compara_hive_conf) && defined($to_db) && defined($ortheus_mlss_id) 
+	&& defined($species_tree) && ( -f $input_file)) {
         $help->();
         exit(0);
 }
@@ -85,20 +93,36 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 my @dbas = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors() };
 
 for(my$i=0;$i<@dbas;$i++) {
-	if ($dbas[$i]->species eq $master) {
+	if ($dbas[$i]->species eq "$master") {
 		$master_db = splice(@dbas, $i, 1);
 		$i--;
 	}
-	elsif ($dbas[$i]->species eq $to_db) {
+	elsif ($dbas[$i]->species eq "$to_db") {
 		$db_to_populate = splice(@dbas, $i, 1);
 		$i--;
 	}	
-		
-	$core_db_data{ $dbas[$i]->species }{"dbname"} = $dbas[$i]->dbc->dbname;
-	$core_db_data{ $dbas[$i]->species }{"host"} = $dbas[$i]->dbc->host;
-	$core_db_data{ $dbas[$i]->species }{"port"} = $dbas[$i]->dbc->port;
-	$core_db_data{ $dbas[$i]->species }{"user"} = $dbas[$i]->dbc->username;
-	$core_db_data{ $dbas[$i]->species }{"pass"} = $dbas[$i]->dbc->password;
+	elsif ($dbas[$i]->species eq "$ancestral_seqs") {
+		$ancestral_db = splice(@dbas, $i, 1);
+		$i--;
+	}
+	else {	
+		$core_db_data{ $dbas[$i]->species }{"dbname"} = $dbas[$i]->dbc->dbname;
+		$core_db_data{ $dbas[$i]->species }{"host"} = $dbas[$i]->dbc->host;
+		$core_db_data{ $dbas[$i]->species }{"port"} = $dbas[$i]->dbc->port;
+		$core_db_data{ $dbas[$i]->species }{"user"} = $dbas[$i]->dbc->username;
+		$core_db_data{ $dbas[$i]->species }{"pass"} = $dbas[$i]->dbc->password;
+	}
+}
+
+my $sql_check_tables="SHOW TABLES";
+my %ortheus_dbs;
+foreach ($db_to_populate, $ancestral_db) {
+	throw("One or both databases missing: $to_db \\ $ancestral_seqs\n") unless $_;
+	my $sth = $_->dbc->prepare($sql_check_tables);
+	$sth->execute();
+	foreach my $table_name( @{ $sth->fetchall_arrayref } ) {
+		$ortheus_dbs{ $_->dbc->dbname }{ $table_name->[0] }++;
+	}
 }
 
 if (-e $species_tree){
@@ -112,19 +136,21 @@ if (-e $species_tree){
 	die "no/invalid species tree provided\n";
 }
 
-my $ancestral_gdb = $master_db->get_adaptor('GenomeDB')->fetch_by_name_assembly("Ancestral sequences");
+my $ancestral_gdb = $master_db->get_adaptor('GenomeDB')->fetch_by_name_assembly("$ancestral_seqs");
 
 my $mlss_a = $master_db->get_adaptor('MethodLinkSpeciesSet');
 my $ortheus_mlss = $mlss_a->fetch_by_dbID($ortheus_mlss_id);
+throw("No such MethodLinkSpeciesSetID $ortheus_mlss_id in the master db\n") unless $ortheus_mlss;
+
 my $to_db_gdb_a = $db_to_populate->get_adaptor('GenomeDB');
 foreach my $genome_db ( @{ $ortheus_mlss->species_set() }, $ancestral_gdb ) {
 	my $species_name = $genome_db->name;
 	push(@$genome_dbs, $genome_db);	
-	my $db_name = $core_db_data{ $species_name }{"dbname"};
-	my $port = $core_db_data{ $species_name }{"port"};
-	my $host = $core_db_data{ $species_name }{"host"};
-	my $user = $core_db_data{ $species_name }{"user"};
-	my $pass = $core_db_data{ $species_name }{"pass"};
+	my $db_name = $core_db_data{ $species_name }{"dbname"} || $ancestral_db->dbc->dbname;
+	my $port = $core_db_data{ $species_name }{"port"} || $ancestral_db->dbc->port;
+	my $host = $core_db_data{ $species_name }{"host"} || $ancestral_db->dbc->host;
+	my $user = $core_db_data{ $species_name }{"user"} || $ancestral_db->dbc->username;
+	my $pass = $core_db_data{ $species_name }{"pass"} || $ancestral_db->dbc->password;
 	my $locator_string = $pass ? "Bio::EnsEMBL::DBSQL::DBAdaptor/pass=" . $pass . ";host=" : 
 				"Bio::EnsEMBL::DBSQL::DBAdaptor/host=";
 	$locator_string .= "$host;port=$port;user=$user;dbname=$db_name;species=$species_name;disconnect_when_inactive=1"; 
@@ -159,6 +185,93 @@ my $enredo_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
 $enredo_mlss = $to_db_mlss_a->store($enredo_mlss);
 
 parse_and_store_enredo($input_file);
+
+parse_hive_compara_config_file( realpath($compara_hive_conf) ) if (-e $compara_hive_conf);
+
+
+=head2 parse_hive_compara_config_file
+
+  Arg[1]  string $path_to_hive_compara_config file
+  Example parse_hive_compara_config_file( realpath($compara_hive_conf) )
+  Description: sets the database values to those present in the file
+	example file:
+	{       HIVE_NAME  => "HsMmBlastz",
+        	INNODB_TABLES  => ["synteny_region", "dna", "seq_region"],
+        	NO_SET_DNA_TABLES => 0,
+	}
+	INNODB_TABLES : list of table name to be changed from MyISAM to INNODB
+	NO_SET_DNA_TABLES : do NOT set the autoincrement value to $mlssid * 10000000000 + 1 for the tables genomic_align*
+ 
+  ReturnType: none
+
+=cut
+
+sub parse_hive_compara_config_file {
+	my $ch_file = shift;
+	my $conf_list = do $ch_file;
+	unless( exists( $conf_list->{"NO_SET_DNA_TABLES"} ) && $conf_list->{"NO_SET_DNA_TABLES"} ) { #set the correct autoincrement on these tables unless told not to.
+		auto_increment_table($ortheus_mlss_id, [ "genomic_align", "genomic_align_block", 
+		"genomic_align_group", "genomic_align_tree" ]);
+	}
+	foreach my $type(sort keys %{$conf_list}) {
+		switch ($type) {
+			case "INNODB_TABLES" {
+				my $db_to_access;
+				foreach my $table2change (@{ $conf_list->{$type} }) {
+					if(exists($ortheus_dbs{ $db_to_populate->dbc->dbname }{ $table2change })) { #its a compara-hive table
+						$db_to_access = $db_to_populate;
+					}
+					elsif(exists($ortheus_dbs{ $ancestral_db->dbc->dbname }{ $table2change })) { #its an ancestral-core table
+						$db_to_access = $ancestral_db;
+					}
+					else {
+						throw("Table $table2change does not exist in either the compara-hive db or the ancestral-core db\n");
+					}
+					my $sql_statement = "ALTER TABLE $table2change ENGINE = INNODB";
+					my $sth = $db_to_access->dbc->prepare( $sql_statement );
+					$sth->execute();
+				}
+			}
+			case "HIVE_NAME" {
+				my $sql_statement = "INSERT INTO meta (meta_key, meta_value) VALUES (?,?)";
+				my $sth = $db_to_populate->dbc->prepare( $sql_statement );
+				$sth->execute("name", $conf_list->{$type});
+			}
+			case "SET_INTERNAL_IDS" {
+				foreach my $table_name (sort keys %{ $conf_list->{$type} }) {
+					my $mlssid = $conf_list->{$type}->{$table_name};
+					auto_increment_table($mlssid, [ $table_name ]);
+				}
+			}
+			case "NO_SET_DNA_TABLES" {
+				print STDERR "autoincrement for genomic_align* tables have not been set\n" if($conf_list->{$type}); 
+			}
+			else { throw("Don't recognise this option $type in the file $ch_file"); }
+		}
+	}
+}
+
+
+=head2 auto_increment_table
+
+  Arg[1]  string $mlssid
+  Arg[2]  arrayraef $table_names
+  Example auto_increment_table(450, [ "genomic_align", "genomic_align_block" ]);
+  Description: set the auto_increment start on the this table to be $mlssid * 10000000000 + 1 
+  ReturnType: none
+
+=cut
+
+sub auto_increment_table {
+	my($mlssid, $tables) = @_;
+	foreach my $table_name(@{ $tables }) {
+		my $auto_increment_start = $mlssid * 10000000000 + 1;
+		my $sql_statement = "ALTER TABLE $table_name AUTO_INCREMENT = $auto_increment_start";
+		my $sth = $db_to_populate->dbc->prepare( $sql_statement );
+		$sth->execute();
+	}
+}
+
 
 =head2 parse_and_store_enredo
 
