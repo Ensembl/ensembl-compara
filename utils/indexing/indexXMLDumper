@@ -57,7 +57,6 @@ our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly
-our %additional_fields; #summarise additional fields so we can make sure we treat each one correctly
 
 ## HACK 1 - if the INDEX is set to all grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
@@ -131,7 +130,6 @@ foreach my $index (@indexes) {
   print LOG "\nTime for $index is " . &elapsed_time($start) . "\n";
 }
 
-#print LOG "\nAdditional fields are:\n",Dumper(\%additional_fields);
 print LOG "\nCross references are:\n",Dumper(\%cross_references) if %cross_references;
 print LOG "\nDumped $total_c records in total\n";
 print LOG "\nTotal time for dumping " . &elapsed_time($start_time) . "\n";
@@ -201,14 +199,11 @@ sub markerLine {
   foreach my $syn (@synonyms) {
     $xml .= qq(
     <field name="synonym">$syn</field>);
-    $additional_fields{'synonym'}++;
   }
   $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">Marker</field>
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'Marker'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -303,16 +298,12 @@ sub QTLLine {
   foreach my $id (@$IDS) {
     $xml .= qq(
     <field name="synonym">$id</field>);
-    $additional_fields{'synonym'}++;
   }
   $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">QTL</field>
     <field name="location">$pos</field>
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'QTL'}++;
-  $additional_fields{'location'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -464,15 +455,11 @@ sub SNPLine {
     $xml .= qq(
     <field name="synonym">$id</field>);
   }
-  $additional_fields{'synonym'}++;
   $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">SNP</field>
     <field name="source">$source</field>
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'SNP'}++;
-  $additional_fields{'source'}{$source}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -544,14 +531,9 @@ sub StrucVarLine {
   while (my ($param,$value) = each %$params) {
     $xml .= qq(
     <field name="$param">$value</field>);
-    $additional_fields{'param'}{$param}++;
   }
   $xml .= qq(
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'feature_type'}{'StructuralVariation'}++;
-  $additional_fields{'location'}++;
-  $additional_fields{'action'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -595,7 +577,7 @@ sub dumpGenomicAlignment {
       $source .= ";db=$db" unless $db eq 'core';
       my $type   = $tables{ $table }[1];
       my $sth    = $conf->{'dbh'}->prepare(
-	"select ad.display_label, a.logic_name, t.hit_name, ad.web_data, edb.db_name, count(*) as hits
+	"select ad.display_label, a.logic_name, ad.displayable, t.hit_name, ad.web_data, edb.db_name, count(*) as hits
                 from (($dbname.analysis as a, $dbname.$table as t) left join
                      $dbname.analysis_description ad on a.analysis_id = ad.analysis_id) 
            left join $dbname.external_db edb on t.external_db_id = edb.external_db_id
@@ -604,9 +586,10 @@ sub dumpGenomicAlignment {
                group by ad.display_label, t.hit_name");
       $sth->execute();
       my $c = 0;
-      while( my( $label, $logic_name, $hid, $webdata, $db_name, $count  ) = $sth->fetchrow_array ) {
+      while( my( $label, $logic_name, $displayable, $hid, $webdata, $db_name, $count  ) = $sth->fetchrow_array ) {
 	my $wd = eval($webdata);
 	next if $wd->{$table}{'do_not_display'};
+	next unless $displayable;
 	$c++;
 	$label ||= '';
 	my $desc = "$label $hid hits the genome in $count locations.";
@@ -659,17 +642,13 @@ sub GenomicAlignmentLine {
   unless ($db eq 'core') {
     $xml .= qq(
     <field name="db">$db</field>);
-    $additional_fields{'db'}++;
   }
   while (my ($param,$value) = each %$params) {
     $xml .= qq(
     <field name="$param">$value</field>);
-    $additional_fields{'db'}++;
   }
   $xml .= qq(
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{$ftype}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -754,10 +733,6 @@ sub OligoProbeLine {
     <field name="db">$db</field>
     <field name="ptype">$pset</field>
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'ProbeFeature'}++;
-  $additional_fields{'ptype'}++;
-  $additional_fields{'db'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -830,14 +805,11 @@ sub DomainLine {
   foreach my $id (@$IDS) {
     $xml .= qq(
     <field name="synonym">$id</field>);
-    $additional_fields{'synonym'}++;
   }
   $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">Domain</field>
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'Domain'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -916,8 +888,6 @@ sub FamilyLine {
     <field name="species">$species</field>
     <field name="featuretype">Family</field>
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'Family'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -1144,14 +1114,9 @@ sub SeqLine {
   foreach my $syn (@$synonyms) {
     $xml .= qq(
     <field name="synonym">$syn</field>);
-    $additional_fields{'synonym'}++;
   }
   $xml .= qq(
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'Sequence'}++;
-  $additional_fields{'location'}++;
-  $additional_fields{'action'}++;
   $counter->();
   return $xml . '</entry>';
 }
@@ -1269,7 +1234,7 @@ sub dumpGene {
     my $sql = qq(
       SELECT gsi.gene_id, tsi.transcript_id, trsi.translation_id,
              gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-             g.description, x.display_label, ad.display_label, ad.web_data, g.status, g.biotype
+             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype
         FROM ((( $dbname.gene_stable_id as gsi, $dbname.gene as g,
              $dbname.transcript_stable_id as tsi,
              $dbname.analysis_description as ad,
@@ -1287,11 +1252,12 @@ sub dumpGene {
     $sth->execute(); 
 
     my $old;
-    my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$status,$biotype);
+    my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$status,$biotype) = @$r;
+      ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
+      next unless $displayable;
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
 	  my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
@@ -1567,25 +1533,18 @@ sub GeneLine {
   unless ($db eq 'core') {
     $xml .= qq(
    <field name="db">$db</field>);
-    $additional_fields{'db'}++;
   }
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{'Gene'}++;
-  $additional_fields{'source'}++;
   foreach my $tsi (keys %$tsids) {
     $xml .= qq(
     <field name="transcript">$tsi</field>);
-    $additional_fields{'transcript'}++;
   }
   foreach my $tlsi (keys %$tlsids) {
     $xml .= qq(
     <field name="peptide">$tlsi</field>);
-    $additional_fields{'peptide'}++;
   }
   foreach my $esi (keys %$exons) {
     $xml .= qq(
     <field name="exon">$esi</field>);
-    $additional_fields{'exon'}++;
   }
   $xml .= qq(
   </additional_fields>);
@@ -1621,18 +1580,12 @@ sub GeneStableIdMappingLine {
   foreach my $id (@$current_sis,@$deprecated_sis) {
     $xml .= qq(
     <field name="old_id">$id</field>);
-    $additional_fields{'old_id'}{$type}++;
   }
  $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">Gene</field>
     <field name="action">Idhistory</field>
-    <field name="db">$db</field>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{$type}++;
-  $additional_fields{'action'}{'Idhistory'}++;
-  $additional_fields{'db'}++;
-  $xml .= qq(
+    <field name="db">$db</field>)
   </additional_fields>);
   $counter->();
   return $xml . qq(
@@ -1754,17 +1707,13 @@ sub RegulatoryFeatureLine {
   foreach my $syn (@$ids) {
     $xml .= qq(
     <field name="synonym">$syn</field>);
-    $additional_fields{'synonym'}++;
   }
   while (my ($param,$value) = each %$params) {
     $xml .= qq(
     <field name="$param">$value</field>);
-    $additional_fields{$param}{$species}++;
   }
   $xml .= qq(
   </additional_fields>);
-  $additional_fields{'species'}{$species}++;
-  $additional_fields{'featuretype'}{$ftype}++;
   $counter->();
   return $xml . qq(
 </entry>);
