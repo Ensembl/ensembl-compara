@@ -12,7 +12,7 @@ use base qw(Bio::EnsEMBL::GlyphSet::Videogram_legend);
 ####################################################################
 ### set true only while you're generating the vega karyotype image ##
 #####################################################################
-## end of vega karyotype static image colours ###                                                
+## end of vega karyotype static image colours ###
 
 sub _init {
   my ($self) = @_;
@@ -88,7 +88,7 @@ sub _init {
       my $vc_band_end    = $band->end() + $v_offset;
       my $stain          = lc( $band->stain());
 
-      if ($stain =~ /Annotation/mx) {
+      if ($stain =~ /annotation/mx) {
         push @annot_bands, $band;
         next;
       }
@@ -208,6 +208,10 @@ sub _init {
     my $bandname       = $band->name();
     my $vc_band_start  = $band->start() + $v_offset;
     my $vc_band_end    = $band->end() + $v_offset;
+
+#    warn $vc_band_end - $vc_band_start;
+    ##hack to make zfish annotated regions look wider on the ideogram
+    next if ( ($vc_band_end - $vc_band_start) < 280000) ;
     my $stain          = $band->stain();
     my $R              = $vc_band_start;
     my $T              = $bpperpx * ( (int $vc_band_end/$bpperpx) - (int $vc_band_start/$bpperpx) );
