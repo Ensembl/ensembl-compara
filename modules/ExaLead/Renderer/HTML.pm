@@ -110,10 +110,16 @@ sub _render_hit {
   $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
   $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
   $URL =~ s{Genome\?ftype=OligoFeature}{Genome\?ftype=ProbeFeature;fdb=funcgen;ptype=pset}; #cope with incorrect oligoprobe feature URLs
-  $URL =~ s{Location/\?ftype=}{Location/Genome\?type=}; #cope with stuffed Vega Genomic alignments (r37 only)
+  $URL =~ s{Location/\?ftype=}{Location/Genome\?type=}; #cope with stuffed Vega Genomic alignments
+  $URL =~ s{markerview\?marker=}{Location/Marker\?m=}; #cope with stuffed Vega Markers (r37 only)
+  $URL =~ s/Transcript\/Domains\/Genes\?domain=(IPR\d{6}).*/Location\/Genome\?ftype=Domain;id=$1/; #no need to have Transcript IDs on Domain results
+  #remove url for unmapped features
+  if ($URL =~ /Location\/Genome\?ftype=UnmappedObject/) {
+    $URL = '';
+  }
 
   #add extra location link only for index types defined in hit_maps above
-  my $add_location_link = 0;
+  my($extra,$add_location_link);
   foreach my $g ($hit->groups) {
     if ($g->name eq 'answergroup.Feature type') {
       foreach my $c ($g->children) {
@@ -121,29 +127,34 @@ sub _render_hit {
       }
     }
   }
-  my $extra = '';
   if ($add_location_link) {
-      my $mappings = $hit_maps->{$add_location_link};
-      my $old_dest = $mappings->[0];
-      my $new_dest = $mappings->[1];
-      my $desc     = $mappings->[2];
-      my $new_URL  = $URL;
-      $new_URL =~ s/$old_dest/$new_dest/;
-      $extra = sprintf( ' [<a href="%s">%s</a>]' , $new_URL, $desc );
-      }
+    my $mappings = $hit_maps->{$add_location_link};
+    my $old_dest = $mappings->[0];
+    my $new_dest = $mappings->[1];
+    my $desc     = $mappings->[2];
+    my $new_URL  = $URL;
+    $new_URL =~ s/$old_dest/$new_dest/;
+    $extra = sprintf( ' [<a href="%s">%s</a>]' , $new_URL, $desc );
+  }
+
+  #remove '(Curated)' etc from HGNC names
+  my $label = $hit->field('title')->getHighlighted;
+  $label =~ s/HGNC \(\w+\)/HGNC Symbol/;
+
+  my $a = $URL ? sprintf qq(<a href="%s">%s</a>),CGI::escapeHTML( $URL ),$label : $label;
   return sprintf qq(
-<p><strong><a href="%s">%s</a></strong>%s<br />
+<p><strong>%s</strong>%s<br />
   %s
 </p>
 <blockquote>%s</blockquote>
 
 ),
-    CGI::escapeHTML( $URL ), 
-    $hit->field('title')->getHighlighted, $extra,
+    $a, $extra,
     $hit->field('description') ? $hit->field('description')->getHighlighted : '--',
     join( '&nbsp;&nbsp; ',
       map { '<strong>'.CGI::escapeHTML( $_->name =~ /answergroup\.(.*)/?$1:$_->name ).'</strong>: '.
             $self->_render_hitcats( $_->children ) } $hit->groups );
+
 }
 
 sub _render_hitcats {
