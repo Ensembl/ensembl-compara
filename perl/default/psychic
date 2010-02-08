@@ -58,6 +58,10 @@ if ($dest_site eq 'ebi') {
   $url = "http://search.sanger.ac.uk/cgi-bin/exasearch?_q=$query";
   $q->redirect($url);
   exit;
+} elsif ($dest_site eq 'ensembl_genomes') {
+  $URL = "http://www.ensemblgenomes.org/search?site=ensembl&q=$query&site=&x=0&y=0&genomic_unit=all";
+  $q->redirect($URL);
+  exit;
 } elsif ($dest_site =~ /vega/) {
   if ($site_type eq 'vega') {
     $url = "/Homo_sapiens/Search/Results?species=all&idx=All&q=$query";
