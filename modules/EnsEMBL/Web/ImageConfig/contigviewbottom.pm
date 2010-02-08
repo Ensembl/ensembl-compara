@@ -126,6 +126,16 @@ sub init {
     [ 'ruler',     '', 'ruler',     { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }],
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
   );
+
+  #switch on default compara multiple alignments (check track name each release)
+  $self->modify_configs(
+    [ 'alignment_compara_436_scores' ],
+    { qw(display tiling) }
+  );
+  $self->modify_configs(
+    [ 'alignment_compara_436_constrained' ],
+    { qw(display compact) }
+  );
 }
 
 1;
