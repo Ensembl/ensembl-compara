@@ -26,7 +26,7 @@ sub content {
   }
   my $group_count = @groups;
 
-  if (@groups) {  
+  if (@groups) {
     my @group_classes = ('one-col');
     if ($group_count > 1) {
       @group_classes = $group_count > 2 
@@ -96,11 +96,50 @@ sub content {
     }
   }
   else {
-    $html .= qq(<p>Your search returned no results</p>);
+    $html = $self->re_search;
   }
-
   return $html;
 }
+
+
+sub re_search {
+  my $self = shift;
+  my $object = $self->object;
+  my $exa_obj = $object->Obj;
+  my $html;
+
+  my $species = $object->param('species');
+  my $species_name = $species eq 'all' ? 'all species' : $species;
+  my $q = $object->param('q');
+  my $q_name = $q;
+
+  my $do_search = 0;
+  if ($q =~ /^(\S+?)(\d+)/) {
+    my $ENS = $1;
+    my $dig = $2;
+    if ( ($ENS =~ /ENS|OTT/) && ($ENS !~ /ENSFM/ ) && (length($dig) != 11) ) {
+      $do_search = 1;
+      my $newq = $ENS.sprintf("%011d",$dig);
+      (my $newq_name = $newq) =~ s/(\d+)/<strong>$1<\/strong>/;
+      $q_name =~ s/(\d+)/<strong>$1<\/strong>/;
+      $html = qq(<p>Your search of $species_name with $q_name returned no results</p>);
+      my $url = '/'.$object->species."/Search/Results?species=$species;idx=".$object->param('idx').';q='.$newq;
+      $html .= sprintf qq(<p><br />Would you like to <a href="%s"> search using $newq_name</a> ?<p>),$url;
+      return $html;
+    }
+  }
+  if (! $do_search && ($species ne 'all') ) {
+    $species =~ s/_/ /g;
+    $html = qq(<p>Your search of <strong>$species</strong> returned no results</p>);
+    my $url = '/'.$object->species.'/Search/Results?species=all;idx='.$object->param('idx').';q='.$q;
+    $html .= sprintf qq(<p><br />Would you like to <a href="%s"> search <strong>all</strong> species</a> with this term ?<p>),$url;
+    return $html;
+  }
+
+  $html = qq(<p>Your search of <strong>$species_name</strong> with <strong>$q</strong> returned no results</p>);
+  return $html;
+}
+
 
 1;
 

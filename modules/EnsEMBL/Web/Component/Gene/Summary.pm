@@ -1,5 +1,3 @@
-# $Id$
-
 package EnsEMBL::Web::Component::Gene::Summary;
 
 use strict;
@@ -74,9 +72,10 @@ sub content {
     # set dnadb to 'vega' so that the assembly mapping is retrieved from there
     my $reg        = 'Bio::EnsEMBL::Registry';
     my $orig_group = $reg->get_DNAAdaptor($object->species, 'vega')->group;
+    $reg->add_DNAAdaptor($object->species, 'vega', $object->species, 'vega');
+
     my $alt_slices = $object->vega_projection($alt_assembly); # project feature slice onto Vega assembly
     
-    $reg->add_DNAAdaptor($object->species, 'vega', $object->species, 'vega');
     
     # link to Vega if there is an ungapped mapping of whole gene
     if (scalar @$alt_slices == 1 && $alt_slices->[0]->length == $object->feature_length) {
@@ -91,7 +90,7 @@ sub content {
         $object->thousandify($alt_slices->[0]->end)
       );
       
-      $location_html .= ' in $alt_assembly coordinates</span>]';
+      $location_html .= " in $alt_assembly coordinates</span>]";
     } else {
       $location_html .= qq{ [<span class="small">There is no ungapped mapping of this $lc_type onto the $alt_assembly assembly</span>]};
     }
