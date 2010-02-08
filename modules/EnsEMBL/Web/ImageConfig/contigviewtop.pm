@@ -57,7 +57,7 @@ sub init {
   );
   $self->modify_configs(
     [ 'variation_feature_structural' ],
-    { qw(display normal menu yes) }
+    { qw(display off menu yes) }
   );
 
 }
