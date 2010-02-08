@@ -79,9 +79,15 @@ sub content {
       if (@features) { ## "FeatureView"
         my $text = @features > 1 ? 'Locations of features' : 'Location of feature';
         my $data_type = $object->param('type');
+        
+      if ($object->param('ftype') eq 'Phenotype'){
+        my $phenotype_name = $object->param('phenotype_name');
+        my $code = $object->param('id');
+        $text = "Phenotype $phenotype_name ($code) information:";
+      }        
 
         $used_colour{$data_type}++;        
-        $html = qq(<strong>$text</strong>);
+        $html = qq(<h2>$text</h2>);
         $image->image_name = "feature-$species";
         $image->imagemap = 'yes';
         
@@ -155,11 +161,11 @@ sub feature_tables {
   my $object = $self->object;
   my $data_type = $object->param('ftype');  
   my $html;
-  my @tables;
-  my $phenotype_name;
+  my @tables;  
  
   foreach my $feature_set (@{$feature_dets}) {
     my $features = $feature_set->[0];
+    
     my $extra_columns = $feature_set->[1];
     my $feat_type = $feature_set->[2];
  
@@ -175,12 +181,6 @@ sub feature_tables {
       my $feature_count = scalar @$features;
       $data_type = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
     }
-    
-    if ($object->param('ftype') eq 'Phenotype'){
-      $phenotype_name = $object->param('phenotype_name');
-      my $code = $object->param('id');
-      $data_type = "Phenotype $phenotype_name ($code) information:";
-    }
 
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
     
@@ -190,13 +190,13 @@ sub feature_tables {
     } else {	    
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location','width' =>'15%','align'=>'left' });
       $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
-      $table->add_columns({'key'=>'names', 'title'=>'Names(s)',        'width'=>'25%','align'=>'left' });
+      $table->add_columns({'key'=>'names', 'title'=>'Name(s)',        'width'=>'25%','align'=>'left' });
     }
         
     my $c = 1;
     
     for( @{$extra_columns||[]} ) {
-      $table->add_columns({'key'=>"extra_$c",'title'=>$_,'width'=>'10%','align'=>'left' });
+      $table->add_columns({'key'=>"extra_$c",'title'=>$_,'width'=>'10%','align'=>'left' });      
       $c++;
     }
         
@@ -242,13 +242,9 @@ sub feature_tables {
               $row->{'label'}
             );            
           } 
-          if ($feat_type =~ /Variation/i && $row->{'label'}) {
-            $names = sprintf(
-              '<a href="%s/Variation/Summary?v=%s;r=%s:%d-%d">%s</a>',
-              $object->species_path, $row->{'label'},
-              $row->{'region'}, $row->{'start'}, $row->{'end'},
-              $row->{'label'}
-            );            
+          if ($feat_type =~ /Variation/i && $row->{'label'}) {            
+            my $species_path = $object->species_path;            
+            $names = qq{<a href="$species_path/Variation/Phenotype?v=$row->{'label'}">$row->{'label'}</a>};   #better way of doing a simple link
           }
           else {
             $names  = $row->{'label'} if $row->{'label'};
