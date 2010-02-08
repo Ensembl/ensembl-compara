@@ -424,17 +424,22 @@ sub adaptor {
 =cut
 
 sub get_all_Slices {
-  my ($self, @species_names) = @_;
+  my ( $self, @species_names ) = @_;
   my $slices = [];
 
   if (@species_names) {
-    foreach my $slice (@{$self->{_slices}}) {
+    foreach my $slice ( @{ $self->{_slices} } ) {
+      #Substitute _ for spaces & check if the current GenomeDB matches with 
+      #or without them
       foreach my $this_species_name (@species_names) {
-	(my $space_species_name = $this_species_name) =~ s/_/ /g; ## supports names containing underscores instead of whitespaces and vice versa
-	push(@$slices, $slice) if (($this_species_name eq $slice->genome_db->name) || ($space_species_name eq $slice->genome_db->name));
-       }
+        ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
+        push( @$slices, $slice )
+          if ( ( $this_species_name eq $slice->genome_db->name )
+          || ( $space_species_name eq $slice->genome_db->name ) );
+      }
     }
-  } else {
+  }
+  else {
     $slices = $self->{_slices};
   }
 
