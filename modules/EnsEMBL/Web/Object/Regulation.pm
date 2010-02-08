@@ -277,3 +277,5 @@ sub get_focus_set_block_features {
 sub get_focus_set_wiggle_features {
   return;
 }
+
+1;
