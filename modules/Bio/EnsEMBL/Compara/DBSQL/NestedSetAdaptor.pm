@@ -31,6 +31,28 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 # FETCH methods
 ###########################
 
+=head2 fetch_all
+
+  Arg[1]     : -none-
+  Example    : $all_trees = $proteintree_adaptor->fetch_all();
+
+  Description: Fetches from the database all the nested sets.
+  Returntype : arrayref of Bio::EnsEMBL::Compara::NestedSet
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub fetch_all {
+  my ($self, $node_id) = @_;
+
+  my $table = $self->tables->[0]->[1];
+  my $constraint = "WHERE $table.node_id = $table.root_id";
+  my $nodes = $self->_generic_fetch($constraint);
+
+  return $nodes;
+}
+
 sub fetch_node_by_node_id {
   my ($self, $node_id) = @_;
 
