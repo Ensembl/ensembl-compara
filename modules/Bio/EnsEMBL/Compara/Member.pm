@@ -452,7 +452,7 @@ sub chr_strand {
   return $self->{'_chr_strand'};
 }
 
-=head taxon_id
+=head2 taxon_id
 
 =cut
 
@@ -491,7 +491,7 @@ sub taxon {
   return $self->{'_taxon'};
 }
 
-=head genome_db_id
+=head2 genome_db_id
 
 =cut
 
@@ -1047,15 +1047,18 @@ sub get_all_peptide_Members {
 # DEPRECATED METHODS
 ####################
 
-sub source_id {
-  my $self = shift;
-  throw("Method deprecated. You can now get the source_name by directly calling source_name method\n");
-}
+=head2 get_longest_peptide_Member (deprecated)
 
+  DEPRECATED. Use the get_canonical_peptide_Member method instead.
+
+=cut
+
+# This method has been first deprecated in ensembl API 57
 sub get_longest_peptide_Member {
   my $self = shift;
 
-  throw("Method deprecated. You can now use the get_canonical_peptide_Member method\n");
+  deprecate("Method deprecated. You can now use the get_canonical_peptide_Member method\n");
+  return $self->get_canonical_peptide_Member(@_);
 }
 
 
