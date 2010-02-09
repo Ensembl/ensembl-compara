@@ -714,9 +714,24 @@ sub transHandler {
     }
   }
   
-  if (!$species && grep /$raw_path[0]/, qw(Multi multi das common default)) {
-    $species = $raw_path[0];
-    shift @path_segments;
+  if (!$species) {
+    if (grep /$raw_path[0]/, qw(Multi multi das common default)) {
+      $species = $raw_path[0];
+      shift @path_segments;
+    }
+=pod
+## UNCOMMENT THIS BLOCK TO TEST IT!
+    elsif ($path_segments[0] eq 'Gene' && $querystring) {
+      my %param = split(';|=', $querystring);
+      if (my $gene_stable_id = $param{'g'}) {
+        my ( $id_species, $object_type, $db_type ) =
+                 Bio::EnsEMBL::Registry->get_species_and_object_type($gene_stable_id);
+        if ($id_species) {
+          $species = $id_species;
+        }
+      }  
+    }
+=cut
   }
  
   @path_segments = @raw_path unless $species;
