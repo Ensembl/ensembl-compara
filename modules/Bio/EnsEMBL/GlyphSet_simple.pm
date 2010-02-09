@@ -227,7 +227,6 @@ sub _init {
     my @tag_glyphs = ();
 
     my $colours        = $self->get_colours($f);
-    # warn "$colour_key - $colours->{'feature'}, $colours->{'label'}";
     
     ## Lets see about placing labels on objects...        
     my $composite = $self->Composite();
@@ -612,7 +611,6 @@ sub _init {
       }
 
       if($bp_textwidth < ($end - $start+1)){
-        # print STDERR "X: $label - $colours->{'label'}\n";
         my $tglyph = $self->Text({
           'x'          => $start - 1,
           'y'          => ($h-$H)/2,
@@ -631,16 +629,21 @@ sub _init {
         $composite->push($tglyph);
       }
     } elsif( $style && $label ) {
+      my $font_size = $FONTSIZE;
       if( $style eq 'overlaid' ) {
-        if($bp_textwidth < ($end - $start+1)){
-          # print STDERR "X: $label - $colours->{'label'}\n";
+        ## Reduce text size slightly for wider letters (A,M,V,W)
+        if($bp_textwidth >= ($end - $start+1)){
+          $font_size = $FONTSIZE * 0.9;
+        }
+        ## Only add labels above a certain feature size
+        if ($pix_per_bp * ($end - $start+1) >= $font_size ) {
           $composite->push($self->Text({
             'x'          => $start-1,
             'y'          => ($h-$H)/2-1,
             'width'      => $end-$start+1,
             'textwidth'  => $bp_textwidth*$pix_per_bp,
             'font'       => $FONT,
-            'ptsize'     => $FONTSIZE,
+            'ptsize'     => $font_size,
             'halign'     => 'center',
             'height'     => $H,
             'colour'     => $colours->{'label'},
@@ -666,7 +669,7 @@ sub _init {
             'absolutey'  => 1,
           }));
           $composite = $t;
-	}
+	      }
       }
     }
 
