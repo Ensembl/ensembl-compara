@@ -185,7 +185,7 @@ sub get_sequence_data {
           vdb     => 'variation'
         }) : $object->species_path($species) . "/Variation/Summary?v=$variation_name;vf=$dbID;vdb=variation";
         
-        my $link_text = qq{ <a href="$url">$snp_start:$alleles</a>;};
+        my $link_text = qq{ <a href="$url">$snp_start: $variation_name $alleles</a>;};
         
         for ($s..$e) {
           # FIXME: API currently returns variations when the resequenced individuals match the reference

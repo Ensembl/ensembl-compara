@@ -173,7 +173,7 @@ sub get_sequence_data {
         
         $mk->{'variations'}->{$_}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$_} && $mk->{'codons'}->{$_}->{'class'} eq 'cu';
         
-        $variation_seq->{'seq'}->[$_]->{'letter'} = $url ? qq{<a href="$url">$ambigcode</a>} : $ambigcode;
+        $variation_seq->{'seq'}->[$_]->{'letter'} = $url ? qq{<a href="$url" title="$variation_name">$ambigcode</a>} : $ambigcode;
         $variation_seq->{'seq'}->[$_]->{'url'}    = $url;
       }
     }
