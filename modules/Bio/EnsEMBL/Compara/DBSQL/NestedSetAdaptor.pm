@@ -432,6 +432,7 @@ sub init_instance_from_rowhash {
   $node->left_index            ($rowhash->{'left_index'});
   $node->right_index           ($rowhash->{'right_index'});
   $node->distance_to_parent    ($rowhash->{'distance_to_parent'});
+  $node->clusterset_id         ($rowhash->{'clusterset_id'}) if defined $rowhash->{'clusterset_id'};
 
   return $node;
 }
