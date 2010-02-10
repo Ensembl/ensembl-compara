@@ -55,7 +55,7 @@ sub new {
     }
   }
 
-  $self->extra_populate_tree if $self->can('extra_populate_tree');
+  $self->modify_tree;
   $self->set_default_action;
   $self->set_action($ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'});
   
@@ -64,6 +64,7 @@ sub new {
 
 
 sub populate_tree      {}
+sub modify_tree        {}
 sub set_default_action {}
 
 sub model        { return $_[0]->{'model'}; }

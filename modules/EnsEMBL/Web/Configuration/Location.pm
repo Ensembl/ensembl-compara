@@ -49,7 +49,7 @@ sub context_panel {
   }
 }
 
-sub extra_populate_tree {
+sub modify_tree {
   my $self = shift;
   my $object = $self->object;
   my $availability = $object->availability;
