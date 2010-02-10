@@ -220,9 +220,9 @@ sub filter_duplicates {
 
   my @del_list = values(%{$self->{'delete_hash'}});
 
-  my $sql_gag = "delete from genomic_align_group where genomic_align_id in ";
-  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
+  my $sql_gag = "delete ignore from genomic_align_group where genomic_align_id in ";
+  my $sql_ga = "delete ignore from genomic_align where genomic_align_id in ";
+  my $sql_gab = "delete ignore from genomic_align_block where genomic_align_block_id in ";
 
   for (my $i=0; $i < scalar @del_list; $i=$i+10000) {
       my (@gab_ids, @ga_ids, @gag_ids);
