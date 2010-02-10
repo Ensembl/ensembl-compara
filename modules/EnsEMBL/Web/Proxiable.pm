@@ -25,6 +25,7 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Problem;
 
 use base qw(EnsEMBL::Web::Root);
 
