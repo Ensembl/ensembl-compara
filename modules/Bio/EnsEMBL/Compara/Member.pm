@@ -1012,12 +1012,29 @@ sub get_canonical_peptide_Member {
   return undef unless($self->adaptor);
   my $canonicalPep = undef;
   if($self->source_name eq 'ENSEMBLGENE') {
+    if ($self->adaptor) {
+      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
+      # As of now (e! 57), all AlignedMembers are ENSEMBLPEP, but we will use the same check
+      # as below to be on the safe side
+      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
+        $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
+      } else {
+        $canonicalPep = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
+      }
+    }
     $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($self->dbID);
   }
   if($self->source_name eq 'ENSEMBLPEP') {
     my $geneMember = $self->gene_member;
     return undef unless($geneMember);
-    $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
+    if ($self->adaptor) {
+      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
+      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
+        $canonicalPep = $self->adaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
+      } else {
+        $canonicalPep = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_peptide_member_for_gene_member_id($geneMember->dbID);
+      }
+    }
   }
   return $canonicalPep;
 }
