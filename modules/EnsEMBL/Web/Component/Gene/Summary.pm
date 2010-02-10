@@ -147,6 +147,9 @@ sub content {
       <dt>Transcripts</dt>
       <dd>
         <p class="toggle_text" id="transcripts_text">There $plural_1 $count $plural_2 in this gene:</p>
+    </dd>
+  </dl>
+
         <table class="toggle_table" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
         <tr>
           <th>Name</th>
@@ -220,9 +223,7 @@ sub content {
   }
   
   $html .= '
-      </table>
-    </dd>
-  </dl>';
+      </table>';
   
   my $site_type = $object->species_defs->ENSEMBL_SITETYPE;
   
