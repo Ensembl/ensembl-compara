@@ -139,6 +139,7 @@ sub get_params {
   $self->{'logic_name'} = $params->{'logic_name'} if(defined($params->{'logic_name'}));
   $self->{'collection_name'} = $params->{'collection_name'} if(defined($params->{'collection_name'}));
   $self->{'region'} = $params->{'region'} if(defined($params->{'region'}));
+  $self->{'method_link_species_set_id'} = $params->{'method_link_species_set_id'} if(defined($params->{'method_link_species_set_id'}));
 
   return;
 }
@@ -154,6 +155,9 @@ sub print_params {
   if (defined $self->{'region'}) {
     printf("   region          : %s\n", $self->{'region'});
   }
+  if(defined $self->{method_link_species_set}) {
+    printf("   method_link_species_set_id          : %d\n", $self->{method_link_species_set_id});
+  }
 }
 
 
@@ -164,6 +168,7 @@ sub createFilterDuplicatesJobs
   my $dna_collection  = $self->{'collection'};
   my $analysis = $self->{'filter_duplicates_analysis'};
   my $region = $self->{'region'};
+  my $mlss = $self->{method_link_species_set_id};
 
   my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
   if (defined $region && $region =~ //) {
@@ -180,6 +185,7 @@ sub createFilterDuplicatesJobs
     $input_hash->{'dnafrag_id'} = $dnafrag_id;
     $input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
     $input_hash->{'seq_region_end'} = $seq_region_end if (defined $seq_region_end);
+    $input_hash->{method_link_species_set_id} = $mlss if defined $mlss;
     my $input_id = main::encode_hash($input_hash);
     #printf("create_job : %s : %s\n", $analysis->logic_name, $input_id);
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
