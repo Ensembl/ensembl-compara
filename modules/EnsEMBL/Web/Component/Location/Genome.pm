@@ -82,8 +82,7 @@ sub content {
         
       if ($object->param('ftype') eq 'Phenotype'){
         my $phenotype_name = $object->param('phenotype_name');
-        my $code = $object->param('id');
-        $text = "Phenotype $phenotype_name ($code) information:";
+        $text = "Phenotype $phenotype_name information:";
       }        
 
         $used_colour{$data_type}++;        
