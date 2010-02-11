@@ -144,6 +144,13 @@ sub get_params {
   foreach my $key (keys %$params) {
     print("  $key : ", $params->{$key}, "\n");
   }
+  
+  #If we have any analysis data params parse them & load
+  if(defined $params->{analysis_data_id}) {
+    my $id = $params->{analysis_data_id};
+    my $input = $self->db()->get_AnalysisDataAdaptor()->fetch_by_dbID($id);
+    $self->get_params($input);
+  }
                       
   $self->{'pair_aligner_logic_name'} = $params->{'pair_aligner'} if(defined($params->{'pair_aligner'}));
   $self->{'query_collection_name'} = $params->{'query_collection_name'} if(defined($params->{'query_collection_name'}));
@@ -151,6 +158,8 @@ sub get_params {
 
   $self->{'method_link_species_set_id'} = $params->{'method_link_species_set_id'} 
       if(defined($params->{'method_link_species_set_id'}));
+      
+  $self->{dump_loc} = $params->{dump_loc} if defined $params->{dump_loc};
   
   return;
 }
@@ -167,6 +176,8 @@ sub print_params {
          $self->{'query_collection'}->dbID, $self->{'query_collection'}->description);
   printf("   target_collection          : (%d) %s\n",
          $self->{'target_collection'}->dbID, $self->{'target_collection'}->description);
+
+  printf("   dump_location          : %s\n", $self->{dump_loc})  if($self->{dump_loc});
 }
 
 
@@ -200,6 +211,9 @@ sub createPairAlignerJobs
       }
       if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
         $input_hash->{'qyChunkSetID'} = $query_dna->dbID;
+      }
+      if($self->{dump_loc}) {
+        $input_hash->{dump_loc} = $self->{dump_loc};
       }
     
       my $input_id = main::encode_hash($input_hash);
