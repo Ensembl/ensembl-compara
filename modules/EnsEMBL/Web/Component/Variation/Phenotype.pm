@@ -63,10 +63,10 @@ sub table_data {
       @data_row = @{ $rows{lc ($disorder)} };
       $disorder = "";
     }
-
+    my $id = $va->{'_phenotype_id'};
     my $code = $va->phenotype_name;
     my $disease;
-    my $disease_url = $object->_url({ 'species' => $object->species, 'type' => 'Location', 'action' => 'Genome', 'id' => $code, 'ftype' => 'Phenotype', 'phenotype_name'  => $disorder });     
+    my $disease_url = $object->_url({ 'species' => $object->species, 'type' => 'Location', 'action' => 'Genome', 'id' => $id, 'ftype' => 'Phenotype', 'phenotype_name'  => $disorder });     
     
     if ($disorder =~/^\w+/){ 
       $disease = $code ? qq{<dt>$disorder ($code) <a href='$disease_url'>[View on Karyotype]</a></dt>} : qq{<dt>$disorder <a href='$disease_url'>[View on Karyotype]</a></dt>};      
