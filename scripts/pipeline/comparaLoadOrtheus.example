@@ -1,0 +1,66 @@
+comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --ch-conf <compara_hive_conf_file> \
+  --master <compara-master> --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> -i enredo.out
+
+mlss_id : is the method_link_species_set_id for ortheus
+to_db : databases to populate with usind the data in the enredo.out file
+
+
+
+>cat ensembl_registry_file 
+#############################################
+use strict;
+use Bio::EnsEMBL::Utils::ConfigRegistry;
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Registry;
+
+my @aliases;
+
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -species => "ortheus",
+    -host     => "compara1",
+    -port     => "3306",
+    -user     => "ensadmin",
+    -pass     => "ensembl",
+    -dbname   => "sf5_test_LoadOrtheus",
+  );
+new Bio::EnsEMBL::DBSQL::DBAdaptor(
+    -species => "Ancestral sequences",
+    -host     => "compara1",
+    -port     => "3306",
+    -user     => "ensadmin",
+    -pass     => "ensembl",
+    -dbname   => "sf5_test_LoadOrtheus_ancestral_seqs",
+  );
+  new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -host           => "compara1",
+    -port           => "3306",
+    -user           => "ensro",
+    -dbname         => "sf5_ensembl_compara_master",
+    -species        => "compara-master"
+  );
+  new Bio::EnsEMBL::DBSQL::DBAdaptor( 
+    -host           => "ens-staging1",
+    -port           => 3306,
+    -user           => "ensro",
+    -dbname         => "loxodonta_africana_core_57_3",
+    -species        => "Loxodonta africana"
+  );
+
+1;
+#############################################
+>cat compara_hive_conf_file
+{       HIVE_NAME  => "ortheus",
+        INNODB_TABLES  => ["synteny_region", "dna", "seq_region"],
+        SET_INTERNAL_IDS => {
+                table_name => method_link_species_set_id,
+        },
+        NO_SET_DNA_TABLES => 0,
+
+}
+
+#HIVE_NAME : the name lsf will call your jobs
+#INNODB_TABLES : change these tables to innodb
+#SET_INTERNAL_IDS : for this hash of table names set them the primary key field to start at (method_link_species_set_id * 10000000000 + 1);
+#The primary keys in the tables ("genomic_align", "genomic_align_block", "genomic_align_group", "genomic_align_tree") are automatically set to
+#(ortheus_mlssid * 10000000000 + 1) unless the NO_SET_DNA_TABLES is set to 1
