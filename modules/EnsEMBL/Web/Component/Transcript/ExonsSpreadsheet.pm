@@ -15,23 +15,22 @@ sub _init {
 }
 
 sub content {
-  my $self          = shift;
-  my $object        = $self->object;
-  my $seq_cols      = $object->param('seq_cols') || 60;
-  my $sscon         = $object->param('sscon')    || 25;   # no of bp to show either side of a splice site
-  my $flanking      = $object->param('flanking') || 50;   # no of bp up/down stream of transcript
-  my $full_seq      = $object->param('fullseq') eq 'yes'; # flag to display full sequence (introns and exons)
-  my $only_exon     = $object->param('oexon')   eq 'yes'; # display only exons
-  my $entry_exon    = $object->param('exon');
-  my $species_path  = $object->species_defs->species_path;
-  my $transcript    = $object->Obj;
-  my $coding_start  = $transcript->coding_region_start;
-  my $coding_end    = $transcript->coding_region_end;
-  my @exons         = @{$transcript->get_all_Exons};
-  my $strand        = $exons[0]->strand;
-  my $chr_name      = $exons[0]->slice->seq_region_name;
-  my $dots          = '.' x ($seq_cols - 2*($sscon % ($seq_cols/2))); # works out length needed to join intron ends with dots;
-  my $i             = 0;
+  my $self         = shift;
+  my $object       = $self->object;
+  my $seq_cols     = $object->param('seq_cols') || 60;
+  my $sscon        = $object->param('sscon')    || 25;   # no of bp to show either side of a splice site
+  my $flanking     = $object->param('flanking') || 50;   # no of bp up/down stream of transcript
+  my $full_seq     = $object->param('fullseq') eq 'yes'; # flag to display full sequence (introns and exons)
+  my $only_exon    = $object->param('oexon')   eq 'yes'; # display only exons
+  my $entry_exon   = $object->param('exon');
+  my $transcript   = $object->Obj;
+  my $coding_start = $transcript->coding_region_start;
+  my $coding_end   = $transcript->coding_region_end;
+  my @exons        = @{$transcript->get_all_Exons};
+  my $strand       = $exons[0]->strand;
+  my $chr_name     = $exons[0]->slice->seq_region_name;
+  my $dots         = '.' x ($seq_cols - 2*($sscon % ($seq_cols/2))); # works out length needed to join intron ends with dots;
+  my $i            = 0;
   my @data;
   
   # Loop over each exon
@@ -86,7 +85,7 @@ sub content {
     
     push @data, {
       Number     => $i,
-      exint      => qq{<a href="$species_path/contigview?l=$chr_name:$exon_start-$exon_end;context=100">$exon_id</a>},
+      exint      => sprintf('<a href="%s">%s</a>', $object->_url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $exon_id),
       Start      => $self->thousandify($exon_start),
       End        => $self->thousandify($exon_end),
       StartPhase => $exon->phase     >= 0 ? $exon->phase     : '-',
@@ -118,7 +117,7 @@ sub content {
       
       push @data, {
         Number   => '&nbsp;',
-        exint    => qq{<a href="$species_path/contigview?l=$chr_name:$intron_start-$intron_end;context=100">$intron_id</a>},
+        exint    => sprintf('<a href="%s">%s</a>', $object->_url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $intron_id),
         Start    => $self->thousandify($intron_start),
         End      => $self->thousandify($intron_end),
         Length   => $self->thousandify($intron_length),
