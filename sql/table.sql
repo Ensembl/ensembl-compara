@@ -9,7 +9,7 @@
 # This table stores meta information about the compara database
 #
 
-CREATE TABLE meta (
+CREATE TABLE IF NOT EXISTS meta (
 
   meta_id                     INT NOT NULL AUTO_INCREMENT,
   species_id                  INT UNSIGNED DEFAULT 1,
@@ -445,7 +445,7 @@ CREATE TABLE subset_member (
 -- gff_source, gff_feature
 --  - how to make a gff dump from features with this analysis
 
-CREATE TABLE analysis (
+CREATE TABLE IF NOT EXISTS analysis (
 
   analysis_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
   created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -468,7 +468,7 @@ CREATE TABLE analysis (
 
 ) COLLATE=latin1_swedish_ci;
 
-CREATE TABLE analysis_description (
+CREATE TABLE IF NOT EXISTS analysis_description (
   analysis_id                int(10) unsigned NOT NULL,
   description                text,
   display_label              varchar(255),
