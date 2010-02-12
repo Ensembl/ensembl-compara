@@ -13,6 +13,7 @@ sub init {
     flanking         50
     fullseq          no
     oexon            no
+    variation        off
   ));
   
   $view_config->storable = 1;
@@ -55,6 +56,18 @@ sub form {
     label => 'Show exons only',
     name  => 'oexon',
     value => 'yes'
+  });
+  
+  $view_config->add_form_element({
+    type   => 'DropDown', 
+    select => 'select',
+    name   => 'variation',
+    label  => 'Show variation features',
+    values => [
+      { value => 'off',  name => 'No'  },
+      { value => 'exon', name => 'In exons only' },
+      { value => 'on',   name => 'Yes' },
+    ]
   });
 }
 
