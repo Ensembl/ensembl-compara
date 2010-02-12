@@ -151,14 +151,7 @@ sub get_exon_sequence_data {
     $sequence[0]->{'class'} = 'eu';
   }
   
-  if ($config->{'variation'} ne 'off') {
-    foreach my $vf (@{$exon->feature_Slice->get_all_VariationFeatures}) {
-      for ($vf->start-1..$vf->end-1) {
-        $sequence[$_]->{'class'} .= ' sn';
-        $sequence[$_]->{'title'} .= ($sequence[$_]->{'title'} ? ', ' : '') . $vf->variation_name;
-      }
-    }
-  }
+  $self->add_variations($exon->feature_Slice, \@sequence) if $config->{'variation'} ne 'off';
   
   return \@sequence;
 }
@@ -182,14 +175,7 @@ sub get_intron_sequence_data {
       $end->{'sequence'}   = [ map {{ letter => $_ }} split //, lc $end->{'slice'}->seq   ];
       
       if ($config->{'variation'} eq 'on') {
-        foreach my $i ($start, $end) {
-          foreach my $vf (@{$i->{'slice'}->get_all_VariationFeatures}) {
-            for ($vf->start-1..$vf->end-1) {
-              $i->{'sequence'}->[$_]->{'class'} .= ' sn';
-              $i->{'sequence'}->[$_]->{'title'} .= ($i->{'sequence'}->[$_]->{'title'} ? ', ' : '') . $vf->variation_name;
-            }
-          }
-        }
+        $self->add_variations($_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
       @sequence = $strand == 1 ? (@{$start->{'sequence'}}, @dots, @{$end->{'sequence'}}) : (@{$end->{'sequence'}}, @dots, @{$start->{'sequence'}});
@@ -198,14 +184,7 @@ sub get_intron_sequence_data {
       
       @sequence = map {{ letter => $_ }} split //, lc $slice->seq;
       
-      if ($config->{'variation'} eq 'on') {
-        foreach my $vf (@{$slice->get_all_VariationFeatures}) {
-          for ($vf->start-1..$vf->end-1) {
-            $sequence[$_]->{'class'} .= ' sn';
-            $sequence[$_]->{'title'} .= ($sequence[$_]->{'title'} ? ', ' : '') . $vf->variation_name;
-          }
-        }
-      }
+      $self->add_variations($slice, \@sequence) if $config->{'variation'} eq 'on';
     }
   };
   
@@ -234,20 +213,24 @@ sub get_flanking_sequence_data {
   $downstream->{'sequence'} = [ map {{ letter => $_ }} split //, lc $downstream->{'slice'}->seq ];
   
   if ($config->{'variation'} eq 'on') {
-    foreach my $f ($upstream, $downstream) {
-      foreach my $vf (@{$f->{'slice'}->get_all_VariationFeatures}) {
-        for ($vf->start-1..$vf->end-1) {
-          $f->{'sequence'}->[$_]->{'class'} .= ' sn';
-          $f->{'sequence'}->[$_]->{'title'} .= ($f->{'sequence'}->[$_]->{'title'} ? ', ' : '') . $vf->variation_name;
-        }
-      }
-    }
+    $self->add_variations($_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
   }
   
   my @upstream_sequence   = (@dots, @{$upstream->{'sequence'}});
   my @downstream_sequence = (@{$downstream->{'sequence'}}, @dots);
   
   return (\@upstream_sequence, \@downstream_sequence);
+}
+
+sub add_variations {
+  my ($self, $slice, $sequence) = @_;
+  
+  foreach my $vf (@{$slice->get_all_VariationFeatures}) {
+    for ($vf->start-1..$vf->end-1) {
+      $sequence->[$_]->{'class'} .= ' sn';
+      $sequence->[$_]->{'title'} .= ($sequence->[$_]->{'title'} ? ', ' : '') . $vf->variation_name;
+    }
+  }
 }
 
 1;
