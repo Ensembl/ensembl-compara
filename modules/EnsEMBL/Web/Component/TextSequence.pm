@@ -727,6 +727,7 @@ sub build_sequence {
     e0  =>  [ 4,  { 'color' => "#$styles->{'SEQ_EXON0'}->{'default'}" } ],
     e1  =>  [ 5,  { 'color' => "#$styles->{'SEQ_EXON1'}->{'default'}" } ],
     e2  =>  [ 6,  { 'color' => "#$styles->{'SEQ_EXON2'}->{'default'}" } ],
+    eu  =>  [ 6,  { 'color' => "#$styles->{'SEQ_EXONUTR'}->{'default'}" } ],
     eo  =>  [ 7,  { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}->{'default'}" } ],
     eg  =>  [ 8,  { 'color' => "#$styles->{'SEQ_EXONGENE'}->{'default'}", 'font-weight' => "bold" } ],
     c0  =>  [ 9,  { 'background-color' => "#$styles->{'SEQ_CODONC0'}->{'default'}" } ],
