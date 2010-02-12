@@ -296,7 +296,7 @@ sub fetch_by_Member_id_Member_id {
 
   throw("Returns more than one element") if (1 < scalar @$homology);
 
-  return @{$homology}->[0];
+  return shift @{$homology};
 }
 
 
