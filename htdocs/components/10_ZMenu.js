@@ -446,6 +446,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   show: function () {
     var menuWidth   = parseInt(this.width());
     var windowWidth = $(window).width() - 10;
+    var scrollLeft  = $(window).scrollLeft();
     
     var css = {
       left: this.position.left, 
@@ -453,8 +454,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       position: 'absolute'
     };
     
-    if (this.position.left + menuWidth > windowWidth) {
-      css.left = windowWidth - menuWidth;
+    if (this.position.left + menuWidth - scrollLeft > windowWidth) {
+      css.left = windowWidth + scrollLeft - menuWidth;
     }
     
     Ensembl.EventManager.trigger('panelToFront', this.id);
