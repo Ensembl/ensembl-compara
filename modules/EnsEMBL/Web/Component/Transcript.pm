@@ -10,7 +10,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use Data::Dumper;
+use Bio::Perl qw(translate_as_string);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Document::SpreadSheet;
@@ -56,7 +56,7 @@ sub markup_variation {
     },
     'insert' => { 
       'class' => 'si', 
-      'title' => sub { shift; $_->{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = Bio::Perl::translate_as_string($_->{'alleles'}); return "Insert: $_->{'alleles'}" }
+      'title' => sub { shift; $_->{'alleles'} = join '', @{$_->{'nt'}}; $_->{'alleles'} = translate_as_string($_->{'alleles'}); return "Insert: $_->{'alleles'}" }
     },
     'delete' => { 
       'class' => 'sd', 
