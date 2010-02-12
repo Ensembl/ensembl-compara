@@ -993,8 +993,11 @@ sub gene_label {
 sub transcript_key {
   my ($self, $transcript, $gene) = @_;
   my $pattern = $self->my_config('colour_key') || '[biotype]';
+
+  #hate having to put ths hack here, needed because any logic_name specific web_data entries
+  #get lost when the track is merged - needs rewrite of imageconfig merging code
   if ($transcript->analysis->logic_name =~ /ensembl_havana/) {
-    return 'merged';
+     return 'merged';
   }
   $pattern =~ s/\[gene.(\w+)\]/$1 eq 'logic_name' ? $gene->analysis->$1 : $gene->$1/eg;
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
