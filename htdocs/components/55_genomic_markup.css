@@ -1,15 +1,7 @@
 /* SNP sequence markup */   /* Feature colours - MUST BE FIRST */
 .alt_allele   { color: red; font-weight: bold }
 
-/* Exon view */
-.exons_flank  { color: green }
-.exons_utr    { color: #9400d3 }
-.exons_exon   { color: black }
-.exons_intron { color: blue }   
-.exons_flank, .exons_utr, .exons_intron, .exons_exon { font-family: Courier New, Courier, Monaco, monospace; margin: 0; padding: 0; }
-
 .orthologues { width: 100% }
-
 
 /* Feature colours - MUST BE FIRST */
 span.con { background-color: [[SEQ_CONSERVATION]] }
@@ -21,6 +13,8 @@ span.end { color: [[SEQ_REGION_CHANGE]]; background-color: [[SEQ_REGION_CHANGE_B
 span.e0 { color: [[SEQ_EXON0]] }
 span.e1 { color: [[SEQ_EXON1]] }
 span.e2 { color: [[SEQ_EXON2]] }
+span.eu { color: [[SEQ_EXONUTR]] }
+span.ef { color: [[SEQ_EXONFLANK]] }
 span.eo { background-color: [[SEQ_EXONOTHER]] }
 span.eg { color: [[SEQ_EXONGENE]]; font-weight: bold }
 
@@ -50,6 +44,8 @@ div.text_seq_buttons { float: right; margin-bottom: 1em; position: relative; }
 div.text_seq_buttons div { float: left; margin-left: 1em; }
 
 pre.text_sequence { margin-top: 0; float: left; }
+pre.exon_sequence { margin: 0; }
+pre.exon_sequence a { text-decoration: none; color: inherit; }
 .sequence_key { margin-bottom: 1em; }
 
 div.alignment_list p { margin-top: 1em; }
