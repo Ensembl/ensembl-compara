@@ -683,11 +683,11 @@ sub hits2html {
   print qq(<table class="ss tint">\n);
   print qq(<tr
             <th>No.</th>
-            <th>Interpro name</th>
+            <th>InterPro name</th>
             <th>Number of genes</th>
             <th>Number of Ensembl hits</th>
             <th>No.</th>
-            <th>Interpro name</th>
+            <th>InterPro name</th>
             <th>Number of genes</th>
             <th>Number of Ensembl hits</th>
          </tr>
