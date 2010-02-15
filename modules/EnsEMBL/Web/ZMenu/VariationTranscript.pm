@@ -44,7 +44,8 @@ sub content {
     
     $self->add_entry({
       label_html => 'Export Protein',
-      link       => $object->_url({ type => 'Transcript', action => 'Export/fasta', t => $trans_id, st => 'peptide', _format => 'Text' }),
+      link       => $object->_url({ type => 'Transcript', action => 'Export/fasta', t => $trans_id, param => 'peptide', _format => 'Text' }),
+      extra      => { external => 1 },
       position   => 8
     });
   }
@@ -56,7 +57,8 @@ sub content {
   
   $self->add_entry({
     label_html => 'Export cDNA',
-    link       => $object->_url({ type => 'Transcript', action => 'Export/fasta', t => $trans_id, st => 'cdna', _format =>'Text' })
+    link       => $object->_url({ type => 'Transcript', action => 'Export/fasta', t => $trans_id, param => 'cdna', _format => 'Text' }),
+    extra      => { external => 1 }
   });
 }
 
