@@ -677,10 +677,10 @@ sub transHandler {
   ## Identify the species element, if any
   my ($species, @path_segments);
  
-  if (@raw_path == 1 && $raw_path[0] && $raw_path[0] !~ /\.\w{1,4}$/) {
+  ## Check for stable id URL (/id/ENSG000000nnnnnn)
+  if ($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) {
     my $uri;
-    ## Stable ID only, so rewrite URL
-    my $stable_id = $raw_path[0];
+    my $stable_id = $raw_path[1];
     my ( $species, $object_type, $db_type ) =
                  Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
     if ($species && $object_type) {
@@ -719,8 +719,6 @@ sub transHandler {
       $species = $raw_path[0];
       shift @path_segments;
     }
-=pod
-## UNCOMMENT THIS BLOCK TO TEST IT!
     elsif ($path_segments[0] eq 'Gene' && $querystring) {
       my %param = split(';|=', $querystring);
       if (my $gene_stable_id = $param{'g'}) {
@@ -731,7 +729,6 @@ sub transHandler {
         }
       }  
     }
-=cut
   }
  
   @path_segments = @raw_path unless $species;
