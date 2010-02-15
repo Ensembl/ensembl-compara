@@ -9,18 +9,20 @@ sub set_title {
   my $title = shift;
   return unless $self->can('title');
   return unless $self->title;
-  $self->title->set(sprintf '%s %s: %s %s', $self->species_defs->ENSEMBL_SITE_NAME, $self->species_defs->ENSEMBL_VERSION, $self->species_defs->SPECIES_BIO_NAME, $title);
+  my $species_defs = $self->species_defs;
+  $self->title->set(sprintf '%s %s: %s %s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, $title);
 }
 
 sub _basic_HTML {
   my $self = shift;
+  my $species_defs = $self->species_defs;
   
   $self->set_doc_type('XHTML', '1.0 Trans');
   $self->_init;
   $self->add_body_attr('id' => 'ensembl-webpage');
   
   if ($self->{'input'} && $self->{'input'}->param('debug') eq 'js') {
-    foreach my $root (reverse @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
+    foreach my $root (reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS}) {
       my $dir = "$root/components";
 
       if (-e $dir && -d $dir) {
@@ -32,39 +34,40 @@ sub _basic_HTML {
       }
     }
   } else {
-    $self->body_javascript->add_source(sprintf '/%s/%s.js', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_JS_NAME)
+    $self->body_javascript->add_source(sprintf '/%s/%s.js', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_JS_NAME)
   }
 
-  $self->stylesheet->add_sheet('all', sprintf '/%s/%s.css', $self->species_defs->ENSEMBL_JSCSS_TYPE, $self->species_defs->ENSEMBL_CSS_NAME);
+  $self->stylesheet->add_sheet('all', sprintf '/%s/%s.css', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_CSS_NAME);
 }
  
 sub _common_HTML {
   my $self = shift;
   
   $self->_basic_HTML; # Main document attributes
-
-  my $style = $self->species_defs->ENSEMBL_STYLE;
+  
+  my $species_defs = $self->species_defs;
+  my $style = $species_defs->ENSEMBL_STYLE;
  
   if ($self->can('links')) {
     $self->links->add_link({ 
       rel  => 'icon',
       type => 'image/png',
-      href => $self->species_defs->ENSEMBL_IMAGE_ROOT . $style->{'SITE_ICON'}
+      href => $species_defs->ENSEMBL_IMAGE_ROOT . $style->{'SITE_ICON'}
     });
     
     $self->links->add_link({
       rel   => 'search',
       type  => 'application/opensearchdescription+xml',
-      href  => $self->species_defs->ENSEMBL_BASE_URL . '/opensearch/all.xml',
-      title => $self->species_defs->ENSEMBL_SITE_NAME_SHORT . ' (All)'
+      href  => $species_defs->ENSEMBL_BASE_URL . '/opensearch/all.xml',
+      title => $species_defs->ENSEMBL_SITE_NAME_SHORT . ' (All)'
     });
     
     if ($ENV{'ENSEMBL_SPECIES'}) {
       $self->links->add_link({
         rel   => 'search',
         type  => 'application/opensearchdescription+xml',
-        href  => $self->species_defs->ENSEMBL_BASE_URL . "/opensearch/$ENV{'ENSEMBL_SPECIES'}.xml",
-        title => sprintf('%s (%s)', $self->species_defs->ENSEMBL_SITE_NAME_SHORT, substr($self->species_defs->SPECIES_BIO_SHORT, 0, 5))
+        href  => $species_defs->ENSEMBL_BASE_URL . "/opensearch/$ENV{'ENSEMBL_SPECIES'}.xml",
+        title => sprintf('%s (%s)', $species_defs->ENSEMBL_SITE_NAME_SHORT, substr($species_defs->SPECIES_BIO_SHORT, 0, 5))
       });
     }
     
@@ -83,12 +86,12 @@ sub _common_HTML {
   $self->logo->href          = $style->{'SITE_LOGO_HREF'};
   $self->logo->print_image   = $style->{'PRINT_LOGO'};
   
-  $self->copyright->sitename = $self->species_defs->ENSEMBL_SITETYPE;
+  $self->copyright->sitename = $species_defs->ENSEMBL_SITETYPE;
   
   if ($self->can('tools')) {
-    $self->tools->logins      = $self->species_defs->ENSEMBL_LOGINS;
-    $self->tools->blast       = $self->species_defs->ENSEMBL_BLAST_ENABLED;
-    $self->tools->biomart     = $self->species_defs->ENSEMBL_MART_ENABLED;
+    $self->tools->logins      = $species_defs->ENSEMBL_LOGINS;
+    $self->tools->blast       = $species_defs->ENSEMBL_BLAST_ENABLED;
+    $self->tools->biomart     = $species_defs->ENSEMBL_MART_ENABLED;
     $self->tools->mirror_icon = $style->{'MIRROR_ICON'};
   }
   
