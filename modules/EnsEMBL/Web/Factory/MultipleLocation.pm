@@ -106,7 +106,7 @@ sub createObjects {
     };
   }
   
-  $object->[1]{'_multi_locations'} = \@slices;
+  $object->__data->{'_multi_locations'} = \@slices;
 }
 
 sub generate_url {
