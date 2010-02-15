@@ -72,15 +72,12 @@ member sequence ncbi_taxa_name ncbi_taxa_node method_link genome_db species_set 
 # rel.pre57     ~6 minutes
 # rel.57        ~4 minutes
 
-time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE member ENGINE=InnoDB'
-time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE sequence ENGINE=InnoDB'
-time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e "ALTER TABLE family_member ENGINE=InnoDB"
+time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE member ENGINE=InnoDB ; ALTER TABLE sequence ENGINE=InnoDB ; ALTER TABLE family_member ENGINE=InnoDB '
 # rel.57        ~6 minutes
 
-# starting from release-58 there will be 3 separate ranges of members, so the following queries will have to be run:
+# starting from release-58 there will be 3 separate ranges of members and sequences, so the following command will have to be run instead (check the constants!):
 #
-#mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE member ENGINE=InnoDB, AUTO_INCREMENT=100000000'
-#mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE sequence ENGINE=InnoDB, AUTO_INCREMENT=100000000'
+#mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -e 'ALTER TABLE member ENGINE=InnoDB, AUTO_INCREMENT=100000000 ; ALTER TABLE sequence ENGINE=InnoDB, AUTO_INCREMENT=100000000 ; ALTER TABLE family_member ENGINE=InnoDB '
 
 
 
@@ -91,15 +88,15 @@ mysql --defaults-group-suffix=_compara2 lg4_compara_families_57
 
 INSERT INTO analysis (created, logic_name, module, parameters)
     VALUES (NOW(), 'load_uniprot_factory', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-    "{ 'module' => 'Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt', 'logic_name' => 'load_uniprot', 'parameters' => { }, 'inputlist' => ['FUN','HUM','MAM','ROD','VRT','INV'], 'eval' => 0, 'hive_capacity' => 20  }");
+    "{ 'module' => 'Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt', 'logic_name' => 'load_uniprot', 'parameters' => { }, 'inputlist' => ['FUN','HUM','MAM','ROD','VRT','INV'], 'numeric' => 0, 'hive_capacity' => 20  }");
 
 INSERT INTO analysis_job (analysis_id, input_id) VALUES (
     (SELECT analysis_id FROM analysis WHERE logic_name='load_uniprot_factory'),
-    "{ 'input_id' => { 'srs' => 'SWISSPROT', 'tax_div' => '$InputLine' } }");
+    "{ 'input_id' => { 'srs' => 'SWISSPROT', 'tax_div' => '$RangeStart' } }");
 
 INSERT INTO analysis_job (analysis_id, input_id) VALUES (
     (SELECT analysis_id FROM analysis WHERE logic_name='load_uniprot_factory'),
-    "{ 'input_id' => { 'srs' => 'SPTREMBL', 'tax_div' => '$InputLine' } }");
+    "{ 'input_id' => { 'srs' => 'SPTREMBL', 'tax_div' => '$RangeStart' } }");
 
 QUIT
 
@@ -176,6 +173,11 @@ time /software/ensembl/compara/blast-2.2.21/bin/formatdb -p T -l metazoa_57.pep.
 
 rm -f metazoa_57.pep.formatdb.log
 
+# Alternative way using C++ Blast binaries:
+#
+bsub -I "time /software/ensembl/compara/ncbi-blast-2.2.22+/bin/makeblastdb -dbtype prot -logfile makeblastdb.log -in metazoa_57.pep"
+# rel.57    (blast+ 2.2.22) 8m; 4.5m; 2.5m
+
 
 
 7- Load and run FamilyBlast.pm analysis
@@ -185,16 +187,14 @@ mysql --defaults-group-suffix=_compara2 lg4_compara_families_57
 
 INSERT INTO analysis (created, logic_name, module, parameters)
     VALUES (NOW(), 'family_blast_factory', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-    "{ 'module' => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast', 'logic_name' => 'family_blast', 'parameters' => { 'fastadb' => '/lustre/scratch103/ensembl/lg4/family_57/metazoa_57.pep', 'idprefixed' => 1 }, 'eval' => 1, 'hive_capacity' => 1000  }");
+    "{ 'module' => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast', 'logic_name' => 'family_blast', 'parameters' => { 'fastadb' => '/lustre/scratch103/ensembl/lg4/family_57/metazoa_57.pep', 'idprefixed' => 1 }, 'numeric' => 1, 'hive_capacity' => 1000  }");
 
 #
-# TODO: In rel.58 the sequence_ids will be coming from an sql query
-# (giving all sequence_ids for members with source_name in ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL', 'ENSEMBLPEP').
-# This not-completely-contiguous range will have to be split into chunks of 100 ids in each.
+# NB: the following line is experimental and has never been run before (should support non-contiguous ranges for rel.58) :
 #
 INSERT INTO analysis_job (analysis_id, input_id) VALUES (
     (SELECT analysis_id FROM analysis WHERE logic_name='family_blast_factory'),
-    "{ 'start' => 1, 'end' => 2595973, 'step' => 100, 'input_id' => { 'sequence_id' => '$RangeStart', 'minibatch' => '$RangeCount' } }");
+    "{ 'inputquery' => 'SELECT DISTINCT s.sequence_id FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN (\"Uniprot/SPTREMBL\", \"Uniprot/SWISSPROT\", \"ENSEMBLPEP\") ', 'step' => 100, 'input_id' => { 'sequence_id' => '$RangeStart', 'minibatch' => '$RangeCount' } }");
 
 QUIT
 
@@ -305,11 +305,11 @@ mysql --defaults-group-suffix=_compara2 lg4_compara_families_57
 
 INSERT INTO analysis (created, logic_name, module, parameters)
     VALUES (NOW(), 'family_mafft_factory', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-    "{ 'module' => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft', 'logic_name' => 'family_mafft', 'inputquery' => 'SELECT family_id FROM family_member GROUP BY family_id HAVING count(*)>1', 'randomize' => 1, 'eval' => 1, 'hive_capacity' => 400, 'batch_size' => 10  }");
+    "{ 'module' => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft', 'logic_name' => 'family_mafft', 'inputquery' => 'SELECT family_id FROM family_member GROUP BY family_id HAVING count(*)>1', 'randomize' => 1, 'numeric' => 1, 'hive_capacity' => 400, 'batch_size' => 10  }");
 
 INSERT INTO analysis_job (analysis_id, input_id) VALUES (
     (SELECT analysis_id FROM analysis WHERE logic_name='family_mafft_factory'),
-    "{ 'input_id' => { 'family_id' => '$InputLine' } }");
+    "{ 'input_id' => { 'family_id' => '$RangeStart' } }");
 
 QUIT
 
