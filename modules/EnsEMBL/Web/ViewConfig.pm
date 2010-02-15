@@ -2,6 +2,7 @@ package EnsEMBL::Web::ViewConfig;
 
 use strict;
 
+use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use URI::Escape qw(uri_escape uri_unescape);
@@ -208,13 +209,34 @@ sub update_from_input {
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_config_strings {
   my ($self, $session, $r) = @_;
-  my $input = $session->input;
-  my $flag = 0;
+  my $input       = $session->input;
+  my $updated     = 0;
+  my $not_updated = 0;
   my $params_removed;
   
   if ($input->param('config')) {
     foreach my $v (split /,/, $input->param('config')) {
       my ($k, $t) = split /=/, $v, 2;
+      
+      if ($k =~ /^(cookie|image)_width$/) {
+        my $cookie_host  = $session->get_species_defs->ENSEMBL_COOKIEHOST;
+        
+        # Set width
+        if ($t != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
+          my $cookie = new CGI::Cookie(
+            -name    => 'ENSEMBL_WIDTH',
+            -value   => $t,
+            -domain  => $cookie_host,
+            -path    => '/',
+            -expires => $t =~ /\d+/ ? 'Monday, 31-Dec-2037 23:59:59 GMT' : 'Monday, 31-Dec-1970 00:00:01 GMT'
+          );
+          
+          $r->headers_out->add('Set-cookie' => $cookie);
+          $r->err_headers_out->add('Set-cookie' => $cookie);
+          $self->altered = 1;
+        }
+      }
+      
       $self->set($k, $t);
     }
     
@@ -229,10 +251,7 @@ sub update_from_config_strings {
     $input->delete('config');
   }
   
-  my $flag = 0;
-  
   foreach my $name ($self->image_configs) {
-    my $string = $input->param($name);
     my @values = split /,/, $input->param($name);
     
     if (@values) {
@@ -252,7 +271,7 @@ sub update_from_config_strings {
         my $server = $v =~ /url=(https?:[^ +]+)/ ? $1 : '';
         my $dsn    = $v =~ /dsn=(\w+)/ ? $1 : '';
         
-        push @values, sprintf 'das:%s=normal', uri_escape("$server/$dsn") if $r;
+        push @values, sprintf 'das:%s=normal', uri_escape("$server/$dsn");
         $params_removed = 1;
       }
       
@@ -298,7 +317,7 @@ sub update_from_config_strings {
             );
             
             my $nd = $ic->get_node("url_$code");
-            $flag += $nd->set_user('display', $render) if $nd; # Then we have to set the renderer
+            $updated += $nd->set_user('display', $render) if $nd; # Then we have to set the renderer
           } elsif ($type eq 'das') {
             $p = uri_unescape($p);
             
@@ -319,27 +338,35 @@ sub update_from_config_strings {
                 message  => sprintf('You have attached a DAS source with DSN: %s to this display', encode_entities($p))
               );
               
-              $flag++;
+              $updated++;
             }
           }
         } else {
-          my $nd = $ic->get_node($key);
-          $flag += $nd->set_user('display', $render) if $nd;
+          my $nd = $ic->get_node($key);          
+          
+          next unless $nd;
+          
+          # Only allow track enabling/disabling. Don't allow enabled tracks' renders to be changed.
+          if ($render eq 'off' || $nd->get('display') eq 'off') {
+            $updated += $nd->set_user('display', $render);
+          } else {
+            $not_updated++;
+          }
         }
       }
     }
   }
   
-  if ($flag) {
+  if ($updated || $not_updated) {
     $session->add_data(
       type     => 'message',
       function => '_info',
       code     => 'image_config',
-      message  => 'The link you visited has made changes to the tracks displayed on this page'
+      message  => $updated ? 'The link you followed has made changes to the tracks displayed on this page' : 'The link you followed requested changes to the tracks displayed on this page but no changes occured'
     );
   }
   
-  $self->altered = 1 if $flag;
+  $self->altered = 1 if $updated;
   $session->store;
 
   return $params_removed ? $input->self_url : undef;
