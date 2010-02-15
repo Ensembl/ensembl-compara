@@ -264,7 +264,7 @@ sub dispatch_bsub {
       $project_name=  join ':', $self->program_name, $db_name, $self->seq->alphabet;   
    }
    else{
-      (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z_]*\..*\.a([-\w+])\.(\w+)\.fa/ENSEMBL.\1\2.\3.\4/;
+      (my $db_name = $self->database) =~ s/([A-Z])[a-z]+_([a-z]{3})[a-z_]*\..*\.a([-\w+])\.(\w+)\.fa/ENSEMBL.$1$2.$3.$4/;
       $project_name = join ':', $self->program_name, $db_name, $self->seq->length, $self->seq->alphabet;
    }
 
