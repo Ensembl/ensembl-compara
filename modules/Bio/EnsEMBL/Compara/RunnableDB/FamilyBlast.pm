@@ -180,13 +180,11 @@ sub run {
         return 1;
     }
 
-    my $fastadb                 = $self->param('fastadb')   || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
-    my $minibatch               = $self->param('minibatch') || 1;
+    my $fastadb                 = $self->param('fastadb')       || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
+    my $minibatch               = $self->param('minibatch')     || 1;
 
-    my $blast_version           = $self->param('blast_version') || 'blast-2.2.21';
-    my $blast_root              = $self->param('blast_root')    || ( '/software/ensembl/compara/' . $blast_version );
-    my $blastmat_directory      = $self->param('blastmat_dir')  || ( $blast_root . '/data' );
-    my $blastall_executable     = $self->param('blastall_exec') || ( $blast_root . '/bin/blastall' ); # a soft link introduced into the directory structure of version 2.2.6 to conform with the pattern
+    my $blast_version           = $self->param('blast_version') || 'ncbi-blast-2.2.22+';
+    my $blastp_executable       = $self->param('blastp_exec')   || ( '/software/ensembl/compara/' . $blast_version . '/bin/blastp' );
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
 
@@ -200,15 +198,13 @@ sub run {
         close FASTA;
     }
 
-    $ENV{BLASTMAT} = $blastmat_directory;
-
-    my $cmd = "$blastall_executable -d $fastadb -p blastp -e $evalue_limit -v $tophits -m 9 -o $blast_outfile";
+    my $cmd = "$blastp_executable -db $fastadb -evalue $evalue_limit -num_alignments $tophits -out $blast_outfile -outfmt 7";
 
     if($debug) {
         warn "CMD:\t$cmd\n";
     }
 
-    open( BLAST, "| $cmd") || die "could not execute $blastall_executable, returned error code: $!";
+    open( BLAST, "| $cmd") || die "could not execute $blastp_executable, returned error code: $!";
     print BLAST @$fasta_list;
     close BLAST;
 
