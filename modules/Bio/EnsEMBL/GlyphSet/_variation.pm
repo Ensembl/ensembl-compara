@@ -19,9 +19,17 @@ sub features {
   return $self->fetch_features;
 }
 
+sub check_set {
+  my ($self, $f, $sets) = @_; 
+  foreach ( @{$f->get_all_VariationSets} ) {
+    return 1 if $sets->{$_->name};
+  }
+  return 0;
+}
+
 sub check_source {
   my ($self,$f,$sources) = @_;
-  foreach ( @{$f->get_all_sources} ) {
+  foreach ( @{$f->get_all_sources} ) { 
     return 1 if $sources->{$_};
   }
   return 0;
@@ -31,8 +39,10 @@ sub fetch_features {
   my ($self) = @_;
 
   unless( $self->cache( $self->{'my_config'}->key ) ) {
-    my $sources = $self->my_config('sources');
+    my $sources = $self->my_config('sources'); 
        $sources = { map { ($_,1) } @$sources } if $sources;
+    my $sets = $self->my_config('sets');
+       $sets = { map { ($_,1) } @$sets } if $sets;
     my %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
 
 ## Add a filtering step here...
@@ -41,6 +51,7 @@ sub fetch_features {
       sort { $a->[0] <=> $b->[0] }  ## to make sure that "most functional" snps appear first!
       map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
       grep { $sources ? $self->check_source($_,$sources) : 1 } ## If sources filter by source!!
+      grep { $sets ? $self->check_set($_,$sets) : 1 } ## If sets filter by set!!
       grep { $_->map_weight < 4 }
       @{ $self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || [] };
     $self->cache( $self->{'my_config'}->key, \@vari_features );
