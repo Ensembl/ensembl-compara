@@ -313,6 +313,7 @@ sub _summarise_variation_db {
      }
      if (@strains) { $self->db_details($db_name)->{'tables'}{'read_coverage_collection_strains'} = join(',', @strains); } 
   }
+
 #--------- Add in structural variation information
   my $v_aref = $dbh->selectall_arrayref( "select s.name, count(*), s.description from structural_variation sv, source s where sv.source_id=s.source_id  group by sv.source_id");
   my %structural_variations;
@@ -323,6 +324,45 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'counts'} = \%structural_variations;
   $self->db_details($db_name)->{'tables'}{'structural_variation'}{'descriptions'} = \%sv_descriptions;
+
+#--------- Add in Variation set information
+  # First get all toplevel sets
+  my (%super_sets, %sub_sets);
+
+  my $st_aref = $dbh->selectall_arrayref( 
+    'select  vs.variation_set_id, vs.name, vs.description 
+        from variation_set vs 
+        where not exists (
+          select * 
+            from variation_set_structure vss 
+           where vss.variation_set_sub = vs.variation_set_id
+        )'
+    );
+    # then get subsets foreach toplevel set
+    foreach( @$st_aref){
+      $super_sets{$_->[0]} = {};
+      $super_sets{$_->[0]}{'name'} = $_->[1];
+      $super_sets{$_->[0]}{'description'} = $_->[2];
+      $super_sets{$_->[0]}{'subsets'} = [];
+      my $set_id = $_->[0];
+
+      my $ss_aref = $dbh->selectall_arrayref(
+        "select vs.variation_set_id, vs.name, vs.description 
+           from variation_set vs, variation_set_structure vss 
+          where vss.variation_set_sub = vs.variation_set_id 
+            and vss.variation_set_super = $set_id"  
+      );
+
+      foreach my $sub_set (@$ss_aref){
+        push @{$super_sets{$_->[0]}{'subsets'}}, $sub_set->[0];
+        $sub_sets{$sub_set->[0]} = {};
+        $sub_sets{$sub_set->[0]}{'name'} = $sub_set->[1];
+        $sub_sets{$sub_set->[0]}{'description'} = $sub_set->[2]; 
+      } 
+    }
+
+  $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'} = \%super_sets;  
+  $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'} = \%sub_sets;
 
   $dbh->disconnect();
 }
