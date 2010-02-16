@@ -22,7 +22,7 @@ no warnings "uninitialized";
 our $PERFORM_PACK = 0;
 
 sub merge_all {
-  my( $ini_file, $species_defs ) = @_;warn "core";
+  my( $ini_file, $species_defs ) = @_;
   my $current_files = {'type'=>'minified','css'=>undef,'js'=>undef};
   if( -e $ini_file && open I, $ini_file ) {
     while(<I>) {
