@@ -219,7 +219,7 @@ sub update_from_config_strings {
       my ($k, $t) = split /=/, $v, 2;
       
       if ($k =~ /^(cookie|image)_width$/) {
-        my $cookie_host  = $session->get_species_defs->ENSEMBL_COOKIEHOST;
+        my $cookie_host  = $self->species_defs->ENSEMBL_COOKIEHOST;
         
         # Set width
         if ($t != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
