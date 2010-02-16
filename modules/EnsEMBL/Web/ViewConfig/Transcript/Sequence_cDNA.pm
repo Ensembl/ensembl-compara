@@ -8,6 +8,7 @@ sub init {
   $view_config->_set_defaults(qw(
     exons         yes
     codons        yes
+    utr           yes
     coding_seq    yes
     display_width 60
     translation   yes
@@ -34,6 +35,7 @@ sub form {
 
   $view_config->add_form_element({ type => 'YesNo', name => 'exons',       select => 'select', label => 'Show exons' });
   $view_config->add_form_element({ type => 'YesNo', name => 'codons',      select => 'select', label => 'Show codons' });
+  $view_config->add_form_element({ type => 'YesNo', name => 'utr',         select => 'select', label => 'Show UTR' });
   $view_config->add_form_element({ type => 'YesNo', name => 'coding_seq',  select => 'select', label => 'Show coding sequence' });
   $view_config->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
   $view_config->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features' });

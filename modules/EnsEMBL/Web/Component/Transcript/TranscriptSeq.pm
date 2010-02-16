@@ -200,6 +200,27 @@ sub get_sequence_data {
     }
   }
   
+  # It's much easier to calculate the sequence with UTR, then lop off both ends than to do it without
+  # If you don't include UTR from the begining, you run into problems with $cd_start and $cd_end being "wrong"
+  # as well as transcript variation starts and ends. This way involves much less hassle.
+  if (!$config->{'utr'}) {
+    foreach (@sequence) {
+      splice @$_, $cd_end;
+      splice @$_, 0, $cd_start-1;
+    }
+    
+    foreach my $mk (grep scalar keys %$_, @markup) {
+      my $shifted;
+      
+      foreach my $type (keys %$mk) {
+        my %tmp = map { $_-$cd_start+1 => $mk->{$type}->{$_} } keys %{$mk->{$type}};
+        $shifted->{$type} = \%tmp;
+      }
+      
+      $mk = $shifted;
+    }
+  }
+  
   return (\@sequence, \@markup, $seq);
 }
 
@@ -215,7 +236,7 @@ sub content {
     maintain_colour => 1
   };
   
-  $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number);
+  $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);
   
   $config->{'codons'} = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
   
