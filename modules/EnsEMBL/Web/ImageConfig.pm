@@ -824,7 +824,6 @@ sub add_dna_align_feature {
     
     if ($menu) {
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
-      
       $menu->append($self->create_track('dna_align_' . $key . '_' . $key_2, $data->{$key_2}{'name'}, {
         db           => $key,
         glyphset     => '_alignment',
@@ -1709,6 +1708,53 @@ sub add_variation_feature {
   $menu->append($sequence_variation);
   
   $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
+
+  # add in variation sets
+  if ($hashref->{'variation_set'}{'rows'} > 0){
+    foreach my $toplevel_set (sort values %{$hashref->{'variation_set'}{'supersets'}}){
+      my $name = $toplevel_set->{'name'};
+      my $description = $toplevel_set->{'description'};
+
+      my $set_variation = $self->create_submenu('set_variation_'.$name, $name, { submenu => 1 });
+      $set_variation->append($self->create_track('variation_set_'.$name, $name, 
+      {   
+        db          => $key,
+        glyphset    => '_variation',
+        caption     => $name,
+        sources     => undef,
+        sets        => [ $name ],
+        strand      => 'r', 
+        depth       => 0.5,
+        bump_width  => 0,
+        colourset   => 'variation',
+        description => $description,
+        display     => 'off',
+      }));
+      $menu->append($set_variation);
+  
+      # add in sub sets
+      my @sub_sets = @{$toplevel_set->{'subsets'}};
+      foreach my $subset_id (sort @sub_sets){
+        my $sub_set_name = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'name'}; 
+        my $sub_set_description = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'description'};
+        $set_variation->append($self->create_track('variation_set_'.$name.'_'.$sub_set_name, $sub_set_name,
+        {
+          db          => $key,
+          glyphset    => '_variation',
+          caption     => $sub_set_name,
+          sources     => undef,
+          sets        => [ $sub_set_name ],
+          strand      => 'r',
+          depth       => 0.5,
+          bump_width  => 0,
+          colourset   => 'variation',
+          description => $sub_set_description,
+          display     => 'off',
+          class       => 'level2',
+        }));
+      }
+    }
+  }
   
   # add in structural variations
   return unless $hashref->{'structural_variation'}{'rows'} > 0;
