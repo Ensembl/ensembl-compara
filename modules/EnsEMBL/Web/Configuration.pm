@@ -459,7 +459,7 @@ sub _configurator {
         $on++ if $display ne 'off';
         $ext_count++ if $class;
         $select_all_menu ||= $menu;
-        $class = lc $class || 'internal';
+        $class = (lc $class || 'internal') .' '. $track_node->get('class');
         $pre_config_group = '</dl><dl class="config_menu submenu"><dt class="external">External data sources</dt>' if $ext_count == 1;
         
         if ($desc) {
