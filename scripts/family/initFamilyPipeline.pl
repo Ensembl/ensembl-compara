@@ -1,5 +1,7 @@
 #!/usr/local/ensembl/bin/perl -w
 
+# A generic loader of hive pipelines
+
 use strict;
 use DBI;
 use Getopt::Long;
@@ -16,11 +18,17 @@ sub main {
 
     Bio::EnsEMBL::Registry->no_version_check(1);
 
-    my $config_file = 'family_pipeline.conf';
+    my $config_file;
 
     GetOptions(
                'conf=s'     => \$config_file,
     );
+
+    unless($config_file and (-f $config_file)) {
+        warn "Please supply a valid pipeline configuration file using '-conf' option\n";
+        warn "Usage example:\n\t$0 ~lg4/work/ensembl-compara/scripts/family/family_pipeline.conf\n";
+        exit(1);
+    }
 
     my $self = bless { do $config_file };
 
@@ -65,8 +73,8 @@ sub main {
         my $stats = $analysis->stats();
         $stats->batch_size( $batch_size )       if(defined($batch_size));
 
-            # ToDo: hive_capacity for some analyses is set to '-1'.
-            # Do we want this behaviour by default?
+# ToDo: hive_capacity for some analyses is set to '-1'.
+# Do we want this behaviour by default?
         $stats->hive_capacity( $hive_capacity ) if(defined($hive_capacity));
 
             # some analyses will be waiting for human intervention in blocked state:

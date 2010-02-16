@@ -19,6 +19,16 @@ mcl (source can be obtained from http://micans.org/mcl/src/)
 mafft
     using /software/ensembl/compara/mafft-6.522/bin/mafft
 
+########################################################################################
+#
+## There is a plan to automaticise the pipeline setup process by running:
+#
+# ./init_pipeline.pl -conf ~lg4/work/ensembl-compara/scripts/family/family_pipeline.conf
+#
+# (currently in development)
+#
+########################################################################################
+
 
 # NB: if you are going to run Family pipeline in a separate database,
 # make sure you have copied over all the necessary tables from tree/homology database (member, sequence, genome_db).
