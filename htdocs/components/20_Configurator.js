@@ -223,13 +223,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   
   styleTracks: function (special) {
     var col    = { 1: 'col1', '-1': 'col2', f: 1 };
-    var margin = '';
+    var margin = 0;
     
     if (special === true) {
       $('.select_all, .external', this.elLk.form).hide();
       $('.submenu', this.elLk.form).css('marginTop', 0);
     } else {
-      margin = '10px';
+      margin = 10;
       $('.submenu', this.elLk.form).removeAttr('style');
     }
     
@@ -244,7 +244,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }).filter('.internal');
       
       if (internal.siblings('.select_all').length) {
-        internal.css('marginLeft', margin);
+        internal.each(function () {
+          var level = this.className.match(/level(\d+)/);
+          var mg = margin * (level ? parseInt(level[1]) : 1)
+          $(this).css('marginLeft', mg);
+        });
       }
       
       col.f    = 1;
