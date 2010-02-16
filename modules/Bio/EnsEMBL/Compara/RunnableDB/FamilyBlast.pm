@@ -149,8 +149,7 @@ sub parse_blast_table_into_matrix_hash {
                                                                            # (that is, the ones that are "not even similar to themselves")
             }
         } else {
-            my ($qname, $hname, $identity, $align_length, $mismatches, $gap_openings, $qstart, $qend, $hstart, $hend, $evalue, $bitscore)
-                = split(/\s+/, $line);
+            my ($qname, $hname, $evalue) = split(/\s+/, $line);
 
             my $hit_index = $self->name2index($hname);
                 # we MUST be explicitly numeric here:
@@ -198,7 +197,7 @@ sub run {
         close FASTA;
     }
 
-    my $cmd = "$blastp_executable -db $fastadb -evalue $evalue_limit -num_alignments $tophits -out $blast_outfile -outfmt 7";
+    my $cmd = "$blastp_executable -db $fastadb -evalue $evalue_limit -num_alignments $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
 
     if($debug) {
         warn "CMD:\t$cmd\n";
