@@ -378,22 +378,35 @@ sub get_all_default_genome_dbs {
     }
     $all_species->{$this_species} = 0;
   }
-
+  
   my $all_genome_dbs = $genome_db_adaptor->fetch_all();
   $all_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {$_->assembly_default} @$all_genome_dbs];
+  
   if (@$species_names) {
-    for (my $i = 0; $i < @$all_genome_dbs; $i++) {
-      my $this_genome_db_name = $all_genome_dbs->[$i]->name;
-
-      if(  ($exact_species_name_match && grep { $this_genome_db_name eq $_ } @$species_names) ||
-		   (!$exact_species_name_match && grep { /$this_genome_db_name/ } @$species_names) ) {
-         $all_species->{$this_genome_db_name} = 1;
-         next;
+    #If we are using exact name matches then we can build a hash & do the lookups that way
+    if($exact_species_name_match) {
+      my %name_hash;
+      @name_hash{@{$all_genome_dbs}} = ();
+      foreach my $species_name (@{$species_names}) {
+        if(exists $name_hash{$species_name}) {
+          $all_species->{$species_name} = 1;
+          next;
+        }
       }
-
-      ## this_genome_db is not in the list of species_names
-      splice(@$all_genome_dbs, $i, 1);
-      $i--;
+    }
+    #Otherwise we must go through all GenomeDBs & the targets looking for 
+    #possible matches. Any GenomeDB not found is removed from $all_genome_dbs}
+    else {
+      for (my $i = 0; $i < @$all_genome_dbs; $i++) {
+        my $this_genome_db_name = $all_genome_dbs->[$i]->name;
+        if (grep {/$this_genome_db_name/} @$species_names) {
+          $all_species->{$this_genome_db_name} = 1;
+          next;
+        }
+        ## this_genome_db is not in the list of species_names
+        splice(@$all_genome_dbs, $i, 1);
+        $i--;
+      }
     }
   }
 
