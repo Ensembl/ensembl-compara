@@ -51,8 +51,6 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 .unpadded { margin:0 1%; padding:0; }
 .noclear { clear:none; }
 
-table#transcripts td, table#transcripts th { padding:2px 4px; }
-
 hr.end-of-doc { height:1px; color:[[PANEL_BORDER]]; background-color:[[PANEL_BORDER]]; border:0; 
                 margin:2em 1em 0 1em; padding: 0; clear:both; }
 hr.with-nav { margin-left:15em; }
