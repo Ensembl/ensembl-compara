@@ -82,7 +82,7 @@ sub content {
         
       if ($object->param('ftype') eq 'Phenotype'){
         my $phenotype_name = $object->param('phenotype_name');
-        $text = "Phenotype $phenotype_name information:";
+        $text = "Location of variants associated with phenotype $phenotype_name:";
       }        
 
         $used_colour{$data_type}++;        
