@@ -166,16 +166,14 @@ sub get_sequence_data {
         # Add the chromosome number for the link text if we're doing species comparisons or resequencing.
         $snp_start = $snp->seq_region_name . ":$snp_start" if scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice';
         
-        my $species = $config->{'ref_slice_name'} ? $config->{'species'} : $name;
-        
-        my $url = $species eq $object->species ? $object->_url({
-          species => $species,
+        my $url = $object->_url({
+          species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
           type    => 'Variation',
           action  => 'Summary',
           v       => $variation_name,
           vf      => $dbID,
           vdb     => 'variation'
-        }) : $object->species_path($species) . "/Variation/Summary?v=$variation_name;vf=$dbID;vdb=variation";
+        });
         
         my $link_text = qq{ <a href="$url">$snp_start: $variation_name $alleles</a>;};
         
