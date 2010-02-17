@@ -11,7 +11,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.href       = area.attr('href');
     this.title      = area.attr('title');
     this.das        = false;
-    this.mutli      = '';
     this.position   = data.position;
     this.coords     = data.coords;
     this.imageId    = data.imageId;
