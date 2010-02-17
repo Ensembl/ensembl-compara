@@ -179,7 +179,7 @@ sub render_normal {
     else {
       @features = @T;
     }
-    warn ">>> DEPTH $dep";
+    
     $self->_init_bump( undef, $dep );
     my %id = ();
     foreach my $f (
