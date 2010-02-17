@@ -291,20 +291,18 @@ sub get_sequence_data {
         }
       } else { # Normal Slice
         foreach my $t (grep { $_->coding_region_start < $slice_length && $_->coding_region_end > 0 } @transcripts) {
-          my ($start, $stop, $id) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id);
+          my ($start, $stop, $id, $strand) = ($t->coding_region_start, $t->coding_region_end, $t->stable_id, $t->strand);
           
           # START codons
-          if ($start > 1) {
-            for ($start-1..$start+1) {
-              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . "START($id)";
-            }
+          if ($start >= 1) {
+            my $label = ($strand == 1 ? 'START' : 'STOP') . "($id)";
+            $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . $label for $start-1..$start+1;
           }
           
           # STOP codons
           if ($stop <= $slice_length) {
-            for ($stop-3..$stop-1) {
-              $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . "STOP($id)";
-            }
+            my $label = ($strand == 1 ? 'STOP' : 'START') . "($id)";
+            $mk->{'codons'}->{$_}->{'label'} .= ($mk->{'codons'}->{$_}->{'label'} ? '; ' : '') . $label for $stop-3..$stop-1;
           }
         }
       }
