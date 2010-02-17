@@ -54,8 +54,11 @@ sub content {
 
       $row->{'name'} = $group->name;
       $row->{'desc'} = $group->blurb || '&nbsp;';
-      my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
-      $row->{'admin'} = $creator->name;
+      my @admins;
+      foreach my $member ($group->members) {
+        push @admins, $member->name if $member->level eq 'administrator';
+      }
+      $row->{'admin'} = join(',', @admins);
       if ($object->param('id') && $object->param('id') == $group->id) {
         $row->{'details'} = qq(<a href="$dir/Account/MemberGroups" class="modal_link">Hide Details</a>);
       }
