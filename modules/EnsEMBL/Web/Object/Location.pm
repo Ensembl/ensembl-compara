@@ -807,10 +807,18 @@ sub retrieve_Variation {
       push(@$results, $unmapped);
     }
     else {      
+
+      #making the location 10kb if it a one base pair
+      if($v->end-$v->start == 0)
+      {
+          $start = $start - 5000;
+          $end = $end + 5000;
+      }
+
       push @$results, {
         'region'   		=> $v->seq_region_name,
-        'start'    		=> $v->start,
-        'end'      		=> $v->end,
+        'start'    		=> $start,
+        'end'      		=> $end,
         'strand'   		=> $v->strand,
         'length'   		=> $v->end-$v->start+1,
         'label'    		=> $v->variation_name,        
@@ -820,7 +828,7 @@ sub retrieve_Variation {
     }
   }
   
-  return ( $results, ['Nearest Gene'], $type );
+  return ( $results, ['Located in gene'], $type );
 }
 
 sub retrieve_Xref {
