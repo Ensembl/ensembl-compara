@@ -18,7 +18,8 @@ sub process {
   }
   else {
     my $bookmark;
-    if ($object->param('owner_type') && $object->param('owner_type') eq 'group') {
+    if ( $object->param('group') 
+          || ($object->param('owner_type') && $object->param('owner_type') eq 'group')) {
       $bookmark = EnsEMBL::Web::Data::Record::Bookmark::Group->new($object->param('id'));
     }
     else {
