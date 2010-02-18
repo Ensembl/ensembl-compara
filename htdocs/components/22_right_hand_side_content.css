@@ -20,6 +20,7 @@ a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
   font-size: 0.8em; 
   text-align: left; 
   width: 20em;
+  white-space: normal;
 }
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
