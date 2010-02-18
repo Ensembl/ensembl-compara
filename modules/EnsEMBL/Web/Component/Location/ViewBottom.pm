@@ -38,6 +38,15 @@ sub content {
     slice_number    => '1|3'
   });
 
+  ## Force display of individual low-weight markers on pages linked to from Location/Marker
+  if (my $marker_id = $object->param('m')) {
+    $image_config->modify_configs(
+      [ 'marker' ],
+      { marker_id => $marker_id }
+    );
+  }
+
+
   # Lets see if we have any das sources
   $self->_attach_das($image_config);
   

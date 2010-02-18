@@ -69,6 +69,15 @@ sub content {
     $image_config->get_node('annotation_status')->set('menu', 'no');
   };
 
+  ## Force display of individual low-weight markers on pages linked to from Location/Marker
+  if (my $marker_id = $object->param('m')) {
+    $image_config->modify_configs(
+      [ 'marker' ],
+      { marker_id => $marker_id }
+    );
+  }
+
+
   my $image = $self->new_image($slice, $image_config, $object->highlights);
   
   return if $self->_export_image($image);
