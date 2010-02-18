@@ -118,8 +118,51 @@ sub count_populations {
 
 sub count_individuals {
   my $self = shift;
-  my $counts = scalar (keys %{ $self->individual_table }) || 0; 
-  return $counts;
+  my $dbh  = $self->database('variation')->get_VariationAdaptor->dbc->db_handle;
+  my $var  = $self->Obj;
+  
+  my ($multibp_samples) = $dbh->selectrow_array('
+    select count(distinct sample_id)
+    from individual_genotype_multiple_bp
+    where variation_id=?',
+    {}, $var->dbID
+  );
+  
+  return $multibp_samples if $multibp_samples;
+  
+  my %sample_ids_for_variation;
+  
+  foreach my $vf (@{$var->get_all_VariationFeatures}) {
+    my ($seq_region_id, $snp_pos) = ($vf->slice->get_seq_region_id, $vf->seq_region_start);
+    
+    # grab data from compressed genotype table
+    # genotypes column consists of "triples" of the alleles followed by a 2-byte gap to the next snp
+    my $data = $dbh->selectall_arrayref('
+      select sample_id, seq_region_id, seq_region_start, seq_region_end, seq_region_strand, genotypes
+      from compressed_genotype_single_bp
+      where seq_region_id = ? and seq_region_start <= ? and seq_region_end >= ? and seq_region_start >= ?',
+      {}, $seq_region_id, $snp_pos, $snp_pos, $snp_pos - 1e5
+    );
+    
+    foreach my $row (@$data) {
+      my ($sample_id, $x, $slice_start, $slice_end, $st, $genotypes) = @$row;
+      my @genotypes = unpack '(aan)*', $genotypes;
+      my $pos = $slice_start;
+      
+      while (my ($a1, $a2, $gap) = splice @genotypes, 0, 3) {
+        next if $gap == -1; # '2 snps in same location' so can skip rest of loop - don't think this works as ffff == 65535 not -1!
+        
+        if ($pos == $snp_pos) {
+          $sample_ids_for_variation{$sample_id} = 1;
+          last; # We can skip out of this now don't need to walk along data anymore
+        }
+        
+        $pos += $gap + 1;
+      }
+    }
+  }
+
+  return scalar keys %sample_ids_for_variation;
 }
 
 sub short_caption {
