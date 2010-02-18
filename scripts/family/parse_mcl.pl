@@ -2,7 +2,7 @@
 
 use strict;
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::Attribute;
 
@@ -31,113 +31,61 @@ sub read_mcl_abc_format {
     return \@clusters;
 }
 
-sub read_mcl_123_format {
-    my ($mcl_file) = @_;
-
-    my @clusters = ();
-
-    if ($mcl_file =~ /\.gz/) {
-      open MCL, "gunzip -c $mcl_file|" || die "$mcl_file: $!";
-    } else {
-      open MCL, $mcl_file || die "$mcl_file: $!";
-    }
-
-    my $headers_off = 0;
-    my $one_line_members = '';
-
-    while (<MCL>) {
-      if (/^begin$/) {
-        $headers_off = 1;
-        next;
-      }
-      next unless ($headers_off);
-      last if (/^\)$/);
-      chomp;
-      $one_line_members .= $_;
-      if (/\$/) {
-        push @clusters, $one_line_members;
-        $one_line_members = "";
-      }
-    }
-    close MCL || die "$mcl_file: $!";
-
-    return \@clusters;
-}
-
-
 my $usage = "
-Usage: $0 options mcl_file dbname [tab_file]
+Usage: $0 options mcl_file
 
 Options:
--abc_format <0|1> (default:1)
 -prefix <family_stable_id_prefix> (default: ENSF)
 -foffset <family_id_numbering_start> (default:1)
--reg_conf <config_file.pl>
+-host <host_name>
+-port <port_number>
+-user <user_name>
+-pass <password>
+-dbname <database_name>
 
 \n";
 
 my $help                = 0;
-my $abc_format          = 1;
 my $method_link_type    = "FAMILY";
 my $family_prefix       = "ENSF";
 my $family_offset       = 1;
-my $reg_conf;
+my $db_conf             = {};
 
 GetOptions('help'     => \$help,
-	   'abc_format=i' => \$abc_format,
 	   'prefix=s'     => \$family_prefix,
 	   'foffset=i'    => \$family_offset,
-       'reg_conf=s'   => \$reg_conf);
+       'host=s'       => \$db_conf->{'-host'},
+       'port=i'       => \$db_conf->{'-port'},
+       'user=s'       => \$db_conf->{'-user'},
+       'pass=s'       => \$db_conf->{'-pass'},
+       'dbname=s'     => \$db_conf->{'-dbname'},
+);
 
 if ($help) {
   print $usage;
   exit 0;
 }
 
-unless (scalar @ARGV >= 2) {
-  print "Need at least 2 arguments\n";
+if (scalar(@ARGV) != 1) {
+  print "Expecting 1 argument:\n";
   print $usage;
   exit 0;
 }
 
-my ($mcl_file, $dbname, $tab_file) = @ARGV;
+my ($mcl_file) = @ARGV;
 
-# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
-# if no reg_conf file is given.
-Bio::EnsEMBL::Registry->load_all($reg_conf);
+my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(%$db_conf);
+my $dbc         = $compara_dba->dbc();
 
-
-my $dbc   = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
-my $fa    = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Family');
-my $ma    = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','Member');
-my $gdba  = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','GenomeDB');
-my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($dbname,'compara','MethodLinkSpeciesSet');
-
+my $fa          = $compara_dba->get_FamilyAdaptor();
+my $ma          = $compara_dba->get_MemberAdaptor();
+my $gdba        = $compara_dba->get_GenomeDBAdaptor();
+my $mlssa       = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 
 my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 $mlss->species_set(\@{$gdba->fetch_all});
 $mlss->method_link_type($method_link_type);
 $mlssa->store($mlss);
-
-my %tab_index2stable_id = ();
-if($tab_file) {
-    print STDERR "Reading tab file...";
-    open TAB, $tab_file || die "$tab_file: $!";
-
-    while (<TAB>) {
-      if (/^(\S+)\s+(\S+)/) {
-        my ($index,$member_stable_id) = ($1,$2);
-        $tab_index2stable_id{$index} = $member_stable_id;
-      } else {
-        warn "$tab_file has not the expected format\nEXIT 1\n";
-        exit 1;
-      }
-    }
-    close TAB || die "$tab_file: $!";
-    print STDERR "Done\n";
-}
-
-
 
 print STDERR "Getting source_name from database...";
 
@@ -145,19 +93,16 @@ my $sql = "select stable_id,source_name,description from member where source_nam
 my $sth = $dbc->prepare($sql);
 $sth->execute;
 
-my ($member_stable_id,$source_name,$description);
+my ($member_stable_id,$source_name);
 
-$sth->bind_columns(\$member_stable_id,\$source_name,\$description);
+$sth->bind_columns(\$member_stable_id,\$source_name);
 
 my %stable_id2source_name = ();
 while ($sth->fetch) {
-    $description = "" unless (defined $description);
     $stable_id2source_name{$member_stable_id} = $source_name;
 }
 $sth->finish;
 print STDERR "Done\n";
-
-
 
 
 print STDERR "Getting redundancy information from the database...";
@@ -189,10 +134,7 @@ print STDERR "Done\n";
 
 print STDERR "Reading mcl file...";
 
-my $clusters = $abc_format
-                    ? read_mcl_abc_format($mcl_file)
-                    : read_mcl_123_format($mcl_file);
-
+my $clusters = read_mcl_abc_format($mcl_file);
 print STDERR "Done\n";
 
 
@@ -203,14 +145,7 @@ print STDERR "Loading clusters in compara\n";
 # entries in the family in order to determinate a consensus description
 
 foreach my $cluster (@$clusters) {
-    my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
-
-  unless($abc_format) {
-      my $popped = pop @cluster_members;
-      if ($popped ne "\$") {
-        die "problem in the mcl parsing in cluster id $cluster_index\n";
-      }
-  }
+   my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
 
   if( (scalar(@cluster_members) == 0)
    or ((scalar(@cluster_members) == 1) and ($cluster_members[0] eq '0'))) {
@@ -230,31 +165,9 @@ foreach my $cluster (@$clusters) {
   
   foreach my $tab_idx (@cluster_members) {
 
-    my $member; # going via different routes depending on the availability of $tab_file:
-
-    if($tab_file) {
-
-        my $member_stable_id = $tab_index2stable_id{$tab_idx};
-        unless($member_stable_id) {
-          warn("no member_stable_id defined for member [$tab_idx]\n");
-          next;
-        }
-
-        my $member_source =  $stable_id2source_name{$member_stable_id};
-        unless($member_source) {
-          warn("no stable_id2source_name defined for [$member_stable_id]\n");
-          next;
-        }
-
-        $member = $ma->fetch_by_source_stable_id($member_source, $member_stable_id);
-        unless($member) {
-          die "member does not exist in the database";
-        }
-    } else {
-        ($member) = @{ $ma->fetch_all_by_sequence_id($tab_idx) };
-        unless($member) {
-            warn "Could not fetch member by sequence_id=$tab_idx";
-        }
+    my ($member) = @{ $ma->fetch_all_by_sequence_id($tab_idx) };
+    unless($member) {
+        warn "Could not fetch member by sequence_id=$tab_idx";
     }
     
     if($member) {

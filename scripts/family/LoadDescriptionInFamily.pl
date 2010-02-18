@@ -2,45 +2,46 @@
 
 use strict;
 use Getopt::Long;
-use IO::File;
-use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 $| = 1;
 
 my $usage = "
 $0
   [--help]                    this menu
-   --dbname string            (e.g. compara25) one of the compara destination database Bio::EnsEMBL::Registry aliases
-  [--reg_conf filepath]       the Bio::EnsEMBL::Registry configuration file. If none given, 
-                              the one set in ENSEMBL_REGISTRY will be used if defined, if not
-                              ~/.ensembl_init will be used.
+-host <host_name>
+-port <port_number>
+-user <user_name>
+-pass <password>
+-dbname <database_name>
+
 \n";
 
 my $help = 0;
-my ($dbname,$reg_conf);
+my $db_conf             = {};
 
 GetOptions('help' => \$help,
-	   'dbname=s' => \$dbname,
-	   'reg_conf=s' => \$reg_conf);
+        'host=s'       => \$db_conf->{'-host'},
+        'port=i'       => \$db_conf->{'-port'},
+        'user=s'       => \$db_conf->{'-user'},
+        'pass=s'       => \$db_conf->{'-pass'},
+        'dbname=s'     => \$db_conf->{'-dbname'},
+);
 
 if ($help || scalar @ARGV != 1) {
   print $usage;
   exit 0;
 }
 
-# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
-# if no reg_conf file is given.
-Bio::EnsEMBL::Registry->load_all($reg_conf);
-
 my ($file) = @ARGV;
 
-my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
+my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(%$db_conf);
+my $dbc         = $compara_dba->dbc();
+
 my $sth = $dbc->prepare("UPDATE family set description = ?, description_score =? where family_id = ?");
 
-my $FH = IO::File->new();
-$FH->open($file) || die "Could not open alignment file [$file], $!\n;";
-
-while (my $line = <$FH>) {
+open(FILE, $file) || die "Could not open alignment file [$file], $!\n;";
+while (my $line = <FILE>) {
   if ($line =~ /^(\d+)\t(.*)\t(\d+)$/) {
     my ($family_id,$description,$score) = ($1,$2,$3);
     if (defined $family_id &&
@@ -57,12 +58,10 @@ $line\n";
 $line\n";
   }
 }
-
-$FH->close;
-
+close FILE;
 $sth->finish;
+
 $sth = $dbc->prepare("UPDATE family set description='UNKNOWN' where description is NULL");
 $sth->execute;
 $sth->finish;
 
-exit 0;

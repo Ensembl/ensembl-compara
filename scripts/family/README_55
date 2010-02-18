@@ -260,8 +260,6 @@ bsub -o gzip.tcx.out -e gzip.tcx.err 'gzip family_57.tcx'
 10- Load the families into compara database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# You'll need a compara database set up, with genome_db, taxon, and method_link tables prefilled.
-
 # Your reg_conf_57.pl should be something like:
 
 cat <<EOF >~/family_57/reg_conf_57.pl
@@ -277,8 +275,14 @@ new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-host => 'compara2',
                                             -dbname => 'lg4_compara_families_57');
 1;
 EOF
+#
+# (we are getting rid of the reg_conf file after rel.57)
 
-time ~lg4/work/ensembl-compara/scripts/family/parse_mcl.pl --reg_conf reg_conf_57.pl --prefix fam57 family_57.mcl compara_families_57 > family_57.description 2> family_57.description.err
+# untested version that doesn't use the Registry:
+#
+time ~lg4/work/ensembl-compara/scripts/family/parse_mcl.pl -host compara2 -port 3306 -user ensadmin -pass ensembl -dbname compara_families_57 -prefix fam57 family_57.mcl > family_57.description 2> family_57.description.err
+#
+#time ~lg4/work/ensembl-compara/scripts/family/parse_mcl.pl --reg_conf reg_conf_57.pl --prefix fam57 family_57.mcl compara_families_57 > family_57.description 2> family_57.description.err
 #
 # rel.pre57     1h40
 
@@ -375,7 +379,18 @@ time mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 < update_si
 # rel.55    5m
 # rel.54    1h
 
-time ~lg4/work/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_57.pl --dbname compara_families_57 > Redundancy_and_Genes_load.err 2>&1
+# New proposed version that combines the previous two commands (not using external files; 6+9 minutes)
+#
+# mysql --defaults-group-suffix=_compara2 lg4_compara_families_57 -N -e \
+# "create temporary table singletons select family_id,length(s.sequence) len,count(*) as count from family_member fm, member m, sequence s where fm.member_id=m.member_id and m.sequence_id=s.sequence_id group by family_id having count=1;
+#  update family_member fm, member m, singletons st set fm.cigar_line=CONCAT(st.len,'M') where fm.family_id=st.family_id and m.member_id=fm.member_id and m.source_name<>'ENSEMBLGENE';"
+
+
+# untested version that doesn't use the Registry:
+#
+time ~lg4/work/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl -host compara2 -port 3306 -user ensadmin -pass ensembl -dbname compara_families_57 > Redundancy_and_Genes_load.err 2>&1
+#
+#time ~lg4/work/ensembl-compara/scripts/family/InsertRedundantPeptidesAndGenesInFamilies.pl --reg_conf reg_conf_57.pl --dbname compara_families_57 > Redundancy_and_Genes_load.err 2>&1
 # rel.57    16m
 # rel.pre57 23m
 # rel.56     5m
@@ -430,11 +445,11 @@ time ~lg4/work/ensembl-compara/scripts/family/assemble-consensus.pl family_57.de
 # rel.55      5m
 # rel.54      4m
 
-
-# update the family description in ensembl_family_57 with the data in family_57.description-consensus using ensembl-compara/scripts/family/LoadDescriptionInFamily.pl 
-# (Use the same reg_conf.pl as in step 11)
-
-time ~lg4/work/ensembl-compara/scripts/family/LoadDescriptionInFamily.pl --reg_conf reg_conf_57.pl --dbname compara_families_57 family_57.description-consensus
+# untested version that doesn't use the Registry:
+#
+time ~lg4/work/ensembl-compara/scripts/family/parse_mcl.pl -host compara2 -port 3306 -user ensadmin -pass ensembl -dbname compara_families_57 -prefix fam57 family_57.mcl > family_57.description 2> family_57.description.err
+#
+#time ~lg4/work/ensembl-compara/scripts/family/LoadDescriptionInFamily.pl -host compara2 -port 3306 -user ensadmin -pass ensembl -dbname compara_families_57 family_57.description-consensus
 #
 # rel.57      3m
 # rel.pre57   2m45

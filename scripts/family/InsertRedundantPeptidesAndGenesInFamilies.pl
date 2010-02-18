@@ -2,39 +2,40 @@
 
 use strict;
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 $| = 1;
 
 my $usage = "
 $0
   [--help]                    this menu
-   --dbname string            (e.g. compara25) one of the compara destination database Bio::EnsEMBL::Registry aliases
-  [--reg_conf filepath]       the Bio::EnsEMBL::Registry configuration file. If none given, 
-                              the one set in ENSEMBL_REGISTRY will be used if defined, if not
-                              ~/.ensembl_init will be used.
+    -host <host_name>
+    -port <port_number>
+    -user <user_name>
+    -pass <password>
+    -dbname <database_name>
 \n";
 
-my $help = 0 ;
-my $dbname;
-my $reg_conf;
+my $help    = 0;
+my $db_conf = {};
 
 GetOptions('help' => \$help,
-	   'dbname=s' => \$dbname,
-           'reg_conf=s' => \$reg_conf);
+        'host=s'       => \$db_conf->{'-host'},
+        'port=i'       => \$db_conf->{'-port'},
+        'user=s'       => \$db_conf->{'-user'},
+        'pass=s'       => \$db_conf->{'-pass'},
+        'dbname=s'     => \$db_conf->{'-dbname'},
+);
 
 if ($help) {
   print $usage;
   exit 0;
 }
 
-# Take values from ENSEMBL_REGISTRY environment variable or from ~/.ensembl_init
-# if no reg_conf file is given.
-Bio::EnsEMBL::Registry->load_all($reg_conf);
-
 my %sequence_id2member_id;
 
-my $dbc = Bio::EnsEMBL::Registry->get_DBAdaptor($dbname,'compara')->dbc;
+my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(%$db_conf);
+my $dbc         = $compara_dba->dbc();
 
 print STDERR "Loading sequence_id to member_id mapping from the database...";
 
@@ -103,3 +104,4 @@ $sth->execute;
 $sth->finish;
 
 print STDERR "Done";
+
