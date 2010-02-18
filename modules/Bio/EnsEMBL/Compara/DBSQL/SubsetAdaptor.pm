@@ -5,6 +5,7 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Attribute;
 use Bio::EnsEMBL::Compara::Subset;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -154,7 +155,7 @@ sub _generic_fetch {
   my $sth = $self->prepare($sql);
   $sth->execute;  
 
-#  print STDERR $sql,"\n";
+  #print STDERR $sql,"\n";
 
   return $self->_objs_from_sth($sth);
 }
@@ -347,13 +348,13 @@ sub delete_link {
 sub dumpFastaForSubset {
   my($self, $subset, $fastafile) = @_;
 
-  unless($subset->isa('Bio::EnsEMBL::Compara::Subset')) {
-    $self->throw(
+  unless($subset && $subset->isa('Bio::EnsEMBL::Compara::Subset')) {
+    throw(
       "set arg must be a [Bio::EnsEMBL::Compara::Subset] "
     . "not a $subset");
   }
   unless($subset->dbID) {
-    $self->throw("subset must be in database and dbID defined");
+    throw("subset must be in database and dbID defined");
   }
   
   my $sql = "SELECT member.source_name, member.stable_id, member.genome_db_id," .

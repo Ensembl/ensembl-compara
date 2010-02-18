@@ -185,6 +185,14 @@ Or, (Ensembl-site-specific)
     ncbi_taxonomy ncbi_taxa_node ncbi_taxa_name \
     | mysql $COMPARA_DBNAME
 
+Or, to copy from a compara DB on ensembldb (using bash);
+
+	$ for TABLE in ncbi_taxa_node ncbi_taxa_name; do
+	  mysql -hensembldb.ensembl.org -P5306 -uanonymous ensembl_compara_55 -p'' \
+	  -N -e "select * from $TABLE" \
+	  | sed s/NULL/\\\\N/g > /tmp/${TABLE}.txt
+	  mysqlimport -L $COMPARA_DBNAME /tmp/${TABLE}.txt
+	  done
 
 4- compara-hive config file
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -221,8 +229,8 @@ Some 'gotchas' with the core databases should be checked;
 - The top-level coordinate system must include a version,
   mysql> SELECT name, version FROM coord_system ORDER BY rank LIMIT 1;
 
-- There must be a genebuild.version set in the meta table,
-  mysql> SELECT * FROM meta WHERE meta_key="genebuild.version";
+- There must be a genebuild.start_date set in the meta table,
+  mysql> SELECT * FROM meta WHERE meta_key="genebuild.start_date";
 
 - Only genes on slices marked as 'toplevel' will be included.
   mysql> SELECT count(*) 
@@ -405,8 +413,8 @@ These scripts may give you warnings if the output directories are not
 available or if it's unable to connect to core databases.
 
  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
- $ ./comparaLoadGenomes.pl -conf my_compara.conf
- $ ./loadGeneTreeSystem.hcluster.pl -conf my_compara.conf
+ $ perl comparaLoadGenomes.pl -conf my_compara.conf
+ $ perl loadGeneTreeSystem.hcluster.pl -conf my_compara.conf
 
 If comparaLoadGenomes.pl or loadGeneTreeSystem.hcluster.pl goes wrong, the DB
 can be reset as follows (you need to re-run both);
@@ -474,25 +482,25 @@ create_mlss.pl script as follows;
     'select group_concat(genome_db_id) from genome_db' | tail -n 1`
 
   $ # For orthologues
-  $ ./create_mlss.pl --f --pw \
+  $ perl create_mlss.pl --f --pw \
     --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_ORTHOLOGUES \
     --genome_db_id "$SPECIES_LIST"
 
   $ # For between-species paralogues
-  $ ./create_mlss.pl --f --pw \
+  $ perl create_mlss.pl --f --pw \
     --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
     --genome_db_id "$SPECIES_LIST"
 
   $ # For same-species paralogues
-  $ ./create_mlss.pl --f --sg \
+  $ perl create_mlss.pl --f --sg \
     --reg_conf ensembl.registry \
     --method_link_type ENSEMBL_PARALOGUES \
     --genome_db_id "$SPECIES_LIST"
 
   $ # For protein trees
-  $ ./create_mlss.pl --f \
+  $ perl create_mlss.pl --f \
     --reg_conf ensembl.registry \
     --method_link_type PROTEIN_TREES \
     --genome_db_id "$SPECIES_LIST"

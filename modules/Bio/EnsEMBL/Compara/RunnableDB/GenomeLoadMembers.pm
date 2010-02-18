@@ -208,6 +208,8 @@ sub loadMembersFromCoreSlices
   print("       ".$self->{'transcriptCount'}." transcripts\n");
   print("       ".$self->{'longestCount'}." longest transcripts\n");
   print("       ".$self->{'pepSubset'}->count()." in Subset\n");
+  
+  throw("problem: no real genes") unless $self->{'realGeneCount'};
 }
 
 

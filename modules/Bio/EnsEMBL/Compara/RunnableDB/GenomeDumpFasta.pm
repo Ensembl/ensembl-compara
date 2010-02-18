@@ -55,6 +55,7 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Analysis::Tools::BlastDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
@@ -73,9 +74,9 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my $self = shift;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  throw("Improper formated input_id") unless ($self->input_id =~ /{/);
   my $input_hash = eval($self->input_id);
   
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -103,7 +104,7 @@ sub fetch_input {
   throw("no subset defined, can't figure out which peptides to use\n") 
     unless(defined($subset_id));
   
-  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id); 
+  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw("Cannot SubsetAdaptor->fetch_by_dbID($subset_id)");  
   
   unless($self->{'logic_name'}) {
     $self->{'logic_name'} = "blast_" . $self->{'pepSubset'}->description;
@@ -226,7 +227,7 @@ sub updateBlastAnalysis
   print("UPDATE the blastDB for analysis $logic_name\n");
   my $blast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
 
-  $self->throw("$logic_name analysis has not been created") unless($blast_analysis);
+  throw("$logic_name analysis has not been created") unless($blast_analysis);
 
   $blast_analysis->db($blastdb->dbname);
   $blast_analysis->db_file($blastdb->dbfile);

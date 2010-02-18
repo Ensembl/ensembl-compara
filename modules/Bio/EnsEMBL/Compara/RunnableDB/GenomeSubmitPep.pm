@@ -71,9 +71,9 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my $self = shift;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /\{/);
+  throw("Improper formated input_id") unless ($self->input_id =~ /\{/);
   my $input_hash = eval($self->input_id);
   
   #create a Compara::DBAdaptor which shares the same DBConnection as $self->db
@@ -104,7 +104,7 @@ sub fetch_input {
   throw("no subset defined, can't figure out which peptides to use\n") 
     unless(defined($subset_id));
   
-  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id); 
+  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw( "Cannot SubsetAdaptor->fetch_by_dbID($subset_id))" ); 
 
   unless($self->{'reference_name'}) {
     $self->{'reference_name'} = $self->{'pepSubset'}->description;
