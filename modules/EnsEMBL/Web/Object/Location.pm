@@ -792,29 +792,33 @@ sub retrieve_Transcript {
 sub retrieve_Variation {
   my ($self, $data, $type) = @_;
   my $results = [];
-
+  
+  
   foreach my $v (@$data) {
   
     my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);
     my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
     my $genes = $slice->get_all_Genes();
+    
+    my $gene_symbol;
+    $gene_symbol = "(".$genes->[0]->display_xref->display_id.")" if($genes->[0]->{'stable_id'});
+    
     my $gene_name = $genes->[0]->{'stable_id'};
     my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});
-    my $gene_link = qq{<a href='$gene_url'>$gene_name</a>};
-    
+    my $gene_link = qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};
+
     if (ref($v) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($v);
       push(@$results, $unmapped);
     }
-    else {      
-
+    else {
       #making the location 10kb if it a one base pair
       if($v->end-$v->start == 0)
       {
           $start = $start - 5000;
           $end = $end + 5000;
       }
-
+    
       push @$results, {
         'region'   		=> $v->seq_region_name,
         'start'    		=> $start,
