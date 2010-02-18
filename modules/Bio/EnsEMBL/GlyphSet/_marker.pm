@@ -38,15 +38,24 @@ sub _init {
 
   my $previous_start = $L + 1e10;
   my $previous_end   = -1e10;
+  my $previous_fid   = '';
 
-  my @features = sort { $a->seq_region_start <=> $b->seq_region_start }
-                 @{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)};
+  my @features = @{$slice->get_all_MarkerFeatures(undef,$priority,$MAP_WEIGHT)};
+
+  ## Force drawing of specific marker regardless of weight
+  if (my $marker_id = $self->my_config('marker_id')) {
+    my @extra_features = @{$slice->get_MarkerFeatures_by_Name($marker_id)};
+    push @features, @extra_features;
+  }
   my $base_url = $self->_url( { 'action' => 'Marker' } );
   
-  foreach my $f (@features){
+  foreach my $f (sort { $a->seq_region_start <=> $b->seq_region_start } @features){
     my $ms   = $f->marker->display_MarkerSynonym;
     my $fid  = $ms ? $ms->name : '';
       ($fid) = grep { $_ ne '-' } map { $_->name } @{$f->marker->get_all_MarkerSynonyms||[]} if $fid eq '-' || $fid eq '';
+
+    ## Remove duplicates
+    next if $fid == $previous_fid && $f->start == $previous_start && $f->end == $previous_end;
 
     my $feature_colour = $self->my_colour( $f->marker->type );
     my $zmenu = {
@@ -57,7 +66,7 @@ sub _init {
 
     my $S = $f->start()-1; next if $S>$L; $S = 0 if $S<0;
     my $E = $f->end()    ; next if $E<0;  $E = $L if $E>$L;
-    
+
     # Draw feature
     unless( $slice->strand < 0 ? $previous_start - $S < 0.5/$pix_per_bp : $E - $previous_end < 0.5/$pix_per_bp ) {
       $self->push( $self->Rect({
@@ -72,6 +81,7 @@ sub _init {
       $previous_end   = $E;
       $previous_start = $E;
     }
+    $previous_fid = $fid;
     next unless $labels;
     my @res = $self->get_text_width( 0, $fid, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $glyph = $self->Text({
