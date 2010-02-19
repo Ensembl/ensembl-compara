@@ -192,9 +192,13 @@ sub markerLine {
   $species =~ s/_/ /;
   my @synonyms = sort @$IDS;
   my $key = pop @synonyms;
+  my $desc = 'A marker with '.@synonyms.' synonym';
+  $desc .= 's' if (@synonyms > 1);
+  $desc .= 's' unless (@synonyms);
   return '' unless $key;
   my $xml = qq(
 <entry id="$key">
+  <description>$desc</description>
   <additional_fields>);
   foreach my $syn (@synonyms) {
     $xml .= qq(
@@ -254,14 +258,17 @@ sub dumpQTL {
   my $old_qtl = 0;
   my $old_ID  = '';
   my $old_pos = '';
-  my $IDS     = [];
+  my $old_action;
+  my $IDS     = []; 
+  my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
+  my $max_length = $scale *= 1e6;
   while( my $T = $sth->fetchrow_hashref() ){
     if($T->{qtl_id} eq $old_qtl) {
       push @$IDS, $T->{source_primary_id};
       $desc .= " $T->{source_database}:$T->{source_primary_id}";
     } else {
       if ($old_ID) {
-	&p( QTLLine( $dbspecies, $old_ID, $old_pos, $IDS, $desc, $counter ), $nogzip, $fh);
+	&p( QTLLine( $dbspecies, $old_ID, $old_pos, $old_action, $IDS, $desc, $counter ), $nogzip, $fh);
       }
       $IDS = [ "$T->{trait} $T->{source_primary_id}" ];
       push @$IDS, $T->{fm1_name} if $T->{fm1_name};
@@ -269,6 +276,7 @@ sub dumpQTL {
       push @$IDS, $T->{pm_name}  if $T->{pm_name};
       $old_ID = $T->{pm_name};
       $old_pos = "$T->{chr}:".($T->{seq_region_start}-1e4).'-'.($T->{seq_region_end}+1e4);
+      $old_action = $T->{seq_region_end}-$T->{seq_region_start} > $max_length ? 'Overview' : 'View';
       $desc       = "QTL exhibiting '$T->{trait}' has ";
       my $f2 = $T->{pm_name} ? 1 : 0;
       if( $T->{fm1_name} || $T->{fm2_name} ) {
@@ -288,7 +296,7 @@ sub dumpQTL {
 }
 
 sub QTLLine {
-  my ($species, $key, $pos, $IDS, $desc, $counter ) = @_;
+  my ($species, $key, $pos, $action, $IDS, $desc, $counter ) = @_;
   return '' unless $key;
   $species =~ s/_/ /;
   my $xml = qq(
@@ -300,6 +308,7 @@ sub QTLLine {
     <field name="synonym">$id</field>);
   }
   $xml .= qq(
+    <field name="action">$action</field>
     <field name="species">$species</field>
     <field name="featuretype">QTL</field>
     <field name="location">$pos</field>
@@ -1581,11 +1590,11 @@ sub GeneStableIdMappingLine {
     $xml .= qq(
     <field name="old_id">$id</field>);
   }
- $xml .= qq(
+  $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">Gene</field>
     <field name="action">Idhistory</field>
-    <field name="db">$db</field>)
+    <field name="db">$db</field>
   </additional_fields>);
   $counter->();
   return $xml . qq(
