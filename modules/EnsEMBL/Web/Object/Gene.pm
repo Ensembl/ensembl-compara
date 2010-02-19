@@ -572,6 +572,7 @@ sub gene_type {
   } else {
     $type = $self->logic_name;
     $type =~ s/_/ /g;
+    $type =~ s/^ccds/CCDS/;
   }
   $type ||= $db;
   if( $type !~ /[A-Z]/ ){ $type = ucfirst($type) } #All lc, so format

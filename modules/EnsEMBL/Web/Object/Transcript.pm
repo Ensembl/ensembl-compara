@@ -948,6 +948,7 @@ sub gene_stat_and_biotype {
     return $type;
   } else {
     $type = $self->logic_name;
+    $type =~ s/^ccds/CCDS/;
   }
   $type ||= $db;
   $type =~ s/_/ /g;
