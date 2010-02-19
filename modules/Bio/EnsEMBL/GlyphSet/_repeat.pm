@@ -14,7 +14,8 @@ sub features {
   my @repeats = sort { $a->seq_region_start <=> $b->seq_region_end }
                  map { my $t = $_; map { @{ $self->{'container'}->get_all_RepeatFeatures( $t, $_ ) } } @$types }
                 @$logicnames;
-  
+
+  $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless scalar @repeats >=1 || $self->{'config'}->get_option('opt_empty_tracks') == 0; 
   return \@repeats;
 }
 
