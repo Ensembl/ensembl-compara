@@ -144,7 +144,7 @@ sub dumpMarker {
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/Marker_$dbname.xml";
+  my $file = $conf->{'directory'}."/${dbname}_Marker.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
@@ -220,7 +220,7 @@ sub dumpQTL {
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/QTL_$dbname.xml";
+  my $file = $conf->{'directory'}."/${dbname}_QTL.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
@@ -326,7 +326,7 @@ sub dumpSNP {
   return unless $SNPDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/SNP_$SNPDB.xml";
+  my $file = $conf->{'directory'}."/${SNPDB}_SNP.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
@@ -481,7 +481,7 @@ sub dumpStructuralVariations {
   return unless $SNPDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/StructuralVariations_$SNPDB.xml";
+  my $file = $conf->{'directory'}."/${SNPDB}_StructuralVariations.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
@@ -567,7 +567,7 @@ sub dumpGenomicAlignment {
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
     my $counter    = make_counter(0);
     my $dbname     = $dbs{$db};
-    my $file       = $conf->{'directory'}."/GenomicAlignment_$dbname.xml";
+    my $file       = $conf->{'directory'}."/${dbname}_GenomicAlignment.xml";
     $file         .= ".gz" unless $nogzip;
     my $start_time = time;
     my $fh;
@@ -671,10 +671,10 @@ sub dumpOligoProbe {
   return unless $FUNCDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/OligoProbe_$FUNCDB.xml";
+  my $file = $conf->{'directory'}."/${FUNCDB}_OligoProbe.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
-  my $db = 'fungen';
+  my $db = 'funcgen';
   my $fh;
   unless ($nogzip) {
     $fh = new IO::Zlib;
@@ -754,7 +754,7 @@ sub dumpDomain {
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/Domain_$dbname.xml";
+  my $file = $conf->{'directory'}."/${dbname}_Domain.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
@@ -837,7 +837,7 @@ sub dumpFamily {
 
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/Family_$dbname.xml";
+  my $file = $conf->{'directory'}."/${dbname}_Family.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'core';
@@ -919,7 +919,7 @@ sub dumpSequence {
     my $dbname    = $dbs{$db};
     my $counter   = make_counter(0);
     my $dbspecies = $conf->{'species'};
-    my $file = $conf->{'directory'}."/Sequence_$dbname.xml";
+    my $file = $conf->{'directory'}."/${dbname}_Sequence.xml";
     $file .= ".gz" unless $nogzip;
     my $start_time = time;
     my $fh;
@@ -1179,7 +1179,7 @@ sub dumpGene {
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
     my $dbname    = $dbs{$db};
     my $counter   = make_counter(0);
-    my $file = $conf->{'directory'}."/Gene_$dbname.xml";
+    my $file = $conf->{'directory'}."/${dbname}_Gene.xml";
     $file .= ".gz" unless $nogzip;
     my $start_time = time;
     my $fh;
@@ -1611,7 +1611,7 @@ sub dumpRegulatoryFeature {
   my $dbspecies = $conf->{'species'};
   my $db = 'regulatoryfeatures';
   my $counter   = make_counter(0);
-  my $file = $conf->{'directory'}."/RegulatoryFeature_$dbname.xml";
+  my $file = $conf->{'directory'}."/${dbname}_RegulatoryFeature.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $fh;
