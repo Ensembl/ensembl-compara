@@ -95,7 +95,7 @@ sub createObjects {
   }
 
   (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
-  (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Strip versions
+  (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; #Make sure we've eleven digits
   foreach my $fetch_call(@fetch_calls) {  
     eval { $geneobj = $adaptor->$fetch_call($identifier) } unless $geneobj; 
     eval { $geneobj = $adaptor->$fetch_call($T2) } unless $geneobj;

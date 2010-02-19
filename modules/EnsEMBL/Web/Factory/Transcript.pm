@@ -81,7 +81,7 @@ sub createObjects {
     my $adapt_getter = "get_$adapt_class";
     my $adaptor = $db_adaptor->$adapt_getter;
     (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
-    (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Strip versions
+    (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Make sure we've eleven digits
 
     foreach my $fetch_call (@fetch_calls) {
     eval { $transobj = $adaptor->$fetch_call($identifier) };
