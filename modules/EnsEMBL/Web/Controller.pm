@@ -213,9 +213,10 @@ sub build_menu {
   my $object = $model->object;
   
   return unless $object;
-  
-  my $type     = $model->hub->type;
-  my $action   = $model->hub->action;
+ 
+  # Force values of action and type because apparently require "EnsEMBL::Web::ZMenu::::Gene" (for eg) doesn't fail. Stupid perl.
+  my $type     = $model->hub->type   || 'NO_TYPE';
+  my $action   = $model->hub->action || 'NO_ACTION';
   my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
   
   my $menu;
