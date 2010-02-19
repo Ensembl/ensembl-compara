@@ -91,7 +91,7 @@ MAIN:{
 
   # Create a new Page object
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
-  my $page     = new EnsEMBL::Web::Document::Page::Dynamic( $renderer, undef, $SPECIES_DEFS );
+  my $page     = new EnsEMBL::Web::Document::Page::Dynamic({ renderer => $renderer, species_defs => $SPECIES_DEFS });
   $page->_initialize_HTML;
   $page->include_navigation(0);
 
@@ -369,7 +369,7 @@ sub is_script_suspended{
 sub get_suspend_page{
   my $msg = shift;
   my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
-  my $page     = new EnsEMBL::Web::Document::Page::Static( $renderer, undef, $SPECIES_DEFS );
+  my $page     = new EnsEMBL::Web::Document::Page::Static({ renderer => $renderer, species_defs => $SPECIES_DEFS });
   my $page->content->add_panel(
     new EnsEMBL::Web::Document::Panel( 'caption' => 'Ensembl Web site message',
       content => "<p>Sorry, BlastView is unavailable at the moment due to essential maintenance work.</p><p>$msg</p><p>Normal service will be resumed shortly</p>"
