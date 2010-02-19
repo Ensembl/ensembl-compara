@@ -12,7 +12,6 @@ sub analysis_logic_name{
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
-  
   my $db_alias = $self->my_config('db');
   my $analyses = $self->my_config('logicnames');
   my @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
@@ -53,11 +52,16 @@ sub legend {
 
 sub href { 	 
   my ($self, $gene, $transcript) = @_;
-  
+  my $source = $ENV{'ENSEMBL_ACTION'};
+#  my $action =  $source eq 'Multi' ? 'MultiTranscript' : 'Summary';#will be used to add realign around this gene link
+  #logic will be moved into web_data
+  my $action = $transcript->analysis->logic_name eq 'ccds_import' ? 'CCDS'
+             : $transcript->analysis->logic_name eq 'refseq_human_import' ? 'RefSeq'
+             : $ENV{'ENSEMBL_ACTION'};
   my $params = {
     species => $self->species,
     type    => 'Transcript',
-    action  => 'Summary',
+    action  => $action,
     t       => $transcript->stable_id,
     g       => $gene->stable_id, 
     db      => $self->my_config('db')
@@ -65,16 +69,21 @@ sub href {
   
   $params->{'r'} = undef if $self->{'container'}->{'web_species'} ne $self->species;
   
-  return $self->_url($params); 	 
-} 	 
+  return $self->_url($params);
+}
 
 sub gene_href { 	 
   my ($self, $gene) = @_;
-  
+  my $source = $ENV{'ENSEMBL_ACTION'};
+#  my $action =  $source eq 'Multi' ? 'MultiGene' : 'Summary';#will be used to add realign around this gene link
+  #logic will be moved into web_data
+  my $action = $gene->analysis->logic_name eq 'ccds_import' ? 'CCDS'
+             : $gene->analysis->logic_name eq 'refseq_human_import' ? 'RefSeq'
+             : $ENV{'ENSEMBL_ACTION'};
   my $params = {
     species => $self->species,
     type    => 'Gene',
-    action  => 'Summary',
+    action  => $action,
     g       => $gene->stable_id, 
     db      => $self->my_config('db')
   };
