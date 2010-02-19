@@ -17,11 +17,11 @@
 $.extend($.fn, {
   validate: function (options) {
     if (this.length && this.attr('tagName') == 'FORM') {
-      var validator = $.data(this[0], 'validator');
+      var validator = $(this).data('validator');
       
       if (!validator) {
-        validator = new $.validator(options, this[0]);
-        $.data(this[0], 'validator', validator); 
+        validator = new $.validator(options, this);
+        $(this).data('validator', validator); 
       }
       
       validator.validateInputs(null, 'initial');
@@ -36,28 +36,34 @@ $.validator = function (options, form) {
   
   this.settings      = $.extend({}, $.validator.defaults, options);
   this.rules         = this.settings.rules;
-  this.form          = form;
   this.inputs        = $('input[type="text"], input[type="password"], textarea', form);
   this.submitButtons = $('input[type="submit"]', form);
   
+  form = null;
+  
   this.inputs.each(function () {
-    $.data(this, 'valid', true);
+    var el    = $(this);
+    var input = { valid: true };
     
-    if (!this.className) return;
+    if (this.className) {
+      if (el.hasClass(validator.settings.requiredClass)) input.required = true;
+      
+      var rule = this.className.match(/.*\b_(\w+)\b.*/);
+      
+      if (rule) {
+        input.rule = rule[1];
+        
+        var min = this.className.match(/\bmin_(\d+)\b/);
+        var max = this.className.match(/\bmax_(\d+)\b/);
+        
+        if (min) input.min = parseFloat(min[1], 10);
+        if (max) input.max = parseFloat(max[1], 10);
+      }
+    }
     
-    if ($(this).hasClass(validator.settings.requiredClass)) $.data(this, 'required', true);
+    el.data(input);
     
-    var rule = this.className.match(/.*\b_(\w+)\b.*/);
-    
-    if (!rule) return;
-    
-    $.data(this, 'rule', rule[1]);
-    
-    var min = this.className.match(/\bmin_(\d+)\b/);
-    var max = this.className.match(/\bmax_(\d+)\b/);
-    
-    if (min) $.data(this, 'min', parseFloat(min[1], 10));
-    if (max) $.data(this, 'max', parseFloat(max[1], 10));
+    el = null;
   }).bind({
     keyup:  function (e) { if (e.keyCode != 9) validator.validateInputs($(this), 'delay'); }, // Ignored if the tab key is pressed, since this will cause blur to fire
     change: function ()  { validator.validateInputs($(this), 'delay'); },
@@ -109,62 +115,61 @@ $.extend($.validator, {
       
       this.timeout = setTimeout(function () {
         inputs.each(function () {
-          var required = $.data(this, 'required')
-          var error    = $.data(this, 'error');
-          var rule     = $.data(this, 'rule');
-          var min      = $.data(this, 'min');
-          var max      = $.data(this, 'max');
+          var el    = $(this);
+          var input = el.data();
           
-          var state = (flag == 'initial' || !required) && !this.value ? null :            // Not required and no value - do nothing. On initial run, ignore empty fields
-                      rule && validator.rules[rule] ? validator.rules[rule](this.value) : // Validate against rule
-                      required ? !!this.value : null;                                     // No rule - check if required
+          var state = (flag == 'initial' || !input.required) && !this.value ? null :                        // Not required and no value - do nothing. On initial run, ignore empty fields
+                      input.rule && validator.rules[input.rule] ? validator.rules[input.rule](this.value) : // Validate against rule
+                      input.required ? !!this.value : null;                                                 // No rule - check if required
           
-          if (state && min) state = parseFloat(this.value, 10) >= min;
-          if (state && max) state = parseFloat(this.value, 10) <= max;
+          if (state && input.min) state = parseFloat(this.value, 10) >= input.min;
+          if (state && input.max) state = parseFloat(this.value, 10) <= input.max;
           
           setClass[state](this);
-          $.data(this, 'valid', state);
+          el.data('valid', state);
           
           if (state === false) {
-            if (required && !this.value) rule = 'required';
+            if (input.required && !this.value) input.rule = 'required';
             
-            var message = validator.settings.messages[rule];
+            var message = validator.settings.messages[input.rule];
             
-            if (rule.match(/int$/)) {
-              if (min && max) {
-                message = 'Please enter an integer between ' + min + ' and ' + max;
-              } else if (min || max) {
-                message = 'Please enter an integer (' + (min ? 'min' : 'max') + 'imum ' + (min || max) + ')';
+            if (input.rule.match(/int$/)) {
+              if (input.min && input.max) {
+                message = 'Please enter an integer between ' + input.min + ' and ' + input.max;
+              } else if (input.min || input.max) {
+                message = 'Please enter an integer (' + (input.min ? 'min' : 'max') + 'imum ' + (input.min || input.max) + ')';
               }
             }
             
-            if (!error) {
-              error = {
-                rule: rule,
+            if (!input.error) {
+              input.error = {
+                rule: input.rule,
                 el: $('<label>', { 
                   className: validator.settings.invalidClass, 
                   'for':     this.id, 
                   html:      message
-                }).hide().appendTo($(this).parent())
+                }).hide().appendTo(el.parent())
               }
               
-              $.data(this, 'error', error);
-            } else if (error.rule != rule) {
-              error.el.html(message);
-              error.rule = rule;
+              el.data('error', error);
+            } else if (input.error.rule != input.rule) {
+              input.error.el.html(message);
+              input.error.rule = input.rule;
             }
             
-            if (flag == 'showError') error.el.show();
-          } else if (error) {
-            error.el.remove();
-            $.data(this, 'error', false);
+            if (flag == 'showError') input.error.el.show();
+          } else if (input.error) {
+            input.error.el.remove();
+            el.data('error', false);
           }
+          
+          el = null;
         });
         
         var isValid = true;
         
         for (var i in validator.inputs.toArray()) {
-          if ($.data(validator.inputs[i], 'valid') === false) {
+          if ($(validator.inputs[i]).data('valid') === false) {
             isValid = false;
             break;
           }
