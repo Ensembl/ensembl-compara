@@ -15,6 +15,10 @@ sub consequence     { return $_[0]->{'__raw__'}[5]; }
 sub extra           { return $_[0]->{'__raw__'}[6]; }
 sub external_data   { return undef; }
 
+sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
+sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
+sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
+
 sub coords {
   my ($self, $data) = @_;
   return ($data->[0], $data->[1], $data->[2]);
