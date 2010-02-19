@@ -31,15 +31,19 @@ sub strand   { my $self = shift;
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
 sub rawend   { my $self = shift; return $self->{'__raw__'}[2]; }
 sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
+
 sub score    { 
   my $self = shift;
-  if ( exists($self->{'__raw__'}[4])) {
-    return $self->{'__raw__'}[4];
+  my $score = 0;
+  if ( exists($self->{'__raw__'}[4]) && $self->{'__raw__'}[4] =~ /^\d+$/) {
+    $score = $self->{'__raw__'}[4];
   }
-  else { ## bedGraph format
-    return $self->{'__raw__'}[3];
+  elsif ($self->{'__raw__'}[3] =~ /^\d+$/) { ## Possible bedGraph format
+    $score = $self->{'__raw__'}[3];
   } 
+  return $score;
 }
+
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
 sub cigar_string {
