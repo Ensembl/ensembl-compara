@@ -91,6 +91,7 @@ sub content {
           <fieldset>
             <input type="hidden" name="_query_sequence" value="%s" />
             <input type="hidden" name="query" value="peptide" />
+            <input type="hidden" name="database" value="peptide" />
             <input type="hidden" name="species" value="%s" />
           </fieldset>
         </form>
