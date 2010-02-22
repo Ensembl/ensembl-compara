@@ -91,7 +91,8 @@ sub counts {
 
   unless ($counts) {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
-    $counts->{'exons'} = @{$self->Obj->get_all_Exons};
+    
+    $counts->{'exons'}              = @{$self->Obj->get_all_Exons};
     $counts->{'evidence'}           = $self->count_supporting_evidence;
     $counts->{'similarity_matches'} = $self->count_similarity_matches;
     $counts->{'oligos'}             = $self->count_oligos;
@@ -115,15 +116,19 @@ sub count_prot_domains {
 
 sub count_prot_variations {
   my $self = shift;
-  return 0 unless $self->translation_object;
-  my $snps = $self->translation_object->pep_snps;
-  my $c = 0;
   
-  foreach my $residue (@$snps){
-    next if !$residue->{'allele'};
-    $c++;
+  return 0 unless $self->species_defs->databases->{'DATABASE_VARIATION'};
+  
+  my $transcript = $self->Obj;
+  my $cd_start   = $transcript->cdna_coding_start;
+  my %count;
+  
+  # coding SNP only
+  foreach my $snp (grep $_->var_class =~ /^(snp|SNP - substitution|in-del)$/, @{$transcript->get_all_cdna_SNPs('variation')->{'coding'}}) {
+    $count{int(($_ - $cd_start) / 3)}++ for $snp->start..$snp->end;
   }
-  return $c;
+  
+  return scalar keys %count;
 }
 
 sub count_supporting_evidence {
