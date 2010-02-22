@@ -119,8 +119,8 @@ sub add_hidden {
 
 sub add_notes {
   my ($self, $notes) = @_;
-  
-  my $fieldset = $self->{'_fieldsets'}->[0];
+   
+  my $fieldset = $self->{'_fieldsets'}->[0] || $self->add_fieldset;
   
   $fieldset->notes($notes) if $fieldset && $notes;
 } 
