@@ -386,13 +386,16 @@ sub get_all_default_genome_dbs {
     #If we are using exact name matches then we can build a hash & do the lookups that way
     if($exact_species_name_match) {
       my %name_hash;
-      @name_hash{map {$_->name() } @{$all_genome_dbs}} = ();
+      @name_hash{map {$_->name() } @{$all_genome_dbs}} = (@{$all_genome_dbs});
+      my @all_species;
       foreach my $species_name (@{$species_names}) {
         if(exists $name_hash{$species_name}) {
           $all_species->{$species_name} = 1;
+          push(@all_species, $name_hash{$species_name});
           next;
         }
       }
+      $all_genome_dbs = \@all_species;
     }
     #Otherwise we must go through all GenomeDBs & the targets looking for 
     #possible matches. Any GenomeDB not found is removed from $all_genome_dbs}
