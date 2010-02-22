@@ -575,18 +575,12 @@ sub fetch_all_by_GenomeDB {
   my $genome_db_id = $genome_db->dbID;
   throw "[$genome_db] must have a dbID" if (!$genome_db_id);
 
-  my $all_method_link_species_sets = $self->fetch_all;
+  my $sql = q{select distinct mlss.method_link_species_set_id 
+from method_link_species_set mlss 
+join species_set ss using (species_set_id)
+where ss.genome_db_id =?};
 
-  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-    foreach my $this_genome_db (@{$this_method_link_species_set->species_set}) {
-      if ($this_genome_db->dbID == $genome_db_id) {
-        push (@$method_link_species_sets, $this_method_link_species_set);
-        last;
-      }
-    }
-  }
-
-  return $method_link_species_sets;
+  return $self->_run_query_and_return_mlss($sql, $genome_db_id);
 }
 
 
@@ -613,16 +607,15 @@ sub fetch_all_by_method_link_type_GenomeDB {
       unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
   my $genome_db_id = $genome_db->dbID;
   throw "[$genome_db] must have a dbID" if (!$genome_db_id);
+  
+  my $sql = q{select distinct mlss.method_link_species_set_id 
+from method_link_species_set mlss 
+join species_set ss using (species_set_id)
+join method_link ml using (method_link_id)
+where ss.genome_db_id =?
+and ml.type =?};
 
-  my $all_method_link_species_sets = $self->fetch_all();
-  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
-    if ($this_method_link_species_set->method_link_type eq $method_link_type and
-        grep (/^$genome_db_id$/, map {$_->dbID} @{$this_method_link_species_set->species_set})) {
-      push(@$method_link_species_sets, $this_method_link_species_set);
-    }
-  }
-
-  return $method_link_species_sets;
+  return $self->_run_query_and_return_mlss($sql, $genome_db_id, $method_link_type);
 }
 
 
@@ -818,14 +811,53 @@ sub _run_query_from_method_link_id_genome_db_ids {
               species_set_id = \"$species_set_id\"
               AND method_link_id = \"$method_link_id\"
             };
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    my ($dbID) = $sth->fetchrow_array();
-    $sth->finish();
-    $method_link_species_set = $self->fetch_by_dbID($dbID);
+    my $mlss_array = $self->_run_query_and_return_mlss($sql);
+    if(@{$mlss_array}) {
+      $method_link_species_set = $mlss_array->[0];
+    }
   }
 
   return $method_link_species_set;
+}
+
+=head2 _run_query_and_return_mlss
+
+  Arg  1     : String $sql to execute; only row it can return is the 
+               method_link_species_set_id
+  Arg 2      : @array of parameters to bind into the generated statement
+  Example    : my $method_link_species_sets =
+                   $mlssa->_run_query_and_return_mlss(
+                   'select method_link_species_set_id from method_link_species_set where method_link_id =?', 
+                   6);
+  Description: For the given SQL query this method will execute it and return
+               an array of MethodLinkSpeciesSet objects. This is useful for 
+               methods where you need to get a quick subset of MLSS instances
+               for manual iteration. Watch out that sometimes it could be 
+               quicker to fetch all MLSS and do the manual iteration becuase
+               this method fetches MLSS on a 1 by 1 basis.               
+  Returntype : ArrayRef of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+  Exceptions : Returns an empty array if nothing was found.
+  Caller     : Internal
+
+=cut
+
+sub _run_query_and_return_mlss {
+  my ($self, $sql, @params) = @_;
+  my @mlss;
+  my $sth = $self->prepare($sql);
+  $sth->execute(@params);
+  my @mlss_ids;
+  
+  while ( my $row = $sth->fetchrow_arrayref() ) {
+    push(@mlss_ids, $row->[0]);
+  }
+  $sth->finish();
+  
+  foreach my $mlss_id (@mlss_ids) {
+    push(@mlss, $self->fetch_by_dbID($mlss_id));
+  }
+  
+  return \@mlss;
 }
 
 
