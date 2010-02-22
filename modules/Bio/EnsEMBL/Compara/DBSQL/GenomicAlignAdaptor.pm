@@ -349,7 +349,7 @@ sub fetch_all_by_GenomicAlignBlock {
 =cut
 
 sub fetch_all_by_genomic_align_block_id {
-  my ($self, $genomic_align_block_id) = @_;
+  my ($self, $incoming_genomic_align_block_id) = @_;
   my $genomic_aligns = [];
 
   my $sql = qq{
@@ -370,7 +370,7 @@ sub fetch_all_by_genomic_align_block_id {
       };
 
   my $sth = $self->prepare($sql);
-  $sth->execute($genomic_align_block_id);
+  $sth->execute($incoming_genomic_align_block_id);
   my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
       $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line,
       $level_id);
