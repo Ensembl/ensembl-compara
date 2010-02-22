@@ -308,7 +308,9 @@ sub createPairAlignerAnalysis
   $stats->update();
   
   #Block BLAT until the dna collections are dumped
-  $ctrlRuleDBA->create_rule($self->{'dumpDnaCollectionAnalysis'}, $pairAlignerAnalysis);
+  if ($target_dnaCollectionConf->{'dump_loc'}) {
+    $ctrlRuleDBA->create_rule($self->{'dumpDnaCollectionAnalysis'}, $pairAlignerAnalysis);
+  }
 
   unless (defined $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}) {
 
