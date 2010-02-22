@@ -60,7 +60,7 @@ if ($dest_site eq 'ebi') {
   exit;
 } elsif ($dest_site eq 'ensembl_genomes') {
   $url = "http://www.ensemblgenomes.org/search?site=ensembl&q=$query&site=&x=0&y=0&genomic_unit=all";
-  $q->redirect($URL);
+  $q->redirect($url);
   exit;
 } elsif ($dest_site =~ /vega/) {
   if ($site_type eq 'vega') {
