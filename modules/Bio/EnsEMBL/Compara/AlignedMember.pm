@@ -56,8 +56,13 @@ sub copy {
 sub print_node {
   my $self  = shift;
   printf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-
-  printf(" %s", $self->genome_db->name) if($self->genome_db_id and $self->adaptor);
+    if($self->genome_db_id and $self->adaptor) {
+      my $genome_db = $self->genome_db;
+      if (!defined($genome_db)) {
+        $DB::single=1;1;
+      }
+      printf(" %s", $genome_db->name) 
+    }
   if($self->gene_member) {
     printf(" %s %s %s:%d-%d",
       $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name,
@@ -231,15 +236,14 @@ sub alignment_string_bounded {
 sub cdna_alignment_string {
   my $self = shift;
 
-  throw("can't connect to CORE to get transcript and cdna for "
-        . "genome_db_id:" . $self->genome_db_id )
-    unless($self->transcript);
-
   unless (defined $self->{'cdna_alignment_string'}) {
-    
+
     my $cdna;
     eval { $cdna = $self->sequence_cds;};
     if ($@) {
+      throw("can't connect to CORE to get transcript and cdna for "
+            . "genome_db_id:" . $self->genome_db_id )
+        unless($self->transcript);
       $cdna = $self->transcript->translateable_seq;
     }
 
