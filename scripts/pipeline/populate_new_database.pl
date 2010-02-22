@@ -386,7 +386,7 @@ sub get_all_default_genome_dbs {
     #If we are using exact name matches then we can build a hash & do the lookups that way
     if($exact_species_name_match) {
       my %name_hash;
-      @name_hash{@{$all_genome_dbs}} = ();
+      @name_hash{map {$_->name() } @{$all_genome_dbs}} = ();
       foreach my $species_name (@{$species_names}) {
         if(exists $name_hash{$species_name}) {
           $all_species->{$species_name} = 1;
