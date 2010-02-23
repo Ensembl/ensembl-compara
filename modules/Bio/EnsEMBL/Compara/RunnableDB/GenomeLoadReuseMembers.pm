@@ -132,6 +132,7 @@ sub fetch_input {
   $self->{'store_genes'} = 1;
 
   $self->{'verbose'} = 0;
+  $self->{'verbose'} = 1 if (2 == $self->debug);
 
   #variables for tracking success of process  
   $self->{'sliceCount'}       = 0;
@@ -173,7 +174,7 @@ sub run
 
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, useing the SliceAdaptor
-  # it will load all slices, all genes, and all transscripts
+  # it will load all slices, all genes, and all transcripts
   # and convert them into members to be stored into compara
   $self->loadMembersFromCoreSlices();
 
@@ -354,10 +355,10 @@ sub loadMembersFromCoreSlices
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL
       # D and J are very short or have no translation at all
-      if (lc($gene->biotype) eq 'protein_coding' || 
-          lc($gene->biotype) eq 'ig_v_gene'      || 
-          lc($gene->biotype) eq 'ig_c_gene'      || 
-          lc($gene->biotype) eq 'c_segment'      || 
+      if (lc($gene->biotype) eq 'protein_coding'         || 
+          lc($gene->biotype) eq 'ig_v_gene'              || 
+          lc($gene->biotype) eq 'ig_c_gene'              || 
+          lc($gene->biotype) eq 'c_segment'              || 
           lc($gene->biotype) eq 'v_segment') {
         $self->{'realGeneCount'}++;
         $self->store_gene_and_all_transcripts($gene);
@@ -372,8 +373,8 @@ sub loadMembersFromCoreSlices
   print("loaded ".$self->{'sliceCount'}." slices\n");
   print("       ".$self->{'geneCount'}." genes\n");
   print("       ".$self->{'realGeneCount'}." real genes\n");
-  print("       ".$self->{'transcriptCount'}." transscripts\n");
-  print("       ".$self->{'longestCount'}." longest transcripts\n");
+  print("       ".$self->{'transcriptCount'}." transcripts\n");
+  print("       ".$self->{'longestCount'}." canonical transcripts\n");
   print("       ".$self->{'pepSubset'}->count()." in Subset\n");
 }
 
@@ -393,30 +394,20 @@ sub store_gene_and_all_transcripts
     $gene->stable_id($self->{'pseudo_stableID_prefix'} ."G_". $gene->dbID);
   }
 
+  my $canonical_transcript; my $canonical_transcript_stable_id;
+  eval {$canonical_transcript = $gene->canonical_transcript;
+        $canonical_transcript_stable_id = $canonical_transcript->stable_id;};
+  if (!defined($canonical_transcript)) {
+    print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n" if ($self->debug);
+    return 1;
+  }
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     my $translation = $transcript->translation;
-    unless (defined $translation) {
-       #warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-      next;
-    }
+    next unless (defined $translation);
 
-#     if($pep_member->seq_length > $maxLength) {
-#       $maxLength = $pep_member->seq_length;
-#       @longestPeptideMember = ($transcript, $pep_member);
-#     }
-    my $canonical_transcript;    my $canonical_transcript_stable_id;
-    eval {$canonical_transcript = $gene->canonical_transcript;
-          $canonical_transcript_stable_id = $canonical_transcript->stable_id;};
-    if (!defined($canonical_transcript)) {
-      print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n" if ($self->debug);
-      next;
-    }
     if ($canonical_transcript->biotype ne $gene->biotype) {
-      print STDERR "WARN: ", $transcript->stable_id, " is labelled as canonical transcript but has wrong biotype\n" if ($self->debug);
-      next;
-    }
-    if ($transcript->biotype ne $gene->biotype) {
-      print STDERR $transcript->stable_id, " non-matching biotype ", $transcript->biotype, "\n" if ($self->debug && $self->{'verbose'});
+      # This can happen when the only transcripts are, e.g., NMDs
+      print STDERR "INFO: ", $canonical_transcript->stable_id, " biotype ", $canonical_transcript->biotype, " is canonical\n" if ($self->debug);
     }
 
 #    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
@@ -515,6 +506,7 @@ sub store_gene_and_all_transcripts
     $self->{'longestCount'}++;
     # print("     LONGEST " . $transcript->stable_id . "\n");
   }
+  return 1;
 }
 
 
