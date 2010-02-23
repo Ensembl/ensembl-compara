@@ -212,7 +212,7 @@ sub get_params {
   }
 
   if(defined($params->{'protein_tree_id'})) {
-    $DB::single=1;1;
+
     $self->{'protein_tree'} =  
          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($params->{'protein_tree_id'});
@@ -416,7 +416,7 @@ sub check_job_fail_options
 #   }
 
   # This will go to QuickTreeBreak
-  if($self->input_job->retry_count >= 2 && !defined($self->{'jackknife'})) {
+  if($self->input_job->retry_count >= 1 && !defined($self->{'jackknife'})) {
     $self->dataflow_output_id($self->input_id, 3);
     $self->input_job->update_status('FAILED');
 
@@ -490,6 +490,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
         $protein1->{'cdna_alignment_string'} = $cdna1;
         $protein2->{'cdna_alignment_string'} = $cdna2;
         print STDERR "$split_type: Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
+
         $tree->store_tag('msplit_'.$protein1->stable_id."_".$protein2->stable_id,$split_type);
         # In case of more than 2 fragments, the projection is going to
         # be done incrementally, the closest pairs pairs first.
@@ -859,27 +860,25 @@ sub check_for_split_genes {
     # Checking for gene_split cases
     if ($type eq 'within_species_paralog' && 0 == $perc_id1 && 0 == $perc_id2 && 0 == $perc_pos1 && 0 == $perc_pos2) {
 
-     # Condition A1: If same seq region and less than 1MB distance
+      # Condition A1: If same seq region and less than 1MB distance
       my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
       if ($gene_member1->chr_name eq $gene_member2->chr_name 
           && (1000000 > abs($gene_member1->chr_start - $gene_member2->chr_start)) 
           && $gene_member1->chr_strand eq $gene_member2->chr_strand ) {
-        push @{$self->{alignment_edits}{contiguous_gene_split}}, $genepairlink;
-      }
 
-     # Condition A2: there have to be the only 2 or 3 protein coding
-     # genes in the range defined by the gene pair. This should
-     # strictly be 2, only the pair in question, but in clean perc_id
-     # = 0 cases, we allow for 2+1: the rare case where one extra
-     # protein coding gene is partially or fully embedded in another.
+        # Condition A2: there have to be the only 2 or 3 protein coding
+        # genes in the range defined by the gene pair. This should
+        # strictly be 2, only the pair in question, but in clean perc_id
+        # = 0 cases, we allow for 2+1: the rare case where one extra
+        # protein coding gene is partially or fully embedded in another.
         my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
         my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
         if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
         if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
         my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
-        # my @genes_in_range = $self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1);
         print STDERR "Checking split genes overlap\n";
-        my @genes_in_range = $self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4);
+        my @genes_in_range = @{$self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
+
         if (3 < scalar @genes_in_range) {
           foreach my $gene (@genes_in_range) {
             print STDERR "More than 2 genes in range...";
@@ -887,18 +886,21 @@ sub check_for_split_genes {
           }
           next;
         }
+        push @{$self->{alignment_edits}{contiguous_gene_split}}, $genepairlink;
+      }
 
-    # This is a second level of contiguous gene split events, more
-    # stringent on contig but less on alignment, for "skidding"
-    # alignment cases.
 
-    # These cases take place when a few of the aminoacids in the
-    # alignment have been wrongly displaced from the columns that
-    # correspond to the fragment, so the identity level is slightly
-    # above 0. This small number of misplaced aminoacids look like
-    # "skid marks" in the alignment view.
+      # This is a second level of contiguous gene split events, more
+      # stringent on contig but less on alignment, for "skidding"
+      # alignment cases.
 
-    # Condition B1: all 4 percents below 10
+      # These cases take place when a few of the aminoacids in the
+      # alignment have been wrongly displaced from the columns that
+      # correspond to the fragment, so the identity level is slightly
+      # above 0. This small number of misplaced aminoacids look like
+      # "skid marks" in the alignment view.
+
+      # Condition B1: all 4 percents below 10
     } elsif ($type eq 'within_species_paralog' 
              && $perc_id1 < 10 
              && $perc_id2 < 10 
@@ -919,7 +921,8 @@ sub check_for_split_genes {
         if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
         if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
         my $strand1 = $gene_member1->chr_strand; my $taxon_id1 = $gene_member1->taxon_id; my $name1 = $gene_member1->chr_name;
-        my @genes_in_range = $self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1);
+
+        my @genes_in_range = @{$self->{'memberDBA'}->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
         if (2 < scalar @genes_in_range) {
           foreach my $gene (@genes_in_range) {
             print STDERR "More than 2 genes in range...";
@@ -932,8 +935,6 @@ sub check_for_split_genes {
         my $len1 = length($protein1->sequence); my $len2 = length($protein2->sequence); my $temp;
         if ($len1 < $len2) { $temp = $len1; $len1 = $len2; $len2 = $temp; }
         if ($len1/$len2 > 10 && $perc_id1 > 2 && $perc_id2 > 2 && $perc_pos1 > 2 && $perc_pos2 > 2) {
-          # my $id1 = $protein1->stable_id; my $id2 = $protein2->stable_id;
-          # `touch /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_56/split_genes/skidding/$id1.$id2`;
           next;
         }
         push @{$self->{alignment_edits}{skidding_contiguous_gene_split}}, $genepairlink;
