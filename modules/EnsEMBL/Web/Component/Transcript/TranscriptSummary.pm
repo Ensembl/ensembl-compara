@@ -108,6 +108,45 @@ sub content {
         1 );
   }
 
+  ## add stop gained/lost variation info
+  my @attrib_codes= ('StopLost','StopGained');
+  my $codons;
+  foreach my $code (@attrib_codes) {
+    my $transcript_attribs = $object->Obj->get_all_Attributes($code);
+    my $description;
+
+    #find which populations are affected by each snp (rsid)
+    my %unique;
+    foreach my $transc_att (@{$transcript_attribs}) {
+      my ($rsid,$pop) = split(/,/, $transc_att->value());
+      $unique{$rsid}{$pop} = 1;
+    }
+
+    # print the popukations for each rsid
+    foreach my $id (keys %unique) {
+      my $population_string = join(", ", keys %{$unique{$id}});
+      my $link = $object->_url({
+        'type'    => 'Variation',
+        'action'  => 'Summary',
+        'v'       => $id,
+      }); 
+      my $id_link = "<a href=$link>$id</a>"; 
+      if ($code eq 'StopLost') {
+        $description = "This transcript has a variant, $id_link, that causes a stop codon ".
+                      "to be lost in at least 10% of HapMap population(s) $population_string.";
+      } elsif ($code eq 'StopGained') {
+        $description = "This transcript has a variant, $id_link, that causes a stop codon ".
+                      "to be gained in at least 10% of HapMap population(s) $population_string.";
+      } 
+      $codons .= $description ."<br />";
+    }
+  }
+  if ($codons =~/^\w/){
+    $table->add_row('Stop codons',
+      "<p>$codons</p>",
+      1
+    );  
+  }
   return $table->render;
 }
 
