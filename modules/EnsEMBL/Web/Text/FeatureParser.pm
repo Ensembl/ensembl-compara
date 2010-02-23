@@ -10,7 +10,8 @@ use EnsEMBL::Web::Root;
 use List::MoreUtils;
 use Data::Dumper;
 
-our ($nearest_region, $nearest_start, $nearest_end, $done);    
+our ($nearest_region, $nearest_start, $nearest_end) = (0, 0, 0);
+our $done;    
 
 sub new {
   my ($class, $species_defs, $location) = @_;
@@ -127,6 +128,7 @@ sub parse {
       ## Skip crap and clean up what's left
       next unless $row;
       next if $row =~ /^#/;
+      #warn "... ROW $row";
       $row =~ s/[\t\r\s]+$//g;
 
       ## Parse as appropriate
@@ -243,7 +245,13 @@ sub split_into_columns {
       @columns = split /\s/, $row;
     }
   }
-  @columns = grep /\S/, @columns;
+  ## Clean up any remaining white space and non-printing characters
+  foreach (@columns) {
+    next unless $_ =~ /\d+/;
+    $_ =~ tr/\x80-\xFF//d;
+    $_ =~ s/^\s+//;
+    $_ =~ s/\s+$//;
+  }
   return (\@columns, $tabbed);
 }
 
