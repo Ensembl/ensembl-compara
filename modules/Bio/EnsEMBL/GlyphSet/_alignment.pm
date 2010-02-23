@@ -149,22 +149,10 @@ sub render_normal {
   }
 
   ## Sort (user tracks) by priority 
-  my $prioritize;
-  while (my ($k, $v) = each (%features)) {
-    if (@$v > 1 && $v->[1]{'priority'}) {
-      $prioritize = 1;
-    }
-  }
-  my @sorted;
-  if ($prioritize) {
-    @sorted = sort { 
-      ($features{$a}->[1]{'priority'} || 0) <=> ($features{$b}->[1]{'priority'} || 0)
-      } keys %features;
-  }
-  else {
+  my @sorted = $self->sort_features_by_priority(%features);
+  unless (@sorted) {
     @sorted = $strand < 0 ? sort keys %features : reverse sort keys %features;
   }
-  @sorted = keys %features unless @sorted;
  
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config

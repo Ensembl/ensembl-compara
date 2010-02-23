@@ -30,10 +30,13 @@ sub draw_features {
   my ($self, $wiggle)= @_; 
  
   my %data = $self->features;
+  my @A = keys %data;
   return 0 unless keys %data;
+  my @sorted = $self->sort_features_by_priority(%data); 
 
   if ( $wiggle ){
-    while (my ($key, $track) = each (%data)) {
+    foreach my $key (@sorted) {
+      my $track = $data{$key};
       my ($features, $config) = @$track;
       my ($min_score,$max_score) = split(':', $config->{'viewLimits'});
       $min_score = $config->{'min_score'} unless $min_score;

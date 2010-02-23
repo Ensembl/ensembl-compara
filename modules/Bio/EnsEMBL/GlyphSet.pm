@@ -1015,5 +1015,25 @@ sub gene_key {
   return lc $pattern;
 }
 
+sub sort_features_by_priority {
+  my ($self, %features) = @_;
+  my @sorted;
+
+  my $prioritize = 0;
+  while (my ($k, $v) = each (%features)) {
+    if (@$v > 1 && $v->[1]{'priority'}) {
+      $prioritize = 1;
+    }
+  }
+  if ($prioritize) {
+    foreach my $f (keys %features) {
+    }
+    @sorted = sort {
+      ($features{$b}->[1]{'priority'} || 0) <=> ($features{$a}->[1]{'priority'} || 0)
+      } keys %features;
+  }
+  return @sorted;
+}
+
 1;
 
