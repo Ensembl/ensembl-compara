@@ -297,7 +297,7 @@ sub run_buildhmm
 
   $self->{'hmm_file'} = $self->{'input_aln'} . "_hmmbuild.hmm ";
 
-  my $hmmer_dir = "/software/pfam/src/hmmer-3.0.a1/bin/";
+  my $hmmer_dir = "/software/ensembl/compara/hmmer3/hmmer-3.0rc1";
   my $buildhmm_executable;
   unless (-e $buildhmm_executable) {
     if (-e "/proc/version") {
