@@ -50,13 +50,12 @@ Allow:      /$_/$view);
     } else {
       print FH qq(
 User-agent: *
-Disallow:   /
-Allow:      /index.html);
+Disallow:   /);
     }
     print FH qq(
 
 User-Agent: W3C-checklink
-Disallow:
+Allow: /info
 );
     close FH;
   } else {
