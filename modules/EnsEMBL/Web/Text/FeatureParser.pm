@@ -10,8 +10,7 @@ use EnsEMBL::Web::Root;
 use List::MoreUtils;
 use Data::Dumper;
 
-our ($nearest_region, $nearest_start, $nearest_end) = (0, 0, 0);
-our $done;    
+our ($nearest_region, $nearest_start, $nearest_end, $done);    
 
 sub new {
   my ($class, $species_defs, $location) = @_;
@@ -125,11 +124,12 @@ sub parse {
     }
 
     foreach my $row ( split /\n|\r/, $data ) {
-      ## Skip crap and clean up what's left
-      next unless $row;
+      ## Clean up the row
       next if $row =~ /^#/;
       #warn "... ROW $row";
       $row =~ s/[\t\r\s]+$//g;
+      $row =~ tr/\x80-\xFF//d;
+      next unless $row;
 
       ## Parse as appropriate
       if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
