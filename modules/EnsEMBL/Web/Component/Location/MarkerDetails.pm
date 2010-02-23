@@ -266,7 +266,7 @@ sub render_location {
 	    my $sr_name = $mf->seq_region_name;
 	    my $start   = $mf->start;
 	    my $end     = $mf->end;
-	    my $url     = $object->_url({ action => 'View', r => "$sr_name:$start-$end", h => $m_name }); 
+	    my $url     = $object->_url({ action => 'View', r => "$sr_name:$start-$end", m => $m_name }); 
 	    my $extra   = $m->priority < $priority ? " [Note that for reasons of clarity this marker is not shown on 'Region in detail']" : '';
 			
 	    $loc_text .= sprintf '<tr><td>%s%s <a href="%s">%s:%s-%s</a>%s</td></tr>', $c > 1 ? '&nbsp;' : '', $mf->coord_system_name, $url, $sr_name, $start, $end, $extra;
