@@ -329,7 +329,7 @@ sub create_species_tree {
   eval {$newick_common = $root->newick_format("full_common");};
   unless ($@) {
     print("\n\n$newick_common\n\n");
-
+    $newick_common =~ s/\ /\_/g;
     open T,">newick_common.$outname.nh" or die "$!";
     print T $newick_common;
     close T;
