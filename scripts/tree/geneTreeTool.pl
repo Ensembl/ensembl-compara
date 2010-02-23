@@ -187,6 +187,7 @@ GetOptions('help'                                     => \$help,
            'indelible=s'                                => \$self->{'_indelible'},
            'species_intersection'                     => \$self->{'_species_intersection'},
            'hmm_build=s'                              => \$self->{'_hmm_build'},
+           'hbpd=s'                              => \$self->{'_hbpd'},
            'hmm_search=s'                             => \$self->{'_hmm_search'},
            '2xeval=s'                                 => \$self->{'_2xeval'},
            'uce=s'                                    => \$self->{'_uce'},
@@ -1012,6 +1013,13 @@ if ($self->{'clusterset_id'} && $self->{'_hmm_build'}) {
   exit(0);
 }
 
+
+# internal purposes
+if ($self->{'clusterset_id'} && $self->{'_hbpd'}) {
+  _hbpd($self) if(defined($self->{'_hbpd'}));
+  exit(0);
+}
+
 # internal purposes
 if ($self->{'clusterset_id'} && $self->{'_hmm_search'}) {
   _hmm_search($self) if(defined($self->{'_hmm_search'}));
@@ -1459,7 +1467,7 @@ sub keep_leaves_species_older {
   foreach my $leaf (@{$tree->get_all_leaves}) {
     my $species = $leaf->genome_db->name;
     unless (defined $species_names{$species}) {
-      print $leaf->name," leaf disavowing parent\n" if $self->{'$debug'};
+      print $leaf->name," leaf disavowing parent\n" if $self->{'debug'};
       $leaf->disavow_parent;
       $tree = $tree->minimize_tree;
     }
@@ -1894,7 +1902,6 @@ sub _analysis_job_trace {
   print STDERR "[querying] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
   while (($analysis_id, $analysis_job_id, $prev_analysis_job_id, $completed, $runtime_msec, $retry_count) = $sth->fetchrow_array) {
     my $node;
-    $DB::single=$self->{debug};1;#??
     unless (defined($self->{defined_nodes}{$analysis_job_id})) {
     $node = Bio::EnsEMBL::Compara::NestedSet->new; $node->node_id($analysis_job_id);
     $self->{defined_nodes}{$analysis_job_id} = $node;
@@ -1923,7 +1930,7 @@ sub _analysis_job_trace {
   print STDERR "[queried] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
 
   print STDERR "[printing graph] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
-  my $scale = $self->{scale} || 0.005;
+  my $scale = $self->{'scale'} || 0.005;
   $root->print_tree($scale);
   print STDERR "[printed graph] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
 }
@@ -2652,9 +2659,10 @@ sub _indelible {
   my $aln_length = $tree->get_tagvalue('aln_length');
   my $length = $residues_length;
 
-  my $substitution_rate = $total_branch_length;
+  my $substitution_rate = $total_branch_length/2;
   my $indel_rate = ($aln_length/$residues_length)/$substitution_rate;
-  $indel_rate = $self->{debug} if ($self->{debug}); # overrides...
+  $indel_rate = $indel_rate/10;
+  $indel_rate += ($indel_rate/100 * $self->{debug}) if ($self->{debug}); # overrides...
 
   print STDERR "indel_rate $indel_rate\n";
   my $ins_rate = $indel_rate;
@@ -2704,11 +2712,107 @@ sub _indelible {
 
   my $aln_f = $output_f."_TRUE.fas";
   my $cds_f = $output_f.".fas";
-  print `cp $aln_f /lustre/scratch103/ensembl/avilella/indelible_tests/$tree_id.indl.mfa`;
-  print `cp $cds_f /lustre/scratch103/ensembl/avilella/indelible_tests/$tree_id.indl.cds`;
+  $indel_rate = sprintf("%.03f",$indel_rate);
+  my $farm = $self->{_farm} || undef;
+  if ($farm) {
+    print `cp $aln_f $farm/$tree_id.$indel_rate.indl.mfa`;
+    print `cp $cds_f $farm/$tree_id.$indel_rate.indl.cds`;
+  }
   unlink <$tempdir/*>;
   rmdir $tempdir;
 }
+
+# sub _binning {
+#   my $self = shift;
+#   my $species = $self->{_binning} || "Homo_sapiens";  $species =~ s/\_/\ /g;
+#   # Bin sizes in bps
+#   my $bin_sizes = [1000000,500000,250000];
+#   # list of seq_regions
+#   my $sql1 = 
+#     "SELECT distinct chr_name, genome_db_id FROM member m ".
+#       "WHERE m.genome_db_id=(select genome_db_id from genome_db where name=\"$species\")";
+#   my $sth1 = $self->{comparaDBA}->dbc->prepare($sql1);
+#   $sth1->execute();
+  
+#   # Temp file for LOAD DATA insert
+#   my $io = new Bio::Root::IO();
+#   my $tempdir = $io->tempdir;
+#   my ($tmpfilefh,$tempfile) = $io->tempfile(-dir => $tempdir); #internal purposes
+#   open FILE, ">$tempfile" or die "$!";
+#   ###
+  
+#   # 1) Foreach my seq_region
+#   while (my ($name,$genome_db_id) = $sth1->fetchrow_array()) {
+#     my $bin_num = 1;
+#     ## Until max chr_end coordinate
+#     my $sql4 = "select max(m.chr_end) from member m where m.genome_db_id=$genome_db_id and m.chr_name=\"$name\"";
+#     my $sth4 = $self->{comparaDBA}->dbc->prepare($sql4);
+#     $sth4->execute();
+#     my ($max_end) = $sth4->fetchrow_array;
+#     $sth4->finish();
+#     ###
+    
+#     # 2) Foreach bin_size
+#     foreach my $size (@$bin_sizes) {
+#       print STDERR "species $species name $name size $size\n";
+#       my $offset;
+#       if (0 == ($bin_num % 2)) { $offset = -1 * int($size/2);} else {$offset = 0;}
+#       while ($offset < $max_end) {
+#         ## In this window
+#         my $end = $size+$offset;
+#         ## Select start end boundaries for features (genes) in this window
+#         my $sql2 = "select min(m.chr_start), max(m.chr_end) from member m where m.genome_db_id=$genome_db_id and m.chr_name=\"$name\" and m.chr_start>=$offset and m.chr_end<$end";
+#         my $sth2 = $self->{comparaDBA}->dbc->prepare($sql2);
+#         $sth2->execute();
+#         my ($chr_start, $chr_end) = $sth2->fetchrow_array;
+#         $sth2->finish();
+#         $offset += $size;
+#         next unless (defined($chr_start) && defined($chr_end));
+#         ## Define bin, first tab is for AUTO_INCREMENT of seq_region_bin_id
+#         print FILE "\t$size\t$genome_db_id\t$name\t$chr_start\t$chr_end\n";
+#       }
+#       $bin_num++;
+#     }
+#   }
+#   $sth1->finish();
+#   close FILE;
+#   ## Load bins into table
+#   my $sql3 = "LOAD DATA LOCAL INFILE '$tempfile' IGNORE INTO TABLE seq_region_bin";
+#   my $sth3 = $self->{comparaDBA}->dbc->prepare($sql3);
+#   $sth3->execute();
+#   return 1;
+# }
+
+# sub _member_bin {
+#   my $self = shift;
+#   my $species = $self->{_member_bin} || "Homo_sapiens";
+#   $species =~ s/\_/\ /g;
+  
+#   my $sth3 = $self->{comparaDBA}->dbc->prepare
+#     ("INSERT IGNORE INTO member_bin
+#            (seq_region_bin_id,
+#             member_id) VALUES (?,?)");
+  
+#   my $sql1 = 
+#     "SELECT srb.seq_region_bin_id, srb.genome_db_id, srb.bin_size, srb.chr_name, srb.chr_start, srb.chr_end ".
+#       "FROM seq_region_bin srb ".
+#         "WHERE srb.genome_db_id=(select genome_db_id from genome_db where name=\"$species\") order by srb.seq_region_bin_id";
+#   my $sth1 = $self->{comparaDBA}->dbc->prepare($sql1);
+#   $sth1->execute();
+#   while (my ($seq_region_bin_id, $genome_db_id, $bin_size, $chr_name, $chr_start, $chr_end) = $sth1->fetchrow_array()) {
+#     #     print STDERR "name $chr_name bin_size $bin_size chr_start $chr_start chr_end $chr_end\n";
+#     my $sql4 = "select member_id from member m where m.source_name='ENSEMBLGENE' and m.genome_db_id=$genome_db_id and m.chr_name=\"$chr_name\" and m.chr_start>=$chr_start and m.chr_end<=$chr_end";
+#     my $sth4 = $self->{comparaDBA}->dbc->prepare($sql4);
+#     $sth4->execute();
+#     while (my ($member_id) = $sth4->fetchrow_array()) {
+#       $sth3->execute($seq_region_bin_id,
+#                      $member_id);
+#     }
+#     $sth4->finish();
+#   }
+#   $sth1->finish();
+#   $sth3->finish();
+# }
 
 # sub _viral_genes {
 #   my $self = shift;
@@ -2807,6 +2911,72 @@ sub _indelible {
 #     system("rm -f /tmp/$tree_id.hmm");
 #   }
 # }
+
+sub _hbpd {
+  my $self = shift;
+  $self->{starttime} = time();
+  my $filename = $self->{_hbpd};
+  my ($infilebase,$path,$type) = fileparse($filename);
+  my $root_id = `cat $filename`;
+  chomp $root_id;
+  next if (1 == $root_id);
+  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{tree} = $self->{treeDBA}->fetch_node_by_node_id($root_id);
+
+  my $tree = $self->{tree};
+
+  my $aln;
+  eval {
+    $aln = $tree->get_SimpleAlign
+      (
+       -id_type => 'STABLE',
+       -cdna => 0,
+       -stop2x => 1
+      );
+  };
+  $tree->release_tree;
+  my $aln_file = "/tmp/$root_id.aln";
+  unless ($@) {
+    my $alignIO = Bio::AlignIO->new
+      (-file => ">$aln_file",
+       -format => 'fasta',
+      );
+    $aln->set_displayname_flat(1);
+    $alignIO->write_aln($aln);
+  }
+
+  my $stk_file = "/tmp/$root_id.stk";
+  my $cmd = "/usr/local/ensembl/bin/sreformat stockholm $aln_file > $stk_file";
+  unless( system("$cmd") == 0) {
+    print("$cmd\n");
+    $self->check_job_fail_options;
+    throw("error running sreformat, $!\n");
+  }
+
+  $self->{'input_aln'} = $stk_file;
+
+  my $buildhmm_executable = "/nfs/users/nfs_a/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmbuild";
+
+  $self->{'hmm_file'} = $self->{'input_aln'} . "_hmmbuild.hmm ";
+  $cmd = $buildhmm_executable;
+  my $mydbname = $self->{comparaDBA}->dbc->dbname;
+  $cmd .= " -n $mydbname.$root_id ";
+  $cmd .= " --amino ";
+  $cmd .= $self->{'hmm_file'};
+  $cmd .= " ". $self->{'input_aln'};
+  $cmd .= " 2>&1 > /dev/null" unless($self->{debug});
+
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  print("$cmd\n") if($self->{debug});
+  unless(system("cd /tmp; $cmd") == 0) {
+    print("$cmd\n");
+    throw("error running hmmbuild, $!\n");
+  }
+  my $file = $self->{'hmm_file'};
+  my $ret1 = `rm -f $filename.hmm`;
+  my $ret2 = `cp $file $filename.hmm`;
+  $DB::single=1;1;#??
+}
 
 sub _hmm_search {
   my $self = shift;
@@ -3402,6 +3572,12 @@ sub _zmenu_prof {
 #     last if ($count++ > $self->{debug});
 #   }
 # }
+
+sub _other_feature_reads {
+  my $self = shift;
+  $self->{starttime} = time();
+  $DB::single=1;1;
+}
 
 sub _mxe_metatranscript_reads {
   my $self = shift;
@@ -4237,7 +4413,7 @@ sub _timetree_pairwise {
     my @myas = keys %{$self->{timetree_ancestor_values}{$ancestor_node_id}};
     print STDERR "# $ancestor_name,$ancestor_node_id, " . join(",",sort {$b<=>$a} keys %{$self->{timetree_ancestor_values}{$ancestor_node_id}}), "\n";
     my $best_mya = $myas[0];
-    print STDERR "insert into ncbi_taxa_name (taxon_id, name_class, name) values ($ancestor_node_id,\"ensembl timetree mya\", \"$best_mya\");\n";
+    print STDERR "insert ignore into ncbi_taxa_name (taxon_id, name_class, name) values ($ancestor_node_id,\"ensembl timetree mya\", \"$best_mya\");\n";
   }
 }
 
@@ -5250,7 +5426,9 @@ sub _interpro_coverage {
   print STDERR "[fetching $species genes] ",time()-$self->{starttime}," secs...\n" if ($self->{verbose}); $self->{starttime} = time();
   foreach my $gene (@$genes) {
     my $stable_id = $gene->stable_id;
-    my $canonical_peptide = $gene->get_canonical_peptide_Member;
+    my $canonical_peptide;
+    eval { $canonical_peptide = $gene->get_canonical_peptide_Member;};
+    eval { $canonical_peptide = $gene->get_longest_peptide_Member;} if ($@);
     my $protein_stable_id = $canonical_peptide->stable_id;
     my $mcl_id = $canonical_peptide->member_id . "_" . $gdb_id;
     my @interpro_entries = @{$gene_adaptor->get_Interpro_by_geneid($stable_id)};
@@ -7682,17 +7860,20 @@ sub _genetree_domains {
         $member_domain->{$pfamid}{$member_id}{$copy}{end} = $end;
         $member_domain->{$pfamid}{$member_id}{$copy}{id} = $member->stable_id;
         $count++;
+
       }
     }
     unless (defined($member_domain)) {
-      $root->adaptor->delete_tag($root->node_id,'pfam_representative_member'); $root->store_tag('pfam_representative_member',$representative_member);
-      $root->adaptor->delete_tag($root->node_id,'pfam_num_domains'); $root->store_tag('pfam_num_domains',0);
-      $root->adaptor->delete_tag($root->node_id,'pfam_non_overlapping_domains'); $root->store_tag('pfam_non_overlapping_domains',0);
-      $root->adaptor->delete_tag($root->node_id,'pfam_domain_coverage'); $root->store_tag('pfam_domain_coverage',0);
-      $root->adaptor->delete_tag($root->node_id,'pfam_domain_string'); $root->store_tag('pfam_domain_string','na');
-      $root->adaptor->delete_tag($root->node_id,'pfam_domain_vector_string'); $root->store_tag('pfam_domain_vector_string','na');
+      $root->adaptor->delete_tag($root->node_id,'pfam_representative_member'); $root->store_tag('pfam_representative_member',$representative_member) unless ($self->{debug});
+      $root->adaptor->delete_tag($root->node_id,'pfam_num_domains'); $root->store_tag('pfam_num_domains',0) unless ($self->{debug});
+      $root->adaptor->delete_tag($root->node_id,'pfam_non_overlapping_domains'); $root->store_tag('pfam_non_overlapping_domains',0) unless ($self->{debug});
+      $root->adaptor->delete_tag($root->node_id,'pfam_domain_coverage'); $root->store_tag('pfam_domain_coverage',0) unless ($self->{debug});
+      $root->adaptor->delete_tag($root->node_id,'pfam_domain_string'); $root->store_tag('pfam_domain_string','na') unless ($self->{debug});
+      $root->adaptor->delete_tag($root->node_id,'pfam_domain_vector_string'); $root->store_tag('pfam_domain_vector_string','na') unless ($self->{debug});
       next;
     }
+
+    my $aln_domains_hash;
 
     my $aln = $root->get_SimpleAlign(-id_type => 'MEMBER');
     my $prev_aln_length = $root->get_tagvalue("aln_length");
@@ -7713,10 +7894,15 @@ sub _genetree_domains {
           $domain_boundaries->{$pfamid}{aln_end_id}{$start_loc}{$member_domain->{$pfamid}{$member_id}{$copy}{id}} = 1;
           $member_domain->{$pfamid}{$member_id}{$copy}{aln_start}{$start_loc}++;
           $member_domain->{$pfamid}{$member_id}{$copy}{aln_end}{$end_loc}++;
+          my $coord_pair = $start_loc . "_" . $end_loc;
+          $aln_domains_hash->{$coord_pair} = 1;
           $aln_domain_range->check_and_register( $pfamid, $start_loc, $end_loc, undef, undef, 1);
         }
       }
     }
+    my $num_elements = scalar keys %$aln_domains_hash;
+    print STDERR "num_elements $num_elements\n";
+
     my $ranged_coverage;
     my $global_domain_range = Bio::EnsEMBL::Mapper::RangeRegistry->new();
     foreach my $pfamid (keys %$ranges) {
