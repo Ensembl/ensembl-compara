@@ -126,8 +126,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       dataType: 'html',
       success: function (html) {
         if (html) {
-          var type = html.match(/<map/) ? 'ImageMap' : 'Content';
-          
+          var type = $(html).find('input.panel_type').val() || 'Content';          
           Ensembl.EventManager.trigger('addPanel', undefined, type, html, el, params);
         } else {
           el.html('');
