@@ -79,7 +79,7 @@ span.sequence { font-family: Courier New, Courier, monospace }
 .bottom     { vertical-align:bottom; }
 .autocenter { margin: 0 auto; }
 /* Force divs to wrap their contents using an invisible paragraph at the end! */
-.invisible  { font-size:1px; color:#fff; height:5px; clear:both; overflow:hidden }
+.invisible  { font-size:1px; color:#fff; height:0; clear:both; overflow:hidden }
 
 /*----------------------------------------------------------------------
  Links 
