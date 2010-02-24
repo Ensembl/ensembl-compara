@@ -25,13 +25,20 @@ sub get_sequence_data {
   my $start_pad    = $start_phase > 0 ? $start_phase : 0; # Determines if the transcript starts mid-codon
   my $cd_start     = $trans->cdna_coding_start;
   my $cd_end       = $trans->cdna_coding_end;
-  my $five_prime   = $trans->five_prime_utr;
-  my $three_prime  = $trans->three_prime_utr;
   my $mk           = {};
+  my $seq;
   
-  $_ = $_ ? $_->seq : $_ for $five_prime, $three_prime;
-  
-  my $seq    = join '', $five_prime, $trans->translateable_seq, $three_prime;
+  if ($trans->translation) {
+    my $five_prime  = $trans->five_prime_utr;
+    my $three_prime = $trans->three_prime_utr;
+    
+    $_ = $_ ? $_->seq : $_ for $five_prime, $three_prime;
+    
+    $seq = join '', $five_prime, $trans->translateable_seq, $three_prime;
+  } else {
+    $seq = $trans->seq->seq;
+  }
+      
   my $length = length $seq;
   
   my @sequence;
@@ -117,7 +124,7 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
-    foreach my $transcript_variation (@{$object->get_variation_transcripts}) {
+    foreach my $transcript_variation (@{$object->get_transcript_variations}) {
       my ($start, $end) = ($transcript_variation->cdna_start, $transcript_variation->cdna_end);
       
       next unless $start && $end;
