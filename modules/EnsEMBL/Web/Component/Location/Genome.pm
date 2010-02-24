@@ -166,7 +166,7 @@ sub feature_tables {
     my $features = $feature_set->[0];
     
     my $extra_columns = $feature_set->[1];
-    my $feat_type = $feature_set->[2];
+    my $feat_type = $feature_set->[2];   
  
     # could show only gene links for xrefs, but probably not what is wanted:
     # next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
@@ -186,8 +186,13 @@ sub feature_tables {
     if ($feat_type =~ /Gene|Transcript|Domain/) {
       $table->add_columns({'key'=>'names',  'title'=>'Ensembl ID',      'width'=>'25%','align'=>'left' });
       $table->add_columns({'key'=>'extname','title'=>'External names',  'width'=>'25%','align'=>'left' });
-    } else {	    
-      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location','width' =>'15%','align'=>'left' });
+    } 
+    elsif ($feat_type =~ /Variation/i) {
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width'=>'100px','align'=>'left' });    
+      $table->add_columns({'key'=>'names', 'title'=>'Name(s)','width'=>'100px','align'=>'left' });
+    } 
+    else {	    
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
       $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
       $table->add_columns({'key'=>'names', 'title'=>'Name(s)',        'width'=>'25%','align'=>'left' });
     }
@@ -195,7 +200,8 @@ sub feature_tables {
     my $c = 1;
     
     for( @{$extra_columns||[]} ) {
-      $table->add_columns({'key'=>"extra_$c",'title'=>$_,'width'=>'10%','align'=>'left' });      
+      my $width  =  ($feat_type =~ /Variation/i) ? '300px' : '10%';
+      $table->add_columns({'key'=>"extra_$c",'title'=>$_,'width'=>$width,'align'=>'left' });      
       $c++;
     }
         
@@ -209,11 +215,12 @@ sub feature_tables {
       my $names = '';
       my $data_row;
       
+      
       if ($row->{'region'}) {
         $contig_link = sprintf(
           '<a href="%s/Location/View?r=%s:%d-%d;h=%s">%s:%d-%d(%d)</a>',
           $object->species_path,
-          $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'label'},
+          $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'label'},          
           $row->{'region'}, $row->{'start'}, $row->{'end'},
           $row->{'strand'}
         );
@@ -242,8 +249,12 @@ sub feature_tables {
             );            
           } 
           if ($feat_type =~ /Variation/i && $row->{'label'}) {            
-            my $species_path = $object->species_path;            
-            $names = qq{<a href="$species_path/Variation/Phenotype?v=$row->{'label'}">$row->{'label'}</a>};   #better way of doing a simple link
+            my $species_path = $object->species_path;
+            
+            #setting phenotype variation track on 
+            my $track = qq{contigviewbottom=variation_set_Phenotype-associated variations=normal};
+            $contig_link = qq{<a href="$species_path/Location/View?r=$row->{'region'}:$row->{'start'}-$row->{'end'};h=$row->{'label'};$track">$row->{'region'}:$row->{'start'}-$row->{'end'}($row->{'strand'})</a>};   #better way of doing a simple link for Genomic location
+            $names = qq{<a href="$species_path/Variation/Phenotype?v=$row->{'label'}">$row->{'label'}</a>};   #better way of doing a simple link for Name(s)
           }
           else {
             $names  = $row->{'label'} if $row->{'label'};
