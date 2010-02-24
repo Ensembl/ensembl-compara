@@ -1569,7 +1569,7 @@ sub get_genetic_variations {
   return $snp_data;
 }
 
-sub get_variation_transcripts {
+sub get_transcript_variations {
   my $self = shift;
   
   return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts([ $self->Obj ]) || [];
