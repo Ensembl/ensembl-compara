@@ -824,7 +824,7 @@ sub retrieve_Variation {
       #only get associated gene and phenotype for matching variation id
       if($variation->{'_variation_id'} eq $v->{'_variation_id'})
       {          
-          $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /$variation->{'phenotype_description'}/g);          
+          $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /, $variation->{'phenotype_description'}/g);          
                 
           if($variation->{'_phenotype_id'} eq $phenotype_id)
           {
@@ -851,7 +851,7 @@ sub retrieve_Variation {
         $gene =~ s/\s//gi;
         my $associated_gene_url = $self->_url({type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID});                                                        
         $associated_gene .= qq{$gene, } if($gene eq 'Intergenic');
-        $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /$gene/i && $gene ne 'Intergenic');
+        $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /, $gene/i && $gene ne 'Intergenic');
       }                            
     }
     $associated_gene =~ s/\s$//g; #removing the last white space
