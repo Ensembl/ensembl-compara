@@ -414,7 +414,7 @@ sub render {
     );
   }
 
-  $html .= $self->tailnote;
+  $html .= $self->tailnote . '<input type="hidden" class="panel_type" value="ImageMap" />';
     
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
