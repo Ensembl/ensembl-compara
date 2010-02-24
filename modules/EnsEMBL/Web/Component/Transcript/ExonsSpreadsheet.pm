@@ -138,10 +138,10 @@ sub get_exon_sequence_data {
   my $seq_length   = length $seq;
   my $exon_start   = $exon->start;
   my $exon_end     = $exon->end;
-  my $utr_start    = $coding_start > $exon_start; # exon starts with UTR
-  my $utr_end      = $coding_end   < $exon_end;   # exon ends with UTR
-  
-  my @sequence = map {{ letter => $_, class => 'e0' }} split //, $seq;
+  my $utr_start    = $coding_start && $coding_start > $exon_start; # exon starts with UTR
+  my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
+  my $class        = $coding_start && $coding_end ? 'e0' : 'eu';   # if the transcript is entirely UTR, use utr class for the whole sequence
+  my @sequence     = map {{ letter => $_, class => $class }} split //, $seq;
   
   if ($utr_start || $utr_end) {
     my ($coding_length, $utr_length);
