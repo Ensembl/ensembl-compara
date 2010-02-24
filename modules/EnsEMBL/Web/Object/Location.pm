@@ -851,7 +851,7 @@ sub retrieve_Variation {
         $gene =~ s/\s//gi;
         my $associated_gene_url = $self->_url({type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID});                                                        
         $associated_gene .= qq{$gene, } if($gene eq 'Intergenic');
-        $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /, $gene/i && $gene ne 'Intergenic');
+        $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /$gene/i && $gene ne 'Intergenic');
       }                            
     }
     $associated_gene =~ s/\s$//g; #removing the last white space
