@@ -93,14 +93,11 @@ sub content {
      <dd>$info</dd>); 
 
   ## Add variation sets
-  my $sets = $object->get_variation_sets;
-  $html .= qq(<dt>Variation Sets</dt>);
-  my $set_names;
-  foreach my $set  (sort { $a->name cmp $b->name } @$sets){
-    $set_names .= $set->name .", ";
+  my $variation_sets = $object->get_formatted_variation_set_string;
+  if ($variation_sets){
+    $html .= qq(<dt>Variation Sets</dt>);
+    $html .= qq(<dd>$variation_sets</dd>);
   }
-  $set_names =~s/\,$//;
-  $html .= qq(<dd>$set_names</dd>);
 
   ## Add Alleles
    my $label = 'Alleles';
