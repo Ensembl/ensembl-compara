@@ -41,14 +41,36 @@ sub draw_features {
   foreach my $feature ( @$block_features ) {
     # render wiggle if wiggle
     if( $wiggle ) { 
-      foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){ 
-     #get features for slice and experimental chip set
-        my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) }; 
-        next unless @features;     
+      my $max_bins = $self->{'config'}->image_width();
+      foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){
+        my ($rfs, $config) =  @{$result_set->get_ResultFeatures_by_Slice($slice, undef, undef, $max_bins)};
+        next unless @$rfs;
         $drawn_wiggle_flag = "wiggle";
-        @features   = sort { $a->score <=> $b->score  } @features;
-        my ($min_score, $max_score) = ($features[0]->score || 0, $features[-1]->score|| 0); 
-#     $self->render_wiggle_plot(\@features, $min_score, $max_score, $result_set->display_label, $wiggle_colour );
+
+        my $wsize = $config->{'window_size'}; 
+        my $start = 1 - $wsize;#Do this here so we minimize the number of calcs done in the loop
+        my $end   = 0;
+        my $score;
+        my @features = @$rfs;
+        @features   = sort { $a->scores->[0] <=> $b->scores->[0]  } @features;
+        my ($min_score, $max_score) = @{$features[0]->get_min_max_scores()};
+        if ($wsize ==0){
+          $min_score = $features[0]->scores->[0];
+          $max_score = $features[-1]->scores->[0];
+        } else {
+          @features = ();
+          foreach my $rf (@$rfs){
+            for my $x(0..$#{$rf->scores}){
+              $start += $wsize;
+              $end += $wsize;
+              $score = $rf->scores->[$x];
+              my $f = { 'start' => $start, 'end' => $end, 'score' => $score };
+              push (@features, $f);
+            }
+          }
+        }
+
+        # render wiggle plot        
         $self->draw_wiggle_plot(
           \@features,                      ## Features array
           { 'min_score' => $min_score, 'max_score' => $max_score }
