@@ -823,9 +823,8 @@ sub retrieve_Variation {
     {      
       #only get associated gene and phenotype for matching variation id
       if($variation->{'_variation_id'} eq $v->{'_variation_id'})
-      {
-          $associated_phenotype .= qq{, } if($associated_phenotype && $associated_phenotype !~ /$variation->{'phenotype_description'}/gi);
-          $associated_phenotype .= $variation->{'phenotype_description'} if($associated_phenotype !~ /$variation->{'phenotype_description'}/g);          
+      {          
+          $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /$variation->{'phenotype_description'}/g);          
                 
           if($variation->{'_phenotype_id'} eq $phenotype_id)
           {
@@ -857,6 +856,9 @@ sub retrieve_Variation {
     }
     $associated_gene =~ s/\s$//g; #removing the last white space
     $associated_gene =~ s/,$|^,//g; #replace the last or first comma if there is any
+    
+    $associated_phenotype =~ s/\s$//g; #removing the last white space
+    $associated_phenotype =~ s/,$|^,//g; #replace the last or first comma if there is any
     
     if (ref($v) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($v);
