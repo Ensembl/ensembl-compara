@@ -26,12 +26,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $('.glossary_mouseover', this.el).bind({
       mouseover: function () {
         var el = $(this);
+        var popup = el.children('.glossary_popup');
         
         var offset = el.offset();
-        offset.top  += 0.75 * el.height();
-        offset.left += 0.25 * el.width();
+        offset.top  -= popup.height() - (0.25 * el.height());
+        offset.left += 0.75 * el.width();
         
-        el.children('.glossary_popup').show().offset(offset);
+        popup.show().offset(offset);
+        popup = null;
         el = null;
       },
       mouseout: function () {
