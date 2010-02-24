@@ -792,21 +792,72 @@ sub retrieve_Transcript {
 sub retrieve_Variation {
   my ($self, $data, $type) = @_;
   my $results = [];
+  my $phenotype_id = $self->param('id');
   
-  
-  foreach my $v (@$data) {
-  
-    my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);
+  #getting associated phenotype with the variation
+  my $species = $self->species;
+  my $vaa = Bio::EnsEMBL::Registry->get_adaptor($species, "variation", "variationannotation");
+  my $variation_array = $vaa->fetch_all_by_VariationFeature_list($data);
+
+  foreach my $v (@$data) {  
+    #getting all genes located in that specific location
+    my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);    
     my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
     my $genes = $slice->get_all_Genes();
+    my ($gene_link, $add_comma,$associated_phenotype,$associated_gene,$p_value);                
     
-    my $gene_symbol;
-    $gene_symbol = "(".$genes->[0]->display_xref->display_id.")" if($genes->[0]->{'stable_id'});
-    
-    my $gene_name = $genes->[0]->{'stable_id'};
-    my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});
-    my $gene_link = qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};
+    foreach my $row (@$genes) 
+    {
+        my $gene_symbol;
+        $gene_symbol = "(".$row->display_xref->display_id.")" if($row->{'stable_id'});
+        
+        my $gene_name = $row->{'stable_id'};
+        my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});        
+        $gene_link .= qq{, } if($gene_link);
+        $gene_link .= qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};        
+    }     
+    my @associated_gene_array;
 
+    #getting associated phenotype and associated gene with the variation
+    foreach my $variation (@$variation_array)
+    {      
+      #only get associated gene and phenotype for matching variation id
+      if($variation->{'_variation_id'} eq $v->{'_variation_id'})
+      {
+          $associated_phenotype .= qq{, } if($associated_phenotype && $associated_phenotype !~ /$variation->{'phenotype_description'}/gi);
+          $associated_phenotype .= $variation->{'phenotype_description'} if($associated_phenotype !~ /$variation->{'phenotype_description'}/g);          
+                
+          if($variation->{'_phenotype_id'} eq $phenotype_id)
+          {
+            #if there is more than one associated gene (comma separated) split them to generate the URL for each of them          
+            if($variation->{'associated_gene'} =~ /,/g)
+            {            
+               push(@associated_gene_array,(split(/,/,$variation->{'associated_gene'})));
+            }
+            else
+            {
+              push(@associated_gene_array,$variation->{'associated_gene'});
+            }
+          }
+                     
+          $p_value = $variation->{'p_value'};   #might be use for colour scaling later on
+      }      
+    }  
+    
+    #preparing the URL for all the associated genes and ignoring duplicate one
+    foreach my $gene (@associated_gene_array)
+    {              
+      if($gene)
+      {
+        $gene =~ s/\s//gi;
+        my $associated_gene_url = $self->_url({type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID});                                                        
+        $associated_gene .= qq{$gene, } if($gene eq 'Intergenic');
+        $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /$gene/i && $gene ne 'Intergenic');
+      }                            
+    }
+    $associated_gene =~ s/\s$//g; #removing the last white space
+    $associated_gene =~ s/,$|^,//g; #replace the last or first comma if there is any
+    
     if (ref($v) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($v);
       push(@$results, $unmapped);
@@ -818,21 +869,20 @@ sub retrieve_Variation {
           $start = $start - 5000;
           $end = $end + 5000;
       }
-    
+      
       push @$results, {
         'region'   		=> $v->seq_region_name,
         'start'    		=> $start,
         'end'      		=> $end,
-        'strand'   		=> $v->strand,
-        'length'   		=> $v->end-$v->start+1,
+        'strand'   		=> $v->strand,        
         'label'    		=> $v->variation_name,        
         'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
-        'extra'       => [ $gene_link ],
+        'extra'       => [ $gene_link,$associated_gene,$associated_phenotype ],
       }
     }
   }
   
-  return ( $results, ['Located in gene'], $type );
+  return ( $results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)'], $type );
 }
 
 sub retrieve_Xref {
