@@ -28,16 +28,14 @@ sub content {
   my $site_type = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
   my $html = sprintf('
-    <div class="text_seq_buttons">
-      <div class="other-tool">
-        <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
-        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-          <fieldset>
-            <input type="hidden" name="_query_sequence" value="%s" />
-            <input type="hidden" name="species" value="%s" />
-          </fieldset>
-        </form>
-      </div>
+    <div class="other-tool">
+      <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
+      <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+        <fieldset>
+          <input type="hidden" name="_query_sequence" value="%s" />
+          <input type="hidden" name="species" value="%s" />
+        </fieldset>
+      </form>
     </div>',
     uc $slice->seq(1),
     $species

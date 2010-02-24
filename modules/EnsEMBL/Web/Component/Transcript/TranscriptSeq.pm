@@ -256,19 +256,17 @@ sub content {
     $html = $self->export_sequence($sequence, $config, sprintf 'cDNA-Sequence-%s-%s', $config->{'species'}, $object->stable_id);
   } else {    
     $html = sprintf('
-      <div class="text_seq_buttons">
-        <div class="other-tool">
-          <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
-        </div>
-        <div class="other-tool">
-          <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
-          <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-            <fieldset>
-              <input type="hidden" name="_query_sequence" value="%s" />
-              <input type="hidden" name="species" value="%s" />
-            </fieldset>
-          </form>
-        </div>
+      <div class="other-tool">
+        <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
+      </div>
+      <div class="other-tool">
+        <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
+        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+          <fieldset>
+            <input type="hidden" name="_query_sequence" value="%s" />
+            <input type="hidden" name="species" value="%s" />
+          </fieldset>
+        </form>
       </div>', 
       $self->ajax_url,
       $raw_seq,

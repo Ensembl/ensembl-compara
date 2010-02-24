@@ -101,10 +101,8 @@ sub content {
     $html = $self->export_sequence(\@data, $config, sprintf 'Exons-%s-%s', $object->species, $object->stable_id);
   } else {    
     $html = sprintf('
-      <div class="text_seq_buttons">
-        <div class="other-tool">
-          <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
-        </div>
+      <div class="other-tool">
+        <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
       </div>', 
       $self->ajax_url
     );
