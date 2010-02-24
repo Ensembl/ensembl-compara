@@ -134,8 +134,8 @@ sub draw_wiggle_plot {
   my $P_MAX           = $parameters->{'max_score'} > 0 ? $parameters->{'max_score'} : 0; 
   my $N_MIN           = $parameters->{'min_score'} < 0 ? $parameters->{'min_score'} : 0;  
 
-  my $pix_per_score   = ($P_MAX-$N_MIN) ? $row_height / ( $P_MAX-$N_MIN ) : 0;
-  my $red_line_offset = $P_MAX * $pix_per_score;
+  my $pix_per_score   = ($P_MAX-$N_MIN) ? $row_height / ( $P_MAX-$N_MIN ) : 0; 
+  my $red_line_offset = $P_MAX * $pix_per_score;    
 
   my $colour          = $parameters->{'score_colour'}|| $self->my_colour('score')|| 'blue';
   my $axis_colour     = $parameters->{'axis_colour'} || $self->my_colour('axis') || 'red';
@@ -219,13 +219,13 @@ sub draw_wiggle_plot {
   # Draw wiggly plot -------------------------------------------------
   ## Check to see if we have multiple data sets to draw on one axis 
   if ( ref($features->[0]) eq 'ARRAY' ){
-    foreach my $feature_set ( @$features){
+    foreach my $feature_set ( @$features){ 
       $colour = shift @$colours; 
       $self->draw_wiggle_points($feature_set, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset);
     }
   }   
   else {
-    $self->draw_wiggle_points($features, $slice,$parameters, $offset, $pix_per_score, $colour, $red_line_offset);  
+    $self->draw_wiggle_points($features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset);  
   }
   $offset = $self->_offset($row_height);
 
@@ -253,17 +253,31 @@ sub draw_wiggle_plot {
 
 sub draw_wiggle_points { 
   my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset) = @_; 
+  foreach my $f (@$features) { 
+    my ($START, $END, $score, $min_score);
 
-  foreach my $f (@$features) {
-    my $START = $f->start < 1 ? 1 : $f->start; 
-    my $END   = $f->end   > $slice->length  ? $slice->length : $f->end; 
-    my ($score, $min_score);
-    if ($f->isa("Bio::EnsEMBL::Variation::ReadCoverageCollection")){
-      $score = $f->read_coverage_max;
-      $min_score = $f->read_coverage_min;
+    if (ref($f) eq 'HASH'){ # Data is from a Funcgen result set collection, windowsize > 0
+      my $start = $f->{'start'};
+      my $end = $f->{'end'};
+      $START = $start < 1 ? 1 : $start;
+      $END   = $end   > $slice->length  ? $slice->length : $end;
+      $score = $f->{'score'};
     } else {
-      $score = $f->score || 0;
+      $START = $f->start < 1 ? 1 : $f->start; 
+      $END   = $f->end   > $slice->length  ? $slice->length : $f->end;  
+
+      if ($f->isa("Bio::EnsEMBL::Variation::ReadCoverageCollection")){
+        $score = $f->read_coverage_max;
+        $min_score = $f->read_coverage_min;
+      } else {
+        if ($f->can('score')){
+          $score = $f->score || 0;
+        } elsif($f->can('scores')) {
+          $score = $f->scores->[0];
+        }
+      }
     }
+
     my ($y, $height);
     if ($parameters->{'graph_type'} eq 'points') {
       $y = -$score * $pix_per_score;
