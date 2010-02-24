@@ -114,9 +114,12 @@ sub gene_links {
 
 sub source_link {
   my ($object, $va, $code) = @_;
-  my $source = $va->source_name;
-
-  my $url = $object->species_defs->ENSEMBL_EXTERNAL_URLS->{$source};
+  my $source = $va->source_name; 
+  my $source_uc = uc($source);
+  if ($source_uc =~/OPEN/){
+    $source_uc ="OPEN_ACCESS_GWAS_DATABASE"; 
+  }
+  my $url = $object->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   if ($url =~/ega/){
     my $ext_id = $va->local_stable_id;
     $url =~s/###ID###/$ext_id/;
@@ -131,7 +134,7 @@ sub source_link {
 }
 
 sub study_link {
-  my ($study) = @_;
+  my ($study) = @_; 
   unless ($study =~/pubmed/){ return; }
   my $link = "<a href=http://www.ncbi.nlm.nih.gov/".$study.">$study</a>";
   return $link;
