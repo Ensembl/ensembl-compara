@@ -64,7 +64,7 @@ sub content {
     elsif ($db =~ /dbsnp/i) {
       foreach (@ids) {
   next if $_ =~/^ss/; # don't display SSIDs - these are useless
-  push @urls , $object->get_ExtURL_link( $_, 'DBSNPSS', $_ );
+  push @urls , $object->get_ExtURL_link( $_, 'SNP', $_ );
       }
       next unless @urls;
     } elsif( $db =~/HGVbase|TSC/){
