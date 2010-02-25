@@ -39,7 +39,7 @@ sub form {
   $view_config->add_form_element({ type => 'YesNo', name => 'coding_seq',  select => 'select', label => 'Show coding sequence' });
   $view_config->add_form_element({ type => 'YesNo', name => 'translation', select => 'select', label => 'Show protein sequence' });
   $view_config->add_form_element({ type => 'YesNo', name => 'rna',         select => 'select', label => 'Show RNA features' });
-  $view_config->add_form_element({ type => 'YesNo', name => 'variation',   select => 'select', label => 'Show variation features' });
+  $view_config->add_form_element({ type => 'YesNo', name => 'variation',   select => 'select', label => 'Show variation features' }) if $object->species_defs->databases->{'DATABASE_VARIATION'};
   $view_config->add_form_element({ type => 'YesNo', name => 'number',      select => 'select', label => 'Number residues' });
 }
 
