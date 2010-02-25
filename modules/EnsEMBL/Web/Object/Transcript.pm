@@ -62,7 +62,7 @@ sub availability {
       $availability->{'transcript'}      = 1;
       $availability->{'domain'}          = 1;
       $availability->{'translation'}     = !!$obj->translation;
-      $availability->{'strains'}         = !!$self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'};
+      $availability->{'strains'}         = !!$self->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
       $availability->{'history_protein'} = 0 unless $self->translation_object;
       $availability->{'has_variations'}  = $counts->{'prot_variations'};
       $availability->{'has_domains'}     = $counts->{'prot_domains'};
