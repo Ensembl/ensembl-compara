@@ -95,7 +95,7 @@ sub content {
   ## Add variation sets
   my $variation_sets = $object->get_formatted_variation_set_string;
   if ($variation_sets){
-    $html .= qq(<dt>Variation Sets</dt>);
+    $html .= qq(<dt>Present in</dt>);
     $html .= qq(<dd>$variation_sets</dd>);
   }
 
