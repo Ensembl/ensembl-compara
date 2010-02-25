@@ -51,8 +51,14 @@ our %DOCUMENT_TYPES = (
 
 sub new {
   my ($class, $data) = @_;
+  use Carp qw(cluck);
+  #cluck "DATA $data";
+ 
   
-  my $format = $data->{'input'} ? $data->{'input'}->param('_format') : $data->{'outputtype'};
+  my $format = $data->{'outputtype'};
+  if ($data->{'input'} && $data->{'input'}->param('_format')) {
+    $format = $data->{'input'}->param('_format');
+  } 
   
   my $self = {
     body_attr        => {},

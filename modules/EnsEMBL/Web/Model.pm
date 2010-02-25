@@ -93,7 +93,7 @@ sub add_objects {
   ### Proxy Object(s)
   if (ref($data) eq 'ARRAY') {
     foreach my $proxy_object (@$data) {
-      $self->object($proxy_object->__objecttype, $proxy_object);
+      $self->object($self->hub->type, $proxy_object);
     }
   }
   ### Other object type

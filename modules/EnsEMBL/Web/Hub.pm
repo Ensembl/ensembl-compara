@@ -28,12 +28,15 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, %args) = @_;
-  
+
+  my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'};# Parsed from URL:  Gene, UserData, etc
+  $type = 'DAS' if $type =~ /^DAS::.+/;
+    
   my $self = {
       _apache_handle  => $args{'_apache_handle'} || undef,
       _input          => $args{'_input'}         || undef,                    # extension of CGI
       _species        => $args{'_species'}       || $ENV{'ENSEMBL_SPECIES'},
-      _type           => $args{'_type'}          || $ENV{'ENSEMBL_TYPE'},     # Parsed from URL:  Gene, UserData, etc
+      _type           => $type,     
       _action         => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
       _function       => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
       _script         => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},   # name of script in this case action... ## deprecated
