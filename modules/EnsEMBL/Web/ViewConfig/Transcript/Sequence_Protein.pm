@@ -16,7 +16,7 @@ sub init {
 }
 
 sub form {
-  my $view_config = shift;
+  my ($view_config, $object) = @_;
 
   $view_config->add_form_element({
     type   => 'DropDown',
