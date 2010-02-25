@@ -27,7 +27,7 @@ sub content {
   my @factors =  @{$object->reg_factors};
   my $species = $object->species;
   my @reg_feats;
-  if ($species eq 'Homo_sapiens' ){ @reg_feats = @{$object->reg_features};}
+  if ($species eq 'Homo_sapiens' || $species eq 'Mus_musculus'){ @reg_feats = @{$object->reg_features};}
   my $object_slice = $object->Obj->feature_Slice;
   my $offset = $object_slice->start -1;
   my $object_strand = $object_slice->strand;
