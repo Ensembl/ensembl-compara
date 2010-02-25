@@ -518,7 +518,7 @@ sub transHandler_species {
   
   if ($seg eq 'Component' || $seg eq 'Zmenu' || $seg eq 'Config') {
     $ajax   = $seg;
-    $type   = shift @path_segments if $OBJECT_TO_SCRIPT{$path_segments[0]};
+    $type   = shift @path_segments if $OBJECT_TO_SCRIPT{$path_segments[0]} || $seg eq 'Zmenu';
     $plugin = shift @path_segments if $ajax eq 'Component';
   } else {
     $type = $seg;
