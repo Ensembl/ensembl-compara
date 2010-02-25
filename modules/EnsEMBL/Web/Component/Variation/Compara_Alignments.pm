@@ -113,11 +113,14 @@ sub get_sequence_data {
           }
         }
         
+        $s = 0 if $s < 0;
+        $e = $#variation_seq if $e > $#variation_seq;
+        
         for ($s..$e) {          
           $mk->{'variations'}->{$_}->{'type'} = $snp_type;
           $mk->{'variations'}->{$_}->{'v'} = $variation_name;
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
-          $variation_seq[$_] = $var;
+          $variation_seq[$_] = $var if $ambigcode;
         }
         
         @pos = ($s..$e) if $variation_name eq $config->{'v'};
@@ -160,7 +163,7 @@ sub markup_variation {
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
-    foreach (sort {$a <=> $b} keys %{$data->{'variations'}}) {
+    foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {      
       $variation = $data->{'variations'}->{$_};
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'};
       
