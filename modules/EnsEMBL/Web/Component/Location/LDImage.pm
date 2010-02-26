@@ -26,8 +26,8 @@ sub content {
   my ($seq_region, $start, $end, $seq_type ) = ($object->seq_region_name, $object->seq_region_start, $object->seq_region_end, $object->seq_region_type);
 
   my $slice_length = ($end - $start) +1;  
-  if ($slice_length >= 200001) {
-    my $html = "<p>The region you have selected is too large to display linkage data, a maximum region of 200kb is allowed. Please change the region using the navigation controls above.<p>";
+  if ($slice_length >= 100001) {
+    my $html = "<p>The region you have selected is too large to display linkage data, a maximum region of 100kb is allowed. Please change the region using the navigation controls above.<p>";
     return $self->_error( 'Region too large', $html );
   }
 
