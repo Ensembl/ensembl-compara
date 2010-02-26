@@ -155,7 +155,7 @@ sub parse {
           ## Complex format requiring special parsing (e.g. WIG)
           $columns = $self->parse_row($row);
         }
-        if ($columns && scalar(@$columns)) { warn scalar @$columns;  
+        if ($columns && scalar(@$columns)) {   
           my ($chr, $start, $end) = $empty->coords($columns); 
           $chr =~ s/chr//;
 
