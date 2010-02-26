@@ -1001,5 +1001,5 @@ CREATE TABLE protein_tree_hmmprofile (
 ) COLLATE=latin1_swedish_ci;
 
 
-# Auto add schema version to database
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "57");
+# Auto add schema version to database (this will override whatever hive puts there)
+REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "57");
