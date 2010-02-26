@@ -14,7 +14,7 @@ sub render {
   return sprintf(qq(
     <tr>
       <th><label for="%s">%s: </label></th>
-      <td><div id="%s">%s</div></td>
+      <td><span id="%s">%s</span></td>
     </tr>),
     $self->name, $self->label, $self->name, $value
   ); 
