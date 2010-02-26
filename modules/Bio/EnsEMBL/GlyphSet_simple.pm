@@ -632,16 +632,20 @@ sub _init {
       my $font_size = $FONTSIZE;
       if( $style eq 'overlaid' ) {
         ## Reduce text size slightly for wider letters (A,M,V,W)
-        if($bp_textwidth >= ($end - $start+1)){
+        my $tmp_textwidth = $bp_textwidth;
+        
+        if ($bp_textwidth >= ($end - $start+1) && length $label == 1){
           $font_size = $FONTSIZE * 0.9;
+          $tmp_textwidth = [$self->get_text_width( 0, $label, '', 'font' => $FONT, 'ptsize' => $font_size )]->[2] / $pix_per_bp;
         }
+        
         ## Only add labels above a certain feature size
-        if ($pix_per_bp * ($end - $start+1) >= $font_size ) {
+        if ($tmp_textwidth < ($end - $start+1)){
           $composite->push($self->Text({
             'x'          => $start-1,
             'y'          => ($h-$H)/2-1,
             'width'      => $end-$start+1,
-            'textwidth'  => $bp_textwidth*$pix_per_bp,
+            'textwidth'  => $tmp_textwidth*$pix_per_bp,
             'font'       => $FONT,
             'ptsize'     => $font_size,
             'halign'     => 'center',
