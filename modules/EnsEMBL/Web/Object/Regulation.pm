@@ -138,7 +138,7 @@ sub get_location_url {
   my $self= shift;
   my $url = $self->_url({
     'type'  => 'Location',
-    'view'  => 'View',
+    'action'  => 'View',
     'rf'    => $self->stable_id,
     'fdb'   => 'funcgen',
     'r'     => $self->location_string,
