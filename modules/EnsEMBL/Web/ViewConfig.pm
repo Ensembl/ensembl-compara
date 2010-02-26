@@ -239,13 +239,15 @@ sub update_from_config_strings {
       
       $self->set($k, $t);
     }
-    
-    $session->add_data(
-      type     => 'message',
-      function => '_info',
-      code     => 'configuration',
-      message  => $self->altered ? 'Your configuration has changed for this page' : 'The link you followed requested a change to the configuration of this page but no change occured'
-    );
+
+    if ($self->altered) {
+      $session->add_data(
+	type     => 'message',
+	function => '_info',
+	code     => 'configuration',
+	message  => 'Your configuration has changed for this page',
+      );
+    }
     
     $params_removed = 1;
     $input->delete('config');
@@ -357,12 +359,12 @@ sub update_from_config_strings {
     }
   }
   
-  if ($updated || $not_updated) {
+  if ($updated) {
     $session->add_data(
       type     => 'message',
       function => '_info',
       code     => 'image_config',
-      message  => $updated ? 'The link you followed has made changes to the tracks displayed on this page' : 'The link you followed requested changes to the tracks displayed on this page but no changes occured'
+      message  => 'The link you followed has made changes to the tracks displayed on this page',
     );
   }
   
