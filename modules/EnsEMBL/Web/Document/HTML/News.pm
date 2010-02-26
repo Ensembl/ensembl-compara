@@ -62,7 +62,7 @@ sub render {
   my $release_date = $self->pretty_date($release->date);
 
   ## get news stories
-  my @stories = EnsEMBL::Web::Data::NewsItem->fetch_news_items({'release_id' => $release_id});
+  my @stories = EnsEMBL::Web::Data::NewsItem->fetch_news_items({'release_id' => $release_id, 'news_done' => 'Y', status => 'handed_over'});
 
   ## Do lookup hashes
   my %species_lookup; 
@@ -155,7 +155,7 @@ sub _output_story {
     my @species = $item->species_ids; 
     my $sp_text;
   
-    if (!@species) {
+    if (!@species || !$species[0]) {
       $sp_text = 'all species';
     }
     elsif (@species > 5) {
