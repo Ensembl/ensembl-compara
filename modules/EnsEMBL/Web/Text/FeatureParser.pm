@@ -109,7 +109,7 @@ sub parse {
       bless $self, $sub_package;
     }
     ## Create an empty feature that gives us access to feature info
-    my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format); 
+    my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format);  
     my $empty = $feature_class->new();
     my $count;
     my $current_max = 0;
@@ -123,7 +123,7 @@ sub parse {
       $current_index = List::MoreUtils::first_index {$_ eq $current_region} @{$self->drawn_chrs} if $current_region;
     }
 
-    foreach my $row ( split /\n|\r/, $data ) {
+    foreach my $row ( split /\n|\r/, $data ) { 
       ## Clean up the row
       next if $row =~ /^#/;
       #warn "... ROW $row";
@@ -135,7 +135,7 @@ sub parse {
       if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
         $self->{'browser_switches'}{$1} = $2;
       }
-      elsif ($row =~ /^track/) {
+      elsif ($row =~ /^track/) { 
         $row =~ s/^track\s+(.*)$/$1/i;
         $self->add_track($row);
         if ($row =~ /type=bedGraph/ || $row =~ /type=wiggle/ || $row =~ /useScore=[3|4]/) {
@@ -145,17 +145,17 @@ sub parse {
         $current_max = 0;
         $current_min = 0;
       }
-      else {
+      else { 
         my $columns; 
-        if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { ;
-          ## 'Normal' format consisting of a straightforward feature
+        if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { 
+          ## 'Normal' format consisting of a straightforward feature 
           ($columns) = $self->split_into_columns($row, $format);
         }
-        else {
+        else { 
           ## Complex format requiring special parsing (e.g. WIG)
           $columns = $self->parse_row($row);
         }
-        if ($columns && scalar(@$columns)) {  
+        if ($columns && scalar(@$columns)) { warn scalar @$columns;  
           my ($chr, $start, $end) = $empty->coords($columns); 
           $chr =~ s/chr//;
 
@@ -251,6 +251,10 @@ sub split_into_columns {
     $_ =~ tr/\x80-\xFF//d;
     $_ =~ s/^\s+//;
     $_ =~ s/\s+$//;
+  }
+  ## If this is removed SNP effect predictor breaks ...  
+  if ($format =~/^CON/){
+    @columns = grep /\S/, @columns;
   }
   return (\@columns, $tabbed);
 }
