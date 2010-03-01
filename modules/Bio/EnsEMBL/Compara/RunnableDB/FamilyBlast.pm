@@ -184,7 +184,7 @@ sub run {
 
     my $blast_version           = $self->param('blast_version') || 'ncbi-blast-2.2.22+';
     my $blastp_executable       = $self->param('blastp_exec')   || ( '/software/ensembl/compara/' . $blast_version . '/bin/blastp' );
-    my $blast_params            = $self->param('blast_params')  || '-comp_based_stats 0';
+    my $blast_params            = $self->param('blast_params')  || '-seg yes';
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
 
