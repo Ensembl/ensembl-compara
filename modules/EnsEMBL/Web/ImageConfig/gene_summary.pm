@@ -21,7 +21,7 @@ sub init {
 
   $self->create_menus(
     sequence      => 'Sequence',
-    transcript    => 'Other genes',
+    transcript    => 'Genes',
     prediction    => 'Prediction transcripts',
     variation     => 'Variation features',
     functional    => 'Functional genomics',
@@ -53,7 +53,7 @@ sub init {
   );
 
   $self->modify_configs(
-    [qw(transcript_core_ensembl)],
+    [qw(transcript_core_ensembl transcript_core_sg)],
     {qw(display transcript_label)}
   );
 }
