@@ -149,7 +149,7 @@ sub render {
 
 sub _output_story {
   my ($self, $item, $header, $show_species) = @_;
-  my $html = '<h'.$header.' id="'.$item->id.'">'.$item->title;
+  my $html = '<h'.$header.' id="news_'.$item->id.'">'.$item->title;
   if ($show_species) {
     ## sort out species names
     my @species = $item->species_ids; 

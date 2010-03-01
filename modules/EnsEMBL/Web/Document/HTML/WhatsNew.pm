@@ -32,6 +32,7 @@ sub render {
   }
 
   my $release_id = $species_defs->ENSEMBL_VERSION;
+  return unless $release_id;
   my $release = EnsEMBL::Web::Data::Release->new($release_id);
   if ($release) {
     my $release_date = $self->pretty_date($release->date);
@@ -72,7 +73,7 @@ sub render {
         ## sort out species names
         my @species = $item->species_ids; 
         my (@sp_ids, $sp_id, $sp_name, $sp_count);
-        if (!scalar(@species)) {
+        if (!scalar(@species) || !$species[0]) {
           $sp_name = 'all species';
         }
         elsif (scalar(@species) > 5) {
@@ -92,7 +93,7 @@ sub render {
           $sp_name = join(', ', @names);
         }
 ## generate HTML
-        $html .= sprintf(qq(<li><strong><a href="%s#%s" style="text-decoration:none">%s</a></strong> (%s)</li>\n),
+        $html .= sprintf(qq(<li><strong><a href="%s#news_%s" style="text-decoration:none">%s</a></strong> (%s)</li>\n),
               $news_url, $item->news_item_id, $item->title, $sp_name);
 
       }
