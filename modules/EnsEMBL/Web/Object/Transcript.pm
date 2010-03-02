@@ -1398,7 +1398,7 @@ sub get_int_seq {
 sub save_seq {
   my $self = shift;
   my $content = shift ;
-  my $seq_file = $self->species_defs->ENSEMBL_TMP_TMP . '/SEQ_' . time . int(rand*100000000) . $$;
+  my $seq_file = $self->species_defs->ENSEMBL_TMP_TMP . '/SEQ_' . time() . int(rand()*100000000) . $$;
   open (TMP,">$seq_file") or die("Cannot create working file.$!");
   print TMP $content;
   close TMP;
@@ -1440,7 +1440,7 @@ sub get_alignment {
   my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s';
   my $pepAlignExe  = '%s/bin/psw -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s';
 
-  my $out_file = time . int(rand*100000000) . $$;
+  my $out_file = time() . int(rand()*100000000) . $$;
   $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/' . $out_file . '.out';
   
   my $command;
