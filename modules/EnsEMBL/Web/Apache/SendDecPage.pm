@@ -257,6 +257,18 @@ sub template_SCRIPT {
   return "$content";
 }
 
+
+sub template_COMPONENT {
+  my( $r, $include ) = @_;
+  my $content;
+  eval {
+    EnsEMBL::Web::Root->dynamic_use($include);
+    $content = $include->content();
+  };
+  if( $@ ){ warn( "Cannot dynamic_use $include: $@" ) } 
+  return "$content";
+}
+
 sub template_PAGE {
   my( $r, $rel ) = @_;
   my $root = $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_BASE_URL;
