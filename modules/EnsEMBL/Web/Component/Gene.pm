@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use Bio::AlignIO;
+
 use base qw(EnsEMBL::Web::Component);
 
 sub email_URL {
