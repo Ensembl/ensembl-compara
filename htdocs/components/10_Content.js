@@ -28,11 +28,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         var el = $(this);
         var popup = el.children('.glossary_popup');
         
-        var offset = el.offset();
-        offset.top  -= popup.height() - (0.25 * el.height());
-        offset.left += 0.75 * el.width();
+        var position = el.position();
+        position.top  -= popup.height() - (0.25 * el.height());
+        position.left += 0.75 * el.width();
         
-        popup.show().offset(offset);
+        popup.show().css(position);
         popup = null;
         el = null;
       },
