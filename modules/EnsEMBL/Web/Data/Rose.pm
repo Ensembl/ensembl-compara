@@ -3,9 +3,8 @@ package EnsEMBL::Web::Data::Rose;
 ### NAME: EnsEMBL::Web::Data::Rose
 ### Base class for a Rose::DB::Object object 
 
-### PLUGGABLE: TODO
-
 ### STATUS: Under Development
+### You will need to uncomment the use base line in order to test this code!
 
 ### DESCRIPTION:
 ### This module and its children provide access to non-genomic
@@ -16,10 +15,11 @@ use warnings;
 
 no warnings qw(uninitialized);
 
-#use Rose::DB::Object;
-#use Rose::DB::MySQL;
+#use EnsEMBL::Web::DBSQL::RoseDB;
 
-use base qw(EnsEMBL::Web::Data);
+use base qw(Rose::DB::Object);
+
+
 
 1;
 
