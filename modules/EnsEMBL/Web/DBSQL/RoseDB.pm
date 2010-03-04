@@ -17,15 +17,26 @@ use EnsEMBL::Web::SpeciesDefs;
 
 #use base qw(Rose::DB);
 
-our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
+sub new {
+  my $class = shift;
+  my $species_defs = shift;
+  my $self = $class->SUPER::new(@);
 
-our $db_user = $species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'} 
+  ## Slightly hacky insertion of db user and password!
+  my $db_user = $species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'} 
                   || $species_defs->DATABASE_WRITE_USER;
 
-our $db_pass = defined $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} 
+  my $db_pass = defined $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} 
                   ? $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'} 
                   : $species_defs->DATABASE_WRITE_PASS;
+  $self->{'ensembl_user'} = $db_user;
+  $self->{'ensembl_pass'} = $db_pass;
 
+  return $self;
+}
+
+sub db_user { return $_->{'ensembl_user'}; }
+sub db_pass { return $_->{'ensembl_pass'}; }
 
 ## Use a private registry for this class
 __PACKAGE__->use_private_registry;
@@ -40,8 +51,8 @@ __PACKAGE__->register_db(
   database => $species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
   host     => $species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
   port     => $species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
-  username => $db_user, 
-  password => $db_pass,
+  username => $self->db_user, 
+  password => $self->db_pass,
 );
 
 ## Register the ensembl_web_user_db data source
@@ -51,8 +62,8 @@ __PACKAGE__->register_db(
   database => $species_defs->ENSEMBL_USERDB_NAME,
   host     => $species_defs->ENSEMBL_USERDB_HOST, 
   port     => $species_defs->ENSEMBL_USERDB_PORT, 
-  username => $db_user, 
-  password => $db_pass,
+  username => $self->db_user, 
+  password => $self->db_pass,
 );
 
 1;
