@@ -100,7 +100,7 @@ sub parse {
     return $error;
   }
   else {
-    $format = uc($self->format);
+    $format = uc($self->format); 
     my $filter = $self->filter;
 
     ## Some complex formats need extra parsing capabilities
@@ -114,7 +114,7 @@ sub parse {
     my $count;
     my $current_max = 0;
     my $current_min = 0;
-    my $valid_coords = $self->{'valid_coords'};
+    my $valid_coords = $self->{'valid_coords'}; 
 
     ## On upload, keep track of current location so we can find nearest feature
     my ($current_index, $current_region, $current_start, $current_end);    
@@ -149,7 +149,7 @@ sub parse {
         my $columns; 
         if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { 
           ## 'Normal' format consisting of a straightforward feature 
-          ($columns) = $self->split_into_columns($row, $format);
+          ($columns) = $self->split_into_columns($row, $format);  
         }
         else { 
           ## Complex format requiring special parsing (e.g. WIG)
@@ -173,14 +173,14 @@ sub parse {
                         'end'     => $end,
                         'index'   => List::MoreUtils::first_index {$_ eq $chr} @{$self->drawn_chrs},
                       }
-            )  unless $done;
-
-          if (keys %$valid_coords && scalar(@$columns) >1) {
+            ) unless $done;
+          
+          if (keys %$valid_coords && scalar(@$columns) >1 && $format!~/^CON/) { 
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
             next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
             next unless $start > 0 && $end <= $valid_coords->{$chr};
           
-          }
+          } 
 
           ## Optional - filter content by location
           if ($filter->{'chr'}) {
@@ -195,7 +195,7 @@ sub parse {
             $self->store_density_feature($empty->coords($columns));
           }
           else {
-            my $feature = $feature_class->new($columns);
+            my $feature = $feature_class->new($columns); 
             if ($feature->can('score')) {
               $current_max = $self->{'tracks'}{$self->current_key}{'config'}{'max_score'};
               $current_min = $self->{'tracks'}{$self->current_key}{'config'}{'min_score'};
