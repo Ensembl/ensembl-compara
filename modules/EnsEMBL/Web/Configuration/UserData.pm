@@ -247,7 +247,7 @@ sub populate_tree {
   $convert_menu->append(
     $self->create_node( 'UploadVariations', 'SNP Effect Predictor',
       [qw(upload_snps EnsEMBL::Web::Component::UserData::UploadVariations)],
-      {'availability' => 'has_variation'},
+      {'availability' => 1,},
     )
   );
   $convert_menu->append(
