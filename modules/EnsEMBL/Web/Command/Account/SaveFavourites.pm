@@ -11,7 +11,7 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   print "Content-type:text/html\n\n";
-  my $user = $objecy->user;
+  my $user = $object->user;
 
   my ($species_list) = $user->specieslists;
   $species_list = EnsEMBL::Web::Data::Record::SpeciesList::User->new
