@@ -264,7 +264,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     $('dl.config_menu', this.elLk.form).each(function () {
       var menu = $(this);
       var div  = menu.parent();
-      var show = false;
+      
+      if (!div[0].show) {
+        div[0].show = false;
+      }
       
       menu.children('dt:not(.select_all, .external)').each(function () {
         var dt    = $(this);
@@ -272,7 +275,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         if (match || dt.next('dd').text().match(myself.regex)) {
           dt.show();
-          show = true;
+          div[0].show = true;
           
           if (!match) {
             dts.push(dt[0]);
@@ -284,7 +287,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         dt = null;
       });
       
-      if (show === true) {
+      if (div[0].show === true) {
         div.show();
       } else {
         div.hide();
