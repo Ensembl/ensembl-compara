@@ -156,6 +156,7 @@ sub get_exon_sequence_data {
     }
     
     if ($utr_end) {
+      $coding_length = 0 if $coding_length < 0;
       $sequence[$_]->{'class'} = 'eu' for $coding_length..$seq_length - 1;
     }
     
