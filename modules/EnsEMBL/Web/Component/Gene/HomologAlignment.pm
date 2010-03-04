@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
+use Bio::AlignIO;
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::Document::HTML::TwoCol;
 use EnsEMBL::Web::Constants;
@@ -126,7 +127,7 @@ sub content {
       $html .= $ss->render;
 
       my $alignio = Bio::AlignIO->newFh(
-        -fh     => new IO::String(my $var),
+        -fh     => IO::String->new(my $var),
         -format => $self->renderer_type($text_format)
       );
       
