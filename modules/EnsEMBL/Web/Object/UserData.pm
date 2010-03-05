@@ -27,7 +27,8 @@ use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::DASConfig;
 use Bio::EnsEMBL::StableIdHistoryTree;
-use Bio::EnsEMBL::Variation::VariationFeature;
+use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
+use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
 
 my $DEFAULT_CS = 'DnaAlignFeature';
 
@@ -603,43 +604,61 @@ sub get_stable_id_history_data {
 sub calculate_consequence_data {
   my ($self, $file) = @_;
   my $data = $self->fetch_userdata_by_id($file);
-  my %slice_hash;      
-  my %consequence_results = ();  
+  my %slice_hash;
+  my %consequence_results;
+  my ($f, @new_vfs);
+  my $count =0;
+
 
   if (my $parser = $data->{'parser'}){ 
-    foreach my $track ($parser->{'tracks'}) { 
+    foreach my $track ($parser->{'tracks'}) {
       foreach my $type (keys %{$track}) { 
         my $features = $parser->fetch_features_by_tracktype($type);
-        my $sa = $self->get_adaptor('get_SliceAdaptor', 'core', $self->species);
-        my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation', $self->species);    
+        my $sa = $self->get_adaptor('get_SliceAdaptor', 'core', $self->param('species'));
+        my $vfa;
+        my %species_dbs =  %{$self->species_defs->get_config($self->param('species'), 'databases')};
+        if (exists $species_dbs{'DATABASE_VARIATION'} ){
+          $vfa  = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation', $self->param('species'));
+        } else  { 
+          $vfa = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($self->param('species'));
+        }
 
-        foreach my $f ( @$features){
+        while ( $f = shift @{$features}){
           # Get Slice
-          my $slice; 
+          my $slice;
           if (defined $slice_hash{$f->seqname}){
             $slice = $slice_hash{$f->seqname};
-          } else { 
-            $slice = $sa->fetch_by_region('chromosome', $f->seqname);
+          } else {
+            eval { $slice = $sa->fetch_by_region('chromosome', $f->seqname); };
+            if(!defined($slice)) {
+              $slice = $sa->fetch_by_region(undef, $f->seqname);
+            }
           }
 
-          my $pos;  
+          if(!defined($slice)) {
+            warn "Could not get slice $f->seqname $f->start $f->end\n";
+            next;
+          }
+
+
+          my $pos;
           if ($f->start == $f->end){
-            $pos = $f->start; 
+            $pos = $f->start;
           } else {
-            $pos = $f->start .'-'. $f->end;    
-          }  
-          
+            $pos = $f->start .'-'. $f->end;
+          }
+
           my $strand;
           if ($f->strand =~/\+|1/){
             $strand =1;
           } elsif($f->strand =~/\-|\-1/){
             $strand = -1;
           } else {
-            $strand = 0; 
+            $strand = 0;
           }
 
           unless ($f->can('allele_string')){
-            my $html ='The uploaded data is not in the correct format. 
+            my $html ='The uploaded data is not in the correct format.
               See <a href="/info/website/upload/index.html#Consequence">here</a> for more details.';
             my $error = 1;
             return ($html, $error);
@@ -653,22 +672,33 @@ sub calculate_consequence_data {
             -strand         => $strand,
             -map_weight     => 1,
             -adaptor        => $vfa,
-            -variation_name => $f->seqname.'_'.$pos.'_'.$f->allele_string,  
+            -variation_name => $f->seqname.'_'.$pos.'_'.$f->allele_string,
           );
+          # check we have a valid variation feature
           unless ($vf->allele_string){
             my $html ='The uploaded data is not in the correct format.
               See <a href="/info/website/upload/index.html#Consequence">here</a> for more details about the expected format.';
             my $error = 1;
             return ($html, $error);
           }
-          $consequence_results{$f} = $vf; 
-        }    
+
+          push @new_vfs, $vf;
+
+          # if the array is "full" or there are no more items in @features
+          if(scalar @new_vfs == 1000 || scalar @$features == 0) {
+            $count++;
+            my @feature_block = @new_vfs;
+            $consequence_results{$count} = \@feature_block;
+            @new_vfs = ();
+          }
+        }
       }
     }
   }
 
   my $table = $self->format_consequence_data(\%consequence_results);
   return $table;
+
 }
 
 sub format_consequence_data {
@@ -678,103 +708,170 @@ sub format_consequence_data {
   $table->add_columns(
     { 'key' => 'var',         'title' =>'Uploaded Variation', 'align' => 'center'},
     { 'key' => 'location',    'title' =>'Location', 'align' => 'center' },
+    { 'key' => 'gene',        'title' =>'Gene', 'align' => 'center'      },
     { 'key' => 'trans',       'title' =>'Transcript', 'align' => 'center'},
     { 'key' => 'con',         'title' =>'Consequence', 'align' => 'center'},
-    { 'key' => 'prot_pos',    'title' =>'Relative position in protein', 'align' => 'center'},
+    { 'key' => 'cdna_pos',    'title' =>'Position in cDNA', 'align' => 'center'},
+    { 'key' => 'prot_pos',    'title' =>'Position in protein', 'align' => 'center'},
     { 'key' => 'aa',          'title' =>'Amino acid change', 'align' => 'center'},
     { 'key' => 'snp',         'title' =>'Corresponding Variation', 'align' => 'center'}
   );
 
-  my $slice_adaptor = $self->get_adaptor('get_SliceAdaptor', 'core', $self->species);
+  my $transcript_variation_adaptor;
+  my %species_dbs =  %{$self->species_defs->get_config($self->param('species'), 'databases')};
+  if (exists $species_dbs{'DATABASE_VARIATION'} ){
+    $transcript_variation_adaptor = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation', $self->param('species'));
+  } else  { 
+    $transcript_variation_adaptor  = Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor->new_fake($self->param('species'));
+  }
+
+  my $slice_adaptor = $self->get_adaptor('get_SliceAdaptor', 'core', $self->param('species'));
+  my $gene_adaptor = $self->get_adaptor('get_GeneAdaptor', 'core', $self->param('species'));
   my %slices;
   my @table_rows;
   my %data = %{$consequence_data};
 
-  foreach my $feature (sort { $data{$a}->seq_region_name <=> $data{$b}->seq_region_name} keys %data){
-    my $var_feature = $data{$feature};
-    my $transcript_variations = $var_feature->get_all_TranscriptVariations();
-    foreach my $tv (@{$transcript_variations}){
-      foreach my $consequence_string (@{$tv->consequence_type}){
-        my $row = {};
+  foreach my $feature_set (keys %data) {
+    my $var_features = $data{$feature_set};
+    # get the consequences
+    # note that we don't need to get the return value since the transcript
+    # variation objects are attached to the VFs in the array in the calculation
+    $transcript_variation_adaptor->fetch_all_by_VariationFeatures($var_features);
+    foreach my $var_feature (@{$var_features}){ 
+      my $transcript_variations = $var_feature->get_all_TranscriptVariations();
+      foreach my $tv (@{$transcript_variations}){
+        foreach my $consequence_string (@{$tv->consequence_type}){
+          my $row = {};
 
-        my $location = $var_feature->seq_region_name .":". $var_feature->seq_region_start;
-        unless ($var_feature->seq_region_start == $var_feature->seq_region_end){
-          $location .= '-' . $var_feature->seq_region_end;
-        }
-        my $url_location = $var_feature->seq_region_name .":". ($var_feature->seq_region_start -500) .
-          "-".($var_feature->seq_region_end + 500);
-        my $location_url = $self->_url({
-          'type'              => 'Location',
-          'action'            => 'View',
-          'r'                 =>  $url_location,
-          'contigviewbottom'  => 'variation_feature_variation=normal',
-        });
-
-        my $transcript = $tv->transcript->stable_id;
-        my $transcript_url = $self->_url({
-          'type'      => 'Transcript',
-          'action'    => 'Population',
-          't'         =>  $transcript,
-        });
-
-        my $translation_position = "N/A";
-        if ($tv->translation_start){
-          $translation_position = $tv->translation_start;
-          unless ($tv->translation_start == $tv->translation_end){
-            $translation_position .= '-'. $tv->translation_end;
+          my $location = $var_feature->seq_region_name .":". $var_feature->seq_region_start;
+          unless ($var_feature->seq_region_start == $var_feature->seq_region_end){
+            $location .= '-' . $var_feature->seq_region_end;
           }
-        }
+          my $url_location = $var_feature->seq_region_name .":". ($var_feature->seq_region_start -500) .
+            "-".($var_feature->seq_region_end + 500);
+          my $location_url = $self->_url({
+            'type'              => 'Location',
+            'action'            => 'View',
+            'r'                 =>  $url_location,
+            '_referer'          => undef,
+            'contigviewbottom'  => 'variation_feature_variation=normal',
+          });
 
-        my $snp_string  ='N/A';
-        my $slice_name = $var_feature->seq_region_name .":" . $location;
-        if (exists $slices{$slice_name} ){
-          $snp_string = $slices{$slice_name};
-        }
-        else {
+          my $transcript_string = "N/A";
+          my $gene_string = "N/A";
 
-          my $temp_slice;
-          if ($var_feature->start <= $var_feature->end){  
-            $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
-              $var_feature->seq_region_name, $var_feature->seq_region_start,
-              $var_feature->seq_region_end);
-          } else {
-            $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
-              $var_feature->seq_region_name, $var_feature->seq_region_end,
-              $var_feature->seq_region_start);
-          }      
-          my $snp_id;
+          if ($tv->transcript){
+            my $transcript = $tv->transcript->stable_id;
+            my $gene = $gene_adaptor->fetch_by_transcript_id($tv->transcript->dbID);
+            my $gene_id = $gene->stable_id;
 
-          foreach my $vf (@{$temp_slice->get_all_VariationFeatures()}){
-            next unless ($vf->seq_region_start == $var_feature->seq_region_start) &&
-              ($vf->seq_region_end == $var_feature->seq_region_end);
-            $snp_id = $vf->variation_name;
-            last if defined($snp_id);
-          }
-
-          if ($snp_id =~/^\w/ ){
-            my $snp_url =  $self->_url({
-              'type'      => 'Variation',
+            my $transcript_url = $self->_url({
+              'type'      => 'Transcript',
               'action'    => 'Summary',
-              'v'         =>  $snp_id,
+              't'         =>  $transcript,
+              '_referer'  => undef,
             });
-            $snp_string = qq(<a href="$snp_url">$snp_id</a>);
+            $transcript_string = qq(<a href="$transcript_url">$transcript</a>);
+
+            my $gene_url = $self->_url({
+              'type'      => 'Gene',
+              'action'    => 'Summary',
+              'g'         =>  $gene_id,
+              '_referer'  => undef,
+            });
+            $gene_string = qq(<a href="$gene_url">$gene_id</a>);
           }
-          $slices{$slice_name} = $snp_string;
+
+
+          my $translation_position = "N/A";
+          if ($tv->translation_start){
+            $translation_position = $tv->translation_start;
+            unless ($tv->translation_start == $tv->translation_end){
+              if ($tv->translation_end < $tv->translation_start){
+                $translation_position = $tv->translation_end .'-' .$translation_position;
+              } else {
+                $translation_position .= '-'. $tv->translation_end;
+              }
+            }
+          }
+
+          my $cdna_position = "N/A";
+          if ($tv->cdna_start){
+            $cdna_position = $tv->cdna_start;
+            unless ($tv->cdna_start == $tv->cdna_end){
+              if ($tv->cdna_end < $tv->cdna_start){
+                $cdna_position = $tv->cdna_end .'-' .$cdna_position;
+              } else {
+                $cdna_position .= '-'. $tv->cdna_end;
+              }
+            }
+          }
+
+          my $snp_string  = "N/A";
+          my $slice_name = $var_feature->seq_region_name .":" . $location;
+          if (exists $slices{$slice_name} ){
+            $snp_string = $slices{$slice_name};
+          }
+          else {
+            my $temp_slice;
+            if ($var_feature->start <= $var_feature->end){
+              eval { $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
+                $var_feature->seq_region_name, $var_feature->seq_region_start,
+                $var_feature->seq_region_end); };
+              if(!defined($temp_slice)) {
+                $temp_slice = $slice_adaptor->fetch_by_region(undef,
+                  $var_feature->seq_region_name, $var_feature->seq_region_start,
+                  $var_feature->seq_region_end);
+              }
+            } else {
+              eval {
+                $temp_slice = $slice_adaptor->fetch_by_region("chromosome",
+                $var_feature->seq_region_name, $var_feature->seq_region_end,
+                $var_feature->seq_region_start); };
+              if(!defined($temp_slice)) {
+                $temp_slice = $slice_adaptor->fetch_by_region(undef,
+                $var_feature->seq_region_name, $var_feature->seq_region_end,
+                $var_feature->seq_region_start);
+              }
+            }
+
+            my $snp_id;
+            foreach my $vf (@{$temp_slice->get_all_VariationFeatures()}){
+              next unless ($vf->seq_region_start == $var_feature->seq_region_start) &&
+              ($vf->seq_region_end == $var_feature->seq_region_end);
+              $snp_id = $vf->variation_name;
+              last if defined($snp_id);
+            }
+
+            if ($snp_id =~/^\w/ ){
+              my $snp_url =  $self->_url({
+                'type'      => 'Variation',
+                'action'    => 'Summary',
+                'v'         =>  $snp_id,
+                '_referer'  =>  undef,
+              });
+              $snp_string = qq(<a href="$snp_url">$snp_id</a>);
+            }
+            $slices{$slice_name} = $snp_string;
+          }
+
+          $row->{'var'}       = $var_feature->variation_name;
+          $row->{'location'}  = qq(<a href="$location_url">$location</a>);
+          $row->{'gene'}      = $gene_string;
+          $row->{'trans'}     = $transcript_string;
+          $row->{'con'}       = $consequence_string;
+          $row->{'cdna_pos'}  = $cdna_position;
+          $row->{'prot_pos'}  = $translation_position;
+          $row->{'aa'}        = $tv->pep_allele_string || 'N/A';
+          $row->{'snp'}       = $snp_string;
+
+          push (@table_rows, $row);
         }
-
-        $row->{'var'}       = $var_feature->variation_name;
-        $row->{'location'}  = qq(<a href="$location_url">$location</a>);
-        $row->{'trans'}     = qq(<a href="$transcript_url">$transcript</a>);
-        $row->{'con'}       = $consequence_string;
-        $row->{'prot_pos'}  = $translation_position;
-        $row->{'aa'}        = $tv->pep_allele_string || 'N/A';
-        $row->{'snp'}       = $snp_string;
-
-        push (@table_rows, $row);
       }
     }
   }
-  foreach my $row (@table_rows){
+
+  foreach my $row ( sort { $a->{'var'} cmp $b->{'var'} } @table_rows){
      $table->add_row($row);
   }
 
