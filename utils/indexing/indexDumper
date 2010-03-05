@@ -217,8 +217,8 @@ sub dumpSNP {
     my $extra = '';
     my $x = $SNP_EXTRA{$ID};
     if( $x ) {
-      push @K, $x->[1], $x->[3],$x->[4];
-      $extra = '; and is associated with following phenotypes:'. $x->[4];
+      push @K,$x->[1],$x->[3],$x->[4],$x->[5];
+      $extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
       if( $x->[1] ) {
         $extra .= sprintf ', through %s', $x->[1];
       }
@@ -276,8 +276,6 @@ sub dumpStructuralVariations {
   my $species = $conf->{'species'};
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
-
-
   my $T = $conf->{'dbh'}->selectall_arrayref("
     select v.structural_variation_id,
            v.variation_name,
@@ -298,8 +296,6 @@ sub dumpStructuralVariations {
     my $length = $row->[6] - $row->[7];
     my $action = 'View';
     my $view_config = 'contigviewbottom=variation_feature_structural=normal;';
-
-
     if ($length >> $max_length) {
       $action = 'Overview';
       $view_config = 'cytoview=variation_feature_structural=normal;';
@@ -308,7 +304,6 @@ sub dumpStructuralVariations {
     $row->[1], "/$species/Location/$action?r=$r;sv=$row->[1];$view_config",
     $row->[1], qq(A structural variation from $row->[2], identified by $row->[3].<br />This variation has been mapped to chromosome $row->[4], from $row->[5] to $row->[6].\n );
   }
-
   close A;
 }
 
