@@ -268,7 +268,6 @@ sub create_features {
   my $features = {};
 
   my $db        = $self->param('db')  || 'core'; 
-  if ($self->param('fdb')){ $db = $self->param('fdb');}
   my ($identifier, $fetch_call, $featureobj, $dataobject, $subtype);
   
   ## Are we inputting IDs or searching on a text term?
@@ -488,11 +487,13 @@ sub _create_RegulatoryFactor {
       $features= {'RegulatoryFactor' => \@assoc_features};
     } else {
       my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
-      my $ftype = $feat_type_adaptor->fetch_by_name($id);
+      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor; warn $feat_type_adaptor; warn $id;
+      my $name = $self->param('name');
+      $name =~s/(\,|\s+)\w*//g;
+      my $ftype = $feat_type_adaptor->fetch_by_name($name); warn $name; warn $ftype;
       my @ftypes = ($ftype); 
-      my $type = $ftype->description; 
-      my $fstype = $fset_types{$type}; 
+      my $type = $ftype->description; warn '>>> TYPE ' . $type; 
+      my $fstype = $fset_types{$type};  warn '>>> FSTYPE '. $fstype;
       my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
       my @fsets = ($fstype);
       my $feats = $fset->get_Features_by_FeatureType($ftype);
