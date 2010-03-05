@@ -2,7 +2,7 @@ package EnsEMBL::Web::Data::Article;
 
 use strict;
 use warnings;
-use base qw(EnsEMBL::Web::Data);
+use base qw(EnsEMBL::Web::CDBI);
 use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
 __PACKAGE__->table('article');

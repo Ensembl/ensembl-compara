@@ -6,7 +6,7 @@ use warnings;
 use HTTP::Date 'str2time';
 use POSIX      'strftime';
 
-use base qw(EnsEMBL::Web::Data);
+use base qw(EnsEMBL::Web::CDBI);
 use EnsEMBL::Web::DBSQL::WebDBConnection (__PACKAGE__->species_defs);
 
 __PACKAGE__->table('ens_release');

@@ -11,7 +11,7 @@ use Class::Std;
 use Data::Dumper;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data;
+use EnsEMBL::Web::CDBI;
 use EnsEMBL::Web::Interface::Element;
 
 {

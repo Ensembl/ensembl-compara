@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use HTTP::Date qw(str2time time2iso);
 use EnsEMBL::Web::Tools::Misc;
-use base qw(EnsEMBL::Web::Data);
+use base qw(EnsEMBL::Web::CDBI);
 
 
 __PACKAGE__->add_queriable_fields(

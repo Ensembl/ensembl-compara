@@ -7,7 +7,7 @@ package EnsEMBL::Web::Data::Session;
 use strict;
 use warnings;
 no warnings 'uninitialized';
-use base qw(EnsEMBL::Web::Data);
+use base qw(EnsEMBL::Web::CDBI);
 
 use EnsEMBL::Web::DBSQL::SessionDBConnection (__PACKAGE__->species_defs);
 use HTTP::Date qw(str2time time2iso);
