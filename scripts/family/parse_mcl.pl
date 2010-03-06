@@ -9,14 +9,14 @@ use Bio::EnsEMBL::Compara::Attribute;
 $| = 1;
 
 sub read_mcl_abc_format {
-    my ($mcl_file) = @_;
+    my ($mclfile) = @_;
 
     my @clusters = ();
 
-    if ($mcl_file =~ /\.gz/) {
-      open MCL, "gunzip -c $mcl_file|" || die "$mcl_file: $!";
+    if ($mclfile =~ /\.gz/) {
+      open MCL, "gunzip -c $mclfile|" || die "$mclfile: $!";
     } else {
-      open MCL, $mcl_file || die "$mcl_file: $!";
+      open MCL, $mclfile || die "$mclfile: $!";
     }
 
     my $cluster_index = 0;
@@ -26,53 +26,48 @@ sub read_mcl_abc_format {
         push @clusters, $cluster_index.' '.$_;
         $cluster_index++;
     }
-    close MCL || die "$mcl_file: $!";
+    close MCL || die "$mclfile: $!";
 
     return \@clusters;
 }
 
 my $usage = "
-Usage: $0 options mcl_file
+Usage: $0 options
 
 Options:
+-mclfile <mcl_file_name> (obligatory)
 -prefix <family_stable_id_prefix> (default: ENSF)
 -foffset <family_id_numbering_start> (default:1)
 -host <host_name>
 -port <port_number>
 -user <user_name>
 -pass <password>
--dbname <database_name>
+-database <database_name>
 
 \n";
 
 my $help                = 0;
-my $method_link_type    = "FAMILY";
-my $family_prefix       = "ENSF";
+my $method_link_type    = 'FAMILY';
+my $family_prefix       = 'ENSF';
 my $family_offset       = 1;
 my $db_conf             = {};
+my $mclfile             = undef;
 
 GetOptions('help'     => \$help,
+       'mclfile=s'    => \$mclfile,
 	   'prefix=s'     => \$family_prefix,
 	   'foffset=i'    => \$family_offset,
        'host=s'       => \$db_conf->{'-host'},
        'port=i'       => \$db_conf->{'-port'},
        'user=s'       => \$db_conf->{'-user'},
        'pass=s'       => \$db_conf->{'-pass'},
-       'dbname=s'     => \$db_conf->{'-dbname'},
+       'database=s'   => \$db_conf->{'-dbname'},
 );
 
-if ($help) {
-  print $usage;
-  exit 0;
+if ($help || !($mclfile && $db_conf->{'-host'} && $db_conf->{'-user'} && $db_conf->{'-dbname'}) ) {
+  print STDERR $usage;
+  exit ($help ? 0 : 1);
 }
-
-if (scalar(@ARGV) != 1) {
-  print "Expecting 1 argument:\n";
-  print $usage;
-  exit 0;
-}
-
-my ($mcl_file) = @ARGV;
 
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(%$db_conf);
 my $dbc         = $compara_dba->dbc();
@@ -89,7 +84,7 @@ $mlssa->store($mlss);
 
 print STDERR "Getting source_name from database...";
 
-my $sql = "select stable_id,source_name,description from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP','EXTERNALPEP')";
+my $sql = "select stable_id,source_name from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP','EXTERNALPEP')";
 my $sth = $dbc->prepare($sql);
 $sth->execute;
 
@@ -134,7 +129,7 @@ print STDERR "Done\n";
 
 print STDERR "Reading mcl file...";
 
-my $clusters = read_mcl_abc_format($mcl_file);
+my $clusters = read_mcl_abc_format($mclfile);
 print STDERR "Done\n";
 
 

@@ -13,7 +13,7 @@ $0
     -port <port_number>
     -user <user_name>
     -pass <password>
-    -dbname <database_name>
+    -database <database_name>
 \n";
 
 my $help    = 0;
@@ -24,12 +24,12 @@ GetOptions('help' => \$help,
         'port=i'       => \$db_conf->{'-port'},
         'user=s'       => \$db_conf->{'-user'},
         'pass=s'       => \$db_conf->{'-pass'},
-        'dbname=s'     => \$db_conf->{'-dbname'},
+        'database=s'   => \$db_conf->{'-dbname'},
 );
 
-if ($help) {
-  print $usage;
-  exit 0;
+if ($help || !($db_conf->{'-host'} && $db_conf->{'-user'} && $db_conf->{'-dbname'}) ) {
+    print $usage;
+    exit ($help ? 0 : 1);
 }
 
 my %sequence_id2member_id;
