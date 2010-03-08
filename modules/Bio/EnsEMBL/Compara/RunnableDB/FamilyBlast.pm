@@ -183,8 +183,8 @@ sub run {
     my $minibatch               = $self->param('minibatch')     || 1;
 
     my $blast_version           = $self->param('blast_version') || 'ncbi-blast-2.2.22+';
-    my $blastp_executable       = $self->param('blastp_exec')   || ( '/software/ensembl/compara/' . $blast_version . '/bin/blastp' );
-    my $blast_params            = $self->param('blast_params')  || '-seg yes';
+    my $blast_bin_dir           = $self->param('blast_bin_dir') || ( '/software/ensembl/compara/' . $blast_version . '/bin' );
+    my $blast_params            = $self->param('blast_params')  || '-seg yes';      # closest emulation of C-based blastp behaviour
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
 
@@ -198,13 +198,13 @@ sub run {
         close FASTA;
     }
 
-    my $cmd = "$blastp_executable -db $fastadb $blast_params -evalue $evalue_limit -num_alignments $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
+    my $cmd = "${blast_bin_dir}/blastp -db $fastadb $blast_params -evalue $evalue_limit -num_descriptions $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
 
     if($debug) {
         warn "CMD:\t$cmd\n";
     }
 
-    open( BLAST, "| $cmd") || die "could not execute $blastp_executable, returned error code: $!";
+    open( BLAST, "| $cmd") || die qq{could not execute "${cmd}", returned error code: $!};
     print BLAST @$fasta_list;
     close BLAST;
 
