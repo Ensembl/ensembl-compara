@@ -179,7 +179,9 @@ sub run {
         return 1;
     }
 
-    my $fastadb                 = $self->param('fastadb')       || die "'fastadb' is an obligatory parameter, please set it in the input_id hashref";
+    my $blastdb_dir             = $self->param('blastdb_dir');
+    my $blastdb_name            = $self->param('blastdb_name')  || die "'blastdb_name' is an obligatory parameter, please set it in the input_id hashref";
+
     my $minibatch               = $self->param('minibatch')     || 1;
 
     my $blast_version           = $self->param('blast_version') || 'ncbi-blast-2.2.22+';
@@ -198,7 +200,8 @@ sub run {
         close FASTA;
     }
 
-    my $cmd = "${blast_bin_dir}/blastp -db $fastadb $blast_params -evalue $evalue_limit -num_descriptions $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
+    my $blastdb = ($blastdb_dir ? $blastdb_dir.'/' : '').$blastdb_name;
+    my $cmd = "${blast_bin_dir}/blastp -db $blastdb $blast_params -evalue $evalue_limit -num_descriptions $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
 
     if($debug) {
         warn "CMD:\t$cmd\n";
