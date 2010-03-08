@@ -679,9 +679,9 @@ sub transHandler {
  
   ## Check for stable id URL (/id/ENSG000000nnnnnn)
   if ($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) {
-    my $uri;
+    my ($object_type, $db_type, $uri);
     my $stable_id = $raw_path[1];
-    my ( $species, $object_type, $db_type ) =
+    ( $species, $object_type, $db_type ) =
                  Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
     if ($species && $object_type) {
       $uri = '/'.$species.'/';
@@ -707,7 +707,7 @@ sub transHandler {
   }
   
   foreach (@raw_path) {
-    if ($species_lookup{$_} && !$species) {
+    if ($species_lookup{$SPECIES_MAP{lc $_}} && !$species) {
       $species = $_;
     } else {
       push @path_segments, $_;
