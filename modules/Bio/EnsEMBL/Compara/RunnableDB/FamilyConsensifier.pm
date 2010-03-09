@@ -28,7 +28,10 @@ sub fetch_input {
     my $sth = $self->dbc->prepare( $sql );
     $sth->execute( $family_id );
 
-    my %dbname2descs = ();
+    my %dbname2descs = (
+        'Uniprot/SWISSPROT' => [],
+        'Uniprot/SPTREMBL'  => [],
+    );
     while( my ($source_name, $description) = $sth->fetchrow() ) {
         $description =~ tr/\(\)\.-/    /;
         push @{ $dbname2descs{$source_name} }, apply_edits(uc $description);
@@ -44,7 +47,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $family_id    = $self->param('family_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $family_id    = $self->param('family_id');
     my $dbname2descs = $self->param('dbname2descs');
 
     my $source_name = scalar(@{ $dbname2descs->{'Uniprot/SWISSPROT'}})
