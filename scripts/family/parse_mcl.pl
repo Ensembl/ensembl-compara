@@ -112,13 +112,13 @@ $sth->bind_columns(\$sequence_id,\$count);
 my $sql2 = "select stable_id from member where sequence_id = ?";
 my $sth2 = $dbc->prepare($sql2);
 
-my %redundant_sequence_id2stable_ids = ();
+my %sequence_id2stable_ids = ();
 while ( $sth->fetch() ) {
   $sth2->execute($sequence_id);
   my ($member_stable_id);
   $sth2->bind_columns(\$member_stable_id);
   while ( $sth2->fetch() ) {
-    push @{$redundant_sequence_id2stable_ids{$sequence_id}},$member_stable_id;
+    push @{$sequence_id2stable_ids{$sequence_id}},$member_stable_id;
   }
 }
 
@@ -179,23 +179,25 @@ foreach my $cluster (@$clusters) {
   foreach my $member (@{$family->get_all_Members}) {
     my $member_source = $member->source_name();
 
+        # spit out the descripton of this particular member:
     if ($member_source eq 'Uniprot/SWISSPROT' 
         or $member_source eq 'Uniprot/SPTREMBL' 
         or $member_source eq 'EXTERNALPEP') {
             print join("\t", $member_source, $family_dbID, $member->stable_id, $member->description)."\n";
     }
 
-    if (defined $redundant_sequence_id2stable_ids{$member->sequence_id}) {
-      foreach my $rmember_stable_id (@{$redundant_sequence_id2stable_ids{$member->sequence_id}}) {
-        next if ($rmember_stable_id eq $member->stable_id);
-        my $rmember_source = $stable_id2source_name{$rmember_stable_id};
+        # add descriptions of all members that share the same sequence:
+    if($sequence_id2stable_ids{$member->sequence_id}) {
+      foreach my $sameseq_member_stable_id (@{$sequence_id2stable_ids{$member->sequence_id}}) {
+        next if ($sameseq_member_stable_id eq $member->stable_id);     # but skip the one that has already been printed above
+        my $sameseq_member_source = $stable_id2source_name{$sameseq_member_stable_id};
 
-        if($rmember_source eq 'Uniprot/SWISSPROT' 
-             or $rmember_source eq 'Uniprot/SPTREMBL' 
-             or $rmember_source eq 'EXTERNALPEP') {
+        if($sameseq_member_source eq 'Uniprot/SWISSPROT' 
+             or $sameseq_member_source eq 'Uniprot/SPTREMBL' 
+             or $sameseq_member_source eq 'EXTERNALPEP') {
 
-                my $rd_member = $ma->fetch_by_source_stable_id($rmember_source, $rmember_stable_id);
-                print join("\t", $rmember_source, $family_dbID, $rmember_stable_id, $rd_member->description)."\n";
+                my $sameseq_member = $ma->fetch_by_source_stable_id($sameseq_member_source, $sameseq_member_stable_id);
+                print join("\t", $sameseq_member_source, $family_dbID, $sameseq_member_stable_id, $sameseq_member->description)."\n";
         }
 
       }
