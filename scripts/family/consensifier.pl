@@ -12,9 +12,13 @@ use strict;
 use Getopt::Long;
 use Algorithm::Diff qw(LCS);
 
-my @allowed_dbs= qw(Uniprot/SWISSPROT Uniprot/SPTREMBL);
+main();
+exit(0);
 
-my $usage=<<END_USAGE;
+sub main {
+    my @allowed_dbs= qw(Uniprot/SWISSPROT Uniprot/SPTREMBL);
+
+    my $usage=<<END_USAGE;
 
 Usage:
   $0 -d database file.annotated > outfile
@@ -24,46 +28,57 @@ Usage:
 
 END_USAGE
 
-my $help = 0;
-my $database;
+    my $help = 0;
+    my $database;
 
-unless (GetOptions('help' => \$help,
-		   'd=s' => \$database)) {
-  die $usage;
+    unless (GetOptions('help' => \$help,
+               'd=s' => \$database)) {
+      die $usage;
+    }
+
+    $database = uc $database;
+
+    if (@ARGV != 1 ||
+        $help ||
+        ! grep($database, @allowed_dbs)) {
+      die $usage; 
+    }
+
+    $|=1;
+
+    my ($file) = @ARGV;
+    die "$file: can't open" unless -f $file;
+    my $goners='().-';
+    my $spaces= ' ' x length($goners);
+    my $filter = "tr '$goners' '$spaces' < $file";
+
+    open FILE, "$filter | " || die "$filter: $!";
+
+    my %family_id2descriptions;
+
+    while (<FILE>) {
+      /^(\S+)\t(\d+)\t(\S+)\t(.*)$/;
+      my ($db,$family_id,$protein,$desc) = ($1,$2,$3,$4);
+      $desc =~ s/\s+/ /g;
+
+      if (uc $db eq $database) {
+        $desc = &apply_edits(uc $desc);
+        push(@{$family_id2descriptions{$family_id}},$desc);
+      }
+    }
+
+    close FILE;
+
+    foreach my $family_id (sort sort_num(keys(%family_id2descriptions))) {
+
+        my ($description, $percentage) = consensify($family_id2descriptions{$family_id});
+
+        print "$family_id\t>>>${description}<<<\t$percentage\n";
+    }
+
 }
 
-$database = uc $database;
-
-if (@ARGV != 1 ||
-    $help ||
-    ! grep($database, @allowed_dbs)) {
-  die $usage; 
-}
-
-$|=1;
-
-my ($file) = @ARGV;
-die "$file: can't open" unless -f $file;
-my $goners='().-';
-my $spaces= ' ' x length($goners);
-my $filter = "tr '$goners' '$spaces' < $file";
-
-open FILE, "$filter | " || die "$filter: $!";
-
-my %hash;
-
-while (<FILE>) {
-  /^(\S+)\t(\d+)\t(\S+)\t(.*)$/;
-  my ($db,$cluster,$protein,$desc) = ($1,$2,$3,$4);
-  $desc =~ s/\s+/ /g;
-
-  if (uc $db eq $database) {
-    $desc = &apply_edits(uc $desc);
-    push(@{$hash{$cluster}},$desc);
-  }
-}
-
-close FILE;
+# -------------------------- functional subroutines ----------------------------------
 
 sub as_words { 
     #add ^ and $ to regexp
@@ -92,9 +107,7 @@ sub apply_edits  {
 			      FOR HYPOTETICAL HYPOTHETICAL PROTEIN ISOFORM)));
  
   foreach my $re ( @deletes ) { 
-#    print "before $re: $_\n";
     s/$re/ /g; #space just for the the as_words regexs, to put back the spaces.
-#    print "after $re: $_\n"; 
   }
   
   #Apply some fixes to the annotation:
@@ -108,76 +121,68 @@ sub apply_edits  {
   $_;
 }
 
-CLUSTER:
-foreach my $cluster (sort sort_num(keys(%hash))) {
-  my $best_annotation;
 
-  print "$cluster\t";
+sub consensify {
+  my($original_descriptions) = @_;
 
-  my @array = @{$hash{$cluster}};
-  
-  my $total_members = scalar(@array);
-  my $total_members_with_desc = grep(/\S+/, @array);
+  my $best_annotation = '';
+
+  my $total_members = scalar(@$original_descriptions);
+  my $total_members_with_desc = grep(/\S+/, @$original_descriptions);
 
   ### OK, first a list of hacks:
   if ( $total_members_with_desc ==0 )  { # truly unknown
-    print ">>>UNKNOWN<<<\t0\n";
-    next CLUSTER;
+    return ('UNKNOWN', 0);
   }
   
   if ($total_members == 1) {
-    $best_annotation = $hash{$cluster}[0];
+    $best_annotation = $original_descriptions->[0];
     $best_annotation =~ s/^\s+//; 
     $best_annotation =~ s/\s+$//; 
     $best_annotation =~ s/\s+/ /;
     if ($best_annotation eq '' || length($best_annotation) == 1) {
-      $best_annotation = "UNKNOWN";
-      print ">>>$best_annotation<<<\t0\n";
+      return ('UNKNOWN', 0);
     } else { 
-      print ">>>$best_annotation<<<\t100\n";
+      return ($best_annotation, 100);
     }
-    next CLUSTER;
   }
 
   if ($total_members_with_desc == 1)  { # nearly unknown
-    ($best_annotation) = grep(/\S+/, @array);
+    ($best_annotation) = grep(/\S+/, @$original_descriptions);
     my $perc= int($total_members_with_desc/$total_members*100);
     $best_annotation =~ s/^\s+//;
     $best_annotation =~ s/\s+$//;
     $best_annotation =~ s/\s+/ /;
     if ($best_annotation eq '' || length($best_annotation) == 1) { 
-      $best_annotation = "UNKNOWN"; 
-      print ">>>$best_annotation<<<\t0\n"; 
+      return ('UNKNOWN', 0);
     } else {  
-      print ">>>$best_annotation<<<\t$perc\n"; 
+      return ($best_annotation, $perc);
     } 
-    next CLUSTER;
   }
 
   # all same desc:
   my %desc = undef;
-  foreach my $desc (@array) {
+  foreach my $desc (@$original_descriptions) {
     $desc{$desc}++;     
   }
   if  ( (keys %desc) == 1 ) {
     ($best_annotation) = keys %desc;
-    my $n = grep($_ eq $best_annotation, @array);
+    my $n = grep($_ eq $best_annotation, @$original_descriptions);
     my $perc= int($n/$total_members*100);
     $best_annotation =~ s/^\s+//;
     $best_annotation =~ s/\s+$//;
     $best_annotation =~ s/\s+/ /;
     if ($best_annotation eq '' || length($best_annotation) == 1) {  
-      $best_annotation = "UNKNOWN";  
-      print ">>>$best_annotation<<<\t0\n";  
+      return ('UNKNOWN', 0);
     } else {   
-      print ">>>$best_annotation<<<\t$perc\n";  
+      return ($best_annotation, $perc);
     }  
-    next CLUSTER;
   }
   # this should speed things up a bit as well 
   
   my %lcshash = undef;
-  my %lcnext = undef;
+  my %lcnext  = undef;
+  my @array   = @$original_descriptions;
   while (@array) {
     # do an all-against-all LCS (longest commong substring) of the
     # descriptions of all members; take the resulting strings, and
@@ -189,8 +194,6 @@ foreach my $cluster (sort sort_num(keys(%hash))) {
     # is more like the common parts of a Unix diff ... 
     for (my $i=0;$i<@array;$i++) {
       for (my $j=$i+1;$j<@array;$j++){
-#	my @list1=split(" ",$array[$i]);
-#	my @list2=split(" ",$array[$j]);
 	my @list1=split /\s+/,$array[$i];
 	my @list2=split /\s+/,$array[$j];
 	my @lcs=LCS(\@list1,\@list2);
@@ -210,16 +213,13 @@ foreach my $cluster (sort sort_num(keys(%hash))) {
   my @all_cands=sort sort_len_desc keys %lcshash ;
   foreach my $candidate_consensus (@all_cands) {
     next unless (length($candidate_consensus) > 1);
-#    my @temp=split(" ",$candidate_consensus);
     my @temp=split /\s+/,$candidate_consensus;
     my $length=@temp;               # num of words in annotation
     
     # see how many members of cluster contain this LCS:
     
     my ($lcs_count)=0;
-    foreach my $orig_desc (@{$hash{$cluster}}) {
-#      my @list1=split(" ",$candidate_consensus);
-#      my @list2=split(" ",$orig_desc);
+    foreach my $orig_desc (@$original_descriptions) {
       my @list1=split /\s+/,$candidate_consensus;
       my @list2=split /\s+/,$orig_desc;
       my @lcs=LCS(\@list1,\@list2);
@@ -242,12 +242,10 @@ foreach my $cluster (sort sort_num(keys(%hash))) {
     }	
     
     my $perc_with_desc=($lcs_count/$total_members_with_desc)*100;
-#    my $perc= int($lcs_count/$total_members*100);
     my $perc= $lcs_count/$total_members*100; 
     my $score=$perc + ($length*14); # take length into account as well
     $score = 0 if $length==0;
     if (($perc_with_desc >= 40) && ($length >= 1)) {
-#      print STDERR ":",$candidate_consensus,": ",int $perc_with_desc," ",int $perc," ",int $score,"\n";
       if ($score > $best_score) {
 	$best_score=$score;
 	$best_perc=$perc;
@@ -256,22 +254,16 @@ foreach my $cluster (sort sort_num(keys(%hash))) {
     }
   }                                   # foreach $candidate_consensus
   
-#  if ($best_perc==0 || $best_perc >= 100 )  {
-#    $best_perc=100;
-#  }
-  
   if  ($best_annotation eq  "" || $best_perc < 40)  {
-    $best_annotation = "AMBIGUOUS";
+    $best_annotation = 'AMBIGUOUS';
     $best_perc = 0;
   }
   $best_annotation =~ s/^\s+//;
   $best_annotation =~ s/\s+$//;
   $best_annotation =~ s/\s+/ /;
   
-  print ">>>$best_annotation<<<\t$best_perc\n";
-  
-  $best_annotation="";
-}                                       # foreach cluster
+  return ($best_annotation, $best_perc);
+}                                       # consensify()
 
 sub sort_num { $a <=> $b };
 
