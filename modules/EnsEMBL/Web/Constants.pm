@@ -277,7 +277,7 @@ sub VARIATION_OPTIONS {
       'opt_within_non_coding_gene'  =>  [ 'on', 'Within non coding gene', 32768 ],
       'opt_upstream'                =>  [ 'on', 'Upstream', 65536 ],
       'opt_downstream'              =>  [ 'on', 'Downstream', 131072 ],
-      'opt_no_consequence'          =>  [ 'on', 'No consequence', 262144 ]
+      'opt_no_consequence'          =>  [ 'on', 'No consequence', 262144 ],
       'opt_intergenic'              =>  [ 'on', 'Intergenic', 524288],
       'opt_sara'                    =>  [ 'on', 'SARA (same as ref.assembly)', 1048576 ],
     },
