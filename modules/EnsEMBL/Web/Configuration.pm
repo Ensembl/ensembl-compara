@@ -445,7 +445,7 @@ sub _configurator {
         
         while (my ($val, $text) = splice @states, 0, 2) {
           $text     = encode_entities($text);
-          $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="selected" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
+          $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="menu_option" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
           $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
           
           if ($class) {
@@ -485,7 +485,7 @@ sub _configurator {
         $config_group .= qq{
           <dt class="$class">
             <ul class="popup_menu">$menu$external_menu</ul>
-            $selected <span>$name</span>
+            $selected <span class="menu_option">$name</span>
           </dt>
           $dd
         };
@@ -557,7 +557,7 @@ sub build_enable_all_menu {
   return qq{
     <dt class="select_all">
       <ul class="popup_menu">$menu</ul>
-      <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="selected" /> <strong>Enable/disable all $label</strong>
+      <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option" /> <strong class="menu_option">Enable/disable all $label</strong>
     </dt>
   };
 }
