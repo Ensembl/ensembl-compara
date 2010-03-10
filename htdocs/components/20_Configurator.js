@@ -33,7 +33,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.help.click(function () { myself.toggleDescription(this); });
     
     // Popup menus - displaying
-    $('img.selected', this.elLk.form).click(function () {
+    $('.menu_option', this.elLk.form).click(function () {
       var menu = $(this).siblings('.popup_menu');
       
       myself.elLk.menus.filter(':visible').not(menu).hide();
@@ -43,12 +43,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     // Popup menus - setting values
-    $('img', this.elLk.menus).click(function () {
-      var menu  = $(this).parents('.popup_menu');
+    $('li', this.elLk.menus).click(function () {
+      var li    = $(this);
+      var img   = li.children('img');
+      var menu  = li.parents('.popup_menu');
       var dt    = menu.parent();
-      var li    = $(this).parent();
       var val   = li.attr('className');
-      var link  = myself.elLk.links.children('a.' + this.className);
+      var link  = myself.elLk.links.children('a.' + img.attr('className'));
       var label = link.html().split(/\b/);
       
       if (dt.hasClass('select_all')) {
@@ -59,7 +60,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           dt.find('li:eq(1)').each(function () {
             li = $(this);
             
-            li.parent().siblings('img.selected').attr({ 
+            li.parent().siblings('img.menu_option').attr({ 
               src:   '/i/render/' + this.className + '.gif', 
               alt:   li.text(),
               title: li.text()
@@ -80,7 +81,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       });
       
       if (val != 'all_on') {
-        dt.children('img.selected').attr({ 
+        dt.children('img.menu_option').attr({ 
           src:   '/i/render/' + val + '.gif', 
           alt:   li.text(),
           title: li.text()
@@ -93,8 +94,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       menu = null;
       dt   = null;
-      li   = null;
       link = null;
+      img  = null;
+      li   = null;
     });
     
     this.elLk.search.bind({
