@@ -104,6 +104,16 @@ sub add_objects {
   }
 }
 
+sub create_data_object_of_type {
+  my ($self, $type, $args) = @_;
+  my $object;
+  my $class = 'EnsEMBL::Web::Data::'.$type;
+  if ($self->dynamic_use($class)) {
+    $object = $class->new($self->hub, $args);
+    $self->object($object->type, $object) if $object;
+  }
+}
+
 sub create_objects {
 ## Currently uses Proxy::Factory
   my ($self, $type) = @_;

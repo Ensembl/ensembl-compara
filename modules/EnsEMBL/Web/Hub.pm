@@ -23,6 +23,7 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::CoreObjects;
 use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::DBSQL::RoseDB;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -50,16 +51,18 @@ sub new {
       _user           => $args{'_user'}          || undef,                    
       _view_configs   => $args{'_view_configs_'} || {},
       _user_details   => $args{'_user_details'}  || 1,
-      _web_user_db    => $args{'_web_user_db'}   || undef,
       _timer          => $args{'_timer'}         || [],                       # Diagnostic object
   };
   
   bless $self, $class;
- 
-  my $db_connection = $self->species ne 'common' ? 
+
+  ## Get database connections 
+  my $api_connection = $self->species ne 'common' ? 
                         new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
-  $self->{'_databases'} = $db_connection;
-  $self->{'_core_objects'}  = new EnsEMBL::Web::CoreObjects($self->input, $db_connection);
+  $self->{'_databases'} = $api_connection;
+
+  ## TODO - remove core objects! 
+  $self->{'_core_objects'}  = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
   $self->_set_core_params;
  
   $self->species_defs->{'timer'} = $args{'_timer'};
@@ -75,7 +78,7 @@ sub action       :lvalue { $_[0]{'_action'}; }
 sub function     :lvalue { $_[0]{'_function'}; }
 sub parent       :lvalue { $_[0]{'_parent'};   }
 sub session      :lvalue { $_[0]{'_session'}; }
-sub databases    :lvalue { $_[0]{'_databases'}; }
+sub databases    :lvalue { $_[0]{'_databases'}; } 
 sub cache        :lvalue { $_[0]{'_cache'};   }
 
 sub core_objects :lvalue { $_[0]{'_core_objects'}; }
