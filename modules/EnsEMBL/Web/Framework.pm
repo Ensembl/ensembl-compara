@@ -136,4 +136,91 @@ sub delete_mode {
   return $self->{'_delete_mode'};
 }
 
+##------------- MANIPULATING FORM ELEMENTS ---------------------
+
+sub element {
+### Sets/gets an individual entry to the form_elements hash
+### Takes a name for the element and (optionally) a hashref of attributes
+  my ($self, $name, $attributes) = @_;
+  return unless $name;
+  if ($attributes && ref($attributes) eq 'HASH') {
+    $self->{'_form_elements'}{$name} = $attributes;
+  }
+  return $self->{'_form_elements'}{$name};
+}
+
+sub modify_element {
+### Modifies an attribute of an individual form element
+### Takes the name of the element, the name of the attribute
+### and (optionally) a new value for the attribute
+  my ($self, $name, $attribute, $value) = @_;
+  return unless $name && $attribute;
+  if ($value) {
+    $self->{'_form_elements'}{$name}{$attribute} = $value;
+  }
+}
+
+sub add_to_form {
+### Pushes an element name onto the form_elements array
+  my ($self, $name) = @_;
+  return unless $name;
+  push @{$self->{'_element_order'}}, $name;
+}
+
+##------------ INTERFACE AUTOMATION -------------------
+
+sub discover {
+### Examines the first data object in the array and auto-generates
+### form element properties based on the column type
+## TODO - add related tables
+  my $self = shift;
+  my $data = $self->{'_data'}[0];
+  return unless $data;
+
+  foreach my $column ($data->get_all_columns) {
+    my $name = $column->name;
+    my $param = {};
+
+    ## set label
+    my $label = ucfirst($column->name);
+    $label =~ s/_/ /g;
+    $param->{'label'} = $label;
+
+    ## set widget type
+    my $data_type = $column->type;
+ 
+    if ($name =~ /^created_|^modified_/) {
+      $param->{'type'} = 'NoEdit';
+    } 
+    elsif ($name =~ /password/) {
+      $param->{'type'} = 'Password';
+    }
+    elsif ($data_type eq 'integer') {
+      $param->{'type'} = 'Int';
+    }
+    elsif ($data_type eq 'text') {
+      $param->{'type'} = 'Text';
+    }
+    elsif ($data_type eq 'enum') {
+      $param->{'type'}    = 'DropDown';
+      $param->{'select'}  = 'select';
+      $param->{'values'}  = $column->values;
+    }
+    elsif ($data_type eq 'set') {
+      $param->{'type'}    = 'MultiSelect';
+      $param->{'select'}  = 'select';
+      $param->{'values'}  = $column->values;
+    } 
+    else {
+      $param->{'type'} = 'String';
+      if ($data_type eq 'varchar') {
+        $param->{'maxlength'} = $column->length;
+      }
+    }
+
+    $self->element($name, $param);
+    $self->add_to_form($name);
+  }
+}
+
 1;
