@@ -23,7 +23,6 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::CoreObjects;
 use EnsEMBL::Web::DBSQL::DBConnection;
-use EnsEMBL::Web::DBSQL::RoseDB;
 
 use base qw(EnsEMBL::Web::Root);
 
