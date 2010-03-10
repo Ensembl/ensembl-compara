@@ -12,40 +12,30 @@ sub init {
 
   $self->set_parameters({
  
-    'title'         => 'Regulation Image',
-    'show_buttons'  => 'no',  # do not show +/- buttons
-    'show_labels'   => 'yes',  # show track names on left-hand side
-    'label_width'   => 113,   # width of labels on left-hand side
-    'margin'        => 5,     # margin
-    'spacing'       => 2,     # spacing
-    'bgcolor'       => 'background1',
-    'bgcolour1'     => 'background2',
-    'bgcolour2'     => 'background3',
-
+    title         => 'Regulation Image',
+    show_buttons  => 'no',  # do not show +/- buttons
+    show_labels   => 'yes',  # show track names on left-hand side
+    label_width   => 113,   # width of labels on left-hand side
+    opt_lines     => 1,     # draw registry lines
+    margin        => 5,     # margin
+    spacing       => 2,     # spacing
   });
 
   $self->create_menus(
-    'transcript'          => 'Genes',
-    'prediction'          => 'Prediction transcripts',
-    'functional'          => 'Functional genomics',
-    'other'               => 'Decorations',
-    'information'         => 'Information'
-  );
-
-
- 
-  $self->add_tracks( 'other',
-    [ 'ruler',     '',  'ruler',          { 'display' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',  'draggable',      { 'display' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
-    [ 'scalebar',  '',  'scalebar',       { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar', height => 50 }]
+    transcript          => 'Genes',
+    prediction          => 'Prediction transcripts',
+    functional          => 'Functional genomics',
+    other               => 'Decorations',
+    information         => 'Information',
   );
 
   $self->load_tracks();
-
-  foreach my $child ( $self->get_node('transcript')->descendants,
-                      $self->get_node('prediction')->descendants ) {
-    $child->set( 'display' => 'off' );
-  }
+ 
+  $self->add_tracks( 'other',
+    [ 'ruler',     '',  'ruler',          { display => 'normal', strand => 'r', name => 'Ruler',  description => 'Shows the length of the region being displayed' } ],
+    [ 'draggable', '',  'draggable',      { display => 'normal', strand => 'b', menu => 'no' } ],
+    [ 'scalebar',  '',  'scalebar',       { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar', height => 50 }],
+  );
 
   $self->modify_configs(
     [qw(functional)],
@@ -66,6 +56,10 @@ sub init {
   $self->modify_configs(
     [qw(gene_legend)],
     {qw(display off)}
+  );
+  $self->modify_configs(
+    [qw(transcript_core_ensembl)],
+    {qw(display transcript_label)}
   );
 }
 1;
