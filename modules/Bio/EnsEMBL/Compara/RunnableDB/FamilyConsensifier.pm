@@ -12,34 +12,34 @@ use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 sub fetch_input {
     my $self = shift @_;
 
-    my $family_id = $self->param('family_id') || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_family_id = $self->param('family_id') || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $minibatch       = $self->param('minibatch') || 1;
+    my $end_family_id   = $start_family_id+$minibatch-1;
 
         # get all Uniprot members that would belong to the given family if redundant elements were added:
     my $sql = qq {
-        SELECT m2.source_name, m2.description
+        SELECT fm.family_id, m2.source_name, m2.description
           FROM family_member fm, member m1, member m2
-         WHERE fm.family_id = ?
+         WHERE fm.family_id BETWEEN ? AND ?
            AND fm.member_id=m1.member_id
            AND m1.sequence_id=m2.sequence_id
-           AND m1.source_name IN ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL')
            AND m2.source_name IN ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL')
     };
 
     my $sth = $self->dbc->prepare( $sql );
-    $sth->execute( $family_id );
+    $sth->execute( $start_family_id, $end_family_id );
 
-    my %dbname2descs = (
-        'Uniprot/SWISSPROT' => [],
-        'Uniprot/SPTREMBL'  => [],
-    );
-    while( my ($source_name, $description) = $sth->fetchrow() ) {
-        $description =~ tr/\(\)\.-/    /;
-        push @{ $dbname2descs{$source_name} }, apply_edits(uc $description);
+        # initialize it to ensure all family_ids are mentioned:
+    my %famid2srcname2descs = map { ($_ => { 'Uniprot/SWISSPROT' => [], 'Uniprot/SPTREMBL'  => []}) } ($start_family_id..$end_family_id);
+
+    while( my ($family_id, $source_name, $description) = $sth->fetchrow() ) {
+        $description =~ tr/().-/    /;
+        push @{ $famid2srcname2descs{$family_id}{$source_name} }, apply_edits(uc $description);
     }
     $sth->finish();
     $self->dbc->disconnect_when_inactive(1);
 
-    $self->param('dbname2descs', \%dbname2descs);
+    $self->param('famid2srcname2descs', \%famid2srcname2descs);
 
     return 1;
 }
@@ -47,19 +47,24 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $family_id    = $self->param('family_id');
-    my $dbname2descs = $self->param('dbname2descs');
+    my $famid2srcname2descs = $self->param('famid2srcname2descs');
 
-    my $source_name = scalar(@{ $dbname2descs->{'Uniprot/SWISSPROT'}})
-        ? 'Uniprot/SWISSPROT'
-        : 'Uniprot/SPTREMBL';
+    my %description = ();
+    my %score       = ();
 
-    my ($description, $percentage) = consensify($dbname2descs->{$source_name});
+    foreach my $family_id (sort {$a<=>$b} keys %$famid2srcname2descs) {
 
-    my ($assembled_consensus, $score, $discarded_flag, $uselessness_output) = assemble_consensus($description, int($percentage));
+        my ($cons_description, $cons_score) = scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'}})
+            ? consensify($famid2srcname2descs->{$family_id}{'Uniprot/SWISSPROT'})
+            : scalar(@{ $famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'}})
+                ? consensify($famid2srcname2descs->{$family_id}{'Uniprot/SPTREMBL'})
+                : ();
 
-    $self->param('description',         $assembled_consensus);
-    $self->param('description_score',   $score);
+        ($description{$family_id}, $score{$family_id}) = assemble_consensus($cons_description, int($cons_score));
+    }
+
+    $self->param('description', \%description);
+    $self->param('score',       \%score);
 
     return 1;
 }
@@ -67,11 +72,15 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    my $sql = "UPDATE family SET description = ?, description_score = ? WHERE family_id = ?";
+    my $description = $self->param('description');
+    my $score       = $self->param('score');
 
+    my $sql = "UPDATE family SET description = ?, description_score = ? WHERE family_id = ?";
     my $sth = $self->dbc->prepare( $sql );
 
-    $sth->execute( $self->param('description'), $self->param('description_score'), $self->param('family_id') );
+    foreach my $family_id (sort {$a<=>$b} keys %$description) {
+        $sth->execute( $description->{$family_id}, $score->{$family_id}, $family_id );
+    }
     $sth->finish();
 
     return 1;
@@ -230,13 +239,6 @@ sub consensify {
 	 ) {
 	$lcs_count++;
 	
-	# Following is occurs frequently, as LCS is _not_ the longest
-	# common substring ... so we can't use the shortcut either
-	
-	# if ( index($orig_desc,$candidate_consensus) == -1 ) {
-	#   warn "lcs:'$lcs' eq cons:'$candidate_consensus' and
-	# orig:'$orig_desc', but index == -1\n" 
-	# }
       }
     }	
     
