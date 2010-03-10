@@ -46,11 +46,11 @@ END_USAGE
 
     $|=1;
 
-    my ($file) = @ARGV;
-    die "$file: can't open" unless -f $file;
+    my ($descriptions_file) = @ARGV;
+    die "$descriptions_file: can't open" unless -f $descriptions_file;
     my $goners='().-';
     my $spaces= ' ' x length($goners);
-    my $filter = "tr '$goners' '$spaces' < $file";
+    my $filter = "tr '$goners' '$spaces' < $descriptions_file";
 
     open FILE, "$filter | " || die "$filter: $!";
 
@@ -58,10 +58,10 @@ END_USAGE
 
     while (<FILE>) {
       /^(\S+)\t(\d+)\t(\S+)\t(.*)$/;
-      my ($db,$family_id,$protein,$desc) = ($1,$2,$3,$4);
+      my ($db_name, $family_id, $seq_id, $desc) = ($1,$2,$3,$4);
       $desc =~ s/\s+/ /g;
 
-      if (uc $db eq $database) {
+      if (uc($db_name) eq $database) {
         $desc = &apply_edits(uc $desc);
         push(@{$family_id2descriptions{$family_id}},$desc);
       }
@@ -69,7 +69,7 @@ END_USAGE
 
     close FILE;
 
-    foreach my $family_id (sort sort_num(keys(%family_id2descriptions))) {
+    foreach my $family_id (sort { $a <=> $b } keys(%family_id2descriptions)) {
 
         my ($description, $percentage) = consensify($family_id2descriptions{$family_id});
 
@@ -210,7 +210,7 @@ sub consensify {
   }
 
   my ($best_score, $best_perc)=(0, 0);
-  my @all_cands=sort sort_len_desc keys %lcshash ;
+  my @all_cands=sort { length($b) <=> length($a) } keys %lcshash ;
   foreach my $candidate_consensus (@all_cands) {
     next unless (length($candidate_consensus) > 1);
     my @temp=split /\s+/,$candidate_consensus;
@@ -263,8 +263,5 @@ sub consensify {
   $best_annotation =~ s/\s+/ /;
   
   return ($best_annotation, $best_perc);
-}                                       # consensify()
+}
 
-sub sort_num { $a <=> $b };
-
-sub sort_len_desc { length($b) <=> length($a) };
