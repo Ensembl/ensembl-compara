@@ -7,58 +7,61 @@ package EnsEMBL::Data::DBSQL::RoseDB;
 ### You will need to uncomment the use base line in order to test this code!
 
 ### DESCRIPTION:
-### To use this module, you will need to pass the constructor a hashref 
-### containing connection details for all the databases you want to use:
-### $db_info = {
-###     'user' => {
-###       'db'    => 'ensembl_web_user_db',
-###       'host'  => 'db.mydomain.org',
-###       'port'  => '3306',
-###       'user'  => 'my_write_user',
-###       'pass'  => 'my_write_password', 
-###     },
-### };
-### The 'port' parameter is optional and will default to 3306
-###
-### The expected keys are:
-### user - Ensembl user database
-### website - Website database (news, help, etc)
-### session - Session database used to store web session IDs
-### production - Production database used in release cycle
+### This module defines the database connections available to EnsEMBL::Data
+### objects, by pulling them in from SpeciesDefs.pm
+
+### TODO - make totally independent of web code if possible! Can we pull in a
+### config file if SpeciesDefs is not available?
 
 use strict;
 use warnings;
 
 no warnings qw(uninitialized);
 
+use EnsEMBL::Web::SpeciesDefs;
+
 #use base qw(Rose::DB);
 
-sub new {
-### Constructor - creates and initialises all the required database connections
-  my ($class, $db_info) = @_;
-  my $self = $class->SUPER::new;
+our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 
-  ## Use a private registry for this class
-  self->use_private_registry;
+## All connections currently use the same user with write permissions
+our $db_user = $species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'}
+                  || $species_defs->DATABASE_WRITE_USER;
 
-  ## Set the default domain
-  self->default_domain('ensembl');
+our $db_pass = defined $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'}
+                  ? $species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'}
+                  : $species_defs->DATABASE_WRITE_PASS;
 
-  ## Register data sources
-  foreach my $db (keys %$db_info) {
-    self->register_db(
-      type     => $db,
-      driver   => 'mysql',
-      database => $db_info->{$db}{'db'},
-      host     => $db_info->{$db}{'host'},
-      port     => $db_info->{$db}{'port'} || 3306,
-      username => $db_info->{$db}{'user'},
-      password => $db_info->{$db}{'pass'},
-    );
-  }
 
-  return $self;
-}
+## Use a private registry for this class
+__PACKAGE__->use_private_registry;
+
+## Set the default domain
+__PACKAGE__->default_domain('ensembl');
+
+__PACKAGE__->default_type('user');
+
+## Register data sources
+__PACKAGE__->register_db(
+  type      => 'website',
+  driver    => 'mysql',
+  database  => $species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
+  host      => $species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
+  port      => $species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
+  username  => $db_user,
+  password  => $db_pass,
+);
+
+__PACKAGE__->register_db(
+  type      => 'user',
+  driver    => 'mysql',
+  database  => $species_defs->ENSEMBL_USERDB_NAME,
+  host      => $species_defs->ENSEMBL_USERDB_HOST,
+  port      => $species_defs->ENSEMBL_USERDB_PORT,
+  username  => $db_user,
+  password  => $db_pass,
+);
+
 
 1;
 

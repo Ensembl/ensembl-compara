@@ -1,14 +1,14 @@
-package EnsEMBL::Data;
+package EnsEMBL::Data::Manager;
 
-### NAME: EnsEMBL::Data
-### Base class for a Rose::DB::Object object 
+### NAME: EnsEMBL::Data::Manager
+### Base class for a Rose::DB::Object::Manager object 
 
 ### STATUS: Under Development
 ### You will need to uncomment the use base line in order to test this code!
 
 ### DESCRIPTION:
-### This module and its children provide access to non-genomic
-### databases, using the Rose::DB suite of ORM modules
+### This module and its children enable easy instantiation of EnsEMBL::Data
+### objects
 
 ### At the moment this base class doesn't really do anything apart from
 ### inheritance, but it avoids having to comment out the use lines
@@ -19,9 +19,7 @@ use warnings;
 
 no warnings qw(uninitialized);
 
-#use EnsEMBL::Data::DBSQL::RoseDB;
-
-#use base qw(Rose::DB::Object);
+#use base qw(Rose::DB::Object::Manager);
 
 
 1;

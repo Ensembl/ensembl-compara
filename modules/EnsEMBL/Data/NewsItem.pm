@@ -7,36 +7,37 @@ package EnsEMBL::Data::NewsItem;
 
 ### DESCRIPTION:
 
+### TODO - add relationships to Species and Release
+
 use strict;
 use warnings;
 use base qw(EnsEMBL::Data);
 
+## Define schema
 __PACKAGE__->meta->setup(
   table       => 'news_item',
 
   columns     => [
-    news_item_id  => {type => 'serial', primary_key => 1, not_null => 1}, 
-    title         => {type => 'tinytext'},
-    content       => {type => 'text'},
-    priority      => {type => 'int'},
-    status        => {type => 'enum'},
+    news_item_id      => {type => 'serial', primary_key => 1, not_null => 1}, 
+    news_category_id  => {type => 'integer'},
+    release_id        => {type => 'integer'},
+    title             => {type => 'text'},
+    content           => {type => 'text'},
+    priority          => {type => 'integer'},
+    status            => {type => 'enum', 'values' => [qw(declared handed_over postponed cancelled)]},
   ],
 
-  foreign_keys => [
+  relationships => [
     news_category => {
-      'class' => 'EnsEMBL::Data::NewsCategory',
+      'type'        => 'many to one',
+      'class'       => 'EnsEMBL::Data::NewsCategory',
       'key_columns' => {'news_category_id' => 'news_category_id'},
     },
   ],
 
 );
 
-=pod
-### TODO - other relationships
-__PACKAGE__->has_a(release       => 'EnsEMBL::Web::Data::Release');
-__PACKAGE__->has_many(species    => 'EnsEMBL::Web::Data::Species');
-=cut
-
-
+## Define which db connection to use
+sub init_db { EnsEMBL::Data::DBSQL::RoseDB->new('website'); }
 
 1;
