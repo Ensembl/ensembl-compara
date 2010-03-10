@@ -35,8 +35,9 @@ sub init {
 
  
   $self->add_tracks( 'other',
-    [ 'ruler',     '',            'ruler',           { 'display' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
-    [ 'draggable', '',            'draggable',       { 'display' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'ruler',     '',  'ruler',          { 'display' => 'on',  'strand' => 'r', 'name' => 'Ruler'      } ],
+    [ 'draggable', '',  'draggable',      { 'display' => 'on',  'strand' => 'b', 'menu' => 'no'         } ],
+    [ 'scalebar',  '',  'scalebar',       { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar', height => 50 }]
   );
 
   $self->load_tracks();
@@ -66,8 +67,6 @@ sub init {
     [qw(gene_legend)],
     {qw(display off)}
   );
-
-
 }
 1;
 
