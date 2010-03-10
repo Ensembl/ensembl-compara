@@ -12,7 +12,7 @@ sub get_feature_sets {
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
 
   my @sources = @{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'}};
-  foreach my $name ( @sources){
+  foreach my $name ( @sources){ 
     next if  $name =~ /cisRED\s+search\s+regions/;
     push @fsets, $feature_set_adaptor->fetch_by_name($name);
   }
@@ -24,7 +24,6 @@ sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
   my $wuc = $self->{'config'};
-  my @fsets;
  
   my $efg_db = undef;
   my $db_type  = $self->my_config('db_type')||'funcgen';
@@ -37,16 +36,16 @@ sub features {
   }
 
 
-  @fsets = @{$self->get_feature_sets($efg_db)}; 
+  my @fsets = @{$self->get_feature_sets($efg_db)}; 
   my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor;
-  my $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, \@sets);
+  my $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, \@fsets);
 
   # count used for colour assignment
   my $count = 0;
   foreach my $feat (@$f){
-   $wuc->cache($feat->display_label, $count);   
-   $count ++;
-   if ($count >= 15) {$count = 0;} 
+    $wuc->cache($feat->display_label, $count);   
+    $count ++;
+    if ($count >= 15) {$count = 0;} 
   } 
 
   return $f;
