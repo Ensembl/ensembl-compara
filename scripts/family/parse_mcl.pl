@@ -82,62 +82,17 @@ $mlss->species_set(\@{$gdba->fetch_all});
 $mlss->method_link_type($method_link_type);
 $mlssa->store($mlss);
 
-print STDERR "Getting source_name from database...";
-
-my $sql = "select stable_id,source_name from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP','EXTERNALPEP')";
-my $sth = $dbc->prepare($sql);
-$sth->execute;
-
-my ($member_stable_id,$source_name);
-
-$sth->bind_columns(\$member_stable_id,\$source_name);
-
-my %stable_id2source_name = ();
-while ($sth->fetch) {
-    $stable_id2source_name{$member_stable_id} = $source_name;
-}
-$sth->finish;
-print STDERR "Done\n";
-
-
-print STDERR "Getting redundancy information from the database...";
-
-$sql = "select sequence_id,count(*) as count from member where source_name in ('Uniprot/SWISSPROT','Uniprot/SPTREMBL','ENSEMBLPEP','EXTERNALPEP') group by sequence_id having count>1";
-$sth = $dbc->prepare($sql);
-$sth->execute;
-
-my ($sequence_id,$count);
-$sth->bind_columns(\$sequence_id,\$count);
-
-my $sql2 = "select stable_id from member where sequence_id = ?";
-my $sth2 = $dbc->prepare($sql2);
-
-my %sequence_id2stable_ids = ();
-while ( $sth->fetch() ) {
-  $sth2->execute($sequence_id);
-  my ($member_stable_id);
-  $sth2->bind_columns(\$member_stable_id);
-  while ( $sth2->fetch() ) {
-    push @{$sequence_id2stable_ids{$sequence_id}},$member_stable_id;
-  }
-}
-
-$sth2->finish;
-$sth->finish;
-print STDERR "Done\n";
-
 
 print STDERR "Reading mcl file...";
 
 my $clusters = read_mcl_abc_format($mclfile);
+
 print STDERR "Done\n";
 
 
 print STDERR "Loading clusters in compara\n";
 
 # starting to use the Family API here to load in a family database
-# still print out description for each Uniprot/SWISSPROT and Uniprot/SPTREMBL 
-# entries in the family in order to determinate a consensus description
 
 foreach my $cluster (@$clusters) {
    my ($cluster_index, @cluster_members) = split /\s+/,$cluster;
@@ -175,34 +130,6 @@ foreach my $cluster (@$clusters) {
   }
 
   my $family_dbID = $fa->store($family);
-
-  foreach my $member (@{$family->get_all_Members}) {
-    my $member_source = $member->source_name();
-
-        # spit out the descripton of this particular member:
-    if ($member_source eq 'Uniprot/SWISSPROT' 
-        or $member_source eq 'Uniprot/SPTREMBL' 
-        or $member_source eq 'EXTERNALPEP') {
-            print join("\t", $member_source, $family_dbID, $member->stable_id, $member->description)."\n";
-    }
-
-        # add descriptions of all members that share the same sequence:
-    if($sequence_id2stable_ids{$member->sequence_id}) {
-      foreach my $sameseq_member_stable_id (@{$sequence_id2stable_ids{$member->sequence_id}}) {
-        next if ($sameseq_member_stable_id eq $member->stable_id);     # but skip the one that has already been printed above
-        my $sameseq_member_source = $stable_id2source_name{$sameseq_member_stable_id};
-
-        if($sameseq_member_source eq 'Uniprot/SWISSPROT' 
-             or $sameseq_member_source eq 'Uniprot/SPTREMBL' 
-             or $sameseq_member_source eq 'EXTERNALPEP') {
-
-                my $sameseq_member = $ma->fetch_by_source_stable_id($sameseq_member_source, $sameseq_member_stable_id);
-                print join("\t", $sameseq_member_source, $family_dbID, $sameseq_member_stable_id, $sameseq_member->description)."\n";
-        }
-
-      }
-    } 
-  }
 
   print STDERR "Done\n";
 }
