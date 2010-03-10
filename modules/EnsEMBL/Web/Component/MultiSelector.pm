@@ -24,14 +24,7 @@ sub content {
   my $object = $self->object;
   my $url    = $self->ajax_url('ajax');
   
-  return sprintf('
-    <div class="autocenter" style="width:%spx; text-align: left;">
-      <div class="other-tool"><p><a class="config modal_link" href="%s">%s</a></p></div>
-    </div>',
-    $self->image_width,
-    $url,
-    $self->{'link_text'}
-  );
+  return qq{<div class="other-tool"><p><a class="config modal_link" href="$url">$self->{'link_text'}</a></p></div>};
 }
 
 sub content_ajax {
