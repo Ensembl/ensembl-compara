@@ -145,7 +145,6 @@ CREATE TABLE genomic_align_block_job_track (
 CREATE TABLE `anchor_sequence` (
   `anchor_seq_id` bigint(20) unsigned NOT NULL auto_increment,
   `method_link_species_set_id` int(10) unsigned default NULL,
-  `test_mlssID` int(10) unsigned default NULL,
   `anchor_id` bigint(20) unsigned default NULL,
   `dnafrag_id` int(20) unsigned default NULL,
   `start` int(20) unsigned default NULL,
