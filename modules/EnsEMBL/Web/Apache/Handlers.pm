@@ -50,7 +50,7 @@ our $BLAST_LAST_RUN;
 our $BIOMART_REGISTRY;
 our %LOOKUP_HASH;
 
-our %OBJECT_TO_SCRIPT = %SiteDefs::OBJECT_TO_SCRIPT;
+our %OBJECT_TO_SCRIPT = %{$SiteDefs::OBJECT_TO_SCRIPT};
 
 #======================================================================#
 # Set up apache-size-limit style load commands                         #
