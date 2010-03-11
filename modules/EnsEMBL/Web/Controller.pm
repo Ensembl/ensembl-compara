@@ -370,21 +370,54 @@ sub update_configuration_from_url {
 }
 
 sub process_command {
-  ### Handles Command modules. Once the command has been processed, a redirect to a Component page will occur.
-  
-  my ($self, $model, $page) = @_;
-  
-  my $r     = $self->{'r'};
-  my $class = $self->{'action'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $self->{'command'};
-  
-  if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {    
-    my $command = $class->new({
-      object => $model->object,
-      page   => $page
-    });
+### Handles Command modules and the Framework-based database frontend. 
+### Once the command has been processed, a redirect to a Component page will occur.
+  my ($self, $model, $page, $problem) = @_;
+
+  if ($self->{'command'} eq 'db_frontend') {
+    my $type      = $model->hub->type;
+    my $action    = $model->hub->action;
+    my $function  = $model->hub->function || 'Display';
+
+    ## Look for all possible modules for this URL, in order of specificity and likelihood
+    my @classes = (
+      'EnsEMBL::Web::Component::'.$type.'::'.$action.$function,
+      'EnsEMBL::Web::Command::'.$type.'::'.$action.$function,
+      'EnsEMBL::Web::Component::DbFrontend::'.$function,
+      'EnsEMBL::Web::Command::DbFrontend::'.$function,
+    );
+
+    foreach my $class (@classes) {
+      if ($class && $self->_use($class) && $self->access_ok($model, $page)) {    
+        if ($class =~ /Command/) {
+          my $command = $class->new({
+            object => $model->object,
+            page   => $page
+          });
+          $command->process;
+          return 1;
+        }
+        else {
+          $page->render;
+          my $content = $page->renderer->content;
+          print $content;
+          $self->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
+        }
+      }
+    }
+  }
+  else {
+    ## Normal command module
+    my $class = $self->{'action'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $self->{'command'};
+    if ($class && $self->_use($class) && $self->access_ok($model, $page)) {    
+      my $command = $class->new({
+        object => $model->object,
+        page   => $page
+      });
     
-    $command->process;
-    return 1;
+      $command->process;
+      return 1;
+    }
   }
 }
 
