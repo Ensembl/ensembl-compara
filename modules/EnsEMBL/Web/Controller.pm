@@ -131,9 +131,14 @@ sub build_page {
   if (ref $object) { # Actual object
     $type = $object->__objecttype;
     $object->viewconfig->form($object);
-  } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
+  } 
+  elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $type = $object;
-  } else {
+  }
+  elsif ($model->type) { ## No domain objects created on page startup
+    $type = $model->type;
+  } 
+  else {
     $type = 'Static';
   }
   
