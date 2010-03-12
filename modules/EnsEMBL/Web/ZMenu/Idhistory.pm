@@ -56,20 +56,18 @@ sub archive_link {
   if ($archive->release == $current) {
      $url = $object->_url({ type => $type, action => $action, $p => $name });
   } else {
-    my $release_id = $archive->release;
+    my $release_id   = $archive->release;
+    my $release      = new EnsEMBL::Web::Data::Release($archive->release);
+    my $archive_site = $release ? $release->archive : '';
     
-    # FILTHY HACK AHOY!
-    $release_id = 1 if $release_id = 1.1;
-    $release_id = 2 if $release_id = 1.2;
-    
-    my $archive_site = new EnsEMBL::Web::Data::Release($release_id)->archive;
-    
-    $url = "http://$archive_site.archive.ensembl.org";
-    
-    if ($archive->release >= 51) {
-      $url .= $object->_url({ type => $type, action => $action, $p => $name });
-    } else {
-      $url .= $object->species_path . "/$view?$type=$name";
+    if ($archive_site) {
+      $url = "http://$archive_site.archive.ensembl.org";
+      
+      if ($archive->release >= 51) {
+        $url .= $object->_url({ type => $type, action => $action, $p => $name });
+      } else {
+        $url .= $object->species_path . "/$view?$type=$name";
+      }
     }
   }
   
