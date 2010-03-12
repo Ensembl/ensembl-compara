@@ -131,14 +131,11 @@ sub build_page {
   if (ref $object) { # Actual object
     $type = $object->__objecttype;
     $object->viewconfig->form($object);
-  } 
-  elsif ($object =~ /^\w+$/) { # String (type of E::W object)
+  } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $type = $object;
-  }
-  elsif ($model->type) { ## No domain objects created on page startup
+  } elsif ($model->type) { ## No domain objects created on page startup
     $type = $model->type;
-  } 
-  else {
+  } else {
     $type = 'Static';
   }
   
@@ -375,34 +372,35 @@ sub update_configuration_from_url {
 }
 
 sub process_command {
-### Handles Command modules and the Framework-based database frontend. 
-### Once the command has been processed, a redirect to a Component page will occur.
+  ### Handles Command modules and the Framework-based database frontend. 
+  ### Once the command has been processed, a redirect to a Component page will occur.
+  
   my ($self, $model, $page, $problem) = @_;
 
   if ($self->{'command'} eq 'db_frontend') {
-    my $type      = $model->hub->type;
-    my $action    = $model->hub->action;
-    my $function  = $model->hub->function || 'Display';
+    my $type     = $model->hub->type;
+    my $action   = $model->hub->action;
+    my $function = $model->hub->function || 'Display';
 
-    ## Look for all possible modules for this URL, in order of specificity and likelihood
+    # Look for all possible modules for this URL, in order of specificity and likelihood
     my @classes = (
-      'EnsEMBL::Web::Component::'.$type.'::'.$action.$function,
-      'EnsEMBL::Web::Command::'.$type.'::'.$action.$function,
-      'EnsEMBL::Web::Component::DbFrontend::'.$function,
-      'EnsEMBL::Web::Command::DbFrontend::'.$function,
+      "EnsEMBL::Web::Component::${type}::${action}::$function",
+      "EnsEMBL::Web::Command::${type}::${action}::$function",
+      "EnsEMBL::Web::Component::DbFrontend::$function",
+      "EnsEMBL::Web::Command::DbFrontend::$function"
     );
 
     foreach my $class (@classes) {
-      if ($class && $self->_use($class) && $self->access_ok($model, $page)) {    
+      if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {
         if ($class =~ /Command/) {
           my $command = $class->new({
             object => $model->object,
             page   => $page
           });
+          
           $command->process;
           return 1;
-        }
-        else {
+        } else {
           $page->render;
           my $content = $page->renderer->content;
           print $content;
@@ -410,11 +408,11 @@ sub process_command {
         }
       }
     }
-  }
-  else {
-    ## Normal command module
+  } else {
+    # Normal command module
     my $class = $self->{'action'} eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $self->{'command'};
-    if ($class && $self->_use($class) && $self->access_ok($model, $page)) {    
+    
+    if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {    
       my $command = $class->new({
         object => $model->object,
         page   => $page
