@@ -147,22 +147,24 @@ sub count_supporting_evidence {
   while (my ($type, $feature_id) = $sth->fetchrow_array) {
     $all_evidence{$type}{$feature_id}++;
   }
-  
-  if ($self->db_type ne 'Vega') {
-    my $sql = '
+
+  if ( $self->db_type ne 'Vega' ) {
+    unless ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+      my $sql = '
       SELECT feature_type, feature_id
         FROM supporting_feature sf, exon_transcript et
        WHERE et.exon_id = sf.exon_id
          AND et.transcript_id = ?';
-         
-    my $sth = $dbc->prepare($sql);
-    $sth->execute($self->Obj->dbID);
-    
-    while (my ($type, $feature_id) = $sth->fetchrow_array) {
-      $all_evidence{$type}{$feature_id}++;
-    };
+      
+      my $sth = $dbc->prepare($sql);
+      $sth->execute($self->Obj->dbID);
+      
+      while (my ($type, $feature_id) = $sth->fetchrow_array) {
+	$all_evidence{$type}{$feature_id}++;
+      };
+    }
   }
-  
+
   my %names = (
     'dna_align_feature'     => 'dna_align_feature_id',
     'protein_align_feature' => 'protein_align_feature_id'
