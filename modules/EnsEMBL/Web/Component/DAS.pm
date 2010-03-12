@@ -30,7 +30,8 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Component);
 
 sub types {
-  my( $panel, $object ) = @_;
+  my( $panel, $model ) = @_;
+  my $object = $model->object;
 
   my $features = $object->Types();
 
@@ -162,7 +163,8 @@ sub features {
 }
 
 sub stylesheet {
-  my( $panel, $object ) = @_;
+  my( $panel, $model ) = @_;
+  my $object = $model->object;
   $panel->print($object->Stylesheet());
 }
 
