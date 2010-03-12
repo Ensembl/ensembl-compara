@@ -180,6 +180,7 @@ sub count_xrefs {
     next if ($db_name eq 'Vega_translation');
     next if ($db_name eq 'GO');
     next if ($db_name eq 'OTTP') && $label =~ /^\d+$/; #ignore xrefs to vega translation_ids
+    next if ($db_name =~ /ENSG|OTTG/);
     $xrefs_c++;
   }
   return $xrefs_c;

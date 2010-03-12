@@ -28,7 +28,8 @@ use strict;
 use warnings;
 
 sub features {
-  my( $panel, $object ) = @_;
+  my( $panel, $model ) = @_;
+  my $object = $model->object;
 
   my $feature_template = qq(
   <FEATURE id="%s"%s>
@@ -99,7 +100,8 @@ sub features {
 }
 
 sub stylesheet {
-  my( $panel, $object ) = @_;
+  my( $panel, $model ) = @_;
+  my $object = $model->object;
 
   $panel->print($object->Stylesheet());
 }

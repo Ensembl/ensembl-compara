@@ -44,7 +44,9 @@ $query=~ s/^\s+//g;
 $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
 if ($query =~ /^ENS|OTT/) {
-  $query =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; #Make sure we've eleven digits
+  unless ($query =~ /ENSFM/) {
+    $query =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; #Make sure we've eleven digits
+  }
 }
 if($dest_site =~ /_all/ ) {
   $species = undef;
@@ -55,7 +57,7 @@ if ($dest_site eq 'ebi') {
   $q->redirect($url);
   exit;
 } elsif ($dest_site eq 'sanger') {
-  $url = "http://search.sanger.ac.uk/cgi-bin/exasearch?_q=$query";
+  $url = "http://www.sanger.ac.uk/search?db=allsanger&t=$query";
   $q->redirect($url);
   exit;
 } elsif ($dest_site eq 'ensembl_genomes') {

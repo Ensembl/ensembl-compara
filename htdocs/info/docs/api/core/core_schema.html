@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
 <title>Ensembl Core Schema Documentation</title>
 <!--<link rel="stylesheet" href="http://www.ensembl.org/EnsEMBL.css">-->
@@ -164,7 +164,7 @@ core schema.
 <li><a href="#interpro">interpro</a></li>
 </ul>
 
-<hr>
+<hr />
 
 <h2>Fundamental tables</h2>
 
@@ -210,7 +210,7 @@ coord_system table.
 <li><a href="#meta">meta</a>
 - Holds meta information about each of the species in a
 database, no matter if it's a multi-species or single-species
-database.
+database.</li>
 </ul>
 
 
@@ -488,7 +488,7 @@ in the coord_system table.
 </ul>
 
 
-<hr>
+<hr />
 <h2>Features and analyses</h2>
 <p></p>
 
@@ -782,7 +782,7 @@ opposed to positions on the assembly, which EnsEMBL has determined and which are
 
 
 
-<hr>
+<hr />
 <h2>ID Mapping</h2>
 <p>Tables involved in mapping identifiers between releases</p>
 
@@ -832,7 +832,7 @@ and translation stable IDs.
 <p>Contains the peptides for deleted or changed translations.</p>
 
 
-<hr>
+<hr />
 <h2>Exernal references</h2>
 <p>Tables used for storing links to and details about objects that are stored in other databases</p>
 
@@ -930,7 +930,7 @@ stored in the object_xref table.
 
 
 
-<hr>
+<hr />
 <h2>Miscellaneous</h2>
 <p>Tables that don't fit anywhere else.</p>
 
@@ -948,12 +948,10 @@ in which identifiable features found in known proteins can be applied to unknown
 
 
 
-<hr>
-<h2> Concepts </h2>
+<hr />
+<h2>Concepts</h2>
 <dl>
-<dt>
-<p><strong><a name="co-ordinates">co-ordinates</a></strong></p>
-</dt>
+<dt><strong><a name="co-ordinates">co-ordinates</a></strong></dt>
 <dd>
 <p>There are several different co-ordinate systems used in the EnsEMBL database and API. For every co-ordinate system, the fundamental
 unit is one base. The differences between co-ordinate systems lie in where a particular numbered base lies, and the start
@@ -964,23 +962,17 @@ Again, numbering is from 1. The seq_region table can store sequence regions in a
 coord_system table.
 </p>
 </dd>
-<dt>
-<p><strong><a name="supercontigs">supercontigs</a></strong></p>
-</dt>
+<dt><strong><a name="supercontigs">supercontigs</a></strong></dt>
 <dd>
 <p>A supercontig is made up of a group of adjacent or overlapping contigs.</p>
 </dd>
-<dt>
-<p><strong><a name="sticky_rank">sticky_rank</a></strong></p>
-</dt>
+<dt><strong><a name="sticky_rank">sticky_rank</a></strong></dt>
 <dd>
 <p>The sticky_rank differentiates between fragments of the same exon; i.e for exons that span multiple contigs, all the fragments
 would have the same ID, but different sticky_rank values
 </p>
 </dd>
-<dt>
-<p><strong><a name="stable_id">stable_id</a></strong></p>
-</dt>
+<dt><strong><a name="stable_id">stable_id</a></strong></dt>
 <dd>
 <p>Gene predictions have changed over the various releases of the EnsEMBL databases. To allow the user to track particular gene
 predictions over changing co-ordinates, each gene-related prediction is given a 'stable identifier'. If a prediction looks
@@ -988,9 +980,7 @@ similar between two releases, we try to give it the same name, even though it ma
 changes.
 </p>
 </dd>
-<dt>
-<p><strong><a name="cigar_line">cigar_line</a></strong></p>
-</dt>
+<dt><strong><a name="cigar_line">cigar_line</a></strong></dt>
 <dd>
 <p>This allows the compact storage of gapped alignments by storing the maximum extent of the matches and then a text string which
 encodes the placement of gaps inside the alignment. Colloquially inside EnsEMBL this is called a and its adoption has shrunk
@@ -998,6 +988,6 @@ the number of rows in the feature table around 4-fold.
 </p>
 </dd>
 </dl>
-<hr>
+<hr />
 </body>
 </html>

@@ -34,7 +34,8 @@ my $strand = {
 };
 
 sub entry_points {
-    my( $panel, $object ) = @_;
+    my( $panel, $model ) = @_;
+    my $object = $model->object;
 
     my $features = $object->EntryPoints();
 
@@ -54,7 +55,8 @@ sub entry_points {
 }
 
 sub dna {
-  my( $panel, $object ) = @_;
+  my( $panel, $model ) = @_;
+  my $object = $model->object;
   my $segment_tmp = qq{<SEQUENCE id="%s" start="%s" stop="%s" version="1.0">\n};
   my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
 
@@ -87,7 +89,8 @@ sub dna {
 }
 
 sub sequence {
-  my( $panel, $object ) = @_;
+  my( $panel, $model ) = @_;
+  my $object = $model->object;
   my $segment_tmp = qq{<SEQUENCE id="%s" start="%s" stop="%s" version="1.0">\n};
   my $error_tmp = qq{<ERRORSEGMENT id="%s" start="%s" stop="%s" />\n};
 

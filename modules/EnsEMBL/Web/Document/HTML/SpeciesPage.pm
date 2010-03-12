@@ -72,7 +72,7 @@ sub render {
     my $link_text = $common =~ /\./ ? $name : $common;
     $html .= qq(<td style="width:8%;text-align:right;padding-bottom:1em">);
     if ($dir) {
-      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name">);
+      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name" />);
     }
     else {
       $html .= '&nbsp;';

@@ -25,13 +25,14 @@
 <ul>
 <li>Under [databases] list all the ones configured for this species.  <br />
 You can use "%" instead of the release number if it is idential to the &lt;ENSEMBL_VERSION&gt; (configured in <kbd>conf/SiteDefs.pm</kbd>). This is equivalent to the schema version for the main ensembl site. <br />
+</li>
 <li> If you want to configure additional data you can use an existing ini file from the <code>public-plugins/ensembl/conf/ini-files/</code> directory as a guide.
 </li>
 </ul>
 <h3 id="customise" class="boxed">Customising your species list</h3>
 
 <p>The default species for Ensembl are listed in this file:</p>
-<p><kbd>public-plugins/ensembl/conf/SiteDefs.pm</kbd> 
+<p><kbd>public-plugins/ensembl/conf/SiteDefs.pm</kbd></p>
 <p> in %__species_aliases.  These are automatically imported into the main conf/SiteDefs::ENSEMBL_SPECIES_ALIASES.
 In this distribution all the default species are enabled - to add or remove species from the list, 
 see our documentation on <a href="/info/docs/webcode/extend/">customising and extending Ensembl</a>.</p>

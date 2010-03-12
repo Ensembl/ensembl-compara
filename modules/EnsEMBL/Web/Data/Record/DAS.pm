@@ -8,6 +8,7 @@ use base qw(EnsEMBL::Web::Data::Record);
 __PACKAGE__->set_type('das');
 
 __PACKAGE__->add_fields(
+  species     => 'text',
   logic_name  => 'text',
   url         => 'text',
   dsn         => 'text',

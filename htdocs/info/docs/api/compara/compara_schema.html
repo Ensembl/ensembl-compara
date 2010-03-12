@@ -21,9 +21,9 @@ EnsEMBL Compara DB is divided into two parts:
 
 <dl>
   <dt>Genomic Alignments</dt>
-  <dd>This part is dedicated to DNA-DNA alignments. It includes alignments made with different alignment tools, and a list of syntenic regions.</dd>
+  <dd><p>This part is dedicated to DNA-DNA alignments. It includes alignments made with different alignment tools, and a list of syntenic regions.</p></dd>
   <dt>Homologues and Families (or Protein Clusters)</dt>
-  <dd>This part is dedicated to protein-protein alignments and it includes protein families, protein trees and homologues defined from the protein trees.
+  <dd><p>This part is dedicated to protein-protein alignments and it includes protein families, protein trees and homologues defined from the protein trees.</p>
     <p>
 The protein families are clusters of proteins. They are defined using
 the full set of Ensembl proteins plus all the metazoan proteins from
@@ -34,9 +34,7 @@ The protein trees are built using the longest transcript of each
 protein coding Ensembl gene. Homologies are derived from them.
     </p>
   </dd>
-
-
-</ul>
+</dl>
 
 
 <h2>List of Tables</h2>
@@ -183,7 +181,7 @@ TABLE META
 <p>Meta table stores miscelaneous values:</p>
 
 
-<pre>mysql&gt; SELECT * FROM meta WHERE meta_key = "schema_version";<br>+---------+------------+----------------+------------+<br>| meta_id | species_id | meta_key       | meta_value |<br>+---------+------------+----------------+------------+<br>|       1 |       NULL | schema_version | 51         |<br>+---------+------------+----------------+------------+<br></pre>
+<pre>mysql&gt; SELECT * FROM meta WHERE meta_key = "schema_version";<br />+---------+------------+----------------+------------+<br />| meta_id | species_id | meta_key       | meta_value |<br />+---------+------------+----------------+------------+<br />|       1 |       NULL | schema_version | 51         |<br />+---------+------------+----------------+------------+<br /></pre>
 
 
 <p>This entry defines which API version must be used to access
@@ -357,7 +355,7 @@ TABLE NCBI_TAXA_NAME
 hominidae family:</p>
 
 
-<pre>mysql&gt; SELECT * FROM ncbi_taxa_node WHERE left_index > 351172 AND left_index < 351217;
+<pre>mysql&gt; SELECT * FROM ncbi_taxa_node WHERE left_index &gt; 351172 AND left_index &lt; 351217;
 +----------+-----------+---------+---------------------+------------+-------------+---------+
 | taxon_id | parent_id | rank    | genbank_hidden_flag | left_index | right_index | root_id |
 +----------+-----------+---------+---------------------+------------+-------------+---------+
@@ -619,6 +617,7 @@ TABLE METHOD_LINK
       <td></td>
       <td></td>
       <td>Description of type of data associated with the \"type\" field and the main table to find these data</td>
+    </tr>
   </tbody>
 </table>
 
@@ -1552,7 +1551,7 @@ to index these sequences is stored in this table. This table stores the sturctur
   </tbody>
 </table>
 
-<p>Left_index and right_index are used to speed up fetching trees from the database. Any given node has its left_index larger than the left_index of its parent node and its right index smaller than the right_index of its parent node. In other words, all descendent nodes of a given node can be obtained by fetching all the node with a left_index (or right_index or both) between the left_index and the right_index of that node.
+<p>Left_index and right_index are used to speed up fetching trees from the database. Any given node has its left_index larger than the left_index of its parent node and its right index smaller than the right_index of its parent node. In other words, all descendent nodes of a given node can be obtained by fetching all the node with a left_index (or right_index or both) between the left_index and the right_index of that node.</p>
 
 <p>E.g. the row</p>
 
@@ -1564,7 +1563,9 @@ to index these sequences is stored in this table. This table stores the sturctur
 +---------------+-----------+---------------+------------+-------------+--------------+---------------+--------------------+
 </pre>
 
+<p>
 correspond to the root of a tree, because parent_id = 0 and root_id = node_id. In order to fetch all the nodes of this tree, one can use the left_index and right_index values:
+</p>
 
 <pre>mysql &gt; SELECT * FROM genomic_align_tree WHERE left_index &gt;= 33 and left_index &lt;= 42;
 +---------------+---------------+---------------+------------+-------------+---------------+---------------+--------------------+
@@ -1730,7 +1731,7 @@ TABLE CONSERVATION SCORE
       <td></td>
       <td></td>
       <td></td>
-      <td><td>
+      <td></td>
     </tr>
     <tr>
       <td>expected_score</td>
@@ -1739,7 +1740,7 @@ TABLE CONSERVATION SCORE
       <td></td>
       <td>MUL</td>
       <td></td>
-      <td>expected score<td>
+      <td>expected score</td>
     </tr>
     <tr>
       <td>diff_score</td>
@@ -1748,7 +1749,7 @@ TABLE CONSERVATION SCORE
       <td></td>
       <td>MUL</td>
       <td></td>
-      <td>diff_score is teh difference between the expected and observed variation, i.e. the conservation score.<td>
+      <td>diff_score is teh difference between the expected and observed variation, i.e. the conservation score.</td>
     </tr>
   </tbody>
 </table>
@@ -2046,7 +2047,7 @@ and <a href="#genome_db">genome_db</a> tables:
 </p>
 
 
-<pre>A<br>mysql&gt; SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 27845;
+<pre>A<br />mysql&gt; SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 27845;
 +-------------------+------+---------------+-------------+----------------+
 | name              | name | dnafrag_start | dnafrag_end | dnafrag_strand |
 +-------------------+------+---------------+-------------+----------------+
@@ -2168,7 +2169,7 @@ external DBs.</p>
       <td>MUL</td>
       <td>NULL</td>
       <td></td>
-      <td>external reference to <a href="#sequence">sequence.sequence_id</a>.<br>
+      <td>external reference to <a href="#sequence">sequence.sequence_id</a>.<br />
 May be 0 when the sequence is not available in the <a href="#sequence">sequence</a> table, e.g. for a gene instance.</td>
     </tr>
     <tr>
@@ -3472,9 +3473,9 @@ Contains the data structure of each tree.</p>
   </tbody>
 </table>
 
-<br>
-
+<p>
 FIXME: the following explanation may need updating/extending because of introduction of clustreset_id.
+</p>
 
 <p>When parent_id=0, then node_id is the root. In our data structure, all trees are arbitrarily connected to the same root. This allows storing in the same database the data from independant tree building analysis. Hence the "biological root" of each tree are the children nodes of the main root. For instance the following SQL query</p>
 
@@ -3498,7 +3499,7 @@ TABLE PROTEIN_TREE_MEMBER
 
 
 <p>
-Contains the data about the leaf (joining the table with a member_id from the member table, all ENSEMBLPEP members)<br>
+Contains the data about the leaf (joining the table with a member_id from the member table, all ENSEMBLPEP members)<br />
 present in each tree. The method_link_species_set should link to an
 entry that has a method_link.type="PROTEIN_TREES". For the aligment,
 the cigar_* column hold the needed information to rebuild the alignment

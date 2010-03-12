@@ -33,15 +33,15 @@ sub content {
   # First process GO terms
   my $html;
   my $go_hash  = $object->get_go_list();
-  if ($go_hash){
+  if (%$go_hash){
     $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
     my $table = $self->table;
     $self->process_data($table, $go_hash);
     $html .= $table->render;
   }
   # then add  GOSlim info
-  my $go_slim_hash = $object->get_go_list('goslim_goa');  
-  if ($go_slim_hash){
+  my $go_slim_hash = $object->get_go_list('goslim_goa');
+  if (%$go_slim_hash){
     $html .= "<p><strong>The following GO terms are the closest ones in the GOSlim GOA subset
       for the above terms:</strong></p>";
     my $go_slim_table = $self->table;

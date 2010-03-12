@@ -13,7 +13,7 @@
 <p>
 This document refers to the schema of the Ensembl Funcgen version <strong>51</strong>.
 </p>
-<br>
+
 
 <h3>Introduction</h3>
 
@@ -34,7 +34,7 @@ The Ensembl Funcgen (eFG) DB can be thought of as containing three distinct type
   
 </ul>
 	
-<br>
+
 <h3>List of Tables</h3>
 
 <ul>
@@ -118,7 +118,7 @@ The Ensembl Funcgen (eFG) DB can be thought of as containing three distinct type
   </li>
 
 </ul>
-<br>
+
 
 <!--
 #####################################################################
@@ -195,7 +195,6 @@ mysql> select * from feature_type where class='HISTONE' limit 10;
 +-----------------+----------+---------+-------------------------------------+
 </pre>
 
-<br>
 
 
 <!--
@@ -273,7 +272,7 @@ mysql> select * from cell_type limit 5;
 |            4 | CD4     | NULL          | Human CD4 T-Cells                        |
 |            5 | IMR90   | NULL          | Human Fetal Lung Fibroblast              |
 +--------------+---------+---------------+------------------------------------------+</pre>
-<br>
+
 <!--
 #####################################################################
 TABLE status
@@ -309,7 +308,7 @@ e.g. experimental_chip, result_set.
   </tbody>
 </table>
 
-<br>
+
 <!--
 #####################################################################
 TABLE status_name
@@ -335,7 +334,7 @@ TABLE status_name
   </tbody>
 </table>
 
-<p>The status and status_name tables allow multiple states to be assigned to an given record. The following table shows the current status to table associations.
+<p>The status and status_name tables allow multiple states to be assigned to an given record. The following table shows the current status to table associations.</p>
 
 <pre>mysql> select distinct(s.table_name), sn.name from status_name sn left join status s on s.status_name_id=sn.status_name_id;</pre>
 <table class="spreadsheet">
@@ -369,7 +368,7 @@ Tracks which analyses have been performed
 Tracks which analyses have been performed
 </pre></td>
 </tr></table>
-<br>
+
 <!--
 #####################################################################
 TABLE analysis
@@ -409,7 +408,7 @@ This table is identical to the core analysis table.  It stores information about
   </tbody>
 </table>
 <p>See the core <a href="../core/core_schema.html#analysis">analysis</a> documentation for more details.</p>
-<br>
+
 <!--
 #####################################################################
 #####################################################################
@@ -442,7 +441,7 @@ This table is identical to the core analysis_description table.  It stores descr
   </tbody>
 </table>
 <p>See the core <a href="../core/core_schema.html#analysis_description">analysis_description</a> documentation for more details.</p>
-<br>
+
 
 <!--
 #####################################################################
@@ -504,7 +503,7 @@ mysql> select * from egroup;
 |         1 | efg  | Hinxton  | njohnson@ebi.ac.uk |
 +-----------+------+----------+--------------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -560,7 +559,7 @@ mysql> select * from experiment where name like 'ctcf_ren';
 |            12 | ctcf_ren |                     1 | NULL | binding_site_identification | NULL        |           2 |
 +---------------+----------+-----------------------+------+-----------------------------+-------------+-------------+
 </pre>
-<br>
+
 
 
 <!--
@@ -598,7 +597,7 @@ XML stored as text
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 <!--
 #####################################################################
@@ -637,7 +636,7 @@ table id of associated record
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 
 <!--
@@ -667,7 +666,7 @@ The design type table holds appropriate terms from ontologies such as MGED.
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 <!--
 #####################################################################
@@ -699,7 +698,7 @@ The experimental_variable table is design to store any meta data which might be 
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 <!--
 #####################################################################
@@ -748,7 +747,8 @@ The technical replicate denomination
 </pre></td></tr>
 </tbody>
 </table>
-<p>The biological_replicate and technical_replicate fields are populated dependent on the tab2MAGE file generated during the import procedure.  These values are then used dynamically to resolve individual results across replicates. Here we see the experimental_chips from the 'Stunnenberg_all_OID_1963' experiment representing two biological replicates:
+<p>The biological_replicate and technical_replicate fields are populated dependent on the tab2MAGE file generated during the import procedure.  These values are then used dynamically to resolve individual results across replicates. Here we see the experimental_chips from the 'Stunnenberg_all_OID_1963' experiment representing two biological replicates:</p>
+
 <pre>
 mysql> select ec.* from experimental_chip ec, experiment e where e.name='Stunnenberg_all_OID_1963' and  ec.experiment_id=e.experiment_id;
 +----------------------+-----------+---------------+---------------+-----------------+--------------+----------------------+---------------------+
@@ -760,7 +760,7 @@ mysql> select ec.* from experimental_chip ec, experiment e where e.name='Stunnen
 |                    4 | 46078     |             1 |             2 |               1 |            3 | 1                    | NULL                |
 +----------------------+-----------+---------------+---------------+-----------------+--------------+----------------------+---------------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -805,7 +805,7 @@ e.g. 'EXPERIMENTAL' sample or 'TOTAL' or control sample
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here we see each channel from the Stunnenberg_all_OID_1963 experiment.
+<p>Here we see each channel from the Stunnenberg_all_OID_1963 experiment.</p>
 <pre>
 mysql> select c.* from experimental_chip ec, channel c, experiment e where e.name='Stunnenberg_all_OID_1963' and  ec.experiment_id=e.experiment_id and ec.experimental_chip_id=c.experimental_chip_id;
 +------------+----------------------+-----------+------+--------------+-------------+
@@ -821,7 +821,7 @@ mysql> select c.* from experimental_chip ec, channel c, experiment e where e.nam
 |          8 |                    4 | NULL      | Cy5  | EXPERIMENTAL | NULL        |
 +------------+----------------------+-----------+------+--------------+-------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -863,7 +863,7 @@ Generic 'table' fields allows linkage to the experimental_chip or channel tables
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here we see channel and 'VSN' normalised experimental_chip level chip_channel entries:
+<p>Here we see channel and 'VSN' normalised experimental_chip level chip_channel entries:</p>
 <pre>
 mysql> select cc.*, a.logic_name from chip_channel cc, result_set rs, analysis a where rs.name like 'Stunnenberg_all_OID_1963%' and rs.analysis_id=a.analysis_id and rs.result_set_id=cc.result_set_id order by cc.result_set_id;
 +-----------------+---------------+----------+-------------------+------------+
@@ -884,7 +884,7 @@ mysql> select cc.*, a.logic_name from chip_channel cc, result_set rs, analysis a
 +-----------------+---------------+----------+-------------------+------------+
 </pre>
 
-<br>
+
 
 <!--
 #####################################################################
@@ -929,7 +929,7 @@ probe and enable plate plotting and spatial normalisation
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here are a few example records:
+<p>Here are a few example records:</p>
 <pre>
 mysql> select * from result where X is not NULL limit 10;
 +-----------+----------+---------+-----------------+------+------+
@@ -948,8 +948,8 @@ mysql> select * from result where X is not NULL limit 10;
 +-----------+----------+---------+-----------------+------+------+
 </pre>
 
-<p>See also <a href="#probe">probe</a>.
-<br>
+<p>See also <a href="#probe">probe</a>.</p>
+
 
 <!--
 #####################################################################
@@ -998,7 +998,7 @@ Size of window in bp over which score is calculated
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 
 <!--
@@ -1042,7 +1042,7 @@ Normalisation or RawValue analysis for experimental_chips or channels respective
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here are a few result sets from experiments using the SangerPCR Encode array:
+<p>Here are a few result sets from experiments using the SangerPCR Encode array:</p>
 <pre>
 mysql> select rs.* from result_set rs, analysis a where a.logic_name='SangerPCR' and rs.analysis_id=a.analysis_id;
 +---------------+-------------+------------------------+--------------+-----------------+
@@ -1060,7 +1060,7 @@ mysql> select rs.* from result_set rs, analysis a where a.logic_name='SangerPCR'
 |            10 |           8 | H3K4Me3-GM06990_IMPORT |            2 |               4 |
 +---------------+-------------+------------------------+--------------+-----------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1109,7 +1109,7 @@ Vendor of experimental platform technology
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here are a few example showing experimental_set records for ChIP-Seq experiments:
+<p>Here are a few example showing experimental_set records for ChIP-Seq experiments:</p>
 <pre>
 mysql> select * from experimental_set limit 10;
 +---------------------+---------------+-----------------+--------------+------------+--------+---------------+
@@ -1127,7 +1127,7 @@ mysql> select * from experimental_set limit 10;
 |                  10 |            23 |              12 |            4 | SEQUENCING | SOLEXA | CD4_H3K36me3  |
 +---------------------+---------------+-----------------+--------------+------------+--------+---------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1165,7 +1165,7 @@ e.g. file name
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here we see the filenames for each experimental_set have been recorded:
+<p>Here we see the filenames for each experimental_set have been recorded:</p>
 <pre>
 mysql> select * from experimental_subset limit 10;
 +------------------------+---------------------+--------------------------------+
@@ -1183,7 +1183,7 @@ mysql> select * from experimental_subset limit 10;
 |                     12 |                  10 | CD4_H3K36me3.clstr_gt1.bed     |
 +------------------------+---------------------+--------------------------------+
 </pre>
-<br>
+
 
 
 
@@ -1252,7 +1252,7 @@ mysql> select * from array where vendor='Sanger';
 |        2 | ENCODE3.1.1 | TILED  | SANGER | Sanger ENCODE PCR array 3.1.1 | PCR  |
 +----------+-------------+--------+--------+-------------------------------+------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1313,7 +1313,7 @@ mysql> select * from array_chip order by design_id limit 10;
 |            13 | 2040      |        1 | 2005-05-10_HG17Tiling_Set10 |
 +---------------+-----------+----------+-----------------------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1376,7 +1376,7 @@ mysql> select * from probe limit 10;
 |  4368968 |            0 | chrXP74276518  |     50 |             2 | EXPERIMENTAL |
 +----------+--------------+----------------+--------+---------------+--------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1416,7 +1416,7 @@ Wider classification of probe_set
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 <!--
 #####################################################################
@@ -1457,7 +1457,7 @@ Required as designs are dependent on the genome assembly version
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 <!--
 #####################################################################
@@ -1525,7 +1525,7 @@ mysql> select * from feature_set where type='external';
 |             63 |              45 |          19 |         NULL | VISTA enhancer set    | external |
 +----------------+-----------------+-------------+--------------+-----------------------+----------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1592,7 +1592,7 @@ mysql> select af.* from annotated_feature af, feature_set fs where af.feature_se
 |                11786 |            45 |        131435349 |      131444027 |                 0 |               |  2.57 |              2 |
 +----------------------+---------------+------------------+----------------+-------------------+---------------+-------+----------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1627,7 +1627,7 @@ External features are analogous to annotated_features, but are sourced from and 
 </pre></td></tr>
 </tbody>
 </table>
-<br>
+
 
 
 <!--
@@ -1697,7 +1697,7 @@ mysql> select rf.* from regulatory_feature rf, feature_set fs where rf.feature_S
 |                605248 |           137 |             1691 |           1734 |                 0 | 1000000100011000100000000000000011 |              44 |             57 |    113240 |
 +-----------------------+---------------+------------------+----------------+-------------------+------------------------------------+-----------------+----------------+-----------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1770,7 +1770,7 @@ mysql> select ra.* from regulatory_attribute ra, regulatory_feature rf where rf.
 |                605239 |             25855327 | annotated               |
 +-----------------------+----------------------+-------------------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1782,7 +1782,7 @@ Association data TABLES
 
 <h3>Association Data Tables</h3>
 
-<p>These tables provide a link between processed feature_sets and there underlying data.
+<p>These tables provide a link between processed feature_sets and there underlying data.</p>
 <!--
 #####################################################################
 #####################################################################
@@ -1832,7 +1832,7 @@ mysql> select ds.* from data_set ds, feature_type ft, feature_set fs where ft.na
 |          46 |             49 | CD4_H3K4me3            |
 +-------------+----------------+------------------------+
 </pre>
-<br>
+
 
 <!--
 #####################################################################
@@ -1871,7 +1871,7 @@ The type of set
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here we see all the supporting sets for the current regulatory build:
+<p>Here we see all the supporting sets for the current regulatory build:</p>
 <pre>
 mysql> select ss.* from supporting_set ss, data_set ds where ds.name='RegulatoryFeatures' and ds.data_Set_id=ss.data_Set_id;
 +-------------+-------------------+---------+
@@ -1929,7 +1929,7 @@ mysql> select ss.* from supporting_set ss, data_set ds where ds.name='Nessie_NG_
 |          22 |                18 | result |
 +-------------+-------------------+--------+
 </pre>
-<br>
+
 
 
 <!--
@@ -2011,7 +2011,7 @@ mysql> select * from coord_system order by schema_build;
 </pre>
 
 <p>See the core <a href="../core/core_schema.html#coord_system">coord_system</a> documentation for more details.</p>
-<br>
+
 <!--
 #####################################################################
 #####################################################################
@@ -2057,7 +2057,7 @@ coord_system_id in core DB
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here see the differing core seq_regions for chromosome 12 and how they are represented in the eFG DB:
+<p>Here see the differing core seq_regions for chromosome 12 and how they are represented in the eFG DB:</p>
 <pre>
 mysql> select * from seq_region where name=12;
 +---------------+------+-----------------+--------------------+--------------+
@@ -2074,9 +2074,9 @@ mysql> select * from seq_region where name=12;
 |            61 | 12   |               1 |             226056 | 48_36j       |
 +---------------+------+-----------------+--------------------+--------------+
 </pre>
-<br>
 
-<p>See the core <a href="../core/core_schema.html#seq_region">seq_region</a> documentation for more details.
+
+<p>See the core <a href="../core/core_schema.html#seq_region">seq_region</a> documentation for more details.</p>
 
 
 </body>

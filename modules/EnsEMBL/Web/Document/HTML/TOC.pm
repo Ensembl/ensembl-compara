@@ -10,7 +10,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
-  
+
   my $tree = $ENSEMBL_WEB_REGISTRY->species_defs->STATIC_INFO;
   my @page_list;
   
@@ -50,6 +50,7 @@ sub _traverse_tree {
     my $subsection = $node->{$section};
     
     next unless keys %$subsection;
+    next if ($subsection->{_index} eq 'NO FOLLOW');
 
     my $title = $subsection->{'_title'} || ucfirst $section;
     
