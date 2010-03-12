@@ -10,21 +10,45 @@
 package Bio::Das::Lite;
 use strict;
 use warnings;
-use Bio::Das::Lite::UserAgent;
-use HTTP::Request;
-use HTTP::Headers;
+use WWW::Curl::Multi;
+use WWW::Curl::Easy qw(
+  CURLOPT_NOPROGRESS
+  CURLOPT_USERAGENT
+  CURLOPT_URL
+  CURLOPT_HTTPHEADER
+  CURLOPT_WRITEDATA
+  CURLOPT_WRITEHEADER
+  CURLOPT_PRIVATE
+  CURLOPT_TIMEOUT
+  CURLOPT_CONNECTTIMEOUT
+  CURLOPT_PROXY
+  CURLOPT_PROXYUSERNAME
+  CURLOPT_PROXYPASSWORD
+  CURLOPT_NOPROXY
+); # CURLOPT imports
+use HTTP::Response;
 use SOAP::Lite;
 use Carp;
 use English qw(-no_match_vars);
+use Readonly;
 
 our $DEBUG    = 0;
-our $VERSION  = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
-our $BLK_SIZE = 8192;
-our $TIMEOUT  = 5;
-our $MAX_REQ  = 5;
-our $MAX_HOST = 7;
-our $LINKRE   = qr{<link\s+href="([^"]+)"[^>]*?>([^<]*)</link>|<link\s+href="([^"]+)"[^>]*?/>}mix;
-our $NOTERE   = qr!<note[^>]*>([^<]*)</note>!mix;
+our $VERSION  = '2.02';
+Readonly::Scalar our $TIMEOUT         => 5;
+Readonly::Scalar our $REG_TIMEOUT     => 15;
+Readonly::Scalar our $LINKRE          => qr{<link\s+href="([^"]+)"[^>]*?>([^<]*)</link>|<link\s+href="([^"]+)"[^>]*?/>}smix;
+Readonly::Scalar our $NOTERE          => qr{<note[^>]*>([^<]*)</note>}smix;
+Readonly::Scalar our $DAS_STATUS_TEXT => {
+					  200 => '200 OK',
+					  400 => '400 Bad command (command not recognized)',
+					  401 => '401 Bad data source (data source unknown)',
+					  402 => '402 Bad command arguments (arguments invalid)',
+					  403 => '403 Bad reference object',
+					  404 => '404 Requested object unknown',
+					  405 => '405 Coordinate error',
+					  500 => '500 Server error',
+					  501 => '501 Unimplemented feature',
+					 };
 
 #########
 # $ATTR contains information about document structure - tags, attributes and subparts
@@ -51,12 +75,6 @@ our %SCORED_STYLE_ATTRS = (
 			   color1         => [],
 			   color2         => [],
 			   color3         => [],
-			   color4         => [],
-			   color5         => [],
-			   color6         => [],
-			   color7         => [],
-			   color8         => [],
-			   color9         => [],
 			   height         => [],
 			  );
 our $ATTR     = {
@@ -209,17 +227,12 @@ our $ATTR     = {
 								    'glyph' => {
                                                                                 'glyph'          => [qw(zoom)],
 										'arrow'          => {
-												     'style'        => [],
 												     'parallel'     => [],
 												     'bar_style'    => [], # WTSI extension
-                                                                                                     'northeast'    => [],
-                                                                                                     'southwest'    => [],
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'anchored_arrow' => {
 												     'parallel'     => [],
-												     'linewidth'    => [],
-												     'style'        => [],
 												     'orientation'  => [], # WTSI extension
 												     'no_anchor'    => [], # WTSI extension
 												     'bar_style'    => [], # WTSI extension
@@ -234,37 +247,30 @@ our $ATTR     = {
 												     'orientation'  => [],
 												     'no_anchor'    => [],
 												     'bar_style'    => [], # WTSI extension
-												     'style'        => [],
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'rarrow'         => {                      # WTSI extension
 												     'orientation'  => [],
 												     'no_anchor'    => [],
 												     'bar_style'    => [], # WTSI extension
-												     'style'        => [],
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'cross'          => {
 												     'linewidth'    => [],  # WTSI extension
 												     %COMMON_STYLE_ATTRS,
 												    },
-										'dot'            => {
-												     'linewidth'    => [],  # WTSI extension
-												     %COMMON_STYLE_ATTRS,
-												    },
+										'dot'            => \%COMMON_STYLE_ATTRS,
 										'ex'             => {
 												     'linewidth'    => [],  # WTSI extension
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'hidden'         => \%COMMON_STYLE_ATTRS,
 										'line'           => {
-                                                                                                     'parallel'     => [],
 												     'style'        => [],
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'span'           => {
 												     'bar_style'    => [], # WTSI extension
-												     'style'        => [],
 												     %COMMON_STYLE_ATTRS,
 												    },
 										'text'           => {
@@ -348,8 +354,18 @@ sub new {
 
 sub new_from_registry {
   my ($class, $ref) = @_;
+  my $user_timeout = defined $ref->{timeout} ? 1 : 0;
   my $self    = $class->new($ref);
+  # If the user specifies a timeout, use it.
+  # But if not, temporarily increase the timeout for the registry request.
+  if (!$user_timeout) {
+    $self->timeout($REG_TIMEOUT);
+  }
   my $sources = $self->registry_sources($ref);
+  # And reset it back to the "normal" non-registry timeout.
+  if (!$user_timeout) {
+    $self->timeout($TIMEOUT);
+  }
   $self->dsn([map { $_->{'url'} } @{$sources}]);
   return $self;
 }
@@ -366,7 +382,7 @@ sub http_proxy {
     $self->{'_checked_http_proxy_env'} = 1;
   }
 
-  if($self->{'http_proxy'} =~ m|^(https?://)(\S+):(.*?)\@(.*?)$|mx) {
+  if($self->{'http_proxy'} =~ m{^(https?://)(\S+):(.*?)\@(.*?)$}smx) {
     #########
     # http_proxy contains username & password - we'll set them up here:
     #
@@ -380,18 +396,18 @@ sub http_proxy {
 }
 
 sub no_proxy {
-  my $self = shift;
+  my ($self, @args) = @_;
 
-  if (scalar @_) {
-    if ($_[0] && ref $_[0] && ref $_[0] eq 'ARRAY') {
-      $self->{'no_proxy'} = $_[0];
+  if (scalar @args) {
+    if ($args[0] && ref $args[0] && ref $args[0] eq 'ARRAY') {
+      $self->{'no_proxy'} = $args[0];
     } else {
-      $self->{'no_proxy'} = \@_;
+      $self->{'no_proxy'} = \@args;
     }
   }
 
   if(!$self->{'_checked_no_proxy_env'}) {
-    $self->{'no_proxy'} ||= [split /\s*,\s*/, $ENV{'no_proxy'} || q()];
+    $self->{'no_proxy'} ||= [split /\s*,\s*/smx, $ENV{'no_proxy'} || q()];
     $self->{'_checked_no_proxy_env'} = 1;
   }
 
@@ -402,7 +418,6 @@ sub _get_set {
   my ($self, $key, $value) = @_;
   if(defined $value) {
     $self->{$key} = $value;
-#print {*STDERR} qq(set self $key = @{[$value||'undef']}\n);
   }
   return $self->{$key};
 }
@@ -434,11 +449,13 @@ sub caching {
 
 sub max_hosts {
   my ($self, $val) = @_;
+  carp 'WARNING: max_hosts method is decprecated and has no effect';
   return $self->_get_set('_max_hosts', $val);
 }
 
 sub max_req {
   my ($self, $val) = @_;
+  carp 'WARNING: max_req method is decprecated and has no effect';
   return $self->_get_set('_max_req', $val);
 }
 
@@ -454,7 +471,7 @@ sub basename {
   my @res          = ();
 
   for my $service (@dsns) {
-    $service =~ m|(https?://.*/das)/?|mx;
+    $service =~ m{(https?://.*/das)/?}smx;
     if($1) {
       push @res, $1;
     }
@@ -555,8 +572,8 @@ sub _generic_request {
   delete $self->{'currentsegs'};
   my $results   = {};
   my $reqname   = $fname;
-  $reqname      =~ s/[\(\)]//mxg;
-  ($fname)      = $fname =~ /^([a-z_]+)/mx;
+  $reqname      =~ s/[\(\)]//smxg;
+  ($fname)      = $fname =~ /^([a-z_]+)/smx;
 
   my $ref       = $self->build_requests({
 					 query   => $query,
@@ -578,7 +595,7 @@ sub _generic_request {
     $DEBUG and print {*STDERR} qq(Performing cache handling\n);
     for my $s (keys %{$results}) {
       if($DEBUG && !$results->{$s}) {
-	print {*STDERR} qq(CACHE HIT for $s\n);
+	print {*STDERR} qq(CACHE HIT for $s\n); ## no critic (InputOutput::RequireCheckedSyscalls)
       }
       $results->{$s}          ||= $self->{'_cache'}->{$s};
       $self->{'_cache'}->{$s} ||= $results->{$s};
@@ -616,7 +633,7 @@ sub build_queries {
 	#########
 	# ... or if the first array arg is a hash, stitch the series of queries together
 	#
-	push @queries, map { ## no critic
+	push @queries, map { ## no critic (ProhibitComplexMappings)
 	  my $q = $_;
 	  join q(;), map { "$_=$q->{$_}" } grep { $q->{$_} } @{$OPTS->{$fname}};
 	} @{$query};
@@ -674,6 +691,7 @@ sub build_requests {
     #########
     # loop over dsn basenames
     #
+    $bn =~ s/\/+$//smx;
     for my $request (map { $_ ? "$bn/$reqname?$_" : "$bn/$reqname" } @{$queries}) {
       #########
       # and for each dsn, loop over the query request
@@ -689,7 +707,7 @@ sub build_requests {
 
       $results->{$request} = [];
       $ref->{$request}     = sub {
-	my $data                     = shift;
+	my $data                     = shift || q();
 	$self->{'data'}->{$request} .= $data;
 
 	if(!$self->{'currentsegs'}->{$request}) {
@@ -697,7 +715,7 @@ sub build_requests {
 	  # If we haven't yet found segment information for this request
 	  # Then look for some. This one is a non-destructive scan.
 	  #
-	  my $matches = $self->{'data'}->{$request}  =~ m!(<segment[^>]*>)!mix;
+	  my $matches = $self->{'data'}->{$request}  =~ m{(<segment[^>]*>)}smix;
 
 	  if($matches) {
 	    my $seginfo = [];
@@ -713,7 +731,7 @@ sub build_requests {
 	}
 
 	if($DEBUG) {
-	  print {*STDERR} qq(invoking _parse_branch for $fname\n);
+	  print {*STDERR} qq(invoking _parse_branch for $fname\n); ## no critic (InputOutput::RequireCheckedSyscalls)
 	}
 
 	#########
@@ -724,8 +742,8 @@ sub build_requests {
 	}
 	$fname = $self->_hack_fname($fname);
 
-	my $pat = qr!(<$fname.*?/$fname>|<$fname[^>]+/>)!smix;
-	while($self->{'data'}->{$request} =~ s/$pat//mx) {
+	my $pat = qr{(<$fname.*?/$fname>|<$fname[^>]+/>)}smix;
+	while($self->{'data'}->{$request} =~ s/$pat//smx) {
 	  $self->_parse_branch({
 				request    => $request,
 				seginfo    => $results->{$request},
@@ -736,7 +754,7 @@ sub build_requests {
 	}
 
 	if($DEBUG) {
-	  print {*STDERR} qq(completed _parse_branch\n);
+	  print {*STDERR} qq(completed _parse_branch\n); ## no critic (InputOutput::RequireCheckedSyscalls)
 	}
 
 	return;
@@ -802,72 +820,133 @@ sub postprocess {
 sub _fetch {
   my ($self, $url_ref, $headers) = @_;
 
-  if (!$self->{'ua'}) {
-    $self->{'ua'} = Bio::Das::Lite::UserAgent->new();
-    $self->{'ua'}->proxy( ['http','https'], $self->http_proxy() );
-    $self->{'ua'}->no_proxy( @{ $self->no_proxy() } );
+  $self->{'statuscodes'} = {};
+  if(!$headers) {
+    $headers = {};
   }
 
-  $self->{'ua'}->initialize();
-  $self->{'ua'}->max_req  ($self->max_req()   || $MAX_REQ );
-  $self->{'ua'}->max_hosts($self->max_hosts() || $MAX_HOST);
-  $self->{'statuscodes'}          = {};
-  $headers                      ||= {};
-  $headers->{'X-Forwarded-For'} ||= $ENV{'HTTP_X_FORWARDED_FOR'};
+  if($ENV{HTTP_X_FORWARDED_FOR}) {
+    $headers->{'X-Forwarded-For'} ||= $ENV{'HTTP_X_FORWARDED_FOR'};
+  }
 
+  # Convert header pairs to strings
+  my @headers;
+  for my $h (keys %{ $headers }) {
+    push @headers, "$h: " . $headers->{$h};
+  }
+
+  # We will now issue the actual requests. Due to insufficient support for error
+  # handling and proxies, we can't use WWW::Curl::Simple. So we generate a
+  # WWW::Curl::Easy object here, and register it with WWW::Curl::Multi.
+
+  my $curlm = WWW::Curl::Multi->new();
+  my %reqs;
+  my $i = 0;
+
+  # First initiate the requests
   for my $url (keys %{$url_ref}) {
     if(ref $url_ref->{$url} ne 'CODE') {
       next;
     }
-    $DEBUG and print {*STDERR} qq(Building HTTP::Request for $url [timeout=$self->{'timeout'}] via $url_ref->{$url}\n);
+    $DEBUG and print {*STDERR} qq(Building WWW::Curl::Easy for $url [timeout=$self->{'timeout'}] via $url_ref->{$url}\n);
 
-    my $headers = HTTP::Headers->new(%{$headers});
-    $headers->user_agent($self->user_agent());
+    $i++;
+    my $curl = WWW::Curl::Easy->new();
 
-    if($self->proxy_user() && $self->proxy_pass()) {
-      $headers->proxy_authorization_basic($self->proxy_user(), $self->proxy_pass());
+    $curl->setopt( CURLOPT_NOPROGRESS, 1 );
+    $curl->setopt( CURLOPT_USERAGENT, $self->user_agent );
+    $curl->setopt( CURLOPT_URL, $url );
+
+    if (scalar @headers) {
+        $curl->setopt( CURLOPT_HTTPHEADER, \@headers );
     }
+    my ($body_ref, $head_ref);
+    CORE::open my $fileb, '>', \$body_ref || croak 'Error opening data handle';
+    $curl->setopt( CURLOPT_WRITEDATA, $fileb );
 
-    my $response = $self->{'ua'}->register(HTTP::Request->new('GET', $url, $headers),
-					   $url_ref->{$url},
-					   $BLK_SIZE);
-    if($response) {
-      $self->{'statuscodes'}->{$url} ||= $response->status_line();
-    }
+    CORE::open my $fileh, '>', \$head_ref || croak 'Error opening header handle';
+    $curl->setopt( CURLOPT_WRITEHEADER, $fileh );
+
+    # we set this so we have the ref later on
+    $curl->setopt( CURLOPT_PRIVATE, $i );
+    $curl->setopt( CURLOPT_TIMEOUT, $self->timeout || $TIMEOUT );
+    #$curl->setopt( CURLOPT_CONNECTTIMEOUT, $self->connection_timeout || 2 );
+    $curl->setopt( CURLOPT_PROXY, $self->http_proxy );
+    $curl->setopt( CURLOPT_PROXYUSERNAME, $self->proxy_user );
+    $curl->setopt( CURLOPT_PROXYPASSWORD, $self->proxy_pass );
+    $curl->setopt( CURLOPT_NOPROXY, join q(,), @{ $self->no_proxy } );
+
+    $curlm->add_handle($curl);
+
+    $reqs{$i} = {
+                 'uri'  => $url,
+                 'easy' => $curl,
+                 'head' => \$head_ref,
+                 'body' => \$body_ref,
+                };
   }
 
   $DEBUG and print {*STDERR} qq(Requests submitted. Waiting for content\n);
-  eval {
-    $self->{'ua'}->wait($self->{'timeout'});
-  };
 
-  if($EVAL_ERROR) {
-    carp $EVAL_ERROR;
-  }
+  $self->_receive($url_ref, $curlm, \%reqs);
 
-  for my $url (keys %{$url_ref}) {
-    if(ref $url_ref->{$url} ne 'CODE') {
-      next;
+  return;
+}
+
+sub _receive {
+  my ($self, $url_ref, $curlm, $reqs) = @_;
+
+  # Now check for results as they come back
+  my $i = scalar keys %{ $reqs };
+  while ($i) {
+    my $active_transfers = $curlm->perform;
+    if ($active_transfers != $i) {
+      while (my ($id,$retcode) = $curlm->info_read) {
+        $id || next;
+
+        $i--;
+        my $req  = $reqs->{$id};
+        my $uri  = $req->{'uri'};
+        my $head = ${ $req->{'head'} } || q();
+        my $body = ${ $req->{'body'} } || q();
+
+        # We got a response from the server:
+        if ($retcode == 0) {
+          my $res = HTTP::Response->parse( $head . "\n" . $body );
+          my $msg;
+          # Prefer X-DAS-Status
+          my ($das_status) = ($res->header('X-DAS-Status') || q()) =~ m/^(\d+)/smx;
+          if ($das_status) {
+            $msg = $self->{statuscodes}->{$uri} = $DAS_STATUS_TEXT->{$das_status};
+            # just in case we get a status we don't understand:
+            $msg ||= $das_status . q( ) . ($res->message || 'Unknown status');
+          }
+          # Fall back to HTTP status
+          else {
+            $msg  = $res->status_line;
+            # workaround for bug in HTTP::Response parse method:
+            $msg  =~ s/\r//gsmx;
+          }
+
+          $self->{statuscodes}->{$uri} = $msg;
+          $url_ref->{$uri}->($res->content); # run the content handling code
+        }
+        # A connection error, timeout etc (NOT an HTTP status):
+        else {
+          $self->{statuscodes}->{$uri} = '500 ' . $req->{'easy'}->strerror($retcode);
+        }
+
+        delete($reqs->{$id}); # put out of scope to free memory
+      }
     }
-
-    $self->{'statuscodes'}->{$url} ||= '200';
   }
+
   return;
 }
 
 sub statuscodes {
   my ($self, $url)         = @_;
   $self->{'statuscodes'} ||= {};
-
-  if($self->{'ua'}) {
-    my $uacodes = $self->{'ua'}->statuscodes();
-    for my $k (keys %{$uacodes}) {
-      if($uacodes->{$k}) {
-	$self->{'statuscodes'}->{$k} = $uacodes->{$k};
-      }
-    }
-  }
-
   return $url?$self->{'statuscodes'}->{$url}:$self->{'statuscodes'};
 }
 
@@ -900,8 +979,8 @@ sub _parse_branch {
   for my $subpart (@subparts) {
     my $subpart_ref  = [];
 
-    my $pat = qr!(<$subpart[^>]*/>|<$subpart[^>]*?(?\!/)>.*?/$subpart>)!smix;
-    while($blk =~ s/$pat//mx) {
+    my $pat = qr{(<$subpart[^>]*/>|<$subpart[^>]*?(?!/)>.*?/$subpart>)}smix;
+    while($blk =~ s/$pat//smx) {
       $self->_parse_branch({
 			    request    => $dsn,
 			    seginfo    => $subpart_ref,
@@ -930,13 +1009,13 @@ sub _parse_branch {
     my $opts = $attr->{$tag}||[];
 
     for my $a (@{$opts}) {
-      ($tmp)              = $blk =~ m|<$tag[^>]+$a="([^"]+?)"|smix;
+      ($tmp)              = $blk =~ m{<$tag[^>]+$a="([^"]+?)"}smix;
       if(defined $tmp) {
 	$ref->{"${tag}_$a"} = $tmp;
       }
     }
 
-    ($tmp) = $blk =~ m|<$tag[^>]*>([^<]+)</$tag>|smix;
+    ($tmp) = $blk =~ m{<$tag[^>]*>([^<]+)</$tag>}smix;
     if(defined $tmp) {
       $tmp         =~ s/^\s+$//smgx;
       if(length $tmp) {
@@ -944,7 +1023,7 @@ sub _parse_branch {
       }
     }
     if($tmp && $DEBUG) {
-      print {*STDERR} q( )x($depth*2), qq(  $tag = $tmp\n);
+      print {*STDERR} q( )x($depth*2), qq(  $tag = $tmp\n); ## no critic (InputOutput::RequireCheckedSyscalls)
     }
   }
 
@@ -972,19 +1051,19 @@ sub _parse_twig {
   #########
   # handle multiples of twig elements here
   #
-  $blk =~ s!$LINKRE!{
+  $blk =~ s/$LINKRE/{
                      $ref->{'link'} ||= [];
                      push @{$ref->{'link'}}, {
                                               'href' => $1 || $3,
                                               'txt'  => $2,
                                              };
                      q()
-                    }!smegix;
-  $blk =~ s!$NOTERE!{
+                    }/smegix;
+  $blk =~ s/$NOTERE/{
                      $ref->{'note'} ||= [];
                      push @{$ref->{'note'}}, $1;
                      q()
-                    }!smegix;
+                    }/smegix;
 
   if($addseginfo && $self->{'currentsegs'}->{$dsn}) {
     while(my ($k, $v) = each %{$self->{'currentsegs'}->{$dsn}}) {
@@ -1012,7 +1091,7 @@ sub registry_sources {
 
   $filters       ||= {};
   my $category     = $filters->{'category'}   || [];
-  my $capability   = $filters->{'capability'} || [];
+  my $capability   = $filters->{'capability'} || $filters->{'capabilities'} || [];
 
   if(!ref $category) {
     $category = [$category];
@@ -1036,11 +1115,16 @@ sub registry_sources {
 
       $DEBUG and print {*STDERR} qq(Running request for $reg\n);
 
-      $SIG{ALRM} = sub { croak 'timeout'; };
+      local $SIG{ALRM} = sub { croak 'timeout'; };
       alarm $self->timeout();
+
       eval {
 	push @{$self->{'_registry_sources'}}, @{$soap->listServices()};
+
+      } or do {
+	carp $EVAL_ERROR;
       };
+
       alarm 0;
     }
   }
@@ -1060,7 +1144,7 @@ sub registry_sources {
   if((ref $capability eq 'ARRAY') &&
      (scalar @{$capability})) {
     my $str    = join q(|), @{$capability};
-    my $match  = qr/$str/;
+    my $match  = qr/$str/smx;
     $sources = [grep { $self->_filter_capability($_, $match) } @{$sources}];
   }
 
@@ -1089,7 +1173,18 @@ sub _filter_category {
   my ($self, $src, $match) = @_;
   for my $scoord (@{$src->{'coordinateSystem'}}) {
     for my $m (@{$match}) {
-       return 1 if($scoord->{'category'} eq $m);
+      if ($m =~ m/,/mxs) {
+        # regex REQUIRES "authority,type", and handles optional version (with proper underscore handling) and species
+        my ($auth, $ver, $cat, $org) = $m =~ m/^ (.+?) (?:_([^_,]+))? ,([^,]+) (?:,(.+))? /mxs;
+        if (lc $cat eq lc $scoord->{'category'} &&
+            $auth eq $scoord->{'name'} &&
+            (!$ver || lc $ver eq lc $scoord->{'version'}) &&
+            (!$org || lc $org eq lc $scoord->{'organismName'})) {
+          return 1;
+        }
+      } else {
+        return 1 if(lc $scoord->{'category'} eq lc $m);
+      }
     }
   }
   return 0;
@@ -1109,7 +1204,7 @@ Bio::Das::Lite - Perl extension for the DAS (HTTP+XML) Protocol (http://biodas.o
 =head1 SYNOPSIS
 
   use Bio::Das::Lite;
-  my $bdl     = Bio::Das::Lite->new_from_registry({'category' => 'Chromosome'});
+  my $bdl     = Bio::Das::Lite->new_from_registry({'category' => 'GRCh_37,Chromosome,Homo sapiens'});
   my $results = $bdl->features('22');
 
 
@@ -1139,23 +1234,30 @@ Bio::Das::Lite - Perl extension for the DAS (HTTP+XML) Protocol (http://biodas.o
 
 =head2 new_from_registry : Constructor
 
-  Similar to 'new' above but supports 'capabilities' and 'category'
+  Similar to 'new' above but supports 'capability' and 'category'
   in the given hashref, using them to query the DAS registry and
   configuring the DSNs accordingly.
 
   my $das = Bio::Das::Lite->new_from_registry({
-					     'capabilities' => ['features'],
-					     'category'     => ['Protein Sequence'],
+					     'capability' => ['features'],
+					     'category'   => ['Protein Sequence'],
 					    });
 
  Options are as above, plus
-                 capability   (optional arrayref of capabilities)
-                 category     (optional arrayref of categories)
+                 capability OR capabilities   (optional arrayref of capabilities)
+                 category                     (optional arrayref of categories)
 
 
-For a complete list of capabilities and categories, see:
+  For a complete list of capabilities and categories, see:
 
     http://das.sanger.ac.uk/registry/
+
+  The category can optionally be a full coordinate system name,
+  allowing further restriction by authority, version and species.
+  For example:
+      'Protein Sequence' OR
+      'UniProt,Protein Sequence' OR
+      'GRCh_37,Chromosome,Homo sapiens'
 
 =head2 http_proxy : Get/Set http_proxy
 
@@ -1271,8 +1373,9 @@ For a complete list of capabilities and categories, see:
                                       # optional args - see DAS Spec
                                      });
   my $feature_data4 = $das->features([
-                                      {'segment' => '1:1,1000000','type' => 'karyotype',},
-                                      {'segment' => '2:1,1000000',},
+                                      {'segment'  => '1:1,1000000','type' => 'karyotype',},
+                                      {'segment'  => '2:1,1000000',},
+                                      {'group_id' => 'OTTHUMG00000036084',},
                                      ]);
 
   #########
@@ -1291,6 +1394,9 @@ For a complete list of capabilities and categories, see:
 
   # or:
   $das->features(['1:1,1000000', '2:1,1000000', '3:1,1000000'], $callback);
+
+  # or:
+  $das->features([{'group_id' => 'OTTHUMG00000036084'}, '2:1,1000000', '3:1,1000000'], $callback);
 
 =head2 alignment : Retrieve protein alignment data for a query.  This can be a multiple sequence alignment
                     or pairwise alignment.  Note - this has not been tested for structural alignments as there
@@ -1322,10 +1428,14 @@ For a complete list of capabilities and categories, see:
 
 =head2 max_hosts set number of running concurrent host connections
 
+  THIS METHOD IS NOW DEPRECATED AND HAS NO EFFECT
+
   $das->max_hosts(7);
   print $das->max_hosts();
 
 =head2 max_req set number of running concurrent requests per host
+
+  THIS METHOD IS NOW DEPRECATED AND HAS NO EFFECT
 
   $das->max_req(5);
   print $das->max_req();
@@ -1354,7 +1464,7 @@ Constructs an arrayref of DAS requests including parameters for each call
 
 =head2 build_requests
 
-Constructs the LWP::P::UA callbacks
+Constructs the WWW::Curl callbacks
 
 =head2 postprocess
 
@@ -1366,12 +1476,25 @@ This module is an implementation of a client for the DAS protocol (XML over HTTP
 
 =head1 DEPENDENCIES
 
-  LWP::Parallel::UserAgent
-  HTTP::Request
-  HTTP::Headers
-  SOAP::Lite
-  Carp
-  English
+=over
+
+=item strict
+
+=item warnings
+
+=item WWW::Curl
+
+=item HTTP::Response
+
+=item SOAP::Lite
+
+=item Carp
+
+=item English
+
+=item Readonly
+
+=back
 
 =head1 DIAGNOSTICS
 
@@ -1382,9 +1505,9 @@ This module is an implementation of a client for the DAS protocol (XML over HTTP
 
 =head1 INCOMPATIBILITIES
 
-
 =head1 BUGS AND LIMITATIONS
 
+  The max_req and max_hosts methods are now deprecated and have no effect.
 
 =head1 SEE ALSO
 
