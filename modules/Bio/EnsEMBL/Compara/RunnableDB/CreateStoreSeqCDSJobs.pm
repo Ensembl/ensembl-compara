@@ -141,7 +141,7 @@ sub create_analysis_jobs {
       $sth = $self->dbc->prepare($sql);
       $sth->execute;
     }
-    $sth->finish;
+    if (defined($sth)) {    $sth->finish;}
   }
 }
 
