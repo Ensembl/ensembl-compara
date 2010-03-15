@@ -659,8 +659,8 @@ sub _parse {
   $plugin_locator->include;
   
   # Create all the child objects with the $tree and $db_tree hashrefs attached
-  $plugin_locator->create_all($tree, $db_tree, $das_tree);
-  
+  $plugin_locator->create_all($tree, $db_tree, $das_tree); 
+  $plugin_locator->children( [ values %{$plugin_locator->results} ] );
   $self->_info_line('Parser', 'Child objects attached');
 
   # Parse the web tree to create the static content site map
@@ -694,7 +694,7 @@ sub _parse {
       $self->_info_line('Retrieve', "$species databases");
     } else {
       # Set species on each of the child objects
-      $plugin_locator->parameters = [ $species ];
+      $plugin_locator->parameters([ $species ]);
       $plugin_locator->call('species');
       $plugin_locator->call('_munge_databases');
       
@@ -710,7 +710,7 @@ sub _parse {
       $self->_info_line('Retrieve', "$species DAS sources");
     } else {
       # Set species on each of the child objects
-      $plugin_locator->parameters = [ $species ];
+      $plugin_locator->parameters([ $species ]);
       $plugin_locator->call('species');
       $plugin_locator->call('_munge_das');
       
@@ -742,7 +742,7 @@ sub _parse {
     $db_tree->{'MULTI'} = lock_retrieve($multi_packed);
     $self->_info_line('Retrieve', 'MULTI ini file');
   } else {
-    $plugin_locator->parameters = [ 'MULTI' ];
+    $plugin_locator->parameters([ 'MULTI' ]);
     $plugin_locator->call('species');
     $plugin_locator->call('_munge_databases_multi');
     
@@ -758,14 +758,14 @@ sub _parse {
   $self->_merge_in_dhtml($tree);
   
   foreach my $species (@$ENSEMBL_DATASETS) {
-    $plugin_locator->parameters = [ $species ];
+    $plugin_locator->parameters([ $species ]);
     $plugin_locator->call('species');
     $plugin_locator->call('_munge_config_tree');
     
     $self->_info_line('munging', "$species config");
   }
   
-  $plugin_locator->parameters = [ 'MULTI' ];
+  $plugin_locator->parameters([ 'MULTI' ]);
   $plugin_locator->call('species');
   $plugin_locator->call('_munge_config_tree_multi');
   
