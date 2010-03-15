@@ -277,6 +277,7 @@ sub create_features {
   }
   else {
     my $feature_type  = $self->param('ftype') ||$self->param('type') || 'ProbeFeature';  
+    $db = 'funcgen';
     if ( ($self->param('ftype') eq 'ProbeFeature') && $self->param('ptype')) {
       $subtype = $self->param('ptype');
     } 
@@ -326,8 +327,8 @@ sub _create_Phenotype {
 sub _create_ProbeFeature {
   # get Oligo hits plus corresponding genes
   my $probe;
-  if ( $_[2] eq 'pset'){ 
-    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] ); 
+  if ( $_[2] eq 'pset'){  
+    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] );
   } else {
     $probe = $_[0]->_create_ProbeFeatures_by_probe_id;
   }
@@ -341,7 +342,7 @@ sub _create_ProbeFeature {
 sub _create_ProbeFeatures_by_probe_id {
   my $self = shift;
   my $db_adaptor = $self->_get_funcgen_db_adaptor; 
-  my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
+  my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;  
   my @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
   my $probe_obj = $probe_objs[0];
   my $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
