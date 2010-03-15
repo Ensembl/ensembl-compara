@@ -85,7 +85,7 @@ sub new {
     timer       => undef 
   }, $class);
   
-  my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/ '. $ENSEMBL_CONFIG_FILENAME;
+  my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/' . $ENSEMBL_CONFIG_FILENAME;
   
   $self->{'_filename'} = $conffile;
 
@@ -279,8 +279,8 @@ sub parse {
   $self->{'_start_time'} = time;
   $self->{'_last_time'}  = $self->{'_start_time'};
   
-  if(!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}){
-    warn " Retrieving conf from $self->{_filename}\n";
+  if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}){
+    warn " Retrieving conf from $self->{'_filename'}\n";
     $self->retrieve;
     $reg_conf->configure;
     return 1;
@@ -805,7 +805,8 @@ sub timer {
 }
 
 sub timer_push {
-  my $self = shift; 
+  my $self = shift;
+  return; 
   return $self->timer->push(@_);
 }
 
