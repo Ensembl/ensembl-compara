@@ -50,7 +50,7 @@ sub new {
       _user           => $args{'_user'}          || undef,                    
       _view_configs   => $args{'_view_configs_'} || {},
       _user_details   => $args{'_user_details'}  || 1,
-      _timer          => $args{'_timer'}         || [],                       # Diagnostic object
+      _timer          => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
   };
   
   bless $self, $class;
