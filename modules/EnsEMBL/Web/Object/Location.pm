@@ -448,7 +448,7 @@ sub _create_Gene {
 
 # For a Regulatory Factor ID display all the RegulatoryFeatures
 sub _create_RegulatoryFactor {
-  my ( $self, $db, $id, $name ) = @_;
+  my ( $self, $db, $id ) = @_;
 
   if (!$id ) {$id = $self->param('id'); }
   my $analysis = $self->param('analysis');
@@ -487,13 +487,11 @@ sub _create_RegulatoryFactor {
       $features= {'RegulatoryFactor' => \@assoc_features};
     } else {
       my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor; warn $feat_type_adaptor; warn $id;
-      my $name = $self->param('name');
-      $name =~s/(\,|\s+)\w*//g;
-      my $ftype = $feat_type_adaptor->fetch_by_name($name); warn $name; warn $ftype;
+      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor; 
+      my $ftype = $feat_type_adaptor->fetch_by_name($id);  
       my @ftypes = ($ftype); 
-      my $type = $ftype->description; warn '>>> TYPE ' . $type; 
-      my $fstype = $fset_types{$type};  warn '>>> FSTYPE '. $fstype;
+      my $type = $ftype->description; 
+      my $fstype = $fset_types{$type};  
       my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
       my @fsets = ($fstype);
       my $feats = $fset->get_Features_by_FeatureType($ftype);
@@ -518,7 +516,7 @@ sub _create_Xref {
     my $mim_m = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_MORBID'] );
     @$t_features = (@$mim_g, @$mim_m);
   }
-  else {
+  else { 
     $t_features = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
   }
   if( $t_features && ref($t_features) eq 'ARRAY') {
