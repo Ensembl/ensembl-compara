@@ -31,13 +31,22 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $data) = @_;
+  
+  $data->{'_type'}    ||= $ENV{'ENSEMBL_TYPE'};
+  $data->{'_action'}  ||= $ENV{'ENSEMBL_ACTION'};
+  $data->{'_function'}||= $ENV{'ENSEMBL_FUNCTION'}; 
+  $data->{'_species'} ||= $ENV{'ENSEMBL_SPECIES'};
+  $data->{'timer'}    ||= $ENSEMBL_WEB_REGISTRY->timer;
+
   my $self = { data => $data };
   bless $self, $class;
   return $self; 
 }
 
-sub apache_handle     { return $_[0]->{'data'}{'_apache_handle'}; }
 sub __data            { return $_[0]->{'data'}; }
+sub __objecttype      { return $_[0]->{'data'}{'_objecttype'}; }
+sub parent            { return $_[0]->hub->parent; }
+sub apache_handle     { return $_[0]->{'data'}{'_apache_handle'}; }
 sub core_objects      { return $_[0]->{'data'}{'_core_objects'}; }
 sub hub               { return $_[0]->{'data'}{'_hub'}; }
 sub type              { return $_[0]->{'data'}{'_type'}; }
