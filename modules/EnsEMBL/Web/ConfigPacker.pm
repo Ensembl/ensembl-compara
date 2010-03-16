@@ -9,47 +9,64 @@ use Data::Dumper;
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
 
-sub _munge_databases {
-  my $self = shift;
-  my @tables = qw(core cdna vega otherfeatures );
-  foreach my $db ( @tables ) { 
-    $self->_summarise_core_tables( $db, 'DATABASE_'.uc($db) );
-  }
-
-  $self->_summarise_variation_db( 'variation', 'DATABASE_VARIATION' );
-  $self->_summarise_funcgen_db(   'funcgen',   'DATABASE_FUNCGEN'   );
+sub munge {
+  my ($self, $func) = @_;
+  
+  $func .= '_multi' if $self->species eq 'MULTI';
+  
+  my $munge  = "munge_$func";
+  my $modify = "modify_$func";
+  
+  $self->$munge();
+  $self->$modify();
 }
 
-sub _munge_das { # creates das.packed...
+sub munge_databases {
+  my $self   = shift;
+  my @tables = qw(core cdna vega otherfeatures);
+  
+  $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
+  $self->_summarise_variation_db('variation', 'DATABASE_VARIATION');
+  $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
+}
+
+# creates das.packed
+sub munge_das {
   my $self = shift;
   $self->_summarise_dasregistry;
 }
 
-sub _munge_databases_multi {
+sub munge_databases_multi {
   my $self = shift;
-  $self->_summarise_website_db(    );
-  $self->_summarise_compara_db(   'compara', 'DATABASE_COMPARA' );
-  $self->_summarise_ancestral_db( 'core',    'DATABASE_CORE'    );
-  $self->_summarise_go_db(         );
+  $self->_summarise_website_db;
+  $self->_summarise_compara_db('compara', 'DATABASE_COMPARA');
+  $self->_summarise_ancestral_db('core', 'DATABASE_CORE');
+  $self->_summarise_go_db;
 }
 
-sub _munge_config_tree {
+sub munge_config_tree {
   my $self = shift;
-#---------- munge the results obtained from the database queries
-#           of the website and the meta tables
-  $self->_munge_meta(       );
-  $self->_munge_variation(  );
-  $self->_munge_website(    );
+  
+  # munge the results obtained from the database queries of the website and the meta tables
+  $self->_munge_meta;
+  $self->_munge_variation;
+  $self->_munge_website;
 
-#---------- parse the BLAST configuration
-  $self->_configure_blast(  );
+  # parse the BLAST configuration
+  $self->_configure_blast;
 }
 
-sub _munge_config_tree_multi {
+sub munge_config_tree_multi {
   my $self = shift;
-  $self->_munge_website_multi(    );
+  $self->_munge_website_multi;
 }
 
+# Implemented in plugins
+sub modify_databases         {}
+sub modify_databases_multi   {}
+sub modify_das               {}
+sub modify_config_tree       {}
+sub modify_config_tree_multi {}
 
 sub _summarise_generic {
   my( $self, $db_name, $dbh ) = @_;

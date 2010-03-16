@@ -80,10 +80,10 @@ sub ingredient {
   
   if ($model->object) {
     # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
-    $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};    
-    $model->object->action = $ENV{'ENSEMBL_ACTION'};
+    $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
+    $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'};
     $model->hub->action = $ENV{'ENSEMBL_ACTION'};
-
+    
     $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
     $page->render;
     

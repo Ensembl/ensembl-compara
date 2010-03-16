@@ -32,18 +32,7 @@ sub _initialize_HTML {
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   ));
   
-  $self->call_child_functions('common_page_elements');
-
-  $self->timer_push('page elements configured');
-  
   $self->_common_HTML;
-  
-  $self->timer_push('common HTML called');
-  $self->timer_push('page decs configured');
-
-  $self->call_child_functions('extra_configuration');
-
-  $self->timer_push('menu items configured');
 }
 
 sub panel_type {

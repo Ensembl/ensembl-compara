@@ -141,7 +141,6 @@ sub build_page {
   
   $type = 'DAS' if $type =~ /^DAS::.+/;
   
-  my @plugins = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
   my $functions_called = {};
   my $common_conf = {
     tree         => new EnsEMBL::Web::OrderedTree,
@@ -153,30 +152,27 @@ sub build_page {
   
   my %configs;
   
-  # Loop through the EnsEMBL root directory and plugins
-  while (my ($module_root) = splice @plugins, 0, 2) {
-    my $config_module_name = "${module_root}::Configuration::$type"; # First work out what the module name is, to see if it can be used
-    my ($configuration, $error) = $self->_use($config_module_name, $page, $model, $common_conf);
-    
-    if ($configuration) {
-      $configs{$_} = [ $configuration, $config_module_name ] for grep $configuration->can($_), @functions; 
-    } elsif ($error) {
-      # Handle "use" failures gracefully, but skip "Can't locate" errors
-      $self->add_error_panel($page, 
-        'Configuration module compilation error',
-        '<p>Unable to use Configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>',
-        $config_module_name, $error
-      );
-    }
+  my $config_module_name = "EnsEMBL::Web::Configuration::$type"; # Work out what the module name is, to see if it can be used
+  my ($configuration, $error) = $self->_use($config_module_name, $page, $model, $common_conf);
+  
+  if ($configuration) {
+    $configs{$_} = [ $configuration, $config_module_name ] for grep $configuration->can($_), @functions; 
+  } elsif ($error) {
+    # Handle "use" failures gracefully, but skip "Can't locate" errors
+    $self->add_error_panel($page, 
+      'Configuration module compilation error',
+      '<p>Unable to use Configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>',
+      $config_module_name, $error
+    );
   }
   
   # Loop through the functions to configure
   foreach my $func (@functions) {
     # Get the configuration module for that function
-    my ($configuration, $config_module_name) = @{$configs{$func}};
+    my ($config, $config_module_name) = @{$configs{$func}};
     
     eval {
-      $configuration->$func();
+      $config->$func();
     };
     
     # Catch any errors and display as a "configuration runtime error"
@@ -191,7 +187,7 @@ sub build_page {
     } else {
       $functions_called->{$func} = 1;
       
-      my $node = $configuration->get_node($configuration->_get_valid_action($self->{'action'}, $self->{'function'}));
+      my $node = $config->get_node($config->_get_valid_action($self->{'action'}, $self->{'function'}));
       
       if ($node) {
         $self->{'command'} = $node->data->{'command'};
@@ -224,9 +220,8 @@ sub build_menu {
   return unless $object;
  
   # Force values of action and type because apparently require "EnsEMBL::Web::ZMenu::::Gene" (for eg) doesn't fail. Stupid perl.
-  my $type     = $model->hub->type   || 'NO_TYPE';
-  my $action   = $model->hub->action || 'NO_ACTION';
-  my @packages = ('EnsEMBL::Web', '', @$ENSEMBL_PLUGINS);
+  my $type   = $model->hub->type   || 'NO_TYPE';
+  my $action = $model->hub->action || 'NO_ACTION';
   
   my $menu;
   
@@ -234,21 +229,19 @@ sub build_menu {
   ### This way we can have, for example, ZMenu::Contig and ZMenu::Contig::Gene (contig menu with Gene page specific functionality),
   ### and also ZMenu::Gene and ZMenu::Gene::ComparaTree (has a similar menu to that of a gene, but has a different glyph in the drawing code)
   my @modules = (
-    "::ZMenu::$type",
-    "::ZMenu::$action",
-    "::ZMenu::${type}::$action",
-    "::ZMenu::${action}::$type"
+    "EnsEMBL::Web::ZMenu::$type",
+    "EnsEMBL::Web::ZMenu::$action",
+    "EnsEMBL::Web::ZMenu::${type}::$action",
+    "EnsEMBL::Web::ZMenu::${action}::$type"
   );
   
-  while (my ($module_root) = splice @packages, 0, 2) {    
-    my $module_name = [ map { $self->dynamic_use("$module_root$_") ? "$module_root$_" : () } @modules ]->[-1];
-    
-    if ($module_name) {
-      $menu = $module_name->new($object, $menu);
-    } else {
-      my $error = $self->dynamic_use_failure("$module_root$modules[-1]");
-      warn $error unless $error =~ /^Can't locate/;
-    }
+  my $module_name = [ map { $self->dynamic_use($_) ? $_ : () } @modules ]->[-1];
+  
+  if ($module_name) {
+    $menu = $module_name->new($object, $menu);
+  } else {
+    my $error = $self->dynamic_use_failure($modules[-1]);
+    warn $error unless $error =~ /^Can't locate/;
   }
   
   $self->{'r'}->content_type('text/plain');

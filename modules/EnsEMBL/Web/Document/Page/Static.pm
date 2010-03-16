@@ -40,10 +40,8 @@ sub _initialize {
     footerlinks     EnsEMBL::Web::Document::HTML::FooterLinks
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   ));
-
-  $self->call_child_functions('common_page_elements', 'static_page_elements');
+  
   $self->_common_HTML;
-  $self->call_child_functions('extra_configuration');
 }
 
 1;

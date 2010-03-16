@@ -442,32 +442,42 @@ sub jsonify {
 }
 
 sub new_object {
-  my ($self, $module, $api_object, $data) = @_;
-  # $data ||= {};
-  # $data->{'_object'} = $api_object;
-  return $self->new_proxy('Object', $module, $api_object, $data);
+  my ($self, $module, $api_object) = @_;
+  my $data = $self->deepcopy($_[-1]) || {};
+  $data->{'_object'} = $api_object;
+  return $self->new_proxy('Object', $module, $data);
 }
 
 sub new_factory {
-  my ($self, $module, $data) = @_;
-  # $data ||= {};
-  # $data->{'_feature_IDs'} = [];
-  # $data->{'_dataObjects'} = [];
+  my ($self, $module) = @_;
+  my $data = $self->deepcopy($_[-1]) || {};
+  $data->{'_feature_IDs'} = [];
+  $data->{'_dataObjects'} = [];
   return $self->new_proxy('Factory', $module, $data);
 }
 
 sub new_proxy {
-  my $self   = shift;
-  my $type   = shift;
+  my ($self, $type, $module, $data) = @_;
+  my $class = "EnsEMBL::Web::${type}::$module";
   
-  # my $class = "EnsEMBL::Web::${type}::$module";
-  my $class = "EnsEMBL::Web::Proxy::$type";
+  $data->{'_objecttype'} = $module;
+  delete $data->{'_viewconfig'};
   
   if ($self->dynamic_use($class)) {
-    return $class->new(@_);
+    return $class->new($data);
   } else {
     warn "COULD NOT USE OBJECT MODULE $class";
   }
+}
+
+sub deepcopy {
+  my $self = shift;
+  if (ref $_[0] eq 'HASH') {
+    return { map( {$self->deepcopy($_)} %{$_[0]}) };
+  } elsif (ref $_[0] eq 'ARRAY') {
+    return [ map( {$self->deepcopy($_)} @{$_[0]}) ];
+  }
+  return $_[0];
 }
 
 1;

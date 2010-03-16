@@ -513,7 +513,6 @@ while( my( $dir, $name ) = splice(@T,0,2)  ) {
   unshift @ENSEMBL_HTDOCS_DIRS,   $dir.'/htdocs'; 
   unshift @$ENSEMBL_PLUGIN_ROOTS, $name;
   push    @ENSEMBL_CONF_DIRS,     $dir.'/conf'; 
-  unshift @ENSEMBL_LIB_DIRS,      $dir.'/modules';
 }
 
 @T = @{$ENSEMBL_PLUGINS||[]};         ## But these have to go on in normal order...

@@ -60,8 +60,8 @@ use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use Bio::EnsEMBL::Utils::Exception qw(verbose);
 
+use EnsEMBL::Web::ConfigPacker;
 use EnsEMBL::Web::DASConfig;
-use EnsEMBL::Web::Tools::PluginLocator;
 use EnsEMBL::Web::Tools::WebTree;
 use EnsEMBL::Web::Tools::RobotsTxt;
 use EnsEMBL::Web::Tools::OpenSearchDescription;
@@ -85,7 +85,7 @@ sub new {
     timer       => undef 
   }, $class);
   
-  my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/' . $ENSEMBL_CONFIG_FILENAME;
+  my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/'. $ENSEMBL_CONFIG_FILENAME;
   
   $self->{'_filename'} = $conffile;
 
@@ -279,7 +279,7 @@ sub parse {
   $self->{'_start_time'} = time;
   $self->{'_last_time'}  = $self->{'_start_time'};
   
-  if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}){
+  if (!$SiteDefs::ENSEMBL_CONFIG_BUILD && -e $self->{'_filename'}) {
     warn " Retrieving conf from $self->{'_filename'}\n";
     $self->retrieve;
     $reg_conf->configure;
@@ -408,11 +408,11 @@ sub _read_in_ini_file {
             $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
           }
         } elsif (/([\w*]\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
-          my ($key,$value) = ($1,$2); # Add a config entry under the current 'top level'
+          my ($key, $value) = ($1, $2); # Add a config entry under the current 'top level'
           $value =~ s/\s*$//;
           
           # [ - ] signifies an array
-          if ($value=~/^\[\s*(.*?)\s*\]$/) {
+          if ($value =~ /^\[\s*(.*?)\s*\]$/) {
             my @array = split /\s+/, $1;
             $value = \@array;
           }
@@ -646,21 +646,11 @@ sub _parse {
 
   $self->_info_log('Parser', 'Starting to parse tree');
 
-  my $tree     = {};
-  my $db_tree  = {};
-  my $das_tree = {};
+  my $tree          = {};
+  my $db_tree       = {};
+  my $das_tree      = {};
+  my $config_packer = new EnsEMBL::Web::ConfigPacker($tree, $db_tree, $das_tree);
   
-  # Initialize plugin locator - and create array of ConfigPacker objects
-  my $plugin_locator = new EnsEMBL::Web::Tools::PluginLocator((
-    locations => [ 'EnsEMBL::Web', reverse @{$self->ENSEMBL_PLUGIN_ROOTS} ], 
-    suffix    => 'ConfigPacker'
-  ));
-  
-  $plugin_locator->include;
-  
-  # Create all the child objects with the $tree and $db_tree hashrefs attached
-  $plugin_locator->create_all($tree, $db_tree, $das_tree); 
-  $plugin_locator->children( [ values %{$plugin_locator->results} ] );
   $self->_info_line('Parser', 'Child objects attached');
 
   # Parse the web tree to create the static content site map
@@ -673,106 +663,68 @@ sub _parse {
   my $defaults = $self->_read_in_ini_file('DEFAULTS', {});
   $self->_info_line('Parsing', 'DEFAULTS ini file');
   
-  $self->_merge_in_css_ini($defaults);
-  
   # Loop for each species exported from SiteDefs
   # grab the contents of the ini file AND
   # IF  the DB/DAS packed files exist expand them
-  # o/w attach the species databases/parse the DAS registry, load the
-  #     data and store the DB/DAS packed files
-  foreach my $species (@$ENSEMBL_DATASETS) {
-    $tree->{$species} = $self->_read_in_ini_file($species, $defaults);
-    $self->_info_line('Parsing', "$species ini file");
-    $self->_expand_database_templates($species, $tree->{$species});
-    $self->_promote_general($tree->{$species});
+  # o/w attach the species databases/parse the DAS registry, 
+  # load the data and store the DB/DAS packed files
+  foreach my $species (@$ENSEMBL_DATASETS, 'MULTI') {
+    $config_packer->species($species);
     
-    my $species_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.db.packed");
-    my $das_packed     = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.das.packed");
-
-    if (-e $species_packed) {
-      $db_tree->{$species} = lock_retrieve($species_packed);
-      $self->_info_line('Retrieve', "$species databases");
-    } else {
-      # Set species on each of the child objects
-      $plugin_locator->parameters([ $species ]);
-      $plugin_locator->call('species');
-      $plugin_locator->call('_munge_databases');
-      
-      $self->_info_line('** DB **', "$species databases");
-      
-      lock_nstore($db_tree->{$species} || {}, $species_packed);
-    }
-    
+    $self->process_ini_files($species, 'db', $config_packer, $defaults);
     $self->_merge_db_tree($tree, $db_tree, $species);
     
-    if (-e $das_packed) {
-      $das_tree->{$species} = lock_retrieve($das_packed);
-      $self->_info_line('Retrieve', "$species DAS sources");
-    } else {
-      # Set species on each of the child objects
-      $plugin_locator->parameters([ $species ]);
-      $plugin_locator->call('species');
-      $plugin_locator->call('_munge_das');
-      
-      $self->_info_line('** DAS **', "$species DAS sources");
-      
-      lock_nstore($das_tree->{$species} || {}, $das_packed);
+    if ($species ne 'MULTI') {
+      $self->process_ini_files($species, 'das', $config_packer, $defaults);
+      $self->_merge_db_tree($tree, $das_tree, $species);
     }
-    
-    $self->_merge_db_tree($tree, $das_tree, $species);
   }
   
-  # Lets try and fake a databases/tables hash so we can
-  # mess around in ImageConfig with an all species
-  # configuration
+  # Fake a databases/tables hash so we can mess around in ImageConfig with an all species configuration
   $tree->{'merged'} = $self->_created_merged_table_hash($tree);
   $self->_info_line('Creating', 'merged species config');
-
-  # Do the same for the multi-species file
-  $tree->{'MULTI'} = $self->_read_in_ini_file('MULTI', $defaults);
-  $self->_info_line('Parsing', 'MULTI ini file');
-  $tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours($self->_read_in_ini_file('COLOUR', {}));
-
-  $self->_expand_database_templates('MULTI', $tree->{'MULTI'});
-  $self->_promote_general($tree->{'MULTI'});
-  
-  my $multi_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', 'MULTI.db.packed');
-  
-  if (-e $multi_packed) {
-    $db_tree->{'MULTI'} = lock_retrieve($multi_packed);
-    $self->_info_line('Retrieve', 'MULTI ini file');
-  } else {
-    $plugin_locator->parameters([ 'MULTI' ]);
-    $plugin_locator->call('species');
-    $plugin_locator->call('_munge_databases_multi');
-    
-    $self->_info_line('** DB **', 'MULTI database');
-    
-    lock_nstore($db_tree->{'MULTI'}, $multi_packed);
-  }
-  
-  $self->_merge_db_tree($tree, $db_tree, 'MULTI');
-
-  # Loop over each tree and make further manipulations
   $self->_info_log('Parser', 'Post processing ini files');
+  
   $self->_merge_in_dhtml($tree);
   
-  foreach my $species (@$ENSEMBL_DATASETS) {
-    $plugin_locator->parameters([ $species ]);
-    $plugin_locator->call('species');
-    $plugin_locator->call('_munge_config_tree');
-    
+  # Loop over each tree and make further manipulations
+  foreach my $species (@$ENSEMBL_DATASETS, 'MULTI') {
+    $config_packer->species($species);
+    $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
   }
-  
-  $plugin_locator->parameters([ 'MULTI' ]);
-  $plugin_locator->call('species');
-  $plugin_locator->call('_munge_config_tree_multi');
-  
-  $self->_info_line('munging', 'MULTI config');
 
   $CONF->{'_storage'} = $tree; # Store the tree
 }
+
+sub process_ini_files {
+  my ($self, $species, $type, $config_packer, $defaults) = @_;
+  
+  my $msg  = "$species " . ($type eq 'das' ? 'DAS sources' : 'database');
+  my $file = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.$type.packed");
+  my $full_tree = $config_packer->full_tree;
+  my $tree_type = "_${type}_tree";
+  
+  if (!$full_tree->{$species}) {
+    $full_tree->{$species} = $self->_read_in_ini_file($species, $defaults);
+    $full_tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours($self->_read_in_ini_file('COLOUR', {})) if $species eq 'MULTI';
+    
+    $self->_info_line('Parsing', "$species ini file");
+    $self->_expand_database_templates($species, $full_tree->{$species});
+    $self->_promote_general($full_tree->{$species});
+  }
+  
+  if (-e $file) {
+    $config_packer->{$tree_type}->{$species} = lock_retrieve($file);
+    $self->_info_line('Retrieve', $species eq 'MULTI' ? 'MULTI ini file' : $msg);
+  } else {
+    $config_packer->munge($type eq 'db' ? 'databases' : 'das');
+    $self->_info_line(sprintf('** %s **', uc $type), $msg);
+    
+    lock_nstore($config_packer->{$tree_type}->{$species} || {}, $file);
+  }
+}
+
 
 sub _munge_colours {
   my $self = shift;
@@ -782,6 +734,7 @@ sub _munge_colours {
   foreach my $set (keys %$in) {
     foreach my $key (keys %{$in->{$set}}) {
       my ($c, $n) = split /\s+/, $in->{$set}{$key}, 2;
+      
       $out->{$set}{$key} = {
         text => $n, 
         map { /:/ ? (split /:/, $_, 2) : ('default', $_) } split /;/, $c
@@ -806,7 +759,6 @@ sub timer {
 
 sub timer_push {
   my $self = shift;
-  return; 
   return $self->timer->push(@_);
 }
 

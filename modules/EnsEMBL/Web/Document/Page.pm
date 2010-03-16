@@ -4,112 +4,89 @@ package EnsEMBL::Web::Document::Page;
 
 use strict;
 
-use Apache2::Const;
 use HTML::Entities qw(encode_entities);
-
-use constant DEFAULT_DOCTYPE         => 'HTML';
-use constant DEFAULT_DOCTYPE_VERSION => '4.01 Trans';
-use constant DEFAULT_ENCODING        => 'ISO-8859-1';
-use constant DEFAULT_LANGUAGE        => 'en-gb';
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
-use EnsEMBL::Web::Tools::PluginLocator;
 
 use base qw(EnsEMBL::Web::Root);
 
-our %DOCUMENT_TYPES = (
-  'none' => { 'none' => '' },
-  'HTML' => {
-    '2.0'         => '"-//IETF//DTD HTML 2.0 Level 2//EN"',
-    '3.0'         => '"-//IETF//DTD HTML 3.0//EN"',
-    '3.2'         => '"-//W3C//DTD HTML 3.2 Final//EN"',
-    '4.01 Strict' => '"-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"',
-    '4.01 Trans'  => '"-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"',
-    '4.01 Frame'  => '"-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd"'
-  },
-  'XHTML' => {
-    '1.0 Strict' => '"-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"',
-    '1.0 Trans'  => '"-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"',
-    '1.0 Frame'  => '"-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"',
-    '1.1'        => '"-//W3C//DTD XHTML 1.1//EN"'
-  },
-  'XML' => {
-    'DASGFF'             => '"http://www.biodas.org/dtd/dasgff.dtd"',
-    'DASDSN'             => '"http://www.biodas.org/dtd/dasdsn.dtd"',
-    'DASEP'              => '"http://www.biodas.org/dtd/dasep.dtd"',
-    'DASDNA'             => '"http://www.biodas.org/dtd/dasdna.dtd"',
-    'DASSEQUENCE'        => '"http://www.biodas.org/dtd/dassequence.dtd"',
-    'DASSTYLE'           => '"http://www.biodas.org/dtd/dasstyle.dtd"',
-    'DASTYPES'           => '"http://www.biodas.org/dtd/dastypes.dtd"',
-    'rss version="0.91"' => '"http://my.netscape.com/publish/formats/rss-0.91.dtd"',
-    'rss version="2.0"'  => '"http://www.silmaril.ie/software/rss2.dtd"',
-    'xhtml'              => '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"',
-  },
-);
-
 sub new {
   my ($class, $data) = @_;
-  use Carp qw(cluck);
-  #cluck "DATA $data";
- 
   
   my $format = $data->{'outputtype'};
-  if ($data->{'input'} && $data->{'input'}->param('_format')) {
-    $format = $data->{'input'}->param('_format');
-  } 
+  $format    = $data->{'input'}->param('_format') if $data->{'input'} && $data->{'input'}->param('_format');
+
+  my $defaults = {
+    doc_type         => 'HTML',
+    doc_type_version => '4.01 Trans',
+    encoding         => 'ISO-8859-1',
+    language         => 'en-gb'
+  };
+  
+   my $document_types = {
+    none => { none => '' },
+    HTML => {
+      '2.0'         => '"-//IETF//DTD HTML 2.0 Level 2//EN"',
+      '3.0'         => '"-//IETF//DTD HTML 3.0//EN"',
+      '3.2'         => '"-//W3C//DTD HTML 3.2 Final//EN"',
+      '4.01 Strict' => '"-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"',
+      '4.01 Trans'  => '"-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"',
+      '4.01 Frame'  => '"-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd"'
+    },
+    XHTML => {
+      '1.0 Strict' => '"-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"',
+      '1.0 Trans'  => '"-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"',
+      '1.0 Frame'  => '"-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"',
+      '1.1'        => '"-//W3C//DTD XHTML 1.1//EN"'
+    },
+    XML => {
+      'DASGFF'             => '"http://www.biodas.org/dtd/dasgff.dtd"',
+      'DASDSN'             => '"http://www.biodas.org/dtd/dasdsn.dtd"',
+      'DASEP'              => '"http://www.biodas.org/dtd/dasep.dtd"',
+      'DASDNA'             => '"http://www.biodas.org/dtd/dasdna.dtd"',
+      'DASSEQUENCE'        => '"http://www.biodas.org/dtd/dassequence.dtd"',
+      'DASSTYLE'           => '"http://www.biodas.org/dtd/dasstyle.dtd"',
+      'DASTYPES'           => '"http://www.biodas.org/dtd/dastypes.dtd"',
+      'rss version="0.91"' => '"http://my.netscape.com/publish/formats/rss-0.91.dtd"',
+      'rss version="2.0"'  => '"http://www.silmaril.ie/software/rss2.dtd"',
+      'xhtml'              => '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"'
+    }
+  };
   
   my $self = {
     body_attr        => {},
-    doc_type         => DEFAULT_DOCTYPE,
-    doc_type_version => DEFAULT_DOCTYPE_VERSION,
-    encoding         => DEFAULT_ENCODING,
-    language         => DEFAULT_LANGUAGE,
-    format           => $format || DEFAULT_DOCTYPE,
+    doc_type         => $defaults->{'doc_type'},
+    doc_type_version => $defaults->{'doc_type_version'},
+    encoding         => $defaults->{'encoding'},
+    language         => $defaults->{'language'},
+    format           => $format || $defaults->{'doc_type'},
     head_order       => [],
     body_order       => [],
-    plugin_locator   => EnsEMBL::Web::Tools::PluginLocator->new(
-      locations  => [ 'EnsEMBL::Web', reverse @{$data->{'species_defs'}->ENSEMBL_PLUGIN_ROOTS} ], 
-      suffix     => 'Document::Configure',
-      method     => 'new'
-    ),
-    %$data
+    %$data,
+    document_types   => $document_types
   };
   
+  $self->{$_} = $defaults->{$_} for grep { $data->{$_} && !exists $document_types->{$data->{$_}} } qw(doc_type doc_type_version);
+ 
   bless $self, $class;
-  $self->plugin_locator->parameters([ $self ]);
   return $self;
 }
 
-sub head_order :lvalue { $_[0]{'head_order'} }
-sub body_order :lvalue { $_[0]{'body_order'} }
-sub renderer   :lvalue { $_[0]{'renderer'}  }
-sub species_defs       { return $_[0]{'species_defs'}; }
-sub printf             { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
-sub print              { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
-sub timer_push         { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
-
-sub plugin_locator {
-  my ($self, $locator) = @_;
-  $self->{'plugin_locator'} = $locator if $locator;
-  return $self->{'plugin_locator'};
-}
-
-sub call_child_functions {
-  my $self = shift;
-  
-  if (!$self->plugin_locator->results) {
-    $self->plugin_locator->include;
-    $self->plugin_locator->create_all;
-  }
-  
-  $self->plugin_locator->call(@_);
-}
+sub head_order     :lvalue { $_[0]{'head_order'}           }
+sub body_order     :lvalue { $_[0]{'body_order'}           }
+sub renderer       :lvalue { $_[0]{'renderer'}             }
+sub species_defs           { return $_[0]{'species_defs'}; }
+sub printf                 { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
+sub print                  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
+sub timer_push             { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
 
 sub set_doc_type {
   my ($self, $type, $version) = @_;
-  return unless exists $DOCUMENT_TYPES{$type}{$version};
+  
+  return unless exists $self->{'document_types'}->{$type}->{$version};
+  
   $self->{'doc_type'} = $type;
   $self->{'doc_type_version'} = $version;
 }
@@ -117,14 +94,11 @@ sub set_doc_type {
 sub doc_type {
   my $self = shift;
   
-  $self->{'doc_type'}         = DEFAULT_DOCTYPE unless exists $DOCUMENT_TYPES{$self->{'doc_type'}};
-  $self->{'doc_type_version'} = DEFAULT_DOCTYPE_VERSION unless exists $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}};
-  
   return '' if $self->{'doc_type'} eq 'none';
   
   my $doctype = $self->{'doc_type'} eq 'XML' ? "$self->{'doc_type_version'} SYSTEM" : 'html PUBLIC';
   
-  return "<!DOCTYPE $doctype $DOCUMENT_TYPES{$self->{'doc_type'}}{$self->{'doc_type_version'}}>\n";
+  return "<!DOCTYPE $doctype $self->{'document_types'}->{$self->{'doc_type'}}->{$self->{'doc_type_version'}}>\n";
 }
 
 sub html_tag {

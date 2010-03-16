@@ -4,6 +4,9 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::Page);
 
+sub modify_elements     {} # Implemented in plugins: configuration before _init
+sub extra_configuration {} # Implemented in plugins: configuration after  _init
+
 sub set_title {
   my $self  = shift;
   my $title = shift;
@@ -43,7 +46,8 @@ sub _basic_HTML {
 sub _common_HTML {
   my $self = shift;
   
-  $self->_basic_HTML; # Main document attributes
+  $self->modify_elements; # Plugin configuration before _init
+  $self->_basic_HTML;     # Main document attributes
   
   my $species_defs = $self->species_defs;
   my $style = $species_defs->ENSEMBL_STYLE;
@@ -102,6 +106,8 @@ sub _common_HTML {
     $self->content->filter_module = undef;
     $self->content->filter_code   = undef;
   }
+  
+  $self->extra_configuration; # Plugin configuration after _init
 }
 
 1;
