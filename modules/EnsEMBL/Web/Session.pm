@@ -640,17 +640,6 @@ sub add_das_from_string {
   return;
 }
 
-sub deepcopy {
-### Recursive deep copy of hashrefs/arrayrefs...
-  my $self = shift;
-  if (ref $_[0] eq 'HASH') {
-    return { map( {$self->deepcopy($_)} %{$_[0]}) };
-  } elsif (ref $_[0] eq 'ARRAY') {
-    return [ map( {$self->deepcopy($_)} @{$_[0]}) ];
-  }
-  return $_[0];
-}
-
 sub attachImageConfig {
   my $self   = shift;
   my $script = shift;
