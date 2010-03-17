@@ -10,14 +10,12 @@
 
 package EnsEMBL::Web::Tools::DHTMLmerge;
 use strict;
-use warnings;
+
 use File::Path;
 use CSS::Minifier;
 use JavaScript::Minifier;
 use Digest::MD5 qw(md5_hex);
 use Pack;
-
-no warnings "uninitialized";
 
 our $PERFORM_PACK = 0;
 
