@@ -539,106 +539,6 @@ sub tagged_snp {
   return \%pops or {};
 }
 
-sub freqs_hack {
-  ### hacked version of freqs
-  ### Population_allele_genotype_frequencies
-  ### Args      : none
-  ### Example    : my $data = $object->test_freqs;
-  ### Description: gets allele and genotype frequencies for this Variation
-  ### Returns hash of data,
-
-  my $self = shift;
-  my $allele_list = $self->vari->get_all_Alleles;
-  my %data;
-  my %population_row_count;
-   
-  next unless $self->pop_genotype_obj;
-  my %populations;
-  my %populations_alleles;
-  foreach my $pop_gt_obj ( @{ $self->pop_genotype_obj } ) {
-    my $pop_id = $pop_gt_obj->population->dbID; 
-    my $allele_string =  $pop_id . $pop_gt_obj->allele1 .  $pop_gt_obj->allele2;
-
-    ## Check if we have already seen this allele combination for this population 
-    my $row_number = 1;
-    if ( $populations_alleles{$allele_string} ) { $row_number = $populations_alleles{$allele_string}; } 
-    my $new_number = $row_number + 1;  
-    $populations_alleles{$allele_string}  = $new_number;
-
-    my %pop_gt_row;
-    if ($populations{$pop_id}) { %pop_gt_row  = %{ $populations{$pop_id} }; }
-    my @objects;
-    if ($pop_gt_row{'row_' .$row_number} ) { 
-      @objects  = @{ $pop_gt_row{'row_' .$row_number} };  
-      my $old_dbID = $objects[0]->dbID;  
-      my $current_dbID = $pop_gt_obj->dbID;
-      if ($old_dbID >= ($current_dbID + 3) || $old_dbID <= ($current_dbID - 3) ){ 
-        $row_number = $new_number;
-        @objects = ();     
-        $new_number++;   
-        $populations_alleles{$allele_string}  = $new_number; 
-      }
-    }
-    push (@objects, $pop_gt_obj);
-    $pop_gt_row{'row_' .$row_number} =  \@objects;
-    $populations{$pop_id} = \%pop_gt_row;
-  }
-
-  foreach (keys %populations){
-    my %rows = %{$populations{$_}};
-    foreach (values %rows) {
-      my @pop_gt_objs = @{$_};
-      my $pop_obj = $pop_gt_objs[0]->population;
-      my $pop_id = $self->pop_id($pop_obj);
-      if ($population_row_count{$pop_id}) {
-        my $count = $population_row_count{$pop_id};
-        $pop_id .= "_" .$count; 
-        $count++;
-        $population_row_count{$pop_id} = $count;
-      }
-      else { $population_row_count{$pop_id} = 1; }
-
-      my (%gt_freqs, %alleles);        
-      foreach my $pop_gt_object (@{$_}) { 
-        my $allele_string =  $pop_id .".". $pop_gt_object->allele1 ."|".  $pop_gt_object->allele2; 
-        $gt_freqs{$allele_string} = $pop_gt_object->frequency;
-        $alleles{$pop_gt_object->allele1} = 1;
-        $alleles{$pop_gt_object->allele2} = 1;
-
-        ## Add population genotype frequency
-        push (@{ $data{$pop_id}{GenotypeFrequency} }, $pop_gt_object->frequency);
-        push (@{ $data{$pop_id}{Genotypes} }, $self->pop_genotypes($pop_gt_object));
-        next if $data{$pop_id}{pop_info};
-        $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);  
-        $data{$pop_id}{ssid} = $pop_gt_object->subsnp();
-        $data{$pop_id}{submitter} = $pop_gt_object->subsnp_handle();
-      } 
-      
-      ## Now work out allele frequencys 
-      foreach my $allele (keys %alleles){ 
-        my $allele_total;  
-        foreach my $key ( keys %gt_freqs){ 
-          if ($key =~/$allele\|$allele/){
-            $allele_total = $allele_total + $gt_freqs{$key}; 
-          } elsif ($key =~/\w\|$allele/ || $key =~/$allele\|\w/){
-            my $freq = ($gt_freqs{$key}) * 0.5;
-            $allele_total = $allele_total + $freq;
-          } elsif ($key =~/$allele\|/){
-            $allele_total = $allele_total + $gt_freqs{$key};
-          } 
-        }
-        my $allele_freq = $allele_total;
-        push (@{ $data{$pop_id}{AlleleFrequency} }, $allele_freq);   
-        push (@{ $data{$pop_id}{Alleles} }, $allele);
-        next if $data{$pop_id}{pop_info};
-        $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);   
-      }
-    }
-  }
-  
-  return \%data;
-}
-
 sub freqs {
 
   ### Population_allele_genotype_frequencies
@@ -651,29 +551,82 @@ sub freqs {
   my $allele_list = $self->vari->get_all_Alleles;
   return {} unless $allele_list;
 
-  my %data;
-  foreach my $allele_obj ( @{ $allele_list } ) {  
+  my (%data, $allele_missing);
+  foreach my $allele_obj ( sort { $a->subsnp cmp $b->subsnp }@{ $allele_list } ) {  
     my $pop_obj = $allele_obj->population;  
     next unless $pop_obj;
-    my $pop_id  = $self->pop_id($pop_obj);  
-    push (@{ $data{$pop_id}{AlleleFrequency} }, $allele_obj->frequency || "");
-    push (@{ $data{$pop_id}{Alleles} },   $allele_obj->allele);   
-    next if $data{$pop_id}{pop_info};
-    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj); 
-  }
-    
-  # Add genotype data;
-  return {} unless scalar @{$self->pop_genotype_obj};
-
-  foreach my $pop_gt_obj ( @{ $self->pop_genotype_obj } ) {
-    my $pop_obj = $pop_gt_obj->population;
     my $pop_id  = $self->pop_id($pop_obj);
-    push (@{ $data{$pop_id}{GenotypeFrequency} }, $pop_gt_obj->frequency);
-    push (@{ $data{$pop_id}{Genotypes} }, $self->pop_genotypes($pop_gt_obj)); 
-    next if $data{$pop_id}{pop_info};
-    $data{$pop_id}{pop_info} = $self->pop_info($pop_obj);
+    my $ssid = $allele_obj->subsnp;   
+   
+    push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency || "");
+    push (@{ $data{$pop_id}{$ssid}{Alleles} },   $allele_obj->allele);    
+    next if $data{$pop_id}{$ssid}{pop_info};
+    $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
+    $data{$pop_id}{$ssid}{ssid} = $allele_obj->subsnp();
+    $data{$pop_id}{$ssid}{submitter} = $allele_obj->subsnp_handle();
+
   }
-  
+
+  # Add genotype data;
+  foreach my $pop_gt_obj ( sort { $a->subsnp cmp $b->subsnp} @{ $self->pop_genotype_obj } ) {
+    my $pop_obj = $pop_gt_obj->population; 
+    my $pop_id  = $self->pop_id($pop_obj); 
+    my $ssid = $pop_gt_obj->subsnp();  
+    # No allele data for this population ...
+    unless (exists $data{$pop_id}{$ssid}{AlleleFrequency}){
+      $allele_missing = 1;
+      push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, "");
+      push (@{ $data{$pop_id}{$ssid}{Alleles} }, "");
+      $data{$pop_id}{$ssid}{ssid} = $pop_gt_obj->subsnp();
+      $data{$pop_id}{$ssid}{submitter} = $pop_gt_obj->subsnp_handle();
+    }
+
+    $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
+    push (@{ $data{$pop_id}{$ssid}{GenotypeFrequency} }, $pop_gt_obj->frequency);
+    push (@{ $data{$pop_id}{$ssid}{Genotypes} }, $self->pop_genotypes($pop_gt_obj)); 
+  }
+
+  if ($allele_missing == 1){
+    %data = %{ $self->calculate_allele_freqs_from_genotype(\%data) }; 
+  }
+
+  return \%data;
+}
+
+sub calculate_allele_freqs_from_genotype {
+  my $self = shift;
+  my $temp_data = shift;
+  my %data = %$temp_data;
+
+  # check if have allele data, if not calculate it
+  foreach my $pop_id(keys %data){
+    foreach my $ssid (keys %{$data{$pop_id}}){
+      if (scalar @{ $data{$pop_id}{$ssid}{Alleles} } <= 1){
+        my (%genotype_freqs, %alleles);
+        foreach my $genotype (@{ $data{$pop_id}{$ssid}{Genotypes} }){
+          my @allele = split (/\|/, $genotype);
+          foreach (@allele){ $alleles{$_} = "";}
+          my @temp_freqs = @{ $data{$pop_id}{$ssid}{GenotypeFrequency}};
+          my $frequency = shift @temp_freqs;
+          $genotype_freqs{$genotype} = $frequency;
+        }
+
+        next if scalar (keys %alleles) > 2;
+        my ($a1, $a2) = ( keys %alleles );
+        my $genotype_1_same = $genotype_freqs{ $a1 ."|". $a1 } || 0;
+        my $genotype_1_diff =  $genotype_freqs{ $a1 ."|". $a2 } || 0;
+        my $freq_a1 = ( $genotype_1_diff + (2 * $genotype_1_same)) /2;
+        my $freq_a2 = 1 - $freq_a1;
+        @{ $data{$pop_id}{$ssid}{Alleles} } = ();
+        @{ $data{$pop_id}{$ssid}{AlleleFrequency} } = ();
+        push (@{ $data{$pop_id}{$ssid}{Alleles} }, $a1); 
+        push (@{ $data{$pop_id}{$ssid}{Alleles} }, $a2);  
+        push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $freq_a1); 
+        push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $freq_a2); 
+      }
+    }
+  }
+
   return \%data;
 }
 
