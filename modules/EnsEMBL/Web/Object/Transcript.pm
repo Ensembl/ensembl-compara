@@ -93,7 +93,7 @@ sub counts {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
     
     $counts = {
-      exons              => @{$self->Obj->get_all_Exons},
+      exons              => scalar @{$self->Obj->get_all_Exons},
       evidence           => $self->count_supporting_evidence,
       similarity_matches => $self->count_similarity_matches,
       oligos             => $self->count_oligos,
