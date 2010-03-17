@@ -24,9 +24,7 @@ sub content {
     );
   }
  
-  ## Hacked version of $objects->freqs to allow the return of multiple rows of data per population
-  my $freq_data = $object->freqs_hack; 
-  #my $freq_data = $object->freqs; 
+  my $freq_data = $object->freqs; 
   unless (%$freq_data ){
     my $html = "<p>No genotypes for this variation</p>"; 
     return $self->_info(
@@ -34,8 +32,7 @@ sub content {
     $html );
   }
 
-  my $table = format_frequencies($object, $freq_data);
- 
+  my $table = format_frequencies($object, $freq_data); 
   return $table->render;
 }
 
@@ -45,55 +42,53 @@ sub format_frequencies {
   my %freq_data = %{ $freq_data };
   my %columns;
   my @rows;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' , 'align' => 'data_table autocenter'} );
+
+  foreach my $pop_id ( keys %freq_data){ 
+    foreach my $ssid (keys %{$freq_data{$pop_id}}){ 
+      my %pop_row;
+      # SSID + Submitter  -----------------------------------------
+      if ($freq_data{$pop_id}{$ssid}{ssid} ){ 
+        $pop_row{ssid} = $freq_data{$pop_id}{$ssid}{ssid};
+        my $submitter = $freq_data{$pop_id}{$ssid}{submitter};
+        $pop_row{submitter} = "<a href=http://www.ncbi.nlm.nih.gov/projects/SNP/snp_viewTable.cgi?handle=".$submitter.">".$submitter."</a>";
+      }  
+      # Freqs alleles ---------------------------------------------
+      my @allele_freq = @{ $freq_data{$pop_id}{$ssid}{AlleleFrequency} };
+      foreach my $gt (  @{ $freq_data{$pop_id}{$ssid}{Alleles} } ) {
+        next unless $gt =~/\w+/;
+        my $freq = _format_number(shift @allele_freq);
+        $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
+      }
+      # Freqs genotypes ---------------------------------------------
+      my @genotype_freq = @{ $freq_data{$pop_id}{$ssid}{GenotypeFrequency} || [] };
+      foreach my $gt ( @{ $freq_data{$pop_id}{$ssid}{Genotypes} } ) {
+        my $freq = _format_number(shift @genotype_freq);
+        $pop_row{"Genotypes&nbsp;<br />$gt"} = $freq;
+      }
+      # Add a name, size and description if it exists ---------------------------
+      $pop_row{pop}= _pop_url( $object, $freq_data{$pop_id}{$ssid}{pop_info}{Name}, $freq_data{$pop_id}{$ssid}{pop_info}{PopLink})."&nbsp;";
+      $pop_row{Size} = $freq_data{$pop_id}{$ssid}{pop_info}{Size};
+      # Descriptions too long. Only display first sentence
+      (my $description = $freq_data{$pop_id}{$ssid}{pop_info}{Description}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
+      $description =~ s/<.*?>//g;
+      if (length $description > 220) {
+        $description = substr($description, 0, 220) ."...";
+      }
+      $pop_row{Description} = "<small>". ($description ||"-") ."</small>";
+      # Super and sub populations ----------------------------------------------
+      my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{pop_info}{"Super-Population"});
+      $pop_row{"Super-Population"} =  $super_string;
+
+      my $sub_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{pop_info}{"Sub-Population"});
+      $pop_row{"Sub-Population"} =  $sub_string;
 
 
-  foreach my $pop_id (sort { $freq_data{$a}{pop_info}{Name} cmp $freq_data{$b}{pop_info}{Name}} keys %freq_data) {
-    my %pop_row;
-
-    # SSID + Submitter  -----------------------------------------
-    if ($freq_data{$pop_id}{ssid} ){
-      $pop_row{ssid} = $freq_data{$pop_id}{ssid};
-      my $submitter = $freq_data{$pop_id}{submitter};
-      $pop_row{submitter} = "<a href=http://www.ncbi.nlm.nih.gov/projects/SNP/snp_viewTable.cgi?handle=".$submitter.">".$submitter."</a>";
+      push (@rows, \%pop_row);
+      map {  $columns{$_} = 1 if $pop_row{$_};  } (keys %pop_row);
     }
-    # Freqs alleles ---------------------------------------------
-    my @allele_freq = @{ $freq_data{$pop_id}{AlleleFrequency} }; 
-    foreach my $gt (  @{ $freq_data{$pop_id}{Alleles} } ) { 
-      my $freq = _format_number(shift @allele_freq);
-      $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
-    }
-    # Freqs genotypes ---------------------------------------------
-    my @genotype_freq = @{ $freq_data{$pop_id}{GenotypeFrequency} || [] };
-    foreach my $gt ( @{ $freq_data{$pop_id}{Genotypes} } ) {
-      my $freq = _format_number(shift @genotype_freq);
-      $pop_row{"Genotypes&nbsp;<br />$gt"} = $freq;
-    }
-
-    # Add a name, size and description if it exists ---------------------------
-    $pop_row{pop}= _pop_url( $object, $freq_data{$pop_id}{pop_info}{Name}, $freq_data{$pop_id}{pop_info}{PopLink})."&nbsp;";
-    $pop_row{Size} = $freq_data{$pop_id}{pop_info}{Size};
-
-    # Descriptions too long. Only display first sentence
-    (my $description = $freq_data{$pop_id}{pop_info}{Description}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
-    $description =~ s/<.*?>//g;
-    if (length $description > 220) {
-      $description = substr($description, 0, 220) ."...";
-    }
-    $pop_row{Description} = "<small>". ($description ||"-") ."</small>";
-
-    # Super and sub populations ----------------------------------------------
-    my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{pop_info}{"Super-Population"});
-    $pop_row{"Super-Population"} =  $super_string;
-
-    my $sub_string = _sort_extra_pops($object, $freq_data{$pop_id}{pop_info}{"Sub-Population"});
-    $pop_row{"Sub-Population"} =  $sub_string;
-
-
-    push (@rows, \%pop_row);
-    map {  $columns{$_} = 1 if $pop_row{$_};  } (keys %pop_row);
   }
-
+  
  # Format table columns ------------------------------------------------------
   my @header_row;
   foreach my $col (sort {$b cmp $a} keys %columns) {
