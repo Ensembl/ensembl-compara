@@ -1,0 +1,113 @@
+=pod 
+
+=head1 NAME
+
+  Bio::EnsEMBL::Compara::StableId::Generator
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+    A name generator object (maintains the counter and knows the format of stable_ids).
+
+=cut
+
+package Bio::EnsEMBL::Compara::StableId::Generator;
+
+use strict;
+use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+use Bio::EnsEMBL::Compara::StableId::Map;
+use Bio::EnsEMBL::Compara::StableId::NamedClusterSet;
+
+sub new {
+    my $class = shift @_;
+
+    my $self = bless { }, $class;
+
+    my ($type, $release, $counter, $map, $default_version) =
+         rearrange([qw(type release counter map default_version)], @_);
+
+    $self->counter($counter || 0);
+
+    $self->type($type)       if(defined($type));
+    $self->release($release) if(defined($release));
+    $self->init_from_map($map) if(defined($map));
+
+    $self->default_version(defined($default_version) ? $default_version : 1);  # can be 0 or anything you would like to start with. But it must be set once and forever.
+
+    return $self;
+}
+
+sub init_from_map {     # actually, we can initialize either from a Map or from a NamedClusterSet (they both have get_all_clids() & clid2clname() methods)
+    my $self = shift @_;
+    my $map  = shift @_;
+    
+    my $highest_counter = 0;
+
+    foreach my $clid (@{ $map->get_all_clids }) {
+        my $clname = $map->clid2clname($clid);
+
+        if($clname=~/^ENS\w{2}\d{4}(\d{10})\.\d+$/) {
+            if($1 > $highest_counter) {
+                $highest_counter = $1;
+            }
+        }
+    }
+    $self->counter($highest_counter);
+}
+
+sub generate_new_name {
+    my $self = shift @_;
+
+    $self->counter($self->counter+1);
+
+    return sprintf("%s%04d%010d.%d",$self->prefix, $self->release, $self->counter, $self->default_version);
+}
+
+sub prefix {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_prefix'} = shift @_;
+    }
+    return ($self->{'_prefix'} ||= { 'f' => 'ENSFM', 't' => 'ENSGT' }->{$self->type} || 'UnkType');
+}
+
+sub type {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_type'} = shift @_;
+    }
+    return $self->{'_type'};
+}
+
+sub release {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_release'} = shift @_;
+    }
+    return $self->{'_release'};
+}
+
+sub counter {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_counter'} = shift @_;
+    }
+    return $self->{'_counter'};
+}
+
+sub default_version {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_default_version'} = shift @_;
+    }
+    return $self->{'_default_version'};
+}
+
+1;
+
