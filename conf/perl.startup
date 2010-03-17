@@ -40,6 +40,8 @@ for (reverse @{$conf->ENSEMBL_PLUGINS||[]}) {
   }
 }
 
+unshift @INC, $_ for @plugin_dirs; # Add plugin directories to INC so that EnsEMBL::PLUGIN modules can be used
+
 find(\&load_plugins, grep -e $_, @plugin_dirs);
 
 # Loop through the plugin directories, requiring .pm files
@@ -63,8 +65,6 @@ sub load_plugins {
     }
   }
 }
-
-unshift @INC, $_ for @plugin_dirs; # Add plugin directories to INC so that EnsEMBL::PLUGIN modules can be used
 
 if ($conf->ENSEMBL_MART_ENABLED) {
   require 'BioMart/Initializer.pm';
