@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 warn " Executing perl startup file\n";
 
@@ -13,7 +13,7 @@ use ModPerl::Registry;
 use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
-use EnsEMBL::Web::SpeciesDefs;
+
 $Apache2::SizeLimit::MAX_PROCESS_SIZE = 400000; # Kill httpd over 400Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
@@ -25,43 +25,13 @@ use Storable qw(nfreeze freeze thaw);
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
-# for page handling
-use EnsEMBL::Web::Apache::SendDecPage;
-use EnsEMBL::Web::Apache::ServerError;
-use EnsEMBL::Web::Apache::Handlers;
-use EnsEMBL::Web::Apache::Static;
 use EnsEMBL::Web::Tools::DHTMLmerge;
+use EnsEMBL::Web::SpeciesDefs;
 
-my $conf = EnsEMBL::Web::SpeciesDefs->new;
+my $conf = new EnsEMBL::Web::SpeciesDefs;
 
-my ($i, @plugins, @plugin_dirs);
-
-for (reverse @{$conf->ENSEMBL_PLUGINS||[]}) {
-  if (++$i % 2) {
-    push @plugin_dirs, "$_/modules";
-  } else {
-    unshift @plugins, $_;
-  }
-}
-
-find(\&load_plugins, @plugin_dirs);
-
-# Loop through the plugin directories, requiring .pm files
-# The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
-# Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
-sub load_plugins {
-  if (/\.pm$/) {
-    my $dir  = $File::Find::topdir;
-    my $file = $File::Find::name;
-    
-    (my $package = $file) =~ s/^$dir\///;
-    $package =~ s/\//::/g;
-    $package =~ s/\.pm$//g;
-    
-    eval "require $package";
-    eval "require '$file'";
-  }
-}
+my $i;
+my @plugins = map ++$i % 2 ? $_ : (),  @{$conf->ENSEMBL_PLUGINS || []};
 
 if ($conf->ENSEMBL_MART_ENABLED) {
   require 'BioMart/Initializer.pm';
