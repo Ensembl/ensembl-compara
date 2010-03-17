@@ -89,16 +89,20 @@ sub counts {
   my $counts = $self->{'_counts'};
   $counts ||= $MEMD->get($key) if $MEMD;
 
-  unless ($counts) {
+  if (!$counts) {
     return unless $self->Obj->isa('Bio::EnsEMBL::Transcript');
     
-    $counts->{'exons'}              = @{$self->Obj->get_all_Exons};
-    $counts->{'evidence'}           = $self->count_supporting_evidence;
-    $counts->{'similarity_matches'} = $self->count_similarity_matches;
-    $counts->{'oligos'}             = $self->count_oligos;
-    $counts->{'prot_domains'}       = $self->count_prot_domains;
-    $counts->{'prot_variations'}    = $self->count_prot_variations;
-    $counts->{'go'}                 = $self->count_go;
+    $counts = {
+      exons              => @{$self->Obj->get_all_Exons},
+      evidence           => $self->count_supporting_evidence,
+      similarity_matches => $self->count_similarity_matches,
+      oligos             => $self->count_oligos,
+      prot_domains       => $self->count_prot_domains,
+      prot_variations    => $self->count_prot_variations,
+      go                 => $self->count_go,
+      %{$self->_counts}
+    };
+    
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
   }
@@ -148,23 +152,19 @@ sub count_supporting_evidence {
     $all_evidence{$type}{$feature_id}++;
   }
 
-  if ( $self->db_type ne 'Vega' ) {
-    unless ($self->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
-      my $sql = '
-      SELECT feature_type, feature_id
-        FROM supporting_feature sf, exon_transcript et
-       WHERE et.exon_id = sf.exon_id
-         AND et.transcript_id = ?';
-      
-      my $sth = $dbc->prepare($sql);
-      $sth->execute($self->Obj->dbID);
-      
-      while (my ($type, $feature_id) = $sth->fetchrow_array) {
-	$all_evidence{$type}{$feature_id}++;
-      };
-    }
-  }
-
+  $sql = '
+  SELECT feature_type, feature_id
+    FROM supporting_feature sf, exon_transcript et
+   WHERE et.exon_id = sf.exon_id
+     AND et.transcript_id = ?';
+  
+  $sth = $dbc->prepare($sql);
+  $sth->execute($self->Obj->dbID);
+  
+  while (my ($type, $feature_id) = $sth->fetchrow_array) {
+    $all_evidence{$type}{$feature_id}++;
+  };
+  
   my %names = (
     'dna_align_feature'     => 'dna_align_feature_id',
     'protein_align_feature' => 'protein_align_feature_id'
@@ -176,8 +176,7 @@ sub count_supporting_evidence {
   while (my ($evi_type, $hits) = each %all_evidence) {
     foreach my $hit_id (keys %$hits) {
       my $type = $names{$evi_type};
-      my $sql = "SELECT hit_name FROM $evi_type where $type = $hit_id";
-      my ($hit_name) = $dbh->selectrow_array($sql);
+      my ($hit_name) = $dbh->selectrow_array("SELECT hit_name FROM $evi_type where $type = $hit_id");
       $hits{$hit_name}++
     }
   }

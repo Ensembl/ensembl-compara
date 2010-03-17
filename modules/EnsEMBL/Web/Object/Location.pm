@@ -60,7 +60,6 @@ sub availability {
     $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
     $availability->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
     $availability->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
-    $availability->{'compara_species'} = $self->check_compara_species_and_locations; # vega only, should really go somewhere else
     $availability->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
   
     $self->{'_availability'} = $availability;
@@ -86,11 +85,12 @@ sub counts {
     $counts = {
       synteny             => scalar keys %{$synteny{$self->species}||{}},
       alignments          => $alignments->{'all'},
-      pairwise_alignments => $alignments->{'pairwise'},
-      self_alignments     => $self->count_self_alignments # vega only, should really go somewhere else
+      pairwise_alignments => $alignments->{'pairwise'}
     };
     
     $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
+    
+    $counts = {%$counts, %{$self->_counts}};
     
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
@@ -98,69 +98,6 @@ sub counts {
 
   return $counts;
 }
-
-##vega
-sub count_self_alignments {
-  my $self = shift;
-  my $species = $self->species;
-#  my $object   = $self->Obj; #this is the only difference from the gene method
-  my $sd = $self->species_defs;
-
-  ## Get the compara database hash!
-  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
-  my $matches = $hash->{'BLASTZ_RAW'}->{$species};
-
-  ## Get details of the primary slice
-  my $ps_name  = $self->seq_region_name;
-  my $ps_start = $self->seq_region_start;
-  my $ps_end   = $self->seq_region_end;
-
-  ## Identify alignments that match the primary slice
-  my $matching = 0;
-  foreach my $other_species (sort keys %{$matches}) {
-    foreach my $alignment (keys %{$matches->{$other_species}}) {
-      my $this_name = $matches->{$other_species}{$alignment}{'source_name'};
-      #only use alignments that include the primary slice
-      next unless ($ps_name eq $this_name);
-      my $start = $matches->{$other_species}{$alignment}{'source_start'};
-      my $end = $matches->{$other_species}{$alignment}{'source_end'};
-      #only create entries for alignments that overlap the current slice
-      if ($end > $ps_start && $start < $ps_end) {
-        $matching++;
-      }
-    }
-  }
-  return $matching;
-}
-
-##vega
-sub check_compara_species_and_locations {
-  #check if genomic_alignments of this location would have been found
-  my $self = shift;
-  my $species = $self->species;
-  my $sd = $self->species_defs;
-  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
-  return 0 unless $hash;
-  unless ($hash->{'BLASTZ_RAW'}{$species}) {
-    return 0; #if this species is not in compara
-  }
-  my $regions  = $hash->{'REGION_SUMMARY'}{$species};
-#  my $object   = $self->Obj; #this is the only difference from the gene method
-  my $sr_name  = $self->seq_region_name;
-  unless ($regions->{$sr_name}) {
-    return 0; #if this seq_region is not in compara
-  }
-  my $sr_start = $self->seq_region_start;
-  my $sr_end   = $self->seq_region_end;
-  my $matching = 0;
-  foreach my $compara_region (@{$regions->{$sr_name}}) {
-    if ( ($sr_start < $compara_region->{'end'}) && ($sr_end > $compara_region->{'start'}) ) {
-      $matching = 1; #if the seq_region overlaps the region in compara
-    }
-  }
-  return $matching;
-}
-
 
 sub short_caption {
   my $self = shift;

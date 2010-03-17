@@ -27,10 +27,10 @@ our $MEMD = new EnsEMBL::Web::Cache;
 sub _filename {
   my $self = shift;
   my $name = sprintf '%s-gene-%d-%s-%s',
-	  $self->species,
-	  $self->species_defs->ENSEMBL_VERSION,
-	  $self->get_db,
-	  $self->stable_id;
+          $self->species,
+          $self->species_defs->ENSEMBL_VERSION,
+          $self->get_db,
+          $self->stable_id;
   $name =~ s/[^-\w\.]/_/g;
   return $name;
 }
@@ -63,15 +63,14 @@ sub availability {
         );
       }
       
-      $availability->{'history'}         = !!$rows;
-      $availability->{'gene'}            = 1;
-      $availability->{'core'}            = $self->get_db eq 'core';
-      $availability->{'compara_species'} = $self->check_compara_species_and_locations;
-      $availability->{'alt_allele'}      = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
-      $availability->{'regulation'}      = !!$funcgen_res; 
-      $availability->{'family'}          = !!$res;
-      $availability->{'has_gene_tree'}   = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
-      $availability->{"has_$_"}          = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
+      $availability->{'history'}       = !!$rows;
+      $availability->{'gene'}          = 1;
+      $availability->{'core'}          = $self->get_db eq 'core';
+      $availability->{'alt_allele'}    = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
+      $availability->{'regulation'}    = !!$funcgen_res; 
+      $availability->{'family'}        = !!$res;
+      $availability->{'has_gene_tree'} = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
+      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
@@ -99,42 +98,20 @@ sub counts {
   
   if (!$counts) {
     $counts = {
-      transcripts         => scalar @{$obj->get_all_Transcripts},
-      exons               => scalar @{$obj->get_all_Exons},
-      similarity_matches  => $self->count_xrefs,
-      alternative_alleles => scalar @{$obj->get_all_alt_alleles}, # vega only, should really go somewhere else
-      self_alignments     => $self->count_self_alignments         # vega only, should really go somewhere else
-    }; 
+      transcripts        => scalar @{$obj->get_all_Transcripts},
+      exons              => scalar @{$obj->get_all_Exons},
+      similarity_matches => $self->count_xrefs
+    };
     
     my $compara_db = $self->database('compara');
     
     if ($compara_db) {
-      my $vega = $self->species_defs->ENSEMBL_SITETYPE eq 'Vega';
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
       
       if ($compara_dbh) {
-        # TODO: re-add between_species_paralog
-        my $res = $compara_dbh->selectall_arrayref(
-          'select ml.type, h.description, count(*) as N
-            from member as m, homology_member as hm, homology as h,
-                 method_link as ml, method_link_species_set as mlss
-           where m.stable_id = ? and hm.member_id = m.member_id and
-                 h.homology_id = hm.homology_id and 
-                 mlss.method_link_species_set_id = h.method_link_species_set_id and
-                 ml.method_link_id = mlss.method_link_id and
-                 ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "between_species_paralog" )
-           group by description', {}, $obj->stable_id
-        );
-        
-        foreach (@$res) {
-          if ($_->[0] eq 'ENSEMBL_PARALOGUES') {
-            $counts->{'paralogs'} += $_->[2];
-          } elsif ($vega || $_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
-            $counts->{'orthologs'} += $_->[2];
-          }
-        }
-        
-        ($res) = $compara_dbh->selectrow_array(
+        $counts = {%$counts, %{$self->count_homologues($compara_dbh)}};
+      
+        my ($res) = $compara_dbh->selectrow_array(
           'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
           {}, $obj->stable_id
         );
@@ -144,9 +121,40 @@ sub counts {
       
       $counts->{'alignments'} = $self->count_alignments->{'all'} if $self->get_db eq 'core';
     }
+    
+    $counts = {%$counts, %{$self->_counts}};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
+  }
+  
+  return $counts;
+}
+
+sub count_homologues {
+  my ($self, $compara_dbh) = @_;
+  
+  my $counts = {};
+  
+  # TODO: re-add between_species_paralog
+  my $res = $compara_dbh->selectall_arrayref(
+    'select ml.type, h.description, count(*) as N
+      from member as m, homology_member as hm, homology as h,
+           method_link as ml, method_link_species_set as mlss
+     where m.stable_id = ? and hm.member_id = m.member_id and
+           h.homology_id = hm.homology_id and 
+           mlss.method_link_species_set_id = h.method_link_species_set_id and
+           ml.method_link_id = mlss.method_link_id and
+           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "between_species_paralog" )
+     group by description', {}, $self->Obj->stable_id
+  );
+  
+  foreach (@$res) {
+    if ($_->[0] eq 'ENSEMBL_PARALOGUES') {
+      $counts->{'paralogs'} += $_->[2];
+    } elsif ($_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
+      $counts->{'orthologs'} += $_->[2];
+    }
   }
   
   return $counts;
@@ -157,16 +165,17 @@ sub count_xrefs {
   my $type = $self->get_db;
   my $dbc = $self->database($type)->dbc;
 
-  #xrefs on the gene
+  # xrefs on the gene
   my $xrefs_c = 0;
-  my $sql = qq(
-                SELECT x.display_label, edb.db_name, edb.status
-                  FROM gene g, object_xref ox, xref x, external_db edb
-                 WHERE g.gene_id = ox.ensembl_id
-                   AND ox.xref_id = x.xref_id
-                   AND x.external_db_id = edb.external_db_id
-                   AND ox.ensembl_object_type = 'Gene'
-                   AND g.gene_id = ?);
+  my $sql = '
+    SELECT x.display_label, edb.db_name, edb.status
+      FROM gene g, object_xref ox, xref x, external_db edb
+     WHERE g.gene_id = ox.ensembl_id
+       AND ox.xref_id = x.xref_id
+       AND x.external_db_id = edb.external_db_id
+       AND ox.ensembl_object_type = "Gene"
+       AND g.gene_id = ?';
+                   
   my $sth = $dbc->prepare($sql);
   $sth->execute($self->Obj->dbID);
   while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
@@ -201,74 +210,12 @@ sub count_gene_supporting_evidence {
     }
     foreach my $exon (@{$trans->get_all_Exons()}) {
       foreach my $evi (@{$exon->get_all_supporting_features}) {
-	my $hit_name = $evi->hseqname;
-	$c{$hit_name}++;
+        my $hit_name = $evi->hseqname;
+        $c{$hit_name}++;
       }
     }
   }
   return scalar(keys(%c));
-}
-
-## vega
-sub count_self_alignments {
-  my $self = shift;
-  my $species = $self->species; 
-  my $object   = $self->Obj;
-  my $sd = $self->species_defs;
-
-  ## Get the compara database hash!
-  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
-  my $matches = $hash->{'BLASTZ_RAW'}->{$species};
-
-  ## Get details of the primary slice
-  my $ps_name  = $object->seq_region_name;
-  my $ps_start = $object->seq_region_start;
-  my $ps_end   = $object->seq_region_end;
-
-  ## Identify alignments that match the primary slice
-  my $matching = 0;
-  foreach my $other_species (sort keys %{$matches}) {
-    foreach my $alignment (keys %{$matches->{$other_species}}) {
-      my $this_name = $matches->{$other_species}{$alignment}{'source_name'};
-      #only use alignments that include the primary slice
-      next unless ($ps_name eq $this_name);
-      my $start = $matches->{$other_species}{$alignment}{'source_start'};
-      my $end = $matches->{$other_species}{$alignment}{'source_end'};
-      #only create entries for alignments that overlap the current slice
-      if ($end > $ps_start && $start < $ps_end) {
-	$matching++;
-      }
-    }
-  }
-  return $matching;
-}
-
-## vega
-sub check_compara_species_and_locations {
-  # check if genomic_alignments and or orthologues of this gene would have been found
-  my $self = shift;
-  my $species = $self->species;
-  my $sd = $self->species_defs;
-  my $hash = $sd->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
-  return 0 unless $hash;
-  unless ($hash->{'BLASTZ_RAW'}{$species}) {
-    return 0; #if this species is not in compara
-  }
-  my $regions  = $hash->{'REGION_SUMMARY'}{$species};
-  my $object   = $self->Obj;
-  my $sr_name  = $object->seq_region_name;
-  unless ($regions->{$sr_name}) {
-    return 0; #if this seq_region is not in compara
-  }
-  my $sr_start = $object->seq_region_start;
-  my $sr_end   = $object->seq_region_end;
-  my $matching = 0;
-  foreach my $compara_region (@{$regions->{$sr_name}}) {
-    if ( ($sr_start < $compara_region->{'end'}) && ($sr_end > $compara_region->{'start'}) ) {
-      $matching = 1; #if the gene overlaps the region in compara
-    }
-  }
-  return $matching;
 }
 
 sub get_gene_supporting_evidence {
@@ -292,40 +239,40 @@ sub get_gene_supporting_evidence {
       #save details of evidence for vega genes for later since we need to combine them 
       #before we can tellif they match the CDS / UTR 
       if ($ln =~ /otter/) {
-	push @{$vega_evi{$name}{'data'}}, $evi;
-	$vega_evi{$name}->{'db_name'} = $db_name;
-	$vega_evi{$name}->{'evi_type'} = ref($evi);
-	next EVI;
+        push @{$vega_evi{$name}{'data'}}, $evi;
+        $vega_evi{$name}->{'db_name'} = $db_name;
+        $vega_evi{$name}->{'evi_type'} = ref($evi);
+        next EVI;
       }
 
       #for e! genes...
       #use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
       #for protein features give some leeway in matching to transcript - +- 3 bases
       if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-	if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
-		 || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
-	  $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-	  $t_hits{$name}++;
-	}
-	else {
-	  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-	  $t_hits{$name}++;
-	}
+        if ((abs($trans->coding_region_start-$evi->seq_region_start) < 4)
+                 || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
+          $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+          $t_hits{$name}++;
+        }
+        else {
+          $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+          $t_hits{$name}++;
+        }
       }
       elsif ( $trans->coding_region_start == $evi->seq_region_start
-		|| $trans->coding_region_end == $evi->seq_region_end ) {
-	$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-	$t_hits{$name}++;
+                || $trans->coding_region_end == $evi->seq_region_end ) {
+        $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+        $t_hits{$name}++;
       }
 
       elsif ( $trans->seq_region_start  == $evi->seq_region_start
-		|| $trans->seq_region_end == $evi->seq_region_end ) {
-	$e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
-	$t_hits{$name}++;
+                || $trans->seq_region_end == $evi->seq_region_end ) {
+        $e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
+        $t_hits{$name}++;
       }
       else {
-	$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-	$t_hits{$name}++;
+        $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+        $t_hits{$name}++;
       }
     }
     $e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
@@ -333,12 +280,12 @@ sub get_gene_supporting_evidence {
     #make a note of the hit_names of the supporting_features (but don't bother for vega db genes)
     if ($ln !~ /otter/) {
       foreach my $exon (@{$trans->get_all_Exons()}) {
-	foreach my $evi (@{$exon->get_all_supporting_features}) {
-	  my $hit_name = $evi->hseqname;
-	  if (! exists($t_hits{$hit_name})) {
-	    $e->{$tsi}{'extra_evidence'}{$hit_name}++;
-	  }
-	}
+        foreach my $evi (@{$exon->get_all_supporting_features}) {
+          my $hit_name = $evi->hseqname;
+          if (! exists($t_hits{$hit_name})) {
+            $e->{$tsi}{'extra_evidence'}{$hit_name}++;
+          }
+        }
       }
     }
 
@@ -348,28 +295,28 @@ sub get_gene_supporting_evidence {
       my $db_name  = $rec->{'db_name'};
       my $evi_type = $rec->{'evi_type'};
       foreach my $hit (@{$rec->{'data'}}) {
-	$min_start = $hit->seq_region_start <= $min_start ? $hit->seq_region_start : $min_start;
-	$max_end   = $hit->seq_region_end   >= $max_end   ? $hit->seq_region_end   : $max_end;
+        $min_start = $hit->seq_region_start <= $min_start ? $hit->seq_region_start : $min_start;
+        $max_end   = $hit->seq_region_end   >= $max_end   ? $hit->seq_region_end   : $max_end;
       }
       if ($evi_type eq 'Bio::EnsEMBL::DnaPepAlignFeature') {
-	#protein evidence supports CDS
-	$e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
+        #protein evidence supports CDS
+        $e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
       }
       else {
-	if ($min_start < $trans->coding_region_start && $max_end > $trans->coding_region_end) {
-	  #full length DNA evidence supports CDS
-	  $e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
-	}
-	if (  $max_end   < $trans->coding_region_start
-	   || $min_start > $trans->coding_region_end
-	   || $trans->seq_region_start  == $min_start
+        if ($min_start < $trans->coding_region_start && $max_end > $trans->coding_region_end) {
+          #full length DNA evidence supports CDS
+          $e->{$tsi}{'evidence'}{'CDS'}{$hit_name} = $db_name;
+        }
+        if (  $max_end   < $trans->coding_region_start
+           || $min_start > $trans->coding_region_end
+           || $trans->seq_region_start  == $min_start
            || $trans->seq_region_end    == $max_end ) {
-	  #full length DNA evidence or that exclusively in the UTR supports the UTR
-	  $e->{$tsi}{'evidence'}{'UTR'}{$hit_name} = $db_name;
-	}
-	elsif (! $e->{$tsi}{'evidence'}{'CDS'}{$hit_name}) {
-	  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$hit_name} = $db_name;
-	}
+          #full length DNA evidence or that exclusively in the UTR supports the UTR
+          $e->{$tsi}{'evidence'}{'UTR'}{$hit_name} = $db_name;
+        }
+        elsif (! $e->{$tsi}{'evidence'}{'CDS'}{$hit_name}) {
+          $e->{$tsi}{'evidence'}{'UNKNOWN'}{$hit_name} = $db_name;
+        }
       }
     }
   }
