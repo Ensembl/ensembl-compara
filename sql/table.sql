@@ -394,7 +394,7 @@ CREATE TABLE member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
-  UNIQUE member_location (member_id, chr_name, chr_start)
+  KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci;
 
 
