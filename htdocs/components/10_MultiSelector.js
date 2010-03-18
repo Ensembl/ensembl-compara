@@ -21,7 +21,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.elLk.list    = $('.multi_selector_list', this.elLk.content);
     
     var ul    = $('ul', this.elLk.list);
-    var spans = $('span', ul)
+    var spans = $('span', ul);
     
     this.elLk.spans    = spans.filter(':not(.switch)');
     this.elLk.form     = $('form', this.elLk.content);

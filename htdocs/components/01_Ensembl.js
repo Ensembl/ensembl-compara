@@ -31,7 +31,7 @@ Ensembl.extend({
     this.images = {
       total: imagePanels.length,
       last:  imagePanels.last()[0]
-    }
+    };
     
     imagePanels = null;
     
@@ -87,7 +87,7 @@ Ensembl.extend({
     var match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
     
     if (match) {
-      this.location = { name: match[1], start: parseInt(match[2]), end: parseInt(match[3]) };
+      this.location = { name: match[1], start: parseInt(match[2], 10), end: parseInt(match[3], 10) };
       this.location.width = this.location.end - this.location.start + 1;
       
       if (this.location.width > 1000000) {
@@ -116,7 +116,7 @@ Ensembl.extend({
           if (this == 'r' && myself.multiSpecies[i].r) {
             r = myself.multiSpecies[i].r.match(/(.+):(\d+)-(\d+)/);
             
-            myself.multiSpecies[i].location = { name: r[1], start: parseInt(r[2]), end: parseInt(r[3]) };
+            myself.multiSpecies[i].location = { name: r[1], start: parseInt(r[2], 10), end: parseInt(r[3], 10) };
           }
         });
       });

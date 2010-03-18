@@ -73,7 +73,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         var input = $(this);
         
         if (input.val() == 'off' ^ val == 'off') {
-          label[1] = parseInt(label[1]) + (val == 'off' ? -1 : 1);
+          label[1] = parseInt(label[1], 10) + (val == 'off' ? -1 : 1);
         }
         
         input.val(input.attr('newVal') || val).removeAttr('newVal');
@@ -195,14 +195,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var active = this.elLk.links.filter('.active').children('a').attr('className');
     
-    if (active == null) {
+    if (typeof active == 'undefined') {
       active = this.elLk.links.first().addClass('active').children('a').attr('className');
     }
     
     if (active == 'search_results') {
       this.elLk.search.val(this.query);
       this.search();
-    } else if (active != null) {
+    } else if (typeof active != 'undefined') {
       $('div:not(.' + active + '), dd', this.elLk.form).hide();
       this.elLk.help.html('Show info');
       
@@ -248,7 +248,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       if (internal.siblings('.select_all').length) {
         internal.each(function () {
           var level = this.className.match(/level(\d+)/);
-          var mg = margin * (level ? parseInt(level[1]) : 1)
+          var mg = margin * (level ? parseInt(level[1], 10) : 1);
           $(this).css('marginLeft', mg);
         });
       }
@@ -313,7 +313,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       els = [ els ];
     }
     
-    for (var i in els) {
+    var i = els.length;
+    
+    while (i--) {
       switch (els[i].nodeName) {
         case 'DT'  : dd = $(els[i]).next('dd'); span = $('.menu_help', els[i]); break;
         case 'SPAN': dd = $(els[i]).parent().next('dd'); span = $(els[i]); break;

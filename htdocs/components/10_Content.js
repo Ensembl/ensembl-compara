@@ -1,9 +1,7 @@
 // $Revision$
 
 Ensembl.Panel.Content = Ensembl.Panel.extend({
-  init: function () {
-    var myself = this;
-    
+  init: function () {    
     this.base();
     this.ajaxLoad();
     
@@ -55,7 +53,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     ajax.each(function () {
       var el = $(this);
       var urls = [];
-      var content, caption, component, node;
+      var content, caption, component;
       
       $('input.ajax_load', this).each(function () {
         urls.push(this.value);
@@ -82,14 +80,16 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           if (component.match(/\?/)) {
             var referer = '';
             var url = [];
-
-            $.each(component.split(/;/), function () {
-              if (this.match(/^_referer=/)){
-                referer = this;
+            var params = component.split(/;/);
+            var j = params.length;
+            
+            while (j--) {
+              if (params[j].match(/^_referer=/)){
+                referer = params[j];
               } else {
-                url.push(this);
+                url.unshift(params[j]);
               }
-            });
+            }
             
             component = Ensembl.replaceTimestamp(url.join(';')) + referer;
           }

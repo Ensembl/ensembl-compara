@@ -24,13 +24,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.drag) {
       var params = this.href.split('|');
-      var n = parseInt(params[1]) - 1;
+      var n = parseInt(params[1], 10) - 1;
       
       this.species = params[3];
       this.chr     = params[4];
-      this.start   = parseInt(params[5]);
-      this.end     = parseInt(params[6]);
-      this.strand  = parseInt(params[7]);
+      this.start   = parseInt(params[5], 10);
+      this.end     = parseInt(params[6], 10);
+      this.strand  = parseInt(params[7], 10);
       this.multi   = area.hasClass('multi') ? n : false;
     }
     
@@ -122,7 +122,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var start  = this.title.match(/Start: (\d+)/)[1];
     var end    = this.title.match(/End: (\d+)/)[1];
-    var strand = this.title.match(/Strand: ([-+])/)[1];
+    var strand = this.title.match(/Strand: ([\-+])/)[1];
     var id     = this.title.match(/Id: ([^;]+)/)[1];
     
     var url = window.location.pathname.replace(/\/(\w+)\/\w+$/, '/Zmenu/$1/Das') +
@@ -198,7 +198,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (loc) {          
       var r = loc[1].split(/\W/);
-      this.location = parseInt(r[1]) + (r[2] - r[1]) / 2;
+      this.location = parseInt(r[1], 10) + (r[2] - r[1]) / 2;
       
       extra += '<tr><th></th><td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
       extra += '<tr><th></th><td><a href="' + this.baseURL.replace(/%s/, loc[1]) + '">Zoom to feature</a></td></tr>';
@@ -232,7 +232,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     // Multi species view
     function multi() {
-      var label = start ? 'region' : 'location'
+      var label = start ? 'region' : 'location';
       
       menu = [ '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this ' + label + '</a>' ];
         
@@ -443,7 +443,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   show: function () {
-    var menuWidth   = parseInt(this.width());
+    var menuWidth   = parseInt(this.width(), 10);
     var windowWidth = $(window).width() - 10;
     var scrollLeft  = $(window).scrollLeft();
     
@@ -475,7 +475,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.getContent();
     } else {
       this.show();
-    };
+    }
   },
   
   hide: function (imageId) {

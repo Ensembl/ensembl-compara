@@ -22,7 +22,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.base();
     
-    this.params.highlight = (Ensembl.images.total == 1 || !($(this.el).parents('.image_panel')[0] == Ensembl.images.last));
+    this.params.highlight = (Ensembl.images.total == 1 || $(this.el).parents('.image_panel')[0] != Ensembl.images.last);
     
     this.elLk.map        = $('map', this.el);
     this.elLk.img        = $('img.imagemap', this.el);
@@ -54,9 +54,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       if (this.shape && this.shape.toLowerCase() != 'rect') {
         c.c = [];
-        $.each(this.coords.split(/[ ,]/), function () { c.c.push(parseInt(this)); });
+        $.each(this.coords.split(/[ ,]/), function () { c.c.push(parseInt(this, 10)); });
       } else {
-        $.each(this.coords.split(/[ ,]/), function (i) { c[rect[i]] = parseInt(this); });
+        $.each(this.coords.split(/[ ,]/), function (i) { c[rect[i]] = parseInt(this, 10); });
       }
       
       myself.areas.push(c);
@@ -64,8 +64,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (this.className.match(/drag/)) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
         var r     = c.a.href.split('|');
-        var start = parseInt(r[5]);
-        var end   = parseInt(r[6]);
+        var start = parseInt(r[5], 10);
+        var end   = parseInt(r[6], 10);
         var scale = (end - start + 1) / (c.r - c.l); // bps per pixel on image
         
         c.range = { start: start, end: end, scale: scale };
@@ -74,7 +74,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         if (highlight === true) {
           r = this.href.split('|');
-          speciesNumber = parseInt(r[1]) - 1;
+          speciesNumber = parseInt(r[1], 10) - 1;
           
           if (myself.multi || !speciesNumber) {
             if (!myself.highlightRegions[speciesNumber]) {
@@ -83,10 +83,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             }
             
             myself.highlightRegions[speciesNumber].push({ region: c });
-            myself.imageNumber = parseInt(r[2]);
+            myself.imageNumber = parseInt(r[2], 10);
             
             Ensembl.images[myself.imageNumber] = Ensembl.images[myself.imageNumber] || {};
-            Ensembl.images[myself.imageNumber][speciesNumber] = [ myself.imageNumber, speciesNumber, parseInt(r[5]), parseInt(r[6]) ];
+            Ensembl.images[myself.imageNumber][speciesNumber] = [ myself.imageNumber, speciesNumber, parseInt(r[5], 10), parseInt(r[6], 10) ];
           }
         }
       }
@@ -218,7 +218,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var dragArea = this.getArea(coords, true);
         
         if (dragArea) {
-          speciesNumber = parseInt(dragArea.a.href.split('|')[1]) - 1;
+          speciesNumber = parseInt(dragArea.a.href.split('|')[1], 10) - 1;
         }
         
         dragArea = null;

@@ -2,31 +2,33 @@
 
 Ensembl.Panel.MultiSpeciesSelector = Ensembl.Panel.MultiSelector.extend({
   updateSelection: function () {
+    var params = [ 's', 'r', 'g' ]; // Multi-species parameters
     var existingSelection = {};
-    var i, j;
+    var urlParams = [];
+    var i, j, k;
     
-    for (i in Ensembl.multiSpecies) {
-      existingSelection[Ensembl.multiSpecies[i].s] = parseInt(i);
+    for (var s in Ensembl.multiSpecies) {
+      existingSelection[Ensembl.multiSpecies[s].s] = parseInt(s, 10);
     }
-    
-    var params = [];
     
     for (i = 0; i < this.selection.length; i++) {
       j = existingSelection[this.selection[i]];
       
-      if (typeof j != 'undefined') {
-        $.each(['r', 'g', 's'], function () {
-          if (Ensembl.multiSpecies[j][this]) {
-            params.push(this + (i + 1) + '=' + Ensembl.multiSpecies[j][this]);
+      if (typeof j != 'undefined') {       
+        k = params.length;
+        
+        while (k--) {
+          if (Ensembl.multiSpecies[j][params[k]]) {
+            urlParams.push(params[k] + (i + 1) + '=' + Ensembl.multiSpecies[j][params[k]]);
           }
-        });
+        }
       } else {
-        params.push('s' + (i + 1) + '=' + this.selection[i]);
+        urlParams.push('s' + (i + 1) + '=' + this.selection[i]);
       }
     }
     
     if (this.selection.join(',') != this.initialSelection) {
-      Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + params.join(';')));
+      Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize() + ';' + urlParams.join(';')));
     }
     
     return true;
