@@ -51,7 +51,7 @@ sub format_frequencies {
       if ($freq_data{$pop_id}{$ssid}{ssid} ){ 
         $pop_row{ssid} = $freq_data{$pop_id}{$ssid}{ssid};
         my $submitter = $freq_data{$pop_id}{$ssid}{submitter};
-        $pop_row{submitter} = "<a href=http://www.ncbi.nlm.nih.gov/projects/SNP/snp_viewTable.cgi?handle=".$submitter.">".$submitter."</a>";
+        $pop_row{submitter} = $object->get_ExtURL_link( $submitter, 'DBSNPSSID', $submitter );
       }  
       # Freqs alleles ---------------------------------------------
       my @allele_freq = @{ $freq_data{$pop_id}{$ssid}{AlleleFrequency} };
