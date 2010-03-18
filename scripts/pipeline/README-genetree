@@ -78,35 +78,45 @@ done. Read README-homology for more information.
 
 1.2 Code checkout
 
+First we export our CVS connection strings
+
+export BIOPERL_CVS_REPO=':ext:bio.perl.org:/home/repository/bioperl'
+export ENSEMBL_CVS_REPO=':ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot'
+#or
+#export ENSEMBL_CVS_REPO=':pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl'
+
+#export ENSEMBL_TAG='branch-ensembl-57'
+export ENSEMBL_TAG='HEAD'
+
 bioperl code;
 
-  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+  $ cvs -d $BIOPERL_CVS_REPO \
     co -r branch-1-2-3 bioperl-live
 
 bioperl-run code (for the CodeML runnable/parser)
   
-  $ cvs -d :ext:bio.perl.org:/home/repository/bioperl \
+  $ cvs -d $BIOPERL_CVS_REPO \
     co -r bioperl-run-release-1-4-0 bioperl-run
 
 core ensembl code
 
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
+  $ cvs -d $ENSEMBL_CVS_REPO co -r $ENSEMBL_TAG ensembl
 
 ensembl-compara code (for Compara API and schema)
 
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
+  $ cvs -d $ENSEMBL_CVS_REPO co -r $ENSEMBL_TAG ensembl-compara
 
 ensembl-analysis code (for Runnables)
 
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+  $ cvs -d $ENSEMBL_CVS_REPO co -r $ENSEMBL_TAG ensembl-analysis
 
 ensembl-pipeline code (for Pipeline)
 
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-pipeline
+  $ cvs -d $ENSEMBL_CVS_REPO co ensembl-pipeline
 
 ensembl-hive code
 
-  $ cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-hive
+  $ cvs -d $ENSEMBL_CVS_REPO co  ensembl-hive
 
 
 1.3 Perl environment
