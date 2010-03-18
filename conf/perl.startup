@@ -31,41 +31,47 @@ use EnsEMBL::Web::SpeciesDefs;
 my $conf = new EnsEMBL::Web::SpeciesDefs;
 
 my ($i, @plugins, @plugin_dirs);
+my @lib_dirs = @{$conf->ENSEMBL_LIB_DIRS};
 
 for (reverse @{$conf->ENSEMBL_PLUGINS||[]}) {
   if (++$i % 2) {
-    push @plugin_dirs, "$_/modules";
+    push @plugin_dirs, "$_/modules" if -e "$_/modules";
   } else {
     unshift @plugins, $_;
   }
 }
 
-unshift @INC, $_ for @plugin_dirs; # Add plugin directories to INC so that EnsEMBL::PLUGIN modules can be used
+unshift @INC, reverse @plugin_dirs; # Add plugin directories to INC so that EnsEMBL::PLUGIN modules can be used
 
-my $root_dir = $conf->ENSEMBL_SERVERROOT . '/modules/';
-
-find(\&load_plugins, grep -e $_, @plugin_dirs);
+find(\&load_plugins, @plugin_dirs);
 
 # Loop through the plugin directories, requiring .pm files
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
 # Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
 sub load_plugins {
-  if (/\.pm$/ && !/(SpeciesDefs|ConfigPacker)\.pm/) {
+  if (/\.pm$/ && !/(SpeciesDefs|ConfigPacker|DHTMLmerge)\.pm/) {
     my $dir  = $File::Find::topdir;
     my $file = $File::Find::name;
     
-    (my $package = $file) =~ s/^$dir\///;
-    my $root_file = "$root_dir$package";
-    
-    $package =~ s/\//::/g;
+    (my $relative_file = $file) =~ s/^$dir\///;    
+    (my $package = $relative_file) =~ s/\//::/g;
     $package =~ s/\.pm$//g;
     
     # Regex matches all namespaces which are EnsEMBL:: but not EnsEMBL::Web
     # Therefore the if statement is true for EnsEMBL::Web:: and Bio:: packages, which are the ones we need to overload
     if ($package !~ /^EnsEMBL::(?!Web)/) {      
       no strict 'refs';
-      eval "require '$root_file'" unless exists ${"$package\::"}{'ISA'}; # Require the base module first, unless it already exists
-      eval "require '$file'";                                            # Require the plugin module
+      
+      # Require the base module first, unless it already exists
+      if (!exists ${"$package\::"}{'ISA'}) {
+        foreach (@lib_dirs) {
+          eval "require '$_/$relative_file'";
+          warn $@ if $@ && $@ !~ /^Can't locate/;
+          last if exists ${"$package\::"}{'ISA'};
+        }
+      }
+      
+      eval "require '$file'"; # Require the plugin module
       warn $@ if $@;
     }
   }
