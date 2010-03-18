@@ -33,7 +33,7 @@ sub content {
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
   my $base_url        = $object->_url($object->multi_params);
-  my $s               = $object->param('panel_top') eq 'yes' ? 3 : 2;
+  my $s               = $object->param('show_panels') eq 'both' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $i               = 1;
   my $methods         = {};
