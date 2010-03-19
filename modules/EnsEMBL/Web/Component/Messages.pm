@@ -22,11 +22,11 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
   
-  return unless $object->can('get_session');
+  return unless $hub->can('get_session');
   
-  my $session = $object->get_session;
+  my $session = $hub->get_session;
   
   my @priority = EnsEMBL::Web::Constants::MESSAGE_PRIORITY;
   
