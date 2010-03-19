@@ -24,18 +24,28 @@ sub new {
 
     my $self = bless { }, $class;
 
-    my ($type, $release, $counter, $map, $default_version) =
-         rearrange([qw(type release counter map default_version)], @_);
+    my ($type, $release, $counter, $prefix, $map, $default_version) =
+         rearrange([qw(type release counter prefix map default_version)], @_);
 
     $self->counter($counter || 0);
 
-    $self->type($type)       if(defined($type));
-    $self->release($release) if(defined($release));
+    $self->type($type)         if(defined($type));
+    $self->release($release)   if(defined($release));
+    $self->prefix($prefix)     if(defined($prefix));
     $self->init_from_map($map) if(defined($map));
 
     $self->default_version(defined($default_version) ? $default_version : 1);  # can be 0 or anything you would like to start with. But it must be set once and forever.
 
     return $self;
+}
+
+sub prefix {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_prefix'} = shift @_;
+    }
+    return ($self->{'_prefix'} ||= { 'f' => 'ENSFM', 't' => 'ENSGT' }->{$self->type} || 'UnkType');
 }
 
 sub init_from_map {     # actually, we can initialize either from a Map or from a NamedClusterSet (they both have get_all_clids() & clid2clname() methods)
@@ -47,9 +57,11 @@ sub init_from_map {     # actually, we can initialize either from a Map or from 
     foreach my $clid (@{ $map->get_all_clids }) {
         my $clname = $map->clid2clname($clid);
 
-        if($clname=~/^ENS\w{2}\d{4}(\d{10})\.\d+$/) {
-            if($1 > $highest_counter) {
-                $highest_counter = $1;
+        if($clname=~/^(\w+)\d{4}(\d{10})\.\d+$/) {
+            if(defined($self->{_prefix}) ? ($1 eq $self->prefix()) : $self->prefix($1)) { # make sure you completely understand this line if you're itching to change it :)
+                if($2 > $highest_counter) {
+                    $highest_counter = $2;
+                }
             }
         }
     }
@@ -62,15 +74,6 @@ sub generate_new_name {
     $self->counter($self->counter+1);
 
     return sprintf("%s%04d%010d.%d",$self->prefix, $self->release, $self->counter, $self->default_version);
-}
-
-sub prefix {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_prefix'} = shift @_;
-    }
-    return ($self->{'_prefix'} ||= { 'f' => 'ENSFM', 't' => 'ENSGT' }->{$self->type} || 'UnkType');
 }
 
 sub type {

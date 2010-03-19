@@ -172,9 +172,10 @@ sub save {
 # If unsuccessful (has been "grabbed" earlier), count this attempt and take the next best candidate.
 #
 sub maximum_name_reuse {
-    my $self = shift @_;
+    my ($self, $generator) = @_;
 
-    my $generator = Bio::EnsEMBL::Compara::StableId::Generator->new(-TYPE => $self->to->type, -RELEASE => $self->to->release, -MAP => $self->from );
+    $generator ||= Bio::EnsEMBL::Compara::StableId::Generator->new(-TYPE => $self->to->type, -RELEASE => $self->to->release, -MAP => $self->from );
+
     my $postmap   = Bio::EnsEMBL::Compara::StableId::Map->new(-TYPE => $self->to->type);
 
     my %from_taken        = (); # indicates the 'from' name has been taken 
