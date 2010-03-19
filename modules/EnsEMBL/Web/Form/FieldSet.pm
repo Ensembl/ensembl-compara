@@ -44,6 +44,16 @@ sub new {
   return $self;
 }
 
+sub elements {
+  my $self = shift;
+  my $elements = [];
+  foreach my $e (@{$self->{'_element_order'}}) {
+    next unless $e;
+    push @$elements, $self->{'_elements'}{$e} if $self->{'_elements'}{$e};
+  }
+  return $elements;
+}
+
 sub add_element {
   my( $self, %options ) = @_;
   my $module = "EnsEMBL::Web::Form::Element::$options{'type'}";
