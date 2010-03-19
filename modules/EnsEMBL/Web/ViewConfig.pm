@@ -434,7 +434,7 @@ sub form {
     next if $fieldset->{'select_all'};
     
     my %element_types;
-    $element_types{lc $_->type}++ for @{$fieldset->{'_elements'}};
+    $element_types{lc $_->type}++ for @{$fieldset->elements};
     delete $element_types{'hidden'};
     
     # If the fieldset has only checkboxes, provide a select/deselect all option
@@ -447,7 +447,7 @@ sub form {
         classes => [ 'select_all' ]
       );
       
-      unshift @{$fieldset->{'_elements'}}, pop @{$fieldset->{'_elements'}}; # Make it the first checkbox
+      unshift @{$fieldset->{'_element_order'}}, pop @{$fieldset->{'_element_order'}}; # Make it the first checkbox
       
       $fieldset->{'select_all'} = 1;
     }
