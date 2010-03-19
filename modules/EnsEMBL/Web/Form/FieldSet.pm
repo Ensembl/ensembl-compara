@@ -76,7 +76,7 @@ sub _add_element {
   if (!$element->id) {
     $element->id =  $self->_next_id();
   }
-  $self->{'_elements'}{'name'} = $element;
+  $self->{'_elements'}{$element->name} = $element;
   push @{$self->{'_element_order'}}, $element->name;
 }
 
