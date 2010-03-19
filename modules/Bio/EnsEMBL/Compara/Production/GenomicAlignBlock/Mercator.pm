@@ -340,7 +340,7 @@ sub get_params {
     $self->method_link_type($params->{'method_link_type'});
   }
   if(defined($params->{'maximum_gap'})) {
-    $self->method_link_type($params->{'maximum_gap'});
+    $self->maximum_gap($params->{'maximum_gap'});
   }
   return 1;
 }
