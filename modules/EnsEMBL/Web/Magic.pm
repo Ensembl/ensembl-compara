@@ -56,7 +56,7 @@ sub stuff {
   # command and/or accessible?   
   $controller->build_page($page, $doctype, $model, @sections);
   
-  if (!$controller->process_command($model, $page) && $controller->access_ok($model, $page)) {
+  if (!$controller->process_command($model, $page, $problem) && $controller->access_ok($model, $page)) {
     $page->render;
     
     my $content = $page->renderer->content;
@@ -140,7 +140,7 @@ sub handler {
   
   return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
-  
+
   my $problem = $model->create_objects($factorytype);
   
   return if $problem eq 'redirect';                          # Forcing a redirect - don't need to go any further
