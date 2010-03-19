@@ -250,7 +250,7 @@ sub count_similarity_matches {
 sub count_oligos {
   my $self = shift;
   my $type = 'funcgen';
-  return unless $self->database('funcgen');
+  return 0 unless $self->database('funcgen');
   my $dbc = $self->database($type)->dbc; 
   my $sql = qq{
    SELECT count(distinct(ox.ensembl_id))
