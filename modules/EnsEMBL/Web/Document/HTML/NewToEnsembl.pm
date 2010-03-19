@@ -57,6 +57,7 @@ sub render {
       if ($response->is_success && (my $xml = $parser->XMLin($response->content, ForceArray => [qw(status)], KeyAttr => []))) {
         foreach my $details (@{ $xml->{'status'} }) {
           my $tweet = $details->{'text'};
+          next unless $tweet;
           my $miniad;
           ## Add an image
           if ($tweet =~ s/(\[\w+\])// ) { ## File name (sans extension) in square brackets
