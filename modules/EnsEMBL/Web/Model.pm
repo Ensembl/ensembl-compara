@@ -120,7 +120,7 @@ sub create_objects {
   my $factory = $self->_create_proxy_factory($type);
   my $problem;
   
-  if ($factory->has_fatal_problem) {
+  if ($factory && $factory->has_fatal_problem) {
     $problem = $factory->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
   } else {
     eval {
