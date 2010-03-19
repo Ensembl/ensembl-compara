@@ -31,7 +31,6 @@ sub export {
   $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
   $slice = $slice->invert if $strand && $strand != $feature_strand;
   
-  
   my $params = { feature_strand => $feature_strand };
   
   my $html_format = !$format || $format eq 'HTML';
@@ -328,6 +327,9 @@ sub gff3_features {
   my $params       = $self->params;
   my $species_defs = $object->species_defs;
   
+  # Always use the forward strand, else CDS coordinates are incorrect (Bio::EnsEMBL::Exon->coding_region_start and _end return coords for forward strand only. Thanks, Core API team.)
+  $slice = $slice->invert if $slice->strand == -1;
+  
   $self->{'config'} = {
     format             => 'gff3',
     delim              => "\t",
@@ -349,7 +351,6 @@ sub gff3_features {
     #      protein_align      => { func => 'get_all_ProteinAlignFeatures',      type => 'protein_match' }
     #    }
   };
-  
   
   my @dbs = ('core');
   push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
