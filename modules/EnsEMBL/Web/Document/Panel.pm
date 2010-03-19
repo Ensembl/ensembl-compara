@@ -318,7 +318,8 @@ sub render {
       
       return if !$content && exists $self->{'null_data'} && !defined $self->{'null_data'};
     }
-    
+   
+    warn ">>> HERE"; 
     my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
     
     my $html = qq{<div class="panel js_panel"><input type="hidden" class="panel_type" value="$panel_type" />};
@@ -341,7 +342,7 @@ sub render {
             <div class="$_->[1]-button print_hide">};
           
           if ($button_text) {
-            my $url = $self->{$label}->{'url'} || $self->{'object'}->_url({ 'action' => $self->{$label}->{'code'}, 'function' => undef });
+            my $url = $self->{$label}->{'url'} || $hub->url({ 'action' => $self->{$label}->{'code'}, 'function' => undef });
             
             $html .= sprintf qq{<a href="%s">$_->[2]</a>}, encode_entities($url), encode_entities($button_text);
           } else {
