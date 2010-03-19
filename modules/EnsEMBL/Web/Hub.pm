@@ -18,6 +18,8 @@ package EnsEMBL::Web::Hub;
 
 use strict;
 
+use URI::Escape qw(uri_escape);
+
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
@@ -79,6 +81,7 @@ sub parent       :lvalue { $_[0]{'_parent'};   }
 sub session      :lvalue { $_[0]{'_session'}; }
 sub databases    :lvalue { $_[0]{'_databases'}; } 
 sub cache        :lvalue { $_[0]{'_cache'};   }
+sub user         :lvalue { $_[0]{'_user'};   }
 
 sub core_objects :lvalue { $_[0]{'_core_objects'}; }
 sub core_params  { return $_[0]{'_core_params'}; }
@@ -120,6 +123,12 @@ sub _set_core_params {
   $self->{'_core_params'} = \%core_params;
 }
 
+# Does an ordinary redirect
+sub redirect {
+  my ($self, $url) = @_;
+  $self->{'_input'}->redirect($url);
+}
+
 sub url {
   my $self = shift;
   my $params = shift || {};
@@ -152,7 +161,7 @@ sub url {
     }
   }
 
-  my $url = sprintf '%s/%s/%s', $self->species_path($species), $type, $action.( $fn ? "/$fn" : '' );
+  my $url = sprintf '%s/%s/%s', $self->species_defs->species_path($species), $type, $action.( $fn ? "/$fn" : '' );
   my $join = '?';
 
   my $flag = shift;
