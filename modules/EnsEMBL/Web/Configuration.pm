@@ -21,11 +21,12 @@ sub new {
   my ($class, $page, $model, $common_conf) = @_;
   
   my $self = {
-    page   => $page,
-    model  => $model,
-    object => $model->object,
-    _data  => $common_conf,
-    cl     => {}
+    page    => $page,
+    model   => $model,
+    object  => $model->object,
+    caption => '',
+    _data   => $common_conf,
+    cl      => {}
   };
   
   bless $self, $class;
@@ -62,6 +63,16 @@ sub new {
   return $self;
 }
 
+sub get_availability {
+  my $self = shift;
+  my $hub = $self->model->hub;
+
+  my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$hub->species_defs->databases} };
+  $hash->{'database:compara'} = 1 if $hub->species_defs->compara_like_databases;
+  $hash->{'logged_in'} = 1 if $hub->user;
+
+  return $hash;
+}
 
 sub populate_tree      {}
 sub modify_tree        {}
@@ -69,6 +80,7 @@ sub set_default_action {}
 
 sub model        { return $_[0]->{'model'}; }
 sub object       { return $_[0]->{'object'}; }
+sub caption      { return $_[0]->{'caption'}; }
 sub page         { return $_[0]->{'page'}; }
 sub tree         { return $_[0]->{'_data'}{'tree'}; }
 sub configurable { return $_[0]->{'_data'}{'configurable'}; }
@@ -103,15 +115,16 @@ sub default_action {
 sub _get_valid_action {
   my ($self, $action, $func) = @_;
   
-  my $object = $self->object;
+  my $hub = $self->model->hub;
   
   return $action if $action eq 'Wizard';
-  return undef unless ref $object;
-  
+  return undef unless ref $hub;
+  my $object = $self->model->object;
+
   my $node;
   
   $node = $self->tree->get_node($action. '/' . $func) if $func;
-  $self->{'availability'} = ref $object ? $object->availability : {};
+  $self->{'availability'} = ref $object ? $object->availability : $self->availability;
 
   return $action. '/' . $func if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
   
@@ -123,8 +136,7 @@ sub _get_valid_action {
     $node = $self->tree->get_node($_);
     
     if ($node && $self->is_available($node->get('availability'))) {
-      $object->problem('redirect', $object->_url({ action => $_ }));
-      return $_;
+      $hub->redirect($hub->url({ action => $_ }));
     }
   }
   
@@ -139,6 +151,7 @@ sub _global_context {
   return unless $self->page->global_context;
   
   my $object       = $self->object;
+  my $hub          = $self->model->hub;
   my $type         = $self->type;
   my $qs           = $self->query_string;
   my $core_objects = $object->core_objects;
@@ -157,7 +170,7 @@ sub _global_context {
     next unless $row->[3];
     
     my $action = $row->[3]->isa('EnsEMBL::Web::Fake') ? $row->[3]->view : $row->[3]->isa('Bio::EnsEMBL::ArchiveStableId') ? 'idhistory' : $row->[1];
-    my $url    = $object->_url({ type => $row->[0], action => $action, __clear => 1 });
+    my $url    = $hub->url({ type => $row->[0], action => $action, __clear => 1 });
     $url .= "?$qs" if $qs;
     
     $self->page->global_context->add_entry( 
@@ -188,13 +201,13 @@ sub user_context {
 sub _user_context {
   my $self          = shift;
   my $section       = shift || 'global_context';
-  my $object        = $self->object;
+  my $hub           = $self->model->hub;
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-  my $vc            = $object->viewconfig;
+  my $vc            = $hub->viewconfig;
   my %ics           = $vc->image_configs;
-  my $flag          = $object->param('config') ? 0 : 1;
-  my $active_config = $object->param('config') || $vc->default_config;
+  my $flag          = $hub->param('config') ? 0 : 1;
+  my $active_config = $hub->param('config') || $vc->default_config;
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
   
   if ($vc->has_form) {
@@ -203,7 +216,7 @@ sub _user_context {
       id      => 'config_page',
       caption => 'Configure page',
       $active ? ( class => 'active' ) : ( 
-      url => $object->_url({
+      url => $hub->url({
         time     => time, 
         type     => 'Config',
         action   => $action,
@@ -215,7 +228,7 @@ sub _user_context {
   }
   
   foreach my $ic_code (sort keys %ics) {
-    my $ic  = $object->get_imageconfig($ic_code);
+    my $ic  = $hub->get_imageconfig($ic_code);
     $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
     
     $self->page->$section->add_entry(
@@ -223,7 +236,7 @@ sub _user_context {
       id      => "config_$ic_code",
       caption => $ic->get_parameter('title'),
       $active ? ( class => 'active' ) : ( 
-      url => $object->_url({
+      url => $hub->url({
         time     => time, 
         type     => 'Config',
         action   => $action,
@@ -241,7 +254,7 @@ sub _user_context {
     id      => 'user_data',
     caption => 'Custom Data',
      $active ? ( class => 'active' ) : ( 
-     url => $object->_url({
+     url => $hub->url({
        time => time,
        __clear  => 1,
        type     => 'UserData',
@@ -251,13 +264,13 @@ sub _user_context {
   
   $active = $section eq 'global_context' && $type eq 'Account'; # Now the user account link - varies depending on whether the user is logged in or not
   
-  if ($object->species_defs->ENSEMBL_LOGINS) {
+  if ($hub->species_defs->ENSEMBL_LOGINS) {
     $self->page->$section->add_entry( 
       type    => 'Account',
       id      => 'account',
       caption => 'Your account',
       $active ? ( class => 'active') : ( 
-      url => $object->_url({
+      url => $hub->url({
         time     => time, 
         __clear  => 1,
         type     => 'Account',
@@ -284,13 +297,14 @@ sub _reset_config_panel {
   my ($self, $title, $action, $config) = @_;
   
   my $object = $self->object;
+  my $hub    = $self->model->hub;
   
   my $panel = $self->new_panel('Configurator',
     code   => 'x',
     object => $object
   );
   
-  my $url = $object->_url({ 
+  my $url = $hub->url({ 
     type     => 'Config', 
     action   => $action, 
     reset    => 1, 
@@ -347,11 +361,12 @@ sub _configurator {
   my $self = shift;
   
   my $object     = $self->object;
+  my $hub        = $self->model->hub;
   my $vc         = $object->viewconfig;
   my $config_key = $object->param('config');
   my $action     = join '/', map $object->$_ || (), qw(type action function);
-  my $url        = $object->_url({ type => 'Config', action => $action }, 1);
-  my $conf       = $object->param('config') ? $object->image_config_hash($object->param('config'), undef, 'merged') : undef;
+  my $url        = $hub->url({ type => 'Config', action => $action }, 1);
+  my $conf       = $hub->param('config') ? $hub->image_config_hash($hub->param('config'), undef, 'merged') : undef;
   
   # This must be the view config
   if (!$conf) {
@@ -572,7 +587,7 @@ sub _local_context {
   
   $self->page->local_context->tree($self->{'_data'}{'tree'});
   $self->page->local_context->active($action);
-  $self->page->local_context->caption(ref $object ? $object->short_caption : $object);
+  $self->page->local_context->caption(ref $object ? $object->short_caption : $self->short_caption);
   $self->page->local_context->counts(ref $object ? $object->counts : {});
   $self->page->local_context->availability(ref $object ? $object->availability : {});
 }
@@ -583,19 +598,19 @@ sub _local_tools {
   return unless $self->page->can('local_tools');
   return unless $self->page->local_tools;
   
-  my $object  = $self->object;
-  my $vc      = $object->viewconfig;
+  my $hub     = $self->model->hub;
+  my $vc      = $hub->viewconfig;
   my $config  = $vc->default_config;
   
   if ($vc->real && $config) {
-    my $action = join '/', map $object->$_ || (), qw(type action function);
+    my $action = join '/', map $hub->$_ || (), qw(type action function);
     (my $rel = $config) =~ s/^_//;
     
     $self->page->local_tools->add_entry(
       caption => 'Configure this page',
       class   => 'modal_link',
       rel     => "modal_config_$rel",
-      url     => $object->_url({ 
+      url     => $hub->url({ 
         time     => time, 
         type     => 'Config', 
         action   => $action,
@@ -614,7 +629,7 @@ sub _local_tools {
   $self->page->local_tools->add_entry(
     caption => 'Manage your data',
     class   => 'modal_link',
-    url     => $object->_url({
+    url     => $hub->url({
       time    => time,
       type    => 'UserData',
       action  => 'ManageData',
@@ -622,11 +637,11 @@ sub _local_tools {
     })
   );
   
-  if ($object->can_export) {       
+  if ($self->model->object && $self->model->object->can_export) {       
     $self->page->local_tools->add_entry(
       caption => 'Export data',
       class   => 'modal_link',
-      url     => $object->_url({ type => 'Export', action => $object->type, function => $object->action })
+      url     => $hub->url({ type => 'Export', action => $hub->type, function => $hub->action })
     );
   } else {
     $self->page->local_tools->add_entry(
@@ -641,12 +656,12 @@ sub _local_tools {
     $self->page->local_tools->add_entry(
       caption => 'Bookmark this page',
       class   => 'modal_link',
-      url     => $object->_url({
+      url     => $hub->url({
         type    => 'Account',
         action  => 'Bookmark/Add',
         __clear => 1,
         name    => $self->page->title->get,
-        url     => $object->species_defs->ENSEMBL_BASE_URL . $object->_url
+        url     => $hub->species_defs->ENSEMBL_BASE_URL . $hub->url
       })
     );
   } else {
@@ -679,12 +694,13 @@ sub _context_panel {
   my $self   = shift;
   my $raw    = shift;
   my $object = $self->object;
-  
+  my $caption = $object ? $object->caption : $self->caption;
+
   my $panel = $self->new_panel('Summary',
     code        => 'summary_panel',
     object      => $object,
     raw_caption => $raw,
-    caption     => $object->caption
+    caption     => $caption,
   );
   
   $panel->add_component(summary => sprintf 'EnsEMBL::Web::Component::%s::Summary', $self->type);
@@ -694,21 +710,21 @@ sub _context_panel {
 
 sub _content_panel {
   my $self   = shift;
-  my $object = $self->object;
-  my $action = $self->_get_valid_action($ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'});
+  my $hub = $self->model->hub;
+  my $object = $self->model->object;
+  my $action = $self->_get_valid_action($hub->action, $hub->function);
   my $node   = $self->get_node($action);
-  
   return unless $node;
   
   if ($self->can('set_title')) {
     my $title = $node->data->{'concise'} || $node->data->{'caption'};
     $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
-    $title = join ' - ', '', $title, ($object ? $object->caption : ());
+    $title = join ' - ', '', $title, ($object ? $object->caption : $self->caption);
      
     $self->set_title($title);
   }
-  
-  $self->{'availability'} = $object->availability;
+ 
+  $self->{'availability'} = $object ? $object->availability : $self->availability;;
   
   my $previous_node = $node->previous;
   my $next_node     = $node->next;
@@ -732,10 +748,10 @@ sub _content_panel {
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'}     = $next_node->data     if $next_node;
   
-  my %help = $object->species_defs->multiX('ENSEMBL_HELP'); # Check for help
+  my %help = $hub->species_defs->multiX('ENSEMBL_HELP'); # Check for help
   
   if (keys %help) {
-    my $page_url = join '/', map $object->$_ || (), qw(type action function);
+    my $page_url = join '/', map $hub->$_ || (), qw(type action function);
     $params{'help'} = $help{$page_url};
   }
   
@@ -791,17 +807,42 @@ sub create_subnode {
 }
 
 sub create_submenu {
-  my ($self, $code, $caption, $options) = @_;
+  my ($self, $code, $caption) = @_;
 
   my $details = {
     caption => $caption,
     url     => '',
     type    => 'menu',
-    %{$options||{}},
   };
   
   return $self->tree->create_node($code, $details) if $self->tree;
 }
+
+=pod
+sub create_dbfrontend_menu {
+### Create a submenu of record management options
+### Default options are Add/Edit/List - pass a hashref of key/value pairs
+### to configure a custom set of links
+  my ($self, $code, $caption, $entrypoints) = @_;
+  my $menu = $self->tree->create_submenu($code, $caption);
+
+  unless ($entrypoints && @$entrypoints) {
+    $entrypoints = [
+      {'function' => 'Add',   'caption' => 'Add'},
+      {'function' => 'Edit',  'caption' => 'Edit'},
+      {'function' => 'List',  'caption' => 'Show List'},
+    ];
+  }
+
+  foreach my $page (@$entrypoints) {
+    $menu->append(
+      $self->create_subnode($page->{'function'}, $page->{'caption'}, 
+        [], {'command' => 'db_frontend'}
+      )
+    );
+  }
+}
+=cut
 
 sub delete_node {
   my ($self, $code) = @_;
