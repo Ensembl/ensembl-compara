@@ -17,8 +17,8 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $object = $self->object;
-  my $file = $object->param('file');
+  my $hub = $self->model->hub;
+  my $file = $hub->param('file');
 
   $file =~ s/\s+//g;
   $file =~ s/^[\.\/\\]*//;
@@ -26,7 +26,7 @@ sub content {
   $file =~ s/\/+/\//g;
   my $html; 
 
-  my $file = $object->species.'/'.$file;
+  my $file = $hub->species.'/'.$file;
   $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file); 
 
   return $html;

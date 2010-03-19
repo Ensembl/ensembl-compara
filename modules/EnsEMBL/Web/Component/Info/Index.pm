@@ -14,8 +14,6 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
-
 }
 
 1;

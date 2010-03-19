@@ -13,10 +13,9 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $object = $self->object;
   my $html; 
 
-  my $file = '/ssi/species/stats_'.$object->species.'.html';
+  my $file = '/ssi/species/stats_'.$self->model->hub->species.'.html';
   $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
 
   return $html;

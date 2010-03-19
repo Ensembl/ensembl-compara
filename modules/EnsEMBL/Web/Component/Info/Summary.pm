@@ -15,7 +15,6 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $object = $self->object;
   my $html = '<br />';
   my $search = EnsEMBL::Web::Document::HTML::HomeSearch->new();
   $html .= $search->render;
