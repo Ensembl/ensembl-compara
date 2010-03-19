@@ -16,10 +16,26 @@ sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel(1);  } ## RAW AS CONTAINS <i> tags
 
+sub caption { 
+  my $self = shift;
+  my $species_defs = $self->model->hub->species_defs;
+  my $caption = 'Search '.$species_defs->ENSEMBL_SITETYPE.' '.$species_defs->SPECIES_COMMON_NAME;
+  return $caption; 
+}
+
+sub short_caption { return 'About this species'; }
+
+sub availability {
+  my $self = shift;
+  my $hash = $self->get_availability;
+  $hash->{'database.variation'} =
+    exists $self->model->hub->species_defs->databases->{'DATABASE_VARIATION'}  ? 1 : 0;
+  return $hash;
+}
+
 sub populate_tree {
-  my $self   = shift;
-  my $object = $self->object;
-  my $sd     = $object->species_defs;
+  my $self  = shift;
+  my $sd    = $self->model->hub->species_defs;
 
   my $index = $self->create_node( 'Index', "Description",
     [qw(blurb    EnsEMBL::Web::Component::Info::SpeciesBlurb)],
@@ -57,7 +73,7 @@ sub populate_tree {
   ));
 
   $self->create_node( 'WhatsNew', "What's New",
-    [qw(whatsnew    EnsEMBL::Web::Component::Info::WhatsNew)],
+    [qw(whatsnew    EnsEMBL::Web::Component::Info::News)],
     { 'availability' => 1}
   );
 
