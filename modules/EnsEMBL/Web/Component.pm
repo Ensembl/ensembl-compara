@@ -441,7 +441,7 @@ sub _sort_similarity_links {
     my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
     my $link_type = $fv_type eq 'OligoFeature' ? $fv_type : "${fv_type}_$externalDB";
     
-    my $k_url = $object->_url({
+    my $k_url = $self->model->hub->url({
       type   => 'Location',
       action => 'Genome',
       id     => $link_name,
