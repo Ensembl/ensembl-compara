@@ -159,9 +159,9 @@ sub render {
   return $output;
 }
 
-# Replacement for old method, included for backwards compatibility
-# Tries to add the element to the last fieldset, or creates a new one if none exist
 sub add_element {
+### Wrapper around fieldset->add_element, to make form-building easier!
+### Tries to add the element to the last fieldset, or creates a new one if none exist
   my ($self, %options) = @_;
 
   my $fieldset = $self->{'_fieldsets'}->[-1];
@@ -177,6 +177,22 @@ sub add_element {
   $fieldset->add_element(%options);
   
   return $fieldset if $new_fieldset;
+}
+
+sub delete_element {
+### Wrapper around fieldset->delete_element, to make form-building easier!
+### Tries to delete the element from the last fieldset
+  my ($self, $name) = @_;
+  my $fieldset = $self->{'_fieldsets'}->[-1];
+  $fieldset->delete_element($name);
+}
+
+sub modify_element {
+### Wrapper around fieldset->modify_element, to make form-building easier!
+### Tries to modify an element in the last fieldset
+  my $self = shift;
+  my $fieldset = $self->{'_fieldsets'}->[-1];
+  $fieldset->modify_element(@_);
 }
 
 1;

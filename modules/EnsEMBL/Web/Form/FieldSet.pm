@@ -18,7 +18,8 @@ sub new {
     '_id'       => $option{'form'}."_$name",
     '_legend'   => $option{'legend'}  || '',
     '_stripes'  => $option{'stripes'} || 0,
-    '_elements' => [],
+    '_elements'       => {},
+    '_element_order'  => [],
     '_set_id'   => 1,
     '_required' => 0,
     '_file'     => 0,
@@ -65,7 +66,34 @@ sub _add_element {
   if (!$element->id) {
     $element->id =  $self->_next_id();
   }
-  push @{$self->{'_elements'}}, $element;
+  $self->{'_elements'}{'name'} = $element;
+  push @{$self->{'_element_order'}}, $element->name;
+}
+
+sub delete_element {
+  my ($self, $name) = @_;
+  return unless $name;
+  delete $self->{'_elements'}{$name};
+  ## Don't forget to remove it from the element order as well!
+  my $keepers;
+  foreach my $element (@{$self->{'_element_order'}}) {
+    push @$keepers, $element unless $element eq $name;
+  }
+  $self->{'_element_order'} = $keepers;
+}
+
+sub modify_element {
+### Modify an attribute of an EnsEMBL::Web::Form::Element object
+  my ($self, $name, $attribute, $value) = @_;
+  return unless ($name && $attribute);
+  if ($name eq $attribute) {
+    warn "!!! Renaming of elements not permitted! Remove this element and replace with a new one.";
+    return;
+  }
+  my $element = $self->{'_elements'}{$name};
+  if ($element && $element->can($attribute)) {
+    $element->$attribute($value);
+  }
 }
 
 sub legend {
@@ -150,7 +178,9 @@ sub render {
   my $hidden_output;
   my $i;
   
-  foreach my $element (@{$self->{'_elements'}}) {
+  foreach my $name (@{$self->{'_element_order'}}) {
+    my $element = $self->{'_elements'}{$name};
+    next unless $element;
     if ($element->type eq 'Hidden') {
       $hidden_output .= $self->_render_element($element);
     } else {
