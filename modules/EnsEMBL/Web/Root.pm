@@ -445,7 +445,7 @@ sub new_object {
   my ($self, $module, $api_object) = @_;
   my $data = $self->deepcopy($_[-1]) || {};
   $data->{'_object'} = $api_object;
-  return $self->new_proxy('Object', $module, $data);
+  return $self->new_module('Object', $module, $data);
 }
 
 sub new_factory {
@@ -453,10 +453,10 @@ sub new_factory {
   my $data = $self->deepcopy($_[-1]) || {};
   $data->{'_feature_IDs'} = [];
   $data->{'_dataObjects'} = [];
-  return $self->new_proxy('Factory', $module, $data);
+  return $self->new_module('Factory', $module, $data);
 }
 
-sub new_proxy {
+sub new_module {
   my ($self, $type, $module, $data) = @_;
   my $class = "EnsEMBL::Web::${type}::$module";
   
