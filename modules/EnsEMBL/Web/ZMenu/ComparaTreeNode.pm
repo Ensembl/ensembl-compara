@@ -50,6 +50,13 @@ sub content {
     label => $tagvalues->{'Bootstrap'},
     order => 4
   });
+
+  # Internal node_id
+  $self->add_entry({
+    type => 'node_id',
+    label => $node->node_id,
+    order => 13
+  });
   
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
@@ -210,7 +217,7 @@ sub content {
         type  => 'Comparison',
         label => 'Jump to Multi-species view',
         link  => $object->_url($url_params),
-        order => 12
+        order => 13
       });
     }
     
@@ -222,7 +229,7 @@ sub content {
       label => 'Alignment: FASTA',
       link  => $url_align,
       extra => { external => 1 },
-      order => 13
+      order => 14
     });
     
     $self->add_entry({
@@ -230,7 +237,7 @@ sub content {
       label => 'Tree: New Hampshire',
       link  => $url_tree,
       extra => { external => 1 },
-      order => 14
+      order => 15
     });
     
     # Jalview
@@ -238,7 +245,7 @@ sub content {
       type       => 'View Sub-tree',
       label      => '[Requires Java]',
       label_html => $self->compara_tree_jalview_html($url_align, $url_tree),
-      order      => 15
+      order      => 16
     });
   }
 }
