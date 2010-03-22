@@ -16,9 +16,10 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   my $object = $self->object;
+  my $hub = $self->model->hub;
   my $url = $object->species_path($object->data_species);
   my $param = {};
-  my $error = $object->[1]->{'_input'}->cgi_error;
+  my $error = $hub->input->cgi_error;
 
   if ($error =~ /413/) {
     $param->{'filter_module'} = 'Data';
@@ -28,14 +29,14 @@ sub process {
   my @methods = qw(text file url);
   my $method;
   foreach my $M (@methods) {
-    if ($object->param($M)) {
+    if ($hub->param($M)) {
       $method = $M;
       last;
     }
   }
 
-  if ($object->param($method)) {
-    $param = upload($method, $object);
+  if ($hub->param($method)) {
+    $param = upload($method, $hub);
     if ($param->{'format'} eq 'none') {
       $url .= '/UserData/MoreInput';
     }
@@ -66,13 +67,13 @@ sub process {
 
 sub upload {
 ## Separate out the upload, to make code reuse easier
-  my ($method, $object) = @_;
+  my ($method, $hub) = @_;
   my $param = {};
   my ($error, $format, $filename, $full_ext, %args);
 
   ## Try to guess the format from the extension
   unless ($method eq 'text') {
-    my @orig_path = split('/', $object->param($method));
+    my @orig_path = split('/', $hub->param($method));
     $filename = $orig_path[-1];
     my @parts = split('\.', $filename);
     my $ext = $parts[-1];
@@ -85,10 +86,10 @@ sub upload {
     $format = uc $ext if $ext =~ /(bed|psl|gff|gtf|wig)/i;
   }
   
-  $format = uc $object->param('upload_format') if $object->param('upload_format');
+  $format = uc $hub->param('upload_format') if $hub->param('upload_format');
 
   ## Get original path, so can save file name as default name for upload
-  my $name = $object->param('name');
+  my $name = $hub->param('name');
   unless ($name) {
     if ($method eq 'text') {
       $name = 'Data';
@@ -100,18 +101,18 @@ sub upload {
   $param->{'name'} = $name;
 
   if ($method eq 'url') {
-    my $url = $object->param('url');
+    my $url = $hub->param('url');
     $url = 'http://'.$url unless $url =~ /^http/;
     my $response = get_url_content($url);
     $error = $response->{'error'};
     $args{'content'} = $response->{'content'};
   }
   elsif ($method eq 'text') {
-    $args{'content'} = $object->param('text');
+    $args{'content'} = $hub->param('text');
   }
   else {
     #$args{'extension'} = $full_ext;
-    $args{'tmp_filename'} = $object->[1]->{'_input'}->tmpFileName($object->param($method));
+    $args{'tmp_filename'} = $hub->input->tmpFileName($hub->param($method));
   }
   if ($error) {
     $param->{'filter_module'} = 'Data';
@@ -122,20 +123,20 @@ sub upload {
   
     if ($file->content) {
       if ($file->save) {
-        my $code = $file->md5 . '_' . $object->get_session->get_session_id;
+        my $code = $file->md5 . '_' . $hub->session->get_session_id;
      
-        $param->{'species'} = $object->param('species') || $object->species;
+        $param->{'species'} = $hub->param('species') || $hub->species;
         ## Attach data species to session
-        $object->get_session->add_data(
+        $hub->session->add_data(
           type      => 'upload',
           filename  => $file->filename,
           filesize  => length($file->content),
           code      => $code,
           md5       => $file->md5,
           name      => $name,
-          species   => $object->param('species'),
+          species   => $hub->param('species'),
           format    => $format,
-          assembly  => $object->param('assembly'),
+          assembly  => $hub->param('assembly'),
         );
 
         $param->{'code'} = $code;
