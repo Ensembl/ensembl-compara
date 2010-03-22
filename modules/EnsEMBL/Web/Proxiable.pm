@@ -107,20 +107,23 @@ sub _url {
   }
   
   my $url = sprintf '%s/%s/%s', $self->species_path($species), $type, $action.( $fn ? "/$fn" : '' );
-  my $join = '?';
   
   my $flag = shift;
   
   return [$url, \%pars] if $flag;
   
+  $url .= '?' if scalar keys %pars;
+  
   # Sort the keys so that the url is the same for a given set of parameters
-  foreach (sort keys %pars) {
-    next unless defined $pars{$_};
+  foreach my $p (sort keys %pars) {
+    next unless defined $pars{$p};
     
-    $url .= sprintf '%s%s=%s', $join, uri_escape($_), uri_escape($pars{$_}, "^A-Za-z0-9\-_.!~*'():"); # Don't escape :
-    $join = ';';
+    # Don't escape :
+    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_.!~*'():") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
   }
-
+  
+  $url =~ s/;$//;
+  
   return $url;
 }
 
