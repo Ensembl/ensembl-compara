@@ -133,7 +133,7 @@ sub _get_valid_action {
     $node = $self->tree->get_node($_);
     
     if ($node && $self->is_available($node->get('availability'))) {
-      $hub->redirect($hub->url({ action => $_ }));
+      $hub->problem('redirect', $object->_url({ action => $_ }));
       return $_;
     }
   }
