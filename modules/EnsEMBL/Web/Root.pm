@@ -466,7 +466,8 @@ sub new_module {
   if ($self->dynamic_use($class)) {
     return $class->new($data);
   } else {
-    warn "COULD NOT USE OBJECT MODULE $class";
+    #warn "COULD NOT USE OBJECT MODULE $class";
+    return undef;
   }
 }
 
