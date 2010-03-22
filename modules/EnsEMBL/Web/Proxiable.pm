@@ -214,20 +214,6 @@ sub database {
   }
 }
 
-sub has_a_problem      { return scalar keys %{$_[0]->{'data'}{'_problem'}}; }
-sub has_fatal_problem  { return scalar @{$_[0]->{'data'}{'_problem'}{'fatal'}||[]}; }
-sub has_problem_type   { return scalar @{$_[0]->{'data'}{'_problem'}{$_[1]}||[]}; }
-sub get_problem_type   { return @{$_[0]->{'data'}{'_problem'}{$_[1]}||[]}; }
-sub clear_problem_type { $_[0]->{'data'}{'_problem'}{$_[1]} = []; }
-sub clear_problems     { $_[0]->{'data'}{'_problem'} = {}; }
-
-sub problem {
-  my $self = shift;  
-  
-  push @{$self->{'data'}{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
-  return $self->{'data'}{'_problem'};
-}
-
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig  {
   my ($self, $key) = @_;

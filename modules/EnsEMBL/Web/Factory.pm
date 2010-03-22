@@ -126,6 +126,10 @@ sub _known_feature {
   }
 }
 
+sub problem        { return shift->hub->problem(@_);        }
+sub has_a_problem  { return shift->hub->has_a_problem(@_);  }
+sub clear_problems { return shift->hub->clear_problems(@_); }
+
 # The whole problem handling code possibly needs re-factoring 
 # Especially the stuff that may end up cyclic! (History/UnMapped)
 # where ID's don't exist but we have a "gene" based display
@@ -133,21 +137,22 @@ sub _known_feature {
 sub handle_problem {
   my $self = shift;
   
+  my $hub = $self->hub;
   my $url;
 
-  if ($self->has_problem_type('redirect')) {
-    my ($p) = $self->get_problem_type('redirect');
+  if ($hub->has_problem_type('redirect')) {
+    my ($p) = $hub->get_problem_type('redirect');
     $url  = $p->name;
-  } elsif ($self->has_problem_type('mapped_id')) {
+  } elsif ($hub->has_problem_type('mapped_id')) {
     my $feature = $self->__data->{'objects'}[0];
     
     $url = sprintf '%s/%s/%s?%s', $self->species_path, $self->type, $self->action, join ';', map { "$_=$feature->{$_}" } keys %$feature;
-  } elsif ($self->has_problem_type('unmapped')) {
+  } elsif ($hub->has_problem_type('unmapped')) {
     my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
     my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
     
     $url = sprintf '%s/%s/Genome?type=%s;id=%s', $self->species_path, $self->type, $type, $id;
-  } elsif ($self->has_problem_type('archived')) {
+  } elsif ($hub->has_problem_type('archived')) {
     my ($view, $param, $id) = 
       $self->param('peptide')    ? ('Transcript/Idhistory/Protein', 'p', $self->param('peptide'))    :
       $self->param('transcript') ? ('Transcript/Idhistory',         't', $self->param('transcript')) :
@@ -161,7 +166,7 @@ sub handle_problem {
   }
   
   if ($url) {
-    $self->redirect($url);
+    $hub->redirect($url);
     return 'redirect';
   }
 }
