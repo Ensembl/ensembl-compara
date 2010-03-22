@@ -34,7 +34,7 @@ sub new {
 
   my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
   $type = 'DAS' if $type =~ /^DAS::.+/;
-    
+
   my $self = {
     _apache_handle => $args{'_apache_handle'} || undef,
     _input         => $args{'_input'}         || undef,                        # extension of CGI
@@ -53,7 +53,7 @@ sub new {
     _timer         => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
     _session       => $ENSEMBL_WEB_REGISTRY->get_session,
   };
-  
+
   bless $self, $class;
 
   ## Get database connections 
@@ -63,9 +63,9 @@ sub new {
   ## TODO - remove core objects! 
   $self->{'_core_objects'}  = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
   $self->_set_core_params;
- 
+
   $self->species_defs->{'timer'} = $args{'_timer'};
-  
+
   return $self;
 }
 
@@ -113,7 +113,7 @@ sub core_param  {
 
 sub _set_core_params {
   ### Initialises core parameter hash from CGI parameters
-  
+
   my $self = shift;
   my @params = @{$self->species_defs->core_params};
   my %core_params = map { $_ => $self->param($_) } @params;
@@ -129,74 +129,74 @@ sub redirect {
 sub url {
   my $self = shift;
   my $params = shift || {};
-  
+
   Carp::croak("Not a hashref while calling _url ($params @_)") unless ref $params eq 'HASH';
-  
+
   my $species = exists $params->{'species'}  ? $params->{'species'}  : $self->species;
   my $type    = exists $params->{'type'}     ? $params->{'type'}     : $self->type;
   my $action  = exists $params->{'action'}   ? $params->{'action'}   : $self->action;
   my $fn      = exists $params->{'function'} ? $params->{'function'} : $action eq $self->action ? $self->function : undef;
   my %pars    = %{$self->core_params};
-  
+
   # Remove any unused params
   foreach (keys %pars) {
     delete $pars{$_} unless $pars{$_};
   }
-  
+
   if ($params->{'__clear'}) {
     %pars = ();
     delete $params->{'__clear'};
   }
-  
+
   delete $pars{'t'}  if $params->{'pt'};
   delete $pars{'pt'} if $params->{'t'};
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
   delete $pars{'time'};
-  
+
   foreach (keys %$params) {
     next if $_ =~ /^(species|type|action|function)$/;
-    
+
     if (defined $params->{$_}) {
       $pars{$_} = $params->{$_};
     } else {
       delete $pars{$_};
     }
   }
-  
+
   my $url  = sprintf '%s/%s/%s', $self->species_defs->species_path($species), $type, $action . ($fn ? "/$fn" : '');
   my $flag = shift;
-  
+
   return [ $url, \%pars ] if $flag;
-  
+
   $url .= '?' if scalar keys %pars;
-  
+
   # Sort the keys so that the url is the same for a given set of parameters
   foreach my $p (sort keys %pars) {
     next unless defined $pars{$p};
-    
+
     # Don't escape :
     $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_.!~*'():") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
   }
-  
+
   $url =~ s/;$//;
-  
+
   return $url;
 }
 
 sub param {
   my $self = shift;
-  
+
   if (@_) {
     my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
     my $view_config = $self->viewconfig;
-    
+
     if ($view_config) {
       $view_config->set(@_) if @_ > 1;
       my @val = $view_config->get(@_);
       return wantarray ? @val : $val[0];
     }
-   
+
     return wantarray ? () : undef;
   } else {
     my @params = map _sanitize($_), $self->input->param;
@@ -220,8 +220,8 @@ sub multi_params {
   my $input = $self->input;
 
   my %params = defined $realign ?
-    map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
-    map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
+  map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
+  map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
 }
@@ -250,5 +250,30 @@ sub viewconfig {
   $self->{'_viewconfig'} ||= $self->get_viewconfig;
   return $self->{'_viewconfig'};
 }
+
+# Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
+sub get_imageconfig  {
+  my ($self, $key) = @_;
+  my $session = $self->session || return;
+  my $T = $session->getImageConfig($key); # No second parameter - this isn't cached
+  $T->_set_core($self->core_objects);
+  return $T;
+}
+
+# Retuns a copy of the script config stored in the database with the given key
+sub image_config_hash {
+  my ($self, $key, $type, @species) = @_;
+
+  $type ||= $key;
+
+  my $session = $self->session;
+  return undef unless $session;
+  my $T = $session->getImageConfig($type, $key, @species);
+  return unless $T;
+  $T->_set_core($self->core_objects);
+  return $T;
+}
+
+
 
 1;
