@@ -102,17 +102,17 @@ sub user_details    { return $_[0]{'_user_details'} ||= 1; }
 sub timer           { return $_[0]{'_timer'}; }
 sub timer_push      { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
 
-sub has_a_problem      { return scalar keys %{$_[0][1]{'_problem'}}; }
-sub has_fatal_problem  { return scalar @{$_[0][1]{'_problem'}{'fatal'}||[]}; }
-sub has_problem_type   { return scalar @{$_[0][1]{'_problem'}{$_[1]}||[]}; }
-sub get_problem_type   { return @{$_[0][1]{'_problem'}{$_[1]}||[]}; }
-sub clear_problem_type { $_[0][1]{'_problem'}{$_[1]} = []; }
-sub clear_problems     { $_[0][1]{'_problem'} = {}; }
+sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
+sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
+sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
+sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
+sub clear_problem_type { $_[0]{'_problem'}{$_[1]} = []; }
+sub clear_problems     { $_[0]{'_problem'} = {}; }
 
 sub problem {
   my $self = shift;
-  push @{$self->[1]{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
-  return $self->[1]{'_problem'};
+  push @{$self->{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
+  return $self->{'_problem'};
 }
 
 sub _set_core_params {
