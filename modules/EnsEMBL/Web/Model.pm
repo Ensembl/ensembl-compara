@@ -114,35 +114,41 @@ sub create_data_object_of_type {
   }
 }
 
-sub create_objects {
-## Currently uses Proxy::Factory
+sub create_objects {  
   my ($self, $type) = @_;
-  my $factory = $self->_create_proxy_factory($type);
+  
+  my $hub     = $self->hub;
+  my $factory = $self->create_factory($type);
   my $problem;
   
   if ($factory) {
-    if ($factory->has_fatal_problem) {
-      $problem = $factory->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
-    } 
-    else {
-      eval {$factory->createObjects;};
-      $factory->problem('fatal', "Unable to execute createObject on Factory of type ".$self->hub->type, $@) if $@;
-      # $factory->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
-      if ($factory->has_a_problem) {
+    if ($hub->has_fatal_problem) {
+      $problem = $hub->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
+    } else {
+      eval {
+        $factory->createObjects;
+      };
+      
+      $hub->problem('fatal', "Unable to execute createObject on Factory of type " . $hub->type, $@) if $@;
+      
+      # $hub->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
+      if ($hub->has_a_problem) {
         $problem = $factory->handle_problem; 
-      }
-      else {
+      } else {
         $self->add_objects($factory->DataObjects);
       }
     }
   }
+  
   return $problem;
 }
 
-sub _create_proxy_factory {
-### Creates a Factory object which can then generate one or more 
-### domain objects
+sub create_factory {
+  ### Creates a Factory object which can then generate one or more 
+  ### domain objects
+  
   my ($self, $type) = @_;
+  
   return unless $type;
   
   return $self->new_factory($type, {
@@ -154,8 +160,6 @@ sub _create_proxy_factory {
     _parent        => $self->hub->parent,
   });
 }
-
-
 
 1;
 
