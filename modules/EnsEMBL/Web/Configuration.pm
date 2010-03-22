@@ -583,13 +583,14 @@ sub _local_context {
   return unless $self->page->can('local_context') && $self->page->local_context;
   
   my $object = $self->object;
-  my $action = $self->_get_valid_action($ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'});
+  my $hub    = $self->model->hub;
+  my $action = $self->_get_valid_action($hub->action, $hub->function);
   
   $self->page->local_context->tree($self->{'_data'}{'tree'});
   $self->page->local_context->active($action);
-  $self->page->local_context->caption(ref $object ? $object->short_caption : $object);
+  $self->page->local_context->caption(ref $object ? $object->short_caption : $self->short_caption);
   $self->page->local_context->counts(ref $object ? $object->counts : {});
-  $self->page->local_context->availability(ref $object ? $object->availability : {});
+  $self->page->local_context->availability(ref $object ? $object->availability : $self->availability);
 }
 
 sub _local_tools {
