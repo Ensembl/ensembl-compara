@@ -1,5 +1,12 @@
 package EnsEMBL::Web::Registry;
 
+### NAME: EnsEMBL::Web::Registry
+### Module to pass session information from Apache::Handlers to Magic
+
+### STATUS: At risk
+### If we can change over to using mod_perl "properly", we won't need
+### to route URLs via a cgi script!
+
 use strict;
 use Data::Dumper;
 
@@ -9,20 +16,50 @@ use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Session;
 use EnsEMBL::Web::DASConfig;
 
-use Class::Std;
+sub new {
+  my $class = shift;
+  my $self = {
+    'timer'         => undef,
+    'dbcache'       => undef,
+    'species_defs'  => undef,
+    'user'          => undef,
+    'ajax'          => undef,
+    'session'       => undef,
+    'script'        => undef,
+    'species'       => undef,
+    'type'          => undef,
+    'action'        => undef,
+  };
+  bless $self, $class;
+  return $self;
+}
 
-{
-my %Timer_of     :ATTR( :set<timer>    :get<timer>    );
-#-- Lazy loaded objects - these will have appropriate lazy loaders attached!
-my %DBcache_of        :ATTR( :get<dbcache>  );
-my %SpeciesDefs_of    :ATTR;
-my %User_of           :ATTR( :set<user>     :get<user>     );
-my %Ajax_of           :ATTR( :set<ajax>     :get<ajax>     );
-my %Session_of        :ATTR( :set<session>  :get<session>  );
-my %Script_of         :ATTR( :set<script>   :get<script>   );
-my %Species_of        :ATTR( :set<species>  :get<species>  );
-my %Type_of           :ATTR( :set<type>     :get<type>     );
-my %Action_of         :ATTR( :set<action>   :get<action>   );
+sub get_timer { return $_[0]->{'timer'}; }
+sub set_timer { $_[0]->{'timer'} = $_[1]; }
+
+sub get_dbcache { return $_[0]->{'dbcache'}; }
+sub get_species_defs { return $_[0]->{'species_defs'}; }
+
+sub get_user { return $_[0]->{'user'}; }
+sub set_user { $_[0]->{'user'} = $_[1]; }
+
+sub get_ajax { return $_[0]->{'ajax'}; }
+sub set_ajax { $_[0]->{'ajax'} = $_[1]; }
+
+sub get_session { return $_[0]->{'session'}; }
+sub set_session { $_[0]->{'session'} = $_[1]; }
+
+sub get_script { return $_[0]->{'script'}; }
+sub set_script { $_[0]->{'script'} = $_[1]; }
+
+sub get_species { return $_[0]->{'species'}; }
+sub set_species { $_[0]->{'species'} = $_[1]; }
+
+sub get_type { return $_[0]->{'type'}; }
+sub set_type { $_[0]->{'type'} = $_[1]; }
+
+sub get_action { return $_[0]->{'action'}; }
+sub set_action { $_[0]->{'action'} = $_[1]; }
 
 # This method gets all configured DAS sources for the current species.
 # Source configurations are retrieved first from SpeciesDefs, then additions and
@@ -61,14 +98,14 @@ sub timer_push {
 }
 sub timer {
   my $self = shift;
-  return $Timer_of{ ident $self } ||= EnsEMBL::Web::Timer->new;
+  return $self->{'timer'} ||= EnsEMBL::Web::Timer->new;
 }
 
 sub species_defs {
 ### a
 ### Lazy loaded SpeciesDefs object
   my $self = shift;
-  return $SpeciesDefs_of{ ident $self } ||=
+  return $self->{'species_defs'} ||=
     EnsEMBL::Web::SpeciesDefs->new();
 }
 
@@ -118,8 +155,6 @@ sub initialize_session {
       'species'      => $arg_ref->{'species'}
     })
   );
-}
-
 }
 
 1;
