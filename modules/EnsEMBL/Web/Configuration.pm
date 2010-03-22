@@ -133,7 +133,7 @@ sub _get_valid_action {
     $node = $self->tree->get_node($_);
     
     if ($node && $self->is_available($node->get('availability'))) {
-      $hub->problem('redirect', $object->_url({ action => $_ }));
+      $hub->problem('redirect', $hub->url({ action => $_ }));
       return $_;
     }
   }
@@ -148,10 +148,11 @@ sub _global_context {
   return unless $self->page->can('global_context');
   return unless $self->page->global_context;
   
+  my $hub          = $self->model->hub;
   my $object       = $self->object;
   my $type         = $self->type;
   my $qs           = $self->query_string;
-  my $core_objects = $object->core_objects;
+  my $core_objects = $hub->core_objects;
   
   return unless $core_objects;
   
@@ -167,7 +168,7 @@ sub _global_context {
     next unless $row->[3];
     
     my $action = $row->[3]->isa('EnsEMBL::Web::Fake') ? $row->[3]->view : $row->[3]->isa('Bio::EnsEMBL::ArchiveStableId') ? 'idhistory' : $row->[1];
-    my $url    = $object->_url({ type => $row->[0], action => $action, __clear => 1 });
+    my $url    = $hub->url({ type => $row->[0], action => $action, __clear => 1 });
     $url .= "?$qs" if $qs;
     
     $self->page->global_context->add_entry( 
@@ -202,7 +203,7 @@ sub _user_context {
   my $object        = $self->object;
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-  my $vc            = $object ? $object->viewconfig : undef;
+  my $vc            = $hub->viewconfig;
   my (%ics, $active_config);
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
   my $flag          = $hub->param('config') ? 0 : 1;
@@ -229,7 +230,7 @@ sub _user_context {
     }
   
     foreach my $ic_code (sort keys %ics) {
-      my $ic  = $object->get_imageconfig($ic_code);
+      my $ic  = $hub->get_imageconfig($ic_code);
       $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
     
       $self->page->$section->add_entry(
@@ -305,7 +306,7 @@ sub _reset_config_panel {
     object => $object
   );
   
-  my $url = $object->_url({ 
+  my $url = $self->model->hub->url({ 
     type     => 'Config', 
     action   => $action, 
     reset    => 1, 
@@ -362,15 +363,16 @@ sub _configurator {
   my $self = shift;
   
   my $object     = $self->object;
-  my $vc         = $object->viewconfig;
-  my $config_key = $object->param('config');
-  my $action     = join '/', map $object->$_ || (), qw(type action function);
-  my $url        = $object->_url({ type => 'Config', action => $action }, 1);
-  my $conf       = $object->param('config') ? $object->image_config_hash($object->param('config'), undef, 'merged') : undef;
+  my $hub        = $self->model->hub;
+  my $vc         = $hub->viewconfig;
+  my $config_key = $hub->param('config');
+  my $action     = join '/', map $hub->$_ || (), qw(type action function);
+  my $url        = $hub->url({ type => 'Config', action => $action }, 1);
+  my $conf       = $hub->param('config') ? $hub->image_config_hash($hub->param('config'), undef, 'merged') : undef;
   
   # This must be the view config
   if (!$conf) {
-    if ($vc->has_form) {
+    if ($vc && $vc->has_form) {
       $vc->get_form->{'_attributes'}{'action'} = $url->[0];
       
       $vc->add_form_element({ type => 'Hidden', name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
@@ -404,7 +406,7 @@ sub _configurator {
     
     if (@image_configs) {
       $config_key = $image_configs[0];
-      $conf = $object->image_config_hash($config_key);
+      $conf = $hub->image_config_hash($config_key);
     }
   }
   
@@ -422,7 +424,7 @@ sub _configurator {
   $rhs_content .= sprintf('
       <input type="hidden" name="config" value="%s" />
     </div>', 
-    $object->param('config')
+    $hub->param('config')
   );
   
   my $active = '';
@@ -679,7 +681,7 @@ sub _local_tools {
 sub _user_tools {
   my $self = shift;
 
-  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
+  my $sitename = $self->model->hub->species_defs->ENSEMBL_SITETYPE;
   my @data     = ([ "Back to $sitename", '/index.html' ]);
   my $rel;
   
@@ -774,7 +776,6 @@ sub get_node {
 
 sub query_string {
   my $self   = shift;
-  my $object = $self->object;
   
   my %parameters = (%{$self->model->hub->core_params}, @_);
   my @query_string = map "$_=$parameters{$_}", grep defined $parameters{$_}, sort keys %parameters;
@@ -850,20 +851,20 @@ sub get_submenu {
 sub update_configs_from_parameter {
   my ($self, $parameter_name, @imageconfigs) = @_;
   
-  my $object      = $self->object;
-  my $val         = $object->param($parameter_name);
-  my $reset       = $object->param('reset');
-  my $view_config = $object->get_viewconfig;
-  my @das         = $object->param('add_das_source');
+  my $hub         = $self->model->hub;
+  my $val         = $hub->param($parameter_name);
+  my $reset       = $hub->param('reset');
+  my $view_config = $hub->get_viewconfig;
+  my @das         = $hub->param('add_das_source');
 
   foreach my $config_name (@imageconfigs) {
-    $object->attach_image_config($object->script, $config_name);
-    $object->image_config_hash($config_name);
+    $hub->attach_image_config($hub->script, $config_name);
+    $hub->image_config_hash($config_name);
   }
   
   foreach my $url (@das) {
     my $das = EnsEMBL::Web::DASConfig->new_from_URL($url);
-    $object->get_session->add_das($das);
+    $hub->session->add_das($das);
   }
   
   return unless $val || $reset;
@@ -874,12 +875,12 @@ sub update_configs_from_parameter {
   }
   
   foreach my $config_name (@imageconfigs) {
-    my $image_config = $object->image_config_hash($config_name);
+    my $image_config = $hub->image_config_hash($config_name);
     
     if ($image_config) {
       $image_config->reset if $reset;
       $image_config->update_config_from_parameter($val) if $val;
-      $object->get_session->_temp_store($object->script, $config_name);
+      $hub->session->_temp_store($hub->script, $config_name);
     }
   }
 }
@@ -904,7 +905,7 @@ sub new_panel {
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
         model      => $self->model,
-        object     => $self->model->object,
+        object     => $self->object,
         code       => "error_$params{'code'}",
         caption    => 'Panel compilation error',
         content    => $error,
@@ -920,7 +921,7 @@ sub new_panel {
   my $panel;
   
   eval {
-    $panel = $module_name->new('model' => $self->model, 'object' => $self->model->object, %params);
+    $panel = $module_name->new('model' => $self->model, 'object' => $self->object, %params);
   };
   
   return $panel unless $@;
@@ -928,7 +929,7 @@ sub new_panel {
   $self->page->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
       model   => $self->model,
-      object  => $self->model->object,
+      object  => $self->object,
       code    => "error_$params{'code'}",
       caption => "Panel runtime error",
       content => sprintf ('<p>Unable to compile <strong>%s</strong></p><pre>%s</pre>', $module_name, $self->_format_error($@))
