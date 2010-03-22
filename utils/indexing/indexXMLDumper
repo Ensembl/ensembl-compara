@@ -7,7 +7,13 @@
 # --debug is specified in which case it will exit.
 # --dry_run|n does everything apart from actually write the xml [note that this
 # option will delete any preexisting file]
-# STDOUT and STDERR (the latter only if debug is not ensabled) are sent to a log file (log.log by default)
+# In the abscence of --debug option, STDOUT and STDERR are sent to a log file
+# (dumping_log.log by default). If you run with --debug then output is sent to STDOUT:
+
+# ./indexXMLDumper --species=ALL --index=ALL --debug                        #all output to STDOUT
+# ./indexXMLDumper --species=ALL --index=ALL --debug -log all_debug_log.log #all output to all_debug_log.log
+# ./indexXMLDumper --species=ALL --index=ALL                                #all output to dumping.log
+# ./indexXMLDumper --species=ALL --index=ALL -log all_log.log               #all output to all_log.log
 
 use strict;
 package indexXMLDumper;
@@ -46,8 +52,8 @@ GetOptions('species=s' => \@species,
 (@species) = split ',',@species[0];
 (@indexes) = split ',',@indexes[0];
 
-#redirect STDOUT and STDERR to a file
-$log ||= 'log.log';
+#redirect STDOUT and maybe STDERR to a file
+$log ||= $debug ? '>-' : 'dumping_log.log';
 open (LOG,    ">$log") or die "Can't open $log: $!";
 unless ($debug) {
   open (STDERR, ">&LOG") or die "Can't open $log: $!";
@@ -56,7 +62,7 @@ unless ($debug) {
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
-our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly
+our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
 
 ## HACK 1 - if the INDEX is set to all grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
@@ -76,8 +82,7 @@ if( $species[0] eq 'ALL' ) {
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
-my $dir = "/nfs/eureka/data/ensembl_$release";
-#my $dir = 'input';
+my $dir = $debug ? 'input' : "/nfs/eureka/data/ensembl_$release";
 mkdir $dir, 0777 unless -e 'input';
 
 my $start_time = time;
@@ -1013,7 +1018,7 @@ sub dumpSequence {
           AND cs.name = 'chromosome'
           AND m.meta_key = 'assembly.default'));
 
-    #get mappings between toplevel assemblies
+    #get mappings between toplevel assemblies - used to check there are no name changes on the different assemblies
     my $sth = $conf->{'dbh'}->prepare(qq(
        SELECT distinct sr1.name, sr1.length, sr2.name, cs2.coord_system_id
          FROM coord_system cs1, seq_region sr1, assembly a, seq_region sr2, coord_system cs2
@@ -1037,26 +1042,21 @@ sub dumpSequence {
         WHERE sr.coord_system_id = cs.coord_system_id));
     $sth->execute();
     while( my($name,$length,$type,$cs_id) = $sth->fetchrow_array() ) {
-      my ($prev_name,$prev_length);
+      my ($prev_name,$prev_length,$mapping_text);
       if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
-	# if an old seq_region is mapped to a new one use it...
+	# if this is an old seq_region mapped to a new one of the same name then skip it
 	if ($mapped_ids->{$cs_id}{$name}) {
 	  $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
-	  $prev_length = $mapped_ids->{$cs_id}{$name}{'length'};
-	  if ($prev_name ne $name) { #don't dump identically named regions
-	    print LOG "WARNING: dumping assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
-	    $name = $prev_name;
-	    $length = $prev_length;
+	  if ($prev_name ne $name) {
+	    print LOG "WARNING: found assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
 	  }
+	  next;
 	}
 	else {
-	  #...otherwise ignore
 	  print LOG "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
 	  next;
 	}
       }
-      my ($prev_name,$extra_IDS);
-      my $ids = $prev_name ? "$prev_name$extra_IDS" : "$name$extra_IDS";
       &p( SeqLine($dbspecies,$name,$type,1,$length,$length,$name,[],$type,$sanger,$counter), $nogzip, $fh);
     }
     $total_c += footer( $counter->(),$nogzip,$fh);
