@@ -16,6 +16,7 @@ my %hive_params;
 my %dnds_params;
 my %sitewise_dnds_params;
 my %genetree_params;
+my %engine_params;
 
 my %compara_conf = ();
 $compara_conf{'-port'} = 3306;
@@ -73,6 +74,8 @@ if(%hive_params) {
   }
 }
 
+$self->migrate_storage();
+
 $self->build_GeneTreeSystem();
 
 exit(0);
@@ -121,6 +124,9 @@ sub parse_conf {
       }
       if($confPtr->{TYPE} eq 'GENE_TREE') {
         %genetree_params = %{$confPtr};
+      }
+      if($confPtr->{TYPE} eq 'ENGINE') {
+        %engine_params = %{$confPtr};
       }
     }
   }
@@ -551,7 +557,7 @@ sub build_GeneTreeSystem
     $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
   }
 
-  $parameters .= ", 'use_genomedb_id'=>1" if defined $genetree_params{use_genomedb_id};
+  $parameters .= ", 'use_genomedb_id'=>1" if $genetree_params{use_genomedb_id};
 
   $parameters .= "}";
   my $njtree_phyml_analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
@@ -912,4 +918,41 @@ sub store_codeml_parameters
   $dNdS_Conf->{'codeml_parameters'} = undef;
 }
 
+my @peptide_pipeline_tables = qw(
+  homology
+  homology_member
+  member
+  protein_tree_node
+  protein_tree_member
+  protein_tree_tag
+  super_protein_tree_node
+  super_protein_tree_member
+  super_protein_tree_tag
+);
+
+sub migrate_storage {
+  if (%engine_params) {
+    if (defined ($engine_params{'peptide_pipeline'}) && $engine_params{'peptide_pipeline'} ne "") {
+    #Change tables to ENGINE
+    my $engine = $engine_params{'peptide_pipeline'};
+    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+      die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	  }
+    foreach my $table (@peptide_pipeline_tables) {
+      my $sql = "ALTER TABLE $table ENGINE=$engine";
+      $self->{'hiveDBA'}->dbc->do($sql);
+    }
+  }
+  #defined individual tables
+  foreach my $table (keys %engine_params) {
+    next if ($table eq 'peptide_pipeline' || $table eq "" || $table eq "TYPE");
+    my $engine = $engine_params{$table};
+    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+	    die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+    }
+    my $sql = "ALTER TABLE $table ENGINE=$engine";
+      $self->{'hiveDBA'}->dbc->do($sql);
+    }
+  }
+}
 
