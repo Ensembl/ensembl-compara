@@ -18,48 +18,46 @@ package EnsEMBL::Web::Hub;
 
 use strict;
 
+use Carp;
 use URI::Escape qw(uri_escape);
 
+use EnsEMBL::Web::CoreObjects;
+use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::CoreObjects;
-use EnsEMBL::Web::DBSQL::DBConnection;
 
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, %args) = @_;
 
-  my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'};# Parsed from URL:  Gene, UserData, etc
+  my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
   $type = 'DAS' if $type =~ /^DAS::.+/;
     
   my $self = {
-      _apache_handle  => $args{'_apache_handle'} || undef,
-      _input          => $args{'_input'}         || undef,                    # extension of CGI
-      _species        => $args{'_species'}       || $ENV{'ENSEMBL_SPECIES'},
-      _type           => $type,     
-      _action         => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
-      _function       => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
-      _script         => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},   # name of script in this case action... ## deprecated
-      _species_defs   => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
-      _session        => $ENSEMBL_WEB_REGISTRY->get_session,
-      _cache          => $args{'_cache'}
-                          || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
-
-      _problem        => $args{'_problem'}       || {},    
-      _ext_url        => $args{'_ext_url'}       || undef,                    # EnsEMBL::Web::ExtURL object used to create external links
-      _user           => $args{'_user'}          || undef,                    
-      _view_configs   => $args{'_view_configs_'} || {},
-      _user_details   => $args{'_user_details'}  || 1,
-      _timer          => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
+    _apache_handle => $args{'_apache_handle'} || undef,
+    _input         => $args{'_input'}         || undef,                        # extension of CGI
+    _species       => $args{'_species'}       || $ENV{'ENSEMBL_SPECIES'},    
+    _type          => $type,
+    _action        => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
+    _function      => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
+    _script        => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action... ## deprecated
+    _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
+    _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
+    _problem       => $args{'_problem'}       || {},    
+    _ext_url       => $args{'_ext_url'}       || undef,                        # EnsEMBL::Web::ExtURL object used to create external links
+    _user          => $args{'_user'}          || undef,                    
+    _view_configs  => $args{'_view_configs_'} || {},
+    _user_details  => $args{'_user_details'}  || 1,
+    _timer         => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
+    _session       => $ENSEMBL_WEB_REGISTRY->get_session,
   };
   
   bless $self, $class;
 
   ## Get database connections 
-  my $api_connection = $self->species ne 'common' ? 
-                        new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
+  my $api_connection = $self->species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
   $self->{'_databases'} = $api_connection;
 
   ## TODO - remove core objects! 
@@ -72,35 +70,25 @@ sub new {
 }
 
 # Accessor functionality
-sub species      :lvalue { $_[0]{'_species'};  }
-sub script       :lvalue { $_[0]{'_script'};   }
-sub type         :lvalue { $_[0]{'_type'};   }
-sub action       :lvalue { $_[0]{'_action'}; }
-sub function     :lvalue { $_[0]{'_function'}; }
-sub parent       :lvalue { $_[0]{'_parent'};   }
-sub session      :lvalue { $_[0]{'_session'}; }
-sub databases    :lvalue { $_[0]{'_databases'}; } 
-sub cache        :lvalue { $_[0]{'_cache'};   }
-sub user         :lvalue { $_[0]{'_user'};   }
+sub species   :lvalue { $_[0]{'_species'};   }
+sub script    :lvalue { $_[0]{'_script'};    }
+sub type      :lvalue { $_[0]{'_type'};      }
+sub action    :lvalue { $_[0]{'_action'};    }
+sub function  :lvalue { $_[0]{'_function'};  }
+sub parent    :lvalue { $_[0]{'_parent'};    }
+sub session   :lvalue { $_[0]{'_session'};   }
+sub databases :lvalue { $_[0]{'_databases'}; } 
+sub cache     :lvalue { $_[0]{'_cache'};     }
+sub user      :lvalue { $_[0]{'_user'};      }
 
-sub core_objects :lvalue { $_[0]{'_core_objects'}; }
-sub core_params  { return $_[0]{'_core_params'}; }
-
-sub core_param  { 
-  my $self = shift;
-  my $name = shift;
-  return unless $name;
-  if (@_) {
-    $self->{'_core_params'}{$name} = @_;
-  }
-  return $self->{'_core_params'}{$name};
-}
-
-sub apache_handle   { return $_[0]{'_apache_handle'}; }
-sub species_defs    { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
-sub user_details    { return $_[0]{'_user_details'} ||= 1; }
-sub timer           { return $_[0]{'_timer'}; }
-sub timer_push      { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
+sub input         { return $_[0]{'_input'};         }
+sub core_objects  { return $_[0]{'_core_objects'};  }
+sub core_params   { return $_[0]{'_core_params'};   }
+sub apache_handle { return $_[0]{'_apache_handle'}; }
+sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
+sub user_details  { return $_[0]{'_user_details'} ||= 1; }
+sub timer         { return $_[0]{'_timer'}; }
+sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -115,8 +103,17 @@ sub problem {
   return $self->{'_problem'};
 }
 
+sub core_param  { 
+  my $self = shift;
+  my $name = shift;
+  return unless $name;
+  $self->{'_core_params'}->{$name} = @_ if @_;
+  return $self->{'_core_params'}->{$name};
+}
+
 sub _set_core_params {
-### Initialises core parameter hash from CGI parameters
+  ### Initialises core parameter hash from CGI parameters
+  
   my $self = shift;
   my @params = @{$self->species_defs->core_params};
   my %core_params = map { $_ => $self->param($_) } @params;
@@ -132,61 +129,65 @@ sub redirect {
 sub url {
   my $self = shift;
   my $params = shift || {};
-
-  Carp::croak("Not a hashref while calling _url ($params @_)") unless ref($params) eq 'HASH';
-
-  my $species = exists($params->{'species'})  ? $params->{'species'}  : $self->species;
-  my $type    = exists($params->{'type'})     ? $params->{'type'}     : $self->type;
-  my $action  = exists($params->{'action'})   ? $params->{'action'}   : $self->action;
-  my $fn      = exists($params->{'function'}) ? $params->{'function'} : ($action eq $self->action ? $self->function : undef);
+  
+  Carp::croak("Not a hashref while calling _url ($params @_)") unless ref $params eq 'HASH';
+  
+  my $species = exists $params->{'species'}  ? $params->{'species'}  : $self->species;
+  my $type    = exists $params->{'type'}     ? $params->{'type'}     : $self->type;
+  my $action  = exists $params->{'action'}   ? $params->{'action'}   : $self->action;
+  my $fn      = exists $params->{'function'} ? $params->{'function'} : $action eq $self->action ? $self->function : undef;
   my %pars    = %{$self->core_params};
-
+  
+  # Remove any unused params
+  foreach (keys %pars) {
+    delete $pars{$_} unless $pars{$_};
+  }
+  
   if ($params->{'__clear'}) {
     %pars = ();
     delete $params->{'__clear'};
   }
-
+  
   delete $pars{'t'}  if $params->{'pt'};
   delete $pars{'pt'} if $params->{'t'};
   delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
   delete $pars{'time'};
-
+  
   foreach (keys %$params) {
     next if $_ =~ /^(species|type|action|function)$/;
-
+    
     if (defined $params->{$_}) {
       $pars{$_} = $params->{$_};
     } else {
       delete $pars{$_};
     }
   }
-
-  my $url = sprintf '%s/%s/%s', $self->species_defs->species_path($species), $type, $action.( $fn ? "/$fn" : '' );
-  my $join = '?';
-
+  
+  my $url  = sprintf '%s/%s/%s', $self->species_defs->species_path($species), $type, $action . ($fn ? "/$fn" : '');
   my $flag = shift;
-
-  return [$url, \%pars] if $flag;
-
+  
+  return [ $url, \%pars ] if $flag;
+  
+  $url .= '?' if scalar keys %pars;
+  
   # Sort the keys so that the url is the same for a given set of parameters
-  foreach (sort keys %pars) {
-    next unless defined $pars{$_};
-
-    $url .= sprintf '%s%s=%s', $join, uri_escape($_), uri_escape($pars{$_}, "^A-Za-z0-9\-_.!~*'():"); # Don't escape :
-    $join = ';';
+  foreach my $p (sort keys %pars) {
+    next unless defined $pars{$p};
+    
+    # Don't escape :
+    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_.!~*'():") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
   }
-
+  
+  $url =~ s/;$//;
+  
   return $url;
 }
-
-### Wrappers around CGI parameter access
-sub input     :lvalue { $_[0]{'_input'}; }
 
 sub param {
   my $self = shift;
   
   if (@_) {
-    my @T = map { _sanitize($_) } $self->input->param(@_);
+    my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
     my $view_config = $self->viewconfig;
     
@@ -198,7 +199,7 @@ sub param {
    
     return wantarray ? () : undef;
   } else {
-    my @params = map { _sanitize($_) } $self->input->param;
+    my @params = map _sanitize($_), $self->input->param;
     my $view_config = $self->viewconfig;
     push @params, $view_config->options if $view_config;
     my %params = map { $_, 1 } @params; # Remove duplicates
@@ -225,7 +226,6 @@ sub multi_params {
   return \%params;
 }
 
-
 sub _sanitize {
   my $T = shift;
   $T =~ s/<script(.*?)>/[script$1]/igsm;
@@ -250,6 +250,5 @@ sub viewconfig {
   $self->{'_viewconfig'} ||= $self->get_viewconfig;
   return $self->{'_viewconfig'};
 }
-
 
 1;
