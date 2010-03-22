@@ -188,50 +188,55 @@ sub user_context {
 sub _user_context {
   my $self          = shift;
   my $section       = shift || 'global_context';
+  my $hub           = $self->model->hub;
   my $object        = $self->object;
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-  my $vc            = $object->viewconfig;
-  my %ics           = $vc->image_configs;
-  my $flag          = $object->param('config') ? 0 : 1;
-  my $active_config = $object->param('config') || $vc->default_config;
+  my $vc            = $object ? $object->viewconfig : undef;
+  my (%ics, $active_config);
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
+  my $flag          = $hub->param('config') ? 0 : 1;
+
+  if ($vc) {
+    %ics            = $vc ? $vc->image_configs : undef;
+    $active_config  = $hub->param('config') || $vc->default_config;
   
-  if ($vc->has_form) {
-    $self->page->$section->add_entry(
-      type    => 'Config',
-      id      => 'config_page',
-      caption => 'Configure page',
-      $active ? ( class => 'active' ) : ( 
-      url => $object->_url({
-        time     => time, 
-        type     => 'Config',
-        action   => $action,
-        config   => '_page'
-      }))
-    );
+    if ($vc->has_form) {
+      $self->page->$section->add_entry(
+        type    => 'Config',
+        id      => 'config_page',
+        caption => 'Configure page',
+        $active ? ( class => 'active' ) : ( 
+        url => $hub->url({
+          time     => time, 
+          type     => 'Config',
+          action   => $action,
+          config   => '_page'
+        }))
+      );
     
-    $flag = 0;
-  }
+      $flag = 0;
+    }
   
-  foreach my $ic_code (sort keys %ics) {
-    my $ic  = $object->get_imageconfig($ic_code);
-    $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
+    foreach my $ic_code (sort keys %ics) {
+      my $ic  = $object->get_imageconfig($ic_code);
+      $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
     
-    $self->page->$section->add_entry(
-      type    => 'Config',
-      id      => "config_$ic_code",
-      caption => $ic->get_parameter('title'),
-      $active ? ( class => 'active' ) : ( 
-      url => $object->_url({
-        time     => time, 
-        type     => 'Config',
-        action   => $action,
-        config   => $ic_code
-      }))
-    );
+      $self->page->$section->add_entry(
+        type    => 'Config',
+        id      => "config_$ic_code",
+        caption => $ic->get_parameter('title'),
+        $active ? ( class => 'active' ) : ( 
+        url => $hub->url({
+          time     => time, 
+          type     => 'Config',
+          action   => $action,
+          config   => $ic_code
+        }))
+      );
     
-    $flag = 0;
+      $flag = 0;
+    }
   }
   
   $active = $section eq 'global_context' && $type eq 'UserData';
@@ -241,7 +246,7 @@ sub _user_context {
     id      => 'user_data',
     caption => 'Custom Data',
      $active ? ( class => 'active' ) : ( 
-     url => $object->_url({
+     url => $hub->url({
        time => time,
        __clear  => 1,
        type     => 'UserData',
@@ -251,13 +256,13 @@ sub _user_context {
   
   $active = $section eq 'global_context' && $type eq 'Account'; # Now the user account link - varies depending on whether the user is logged in or not
   
-  if ($object->species_defs->ENSEMBL_LOGINS) {
+  if ($hub->species_defs->ENSEMBL_LOGINS) {
     $self->page->$section->add_entry( 
       type    => 'Account',
       id      => 'account',
       caption => 'Your account',
       $active ? ( class => 'active') : ( 
-      url => $object->_url({
+      url => $hub->url({
         time     => time, 
         __clear  => 1,
         type     => 'Account',
@@ -583,19 +588,19 @@ sub _local_tools {
   return unless $self->page->can('local_tools');
   return unless $self->page->local_tools;
   
-  my $object  = $self->object;
-  my $vc      = $object->viewconfig;
+  my $hub  = $self->model->hub;
+  my $vc      = $hub->viewconfig;
   my $config  = $vc->default_config;
   
   if ($vc->real && $config) {
-    my $action = join '/', map $object->$_ || (), qw(type action function);
+    my $action = join '/', map $hub->$_ || (), qw(type action function);
     (my $rel = $config) =~ s/^_//;
     
     $self->page->local_tools->add_entry(
       caption => 'Configure this page',
       class   => 'modal_link',
       rel     => "modal_config_$rel",
-      url     => $object->_url({ 
+      url     => $hub->url({ 
         time     => time, 
         type     => 'Config', 
         action   => $action,
@@ -614,7 +619,7 @@ sub _local_tools {
   $self->page->local_tools->add_entry(
     caption => 'Manage your data',
     class   => 'modal_link',
-    url     => $object->_url({
+    url     => $hub->url({
       time    => time,
       type    => 'UserData',
       action  => 'ManageData',
@@ -622,13 +627,14 @@ sub _local_tools {
     })
   );
   
-  if ($object->can_export) {       
+  if ($self->object && $self->object->can_export) {       
     $self->page->local_tools->add_entry(
       caption => 'Export data',
       class   => 'modal_link',
-      url     => $object->_url({ type => 'Export', action => $object->type, function => $object->action })
+      url     => $hub->url({ type => 'Export', action => $hub->type, function => $hub->action })
     );
-  } else {
+  } 
+  else {
     $self->page->local_tools->add_entry(
       caption => 'Export data',
       class   => 'disabled',
@@ -641,12 +647,12 @@ sub _local_tools {
     $self->page->local_tools->add_entry(
       caption => 'Bookmark this page',
       class   => 'modal_link',
-      url     => $object->_url({
+      url     => $hub->url({
         type    => 'Account',
         action  => 'Bookmark/Add',
         __clear => 1,
         name    => $self->page->title->get,
-        url     => $object->species_defs->ENSEMBL_BASE_URL . $object->_url
+        url     => $hub->species_defs->ENSEMBL_BASE_URL . $hub->url
       })
     );
   } else {
@@ -679,12 +685,13 @@ sub _context_panel {
   my $self   = shift;
   my $raw    = shift;
   my $object = $self->object;
+  my $caption = $object ? $object->caption : $self->caption;
   
   my $panel = $self->new_panel('Summary',
     code        => 'summary_panel',
     object      => $object,
     raw_caption => $raw,
-    caption     => $object->caption
+    caption     => $caption
   );
   
   $panel->add_component(summary => sprintf 'EnsEMBL::Web::Component::%s::Summary', $self->type);
