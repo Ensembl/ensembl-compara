@@ -1,5 +1,36 @@
 package EnsEMBL::Web::Session;
 
+### NAME: EnsEMBL::Web::Session
+### Object to maintain state during a browser session 
+
+### STATUS: Stable
+
+### DESCRIPTION:
+### New Session object - passed around inside the data object to handle storage of
+### ViewConfigs/ImageConfigs in the web_user_db
+###
+### How it is used...
+###
+### The session object is "lazily" attached to {{EnsEMBL::Web::Hub}} objects and is
+### accessed via the {{EnsEMBL::Web::Hub::session}} method. You usually won't need
+### to do this explicitly - because it is done implicitly by methods such as:
+###
+### {{EnsEMBL::Web::Hub::get_imageconfig}},
+### {{EnsEMBL::Web::Hub::image_config_hash}},
+### {{EnsEMBL::Web::Hub::get_viewconfig}},
+### {{EnsEMBL::Web::Hub::attach_image_config}} all of which create either
+### {{EnsEMBL::Web::ViewConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
+###
+### These commands in turn access the database if we already have a session (whose is
+### accessible by {{session_id}}) and if the appropriate viewconfig is defined as
+### storable. (In this way it replaces the ViewConfigAdaptor/ImageConfigAdaptor modules
+###
+### At the end of the configuration section of the webpage if any data needs to be
+### saved to the session this is done so (and if required a session cookie set and
+### stored in the users browser. (See {{EnsEMBL::Web::Controller}} to see
+### where this is done (by the {{EnsEMBL::Web::Hub::fix_session}} method.
+###
+
 use warnings;
 no warnings 'uninitialized';
 use strict;
@@ -9,7 +40,6 @@ use Bio::EnsEMBL::ColourMap;
 use Apache2::RequestUtil;
 use Data::Dumper qw(Dumper);
 use Time::HiRes qw(time);
-use Class::Std;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Tools::Encryption 'checksum';
@@ -25,81 +55,88 @@ use base qw(EnsEMBL::Web::Root);
 
 our %DAS_IMAGE_DEFAULTS = ( 'display' => 'off' );
 
-{
-## Standard initialized attributes...
-  my %Cookie_of        :ATTR( :name<cookie>       );
-  my %Adaptor_of       :ATTR( :name<adaptor>      );
-  my %Input_of         :ATTR( :get<input>    :set<input>    );
-  my %Request_of       :ATTR( :get<request>  :set<request>  );
-  my %SpeciesDef_of    :ATTR( :name<species_defs> );
-  my %Session_id_of    :ATTR( :name<session_id>   );
-## Modified parameters built in BUILD fnuction...
-  my %Configs_of       :ATTR;
-  my %Das_sources_of   :ATTR( :get<das_sources>  );
-  my %Das_parser_of    :ATTR;
-  my %ImageConfigs_of  :ATTR;
-  my %Path_of          :ATTR( :get<path> );
-## Lazy loaded objects....
-  my %ExtURL_of        :ATTR( :get<exturl> :set<exturl>  );
-  my %Species_of       :ATTR( :name<species>      );
-  my %ColourMap_of     :ATTR;
+sub new {
+  my( $class, $args ) = @_;
+  my $self = {
+    'adaptor'       => $args->{'adaptor'},
+    'configs'       => {},
+    'cookie'        => $args->{'cookie'},
+    'colourmap'     => $args->{'colourmap'},
+    'das_parser'    => $args->{'das_parser'},
+    'das_sources'   => $args->{'das_sources'},
+    'data'          => {},
+    'exturl'        => $args->{'exturl'},
+    'image_configs' => {},
+    'input'         => $args->{'input'},
+    'path'          => ['EnsEMBL::Web', reverse @{$args->{'path'}||[]}],
+    'request'       => $args->{'request'},
+    'session_id'    => $args->{'session_id'},
+    'species'       => $args->{'species'},
+    'species_defs'  => $args->{'species_defs'},
+  };
 
-## Common data (tmp upload, upload, url, etc) ...
-  my %Data_of       :ATTR( :get<tmp> :set<tmp>  );
+  bless $self, $class;
+  return $self;
+}
 
+sub get_adaptor { return $_[0]->{'adaptor'}; }
+sub set_adaptor { $_[0]->{'adaptor'} = $_[1]; }
 
-### New Session object - passed around inside the data object to handle storage of
-### ViewConfigs/ImageConfigs in the web_user_db
-###
-### How it is used...
-###
-### The session object is "lazily" attached to {{EnsEMBL::Web::Proxiable}} objects and is
-### accessed via {{EnsEMBL::Web::Proxiable::get_session}} method. You usually won't need
-### to do this explicitly - because it is done implicitly by methods such as:
-###
-### {{EnsEMBL::Web::Proxiable::get_imageconfig}},
-### {{EnsEMBL::Web::Proxiable::image_config_hash}},
-### {{EnsEMBL::Web::Proxiable::get_viewconfig}},
-### {{EnsEMBL::Web::Proxiable::attach_image_config}} all of which create either
-### {{EnsEMBL::Web::ViewConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
-###
-### These commands in turn access the database if we already have a session (whose is
-### accessible by {{session_id}}) and if the appropriate viewconfig is defined as
-### storable. (In this way it replaces the ViewConfigAdaptor/ImageConfigAdaptor modules
-###
-### At the end of the configuration section of the webpage if any data needs to be
-### saved to the session this is done so (and if required a session cookie set and
-### stored in the users browser. (See {{EnsEMBL::Web::Document::WebPage}} to see
-### where this is done (by the {{EnsEMBL::Web::Proxiable::fix_session}} method.
-###
+sub get_input { return $_[0]->{'input'}; }
+sub set_input { $_[0]->{'input'} = $_[1]; }
+
+sub get_request { return $_[0]->{'request'}; }
+sub set_request { $_[0]->{'request'} = $_[1]; }
+
+sub get_species_defs { return $_[0]->{'species_defs'}; }
+sub set_species_defs { $_[0]->{'species_defs'} = $_[1]; }
+
+sub get_session_id { return $_[0]->{'session_id'}; }
+sub set_session_id { $_[0]->{'session_id'} = $_[1]; }
+
+sub get_configs { return $_[0]->{'configs'}; }
+sub set_configs { $_[0]->{'configs'} = $_[1]; }
+
+sub get_das_sources { return $_[0]->{'das_sources'}; }
+
+sub get_image_configs { return $_[0]->{'image_configs'}; }
+sub set_image_configs { $_[0]->{'image_configs'} = $_[1]; }
+
+sub get_path { return $_[0]->{'path'}; }
+
+sub get_species { return $_[0]->{'species'}; }
+sub set_species { $_[0]->{'species'} = $_[1]; }
 
 sub get_site { return ''; }
-
-sub BUILD {
-  my( $class, $ident,  $arg_ref ) = @_;
-### Most of the build functions is done automagically by Class::Std, two unusual ones
-### are the path and Cookie object..
-  $Configs_of      { $ident } = {}; # Initialize empty hash!
-  $ImageConfigs_of { $ident } = {}; # Initialize emtpy hash!
-  $Data_of         { $ident } = {}; # Initialize empty hash!
-  $Path_of         { $ident } = ['EnsEMBL::Web', reverse @{$arg_ref->{'path'}||[]}];
-}
 
 sub input {
 ### Wrapper accessor to keep code simple...
   my $self = shift;
-  return $self->get_input(@_);
+  if (@_) {
+    $self->{'input'} = @_;
+  }
+  return $self->{'input'};
 }
 
 sub exturl {
   my $self = shift;
-  return $ExtURL_of{ident $self} ||= EnsEMBL::Web::ExtURL->new( $self->get_species, $self->get_species_defs );
+  my $exturl = $self->{'exturl'};
+  unless ($exturl) {
+    $self->{'exturl'} = EnsEMBL::Web::ExtURL->new( $self->get_species, $self->get_species_defs );
+    $exturl = $self->{'exturl'};
+  }
+  return $exturl;
 }
 
 sub colourmap {
 ### Gets the colour map
   my $self = shift;
-  return $ColourMap_of{ident $self} ||= Bio::EnsEMBL::ColourMap->new( $self->get_species_defs );
+  my $colourmap = $self->{'colourmap'};
+  unless ($colourmap) {
+    $self->{'colourmap'} = Bio::EnsEMBL::ColourMap->new( $self->get_species_defs );
+    $colourmap = $self->{'colourmap'};
+  }
+  return $colourmap;
 }
 
 sub create_session_id {
@@ -118,20 +155,17 @@ sub create_session_id {
 sub _temp_store {
   my( $self, $name, $code ) = @_;
 ### At any point can copy back value from image_config into the temporary storage space for the config!!
-#warn "$name .... ", $Configs_of{ ident $self }{$name}," ... ",
-#   $Configs_of{ ident $self }{$name}{'image_config_data'}{$code}," ... ",
-#   $ImageConfigs_of{ident $self}{$code}{'user'};
-  $Configs_of{ ident $self }{$name}{'image_config_data'}{$code} =
-  $Configs_of{ ident $self }{$name}{'user'}{'image_configs'}{$code} =
-    $self->deepcopy( $ImageConfigs_of{ident $self}{$code}{'user'} );
+  $self->{'configs'}{$name}{'image_config_data'}{$code} =
+    $self->{'configs'}{$name}{'user'}{'image_configs'}{$code} =
+      $self->deepcopy( $self->{'image_configs'}{$code}{'user'} );
 # warn Dumper( $self->{'configs'}{$name}{'user'}{'image_configs'}{$code} );
 }
 
 sub reset_config {
 ### Reset the config given by $config name in the storage hash
   my( $self, $configname ) = @_;
-  return unless exists $Configs_of{ ident $self }{ $configname };
-  $Configs_of{ ident $self }{ $configname }{ 'config' }->reset();
+  return unless exists $self->{'configs'}{ $configname };
+  $self->{'configs'}{ $configname }{ 'config' }->reset();
 }
 
 sub store {
@@ -158,8 +192,8 @@ sub storable_data {
   ### Returns an array ref of hashes suitable for dumping to a database record. 
   my($self,$r) = @_;
   my $return_data = [];
-  foreach my $config_key ( keys %{$Configs_of{ ident $self }||{}} ) {
-    my $sc_hash_ref = $Configs_of{ ident $self }{$config_key}||{};
+  foreach my $config_key ( keys %{$self->{'configs'}||{}} ) {
+    my $sc_hash_ref = $self->{'configs'}{$config_key}||{};
     ## Cannot store unless told to do so by script config
     next unless $sc_hash_ref->{'config'}->storable;
     ## Start by setting the to store flag to 1 if the script config has been updated!
@@ -171,7 +205,7 @@ sub storable_data {
 
     ## get the script config diffs
     foreach my $image_config_key ( keys %{$sc_hash_ref->{'config'}->{'_image_config_names'}||{} }) {
-      my $image_config = $ImageConfigs_of{ ident $self }{$image_config_key};
+      my $image_config = $self->{'image_configs'}{$image_config_key};
       $image_config = $self->getImageConfig($image_config_key,$image_config_key) unless $image_config;
       next          unless $image_config->storable; ## Cannot store unless told to do so by image config
       $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
@@ -199,13 +233,13 @@ sub get_cached_data {
 
   if ($args{code}) {
     ## Code is spcified
-    return $Data_of{ ident $self }{$args{type}}{$args{code}}
-      if $Data_of{ ident $self }{$args{type}}{$args{code}};
-  } elsif ($Data_of{ ident $self }{$args{type}}) {
+    $self->{'data'}{$args{type}}{$args{code}}
+      if $self->{'data'}{$args{type}}{$args{code}};
+  } elsif ($self->{'data'}{$args{type}}) {
     ## Code is not spcified // wantarray or not?
-    my ($code) = keys %{ $Data_of{ ident $self }{$args{type}} };
-    return wantarray ? values %{ $Data_of{ ident $self }{$args{type}} }
-                     : $Data_of{ ident $self }{$args{type}}{$code};
+    my ($code) = keys %{ $self->{'data'}{$args{type}} };
+    return wantarray ? values %{ $self->{'data'}{$args{type}} }
+                     : $self->{'data'}{$args{type}}{$code};
   }
 
 }
@@ -231,7 +265,7 @@ sub get_data {
   return $self->get_cached_data(%args)
       if $self->get_cached_data(%args);
 
-  $Data_of{ ident $self }{$args{type}} ||= {};
+  $self->{'data'}{$args{type}} ||= {};
 
   ## Get all data of the given type from the database!
   my @entries = EnsEMBL::Web::Data::Session->get_config(
@@ -239,12 +273,7 @@ sub get_data {
     %args,
   );
   
-  $Data_of{ ident $self }{$args{type}}{$_->code} = $_->data for @entries;
-
-###  use Data::Dumper; warn Dumper($Data_of{ ident $self });
-
-  ## Make empty {} if none found
-  #$Data_of{ ident $self }{$args{type}}{$args{code}} ||= {} if $args{code};
+  $self->{'data'}{$args{type}}{$_->code} = $_->data for @entries;
 
   return $self->get_cached_data(%args);
 }
@@ -263,7 +292,7 @@ sub set_data {
     code => $args{code},
   );
 
-  $Data_of{ ident $self }{$args{type}}{$args{code}} = {
+  $self->{'data'}{$args{type}}{$args{code}} = {
     %{ $data || {} },
     type => $args{type},
     code => $args{code},
@@ -285,9 +314,9 @@ sub purge_data {
   );
   
   if ($args{code}) {
-    delete $Data_of{ ident $self }{$args{type}}{$args{code}};
+    delete $self->{'data'}{$args{type}}{$args{code}};
   } else {
-    $Data_of{ ident $self }{$args{type}} = {};
+    $self->{'data'}{$args{type}} = {};
   }
   
   $self->save_data(%args);
@@ -420,9 +449,9 @@ sub get_all_das {
   return ({},{}) unless $self->get_session_id;
   
   # If the cache hasn't been initialised, do it
-  if ( ! $Das_sources_of{ ident $self } ) {
+  if ( ! $self->{'das_sources'} ) {
     
-    $Das_sources_of{ ident $self } = {};
+    $self->{'das_sources'} = {};
     
     # Retrieve all DAS configurations from the database
     my @configs = EnsEMBL::Web::Data::Session->get_config(
@@ -435,13 +464,13 @@ sub get_all_das {
       # Create new DAS source from value in database...
       my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
       $das->category( 'session' ); # paranoia...
-      $Das_sources_of{ ident $self }{ $das->logic_name } = $das;
+      $self->{'das_sources'}{ $das->logic_name } = $das;
     }
   }
   
   my %by_name = ();
   my %by_url  = ();
-  for my $das ( values %{ $Das_sources_of{ ident $self } } ) {
+  for my $das ( values %{ $self->{'das_sources'}} ) {
     unless ($species eq 'ANY') {
       $das->matches_species( $species ) || next;
     }
@@ -523,7 +552,7 @@ warn ">> $new_name <<";
     $das->logic_name( $new_name );
     $das->category  ( 'session' );
     $das->mark_altered;
-    $Das_sources_of{ ident $self }{ $new_name } = $das;
+    $self->{'das_sources'}{ $new_name } = $das;
     return  1;
   }
   
@@ -585,12 +614,12 @@ sub configure_das_views {
 
 sub get_das_parser {
   my $self = shift;
-  $Das_parser_of{ ident $self } ||= Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
+  $self->{'das_parser'} ||= Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
     -timeout  => $self->get_species_defs->ENSEMBL_DAS_TIMEOUT,
     -proxy    => $self->get_species_defs->ENSEMBL_WWW_PROXY,
     -noproxy  => $self->get_species_defs->ENSEMBL_NO_PROXY,
   );
-  return $Das_parser_of{ ident $self };
+  return $self->{'das_parser'};
 }
 
 sub add_das_from_string {
@@ -643,9 +672,9 @@ sub add_das_from_string {
 sub attachImageConfig {
   my $self   = shift;
   my $script = shift;
-  return unless $Configs_of{ ident $self }{$script};
+  return unless $self->{'configs'}{$script};
   foreach my $image_config (@_) {
-    $Configs_of{ ident $self }{$script}{'image_configs'}{$image_config}=1;
+    $self->{'configs'}{$script}{'image_configs'}{$image_config} = 1;
   }
   return;
 }
@@ -676,7 +705,7 @@ sub getViewConfig {
     code       => $key
   );  
 
-  if (!$Configs_of{ident $self}{$key}) {
+  if (!$self->{'configs'}{$key}) {
     my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $self);
     
     foreach my $root (@{$self->get_path}) {
@@ -699,14 +728,14 @@ sub getViewConfig {
       }
     }
     
-    $Configs_of{ident $self}{$key} = {
+    $self->{'configs'}{$key} = {
       config            => $view_config,
       image_configs     => {},                # List of attached image configs
       image_config_data => $image_config_data # Data retrieved from database to define image config settings.
     };
   }
   
-  return $Configs_of{ident $self}{$key}{'config'};
+  return $self->{'configs'}{$key}{'config'};
 }
 
 sub get_view_config_as_string {
@@ -752,21 +781,21 @@ sub getImageConfig {
   );  
   
 ## If key is not set we aren't worried about caching it!
-  if( $key && exists $ImageConfigs_of{ ident $self }{$key} ) {
-    return $ImageConfigs_of{ ident $self }{$key};
+  if( $key && exists $self->{'image_configs'}{$key} ) {
+    return $self->{'image_configs'}{$key};
   }
   my $image_config = $self->get_ImageConfig( $type, @species ) ;
 
-  foreach my $script ( keys %{$Configs_of{ ident $self }||{}} ) {
-    if( $Configs_of{ ident $self }{$script}{'image_config_data'}{$type} ) {
-      my $T = $Configs_of{ ident $self }{$script}{'image_config_data'}{$type}||{};
+  foreach my $script ( keys %{$self->{'configs'}||{}} ) {
+    if( $self->{'configs'}{$script}{'image_config_data'}{$type} ) {
+      my $T = $self->{'configs'}{$script}{'image_config_data'}{$type}||{};
       foreach (keys %$T) {
         $image_config->tree->{_user_data}{$_} = $self->deepcopy( $T->{$_} );
       }
     }
   }
 ## Store if $key is set!
-  $ImageConfigs_of{ ident $self }{ $key } = $image_config if $key;
+  $self->{'image_configs'}{ $key } = $image_config if $key;
   return $image_config;
 }
 
@@ -825,6 +854,5 @@ sub custom_page_config {
   return $config->{'components'} || [];
 }
 
-}
 1;
 
