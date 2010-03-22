@@ -1,13 +1,36 @@
 package EnsEMBL::Web::Cookie;
 use CGI::Cookie;
 use strict;
-use Class::Std;
-{
-  my %Host_of         :ATTR( :name<host>    );
-  my %Name_of         :ATTR( :name<name>    );
-  my %Value_of        :ATTR( :name<value>   );
-  my %EnvVariable     :ATTR( :name<env>     );
-  my %Encrypt_hash_of :ATTR( :name<hash>    );
+
+sub new {
+  my ($class, $args) = @_;
+  my $self = {
+    'host'  => undef,
+    'name'  => undef,
+    'value' => undef,
+    'env'   => undef,
+    'hash'  => undef,
+    %$args
+  };
+  bless $self, $class;
+  return $self;
+}
+
+sub get_host { return $_[0]->{'host'}; }
+sub set_host { $_[0]->{'host'} = $_[1]; }
+
+sub get_name { return $_[0]->{'name'}; }
+sub set_name { $_[0]->{'name'} = $_[1]; }
+
+sub get_value { return $_[0]->{'value'}; }
+sub set_value { $_[0]->{'value'} = $_[1]; }
+
+sub get_env { return $_[0]->{'env'}; }
+sub set_env { $_[0]->{'env'} = $_[1]; }
+
+sub get_hash { return $_[0]->{'hash'}; }
+sub set_hash { $_[0]->{'hash'} = $_[1]; }
+
 
 sub clear {
   my( $self, $r ) = @_;
@@ -98,5 +121,4 @@ sub decrypt_value {
 
 }
 
-}
 1;

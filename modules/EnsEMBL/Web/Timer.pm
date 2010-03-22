@@ -6,26 +6,42 @@ use Time::HiRes qw(time);
 ### * Diagnostics to count/time inner loops ({{start}}/{{end}})
 ### * Heirarchical diagnostics for timing execution of parts of pages ({{new}})
 use strict;
-use Class::Std;
-{
-  my %Benchmarks_of :ATTR( :get<benchmarks> );
-  my %Times_of      :ATTR( :get<times>      );
-  my %script_start_time_of  :ATTR( :get<script_start_time>  :set<script_start_time>  );
-  my %process_start_time_of :ATTR( :get<process_start_time> :set<process_start_time> );
-  my %process_child_count_of :ATTR( :get<process_child_count> :set<process_child_count> );
-  my %Totals_of     :ATTR( :get<totals>     );
-  my %Name_of       :ATTR( :get<name> :set<name> );
-  sub BUILD {
-  ### c
-    my( $class, $ident, $arg_ref ) = @_;
-    $Times_of{      $ident } = [];
-    $Totals_of{     $ident } = {};
-    $Benchmarks_of{ $ident } = {};
-  }
+
+sub new {
+  my $class = shift;
+  my $self = {
+    'benchmarks'          => {},
+    'times'               => [],
+    'script_start_time'   => undef,
+    'process_start_time'  => undef,
+    'process_child_count' => undef,
+    'totals'              => undef,
+    'name'                => undef,
+  };
+  bless $self, $class;
+  return $self;
+}
+
+sub get_benchmark { return $_[0]->{'benchmarks'}; }
+
+sub get_times { return $_[0]->{'times'}; }
+sub get_totals { return $_[0]->{'totals'}; }
+
+sub get_script_start_time { return $_[0]->{'script_start_time'}; }
+sub set_script_start_time { $_[0]->{'script_start_time'} = $_[1]; }
+
+sub get_process_start_time { return $_[0]->{'process_start_time'}; }
+sub set_process_start_time { $_[0]->{'process_start_time'} = $_[1]; }
+
+sub get_process_child_count { return $_[0]->{'process_child_count'}; }
+sub set_process_child_count { $_[0]->{'process_child_count'} = $_[1]; }
+
+sub get_name { return $_[0]->{'name'}; }
+sub set_name { $_[0]->{'name'} = $_[1]; }
 
 sub new_child {
   my $self = shift;
-  $process_child_count_of{ ident $self }++;
+  $self->{'process_child_count'}++;
   $self->set_script_start_time( time );
 }
 
@@ -37,8 +53,8 @@ sub start {
 ### Start a new inner loop
   my( $self, $tag ) = @_;
 ## Only push new start time if actually started!!
-  unless( $Benchmarks_of{ ident $self }{$tag}{'last_start'} ) { 
-    $Benchmarks_of{ ident $self }{$tag}{'last_start'} = time();
+  unless( $self->{'benchmarks'}{$tag}{'last_start'} ) { 
+    $self->{'benchmarks'}{$tag}{'last_start'} = time();
   }
 }
 
@@ -46,7 +62,7 @@ sub end {
 ### Mark inner loop as finished
   my( $self, $tag ) = @_;
 ## Can't push if there is no start!
-  my $temp_ref = $Benchmarks_of{ ident $self }{$tag};
+  my $temp_ref = $self->{'benchmarks'}{$tag};
   if( $temp_ref->{'last_start'} ) {
     my $time = time()-$temp_ref->{'last_start'};
     if( exists( $temp_ref->{'min'} ) ) {
@@ -69,21 +85,20 @@ sub end {
 
 sub clear_times {
   my $self = shift;
-  $Times_of{ ident $self } = [];
-  $Totals_of{ ident $self } = {};
+  $self->{'times'} = [];
+  $self->{'totals'} = {};
 }
 sub push {
 ### Push a new tag onto the "heirarchical diagnsotics"
 ### Message is message to display and level is the depth of the tree
 ### for which the timing is recorded
   my( $self, $message, $level, $flag ) = @_;
-  my $i = ident $self;
   $level ||= 0;
   $flag  ||= 'web';
-  my $last = @{$Times_of{$i}} ? $Times_of{$i}[-1][0] : 0;
+  my $last = @{$self->{'times'}} ? $self->{'times'}[-1][0] : 0;
   my $time = time; 
-  CORE::push @{$Times_of{ ident $self }}, [ $time, $message, $level, $flag ];
-  $Totals_of{ ident $self }{$flag} += $time-$last if $last;
+  CORE::push @{$self->{'times'}}, [ $time, $message, $level, $flag ];
+  $self->{'totals'}{$flag} += $time-$last if $last;
 }
 
 sub render {
@@ -91,7 +106,7 @@ sub render {
   my $self = shift;
 
   #$self->push("Page rendered");
-  my $base_time = shift @{$Times_of{ ident $self }};
+  my $base_time = shift @{$self->{'times'}};
 
   my $diagnostics = '
 ================================================================================
@@ -101,11 +116,11 @@ Flag      Cumulative     Section
 ';
   my @previous  = ();
   my $max_depth = 0;
-  foreach( @{$Times_of{ ident $self }} ) { $max_depth = $_->[2] if $max_depth < $_->[2]; }
+  foreach( @{$self->{'times'}} ) { $max_depth = $_->[2] if $max_depth < $_->[2]; }
 
   $diagnostics .= '           '.('           ' x (2+$max_depth) ) . $base_time->[1]; 
   $base_time = $base_time->[0];
-  foreach( @{ $Times_of{ ident $self }} ) {
+  foreach( @{$self->{'times'}} ) {
     $diagnostics .= sprintf( "\n%10s ",substr($_->[3],0,10) );
     foreach my $i (0..($max_depth+1)) {
       if( $i<=$_->[2] ) {
@@ -121,7 +136,7 @@ Flag      Cumulative     Section
     $diagnostics .= ("  | " x $_->[2]).$_->[1];
 
   }
-  my %X = %{$Totals_of{ ident $self }};
+  my %X = %{$self->{'times'}};
   $diagnostics .='
 --------------------------------------------------------------------------------
       Time       %age   Category
@@ -139,8 +154,8 @@ Flag      Cumulative     Section
 --------------------------------------------------------------------------------';
     
   my $benchmarks = '';
-  foreach (keys %{$Benchmarks_of{ ident $self}} ) {
-    my $T = $Benchmarks_of{ ident $self }{$_};
+  foreach (keys %{$self->{'benchmarks'}} ) {
+    my $T = $self->{'benchmarks'}{$_};
     next unless $T->{'count'};
     my $var = '**';
     if( $T->{'count'} > 1 ) {
@@ -167,6 +182,5 @@ $benchmarks
 ";
 }
 
-}
 1;
 
