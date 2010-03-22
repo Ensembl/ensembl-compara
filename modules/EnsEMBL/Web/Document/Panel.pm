@@ -319,7 +319,6 @@ sub render {
       return if !$content && exists $self->{'null_data'} && !defined $self->{'null_data'};
     }
    
-    warn ">>> HERE"; 
     my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
     
     my $html = qq{<div class="panel js_panel"><input type="hidden" class="panel_type" value="$panel_type" />};
