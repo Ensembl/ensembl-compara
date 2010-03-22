@@ -133,7 +133,7 @@ sub build_page {
     $object->viewconfig->form($object);
   } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $type = $object;
-  } elsif ($model->hub->type) { ## No domain objects created on page startup
+  } elsif ($model->hub->type) { # No domain objects created on page startup
     $type = $model->hub->type;
   } else {
     $type = 'Static';
@@ -150,14 +150,10 @@ sub build_page {
     doctype      => $doctype
   };
   
-  my %configs;
-  
   my $config_module_name = "EnsEMBL::Web::Configuration::$type"; # Work out what the module name is, to see if it can be used
   my ($configuration, $error) = $self->_use($config_module_name, $page, $model, $common_conf);
   
-  if ($configuration) {
-    $configs{$_} = [ $configuration, $config_module_name ] for grep $configuration->can($_), @functions; 
-  } elsif ($error) {
+  if ($error) {
     # Handle "use" failures gracefully, but skip "Can't locate" errors
     $self->add_error_panel($page, 
       'Configuration module compilation error',
@@ -168,30 +164,31 @@ sub build_page {
   
   # Loop through the functions to configure
   foreach my $func (@functions) {
-    # Get the configuration module for that function
-    my ($config, $config_module_name) = @{$configs{$func}};
-    
-    eval {
-      $config->$func();
-    };
-    
-    # Catch any errors and display as a "configuration runtime error"
-    if ($@) {
-      warn ">>> FUNCTION $func failed: $@";
-      
-      $page->content->add_panel($page,
-        'Configuration module runtime error',
-        '<p>Unable to execute configuration %s from configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>', 
-        $_, $config_module_name, $@
-      );
-    } else {
-      $functions_called->{$func} = 1;
-      
-      my $node = $config->get_node($config->_get_valid_action($self->{'action'}, $self->{'function'}));
+    if ($func eq 'check_filters') {
+      my $node = $configuration->get_node($configuration->_get_valid_action($self->{'action'}, $self->{'function'}));
       
       if ($node) {
         $self->{'command'} = $node->data->{'command'};
         $self->{'filters'} = $node->data->{'filters'};
+      }
+      
+      $functions_called->{$func} = 1;
+    } else {
+      eval {
+        $configuration->$func();
+      };
+      
+      # Catch any errors and display as a "configuration runtime error"
+      if ($@) {
+        warn ">>> FUNCTION $func failed: $@";
+        
+        $page->content->add_panel($page,
+          'Configuration module runtime error',
+          '<p>Unable to execute configuration %s from configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>', 
+          $_, $config_module_name, $@
+        );
+      } else {
+        $functions_called->{$func} = 1;
       }
     }
   }
