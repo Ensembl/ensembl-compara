@@ -72,6 +72,9 @@
               
     'max_gap' => 50,
     'output_group_type' => 'chain'
+    # If you are using non-ensembl locations for faToNib, lavToAxt, axtChain
+    # set this to the directory where those binaries are
+    #, bin_dir => '/dir/of/binaries'
   },
 
   { TYPE => NET_CONFIG,
@@ -84,6 +87,9 @@
     'max_gap' => 50,
     'input_group_type' => 'chain',
     'output_group_type' => 'default'
+    # If you are using non-ensembl locations for chainNet
+    # set this to the directory where that binary is located
+    #, bin_dir => '/dir/of/binaries'
   },
 
 ## HEALTHCHECKS are run at the end of the pipeline.
