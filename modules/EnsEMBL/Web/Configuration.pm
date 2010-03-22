@@ -62,6 +62,16 @@ sub new {
   return $self;
 }
 
+sub get_availability {
+  my $self = shift;
+  my $hub = $self->model->hub;
+
+  my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$hub->species_defs->databases} };
+  $hash->{'database:compara'} = 1 if $hub->species_defs->compara_like_databases;
+  $hash->{'logged_in'} = 1 if $hub->user;
+
+  return $hash;
+}
 
 sub populate_tree      {}
 sub modify_tree        {}
@@ -104,14 +114,14 @@ sub _get_valid_action {
   my ($self, $action, $func) = @_;
   
   my $object = $self->object;
-  
+  my $hub = $self->model->hub;  
+
   return $action if $action eq 'Wizard';
-  return undef unless ref $object;
   
   my $node;
   
   $node = $self->tree->get_node($action. '/' . $func) if $func;
-  $self->{'availability'} = ref $object ? $object->availability : {};
+  $self->{'availability'} = $object ? $object->availability : $self->availability;
 
   return $action. '/' . $func if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
   
@@ -123,7 +133,7 @@ sub _get_valid_action {
     $node = $self->tree->get_node($_);
     
     if ($node && $self->is_available($node->get('availability'))) {
-      $object->problem('redirect', $object->_url({ action => $_ }));
+      $hub->redirect($hub->url({ action => $_ }));
       return $_;
     }
   }
@@ -702,7 +712,9 @@ sub _context_panel {
 sub _content_panel {
   my $self   = shift;
   my $object = $self->object;
-  my $action = $self->_get_valid_action($ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'});
+  my $hub = $self->model->hub;
+
+  my $action = $self->_get_valid_action($hub->action, $hub->function);
   my $node   = $self->get_node($action);
   
   return unless $node;
@@ -710,12 +722,12 @@ sub _content_panel {
   if ($self->can('set_title')) {
     my $title = $node->data->{'concise'} || $node->data->{'caption'};
     $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
-    $title = join ' - ', '', $title, ($object ? $object->caption : ());
+    $title = join ' - ', '', $title, ($object ? $object->caption : $self->caption);
      
     $self->set_title($title);
   }
   
-  $self->{'availability'} = $object->availability;
+  $self->{'availability'} = $object ? $object->availability : $self->availability;
   
   my $previous_node = $node->previous;
   my $next_node     = $node->next;
@@ -739,10 +751,10 @@ sub _content_panel {
   $params{'previous'} = $previous_node->data if $previous_node;
   $params{'next'}     = $next_node->data     if $next_node;
   
-  my %help = $object->species_defs->multiX('ENSEMBL_HELP'); # Check for help
+  my %help = $hub->species_defs->multiX('ENSEMBL_HELP'); # Check for help
   
   if (keys %help) {
-    my $page_url = join '/', map $object->$_ || (), qw(type action function);
+    my $page_url = join '/', map $hub->$_ || (), qw(type action function);
     $params{'help'} = $help{$page_url};
   }
   

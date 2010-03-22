@@ -325,7 +325,7 @@ sub render {
     my $counts = {};
 
     if (!$self->{'omit_header'}) {
-      if ( (exists $self->{'previous'} || exists $self->{'next'}) && $object->type ne 'Search') {
+      if ( (exists $self->{'previous'} || exists $self->{'next'}) && $hub->type ne 'Search') {
         my @buttons = (
           [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
           [ 'next',     'right', '%s&nbsp;&raquo;' ]
