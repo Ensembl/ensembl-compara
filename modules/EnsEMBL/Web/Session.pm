@@ -53,26 +53,25 @@ use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
 use base qw(EnsEMBL::Web::Root);
 
-our %DAS_IMAGE_DEFAULTS = ( 'display' => 'off' );
-
 sub new {
   my( $class, $args ) = @_;
   my $self = {
-    'adaptor'       => $args->{'adaptor'},
-    'configs'       => {},
-    'cookie'        => $args->{'cookie'},
-    'colourmap'     => $args->{'colourmap'},
-    'das_parser'    => $args->{'das_parser'},
-    'das_sources'   => $args->{'das_sources'},
-    'data'          => {},
-    'exturl'        => $args->{'exturl'},
-    'image_configs' => {},
-    'input'         => $args->{'input'},
-    'path'          => ['EnsEMBL::Web', reverse @{$args->{'path'}||[]}],
-    'request'       => $args->{'request'},
-    'session_id'    => $args->{'session_id'},
-    'species'       => $args->{'species'},
-    'species_defs'  => $args->{'species_defs'},
+    'adaptor'            => $args->{'adaptor'},
+    'configs'            => {},
+    'cookie'             => $args->{'cookie'},
+    'colourmap'          => $args->{'colourmap'},
+    'das_parser'         => $args->{'das_parser'},
+    'das_sources'        => $args->{'das_sources'},
+    'data'               => {},
+    'exturl'             => $args->{'exturl'},
+    'image_configs'      => {},
+    'input'              => $args->{'input'},
+    'path'               => ['EnsEMBL::Web', reverse @{$args->{'path'}||[]}],
+    'request'            => $args->{'request'},
+    'session_id'         => $args->{'session_id'},
+    'species'            => $args->{'species'},
+    'species_defs'       => $args->{'species_defs'},
+    'das_image_defaults' => [ 'display', 'off' ];
   };
 
   bless $self, $class;
@@ -602,7 +601,7 @@ sub configure_das_views {
     my $ic = $self->getImageConfig( $image, $image );
     my $n = $ic->get_node( 'das_' . $das->logic_name );
     if( !$n ) {
-      my %tmp = ( map( { ($_=>'') } keys %$track_options ), %DAS_IMAGE_DEFAULTS );
+      my %tmp = ( map( { ($_=>'') } keys %$track_options ), @{$self->{'das_image_defaults'}} );
       $n = $ic->tree->create_node( 'das_' . $das->logic_name, \%tmp );
     }
     $n->set_user( %{ $track_options } );
