@@ -47,9 +47,9 @@ sub stuff {
   my @sections;
     
   if ($doctype eq 'Popup') {
-    @sections = qw(global_context local_context content_panel local_tools);
+    @sections = qw(check_filters global_context local_context content_panel local_tools);
   } else {
-    @sections = qw(global_context local_context modal_context context_panel content_panel local_tools);
+    @sections = qw(check_filters global_context local_context modal_context context_panel content_panel local_tools);
   }
  
   # FIXME - why do we build the page before we check to see if it's a 
