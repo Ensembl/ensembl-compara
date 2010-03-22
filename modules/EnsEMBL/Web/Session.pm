@@ -71,7 +71,7 @@ sub new {
     'session_id'         => $args->{'session_id'},
     'species'            => $args->{'species'},
     'species_defs'       => $args->{'species_defs'},
-    'das_image_defaults' => [ 'display', 'off' ];
+    'das_image_defaults' => [ 'display', 'off' ],
   };
 
   bless $self, $class;
