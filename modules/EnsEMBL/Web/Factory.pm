@@ -126,9 +126,10 @@ sub _known_feature {
   }
 }
 
-sub problem        { return shift->hub->problem(@_);        }
-sub has_a_problem  { return shift->hub->has_a_problem(@_);  }
-sub clear_problems { return shift->hub->clear_problems(@_); }
+sub problem            { return shift->hub->problem(@_);            }
+sub has_a_problem      { return shift->hub->has_a_problem(@_);      }
+sub clear_problems     { return shift->hub->clear_problems(@_);     }
+sub clear_problem_type { return shift->hub->clear_problem_type(@_); }
 
 # The whole problem handling code possibly needs re-factoring 
 # Especially the stuff that may end up cyclic! (History/UnMapped)
