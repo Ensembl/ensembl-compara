@@ -603,10 +603,11 @@ sub calculate_allele_freqs_from_genotype {
     foreach my $ssid (keys %{$data{$pop_id}}){
       if (scalar @{ $data{$pop_id}{$ssid}{Alleles} } <= 1){
         my (%genotype_freqs, %alleles);
+        return {} unless $data{$pop_id}{$ssid}{GenotypeFrequency};
+        my @temp_freqs = @{ $data{$pop_id}{$ssid}{GenotypeFrequency}};
         foreach my $genotype (@{ $data{$pop_id}{$ssid}{Genotypes} }){
           my @allele = split (/\|/, $genotype);
           foreach (@allele){ $alleles{$_} = "";}
-          my @temp_freqs = @{ $data{$pop_id}{$ssid}{GenotypeFrequency}};
           my $frequency = shift @temp_freqs;
           $genotype_freqs{$genotype} = $frequency;
         }
