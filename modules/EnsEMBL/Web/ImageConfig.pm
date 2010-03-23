@@ -557,7 +557,7 @@ sub get_track_key {
   my $logic_name = $obj->gene ? $obj->gene->analysis->logic_name : $obj->analysis->logic_name;
   my $db         = $obj->get_db;
   my $db_key     = 'DATABASE_' . uc $db;
-  my $key        = $self->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{lc $logic_name}{'web'}{'key'} || $logic_name;
+  my $key        = $self->databases->{$db_key}{'tables'}{'gene'}{'analyses'}{lc($logic_name)}{'web'}{'key'} || lc($logic_name);
   return join '_', $prefix, $db, $key;
 }
 
@@ -990,7 +990,7 @@ sub add_gene {
   
   foreach my $type (@TRANSCRIPT_TYPES) {
     my $menu = $self->get_node($type);
-    
+
     next unless $menu;
     
     foreach my $key_2 (@$keys) {
