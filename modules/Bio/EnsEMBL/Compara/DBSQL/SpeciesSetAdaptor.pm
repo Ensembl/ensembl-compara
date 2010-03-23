@@ -52,7 +52,7 @@ sub fetch_by_dbID {
   my $genome_dbs;
   while ($sth->fetch) {
     my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-    push(@$genome_dbs, $genome_db);
+    push(@$genome_dbs, $genome_db) if (defined($genome_db));
   }
   $sth->finish();
 
