@@ -12,7 +12,7 @@ sub _init {
   my $flag = $self->my_config('flag');
 
   #retrieve tag locations and colours (identified by TSE_transcript track)
-  foreach my $tag (@{$wuc->cache('vertical_tags')}) {
+  foreach my $tag (@{$wuc->cache('vertical_tags') || []}) {
     my ($extra,$e,$s) = split ':', $tag->[0];
     my $col = $tag->[1];
     my $tglyph = $self->Space({
