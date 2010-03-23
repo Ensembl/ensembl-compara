@@ -35,6 +35,8 @@ sub content {
     my $movie = $movies[0];
     $html .= embed_movie($movie);
 
+    $html .= qq(<table><tr><td><a href="http://www.youtube.com/user/EnsemblHelpdesk"><img src="/img/youtube.png" style="float:left;padding:20px 0px;" /></a></td><td>);
+
     ## Feedback
     my $style = 'text-align:right;margin-right:2em';
     if ($object->param('feedback')) {
@@ -48,6 +50,7 @@ sub content {
       my $title = $movie->title;
       $html .= qq(<div class="info-box" style="float:right;width:50%;padding:10px;margin:5px">If you have problems viewing this movie, we would be grateful if you could <a href="/Help/MovieFeedback?title=$title" class="popup">provide feedback</a> that will help us improve our service. Thank you.</div>);
     }
+    $html .= '</td></tr></table>';
   }
   elsif (scalar(@movies) > 0 && $movies[0]) {
 
