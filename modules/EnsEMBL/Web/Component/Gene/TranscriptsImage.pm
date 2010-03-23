@@ -36,7 +36,7 @@ sub content {
   $self->_attach_das($image_config);
 
   my $key = $image_config->get_track_key('transcript', $gene);
-  my $n   = $image_config->get_node($key);
+  my $n   = $image_config->get_node(lc($key));
   
   $n->set('display', 'transcript_label') if $n && $n->get('display') eq 'off';
 
