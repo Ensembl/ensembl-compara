@@ -750,6 +750,10 @@ CREATE TABLE protein_tree_node (
 ) COLLATE=latin1_swedish_ci;
 
 -- overview:
+--   This table holds the member information for the nc trees
+CREATE TABLE nc_tree_node LIKE protein_tree_node;
+
+-- overview:
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 
@@ -783,6 +787,10 @@ CREATE TABLE protein_tree_member (
   UNIQUE (node_id),
   KEY (member_id)
 ) COLLATE=latin1_swedish_ci;
+
+-- overview:
+--   This table holds the member information for the nc trees
+CREATE TABLE nc_tree_member LIKE protein_tree_member;
 
 -- overview:
 --   This table holds the few big super protein tree alignments that are then broken down.
@@ -843,6 +851,20 @@ CREATE TABLE protein_tree_tag (
   KEY (node_id),
   KEY (tag)
 ) COLLATE=latin1_swedish_ci;
+
+-- overview:
+--   This table holds the tag information for the nc trees
+CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
+
+CREATE TABLE nc_profile (
+  model_id                    varchar(10) NOT NULL,
+  name                        varchar(40),
+  type                        varchar(40) DEFAULT 'ncrna' NOT NULL,
+  hc_profile                  mediumtext,
+
+  PRIMARY KEY (model_id)
+) COLLATE=latin1_swedish_ci;
+
 
 -- overview:
 --   This table holds the few big super protein tree alignments that are then broken down.
