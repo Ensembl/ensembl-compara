@@ -31,7 +31,7 @@ sub new {
   my @core_types  = qw/Location Gene Transcript Variation Regulation/;  
   my @param_names = qw/g h r t v db pt rf vf fdb vdb domain family protein/;
 
-  $model->hub->set_core_params(\@param_names);
+  $model->hub->set_core_params(@param_names);
 
   my $self = {
     '_model'        => $model,
@@ -64,17 +64,26 @@ sub _chain_Gene {
 
   ## Do we need to create any other objects?
   ## NEXT TAB
-  if (!$self->model->object('Transcript') && $self->model->hub->param('t')) {
-    $self->_generic_create('Transcript');
+  if (!$self->model->object('Transcript')) {
+    my $gene = $self->model->raw_object('Gene');
+    my @transcripts = @{$gene->get_all_Transcripts};
+    if (scalar @transcripts == 1) {
+      ## Add transcript if there's only one
+      my $trans_id = $transcripts[0]->stable_id;
+      $self->model->hub->param('t', $trans_id);
+    }
+    if ($self->model->hub->param('t')) {
+      $self->_generic_create('Transcript');
+    }
   }
   elsif (!$self->model->object('Variation') && $self->model->hub->param('v')) {
     $self->_generic_create('Variation');
   }
   ## PREVIOUS TAB
   my $coords;
-  if ($self->model->hub->type eq 'Transcript') {
-    my $object = $self->model->object('Transcript');
-    ## Create a location based on transcript coordinates
+  if ($self->model->hub->type ne 'Location') {
+    my $object = $self->model->object;
+    ## Create a location based on object coordinates
     if ($object) {
       $coords = {
         'seq_region' => $object->seq_region_name,
@@ -83,17 +92,7 @@ sub _chain_Gene {
       };
     }
   }
-  elsif ($self->model->hub->type eq 'Gene') {
-    my $object = $self->model->object('Gene');
-    ## Create a location based on gene coordinates
-    if ($object) {
-      $coords = {
-        'seq_region' => $object->seq_region_name,
-        'start'      => $object->seq_region_start,
-        'end'        => $object->seq_region_end,
-      };
-    }
-  }
+ 
   if ($coords) {
     ## Feed these back into CGI params, for use in links
     my $r = $coords->{'seq_region'}.':'.$coords->{'start'}.'-'.$coords->{'end'};
