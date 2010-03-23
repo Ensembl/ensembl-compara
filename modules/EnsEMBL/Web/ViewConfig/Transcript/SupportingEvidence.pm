@@ -3,15 +3,13 @@ package EnsEMBL::Web::ViewConfig::Transcript::SupportingEvidence;
 use strict;
 
 sub init {
-    my ($view_config) = @_;
-   
-    $view_config->_set_defaults(qw(context 100));
-    $view_config->storable = 1;
+  my ($view_config) = @_;
+  $view_config->_set_defaults(qw(context 100));
+  $view_config->storable = 1;
 }
 
 sub form {
   my ($view_config, $object) = @_;
-  
   $view_config->add_form_element({
     type   => 'DropDown',
     select => 'select',

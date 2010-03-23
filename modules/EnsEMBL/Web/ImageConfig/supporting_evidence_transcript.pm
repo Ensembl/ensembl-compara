@@ -49,7 +49,7 @@ sub init {
     }
   ], [
     'SE_generic_match_label',  'Exon evidence:', 'SE_generic_match_label', {
-      'display' => 'normal', 
+      'display' => 'normal',
       'strand'  => 'r'
     }
   ], [
@@ -60,12 +60,12 @@ sub init {
     }
   ], [
     'TSE_background_exon', '', 'TSE_background_exon', {
-      'display' => 'normal', 
+      'display' => 'normal',
       'strand'  => 'r'
     }
   ], [
     'TSE_legend', 'Legend', 'TSE_legend', {
-      'display' => 'normal', 
+      'display' => 'normal',
       'strand' => 'r',
       'colours'  => $self->species_defs->colour('feature')
     }
