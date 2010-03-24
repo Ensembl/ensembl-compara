@@ -66,11 +66,13 @@ sub _chain_Gene {
   ## NEXT TAB
   if (!$self->model->object('Transcript')) {
     my $gene = $self->model->raw_object('Gene');
-    my @transcripts = @{$gene->get_all_Transcripts};
-    if (scalar @transcripts == 1) {
-      ## Add transcript if there's only one
-      my $trans_id = $transcripts[0]->stable_id;
-      $self->model->hub->param('t', $trans_id);
+    if ($gene) {
+      my @transcripts = @{$gene->get_all_Transcripts};
+      if (scalar @transcripts == 1) {
+        ## Add transcript if there's only one
+        my $trans_id = $transcripts[0]->stable_id;
+        $self->model->hub->param('t', $trans_id);
+      }
     }
     if ($self->model->hub->param('t')) {
       $self->_generic_create('Transcript');
@@ -178,6 +180,9 @@ sub _create_tab {
 
   if ($object->isa('Bio::EnsEMBL::ArchiveStableId')) {
     $info->{'action'} = 'idhistory';
+  }
+  if ($type eq 'Gene' || $type eq 'Transcript' || $type eq 'Regulation') {
+    $info->{'stable_id'} = $object->stable_id;
   }
   $info->{'long_caption'} = '';
 
