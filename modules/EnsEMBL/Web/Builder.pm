@@ -162,7 +162,25 @@ sub _chain_Regulation {
 
   ## Do we need to create any other objects?
   ## PREVIOUS TAB
-  $self->_generic_create('Gene');
+  if ($self->model->hub->param('t')) {
+    $self->_generic_create('Transcript');
+  }
+  elsif ($self->model->hub->param('g')) {
+    $self->_generic_create('Gene');
+  }
+  else {
+    my $coords = {};
+    my $object = $self->model->object;
+    ## Create a location based on object coordinates
+    if ($object) {
+      $coords = {
+        'seq_region' => $object->seq_region_name,
+        'start'      => $object->seq_region_start,
+        'end'        => $object->seq_region_end,
+      };
+    }
+    $self->_generic_create('Location', $coords);
+  }
 
   return $problems;
 }
