@@ -656,7 +656,7 @@ sub build_GeneTreeSystem
   if (defined $njtree_phyml_analysis_data_id) {
     $parameters = "{'njtree_phyml_analysis_data_id'=>'$njtree_phyml_analysis_data_id'}";
   }
-  my $tree_best_program = $genetree_params{'treebest'} || '/nfs/acari/avilella/src/treesoft/trunk/treebest/treebest';
+  my $tree_best_program = $genetree_params{'treebest'} || '/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest';
   my $njtree_phyml = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NJTREE_PHYML',
       -program_file    => $tree_best_program,
@@ -893,7 +893,7 @@ sub build_GeneTreeSystem
   # BuildHMMaa
   print STDERR "BuildHMMaa...\n";
   #
-  my $buildhmm_program = $genetree_params{'buildhmm'} || '/nfs/acari/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmbuild';
+  my $buildhmm_program = $genetree_params{'buildhmm'} || '/nfs/users/nfs_a/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmbuild';
   my $BuildHMMaa = Bio::EnsEMBL::Analysis->new
     (
      -db_version      => '1',
