@@ -316,11 +316,25 @@ sub createPairAlignerAnalysis
   $stats->update();
 
   #Dump reference dna as overlapping chunks in multi-fasta file
-  if ($target_dnaCollectionConf->{'dump_loc'}) {
-      ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
+  if ($target_dnaCollectionConf->{'dump_loc'}) { 
+ 
+      my $analysis_parameters = "{'dump_dna'=>1,'dump_min_size'=>1";
+
+      if ($target_dnaCollectionConf->{'dump_nib'}) {   
+        $analysis_parameters.=",'dump_nib'=>1,";
+      }else {  
+        print "\n\nWARNING !\nYou've configured compara to not dump any nib files !!!\n".
+         "The analysis will run a lot slower. To dump nib-files change your compara analysis configuration file\n". 
+         " and add dump_nib => 1 to the DNA_COLLECTION config-hash of your well-analysed target genome (usually human)\n\n" ; 
+        sleep(3);
+      } 
+      $analysis_parameters.="}";
+     
+      ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. 
+      # The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
       my $dumpDnaAnalysis = new Bio::EnsEMBL::Analysis(
 						       -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
-						       -parameters => "{'dump_dna'=>1,'dump_min_size'=>1}",
+						       -parameters => $analysis_parameters, 
 						      );
       my $dump_dna_logic_name = "DumpDnaForPairAligner-".$hexkey;
       $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
