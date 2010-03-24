@@ -289,7 +289,6 @@ sub _ajax_content {
   my $self = shift;
   
   $self->page->renderer->{'r'}->headers_in->{'X-Requested-With'} = 'XMLHttpRequest';
-  $self->page->{'_page_type_'} = 'ingredient'; # Force page type to be ingredient
   
   my $panel = $self->new_panel('Ajax', 'code' => 'ajax_panel', 'object' => $self->object);
   $panel->add_component('component' => $ENV{'ENSEMBL_COMPONENT'});
@@ -377,7 +376,6 @@ sub _configurator {
       
       $vc->add_form_element({ type => 'Hidden', name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
       
-      $self->page->{'_page_type_'} = 'configurator';
       $self->tree->_flush_tree;
       
       $self->page->local_context->tree($vc->tree);
@@ -412,7 +410,6 @@ sub _configurator {
   
   return unless $conf;
   
-  $self->page->{'_page_type_'} = 'configurator';
   $self->tree->_flush_tree;
 
   my $rhs_content = qq{
