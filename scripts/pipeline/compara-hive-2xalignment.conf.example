@@ -63,14 +63,27 @@
     chunk_size            => 30000000,
     group_set_size        => undef,
     overlap               => 0,
-    # in human, make sure assemblu_excpetion_type_PAR is set to 0; 
+    # in human, make sure assembly_excpetion_type_PAR is set to 0; 
     # this makes sure that the Y PAR is hard-masked
     masking_options       => "{default_soft_masking => 1, assembly_exception_type_PAR => 0}",
+
+    # When working with the human genome, in addition to hard-masking Y PAR, make sure 
+    # include_duplicates is set to 1, or else the compara code would try to skip the PAR regions 
+    # when creating DNA fragments for the Y-chr, and during that process the sequence start/end 
+    # positions of some non-PAR fragments would be reset to a wrong number. Compara jobs would die
+    # for the ChunkAndGroupDna analysis. Setting include_duplicates to 1 results in the Y-chr 
+    # being treated just like any other chrs (without PARs).
+
+    include_duplicates    => 1,
+
     # set the below to the location of the pre-dumped nib-files; this directory
     # can contain any subset of the top-level sequences. So if it's not practical
     # to dump all top-level sequences (i.e. of there are more than a few hundred)
     # then just dump the large ones. All non-pre-dumped nib files will be created
-    # on the fly in /tmp and removed afterwards. 
+    # on the fly in /tmp and removed afterwards.   
+
+    # If you want the pipeline to dump and create nib files uncomment the entry below:
+    # dump_nib             => 1, 
     dump_loc              => '/data/blastdb/Ensembl/Human/NCBI36/nib',
   },
 

@@ -3,7 +3,7 @@
 #
 # POD documentation - main docs before the code
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -28,7 +28,7 @@ Abel Ureta-Vidal <abel@ebi.ac.uk>
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
+The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
@@ -39,12 +39,19 @@ use strict;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;;
 use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Pipeline::Runnable::Blat;
+use Bio::EnsEMBL::Analysis::Runnable::Blat;
 
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+#use Bio::EnsEMBL::Pipeline::Runnable::Blat;
+#our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+
+use Bio::EnsEMBL::Analysis::RunnableDB;
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 
+#comment out to use default faToNib
+my $BIN_DIR = "/software/ensembl/compara/bin";
 
 =head2 fetch_input
 
@@ -86,7 +93,7 @@ sub run
 
   if ($self->dump_nib) {
       $self->dumpNibFiles;
-  } 
+  }
   if ($self->dump_dna) {
       $self->dumpDnaFiles;
   }
@@ -103,7 +110,7 @@ sub write_output {
 ##########################################
 #
 # getter/setter methods
-# 
+#
 ##########################################
 
 sub dna_collection_name {
@@ -165,9 +172,9 @@ sub dumpNibFiles {
   my $self = shift;
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-  
+
   my $starttime = time();
-  
+
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
   my $dump_loc = $dna_collection->dump_loc;
   unless (defined $dump_loc) {
@@ -182,24 +189,30 @@ sub dumpNibFiles {
     if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
       next if ($dna_object->length <= $self->dump_min_size);
 
+      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
+
+      #don't dump nibfile if it already exists
+      next if (-e $nibfile);
+
       my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
-      
+
       #$dna_object->dump_to_fasta_file($fastafile);
       #use this version to solve problem of very large chromosomes eg opossum
       $dna_object->dump_chunks_to_fasta_file($fastafile);
 
-      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
+      if (defined $BIN_DIR) {
+	  #use newer version
+	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      } else {
+	  system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+      }
 
-      system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
-
-      #hack to use newer version of faToNib to dump larger fa files eg cow Un.fa
-      #system("/nfs/team71/phd/klh/progs/kent/bin/i386_64/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
       unlink $fastafile;
       $dna_object = undef;
     }
   }
 
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->collection_name);}
+  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->dna_collection_name);}
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
@@ -210,9 +223,9 @@ sub dumpDnaFiles {
   my $self = shift;
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
-  
+
   my $starttime = time();
-  
+
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
   my $dump_loc = $dna_collection->dump_loc;
   unless (defined $dump_loc) {
@@ -229,14 +242,14 @@ sub dumpDnaFiles {
 
       my $fastafile = "$dump_loc/". $name . ".fa";
 
-      #Must always dump new fasta files because different runs call the chunks 
+      #Must always dump new fasta files because different runs call the chunks
       #different names and the chunk name is what is stored in the fasta file.
       if (-e $fastafile) {
 	  unlink $fastafile
       }
       foreach my $chunk (@$chunk_array) {
 	  #A chunk_set will contain several seq_regions which will be appended
-	  #to a single fastafile. This means I can't use 
+	  #to a single fastafile. This means I can't use
 	  #dump_chunks_to_fasta_file because this deletes the fastafile each
 	  #time!
 	  $chunk->dump_to_fasta_file(">".$fastafile);
@@ -248,7 +261,7 @@ sub dumpDnaFiles {
       my $name = $dna_object->dnafrag->name . "_" . $dna_object->seq_start . "_" . $dna_object->seq_end;
 
       my $fastafile = "$dump_loc/". $name . ".fa";
-      
+
       if (-e $fastafile) {
 	  unlink $fastafile
       }
@@ -257,7 +270,7 @@ sub dumpDnaFiles {
     $dna_object = undef;
   }
 
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->collection_name);}
+  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->dna_collection_name);}
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
@@ -269,20 +282,20 @@ sub create_ooc_file {
   my ($dir, $seq_region) = @_;
 
   my $ooc_file = "$dir/$seq_region/5ooc";
-  
+
   #make new directory to store 5ooc file for each seq_region
   if (!-e "$dir/$seq_region") {
       mkdir("$dir/$seq_region")
         or throw("Directory $dir/$seq_region cannot be created");
   }
 
-  my $runnable = new Bio::EnsEMBL::Pipeline::Runnable::Blat (
+  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Blat (
 							     -database => "$dir/$seq_region.fa",
 							     -query_type => "dnax",
 							     -target_type => "dnax",
 							     -options => "-ooc=$ooc_file -tileSize=5 -makeOoc=$ooc_file -mask=lower -qMask=lower");
   $runnable->run;
-  
+
   return $ooc_file;
 }
 

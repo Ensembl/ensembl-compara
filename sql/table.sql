@@ -70,7 +70,8 @@ CREATE TABLE genome_db (
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   locator                     varchar(255),
 
-  FOREIGN KEY (taxon_id) REFERENCES taxon(taxon_id),
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+
   PRIMARY KEY (genome_db_id),
   UNIQUE name (name,assembly,genebuild)
 ) COLLATE=latin1_swedish_ci;
@@ -118,6 +119,10 @@ CREATE TABLE method_link_species_set (
   name                        varchar(255) NOT NULL default '',
   source                      varchar(255) NOT NULL default 'ensembl',
   url                         varchar(255) NOT NULL default '',
+
+  FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
+  # species_set(species_set_id) is not a unique key. Some RDBMS may complain
+  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   PRIMARY KEY (method_link_species_set_id),
   UNIQUE KEY method_link_id (method_link_id,species_set_id)
@@ -230,10 +235,10 @@ CREATE TABLE genomic_align_group (
 #   ancestral sequence reconstruction. This table stores the tree underlying each tree
 #   alignments
 #
--- primary key is a foreign key to genomic_align.genomic_align_id
+-- primary key is a foreign key to genomic_align_group.group_id
 
 CREATE TABLE genomic_align_tree (
-  node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.genomic_align_id
+  node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align_group.genomic_align_id
   parent_id                   bigint(20) unsigned NOT NULL default '0',
   root_id                     bigint(20) unsigned NOT NULL default '0',
   left_index                  int(10) NOT NULL default '0',
@@ -242,7 +247,8 @@ CREATE TABLE genomic_align_tree (
   right_node_id               bigint(10) NOT NULL default '0',
   distance_to_parent          double NOT NULL default '1',
 
-  FOREIGN KEY (node_id) REFERENCES genomic_align(genomic_align_id),
+  # genomic_align_group(group_id) is not a unique key. Some RDBMS may complain
+  # FOREIGN KEY (node_id) REFERENCES genomic_align_group(group_id),
 
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
@@ -283,7 +289,8 @@ CREATE TABLE dnafrag_region (
   dnafrag_start               int(10) unsigned DEFAULT '0' NOT NULL,
   dnafrag_end                 int(10) unsigned DEFAULT '0' NOT NULL,
   dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
-  
+
+  FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   KEY synteny (synteny_region_id,dnafrag_id),
@@ -325,7 +332,7 @@ CREATE TABLE member (
   chr_strand                  tinyint(1) NOT NULL,
   display_label               varchar(128) default NULL,
 
-  FOREIGN KEY (taxon_id) REFERENCES taxon(taxon_id),
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
   FOREIGN KEY (gene_member_id) REFERENCES member(member_id),
@@ -389,6 +396,8 @@ CREATE TABLE analysis_description (
   display_label              varchar(255),
   displayable                boolean not null default 1,
   web_data                   text,
+
+  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
   UNIQUE KEY analysis_idx( analysis_id )
 
@@ -599,6 +608,8 @@ CREATE TABLE conservation_score (
   expected_score         blob,
   diff_score             blob,
 
+  FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
+
   KEY (genomic_align_block_id, window_size)
 ) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci;
 
@@ -625,7 +636,7 @@ CREATE TABLE protein_tree_node (
   left_index                      int(10) NOT NULL,
   right_index                     int(10) NOT NULL,
   distance_to_parent              double default 1.0 NOT NULL,
-  
+
   PRIMARY KEY (node_id),
   KEY (parent_id),
   KEY (root_id),
@@ -656,6 +667,8 @@ CREATE TABLE protein_tree_member (
   cigar_start                 int(10),
   cigar_end                   int(10),
 
+  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+
   UNIQUE (node_id),
   KEY (member_id)
 ) COLLATE=latin1_swedish_ci;
@@ -679,11 +692,70 @@ CREATE TABLE protein_tree_tag (
   tag                    varchar(50),
   value                  mediumtext,
 
+  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+
   UNIQUE tag_node_id (node_id, tag),
   KEY (node_id),
   KEY (tag)
 ) COLLATE=latin1_swedish_ci;
 
-# Auto add schema version to database
-INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "48");
+# Table sitewise_aln
+# This table stores the values of calculating the sitewise dN/dS ratio
+#  on node_ids (subtrees) for the GeneTrees. A subtree can also be the
+#  root of the tree
+# sitewise_id - identifies the sitewise entry
+# aln_position - is the position in the whole GeneTree alignment, even
+# if it is all_gaps in the subtree
+# node_id - is the root of the subtree for which the sitewise is
+# calculated
+# tree_node_id - is the root of the tree. it will be equal to node_id
+# if we are calculating sitewise for the whole tree
+# omega is the estimated omega value at the position
+# omega_lower is the lower bound of the confidence interval
+# omega_upper is the upper bound of the confidence interval
+# threshold_on_branch_ds is the used threshold to break a tree into
+# subtrees when the dS value of a given branch is too big. This is
+# defined in the configuration file for the genetree pipeline
+# type is the predicted type for the codon/aminoacid
+# (positive4,positive3,positive2,positive1,
+#  negative4,negative3,negative2,negative1,
+#  constant,all_gaps,single_character,synonymous,default)
 
+CREATE TABLE sitewise_aln (
+  sitewise_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  aln_position                int(10) unsigned NOT NULL,
+  node_id                     int(10) unsigned NOT NULL,
+  tree_node_id                int(10) unsigned NOT NULL,
+  omega                       float(10,5),
+  omega_lower                 float(10,5),
+  omega_upper                 float(10,5),
+  threshold_on_branch_ds      float(10,5),
+  type                        varchar(10) NOT NULL,
+
+  FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+
+  UNIQUE aln_position_node_id_ds (aln_position,node_id,threshold_on_branch_ds),
+  PRIMARY KEY (sitewise_id),
+  KEY (node_id)
+) COLLATE=latin1_swedish_ci;
+
+# Table sitewise_member
+# This table stores the member_positions for a given sitewise entry
+# sitewise_id - identifies the sitewise entry
+# member_id - 
+# member_position - position with respect to the aln_position after
+# mapping the gaps in the multiple alignment
+
+CREATE TABLE sitewise_member (
+  sitewise_id                 int(10) unsigned NOT NULL,
+  member_id                   int(10) unsigned NOT NULL,
+  member_position             int(10) unsigned NOT NULL,
+
+  FOREIGN KEY (sitewise_id) REFERENCES sitewise_aln(sitewise_id),
+
+  UNIQUE sitewise_member_position (sitewise_id,member_id,member_position),
+  KEY (member_id)
+) MAX_ROWS = 1000000000 COLLATE=latin1_swedish_ci;
+
+# Auto add schema version to database
+INSERT INTO meta (meta_key, meta_value) VALUES ("schema_version", "50");

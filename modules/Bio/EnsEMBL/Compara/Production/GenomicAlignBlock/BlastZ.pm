@@ -63,7 +63,11 @@ sub configure_defaults {
   
   $self->options('T=2 H=2200');
   $self->method_link_type('BLASTZ_RAW');
-  $self->max_alignments('5000000');
+
+  #Although this seems a good idea in principle, it takes longer and longer to
+  #check as the genomic_align_block table gets longer.
+  #$self->max_alignments('5000000');
+  $self->max_alignments('0');
   
   return 0;
 }

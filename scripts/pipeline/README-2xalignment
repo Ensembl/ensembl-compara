@@ -67,7 +67,10 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     perl $BASEDIR/ensembl-compara/scripts/pipeline/comparaLoadGenomes.pl -conf ./compara_2x.conf
-    perl $BASEDIR/ensembl-compara/scripts/pipeline/loadPairAlignerSystem.pl -conf ./compara_2x.conf
+    perl $BASEDIR/ensembl-compara/scripts/pipeline/loadPairAlignerSystem.pl -conf ./compara_2x.conf 
+
+    Note: you want to add the config entry dump_nib => '1' to the compara_2x.conf config file in the 
+    DNA_COLLECTION configuration hash of your target (usually human ) genome
 
 6 - Run the beekeeper to generate raw alignment
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

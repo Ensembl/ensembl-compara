@@ -30,8 +30,12 @@ GetOptions('help'     => \$help,
 if ($help) { usage(); }
 
 my %hive_params;
+my %engine_params;
 my %compara_conf;
 $compara_conf{'-port'} = 3306;
+
+#list of compara tables to be changed to InnoDB
+my @dna_pipeline_tables = qw(genomic_align_block genomic_align genomic_align_group genomic_align_tree sequence dnafrag_region constrained_element conservation_score);
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -54,6 +58,29 @@ if(%hive_params) {
   }
 }
 
+if (%engine_params) {
+    if (defined ($engine_params{'dna_pipeline'}) && $engine_params{'dna_pipeline'} ne "") {
+	#Change tables to ENGINE
+	my $engine = $engine_params{'dna_pipeline'};
+	if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+	    die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	}
+	foreach my $table (@dna_pipeline_tables) {
+	    my $sql = "ALTER TABLE $table ENGINE=$engine";
+	    $self->{'hiveDBA'}->dbc->do($sql);
+	}
+    }
+    #defined individual tables
+    foreach my $table (keys %engine_params) {
+	next if ($table eq 'dna_pipeline' || $table eq "" || $table eq "TYPE");
+	my $engine = $engine_params{$table};
+	if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+	    die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	}
+	my $sql = "ALTER TABLE $table ENGINE=$engine";
+	$self->{'hiveDBA'}->dbc->do($sql);
+    }
+}
 
 $self->preparePairAlignerSystem;
 
@@ -114,7 +141,9 @@ sub parse_conf {
       }
       elsif($type eq 'DNA_COLLECTION') {
         push @{$self->{'dna_collection_conf_list'}} , $confPtr;
-      }
+    } elsif($type eq 'ENGINE') {
+	%engine_params = %{$confPtr};
+    }
     }
   }
 }
@@ -287,11 +316,25 @@ sub createPairAlignerAnalysis
   $stats->update();
 
   #Dump reference dna as overlapping chunks in multi-fasta file
-  if ($target_dnaCollectionConf->{'dump_loc'}) {
-      ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
+  if ($target_dnaCollectionConf->{'dump_loc'}) { 
+ 
+      my $analysis_parameters = "{'dump_dna'=>1,'dump_min_size'=>1";
+
+      if ($target_dnaCollectionConf->{'dump_nib'}) {   
+        $analysis_parameters.=",'dump_nib'=>1,";
+      }else {  
+        print "\n\nWARNING !\nYou've configured compara to not dump any nib files !!!\n".
+         "The analysis will run a lot slower. To dump nib-files change your compara analysis configuration file\n". 
+         " and add dump_nib => 1 to the DNA_COLLECTION config-hash of your well-analysed target genome (usually human)\n\n" ; 
+        sleep(3);
+      } 
+      $analysis_parameters.="}";
+     
+      ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. 
+      # The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
       my $dumpDnaAnalysis = new Bio::EnsEMBL::Analysis(
 						       -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
-						       -parameters => "{'dump_dna'=>1,'dump_min_size'=>1}",
+						       -parameters => $analysis_parameters, 
 						      );
       my $dump_dna_logic_name = "DumpDnaForPairAligner-".$hexkey;
       $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
