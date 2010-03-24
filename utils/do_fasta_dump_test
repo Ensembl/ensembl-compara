@@ -32,7 +32,7 @@ BEGIN{
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBLoader;
 use Bio::SeqIO;
-use EnsEMBL::Web::Data::NewsItem;
+#use EnsEMBL::Web::Data::NewsItem;
 use utils::Tool;
 
 ### This block defines our configuration variables
@@ -161,12 +161,15 @@ my %db_names = qw(
   DATABASE_VEGA    vega
 );
 
+my @blast_servers = @{$SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_SERVERS")};
+
 unless( $no_remotedirs ) {
    # Create directories for blast
   unless ($blastdir =~ /vega|PRE/) {
     $blastdir .= '/release-'.$release;
   }
-  foreach my $blast_machine (@{$SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_SERVERS")} ){  
+
+  foreach my $blast_machine (@blast_servers ){  #warn $blast_machine;
     info (1, "Creating dir for blast on $blast_machine") unless $no_indexes;
     eval{
       system("ssh -i $key_file $blast_machine mkdir -p $blastdir"        ) unless ($no_indexes or $no_remotedirs);
@@ -206,16 +209,17 @@ if ($PREVIOUS_DUMPDIR && $dump_dna) {
           while (my $species_dna_file = readdir(SPECIES_DNA_DIR)){
             next if ( $species_dna_file =~/^\./);
             $last_release_species_data{$file}{'data'}{'old_dna_files'}{$species_dna_file} =1;
-            $species_dna_file =~s/$file\.//i;
-            $species_dna_file =~s/\.fa\.gz//;
-            $species_dna_file =~s/\d*$|MT$|Un|X|Y//;           
-            my @temp = split (/\./, $species_dna_file);
-            my $type = pop @temp;
-            my $dna = pop @temp;
-            my $old_release = pop @temp;
-            my $old_assembly = join '.', @temp;             
-            $last_release_species_data{$file}{'data'}{'old_assembly'} = $old_assembly;
-            $last_release_species_data{$file}{'data'}{'old_release'} = $old_release;    
+            if ($species_dna_file =~/dna\.toplevel/){
+              $species_dna_file =~s/\.dna\.toplevel\.fa\.gz//;
+              my $species_name = ucfirst($file); 
+              $species_dna_file =~s/$species_name//;  
+              my @temp = split( /\./, $species_dna_file);
+              my $old_release = pop @temp;
+              my $old_assembly = join '.', @temp;
+              $old_assembly =~s/^\.//;                  
+              $last_release_species_data{$file}{'data'}{'old_assembly'} = $old_assembly; 
+              $last_release_species_data{$file}{'data'}{'old_release'} = $old_release;    
+            }
           } 
         closedir (SPECIES_DNA_DIR);  
       } 
@@ -224,15 +228,6 @@ if ($PREVIOUS_DUMPDIR && $dump_dna) {
   }
   closedir(DIR);
 }
-
-##
-  my $news_item = EnsEMBL::Web::Data::NewsItem->new();
-  $news_item->set_sql(species_data => qq{
-    SELECT n.data
-      FROM news_item n, species s, item_species i
-     WHERE n.release_id = 57 and n.news_item_id = i.news_item_id and i.species_id=s.species_id
-            %s
-  });
 
 
 ## Work out what files we need to dump:
@@ -299,6 +294,20 @@ sub need_dna {
   my $needed = 0;
   my $reason;
 
+  my $web_db_connection = Bio::EnsEMBL::DBSQL::DBConnection->new(
+    -host => 'ensdb-1-13',
+    -port => 5307,
+    -user => 'ensro',
+    -dbname =>  'ensembl_website'
+  );
+
+  my $sth = $web_db_connection->prepare(
+    "SELECT n.data
+      FROM news_item n, species s, item_species i
+     WHERE n.release_id = ? and n.news_item_id = i.news_item_id and 
+           i.species_id=s.species_id and s.name = ?"
+  );
+
   ## Work out if we need to dump DNA for this species
   ## Currently we only dump DNA if we have a new species, a new assembly
   ## or if repeat masking has been re-run.
@@ -308,12 +317,10 @@ sub need_dna {
     # Check the info provided in DOI to see if there has been an assembly change
     # or re-run of repeat masking for this species
 
-    my $species_name = 'and s.name = "'. ucfirst($sp) .'"';  
-   
-    my $sth = $news_item->sql_species_data($species_name);
-    $sth->execute;   
-    foreach my $row (@{$sth->fetchall}){
-      my $data = $row->[0];  
+    my $species_name = ucfirst($sp);     
+    $sth->execute($release,$species_name);
+    foreach my $row ( $sth->fetchrow){
+      my $data = $row;  
       $data =~s/\{|\}|\s|//g;
       my @split_pairs = split (/\,/, $data);
       foreach my $pair (@split_pairs) { 
@@ -334,6 +341,8 @@ sub need_dna {
         }
       } 
     }
+    $sth->finish;
+#    $web_db_connection->db_handle->disconnect_when_inactive(1);
     #Check that old assembly name matches current assembly
     my $old_assembly = $last_release_species_data{lc($sp)}{'data'}{'old_assembly'};
     info(1, "$current_assembly");
@@ -574,6 +583,8 @@ sub get_data {
                            |E\d\d\w*$
                            |_NT_
                            |scaffold_
+                           |cutchr
+                           |unplaced  
                            /x)  ) {
 
         if ( my $seqio = $fhs->{'dna_toplevel'} ){
@@ -922,6 +933,7 @@ sub blast_indexes {
 
     # Copy blast indexes across------------------------------
     foreach my $file (keys %$names ) {
+      next if $file =~/\.dna/;
       my $file_name = $names->{$file};
       my $xd_file = "$basedir/xdformat/$release_dir/" . $file_name;
       $xd_file =~s/\/\//\//;
@@ -929,7 +941,7 @@ sub blast_indexes {
       utils::Tool::warning(1, "Error producing file $xd_file") && next unless -s "$xd_file";
 
       $no_remotedirs && next;
-      foreach my $blast_machine (@{$SPECIES_DEFS->get_config($SPECIES[0],"ENSEMBL_BLAST_SERVERS")} ){
+      foreach my $blast_machine(@blast_servers){
         warn "scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name";
         system("scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name");
       }
@@ -1135,7 +1147,25 @@ EXAMPLES
    Non-chromosomal assembly sequences:
    e.g. mitochondrial genome, sequence contigs not yet mapped on chromosomes
      Homo_sapiens.NCBI36.40.dna.nonchromosomal.fa.gz
-     Homo_sapiens.NCBI36.40.dna_rm.nonchromosomal.fa.gz\n\n",
+     Homo_sapiens.NCBI36.40.dna_rm.nonchromosomal.fa.gz
+
+--------------
+SPECIAL CASES
+--------------
+Some chromosomes have alternate haplotypes which are presented in files with 
+the haplotype sequence only:
+   Homo_sapiens.GRCh37.56.dna_rm.chromosome.HSCHR6_MHC_QBL.fa.gz
+   Homo_sapiens.GRCh37.56.dna_rm.chromosome.HSCHR17_1.fa.gz
+   
+
+Some species have sequenced Y chromosomes and the pseudoautosomal region (PAR)
+on the Y is annotated.  By definition the PAR region is identical on the 
+X and Y chromosome.  We provide this sequence in the following way.
+-- The Y chromosome file contains the complete sequence of the PAR:
+    Homo_sapiens.GRCh37.56.dna.chromosome.Y.fa.gz
+-- The top level file includes only the unique portion of Y (i.e. the PAR 
+   (region is N-masked):
+      Homo_sapiens.GRCh37.56.dna.toplevel.fa.gz\n\n",
 
 pep => "
 ####################
