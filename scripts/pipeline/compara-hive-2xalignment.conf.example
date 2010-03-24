@@ -80,7 +80,10 @@
     # can contain any subset of the top-level sequences. So if it's not practical
     # to dump all top-level sequences (i.e. of there are more than a few hundred)
     # then just dump the large ones. All non-pre-dumped nib files will be created
-    # on the fly in /tmp and removed afterwards. 
+    # on the fly in /tmp and removed afterwards.   
+
+    # If you want the pipeline to dump and create nib files uncomment the entry below:
+    # dump_nib             => 1, 
     dump_loc              => '/data/blastdb/Ensembl/Human/NCBI36/nib',
   },
 
