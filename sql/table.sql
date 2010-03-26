@@ -536,7 +536,7 @@ CREATE TABLE peptide_align_feature (
 #  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
   PRIMARY KEY (peptide_align_feature_id),
-  UNIQUE member (hmember_id, hit_rank) 
+  KEY hmember_hit (hmember_id, hit_rank) 
 
 #  KEY qmember_id  (qmember_id),
 #  KEY hmember_id  (hmember_id),
