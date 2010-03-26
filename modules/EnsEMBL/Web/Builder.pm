@@ -28,15 +28,21 @@ sub new {
   my ($class, $model) = @_;
 
   ## Edit these next two lines if you add more core objects 
-  my @core_types  = qw/Location Gene Transcript Variation Regulation/;  
-  my @param_names = qw/g h r t v db pt rf vf fdb vdb domain family protein/;
+  my %core_types  = (
+    'Location'    => 'r',
+    'Gene'        => 'g',
+    'Transcript'  => 't',
+    'Variation'   => 'v',
+    'Regulation'  => 'rf',
+  );  
+  my @extra_params = qw/h db pt vf fdb vdb domain family protein/;
 
-  $model->hub->set_core_params(@param_names);
+  $model->hub->set_core_params(values %core_types, @extra_params);
 
   my $self = {
     '_model'        => $model,
-    '_core_types'   => \@core_types,
-    '_param_names'  => \@param_names,
+    '_core_types'   => \%core_types,
+    '_param_names'  => \@extra_params,
   };
   
   bless $self, $class;
@@ -53,6 +59,15 @@ sub _chain_Location {
   ## NEXT TAB
   if (!$self->model->object('Gene') && $self->model->hub->param('g')) {
     $self->_generic_create('Gene');
+  }
+
+  ### Set coordinates in CGI parameters
+  my $location = $self->model->object('Location');
+  if ($location && $location->seq_region_name) {
+    my $r = $location->seq_region_name;
+    $r .= ':'.$location->seq_region_start if $location->seq_region_start;
+    $r .= '-'.$location->seq_region_end   if $location->seq_region_end;
+    $self->model->hub->param('r', $r);
   }
 
   return $problems;
@@ -219,17 +234,23 @@ sub _long_caption {
 sub _tab_Location {
   my ($self, $slice, $info) = @_;
 
+  my $coords;
   if ($slice->isa('EnsEMBL::Web::Fake')) {
     $info->{'action'} = 'Genome';
     $info->{'short_caption'}  = 'Genome';
   }
   else {
     $info->{'action'} = 'View';
-    my $label = $slice->seq_region_name.':'
+    $coords = $slice->seq_region_name.':'
                   .$self->thousandify($slice->start).'-'.$self->thousandify($slice->end);
-    $info->{'short_caption'} = "Location: $label";
+    $info->{'short_caption'} = "Location: $coords";
   }
   $info->{'parameters'} = ['r'];
+  $info->{'url'} = $self->model->hub->url({
+    'type'   => 'Location',
+    'action' => $info->{'action'},
+    'r'      => $coords,
+  });
 
   return $info;
 }
@@ -299,16 +320,22 @@ sub create_objects {
   my ($self, $type) = @_;
   return if $self->model->object($type); ## No thanks, I've already got one!
   my $problems;
-  my @core_types = @{$self->core_types};
+  my %core_types = %{$self->core_types};
 
-  if (grep /^$type$/, @core_types) {
+  if (grep /^$type$/, keys %core_types) {
     ## start with the current object and create others as necessary
     $problems = $self->_generic_create($type);
     ## Add all the generated objects to the tab list
-    foreach (@core_types) {
+    foreach (keys %core_types) {
       if ($self->model->object($_)) {
         my $tab_info = $self->_create_tab($_);
         $self->model->add_tab($tab_info);
+      }
+    }
+    ## Add any non-tab core objects (e.g. variation on Location/LD page)
+    while (my($type, $param) = each (%core_types)) {
+      if ($self->model->hub->param($param) && !$self->model->object($type)) {
+        $problems = $self->model->create_objects($type);
       }
     }
   }
