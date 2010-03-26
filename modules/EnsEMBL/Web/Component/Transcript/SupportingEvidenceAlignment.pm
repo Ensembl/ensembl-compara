@@ -163,7 +163,7 @@ sub content {
     my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
     $table2->add_row('Transcript alignment:','',1);
     $html .= $table2->render;
-    $html .= "<p><br /><pre>$trans_alignment</pre></p>";
+    $html .= "<p><br /><br /><pre>$trans_alignment</pre></p>";
   }
   else {
     $table->add_row('Transcript alignment',
