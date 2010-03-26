@@ -78,6 +78,9 @@ sub new {
   return $self;
 }
 
+sub get_cookie { return $_[0]->{'cookie'}; }
+sub set_cookie { $_[0]->{'cookie'} = $_[1]; }
+
 sub get_adaptor { return $_[0]->{'adaptor'}; }
 sub set_adaptor { $_[0]->{'adaptor'} = $_[1]; }
 
