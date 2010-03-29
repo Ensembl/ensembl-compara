@@ -76,8 +76,12 @@ sub _add_element {
   if (!$element->id) {
     $element->id =  $self->_next_id();
   }
-  $self->{'_elements'}{$element->name} = $element;
-  push @{$self->{'_element_order'}}, $element->name;
+  
+  my $key = $element->name || $element->id;
+  
+  $self->{'_elements'}{$key} = $element;
+  
+  push @{$self->{'_element_order'}}, $key;
 }
 
 sub delete_element {
