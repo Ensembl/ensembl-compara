@@ -106,7 +106,7 @@ sub delete_by_MethodLinkSpeciesSet {
   my ($self, $mlss_obj) = @_;
 
   if (defined($mlss_obj)) {
-    throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
+    throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")      
       unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
   } else {
     throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
@@ -118,7 +118,37 @@ sub delete_by_MethodLinkSpeciesSet {
 # Delete constrtained element entries by mlss_id
   my $sth = $self->prepare($cons_ele_sql);
   $sth->execute($mlss_obj->dbID);
+  $sth->finish;
 }
+
+
+=head2 delete_by_dbID
+
+  Arg  1     : int $constrained_element_id
+  Example    : $constrained_element_adaptor->delete_by_dbID(123);
+  Description: It removes constrained elements with the specified ID
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub delete_by_dbID {
+  my ($self, $constrained_element_id) = @_;
+
+  if (!defined($constrained_element_id)) {
+    throw("undefined Constrained Element ID");
+  }
+
+  my $cons_ele_sql =
+        qq{DELETE FROM constrained_element WHERE constrained_element_id = ?};
+  
+# Delete constrtained element entries by mlss_id
+  my $sth = $self->prepare($cons_ele_sql);
+  $sth->execute($constrained_element_id);
+  $sth->finish;
+}
+
 
 =head2 fetch_all_by_MethodLinkSpeciesSet_Slice
 
