@@ -98,6 +98,33 @@ my $PACKED = 1;
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
+
+=head2 delete_by_genomic_align_block_id
+
+  Arg  1     : int $genomic_align_block_id
+  Example    : $conservation_score_adaptor->delete_by_genomic_align_block_id(123);
+  Description: Delete all the scores related to this GenomicAlignBlock object
+  Returntype : int (number of deleted rows, not scores)
+  Exceptions : throw if not $genomic_align_block_id
+  Status     : Stable
+
+=cut
+
+sub delete_by_genomic_align_block_id {
+  my ($self, $genomic_align_block_id) = @_;
+
+  unless (defined $genomic_align_block_id) {
+    throw("Must define a genomic_align_block_id");
+  }
+
+  my $sql = "DELETE FROM conservation_score WHERE genomic_align_block_id = ?";
+  my $sth = $self->prepare($sql);
+  my $rv = $sth->execute($genomic_align_block_id);
+  $sth->finish;
+
+  return $rv;
+}
+
 =head2 fetch_all_by_MethodLinkSpeciesSet_Slice
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set 
