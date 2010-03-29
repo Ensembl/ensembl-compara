@@ -204,14 +204,12 @@ sub _user_context {
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
   my $vc            = $hub->viewconfig;
-  my (%ics, $active_config);
+  my %ics           = $vc ? $vc->image_configs : undef;
+  my $active_config = $hub->param('config') || $vc ? $vc->default_config : undef;
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
   my $flag          = $hub->param('config') ? 0 : 1;
 
   if ($vc) {
-    %ics            = $vc ? $vc->image_configs : undef;
-    $active_config  = $hub->param('config') || $vc->default_config;
-  
     if ($vc->has_form) {
       $self->page->$section->add_entry(
         type    => 'Config',
