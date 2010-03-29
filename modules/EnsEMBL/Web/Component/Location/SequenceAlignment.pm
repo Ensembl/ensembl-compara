@@ -1,9 +1,10 @@
 package EnsEMBL::Web::Component::Location::SequenceAlignment;
 
 use strict;
-use warnings;
-use Bio::EnsEMBL::AlignStrainSlice;
-no warnings "uninitialized";
+
+use Bio::EnsEMBL::MappedSliceContainer;
+use Bio::EnsEMBL::DBSQL::StrainSliceAdaptor;
+
 use base qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
@@ -19,8 +20,8 @@ sub caption {
 sub content {
   my $self = shift;
   
-  my $object = $self->object;
-  my $threshold = 50000;
+  my $object    = $self->object;
+  my $threshold = 50001;
   
   if ($object->length > $threshold) {
     return $self->_warning(
@@ -29,18 +30,25 @@ sub content {
     );
   }
   
+  my $original_slice = $object->slice;
+  $original_slice    = $original_slice->invert if $object->param('strand') == -1;
+  my $ref_slice      = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
+  my $ref_slice_obj  = $ref_slice->Obj;
+  my $var_db         = $object->species_defs->databases->{'DATABASE_VARIATION'};
+  my @individuals;
+  my $html;
+    
   my $config = {
     display_width  => $object->param('display_width') || 60,
     site_type      => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
     species        => $object->species,
-    species_path   => $object->species_path,
     key_template   => '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>',
     key            => '',
     comparison     => 1,
-    maintain_exons => 1 # This is to stop the exons being reversed in markup_exons if the strand is -1
+    ref_slice_name  => $ref_slice->get_individuals('reference')
   };
   
-  for ('exon_ori', 'match_display', 'snp_display', 'line_numbering', 'codons_display', 'title_display') {
+  foreach ('exon_ori', 'match_display', 'snp_display', 'line_numbering', 'codons_display', 'title_display') {
     $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
   }
   
@@ -52,80 +60,39 @@ sub content {
   
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
-    $config->{'number'} = 1;
+    $config->{'number'}     = 1;
   }
   
-  my $original_slice = $object->slice;
-  $original_slice = $original_slice->invert if $object->param('strand') == -1;
-  
-  my $ref_slice = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
-  my $ref_slice_obj = $ref_slice->Obj;
-  my $var_hash = $object->species_defs->databases->{'DATABASE_VARIATION'};
-  my @individuals;
-  my @individual_slices;
-  my $html;
-  
   foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS') {
-    foreach my $ind (@{$var_hash->{$_}}) {
+    foreach my $ind (@{$var_db->{$_}}) {
       push @individuals, $ind if $object->param($ind) eq 'yes';
     }
   }
   
-  foreach my $individual (@individuals) {
-    my $slice = $ref_slice_obj->get_by_strain($individual);
-    
-    if ($slice) {
-      $slice->remove_indels; # FIXME: Can be removed once resequencing view is fixed by variation team
-      push @individual_slices, $slice;
-    }
-  }
-  
-  if (scalar @individual_slices) {
-    my $align_slice = new Bio::EnsEMBL::AlignStrainSlice(-SLICE => $ref_slice_obj, -STRAINS => \@individual_slices); # Get align slice
-    my $slice_array = $align_slice->get_all_Slices; # Get aligned strain slice objects
-    
-    my @ordered_slices = sort { $a->[0] cmp $b->[0] } map { [ ($_->can('display_Slice_name') ? $_->display_Slice_name : $config->{'species'}), $_ ] } @$slice_array;
-    
-    $config->{'ref_slice_name'} = $ref_slice->get_individuals('reference');
-    
-    foreach (@ordered_slices) {
-      my $slice = $_->[1];
-      
-      my $sl = {
-        slice             => $slice,
-        underlying_slices => $slice->can('get_all_underlying_Slices') ? $slice->get_all_underlying_Slices : [ $slice ],
-        name              => $_->[0]
-      };
-      
-      if ($_->[0] eq $config->{'ref_slice_name'}) {
-        unshift @{$config->{'slices'}}, $sl; # Put the reference slice at the top
-        $config->{'ref_slice_seq'} = [ split //, $_->[1]->seq ];
-      } else {
-        push @{$config->{'slices'}}, $sl;
-      }
-    }
+  if (scalar @individuals) {
+    $config->{'slices'} = $self->get_slices($ref_slice_obj, \@individuals, $config);
     
     my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
     
     # Order is important for the key to be displayed correctly
-    $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
-    $self->markup_codons($sequence, $markup, $config) if $config->{'codons_display'};
+    $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
+    $self->markup_codons($sequence, $markup, $config)    if $config->{'codons_display'};
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
     $self->markup_comparisons($sequence, $markup, $config); # Always called in this view
-    $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
+    $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
     
-    $config->{'key'} .= '<p><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</p>' if $slice_array->[0]->isa('Bio::EnsEMBL::StrainSlice');
-    $config->{'key'} =~ s/(Location of SNPs)/$1 - <strong>Note: Inserts and deletes are currently disabled for this display<\/strong>/; # FIXME: Can be removed once resequencing view is fixed by variation team
+    $config->{'key'} .= '<p><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</p>';
     
     my $slice_name = $original_slice->name;
     
     my (undef, undef, $region, $start, $end) = split /:/, $slice_name;
+    my $url = $object->hub->url({ action => 'View', r => "$region:$start-$end" });
     
     my $table = qq{
     <table class="sequence_key">
       <tr>
         <th>$config->{'species'} &gt;&nbsp;</th>
-        <td><a href="$config->{'species_path'}/Location/View?r=$region:$start-$end">$slice_name</a><br /></td>
+        <td><a href="$url">$slice_name</a><br /></td>
       </tr>
     </table>
     };
@@ -144,6 +111,51 @@ sub content {
   }
   
   return $html;
+}
+
+sub get_slices {
+  my $self = shift;
+  my ($ref_slice_obj, $individuals, $config) = @_;
+  
+  my $object = $self->object;
+  
+  # Chunked request
+  if (!defined $individuals) {
+    my $var_db = $object->species_defs->databases->{'DATABASE_VARIATION'};
+    
+    foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS') {
+      foreach my $ind (@{$var_db->{$_}}) {
+        push @$individuals, $ind if $object->param($ind) eq 'yes';
+      }
+    }
+  }
+  
+  my $msc = new Bio::EnsEMBL::MappedSliceContainer(-SLICE => $ref_slice_obj, -EXPANDED => 1);
+  
+  $msc->set_StrainSliceAdaptor(new Bio::EnsEMBL::DBSQL::StrainSliceAdaptor($ref_slice_obj->adaptor->db));
+  $msc->attach_StrainSlice($_) for @$individuals;
+  
+  my @slices = ({ 
+    name  => $config->{'ref_slice_name'},
+    slice => $ref_slice_obj
+  });
+  
+  foreach (@{$msc->get_all_MappedSlices}) {
+    my $slice = $_->get_all_Slice_Mapper_pairs->[0]->[0];
+    
+    push @slices, { 
+      name  => $slice->can('display_Slice_name') ? $slice->display_Slice_name : $config->{'species'}, 
+      slice => $slice,
+      seq   => $_->seq(1)
+    };
+  }
+  
+  $config->{'ref_slice_start'} = $ref_slice_obj->start;
+  $config->{'ref_slice_end'}   = $ref_slice_obj->end;
+  $config->{'ref_slice_seq'}   = [ split //, $msc->seq(1) ];
+  $config->{'mapper'}          = $msc->mapper;
+  
+  return \@slices;
 }
 
 1;
