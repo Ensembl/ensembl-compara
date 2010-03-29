@@ -25,24 +25,28 @@ sub get_sequence_data {
     my $mk    = {};
     my $slice = $sl->{'slice'};
     my $name  = $sl->{'name'};
-    my $seq   = uc $slice->seq(1);
+    my $seq   = uc($sl->{'seq'} || $slice->seq(1));
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
     
     $config->{'length'} ||= $slice_length;
     
-    if ($config->{'match_display'} && $name ne $config->{'ref_slice_name'}) {      
-      my $i = 0;
-      my @cmp_seq = map {{ letter => ($config->{'ref_slice_seq'}->[$i++] eq $_ ? '.' : $_) }} split //, $seq;
+    if ($config->{'match_display'}) {
+      if ($name eq $config->{'ref_slice_name'}) {
+        push @sequence, [ map {{ letter => $_ }} @{$config->{'ref_slice_seq'}} ];
+      } else {
+        my $i = 0;
+        my @cmp_seq = map {{ letter => ($config->{'ref_slice_seq'}->[$i++] eq $_ ? '.' : $_) }} split //, $seq;
 
-      while ($seq =~ m/([^~]+)/g) {
-        my $reseq_length = length $1;
-        my $reseq_end    = pos $seq;
+        while ($seq =~ m/([^~]+)/g) {
+          my $reseq_length = length $1;
+          my $reseq_end    = pos $seq;
+          
+          $mk->{'comparisons'}->{$reseq_end-$_}->{'resequencing'} = 1 for 1..$reseq_length;
+        }
         
-        $mk->{'comparisons'}->{$reseq_end-$_}->{'resequencing'} = 1 for 1..$reseq_length;
+        push @sequence, \@cmp_seq;
       }
-      
-      push @sequence, \@cmp_seq;
     } else {
       push @sequence, [ map {{ letter => $_ }} split //, $seq ];
     }
@@ -82,7 +86,7 @@ sub get_sequence_data {
       my $u_snps = {};
     
       eval {
-        $snps = $slice->get_all_VariationFeatures;
+        $snps = $slice->get_all_VariationFeatures(1);
       };
       
       if (scalar @$snps) {
@@ -127,13 +131,29 @@ sub get_sequence_data {
         # Use the variation from the underlying slice if we have it.
         my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
         
-        # Co-ordinates relative to the sequence - used to mark up the variation's position
-        my $s = $start - 1;
-        my $e = $end - 1;
-        
         # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
         my $seq_region_start = $snp->seq_region_start;
         my $seq_region_end   = $snp->seq_region_end;
+        
+        # If it's a mapped slice, get the coordinates for the variation based on the reference slice
+        if ($config->{'mapper'}) {
+          # Constrain region to the limits of the reference slice
+          $start = $seq_region_start < $config->{'ref_slice_start'} ? $config->{'ref_slice_start'} : $seq_region_start;
+          $end   = $seq_region_end   > $config->{'ref_slice_end'}   ? $config->{'ref_slice_end'}   : $seq_region_end;
+          
+          my $func            = $seq_region_start > $seq_region_end ? 'map_indel' : 'map_coordinates';
+          my ($mapped_coords) = $config->{'mapper'}->$func($snp->seq_region_name, $start, $end, $snp->seq_region_strand, 'ref_slice');
+          
+          # map_indel will fail if the strain slice is the same as the reference slice, and there's currently no way to check if this is the case beforehand. Stupid API.
+          ($mapped_coords) = $config->{'mapper'}->map_coordinates($snp->seq_region_name, $start, $end, $snp->seq_region_strand, 'ref_slice') if $func eq 'map_indel' && !$mapped_coords;
+          
+          $start = $mapped_coords->start;
+          $end   = $mapped_coords->end;
+        }
+        
+        # Co-ordinates relative to the sequence - used to mark up the variation's position
+        my $s = $start - 1;
+        my $e = $end   - 1;
         
         # Co-ordinates to be used in link text - will use $start or $seq_region_start depending on line numbering style
         my ($snp_start, $snp_end);
@@ -423,7 +443,6 @@ sub markup_comparisons {
   my $i           = 0;
   my ($species, $length, $length_diff, $pad, $seq, $comparison);
   
-  
   foreach (@{$config->{'slices'}}) {
     $species = $_->{'display_name'} || $_->{'name'};
     
@@ -504,9 +523,8 @@ sub markup_line_numbers {
   
   foreach my $sl (@{$config->{'slices'}}) {
     my $slice       = $sl->{'slice'};
-    my $name        = $sl->{'name'};
-    my $align_slice = 0;
     my $seq         = $sequence->[$n];
+    my $align_slice = 0;
     my @numbering;
     
     if ($config->{'line_numbering'} eq 'slice') {
