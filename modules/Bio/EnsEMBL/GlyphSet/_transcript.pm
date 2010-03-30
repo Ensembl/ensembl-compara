@@ -50,10 +50,8 @@ sub legend {
 
 ## sub error_track_name { return $_[0]->my_label }
 
-sub href { 	 
+sub href {
   my ($self, $gene, $transcript) = @_;
-  my $source = $ENV{'ENSEMBL_ACTION'};
-#  my $action =  $source eq 'Multi' ? 'MultiTranscript' : 'Summary';#will be used to add realign around this gene link
   #logic will be moved into web_data
   my $action = $transcript->analysis->logic_name eq 'ccds_import' ? 'CCDS'
              : $transcript->analysis->logic_name eq 'refseq_human_import' ? 'RefSeq'
@@ -72,24 +70,35 @@ sub href {
   return $self->_url($params);
 }
 
-sub gene_href { 	 
+sub gene_href {
   my ($self, $gene) = @_;
-  my $source = $ENV{'ENSEMBL_ACTION'};
-#  my $action =  $source eq 'Multi' ? 'MultiGene' : 'Summary';#will be used to add realign around this gene link
   #logic will be moved into web_data
   my $action = $gene->analysis->logic_name eq 'ccds_import' ? 'CCDS'
              : $gene->analysis->logic_name eq 'refseq_human_import' ? 'RefSeq'
              : $ENV{'ENSEMBL_ACTION'};
+
+  my $gene_loc = $gene->seq_region_name.':'.$gene->seq_region_start.'-'.$gene->seq_region_end.':'.$gene->seq_region_strand;
   my $params = {
-    species => $self->species,
-    type    => 'Gene',
-    action  => $action,
-    g       => $gene->stable_id, 
-    db      => $self->my_config('db')
+    species    => $self->species,
+    type       => 'Gene',
+    action     => $action,
+    g          => $gene->stable_id, 
+    db         => $self->my_config('db'),
+    calling_sp => $ENV{'ENSEMBL_SPECIES'},
   };
-  
+
   $params->{'r'} = undef if $self->{'container'}->{'web_species'} ne $self->species;
-  
+
+  my $url_params = $self->{'config'}{'_core'}{'input'};
+  foreach my $p ( @{$url_params->{'.parameters'}} ) {
+    if ($p =~ /^s|r\d+/) {
+      $params->{$p} =  $url_params->{$p}[0];
+    }
+    if ($p eq 'r') {
+      $params->{'real_r'} =  $url_params->{$p}[0];
+    }
+  }
+
   return $self->_url($params);
 }
 
