@@ -19,8 +19,9 @@ Ensembl.LayoutManager.extend({
     $('#local-tools > p').show();
     
     $('.modal_link').show().live('click', function () {
-      Ensembl.EventManager.trigger('modalOpen', this);
-      return false;
+      if (Ensembl.EventManager.trigger('modalOpen', this)) {
+        return false;
+      }
     });
     
     $('.popup').live('click', function () {
