@@ -58,6 +58,8 @@
    'species_set' => [1,2,3],
    'tree_file' => '/lustre/work1/ensembl/jh7/release47/pecan/hmr.tree',
    'method_link' => [10, 'PECAN'],
+   'max_block_size' => 1000000,
+   'java_options' => '-server -Xmx1000M',
  },
 
 ##If this is defined, the pipeline will set the genomic_align_block_id
