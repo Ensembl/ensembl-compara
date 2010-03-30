@@ -277,13 +277,14 @@ sub _find_nearest {
     if ($feature->{'region'} eq $current->{'region'}) { ## We're getting warm!
       $nearest_region = $feature->{'region'};
       ## Is this feature start nearer?
-      if (abs($current->{'start'} - $feature->{'start'}) < abs($current->{'start'} - $nearest_start)) {
+      if ($current->{'start'} ne '' && $feature->{'start'} ne '' && $nearest_start ne '' 
+        && (abs($current->{'start'} - $feature->{'start'}) < abs($current->{'start'} - $nearest_start))) {
         ($nearest_start, $nearest_end) = ($feature->{'start'}, $feature->{'end'});
       }
     }
     else {
       ## Is this chromosome nearer?
-      if (exists($feature->{'index'}) 
+      if ($feature->{'index'} ne '' && $current->{'index'} ne '' && $nearest_index ne '' 
           && (abs($current->{'index'} - $feature->{'index'}) < abs($current->{'index'} - $nearest_index))) {
         ($nearest_region, $nearest_start, $nearest_end) 
           = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
