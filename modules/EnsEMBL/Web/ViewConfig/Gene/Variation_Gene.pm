@@ -56,25 +56,6 @@ sub form {
   my %class      = %{$options{'class'}};
   my %type       = %{$options{'type'}};
 
-  # Add context selection
-	$view_config->add_fieldset('Context');
-	$view_config->add_form_element({
-	  type   => 'DropDown',
-    select => 'select',
-    name   => 'context',
-	  label  => 'Context',
-	  values => [
-	    { value => '20',   name => '20bp' },
-	    { value => '50',   name => '50bp' },
-	    { value => '100',  name => '100bp' },
-	    { value => '200',  name => '200bp' },
-	    { value => '500',  name => '500bp' },
-	    { value => '1000', name => '1000bp' },
-	    { value => '2000', name => '2000bp' },
-	    { value => '5000', name => '5000bp' },
-	    { value => 'FULL', name => 'Full Introns' }
-	  ]
-  });
   
   # Add source selection
   $view_config->add_fieldset('Variation source');
@@ -132,6 +113,26 @@ sub form {
       raw   => 1
     });
   }
+
+  # Add context selection
+  $view_config->add_fieldset('Context');
+  $view_config->add_form_element({
+    type   => 'DropDown',
+    select => 'select',
+    name   => 'context',
+    label  => 'Context',
+    values => [
+      { value => '20',   name => '20bp' },
+      { value => '50',   name => '50bp' },
+      { value => '100',  name => '100bp' },
+      { value => '200',  name => '200bp' },
+      { value => '500',  name => '500bp' },
+      { value => '1000', name => '1000bp' },
+      { value => '2000', name => '2000bp' },
+      { value => '5000', name => '5000bp' },
+      { value => 'FULL', name => 'Full Introns' }
+    ]
+  });
 }
 
 1;
