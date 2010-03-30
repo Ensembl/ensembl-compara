@@ -826,7 +826,7 @@ sub build_sequence {
         push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post };
         
         $new_line_class = $class;
-        $new_line_title = $title || $previous_title;
+        $new_line_title = $title;
         $count          = 0;
         $row            = '';
         $pre            = '';
