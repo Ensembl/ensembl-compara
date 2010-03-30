@@ -658,5 +658,12 @@
     'user'           => "readonlyuser",
     'dbname'         => 'anolis_carolinensis_core_54_1',
   },
+  
+  #Change the default ENGINE. Can define individual tables or if dna_pipeline 
+  #is defined, change a set of tables (as defined in loadGeneTreeSystem.hcluster_tablereuse.pl). 
+  { TYPE => ENGINE,
+    #'peptide_pipeline' => 'InnoDB',
+  },
+  
   { TYPE => END }
 ]
