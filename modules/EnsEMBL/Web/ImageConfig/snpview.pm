@@ -10,7 +10,7 @@ sub init {
   my $self = shift;
 
   $self->set_parameters({
-    title             => 'Overview panel',
+    title             => 'Variation Context',
     show_buttons      => 'no',  # do not show +/- buttons
     button_width      => 8,     # width of red "+/-" buttons
     show_labels       => 'yes', # show track names on left-hand side
@@ -18,9 +18,7 @@ sub init {
     margin            => 5,     # margin
     spacing           => 2,     # spacing
     opt_halfheight    => 1,     # glyphs are half-height [ probably removed when this becomes a track config ]
-    opt_empty_tracks  => 0,     # include empty tracks..
     opt_lines         => 1,     # draw registry lines
-    opt_restrict_zoom => 1,     # when we get "zoom" working draw restriction enzyme info on it!!
   });
   
   $self->create_menus(
@@ -59,6 +57,10 @@ sub init {
 
   $self->modify_configs(
     [ 'variation_feature_variation' ],
+    { display => 'normal' }
+  );
+  $self->modify_configs(
+    ['variation_feature_structural'],
     { display => 'normal' }
   );
 }

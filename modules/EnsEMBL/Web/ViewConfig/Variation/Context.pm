@@ -52,6 +52,7 @@ sub init {
 
 sub form {
   my ($view_config, $object) = @_;
+  $view_config->default_config = 'snpview'; 
 
   # Add context selection
   $view_config->add_fieldset('Context');
