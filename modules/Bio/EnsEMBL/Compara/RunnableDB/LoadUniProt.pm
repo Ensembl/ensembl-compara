@@ -73,9 +73,8 @@ sub compara_dba {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->debug(0);
-
     $self->param_init(  # these defaults take the lowest priority after input_id and parameters
+        'uniprot'           => 'uniprot',   # but you can ask for a specific version of uniprot that mfetch would recognize
         'srs'               => 'SWISSPROT', # either 'SWISSPROT' or 'SPTREMBL'
         'taxon_id'          => undef,       # no ncbi_taxid filter means get all Fungi/Metazoa
         'genome_db_id'      => undef,       # a constant to set all members to (YOU MUST KNOW THAT YOU'RE DOING!)
@@ -97,12 +96,12 @@ sub fetch_input {
     my $subset_name = $self->param('srs');
     if(my $taxon_id = $self->param('taxon_id')) {
         $subset_name .= " ncbi_taxid:$taxon_id";
-        $self->param('uniprot_ids', $self->mfetch_uniprot_ids($self->param('srs'), $taxon_id) );
+        $self->param('uniprot_ids', $self->mfetch_uniprot_ids($self->param('uniprot'), $self->param('srs'), $taxon_id) );
     } else {
         my $tax_div = $self->param('tax_div');
         $subset_name .= " metazoa";
         $subset_name .= ", tax_div:$tax_div" if($tax_div);
-        $self->param('uniprot_ids', $self->mfetch_uniprot_ids($self->param('srs'),'', $tax_div && [ $tax_div ]) );
+        $self->param('uniprot_ids', $self->mfetch_uniprot_ids($self->param('uniprot'), $self->param('srs'),'', $tax_div && [ $tax_div ]) );
     }
 
     my $subset_adaptor = $self->compara_dba()->get_SubsetAdaptor();
@@ -188,6 +187,7 @@ sub write_output {
 
 sub mfetch_uniprot_ids {
     my $self     = shift;
+    my $uniprot  = shift;  # 'uniprot' or a specific version of it
     my $source   = shift;  # 'SWISSPROT' or 'SPTREMBL'
     my $taxon_id = shift;  # assume Fungi/Metazoa if not set
     my $tax_divs = shift || [ $taxon_id ? 0 : qw(FUN HUM MAM ROD VRT INV) ];
@@ -201,7 +201,7 @@ sub mfetch_uniprot_ids {
 
     my @all_ids = ();
     foreach my $txd (@$tax_divs) {
-        my $cmd = "mfetch -d uniprot -v av -i '".join('&', @filters).($txd ? "&txd:$txd" : '')."'";
+        my $cmd = "mfetch -d $uniprot -v av -i '".join('&', @filters).($txd ? "&txd:$txd" : '')."'";
         print("$cmd\n") if($self->debug);
         if( my $output_text = `$cmd` ) {
             my @ids = split(/\s/, $output_text);
