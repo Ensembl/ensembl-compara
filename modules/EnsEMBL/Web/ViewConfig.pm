@@ -242,10 +242,10 @@ sub update_from_config_strings {
 
     if ($self->altered) {
       $session->add_data(
-	type     => 'message',
-	function => '_info',
-	code     => 'configuration',
-	message  => 'Your configuration has changed for this page',
+        type     => 'message',
+        function => '_info',
+        code     => 'configuration',
+        message  => 'Your configuration has changed for this page',
       );
     }
     
@@ -319,7 +319,11 @@ sub update_from_config_strings {
             );
             
             my $nd = $ic->get_node("url_$code");
-            $updated += $nd->set_user('display', $render) if $nd; # Then we have to set the renderer
+            
+            if ($nd) {
+              my %valid_renderers = @{$nd->data->{'renderers'}};
+              $updated += $nd->set_user('display', $render) if $valid_renderers{$render}; # Then we have to set the renderer
+            }
           } elsif ($type eq 'das') {
             $p = uri_unescape($p);
             
@@ -348,8 +352,10 @@ sub update_from_config_strings {
           
           next unless $nd;
           
+          my %valid_renderers = @{$nd->data->{'renderers'}};
+          
           # Only allow track enabling/disabling. Don't allow enabled tracks' renders to be changed.
-          if ($render eq 'off' || $nd->get('display') eq 'off') {
+          if ($valid_renderers{$render} && ($render eq 'off' || $nd->get('display') eq 'off')) {
             $updated += $nd->set_user('display', $render);
           } else {
             $not_updated++;
