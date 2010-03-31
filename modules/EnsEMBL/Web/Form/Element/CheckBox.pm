@@ -26,13 +26,14 @@ sub render {
     qq(
   <tr>
     <th%s>
-      <label>%s %s</label>
+      <label for="%s">%s %s</label>
     </th>
     <td%s>
       <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>
     </td>
   </tr>),
     $self->class_attrib,
+    encode_entities( $self->id ),
     $self->{'raw'} ? $self->label : encode_entities( $self->label ), 
     $self->notes ? '<div style="font-weight:normal">'.encode_entities($self->notes).'</div>':'',
     $self->class_attrib,
