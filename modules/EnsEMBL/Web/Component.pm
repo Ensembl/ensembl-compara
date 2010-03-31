@@ -303,7 +303,7 @@ sub _matches {
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
-  
+
   return unless @links;
 
   my $db    = $object->get_db;
@@ -348,7 +348,6 @@ sub _matches {
 sub _sort_similarity_links {
   my $self = shift;
   my @similarity_links = @_;
-  
   my $object   = $self->object;
   my $database = $object->database;
   my $db       = $object->get_db;
@@ -405,10 +404,11 @@ sub _sort_similarity_links {
       $join_links = 1;
     }
     
-    if ($object->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i) {
+    if ($object->species_defs->ENSEMBL_PFETCH_SERVER
+	&& $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i
+        && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript' ) {
       my $seq_arg = $display_id;
       $seq_arg = "LL_$seq_arg" if $externalDB eq 'LocusLink';
-      
       $text .= sprintf ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ', $object->species, $object->stable_id, $seq_arg, $db;
     }
     
