@@ -377,7 +377,7 @@ sub update_from_config_strings {
   $self->altered = 1 if $updated;
   $session->store;
 
-  return $params_removed ? $input->self_url : undef;
+  return $params_removed ? join '?', [split /\?/, $ENV{'REQUEST_URI'}]->[0], $input->query_string : undef;
 }
 
 # Delete a key from the user settings
