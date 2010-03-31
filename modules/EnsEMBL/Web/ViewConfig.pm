@@ -486,8 +486,14 @@ sub form {
   }
   
   $self->tree->create_node('form_conf', { availability => 0, caption => 'Configure' }) unless $self->nav_tree;
-}tions'}{$key}{'user'} eq $value;
+}
+
+# Set a key for user settings 	 
+sub set { 	 
+  my ($self, $key, $value, $force) = @_; 	 
   
+  return unless $force || exists $self->{'_options'}{$key}; 	 
+  return if $self->{'_options'}{$key}{'user'} eq $value;
   $self->altered = 1;
   $self->{'_options'}{$key}{'user'}  = $value;
 }
