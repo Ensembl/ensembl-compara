@@ -82,11 +82,12 @@ sub content {
         
       if ($object->param('ftype') eq 'Phenotype'){
         my $phenotype_name = $object->param('phenotype_name');
-        $text = "Location of variants associated with phenotype $phenotype_name:";
+        $text = "Location of variants associated with phenotype $phenotype_name:";        
       }        
 
         $used_colour{$data_type}++;        
-        $html = qq(<h2>$text</h2>);
+        $html = qq(<h2>$text</h2>);        
+                
         $image->image_name = "feature-$species";
         $image->imagemap = 'yes';
         
@@ -102,8 +103,7 @@ sub content {
           
           push(@$pointers, $pointer_ref);
         }
-      }
-
+      }       
       my $colours = $self->colour_array;
       my $ok_colours = [];
       
@@ -130,7 +130,19 @@ sub content {
       $image->imagemap = 'yes';
       $image->karyotype( $object, $pointers, 'Vkaryotype' );
 
-      $html .= $image->render;
+      $html .= $image->render;      
+      if($object->param('ftype') eq 'Phenotype')    #making colour scale for pointers
+      {
+        $html .= '<br /><b>Colour Scale:</b><br />';
+        my @colour_scale = $config->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red');  #making an array of the colour scale to make the scale
+
+        foreach my $colour (@colour_scale)
+        {      
+          $html .= qq{<div style='border-style:solid;border-width:2px;float:left;width:20px;height:20px;background:#$colour'></div>};
+        }
+        $html .= '<br /><div style="clear:both"></div><span style="font-size:12px">1.0<div style="display: inline;  margin-left: 100px;"></div>3.0<div style="display: inline;  margin-left: 55px;"></div>4.0<div style="display: inline;  margin-left: 60px;"></div>5.0<div style="display: inline;  margin-left: 100px;"></div>7.0<div style="display: inline;  margin-left: 130px;"></div>9.0<div style="display: inline;  margin-left: 140px;"></div>>10.0</span><br />(Least Significant P Value) <div style="display: inline;  margin-left: 420px;"></div> (Most Significant P Value)<br /><br />';
+      }
+
     }
     
     if ($not_drawn) {
@@ -188,7 +200,7 @@ sub feature_tables {
       $table->add_columns({'key'=>'extname','title'=>'External names',  'width'=>'25%','align'=>'left' });
     } 
     elsif ($feat_type =~ /Variation/i) {
-      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width'=>'100px','align'=>'left' });    
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width'=>'170px','align'=>'left' });    
       $table->add_columns({'key'=>'names', 'title'=>'Name(s)','width'=>'100px','align'=>'left' });
     } 
     else {	    
