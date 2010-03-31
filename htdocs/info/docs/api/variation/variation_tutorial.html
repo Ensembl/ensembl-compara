@@ -278,7 +278,7 @@ sub get_TranscriptVariations{
 <h2>Structural variations</h2>
 
 <p>
-The Ensembl variation database also stores information about structural variations. These data are imported from the DGVa (Database of Genomic Variants archive).</p>
+The Ensembl variation database also stores information about structural variations. These data are imported from the DGVa (Database of Genomic Variants archive). Structural variants are remapped to the current genome assembly using the $slice->project() method from the Ensembl Core API, allowing for one gap in the resultant mapping.</p>
 
 <pre class="code">
 use strict;
