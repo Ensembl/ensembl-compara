@@ -31,7 +31,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       return false;
     });
     
-    $('form td.select_all input', this.elLk.content).click(function () {
+    $('form td.select_all input', this.elLk.content).live('click', function () {
       $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
     }).each(function () {
       $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
@@ -80,7 +80,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
   },
   
-  formSubmit: function (form) {
+  formSubmit: function (form, data) {
     if (!form.parents('#' + this.id).length) {
       return false;
     }
@@ -89,17 +89,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       return true;
     }
     
-    var data = form.serialize();
-    
-    if (form.hasClass('export')) {
-      $('input.input-checkbox', form).each(function () {
-        // overwrite the checkbox with a hidden input with the value of "no" so that we know which boxes have been deselected
-        // TODO: rewrite perl so that this isn't necessary
-        if (this.checked === false) {
-          data += "&" + this.name + "=no";
-        }
-      });
-    }
+    data = data || form.serialize();
     
     this.elLk.content.html('<div class="spinner">Loading Content</div>');
     
@@ -134,6 +124,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     if ($('.panel', this.elLk.content).length > 1) {
       this.elLk.content.removeClass('panel');
     }
+    
+    $('form td.select_all input', this.elLk.content).each(function () {
+      $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
+    });
     
     Ensembl.EventManager.trigger('validateForms', this.el);
        
