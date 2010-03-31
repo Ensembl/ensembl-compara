@@ -334,16 +334,31 @@ eg:
 8,150029,150029,A/T,+ -->
 
 <p>
-This tool predicts the consequence of this SNP, the amino acid position and change (if the SNP falls within a protein) and the SNP  identifier of  known SNPs that occur at this position.
-The output columns are: </p>
-<pre> Uploaded Variation, Location, Transcript, Consequence, Relative position in protein, Amino acid change, Corresponding Variation </pre>
+This tool predicts the consequence of this SNP, the amino acid 
+position and change (if the SNP falls within a protein) and the SNP 
+identifier of  known SNPs that occur at this position. The output 
+columns are: </p>
+
+<pre> Uploaded Variation, Location, Transcript, Consequence, 
+Relative position in protein, Amino acid change, Corresponding 
+Variation </pre>
 
 
 <p>
-Note, this prediction is only available for species that have variation databases. The SNP Effect predictor will use the data from the current Ensembl assembly and gene build.
+The SNP Effect predictor will use the data from the current Ensembl 
+assembly and gene build for the selected species.
 </p>
-<p> It is also possible to use the API to predict the effects of SNPs. This is the best method for large datasets.
-Here is an example in the <a href="/info/docs/api/variation/variation_tutorial.html#Consequence"> Variation API Tutorial</a>.
+
+<p>This tool is currently limited to processing data for 750 
+variations, if you wish to get results for more variations than 
+this you will have to split your data into files containing no more 
+than 1000 lines, or you may wish to use the Variation API. If you 
+upload a file containg more than 1000 lines any information after 
+the 1000 line will be ignored.</p>
+
+<p> It is also possible to use the API to predict the effects of SNPs. 
+This is the best method for large datasets. Here is an example in the 
+<a href="/info/docs/api/variation/variation_tutorial.html#Consequence"> Variation API Tutorial</a>.
 </p>
 
 <h2 id="Displaying">Displaying Data on Whole Chromosomes</h2>
