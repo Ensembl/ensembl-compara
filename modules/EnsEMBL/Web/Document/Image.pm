@@ -146,15 +146,29 @@ sub add_pointers {
   my $color       = lc($object->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
   my $style       = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
+  my ($p_value_sorted,$i);
+  my $j = 1;
+  
+  #colour gradient bit for phenotype
+  if(exists($extra->{'features'}->{'colour_scaling'}))
+  {    
+    my @colour_scale = $config->colourmap->build_linear_gradient(90, '#0000FF', '#770088', '#BB0044', 'red');  #making an array of the colour scale       
+
+    foreach my $colour (@colour_scale)
+    {
+      $p_value_sorted->{$j} = $colour;
+      $j = sprintf("%.1f", $j + 0.1);
+    }
+  }
 
   foreach my $row (@data) {
     my $chr = $row->{'chr'} || $row->{'region'};
-    
+
     my $point = {
       start => $row->{'start'},
       end   => $row->{'end'},
       id    => $row->{'label'},
-      col   => $color,
+      col   => $p_value_sorted->{sprintf("%.1f",$row->{'p_value'})} || $color,
       href  => $row->{'href'}
     };
     
