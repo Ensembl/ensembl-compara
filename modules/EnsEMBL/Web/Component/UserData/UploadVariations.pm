@@ -25,19 +25,21 @@ sub content {
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
   my $current_species = $object->data_species;
   my $action_url = $object->species_path($current_species)."/UserData/CheckConvert";
+  my $variation_limit = 750;
 
-  ## Get assembly info
   my $html;
-
-  ## Should default to 5.0MB :)
-  my $max_upload_size = sprintf("%.1f", $object->species_defs->CGI_POST_MAX / 1048576).'MB';
-
   my $form = $self->modal_form('select', $action_url,);
   $form->add_notes({ 
     'heading'=>'IMPORTANT NOTE:',
-    'text'=>qq(<p>Data should be uploaded as a list of tab separated values for more information 
-              on the expected format see <a href="/info/website/upload/index.html#Consequence">here.</a> 
-              There is also a $max_upload_size limit on data uploads.</p>
+    'text'=>qq(<p class="space-below">Data should be uploaded as a list of tab separated values for more information 
+              on the expected format see <a href="/info/website/upload/index.html#Consequence">here.</a></p>
+              <p>There is a limit of $variation_limit variations that can be processed at any one time. 
+              You can upload a file that contains more entries, however anything after the $variation_limit 
+              line will be ignored. If your file contains more than $variation_limit variations you can split 
+              your file into smaller chunks and process them one at a time, or you may wish to use the 
+              <a href="/info/docs/api/variation/variation_tutorial.html#Consequence">variation API</a> or a standalone 
+              <a href="ftp://ftp.ensembl.org/pub/misc-scripts/SNP_effect_predictor_1.0/">perl script</a> which you 
+              can run on your own machine to generate the same results as this web tool. </p>
   )});
   my $subheader = 'Upload file';
 
@@ -59,6 +61,7 @@ sub content {
       'value'   => $current_species,
       'select'  => 'select',
   );
+  $form->add_element( type => 'Hidden', name => 'variation_limit', 'value' => $variation_limit);
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
   $form->add_element( type => 'Text', name => 'text', label => 'Paste file' );
   $form->add_element( type => 'File', name => 'file', label => 'Upload file' );

@@ -59,6 +59,9 @@ sub process {
   if ($object->param('id_limit')) {
     $param->{'id_limit'} = $object->param('id_limit');
   }
+  if ($object->param('variation_limit')) {
+    $param->{'variation_limit'} = $object->param('variation_limit');
+  }
 
   if ($self->object->param('uploadto') eq 'iframe') {
     $url = encode_entities($self->url($url, $param));

@@ -24,25 +24,19 @@ sub content {
 
 
   my @files = ($object->param('convert_file'));
+  my $size_limit =  $object->param('variation_limit');
 
   foreach my $file_name (@files) {
     my ($file, $name) = split(':', $file_name);  
-    my ($table, $error) = $object->calculate_consequence_data($file);
-    if ($error) {  return $self->error($table); }
+    my ($table, $file_count) = $object->calculate_consequence_data($file, $size_limit);
+    if ($file_count){
+      $html .= $self->_hint ('', '<p>' .'Your file contained '.$file_count .' features however 
+       this web tool will only convert the first '. $size_limit .' features in the file.</p>');
+    }
     $html .= $table->render;
   }
 
   return $html;
-}
-
-sub error {
-  my ($self, $error_text) = (@_);
-  my $html = $self->_info(
-    'Error Parsing the data',
-    $error_text
-  );
-  return $html;
-
 }
 
 1;
