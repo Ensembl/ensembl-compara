@@ -439,12 +439,13 @@ sub form {
   
   foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
     next if $fieldset->{'select_all'};
+       
+    my %element_types; 	     
+    $element_types{lc $_->type}++ for @{$fieldset->elements};
+    delete $element_types{$_} for qw(hidden submit noedit);
     
-    my $checkboxes;
-    $checkboxes++ for grep { $_->type eq 'CheckBox' } @{$fieldset->elements};
-    
-    # If the fieldset has only checkboxes, provide a select/deselect all option
-    if ($checkboxes > 1) {
+    # If the fieldset is mostly checkboxes, provide a select/deselect all option
+    if ($element_types{'checkbox'} > 1 && [ sort { $element_types{$b} <=> $element_types{$a} } keys %element_types ]->[0] eq 'checkbox') {
       my $position = 0;
       
       foreach (@{$fieldset->elements}) {
@@ -485,14 +486,7 @@ sub form {
   }
   
   $self->tree->create_node('form_conf', { availability => 0, caption => 'Configure' }) unless $self->nav_tree;
-}
-
-# Set a key for user settings
-sub set {
-  my ($self, $key, $value, $force) = @_;
-  
-  return unless $force || exists $self->{'_options'}{$key};
-  return if $self->{'_options'}{$key}{'user'} eq $value;
+}tions'}{$key}{'user'} eq $value;
   
   $self->altered = 1;
   $self->{'_options'}{$key}{'user'}  = $value;
