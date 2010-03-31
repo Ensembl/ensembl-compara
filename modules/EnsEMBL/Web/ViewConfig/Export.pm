@@ -63,6 +63,27 @@ sub form {
   $view_config->add_fieldset;
   
   $view_config->add_form_element({
+    type    => 'Hidden',
+    name    => 'panel_type',
+    classes => [ 'panel_type' ],
+    value   => 'Exporter'
+  });
+  
+  $view_config->add_form_element({
+    type  => 'Hidden',
+    name  => 'save',
+    value => 'yes'
+  });
+  
+  foreach (keys %{$form_action->[1]}) {
+    $view_config->add_form_element({
+      type  => 'Hidden',
+      name  => $_,
+      value => $form_action->[1]->{$_}
+    });
+  }
+  
+  $view_config->add_form_element({
     type  => 'NoEdit',
     name  => 'location_to_export',
     label => 'Location to export',
@@ -85,7 +106,7 @@ sub form {
     });
   } 
   
-  $view_config->add_fieldset;
+  $view_config->add_fieldset(undef, 'general_options');
   
   my @output_values;
   
@@ -101,6 +122,7 @@ sub form {
       select   => 'select',
       required => 'yes',
       name     => 'output',
+      classes  => [ 'output_type' ],
       label    => 'Output',
       values   => \@output_values
     });
@@ -141,7 +163,7 @@ sub form {
   $view_config->add_form_element({
     type  => 'Submit',
     class => 'submit',
-    name  => 'next_top',
+    name  => 'next',
     value => 'Next >'
   });
   
@@ -149,7 +171,7 @@ sub form {
     next unless $config->{$c}->{'params'};
     
     foreach my $f (@{$config->{$c}->{'formats'}}) {
-      $view_config->add_fieldset("Options for $f->[1]");
+      $view_config->add_fieldset("Options for $f->[1]", $f->[0]);
       
       if ($f->[0] eq 'fasta') {
         my $genomic = [
@@ -185,27 +207,6 @@ sub form {
         });
       }
     }
-  }
-  
-  $view_config->add_form_element({
-    type  => 'Submit',
-    class => 'submit',
-    name  => 'next_bottom',
-    value => 'Next >'
-  });
-  
-  $view_config->add_form_element({
-    type  => 'Hidden',
-    name  => 'save',
-    value => 'yes'
-  });
-  
-  foreach (keys %{$form_action->[1]}) {
-    $view_config->add_form_element({
-      type  => 'Hidden',
-      name  => $_,
-      value => $form_action->[1]->{$_}
-    });
   }
 }
 
