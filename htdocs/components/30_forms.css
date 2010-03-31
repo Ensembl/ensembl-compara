@@ -56,3 +56,5 @@ form.check input.disabled { background-color: #999999; }
 form.check label.invalid { color: #FF0000; font-weight: normal; font-style: italic; margin-top: 6px; display: block; }
 
 .hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
+
+form.export fieldset h2 { margin-top: 1em; }
