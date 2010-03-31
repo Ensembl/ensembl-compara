@@ -122,14 +122,15 @@ sub get_form {
 }
 
 sub add_fieldset {
-  my ($self, $legend, $layout) = @_;
+  my ($self, $legend, $class) = @_;
   
-  (my $class = $legend) =~ s/ /_/g;
-  my $fieldset = $self->get_form->add_fieldset('form' => $self->{'_form_id'}, 'layout' => $layout);
+  (my $div_class = $legend) =~ s/ /_/g;
+  my $fieldset = $self->get_form->add_fieldset('form' => $self->{'_form_id'});
   $fieldset->legend($legend);
-  $fieldset->class($class);
+  $fieldset->class($div_class);
+  $fieldset->extra(qq{ class="$class"}) if $class;
   
-  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $class }) if $self->nav_tree;
+  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $div_class }) if $self->nav_tree;
   
   return $fieldset;
 }
