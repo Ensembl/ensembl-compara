@@ -439,12 +439,18 @@ sub form {
   foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
     next if $fieldset->{'select_all'};
     
-    my %element_types;
-    $element_types{lc $_->type}++ for @{$fieldset->elements};
-    delete $element_types{'hidden'};
+    my $checkboxes;
+    $checkboxes++ for grep { $_->type eq 'CheckBox' } @{$fieldset->elements};
     
     # If the fieldset has only checkboxes, provide a select/deselect all option
-    if ($element_types{'checkbox'} > 1 && scalar keys %element_types == 1) {
+    if ($checkboxes > 1) {
+      my $position = 0;
+      
+      foreach (@{$fieldset->elements}) {
+        last if $_->type eq 'CheckBox';
+        $position++;
+      }
+      
       $fieldset->add_element(
         type    => 'CheckBox',
         name    => 'select_all',
@@ -453,7 +459,7 @@ sub form {
         classes => [ 'select_all' ]
       );
       
-      unshift @{$fieldset->{'_element_order'}}, pop @{$fieldset->{'_element_order'}}; # Make it the first checkbox
+      splice @{$fieldset->{'_element_order'}}, $position, 0, pop @{$fieldset->{'_element_order'}}; # Make it the first checkbox
       
       $fieldset->{'select_all'} = 1;
     }
