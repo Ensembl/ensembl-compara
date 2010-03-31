@@ -743,7 +743,7 @@ sub retrieve_Variation {
     my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);    
     my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
     my $genes = $slice->get_all_Genes();
-    my ($gene_link, $add_comma,$associated_phenotype,$associated_gene,$p_value);                
+    my ($gene_link, $add_comma,$associated_phenotype,$associated_gene,$p_value_log);
     
     foreach my $row (@$genes) 
     {
@@ -776,9 +776,9 @@ sub retrieve_Variation {
             {
               push(@associated_gene_array,$variation->{'associated_gene'});
             }
+
+            $p_value_log = -(log($variation->{'p_value'})/log(10)) if($variation->{'p_value'} != 0);  #only get the p value log 10 for the pointer matching phenotype id and variation id
           }
-                     
-          $p_value = $variation->{'p_value'};   #might be use for colour scaling later on
       }      
     }  
     
@@ -818,12 +818,14 @@ sub retrieve_Variation {
         'strand'   		=> $v->strand,        
         'label'    		=> $v->variation_name,        
         'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
-        'extra'       => [ $gene_link,$associated_gene,$associated_phenotype ],
+        'extra'       => [ $gene_link,$associated_gene,$associated_phenotype, sprintf("%.1f",$p_value_log) ],
+        'p_value'         => $p_value_log,  
+        'colour_scaling'  => 1,
       }
     }
   }
   
-  return ( $results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)'], $type );
+  return ( $results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], $type );
 }
 
 sub retrieve_Xref {
