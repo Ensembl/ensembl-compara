@@ -10,7 +10,7 @@ sub init {
   
   $view_config->_set_defaults(qw(
     panel_image          on 
-    context              100
+    context              FULL
     panel_transcript     on
     image_width          800
     reference),          ''
@@ -120,7 +120,7 @@ sub form {
     type   => 'DropDown',
     select => 'select',
     name   => 'context',
-    label  => 'Context',
+    label  => 'Intron Context',
     values => [
       { value => '20',   name => '20bp' },
       { value => '50',   name => '50bp' },
