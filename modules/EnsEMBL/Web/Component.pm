@@ -307,7 +307,8 @@ sub _matches {
   return unless @links;
 
   my $db    = $object->get_db;
-  my $entry = $object->gene_type || 'Ensembl';
+  my $entry = lc(ref $obj);
+  $entry =~ s/bio::ensembl:://;
 
   # add table call here
   my $html;
@@ -315,7 +316,7 @@ sub _matches {
   if ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
     $html = '<p></p>';
   } else {
-    $html = "<p><strong>This $entry entry corresponds to the following database identifiers:</strong></p>";
+    $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
   }
   
   $html .= '<table cellpadding="4">';
@@ -409,7 +410,7 @@ sub _sort_similarity_links {
         && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript' ) {
       my $seq_arg = $display_id;
       $seq_arg = "LL_$seq_arg" if $externalDB eq 'LocusLink';
-      $text .= sprintf ' [<a href="/%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ', $object->species, $object->stable_id, $seq_arg, $db;
+      $text .= sprintf ' [<a href="%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ', $object->species_defs->species_path, $object->stable_id, $seq_arg, $db;
     }
     
     $text .= sprintf ' [<a href="%s">Search GO</a>]', $urls->get_url('GOSEARCH', $primary_id) if $externalDB =~ /^(SWISS|SPTREMBL)/i; # add Search GO link;
