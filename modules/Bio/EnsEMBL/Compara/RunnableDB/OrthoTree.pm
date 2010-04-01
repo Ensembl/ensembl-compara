@@ -100,7 +100,7 @@ sub fetch_input {
   $self->{'store_homologies'} = 1;
   $self->{'max_gene_count'} = 999999;
   $self->{all_between} = 0;
-  $self->{no_between} = 0.25; # dont store all between_species_paralogs
+  $self->{no_between} = 0.25; # dont store all possible_orthologs
 
   $self->throw("No input_id") unless defined($self->input_id);
 
@@ -1174,7 +1174,7 @@ sub outspecies_test
   unless ($dup_value eq '') {
     if($dup_value > 0 && $sis_value ne '0') {
 #      $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
-      $genepairlink->add_tag("orthotree_type", 'between_species_paralog');
+      $genepairlink->add_tag("orthotree_type", 'possible_ortholog');
       $genepairlink->add_tag("orthotree_subtype", $taxon->name);
       # Duplication_confidence_score
       if ('' eq $ancestor->get_tagvalue("duplication_confidence_score")) {
@@ -1206,7 +1206,7 @@ sub store_homologies
 
     my $type = $genepairlink->get_tagvalue("orthotree_type");
     my $dcs = $genepairlink->{duplication_confidence_score};
-    next if ($type eq 'between_species_paralog' && $dcs > $self->{no_between});
+    next if ($type eq 'possible_ortholog' && $dcs > $self->{no_between});
 
     my $homology = $self->store_gene_link_as_homology($genepairlink);
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
@@ -1244,8 +1244,8 @@ sub store_gene_link_as_homology
   #
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type("ENSEMBL_ORTHOLOGUES") 
-    unless ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
-  $mlss->method_link_type("ENSEMBL_PARALOGUES") if ($type eq 'between_species_paralog' || $type eq 'within_species_paralog');
+    unless ($type eq 'possible_ortholog' || $type eq 'within_species_paralog');
+  $mlss->method_link_type("ENSEMBL_PARALOGUES") if ($type eq 'possible_ortholog' || $type eq 'within_species_paralog');
   if ($protein1->genome_db->dbID == $protein2->genome_db->dbID) {
     $mlss->species_set([$protein1->genome_db]);
   } else {
@@ -1520,7 +1520,7 @@ sub generate_attribute_arguments {
 
   # This speeds up the pipeline for this portion of the homology table. If no_between option is used,
   # only the low SIS are dealt with, so we will calculate the cigar_lines
-  if ($type eq 'between_species_paralog' && !defined($self->{no_between})) {
+  if ($type eq 'possible_ortholog' && !defined($self->{no_between})) {
     return ($new_aln1_cigarline, $perc_id1, $perc_pos1, $new_aln2_cigarline, $perc_id2, $perc_pos2);
   }
 
