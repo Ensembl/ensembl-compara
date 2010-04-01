@@ -266,17 +266,17 @@ sub run_njtree_phyml
 
   unless (-e $njtree_phyml_executable) {
     if (`uname -m` =~ /ia64/) {
-      $njtree_phyml_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest/ia64/treebest";
+      $njtree_phyml_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/ia64/treebest";
     } else {
       # it is a linux machine
       # md5sum 91a9da7ad7d38ebedd5ce363a28d509b
       # $njtree_phyml_executable = "/lustre/work1/ensembl/avilella/bin/i386/njtree_gcc";
       # $njtree_phyml_executable = "/nfs/acari/avilella/src/_treesoft/treebest/treebest";
-      $njtree_phyml_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest/treebest";
+      $njtree_phyml_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest";
     }
   }
 
-  throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
+  $self->throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
 
   # Defining a species_tree
   # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
