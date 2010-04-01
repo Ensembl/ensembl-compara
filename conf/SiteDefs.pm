@@ -155,7 +155,7 @@ $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_d
 $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 $APACHE_DIR         = "$ENSEMBL_SERVERROOT/apache2";
 
-$BIOPERL_DIR        = "$ENSEMBL_SERVERROOT/bioperl-live";
+$BIOPERL_DIR        ||= "$ENSEMBL_SERVERROOT/bioperl-live";
 #warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
 eval qq(require '$ENSEMBL_SERVERROOT/$CONF_DIR/Plugins.pm');
@@ -284,6 +284,18 @@ $ENSEMBL_PRIVATE_AUTH   = undef;
   $ENSEMBL_SERVERROOT.'/biomart-perl/htdocs'
 );
 
+@ENSEMBL_LIB_DIRS     = (
+  $APACHE_DIR."lib/perl5/site_perl/$Config{'version'}/$Config{archname}/",
+  $ENSEMBL_SERVERROOT.'/ensembl/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+  $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
+  $BIOPERL_DIR,
+  $ENSEMBL_SERVERROOT.'/modules',
+);
 ###############################################################################
 ######################### END OF LOCAL CONFIGURATION SECTION ##################
 ###############################################################################
@@ -371,6 +383,7 @@ $OBJECT_TO_SCRIPT = {
   Help        => 'modal',
   Export      => 'modal',
 };
+
 
 
 ###############################################################################
@@ -495,19 +508,6 @@ $APACHE_BIN ||= "$APACHE_DIR/bin/httpd";
 # You should not change anything below here
 ###############################################################################
 
-@ENSEMBL_LIB_DIRS     = (
-  $APACHE_DIR."lib/perl5/site_perl/$Config{'version'}/$Config{archname}/",
-  $ENSEMBL_SERVERROOT.'/ensembl/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
-  $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
-  $BIOPERL_DIR,
-  $ENSEMBL_SERVERROOT.'/modules',
-);
-
 @T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
 $ENSEMBL_PLUGIN_ROOTS = ();
 while( my( $dir, $name ) = splice(@T,0,2)  ) {
@@ -532,7 +532,7 @@ $ENSEMBL_PROXY_PORT = $ENSEMBL_PORT unless ( $ENSEMBL_PROXY_PORT && $ENSEMBL_PRO
 ## And one without the _ in...
 
 $ENSEMBL_SPECIES_ALIASES = {};
-$ENSEMBL_DATASETS = [ sort keys %__species_aliases ];
+$ENSEMBL_DATASETS ||= [ sort keys %__species_aliases ];
 
 foreach my $name ( @$ENSEMBL_DATASETS ) {
   foreach my $alias ( @{$__species_aliases{$name}} ) {
