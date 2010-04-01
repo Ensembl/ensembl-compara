@@ -279,7 +279,7 @@ sub fetch_by_Member_Member_method_link_type {
 =cut
 
 sub fetch_by_Member_id_Member_id {
-  my ($self, $member_id1, $member_id2) = @_;
+  my ($self, $member_id1, $member_id2,$allow_duplicates) = @_;
 
   unless ($member_id1 ne $member_id2) {
     throw("The members should be different");
@@ -294,7 +294,12 @@ sub fetch_by_Member_id_Member_id {
 
   my $homology = $self->generic_fetch($constraint, $join);
 
-  throw("Returns more than one element") if (1 < scalar @$homology);
+  # At production time, we may have more than one entry due to the
+  # OtherParalogs code, so we allow fetching with the extra parameter,
+  # but the duplicity is cleaned up afterwards
+  if (1 < scalar @$homology && !defined($allow_duplicates)) {
+    throw("Returns more than one element");
+  }
 
   return shift @{$homology};
 }
