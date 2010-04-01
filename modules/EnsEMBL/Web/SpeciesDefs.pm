@@ -90,7 +90,7 @@ sub new {
   $self->{'_filename'} = $conffile;
 
   # TODO - these need to be pulled in dynamically from appropriate modules
-  my @params = qw/g h r t v db pt rf vf fdb vdb domain family protein/;
+  my @params = qw/g h r t v m db pt rf vf fdb vdb domain family protein/;
   $self->{'_core_params'} = \@params; 
   
   $self->parse unless $CONF;
