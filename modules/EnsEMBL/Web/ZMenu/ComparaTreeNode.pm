@@ -4,6 +4,7 @@ package EnsEMBL::Web::ZMenu::ComparaTreeNode;
 
 use strict;
 
+use URI::Escape qw(uri_escape);
 use IO::String;
 use Bio::AlignIO;
 use EnsEMBL::Web::TmpFile::Text;
@@ -14,20 +15,20 @@ sub content {
   my $self = shift;
   
   my $object   = $self->object;
-  my $node_id  = $object->param('node') || die 'No node value in params';
-  my $tree     = $object->get_ProteinTree || die 'No protein tree for gene';
+  my $node_id  = $object->param('node')                || die 'No node value in params';
+  my $tree     = $object->get_ProteinTree              || die 'No protein tree for gene';
   my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   
-  my %collapsed_ids = map { $_ => 1 } grep $_, split ',', $object->param('collapse');
+  my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $object->param('collapse');
   my $leaf_count      = scalar @{$node->get_all_leaves};
   my $is_leaf         = $node->is_leaf;
   my $parent_distance = $node->distance_to_parent || 0;
   my $tagvalues       = $node->get_tagvalue_hash;
   my $caption         = $tagvalues->{'taxon_name'};
   
-  $caption = $node->genome_db->name if !$caption && $is_leaf;
+  $caption   = $node->genome_db->name if !$caption && $is_leaf;
   $caption ||= 'unknown';
-  $caption = "Taxon: $caption";
+  $caption   = "Taxon: $caption";
   
   if ($tagvalues->{'taxon_alias_mya'}) {
     $caption .= " ($tagvalues->{'taxon_alias_mya'})";
@@ -209,7 +210,7 @@ sub content {
         next if $gene eq $object->param('g');
         
         ($url_params->{"s$s"} = $_->genome_db->name) =~ s/ /_/g;
-        $url_params->{"g$s"} = $gene;
+        $url_params->{"g$s"}  = $gene;
         $s++;
       }
       
@@ -242,10 +243,17 @@ sub content {
     
     # Jalview
     $self->add_entry({
-      type       => 'View Sub-tree',
-      label      => '[Requires Java]',
-      label_html => $self->compara_tree_jalview_html($url_align, $url_tree),
-      order      => 16
+      type  => 'View Sub-tree',
+      label => 'Expand for Jalview',
+      class => 'expand',
+      order => 16,
+      link  => $object->_url({
+        type     => 'Zmenu',
+        action   => 'Gene',
+        function => 'Jalview',
+        file     => uri_escape($url_align),
+        treeFile => uri_escape($url_tree)
+      })
     });
   }
 }
@@ -272,24 +280,6 @@ sub dump_tree_as_text {
   $file_nh->save;
 
   return ($file_fa->URL, $file_nh->URL);
-}
-
-# Constructs the html needed to launch jalview for fasta and nh file urls
-sub compara_tree_jalview_html {
-  my ($self, $url_fa, $url_nh) = @_;
-  my $url_site = $self->object->species_defs->ENSEMBL_BASE_URL;
-  
-  return sprintf(
-    '<applet code="jalview.bin.JalviewLite" width="140" height="35" archive="%s/jalview/jalviewAppletOld.jar">
-      <param name="file" value="%s">
-      <param name="treeFile" value="%s">
-      <param name="sortByTree" value="true">
-      <param name="defaultColour" value="clustal">
-    </applet>', 
-    $url_site, 
-    $url_site . $url_fa, 
-    $url_site . $url_nh
-  );
 }
 
 1;
