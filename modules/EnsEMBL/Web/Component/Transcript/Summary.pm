@@ -34,7 +34,7 @@ sub content {
         $description .= sprintf ' <span class="small">%s</span>', $object->get_ExtURL_link("Source: $edb", $edb . '_transcript', $acc);
       } else {
         $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-        $description =~ s/\[\w+:([\w\/\_]+)\;\w+:(\w+)\]//g;
+	$description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
         ($edb, $acc) = ($1, $2);
         $description .= sprintf ' <span class="small">%s</span>', $object->get_ExtURL_link("Source: $edb $acc", $edb, $acc) if $acc ne 'content';
       }
