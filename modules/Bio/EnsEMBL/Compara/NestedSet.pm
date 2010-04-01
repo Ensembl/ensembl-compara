@@ -914,6 +914,13 @@ sub string_node {
     {
       $str .= "DD  ";
     }
+  if(defined $self->get_tagvalue("TID") 
+     && $self->get_tagvalue("TID") ne '' 
+     && $self->get_tagvalue("TID") > 0 ) 
+    {
+      my $taxon_id = $self->get_tagvalue('TID');
+      $str .= "TID=$taxon_id ";
+    }
   if(defined $self->get_tagvalue("Bootstrap") && $self->get_tagvalue("Bootstrap") ne '') { my $bootstrap_value = $self->get_tagvalue("Bootstrap"); $str .= "B=$bootstrap_value "; }
   if(defined $self->get_tagvalue("taxon_name") && $self->get_tagvalue("taxon_name") ne '') { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
   $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
@@ -992,10 +999,16 @@ sub _internal_nhx_format {
             $nhx .= $self->member_id . "_" . $self->taxon_id;
           }
       } else {
-        my $name = sprintf("%s", $self->name);
-        $name = sprintf("%s", $self->get_tagvalue("taxon_name")) if ($name eq '');
-	$name =~ s/\ /\_/g;
-        $nhx .= $name;
+        if ($format_mode eq "member_id_taxon_id") {
+          my $node_id = $self->node_id;
+          my $taxon_id = $self->get_tagvalue("taxon_id");
+          $nhx .= $node_id . "_" . $taxon_id;
+        } else {
+          my $name = sprintf("%s", $self->name);
+          $name = sprintf("%s", $self->get_tagvalue("taxon_name")) if ($name eq '');
+          $name =~ s/\ /\_/g;
+          $nhx .= $name;
+        }
       }
     $nhx .= sprintf(":%1.4f", $self->distance_to_parent);
     $nhx .= "[&&NHX";
@@ -1014,7 +1027,8 @@ sub _internal_nhx_format {
     }
     my $taxon_id;
     if($self->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      my $gene_stable_id = $self->gene_member->stable_id;
+      my $gene_stable_id;
+      eval { $gene_stable_id = $self->gene_member->stable_id;};
       if (defined $gene_stable_id && $format_mode eq "transcript_id") {
         $nhx .= ":G=$gene_stable_id";
       } elsif (defined $gene_stable_id && $format_mode eq "gene_id") {
@@ -1034,6 +1048,11 @@ sub _internal_nhx_format {
     if(defined ($taxon_id) && (!($taxon_id eq ''))) {
         $nhx .= ":T=$taxon_id";
 	$nhx .= ":S=$taxon_id" if ($format_mode eq "treebest_ortho");
+    }
+    if(defined $self->get_tagvalue("TID") && $self->get_tagvalue("TID") ne '') { 
+      my $tid_value = $self->get_tagvalue("TID");
+        # mark as duplication
+        $nhx .= ":TID=$tid_value";
     }
     # GJ 2009-02-01 : Add img tags to string if necessary.
       if ($self->get_tagvalue("img") ne '') {
