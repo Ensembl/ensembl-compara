@@ -148,7 +148,7 @@ sub content {
       
       for my $link ( @{ $f->links } ) {
         my $raw  = $link->{'href'};
-        my $cdata = $link->{'txt'};
+        my ($cdata, $w) = $self->_decode_and_validate($link->{'txt'});
         # We don't expect embedded HTML here so don't need to decode, but still
         # need to validate to protect against XSS...
         my ( $href, $warning ) = $self->_validate( $raw );
@@ -165,8 +165,9 @@ sub content {
       my $text = join "\n", @notes, @links;
       
       (my $lh = ucfirst($f->type_label)) =~ s/_/ /g;
+      my ($display_label , $w) = $self->_decode_and_validate($f->display_label) ;
       $table->add_row({
-        'type' => $lh, 'label' => $f->display_label, 'notes' => $text
+        'type' => $lh, 'label' => $display_label, 'notes' => $text
       });
     }
     

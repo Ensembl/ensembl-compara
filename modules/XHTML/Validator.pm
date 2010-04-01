@@ -21,7 +21,7 @@ our $sets = {};
 ### Package global variable $sets defines the different groups of tags allowed
 
 $sets->{'no-tags'} = {
-  'ent' => '&(amp|#x26|lt|#x3C|gt|#x3E|quot|#x22|apos|#x27);',
+  'ent' => '&(amp|#x26|lt|#x3C|gt|#x3E|quot|#x22|apos|#x27|#[0-9]+);',
   'ats' => {},
   'nts' => {}
 };
@@ -32,11 +32,15 @@ $sets->{'in-line'} = {
   'nts' => {
     'img'    => { 'rt' => 1, 'tx' => 0, 'at' => {map {($_,1)} qw(src alt title)}, 'tg' => {} },
     'a'      => { 'rt' => 1, 'tx' => 1, 'at' => {map {($_,1)} qw(href name rel)}, 'tg' => {map {($_,1)} qw(img span em strong)} },
-    'strong' => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em)       } },
-    'em'     => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a    strong)} },
-    'span'   => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong)} }
+    'strong' => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em sup sub del)       } },
+    'em'     => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a    strong sup sub del)} },
+    'span'   => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(img span a em strong sup sub del)} },
+    'sup'    => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {} },
+    'sub'    => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {} },
+    'del'    => { 'rt' => 1, 'tx' => 1, 'at' => {}, 'tg' => {} },
   }
 };
+
 $sets->{'normal'} = {
   'ent' => $sets->{'no-tags'}{'ent'},
   'ats' => $sets->{'in-line'}{'ats'},
@@ -76,7 +80,8 @@ $sets->{'extended'} = {
     'td'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map b i br) }},
     'th'     => { 'rt' => 0, 'tx' => 1, 'at' => {}, 'tg' => {map {($_,1)} qw(table p pre dl ul ol div img span a em strong map b i br) }},
     'map'    => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(name)}, 'tg' => {map {($_,1)} qw(area) }},
-    'area'   => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(shape coords href alt)}, 'tg' => {} }
+    'area'   => { 'rt' => 0, 'tx' => 0, 'at' => {map{($_,1)} qw(shape coords href alt)}, 'tg' => {} },
+
   }
 };
 
@@ -103,6 +108,7 @@ sub trim {
 sub validate {
   my( $self, $string ) = @_;
 ## Tokenize string;
+
   my @a = ();
   foreach my $w ( split /(?=<)/, $string ) {
     if( $w =~/^</ ) {
@@ -120,6 +126,8 @@ sub validate {
     }
   }
   my @stk = ();
+
+
   my $ent_regexp = $self->info('ent');
   foreach my $w ( @a ) {
     my $LN = $stk[0];
