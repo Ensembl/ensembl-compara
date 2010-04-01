@@ -185,6 +185,10 @@ sub store_clusters {
     }
   }
 
+  # FIXME: load the entire file in a hash and store in decreasing
+  # order by cluster size this will make big clusters go first in the
+  # alignment process, which makes sense since they are going to take
+  # longer to process anyway
   my $clusterset;
   $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
   if (!defined($clusterset)) {
@@ -322,10 +326,10 @@ sub run_hcluster {
   unless (-e $hcluster_executable) {
     if (`uname -m` =~ /ia64/) {
       $hcluster_executable
-        = "/nfs/acari/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg";
+        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg";
     } else {
       $hcluster_executable
-        = "/nfs/acari/avilella/src/treesoft/trunk/hcluster/hcluster_sg";
+        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/hcluster/hcluster_sg";
     }
   }
 

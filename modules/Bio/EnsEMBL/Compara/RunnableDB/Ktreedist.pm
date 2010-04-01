@@ -274,7 +274,7 @@ sub reroot_inputtrees {
 
   my $root_id = $self->{nc_tree}->node_id;
   my $species_tree_file = $self->{'species_tree_file'};
-  my $treebest_mmerge_executable = '/nfs/acari/avilella/src/treesoft/trunk/treebest_ncrna/treebest';
+  my $treebest_mmerge_executable = '/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest';
 
   my $temp_directory = $self->worker_temp_directory;
   my $template_cmd = "$treebest_mmerge_executable sdi -rs $species_tree_file";
