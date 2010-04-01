@@ -63,7 +63,7 @@ sub markup_variation {
       'title' => sub { return "Deletion: $_[0]->{'alleles'}" } 
     },
     'frameshift' => { 
-      'class' => 'fs', 
+      'class' => 'sf', 
       'title' => sub { return "Frame-shift" }
     },
     'snputr'    => { 'class' => 'snu' },
@@ -80,13 +80,8 @@ sub markup_variation {
       
       next unless $mk->{$type}; # Just in case, but shouldn't happen.
       
-      if ($variation->{'transcript'}) {
-        $seq->[$_]->{'title'} = "Alleles: $variation->{'alleles'}";
-        $seq->[$_]->{'class'} .= ($config->{'translation'} ? $mk->{$type}->{'class'} : 'sn') . " ";
-      } else {
-        $seq->[$_]->{'title'} = &{$mk->{$type}->{'title'}}($variation);
-        $seq->[$_]->{'class'} .= "$mk->{$type}->{'class'} ";
-      }
+      $seq->[$_]->{'title'}  = $variation->{'transcript'} ? "Alleles: $variation->{'alleles'}" : &{$mk->{$type}->{'title'}}($variation);
+      $seq->[$_]->{'class'} .= "$mk->{$type}->{'class'} ";
     }
     
     $i++;
