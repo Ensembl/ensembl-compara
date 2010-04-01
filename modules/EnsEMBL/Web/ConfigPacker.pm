@@ -303,12 +303,13 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'source'}{'descriptions'} = \%$temp_description;
 #---------- Add in information about the display type from the sample table
    my $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
-   my (@default, $reference, @display);
+   my (@default, $reference, @display, @ld);
    foreach (@$d_aref){
      my  ($name, $type) = @$_;  
      if ($type eq 'REFERENCE') { $reference = $name;}
      elsif ($type eq 'DISPLAYABLE'){ push(@display, $name); }
      elsif ($type eq 'DEFAULT'){ push (@default, $name); }
+     elsif ($type eq 'LD'){ push (@ld, $name); } 
    }
    $self->db_details($db_name)->{'tables'}{'individual.reference_strain'} = $reference;
    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'REFERENCE_STRAIN'} = $reference; 
@@ -316,6 +317,7 @@ sub _summarise_variation_db {
    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} = \@default;  
    $self->db_details($db_name)->{'meta_info'}{'individual.display_strain'} = \@display;
    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} = \@display; 
+   $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'LD_POPULATIONS'} = \@ld;
 #---------- Add in strains contained in read_coverage_collection table
   if ($self->db_details($db_name)->{'tables'}{'read_coverage_collection'}){
     my $r_aref = $dbh->selectall_arrayref(
