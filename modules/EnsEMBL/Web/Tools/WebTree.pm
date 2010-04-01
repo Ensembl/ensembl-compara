@@ -83,6 +83,11 @@ sub read_tree {
       $branch->{_nolink} = 1 if $filename eq 'index.none';
     }
     else {
+      if ($index =~ /DELETE/) {
+	delete $parent->{$branch->{'_name'}}->{$filename};
+	next;
+      }
+
       unless ($index =~ /NO INDEX/ || $branch->{'_no_follow'}) {
         $branch->{$filename}->{_title} = $title;
         $branch->{$filename}->{_nav}   = $nav;
