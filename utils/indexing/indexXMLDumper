@@ -176,13 +176,14 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
   my $names  = [];
   my $old_ID = 0;
   my ($ID,$marker,$synonym);
+  my $params = { contigviewbottom => 'marker_core_marker=normal'}; #used to switch on track by default
   while( ($ID,$marker,$synonym) = $sth->fetchrow_array()){
     $marker = $synonym unless $marker;
     if($ID == $old_ID) {
       push @$names, $synonym;
     } else {
       if ($old_ID) {
-	&p( markerLine( $dbspecies, $names, $counter ), $nogzip, $fh);
+	&p( markerLine( $dbspecies, $names, $params, $counter ), $nogzip, $fh);
       }
       $names    = [ $synonym ];
       $old_ID  = $ID;
@@ -193,7 +194,7 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
 }
 
 sub markerLine {
-  my( $species, $IDS, $counter ) = @_;
+  my( $species, $IDS, $params, $counter ) = @_;
   $species =~ s/_/ /;
   my @synonyms = sort @$IDS;
   my $key = pop @synonyms;
@@ -212,6 +213,12 @@ sub markerLine {
   $xml .= qq(
     <field name="species">$species</field>
     <field name="featuretype">Marker</field>
+);
+  while (my ($param,$value) = each %$params) {
+    $xml .= qq(
+    <field name="$param">$value</field>);
+  }
+  $xml .= qq(
   </additional_fields>);
   $counter->();
   return $xml . '</entry>';
