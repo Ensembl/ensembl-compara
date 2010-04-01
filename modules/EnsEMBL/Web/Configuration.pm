@@ -205,10 +205,10 @@ sub _user_context {
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
   my $vc            = $hub->viewconfig;
   my %ics           = $vc ? $vc->image_configs : undef;
-  my $active_config = $hub->param('config') || $vc ? $vc->default_config : undef;
+  my $active_config = $hub->param('config') || ($vc ? $vc->default_config : undef);
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
   my $flag          = $hub->param('config') ? 0 : 1;
-
+  
   if ($vc) {
     if ($vc->has_form) {
       $self->page->$section->add_entry(
@@ -230,7 +230,7 @@ sub _user_context {
     foreach my $ic_code (sort keys %ics) {
       my $ic  = $hub->get_imageconfig($ic_code);
       $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq $ic_code || $flag;
-    
+      
       $self->page->$section->add_entry(
         type    => 'Config',
         id      => "config_$ic_code",
