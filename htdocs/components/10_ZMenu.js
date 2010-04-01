@@ -78,6 +78,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.baseURL = this.baseURL.replace(/r\d+=[^;]+;?/g, '');
     }
     
+    $('a.expand', this.el).live('click', function () {
+      myself.populateAjax(this.href, $(this).parents('tr'));
+      return false;
+    });
+    
     this.getContent();
   },
   
@@ -144,7 +149,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.populateAjax(url);
   },
   
-  populateAjax: function (url) {
+  populateAjax: function (url, expand) {
     var timeout = this.timeout;
     
     url = url || this.href.replace(/\/(\w+\/\w+)\?/, '/Zmenu/$1?');
@@ -174,10 +179,15 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
                 body += '<tr>' + row + '</tr>';
               }
               
-              this.elLk.tbody.html(body);
-              this.elLk.caption.html(json.caption);
-              
-              this.show();
+              if (expand) {
+                expand.replaceWith(body);
+                expand = null;
+              } else {
+                this.elLk.tbody.html(body);
+                this.elLk.caption.html(json.caption);
+                
+                this.show();
+              }
             } else {
               this.populateNoAjax();
             }
