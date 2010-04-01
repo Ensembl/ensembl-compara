@@ -108,7 +108,7 @@ sub fetch_input {
   # Define executable
   my $treebest_mmerge_executable = $self->analysis->program_file || '';
   unless (-e $treebest_mmerge_executable) {
-    $treebest_mmerge_executable = "/nfs/acari/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
+    $treebest_mmerge_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
   }
   throw("can't find a treebest executable to run\n") unless(-e $treebest_mmerge_executable);
   $self->{treebest_mmerge_executable} = $treebest_mmerge_executable;
@@ -166,9 +166,11 @@ sub get_params {
 sub run {
   my $self = shift;
 
-  $self->reroot_inputtrees;
-  $self->run_treebest_mmerge;
-  $self->calculate_branch_lengths;
+  if (defined($self->{inputtrees_unrooted})) {
+    $self->reroot_inputtrees;
+    $self->run_treebest_mmerge;
+    $self->calculate_branch_lengths;
+  }
 }
 
 
@@ -186,7 +188,7 @@ sub run {
 sub write_output {
   my $self = shift;
 
-  $self->store_nctree;
+  $self->store_nctree if (defined($self->{inputtrees_unrooted}));
 }
 
 sub DESTROY {
@@ -229,7 +231,7 @@ sub run_treebest_mmerge {
 
   my $cmd = "$treebest_mmerge_executable mmerge -s $species_tree_file $mmergefilename > $mmerge_output_filename";
   print("$cmd\n") if($self->debug);
-
+  $DB::single=1;1;#??
   unless(system("$cmd") == 0) {
     print("$cmd\n");
     throw("error running treebest sdi, $!\n");
@@ -302,7 +304,7 @@ sub reroot_inputtrees {
     $cmd .= " > $rootedfilename";
 
     print("$cmd\n") if($self->debug);
-
+    $DB::single=1;1;
     unless(system("$cmd") == 0) {
       print("$cmd\n");
       throw("error running treebest sdi, $!\n");
@@ -331,6 +333,7 @@ sub load_input_trees {
   my $sql1 = "select tag,value from nc_tree_tag where node_id=$root_id and tag like '%\\\_IT\\\_%'";
   my $sth1 = $self->dbc->prepare($sql1);
   $sth1->execute;
+
   while (  my $inputtree_string = $sth1->fetchrow_hashref ) {
     my $eval_inputtree;
     eval {
