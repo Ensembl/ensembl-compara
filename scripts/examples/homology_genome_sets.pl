@@ -15,10 +15,12 @@ my $mlss_adaptor =
 my $genomedb_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor("Compara", "compara", "GenomeDB");
 
-my @list_of_species = ("Homo sapiens","Drosophila melanogaster","Caenorhabditis elegans");
+my @list_of_species = ("Homo sapiens","Drosophila melanogaster","Saccharomyces cerevisiae");
+my $hash_of_species;
 my @gdbs;
 foreach my $species_binomial (@list_of_species) {
   push @gdbs, $genomedb_adaptor->fetch_by_name_assembly($species_binomial);
+  $hash_of_species->{$species_binomial} = 1;
 }
 
 my $present_in_all = undef;
@@ -31,15 +33,41 @@ while (my $sp1_gdb = shift @gdbs) {
     my $count = 0; my $total_count = scalar @orthologies;
     foreach my $ortholog (@orthologies) {
       1;
-      # # Do something with the sets
-      #       my ($gene1,$gene2) = @{$ortholog->gene_list};
-      #       $present_in_all->{$gene1->stable_id}{$sp1_gdb->name}{$gene2->stable_id} = 1;
-      #       $present_in_all->{$gene1->stable_id}{$sp2_gdb->name}{$gene1->stable_id} = 1;
-      #       $present_in_all->{$gene2->stable_id}{$sp1_gdb->name}{$gene2->stable_id} = 1;
-      #       $present_in_all->{$gene2->stable_id}{$sp2_gdb->name}{$gene1->stable_id} = 1;
-      #       $count++;
-      #       print STDERR "[$count/$total_count]\n" if (0 == $count % 100);
+      # Create a hash of stable_id pairs with genome name as subkey
+      my ($gene1,$gene2) = @{$ortholog->gene_list};
+      $present_in_all->{$gene1->stable_id}{$sp1_gdb->name}{$gene2->stable_id} = 1;
+      $present_in_all->{$gene1->stable_id}{$sp2_gdb->name}{$gene1->stable_id} = 1;
+      $present_in_all->{$gene2->stable_id}{$sp1_gdb->name}{$gene2->stable_id} = 1;
+      $present_in_all->{$gene2->stable_id}{$sp2_gdb->name}{$gene1->stable_id} = 1;
+      $count++;
+      print STDERR "[$count/$total_count]\n" if (0 == $count % 100);
     }
+  }
+}
+
+# This code below is optional and is only to sort out cases where all
+# genomes are in the list and print the list of ids if it is the case
+my @list = keys %$hash_of_species; my $set_num = scalar @list;
+my $tagged_stable_id;
+foreach my $stable_id (keys %$present_in_all) {
+  my @set = $present_in_all->{$stable_id};
+  my $present;
+  foreach my $element (@set) {
+    foreach my $name (@list) {
+      $present->{$name} = 1 if (defined($element->{$name}));
+    }
+  }
+  my $output_string;
+  if (scalar keys %$present == scalar @list) {
+    next if (defined($tagged_stable_id->{$stable_id})); #Print only once
+    $tagged_stable_id->{$stable_id};
+    $output_string = "$stable_id";
+    my @stable_ids;
+    push @stable_ids, $stable_id;
+    foreach my $name (@list) {
+      push @stable_ids, keys %{$present_in_all->{$stable_id}{$name}};
+    }
+    print join(",",sort @stable_ids), "\n";
   }
 }
 
