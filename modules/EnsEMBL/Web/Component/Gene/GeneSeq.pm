@@ -137,12 +137,14 @@ sub get_key {
     [ 'snp_display',  'sn,si,sd' ]
   );
   
+  my $population_key = $object->param('population_filter') ? sprintf('for %s with a minimum frequency of %s', $object->param('population_filter'), $object->param('min_frequency')) : '';
+  
   my $key = {
     eg  => "Location of $gene_name exons",
     eo  => "Location of $exon_label exons",
-    sn  => 'Location of SNPs',
-    si  => 'Location of inserts',
-    sd  => 'Location of deletes'
+    sn  => "Location of SNPs $population_key",
+    si  => "Location of inserts $population_key",
+    sd  => "Location of deletes $population_key"
   };
   
   foreach (@map) {

@@ -42,11 +42,23 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
+    my $object     = $self->object;
     my $variations = $translation->pep_snps('hash');
+    my $filter     = $object->param('population_filter');
+    my %population_filter;
+    
+    if ($filter && $filter ne 'off') {
+      %population_filter = map { $_->dbID => $_ }
+        @{$translation->get_Slice->get_all_VariationFeatures_by_Population(
+          $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
+          $object->param('min_frequency')
+        )};
+    }
     
     foreach (sort { $a <=> $b } keys %$variations) {
       last if $_ >= $config->{'length'};
       next unless $variations->{$_}->{'type'}; # Weed out the rubbish returned by pep_snps
+      next if keys %population_filter && !$population_filter{$variations->{$_}->{'vdbid'}};
       
       $markup->{'variations'}->{$_}->{'type'}      = $variations->{$_}->{'type'};
       $markup->{'variations'}->{$_}->{'alleles'}   = $variations->{$_}->{'allele'};
@@ -56,7 +68,7 @@ sub get_sequence_data {
     }
   }
   
-  return (\@sequence,  [ $markup ]);
+  return (\@sequence, [ $markup ]);
 }
 
 sub content {

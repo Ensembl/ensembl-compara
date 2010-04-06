@@ -8,13 +8,15 @@ sub init {
   my ($view_config) = @_;
   
   $view_config->_set_defaults(qw(
-    flank5_display 600
-    flank3_display 600
-    display_width  60
-    exon_display   core
-    exon_ori       all
-    snp_display    off
-    line_numbering off
+    flank5_display    600
+    flank3_display    600
+    display_width     60
+    exon_display      core
+    exon_ori          all
+    snp_display       off
+    population_filter off
+    min_frequency     0.1
+    line_numbering    off
   ));
   
   $view_config->storable = 1;
@@ -37,7 +39,20 @@ sub form {
   $view_config->add_form_element($other_markup_options{'display_width'});
   $view_config->add_form_element($gene_markup_options{'exon_display'});
   $view_config->add_form_element($general_markup_options{'exon_ori'});
-  $view_config->add_form_element($general_markup_options{'snp_display'}) if $dbs->{'DATABASE_VARIATION'};
+  
+  if ($dbs->{'DATABASE_VARIATION'}) {
+    $view_config->add_form_element($general_markup_options{'snp_display'});
+    
+    my $populations = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
+    
+    if (scalar @$populations) {      
+      push @{$general_markup_options{'pop_filter'}{'values'}}, sort { $a->{'name'} cmp $b->{'name'} } map {{ value => $_->name, name => $_->name }} @$populations;
+    
+      $view_config->add_form_element($general_markup_options{'pop_filter'});
+      $view_config->add_form_element($general_markup_options{'pop_min_freq'});
+    }
+  }
+  
   $view_config->add_form_element($general_markup_options{'line_numbering'});
 }
 

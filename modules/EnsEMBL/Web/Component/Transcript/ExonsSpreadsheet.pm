@@ -16,16 +16,16 @@ sub _init {
 }
 
 sub content {
-  my $self         = shift;
-  my $object       = $self->object; 
-  my $only_exon    = $object->param('oexon') eq 'yes'; # display only exons
-  my $entry_exon   = $object->param('exon');
-  my $export       = $object->param('export');
-  my $transcript   = $object->Obj;
-  my @exons        = @{$transcript->get_all_Exons};
-  my $strand       = $exons[0]->strand;
-  my $chr_name     = $exons[0]->slice->seq_region_name;
-  my $i            = 0;
+  my $self       = shift;
+  my $object     = $self->object; 
+  my $only_exon  = $object->param('oexon') eq 'yes'; # display only exons
+  my $entry_exon = $object->param('exon');
+  my $export     = $object->param('export');
+  my $transcript = $object->Obj;
+  my @exons      = @{$transcript->get_all_Exons};
+  my $strand     = $exons[0]->strand;
+  my $chr_name   = $exons[0]->slice->seq_region_name;
+  my $i          = 0;
   my @data;
   
   my $config = {
@@ -40,6 +40,15 @@ sub content {
   };
   
   $config->{'variation'} = 'off' unless $object->species_defs->databases->{'DATABASE_VARIATION'};
+  
+  if ($config->{'variation'} ne 'off') {
+    my $filter = $object->param('population_filter');
+    
+    if ($filter && $filter ne 'off') {
+      $config->{'population'}    = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
+      $config->{'min_frequency'} = $object->param('min_frequency');
+    }
+  }
   
   foreach my $exon (@exons) {
     my $next_exon  = $exons[++$i];
@@ -165,7 +174,7 @@ sub get_exon_sequence_data {
     }
   }
   
-  $self->add_variations($exon->feature_Slice, \@sequence) if $config->{'variation'} ne 'off';
+  $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'variation'} ne 'off';
   
   return \@sequence;
 }
@@ -189,7 +198,7 @@ sub get_intron_sequence_data {
       $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split //, lc $end->{'slice'}->seq   ];
       
       if ($config->{'variation'} eq 'on') {
-        $self->add_variations($_->{'slice'}, $_->{'sequence'}) for $start, $end;
+        $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
       @sequence = $strand == 1 ? (@{$start->{'sequence'}}, @dots, @{$end->{'sequence'}}) : (@{$end->{'sequence'}}, @dots, @{$start->{'sequence'}});
@@ -198,7 +207,7 @@ sub get_intron_sequence_data {
       
       @sequence = map {{ letter => $_, class => 'e1' }} split //, lc $slice->seq;
       
-      $self->add_variations($slice, \@sequence) if $config->{'variation'} eq 'on';
+      $self->add_variations($config, $slice, \@sequence) if $config->{'variation'} eq 'on';
     }
   };
   
@@ -241,7 +250,7 @@ sub get_flanking_sequence_data {
   $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split //, lc $downstream->{'seq'} ];
   
   if ($config->{'variation'} eq 'on') {
-    $self->add_variations($_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
+    $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
   }
   
   my @upstream_sequence   = (@dots, @{$upstream->{'sequence'}});
@@ -251,11 +260,13 @@ sub get_flanking_sequence_data {
 }
 
 sub add_variations {
-  my ($self, $slice, $sequence) = @_;
+  my ($self, $config, $slice, $sequence) = @_;
   
   my $object = $self->object;
   
-  foreach my $vf (@{$slice->get_all_VariationFeatures}) {
+  my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
+  
+  foreach my $vf (@$variation_features) {
     my $name = $vf->variation_name;
     my $url  = $object->_url({ type => 'Variation', action => 'Summary', v => $name, vf => $vf->dbID, vdb => 'variation' });
     

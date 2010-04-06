@@ -157,6 +157,20 @@ sub GENERAL_MARKUP_OPTIONS {
         { 'value' => 'all', 'name' => 'Display exons in both orientations' },
       ],
     },
+    'pop_filter' => {
+      'type'   => 'DropDown', 
+      'select' => 'select',
+      'name'   => 'population_filter',
+      'label'  => 'Filter variations by population',
+      'notes'  => 'Warning: This could cause the page to take a long time to load',
+      'values' => [{ 'value' => 'off', 'name' => 'All' }]
+    },
+    'pop_min_freq' => {
+      'type'  => 'NonNegFloat', 
+      'label' => 'Minimum frequency for population filter',  
+      'name'  => 'min_frequency',
+      'max'   => 0.5
+    }
   );
 }
 

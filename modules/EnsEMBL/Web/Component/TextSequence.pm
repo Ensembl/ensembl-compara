@@ -20,6 +20,17 @@ sub get_sequence_data {
   my $object = $self->object;
   my @sequence;
   my @markup;
+  my $population;
+  
+  if ($config->{'snp_display'}) {
+    my $filter = $object->param('population_filter');
+    
+    if ($filter && $filter ne 'off') {
+      $population = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
+      $config->{'min_frequency'} = $object->param('min_frequency');
+      $config->{'population_filter'} = $filter;
+    }
+  }
   
   foreach my $sl (@$slices) {
     my $mk    = {};
@@ -84,9 +95,9 @@ sub get_sequence_data {
     if ($config->{'snp_display'}) {
       my $snps   = [];
       my $u_snps = {};
-    
+      
       eval {
-        $snps = $slice->get_all_VariationFeatures(1);
+        $snps = $population ? $slice->get_all_VariationFeatures_by_Population($population, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures(1);
       };
       
       if (scalar @$snps) {
@@ -427,10 +438,12 @@ sub markup_variation {
     
     $i++;
   }
-
-  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'snp'},    'Location of SNPs'    if $snps;
-  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'insert'}, 'Location of inserts' if $inserts;
-  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'delete'}, 'Location of deletes' if $deletes;
+  
+  my $population_key = $config->{'population_filter'} ? sprintf('for %s with a minimum frequency of %s', $config->{'population_filter'}, $config->{'min_frequency'}) : '';
+  
+  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'snp'},    "Location of SNPs $population_key"    if $snps;
+  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'insert'}, "Location of inserts $population_key" if $inserts;
+  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'delete'}, "Location of deletes $population_key" if $deletes;
 }
 
 sub markup_comparisons {
@@ -764,7 +777,7 @@ sub build_sequence {
       } else {
         $class = '';
       }
-
+      
       $post .= $seq->{'post'};
       
       my $style;
