@@ -106,7 +106,7 @@ sub modify_element {
   }
   my $element = $self->{'_elements'}{$name};
   if ($element && $element->can($attribute)) {
-    $element->$attribute($value);
+    $element->$attribute = $value;
   }
 }
 
