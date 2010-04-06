@@ -77,7 +77,7 @@ sub render {
     return sprintf( qq(
   <tr>
     <th><label for="%s">%s</label></th>
-    <td><select name="%s" id="%s" %s%s>\n%s</select>%s</td>
+    <td><select name="%s" id="%s" %s%s>\n%s</select> %s</td>
   </tr>),
       encode_entities( $self->name ), $label,
       encode_entities( $self->name ), 
