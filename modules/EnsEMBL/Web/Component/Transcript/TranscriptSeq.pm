@@ -124,20 +124,37 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
+    my $slice  = $trans->feature_Slice;
+    my $filter = $object->param('population_filter');
+    my %population_filter;
+    
+    if ($filter && $filter ne 'off') {
+      %population_filter = map { $_->dbID => $_ }
+        @{$slice->get_all_VariationFeatures_by_Population(
+          $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
+          $object->param('min_frequency')
+        )};
+    }
+    
     foreach my $transcript_variation (@{$object->get_transcript_variations}) {
       my ($start, $end) = ($transcript_variation->cdna_start, $transcript_variation->cdna_end);
       
       next unless $start && $end;
       
-      my $var               = $transcript_variation->variation_feature->transfer($trans->feature_Slice);
+      my $var  = $transcript_variation->variation_feature->transfer($slice);
+      my $dbID = $var->dbID;
+      
+      next if keys %population_filter && !$population_filter{$dbID};
+      
       my $var_class         = $var->var_class;
       my $variation_name    = $var->variation_name;
-      my $dbID              = $var->dbID;
       my $alleles           = $var->allele_string;
-      my $ambigcode         = $var_class eq 'in-del' ? '*' : $var->ambig_code;
+      my $ambigcode         = $var->ambig_code || '*';
       my $pep_allele_string = $transcript_variation->pep_allele_string;
       my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
-      my $utr_var           = join('', @{$transcript_variation->consequence_type}) =~ /UTR/;
+      my $consequence_type  = join '', @{$transcript_variation->consequence_type};
+      my $utr_var           = $consequence_type =~ /UTR/;
+      my $frameshift_var    = $consequence_type =~ /FRAMESHIFT/;
       my $allele_count      = scalar split /\//, $pep_allele_string;
       my $insert            = 0;
       
@@ -155,13 +172,17 @@ sub get_sequence_data {
       ($_ += $start_pad)-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
       
       foreach ($start..$end) {
-        $mk->{'variations'}->{$_}->{'alleles'}   .= $alleles;
+        $mk->{'variations'}->{$_}->{'alleles'}   .= ($mk->{'variations'}->{$_}->{'alleles'} ? ', ' : '') . $alleles;
         $mk->{'variations'}->{$_}->{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
         $mk->{'variations'}->{$_}->{'transcript'} = 1;
         
         my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
         
-        if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {
+        if ($frameshift_var) {
+          $mk->{'variations'}->{$_}->{'type'} = 'frameshift';
+        } elsif ($var_class eq 'in-del') {
+          $mk->{'variations'}->{$_}->{'type'} = $insert ? 'insert' : 'delete';
+        } else {
           $mk->{'variations'}->{$_}->{'type'} = $utr_var || $allele_count > 1 ? 'snp' : 'syn';
           
           if ($config->{'translation'} && $allele_count > 1) {
@@ -174,8 +195,6 @@ sub get_sequence_data {
               $protein_seq->{'seq'}->[$aa]->{'title'} .= $pep_allele_string;
             }
           }
-        } else {
-          $mk->{'variations'}->{$_}->{'type'} = $insert ? 'insert' : 'delete';
         }
         
         $mk->{'variations'}->{$_}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$_} && $mk->{'codons'}->{$_}->{'class'} eq 'cu';
@@ -185,7 +204,7 @@ sub get_sequence_data {
       }
     }
   }
-   
+  
   push @sequence, \@reference_seq;
   push @markup, $mk;
   
