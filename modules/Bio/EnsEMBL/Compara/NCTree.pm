@@ -67,9 +67,19 @@ sub get_SitewiseOmega_values {
 sub stable_id {
   my $self = shift;
 
-  $self->throw("method not defined by implementing" .
-               " subclass of ProteinTree");
-  return undef;
+  return undef; #FIXME, delete this line when stable_ids called for nctrees
+
+  if(@_) {
+    $self->{'_stable_id'} = shift;
+    return $self->{'_stable_id'};
+  }
+  
+  if(!defined($self->{'_stable_id'}))
+    {
+    $self->{'_stable_id'} = $self->adaptor->_fetch_stable_id_by_node_id($self->node_id);
+  }
+
+  return $self->{'_stable_id'};
 }
 
 1;
