@@ -717,8 +717,14 @@ sub get_ProteinTree {
   unless( defined( $self->{$cachekey} ) ){ # Look in cache
     # Fetch the objects
     my $member       = $self->get_compara_Member($compara_db)               || return &$error('No compara member for this gene');
-    my $tree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')     || return &$error("Cannot COMPARA->get_adaptor('ProteinTree')");
-    my $tree         = $tree_adaptor->fetch_by_gene_Member_root_id($member) || return &$error("No compara tree for ENSEMBLGENE $member");
+    my $proteintree_adaptor = $member->adaptor->db->get_adaptor('ProteinTree')     || return &$error("Cannot COMPARA->get_adaptor('ProteinTree')");
+    my $tree;
+    eval {$tree = $proteintree_adaptor->fetch_by_gene_Member_root_id($member);};
+    if ($@ || !defined($tree)) {
+      my $nctree_adaptor = $member->adaptor->db->get_adaptor('NCTree')     || return &$error("Cannot COMPARA->get_adaptor('NCTree')");
+      eval {$tree = $nctree_adaptor->fetch_by_gene_Member_root_id($member)};
+      return &$error("No compara tree for ENSEMBLGENE $member") if ($@);
+    }
     # Update the cache
     $self->{$cachekey} = $tree;
     $self->{"_member_$compara_db"} = $member;
