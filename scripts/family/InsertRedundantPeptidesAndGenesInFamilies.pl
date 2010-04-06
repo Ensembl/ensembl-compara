@@ -58,11 +58,10 @@ print STDERR "Loading redundant peptides in families...";
 foreach my $sequence_id (keys %sequence_id2member_id) {
   next if (scalar @{$sequence_id2member_id{$sequence_id}} == 1);    # skip cases where there is no redundancy (1 member per sequence)
   my $member_ids = join(",", @{$sequence_id2member_id{$sequence_id}});
-  my $sql = "select * from family_member where member_id in ($member_ids)";
+  my $sql = "SELECT family_id, member_id, cigar_line FROM family_member WHERE member_id in ($member_ids)";
   my $sth = $dbc->prepare($sql);
   $sth->execute;
 
-  my ($ref_family_id, $ref_member_id, $ref_cigar_line);
   my ($family_id, $member_id, $cigar_line);
   $sth->bind_columns(\$family_id, \$member_id, \$cigar_line);
   
@@ -71,6 +70,7 @@ foreach my $sequence_id (keys %sequence_id2member_id) {
   my $sql2 = "insert ignore into family_member (family_id, member_id, cigar_line) values (?,?,?)";
   my $sth2 = $dbc->prepare($sql2);
 
+  my ($ref_family_id, $ref_member_id, $ref_cigar_line);
   my $number_of_rows = 0;
   while ( $sth->fetch() ) {
     $number_of_rows++;
