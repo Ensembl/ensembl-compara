@@ -30,7 +30,7 @@ sub render {
     $self->_class,
     $self->required eq 'yes' ? 'required' : 'optional',
     $self->size || 20,
-    $self->required eq 'yes' ? $self->required_string : '',
+    $self->required eq 'yes' ? $self->required_string : $self->optional_string,
     $self->notes ? "<br />".$self->notes : '',
   );
 }
