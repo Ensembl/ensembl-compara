@@ -91,12 +91,11 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $debug                   = $self->param('debug')         || 0;
+    my $debug                   = $self->param('debug')          || 0;
     my $family_id               = $self->param('family_id');
-    my $mafft_root              = $self->param('mafft_root')    || '/software/ensembl/compara';
-    my $mafft_bindir            = $self->param('mafft_bindir')  || ( $mafft_root . '/mafft-6.522' );
-    my $mafft_executable        = $self->param('mafft_exec')    || ( $mafft_root . '/mafft-6.522/bin/mafft' );
-    my $mafft_args              = $self->param('mafft_args')    || '';
+    my $mafft_root_dir          = $self->param('mafft_root_dir') || '/software/ensembl/compara/mafft-6.522';
+    my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
+    my $mafft_args              = $self->param('mafft_args')     || '';
 
     my $pep_file                = $self->param('pep_file');
     my $mafft_file              = $self->param('mafft_file');
@@ -105,7 +104,7 @@ sub run {
         return 1;
     }
 
-    $ENV{MAFFT_BINARIES} = $mafft_bindir; # set it for all exec'd processes
+    $ENV{MAFFT_BINARIES} = $mafft_root_dir; # set it for all exec'd processes
 
     my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
     if($debug) {

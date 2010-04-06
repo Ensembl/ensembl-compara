@@ -184,8 +184,7 @@ sub run {
 
     my $minibatch               = $self->param('minibatch')     || 1;
 
-    my $blast_version           = $self->param('blast_version') || 'ncbi-blast-2.2.22+';
-    my $blast_bin_dir           = $self->param('blast_bin_dir') || ( '/software/ensembl/compara/' . $blast_version . '/bin' );
+    my $blast_bin_dir           = $self->param('blast_bin_dir') || ( '/software/ensembl/compara/ncbi-blast-2.2.22+/bin' );
     my $blast_params            = $self->param('blast_params')  || '-seg yes';      # closest emulation of C-based blastp behaviour
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
