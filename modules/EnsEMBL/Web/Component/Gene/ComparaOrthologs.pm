@@ -23,11 +23,11 @@ sub content {
   
   my $object = $self->object;
   
-#  my @orthologues = (
-#    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
-#    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'between_species_paralog')
-#  );
-  my @orthologues = $object->get_homology_matches('ENSEMBL_ORTHOLOGUES');
+  my @orthologues = (
+    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
+    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog')
+  );
+#  my @orthologues = $object->get_homology_matches('ENSEMBL_ORTHOLOGUES');
   
   my %orthologue_list;
   my %skipped;
