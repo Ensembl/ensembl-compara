@@ -54,7 +54,8 @@ sub availability {
       my $has_gene_tree;
       
       if ($gene_tree) {
-        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
+        $has_gene_tree = 1;
+        # eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
       }
       
       if ($compara_db) {
@@ -145,7 +146,7 @@ sub count_homologues {
            h.homology_id = hm.homology_id and 
            mlss.method_link_species_set_id = h.method_link_species_set_id and
            ml.method_link_id = mlss.method_link_id and
-           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "between_species_paralog" )
+           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "possible_paralog" )
      group by description', {}, $self->Obj->stable_id
   );
   
@@ -566,7 +567,8 @@ sub get_homology_matches {
       'ortholog_one2one'          => '1-to-1',
       'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
       'ortholog_one2many'         => '1-to-many',
-      'between_species_paralog'   => 'paralogue (between species)',
+#      'between_species_paralog'   => 'paralogue (between species)',
+      'possible_ortholog'         => 'possible ortholog',
       'ortholog_many2many'        => 'many-to-many',
       'within_species_paralog'    => 'paralogue (within species)',
       'other_paralog'             => 'other paralogue (within species)',
@@ -722,8 +724,8 @@ sub get_ProteinTree {
     eval {$tree = $proteintree_adaptor->fetch_by_gene_Member_root_id($member);};
     if ($@ || !defined($tree)) {
       my $nctree_adaptor = $member->adaptor->db->get_adaptor('NCTree')     || return &$error("Cannot COMPARA->get_adaptor('NCTree')");
-      eval {$tree = $nctree_adaptor->fetch_by_gene_Member_root_id($member)};
-      return &$error("No compara tree for ENSEMBLGENE $member") if ($@);
+      $tree = $nctree_adaptor->fetch_by_gene_Member_root_id($member);
+      return &$error("No compara tree for ENSEMBLGENE $member") if (!defined($tree));
     }
     # Update the cache
     $self->{$cachekey} = $tree;
