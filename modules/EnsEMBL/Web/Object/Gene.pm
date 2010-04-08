@@ -54,8 +54,7 @@ sub availability {
       my $has_gene_tree;
       
       if ($gene_tree) {
-        $has_gene_tree = 1;
-        # eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
+        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
       }
       
       if ($compara_db) {
@@ -137,7 +136,6 @@ sub count_homologues {
   
   my $counts = {};
   
-  # TODO: re-add between_species_paralog
   my $res = $compara_dbh->selectall_arrayref(
     'select ml.type, h.description, count(*) as N
       from member as m, homology_member as hm, homology as h,
@@ -146,7 +144,7 @@ sub count_homologues {
            h.homology_id = hm.homology_id and 
            mlss.method_link_species_set_id = h.method_link_species_set_id and
            ml.method_link_id = mlss.method_link_id and
-           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "possible_paralog" )
+           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "possible_ortholog" )
      group by description', {}, $self->Obj->stable_id
   );
   
@@ -567,7 +565,6 @@ sub get_homology_matches {
       'ortholog_one2one'          => '1-to-1',
       'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
       'ortholog_one2many'         => '1-to-many',
-#      'between_species_paralog'   => 'paralogue (between species)',
       'possible_ortholog'         => 'possible ortholog',
       'ortholog_many2many'        => 'many-to-many',
       'within_species_paralog'    => 'paralogue (within species)',
