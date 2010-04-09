@@ -353,6 +353,7 @@ sub add_row {
 
 sub get_value {
   my ($row, $counter, $key) = @_;  
+  return unless $row;
   
   my $rtn = '--';
   
