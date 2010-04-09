@@ -215,9 +215,18 @@ sub new_image {
   my $object = $self->object;
   
   my %formats = EnsEMBL::Web::Constants::FORMATS;
-  my $image_config = ref $_[0] eq 'ARRAY' ? $_[0][1] : $_[1];
+  my ($image_config, $id);
   
-  $self->id($image_config->{'type'});
+  if (ref $_[0] eq 'ARRAY') {
+    my %image_config_types = map $_->{'type'}, grep $_->isa('EnsEMBL::Web::ImageConfig'), @{$_[0]};
+    $image_config = $_[0][1];
+    $id = join '--', keys %image_config_types;
+  } else {
+    $image_config = $_[1];
+    $id = $image_config->{'type'}
+  }
+  
+  $self->id($id);
   
   # Set text export on image config
   $image_config->set_parameter('text_export', $object->param('export')) if $formats{$object->param('export')}{'extn'} eq 'txt';
