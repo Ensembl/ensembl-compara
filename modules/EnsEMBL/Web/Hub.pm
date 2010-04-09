@@ -115,9 +115,14 @@ sub _set_core_params {
   ### Initialises core parameter hash from CGI parameters
 
   my $self = shift;
-  my @params = @{$self->species_defs->core_params};
-  my %core_params = map { $_ => $self->param($_) } @params;
-  $self->{'_core_params'} = \%core_params;
+  my $core_params = {};
+
+  foreach (@{$self->species_defs->core_params}) {
+    my @param = $self->param($_);
+    $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param;
+  }
+
+  $self->{'_core_params'} = $core_params;
 }
 
 # Does an ordinary redirect
