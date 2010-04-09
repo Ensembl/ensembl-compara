@@ -21,10 +21,12 @@ Ensembl.EventManager = {
     if (this.registry[eventName].callId) { return false; }
     
     // register the object and function references
-    this.registry[eventName].count++;
-    this.registry[eventName].ref[callId] = {};  
-    this.registry[eventName].ref[callId].func = callFunc;
-    this.registry[eventName].ref[callId].obj = callObj;
+    for (var id in this.getCallIds(callId)) {
+      this.registry[eventName].count++;
+      this.registry[eventName].ref[id] = {};  
+      this.registry[eventName].ref[id].func = callFunc;
+      this.registry[eventName].ref[id].obj = callObj;
+    }
   },
    
   /**
@@ -35,13 +37,16 @@ Ensembl.EventManager = {
     
     // Remove this items interest from this action
     if (this.registry[eventName] && this.registry[eventName].ref[callId]) {
-      delete this.registry[eventName].ref[callId];
-      this.registry[eventName].count--;
+      for (var id in this.getCallIds(callId)) {
+        delete this.registry[eventName].ref[id];
+        this.registry[eventName].count--;
+      }
+      
       this.deleteTest(eventName);
     }
   },
   
-   /**
+  /**
    * Finds all instances of an object and removes all references
    * Useful if an item is removed from the DOM and no longer has interest
    */ 
@@ -51,12 +56,26 @@ Ensembl.EventManager = {
     
     for (eventName in this.registry) {
       if (this.registry[eventName].ref[callId]) {
-        delete this.registry[eventName].ref[callId];
-        this.registry[eventName].count--;
+        for (var id in this.getCallIds(callId)) {
+          delete this.registry[eventName].ref[id];
+          this.registry[eventName].count--;
+        }
       }
       
       this.deleteTest(eventName);
     }    
+  },
+  
+  /**
+   * Returns an associative array whose keys are the ids required
+   * Used to register/unregister correctly when the callId is in the form id1--id2
+   */
+  getCallIds: function (callId) {
+    var ids = callId.split(/--/);
+    var rtn = {};
+    if  (ids.length > 1) { ids.push(callId); }
+    for (var i in ids)   { rtn[ids[i]] = 1;  }
+    return rtn;
   },
   
   /**
