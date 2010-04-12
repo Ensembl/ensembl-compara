@@ -1074,21 +1074,26 @@ sub build_GeneTreeSystem
  #       -analysis       => $paf_cluster,
         -analysis       => $hclusterrun,
        );
+   
+   if($analysis_template{reuse_db}) {
+     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+         (
+          -input_id       => 1,
+   #       -analysis       => $paf_cluster,
+          -analysis       => $clustersetqc,
+         );
 
-   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-       (
-        -input_id       => 1,
- #       -analysis       => $paf_cluster,
-        -analysis       => $clustersetqc,
-       );
-
-   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-       (
-        -input_id       => 1,
- #       -analysis       => $paf_cluster,
-        -analysis       => $genetreesetqc,
-       );
-
+     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+         (
+          -input_id       => 1,
+   #       -analysis       => $paf_cluster,
+          -analysis       => $genetreesetqc,
+         );
+   }
+   else {
+     print STDERR "No reuse database detected in BLASTP_TEMPLATE. Skipping global checks for ClustersetQC and GeneTreesetQC\n";
+   }
+   
   print STDERR "Done.\n";
   return 1;
 }
