@@ -65,6 +65,7 @@
 #   * quicktree
 #   * sreformat
 #   * mafft
+#   * buildhmm
 # 
 # Set the value of the keys to the binary location required
 
