@@ -893,7 +893,7 @@ sub build_GeneTreeSystem
   # BuildHMMaa
   print STDERR "BuildHMMaa...\n";
   #
-  my $buildhmm_program = $genetree_params{'buildhmm'} || '/nfs/users/nfs_a/avilella/src/hmmer3/latest/hmmer-3.0b3/src/hmmbuild';
+  my $buildhmm_program = $genetree_params{'buildhmm'} || '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
   my $BuildHMMaa = Bio::EnsEMBL::Analysis->new
     (
      -db_version      => '1',
