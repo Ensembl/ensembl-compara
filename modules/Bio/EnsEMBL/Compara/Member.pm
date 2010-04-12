@@ -946,7 +946,7 @@ sub get_Transcript {
   
   return undef unless($self->source_name eq 'ENSEMBLPEP');
   return $self->{'core_transcript'} if($self->{'core_transcript'});
-  
+
   unless($self->genome_db and 
          $self->genome_db->db_adaptor and
          $self->genome_db->db_adaptor->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) 
@@ -975,7 +975,12 @@ sub get_Transcript {
 
 sub get_Translation {
   my $self = shift;
-  return $self->get_Transcript->translation if($self->get_Transcript);
+  my $no_canonical = shift;
+
+  if($self->get_Transcript) {
+    my $transcript = $self->get_Transcript;
+    return $transcript->translation(undef,$no_canonical);
+  }
   return undef;
 }
 
@@ -989,7 +994,8 @@ sub transcript {
 }
 sub translation {
   my $self = shift;
-  return $self->get_Translation;
+  my $no_canonical = shift;
+  return $self->get_Translation($no_canonical);
 }
 
 
