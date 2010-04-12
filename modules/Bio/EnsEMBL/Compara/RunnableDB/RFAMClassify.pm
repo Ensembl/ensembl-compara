@@ -106,7 +106,10 @@ sub fetch_input {
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
     my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
+    unless (defined $gdb) {
+      $DB::single=1;1;
+      throw("gdb not defined for gdb_id = $gdb_id\n");
+    }
     push @genomeDB_set, $gdb;
   }
   $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
