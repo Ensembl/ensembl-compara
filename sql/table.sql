@@ -424,7 +424,7 @@ CREATE TABLE subset_member (
 );
 
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'analysis'
 --
@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
 ) COLLATE=latin1_swedish_ci;
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'peptide_align_feature'
 --
@@ -716,7 +716,7 @@ CREATE TABLE constrained_element (
   KEY mlssid_dfId_idx (method_link_species_set_id,dnafrag_id)
 ) COLLATE=latin1_swedish_ci;
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_node'
 --
@@ -757,7 +757,7 @@ CREATE TABLE nc_tree_node LIKE protein_tree_node;
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_member'
 --
@@ -796,7 +796,7 @@ CREATE TABLE nc_tree_member LIKE protein_tree_member;
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_member_score'
 --
@@ -828,7 +828,7 @@ CREATE TABLE protein_tree_member_score (
 ) COLLATE=latin1_swedish_ci;
 
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_tag'
 --
@@ -870,7 +870,7 @@ CREATE TABLE nc_profile (
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
 
---------------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_stable_id'
 --
@@ -891,7 +891,7 @@ CREATE TABLE protein_tree_stable_id (
 );
 
 
---------------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------
 --
 -- Table structure for table 'mapping_session'
 --
@@ -911,7 +911,7 @@ CREATE TABLE mapping_session (
 );
 
 
---------------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------
 --
 -- Table structure for table 'stable_id_history'
 --
@@ -983,7 +983,7 @@ CREATE TABLE sitewise_aln (
 ) COLLATE=latin1_swedish_ci;
 
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'lr_index_offset'
 --
@@ -1002,7 +1002,7 @@ CREATE TABLE lr_index_offset (
 	PRIMARY KEY (table_name)
 ) COLLATE=latin1_swedish_ci;
 
-------------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_hmmprofile'
 --
