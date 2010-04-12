@@ -259,7 +259,7 @@ sub get_params {
     }
   }
 
-  foreach my $key (qw[protein_tree_id taxon_ids notaxon cdna]) {
+  foreach my $key (qw[protein_tree_id taxon_ids notaxon cdna sreformat]) {
     my $value = $params->{$key};
     $self->{$key} = $value if defined $value;
   }
@@ -424,7 +424,8 @@ sub dumpTreeMultipleAlignmentToWorkdir
   close OUTSEQ;
 
   my $stk_file = $self->{'file_root'} . ".stk";
-  my $cmd = "/usr/local/ensembl/bin/sreformat stockholm $aln_file > $stk_file";
+  my $sreformat = $self->{sreformat} || '/usr/local/ensembl/bin/sreformat';
+  my $cmd = "$sreformat stockholm $aln_file > $stk_file";
   unless( system("$cmd") == 0) {
     print("$cmd\n");
     $self->check_job_fail_options;
