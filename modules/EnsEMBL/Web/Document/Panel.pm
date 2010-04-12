@@ -671,7 +671,11 @@ sub content {
               
               # Check if ajax enabled
               if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
-                $self->printf(qq{<div class="$class">%s</div>}, join '', map { $_ ? sprintf '<input type="hidden" class="ajax_load" value="%s" />', encode_entities($_) : () } $caption, $url);
+                # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
+                # $panel_name is the memory location of the current object, so unique for each panel.
+                # Without this, ajax panels don't load, or load the wrong content.
+                my ($panel_name) = $self =~ /\((.+)\)$/;
+                $self->printf(qq{<div class="$class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url));
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
                 my @wrapper = $comp_obj->has_image ? ('<div class="image_panel">', '</div>') : ();
                 
