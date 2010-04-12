@@ -143,22 +143,30 @@ sub download_rfam_models {
   my $starttime = time();
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  my $url  = 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/CURRENT/';
-  my $file = 'infernal-latest.tar.gz';
+  my $url = 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/10.0/'; my $file = 'Rfam.cm.gz';
+#  my $url  = 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/CURRENT/'; my $file = 'infernal-latest.tar.gz';
+  my $expanded_file = $worker_temp_directory . $file; $expanded_file =~ s/\.gz$//;
+
+  unlink($expanded_file); # retry safe
   my $ftp_file = $url . $file;
   my $tmp_file = $worker_temp_directory . $file;
   my $status = getstore($ftp_file, $tmp_file);
   die "Error $status on $ftp_file" unless is_success($status);
-  my $cmd = "tar xzf $tmp_file";
+  my $cmd = "gunzip $tmp_file";
+  # my $cmd = "tar xzf $tmp_file";
 
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
     throw("error expanding RFAMLoadModels $!\n");
   }
   printf("time for RFAMLoadModels fetch : %1.3f secs\n" , time()-$starttime);
+
+  $self->{multicm_file} = $expanded_file;
+
+  return 1;
 }
 
-sub store_hmmprofile {
+sub store_hmmprofile_dir {
   my $self = shift;
 
   my $worker_temp_directory = $self->worker_temp_directory;
@@ -174,6 +182,33 @@ sub store_hmmprofile {
       $self->load_cmfile($tmp_cm_file,$model_id);
     }
   }
+}
+
+sub store_hmmprofile {
+  my $self = shift;
+
+  my $multicm_file = $self->{multicm_file};
+  open MULTICM,$multicm_file or die "$!\n";
+  my $name; my $model_id;
+  my $profile_content = undef;
+  while (<MULTICM>) {
+    $profile_content .= $_;
+    if ($_ =~ /NAME/) { 
+      my ($tag,$this_name) = split(" ",$_);
+      $name = $this_name;
+    } elsif ($_ =~ /ACCESSION/) { 
+      my ($tag,$accession) = split(" ",$_);
+      $model_id = $accession;
+    } elsif ($_ =~ /\/\//) {
+      # End of profile, let's store it
+      throw("Error loading cm profile [$model_id]\n") unless (defined($model_id) && defined($profile_content));
+      $self->load_cmprofile($profile_content,$model_id,$name);
+      $model_id = undef;
+      $profile_content = undef;
+    }
+  }
+
+  return 1;
 }
 
 sub load_cmfile {
@@ -197,6 +232,22 @@ sub load_cmfile {
   my $table_name = 'nc_profile';
   my $sth = $self->{comparaDBA}->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
   $sth->execute($model_id, $name, $self->{type},$hmm_text);
+  $sth->finish;
+
+  return undef;
+}
+
+sub load_cmprofile {
+  my $self = shift;
+  my $cm_profile = shift;
+  my $model_id = shift;
+  my $name = shift;
+
+  print("load profile $model_id\n") if($self->debug);
+
+  my $table_name = 'nc_profile';
+  my $sth = $self->{comparaDBA}->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
+  $sth->execute($model_id, $name, $self->{type},$cm_profile);
   $sth->finish;
 
   return undef;
