@@ -56,6 +56,11 @@ sub fetch_by_dbID {
   }
   $sth->finish();
 
+  if (!defined($genome_dbs)) {
+    # There are situations when the genome_db will not exist, but
+    # still makes sense to do the query -- mostly production
+    $DB::single=1;1;
+  }
   ## Create the object
   $species_set = new Bio::EnsEMBL::Compara::SpeciesSet
     (-adaptor => $self,
