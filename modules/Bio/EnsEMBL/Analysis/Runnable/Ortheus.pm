@@ -57,7 +57,7 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
-my $default_exonerate = "exonerate-1.0.0";
+my $default_exonerate = $EXONERATE;
 my $default_jar_file = "pecan.0.8.jar";
 my $default_java_class = "bp.pecan.Pecan";
 my $estimate_tree = "~/pecan/EstimateTree.py";
@@ -252,7 +252,7 @@ sub run_ortheus {
   }
 
   #Add -X to fix -ve indices in array bug suggested by BP
-  $command .= " -m \"$JAVA " . $java_params . "\" -k \"#-J $EXONERATE -X\"";
+  $command .= " -m \"$JAVA " . $java_params . "\" -k \"#-J " . $self->exonerate . " -X\"";
 
   if ($self->tree_string) {
     $command .= " -d '" . $self->tree_string . "'";
