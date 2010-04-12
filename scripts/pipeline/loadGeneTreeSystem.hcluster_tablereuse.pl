@@ -894,18 +894,20 @@ sub build_GeneTreeSystem
   print STDERR "BuildHMMaa...\n";
   #
   my $buildhmm_program = $genetree_params{'buildhmm'} || '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
+  my $sreformat_program = $genetree_params{'sreformat'} || '/usr/local/ensembl/bin/sreformat';
   my $BuildHMMaa = Bio::EnsEMBL::Analysis->new
     (
      -db_version      => '1',
      -logic_name      => 'BuildHMMaa',
      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMM',
      -program_file    => $buildhmm_program,
+     -parameters      => "{sreformat => '${sreformat_program}'}"
     );
   $analysisDBA->store($BuildHMMaa);
   $stats = $BuildHMMaa->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(200);
-  $stats->status('BLOCKED');
+  $stats->status('READY');
   $stats->update();
 
   #
@@ -913,7 +915,7 @@ sub build_GeneTreeSystem
   print STDERR "BuildHMMcds...\n";
   #
   $parameters = '';
-  $parameters = '{cdna=>1}';
+  $parameters = "{cdna=>1, sreformat => '${sreformat_program}'}";
   my $BuildHMMcds = Bio::EnsEMBL::Analysis->new
     (
      -db_version      => '1',
@@ -926,7 +928,7 @@ sub build_GeneTreeSystem
   $stats = $BuildHMMcds->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(200);
-  $stats->status('BLOCKED');
+  $stats->status('READY');
   $stats->update();
 
   #
