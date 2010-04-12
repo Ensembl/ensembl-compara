@@ -40,6 +40,7 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::DBSQL::ProteinTreeAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Analysis::Config::Compara;
 
 use Bio::EnsEMBL::Analysis::Runnable;
 our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
@@ -47,7 +48,7 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 my $java_exe = "/software/bin/java";
 my $uname = `uname`;
 $uname =~ s/[\r\n]+//;
-my $default_exonerate = "exonerate-1.0.0";
+my $default_exonerate = $EXONERATE;
 my $default_jar_file = "pecan_v0.8.jar";
 my $default_java_class = "bp.pecan.Pecan";
 my $estimate_tree = "/software/ensembl/compara/pecan/EstimateTree.py";
