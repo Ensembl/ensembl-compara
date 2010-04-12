@@ -331,7 +331,6 @@ sub fetch_by_GenomicAlignBlock {
   $sth->finish();
 
   #print STDERR "root_id $root_id\n";
-
   #whole tree
   $sql = "SELECT " . join(",", @{$self->columns}) .  
     " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_id";
@@ -459,6 +458,13 @@ sub store {
   my $leaves = $node->get_all_leaves;
   my $method_link_species_set = $leaves->[0]->get_all_GenomicAligns->[0]->method_link_species_set;
 
+  #if only have one sequence (can happen after splitting on a large block into
+  #smaller ones) then do not store it - it has no alignments and no
+  #ancestors
+  if (@$leaves < 2) {
+      print "Tree contains less than 2 leaves. Not saving \n";
+      return
+  }
 
   ## Create and store all the GenomicAlignBlock objects (this stores the GenomicAlign objects as well)
   my $genomic_align_block_adaptor = $self->db->get_GenomicAlignBlockAdaptor();
