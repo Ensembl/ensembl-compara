@@ -104,6 +104,9 @@ sub fetch_input {
   if($input_hash->{'pseudo_stableID_prefix'}) {
     $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
   }
+  if($input_hash->{force_unique_canonical}) {
+    $self->{force_unique_canonical} = $input_hash->{force_unique_canonical};
+  }
 
   ########################################
   # Check if this is one that we need to reuse
@@ -342,6 +345,7 @@ sub loadMembersFromCoreSlices
 
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
+
   my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
   print("fetched ",scalar(@slices), " slices to load from\n");
   throw("problem: no toplevel slices") unless(scalar(@slices));
@@ -395,9 +399,11 @@ sub store_gene_and_all_transcripts
   }
 
   my $canonical_transcript; my $canonical_transcript_stable_id;
-  eval {$canonical_transcript = $gene->canonical_transcript;
-        $canonical_transcript_stable_id = $canonical_transcript->stable_id;};
-  if (!defined($canonical_transcript)) {
+  eval {
+    $canonical_transcript = $gene->canonical_transcript;
+    $canonical_transcript_stable_id = $canonical_transcript->stable_id;
+  };
+  if (!defined($canonical_transcript) && !defined($self->{force_unique_canonical})) {
     print STDERR "WARN: ", $gene->stable_id, " has no canonical transcript\n" if ($self->debug);
     return 1;
   }
@@ -405,11 +411,12 @@ sub store_gene_and_all_transcripts
     my $translation = $transcript->translation;
     next unless (defined $translation);
 
-    if ($canonical_transcript->biotype ne $gene->biotype) {
-      # This can happen when the only transcripts are, e.g., NMDs
-      print STDERR "INFO: ", $canonical_transcript->stable_id, " biotype ", $canonical_transcript->biotype, " is canonical\n" if ($self->debug);
+    if (!defined($self->{force_unique_canonical})) {
+      if ($canonical_transcript->biotype ne $gene->biotype) {
+        # This can happen when the only transcripts are, e.g., NMDs
+        print STDERR "INFO: ", $canonical_transcript->stable_id, " biotype ", $canonical_transcript->biotype, " is canonical\n" if ($self->debug);
+      }
     }
-
 #    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
 #    my $next = 0;
 #    try {
@@ -494,7 +501,7 @@ sub store_gene_and_all_transcripts
     $self->{memberDBA}->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
     print(" : stored\n") if($self->{'verbose'});
 
-    if($transcript->stable_id eq $canonical_transcript_stable_id) {
+    if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->{force_unique_canonical})) {
       @canonicalPeptideMember = ($transcript, $pep_member);
     }
 
