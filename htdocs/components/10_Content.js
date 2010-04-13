@@ -186,7 +186,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     // TODO: do this in perl, have it hidden. show in js.
-    $('<div class="toggle_button">' + txt + id + '</div>').appendTo('.toggle_text', this.el).click(function () {
+    $('<div class="toggle_button">' + txt + id + '</div>').appendTo($('.toggle_text', this.el)).click(function () {
       table.toggle();
       
       if (table.is(':visible')) {
