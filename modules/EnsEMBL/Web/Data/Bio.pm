@@ -16,5 +16,15 @@ no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::Data);
 
-1;
+sub _init {
+  my ($self, $api_object) = @_;
+  $self->data_object($api_object);
+}
 
+sub convert_to_drawing_parameters {
+### Stub - individual object types probably need to implement this separately
+  my $self = shift;
+  return [];
+}
+
+1;
