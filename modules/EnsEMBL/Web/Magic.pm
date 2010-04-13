@@ -27,6 +27,7 @@ use CGI;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Model;
+use EnsEMBL::Web::Builder;
 
 use base qw(Exporter);
 
@@ -141,7 +142,8 @@ sub handler {
   return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
 
-  my $problem = $model->create_objects($factorytype);
+  my $builder = new EnsEMBL::Web::Builder($model);
+  my $problem = $builder->create_objects($factorytype);
   
   return if $problem eq 'redirect';                          # Forcing a redirect - don't need to go any further
   return ($controller, $model) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
@@ -151,6 +153,7 @@ sub handler {
   
   my ($renderer) = $controller->_use($renderer_module, (r => $r, cache => $hub->cache));
   my ($page)     = $controller->_use($document_module, { 
+    hub          => $hub,
     renderer     => $renderer, 
     species_defs => $hub->species_defs, 
     input        => $input, 
