@@ -92,9 +92,10 @@ sub colour_array {
 sub create_user_set {
   my ($self, $image, $colours) = @_;
   my $object = $self->object;
+  my $hub = $self->hub;
 
-  my $user = $object->user;
-  my $image_config = $object->get_session->getImageConfig('Vkaryotype');
+  my $user = $hub->user;
+  my $image_config = $hub->session->getImageConfig('Vkaryotype');
   my $pointers = [];
 
   # Key to track colours
@@ -120,7 +121,7 @@ sub create_user_set {
 
     if ($render eq 'highlight') {
       ## Create pointer configuration
-      my $tracks = $object->get_tracks($key);
+      my $tracks = $hub->get_tracks($key);
       while (my ($label, $track) = each (%$tracks)) {
         my $colour; 
         if ($track->{'config'} && $track->{'config'}{'color'}) {
@@ -130,7 +131,7 @@ sub create_user_set {
           $colour = $colours->[$i];
           $i++;
         }
-        push @$pointers, $image->add_pointers( $object, {
+        push @$pointers, $image->add_pointers( $hub, {
           'config_name'   => 'Vkaryotype',
           'features'      => $track->{'features'},
           'color'         => $colour,
