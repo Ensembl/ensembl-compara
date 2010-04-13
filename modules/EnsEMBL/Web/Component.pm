@@ -45,7 +45,8 @@ sub id {
   return $self->{'id'};
 }
 
-sub model { return $_[0]->{'model'} };
+sub model { return $_[0]->{'model'}; }
+sub hub { return $_[0]->{'model'}{'_hub'}; }
 
 sub object {
 ## Tries to be backwards compatible!
@@ -121,10 +122,10 @@ sub _info_panel {
 sub ajax_url {
   my ($self, $function_name, $no_query_string) = @_;
   
-  my $object = $self->object;
+  my $hub = $self->hub;
   my ($ensembl, $plugin, $component, $type, $module) = split '::', ref $self;
   
-  my $url = join '/', $object->species_path, 'Component', $object->type, $plugin, $module;
+  my $url = join '/', $hub->species_defs->species_path, 'Component', $hub->type, $plugin, $module;
   $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
   $url .= '?_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4;
   $url .= ";$ENV{'QUERY_STRING'}" unless $no_query_string;
@@ -136,7 +137,7 @@ sub glossary_mouseover {
   my ($self, $entry, $display_text) = @_;
   $display_text ||= $entry;
   
-  my %glossary = $self->object->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my %glossary = $self->hub->species_defs->multiX('ENSEMBL_GLOSSARY');
   (my $text = $glossary{$entry}) =~ s/<.+?>//g;
 
   return $text ? qq{<span class="glossary_mouseover">$display_text<span class="glossary_popup">$text</span></span>} : $display_text;
@@ -154,7 +155,7 @@ sub _attach_das {
   return unless @das_nodes; # Return if no sources to be drawn
  
   # Check to see if they really exists, and get entries from get_all_das call
-  my %T = %{$ENSEMBL_WEB_REGISTRY->get_all_das($self->object->species)};
+  my %T = %{$ENSEMBL_WEB_REGISTRY->get_all_das($self->hub->species)};
   my @das_sources = @T{@das_nodes};
   return unless @das_sources; # Return if no sources exist
 
@@ -162,9 +163,9 @@ sub _attach_das {
   $wuc->cache('das_coord',  
     Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
       -sources => \@das_sources,
-      -proxy   => $self->object->species_defs->ENSEMBL_WWW_PROXY,
-      -noproxy => $self->object->species_defs->ENSEMBL_NO_PROXY,
-      -timeout => $self->object->species_defs->ENSEMBL_DAS_TIMEOUT
+      -proxy   => $self->hub->species_defs->ENSEMBL_WWW_PROXY,
+      -noproxy => $self->hub->species_defs->ENSEMBL_NO_PROXY,
+      -timeout => $self->hub->species_defs->ENSEMBL_DAS_TIMEOUT
     )
   );
 }
@@ -256,7 +257,7 @@ sub new_karyotype_image {
   
   $self->id($image_config->{'type'}) if $image_config;
   
-  my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
+  my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
   $image->{'object'} = $object;
   
   return $image;
@@ -264,10 +265,11 @@ sub new_karyotype_image {
 
 sub _export_image {
   my ($self, $image, $flag) = @_;
+  my $hub = $self->model->hub;
   
   $image->{'export'} = 'iexport' . ($flag ? " $flag" : '');
   
-  my ($format, $scale) = $self->object->param('export') ? split /-/, $self->object->param('export'), 2 : ('', 1);
+  my ($format, $scale) = $hub->param('export') ? split /-/, $hub->param('export'), 2 : ('', 1);
   $scale eq 1 if $scale <= 0;
   
   my %formats = EnsEMBL::Web::Constants::FORMATS;
@@ -275,12 +277,13 @@ sub _export_image {
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
-    my $filename = sprintf '%s-%s-%s.%s', $comp, $self->object->_filename, $scale, $formats{$format}{'extn'};
+    my $obj_filename = $self->object ? $self->object->_filename : $hub->filename;
+    my $filename = sprintf '%s-%s-%s.%s', $comp, $obj_filename, $scale, $formats{$format}{'extn'};
     
-    if ($self->object->param('download')) {
-      $self->object->input->header(-type => $formats{$format}{'mime'}, -attachment => $filename);
+    if ($hub->param('download')) {
+      $hub->input->header(-type => $formats{$format}{'mime'}, -attachment => $filename);
     } else {
-      $self->object->input->header(-type => $formats{$format}{'mime'}, -inline => $filename);
+      $hub->input->header(-type => $formats{$format}{'mime'}, -inline => $filename);
     }
 
     if ($formats{$format}{'extn'} eq 'txt') {
@@ -299,7 +302,7 @@ sub _matches {
   my ($self, $key, $caption, @keys) = @_;
   
   my $object = $self->object;
-  my $label  = $object->species_defs->translate($caption);
+  my $label  = $self->hub->species_defs->translate($caption);
   my $obj    = $object->Obj;
 
   # Check cache
@@ -322,7 +325,7 @@ sub _matches {
   # add table call here
   my $html;
   
-  if ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+  if ($self->hub->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
     $html = '<p></p>';
   } else {
     $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
