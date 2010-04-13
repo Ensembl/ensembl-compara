@@ -35,7 +35,7 @@ sub content {
     my $genes = $families->{$family_id}{'info'}{'genes'};
     if (scalar(@$genes) > 1) {
       $row->{'id'} .= sprintf(qq#<br /><br />(<a href="/%s/Gene/Family/Genes?%s;family=%s" title="Show locations of these genes">%s genes</a>)#, 
-                    $object->species, join(';', @{$object->core_params}),
+                    $object->species, join(';', @{$self->model->core_param_strings}),
                     $family_id, scalar(@$genes)
                     );
     }
@@ -43,7 +43,7 @@ sub content {
       $row->{'id'} .= '<br /><br />(1 gene)';
     }
     my $prot_url = sprintf('/%s/Gene/Family/Proteins?%s;family=%s', 
-                    $object->species, join(';', @{$object->core_params}), $family_id
+                    $object->species, join(';', @{$self->model->core_param_strings}), $family_id
     );
     $row->{'id'} .= '<br />(<a href="'.$prot_url.'">all proteins in family</a>)';
 
