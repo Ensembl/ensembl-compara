@@ -34,9 +34,12 @@ sub new {
     'Transcript'  => 't',
     'Variation'   => 'v',
     'Regulation'  => 'rf',
+    'Marker'      => 'm',
+    'LRG'         => 'lrg',
   );  
   my @extra_params = qw/h db pt vf fdb vdb domain family protein/;
 
+  $model->hub->set_core_types(keys %core_types);
   $model->hub->set_core_params(values %core_types, @extra_params);
 
   my $self = {
@@ -58,7 +61,7 @@ sub _chain_Location {
   ## Do we need to create any other objects?
   ## NEXT TAB
   if (!$self->model->object('Gene') && $self->model->hub->param('g')) {
-    $self->_generic_create('Gene');
+    $self->_generic_create('Gene', 'next');
   }
 
   ### Set coordinates in CGI parameters
@@ -90,13 +93,118 @@ sub _chain_Gene {
       }
     }
     if ($self->model->hub->param('t')) {
-      $self->_generic_create('Transcript');
+      $self->_generic_create('Transcript', 'next');
     }
   }
   elsif (!$self->model->object('Variation') && $self->model->hub->param('v')) {
-    $self->_generic_create('Variation');
+    $self->_generic_create('Variation', 'next');
   }
   ## PREVIOUS TAB
+  unless ($self->model->object('Location')) {
+    $problems = $self->_previous_tab_Location;
+  }  
+
+  return $problems;
+}
+
+sub _chain_Transcript {
+  my $self = shift;
+  my $problems;
+
+  ## Do we need to create any other objects?
+  ## NEXT TAB
+  if ($self->model->hub->param('v')) {
+    $self->_generic_create('Variation', 'next');
+  }
+  ## PREVIOUS TAB
+  $self->_generic_create('Gene', 'previous');
+
+  return $problems;
+}
+
+sub _chain_Variation {
+  my $self = shift;
+  my $problems;
+
+  ## Do we need to create any other objects?
+  ## PREVIOUS TAB
+  if ($self->model->hub->param('t')) {
+    $self->_generic_create('Transcript', 'previous');
+  }
+  elsif ($self->model->hub->param('g')) {
+    $self->_generic_create('Gene', 'previous');
+  }
+  else {
+    ## Have come straight in on a Variation, so choose a location for it
+    my $var_obj = $self->model->object('Variation');
+    my $db_adaptor  = $self->model->hub->database('variation');
+
+    my $vari_features = $db_adaptor->get_VariationFeatureAdaptor->fetch_all_by_Variation($var_obj->Obj);
+
+    return unless @$vari_features;
+
+    my $feature = $vari_features->[0];
+    my $slice = $feature->slice;
+    if ($slice) {
+      my $region = $slice->seq_region_name;
+      if ($region) {
+        my $s = $feature->start;
+        my $coords = {'seq_region' => $region, 'start' => $s - 500, 'end' => $s + 500};
+        $self->_generic_create('Location', 'previous', $coords);
+      }
+    }
+  }
+
+  return $problems;
+}
+
+sub _chain_Regulation {
+  my $self = shift;
+  my $problems;
+
+  ## Do we need to create any other objects?
+  ## PREVIOUS TAB
+  if ($self->model->hub->param('t')) {
+    $self->_generic_create('Transcript', 'previous');
+  }
+  elsif ($self->model->hub->param('g')) {
+    $self->_generic_create('Gene', 'previous');
+  }
+  else {
+    my $coords = {};
+    my $object = $self->model->object;
+    ## Create a location based on object coordinates
+    if ($object) {
+      $coords = {
+        'seq_region' => $object->seq_region_name,
+        'start'      => $object->seq_region_start,
+        'end'        => $object->seq_region_end,
+      };
+    }
+    $self->_generic_create('Location', 'previous', $coords);
+  }
+
+  return $problems;
+}
+
+sub _chain_Marker {
+  my $self = shift;
+  my $problems;
+  unless ($self->model->object('Location')) {
+    $problems = $self->_previous_tab_Location;
+    return $problems;
+  }  
+}
+
+sub _chain_LRG {
+  my $self = shift;
+  my $problems;
+}
+
+sub _previous_tab_Location {
+  my $self = shift;
+  my $problems;
+
   my $coords;
   if ($self->model->hub->type ne 'Location') {
     my $object = $self->model->object;
@@ -115,87 +223,7 @@ sub _chain_Gene {
     my $r = $coords->{'seq_region'}.':'.$coords->{'start'}.'-'.$coords->{'end'};
     $self->model->hub->param('r', $r);
   }
-  $self->_generic_create('Location', $coords);
-
-  return $problems;
-}
-
-sub _chain_Transcript {
-  my $self = shift;
-  my $problems;
-
-  ## Do we need to create any other objects?
-  ## NEXT TAB
-  if ($self->model->hub->param('v')) {
-    $self->_generic_create('Variation');
-  }
-  ## PREVIOUS TAB
-  $self->_generic_create('Gene');
-
-  return $problems;
-}
-
-sub _chain_Variation {
-  my $self = shift;
-  my $problems;
-
-  ## Do we need to create any other objects?
-  ## PREVIOUS TAB
-  if ($self->model->hub->param('t')) {
-    $self->_generic_create('Transcript');
-  }
-  elsif ($self->model->hub->param('g')) {
-    $self->_generic_create('Gene');
-  }
-  else {
-    ## Have come straight in on a Variation, so choose a location for it
-    my $var_obj = $self->model->object('Variation');
-    my $db_adaptor  = $self->model->hub->get_adaptor('variation');
-
-    my $vari_features = $db_adaptor->get_VariationFeatureAdaptor->fetch_all_by_Variation($var_obj->Obj);
-
-    return unless @$vari_features;
-
-    my $feature = $vari_features->[0];
-    my $slice = $feature->slice;
-    if ($slice) {
-      my $region = $slice->seq_region_name;
-      if ($region) {
-        my $s = $feature->start;
-        my $coords = {'seq_region' => $region, 'start' => $s - 500, 'end' => $s + 500};
-        $self->_generic_create('Location', $coords);
-      }
-    }
-  }
-
-  return $problems;
-}
-
-sub _chain_Regulation {
-  my $self = shift;
-  my $problems;
-
-  ## Do we need to create any other objects?
-  ## PREVIOUS TAB
-  if ($self->model->hub->param('t')) {
-    $self->_generic_create('Transcript');
-  }
-  elsif ($self->model->hub->param('g')) {
-    $self->_generic_create('Gene');
-  }
-  else {
-    my $coords = {};
-    my $object = $self->model->object;
-    ## Create a location based on object coordinates
-    if ($object) {
-      $coords = {
-        'seq_region' => $object->seq_region_name,
-        'start'      => $object->seq_region_start,
-        'end'        => $object->seq_region_end,
-      };
-    }
-    $self->_generic_create('Location', $coords);
-  }
+  $self->_generic_create('Location', 'previous', $coords);
 
   return $problems;
 }
@@ -206,21 +234,29 @@ sub _create_tab {
   my $self = shift;
   my $type = shift;
   my $object = $self->model->raw_object($type);
-  return unless $object;
+  return if $type ne 'Location' && !$object;
 
   ## Set some default values that can be overridden as needed
   my $info = {'type' => $type, 'action' => 'Summary'};
 
-  if ($object->isa('Bio::EnsEMBL::ArchiveStableId')) {
+  if ($object && $object->isa('Bio::EnsEMBL::ArchiveStableId')) {
     $info->{'action'} = 'idhistory';
   }
   if ($type eq 'Gene' || $type eq 'Transcript' || $type eq 'Regulation') {
     $info->{'stable_id'} = $object->stable_id;
   }
+  elsif ($type eq 'Variation') {
+    $info->{'stable_id'} = $object->name; 
+  }
   $info->{'long_caption'} = '';
 
   my $tab_method = "_tab_$type";
-  return $self->$tab_method($object, $info);
+  if ($self->can($tab_method)) {
+    return $self->$tab_method($object, $info);
+  }
+  else {
+    warn "!!! CANNOT ADD TAB $type - NO METHOD DEFINED";
+  }
 }
 
 sub _long_caption {
@@ -235,7 +271,7 @@ sub _tab_Location {
   my ($self, $slice, $info) = @_;
 
   my $coords;
-  if ($slice->isa('EnsEMBL::Web::Fake')) {
+  if (!$slice) {
     $info->{'action'} = 'Genome';
     $info->{'short_caption'}  = 'Genome';
   }
@@ -306,6 +342,28 @@ sub _tab_Regulation {
   return $info;
 }
 
+sub _tab_Marker {
+  my ($self, $marker, $info) = @_;
+  $info->{'short_caption'}  = 'Marker: '.$self->model->hub->param('m');
+  return $info;
+}
+
+sub _tab_LRG {
+  my ($self, $slice, $info) = @_;
+
+  $info->{'action'} = 'Summary';
+  my $coords = $slice->seq_region_name.':'
+                  .$self->thousandify($slice->start).'-'.$self->thousandify($slice->end);
+  $info->{'short_caption'} = "Location: $coords";
+  $info->{'url'} = $self->model->hub->url({
+    'type'   => 'LRG',
+    'action' => $info->{'action'},
+    'lrg'      => $self->model->hub->param('lrg'),
+  });
+
+  return $info;
+}
+
 ## DO NOT EDIT BELOW THIS POINT (unless you do something very drastic to the constructor!)
 
 ### Getters for preset properties
@@ -323,19 +381,15 @@ sub create_objects {
   my %core_types = %{$self->core_types};
 
   if (grep /^$type$/, keys %core_types) {
-    ## start with the current object and create others as necessary
+    ## start with the current object, which will create others as necessary
     $problems = $self->_generic_create($type);
-    ## Add all the generated objects to the tab list
-    foreach (keys %core_types) {
-      if ($self->model->object($_)) {
-        my $tab_info = $self->_create_tab($_);
-        $self->model->add_tab($tab_info);
-      }
-    }
+
     ## Add any non-tab core objects (e.g. variation on Location/LD page)
     while (my($type, $param) = each (%core_types)) {
       if ($self->model->hub->param($param) && !$self->model->object($type)) {
         $problems = $self->model->create_objects($type);
+        my $tab_info = $self->_create_tab($type);
+        $self->model->add_tab($tab_info);
       }
     }
   }
@@ -347,19 +401,31 @@ sub create_objects {
 }
 
 sub _generic_create {
-  my $self = shift;
-  my $type = shift;
-  my $problems;
+  my $self      = shift;
+  my $type      = shift;
+  my $direction = shift;
+  my $problem;
 
   ## Create this object unless it already exists
   unless ($self->model->object($type)) {
-    $problems = $self->model->create_objects($type, @_);
-    ## Do we need to create any other objects?
-    my $chain_method = "_chain_$type";
-    $problems = $self->$chain_method;
+    $problem = $self->model->create_objects($type, @_);
+    if ($problem && $self->model->hub->has_fatal_problem) {
+      return $problem;
+    }
+    else {  
+      my $tab_info = $self->_create_tab($type);
+      $self->model->add_tab($tab_info, $direction);
+      ## Do we need to create any other objects?
+      my $chain_method = "_chain_$type";
+      if ($self->can($chain_method)) {
+        $problem = $self->$chain_method;
+      }
+      else {
+        warn "!!! CANNOT CREATE ADDITIONAL TAB(S) - NO METHOD $chain_method";
+      }
+    }
   }
-
-  return $problems;
+  return $problem;
 }
 
 1;
