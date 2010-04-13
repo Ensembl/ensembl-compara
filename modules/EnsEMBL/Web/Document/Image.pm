@@ -64,19 +64,20 @@ sub prefix {
 #----------------------------------------------------------------------------
 
 sub karyotype {
-  my ($self, $object, $highs, $config_name) = @_;
-
+  my ($self, $model, $highs, $config_name) = @_;
+  my $hub = $model->hub;
+  my $object = $model->object;
   my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
 
   $config_name ||= 'Vkaryotype';
   my $chr_name;
 
-  my $image_config = $object->image_config_hash($config_name);
-  my $view_config  = $object->get_viewconfig;
+  my $image_config = $hub->image_config_hash($config_name);
+  my $view_config  = $hub->get_viewconfig;
 
   # set some dimensions based on number and size of chromosomes
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
-    my $total_chrs = @{$object->species_defs->ENSEMBL_CHROMOSOMES};
+    my $total_chrs = @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
     my $rows;
 
     $chr_name = 'ALL';
@@ -96,33 +97,35 @@ sub karyotype {
     $rows = ceil($total_chrs / 18) unless $rows;
 
     $image_config->set_parameters({ 
-        container_width => $object->species_defs->MAX_CHR_LENGTH,
+        container_width => $hub->species_defs->MAX_CHR_LENGTH,
         rows            => $rows,
         slice_number    => '0|1',
       });
   } else {
-    $chr_name = $object->seq_region_name;
+    $chr_name = $object->seq_region_name if $object;
 
+    my $seq_region_length = $object ? $object->seq_region_length : '';
     $image_config->set_parameters({
-        container_width => $object->seq_region_length,
+        container_width => $seq_region_length,
         slice_number    => '0|1'
       });
 
     $image_config->{'_rows'} = 1;
   }
 
-  $image_config->{'_aggregate_colour'} = $object->param('aggregate_colour') if $object->param('aggregate_colour');
+  $image_config->{'_aggregate_colour'} = $hub->param('aggregate_colour') if $hub->param('aggregate_colour');
 
   # get some adaptors for chromosome data
   my ($sa, $ka, $da);
-  my $species = $object->param('species') || undef;
+  my $species = $hub->param('species') || $hub->species;
+  return unless $species;
 
+  my $db = $hub->databases->get_DBAdaptor('core', $species);
   eval {
-    $sa = $object->database('core', $species)->get_SliceAdaptor,
-    $ka = $object->database('core', $species)->get_KaryotypeBandAdaptor,
-    $da = $object->database('core', $species)->get_DensityFeatureAdaptor
+    $sa = $db->get_SliceAdaptor,
+    $ka = $db->get_KaryotypeBandAdaptor,
+    $da = $db->get_DensityFeatureAdaptor
   };
-
   return $@ if $@;
   
   # create the container object and add it to the image
@@ -137,14 +140,14 @@ sub karyotype {
 }
 
 sub add_pointers {
-  my ($self, $object, $extra) = @_;
+  my ($self, $hub, $extra) = @_;
 
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
-  my $config      = $object->image_config_hash($config_name);
-  my $species     = $object->species;
-  my $color       = lc($object->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
-  my $style       = lc($object->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
+  my $config      = $hub->image_config_hash($config_name);
+  my $species     = $hub->species;
+  my $color       = lc($hub->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
+  my $style       = lc($hub->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
   my ($p_value_sorted,$i);
   my $j = 1;
@@ -286,6 +289,7 @@ sub render_image_map {
 
 sub render {
   my ($self, $format) = @_;
+  return unless $self->drawable_container;
 
   if ($format) {
     print $self->drawable_container->render($format);

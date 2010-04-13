@@ -14,6 +14,7 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $data) = @_;
+  my $hub = $data->{'hub'};
   
   my $format = $data->{'outputtype'};
   $format    = $data->{'input'}->param('_format') if $data->{'input'} && $data->{'input'}->param('_format');
@@ -230,9 +231,10 @@ sub _init {
     next unless $self->dynamic_use($classname); 
     
     my $html_module;
+    my $params = {'_hub' => $self->{'hub'}, 'timer' => $self->{'timer'}};
     
     eval { 
-      $html_module = $classname->new($self->{'timer'}); # Construct the module
+      $html_module = $classname->new($params); # Construct the module
       $html_module->{'species_defs'} = $self->species_defs;
       $html_module->{'_renderer'}    = $self->renderer;
     };

@@ -325,7 +325,7 @@ sub render {
     my $counts = {};
 
     if (!$self->{'omit_header'}) {
-      if ( (exists $self->{'previous'} || exists $self->{'next'}) && $hub->type ne 'Search') {
+      if ( (exists $self->{'previous'} || exists $self->{'next'}) && $hub && $hub->type ne 'Search') {
         my @buttons = (
           [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
           [ 'next',     'right', '%s&nbsp;&raquo;' ]
@@ -370,9 +370,8 @@ sub render {
         $self->renderer = new EnsEMBL::Web::Document::Renderer::Assembler(
           r       => $temp_renderer->r,
           cache   => $temp_renderer->cache,
-          session => $object ? $object->get_session : undef,
+          session => $hub ? $hub->session : undef,
         );
-
         $self->_render_content;
         $self->renderer->close;
 
