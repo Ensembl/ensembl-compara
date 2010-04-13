@@ -16,11 +16,6 @@ sub createObjects {
 
  return $self->problem ('Fatal', 'Database Error', "There is no functional genomics database for this species.") unless $dbh;
 
-  if( $self->core_objects->regulation ) {
-    $self->DataObjects( $self->new_object( 'Regulation', $self->core_objects->regulation, $self->__data ));
-    return;
-  }
-
   my $dbs= $self->get_databases(qw(core funcgen));
   return $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." ) unless $dbs;
   my $funcgen_db = $dbs->{'funcgen'};
@@ -36,10 +31,8 @@ sub createObjects {
     $self->_help( "Either $reg_feat does not exist in the current Ensembl database, or there was a problem retrieving it.")
   ) unless $reg_feat_obj;
 
-  $self->problem( 'redirect', $self->_url({'fdb'=>'funcgen','rf'=>$reg_feat,'v'=>undef, 'pt' =>undef,'g'=>undef,'r'=>undef,'t'=>undef}));
-  return;
-  my $obj = $self->new_object( 'Regulaiton', $reg_feat_obj, $self->__data );
-   $self->DataObjects($obj);
+  #$self->problem( 'redirect', $self->_url({'fdb'=>'funcgen','rf'=>$reg_feat,'v'=>undef, 'pt' =>undef,'g'=>undef,'r'=>undef,'t'=>undef}));
+  $self->DataObjects( $self->new_object( 'Regulation', $reg_feat_obj, $self->__data ) );
 }
 
 1;
