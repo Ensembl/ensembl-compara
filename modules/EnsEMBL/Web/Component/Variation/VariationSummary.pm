@@ -19,10 +19,10 @@ sub content {
   my $html = '';
  
   ## first check we have a location
-  if ( $object->has_location ){
+  if ( $object->not_unique_location ){
     return $self->_info(
       'A unique location can not be determined for this Variation',
-      $object->has_location
+      $object->not_unique_location
     );
   }
 
@@ -75,7 +75,7 @@ sub content {
   my $label = "Linkage disequilibrium data";
 
    ## First check that a location has been selected:
-  if  ($object->core_objects->location ){ 
+  if  ($self->model->object('Location') ){ 
     if  ($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
       my %pop_names = %{_ld_populations($object) ||{} };
       my %tag_data  = %{$object->tagged_snp ||{} };

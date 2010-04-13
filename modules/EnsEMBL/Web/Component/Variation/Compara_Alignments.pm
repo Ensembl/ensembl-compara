@@ -222,10 +222,10 @@ sub content {
   my %mappings = %{$object->variation_feature_mapping}; 
   my $v = keys %mappings == 1 ? [values %mappings]->[0] : $mappings{$object->param('vf')};
   
-  if ( $object->has_location ){
+  if ( $object->not_unique_location ){
     return $self->_info(
       'Unable to draw SNP neighbourhood',
-      $object->has_location
+      $object->not_unique_location
     );
   }
   

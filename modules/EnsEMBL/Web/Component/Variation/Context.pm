@@ -17,10 +17,10 @@ sub content {
   my $object = $self->object;
   
   ## first check we have a location
-  if ( $object->has_location ){
+  if ( $object->not_unique_location ){
     return $self->_info(
       'A unique location can not be determined for this Variation',
-      $object->has_location
+      $object->not_unique_location
     );
   }
 

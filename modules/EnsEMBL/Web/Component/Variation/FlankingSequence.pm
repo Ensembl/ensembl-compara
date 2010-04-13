@@ -16,7 +16,7 @@ sub content {
   my $object = $self->object;
   my $html = '';
   ## first check we have a location
- return  unless ($self->model->hub->core_param('vf') );
+  return if $object->not_unique_location;
 
 
   ## Add flanking sequence

@@ -21,11 +21,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Cache;
-
 use base qw(EnsEMBL::Web::Object);
-
-our $MEMD = new EnsEMBL::Web::Cache;
 
 sub _filename {
   my $self = shift;
@@ -38,64 +34,13 @@ sub _filename {
   return $name;
 }     
 
-sub availability {
-  my $self = shift;
-  
-  if (!$self->{'_availability'}) {
-    my $availability = $self->_availability;
-    my $obj = $self->Obj;
-    
-    if ($obj->isa('Bio::EnsEMBL::Variation::Variation')) {
-      my $counts = $self->counts;
-      
-      if ($obj->failed_description) { 
-        $availability->{'unmapped'} = 1; 
-      } else { 
-        $availability->{'variation'} = 1;
-      }
-      
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments);
-    }
-    
-    $self->{'_availability'} = $availability;
-  }
-  
-  return $self->{'_availability'};
-}
-
-sub counts {
-  my $self = shift;
-  my $obj = $self->Obj;
-
-  return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
-  my $key = '::Counts::Variation::'.
-            $self->species                         .'::'.
-            $self->hub->core_param('vdb') .'::'.
-            $self->hub->core_param('v')   .'::';
-
-  my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
-
-  unless ($counts) {
-    $counts = {};
-    $counts->{'transcripts'} = $self->count_transcripts;
-    $counts->{'populations'} = $self->count_populations;
-    $counts->{'individuals'} = $self->count_individuals;
-    $counts->{'ega'}         = $self->count_ega;
-    $counts->{'alignments'}  = $self->count_alignments->{'multi'};
-    
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
-    $self->{'_counts'} = $counts;
-  }
-
-  return $counts;
-}
 sub count_ega {
   my $self = shift;
   my @ega_links = @{$self->get_external_data};
   my $counts = scalar @ega_links || 0; 
   return $counts;	
 }
+
 sub count_transcripts {
   my $self = shift;
   my %mappings = %{ $self->variation_feature_mapping };
@@ -185,7 +130,7 @@ sub caption {
 
 # Location ----------------------------------------------------------------------
 
-sub has_location {
+sub not_unique_location {
   my $self = shift;
   unless ($self->hub->core_param('vf') ){
     my %mappings = %{ $self->variation_feature_mapping };
@@ -193,10 +138,10 @@ sub has_location {
     my $html;
     if ($count < 1) {
       $html = "<p>This feature has not been mapped.<p>";
-    } else { 
+    } elsif ($count > 1) { 
       $html = "<p>You must select a location from the panel above to see this information</p>";
     }
-    return  $html;
+    return $html;
   }
   return;
 }
