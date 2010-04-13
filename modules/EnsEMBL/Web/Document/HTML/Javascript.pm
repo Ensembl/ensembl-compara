@@ -6,7 +6,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new('scripts' => '', 'sources' => {});
+  my $self = $class->SUPER::new(@_, {'scripts' => '', 'sources' => {}});
   return $self;
 }
 

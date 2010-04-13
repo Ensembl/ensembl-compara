@@ -9,10 +9,11 @@ use strict;
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
+use Carp qw(cluck);
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new('counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context');
+  my $self = $class->SUPER::new(@_, {'counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context'});
   return $self;
 }
 
@@ -139,7 +140,7 @@ sub _content {
           my @ok_params;
           my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
           
-          if ($ENV{'ENSEMBL_TYPE'} =~ /Location|Gene|Transcript|Variation|Regulation/) {
+          if ($self->hub->is_core($self->hub->type)) {
             @ok_params = grep !/^time=/, @cgi_params;
           }
           

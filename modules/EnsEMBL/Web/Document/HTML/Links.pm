@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new( 'links' => [] );
+  my $self = $class->SUPER::new(@_, {'links' => []} );
   return $self;
 }
 

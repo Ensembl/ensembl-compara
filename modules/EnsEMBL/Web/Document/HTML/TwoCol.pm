@@ -8,7 +8,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my $class = shift;
-  my $self = { 'content' => [] };
+  my $self = {@_, {'content' => []} };
   bless $self, $class;
   return $self;
 }

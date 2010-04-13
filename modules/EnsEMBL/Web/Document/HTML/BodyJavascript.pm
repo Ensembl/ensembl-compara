@@ -4,7 +4,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new( 'scripts' => '', 'sources' => {}, 'debug' => 0 ); }
+sub new { return shift->SUPER::new(@_, {'scripts' => '', 'sources' => {}, 'debug' => 0} ); }
 
 sub debug {
   my $self = shift;

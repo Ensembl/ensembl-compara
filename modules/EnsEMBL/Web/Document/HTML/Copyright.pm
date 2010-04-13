@@ -6,7 +6,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new( 'sitename' => '?' ); }
+sub new { return shift->SUPER::new(@_, {'sitename' => '?'} ); }
 
 sub sitename :lvalue { $_[0]{'sitename'};   }
 

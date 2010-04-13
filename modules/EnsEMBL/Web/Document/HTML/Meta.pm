@@ -3,7 +3,7 @@ use strict;
 use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new      { return shift->SUPER::new( 'tags' => {}, 'equiv' =>{} ); }
+sub new      { return shift->SUPER::new(@_, {'tags' => {}, 'equiv' =>{}} ); }
 sub add      { $_[0]{'tags'}{$_[1]} = $_[2]; }
 sub addequiv { $_[0]{'equiv'}{$_[1]} = $_[2]; }
 sub render   {
