@@ -106,7 +106,7 @@ sub _draw_karyotype {
   $image->image_name = "blast-karyotype";
   $image->set_button('form', 'id'=>'vclick', 'URL'=>"/$species/jump_to_location_view");
   my $pointers = [\%all_hits, \%top_hit];
-  $image->karyotype( $object, $pointers, $config_name );
+  $image->karyotype( $self->model, $pointers, $config_name );
 
   return $image->render;
 }
