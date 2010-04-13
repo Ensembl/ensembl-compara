@@ -1,23 +1,10 @@
 package EnsEMBL::Web::Object::Marker;
 
-### NAME: EnsEMBL::Web::Object::Marker
-### Wrapper around a Bio::EnsEMBL::Marker object  
-
-### PLUGGABLE: Yes, using Proxy::Object 
-
-### STATUS: At Risk
-### It is not clear if this module is in use any more, though its
-### functionality may be worth reviving!
-
-### DESCRIPTION
-
-
 use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
-our @ISA = qw(EnsEMBL::Web::Object);
+use base qw(EnsEMBL::Web::Object);
 
 sub marker { 
   my $self = shift;
@@ -108,6 +95,14 @@ sub _seq_region_ {
   return @{$self->{'_region_array_'}};
 }
 
+sub location_string {
+  my( $type, $sr,$st,$en) = $_[0]->_seq_region_;
+  if( $type ) {
+    return "$sr:@{[$st-1000]}-@{[$en+1000]}";
+  } else {
+    return undef;
+  }
+}
 sub seq_region_type   { return [$_[0]->_seq_region_]->[0]; }
 sub seq_region_name   { return [$_[0]->_seq_region_]->[1]; }
 sub seq_region_start  { return [$_[0]->_seq_region_]->[2]; }
