@@ -27,11 +27,6 @@ sub object {
   return $self->{'data'}{'_dataObjects'} ? $self->{'data'}{'_dataObjects'}[0] : undef;
 }
 
-sub fastCreateObjects {
-  my $self = shift;
-  $self->createObjects(@_);
-}
-
 sub clearDataObjects {
   my $self = shift;
   $self->{'data'}{'_dataObjects'} = [];
