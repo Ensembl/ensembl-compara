@@ -61,7 +61,7 @@ warn "HERE........................ $gene";
       }
     }
     $image->set_button('drag');
-    $image->karyotype( $object, [\%high] );
+    $image->karyotype( $self->model, [\%high] );
     $html .= '<div style="margin-top:10px">'.$image->render.'</div>';
   }
 
