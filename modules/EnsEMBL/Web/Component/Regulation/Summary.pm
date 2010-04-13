@@ -25,7 +25,7 @@ sub content {
   );
 
 
-  my $url = $self->object->_url({
+  my $url = $self->model->hub->url({
     'type'   => 'Location',
     'action' => 'View',
     'r'      => $object->seq_region_name.':'.$object->bound_start.'-'.$object->bound_end

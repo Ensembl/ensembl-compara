@@ -50,7 +50,7 @@ sub content {
   $image->{'panel_number'} = 'chrom';
 
   my $script = $object->species_defs->NO_SEQUENCE ? 'Overview' : 'View';
-  $image->karyotype($object, undef, $config_name);
+  $image->karyotype($self->model, undef, $config_name);
   $image->caption = 'Click on the image above to zoom into that point';
   return $image->render;
 }
