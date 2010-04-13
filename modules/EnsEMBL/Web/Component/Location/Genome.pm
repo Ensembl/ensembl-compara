@@ -14,33 +14,37 @@ use base qw(EnsEMBL::Web::Component::Location);
 sub _init {
   my $self = shift;
   $self->cacheable(0);
-  $self->ajaxable(1);
+  $self->ajaxable(0);
   $self->configurable(1);
 }
 
 sub content {
   my $self = shift;
-  my $object = $self->object; 
-  my $species = $object->species;
+  my $hub = $self->model->hub;
+  my $species = $hub->species;
 
-  my ($html, $table);
+  my ($html, $table, $features, $has_features, @all_features);
   
-  my @features;
-  
-  if (my $id = $object->param('id')) { ## "FeatureView"
-    my $f_objects = $object->create_features; ## Now that there's no Feature factory, we create these on the fly
-    ## TODO: Should there be some generic object->hash functionality for use with drawing code?
-    @features = @{$object->retrieve_features($f_objects)};
-    if (@features) { $table = $self->feature_tables(\@features); }
+  if (my $id = $hub->param('id') || $hub->type eq 'LRG') { ## "FeatureView"
+    $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
+    $features = $self->model->munge_features_for_drawing;
+    if (keys %$features) { $table = $self->feature_tables($features); }
   } 
 
-  if ($object->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$object->species_defs->ENSEMBL_CHROMOSOMES}) && $object->species_defs->MAX_CHR_LENGTH) {
+  while (my ($type, $feature_set) = each (%$features)) {
+    if ($feature_set && @$feature_set) {
+      $has_features = 1;
+      push @all_features, @{$feature_set->[0]};
+    }
+  }
+
+  if ($hub->species_defs->ENSEMBL_CHROMOSOMES && scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES}) && $hub->species_defs->MAX_CHR_LENGTH) {
     ## Now check if we have any features mapped to chromosomes
-    my $draw_karyotype = @features ? 0 : 1;
+    my $draw_karyotype = $has_features ? 0 : 1;
     my $not_drawn;
-    my %chromosome = map { $_ => 1 } @{$object->species_defs->ENSEMBL_CHROMOSOMES};
-    
-    foreach (map @{$_->[0]}, @features) {
+    my %chromosome = map { $_ => 1 } @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
+   
+    foreach (@all_features) {
       if (ref($_) eq 'HASH' && $chromosome{$_->{'region'}}) {
         $draw_karyotype = 1;
       } else {
@@ -51,17 +55,6 @@ sub content {
     if ($draw_karyotype) {
       my $image    = $self->new_karyotype_image;
       my $pointers = [];
-
-      ## Form with hidden elements for click-through
-      my $config = $object->get_imageconfig('Vkaryotype');
-      my $hidden = {
-        'karyotype'   => 'yes',
-        'max_chr'     => $config->get_parameter('image_height'),
-        'margin'      => $config->get_parameter('top_margin'),
-        'chr'         => $object->seq_region_name,
-        'start'       => $object->seq_region_start,
-        'end'         => $object->seq_region_end,
-      };
 
       ## Deal with pointer colours
       my %used_colour;
@@ -76,12 +69,30 @@ sub content {
       );
 
       ## Do internal Ensembl data
-      if (@features) { ## "FeatureView"
-        my $text = @features > 1 ? 'Locations of features' : 'Location of feature';
-        my $data_type = $object->param('type');
+      if ($has_features) { ## "FeatureView"
+        my $data_type = $hub->param('ftype');
+        my $feature_names;
+        my %names = map {$_ => lc($_).'s'} keys %$features;
+        if (scalar keys %names == 2) {
+          $feature_names = join(' and ', sort values %names);  
+        }
+        else {
+          $feature_names = join(', ', sort values %names);  
+        }
+        my $text = "Locations of $feature_names associated with $data_type";
+        my @ids = ($hub->param('id'));
+        warn ">>> IDs @ids";
+        if (@ids) {
+          if (@ids > 1) {
+            $text .= 's '.join(', ', @ids);
+          }
+          else {
+            $text .= ' '.$ids[0];
+        }
+      }
         
-      if ($object->param('ftype') eq 'Phenotype'){
-        my $phenotype_name = $object->param('phenotype_name');
+      if ($hub->param('ftype') eq 'Phenotype'){
+        my $phenotype_name = $hub->param('phenotype_name');
         $text = "Location of variants associated with phenotype $phenotype_name:";        
       }        
 
@@ -90,13 +101,13 @@ sub content {
                 
         $image->image_name = "feature-$species";
         $image->imagemap = 'yes';
-        
-        foreach my $set  (@features) {
+       
+        while (my ($feat_type, $set) = each (%$features)) { 
           my $defaults = $pointer_default{$set->[2]};
-          my $pointer_ref = $image->add_pointers($object, {
+          my $pointer_ref = $image->add_pointers($hub, {
             'config_name'   => 'Vkaryotype',
             'features'      => $set->[0],
-            'feature_type'  => $set->[2],
+            'feature_type'  => $feat_type,
             'color'         => $defaults->[0],
             'style'         => $defaults->[1],
           });
@@ -128,26 +139,23 @@ sub content {
       $image->set_button('drag', 'title' => 'Click on a chromosome' );
       $image->caption = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
       $image->imagemap = 'yes';
-      $image->karyotype( $object, $pointers, 'Vkaryotype' );
+      $image->karyotype( $self->model, $pointers, 'Vkaryotype' );
 
       $html .= $image->render;      
-      if($object->param('ftype') eq 'Phenotype')    #making colour scale for pointers
-      {
+      if($hub->param('ftype') eq 'Phenotype') {   #making colour scale for pointers
         $html .= '<br /><b>Colour Scale:</b><br />';
-        my @colour_scale = $config->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red');  #making an array of the colour scale to make the scale
+        my @colour_scale; # = $config->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red');  #making an array of the colour scale to make the scale
 
-        foreach my $colour (@colour_scale)
-        {      
+        foreach my $colour (@colour_scale) {      
           $html .= qq{<div style='border-style:solid;border-width:2px;float:left;width:20px;height:20px;background:#$colour'></div>};
         }
         $html .= '<br /><div style="clear:both"></div><span style="font-size:12px">1.0<div style="display: inline;  margin-left: 100px;"></div>3.0<div style="display: inline;  margin-left: 55px;"></div>4.0<div style="display: inline;  margin-left: 60px;"></div>5.0<div style="display: inline;  margin-left: 100px;"></div>7.0<div style="display: inline;  margin-left: 130px;"></div>9.0<div style="display: inline;  margin-left: 140px;"></div>>10.0</span><br />(Least Significant P Value) <div style="display: inline;  margin-left: 420px;"></div> (Most Significant P Value)<br /><br />';
       }
-
     }
     
     if ($not_drawn) {
       my $plural = $not_drawn > 1 ? 's' : '';
-      $not_drawn = 'These' if $not_drawn == @features;
+      $not_drawn = 'These' if $not_drawn == @all_features;
       my $message = $draw_karyotype ? 'therefore have not been drawn' : 'therefore the karyotype has not been drawn';
       $html .= $self->_info( 'Undrawn features', "<p>$not_drawn feature$plural do not map to chromosomal coordinates and $message.</p>" );
     }
@@ -158,27 +166,29 @@ sub content {
   if ($table) {
     $html .= $table;
   } else {
-    my $file = '/ssi/species/stats_'.$object->species.'.html';
+    my $file = '/ssi/species/stats_'.$hub->species.'.html';
     $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
     
   }
-
   return $html;
 }
 
 sub feature_tables {
   my $self = shift;
   my $feature_dets = shift;
-  my $object = $self->object;
-  my $data_type = $object->param('ftype');  
+  my $hub = $self->model->hub;
+  my $data_type = $hub->param('ftype');  
   my $html;
   my @tables;  
  
-  foreach my $feature_set (@{$feature_dets}) {
+  while (my($feat_type, $feature_set) = each (%$feature_dets)) {
     my $features = $feature_set->[0];
-    
     my $extra_columns = $feature_set->[1];
-    my $feat_type = $feature_set->[2];   
+
+    if ($hub->type eq 'LRG') {
+      my @sorted = sort {$a->{'number'} <=> $b->{'number'}} @$features;
+      $features = \@sorted;
+    }
  
     # could show only gene links for xrefs, but probably not what is wanted:
     # next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
@@ -188,7 +198,7 @@ sub feature_tables {
       : 'Feature Information:';
 
     if ($feat_type eq 'Domain'){
-      my $domain_id = $object->param('id');
+      my $domain_id = $hub->param('id');
       my $feature_count = scalar @$features;
       $data_type = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
     }
@@ -231,7 +241,7 @@ sub feature_tables {
       if ($row->{'region'}) {
         $contig_link = sprintf(
           '<a href="%s/Location/View?r=%s:%d-%d;h=%s">%s:%d-%d(%d)</a>',
-          $object->species_path,
+          $hub->species_defs->species_path,
           $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'label'},          
           $row->{'region'}, $row->{'start'}, $row->{'end'},
           $row->{'strand'}
@@ -243,7 +253,7 @@ sub feature_tables {
           
           $names = sprintf(
             '<a href="%s/%s/Summary?%s=%s;r=%s:%d-%d">%s</a>',
-            $object->species_path, $feat_type, $t, $row->{'label'},
+            $hub->species_defs->species_path, $feat_type, $t, $row->{'label'},
             $row->{'region'}, $row->{'start'}, $row->{'end'},
             $row->{'label'}
           );
@@ -255,13 +265,13 @@ sub feature_tables {
           if ($feat_type !~ /align|RegulatoryFactor|ProbeFeature/i && $row->{'label'}) {
             $names = sprintf(
               '<a href="%s/Gene/Summary?g=%s;r=%s:%d-%d">%s</a>',
-              $object->species_path, $row->{'label'},
+              $hub->species_defs->species_path, $row->{'label'},
               $row->{'region'}, $row->{'start'}, $row->{'end'},
               $row->{'label'}
             );            
           } 
           if ($feat_type =~ /Variation/i && $row->{'label'}) {            
-            my $species_path = $object->species_path;
+            my $species_path = $hub->species_defs->species_path;
             
             #setting phenotype variation track on 
             my $track = qq{contigviewbottom=variation_set_Phenotype-associated variations=normal};
@@ -301,7 +311,7 @@ sub feature_tables {
   }
   
   if (!$html) {
-    my $id = $object->param('id');
+    my $id = $hub->param('id');
     $html .= qq(<br /><br />No mapping of $id found<br /><br />);
   }
   
