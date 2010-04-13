@@ -22,8 +22,6 @@ use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
 
-our $MEMD = new EnsEMBL::Web::Cache;
-
 sub _filename {
   my $self = shift;
   my $name = sprintf '%s-gene-%d-%s-%s',
@@ -35,100 +33,9 @@ sub _filename {
   return $name;
 }
 
-sub availability {
-  my $self = shift;
-  
-  if (!$self->{'_availability'}) {
-    my $availability = $self->_availability;
-    my $obj = $self->Obj;
-    
-    if ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
-      $availability->{'history'} = 1;
-    } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
-      my $counts      = $self->counts;
-      my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-      my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
-      my $compara_db  = $self->database('compara');
-      my $gene_tree   = $self->get_ProteinTree;
-      my $res         = 0;
-      my $has_gene_tree;
-      
-      if ($gene_tree) {
-        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
-      }
-      
-      if ($compara_db) {
-        ($res) = $compara_db->get_MemberAdaptor->dbc->db_handle->selectrow_array(
-          'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->stable_id
-        );
-      }
-      
-      $availability->{'history'}       = !!$rows;
-      $availability->{'gene'}          = 1;
-      $availability->{'core'}          = $self->get_db eq 'core';
-      $availability->{'alt_allele'}    = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
-      $availability->{'regulation'}    = !!$funcgen_res; 
-      $availability->{'family'}        = !!$res;
-      $availability->{'has_gene_tree'} = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
-      $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
-    } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
-      $availability->{'family'} = 1;
-    }
-  
-    $self->{'_availability'} = $availability;
-  }
-  
-  return $self->{'_availability'};
-}
-
 sub analysis {
   my $self = shift;
   return $self->Obj->analysis;
-}
-
-sub counts {
-  my $self = shift;
-  my $obj = $self->Obj;
-
-  return {} unless $obj->isa('Bio::EnsEMBL::Gene');
-  
-  my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $self->species, $self->hub->core_param('db'), $self->hub->core_param('g');
-  my $counts = $self->{'_counts'};
-  $counts ||= $MEMD->get($key) if $MEMD;
-  
-  if (!$counts) {
-    $counts = {
-      transcripts        => scalar @{$obj->get_all_Transcripts},
-      exons              => scalar @{$obj->get_all_Exons},
-      similarity_matches => $self->count_xrefs
-    };
-    
-    my $compara_db = $self->database('compara');
-    
-    if ($compara_db) {
-      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-      
-      if ($compara_dbh) {
-        $counts = {%$counts, %{$self->count_homologues($compara_dbh)}};
-      
-        my ($res) = $compara_dbh->selectrow_array(
-          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
-          {}, $obj->stable_id
-        );
-        
-        $counts->{'families'} = $res;
-      }
-      
-      $counts->{'alignments'} = $self->count_alignments->{'all'} if $self->get_db eq 'core';
-    }
-    
-    $counts = {%$counts, %{$self->_counts}};
-
-    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
-    $self->{'_counts'} = $counts;
-  }
-  
-  return $counts;
 }
 
 sub count_homologues {

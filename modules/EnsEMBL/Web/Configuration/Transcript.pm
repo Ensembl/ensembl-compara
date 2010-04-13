@@ -206,5 +206,100 @@ sub user_populate_tree {
   }
 }
 
+sub short_caption {
+  my $self = shift;
+  my $transcript = $self->model->object('Transcript');
+  return 'Transcript-based displays';
+}
+
+sub caption {
+  my $self = shift;
+  my $transcript = $self->model->object('Transcript');
+  my ($disp_id) = $transcript->display_xref;
+  my $caption = $self->model->hub->species_defs->translate('Transcript') . ': ';
+  if ($disp_id) {
+    $caption .= "$disp_id (" . $transcript->stable_id . ")";
+  } else {
+    $caption .= $transcript->stable_id;
+  }
+  return $caption;
+}
+
+sub availability {
+  my $self = shift;
+  my $hub = $self->model->hub;
+  my $transcript = $self->model->object('Transcript');
+
+  if (!$self->{'_availability'}) {
+    my $availability = $self->default_availability;
+    my $obj = $transcript->Obj;
+
+    if ($obj->isa('EnsEMBL::Web::Fake')) {
+      $availability->{$self->feature_type} = 1;
+    } elsif ($obj->isa('Bio::EnsEMBL::ArchiveStableId')) {
+      $availability->{'history'} = 1;
+      my $trans_id = $hub->param('p') || $hub->param('protein');
+      my $trans = scalar @{$obj->get_all_translation_archive_ids};
+      $availability->{'history_protein'} = 1 if $trans_id || $trans >= 1;
+    } elsif( $obj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
+      $availability->{'either'} = 1;
+    } else {
+      my $counts = $self->counts;
+      my $rows   = $transcript->table_info($transcript->get_db, 'stable_id_event')->{'rows'};
+
+      $availability->{'history'}         = !!$rows;
+      $availability->{'history_protein'} = !!$rows;
+      $availability->{'core'}            = $transcript->get_db eq 'core';
+      $availability->{'either'}          = 1;      
+      $availability->{'transcript'}      = 1;
+      $availability->{'domain'}          = 1;
+      $availability->{'translation'}     = !!$obj->translation;
+      $availability->{'strains'}         = !!$hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} if $hub->species_defs->databases->{'DATABASE_VARIATION'};
+      $availability->{'history_protein'} = 0 unless $transcript->translation_object;
+      $availability->{'has_variations'}  = $counts->{'prot_variations'};
+      $availability->{'has_domains'}     = $counts->{'prot_domains'};
+      $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos go);
+    }
+    $self->{'_availability'} = $availability;
+  }
+  return $self->{'_availability'};
+}
+
+sub counts {
+  my $self = shift;
+  my $hub = $self->model->hub;
+  my $sd = $hub->species_defs;
+  my $transcript = $self->model->object('Transcript');
+
+  my $key = sprintf(
+    '::COUNTS::TRANSCRIPT::%s::%s::%s::', 
+    $hub->species, 
+    $hub->core_param('db'), 
+    $hub->core_param('t')
+  );
+  
+  my $counts = $self->{'_counts'};
+  $counts ||= $hub->cache->get($key) if $hub->cache;
+
+  if (!$counts) {
+    return unless $self->model->raw_object('Transcript')->isa('Bio::EnsEMBL::Transcript');
+
+    $counts = {
+      exons              => scalar @{$transcript->Obj->get_all_Exons},
+      evidence           => $transcript->count_supporting_evidence,
+      similarity_matches => $transcript->count_similarity_matches,
+      oligos             => $transcript->count_oligos,
+      prot_domains       => $transcript->count_prot_domains,
+      prot_variations    => $transcript->count_prot_variations,
+      go                 => $transcript->count_go,
+      %{$self->_counts}
+    };
+
+    $hub->cache->set($key, $counts, undef, 'COUNTS') if $hub->cache;
+    $self->{'_counts'} = $counts;
+  }
+  return $counts;
+}
+
 1;
 

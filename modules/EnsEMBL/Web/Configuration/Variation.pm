@@ -29,6 +29,155 @@ sub set_default_action {
   }
 }
 
+sub availability {
+  my $self = shift;
+  my $hub = $self->model->hub;
+
+  if (!$self->{'_availability'}) {
+    my $availability = $self->default_availability;
+    my $var = $self->model->raw_object('Variation');;
+
+    if ($var->isa('Bio::EnsEMBL::Variation::Variation')) {
+      my $counts = $self->counts;
+
+      if ($var->failed_description) {
+        $availability->{'unmapped'} = 1;
+      } else {
+        $availability->{'variation'} = 1;
+      }
+
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments);
+    }
+
+    $self->{'_availability'} = $availability;
+  }
+
+  return $self->{'_availability'};
+}
+
+sub counts {
+  my $self = shift;
+  my $hub = $self->model->hub;
+  my $var = $self->model->raw_object('Variation');;
+
+  return {} unless $var->isa('Bio::EnsEMBL::Variation::Variation');
+  my $key = '::Counts::Variation::'.
+            $hub->species           .'::'.
+            $hub->core_param('vdb') .'::'.
+            $hub->core_param('v')   .'::';
+
+  my $counts = $self->{'_counts'};
+  $counts ||= $hub->cache->get($key) if $hub->cache;
+
+  unless ($counts) {
+    $counts = {};
+    $counts->{'transcripts'} = $self->count_transcripts;
+    $counts->{'populations'} = $self->count_populations;
+    $counts->{'individuals'} = $self->count_individuals;
+    $counts->{'ega'}         = $self->count_ega;
+    $counts->{'alignments'}  = $self->count_alignments->{'multi'};
+
+    $hub->cache->set($key, $counts, undef, 'COUNTS') if $hub->cache;
+    $self->{'_counts'} = $counts;
+  }
+
+  return $counts;
+}
+
+sub count_ega {
+  my $self = shift;
+  my @ega_links = @{$self->model->object('Variation')->get_external_data};
+  my $counts = scalar @ega_links || 0;
+  return $counts;
+}
+
+sub count_transcripts {
+  my $self = shift;
+  my %mappings = %{ $self->model->object('Variation')->variation_feature_mapping };
+  my $counts = 0;
+
+  foreach my $varif_id (keys %mappings) {
+    next unless ($varif_id  eq $self->model->hub->param('vf'));
+    my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
+    $counts = scalar @transcript_variation_data;
+  }
+
+  return $counts;
+}
+
+sub count_populations {
+  my $self = shift;
+  my $counts = scalar(keys %{$self->model->object('Variation')->freqs}) || 0;
+  return $counts;
+}
+
+sub count_individuals {
+  my $self = shift;
+  my $dbh  = $self->model->hub->database('variation')->get_VariationAdaptor->dbc->db_handle;
+  my $var  = $self->model->raw_object('Variation');
+  
+  my ($multibp_samples) = $dbh->selectrow_array('
+    select count(distinct sample_id)
+    from individual_genotype_multiple_bp
+    where variation_id=?',
+    {}, $var->dbID
+  );
+
+  return $multibp_samples if $multibp_samples;
+
+  my %sample_ids_for_variation;
+
+  foreach my $vf (@{$var->get_all_VariationFeatures}) {
+    my ($seq_region_id, $snp_pos) = ($vf->slice->get_seq_region_id, $vf->seq_region_start);
+
+    # grab data from compressed genotype table
+    # genotypes column consists of "triples" of the alleles followed by a 2-byte gap to the next snp
+    my $data = $dbh->selectall_arrayref('
+      select sample_id, seq_region_id, seq_region_start, seq_region_end, seq_region_strand, genotypes
+      from compressed_genotype_single_bp
+      where seq_region_id = ? and seq_region_start <= ? and seq_region_end >= ? and seq_region_start >= ?',
+      {}, $seq_region_id, $snp_pos, $snp_pos, $snp_pos - 1e5
+    );
+
+    foreach my $row (@$data) {
+      my ($sample_id, $x, $slice_start, $slice_end, $st, $genotypes) = @$row;
+      my @genotypes = unpack '(aan)*', $genotypes;
+      my $pos = $slice_start;
+      
+      while (my ($a1, $a2, $gap) = splice @genotypes, 0, 3) {
+        next if $gap == -1; # '2 snps in same location' so can skip rest of loop - don't think this works as ffff == 65535 not -1!
+
+        if ($pos == $snp_pos) {
+          $sample_ids_for_variation{$sample_id} = 1;
+          last; # We can skip out of this now don't need to walk along data anymore
+        }
+
+        $pos += $gap + 1;
+      }
+    }
+  }
+
+  return scalar keys %sample_ids_for_variation;
+}
+
+sub short_caption {
+  my $self = shift;
+  my $label = $self->model->object('Variation')->name;
+  if( length($label)>30) {
+    return "Var: $label";
+  } else {
+    return "Variation: $label";
+  }
+}
+
+sub caption {
+ my $self = shift; 
+ my $caption = 'Variation: '.$self->model->object('Variation')->name;
+
+ return $caption;
+}
+
+
 sub populate_tree {
   my $self = shift;
 

@@ -29,33 +29,6 @@ sub _filename {
   return $name;
 }
 
-sub short_caption {
-  my $self = shift;
-  return "Regulation-based displays";
-}
-
-sub caption {
-  my $self = shift;
-  my $caption = 'Regulatory Feature: '. $self->Obj->stable_id;
-  return $caption;    
-}
-
-sub availability {
-  my $self = shift;
-  my $hash = $self->_availability;
-  if ($self->Obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature')){
-    $hash->{'regulation'} =1;
-  }
-  return $hash;
-}
-
-sub counts {
-  my $self = shift;
-  my $obj = $self->Obj;
-  return {} unless $obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
-  return {};  
-}
-
 sub _adaptor {
   my $self = shift;
   return $self->database('funcgen')->get_RegulatoryFeatureAdaptor;

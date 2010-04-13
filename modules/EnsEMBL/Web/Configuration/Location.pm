@@ -10,63 +10,175 @@ sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub configurator   { return $_[0]->_configurator;   }
-sub context_panel  { return $_[0]->_context_panel;  }
-
-sub set_default_action {
-  my $self = shift;
-  
-  if (!ref $self->object) {
-    $self->{'_data'}->{'default'} = 'Genome';
-    return;
-  }
-  
-  my $x = $self->object->availability || {};
-  
-  if ($x->{'slice'}) {
-    $self->{'_data'}->{'default'} = 'View';
-  } elsif ($x->{'chromosome'}) {
-    $self->{'_data'}->{'default'} = 'Chromosome';
-  } else {
-    $self->{'_data'}->{'default'} = 'Genome';
-  }
-}
 
 sub context_panel {
   my $self   = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
   
-  if ($object->action eq 'Multi') {
+  if (!$self->object) {
+    return undef;
+  } 
+  elsif ($hub->action eq 'Multi') {
     my $panel  = $self->new_panel('Summary',
       'code'    => 'summary_panel',
-      'object'  => $object,
-      'caption' => $object->caption
+      'object'  => $self->model->object,
+      'caption' => $self->caption
     );
     
     $panel->add_component('summary' => 'EnsEMBL::Web::Component::Location::MultiIdeogram');
     $self->add_panel($panel);
-  } else {
+  }
+  else {
     $self->_context_panel;
   }
 }
 
+sub set_default_action {
+  my $self = shift;
+  
+  if (!$self->object) {
+    $self->{'_data'}->{'default'} = 'Genome';
+    return;
+  }
+  
+  my $avail = $self->availability || {};
+  
+  if ($avail->{'slice'}) {
+    $self->{'_data'}->{'default'} = 'View';
+  } 
+  elsif ($avail->{'chromosome'}) {
+    $self->{'_data'}->{'default'} = 'Chromosome';
+  } 
+  else {
+    $self->{'_data'}->{'default'} = 'Genome';
+  }
+}
+
+sub short_caption {
+  my $self = shift;
+  return 'Location-based displays';
+}
+
+sub caption {
+  my $self = shift;
+  my $location = $self->model->object('Location');
+  if ($location) {
+    return $location->neat_sr_name($location->seq_region_type, $location->seq_region_name)
+        .': '.$location->thousandify($location->seq_region_start)
+        .'-'.$location->thousandify($location->seq_region_end);
+  }
+  else {
+    return '';
+  }
+}
+
+
+sub availability {
+  my $self = shift;
+  my $hub = $self->model->hub;
+
+  if (!$self->{'_availability'}) {
+    my $availability    = $self->default_availability;
+
+    my ($rows, $marker_rows, $seq_region_name, $counts);
+
+    ## Only available on specific regions (e.g. not whole genome)
+    my $location = $self->model->object('Location');
+    if ($location) {
+      $rows             = $location->table_info($location->get_db, 'stable_id_event')->{'rows'};
+      $marker_rows      = $location->table_info($location->get_db, 'marker_feature')->{'rows'};
+      $seq_region_name  = $self->model->raw_object('Location')->{'seq_region_name'};
+      $counts                   = $location->counts;
+      $availability->{"has_$_"} = $counts->{$_} for qw(alignments pairwise_alignments);
+    }
+
+    ## Applicable to all location-based pages
+    my $species_defs    = $hub->species_defs;
+    my $variation_db    = $species_defs->databases->{'DATABASE_VARIATION'};
+    my @chromosomes     = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
+    my %chrs            = map { $_, 1 } @chromosomes;
+    my %synteny_hash    = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+
+    $availability->{'karyotype'}       = 1;
+    $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
+    $availability->{'has_chromosomes'} = scalar @chromosomes;
+    $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
+    $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $hub->core_param('r');
+    $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
+    $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
+    $availability->{'has_markers'}     = ($hub->param('m') || $hub->param('r')) && $marker_rows;
+
+    $self->{'_availability'} = $availability;
+  }
+
+  return $self->{'_availability'};
+}
+
+sub counts {
+  my $self = shift;
+  my $hub = $self->model->hub;
+
+  my $key = '::COUNTS::LOCATION::' . $hub->species;
+  my $counts = $self->{'_counts'};
+  $counts ||= $hub->cache->get($key) if $hub->cache;
+
+  if (!$counts) {
+    my %synteny = $hub->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my $alignments = $self->count_alignments;
+
+    $counts = {
+      synteny             => scalar keys %{$synteny{$hub->species}||{}},
+      alignments          => $alignments->{'all'},
+      pairwise_alignments => $alignments->{'pairwise'}
+    };
+
+    $counts->{'reseq_strains'} = $hub->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $hub->species_defs->databases->{'DATABASE_VARIATION'};
+
+    $counts = {%$counts, %{$self->_counts}};
+
+    $hub->cache->set($key, $counts, undef, 'COUNTS') if $hub->cache;
+    $self->{'_counts'} = $counts;
+  }
+
+  return $counts;
+}
+
+sub short_caption {
+  my $self = shift;
+  return 'Location-based displays';
+
+}
+
+sub caption {
+  my $self = shift;
+  my $location = $self->model->object('Location');
+  return "Karyotype" unless $location->seq_region_name;
+
+  return $location->neat_sr_name($location->seq_region_type,$location->seq_region_name)
+          .': '.$self->thousandify($location->seq_region_start)
+          .'-'.$self->thousandify($location->seq_region_end);
+}
+
+
 sub modify_tree {
   my $self = shift;
-  my $object = $self->object;
-  my $availability = $object->availability;
+  my $location = $self->model->object('Location');
+  my $availability = $self->availability;
+  my $hub = $self->model->hub;
   
   # Links to external browsers - UCSC, NCBI, etc
-  my %browsers = %{$object->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
-  $browsers{'UCSC_DB'} = $object->species_defs->UCSC_GOLDEN_PATH;
-  $browsers{'NCBI_DB'} = $object->species_defs->NCBI_GOLDEN_PATH;
+  my %browsers = %{$hub->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
+  $browsers{'UCSC_DB'} = $hub->species_defs->UCSC_GOLDEN_PATH;
+  $browsers{'NCBI_DB'} = $hub->species_defs->NCBI_GOLDEN_PATH;
   
   my $url;
   my $browser_menu = $self->create_submenu('OtherBrowsers', 'Other genome browsers');
   
   if ($browsers{'UCSC_DB'}) {
-    if ($object->seq_region_name) {
-      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    if ($location && $location->seq_region_name) {
+      $url = $hub->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $location->seq_region_name, 'START' => int($location->seq_region_start), 'END' => int($location->seq_region_end) });
     } else {
-      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => '1', 'START' => '1', 'END' => '1000000' });
+      $url = $hub->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => '1', 'START' => '1', 'END' => '1000000' });
     }
     
     $browser_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
@@ -75,10 +187,10 @@ sub modify_tree {
   }
   
   if ($browsers{'NCBI_DB'}) {
-    if ($object->seq_region_name) { 
-      $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    if ($location && $location->seq_region_name) { 
+      $url = $hub->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $location->seq_region_name, 'START' => int($location->seq_region_start), 'END' => int($location->seq_region_end) });
     } else {
-      my $taxid = $object->species_defs->get_config($object->species, 'TAXONOMY_ID'); 
+      my $taxid = $hub->species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
       $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
     }
     
@@ -90,19 +202,17 @@ sub modify_tree {
   foreach (sort keys %browsers) {
     next unless $browsers{$_};
     
-    $url = $object->get_ExtURL($_, { 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    $url = $hub->get_ExtURL($_, { 'CHR' => $location->seq_region_name, 'START' => int($location->seq_region_start), 'END' => int($location->seq_region_end) });
     $browser_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
   }
 }
 
 sub populate_tree {
   my $self = shift;
-  my $object = $self->object;
-  my $availability = $object->availability;
   
   $self->create_node('Genome', 'Whole genome',
     [qw( genome EnsEMBL::Web::Component::Location::Genome )],
-    { 'availability' => 'karyotype'},
+    { 'availability' => 1},
   );
 
   $self->create_node('Chromosome', 'Chromosome summary',
@@ -200,7 +310,7 @@ sub populate_tree {
   $self->create_node('Marker', 'Markers',
     [qw(
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
-      marker EnsEMBL::Web::Component::Location::MarkerDetails
+      marker EnsEMBL::Web::Component::Location::Markers
     )],
     { 'availability' => 'slice|marker has_markers' }
   );
