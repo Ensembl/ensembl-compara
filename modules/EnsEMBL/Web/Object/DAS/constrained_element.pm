@@ -71,6 +71,8 @@ sub Features {
           my $constrained_elements = $constrained_element_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice( $mlss, $slice);
 
           foreach my $feature ( @{$constrained_elements || []} ) {
+	    $feature->start($feature->start + $segment->slice->start - 1);
+	    $feature->end($feature->end + $segment->slice->start - 1);
             $self->_feature( $feature, $type );
           }
         }
