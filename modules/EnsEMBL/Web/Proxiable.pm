@@ -47,7 +47,6 @@ sub __data            { return $_[0]->{'data'}; }
 sub __objecttype      { return $_[0]->{'data'}{'_objecttype'}; }
 sub parent            { return $_[0]->hub->parent; }
 sub apache_handle     { return $_[0]->{'data'}{'_apache_handle'}; }
-sub core_objects      { return $_[0]->{'data'}{'_core_objects'}; }
 sub hub               { return $_[0]->{'data'}{'_hub'}; }
 sub type              { return $_[0]->{'data'}{'_type'}; }
 sub action            { return $_[0]->{'data'}{'_action'};  }
@@ -214,54 +213,38 @@ sub database {
   }
 }
 
+##---------- BACKWARDS COMPATIBILITY - WRAPPERS AROUND HUB METHODS -------------
+
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig  {
-  my ($self, $key) = @_;
-  my $session = $self->get_session || return;
-  my $T = $session->getImageConfig($key); # No second parameter - this isn't cached
-  $T->_set_core($self->core_objects);
-  return $T;
+  my $self = shift;
+  return $self->hub->get_imageconfig(@_);
 }
 
 # Retuns a copy of the script config stored in the database with the given key
 sub image_config_hash {
-  my ($self, $key, $type, @species) = @_;
-
-  $type ||= $key;
-  
-  my $session = $self->get_session;
-  return undef unless $session;
-  my $T = $session->getImageConfig($type, $key, @species);
-  return unless $T;
-  $T->_set_core($self->core_objects);
-  return $T;
+  my $self = shift;
+  return $self->hub->image_config_hash(@_);
 }
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
 sub get_viewconfig {
-  my ($self, $type, $action) = @_;
-  my $session = $self->get_session;
-  
-  return undef unless $session;
-  
-  return $session->getViewConfig($type || $self->type, $action || $self->action);
+  my $self = shift;
+  return $self->hub->get_viewconfig(@_);
 }
 
 # Store default viewconfig so we don't have to keep getting it from session
 sub viewconfig {
   my $self = shift;
-  $self->__data->{'_viewconfig'} ||= $self->get_viewconfig;
-  return $self->__data->{'_viewconfig'};
+  return $self->hub->viewconfig(@_);
 }
 
 sub attach_image_config {
-  my ($self, $key, $image_key) = @_;
-  my $session = $self->get_session;
-  return undef unless $session;
-  my $T = $session->attachImageConfig($key, $image_key);
-  $T->_set_core($self->core_objects);
-  return $T;
+  my $self = shift;
+  return $self->hub->viewconfig(@_);
 }
+
+##---------------------------------------------------------------
 
 sub get_ExtURL {
   my $self = shift;
