@@ -155,7 +155,7 @@ sub block_features_zmenu {
   my $pos = $f->slice->seq_region_name .":". ($offset + $f->start )."-".($f->end+$offset);
   my $feature_set = $f->feature_set->name;
 
-  my $id = $self->{'config'}->core_objects->regulation->stable_id;
+  my $id = $self->{'config'}->core_info->{'Regulation'}{'stable_id'};
   my $href = $self->_url
   ({
     'action'  => 'FeatureEvidence',

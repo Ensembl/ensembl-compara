@@ -17,7 +17,7 @@ sub features {
 
   my @T2;
 
-
+  eval {
   warn join ' * ', 'SLICE', $slice->seq_region_name, $slice->start, $slice->end;
   foreach my $lrg_name (@{$self->species_defs->LRG_REGIONS || []}) {
       my $lrg =$slice->adaptor->fetch_by_region( undef, $lrg_name) || next;
@@ -35,8 +35,9 @@ sub features {
 
 
   }
+};
 
-#  warn "LRG C : ", scalar(@T2), "\n";
+  warn "LRG C : ", scalar(@T2), "\n";
   return \@T2;
 
   return \@T;

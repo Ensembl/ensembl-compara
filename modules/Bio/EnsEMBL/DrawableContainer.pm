@@ -215,11 +215,11 @@ sub new {
           # Add a header showing the region being exported
           if (!$self->{'export'}) {
             my $container = $glyphset->{'container'};
-            my $core = $self->{'config'}->core_objects;
+            my $core      = $self->{'config'}->core_info;
             
             $self->{'export'} .= sprintf("Region:     %s\r\n", $container->name) if $container->can('name');
-            $self->{'export'} .= sprintf("Gene:       %s\r\n", $core->long_caption('gene')) if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
-            $self->{'export'} .= sprintf("Transcript: %s\r\n", $core->long_caption('transcript')) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
+            $self->{'export'} .= sprintf("Gene:       %s\r\n", $core->{'gene'}{'long_caption'}) if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
+            $self->{'export'} .= sprintf("Transcript: %s\r\n", $core->{'transcript'}{'long_caption'}) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
             $self->{'export'} .= sprintf("Protein:    %s\r\n", $container->stable_id) if $container->isa('Bio::EnsEMBL::Translation');
             $self->{'export'} .= "\r\n";
           }

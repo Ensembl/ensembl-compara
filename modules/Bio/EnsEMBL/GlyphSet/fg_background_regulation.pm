@@ -8,16 +8,17 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
   my ($self) = @_;  
+  warn "DOING BACKGROUND SHADING";
   my $Config = $self->{'config'};
   my $slice = $self->{'container'}; 
-  my $target_feature_id = $self->{'config'}->core_objects->regulation->stable_id;  
+  my $target_feature_id = $self->{'config'}->core_info->{'Regulation'}{'stable_id'};  
   my $strand = $self->strand;
   my $colour = 'wheat';
   my $x = 10;
   my $width = 40;
   my $pix_per_bp = $Config->transform->{'scalex'};
 
-  return unless  $Config->get_parameter('opt_highlight') eq 'yes';
+  #return unless  $Config->get_parameter('opt_highlight') eq 'yes';
 
   my $fg_db = undef; ;
   my $db_type  = $self->my_config('db_type')||'funcgen';
@@ -36,7 +37,8 @@ sub _init {
     $x = $f->start;
     $width = $f->end - $f->start ;
   }
-   
+  
+  warn ">>> WIDTH $width"; 
   my $glyph = $self->Rect({
     x => $x,
     y => 0,
