@@ -13,13 +13,7 @@ sub content {
  
   return unless $object->param('rf'); 
   
-  my $reg_obj;
-  
-  if ($object->type eq 'Regulation') { 
-    $reg_obj = $object;
-  } else {
-    $reg_obj = $self->new_object('Regulation', $object->core_objects->regulation, $object->__data);   
-  }
+  my $reg_obj = $self->model->object('Regulation');
   
   $self->caption('Regulatory Feature');
   
