@@ -441,6 +441,20 @@ sub jsonify {
   return to_json($content);
 }
 
+sub new_bio_object {
+## Create a simple wrapper around an API object 
+## (or a generic wrapper if not implemented)
+  my ($self, $type, $api_object, $hub) = @_;
+  my $class = 'EnsEMBL::Web::Data::Bio::'.$type;
+  if (!$self->dynamic_use($class)) {
+    require EnsEMBL::Web::Data::Bio;
+    return EnsEMBL::Web::Data::Bio->new($hub, $api_object);
+  }
+  else {
+    return $class->new($hub, $api_object);
+  }
+}
+
 sub new_object {
   my ($self, $module, $api_object) = @_;
   my $data = $self->deepcopy($_[-1]) || {};
