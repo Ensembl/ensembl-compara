@@ -17,14 +17,19 @@ no warnings qw(uninitialized);
 use base qw(EnsEMBL::Web::Data);
 
 sub _init {
-  my ($self, $api_object) = @_;
-  $self->data_object($api_object);
+  my $self = shift;
+  $self->data_objects(@_);
 }
 
 sub convert_to_drawing_parameters {
 ### Stub - individual object types probably need to implement this separately
   my $self = shift;
   return [];
+}
+
+sub coord_systems {
+  my $self = shift;
+  return [map { $_->name } @{ $self->hub->database('core')->get_CoordSystemAdaptor()->fetch_all() }];
 }
 
 1;
