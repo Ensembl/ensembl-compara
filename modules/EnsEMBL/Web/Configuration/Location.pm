@@ -88,7 +88,7 @@ sub availability {
       $rows             = $location->table_info($location->get_db, 'stable_id_event')->{'rows'};
       $marker_rows      = $location->table_info($location->get_db, 'marker_feature')->{'rows'};
       $seq_region_name  = $self->model->raw_object('Location')->{'seq_region_name'};
-      $counts                   = $location->counts;
+      $counts                   = $self->counts;
       $availability->{"has_$_"} = $counts->{$_} for qw(alignments pairwise_alignments);
     }
 
