@@ -424,7 +424,7 @@ CREATE TABLE subset_member (
 );
 
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'analysis'
 --
@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
 ) COLLATE=latin1_swedish_ci;
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'peptide_align_feature'
 --
@@ -535,8 +535,7 @@ CREATE TABLE peptide_align_feature (
 #  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 #  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
-  PRIMARY KEY (peptide_align_feature_id),
-  KEY hmember_hit (hmember_id, hit_rank) 
+  PRIMARY KEY (peptide_align_feature_id)
 
 #  KEY qmember_id  (qmember_id),
 #  KEY hmember_id  (hmember_id),
@@ -553,7 +552,7 @@ CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(40),
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','UBRH','BRH','MBRH','RHS'),
+  description                 ENUM('ortholog_one2one','apparent_ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','putative_gene_split','contiguous_gene_split','between_species_paralog','possible_ortholog','UBRH','BRH','MBRH','RHS'),
   subtype                     varchar(40) NOT NULL DEFAULT '',
   dn                          float(10,5),
   ds                          float(10,5),
@@ -716,7 +715,7 @@ CREATE TABLE constrained_element (
   KEY mlssid_dfId_idx (method_link_species_set_id,dnafrag_id)
 ) COLLATE=latin1_swedish_ci;
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_node'
 --
@@ -757,7 +756,7 @@ CREATE TABLE nc_tree_node LIKE protein_tree_node;
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_member'
 --
@@ -796,7 +795,7 @@ CREATE TABLE nc_tree_member LIKE protein_tree_member;
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_member_score'
 --
@@ -828,7 +827,7 @@ CREATE TABLE protein_tree_member_score (
 ) COLLATE=latin1_swedish_ci;
 
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_tag'
 --
@@ -870,7 +869,7 @@ CREATE TABLE nc_profile (
 --   This table holds the few big super protein tree alignments that are then broken down.
 CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
 
--- ------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_stable_id'
 --
@@ -891,7 +890,7 @@ CREATE TABLE protein_tree_stable_id (
 );
 
 
--- ------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 --
 -- Table structure for table 'mapping_session'
 --
@@ -911,7 +910,7 @@ CREATE TABLE mapping_session (
 );
 
 
--- ------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 --
 -- Table structure for table 'stable_id_history'
 --
@@ -983,7 +982,7 @@ CREATE TABLE sitewise_aln (
 ) COLLATE=latin1_swedish_ci;
 
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'lr_index_offset'
 --
@@ -1002,7 +1001,7 @@ CREATE TABLE lr_index_offset (
 	PRIMARY KEY (table_name)
 ) COLLATE=latin1_swedish_ci;
 
--- ----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 --
 -- Table structure for table 'protein_tree_hmmprofile'
 --
