@@ -32,6 +32,27 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 # FETCH methods
 ###########################
 
+=head2 fetch_all
+
+  Arg[1]     : [optional] int clusterset_id (def. 1)
+  Example    : $all_trees = $proteintree_adaptor->fetch_all(1);
+
+  Description: Fetches from the database all the protein trees
+  Returntype : arrayref of Bio::EnsEMBL::Compara::NestedSet
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub fetch_all {
+  my ($self, $clusterset_id) = @_;
+  $clusterset_id = 1 if ! defined $clusterset_id;
+  my $table = $self->tables->[0]->[1];
+  my $constraint = "WHERE ${table}.node_id = ${table}.root_id and ${table}.clusterset_id = ${clusterset_id}";
+  my $nodes = $self->_generic_fetch($constraint);
+  return $nodes;
+}
+
 =head2 fetch_by_Member_root_id
 
   Arg[1]     : Bio::EnsEMBL::Compara::Member
