@@ -376,8 +376,9 @@ sub parse_results {
 sub get_best_score_in_all_frames {
     my ($seq1, $seq2, $matrix) = @_;
     
-    my @aa_seq1_6fr = Bio::SeqUtils->translate_6frames($seq1);
-    my @aa_seq2_6fr = Bio::SeqUtils->translate_6frames($seq2);
+    #Using our fixed version of this
+    my @aa_seq1_6fr = _translate_6frames($seq1);
+    my @aa_seq2_6fr = _translate_6frames($seq2);
     
     my $score;
     my $perc_id = 0;
@@ -426,6 +427,22 @@ sub get_best_score_in_all_frames {
     }
     
     return ($score, $perc_id, $frame);
+}
+
+#Taken from BioPerl since the 1.2.3 version incorrectly lets Bio::PrimarySeq
+#decide what the reversed complemented sequence is; we know it's the same
+#type therefore it stays as the same type
+sub _translate_6frames {
+  my ($seq, @args) = @_;    
+  my @seqs = Bio::SeqUtils->translate_3frames($seq, @args);
+  $seq->seq($seq->revcom->seq, $seq->alphabet());
+  my @seqs2 = Bio::SeqUtils->translate_3frames($seq, @args);
+  foreach my $seq2 (@seqs2) {
+    my ($tmp) = $seq2->id;
+    $tmp =~ s/F$/R/g;
+    $seq2->id($tmp);
+  }
+  return @seqs, @seqs2;
 }
 
 
