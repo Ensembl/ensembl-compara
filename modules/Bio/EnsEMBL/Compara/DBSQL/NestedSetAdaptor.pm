@@ -44,7 +44,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 =cut
 
 sub fetch_all {
-  my ($self, $node_id) = @_;
+  my ($self) = @_;
 
   my $table = $self->tables->[0]->[1];
   my $constraint = "WHERE $table.node_id = $table.root_id";
@@ -454,6 +454,7 @@ sub init_instance_from_rowhash {
   $node->left_index            ($rowhash->{'left_index'});
   $node->right_index           ($rowhash->{'right_index'});
   $node->distance_to_parent    ($rowhash->{'distance_to_parent'});
+  $node->clusterset_id         ($rowhash->{'clusterset_id'}) if defined $rowhash->{'clusterset_id'};
 
   return $node;
 }
