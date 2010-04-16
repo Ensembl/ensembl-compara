@@ -1,25 +1,38 @@
 package EnsEMBL::Web::Factory::Feature;
 
 ### NAME: EnsEMBL::Web::Factory::Feature
-### Creates a hash of API objects
+### Creates a hash of API objects to be displayed on a karyotype or chromosome
 
 ### STATUS: Under development
 
 ### DESCRIPTION:
+### This factory creates data for "featureview", i.e. a display of data over a 
+### large region such as a whole chromosome or even the entire genome. 
+### Unlike most Factories it does not create  a single domain object but a hash i
+### of key-value pairs, e.g.:
+### {'Gene' => Data::Bio::Gene, 'ProbeFeature' => Data::Bio::ProbeFeature};
 
 use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use EnsEMBL::Web::Data::Bio::Slice;
 use EnsEMBL::Web::Data::Bio::Gene;
 use EnsEMBL::Web::Data::Bio::Transcript;
 use EnsEMBL::Web::Data::Bio::Variation;
 use EnsEMBL::Web::Data::Bio::ProbeFeature;
 use EnsEMBL::Web::Data::Bio::AlignFeature;
+use EnsEMBL::Web::Data::Bio::RegulatoryFeature;
+use EnsEMBL::Web::Data::Bio::Xref;
 
 use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects {  
+### Identifies the type of API object(s) required, based on CGI parameters,
+### and calls the relevant helper method to create them.
+### Arguments: None
+### Returns: undef (data is put into Factory->DataObjects, from where it can
+### be retrieved by the Model)
   my $self = shift;
   my $hub = $self->hub;
   my $features = {};
@@ -61,7 +74,9 @@ sub createObjects {
 }
 
 sub _create_Domain {
-### Fetches all the genes for a domain
+### Fetches all the genes for a given domain
+### Args: db
+### Returns: hashref of API objects
   my ($self, $db) = @_;
   my $id  = $self->hub->param('id');
   my $dbc = $self->hub->database($db);
@@ -73,6 +88,8 @@ sub _create_Domain {
 
 sub _create_Phenotype {
 ### Fetches all the variation features associated with a phenotype
+### Args: db 
+### Returns: hashref of API objects
   my ($self, $db) = @_; 
   my $slice;
   my $features;
@@ -91,23 +108,30 @@ sub _create_Phenotype {
 }
 
 sub _create_ProbeFeature {
-  # get Oligo hits plus corresponding genes
+### Fetches Oligo hits plus corresponding transcripts
+### Args: db, subtype (string)
+### Returns: hashref of API objects
+  my ($self, $db, $subtype)  = @_;
   my $probe;
-  if ( $_[2] eq 'pset'){
-    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] );
+  if ( $subtype && $subtype eq 'pset'){
+    $probe = $self->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $db );
   } else {
-    $probe = $_[0]->_create_ProbeFeatures_by_probe_id;
+    $probe = $self->_create_ProbeFeatures_by_probe_id;
   }
   #my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
-  my $probe_trans = $_[0]->_create_ProbeFeatures_linked_transcripts($_[2]);
-  my $features = {'ProbeFeature' => EnsEMBL::Web::Data::Bio::ProbeFeature->new($_[0]->hub, @$probe)};
+  my $probe_trans = $self->_create_ProbeFeatures_linked_transcripts($subtype);
+  my $features = {'ProbeFeature' => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe)};
   if ($probe_trans) {
-    $features->{'Transcript'} = EnsEMBL::Web::Data::Bio::Transcript->new($_[0]->hub, @$probe_trans);
+    $features->{'Transcript'} = EnsEMBL::Web::Data::Bio::Transcript->new($self->hub, @$probe_trans);
   }
   return $features;
 }
 
 sub _create_ProbeFeatures_by_probe_id {
+### Helper method called by _create_ProbeFeature
+### Fetches the probe features for a given probe id
+### Args: none
+### Returns: arrayref of Bio::EnsEMBL::ProbeFeature objects
   my $self = shift;
   my $db_adaptor = $self->_get_funcgen_db_adaptor; 
   my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;  
@@ -119,6 +143,10 @@ sub _create_ProbeFeatures_by_probe_id {
 }
 
 sub _create_ProbeFeatures_linked_transcripts {
+### Helper method called by _create_ProbeFeature
+### Fetches the transcript(s) linked to a probeset
+### Args: $ptype (string)
+### Returns: arrayref of Bio::EnsEMBL::Transcript objects
   my ($self, $ptype)  = @_;
   my $db_adaptor = $self->_get_funcgen_db_adaptor;
   my (@probe_objs, @transcripts, %seen );
@@ -148,6 +176,9 @@ sub _create_ProbeFeatures_linked_transcripts {
 }
 
 sub _get_funcgen_db_adaptor {
+### Helper method used by _create_ProbeFeatures_linked_transcripts
+### Args: none
+### Returns: database adaptor
   my $self = shift;
   my $hub = $self->hub;
   my $db = $hub->param('db');
@@ -161,6 +192,9 @@ sub _get_funcgen_db_adaptor {
 }
 
 sub _get_core_adaptor {
+### Helper method used by _create_ProbeFeatures_linked_transcripts
+### Args: none
+### Returns: database adaptor
   my $self = shift;
   my $db_adaptor  = $self->hub->database('core');
   unless( $db_adaptor ){
@@ -171,27 +205,27 @@ sub _get_core_adaptor {
 }
 
 sub _create_DnaAlignFeature {
-  my ($self, $args) = @_;
-  warn "@@@ CREATING DNA ALIGN FEATURES";
-  my $daf = $self->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $args);
-  warn ">> DAF = ".@$daf;
+### Fetches all the DnaAlignFeatures with a given ID, and associated genes
+### Args: db
+### Returns: hashref of API objects
+  my ($self, $db) = @_;
+  my $daf = $self->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $db);
   my $features = {'DnaAlignFeature' => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$daf)};
-  warn ">>> FEATURES $features";
-  my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $args, undef, 'no_errors' );
+  my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, undef, 'no_errors' );
   if ($genes) {
     $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
   }
-  while (my($k,$v) = each (%$features)) {
-    warn ">>> $k = $v";
-  } 
   return $features;
 }
 
 sub _create_ProteinAlignFeature {
-  my ($self, $args) = @_;
-  my $paf = $self->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $args);
+### Fetches all the DnaAlignFeatures with a given ID, and associated genes
+### Args: db
+### Returns: hashref of API objects
+  my ($self, $db) = @_;
+  my $paf = $self->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $db);
   my $features = {'ProteinAlignFeature' => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$paf)};
-  my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $args, undef, 'no_errors' );
+  my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, undef, 'no_errors' );
   if ($genes) {
     $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
   }
@@ -217,34 +251,39 @@ sub create_UserDataFeature {
       push @$features, @$F;
     }
   }
-  return $features;
+  return {'UserDataAlignFeature' => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$features)};
 }
 
 sub _create_Gene {
+### Fetches all the genes for a given identifier (usually only one, but could be multiple
+### Args: db
+### Returns: hashref containing a Data::Bio::Gene object
   my ($self, $db) = @_;
+  my $genes;
   if ($self->param('id') =~ /^ENS/) {
-    return {'Gene' => $self->_generic_create( 'Gene', 'fetch_by_stable_id', $db ) };
+    $genes = $self->_generic_create( 'Gene', 'fetch_by_stable_id', $db );
   }
   else {
-    return {'Gene' => $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db ) };
+    $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db );
   }
+  return {'Gene' => EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes)};
 }
 
-# For a Regulatory Factor ID display all the RegulatoryFeatures
 sub _create_RegulatoryFactor {
+### Fetches all the regulatory features for a given regulatory factor ID 
+### Args: db, id (optional)
+### Returns: hashref containing a Data::Bio::RegulatoryFeature object
   my ( $self, $db, $id ) = @_;
 
-  if (!$id ) {$id = $self->param('id'); }
-  my $analysis = $self->param('analysis');
+  if (!$id ) {$id = $self->hub->param('id'); }
+  my $analysis = $self->hub->param('analysis');
 
-  my $db_type  = 'funcgen';
-  my $efg_db = $self->database(lc($db_type));
+  my $efg_db = $self->hub->database('funcgen');
   if(!$efg_db) {
-     warn("Cannot connect to $db_type db");
-     return [];
+     warn("Cannot connect to funcgen db");
+     return undef;
   }
-  my $features;
-  my $feats = ();
+  my $features = [];
 
   my %fset_types = (
    "cisRED group motif" => "cisRED motifs",
@@ -256,11 +295,10 @@ sub _create_RegulatoryFactor {
   if ($analysis eq 'RegulatoryRegion'){
     my $regfeat_adaptor = $efg_db->get_RegulatoryFeatureAdaptor;
     my $feature = $regfeat_adaptor->fetch_by_stable_id($id);
-    push (@$feats, $feature);
-    $features = {'RegulatoryFactor'=> $feats};
-
-  } else {
-    if ($self->param('dbid')){
+    $features = [$feature]; 
+  } 
+  else {
+    if ($self->hub->param('dbid')){
       my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
       my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));
       my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
@@ -268,32 +306,36 @@ sub _create_RegulatoryFactor {
       if (scalar @assoc_features ==0) {
          push @assoc_features, $feature;
       }
-      $features= {'RegulatoryFactor' => \@assoc_features};
-    } else {
+      $features = \@assoc_features;
+    } 
+    else {
       my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
       my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
       my $ftype = $feat_type_adaptor->fetch_by_name($id);
-      my @ftypes = ($ftype);
       my $type = $ftype->description;
       my $fstype = $fset_types{$type};
       my $fset = $feature_set_adaptor->fetch_by_name($fstype);
-      my @fsets = ($fstype);
-      my $feats = $fset->get_Features_by_FeatureType($ftype);
-      $features = {'RegulatoryFactor'=> $feats};
+      $features = $fset->get_Features_by_FeatureType($ftype);
     }
   }
 
-  return $features if $features && keys %$features; # Return if we have at least one feature
-  # We have no features so return an error....
-  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
-  return undef;
+  if (@$features) {
+    return {'RegulatoryFeature' => EnsEMBL::Web::Data::Bio::RegulatoryFeature->new($self->hub, @$features)}
+  }
+  else {
+    # We have no features so return an error....
+    $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
+    return undef;
+  }
 }
 
 sub _create_Xref {
-  # get OMIM hits plus corresponding Ensembl genes
+### Fetches Xrefs plus corresponding genes
+### Args: db, subtype (string)
+### Returns: hashref of API objects
   my ($self, $db, $subtype) = @_;
   my $t_features = [];
-  my ($xrefarray, $genes);
+  my ($xrefs, $genes);
 
   if ($subtype eq 'MIM') {
     my $mim_g = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_GENE'] );
@@ -304,15 +346,16 @@ sub _create_Xref {
     $t_features = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
   }
   if( $t_features && ref($t_features) eq 'ARRAY') {
-    ($xrefarray, $genes) = $self->_create_XrefArray($t_features, $db);
+    ($xrefs, $genes) = $self->_create_XrefArray($t_features, $db);
   }
 
-  my $features = {'Xref'=>$xrefarray};
-  $features->{'Gene'} = $genes if $genes;
+  my $features = {'Xref' => EnsEMBL::Web::Data::Bio::Xref->new($self->hub, @$xrefs)};
+  $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) if $genes;
   return $features;
 }
 
 sub _create_XrefArray {
+### Helper method used by _create_Xref
   my ($self, $t_features, $db) = @_;
   my (@features, @genes);
 
@@ -334,6 +377,9 @@ sub _create_XrefArray {
 }
 
 sub _create_LRG {
+### Fetches LRG region(s)
+### Args: none
+### Returns: hashref containing Bio::EnsEMBL::Slice objects
   my $self = shift;
   my $db_adaptor  = $self->hub->database('core');
   unless( $db_adaptor ){
@@ -351,10 +397,11 @@ sub _create_LRG {
   else {
     $slices = $adaptor->fetch_all('lrg');
   }
-  return {'Slice' => $slices};
+  return {'Slice' => EnsEMBL::Web::Data::Bio::Slice->new($self->hub, @$slices)};
 }
 
 sub _generic_create {
+### Helper method used by various _create_ methods to get API objects from the database
   my( $self, $object_type, $accessor, $db, $id, $flag ) = @_; 
   $db ||= 'core';
   if (!$id ) {
