@@ -22,7 +22,7 @@ sub set_default_action {
     return;
   }
   
-  my $x = $self->object->availability || {};
+  my $x = $self->availability || {};
   
   if ($x->{'gene'}) {
     $self->{'_data'}->{'default'} = 'Summary';
@@ -231,7 +231,6 @@ sub count_gene_supporting_evidence {
 
 sub populate_tree {
   my $self = shift;
-  my $availability = $self->object->availability;
   
   $self->create_node('Summary', 'Gene summary',
     [qw(

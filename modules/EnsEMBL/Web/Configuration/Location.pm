@@ -163,7 +163,6 @@ sub caption {
 sub modify_tree {
   my $self = shift;
   my $location = $self->model->object('Location');
-  my $availability = $self->availability;
   my $hub = $self->model->hub;
   
   # Links to external browsers - UCSC, NCBI, etc
