@@ -14,7 +14,7 @@ package EnsEMBL::Web::Builder;
 ### of having to poke around in various factories! 
 
 ### Note that Builder is only used on page startup - additional domain objects
-### can still be created on-the-fly by calling create_objects on the Model
+### can still be created on-the-fly by calling create_domain_object on the Model
 
 use strict;
 use warnings;
@@ -60,12 +60,12 @@ sub _chain_Location {
 
   ## Do we need to create any other objects?
   ## NEXT TAB
-  if (!$self->model->object('Gene') && $self->model->hub->param('g')) {
+  if (!$self->model->data('Gene') && $self->model->hub->param('g')) {
     $self->_generic_create('Gene', 'next');
   }
 
   ### Set coordinates in CGI parameters
-  my $location = $self->model->object('Location');
+  my $location = $self->model->data('Location');
   if ($location && $location->seq_region_name) {
     my $r = $location->seq_region_name;
     $r .= ':'.$location->seq_region_start if $location->seq_region_start;
@@ -82,8 +82,8 @@ sub _chain_Gene {
 
   ## Do we need to create any other objects?
   ## NEXT TAB
-  if (!$self->model->object('Transcript')) {
-    my $gene = $self->model->raw_object('Gene');
+  if (!$self->model->data('Transcript')) {
+    my $gene = $self->model->api_object('Gene');
     if ($gene) {
       my @transcripts = @{$gene->get_all_Transcripts};
       if (scalar @transcripts == 1) {
@@ -96,11 +96,11 @@ sub _chain_Gene {
       $self->_generic_create('Transcript', 'next');
     }
   }
-  elsif (!$self->model->object('Variation') && $self->model->hub->param('v')) {
+  elsif (!$self->model->data('Variation') && $self->model->hub->param('v')) {
     $self->_generic_create('Variation', 'next');
   }
   ## PREVIOUS TAB
-  unless ($self->model->object('Location')) {
+  unless ($self->model->data('Location')) {
     $problems = $self->_previous_tab_Location;
   }  
 
@@ -136,7 +136,7 @@ sub _chain_Variation {
   }
   else {
     ## Have come straight in on a Variation, so choose a location for it
-    my $var_obj = $self->model->object('Variation');
+    my $var_obj = $self->model->data('Variation');
     my $db_adaptor  = $self->model->hub->database('variation');
 
     my $vari_features = $db_adaptor->get_VariationFeatureAdaptor->fetch_all_by_Variation($var_obj->Obj);
@@ -172,13 +172,13 @@ sub _chain_Regulation {
   }
   else {
     my $coords = {};
-    my $object = $self->model->object;
+    my $data = $self->model->data;
     ## Create a location based on object coordinates
-    if ($object) {
+    if ($data) {
       $coords = {
-        'seq_region' => $object->seq_region_name,
-        'start'      => $object->seq_region_start,
-        'end'        => $object->seq_region_end,
+        'seq_region' => $data->seq_region_name,
+        'start'      => $data->seq_region_start,
+        'end'        => $data->seq_region_end,
       };
     }
     $self->_generic_create('Location', 'previous', $coords);
@@ -190,7 +190,7 @@ sub _chain_Regulation {
 sub _chain_Marker {
   my $self = shift;
   my $problems;
-  unless ($self->model->object('Location')) {
+  unless ($self->model->data('Location')) {
     $problems = $self->_previous_tab_Location;
     return $problems;
   }  
@@ -207,13 +207,13 @@ sub _previous_tab_Location {
 
   my $coords;
   if ($self->model->hub->type ne 'Location') {
-    my $object = $self->model->object;
+    my $data = $self->model->data;
     ## Create a location based on object coordinates
-    if ($object) {
+    if ($data) {
       $coords = {
-        'seq_region' => $object->seq_region_name,
-        'start'      => $object->seq_region_start,
-        'end'        => $object->seq_region_end,
+        'seq_region' => $data->seq_region_name,
+        'start'      => $data->seq_region_start,
+        'end'        => $data->seq_region_end,
       };
     }
   }
@@ -233,7 +233,7 @@ sub _previous_tab_Location {
 sub _create_tab {
   my $self = shift;
   my $type = shift;
-  my $object = $self->model->raw_object($type);
+  my $object = $self->model->api_object($type);
   return if $type ne 'Location' && !$object;
 
   ## Set some default values that can be overridden as needed
@@ -376,7 +376,7 @@ sub create_objects {
 ### and adds them to the Model. Note that the Builder does not contain
 ### any direct object creation code - this is encapsulated in the Model.
   my ($self, $type) = @_;
-  return if $self->model->object($type); ## No thanks, I've already got one!
+  return if $self->model->data($type); ## No thanks, I've already got one!
   my $problems;
   my %core_types = %{$self->core_types};
 
@@ -386,8 +386,8 @@ sub create_objects {
 
     ## Add any non-tab core objects (e.g. variation on Location/LD page)
     while (my($type, $param) = each (%core_types)) {
-      if ($self->model->hub->param($param) && !$self->model->object($type)) {
-        $problems = $self->model->create_objects($type);
+      if ($self->model->hub->param($param) && !$self->model->data($type)) {
+        $problems = $self->model->create_domain_object($type);
         my $tab_info = $self->_create_tab($type);
         $self->model->add_tab($tab_info);
       }
@@ -395,7 +395,7 @@ sub create_objects {
   }
   else {
     ## Not core, so just generate a single object
-    $problems = $self->model->create_objects($type);
+    $problems = $self->model->create_domain_object($type);
   } 
   return $problems;
 }
@@ -407,8 +407,8 @@ sub _generic_create {
   my $problem;
 
   ## Create this object unless it already exists
-  unless ($self->model->object($type)) {
-    $problem = $self->model->create_objects($type, @_);
+  unless ($self->model->data($type)) {
+    $problem = $self->model->create_domain_object($type, @_);
     if ($problem && $self->model->hub->has_fatal_problem) {
       return $problem;
     }

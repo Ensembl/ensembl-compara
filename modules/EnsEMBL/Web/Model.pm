@@ -12,17 +12,16 @@ package EnsEMBL::Web::Model;
 ### DESCRIPTION:
 ### Model is a container for domain objects such as Location, Gene, 
 ### and User plus a single helper module, Hub (see separate documentation).
-### Domain objects are stored as a hash of key-arrayref pairs, since 
-### theoretically a page can have more than one domain object of a 
-### given type.
+### Domain objects are stored as a hash of key-object pairs
 ### E.g.
-### $self->{'_objects'} = {
-###   'Location'  => [$x],
-###   'Gene'      => [$a, $b, $c],
-###   'UserData'  => [$bed, $gff],
+### $self->{'_data'} = {
+###   'Location'  => $x,
+###   'Gene'      => $y,
+###   'UserData'  => $gff,
 ### };
-### Note: Currently, most domain objects are Proxy::Object objects, but an
-### alternative implementation is under development 
+### Note: Currently, most domain objects are Proxy::Object objects (containing
+### a single API object), but an alternative implementation is under development 
+### which can contain multiple API objects in each domain object
 
 use strict;
 use warnings;
@@ -37,8 +36,8 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my ($class, $args) = @_;
   my $self = { 
-    '_objects'  => {}, 
-    '_tabs'     => [],
+    '_data' => {}, 
+    '_tabs' => [],
   };
 
   ## Create the hub - a mass of connections to databases, Apache, etc
@@ -55,9 +54,7 @@ sub new {
 }
 
 sub hub { return $_[0]->{'_hub'}; }
-sub all_objects { return $_[0]->{'_objects'}};
 sub tabs    :lvalue { $_[0]->{'_hub'}{'_tabs'}};
-
 
 sub add_tab {
   my ($self, $tab, $direction) = @_;
@@ -71,101 +68,79 @@ sub add_tab {
   $self->hub->add_tab($tab);
 }
 
-sub objects {
-### Getter/setter for domain objects - acts on the default data type 
-### for this page if none is specified
-### Returns an arrayref of objects of the appropriate type
-  my ($self, $type, $objects) = @_;
-  $type ||= $self->type;
-  if ($objects) {
-    my $m = $self->{'_objects'}{$type} || [];
-    my @a = ref($objects) eq 'ARRAY' ? @$objects : ($objects); 
-    push @$m, @a;
-    $self->{'_objects'}{$type} = $m;
+sub all_data {
+### Getter/setter for domain objects
+### Returns all the domain objects 
+  my ($self, $hash) = @_;
+  if ($hash) {
+    $self->{'_data'} = $hash;
   } 
-  return $self->{'_objects'}{$type};
+  return $self->{'_data'};
 }
 
-sub object {
+sub data {
 ### Getter/setter for data objects - acts on the default data type 
 ### for this page if none is specified
-### Returns a single object, or undef if there is more than one 
   my ($self, $type, $object) = @_;
   $type ||= $self->hub->type;
   if ($object) {
-    my $m = $self->{'_objects'}{$type} || [];
-    push @$m, $object; 
-    $self->{'_objects'}{$type} = $m;
+    $self->{'_data'}{$type} = $object;
   }
-  if ($self->{'_objects'}{$type} && scalar @{$self->{'_objects'}{$type}} == 1) {
-    return $self->{'_objects'}{$type}[0];
-  }
+  return $self->{'_data'}{$type};
 }
 
-sub raw_object {
-### returns the underlying object (mainly for API objects)
-  my ($self, $type) = @_;
-  my $object = $self->{'_objects'}{$type}[0];
+sub object {
+### Backwards compatibility - wrapper around 'data'
+  my $self = shift;
+  return $self->data(@_);
+}
+
+sub api_object {
+### returns the underlying API object(s)
+  my ($self, $type, $subtype) = @_;
+  my $object = $self->{'_data'}{$type};
   return unless $object;
   if ($type eq 'Location') {
     return $object->slice;
+  }
+  elsif ($type eq 'Feature') {
+    return $self->{'_data'}{'Feature'};
   }
   else {
     return $object->Obj;
   }
 }
 
-sub add_objects {
-### Adds domain objects created by the factory to this Model
-  my ($self, $type, $data) = @_;
-  return unless $data;
-  #warn ">>> DATA $data";
+sub all_features {
+### Direct access to Feature, which is a nested hash of
+### domain objects used to render point data on whole chromosomes
+### Returns a hash of key-arrayref pairs
+  my $self = shift;
+  return $self->{'_data'}{'Feature'};
+}
 
-  ### Proxy Object(s)
-  if (ref($data) eq 'ARRAY') {
-    foreach my $element (@$data) {
-      #warn ">>> ELEMENT $element";
-      if (ref($element) eq 'HASH') {
-      ## "FEATUREVIEW"
-        while (my ($key, $array) = each (%$element)) {
-          #warn ">>> KEY $key = $array";
-          foreach (@$array) {
-            #warn "... ".$_->Obj;
-            $self->object($key, $_);
-          }
-        }
-      }
-      else {
-        $self->object($type, $element);
-      }
-    }
-  }
-  ### Other object type
-  elsif (ref($data) eq 'HASH') {
-    while (my ($key, $object) = each (%$data)) {
-      if (ref($object) eq 'ARRAY') {
-        foreach (@$object) {
-          $self->object($key, $_);
-        }
-      }
-      else {
-        $self->object($key, $object);
-      }
-    }
-  }
+sub features_of_type {
+### Direct access to Feature, which is a nested hash of
+### domain objects used to render point data on whole chromosomes
+### Arg 1: type of features to return
+### Returns: arrayref of features of that type
+  my ($self, $type) = @_;
+  return unless $type;
+  return $self->{'_data'}{'Feature'}{$type};
 }
 
 sub create_data_object_of_type {
-  my ($self, $type, $args) = @_;
-  my $object;
+  my $self = shift;
+  my $type = shift || $self->hub->type;
+  my $data;
   my $class = 'EnsEMBL::Web::Data::'.$type;
   if ($self->dynamic_use($class)) {
-    $object = $class->new($self->hub, $args);
-    $self->object($object->type, $object) if $object;
+    $data = $class->new($self->hub, @_);
+    $self->data($type, $data) if $data;
   }
 }
 
-sub create_objects {  
+sub create_domain_object {  
   my ($self, $type, $params) = @_;
   
   my $hub     = $self->hub;
@@ -186,10 +161,13 @@ sub create_objects {
       # $hub->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
       if ($hub->has_a_problem) {
         $problem = $hub->handle_problem; 
-        warn "!!! OBJECT $type ".$problem->[0]->description;
       } 
       else {
-        $self->add_objects($type, $factory->DataObjects);
+        my $DO = $factory->DataObjects;
+        if (@$DO > 1) {
+          warn ">>> MULTIPLE DOMAIN OBJECTS OF TYPE $type";
+        }
+        $self->data($type, $DO->[0]);
       }
     }
   }
@@ -219,9 +197,9 @@ sub create_factory {
 sub core_param_strings {
   my $self = shift;
 
-  my $location     = $self->raw_object('Location');
-  my $gene         = $self->raw_object('Gene');
-  my $transcript   = $self->raw_object('Transcript');
+  my $location     = $self->api_object('Location');
+  my $gene         = $self->api_object('Gene');
+  my $transcript   = $self->api_object('Transcript');
   my $params       = [];
  
   push @$params, sprintf 'r=%s:%s-%s', $location->seq_region_name, $location->start, $location->end if $location;
@@ -236,25 +214,12 @@ sub munge_features_for_drawing {
 ### Converts full objects into simple data structures that can be used by the drawing code
   my ($self, $types) = @_;
   my $drawable_features = {};
+  my $stored_features = $self->{'_data'}{'Feature'};
 
-  unless ($types) {
-    my @keys = keys %{$self->{'_objects'}};
-    foreach (@keys) {
-      push @$types, $_ unless $_ eq 'Location';
-    }
-  }
-
-  foreach my $type (@$types) {
-    my $objects = $self->objects($type);
-    my $features = [];
-    next unless $objects && @$objects;
-    foreach my $object (@$objects) {
-      next unless $object;
-      my ($f, $columns) = $object->convert_to_drawing_parameters;
-      push @{$features->[0]}, $f;
-      $features->[1] = $columns;
-    }
-    $drawable_features->{$type} = $features;
+  while (my ($type, $domain_object) = each(%$stored_features)) {
+    next unless $domain_object;
+    my $parameters = $domain_object->convert_to_drawing_parameters;
+    $drawable_features->{$type} = $parameters;
   }
   return $drawable_features;
 }
