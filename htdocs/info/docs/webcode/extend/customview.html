@@ -1,19 +1,19 @@
 <html>
 <head>
-<title>Creating a custom dynamic page</title>
+<title>Creating a simple custom view</title>
 </head>
 
 <body>
 
-<h1>Custom Dynamic Pages</h1>
+<h1>Creating a simple custom view</h1>
 
-<p>Creating a dynamic page with shows a selection of data from one of the Ensembl databases is fairly straightforward.</p>
+<p>Creating a dynamic page which shows a selection of data from one of the Ensembl databases is fairly straightforward.</p>
 
 <h2>Creating the page</h2>
 
 <ol>
 <li>Create a directory in your plugin to contain your custom code. If you want to put your code in the mirror plugin, it should be<br /><kbd>public-plugins/mirror/modules/EnsEMBL/Mirror</kbd></li>
-<li>Decide on the URL for your new page. For example if you are basing your view around gene information, your URL might be <br />&lt;species&gt;/Gene/MyViewName</li>
+<li>Decide on the Action for your new page. For example if you are basing your view around gene information, your URL might be <br />&lt;species&gt;/Gene/MyViewName</li>
 <li>Create a module which will add this URL to the available views. In our example, <kbd>public-plugins/mirror/modules/EnsEMBL/Mirror/Configuration/Gene.pm</kbd> will extend the current set of gene-based displays:
 <pre class="code">
 package EnsEMBL::Mirror::Configuration::Gene;

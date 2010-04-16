@@ -1,22 +1,97 @@
 <html>
 <head>
-<title>Advanced Customization</title>
+<title>How a dynamic webpage is put together</title>
 </head>
 
 <body>
 
-<h1>Advanced Customization</h1>
+<h1>Dynamic (database-driven) web pages</h1>
 
-<p>This section covers the more technical aspects of customizing Ensembl, and is recommended for advanced Perl users only.</p>
+<p>Ensembl uses a complex structure of templating modules in order to create its pages. The 
+diagram below shows the process for constructing the human karyotype page; other dynamic pages
+are constructed in a similar manner..</p>
 
-<ul>
-<li><a href="dynamic.html">How a dynamic (database-driven) page is put together</a></li>
-<li><a href="customview.html">Creating a custom dynamic page</a></li>
-<li><a href="documentation.html">Documenting your code</a></li>
-<li><a href="debugging.html">Debugging and profiling your code</a></li>
-</ul>
+<pre>
+                             www.ensembl.org/Homo_sapiens/Location/Genome
+                                                |
+                                                V
+                                          Apache::Handlers
+                                                |
+                                                V
+                                         perl/default/action
+                                                |
+                                                V
+                                            E::W::Magic  
+                                                |
+                                    --------------------------------------------------------------
+                                    |                                        |                   | 
+                                    V                                        |                   V                   
+                              E::W::Controller                               |              E::W::Builder
+                                    |                                        |                   |     
+                      ---------------------------                            |                   |   
+                      |                         |                            |                   V       
+                      V                         V                            |         E::W::Factory::Location         
+            E::W::Document::Page   E::W::Configuration::Location             |                   |          
+                      |                         |                            |                   |
+        -------------------------------         |                            V                   V
+        |                             |         |                        E::W::Model &lt;----E::W::Object::Location 
+        V                             V         V                            |                     
+  template modules                 E::W::Document::Panel                     |                     
+(E::W::Document::HTML::Logo, etc)             |                              |                     
+                                              V                              |                     
+                                  dynamic content modules  &lt;------------------
+                              (E::W::Component::Location::Genome)  
+                                                                         
+</pre>                                     
 
-<p>For more information on how we use Apache and mod_perl, please see the section  on the underlying <a href="/info/docs/webcode/architecture/">code architecture</a>.</p>
+<dl>
+<dt>Apache::Handlers</dt>
+
+<dd>Analyses the URL and redirects to the appropriate script</dd>
+
+<dt>perl/default/action</dt>
+
+<dd>One of a number of lightweight wrapper scripts (others are 'modal', 'config', etc) which direct the request to an appropriate method within the Magic module</dd>
+
+<dt>Magic</dt>
+ 
+<dd>Principal Controller module, which instantiates the Model</dd>
+
+<dt>Controller</dt>
+
+<dd>Secondary Controller object, which instantiates the main View object (usually Page)</dd>
+
+<dt>Model</dt>
+
+<dd>Model module, containing zero or more domain objects plus a Hub - a holder object for all the database connections, CGI parameters, session data, etc. required by any dynamic page</dd>
+
+<dt>Builder</dt>
+
+<dd>Creates one or more domain objects which are passed back to the Model</dd>
+
+<dt>Document::Page</dt>
+
+<dd>The principal View object, which instantiates subordinate View objects</dd>
+
+<dt>template modules</dt>
+
+<dd>A series of more-or-less static modules which output HTML for various sections of the page template: logo, search box, footer, etc</dd>
+
+<dt>Configuration::Location</dt>
+
+<dd>Builds a tree of available pages for the current Location, from which the lefthand navigation menu is built. Also defines the set of components that belong to each page</dd>
+
+<dt>Document::Panel</dt>
+
+<dd>A "container" for a set of output modules</dd>
+
+<dt>Components (dynamic content modules)</dt>
+
+<dd>One or more modules attached to a Panel, each of which outputs a chunk of HTML and/or images</dd>
+</dl>
+
+<p style="margin-top:2em"><strong>Next</strong>: <a href="customview.html">Creating a simple custom page</a></p>
+
 
 </body>
 </html>
