@@ -87,8 +87,8 @@ sub availability {
     if ($location) {
       $rows             = $location->table_info($location->get_db, 'stable_id_event')->{'rows'};
       $marker_rows      = $location->table_info($location->get_db, 'marker_feature')->{'rows'};
-      $seq_region_name  = $self->model->raw_object('Location')->{'seq_region_name'};
-      $counts                   = $self->counts;
+      $seq_region_name  = $self->model->api_object('Location')->{'seq_region_name'};
+      $counts                   = $location->counts;
       $availability->{"has_$_"} = $counts->{$_} for qw(alignments pairwise_alignments);
     }
 
@@ -152,7 +152,7 @@ sub short_caption {
 sub caption {
   my $self = shift;
   my $location = $self->model->object('Location');
-  return "Karyotype" unless $location->seq_region_name;
+  return "Karyotype" unless $location && $location->seq_region_name;
 
   return $location->neat_sr_name($location->seq_region_type,$location->seq_region_name)
           .': '.$self->thousandify($location->seq_region_start)
