@@ -50,7 +50,7 @@ sub focus {
 
   my ( $info, $focus );
   if ( $obj->param('v') && $obj->param('focus')) {
-    my $snp = $model->raw_object('Variation'); 
+    my $snp = $model->api_object('Variation'); 
     my $name = $snp->name; 
     my $source = $snp->source;
     my $link_name  = $obj->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 

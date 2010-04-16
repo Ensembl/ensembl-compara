@@ -35,7 +35,7 @@ sub availability {
 
   if (!$self->{'_availability'}) {
     my $availability = $self->default_availability;
-    my $var = $self->model->raw_object('Variation');;
+    my $var = $self->model->api_object('Variation');;
 
     if ($var->isa('Bio::EnsEMBL::Variation::Variation')) {
       my $counts = $self->counts;
@@ -58,7 +58,7 @@ sub availability {
 sub counts {
   my $self = shift;
   my $hub = $self->model->hub;
-  my $var = $self->model->raw_object('Variation');;
+  my $var = $self->model->api_object('Variation');;
 
   return {} unless $var->isa('Bio::EnsEMBL::Variation::Variation');
   my $key = '::Counts::Variation::'.
@@ -114,7 +114,7 @@ sub count_populations {
 sub count_individuals {
   my $self = shift;
   my $dbh  = $self->model->hub->database('variation')->get_VariationAdaptor->dbc->db_handle;
-  my $var  = $self->model->raw_object('Variation');
+  my $var  = $self->model->api_object('Variation');
   
   my ($multibp_samples) = $dbh->selectrow_array('
     select count(distinct sample_id)

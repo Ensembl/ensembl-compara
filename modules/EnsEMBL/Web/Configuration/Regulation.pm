@@ -30,7 +30,7 @@ sub set_default_action {
 sub availability {
   my $self = shift;
   my $hash = $self->default_availability;
-  if ($self->model->raw_object('Regulation')->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature')){
+  if ($self->model->api_object('Regulation')->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature')){
     $hash->{'regulation'} =1;
   }
   return $hash;
@@ -38,7 +38,7 @@ sub availability {
 
 sub counts {
   my $self = shift;
-  my $obj = $self->model->raw_object('Regulation');
+  my $obj = $self->model->api_object('Regulation');
   return {} unless $obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
   return {};
 }

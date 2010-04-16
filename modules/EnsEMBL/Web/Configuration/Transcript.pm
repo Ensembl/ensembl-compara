@@ -282,7 +282,7 @@ sub counts {
   $counts ||= $hub->cache->get($key) if $hub->cache;
 
   if (!$counts) {
-    return unless $self->model->raw_object('Transcript')->isa('Bio::EnsEMBL::Transcript');
+    return unless $self->model->api_object('Transcript')->isa('Bio::EnsEMBL::Transcript');
 
     $counts = {
       exons              => scalar @{$transcript->Obj->get_all_Exons},

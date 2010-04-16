@@ -51,7 +51,7 @@ sub availability {
   if (!$self->{'_availability'}) {
     my $availability = $self->default_availability;
     my $gene = $self->model->object('Gene');
-    my $g = $self->model->raw_object('Gene');
+    my $g = $self->model->api_object('Gene');
 
     if ($g->isa('Bio::EnsEMBL::ArchiveStableId')) {
       $availability->{'history'} = 1;
@@ -97,7 +97,7 @@ sub counts {
   my $self = shift;
   my $hub = $self->model->hub;
   my $gene = $self->model->object('Gene');
-  my $g = $self->model->raw_object('Gene');
+  my $g = $self->model->api_object('Gene');
 
   return {} unless $g->isa('Bio::EnsEMBL::Gene');
 
@@ -155,7 +155,7 @@ sub count_homologues {
            mlss.method_link_species_set_id = h.method_link_species_set_id and
            ml.method_link_id = mlss.method_link_id and
            ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "between_species_paralog" )
-     group by description', {}, $self->model->raw_object('Gene')->stable_id
+     group by description', {}, $self->model->api_object('Gene')->stable_id
   );
 
   foreach (@$res) {
@@ -187,7 +187,7 @@ sub count_xrefs {
        AND g.gene_id = ?';
 
   my $sth = $dbc->prepare($sql);
-  $sth->execute($self->model->raw_object('Gene')->dbID);
+  $sth->execute($self->model->api_object('Gene')->dbID);
   while (my ($label,$db_name,$status) = $sth->fetchrow_array) {
     #these filters are taken directly from Component::_sort_similarity_links
     #code duplication needs removing, and some of these may well not be needed any more
@@ -209,7 +209,7 @@ sub count_gene_supporting_evidence {
   #count all supporting_features and transcript_supporting_features for the gene
   #- not used in the tree but keep the code just in case we change our minds again!
   my $self = shift;
-  my $g = $self->model->raw_object('Gene');
+  my $g = $self->model->api_object('Gene');
   my $o_type = $self->get_db;
   my $evi_count = 0;
   my %c;
