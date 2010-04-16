@@ -1,15 +1,21 @@
 package EnsEMBL::Web::Factory::Feature;
 
 ### NAME: EnsEMBL::Web::Factory::Feature
-### Creates an array of miscellaneous objects in a format suitable for passing to the drawing code
+### Creates a hash of API objects
 
-### STATUS: Stable
+### STATUS: Under development
 
 ### DESCRIPTION:
 
 use strict;
 use warnings;
 no warnings 'uninitialized';
+
+use EnsEMBL::Web::Data::Bio::Gene;
+use EnsEMBL::Web::Data::Bio::Transcript;
+use EnsEMBL::Web::Data::Bio::Variation;
+use EnsEMBL::Web::Data::Bio::ProbeFeature;
+use EnsEMBL::Web::Data::Bio::AlignFeature;
 
 use base qw(EnsEMBL::Web::Factory);
 
@@ -19,7 +25,7 @@ sub createObjects {
   my $features = {};
   my $feature_type;
 
-  my $db        = $hub->param('db')  || 'core';
+  my $db = $hub->param('db')  || 'core';
   my ($identifier, $fetch_call, $featureobj, $dataobject, $subtype);
 
   ## Are we inputting IDs or searching on a text term?
@@ -51,31 +57,7 @@ sub createObjects {
   }
   return unless $features && ref($features) eq 'HASH' && keys %$features;
 
-  ## Handle features a bit more sensibly than in old code!
-  ## i.e. create a hash that can be imported into Model as-is
-  my $data_objects = {};
-  my $core_types = $hub->core_types;
-  while (my ($type, $api_objects) = each (%$features)) {
-    foreach (@$api_objects) {
-      ## Create a new data object
-      my $data_object;
-      ## (Currently uses old-style objects for Gene, Transcript, etc)
-      if ($core_types->{$type}) { 
-        $data_object = $self->new_object($type, $_, $self->__data);
-      }
-      else {
-        $data_object = $self->new_bio_object($type, $_, $hub);
-      }
-      ## Now add it to the appropriate array
-      if ($data_objects->{$type}) {
-        push @{$data_objects->{$type}}, $data_object;
-      }
-      else {
-        $data_objects->{$type} = [$data_object];
-      }
-    }
-  }
-  $self->DataObjects($data_objects);
+  $self->DataObjects($features);
 }
 
 sub _create_Domain {
@@ -85,9 +67,8 @@ sub _create_Domain {
   my $dbc = $self->hub->database($db);
   my $a   = $dbc->get_adaptor('Gene');
   my $genes = $a->fetch_all_by_domain($id);
-  my %features = ('Gene' => $genes);
-
-  return \%features;
+  return unless $genes && ref($genes) eq 'ARRAY';
+  return {'Gene' => EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes)};
 }
 
 sub _create_Phenotype {
@@ -106,8 +87,7 @@ sub _create_Phenotype {
 
     push(@$array,@$array2) if (@$array2);
   }
-  $features = {'Variation' => $array};
-  return $features;
+  return {'Variation' => EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$array)};
 }
 
 sub _create_ProbeFeature {
@@ -120,9 +100,11 @@ sub _create_ProbeFeature {
   }
   #my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
   my $probe_trans = $_[0]->_create_ProbeFeatures_linked_transcripts($_[2]);
-  my %features = ('ProbeFeature' => $probe);
-  $features{'Transcript'} = $probe_trans if $probe_trans;
-  return \%features;
+  my $features = {'ProbeFeature' => EnsEMBL::Web::Data::Bio::ProbeFeature->new($_[0]->hub, @$probe)};
+  if ($probe_trans) {
+    $features->{'Transcript'} = EnsEMBL::Web::Data::Bio::Transcript->new($_[0]->hub, @$probe_trans);
+  }
+  return $features;
 }
 
 sub _create_ProbeFeatures_by_probe_id {
@@ -166,38 +148,53 @@ sub _create_ProbeFeatures_linked_transcripts {
 }
 
 sub _get_funcgen_db_adaptor {
-   my $self = shift;
-   my $db = $self->param('db');
-   if ($self->param('fdb')) { $db = $self->param('fdb');}
-   my $db_adaptor  = $self->database(lc($db));
-   unless( $db_adaptor ){
-     $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
-     return undef;
-   }
+  my $self = shift;
+  my $hub = $self->hub;
+  my $db = $hub->param('db');
+  if ($hub->param('fdb')) { $db = $hub->param('fdb');}
+  my $db_adaptor  = $self->database(lc($db));
+  unless( $db_adaptor ){
+    $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+    return undef;
+  }
   return $db_adaptor;
 }
 
 sub _get_core_adaptor {
-   my $self = shift;
-   my $db_adaptor  = $self->database('core');
-   unless( $db_adaptor ){
-     $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." );
-     return undef;
-   }
+  my $self = shift;
+  my $db_adaptor  = $self->hub->database('core');
+  unless( $db_adaptor ){
+    $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." );
+    return undef;
+  }
   return $db_adaptor;
 }
 
 sub _create_DnaAlignFeature {
-  my $features = {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
-  my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
-  $features->{'Gene'} = $genes if $genes;
+  my ($self, $args) = @_;
+  warn "@@@ CREATING DNA ALIGN FEATURES";
+  my $daf = $self->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $args);
+  warn ">> DAF = ".@$daf;
+  my $features = {'DnaAlignFeature' => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$daf)};
+  warn ">>> FEATURES $features";
+  my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $args, undef, 'no_errors' );
+  if ($genes) {
+    $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
+  }
+  while (my($k,$v) = each (%$features)) {
+    warn ">>> $k = $v";
+  } 
   return $features;
 }
 
 sub _create_ProteinAlignFeature {
-  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
-  my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
-  $features->{'Gene'} = $genes if $genes;
+  my ($self, $args) = @_;
+  my $paf = $self->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $args);
+  my $features = {'ProteinAlignFeature' => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$paf)};
+  my $genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $args, undef, 'no_errors' );
+  if ($genes) {
+    $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes);
+  }
   return $features;
 }
 
