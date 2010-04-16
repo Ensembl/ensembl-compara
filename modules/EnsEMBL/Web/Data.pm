@@ -20,9 +20,10 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
 ### c
-  my ($class, $hub, $args) = @_;
+  my $class = shift;
+  my $hub = shift;;
 
-  my $self = {'_hub'  => $hub};
+  my $self = {'_hub'  => $hub, '_data' => []};
 
   ## Set type automatically from class name
   my @A = split('::', $class);
@@ -30,7 +31,7 @@ sub new {
 
   bless $self, $class;
 
-  $self->_init($args);
+  $self->_init(@_);
 
   return $self;
 }
@@ -51,14 +52,11 @@ sub type  {
 
 sub _init {}
 
-sub data_object {
+sub data_objects {
 ### a
-  my ($self, $object) = @_;
-  if ($object) {
-    $self->{'_data_object'} = $object;
-  }
-  return $self->{'_data_object'};
+  my $self = shift;
+  push @{$self->{'_data'}}, @_;
+  return $self->{'_data'};
 }
-
 
 1;
