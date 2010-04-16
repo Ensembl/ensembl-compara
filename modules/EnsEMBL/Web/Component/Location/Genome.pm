@@ -26,7 +26,7 @@ sub content {
   my ($html, $table, $features, $has_features, @all_features);
   
   if (my $id = $hub->param('id') || $hub->type eq 'LRG') { ## "FeatureView"
-    $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
+    $self->model->create_domain_object('Feature'); ## For location pages, we create these on the fly
     $features = $self->model->munge_features_for_drawing;
     if (keys %$features) { $table = $self->feature_tables($features); }
   } 
@@ -56,6 +56,9 @@ sub content {
       my $image    = $self->new_karyotype_image;
       my $pointers = [];
 
+      ## Form with hidden elements for click-through
+      my $config = $hub->get_imageconfig('Vkaryotype');
+
       ## Deal with pointer colours
       my %used_colour;
       my %pointer_default = (
@@ -70,31 +73,38 @@ sub content {
 
       ## Do internal Ensembl data
       if ($has_features) { ## "FeatureView"
+        my $text = 'Locations of ';
         my $data_type = $hub->param('ftype');
         my $feature_names;
         my %names = map {$_ => lc($_).'s'} keys %$features;
-        if (scalar keys %names == 2) {
-          $feature_names = join(' and ', sort values %names);  
+        my @A = keys %names;
+        if (@A == 1 && $A[0] eq $data_type) {
+          $text .= $data_type;
         }
         else {
-          $feature_names = join(', ', sort values %names);  
+          if (scalar keys %names == 2) {
+            $feature_names = join(' and ', sort values %names);  
+          }
+          else {
+            $feature_names = join(', ', sort values %names);  
+          }
+          $text = "$feature_names associated with $data_type";
         }
-        my $text = "Locations of $feature_names associated with $data_type";
+
         my @ids = ($hub->param('id'));
-        warn ">>> IDs @ids";
         if (@ids) {
           if (@ids > 1) {
             $text .= 's '.join(', ', @ids);
           }
           else {
             $text .= ' '.$ids[0];
+          }
         }
-      }
         
-      if ($hub->param('ftype') eq 'Phenotype'){
-        my $phenotype_name = $hub->param('phenotype_name');
-        $text = "Location of variants associated with phenotype $phenotype_name:";        
-      }        
+        if ($hub->param('ftype') eq 'Phenotype'){
+          my $phenotype_name = $hub->param('phenotype_name') || $hub->param('id');
+          $text = "Location of variants associated with phenotype $phenotype_name:";        
+        }        
 
         $used_colour{$data_type}++;        
         $html = qq(<h2>$text</h2>);        
@@ -143,8 +153,9 @@ sub content {
 
       $html .= $image->render;      
       if($hub->param('ftype') eq 'Phenotype') {   #making colour scale for pointers
-        $html .= '<br /><b>Colour Scale:</b><br />';
-        my @colour_scale; # = $config->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red');  #making an array of the colour scale to make the scale
+        $html .= '<h3>Colour Scale:</h3>';
+        # making an array of the colour scale to make the scale
+        my @colour_scale = $config->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red');  
 
         foreach my $colour (@colour_scale) {      
           $html .= qq{<div style='border-style:solid;border-width:2px;float:left;width:20px;height:20px;background:#$colour'></div>};
