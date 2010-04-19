@@ -259,7 +259,7 @@ sub fetch_by_taxon_id {
   $sth->finish;
 
   my $return_count = scalar(@ids);
-	my $id;
+  my $id;
   if ($return_count ==0) {
     throw("No GenomeDB with this taxon_id [$taxon_id]");
   }
@@ -271,6 +271,55 @@ sub fetch_by_taxon_id {
   }
 
   return $self->fetch_by_dbID($id);
+}
+
+=head2 fetch_all_by_ancestral_taxon_id
+
+  Arg [1]    : int $ancestral_taxon_id
+  Arg [2]    : (optional) bool $default_assembly_only
+  Example    : $gdb = $gdba->fetch_by_taxon_id(1234);
+  Description: Retrieves all the genome dbs derived from that NCBI taxon_id.
+  Note       : This method uses the ncbi_taxa_node table
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
+  Exceptions : 
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub fetch_all_by_ancestral_taxon_id {
+  my ($self, $taxon_id, $default_assembly_only) = @_;
+
+  unless($taxon_id) {
+    throw('taxon_id argument is required');
+  }
+  my $all_genome_dbs = $self->fetch_all; # loads the cache
+
+  my $sth;
+
+  my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
+    WHERE ntn1.taxon_id = ? AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index
+    AND ntn2.taxon_id = gdb.taxon_id";
+  if ($default_assembly_only) {
+    $sql .= " AND gdb.default_assembly = 1";
+  }
+
+  $sth = $self->prepare($sql);
+  $sth->execute($taxon_id);
+  my $genome_db_id;
+  $sth->bind_columns(\$genome_db_id);
+
+  # Create a string of dbIDs separated by colons for quick search
+  my $genome_db_id_string = ":";
+  while ($sth->fetch) {
+    $genome_db_id_string .= $genome_db_id.":";
+  }
+  $sth->finish;
+
+  # Run the quick search
+  my $these_genome_dbs = [grep {index($genome_db_id_string, ":".$_->dbID.":") > -1} @$all_genome_dbs];
+  
+  return $these_genome_dbs;
 }
 
 =head2 fetch_by_core_DBAdaptor
