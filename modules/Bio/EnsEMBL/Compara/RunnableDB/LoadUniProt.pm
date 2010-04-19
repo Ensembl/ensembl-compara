@@ -38,8 +38,6 @@ supported keys:
   accession_number => 0/1 (default is 1=on)
        optional: if one wants to load Accession Number (AC) (DEFAULT) as 
        stable_id rather than Entry Name (ID) 
-  id_start_from => <numerical_id>
-        optional: start loading members from the given id (to create distinct ranges)
 
 =cut
 
@@ -129,10 +127,6 @@ sub run {
     my $index  = 0;
     my $loaded = 0;
   
-    if($self->param('id_start_from')) {
-        $self->set_id_auto_increment();
-    }
-
     foreach my $id (@$uniprot_ids) {
         $index++;
         print("checked/loaded $index ids so far\n") if($index % 100 == 0 and $self->debug);
@@ -303,24 +297,6 @@ sub store_bioseq {
         return 0;
     }
     return 1;
-}
-
-sub set_id_auto_increment { # increment the IDs of both member and sequence tables:
-    my $self = shift @_;
-
-    return if($self->param('auto_increment_been_here'));   # only perform this operation once
-
-    if(my $id_start_from = $self->param('id_start_from') ) {
-
-        for my $table_name ('member', 'sequence') {
-                # should not use the '?'-syntax here to avoid implicit quotation of numeric argument:
-            my $sql = "ALTER TABLE $table_name AUTO_INCREMENT=".($id_start_from+0);
-            my $sth = $self->compara_dba()->dbc->prepare( $sql );
-            $sth->execute();
-        }
-    }
-
-    $self->param('auto_increment_been_here', 1);    # so that we never come here again (for any reason)
 }
 
 sub parse_description {
