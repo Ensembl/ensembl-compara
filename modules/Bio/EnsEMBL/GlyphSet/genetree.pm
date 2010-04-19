@@ -49,7 +49,7 @@ sub _init {
   # Keep the collapsed nodes in the URL. This is icky!
   # I have mailed james to see if the arbitrary URL params can be included 
   # by default.
-  $self->{'config'}{_core}{'parameters'}{'collapse'} = $collapsed_nodes_str;
+  $self->{'config'}->core_info->{'parameters'}{'collapse'} = $collapsed_nodes_str;
 
   # $coloured_nodes is an array. It is sorted such as the largest clades
   # are used first. In case or a tie (i.e. all the genes are mammals and
@@ -286,7 +286,7 @@ sub _init {
         my $href = $self->_url( {'species' => $species,
                                  'type'    => 'Gene',
                                  'action'  => 'ComparaTree',
-                                 '__clear' => $stable_id != $self->{'config'}{_core}{'parameters'}{'g'}, 
+                                 '__clear' => $stable_id != $self->{'config'}->core_info->{'parameters'}{'g'}, 
                                  'r'       => undef,
                                  'g'       => $stable_id } );
         $txt->{'href'} = $href;
