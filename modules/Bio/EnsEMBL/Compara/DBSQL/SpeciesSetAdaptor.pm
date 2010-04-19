@@ -31,6 +31,96 @@ sub new {
   return $self;
 }
 
+
+=head2 store
+
+  Arg [1]     : Bio::EnsEMBL::Compara::SpeciesSet object
+  Example     : my $species_set = $species_set_adaptor->store($species_set);
+  Description : Stores the object in the database. Checks that all the
+                Bio::EnsEMBL::Compara::GenomeDB objects in the genome_dbs
+                array have a dbID. Assigns a species_set_id if the object hasn't
+                got one (this locks the table). Also stores the tags if any
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : thrown if a GenomeDB has no dbID
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub store {
+  my ($self, $species_set) = @_;
+
+  # First check all the GenomeDB objects
+  foreach my $genome_db (@{$species_set->genome_dbs}) {
+    throw if (!$genome_db->dbID);
+  }
+
+  # Check that the data do not exist already in the DB.
+  my $existing_species_set = $self->fetch_by_GenomeDBs($species_set->genome_dbs);
+  return $existing_species_set if ($existing_species_set);
+
+  # Check the species_set_id. Assign it if it doesn't exist
+  my $species_set_id = $species_set->dbID;
+  my $lock_tables = 0;
+  if (!$species_set_id) {
+    $lock_tables = 1;
+    $self->dbc->do("LOCK TABLES species_set WRITE");
+
+    my $sql = "SELECT MAX(species_set_id) FROM species_set";
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    $species_set_id = ($sth->fetchrow_array() or 0);
+    $species_set_id++;
+    $species_set->dbID($species_set_id);
+  }
+  throw if (!$species_set_id);
+
+  # Add the data into the DB
+  my $sql = qq{
+          INSERT INTO species_set(species_set_id,genome_db_id)
+          VALUES (?, ?)
+      };
+  my $sth = $self->prepare($sql);
+  foreach my $genome_db (@{$species_set->genome_dbs}) {
+    my $genome_db_id = $genome_db->dbID;
+#     print "$species_set_id, $genome_db_id\n";
+    $sth->execute($species_set_id, $genome_db_id);
+  }
+  $sth->finish();
+  
+  # Only unlock the table after adding the entries to make sure that not 2 threads try to use the species_set_id
+  if ($lock_tables) {
+    $self->dbc->do("UNLOCK TABLES");
+  }
+
+  # Add the tags if any
+  my $tag_value_hash = $species_set->get_tagvalue_hash();
+  if ($tag_value_hash) {
+    $sql = "INSERT INTO species_set_tag (species_set_id, tag, value) VALUES (?, ?, ?)";
+    $sth = $self->prepare($sql);
+    while (my ($tag, $value) = each %$tag_value_hash) {
+#     print "$species_set_id, $tag, $value\n";
+      $sth->execute($species_set_id, $tag, $value);
+    }
+    $sth->finish;
+  }
+
+  return $species_set;
+}
+
+
+=head2 fetch_by_dbID
+
+  Arg [1]     : int $species_set_id
+  Example     : my $species_set = $species_set_adaptor->fetch_by_dbID($species_set_id);
+  Description : Fetches the SpeciesSet object with that internal ID
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : None
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub fetch_by_dbID {
   my ($self, $dbID) = @_;
   my $species_set; # returned object
@@ -72,6 +162,21 @@ sub fetch_by_dbID {
 }
 
 
+=head2 fetch_by_tag_value
+
+  Arg [1]     : string $tag
+  Arg [2]     : string $value
+  Example     : my $species_set = $species_set_adaptor->fetch_by_tag_value("name", "primates");
+  Description : Fetches the SpeciesSet object with that tag-value pair. If more than one
+                species_set exists with this tag-value pair, returns the species_set
+                with the largest species_set_id
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : None
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub fetch_by_tag_value {
   my ($self, $tag, $value) = @_;
   my $species_set; # returned object
@@ -85,6 +190,7 @@ sub fetch_by_tag_value {
               tag = ?
           AND
               value = ?
+          ORDER BY species_set_id DESC
       };
 
   my $sth = $self->prepare($sql);
@@ -104,7 +210,65 @@ sub fetch_by_tag_value {
 }
 
 
+=head2 fetch_all_by_tag
+
+  Arg [1]     : string $tag
+  Example     : my $species_sets = $species_set_adaptor->fetch_all_by_tag("taxon_id");
+  Description : Fetches the SpeciesSet object that have this tag
+  Returntype  : listref of Bio::EnsEMBL::Compara::SpeciesSet objects
+  Exceptions  : None
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_by_tag {
+  my ($self, $tag) = @_;
+  my $species_sets = []; # returned object
+
+  my $sql = qq{
+          SELECT
+              species_set_id
+          FROM
+              species_set_tag
+          WHERE
+              tag = ?
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute($tag);
+  my $species_set_id;
+  $sth->bind_columns(\$species_set_id);
+  while ($sth->fetch) {
+    push(@$species_sets, $self->fetch_by_dbID($species_set_id));
+  }
+  $sth->finish;
+
+  return $species_sets;
+
+}
+
+
 sub fetch_all_by_GenomeDBs {
+  my ($self, $genome_dbs) = @_;
+  return $self->fetch_by_GenomeDBs($genome_dbs);
+}
+
+
+=head2 fetch_by_GenomeDBs
+
+  Arg [1]     : listref of Bio::EnsEMBL::Compara::GenomeDB objects
+  Example     : my $species_set = $species_set_adaptor->fetch_by_GenomeDBs($genome_dbs);
+  Description : Fetches the SpeciesSet object for that set of GenomeDBs
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : thrown if a GenomeDB has no dbID. Warns if more than one SpeciesSet has
+                this set of GenomeDBs
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_GenomeDBs {
   my ($self, $genome_dbs) = @_;
   my $species_set_id;
 
