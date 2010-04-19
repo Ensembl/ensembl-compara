@@ -196,7 +196,7 @@ sub _user_context {
   my $object        = $self->object;
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-  my $vc            = $object->viewconfig;
+  my $vc            = $object ? $object->viewconfig : undef;
   my %ics           = $vc ? $vc->image_configs : undef;
   my $active_config = $hub->param('config') || ($vc ? $vc->default_config : undef);
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
@@ -590,10 +590,11 @@ sub _local_tools {
   return unless $self->page->local_tools;
   
   my $hub    = $self->model->hub;
-  my $vc     = $self->object->viewconfig;
-  my $config = $vc->default_config;
+  my $object = $self->object;
+  my $vc     = $object ? $object->viewconfig : undef;
+  my $config = $vc && $vc->real ? $vc->default_config : undef;
   
-  if ($vc->real && $config) {
+  if ($config) {
     my $action = join '/', map $hub->$_ || (), qw(type action function);
     (my $rel = $config) =~ s/^_//;
     
@@ -634,8 +635,7 @@ sub _local_tools {
       class   => 'modal_link',
       url     => $hub->url({ type => 'Export', action => $hub->type, function => $hub->action })
     );
-  } 
-  else {
+  } else {
     $self->page->local_tools->add_entry(
       caption => 'Export data',
       class   => 'disabled',
@@ -842,7 +842,8 @@ sub update_configs_from_parameter {
   my $val         = $hub->param($parameter_name);
   my $reset       = $hub->param('reset');
   my @das         = $hub->param('add_das_source');
-  my $view_config = $self->object->get_viewconfig;
+  my $object      = $self->object;
+  my $view_config = $object ? $object->get_viewconfig : undef;
 
   foreach my $config_name (@imageconfigs) {
     $hub->attach_image_config($hub->script, $config_name);
