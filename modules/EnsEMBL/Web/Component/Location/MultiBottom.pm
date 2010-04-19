@@ -18,10 +18,11 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
+  my $hub = $self->model->hub;
   
-  return if $object->param('show_panels') eq 'top';
+  return if $hub->param('show_panels') eq 'top';
   
-  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
@@ -32,8 +33,8 @@ sub content {
   my $slices          = $object->multi_locations;
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
-  my $base_url        = $object->_url($object->multi_params);
-  my $s               = $object->param('show_panels') eq 'both' ? 3 : 2;
+  my $base_url        = $hub->url($object->multi_params);
+  my $s               = $hub->param('show_panels') eq 'both' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $i               = 1;
   my $methods         = {};
@@ -42,10 +43,11 @@ sub content {
   my $compara_db;
   my $primary_image_config;
   my @images;
+
   
   foreach (@$slices) {
-    my $image_config = $object->image_config_hash("contigview_bottom_$i", 'MultiBottom', $_->{'species'});
-    my $highlight_gene = $object->param('g' . ($i-1));
+    my $image_config = $hub->image_config_hash("contigview_bottom_$i", 'MultiBottom', $_->{'species'});
+    my $highlight_gene = $hub->param('g' . ($i-1));
     
     if (!defined $join_alignments) {
       $methods->{'BLASTZ_NET'}          = $image_config->get_option('opt_pairwise_blastz', 'values');
