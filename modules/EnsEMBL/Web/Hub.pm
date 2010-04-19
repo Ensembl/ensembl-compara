@@ -79,16 +79,10 @@ sub session   :lvalue { $_[0]{'_session'};   }
 sub databases :lvalue { $_[0]{'_databases'}; } 
 sub cache     :lvalue { $_[0]{'_cache'};     }
 sub user      :lvalue { $_[0]{'_user'};      }
-
 sub tab_order :lvalue { $_[0]{'_tab_order'}; }
-sub tabs      { return $_[0]{'_tabs'}; }
 
-sub add_tab   { 
-  my ($self, $tab) = @_;
-  $self->{'_tabs'}{$tab->{'type'}} = $tab; 
-}
-
-sub input         { return $_[0]{'_input'};         }
+sub tabs          { return $_[0]{'_tabs'}; }
+sub input         { return $_[0]{'_input'}; }
 sub delete_param  { my $self = shift; $self->{'_input'}->delete(@_); }
 sub core_types    { return $_[0]{'_core_types'};   }
 sub core_params   { return $_[0]{'_core_params'};   }
@@ -97,8 +91,13 @@ sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesD
 sub user_details  { return $_[0]{'_user_details'} ||= 1; }
 sub timer         { return $_[0]{'_timer'}; }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
-
 sub ExtURL        { return $_[0]->{'_ext_url'} ||= new EnsEMBL::Web::ExtURL($_[0]->species, $_[0]->species_defs); } 
+sub species_path  { return shift->species_defs->species_path(@_); }
+
+sub add_tab   { 
+  my ($self, $tab) = @_;
+  $self->{'_tabs'}{$tab->{'type'}} = $tab; 
+}
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -152,8 +151,6 @@ sub handle_problem {
     return 'redirect';
   }
 }
-
-sub species_path      { my $self = shift; $self->species_defs->species_path(@_); }
 
 sub database {
   my $self = shift;
@@ -282,21 +279,10 @@ sub param {
   if (@_) {
     my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
-    my $view_config = $self->viewconfig;
-
-    if ($view_config) {
-      $view_config->set(@_) if @_ > 1;
-      my @val = $view_config->get(@_);
-      return wantarray ? @val : $val[0];
-    }
-
     return wantarray ? () : undef;
   } else {
     my @params = map _sanitize($_), $self->input->param;
-    my $view_config = $self->viewconfig;
-    push @params, $view_config->options if $view_config;
     my %params = map { $_, 1 } @params; # Remove duplicates
-
     return keys %params;
   }
 }
