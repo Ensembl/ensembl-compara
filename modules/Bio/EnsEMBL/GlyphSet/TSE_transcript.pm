@@ -18,7 +18,7 @@ sub _init {
 
   #need both gene and transcript to get the colour
   my $transcript   = $trans_obj->{'transcript'};
-  my $gene         = $trans_obj->{'web_transcript'}->core_info->gene;
+  my $gene         = $trans_obj->{'web_transcript'}->core_info->{'Gene'};
   my $colour_key   = $self->transcript_key($transcript,$gene);
   my $colour       = $self->my_colour($colour_key);
 
