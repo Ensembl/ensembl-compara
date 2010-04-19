@@ -973,7 +973,7 @@ sub viewconfig {
 sub can_export {
   my $self = shift;
   
-  return $self->action =~ /^Export$/ ? 0 : $self->availability->{'gene'};
+  return $self->action =~ /^Export$/ ? 0 : 1;
 }
 
 1;

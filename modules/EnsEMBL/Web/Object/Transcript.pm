@@ -1500,7 +1500,7 @@ sub get_transcript_variations {
 sub can_export {
   my $self = shift;
   
-  return $self->action =~ /^Export$/ ? 0 : $self->availability->{'transcript'};
+  return $self->action =~ /^Export$/ ? 0 : 1;
 }
 
 1;
