@@ -531,10 +531,8 @@ sub transHandler_species {
     
   if ($flag && $script) {
     if ($script eq 'action' || $script eq 'modal') {
-      $r->subprocess_env->{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action eq 'Multi';
     } elsif ($script eq 'component') {
       $r->subprocess_env->{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action;
-      $r->subprocess_env->{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram|Top|Bottom)$/;
       
       @path_segments = ();
     }

@@ -144,7 +144,8 @@ sub create_domain_object {
   my ($self, $type, $params) = @_;
   
   my $hub     = $self->hub;
-  my $factory = $self->create_factory($type);
+  my $factorytype = ($type eq 'Location' && $hub->action =~ /^Multi/) ? 'MultipleLocation' : $type;
+  my $factory = $self->create_factory($factorytype);
   my $problem;
   
   if ($factory) {
@@ -167,7 +168,6 @@ sub create_domain_object {
         if (@$DO > 1) {
           warn ">>> MULTIPLE DOMAIN OBJECTS OF TYPE $type";
         }
-        $type = 'Location' if $type eq 'MultipleLocation';
         $self->data($type, $DO->[0]);
       }
     }
