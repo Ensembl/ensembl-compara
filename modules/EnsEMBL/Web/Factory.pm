@@ -16,6 +16,11 @@ sub new {
   return $self;
 }
 
+sub param {
+  my @params = shift->hub->param(@_);
+  return wantarray ? @params : $params[0];
+}
+
 sub DataObjects {
   my $self = shift;
   push @{$self->{'data'}{'_dataObjects'}}, @_ if @_;
