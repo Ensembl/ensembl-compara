@@ -25,7 +25,7 @@ sub set_default_action {
     return;
   }
 
-  my $x = $self->object->availability || {};
+  my $x = $self->availability || {};
   
   if ($x->{'either'}) {
     $self->{'_data'}->{'default'} = 'Summary';
