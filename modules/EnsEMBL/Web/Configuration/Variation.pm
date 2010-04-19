@@ -22,7 +22,7 @@ sub set_default_action {
     return;
   }
   
-  my $x = $self->object->availability || {};
+  my $x = $self->availability || {};
   
   if ($x->{'variation'}) {
     $self->{'_data'}->{'default'} = 'Summary';
