@@ -66,7 +66,7 @@ sub availability {
       my $has_gene_tree;
 
       if ($gene_tree) {
-        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
+        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($gene->{'_member_compara'}); }
       }
       
       if ($compara_db) {
@@ -80,7 +80,7 @@ sub availability {
       $availability->{'alt_allele'}    = $gene->table_info($gene->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}    = !!$funcgen_res; 
       $availability->{'family'}        = !!$res;
-      $availability->{'has_gene_tree'} = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
+      $availability->{'has_gene_tree'} = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($gene->{'_member_compara'});
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
     } 
     elsif ($g->isa('Bio::EnsEMBL::Compara::Family')) {
@@ -154,7 +154,7 @@ sub count_homologues {
            h.homology_id = hm.homology_id and 
            mlss.method_link_species_set_id = h.method_link_species_set_id and
            ml.method_link_id = mlss.method_link_id and
-           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "between_species_paralog" )
+           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "possible_ortholog" )
      group by description', {}, $self->model->api_object('Gene')->stable_id
   );
 
