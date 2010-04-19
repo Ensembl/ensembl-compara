@@ -227,21 +227,9 @@ sub image_config_hash {
   return $self->hub->image_config_hash(@_);
 }
 
-# Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
-sub get_viewconfig {
-  my $self = shift;
-  return $self->hub->get_viewconfig(@_);
-}
-
-# Store default viewconfig so we don't have to keep getting it from session
-sub viewconfig {
-  my $self = shift;
-  return $self->hub->viewconfig(@_);
-}
-
 sub attach_image_config {
   my $self = shift;
-  return $self->hub->viewconfig(@_);
+  return $self->hub->attach_image_config(@_);
 }
 
 ##---------------------------------------------------------------
