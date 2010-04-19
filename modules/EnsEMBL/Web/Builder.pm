@@ -379,10 +379,8 @@ sub create_objects {
 
   ## Deal with funky zmenus!
   if ($request eq 'menu') {
-    warn "ACTION ".$self->model->hub->action;
     $self->model->create_domain_object($type);
     $self->model->create_domain_object($self->model->hub->action);
-    warn "CREATED OBJECTS";
     return;
   }
 

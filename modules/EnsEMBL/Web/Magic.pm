@@ -110,8 +110,6 @@ sub menu {
   ### Prints the popup zmenus on the images.
   
   my ($controller, $model) = handler(shift, 'Dynamic', 'menu');
-  warn "URL ".$ENV{'REQUEST_URI'};
-  warn "HUB ".$model->hub->type.'/'.$model->hub->action;
   
   $controller->build_menu($model);
 }
