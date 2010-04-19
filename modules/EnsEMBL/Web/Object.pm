@@ -163,4 +163,21 @@ sub alternative_object_from_factory {
   }
 }
 
+# Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
+sub get_viewconfig {
+  my ($self, $type, $action) = @_;
+  my $session = $self->get_session;
+  
+  return undef unless $session;
+  
+  return $session->getViewConfig($type || $self->type, $action || $self->action);
+}
+
+# Store default viewconfig so we don't have to keep getting it from session
+sub viewconfig {
+  my $self = shift;
+  $self->__data->{'_viewconfig'} ||= $self->get_viewconfig;
+  return $self->__data->{'_viewconfig'};
+}
+
 1;
