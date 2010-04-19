@@ -89,6 +89,7 @@ sub add_tab   {
 }
 
 sub input         { return $_[0]{'_input'};         }
+sub delete_param  { my $self = shift; $self->{'_input'}->delete(@_); }
 sub core_types    { return $_[0]{'_core_types'};   }
 sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
