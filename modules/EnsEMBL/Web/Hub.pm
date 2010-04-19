@@ -153,6 +153,8 @@ sub handle_problem {
   }
 }
 
+sub species_path      { my $self = shift; $self->species_defs->species_path(@_); }
+
 sub database {
   my $self = shift;
 
