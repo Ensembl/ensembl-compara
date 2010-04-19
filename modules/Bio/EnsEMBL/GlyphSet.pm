@@ -19,7 +19,7 @@ use Bio::EnsEMBL::Registry;
 use GD;
 use GD::Simple;
 use GD::Text;
-use HTML::Entities qw(encode_entities);
+use URI::Escape qw(uri_escape);
 use POSIX qw(floor ceil);
 
 our $AUTOLOAD;
@@ -163,37 +163,56 @@ sub core {
   my $k    = shift;
   return $self->{'config'}->core_info->{'parameters'}{$k};
 }
+
 sub _url {
   my $self = shift;
-  my $params  = shift || {};
-  my $species = exists( $params->{'species'} ) ? $params->{'species'} : $self->{'container'}{'web_species'};
-  my $type    = exists( $params->{'type'}    ) ? $params->{'type'}    : $ENV{'ENSEMBL_TYPE'};
-  my $action  = exists( $params->{'action'}  ) ? $params->{'action'}  : $ENV{'ENSEMBL_ACTION'};
-  my $function  = exists( $params->{'function'}) ? $params->{'function'}: $ENV{'ENSEMBL_FUNCTION'};
-  $function = '' if $action ne $ENV{'ENSEMBL_ACTION'};
+  my $params = shift || {};
 
-  my %pars = $params->{'__clear'} || !exists $self->{'config'}->core_info->{'parameters'}
-           ? () 
-           : %{$self->{'config'}->core_info->{'parameters'}}
-           ;
-  delete $params->{'__clear'} if exists $params->{'__clear'};
-  delete $pars{'t'}  if $params->{'pt'};
-  delete $pars{'pt'} if $params->{'t'}; 
-  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+  my $species = exists $params->{'species'}  ? $params->{'species'}  : $self->{'container'}{'web_species'};
+  my $type    = exists $params->{'type'}     ? $params->{'type'}     : $ENV{'ENSEMBL_TYPE'};
+  my $action  = exists $params->{'action'}   ? $params->{'action'}   : $ENV{'ENSEMBL_ACTION'};
+  my $fn      = exists $params->{'function'} ? $params->{'function'} : $action eq $ENV{'ENSEMBL_ACTION'} ? $ENV{'ENSEMBL_FUNCTION'} : undef;
+  my %pars    = %{$self->{'config'}->core_info->{'parameters'}};
 
-  foreach( keys %$params ) {
-    $pars{$_} = $params->{$_} unless $_ =~ /^(species|type|action|function)$/;
+  # Remove any unused params
+  foreach (keys %pars) {
+    delete $pars{$_} unless $pars{$_};
   }
-  my $URL = sprintf '/%s/%s/%s', $species, $type, $action.( $function ? "/$function" : "" );
-  my $join = '?';
-## Sort the keys so that the URL is the same for a given set of parameters...
-  foreach ( sort keys %pars ) {
-    if (defined $pars{$_}) {
-      $URL .= sprintf '%s%s=%s', $join, encode_entities($_), encode_entities($pars{$_});
-      $join = ';';
+
+  if ($params->{'__clear'}) {
+    %pars = ();
+    delete $params->{'__clear'};
+  }
+
+  delete $pars{'t'}  if $params->{'pt'};
+  delete $pars{'pt'} if $params->{'t'};
+  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+  delete $pars{'time'};
+
+  foreach (keys %$params) {
+    next if $_ =~ /^(species|type|action|function)$/;
+
+    if (defined $params->{$_}) {
+      $pars{$_} = $params->{$_};
+    } else {
+      delete $pars{$_};
     }
   }
-  return $URL;
+
+  my $url = sprintf '%s/%s/%s', $self->species_defs->species_path($species), $type, $action . ($fn ? "/$fn" : '');
+  $url   .= '?' if scalar keys %pars;
+
+  # Sort the keys so that the url is the same for a given set of parameters
+  foreach my $p (sort keys %pars) {
+    next unless defined $pars{$p};
+
+    # Don't escape :
+    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_.!~*'():") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
+  }
+
+  $url =~ s/;$//;
+
+  return $url;
 }
 
 sub get_font_details {
