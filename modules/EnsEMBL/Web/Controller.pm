@@ -270,7 +270,7 @@ sub update_configuration {
       # If we have multiple species in the view (e.g. Align Slice View) then we would
       # need to make sure that the image config we have is a merged image config, with
       # each of the trees for each species combined
-      $view_config->altered = $session->getImageConfig($config, $config, 'merged')->update_from_input($input); 
+      $view_config->altered = $self->hub->get_imageconfig($config, $config, 'merged')->update_from_input($input); 
     } else { # Updating a view config
       $view_config->update_from_input($input);
       

@@ -95,7 +95,7 @@ sub create_user_set {
   my $hub = $self->hub;
 
   my $user = $hub->user;
-  my $image_config = $hub->session->getImageConfig('Vkaryotype');
+  my $image_config = $hub->get_imageconfig('Vkaryotype');
   my $pointers = [];
 
   # Key to track colours
