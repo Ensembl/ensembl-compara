@@ -25,24 +25,11 @@ use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Proxiable);
 
-sub counts            { return {}; }
-sub _counts           { return {}; }                             # Implemented in plugins
-sub availability      { return {}; }
 sub can_export        { return 0; }
 sub hub               { return $_[0]{'data'}{'_hub'}; }          # Gets the underlying Ensembl object wrapped by the web object
 sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the underlying Ensembl object wrapped by the web object
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 sub problem           { return shift->hub->problem(@_); }
-
-sub _availability { 
-  my $self = shift;
-  
-  my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$self->species_defs->databases} };
-  $hash->{'database:compara'} = 1 if $self->species_defs->compara_like_databases;
-  $hash->{'logged_in'} = 1 if $self->user;
-  
-  return $hash;
-}
 
 sub convert_to_drawing_parameters {
 ### Stub - individual object types probably need to implement this separately
