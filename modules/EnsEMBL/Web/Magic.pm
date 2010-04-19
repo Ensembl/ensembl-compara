@@ -110,6 +110,8 @@ sub menu {
   ### Prints the popup zmenus on the images.
   
   my ($controller, $model) = handler(shift, 'Dynamic', 'menu');
+  warn "URL ".$ENV{'REQUEST_URI'};
+  warn "HUB ".$model->hub->type.'/'.$model->hub->action;
   
   $controller->build_menu($model);
 }
@@ -131,6 +133,7 @@ sub handler {
   my $input        = new CGI;
   my $model        = new EnsEMBL::Web::Model({ _input => $input, _apache_handle => $r }); # The model object is used throughout the code to store data objects, connections and parameters 
   my $hub          = $model->hub;
+  my $factorytype  = $input->param('factorytype') || $hub->type;
   my $outputtype   = $hub->type eq 'DAS' ? 'DAS' : undef;
   my $controller   = new EnsEMBL::Web::Controller($hub);
   
@@ -142,7 +145,7 @@ sub handler {
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
 
   my $builder = new EnsEMBL::Web::Builder($model);
-  my $problem = $builder->create_objects($hub->type);
+  my $problem = $builder->create_objects($factorytype, $requesttype);
   
   return if $problem eq 'redirect';                          # Forcing a redirect - don't need to go any further
   return ($controller, $model) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
