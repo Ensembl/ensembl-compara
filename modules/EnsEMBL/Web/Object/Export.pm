@@ -20,7 +20,7 @@ sub caption { return 'Export Data'; }
 sub slice {
   my $self = shift;
   
-  $self->{'_slice'} ||= $self->model->raw_object('Location');
+  $self->{'_slice'} ||= $self->model->api_object('Location');
   
   return $self->{'_slice'};
 }
