@@ -375,7 +375,17 @@ sub create_objects {
 ### Creates one or more domain objects, as required by the current page
 ### and adds them to the Model. Note that the Builder does not contain
 ### any direct object creation code - this is encapsulated in the Model.
-  my ($self, $type) = @_;
+  my ($self, $type, $request) = @_;
+
+  ## Deal with funky zmenus!
+  if ($request eq 'menu') {
+    warn "ACTION ".$self->model->hub->action;
+    $self->model->create_domain_object($type);
+    $self->model->create_domain_object($self->model->hub->action);
+    warn "CREATED OBJECTS";
+    return;
+  }
+
   return if $self->model->data($type); ## No thanks, I've already got one!
   my $problems;
   my %core_types = %{$self->core_types};
