@@ -326,46 +326,37 @@ sub _sanitize {
   return $T;
 } 
 
-### VIEWCONFIGS
-
-# Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
-sub get_viewconfig {
-  my ($self, $type, $action) = @_;
-  my $session = $self->session;
-  return undef unless $session;
-  my $T = $session->getViewConfig( $type || $self->type, $action || $self->action );
-  return $T;
-}
-
-# Store default viewconfig so we don't have to keep getting it from session
-sub viewconfig {
-  my $self = shift;
-  $self->{'_viewconfig'} ||= $self->get_viewconfig;
-  return $self->{'_viewconfig'};
-}
+### IMAGE CONFIGS
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
-sub get_imageconfig  {
-  my ($self, $key) = @_;
-  my $session = $self->session || return;
-  my $T = $session->getImageConfig($key); # No second parameter - this isn't cached
-  $T->_set_core_info($self->{'_tabs'});
-  return $T;
+sub get_imageconfig {
+  my $self    = shift;
+  my $session = $self->session;
+  
+  return undef unless $session;
+  
+  my $key = shift;
+  my ($type, $species);
+  
+  if (@_) {
+    $type    = shift || $key;
+    $species = shift;
+  } else {
+    $type = $key;
+    $key  = undef;
+  }
+  
+  my $image_config = $session->getImageConfig($type, $key, $species);
+  
+  return unless $image_config;
+  
+  $image_config->set_core_info({ %{$self->{'_tabs'}}, parameters => $self->{'_core_params'}, input => $self->{'_input'} });
+  
+  return $image_config;
 }
 
 # Retuns a copy of the script config stored in the database with the given key
-sub image_config_hash {
-  my ($self, $key, $type, @species) = @_;
-
-  $type ||= $key;
-
-  my $session = $self->session;
-  return undef unless $session;
-  my $T = $session->getImageConfig($type, $key, @species);
-  return unless $T;
-  $T->_set_core_info($self->{'_tabs'});
-  return $T;
-}
+sub image_config_hash { return shift->get_imageconfig(@_); }
 
 sub attach_image_config {
   my ($self, $key, $image_key) = @_;
