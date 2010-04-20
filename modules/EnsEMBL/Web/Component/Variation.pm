@@ -328,7 +328,7 @@ sub snpview_image_menu {
   ### Returns  0
 
   my($panel, $object ) = @_;
-  my $image_config = $object->image_config_hash( 'snpview' );
+  my $image_config = $object->get_imageconfig( 'snpview' );
   my $params =  {
 		 'h'          => $object->highlights_string || '',
 		 'source'     => $object->source || "dbSNP",

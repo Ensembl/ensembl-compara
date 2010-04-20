@@ -188,7 +188,7 @@ sub ldview_image_menu {
   ### Returns 0
 
   my($panel, $object ) = @_;
-  my $image_config = $object->image_config_hash( 'LD_population' );
+  my $image_config = $object->get_imageconfig( 'LD_population' );
   $image_config->{'Populations'}    = $object->pops_for_slice(100000);
 
   return 0;
@@ -215,7 +215,7 @@ sub ldview_image {
   my ($count_snps, $snps) = $object->getVariationsOnSlice();
   my ($genotyped_count, $genotyped_snps) = $object->get_genotyped_VariationsOnSlice();
 
-  my $wuc_ldview = $object->image_config_hash( 'ldview' );
+  my $wuc_ldview = $object->get_imageconfig( 'ldview' );
   $wuc_ldview->set( '_settings', 'width', $object->param('image_width'));
   $wuc_ldview->container_width($slice->length);
   $wuc_ldview->{'_databases'}     = $object->DBConnection;
@@ -231,7 +231,7 @@ sub ldview_image {
     my $pop_obj = $object->pop_obj_from_name($pop_name);
     next unless $pop_obj->{$pop_name}; # i.e. skip name if not a valid pop name
 
-    my $wuc_pop = $object->image_config_hash( "LD_population_$pop_name", 'LD_population' );
+    my $wuc_pop = $object->get_imageconfig('LD_population', "LD_population_$pop_name");
     $wuc_pop->set( '_settings', 'width', $object->param('image_width'));
     $wuc_pop->container_width($slice->length);
     $wuc_pop->{'_databases'}     = $object->DBConnection;

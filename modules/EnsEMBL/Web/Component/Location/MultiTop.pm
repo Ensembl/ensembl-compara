@@ -53,7 +53,7 @@ sub content {
       }
     }
     
-    my $image_config = $object->image_config_hash('contigviewtop_' . $i, 'MultiTop', $_->{'species'});
+    my $image_config = $object->get_imageconfig('MultiTop', "contigviewtop_$i", $_->{'species'});
     my $join_genes   = $image_config->get_option('opt_join_genes', 'values');
     
     $image_config->set_parameters({

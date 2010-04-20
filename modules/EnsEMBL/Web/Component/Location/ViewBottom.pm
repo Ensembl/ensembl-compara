@@ -27,7 +27,7 @@ sub content {
   my $slice        = $object->slice;
   my $length       = $slice->end - $slice->start + 1;
   my $T            = time;
-  my $image_config = $object->image_config_hash('contigviewbottom');
+  my $image_config = $object->get_imageconfig('contigviewbottom');
   $T = sprintf "%0.3f", time - $T;
   
   $image_config->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])') if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
@@ -50,7 +50,7 @@ sub content {
   # Lets see if we have any das sources
   $self->_attach_das($image_config);
   
-  my $image_config_2 = $object->image_config_hash('contigviewtop');
+  my $image_config_2 = $object->get_imageconfig('contigviewtop');
   my $info           = $image_config->_update_missing($object);
   my $info_2         = $image_config_2->_update_missing($object);
   my $extra_message  = '';

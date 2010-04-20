@@ -20,7 +20,7 @@ sub content {
   
   my $slice = $object->slice;
   my $length = $slice->end - $slice->start + 1;
-  my $image_config = $object->image_config_hash('cytoview');
+  my $image_config = $object->get_imageconfig('cytoview');
   
   $image_config->set_parameters({
     container_width => $length,

@@ -25,7 +25,7 @@ sub content {
      $gene_slice = $gene_slice->invert if $gene->seq_region_strand < 0;
      
   # Get the web_image_config
-  my $image_config = $gene->image_config_hash('gene_summary');
+  my $image_config = $gene->get_imageconfig('gene_summary');
   
   $image_config->set_parameters({
     'container_width' => $gene_slice->length,

@@ -358,7 +358,7 @@ sub _configurator {
   my $config_key = $hub->param('config');
   my $action     = join '/', map $hub->$_ || (), qw(type action function);
   my $url        = $hub->url({ type => 'Config', action => $action }, 1);
-  my $conf       = $hub->param('config') ? $hub->image_config_hash($hub->param('config'), undef, 'merged') : undef;
+  my $conf       = $hub->param('config') ? $hub->get_imageconfig($hub->param('config'), undef, 'merged') : undef;
   
   # This must be the view config
   if (!$conf) {
@@ -395,7 +395,7 @@ sub _configurator {
     
     if (@image_configs) {
       $config_key = $image_configs[0];
-      $conf = $hub->image_config_hash($config_key);
+      $conf = $hub->get_imageconfig($config_key);
     }
   }
   
@@ -847,7 +847,7 @@ sub update_configs_from_parameter {
 
   foreach my $config_name (@imageconfigs) {
     $hub->attach_image_config($hub->script, $config_name);
-    $hub->image_config_hash($config_name);
+    $hub->get_imageconfig($config_name);
   }
   
   foreach my $url (@das) {
@@ -863,7 +863,7 @@ sub update_configs_from_parameter {
   }
   
   foreach my $config_name (@imageconfigs) {
-    my $image_config = $hub->image_config_hash($config_name);
+    my $image_config = $hub->get_imageconfig($config_name);
     
     if ($image_config) {
       $image_config->reset if $reset;

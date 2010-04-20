@@ -46,7 +46,7 @@ sub content {
   }
   
   my $length = $slice->end - $slice->start + 1;
-  my $image_config = $object->image_config_hash('contigviewtop');
+  my $image_config = $object->get_imageconfig('contigviewtop');
   
   $image_config->set_parameters({
     container_width => $length,

@@ -46,7 +46,7 @@ sub content {
 
   
   foreach (@$slices) {
-    my $image_config = $hub->image_config_hash("contigview_bottom_$i", 'MultiBottom', $_->{'species'});
+    my $image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
     my $highlight_gene = $hub->param('g' . ($i-1));
     
     if (!defined $join_alignments) {
@@ -94,7 +94,7 @@ sub content {
         if ($join_alignments) {
           my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i-1, $i;
           
-          $primary_image_config = $object->image_config_hash("contigview_bottom_1_$i", 'MultiBottom', $primary_species);
+          $primary_image_config = $object->get_imageconfig('MultiBottom', "contigview_bottom_1_$i", $primary_species);
           
           $primary_image_config->set_parameters({
             container_width => $primary_slice->length,

@@ -22,7 +22,7 @@ sub content {
     $object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1
   );
   
-  my $image_config = $object->image_config_hash('chromosome');
+  my $image_config = $object->get_imageconfig('chromosome');
   
   $image_config->set_parameters({
     container_width => $object->seq_region_length,

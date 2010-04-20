@@ -24,7 +24,7 @@ sub content {
   my $slices = $object->multi_locations;
   
   foreach (@$slices) {
-    my $image_config = $object->image_config_hash('chromosome_' . $i, 'MultiIdeogram', $_->{'species'});
+    my $image_config = $object->get_imageconfig('MultiIdeogram', "chromosome_$i", $_->{'species'});
     my $chromosome = $_->{'slice'}->adaptor->fetch_by_region(undef, $_->{'name'});
     
     $image_config->set_parameters({

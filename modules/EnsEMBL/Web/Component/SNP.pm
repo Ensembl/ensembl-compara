@@ -529,7 +529,7 @@ sub snpview_image_menu {
   ### Returns  0
 
   my($panel, $object ) = @_;
-  my $image_config = $object->image_config_hash( 'snpview' );
+  my $image_config = $object->get_imageconfig( 'snpview' );
   my $params =  {
 		 'h'          => $object->highlights_string || '',
 		 'source'     => $object->source || "dbSNP",
@@ -575,7 +575,7 @@ sub snpview_image {
   my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
   my ($genotyped_count, $genotyped_snps) = $sliceObj->get_genotyped_VariationFeatures();
 
-  my $wuc = $object->image_config_hash( 'snpview' );
+  my $wuc = $object->get_imageconfig( 'snpview' );
   $wuc->set( '_settings', 'width', $object->param('image_width') );
   $wuc->{'snps'}           = $filtered_snps;
   $wuc->{'genotyped_snps'} = $genotyped_snps;

@@ -61,7 +61,7 @@ sub content {
   }
   
   foreach (@$slices) {
-    my $image_config = $object->image_config_hash('alignsliceviewbottom_' . $i, 'alignsliceviewbottom', $_->{'name'});
+    my $image_config = $object->get_imageconfig('alignsliceviewbottom', "alignsliceviewbottom_$i", $_->{'name'});
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,

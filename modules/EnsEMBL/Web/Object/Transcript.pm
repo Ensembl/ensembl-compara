@@ -433,7 +433,7 @@ sub get_transcript_slices {
 sub get_munged_slice {
   my $self = shift;
   my $config_name = shift;
-  my $master_config = $self->image_config_hash($config_name);
+  my $master_config = $self->get_imageconfig($config_name);
   $master_config->{'_draw_single_Transcript'} = $self->stable_id;
 
   my $slice  = $self->get_transcript_Slice(@_); # pushes it onto forward strand, expands if necc.

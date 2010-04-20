@@ -72,7 +72,7 @@ sub content {
     }
   }
 
-  my $wuc            = $object->image_config_hash( 'genetreeview' );
+  my $wuc            = $object->get_imageconfig( 'genetreeview' );
   my $image_width    = $self->image_width || 800;
   my $collapsability = $object->param('collapsability') || 'gene';
   my $colouring      = $object->param('colouring') || 'background';

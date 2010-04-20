@@ -72,7 +72,7 @@ sub karyotype {
   $config_name ||= 'Vkaryotype';
   my $chr_name;
 
-  my $image_config = $hub->image_config_hash($config_name);
+  my $image_config = $hub->get_imageconfig($config_name);
   my $view_config  = $hub->get_viewconfig;
 
   # set some dimensions based on number and size of chromosomes
@@ -144,7 +144,7 @@ sub add_pointers {
 
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
-  my $config      = $hub->image_config_hash($config_name);
+  my $config      = $hub->get_imageconfig($config_name);
   my $species     = $hub->species;
   my $color       = lc($hub->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
   my $style       = lc($hub->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles

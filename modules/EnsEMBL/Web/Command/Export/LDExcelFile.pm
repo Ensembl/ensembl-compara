@@ -32,7 +32,7 @@ sub make_file {
   my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($file); 
   my $table    = $renderer->new_table_renderer;
   
-  my @colour_gradient = ('ffffff', $object->image_config_hash('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
+  my @colour_gradient = ('ffffff', $object->get_imageconfig('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
   
   foreach (values %pop_params){ 
     my $pop_param   = $object->param('pop'.$_); 

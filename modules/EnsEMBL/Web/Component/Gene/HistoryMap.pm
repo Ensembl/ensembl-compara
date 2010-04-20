@@ -80,7 +80,7 @@ sub _create_idhistory_tree {
   my ($self, $object, $tree, $OBJ) = @_;
 
   #user defined width in pixels
-  my $wuc = $OBJ->image_config_hash( 'idhistoryview' );
+  my $wuc = $OBJ->get_imageconfig( 'idhistoryview' );
    $wuc->set_parameters({
       'container_width' => $self->image_width || 800,
       'image_width'     => $self->image_width || 800, ## hack at the moment....

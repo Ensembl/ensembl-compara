@@ -24,7 +24,7 @@ sub content {
   my $species   = $object->species;
   my $chr_name  = $object->seq_region_name;
 
-  my $config = $object->image_config_hash($config_name);
+  my $config = $object->get_imageconfig($config_name);
      $config->set_parameters({
        'container_width', $object->Obj->{'slice'}->seq_region_length,
        'slice_number'    => '2|1'
