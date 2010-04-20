@@ -42,11 +42,10 @@
 89	7955	Danio rerio	Zv8	1	2009-01-Ensembl	
 90	9606	Homo sapiens	GRCh37	1	2009-03-Ensembl	
 91	9315	Macropus eugenii	Meug_1.0	1	2009-02-Ensembl	
-92	6239	Caenorhabditis elegans	WS200	1	2009-01-WormBase	
 93	9823	Sus scrofa	Sscrofa9	1	2009-04-Ensembl	
-94	9483	Callithrix jacchus	calJac3	1	2009-04-Ensembl	
 95	7227	Drosophila melanogaster	BDGP5.13	1	2009-01-FlyBase	
 98	9785	Loxodonta africana	loxAfr3	1	2009-07-Ensembl	
 99	9986	Oryctolagus cuniculus	oryCun2	1	2009-11-Ensembl	
-100	9103	Meleagris gallopavo	UMD2	1	2009-11-Ensembl	
 101	9593	Gorilla gorilla	gorGor3	1	2009-08-Ensembl	
+102	9483	Callithrix jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
+103	6239	Caenorhabditis elegans	WS210	1	2010-01-WormBase	
