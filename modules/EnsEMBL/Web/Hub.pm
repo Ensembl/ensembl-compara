@@ -190,7 +190,7 @@ sub set_core_params {
 
   foreach (@{$self->species_defs->core_params}) {
     my @param = $self->param($_);
-    $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param;
+    $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param if scalar @param;
   }
 
   $self->{'_core_params'} = $core_params;
