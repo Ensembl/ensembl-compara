@@ -66,9 +66,7 @@ sub convert_to_drawing_parameters {
               push @associated_gene_array, $variation->{'associated_gene'};
             }
             # only get the p value log 10 for the pointer matching phenotype id and variation id
-            warn ">>> P-VALUE ".$variation->{'p_value'};
             if ($variation->{'p_value'} != 0) {
-              warn ">>> P-VALUE FOR ".$variation->{'_variation_id'}.' = '.$variation->{'p_value'};
               $p_value_log = -(log($variation->{'p_value'})/log(10));  
             }
           }
