@@ -370,7 +370,6 @@ CREATE TABLE member (
   member_id                   int(10) unsigned NOT NULL auto_increment, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT '0',
-#  source_name                 varchar(40) NOT NULL,
   source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
@@ -1024,4 +1023,4 @@ CREATE TABLE protein_tree_hmmprofile (
 
 
 # Auto add schema version to database (this will override whatever hive puts there)
-REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "57");
+REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "58");
