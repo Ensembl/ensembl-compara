@@ -152,13 +152,11 @@ sub add_pointers {
   my ($p_value_sorted,$i);
   my $j = 1;
   
-  #colour gradient bit for phenotype
-  if(exists($extra->{'features'}->{'colour_scaling'}))
-  {    
-    my @colour_scale = $config->colourmap->build_linear_gradient(90, '#0000FF', '#770088', '#BB0044', 'red');  #making an array of the colour scale       
+  # colour gradient bit for phenotype
+  if (grep $_->{'colour_scaling'}, @data) {    
+    my @colour_scale = $config->colourmap->build_linear_gradient(90, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale
 
-    foreach my $colour (@colour_scale)
-    {
+    foreach my $colour (@colour_scale) {
       $p_value_sorted->{$j} = $colour;
       $j = sprintf("%.1f", $j + 0.1);
     }
