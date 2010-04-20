@@ -58,12 +58,6 @@ sub _chain_Location {
   my $self = shift;
   my $problems;
 
-  ## Do we need to create any other objects?
-  ## NEXT TAB
-  if (!$self->model->data('Gene') && $self->model->hub->param('g')) {
-    $self->_generic_create('Gene', 'next');
-  }
-
   ### Set coordinates in CGI parameters
   my $location = $self->model->data('Location');
   if ($location && $location->seq_region_name) {
