@@ -177,9 +177,9 @@ sub fetch_by_dbID {
 
 =cut
 
-sub fetch_by_tag_value {
+sub fetch_all_by_tag_value {
   my ($self, $tag, $value) = @_;
-  my $species_set; # returned object
+  my $species_sets; # returned object
 
   my $sql = qq{
           SELECT
@@ -190,22 +190,19 @@ sub fetch_by_tag_value {
               tag = ?
           AND
               value = ?
-          ORDER BY species_set_id DESC
       };
 
   my $sth = $self->prepare($sql);
   $sth->execute($tag,$value);
   my $species_set_id;
   $sth->bind_columns(\$species_set_id);
-  $sth->fetch;
-  $sth->finish;
-
-  ## Create the object
-  if (defined($species_set_id)) {
-    $species_set = $self->fetch_by_dbID($species_set_id);
+  while ($sth->fetch) {
+    push(@$species_sets, $self->fetch_by_dbID($species_set_id));
   }
 
-  return $species_set;
+  $sth->finish;
+
+  return $species_sets;
 
 }
 
