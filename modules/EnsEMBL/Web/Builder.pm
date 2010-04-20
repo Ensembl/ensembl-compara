@@ -387,13 +387,28 @@ sub create_objects {
     $problems = $self->_generic_create($type);
 
     ## Add any non-tab core objects (e.g. variation on Location/LD page)
-    while (my($type, $param) = each (%core_types)) {
-      if ($self->model->hub->param($param) && !$self->model->data($type)) {
-        $problems = $self->model->create_domain_object($type);
-        my $tab_info = $self->_create_tab($type);
+    while (my($ct, $param) = each (%core_types)) {
+      if ($self->model->hub->param($param) && !$self->model->data($ct)) {
+        $problems = $self->model->create_domain_object($ct);
+        my $tab_info = $self->_create_tab($ct);
         $self->model->add_tab($tab_info);
       }
     }
+  
+    ## Finally, generate a location for core objects where there is no r param
+    if ($type eq 'Location' && !$self->model->data('Location')) {
+      while (my($ct, $param) = each (%core_types)) {
+        if ($self->model->hub->param($param) && $self->model->data($ct)) {
+          my $object = $self->model->data($ct);
+          my $coords = $object->coords;
+          $problems = $self->model->create_domain_object('Location', $coords);
+          my $tab_info = $self->_create_tab('Location');
+          $self->model->hub->add_tab($tab_info);
+          last;
+        }
+      }
+    }
+
   }
   else {
     ## Not core, so just generate a single object

@@ -31,6 +31,8 @@ sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the unde
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 sub problem           { return shift->hub->problem(@_); }
 
+sub coords { return {} }
+
 sub convert_to_drawing_parameters {
 ### Stub - individual object types probably need to implement this separately
   my $self = shift;

@@ -158,6 +158,20 @@ sub location_string {
   return $sr ? "$sr:@{[$st-100]}-@{[$st+100]}" : undef;
 }
 
+sub coords {
+  my $self = shift;
+  my $coords = {};
+  my( $sr, $st ) = $self->_seq_region_(1);
+  if ($sr) {
+    $coords = {
+      'seq_region' => $sr,
+      'start'      => @{[$st]},
+      'end'        => @{[$st]},
+    };
+  }
+  return $coords;
+}
+
 sub var_location {
   ### Variation_location
   ### Example    : my $location = $self->location_string;

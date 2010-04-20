@@ -312,6 +312,16 @@ sub seq_region_strand      { return $_[0]->Obj->strand; }
 sub feature_length         { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation { return $_[0]->Obj->get_latest_incarnation; }
 
+sub coords {
+  my $self = shift;
+  return {
+    'seq_region' => $self->seq_region_name,
+    'start'      => $self->seq_region_start,
+    'end'        => $self->seq_region_end,
+  }
+}
+
+
 # Returns a hash of family information and associated (API) Gene objects
 # N.B. moved various bits from Translation and Family objects
 sub get_families {

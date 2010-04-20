@@ -299,6 +299,15 @@ sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
 
+sub coords {
+  my $self = shift;
+  return {
+    'seq_region' => $self->seq_region_name,
+    'start'      => $self->seq_region_start,
+    'end'        => $self->seq_region_end,
+  }
+}
+
 sub get_database_matches {
   my $self = shift;
   my @DBLINKS;

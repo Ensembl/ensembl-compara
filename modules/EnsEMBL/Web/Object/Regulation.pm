@@ -52,6 +52,15 @@ sub feature_type          { my $self = shift; return $self->Obj->feature_type;  
 sub slice                 { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length     { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
+sub coords {
+  my $self = shift;
+  return {
+    'seq_region' => $self->seq_region_name,
+    'start'      => $self->seq_region_start,
+    'end'        => $self->seq_region_end,
+  }
+}
+
 
 sub get_attribute_list {
   my $self = shift;
