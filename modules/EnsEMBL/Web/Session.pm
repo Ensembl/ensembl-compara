@@ -16,7 +16,6 @@ package EnsEMBL::Web::Session;
 ### to do this explicitly - because it is done implicitly by methods such as:
 ###
 ### {{EnsEMBL::Web::Hub::get_imageconfig}},
-### {{EnsEMBL::Web::Hub::image_config_hash}},
 ### {{EnsEMBL::Web::Hub::get_viewconfig}},
 ### {{EnsEMBL::Web::Hub::attach_image_config}} all of which create either
 ### {{EnsEMBL::Web::ViewConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
