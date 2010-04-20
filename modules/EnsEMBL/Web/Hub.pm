@@ -312,7 +312,17 @@ sub _sanitize {
   return $T;
 } 
 
-### IMAGE CONFIGS
+### VIEW / IMAGE CONFIGS
+
+# Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
+sub get_viewconfig {
+  my ($self, $type, $action) = @_;
+  my $session = $self->session;
+  
+  return undef unless $session;
+  
+  return $session->getViewConfig($type || $self->type, $action || $self->action);
+}
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig {
