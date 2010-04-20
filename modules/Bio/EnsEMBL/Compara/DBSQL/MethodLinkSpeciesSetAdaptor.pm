@@ -745,6 +745,41 @@ sub fetch_by_method_link_type_registry_aliases {
   return $self->fetch_by_method_link_type_GenomeDBs($method_link_type,\@genome_dbs);
 }
 
+=head2 fetch_by_method_link_type_species_set_name
+
+  Arg  1     : string method_link_type
+  Arg  2     : string species_set_name
+  Example    : my $method_link_species_set =
+                     $mlssa->fetch_all_by_method_link_type_Species_set_tag("EPO", "mammals")
+  Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+               corresponding to the given method_link_type and and species_set_tag value
+  Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
+  Exceptions : Returns undef if no Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+               object is found
+  Caller     :
+
+=cut
+
+sub fetch_by_method_link_type_species_set_name {
+  my ($self, $method_link_type, $species_set_name) = @_;
+  my $method_link_species_set;
+
+  my $all_method_link_species_sets = $self->fetch_all();
+  my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
+
+  my $all_species_sets = $species_set_adaptor->fetch_all_by_tag_value("name", $species_set_name);
+  foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
+      foreach my $this_species_set (@$all_species_sets) {
+	  if ($this_method_link_species_set->method_link_type eq $method_link_type && $this_method_link_species_set->species_set_id == $this_species_set->dbID) {
+	      return $this_method_link_species_set;
+	  }
+      }
+  }
+  warning("Unable to find method_link_species_set with method_link_type of $method_link_type and species_set_tag value of $species_set_name\n");
+  
+}
+
+
 
 =head2 get_max_alignment_length
 
