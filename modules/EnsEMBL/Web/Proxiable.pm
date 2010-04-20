@@ -221,12 +221,6 @@ sub get_imageconfig  {
   return $self->hub->get_imageconfig(@_);
 }
 
-# Retuns a copy of the script config stored in the database with the given key
-sub image_config_hash {
-  my $self = shift;
-  return $self->hub->image_config_hash(@_);
-}
-
 sub attach_image_config {
   my $self = shift;
   return $self->hub->attach_image_config(@_);

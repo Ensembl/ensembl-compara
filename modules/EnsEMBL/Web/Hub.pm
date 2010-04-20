@@ -327,22 +327,14 @@ sub get_viewconfig {
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig {
   my $self    = shift;
+  my $type    = shift;
   my $session = $self->session;
   
   return undef unless $session;
   
-  my $key = shift;
-  my ($type, $species);
+  $_[0] ||= $type if scalar @_;
   
-  if (@_) {
-    $type    = shift || $key;
-    $species = shift;
-  } else {
-    $type = $key;
-    $key  = undef;
-  }
-  
-  my $image_config = $session->getImageConfig($type, $key, $species);
+  my $image_config = $session->getImageConfig($type, @_);
   
   return unless $image_config;
   
@@ -350,9 +342,6 @@ sub get_imageconfig {
   
   return $image_config;
 }
-
-# Retuns a copy of the script config stored in the database with the given key
-sub image_config_hash { return shift->get_imageconfig(@_); }
 
 sub attach_image_config {
   my ($self, $key, $image_key) = @_;
