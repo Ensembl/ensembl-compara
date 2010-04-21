@@ -131,45 +131,5 @@ sub has_a_problem      { return shift->hub->has_a_problem(@_);      }
 sub clear_problems     { return shift->hub->clear_problems(@_);     }
 sub clear_problem_type { return shift->hub->clear_problem_type(@_); }
 
-# The whole problem handling code possibly needs re-factoring 
-# Especially the stuff that may end up cyclic! (History/UnMapped)
-# where ID's don't exist but we have a "gene" based display
-# for them.
-sub handle_problem {
-  my $self = shift;
-  
-  my $hub = $self->hub;
-  my $url;
-
-  if ($hub->has_problem_type('redirect')) {
-    my ($p) = $hub->get_problem_type('redirect');
-    $url  = $p->name;
-  } elsif ($hub->has_problem_type('mapped_id')) {
-    my $feature = $self->__data->{'objects'}[0];
-    
-    $url = sprintf '%s/%s/%s?%s', $self->species_path, $self->type, $self->action, join ';', map { "$_=$feature->{$_}" } keys %$feature;
-  } elsif ($hub->has_problem_type('unmapped')) {
-    my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
-    my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
-    
-    $url = sprintf '%s/%s/Genome?type=%s;id=%s', $self->species_path, $self->type, $type, $id;
-  } elsif ($hub->has_problem_type('archived')) {
-    my ($view, $param, $id) = 
-      $self->param('peptide')    ? ('Transcript/Idhistory/Protein', 'p', $self->param('peptide'))    :
-      $self->param('transcript') ? ('Transcript/Idhistory',         't', $self->param('transcript')) :
-                                   ('Gene/Idhistory',               'g', $self->param('gene'));
-    
-    $url = sprintf '%s/%s?%s=%s', $self->species_path, $view, $param, $id;
-  } else {
-    my $p = $self->problem;
-    my @problems = map @{$p->{$_}}, keys %$p;
-    return \@problems;
-  }
-  
-  if ($url) {
-    $hub->redirect($url);
-    return 'redirect';
-  }
-}
-
 1;
+
