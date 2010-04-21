@@ -44,6 +44,20 @@ sub _filename {
   return $name;
 }
 
+sub short_caption {
+  my $self = shift;
+  return 'Gene-based displays';
+}
+
+sub caption {
+  my $self      = shift;
+  my $gene      = $self->model->object('Gene');
+  my ($disp_id) = $gene->display_xref;
+  my $caption   = $gene->type_name . ': ';
+  $caption     .= sprintf '%s(%s)', $disp_id ? "$disp_id " : '', $gene->stable_id;
+  return $caption;
+}
+
 sub availability {
   my $self = shift;
   my $hub = $self->model->hub;
