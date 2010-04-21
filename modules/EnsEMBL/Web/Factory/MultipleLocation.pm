@@ -44,7 +44,7 @@ sub createObjects {
     $invalid = 1;
   }
   
-  $inputs{$action_id}->{'action'} = $self->hub('action') if $inputs{$action_id};
+  $inputs{$action_id}->{'action'} = $hub->param('action') if $inputs{$action_id};
   
   # If we had bad parameters, redirect to remove them from the url.
   # If we came in on an a gene, redirect so that we use the location in the url instead.
