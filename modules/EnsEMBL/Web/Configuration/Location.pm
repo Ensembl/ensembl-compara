@@ -12,23 +12,19 @@ sub content_panel  { return $_[0]->_content_panel;  }
 sub configurator   { return $_[0]->_configurator;   }
 
 sub context_panel {
-  my $self   = shift;
-  my $hub = $self->model->hub;
+  my $self  = shift;
+  my $model = $self->model;
   
-  if (!$self->object) {
-    return undef;
-  } 
-  elsif ($hub->action eq 'Multi') {
+  if ($model->hub->action eq 'Multi') {
     my $panel  = $self->new_panel('Summary',
       'code'    => 'summary_panel',
-      'object'  => $self->model->object,
+      'object'  => $model->object,
       'caption' => $self->caption
     );
     
     $panel->add_component('summary' => 'EnsEMBL::Web::Component::Location::MultiIdeogram');
     $self->add_panel($panel);
-  }
-  else {
+  } else {
     $self->_context_panel;
   }
 }
@@ -62,42 +58,39 @@ sub short_caption {
 sub caption {
   my $self = shift;
   my $location = $self->model->object('Location');
-  if ($location) {
-    return $location->neat_sr_name($location->seq_region_type, $location->seq_region_name)
-        .': '.$location->thousandify($location->seq_region_start)
-        .'-'.$location->thousandify($location->seq_region_end);
-  }
-  else {
-    return '';
-  }
+  
+  return 'Karyotype' unless $location && $location->seq_region_name;
+  
+  return $location->neat_sr_name($location->seq_region_type, $location->seq_region_name) . ': ' . 
+         $location->thousandify($location->seq_region_start) . '-' . 
+         $location->thousandify($location->seq_region_end);
 }
-
 
 sub availability {
   my $self = shift;
   my $hub = $self->model->hub;
 
   if (!$self->{'_availability'}) {
-    my $availability    = $self->default_availability;
+    my $availability = $self->default_availability;
 
-    my ($rows, $marker_rows, $seq_region_name, $counts);
+    my ($marker_rows, $seq_region_name, $counts);
 
     ## Only available on specific regions (e.g. not whole genome)
     my $location = $self->model->object('Location');
+    
     if ($location) {
-      $rows             = $location->table_info($location->get_db, 'stable_id_event')->{'rows'};
-      $marker_rows      = $location->table_info($location->get_db, 'marker_feature')->{'rows'};
-      $seq_region_name  = $self->model->api_object('Location')->{'seq_region_name'};
+      $marker_rows              = $location->table_info($location->get_db, 'marker_feature')->{'rows'};
+      $seq_region_name          = $self->model->api_object('Location')->{'seq_region_name'};
       $counts                   = $self->counts;
       $availability->{"has_$_"} = $counts->{$_} for qw(alignments pairwise_alignments);
     }
 
     ## Applicable to all location-based pages
-    my $species_defs    = $hub->species_defs;
-    my $variation_db    = $species_defs->databases->{'DATABASE_VARIATION'};
-    my @chromosomes     = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
-    my %chrs            = map { $_, 1 } @chromosomes;
-    my %synteny_hash    = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my $species_defs = $hub->species_defs;
+    my $variation_db = $species_defs->databases->{'DATABASE_VARIATION'};
+    my @chromosomes  = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
+    my %chrs         = map { $_, 1 } @chromosomes;
+    my %synteny_hash = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
 
     $availability->{'karyotype'}       = 1;
     $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
@@ -118,12 +111,12 @@ sub counts {
   my $self = shift;
   my $hub = $self->model->hub;
 
-  my $key = '::COUNTS::LOCATION::' . $hub->species;
+  my $key    = '::COUNTS::LOCATION::' . $hub->species;
   my $counts = $self->{'_counts'};
-  $counts ||= $hub->cache->get($key) if $hub->cache;
+  $counts  ||= $hub->cache->get($key) if $hub->cache;
 
   if (!$counts) {
-    my %synteny = $hub->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my %synteny    = $hub->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
     my $alignments = $self->count_alignments;
 
     $counts = {
@@ -142,23 +135,6 @@ sub counts {
 
   return $counts;
 }
-
-sub short_caption {
-  my $self = shift;
-  return 'Location-based displays';
-
-}
-
-sub caption {
-  my $self = shift;
-  my $location = $self->model->object('Location');
-  return "Karyotype" unless $location && $location->seq_region_name;
-
-  return $location->neat_sr_name($location->seq_region_type,$location->seq_region_name)
-          .': '.$self->thousandify($location->seq_region_start)
-          .'-'.$self->thousandify($location->seq_region_end);
-}
-
 
 sub modify_tree {
   my $self = shift;
