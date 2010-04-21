@@ -154,23 +154,21 @@ sub _global_context {
   
   return unless $self->page->can('global_context');
   return unless $self->page->global_context;
+  
   my %tabs = %{$self->model->hub->tabs};
 
-  foreach my $tabtype (@{$self->model->hub->tab_order}) {
-    my $tab         = $tabs{$tabtype};
-    my $caption     = $tab->{'short_caption'};
-    my %core_params = map {$_ => $self->model->hub->param($_)} @{$tab->{'parameters'}};
-
-    my $url     = $self->model->hub->url({ type => $tabtype, action => $tab->{'action'}, %core_params });
+  foreach my $tab_type (@{$self->model->hub->tab_order}) {
+    my $tab     = $tabs{$tab_type};
+    my $caption = $tab->{'short_caption'};
+    my $url     = $self->model->hub->url({ type => $tab_type, action => $tab->{'action'} });
 
     $self->page->global_context->add_entry(
-      type    => $tabtype,
+      type    => $tab_type,
       caption => $caption,
       url     => $url,
-      class   => $tabtype eq $self->model->hub->type ? 'active' : ''
+      class   => $tab_type eq $self->model->hub->type ? 'active' : ''
     );
   }
-  
 }
 
 sub modal_context {
