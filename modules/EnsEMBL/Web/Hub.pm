@@ -168,11 +168,16 @@ sub is_core  {
   return $self->{'_core_types'}->{$name};
 }
 
-sub core_param  { 
-  my $self = shift;
-  my $name = shift;
+sub core_param { 
+  my ($self, $name, $value) = @_;
+  
   return unless $name;
-  $self->{'_core_params'}->{$name} = @_ if @_;
+  
+  if ($value) {
+    $self->{'_core_params'}->{$name} = $value;
+    $self->param($name, $value);
+  }
+  
   return $self->{'_core_params'}->{$name};
 }
 
