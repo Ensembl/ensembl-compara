@@ -36,8 +36,10 @@ sub new {
     'Regulation'  => 'rf',
     'Marker'      => 'm',
     'LRG'         => 'lrg',
-  );  
-  my @extra_params = qw/h db pt vf fdb vdb domain family protein/;
+  );
+  
+  my @core_order   = qw(r g t v rf m);
+  my @extra_params = qw(h db pt vf fdb vdb domain family protein);
 
   $model->hub->set_core_types(keys %core_types);
   $model->hub->set_core_params(values %core_types, @extra_params);
@@ -45,6 +47,7 @@ sub new {
   my $self = {
     '_model'        => $model,
     '_core_types'   => \%core_types,
+    '_core_order'   => \@core_order,
     '_param_names'  => \@extra_params,
   };
   
@@ -56,170 +59,109 @@ sub new {
 
 sub _chain_Location {
   my $self = shift;
-  my $problems;
-
+  
   ### Set coordinates in CGI parameters
-  my $location = $self->model->data('Location');
-  if ($location && $location->seq_region_name) {
+  my $model    = $self->model;
+  my $location = shift || $model->data('Location');
+  
+  if ($location && $location->seq_region_name && !$model->hub->param('r')) {
     my $r = $location->seq_region_name;
-    $r .= ':'.$location->seq_region_start if $location->seq_region_start;
-    $r .= '-'.$location->seq_region_end   if $location->seq_region_end;
-    $self->model->hub->param('r', $r);
+    $r   .= ':' . $location->start if $location->start;
+    $r   .= '-' . $location->end   if $location->end;
+    
+    $model->hub->core_param('r', $r);
+    
+    return $self->_generic_create('Location', 'previous');
   }
-
-  return $problems;
 }
 
 sub _chain_Gene {
-  my $self = shift;
-  my $problems;
-
+  my $self  = shift;
+  my $model = $self->model;
+  my $hub   = $model->hub;
+  my $gene  = $model->api_object('Gene');
+  my @problems;
+  
   ## Do we need to create any other objects?
-  ## NEXT TAB
-  if (!$self->model->data('Transcript')) {
-    my $gene = $self->model->api_object('Gene');
-    if ($gene) {
+  if ($gene) {
+    ## NEXT TAB
+    if (!$model->data('Transcript')) {
       my @transcripts = @{$gene->get_all_Transcripts};
+      
       if (scalar @transcripts == 1) {
         ## Add transcript if there's only one
-        my $trans_id = $transcripts[0]->stable_id;
-        $self->model->hub->param('t', $trans_id);
+        $hub->core_param('t', $transcripts[0]->stable_id);
+        
+        push @problems, $self->_generic_create('Transcript', 'next');
       }
     }
-    if ($self->model->hub->param('t')) {
-      $self->_generic_create('Transcript', 'next');
-    }
+    
+    push @problems, $self->_chain_Location($gene->feature_Slice) unless $model->data('Location'); ## PREVIOUS TAB
+    
+    $hub->core_param('g', $gene->stable_id);
   }
-  elsif (!$self->model->data('Variation') && $self->model->hub->param('v')) {
-    $self->_generic_create('Variation', 'next');
-  }
-  ## PREVIOUS TAB
-  unless ($self->model->data('Location')) {
-    $problems = $self->_previous_tab_Location;
-  }  
 
-  return $problems;
+  return \@problems;
 }
 
 sub _chain_Transcript {
   my $self = shift;
-  my $problems;
-
-  ## Do we need to create any other objects?
-  ## NEXT TAB
-  if ($self->model->hub->param('v')) {
-    $self->_generic_create('Variation', 'next');
-  }
-  ## PREVIOUS TAB
-  $self->_generic_create('Gene', 'previous');
-
-  return $problems;
+  return $self->_generic_create('Gene', 'previous'); ## PREVIOUS TAB
 }
 
 sub _chain_Variation {
-  my $self = shift;
-  my $problems;
+  my $self  = shift;
+  my $model = $self->model;
+  my $vf    = $model->hub->param('vf');
+  
+  ## Have come straight in on a Variation, so choose a location for it
+  my $vari_features = $vf ? [ $model->data('Variation')->Obj->get_VariationFeature_by_dbID($vf) ] : $model->data('Variation')->get_variation_features;
 
-  ## Do we need to create any other objects?
-  ## PREVIOUS TAB
-  if ($self->model->hub->param('t')) {
-    $self->_generic_create('Transcript', 'previous');
+  return unless @$vari_features;
+  
+  if (scalar @$vari_features == 1) {
+    my $slice = $vari_features->[0]->feature_Slice;
+    
+    $model->hub->core_param('vf', $vari_features->[0]->dbID) unless $vf;
+    
+    return $self->_chain_Location($slice->expand(500, 500)) if $slice && !$model->data('Location'); ## PREVIOUS TAB
+  } else {
+    return $self->_generic_create('Location', 'previous'); ## PREVIOUS TAB - Genome tab
   }
-  elsif ($self->model->hub->param('g')) {
-    $self->_generic_create('Gene', 'previous');
-  }
-  else {
-    ## Have come straight in on a Variation, so choose a location for it
-    my $var_obj = $self->model->data('Variation');
-    my $db_adaptor  = $self->model->hub->database('variation');
-
-    my $vari_features = $db_adaptor->get_VariationFeatureAdaptor->fetch_all_by_Variation($var_obj->Obj);
-
-    return unless @$vari_features;
-
-    my $feature = $vari_features->[0];
-    my $slice = $feature->slice;
-    if ($slice) {
-      my $region = $slice->seq_region_name;
-      if ($region) {
-        my $s = $feature->start;
-        my $coords = {'seq_region' => $region, 'start' => $s - 500, 'end' => $s + 500};
-        $self->_generic_create('Location', 'previous', $coords);
-      }
-    }
-  }
-
-  return $problems;
 }
 
 sub _chain_Regulation {
-  my $self = shift;
-  my $problems;
-
-  ## Do we need to create any other objects?
-  ## PREVIOUS TAB
-  if ($self->model->hub->param('t')) {
-    $self->_generic_create('Transcript', 'previous');
-  }
-  elsif ($self->model->hub->param('g')) {
-    $self->_generic_create('Gene', 'previous');
-  }
-  else {
-    my $coords = {};
-    my $data = $self->model->data;
-    ## Create a location based on object coordinates
-    if ($data) {
-      $coords = {
-        'seq_region' => $data->seq_region_name,
-        'start'      => $data->seq_region_start,
-        'end'        => $data->seq_region_end,
-      };
-    }
-    $self->_generic_create('Location', 'previous', $coords);
-  }
-
-  return $problems;
+  my $self  = shift;
+  my $model = $self->model;
+  my $slice = $model->data('Regulation')->Obj->feature_Slice;
+  return $self->_chain_Location($slice) if $slice && !$model->data('Location'); ## PREVIOUS TAB
 }
 
 sub _chain_Marker {
-  my $self = shift;
-  my $problems;
-  unless ($self->model->data('Location')) {
-    $problems = $self->_previous_tab_Location;
-    return $problems;
-  }  
+  my $self    = shift;
+  my $model   = $self->model;
+  my $hub     = $model->hub;
+  my $adaptor = $hub->database($hub->param('db') || 'core')->get_adaptor('Marker');
+  my $markers = $adaptor->fetch_all_by_synonym($hub->param('m')); # FIXME: make a way to get the marker features straight from the object
+  my @mfs     = map @{$_->get_all_MarkerFeatures}, @{$markers||[]};
+  
+  return unless @mfs;
+
+# FIXME: Should be using this code, but marker views still require a location object to exist
+#  if (scalar @mfs == 1) {
+#    my $slice = $mfs[0]->feature_Slice;    
+#    return $self->_chain_Location($slice) if $slice && !$model->data('Location'); ## PREVIOUS TAB
+#  } else {
+#    return $self->_generic_create('Location', 'previous'); ## PREVIOUS TAB - Genome tab
+#  }
+  
+  my $slice = $mfs[0]->feature_Slice;
+  return $self->_chain_Location($slice) if $slice && !$model->data('Location'); ## PREVIOUS TAB
 }
 
 sub _chain_LRG {
   my $self = shift;
   my $problems;
-}
-
-sub _previous_tab_Location {
-  my $self = shift;
-  my $problems;
-
-  my $coords;
-  if ($self->model->hub->type ne 'Location') {
-    my $data = $self->model->data;
-    ## Create a location based on object coordinates
-    if ($data) {
-      $coords = {
-        'seq_region' => $data->seq_region_name,
-        'start'      => $data->seq_region_start,
-        'end'        => $data->seq_region_end,
-      };
-    }
-  }
- 
-  if ($coords) {
-    ## Feed these back into CGI params, for use in links
-    my $r = $coords->{'seq_region'}.':'.$coords->{'start'}.'-'.$coords->{'end'};
-    $self->model->hub->param('r', $r);
-  }
-  $self->_generic_create('Location', 'previous', $coords);
-
-  return $problems;
 }
 
 ## -------- TABS --------------
@@ -228,27 +170,29 @@ sub _create_tab {
   my $self = shift;
   my $type = shift;
   my $object = $self->model->api_object($type);
+  
   return if $type ne 'Location' && !$object;
 
   ## Set some default values that can be overridden as needed
-  my $info = {'type' => $type, 'action' => 'Summary'};
+  my $info = { 'type' => $type, 'action' => 'Summary' };
 
   if ($object && $object->isa('Bio::EnsEMBL::ArchiveStableId')) {
     $info->{'action'} = 'idhistory';
   }
+  
   if ($type eq 'Gene' || $type eq 'Transcript' || $type eq 'Regulation') {
     $info->{'stable_id'} = $object->stable_id;
-  }
-  elsif ($type eq 'Variation') {
+  } elsif ($type eq 'Variation') {
     $info->{'stable_id'} = $object->name; 
   }
+  
   $info->{'long_caption'} = '';
 
   my $tab_method = "_tab_$type";
+  
   if ($self->can($tab_method)) {
     return $self->$tab_method($object, $info);
-  }
-  else {
+  } else {
     warn "!!! CANNOT ADD TAB $type - NO METHOD DEFINED";
   }
 }
@@ -257,7 +201,6 @@ sub _long_caption {
   my ($self, $object) = @_;
   my $dxr   = $object->can('display_xref') ? $object->display_xref : undef;
   my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
-
   return $object->stable_id . $label;
 }
 
@@ -265,21 +208,20 @@ sub _tab_Location {
   my ($self, $slice, $info) = @_;
 
   my $coords;
+  
   if (!$slice) {
-    $info->{'action'} = 'Genome';
-    $info->{'short_caption'}  = 'Genome';
-  }
-  else {
+    $info->{'action'}        = 'Genome';
+    $info->{'short_caption'} = 'Genome';
+  } else {
     $info->{'action'} = 'View';
-    $coords = $slice->seq_region_name.':'
-                  .$self->thousandify($slice->start).'-'.$self->thousandify($slice->end);
+    $coords = $slice->seq_region_name . ':' .$self->thousandify($slice->start) . '-' . $self->thousandify($slice->end);
     $info->{'short_caption'} = "Location: $coords";
   }
-  $info->{'parameters'} = ['r'];
+  
   $info->{'url'} = $self->model->hub->url({
     'type'   => 'Location',
     'action' => $info->{'action'},
-    'r'      => $coords,
+    'r'      => $coords
   });
 
   return $info;
@@ -289,15 +231,14 @@ sub _tab_Gene {
   my ($self, $gene, $info) = @_;
 
   if ($gene->isa('EnsEMBL::Web::Fake')) {
-    $info->{'short_caption'} = ucfirst($gene->type) . ': ' . $gene->stable_id;
-  }
-  else {
+    $info->{'short_caption'} = ucfirst $gene->type . ': ' . $gene->stable_id;
+  } else {
     my $dxr   = $gene->can('display_xref') ? $gene->display_xref : undef;
     my $label = $dxr ? $dxr->display_id : $gene->stable_id;
     $info->{'short_caption'} =  "Gene: $label";
   }
+  
   $info->{'long_caption'} = $self->_long_caption($gene);
-  $info->{'parameters'} = ['r', 'g'];
 
   return $info;
 }
@@ -306,53 +247,50 @@ sub _tab_Transcript {
   my ($self, $transcript, $info) = @_;
 
   if ($transcript->isa('EnsEMBL::Web::Fake')) {
-    $info->{'short_caption'} = ucfirst($transcript->type) . ': ' . $transcript->stable_id;
-  }
-  else {
+    $info->{'short_caption'} = ucfirst $transcript->type . ': ' . $transcript->stable_id;
+  } else {
     my $dxr   = $transcript->can('display_xref') ? $transcript->display_xref : undef;
     my $label = $dxr ? $dxr->display_id : $transcript->stable_id;
     $info->{'short_caption'} = length $label < 15 ? "Transcript: $label" : "Trans: $label";
   }
+  
   $info->{'long_caption'} = $self->_long_caption($transcript);
-  $info->{'parameters'} = ['r', 'g', 't'];
 
   return $info;
 }
 
 sub _tab_Variation {
   my ($self, $variation, $info) = @_;
-
   my $label = $variation->name;
   $info->{'short_caption'} = (length $label > 30 ? 'Var: ' : 'Variation: ') . $label;
-
   return $info;
 }
 
 sub _tab_Regulation {
   my ($self, $regulation, $info) = @_;
-
-  $info->{'short_caption'}  = 'Regulation: '.$regulation->stable_id;
-
+  $info->{'short_caption'} = 'Regulation: ' . $regulation->stable_id;
   return $info;
 }
 
 sub _tab_Marker {
   my ($self, $marker, $info) = @_;
-  $info->{'short_caption'}  = 'Marker: '.$self->model->hub->param('m');
+  $info->{'short_caption'} = 'Marker: ' . $self->model->hub->param('m');
   return $info;
 }
 
 sub _tab_LRG {
   my ($self, $slice, $info) = @_;
 
-  $info->{'action'} = 'Summary';
-  my $coords = $slice->seq_region_name.':'
-                  .$self->thousandify($slice->start).'-'.$self->thousandify($slice->end);
+  my $hub    = $self->model->hub;
+  my $coords = $slice->seq_region_name . ':' . $self->thousandify($slice->start) . '-' . $self->thousandify($slice->end);
+  
+  $info->{'action'}        = 'Summary';
   $info->{'short_caption'} = "Location: $coords";
-  $info->{'url'} = $self->model->hub->url({
+  
+  $info->{'url'} = $hub->url({
     'type'   => 'LRG',
     'action' => $info->{'action'},
-    'lrg'      => $self->model->hub->param('lrg'),
+    'lrg'    => $hub->param('lrg')
   });
 
   return $info;
@@ -363,6 +301,7 @@ sub _tab_LRG {
 ### Getters for preset properties
 sub model       { return $_[0]->{'_model'}; }
 sub core_types  { return $_[0]->{'_core_types'}; }
+sub core_order  { return $_[0]->{'_core_order'}; }
 sub param_names { return $_[0]->{'_param_names'}; }
 
 sub create_objects {
@@ -370,7 +309,7 @@ sub create_objects {
 ### and adds them to the Model. Note that the Builder does not contain
 ### any direct object creation code - this is encapsulated in the Model.
   my ($self, $type, $request) = @_;
-
+  
   ## Deal with funky zmenus!
   if ($request eq 'menu') {
     $self->model->create_domain_object($type);
@@ -379,70 +318,54 @@ sub create_objects {
   }
 
   return if $self->model->data($type); ## No thanks, I've already got one!
-  my $problems;
-  my %core_types = %{$self->core_types};
-
-  if (grep /^$type$/, keys %core_types) {
-    ## start with the current object, which will create others as necessary
-    $problems = $self->_generic_create($type);
-
-    ## Add any non-tab core objects (e.g. variation on Location/LD page)
-    while (my($ct, $param) = each (%core_types)) {
-      if ($self->model->hub->param($param) && !$self->model->data($ct)) {
-        $problems = $self->model->create_domain_object($ct);
-        my $tab_info = $self->_create_tab($ct);
-        $self->model->add_tab($tab_info);
-      }
-    }
   
-    ## Finally, generate a location for core objects where there is no r param
-    if ($type eq 'Location' && !$self->model->data('Location')) {
-      while (my($ct, $param) = each (%core_types)) {
-        if ($self->model->hub->param($param) && $self->model->data($ct)) {
-          my $object = $self->model->data($ct);
-          my $coords = $object->coords;
-          $problems = $self->model->create_domain_object('Location', $coords);
-          my $tab_info = $self->_create_tab('Location');
-          $self->model->hub->add_tab($tab_info);
-          last;
-        }
-      }
+  my @problems;
+  my %core_types  = %{$self->core_types};
+  my %core_params = reverse %core_types;
+  my @core_order  = @{$self->core_order};
+  my $hub         = $self->model->hub;
+  
+  foreach (map $core_params{$_}, grep $hub->param($_), @core_order) {
+    my $problem = $self->_generic_create($_);
+    
+    if (ref $problem eq 'ARRAY') {
+      push @problems, grep $_, @$problem;
+    } elsif ($problem) {
+      push @problems, $problem;
     }
-
   }
-  else {
-    ## Not core, so just generate a single object
-    $problems = $self->model->create_domain_object($type);
-  } 
-  return $problems;
+  
+  return \@problems;
 }
 
 sub _generic_create {
   my $self      = shift;
   my $type      = shift;
   my $direction = shift;
-  my $problem;
-
+  my $model     = $self->model;
+  my $problems;
+  
   ## Create this object unless it already exists
-  unless ($self->model->data($type)) {
-    $problem = $self->model->create_domain_object($type, @_);
-    if ($problem && $self->model->hub->has_fatal_problem) {
-      return $problem;
-    }
-    else {  
+  if (!$model->data($type)) {
+    $problems = $model->create_domain_object($type, @_);
+    
+    if ($problems && $model->hub->has_fatal_problem) {
+    } else {  
       my $tab_info = $self->_create_tab($type);
-      $self->model->add_tab($tab_info, $direction);
+      $model->add_tab($tab_info, $direction);
+      
       ## Do we need to create any other objects?
       my $chain_method = "_chain_$type";
+      
       if ($self->can($chain_method)) {
-        $problem = $self->$chain_method;
-      }
-      else {
+        $problems = $self->$chain_method;
+      } else {
         warn "!!! CANNOT CREATE ADDITIONAL TAB(S) - NO METHOD $chain_method";
       }
     }
   }
-  return $problem;
+  
+  return $problems;
 }
 
 1;
