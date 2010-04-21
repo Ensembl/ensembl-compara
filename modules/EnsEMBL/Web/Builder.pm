@@ -343,17 +343,18 @@ sub _generic_create {
   my $type      = shift;
   my $direction = shift;
   my $model     = $self->model;
+  my $hub       = $model->hub;
   my $problems;
   
   ## Create this object unless it already exists
   if (!$model->data($type)) {
     $problems = $model->create_domain_object($type, @_);
     
-    if ($problems && $model->hub->has_fatal_problem) {
+    if ($problems && $hub->has_fatal_problem) {
       return $problems;
     } else {  
       my $tab_info = $self->_create_tab($type);
-      $model->add_tab($tab_info, $direction);
+      $hub->add_tab($tab_info, $direction);
       
       ## Do we need to create any other objects?
       my $chain_method = "_chain_$type";
