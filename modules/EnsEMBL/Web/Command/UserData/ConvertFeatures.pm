@@ -29,7 +29,7 @@ sub process {
     ## Get data for remapping
     next unless $id;
     my ($file, $name) = split(':', $id);
-    my $data = $object->fetch_userdata_by_id($file);
+    my $data = $self->model->hub->fetch_userdata_by_id($file);
     my (@fs, $class);
 
     if (my $parser = $data->{'parser'}) {
