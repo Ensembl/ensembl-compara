@@ -94,9 +94,18 @@ sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->ti
 sub ExtURL        { return $_[0]->{'_ext_url'} ||= new EnsEMBL::Web::ExtURL($_[0]->species, $_[0]->species_defs); } 
 sub species_path  { return shift->species_defs->species_path(@_); }
 
-sub add_tab   { 
-  my ($self, $tab) = @_;
-  $self->{'_tabs'}{$tab->{'type'}} = $tab; 
+sub add_tab {
+  my ($self, $tab, $direction) = @_;
+  
+  return unless $tab && ref($tab) eq 'HASH';
+  
+  if ($direction eq 'previous') {
+    unshift @{$self->tab_order}, $tab->{'type'};
+  } else {
+    push @{$self->tab_order}, $tab->{'type'};
+  }
+  
+  $self->{'_tabs'}{$tab->{'type'}} = $tab;
 }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }

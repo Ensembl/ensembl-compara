@@ -36,14 +36,13 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my ($class, $args) = @_;
   my $self = { 
-    '_data' => {}, 
-    '_tabs' => [],
+    '_data' => {}
   };
 
   ## Create the hub - a mass of connections to databases, Apache, etc
   $self->{'_hub'} = EnsEMBL::Web::Hub->new(
-    '_apache_handle'  => $args->{'_apache_handle'},
-    '_input'          => $args->{'_input'},
+    '_apache_handle' => $args->{'_apache_handle'},
+    '_input'         => $args->{'_input'},
   );
 
   bless $self, $class;
@@ -54,19 +53,6 @@ sub new {
 }
 
 sub hub { return $_[0]->{'_hub'}; }
-sub tabs    :lvalue { $_[0]->{'_hub'}{'_tabs'}};
-
-sub add_tab {
-  my ($self, $tab, $direction) = @_;
-  return unless $tab && ref($tab) eq 'HASH';
-  if ($direction eq 'previous') {
-    unshift @{$self->hub->tab_order}, $tab->{'type'};
-  }
-  else {
-    push @{$self->hub->tab_order}, $tab->{'type'};
-  }
-  $self->hub->add_tab($tab);
-}
 
 sub all_data {
 ### Getter/setter for domain objects
@@ -151,8 +137,7 @@ sub create_domain_object {
   if ($factory) {
     if ($hub->has_fatal_problem) {
       $problem = $hub->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
-    } 
-    else {
+    } else {
       eval {
         $factory->createObjects($params);
       };
@@ -161,9 +146,8 @@ sub create_domain_object {
       
       # $hub->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
       if ($hub->has_a_problem) {
-        $problem = $hub->handle_problem; 
-      } 
-      else {
+        $problem = $hub->handle_problem;
+      } else {
         my $DO = $factory->DataObjects;
         if (@$DO > 1) {
           warn ">>> MULTIPLE DOMAIN OBJECTS OF TYPE $type";
@@ -209,7 +193,6 @@ sub core_param_strings {
 
   return $params;
 }
-
 
 sub munge_features_for_drawing {
 ### Converts full objects into simple data structures that can be used by the drawing code
