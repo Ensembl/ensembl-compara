@@ -582,15 +582,16 @@ sub content {
   my ($self) = @_;
   
   $self->reset_buffer;
-  
-  if ($self->{'content'}) {
-    $self->print($self->{'content'});
-  }
+  $self->print($self->{'content'}) if $self->{'content'};
   
   my $model = $self->{'model'};
+  
   return $self->buffer unless $model;
-  my $hub = $model->hub;
-  my $object = $self->{'object'};
+  
+  my $hub    = $model->hub;
+  my $object = $model->object;
+  
+  $object->prefix($self->prefix) if $object;
 
   foreach my $component ($self->components) {
     if ($component eq 'das_features') {
@@ -598,10 +599,7 @@ sub content {
         my $result;
         (my $module_name = $function_name) =~ s/::\w+$//;
         
-        if ($self->dynamic_use($module_name)) {
-          my $object = $model->object;
-          $object && $object->prefix($self->prefix);
-          
+        if ($self->dynamic_use($module_name)) {          
           no strict 'refs';
           
           eval {
@@ -638,9 +636,6 @@ sub content {
         my $result;
         
         if ($self->dynamic_use($module_name)) {
-          my $object = $model->object;
-          $object && $object->prefix($self->prefix);
-
           no strict 'refs';
           
           my $comp_obj;
@@ -679,13 +674,13 @@ sub content {
                 my @wrapper = $comp_obj->has_image ? ('<div class="image_panel">', '</div>') : ();
                 
                 # if ajax disabled - we get all content by parallel requests to ourself
-                $self->print($wrapper[0], HTTP::Request->new('GET', $object->species_defs->ENSEMBL_BASE_URL . $url), $wrapper[1]);
+                $self->print($wrapper[0], HTTP::Request->new('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url), $wrapper[1]);
               }
             } else {
               my $content;
               
               eval {
-                my $FN = $self->_is_ajax_request ? lc $object->function : $function_name;
+                my $FN = $self->_is_ajax_request ? lc $hub->function : $function_name;
                 $FN = $FN ? "content_$FN" : $FN;
                 $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
               };
@@ -702,10 +697,10 @@ sub content {
               } else {
                 if ($content) {
                   if ($self->_is_ajax_request) {
-                    my $id = $object->function eq 'sub_slice' ? '' : $comp_obj->id;
+                    my $id = $hub->function eq 'sub_slice' ? '' : $comp_obj->id;
                     
                     # Only add the wrapper if $content is html, and the update_panel parameter isn't present
-                    $content = qq{<div class="js_panel" id="$id">$content</div>} if !$object->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
+                    $content = qq{<div class="js_panel" id="$id">$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
                   } else {
                     my $caption = $comp_obj->caption;
                     $self->printf("<h2>%s</h2>", encode_entities($caption)) if $caption;
