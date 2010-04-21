@@ -350,6 +350,7 @@ sub _generic_create {
     $problems = $model->create_domain_object($type, @_);
     
     if ($problems && $model->hub->has_fatal_problem) {
+      return $problems;
     } else {  
       my $tab_info = $self->_create_tab($type);
       $model->add_tab($tab_info, $direction);
