@@ -221,6 +221,13 @@ sub createSubmitPepAnalysis {
     $stats->batch_size(500);
     $stats->hive_capacity(10);
     $stats->status('BLOCKED');
+    
+    if($self->_hive_supports_resources()) {
+      my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
+      my $rc_id = $blast_template->rc_id();
+      $stats->rc_id($rc_id);
+    }
+    
     $stats->update();   
   }
 
@@ -295,5 +302,16 @@ sub create_peptide_align_feature_table {
   $sth->execute();
   $sth->finish();
 }
+
+sub _hive_supports_resources {
+  my ($self) = @_;
+  my $okay = 0;
+  eval {
+    $self->hive_dba()->get_ResourceDescriptionAdaptor();
+    $okay = 1;
+  };
+  return $okay;
+}
+
 
 1;

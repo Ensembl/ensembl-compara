@@ -309,6 +309,13 @@ sub createBlastAnalysis
   my $hive_capacity = $fasta_dump_parameters{'blast_hive_capacity'};
   $hive_capacity = 450 unless defined $hive_capacity; #Set it to the default 450 unless something was given
   $stats->hive_capacity($hive_capacity);
+  
+  #If we support resources copy the ID from the blast_template
+  if($self->_hive_supports_resources()) {
+    my $rc_id = $blast_template->stats()->rc_id();
+    $stats->rc_id($rc_id);
+  }
+  
   $stats->update();
   
   return $analysis;
@@ -340,4 +347,17 @@ sub parameter_hash{
   }
   return %parameters;
 }
+
+#If we can get the resource adaptor then we assume that we have 
+#AnalysisStats::rc_id available.
+sub _hive_supports_resources {
+  my ($self) = @_;
+  my $okay = 0;
+  eval {
+    $self->hive_dba()->get_ResourceDescriptionAdaptor();
+    $okay = 1;
+  };
+  return $okay;
+}
+
 1;
