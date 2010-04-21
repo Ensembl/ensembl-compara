@@ -79,19 +79,17 @@ sub ingredient {
   
   return unless $controller; # Cache hit
   
-  if ($model->object) {
-    # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
-    $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
-    $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'};
-    $model->hub->action = $ENV{'ENSEMBL_ACTION'};
-    
-    $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-    $page->render;
-    
-    my $content = $page->renderer->content;
-    print $content;
-    $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
-  }
+  # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
+  $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
+  $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'} if $model->object;
+  $model->hub->action = $ENV{'ENSEMBL_ACTION'};
+  
+  $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
+  $page->render;
+  
+  my $content = $page->renderer->content;
+  print $content;
+  $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
 }
 
 sub configurator {
