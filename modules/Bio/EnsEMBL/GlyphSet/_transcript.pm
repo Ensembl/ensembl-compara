@@ -52,10 +52,7 @@ sub legend {
 
 sub href {
   my ($self, $gene, $transcript) = @_;
-  #logic will be moved into web_data
-  my $action = $transcript->analysis->logic_name eq 'ccds_import' ? 'CCDS'
-             : $transcript->analysis->logic_name eq 'refseq_human_import' ? 'RefSeq'
-             : $ENV{'ENSEMBL_ACTION'};
+  my $action =  $self->my_config('zmenu') ?  $self->my_config('zmenu') :  $ENV{'ENSEMBL_ACTION'};
   my $params = {
     species => $self->species,
     type    => 'Transcript',
@@ -72,11 +69,7 @@ sub href {
 
 sub gene_href {
   my ($self, $gene) = @_;
-  #logic will be moved into web_data
-  my $action = $gene->analysis->logic_name eq 'ccds_import' ? 'CCDS'
-             : $gene->analysis->logic_name eq 'refseq_human_import' ? 'RefSeq'
-             : $ENV{'ENSEMBL_ACTION'};
-
+  my $action =  $self->my_config('zmenu') ?  $self->my_config('zmenu') :  $ENV{'ENSEMBL_ACTION'};
   my $gene_loc = $gene->seq_region_name.':'.$gene->seq_region_start.'-'.$gene->seq_region_end.':'.$gene->seq_region_strand;
   my $params = {
     species    => $self->species,

@@ -61,8 +61,9 @@ sub href {
 ### Links to /Location/Genome
   my( $self, $f ) = @_;
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
+  my $action = $self->my_config('zmenu') ?  $self->my_config('zmenu') :  'Genome';
   return $self->_url({
-    'action'  => 'Genome',
+    'action'  => $action,
     'ftype'   => $self->my_config('object_type') || 'DnaAlignFeature',
     'r'       => $r,
     'id'      => $f->display_id,
@@ -93,7 +94,7 @@ sub render_half_height {
 
 sub colour_key {
   my( $self, $feature_key ) = @_;
-  return $self->my_config( 'sub_type' );
+  return $self->my_config( 'colour_key' ) ? $self->my_config( 'colour_key' ) : $self->my_config( 'sub_type' );
 }
 
 sub render_labels {
@@ -190,8 +191,8 @@ sub render_normal {
     my @greyscale      = (qw/cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000/);
     my $y_pos;
     my $colour_key     = $self->colour_key( $feature_key );
-    my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ), undef  );
-    my $join_colour    = $self->my_colour( $self->my_config( 'sub_type' ), 'join' );
+    my $feature_colour = $self->my_colour( $colour_key, undef  );
+    my $join_colour    = $self->my_colour( $colour_key, 'join' );
     my $max_score      = $config->{'max_score'} || 1000;
     my $min_score      = $config->{'min_score'} || 0;
     if ($config && $config->{'useScore'} == 2) {
@@ -282,7 +283,7 @@ sub render_normal {
              'height'     => $h,
              'absolutey'  => 1,
           }));
-          
+
           $self->draw_cigar_feature({
             composite      => $Composite, 
             feature        => $feat, 
@@ -311,10 +312,10 @@ sub render_normal {
         $Composite->unshift( $self->Rect({
           'x'         => $Composite->{'x'},
           'y'         => $Composite->{'y'},
-        	'width'     => $Composite->{'width'},
-        	'height'    => $h,
-        	'colour'    => $join_colour,
-        	'absolutey' => 1
+	  'width'     => $Composite->{'width'},
+	  'height'    => $h,
+	  'colour'    => $join_colour,
+	  'absolutey' => 1
         }));
       }
       $Composite->y( $Composite->y + $y_pos );
