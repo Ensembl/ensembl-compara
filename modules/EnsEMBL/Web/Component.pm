@@ -644,7 +644,7 @@ sub transcript_table {
       <dt>%s</dt>
       <dd><p class="toggle_text" id="transcripts_text">%s <span class="toggle_button">Hide transcripts</span></p></dd>
     </dl>
-    <table class="toggle_table data_table" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
+    <table class="toggle_table data_table fixed_width" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
       <thead>
         <tr>
           <th>Name</th>
