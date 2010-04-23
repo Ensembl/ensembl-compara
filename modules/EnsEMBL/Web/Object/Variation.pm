@@ -548,7 +548,8 @@ sub freqs {
   ### Returns hash of data, 
 
   my $self = shift;
-  my $allele_list = $self->vari->get_all_Alleles;
+  my $variation_feature = shift || $self->vari->get_VariationFeature_by_dbID($self->param('vf'));
+  my $allele_list = $variation_feature->get_all_Alleles;
   return {} unless $allele_list;
 
   my (%data, $allele_missing);
@@ -587,43 +588,41 @@ sub freqs {
   }
 
   if ($allele_missing == 1){
-    %data = %{ $self->calculate_allele_freqs_from_genotype(\%data) }; 
+    %data = %{ $self->calculate_allele_freqs_from_genotype($variation_feature, \%data) }; 
   }
 
   return \%data;
 }
 
 sub calculate_allele_freqs_from_genotype {
-  my $self = shift;
-  my $temp_data = shift;
+  my ($self, $variation_feature, $temp_data) = @_;
   my %data = %$temp_data;
-
+  my ($a1, $a2) = split /\//, $variation_feature->allele_string;
+  
   # check if have allele data, if not calculate it
   foreach my $pop_id(keys %data){
     foreach my $ssid (keys %{$data{$pop_id}}){
-      if (scalar @{ $data{$pop_id}{$ssid}{Alleles} } <= 1){
-        my (%genotype_freqs, %alleles);
-        return {} unless $data{$pop_id}{$ssid}{GenotypeFrequency};
-        my @temp_freqs = @{ $data{$pop_id}{$ssid}{GenotypeFrequency}};
-        foreach my $genotype (@{ $data{$pop_id}{$ssid}{Genotypes} }){
-          my @allele = split (/\|/, $genotype);
-          foreach (@allele){ $alleles{$_} = "";}
-          my $frequency = shift @temp_freqs;
-          $genotype_freqs{$genotype} = $frequency;
+      if (scalar @{$data{$pop_id}{$ssid}{'Alleles'}} <= 1){
+        my (%genotype_freqs, $i);
+        
+        next unless $data{$pop_id}{$ssid}{'GenotypeFrequency'};
+        
+        foreach my $genotype (@{$data{$pop_id}{$ssid}{'Genotypes'}}){
+          $genotype_freqs{$genotype} = $data{$pop_id}{$ssid}{'GenotypeFrequency'}[$i++];
         }
-
-        next if scalar (keys %alleles) > 2;
-        my ($a1, $a2) = ( keys %alleles );
-        my $genotype_1_same = $genotype_freqs{ $a1 ."|". $a1 } || 0;
-        my $genotype_1_diff =  $genotype_freqs{ $a1 ."|". $a2 } || 0;
-        my $freq_a1 = ( $genotype_1_diff + (2 * $genotype_1_same)) /2;
-        my $freq_a2 = 1 - $freq_a1;
-        @{ $data{$pop_id}{$ssid}{Alleles} } = ();
-        @{ $data{$pop_id}{$ssid}{AlleleFrequency} } = ();
-        push (@{ $data{$pop_id}{$ssid}{Alleles} }, $a1); 
-        push (@{ $data{$pop_id}{$ssid}{Alleles} }, $a2);  
-        push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $freq_a1); 
-        push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $freq_a2); 
+        
+        my $genotype_1_same = $genotype_freqs{"$a1|$a1"} || 0;
+        my $genotype_1_diff = $genotype_freqs{"$a1|$a2"} || $genotype_freqs{"$a2|$a1"} || 0;
+        my $freq_a1         = ($genotype_1_diff + (2 * $genotype_1_same)) /2;
+        my $freq_a2         = 1 - $freq_a1;
+        
+        @{$data{$pop_id}{$ssid}{'Alleles'}} = ();
+        @{$data{$pop_id}{$ssid}{'AlleleFrequency'}} = ();
+        
+        push @{$data{$pop_id}{$ssid}{'Alleles'}}, $a1; 
+        push @{$data{$pop_id}{$ssid}{'Alleles'}}, $a2;  
+        push @{$data{$pop_id}{$ssid}{'AlleleFrequency'}}, $freq_a1; 
+        push @{$data{$pop_id}{$ssid}{'AlleleFrequency'}}, $freq_a2; 
       }
     }
   }
@@ -665,8 +664,7 @@ sub pop_genotypes {
   ### Returns String
 
   my ($self, $pop_genotype_obj)  = @_;
-  return join "|", sort($pop_genotype_obj->allele1, $pop_genotype_obj->allele2);
-
+  return join '|', sort($pop_genotype_obj->allele1, $pop_genotype_obj->allele2);
 }
 
 
@@ -1044,38 +1042,8 @@ sub get_variation_features {
   ### Returns Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
 
    my $self = shift;
-   return [] unless $self->vari;
-
-   # return VariationFeatures that were added by add_variation_feature if
-   # present
-   return $self->{'_variation_features'} if ($self->{'_variation_features'});
-
-   my $dbs = $self->DBConnection->get_DBAdaptor('variation');
-   my $vari_f_adaptor = $dbs->get_VariationFeatureAdaptor;
-   my $vari_features = $vari_f_adaptor->fetch_all_by_Variation($self->vari);
-   return $vari_features || [];
+   return $self->vari ? $self->vari->get_all_VariationFeatures : [];
 }
-
-
-sub add_variation_feature {
-
-  ### Variation_features
-  ### Args      : a Bio::EnsEBML::Variation::VariationFeature object
-  ### Example    : $object->add_variation_feature($varfeat);
-  ### Description: adds a VariationFeature to the Variation
-  ### Returns none
-  ### Exceptions  : thrown if wrong object supplied
-
-  my ($self, $vari_feature) = @_;
-  unless ($vari_feature->isa('Bio::EnsEMBL::Variation::VariationFeature')) {
-    # throw
-    $self->problem('fatal', 'EnsEMBL::Web::Data::SNP->add_variation_feature expects a Bio::EnsEMBL::Variation::VariationFeature as argument');
-  }
-
-  push @{ $self->{'_variation_features'} }, $vari_feature;
-}
-
-
 
 sub region_type { 
 
