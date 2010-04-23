@@ -63,7 +63,7 @@ sub new {
     no_load      => undef,
     storable     => 1,
     altered      => 0,
-    _core_info   => {},
+    _core        => undef,
     _tree        => EnsEMBL::Web::OrderedTree->new,
     _parameters  => {},
     _cache       => {}
@@ -122,8 +122,8 @@ sub storable :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is c
 sub altered  :lvalue { $_[0]->{'altered'};  } # Set to one if the configuration has been updated
 
 sub mergeable_config { return 0; }
-sub set_core_info   { $_[0]->{'_core_info'} = $_[1]; }
-sub core_info        { return $_[0]->{'_core_info'}; }
+sub _set_core        { $_[0]->{'_core'} = $_[1]; }
+sub core_objects     { return $_[0]->{'_core'}; }
 sub set_species      { my $self = shift; $self->{'species'} = shift; }
 sub species_defs     { return $_[0]->{'species_defs'}; }
 sub colourmap        { return $_[0]->{'_colourmap'}; }

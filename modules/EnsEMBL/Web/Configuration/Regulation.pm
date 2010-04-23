@@ -20,40 +20,12 @@ sub set_default_action {
     return;
   }
   
-  my $x = $self->availability || {};
+  my $x = $self->object->availability || {};
   
   if ($x->{'regulation'}) {
     $self->{'_data'}->{'default'} = 'Details';
   }
 }
-
-sub availability {
-  my $self = shift;
-  my $hash = $self->default_availability;
-  if ($self->model->api_object('Regulation')->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature')){
-    $hash->{'regulation'} =1;
-  }
-  return $hash;
-}
-
-sub counts {
-  my $self = shift;
-  my $obj = $self->model->api_object('Regulation');
-  return {} unless $obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
-  return {};
-}
-
-sub short_caption {
-  my $self = shift;
-  return 'Regulation-based displays';
-}
-
-sub caption {
- my $self = shift; 
- my $caption = 'Regulatory Feature: '.$self->model->object('Regulation')->stable_id;
-
- return $caption;
-}   
 
 sub populate_tree {
   my $self = shift;

@@ -47,6 +47,7 @@ sub __data            { return $_[0]->{'data'}; }
 sub __objecttype      { return $_[0]->{'data'}{'_objecttype'}; }
 sub parent            { return $_[0]->hub->parent; }
 sub apache_handle     { return $_[0]->{'data'}{'_apache_handle'}; }
+sub core_objects      { return $_[0]->{'data'}{'_core_objects'}; }
 sub hub               { return $_[0]->{'data'}{'_hub'}; }
 sub type              { return $_[0]->{'data'}{'_type'}; }
 sub action            { return $_[0]->{'data'}{'_action'};  }
@@ -213,9 +214,6 @@ sub database {
   }
 }
 
-##---------- BACKWARDS COMPATIBILITY - WRAPPERS AROUND HUB METHODS -------------
-
-# Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig  {
   my $self = shift;
   return $self->hub->get_imageconfig(@_);
@@ -225,8 +223,6 @@ sub attach_image_config {
   my $self = shift;
   return $self->hub->attach_image_config(@_);
 }
-
-##---------------------------------------------------------------
 
 sub get_ExtURL {
   my $self = shift;

@@ -25,21 +25,56 @@ use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
 use base qw(EnsEMBL::Web::Proxiable);
 
+sub counts            { return {}; }
+sub _counts           { return {}; }                             # Implemented in plugins
+sub availability      { return {}; }
 sub can_export        { return 0; }
 sub hub               { return $_[0]{'data'}{'_hub'}; }          # Gets the underlying Ensembl object wrapped by the web object
 sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the underlying Ensembl object wrapped by the web object
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 sub problem           { return shift->hub->problem(@_); }
 
-sub coords { return {} }
-
-sub convert_to_drawing_parameters {
-### Stub - individual object types probably need to implement this separately
+sub count_alignments {
   my $self = shift;
-  my $hash = {};
+  
+  my $species = $self->species;
+  my %alignments = $self->species_defs->multi('DATABASE_COMPARA', 'ALIGNMENTS');
+  my $c = { all => 0, pairwise => 0 };
+  
+  foreach (grep $_->{'species'}{$species}, values %alignments) {
+    $c->{'all'}++ ;
+    $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/;
+  }
+  
+  $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
+  
+  return $c; 
+}
+
+sub _availability { 
+  my $self = shift;
+  
+  my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$self->species_defs->databases} };
+  $hash->{'database:compara'} = 1 if $self->species_defs->compara_like_databases;
+  $hash->{'logged_in'} = 1 if $self->user;
+  
   return $hash;
 }
 
+sub core_params {
+  my $self = shift;
+  
+  my $location     = $self->core_objects->location;
+  my $gene         = $self->core_objects->gene;
+  my $transcript   = $self->core_objects->transcript;
+  my $params       = [];
+  
+  push @$params, sprintf 'r=%s:%s-%s', $location->seq_region_name, $location->start, $location->end if $location;
+  push @$params, 'g=' . $gene->stable_id if $gene;
+  push @$params, 't=' . $transcript->stable_id if $transcript;
+  
+  return $params;
+}
 
 sub prefix {
   my ($self, $value) = @_;
@@ -149,6 +184,58 @@ sub gene_description {
   }
 }
 
+sub fetch_userdata_by_id {
+  my ($self, $record_id) = @_;
+  
+  return unless $record_id;
+  
+  my $user = $self->user;
+  my $data = {};
+
+  my ($status, $type, $id) = split '-', $record_id;
+
+  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
+    my ($content, $format);
+
+    my $tempdata = {};
+    if ($status eq 'temp') {
+      $tempdata = $self->get_session->get_data('type' => $type, 'code' => $id);
+    } else {
+      my $record = $user->urls($id);
+      $tempdata = { 'url' => $record->url };
+    }
+    
+    my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
+    
+    if ($type eq 'url') {
+      my $response = get_url_content($tempdata->{'url'});
+      $content = $response->{'content'};
+    } else {
+      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
+      $content = $file->retrieve;
+      return {} unless $content;
+    }
+    
+    $parser->parse($content, $tempdata->{'format'});
+    $data = { 'parser' => $parser };
+  } else {
+    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
+    my @records = $user->uploads($id);
+    my $record = $records[0];
+    
+    if ($record) {
+      my @analyses = ($record->analyses);
+      
+      foreach (@analyses) {
+        next unless $_;
+        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
+      }
+    }
+  }
+  
+  return $data;
+}
+
 # There may be occassions when a script needs to work with features of
 # more than one type. in this case we create a new {{EnsEMBL::Web::Proxy::Factory}}
 # object for the alternative data type and retrieves the data (based on the standard URL
@@ -177,3 +264,4 @@ sub get_viewconfig {
 }
 
 1;
+

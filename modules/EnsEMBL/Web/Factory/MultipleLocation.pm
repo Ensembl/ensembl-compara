@@ -10,46 +10,48 @@ use base qw(EnsEMBL::Web::Factory::Location);
 
 sub createObjects {
   my $self = shift;
-  my $hub = $self->hub;
-  $self->SUPER::createObjects if !$self->object('Location') || ($self->param('region') && !$self->param('r'));
   
-  my $location = $self->DataObjects->[0];
+  return $self->SUPER::createObjects if !$self->core_objects->location || $self->core_objects->location->isa('EnsEMBL::Web::Fake') || ($self->param('region') && !$self->param('r'));
+  
+  $self->_create_object_from_core;
+  
+  my $object = $self->DataObjects->[0];
   
   # Redirect if we need to generate a new url
-  return if $self->generate_url($location->slice);
+  return if $self->generate_url($object->slice);
   
   my @slices;
   my $gene = 0;
-  my $action_id = $hub->param('id');
+  my $action_id = $self->param('id');
   my $invalid = 0;
   my $chr_flag;
   
   my %inputs = (
     0 => { 
-      s => $hub->species,
-      r => $hub->param('r'),
-      g => $hub->param('g')
+      s => $self->species,
+      r => $self->param('r'),
+      g => $self->param('g')
     }
   );
   
-  foreach ($hub->param) {
-    $inputs{$2}->{$1} = $hub->param($_) if /^([gr])(\d+)$/;
-    ($inputs{$1}->{'s'}, $inputs{$1}->{'chr'}) = split '--', $hub->param($_) if /^s(\d+)$/;
+  foreach ($self->param) {
+    $inputs{$2}->{$1} = $self->param($_) if /^([gr])(\d+)$/;
+    ($inputs{$1}->{'s'}, $inputs{$1}->{'chr'}) = split '--', $self->param($_) if /^s(\d+)$/;
     $chr_flag = 1 if $inputs{$1} && $inputs{$1}->{'chr'};
   }
   
   # Strip bad parameters (r/g without s)
   foreach my $id (grep !$inputs{$_}->{'s'}, keys %inputs) {
-    $hub->delete_param("$_$id") for keys %{$inputs{$id}};
+    $self->delete_param("$_$id") for keys %{$inputs{$id}};
     $invalid = 1;
   }
   
-  $inputs{$action_id}->{'action'} = $hub->param('action') if $inputs{$action_id};
+  $inputs{$action_id}->{'action'} = $self->param('action') if $inputs{$action_id};
   
   # If we had bad parameters, redirect to remove them from the url.
   # If we came in on an a gene, redirect so that we use the location in the url instead.
-  return $self->problem('redirect', $hub->url($hub->multi_params)) if $invalid || $self->input_genes(\%inputs) || $self->change_all_locations(\%inputs);
- 
+  return $self->problem('redirect', $self->_url($self->multi_params)) if $invalid || $self->input_genes(\%inputs) || $self->change_all_locations(\%inputs);
+  
   foreach (sort { $a <=> $b } keys %inputs) {
     my $species = $inputs{$_}->{'s'};
     my $r       = $inputs{$_}->{'r'};
@@ -96,14 +98,15 @@ sub createObjects {
       species    => $species,
       target     => $chr,
       name       => $slice->seq_region_name,
-      short_name => $location->chr_short_name($slice, $species),
+      short_name => $object->chr_short_name($slice, $species),
       start      => $slice->start,
       end        => $slice->end,
       strand     => $slice->strand,
       length     => $slice->seq_region_length
     };
   }
-  $location->__data->{'_multi_locations'} = \@slices;
+  
+  $object->__data->{'_multi_locations'} = \@slices;
 }
 
 sub generate_url {

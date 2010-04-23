@@ -9,11 +9,10 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $model, $existing_menu) = @_;
+  my ($class, $object, $existing_menu) = @_;
   
   my $self = {
-    model          => $model,
-    object         => $model->object,
+    object         => $object,
     entries        => [],
     stored_entries => \%{$existing_menu->{'stored_entries'}} || {},
     order          => $existing_menu->{'order'} || 1,
@@ -21,7 +20,7 @@ sub new {
   };
   
   bless $self, $class;
- 
+  
   $self->content;
   
   # stored_entries keeps all entries of all plugins in a hash, keyed by order
@@ -32,13 +31,10 @@ sub new {
 
 sub content {}
 
-sub model { return $_[0]{'model'}; }
-
 sub object {
   my $self = shift;
   $self->{'object'} = shift if @_;
-  my $object = $self->{'object'} || $self->{'model'}->hub;
-  return $object;
+  return $self->{'object'};
 }
 
 sub caption {

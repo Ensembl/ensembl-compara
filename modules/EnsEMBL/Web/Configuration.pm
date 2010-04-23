@@ -25,7 +25,6 @@ sub new {
     model  => $model,
     object => $model->object,
     _data  => $common_conf,
-    _availability => undef,
     cl     => {}
   };
   
@@ -63,7 +62,7 @@ sub new {
   return $self;
 }
 
-sub default_availability {
+sub get_availability {
   my $self = shift;
   my $hub = $self->model->hub;
 
@@ -74,12 +73,6 @@ sub default_availability {
   return $hash;
 }
 
-sub availability  { return $_[0]{'_availability'} || {}; }
-sub _counts       { return {}; }                            # Implemented in plugins
-sub counts        { return $_[0]{'_counts'} || {}; }
-
-sub caption { return ''; }
-sub short_caption { return ''; }
 sub populate_tree      {}
 sub modify_tree        {}
 sub set_default_action {}
@@ -128,7 +121,7 @@ sub _get_valid_action {
   my $node;
   
   $node = $self->tree->get_node($action. '/' . $func) if $func;
-  $self->{'availability'} = $self->availability;
+  $self->{'availability'} = $object ? $object->availability : $self->availability;
 
   return $action. '/' . $func if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
   
@@ -155,18 +148,34 @@ sub _global_context {
   return unless $self->page->can('global_context');
   return unless $self->page->global_context;
   
-  my %tabs = %{$self->model->hub->tabs};
-
-  foreach my $tab_type (@{$self->model->hub->tab_order}) {
-    my $tab     = $tabs{$tab_type};
-    my $caption = $tab->{'short_caption'};
-    my $url     = $self->model->hub->url({ type => $tab_type, action => $tab->{'action'} });
-
-    $self->page->global_context->add_entry(
-      type    => $tab_type,
-      caption => $caption,
+  my $hub          = $self->model->hub;
+  my $object       = $self->object;
+  my $type         = $self->type;
+  my $qs           = $self->query_string;
+  my $core_objects = $hub->core_objects;
+  
+  return unless $core_objects;
+  
+  my @data = (
+    [ 'Location',   'View',    $core_objects->location_short_caption,   $core_objects->location   ],
+    [ 'Gene',       'Summary', $core_objects->gene_short_caption,       $core_objects->gene       ],
+    [ 'Transcript', 'Summary', $core_objects->transcript_short_caption, $core_objects->transcript ],
+    [ 'Variation',  'Summary', $core_objects->variation_short_caption,  $core_objects->variation  ],
+    [ 'Regulation', 'Summary', $core_objects->regulation_short_caption, $core_objects->regulation ],
+  );
+  
+  foreach my $row (@data) {
+    next unless $row->[3];
+    
+    my $action = $row->[3]->isa('EnsEMBL::Web::Fake') ? $row->[3]->view : $row->[3]->isa('Bio::EnsEMBL::ArchiveStableId') ? 'idhistory' : $row->[1];
+    my $url    = $hub->url({ type => $row->[0], action => $action, __clear => 1 });
+    $url .= "?$qs" if $qs;
+    
+    $self->page->global_context->add_entry( 
+      type    => $row->[0],
+      caption => $row->[2],
       url     => $url,
-      class   => $tab_type eq $self->model->hub->type ? 'active' : ''
+      class   => $row->[0] eq $type ? 'active' : ''
     );
   }
 }
@@ -523,7 +532,6 @@ sub _configurator {
   $self->page->local_context->active('active_tracks');
   $self->page->local_context->caption($conf->get_parameter('title'));
   $self->page->local_context->configuration(1);
-  $self->page->local_context->counts({});
 
   my $search_panel = $self->new_panel('Configurator',
     code   => 'configurator_search',
@@ -576,9 +584,8 @@ sub _local_context {
   
   $self->page->local_context->tree($self->{'_data'}{'tree'});
   $self->page->local_context->active($action);
-  $self->page->local_context->caption($self->short_caption);
-  $self->page->local_context->counts($self->counts);
-  $self->page->local_context->availability($self->availability);
+  $self->page->local_context->caption(ref $object ? $object->short_caption : $self->short_caption);
+  $self->page->local_context->counts($object->counts) if ref $object;
 }
 
 sub _local_tools {
@@ -633,7 +640,8 @@ sub _local_tools {
       class   => 'modal_link',
       url     => $hub->url({ type => 'Export', action => $hub->type, function => $hub->action })
     );
-  } else {
+  } 
+  else {
     $self->page->local_tools->add_entry(
       caption => 'Export data',
       class   => 'disabled',
@@ -683,16 +691,17 @@ sub _user_tools {
 sub _context_panel {
   my $self   = shift;
   my $raw    = shift;
-  my $caption = $self->caption;
+  my $object = $self->object;
+  my $caption = $object ? $object->caption : $self->caption;
   
   my $panel = $self->new_panel('Summary',
     code        => 'summary_panel',
-    object      => $self->object,
+    object      => $object,
     raw_caption => $raw,
     caption     => $caption
   );
   
-  $panel->add_component(summary => sprintf 'EnsEMBL::Web::Component::%s::Summary', $self->model->hub->type);
+  $panel->add_component(summary => sprintf 'EnsEMBL::Web::Component::%s::Summary', $self->type);
   
   $self->add_panel($panel);
 }
@@ -710,12 +719,12 @@ sub _content_panel {
   if ($self->can('set_title')) {
     my $title = $node->data->{'concise'} || $node->data->{'caption'};
     $title =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
-    $title = join ' - ', '', $title, ($self->caption);
+    $title = join ' - ', '', $title, ($object ? $object->caption : $self->caption);
      
     $self->set_title($title);
   }
   
-  $self->{'availability'} = $self->availability;
+  $self->{'availability'} = $object ? $object->availability : $self->availability;
   
   my $previous_node = $node->previous;
   my $next_node     = $node->next;
@@ -924,24 +933,6 @@ sub new_panel {
   
   return undef;
 }
-
-sub count_alignments {
-  my $self = shift;
-
-  my $species = $self->model->hub->species;
-  my %alignments = $self->model->hub->species_defs->multi('DATABASE_COMPARA', 'ALIGNMENTS');
-  my $c = { all => 0, pairwise => 0 };
-
-  foreach (grep $_->{'species'}{$species}, values %alignments) {
-    $c->{'all'}++ ;
-    $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/;
-  }
-
-  $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
-
-  return $c;
-}
-
 
 # FIXME: Dead?
 sub add_block {

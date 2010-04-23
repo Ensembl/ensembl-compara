@@ -50,7 +50,7 @@ sub focus {
 
   my ( $info, $focus );
   if ( $obj->param('v') && $obj->param('focus')) {
-    my $snp = $model->api_object('Variation'); 
+    my $snp = $obj->core_objects->variation;
     my $name = $snp->name; 
     my $source = $snp->source;
     my $link_name  = $obj->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
@@ -178,7 +178,8 @@ sub tagged_snp {
   ### returns no
 
   my ($self, $object, $pop_name)  = @_;
-  my $snp = $self->model->object('Variation');
+  my $var = $object->core_objects->variation;
+  my $snp = $self->new_object('Variation', $var, $object->__data);
   
   my $snp_data  = $snp->tagged_snp;
   return unless keys %$snp_data;

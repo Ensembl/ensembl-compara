@@ -27,7 +27,7 @@ sub short_caption { return 'About this species'; }
 
 sub availability {
   my $self = shift;
-  my $hash = $self->default_availability;
+  my $hash = $self->get_availability;
   $hash->{'database.variation'} =
     exists $self->model->hub->species_defs->databases->{'DATABASE_VARIATION'}  ? 1 : 0;
   return $hash;

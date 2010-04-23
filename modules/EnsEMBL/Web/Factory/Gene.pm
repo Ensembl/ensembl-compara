@@ -34,8 +34,14 @@ sub _help {
 
 
 sub createObjects { 
-  my ($self, $params) = @_;
+  my $self = shift;
   my ($identifier, @fetch_calls, $geneobj);
+  if( $self->core_objects->gene ) {
+    $self->timer_push( 'About to create DO' );
+    $self->DataObjects( $self->new_object( 'Gene', $self->core_objects->gene, $self->__data ));
+    $self->timer_push( 'Created DO' );
+    return;
+  }
   my $db        = $self->param('db')  || 'core'; 
      $db          = 'otherfeatures' if $db eq 'est';
   my $exonid    = $self->param('exon');
@@ -87,7 +93,9 @@ sub createObjects {
     };
   }
 
-  $self->DataObjects( $self->new_object( 'Gene', $geneobj, $self->__data ));
+  
+  $self->problem( 'redirect', $self->_url({'db'=>$db, 'g' =>$geneobj->stable_id,'t'=>undef,'r'=>undef,'pt'=>undef}));
+  return;
 }
 
 #----------------------------------------------------------------------

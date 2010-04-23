@@ -21,11 +21,10 @@ use strict;
 use Carp;
 use URI::Escape qw(uri_escape);
 
+use EnsEMBL::Web::CoreObjects;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::ExtURL;
-use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::SpeciesDefs;
 
 use base qw(EnsEMBL::Web::Root);
@@ -49,8 +48,6 @@ sub new {
     _problem       => $args{'_problem'}       || {},    
     _ext_url       => $args{'_ext_url'}       || undef,                        # EnsEMBL::Web::ExtURL object used to create external links
     _user          => $args{'_user'}          || undef,                    
-    _tabs          => $args{'_tabs'}          || {},
-    _tab_order     => $args{'_tab_order'}     || [],
     _view_configs  => $args{'_view_configs_'} || {},
     _user_details  => $args{'_user_details'}  || 1,
     _timer         => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
@@ -62,6 +59,10 @@ sub new {
   ## Get database connections 
   my $api_connection = $self->species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
   $self->{'_databases'} = $api_connection;
+
+  ## TODO - remove core objects! 
+  $self->{'_core_objects'} = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
+  $self->_set_core_params;
 
   $self->species_defs->{'timer'} = $args{'_timer'};
 
@@ -79,34 +80,15 @@ sub session   :lvalue { $_[0]{'_session'};   }
 sub databases :lvalue { $_[0]{'_databases'}; } 
 sub cache     :lvalue { $_[0]{'_cache'};     }
 sub user      :lvalue { $_[0]{'_user'};      }
-sub tab_order :lvalue { $_[0]{'_tab_order'}; }
 
-sub tabs          { return $_[0]{'_tabs'}; }
-sub input         { return $_[0]{'_input'}; }
-sub delete_param  { my $self = shift; $self->{'_input'}->delete(@_); }
-sub core_types    { return $_[0]{'_core_types'};   }
+sub input         { return $_[0]{'_input'};         }
+sub core_objects  { return $_[0]{'_core_objects'};  }
 sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
 sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
 sub user_details  { return $_[0]{'_user_details'} ||= 1; }
 sub timer         { return $_[0]{'_timer'}; }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
-sub ExtURL        { return $_[0]->{'_ext_url'} ||= new EnsEMBL::Web::ExtURL($_[0]->species, $_[0]->species_defs); } 
-sub species_path  { return shift->species_defs->species_path(@_); }
-
-sub add_tab {
-  my ($self, $tab, $direction) = @_;
-  
-  return unless $tab && ref($tab) eq 'HASH';
-  
-  if ($direction eq 'previous') {
-    unshift @{$self->tab_order}, $tab->{'type'};
-  } else {
-    push @{$self->tab_order}, $tab->{'type'};
-  }
-  
-  $self->{'_tabs'}{$tab->{'type'}} = $tab;
-}
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -161,44 +143,17 @@ sub handle_problem {
   }
 }
 
-sub database {
+sub core_param  { 
   my $self = shift;
-
-  if ($_[0] =~ /compara/) {
-    return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0]);
-  } else {
-    return $self->{'_databases'}->get_DBAdaptor(@_);
-  }
-}
-
-sub is_core  { 
-  my ($self, $name) = @_;
+  my $name = shift;
   return unless $name;
-  return $self->{'_core_types'}->{$name};
-}
-
-sub core_param { 
-  my ($self, $name, $value) = @_;
-  
-  return unless $name;
-  
-  if ($value) {
-    $self->{'_core_params'}->{$name} = $value;
-    $self->param($name, $value);
-  }
-  
+  $self->{'_core_params'}->{$name} = @_ if @_;
   return $self->{'_core_params'}->{$name};
 }
 
-sub set_core_types {
-  ### Used by Builder to initialise core types hash
-  my ($self, @types) = @_;
-  my %core_types = map { $_ => 1 } @types;
-  $self->{'_core_types'} = \%core_types;
-}
+sub _set_core_params {
+  ### Initialises core parameter hash from CGI parameters
 
-sub set_core_params {
-  ### Used by Builder to initialise core parameter hash from CGI parameters
   my $self = shift;
   my $core_params = {};
 
@@ -209,20 +164,6 @@ sub set_core_params {
 
   $self->{'_core_params'} = $core_params;
 }
-
-sub filename {
-### Creates a generic filename for miscellaneous exports
-  my $self = shift;
-  my $name = sprintf '%s-%d-%s_%s',
-    $self->species,
-    $self->species_defs->ENSEMBL_VERSION,
-    $self->type,
-    $self->action;
-
-  $name =~ s/[^-\w\.]/_/g;
-  return $name;
-}
-
 
 # Does an ordinary redirect
 sub redirect {
@@ -352,7 +293,7 @@ sub get_imageconfig {
   
   return unless $image_config;
   
-  $image_config->set_core_info({ %{$self->{'_tabs'}}, parameters => $self->{'_core_params'}, input => $self->{'_input'} });
+  $image_config->_set_core($self->core_objects);
   
   return $image_config;
 }
@@ -364,146 +305,5 @@ sub attach_image_config {
   my $T = $session->attachImageConfig($key, $image_key);
   return $T;
 }
-
-#----------------------- EXTERNAL URLs -----------------------------
-
-sub get_ExtURL {
-  my $self = shift;
-  my $new_url = $self->ExtURL || return;
-  return $new_url->get_url(@_);
-}
-
-sub get_ExtURL_link {
-  my $self = shift;
-  my $text = shift;
-  my $url = $self->get_ExtURL(@_);
-  return $url ? qq(<a href="$url">$text</a>) : $text;
-}
-
-# use PFETCH etc to get description and sequence of an external record
-sub get_ext_seq {
-  my ($self, $id, $ext_db) = @_;
-  my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs);
-
-  return unless $indexer;
-
-  my $seq_ary;
-  my %args;
-  $args{'ID'} = $id;
-  $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
-
-  eval { $seq_ary = $indexer->get_seq_by_id(\%args); };
- 
-  if (!$seq_ary) {
-    warn "The $ext_db server is unavailable: $@";
-    return '';
-  } else {
-    my $list = join ' ', @$seq_ary;
-    return $list =~ /no match/i ? '' : $list;
-  }
-}
-
-sub get_tracks {
-  my ($self, $key) = @_;
-  my $data = $self->fetch_userdata_by_id($key);
-  my $tracks = {};
-
-  if (my $parser = $data->{'parser'}) {
-    while (my ($type, $track) = each(%{$parser->get_all_tracks})) {
-      my @A = @{$track->{'features'}};
-      my @rows;
-      foreach my $feature (@{$track->{'features'}}) {
-        my $data_row = {
-          'chr'     => $feature->seqname(),
-          'start'   => $feature->rawstart(),
-          'end'     => $feature->rawend(),
-          'label'   => $feature->id(),
-          'gene_id' => $feature->id(),
-        };
-        push (@rows, $data_row);
-      }
-      $tracks->{$type} = {'features' => \@rows, 'config' => $track->{'config'}};
-    }
-  }
-  else {
-    while (my ($analysis, $track) = each(%{$data})) {
-      my @rows;
-      foreach my $f (
-        map { $_->[0] }
-        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-        map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
-$_->{'start'}] }
-        @{$track->{'features'}}
-        ) {
-        my $data_row = {
-          'chr'       => $f->{'region'},
-          'start'     => $f->{'start'},
-          'end'       => $f->{'end'},
-          'length'    => $f->{'length'},
-          'label'     => $f->{'label'},
-          'gene_id'   => $f->{'gene_id'},
-        };
-        push (@rows, $data_row);
-      }
-      $tracks->{$analysis} = {'features' => \@rows, 'config' => $track->{'config'}};
-    }
-  }
-
-  return $tracks;
-}
-
-sub fetch_userdata_by_id {
-  my ($self, $record_id) = @_;
-
-  return unless $record_id;
-
-  my $user = $self->user;
-  my $data = {};
-
-  my ($status, $type, $id) = split '-', $record_id;
-
-  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
-    my ($content, $format);
-
-    my $tempdata = {};
-    if ($status eq 'temp') {
-      $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
-    } else {
-      my $record = $user->urls($id);
-      $tempdata = { 'url' => $record->url };
-    }
-   
-    my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
-
-    if ($type eq 'url') {
-      my $response = get_url_content($tempdata->{'url'});
-      $content = $response->{'content'};
-    } else {
-      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
-      $content = $file->retrieve;
-      return {} unless $content;
-    }
-   
-    $parser->parse($content, $tempdata->{'format'});
-    $data = { 'parser' => $parser };
-  } 
-  else {
- my $fa = $self->databases('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    my @records = $user->uploads($id);
-    my $record = $records[0];
-
-    if ($record) {
-      my @analyses = ($record->analyses);
-
-      foreach (@analyses) {
-        next unless $_;
-        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
-      }
-    }
-  }
-
-  return $data;
-}
-
 
 1;

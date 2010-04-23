@@ -5,8 +5,6 @@ package EnsEMBL::Web::Magic;
 ### NAME: Magic.pm
 ### Converts Apache requests into web pages or HTML fragments
 
-### PLUGGABLE: No 
-
 ### STATUS: Stable
 ### Any changes to this module should not affect external users
 
@@ -27,7 +25,6 @@ use CGI;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Model;
-use EnsEMBL::Web::Builder;
 
 use base qw(Exporter);
 
@@ -52,11 +49,10 @@ sub stuff {
   } else {
     @sections = qw(check_filters global_context local_context modal_context context_panel content_panel local_tools);
   }
- 
-  # FIXME - why do we build the page before we check to see if it's a 
-  # command and/or accessible?   
+  
   $controller->build_page($page, $doctype, $model, @sections);
   
+  # TODO: run check_filters first, store the Configuration object created for use in build_page
   if (!$controller->process_command($model, $page, $problem) && $controller->access_ok($model, $page)) {
     $page->render;
     
@@ -79,17 +75,19 @@ sub ingredient {
   
   return unless $controller; # Cache hit
   
-  # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
-  $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
-  $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'} if $model->object;
-  $model->hub->action = $ENV{'ENSEMBL_ACTION'};
-  
-  $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-  $page->render;
-  
-  my $content = $page->renderer->content;
-  print $content;
-  $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
+  if ($model->object) {
+    # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
+    $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
+    $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'};
+    $model->hub->action = $ENV{'ENSEMBL_ACTION'};
+    
+    $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
+    $page->render;
+    
+    my $content = $page->renderer->content;
+    print $content;
+    $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
+  }
 }
 
 sub configurator {
@@ -116,7 +114,7 @@ sub handler {
   ### Deals with common functionality of all request types.
   ### Returns:
   ### controller (EnsEMBL::Web::Controller)
-  ### model   (EnsEMBL::Web::Model)
+  ### model      (EnsEMBL::Web::Model)
   ### page       (EnsEMBL::Web::Document::[DOCTYPE]) - will be a child of EnsEMBL::Web::Document::Page. Not returned for calls from menu.
   ### problem    boolean - true if the factory has a problem
   ###
@@ -129,29 +127,28 @@ sub handler {
   my $input        = new CGI;
   my $model        = new EnsEMBL::Web::Model({ _input => $input, _apache_handle => $r }); # The model object is used throughout the code to store data objects, connections and parameters 
   my $hub          = $model->hub;
-  my $factorytype  = $input->param('factorytype') || $hub->type;
+  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || $input->param('factorytype') || $hub->type;
   my $outputtype   = $hub->type eq 'DAS' ? 'DAS' : undef;
   my $controller   = new EnsEMBL::Web::Controller($hub);
   
   $controller->clear_cached_content if $requesttype eq 'page';                    # Conditional - only clears on force refresh of page. 
   
-  $CGI::POST_MAX = $hub->species_defs->CGI_POST_MAX;                         # Set max upload size
+  $CGI::POST_MAX = $hub->species_defs->CGI_POST_MAX;                              # Set max upload size
   
   return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
 
-  my $builder = new EnsEMBL::Web::Builder($model);
-  my $problem = $builder->create_objects($factorytype, $requesttype);
+  my $problem = $model->create_objects($factorytype);
   
-  return if $problem eq 'redirect';                          # Forcing a redirect - don't need to go any further
+  return if $problem eq 'redirect';                       # Forcing a redirect - don't need to go any further
   return ($controller, $model) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
   
   my $renderer_module = "EnsEMBL::Web::Document::Renderer::$renderertype";
   my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
   
   my ($renderer) = $controller->_use($renderer_module, (r => $r, cache => $hub->cache));
-  my ($page)     = $controller->_use($document_module, { 
-    hub          => $hub,
+  my ($page)     = $controller->_use($document_module, {
+    hub          => $hub, 
     renderer     => $renderer, 
     species_defs => $hub->species_defs, 
     input        => $input, 

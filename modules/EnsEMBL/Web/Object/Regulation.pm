@@ -29,6 +29,33 @@ sub _filename {
   return $name;
 }
 
+sub short_caption {
+  my $self = shift;
+  return "Regulation-based displays";
+}
+
+sub caption {
+  my $self = shift;
+  my $caption = 'Regulatory Feature: '. $self->Obj->stable_id;
+  return $caption;    
+}
+
+sub availability {
+  my $self = shift;
+  my $hash = $self->_availability;
+  if ($self->Obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature')){
+    $hash->{'regulation'} =1;
+  }
+  return $hash;
+}
+
+sub counts {
+  my $self = shift;
+  my $obj = $self->Obj;
+  return {} unless $obj->isa('Bio::EnsEMBL::Funcgen::RegulatoryFeature');
+  return {};  
+}
+
 sub _adaptor {
   my $self = shift;
   return $self->database('funcgen')->get_RegulatoryFeatureAdaptor;
@@ -51,15 +78,6 @@ sub feature_set           { my $self = shift; return $self->Obj->feature_set;   
 sub feature_type          { my $self = shift; return $self->Obj->feature_type;              }
 sub slice                 { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length     { my $self = shift; return $self->Obj->slice->seq_region_length;  }
-
-sub coords {
-  my $self = shift;
-  return {
-    'seq_region' => $self->seq_region_name,
-    'start'      => $self->seq_region_start,
-    'end'        => $self->seq_region_end,
-  }
-}
 
 
 sub get_attribute_list {

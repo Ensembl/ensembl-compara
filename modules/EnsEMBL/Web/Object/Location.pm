@@ -37,6 +37,82 @@ sub _filename {
   return $name;
 }
 
+sub availability {
+  my $self = shift;
+  
+  if (!$self->{'_availability'}) {
+    my $species_defs    = $self->species_defs;
+    my $variation_db    = $species_defs->databases->{'DATABASE_VARIATION'};
+    my @chromosomes     = @{$species_defs->ENSEMBL_CHROMOSOMES || []};
+    my %chrs            = map { $_, 1 } @chromosomes;
+    my %synteny_hash    = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my $rows            = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+    my $seq_region_name = $self->Obj->{'seq_region_name'};
+    my $counts          = $self->counts;
+    my $availability    = $self->_availability;
+    
+    $availability->{'karyotype'}       = 1;
+    $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
+    $availability->{'has_chromosomes'} = scalar @chromosomes;
+    $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
+    $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->hub->core_param('r');
+    $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
+    $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
+    $availability->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
+    $availability->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
+    $availability->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
+  
+    $self->{'_availability'} = $availability;
+  }
+  
+  return $self->{'_availability'};
+}
+
+our $MEMD = new EnsEMBL::Web::Cache;
+
+sub counts {
+  my $self = shift;
+  
+  my $obj = $self->Obj;
+  my $key = '::COUNTS::LOCATION::' . $self->species;
+  my $counts = $self->{'_counts'};
+  $counts ||= $MEMD->get($key) if $MEMD;
+ 
+  if (!$counts) {
+    my %synteny = $self->species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+    my $alignments = $self->count_alignments;
+    
+    $counts = {
+      synteny             => scalar keys %{$synteny{$self->species}||{}},
+      alignments          => $alignments->{'all'},
+      pairwise_alignments => $alignments->{'pairwise'}
+    };
+    
+    $counts->{'reseq_strains'} = $self->species_defs->databases->{'DATABASE_VARIATION'}{'#STRAINS'} if $self->species_defs->databases->{'DATABASE_VARIATION'};
+    
+    $counts = {%$counts, %{$self->_counts}};
+    
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
+    $self->{'_counts'} = $counts;
+  }
+
+  return $counts;
+}
+
+sub short_caption {
+  my $self = shift;
+  return 'Location-based displays';
+  #return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
+  #  $self->thousandify($self->seq_region_end);
+
+}
+
+sub caption {
+  my $self = shift;
+  return "Karyotype" unless $self->seq_region_name;
+  return $self->neat_sr_name($self->seq_region_type,$self->seq_region_name).': '.$self->thousandify($self->seq_region_start).'-'.
+                                     $self->thousandify($self->seq_region_end);
+}
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
 sub length           { return   $_[0]->Obj->{'seq_region_end'} - $_[0]->Obj->{'seq_region_start'} + 1; }
 
@@ -119,6 +195,375 @@ sub addContext {
   my $context = shift;
   $self->seq_region_start -= int($context);
   $self->seq_region_end   += int($context);
+}
+
+
+######## "FeatureView" calls ##########################################
+
+sub create_features {
+  my $self = shift;
+  my $features = {};
+
+  my $db        = $self->param('db')  || 'core'; 
+  my ($identifier, $fetch_call, $featureobj, $dataobject, $subtype);
+  
+  ## Are we inputting IDs or searching on a text term?
+  if ($self->param('xref_term')) {
+    my @exdb = $self->param('xref_db');
+    $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
+  }
+  else {
+    my $feature_type  = $self->param('ftype') ||$self->param('type') || 'ProbeFeature';  
+    if ( ($self->param('ftype') eq 'ProbeFeature')){
+      $db = 'funcgen';
+      if ( $self->param('ptype')) {
+        $subtype = $self->param('ptype');
+      }
+    } 
+   ## deal with xrefs
+    if ($feature_type =~ /^Xref_/) {
+      ## Don't use split here - external DB name may include underscores!
+      ($subtype = $feature_type) =~ s/Xref_//;
+      $feature_type = 'Xref';
+    }
+
+    my $create_method = "_create_$feature_type"; 
+    $features    = defined &$create_method ? $self->$create_method($db, $subtype) : undef;
+  }
+  return $features;
+}
+
+sub _create_Domain {
+  my $self =shift;
+  my $id = $self->param('id');
+  my $a = $self->get_adaptor('get_GeneAdaptor'); 
+  my $domains = $a->fetch_all_by_domain($id);
+  my %features = ('Domain' => $domains);
+
+  return \%features;
+}
+
+sub _create_Phenotype {
+	my ($self, $db) = @_;	
+	my $slice;
+	my $features;
+	my $array = [];	
+	my $id = $self->param('id');
+				
+	my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};	
+
+	foreach my $chr (@chrs)
+	{
+		$slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);				
+		my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
+
+		push(@$array,@$array2) if (@$array2);
+	}	
+	$features = {'Variation' => $array};			
+	return $features;
+}
+
+sub _create_ProbeFeature {
+  # get Oligo hits plus corresponding genes
+  my $probe;
+  if ( $_[2] eq 'pset'){  
+    $probe = $_[0]->_generic_create( 'ProbeFeature', 'fetch_all_by_probeset', $_[1] );
+  } else {
+    $probe = $_[0]->_create_ProbeFeatures_by_probe_id;
+  }
+  #my $probe_trans = $_[0]->_generic_create( 'Transcript', 'fetch_all_by_external_name', $_[1], undef, 'no_errors' );
+  my $probe_trans = $_[0]->_create_ProbeFeatures_linked_transcripts($_[2]);
+  my %features = ('ProbeFeature' => $probe);
+  $features{'Transcript'} = $probe_trans if $probe_trans;
+  return \%features;
+}
+
+sub _create_ProbeFeatures_by_probe_id {
+  my $self = shift;
+  my $db_adaptor = $self->_get_funcgen_db_adaptor; 
+  my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;  
+  my @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
+  my $probe_obj = $probe_objs[0];
+  my $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
+  my @probe_features =  @{$probe_feature_adaptor->fetch_all_by_Probe($probe_obj)};
+  return \@probe_features;
+}
+
+sub _create_ProbeFeatures_linked_transcripts {
+  my ($self, $ptype)  = @_;
+  my $db_adaptor = $self->_get_funcgen_db_adaptor;
+  my (@probe_objs, @transcripts, %seen );
+
+  if ($ptype eq 'pset'){
+  my  $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
+  @probe_objs = @{$probe_feature_adaptor->fetch_all_by_probeset($self->param('id'))}; 
+  } else {
+    my  $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
+    @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
+  } 
+ ## Now retrieve transcript ID and create transcript Objects 
+  foreach my $probe (@probe_objs){
+    my @dbentries = @{$probe->get_all_Transcript_DBEntries};
+    foreach my $entry (@dbentries) {
+      my $core_db_adaptor = $self->_get_core_adaptor ;
+      my $transcript_adaptor = $core_db_adaptor->get_TranscriptAdaptor; 
+      unless (exists $seen{$entry->primary_id}){
+        my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->primary_id);  
+        push (@transcripts, $transcript);  
+        $seen{$entry->primary_id} =1;
+      }
+    }
+  }
+
+  return \@transcripts;
+}
+
+sub _get_funcgen_db_adaptor {
+   my $self = shift;
+   my $db = $self->param('db');
+   if ($self->param('fdb')) { $db = $self->param('fdb');}
+   my $db_adaptor  = $self->database(lc($db));
+   unless( $db_adaptor ){
+     $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+     return undef;
+   }
+  return $db_adaptor;
+}
+
+sub _get_core_adaptor {
+   my $self = shift;
+   my $db_adaptor  = $self->database('core');
+   unless( $db_adaptor ){
+     $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." );
+     return undef;
+   }
+  return $db_adaptor;
+}
+
+sub _create_DnaAlignFeature {
+  my $features = {'DnaAlignFeature' => $_[0]->_generic_create( 'DnaAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
+  $features->{'Gene'} = $genes if $genes;
+  return $features;
+}
+
+sub _create_ProteinAlignFeature {
+  my $features = {'ProteinAlignFeature' => $_[0]->_generic_create( 'ProteinAlignFeature', 'fetch_all_by_hit_name', $_[1] ) };
+  my $genes = $_[0]->_generic_create( 'Gene', 'fetch_all_by_external_name', $_[1],undef, 'no_errors' );
+  $features->{'Gene'} = $genes if $genes;
+  return $features;
+}
+
+sub create_UserDataFeature {
+  my ($self, $logic_name) = @_;
+  my $dbs      = EnsEMBL::Web::DBSQL::DBConnection->new( $self->species );
+  my $dba      = $dbs->get_DBAdaptor('userdata');
+  my $features = [];
+  return [] unless $dba;
+
+  $dba->dnadb($self->database('core'));
+
+  ## Have to do the fetch per-chromosome, since API doesn't have suitable call
+  my $chrs = $self->species_defs->ENSEMBL_CHROMOSOMES;
+  foreach my $chr (@$chrs) {
+    my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region(undef, $chr);
+    if ($slice) {
+      my $dafa     = $dba->get_adaptor( 'DnaAlignFeature' );
+      my $F = $dafa->fetch_all_by_Slice($slice, $logic_name );
+      push @$features, @$F;
+    }
+  }
+  return $features;
+}
+
+sub _create_Gene {
+  my ($self, $db) = @_;
+  if ($self->param('id') =~ /^ENS/) {
+    return {'Gene' => $self->_generic_create( 'Gene', 'fetch_by_stable_id', $db ) };
+  }
+  else {
+    return {'Gene' => $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db ) };
+  }
+}
+
+# For a Regulatory Factor ID display all the RegulatoryFeatures
+sub _create_RegulatoryFactor {
+  my ( $self, $db, $id ) = @_;
+
+  if (!$id ) {$id = $self->param('id'); }
+  my $analysis = $self->param('analysis');
+
+  my $db_type  = 'funcgen';
+  my $efg_db = $self->database(lc($db_type));
+  if(!$efg_db) {
+     warn("Cannot connect to $db_type db");
+     return [];
+  }
+  my $features;
+  my $feats = (); 
+
+  my %fset_types = (
+   "cisRED group motif" => "cisRED motifs",
+   "miRanda miRNA_target" => "miRanda miRNA targets",
+   "BioTIFFIN motif" => "BioTIFFIN motifs",
+   "VISTA" => 'VISTA enhancer set'
+  );
+
+  if ($analysis eq 'RegulatoryRegion'){
+    my $regfeat_adaptor = $efg_db->get_RegulatoryFeatureAdaptor;
+    my $feature = $regfeat_adaptor->fetch_by_stable_id($id);
+    push (@$feats, $feature);
+    $features = {'RegulatoryFactor'=> $feats};
+
+  } else {
+    if ($self->param('dbid')){
+      my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
+      my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));
+      my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
+
+      if (scalar @assoc_features ==0) {
+         push @assoc_features, $feature;
+      }
+      $features= {'RegulatoryFactor' => \@assoc_features};
+    } else {
+      my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
+      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor; 
+      my $ftype = $feat_type_adaptor->fetch_by_name($id);  
+      my @ftypes = ($ftype); 
+      my $type = $ftype->description; 
+      my $fstype = $fset_types{$type};  
+      my $fset = $feature_set_adaptor->fetch_by_name($fstype); 
+      my @fsets = ($fstype);
+      my $feats = $fset->get_Features_by_FeatureType($ftype);
+      $features = {'RegulatoryFactor'=> $feats};
+    }
+  }
+
+  return $features if $features && keys %$features; # Return if we have at least one feature
+  # We have no features so return an error....
+  $self->problem( 'no_match', 'Invalid Identifier', "Regulatory Factor $id was not found" );
+  return undef;
+}
+
+sub _create_Xref {
+  # get OMIM hits plus corresponding Ensembl genes
+  my ($self, $db, $subtype) = @_;
+  my $t_features = [];
+  my ($xrefarray, $genes);
+
+  if ($subtype eq 'MIM') {
+    my $mim_g = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_GENE'] );
+    my $mim_m = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_MORBID'] );
+    @$t_features = (@$mim_g, @$mim_m);
+  }
+  else { 
+    $t_features = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
+  }
+  if( $t_features && ref($t_features) eq 'ARRAY') {
+    ($xrefarray, $genes) = $self->_create_XrefArray($t_features, $db);
+  }
+
+  my $features = {'Xref'=>$xrefarray};
+  $features->{'Gene'} = $genes if $genes;
+  return $features;
+}
+
+sub _create_XrefArray {
+  my ($self, $t_features, $db) = @_;
+  my (@features, @genes);
+
+  foreach my $t (@$t_features) {
+    ## we need to keep each xref and its matching genes together
+    my @matches;
+    push @matches, $t;
+    ## get genes for each xref
+    my $id = $t->primary_id;
+    my $t_genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, $id, 'no_errors' );
+    if ($t_genes && @$t_genes) {
+      push (@matches, @$t_genes);
+      push (@genes, @$t_genes);
+    }
+    push @features, \@matches;
+  }
+
+  return (\@features, \@genes);
+}
+
+sub _generic_create {
+  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_; 
+  $db ||= 'core';
+  if (!$id ) {
+    my @ids = $self->param( 'id' );
+    $id = join(' ', @ids);
+  }
+  elsif (ref($id) eq 'ARRAY') {
+    $id = join(' ', @$id);
+  }
+
+  ## deal with xrefs
+  my $xref_db;
+  if ($object_type eq 'DBEntry') {
+    my @A = @$db;
+    $db = $A[0];
+    $xref_db = $A[1];
+  }
+
+  if( !$id ) {
+    return undef; # return empty object if no id
+  }
+  else {
+# Get the 'central' database (core, est, vega)
+    my $db_adaptor  = $self->database(lc($db));
+    unless( $db_adaptor ){
+      $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+      return undef;
+    }
+    my $adaptor_name = "get_${object_type}Adaptor";
+    my $features = [];
+    $id =~ s/\s+/ /g;
+    $id =~s/^ //;
+    $id =~s/ $//;
+    foreach my $fid ( split /\s+/, $id ) {
+      my $t_features;
+      if ($xref_db) {
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
+        };
+      }
+      elsif ($accessor eq 'fetch_by_stable_id') { ## Hack to get gene stable IDs to work!
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($fid)];
+        };
+      }
+      else {
+        eval {
+         $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
+        };
+      }
+      ## if no result, check for unmapped features
+      if ($t_features && ref($t_features) eq 'ARRAY') {
+        if (!@$t_features) {
+          my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
+          $t_features = $uoa->fetch_by_identifier($fid);
+        }
+        else {
+          foreach my $f (@$t_features) {
+            next unless $f;
+            $f->{'_id_'} = $fid;
+            push @$features, $f;
+          }
+        }
+      }
+    }
+    return $features if $features && @$features; # Return if we have at least one feature
+
+    # We have no features so return an error....
+    unless ( $flag eq 'no_errors' ) {
+      $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
+    }
+    return undef;
+  }
+
 }
 
 
@@ -216,6 +661,342 @@ sub retrieve_userdata {
     return $results, [], $type;
   }
 
+}
+
+sub retrieve_features {
+  my ($self, $features) = @_;
+  my $method;
+  my $results = [];  
+  while (my ($type, $data) = each (%$features)) { 
+    $method = 'retrieve_'.$type; 
+    push @$results, [$self->$method($data,$type)] if defined &$method;
+  }  
+
+  return $results;
+}
+
+sub retrieve_Gene {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $g (@$data) {
+    if (ref($g) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($g);
+      push(@$results, $unmapped);
+    }
+    else {
+      push @$results, {
+        'region'   => $g->seq_region_name,
+        'start'    => $g->start,
+        'end'      => $g->end,
+        'strand'   => $g->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->external_name,
+        'label'    => $g->stable_id,
+        'gene_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->description ]
+      }
+    }
+  }
+
+  return ( $results, ['Description'], $type );
+}
+
+sub retrieve_Transcript {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $t (@$data) {
+    if (ref($t) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($t);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $trans = $self->new_object('Transcript',$t, $self->__data);
+      my $desc = $trans->trans_description();
+      push @$results, {
+        'region'   => $t->seq_region_name,
+        'start'    => $t->start,
+        'end'      => $t->end,
+        'strand'   => $t->strand,
+        'length'   => $t->end-$t->start+1,
+        'extname'  => $t->external_name,
+        'label'    => $t->stable_id,
+        'trans_id' => [ $t->stable_id ],
+        'extra'    => [ $desc ]
+      }
+    }
+  }
+  return ( $results, ['Description'], $type );
+}
+
+sub retrieve_Variation {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  my $phenotype_id = $self->param('id');
+  
+  #getting associated phenotype with the variation
+  my $species = $self->species;
+  my $vaa = Bio::EnsEMBL::Registry->get_adaptor($species, "variation", "variationannotation");
+  my $variation_array = $vaa->fetch_all_by_VariationFeature_list($data);
+
+  foreach my $v (@$data) {  
+    #getting all genes located in that specific location
+    my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);    
+    my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
+    my $genes = $slice->get_all_Genes();
+    my ($gene_link, $add_comma,$associated_phenotype,$associated_gene,$p_value_log);
+    
+    foreach my $row (@$genes) 
+    {
+        my $gene_symbol;
+        $gene_symbol = "(".$row->display_xref->display_id.")" if($row->{'stable_id'});
+        
+        my $gene_name = $row->{'stable_id'};
+        my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});        
+        $gene_link .= qq{, } if($gene_link);
+        $gene_link .= qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};        
+    }     
+    my @associated_gene_array;
+
+    #getting associated phenotype and associated gene with the variation
+    foreach my $variation (@$variation_array)
+    {      
+      #only get associated gene and phenotype for matching variation id
+      if($variation->{'_variation_id'} eq $v->{'_variation_id'})
+      {          
+          $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /, $variation->{'phenotype_description'}/g);          
+                
+          if($variation->{'_phenotype_id'} eq $phenotype_id)
+          {
+            #if there is more than one associated gene (comma separated) split them to generate the URL for each of them          
+            if($variation->{'associated_gene'} =~ /,/g)
+            {            
+               push(@associated_gene_array,(split(/,/,$variation->{'associated_gene'})));
+            }
+            else
+            {
+              push(@associated_gene_array,$variation->{'associated_gene'});
+            }
+
+            $p_value_log = -(log($variation->{'p_value'})/log(10)) if($variation->{'p_value'} != 0);  #only get the p value log 10 for the pointer matching phenotype id and variation id
+          }
+      }      
+    }  
+    
+    #preparing the URL for all the associated genes and ignoring duplicate one
+    foreach my $gene (@associated_gene_array)
+    {              
+      if($gene)
+      {
+        $gene =~ s/\s//gi;
+        my $associated_gene_url = $self->_url({type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID});                                                        
+        $associated_gene .= qq{$gene, } if($gene eq 'Intergenic');
+        $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /$gene/i && $gene ne 'Intergenic');
+      }                            
+    }
+    $associated_gene =~ s/\s$//g; #removing the last white space
+    $associated_gene =~ s/,$|^,//g; #replace the last or first comma if there is any
+    
+    $associated_phenotype =~ s/\s$//g; #removing the last white space
+    $associated_phenotype =~ s/,$|^,//g; #replace the last or first comma if there is any
+    
+    if (ref($v) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($v);
+      push(@$results, $unmapped);
+    }
+    else {
+      #making the location 10kb if it a one base pair
+      if($v->end-$v->start == 0)
+      {
+          $start = $start - 5000;
+          $end = $end + 5000;
+      }
+      
+      push @$results, {
+        'region'   		=> $v->seq_region_name,
+        'start'    		=> $start,
+        'end'      		=> $end,
+        'strand'   		=> $v->strand,        
+        'label'    		=> $v->variation_name,        
+        'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
+        'extra'       => [ $gene_link,$associated_gene,$associated_phenotype, sprintf("%.1f",$p_value_log) ],
+        'p_value'         => $p_value_log,  
+        'colour_scaling'  => 1,
+      }
+    }
+  }
+  
+  return ( $results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], $type );
+}
+
+sub retrieve_Xref {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $array (@$data) {
+    my $xref = shift @$array;
+    push @$results, {
+      'label'     => $xref->primary_id,
+      'xref_id'   => [ $xref->primary_id ],
+      'extname'   => $xref->display_id,
+      'extra'     => [ $xref->description, $xref->dbname ]
+    };
+    ## also get genes
+    foreach my $g (@$array) {
+      push @$results, {
+        'region'   => $g->seq_region_name,
+        'start'    => $g->start,
+        'end'      => $g->end,
+        'strand'   => $g->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->external_name,
+        'label'    => $g->stable_id,
+        'gene_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->description ]
+      }
+    }
+  }
+  return ( $results, ['Description'], $type );
+}
+
+sub retrieve_ProbeFeature {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  
+  foreach my $probefeature (@$data) { 
+    my $probe = $probefeature->probe;
+    if (ref($probe) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($probe);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()};
+      foreach my $f (@{$probe->get_all_ProbeFeatures()}) {  
+        push @$results, {
+          'region'   => $f->seq_region_name,
+          'start'    => $f->start,
+          'end'      => $f->end,
+          'strand'   => $f->strand,
+          'length'   => $f->end-$f->start+1,
+          'label'    => $names,
+          'gene_id'  => [$names],
+          'extra'    => [ $f->mismatchcount, $f->cigar_string ]
+        }
+      }
+    }
+  }
+  return ( $results, ['Mismatches', 'Cigar String'], $type );
+}
+
+sub retrieve_Domain {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $f (@$data){
+    if (ref($f) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($f);
+      push(@$results, $unmapped);
+    }
+    else {
+      my $location = $f->seq_region_name .":" .$f->start ."-". $f->end;
+      my $location_url = $self->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
+      my $location_link = "<a href=$location_url>$location</a>";
+      push @$results,{
+        'region'    => $f->seq_region_name,
+        'start'     => $f->start,
+        'end'       => $f->end,
+        'strand'    => $f->strand,
+        'length'    => $f->end-$f->start+1,
+        'extname'   => $f->external_name,
+        'label'     => $f->stable_id,
+        'gene_id'   => [$f->stable_id],
+        'extra'     => [$location_link, $f->description, ]
+      }
+    }
+  }
+
+  return ( $results, [ 'Genomic Location', 'Description' ], $type );
+}
+
+sub retrieve_DnaAlignFeature {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $f ( @$data ) {
+    if (ref($f) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($f);
+      push(@$results, $unmapped);
+    }
+    else {
+#     next unless ($f->score > 80);
+      my $coord_systems = $self->coord_systems();
+      my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
+      if( $f->coord_system_name ne $coord_systems->[0] ) {
+        foreach my $system ( @{$coord_systems} ) {
+          # warn "Projecting feature to $system";
+          my $slice = $f->project( $system );
+          # warn @$slice;
+          if( @$slice == 1 ) {
+            ($region,$start,$end,$strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand );
+            last;
+          }
+        }
+      }
+      push @$results, {
+        'region'   => $region,
+        'start'    => $start,
+        'end'      => $end,
+        'strand'   => $strand,
+        'length'   => $f->end-$f->start+1,
+        'label'    => $f->display_id." (@{[$f->hstart]}-@{[$f->hend]})",
+        'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
+        'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
+      };
+    }
+  }
+  my $feature_mapped = 1; ## TODO - replace with $self->feature_mapped call once unmapped feature display is added
+  if ($feature_mapped) {
+    return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ], $type;
+  }
+  else {
+    return $results, [], $type;
+  }
+}
+
+sub retrieve_ProteinAlignFeature {
+  my ($self, $data, $type) = @_;
+  return $self->retrieve_DnaAlignFeature($data,$type);
+}
+
+sub retrieve_RegulatoryFactor {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  my $flag = 0;
+  foreach my $reg (@$data) {
+    my @stable_ids;
+    my $gene_links;
+    my $db_ent = $reg->get_all_DBEntries;
+    foreach ( @{ $db_ent} ) {
+      push @stable_ids, $_->primary_id;
+      my $url = $self->_url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_ids[-1] }); 
+      $gene_links  .= qq(<a href="$url">$stable_ids[-1]</a>);  
+    }
+
+    my @extra_results = $reg->analysis->description;
+    $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
+
+    unshift (@extra_results, $gene_links);# if $gene_links;
+
+    push @$results, {
+      'region'   => $reg->seq_region_name,
+      'start'    => $reg->start,
+      'end'      => $reg->end,
+      'strand'   => $reg->strand,
+      'length'   => $reg->end-$reg->start+1,
+      'label'    => $reg->display_label,
+      'gene_id'  => \@stable_ids,
+      'extra'    => \@extra_results,
+    }
+  }
+  my $extras = ["Feature analysis"];
+  unshift @$extras, "Associated gene";# if $flag;
+  return ( $results, $extras, $type );
 }
 
 sub unmapped_object {
@@ -347,7 +1128,7 @@ sub get_synteny_local_genes {
   my $self = shift ;
 
   my $flag = @_ ? 1 : 0;
-  my $slice = shift || $self->Obj->{'slice'};
+  my $slice = shift || $self->core_objects->location;
   unless( $flag || $self->param('r') =~ /:/) {
     $slice = $slice->sub_Slice(1,1e6) unless $slice->length < 1e6;
   }
@@ -858,7 +1639,7 @@ sub focus {
 
 sub can_export {
   my $self = shift;
-  return $self->action =~ /^(Export|Chromosome|Genome|Synteny)$/ ? 0 : 1;
+  return $self->action =~ /^(Export|Chromosome|Genome|Synteny)$/ ? 0 : $self->availability->{'slice'};
 }
 
 sub multi_locations {

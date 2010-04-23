@@ -20,21 +20,15 @@ sub caption { return 'Export Data'; }
 sub slice {
   my $self = shift;
   
-  $self->{'_slice'} ||= $self->model->api_object('Location');
+  $self->{'_slice'} ||= $self->core_objects->location;
   
   return $self->{'_slice'};
 }
 
 sub get_all_transcripts {
   my $self = shift;
-    
-  my $gene = $self->model->object('Gene');
-  if ($gene) {
-    return $gene->get_all_transcripts || [];
-  }
-  else {
-    return [];
-  }
+  
+  return $self->new_object('Gene', $self->core_objects->gene, $self->__data)->get_all_transcripts || [];
 }
 
 sub get_location_object {

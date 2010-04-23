@@ -35,6 +35,10 @@ sub _help {
 sub createObjects {   
   my $self = shift;
   my ($identifier, @fetch_calls, $transobj);
+  if( $self->core_objects->transcript ) {
+    $self->DataObjects($self->new_object( 'Transcript', $self->core_objects->transcript, $self->__data ));
+    return;
+  }
 
   my $db          = $self->param( 'db' ) || 'core';
      $db          = 'otherfeatures' if $db eq 'est';
@@ -92,8 +96,6 @@ sub createObjects {
     return ;	
   }
 
-  $self->DataObjects( $self->new_object( 'Transcript', $transobj, $self->__data ));
-=pod
   # Set transcript param to Ensembl Stable ID
   # $self->param( 'transcript',[ $transobj->stable_id ] );
   if( $transobj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
@@ -102,7 +104,6 @@ sub createObjects {
     $self->problem( 'redirect', $self->_url({'db'=>$db, 't' =>$transobj->stable_id,'g'=>undef,'r'=>undef,'pt'=>undef}));
   }
   return;
-=cut
 }
 
 

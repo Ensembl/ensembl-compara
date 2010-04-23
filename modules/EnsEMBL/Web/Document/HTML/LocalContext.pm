@@ -9,7 +9,6 @@ use strict;
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
-use Carp qw(cluck);
 
 sub new {
   my $class = shift;
@@ -44,20 +43,13 @@ sub caption {
 sub counts {
   my $self = shift;
   $self->{'counts'} = shift if @_;
-  return $self->{'counts'};
+  return $self->{'counts'} || {};
 }
 
 sub configuration {
   my $self = shift;
   $self->{'configuration'} = shift if @_;
   return $self->{'configuration'};
-}
-
-sub availability {
-  my $self = shift;
-  $self->{'availability'} = shift if @_;
-  $self->{'availability'} ||= {};
-  return $self->{'availability'};
 }
 
 sub get_json {
@@ -140,7 +132,7 @@ sub _content {
           my @ok_params;
           my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
           
-          if ($self->hub->is_core($self->hub->type)) {
+          if ($ENV{'ENSEMBL_TYPE'} =~ /Location|Gene|Transcript|Variation|Regulation/) {
             @ok_params = grep !/^time=/, @cgi_params;
           }
           

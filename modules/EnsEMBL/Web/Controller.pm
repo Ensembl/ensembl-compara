@@ -1,4 +1,4 @@
-#$Id$
+# $Id$
 
 package EnsEMBL::Web::Controller;
 
@@ -19,6 +19,7 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $hub) = @_;
+    
   my $self = {
     hub        => $hub,
     r          => $hub->apache_handle,
@@ -211,6 +212,10 @@ sub build_menu {
   
   return unless $model;
   
+  my $object = $model->object;
+  
+  return unless $object;
+ 
   # Force values of action and type because apparently require "EnsEMBL::Web::ZMenu::::Gene" (for eg) doesn't fail. Stupid perl.
   my $type   = $model->hub->type   || 'NO_TYPE';
   my $action = $model->hub->action || 'NO_ACTION';
@@ -233,7 +238,7 @@ sub build_menu {
     my $module_name = [ map { $self->dynamic_use("$module_root$_") ? "$module_root$_" : () } @modules ]->[-1];
     
     if ($module_name) {
-      $menu = $module_name->new($model, $menu);
+      $menu = $module_name->new($object, $menu);
       last;
     } else {
       my $error = $self->dynamic_use_failure("$module_root$modules[-1]");
@@ -384,7 +389,6 @@ sub process_command {
       if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {
         if ($class =~ /Command/) {
           my $command = $class->new({
-            model  => $model,
             object => $model->object,
             page   => $page
           });
@@ -405,7 +409,6 @@ sub process_command {
     
     if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {    
       my $command = $class->new({
-        model  => $model,
         object => $model->object,
         page   => $page
       });
