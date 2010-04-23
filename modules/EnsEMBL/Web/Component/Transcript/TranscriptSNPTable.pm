@@ -1,14 +1,15 @@
 package EnsEMBL::Web::Component::Transcript::TranscriptSNPTable;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 1 );
-  $self->ajaxable(  1 );
+  $self->cacheable(1);
+  $self->ajaxable(1);
 }
 
 sub caption {
@@ -20,57 +21,65 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my @samples;
-  foreach my $param ( $object->param() ) {
-    if ($param =~/opt_pop/){ 
-      if ($object->param($param) eq 'on' ) {
-        $param =~s/opt_pop_//;
-        push (@samples, $param);
-      }
+  
+  foreach my $param ($object->param) {
+    if ($param =~ /opt_pop/ && $object->param($param) eq 'on') {
+      $param =~ s/opt_pop_//;
+      push @samples, $param;
     }
   }
-  my $snp_data = get_page_data($object, \@samples);
-  my $strain_name = $object->species_defs->translate("strain");
+  
+  my $snp_data    = get_page_data($object, \@samples);
+  my $strain_name = $object->species_defs->translate('strain');
   my %tables;
  
   foreach my $sample (@samples) {
-    my %flags;
-    $flags{$sample} = 0;  
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );  
+    my $flag  = 0;
+    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'chr asc' ] });  
   
     $table->add_columns (
-      { 'key' => 'ID',  },
-      { 'key' => 'consequence', 'title' => 'Type', },
-      { 'key' => 'chr' ,        'title' => "Chr: bp" },
-      { 'key' => 'ref_alleles',  'title' => 'Ref. allele', },
-      { 'key' => 'Alleles',     'title' => ucfirst($strain_name)." genotype", },
-      { 'key' => 'Ambiguity',   'title' => 'Ambiguity',  },
-      { 'key' => 'Codon',       'title' => "Transcript codon" ,  },
-      { 'key' => 'cdscoord',  'title' => 'CDS coord.',  },
-      { 'key' => 'aachange', 'title' => 'AA change',  },
-      { 'key' => 'aacoord',  'title' => 'AA coord.',  },
-      #{ 'key' => 'coverage',  'title' => 'Read coverage',  },
-      { 'key' => 'Class', },
-      { 'key' => 'Source', },
-      { 'key' => 'Status', 'title' => 'Validation',  },
+      { key => 'ID',          sort => 'html'                                               },
+      { key => 'consequence', sort => 'string',   title => 'Type'                          },
+      { key => 'chr' ,        sort => 'position', title => 'Chr: bp'                       },
+      { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
+      { key => 'Alleles',     sort => 'string',   title => ucfirst "$strain_name genotype" },
+      { key => 'Ambiguity',   sort => 'string',   title => 'Ambiguity'                     },
+      { key => 'Codon',       sort => 'html',     title => 'Transcript codon'              },
+      { key => 'cdscoord',    sort => 'numeric',  title => 'CDS coord.'                    },
+      { key => 'aachange',    sort => 'string',   title => 'AA change'                     },
+      { key => 'aacoord',     sort => 'numeric',  title => 'AA coord.'                     },
+      { key => 'Class',       sort => 'string'                                             },
+      { key => 'Source',      sort => 'string'                                             },
+      { key => 'Status',      sort => 'string',   title => 'Validation'                    }
     );
+    
     foreach my $snp_row (sort keys %$snp_data) { 
-      foreach my $row ( @{$snp_data->{$snp_row}{$sample} || [] } ) {  
-        $flags{$sample} = 1;
+      foreach my $row (@{$snp_data->{$snp_row}{$sample} || []}) {  
+        $flag = 1;
         $table->add_row($row);
       }
     }
-    if ($flags{$sample} == 1){ 
-      $tables{$sample} = $table->render;
-    }
-    else {  
-      $tables{$sample} = qq(<p>There are no variations in this region in this strain, or the variations have been filtered out by the options set in the page configuration. To change the filtering options select the 'Configure this page' link from the menu on the left hand side of this page.</p><br />);   
-    }
+    
+    $tables{$sample} = $flag ? $table->render : 
+      q{<p>
+        There are no variations in this region in this strain, or the variations have been filtered out by the options set in the page configuration. 
+        To change the filtering options select the 'Configure this page' link from the menu on the left hand side of this page.
+      </p><br />};
   }
-
+  
+  $strain_name .= 's';
+  
   my $html;
-  foreach (keys %tables){
-  $html .= "<p><h2>Variations in $_: </h2><p> $tables{$_}";
-  }  
+  $html .= "<h2>Variations in $_:</h2>$tables{$_}" for keys %tables;
+  $html .= $self->_info(
+    'Configuring the display',
+    sprintf(
+      q{<p>These %s are displayed by default:<b> %s.</b>
+      <br /> Select the 'Configure this page' link in the left hand menu to customise which %s and types of variation are displayed in the tables above.</p>},
+      $strain_name, join(', ', $object->get_samples('default')), $strain_name
+    )
+  );  
+  
   return $html;
 }
 
@@ -153,7 +162,6 @@ sub get_page_data {
 
       # Other
       my $chr = $sample_slice->seq_region_name;
-
       my $aa_alleles = $conseq_type->aa_alleles || [];
       my $aa_coord = $conseq_type->aa_start;
       $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
