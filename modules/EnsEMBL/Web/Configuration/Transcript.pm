@@ -103,10 +103,7 @@ sub populate_tree {
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
   
   $var_menu->append($self->create_node('Population', 'Population comparison',
-    [qw(
-      snptable EnsEMBL::Web::Component::Transcript::TranscriptSNPTable
-      snpinfo  EnsEMBL::Web::Component::Transcript::TranscriptSNPInfo
-    )],
+    [qw( snptable EnsEMBL::Web::Component::Transcript::TranscriptSNPTable )],
     { 'availability' => 'strains database:variation' }
   ));
   
