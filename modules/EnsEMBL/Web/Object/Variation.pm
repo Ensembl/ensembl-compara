@@ -548,6 +548,7 @@ sub freqs {
   ### Returns hash of data, 
 
   my $self = shift;
+  return {} unless @_ || $self->param('vf');
   my $variation_feature = shift || $self->vari->get_VariationFeature_by_dbID($self->param('vf'));
   my $allele_list = $variation_feature->get_all_Alleles;
   return {} unless $allele_list;
