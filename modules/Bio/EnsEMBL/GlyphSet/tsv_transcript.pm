@@ -30,7 +30,7 @@ sub _init {
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
   my $strand = $trans_ref->{'exons'}[0][2]->strand;
   my $transcript = $trans_ref->{'transcript'};
-  my $gene = $self->{'config'}->core_info->{'Gene'};
+  my $gene = $self->{'config'}->core_objects->gene;
   my @exons = sort {$a->[0] <=> $b->[0]} @{$trans_ref->{'exons'}};
   # If stranded diagram skip if on wrong strand
   # For exon_structure diagram only given transcript

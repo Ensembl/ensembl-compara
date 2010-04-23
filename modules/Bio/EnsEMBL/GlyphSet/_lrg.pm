@@ -17,7 +17,7 @@ sub features {
 
   my @T2;
 
-  eval {
+
   warn join ' * ', 'SLICE', $slice->seq_region_name, $slice->start, $slice->end;
   foreach my $lrg_name (@{$self->species_defs->LRG_REGIONS || []}) {
       my $lrg =$slice->adaptor->fetch_by_region( undef, $lrg_name) || next;
@@ -35,9 +35,8 @@ sub features {
 
 
   }
-};
 
-  warn "LRG C : ", scalar(@T2), "\n";
+#  warn "LRG C : ", scalar(@T2), "\n";
   return \@T2;
 
   return \@T;
@@ -88,7 +87,7 @@ sub _init {
   foreach my $g (@{$regions || []}) {
     my $gene_col   = 'skyblue3'; 
     my $label      = $g->seq_region_name;
-    my $high = $g->seq_region_name eq $self->{'config'}->core_info->{'parameters'}{'lrg'};
+    my $high = $g->seq_region_name eq $self->{'config'}{'_core'}{'parameters'}{'lrg'};
 
     my $gslice = $g->{_chrom_slice};
 
@@ -249,7 +248,7 @@ sub old_init {
   foreach my $g (@$genes) {
     my $gene_col   = 'skyblue3'; 
     my $label      = $g->external_name || $g->stable_id;
-    my $high = $g->stable_id eq $self->{'config'}->core_info->{'parameters'}{'g'};
+    my $high = $g->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
 
     my $start = $g->start;
     my $end   = $g->end;
