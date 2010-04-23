@@ -174,31 +174,31 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       return;
     }
     
-    var id = table.attr('id');
-    var txt;
+    var button = $('.toggle_button', this.el);
+    var id     = table.attr('id');
     
     if (Ensembl.cookie.get('ENSEMBL_' + id) == 'close') {
       table.hide();
-      txt = 'show ';
+      button.html('Show ' + id);
     } else {
       table.show();
-      txt = 'hide ';
     }
     
-    // TODO: do this in perl, have it hidden. show in js.
-    $('<div class="toggle_button">' + txt + id + '</div>').appendTo($('.toggle_text', this.el)).click(function () {
+    button.click(function () {
       table.toggle();
       
       if (table.is(':visible')) {
         Ensembl.cookie.set('ENSEMBL_' + id, 'open');
-        this.innerHTML = 'hide ' + id;
+        this.innerHTML = 'Hide ' + id;
       } else {
         Ensembl.cookie.set('ENSEMBL_' + id, 'close');
-        this.innerHTML = 'show ' + id;
+        this.innerHTML = 'Show ' + id;
       }
-    });
+    }).show();
+    
+    button = null;
   },
-
+  
   toggleList: function () {
     var attrs = {
       open: { src: '/i/list_open.gif', alt: 'V' },
