@@ -352,12 +352,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var els = $('.' + cl, this.el);
     
     if (!els.length) {
-      els = $(
-        '<div class="' + cl + ' l"></div>' + 
-        '<div class="' + cl + ' r"></div>' + 
-        '<div class="' + cl + ' t"></div>' + 
+      els = $([
+        '<div class="' + cl + ' l"></div>', 
+        '<div class="' + cl + ' r"></div>', 
+        '<div class="' + cl + ' t"></div>', 
         '<div class="' + cl + ' b"></div>'
-      ).insertAfter(this.elLk.img);
+      ].join('')).insertAfter(this.elLk.img);
     }
     
     els.each(function () {

@@ -89,12 +89,14 @@ Ensembl.LayoutManager.extend({
   
   makeZMenu: function (id, params) {
     if (!$('#' + id).length) {
-      $('<table class="zmenu" id="' + id + '" style="display:none">' +
-        '  <thead>' + 
-        '    <tr><th class="caption" colspan="2"><span class="close">X</span><span class="title"></span></th></tr>' +
-        '  </thead>' + 
-        '  <tbody></tbody>' + 
-        '</table>').draggable({ handle: 'thead' }).appendTo('body');
+      $([
+        '<table class="zmenu" id="' + id + '" style="display:none">',
+        '  <thead>', 
+        '    <tr><th class="caption" colspan="2"><span class="close">X</span><span class="title"></span></th></tr>',
+        '  </thead>', 
+        '  <tbody></tbody>',
+        '</table>'
+      ].join('')).draggable({ handle: 'thead' }).appendTo('body');
     }
     
     Ensembl.EventManager.trigger('addPanel', id, 'ZMenu', undefined, undefined, params, 'showExistingZMenu');

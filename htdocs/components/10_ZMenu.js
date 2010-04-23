@@ -130,15 +130,17 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var strand = this.title.match(/Strand: ([\-+])/)[1];
     var id     = this.title.match(/Id: ([^;]+)/)[1];
     
-    var url = window.location.pathname.replace(/\/(\w+)\/\w+$/, '/Zmenu/$1/Das') +
-      '?logic_name=' + this.logicName +
-      ';' + this.das + '_id=' + id +
-      ';start=' + start + 
-      ';end=' + end + 
-      ';strand=' + strandMap[strand] + 
-      ';click_start=' + this.coords.clickStart + 
-      ';click_end=' + this.coords.clickEnd + 
-      ';label=' + this.title.split('; ')[0];
+    var url = [
+      window.location.pathname.replace(/\/(\w+)\/\w+$/, '/Zmenu/$1/Das'),
+      '?logic_name=' + this.logicName,
+      ';' + this.das + '_id=' + id,
+      ';start=' + start, 
+      ';end=' + end,
+      ';strand=' + strandMap[strand],
+      ';click_start=' + this.coords.clickStart,
+      ';click_end=' + this.coords.clickEnd,
+      ';label=' + this.title.split('; ')[0]
+    ].join('');
       
     for (var p in Ensembl.coreParams) {
       if (Ensembl.coreParams[p]) {
