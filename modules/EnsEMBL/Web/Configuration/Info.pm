@@ -73,7 +73,7 @@ sub populate_tree {
   ));
 
   $self->create_node( 'WhatsNew', "What's New",
-    [qw(whatsnew    EnsEMBL::Web::Component::Info::News)],
+    [qw(whatsnew    EnsEMBL::Web::Component::Info::WhatsNew)],
     { 'availability' => 1}
   );
 
