@@ -66,13 +66,13 @@ sub render {
   if ($page_species eq 'common') {
     my $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
     if (keys %$sample_data) {
-      @examples = ($sample_data->{'GENE_TEXT'}, $sample_data->{'LOCATION_TEXT'}, $sample_data->{'SEARCH_TEXT'});
+      @examples = grep {$_} ($sample_data->{'GENE_TEXT'}, $sample_data->{'LOCATION_TEXT'}, $sample_data->{'SEARCH_TEXT'});
     }
   }
   else {
     my $sample_data = $species_defs->SAMPLE_DATA;
     if (keys %$sample_data) {
-      @examples = ('gene '.$sample_data->{'GENE_TEXT'}, $sample_data->{'LOCATION_TEXT'}, $sample_data->{'SEARCH_TEXT'});
+      @examples = grep {$_} ('gene '.$sample_data->{'GENE_TEXT'}, $sample_data->{'LOCATION_TEXT'}, $sample_data->{'SEARCH_TEXT'});
     }
   }
   if (scalar(@examples)) {
