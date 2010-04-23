@@ -1,4 +1,4 @@
-.toggle_button { cursor: pointer; font-weight: bold; background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 0 0.5em; display: inline; }
+.toggle_button { cursor: pointer; font-weight: bold; background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 0 0.5em; display: none; }
 
 table.toggle_table { border-collapse: collapse; margin: 0.5em 0 0.5em 4em; cursor: pointer; }
 table.toggle_table td, table.toggle_table th { padding: 2px 4px; border: 1px solid black; margin: 0; text-align: center; white-space: nowrap; }
