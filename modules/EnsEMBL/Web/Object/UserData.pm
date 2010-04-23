@@ -603,7 +603,7 @@ sub get_stable_id_history_data {
 #------------------------------- Variation functionality -------------------------------
 sub calculate_consequence_data {
   my ($self, $file, $size_limit) = @_;
-  my $data = $self->fetch_userdata_by_id($file);
+  my $data = $self->hub->fetch_userdata_by_id($file);
   my %slice_hash;
   my %consequence_results;
   my ($f, @new_vfs);
