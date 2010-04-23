@@ -125,7 +125,7 @@ sub ajax_url {
   my $hub = $self->hub;
   my ($ensembl, $plugin, $component, $type, $module) = split '::', ref $self;
   
-  my $url = join '/', $hub->species_defs->species_path, 'Component', $type, $plugin, $module;
+  my $url = join '/', $hub->species_defs->species_path, 'Component', $hub->type, $plugin, $module;
   $url .= "/$function_name" if $function_name && $self->can("content_$function_name");
   $url .= '?_rmd=' . substr md5_hex($ENV{'REQUEST_URI'}), 0, 4;
   $url .= ";$ENV{'QUERY_STRING'}" unless $no_query_string;
