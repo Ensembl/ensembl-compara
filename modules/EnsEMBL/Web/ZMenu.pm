@@ -54,6 +54,7 @@ sub caption {
 # ZMenus are pluggable in such a way that if you specify either ORDER or POSITION for an entry from 
 # a plugin, it will OVERWRITE the existing menu of that position. If you specify neither, the plugin 
 # entry will be added at the bottom of the menu.
+
 sub add_entry {
   my ($self, $entry) = @_;
   
@@ -84,6 +85,48 @@ sub add_subheader {
 sub remove_entries {
   my $self = shift;
   delete $self->{'stored_entries'}->{$_} for @_;
+}
+
+#grab hold of an existing entry and modify it
+sub modify_entry_by_type {
+  my ($self, $entry) = @_;
+  my $i;
+  for ($i=0; $i < scalar(@{$self->{'entries'}}); $i++) {
+    if ($self->{'entries'}[$i]{'type'} eq $entry->{'type'}) {
+      foreach my $key (keys %$entry) {
+	$self->{'entries'}[$i]{$key} = $entry->{$key};
+      }
+      last;
+    }
+  }
+}
+
+#delete an entry by its value
+sub delete_entry_by_value {
+  my ($self, $value) = @_;
+  my $i;
+  for ($i=0; $i < scalar(@{$self->{'entries'}}); $i++) {
+    foreach my $key (keys %{$self->{'entries'}[$i]}) {
+      if ($self->{'entries'}[$i]{$key} eq $value) {
+	$self->{'entries'}[$i] = undef;
+	last;
+      }
+    }
+  }
+}
+
+#delete an entry by type
+sub delete_entry_by_type {
+  my ($self, $type) = @_;
+  my $i;
+  for ($i=0; $i < scalar(@{$self->{'entries'}}); $i++) {
+    foreach my $key (keys %{$self->{'entries'}[$i]}) {
+      if ($self->{'entries'}[$i]{'type'} eq $type) {
+	$self->{'entries'}[$i] = undef;
+	last;
+      }
+    }
+  }
 }
 
 # Build and print the JSON response
