@@ -28,7 +28,7 @@ sub logo_print {
   return sprintf(
     '<img src="%s%s" alt="%s" title="%s" class="screen_hide_inline" style="width:%spx;height:%spx" />',
     $self->img_url, $self->print_image, $self->alt, $self->alt, $self->width, $self->height
-  );
+  ) if ($self->print_image);
 }
 
 sub render {
