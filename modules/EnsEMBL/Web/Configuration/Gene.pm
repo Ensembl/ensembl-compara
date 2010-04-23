@@ -154,10 +154,7 @@ sub populate_tree {
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
   $var_menu->append($self->create_node('Variation_Gene/Table', 'Variation Table',
-    [qw(
-      snptable EnsEMBL::Web::Component::Gene::GeneSNPTable
-      snpinfo  EnsEMBL::Web::Component::Gene::GeneSNPInfo
-    )],
+    [qw( snptable EnsEMBL::Web::Component::Gene::GeneSNPTable )],
     { 'availability' => 'gene database:variation core' }
   ));
   
