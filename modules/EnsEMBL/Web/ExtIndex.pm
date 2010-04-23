@@ -15,35 +15,35 @@ sub new {
 }
 
 sub get_indexer {
-    my( $self, $db ) = @_;
+  my( $self, $db ) = @_;
 
-    unless( $self->{'databases'}{$db} ) {
-	my ($indexer,$exe);
-	#get data from e! databases
-	if ($db =~ /^ENS/) {
-	    $indexer = 'ENSEMBL_RETRIEVE';
-	    $exe     = 1;
-	}
-	else {
-	    $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 
-		$self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ 'DEFAULT'  } || 'PFETCH' ;
-	    $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
-	}
-	if( $exe ) {
-	    my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
-	    unless( exists $self->{'indexers'}{$classname} ) {
-		if( $self->dynamic_use( $classname ) ) {
-		    $self->{'indexers'}{$classname} = $classname->new();
-		} else {
-		    $self->{'indexers'}{$classname} = undef;
-		}
-		$self->{'databases'}{$db} = { 'module' => $self->{'indexers'}{$classname}, 'exe' => $exe };
-	    }
-	} else {
-	    $self->{'databases'}{$db} = { 'module' => undef };
-	}
+  unless( $self->{'databases'}{$db} ) {
+    my ($indexer,$exe);
+    #get data from e! databases
+    if ($db =~ /^ENS/) {
+      $indexer = 'ENSEMBL_RETRIEVE';
+      $exe     = 1;
     }
-    return $self->{'databases'}{$db}{'module'};
+    else {
+      $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 
+	$self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ 'DEFAULT'  } || 'PFETCH' ;
+      $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
+    }
+    if( $exe ) {
+      my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
+      unless( exists $self->{'indexers'}{$classname} ) {
+	if( $self->dynamic_use( $classname ) ) {
+	  $self->{'indexers'}{$classname} = $classname->new();
+	} else {
+	  $self->{'indexers'}{$classname} = undef;
+	}
+	$self->{'databases'}{$db} = { 'module' => $self->{'indexers'}{$classname}, 'exe' => $exe };
+      }
+    } else {
+      $self->{'databases'}{$db} = { 'module' => undef };
+    }
+  }
+  return $self->{'databases'}{$db}{'module'};
 }
 
 sub get_seq_by_id{
@@ -90,4 +90,3 @@ sub _get_seq{
 }   
 
 1;
-
