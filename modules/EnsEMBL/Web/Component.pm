@@ -642,22 +642,25 @@ sub transcript_table {
     $html .= sprintf(qq{
     <dl class="summary">
       <dt>%s</dt>
-      <dd>
-        <p class="toggle_text" id="transcripts_text">%s </p>
-      </dd>
+      <dd><p class="toggle_text" id="transcripts_text">%s <span class="toggle_button">Hide transcripts</span></p></dd>
     </dl>
-    <table class="toggle_table" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
-      <tr>
-        <th>Name</th>
-        <th>Transcript ID</th>
-        <th>Length (bp)</th>
-        <th>Protein ID</th>
-        <th>Length (aa)</th>
-        <th>Biotype</th> 
+    <table class="toggle_table data_table" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th class="sort_html">Transcript ID</th>
+          <th class="sort_numeric">Length (bp)</th>
+          <th class="sort_html">Protein ID</th>
+          <th class="sort_numeric">Length (aa)</th>
+          <th class="sort_html">Biotype</th> 
     }, $page_type eq 'gene' ? 'Transcripts' : 'Gene', $label);
 
-    $html .= '<th>CCDS</th>' if $object->species =~ /^Homo|Mus/;
-    $html .= '</tr>';
+    $html .= '<th class="sort_html">CCDS</th>' if $object->species =~ /^Homo|Mus/;
+    $html .= '
+        </tr>
+      </thead>
+      <tbody>
+    ';
     
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
@@ -690,7 +693,7 @@ sub transcript_table {
       
       my $html_row .= sprintf('
         <tr%s>
-          <th>%s</th>
+          <td class="bold">%s</td>
           <td><a href="%s">%s</a></td>
           <td>%s</td>
           <td>%s</td>
@@ -720,7 +723,11 @@ sub transcript_table {
     }   
 
     $html .= '
-    </table>';
+      </tbody>
+    </table>
+    <form class="data_table_config">
+      <input type="hidden" name="asStripClasses" value="[]" />
+    </form>';
   }
   
   return $html;
