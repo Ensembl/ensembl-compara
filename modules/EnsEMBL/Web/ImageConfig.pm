@@ -821,7 +821,6 @@ sub add_dna_align_feature {
   foreach my $key_2 (@$keys) {
     my $k = $data->{$key_2}{'type'} || 'other';
     my $menu = $self->tree->get_node("dna_align_$k");
-    
     if ($menu) {
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
       $menu->append($self->create_track('dna_align_' . $key . '_' . $key_2, $data->{$key_2}{'name'}, {
@@ -829,6 +828,8 @@ sub add_dna_align_feature {
         glyphset     => '_alignment',
         sub_type     => lc($k),
         colourset    => 'feature',
+	colour_key   => $data->{$key_2}{'colour_key'},
+	zmenu        => $data->{$key_2}{'zmenu'},
         logicnames   => $data->{$key_2}{'logic_names'},
         caption      => $data->{$key_2}{'caption'},
         description  => $data->{$key_2}{'description'},
@@ -1002,6 +1003,7 @@ sub add_gene {
         caption     => $data->{$key_2}{'caption'},
         colour_key  => $data->{$key_2}{'colour_key'},
         label_key   => $data->{$key_2}{'label_key'},
+	zmenu       => $data->{$key_2}{'zmenu'},
         description => $data->{$key_2}{'description'},
         display     => $data->{$key_2}{'display'} || 'off',
         strand      => $type eq 'gene' ? 'r' : 'b',
