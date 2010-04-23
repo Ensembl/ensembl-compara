@@ -1,8 +1,9 @@
 package EnsEMBL::Web::Component::Variation::PopulationGenotypes;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -42,89 +43,84 @@ sub format_frequencies {
   my %freq_data = %{ $freq_data };
   my %columns;
   my @rows;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
 
-  foreach my $pop_id ( keys %freq_data){ 
-    foreach my $ssid (keys %{$freq_data{$pop_id}}){ 
+  foreach my $pop_id (keys %freq_data) { 
+    foreach my $ssid (keys %{$freq_data{$pop_id}}) { 
       my %pop_row;
+      
       # SSID + Submitter  -----------------------------------------
-      if ($freq_data{$pop_id}{$ssid}{ssid} ){ 
-        $pop_row{ssid} = $freq_data{$pop_id}{$ssid}{ssid};
-        my $submitter = $freq_data{$pop_id}{$ssid}{submitter};
-        $pop_row{submitter} = $object->get_ExtURL_link( $submitter, 'DBSNPSSID', $submitter );
+      if ($freq_data{$pop_id}{$ssid}{'ssid'}) {
+        my $submitter         = $freq_data{$pop_id}{$ssid}{'submitter'};
+        $pop_row{'ssid'}      = $freq_data{$pop_id}{$ssid}{'ssid'};
+        $pop_row{'submitter'} = $object->get_ExtURL_link($submitter, 'DBSNPSSID', $submitter);
       }  
+      
       # Freqs alleles ---------------------------------------------
-      my @allele_freq = @{ $freq_data{$pop_id}{$ssid}{AlleleFrequency} };
-      foreach my $gt (  @{ $freq_data{$pop_id}{$ssid}{Alleles} } ) {
-        next unless $gt =~/\w+/;
+      my @allele_freq = @{$freq_data{$pop_id}{$ssid}{'AlleleFrequency'}};
+      
+      foreach my $gt (@{$freq_data{$pop_id}{$ssid}{'Alleles'}}) {
+        next unless $gt =~ /\w+/;
         my $freq = _format_number(shift @allele_freq);
         $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
       }
+      
       # Freqs genotypes ---------------------------------------------
-      my @genotype_freq = @{ $freq_data{$pop_id}{$ssid}{GenotypeFrequency} || [] };
-      foreach my $gt ( @{ $freq_data{$pop_id}{$ssid}{Genotypes} } ) {
+      my @genotype_freq = @{$freq_data{$pop_id}{$ssid}{'GenotypeFrequency'} || []};
+      
+      foreach my $gt (@{$freq_data{$pop_id}{$ssid}{'Genotypes'}}) {
         my $freq = _format_number(shift @genotype_freq);
         $pop_row{"Genotypes&nbsp;<br />$gt"} = $freq;
       }
+      
       # Add a name, size and description if it exists ---------------------------
-      $pop_row{pop}= _pop_url( $object, $freq_data{$pop_id}{$ssid}{pop_info}{Name}, $freq_data{$pop_id}{$ssid}{pop_info}{PopLink})."&nbsp;";
-      $pop_row{Size} = $freq_data{$pop_id}{$ssid}{pop_info}{Size};
+      $pop_row{'pop'}  = _pop_url($object, $freq_data{$pop_id}{$ssid}{'pop_info'}{'Name'}, $freq_data{$pop_id}{$ssid}{'pop_info'}{'PopLink'}) . '&nbsp;';
+      $pop_row{'Size'} = $freq_data{$pop_id}{$ssid}{'pop_info'}{'Size'};
+      
       # Descriptions too long. Only display first sentence
-      (my $description = $freq_data{$pop_id}{$ssid}{pop_info}{Description}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
+      (my $description = $freq_data{$pop_id}{$ssid}{'pop_info'}{'Description'}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
       $description =~ s/<.*?>//g;
-      if (length $description > 220) {
-        $description = substr($description, 0, 220) ."...";
-      }
-      $pop_row{Description} = "<small>". ($description ||"-") ."</small>";
+      $description = substr($description, 0, 220) . '...' if length $description > 220;
+      
+      $pop_row{'Description'} = sprintf '<small>%s</small>', $description || '-';
+      
       # Super and sub populations ----------------------------------------------
-      my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{pop_info}{"Super-Population"});
-      $pop_row{"Super-Population"} =  $super_string;
+      my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{'pop_info'}{'Super-Population'});
+      $pop_row{'Super-Population'} = $super_string;
 
-      my $sub_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{pop_info}{"Sub-Population"});
-      $pop_row{"Sub-Population"} =  $sub_string;
+      my $sub_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{'pop_info'}{'Sub-Population'});
+      $pop_row{'Sub-Population'} = $sub_string;
 
 
-      push (@rows, \%pop_row);
-      map {  $columns{$_} = 1 if $pop_row{$_};  } (keys %pop_row);
+      push @rows, \%pop_row;
+      map { $columns{$_} = 1 } grep $pop_row{$_}, keys %pop_row;
     }
   }
   
  # Format table columns ------------------------------------------------------
   my @header_row;
-  foreach my $col (sort {$b cmp $a} keys %columns) {
-    next if $col =~/pop|ssid|submitter/;
-    if ($col !~ /Population|Description/) {
-      unshift (@header_row, {key  =>$col,  'align'=>'left',
-           title => $col });
+  
+  foreach my $col (sort { $b cmp $a } keys %columns) {
+    next if $col =~ /pop|ssid|submitter/;
+    
+    if ($col eq 'Description') {
+      push @header_row, { key => $col, align => 'left', title => $col, sort => 'none' };
+    } else {
+      unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numeric' };
     }
-    else {
-      push (@header_row, {key  =>$col, 'align'=>'left', title => "&nbsp;$col&nbsp;"  });
-    }
   }
-  if (exists $columns{ssid}){
-    unshift (@header_row,  {key  =>"submitter",'align'=>'left',  title =>"Submitter"} );
-    unshift (@header_row,  {key  =>"ssid",'align'=>'left',  title =>"ssID"} );
+  
+  if (exists $columns{'ssid'}) {
+    unshift @header_row, { key => 'submitter', align => 'left', title => 'Submitter', sort => 'html'   };
+    unshift @header_row, { key => 'ssid',      align => 'left', title => 'ssID',      sort => 'string' };
   }
-  unshift (@header_row,  {key  =>"pop",'align'=>'left',  title =>"Population"} );
+  
+  unshift @header_row, { key => 'pop', align =>'left', title => 'Population', sort => 'html' };
+  
+  $table->add_columns(@header_row);
+  $table->add_rows(@rows);
 
-
-  foreach my $column  (@header_row){ 
-    my %col_info  = %{$column};  
-    $table->add_columns(
-     { 'key' => $col_info{'key'}, 'title' => $col_info{'title'}, 'align' => $col_info{'align'} }, 
-    );
- } 
-
-  foreach my $r (@rows){
-   my %temp = %{$r};
-   my $tmp_row = {};
-   foreach my $key (keys %temp){
-      if ($temp{$key}) {  $tmp_row->{$key} = $temp{$key}; }
-   }
-   $table->add_row($tmp_row);
-  }
-
- return $table;
+  return $table;
 }
 
 sub _sort_extra_pops {

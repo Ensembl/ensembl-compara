@@ -1,150 +1,151 @@
 package EnsEMBL::Web::Component::Variation::Phenotype;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $html = '';
 
   ## first check we have uniquely determined variation
-  if ( $object->not_unique_location ){
+  if ($object->not_unique_location) {
     return $self->_info(
       'A unique location can not be determined for this Variation',
       $object->not_unique_location
     );
   }
-
-  my @data = @{$object->get_external_data};
-  unless (scalar @data >= 1) { return "We do not have any external data for this variation";}
   
-  my $table_rows = table_data($object, \@data);
+  my $data = $object->get_external_data;
+  
+  return 'We do not have any external data for this variation' unless scalar @$data;
+  
+  my $table_rows = $self->table_data($data);
 
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' =>'1em 0px', });
-  $table->add_columns (
-    { 'key' => 'disease','title' => 'Disease/Trait', 'align' => 'left'},  
-    { 'key' => 'source', 'title' => 'Source', 'align' => 'left'},
-    { 'key' => 'study', 'title' => 'Study','align' => 'left'},
-    { 'key' => 'genes', 'title' => 'Associated Gene(s)', 'align' => 'left'},
-    { 'key' => 'allele', 'title' => 'Strongest risk allele', 'align' => 'left'},
-    { 'key' => 'variant', 'title' => 'Associated variant', 'align' => 'left'},
-    { 'key' => 'pvalue', 'title' => 'P value', 'align' => 'left'},
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1 });
+  
+  $table->add_columns(
+    { key => 'disease', title => 'Disease/Trait',         align => 'left', sort => 'html'    },  
+    { key => 'source',  title => 'Source',                align => 'left', sort => 'html'    },
+    { key => 'study',   title => 'Study',                 align => 'left', sort => 'html'    },
+    { key => 'genes',   title => 'Associated Gene(s)',    align => 'left', sort => 'none'    },
+    { key => 'allele',  title => 'Strongest risk allele', align => 'left', sort => 'none'    },
+    { key => 'variant', title => 'Associated variant',    align => 'left', sort => 'none'    },
+    { key => 'pvalue',  title => 'P value',               align => 'left', sort => 'numeric' }
   );
  
-  foreach my $row (values %$table_rows){
-    foreach ( @$row) {
-      $table->add_row($_);
-    }
-  }
-
-  $html .=  $table->render; 
-  return $html;
+  $table->add_rows(@$_) for values %$table_rows;
   
-
+  return $table->render;
 };
 
 sub table_data { 
-  my ($object, $external_data) = @_;
+  my ($self, $external_data) = @_;
+  
+  my $object = $self->object;
   my %rows;
-  foreach my $va (@$external_data){ 
-    my @data_row;
+  
+  foreach my $va (@$external_data) { 
     my $disorder = $va->phenotype_description;
-    if (exists $rows{lc ($disorder)}) { 
-      @data_row = @{ $rows{lc ($disorder)} };
-      $disorder = "";
+    my @data_row;
+        
+    if (exists $rows{lc $disorder}) { 
+      @data_row = @{$rows{lc $disorder}};
+      $disorder = '';
     }
-    my $id = $va->{'_phenotype_id'};
-    my $code = $va->phenotype_name;
+    
+    my $id           = $va->{'_phenotype_id'};
+    my $code         = $va->phenotype_name;
+    my $disease_url  = $object->_url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', phenotype_name => $disorder }); 
+    my $source       = $self->source_link($va, $code);
+    my $study        = $self->study_link($va->study);
+    my $gene         = $self->gene_links($va->associated_gene);
+    my $allele       = $va->associated_variant_risk_allele;
+    my $variant_link = $self->variation_link($va->variation->name);
+    my $pval         = $va->p_value;
+    
     my $disease;
-    my $disease_url = $object->_url({ 'species' => $object->species, 'type' => 'Location', 'action' => 'Genome', 'id' => $id, 'ftype' => 'Phenotype', 'phenotype_name'  => $disorder });     
+    $disease = $code ? qq{<dt>$disorder ($code) <a href="$disease_url">[View on Karyotype]</a></dt>} : qq{<dt>$disorder <a href="$disease_url">[View on Karyotype]</a></dt>} if $disorder =~ /^\w+/;    
     
-    if ($disorder =~/^\w+/){ 
-      $disease = $code ? qq{<dt>$disorder ($code) <a href='$disease_url'>[View on Karyotype]</a></dt>} : qq{<dt>$disorder <a href='$disease_url'>[View on Karyotype]</a></dt>};      
-    } 
-    
-    my $source = source_link($object, $va, $code);
-    my $study = study_link($va->study);
-    my $gene = gene_links($object, $va->associated_gene);
-    my $allele = $va->associated_variant_risk_allele;
-    my $variant_link = variation_link($object, $va->variation->name);
-    my $pval = $va->p_value;
-
     my $row = {
-      'disease'     => $disease,
-      'source'      => $source,
-      'study'       => $study, 
-      'genes'       => $gene,
-      'allele'      => $allele,
-      'variant'     => $variant_link,
-      'pvalue'      => $pval,
+      disease => $disease,
+      source  => $source,
+      study   => $study, 
+      genes   => $gene,
+      allele  => $allele,
+      variant => $variant_link,
+      pvalue  => $pval
     };
+    
     push @data_row, $row;
-    $rows{lc ($va->phenotype_description)} = \@data_row;
+    $rows{lc $va->phenotype_description} = \@data_row;
   } 
 
   return \%rows;
 }
 
 sub gene_links {
-  my ($object, $data) = @_;
+  my ($self, $data) = @_;
+  
   return unless $data;
-  my @genes = split (/,/, $data);
+  
+  my $object = $self->object;
+  my @genes  = split /,/, $data;
   my @links;
-  foreach my $g (@genes){
-    if ($g =~/Intergenic/) { push (@links, $g); }
-    else { 
-      my $url = $object->_url({ 'type' => 'Gene', 'action' => 'Summary', 'g' => $g });
-      my $link = "<a href=" .$url.">$g</a>"; 
-      push (@links, $link);   
+  
+  foreach my $g (@genes) {
+    if ($g =~ /Intergenic/) {
+      push @links, $g;
+    } else { 
+      my $url = $object->_url({ type => 'Gene', action => 'Summary', g => $g });
+      push @links, qq{<a href="$url">$g</a>};
     }
   }
-  my $gene_links = join (',', @links); 
+  
+  my $gene_links = join ',', @links; 
+  
   return $gene_links;
 }
 
 sub source_link {
-  my ($object, $va, $code) = @_;
-  my $source = $va->source_name; 
-  my $source_uc = uc($source);
-  if ($source_uc =~/OPEN/){
-    $source_uc ="OPEN_ACCESS_GWAS_DATABASE"; 
-  }
-  my $url = $object->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
-  if ($url =~/ega/){
+  my ($self, $va, $code) = @_;
+  
+  my $source    = $va->source_name; 
+  my $source_uc = uc $source;
+  $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
+  my $url       = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
+  
+  if ($url =~ /ega/) {
     my $ext_id = $va->local_stable_id;
-    $url =~s/###ID###/$ext_id/;
-    $url =~s/###D###/$code/;
-  } elsif ($url =~/gwastudies/){
+    $url       =~ s/###ID###/$ext_id/;
+    $url       =~ s/###D###/$code/;
+  } elsif ($url =~/gwastudies/) {
     my $pubmed_id = $va->study;
-    $pubmed_id =~s/pubmed\///; 
-    $url =~s/###ID###/$pubmed_id/;       
+    $pubmed_id    =~ s/pubmed\///; 
+    $url          =~ s/###ID###/$pubmed_id/;       
   }
-  my $link = "<a href=".$url.">[$source]</a>";
-  return $link;
+  
+  return qq{<a href="$url">[$source]</a>};
 }
 
 sub study_link {
-  my ($study) = @_; 
-  unless ($study =~/pubmed/){ return; }
-  my $link = "<a href=http://www.ncbi.nlm.nih.gov/".$study.">$study</a>";
-  return $link;
+  my ($self, $study) = @_; 
+  return $study =~ /pubmed/ ? qq{<a href="http://www.ncbi.nlm.nih.gov/$study">$study</a>} : '';
 }
 
 sub variation_link {
-  my ($object, $v) = @_;
-  my $url = $object->_url({ 'type' => 'Variation', 'action' => 'Summary', 'v' => $v });
-  my $link = "<a href=" .$url.">$v</a>";
-  return $link;
+  my ($self, $v) = @_;
+  my $url = $self->object->_url({ type => 'Variation', action => 'Summary', v => $v });
+  return qq{<a href="$url">$v</a>};
 }
 
 1;

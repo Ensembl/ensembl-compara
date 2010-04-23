@@ -34,37 +34,25 @@ sub content {
   my $source = $object->source;
   my $name   = $object->name;
  
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
+  
   $table->add_columns(
-    { key => 'gene',      title => 'Gene' },
-    { key => 'trans',     title => 'Transcript' },
-    { key => 'type',      title => 'Type' },     
-    { key => 'trans_pos', title => 'Relative position in transcript', align =>'center' },
-    { key => 'prot_pos',  title => 'Relative position in protein',    align => 'center' },
-    { key => 'aa',        title => 'Amino acid' },
+    { key => 'gene',      title => 'Gene',                            sort => 'html'                        },
+    { key => 'trans',     title => 'Transcript',                      sort => 'html'                        },
+    { key => 'type',      title => 'Type'  ,                          sort => 'string'                      },     
+    { key => 'trans_pos', title => 'Relative position in transcript', sort => 'position', align => 'center' },
+    { key => 'prot_pos',  title => 'Relative position in protein',    sort => 'position', align => 'center' },
+    { key => 'aa',        title => 'Amino acid',                      sort => 'string'                      }
   );
   
-  my $tsv_species  = ($object->species_defs->VARIATION_STRAIN &&  $object->species_defs->get_db eq 'core') ? 1 : 0;
-  my $gene_adaptor = $object->database('core')->get_GeneAdaptor();
-  my %genes;
+  my $gene_adaptor = $object->database('core')->get_GeneAdaptor;
   my $flag;
   
-  foreach my $varif_id (keys %mappings) {
-    # Check vari feature s the one we are intrested in
-    next unless $varif_id  eq $object->param('vf');
-    
-    my @transcript_variation_data = @{$mappings{$varif_id}{'transcript_vari'}};
-    
-    next unless scalar @transcript_variation_data;
-
-    foreach my $transcript_data (@transcript_variation_data) {
-      my $gene         = $gene_adaptor->fetch_by_transcript_stable_id($transcript_data->{'transcriptname'}); 
-      my $gene_name    = $gene->stable_id if $gene;
-      my $trans_name   = $transcript_data->{'transcriptname'}; 
-      my $trans_coords = $self->_sort_start_end($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'});
-      my $pep_coords   = $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'});
-      my $type         = $transcript_data->{'conseq'};
-      my $aa           = $transcript_data->{'pepallele'} || 'n/a';
+  foreach my $varif_id (grep $_ eq $object->param('vf'), keys %mappings) {
+    foreach my $transcript_data (@{$mappings{$varif_id}{'transcript_vari'}}) {
+      my $gene       = $gene_adaptor->fetch_by_transcript_stable_id($transcript_data->{'transcriptname'}); 
+      my $gene_name  = $gene ? $gene->stable_id : '';
+      my $trans_name = $transcript_data->{'transcriptname'}; 
       
       my $gene_url = $object->_url({
         type   => 'Gene',
@@ -88,25 +76,16 @@ sub content {
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
       my $row = {
+        gene      => qq{<a href="$gene_url">$gene_name</a>},
         trans     => qq{<a href="$transcript_url">$trans_name</a>},
-        type      => $type,
-        trans_pos => $trans_coords,
-        prot_pos  => $pep_coords,
-        aa        => $aa
+        type      => $transcript_data->{'conseq'},
+        trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}),
+        prot_pos  => $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}),
+        aa        => $transcript_data->{'pepallele'} || 'n/a'
       };
       
-      if (exists $genes{$gene_name}) { 
-         push @{$genes{$gene_name}}, $row;
-      } else {
-         $row->{'gene'} = qq{<a href="$gene_url">$gene_name</a>};
-         $genes{$gene_name} = [ $row ]; 
-      }
-    }
-    
-    $flag = 1;
-    
-    foreach my $g (keys %genes) {
-      $table->add_row($_) for @{$genes{$g}};
+      $table->add_row($row);
+      $flag = 1;
     }
   }
 
@@ -126,9 +105,9 @@ sub _sort_start_end {
   my ($self, $start, $end) = @_;
   
   if ($start || $end) {
-    return " $start-$end&nbsp;";
+    return "$start-$end";
   } else {
-    return " n/a&nbsp;"
+    return 'n/a';
   };
 }
 
