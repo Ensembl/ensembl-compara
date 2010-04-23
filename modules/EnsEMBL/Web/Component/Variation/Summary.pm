@@ -134,8 +134,11 @@ sub content {
   } else {
     my @locations;
     my $select_html;
-    if ($count >1){ $select_html = "<br />Please select a location to display information relating to $id in that genomic region.";}
-    $html .= qq(<dt>Location</dt><dd><p class="toggle_text" id="locations_text"> This feature maps to $count genomic location(s). $select_html </p>
+    if ($count >1){ $select_html = "<br />Please select a location to display information relating to $id in that genomic region. ";}
+    $html .= qq(
+      <dt>Location</dt>
+      <dd><p class="toggle_text" id="locations_text"> This feature maps to $count genomic location(s). $select_html<span class="toggle_button">Hide locations</span></p></dd>
+    </dl>
     <table class="toggle_table" id="locations">);
 
     foreach my $varif_id (keys %mappings) {
@@ -172,7 +175,7 @@ sub content {
        $location_link_html,   
       );
     }
-   $html .= "</table></dd>";
+   $html .= "</table>";
   }
 
 
