@@ -2,15 +2,10 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss { width: 100%; }
-table.ss th, table.ss tr.ss_header { background-color:[[NEUTRAL_BORDER]]; border: 0px solid [[NEUTRAL_BORDER]]; border-top-width:1px; }
-table.ss td { padding:0.2em; }
-
-table.ss .left-border {    border-left:  1px [[NEUTRAL_BORDER]] solid; }
-table.ss .right-border {   border-right: 1px [[NEUTRAL_BORDER]] solid; }
-table.ss .bottom-border {  border-bottom:1px [[NEUTRAL_BORDER]] solid; }
-table.top-border {     border-top:   1px [[NEUTRAL_BORDER]] solid; }
-
-table.ss   tr.bg1 { background-color:[[PANEL_BG]]; }
-table.ss   tr.bg2 { background-color:[[NEUTRAL_BG]]; } 
-table.tint tr.bg2 { background-color:[[TINT_BG]]; } 
+table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid }
+table.ss   th, 
+table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
+table.ss   td           { padding: 0.2em; }
+table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
+table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
+table.tint tr.bg2       { background-color: [[TINT_BG]];    } 
