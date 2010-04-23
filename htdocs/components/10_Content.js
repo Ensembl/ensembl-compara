@@ -7,6 +7,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.hideHints();
     this.toggleTable();
+    this.dataTable();
     this.toggleList();
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
@@ -185,7 +186,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     button.click(function () {
-      table.toggle();
+      table.toggle().parent('.dataTables_wrapper').toggle();
       
       if (table.is(':visible')) {
         Ensembl.cookie.set('ENSEMBL_' + id, 'open');
@@ -197,6 +198,74 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }).show();
     
     button = null;
+  },
+  
+  dataTable: function () {
+    $('table.data_table', this.el).each(function () {
+      var table  = $(this);
+      var length = $('tbody tr', this).length;
+      var width  = table.width();
+      var noSort = table.hasClass('no_sort');
+      var config = table.siblings('form.data_table_config');
+      var menu   = '';
+      var sDom;
+      
+      var cols = $('thead th', this).map(function () {
+        var sort = this.className.match(/\s*sort_(\w+)\s*/);
+        var rtn  = {};
+        
+        sort = sort ? sort[1] : 'string';
+        
+        if (noSort || sort == 'none') {
+          rtn.bSortable = false;
+        } else {
+          rtn.sType = $.fn.dataTableExt.oSort[sort + '-asc'] ? sort : 'string';
+        }
+        
+        return rtn;
+      });
+      
+      if (length > 10) {
+        sDom = '<"dataTables_top"lf<"invisible">>t<"dataTables_bottom"i<"col_toggle">p<"invisible">>';
+        
+        $.each([ 10, 25, 50, 100 ], function () {
+          if (this < length) {
+            menu += '<option value="' + this + '">' + this + '</option>';
+          }
+        });
+        
+        menu += '<option value="-1">All</option>';
+      } else {
+        sDom = '<"dataTables_top"f<"invisible">>t<"dataTables_bottom"<"col_toggle"><"invisible">>'
+      }
+      
+      var options = {
+        aoColumns: cols,
+        aaSorting: [],
+        sDom: 't',
+        asStripClasses: [ 'bg1', 'bg2' ],
+        oLanguage: {
+          sLengthMenu: 'Show <select>' + menu + '</select> entries'
+        },
+        fnInitComplete: function (data) {
+          $(data.nTable).width(width).parent().width(width);
+          
+          if (!$(data.nTable).is(':visible')) {
+            $(data.nTable).parent().hide();
+          }
+        },
+        bPaginate: false,
+        bSort: false
+      };
+      
+      $('input', config).each(function () {
+        options[this.name] = eval(this.value);
+      });
+      
+      table.dataTable(options);
+      
+      table = null;
+    });
   },
   
   toggleList: function () {
