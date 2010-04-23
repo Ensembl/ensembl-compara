@@ -39,7 +39,8 @@ sub init {
     dna_align_cdna   => 'cDNA/mRNA alignments', # Separate menus for different cDNAs/ESTs
     dna_align_est    => 'EST alignments',
     dna_align_rna    => 'RNA alignments',
-    dna_align_other  => 'Other DNA alignments', 
+    dna_align_other  => 'Other DNA alignments',
+    dna_align_support=> 'Supporting DNA alignments',
     oligo            => 'Probe features',
     ditag            => 'Ditag features',
     external_data    => 'External data',
