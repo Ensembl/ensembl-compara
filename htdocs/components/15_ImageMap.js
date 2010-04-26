@@ -211,7 +211,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
     
-    if ($(area.a).hasClass('das') && this.highlightRegions) {
+    if (($(area.a).hasClass('das') || $(area.a).hasClass('group')) && this.highlightRegions) {
       var speciesNumber = 0;
       
       if (this.speciesCount > 1) {
