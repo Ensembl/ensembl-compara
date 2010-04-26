@@ -16,7 +16,7 @@ send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
-3bis. The current (rel.57) compara_master database is sf5_ensembl_compara_master on compara1 
+3bis. The current (rel.58) compara_master database is sf5_ensembl_compara_master on compara1 
 
 4. Add in the master compara database
 (compara1:3306/sf5_ensembl_compara_master) the new entries in the
@@ -100,15 +100,16 @@ fresh new database with the tables already created. The script will
 copy relevant data from the master and the old database into the new
 one. 
 
-mysql --defaults-group-suffix=_compara1 -e "CREATE DATABASE lg4_ensembl_compara_57"
-mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_57 < ~lg4/work/ensembl-compara/sql/table.sql
+mysql --defaults-group-suffix=_compara1 -e "CREATE DATABASE lg4_ensembl_compara_58"
+mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_58 < ~lg4/work/ensembl-compara/sql/table.sql
 
 # NB: before you start copying, review the list of mlss_ids that are NOT going to be copied
 # and synchronize it with the 'skip_mlss' meta entries in the master database.
 
 time ~/work/ensembl-compara/scripts/pipeline/populate_new_database.pl \
---reg-conf reg_conf.pl --master compara_master --old compara_pre57 --new compara_57
+    --reg-conf reg_conf.pl --master compara_master --old compara_57 --new compara_58
 #
+# took 2:15 hours for rel.58 (copied from rel.57)
 # took 3 hours for rel.57 (copied from rel.pre57)
 # took 3 hours for rel.pre57 (copied from rel.56)
 
@@ -118,7 +119,7 @@ the old_database in order to avoid trying to copy the dna-dna alignments and
 syntenies again.
 
 ~/work/ensembl-compara/scripts/pipeline/populate_new_database.pl \
---reg-conf reg_conf.pl --master compara_master --new compara_57
+    --reg-conf reg_conf.pl --master compara_master --new compara_58
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
@@ -145,12 +146,12 @@ like this:
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara -d2 .+_core_57_.+ compara_external_foreign_keys
+time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58_.+ compara_external_foreign_keys
 
 ...and correct mismatches if any!
 
 
-10. Merge data. The fastest way to merge new data is to mysqlimport them.
+10. Merge data.
 
 10.1 TRANSLATED_BLAT_NET, BlastZ-Net, Pecan, Gerp
 
@@ -168,40 +169,15 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara -d2 .+_core_57
                 WHERE ga.method_link_species_set_id=Main_MLSS_ID;
         # in rel.pre57 didn't cleanly remove all gat entries, please check by node_id range.
 
-
-  These data should be in a production database. You can copy them using the
-  copy_data.pl script in ensembl-compara/scripts/pipeline. This script requires
-  write access in the production database if the dnafrag_ids need fixing or the
-  data must be copyied in binary mode (this is required for conservation scores).
-  Example:
-
-  bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
-    -I time ~lg4/work/ensembl-compara/scripts/pipeline/copy_data.pl \
-    --from_url mysql://ro_user@host/production_db \
-    --to_url mysql://rw_user:password@host/release_db --mlss 268
-
-# rel.57    ~1h to copy over 13-way Pecan
-#           50m to copy over Human-vs-Turkey
-#           51m to copy over Human-vs-Rabbit
-#           49m to copy over Chicken-vs-Turkey
-#           ~1h to copy over Human-vs-Gorilla
-#
-#           ~3h to copy over 33-way LC EPO
-#           52m to copy over 33-way constrained elements
-#            1h to copy over 33-way conservation scores
-#
-#           1h5m to copy over 5-way EPO primates
-#
-#           1h12m to copy over 5-way fish
-#             22m to copy over 5-way fish constrained elements
-#              8m to copy over 5-way fish conservation scores
-#
-#           1.5h  to copy over 11-way placental mammals
-#
-#           1h10m to copy over 3-way birds
-#           30m   to copy over 3-way birds constrained elements
-#           3h+   to copy over 3-way birds conservation scores
-
+    These data are usually in separate production databases. You can copy them using the
+    copy_data.pl script in ensembl-compara/scripts/pipeline. This script requires
+    write access to the production database if the dnafrag_ids need fixing or the
+    data must be copyied in binary mode (this is required for conservation scores).
+    Example:
+          bsub -q yesterday -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
+            -I time ~lg4/work/ensembl-compara/scripts/pipeline/copy_data.pl \
+            --from_url mysql://ro_user@host/production_db \
+            --to_url mysql://rw_user:password@host/release_db --mlss 268
 
     Note_1: bear in mind that even though constrained elements and conservation scores are associated
     with a multiple alignment, they are not copied automatically and have their own mlss_id,
@@ -212,30 +188,66 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara -d2 .+_core_57
 
     Note_3: before copying multiple alignments THAT PRODUCE ANCESTRAL SEQUENCES (not all of them do),
     you may need to manually copy the dnafrags that correspond to the ancestral sequences
-    from the production database into the release database. You are lucky if they live on the same mysql instance:
-    (but first check that there is no collision of dnafrag_ids!)
+    from the production database into the release database.
+
+    If they live on the same mysql instance:
+        1) check that there is no collision of dnafrag_ids:
+            select * from sf5_compara_12wayOrtheus_e58.dnafrag src join lg4_ensembl_compara_58.dnafrag using (dnafrag_id) where src.name like 'Ancestor_467_%';
+        2) copy dnafrags over:
+            insert into lg4_ensembl_compara_58.dnafrag select * from sf5_compara_12wayOrtheus_e58.dnafrag where name like 'Ancestor_467_%';
+
+    If they live on different instances:
+        1) filter the needed sequences in the source database into separate table:
+            create table ancestor_468 select * from dnafrag where name like 'Ancestor_468_%';
+        2) transfer the table across instances:
+            mysqldump --defaults-group-suffix=_compara3 sf5_compara_6way_primate_e58 ancestor_468 | mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
+        3) check that there are no id collisions in the destination:
+            select * from dnafrag join ancestor_468 using (dnafrag_id);
+        4) merge the data in:
+            insert into dnafrag select * from ancestor_468;
+        5) drop the "temporary" table:
+            drop table ancestor_468;
+
+    Note_4: for multiple alignments that SHOULD HAVE BEEN automatically copied from the prev.release,
+    check that you have the ancestral dnafrags copied (because they probably won't copy automatically),
+    so follow the same steps as in Note_3.
+
+# ToDo: "Note_3&Note_4" should become a part of the copy_data script (before the consistency check that would fall over)
+
+
+# rel.58
+#           30m to copy over Human-vs-Marmoset
 #
-# in rel.57 there were 4 databases with ancestor sequences:
-#        insert into lg4_ensembl_compara_57.dnafrag select * from sf5_compara_5way_primate_orthues_e57b.dnafrag where name like 'Ancestor_456_%';
-#        insert into lg4_ensembl_compara_57.dnafrag select * from sf5_fish_tblat_ortheus_25_08_09.dnafrag where name like 'Ancestor_450_%';
-#        insert into lg4_ensembl_compara_57.dnafrag select * from kb3_compara_11way_e57b.dnafrag where name like 'Ancestor_457_%';
-#        insert into lg4_ensembl_compara_57.dnafrag select * from sf5_test_3way_bird_orthues_e57b.dnafrag where name like 'Ancestor_460_%';
+#           76m to copy over 33way LC EPO
+#           23m to copy over 33way LC EPO constrained elements
+#           70m to copy over 33way LC EPO conservation scores
 #
-# ToDo: this bit should be a part of the copy_data script (before the consistency check that would fall over)
+# don't forget to copy ancestral dnafrags for 6-way primates! (done)
+#
+#           48m to copy over 6way primate EPO
+#
+# don't forget to copy ancestral dnafrags for 12-way eutherians! (done)
+#
+#           45m to copy over 12way eutherian EPO
+#
+#           43m to copy over 16way placental mercator/pecan
+#           17m to copy over 16way placental mercator/pecan constrained elements
+#            1h to copy over 16way placental mercator/pecan conservation scores
 
 
 10.2 Syntenies
 
   Please refer to the documentation in the ensembl-compara/script/synteny directory.
 
-    # First make sure the entries in reg_conf.pl file point at the latest (staging) versions of the core databases.
-    #
-    # Then run something like:
-    ~/work/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --reg_conf ~/release_57/reg_conf.pl \
-        --dbname compara_57 -qy "Sus scrofa" -tg "Bos taurus" \
-        /lustre/scratch103/ensembl/kb3/work/hive/release_57/kb3_sscr_btau_synteny_57/synteny/all.100000.100000.BuildSynteny
+    1) First make sure the entries in reg_conf.pl file point at the latest (staging) versions of the core databases.
+    
+    2) Then run something like:
+    ~/work/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --reg_conf ~/release_58/reg_conf.pl \
+        --dbname compara_58 -qy "Homo sapiens" -tg "Callithrix jacchus" \
+        /lustre/scratch103/ensembl/kb3/scratch/hive/release_58/kb3_hsap_cjac_synteny_58/synteny/all.100000.100000.BuildSynteny
+    3) Check that the MLSS object in the method_link_species_set is fully defined (the loading script may need fixing?)
 
-10.3 Protein trees/homologues
+10.3 Protein trees/homologues/RNA trees:
 
   The merge is done by the person in charge of the protein compara production
   side. The compara release coordinator needs to let him/her know where is the
@@ -260,90 +272,63 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara -d2 .+_core_57
      -src_db avilella_compara_homology_48 \
     -dest_db avilella_ensembl_compara_48 -socket /mysql/data_3306/mysql.sock
 
-10.4 Families (done by lg4 in a separate database)
+10.4 Families 
 
-    Involves copying over (in MyISAM form):
-        * topped-up 'member' and 'sequence' tables (so the order of homologies and families IS important: load the homologies first and families afterwards)
-        * 'family' and 'family_member' tables
+    1) Top-up the member and sequence tables using -t and --insert-ignore:
+        time mysqldump --defaults-group-suffix=_compara4 -t --insert-ignore lg4_compara_family_58 \
+            member sequence family family_member mapping_session stable_id_history | \
+        mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
+# 10m in rel.58
 
-time mysqldump --defaults-group-suffix=_compara2 lg4_compara_families_57 member sequence family family_member | \
-    sed 's/ENGINE=InnoDB/ENGINE=MyISAM/' | \
-    mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_57
-#
-# took 16 minutes in rel.pre57
-# took 16 minutes in rel.57
+    2) Add the previous mapping_session and stable_id_history entries:
+        time mysqldump --defaults-group-suffix=_staging -t --insert-ignore ensembl_compara_57 mapping_session stable_id_history | \
+        mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
+# 3m in rel.58
 
-
-10.5 Stable_ids (done by lg4)
-
-    ## Once both protein trees and families have been copied into the release database,
-    stable_ids for both of them can be generated and loaded directly into the release database.
-    (* omitted *)
-
-
-10.6 Ancestral database (see different scenarios, but scenario (C) is preferred)
-
-A)  Reuse the one in previous release if it hasn't changed and apply core patches:
-
-ssh mysqlens@compara1
-cat <<EOF >/tmp/lg4_ensembl_ancestral_57.copy_options
-compara1        3306    lg4_ensembl_ancestral_56        compara1	3306    lg4_ensembl_ancestral_57
-EOF
-~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl -noflush /tmp/lg4_ensembl_ancestral_57.copy_options > /tmp/lg4_ensembl_ancestral_57.copy.err 2>&1
-
-ssh mysqlens@ens-staging
-cat <<EOF >/tmp/ensembl_ancestral_57.copy_options
-compara1        3306    lg4_ensembl_ancestral_57        ens-staging	3306    ensembl_ancestral_57
-EOF
-~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl -noflush /tmp/ensembl_ancestral_57.copy_options > /tmp/ensembl_ancestral_57.copy.err 2>&1
+    3) Check and change to MyISAM tables that need it:
+        ALTER TABLE member   engine=MyISAM;
+# 2.5m in rel.58
+        ALTER TABLE sequence engine=MyISAM;
+# 0.5m in rel.58
 
 
-B) If something has changed, start with the previous release and remove/add data manualy.
-Ancestral database is very simple in structure: it is a core database with only three tables (meta, seq_region, dna) that have any data.
-This data has to be copied across databases with id-collisions resolved.
+10.5 Populate the species_set_tag table from the previous release (should be in a script, really!)
+Note that the resulting table will probably need updating (either by hand or by a healtchcheck)
 
-Find out which method_link's ancestral sequences are in the ancestral database and the corresponding seq_region_id ranges:
-    select left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 from seq_region group by na;
+    mysqldump --defaults-group-suffix=_compara1 --port=3366 lg4_ensembl_compara_57 species_set_tag | \
+        mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
 
-Assuming you need to remove 'Ancestor_426%' entries:
-    delete sr,d from seq_region sr, dna d where sr.seq_region_id=d.seq_region_id and left(sr.name,12)='Ancestor_426';
+10.6 Put together ancestral database:
 
-Adding is trickier, because you need to make sure seq_region_ids won't collide.
-Run the same 'inventory' command for the source database:
-    select left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 from kb3_epo_5primate_57_ancestral_core.seq_region group by na;
+Merge several ancestral core databases together, starting with the ancestors that haven't changed from prev.release.
+    You need to make sure that 'dna' and 'seq_region' tables that are in sync via seq_region_id field
+    stay in sync in the target database (but there may/need to be a new seq_region_id generated,
+    to avoid collisions between several independently derived sources of ancestral sequences).
 
-In case there is no collision, you can simply insert-select:
-    INSERT INTO dna SELECT * FROM kb3_epo_5primate_57_ancestral_core.dna;
-    INSERT INTO seq_region SELECT * FROM kb3_epo_5primate_57_ancestral_core.seq_region;
-        If you copied too much, remove the dna entries that had no corresponding seq_region:
-            DELETE d FROM dna d LEFT JOIN seq_region sr ON d.seq_region_id=sr.seq_region_id WHERE sr.seq_region_id IS NULL;
-Otherwise apply a range-shift while loading.
+Merging each source into target is done in two steps (3) and (4) (assuming the target and the sources are living on the same MySQL instance) :
 
+    1) Create a new core database:
+        mysql --defaults-group-suffix=_compara4 -e 'CREATE DATABASE lg4_ensembl_ancestral_58'
+        mysql --defaults-group-suffix=_compara4 lg4_ensembl_ancestral_58 <~lg4/work/ensembl/sql/table.sql
 
-C) Sometimes there is nothing to reuse, just merge several ancestral core databases together.
-You need to make sure that 'dna' and 'seq_region' tables that are in sync via seq_region_id field
-stay in sync in the target database (but there may/need to be a new seq_region_id generated,
-to avoid collisions between several independently derived sources of ancestral sequences).
+    2) Copy over the ancestralsegment coord_system:
+        INSERT INTO lg4_ensembl_ancestral_58.coord_system SELECT * FROM lg4_ensembl_ancestral_57.coord_system;
 
-Merging each source into target is done in two steps (assuming the target and the sources are living on the same MySQL instance) :
+    3) Insert names and generate new seq_region_ids on the way (in this case we inherit a set from the previous release, but the syntax is the same for other sources):
+        INSERT INTO lg4_ensembl_ancestral_58.seq_region (name, length, coord_system_id)
+            SELECT ss.name, ss.length, ss.coord_system_id FROM lg4_ensembl_ancestral_57.seq_region ss WHERE ss.name like 'Ancestor_450_%';
 
-C0) # Do this step only for the first source database:
-        INSERT INTO lg4_ensembl_ancestral_57.coord_system SELECT * FROM sf5_compara_5way_primate_orthues_e57b_ancestral_core.coord_system;
+    4) Use the seq_region_ids generated on previous step and insert them with the dna sequences:
+            INSERT INTO lg4_ensembl_ancestral_58.dna (seq_region_id, sequence)
+                SELECT ts.seq_region_id, sd.sequence FROM lg4_ensembl_ancestral_57.dna sd
+                                                    JOIN lg4_ensembl_ancestral_57.seq_region ss ON sd.seq_region_id=ss.seq_region_id
+                                                    JOIN lg4_ensembl_ancestral_58.seq_region ts ON ss.name=ts.name;
+# 2min, 26min, 25min in rel.58
 
-C1) # Insert names and generate new seq_region_ids on the way:
-        INSERT INTO lg4_ensembl_ancestral_57.seq_region (name, length, coord_system_id)
-            SELECT ss.name, ss.length, ss.coord_system_id FROM sf5_test_3way_bird_orthues_e57b_ancestral_core.seq_region ss;
+    5) Repeat steps (3) & (4) for all other sources
 
-C2) # Use the seq_region_ids generated on previous step and insert them with the dna sequences:
-        INSERT INTO lg4_ensembl_ancestral_57.dna (seq_region_id, sequence)
-            SELECT ts.seq_region_id, sd.sequence FROM sf5_test_3way_bird_orthues_e57b_ancestral_core.dna sd
-                                                JOIN sf5_test_3way_bird_orthues_e57b_ancestral_core.seq_region ss ON sd.seq_region_id=ss.seq_region_id
-                                                JOIN lg4_ensembl_ancestral_57.seq_region ts ON ss.name=ts.name;
-
-C3) # Repeat steps (C1) & (C2) for all sources
-
-C4) # Chech that you have done it correctly:
-    SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
+    6) Check that you have done it correctly:
+        SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
 
 
 11. Drop method_link_species_set entries for alignments which did not make it.
@@ -383,61 +368,69 @@ This step has to happen ASAP, but AFTER the Core name projections have been done
 
 #
 mysql --defaults-group-suffix=_staging -e 'create database compara_member'
-time mysqldump --defaults-group-suffix=_compara1 lg4_ensembl_compara_57 member | mysql --defaults-group-suffix=_staging compara_member
+time mysqldump --defaults-group-suffix=_compara1 lg4_ensembl_compara_58 member | mysql --defaults-group-suffix=_staging compara_member
+# rel.58:   6m
 # rel.57:   7m
 #
 # Actually, you can run the second dump-and-load process in parallel:
 #
 mysql --defaults-group-suffix=_staging2 -e 'create database compara_member'
-time mysqldump --defaults-group-suffix=_compara1 lg4_ensembl_compara_57 member | mysql --defaults-group-suffix=_staging2 compara_member
+time mysqldump --defaults-group-suffix=_compara4 lg4_ensembl_compara_58 member | mysql --defaults-group-suffix=_staging2 compara_member
+# rel.58:   6m
 # rel.57:   10m
 
 
 12.2 Run the first set of 3 queries against ens-staging:
 
-time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_57\_%"' | \
+time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_58\_%"' | \
     awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT(m.display_label <=> x.display_label) ;"}' | \
     mysql --defaults-group-suffix=_staging -N compara_member | \
     awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
     sed 's/"NULL"/NULL/' > gene_dlabel_transferable_patch.sql
+# rel.58:    2m
 # rel.57:   24m
 
-time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_57\_%"' | \
+time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_58\_%"' | \
     awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".transcript t, "$1".translation p, "$1".translation_stable_id psi, member m WHERE t.display_xref_id=x.xref_id AND t.transcript_id=p.transcript_id AND p.translation_id=psi.translation_id AND m.stable_id=psi.stable_id AND m.source_name=\"ENSEMBLPEP\" AND NOT (m.display_label <=> x.display_label) ;"}' | \
     mysql --defaults-group-suffix=_staging -N compara_member | \
     awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLPEP\"; "}' | \
     sed 's/"NULL"/NULL/' > transcript_dlabel_transferable_patch.sql
+# rel.58:    1m
 # rel.57:   11m
 
-time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_57\_%"' | \
+time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_58\_%"' | \
     awk '{print "SELECT m.stable_id, g.description FROM "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT (m.description <=> g.description) ;"}' | \
     mysql --defaults-group-suffix=_staging -N compara_member | \
     awk -F '\t' '{print "UPDATE member SET description=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
     sed 's/"NULL"/NULL/' > gene_description_transferable_patch.sql
+# rel.58:    1m
 # rel.57:   10m
 
 
 12.3 Run the same set of queries against ens-staging2 (can be done in parallel with 12.2) :
 
-time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_57\_%"' | \
+time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_58\_%"' | \
     awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT(m.display_label <=> x.display_label) ;"}' | \
     mysql --defaults-group-suffix=_staging2 -N compara_member | \
     awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
     sed 's/"NULL"/NULL/' > gene_dlabel_transferable_patch2.sql
+# rel.58:    2m
 # rel.57:   47m
 
-time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_57\_%"' | \
+time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_58\_%"' | \
     awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".transcript t, "$1".translation p, "$1".translation_stable_id psi, member m WHERE t.display_xref_id=x.xref_id AND t.transcript_id=p.transcript_id AND p.translation_id=psi.translation_id AND m.stable_id=psi.stable_id AND m.source_name=\"ENSEMBLPEP\" AND NOT (m.display_label <=> x.display_label) ;"}' | \
     mysql --defaults-group-suffix=_staging2 -N compara_member | \
     awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLPEP\"; "}' | \
     sed 's/"NULL"/NULL/' > transcript_dlabel_transferable_patch2.sql
+# rel.58:   1m
 # rel.57:   8m
 
-time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_57\_%"' | \
+time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_58\_%"' | \
     awk '{print "SELECT m.stable_id, g.description FROM "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT (m.description <=> g.description) ;"}' | \
     mysql --defaults-group-suffix=_staging2 -N compara_member | \
     awk -F '\t' '{print "UPDATE member SET description=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
     sed 's/"NULL"/NULL/' > gene_description_transferable_patch2.sql
+# rel.58:    1m
 # rel.57:   43m
 
 
@@ -451,36 +444,36 @@ mysql --defaults-group-suffix=_staging2 -e 'drop database compara_member'
 #
 # (assuming there are no other .sql files in the current directory)
 #
-time cat *.sql | mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_57
+time cat *.sql | mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
+# rel.58:   10m
 
 
-12.6 Same patches can be retro-applied to homology and family production databases (if needed)
+12.6 Same patches to the member table can be retro-applied to homology and family production databases (if needed)
 
 
 13. Run the healthchecks:
 
 13.1 Run the healthchecks for ancestral database:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_ancestral_57 compara-ancestral
+    time ./run-healthcheck.sh -d lg4_ensembl_ancestral_58 compara-ancestral
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara -repair Meta
+    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -repair Meta
 
 13.3 Now run the remaining healthchecks:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara -d2 .+_core_57_.+ compara_external_foreign_keys
-# in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
-# in rel.pre57 it took 20 minutes (all passed).
+    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58_.+ compara_external_foreign_keys
+# rel.58:   22m
 # in rel.57 it took ?? minutes ('genbank common name' for 4 species had to be copied from their 'ensembl common name' in ncbi_taxa_name table)
+# in rel.pre57 it took 20 minutes (all passed).
+# in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara compara_db_constraints
-# in rel.56 the following tests failed: ForeignKeyMethodLinkSpeciesSetIdGenomicAlignBlock (the test itself needs updating) and CheckSynteny (human-platypus missing - it is ok)
-# in rel.pre57 took 73 minutes (2 errors: both CheckConservationScore and CheckSynteny are supposed to be that way)
+    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara compara_genomic
+# rel.58:   47m, 7 failures
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_57 -type compara protein_db_constraints
-# in rel.56 all passed
-# in rel.pre57 took 20 minutes (all passed)
+    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara compara_homology
+# rel.58:   14m, 5 failures
 
 ...and correct mismatches if any!
 
@@ -498,20 +491,21 @@ and check their data.
 # So if you (suspect that you) have changed anything in the database, do run these two commands just in case -
 # a dry run of each doesn't even take a minute.
 
-time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_57
-# rel.56    12min
-# rel.pre57 30+105min
+time mysqlcheck --analyze --verbose --host=compara4 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_58
+# rel.58    3min
 # rel.57    9+4+5min
+# rel.pre57 30+105min
+# rel.56    12min
 
-time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_57
-# rel.56    2.5 hours
-# rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
+time mysqlcheck --optimize --verbose --host=compara4 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_58
 # rel.57    2+1.6 hours
+# rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
+# rel.56    2.5 hours
 
-time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_ancestral_57
+time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_ancestral_58
 # rel.57    took seconds to complete
 
-time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_ancestral_57
+time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_ancestral_58
 # rel.57    took seconds to complete
 
 
@@ -528,23 +522,24 @@ bash
 
 16.2. Create a file that will contain one line with the source/destination parameters, like this:
 
-cat <<EOF >/tmp/lg4_ensembl_compara_57.copy_options
+cat <<EOF >/tmp/lg4_ensembl_compara_58.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara1        3306        lg4_ensembl_compara_57      ens-staging     3306        ensembl_compara_57
-compara1        3306        lg4_ensembl_ancestral_57    ens-staging     3306        ensembl_ancestral_57
+compara1        3306        lg4_ensembl_compara_58      ens-staging     3306        ensembl_compara_58
+compara1        3306        lg4_ensembl_ancestral_58    ens-staging     3306        ensembl_ancestral_58
 EOF
 
 
 16.3. Run the script to actually copy the data:
 
 time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
-        -noflush /tmp/lg4_ensembl_compara_57.copy_options > /tmp/lg4_ensembl_compara_57.copy.err 2>&1
+        -noflush /tmp/lg4_ensembl_compara_58.copy_options > /tmp/lg4_ensembl_compara_58.copy.err 2>&1
 
 # copying of rel_56 took 2 hours (SUCCESSFUL for both databases - you should check the output file)
 # copying of ensembl_compara_pre57 took 2 hours (SUCCESSFUL)
 # copying of ensembl_compara_57 took 2 hours (SUCCESSFUL)
 # copying of ensembl_ancestral_57 took 20 minutes (only SUCCESSFUL after analyzing/optimizing)
+# copying of ensembl_compara_58 and ensembl_ancestral_58 together took 1:30h (SUCCESSFUL)
 
 16.4 Do the same thing in parallel on ens-staging2 :
 
@@ -554,14 +549,15 @@ bash
 
 # NB: the ancestral database doesn't need to be copied to the second staging server
 
-cat <<EOF >/tmp/lg4_ensembl_compara_57.copy_options
+cat <<EOF >/tmp/lg4_ensembl_compara_58.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara1        3306        lg4_ensembl_compara_57      ens-staging2     3306        ensembl_compara_57
+compara1        3306        lg4_ensembl_compara_58      ens-staging2     3306        ensembl_compara_58
 EOF
 
 time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
-        -noflush /tmp/lg4_ensembl_compara_57.copy_options > /tmp/lg4_ensembl_compara_57.copy.err 2>&1
+        -noflush /tmp/lg4_ensembl_compara_58.copy_options > /tmp/lg4_ensembl_compara_58.copy.err 2>&1
+# copying of ensembl_compara_58 took 1:15h (SUCCESSFUL)
 
 
 #### At this point you are "handing over the databases" to the person running Compara Mart (usually Rhoda).
@@ -571,34 +567,35 @@ time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
 
 17. Dump both the current and the previous release schemas and compare them.
 
-# Create a patch to convert a compara DB from the previous release to the new one.
+17.1 Create a patch to convert a compara DB from the previous release to the new one.
+
 # The patch should include at least an update of the schema_version in the meta table!
 #
-mysqldump --defaults-group-suffix=_compara1 --no-data --skip-add-drop-table lg4_ensembl_compara_56 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
-mysqldump --defaults-group-suffix=_compara1 --no-data --skip-add-drop-table lg4_ensembl_compara_57 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_57 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_58 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
 #
 sdiff -b old_schema.sql new_schema.sql | less
 #
-# (create the patch file by hand)
+# (create the patch_57_58.sql file by hand)
 
-# Generate an empty database from the old schema, apply the patch, dump it, and check that you get the new schema.
+17.2 Generate an empty database from the old schema, apply the patch, dump it, and check that you get the new schema.
 
-mysql --defaults-group-suffix=_compara1 -e 'create database lg4_schema_patch_test'
-mysql --defaults-group-suffix=_compara1 lg4_schema_patch_test < old_schema.sql
-mysql --defaults-group-suffix=_compara1 lg4_schema_patch_test < patch_56_57.sql
-mysqldump --defaults-group-suffix=_compara1 --no-data --skip-add-drop-table lg4_schema_patch_test | sed 's/AUTO_INCREMENT=[0-9]*\b//' >patched_old_schema.sql
+mysql --defaults-group-suffix=_compara4 -e 'create database lg4_schema_patch_test'
+mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < old_schema.sql
+mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < patch_57_58.sql
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_schema_patch_test | sed 's/AUTO_INCREMENT=[0-9]*\b//' >patched_old_schema.sql
 #
 sdiff -bs patched_old_schema.sql new_schema.sql | less
 
-# CVS commit the patch.
+17.3 CVS commit the patch.
 
 
 18. Update the files in the ~ensembl-compara/sql directory:
 
 cd PATH_TO/ensembl-compara/sql/
 
-mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM genome_db order by genome_db_id asc" lg4_ensembl_compara_57 > genome_db.txt
-mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM method_link order by method_link_id asc" lg4_ensembl_compara_57 > method_link.txt
+mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM genome_db order by genome_db_id asc" lg4_ensembl_compara_58 > genome_db.txt
+mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM method_link order by method_link_id asc" lg4_ensembl_compara_58 > method_link.txt
 
 # You will have to change the default schema_version in the table.sql file (last line of the file)
 
@@ -611,28 +608,28 @@ You might need to update the create_mlss_table.conf file with new species added.
 Or you can use the order of species given in the species tree:
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_57/reg_conf.pl --dbname compara_57 --method_link PECAN \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link PECAN \
     --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > pecan.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_57/reg_conf.pl --dbname compara_57 --method_link EPO \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link EPO \
     --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_57/reg_conf.pl --dbname compara_57 --method_link EPO_LOW_COVERAGE \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link EPO_LOW_COVERAGE \
     --list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > epo_lc.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_57/reg_conf.pl --dbname compara_57 --method_link TRANSLATED_BLAT_NET \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link TRANSLATED_BLAT_NET \
     --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat_net.inc
 
 # for blastz_net produce a simple list, because the table is getting too big:
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_57/reg_conf.pl --dbname compara_57 --method_link BLASTZ_NET \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link BLASTZ_NET \
     --blastz_list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > blastz_net.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_57/reg_conf.pl --dbname compara_57 --method_link SYNTENY \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link SYNTENY \
     --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > synteny.inc
 
 CVS commit these files.
