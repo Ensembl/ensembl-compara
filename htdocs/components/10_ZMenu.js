@@ -11,6 +11,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.href       = area.attr('href');
     this.title      = area.attr('title');
     this.das        = false;
+    this.group      = area.hasClass('group') || area.hasClass('pseudogroup');
     this.position   = data.position;
     this.coords     = data.coords;
     this.imageId    = data.imageId;
@@ -137,8 +138,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       ';start=' + start, 
       ';end=' + end,
       ';strand=' + strandMap[strand],
-      ';click_start=' + this.coords.clickStart,
-      ';click_end=' + this.coords.clickEnd,
       ';label=' + this.title.split('; ')[0]
     ].join('');
       
@@ -155,6 +154,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var timeout = this.timeout;
     
     url = url || this.href.replace(/\/(\w+\/\w+)\?/, '/Zmenu/$1?');
+    
+    if (this.group) {
+      url += ';click_start=' + this.coords.clickStart + ';click_end=' + this.coords.clickEnd;
+    }
     
     if (url) {
       $.ajax({
@@ -480,7 +483,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.position = data.position;
     this.coords   = data.coords;
     
-    if (this.das == 'group' || this.das == 'pseudogroup' || this.drag) {
+    if (this.group || this.drag) {
       this.elLk.tbody.empty();
       this.elLk.caption.empty();
       this.hide();
