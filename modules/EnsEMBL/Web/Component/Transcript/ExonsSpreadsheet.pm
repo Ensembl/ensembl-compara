@@ -117,14 +117,14 @@ sub content {
     );
     
     my $table = new EnsEMBL::Web::Document::SpreadSheet([
-        { key => 'Number',     title => 'No.',           width => '6%',  align => 'center' },
-        { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'center' },
-        { key => 'Start',      title => 'Start',         width => '10%', align => 'right'  },
-        { key => 'End',        title => 'End',           width => '10%', align => 'right'  },
-        { key => 'StartPhase', title => 'Start Phase',   width => '7%',  align => 'center' },
-        { key => 'EndPhase',   title => 'End Phase',     width => '7%',  align => 'center' },
-        { key => 'Length',     title => 'Length',        width => '10%', align => 'right'  },
-        { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left'   }
+        { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
+        { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
+        { key => 'Start',      title => 'Start',         width => '10%', align => 'left' },
+        { key => 'End',        title => 'End',           width => '10%', align => 'left' },
+        { key => 'StartPhase', title => 'Start Phase',   width => '7%',  align => 'left' },
+        { key => 'EndPhase',   title => 'End Phase',     width => '7%',  align => 'left' },
+        { key => 'Length',     title => 'Length',        width => '10%', align => 'left' },
+        { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
       ], 
       \@data, 
       { margin => '1em 0px', data_table => 'no_sort' }
