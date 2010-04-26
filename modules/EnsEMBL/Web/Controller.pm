@@ -410,6 +410,7 @@ sub process_command {
     if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {    
       my $command = $class->new({
         object => $model->object,
+        model => $model,
         page   => $page
       });
     
