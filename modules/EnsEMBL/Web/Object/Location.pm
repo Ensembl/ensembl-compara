@@ -1070,7 +1070,7 @@ sub get_synteny_matches {
   my @data;
   my $OTHER = $self->param('otherspecies') || 
               $self->param('species')      ||
-              ( $self->species eq 'Homo_sapiens' ? 'Mus_musculus' : 'Homo_sapiens' );
+	      $self->_default_otherspecies;
   my $gene2_adaptor = $self->database( 'core', $OTHER )->get_GeneAdaptor();
   my $localgenes = $self->get_synteny_local_genes;
   my $offset = $self->seq_region_start;
@@ -1143,6 +1143,50 @@ sub get_synteny_local_genes {
 
   my @sorted = sort {$a->start <=> $b->start} @$localgenes;
   return \@sorted;
+}
+
+sub _default_otherspecies {
+  ## Needs moving to viewconfig so we don't have to work it out each time
+ 
+    my $self = shift;
+    my $sd = $self->species_defs;
+    my %synteny = $sd->multi('DATABASE_COMPARA', 'SYNTENY');
+    my @has_synteny = sort keys %synteny;
+    my $sp;
+
+  ## Set default as primary species, if available
+
+    my $species = $self->species;
+    if (my $spg = $sd->SPECIES_GROUP($species)) {
+	foreach $sp (@has_synteny) {
+	    my $ospg = $sd->SPECIES_GROUP($sp);
+	    if ($ospg eq $spg)  {
+		if ($sp ne $species) {
+		    return $sp;
+		}
+	    }
+	}
+    }
+
+    unless ($ENV{'ENSEMBL_SPECIES'} eq $sd->ENSEMBL_PRIMARY_SPECIES) {
+	foreach my $sp (@has_synteny) {
+	    if ($sp eq $sd->ENSEMBL_PRIMARY_SPECIES) {
+		return $sp;
+	    }
+	}
+    }
+
+  ## Set default as secondary species, if primary not available
+    unless ($ENV{'ENSEMBL_SPECIES'} eq $sd->ENSEMBL_SECONDARY_SPECIES) {
+	foreach $sp (@has_synteny) {
+	    if ($sp eq $sd->ENSEMBL_SECONDARY_SPECIES) {
+		return $sp;
+	    }
+	}
+    }
+
+  ## otherwise choose first in list
+    return $has_synteny[0];
 }
 
 ######## LDVIEW CALLS ################################################
