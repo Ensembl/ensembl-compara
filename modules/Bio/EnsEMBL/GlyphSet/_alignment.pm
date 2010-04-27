@@ -141,7 +141,7 @@ sub render_normal {
 
   my $features_drawn = 0;
   my $features_bumped = 0;
-    my $label_h = 0;
+  my $label_h = 0;
   my( $fontname, $fontsize ) ;
   if( $self->{'show_labels'} ) {
     ( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
@@ -154,7 +154,7 @@ sub render_normal {
   unless (@sorted) {
     @sorted = $strand < 0 ? sort keys %features : reverse sort keys %features;
   }
- 
+
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
     my ($config, @features);
@@ -168,7 +168,7 @@ sub render_normal {
     else {
       @features = @T;
     }
-    
+
     $self->_init_bump( undef, $dep );
     my %id = ();
     foreach my $f (
@@ -185,7 +185,7 @@ sub render_normal {
       next if $strand_flag eq 'b' && $strand != ( ($hstrand||1)*$f->strand || -1 ) || $e < 1 || $s > $length ;
       push @{$id{$fgroup_name}}, [$s,$e,$f,int($s*$pix_per_bp),int($e*$pix_per_bp),$db_name];
     }
-  
+
     ## Now go through each feature in turn, drawing them
     my ($cgGrades, $score_per_grade, @colour_gradient);
     my @greyscale      = (qw/cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000/);
@@ -260,7 +260,8 @@ sub render_normal {
         'x'     => $F[0][0]> 1 ? $F[0][0]-1 : 0,
         'width' => 0,
         'y'     => 0,
-        'title' => $self->feature_title($F[0][2],$db_name)
+        'title' => $self->feature_title($F[0][2],$db_name),
+	'class' => 'group',
       });
       my $X = -1e8;
       foreach my $f ( @F ){ ## Loop through each feature for this ID!
@@ -403,7 +404,7 @@ sub render_ungrouped {
     my $flag = 0;
     $self->{'track_key'} = $feature_key;
     my $colour_key     = $self->colour_key( $feature_key );
-    my $feature_colour = $self->my_colour( $self->my_config( 'sub_type' ), undef  );
+    my $feature_colour = $self->my_colour( $colour_key, undef  );
 
     $self->_init_bump( undef, '0.5' );
     foreach my $f (
