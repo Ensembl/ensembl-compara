@@ -119,18 +119,19 @@ sub create_user_set {
     
     next if $display eq 'off';
 
-    if ($render eq 'highlight') {
-      ## Create pointer configuration
-      my $tracks = $hub->get_tracks($key);
-      while (my ($label, $track) = each (%$tracks)) {
-        my $colour; 
-        if ($track->{'config'} && $track->{'config'}{'color'}) {
-          $colour = $track->{'config'}{'color'};
-        }
-        else {
-          $colour = $colours->[$i];
-          $i++;
-        }
+    ## Create pointer configuration
+    my $tracks = $hub->get_tracks($key);
+    while (my ($label, $track) = each (%$tracks)) {
+      my $colour; 
+      if ($track->{'config'} && $track->{'config'}{'color'}) {
+        $colour = $track->{'config'}{'color'};
+      }
+      else {
+        $colour = $colours->[$i];
+        $i++;
+      }
+        
+      if ($render eq 'highlight') {
         push @$pointers, $image->add_pointers( $hub, {
           'config_name'   => 'Vkaryotype',
           'features'      => $track->{'features'},
@@ -138,12 +139,17 @@ sub create_user_set {
           'style'         => $style,
         });
       }
-    } else {
-      ## TODO - add density tracks to table
+      ## Create key entry
+      my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
+      if ($colour =~ /^[a-z0-9]{6}$/i) {
+        $colour = '#'.$colour;
+      }
+      $swatch .= $colour.'" title="'.$colour.'" />';
+      $table->add_row({'colour' => $swatch, 'track' => $label});
     }
   }
 
-  return ($pointers, $table);
+  return ($pointers, $table );
 }
 
 1;

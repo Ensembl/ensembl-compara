@@ -22,10 +22,10 @@ sub content {
   my $hub = $self->model->hub;
   my $species = $hub->species;
 
-  my ($html, $table, $features, $has_features, @all_features);
+  my ($html, $table, $usertable, $features, $has_features, @all_features);
   
   if (my $id = $hub->param('id') || $hub->type eq 'LRG') { ## "FeatureView"
-    $self->model->create_domain_object('Feature'); ## For location pages, we create these on the fly
+    $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
     $features = $self->model->munge_features_for_drawing;
     if (keys %$features) { $table = $self->feature_tables($features); }
   } 
@@ -87,26 +87,26 @@ sub content {
           else {
             $feature_names = join(', ', sort values %names);  
           }
-          $text = "$feature_names associated with $data_type";
-        }
+          $text .= "$feature_names associated with $data_type";
 
-        my @ids = ($hub->param('id'));
-        if (@ids) {
-          if (@ids > 1) {
-            $text .= 's '.join(', ', @ids);
+          my @ids = ($hub->param('id'));
+          if (@ids) {
+            if (@ids > 1) {
+              $text .= 's '.join(', ', @ids);
+            }
+            else {
+              $text .= ' '.$ids[0];
+            }
           }
-          else {
-            $text .= ' '.$ids[0];
-          }
-        }
         
-        if ($hub->param('ftype') eq 'Phenotype'){
-          my $phenotype_name = $hub->param('phenotype_name') || $hub->param('id');
-          $text = "Location of variants associated with phenotype $phenotype_name:";        
+          if ($hub->param('ftype') eq 'Phenotype'){
+            my $phenotype_name = $hub->param('phenotype_name') || $hub->param('id');
+            $text = "Location of variants associated with phenotype $phenotype_name:";        
+          }
         }        
 
         $used_colour{$data_type}++;        
-        $html = qq(<h2>$text</h2>);        
+        $html = qq(<h2>$text</h2>) unless $names{'LRG'};        
                 
         $image->image_name = "feature-$species";
         $image->imagemap = 'yes';
@@ -132,8 +132,8 @@ sub content {
         next if $used_colour{$colour};
         push @$ok_colours, $colour;
       }
-
-      my ($user_pointers, $table2) = $self->create_user_set($image, $ok_colours);
+      my $user_pointers;
+      ($user_pointers, $usertable) = $self->create_user_set($image, $ok_colours);
 
       ## Add some settings, if there is any user data
       if( @$user_pointers ) {
@@ -173,8 +173,11 @@ sub content {
     $html .= $self->_info( 'Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>' );
   }
 
-  if ($table) {
-    $html .= $table;
+  if ($table || $usertable) {
+    $html .= $table if $table;
+    if ($usertable) {
+      $html .= '<h3>Key to user data tracks</h3>'.$usertable->render;
+    };
   } else {
     my $file = '/ssi/species/stats_'.$hub->species.'.html';
     $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
@@ -195,11 +198,6 @@ sub feature_tables {
     my $features = $feature_set->[0];
     my $extra_columns = $feature_set->[1];
 
-    if ($hub->type eq 'LRG') {
-      my @sorted = sort {$a->{'number'} <=> $b->{'number'}} @$features;
-      $features = \@sorted;
-    }
- 
     # could show only gene links for xrefs, but probably not what is wanted:
     # next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
     
@@ -223,6 +221,11 @@ sub feature_tables {
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width'=>'170px','align'=>'left' });    
       $table->add_columns({'key'=>'names', 'title'=>'Name(s)','width'=>'100px','align'=>'left' });
     } 
+    elsif ($feat_type eq 'LRG') {
+      $table->add_columns({'key'=>'lrg',   'title'=>'LRG',  'width' =>'15%','align'=>'left' });
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
+      $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
+    }
     else {	    
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
       $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
@@ -237,17 +240,22 @@ sub feature_tables {
       $c++;
     }
         
-    my @data = map { $_->[0] }
-      sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-      map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20, $_->{'region'}, $_->{'start'}] }
-      @$features;
-    
+    my @data;
+    if ($feat_type eq 'LRG') {
+      @data = sort {$a->{'lrg_number'} <=> $b->{'lrg_number'}} @$features;
+    }
+    else {
+      @data = map { $_->[0] }
+        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+        map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20, $_->{'region'}, $_->{'start'}] }
+        @$features;
+    }
+
     foreach my $row (@data) {
       my $contig_link = 'Unmapped';
       my $names = '';
       my $data_row;
-      
-      
+     
       if ($row->{'region'}) {
         $contig_link = sprintf(
           '<a href="%s/Location/View?r=%s:%d-%d;h=%s">%s:%d-%d(%d)</a>',
@@ -297,6 +305,14 @@ sub feature_tables {
         }
       }
       
+      if ($feat_type eq 'LRG') {
+        my $link = sprintf(
+          '<a href="%s/LRG/Summary?lrg=%s">%s</a>',
+          $hub->species_defs->species_path, $row->{'lrg_name'}, $row->{'lrg_name'}
+        );
+        $data_row->{'lrg'} = $link;
+      } 
+      
       my $c = 1;
       
       for( @{$row->{'extra'}||[]} ) {
@@ -321,7 +337,7 @@ sub feature_tables {
   }
   
   if (!$html) {
-    my $id = $hub->param('id');
+    my $id = $hub->param('id') || 'unknown feature';
     $html .= qq(<br /><br />No mapping of $id found<br /><br />);
   }
   
