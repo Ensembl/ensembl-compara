@@ -137,15 +137,19 @@ sub dumpSNP {
   my $conf = shift;
   my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $SNPDB;
-
-  `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation order by variation_id' > v.txt`;
-  `/usr/bin/mysql -h ensdb-1-13 -P5307 -uensro $SNPDB -e 'select variation_id,source_id,name from variation_synonym order by variation_id' > vs.txt`;
-
-  return unless $SNPDB;
-
-
-  my %SNP_EXTRA = map { ($_->[0] => $_) }
-    @{$conf->{'dbh'}->selectall_arrayref( 
+  open O, ">$conf->{'directory'}/SNP.txt";
+  my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $SNPDB.phenotype",'description');
+  foreach my $phen (keys %$phenotype_info) {
+    print O join "\t",
+      'Phenotype',
+      $phen,
+      sprintf( "/$conf->{'species'}/Location/Genome?ftype=Phenotype;id=%s;phenotype_name=%s", $phenotype_info->{$phen}{'phenotype_id'}, $phen),
+      $phen,
+      "\n",
+  }
+  my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
+  my %snp_extra = map { ($_->[0] => $_) }
+    @{$conf->{'dbh'}->selectall_arrayref(
       "select va.variation_id,
               group_concat( distinct va.local_stable_id SEPARATOR '; ') as lsi,
               group_concat( distinct va.study           SEPARATOR '; ') as st,
@@ -163,109 +167,58 @@ sub dumpSNP {
               $SNPDB.phenotype as p on p.phenotype_id = va.phenotype_id
         group by va.variation_id
         order by va.variation_id"
-   )};
+    )};
 
-  my $SOURCES = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
+  my $sth = $conf->{'dbh'}->prepare(
+    "SELECT vf.variation_id, vf.variation_name, vf.source_id, group_concat(vs.source_id, ' ',vs.name), vf.consequence_type
+       FROM $SNPDB.variation_feature vf left join $SNPDB.variation_synonym vs on vf.variation_id = vs.variation_id group by vf.variation_id"
+  );
+  $sth->execute() or die "Error:", $DBI::errstr;
+  while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
+    while ( my $row = shift( @{$rowcache} ) ) {
+      my $vf_id = $row->[0];
+      my $name  = $row->[1];
+      my %synonyms;
+      my $syn_c = 0;
+      foreach my $syn (split /,/, @$row->[3]) {
+	my ($id,$sname) = split / /,$syn;
+	$synonyms{$sname} = $sources->{$id};
+	$syn_c++;
+      }
+      my (@K, $synonym_text);
+      foreach my $syn (keys %synonyms) {
+	push @K, $syn;
+	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
+      }
 
-  open( my $fh1, 'v.txt' );
-  open( my $fh2, 'vs.txt' );
-  open( my $fh3, '>snps.txt' );
-  my $shift = <$fh1>; # remove first line
-  $shift = <$fh2>;
-  my $F=1;
-  my $snp1 = n($fh1,$SOURCES);
-  my $snp2 = n($fh2,$SOURCES) || [0,0,''];
-  while( $snp1 && $snp2 ) {
-#   warn "$snp1->[0]-$snp2->[0]";
-    if( $snp2->[0] ) {
-      if( $snp1->[0] ) {
-        if($snp2->[0]<$snp1->[0]) {
-          warn "ARGH!! snp2_ID < snp1_ID panic!! @{$snp2}";
-          $snp2 = n($fh2,$SOURCES)||[0,0,'']; # get next synonym
-        } elsif($snp2->[0]>$snp1->[0]) {
-          print $fh3 "@$snp1\n";
-          $snp1 = n($fh1,$SOURCES); # get next snp...
-        } else {
-          push @{$snp1}, "$snp2->[1]:$snp2->[2]";
-          $snp2 = n($fh2,$SOURCES)||[0,0,'']; # get next snp2
-        }
-      } else {
-        warn "ARGH!!!! run out of snps";
+      my $snp_source = $sources->{ $row->[2] };
+      my $extra      = '';
+      my $x = $snp_extra{$vf_id};
+      if( $x ) {
+	push @K,$x->[1],$x->[3],$x->[4];
+	$extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
+	if( $x->[1] ) {
+	  $extra .= sprintf ', through %s', $x->[1];
+	}
+	if( $x->[2] ) {
+	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
+	}
       }
-    } elsif( $snp1->[0] ) {
-      print $fh3 "@$snp1\n";
-      $snp1 = n($fh1,$SOURCES);
-    } else {
-      $F = 0;
-    }
-  }
-  if($snp1) {
-    print $fh3 "@$snp1\n";
-  }
-
-  unlink 'v.txt';
-  unlink 'vs.txt';
-  close $fh1;
-  close $fh2;
-  close $fh3;
-  open I, 'snps.txt' ;
-  open O, ">$conf->{'directory'}/SNP.txt";
-  while(<I>) {
-    my($ID,$source,$name,@keywords) = split;
-    my @K = map { (my $t=$_)=~ s/^\w+://;$t } @keywords;
-    my $size = @keywords;
-    my $extra = '';
-    my $x = $SNP_EXTRA{$ID};
-    if( $x ) {
-      push @K,$x->[1],$x->[3],$x->[4],$x->[5];
-      $extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
-      if( $x->[1] ) {
-        $extra .= sprintf ', through %s', $x->[1];
-      }
-      if( $x->[2] ) {
-        $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
-      }
-    } 
-    print O join "\t",
-      "$source SNP",
-      $name,
-      "/$conf->{'species'}/Variation/Summary?source=$source;v=$name",
-      "$name @K",
-      sprintf( "A %s SNP with %s%s\n",
-        $source, 
-          $size > 1 ? " with $size synonyms: @keywords" 
-        : $size     ? " with one synonym: @keywords"
-        :             " with no synonyms",
+      print O join "\t",
+	"$snp_source SNP",
+	$name,
+        "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
+	"$name @K",
+	sprintf( "A %s SNP %s%s\n",
+          $snp_source,
+          $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
+        : $syn_c     ? "with one synonym: $synonym_text"
+	:             "with no synonyms",
         $extra
       );
+    }
   }
   close O;
-  close I;
-  unlink 'snps.txt';
-}
-
-sub n {
-  my( $fh, $sources ) = @_;
-  my $L = <$fh>;
-  my $snp;
-  if( $L ) {
-    chomp $L;
-    my @L = split /\t/, $L;
-    $snp = [ $L[0], $sources->{$L[1]}, $L[2]];
-  }
-  return $snp;
-}
-
-sub snpLine {
-  my ($species, $source, $snpid, $IDS, $desc ) =@_;
-  return if $snpid eq '';
-  $desc =~ s/^, //;
-  return join "\t",
-    (INC_SPECIES?"$species\t":"").qq(Ensembl SNP),
-    $snpid,
-    "/$species/snpview?snp=$snpid;source=$source",
-    "$IDS",
-    "SNP $snpid. Alternative IDs: $desc.\n";
 }
 
 sub dumpStructuralVariations {
