@@ -15,6 +15,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
+    Ensembl.EventManager.register('locationChange', this, this.locationChange);
     
     $('#local-tools > p').show();
     
@@ -112,6 +113,38 @@ Ensembl.LayoutManager.extend({
     $('a.seq_blast', localTools).click(function () {
       $('form.seq_blast', localTools).submit();
       return false;
+    });
+  },
+  
+  locationChange: function (loc) {
+    function addCommas(nStr) {
+      var rgx = /(\d+)(\d{3})/;
+      
+      nStr += '';
+      x  = nStr.split('.');
+      x1 = x[0];
+      x2 = x.length > 1 ? '.' + x[1] : '';
+      
+      while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+      }
+      
+      return x1 + x2;
+    }
+    
+    $('a').not('.constant').each(function () {
+      this.href = Ensembl.urlFromHash(this.href);
+    });
+    
+    loc = loc.split(/\W/);
+    
+    loc[1] = addCommas(loc[1]);
+    loc[2] = addCommas(loc[2]);
+    
+    $('#tab_location a').html('Location: ' + loc[0] + ':' + loc[1] + '-' + loc[2]);
+    
+    $('h2.caption').each(function () {
+      $(this).html($(this).html().replace(/^(Chromosome ).+/, '$1' + loc[0] + ': ' + loc[1] + '-' + loc[2]));
     });
   }
 });
