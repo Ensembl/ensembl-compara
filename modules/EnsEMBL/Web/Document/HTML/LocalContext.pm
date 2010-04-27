@@ -112,7 +112,7 @@ sub _content {
       $title ||= $name;
       
       if ($node->data->{'availability'} && $self->is_available($node->data->{'availability'})) {
-        my $url      = $node->data->{'url'};
+        my $url      = $node->data->{'url'} || $self->hub->url({ action => $node->data->{'code'} });
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
         $class = qq{ class="$class"} if $class;
@@ -120,23 +120,6 @@ sub _content {
         for ($title, $name) {
           s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
           $_ = encode_entities($_);
-        }
-        
-        # This is a tmp hack since we do not have an object here
-        # TODO: propagate object here and use object->_url method
-        if (!$url) {
-          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $self->species_defs->species_path;
-          $url .= '/' unless $url eq '/';
-          $url .= "$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
-          
-          my @ok_params;
-          my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
-          
-          if ($ENV{'ENSEMBL_TYPE'} =~ /Location|Gene|Transcript|Variation|Regulation/) {
-            @ok_params = grep !/^time=/, @cgi_params;
-          }
-          
-          $url .= '?' . join ';', @ok_params if scalar @ok_params;
         }
         
         $name = qq{<a href="$url" title="$title"$class$external>$name</a>};
