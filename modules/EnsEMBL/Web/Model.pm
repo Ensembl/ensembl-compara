@@ -87,13 +87,14 @@ sub object {
 
 sub add_objects {
 ### Adds domain objects created by the factory to this Model
-  my ($self, $data) = @_;
+  my ($self, $data, $type) = @_;
   return unless $data;
+  $type ||= $self->hub->type;
 
   ### Proxy Object(s)
   if (ref($data) eq 'ARRAY') {
     foreach my $proxy_object (@$data) {
-      $self->object($self->hub->type, $proxy_object);
+      $self->object($type, $proxy_object);
     }
   }
   ### Other object type
@@ -118,6 +119,7 @@ sub create_objects {
   my ($self, $type) = @_;
   
   my $hub     = $self->hub;
+  $type       ||= $hub->type;
   my $factory = $self->create_factory($type);
   my $problem;
   
@@ -129,13 +131,21 @@ sub create_objects {
         $factory->createObjects;
       };
       
-      $hub->problem('fatal', "Unable to execute createObject on Factory of type " . $hub->type, $@) if $@;
+      $hub->problem('fatal', "Unable to execute createObject on Factory of type " . $type, $@) if $@;
       
       # $hub->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
       if ($hub->has_a_problem) {
         $problem = $hub->handle_problem; 
       } else {
-        $self->add_objects($factory->DataObjects);
+        #my $DO = $factory->DataObjects;
+        #if (@$DO > 1) {
+        #  foreach my $do (@$DO) {
+        #    my @namespace = split('::', ref($do));
+        #    $self->data($namespace[-1], $do);
+        #  }
+        #}
+        #$self->data($type, $DO->[0]);
+        $self->add_objects($factory->DataObjects, $type);
       }
     }
   }
@@ -160,6 +170,21 @@ sub create_factory {
     _parent        => $self->hub->parent,
   });
 }
+
+sub munge_features_for_drawing {
+### Converts full objects into simple data structures that can be used by the drawing code
+  my ($self, $types) = @_;
+  my $drawable_features = {};
+  my $stored_features = $self->{'_objects'}{'Feature'}[0];
+
+  while (my ($type, $domain_object) = each(%$stored_features)) {
+    next unless $domain_object;
+    my $parameters = $domain_object->convert_to_drawing_parameters;
+    $drawable_features->{$type} = $parameters;
+  }
+  return $drawable_features;
+}
+
 
 1;
 
