@@ -143,6 +143,17 @@ sub handle_problem {
   }
 }
 
+sub database {
+  my $self = shift;
+
+  if ($_[0] =~ /compara/) {
+    return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0]);
+  } else {
+    return $self->{'_databases'}->get_DBAdaptor(@_);
+  }
+}
+
+
 sub core_param  { 
   my $self = shift;
   my $name = shift;
