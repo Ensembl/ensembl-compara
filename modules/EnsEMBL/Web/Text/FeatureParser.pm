@@ -252,10 +252,8 @@ sub split_into_columns {
     $_ =~ s/^\s+//;
     $_ =~ s/\s+$//;
   }
-  ## If this is removed SNP effect predictor breaks ...  
-  if ($format =~/^CON/){
-    @columns = grep /\S/, @columns;
-  }
+  ## Remove any empty columns (mainly needed for Consequence format)
+  @columns = grep /\S/, @columns;
   return (\@columns, $tabbed);
 }
 
@@ -359,6 +357,9 @@ sub analyse_row {
   }
   elsif (scalar(@$columns) == 21 && $columns->[8] =~/^[-+][-+]?$/) {
     $format = 'PSL';   
+  }
+  elsif ($columns->[3] =~ /^[ACTG-]\/[ACTG-]$/) {
+    $format = 'CONSEQUENCE';   
   }
   elsif ($tabbed && _is_strand($columns->[7])) {
     if ($columns->[8] =~ /(; )+/ && $columns->[8] =~ /^[gene_id|transcript_id]/) {
