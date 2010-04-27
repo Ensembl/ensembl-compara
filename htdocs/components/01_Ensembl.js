@@ -14,6 +14,12 @@ Ensembl.extend({
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
+    if (window.location.hash) {
+      $('.ajax_load').each(function () {
+        this.value = myself.urlFromHash(this.value);
+      });
+    }
+    
     (this.ajax  = this.cookie.get('ENSEMBL_AJAX'))  || this.setAjax();
     (this.width = this.cookie.get('ENSEMBL_WIDTH')) || this.setWidth();
     
@@ -69,7 +75,8 @@ Ensembl.extend({
     var myself = this;
     
     var regex = '[;&?]%s=(.+?)[;&]';
-    var url = window.location.search + ';';
+    var url   = window.location.search + ';';
+    var hash  = window.location.hash.replace(/^#/, '?') + ';';
     
     this.coreParams = {};
     this.location = { width: 100000 };
@@ -77,7 +84,7 @@ Ensembl.extend({
     this.multiSpecies = {};
     
     $.each(['r', 'g', 't', 'v'], function () {
-      myself.coreParams[this] = url.match(regex.replace('%s', this));
+      myself.coreParams[this] = hash.match(regex.replace('%s', this)) || url.match(regex.replace('%s', this));
       
       if (myself.coreParams[this]) {
         myself.coreParams[this] = unescape(myself.coreParams[this][1]);
@@ -143,6 +150,18 @@ Ensembl.extend({
       this.PanelManager.panels[p].destructor('cleanup');
     }
     
-    window.location = url || this.replaceTimestamp(window.location.href);
+    url = url || this.replaceTimestamp(window.location.href);
+    
+    if (window.location.hash) {
+      url = this.urlFromHash(url);
+    }
+    
+    window.location = url;
+  },
+  
+  urlFromHash: function (url) {
+    var hash = window.location.hash.replace(/^#/, '?') + ';';
+    var r    = hash.match(/[\?;]r=([^;]+)/)[1];
+    return url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2');
   }
 });
