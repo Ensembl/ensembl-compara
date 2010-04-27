@@ -317,4 +317,107 @@ sub attach_image_config {
   return $T;
 }
 
+sub get_tracks {
+  my ($self, $key) = @_;
+  my $data = $self->fetch_userdata_by_id($key);
+  my $tracks = {};
+ 
+  if (my $parser = $data->{'parser'}) {
+    while (my ($type, $track) = each(%{$parser->get_all_tracks})) {
+      my @A = @{$track->{'features'}};
+      my @rows;
+      foreach my $feature (@{$track->{'features'}}) {
+        my $data_row = {
+          'chr'     => $feature->seqname(),
+          'start'   => $feature->rawstart(),
+          'end'     => $feature->rawend(),
+          'label'   => $feature->id(),
+          'gene_id' => $feature->id(),
+        };
+        push (@rows, $data_row);
+      }
+      $tracks->{$type} = {'features' => \@rows, 'config' => $track->{'config'}};
+    }
+  }
+  else {
+    while (my ($analysis, $track) = each(%{$data})) {
+      my @rows;
+      foreach my $f (
+        map { $_->[0] }
+        sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
+        map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
+$_->{'start'}] }
+        @{$track->{'features'}}
+        ) {
+        my $data_row = {
+          'chr'       => $f->{'region'},
+          'start'     => $f->{'start'},
+          'end'       => $f->{'end'},
+          'length'    => $f->{'length'},
+          'label'     => $f->{'label'},
+          'gene_id'   => $f->{'gene_id'},
+        };
+        push (@rows, $data_row);
+      }
+      $tracks->{$analysis} = {'features' => \@rows, 'config' => $track->{'config'}};
+    }
+  }
+
+  return $tracks;
+}
+
+sub fetch_userdata_by_id {
+  my ($self, $record_id) = @_;
+
+  return unless $record_id;
+
+  my $user = $self->user;
+  my $data = {};
+
+  my ($status, $type, $id) = split '-', $record_id;
+
+  if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
+    my ($content, $format);
+
+    my $tempdata = {};
+    if ($status eq 'temp') {
+      $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
+    } else {
+      my $record = $user->urls($id);
+      $tempdata = { 'url' => $record->url };
+    }
+   
+    my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
+
+    if ($type eq 'url') {
+      my $response = get_url_content($tempdata->{'url'});
+      $content = $response->{'content'};
+    } else {
+      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
+      $content = $file->retrieve;
+      return {} unless $content;
+    }
+   
+    $parser->parse($content, $tempdata->{'format'});
+    $data = { 'parser' => $parser };
+  } 
+  else {
+    my $fa = $self->databases('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
+    my @records = $user->uploads($id);
+    my $record = $records[0];
+
+    if ($record) {
+      my @analyses = ($record->analyses);
+
+      foreach (@analyses) {
+        next unless $_;
+        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
+      }
+    }
+  }
+
+  return $data;
+}
+
+
 1;
