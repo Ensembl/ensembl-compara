@@ -646,10 +646,10 @@ sub calculate_consequence_data {
 
 
           my $pos;
-          if ($f->start == $f->end){
-            $pos = $f->start;
+          if ($f->rawstart == $f->rawend){
+            $pos = $f->rawstart;
           } else {
-            $pos = $f->start .'-'. $f->end;
+            $pos = $f->rawstart .'-'. $f->rawend;
           }
 
           my $strand;
@@ -669,8 +669,8 @@ sub calculate_consequence_data {
           }
           # Create VariationFeature
           my $vf = Bio::EnsEMBL::Variation::VariationFeature->new(
-            -start          => $f->start,
-            -end            => $f->end,
+            -start          => $f->rawstart,
+            -end            => $f->rawend,
             -slice          => $slice,
             -allele_string  => $f->allele_string,
             -strand         => $strand,
