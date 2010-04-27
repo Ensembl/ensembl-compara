@@ -7,3 +7,6 @@
 
 .navbar img.zoom { height: 18px; width: 18px; vertical-align: bottom; }
 .go-button       { color: [[MH_BORDER]]; background-color:[[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
+
+.slider       { top: 8px; margin: 0 10px; width: 150px; display: none; }
+.slider_label { position: absolute; display: none; font-weight: bold; color: red; bottom: 13px; font-weight: normal; font-size: 0.8em; }
