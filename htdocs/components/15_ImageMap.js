@@ -14,6 +14,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.speciesCount     = 0;
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
+    Ensembl.EventManager.register('highlightAllImages', this, this.highlightAllImages);
     Ensembl.EventManager.register('dragStop', this, this.dragStop);
   },
   
@@ -93,7 +94,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
     
     if (Ensembl.images.total) {
-      this.prepHighlightImage();
+      this.highlightAllImages();
     }
     
     this.elLk.img.bind({
@@ -248,7 +249,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.trigger('makeZMenu', id, { position: { left: e.pageX, top: e.pageY }, coords: coords, area: area, imageId: this.id });
   },
   
-  prepHighlightImage: function () {
+  /**
+   * Triggers events to highlight all images on the page
+   */
+  highlightAllImages: function () {
     var image = Ensembl.images[this.imageNumber + 1] || Ensembl.images[this.imageNumber];
     var args, i;
     
