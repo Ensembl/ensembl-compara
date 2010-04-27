@@ -56,8 +56,8 @@ sub navbar {
   
   return sprintf (qq{
     <div class="autocenter navbar print_hide js_panel" style="width:$image_width">
-      <input type="hidden" class="panel_type" value="LocationNav" />
-      <input type="hidden" class="update_url" value="%s" />
+<!--      <input type="hidden" class="panel_type" value="LocationNav" />
+      <input type="hidden" class="update_url" value="%s" />-->
       <div class="relocate">
         <form action="$url->[0]" method="get">
           Location:
