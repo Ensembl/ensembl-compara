@@ -76,7 +76,7 @@ sub object {
 ### for this page if none is specified
 ### Returns the first object in the array of the appropriate type
   my ($self, $type, $object) = @_;
-  $type ||= $self->hub->type;
+  $type ||= $self->hub->factorytype;
   if ($object) {
     my $m = $self->{'_objects'}{$type} || [];
     push @$m, $object; 
@@ -89,7 +89,7 @@ sub add_objects {
 ### Adds domain objects created by the factory to this Model
   my ($self, $data, $type) = @_;
   return unless $data;
-  $type ||= $self->hub->type;
+  $type ||= $self->hub->factorytype;
 
   ### Proxy Object(s)
   if (ref($data) eq 'ARRAY') {
@@ -115,11 +115,10 @@ sub create_data_object_of_type {
   }
 }
 
-sub create_objects {  
-  my ($self, $type) = @_;
-  
+sub create_objects {
+  my $self    = shift;
   my $hub     = $self->hub;
-  $type       ||= $hub->type;
+  my $type    = shift || $hub->factorytype;
   my $factory = $self->create_factory($type);
   my $problem;
   
@@ -137,14 +136,6 @@ sub create_objects {
       if ($hub->has_a_problem) {
         $problem = $hub->handle_problem; 
       } else {
-        #my $DO = $factory->DataObjects;
-        #if (@$DO > 1) {
-        #  foreach my $do (@$DO) {
-        #    my @namespace = split('::', ref($do));
-        #    $self->data($namespace[-1], $do);
-        #  }
-        #}
-        #$self->data($type, $DO->[0]);
         $self->add_objects($factory->DataObjects, $type);
       }
     }
