@@ -199,6 +199,15 @@ sub get_sequence_data {
         
         $mk->{'variations'}->{$_}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$_} && $mk->{'codons'}->{$_}->{'class'} eq 'cu';
         
+        $mk->{'variations'}->{$_}->{'href'} ||= {
+          type        => 'Zmenu',
+          action      => 'TextSequence',
+          factorytype => 'Location'
+        };
+        
+        push @{$mk->{'variations'}->{$_}->{'href'}->{'v'}},  $variation_name;
+        push @{$mk->{'variations'}->{$_}->{'href'}->{'vf'}}, $dbID;
+        
         $variation_seq->{'seq'}->[$_]->{'letter'} = $url ? qq{<a href="$url" title="$variation_name">$ambigcode</a>} : $ambigcode;
         $variation_seq->{'seq'}->[$_]->{'url'}    = $url;
       }

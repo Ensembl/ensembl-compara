@@ -65,6 +65,15 @@ sub get_sequence_data {
       $markup->{'variations'}->{$_}->{'ambigcode'} = $variations->{$_}->{'ambigcode'};
       $markup->{'variations'}->{$_}->{'pep_snp'}   = $variations->{$_}->{'pep_snp'};
       $markup->{'variations'}->{$_}->{'nt'}        = $variations->{$_}->{'nt'};
+      
+      $markup->{'variations'}->{$_}->{'href'} ||= {
+        type        => 'Zmenu',
+        action      => 'TextSequence',
+        factorytype => 'Location'
+      };
+      
+      push @{$markup->{'variations'}->{$_}->{'href'}->{'v'}},  $variations->{$_}->{'snp_id'};
+      push @{$markup->{'variations'}->{$_}->{'href'}->{'vf'}}, $variations->{$_}->{'vdbid'};
     }
   }
   

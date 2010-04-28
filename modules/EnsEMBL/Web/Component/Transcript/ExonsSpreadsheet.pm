@@ -266,24 +266,31 @@ sub add_variations {
   
   my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   
+  my %href;
+  
   foreach my $vf (@$variation_features) {
     my $name = $vf->variation_name;
-    my $url  = $object->_url({ type => 'Variation', action => 'Summary', v => $name, vf => $vf->dbID, vdb => 'variation' });
     
     for ($vf->start-1..$vf->end-1) {
       $sequence->[$_]->{'class'} .= ' sn';
       $sequence->[$_]->{'title'}  = $name;
-      $sequence->[$_]->{'url'}    = $url;
+       
+      $href{$_} ||= {
+        type        => 'Zmenu',
+        action      => 'LW',
+        factorytype => 'Location'
+      };
+      
+      push @{$href{$_}->{'v'}},  $name;
+      push @{$href{$_}->{'vf'}}, $vf->dbID;
     }
   }
+  
+  $sequence->[$_]->{'href'} = $object->_url($href{$_}) for keys %href;
 }
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  
-  foreach (@$sequence) {
-    $_->{'letter'} = qq{<a href="$_->{'url'}">$_->{'letter'}</a>} if $_->{'url'};
-  }
   
   $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
   

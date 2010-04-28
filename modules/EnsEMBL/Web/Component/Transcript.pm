@@ -42,6 +42,7 @@ sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
   
+  my $object = $self->object;
   my $seq;
   my $i = 0;
   
@@ -81,6 +82,7 @@ sub markup_variation {
       next unless $mk->{$type}; # Just in case, but shouldn't happen.
       
       $seq->[$_]->{'title'}  = $variation->{'transcript'} ? "Alleles: $variation->{'alleles'}" : &{$mk->{$type}->{'title'}}($variation);
+      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
       $seq->[$_]->{'class'} .= "$mk->{$type}->{'class'} ";
     }
     
