@@ -209,8 +209,6 @@ sub get_sequence_data {
         my $link_text = qq{ <a href="$url">$snp_start: $variation_name $alleles</a>;};
         
         for ($s..$e) {
-          # FIXME: API currently returns variations when the resequenced individuals match the reference
-          # This line can be deleted once we get the correct set.
           # Don't mark up variations when the secondary strain is the same as the sequence.
           # $sequence[-1] is the current secondary strain, as it is the last element pushed onto the array
           next if defined $config->{'match_display'} && $sequence[-1]->[$_]->{'letter'} =~ /[\.~$sequence[0]->[$_]->{'letter'}]/;
@@ -219,6 +217,16 @@ sub get_sequence_data {
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
           
           unshift @{$mk->{'variations'}->{$_}->{'link_text'}}, $link_text if $_ == $s;
+
+          $mk->{'variations'}->{$_}->{'href'} ||= {
+            species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
+            type        => 'Zmenu',
+            action      => 'TextSequence',
+            factorytype => 'Location'
+          };
+          
+          push @{$mk->{'variations'}->{$_}->{'href'}->{'v'}},  $variation_name;
+          push @{$mk->{'variations'}->{$_}->{'href'}->{'vf'}}, $dbID;
         }
       }
     }
@@ -411,6 +419,7 @@ sub markup_variation {
   my ($sequence, $markup, $config) = @_;
 
   my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
+  my $object = $self->object;
   my $i = 0;
   
   my $class = {
@@ -429,6 +438,7 @@ sub markup_variation {
       $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]->{'class'} .= "$class->{$variation->{'type'}} ";
+      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
       $seq->[$_]->{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
 
       $snps    = 1 if $variation->{'type'} eq 'snp';
@@ -758,34 +768,40 @@ sub build_sequence {
   my $single_line = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
   
   foreach my $lines (@$sequence) {
-    my ($row, $title, $previous_title, $new_line_title, $class, $previous_class, $new_line_class, $pre, $post, $count, $i);
+    my ($row, $pre, $post, $count, $i);
+    
+    my %current  = ( tag => 'span', class=> '', title => '', href => '' );
+    my %previous = ( tag => 'span', class=> '', title => '', href => '' );
+    my %new_line = ( tag => 'span', class=> '', title => '', href => '' );
     
     foreach my $seq (@$lines) {
-      $previous_class = $class;
-      $previous_title = $title;
-      $title          = $seq->{'title'} ? qq{title="$seq->{'title'}"} : '';
+      $previous{$_} = $current{$_} for keys %current;
+      
+      $current{'title'} = $seq->{'title'}  ? qq{title="$seq->{'title'}"} : '';
+      $current{'href'}  = $seq->{'href'}   ? qq{href="$seq->{'href'}"}  : '';;
+      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"' : 'span';
       
       if ($seq->{'class'}) {
-        $class = $seq->{'class'};
-        chomp $class;
+        $current{'class'} = $seq->{'class'};
+        chomp $current{'class'};
         
-        if ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/ && $class !~ /\s*(e\w)\s*/) {
-          $class .= " $1";
+        if ($config->{'maintain_colour'} && $previous{'class'} =~ /\s*(e\w)\s*/ && $current{'class'} !~ /\s*(e\w)\s*/) {
+          $current{'class'} .= " $1";
         }
-      } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
-        $class = $1;
+      } elsif ($config->{'maintain_colour'} && $previous{'class'} =~ /\s*(e\w)\s*/) {
+        $current{'class'} = $1;
       } else {
-        $class = '';
+        $current{'class'} = '';
       }
       
       $post .= $seq->{'post'};
       
       my $style;
       
-      if ($class) {
+      if ($current{'class'}) {
         my %style_hash;
         
-        foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $class) {
+        foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $current{'class'}) {
           my $st = $class_to_style{$_}->[1];
           map $style_hash{$_} = $st->{$_}, keys %$st;
         }
@@ -794,9 +810,11 @@ sub build_sequence {
       }
       
       if ($i == 0) {
-        $row .= "<span $style $title>";
-      } elsif ($class ne $previous_class || $title ne $previous_title) {
-        $row .= "</span><span $style $title>";
+        $row .= "<$current{'tag'} $style $current{'title'} $current{'href'}>";
+      } elsif ($current{'href'}) {
+        $row .= "</$previous{'tag'}><$current{'tag'} $style $current{'title'} $current{'href'}>" if $current{'href'} ne $previous{'href'};
+      } elsif ($current{'class'} ne $previous{'class'} || $current{'title'} ne $previous{'title'}) {
+        $row .= "</$previous{'tag'}><$current{'tag'} $style $current{'title'}>";
       }
       
       $row .= $seq->{'letter'};
@@ -804,18 +822,20 @@ sub build_sequence {
       $count++;
       $i++;
       
+      (my $close_tag = $current{'tag'}) =~ s/(\w+).*/$1/;
+      
       if ($count == $config->{'display_width'} || $i == scalar @$lines) {
         if ($i == $config->{'display_width'} || $single_line) {
-          $row = "$row</span>";
+          $row = "$row</$close_tag>";
         } else {
           my $new_line_style;
           
-          if ($new_line_class eq $class) {
+          if ($new_line{'class'} eq $current{'class'}) {
             $new_line_style = $style;
-          } elsif ($new_line_class) {
+          } elsif ($new_line{'class'}) {
             my %style_hash;
             
-            foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $new_line_class) {
+            foreach (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split / /, $new_line{'class'}) {
               my $st = $class_to_style{$_}->[1];
               map $style_hash{$_} = $st->{$_}, keys %$st;
             }
@@ -823,7 +843,7 @@ sub build_sequence {
             $new_line_style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
           }
           
-          $row = "<span $new_line_style $new_line_title>$row</span>";
+          $row = "<$new_line{'tag'} $new_line_style $new_line{'title'} $new_line{'href'}>$row</$close_tag>";
         }
         
         if ($config->{'comparison'}) {
@@ -838,12 +858,11 @@ sub build_sequence {
         
         push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post };
         
-        $new_line_class = $class;
-        $new_line_title = $title;
-        $count          = 0;
-        $row            = '';
-        $pre            = '';
-        $post           = '';
+        $new_line{$_} = $current{$_} for keys %current;
+        $count        = 0;
+        $row          = '';
+        $pre          = '';
+        $post         = '';
       }
     }
     
@@ -889,7 +908,7 @@ sub build_sequence {
   $config->{'html_template'} ||= qq{<pre class="text_sequence">%s</pre><p class="invisible">.</p>};  
   $config->{'html_template'} = sprintf $config->{'html_template'}, $html;
   
-  return $config->{'html_template'};
+  return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 }
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly
