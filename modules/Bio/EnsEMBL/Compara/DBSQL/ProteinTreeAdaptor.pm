@@ -73,7 +73,8 @@ sub fetch_by_Member_root_id {
   my ($self, $member, $clusterset_id) = @_;
   $clusterset_id = 1 if ! defined $clusterset_id;
 
-  my $root_id = $self->gene_member_id_is_in_tree($member->gene_member_id);
+  my $root_id = $self->gene_member_id_is_in_tree($member->gene_member_id || $member->member_id);
+
   return undef unless (defined $root_id);
   my $aligned_member = $self->fetch_AlignedMember_by_member_id_root_id
     (
