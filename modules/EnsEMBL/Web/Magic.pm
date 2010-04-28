@@ -127,7 +127,6 @@ sub handler {
   my $input        = new CGI;
   my $model        = new EnsEMBL::Web::Model({ _input => $input, _apache_handle => $r }); # The model object is used throughout the code to store data objects, connections and parameters 
   my $hub          = $model->hub;
-  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || $input->param('factorytype') || $hub->type;
   my $outputtype   = $hub->type eq 'DAS' ? 'DAS' : undef;
   my $controller   = new EnsEMBL::Web::Controller($hub);
   
@@ -138,7 +137,7 @@ sub handler {
   return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
   return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
 
-  my $problem = $model->create_objects($factorytype);
+  my $problem = $model->create_objects;
   
   return if $problem eq 'redirect';                       # Forcing a redirect - don't need to go any further
   return ($controller, $model) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
