@@ -87,43 +87,42 @@ sub remove_entries {
   delete $self->{'stored_entries'}->{$_} for @_;
 }
 
-#grab hold of an existing entry and modify it
+# Grab hold of an existing entry and modify it
 sub modify_entry_by_type {
   my ($self, $entry) = @_;
-  my $i;
-  for ($i=0; $i < scalar(@{$self->{'entries'}}); $i++) {
+  
+  for my $i (0..$#{$self->{'entries'}}) {
     if ($self->{'entries'}[$i]{'type'} eq $entry->{'type'}) {
-      foreach my $key (keys %$entry) {
-	$self->{'entries'}[$i]{$key} = $entry->{$key};
-      }
+      $self->{'entries'}[$i]{$_} = $entry->{$_} for keys %$entry;
       last;
     }
   }
 }
 
-#delete an entry by its value
+# Delete an entry by its value
 sub delete_entry_by_value {
   my ($self, $value) = @_;
-  my $i;
-  for ($i=0; $i < scalar(@{$self->{'entries'}}); $i++) {
+  
+  for my $i (0..$#{$self->{'entries'}}) {
     foreach my $key (keys %{$self->{'entries'}[$i]}) {
       if ($self->{'entries'}[$i]{$key} eq $value) {
-	$self->{'entries'}[$i] = undef;
-	last;
+        $self->{'entries'}[$i] = undef;
+        last;
       }
     }
   }
 }
 
-#delete an entry by type
+# Delete an entry by type
 sub delete_entry_by_type {
   my ($self, $type) = @_;
   my $i;
-  for ($i=0; $i < scalar(@{$self->{'entries'}}); $i++) {
+  
+  for my $i (0..$#{$self->{'entries'}}) {
     foreach my $key (keys %{$self->{'entries'}[$i]}) {
       if ($self->{'entries'}[$i]{'type'} eq $type) {
-	$self->{'entries'}[$i] = undef;
-	last;
+        $self->{'entries'}[$i] = undef;
+        last;
       }
     }
   }
