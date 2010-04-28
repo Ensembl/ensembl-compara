@@ -1,5 +1,5 @@
 /* SNP sequence markup */   /* Feature colours - MUST BE FIRST */
-.alt_allele   { color: red; font-weight: bold }
+.alt_allele { color: red; font-weight: bold }
 
 .orthologues { width: 100% }
 
@@ -41,8 +41,23 @@ span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
 
 pre.text_sequence   { margin-top: 0; float: left; }
 pre.exon_sequence   { margin: 0; }
-pre.exon_sequence a { text-decoration: none; color: inherit; }
+pre a.sequence_info { text-decoration: none; color: [[PAGE_TEXT]]; }
 div.sequence_key    { margin-bottom: 1em; }
 
 div.alignment_list p { margin-top: 1em; }
 div.alignment_list a { text-decoration: none; }
+
+.info_popup                    { display: none; position: absolute; }
+.info_popup table              { font: bold 0.8em Luxi Sans,Geneva,Helvetica,Arial,sans-serif; background-color: [[TINT_BG]]; border: 1px outset [[TINT_BORDER]]; cursor: default; }
+.info_popup th, .info_popup td { padding: 2px 3px; white-space: nowrap; }
+.info_popup tr.header          { background-color: [[BUTTON_BG]]; }
+.info_popup tr.header th       { border-bottom: 1px solid black; color: white; }
+.info_popup tr.header a        { color: white; }
+.info_popup img.close          { position: absolute; top: -8px; right: -12px; cursor: pointer; }
+.info_popup td.closed          { background: url(/i/closed2.gif) 100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
+.info_popup td.opened          { background: url(/i/open2.gif)   100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
+.info_popup .freq              { display: inline-block; height: 0.5em; }
+.info_popup .A                 { background-color: #90EE90; }
+.info_popup .T                 { background-color: #EEA2AD; }
+.info_popup .C                 { background-color: #B0C4DE; }
+.info_popup .G                 { background-color: #FFEC8B; }
