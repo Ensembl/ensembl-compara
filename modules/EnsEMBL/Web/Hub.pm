@@ -43,6 +43,7 @@ sub new {
     _action        => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
     _function      => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
     _script        => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action... ## deprecated
+    _factorytype   => $ENV{'ENSEMBL_FACTORY'} || $args{'_input'}->param('factorytype') || $type,
     _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
     _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
     _problem       => $args{'_problem'}       || {},    
@@ -70,16 +71,17 @@ sub new {
 }
 
 # Accessor functionality
-sub species   :lvalue { $_[0]{'_species'};   }
-sub script    :lvalue { $_[0]{'_script'};    }
-sub type      :lvalue { $_[0]{'_type'};      }
-sub action    :lvalue { $_[0]{'_action'};    }
-sub function  :lvalue { $_[0]{'_function'};  }
-sub parent    :lvalue { $_[0]{'_parent'};    }
-sub session   :lvalue { $_[0]{'_session'};   }
-sub databases :lvalue { $_[0]{'_databases'}; } 
-sub cache     :lvalue { $_[0]{'_cache'};     }
-sub user      :lvalue { $_[0]{'_user'};      }
+sub species     :lvalue { $_[0]{'_species'};     }
+sub script      :lvalue { $_[0]{'_script'};      }
+sub type        :lvalue { $_[0]{'_type'};        }
+sub action      :lvalue { $_[0]{'_action'};      }
+sub function    :lvalue { $_[0]{'_function'};    }
+sub factorytype :lvalue { $_[0]{'_factorytype'}; }
+sub parent      :lvalue { $_[0]{'_parent'};      }
+sub session     :lvalue { $_[0]{'_session'};     }
+sub databases   :lvalue { $_[0]{'_databases'};   } 
+sub cache       :lvalue { $_[0]{'_cache'};       }
+sub user        :lvalue { $_[0]{'_user'};        }
 
 sub input         { return $_[0]{'_input'};         }
 sub core_objects  { return $_[0]{'_core_objects'};  }
