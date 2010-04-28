@@ -51,7 +51,7 @@ sub content {
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
 
   $form->add_element( type => 'Hidden', name => 'consequence_mapper', 'value' => 1);
-  $form->add_element( type => 'Hidden', name => 'upload_format', 'value' => 'consequence');
+  $form->add_element( type => 'Hidden', name => 'upload_format', 'value' => 'snp');
   $form->add_element('type' => 'SubHeader', 'value' => $subheader);
   $form->add_element(
       'type'    => 'DropDown',

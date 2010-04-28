@@ -252,8 +252,18 @@ sub split_into_columns {
     $_ =~ s/^\s+//;
     $_ =~ s/\s+$//;
   }
-  ## Remove any empty columns (mainly needed for Consequence format)
-  @columns = grep /\S/, @columns;
+  ## Remove any empty columns (Consequence format only)
+  if ($format && $format eq 'SNP') {
+    @columns = grep /\S/, @columns;
+  }
+  elsif (!$self->format) {
+    my @no_empties = grep /\S/, @columns;
+    if ($no_empties[3] =~ /^[ACTG-]\/[ACTG-]$/) {
+      $self->format('SNP');
+      @columns = @no_empties;
+    }
+  }
+
   return (\@columns, $tabbed);
 }
 
@@ -349,7 +359,7 @@ sub analyse_row {
   $row =~ s/[\t\r\s]+$//g;
  
   ## Split row into columns by either tabs or whitespaces, then remove empty values 
-  my ($columns, $tabbed) = $self->split_into_columns($row);
+  my ($columns, $tabbed) = $self->split_into_columns($row, $self->format);
 
   if (scalar(@$columns) == 1) { 
     ## one element per line assume we have list of stable IDs
@@ -359,7 +369,7 @@ sub analyse_row {
     $format = 'PSL';   
   }
   elsif ($columns->[3] =~ /^[ACTG-]\/[ACTG-]$/) {
-    $format = 'CONSEQUENCE';   
+    $format = 'SNP';   
   }
   elsif ($tabbed && _is_strand($columns->[7])) {
     if ($columns->[8] =~ /(; )+/ && $columns->[8] =~ /^[gene_id|transcript_id]/) {
