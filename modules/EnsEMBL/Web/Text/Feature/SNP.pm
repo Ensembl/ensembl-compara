@@ -1,4 +1,6 @@
-package EnsEMBL::Web::Text::Feature::CONSEQUENCE;
+package EnsEMBL::Web::Text::Feature::SNP;
+
+### Ensembl format for SNP data (e.g. for SNP Effect Predictor)
 
 use strict;
 use warnings;
