@@ -99,13 +99,14 @@ sub create_user_set {
   my $pointers = [];
 
   # Key to track colours
+  my $has_table;
   my $table =  new EnsEMBL::Web::Document::SpreadSheet([], [], { 'width' => '500px', 'margin' => '1em 0px' });
   
   $table->add_columns(
     {'key' => 'colour', 'title' => 'Track colour', 'align' => 'center' },
     {'key' => 'track',  'title' => 'Track name',   'align' => 'center' },
   );
-  
+
   my $i = 0;
   
   foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
@@ -117,11 +118,12 @@ sub create_user_set {
     my $display = $details->{'_user_data'}{$key}{'display'};
     my ($render, $style) = split '_', $display;
     
-    next if $display eq 'off';
+    next if (!$display || $display eq 'off');
+    $has_table = 1;
 
     ## Create pointer configuration
     my $tracks = $hub->get_tracks($key);
-    while (my ($label, $track) = each (%$tracks)) {
+    while (my ($key, $track) = each (%$tracks)) {
       my $colour; 
       if ($track->{'config'} && $track->{'config'}{'color'}) {
         $colour = $track->{'config'}{'color'};
@@ -139,15 +141,23 @@ sub create_user_set {
           'style'         => $style,
         });
       }
-      ## Create key entry
-      my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
-      if ($colour =~ /^[a-z0-9]{6}$/i) {
-        $colour = '#'.$colour;
+      if ($has_table) {
+        ## Create key entry
+        my $label = $key;
+        if ($key eq 'default') {
+          $label = $track->{'config'}{'name'};
+        }
+        my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
+        if ($colour =~ /^[a-z0-9]{6}$/i) {
+          $colour = '#'.$colour;
+        }
+        $swatch .= $colour.'" title="'.$colour.'" />';
+        $table->add_row({'colour' => $swatch, 'track' => $label});
       }
-      $swatch .= $colour.'" title="'.$colour.'" />';
-      $table->add_row({'colour' => $swatch, 'track' => $label});
     }
   }
+  ## delete table if no tracks turned on
+  $table = undef unless $has_table;
 
   return ($pointers, $table );
 }
