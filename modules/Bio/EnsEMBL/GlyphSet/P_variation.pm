@@ -27,8 +27,8 @@ sub _init {
     next if $last_indel eq $int->{'indel'};
     
     if ($int->{'type'} eq 'insert' || $int->{'type'} eq 'delete') {
-      my ($in, $out, $end) = $int->{'type'} eq 'insert' ? ($h, 0, 1) : (0, $h, length $int->{'allele'});
-      my $pos    = "$x-" . ($x + $end);
+      my ($in, $out, $end) = $int->{'type'} eq 'insert' ? ($h, 0, 1) : (0, $h, $int->{'length'} - 1);
+      my $pos    = $x . ($end ? '-' . ($x + $end) : '');
       my $colour = $self->my_colour('insert');
       
       my $glyph = $self->Poly({
@@ -55,7 +55,7 @@ sub _init {
         width     => 2 * $t_width,
         height    => $h,
         absolutey => 1,
-        title     => sprintf('%sion %s; %s: %s; Position: %d-%d; Length: %d', uc $int->{'type'}, $int->{'snp_id'}, uc $int->{'type'}, $int->{'allele'}, $x, $x + $end, length $int->{'allele'}),
+        title     => sprintf('%sion %s; %s: %s; Position: %d-%d; Length: %d', uc $int->{'type'}, $int->{'snp_id'}, uc $int->{'type'}, $int->{'allele'}, $x, $x + $end, $int->{'length'}),
         href      => $self->_url({
           type   => 'Variation',
           action => 'VariationProtein',
@@ -63,7 +63,7 @@ sub _init {
           vf     => $int->{'vdbid'},
           vtype  => uc $int->{'type'},
           pos    => $pos,
-          len    => length $int->{'allele'},
+          len    => $int->{'length'},
           indel  => $int->{'allele'}
         })
       }));
@@ -151,7 +151,7 @@ sub render_text {
     my ($end, $codon, $type);
     
     if ($_->{'type'} eq 'insert' || $_->{'type'} eq 'delete') {
-      $end = $_->{'type'} eq 'insert' ? 1 : length $_->{'allele'};
+      $end = $_->{'type'} eq 'insert' ? 1 : $_->{'length'};
     } elsif ($_->{'type'} eq 'snp' || $_->{'type'} eq 'syn') {  
       $type = $_->{'type'} eq 'snp' ? 'NON_SYNONYMOUS_CODING' : 'SYNONYMOUS_CODING';
       
