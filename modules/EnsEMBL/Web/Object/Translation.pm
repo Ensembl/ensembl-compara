@@ -383,7 +383,8 @@ sub pep_snps {
           
           $aas[$aa-1]{'indel'}  = $id;
           $aas[$aa-1]{'allele'} = $alleles;
-          $aas[$aa-1]{'allele'} =~ tr/ACGTN/TGCAN/d if $snp->strand ne $trans_strand;            
+          $aas[$aa-1]{'allele'} =~ tr/ACGTN/TGCAN/d if $snp->strand ne $trans_strand;
+          $aas[$aa-1]{'length'} = abs($end - $start) + 1;
         }
       }
     }
