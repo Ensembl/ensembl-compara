@@ -49,7 +49,7 @@ foreach my $gene_id (@gene_ids) {
 
   # Fetch the proteintree
   my $proteintree =  $proteintree_adaptor->
-    fetch_by_Member_root_id($member);
+    fetch_by_gene_Member_root_id($member);
   unless (defined $proteintree) {
     print "# No alignment for $gene_id\n";
     next;
