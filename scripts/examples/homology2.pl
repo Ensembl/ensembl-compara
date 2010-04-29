@@ -5,7 +5,7 @@ use Bio::EnsEMBL::Registry;
 Bio::EnsEMBL::Registry->load_registry_from_db
   (-host=>"ensembldb.ensembl.org", 
    -user=>"anonymous", 
-   -db_version=>'47');
+   -db_version=>'58');
 my $human_gene_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
   ("Homo sapiens", "core", "Gene");
@@ -33,7 +33,7 @@ foreach my $gene (@$genes) {
 
   # Fetch the proteintree
   my $proteintree =  $proteintree_adaptor->
-    fetch_by_Member_root_id($member);
+    fetch_by_gene_Member_root_id($member);
 
   foreach my $leaf (@{$proteintree->get_all_leaves}) {
       print $leaf->description, "\n";
