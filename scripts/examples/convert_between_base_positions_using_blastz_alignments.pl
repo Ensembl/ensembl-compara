@@ -10,7 +10,7 @@ my $reference_species = "human";
 
 #Note: ensembl release 54 was the last to use human assembly NCBI36
 Bio::EnsEMBL::Registry->load_registry_from_url(
-	'mysql://anonymous@ensembldb.ensembl.org:5306/56');
+	'mysql://anonymous@ensembldb.ensembl.org:5306/58');
 
 #get the required adaptors
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
