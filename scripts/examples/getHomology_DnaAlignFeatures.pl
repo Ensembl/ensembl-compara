@@ -15,10 +15,12 @@ my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
 
 # get GenomeDB for human and mouse
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
+my $human_gdb_id = $humanGDB->dbID;
 my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
+my $mouse_gdb_id = $mouseGDB->dbID;
 
 my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[1,2]);
+    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
 
 my $homology_list = $comparaDBA->get_HomologyAdaptor->
     fetch_all_by_MethodLinkSpeciesSet($homology_mlss);
@@ -38,8 +40,8 @@ foreach my $homology (@{$homology_list}) {
   my $mouse_gene = undef;
   foreach my $member_attribute (@{$mem_attribs}) {
     my ($member, $atrb) = @{$member_attribute};
-    if($member->genome_db_id == 2) { $mouse_gene = $member; }
-    if($member->genome_db_id == 1) { $human_gene = $member; }
+    if($member->genome_db_id == $mouse_gdb_id) { $mouse_gene = $member; }
+    if($member->genome_db_id == $human_gdb_id) { $human_gene = $member; }
   }
   next unless($mouse_gene and $human_gene);
   $mouse_gene->print_member;

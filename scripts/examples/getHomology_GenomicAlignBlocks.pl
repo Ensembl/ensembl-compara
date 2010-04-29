@@ -15,14 +15,17 @@ my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
 
 # get GenomeDB for human and mouse
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
+my $human_gdb_id = $humanGDB->dbID;
+
 my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
+my $mouse_gdb_id = $mouseGDB->dbID;
 
 # get MethodLinkSpeciesSet for BLASTZ_NET alignments between human and mouse
 my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
      fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$humanGDB, $mouseGDB]);
 
 my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[1,2]);
+    fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
 
 my $homology_list = $comparaDBA->get_HomologyAdaptor->
     fetch_all_by_MethodLinkSpeciesSet($homology_mlss);
@@ -33,12 +36,12 @@ my $alignIO = Bio::AlignIO->newFh(-interleaved=>1, -fh=>\*STDOUT, -format=>'psi'
 
 foreach my $homology (@{$homology_list}) {
   $homology->print_homology;
-  
+
   my $mem_attribs = $homology->get_all_Member_Attribute;
   my $mouse_gene = undef;
   foreach my $member_attribute (@{$mem_attribs}) {
     my ($member, $atrb) = @{$member_attribute};
-    if($member->genome_db_id == 2) { $mouse_gene = $member; }
+    if($member->genome_db_id == $mouse_gdb_id) { $mouse_gene = $member; }
   }
   next unless($mouse_gene);
   
@@ -52,7 +55,7 @@ foreach my $homology (@{$homology_list}) {
            $blastz_mlss, 
            $dnafrag, 
            $mouse_gene->chr_start, $mouse_gene->chr_end);
-           
+
   foreach my $this_genomic_align_block (@{$genomic_align_blocks}) {
     print "Bio::EnsEMBL::Compara::GenomicAlignBlock #", $this_genomic_align_block->dbID, "\n";
     print "=====================================================\n";
