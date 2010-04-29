@@ -910,11 +910,24 @@ sub print_my_maf {
     my $seq_name = $this_genomic_align->genome_db->name;
     $seq_name =~ s/(.)\w* (...)\w*/$1$2/;
     my $aligned_sequence;
-    if ($masked_seq == 1) {
-      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-    } elsif ($masked_seq == 2) {
-      $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
+      foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
+        if ($masked_seq == 1) {
+          next if (!$this_sub_genomic_align->get_Slice);
+          $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+        } elsif ($masked_seq == 2) {
+          $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+        }
+      }
+    } else {
+      if ($masked_seq == 1) {
+        next if (!$this_genomic_align->get_Slice);
+        $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+      } elsif ($masked_seq == 2) {
+        $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+      }
     }
+
     if ($original_seq) {
       $aligned_sequence = $this_genomic_align->original_sequence;
     } else {
