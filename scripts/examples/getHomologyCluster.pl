@@ -13,7 +13,7 @@ use Bio::EnsEMBL::Compara::Attribute;
 
 my $reg_conf = shift;
 my $gene_name = shift;
-$gene_name="ENSDARG00000041437" unless(defined($gene_name));
+$gene_name="ENSDARG00000052960" unless(defined($gene_name));
 
 die("must specify registry conf file on commandline\n") unless($reg_conf);
 Bio::EnsEMBL::Registry->load_all($reg_conf);
