@@ -448,7 +448,11 @@ sub _run_conservation_scores_test {
         " WHERE genomic_align_block.method_link_species_set_id = $this_method_link_species_set_id".
         " AND conservation_score.genomic_align_block_id IS NULL".
         " GROUP BY genomic_align_block.genomic_align_block_id HAVING count(*) > 3");
+
     if (@$values) {
+	foreach my $value (@$values) {
+	    print "gab_id $value\n";
+	}
       die "There are ".scalar(@$values)." blocks (mlss=".$this_method_link_species_set_id.
           ") with more than 3 seqs and no conservation score!\n";
     } else {
