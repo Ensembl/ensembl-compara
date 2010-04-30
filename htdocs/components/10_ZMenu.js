@@ -34,6 +34,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.end         = parseInt(params[6], 10);
       this.strand      = parseInt(params[7], 10);
       this.multi       = area.hasClass('multi') ? n : false;
+      
+      if (!this.speciesPath.match(/^\//)) {
+        this.speciesPath = '/' + this.speciesPath;
+      }
     }
     
     area = null;
