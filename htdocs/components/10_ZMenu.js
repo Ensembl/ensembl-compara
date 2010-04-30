@@ -27,12 +27,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       var params = this.href.split('|');
       var n = parseInt(params[1], 10) - 1;
       
-      this.species = params[3];
-      this.chr     = params[4];
-      this.start   = parseInt(params[5], 10);
-      this.end     = parseInt(params[6], 10);
-      this.strand  = parseInt(params[7], 10);
-      this.multi   = area.hasClass('multi') ? n : false;
+      this.speciesPath = params[3].replace(/-/, '/');
+      this.species     = this.speciesPath.split('/').pop();
+      this.chr         = params[4];
+      this.start       = parseInt(params[5], 10);
+      this.end         = parseInt(params[6], 10);
+      this.strand      = parseInt(params[7], 10);
+      this.multi       = area.hasClass('multi') ? n : false;
     }
     
     area = null;
@@ -240,8 +241,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       url = url.replace(/.+\?/, '?');
       
       menu = [
-        '<a href="/' + myself.species + '/Location/View' + url + '">Jump to location View</a>',
-        '<a href="/' + myself.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+        '<a href="' + myself.speciesPath + '/Location/View' + url + '">Jump to location View</a>',
+        '<a href="' + myself.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
       ];
     }
     
@@ -404,8 +405,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     url = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
     
     menu = [
-      '<a href="/' + this.species + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
-      '<a href="/' + this.species + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+      '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to location ' + view + '</a>',
+      '<a href="' + this.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
     ];
     
     this.buildMenu(menu, caption);
