@@ -5,7 +5,8 @@ use Bio::EnsEMBL::Registry;
 Bio::EnsEMBL::Registry->load_registry_from_db
   (-host=>"ensembldb.ensembl.org", 
    -user=>"anonymous", 
-   -db_version=>'50');
+   -db_version=>'58');
+
 my $human_gene_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
   ("Homo sapiens", "core", "Gene");
@@ -33,7 +34,7 @@ foreach my $gene (@$genes) {
 
   # Fetch the proteintree
   my $proteintree =  $proteintree_adaptor->
-    fetch_by_Member_root_id($member);
+    fetch_by_gene_Member_root_id($member);
   my @sitewise_dnds_values = @{$proteintree->get_SitewiseOmega_values};
   my $conservation_string;
   printf ("%5s %10s %5s %12s\n","alnpos", "type", "omega", "CI(lower upper)\n");
