@@ -80,6 +80,9 @@ sub ingredient {
     $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
     $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'};
     $model->hub->action = $ENV{'ENSEMBL_ACTION'};
+    $ENV{'ENSEMBL_FUNCTION'} = $model->hub->parent->{'ENSEMBL_FUNCTION'};
+    $model->object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'};
+    $model->hub->function = $ENV{'ENSEMBL_FUNCTION'};
     
     $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
     $page->render;
