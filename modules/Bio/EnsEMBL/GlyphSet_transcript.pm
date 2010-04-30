@@ -871,7 +871,7 @@ sub render_alignslice_collapsed {
     my $end  = $exons[-1]->{'exon'}->{'etype'} eq 'A' ? $length : 0; # End line at the end of the image if there are further exons beyond the region end
     
     # Get only exons in view
-    my @exons_in_view = grep { $_->{'exon'}->{'etype'} =~ /[NM]/} @exons;
+    my @exons_in_view = sort { $a->start <=> $b->start } grep { $_->{'exon'}->{'etype'} =~ /[NM]/} @exons;
     
     # Set start and end of the connecting line if they are not set yet
     $start ||= $exons_in_view[0]->start;
