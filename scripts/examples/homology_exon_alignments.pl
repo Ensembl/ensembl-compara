@@ -4,8 +4,9 @@ use Bio::EnsEMBL::Registry;
 
 Bio::EnsEMBL::Registry->load_registry_from_db
     (-host=>"ensembldb.ensembl.org", 
-     -user=>"anonymous");
-#     -db_version=>'47');
+     -user=>"anonymous",
+     -db_version=>'58');
+
 print STDERR "This script was only tested with version 47\n" if (Bio::EnsEMBL::Registry->software_version ne '47');
 # Bio::EnsEMBL::Registry->no_version_check(1);
 my $human_gene_adaptor =
