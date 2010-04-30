@@ -14,7 +14,6 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $data) = @_;
-  my $hub = $data->{'hub'};
   
   my $format = $data->{'outputtype'};
   $format    = $data->{'input'}->param('_format') if $data->{'input'} && $data->{'input'}->param('_format');
@@ -395,11 +394,14 @@ sub render_HTML {
   $html .= '[[content]]' unless $flag;
       
   if ($flag ne 'start') {
+    my $species_path = $self->species_defs->species_path;
+    
     $html .= qq{
         <!-- End of real content -->
       </div>
       <div id="$footer_id">[[copyright]][[footerlinks]]</div>
     </div>
+    <input type="hidden" id="species_path" name="species_path" value="$species_path" />
     [[body_javascript]]
     };
   }
