@@ -27,8 +27,10 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
+        %{$self->SUPER::default_options},
+
         release        => '58',
-        rel_suffix     => '',    # an empty string by default, a letter otherwise
+        rel_suffix     => 'a',    # an empty string by default, a letter otherwise
 
         email          => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
@@ -48,7 +50,7 @@ sub default_options {
 
             # family database connection parameters (our main database):
         pipeline_db => {
-            -host   => 'compara2',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -99,8 +101,9 @@ sub pipeline_create_commands {
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'ALTER TABLE member   AUTO_INCREMENT=100000001'",
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'ALTER TABLE sequence AUTO_INCREMENT=100000001'",
 
-        'mkdir -p '.$self->o('work_dir'),
         'mkdir -p '.$self->o('blastdb_dir'),
+        'mkdir -p '.$self->o('work_dir'),
+
     ];
 }
 
