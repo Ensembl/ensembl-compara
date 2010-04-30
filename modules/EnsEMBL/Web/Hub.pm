@@ -26,6 +26,7 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::ExtURL;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -47,7 +48,6 @@ sub new {
     _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
     _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
     _problem       => $args{'_problem'}       || {},    
-    _ext_url       => $args{'_ext_url'}       || undef,                        # EnsEMBL::Web::ExtURL object used to create external links
     _user          => $args{'_user'}          || undef,                    
     _view_configs  => $args{'_view_configs_'} || {},
     _user_details  => $args{'_user_details'}  || 1,
@@ -65,6 +65,7 @@ sub new {
   $self->{'_core_objects'} = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
   $self->_set_core_params;
 
+  $self->{'_ext_url'} = $args{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
   $self->species_defs->{'timer'} = $args{'_timer'};
 
   return $self;
@@ -91,6 +92,7 @@ sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesD
 sub user_details  { return $_[0]{'_user_details'} ||= 1; }
 sub timer         { return $_[0]{'_timer'}; }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
+sub ExtURL        { return $_[0]{'_ext_url_'}; } 
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -280,6 +282,19 @@ sub _sanitize {
   return $T;
 } 
 
+sub get_ExtURL {
+  my $self = shift;
+  my $new_url = $self->ExtURL || return;
+  return $new_url->get_url(@_);
+}
+
+sub get_ExtURL_link {
+  my $self = shift;
+  my $text = shift;
+  my $url = $self->get_ExtURL(@_);
+  return $url ? qq(<a href="$url">$text</a>) : $text;
+}
+
 ### VIEW / IMAGE CONFIGS
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
@@ -326,7 +341,6 @@ sub get_tracks {
  
   if (my $parser = $data->{'parser'}) {
     while (my ($type, $track) = each(%{$parser->get_all_tracks})) {
-      my @A = @{$track->{'features'}};
       my @rows;
       foreach my $feature (@{$track->{'features'}}) {
         my $data_row = {
@@ -338,6 +352,7 @@ sub get_tracks {
         };
         push (@rows, $data_row);
       }
+      $track->{'config'}{'name'} = $data->{'name'};
       $tracks->{$type} = {'features' => \@rows, 'config' => $track->{'config'}};
     }
   }
@@ -382,11 +397,14 @@ sub fetch_userdata_by_id {
     my ($content, $format);
 
     my $tempdata = {};
+    my $name;
     if ($status eq 'temp') {
       $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
+      $name = $tempdata->{'name'};
     } else {
       my $record = $user->urls($id);
       $tempdata = { 'url' => $record->url };
+      $name = $record->url;
     }
    
     my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
@@ -401,7 +419,7 @@ sub fetch_userdata_by_id {
     }
    
     $parser->parse($content, $tempdata->{'format'});
-    $data = { 'parser' => $parser };
+    $data = { 'parser' => $parser, 'name' => $name };
   } 
   else {
     my $fa = $self->databases('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
@@ -413,7 +431,7 @@ sub fetch_userdata_by_id {
 
       foreach (@analyses) {
         next unless $_;
-        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {}};
+        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {'name' => $_}};
       }
     }
   }
