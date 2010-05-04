@@ -7,8 +7,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     this.hideHints();
     this.toggleTable();
-    this.dataTable();
     this.toggleList();
+    this.dataTable();
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.trigger('validateForms', this.el);
@@ -25,7 +25,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $('.glossary_mouseover', this.el).bind({
       mouseover: function () {
         var el = $(this);
-        var popup = el.children('.glossary_popup');
+        var popup = el.children('.floating_popup');
         
         var position = el.position();
         position.top  -= popup.height() - (0.25 * el.height());
@@ -36,7 +36,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         el = null;
       },
       mouseout: function () {
-        $(this).children('.glossary_popup').hide();
+        $(this).children('.floating_popup').hide();
       }
     });
   },
@@ -129,8 +129,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       dataType: 'html',
       success: function (html) {
         if (html) {
-          var type = $(html).find('input.panel_type').val() || 'Content';          
+          var type = $(html).find('input.panel_type').val() || 'Content';
           Ensembl.EventManager.trigger('addPanel', undefined, type, html, el, params);
+          Ensembl.EventManager.trigger('ajaxLoaded');
         } else {
           el.html('');
         }
@@ -148,124 +149,40 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $('.hint', this.el).each(function () {
       var div = $(this);
       
-      if (Ensembl.hideHints[this.id]) {
+      $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').click(function () {
+        var tmp = [];
+        
         div.hide();
-      } else {
-        $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').click(function () {
-          var tmp = [];
-          
-          div.hide();
-          
-          Ensembl.hideHints[div.attr('id')] = 1;
-          
-          for (var i in Ensembl.hideHints) {
-            tmp.push(i);
-          }
-          
-          Ensembl.cookie.set('ENSEMBL_HINTS', tmp.join(':'));
-        }).prependTo(this.firstChild);
-      }
+        
+        Ensembl.hideHints[div.attr('id')] = 1;
+        
+        for (var i in Ensembl.hideHints) {
+          tmp.push(i);
+        }
+        
+        Ensembl.cookie.set('ENSEMBL_HINTS', tmp.join(':'));
+      }).prependTo(this.firstChild);
     });
   },
   
   toggleTable: function () {    
     var table = $('.toggle_table', this.el);
     
-    if (!table.length) {
-      return;
-    }
+    if (table.length) {
+      var id = table.attr('id');
     
-    var button = $('.toggle_button', this.el);
-    var id     = table.attr('id');
-    
-    if (Ensembl.cookie.get('ENSEMBL_' + id) == 'close') {
-      table.hide();
-      button.html('Show ' + id);
-    } else {
-      table.show();
-    }
-    
-    button.click(function () {
-      table.toggle().parent('.dataTables_wrapper').toggle();
-      
-      if (table.is(':visible')) {
-        Ensembl.cookie.set('ENSEMBL_' + id, 'open');
-        this.innerHTML = 'Hide ' + id;
-      } else {
-        Ensembl.cookie.set('ENSEMBL_' + id, 'close');
-        this.innerHTML = 'Show ' + id;
-      }
-    }).show();
-    
-    button = null;
-  },
-  
-  dataTable: function () {
-    $('table.data_table', this.el).each(function () {
-      var table  = $(this);
-      var length = $('tbody tr', this).length;
-      var width  = table.width();
-      var noSort = table.hasClass('no_sort');
-      var config = table.siblings('form.data_table_config');
-      var menu   = '';
-      var sDom;
-      
-      var cols = $('thead th', this).map(function () {
-        var sort = this.className.match(/\s*sort_(\w+)\s*/);
-        var rtn  = {};
+      $('.toggle_button', this.el).click(function () {
+        table.toggle().parent('.toggleTable_wrapper').toggle();
         
-        sort = sort ? sort[1] : 'string';
-        
-        if (noSort || sort == 'none') {
-          rtn.bSortable = false;
+        if (table.is(':visible')) {
+          Ensembl.cookie.set('ENSEMBL_' + id, 'open');
+          this.innerHTML = 'Hide ' + id;
         } else {
-          rtn.sType = $.fn.dataTableExt.oSort[sort + '-asc'] ? sort : 'string';
+          Ensembl.cookie.set('ENSEMBL_' + id, 'close');
+          this.innerHTML = 'Show ' + id;
         }
-        
-        return rtn;
-      });
-      
-      if (length > 10) {
-        sDom = '<"dataTables_top"lf<"invisible">>t<"dataTables_bottom"i<"col_toggle">p<"invisible">>';
-        
-        $.each([ 10, 25, 50, 100 ], function () {
-          if (this < length) {
-            menu += '<option value="' + this + '">' + this + '</option>';
-          }
-        });
-        
-        menu += '<option value="-1">All</option>';
-      } else {
-        sDom = '<"dataTables_top"f<"invisible">>t<"dataTables_bottom"<"col_toggle"><"invisible">>'
-      }
-      
-      var options = {
-        aoColumns: cols,
-        aaSorting: [],
-        sDom: 't',
-        asStripClasses: [ 'bg1', 'bg2' ],
-        oLanguage: {
-          sLengthMenu: 'Show <select>' + menu + '</select> entries'
-        },
-        fnInitComplete: function (data) {
-          $(data.nTable).width(width).parent().width(width);
-          
-          if (!$(data.nTable).is(':visible')) {
-            $(data.nTable).parent().hide();
-          }
-        },
-        bPaginate: false,
-        bSort: false
-      };
-      
-      $('input', config).each(function () {
-        options[this.name] = eval(this.value);
-      });
-      
-      table.dataTable(options);
-      
-      table = null;
-    });
+      }).show();
+    }
   },
   
   toggleList: function () {
@@ -283,6 +200,159 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       $(this).siblings('ul.shut').toggle();
       
       return false;
+    });
+  },
+  
+  dataTable: function () {
+    var myself = this;
+    
+    $('table.data_table', this.el).each(function (i) {
+      var table  = $(this);
+      var length = $('tbody tr', this).length;
+      var width  = table.hasClass('fixed_width') ? table.width() : '100%';
+      var noSort = table.hasClass('no_sort');
+      var menu   = '';
+      var sDom;
+      
+      var cookieId      = this.id || 'data_table' + myself.panelNumber;
+      var cookieName    = 'DT#' + (table.hasClass('toggle_table') ? '' : window.location.pathname.replace(Ensembl.speciesPath, '') + '#') + cookieId.replace(/^data_table/, '');
+      var cookieOptions = Ensembl.cookie.get(cookieName, true);
+      
+      var cols = $('thead th', this).map(function () {
+        var sort = this.className.match(/\s*sort_(\w+)\s*/);
+        var rtn  = {};
+        
+        sort = sort ? sort[1] : 'string';
+        
+        if (noSort || sort == 'none') {
+          rtn.bSortable = false;
+        } else {
+          rtn.sType = $.fn.dataTableExt.oSort[sort + '-asc'] ? sort : 'string';
+        }
+        
+        return rtn;
+      });
+      
+      if (length > 10) {
+        sDom = '<"dataTables_top"l<"col_toggle">f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
+        
+        $.each([ 10, 25, 50, 100 ], function () {
+          if (this < length) {
+            menu += '<option value="' + this + '">' + this + '</option>';
+          }
+        });
+        
+        menu += '<option value="-1">All</option>';
+      } else {
+        sDom = '<"dataTables_top"<"col_toggle">f<"invisible">>t'
+      }
+      
+      var options = {
+        sPaginationType: 'full_numbers',
+        aoColumns: cols,
+        aaSorting: [],
+        sDom: 't',
+        asStripClasses: [ 'bg1', 'bg2' ],
+        iDisplayLength: -1,
+        bAutoWidth: false,
+        oLanguage: {
+          sLengthMenu: 'Show <select>' + menu + '</select> entries',
+          sSearch: 'Search table:',
+          oPaginate: {
+            sFirst:    '<<',
+            sPrevious: '<',
+            sNext:     '>',
+            sLast:     '>>'
+          }
+        },
+        fnInitComplete: function () {
+          table.width(width).parent().width(width);
+          table.not(':visible').parent().hide(); // Hide the wrapper of already hidden tables
+        },
+        fnDrawCallback: function (data) {
+          $('.dataTables_info, .dataTables_paginate', $(data.nTable).parent())[data._iDisplayLength == -1 ? 'hide' : 'show']();
+          
+          var sort   = $.map(data.aaSorting, function (s) { return '[' + s.toString().replace(/([a-z]+)/g, '"$1"') + ']'; });
+          var hidden = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j });
+          
+          Ensembl.cookie.set(cookieName, '[' + sort.join(',') + ']' + (hidden.length ? '#' + hidden.join(',') : ''), 1, true);
+          
+          Ensembl.EventManager.trigger('dataTableRedraw');
+        }
+      };
+      
+      // Extend options from config defined in the html
+      $('input', table.siblings('form.data_table_config')).each(function () {
+        options[this.name] = eval(this.value);
+      });
+      
+      // Extend options from the cookie
+      if (cookieOptions) {
+        cookieOptions = cookieOptions.replace(/#$/, '').split('#');
+        
+        options.aaSorting = eval(cookieOptions[0]);
+        
+        if (cookieOptions[1]) {
+          $.each(cookieOptions[1].split(','), function () {
+            options.aoColumns[this].bVisible = false;
+          });
+        }
+      }
+      
+      $.fn.dataTableExt.oStdClasses.sWrapper = table.hasClass('toggle_table') ? 'toggleTable_wrapper' : 'dataTables_wrapper';
+      
+      var dataTable = table.dataTable(options);
+      
+      myself.elLk.colToggle = $('.col_toggle', myself.el);
+      
+      var columns    = dataTable.fnSettings().aoColumns;
+      var toggle     = $('<div class="toggle">Toggle columns</div>').click(function () { $(this).next().toggle(); });
+      var toggleList = $('<ul class="floating_popup"></ul>');
+      
+      $.each(columns, function (col) {
+        var th = $(this.nTh);
+        
+        $('<li>').click(function () {
+          var input = $('input', this);
+          
+          if (!input.attr('disabled')) {
+            var visibility = !columns[col].bVisible;
+            
+            if (myself.elLk.colToggle.length == 1) {
+              input.attr('checked', visibility);
+            } else {
+              var index = input.index();
+              
+              myself.elLk.colToggle.each(function () {
+                $('input', this).get(index).checked = visibility;
+              });
+            }
+            
+            $.each(myself.dataTables, function () {
+              this.fnSetColumnVis(col, visibility);
+              options.fnDrawCallback(this.fnSettings());
+            });
+          }
+          
+          input = null;
+        }).append($('<input>', {
+          type: 'checkbox',
+          checked: columns[col].bVisible,
+          disabled: th.hasClass('no_hide')
+        })).append(
+          '<span>' + th.text() + '</span>'
+        ).appendTo(toggleList);
+        
+        th = null; 
+      });
+      
+      $('.col_toggle', table.parent()).append(toggle, toggleList);
+      
+      myself.dataTables = myself.dataTables || [];
+      myself.dataTables.push(dataTable);
+      
+      table = null;
+      dataTable = null;
     });
   }
 });
