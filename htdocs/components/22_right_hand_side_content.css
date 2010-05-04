@@ -8,7 +8,7 @@ div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 
 a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
 .glossary_mouseover { border-bottom:1px dotted #00c; cursor:pointer; }
-.glossary_popup { 
+.floating_popup { 
   position: absolute; 
   display: none; 
   background-color: [[TINT_BG]]; 
