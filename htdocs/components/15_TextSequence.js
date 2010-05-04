@@ -16,7 +16,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     this.initPopups();
     
     this.elLk.popup = $([
-      '<div class="info_popup">',
+      '<div class="info_popup floating_popup">',
       ' <img class="close" src="/i/close.png" />',
       ' <table cellspacing="0"></table>',
       '</div>'
