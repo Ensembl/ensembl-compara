@@ -50,7 +50,7 @@ sub handler {
       $r->headers_out->set('Expires' => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
       my $helpdesk = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
       my $webmaster = $SiteDefs::ENSEMBL_SERVERADMIN;
-      my $url = $SiteDefs::ENSEMBL_BASEURL;
+      my $url = $SiteDefs::ENSEMBL_BASE_URL;
 
       my $rss = qq(
         <rss version="2.0">
