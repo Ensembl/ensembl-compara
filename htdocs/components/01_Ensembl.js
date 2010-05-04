@@ -48,14 +48,19 @@ Ensembl.extend({
   },
    
   cookie: {
-    set: function (name, value, expiry) {  
-      document.cookie = escape(name) + '=' + escape(value || '') +
-      '; expires=' + (expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038') +
-      ' 00:00:00 GMT; path=/';
+    set: function (name, value, expiry, unescaped) {  
+      var cookie = [
+        unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
+        '; expires=',
+        (expiry == -1 ? 'Thu, 01 Jan 1970' : 'Tue, 19 Jan 2038'),
+        ' 00:00:00 GMT; path=/'
+      ].join('');
+      
+      document.cookie = cookie;
     },
     
-    get: function (name) {
-      var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + escape(name) + '=([^;\\s]*)'));
+    get: function (name, unescaped) {
+      var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + (unescaped === true ? name : escape(name)) + '=([^;\\s]*)'));
       return cookie ? unescape(cookie[2]) : '';
     }
   },
@@ -78,9 +83,10 @@ Ensembl.extend({
     var url   = window.location.search + ';';
     var hash  = window.location.hash.replace(/^#/, '?') + ';';
     
-    this.coreParams = {};
-    this.location = { width: 100000 };
-    this.species = window.location.pathname.split('/')[1];
+    this.coreParams   = {};
+    this.location     = { width: 100000 };
+    this.speciesPath  = $('#species_path').val();
+    this.species      = this.speciesPath.split('/').pop();
     this.multiSpecies = {};
     
     $.each(['r', 'g', 't', 'v'], function () {
