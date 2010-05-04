@@ -9,12 +9,13 @@ Ensembl.PanelManager.extend({
    * Inspects the HTML to find and create panels
    */
   initialize: function () {
-    this.id         = 'PanelManager';
-    this.panels     = {};
-    this.nextId     = 1;
-    this.zIndex     = 101;
-    this.ajaxPanels = $('.ajax_load').length;
-    this.ajaxLoaded = 0;
+    this.id          = 'PanelManager';
+    this.panels      = {};
+    this.nextId      = 1;
+    this.panelNumber = 0;
+    this.zIndex      = 101;
+    this.ajaxPanels  = $('.ajax_load').length;
+    this.ajaxLoaded  = 0;
     
     var myself = this;
     var panels = $('.js_panel');
@@ -113,6 +114,7 @@ Ensembl.PanelManager.extend({
       this.panels[id] = new Ensembl.Panel(id, params);
     }
     
+    this.panels[id].panelNumber = this.panelNumber++;
     this.panels[id].init();
   },
   
