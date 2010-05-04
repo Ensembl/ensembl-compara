@@ -104,7 +104,11 @@ sub _init       { return; }
 sub _error   { return shift->_info_panel('error',   @_);  } # Fatal error message. Couldn't perform action
 sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
 sub _info    { return shift->_info_panel('info',    @_ ); } # Extra information 
-sub _hint    { my ($self, $id, $caption, $desc, $width) = @_; return $self->_info_panel('hint hint_flag', $caption, $desc, $width, $id); } # Extra information, hideable
+sub _hint    {                                              # Extra information, hideable
+  my ($self, $id, $caption, $desc, $width) = @_;
+  return if grep $_ eq $id, split /:/, $self->hub->get_cookies('ENSEMBL_HINTS');
+  return $self->_info_panel('hint hint_flag', $caption, $desc, $width, $id);
+} 
 
 sub _info_panel {
   my ($self, $class, $caption, $desc, $width, $id) = @_;
@@ -639,21 +643,28 @@ sub transcript_table {
       $label = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a> - $label};
     }
     
+    my $hide = $self->hub->get_cookies('ENSEMBL_transcripts') eq 'close';
+    
     $html .= sprintf(qq{
-    <dl class="summary">
-      <dt>%s</dt>
-      <dd><p class="toggle_text" id="transcripts_text">%s <span class="toggle_button">Hide transcripts</span></p></dd>
-    </dl>
-    <table class="toggle_table data_table fixed_width" id="transcripts" summary="List of transcripts for this gene - along with translation information and type">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th class="sort_html">Transcript ID</th>
-          <th class="sort_numeric">Length (bp)</th>
-          <th class="sort_html">Protein ID</th>
-          <th class="sort_numeric">Length (aa)</th>
-          <th class="sort_html">Biotype</th> 
-    }, $page_type eq 'gene' ? 'Transcripts' : 'Gene', $label);
+      <dl class="summary">
+        <dt>%s</dt>
+        <dd><p class="toggle_text" id="transcripts_text">%s <span class="toggle_button">%s transcripts</span></p></dd>
+      </dl>
+      <table class="toggle_table data_table fixed_width" id="transcripts" summary="List of transcripts for this gene - along with translation information and type"%s>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th class="sort_html">Transcript ID</th>
+            <th class="sort_numeric">Length (bp)</th>
+            <th class="sort_html">Protein ID</th>
+            <th class="sort_numeric">Length (aa)</th>
+            <th class="sort_html">Biotype</th> 
+      }, 
+      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
+      $label,
+      $hide ? 'Show' : 'Hide',
+      $hide ? ' style="display:none"' : ''
+    );
 
     $html .= '<th class="sort_html">CCDS</th>' if $object->species =~ /^Homo|Mus/;
     $html .= '
