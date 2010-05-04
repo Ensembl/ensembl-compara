@@ -19,6 +19,7 @@ package EnsEMBL::Web::Hub;
 use strict;
 
 use Carp;
+use CGI::Cookie;
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::CoreObjects;
@@ -56,7 +57,9 @@ sub new {
   };
 
   bless $self, $class;
-
+  
+  $self->{'_cookies'} = $args{'_apache_handle'} ? CGI::Cookie->parse($args{'_apache_handle'}->headers_in->{'Cookie'}) : {};
+  
   ## Get database connections 
   my $api_connection = $self->species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
   $self->{'_databases'} = $api_connection;
@@ -67,7 +70,7 @@ sub new {
 
   $self->{'_ext_url'} = $args{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
   $self->species_defs->{'timer'} = $args{'_timer'};
-
+  
   return $self;
 }
 
@@ -85,6 +88,7 @@ sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 
 sub input         { return $_[0]{'_input'};         }
+sub cookies       { return $_[0]{'_cookies'};       }
 sub core_objects  { return $_[0]{'_core_objects'};  }
 sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
@@ -100,6 +104,17 @@ sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub clear_problem_type { $_[0]{'_problem'}{$_[1]} = []; }
 sub clear_problems     { $_[0]{'_problem'} = {}; }
+
+# Returns the values of cookies
+# If only one cookie name is given, returns the value as a scalar
+# If more than one cookie name is given, returns a hash of name => value
+sub get_cookies {
+  my $self    = shift;
+  my %cookies = %{$self->cookies};
+  %cookies    = map { exists $cookies{$_} ? ($_ => $cookies{$_}) : () } @_ if @_;
+  $cookies{$_} = $cookies{$_}->value for grep exists $cookies{$_}, @_;
+  return scalar keys %cookies > 1 ? \%cookies : [ values %cookies ]->[0];
+}
 
 sub problem {
   my $self = shift;
@@ -355,15 +370,13 @@ sub get_tracks {
       $track->{'config'}{'name'} = $data->{'name'};
       $tracks->{$type} = {'features' => \@rows, 'config' => $track->{'config'}};
     }
-  }
-  else {
+  } else {
     while (my ($analysis, $track) = each(%{$data})) {
       my @rows;
       foreach my $f (
         map { $_->[0] }
         sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-        map { [$_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'},
-$_->{'start'}] }
+        map {[ $_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'}, $_->{'start'} ]}
         @{$track->{'features'}}
         ) {
         my $data_row = {
@@ -420,8 +433,7 @@ sub fetch_userdata_by_id {
    
     $parser->parse($content, $tempdata->{'format'});
     $data = { 'parser' => $parser, 'name' => $name };
-  } 
-  else {
+  } else {
     my $fa = $self->databases('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
     my @records = $user->uploads($id);
     my $record = $records[0];
@@ -438,6 +450,5 @@ sub fetch_userdata_by_id {
 
   return $data;
 }
-
 
 1;
