@@ -34,17 +34,19 @@ warn "--------------------------------------------------------------------------
 ## index page... /index.html...
 
     if( @allowed ) {
-      print FH qq(
+      unless ($allowed[0] eq 'GOOGLE') { ## Google Sitemaps script makes its own robots.txt
+        print FH qq(
 User-agent: *
 Disallow:   /Multi/
 Disallow:   /biomart/);
-      foreach( @{$species||[]} ) {
-        print FH qq(
+        foreach( @{$species||[]} ) {
+          print FH qq(
 
 Disallow:   /$_/);
-        foreach my $view ( @allowed ) {
-          print FH qq(
+          foreach my $view ( @allowed ) {
+            print FH qq(
 Allow:      /$_/$view);
+          }
         }
       }
     } else {
