@@ -17,6 +17,8 @@
   # * ortho_tree_hive_capacity 
   # * njtree_hive_capacity
   # * homology_dnds_hive_capacity
+  # * buildhmm_hive_capacity (default 200)
+  # * buildhmm_batch_size (default 1)
 
   { TYPE => HIVE,
   	# 'njtree_hive_capacity' => 100,

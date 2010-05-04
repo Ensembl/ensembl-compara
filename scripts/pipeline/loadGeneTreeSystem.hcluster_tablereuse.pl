@@ -895,6 +895,9 @@ sub build_GeneTreeSystem
   #
   my $buildhmm_program = $genetree_params{'buildhmm'} || '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
   my $sreformat_program = $genetree_params{'sreformat'} || '/usr/local/ensembl/bin/sreformat';
+  my $buildhmm_hive_capacity = $hive_params{buildhmm_hive_capacity} || 200;
+  my $buildhmm_batch_size = $hive_params{buildhmm_batch_size} || 1;
+  
   my $BuildHMMaa = Bio::EnsEMBL::Analysis->new
     (
      -db_version      => '1',
@@ -905,8 +908,8 @@ sub build_GeneTreeSystem
     );
   $analysisDBA->store($BuildHMMaa);
   $stats = $BuildHMMaa->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(200);
+  $stats->batch_size($buildhmm_batch_size);
+  $stats->hive_capacity($buildhmm_hive_capacity);
   $stats->status('READY');
   $stats->update();
 
@@ -926,8 +929,8 @@ sub build_GeneTreeSystem
     );
   $analysisDBA->store($BuildHMMcds);
   $stats = $BuildHMMcds->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(200);
+  $stats->batch_size($buildhmm_batch_size);
+  $stats->hive_capacity($buildhmm_hive_capacity);
   $stats->status('READY');
   $stats->update();
 
