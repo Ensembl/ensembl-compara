@@ -1,9 +1,18 @@
-.toggle_button { cursor: pointer; font-weight: bold; background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 0 0.5em; display: none; }
+.toggle_button { cursor: pointer; font-weight: bold; }
 
-table.toggle_table { border-collapse: collapse; margin: 0.5em 0 0.5em 10em; cursor: pointer; }
+.toggle_button span    { float: left; }
+.toggle_button em      { float: left; display: none; height: 14px; width: 14px; margin-left: 0.5em; background-repeat: no-repeat; background-position: 0 2px; }
+.toggle_button .closed { background-image: url(/i/closed2.gif); }
+.toggle_button .open   { background-image: url(/i/open2.gif);   }
+.toggle_info           { font-weight: bold; }
+
+table.toggle_table { border-collapse: collapse; margin: 0.5em 0 0.5em 8em; cursor: pointer; }
 table.toggle_table td, table.toggle_table th { padding: 2px 4px; border: 1px solid black; margin: 0; text-align: center; white-space: nowrap; }
 table.toggle_table .active { background-color: [[TINT_BG]]; }
 table.toggle_table td.bold { font-weight: bold; text-align: center; }
 
 #locations { width: 30em; }
 #locations td, #locations th { border-color: [[TINT_BORDER]]; width: 15em; }
+
+div.summary_panel dl.summary dt { width: 8em; }
+div.summary_panel dl.summary dd { margin-left: 8em; }

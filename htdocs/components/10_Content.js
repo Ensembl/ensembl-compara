@@ -169,19 +169,19 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var table = $('.toggle_table', this.el);
     
     if (table.length) {
-      var id = table.attr('id');
+      var id     = table.attr('id');
+      var button = $('.toggle_button', this.el);
+      var icon   = button.children('em').show();
+      var info   = button.siblings('.toggle_info');
     
-      $('.toggle_button', this.el).click(function () {
+      button.click(function () {
         table.toggle().parent('.toggleTable_wrapper').toggle();
-        
-        if (table.is(':visible')) {
-          Ensembl.cookie.set('ENSEMBL_' + id, 'open');
-          this.innerHTML = 'Hide ' + id;
-        } else {
-          Ensembl.cookie.set('ENSEMBL_' + id, 'close');
-          this.innerHTML = 'Show ' + id;
-        }
-      }).show();
+        info.toggle();
+        icon.toggleClass('open closed');
+        Ensembl.cookie.set('ENSEMBL_' + id, table.is(':visible') ? 'open' : 'close')
+      });
+      
+      button = null;
     }
   },
   
