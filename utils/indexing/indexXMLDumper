@@ -189,7 +189,7 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
       $old_ID  = $ID;
     }
   }
-  &p( markerLine( $dbspecies, $names, $counter ), $nogzip, $fh);
+  &p( markerLine( $dbspecies, $names, $params, $counter ), $nogzip, $fh);
   return footer( $counter->(),$nogzip,$fh);
 }
 
@@ -330,6 +330,54 @@ sub QTLLine {
 }
 
 
+########################################################################## SNP Phenotypes
+
+sub dumpSNPPhenotype {
+  my $conf = shift;
+  my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
+  return unless $SNPDB;
+  my $counter   = make_counter(0);
+  my $dbspecies = $conf->{'species'};
+  my $file = $conf->{'directory'}."/${SNPDB}_SNPPhenotype.xml";
+  $file .= ".gz" unless $nogzip;
+  my $start_time = time;
+  my $db = 'variation';
+  my $fh;
+  unless ($nogzip) {
+    $fh = new IO::Zlib;
+    $fh->open( "$file", "wb9" )
+      or die("Can't open compressed stream to $file: $!");
+  }
+  else {
+    open( FILE, ">$file" ) or die "Can't open $file: $!";
+  }
+  print LOG "  Dumping $SNPDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
+  header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+
+  #phenotype info
+  my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $SNPDB.phenotype",'description');
+  foreach my $phen (keys %$phenotype_info) {
+    &p( SNPPhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
+  }
+
+  return footer( $counter->(),$nogzip,$fh);
+}
+
+sub SNPPhenLine {
+  my ($species, $name, $id, $counter ) = @_;
+  $species =~ s/_/ /;
+  my $xml = qq(
+<entry id="$id">
+  <description>$name</description>
+  <additional_fields>);
+  $xml .= qq(
+    <field name="species">$species</field>
+    <field name="featuretype">Phenotype</field>
+  </additional_fields>);
+  $counter->();
+  return $xml . '</entry>';
+}
+
 ########################################################################## SNPs
 
 sub dumpSNP {
@@ -351,14 +399,8 @@ sub dumpSNP {
   else {
     open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print LOG "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
+  print LOG "  Dumping $SNPDB SNPs to $file ... ", format_datetime($start_time), "\n";
   header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
-
-  #phenotype info
-  my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $SNPDB.phenotype",'description');
-  foreach my $phen (keys %$phenotype_info) {
-    &p( SNPPhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
-  }
 
   #SNPs
   my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
@@ -430,21 +472,6 @@ sub dumpSNP {
     }
   }
   return footer( $counter->(),$nogzip,$fh);
-}
-
-sub SNPPhenLine {
-  my ($species, $name, $id, $counter ) = @_;
-  $species =~ s/_/ /;
-  my $xml = qq(
-<entry id="$id">
-  <description>$name</description>
-  <additional_fields>);
-  $xml .= qq(
-    <field name="species">$species</field>
-    <field name="featuretype">Phenotype</field>
-  </additional_fields>);
-  $counter->();
-  return $xml . '</entry>';
 }
 
 sub SNPLine {
