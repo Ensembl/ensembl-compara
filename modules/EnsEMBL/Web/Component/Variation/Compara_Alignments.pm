@@ -12,17 +12,16 @@ sub get_sequence_data {
   my @sequence;
   my @markup;
   my @temp_slices;
-  
   my @pos;
   
   foreach my $sl (@$slices) {
-    my $mk = {};
+    my $mk    = {};
     my $slice = $sl->{'slice'};
-    my $name = $sl->{'name'};
-    my $seq = uc $slice->seq(1);
-    my @variation_seq = map ' ', 1..length $seq;
+    my $name  = $sl->{'name'};
+    my $seq   = uc $slice->seq(1);
     
     my ($slice_start, $slice_end, $slice_length, $slice_strand) = ($slice->start, $slice->end, $slice->length, $slice->strand);
+    my @variation_seq = map ' ', 1..length $seq;
     
     $config->{'length'} ||= $slice_length;
     
@@ -30,15 +29,15 @@ sub get_sequence_data {
     if ($config->{'align'}) {
       while ($seq =~  m/(\-+)[\w\s]/g) {
         my $ins_length = length $1;
-        my $ins_end = pos ($seq) - 1;
+        my $ins_end    = pos ($seq) - 1;
         
-        $mk->{'comparisons'}->{$ins_end-$_}->{'insert'} = "$ins_length bp" for (1..$ins_length);
+        $mk->{'comparisons'}->{$ins_end-$_}->{'insert'} = "$ins_length bp" for 1..$ins_length;
       }
     }
     
     # Get variations
     if ($config->{'snp_display'}) {
-      my $snps = [];
+      my $snps   = [];
       my $u_snps = {};
     
       eval {
@@ -47,7 +46,7 @@ sub get_sequence_data {
       
       if (scalar @$snps) {
         foreach my $u_slice (@{$sl->{'underlying_slices'}||[]}) {
-          next if ($u_slice->seq_region_name eq 'GAP');
+          next if $u_slice->seq_region_name eq 'GAP';
           
           if (!$u_slice->adaptor) {
             my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($name, $config->{'db'}, 'slice');
@@ -61,27 +60,27 @@ sub get_sequence_data {
       }
       
       # Put deletes second, so that they will overwrite the markup of other variations in the same location
-      my @ordered_snps = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $_->end < $_->start ? 1 : 0, $_ ] } @$snps;
+      my @ordered_snps = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map {[ $_->end < $_->start ? 1 : 0, $_ ]} @$snps;
       
       foreach (@ordered_snps) {
-        my $snp_type = 'snp';
+        my $snp_type       = 'snp';
         my $variation_name = $_->variation_name;
-        my $var_class = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
-        my $dbID = $_->dbID;
-        my $start = $_->start;
-        my $end = $_->end;
-        my $alleles = $_->allele_string;
-        my $ambigcode = $var_class eq 'in-del' ? '*' : $_->ambig_code;
-        my $url = $object->_url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
-        my $var = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
+        my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
+        my $dbID           = $_->dbID;
+        my $start          = $_->start;
+        my $end            = $_->end;
+        my $alleles        = $_->allele_string;
+        my $ambigcode      = $var_class eq 'in-del' ? '*' : $_->ambig_code;
+        my $url            = $object->_url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
+        my $var            = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
         
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
         if ($slice_strand < 0) {
           my @al = split(/\//, $alleles);
           
-          $alleles = '';
+          $alleles  = '';
           $alleles .= reverse($_) . '/' for @al;
-          $alleles =~ s/\/$//;
+          $alleles  =~ s/\/$//;
         }
       
         # If the variation is on reverse strand, flip the bases
@@ -91,23 +90,17 @@ sub get_sequence_data {
         my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
         
         # Co-ordinates relative to the sequence - used to mark up the variation's position
-        my $s = $start-1;
-        my $e = $end-1;
+        my $s = $start - 1;
+        my $e = $end   - 1;
         
         # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
         my $seq_region_start = $snp->seq_region_start;
-        my $seq_region_end = $snp->seq_region_end;
+        my $seq_region_end   = $snp->seq_region_end;
         
         if ($var_class eq 'in-del') {
           if ($seq_region_start > $seq_region_end) {
             $snp_type = 'insert';
-            
-            if ($s > $e) {
-              my $tmp = $s;
-              
-              $s = $e;
-              $e = $tmp;
-            }
+            ($s, $e)  = ($e, $s) if $s > $e;
           } else {
             $snp_type = 'delete';
           }
@@ -117,9 +110,19 @@ sub get_sequence_data {
         $e = $#variation_seq if $e > $#variation_seq;
         
         for ($s..$e) {          
-          $mk->{'variations'}->{$_}->{'type'} = $snp_type;
-          $mk->{'variations'}->{$_}->{'v'} = $variation_name;
+          $mk->{'variations'}->{$_}->{'type'}     = $snp_type;
+          $mk->{'variations'}->{$_}->{'v'}        = $variation_name;
           $mk->{'variations'}->{$_}->{'alleles'} .= ($mk->{'variations'}->{$_}->{'alleles'} ? '; ' : '') . $alleles;
+          $mk->{'variations'}->{$_}->{'href'}   ||= {
+            species     => $name,
+            type        => 'Zmenu',
+            action      => 'TextSequence',
+            factorytype => 'Location'
+          };
+          
+          push @{$mk->{'variations'}->{$_}->{'href'}->{'v'}},  $variation_name;
+          push @{$mk->{'variations'}->{$_}->{'href'}->{'vf'}}, $dbID;
+          
           $variation_seq[$_] = $var if $ambigcode;
         }
         
@@ -132,12 +135,12 @@ sub get_sequence_data {
     if (!$sl->{'no_variations'} && grep /\S/, @variation_seq) {
       push @temp_slices, {};
       push @markup, {};
-      push @sequence, [ map {{ 'letter' => $_ }} @variation_seq ];
+      push @sequence, [ map {{ letter => $_ }} @variation_seq ];
     }
     
     push @temp_slices, $sl;
     push @markup, $mk;
-    push @sequence, [ map {{ 'letter' => $_ }} split(//, $seq) ];
+    push @sequence, [ map {{ letter => $_ }} split(//, $seq) ];
     
     $config->{'ref_slice_seq'} ||= $sequence[-1];
   }
@@ -151,13 +154,14 @@ sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
+  my $object = $self->object;
   my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
   my $i = 0;
   
   my $class = {
-    'snp'    => 'sn',
-    'insert' => 'si',
-    'delete' => 'sd'
+    snp    => 'sn',
+    insert => 'si',
+    delete => 'sd'
   };
 
   foreach my $data (@$markup) {
@@ -165,17 +169,14 @@ sub markup_variation {
     
     foreach (sort { $a <=> $b } keys %{$data->{'variations'}}) {      
       $variation = $data->{'variations'}->{$_};
-      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'};
       
+      $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'};
       $seq->[$_]->{'class'} .= "$class->{$variation->{'type'}} ";
       $seq->[$_]->{'class'} .= 'bold ' if $variation->{'align'};
+      $seq->[$_]->{'class'} .= 'var '  if $config->{'v'} eq $variation->{'v'}; # The page's variation
+      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
       
-      # The page's variation
-      if ($config->{'v'} eq $variation->{'v'}) {
-        $seq->[$_]->{'class'} .= 'var ';
-      }
-      
-      $snps = 1 if $variation->{'type'} eq 'snp';
+      $snps    = 1 if $variation->{'type'} eq 'snp';
       $inserts = 1 if $variation->{'type'} =~ /insert/;
       $deletes = 1 if $variation->{'type'} eq 'delete';
     }
@@ -183,9 +184,9 @@ sub markup_variation {
     $i++;
   }
 
-  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'snp'}, 'Location of SNPs') if $snps;
-  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'insert'}, 'Location of inserts') if $inserts;
-  $config->{'key'} .= sprintf ($config->{'key_template'}, $class->{'delete'}, 'Location of deletes') if $deletes;
+  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'snp'}, 'Location of SNPs'       if $snps;
+  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'insert'}, 'Location of inserts' if $inserts;
+  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'delete'}, 'Location of deletes' if $deletes;
 }
 
 sub markup_conservation {
@@ -203,47 +204,38 @@ sub markup_conservation {
     for (0..$config->{'length'}-1) {
       next if $seq->[$_]->{'letter'} eq $config->{'ref_slice_seq'}->[$_]->{'letter'};
       
-      $seq->[$_]->{'class'} .= "dif ";
+      $seq->[$_]->{'class'} .= 'dif ';
       $difference = 1
     }
   }
   
-  if ($difference) {
-    $config->{'key'} .= sprintf ($config->{'key_template'}, "dif", "Location of differences between the primary and aligned species");
-  }
+  $config->{'key'} .= sprintf $config->{'key_template'}, 'dif', 'Location of differences between the primary and aligned species' if $difference;
 }
 
 sub content {  
-  my $self = shift;
-  my $object = $self->object;
+  my $self         = shift;
+  my $object       = $self->object;
   my $species_defs = $object->species_defs;
+  my $width        = 20;
+  my %mappings     = %{$object->variation_feature_mapping}; 
+  my $v            = keys %mappings == 1 ? [values %mappings]->[0] : $mappings{$object->param('vf')};
   
-  my $width = 20;
-  my %mappings = %{$object->variation_feature_mapping}; 
-  my $v = keys %mappings == 1 ? [values %mappings]->[0] : $mappings{$object->param('vf')};
-  
-  if ( $object->not_unique_location ){
-    return $self->_info(
-      'Unable to draw SNP neighbourhood',
-      $object->not_unique_location
-    );
-  }
+  return $self->_info('Unable to draw SNP neighbourhood', $object->not_unique_location) if $object->not_unique_location;
   
   my $defaults = { 
-    snp_display => 1, 
-    title_display => 1, 
+    snp_display          => 1, 
+    title_display        => 1, 
     conservation_display => 1,
-    v => $object->param('v')
+    v                    => $object->param('v')
   };
   
-  my $seq_type = $v->{'type'}; 
+  my $seq_type   = $v->{'type'}; 
   my $seq_region = $v->{'Chr'};
-  my $start = $v->{'start'} - ($width/2);  
-  my $end = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width/2);
+  my $start      = $v->{'start'} - ($width/2);  
+  my $end        = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
   
-  my $slice = $object->database('core')->get_SliceAdaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
-  my $align = $object->param('align');
-  
+  my $slice   = $object->database('core')->get_SliceAdaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+  my $align   = $object->param('align');
   my ($error) = $self->check_for_errors($object, $align, $object->species);
   
   return $error if $error;
@@ -300,7 +292,7 @@ sub content {
   $no_variation_slices{$ancestral_seq} = 1 if $ancestral_seq;
   
   if (scalar keys %non_aligned_slices) {    
-    $info .= sprintf (
+    $info .= sprintf(
       '<p>The following %d species have no alignment in this region:</p><ul><li>%s</li></ul>',
       scalar keys %non_aligned_slices,
       join "</li>\n<li>", sort keys %non_aligned_slices
@@ -308,7 +300,7 @@ sub content {
   }
   
   if (scalar keys %no_variation_slices) {
-    $info .= sprintf (
+    $info .= sprintf(
       '<p>The following %d%s species have no variation database:</p><ul><li>%s</li></ul>',
       scalar keys %no_variation_slices,
       (scalar keys %aligned_names != scalar keys %$align_species ? ' displayed' : ''),
