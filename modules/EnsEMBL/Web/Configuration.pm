@@ -121,7 +121,7 @@ sub _get_valid_action {
   my $node;
   
   $node = $self->tree->get_node($action. '/' . $func) if $func;
-  $self->{'availability'} = $object ? $object->availability : $self->availability;
+  $self->{'availability'} = $object ? $object->availability : {};
 
   return $action. '/' . $func if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
   
@@ -586,6 +586,7 @@ sub _local_context {
   $self->page->local_context->active($action);
   $self->page->local_context->caption(ref $object ? $object->short_caption : $self->short_caption);
   $self->page->local_context->counts($object->counts) if ref $object;
+  $self->page->local_context->availability($object->availability) if ref $object;
 }
 
 sub _local_tools {
@@ -724,7 +725,7 @@ sub _content_panel {
     $self->set_title($title);
   }
   
-  $self->{'availability'} = $object ? $object->availability : $self->availability;
+  $self->{'availability'} = $object ? $object->availability : {};
   
   my $previous_node = $node->previous;
   my $next_node     = $node->next;

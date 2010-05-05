@@ -52,6 +52,13 @@ sub configuration {
   return $self->{'configuration'};
 }
 
+sub availability {
+  my $self = shift;
+  $self->{'availability'} = shift if @_;
+  $self->{'availability'} ||= {};
+  return $self->{'availability'};
+}
+
 sub get_json {
   my $self = shift;
   $self->class('local_modal');
