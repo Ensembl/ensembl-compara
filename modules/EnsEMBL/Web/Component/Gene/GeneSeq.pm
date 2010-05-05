@@ -12,7 +12,7 @@ sub _init {
   $self->cacheable(1);
   $self->ajaxable(1);
   
-  $self->{'subslice_length'} = $object->param('force') || 10000 * ($object->param('display_width') || 60) if $object;
+  $self->{'subslice_length'} = $object->param('force') || 5000 * ($object->param('display_width') || 60) if $object;
 }
 
 sub caption { return undef; }
@@ -137,7 +137,7 @@ sub get_key {
     [ 'snp_display',  'sn,si,sd' ]
   );
   
-  my $population_key = $object->param('population_filter') ? sprintf('for %s with a minimum frequency of %s', $object->param('population_filter'), $object->param('min_frequency')) : '';
+  my $population_key = $object->param('population_filter') ne 'off' ? sprintf('for %s with a minimum frequency of %s', $object->param('population_filter'), $object->param('min_frequency')) : '';
   
   my $key = {
     eg  => "Location of $gene_name exons",
