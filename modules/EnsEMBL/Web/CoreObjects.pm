@@ -213,86 +213,83 @@ sub _generate_gene {
 sub _generate_transcript {
   my $self = shift;
   
-  if ($self->param('t')) {
-    my $tdb = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-    my $tdb_adaptor = $self->database($tdb);
+  my $tdb = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
+  my $tdb_adaptor = $self->database($tdb);
+  
+  return unless $tdb_adaptor;
+  
+  if ($self->param('t')) {    
+    my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
     
-    if ($tdb_adaptor) {
-      my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
+    if ($t) {
+      $self->transcript = $t;
+      $self->_get_gene_location_from_transcript($tdb_adaptor);
+    } else {
+      my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
       
-      if ($t) {
-        $self->transcript = $t;
-        $self->_get_gene_location_from_transcript($tdb_adaptor);
-      } else {
-        my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
-        
-        $t = $a->fetch_by_stable_id($self->param('t')); 
-        $self->transcript = $t if $t;
-      }
-      
-      $self->{'parameters'}{'t'} = $t->stable_id if $t;
+      $t = $a->fetch_by_stable_id($self->param('t')); 
+      $self->transcript = $t if $t;
     }
+    
+    $self->{'parameters'}{'t'} = $t->stable_id if $t;
   }
   
   if ($self->param('pt')) {
-    my $tdb         = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-    my $tdb_adaptor = $self->database($tdb);
+    my $t = $tdb_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id($self->param('pt'));
     
-    if ($tdb_adaptor) {
-      my $t = $tdb_adaptor->get_PredictionTranscriptAdaptor->fetch_by_stable_id($self->param('pt'));
+    if ($t) {
+      $self->transcript = $t;
       
-      if ($t) {
-        $self->transcript = $t;
-        
-        my $slice = $self->transcript->feature_Slice;
-        $slice = $slice->invert if $slice->strand < 0;
-        
-        $self->location = $slice;
-        
-        $self->{'parameters'}{'pt'} = $t->stable_id;
-      }
+      my $slice = $self->transcript->feature_Slice;
+      $slice = $slice->invert if $slice->strand < 0;
+      
+      $self->location = $slice;
+      
+      $self->{'parameters'}{'pt'} = $t->stable_id;
     }
   }
   
   if (!$self->transcript && ($self->param('protein') || $self->param('p'))) {
-    my $tdb         = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-    my $trans_id    = $self->param('protein') || $self->param('p'); 
-    my $tdb_adaptor = $self->database($tdb);
-    my $a           = $tdb_adaptor->get_ArchiveStableIdAdaptor;
-    my $p           = $a->fetch_by_stable_id($trans_id);
+    my $trans_id = $self->param('protein') || $self->param('p'); 
+    my $t        = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
     
-    if ($p) {
-      if ($p->is_current) {
-        my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
-        $self->transcript = $t;
-        $self->_get_gene_location_from_transcript($tdb_adaptor);
-      } else {
-        my $assoc_transcript = shift @{$p->get_all_transcript_archive_ids};
-        
-        if ($assoc_transcript) {
-          my $t = $a->fetch_by_stable_id($assoc_transcript->stable_id);
+    if ($t) {
+      $self->transcript = $t;
+      $self->_get_gene_location_from_transcript($tdb_adaptor);
+    } else {
+      my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+      my $p = $a->fetch_by_stable_id($trans_id);
+      
+      if ($p) {
+        if ($p->is_current) {
+          my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_translation_stable_id($trans_id);
           $self->transcript = $t;
-        } else { 
-          $self->transcript = new EnsEMBL::Web::Fake({ view => 'Idhistory/Protein', type => 'history_protein', id => $trans_id , adaptor => $a });
-          $self->{'parameters'}{'protein'} = $trans_id; 
-        }  
+          $self->_get_gene_location_from_transcript($tdb_adaptor);
+        } else {
+          my $assoc_transcript = shift @{$p->get_all_transcript_archive_ids};
+          
+          if ($assoc_transcript) {
+            my $t = $a->fetch_by_stable_id($assoc_transcript->stable_id);
+            $self->transcript = $t;
+          } else {
+            $self->transcript = new EnsEMBL::Web::Fake({ view => 'Idhistory/Protein', type => 'history_protein', id => $trans_id, adaptor => $a });
+            $self->{'parameters'}{'protein'} = $trans_id; 
+          }  
+        }
       }
     }
+    
+    $self->{'parameters'}{'t'} = $self->transcript->stable_id if $self->transcript;
   }
   
   if (!$self->transcript && $self->param('domain')) {
-    my $tdb         = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-    my $tdb_adaptor = $self->database($tdb);
+    my $sth = $tdb_adaptor->dbc->db_handle->prepare('select i.interpro_ac, x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac = x.dbprimary_acc where i.interpro_ac = ?');
+    $sth->execute($self->param('domain'));
+    my ($t, $n, $d) = $sth->fetchrow;
     
-    if ($tdb_adaptor) {
-      my $sth = $tdb_adaptor->dbc->db_handle->prepare('select i.interpro_ac, x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac = x.dbprimary_acc where i.interpro_ac = ?');
-      $sth->execute($self->param('domain'));
-      my ($t, $n, $d) = $sth->fetchrow;
-      
-      if ($t) {
-        $self->transcript = new EnsEMBL::Web::Fake({ view => 'Domains/Genes', type => 'Interpro Domain', id => $t, name => $n, description => $d, adaptor => $tdb_adaptor->get_GeneAdaptor });
-        $self->{'parameters'}{'domain'} = $self->param('domain');
-      }
+    if ($t) {
+      $self->transcript = new EnsEMBL::Web::Fake({ view => 'Domains/Genes', type => 'Interpro Domain', id => $t, name => $n, description => $d, adaptor => $tdb_adaptor->get_GeneAdaptor });
+      $self->{'parameters'}{'domain'} = $self->param('domain');
     }
   }
 }
