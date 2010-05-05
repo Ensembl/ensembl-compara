@@ -112,7 +112,10 @@ sub _content {
       $title ||= $name;
       
       if ($node->data->{'availability'} && $self->is_available($node->data->{'availability'})) {
-        my $url      = $node->data->{'url'} || $self->hub->url({ action => $node->data->{'code'} });
+        # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
+        # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
+        # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
+        my $url      = $node->data->{'url'} || $self->hub->url({ action => $node->data->{'code'}, function => undef });
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
         $class = qq{ class="$class"} if $class;
