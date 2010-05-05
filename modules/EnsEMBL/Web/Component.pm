@@ -630,7 +630,7 @@ sub transcript_table {
       $plural_2 =~ s/s$//;
     }
     
-    my $label = "There $plural_1 $count $plural_2 in this gene:";
+    my $label = "There $plural_1 $count $plural_2 in this gene";
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
@@ -647,8 +647,9 @@ sub transcript_table {
     
     $html .= sprintf(qq{
       <dl class="summary">
-        <dt>%s</dt>
-        <dd><p class="toggle_text" id="transcripts_text">%s <span class="toggle_button">%s transcripts</span></p></dd>
+        <dt class="toggle_button" title="Click to toggle the transcript table"><span>%s</span><em class="%s"></em></dt>
+        <dd>%s</dd>
+        <dd class="toggle_info"%s>Click the plus to show the transcript table</dd>
       </dl>
       <table class="toggle_table data_table fixed_width" id="transcripts" summary="List of transcripts for this gene - along with translation information and type"%s>
         <thead>
@@ -661,8 +662,9 @@ sub transcript_table {
             <th class="sort_html">Biotype</th> 
       }, 
       $page_type eq 'gene' ? 'Transcripts' : 'Gene',
+      $hide ? 'closed' : 'open',
       $label,
-      $hide ? 'Show' : 'Hide',
+      $hide ? '' : ' style="display:none"',
       $hide ? ' style="display:none"' : ''
     );
 
@@ -741,7 +743,7 @@ sub transcript_table {
     </form>';
   }
   
-  return $html;
+  return qq{<div class="summary_panel">$html</div>};
 }
 
 # Simple subroutine to dump a formatted "warn" block to the error logs - useful when debugging complex
