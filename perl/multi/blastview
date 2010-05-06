@@ -1860,7 +1860,7 @@ sub populate_karyotype{
   my $html = sprintf '
     <table align="center" border="0" cellspacing="0" cellpadding="2">
       <tr valign="top">
-        <td nowrap align="center"><div class="drag_select" id="blast_karyo"
+        <td nowrap align="center"><div class="drag_select js_panel" id="blast_karyo"
 	  style="margin: 0px auto; border: solid 1px black; position: relative; width:%dpx">%s</div></td>
       </tr>
     </table>',
