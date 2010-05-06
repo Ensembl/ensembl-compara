@@ -23,6 +23,7 @@ use EnsEMBL::Web::Data::Bio::Variation;
 use EnsEMBL::Web::Data::Bio::ProbeFeature;
 use EnsEMBL::Web::Data::Bio::AlignFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFeature;
+use EnsEMBL::Web::Data::Bio::RegulatoryFactor;
 use EnsEMBL::Web::Data::Bio::Xref;
 
 use base qw(EnsEMBL::Web::Factory);
@@ -276,47 +277,24 @@ sub _create_RegulatoryFactor {
   my ( $self, $db, $id ) = @_;
 
   if (!$id ) {$id = $self->hub->param('id'); }
-  my $analysis = $self->hub->param('analysis');
-
-  my $efg_db = $self->hub->database('funcgen');
-  if(!$efg_db) {
+  my $fg_db = $self->hub->database('funcgen');
+  if(!$fg_db) {
      warn("Cannot connect to funcgen db");
      return undef;
   }
+
   my $features = [];
-
-  my %fset_types = (
-   "cisRED group motif" => "cisRED motifs",
-   "miRanda miRNA_target" => "miRanda miRNA targets",
-   "BioTIFFIN motif" => "BioTIFFIN motifs",
-   "VISTA" => 'VISTA enhancer set'
-  );
-
-  if ($analysis eq 'RegulatoryRegion'){
-    my $regfeat_adaptor = $efg_db->get_RegulatoryFeatureAdaptor;
-    my $feature = $regfeat_adaptor->fetch_by_stable_id($id);
-    $features = [$feature]; 
+  if( $id =~/miR/){
+   my ($transcript_id, $feature_id) = split(':', $id);
+   $id = $feature_id;  
   } 
-  else {
-    if ($self->hub->param('dbid')){
-      my $ext_feat_adaptor = $efg_db->get_ExternalFeatureAdaptor;
-      my $feature = $ext_feat_adaptor->fetch_by_dbID($self->param('dbid'));
-      my @assoc_features = @{$ext_feat_adaptor->fetch_all_by_Feature_associated_feature_types($feature)};
 
-      if (scalar @assoc_features ==0) {
-         push @assoc_features, $feature;
-      }
-      $features = \@assoc_features;
-    } 
-    else {
-      my $feature_set_adaptor = $efg_db->get_FeatureSetAdaptor;
-      my $feat_type_adaptor =  $efg_db->get_FeatureTypeAdaptor;
-      my $ftype = $feat_type_adaptor->fetch_by_name($id);
-      my $type = $ftype->description;
-      my $fstype = $fset_types{$type};
-      my $fset = $feature_set_adaptor->fetch_by_name($fstype);
-      $features = $fset->get_Features_by_FeatureType($ftype);
-    }
+  $features = $fg_db->get_ExternalFeatureAdaptor->fetch_all_by_display_label($id);
+
+  unless (scalar @$features >> 0){
+    my $fset = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
+    my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
+    $features = $fset->get_Features_by_FeatureType($ftype);
   }
 
   if (@$features) {
