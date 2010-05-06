@@ -31,7 +31,7 @@ $query =~ s/\s+/ /g;
 
 if ($q->param('species')) {
   $species = $q->param('species');
-} elsif ($ENV{'ENSEMBL_SPECIES'} ne 'common') {
+} elsif ($ENV{'ENSEMBL_SPECIES'} !~ /^(common|multi)$/i) {
   $species = $ENV{'ENSEMBL_SPECIES'};
 }
 
