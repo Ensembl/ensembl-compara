@@ -5,6 +5,7 @@
 table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid }
 table.ss   th, 
 table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
+table.ss   th           { padding: 0 2px; }
 table.ss   td           { padding: 0.2em; }
 table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
 table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
