@@ -137,6 +137,10 @@ sub init {
     [ 'alignment_compara_436_constrained' ],
     { qw(display compact) }
   );
+  $self->modify_configs(
+    [qw(regulatory_regions_funcgen_feature_set)],
+    {qw(depth 25 height 6)}
+  );
 }
 
 1;
