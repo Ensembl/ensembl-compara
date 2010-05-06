@@ -1,19 +1,22 @@
 #!/usr/local/bin/perl
 
 #usage:
-# ./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) --log index.log
+# ./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) (--log index.log) (--dir dir)
 # 'ALL' can be used for both species and indexes
 # The script will retry five times if it loses database connections, unless
 # --debug is specified in which case it will exit.
 # --dry_run|n does everything apart from actually write the xml [note that this
 # option will delete any preexisting file]
 # In the abscence of --debug option, STDOUT and STDERR are sent to a log file
-# (dumping_log.log by default). If you run with --debug then output is sent to STDOUT:
+# (dumping_log.log by default). If you run with --debug then output is sent to STDOUT
+# The locations of the actual xml files can be specified with the dir option. If not specified then it is
+# dumped locally with debug, or in the correct location for indexing without
 
-# ./indexXMLDumper --species=ALL --index=ALL --debug                        #all output to STDOUT
-# ./indexXMLDumper --species=ALL --index=ALL --debug -log all_debug_log.log #all output to all_debug_log.log
-# ./indexXMLDumper --species=ALL --index=ALL                                #all output to dumping.log
-# ./indexXMLDumper --species=ALL --index=ALL -log all_log.log               #all output to all_log.log
+# ./indexXMLDumper --species=ALL --index=ALL --debug                 #all log output to STDOUT; xml to input
+# ./indexXMLDumper --species=ALL --index=ALL --debug -log debug.log  #all log output to debug.log; xml to input
+# ./indexXMLDumper --species=ALL --index=ALL                         #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release
+# ./indexXMLDumper --species=ALL --index=ALL --dir new_input         #all log output to dumping_$release.log; xml to new_input
+# ./indexXMLDumper --species=ALL --index=ALL -log dumping.log        #all log output to all_log.log; xml to /nfs/eureka/data/ensembl_$release"
 
 use strict;
 package indexXMLDumper;
@@ -41,28 +44,29 @@ use CGI;
 
 $| = 1;
 
-my (@species,@indexes,$debug,$dry_run,$log);
+my (@species,@indexes,$debug,$dry_run,$log,$dir);
 GetOptions('species=s' => \@species,
 	   'index=s'   => \@indexes,
 	   'debug'     => \$debug,
 	   'dry_run|n' => \$dry_run,
 	   'log=s'     => \$log,
+	   'dir=s'     => \$dir,
 	 );
 
 (@species) = split ',',@species[0];
 (@indexes) = split ',',@indexes[0];
 
-#redirect STDOUT and maybe STDERR to a file
-$log ||= $debug ? '>-' : 'dumping_log.log';
-open (LOG,    ">$log") or die "Can't open $log: $!";
-unless ($debug) {
-  open (STDERR, ">&LOG") or die "Can't open $log: $!";
-}
-
 our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
+
+#redirect STDOUT and maybe STDERR to a file
+$log ||= $debug ? '>-' : "dumping_${release}.log";
+open (LOG,    ">$log") or die "Can't open $log: $!";
+unless ($debug) {
+  open (STDERR, ">&LOG") or die "Can't open $log: $!";
+}
 
 ## HACK 1 - if the INDEX is set to all grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
@@ -82,8 +86,9 @@ if( $species[0] eq 'ALL' ) {
 
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
-my $dir = $debug ? 'input' : "/nfs/eureka/data/ensembl_$release";
-mkdir $dir, 0777 unless -e 'input';
+$dir ||= $debug ? 'input' : "/nfs/eureka/data/ensembl_$release";
+#warn $dir; exit;
+mkdir $dir, 0777 unless -e "$dir";
 
 my $start_time = time;
 my $total_c;
