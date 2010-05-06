@@ -17,7 +17,7 @@ sub content {
   $self->add_entry({
     type  => 'Gene',
     label => $object->stable_id,
-    link  => $object->_url({ type => 'Gene' })
+    link  => $object->_url({ type => 'Gene', action => 'Summary' })
   });
   
   $self->add_entry({
