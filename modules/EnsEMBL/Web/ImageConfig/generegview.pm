@@ -61,6 +61,10 @@ sub init {
     [qw(transcript_core_ensembl)],
     {qw(display transcript_label)}
   );
+  $self->modify_configs(
+    [qw(regulatory_regions_funcgen_feature_set)],
+    {qw(depth 25 height 6)}
+  );
 }
 1;
 
