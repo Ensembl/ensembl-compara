@@ -1006,7 +1006,7 @@ sub get_feature_view_link {
     'action'  => 'Genome',
     'ftype'   => 'RegulatoryFactor',
     'fset'    =>  $feature_set,
-    'id'      =>  $feature_id
+    'id'      =>  $feature_id,
   });
 
   my $url = "<span class='small'><a href=$link>[view all]</a></span>";
