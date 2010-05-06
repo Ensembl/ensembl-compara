@@ -142,7 +142,7 @@ sub dumpSNP {
   my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $SNPDB.phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
     print P join "\t",
-      'Phenotype',
+      'SNPPhenotype',
       $phen,
       sprintf( "/$conf->{'species'}/Location/Genome?ftype=Phenotype;id=%s;phenotype_name=%s", $phenotype_info->{$phen}{'phenotype_id'}, $phen),
       $phen,
