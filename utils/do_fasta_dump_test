@@ -44,7 +44,7 @@ our $blatdir      = "/data/blat";
 our $xdformat_command = '/dumps/shared/xdformat';
 our $ssaha_command  = '/dumps/shared/ssaha2Build';
 our $blat_command = '/nfs/WWW/bin/i686/faToTwoBit';
-our $key_file     = '/nfs/WWW/.ssh/blastsrv';
+#our $key_file     = '/nfs/WWW/.ssh/blastsrv';
 our $no_data;
 our $no_dumpdata;
 my ($no_compress, $no_log, $no_indexes, $no_ssaha, $no_remotedirs, $no_blat);
@@ -172,7 +172,8 @@ unless( $no_remotedirs ) {
   foreach my $blast_machine (@blast_servers ){  #warn $blast_machine;
     info (1, "Creating dir for blast on $blast_machine") unless $no_indexes;
     eval{
-      system("ssh -i $key_file $blast_machine mkdir -p $blastdir"        ) unless ($no_indexes or $no_remotedirs);
+#      system("ssh -i $key_file $blast_machine mkdir -p $blastdir"        ) unless ($no_indexes or $no_remotedirs);
+      system("ssh $blast_machine mkdir -p $blastdir"        ) unless ($no_indexes or $no_remotedirs);
     };
     if ($@) {
       utils::Tool::warning(1, "$@") unless $@ =~ /File exists/;
@@ -558,12 +559,22 @@ sub get_data {
     $sliceAdaptor->cache_toplevel_seq_mappings();
   } else{
     info( 1, "Using minimise memory option. Will use less memory but will be slower" );
-    my @gene_ids = @{$gene_adaptor->list_dbIDs()};
+=cut    my @gene_ids = @{$gene_adaptor->list_dbIDs()};
     info( 1, "dumping the data for ".scalar(@gene_ids)." genes" );
     foreach my $gene_id ( @gene_ids ){
       my $gene = $gene_adaptor->fetch_by_dbID($gene_id);
       dump_data_for_gene($gene, $fhs);
     }
+=cut
+    if(scalar( grep{$_ !~ /^dna|abinitio|\/dna\// } keys %$fhs ))  {
+      my $genes = $gene_adaptor->fetch_all;
+
+      info( 1, "dumping the data for ".scalar(@$genes)." genes" );
+      foreach my $gene ( @$genes ){    
+        my $check = dump_data_for_gene($gene, $fhs);
+        $gene_adaptor->clear_cache;
+      }
+    } 
   }
 
  # Sort these by incr slice length for more efficient memory usage
@@ -942,8 +953,11 @@ sub blast_indexes {
 
       $no_remotedirs && next;
       foreach my $blast_machine(@blast_servers){
-        warn "scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name";
-        system("scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name");
+#        warn "scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name";
+#        system("scp -i $key_file $xd_file $blast_machine:/$blastdir/$file_name");
+        warn "scp $xd_file $blast_machine:/$blastdir/$file_name";
+        system("scp $xd_file $blast_machine:/$blastdir/$file_name");
+
       }
       unlink($xd_file) || warn "Can't delete $xd_file: $!" unless $file eq $fh;
     }
@@ -1090,6 +1104,14 @@ sub readme {
 
 my %text = (
 dna => "
+#### README ####
+
+IMPORTANT: Please note you can download correlation data tables,
+supported by Ensembl, via the highly customisable BioMart and
+EnsMart data mining tools. See http://www.ensembl.org/biomart/martview or
+http://www.biomart.org for more information.
+
+
 #######################
 Fasta DNA dumps
 #######################
@@ -1138,16 +1160,17 @@ They contain one chromosome per file.
 
 EXAMPLES
    The genomic sequence of human chromosome 1:
-     Homo_sapiens.NCBI36.40.dna.chromosome.1.fa.gz
+     Homo_sapiens.GRCh37.57.dna.chromosome.1.fa.gz
 
    The masked version of the genome sequence on human chromosome 1
    (contains '_rm' in the name):
-     Homo_sapiens.NCBI36.40.dna_rm.chromosome.1.fa.gz
+     Homo_sapiens.GRCh37.57.dna_rm.chromosome.1.fa.gz
 
    Non-chromosomal assembly sequences:
    e.g. mitochondrial genome, sequence contigs not yet mapped on chromosomes
-     Homo_sapiens.NCBI36.40.dna.nonchromosomal.fa.gz
-     Homo_sapiens.NCBI36.40.dna_rm.nonchromosomal.fa.gz
+     Homo_sapiens.GRCh37.57.dna.nonchromosomal.fa.gz
+     Homo_sapiens.GRCh37.57.dna_rm.nonchromosomal.fa.gz
+
 
 --------------
 SPECIAL CASES
@@ -1165,7 +1188,7 @@ X and Y chromosome.  We provide this sequence in the following way.
     Homo_sapiens.GRCh37.56.dna.chromosome.Y.fa.gz
 -- The top level file includes only the unique portion of Y (i.e. the PAR 
    (region is N-masked):
-      Homo_sapiens.GRCh37.56.dna.toplevel.fa.gz\n\n",
+      Homo_sapiens.GRCh37.56.dna.toplevel.fa.gz\n",
 
 pep => "
 ####################
