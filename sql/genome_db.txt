@@ -7,7 +7,7 @@
 27	51511	Ciona savignyi	CSAV2.0	1	2006-04-Ensembl	
 29	7159	Aedes aegypti	AaegL1	1	2006-06-VectorBase	
 31	9544	Macaca mulatta	MMUL_1	1	2006-01-Ensembl	
-32	9785	Loxodonta africana	BROADE1	1	2006-08-Ensembl	
+32	9785	Loxodonta africana	BROADE2	1	2008-08-Ensembl	
 33	9371	Echinops telfairi	TENREC	1	2006-08-Ensembl	
 34	9986	Oryctolagus cuniculus	RABBIT	1	2006-08-Ensembl	
 35	9361	Dasypus novemcinctus	ARMA	1	2006-08-Ensembl	
@@ -38,3 +38,11 @@
 66	9685	Felis catus	CAT	1	2008-02-Ensembl	
 67	9978	Ochotona princeps	pika	1	2008-01-Ensembl	
 68	6239	Caenorhabditis elegans	WS190	1	2008-04-WormBase	
+69	10020	Dipodomys ordii	dipOrd1	1	2008-07-Ensembl
+70	30538	Lama pacos	vicPac1	1	2008-07-Ensembl
+71	132908	Pteropus vampyrus	pteVam1	1	2008-07-Ensembl
+72	9739	Tursiops truncatus	turTru1	1	2008-07-Ensembl
+73	9478	Tarsius syrichta	tarSyr1	1	2008-07-Ensembl
+74	9358	Choloepus hoffmanni	choHof1	1	2008-07-Ensembl
+75	9813	Procavia capensis	proCap1	1	2008-07-Ensembl
+

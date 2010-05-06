@@ -61,9 +61,10 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+use Bio::EnsEMBL::Hive::Process; 
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Analysis::RunnableDB;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB);
 
 
 =head2 fetch_input
@@ -341,6 +342,7 @@ sub assign_jobID_to_genomic_align_block {
 
   my $sql = "SELECT analysis_job_id FROM genomic_align_block_job_track ".
                   "WHERE genomic_align_block_id=?";
+
   my $sth = $self->{'comparaDBA'}->prepare($sql);
   $sth->execute($gab->dbID);
   my ($job_id) = $sth->fetchrow_array();

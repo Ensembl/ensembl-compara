@@ -56,7 +56,8 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB );
 
 sub fetch_input {
   my $self = shift;
@@ -71,8 +72,8 @@ sub fetch_input {
   $self->{'target_dna'}                 = undef;
   $self->{'method_link_species_set_id'} = undef;
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
+  $self->get_params($self->parameters);  
+  $self->get_params($self->input_id); 
 
   # create a Compara::DBAdaptor which shares my DBConnection
   $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
@@ -102,8 +103,13 @@ sub fetch_input {
 
 
   $self->print_params;
-    
-  
+
+ if ( $self->dump_chunks == 1 ) { 
+    if ( defined $self->dump_chunks_loc && ! -e $self->dump_chunks_loc ) {  
+         throw("your dump_chunks_loc " . $self->dump_chunks_loc . " does not exist!\n");
+    }
+ }   
+  print "FETCH_INPUT *done*\n"; 
   return 1;
 }
 
@@ -111,7 +117,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  $self->createPairAlignerJobs();
+  $self->createPairAlignerJobs(); 
   return 1;
 }
 
@@ -151,6 +157,8 @@ sub get_params {
 
   $self->{'method_link_species_set_id'} = $params->{'method_link_species_set_id'} 
       if(defined($params->{'method_link_species_set_id'}));
+  $self->dump_chunks($params->{'dump_chunks'}) if(defined($params->{'dump_chunks'}));
+  $self->dump_chunks_loc($params->{'dump_chunks_loc'}) if(defined($params->{'dump_chunks_loc'}));
   
   return;
 }
@@ -167,6 +175,20 @@ sub print_params {
          $self->{'query_collection'}->dbID, $self->{'query_collection'}->description);
   printf("   target_collection          : (%d) %s\n",
          $self->{'target_collection'}->dbID, $self->{'target_collection'}->description);
+
+}
+
+
+sub dump_chunks {
+  my $self = shift;
+  $self->{'_dump_chunks'} = shift if(@_); 
+  return $self->{'_dump_chunks'};
+}
+
+sub dump_chunks_loc {
+  my $self = shift;
+  $self->{'_dump_chunks_loc'} = shift if(@_); 
+  return $self->{'_dump_chunks_loc'};
 }
 
 
@@ -177,55 +199,42 @@ sub createPairAlignerJobs
   my $query_dna_list  = $self->{'query_collection'}->get_all_dna_objects;
   my $target_dna_list = $self->{'target_collection'}->get_all_dna_objects;
 
-  #get dnafrag adaptors
-  my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
-  my $dnafrag_chunk_adaptor = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor;
-  my $dnafrag_chunk_set_adaptor = $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor;
-  
+  my %target_dnafrag_chunk; 
+  my %target_dnafrag_chunk_set; 
+  my %query_dnafrag_chunk; 
+  my %query_dnafrag_chunk_set; 
+
   my $count=0;
   foreach my $target_dna (@{$target_dna_list}) {
     my $input_hash = {};
-
-    #find the target dnafrag name to check if it is MT - it can only be a 
-    #chunk and not part of a group
-    my $target_dnafrag_name;
 
     $input_hash->{'dbChunk'}      = undef;
     $input_hash->{'dbChunkSetID'} = undef;
 
     if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
       $input_hash->{'dbChunk'} = $target_dna->dbID;
-      my $dnafrag_chunk = $dnafrag_chunk_adaptor->fetch_by_dbID($target_dna->dbID);
-      $target_dnafrag_name = $dnafrag_chunk->dnafrag->name;
+      $target_dnafrag_chunk{$target_dna->dbID}= $target_dna; 
     }
     if($target_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
       $input_hash->{'dbChunkSetID'} = $target_dna->dbID;
-
+      $target_dnafrag_chunk_set{$target_dna->dbID}=$target_dna; 
     }
-
+ 
     foreach my $query_dna (@{$query_dna_list}) {
       $input_hash->{'qyChunk'}      = undef
       $input_hash->{'qyChunkSetID'} = undef;
 
-      #find the query dnafrag name to check if it is MT - it can only be a 
-      #chunk and not part of a group
-      my $query_dnafrag_name;
-
       if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
-        $input_hash->{'qyChunk'} = $query_dna->dbID;
-	my $dnafrag_chunk = $dnafrag_chunk_adaptor->fetch_by_dbID($query_dna->dbID);
-	$query_dnafrag_name = $dnafrag_chunk->dnafrag->name;
+        $input_hash->{'qyChunk'} = $query_dna->dbID; 
+        $query_dnafrag_chunk{$query_dna->dbID}=$query_dna;
       }
       if($query_dna->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
         $input_hash->{'qyChunkSetID'} = $query_dna->dbID;
+        $query_dnafrag_chunk_set{$query_dna->dbID}=$query_dna
       }
     
-      #only allow mitochrondria chromosomes to find matches to each other
-      next if (($query_dnafrag_name eq "MT" && $target_dnafrag_name ne "MT") || 
-	      ($query_dnafrag_name ne "MT" && $target_dnafrag_name eq "MT"));
-
       my $input_id = main::encode_hash($input_hash);
-      #printf("create_job : %s : %s\n", $self->{'pair_aligner'}->logic_name, $input_id);
+      
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $self->{'pair_aligner'},
@@ -233,8 +242,80 @@ sub createPairAlignerJobs
         );
       $count++;
     }
+    #printf("create_job : " . $target_dna->dbID . "\n" ) ; 
+  } 
+  
+  printf("jhv created %d jobs for pair aligner\n", $count);    
+
+  if ( $self->dump_chunks == 1 ) {  
+    unless ( -e $self->dump_chunks_loc ) {  
+      throw("The dump chunks-location " . $self->dump_chunks_loc . " in the analysis.parameters-table does not exist\n") ; 
+    } 
+    if ( defined $self->dump_chunks_loc) {  
+      # First write the 'single' chunks 
+      for my $t ( keys %target_dnafrag_chunk ) {   
+        $self->write_dnafrag_chunk($target_dnafrag_chunk{$t});
+      }  
+      for my $q ( keys %query_dnafrag_chunk ) { 
+        $self->write_dnafrag_chunk($query_dnafrag_chunk{$q});
+      }
+      # now write the sets. 
+      for my $q ( keys %query_dnafrag_chunk_set ) { 
+        $self->write_dnafrag_chunk_set($query_dnafrag_chunk_set{$q});
+      }   
+      for my $t ( keys %target_dnafrag_chunk_set ) { 
+        $self->write_dnafrag_chunk_set($target_dnafrag_chunk_set{$t});
+      }  
+    } 
+  } else {  
+    warning("You specified to dump the chunks but you have to give a dump_chunks_loc location where to dump the chunks to, too.\n".
+            " you can specify this in the analysis.parameters column   'dump_chunks_loc=>\"/path/to/dump/loc\"}\n") ; 
+  } 
+} 
+
+
+sub write_dnafrag_chunk_set{ 
+  my ($self,$chunk_set) = @_ ;    
+
+  my $dump_location = $self->dump_chunks_loc ; 
+  $dump_location = $dump_location ."/" unless $dump_location =~m/\/$/; 
+  my $fastafile = $dump_location .  "chunk_set_" . $chunk_set->dbID . ".fasta";  # same name is used in blastz  
+  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+
+  open(OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for write");
+  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta'); 
+
+  my $chunk_array = $chunk_set->get_all_DnaFragChunks ;
+
+  my $dna_frag_chunk_adaptor = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor; 
+  my $dis_con = $self->{'comparaDBA'}->disconnect_when_inactive() ;
+  $self->{'comparaDBA'}->disconnect_when_inactive(0) ;
+
+  # my @sequences_to_store_and_update ; 
+  foreach my $chunk (@$chunk_array) {
+    printf("  writing $fastafile -> chunk %s\n", $chunk->display_id);
+    my $bioseq = $chunk->bioseq; 
+    # it might be that the sequence is not stored , so we have to store it here ........ select count(*) from sequence 
+    if($chunk->sequence_id==0) {  
+       # push  @sequences_to_store_and_update, $chunk;
+       print "storing sequence .\n" ; 
+       $dna_frag_chunk_adaptor->update_sequence($chunk);
+    }
+    $output_seq->write_seq($bioseq);
+    # $dna_frag_chunk_adaptor->update_multiple_sequences(\@sequences_to_store_and_update) ; 
   }
-  printf("created %d jobs for pair aligner\n", $count);
+  close OUTSEQ;
+  $self->{'comparaDBA'}->disconnect_when_inactive($dis_con) ;
 }
+
+sub write_dnafrag_chunk{ 
+  my ($self,$chunk) = @_ ;   
+  my $dump_location = $self->dump_chunks_loc ;
+  $dump_location = $dump_location ."/" unless $dump_location =~m/\/$/; 
+  my $fastafile = $dump_location .  "chunk_" . $chunk->dbID . ".fasta";  # same name is used in blastz  
+  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+  print "dumping dnafrag_chunk : $fastafile\n" ; 
+  $chunk->dump_to_fasta_file($fastafile);
+} 
 
 1;

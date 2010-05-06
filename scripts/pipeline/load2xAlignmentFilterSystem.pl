@@ -90,7 +90,7 @@ sub parse_conf {
             die "'$k' must be defined in DNA_COLLECTION\n";
           }
         }
-        $collectionConf_by_name{$confPtr->{collection_name}} = $confPtr;
+        $collectionConf_by_name{$confPtr->{collection_name}} = $confPtr;  
       } 
       elsif ($type eq 'PAIR_ALIGNER') {
         foreach my $k (qw(method_link)) {
@@ -297,8 +297,9 @@ sub prepareChainSystem {
 #####################################################################################
 
 
-sub prepareNetSystem {
-  my $last_analysis = shift;
+sub prepareNetSystem { 
+  my $last_analysis = shift; 
+  print "preparing Net systemj\n" ; 
   #
   # obtain all necessary config variables
   #

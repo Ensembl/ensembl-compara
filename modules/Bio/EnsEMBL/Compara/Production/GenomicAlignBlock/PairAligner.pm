@@ -90,7 +90,10 @@ sub get_params {
   return unless($params);
 
   if(defined($params->{'qyChunkSetID'})) {
-    my $chunkset = $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->fetch_by_dbID($params->{'qyChunkSetID'});
+    print "about to fetch " . $params->{'qyChunkSetID'} ."\n";
+    my $chunkset = $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->fetch_by_dbID($params->{'qyChunkSetID'}); 
+    print "fetched $chunkset\n";
+    print "count " . $chunkset->count . "\n";
     $self->query_DnaFragChunkSet($chunkset);
   }
   if(defined($params->{'qyChunk'})) {
@@ -110,7 +113,7 @@ sub get_params {
   $self->options($params->{'options'})              if(defined($params->{'options'}));
   $self->method_link_type($params->{'method_link'}) if(defined($params->{'method_link'}));
   $self->max_alignments($params->{'max_alignments'}) if(defined($params->{'max_alignments'}));
-  $self->dump_loc($params->{'dump_loc'}) if(defined($params->{'dump_loc'}));
+  $self->dump_chunks_loc($params->{'dump_chunks_loc'}) if(defined($params->{'dump_chunks_loc'}));
   return;
 }
 
@@ -127,11 +130,19 @@ sub options {
   return $self->{'_options'};
 }
 
-sub dump_loc {
+sub dump_chunks {
   my $self = shift;
-  $self->{'_dump_loc'} = shift if(@_);
-  return $self->{'_dump_loc'};
+  $self->{'_dump_chunks'} = shift if(@_);
+  return $self->{'_dump_chunks'};
 }
+
+
+sub dump_chunks_loc {
+  my $self = shift;
+  $self->{'_dump_chunks_loc'} = shift if(@_);
+  return $self->{'_dump_chunks_loc'};
+}
+
 
 sub method_link_type {
   my $self = shift;
@@ -218,18 +229,19 @@ sub fetch_input {
   $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
   $self->{'method_link_species_set'} = $mlss;
 
-  if ($self->max_alignments) {
-    my $sth = $self->{'comparaDBA'}->dbc->prepare("SELECT count(*) FROM genomic_align_block".
-        " WHERE method_link_species_set_id = ".$mlss->dbID);
-    $sth->execute();
-    my ($num_alignments) = $sth->fetchrow_array();
-    $sth->finish();
-    if ($num_alignments >= $self->max_alignments) {
-      throw("Too many alignments ($num_alignments) have been stored already for MLSS ".$mlss->dbID."\n".
-          "  Try changing the parameters or increase the max_alignments option if you think\n".
-          "  your system can cope with so many alignments.");
-    }
-  }
+# SMJS This count is slow in InnoDB - commented out as I don't care about this check
+#  if ($self->max_alignments) {
+#    my $sth = $self->{'comparaDBA'}->dbc->prepare("SELECT count(*) FROM genomic_align_block".
+#        " WHERE method_link_species_set_id = ".$mlss->dbID);
+#    $sth->execute();
+#    my ($num_alignments) = $sth->fetchrow_array();
+#    $sth->finish();
+#    if ($num_alignments >= $self->max_alignments) {
+#      throw("Too many alignments ($num_alignments) have been stored already for MLSS ".$mlss->dbID."\n".
+#          "  Try changing the parameters or increase the max_alignments option if you think\n".
+#          "  your system can cope with so many alignments.");
+#    }
+#  }
 
   #
   # execute subclass configure_runnable method
@@ -274,7 +286,9 @@ sub delete_fasta_dumps_but_these {
         last;
       }
     }
-    unlink "$work_dir/$file" if ($delete);
+    if ($delete) {  
+      unlink "$work_dir/$file" ; 
+    }
   }
   close F;
 }
@@ -312,57 +326,95 @@ sub dumpChunkSetToWorkdir
   my $self      = shift;
   my $chunkSet   = shift;
 
-  my $starttime = time();
+  my $starttime = time(); 
 
-  my $fastafile = $self->worker_temp_directory. "chunk_set_". $chunkSet->dbID .".fasta";
+  my $dir = $self->worker_temp_directory ;  
 
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-  #print("fastafile = '$fastafile'\n");
+ if ( -e $self->dump_chunks_loc ) { 
+   $dir = $self->dump_chunks_loc ; 
+ } else {  
+   throw("Missing directory ! Your dump_chunks_loc:  " . $self->dump_chunks_loc . " doees not exist \n") ; 
+ }  
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
+ $dir = $dir."/" unless $dir =~m/\/$/; 
+
+ my $fastafile = $dir . "chunk_set_" . $chunkSet->dbID . ".fasta";  
+
+ $fastafile =~ s/\/\//\//g;  # converts any // in path to / 
+
+ if(-e $fastafile) {    
+     # test if file exist; 
+     # files are written in CreatePairAlignerJobs stage, if configured in analysis.parameters column
+    if ( $self->debug > 1) {  
+      print " Using cached/pre-dumped chunkSet sequence : $fastafile\n";
+    }
+    return $fastafile  ; 
+ } 
+   
+
+  
+  open(OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for write"); 
+
   my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
   
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
   
-  foreach my $chunk (@$chunk_array) {
-    #rintf("  writing chunk %s\n", $chunk->display_id);
+  foreach my $chunk (@$chunk_array) { 
+    printf("  writing $fastafile -> chunk %s\n", $chunk->display_id);
     my $bioseq = $chunk->bioseq;
     if($chunk->sequence_id==0) {
-      $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
+       $self->{'comparaDBA'}->get_DnaFragChunkAdaptor->update_sequence($chunk);
     }
-
     $output_seq->write_seq($bioseq);
   }
-  close OUTSEQ;
-  if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
+  close OUTSEQ;   
 
+  printf("  %1.3f secs to dump\n", (time()-$starttime)); 
   return $fastafile
 }
 
-
+# human
 sub dumpChunkToWorkdir
 {
   my $self = shift;
   my $chunk = shift;
+  my $dir = shift;  
 
   my $starttime = time();
 
-  my $fastafile = $self->worker_temp_directory .
-                  "chunk_" . $chunk->dbID . ".fasta";
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-  #print("fastafile = '$fastafile'\n");
+  my $dir =  $self->worker_temp_directory;
 
-  if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
+  if ( -e $self->dump_chunks_loc ) {  
+    $dir = $self->dump_chunks_loc; 
+  } 
+  $dir = $dir."/" unless $dir =~m/\/$/;  
 
-  $chunk->cache_sequence;
-  $chunk->dump_to_fasta_file($fastafile);
+  my $fastafile = $dir .  "chunk_" . $chunk->dbID . ".fasta"; 
 
-  if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
+  $fastafile =~ s/\/\//\//g;  # converts any // in path to /  
 
+  if(-e $fastafile) {   
+    # chunks have already been writtne in CreatePairAlignerJobs step  
+    # below some chaching - unsure if it's faster 
+    #my $seqio= Bio::SeqIO->new(-file => $fastafile);
+    #my $seq = $seqio->next_seq; 
+    #$chunk->sequence($seq);   
+    print " Using pre-dumped chunk sequence : $fastafile\n"; 
+
+    return $fastafile  ; 
+  } 
+
+  if($self->debug){
+      print("dumpChunkToWorkdir-PairAligner : $fastafile\n");
+  } 
+   
+  $chunk->cache_sequence; 
+  $chunk->dump_to_fasta_file($fastafile); 
+
+  if($self->debug){
+    printf("  %1.3f secs to dump\n", (time()-$starttime));
+  }
   return $fastafile
 }
 

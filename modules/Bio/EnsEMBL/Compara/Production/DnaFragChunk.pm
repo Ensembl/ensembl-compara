@@ -21,6 +21,7 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use Bio::SeqIO;
 
 sub new {
   my ($class, $dnafrag, $start, $end) = @_;

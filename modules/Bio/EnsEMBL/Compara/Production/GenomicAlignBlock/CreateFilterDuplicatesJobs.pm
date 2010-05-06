@@ -56,8 +56,13 @@ use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Analysis::RunnableDB;
+use Bio::EnsEMBL::Hive::Process; 
+
+our @ISA = qw(
+              Bio::EnsEMBL::Hive::Process
+              Bio::EnsEMBL::Analysis::RunnableDB 
+             ); 
 
 sub fetch_input {
   my $self = shift;

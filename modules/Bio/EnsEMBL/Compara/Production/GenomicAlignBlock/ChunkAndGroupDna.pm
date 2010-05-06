@@ -14,7 +14,7 @@ Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna
 =head1 SYNOPSIS
 
 my $db       = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Pipeline::RunnableDB::ChunkAndGroupDna->new (
+my $runnable = Bio::EnsEMBL::Analysis::RunnableDB::ChunkAndGroupDna->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -61,8 +61,10 @@ use Bio::EnsEMBL::Compara::Production::DnaCollection;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+use Bio::EnsEMBL::Analysis::RunnableDB; 
+
+our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Analysis::RunnableDB);
 
 
 =head2 fetch_input

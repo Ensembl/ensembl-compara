@@ -88,12 +88,36 @@ sub store {
   return $dfc;
 }
 
+# sub update_multiple_sequences {
+# my ($self, $dna_frag_chunk_aref ) = @_ ; 
+#
+# my $seqDBA = $self->db->get_SequenceAdaptor;
+# my @seqs_to_store; 
+#
+# for my $s ( @$dna_frag_chunk_aref ) { 
+#   push @seqs_to_store, $s->sequence ; 
+# } 
+#
+# print join("\n" , @seqs_to_store); 
+# my @new_seq_ids_aref  = @{ $seqDBA->store_multiple_sequences(\@seqs_to_store) } ;  
+#
+# my $sth = $self->prepare("UPDATE dnafrag_chunk SET sequence_id=? where dnafrag_chunk_id=?"); 
+#
+# for my $newSeqID ( @new_seq_ids_aref ) {
+#   my $dfc = shift @$dna_frag_chunk_aref ; 
+#   $sth->execute($newSeqID, $dfc->dbID);
+#   $sth->finish; 
+#  $dfc->sequence_id($newSeqID);
+# } 
+# return \@new_seq_ids_aref; 
+#} 
+# 
 
 sub update_sequence
 {
   my $self = shift;
   my $dfc  = shift;
-
+  
   return 0 unless($dfc);
   return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
   return 0 unless($dfc->dbID);
@@ -101,7 +125,8 @@ sub update_sequence
   return 0 unless(length($dfc->sequence) <= 11500000);  #limited by myslwd max_allowed_packet=12M 
 
   my $seqDBA = $self->db->get_SequenceAdaptor;
-  my $newSeqID = $seqDBA->store($dfc->sequence);
+
+  my $newSeqID = $seqDBA->store($dfc->sequence);  
 
   return if($dfc->sequence_id == $newSeqID); #sequence unchanged
 

@@ -625,8 +625,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   
   my $all_genomic_align_blocks;
   my $genomic_align_groups = {};
-  my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
-      $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $level_id,
+  # SMJS Removed already declared variables from this my list ($method_link_species_set_id and $dnafrag_id)
+  my ($genomic_align_id, $genomic_align_block_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $level_id,
       $query_genomic_align_id);
   $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id, \$method_link_species_set_id,
       \$dnafrag_id, \$dnafrag_start, \$dnafrag_end, \$dnafrag_strand, \$cigar_line, \$level_id,

@@ -55,9 +55,9 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 #my $DEFAULT_DUMP_MIN_SIZE = 11500000;
 my $DEFAULT_OUTPUT_METHOD_LINK = "BLASTZ_CHAIN";
 
-sub fetch_input {
-  my $self = shift;
-
+sub fetch_input {  
+  my $self = shift; 
+  print "FETCHING INPUT\n"; 
   #
   # parameters which can be set either via
   # $self->parameters OR
@@ -86,9 +86,11 @@ sub fetch_input {
 
   # get DnaCollection of target
   throw("must specify 'target_collection_name' to identify DnaCollection of query") 
-    unless(defined($self->{'target_collection_name'}));
+    unless(defined($self->{'target_collection_name'})); 
+
   $self->{'target_collection'} = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->
-                                fetch_by_set_description($self->{'target_collection_name'});
+                                fetch_by_set_description($self->{'target_collection_name'}); 
+
   throw("unable to find DnaCollection with name : ". $self->{'target_collection_name'})
     unless(defined($self->{'target_collection'}));
 
@@ -121,6 +123,7 @@ sub fetch_input {
 
   $self->print_params;
     
+  #print "DONE FETCHING INPUT\n"; 
   
   return 1;
 }
@@ -153,14 +156,14 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
+  #print("parsing parameter string : ",$param_string,"\n");
   
   my $params = eval($param_string);
   return unless($params);
 
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
-  }
+  #foreach my $key (keys %$params) {
+  #  print("  $key : ", $params->{$key}, "\n");
+  #}
 
   # from input_id
   $self->{'query_genome_db_id'} = $params->{'query_genome_db_id'} if(defined($params->{'query_genome_db_id'}));
@@ -199,9 +202,9 @@ sub print_params {
 sub createAlignmentChainsJobs
 {
   my $self = shift;
-
-  #my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('AlignmentChains');
-  my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
+  #print "CREATING ALIGNMENT CHAIN JOBS \n" ; 
+  my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('AlignmentChains');
+  # SMJS Reverted recent change for 2x my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
   my (%qy_dna_hash, %tg_dna_hash);
 
@@ -236,6 +239,7 @@ sub createAlignmentChainsJobs
   }
 
   my $count=0;
+  #print "STILL CREATING ALIGNMENT CHAIN JOBS \n" ; 
 
   my $sql = "select g2.dnafrag_id from genomic_align g1, genomic_align g2 where g1.method_link_species_set_id = ? and g1.genomic_align_block_id=g2.genomic_align_block_id and g1.dnafrag_id = ? and g1.genomic_align_id != g2.genomic_align_id group by g2.dnafrag_id";
   my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
@@ -255,7 +259,6 @@ sub createAlignmentChainsJobs
       $input_hash->{'qyDnaFragID'} = $qy_dnafrag_id;
       $input_hash->{'tgDnaFragID'} = $tg_dnafrag_id;
 
-
       if ($self->{'query_collection'}->dump_loc) {
         my $nib_file = $self->{'query_collection'}->dump_loc 
             . "/" 
@@ -264,7 +267,8 @@ sub createAlignmentChainsJobs
         if (-e $nib_file) {
           $input_hash->{'query_nib_dir'} = $self->{'query_collection'}->dump_loc;
         }
-      }
+      }  
+
       if ($self->{'target_collection'}->dump_loc) {
         my $nib_file = $self->{'target_collection'}->dump_loc 
             . "/" 
@@ -272,8 +276,11 @@ sub createAlignmentChainsJobs
             . ".nib";
         if (-e $nib_file) {
           $input_hash->{'target_nib_dir'} = $self->{'target_collection'}->dump_loc;
+         } else { 
+          print "nib file $nib_file does not exist at ".$self->{'target_collection'}->dump_loc." ...... skipping \n"; 
         }
-      }
+      }  
+
       $reverse_pairs->{$tg_dnafrag_id}->{$qy_dnafrag_id} = 1;
 
       my $input_id = main::encode_hash($input_hash);

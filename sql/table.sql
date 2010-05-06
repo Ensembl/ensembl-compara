@@ -9,15 +9,18 @@
 # This table stores meta information about the compara database
 #
 
-CREATE TABLE meta (
-  meta_id                     int unsigned not null auto_increment, # unique internal id
-  meta_key                    varchar(40) not null,
-  meta_value                  varchar(255) not null,
+CREATE TABLE IF NOT EXISTS meta (
 
-  PRIMARY KEY (meta_id),
-  KEY meta_key_index (meta_key),
-  KEY meta_value_index (meta_value)
-) COLLATE=latin1_swedish_ci;
+  meta_id                     INT NOT NULL AUTO_INCREMENT,
+  species_id                  INT UNSIGNED DEFAULT 1,
+  meta_key                    VARCHAR(40) NOT NULL,
+  meta_value                  VARCHAR(255) BINARY NOT NULL,
+
+  PRIMARY   KEY (meta_id),
+  UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value),
+            KEY species_value_idx (species_id, meta_value)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 #

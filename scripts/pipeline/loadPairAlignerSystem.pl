@@ -80,9 +80,11 @@ if (%engine_params) {
 	my $sql = "ALTER TABLE $table ENGINE=$engine";
 	$self->{'hiveDBA'}->dbc->do($sql);
     }
-}
+} 
 
-$self->preparePairAlignerSystem;
+
+  $self->preparePairAlignerSystem($self->{'pair_aligner_conf_list'},$self->{'dna_collection_conf_list'});
+
 
 foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
   print("creating ChunkAndGroup jobs\n");
@@ -157,8 +159,9 @@ sub parse_conf {
 # 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
 sub preparePairAlignerSystem
 {
-  #yes this should be done with a config file and a loop, but...
   my $self = shift;
+  my $pair_aligner_conf = shift; 
+  my $dna_collection_conf = shift; 
 
   my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
@@ -199,13 +202,52 @@ sub preparePairAlignerSystem
 
   #
   # creating CreatePairAlignerJobs analysis
-  #
+  # 
+
   my $createPairAlignerJobsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreatePairAlignerJobs',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreatePairAlignerJobs',
       -parameters      => ""
-    );
+  );   
+
+  #
+  # PARAMETERS - now compara acrobatic to get the dump_loc entry out of the DNA_COLLECTION config
+  # of the target genome ( usually human ) 
+  #
+  my @p_conf = @$pair_aligner_conf ; 
+  my @dna_col_conf = @$dna_collection_conf ;  
+  my $target_collection_name ;
+  my $dump_chunks ;  
+  my $dump_chunks_loc ;  
+
+  # get target collection name first out of pair_aligner_conf
+  for my $p (  @p_conf ) {  
+    $target_collection_name = $p->{'target_collection_name'}; 
+  }     
+
+  # get dump loc out of target collection name 
+  for my $dc ( @dna_col_conf ) {  
+    if ( $dc->{'collection_name'} =~m/$target_collection_name/ ) {  
+      $dump_chunks = $dc->{dump_chunks}; 
+      $dump_chunks_loc = $dc->{dump_chunks_loc}; 
+    } 
+  }  
+ 
+  if (! -e $dump_chunks_loc ) {  
+    throw ("your speciefied dump_chunks_loc for chunks and chunk sets does not exist !\n"); 
+  }  
+
+  if ( $dump_chunks == 1  ) { 
+    if ( defined $dump_chunks_loc  ) { 
+     my $parameters = "{dump_chunks_loc=>'$dump_chunks_loc',dump_chunks=>'$dump_chunks'}";
+     $createPairAlignerJobsAnalysis->parameters($parameters);
+    } 
+  }  else {  
+    print "dump_chunks is not defined, or not set to 1 in target DNA_COLLECTION config file - so i won't dump the chunks .....\n"; 
+  } 
+
+
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createPairAlignerJobsAnalysis);
   $stats = $createPairAlignerJobsAnalysis->stats;
   $stats->batch_size(1);
@@ -292,15 +334,23 @@ sub createPairAlignerAnalysis
   #if running blat, need to append dump_loc to blat analysis parameters 
   if ($target_dnaCollectionConf->{'dump_loc'}) {
       my $dump_loc = $target_dnaCollectionConf->{'dump_loc'};
+      print "dump_loc $dump_loc\n";
       $parameters =~ s/\}/,dump_loc=>'$dump_loc'\}/;
-      $pairAlignerAnalysis->parameters($parameters);
   }
+  if ($target_dnaCollectionConf->{'dump_chunks_loc'}) {
+      my $dump_chunks_loc = $target_dnaCollectionConf->{'dump_chunks_loc'};
+      print "dump_chunks_loc $dump_chunks_loc\n";
+      $parameters =~ s/\}/,dump_chunks_loc=>'$dump_chunks_loc'\}/;
+  }
+  $pairAlignerAnalysis->parameters($parameters);
+
 
   my $logic_name = "PairAligner-".$hexkey;
   $logic_name = $pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
     if (defined $pair_aligner_conf->{'logic_name_prefix'});
 
-  print "logic_name $logic_name\n";
+  print "logic_name $logic_name\n"; 
+
   $pairAlignerAnalysis->logic_name($logic_name);
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($pairAlignerAnalysis);
   my $stats = $pairAlignerAnalysis->stats;
@@ -320,7 +370,7 @@ sub createPairAlignerAnalysis
  
       my $analysis_parameters = "{'dump_dna'=>1,'dump_min_size'=>1";
 
-      if ($target_dnaCollectionConf->{'dump_nib'}) {   
+      if ($target_dnaCollectionConf->{'dump_nib'}==1) {   
         $analysis_parameters.=",'dump_nib'=>1,";
       }else {  
         print "\n\nWARNING !\nYou've configured compara to not dump any nib files !!!\n".
@@ -406,7 +456,8 @@ sub createPairAlignerAnalysis
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
       (-input_id       => $input_id,
-       -analysis       => $self->{'createPairAlignerJobsAnalysis'});
+       -analysis       => $self->{'createPairAlignerJobsAnalysis'}
+      );
 
 
   

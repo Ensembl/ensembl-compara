@@ -77,8 +77,8 @@ sub fetch_input {
 
   unless ($self->dump_min_size) {
     $self->dump_min_size($DEFAULT_DUMP_MIN_SIZE);
-  }
-
+  } 
+  #dump_min_size, dump_nib and dump_dna are specified in analysis.parameters column 
   #must have dump_nib or dump_ooc defined
   throw("Missing dump_nib or dump_ooc method or dump_dna") unless ($self->dump_nib || $self->dump_dna);
 
@@ -95,7 +95,7 @@ sub run
       $self->dumpNibFiles;
   }
   if ($self->dump_dna) {
-      $self->dumpDnaFiles;
+      $self->dumpDnaFiles; 
   }
 
   return 1;
@@ -148,7 +148,7 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  #print("parsing parameter string : ",$param_string,"\n");
+  print("parsing parameter string : ",$param_string,"\n");
 
   my $params = eval($param_string);
   return unless($params);
@@ -176,32 +176,77 @@ sub dumpNibFiles {
   my $starttime = time();
 
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
-  my $dump_loc = $dna_collection->dump_loc;
-  unless (defined $dump_loc) {
-    throw("dump_loc directory is not defined, can not dump nib files\n");
+  my $dump_loc = $dna_collection->dump_loc; 
+
+  unless (defined $dump_loc ) {  
+    throw("dump_loc directory is not defined in config or compara database\n");
   }
+  unless ( -e $dump_loc ) {  
+    throw("dump_loc : $dump_loc does not exist\n");
+  } 
 
   foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
     if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
       warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
       next;
     }
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) {
+    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
+
       next if ($dna_object->length <= $self->dump_min_size);
+
+      # 
+      # the problem is that if a file is bigger chunk_size, it will get  split into 2 files but both files have the same name, 
+      # and the splitting does not really work ( files get different ids but have same seq content ) 
+      #
 
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
       #don't dump nibfile if it already exists
-      next if (-e $nibfile);
+      
+      if (-e $nibfile) {  
+        print "nibfile $nibfile already exists - i won't dump it\n"; 
+      } 
 
       my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
 
+      #if ( $fastafile =~m/groupIV/ ) { 
+      
+        # CORRECT -but overwritten this method below dump_to_fasta_file dumps correctly, but still overwrites the files.   
+        # $dna_object->dump_to_fasta_file($fastafile); 
+        # dump_to_fasta_file-method : -produces corerct headers and fa lenght 
+        #                             - uses chunk_size to split long fasta into smaller files 
+        #                             - smaller files get overwritten ...  
+        #                             - files can't have different names as they won't be found 
+        # we want : a file with full sequence ( 32000.000 bp ) concerted to nib.  
+        # fasta seqs > chunk_size into into 2  files
+        # ( chunkID18:1.30000000 and  
+        
+        # use this version to solve problem of very large chromosomes eg opossum 
+        # faToNib only works on fa files containing a single sequence so we can't concatenate the sequences into one file. solution ? 
+        $dna_object->dump_chunks_to_fasta_file($fastafile);  # INCORRECT - headers don't correspond to file size.  that does not really matter...
+                                                             
+        # dump_chunks_to_fasta_file 
+        # writes multiple fa-files as we have the loop and multiple names ( 2x groupIV ) 
+        # 32632948 chunkID18:1.3000000   
+        # 32632948 chunkID19:30000001.32632948
+        # creates nib-files from both files. 
+  
+        my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
+  
+     #   my $cmd = "faToNib $fastafile $nibfile "  ;  ;
+     #   print "\ncreating nib : $cmd\n" ; 
+     #   system($cmd) and throw("Could not convert fasta file $fastafile to nib: $!\n"); 
+     
+      #}
+      #hack to use newer version of faToNib to dump larger fa files eg cow Un.fa
+      #system("/nfs/team71/phd/klh/progs/kent/bin/i386_64/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+
+
       #$dna_object->dump_to_fasta_file($fastafile);
-      #use this version to solve problem of very large chromosomes eg opossum
+      #use this version to solve problem of very large chromosomes eg opossum / stickleback
       $dna_object->dump_chunks_to_fasta_file($fastafile);
 
       if (defined $BIN_DIR) {
-	  #use newer version
 	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
       } else {
 	  system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
@@ -219,17 +264,21 @@ sub dumpNibFiles {
   return 1;
 }
 
+
 sub dumpDnaFiles {
   my $self = shift;
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   my $starttime = time();
-
+ 
+  # dna_collection_name is specified in the input_id 
+  
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
-  my $dump_loc = $dna_collection->dump_loc;
+  my $dump_loc = $dna_collection->dump_loc; 
+
   unless (defined $dump_loc) {
-    throw("dump_loc directory is not defined, can not dump nib files\n");
+    throw("dump_loc directory is not defined, can not dump dna files\n");
   }
 
   foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {

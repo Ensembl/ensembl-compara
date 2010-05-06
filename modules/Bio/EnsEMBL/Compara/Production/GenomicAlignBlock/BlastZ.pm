@@ -63,11 +63,7 @@ sub configure_defaults {
   
   $self->options('T=2 H=2200');
   $self->method_link_type('BLASTZ_RAW');
-
-  #Although this seems a good idea in principle, it takes longer and longer to
-  #check as the genomic_align_block table gets longer.
-  #$self->max_alignments('5000000');
-  $self->max_alignments('0');
+# SMJS Commented out to stop count sql statement slowness  $self->max_alignments('5000000');
   
   return 0;
 }
@@ -75,18 +71,32 @@ sub configure_defaults {
 
 sub configure_runnable {
   my $self = shift;
-
+  #$self->debug(1);
   my (@db_chunk) = @{$self->db_DnaFragChunkSet->get_all_DnaFragChunks};
 
   #
   # get the sequences and create the runnable
+  # $qychunkFile is a set of sequences with 812 or so little seqs /tmp/worker.10999/chunk_set_412.fasta 
+  # these chunks are fetched from tarsier database with sql - does not take too long ...
+  # >chunkID580574:1.10500
+  # >chunkID580575:1.909
+  # >chunkID580576:1.6883
+  # >chunkID580577:1.978
+  # >chunkID580578:1.4843
+  # >chunkID580579:1.1576
+  # >chunkID580580:1.969
+  # >chunkID580581:1.6466
+  # >chunkID580582:1.1676
+  # >chunkID580583:1.6757
+  # around 3-4 MB fetching takes about 1-2 seconds  
   #
-  my $qyChunkFile;
+  my $qyChunkFile; 
+
   if($self->query_DnaFragChunkSet->count == 1) {
     my ($qy_chunk) = @{$self->query_DnaFragChunkSet->get_all_DnaFragChunks};
     $qyChunkFile = $self->dumpChunkToWorkdir($qy_chunk);
-  } else {
-    $qyChunkFile = $self->dumpChunkSetToWorkdir($self->query_DnaFragChunkSet);
+  } else {  
+      $qyChunkFile = $self->dumpChunkSetToWorkdir($self->query_DnaFragChunkSet);
   }
 
   my @db_chunk_files;
@@ -95,8 +105,13 @@ sub configure_runnable {
     #      "You may have specified a group_set_size in the target_dna_collection.\n" .
     #      "In the case of blastz this should only be used for query_dna_collection");
   #}
-  foreach my $db_chunk (@{$self->db_DnaFragChunkSet->get_all_DnaFragChunks}) {
-    push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk);
+  foreach my $db_chunk (@{$self->db_DnaFragChunkSet->get_all_DnaFragChunks}) {  
+    # dump for HUMAN  
+    if (  $self->dump_chunks_loc && -e $self->dump_chunks_loc ) {  
+        push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk); 
+    }else {  
+      push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk); 
+    }
   }
 
   if (@db_chunk_files > 1) {
@@ -114,8 +129,9 @@ sub configure_runnable {
   }
   
   $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
- 
-  foreach my $dbChunkFile (@db_chunk_files) {
+
+  foreach my $dbChunkFile (@db_chunk_files) {  
+    # looping over human dumps ....
     my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blastz->
         new(
             -query      => $dbChunkFile,
