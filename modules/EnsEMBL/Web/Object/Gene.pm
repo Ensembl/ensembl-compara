@@ -595,7 +595,8 @@ sub get_homology_matches {
         $homology_list{$display_spp}{$homologue_id}{'homology_dnds_ratio'} = $dnds_ratio; 
         $homology_list{$display_spp}{$homologue_id}{'display_id'}          = $homologue->display_label || 'Novel Ensembl prediction';
         $homology_list{$display_spp}{$homologue_id}{'ancestor_node_id'}    = $ancestor_node_id;
-	$homology_list{$display_spp}{$homologue_id}{'stable_id'}           = $homologue_id;
+        $homology_list{$display_spp}{$homologue_id}{'stable_id'}           = $homologue_id;
+        $homology_list{$display_spp}{$homologue_id}{'location'}            = sprintf '%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand);
         $order++;
       }
     }
