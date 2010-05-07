@@ -136,6 +136,8 @@ Ensembl.LayoutManager.extend({
       this.href = Ensembl.urlFromHash(this.href);
     });
     
+    $('input[name=r]', 'form:not(#core_params)').val(loc);
+    
     loc = loc.split(/\W/);
     
     loc[1] = addCommas(loc[1]);
