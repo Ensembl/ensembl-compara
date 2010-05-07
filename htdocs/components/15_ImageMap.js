@@ -14,7 +14,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.speciesCount     = 0;
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
+    Ensembl.EventManager.register('highlightAllImages', this, this.highlightAllImages);
     Ensembl.EventManager.register('dragStop', this, this.dragStop);
+    Ensembl.EventManager.register('locationChange', this, function () { 
+      if (this.align) { 
+        Ensembl.EventManager.trigger('highlightAllImages');
+      }
+    });
   },
   
   init: function () {
