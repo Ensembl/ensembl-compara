@@ -4,7 +4,11 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id, params);
     
+    this.matchRegex   = new RegExp(/[\?;&]r=([^;&]+)/);
+    this.replaceRegex = new RegExp(/([\?;&]r=)[^;&]+(;&?)/);
+    
     Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
+    Ensembl.EventManager.register('locationChange', this, this.getContent);
   },
   
   init: function () {
@@ -25,7 +29,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       this.getContent();
     
       var hash = window.location.hash.replace(/^#/, '?') + ';';
-      var r    = hash.match(/[\?;]r=([^;]+)/)[1].split(/\W/);
+      var r    = hash.match(this.matchRegex)[1].split(/\W/);
       var l    = r[2] - r[1] + 1;
       
       sliderLabel.html(l);
@@ -51,22 +55,20 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }
     }
     
-    sliderLabel.show();
-    
     $('div.slider', this.el).css('display', 'inline-block').slider({
       value: sliderConfig.filter('.selected').index(),
       step:  1,
       min:   0,
       max:   sliderConfig.length - 1,
       slide: function (e, ui) {
-        sliderLabel.html(sliderConfig.get(ui.value).name).show();
+        sliderLabel.html(sliderConfig.get(ui.value).name + ' bp').show();
       },
       change: function (e, ui) {
         var input = sliderConfig.get(ui.value);
         var url   = input.href;
-        var r     = input.href.match(/[\?;]r=([^;]+)/)[1];
+        var r     = input.href.match(myself.matchRegex)[1];
         
-        sliderLabel.html(input.name);
+        sliderLabel.html(input.name + ' bp');
         
         input = null;
         
@@ -81,27 +83,29 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         
         window.location.hash = 'r=' + r;
         
-        myself.getContent();
-        
         Ensembl.EventManager.trigger('locationChange', r, myself.id, 1);
+      },
+      stop: function () {
+        sliderLabel.hide();
       }
     });
   },
   
-  getContent: function () {    
+  getContent: function () {
+    var myself = this;
+    
     $.ajax({
       url: Ensembl.urlFromHash(this.elLk.updateURL.val() + ';update_panel=1'),
       dataType: 'json',
-      context: this,
       success: function (json) {
-        this.elLk.updateURL.val(json.shift());
+        myself.elLk.updateURL.val(json.shift());
         
-        this.elLk.regionInputs.each(function () {
+        myself.elLk.regionInputs.each(function () {
           this.value = json.shift();
         });
         
-        this.elLk.navLinks.not('.ramp').each(function () {
-          this.href = this.href.replace(/([\?;]r=)[^;]+(;?)/, '$1' + json.shift() + '$2');
+        myself.elLk.navLinks.not('.ramp').each(function () {
+          this.href = this.href.replace(myself.replaceRegex, '$1' + json.shift() + '$2');
         });
       }
     });
