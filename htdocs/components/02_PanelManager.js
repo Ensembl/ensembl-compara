@@ -184,6 +184,5 @@ Ensembl.PanelManager.extend({
     Ensembl.setCoreParams();
     
     Ensembl.EventManager.triggerSpecific('updatePanel', panel.id);
-    Ensembl.EventManager.trigger('highlightAllImages');
   }
 });
