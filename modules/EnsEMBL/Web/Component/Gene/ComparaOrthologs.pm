@@ -159,7 +159,7 @@ sub content {
     }
   }
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1 });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ] });
   
   my $html = '<p>The following gene(s) have been identified as putative orthologues:</p>' . $table->render;
   
