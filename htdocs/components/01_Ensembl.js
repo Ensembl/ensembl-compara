@@ -89,12 +89,9 @@ Ensembl.extend({
     this.species      = this.speciesPath.split('/').pop();
     this.multiSpecies = {};
     
-    $.each(['r', 'g', 't', 'v'], function () {
-      myself.coreParams[this] = hash.match(regex.replace('%s', this)) || url.match(regex.replace('%s', this));
-      
-      if (myself.coreParams[this]) {
-        myself.coreParams[this] = unescape(myself.coreParams[this][1]);
-      }
+    $('input', '#core_params').each(function () {
+      var hashMatch = hash.match(regex.replace('%s', this.name));
+      myself.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
     });
     
     var match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
@@ -166,8 +163,10 @@ Ensembl.extend({
   },
   
   urlFromHash: function (url) {
+    this.hashRegex = this.hashRegex || new RegExp(/[\?;&]r=([^;&]+)/);
+    
     var hash = window.location.hash.replace(/^#/, '?') + ';';
-    var r    = hash.match(/[\?;]r=([^;]+)/)[1];
-    return url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2');
+    var r    = hash.match(this.hashRegex)[1];
+    return url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : url + ';r=' + r;
   }
 });
