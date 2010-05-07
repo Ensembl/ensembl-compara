@@ -143,13 +143,12 @@ sub count_homologues {
      where m.stable_id = ? and hm.member_id = m.member_id and
            h.homology_id = hm.homology_id and 
            mlss.method_link_species_set_id = h.method_link_species_set_id and
-           ml.method_link_id = mlss.method_link_id and
-           ( ml.type = "ENSEMBL_ORTHOLOGUES" or ml.type = "ENSEMBL_PARALOGUES" and h.description != "possible_ortholog" )
+           ml.method_link_id = mlss.method_link_id
      group by description', {}, $self->Obj->stable_id
   );
   
   foreach (@$res) {
-    if ($_->[0] eq 'ENSEMBL_PARALOGUES') {
+    if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'possible_ortholog') {
       $counts->{'paralogs'} += $_->[2];
     } elsif ($_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
       $counts->{'orthologs'} += $_->[2];
