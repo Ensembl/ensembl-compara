@@ -203,9 +203,9 @@ sub dumpNibFiles {
 
       #don't dump nibfile if it already exists
       
-      if (-e $nibfile) {  
-        print "nibfile $nibfile already exists - i won't dump it\n"; 
-      } 
+     # if (-e $nibfile) {  
+     #   print "nibfile $nibfile already exists - i won't dump it\n"; 
+     # } 
 
       my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
 
@@ -241,10 +241,6 @@ sub dumpNibFiles {
       #hack to use newer version of faToNib to dump larger fa files eg cow Un.fa
       #system("/nfs/team71/phd/klh/progs/kent/bin/i386_64/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
 
-
-      #$dna_object->dump_to_fasta_file($fastafile);
-      #use this version to solve problem of very large chromosomes eg opossum / stickleback
-      $dna_object->dump_chunks_to_fasta_file($fastafile);
 
       if (defined $BIN_DIR) {
 	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
