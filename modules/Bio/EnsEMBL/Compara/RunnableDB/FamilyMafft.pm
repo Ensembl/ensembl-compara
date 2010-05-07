@@ -3,13 +3,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft;
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
-
-sub compara_dba {
-    my $self = shift @_;
-
-    return $self->{'comparaDBA'} ||= Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
@@ -28,7 +22,7 @@ sub fetch_input {
     eval {$aln = $family->get_SimpleAlign};
     unless ($@) {
         if(defined(my $flush = $aln->is_flush)) { # looks like this family is already aligned
-            return 1;
+            return;
         }
     }
 
@@ -54,7 +48,7 @@ sub fetch_input {
             # by setting this parameter we will trigger the update in write_output()
         $self->param('singleton_relation', [$member, $attribute]);
 
-        return 1;
+        return;
     }
 
     # otherwise prepare the files and perform the actual mafft run:
@@ -84,8 +78,6 @@ sub fetch_input {
     $self->param('mafft_file', $mafft_file);
 
     $self->dbc->disconnect_when_inactive(1);
-
-    return 1;
 }
 
 sub run {
@@ -101,7 +93,7 @@ sub run {
     my $mafft_file              = $self->param('mafft_file');
 
     unless($pep_file) { # if we have no more work to do just exit gracefully
-        return 1;
+        return;
     }
 
     $ENV{MAFFT_BINARIES} = $mafft_root_dir; # set it for all exec'd processes
@@ -139,8 +131,6 @@ sub write_output {
             unlink $mafft_file;
         }
     } # otherwise we had no work to do and no files to remove
-
-    return 1;
 }
 
 1;

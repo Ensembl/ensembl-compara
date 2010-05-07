@@ -59,14 +59,7 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 use Bio::SeqIO;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
-
-    # This should really be in the superclass of all Compara::RunnableDB's!
-sub compara_dba {
-    my $self = shift @_;
-
-    return $self->{'comparaDBA'} ||= Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
@@ -111,8 +104,6 @@ sub fetch_input {
     $self->param('subset', $subset);
 
     $self->param('source_name', 'Uniprot/'.$self->param('srs'));
-
-    return 1;
 }
 
 sub run {
@@ -152,7 +143,6 @@ sub run {
     if($self->debug()) {
         print "Went through $total ids from '$source_name', of which $loaded needed to be loaded into the database\n";
     }
-    return 1;
 }
 
 sub write_output {  
@@ -169,7 +159,6 @@ sub write_output {
     if($self->param('genome_db_id')) {
         $self->dataflow_output_id($output_id, 2);
     }
-    return 1;
 }
 
 

@@ -7,7 +7,7 @@ use POSIX;
 use strict;
 use Algorithm::Diff qw(LCS);
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
@@ -26,7 +26,7 @@ sub fetch_input {
            AND m2.source_name IN ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL')
     };
 
-    my $sth = $self->dbc->prepare( $sql );
+    my $sth = $self->compara_dba->dbc->prepare( $sql );
     $sth->execute( $start_family_id, $end_family_id );
 
         # initialize it to ensure all family_ids are mentioned:
@@ -37,11 +37,9 @@ sub fetch_input {
         push @{ $famid2srcname2descs{$family_id}{$source_name} }, apply_edits(uc $description);
     }
     $sth->finish();
-    $self->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     $self->param('famid2srcname2descs', \%famid2srcname2descs);
-
-    return 1;
 }
 
 sub run {
@@ -65,8 +63,6 @@ sub run {
 
     $self->param('description', \%description);
     $self->param('score',       \%score);
-
-    return 1;
 }
 
 sub write_output {
@@ -76,14 +72,12 @@ sub write_output {
     my $score       = $self->param('score');
 
     my $sql = "UPDATE family SET description = ?, description_score = ? WHERE family_id = ?";
-    my $sth = $self->dbc->prepare( $sql );
+    my $sth = $self->compara_dba->dbc->prepare( $sql );
 
     foreach my $family_id (sort {$a<=>$b} keys %$description) {
         $sth->execute( $description->{$family_id}, $score->{$family_id}, $family_id );
     }
     $sth->finish();
-
-    return 1;
 }
 
 

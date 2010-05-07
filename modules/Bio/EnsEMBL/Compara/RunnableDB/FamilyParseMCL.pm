@@ -7,20 +7,12 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::Attribute;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
-
-sub compara_dba {
-    my $self = shift @_;
-
-    return $self->{'comparaDBA'} ||= Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {   # nothing to fetch here, just write_output()
-    return 1;
 }
 
 sub run {   # nothing to run, just write_output()
-    return 1;
 }
 
 sub write_output {
@@ -88,8 +80,6 @@ sub write_output {
         print STDERR "Done\n" if($self->debug);
     }
     close MCL;
-
-    return 1;
 }
 
 1;

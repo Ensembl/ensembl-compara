@@ -21,14 +21,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
-
-    # This should really be in the superclass of all Compara::RunnableDB's!
-sub compara_dba {
-    my $self = shift @_;
-
-    return $self->{'comparaDBA'} ||= Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
@@ -40,8 +33,6 @@ sub fetch_input {
         'removeXed'   => undef,         # do not filter sequences that contain that many X-es consecutively
         'source_names'=> [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL', 'EXTERNALPEP' ],
     );
-
-    return 1;
 }
 
 sub run {
@@ -87,14 +78,9 @@ sub run {
     $sth->finish();
 
     close FASTAFILE;
-
-    return 1;
 }
 
 sub write_output {  
-    my $self = shift;
-
-    return 1;
 }
 
 1;
