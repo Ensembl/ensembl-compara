@@ -14,11 +14,17 @@ Ensembl.extend({
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
     }
     
+    this.hashRegex = new RegExp(/[\?;&]r=([^;&]+)/);
+    
     if (window.location.hash) {
       $('.ajax_load').each(function () {
         this.value = myself.urlFromHash(this.value);
       });
     }
+    
+    $(window).bind('hashchange', function (e) {
+      Ensembl.EventManager.trigger('hashChange', myself.urlFromHash(window.location.href, true));
+    });
     
     (this.ajax  = this.cookie.get('ENSEMBL_AJAX'))  || this.setAjax();
     (this.width = this.cookie.get('ENSEMBL_WIDTH')) || this.setWidth();
@@ -84,6 +90,7 @@ Ensembl.extend({
     var hash  = window.location.hash.replace(/^#/, '?') + ';';
     
     this.coreParams   = {};
+    this.initialR     = $('input[name=r]', '#core_params').val()
     this.location     = { width: 100000 };
     this.speciesPath  = $('#species_path').val();
     this.species      = this.speciesPath.split('/').pop();
@@ -162,11 +169,11 @@ Ensembl.extend({
     window.location = url;
   },
   
-  urlFromHash: function (url) {
-    this.hashRegex = this.hashRegex || new RegExp(/[\?;&]r=([^;&]+)/);
+  urlFromHash: function (url, paramOnly) {
+    var hash  = window.location.hash.replace(/^#/, '?') + ';';
+    var match = hash.match(this.hashRegex);
+    var r     = match ? match[1] : this.initialR;
     
-    var hash = window.location.hash.replace(/^#/, '?') + ';';
-    var r    = hash.match(this.hashRegex)[1];
-    return url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : url + ';r=' + r;
+    return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : url + ';r=' + r;
   }
 });
