@@ -31,7 +31,7 @@ sub content {
   my $wd               = $seq_region_end - $seq_region_start + 1;
   
   my $values = [
-    $self->ajax_url,
+    $self->ajax_url(undef, 1) . ';r=' . $object->param('r'),
     $object->seq_region_name,
     $seq_region_start,
     $seq_region_end,
@@ -76,7 +76,7 @@ sub navbar {
           $ramp
         </span>
         <div class="slider">
-          <span class="slider_label">$wd</span>
+          <span class="slider_label floating_popup">$wd</span>
         </div>
         <a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
         <a href="%s"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a>
