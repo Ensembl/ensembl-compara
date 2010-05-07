@@ -394,13 +394,18 @@ sub render_HTML {
   $html .= '[[content]]' unless $flag;
       
   if ($flag ne 'start') {
-    my $species_path = $self->species_defs->species_path;
+    my $species_path     = $self->species_defs->species_path;
+    my $core_params      = $self->{'hub'}->core_params;
+    my $core_params_html = join '', map qq{<input type="hidden" name="$_" value="$core_params->{$_}" />}, keys %$core_params;
     
     $html .= qq{
         <!-- End of real content -->
       </div>
       <div id="$footer_id">[[copyright]][[footerlinks]]</div>
     </div>
+    <form id="core_params">
+      $core_params_html
+    </form>
     <input type="hidden" id="species_path" name="species_path" value="$species_path" />
     [[body_javascript]]
     };
