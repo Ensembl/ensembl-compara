@@ -121,7 +121,7 @@ sub render_Text {
 
   my $output = '';
   
-  $self->sort_rows($options->{'sorting'}) if $options->{'sorting'};
+  $self->sort_config if $options->{'data_table'};
   
   foreach my $row (@{$self->_process}) {
     $output .= join "\t", map $self->strip_HTML($_->{'value'}), @{$row->{'cols'}};
