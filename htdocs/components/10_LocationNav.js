@@ -9,6 +9,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
     Ensembl.EventManager.register('locationChange', this, this.getContent);
+    Ensembl.EventManager.register('hashChange', this, this.hashChange);
   },
   
   init: function () {
@@ -55,11 +56,12 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }
     }
     
-    $('div.slider', this.el).css('display', 'inline-block').slider({
+    this.elLk.slider = $('div.slider', this.el).css('display', 'inline-block').slider({
       value: sliderConfig.filter('.selected').index(),
       step:  1,
       min:   0,
       max:   sliderConfig.length - 1,
+      force: false,
       slide: function (e, ui) {
         sliderLabel.html(sliderConfig.get(ui.value).name + ' bp').show();
       },
@@ -72,7 +74,9 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         
         input = null;
         
-        if (myself.enabled === false || window.location.pathname.match(/\/Multi/)) {
+        if (myself.elLk.slider.slider('option', 'force') === true) {
+          return false;
+        } if (myself.enabled === false || window.location.pathname.match(/\/Multi/)) {
           Ensembl.redirect(url);
           return false;
         } else if ((!window.location.hash || window.location.hash == '#') && url == window.location.href) {
@@ -82,8 +86,6 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         }
         
         window.location.hash = 'r=' + r;
-        
-        Ensembl.EventManager.trigger('locationChange', r, myself.id, 1);
       },
       stop: function () {
         sliderLabel.hide();
@@ -98,6 +100,14 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       url: Ensembl.urlFromHash(this.elLk.updateURL.val() + ';update_panel=1'),
       dataType: 'json',
       success: function (json) {
+        var sliderValue = json.shift();
+        
+        if (myself.elLk.slider.slider('value') != sliderValue) {
+          myself.elLk.slider.slider('option', 'force', true);
+          myself.elLk.slider.slider('value', sliderValue);
+          myself.elLk.slider.slider('option', 'force', false);
+        }
+      
         myself.elLk.updateURL.val(json.shift());
         
         myself.elLk.regionInputs.each(function () {
@@ -109,5 +119,9 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         });
       }
     });
+  },
+  
+  hashChange: function (r) {
+    Ensembl.EventManager.trigger('locationChange', r, this.id, 1);
   }
 });
