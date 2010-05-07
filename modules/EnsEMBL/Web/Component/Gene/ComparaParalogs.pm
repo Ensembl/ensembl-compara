@@ -18,10 +18,10 @@ sub caption {
 
 sub content {
   my $self = shift;
-  
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
+
   my $object = $self->object;
-  
-  my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog')};
+  my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   

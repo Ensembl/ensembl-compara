@@ -23,11 +23,13 @@ sub caption {
 
 sub _get_details {
   my $self = shift;
+  my $cdb = shift;
   my $object = $self->object;
-  my $member = $object->get_compara_Member;
+  my $member = $object->get_compara_Member($cdb);
+
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
-  my $tree = $object->get_ProteinTree;
+  my $tree = $object->get_ProteinTree($cdb);
   return (undef, '<strong>Gene is not in a compara protein tree</strong>') unless $tree;
 
   my $node = $tree->get_leaf_by_Member($member);
@@ -38,12 +40,15 @@ sub _get_details {
 
 sub content {
   my $self   = shift;
+  my $cdb     = shift || 'compara';
   my $object = $self->object;
 
   # Get the Member and ProteinTree objects and draw the tree
 
-  my ($member, $tree, $node) = $self->_get_details;
-  return $tree . $self->genomic_alignment_links unless defined $member;
+
+  my ($member, $tree, $node) = $self->_get_details($cdb);
+
+  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
 
   my $leaves = $tree->get_all_leaves;
 
@@ -56,6 +61,9 @@ sub content {
     foreach my $this_leaf (@$leaves) {
       if ($highlight_gene and $this_leaf->gene_member->stable_id eq $highlight_gene) {
         $highlight_gene_display_label = $this_leaf->gene_member->display_label || $highlight_gene;
+
+
+
         $highlight_species = $this_leaf->gene_member->genome_db->name;
         $highlight_genome_db_id = $this_leaf->gene_member->genome_db_id;
         last;
@@ -355,12 +363,13 @@ sub _find_nodes_by_genome_db_ids {
 
 sub content_align {
   my $self           = shift;
+  my $cdb     = shift || 'compara';
   my $object         = $self->object;
 
   #----------
   # Get the ProteinTree object
-  my ( $member,$tree,$node ) = $self->_get_details;
-  return $tree . $self->genomic_alignment_links unless defined $member;
+  my ( $member,$tree,$node ) = $self->_get_details($cdb);
+  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
 
   #----------
   # Return the text representation of the tree
@@ -393,12 +402,13 @@ sub content_align {
 
 sub content_text {
   my $self           = shift;
+  my $cdb     = shift || 'compara';
   my $object         = $self->object;
 
   #----------
   # Get the ProteinTree object
-  my ( $member,$tree,$node ) = $self->_get_details;
-  return $tree . $self->genomic_alignment_links unless defined $member;
+  my ( $member,$tree,$node ) = $self->_get_details($cdb);
+  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
 
   #----------
   # Template for the section HTML
@@ -433,10 +443,13 @@ sub content_text {
 
 sub genomic_alignment_links {
   my $self       = shift;
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
+  (my $ckey = $cdb) =~ s/compara//;
+
   my $object     = $self->object;
-  my $alignments = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{};
+  my $alignments = $object->species_defs->multi_hash->{$ckey}{'ALIGNMENTS'}||{};
   my $species    = $object->species;
-  my $url        = $object->_url({ action => 'Compara_Alignments', align => undef });
+  my $url        = $object->_url({ action => "Compara_Alignments$ckey", align => undef });
   my (%species_hash, $list);
   
   foreach my $row_key (grep $alignments->{$_}{'class'} !~ /pairwise/, keys %$alignments) {

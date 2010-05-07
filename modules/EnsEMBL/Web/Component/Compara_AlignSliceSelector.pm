@@ -13,7 +13,8 @@ sub _init {
 }
 
 sub content {
-  my $self   = shift;
+  my $self = shift;
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
   my $object = $self->object;
   my $params = $object->can('multi_params') ? $object->multi_params : {};
   my $url    = $object->_url({ %$params, align => undef}, 1);
@@ -24,7 +25,8 @@ sub content {
   }
 
   my $align   = $object->param('align');
-  my $hash    = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {}; # Get the compara database hash
+  my $hash = $cdb =~ /pan_ensembl/ ? $object->species_defs->multi_hash->{'DATABASE_COMPARA_PAN_ENSEMBL'}{'ALIGNMENTS'}||{} : $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{}; # Get the compara database hash
+
   my $species = $object->species;
   my $options = '<option value="">-- Select an alignment --</option>';
   

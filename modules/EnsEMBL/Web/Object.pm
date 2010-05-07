@@ -36,9 +36,10 @@ sub problem           { return shift->hub->problem(@_); }
 
 sub count_alignments {
   my $self = shift;
-  
+  my $cdb = shift || 'DATABASE_COMPARA';
+
   my $species = $self->species;
-  my %alignments = $self->species_defs->multi('DATABASE_COMPARA', 'ALIGNMENTS');
+  my %alignments = $self->species_defs->multi($cdb, 'ALIGNMENTS');
   my $c = { all => 0, pairwise => 0 };
   
   foreach (grep $_->{'species'}{$species}, values %alignments) {
@@ -55,7 +56,7 @@ sub _availability {
   my $self = shift;
   
   my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$self->species_defs->databases} };
-  $hash->{'database:compara'} = 1 if $self->species_defs->compara_like_databases;
+  map { my $key =lc(substr($_,9)); $hash->{"database:$key"} = 1} @{$self->species_defs->compara_like_databases || [] };
   $hash->{'logged_in'} = 1 if $self->user;
   
   return $hash;

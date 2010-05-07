@@ -16,9 +16,10 @@ sub _init {
 
 sub content_other {
   my $self = shift;
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
   my $object = $self->object;
   my $species = $object->species;
-  my $family = $object->create_family($object->param('family'));
+  my $family = $object->create_family($object->param('family'), $cdb);
   return '' unless $family;
   my $html;
   
@@ -74,9 +75,10 @@ sub content_other {
 
 sub content_ensembl {
   my $self = shift;
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
   my $object = $self->object;
   my $species = $object->species;
-  my $family = $object->create_family($object->param('family'));
+  my $family = $object->create_family($object->param('family'), $cdb);
   return '' unless $family;
   my $html = '';
   ## Ensembl proteins

@@ -20,11 +20,12 @@ sub _init {
 
 sub content {
   my $self = shift;
+  my $cdb     = shift || 'compara';
   my $object = $self->object;
   my $species = $object->species;
   my $html;
 
-  my $fam_obj = $object->create_family($object->param('family'));
+  my $fam_obj = $object->create_family($object->param('family'), $cdb);
   my $ensembl_members   = $object->member_by_source($fam_obj, 'ENSEMBLPEP');
   my @all_pep_members;
   push @all_pep_members, @$ensembl_members;

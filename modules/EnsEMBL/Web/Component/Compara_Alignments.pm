@@ -26,6 +26,7 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
   my $object = $self->object;
   my $slice = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
@@ -42,7 +43,7 @@ sub content {
   my $align_param = $object->param('align');
   my ($align) = split '--', $align_param;
   
-  my ($error, $warnings) = $self->check_for_errors($object, $align, $species);
+  my ($error, $warnings) = $self->check_for_errors($object, $align, $species, $cdb);
 
   return $error if $error;
   
@@ -65,7 +66,7 @@ sub content {
   $slice = $slice->invert if $object->param('strand') == -1;
   
   # Get all slices for the gene
-  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align_param, $species);
+  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align_param, $species, undef, undef, $cdb);
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
@@ -73,7 +74,7 @@ sub content {
     
     $html .= $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
-    $html .= $self->content_sub_slice($slice, $slices, $warnings); # Direct call if the sequence length is short enough
+    $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
   }
   
   return $html;
@@ -81,7 +82,7 @@ sub content {
 
 sub content_sub_slice {
   my $self = shift;
-  my ($slice, $slices, $warnings, $defaults) = @_;
+  my ($slice, $slices, $warnings, $defaults, $cdb) = @_;
   
   my $object = $self->object;
   
@@ -117,7 +118,7 @@ sub content_sub_slice {
   $config = {%$config, %$defaults} if $defaults;
   
   # Requesting data from a sub slice
-  ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end) if $start && $end;
+  ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end, $cdb) if $start && $end;
   
   $config->{'slices'} = $slices;
   
@@ -158,7 +159,7 @@ sub content_sub_slice {
 
 sub get_slices {
   my $self = shift;
-  my ($object, $slice, $align, $species, $start, $end) = @_;
+  my ($object, $slice, $align, $species, $start, $end, $cdb) = @_;
 
   my @slices;
   my @formatted_slices;
@@ -190,7 +191,7 @@ sub get_slices {
 
 sub get_alignments {
   my $self = shift;
-  my ($object, $slice, $selected_alignment, $species, $start, $end) = @_;
+  my ($object, $slice, $selected_alignment, $species, $start, $end, $cdb) = @_;
   
   my $target_slice;
   my ($align, $target_species, $target_slice_name) = split '--', $selected_alignment;
@@ -202,7 +203,8 @@ sub get_alignments {
   }
   
   my $func = $self->{'alignments_function'} || 'get_all_Slices';
-  my $compara_db = $object->database('compara');
+  $cdb ||= 'compara';
+  my $compara_db = $object->database($cdb);
   my $as_adaptor = $compara_db->get_adaptor('AlignSlice');
   my $mlss_adaptor = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
@@ -232,11 +234,11 @@ sub get_alignments {
 
 sub check_for_errors {
   my $self = shift;
-  my ($object, $align, $species) = @_;
+  my ($object, $align, $species, $cdb) = @_;
 
   return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
-
-  my $align_details = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
+  my $ckey = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
+  my $align_details = $object->species_defs->multi_hash->{$ckey}->{'ALIGNMENTS'}->{$align};
   
   return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
 

@@ -14,7 +14,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
   my $object = $self->object;
   my $species = $object->species;
   my $family_id = $object->param('family');
@@ -24,7 +24,7 @@ sub content {
   if ($family_id) {
 
     $html .= "<h4>Ensembl genes containing proteins in family $family_id</h4>\n";
-    my $families = $object->get_all_families;
+    my $families = $object->get_all_families($cdb);
     my $genes = $families->{$family_id}{'info'}{'genes'} || [];
 
     ## Karyotype (optional)

@@ -20,12 +20,14 @@ sub caption {
 
 sub content {
   my $self = shift;
-  
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
+  (my $ckey = $cdb) =~ s/compara//;  
+
   my $object = $self->object;
   
   my @orthologues = (
-    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
-    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog')
+    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
+    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog', undef, $cdb)
   );
   
   my %orthologue_list;
@@ -35,7 +37,6 @@ sub content {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
       my $label    = $object->species_defs->species_label($species);
-      
       $orthologue_list{$label} = {%{$orthologue_list{$label}||{}}, %{$homology_type->{$_}}};
       $skipped{$label}        += keys %{$homology_type->{$_}} if $object->param('species_' . lc $species) eq 'off';
     }
@@ -88,9 +89,12 @@ sub content {
         }),
         $stable_id
       );
-      
-      my $target_links = sprintf(
-        '<a href="%s">Multi-species view</a>',
+
+      # Check the target species are on the same portal - otherwise the multispecies link does not make sense
+      my $local_species =  ($object_stable_id_link =~ /^\//) ? 1 : 0;      
+
+      my $target_links =  ($local_species && ($cdb eq 'compara')) ? sprintf(
+        '<br /><span class="small">[<a href="%s">Multi-species view</a>] </span>',
         $object->_url({
           type   => 'Location',
           action => 'Multi',
@@ -98,7 +102,7 @@ sub content {
           s1     => $spp,
           r      => undef
         })
-      );
+      )  : '<br />';
       
       my $location_link = $object->_url({
         species => $spp,
@@ -115,8 +119,8 @@ sub content {
           '<br /><a href="%s">Alignment</a>',
           $object->_url({
             action   => 'Compara_Ortholog', 
-            function => 'Alignment',
-            g1       => $stable_id
+            function => "Alignment$ckey",
+            g1       => $stable_id,
           })
         );
         
@@ -127,7 +131,7 @@ sub content {
         '<br /><a href="%s">Gene Tree (image)</a>',
         $object->_url({
           type   => 'Gene',
-          action => 'Compara_Tree',
+          action => "Compara_Tree$ckey",
           g1     => $stable_id,
           anc    => $orthologue->{'ancestor_node_id'},
           r      => undef
@@ -166,7 +170,7 @@ sub content {
   if ($alignview && keys %orthologue_list) {
     $html .= sprintf(
       '<p><a href="%s">View sequence alignments of these homologues</a>.</p>', 
-      $object->_url({ action => 'Compara_Ortholog', function => 'Alignment' })
+      $object->_url({ action => "Compara_Ortholog$ckey", function => 'Alignment' })
     );
   }
   

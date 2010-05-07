@@ -22,7 +22,7 @@ sub caption {
 
 sub content {
   my $self = shift;
-  
+  my $cdb = shift || $self->object->param('cdb') || 'compara';  
   my $object      = $self->object;
   my $species     = $object->species;
   my $gene_id     = $object->stable_id;
@@ -30,7 +30,7 @@ sub content {
   my $second_gene = $object->param('g1');
   my $seq         = $object->param('seq');
   my $text_format = $object->param('text_format');
-  my $databases   = $object->database('compara');
+  my $databases   = $object->database($cdb);
   my $ma          = $databases->get_MemberAdaptor;
   my $qm          = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
   my ($homologies, $html, %skipped);
