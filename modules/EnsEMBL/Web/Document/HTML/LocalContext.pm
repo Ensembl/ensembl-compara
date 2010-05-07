@@ -96,6 +96,8 @@ sub _content {
   
   return "$content</dl>" unless $active_node;
   
+  my $hub      = $self->hub;
+  my %params   = %{$hub->multi_params};
   my $active_l = $active_node->left;
   my $active_r = $active_node->right;
   my $counts   = $self->counts;
@@ -122,7 +124,7 @@ sub _content {
         # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
         # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
         # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
-        my $url      = $node->data->{'url'} || $self->hub->url({ action => $node->data->{'code'}, function => undef });
+        my $url      = $node->data->{'url'} || $hub->url({ %params, action => $node->data->{'code'}, function => undef });
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
         $class = qq{ class="$class"} if $class;
