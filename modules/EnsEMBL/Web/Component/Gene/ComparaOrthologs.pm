@@ -1,10 +1,10 @@
 package EnsEMBL::Web::Component::Gene::ComparaOrthologs;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use HTML::Entities qw(encode_entities);
+
+use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -27,7 +27,6 @@ sub content {
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES'), 
     $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog')
   );
-#  my @orthologues = $object->get_homology_matches('ENSEMBL_ORTHOLOGUES');
   
   my %orthologue_list;
   my %skipped;
@@ -35,11 +34,10 @@ sub content {
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
-      my $label = $object->species_defs->species_label($species);
+      my $label    = $object->species_defs->species_label($species);
       
       $orthologue_list{$label} = {%{$orthologue_list{$label}||{}}, %{$homology_type->{$_}}};
-      
-      $skipped{$label} += keys %{$homology_type->{$_}} if $object->param('species_' . lc $species) eq 'off';
+      $skipped{$label}        += keys %{$homology_type->{$_}} if $object->param('species_' . lc $species) eq 'off';
     }
   }
   
@@ -48,41 +46,36 @@ sub content {
   my %orthologue_map = qw(SEED BRH PIP RHS);
   my $alignview      = 0;
   
-  my $html = '
-  <table class="orthologues">
-    <tr>
-      <th>Species</th>
-      <th>Type</th>
-      <th>dN/dS</th>
-      <th>Ensembl identifier</th>
-      <th>External ref.</th>
-    </tr>';
+  my $columns = [
+    { key => 'Species',            align => 'left', width => '10%', sort => 'html'          },
+    { key => 'Type',               align => 'left', width => '5%',  sort => 'string'        },
+    { key => 'dN/dS',              align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'Ensembl identifier', align => 'left', width => '20%', sort => 'html'          },
+    { key => 'Location',           align => 'left', width => '20%', sort => 'position_html' },
+    { key => 'Target %id',         align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'Query %id',          align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'External ref.',      align => 'left', width => '30%', sort => 'none'          }
+  ];
+  
+  my @rows;
   
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next if $skipped{$species};
     
-    $html .= sprintf('
-      <tr>
-        <th rowspan="%s">%s</th>',
-        scalar keys %{$orthologue_list{$species}},
-        $species
-    );
-    
-    my $start;
-    
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};
-      my $percent_ids;
+      my ($target, $query);
       
       # (Column 2) Add in Orthologue description
       my $orthologue_desc = $orthologue_map{$orthologue->{'homology_desc'}} || $orthologue->{'homology_desc'};
       
       # (Column 3) Add in the dN/dS ratio
-      my $orthologue_dnds_ratio = $orthologue->{'homology_dnds_ratio'} || 'na';
+      my $orthologue_dnds_ratio = $orthologue->{'homology_dnds_ratio'} || 'n/a';
          
-      # (Column 4) Sort out (1) the link to the other species
-      #                     (2) information about %ids
-      #                     (3) links to multi-contigview and align view
+      # (Column 4) Sort out 
+      # (1) the link to the other species
+      # (2) information about %ids
+      # (3) links to multi-contigview and align view
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
       
       my $object_stable_id_link = sprintf(
@@ -91,44 +84,53 @@ sub content {
           species => $spp,
           action  => 'Summary',
           g       => $stable_id,
-	  r       => undef,
+          r       => undef
         }),
         $stable_id
       );
       
       my $target_links = sprintf(
-        '<br /><span class="small">[<a href="%s">Multi-species view</a>] </span>',
+        '<a href="%s">Multi-species view</a>',
         $object->_url({
           type   => 'Location',
           action => 'Multi',
           g1     => $stable_id,
           s1     => $spp,
-          r      => undef,
+          r      => undef
         })
       );
       
+      my $location_link = $object->_url({
+        species => $spp,
+        type    => 'Location',
+        action  => 'View',
+        r       => $orthologue->{'location'},
+        g       => $stable_id
+      });
+      
       if ($orthologue_desc ne 'DWGA') {
-        $alignview = 1;
+        ($target, $query) = ($orthologue->{'target_perc_id'}, $orthologue->{'query_perc_id'});
         
-        $percent_ids = qq{<br /><span class="small">Target %id: $orthologue->{'target_perc_id'}; Query %id: $orthologue->{'query_perc_id'}</span>};
         $target_links .= sprintf(
-          '<span class="small">[<a href="%s">Align</a>]</span>',
+          '<br /><a href="%s">Alignment</a>',
           $object->_url({
             action   => 'Compara_Ortholog', 
             function => 'Alignment',
-            g1       => $stable_id,
+            g1       => $stable_id
           })
         );
+        
+        $alignview = 1;
       }
       
       $target_links .= sprintf(
-        '<br /><span class="small">[<a href="%s">Gene Tree (image)</a>] </span>',
+        '<br /><a href="%s">Gene Tree (image)</a>',
         $object->_url({
           type   => 'Gene',
           action => 'Compara_Tree',
           g1     => $stable_id,
           anc    => $orthologue->{'ancestor_node_id'},
-          r      => undef,
+          r      => undef
         })
       );
       
@@ -138,48 +140,28 @@ sub content {
          
       if ($description =~ s/\[\w+:([-\/\w]+)\;\w+:(\w+)\]//g) {
         my ($edb, $acc) = ($1, $2);
-        $description .= "[Source: $edb; acc: " . $object->get_ExtURL_link($acc, $edb, $acc) . ']' if $acc;
+        $description   .= sprintf '[Source: %s; acc: %s]', $edb, $object->get_ExtURL_link($acc, $edb, $acc) if $acc;
       }
       
-      my @external;
+      my @external = qq{<span class="small">$description</span>};
+      unshift @external, $orthologue->{'display_id'} if $orthologue->{'display_id'};
       
-      push @external, $orthologue->{'display_id'} if $orthologue->{'display_id'};
-      push @external, qq{<span class="small">$description</span>};
-      
-      my $ext = join '<br />', @external;
-      
-      $html .= qq{
-        $start
-          <td>$orthologue_desc</td>
-          <td>$orthologue_dnds_ratio</td>
-          <td>
-            $object_stable_id_link$percent_ids$target_links
-          </td>
-          <td>
-            $ext
-          </td>
-        </tr>
+      push @rows, {
+        'Species'            => join('<br />(', split /\s*\(/, $species),
+        'Type'               => ucfirst $orthologue_desc,
+        'dN/dS'              => $orthologue_dnds_ratio,
+        'Ensembl identifier' => qq{$object_stable_id_link<br /><span class="small">$target_links</span>},
+        'Location'           => qq{<a href="$location_link">$orthologue->{'location'}</a>},
+        'Target %id'         => $target,
+        'Query %id'          => $query,
+        'External ref.'      => join('<br />', @external)
       };
-      
-      $start = '<tr>';
     }
   }
   
-  $html .= '
-  </table>';
-
-  $html = sprintf(
-    qq{<p>
-      The following gene(s) have been identified as putative
-      orthologues:
-    </p>
-    <p>
-      (N.B. If you don't find a homologue here, it may be a "between-species paralogue". Please view the <a href="%s">gene tree info</a> to see more.)
-    </p>
-    %s},
-    $object->_url({ action => 'Compara_Tree' }), 
-    $html
-  );
+  my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1 });
+  
+  my $html = '<p>The following gene(s) have been identified as putative orthologues:</p>' . $table->render;
   
   if ($alignview && keys %orthologue_list) {
     $html .= sprintf(
@@ -206,5 +188,3 @@ sub content {
 }
 
 1;
-
-

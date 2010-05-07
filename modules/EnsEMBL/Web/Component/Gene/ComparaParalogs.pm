@@ -1,10 +1,10 @@
 package EnsEMBL::Web::Component::Gene::ComparaParalogs;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::Gene);
+
+use EnsEMBL::Web::Document::SpreadSheet;
 
 sub _init {
   my $self = shift;
@@ -20,20 +20,25 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
-#  my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'between_species_paralog')};
+  
   my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog')};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   
   my %paralogue_map = qw(SEED BRH PIP RHS);
-  my $alignview = 0;
+  my $alignview     = 0;
   
-  my $html = '
-    <p>The following gene(s) have been identified as putative paralogues (within species):</p>
-    <table>
-      <tr>
-        <th>Taxonomy Level</th><th>Gene identifier</th>
-      </tr>';
+  my $columns = [
+    { key => 'Taxonomy Level',  align => 'left', width => '10%', sort => 'html'          },
+    { key => 'Type',            align => 'left', width => '10%', sort => 'string'        },
+    { key => 'Gene identifier', align => 'left', width => '20%', sort => 'html'          },
+    { key => 'Location',        align => 'left', width => '20%', sort => 'position_html' },
+    { key => 'Target %id',      align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'Query %id',       align => 'left', width => '5%',  sort => 'numeric'       },
+    { key => 'External ref.',   align => 'left', width => '30%', sort => 'none'          }
+  ];
+  
+  my @rows;
   
   foreach my $species (sort keys %paralogue_list) {
     foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}) {
@@ -42,9 +47,9 @@ sub content {
       my $description = $paralogue->{'description'};
          $description = 'No description' if $description eq 'NULL';
          
-      my $paralogue_desc = $paralogue_map{$paralogue->{'homology_desc'}} || $paralogue->{'homology_desc'};
-      my $paralogue_subtype = $paralogue->{'homology_subtype'} || '&nbsp;';
-      my $paralogue_dnds_ratio = $paralogue->{'homology_dnds_ratio'} || '&nbsp;';
+      my $paralogue_desc              = $paralogue_map{$paralogue->{'homology_desc'}} || $paralogue->{'homology_desc'};
+      my $paralogue_subtype           = $paralogue->{'homology_subtype'}              || '&nbsp;';
+      my $paralogue_dnds_ratio        = $paralogue->{'homology_dnds_ratio'}           || '&nbsp;';
       (my $spp = $paralogue->{'spp'}) =~ tr/ /_/;
       
       my $link = $object->_url({
@@ -52,8 +57,15 @@ sub content {
         r => undef
       });
       
-      my $extra = sprintf (
-        '<span class="small">[<a href="%s">Multi-species comp.</a>]</span> ',
+      my $location_link = $object->_url({
+        type   => 'Location',
+        action => 'View',
+        r      => $paralogue->{'location'},
+        g      => $stable_id
+      });
+      
+      my $links = sprintf (
+        '<a href="%s">Multi-location view</a>',
         $object->_url({
           type   => 'Location',
           action => 'Multi',
@@ -63,11 +75,11 @@ sub content {
         })
       );
       
-      my $extra2;
+      my ($target, $query);
       
       if ($paralogue_desc ne 'DWGA') {          
-        $extra .= sprintf(
-          '<span class="small">[<a href="%s">Align</a>]</span>', 
+        $links .= sprintf(
+          '<br /><a href="%s">Alignment</a>', 
           $object->_url({
             action   => 'Compara_Paralog', 
             function => 'Alignment', 
@@ -75,7 +87,7 @@ sub content {
           })
         );
         
-        $extra2 = qq{<br /><span class="small">[Target %id: $paralogue->{'target_perc_id'}; Query %id: $paralogue->{'query_perc_id'}]</span>};
+        ($target, $query) = ($paralogue->{'target_perc_id'}, $paralogue->{'query_perc_id'});
         $alignview = 1;
       }
       
@@ -84,19 +96,24 @@ sub content {
         $description .= '[' . $object->get_ExtURL_link("Source: $edb ($acc)", $edb, $acc). ']' if $acc;
       }
       
-      $html .= qq{
-        <tr>
-          <td>$paralogue_subtype<br>$paralogue_desc</td>
-          <td>
-            <a href="$link">$stable_id</a> ($paralogue->{'display_id'}) $extra<br />
-            <span class="small">$description</span>$extra2
-          </td>
-        </tr>
+      my @external = qq{<span class="small">$description</span>};
+      unshift @external, $paralogue->{'display_id'} if $paralogue->{'display_id'};
+      
+      push @rows, {
+        'Taxonomy Level'  => $paralogue_subtype,
+        'Type'            => ucfirst $paralogue_desc,
+        'Gene identifier' => qq{<a href="$link">$stable_id</a><br /><span class="small">$links</span>},
+        'Location'        => qq{<a href="$location_link">$paralogue->{'location'}</a>},
+        'Target %id'      => $target,
+        'Query %id'       => $query,
+        'External ref.'   => join('<br />', @external)
       };
     }
   }
   
-  $html .= '</table>';
+  my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1 });
+  
+  my $html = '<p>The following gene(s) have been identified as putative paralogues (within species):</p>' . $table->render;
   
   if ($alignview && keys %paralogue_list) {
     $html .= sprintf(
