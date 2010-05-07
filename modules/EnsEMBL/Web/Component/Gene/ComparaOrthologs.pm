@@ -94,7 +94,7 @@ sub content {
       my $local_species =  ($object_stable_id_link =~ /^\//) ? 1 : 0;      
 
       my $target_links =  ($local_species && ($cdb eq 'compara')) ? sprintf(
-        '<br /><span class="small">[<a href="%s">Multi-species view</a>] </span>',
+        '<span class="small">[<a href="%s">Multi-species view</a>] </span>',
         $object->_url({
           type   => 'Location',
           action => 'Multi',
@@ -102,7 +102,7 @@ sub content {
           s1     => $spp,
           r      => undef
         })
-      )  : '<br />';
+      )  : '';
       
       my $location_link = $object->_url({
         species => $spp,
