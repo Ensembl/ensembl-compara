@@ -62,7 +62,7 @@ sub availability {
           'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->stable_id
         );
       }
-      
+
       $availability->{'history'}       = !!$rows;
       $availability->{'gene'}          = 1;
       $availability->{'core'}          = $self->get_db eq 'core';
@@ -71,6 +71,17 @@ sub availability {
       $availability->{'family'}        = !!$res;
       $availability->{'has_gene_tree'} = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
+
+      if ( $compara_db  = $self->database('compara_pan_ensembl')) {
+	  my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+	  my ($res2) = $compara_dbh->selectrow_array(
+						     'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->Obj->stable_id
+						     );
+	  $availability->{'family_pan_ensembl'}     = !!$res2;
+	  $availability->{'family'}     = 1; # has to enable other family - otherwise nothing get displayed
+      }
+
+
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
@@ -120,6 +131,31 @@ sub counts {
       }
       
       $counts->{'alignments'} = $self->count_alignments->{'all'} if $self->get_db eq 'core';
+    }
+
+    if (my $compara_db = $self->database('compara_pan_ensembl')) {
+      my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
+      
+      my $pan_counts;
+
+      if ($compara_dbh) {
+        $pan_counts = {%$counts, %{$self->count_homologues($compara_dbh)}};
+      
+        my ($res) = $compara_dbh->selectrow_array(
+          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
+          {}, $obj->stable_id
+        );
+        
+        $pan_counts->{'families'} = $res;
+      }
+      
+      $pan_counts->{'alignments'} = $self->count_alignments('DATABASE_COMPARA_PAN_ENSEMBL')->{'all'} if $self->get_db eq 'core';
+
+#      warn Dumper $pan_counts;
+      foreach (keys %$pan_counts) {
+	  my $key = $_."_pan_ensembl";
+	  $counts->{$key} = $pan_counts->{$_};
+      }
     }
     
     $counts = {%$counts, %{$self->_counts}};
@@ -414,6 +450,8 @@ sub get_all_transcripts {
 
 sub get_all_families {
   my $self = shift;
+  my $compara_db = shift || 'compara';
+
   my $families;
   if (ref($self->gene) =~ /Family/) { ## No gene in URL, so CoreObjects fetches a family instead
     ## Explicitly set db connection, as registry is buggy!
@@ -434,7 +472,7 @@ sub get_all_families {
   }
   else {
     foreach my $transcript (@{$self->get_all_transcripts}) {
-      my $trans_families = $transcript->get_families;
+      my $trans_families = $transcript->get_families($compara_db);
       while (my ($id, $info) = each (%$trans_families)) {
         if (exists $families->{$id}) {
           push @{$families->{$id}{'transcripts'}}, $transcript;
@@ -450,8 +488,9 @@ sub get_all_families {
 }
 
 sub create_family {
-  my ($self, $id) = @_; 
-  my $databases = $self->database('compara') ;
+  my ($self, $id, $cmpdb) = @_; 
+  $cmpdb ||= 'compara';
+  my $databases = $self->database($cmpdb) ;
   my $family_adaptor;
   eval{ $family_adaptor = $databases->get_FamilyAdaptor };
   if ($@){ warn($@); return {} }

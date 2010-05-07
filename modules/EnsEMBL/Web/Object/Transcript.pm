@@ -395,7 +395,8 @@ sub get_latest_incarnation { return $_[0]->Obj->get_latest_incarnation; }
 # N.B. moved various bits from Translation and Family objects
 sub get_families {
   my $self = shift;
-  my $databases = $self->database('compara');
+  my $cdb = shift || 'compara';
+  my $databases = $self->database($cdb);
 
   # get taxon_id
   my $taxon_id;
