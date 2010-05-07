@@ -96,7 +96,7 @@ sub content {
         my $note = $validator->validate($_) ? encode_entities($_) : $_;
         
         if ($note =~ /: /) {
-          my ($type, $label_html) = split /: /, $note;
+          my ($type, $label_html) = split /: /, $note, 2;
           $self->add_entry({ type => $type, label_html => $label_html });
         } else {
           $self->add_entry({ label_html => $note });
