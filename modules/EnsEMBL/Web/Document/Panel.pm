@@ -392,7 +392,7 @@ sub render {
 sub _caption_with_helplink {
   my $self = shift;
   my $id = $self->{'help'};
-  my $html = '<h2>';
+  my $html = '<h2 class="caption">';
   if ( $id ) {
     $html .= sprintf(' <a href="/Help/View?id=%s" class="popup help-header" title="Click for Help">', encode_entities($id));
   }
