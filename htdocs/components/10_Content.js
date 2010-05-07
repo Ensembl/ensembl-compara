@@ -270,7 +270,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           table.not(':visible').parent().hide(); // Hide the wrapper of already hidden tables
         },
         fnDrawCallback: function (data) {
-          $('.dataTables_info, .dataTables_paginate', $(data.nTable).parent())[data._iDisplayLength == -1 ? 'hide' : 'show']();
+          $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', $(data.nTable).parent())[data._iDisplayLength == -1 ? 'hide' : 'show']();
           
           var sort   = $.map(data.aaSorting, function (s) { return '[' + s.toString().replace(/([a-z]+)/g, '"$1"') + ']'; });
           var hidden = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j });
@@ -290,7 +290,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       if (cookieOptions) {
         cookieOptions = cookieOptions.replace(/#$/, '').split('#');
         
-        options.aaSorting = eval(cookieOptions[0]);
+        var sorting = eval(cookieOptions[0]);
+        
+        if (sorting.length) {
+          options.aaSorting = sorting;
+        }
         
         if (cookieOptions[1]) {
           $.each(cookieOptions[1].split(','), function () {
