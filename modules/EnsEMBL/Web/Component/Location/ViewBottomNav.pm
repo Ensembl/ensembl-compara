@@ -30,6 +30,8 @@ sub content {
   my $cp               = int(($seq_region_end + $seq_region_start) / 2);
   my $wd               = $seq_region_end - $seq_region_start + 1;
   
+  $self->{'update'} = $object->param('update_panel');
+  
   my $values = [
     $self->ajax_url(undef, 1) . ';r=' . $object->param('r'),
     $object->seq_region_name,
@@ -43,7 +45,11 @@ sub content {
     $self->nav_url($seq_region_start + 1e6, $seq_region_end + 1e6)
   ];
   
-  return $object->param('update_panel') ? $self->jsonify($values) : $self->navbar($self->ramp($ramp_entries, $wd, $cp), $wd, $values);
+  my $ramp = $self->ramp($ramp_entries, $wd, $cp);
+  
+  unshift @$values, $ramp if $self->{'update'};
+  
+  return $self->{'update'} ? $self->jsonify($values) : $self->navbar($ramp, $wd, $values);
 }
 
 sub navbar {
@@ -65,7 +71,7 @@ sub navbar {
             <label class="hidden" for="region">Region</label><input name="region" id="region" class="location_selector" style="width:3em" value="%s" type="text" /> :
             <label class="hidden" for="start">Start</label><input name="start" id="start" class="location_selector" style="width:5em" value="%s" type="text" /> - 
             <label class="hidden" for="end">End</label><input name="end" id="end" class="location_selector" style="width:5em" value="%s" type="text" />
-            <input value="Go&gt;" type="submit" class="go-button" />
+            <input value="Go &gt;" type="submit" class="go-button" />
         </form>
       </div>
       <div class="image_nav">
@@ -104,20 +110,35 @@ sub ramp {
   
   my $l = shift @mp;
   
-  foreach (@$ramp_entries) {
-    my $r = shift @mp; 
+  if ($self->{'update'}) {
+    $ramp = 0;
     
-    $ramp .= sprintf(
-      '<a href="%s" name="%d" class="ramp%s"><img title="%d bp" alt="%s bp" src="/i/blank.gif" style="height:%dpx" /></a>',
-      $self->ramp_url($_->[1], @url_params),
-      $_->[1], 
-      $wd > $l && $wd <= $r ? ' selected' : '',
-      $_->[1], 
-      $_->[1],
-      $_->[0]
-    );
-    
-    $l = $r;
+    for (0..$#{@$ramp_entries}) {
+      my $r = shift @mp;
+      
+      if ($wd > $l && $wd <= $r) {
+        $ramp = $_;
+        last;
+      }
+      
+      $l = $r;
+    }
+  } else {
+    foreach (@$ramp_entries) {
+      my $r = shift @mp; 
+      
+      $ramp .= sprintf(
+        '<a href="%s" name="%d" class="ramp%s"><img title="%d bp" alt="%s bp" src="/i/blank.gif" style="height:%dpx" /></a>',
+        $self->ramp_url($_->[1], @url_params),
+        $_->[1], 
+        $wd > $l && $wd <= $r ? ' selected' : '',
+        $_->[1], 
+        $_->[1],
+        $_->[0]
+      );
+      
+      $l = $r;
+    }
   }
   
   return $ramp;
@@ -136,7 +157,7 @@ sub nav_url {
   ($s, $e) = (1, $e - $s || 1) if $s < 1;
   ($s, $e) = ($max - ($e - $s), $max) if $e > $max;
   
-  return $object->seq_region_name . ':' . $s . '-' . $e if $object->param('update_panel');
+  return $object->seq_region_name . ':' . $s . '-' . $e if $self->{'update'};
   
   return $object->_url({ 
     %{$object->multi_params(0)},
