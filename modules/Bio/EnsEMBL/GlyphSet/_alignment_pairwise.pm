@@ -19,6 +19,7 @@ sub render_normal {
   
   my $self_species   = $container->{'web_species'};
   my $length         = $container->length;
+  my $chr            = $container->seq_region_name;
   my $pix_per_bp     = $self->scalex;
   my $draw_cigar     = $pix_per_bp > 0.2;
   my $feature_key    = lc $self->my_config('type');
@@ -65,6 +66,9 @@ sub render_normal {
       y     => 0,
       width => 0
     });
+    
+    (my $url_species = $features[0][1]->species) =~ s/ /_/g;
+    my ($rs, $re) = $self->slice2sr($features[0][1]->start, $features[-1][1]->end);
     
     foreach (@features) {
       my $f = $_->[1];
@@ -152,8 +156,11 @@ sub render_normal {
     $composite->href($self->_url({
       type   => 'Location',
       action => 'PairwiseAlignment',
+      species => $url_species,
+      r       => "$chr:$rs-$re",
       r1     => $features[0][1]->hseqname . ":$hs-$he",
       s1     => $other_species,
+      method => $self->my_config('type'),
       orient => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
     }));
     
