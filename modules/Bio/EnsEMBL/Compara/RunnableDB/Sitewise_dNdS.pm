@@ -245,6 +245,7 @@ sub get_params {
   print("parsing parameter string : ",$param_string,"\n") if($self->debug);
 
   my $params = eval($param_string);
+  if( $@ ){ throw "Problem with parameter string: $@" }
   if(! $params) {
     print 'Output was empty: skipping',"\n" if $self->debug();
   	return;
