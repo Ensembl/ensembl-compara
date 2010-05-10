@@ -112,7 +112,6 @@ sub default_action {
 
 sub _get_valid_action {
   my ($self, $action, $func) = @_;
-  
   my $object = $self->object;
   my $hub = $self->model->hub;  
 
@@ -158,6 +157,7 @@ sub _global_context {
   
   my @data = (
     [ 'Location',   'View',    $core_objects->location_short_caption,   $core_objects->location   ],
+    [ 'LRG',        'Genome',  $core_objects->lrg_short_caption,        $core_objects->lrg,       ],
     [ 'Gene',       'Summary', $core_objects->gene_short_caption,       $core_objects->gene       ],
     [ 'Transcript', 'Summary', $core_objects->transcript_short_caption, $core_objects->transcript ],
     [ 'Variation',  'Summary', $core_objects->variation_short_caption,  $core_objects->variation  ],
