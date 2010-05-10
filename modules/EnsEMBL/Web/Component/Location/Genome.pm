@@ -23,10 +23,11 @@ sub content {
   my $species = $hub->species;
 
   my ($html, $table, $usertable, $features, $has_features, @all_features);
-  
-  if (my $id = $hub->param('id') || $hub->type eq 'LRG') { ## "FeatureView"
+ 
+  if (my $id = $hub->param('id') || $hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
     $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
     $features = $self->model->munge_features_for_drawing;
+    my @A = keys %$features;
     if (keys %$features) { $table = $self->feature_tables($features); }
   } 
 
@@ -222,7 +223,7 @@ sub feature_tables {
       $table->add_columns({'key'=>'names', 'title'=>'Name(s)','width'=>'100px','align'=>'left' });
     } 
     elsif ($feat_type eq 'LRG') {
-      $table->add_columns({'key'=>'lrg',   'title'=>'LRG',  'width' =>'15%','align'=>'left' });
+      $table->add_columns({'key'=>'lrg',   'title'=>'Name',  'width' =>'15%','align'=>'left' });
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
       $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
     }
