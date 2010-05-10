@@ -188,7 +188,16 @@ sub populate_tree {
     [ qw(consequence EnsEMBL::Web::Component::UserData::ConsequenceTool)],
     {'no_menu_entry' => 1}
   ); 
-  
+ 
+  ## FeatureView 
+  $self->create_node('FeatureView', 'Features on Karyotype',
+    [qw(featureview   EnsEMBL::Web::Component::UserData::FeatureView)],
+    {'availability' => @{$self->object->species_defs->ENSEMBL_CHROMOSOMES}},
+  );
+  $self->create_node ('FviewRedirect', '',
+    [], {'command' => 'EnsEMBL::Web::Command::UserData::FviewRedirect', 
+      'no_menu_entry' => 1}
+  ); 
 
 
   ## Data conversion
