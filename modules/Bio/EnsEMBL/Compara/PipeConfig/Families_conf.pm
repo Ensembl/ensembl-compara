@@ -150,8 +150,8 @@ sub pipeline_analyses {
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'input_id' => { 'srs' => 'SWISSPROT', 'tax_div' => '$RangeStart' } },
-                { 'input_id' => { 'srs' => 'SPTREMBL',  'tax_div' => '$RangeStart' } },
+                { 'input_id' => { 'srs' => 'SWISSPROT', 'tax_div' => '_range_start' } },
+                { 'input_id' => { 'srs' => 'SPTREMBL',  'tax_div' => '_range_start' } },
             ],
             -flow_into => {
                 2 => [ 'load_uniprot' ],
@@ -210,7 +210,7 @@ sub pipeline_analyses {
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'input_id' => { 'sequence_id' => '$RangeStart', 'minibatch' => '$RangeCount' }, },
+                { 'input_id' => { 'sequence_id' => '_range_start', 'minibatch' => '_range_count' }, },
             ],
             -wait_for => [ 'copy_blastdb_over' ],
             -flow_into => {
@@ -282,7 +282,7 @@ sub pipeline_analyses {
             -parameters => {
                 'randomize'  => 1,
                 'numeric'    => 1,
-                'input_id'   => { 'family_id' => '$RangeStart' },
+                'input_id'   => { 'family_id' => '_range_start' },
             },
             -hive_capacity => 20, # to enable parallel branches
             -input_ids  => [
@@ -361,7 +361,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'numeric'         => 1,
-                'input_id'        => { 'family_id' => '$RangeStart', 'minibatch' => '$RangeCount'},
+                'input_id'        => { 'family_id' => '_range_start', 'minibatch' => '_range_count'},
                 'fan_branch_code' => 2,
             },
             -hive_capacity => 20, # run the two in parallel and enable parallel branches
