@@ -1653,6 +1653,7 @@ sub get_all_genotypes{
 
 ### Calls for LD view ##########################################################
 
+# FIXME: This function seems to be a duplicate of the one in Component::Location::LD
 sub focus {
   ### Information_panel
   ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
