@@ -21,7 +21,7 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
 ### c
   my $class = shift;
-  my $hub = shift;;
+  my $hub = shift;
 
   my $self = {'_hub'  => $hub, '_data' => []};
 
