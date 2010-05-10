@@ -253,8 +253,6 @@ sub _generate_transcript {
         $t = $a->fetch_by_stable_id($self->param('t')); 
         $self->transcript = $t if $t;
       }
-      $t = $a->fetch_by_stable_id($self->param('t')); 
-      $self->transcript = $t if $t;
     }
     
     $self->{'parameters'}{'t'} = $t->stable_id if $t;
