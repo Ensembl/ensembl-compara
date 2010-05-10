@@ -32,6 +32,7 @@ sub gene       :lvalue { $_[0]->{'objects'}{'gene'};       }
 sub transcript :lvalue { $_[0]->{'objects'}{'transcript'}; }
 sub variation  :lvalue { $_[0]->{'objects'}{'variation'};  }
 sub regulation :lvalue { $_[0]->{'objects'}{'regulation'}; }
+sub lrg        :lvalue { $_[0]->{'objects'}{'lrg'};       }
 
 sub param    { my $self = shift; return $self->{'input'}->param(@_); }
 sub database { my $self = shift; return $self->{'dbc'}->get_DBAdaptor(@_); }
@@ -74,8 +75,9 @@ sub location_short_caption {
   my $self = shift;
   
   return '-' unless $self->location;
-  return 'Genome' if $self->location->isa('EnsEMBL::Web::Fake');
-  
+  if ($self->location->isa('EnsEMBL::Web::Fake')) {
+    return 'Genome';
+  } 
   my $label = $self->location->seq_region_name . ':' . $self->thousandify($self->location->start) . '-' . $self->thousandify($self->location->end);
   
   return "Location: $label";
@@ -98,6 +100,19 @@ sub regulation_short_caption {
   return 'Regulation: ' . $self->regulation->stable_id;
 }
 
+sub lrg_short_caption {
+  my $self = shift;
+  return '-' unless $self->lrg;
+  my $label = $self->lrg->stable_id;
+  return $label ? "LRG: $label" : 'LRGs';
+}
+
+sub lrg_long_caption {
+  my $self = shift;
+  return '-' unless $self->lrg;
+  return $self->lrg->stable_id;
+}
+
 sub _generate_objects {
   my $self = shift;
 
@@ -107,6 +122,7 @@ sub _generate_objects {
   $self->_generate_variation  if $self->param('v');
   $self->_generate_transcript;
   $self->_generate_gene;
+  $self->_generate_lrg;
   $self->_generate_location;
   
   $self->param($_, $self->{'parameters'}->{$_}) for keys %{$self->{'parameters'}};
@@ -221,12 +237,22 @@ sub _generate_transcript {
   if ($self->param('t')) {    
     my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
     
-    if ($t) {
-      $self->transcript = $t;
-      $self->_get_gene_location_from_transcript($tdb_adaptor);
-    } else {
-      my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+    if ($tdb_adaptor) {
+      my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
       
+      if ($t) {
+        $self->transcript = $t;
+        if ($t->stable_id =~ /LRG/) {
+          $self->_get_lrg_location_from_transcript;
+        } else {
+          $self->_get_gene_location_from_transcript;
+        }
+      } else {
+        my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+        
+        $t = $a->fetch_by_stable_id($self->param('t')); 
+        $self->transcript = $t if $t;
+      }
       $t = $a->fetch_by_stable_id($self->param('t')); 
       $self->transcript = $t if $t;
     }
@@ -364,6 +390,23 @@ sub _generate_regulation {
   }
 }
 
+sub _generate_lrg {
+  my $self = shift;
+  if ($self->{'parameters'}{'lrg'}) {
+    $self->{'parameters'}{'db'} ||= 'core';
+    my $db_adaptor = $self->database($self->{'parameters'}{'db'});
+    my $t = $db_adaptor->get_SliceAdaptor->fetch_by_region( $self->{'parameters'}{'lrg'} );
+    $self->timer_push( 'LRG fetched', undef, 'fetch' );
+    if ($t) {
+      $self->lrg( $t );
+    }
+  }
+  else {
+    $self->lrg = new EnsEMBL::Web::Fake({ view => 'Genome', type => 'LRG' });
+  }
+}
+
+
 sub _get_slice {
   my $self = shift;
   my ($r, $s, $e) = @_;
@@ -406,5 +449,22 @@ sub _get_gene_location_from_transcript {
   $self->gene = $db_adaptor->get_GeneAdaptor->fetch_by_transcript_stable_id($self->transcript->stable_id);
   $self->_generate_location($self->transcript->feature_Slice);        
 }
+
+sub _get_lrg_location_from_transcript {
+  my $self = shift;
+
+  return unless $self->transcript;
+
+  my $slice = $self->transcript->feature_Slice;
+  my $tdb = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
+  my $tdb_adaptor = $self->database($tdb);
+
+  my $lrg = $tdb_adaptor->get_SliceAdaptor->fetch_by_region( undef,      $slice->seq_region_name );
+  if( $lrg ) {
+      $self->lrg( $lrg );
+  }
+  $self->location($lrg->feature_Slice);
+}
+
 
 1;
