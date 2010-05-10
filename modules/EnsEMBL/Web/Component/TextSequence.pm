@@ -255,7 +255,12 @@ sub get_sequence_data {
       
       if ($config->{'exon_features'}) {
         push @all_exons, [ 'gene', $_ ] for @{$config->{'exon_features'}};
-        $config->{'gene_exon_type'} = $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon') ? 'exons' : 'features';
+        if ($config->{'exon_features'} && $config->{'exon_features'}->[0] && $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon')) {
+          $config->{'gene_exon_type'} = 'exons';
+        }
+        else {
+          $config->{'gene_exon_type'} = 'features';
+        }
       }
       
       foreach (@all_exons) {
