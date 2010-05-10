@@ -122,7 +122,7 @@ sub _generate_objects {
   $self->_generate_variation  if $self->param('v');
   $self->_generate_transcript;
   $self->_generate_gene;
-  $self->_generate_lrg;
+  $self->_generate_lrg if $ENV{'ENSEMBL_TYPE'} eq 'LRG';
   $self->_generate_location;
   
   $self->param($_, $self->{'parameters'}->{$_}) for keys %{$self->{'parameters'}};
