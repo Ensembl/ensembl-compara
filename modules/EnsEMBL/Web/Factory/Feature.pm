@@ -25,6 +25,7 @@ use EnsEMBL::Web::Data::Bio::AlignFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFactor;
 use EnsEMBL::Web::Data::Bio::Xref;
+use EnsEMBL::Web::Data::Bio::LRG;
 
 use base qw(EnsEMBL::Web::Factory);
 
@@ -48,7 +49,7 @@ sub createObjects {
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   }
   else {
-    if ($hub->type eq 'LRG') {
+    if ($hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') {
       $feature_type = 'LRG';
     }
     else {
@@ -359,23 +360,42 @@ sub _create_LRG {
 ### Args: none
 ### Returns: hashref containing Bio::EnsEMBL::Slice objects
   my $self = shift;
-  my $db_adaptor  = $self->hub->database('core');
+  my $hub = $self->hub;
+  my $db_adaptor  = $hub->database('core');
   unless( $db_adaptor ){
     $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." );
     return undef;
   }
-  my $adaptor = $db_adaptor->get_SliceAdaptor;
+
+  ## Get LRG slices
+  my $sa = $db_adaptor->get_SliceAdaptor;
   my $slices = [];
-  if ($self->hub->param('id')) {
-    my @ids = ($self->hub->param('id'));
+  if ($hub->param('id')) {
+    my @ids = ($hub->param('id'));
     foreach my $id (@ids) {
-      push @$slices, $adaptor->fetch_by_region('lrg', $id);
+      push @$slices, $sa->fetch_by_region('lrg', $id);
     }
   }
   else {
-    $slices = $adaptor->fetch_all('lrg');
+    $slices = $sa->fetch_all('lrg', '', 1);
   }
-  return {'Slice' => EnsEMBL::Web::Data::Bio::Slice->new($self->hub, @$slices)};
+ 
+  ## Map slices to chromosomal coordinates
+  my $mapped_slices = [];
+  my $csa    = $hub->database('core',$hub->species)->get_CoordSystemAdaptor;
+  my $ama    = $hub->database('core', $hub->species)->get_AssemblyMapperAdaptor;
+  my $old_cs = $csa->fetch_by_name('lrg');
+  my $new_cs = $csa->fetch_by_name('chromosome', $hub->species_defs->ASSEMBLY_NAME);
+  my $mapper = $ama->fetch_by_CoordSystems($old_cs, $new_cs);
+
+  foreach my $s (@$slices) {
+    my @coords = $mapper->map($s->seq_region_name, $s->start, $s->end, $s->strand, $old_cs);
+    foreach (@coords) {
+      push @$mapped_slices, {'lrg' => $s, 'chr' => $sa->fetch_by_seq_region_id($_->id, $_->start, $_->end)};
+    }
+  }
+ 
+  return {'LRG' => EnsEMBL::Web::Data::Bio::LRG->new($self->hub, @$mapped_slices)};
 }
 
 sub _generic_create {
