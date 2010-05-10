@@ -56,7 +56,6 @@ sub init {
   }
 
   $self->load_tracks;
-  $self->load_configured_das('strand' => 'r');
 
   $self->modify_configs(
     [ 'transcript' ],
@@ -76,6 +75,9 @@ sub init {
     [ 'variation_feature_structural' ],
     { qw(display normal menu yes) }
   );
+
+  $self->load_configured_das('strand' => 'r');
+
 
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
