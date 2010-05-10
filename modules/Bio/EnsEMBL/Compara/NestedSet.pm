@@ -578,8 +578,7 @@ sub num_leaves {
    my $left = $self->left_index;
    my $right = $self->right_index;
 
-   return undef unless (defined($left) && defined($right));
-   return undef if ($left = 0 || $right = 0);
+   return unless( $left && $right );
 
    my $num = $right - $left + 1;
    my $num_leaves = ( ($num/2) + 1 ) / 2;
