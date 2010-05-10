@@ -19,6 +19,7 @@ sub init {
   });
 
   $self->create_menus(
+    'lrg'        => 'LRG transcripts',
     'transcript' => 'Other genes',
     'prediction' => 'Prediction transcripts',
     'other'      => 'Decorations',
@@ -30,6 +31,19 @@ sub init {
   );
 
   $self->load_tracks();
+
+  # FIXME - should surely come from db?
+  $self->add_tracks('lrg',
+    [ 'lrg_transcript',  'LRG', '_lrg_transcript',
+      { display => 'normal',
+  name => 'LRG transcripts', 
+  description => 'Shows LRG transcripts',
+  logicnames=>['LRG_download'],
+  logic_name=>'LRG_download',
+        'colours'     => $self->species_defs->colour( 'gene' ),
+        'label_key'   => '[display_label]',
+}],
+  );
 
   $self->modify_configs(
     [qw(transcript prediction)],

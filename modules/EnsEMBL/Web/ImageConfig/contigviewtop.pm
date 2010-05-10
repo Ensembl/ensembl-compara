@@ -7,7 +7,7 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub mergeable_config {
-  return 0;
+  return 1;
 }
 
 sub init {
@@ -30,6 +30,7 @@ sub init {
     sequence    => 'Sequence',
     marker      => 'Markers',
     transcript  => 'Genes', 
+    misc_feature  => 'Misc. regions',
     synteny     => 'Synteny',
     variation   =>  'Variation',
     decorations => 'Additional features',
@@ -47,17 +48,26 @@ sub init {
     [ 'draggable', '', 'draggable', { display => 'normal', menu => 'no' }]
   );
   
+#  $self->add_track( 'misc_feature', 'lrg', 'LRG', '_lrg',  { display => 'normal' });
+
+
   $self->modify_configs(
     [ 'transcript' ],
     { qw(render gene_label strand r) }
   );
+
+  $self->modify_configs(
+    [ 'misc_feature_lrg' ],
+    { qw(render gene_label strand r) }
+  );
+
   $self->modify_configs(
     [ 'variation' ],
     { qw(display off menu no) }  
   );
   $self->modify_configs(
     [ 'variation_feature_structural' ],
-    { qw(display off menu yes) }
+    { qw(display normal menu yes) }
   );
 
 }
