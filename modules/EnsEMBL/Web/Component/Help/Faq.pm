@@ -36,6 +36,7 @@ sub content {
     my $style = 'text-align:right;margin-right:2em';
 
     foreach my $faq (@faqs) {
+      next unless $faq;
 
       $html .= sprintf(qq(<h3 id="faq%s">%s</h3>\n<p>%s</p>), $faq->help_record_id, $faq->question, $faq->answer);
       if ($object->param('feedback') && $object->param('feedback') == $faq->help_record_id) {
