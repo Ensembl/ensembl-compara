@@ -85,22 +85,35 @@ sub object {
   return $self->{'_objects'}{$type}[0];
 }
 
+sub api_object {
+### returns the underlying API object(s)
+  my ($self, $type, $subtype) = @_;
+  my $object = $self->{'_objects'}{$type}[0];
+  return unless $object;
+  if ($type eq 'Location') {
+    return $object->slice;
+  }
+  else {
+    return $object->Obj;
+  }
+}
+
+
 sub add_objects {
 ### Adds domain objects created by the factory to this Model
   my ($self, $data, $type) = @_;
   return unless $data;
-  $type ||= $self->hub->factorytype;
 
   ### Proxy Object(s)
   if (ref($data) eq 'ARRAY') {
-    foreach my $proxy_object (@$data) {
-      $self->object($type, $proxy_object);
-    }
-  }
-  ### Other object type
-  elsif (ref($data) eq 'HASH') {
-    while (my ($key, $object) = each (%$data)) {
-      $self->object($key, $object);
+    foreach my $object (@$data) {
+      if (ref($object) =~ /Object/) {
+        $self->object($object->__objecttype, $object);
+      }
+      ### Other object type
+      else {
+        $self->object($type, $object);
+      }
     }
   }
 }
