@@ -75,7 +75,7 @@ sub populate_tree {
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
       summary  EnsEMBL::Web::Component::Variation::Compara_Alignments
     )],
-    { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Evolutionary or Phylogenetic Context' }
+    { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
 
   # External Data tree, including non-positional DAS sources
