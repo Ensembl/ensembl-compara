@@ -48,6 +48,30 @@ sub id {
 sub model { return $_[0]->{'model'}; }
 sub hub { return $_[0]->{'model'}{'_hub'}; }
 
+sub content_pan_compara {
+  my $self = shift;
+  return $self->content('compara_pan_ensembl');
+}
+
+sub content_text_pan_compara {
+  my $self = shift;
+  return $self->content_text('compara_pan_ensembl');
+}
+
+sub content_align_pan_compara {
+  my $self = shift;
+  return $self->content_align('compara_pan_ensembl');
+}
+
+sub content_ensembl_pan_compara {
+  my $self = shift;
+  return $self->content_ensembl('compara_pan_ensembl');
+}
+sub content_other_pan_compara {
+  my $self = shift;
+  return $self->content_other('compara_pan_ensembl');
+}
+
 sub object {
 ## Tries to be backwards compatible!
   my $self = shift;
@@ -515,10 +539,15 @@ sub transcript_table {
       $acc = $object->Obj->stable_id;
       $description .= sprintf ' <span class="small">%s</span>', $object->get_ExtURL_link("Source: $edb", $edb . '_' . lc $page_type, $acc);
     } else {
-      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-      $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
-      ($edb, $acc) = ($1, $2);
-      $description .= sprintf ' <span class="small">%s</span>', $object->get_ExtURL_link("Source: $edb $acc", $edb, $acc) if $acc ne 'content';
+        $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
+        $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
+        ($edb, $acc) = ($1, $2);
+
+	my $l1 =  $object->get_ExtURL($edb, $acc);
+	$l1 =~ s/\&amp\;/\&/g;
+	my $t1 = "Source: $edb $acc";
+	my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
+        $description .= qq( <span class="small">@{[ $link ]}</span>) if ($acc ne 'content');
     }
     
     $description = "<p>$description</p>";
