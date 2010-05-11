@@ -84,10 +84,6 @@ sub pointer_default {
   return $hash{$feature_type};
 }
 
-sub colour_array {
-  return [qw(red blue green purple orange grey brown magenta darkgreen darkblue violet darkgrey)];
-}
-
 # Adds a set of userdata pointers to vertical drawing code
 sub create_user_set {
   my ($self, $image, $colours) = @_;
