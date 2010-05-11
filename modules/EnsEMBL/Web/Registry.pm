@@ -128,7 +128,14 @@ sub initialize_user {
   my $id = $arg_ref->{'cookie'}->get_value;
 
   if ($id) {
-    $self->set_user(EnsEMBL::Web::Data::User->new($id));
+      # try to log in with user id from cookie
+      eval { $self->set_user(EnsEMBL::Web::Data::User->new($id)) };
+      if ($@) {
+	  # login failed (because the connection to the used db has gone away)
+	  # so log the user out by clearing the cookie
+	  $arg_ref->{'cookie'}->clear($arg_ref->{'r'});
+	  $self->set_user(undef);
+      }
   } else {
     $self->set_user(undef);
   }
