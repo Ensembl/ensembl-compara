@@ -1118,16 +1118,6 @@ sub _munge_meta {
     $self->tree->{$species}{'SPECIES_BIO_NAME'} = $bioname;
     $self->tree->{$species}{'SPECIES_BIO_SHORT'} = $bioshort;
 
-# Now make all meta keys available via species defs, you just need to replace non-alpha numeric characters with underscores, e.g
-# species.stable_id_prefix can be accessed via species_defs->SPECIES_STABLE_ID_PREFIX
-    foreach my $key ( keys %$meta_hash ) {
-	(my $mkey = uc($key)) =~ s/[^\w]/_/g;
-	if( (ref($meta_hash->{$key} eq 'ARRAY')) && (ref($meta_hash->{$key} eq 'ARRAY')) ) {
-	  @{$self->tree($species)->{$mkey}} = @{$meta_hash->{$key}};
-	} else {
-	  $self->tree($species)->{$mkey} = $meta_hash->{$key};
-	}
-    }
 
     if ($self->tree->{'ENSEMBL_SPECIES'}) {
       push @{$self->tree->{'DB_SPECIES'}}, $species;
