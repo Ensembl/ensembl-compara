@@ -35,6 +35,7 @@ sub content {
       { key => 'chr' ,      sort => 'position', title => 'Chr: bp'                           },
       { key => 'Alleles',   sort => 'string',   align => 'center'                            },
       { key => 'Ambiguity', sort => 'string',   align => 'center'                            },
+      { key => 'HGVS',      sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
       { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
       { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
       { key => 'class',     sort => 'string',   title => 'Class',          align => 'center' },
@@ -80,6 +81,9 @@ sub variation_table {
     my $validation           = $snp->get_all_validation_states || [];
     my $variation_name       = $snp->variation_name;
     my $transcript_variation = $snps{$raw_id};
+    my @hgvs = @{$snp->get_all_hgvs_notations($object->param('hgvs') eq 'transcript' ? ($object->transcript, 'c') : ($object->gene, 'g'))};
+    s/ENS(...)?[TG]\d+\://g for @hgvs;
+    my $hgvs = join ", ", @hgvs;
     
     if ($transcript_variation && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
       my $url = $object->_url({ type => 'Variation', action => 'Summary', v => $variation_name, vf => $raw_id, source => $snp->source }); 
@@ -89,6 +93,7 @@ sub variation_table {
         class     => $snp->var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $snp->var_class,
         Alleles   => $snp->allele_string,
         Ambiguity => $snp->ambig_code,
+        HGVS      => ($hgvs || '-'),
         status    => (join(', ',  @$validation) || '-'),
         chr       => "$chr:$start" . ($start == $end ? '' : "-$end"),
         Source    => (join ', ', @{$snp->get_all_sources||[]}) || '-',
