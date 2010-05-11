@@ -197,7 +197,26 @@ sub flat {
   my $slice = $self->slice;
   my $params = $self->params;
   
-  my $seq_dumper = new EnsEMBL::Web::SeqDumper;
+
+  my $dumper_params = {};
+# Check where the data came from.
+  if ( my $plist = $object->species_defs->PROVIDER_NAME) {
+      my @providers = ref $plist eq 'ARRAY' ? @$plist : ($plist);
+      my $purls = $object->species_defs->PROVIDER_URL;
+      my @providers_url =  ref $purls eq 'ARRAY' ? @$purls : ($purls);
+      my @plist;
+
+      foreach my $p (@providers) {
+	  my $ds = $p;
+	  if (my $purl = shift @providers_url) {
+	      $ds .= " ( $purl )";
+	  }
+	  push @plist, $ds;
+      }
+      $dumper_params->{_data_source} = join ', ' , @plist;
+  }
+
+  my $seq_dumper = new EnsEMBL::Web::SeqDumper(undef, $dumper_params);
 
   foreach (qw( genscan similarity gene repeat variation contig marker )) {
     $seq_dumper->disable_feature_type($_) unless $params->{$_};
