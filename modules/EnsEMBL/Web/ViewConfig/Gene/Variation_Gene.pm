@@ -11,6 +11,7 @@ sub init {
   $view_config->_set_defaults(qw(
     panel_image          on 
     context              FULL
+    hgvs                 transcript
     panel_transcript     on
     image_width          800
     reference),          ''
@@ -131,6 +132,17 @@ sub form {
       { value => '2000', name => '2000bp' },
       { value => '5000', name => '5000bp' },
       { value => 'FULL', name => 'Full Introns' }
+    ]
+  });
+  
+  $view_config->add_form_element({
+    type   => 'DropDown',
+    select => 'select',
+    name   => 'hgvs',
+    label  => 'Show HGVS notation relative to',
+    values => [
+      { value => 'transcript',   name => 'Transcript' },
+      { value => 'gene',   name => 'Gene' },
     ]
   });
 }
