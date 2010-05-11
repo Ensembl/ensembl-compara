@@ -54,7 +54,7 @@ sub availability {
         $availability->{'variation'} = 1;
       }
       
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments);
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments ldpops);
     }
     
     $self->{'_availability'} = $availability;
@@ -82,6 +82,7 @@ sub counts {
     $counts->{'populations'} = $self->count_populations;
     $counts->{'individuals'} = $self->count_individuals;
     $counts->{'ega'}         = $self->count_ega;
+    $counts->{'ldpops'}      = $self->count_ldpops;
     $counts->{'alignments'}  = $self->count_alignments->{'multi'};
     
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
@@ -163,6 +164,14 @@ sub count_individuals {
   }
 
   return scalar keys %sample_ids_for_variation;
+}
+
+sub count_ldpops {
+  my $self = shift;
+  my $pa  = $self->database('variation')->get_PopulationAdaptor;
+  my $count = scalar @{$pa->fetch_all_LD_Populations};
+  
+  return ($count > 0 ? $count : undef);
 }
 
 sub short_caption {
