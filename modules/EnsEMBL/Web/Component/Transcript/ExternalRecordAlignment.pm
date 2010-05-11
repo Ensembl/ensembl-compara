@@ -29,9 +29,11 @@ sub content {
   my $tsi = $object->stable_id;
   my $input = $object->input;
   my $hit_id = $input->{'sequence'}->[0];
+# Check if there is external db name argument
+  my $ext_db = $input->{'extdb'}->[0];
 
   #get external sequence and type (DNA or PEP)
-  my $ext_seq = $object->get_ext_seq( $hit_id);
+  my $ext_seq = $object->get_ext_seq( $hit_id, $ext_db);
   $ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
   my $seq_type = $object->determine_sequence_type( $ext_seq );
 
