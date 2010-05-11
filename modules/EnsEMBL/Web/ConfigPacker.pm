@@ -40,6 +40,7 @@ sub munge_databases_multi {
   my $self = shift;
   $self->_summarise_website_db;
   $self->_summarise_compara_db('compara', 'DATABASE_COMPARA');
+  $self->_summarise_compara_db('compara_pan_ensembl', 'DATABASE_COMPARA_PAN_ENSEMBL');
   $self->_summarise_ancestral_db('core', 'DATABASE_CORE');
   $self->_summarise_go_db;
 }
@@ -1058,6 +1059,11 @@ sub _munge_meta {
     assembly.name               ASSEMBLY_DISPLAY_NAME
     liftover.mapping            ASSEMBLY_MAPPINGS
     genebuild.method            GENEBUILD_METHOD
+    provider.name      PROVIDER_NAME
+    provider.url       PROVIDER_URL
+    provider.logo      PROVIDER_LOGO
+    species.strain     SPECIES_STRAIN
+    species.sql_name   SYSTEM_NAME
   );
   my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 
