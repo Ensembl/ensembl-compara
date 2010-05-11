@@ -60,6 +60,11 @@ sub populate_tree {
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
   
+  $self->create_node('HighLD', 'Linked variations',
+    [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
+    { 'availability' => 'variation has_ldpops', 'concise' => 'Other variations in strong linkage disequilibrium' }
+  );
+  
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Phenotype )],
     { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
