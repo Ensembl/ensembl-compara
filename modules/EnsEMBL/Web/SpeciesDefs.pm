@@ -1142,7 +1142,6 @@ sub species_display_label {
 
   my $site_hash = $self->ENSEMBL_SPECIES_SITE($current_species);
   my $url_hash  = $self->ENSEMBL_EXTERNAL_URLS($current_species);
-  (my $nospaces = $species) =~ s/ /_/g;
   
   return $site_hash->{$ss} ? $species : 'Ancestral sequence';
 }
