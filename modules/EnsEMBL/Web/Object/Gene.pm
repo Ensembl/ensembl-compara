@@ -79,6 +79,14 @@ sub availability {
 						     );
 	  $availability->{'family_pan_ensembl'}     = !!$res2;
 	  $availability->{'family'}     = 1; # has to enable other family - otherwise nothing get displayed
+
+	  my $gene_tree_pan   = $self->get_ProteinTree('compara_pan_ensembl');
+	  my $has_gene_tree_pan;
+      
+	  if ($gene_tree_pan) {
+	      eval { $has_gene_tree_pan = !!$gene_tree_pan->get_leaf_by_Member($self->{'_member_compara'}); }
+	  }
+	  $availability->{'has_gene_tree_pan'} = $has_gene_tree_pan;
       }
 
 
