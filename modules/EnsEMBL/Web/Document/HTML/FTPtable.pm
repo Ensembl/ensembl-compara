@@ -20,7 +20,7 @@ sub render {
 
 <tr>
 <th>Species</th>
-<th colspan="9" style="text-align:center">Files</th>
+<th colspan="11" style="text-align:center">Files</th>
 </tr>
 
 );
@@ -29,10 +29,14 @@ sub render {
   my $class;
   foreach my $spp (sort @{$species_defs->ENSEMBL_DATASETS}) {
     (my $sp_name = $spp) =~ s/_/ /;
-     my $sp_dir =lc($spp);
-     my $sp_var = lc($spp).'_variation';
-     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
-     my $emf = '-';
+    my $sp_dir =lc($spp);
+    my $sp_var = lc($spp).'_variation';
+    my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
+    my $ncrna = '-';
+    if ($sp_dir =~ /homo_sapiens/) {
+      $ncrna = qq(<a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/ncrna/">FASTA</a> (ncRNA));
+    }
+    my $emf = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
       $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/$sp_var/">EMF</a>);
     }
@@ -48,6 +52,7 @@ sub render {
 <td><strong><i>$sp_name</i></strong> ($common)</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/dna/">FASTA</a> (DNA)</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/cdna/">FASTA</a> (cDNA)</td>
+<td>$ncrna</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/pep/">FASTA</a> (protein)</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_embl/$sp_dir/">EMBL</a></td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_genbank/$sp_dir/">GenBank</a></td>
@@ -70,6 +75,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
+<td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_mysql/">mySQL</a></td>
 <td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/">EMF</a></td>
@@ -78,6 +84,7 @@ sub render {
 </tr>
 <tr class="$rev">
 <td><strong>Ensembl Mart</strong></td>
+<td>-</td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
