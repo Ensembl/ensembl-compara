@@ -39,20 +39,23 @@ sub content {
   $table->add_columns(
     { key => 'gene',      title => 'Gene',                            sort => 'html'                        },
     { key => 'trans',     title => 'Transcript',                      sort => 'html'                        },
-    { key => 'type',      title => 'Type'  ,                          sort => 'string'                      },     
+    { key => 'type',      title => 'Type'  ,                          sort => 'string'                      },
+    { key => 'hgvs',      title => 'HGVS names'  ,                    sort => 'string'                      },     
     { key => 'trans_pos', title => 'Relative position in transcript', sort => 'position', align => 'center' },
     { key => 'prot_pos',  title => 'Relative position in protein',    sort => 'position', align => 'center' },
     { key => 'aa',        title => 'Amino acid',                      sort => 'string'                      }
   );
   
   my $gene_adaptor = $object->database('core')->get_GeneAdaptor;
+  my $trans_adaptor = $object->database('core')->get_TranscriptAdaptor;
   my $flag;
   
   foreach my $varif_id (grep $_ eq $object->param('vf'), keys %mappings) {
     foreach my $transcript_data (@{$mappings{$varif_id}{'transcript_vari'}}) {
       my $gene       = $gene_adaptor->fetch_by_transcript_stable_id($transcript_data->{'transcriptname'}); 
       my $gene_name  = $gene ? $gene->stable_id : '';
-      my $trans_name = $transcript_data->{'transcriptname'}; 
+      my $trans_name = $transcript_data->{'transcriptname'};
+      my $trans      = $trans_adaptor->fetch_by_stable_id($trans_name);
       
       my $gene_url = $object->_url({
         type   => 'Gene',
@@ -73,12 +76,20 @@ sub content {
         v      => $name,
         source => $source
       });
+      
+      # HGVS      
+      my @vfs = grep {$_->dbID eq $varif_id} @{$object->vari->get_all_VariationFeatures};
+      my @hgvs = @{$vfs[0]->get_all_hgvs_notations($gene, 'g')};
+      push @hgvs, @{$vfs[0]->get_all_hgvs_notations($trans, 'c')};
+      s/ENS(...)?[TG]\d+\://g for @hgvs;
+      my $hgvs = join ", ", @hgvs;
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
       my $row = {
         gene      => qq{<a href="$gene_url">$gene_name</a>},
         trans     => qq{<a href="$transcript_url">$trans_name</a>},
         type      => $transcript_data->{'conseq'},
+        hgvs      => ($hgvs || '-'),
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}),
         prot_pos  => $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}),
         aa        => $transcript_data->{'pepallele'} || 'n/a'

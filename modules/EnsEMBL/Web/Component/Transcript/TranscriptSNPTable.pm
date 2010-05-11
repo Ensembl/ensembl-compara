@@ -44,6 +44,7 @@ sub content {
       { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
       { key => 'Alleles',     sort => 'string',   title => ucfirst "$strain_name genotype" },
       { key => 'Ambiguity',   sort => 'string',   title => 'Ambiguity'                     },
+      { key => 'HGVS',        sort => 'string',   title => 'HGVS name(s)'                  },
       { key => 'Codon',       sort => 'html',     title => 'Transcript codon'              },
       { key => 'cdscoord',    sort => 'numeric',  title => 'CDS coord.'                    },
       { key => 'aachange',    sort => 'string',   title => 'AA change'                     },
@@ -171,7 +172,10 @@ sub get_page_data {
       my $vid = $allele->variation_name;
       my $source = $allele->source;
       my $vf = $allele->variation->dbID; 
-      my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });       
+      my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });
+      my @hgvs = @{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
+      s/ENS(...)?[TG]\d+\://g for @hgvs;
+      my $hgvs = join ", ", @hgvs;
  
       my $row = {
         'ID'          =>  qq(<a href = $url>@{[$allele->variation_name]}</a>),
@@ -180,6 +184,7 @@ sub get_page_data {
         'ref_alleles' => $allele->ref_allele_string || "-",
         'Alleles'     => $allele->allele_string || "-",
         'Ambiguity'   => $object->ambig_code($allele),
+        'HGVS'        => ($hgvs || '-'),
         'Status'      => $status,
         'chr'         => "$chr:$pos",
         'Codon'       => $codon || "-",
