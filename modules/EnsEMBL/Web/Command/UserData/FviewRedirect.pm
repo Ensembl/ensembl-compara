@@ -17,7 +17,13 @@ sub process {
     s/^\s+//;
     s/\s+$//;
   }
-  my $params = {'ftype' => $object->param('ftype'), 'id' => \@ids, 'reload' => 1};
+  my $params = {
+    'ftype' => $object->param('ftype'), 
+    'id' => \@ids,
+    'colour' => $object->param('colour'), 
+    'style' => $object->param('style'), 
+    'reload' => 1,
+  };
 
 =pod
   my $chr = $object->param('chr');

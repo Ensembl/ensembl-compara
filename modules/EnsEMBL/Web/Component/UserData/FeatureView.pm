@@ -79,6 +79,36 @@ Using this form, you can select Ensembl features to display on a karyotype (form
   );
 =cut
 
+  my @colours;
+  foreach my $colour (@{$self->colour_array}) {
+    my $colourname = ucfirst($colour);
+    $colourname =~ s/Dark/Dark /;
+    push @colours, {'name' => ucfirst($colourname), 'value' => $colour};
+  }
+  $form->add_element(
+      'type'    => 'DropDown',
+      'name'    => 'colour',
+      'label'   => 'Colour',
+      'values'  => \@colours,
+      'select'  => 'select',
+  );
+
+  my @styles = (
+    {'value' => 'rharrow',   'name' => 'Arrow on lefthand side'},
+    {'value' => 'lharrow',   'name' => 'Arrow on righthand side'},
+    {'value' => 'bowtie',    'name' => 'Arrows on both sides'},
+    {'value' => 'wideline',  'name' => 'Line'},
+    {'value' => 'widebox',   'name' => 'Box'},
+  );
+  $form->add_element(
+      'type'    => 'DropDown',
+      'name'    => 'style',
+      'label'   => 'Pointer style',
+      'values'  => \@styles,
+      'select'  => 'select',
+  );
+
+
   $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => 'Show features', 'classes' => ['submit', 'modal_close']);
   $form->add_element('type' => 'ForceReload');
 

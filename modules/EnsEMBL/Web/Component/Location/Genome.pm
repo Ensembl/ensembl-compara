@@ -118,8 +118,8 @@ sub content {
             'config_name'   => 'Vkaryotype',
             'features'      => $set->[0],
             'feature_type'  => $feat_type,
-            'color'         => $defaults->[0],
-            'style'         => $defaults->[1],
+            'color'         => $hub->param('colour') || $defaults->[0],
+            'style'         => $hub->param('style') || $defaults->[1],
           });
           
           push(@$pointers, $pointer_ref);
