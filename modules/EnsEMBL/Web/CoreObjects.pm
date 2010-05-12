@@ -243,9 +243,9 @@ sub _generate_transcript {
       if ($t) {
         $self->transcript = $t;
         if ($t->stable_id =~ /LRG/) {
-          $self->_get_lrg_location_from_transcript;
+          $self->_get_lrg_location_from_transcript($tdb_adaptor);
         } else {
-          $self->_get_gene_location_from_transcript;
+          $self->_get_gene_location_from_transcript($tdb_adaptor);
         }
       } else {
         my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
@@ -449,19 +449,17 @@ sub _get_gene_location_from_transcript {
 }
 
 sub _get_lrg_location_from_transcript {
-  my $self = shift;
+  my ($self, $db_adaptor) = @_;
 
   return unless $self->transcript;
 
   my $slice = $self->transcript->feature_Slice;
-  my $tdb = $self->{'parameters'}{'db'} = $self->param('db') || 'core';
-  my $tdb_adaptor = $self->database($tdb);
+  my $lrg   = $db_adaptor->get_SliceAdaptor->fetch_by_region(undef, $slice->seq_region_name );
 
-  my $lrg = $tdb_adaptor->get_SliceAdaptor->fetch_by_region( undef,      $slice->seq_region_name );
-  if( $lrg ) {
-      $self->lrg( $lrg );
+  if ($lrg) {
+    $self->lrg($lrg);
+    $self->location($lrg->feature_Slice);
   }
-  $self->location($lrg->feature_Slice);
 }
 
 
