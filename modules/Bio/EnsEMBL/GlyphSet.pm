@@ -1017,7 +1017,7 @@ sub gene_key {
 
 sub sort_features_by_priority {
   my ($self, %features) = @_;
-  my @sorted;
+  my @sorted = keys %features;
 
   my $prioritize = 0;
   while (my ($k, $v) = each (%features)) {
@@ -1026,8 +1026,6 @@ sub sort_features_by_priority {
     }
   }
   if ($prioritize) {
-    foreach my $f (keys %features) {
-    }
     @sorted = sort {
       ($features{$b}->[1]{'priority'} || 0) <=> ($features{$a}->[1]{'priority'} || 0)
       } keys %features;
