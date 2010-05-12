@@ -8,9 +8,6 @@ use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Root;
 use List::MoreUtils;
-use Data::Dumper;
-
-our ($nearest_region, $nearest_start, $nearest_end, $done);    
 
 sub new {
   my ($class, $species_defs, $location) = @_;
@@ -26,6 +23,7 @@ sub new {
   'tracks'            => {},
   'filter'            => undef,
   '_current_key'      => 'default',
+  '_find_nearest'     => {},
   };
   my $all_chrs = $species_defs->ALL_CHROMOSOMES;
   foreach my $chr (@{$data->{'drawn_chrs'}}) {
@@ -126,7 +124,6 @@ sub parse {
     foreach my $row ( split /\n|\r/, $data ) { 
       ## Clean up the row
       next if $row =~ /^#/;
-      #warn "... ROW $row";
       $row =~ s/[\t\r\s]+$//g;
       $row =~ tr/\x80-\xFF//d;
       next unless $row;
@@ -160,7 +157,7 @@ sub parse {
           $chr =~ s/chr//;
 
           ## We currently only do this on initial upload (by passing current location)  
-          $done = $self->_find_nearest(
+          $self->{'_find_nearest'}{'done'} = $self->_find_nearest(
                       {
                         'region'  => $current_region, 
                         'start'   => $current_start, 
@@ -173,7 +170,7 @@ sub parse {
                         'end'     => $end,
                         'index'   => List::MoreUtils::first_index {$_ eq $chr} @{$self->drawn_chrs},
                       }
-            ) unless $done;
+            ) unless $self->{'_find_nearest'}{'done'};
           
           if (keys %$valid_coords && scalar(@$columns) >1 && $format ne 'SNP') { 
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
@@ -214,11 +211,13 @@ sub parse {
     }
     $self->{'feature_count'} = $count;
     ## Extend sample coordinates a bit!
-    if ($nearest_region) {
-      my $midpoint = int(abs($nearest_start - $nearest_end)/2) + $nearest_start;
+    if ($self->{'_find_nearest'}{'nearest_region'}) {
+      my $midpoint = int(abs($self->{'_find_nearest'}{'nearest_start'} 
+                              - $self->{'_find_nearest'}{'nearest_end'})/2) 
+                              + $self->{'_find_nearest'}{'nearest_start'};
       my $start = $midpoint < 50000 ? 0 : ($midpoint - 50000);
       my $end = $start + 100000;
-      $self->{'nearest'} = $nearest_region.':'.$start.'-'.$end;
+      $self->{'nearest'} = $self->{'_find_nearest'}{'nearest_region'}.':'.$start.'-'.$end;
     }
   }
 }
@@ -274,35 +273,39 @@ sub _find_nearest {
 
   ## Set first feature as nearest if no location / chromosomes
   unless (exists($current->{'index'})) {
-    ($nearest_region, $nearest_start, $nearest_end) 
-        = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
+    $self->{'_find_nearest'}{'nearest_region'}  = $feature->{'region'};
+    $self->{'_find_nearest'}{'nearest_start'}   = $feature->{'start'};
+    $self->{'_find_nearest'}{'nearest_end'}     = $feature->{'end'};
     return 1;
   }
 
-  my $nearest_index = List::MoreUtils::first_index {$_ eq $nearest_region} @{$self->drawn_chrs};
+  my $nearest_index = List::MoreUtils::first_index {$_ eq $self->{'_find_nearest'}{'nearest_region'} } @{$self->drawn_chrs};
 
-  if ($nearest_region) {
+  if ($self->{'_find_nearest'}{'nearest_region'}) {
     if ($feature->{'region'} eq $current->{'region'}) { ## We're getting warm!
-      $nearest_region = $feature->{'region'};
+      $self->{'_find_nearest'}{'nearest_region'} = $feature->{'region'};
       ## Is this feature start nearer?
-      if ($current->{'start'} ne '' && $feature->{'start'} ne '' && $nearest_start ne '' 
-        && (abs($current->{'start'} - $feature->{'start'}) < abs($current->{'start'} - $nearest_start))) {
-        ($nearest_start, $nearest_end) = ($feature->{'start'}, $feature->{'end'});
+      if ($current->{'start'} ne '' && $feature->{'start'} ne '' && $self->{'_find_nearest'}{'nearest_start'} ne '' 
+        && (abs($current->{'start'} - $feature->{'start'}) < abs($current->{'start'} - $self->{'_find_nearest'}{'nearest_start'}))) {
+        $self->{'_find_nearest'}{'nearest_start'} = $feature->{'start'};
+        $self->{'_find_nearest'}{'nearest_end'}   = $feature->{'end'};
       }
     }
     else {
       ## Is this chromosome nearer?
       if ($feature->{'index'} ne '' && $current->{'index'} ne '' && $nearest_index ne '' 
           && (abs($current->{'index'} - $feature->{'index'}) < abs($current->{'index'} - $nearest_index))) {
-        ($nearest_region, $nearest_start, $nearest_end) 
-          = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
+            $self->{'_find_nearest'}{'nearest_region'}  = $feature->{'region'};
+            $self->{'_find_nearest'}{'nearest_start'}   = $feature->{'start'};
+            $self->{'_find_nearest'}{'nearest_end'}     = $feature->{'end'};
       }
     }
   }
   else {
     ## Establish a baseline
-    ($nearest_region, $nearest_start, $nearest_end) 
-      = ($feature->{'region'}, $feature->{'start'}, $feature->{'end'});
+    $self->{'_find_nearest'}{'nearest_region'}  = $feature->{'region'};
+    $self->{'_find_nearest'}{'nearest_start'}   = $feature->{'start'};
+    $self->{'_find_nearest'}{'nearest_end'}     = $feature->{'end'};
   }
   return 0;
 }
