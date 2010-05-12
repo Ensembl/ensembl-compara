@@ -53,6 +53,7 @@ sub map {
   my $slice_start = $slice->start();
   return () unless $slice_start < $end;
   $self->slide( 1 - $slice_start );
+  warn $self->start.' <- '.$self->end;
   return $self;
 }
 
