@@ -419,8 +419,11 @@ sub fetch_userdata_by_id {
       $tempdata = { 'url' => $record->url };
       $name = $record->url;
     }
-   
-    my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
+
+    # NB this used to be new EnsEMBL::Web... etc but this does not work with the
+    # FeatureParser module for some reason, so have to use FeatureParser->new()
+    #my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
 
     if ($type eq 'url') {
       my $response = get_url_content($tempdata->{'url'});
