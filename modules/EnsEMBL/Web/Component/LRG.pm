@@ -7,6 +7,7 @@ no warnings "uninitialized";
 use EnsEMBL::Web::Form;
 
 use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
 use Bio::AlignIO;
 use IO::String;
 use CGI qw(escapeHTML);
