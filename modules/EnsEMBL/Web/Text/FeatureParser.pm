@@ -225,7 +225,6 @@ sub parse {
 
 sub split_into_columns {
   my ($self, $row, $format) = @_;
-  warn "SPLITTING $format FILE";
   my @columns; ;
   my $tabbed = 0;
   if ($format) { ## Parsing a known file
