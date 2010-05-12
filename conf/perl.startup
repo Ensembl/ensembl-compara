@@ -162,7 +162,7 @@ if ($conf->ENSEMBL_MART_ENABLED) {
 if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first pass
   $conf->store;
   
-  EnsEMBL::Web::Tools::DHTMLmerge::merge_all($SiteDefs::ENSEMBL_SERVERROOT . '/conf/packed/dhtml.ini', $conf);
+  EnsEMBL::Web::Tools::DHTMLmerge::merge_all($conf);
 
   # dynamically build mart registry file
   if (keys %{$conf->{'_multi'}{'marts'}} && !$SiteDefs::ENSEMBL_NOMART) { # NOMARTS
