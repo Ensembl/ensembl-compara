@@ -55,13 +55,24 @@ sub init {
    { display => 'off', menu => 'no' }
   );
 
+  # variations
   $self->modify_configs(
     [ 'variation_feature_variation' ],
+    { display => 'normal' }
+  );  
+  $self->modify_configs(
+    ['variation_set_Phenotype-associated variations'],
     { display => 'normal' }
   );
   $self->modify_configs(
     ['variation_feature_structural'],
     { display => 'normal' }
+  );
+  
+  # genes
+  $self->modify_configs(
+    ['transcript_core_ensembl'],
+    { display => 'transcript_nolabel' }
   );
 }
 
