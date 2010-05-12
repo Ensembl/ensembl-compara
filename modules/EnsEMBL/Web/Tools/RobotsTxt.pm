@@ -21,7 +21,7 @@ sub create {
     close I;
   }
 warn "------------------------------------------------------------------------------
- Placing .cvsignore and robots.txt into $root
+ Placing .cvsignore and robots.txt into  $root 
 ------------------------------------------------------------------------------
 ";
 
@@ -29,12 +29,15 @@ warn "--------------------------------------------------------------------------
   print O join "\n", sort keys %ignore;
   close O;
 
+ #do not create/overwrite robots.txt if sitemaps are on the server (for google crawling). 
+  my $sitemap = `ls $root/sitemaps/sitemap-index.xml 2>&1`;
+  return if($sitemap !~ /No such file or directory/);
+ 
   if( open FH, ">$root/robots.txt" ) {
 ## Allowed list is empty so we only allow access to the main
 ## index page... /index.html...
 
-    if( @allowed ) {
-      unless ($allowed[0] eq 'GOOGLE') { ## Google Sitemaps script makes its own robots.txt
+    if( @allowed ) {      
         print FH qq(
 User-agent: *
 Disallow:   /Multi/
@@ -48,7 +51,6 @@ Disallow:   /$_/);
 Allow:      /$_/$view);
           }
         }
-      }
     } else {
       print FH qq(
 User-agent: *
