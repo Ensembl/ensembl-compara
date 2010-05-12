@@ -98,16 +98,16 @@ sub api_object {
   }
 }
 
-
 sub add_objects {
 ### Adds domain objects created by the factory to this Model
   my ($self, $data, $type) = @_;
   return unless $data;
-
+  $type ||= $self->hub->factorytype;
+  
   ### Proxy Object(s)
   if (ref($data) eq 'ARRAY') {
     foreach my $object (@$data) {
-      if (ref($object) =~ /Object/) {
+      if (ref($object) =~ /Object/ && $type ne 'MultipleLocation') {
         $self->object($object->__objecttype, $object);
       }
       ### Other object type
