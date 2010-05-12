@@ -178,6 +178,7 @@ sub parse {
           if (keys %$valid_coords && scalar(@$columns) >1 && $format ne 'SNP') { 
             ## We only validate on chromosomal coordinates, to prevent errors on vertical code
             next unless $valid_coords->{$chr}; ## Chromosome is valid and has length
+            warn "CHR $chr: START $start - END $end";
             next unless $start > 0 && $end <= $valid_coords->{$chr};
           
           } 
@@ -225,6 +226,7 @@ sub parse {
 
 sub split_into_columns {
   my ($self, $row, $format) = @_;
+  warn "SPLITTING $format FILE";
   my @columns; ;
   my $tabbed = 0;
   if ($format) { ## Parsing a known file
@@ -252,8 +254,8 @@ sub split_into_columns {
     $_ =~ s/^\s+//;
     $_ =~ s/\s+$//;
   }
-  ## Remove any empty columns (Consequence format only)
-  if ($format && $format eq 'SNP') {
+  ## Remove any empty columns where these are not allowed by format 
+  if ($format && ($format eq 'BED' || $format eq 'SNP' || $format eq 'CONSEQUENCE')) {
     @columns = grep /\S/, @columns;
   }
   elsif (!$self->format) {
