@@ -240,8 +240,9 @@ sub _summarise_core_tables {
     my $aref =  $dbh->selectall_arrayref(
       'select sr.name, sr.length 
          from seq_region as sr, coord_system as cs 
-        where cs.name in( "chromosome", "group" ) and
-              cs.coord_system_id = sr.coord_system_id' 
+        where cs.name in( "chromosome", "group" )
+              and cs.attrib like "%default_version%"
+              and cs.coord_system_id = sr.coord_system_id' 
     );
     $self->db_tree->{'MAX_CHR_NAME'  } = undef;
     $self->db_tree->{'MAX_CHR_LENGTH'} = undef;
