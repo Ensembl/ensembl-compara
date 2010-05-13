@@ -90,9 +90,9 @@ sub merge {
     close O;
    
     if ($type eq 'js') {
-      system 'java', '-jar', "$compression_dir/compiler.jar", '--js', $tmp, '--js_output_file', $minified, '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET';
+      system $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', $tmp, '--js_output_file', $minified, '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET';
     } else {
-      system 'java', '-jar', "$compression_dir/yuicompressor-2.4.2.jar", '--type', 'css', '-o', $minified, $tmp;
+      system $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.2.jar", '--type', 'css', '-o', $minified, $tmp;
     }
     
     unlink $tmp;
