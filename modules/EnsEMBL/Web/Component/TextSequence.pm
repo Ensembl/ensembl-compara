@@ -1007,7 +1007,7 @@ sub content_key {
   
   $config->{'key'}->{$_} = $object->param($_) for @{$self->{'key_types'}};
   
-  for my $p (qw(exons variations)) {
+  for my $p (grep $object->param($_), qw(exons variations)) {
     $config->{'key'}->{$p}->{$_} = 1 for $object->param($p);
   }
 
