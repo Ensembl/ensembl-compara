@@ -127,7 +127,7 @@ sub problem {
 # where ID's don't exist but we have a "gene" based display
 # for them.
 sub handle_problem {
-  my $self = shift;
+  my ($self, $factory) = @_;
 
   my $url;
 
@@ -135,21 +135,21 @@ sub handle_problem {
     my ($p) = $self->get_problem_type('redirect');
     $url  = $p->name;
   } elsif ($self->has_problem_type('mapped_id')) {
-    my $feature = $self->__data->{'objects'}[0];
+    my $feature = $factory->__data->{'objects'}[0];
 
-    $url = sprintf '%s/%s/%s?%s', $self->species_path, $self->type, $self->action, join ';', map { "$_=$feature->{$_}" } keys %$feature;
+    $url = sprintf '%s/%s/%s?%s', $self->species_defs->species_path, $self->type, $self->action, join ';', map { "$_=$feature->{$_}" } keys %$feature;
   } elsif ($self->has_problem_type('unmapped')) {
     my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
     my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
 
-    $url = sprintf '%s/%s/Genome?type=%s;id=%s', $self->species_path, $self->type, $type, $id;
+    $url = sprintf '%s/%s/Genome?type=%s;id=%s', $self->species_defs->species_path, $self->type, $type, $id;
   } elsif ($self->has_problem_type('archived')) {
     my ($view, $param, $id) =
       $self->param('peptide')    ? ('Transcript/Idhistory/Protein', 'p', $self->param('peptide'))    :
       $self->param('transcript') ? ('Transcript/Idhistory',         't', $self->param('transcript')) :
                                    ('Gene/Idhistory',               'g', $self->param('gene'));
 
-    $url = sprintf '%s/%s?%s=%s', $self->species_path, $view, $param, $id;
+    $url = sprintf '%s/%s?%s=%s', $self->species_defs->species_path, $view, $param, $id;
   } else {
     my $p = $self->problem;
     my @problems = map @{$p->{$_}}, keys %$p;
