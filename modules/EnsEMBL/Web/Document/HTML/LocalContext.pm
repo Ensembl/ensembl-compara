@@ -124,6 +124,7 @@ sub _content {
         # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
+        my $url      = $node->data->{'url'};
         $class = qq{ class="$class"} if $class;
         
         for ($title, $name) {
