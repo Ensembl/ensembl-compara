@@ -14,8 +14,6 @@ Ensembl.PanelManager.extend({
     this.nextId      = 1;
     this.panelNumber = 0;
     this.zIndex      = 101;
-    this.ajaxPanels  = $('.ajax_load').length;
-    this.ajaxLoaded  = 0;
     
     var myself = this;
     var panels = $('.js_panel');
@@ -27,9 +25,10 @@ Ensembl.PanelManager.extend({
     Ensembl.EventManager.register('resetZIndex', this, this.resetZIndex);
     Ensembl.EventManager.register('locationChange', this, this.locationChange);
     
-    Ensembl.EventManager.register('ajaxLoaded', this, function () { 
-      if (this.ajaxPanels == ++this.ajaxLoaded) {
+    Ensembl.EventManager.register('ajaxLoaded', this, function () {
+      if (!$('.ajax_load').length) {
         Ensembl.EventManager.trigger('ajaxComplete');
+        Ensembl.EventManager.unregister('ajaxLoaded', this);
       }
     });
     
