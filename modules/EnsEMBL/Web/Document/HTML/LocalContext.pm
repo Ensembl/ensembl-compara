@@ -96,8 +96,6 @@ sub _content {
   
   return "$content</dl>" unless $active_node;
   
-  my $hub      = $self->hub;
-  my %params   = %{$hub->multi_params};
   my $active_l = $active_node->left;
   my $active_r = $active_node->right;
   my $counts   = $self->counts;
@@ -124,7 +122,6 @@ sub _content {
         # $node->data->{'code'} contains action and function where required, so setting function to undef is fine.
         # If function is NOT set to undef and you are on a page with a function, the generated url could be wrong
         # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
-        my $url      = $node->data->{'url'} || $hub->url({ %params, action => $node->data->{'code'}, function => undef });
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
         $class = qq{ class="$class"} if $class;
@@ -133,7 +130,25 @@ sub _content {
           s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
           $_ = encode_entities($_);
         }
-        
+       
+        # This is a tmp hack since we do not have an object here
+        # TODO: propagate object here and use object->_url method
+        if (!$url) {
+          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $self->species_defs->species_path;
+          $url .= '/' unless $url eq '/';
+          $url .= "$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
+
+          my @ok_params;
+          my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
+
+          if ($ENV{'ENSEMBL_TYPE'} =~ /Location|Gene|Transcript|Variation|Regulation/) {
+            @ok_params = grep !/^time=/, @cgi_params;
+          }
+
+          $url .= '?' . join ';', @ok_params if scalar @ok_params;
+        }
+
+ 
         $name = qq{<a href="$url" title="$title"$class$external>$name</a>};
       } else {
         $name =~ s/\(\[\[counts::(\w+)\]\]\)//eg;
