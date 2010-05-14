@@ -306,7 +306,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         var sorting = JSON.parse(cookieOptions[0]);
         
         if (sorting.length) {
-          options.aaSorting = sorting;
+          options.aaSorting = $.grep(sorting, function (s) { return s[0] < cols.length });
         }
         
         if (cookieOptions[1]) {
