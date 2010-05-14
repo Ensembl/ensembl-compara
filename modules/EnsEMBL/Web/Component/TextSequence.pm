@@ -4,13 +4,29 @@ package EnsEMBL::Web::Component::TextSequence;
 
 use strict;
 
+use URI::Escape qw(uri_unescape);
 use HTTP::Request;
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
+use Sanger::Graphics::ColourMap;
+
 use EnsEMBL::Web::Document::Renderer::Assembler;
+use EnsEMBL::Web::Fake;
 
 use base qw(EnsEMBL::Web::Component);
+
+sub new {
+  my $class = shift;
+  my $self  = $class->SUPER::new(@_);
+  
+  $self->{'key_types'}  = [qw(codons conservation population resequencing align_change)];
+  $self->{'key_params'} = [qw(gene_name gene_exon_type alignment_numbering match_display)];
+  
+  return $self;
+}
+
+sub colour_map { return $_[0]->{'colour_map'} ||= new Sanger::Graphics::ColourMap; }
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
@@ -119,7 +135,8 @@ sub get_sequence_data {
       my @ordered_snps = map $_->[1], sort { $a->[0] <=> $b->[0] } map [ $_->end == $_->start ? 1 : 0, $_ ], @$snps;
       
       foreach (@ordered_snps) {
-        my $snp_type       = 'snp';
+        #my $snp_type       = 'snp';
+        my $snp_type       = $_->can('display_consequence') ? lc $_->display_consequence : 'snp';
         my $variation_name = $_->variation_name;
         my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
         my $dbID           = $_->dbID;
@@ -177,7 +194,7 @@ sub get_sequence_data {
           $snp_end   = $end;
         }
         
-        if ($var_class eq 'in-del') {
+        if ($var_class eq 'in-del' && $snp_type eq 'snp') {
           if ($seq_region_start > $seq_region_end) {
             $snp_type = 'insert';
             
@@ -236,7 +253,7 @@ sub get_sequence_data {
       my $exontype = $config->{'exon_display'};
       my @exons;
       
-      if ($exontype eq 'Ab-initio') {      
+      if ($exontype eq 'Ab-initio') {
         @exons = grep { $_->seq_region_start <= $slice_end && $_->seq_region_end >= $slice_start } map @{$_->get_all_Exons}, @{$slice->get_all_PredictionTranscripts};
       } elsif ($exontype eq 'vega' || $exontype eq 'est') {
         @exons = map @{$_->get_all_Exons}, @{$slice->get_all_Genes('', $exontype)};
@@ -255,10 +272,10 @@ sub get_sequence_data {
       
       if ($config->{'exon_features'}) {
         push @all_exons, [ 'gene', $_ ] for @{$config->{'exon_features'}};
+        
         if ($config->{'exon_features'} && $config->{'exon_features'}->[0] && $config->{'exon_features'}->[0]->isa('Bio::EnsEMBL::Exon')) {
           $config->{'gene_exon_type'} = 'exons';
-        }
-        else {
+        } else {
           $config->{'gene_exon_type'} = 'features';
         }
       }
@@ -349,9 +366,8 @@ sub get_sequence_data {
 sub markup_exons {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
-
-  my $exon_types = {};
-  my ($exon, $type, $s, $seq);
+  
+  my (%exon_types, $exon, $type, $s, $seq);
   my $i = 0;
   
   my $class = {
@@ -372,51 +388,41 @@ sub markup_exons {
       
       foreach $type (@{$exon->{'type'}}) {
         $seq->[$_]->{'class'} .= "$class->{$type} " unless $seq->[$_]->{'class'} =~ /\b$class->{$type}\b/;
-        $exon_types->{$type} = 1;
+        $exon_types{$type} = 1;
       }
     }
     
     $i++;
   }
-
-  if ($config->{'key_template'}) {
-    $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'gene'}, "Location of $config->{'gene_name'} $config->{'gene_exon_type'}" if $exon_types->{'gene'};
-    
-    my $selected;
-    
-    foreach my $type ('other', 'compara') {
-      if ($exon_types->{$type}) {
-        $selected   = ucfirst $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
-        $selected   = $config->{'site_type'} if $selected eq 'Core';
-        $selected ||= 'selected';
-        
-        $config->{'key'} .= sprintf $config->{'key_template'}, $class->{$type}, "Location of $selected exons";
-      }
-    }
-  }
+  
+  $config->{'key'}->{'exons'}->{$_} = 1 for keys %exon_types;
 }
 
 sub markup_codons {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my ($codons, $class, $seq);
+  my ($class, $seq);
   my $i = 0;
 
   foreach my $data (@$markup) {
-    $codons = 1 if scalar keys %{$data->{'codons'}};
-    $seq    = $sequence->[$i];
+    $seq = $sequence->[$i];
     
-    foreach (sort { $a <=> $b } keys %{$data->{'codons'}}) {      
-      $seq->[$_]->{'class'} .= ($data->{'codons'}->{$_}->{'class'} || 'cu') . ' ';
+    foreach (sort { $a <=> $b } keys %{$data->{'codons'}}) {
+      $class = $data->{'codons'}->{$_}->{'class'} || 'co';
+      
+      $seq->[$_]->{'class'} .= "$class ";
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $data->{'codons'}->{$_}->{'label'} if $config->{'title_display'};
+      
+      if ($class eq 'cu') {
+        $config->{'key'}->{'utr'} = 1;
+      } else {
+        $config->{'key'}->{'codons'}->{$class} = 1;
+      }
     }
     
     $i++;
   }
-
-  # Only used on Gene view, which uses just condonutr colour.
-  $config->{'key'} .= sprintf $config->{'key_template'}, 'cu', 'Location of START/STOP codons' if $codons && $config->{'key_template'};
 }
 
 sub markup_variation {
@@ -442,23 +448,19 @@ sub markup_variation {
 
       $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
-      $seq->[$_]->{'class'} .= "$class->{$variation->{'type'}} ";
+      $seq->[$_]->{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
       $seq->[$_]->{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
 
       $snps    = 1 if $variation->{'type'} eq 'snp';
       $inserts = 1 if $variation->{'type'} =~ /insert/;
       $deletes = 1 if $variation->{'type'} eq 'delete';
+      
+      $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1;
     }
     
     $i++;
   }
-  
-  my $population_key = $config->{'population_filter'} ? sprintf('for %s with a minimum frequency of %s', $config->{'population_filter'}, $config->{'min_frequency'}) : '';
-  
-  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'snp'},    "Location of SNPs $population_key"    if $snps;
-  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'insert'}, "Location of inserts $population_key" if $inserts;
-  $config->{'key'} .= sprintf $config->{'key_template'}, $class->{'delete'}, "Location of deletes $population_key" if $deletes;
 }
 
 sub markup_comparisons {
@@ -499,15 +501,14 @@ sub markup_comparisons {
       $comparison = $data->{'comparisons'}->{$_};
       
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
-      $seq->[$_]->{'class'} .= 'res ' if $comparison->{'resequencing'}; 
+      
+      if ($comparison->{'resequencing'}) {
+        $seq->[$_]->{'class'} .= 'res ';
+        $config->{'key'}->{'resequencing'} = 1;
+      }
     }
     
     $i++;
-  }
-  
-  if ($config->{'match_display'}) {
-    $config->{'key'} .= sprintf $config->{'key_template'}, 'res', 'Resequencing coverage';
-    $config->{'key'} .= '<p><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</p>'; # Using middle dot to make it easier to see
   }
   
   $config->{'v_space'} = "\n";
@@ -536,7 +537,7 @@ sub markup_conservation {
     }
   }
   
-  $config->{'key'} .= sprintf $config->{'key_template'}, "con", "Location of conserved regions (where >50&#37; of bases in alignments match)" if $conserved;
+  $config->{'key'}->{'conservation'} = 1 if $conserved;
 }
 
 sub markup_line_numbers {
@@ -724,9 +725,7 @@ sub markup_line_numbers {
   
   $config->{'padding'}->{'pre_number'}++ if $config->{'padding'}->{'pre_number'}; # Compensate for the : after the label
  
-  if ($config->{'line_numbering'} eq 'slice' && $config->{'align'}) {
-    $config->{'key'} .= qq{<p>NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</p>};
-  }
+  $config->{'alignment_numbering'} = 1 if $config->{'line_numbering'} eq 'slice' && $config->{'align'};
 }
 
 sub build_sequence {
@@ -737,40 +736,11 @@ sub build_sequence {
   my $s = 0;
   my $html; 
   my @output;
-
+  
   # Temporary patch because Firefox doesn't copy/paste anything but inline styles
   # If we remove this patch, look at version 1.79 for the correct code to revert to
-  my $styles = $self->object->species_defs->colour('sequence_markup');
-  my %class_to_style = (
-    con =>  [ 1,  { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}->{'default'}" } ],
-    dif =>  [ 2,  { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}->{'default'}" } ],
-    res =>  [ 3,  { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}->{'default'}" } ],
-    e0  =>  [ 4,  { 'color' => "#$styles->{'SEQ_EXON0'}->{'default'}" } ],
-    e1  =>  [ 5,  { 'color' => "#$styles->{'SEQ_EXON1'}->{'default'}" } ],
-    e2  =>  [ 6,  { 'color' => "#$styles->{'SEQ_EXON2'}->{'default'}" } ],
-    eu  =>  [ 7,  { 'color' => "#$styles->{'SEQ_EXONUTR'}->{'default'}" } ],
-    ef  =>  [ 8,  { 'color' => "#$styles->{'SEQ_EXONFLANK'}->{'default'}" } ],
-    eo  =>  [ 9,  { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}->{'default'}" } ],
-    eg  =>  [ 10, { 'color' => "#$styles->{'SEQ_EXONGENE'}->{'default'}", 'font-weight' => "bold" } ],
-    c0  =>  [ 11, { 'background-color' => "#$styles->{'SEQ_CODONC0'}->{'default'}" } ],
-    c1  =>  [ 12, { 'background-color' => "#$styles->{'SEQ_CODONC1'}->{'default'}" } ],
-    cu  =>  [ 13, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}->{'default'}" } ],
-    sn  =>  [ 14, { 'background-color' => "#$styles->{'SEQ_SNP'}->{'default'}" } ],      
-    si  =>  [ 15, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}->{'default'}" } ],
-    sd  =>  [ 16, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}->{'default'}" } ],   
-    snt =>  [ 17, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}->{'default'}" } ],
-    syn =>  [ 18, { 'background-color' => "#$styles->{'SEQ_SYN'}->{'default'}" } ],
-    snu =>  [ 19, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}->{'default'}" } ],
-    siu =>  [ 20, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}->{'default'}" } ],
-    sdu =>  [ 21, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}->{'default'}" } ],
-    sf  =>  [ 22, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}->{'default'}" } ],
-    aa  =>  [ 23, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
-    var =>  [ 24, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}" } ],
-    end =>  [ 25, { 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'background-color' => "#$styles->{'SEQ_REGION_CHANGE_BG'}->{'default'}" } ],
-    bold => [ 26, { 'font-weight' => 'bold' } ]
-  );
-  
-  my $single_line = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
+  my %class_to_style = %{$self->class_to_style};
+  my $single_line    = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
   
   foreach my $lines (@$sequence) {
     my ($row, $pre, $post, $count, $i);
@@ -790,10 +760,10 @@ sub build_sequence {
         $current{'class'} = $seq->{'class'};
         chomp $current{'class'};
         
-        if ($config->{'maintain_colour'} && $previous{'class'} =~ /\s*(e\w)\s*/ && $current{'class'} !~ /\s*(e\w)\s*/) {
+        if ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/ && $current{'class'} !~ /\b(e\w)\b/) {
           $current{'class'} .= " $1";
         }
-      } elsif ($config->{'maintain_colour'} && $previous{'class'} =~ /\s*(e\w)\s*/) {
+      } elsif ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/) {
         $current{'class'} = $1;
       } else {
         $current{'class'} = '';
@@ -913,6 +883,18 @@ sub build_sequence {
   $config->{'html_template'} ||= qq{<pre class="text_sequence">%s</pre><p class="invisible">.</p>};  
   $config->{'html_template'} = sprintf $config->{'html_template'}, $html;
   
+  if ($config->{'sub_slice_start'}) {
+    my $partial_key;
+    $partial_key->{$_} = $config->{$_} for grep $config->{$_},          @{$self->{'key_params'}};
+    $partial_key->{$_} = 1             for grep $config->{'key'}->{$_}, @{$self->{'key_types'}};
+    
+    foreach my $type (grep $config->{'key'}->{$_}, qw(exons variations)) {
+      $partial_key->{$type}->{$_} = 1 for keys %{$config->{'key'}->{$type}};
+    }
+    
+    $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key);
+  }
+  
   return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 }
 
@@ -954,6 +936,155 @@ sub chunked_content {
   }
 
   return $html;
+}
+
+sub class_to_style {
+  my $self = shift;
+  
+  if (!$self->{'class_to_style'}) {
+    my $colourmap    = $self->colour_map;
+    my $species_defs = $self->object->species_defs;
+    my $styles       = $species_defs->colour('sequence_markup');
+    my $var_styles   = $species_defs->colour('variation');
+    my $i            = 1;
+    
+    my %class_to_style = (
+      con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}->{'default'}" } ],
+      dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}->{'default'}" } ],
+      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}->{'default'}" } ],
+      e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}->{'default'}" } ],
+      e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}->{'default'}" } ],
+      e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}->{'default'}" } ],
+      eu   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONUTR'}->{'default'}" } ],
+      ef   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONFLANK'}->{'default'}" } ],
+      eo   => [ $i++, { 'background-color' => "#$styles->{'SEQ_EXONOTHER'}->{'default'}" } ],
+      eg   => [ $i++, { 'color' => "#$styles->{'SEQ_EXONGENE'}->{'default'}", 'font-weight' => "bold" } ],
+      c0   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC0'}->{'default'}" } ],
+      c1   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONC1'}->{'default'}" } ],
+      cu   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODONUTR'}->{'default'}" } ],
+      co   => [ $i++, { 'background-color' => "#$styles->{'SEQ_CODON'}->{'default'}" } ],
+      sn   => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNP'}->{'default'}" } ],      
+      si   => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPINSERT'}->{'default'}" } ],
+      sd   => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPDELETE'}->{'default'}" } ],   
+      snt  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNP_TR'}->{'default'}" } ],
+      syn  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SYN'}->{'default'}" } ],
+      snu  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNP_TR_UTR'}->{'default'}" } ],
+      siu  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPINSERT_TR_UTR'}->{'default'}" } ],
+      sdu  => [ $i++, { 'background-color' => "#$styles->{'SEQ_SNPDELETE_TR_UTR'}->{'default'}" } ],
+      sf   => [ $i++, { 'background-color' => "#$styles->{'SEQ_FRAMESHIFT'}->{'default'}" } ],
+      aa   => [ $i++, { 'color' => "#$styles->{'SEQ_AMINOACID'}->{'default'}" } ],
+      var  => [ $i++, { 'color' => "#$styles->{'SEQ_MAIN_SNP'}->{'default'}" } ],
+      end  => [ $i++, { 'background-color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'default'}", 'color' => "#$styles->{'SEQ_REGION_CHANGE'}->{'label'}" } ],
+      bold => [ $i++, { 'font-weight' => 'bold' } ]
+    );
+    
+    foreach (keys %$var_styles) {
+      my $style = { 'background-color' => '#' . $colourmap->hex_by_name($var_styles->{$_}->{'default'}) };
+      
+      $style->{'color'} = '#' . $colourmap->hex_by_name($var_styles->{$_}->{'label'}) if $var_styles->{$_}->{'label'};
+      
+      $class_to_style{$_} = [ $i++, $style ];
+    }
+    
+    $self->{'class_to_style'} = \%class_to_style;
+  }
+  
+  return $self->{'class_to_style'};
+}
+
+sub content_key {
+  my $self = shift;
+  
+  my $object = $self->object;
+  
+  my $config = {
+    site_type => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl'
+  };
+  
+  for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency)) {
+    $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
+  }
+  
+  $config->{'key'}->{$_} = $object->param($_) for @{$self->{'key_types'}};
+  
+  for my $p (qw(exons variations)) {
+    $config->{'key'}->{$p}->{$_} = 1 for $object->param($p);
+  }
+
+  return $self->get_key($config);
+}
+
+sub get_key {
+  my ($self, $config) = @_;
+  
+  my $object         = $self->object;
+  my $class_to_style = $self->class_to_style;
+  my $var_styles     = $object->species_defs->colour('variation');
+  my $image_config   = $object->get_imageconfig('text_seq_legend');
+    
+  my $exon_type;
+  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+  $exon_type = $config->{'site_type'} if $exon_type eq 'core' || !$exon_type;
+  
+  my %key = (
+    utr          => { class => 'cu',  text => 'UTR'                         },
+    resequencing => { class => 'res', text => 'Resequencing coverage'       },
+    conservation => { class => 'con', text => 'Conserved regions'           },
+    difference   => { class => 'dif', text => 'Differs from primary species' },
+    align_change => { class => 'end', text => 'Start/end of aligned region' },
+    codons       => {
+      co => { class => 'co', text => 'START/STOP codons'  },
+      c0 => { class => 'c0', text => 'Alternating codons' },
+      c1 => { class => 'c1', text => 'Alternating codons' },
+    },
+    exons       => {
+      exon0   => { class => 'e0', text => 'Alternating exons'                                  },
+      exon1   => { class => 'e1', text => 'Alternating exons'                                  },
+      exon2   => { class => 'e2', text => 'Residue overlap splice site'                        },
+      gene    => { class => 'eg', text => "$config->{'gene_name'} $config->{'gene_exon_type'}" },
+      other   => { class => 'eo', text => "$exon_type exons"                                   },
+      compara => { class => 'e2', text => "$exon_type exons"                                   }
+    }
+  );
+  
+  foreach my $type (keys %key) {
+    if ($key{$type}{'class'}) {
+      my $style = $class_to_style->{$key{$type}{'class'}}->[1];
+      
+      $key{$type}{'default'} = $style->{'background-color'};
+      $key{$type}{'label'}   = $style->{'color'};
+    } else {
+      foreach (values %{$key{$type}}) {
+        my $style = $class_to_style->{$_->{'class'}}->[1];
+        
+        $_->{'default'} = $style->{'background-color'};
+        $_->{'label'}   = $style->{'color'};
+      }
+    }
+  }
+  
+  map $key{'variations'}{$_} = $var_styles->{$_}, keys %$var_styles;
+  
+  foreach my $type (keys %{$config->{'key'}}) {
+    if (ref $config->{'key'}->{$type} eq 'HASH') {
+      $image_config->{'legend'}->{$type}->{$_} = $key{$type}{$_} for grep $config->{'key'}->{$type}->{$_}, keys %{$config->{'key'}->{$type}};
+    } elsif ($config->{'key'}->{$type}) {
+      $image_config->{'legend'}->{$type} = $key{$type};
+    }
+  }
+  
+  $image_config->image_width(650);
+  $image_config->{'no_panel_type'} = 1;
+  
+  my $key_html;
+  $key_html .= sprintf '<li>Displaying variations for %s with a minimum frequency of %s</li>', $config->{'population_filter'}, $config->{'min_frequency'} if $config->{'population_filter'};
+  $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                               if $config->{'key'}->{'conservation'};
+  $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'     if $config->{'alignment_numbering'};
+  $key_html .= '<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</li>'      if $config->{'match_display'};
+  $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                             if $config->{'key'}->{'resequencing'};
+  $key_html  = "<ul>$key_html</ul>" if $key_html;
+  
+  return '<h4>Key</h4>' . $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render . $key_html;
 }
 
 1;

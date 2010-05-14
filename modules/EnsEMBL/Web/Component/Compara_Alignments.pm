@@ -3,8 +3,6 @@
 package EnsEMBL::Web::Component::Compara_Alignments;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use HTML::Entities qw(encode_entities);
 
@@ -20,18 +18,14 @@ sub _init {
   $self->{'subslice_length'} = $object->param('force') || 100 * ($object->param('display_width') || 60) if $object;
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
-  my $self = shift;
-  my $cdb = shift || $self->object->param('cdb') || 'compara';
-  my $object = $self->object;
-  my $slice = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  my $self      = shift;
+  my $object    = $self->object;
+  my $cdb       = shift || $object->param('cdb') || 'compara';
+  my $slice     = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $species = $object->species;
-  my $type = $object->type;
+  my $species   = $object->species;
+  my $type      = $object->type;
   
   if ($type eq 'Location' && $slice->length > $threshold) {
     return $self->_warning(
@@ -72,7 +66,7 @@ sub content {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     my $base_url = $self->ajax_url('sub_slice') . ";padding=$padding;length=$slice_length";
     
-    $html .= $self->get_key($object) . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
+    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, $base_url) . $warnings;
   } else {
     $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
   }
@@ -98,8 +92,6 @@ sub content_sub_slice {
     display_width   => $object->param('display_width') || 60,
     site_type       => ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $object->species,
-    key_template    => '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>',
-    key             => '',
     comparison      => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
     sub_slice_start => $start,
@@ -112,10 +104,10 @@ sub content_sub_slice {
   
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
-    $config->{'number'} = 1;
+    $config->{'number'}     = 1;
   }
   
-  $config = {%$config, %$defaults} if $defaults;
+  $config = { %$config, %$defaults } if $defaults;
   
   # Requesting data from a sub slice
   ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end, $cdb) if $start && $end;
@@ -126,16 +118,16 @@ sub content_sub_slice {
   
   # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
-  $self->markup_comparisons($sequence, $markup, $config) if $config->{'align'};
-  $self->markup_conservation($sequence, $config) if $config->{'conservation_display'};
+  $self->markup_comparisons($sequence, $markup, $config)   if $config->{'align'};
+  $self->markup_conservation($sequence, $config)           if $config->{'conservation_display'};
   $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'};
-  $self->markup_codons($sequence, $markup, $config) if $config->{'codons_display'};
-  $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-  $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
+  $self->markup_codons($sequence, $markup, $config)        if $config->{'codons_display'};
+  $self->markup_exons($sequence, $markup, $config)         if $config->{'exon_display'};
+  $self->markup_variation($sequence, $markup, $config)     if $config->{'snp_display'};
+  $self->markup_line_numbers($sequence, $config)           if $config->{'line_numbering'};
   
   # Only if this IS NOT a sub slice - print the key and the slice list
-  my $template = qq{<div class="sequence_key">$config->{'key'}</div>} . $self->get_slice_table($config->{'slices'}) unless $start && $end;
+  my $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $style = $start == 1 ? 'margin-bottom:0px;' : $end == $slice_length ? 'margin-top:0px;': 'margin-top:0px; margin-bottom:0px' if $start && $end;
@@ -149,7 +141,7 @@ sub content_sub_slice {
     
     if ($config->{'line_numbering'} eq 'slice') {
       $config->{'padding'}->{'pre_number'} = $pad[1];
-      $config->{'padding'}->{'number'} = $pad[2];
+      $config->{'padding'}->{'number'}     = $pad[2];
     }
   }
   
@@ -173,7 +165,7 @@ sub get_slices {
   }
 
   foreach (@slices) {
-    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    my $name         = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
     my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
     
     push @formatted_slices, { 
@@ -196,19 +188,19 @@ sub get_alignments {
   my $target_slice;
   my ($align, $target_species, $target_slice_name) = split '--', $selected_alignment;
   $align ||= 'NONE';
+  $cdb   ||= 'compara';
   
   if ($target_slice_name) {
     my $target_slice_adaptor = $object->DBConnection->get_DBAdaptor('core', $target_species)->get_SliceAdaptor;
     $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name);
   }
   
-  my $func = $self->{'alignments_function'} || 'get_all_Slices';
-  $cdb ||= 'compara';
-  my $compara_db = $object->database($cdb);
-  my $as_adaptor = $compara_db->get_adaptor('AlignSlice');
-  my $mlss_adaptor = $compara_db->get_adaptor('MethodLinkSpeciesSet');
+  my $func                    = $self->{'alignments_function'} || 'get_all_Slices';
+  my $compara_db              = $object->database($cdb);
+  my $as_adaptor              = $compara_db->get_adaptor('AlignSlice');
+  my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
-  my $align_slice = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, 'expanded', 'restrict', $target_slice);
+  my $align_slice             = $as_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $method_link_species_set, 'expanded', 'restrict', $target_slice);
   
   my @selected_species;
   
@@ -237,15 +229,17 @@ sub check_for_errors {
   my ($object, $align, $species, $cdb) = @_;
 
   return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
-  my $ckey = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
-  my $align_details = $object->species_defs->multi_hash->{$ckey}->{'ALIGNMENTS'}->{$align};
+  
+  my $species_defs  = $object->species_defs;
+  my $db_key        = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
+  my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
   
   return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
 
   if (!exists $align_details->{'species'}->{$species}) {
     return $self->_error('Unknown alignment', sprintf(
       '<p>%s is not part of the %s alignment in the database.</p>',
-      $object->species_defs->species_label($species),
+      $species_defs->species_label($species),
       encode_entities($align_details->{'name'})
     ));
   }
@@ -275,53 +269,6 @@ sub check_for_errors {
   }
 
   return (undef, $warnings);
-}
-
-# This function is pretty nasty because 
-# 1) Variables are declared which will be redeclare later (cannot pass them through because of parallel processing).
-# 2) The key is unconditional - i.e. if variation markup is turned on, the variation key will appear even if there are no variations.
-# 3) It smells like hack. This is similar to the smell of chicken which went off last month, only slightly worse.
-sub get_key {
-  my $self = shift;
-  my $object = shift;
-  
-  my $site_type = ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
-  my $key_template = '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>';
-  
-  my $exon_label = ucfirst $object->param('exon_display');
-  $exon_label = $site_type if $exon_label eq 'Core';
-  
-  my @map = (
-    [ 'conservation_display', 'con' ],
-    [ 'region_change_display', 'end' ],
-    [ 'codons_display', 'cu' ],
-    [ 'exon_display', 'e2' ],
-    [ 'snp_display', 'sn,si,sd' ]
-  );
-  
-  my $key = {
-    con => 'Location of conserved regions (where >50&#37; of bases in alignments match)',
-    end => 'Location of start/end of aligned regions',
-    cu  => 'Location of START/STOP codons',
-    e2  => "Location of $exon_label exons",
-    sn  => 'Location of SNPs',
-    si  => 'Location of inserts',
-    sd  => 'Location of deletes'
-  };
-  
-  my $rtn = '';
-  
-  foreach my $param (@map) {
-    next if ($object->param($param->[0])||'off') eq 'off';
-    
-    $rtn .= sprintf $key_template, $_, $key->{$_} for split ',', $param->[1];
-  }
-  
-  if ($object->param('line_numbering') eq 'slice' && $object->param('align')) {
-    $rtn .= ' NOTE: For secondary species we display the coordinates of the first and the last mapped (i.e A, T, G, C or N) basepairs of each line';
-  }
-  
-  return qq{<div class="sequence_key">$rtn</div>};
 }
 
 # Displays slices for all species above the sequence
@@ -372,12 +319,8 @@ sub get_slice_table {
   
   $region_padding++ if $region_padding;
   
-  my $rtn = qq{
-  <table class="sequence_key">$table_rows
-  </table>
-  };
-  
-  $rtn = qq{<p>NOTE: <a href="/info/docs/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
+  my $rtn = "<table>$table_rows</table>";
+  $rtn    = qq{<p>NOTE: <a href="/info/docs/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
   
   return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;
 }
@@ -401,7 +344,7 @@ sub markup_region_change {
     $i++;
   }
   
-  $config->{'key'} .= sprintf $config->{'key_template'}, 'end', 'Location of start/end of aligned regions' if $change && $config->{'key_template'};
+  $config->{'key'}->{'align_change'} = 1 if $change;
 }
 
 # get full name of seq-region from which the alignment comes
@@ -413,7 +356,7 @@ sub get_full_name {
   
   if (ref $sl eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
     my $species_name = $sl->seq_region_name;
-    my $chr_name = $sl->{'slice_mapper_pairs'}->[0]->{'slice'}->{'seq_region_name'};
+    my $chr_name     = $sl->{'slice_mapper_pairs'}->[0]->{'slice'}->{'seq_region_name'};
     
     $id = "$species_name:$chr_name";
   } else {

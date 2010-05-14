@@ -1,9 +1,8 @@
 package EnsEMBL::Web::Component::Gene::GeneSeq;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Gene EnsEMBL::Web::Component::TextSequence);
+
+use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
@@ -14,8 +13,6 @@ sub _init {
   
   $self->{'subslice_length'} = $object->param('force') || 5000 * ($object->param('display_width') || 60) if $object;
 }
-
-sub caption { return undef; }
 
 sub content {
   my $self = shift;
@@ -44,7 +41,7 @@ sub content {
   if ($length >= $self->{'subslice_length'}) {
     my $base_url = $self->ajax_url('sub_slice') . ";length=$length;name=" . $slice->name;
     
-    $html .= $self->get_key($object, $site_type) . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
+    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
   } else {
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
@@ -83,8 +80,6 @@ sub content_sub_slice {
     gene_name       => $object->Obj->stable_id,
     species         => $object->species,
     title_display   => 'yes',
-    key_template    => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
-    key             => '',
     sub_slice_start => $start,
     sub_slice_end   => $end
   };
@@ -103,9 +98,9 @@ sub content_sub_slice {
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
 
-  $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
+  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-  $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
+  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   if ($start == 1) {
     $config->{'html_template'} = qq{<pre class="text_sequence" style="margin-bottom:0">&gt;} . $object->param('name') . "\n%s</pre>";
@@ -114,46 +109,12 @@ sub content_sub_slice {
   } elsif ($start && $end) {
     $config->{'html_template'} = '<pre class="text_sequence" style="margin:0 0 0 1em">%s</pre>';
   } else {
-    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div><pre class="text_sequence">&gt;} . $slice->name . "\n%s</pre>";
+    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . '<pre class="text_sequence">&gt;' . $slice->name . "\n%s</pre>";
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
-  
-  return $self->build_sequence($sequence, $config);
-}
-
-sub get_key {
-  my ($self, $object, $site_type) = @_;
-  
-  my $key_template = '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>';
-  my $gene_name    = $object->Obj->stable_id;
-  my $exon_label   = ucfirst $object->param('exon_display');
-  my $rtn;
-  
-  $exon_label = $site_type if $exon_label eq 'Core';
-  
-  my @map = (
-    [ 'exon_display', 'eg,eo'    ],
-    [ 'snp_display',  'sn,si,sd' ]
-  );
-  
-  my $population_key = $object->param('population_filter') ne 'off' ? sprintf('for %s with a minimum frequency of %s', $object->param('population_filter'), $object->param('min_frequency')) : '';
-  
-  my $key = {
-    eg  => "Location of $gene_name exons",
-    eo  => "Location of $exon_label exons",
-    sn  => "Location of SNPs $population_key",
-    si  => "Location of inserts $population_key",
-    sd  => "Location of deletes $population_key"
-  };
-  
-  foreach (@map) {
-    next if ($object->param($_->[0])||'off') eq 'off';
     
-    $rtn .= sprintf $key_template, $_, $key->{$_} for split ',', $_->[1];
-  }
-  
-  return qq{<div class="sequence_key">$rtn</div>};
+  return $self->build_sequence($sequence, $config);
 }
 
 1;
