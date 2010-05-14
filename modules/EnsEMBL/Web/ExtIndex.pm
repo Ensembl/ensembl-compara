@@ -19,14 +19,16 @@ sub get_indexer {
 
   unless( $self->{'databases'}{$db} ) {
     my ($indexer,$exe);
+
     #get data from e! databases
-    if ($db =~ /^ENS/) {
+    if ($db =~ /^ENS_/) {
       $indexer = 'ENSEMBL_RETRIEVE';
       $exe     = 1;
     }
     else {
-      $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db } || 
-	$self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ 'DEFAULT'  } || 'PFETCH' ;
+      $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db }
+         || $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ 'DEFAULT'  }
+         || 'PFETCH' ;
       $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
     }
     if( $exe ) {
