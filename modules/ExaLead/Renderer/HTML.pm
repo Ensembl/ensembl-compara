@@ -107,12 +107,17 @@ sub _render_hit {
   my( $self,  $hit ) = @_;
   my $URL = $hit->URL;
 
-  $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
-  $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
-  $URL =~ s{Genome\?ftype=OligoFeature}{Genome\?ftype=ProbeFeature;fdb=funcgen;ptype=pset}; #cope with incorrect oligoprobe feature URLs
-  $URL =~ s{Location/\?ftype=}{Location/Genome\?type=}; #cope with stuffed Vega Genomic alignments
-  $URL =~ s{markerview\?marker=}{Location/Marker\?m=}; #cope with stuffed Vega Markers (r37 only)
-  $URL =~ s/Transcript\/Domains\/Genes\?domain=(IPR\d{6}).*/Location\/Genome\?ftype=Domain;id=$1/; #no need to have Transcript IDs on Domain results
+#  $URL =~ s{Location/View\?marker}{Location/Marker\?m}; #cope with incorrect marker URLs
+#  $URL =~ s{Karyotype\?type=}{Genome\?ftype=}; #cope with incorrect feature URLs
+#  $URL =~ s{Genome\?ftype=OligoFeature}{Genome\?ftype=ProbeFeature;fdb=funcgen;ptype=pset}; #cope with incorrect oligoprobe feature URLs
+#  $URL =~ s{Location/\?ftype=}{Location/Genome\?type=}; #cope with stuffed Vega Genomic alignments
+#  $URL =~ s{markerview\?marker=}{Location/Marker\?m=}; #cope with stuffed Vega Markers (r37 only)
+#  $URL =~ s/Transcript\/Domains\/Genes\?domain=(IPR\d{6}).*/Location\/Genome\?ftype=Domain;id=$1/; #no need to have Transcript IDs on Domain results
+ 
+  #two hacks for LRG
+  $URL =~ s{Homo_sapiens/Gene/Summary\?g=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
+  $URL =~ s{Homo_sapiens/Location/View\?r=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
+ 
   #remove url for unmapped features
   if ($URL =~ /Location\/Genome\?ftype=UnmappedObject/) {
     $URL = '';
@@ -134,7 +139,7 @@ sub _render_hit {
     my $desc     = $mappings->[2];
     my $new_URL  = $URL;
     $new_URL =~ s/$old_dest/$new_dest/;
-    $extra = sprintf( ' [<a href="%s">%s</a>]' , $new_URL, $desc );
+    $extra = sprintf( ' [<a href="%s">%s</a>]' , $new_URL, $desc ) unless ($URL =~ /Summary\?lrg/);
   }
 
   #remove '(Curated)' etc from HGNC names
