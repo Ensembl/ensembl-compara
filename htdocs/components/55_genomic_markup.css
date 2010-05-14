@@ -22,6 +22,7 @@ span.eg { color: [[SEQ_EXONGENE]]; font-weight: bold }
 span.c0 { background-color: [[SEQ_CODONC0]] }
 span.c1 { background-color: [[SEQ_CODONC1]] }
 span.cu { background-color: [[SEQ_CODONUTR]] }
+span.co { background-color: [[SEQ_CODON]] }
 
 /* Variation colours */
 span.sn   { background-color: [[SEQ_SNP]] }       /* SNP */
@@ -42,7 +43,7 @@ span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
 pre.text_sequence   { margin-top: 0; float: left; }
 pre.exon_sequence   { margin: 0; }
 pre a.sequence_info { text-decoration: none; color: [[PAGE_TEXT]]; }
-div.sequence_key    { margin-bottom: 1em; }
+div.sequence_key    { margin: 0 0 1em 1em; }
 
 div.alignment_list p { margin-top: 1em; }
 div.alignment_list a { text-decoration: none; }
