@@ -46,15 +46,17 @@ sub init {
   $self->load_configured_das;
 
   $self->add_tracks('lrg',
-    [ 'lrg_transcript',  'LRG', '_lrg_transcript',  
-      { display => 'normal', 
+    [ 'lrg_transcript',  'LRG', '_transcript',
+      { display => 'normal',
 	name => 'LRG transcripts', 
-	description => 'Shows LRG transcripts', 
+	description => 'Shows LRG transcripts',
 	logicnames=>['LRG_import'], 
 	logic_name=>'LRG_import',
         'colours'     => $self->species_defs->colour( 'gene' ),
         'label_key'   => '[display_label]',
-}],
+	'colour_key'  => '[logic_name]',
+	'zmenu'       => 'LRG',
+      }],
   );
 
   $self->modify_configs(
