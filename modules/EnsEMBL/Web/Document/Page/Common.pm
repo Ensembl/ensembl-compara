@@ -37,7 +37,7 @@ sub _basic_HTML {
       }
     }
   } else {
-    $self->body_javascript->add_source(sprintf '/%s/%s.js', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_JS_NAME)
+    $self->body_javascript->add_source(sprintf '/%s/%s.js', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_JS_NAME);
   }
 
   $self->stylesheet->add_sheet('all', sprintf '/%s/%s.css', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_CSS_NAME);
