@@ -1,18 +1,22 @@
 // $Revision$
 
 Ensembl.Panel.Content = Ensembl.Panel.extend({
-  init: function () {    
+  init: function () {
     this.base();
     
-    this.elLk.ajaxLoad    = $('.ajax', this.el);
-    this.elLk.hideHints   = $('.hint', this.el);
-    this.elLk.toggleTable = $('.toggle_table', this.el);
-    this.elLk.toggleList  = $('a.collapsible', this.el);
-    this.elLk.glossary    = $('.glossary_mouseover', this.el);
-    this.elLk.dataTable   = $('table.data_table', this.el);
+    var fnEls = {
+      ajaxLoad:    $('.ajax', this.el),
+      hideHints:   $('.hint', this.el),
+      toggleTable: $('.toggle_table', this.el),
+      toggleList:  $('a.collapsible', this.el),
+      glossary:    $('.glossary_mouseover', this.el),
+      dataTable:   $('table.data_table', this.el)
+    };
     
-    for (var fn in this.elLk) {
-      if (this.elLk[fn].length) {
+    $.extend(this.elLk, fnEls);
+    
+    for (var fn in fnEls) {
+      if (fnEls[fn].length) {
         this[fn]();
       }
     }
