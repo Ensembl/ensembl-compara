@@ -5,14 +5,14 @@
 .navbar span.ramp img            { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; }
 .navbar span.ramp a.selected img { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
 
-.navbar img.zoom { height: 18px; width: 18px; vertical-align: bottom; }
+.navbar img.zoom { height: 20px; width: 20px; vertical-align: bottom; margin-bottom:1px; padding:0px; }
 .go-button       { color: [[MH_BORDER]]; background-color:[[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 
-.slider { margin: 0 10px; width: 150px; display: none; position: relative; height: 0.6em; border: 1px solid #aaaaaa; background: #ffffff; top: 4px; }
-.slider .ui-slider-handle { top: -0.4em; margin-left: -0.6em; position: absolute; z-index: 2; width: 0.8em; height: 1em; color: #222222; }
-.slider .ui-state-default, .slider .ui-widget-content .ui-state-default { border: 1px solid #d3d3d3; background: #e6e6e6; color: #555555; }
+.slider { width: 152px; height:16px; display: none; position: relative; background-image: url(/i/slider.gif); top: 4px; }
+.slider .ui-slider-handle { top: -2px; margin-left: -5px; position: absolute; z-index: 2; width: 12px; height: 16px; color: #222222; }
+.slider .ui-state-default, .slider .ui-widget-content .ui-state-default { border: 1px solid #666666; background: #cccccc; color: #555555; }
 .slider .ui-state-active,  .slider .ui-widget-content .ui-state-active  { border: 1px solid #aaaaaa; background: #ffffff; color: #212121; }
 .slider .ui-state-hover,   .slider .ui-widget-content .ui-state-hover, 
-.slider .ui-state-focus,   .slider .ui-widget-content .ui-state-focus   { border: 1px solid #999999; background: #dadada; color: #212121; }
+.slider .ui-state-focus,   .slider .ui-widget-content .ui-state-focus   { border: 1px solid #cc0000; background: #dddddd; color: #212121; }
 
 .slider_label { position: absolute; display: none; font-weight: bold; bottom: 15px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
