@@ -290,7 +290,7 @@ sub get_sequence_data {
         my $end   = $exon->end   - ($type eq 'gene' ? $slice_start : 1);
         my $id    = $exon->can('stable_id') ? $exon->stable_id : '';
         
-        ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $slice_strand < 0 && $exon->strand < 0;
+        ($start, $end) = ($slice_length - $end - 1, $slice_length - $start - 1) if $type eq 'gene' && $slice_strand < 0 && $exon->strand < 0;
         
         next if $end < 0 || $start >= $slice_length;
         
