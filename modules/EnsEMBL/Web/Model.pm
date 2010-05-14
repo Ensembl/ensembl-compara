@@ -147,7 +147,7 @@ sub create_objects {
       
       # $hub->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
       if ($hub->has_a_problem) {
-        $problem = $hub->handle_problem; 
+        $problem = $hub->handle_problem($factory); 
       } else {
         $self->add_objects($factory->DataObjects, $type);
       }
