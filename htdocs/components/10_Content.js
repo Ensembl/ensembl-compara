@@ -3,14 +3,23 @@
 Ensembl.Panel.Content = Ensembl.Panel.extend({
   init: function () {    
     this.base();
-    this.ajaxLoad();
     
-    this.hideHints();
-    this.toggleTable();
-    this.toggleList();
-    this.dataTable();
+    this.elLk.ajaxLoad    = $('.ajax', this.el);
+    this.elLk.hideHints   = $('.hint', this.el);
+    this.elLk.toggleTable = $('.toggle_table', this.el);
+    this.elLk.toggleList  = $('a.collapsible', this.el);
+    this.elLk.glossary    = $('.glossary_mouseover', this.el);
+    this.elLk.dataTable   = $('table.data_table', this.el);
+    
+    for (var fn in this.elLk) {
+      if (this.elLk[fn].length) {
+        this[fn]();
+      }
+    }
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
+    Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
+    
     Ensembl.EventManager.trigger('validateForms', this.el);
     Ensembl.EventManager.trigger('relocateTools', $('.other-tool', this.el));
     
@@ -21,37 +30,18 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return false;
       });
     }
-    
-    $('.glossary_mouseover', this.el).bind({
-      mouseover: function () {
-        var el = $(this);
-        var popup = el.children('.floating_popup');
-        
-        var position = el.position();
-        position.top  -= popup.height() - (0.25 * el.height());
-        position.left += 0.75 * el.width();
-        
-        popup.show().css(position);
-        popup = null;
-        el = null;
-      },
-      mouseout: function () {
-        $(this).children('.floating_popup').hide();
-      }
-    });
   },
   
   ajaxLoad: function () {
     var myself = this;
-    var ajax = $('.ajax', this.el);
     
     if ($(this.el).hasClass('ajax')) {
-      $.extend(ajax, $(this.el));
+      $.extend(this.elLk.ajaxLoad, $(this.el));
     }    
     
     $('.navbar', this.el).width(Ensembl.width);
     
-    ajax.each(function () {
+    this.elLk.ajaxLoad.each(function () {
       var el = $(this);
       var urls = [];
       var content, caption, component;
@@ -102,8 +92,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       el = null;
       content = null;
     });
-    
-    ajax = null;
   },
   
   getContent: function (url, el, params) {
@@ -146,7 +134,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   hideHints: function () {
-    $('.hint', this.el).each(function () {
+    this.elLk.hideHints.each(function () {
       var div = $(this);
       
       $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').click(function () {
@@ -165,24 +153,21 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     });
   },
   
-  toggleTable: function () {    
-    var table = $('.toggle_table', this.el);
+  toggleTable: function () {
+    var myself = this;
+    var id     = this.elLk.toggleTable[0].id;
+    var button = $('.toggle_button', this.el);
+    var icon   = button.children('em').show();
+    var info   = button.siblings('.toggle_info');
+  
+    button.click(function () {
+      myself.elLk.toggleTable.toggle().parent('.toggleTable_wrapper').toggle();
+      info.toggle();
+      icon.toggleClass('open closed');
+      Ensembl.cookie.set('ENSEMBL_' + id, myself.elLk.toggleTable.is(':visible') ? 'open' : 'close');
+    });
     
-    if (table.length) {
-      var id     = table.attr('id');
-      var button = $('.toggle_button', this.el);
-      var icon   = button.children('em').show();
-      var info   = button.siblings('.toggle_info');
-    
-      button.click(function () {
-        table.toggle().parent('.toggleTable_wrapper').toggle();
-        info.toggle();
-        icon.toggleClass('open closed');
-        Ensembl.cookie.set('ENSEMBL_' + id, table.is(':visible') ? 'open' : 'close')
-      });
-      
-      button = null;
-    }
+    button = null;
   },
   
   toggleList: function () {
@@ -191,7 +176,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       shut: { src: '/i/list_shut.gif', alt: '>' }
     };
     
-    $('a.collapsible', this.el).click(function () {
+    this.elLk.toggleList.click(function () {
       var img = $('img', this);
       
       img.attr(attrs[img.hasClass('open') ? 'shut' : 'open']).toggleClass('open');
@@ -203,10 +188,34 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     });
   },
   
+  glossary: function () {
+    this.elLk.glossary.bind({
+      mouseover: function () {
+        var el = $(this);
+        var popup = el.children('.floating_popup');
+        
+        var position = el.position();
+        position.top  -= popup.height() - (0.25 * el.height());
+        position.left += 0.75 * el.width();
+        
+        popup.show().css(position);
+        popup = null;
+        el = null;
+      },
+      mouseout: function () {
+        $(this).children('.floating_popup').hide();
+      }
+    });
+  },
+  
   dataTable: function () {
     var myself = this;
     
-    $('table.data_table', this.el).each(function (i) {
+    if (!window.JSON) {
+      $('<script type="text/javascript" src="/components/json2.js"></script>').appendTo('body');
+    }
+    
+    this.elLk.dataTable.each(function (i) {
       var table  = $(this);
       var length = $('tbody tr', this).length;
       var width  = table.hasClass('fixed_width') ? table.width() : '100%';
@@ -244,7 +253,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         
         menu += '<option value="-1">All</option>';
       } else {
-        sDom = '<"dataTables_top"<"col_toggle">f<"invisible">>t'
+        sDom = '<"dataTables_top"<"col_toggle">f<"invisible">>t';
       }
       
       var options = {
@@ -273,7 +282,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', $(data.nTable).parent())[data._iDisplayLength == -1 ? 'hide' : 'show']();
           
           var sort   = $.map(data.aaSorting, function (s) { return '[' + s.toString().replace(/([a-z]+)/g, '"$1"') + ']'; });
-          var hidden = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j });
+          var hidden = $.map(data.aoColumns, function (c, j) { return c.bVisible ? null : j; });
           
           Ensembl.cookie.set(cookieName, '[' + sort.join(',') + ']' + (hidden.length ? '#' + hidden.join(',') : ''), 1, true);
           
@@ -283,14 +292,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       // Extend options from config defined in the html
       $('input', table.siblings('form.data_table_config')).each(function () {
-        options[this.name] = eval(this.value);
+        options[this.name] = JSON.parse(this.value.replace(/'/g, '"'));
       });
       
       // Extend options from the cookie
       if (cookieOptions) {
         cookieOptions = cookieOptions.replace(/#$/, '').split('#');
         
-        var sorting = eval(cookieOptions[0]);
+        var sorting = JSON.parse(cookieOptions[0]);
         
         if (sorting.length) {
           options.aaSorting = sorting;
@@ -358,5 +367,30 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       table = null;
       dataTable = null;
     });
+  },
+  
+  getSequenceKey: function () {
+    var params = {};
+    var urlParams;
+    
+    if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
+      if (!window.JSON) {
+        $('<script type="text/javascript" src="/components/json2.js"></script>').appendTo('body');
+      }
+      
+      $('.sequence_key_json', this.el).each(function () {
+          $.extend(true, params, JSON.parse(this.innerHTML));
+      });
+      
+      urlParams = $.extend({}, params, { variations: [], exons: [] });
+      
+      $.each([ 'variations', 'exons' ], function () {
+        for (var p in params[this]) {
+          urlParams[this].push(p);
+        }
+      });
+      
+      this.getContent(this.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', this.el));
+    }
   }
 });
