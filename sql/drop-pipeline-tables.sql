@@ -2,8 +2,6 @@
    to the compara database as part of the production process */
 
 /* from ensembl-compara/sql/pipeline-tables.sql */
-DROP TABLE subset;
-DROP TABLE subset_member;
 DROP TABLE genome_db_extn;
 DROP TABLE genome_db_stats;
 DROP TABLE dnafrag_chunk;
