@@ -281,7 +281,6 @@ sub render_image_map {
     <map name="$map_name" id="$map_name">
       $imagemap
     </map>
-    <input type="hidden" class="panel_type" value="ImageMap" />
   };
 }
 
@@ -430,7 +429,8 @@ sub render {
     );
   }
 
-  $html .= $self->tailnote . '<input type="hidden" class="panel_type" value="ImageMap" />';
+  $html .= $self->tailnote;
+  $html .= '<input type="hidden" class="panel_type" value="ImageMap" />' unless $self->{'no_panel_type'};
     
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');

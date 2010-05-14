@@ -255,7 +255,7 @@ sub new_image {
     $id = $image_config->{'type'}
   }
   
-  $self->id($id);
+  $self->id($id) unless $image_config->{'no_panel_type'};
   
   # Set text export on image config
   $image_config->set_parameter('text_export', $object->param('export')) if $formats{$object->param('export')}{'extn'} eq 'txt';
@@ -263,6 +263,7 @@ sub new_image {
   my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_);
   $image->prefix($object->prefix) if $object->prefix;
+  $image->{'no_panel_type'} = $image_config->{'no_panel_type'};
   
   return $image;
 }
