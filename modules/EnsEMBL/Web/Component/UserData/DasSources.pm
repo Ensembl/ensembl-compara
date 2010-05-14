@@ -26,13 +26,12 @@ sub content {
   my $form;
 
   my $url = $object->species_path($object->data_species).'/UserData/ValidateDAS';
-  my $fieldset = {'name' => 'sources'};
   my $elements = [];
 
   $form = $self->modal_form('select_das', $url, {'wizard' => 1});
   $form->extra_buttons('top'); ## Repeat buttons at top, as this is often a long form
+  my $fieldset = $form->add_fieldset('name' => 'sources', 'stripes' => 1);
 
-  $fieldset->{'stripes'} = 1;
   my $count_added;
   my @all_das = $ENSEMBL_WEB_REGISTRY->get_all_das();
 
@@ -46,11 +45,12 @@ sub content {
       $already_added = 1;
       $count_added++;
     }
-    push @$elements, { 'type'     => 'DASCheckBox',
-                       'das'      => $source,
-                       'disabled' => $already_added,
-                       'checked'  => $already_added  };
-    $fieldset->{'elements'} = $elements;
+    $fieldset->add_element(
+         'type'     => 'DASCheckBox',
+         'das'      => $source,
+         'disabled' => $already_added,
+         'checked'  => $already_added,
+    );
   }
   if ( $count_added ) {
     my $noun    = $count_added > 1 ? 'sources' : 'source';
@@ -62,7 +62,6 @@ sub content {
     $form->add_notes( {'heading'=>'Note', 'text'=> $note } );
   }
 
-  $form->add_fieldset(%$fieldset);
   $form->add_element('type'  => 'Hidden','name'  => 'das_server','value' => $object->param('das_server'));
   return $form->render;
 }

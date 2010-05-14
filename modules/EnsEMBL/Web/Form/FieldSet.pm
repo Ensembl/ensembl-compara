@@ -78,10 +78,14 @@ sub _add_element {
   }
   
   my $key = $element->name || $element->id;
-  
-  $self->{'_elements'}{$key} = $element;
-  
-  push @{$self->{'_element_order'}}, $key;
+ 
+  if ($self->{'_elements'}{$key}) {
+    push @{$self->{'_elements'}{$key}}, $element;
+  }
+  else { 
+    $self->{'_elements'}{$key} = [$element];
+    push @{$self->{'_element_order'}}, $key;
+  }
 }
 
 sub delete_element {
@@ -104,9 +108,29 @@ sub modify_element {
     warn "!!! Renaming of elements not permitted! Remove this element and replace with a new one.";
     return;
   }
-  my $element = $self->{'_elements'}{$name};
+  my $elements = $self->{'_elements'}{$name};
+  if (@$elements > 1) {
+    warn "!!! Use modify_elements to change multiple elements";
+    return;
+  }
+  my $element = $elements->[0];
   if ($element && $element->can($attribute)) {
     $element->$attribute = $value;
+  }
+}
+
+sub modify_elements {
+### Modify an attribute of multiple EnsEMBL::Web::Form::Element objects of the same name
+  my ($self, $name, $attribute, $value) = @_;
+  return unless ($name && $attribute);
+  if ($name eq $attribute) {
+    warn "!!! Renaming of elements not permitted! Remove this element and replace with a new one.";
+    return;
+  }
+  foreach my $element (@{$self->{'_elements'}{$name}}) {
+    if ($element && $element->can($attribute)) {
+      $element->$attribute = $value;
+    }
   }
 }
 
@@ -141,15 +165,21 @@ sub _next_id {
 }
 
 sub _render_element {
-  my ($self, $element, $tint) = @_;
+  my ($self, $elements, $tint) = @_;
   my $output;
-  if ($element->type eq 'Submit' || $element->type eq 'Button') {
-    my $html = '<tr><td></td><td>';
-    $html .= $element->render($tint);
-    $html .= '</td></tr>';
-    return $html;
-  } else {
-    return $element->render;
+  if (ref($elements) ne 'ARRAY') {
+    $elements = [$elements];
+  }
+  foreach my $element (@$elements) {
+    if ($element->type eq 'Submit' || $element->type eq 'Button') {
+      my $html = '<tr><td></td><td>';
+      $html .= $element->render($tint);
+      $html .= '</td></tr>';
+      return $html;
+    } 
+    else {
+      return $element->render;
+    }
   }
 }
 
@@ -193,19 +223,22 @@ sub render {
   my $i;
   
   foreach my $name (@{$self->{'_element_order'}}) {
-    my $element = $self->{'_elements'}{$name};
-    next unless $element;
-    if ($element->type eq 'Hidden') {
-      $hidden_output .= $self->_render_element($element);
-    } else {
-      if ($self->{'_stripes'}) {
-        $element->bg = $i % 2 == 0 ? 'bg2' : 'bg1';
-      }
+    my $elements = $self->{'_elements'}{$name};
+    next unless @$elements;
+    foreach my $element (@$elements) {
+      if ($element->type eq 'Hidden') {
+        $hidden_output .= $self->_render_element($element);
+      } 
+      else {
+        if ($self->{'_stripes'}) {
+          $element->bg = $i % 2 == 0 ? 'bg2' : 'bg1';
+        }
       
-      $output .= $self->_render_element($element);
-    }
+        $output .= $self->_render_element($element);
+      }
     
-    $i++;
+      $i++;
+    }
   }
   
   $output .= "\n</tbody></table>\n";
