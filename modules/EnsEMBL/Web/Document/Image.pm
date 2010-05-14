@@ -277,11 +277,15 @@ sub render_image_map {
   my $imagemap = $self->drawable_container->render('imagemap');
   my $map_name = $self->{'image_id'} || $image->token;
 
-  return qq{
+  my $map = qq{
     <map name="$map_name" id="$map_name">
       $imagemap
     </map>
   };
+  
+  $map .= '<input type="hidden" class="panel_type" value="ImageMap" />' unless $self->{'no_panel_type'};
+  
+  return $map;
 }
 
 sub render {
@@ -430,7 +434,6 @@ sub render {
   }
 
   $html .= $self->tailnote;
-  $html .= '<input type="hidden" class="panel_type" value="ImageMap" />' unless $self->{'no_panel_type'};
     
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
