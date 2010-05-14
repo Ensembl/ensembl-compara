@@ -4,7 +4,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new    { return shift->SUPER::new(@_, {'title' => 'Untitled document'} ); }
+sub new    { return shift->SUPER::new( 'title' => 'Untitled document' ); }
 sub set    { $_[0]{'title'} = $_[1]; }
 sub get    { return $_[0]{'title'}; }
 

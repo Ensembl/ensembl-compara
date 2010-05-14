@@ -12,7 +12,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new(@_, {'counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context'});
+  my $self = $class->SUPER::new('counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context');
   return $self;
 }
 

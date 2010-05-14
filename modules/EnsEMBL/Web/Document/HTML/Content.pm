@@ -8,7 +8,9 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new(@_, {'panels' => [], 'first' => 1, 'form' => ''});
+  my $self = $class->SUPER::new('panels' => [], 'first' => 1, 'form' => '');
+  my $timer = shift;
+  $self->{'timer'} = $timer;  
   return $self;
 }
 

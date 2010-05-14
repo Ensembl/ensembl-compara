@@ -4,7 +4,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new(@_, {'media' => {}, 'media_order' => []} ); }
+sub new { return shift->SUPER::new( 'media' => {}, 'media_order' => [] ); }
 
 sub add {
   my ($self, $media, $css) = @_;

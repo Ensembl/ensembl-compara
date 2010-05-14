@@ -9,7 +9,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub new {
   my $class = shift;
-  my $self = $class->SUPER::new(@_, {'title' => undef} );
+  my $self = $class->SUPER::new('title' => undef );
   return $self;
 }
 

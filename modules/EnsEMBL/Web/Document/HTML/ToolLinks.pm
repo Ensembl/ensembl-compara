@@ -6,7 +6,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new(@_, {'logins' => '?'} ); }
+sub new { return shift->SUPER::new( 'logins' => '?' ); }
 
 sub logins      :lvalue { $_[0]{'logins'}; }
 sub blast       :lvalue { $_[0]{'blast'}; }
