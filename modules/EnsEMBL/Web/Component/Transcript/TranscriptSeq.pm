@@ -152,11 +152,13 @@ sub get_sequence_data {
       my $ambigcode         = $var->ambig_code || '*';
       my $pep_allele_string = $transcript_variation->pep_allele_string;
       my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
-      my $consequence_type  = join '', @{$transcript_variation->consequence_type};
+      my $consequence_type  = join ' ', @{$transcript_variation->consequence_type};
       my $utr_var           = $consequence_type =~ /UTR/;
       my $frameshift_var    = $consequence_type =~ /FRAMESHIFT/;
+      my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
       my $allele_count      = scalar split /\//, $pep_allele_string;
       my $insert            = 0;
+      my $type              = lc $var->display_consequence;
       
       if ($var->strand == -1 && $trans_strand == -1) {
         $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
@@ -178,26 +180,18 @@ sub get_sequence_data {
         
         my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
         
-        if ($frameshift_var) {
-          $mk->{'variations'}->{$_}->{'type'} = 'frameshift';
-        } elsif ($var_class eq 'in-del') {
-          $mk->{'variations'}->{$_}->{'type'} = $insert ? 'insert' : 'delete';
-        } else {
-          $mk->{'variations'}->{$_}->{'type'} = $utr_var || $allele_count > 1 ? 'snp' : 'syn';
+        $mk->{'variations'}->{$_}->{'type'} = $type;
+        
+        if ($config->{'translation'} && $aa_change) {
+          $protein_seq->{'seq'}->[$amino_acid_pos]->{'letter'}     = 
+          $protein_seq->{'seq'}->[$amino_acid_pos + 2]->{'letter'} = '=';
           
-          if ($config->{'translation'} && $allele_count > 1) {
-            $protein_seq->{'seq'}->[$amino_acid_pos]->{'letter'}     = 
-            $protein_seq->{'seq'}->[$amino_acid_pos + 2]->{'letter'} = '=';
-            
-            foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
-              $protein_seq->{'seq'}->[$aa]->{'class'}  = 'aa';
-              $protein_seq->{'seq'}->[$aa]->{'title'} .= ', ' if $protein_seq->{'seq'}->[$aa]->{'title'};
-              $protein_seq->{'seq'}->[$aa]->{'title'} .= $pep_allele_string;
-            }
+          foreach my $aa ($amino_acid_pos..$amino_acid_pos + 2) {
+            $protein_seq->{'seq'}->[$aa]->{'class'}  = 'aa';
+            $protein_seq->{'seq'}->[$aa]->{'title'} .= ', ' if $protein_seq->{'seq'}->[$aa]->{'title'};
+            $protein_seq->{'seq'}->[$aa]->{'title'} .= $pep_allele_string;
           }
         }
-        
-        $mk->{'variations'}->{$_}->{'type'} .= 'utr' if $config->{'codons'} && $mk->{'codons'}->{$_} && $mk->{'codons'}->{$_}->{'class'} eq 'cu';
         
         $mk->{'variations'}->{$_}->{'href'} ||= {
           type        => 'Zmenu',
@@ -308,8 +302,8 @@ sub content {
       $config->{'species'}
     );
     
+    $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
     $html .= $self->build_sequence($sequence, $config);
-    $html .= '<img src="/i/help/transview_key3.gif" alt="[Key]" border="0" />' if $config->{'codons'} || $config->{'variation'} || $config->{'translation'} || $config->{'coding_seq'};
   }
   
   return $html;
@@ -319,42 +313,22 @@ sub export_sequence {
   my $self = shift;
   my ($sequence, $config, $filename) = @_;
   
-  my $object  = $self->object;
-  my @colours = (undef);
-  my @output;
-  my ($i, $j);
+  my $object         = $self->object;
+  my @colours        = (undef);
+  my $class_to_style = $self->class_to_style;
+  my $c              = 1;
+  my (@output, $i, $j);
   
-  my $styles = $object->species_defs->colour('sequence_markup');
-  
-  my %class_to_style = (
-    con  => [ 1,  { '\chcbpat1'  => $styles->{'SEQ_CONSERVATION'}->{'default'} }],
-    dif  => [ 2,  { '\chcbpat2'  => $styles->{'SEQ_DIFFERENCE'}->{'default'} }],
-    res  => [ 3,  { '\cf3'       => $styles->{'SEQ_RESEQEUNCING'}->{'default'} }],
-    e0   => [ 4,  { '\cf4'       => $styles->{'SEQ_EXON0'}->{'default'} }],
-    e1   => [ 5,  { '\cf5'       => $styles->{'SEQ_EXON1'}->{'default'} }],
-    e2   => [ 6,  { '\cf6'       => $styles->{'SEQ_EXON2'}->{'default'} }],
-    eo   => [ 7,  { '\chcbpat7'  => $styles->{'SEQ_EXONOTHER'}->{'default'} }],
-    eg   => [ 8,  { '\cf8'       => $styles->{'SEQ_EXONGENE'}->{'default'}, '\b' => 1 }],
-    c0   => [ 9,  { '\chcbpat9'  => $styles->{'SEQ_CODONC0'}->{'default'} }],
-    c1   => [ 10, { '\chcbpat10' => $styles->{'SEQ_CODONC1'}->{'default'} }],
-    cu   => [ 11, { '\chcbpat11' => $styles->{'SEQ_CODONUTR'}->{'default'} }],
-    sn   => [ 12, { '\chcbpat12' => $styles->{'SEQ_SNP'}->{'default'} }],      
-    si   => [ 13, { '\chcbpat13' => $styles->{'SEQ_SNPINSERT'}->{'default'} }],
-    sd   => [ 14, { '\chcbpat14' => $styles->{'SEQ_SNPDELETE'}->{'default'} }],   
-    snt  => [ 15, { '\chcbpat15' => $styles->{'SEQ_SNP_TR'}->{'default'} }],
-    syn  => [ 16, { '\chcbpat16' => $styles->{'SEQ_SYN'}->{'default'} }],
-    snu  => [ 17, { '\chcbpat17' => $styles->{'SEQ_SNP_TR_UTR'}->{'default'} }],
-    siu  => [ 18, { '\chcbpat18' => $styles->{'SEQ_SNPINSERT_TR_UTR'}->{'default'} }],
-    sdu  => [ 19, { '\chcbpat19' => $styles->{'SEQ_SNPDELETE_TR_UTR'}->{'default'} }],
-    sf   => [ 20, { '\chcbpat20' => $styles->{'SEQ_FRAMESHIFT'}->{'default'} }],
-    aa   => [ 21, { '\cf21'      => $styles->{'SEQ_AMINOACID'}->{'default'} }],
-    var  => [ 22, { '\cf22'      => $styles->{'SEQ_MAIN_SNP'}->{'default'} }],
-    end  => [ 23, { '\cf23'      => $styles->{'SEQ_REGION_CHANGE'}->{'default'}, '\chcbpat24' => $styles->{'SEQ_REGION_CHANGE_BG'}->{'default'} }],
-    bold => [ 24, { '\b'         => 1 }]
-  );
-  
-  foreach my $class (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } keys %class_to_style) {
-    push @colours, [ map hex, unpack 'A2A2A2', $class_to_style{$class}->[1]->{$_} ] for sort grep /\d/, keys %{$class_to_style{$class}->[1]};
+  foreach my $class (sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } keys %$class_to_style) {
+    my $rtf_style = {};
+    
+    $rtf_style->{'\cf' . $c++}      = substr $class_to_style->{$class}->[1]->{'color'}, 1            if $class_to_style->{$class}->[1]->{'color'};
+    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}->[1]->{'background-color'}, 1 if $class_to_style->{$class}->[1]->{'background-color'};
+    $rtf_style->{'\b'}              = 1                                                              if $class_to_style->{$class}->[1]->{'font-weight'} eq 'bold';
+    
+    $class_to_style->{$class}->[1] = $rtf_style;
+    
+    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
   }
   
   foreach my $lines (@$sequence) {
@@ -375,10 +349,10 @@ sub export_sequence {
         $class = '';
       }
       
-      $class = join ' ', sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split /\s+/, $class;
+      $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $class;
       
       if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style{$_}->[1]}, split / /, $previous_class;
+        my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
         
         $section .= $seq->{'letter'} if $seq->{'end'};
         
@@ -409,8 +383,8 @@ sub export_sequence {
       }
       
       $section .= $seq->{'letter'};
-      $count++;
       $previous_class = $class;
+      $count++;
     }
     
     $i++;
@@ -418,20 +392,18 @@ sub export_sequence {
   }
   
   my $string;
-  my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
-  
-  my $rtf = RTF::Writer->new_to_string(\$string);
-
-  $rtf->prolog(
-    'fonts'  => [ 'Courier New' ],
-    'colors' => \@colours,
-  );
-  
+  my $file   = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
+  my $rtf    = RTF::Writer->new_to_string(\$string);
   my $spacer = ' ' x $config->{'display_width'} if $config->{'v_space'};
   
-  for my $i (0..scalar @{$output[0]} - 1) {
+  $rtf->prolog(
+    fonts  => [ 'Courier New' ],
+    colors => \@colours,
+  );
+  
+  for my $i (0..$#{$output[0]}) {
     $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
-    $rtf->paragraph(\'\fs20', $spacer) if $spacer;
+    $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
   }
   
   $rtf->close;

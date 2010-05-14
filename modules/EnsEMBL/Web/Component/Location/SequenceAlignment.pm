@@ -13,10 +13,6 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
   my $self = shift;
   
@@ -42,10 +38,8 @@ sub content {
     display_width  => $object->param('display_width') || 60,
     site_type      => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
     species        => $object->species,
-    key_template   => '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>',
-    key            => '',
     comparison     => 1,
-    ref_slice_name  => $ref_slice->get_individuals('reference')
+    ref_slice_name => $ref_slice->get_individuals('reference')
   };
   
   foreach ('exon_ori', 'match_display', 'snp_display', 'line_numbering', 'codons_display', 'title_display') {
@@ -81,23 +75,21 @@ sub content {
     $self->markup_comparisons($sequence, $markup, $config); # Always called in this view
     $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
     
-    $config->{'key'} .= '<p><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</p>';
-    
     my $slice_name = $original_slice->name;
     
     my (undef, undef, $region, $start, $end) = split /:/, $slice_name;
-    my $url = $object->hub->url({ action => 'View', r => "$region:$start-$end" });
+    my $url = $object->_url({ action => 'View', r => "$region:$start-$end" });
     
     my $table = qq{
-    <table class="sequence_key">
-      <tr>
-        <th>$config->{'species'} &gt;&nbsp;</th>
-        <td><a href="$url">$slice_name</a><br /></td>
-      </tr>
-    </table>
+      <table>
+        <tr>
+          <th>$config->{'species'} &gt;&nbsp;</th>
+          <td><a href="$url">$slice_name</a><br /></td>
+        </tr>
+      </table>
     };
     
-    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div>$table<pre>%s</pre>};
+    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . "$table<pre>%s</pre>";
   
     $html = $self->build_sequence($sequence, $config);
   } else {

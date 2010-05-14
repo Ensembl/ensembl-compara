@@ -2,7 +2,7 @@ package EnsEMBL::Web::Component::Transcript::ProteinSeq;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
+use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
@@ -14,9 +14,8 @@ sub get_sequence_data {
   my $self = shift;
   my ($translation, $config) = @_;
   
-  my $peptide = $translation->Obj;
-  my $pep_seq = $peptide->seq;
-
+  my $peptide  = $translation->Obj;
+  my $pep_seq  = $peptide->seq;
   my @sequence = [ map {{ letter => $_ }} split //, uc $pep_seq ];
   my $markup;
   
@@ -42,38 +41,43 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
-    my $object     = $self->object;
-    my $variations = $translation->pep_snps('hash');
-    my $filter     = $object->param('population_filter');
+    my $object = $self->object;
+    my $filter = $object->param('population_filter');
     my %population_filter;
+    
+    my $slice  = $translation->get_Slice;
     
     if ($filter && $filter ne 'off') {
       %population_filter = map { $_->dbID => $_ }
-        @{$translation->get_Slice->get_all_VariationFeatures_by_Population(
+        @{$slice->get_all_VariationFeatures_by_Population(
           $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
           $object->param('min_frequency')
         )};
     }
     
-    foreach (sort { $a <=> $b } keys %$variations) {
-      last if $_ >= $config->{'length'};
-      next unless $variations->{$_}->{'type'}; # Weed out the rubbish returned by pep_snps
-      next if keys %population_filter && !$population_filter{$variations->{$_}->{'vdbid'}};
+    foreach my $transcript_variation (@{$object->get_transcript_variations}) {
+      my $pos = $transcript_variation->translation_start;
       
-      $markup->{'variations'}->{$_}->{'type'}      = $variations->{$_}->{'type'};
-      $markup->{'variations'}->{$_}->{'alleles'}   = $variations->{$_}->{'allele'};
-      $markup->{'variations'}->{$_}->{'ambigcode'} = $variations->{$_}->{'ambigcode'};
-      $markup->{'variations'}->{$_}->{'pep_snp'}   = $variations->{$_}->{'pep_snp'};
-      $markup->{'variations'}->{$_}->{'nt'}        = $variations->{$_}->{'nt'};
+      next unless $pos;
       
-      $markup->{'variations'}->{$_}->{'href'} ||= {
+      $pos--;
+      
+      my $var  = $transcript_variation->variation_feature->transfer($slice);
+      my $dbID = $var->dbID;
+      
+      next if keys %population_filter && !$population_filter{$dbID};
+      
+      $markup->{'variations'}->{$pos}->{'type'}      = lc $var->display_consequence;
+      $markup->{'variations'}->{$pos}->{'alleles'}   = $var->allele_string;
+      $markup->{'variations'}->{$pos}->{'ambigcode'} = $var->ambig_code || '*';
+      $markup->{'variations'}->{$pos}->{'href'} ||= {
         type        => 'Zmenu',
         action      => 'TextSequence',
         factorytype => 'Location'
       };
       
-      push @{$markup->{'variations'}->{$_}->{'href'}->{'v'}},  $variations->{$_}->{'snp_id'};
-      push @{$markup->{'variations'}->{$_}->{'href'}->{'vf'}}, $variations->{$_}->{'vdbid'};
+      push @{$markup->{'variations'}->{$pos}->{'href'}->{'v'}},  $var->variation_name;
+      push @{$markup->{'variations'}->{$pos}->{'href'}->{'vf'}}, $dbID;
     }
   }
   
@@ -94,8 +98,8 @@ sub content {
     maintain_colour => 1
   };
   
-  for ('exons', 'variation', 'number') {
-    $config->{$_} = ($object->param($_) eq 'yes') ? 1 : 0;
+  for (qw(exons variation number)) {
+    $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0;
   }
 
   my ($sequence, $markup) = $self->get_sequence_data($translation, $config);
@@ -120,8 +124,8 @@ sub content {
     $config->{'species'}
   );
   
+  $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
   $html .= $self->build_sequence($sequence, $config);
-  $html .= '<img src="/i/help/protview_key1.gif" alt="[Key]" border="0" />' if $config->{'exons'} || $config->{'variation'};
 
   return $html;
 }

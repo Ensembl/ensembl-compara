@@ -131,6 +131,7 @@ sub content {
     );
     
     $html .= $table->render;
+    $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html;
   }
   
   return $html;
@@ -271,8 +272,12 @@ sub add_variations {
   foreach my $vf (@$variation_features) {
     my $name = $vf->variation_name;
     
+    my $class = lc $vf->display_consequence;
+    $config->{'key'}->{'variations'}->{$class} = 1;
+    $class = " $class";
+    
     for ($vf->start-1..$vf->end-1) {
-      $sequence->[$_]->{'class'} .= ' sn';
+      $sequence->[$_]->{'class'} .= $class;
       $sequence->[$_]->{'title'}  = $name;
        
       $href{$_} ||= {
@@ -301,24 +306,23 @@ sub export_sequence {
   my $self = shift;
   my ($sequence, $config, $filename) = @_;
   
-  my $object  = $self->object;
-  my $space   = ' ' x $config->{'display_width'};
-  my @colours = (undef);
-  my @output;
-  my ($i, $j);
+  my $object         = $self->object;
+  my @colours        = (undef);
+  my $class_to_style = $self->class_to_style;
+  my $space          = ' ' x $config->{'display_width'};
+  my $c              = 1;
+  my (@output, $i, $j);
   
-  my $styles = $object->species_defs->colour('sequence_markup');
-  
-  my %class_to_style = (
-    e0   => [ 1, { '\cf1'      => $styles->{'SEQ_EXON0'}->{'default'} }],
-    e1   => [ 2, { '\cf2'      => $styles->{'SEQ_EXON1'}->{'default'} }],
-    eu  =>  [ 3, { '\cf3'      => $styles->{'SEQ_EXONUTR'}->{'default'} }],
-    ef  =>  [ 4, { '\cf4'      => $styles->{'SEQ_EXONFLANK'}->{'default'} }],
-    sn   => [ 5, { '\chcbpat5' => $styles->{'SEQ_SNP'}->{'default'} }]
-  );
-  
-  foreach my $class (sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } keys %class_to_style) {
-    push @colours, [ map hex, unpack 'A2A2A2', $class_to_style{$class}->[1]->{$_} ] for sort grep /\d/, keys %{$class_to_style{$class}->[1]};
+  foreach my $class (sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } keys %$class_to_style) {
+    my $rtf_style = {};
+    
+    $rtf_style->{'\cf' . $c++}      = substr $class_to_style->{$class}->[1]->{'color'}, 1            if $class_to_style->{$class}->[1]->{'color'};
+    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}->[1]->{'background-color'}, 1 if $class_to_style->{$class}->[1]->{'background-color'};
+    $rtf_style->{'\b'}              = 1                                                              if $class_to_style->{$class}->[1]->{'font-weight'} eq 'bold';
+    
+    $class_to_style->{$class}->[1] = $rtf_style;
+    
+    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
   }
   
   foreach my $part (@$sequence) {
@@ -327,10 +331,10 @@ sub export_sequence {
     $part->[-1]->{'end'} = 1;
     
     foreach my $seq (@$part) {
-      $class = join ' ', sort { $class_to_style{$a}->[0] <=> $class_to_style{$b}->[0] } split /\s+/, $seq->{'class'};
+      $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $seq->{'class'};
       
       if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style{$_}->[1]}, split / /, $previous_class;
+        my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
         
         $section .= $seq->{'letter'} if $seq->{'end'};
         
@@ -345,8 +349,8 @@ sub export_sequence {
       }
       
       $section .= $seq->{'letter'};
-      $count++;
       $previous_class = $class;
+      $count++;
     }
     
     $i++;
@@ -355,8 +359,7 @@ sub export_sequence {
   
   my $string;
   my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
-  
-  my $rtf = RTF::Writer->new_to_string(\$string);
+  my $rtf  = RTF::Writer->new_to_string(\$string);
 
   $rtf->prolog(
     'fonts'  => [ 'Courier New' ],
