@@ -84,6 +84,10 @@ CREATE TABLE subset_member (
  UNIQUE subset_member_id (subset_id, member_id)
 );
 
+## ---------------------- Used to populate subset member with a dummy set of data
+insert into subset( subset_id, description ) values ( 1, 'DUMMY' );
+insert into subset_member select 1, member_id from member;
+
 
 ## ----------------------  This table holds the sequence cds information
 #
