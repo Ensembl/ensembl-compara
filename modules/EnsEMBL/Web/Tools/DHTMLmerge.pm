@@ -13,6 +13,8 @@ package EnsEMBL::Web::Tools::DHTMLmerge;
 use strict;
 
 use Digest::MD5 qw(md5_hex);
+use CSS::Minifier;
+use JavaScript::Minifier;
 
 sub merge_all {
   my ($species_defs) = @_;
@@ -96,6 +98,12 @@ sub merge {
     }
     
     unlink $tmp;
+    
+    if (!-e $minified) {
+      open  O, ">$minified" or die "can't open $minified for writing";
+      print O $type eq 'css' ? CSS::Minifier::minify(input => $contents) : JavaScript::Minifier::minify(input => "$jquery$contents");
+      close O;
+    }
   }
   
   return $filename;
