@@ -16,6 +16,40 @@ no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::Data::Bio);
 
+sub trans_description {
+  my ($self, $transcript) = @_;
+  my $gene = $self->gene($transcript);
+  my %description_by_type = ( 'bacterial_contaminant' => 'Probable bacterial contaminant' );
+
+  if ($gene) {
+    return $gene->description || $description_by_type{$gene->biotype} || 'No description';
+  }
+
+  return 'No description';
+}
+
+sub gene {
+  my $self = shift;
+  my $transcript = shift;
+  my $hub = $self->hub;
+
+  if (@_) {
+    $self->{'_gene'} = shift;
+  } 
+  elsif (!$self->{'_gene'}) {
+    eval {
+      my $db = $hub->param('db') || 'core';
+      my $adaptor_call = $hub->param('gene_adaptor') || 'get_GeneAdaptor';
+      my $GeneAdaptor = $hub->database($db)->$adaptor_call;
+      my $Gene = $GeneAdaptor->fetch_by_transcript_stable_id($transcript->stable_id);
+      $self->{'_gene'} = $Gene if $Gene;
+    };
+  }
+
+  return $self->{'_gene'};
+}
+
+
 sub convert_to_drawing_parameters {
 ### Converts a set of API objects into simple parameters 
 ### for use by drawing code and HTML components
@@ -29,7 +63,7 @@ sub convert_to_drawing_parameters {
       push(@$results, $unmapped);
     }
     else {
-      my $desc = $t->trans_description();
+      my $desc = $self->trans_description($t);
       push @$results, {
         'region'   => $t->seq_region_name,
         'start'    => $t->start,
