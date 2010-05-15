@@ -170,7 +170,7 @@ sub get_params {
 sub dumpNibFiles {
   my $self = shift;
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
   my $starttime = time();
 
@@ -191,28 +191,87 @@ sub dumpNibFiles {
         next;
       }
       if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
-         next if ($dna_object->length <= $self->dump_min_size); 
-         push @{ $dna_frag_hash{$dna_object->dnafrag->dbID}{_objects}} , $dna_object; 
-         $dna_frag_hash{$dna_object->dnafrag->dbID}{_name} = $dna_object->dnafrag->name; 
+         next if ($dna_object->length <= $self->dump_min_size);  
+         # only save one dnafrag 
+         if (! exists $dna_frag_hash{$dna_object->dnafrag->dbID}) {
+           $dna_frag_hash{$dna_object->dnafrag->dbID}= $dna_object; 
+         }
       }
   }
 
-  for my $k ( keys %dna_frag_hash ) {   
-    print "processing $k\n"; 
-    my @dna_objects = @{ $dna_frag_hash {$k }{_objects}}; 
-    @dna_objects = sort { $a->seq_start <=> $b->seq_start } @dna_objects ;  
+  my @sq = values %dna_frag_hash; 
 
-    my $name = $dna_frag_hash{$k }{_name}; 
+  while ( my $dno = shift @sq ) {   
+    my $masking_options; 
+    my $seq_string;  
+
+    my $name =  $dno->dnafrag->name; 
+    print "processing $name\n"; 
+    my $dba = $dno->dnafrag->genome_db->db_adaptor;
+    my $sliceDBA = $dba->get_SliceAdaptor; 
+    $dba->disconnect_when_inactive(0); 
+    my $slice = $sliceDBA->fetch_by_region($dno->dnafrag->coord_system_name, $name);  
+
+
+  if(defined($dno->masking_options)) {
+    $masking_options = eval($dno->masking_options);
+    my $logic_names = $masking_options->{'logic_names'};
+    if(defined($masking_options->{'default_soft_masking'}) and $masking_options->{'default_soft_masking'} == 0)
+    {
+      print "getting HARD masked sequence...\n";
+      $seq_string = $slice->get_repeatmasked_seq($logic_names,0,$masking_options)->seq;
+    } else {
+      print "getting SOFT masked sequence...\n";
+      $seq_string = $slice->get_repeatmasked_seq($logic_names,1,$masking_options)->seq;
+    }
+  } else {  # no masking options set, so get unmasked sequence
+    print "getting UNMASKED sequence...\n";
+    $seq_string = $slice->seq; 
+  }
+  my $seq_display_id = $slice->name ;  
+
+  print "got masked sequence - now integrating assembly execptions - substr call \n";
+  if (defined $masking_options) {
+    foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
+        next unless (defined $masking_options->{"assembly_exception_type_" . $ae->type});
+        print $masking_options->{"assembly_exception_type_" . $ae->type}."\n";
+        my $length = $ae->end - $ae->start + 1;
+
+      if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
+        my $padstr = 'N' x ($length);
+        substr ($seq_string, ($ae->start), ($length)) = $padstr;
+
+      } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) {
+        my $padstr = lc substr ($seq_string, $ae->start, $length);
+        substr ($seq_string, $ae->start, $length) = $padstr;
+      }
+    }
+  } 
+
     my $fastafile = "$dump_loc/". $name . ".fa";
-    my $nibfile = "$dump_loc/". $name . ".nib"; 
-    concatenate_chunks_to_fasta_file(\@dna_objects,$fastafile);  
+    my $nibfile = "$dump_loc/". $name . ".nib";   
 
+
+    open(OUTSEQ, ">$fastafile") or throw("Error opening $fastafile for write");
+    print "bioseq sequence " .  $seq_display_id ."\n"; # chunkID122:1.38502
+    print OUTSEQ ">".$seq_display_id."\n"; 
+     
+    $seq_string =~ s/(.{60})/$1\n/g;
+    $seq_string =~ s/\n$//;
+    print OUTSEQ $seq_string;
+    close OUTSEQ; 
+    $seq_string =undef;
+ 
+    #my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta'); 
+    #$output_seq->write_seq($seq); 
+    print "sequence written $fastafile\n";
+    #concatenate_chunks_to_fasta_file(\@dna_objects,$fastafile);  
     if (defined $BIN_DIR) {
        system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
      } else {
        system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
      }
-        unlink $fastafile;
+        #unlink $fastafile;
   } 
 
 #  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) { 
