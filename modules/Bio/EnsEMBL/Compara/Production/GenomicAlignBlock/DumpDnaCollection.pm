@@ -97,7 +97,6 @@ sub run
   if ($self->dump_dna) {
       $self->dumpDnaFiles; 
   }
-
   return 1;
 }
 
@@ -185,73 +184,104 @@ sub dumpNibFiles {
     throw("dump_loc : $dump_loc does not exist\n");
   } 
 
-  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-      warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
-      next;
-    }
-    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
-
-      next if ($dna_object->length <= $self->dump_min_size);
-
-      # 
-      # the problem is that if a file is bigger chunk_size, it will get  split into 2 files but both files have the same name, 
-      # and the splitting does not really work ( files get different ids but have same seq content ) 
-      #
-
-      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
-
-      #don't dump nibfile if it already exists
-      
-     # if (-e $nibfile) {  
-     #   print "nibfile $nibfile already exists - i won't dump it\n"; 
-     # } 
-
-      my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
-
-      #if ( $fastafile =~m/groupIV/ ) { 
-      
-        # CORRECT -but overwritten this method below dump_to_fasta_file dumps correctly, but still overwrites the files.   
-        # $dna_object->dump_to_fasta_file($fastafile); 
-        # dump_to_fasta_file-method : -produces corerct headers and fa lenght 
-        #                             - uses chunk_size to split long fasta into smaller files 
-        #                             - smaller files get overwritten ...  
-        #                             - files can't have different names as they won't be found 
-        # we want : a file with full sequence ( 32000.000 bp ) concerted to nib.  
-        # fasta seqs > chunk_size into into 2  files
-        # ( chunkID18:1.30000000 and  
-        
-        # use this version to solve problem of very large chromosomes eg opossum 
-        # faToNib only works on fa files containing a single sequence so we can't concatenate the sequences into one file. solution ? 
-        $dna_object->dump_chunks_to_fasta_file($fastafile);  # INCORRECT - headers don't correspond to file size.  that does not really matter...
-                                                             
-        # dump_chunks_to_fasta_file 
-        # writes multiple fa-files as we have the loop and multiple names ( 2x groupIV ) 
-        # 32632948 chunkID18:1.3000000   
-        # 32632948 chunkID19:30000001.32632948
-        # creates nib-files from both files. 
-  
-        my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
-  
-     #   my $cmd = "faToNib $fastafile $nibfile "  ;  ;
-     #   print "\ncreating nib : $cmd\n" ; 
-     #   system($cmd) and throw("Could not convert fasta file $fastafile to nib: $!\n"); 
-     
-      #}
-      #hack to use newer version of faToNib to dump larger fa files eg cow Un.fa
-      #system("/nfs/team71/phd/klh/progs/kent/bin/i386_64/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
-
-
-      if (defined $BIN_DIR) {
-	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
-      } else {
-	  system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+  my %dna_frag_hash ; 
+  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {  
+      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+        warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
+        next;
       }
-
-      unlink $fastafile;
-      $dna_object = undef;
-    }
+      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
+         next if ($dna_object->length <= $self->dump_min_size); 
+         push @{ $dna_frag_hash{$dna_object->dnafrag->dbID}{_objects}} , $dna_object; 
+         $dna_frag_hash{$dna_object->dnafrag->dbID}{_name} = $dna_object->dnafrag->name; 
+      }
   }
+
+  for my $k ( keys %dna_frag_hash ) {   
+    print "processing $k\n"; 
+    my @dna_objects = @{ $dna_frag_hash {$k }{_objects}}; 
+    @dna_objects = sort { $a->seq_start <=> $b->seq_start } @dna_objects ;  
+
+    my $name = $dna_frag_hash{$k }{_name}; 
+    my $fastafile = "$dump_loc/". $name . ".fa";
+    my $nibfile = "$dump_loc/". $name . ".nib"; 
+    concatenate_chunks_to_fasta_file(\@dna_objects,$fastafile);  
+
+    if (defined $BIN_DIR) {
+       system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+     } else {
+       system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+     }
+        unlink $fastafile;
+  } 
+
+#  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) { 
+#    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+#      warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
+#      next;
+#    }
+#    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
+#
+#      next if ($dna_object->length <= $self->dump_min_size);
+#
+#      # 
+#      # the problem is that if a file is bigger chunk_size, it will get  split into 2 files but both files have the same name, 
+#      # and the splitting does not really work ( files get different ids but have same seq content ) 
+#      #
+#
+#      my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
+#
+#      #don't dump nibfile if it already exists
+#      
+#     # if (-e $nibfile) {  
+#     #   print "nibfile $nibfile already exists - i won't dump it\n"; 
+#     # } 
+#
+#      my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
+#
+#      #if ( $fastafile =~m/groupIV/ ) { 
+#      
+#        # CORRECT -but overwritten this method below dump_to_fasta_file dumps correctly, but still overwrites the files.   
+#        # $dna_object->dump_to_fasta_file($fastafile); 
+#        # dump_to_fasta_file-method : -produces corerct headers and fa lenght 
+#        #                             - uses chunk_size to split long fasta into smaller files 
+#        #                             - smaller files get overwritten ...  
+#        #                             - files can't have different names as they won't be found 
+#        # we want : a file with full sequence ( 32000.000 bp ) concerted to nib.  
+#        # fasta seqs > chunk_size into into 2  files
+#        # ( chunkID18:1.30000000 and  
+#        
+#        # use this version to solve problem of very large chromosomes eg opossum 
+#        # faToNib only works on fa files containing a single sequence so we can't concatenate the sequences into one file. solution ? 
+#        $dna_object->dump_chunks_to_fasta_file($fastafile);  # INCORRECT - headers don't correspond to file size.  that does not really matter...
+#                                                             
+#        # dump_chunks_to_fasta_file 
+#        # writes multiple fa-files as we have the loop and multiple names ( 2x groupIV ) 
+#        # 32632948 chunkID18:1.3000000   
+#        # 32632948 chunkID19:30000001.32632948
+#        # creates nib-files from both files. 
+#  
+#        my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
+#  
+#     #   my $cmd = "faToNib $fastafile $nibfile "  ;  ;
+#     #   print "\ncreating nib : $cmd\n" ; 
+#     #   system($cmd) and throw("Could not convert fasta file $fastafile to nib: $!\n"); 
+#     
+#      #}
+#      #hack to use newer version of faToNib to dump larger fa files eg cow Un.fa
+#      #system("/nfs/team71/phd/klh/progs/kent/bin/i386_64/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+#
+#
+#      if (defined $BIN_DIR) {
+#	  system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+#      } else {
+#	  system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+#      }
+#
+#      unlink $fastafile;
+#      $dna_object = undef;
+#    }
+#  }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->dna_collection_name);}
 
@@ -260,6 +290,48 @@ sub dumpNibFiles {
   return 1;
 }
 
+sub concatenate_chunks_to_fasta_file { 
+  my ( $aref_dna_objects, $fasta_file ) = @_ ;  
+
+  my $fasta_file_tmp = $fasta_file.".tmp"; 
+
+  unlink $fasta_file_tmp; 
+  unlink $fasta_file ;  
+  my $seq_length =0;  
+  my $seq_id ; 
+  while (my $dna_object = shift @$aref_dna_objects ) {   
+    my $bioseq = $dna_object->bioseq;
+
+    open(OUTSEQ, ">>$fasta_file_tmp") or throw("Error opening $fasta_file_tmp for write");
+    my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta'); 
+    $seq_id =  $bioseq->display_id ; # chunkID122:1.38502
+    $output_seq->write_seq($bioseq); 
+    $seq_length+=$bioseq->length; 
+    close OUTSEQ; 
+  } 
+  print $seq_length . "bp written \n" ; 
+
+  open(A, "$fasta_file_tmp") or throw("Error opening $fasta_file_tmp for write");
+  open(B, ">$fasta_file") or throw("Error opening $fasta_file for write"); 
+
+  my $write_header = 1 ;   
+  my ($main,$tail) = split /\./,$seq_id; 
+  my $header = $main.".$seq_length"; 
+
+  while (my $line =  <A> ) {   
+    if ( $write_header ) {  
+     print B ">$header"; 
+     $write_header = 0 ; 
+    } 
+    if ($line !~/\>/) {  
+      print B $line ;  
+    }
+  }
+    close(A);
+    close(B); 
+    unlink $fasta_file_tmp; 
+    print "written $fasta_file\n";
+}
 
 sub dumpDnaFiles {
   my $self = shift;
@@ -272,12 +344,15 @@ sub dumpDnaFiles {
   
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
   my $dump_loc = $dna_collection->dump_loc; 
-
+print "starting to dump dna files : dumpDnnaFilse() \n"; 
   unless (defined $dump_loc) {
     throw("dump_loc directory is not defined, can not dump dna files\n");
   }
 
-  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {
+  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) { 
+   print "Dumping $dna_object " ; 
+   print "Dumping " . $dna_object->dnafrag->name. "\n"  ; 
+
     if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
 
       my $first_dna_object = $dna_object->get_all_DnaFragChunks->[0];
@@ -286,12 +361,12 @@ sub dumpDnaFiles {
       my $name = $first_dna_object->dnafrag->name . "_" . $first_dna_object->seq_start . "_" . $first_dna_object->seq_end;
 
       my $fastafile = "$dump_loc/". $name . ".fa";
-
       #Must always dump new fasta files because different runs call the chunks
       #different names and the chunk name is what is stored in the fasta file.
       if (-e $fastafile) {
 	  unlink $fastafile
       }
+      print "writing $fastafile\n"; 
       foreach my $chunk (@$chunk_array) {
 	  #A chunk_set will contain several seq_regions which will be appended
 	  #to a single fastafile. This means I can't use
@@ -304,7 +379,7 @@ sub dumpDnaFiles {
       next if ($dna_object->length <= $self->dump_min_size);
 
       my $name = $dna_object->dnafrag->name . "_" . $dna_object->seq_start . "_" . $dna_object->seq_end;
-
+      print "now writing : $dump_loc\n"; 
       my $fastafile = "$dump_loc/". $name . ".fa";
 
       if (-e $fastafile) {
