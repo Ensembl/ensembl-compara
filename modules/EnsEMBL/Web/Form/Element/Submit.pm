@@ -12,8 +12,11 @@ sub new { my $class = shift; return $class->SUPER::new( @_ ); }
 
 sub render { 
   my $self = shift; 
-  return  sprintf( '<input type="submit" name="%s" value="%s" class="submit" %s/>', 
-    encode_entities($self->name) || 'submit', encode_entities($self->value) );
+  return  sprintf( '<input type="submit" name="%s" value="%s" class="%s" %s/>', 
+    encode_entities($self->name) || 'submit', 
+    encode_entities($self->value), 
+    encode_entities(join(' ', @{$self->classes})) || 'submit', 
+  );
 }
 
 1;
