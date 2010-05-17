@@ -166,6 +166,7 @@ sub _global_context {
   
   foreach my $row (@data) {
     next unless $row->[3];
+    next if ($row->[0] eq 'Location' && $type eq 'LRG');
     
     my $action = $row->[3]->isa('EnsEMBL::Web::Fake') ? $row->[3]->view : $row->[3]->isa('Bio::EnsEMBL::ArchiveStableId') ? 'idhistory' : $row->[1];
     my $url    = $hub->url({ type => $row->[0], action => $action, __clear => 1 });
