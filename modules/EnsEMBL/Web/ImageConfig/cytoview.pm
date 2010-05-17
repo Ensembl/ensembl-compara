@@ -75,6 +75,10 @@ sub init {
     [ 'variation_feature_structural' ],
     { qw(display normal menu yes) }
   );
+  $self->modify_configs(
+    [ 'das' ],
+    { qw(display off menu yes) }
+  );
 
   $self->load_configured_das('strand' => 'r');
 
