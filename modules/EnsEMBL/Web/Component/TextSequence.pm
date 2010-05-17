@@ -394,11 +394,8 @@ sub markup_exons {
     
     $i++;
   }
-  for (keys %exon_types) {
-    next unless $config->{'key'};
-    $config->{'key'}->{'exons'}->{$_} = 1;
-  }
- 
+  
+  $config->{'key'}->{'exons'}->{$_} = 1 for keys %exon_types;
 }
 
 sub markup_codons {
@@ -458,10 +455,8 @@ sub markup_variation {
       $snps    = 1 if $variation->{'type'} eq 'snp';
       $inserts = 1 if $variation->{'type'} =~ /insert/;
       $deletes = 1 if $variation->{'type'} eq 'delete';
-     
-      if ($config->{'key'}) { 
-        $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1;
-      }
+      
+      $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1;
     }
     
     $i++;
@@ -897,7 +892,7 @@ sub build_sequence {
       $partial_key->{$type}->{$_} = 1 for keys %{$config->{'key'}->{$type}};
     }
     
-    $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key);
+    $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
   }
   
   return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
