@@ -15,7 +15,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
-    Ensembl.EventManager.register('locationChange', this, this.locationChange);
+    Ensembl.EventManager.register('hashChange', this, this.hashChange);
     
     $('#local-tools > p').show();
     
@@ -116,7 +116,7 @@ Ensembl.LayoutManager.extend({
     });
   },
   
-  locationChange: function (loc) {
+  hashChange: function (loc) {
     function addCommas(nStr) {
       var rgx = /(\d+)(\d{3})/;
       
