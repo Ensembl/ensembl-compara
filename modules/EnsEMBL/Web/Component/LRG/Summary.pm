@@ -72,8 +72,14 @@ information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.
       'r'      => $r,
     });
 
-    my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s.',
-      $url,
+    #my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s.',
+    #  $url,
+    #  $object->neat_sr_name( $fSlice->coord_system->name, $fSlice->seq_region_name ),
+    #  $object->thousandify( $fSlice->start ),
+    #  $object->thousandify( $fSlice->end ),
+    #  $fSlice->strand < 0 ? ' reverse strand' : 'forward strand'
+    #);
+    my $location_html = sprintf( '%s: %s-%s %s.',
       $object->neat_sr_name( $fSlice->coord_system->name, $fSlice->seq_region_name ),
       $object->thousandify( $fSlice->start ),
       $object->thousandify( $fSlice->end ),
@@ -140,32 +146,36 @@ information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.
     ) {
  #     warn "T: ", join ' * ', $_->stable_id, $_->biotype, $_->analysis->logic_name;
 
-      my $url = $self->object->_url({
-        'type'   => 'Transcript',
-        'action' => 'Summary',
-        't'      => $_->stable_id
-      }); 
+      my $transcript = CGI::escapeHTML( $_->stable_id );
+      #my $transcript = sprintf '<a href="%s">%s</a>',
+      #  $self->object->_url({
+      #  'type'   => 'Transcript',
+      #  'action' => 'Summary',
+      #  't'      => $_->stable_id
+      #  }),
+      #  CGI::escapeHTML( $_->stable_id );
+ 
       my $protein = 'No protein product';
       if ($_->translation) {
-        $protein = sprintf '<a href="%s">%s</a>',
-        $self->object->_url({
-          'type'   => 'Transcript',
-          'action' => 'ProteinSummary',
-          't'      => $_->stable_id
-          }),
-	        'LRG Protein'; #CGI::escapeHTML( $_->translation->stable_id );
+        $protein = 'LRG Protein';
+        #$protein = sprintf '<a href="%s">%s</a>',
+        #$self->object->_url({
+        #  'type'   => 'Transcript',
+        #  'action' => 'ProteinSummary',
+        #  't'      => $_->stable_id
+        #  }),
+	      #  'LRG Protein'; #CGI::escapeHTML( $_->translation->stable_id );
       }
       $html .= sprintf( '
         <tr%s>      
           <th>%s</th>
-          <td><a href="%s">%s</a></td>
+          <td>%s</td>
           <td>%s</td>
           <td>%s</td>
         </tr>',
         $_->stable_id eq $transcript ? ' class="active"' : '',
         CGI::escapeHTML( $_->display_xref ? $_->display_xref->display_id : '-' ),
-        $url,
-        CGI::escapeHTML( $_->stable_id ),
+        $transcript,
 	      $protein,
 		       'Fixed transcript for reporting purposes'
 #	    $_->biotype
