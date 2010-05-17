@@ -78,7 +78,7 @@ sub navbar {
       </div>
       <div class="image_nav">
         <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a href="%s">
-        <img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a><span class="ramp">$ramp</span><div class="slider"><span class="slider_label floating_popup">$wd</span></div><a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
+        <img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a><span class="ramp">$ramp</span><span class="slider"><span class="slider_label floating_popup">$wd</span></span><a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
         <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
       </div>
     </div>},    
