@@ -49,7 +49,7 @@ sub availability {
       my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
       my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
       my $compara_db  = $self->database('compara');
-      my $gene_tree   = $self->get_ProteinTree;
+      my $gene_tree   = $self->get_GeneTree;
       my $res         = 0;
       my $has_gene_tree;
       
@@ -80,7 +80,7 @@ sub availability {
 	  $availability->{'family_pan_ensembl'}     = !!$res2;
 	  $availability->{'family'}     = 1; # has to enable other family - otherwise nothing get displayed
 
-	  my $gene_tree_pan   = $self->get_ProteinTree('compara_pan_ensembl');
+	  my $gene_tree_pan   = $self->get_GeneTree('compara_pan_ensembl');
 	  my $has_gene_tree_pan;
       
 	  if ($gene_tree_pan) {
@@ -749,6 +749,11 @@ sub get_compara_Member {
 }
 
 sub get_ProteinTree {
+  # deprecated, use get_GeneTree
+  return get_GeneTree(@_);
+}
+
+sub get_GeneTree {
   # Returns the Bio::EnsEMBL::Compara::ProteinTree object
   # corresponding to this gene
   my $self = shift;
