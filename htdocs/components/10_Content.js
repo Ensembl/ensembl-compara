@@ -24,6 +24,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
     
+    // This event registration must be in the init, because it can overwrite the one in Ensembl.Panel.ImageMap's constructor
+    if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
+      Ensembl.EventManager.register('hashChange', this, function () { this.getContent(Ensembl.urlFromHash(this.params.updateURL), undefined, undefined, true); });
+    }
+    
     Ensembl.EventManager.trigger('validateForms', this.el);
     Ensembl.EventManager.trigger('relocateTools', $('.other-tool', this.el));
     
@@ -79,7 +84,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
             var j = params.length;
             
             while (j--) {
-              if (params[j].match(/^_referer=/)){
+              if (params[j].match(/^_referer=/)) {
                 referer = params[j];
               } else {
                 url.unshift(params[j]);
@@ -306,7 +311,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         var sorting = JSON.parse(cookieOptions[0]);
         
         if (sorting.length) {
-          options.aaSorting = $.grep(sorting, function (s) { return s[0] < cols.length });
+          options.aaSorting = $.grep(sorting, function (s) { return s[0] < cols.length; });
         }
         
         if (cookieOptions[1]) {
