@@ -16,13 +16,13 @@ Ensembl.EventManager = {
       this.registry[eventName].ref = {};
       this.registry[eventName].count = 0;
     }
-
-    // currently an object can't register with the same action more than once.    
-    if (this.registry[eventName].callId) { return false; }
     
     // register the object and function references
     for (var id in this.getCallIds(callId)) {
-      this.registry[eventName].count++;
+      if (!this.registry[eventName].ref[id]) {
+        this.registry[eventName].count++;
+      }
+      
       this.registry[eventName].ref[id] = {};  
       this.registry[eventName].ref[id].func = callFunc;
       this.registry[eventName].ref[id].obj = callObj;
@@ -50,8 +50,7 @@ Ensembl.EventManager = {
    * Finds all instances of an object and removes all references
    * Useful if an item is removed from the DOM and no longer has interest
    */ 
-  remove: function (callObj) {
-    var callId = callObj.id;
+  remove: function (callId) {
     var eventName;
     
     for (eventName in this.registry) {
