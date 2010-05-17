@@ -35,7 +35,6 @@ sub _help {
 sub createObjects { 
   my $self = shift;
   my $id;
-  warn "CREATING LRG OBJECTS";
 
   my $db        = $self->hub->param('db')  || 'core'; 
 

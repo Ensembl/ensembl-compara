@@ -101,7 +101,6 @@ sub populate_tree {
 
   ## HACK THE AVAILABILITY, BECAUSE WE ARE MIXING OBJECT TYPES
   my $has_lrg = $self->model->api_object('LRG') ? 1 : 0;
-  warn ">>> I CAN HAZ LRG! $has_lrg";
 
   $self->create_node('Genome', 'All LRGs',
     [qw(
