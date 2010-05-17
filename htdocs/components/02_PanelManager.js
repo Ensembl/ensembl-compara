@@ -15,15 +15,11 @@ Ensembl.PanelManager.extend({
     this.panelNumber = 0;
     this.zIndex      = 101;
     
-    var myself = this;
-    var panels = $('.js_panel');
-    
     Ensembl.EventManager.register('createPanel', this, this.createPanel);
     Ensembl.EventManager.register('destroyPanel', this, this.destroyPanel);
     Ensembl.EventManager.register('addPanel', this, this.addPanel);
     Ensembl.EventManager.register('panelToFront', this, this.panelToFront);
     Ensembl.EventManager.register('resetZIndex', this, this.resetZIndex);
-    Ensembl.EventManager.register('locationChange', this, this.locationChange);
     
     Ensembl.EventManager.register('ajaxLoaded', this, function () {
       if (!$('.ajax_load').length) {
@@ -32,12 +28,10 @@ Ensembl.PanelManager.extend({
       }
     });
     
-    panels.each(function () {      
-      myself.generateId(this);
-      myself.createPanel(this.id, $('input.panel_type', this).val());
+    $('.js_panel').each(function () {      
+      Ensembl.PanelManager.generateId(this);
+      Ensembl.PanelManager.createPanel(this.id, $('input.panel_type', this).val());
     });
-    
-    panels = null;
   },
   
   /**
@@ -63,7 +57,6 @@ Ensembl.PanelManager.extend({
    * Returns all panels of the given type (or all panels if no type is specified), in the order their divs appear on the page
    */
   getPanels: function (type) {
-    var myself = this;
     var ids    = [];
     var panels = [];
     
@@ -75,7 +68,7 @@ Ensembl.PanelManager.extend({
     
     // This ensures we get the panel divs back in the order they appear on the page.
     $.each($(ids.join(',')), function () {
-      panels.push(myself.panels[this.id]);
+      panels.push(Ensembl.PanelManager.panels[this.id]);
     });
     
     return panels;
@@ -161,27 +154,5 @@ Ensembl.PanelManager.extend({
     for (p in zInd.sort(sort)) {
       this.panels[zInd[p].id].el.style.zIndex = ++this.zIndex;
     }
-  },
-  
-  /**
-   * Triggers updating of panels when the location slider changes the page's location
-   */
-  locationChange: function (loc, id, indexModifier) {
-    var orderedPanels = this.getPanels();
-    var i = orderedPanels.length;
-    var panel;
-    
-    while (i--) {
-      if (orderedPanels[i].id == id) {
-        panel = orderedPanels[i + indexModifier];
-        break;
-      }
-    }
-    
-    panel.params.updateURL = Ensembl.urlFromHash(panel.params.updateURL);
-    
-    Ensembl.setCoreParams();
-    
-    Ensembl.EventManager.triggerSpecific('updatePanel', panel.id);
   }
 });
