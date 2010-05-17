@@ -309,7 +309,8 @@ sub write_dnafrag_chunk_set{
 }
 
 sub write_dnafrag_chunk{ 
-  my ($self,$chunk) = @_ ;   
+  my ($self,$chunk) = @_ ;    
+
   my $dump_location = $self->dump_chunks_loc ;
   $dump_location = $dump_location ."/" unless $dump_location =~m/\/$/; 
   my $fastafile = $dump_location .  "chunk_" . $chunk->dbID . ".fasta";  # same name is used in blastz  
