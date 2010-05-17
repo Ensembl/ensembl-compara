@@ -5,9 +5,7 @@ var Ensembl = new Base();
 Ensembl.extend({
   constructor: null,
   
-  initialize: function () {
-    var myself = this;
-    
+  initialize: function () {    
     var hints = this.cookie.get('ENSEMBL_HINTS');
     
     if (!window.name) {
@@ -18,12 +16,13 @@ Ensembl.extend({
     
     if (window.location.hash) {
       $('.ajax_load').each(function () {
-        this.value = myself.urlFromHash(this.value);
+        this.value = Ensembl.urlFromHash(this.value);
       });
     }
     
     $(window).bind('hashchange', function (e) {
-      Ensembl.EventManager.trigger('hashChange', myself.urlFromHash(window.location.href, true));
+      Ensembl.setCoreParams();
+      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
     });
     
     (this.ajax  = this.cookie.get('ENSEMBL_AJAX'))  || this.setAjax();
@@ -33,7 +32,7 @@ Ensembl.extend({
     
     if (hints) {
       $.each(hints.split(/:/), function () {
-        myself.hideHints[this] = 1;
+        Ensembl.hideHints[this] = 1;
       });
     }
     
@@ -46,6 +45,8 @@ Ensembl.extend({
     };
     
     imagePanels = null;
+    
+    this.initialPanels = $('.initial_panel');
     
     this.setCoreParams();
     
@@ -83,14 +84,12 @@ Ensembl.extend({
   },
   
   setCoreParams: function () {
-    var myself = this;
-    
     var regex = '[;&?]%s=(.+?)[;&]';
     var url   = window.location.search + ';';
     var hash  = window.location.hash.replace(/^#/, '?') + ';';
     
     this.coreParams   = {};
-    this.initialR     = $('input[name=r]', '#core_params').val()
+    this.initialR     = $('input[name=r]', '#core_params').val();
     this.location     = { width: 100000 };
     this.speciesPath  = $('#species_path').val();
     this.species      = this.speciesPath.split('/').pop();
@@ -98,7 +97,7 @@ Ensembl.extend({
     
     $('input', '#core_params').each(function () {
       var hashMatch = hash.match(regex.replace('%s', this.name));
-      myself.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
+      Ensembl.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
     });
     
     var match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
@@ -121,19 +120,19 @@ Ensembl.extend({
         m = this.split('=');
         i = m[0].substr(1);
         
-        myself.multiSpecies[i] = {};
+        Ensembl.multiSpecies[i] = {};
         
         $.each(['r', 'g', 's'], function () {
-          myself.multiSpecies[i][this] = url.match(regex.replace('%s', this + i));
+          Ensembl.multiSpecies[i][this] = url.match(regex.replace('%s', this + i));
           
-          if (myself.multiSpecies[i][this]) {
-            myself.multiSpecies[i][this] = unescape(myself.multiSpecies[i][this][1]);
+          if (Ensembl.multiSpecies[i][this]) {
+            Ensembl.multiSpecies[i][this] = unescape(Ensembl.multiSpecies[i][this][1]);
           }
           
-          if (this == 'r' && myself.multiSpecies[i].r) {
-            r = myself.multiSpecies[i].r.match(/(.+):(\d+)-(\d+)/);
+          if (this == 'r' && Ensembl.multiSpecies[i].r) {
+            r = Ensembl.multiSpecies[i].r.match(/(.+):(\d+)-(\d+)/);
             
-            myself.multiSpecies[i].location = { name: r[1], start: parseInt(r[2], 10), end: parseInt(r[3], 10) };
+            Ensembl.multiSpecies[i].location = { name: r[1], start: parseInt(r[2], 10), end: parseInt(r[3], 10) };
           }
         });
       });
