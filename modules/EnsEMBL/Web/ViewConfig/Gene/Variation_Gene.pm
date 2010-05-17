@@ -135,16 +135,16 @@ sub form {
     ]
   });
   
-  $view_config->add_form_element({
-    type   => 'DropDown',
-    select => 'select',
-    name   => 'hgvs',
-    label  => 'Show HGVS notation relative to',
-    values => [
-      { value => 'transcript',   name => 'Transcript' },
-      { value => 'gene',   name => 'Gene' },
-    ]
-  });
+  #$view_config->add_form_element({
+  #  type   => 'DropDown',
+  #  select => 'select',
+  #  name   => 'hgvs',
+  #  label  => 'Show HGVS notation relative to',
+  #  values => [
+  #    { value => 'transcript',   name => 'Transcript' },
+  #    { value => 'gene',   name => 'Gene' },
+  #  ]
+  #});
 }
 
 1;
