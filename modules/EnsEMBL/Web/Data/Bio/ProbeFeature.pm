@@ -23,14 +23,14 @@ sub convert_to_drawing_parameters {
   my $data = $self->data_objects;
   my $results = [];
 
-  foreach my $probe (@$data) {
-    if (ref($probe) =~ /UnmappedObject/) {
-      my $unmapped = $self->unmapped_object($probe);
+  foreach my $probe_feature (@$data) {
+    if (ref($probe_feature) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($probe_feature);
       push(@$results, $unmapped);
     }
     else {
-      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()};
-      foreach my $f (@{$probe->get_all_ProbeFeatures()}) {
+      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe_feature->probe->get_all_complete_names()};
+      foreach my $f (@{$probe_feature->probe->get_all_ProbeFeatures()}) {
         push @$results, {
           'region'   => $f->seq_region_name,
           'start'    => $f->start,
