@@ -74,7 +74,7 @@ sub slice {
 }
 
 
-=head2 fetch_masked_sequence
+=head2 fetch_masked_sequence_string
 
   Description: Meta method which uses the slice associated with this chunk
                and from the external core database associated with the slice
@@ -92,72 +92,78 @@ sub slice {
 
 =cut
 
-sub fetch_masked_sequence {
-  my $self = shift;
-  
-  return undef unless(my $slice = $self->slice());
 
+sub fetch_masked_sequence_string_ref { 
+  my ($self,$slice)= @_;
 
   my $dcs = $slice->adaptor->db->dbc->disconnect_when_inactive();
-  #print("fetch_masked_sequence disconnect=$dcs\n");
   $slice->adaptor->db->dbc->disconnect_when_inactive(0);
-  #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
 
-  my $seq;
-  my $id = $self->display_id;
+  my $seq_string;
   my $masking_options;
-  my $starttime = time();
 
   if(defined($self->masking_options)) {
     $masking_options = eval($self->masking_options);
     my $logic_names = $masking_options->{'logic_names'};
-    if(defined($masking_options->{'default_soft_masking'}) and
-       $masking_options->{'default_soft_masking'} == 0)
-    {
-      #print "getting HARD masked sequence...\n";
-      $seq = $slice->get_repeatmasked_seq($logic_names,0,$masking_options);
+
+    if(defined($masking_options->{'default_soft_masking'}) and $masking_options->{'default_soft_masking'} == 0) {
+      print "getting HARD-2 masked sequence...\n";
+      $seq_string = $slice->get_repeatmasked_seq($logic_names,0,$masking_options)->seq;
     } else {
-      #print "getting SOFT masked sequence...\n";
-      $seq = $slice->get_repeatmasked_seq($logic_names,1,$masking_options);
+      print "getting SOFT-2 masked sequence...\n";
+      $seq_string = $slice->get_repeatmasked_seq($logic_names,1,$masking_options)->seq;
     }
+  } else {
+    $seq_string = $slice->seq;
   }
-  else {  # no masking options set, so get unmasked sequence
-    #print "getting UNMASKED sequence...\n";
-    $seq = Bio::PrimarySeq->new( -id => $id, -seq => $slice->seq);
-  }
-
-  unless($seq->isa('Bio::PrimarySeq')) {
-    #print("seq is a [$seq] not a [Bio::PrimarySeq]\n");
-    my $oldseq = $seq;
-    $seq = Bio::PrimarySeq->new( -id => $id, -seq => $oldseq->seq);
-  }
-  #print ((time()-$starttime), " secs\n");
-
+  $seq_string = $slice->seq;
   $slice->adaptor->db->dbc->disconnect_when_inactive($dcs);
-  #printf("fetch_masked_sequence disconnect=%d\n", $slice->adaptor->db->dbc->disconnect_when_inactive());
-
-  #print STDERR "sequence length : ",$seq->length,"\n";
-
-  $seq = $seq->seq;
-
-  if (defined $masking_options) {
-    foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
-      next unless (defined $masking_options->{"assembly_exception_type_" . $ae->type});
-      my $length = $ae->end - $ae->start + 1;
-      if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
-        my $padstr = 'N' x $length;
-        substr ($seq, $ae->start, $length) = $padstr;
-      } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) {
-        my $padstr = lc substr ($seq, $ae->start, $length);
-        substr ($seq, $ae->start, $length) = $padstr;
-      }
-    }
-  }
-
-  $self->sequence($seq);
-  return $seq;
+  # better : self->integrate and than take the masking options out ...
+  return $self->integrate_assembly_exception_features($slice, \$seq_string); #returns reference 
 }
 
+
+sub fetch_masked_sequence {
+  my $self = shift;
+  
+  my $slice = $self->slice();
+
+  if ( !defined $slice ) { 
+    return undef; 
+  }
+  my $seq_string_ref = $self->fetch_masked_sequence_string_ref($slice); 
+
+ # my $id = $self->display_id;
+ # my $seq = Bio::PrimarySeq->new( -id => $id, -seq => \$seq_string);
+
+  $self->sequence($$seq_string_ref);
+}
+
+
+
+
+sub integrate_assembly_exception_features {
+  my ( $self,$slice, $seq_string_ref )= @_;
+
+  my  $masking_options = eval($self->masking_options);
+
+  foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
+    next unless (defined $masking_options->{"assembly_exception_type_" . $ae->type});
+
+    my $length = $ae->end - $ae->start + 1;
+
+    if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
+      # hardmask 
+       my $padstr = 'N' x $length;
+       substr ($$seq_string_ref, $ae->start, $length) = $padstr;
+    } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) { 
+      # softmask 
+      my $padstr = lc substr ($seq_string_ref, $ae->start, $length);
+      substr ($$seq_string_ref, $ae->start, $length) = $padstr;
+    }
+  }
+  return $seq_string_ref;
+} 
 
 =head2 display_id
 
@@ -202,22 +208,19 @@ sub display_id {
 sub bioseq {
   my $self = shift;
 
-  my $seq = undef;
+
+  print "DnaFragChunk->bioseq()\n";
 
   if(not defined($self->sequence())) {
-    my $starttime = time();
-
-    $seq = $self->fetch_masked_sequence;
-    my $fetch_time = time()-$starttime;
-
-    $self->sequence($seq);
+    #$seq = $self->fetch_masked_sequence; # fetches sequence and stores it in $self->{_sequence}
+    $self->fetch_masked_sequence; # fetches sequence and stores it in $self->{_sequence}
+    #$self->sequence($seq);
   }
   
-  $seq = Bio::Seq->new(-seq        => $self->sequence(),
+  return Bio::Seq->new(-seq        => $self->sequence(),
                        -display_id => $self->display_id(),
                        -primary_id => $self->sequence_id(),
                        );
-  return $seq;
 }
 
 
@@ -294,17 +297,20 @@ sub sequence_id {
 }
 
 sub sequence {
-  my $self = shift;
-  if(@_) {
-    $self->{'_sequence'} = shift;
+  my ( $self, $arg ) = @_ ; 
+
+  if($arg) {
+    $self->{'_sequence'} = $arg; 
     $self->sequence_id(0);
   }
 
   return $self->{'_sequence'} if(defined($self->{'_sequence'}));
 
-  #lazy load the sequence if sequence_id is set
-  if(defined($self->sequence_id()) and defined($self->adaptor())) {
+  #lazy load the quence if sequence_id is set
+  if(defined($self->sequence_id()) and defined($self->adaptor())) { 
+    print "xxc fetching sequence : " . $self->sequence_id."\n";  
     $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
+    print "xxc sequence fetched: " . $self->{_sequence}."\n";  
   }
   return $self->{'_sequence'};
 }
@@ -328,29 +334,26 @@ sub masking_analysis_data_id {
 }
 
 
-sub dump_to_fasta_file
-{
+sub dump_to_fasta_file {
   my $self = shift;
   my $fastafile = shift;
-  
-  my $bioseq = $self->bioseq;
+  print "dump_to_fasta_file()\n";
+  my $bioseq = $self->bioseq;  # callse fetch_repeatmasked sequence and returns a Bio:::Seq object
 
-  #printf("  writing chunk %s\n", $self->display_id);
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
+  printf("  writing chunk %s\n", $self->display_id);
+
+  open(OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for write");
   my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
   $output_seq->write_seq($bioseq);
   close OUTSEQ;
-
   return $self;
 }
 
-#Version of dump_to_fasta_file that appends chunk_size portions of the 
 #sequence to fastafile. Useful if the sequence is very long eg opossum chr1 & 2
 #Must remember that fastafile should not exist beforehand otherwise it will be 
 #appended to so check if it exists and delete it
-sub dump_chunks_to_fasta_file 
-{
+
+sub dump_chunks_to_fasta_file {
   my $self = shift;
   my $fastafile = shift;
 
@@ -399,13 +402,12 @@ sub dump_chunks_to_fasta_file
 }
 
 
-sub cache_sequence
-{
+sub cache_sequence {
   my $self = shift;
   
   # $self->sequence will load from compara if available, if not go fetch it
   unless($self->sequence) {
-    $self->fetch_masked_sequence;
+    $self->fetch_masked_sequence; 
   }
   
   # fetching sequence will set $self->sequence but not sequence_id so store it
@@ -414,7 +416,6 @@ sub cache_sequence
   if($self->sequence_id==0) {
     $self->adaptor->update_sequence($self);
   }
-
   return $self;
 }
 
