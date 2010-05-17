@@ -49,7 +49,7 @@ sub createObjects {
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   }
   else {
-    if ($hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') {
+    if ($hub->type eq 'LRG') {
       $feature_type = 'LRG';
     }
     else {
