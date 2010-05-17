@@ -14,13 +14,35 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.speciesCount     = 0;
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
-    Ensembl.EventManager.register('highlightAllImages', this, this.highlightAllImages);
     Ensembl.EventManager.register('dragStop', this, this.dragStop);
-    Ensembl.EventManager.register('locationChange', this, function () { 
-      if (this.align) { 
-        Ensembl.EventManager.trigger('highlightAllImages');
+    
+    Ensembl.EventManager.register('highlightAllImages', this, function () {
+      if (!this.align) {
+        this.highlightAllImages();
       }
     });
+    
+    // This event registration must be in the constructor, because it can be overwritten in Ensembl.Panel.Content's init function
+    Ensembl.EventManager.register('hashChange', this, function (r) {
+      if (Ensembl.images.total == 1) {
+        this.highlightAllImages();
+      } else if (!this.multi) {
+        var range = this.highlightRegions[0][0].region.range;
+        r = r.split(/\W/);
+        
+        if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end) {
+          this.getContent(Ensembl.urlFromHash(this.params.updateURL), undefined, undefined, true);
+        }
+      }
+    });
+  },
+  
+  getContent: function (url, el, params, hashChange) {
+    this.base(url, el, params);
+    
+    if (hashChange === true && this.align) {
+      Ensembl.EventManager.trigger('highlightAllImages');
+    }
   },
   
   init: function () {
@@ -290,7 +312,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
    *          If there is only one image, or the next image has an invalid coordinate system 
    *          (eg AlignSlice or whole chromosome), highlighting is taken from the r parameter in the url.
    */
-  highlightImage: function (imageNumber, speciesNumber, start, end) {    
+  highlightImage: function (imageNumber, speciesNumber, start, end) {
     // Make sure each image is highlighted based only on itself or the next image on the page
     if (!this.draggables.length || this.vdrag || imageNumber - this.imageNumber > 1 || imageNumber - this.imageNumber < 0) {
       return;
@@ -341,7 +363,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
   
-  highlight: function (coords, cl, speciesNumber, multi) {  
+  highlight: function (coords, cl, speciesNumber, multi) {
     var w = coords.r - coords.l + 1;
     var h = coords.b - coords.t + 1;
     var originalClass;
@@ -362,10 +384,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (!els.length) {
       els = $([
-        '<div class="' + cl + ' l"></div>', 
-        '<div class="' + cl + ' r"></div>', 
-        '<div class="' + cl + ' t"></div>', 
-        '<div class="' + cl + ' b"></div>'
+        '<div class="', cl, ' l"></div>', 
+        '<div class="', cl, ' r"></div>', 
+        '<div class="', cl, ' t"></div>', 
+        '<div class="', cl, ' b"></div>'
       ].join('')).insertAfter(this.elLk.img);
     }
     

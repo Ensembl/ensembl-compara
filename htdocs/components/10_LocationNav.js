@@ -5,11 +5,13 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.base(id, params);
     
     this.matchRegex   = new RegExp(/[\?;&]r=([^;&]+)/);
-    this.replaceRegex = new RegExp(/([\?;&]r=)[^;&]+(;&?)/);
+    this.replaceRegex = new RegExp(/([\?;&]r=)[^;&]+(;&?)*/);
     
-    Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
-    Ensembl.EventManager.register('locationChange', this, this.getContent);
-    Ensembl.EventManager.register('hashChange', this, this.hashChange);
+    Ensembl.EventManager.register('hashChange', this, this.getContent);
+    
+    if (!window.location.pathname.match(/\/Multi/)) {
+      Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
+    }
   },
   
   init: function () {
@@ -17,14 +19,30 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     this.base();
     
-    this.enabled = false;
+    this.enabled = this.params.enabled || false;
     
     var sliderConfig = $('span.ramp', this.el).hide().children();
     var sliderLabel  = $('.slider_label', this.el);
     
     this.elLk.updateURL    = $('.update_url', this.el);
     this.elLk.regionInputs = $('.location_selector', this.el);
-    this.elLk.navLinks     = $('a', this.el).addClass('constant');
+    this.elLk.navLinks     = $('a', this.el).addClass('constant').click(function (e) {
+      if (myself.enabled === true) {
+        window.location.hash = 'r=' + this.href.match(myself.matchRegex)[1];
+        
+        if ($(this).hasClass('move')) {
+          $.ajax({
+            url: Ensembl.urlFromHash(myself.elLk.updateURL.val()),
+            dataType: 'html',
+            success: function (html) {
+              Ensembl.EventManager.trigger('addPanel', myself.id, 'LocationNav', html, $(myself.el), { enabled: myself.enabled });
+            }
+          });
+        }
+        
+        return false;
+      }
+    });
     
     if (window.location.hash) {
       this.getContent();
@@ -63,10 +81,10 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       max:   sliderConfig.length - 1,
       force: false,
       slide: function (e, ui) {
-        sliderLabel.html(sliderConfig.get(ui.value).name + ' bp').show();
+        sliderLabel.html(sliderConfig[ui.value].name + ' bp').show();
       },
       change: function (e, ui) {
-        var input = sliderConfig.get(ui.value);
+        var input = sliderConfig[ui.value];
         var url   = input.href;
         var r     = input.href.match(myself.matchRegex)[1];
         
@@ -76,7 +94,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         
         if (myself.elLk.slider.slider('option', 'force') === true) {
           return false;
-        } if (myself.enabled === false || window.location.pathname.match(/\/Multi/)) {
+        } else if (myself.enabled === false) {
           Ensembl.redirect(url);
           return false;
         } else if ((!window.location.hash || window.location.hash == '#') && url == window.location.href) {
@@ -119,9 +137,5 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         });
       }
     });
-  },
-  
-  hashChange: function (r) {
-    Ensembl.EventManager.trigger('locationChange', r, this.id, 1);
   }
 });
