@@ -101,6 +101,7 @@ sub populate_tree {
 
   ## HACK THE AVAILABILITY, BECAUSE WE ARE MIXING OBJECT TYPES
   my $has_lrg = $self->model->api_object('LRG') ? 1 : 0;
+  warn ">>> I CAN HAZ LRG! $has_lrg";
 
   $self->create_node('Genome', 'All LRGs',
     [qw(
@@ -129,25 +130,25 @@ sub populate_tree {
       snptable EnsEMBL::Web::Component::LRG::LRGSNPTable
       snpinfo  EnsEMBL::Web::Component::LRG::GeneSNPInfo
     )],
-    { 'availability' => "lrg database:variation" }
+    { 'availability' => $has_lrg }
   ));
 
   $var_menu->append($self->create_node('Variation_LRG/Image',  'Variation Image',
     [qw( image EnsEMBL::Web::Component::LRG::LRGSNPImage )],
-    #{ 'availability' => "lrg database:variation" }
+    #{ 'availability' => $has_lrg }
     { 'availability' => 0 }
   ));
 
   # External Data tree, including non-positional DAS sources
-  my $external = $self->create_node('ExternalData', 'External Data',
-    [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
-    { 'availability' => 'gene' }
-  );
+  #my $external = $self->create_node('ExternalData', 'External Data',
+  #  [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
+  #  { 'availability' => 'gene' }
+  #);
   
-  $external->append($self->create_node('UserAnnotation', 'Personal annotation',
-    [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
-    { 'availability' => 'gene' }
-  ));
+  #$external->append($self->create_node('UserAnnotation', 'Personal annotation',
+  #  [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
+  #  { 'availability' => 'gene' }
+  #));
   
   
   $self->create_subnode('Export', 'Export Gene Data',
