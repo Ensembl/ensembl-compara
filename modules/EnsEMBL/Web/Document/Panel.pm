@@ -318,7 +318,7 @@ sub render {
       
       return if !$content && exists $self->{'null_data'} && !defined $self->{'null_data'};
     }
-   
+    
     my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
     
     my $html = qq{<div class="panel js_panel"><input type="hidden" class="panel_type" value="$panel_type" />};
@@ -368,9 +368,10 @@ sub render {
         my $temp_renderer = $self->renderer;
         
         $self->renderer = new EnsEMBL::Web::Document::Renderer::Assembler(
-          r       => $temp_renderer->r,
-          cache   => $temp_renderer->cache,
-          session => $hub ? $hub->session : undef,
+          r              => $temp_renderer->r,
+          cache          => $temp_renderer->cache,
+          session        => $hub ? $hub->session : undef,
+          _modal_dialog_ => $temp_renderer->{'_modal_dialog_'}
         );
         $self->_render_content;
         $self->renderer->close;
@@ -661,7 +662,7 @@ sub content {
             if (!$self->{'disable_ajax'} && $comp_obj->ajaxable && !$self->_is_ajax_request) {
               my $url = $comp_obj->ajax_url($function_name);
               
-              my $class = 'ajax' . ($comp_obj->has_image ? ' image_panel' : '');
+              my $class = 'initial_panel' . ($comp_obj->has_image ? ' image_panel' : '');
               
               # Check if ajax enabled
               if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
@@ -669,12 +670,10 @@ sub content {
                 # $panel_name is the memory location of the current object, so unique for each panel.
                 # Without this, ajax panels don't load, or load the wrong content.
                 my ($panel_name) = $self =~ /\((.+)\)$/;
-                $self->printf(qq{<div class="$class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url));
+                $self->printf(qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url));
               } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
-                my @wrapper = $comp_obj->has_image ? ('<div class="image_panel">', '</div>') : ();
-                
                 # if ajax disabled - we get all content by parallel requests to ourself
-                $self->print($wrapper[0], HTTP::Request->new('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url), $wrapper[1]);
+                $self->print(qq{<div class="$class">}, HTTP::Request->new('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url), '</div>');
               }
             } else {
               my $content;
@@ -697,13 +696,14 @@ sub content {
               } else {
                 if ($content) {
                   if ($self->_is_ajax_request) {
-                    my $id = $hub->function eq 'sub_slice' ? '' : $comp_obj->id;
+                    my $id         = $hub->function eq 'sub_slice' ? '' : $comp_obj->id;
+                    my $panel_type = $self->renderer->{'_modal_dialog_'} || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
                     
                     # Only add the wrapper if $content is html, and the update_panel parameter isn't present
-                    $content = qq{<div class="js_panel" id="$id">$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
+                    $content = qq{<div class="js_panel" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
                   } else {
                     my $caption = $comp_obj->caption;
-                    $self->printf("<h2>%s</h2>", encode_entities($caption)) if $caption;
+                    $self->printf('<h2>%s</h2>', encode_entities($caption)) if $caption;
                   }
                   
                   $self->print($content);
