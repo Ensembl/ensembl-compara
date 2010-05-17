@@ -394,8 +394,11 @@ sub markup_exons {
     
     $i++;
   }
-  
-  $config->{'key'}->{'exons'}->{$_} = 1 for keys %exon_types;
+  for (keys %exon_types) {
+    next unless $config->{'key'};
+    $config->{'key'}->{'exons'}->{$_} = 1;
+  }
+ 
 }
 
 sub markup_codons {
