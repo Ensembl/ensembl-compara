@@ -8,13 +8,13 @@ sub init {
   my ($view_config) = @_;
   
   $view_config->_set_defaults(qw(
-    flank5_display 600
-    flank3_display 600
+    flank5_display 0
+    flank3_display 0
     display_width  60
     exon_display   core
     exon_ori       all
-    snp_display    off
-    line_numbering off
+    snp_display    snp_link
+    line_numbering sequence
   ));
   
   $view_config->storable = 1;
