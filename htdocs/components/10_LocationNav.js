@@ -74,7 +74,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }
     }
     
-    this.elLk.slider = $('div.slider', this.el).css('display', 'inline-block').slider({
+    this.elLk.slider = $('.slider', this.el).css('display', 'inline-block').slider({
       value: sliderConfig.filter('.selected').index(),
       step:  1,
       min:   0,
