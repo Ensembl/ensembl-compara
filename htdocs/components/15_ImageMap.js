@@ -75,7 +75,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vdrag);
     var rect = [ 'l', 't', 'r', 'b' ];
-    var speciesNumber, r, c;
+    var speciesNumber, c;
     
     this.elLk.areas.each(function () {
       c = { a: this };
@@ -154,7 +154,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   dragStart: function (e) {
     var myself = this;
-    var i = this.draggables.length;
     
     this.dragCoords.map    = this.getMapCoords(e);
     this.dragCoords.page   = { x: e.pageX, y : e.pageY };
@@ -346,8 +345,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         link = false;
       }
-      
-      var range = highlight.region.range;
       
       var coords = {
         t: highlight.region.t + 2,
