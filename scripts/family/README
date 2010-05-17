@@ -1,39 +1,6 @@
-# 22.Mar'2010
 #
-# ------------------[Running MCL Family pipeline]-------------
+# The Families' pipeline configuration has moved into the module
+#       Bio/EnsEMBL/Compara/PipeConfig/Families_conf.pm
 #
-# Dependencies:
+# which is driven by ensembl-hive/scripts/init_pipeline.pl script.
 #
-# 0) mysql 5.1 or higher
-# 1) fresh ensembl-hive and ensembl-compara CVS checkouts
-# 2) blastp, mcl and mafft (external executables)
-# 3) bioperl with Abel's changes for loading of Uniprot sequences [this is an unwanted dependency]
-#
-#
-# The new MCL Family pipeline is initialized from ensembl-compara/scripts/family/family_pipeline.conf .
-# Please edit this file to reflect the current state of things:
-#
-# 1) $release number
-# 2) your $email address (to get the completion notification)
-# 3) $cvs_root_dir (your CVS modules may not live in ~/work)
-# 4) location of blastp, mcl and mafft
-# 5) version of blastp
-# 6) connection parameters of all the databases
-# 7) blastp/mcl running parameters (may considerably influence the resource requirements!)
-# 8) resource requirements for this particular run
-#
-# Then run the pipeline initialization command:
-#
-# time init_pipeline.pl -conf family_pipeline.conf
-#
-# It will prompt you to run the beekeeper.pl with the URL generated from your connection data.
-# DON'T FORGET to use '-lifespan 1200' on the beekeeper, otherwise the benefit of using the long queue will be lost.
-# 
-# rel.57+:  init_pipeline.pl execution took 8m45;   pipeline execution took 100hours (4.2 x days-and-nights) including queue waiting
-#
-# Note: family_idmap analysis failed 4 times as part of pipeline, but ran successfully via runWorker.pl
-
-#
-## Please remember that both mapping_session and stable_id_history will have to be MERGED in an intelligent way, and not just written over.
-#
-
