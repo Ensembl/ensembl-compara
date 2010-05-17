@@ -53,11 +53,16 @@ sub render_normal {
     ['collapsed (current gene)', 'red' ],
     ['collapsed (paralog)', 'royalblue'],
   );
+  
+  my $alphabet = "AA";
+  if (UNIVERSAL::isa($vc, "Bio::EnsEMBL::Compara::NCTree")) {
+    $alphabet = "Nucl.";
+  }
   my @boxes = (
-    ['AA alignment match/mismatch',   'yellowgreen', 'yellowgreen'],
-    ['AA consensus > 66% (mis)match',      'darkgreen',   'darkgreen'],
-    ['AA consensus > 33% (mis)match',      'yellowgreen',   'darkgreen'],
-    ['AA alignment gap',              'white',       'yellowgreen'],
+    ["$alphabet alignment match/mismatch",   'yellowgreen', 'yellowgreen'],
+    ["$alphabet consensus > 66% (mis)match",      'darkgreen',   'darkgreen'],
+    ["$alphabet consensus > 33% (mis)match",      'yellowgreen',   'darkgreen'],
+    ["$alphabet alignment gap",              'white',       'yellowgreen'],
                );
 
   my ($legend, $colour, $style, $border, $label, $text);
