@@ -57,8 +57,8 @@ sub content {
     my $up_start  = @up_sample ? $object->seq_region_start - $up_sample[-1]->end : 0;
     my $up_end    = @up_sample ? $object->seq_region_start - $up_sample[0]->start: 0;
     $up_link = sprintf(qq(
-<a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s"><img src="/i/nav-l2.gif" class="zoom" alt="<<"/> %s upstream %s</a>),
-  $object->species, $object->param('otherspecies'), $chr, $up_start, $up_end, $up_count, $gene_text,
+			  <a href="%s"><img src="/i/nav-l2.gif" class="zoom" alt="<<"/> %s upstream %s</a>),
+		       $object->_url({ type => 'Location', action => 'Synteny', otherspecies =>  $object->param('otherspecies'), r => "$chr:$up_start-$up_end"}), $up_count, $gene_text
     );
   }
   else {
@@ -78,10 +78,11 @@ sub content {
     $down_start = -$down_start if $down_start < 0;
     my $down_end    = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
 
+
     $down_link = sprintf(qq(
-<a href="/%s/Location/Synteny?otherspecies=%s;r=%s:%s-%s">%s downstream %s <img src="/i/nav-r2.gif" class="zoom" alt=">>"/></a> ),
-  $object->species, $object->param('otherspecies'), $chr, $down_start, $down_end, $down_count, $gene_text,
-    );
+			  <a href="%s">%s downstream %s <img src="/i/nav-r2.gif" class="zoom" alt="<<"/></a>),
+			 $object->_url({ type => 'Location', action => 'Synteny', otherspecies =>  $object->param('otherspecies'), r => "$chr:$down_start-$down_end"}), $down_count, $gene_text
+			 );
   }
   else {
     $down_link = 'No downstream homologues';
