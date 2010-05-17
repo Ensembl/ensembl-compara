@@ -104,7 +104,7 @@ sub populate_tree {
 
   $self->create_node('Genome', 'All LRGs',
     [qw(
-      karyotype EnsEMBL::Web::Component::Location::Genome 
+      karyotype EnsEMBL::Web::Component::LRG::Genome 
     )],
     { 'availability' => 1 }
   );
