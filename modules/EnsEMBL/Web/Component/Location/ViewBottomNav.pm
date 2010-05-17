@@ -9,7 +9,7 @@ use base qw(EnsEMBL::Web::Component::Location);
 sub _init {
   my $self = shift;
   $self->cacheable(0);
-  $self->ajaxable(0);
+  $self->ajaxable(1); # Must be ajaxable for slider/button nav stuff to work properly.
 }
 
 sub content_region {
@@ -77,9 +77,9 @@ sub navbar {
         </form>
       </div>
       <div class="image_nav">
-        <a href="%s"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a href="%s"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a href="%s">
+        <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a href="%s">
         <img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a><span class="ramp">$ramp</span><div class="slider"><span class="slider_label floating_popup">$wd</span></div><a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
-        <a href="%s"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a href="%s"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
+        <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
       </div>
     </div>},    
     @$values
