@@ -326,7 +326,23 @@ eg:
 14  19584687  19584687  C/T   -
 19  66520     66520     G/A   +
 8   150029    150029    A/T   +   
-</pre> 
+</pre>
+
+<p>An insertion is indicated by start coordinate = end coordinate +
+1. For example, an insertion of &#34;C&#34; between nucleotides 12600 and
+12601 on the forward strand of chromosome 8 is indicated as
+follows:</p>
+
+<pre>
+8   12601     12600     -/C +
+</pre>
+
+<p>A deletion indicates which positions are deleted. For example, a three base pair deletion of nucleotides 12600, 12601, and 12602 of the reverse strand of chromosome 8 will be:</p>
+
+<pre>
+8   12600     12602     -
+</pre>
+
 <!-- 5,140532,140532,T/C,+
 12,1017956,1017956,T/A,+
 2,946507,946507,G/C,+
@@ -334,16 +350,12 @@ eg:
 19,66520,66520,G/A,+
 8,150029,150029,A/T,+ -->
 
-<p>
-This tool predicts the consequence of this SNP, the amino acid 
+<p>This tool predicts the consequence of this SNP, the amino acid 
 position and change (if the SNP falls within a protein) and the SNP 
 identifier of  known SNPs that occur at this position. The output 
-columns are: </p>
+columns are:</p>
 
-<pre> Uploaded Variation, Location, Transcript, Consequence, 
-Relative position in protein, Amino acid change, Corresponding 
-Variation </pre>
-
+<pre>Uploaded Variation, Location, Transcript, Consequence, Relative position in protein, Amino acid change, Corresponding Variation</pre>
 
 <p>
 The SNP Effect predictor will use the data from the current Ensembl 
