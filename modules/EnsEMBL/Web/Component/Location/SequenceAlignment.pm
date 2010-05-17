@@ -5,7 +5,7 @@ use strict;
 use Bio::EnsEMBL::MappedSliceContainer;
 use Bio::EnsEMBL::DBSQL::StrainSliceAdaptor;
 
-use base qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::TextSequence);
+use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Location);
 
 sub _init {
   my $self = shift;
