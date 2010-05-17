@@ -458,8 +458,10 @@ sub markup_variation {
       $snps    = 1 if $variation->{'type'} eq 'snp';
       $inserts = 1 if $variation->{'type'} =~ /insert/;
       $deletes = 1 if $variation->{'type'} eq 'delete';
-      
-      $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1;
+     
+      if ($config->{'key'}) { 
+        $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1;
+      }
     }
     
     $i++;
