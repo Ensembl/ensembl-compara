@@ -501,11 +501,7 @@ sub markup_comparisons {
       $comparison = $data->{'comparisons'}->{$_};
       
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $comparison->{'insert'} if $comparison->{'insert'} && $config->{'title_display'};
-      
-      if ($comparison->{'resequencing'}) {
-        $seq->[$_]->{'class'} .= 'res ';
-        $config->{'key'}->{'resequencing'} = 1;
-      }
+      $seq->[$_]->{'class'} .= 'res ' if $comparison->{'resequencing'};
     }
     
     $i++;
@@ -993,13 +989,12 @@ sub class_to_style {
 }
 
 sub content_key {
-  my $self = shift;
+  my $self   = shift;
+  my $config = shift || {};
   
   my $object = $self->object;
   
-  my $config = {
-    site_type => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl'
-  };
+  $config->{'site_type'} = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
   for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency)) {
     $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
@@ -1025,13 +1020,13 @@ sub get_key {
   my $exon_type;
   $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
   $exon_type = $config->{'site_type'} if $exon_type eq 'core' || !$exon_type;
+  $exon_type = ucfirst $exon_type;
   
   my %key = (
-    utr          => { class => 'cu',  text => 'UTR'                         },
-    resequencing => { class => 'res', text => 'Resequencing coverage'       },
-    conservation => { class => 'con', text => 'Conserved regions'           },
+    utr          => { class => 'cu',  text => 'UTR'                          },
+    conservation => { class => 'con', text => 'Conserved regions'            },
     difference   => { class => 'dif', text => 'Differs from primary species' },
-    align_change => { class => 'end', text => 'Start/end of aligned region' },
+    align_change => { class => 'end', text => 'Start/end of aligned region'  },
     codons       => {
       co => { class => 'co', text => 'START/STOP codons'  },
       c0 => { class => 'c0', text => 'Alternating codons' },
@@ -1081,7 +1076,7 @@ sub get_key {
   $key_html .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                               if $config->{'key'}->{'conservation'};
   $key_html .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'     if $config->{'alignment_numbering'};
   $key_html .= '<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary strains matching the reference strain are replaced with dots</li>'      if $config->{'match_display'};
-  $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                             if $config->{'key'}->{'resequencing'};
+  $key_html .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                             if $config->{'resequencing'};
   $key_html  = "<ul>$key_html</ul>" if $key_html;
   
   return '<h4>Key</h4>' . $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render . $key_html;
