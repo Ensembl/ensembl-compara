@@ -99,13 +99,15 @@ sub render {
   
   # Yes, tfoot does come before tbody. Confusing I know, but that's the spec.
   my $table = qq{
-  <table class="$table_class" style="width:$width;margin:$margin" cellpadding="$padding" cellspacing="$spacing">
-    $elements{'thead'}
-    $elements{'tfoot'}
-    $elements{'tbody'}
-  </table>
-  $config
+    <table class="$table_class" style="width:$width;margin:$margin" cellpadding="$padding" cellspacing="$spacing">
+      $elements{'thead'}
+      $elements{'tfoot'}
+      $elements{'tbody'}
+    </table>
+    $config
   };
+  
+  $table = qq{<div class="autocenter_wrapper">$table</div>} if $width ne '100%' && $table_class =~ /\s*autocenter\s*/;
   
   return $table;
 }

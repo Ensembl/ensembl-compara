@@ -13,19 +13,20 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $cdb = shift || $self->object->param('cdb') || 'compara';
-  my $object = $self->object;
-  my $params = $object->can('multi_params') ? $object->multi_params : {};
-  my $url    = $object->_url({ %$params, align => undef}, 1);
+  my $self    = shift;
+  my $cdb     = shift || $self->object->param('cdb') || 'compara';
+  my $object  = $self->object;
+  my $db_hash = $object->species_defs->multi_hash;
+  my $params  = $object->can('multi_params') ? $object->multi_params : {};
+  my $url     = $object->_url({ %$params, align => undef}, 1);
   my $extra_inputs;
   
   foreach (sort keys %{$url->[1]||{}}) {
     $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_});
   }
 
-  my $align   = $object->param('align');
-  my $hash = $cdb =~ /pan_ensembl/ ? $object->species_defs->multi_hash->{'DATABASE_COMPARA_PAN_ENSEMBL'}{'ALIGNMENTS'}||{} : $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{}; # Get the compara database hash
+  my $align = $object->param('align');
+  my $hash = $cdb =~ /pan_ensembl/ ? $db_hash->{'DATABASE_COMPARA_PAN_ENSEMBL'}{'ALIGNMENTS'}||{} : $db_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{}; # Get the compara database hash
 
   my $species = $object->species;
   my $options = '<option value="">-- Select an alignment --</option>';
@@ -78,16 +79,18 @@ sub content {
     $options .= '</optgroup>';
   }
   
-  ## Get the species in the alignment and turn on the approriate Synteny tracks!
+  ## Get the species in the alignment
   return sprintf(qq{
-    <div class="autocenter navbar" style="width:%spx; text-align:left" >
-      <form action="%s" method="get">
-        <div style="padding:2px;">
-          <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
-          %s
-          <input value="Go &gt;" type="submit" class="go-button" />
-        </div>
-      </form>
+    <div class="autocenter_wrapper">
+      <div class="autocenter navbar" style="width:%spx; text-align:left">
+        <form action="%s" method="get">
+          <div style="padding:2px;">
+            <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
+            %s
+            <input value="Go &gt;" type="submit" class="go-button" />
+          </div>
+        </form>
+      </div>
     </div>},
     $self->image_width, 
     $url->[0],

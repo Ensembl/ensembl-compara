@@ -325,7 +325,7 @@ sub render {
     }
     
     $html .= sprintf(
-      '<form style="width: %spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form>',
+      '<div class="autocenter_wrapper"><form style="width: %spx" class="autocenter" action="%s" method="get"><div>%s</div><div class="autocenter">%s</div></form></div>',
       $image->width,
       $self->{'URL'},
       $inputs,
