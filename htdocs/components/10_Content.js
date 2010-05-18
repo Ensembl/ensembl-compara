@@ -17,7 +17,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     for (var fn in fnEls) {
       if (fnEls[fn].length) {
-        this[fn]();
+        if (fn == 'dataTable' && !window.JSON) {
+          Ensembl.loadScript('/components/json2.js', this[fn]);
+        } else {
+          this[fn]();
+        }
       }
     }
     
@@ -219,11 +223,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   dataTable: function () {
     var myself = this;
-    
-    if (!window.JSON) {
-      $('<script type="text/javascript" src="/components/json2.js"></script>').appendTo('body');
-    }
-    
+        
     this.elLk.dataTable.each(function (i) {
       var table  = $(this);
       var length = $('tbody tr', this).length;
@@ -356,13 +356,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
             });
           }
           
-          input = null;
-        }).append($('<input>', {
-          type: 'checkbox',
-          checked: columns[col].bVisible,
-          disabled: th.hasClass('no_hide')
-        })).append(
-          '<span>' + th.text() + '</span>'
+          input = null;        
+        }).append(
+          '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>'
         ).appendTo(toggleList);
         
         th = null; 
@@ -382,13 +378,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var params = {};
     var urlParams;
     
-    if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
-      if (!window.JSON) {
-        $('<script type="text/javascript" src="/components/json2.js"></script>').appendTo('body');
-      }
-      
+    function getKey() {
       $('.sequence_key_json', this.el).each(function () {
-          $.extend(true, params, JSON.parse(this.innerHTML));
+        $.extend(true, params, JSON.parse(this.innerHTML));
       });
       
       urlParams = $.extend({}, params, { variations: [], exons: [] });
@@ -400,6 +392,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
       
       this.getContent(this.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', this.el));
+    }
+    
+    if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
+      if (!window.JSON) {
+        Ensembl.loadScript('/components/json2.js', getKey);
+      } else {
+        getKey();
+      }
     }
   }
 });
