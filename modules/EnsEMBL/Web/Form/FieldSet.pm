@@ -265,7 +265,8 @@ sub render_matrix {
 
   foreach my $name (@{$self->{'_element_order'}}) {
     next if $name =~/select_all/;
-    my $element = $self->{'_elements'}{$name};
+    my $elements = $self->{'_elements'}{$name};
+    my $element = $elements->[0];
     my $position = $element->layout;
     my ($row, $column) = split (/:/, $position);
     $data_matrix[$row][$column] = $element;
