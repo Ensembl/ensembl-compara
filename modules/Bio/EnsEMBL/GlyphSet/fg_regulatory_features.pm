@@ -28,34 +28,32 @@ sub features {
 
 sub fetch_features {
   my ($self, $db, $slice, $Config ) = @_;
-  unless ( exists( $self->{'config'}->{'reg_feats'} ) ){
-    my $dsa = $db->get_FeatureSetAdaptor(); 
-    if (!$dsa) {
-      warn ("Cannot get get adaptors: $dsa");
-      return [];
-    }
+  my $cell_line = $self->my_config('cell_line');  
 
-  my @reg_feature_sets = @{$dsa->fetch_all_displayable_by_type('regulatory')}; 
+
+  my $fsa = $db->get_FeatureSetAdaptor(); 
+  if (!$fsa) {
+    warn ("Cannot get get adaptors: $fsa");
+    return [];
+  }
+
+  my @reg_feature_sets = @{$fsa->fetch_all_displayable_by_type('regulatory')}; 
 
   foreach my $set (@reg_feature_sets) {  
-	 foreach my $pf (@{$set->get_Features_by_Slice($slice) }){  
-      my $type = $pf->feature_type->name();  
-      my $id  = $pf->stable_id; 
-      my $label = $pf->display_label;
-    }
-    my @pf_ref = @{$set->get_Features_by_Slice($slice)}; 
-    if(@pf_ref && !$self->{'config'}->{'fg_regulatory_features_legend_features'} ) {
-     # warn "...................".ref($self)."........................";
+    next unless $set->cell_type->name =~/$cell_line/;
+    my @rf_ref = @{$set->get_Features_by_Slice($slice)}; 
+    if(@rf_ref && !$self->{'config'}->{'fg_regulatory_features_legend_features'} ) {
+     #warn "...................".ref($self)."........................";
       $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_reglatory_features'} = { 'priority' => 1020, 'legend' => [] };
     }
-    $self->{'config'}->{'reg_feats'} = \@pf_ref;
-  }  
-  
+    $self->{'config'}->{'reg_feats'} = \@rf_ref;
   }
+    
   my $reg_feats = $self->{'config'}->{'reg_feats'} || [];   
   if (@$reg_feats && $self->{'config'}->{'fg_regulatory_features_legend_features'} ){
     $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = {'priority' =>1020, 'legend' => [] };	
   }
+
   return $reg_feats;
 }
 
@@ -66,13 +64,6 @@ sub colour_key {
   elsif ($type =~/Gene/){$type = 'Genic';}
   elsif ($type =~/Unclassified/){$type = 'Unclassified';}
   if ($type =~/Non/){$type = 'Non-genic';}
-  ## Add feature types to legend
-  my $t = lc($type);
-  unless ($self->{'config'}->{'reg_feat_type'}{$type}){ 
-   push @{$self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'}->{'legend'}},$self->{'colours'}{lc($type)}{'text'} , $self->my_colour(lc($type));
-    $self->{'config'}->{'reg_feat_type'}{$type} = 1;
-  }
- 
   return lc($type);
 }
 
