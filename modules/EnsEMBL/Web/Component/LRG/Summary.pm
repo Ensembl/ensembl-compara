@@ -63,7 +63,7 @@ information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.
 
     ## Now a link to location;
 
-    my $fSlice = $model->api_object('LRG');
+    my $fSlice = $model->api_object('LRG')->feature_Slice;
     my $r = $fSlice->seq_region_name.':'.$fSlice->start.'-'.$fSlice->end;
 
     my $url = $hub->url({

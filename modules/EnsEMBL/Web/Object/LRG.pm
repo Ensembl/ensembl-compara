@@ -11,6 +11,137 @@ use Time::HiRes qw(time);
 
 use base qw(EnsEMBL::Web::Object);
 
+sub create_features {
+    my $self = shift;
+    return {'LRG' => $self->_generic_create( 'Slice', 'fetch_by_region' ) };
+}
+
+sub _generic_create {
+  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_; 
+  $db ||= 'core';
+  if (!$id ) {
+#    my @ids = $self->param( 'lrg' );
+
+    my @ids = @{$self->species_defs->LRG_REGIONS || []};
+
+    $id = join(' ', @ids);
+  }
+  elsif (ref($id) eq 'ARRAY') {
+    $id = join(' ', @$id);
+  }
+
+  ## deal with xrefs
+  my $xref_db;
+  if ($object_type eq 'DBEntry') {
+    my @A = @$db;
+    $db = $A[0];
+    $xref_db = $A[1];
+  }
+
+  if( !$id ) {
+    return undef; # return empty object if no id
+  }
+  else {
+# Get the 'central' database (core, est, vega)
+    my $db_adaptor  = $self->database(lc($db));
+    unless( $db_adaptor ){
+      $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+      return undef;
+    }
+    my $adaptor_name = "get_${object_type}Adaptor";
+    my $features = [];
+    $id =~ s/\s+/ /g;
+    $id =~s/^ //;
+    $id =~s/ $//;
+
+    foreach my $fid ( split /\s+/, $id ) {
+      my $t_features;
+      if ($xref_db) {
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
+        };
+      }
+      elsif ($accessor eq 'fetch_by_stable_id') { ## Hack to get gene stable IDs to work!
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor($fid)];
+        };
+      }
+      elsif ($accessor eq 'fetch_by_region') { ## Hack to get gene stable IDs to work!
+        eval {
+         $t_features = [$db_adaptor->$adaptor_name->$accessor(undef, $fid)];
+        };
+      }
+      else {
+        eval {
+         $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
+        };
+      }
+
+      ## if no result, check for unmapped features
+      if ($t_features && ref($t_features) eq 'ARRAY') {
+        if (!@$t_features) {
+          my $uoa = $db_adaptor->get_UnmappedObjectAdaptor;
+          $t_features = $uoa->fetch_by_identifier($fid);
+        }
+        else {
+          foreach my $f (@$t_features) {
+            next unless $f;
+            $f->{'_id_'} = $fid;
+            push @$features, $f;
+          }
+        }
+      }
+    }
+    return $features if $features && @$features; # Return if we have at least one feature
+
+    # We have no features so return an error....
+    unless ( $flag eq 'no_errors' ) {
+      $self->problem( 'no_match', 'Invalid Identifier', "$object_type $id was not found" );
+    }
+    return undef;
+  }
+
+}
+
+sub retrieve_features {
+  my ($self, $features) = @_;
+  my $method;
+  my $results = [];  
+  while (my ($type, $data) = each (%$features)) { 
+    $method = 'retrieve_'.$type; 
+    push @$results, [$self->$method($data,$type)] if defined &$method;
+  }
+  return $results;
+}
+
+sub retrieve_LRG {
+  my ($self, $data, $type) = @_;
+  my $results = [];
+  foreach my $g (@$data) {
+    if (ref($g) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($g);
+      push(@$results, $unmapped);
+    }
+    else {
+      push @$results, {
+        'region'   => $g->feature_Slice->seq_region_name,
+        'start'    => $g->feature_Slice->start,
+        'end'      => $g->feature_Slice->end,
+        'strand'   => $g->feature_Slice->strand,
+        'length'   => $g->end-$g->start+1,
+        'extname'  => $g->stable_id,
+        'label'    => $g->stable_id,
+        'lrg_id'  => [ $g->stable_id ],
+        'extra'    => [ $g->stable_id ]
+      }
+    }
+  }
+
+  return ( $results, ['Description'], $type );
+}
+
+
+
 sub _filename {
   my $self = shift;
   my $name = sprintf '%s-gene-%d-%s-%s',
@@ -22,76 +153,50 @@ sub _filename {
   return $name;
 }
 
-sub short_caption {
-  my $self = shift; 
-  return 'LRG-based displays';
-}    
-    
-sub caption           {
-  my $self = shift;
-  my $caption;
-=pod
-  my( $disp_id ) = $self->object->display_xref;
-  my $caption = $self->object->type_name.': ';
-  if( $disp_id ) {
-    $caption .= "$disp_id (".$self->object->stable_id.")";
-  } else {
-    $caption .= $self->object->stable_id;
-  }
-=cut
-  if ($self->param('lrg')) {
-    $caption = 'LRG: '.$self->param('lrg');
-  }
-  else {
-    $caption = 'LRGs';
-  }
-  return $caption;
-}
-
-
 sub availability {
   my $self = shift;
   my $hash = $self->_availability;
-  my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
-  $hash->{'lrg'} = $self->param('lrg') ? 1 : 0;
-  $hash->{'either'}   = 1;
-  $hash->{'core'}     = $self->get_db eq 'core' ? 1 : 0;
-  my $funcgen_db = $self->get_db('funcgen');
-  my $funcgen_res = 0;
-  if ($funcgen_db){
-   $funcgen_res = $self->table_info('funcgen', 'feature_set' )->{'rows'} ? 1 : 0;
+
+  if( $self->Obj->isa('Bio::EnsEMBL::LRGSlice') ) {
+    my $rows = $self->table_info( $self->get_db, 'stable_id_event' )->{'rows'};
+    $hash->{'lrg'}       = 1;
+    $hash->{'core'}       = $self->get_db eq 'core' ? 1 : 0;
+    my $funcgen_db = $self->database('funcgen');
+    my $funcgen_res = 0;
+    if ($funcgen_db){  
+     $funcgen_res = $self->table_info('funcgen', 'feature_set' )->{'rows'} ? 1 : 0; 
+    }
+    $hash->{'regulation'} = $funcgen_res ? 1 : 0; 
   }
-  $hash->{'regulation'} = $funcgen_res ? 1 : 0;
   return $hash;
+}
+
+sub analysis {
+  my $self = shift;
+  return $self->core_objects->gene->analysis;
 }
 
 sub counts {
   my $self = shift;
 =pod
-  my $hub = $self->model->hub;
-  my $obj = $self->model->api_object('Gene');
+  my $obj = $self->Obj;
+
+  return {} unless $obj->isa('Bio::EnsEMBL::Gene');
   
-  return {} unless $obj;
-  
-  my $key = '::COUNTS::GENE::'.$hub->species.'::'.$hub->param('db').'::'.$hub->param('lrg').'::';
-  my $counts = $hub->cache ? $hub->cache->get($key) : undef;
+  my $key = "::COUNTS::GENE::$ENV{'ENSEMBL_SPECIES'}::$self->core_objects->{'parameters'}{'db'}::$self->core_objects->{'parameters'}{'lrg'}::";
+  my $counts = $MEMD ? $MEMD->get($key) : undef;
   
   if (!$counts) {
-    $counts = { 
-      transcripts   => scalar @{$self->model->api_object('Transcript')},
-      genes         => 1,
-    };
-
-    $hub->cache->set($key, $counts, undef, 'COUNTS') if $hub->cache;
+    $counts = {
+      transcripts         => scalar @{$obj->get_all_Transcripts},
+      genes         => scalar @{$obj->get_all_Genes},
+    }; 
+    
+    $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
   }
-
+  
   return $counts;
 =cut
-}
-
-sub analysis {
-  my $self = shift;
-  return undef; # $self->core_objects->gene->analysis;
 }
 
 sub count_xrefs {
@@ -241,42 +346,42 @@ sub get_gene_supporting_evidence {
       my $name = $evi->hseqname;
       my $db_name = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
       #save details of evidence for vega genes for later since we need to combine them 
-      #before we can tell if they match the CDS / UTR 
+      #before we can tellif they match the CDS / UTR 
       if ($ln =~ /otter/) {
-	      push @{$vega_evi{$name}{'data'}}, $evi;
-	      $vega_evi{$name}->{'db_name'} = $db_name;
-	      $vega_evi{$name}->{'evi_type'} = ref($evi);
-	      next EVI;
+	push @{$vega_evi{$name}{'data'}}, $evi;
+	$vega_evi{$name}->{'db_name'} = $db_name;
+	$vega_evi{$name}->{'evi_type'} = ref($evi);
+	next EVI;
       }
 
       #for e! genes...
       #use coordinates to check if the transcript evidence supports the CDS, UTR, or just the transcript
       #for protein features give some leeway in matching to transcript - +- 3 bases
       if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-	      if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
-		      || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
-	        $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-	        $t_hits{$name}++;
-	      }
-	      else {
-	        $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-	        $t_hits{$name}++;
-	      }
+	if (   (abs($trans->coding_region_start-$evi->seq_region_start) < 4)
+		 || (abs($trans->coding_region_end-$evi->seq_region_end) < 4)) {
+	  $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+	  $t_hits{$name}++;
+	}
+	else {
+	  $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+	  $t_hits{$name}++;
+	}
       }
       elsif ( $trans->coding_region_start == $evi->seq_region_start
-		      || $trans->coding_region_end == $evi->seq_region_end ) {
-	      $e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
-	      $t_hits{$name}++;
+		|| $trans->coding_region_end == $evi->seq_region_end ) {
+	$e->{$tsi}{'evidence'}{'CDS'}{$name} = $db_name;
+	$t_hits{$name}++;
       }
 
       elsif ( $trans->seq_region_start  == $evi->seq_region_start
-		      || $trans->seq_region_end == $evi->seq_region_end ) {
-	      $e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
-	      $t_hits{$name}++;
+		|| $trans->seq_region_end == $evi->seq_region_end ) {
+	$e->{$tsi}{'evidence'}{'UTR'}{$name} = $db_name;
+	$t_hits{$name}++;
       }
       else {
-	      $e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
-	      $t_hits{$name}++;
+	$e->{$tsi}{'evidence'}{'UNKNOWN'}{$name} = $db_name;
+	$t_hits{$name}++;
       }
     }
     $e->{$tsi}{'logic_name'} = $trans->analysis->logic_name;
@@ -353,10 +458,14 @@ sub get_Slice {
   my( $self, $context, $ori ) = @_;
   my $db  = $self->get_db ;
   my $dba = $self->DBConnection->get_DBAdaptor($db);
-  my $slice = $self->Obj->feature_Slice;
+#  my @genes = @{$self->Obj->get_all_Genes('LRG_download')||[]};
+  my @genes = @{$self->Obj->get_all_Genes('LRG_import')||[]};
+  my $slice = $genes[0]->feature_Slice;
+
   if( $context =~ /(\d+)%/ ) {
     $context = $slice->length * $1 / 100;
   }
+
   if( $ori && $slice->strand != $ori ) {
     $slice = $slice->invert();
   }
@@ -368,7 +477,24 @@ sub lrg_name {
   return  $self->stable_id;
 }
 
-sub type_name         { my $self = shift; return $self->species_defs->translate('Gene'); }
+sub short_caption {
+  my $self = shift;
+  return 'LRG-based displays';
+}
+
+sub caption           {
+  my $self = shift;
+  my( $disp_id ) = $self->display_xref;
+  my $caption = $self->type_name.': ';
+  if( $disp_id && ($disp_id ne $self->stable_id)) {
+    $caption .= "$disp_id (".$self->stable_id.")";
+  } else {
+    $caption .= $self->stable_id;
+  }
+  return $caption;
+}
+
+sub type_name         { return 'LRG'; }
 sub gene              { my $self = shift; return $self->Obj;             }
 sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
 sub feature_type      { my $self = shift; return $self->Obj->type;       }
@@ -403,7 +529,8 @@ sub get_database_matches {
 sub get_all_transcripts{
   my $self = shift;
   unless ($self->{'data'}{'_transcripts'}){
-    foreach my $transcript (@{$self->gene()->get_all_Transcripts}){
+    foreach my $transcript (@{$self->Obj->get_all_Transcripts(undef, 'lrg_import')||[]}){
+
       my $transcriptObj = $self->new_object(
         'Transcript', $transcript, $self->__data
       );
@@ -475,7 +602,6 @@ sub chromosome {
 
 sub display_xref {
   my $self = shift; 
-  return unless $self->Obj;
   return undef if $self->Obj->isa('Bio::EnsEMBL::Compara::Family');
   return undef if $self->Obj->isa('Bio::EnsEMBL::ArchiveStableId');
   my $trans_xref = $self->Obj->display_xref();
@@ -503,16 +629,13 @@ sub get_db {
 }
 
 sub get_author_name {
-  my $self = shift;
-  return unless $self->Qbj;
-  
-  my $attribs = $self->Obj->get_all_Attributes('author');
-  if (@$attribs) {
-    return $attribs->[0]->value;
-  } 
-  else {
-    return undef;
-  }
+    my $self = shift;
+    my $attribs = $self->Obj->get_all_Attributes('author');
+    if (@$attribs) {
+        return $attribs->[0]->value;
+    } else {
+        return undef;
+    }
 }
 
 sub gene_type {
@@ -883,8 +1006,10 @@ sub getVariationsOnSlice {
   my $sliceObj = $self->new_object(
         'Slice', $slice, $self->__data
        );
-  
+#  warn "*** 1 ***", join ' * ', $slice->name, $slice->start, $slice->end, $gene;
+
   my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);  
+#  warn "*** 2 ***", join ' * ', $count_snps, scalar @$filtered_snps, $context_count, "\n";
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
   $self->__data->{'SNPS'} = $filtered_snps; 
   return ($count_snps, $filtered_snps, $context_count);
@@ -917,31 +1042,33 @@ sub store_TransformedTranscripts {
   my $offset = $self->__data->{'slices'}{'transcripts'}->[1]->start -1;
   foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
     my $transcript = $trans_obj->Obj;
-    my ($raw_coding_start,$coding_start);
-    if (defined( $transcript->coding_region_start )) {    
-      $raw_coding_start = $transcript->coding_region_start;
-      $raw_coding_start -= $offset;
-      $coding_start = $raw_coding_start + $self->munge_gaps( 'transcripts', $raw_coding_start );
-    }
-    else {
-      $coding_start  = undef;
+  my ($raw_coding_start,$coding_start);
+  if (defined( $transcript->coding_region_start )) {    
+    $raw_coding_start = $transcript->coding_region_start;
+    $raw_coding_start -= $offset;
+    $coding_start = $raw_coding_start + $self->munge_gaps( 'transcripts', $raw_coding_start );
+  }
+  else {
+    $coding_start  = undef;
     }
 
-    my ($raw_coding_end,$coding_end);
-    if (defined( $transcript->coding_region_end )) {
-      $raw_coding_end = $transcript->coding_region_end;
-      $raw_coding_end -= $offset;
+  my ($raw_coding_end,$coding_end);
+  if (defined( $transcript->coding_region_end )) {
+    $raw_coding_end = $transcript->coding_region_end;
+    $raw_coding_end -= $offset;
       $coding_end = $raw_coding_end   + $self->munge_gaps( 'transcripts', $raw_coding_end );
     }
-    else {
-      $coding_end = undef;
+  else {
+    $coding_end = undef;
     }
     my $raw_start = $transcript->start;
     my $raw_end   = $transcript->end  ;
     my @exons = ();
     foreach my $exon (@{$transcript->get_all_Exons()}) {
-      my $es = $exon->start - $offset; 
-      my $ee = $exon->end   - $offset;
+#      my $es = $exon->start - $offset; 
+#      my $ee = $exon->end   - $offset;
+      my $es = $exon->start; 
+      my $ee = $exon->end;
       my $O = $self->munge_gaps( 'transcripts', $es );
       push @exons, [ $es + $O, $ee + $O, $exon ];
     }
@@ -954,23 +1081,26 @@ sub store_TransformedTranscripts {
 }
 
 sub store_TransformedSNPS {
-  my $self = shift;
-  my $valids = $self->valids; 
-  foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
-    my $T = $trans_obj->stable_id;
-    my $snps = {};
-    foreach my $S ( @{$self->__data->{'SNPS'}} ) {
-      foreach( @{$S->[2]->get_all_TranscriptVariations||[]} ) {
-        #next unless  $T eq $_->transcript->stable_id;
-        foreach my $type ( @{ $_->consequence_type || []} ) {
-          next unless $valids->{'opt_'.lc($type)};
-          $snps->{ $S->[2]->dbID } = $_;
-          last;
-        }
-      }
+    my $self = shift;
+    my $valids = $self->valids; 
+    foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
+	my $T = $trans_obj->stable_id;
+#	warn "T : $T";
+	my $snps = {};
+	foreach my $S ( @{$self->__data->{'SNPS'}} ) {
+#	    warn "\t S: ", join ' # ', @$S, "\n";
+	    foreach( @{$S->[2]->get_all_TranscriptVariations||[]} ) {
+### WHY ?!?!??!
+#		next unless  $T eq $_->transcript->stable_id;
+		foreach my $type ( @{ $_->consequence_type || []} ) {
+		    next unless $valids->{'opt_'.lc($type)};
+		    $snps->{ $S->[2]->dbID } = $_;
+		    last;
+		}
+	    }
+	}
+	$trans_obj->__data->{'transformed'}{'snps'} = $snps;
     }
-    $trans_obj->__data->{'transformed'}{'snps'} = $snps;
-  }
 }
 
 sub store_TransformedDomains {
@@ -1010,40 +1140,51 @@ sub munge_gaps {
   return undef;
 }
 
+### MUNGED !!!!"
+
 sub get_munged_slice {
   my $self = shift;
   my $master_config = shift;
-  my $slice = $self->get_Slice( @_ );
-  my $gene_stable_id = $self->stable_id;
 
+#  warn "ARGS: @_";
+  my $slice = $self->get_Slice( @_ );
+  my $lrg_stable_id = $self->stable_id;
+  my $lrg = $self->Obj;
   my $length = $slice->length(); 
   my $munged  = '0' x $length;
-  my $CONTEXT = $self->param( 'context' )|| 100;
-  my $EXTENT  = $CONTEXT eq 'FULL' ? 1000 : $CONTEXT;
+  my $CONTEXT = $self->param( 'context' )|| 'FULL';
+  my $EXTENT  = $CONTEXT eq 'FULL' ? 5000 : $CONTEXT;
   ## first get all the transcripts for a given gene...
-  my @ANALYSIS = ( $self->get_db() eq 'core' ? (lc($self->species_defs->AUTHORITY)||'ensembl') : 'otter' );
-  @ANALYSIS = qw(ensembl havana ensembl_havana_gene) if $ENV{'ENSEMBL_SPECIES'} eq 'Homo_sapiens';
-# my $features = [map { @{ $slice->get_all_Genes($_)||[]} } @ANALYSIS ];
-  my $features = $slice->get_all_Genes( undef, $self->param('opt_db') );
+  my @ANALYSIS = qw(lrg_download);
+
+#  warn " GMS: ", join ' * ', $lrg_stable_id, $slice->name, $slice->start, $slice->end, $length, $EXTENT;
+  my $LRG_START = $slice->start-1;;
   my @lengths;
   if( $CONTEXT eq 'FULL' ) {
     @lengths = ( $length );
   } else {
-    foreach my $gene ( grep { $_->stable_id eq $gene_stable_id } @$features ) {
       foreach my $X ('1') { ## 1 <- exon+flanking, 2 <- exon only
-        my $extent = $X == 1 ? $EXTENT : 0;
-        foreach my $transcript (@{$gene->get_all_Transcripts()}) {
-          foreach my $exon (@{$transcript->get_all_Exons()}) {
-            my $START    = $exon->start            - $extent;
-            my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
-            substr( $munged, $START-1, $EXON_LEN ) = $X x $EXON_LEN;
-          }
-        }
+	  my $extent = $X == 1 ? $EXTENT : 0;
+	  foreach my $transcript (@{$lrg->get_all_Transcripts()}) {
+	      next unless $transcript->stable_id =~ /LRG/;
+	      foreach my $exon (@{$transcript->get_all_Exons()}) {
+#		  warn "E: ", join ' * ', $exon->start, $exon->end;
+		  my $START    = $exon->start - $LRG_START         - $extent;
+		  my $EXON_LEN = $exon->end-$exon->start + 1 + 2 * $extent;
+#		  warn "E : $START * $EXON_LEN \n";
+		  substr( $munged, $START-1, $EXON_LEN ) = $X x $EXON_LEN;
+	      }
+	  }
       }
-    }
-    @lengths = map { length($_) } split /(0+)/, $munged;
+ #     warn "M: $munged\n";
+
+      @lengths = map { length($_) } split /(0+)/, $munged;
+#      shift @lengths;
   }
+  
   ## @lengths contains the sizes of gaps and exons(+- context)
+
+#  warn join ' + ', 'LENS', @lengths;
 
   $munged = undef;
 
@@ -1080,9 +1221,11 @@ sub get_munged_slice {
   my $padding      = int($scale_factor * $fake_intron_gap_size) + 1;
   $collapsed_length += $padding * $intron_gaps;
 
+#  warn " Padding : $padding \n";
 ## Compute offset for each subslice
   my $start = 0;
   foreach(@$subslices) {
+ #     warn join ' = ' , "\t",  $start, @{$_}, "\n";
     $_->[2] = $start - $_->[0];
     $start += $_->[1]-$_->[0]-1 + $padding;
   }
@@ -1275,7 +1418,7 @@ sub viewconfig {
 sub can_export {
   my $self = shift;
   
-  return $self->action =~ /^Export$/ ? 0 : 1;
+  return $self->action =~ /^Export$/ ? 0 : $self->availability->{'gene'};
 }
 
 1;

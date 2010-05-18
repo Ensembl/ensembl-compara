@@ -18,7 +18,6 @@ sub caption {
 
 sub content {
   my $self = shift;
-  warn "!!! SNP TABLE";
   my $object = $self->model->object('LRG');
   my $lrg = configure_lrg($object);
   my %var_tables;
@@ -28,7 +27,6 @@ sub content {
   foreach my $transcript ( @transcripts ) {
     my $tsid = $transcript->stable_id;
     my $table_rows = $self->variation_table($lrg, $transcript);    
-    warn ">>> ROWS $table_rows";
     my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );
 
     $table->add_columns (
@@ -66,8 +64,8 @@ sub variation_table {
 
   my $lrgslice = $lrg->Obj->feature_Slice;
 
-  my $tr_start = $transcript->__data->{'transformed'}{'start'} + $lrgslice->start;
-  my $tr_end   = $transcript->__data->{'transformed'}{'end'} + $lrgslice->start;
+  my $tr_start = $transcript->__data->{'transformed'}{'start'};
+  my $tr_end   = $transcript->__data->{'transformed'}{'end'};
   my $extent   = $transcript->__data->{'transformed'}{'extent'};
   my $cdna_coding_start = $transcript->Obj->cdna_coding_start;
 
@@ -79,8 +77,6 @@ sub variation_table {
     my $transcript_variation  = $snps{$raw_id};
     next unless $transcript_variation;
     my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
-    #warn "TV : $transcript_variation * $gs->[5] * $gs->[4] * $gs->[2] \n";
-    #warn $gs->[5].' > '.($tr_start - $extent).' / '.$gs->[4].' < '.($tr_end + $extent);
     if( $transcript_variation && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
       my $url = $transcript->_url({'type' => 'Variation', 'action' =>'Summary', 'v' => @{[$gs->[2]->variation_name]}, 'vf' => @{[$gs->[2]->dbID]}, 'source' => @{[$gs->[2]->source]} });   
       my $row = {
@@ -130,9 +126,9 @@ sub configure_lrg{
 
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
+  warn "TR $transcript_slice";
+  warn "SUB $sub_slices";
   my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
-  warn join ' * ', "TS", $transcript_slice->start, $transcript_slice->end; 
-  warn "COUNT : $count_snps * $context_count * ", scalar(@$snps);
 
 
 

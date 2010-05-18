@@ -5,6 +5,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use EnsEMBL::Web::Document::SpreadSheet;
+use Digest::MD5 qw(md5_hex);
 
 use base qw(EnsEMBL::Web::Component);
 
