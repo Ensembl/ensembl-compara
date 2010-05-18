@@ -45,7 +45,6 @@ sub content {
 
   # Get the Member and ProteinTree objects and draw the tree
 
-
   my ($member, $tree, $node) = $self->_get_details($cdb);
 
   return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
@@ -114,8 +113,9 @@ sub content {
 
   $wuc->set_parameters({
     'container_width'   => $image_width,
-    'image_width',      => $image_width,
-    'slice_number',     => '1|1',
+    'image_width'      => $image_width,
+    'slice_number'     => '1|1',
+    'cdb' => $cdb,
   });
 
   #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
