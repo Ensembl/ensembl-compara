@@ -702,7 +702,7 @@ sub load_configured_das {
 
 sub add_das_track {
   my ($self, $menu, $source, @extra) = @_;
-  my $node = $self->get_node($menu);
+  my $node = $self->get_node($menu); 
   
   if (!$node && grep { $menu eq $_ } @TRANSCRIPT_TYPES) {
     for (@TRANSCRIPT_TYPES) {
@@ -711,7 +711,7 @@ sub add_das_track {
     }
   }
   
-  $node ||= $self->get_node('external_data');
+  $node ||= $self->get_node('external_data'); 
   
   return unless $node;
 
@@ -1529,6 +1529,7 @@ sub add_regulation_feature {
       my @temp;
       
       foreach (sort keys %renderers){
+
         my $value = $renderers{$_};         
         push @temp, $_ => $value; 
         $wiggle_flag = 1 if /tiling/ && $fg_data->{$key_2}{'type'} !~ /histone/; 
@@ -1540,18 +1541,47 @@ sub add_regulation_feature {
     $legend_flag = 1 if $k =~/fg_reg/;
     $cisred_flag = 1 if $fg_data->{$key_2}{'description'} =~ /cisRED/;
   
-    $menu->append($self->create_track($k . '_' . $key . '_' . $key_2, $fg_data->{$key_2}{'name'} || $fg_data->{$key_2}{'logic_names'}, { 
-      db          => $key,
-      glyphset    => $k,
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => $fg_data->{$key_2}{'depth'} || 0.5,
-      colourset   => $fg_data->{$key_2}{'colourset'} || $k,
-      description => $fg_data->{$key_2}{'description'},
-      display     => $fg_data->{$key_2}{'display'} || 'off', 
-      renderers   => $render, 
-    }));
+    if ($key_2 =~/reg_feats/){
+      my @cell_lines = keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+      unshift @cell_lines, 'MultiCell';
+      foreach my $cell_line (@cell_lines){
+        $cell_line =~s/\:\w*//;
+        my $track_key = $k . '_' . $key . '_' . $key_2. '_' .$cell_line;  
+        my $display = 'off';
+        my $name = $fg_data->{$key_2}{'name'} .' '. $cell_line;
+        if ($cell_line =~/MultiCell/){ 
+          $track_key = $k . '_' . $key . '_' . $key_2;
+          $display = $fg_data->{$key_2}{'display'} || 'off';
+          $name = $fg_data->{$key_2}{'name'}; 
+        }
+        $menu->append($self->create_track($track_key, $name || $fg_data->{$key_2}{'logic_names'}, {
+          db          => $key,
+          glyphset    => $k,
+          sources     => 'undef',
+          strand      => 'r',
+          labels      => 'on',
+          depth       => $fg_data->{$key_2}{'depth'} || 0.5,
+          colourset   => $fg_data->{$key_2}{'colourset'} || $k,
+          description => $fg_data->{$key_2}{'description'},
+          display     => $display,
+          renderers   => $render,
+          cell_line   => $cell_line
+        }));
+      } 
+    } else {
+      $menu->append($self->create_track($k . '_' . $key . '_' . $key_2, $fg_data->{$key_2}{'name'} || $fg_data->{$key_2}{'logic_names'}, { 
+        db          => $key,
+        glyphset    => $k,
+        sources     => 'undef',
+        strand      => 'r',
+        labels      => 'on',
+        depth       => $fg_data->{$key_2}{'depth'} || 0.5,
+        colourset   => $fg_data->{$key_2}{'colourset'} || $k,
+        description => $fg_data->{$key_2}{'description'},
+        display     => $fg_data->{$key_2}{'display'} || 'off', 
+        renderers   => $render, 
+      }));
+    } 
     
     if ($wiggle_flag) {
       $menu->append($self->create_track($k . '_' . $key .  '_blocks_' . $key_2, ($fg_data->{$key_2}{'name'} || $fg_data->{$key_2}{'logic_names'}) . ' peaks', {
@@ -1568,7 +1598,7 @@ sub add_regulation_feature {
       }));
     }
     
-    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { strand => 'r' }) if $legend_flag;
+    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $legend_flag;
     
     if ($cisred_flag) {
       $menu->append($self->create_track($k . '_' . $key . '_search', 'cisRED Search Regions', {
