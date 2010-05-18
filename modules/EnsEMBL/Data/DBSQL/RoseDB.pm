@@ -62,6 +62,16 @@ __PACKAGE__->register_db(
   password  => $db_pass,
 );
 
+__PACKAGE__->register_db(
+  type      => 'production',
+  driver    => 'mysql',
+  database  => 'ensembl_production_58',
+  host      => 'ens-staging1',
+  port      => '3306',
+  username  => $db_user,
+  password  => $db_pass,
+);
+
 
 1;
 
