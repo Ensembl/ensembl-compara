@@ -164,6 +164,9 @@ sub content {
 	$html .= "<p><br /><pre>$e_alignment</pre></p>";
       }
     }
+    else {
+      $html .= $table->render;
+    }
   }
 
   if ( $ext_seq) {
