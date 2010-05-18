@@ -514,6 +514,28 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'feature_type'}{'analyses'}{$feature_type_key} = 2;   
   }
 
+  my $c_aref =  $dbh->selectall_arrayref(
+    'select  ct.name, ct.cell_type_id 
+       from  cell_type ct, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
+       where  fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 
+         and  ss.type="feature" and ss.supporting_set_id=fs.feature_set_id and fs.cell_type_id=ct.cell_type_id 
+    group by  ct.name order by ct.name'
+  );
+  foreach my $row (@$c_aref) {
+    my $cell_type_key =  $row->[0] .':'. $row->[1];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 2;
+  }
+
+  my $ft_aref =  $dbh->selectall_arrayref(
+    'select ft.name, ft.feature_type_id from feature_type ft, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
+      where fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 
+        and ss.type="feature" and ss.supporting_set_id=fs.feature_set_id and fs.feature_type_id=ft.feature_type_id 
+   group by ft.name order by ft.name'
+  );
+  foreach my $row (@$ft_aref) {
+    my $feature_type_key =  $row->[0] .':'. $row->[1];
+    $self->db_details($db_name)->{'tables'}{'feature_type'}{'ids'}{$feature_type_key} = 2;
+  }
 
   $dbh->disconnect();
 }
