@@ -150,14 +150,19 @@ sub content {
 		    1, );
 
     if ( $ext_seq) {
-      #get exon alignment
-      my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
-      $table->add_row('Exon alignment:','',1);
-      $html .= $table->render;
-      $html .= "<p><br /><pre>$e_alignment</pre></p>";
-    }
-    else {
-      $html .= $table->render;
+      if (!$e_sequence && $seq_type eq 'PEP') {
+	$table->add_row('Exon alignment:',
+			"Unable to retrieve translation for $exon_id",
+			1);
+	$html .= $table->render;
+      }
+      else {
+	#get exon alignment
+	my $e_alignment = $object->get_alignment( $ext_seq, $e_sequence, $seq_type );
+	$table->add_row('Exon alignment:','',1);
+	$html .= $table->render;
+	$html .= "<p><br /><pre>$e_alignment</pre></p>";
+      }
     }
   }
 
@@ -165,11 +170,20 @@ sub content {
     #get transcript sequence
     my $trans_sequence = $object->get_int_seq($trans,$seq_type)->[0];
     my $table2  = new EnsEMBL::Web::Document::HTML::TwoCol;
+    my $type = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
+    if (!$trans_sequence && $seq_type eq 'PEP') {
+      $table2->add_row("$type alignment:",
+		       "Unable to retrieve translation for $tsi",
+		       1);
+      $html .= $table2->render;
+    }
+    else {
     #get transcript alignment
-    my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
-    $table2->add_row('Transcript alignment:','',1);
-    $html .= $table2->render;
-    $html .= "<p><br /><br /><pre>$trans_alignment</pre></p>";
+      my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
+      $table2->add_row("$type alignment:",'',1);
+      $html .= $table2->render;
+      $html .= "<p><br /><br /><pre>$trans_alignment</pre></p>";
+    }
   }
   return $html;;
 }		
