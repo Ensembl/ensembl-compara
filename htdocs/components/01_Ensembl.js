@@ -174,5 +174,23 @@ Ensembl.extend({
     var r     = match ? match[1] : this.initialR;
     
     return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : url + ';r=' + r;
+  },
+  
+  loadScript: function (url, callback) {
+    var script = document.createElement('script');
+    
+    if (script.readyState) { //IE
+      script.onreadystatechange = function () {
+        if (script.readyState == 'loaded' || script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { // others
+      script.onload = callback;
+    }
+    
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
   }
 });
