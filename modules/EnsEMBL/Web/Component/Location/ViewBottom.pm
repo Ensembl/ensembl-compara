@@ -28,6 +28,7 @@ sub content {
   my $length       = $slice->end - $slice->start + 1;
   my $T            = time;
   my $image_config = $object->get_imageconfig('contigviewbottom');
+  my $s            = $object->param('panel_top') eq 'yes' ? 3 : 2;
   $T = sprintf "%0.3f", time - $T;
   
   $image_config->tree->dump("View Bottom configuration [ time to generate $T sec ]", '([[caption]])') if $object->species_defs->ENSEMBL_DEBUG_FLAGS & $object->species_defs->ENSEMBL_DEBUG_TREE_DUMPS;
@@ -35,7 +36,7 @@ sub content {
   $image_config->set_parameters({
     container_width => $length,
     image_width     => $image_width || 800, # hack at the moment
-    slice_number    => '1|3'
+    slice_number    => "1|$s"
   });
 
   ## Force display of individual low-weight markers on pages linked to from Location/Marker
