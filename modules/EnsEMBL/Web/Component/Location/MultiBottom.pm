@@ -20,7 +20,7 @@ sub content {
   my $object = $self->object;
   my $hub = $self->model->hub;
   
-  return if $hub->param('show_panels') eq 'top';
+  return if $object->param('show_panels') eq 'top';
   
   my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
   
@@ -33,8 +33,8 @@ sub content {
   my $slices          = $object->multi_locations;
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
-  my $base_url        = $hub->url($object->multi_params);
-  my $s               = $hub->param('show_panels') eq 'both' ? 3 : 2;
+  my $base_url        = $object->_url($object->multi_params);
+  my $s               = $object->param('show_panels') eq 'both' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $i               = 1;
   my $methods         = {};
