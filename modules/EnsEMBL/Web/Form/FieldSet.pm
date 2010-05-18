@@ -183,12 +183,20 @@ sub _render_element {
   }
 }
 
+sub _render_raw_element {
+  my ($self, $element) = @_;
+  return $element->render_raw;
+}
+
 sub render {
   my $self = shift;
-  
+ 
   my $output = sprintf qq{<div class="%s"><fieldset%s>\n}, $self->class, $self->extra;
   $output .= sprintf "<h2>%s</h2>\n", encode_entities($self->legend) if $self->legend;
-  
+if ( $self->extra =~/matrix/){ 
+  my $html = $self->render_matrix;
+  $output .= $html;  
+} else{   
   if ($self->{'_required'}) {
     $self->add_element(
       'type'  => 'Information',
@@ -244,8 +252,74 @@ sub render {
   $output .= "\n</tbody></table>\n";
   $output .= $hidden_output;
   $output .= "\n</fieldset></div>\n";
-  
+}
   return $output;
 }
 
+sub render_matrix {
+  my $self = shift;
+  my $html;
+  my @data_matrix;
+      
+
+  foreach my $name (@{$self->{'_element_order'}}) {
+    next if $name =~/select_all/;
+    my $element = $self->{'_elements'}{$name};
+    my $position = $element->layout;
+    my ($row, $column) = split (/:/, $position);
+    $data_matrix[$row][$column] = $element;
+  }
+
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' =>'1em 0px'});
+
+  my @column_headers = @{$data_matrix[0]};
+  my $number_of_variable_width_columns = scalar @column_headers -1;
+  my $fixed_column_width = 8;
+  my $column_width = (100 - $fixed_column_width) / $number_of_variable_width_columns; 
+  
+  my $column_count =1;
+  # First add table columns 
+  foreach (@column_headers){
+    my $label = '';
+    if ($_){
+      $label = $_->label;
+      $table->add_columns( {'key' => $column_count,   'title' => $label, 'align' => 'left', width => $column_width.'%', },);
+      $column_count++; 
+    } else {
+      $table->add_columns( {'key' => 'all',     'title' => '&nbsp'  , 'align' => 'left', 'width' => $fixed_column_width .'%', },);
+    }
+  }
+
+  my $number_of_rows = scalar @data_matrix - 1; 
+ 
+  my @table_rows;
+
+  # Now loop through a row at a time
+  for( my $i = 1; $i <= $number_of_rows; $i++){
+    my $row;
+    my @row_data = @{$data_matrix[$i]};
+    my $label_element = shift(@row_data);
+    my $row_label = $label_element->label;
+    $row_label = '<strong>'.$row_label.'</strong>'; 
+    $row->{'all'} = $row_label;    
+
+    # Add check boxes
+    my $column_pos =1;  
+    foreach my $element( @row_data){
+      my $checkbox = $self->_render_raw_element($element);
+      $row->{$column_pos} = $checkbox;
+      $column_pos++;      
+    }
+
+    push @table_rows, $row;    
+  }
+
+  foreach (@table_rows){
+    $table->add_row($_);
+  }
+
+  $html .= $table->render;
+  $html .= "\n</fieldset></div>\n";
+  return $html;
+}
 1;
