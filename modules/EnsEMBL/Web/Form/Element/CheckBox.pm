@@ -44,6 +44,18 @@ sub render {
     $self->disabled ? ' disabled="disabled" ' : '',
   );
 }
+
+sub render_raw {
+  my $self = shift;
+   return sprintf(
+    qq( <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>),
+    encode_entities( $self->name ),
+    encode_entities( $self->id ),
+    $self->value || 'yes',
+    $self->checked ? ' checked="checked" ' : '',
+    $self->disabled ? ' disabled="disabled" ' : '',
+  );
+}
                                                                                 
 sub validate { return 1; }
 1;
