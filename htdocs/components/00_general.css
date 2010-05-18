@@ -71,15 +71,15 @@ span.sequence { font-family: Courier New, Courier, monospace }
   Text layout
 ----------------------------------------------------------------------*/
 
-.nowrap     { white-space:nowrap; }
-.left       { text-align:left; }
-.right, .more { text-align:right; }
-.center     { text-align:center; }
-.middle     { vertical-align:middle; }
-.bottom     { vertical-align:bottom; }
-.autocenter { margin: 0 auto; }
-/* Force divs to wrap their contents using an invisible paragraph at the end! */
-.invisible  { font-size:1px; color:#fff; height:0; clear:both; overflow:hidden }
+.nowrap             { white-space: nowrap; }
+.left               { text-align: left; }
+.right, .more       { text-align: right; }
+.center             { text-align: center; }
+.middle             { vertical-align: middle; }
+.bottom             { vertical-align: bottom; }
+.autocenter_wrapper { text-align: center; }
+.autocenter         { margin: 0 auto; text-align: left; }
+.invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; } /* Force divs to wrap their contents using an invisible paragraph at the end! */
 
 /*----------------------------------------------------------------------
  Links 
