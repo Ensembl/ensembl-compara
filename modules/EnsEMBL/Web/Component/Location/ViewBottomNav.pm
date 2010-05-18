@@ -63,25 +63,27 @@ sub navbar {
   ## N.B. Do not change the whitespace within the image_nav block 
   ## unless you want to change the spacing of the images! 
   return sprintf (qq{
-    <div class="autocenter navbar print_hide js_panel" style="width:$image_width">
-      <input type="hidden" class="panel_type" value="LocationNav" />
-      <input type="hidden" class="update_url" value="%s" />
-      <div class="relocate">
-        <form action="$url->[0]" method="get">
-          Location:
-            $extra_inputs
-            <label class="hidden" for="region">Region</label><input name="region" id="region" class="location_selector" style="width:3em" value="%s" type="text" /> :
-            <label class="hidden" for="start">Start</label><input name="start" id="start" class="location_selector" style="width:5em" value="%s" type="text" /> - 
-            <label class="hidden" for="end">End</label><input name="end" id="end" class="location_selector" style="width:5em" value="%s" type="text" />
-            <input value="Go &gt;" type="submit" class="go-button" />
-        </form>
+    <div style="text-align:center">
+      <div class="autocenter navbar print_hide js_panel" style="width:$image_width">
+        <input type="hidden" class="panel_type" value="LocationNav" />
+        <input type="hidden" class="update_url" value="%s" />
+        <div class="relocate">
+          <form action="$url->[0]" method="get">
+            Location:
+              $extra_inputs
+              <label class="hidden" for="region">Region</label><input name="region" id="region" class="location_selector" style="width:3em" value="%s" type="text" /> :
+              <label class="hidden" for="start">Start</label><input name="start" id="start" class="location_selector" style="width:5em" value="%s" type="text" /> - 
+              <label class="hidden" for="end">End</label><input name="end" id="end" class="location_selector" style="width:5em" value="%s" type="text" />
+              <input value="Go &gt;" type="submit" class="go-button" />
+          </form>
+        </div>
+        <div class="image_nav">
+          <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a href="%s">
+          <img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a><span class="ramp">$ramp</span><span class="slider"><span class="slider_label floating_popup">$wd</span></span><a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
+          <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
+        </div>
       </div>
-      <div class="image_nav">
-        <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a href="%s">
-        <img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a><span class="ramp">$ramp</span><span class="slider"><span class="slider_label floating_popup">$wd</span></span><a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
-        <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
-      </div>
-    </div>},    
+    </div>},
     @$values
   );
 }
