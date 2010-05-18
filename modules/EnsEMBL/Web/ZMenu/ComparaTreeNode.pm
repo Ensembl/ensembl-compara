@@ -16,7 +16,7 @@ sub content {
   
   my $object   = $self->object;
   my $node_id  = $object->param('node')                || die 'No node value in params';
-  my $tree     = $object->get_ProteinTree              || die 'No protein tree for gene';
+  my $tree     = $object->get_GeneTree                 || die 'No tree for gene';
   my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   
   my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $object->param('collapse');

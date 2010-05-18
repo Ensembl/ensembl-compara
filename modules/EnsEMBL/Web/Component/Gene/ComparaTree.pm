@@ -29,8 +29,8 @@ sub _get_details {
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
-  my $tree = $object->get_ProteinTree($cdb);
-  return (undef, '<strong>Gene is not in a compara protein tree</strong>') unless $tree;
+  my $tree = $object->get_GeneTree($cdb);
+  return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
 
   my $node = $tree->get_leaf_by_Member($member);
   return (undef, '<strong>Gene is not in the compara tree</strong>') unless $node;

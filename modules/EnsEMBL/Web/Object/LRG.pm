@@ -747,7 +747,12 @@ sub get_compara_Member{
   return $self->{$cachekey};
 }
 
-sub get_ProteinTree{
+sub get_ProteinTree {
+  # deprecated, use get_GeneTree
+  return get_GeneTree(@_);
+}
+
+sub get_GeneTree {
   # Returns the Bio::EnsEMBL::Compara::ProteinTree object
   # corresponding to this gene
   my $self = shift;
