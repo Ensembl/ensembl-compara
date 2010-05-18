@@ -18,7 +18,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     for (var fn in fnEls) {
       if (fnEls[fn].length) {
         if (fn == 'dataTable' && !window.JSON) {
-          Ensembl.loadScript('/components/json2.js', this[fn]);
+          Ensembl.loadScript('/components/json2.js', fn, this);
         } else {
           this[fn]();
         }
