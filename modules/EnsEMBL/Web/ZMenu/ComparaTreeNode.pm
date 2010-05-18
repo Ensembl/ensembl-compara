@@ -13,10 +13,10 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
-  
+  my $cdb = shift || 'compara';
   my $object   = $self->object;
   my $node_id  = $object->param('node')                || die 'No node value in params';
-  my $tree     = $object->get_GeneTree                 || die 'No tree for gene';
+  my $tree     = $object->get_GeneTree($cdb)                 || die 'No tree for gene';
   my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   
   my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $object->param('collapse');
@@ -59,6 +59,9 @@ sub content {
     order => 13
   });
   
+  my $action = 'Compara_Tree';
+  $action .= '/pan_compara' if ($cdb =~ /pan/);
+
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
     $self->add_entry({
@@ -67,7 +70,7 @@ sub content {
       order => 8,
       link  => $object->_url({
         type     => 'Gene',
-        action   => 'Compara_Tree',
+        action   => $action,
         collapse => '' 
       })
     });
@@ -83,7 +86,7 @@ sub content {
       order => 10,
       link  => $object->_url({
         type     => 'Gene',
-        action   => 'Compara_Tree',
+        action   => $action,
         collapse => join(',', keys %collapsed_ids, @adjacent_subtree_ids)
       })
     });
@@ -111,7 +114,7 @@ sub content {
         order => 11,
         link  => $object->_url({
           type     => 'Gene', 
-          action   => 'Compara_Tree',
+          action   => $action,
           collapse => join(',', @collapse_node_ids)
         })
       }); 
@@ -182,7 +185,7 @@ sub content {
         order => 7,
         link  => $object->_url({
           type     => 'Gene', 
-          action   => 'Compara_Tree',
+          action   => $action,
           collapse => join(',', grep $_ != $node_id, keys %collapsed_ids)
         })
       });
@@ -194,7 +197,7 @@ sub content {
         order => 9,
         link  => $object->_url({
           type     => 'Gene',
-          action   => 'Compara_Tree',
+          action   => $action,
           collapse => join(',', $node_id, keys %collapsed_ids) 
         })
       });
