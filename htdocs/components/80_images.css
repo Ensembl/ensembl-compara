@@ -1,20 +1,23 @@
 /* ENSEMBL STYLES FOR IMAGES, ETC */
 
-img  { border: 0 }
+img { border: 0; }
 
-img.float-left { float:left; margin-right:10px; }
-img.float-right { float:right; margin-left:10px; }
+img.float-left  { float:left;  margin-right: 10px; }
+img.float-right { float:right; margin-left:  10px; }
 
-img.screenshot { text-align:center; margin:10px auto; }
-img.karyomap { text-align:center; margin:auto; }
-img.flash { margin:20px auto; }
+img.screenshot { text-align: center; margin: 10px auto; }
+img.karyomap   { text-align: center; margin: auto; }
+img.flash      { margin: 20px auto; }
 
 /* Below is the image export CSS code */
 
-div.iexport { text-align:right; margin: 0px auto }
-div.iexport span, div.iexport a { background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; padding: 1px 5em; text-decoration: none; font-size: 0.8em; font-weight: bold; width: 12em }
+div.iexport      { text-align:right; margin: 0px auto; position: relative; margin-bottom: 2em; }
+div.iexport span, 
+div.iexport a    { background-color: [[TINT_BG]]; border: 1px outset [[TINT_BORDER]]; padding: 1px 5em; text-decoration: none; font-size: 0.8em; font-weight: bold; }
+div.iexport span { width: 12em; }
+div.iexport a    { float: right; }
 
-div.iexport_menu { z-index: 1000; width: 12em; margin: 2px; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; }
-div.iexport_menu div { border: 1px solid [[MH_BORDER]]; border-top: 0; font-size: 0.8em; background-color: [[TINT_BG]]; text-align: left; padding: 2px; }
-div.iexport_menu div a { text-decoration: none; font-weight: bold; }
+div.iexport_menu            { z-index: 1000; width: 12em; margin: 2px; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; }
+div.iexport_menu div        { border: 1px solid [[MH_BORDER]]; border-top: 0; font-size: 0.8em; background-color: [[TINT_BG]]; text-align: left; padding: 2px; }
+div.iexport_menu div a      { text-decoration: none; font-weight: bold; }
 div.iexport_menu div a.view { float: right; margin-right: 2px; }
