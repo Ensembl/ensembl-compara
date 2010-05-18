@@ -609,8 +609,7 @@ sub calculate_consequence_data {
   my ($f, @new_vfs);
   my $count =0;
   my $feature_count = 0;
-  my $file_count = 0; 
-
+  my $file_count = 0;
 
   if (my $parser = $data->{'parser'}){ 
     foreach my $track ($parser->{'tracks'}) {
@@ -667,6 +666,11 @@ sub calculate_consequence_data {
             my $error = 1;
             return ($html, $error);
           }
+          
+          # name for VF can be specified in extra column or made from location
+          # and allele string if not given
+          my $new_vf_name = $f->extra || $f->seqname.'_'.$pos.'_'.$f->allele_string;
+          
           # Create VariationFeature
           my $vf = Bio::EnsEMBL::Variation::VariationFeature->new(
             -start          => $f->rawstart,
@@ -676,7 +680,7 @@ sub calculate_consequence_data {
             -strand         => $strand,
             -map_weight     => 1,
             -adaptor        => $vfa,
-            -variation_name => $f->seqname.'_'.$pos.'_'.$f->allele_string,
+            -variation_name => $new_vf_name,
           );
           # check we have a valid variation feature
           unless ($vf->allele_string){
