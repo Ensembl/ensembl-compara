@@ -13,6 +13,8 @@ sub _init {
   $self->ajaxable(1);
 }
 
+sub content_key { return shift->SUPER::content_key({ resequencing => 1 }); }
+
 sub content {
   my $self = shift;
   
@@ -39,6 +41,7 @@ sub content {
     site_type      => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
     species        => $object->species,
     comparison     => 1,
+    resequencing   => 1,
     ref_slice_name => $ref_slice->get_individuals('reference')
   };
   
