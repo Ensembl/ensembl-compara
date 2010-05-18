@@ -402,8 +402,8 @@ sub render_HTML {
       </div>
       <div id="$footer_id">[[copyright]][[footerlinks]]</div>
     </div>
-    <form id="core_params">
-      $core_params_html
+    <form id="core_params" action="#" style="display:none">
+      <fieldset>$core_params_html</fieldset>
     </form>
     <input type="hidden" id="species_path" name="species_path" value="$species_path" />
     [[body_javascript]]
