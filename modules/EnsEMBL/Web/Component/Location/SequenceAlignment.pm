@@ -93,15 +93,23 @@ sub content {
     };
     
     $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . "$table<pre>%s</pre>";
-  
-    $html = $self->build_sequence($sequence, $config);
+    
+    $html  = $self->build_sequence($sequence, $config);
+    $html .= $self->_hint(
+      'strain_config', 
+      'Strain configuration', 
+      '<p>You can choose which strains to display from the "<b>Resequenced individuals</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>'
+    );
   } else {
     my $strains = ($object->species_defs->translate('strain') || 'strain') . 's';
     
     if ($ref_slice->get_individuals('reseq')) {
-      $html = $self->_info('No strains specified', qq{<p>Please select $strains to display from the "<strong>Configure this page</strong>" link to the left</p>});
+      $html = $self->_info(
+        'No strains specified', 
+        qq{<p>Please select $strains to display from the "<b>Resequenced individuals</b>" section of the configuration panel, accessible via "<b>Configure this page</b>" link to the left.</p>}
+      );
     } else {
-      $html = $self->_warning('No strains available', qq{<p>No resequenced $strains available for this species</p>});
+      $html = $self->_warning('No strains available', "<p>No resequenced $strains available for this species</p>");
     }
   }
   
