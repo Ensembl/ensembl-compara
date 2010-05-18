@@ -176,18 +176,23 @@ Ensembl.extend({
     return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : url + ';r=' + r;
   },
   
-  loadScript: function (url, callback) {
+  loadScript: function (url, callback, caller) {
     var script = document.createElement('script');
     
     if (script.readyState) { //IE
       script.onreadystatechange = function () {
         if (script.readyState == 'loaded' || script.readyState == 'complete') {
           script.onreadystatechange = null;
-          callback();
+          
+          if (caller) {
+            caller[callback]();
+          } else {
+            callback();
+          }
         }
       };
     } else { // others
-      script.onload = callback;
+      script.onload = caller ? caller.callback : callback;
     }
     
     script.src = url;
