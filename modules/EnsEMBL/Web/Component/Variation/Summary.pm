@@ -27,12 +27,18 @@ sub content {
     my $version = $object->source_version; 
     
     $name = $object->get_ExtURL_link($source .' '. $version, 'DBSNP', $name); 
-    $name = "$class (source $name $source_description)"; 
+    $name = "$class (source $name - $source_description)"; 
   } elsif ($source =~ /SGRP/) {
     $name = $object->get_ExtURL_link($source, 'SGRP', $name);
-    $name = "$class (source $name $source_description)";
+    $name = "$class (source $name - $source_description)";
   } else {
-    $name = "$class (source $source $source_description)";
+    if(defined($object->source_url)) {
+      $name = '<a href="'.$object->source_url.'">'.$source.'</a>';
+    }
+    else {
+      $name = $source;
+    }
+    $name = "$class (source $name - $source_description)";
   }
 
   my $html = qq{
