@@ -117,4 +117,23 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config);
 }
 
+sub get_key {
+  my ($self, $config) = @_;
+  
+  my $exon_type;
+  $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
+  $exon_type = $config->{'site_type'} if $exon_type eq 'core' || !$exon_type;
+  $exon_type = ucfirst $exon_type;
+  
+  my $key = {
+    exons => {
+      gene    => { class => 'eg', text => "$config->{'gene_name'} $config->{'gene_exon_type'}" },
+      other   => { class => 'eo', text => "$exon_type exons in this region" },
+      compara => { class => 'e2', text => "$exon_type exons in this region" }
+    }
+  };
+  
+  return $self->SUPER::get_key($config, $key);
+}
+
 1;
