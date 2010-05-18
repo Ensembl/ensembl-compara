@@ -63,7 +63,7 @@ sub navbar {
   ## N.B. Do not change the whitespace within the image_nav block 
   ## unless you want to change the spacing of the images! 
   return sprintf (qq{
-    <div style="text-align:center">
+    <div class="autocenter_wrapper">
       <div class="autocenter navbar print_hide js_panel" style="width:$image_width">
         <input type="hidden" class="panel_type" value="LocationNav" />
         <input type="hidden" class="update_url" value="%s" />
