@@ -27,12 +27,9 @@ sub content {
 
   my ($html, $table, $usertable, $features, $has_features, @all_features);
  
-  if (my $id = $hub->param('id') || $hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
-    $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
-    $features = $self->model->munge_features_for_drawing;
-    my @A = keys %$features;
-    if (keys %$features) { $table = $self->feature_tables($features); }
-  } 
+  $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
+  $features = $self->model->munge_features_for_drawing;
+  if (keys %$features) { $table = $self->feature_tables($features); }
 
   while (my ($type, $feature_set) = each (%$features)) {
     if ($feature_set && @$feature_set) {

@@ -39,7 +39,7 @@ sub content {
   if ($length >= $self->{'subslice_length'}) {
     my $base_url = $self->ajax_url('sub_slice') . ";length=$length;name=" . $slice->name;
     
-    $html .= $self->get_key($object, $site_type) . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
+    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, $base_url);
   } else {
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
@@ -81,8 +81,6 @@ sub content_sub_slice {
     gene_name       => $object->Obj->stable_id,
     species         => $object->species,
     title_display   => 'yes',
-    key_template    => qq{<p><code><span class="%s">THIS STYLE:</span></code> %s</p>},
-    key             => '',
     sub_slice_start => $start,
     sub_slice_end   => $end
   };
@@ -126,44 +124,12 @@ sub content_sub_slice {
   } elsif ($start && $end) {
     $config->{'html_template'} = '<pre class="text_sequence" style="margin:0 0 0 1em">%s</pre>';
   } else {
-    $config->{'html_template'} = qq{<div class="sequence_key">$config->{'key'}</div><pre class="text_sequence">&gt;} . $slice->name . "\n%s</pre>";
+    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)).qq{<pre class="text_sequence">&gt;} . $slice->name . "\n%s</pre>";
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
   
   return $self->build_sequence($sequence, $config);
-}
-
-sub get_key {
-  my ($self, $object, $site_type) = @_;
-  
-  my $key_template = '<p><code><span class="%s">THIS STYLE:</span></code> %s</p>';
-  my $gene_name    = $object->Obj->stable_id;
-  my $exon_label   = ucfirst $object->param('exon_display');
-  my $rtn;
-  
-  $exon_label = $site_type if $exon_label eq 'Core';
-  
-  my @map = (
-    [ 'exon_display', 'eg,eo'    ],
-    [ 'snp_display',  'sn,si,sd' ]
-  );
-  
-  my $key = {
-    eg  => "Location of $gene_name exons",
-    eo  => "Location of $exon_label exons",
-    sn  => 'Location of SNPs',
-    si  => 'Location of inserts',
-    sd  => 'Location of deletes'
-  };
-  
-  foreach (@map) {
-    next if ($object->param($_->[0])||'off') eq 'off';
-    
-    $rtn .= sprintf $key_template, $_, $key->{$_} for split ',', $_->[1];
-  }
-  
-  return qq{<div class="sequence_key">$rtn</div>};
 }
 
 1;
