@@ -44,7 +44,12 @@ sub content {
   my $html;
   if ($ext_seq) {
     my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
-    $html = qq(<p>Alignment between external feature $hit_id and transcript ID $tsi</p><p><pre>$trans_alignment</pre></p>);
+    if ($seq_type eq 'PEP') {
+      $html =  qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$trans_alignment</pre></p>);
+    }
+    else {
+      $html = qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$trans_alignment</pre></p>);
+    }
   }
   else {
     $html = qq(<p>Unable to retrieve sequence for $hit_id</p>);
