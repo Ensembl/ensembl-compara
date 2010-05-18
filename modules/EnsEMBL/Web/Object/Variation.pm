@@ -389,6 +389,20 @@ sub source_version {
   my $version = $self->vari->adaptor->get_source_version($source);
   return $version;
 }
+
+
+sub source_url {
+  
+  ### Variation_object_calls
+  ### Args: none
+  ### Example    : my $vari_source_url = $object->source_url
+  ### Description: gets the Variation source URL
+  ### Returns String
+  
+  my $self = shift;
+  my $source_url = $self->vari->source_url;
+  return $source_url;
+}
  
 sub dblinks {
 
