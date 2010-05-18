@@ -36,14 +36,18 @@ sub content {
   #get external sequence and type (DNA or PEP) - refseq try with and without version
   my ($query_db, $ext_seq);
   my @hit_ids = ( $hit_id );
+  $query_db = $hit_db_name;
   if ($hit_db_name =~ /^RefSeq/) {
     $query_db = 'RefSeq';
     $hit_id =~ s/\.\d+//;
     push @hit_ids, $hit_id;
   }
-  else {
-    $query_db = $hit_db_name;
+  elsif ($hit_db_name eq 'Uniprot/Varsplic') {
+    #hack - strip off isoform version for uniprot
+    $hit_id =~ /(\w+)-\d+/;
+    push @hit_ids, $1;
   }
+
 
   #as yet don't do anything if we have a DnaDnaAlignFeature as an ENS_ supporting_feature (only a limited number in Fugu at presents (e58))
   #if we decide to use these then will have to modify ENSEMBL_RETRIEVE.pm
