@@ -184,7 +184,7 @@ sub _process {
     
     foreach (@$columns) {
       push @{$row->{'cols'}}, {
-        style => 'text-align:' . ($options->{'alignheader'} || $_->{'align'} || 'center') . ';width:' . ($_->{'width'} || $average . '%'), 
+        style => 'text-align:' . ($options->{'alignheader'} || $_->{'align'} || 'auto') . ';width:' . ($_->{'width'} || $average . '%'), 
         value => defined $_->{'title'} ? $_->{'title'} : $_->{'key'}, 
         class => $_->{'class'} . ($_->{'sort'} ? " sort_$_->{'sort'}" : '')
       };
