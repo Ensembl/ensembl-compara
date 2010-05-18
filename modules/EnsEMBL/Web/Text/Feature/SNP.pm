@@ -11,8 +11,7 @@ use base qw(EnsEMBL::Web::Text::Feature);
 sub seqname   	    { return $_[0]->{'__raw__'}[0]; }
 sub allele_string   { return $_[0]->{'__raw__'}[3]; }
 sub strand          { return $_[0]->{'__raw__'}[4]; }
-sub consequence     { return $_[0]->{'__raw__'}[5]; }
-sub extra           { return $_[0]->{'__raw__'}[6]; }
+sub extra           { return $_[0]->{'__raw__'}[5]; }
 sub external_data   { return undef; }
 
 sub rawstart { my $self = shift; return $self->{'__raw__'}[1]; }
