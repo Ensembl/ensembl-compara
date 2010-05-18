@@ -1010,7 +1010,7 @@ sub content_key {
 }
 
 sub get_key {
-  my ($self, $config) = @_;
+  my ($self, $config, $k) = @_;
   
   my $object         = $self->object;
   my $class_to_style = $self->class_to_style;
@@ -1041,6 +1041,8 @@ sub get_key {
       compara => { class => 'e2', text => "$exon_type exons"                                   }
     }
   );
+  
+  %key = (%key, %$k) if $k;
   
   foreach my $type (keys %key) {
     if ($key{$type}{'class'}) {
