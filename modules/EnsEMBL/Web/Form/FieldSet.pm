@@ -193,66 +193,67 @@ sub render {
  
   my $output = sprintf qq{<div class="%s"><fieldset%s>\n}, $self->class, $self->extra;
   $output .= sprintf "<h2>%s</h2>\n", encode_entities($self->legend) if $self->legend;
-if ( $self->extra =~/matrix/){ 
-  my $html = $self->render_matrix;
-  $output .= $html;  
-} else{   
-  if ($self->{'_required'}) {
-    $self->add_element(
-      'type'  => 'Information',
-      'value' => 'Fields marked with <strong>*</strong> are required'
-    )
-  }
-  
-  foreach my $note (@{$self->notes||[]}) {
-    my $class = exists $note->{'class'} && !defined $note->{'class'} ? '' : $note->{'class'} || 'notes';
-    $class = qq{ class="$class"} if $class;
-    
-    $output .= qq{<div$class>};
-    
-    if ($note->{'heading'}) {
-      $output .= "<h4>$note->{'heading'}</h4>";
+
+  if ( $self->extra =~/matrix/){ 
+    my $html = $self->render_matrix;
+    $output .= $html;  
+  } else {   
+    if ($self->{'_required'}) {
+      $self->add_element(
+        'type'  => 'Information',
+        'value' => 'Fields marked with <strong>*</strong> are required'
+     )
     }
+  
+    foreach my $note (@{$self->notes||[]}) {
+      my $class = exists $note->{'class'} && !defined $note->{'class'} ? '' : $note->{'class'} || 'notes';
+      $class = qq{ class="$class"} if $class;
     
-    if ($note->{'list'}) {
-      $output .= '<ul>';
-      $output .= "<li>$_</li>\n" for @{$note->{'list'}};
-      $output .= '</ul>';
-    } elsif ($note->{'text'}) {
-      $output .= "<p>$note->{'text'}</p>";
-    }
+      $output .= qq{<div$class>};
     
-    $output .= "</div>\n";
-  }
-  
-  $output .= qq{\n<table style="width:100%"><tbody>\n};
-  
-  my $hidden_output;
-  my $i;
-  
-  foreach my $name (@{$self->{'_element_order'}}) {
-    my $elements = $self->{'_elements'}{$name};
-    next unless @$elements;
-    foreach my $element (@$elements) {
-      if ($element->type eq 'Hidden') {
-        $hidden_output .= $self->_render_element($element);
-      } 
-      else {
-        if ($self->{'_stripes'}) {
-          $element->bg = $i % 2 == 0 ? 'bg2' : 'bg1';
-        }
-      
-        $output .= $self->_render_element($element);
+      if ($note->{'heading'}) {
+        $output .= "<h4>$note->{'heading'}</h4>";
       }
     
-      $i++;
-    }
-  }
+      if ($note->{'list'}) {
+        $output .= '<ul>';
+        $output .= "<li>$_</li>\n" for @{$note->{'list'}};
+        $output .= '</ul>';
+      } elsif ($note->{'text'}) {
+        $output .= "<p>$note->{'text'}</p>";
+      }
+    
+      $output .= "</div>\n";
+    } 
   
-  $output .= "\n</tbody></table>\n";
-  $output .= $hidden_output;
-  $output .= "\n</fieldset></div>\n";
-}
+    $output .= qq{\n<table style="width:100%"><tbody>\n};
+  
+    my $hidden_output;
+    my $i;
+  
+    foreach my $name (@{$self->{'_element_order'}}) {
+      my $elements = $self->{'_elements'}{$name};
+      next unless @$elements;
+      foreach my $element (@$elements) {
+        if ($element->type eq 'Hidden') {
+          $hidden_output .= $self->_render_element($element);
+        } 
+        else {
+          if ($self->{'_stripes'}) {
+            $element->bg = $i % 2 == 0 ? 'bg2' : 'bg1';
+          }
+      
+          $output .= $self->_render_element($element);
+        }
+    
+        $i++;
+      }
+    }
+  
+    $output .= "\n</tbody></table>\n";
+    $output .= $hidden_output;
+    $output .= "\n</fieldset></div>\n";
+  }
   return $output;
 }
 
