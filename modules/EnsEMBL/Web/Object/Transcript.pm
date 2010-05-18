@@ -1386,10 +1386,13 @@ sub get_int_seq {
   
   if ($seq_type eq 'DNA') {
     return [ $fasta_prefix . $self->split60($obj->seq->seq), length $obj->seq->seq ];
-  } elsif ($seq_type eq 'PEP') {
+  }
+  elsif ($seq_type eq 'PEP') {
     if ($obj->isa('Bio::EnsEMBL::Exon') && $other_obj->isa('Bio::EnsEMBL::Transcript')) {
       return [ $fasta_prefix.$self->split60($obj->peptide($other_obj)->seq), length $obj->peptide($other_obj)->seq ] if $obj->peptide($other_obj) && $other_obj->translate;
-    } elsif($obj->translate) {
+    } 
+    elsif($obj->translate) {
+      $fasta_prefix = join '', '>', $obj->translation->stable_id, "<br />\n";
       return [ $fasta_prefix . $self->split60($obj->translate->seq), length $obj->translate->seq ];
     }
   }
