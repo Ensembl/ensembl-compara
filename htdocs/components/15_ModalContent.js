@@ -37,6 +37,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
     });
     
+    $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).live('click', function () {
+      $(this).parents('fieldset').find('input.' + $(this).attr('name')).attr('checked', this.checked);
+    }).each(function () {
+      $(this).attr('checked', !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length);
+    });
+    
     $('form.wizard input.back', this.elLk.content).live('click', function () {
       $(this).parents('form.wizard').append('<input type="hidden" name="wizard_back" value="1" />').submit();
     });
@@ -127,6 +133,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     $('form td.select_all input', this.elLk.content).each(function () {
       $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
+    });
+    
+    $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).each(function () {
+      $(this).attr('checked', !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length);
     });
     
     Ensembl.EventManager.trigger('validateForms', this.el);
