@@ -47,7 +47,7 @@ sub gene_link {
     't'      => undef
   });
   
-  return qq{<p>Click <a href="$url">here</a> for a summary of the evidence supporting the parent gene</p>};
+  return qq{<p>Click <a href="$url">here</a> for a summary of the evidence that supports all the transcripts of this gene</p>};
 }
 
 sub _content {
