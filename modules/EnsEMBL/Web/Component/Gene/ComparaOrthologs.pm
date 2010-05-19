@@ -78,23 +78,24 @@ sub content {
       # (2) information about %ids
       # (3) links to multi-contigview and align view
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
-      
-      my $object_stable_id_link = sprintf(
-        '<a href="%s">%s</a>',
-        $object->_url({
+      my $link_url = $object->_url({
           species => $spp,
           action  => 'Summary',
           g       => $stable_id,
           r       => undef
-        }),
+	  });
+
+      my $object_stable_id_link = sprintf(
+        '<a href="%s">%s</a>',
+	$link_url,				  
         $stable_id
       );
 
       # Check the target species are on the same portal - otherwise the multispecies link does not make sense
-      my $local_species =  ($object_stable_id_link =~ /^\//) ? 1 : 0;      
+      my $local_species =  ($link_url =~ /^\//) ? 1 : 0;      
 
       my $target_links =  ($local_species && ($cdb eq 'compara')) ? sprintf(
-        '<span class="small">[<a href="%s">Multi-species view</a>] </span>',
+        '<a href="%s">Multi-species view</a>',
         $object->_url({
           type   => 'Location',
           action => 'Multi',
@@ -103,6 +104,7 @@ sub content {
           r      => undef
         })
       )  : '';
+   
       
       my $location_link = $object->_url({
         species => $spp,
