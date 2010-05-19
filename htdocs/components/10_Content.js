@@ -4,6 +4,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   init: function () {
     this.base();
     
+    this.xhr = false;
+    
     var fnEls = {
       ajaxLoad:    $('.ajax', this.el),
       hideHints:   $('.hint', this.el),
@@ -27,10 +29,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
+    Ensembl.EventManager.register('cancelLocationChange', this, function () {if (this.xhr) { this.xhr.abort(); this.xhr = false; } });
     
     // This event registration must be in the init, because it can overwrite the one in Ensembl.Panel.ImageMap's constructor
     if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
-      Ensembl.EventManager.register('hashChange', this, function () { this.getContent(Ensembl.urlFromHash(this.params.updateURL), undefined, undefined, true); });
+      Ensembl.EventManager.register('hashChange', this, function () {
+        this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
+        this.getContent();
+      });
     }
     
     Ensembl.EventManager.trigger('validateForms', this.el);
@@ -107,12 +113,17 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     });
   },
   
-  getContent: function (url, el, params) {
+  getContent: function () {
+    var args = [].slice.call(arguments);
     var node;
     
-    params = params || this.params;
-    url = url || params.updateURL;
-    el  = el  || $(this.el).empty();
+    if (args[0] == 'hashChange') {
+      args.shift();
+    }
+    
+    var params = args[2] || this.params;
+    var url    = args[0] || params.updateURL;
+    var el     = args[1] || $(this.el).empty();
     
     switch (el.attr('nodeName')) {
       case 'DL': node = 'dt'; break;
@@ -125,7 +136,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
     
-    $.ajax({
+    this.xhr = $.ajax({
       url: url,
       dataType: 'html',
       success: function (html) {
@@ -142,6 +153,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       },
       complete: function () {
         el = null;
+        this.xhr = false;
       }
     });
   },
@@ -223,7 +235,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   dataTable: function () {
     var myself = this;
-        
+    
     this.elLk.dataTable.each(function (i) {
       var table  = $(this);
       var length = $('tbody tr', this).length;

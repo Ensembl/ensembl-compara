@@ -24,6 +24,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     // This event registration must be in the constructor, because it can be overwritten in Ensembl.Panel.Content's init function
     Ensembl.EventManager.register('hashChange', this, function (r) {
+      this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
+      
       if (Ensembl.images.total == 1) {
         this.highlightAllImages();
       } else if (!this.multi) {
@@ -31,18 +33,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         r = r.split(/\W/);
         
         if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end) {
-          this.getContent(Ensembl.urlFromHash(this.params.updateURL), undefined, undefined, true);
+          this.getContent('hashChange');
         }
       }
     });
-  },
-  
-  getContent: function (url, el, params, hashChange) {
-    this.base(url, el, params);
-    
-    if (hashChange === true && this.align) {
-      Ensembl.EventManager.trigger('highlightAllImages');
-    }
   },
   
   init: function () {
@@ -68,6 +62,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
       return false;
     });
+  },
+  
+  getContent: function (hashChange) {
+    this.base.apply(this, [].slice.call(arguments, 1));
+    
+    if (hashChange === 'hashChange' && this.align) {
+      Ensembl.EventManager.trigger('highlightAllImages');
+    }
   },
   
   makeImageMap: function () {
