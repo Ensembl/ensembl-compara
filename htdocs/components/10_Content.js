@@ -29,7 +29,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
-    Ensembl.EventManager.register('cancelLocationChange', this, function () {if (this.xhr) { this.xhr.abort(); this.xhr = false; } });
+    Ensembl.EventManager.register('cancelLocationChange', this, function () { if (this.xhr) { this.xhr.abort(); this.xhr = false; } });
     
     // This event registration must be in the init, because it can overwrite the one in Ensembl.Panel.ImageMap's constructor
     if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
@@ -122,7 +122,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     var params = args[2] || this.params;
-    var url    = args[0] || params.updateURL;
+    var url    = args[0] || Ensembl.replaceTimestamp(params.updateURL);
     var el     = args[1] || $(this.el).empty();
     
     switch (el.attr('nodeName')) {
@@ -139,6 +139,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.xhr = $.ajax({
       url: url,
       dataType: 'html',
+      context: this,
       success: function (html) {
         if (html) {
           var type = $(html).find('input.panel_type').val() || 'Content';
