@@ -440,12 +440,12 @@ sub form {
   foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
     next if $fieldset->{'select_all'};
        
-    my %element_types; 	     
+    my %element_types;
+    
     foreach my $element (@{$fieldset->elements}) {
-      foreach (@$element) {
-        $element_types{lc $_->type}++;
-      }
+      $element_types{lc $_->type}++ for @$element;
     }
+    
     delete $element_types{$_} for qw(hidden submit noedit);
     
     # If the fieldset is mostly checkboxes, provide a select/deselect all option
@@ -453,10 +453,8 @@ sub form {
       my $position = 0;
       
       foreach my $element (@{$fieldset->elements}) {
-        foreach (@$element) {
-          last if $_->type eq 'CheckBox';
-          $position++;
-        }
+        last if grep $_->type eq 'CheckBox', @$element;
+        $position++;
       }
       
       $fieldset->add_element(
