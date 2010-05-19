@@ -144,6 +144,8 @@ sub _render_hit {
 
   #remove '(Curated)' etc from HGNC names
   my $label = $hit->field('title')->getHighlighted;
+
+  $label =~ s/dataBase/database/;
   $label =~ s/HGNC \(\w+\)/HGNC Symbol/;
 
   my $a = $URL ? sprintf qq(<a href="%s">%s</a>),CGI::escapeHTML( $URL ),$label : $label;
