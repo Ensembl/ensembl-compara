@@ -707,7 +707,6 @@ sub dumpGene {
 	  $old->{'i'}->{$dpa}=1;
 	  $old->{'i'}->{$dn}=1;
 	}
-        $old->{'s'}=~s/base/Base/;
         $old->{'ex'} = $exons{$g};
         foreach my $K (keys %{$exons{$g}}) { $old->{'i'}{$K} = 1; }
         foreach my $db( keys %{$xrefs{'Gene'}{$g}||{}} ) {

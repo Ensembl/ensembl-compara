@@ -1325,7 +1325,6 @@ sub dumpGene {
         };
 
         $old->{'exons'}  = $exons{$gid};
-        $old->{'source'} = ~s/base/Base/;
 
 	#add xref details
 	while (my ($xref_id,$dets) = each %{$xrefs{'Gene'}{$gid}}) {
