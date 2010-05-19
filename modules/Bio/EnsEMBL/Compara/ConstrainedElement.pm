@@ -500,16 +500,16 @@ sub reference_dnafrag_id {
 
 =head2 get_SimpleAlign
 
-  Arg [1]    : The method_link_species_set_object of the original alignment
+  Arg [1]    : The method_link_species_set_object of the original alignment from 
+		which the constrained elements were generated
   Example    : my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
-	       my$cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
-               foreach my $simple_align(@{ $ce->get_SimpleAlign($prev_mlss, "uc") }) {
+	       my $cons = $ce_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
+               foreach my $constrained_element(@{ $cons }) {
+			my $simple_align = $constrained_element->get_SimpleAlign($orig_mlss, "uc");
 			print $out $simple_align;
 	       }
-  Note       : Where constrained elements occur in overlapping genomic_align_blocks there will be ambiguities
-               in associating an alignment with the correct constrined_element_id.
   Description: Rebuilds the constrained element alignment
-  Returntype : an arrayref of Bio::SimpleAlign objects
+  Returntype : a Bio::SimpleAlign object
   Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Caller     : object::methodname
 
@@ -527,7 +527,6 @@ sub get_SimpleAlign {
 
 	# setting the flags
 	my $skip_empty_GenomicAligns = 1;
-	my @SimpleAligns;
 	my $uc = 0;
 	my $translated = 0;
 
@@ -541,40 +540,39 @@ sub get_SimpleAlign {
 	my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice(
 		$orig_mlss, $self->slice->sub_Slice($self->start, $self->end, $self->slice->strand));
 
-	foreach my $this_genomic_align_block(@$gabs) {
-		my $sa = Bio::SimpleAlign->new();
-		my $bio07 = 0; 
-		if(!$sa->can('add_seq')) {
-			$bio07 = 1; 
-		}
-		my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align();
+	my $sa = Bio::SimpleAlign->new();
 
-		my $restricted_gab = $this_genomic_align_block->restrict_between_reference_positions(
-			($self->slice->start + $self->start - 1),
-			($self->slice->start + $self->end - 1),
-			$reference_genomic_align,
-			$skip_empty_GenomicAligns);
-		foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
-			my $alignSeq = $genomic_align->aligned_sequence;
-			my $loc_seq = Bio::LocatableSeq->new(
-				-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
-				-START  => $genomic_align->dnafrag_start,
-				-END    => $genomic_align->dnafrag_end,
-				-ID     => $this_genomic_align_block->dbID . "/" .
-				 $genomic_align->dnafrag->genome_db_id . "/" . $genomic_align->dnafrag->name,
-				-STRAND => $genomic_align->dnafrag_strand);
+	warn "should be only one genomic_align_block associated with each constrained element\n" if @$gabs > 1;
 
-			if($bio07) { 
-				$sa->addSeq($loc_seq); 
-			}else{ 
-				$sa->add_seq($loc_seq); 
-			}				
-		}
-		push(@SimpleAligns, $sa);
+	my $this_genomic_align_block = $gabs->[0];
+	my $bio07 = 0; 
+	if(!$sa->can('add_seq')) {
+		$bio07 = 1; 
 	}
-	warn "overlapping constrained elements for ", $self->dbID, "\n" if (@SimpleAligns > 1);	
-	
-	return \@SimpleAligns;
+	my $reference_genomic_align = $this_genomic_align_block->reference_genomic_align();
+
+	my $restricted_gab = $this_genomic_align_block->restrict_between_reference_positions(
+		($self->slice->start + $self->start - 1),
+		($self->slice->start + $self->end - 1),
+		$reference_genomic_align,
+		$skip_empty_GenomicAligns);
+	foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
+		my $alignSeq = $genomic_align->aligned_sequence;
+		my $loc_seq = Bio::LocatableSeq->new(
+			-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
+			-START  => $genomic_align->dnafrag_start,
+			-END    => $genomic_align->dnafrag_end,
+			-ID     => $this_genomic_align_block->dbID . "/" .
+			 $genomic_align->dnafrag->genome_db_id . "/" . $genomic_align->dnafrag->name,
+			-STRAND => $genomic_align->dnafrag_strand);
+
+		if($bio07) { 
+			$sa->addSeq($loc_seq); 
+		}else{ 
+			$sa->add_seq($loc_seq); 
+		}				
+	}
+	return $sa;
 }
 
 1;
