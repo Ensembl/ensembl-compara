@@ -4,6 +4,8 @@
 
 package EnsEMBL::Web::ZMenu::Jalview;
 
+use URI::Escape qw(uri_unescape);
+
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
@@ -19,8 +21,8 @@ sub content {
       <param name="defaultColour" value="clustal">
     </applet>', 
     $url_site, 
-    $url_site . $object->param('file'), 
-    $url_site . $object->param('treeFile')
+    $url_site . uri_unescape($object->param('file')),
+    $url_site . uri_unescape($object->param('treeFile'))
   );
   
   $self->add_entry({
