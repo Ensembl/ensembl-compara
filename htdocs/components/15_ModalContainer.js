@@ -107,7 +107,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     contentEl.html('<div class="spinner">Loading Content</div>').show();
     
     $.ajax({
-      url: url,
+      url: Ensembl.replaceTimestamp(url),
       dataType: 'json',
       context: this,
       success: function (json) {

@@ -54,7 +54,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     this.elLk.content.html('<div class="spinner">Loading Content</div>').addClass('panel');
     
     $.ajax({
-      url: url,
+      url: Ensembl.replaceTimestamp(url),
       dataType: 'json',
       context: this,
       success: function (json) {
