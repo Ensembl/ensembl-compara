@@ -451,7 +451,7 @@ sub _sort_similarity_links {
         && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript' ) {
       my $seq_arg = $display_id;
       $seq_arg = "LL_$seq_arg" if $externalDB eq 'LocusLink';
-      $text .= sprintf ' [<a href="%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s">align</a>] ', $object->species_defs->species_path, $object->stable_id, $seq_arg, $db;
+      $text .= sprintf ' [<a href="%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s;extdb=%s">align</a>] ', $object->species_defs->species_path, $object->stable_id, $seq_arg, $db, lc($externalDB);
     }
     
     $text .= sprintf ' [<a href="%s">Search GO</a>]', $urls->get_url('GOSEARCH', $primary_id) if $externalDB =~ /^(SWISS|SPTREMBL)/i; # add Search GO link;
