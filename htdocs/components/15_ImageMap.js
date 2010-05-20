@@ -15,26 +15,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
     Ensembl.EventManager.register('dragStop', this, this.dragStop);
+    Ensembl.EventManager.register('hashChange', this, this.hashChange);
     
     Ensembl.EventManager.register('highlightAllImages', this, function () {
       if (!this.align) {
         this.highlightAllImages();
-      }
-    });
-    
-    // This event registration must be in the constructor, because it can be overwritten in Ensembl.Panel.Content's init function
-    Ensembl.EventManager.register('hashChange', this, function (r) {
-      this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
-      
-      if (Ensembl.images.total == 1) {
-        this.highlightAllImages();
-      } else if (!this.multi) {
-        var range = this.highlightRegions[0][0].region.range;
-        r = r.split(/\W/);
-        
-        if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end) {
-          this.getContent('hashChange');
-        }
       }
     });
   },
@@ -44,7 +29,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.base();
     
-    this.params.highlight = (Ensembl.images.total == 1 || $(this.el).parents('.image_panel')[0] != Ensembl.images.last);
+    this.lastImage = $(this.el).parents('.image_panel')[0] == Ensembl.images.last;
+    this.params.highlight = (Ensembl.images.total == 1 || !this.lastImage);
     
     this.elLk.map        = $('map', this.el);
     this.elLk.img        = $('img.imagemap', this.el);
@@ -64,10 +50,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
   },
   
-  getContent: function (hashChange) {
-    this.base.apply(this, [].slice.call(arguments, 1));
+  hashChange: function (r) {
+    this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
     
-    if (hashChange === 'hashChange' && this.align) {
+    if (Ensembl.images.total == 1) {
+      this.highlightAllImages();
+    } else if (this.lastImage) {
+      this.base();
+    } else if (!this.multi) {
+      var range = this.highlightRegions[0][0].region.range;
+      r = r.split(/\W/);
+      
+      if (parseInt(r[1], 10) < range.start || parseInt(r[2], 10) > range.end) {
+        this.base();
+      }
+    }
+    
+    if (this.align) {
       Ensembl.EventManager.trigger('highlightAllImages');
     }
   },

@@ -29,14 +29,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('updatePanel', this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
-    Ensembl.EventManager.register('cancelLocationChange', this, function () { if (this.xhr) { this.xhr.abort(); this.xhr = false; } });
     
-    // This event registration must be in the init, because it can overwrite the one in Ensembl.Panel.ImageMap's constructor
     if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
-      Ensembl.EventManager.register('hashChange', this, function () {
-        this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
-        this.getContent();
-      });
+      Ensembl.EventManager.register('hashChange', this, this.hashChange);
     }
     
     Ensembl.EventManager.trigger('validateForms', this.el);
@@ -113,17 +108,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     });
   },
   
-  getContent: function () {
-    var args = [].slice.call(arguments);
+  getContent: function (url, el, params) {    
     var node;
     
-    if (args[0] == 'hashChange') {
-      args.shift();
-    }
-    
-    var params = args[2] || this.params;
-    var url    = args[0] || Ensembl.replaceTimestamp(params.updateURL);
-    var el     = args[1] || $(this.el).empty();
+    params = params || this.params;
+    url    = url    || Ensembl.replaceTimestamp(params.updateURL);
+    el     = el     || $(this.el).empty();
     
     switch (el.attr('nodeName')) {
       case 'DL': node = 'dt'; break;
@@ -157,6 +147,17 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         this.xhr = false;
       }
     });
+  },
+  
+  hashChange: function () {
+    this.params.updateURL = Ensembl.urlFromHash(this.params.updateURL);
+    
+    if (this.xhr) {
+      this.xhr.abort();
+      this.xhr = false;
+    }
+    
+    this.getContent();
   },
   
   hideHints: function () {
