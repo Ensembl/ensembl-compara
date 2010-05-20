@@ -31,7 +31,18 @@ sub content {
   } elsif ($source =~ /SGRP/) {
     $name = $object->get_ExtURL_link($source, 'SGRP', $name);
     $name = "$class (source $name - $source_description)";
-  } else {
+  } elsif ($source =~ /HGMD/) { # HACK - should get its link properly somehow
+    # get a va adaptor
+    my $vaa = $object->vari->adaptor->db->get_VariationAnnotationAdaptor();
+    foreach my $va(@{$vaa->fetch_all_by_Variation($object->vari)}) {
+      next unless $va->source_name =~ /HGMD/;
+      $name =
+        $class.' (source <a href="http://www.hgmd.cf.ac.uk/ac/gene.php?gene='.
+        $va->associated_gene.'&accession='.$object->name.'">'.
+        $source.'</a> - '.$source_description.')';
+    }
+  }
+  else {
     if(defined($object->source_url)) {
       $name = '<a href="'.$object->source_url.'">'.$source.'</a>';
     }
