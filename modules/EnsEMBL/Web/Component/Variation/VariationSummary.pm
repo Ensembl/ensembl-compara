@@ -99,35 +99,41 @@ sub content {
     }
     
     if(defined($vf)) {
-      my (@hgvs, $hgvs, $hgvs_html);
+      my (@hgvs, $hgvs, $hgvs_html, $prev_trans);
       
-      foreach my $gene(@{$vf->feature_Slice->get_all_Genes()}) {
-        @hgvs = @{$vf->get_all_hgvs_notations($gene, 'g')};
+      # go via transcript variations (should be faster than slice)
+      foreach my $tv(@{$vf->get_all_TranscriptVariations()}) {
+        next unless defined($tv->{'_transcript_stable_id'});
+        next if $tv->{'_transcript_stable_id'} eq $prev_trans;
+        $prev_trans = $tv->{'_transcript_stable_id'};
+        
+        @hgvs = @{$vf->get_all_hgvs_notations($tv->transcript, 'c')};
         $hgvs = join '<br/>', @hgvs;
-        $hgvs =~ s/ENS(...)?G\d+/'<a href="'.$object->_url({
-          type   => 'Gene',
-          action => 'Variation_Gene',
+        $hgvs =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
+          type => 'Transcript',
+          action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
           db     => 'core',
           r      => undef,
-          g      => $&,
+          t      => $&,
           v      => $object->name,
           source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
         $hgvs_html .= $hgvs.'<br/>' if $hgvs;
-        
-        foreach my $trans(@{$gene->get_all_Transcripts}) {
-          @hgvs = @{$vf->get_all_hgvs_notations($trans, 'c')};
-          $hgvs = join '<br/>', @hgvs;
-          $hgvs =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
-            type => 'Transcript',
-            action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-            db     => 'core',
-            r      => undef,
-            t      => $&,
-            v      => $object->name,
-            source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
-          $hgvs_html .= $hgvs.'<br/>' if $hgvs;
-        }
       }
+      
+      # alternative method going via slice      
+      #foreach my $trans(@{$vf->feature_Slice->get_all_Transcripts()}) {
+      #  @hgvs = @{$vf->get_all_hgvs_notations($trans, 'c')};
+      #  $hgvs = join '<br/>', @hgvs;
+      #  $hgvs =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
+      #    type => 'Transcript',
+      #    action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
+      #    db     => 'core',
+      #    r      => undef,
+      #    t      => $&,
+      #    v      => $object->name,
+      #    source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
+      #  $hgvs_html .= $hgvs.'<br/>' if $hgvs;
+      #}
       
       $hgvs_html ||= "<h5>None</h5>";
       

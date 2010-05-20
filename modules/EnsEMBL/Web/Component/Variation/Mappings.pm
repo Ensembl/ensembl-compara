@@ -79,9 +79,8 @@ sub content {
       
       # HGVS      
       my @vfs = grep {$_->dbID eq $varif_id} @{$object->vari->get_all_VariationFeatures};
-      my @hgvs = @{$vfs[0]->get_all_hgvs_notations($gene, 'g')};
-      push @hgvs, @{$vfs[0]->get_all_hgvs_notations($trans, 'c')};
-      s/ENS(...)?[TG]\d+\://g for @hgvs;
+      my @hgvs = @{$vfs[0]->get_all_hgvs_notations($trans, 'c')};
+      #s/ENS(...)?[TG]\d+\://g for @hgvs;
       my $hgvs = join ", ", @hgvs;
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
