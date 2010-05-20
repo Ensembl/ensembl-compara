@@ -623,7 +623,15 @@ sub do_interpro {
     $domain->{$acc}{descr} = $descr;
     $domain->{$acc}{count} = $count;
   }
-  return 0 if !(keys %$domain);
+
+  warn "HEY ! ($species)";
+
+  if (! keys %$domain) {
+      nohits2html($PLUGIN_ROOT, "IPtop40.html", $species);
+      nohits2html($PLUGIN_ROOT, "IPtop500.html", $species);
+      return 0;
+  }
+
 
   use EnsEMBL::Web::DBSQL::DBConnection;
   my $dbc = EnsEMBL::Web::DBSQL::DBConnection->new();
@@ -741,6 +749,34 @@ sub hits2html {
 
   close(HTML);
 }
+
+sub nohits2html {
+  my ($ENS_ROOT, $file, $species ) = @_;
+  my $interpro_dir = sprintf(STATS_PATH, $ENS_ROOT);
+
+  warn "ID : $interpro_dir * $species * $file";
+
+  if( ! -e $interpro_dir ){
+    #utils::Tool::info(1, "Creating $interpro_dir" );
+    system("mkdir -p $interpro_dir") == 0 or
+      ( warning( 1, "Cannot create $interpro_dir: $!" ) && next );
+  }
+
+  my $fq_path = $interpro_dir.'/stats_'.$species.'_'.$file;
+  warn "create $fq_path";
+  open (HTML, ">$fq_path") or warn "Cannot write HTML file for pfam hits: $!\n";
+
+  print HTML qq(<table class="ss tint">\n);
+  print HTML qq(
+<tr class="bg2">
+  <td><b>No InterPro data</b></td>
+</tr>
+</table>
+);
+
+  close(HTML);
+}
+
 
 
 __END__
