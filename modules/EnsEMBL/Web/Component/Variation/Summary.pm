@@ -87,6 +87,17 @@ sub content {
       foreach (@ids) {
         push @urls , $object->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_);
       }
+    } elsif ($db =~ /HGMD/) { # HACK - should get its link properly somehow
+      foreach (@ids) {
+        # get a va adaptor
+        my $vaa = $object->vari->adaptor->db->get_VariationAnnotationAdaptor();
+        foreach my $va(@{$vaa->fetch_all_by_Variation($object->vari)}) {
+          next unless $va->source_name =~ /HGMD/;
+          push @urls, 
+            '<a href="http://www.hgmd.cf.ac.uk/ac/gene.php?gene='.
+            $va->associated_gene.'&accession='.$_.'">'.$_.'</a>';
+        }
+      }
     } else {
       @urls = @ids;
     }
