@@ -110,13 +110,15 @@ sub highlight {
 
 sub href {
   my ($self, $f) = @_;
+  my $cell_line = $self->my_config('cell_line');
   my $id = $f->stable_id;
   my $href = $self->_url
   ({
     'species' =>  $self->species, 
     'action'  => 'Regulation',
     'rf'      => $id,
-    'fdb'     => 'funcgen' 
+    'fdb'     => 'funcgen', 
+    'cl'      => $cell_line,  
   });
   return $href; 
 }
