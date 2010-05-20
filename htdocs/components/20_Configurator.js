@@ -36,8 +36,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     $('.menu_option', this.elLk.form).click(function () {
       var menu = $(this).siblings('.popup_menu');
       
-      myself.elLk.menus.filter(':visible').not(menu).hide();
-      menu.toggle();
+      if (menu.children().length == 2 && !$(this).parent().hasClass('select_all')) {
+        menu.children(':not(.' + $(this).siblings('input').val() + ')').trigger('click');
+      } else {
+        myself.elLk.menus.filter(':visible').not(menu).hide();
+        menu.toggle();
+      }
       
       menu = null;
     });
