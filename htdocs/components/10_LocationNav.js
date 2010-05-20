@@ -83,9 +83,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       slide: function (e, ui) {
         sliderLabel.html(sliderConfig[ui.value].name + ' bp').show();
       },
-      change: function (e, ui) {
-        Ensembl.EventManager.trigger('cancelLocationChange');
-      
+      change: function (e, ui) {      
         var input = sliderConfig[ui.value];
         var url   = input.href;
         var r     = input.href.match(myself.matchRegex)[1];
