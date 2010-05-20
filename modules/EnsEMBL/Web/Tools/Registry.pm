@@ -5,9 +5,8 @@ use base qw(EnsEMBL::Web::Root);
 
 use Bio::EnsEMBL::Registry;
 
-
 sub new {
-  my( $class, $conf ) = @_;
+  my ($class, $conf) = @_;
   my $self = { 'conf' => $conf };
   bless $self, $class;
   return $self;
@@ -19,72 +18,69 @@ sub configure {
   my $self = shift;
 
   my %adaptors = (
-    'VARIATION'        => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor',
-    'FUNCGEN'          => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor',
-    'OTHERFEATURES'    => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'CDNA'             => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'VEGA'             => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'VEGA_ENSEMBL'     => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'CORE'             => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'COMPARA'          => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-    'COMPARA_PAN_ENSEMBL' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
-    'USERDATA'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    'COMPARA_MULTIPLE' => undef,
-    'WEBSITE'          => undef,
-    'HEALTHCHECK'      => undef,
-    'BLAST'            => undef,
-    'BLAST_LOG'        => undef,
-    'MART'             => undef,
-    'GO'               => undef,
-    'FASTA'            => undef,
+    VARIATION           => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor',
+    FUNCGEN             => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor',
+    OTHERFEATURES       => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    CDNA                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    VEGA                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    VEGA_ENSEMBL        => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    CORE                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    COMPARA             => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    COMPARA_PAN_ENSEMBL => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+    USERDATA            => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    COMPARA_MULTIPLE    => undef,
+    WEBSITE             => undef,
+    HEALTHCHECK         => undef,
+    BLAST               => undef,
+    BLAST_LOG           => undef,
+    MART                => undef,
+    GO                  => undef,
+    FASTA               => undef,
+    WEB_COMMON          => undef,
   );
 
-  for my $species ( keys %{$self->{'conf'}->{_storage}},'MULTI' ) {
-    (my $sp = $species ) =~ s/_/ /g;
+  for my $species (keys %{$self->{'conf'}->{'_storage'}}, 'MULTI') {
+    (my $sp = $species) =~ s/_/ /g;
     $sp = 'Ancestral sequences' if $sp eq 'MULTI';
     
     next unless ref $self->{'conf'}->{'_storage'}{$species};
     
-    Bio::EnsEMBL::Registry->add_alias( $species, $sp );
-    for my $type ( keys %{$self->{'conf'}->{'_storage'}{$species}{databases}}){
-## Grab the configuration information from the SpeciesDefs object
-      my $TEMP = $self->{'conf'}->{'_storage'}{$species}{databases}{$type};
-## Skip if the name hasn't been set (mis-configured database)
+    Bio::EnsEMBL::Registry->add_alias($species, $sp);
+    
+    for my $type (keys %{$self->{'conf'}->{'_storage'}{$species}{'databases'}}){
+      ## Grab the configuration information from the SpeciesDefs object
+      my $TEMP = $self->{'conf'}->{'_storage'}{$species}{'databases'}{$type};
+      
+      ## Skip if the name hasn't been set (mis-configured database)
       if ($sp ne 'merged' && $sp ne 'Ancestral sequences') {
-        warn (' 'x10) . "[WARN] no NAME for $sp $type" unless $TEMP->{NAME};
-        warn (' 'x10) . "[WARN] no USER for $sp $type" unless $TEMP->{USER};
+        warn((' ' x 10) . "[WARN] no NAME for $sp $type") unless $TEMP->{'NAME'};
+        warn((' ' x 10) . "[WARN] no USER for $sp $type") unless $TEMP->{'USER'};
       }
       
-      next unless $TEMP->{NAME} && $TEMP->{USER};
+      next unless $TEMP->{'NAME'} && $TEMP->{'USER'};
 
-     
-      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{NAME} );
-## Copy through the other parameters if defined
+      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{'NAME'} );
+      
+      ## Copy through the other parameters if defined
       foreach (qw(host pass port user driver)) {
-        $arg{ "-$_" } = $TEMP->{uc($_)} if defined $TEMP->{uc($_)};
+        $arg{"-$_"} = $TEMP->{uc $_} if defined $TEMP->{uc $_};
       }
-## Check to see if the adaptor is in the known list above
-      if( $type =~ /DATABASE_(\w+)/ && exists $adaptors{$1}  ) {
-## If the value is defined then we will create the adaptor here...
-        if( my $module = $adaptors{ my $key = $1 } ) {
-## Hack because we map DATABASE_CORE to 'core' not 'DB'....
-          my $group = lc( $key );
-## Create a new "module" object... stores info - but doesn't create connection yet!
-          if( $self->dynamic_use( $module ) ) {
-            $module->new( %arg, '-group' => $group );
-          }
-## Add information to the registry...
-#          Bio::EnsEMBL::Registry->set_default_track( $species, $group );
+      
+      ## Check to see if the adaptor is in the known list above
+      if ($type =~ /DATABASE_(\w+)/ && exists $adaptors{$1}) {
+        ## If the value is defined then we will create the adaptor here
+        if (my $module = $adaptors{$1}) {
+          ## Create a new "module" object. Stores info - but doesn't create connection yet
+          $module->new(%arg, '-group' => lc $1) if $self->dynamic_use($module);
         }
       } else {
-        warn("unknown database type $type\n");
+        warn "unknown database type $type\n";
       }
     }
   }
+  
   Bio::EnsEMBL::Registry->load_all($SiteDefs::ENSEMBL_REGISTRY);
-  if ($SiteDefs::ENSEMBL_NOVERSIONCHECK) {
-    Bio::EnsEMBL::Registry->no_version_check(1);
-  }
+  Bio::EnsEMBL::Registry->no_version_check(1) if $SiteDefs::ENSEMBL_NOVERSIONCHECK;
 }
 
 1;
