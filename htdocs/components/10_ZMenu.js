@@ -8,10 +8,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.drag       = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
     this.align      = area.hasClass('align'); // TODO: implement alignslice menus
+    this.group      = area.hasClass('group') || area.hasClass('pseudogroup');
+    this.coloured   = area.hasClass('coloured');
     this.href       = area.attr('href');
     this.title      = area.attr('title');
     this.das        = false;
-    this.group      = area.hasClass('group') || area.hasClass('pseudogroup');
     this.position   = data.position;
     this.coords     = data.coords;
     this.imageId    = data.imageId;
@@ -82,6 +83,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     // Clear secondary regions so all species will be realigned - any change in primary species location should result in a new alignment
     if (this.multi === false) {
       this.baseURL = this.baseURL.replace(/r\d+=[^;]+;?/g, '');
+    }
+    
+    if (this.coloured) {
+      $(this.el).addClass('coloured');
     }
     
     $('a.expand', this.el).live('click', function () {
@@ -417,25 +422,46 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   buildMenu: function (content, caption, link, extra) {
-    var body = '';
-    var menu, title;
+    var body = [];
+    var i = content.length;
+    var menu, title, parse, j, row;
     
     caption = caption || 'Menu';
-    extra = extra || '';
+    extra   = extra   || '';
     
     if (link === true && this.href) {
       title = this.title ? this.title.split('; ')[0] : caption;
       extra = '<tr><th>Link</th><td><a href="' + this.href + '">' + title + '</a></td></tr>' + extra;
     }
     
-    $.each(content, function () {
-      menu = this.split(': ');      
-      body += '<tr>' + (menu.length > 1 ? '<th>' + menu.shift() + '</th><td>' + menu.join(': ') + '</td>' : '<td colspan="2">' + this + '</td>') + '</tr>';
-    });
+    while (i--) {
+      parse = this.coloured ? content[i].match(/\[(.+)\]/) : null;
+      
+      if (parse) {
+        parse = parse[1].split(',');
+        
+        for (j = 0; j < parse.length; j += 2) {
+          parse[j] = parse[j].split(':');
+          row = '<td style="color:#' + parse[j][1] + '">' + parse[j][0] + '</td>';
+          
+          if (parse[j+1]) {
+            parse[j+1] = parse[j+1].split(':');
+            row += '<td style="color:#' + parse[j+1][1] + '">' + parse[j+1][0] + '</td>';
+          } else {
+            row += '<td></td>';
+          }
+          
+          body.push('<tr>' + row + '</tr>');
+        }
+      } else {
+        menu = content[i].split(': ');  
+        body.unshift('<tr>' + (menu.length > 1 ? '<th>' + menu.shift() + '</th><td>' + menu.join(': ') + '</td>' : '<td colspan="2">' + content[i] + '</td>') + '</tr>');
+      }
+    }
     
     this.populated = true;
     
-    this.elLk.tbody.html(body + extra);
+    this.elLk.tbody.html(body.join('') + extra);
     this.elLk.caption.html(caption);
     
     this.show();
