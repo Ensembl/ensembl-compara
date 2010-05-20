@@ -13,14 +13,26 @@ sub content {
  
   return unless $object->param('rf'); 
   
-  my $reg_obj;
-  
-  if ($object->type eq 'Regulation') { 
-    $reg_obj = $object;
-  } else {
-    $reg_obj = $self->new_object('Regulation', $object->core_objects->regulation, $object->__data);   
+  my $core_reg_obj;
+  my $funcgen_db = $object->database('funcgen');
+  my $reg_feature_adaptor = $funcgen_db->get_RegulatoryFeatureAdaptor; 
+  my $reg_objs = $reg_feature_adaptor->fetch_all_by_stable_ID($object->param('rf'));  
+  foreach my $rf ( @$reg_objs){
+    if ($object->param('cl')){
+      my $cell_line = $object->param('cl');
+      if ($rf->feature_set->cell_type->name =~/$cell_line/i){
+        $core_reg_obj = $rf;
+      }
+    } else {
+      if ($rf->feature_set->cell_type->name =~/multi/i){
+        $core_reg_obj = $rf;
+      }
+    } 
   }
-  
+
+ my $reg_obj = $self->new_object('Regulation', $core_reg_obj, $object->__data); 
+
+ 
   $self->caption('Regulatory Feature');
   
   $self->add_entry({
