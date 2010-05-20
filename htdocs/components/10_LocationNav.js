@@ -20,6 +20,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.base();
     
     this.enabled = this.params.enabled || false;
+    this.reload  = false;
     
     var sliderConfig = $('span.ramp', this.el).hide().children();
     var sliderLabel  = $('.slider_label', this.el);
@@ -28,25 +29,16 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.elLk.regionInputs = $('.location_selector', this.el);
     this.elLk.navLinks     = $('a', this.el).addClass('constant').click(function (e) {
       if (myself.enabled === true) {
-        window.location.hash = 'r=' + this.href.match(myself.matchRegex)[1];
-        
         if ($(this).hasClass('move')) {
-          $.ajax({
-            url: Ensembl.urlFromHash(myself.elLk.updateURL.val()),
-            dataType: 'html',
-            success: function (html) {
-              Ensembl.EventManager.trigger('addPanel', myself.id, 'LocationNav', html, $(myself.el), { enabled: myself.enabled });
-            }
-          });
+          myself.reload = true;
         }
         
+        window.location.hash = 'r=' + this.href.match(myself.matchRegex)[1]; 
         return false;
       }
     });
     
     if (window.location.hash) {
-      this.getContent();
-    
       var hash = window.location.hash.replace(/^#/, '?') + ';';
       var r    = hash.match(this.matchRegex)[1].split(/\W/);
       var l    = r[2] - r[1] + 1;
@@ -114,28 +106,38 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   getContent: function () {
     var myself = this;
     
-    $.ajax({
-      url: Ensembl.urlFromHash(this.elLk.updateURL.val() + ';update_panel=1'),
-      dataType: 'json',
-      success: function (json) {
-        var sliderValue = json.shift();
-        
-        if (myself.elLk.slider.slider('value') != sliderValue) {
-          myself.elLk.slider.slider('option', 'force', true);
-          myself.elLk.slider.slider('value', sliderValue);
-          myself.elLk.slider.slider('option', 'force', false);
+    if (this.reload === true) {
+      $.ajax({
+        url: Ensembl.urlFromHash(myself.elLk.updateURL.val()),
+        dataType: 'html',
+        success: function (html) {
+          Ensembl.EventManager.trigger('addPanel', myself.id, 'LocationNav', html, $(myself.el), { enabled: myself.enabled });
         }
-      
-        myself.elLk.updateURL.val(json.shift());
+      });
+    } else {
+      $.ajax({
+        url: Ensembl.urlFromHash(this.elLk.updateURL.val() + ';update_panel=1'),
+        dataType: 'json',
+        success: function (json) {
+          var sliderValue = json.shift();
+          
+          if (myself.elLk.slider.slider('value') != sliderValue) {
+            myself.elLk.slider.slider('option', 'force', true);
+            myself.elLk.slider.slider('value', sliderValue);
+            myself.elLk.slider.slider('option', 'force', false);
+          }
         
-        myself.elLk.regionInputs.each(function () {
-          this.value = json.shift();
-        });
-        
-        myself.elLk.navLinks.not('.ramp').each(function () {
-          this.href = this.href.replace(myself.replaceRegex, '$1' + json.shift() + '$2');
-        });
-      }
-    });
+          myself.elLk.updateURL.val(json.shift());
+          
+          myself.elLk.regionInputs.each(function () {
+            this.value = json.shift();
+          });
+          
+          myself.elLk.navLinks.not('.ramp').each(function () {
+            this.href = this.href.replace(myself.replaceRegex, '$1' + json.shift() + '$2');
+          });
+        }
+      });
+    }
   }
 });
