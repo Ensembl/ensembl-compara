@@ -5,6 +5,8 @@
 .navbar span.ramp img            { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; }
 .navbar span.ramp a.selected img { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
 
+.navbar .homology_move { position: relative; top: 3px; }
+
 .relocate             { float: left; }
 .relocate input       { border: 1px solid [[TINT_BORDER]]; padding: 2px; }
 .relocate input:hover { background-color: [[CONTRAST_BG]]; }
