@@ -1649,7 +1649,6 @@ sub dumpRegulatoryFeature {
   my $ftype = 'RegulatoryFeature';
   my $params;
 
-
   my $prefix = ($dbspecies =~/Mus/) ? 'ENSMUSR' : 'ENSR';
   my $d = $conf->{'dbh'}->selectall_arrayref( 
     "select concat('$prefix', lpad(rf.stable_id, 11, 0)),
@@ -1671,7 +1670,6 @@ sub dumpRegulatoryFeature {
     &p (RegulatoryFeatureLine($dbspecies,$desc,$id,$ids,$ftype,$params,$db,$counter),$nogzip, $fh);
   }
 
-
 ## External Features...
   my $e = $conf->{'dbh'}->selectall_arrayref(
   "select ef.display_label, group_concat(distinct ft.name), count(distinct ef.external_feature_id),
@@ -1691,32 +1689,7 @@ sub dumpRegulatoryFeature {
  #   warn "$display_label -- $f_name -- $count -- $f_desc -- $f_class -- $fs_name -- $seq_region -- $start -- $end -- $strand";
  #   exit;
     my @ids = split ' ', $f_name;
-    if ($count >> 1) {
-      $params = { 'f_name' => $f_name, 'subtype' => 'RegulatoryFactor' };
-#	$link = "/$species/Location/Genome?ftype=RegulatoryFactor;id=$display_label;name=$f_name;";
-    }
-    else {
-      # link miranda features to gene reg view other feats to region in detail
-      if ( $f_class eq 'RNA'){
-	my ($trans_id, $feat) = split(/:/,$display_label);
-	$params = { 't' => $trans_id, 'subtype' => 'RegulationGene', 'hid' => $display_label };
-#	$link = "/$species/Gene/Regulation?t=$trans_id;hid=$display_label";
-      }
-      else {
-        $start = $start -=100;
-        $end = $end +=100;
-        my $r  = $seq_region .':' . $start . "-" . $end;
-        my $renderer;
-        if ($f_class =~/Search/) {
-	  $renderer = 'regulatory_regions_funcgen_search';
-	}
-        else {
-	  $renderer = 'regulatory_regions_funcgen_feature_set';
-	}
-	$params = { 'r' => $r, 'subtype' => 'RegulationLocation','hid' => $display_label, 'contigviewbottom' => "$renderer=normal" };
-#        $link = "/$species/Location/View?r=$region;hid=$display_label;contigviewbottom=$renderer=normal";
-      }
-    }
+    $params = { 'fs_name' => $fs_name, 'subtype' => 'RegulatoryFactor' };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
     &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@ids,$ftype,$params,$db,$counter),$nogzip, $fh);
   }
