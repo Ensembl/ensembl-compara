@@ -407,7 +407,12 @@ sub _sort_similarity_links {
     my $externalDB = $type->database;
     my $display_id = $type->display_id;
     my $primary_id = $type->primary_id;
-    
+
+    #hack for LRG in e58
+    if ( $externalDB eq 'ENS_LRG_gene') {
+      $primary_id =~ s/_g\d*$//;
+    };
+   
     next if $type->status eq 'ORTH';                            # remove all orthologs
     next if lc $externalDB eq 'medline';                        # ditch medline entries - redundant as we also have pubmed
     next if $externalDB =~ /^flybase/i && $display_id =~ /^CG/; # ditch celera genes from FlyBase
