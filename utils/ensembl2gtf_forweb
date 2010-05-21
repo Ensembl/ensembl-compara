@@ -222,6 +222,11 @@ sub make_start_codon_features {
 
   my @pepgencoords = $trans->pep2genomic(1,1);
 
+  # cdna can come padded these days so allow gap at the start
+  if($pepgencoords[0]->isa('Bio::EnsEMBL::Mapper::Gap')){
+    shift @pepgencoords;
+  }
+
   if(scalar(@pepgencoords) > 3) {
     croak "pep start does not map cleanly\n";
   }
