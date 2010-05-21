@@ -66,7 +66,9 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }
     }
     
-    this.elLk.slider = $('.slider', this.el).css('display', 'inline-block').slider({
+    $('.slider_wrapper', this.el).children().css('display', 'inline-block');
+    
+    this.elLk.slider = $('.slider', this.el).slider({
       value: sliderConfig.filter('.selected').index(),
       step:  1,
       min:   0,
@@ -99,6 +101,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       },
       stop: function () {
         sliderLabel.hide();
+        $('.ui-slider-handle', myself.elLk.slider).trigger('blur'); // Force the blur event to remove the highlighting for the handle
       }
     });
   },
