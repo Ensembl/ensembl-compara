@@ -58,7 +58,7 @@ sub content {
     my $up_end    = @up_sample ? $object->seq_region_start - $up_sample[0]->start : 0;
     
     $up_link = sprintf('
-      <a href="%s"><img src="/i/nav-l2-old.gif" class="zoom" alt="<<"/> %s upstream %s</a>',
+      <a href="%s"><img src="/i/nav-l2-old.gif" class="homology_move" alt="<<"/> %s upstream %s</a>',
       $object->_url({ type => 'Location', action => 'Synteny', otherspecies =>  $object->param('otherspecies'), r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
     );
   } else {
@@ -83,7 +83,7 @@ sub content {
     my $down_end   = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
     
     $down_link = sprintf('
-      <a href="%s">%s downstream %s <img src="/i/nav-r2-old.gif" class="zoom" alt="<<"/></a>',
+      <a href="%s">%s downstream %s <img src="/i/nav-r2-old.gif" class="homology_move" alt="<<"/></a>',
       $object->_url({ type => 'Location', action => 'Synteny', otherspecies =>  $object->param('otherspecies'), r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
     );
   } else {
