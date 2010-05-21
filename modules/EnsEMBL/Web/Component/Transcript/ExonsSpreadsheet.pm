@@ -282,7 +282,7 @@ sub add_variations {
        
       $href{$_} ||= {
         type        => 'Zmenu',
-        action      => 'LW',
+        action      => 'TextSequence',
         factorytype => 'Location'
       };
       
