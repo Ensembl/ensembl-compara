@@ -11,6 +11,23 @@ sub set_default_action {
 sub global_context { return undef; }
 sub ajax_content   { return undef;   }
 sub local_context  { return $_[0]->_local_context;  }
+
+=head2 local_context
+ Example     : gets called from core ensembl (don't call manually!)
+ Description : hide all menu and contact panels for ListVegaMappings
+ Returns     : if action==ListVegaMappings -> undef
+               ||else -> $self->_local_context
+ Return type : scalar
+=cut
+sub local_context  { 
+  my $self   = shift;
+  if ($self->object->action eq 'ListVegaMappings') {
+    return undef;
+  }else{
+    return $self->_local_context;
+  }
+}
+
 sub local_tools    { return undef;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return undef;  }
@@ -105,6 +122,11 @@ sub populate_tree {
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Help::MovieEmail'}
   );
 
+  #to enable the ListVegaMappings page, a menu itme is needed. We do not want ListVegaMappings in the help menu so so a hidden menu item is added.
+  $self->create_node('ListVegaMappings', 'Vega',
+   [qw( ListVegaMappings EnsEMBL::Web::Component::Help::ListVegaMappings )],
+    { 'class'=>'modal_link', 'availability' => 1, 'concise' => 'ListVegaMappings', 'no_menu_entry' => 1 }
+  );  
 
 }
 
