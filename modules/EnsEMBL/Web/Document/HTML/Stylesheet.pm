@@ -4,19 +4,26 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new( 'media' => {}, 'media_order' => [] ); }
+sub new { return shift->SUPER::new('media' => {}, 'media_order' => [], 'conditional' => {}); }
 
-sub add {
-  my ($self, $media, $css) = @_;
+sub add_sheet {
+  my ($self, $media, $css, $condition) = @_;
   push @{$self->{'media_order'}}, $media unless $self->{'media'}{$media};
-  $self->{'media'}{$media} .= "    $css\n";
+  push @{$self->{'media'}{$media}}, $css;
+  $self->{'conditional'}->{$css} = $condition if $condition;
 }
 
-sub add_sheet { $_[0]->add( $_[1], "\@import url($_[2]);" ); }
-
-sub render { 
-  foreach my $media (@{$_[0]{'media_order'}}) {
-    $_[0]->printf(qq{  <style type="text/css" media="%s">\n%s  </style>\n}, $media, $_[0]{'media'}{$media});
+sub render {
+  my $self = shift;
+  
+  foreach my $media (@{$self->{'media_order'}}) {
+    foreach (@{$self->{'media'}{$media}}) {
+      if ($self->{'conditional'}->{$_}) {
+        $self->print(qq{\n<!--[if $self->{'conditional'}->{$_}]><link rel="stylesheet" type="text/css" media="$media" href="$_" /><![endif]-->});
+      } else {
+        $self->print(qq{\n<link rel="stylesheet" type="text/css" media="$media" href="$_" />});
+      }
+    }
   }
 }
 
