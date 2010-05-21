@@ -59,9 +59,7 @@ sub navbar {
   my $image_width  = $self->image_width . 'px';
   my $url          = $object->_url({ %{$object->multi_params(0)}, r => undef }, 1);
   my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1]||{}};
- 
-  ## N.B. Do not change the whitespace within the image_nav block 
-  ## unless you want to change the spacing of the images! 
+  
   return sprintf (qq{
     <div class="autocenter_wrapper">
       <div class="autocenter navbar print_hide js_panel" style="width:$image_width">
@@ -78,10 +76,20 @@ sub navbar {
           </form>
         </div>
         <div class="image_nav">
-          <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left"/></a><a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left"/></a><a href="%s">
-          <img src="/i/zoom-plus.gif" class="zoom" alt="zoom in"/></a><span class="ramp">$ramp</span><span class="slider"><span class="slider_label floating_popup">$wd</span></span><a href="%s"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out"/></a>
-          <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left"/></a><a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left"/></a>
+          <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left" /></a>
+          <a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left" /></a>
+          <a href="%s" class="zoom_in"><img src="/i/zoom-plus.gif" class="zoom" alt="zoom in" /></a>
+          <span class="ramp">$ramp</span>
+          <span class="slider_wrapper">
+            <span class="slider_left"></span>
+            <span class="slider"><span class="slider_label floating_popup">$wd</span></span>
+            <span class="slider_right"></span>
+          </span>
+          <a href="%s" class="zoom_out"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out" /></a>
+          <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left" /></a>
+          <a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left" /></a>
         </div>
+        <div class="invisible"></div>
       </div>
     </div>},
     @$values

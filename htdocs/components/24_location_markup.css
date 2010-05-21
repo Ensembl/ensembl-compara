@@ -1,10 +1,9 @@
 .navbar     { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin-top: 3px; margin-bottom: 1em; padding: 7px 0 10px; font-weight: bold; border: 1px solid #67718D; position: relative; }
-.navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; vertical-align: middle; text-decoration: none; margin: 1px; position: relative; top: 2px; }
+.navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
 .navbar div { margin: 0 5px; }
 
 .navbar span.ramp img            { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; }
 .navbar span.ramp a.selected img { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
-.navbar img.zoom                 { height: 20px; width: 20px; vertical-align: bottom; margin-bottom: 1px; padding: 0px; }
 
 .relocate             { float: left; }
 .relocate input       { border: 1px solid [[TINT_BORDER]]; padding: 2px; }
@@ -13,11 +12,22 @@
 input.go-button       { padding: 1px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 input.go-button:hover { background-color: [[TINT_BORDER]]; }
 
-.slider { width: 152px; height:16px; display: none; position: relative; background-image: url(/i/slider.gif); top: 4px; }
-.slider .ui-slider-handle { top: -2px; margin-left: -5px; position: absolute; z-index: 2; width: 12px; height: 16px; color: #222222; }
+.image_nav { position: relative; top: 2px; float: right; }
+
+a.move, a.zoom_in, a.zoom_out { float: left; top: 0; margin: 0; }
+a.zoom_in                     { margin-left:  4px; }
+a.zoom_out                    { margin-right: 4px; }
+a.move                        { margin: 0 2px; }
+
+.slider, .slider_left, .slider_right { display: none; position: relative; height: 20px; float: left; background: url(/i/slider.gif) no-repeat 0 center; }
+.slider { width: 150px; }
+.slider_left, .slider_right { width: 5px; z-index: 0 }
+.slider_left { background-position: -1px center; }
+
+.slider .ui-slider-handle { top: -1px; margin-left: -6px; position: absolute; z-index: 2; width: 9px; height: 18px; color: #222222; outline: 0; }
 .slider .ui-state-default, .slider .ui-widget-content .ui-state-default { border: 1px solid #666666; background: #CCCCCC; color: #555555; }
 .slider .ui-state-active,  .slider .ui-widget-content .ui-state-active  { border: 1px solid #AAAAAA; background: #FFFFFF; color: #212121; }
 .slider .ui-state-hover,   .slider .ui-widget-content .ui-state-hover, 
 .slider .ui-state-focus,   .slider .ui-widget-content .ui-state-focus   { border: 1px solid #CC0000; background: #DDDDDD; color: #212121; }
 
-.slider_label { position: absolute; display: none; font-weight: bold; bottom: 15px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
+.slider_label { position: absolute; display: none; font-weight: bold; bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
