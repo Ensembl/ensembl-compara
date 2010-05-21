@@ -131,7 +131,7 @@ sub content {
     );
     
     $html .= $table->render;
-    $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html;
+    $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'variation'} ne 'off';
   }
   
   return $html;
