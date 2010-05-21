@@ -199,3 +199,5 @@ Ensembl.extend({
     document.getElementsByTagName('head')[0].appendChild(script);
   }
 });
+
+window.Ensembl = Ensembl; // Make Ensembl namespace available on window - needed for upload iframes because the minifier will compress the variable name Ensembl
