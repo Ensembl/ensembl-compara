@@ -41,6 +41,7 @@ sub _basic_HTML {
   }
 
   $self->stylesheet->add_sheet('all', sprintf '/%s/%s.css', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_CSS_NAME);
+  $self->stylesheet->add_sheet('all', '/components/ie.css', 'IE'); # IE only stylesheet
 }
  
 sub _common_HTML {
