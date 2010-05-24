@@ -11,7 +11,8 @@ table.toggle_table td, table.toggle_table th { padding: 2px 4px; border: 1px sol
 table.toggle_table .active { background-color: [[TINT_BG]]; }
 table.toggle_table td.bold { font-weight: bold; text-align: center; }
 
-#locations { width: 30em; }
+#transcripts { margin: 0; clear: both; }
+#locations   { width: 30em; }
 #locations td, #locations th { border-color: [[TINT_BORDER]]; width: 15em; }
 
 div.summary_panel dl.summary dt { width: 8em; }

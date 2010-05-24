@@ -2,7 +2,7 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid }
+table.ss                { width: 100%; border: 1px [[PAGE_TEXT]] solid }
 table.ss   th, 
 table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
 table.ss   th           { padding: 0 2px; }
@@ -10,3 +10,46 @@ table.ss   td           { padding: 0.2em; }
 table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
 table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
 table.tint tr.bg2       { background-color: [[TINT_BG]];    } 
+
+table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 5px; }
+table.data_table th:first-child      { padding-left: 2px; }
+table.data_table th.sorting_disabled { cursor: text; }
+table.data_table th div              { height: 19px; padding: 3px 0; }
+table.toggle_table th div            { padding: 0; }
+
+.toggleTable_wrapper { margin: 1.5em 0 0.5em 1.5em; clear: none; }
+.dataTables_wrapper  { margin: 1em 0; clear: both; }
+
+.dataTables_top,
+.dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[PAGE_TEXT]]; background: #8E97AF; color: [[PANEL_BG]]; }
+.dataTables_top    { border-bottom: 0; }
+.dataTables_bottom { border-top: 0; }
+
+.dataTables_info     { float: left; }
+.dataTables_length   { float: left; width: 33%; }
+.dataTables_filter   { float: right; width: 33%; text-align: right; }
+.dataTables_paginate { float: right; text-align: right; color: [[PAGE_TEXT]]; font-size: 10px; }
+
+.dataTables_length select,
+.dataTables_filter input { border: 1px solid [[PAGE_TEXT]]; }
+
+.dataTables_paginate span.paginate_button,
+.dataTables_paginate span.paginate_active       { border: 1px solid [[PAGE_TEXT]]; padding: 2px 5px; margin: 0 3px; cursor: pointer; display: inline-block; }
+.dataTables_paginate span.paginate_button       { background-color: [[TINT_BG]]; }
+.dataTables_paginate span.paginate_button:hover { background-color: #BFD0FF; }
+.dataTables_paginate span.paginate_active       { background-color: #99B3FF; }
+
+.col_toggle              { float: left; width: 34%; text-align: center; color: [[PAGE_TEXT]]; }
+.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; width: 115px; padding: 1px 5px; margin: auto; }
+.col_toggle.left         { text-align: left; }
+.col_toggle.left .toggle { margin: 0; }
+.col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 127px; }
+.col_toggle ul li        { list-style: none; list-style-image: none; margin: 0; border-top: 1px solid; padding: 0 6px 2px 2px; cursor: pointer; }
+.col_toggle ul li span   { position: relative; top: -2px; }
+.col_toggle ul li input  { margin-right: 6px; }
+
+.sorting      { background: url(/i/sort_both_light.png) no-repeat right center; }
+.sorting_asc  { background: url(/i/sort_asc.png) no-repeat right center; }
+.sorting_desc { background: url(/i/sort_desc.png) no-repeat right center; }
+
+.toggle_table .sorting { background-image: url(/i/sort_both.png); }
