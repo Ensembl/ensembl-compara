@@ -96,9 +96,6 @@ sub populate_tree {
     my $transcript_url  = "$species_path/Transcript/Summary?t=".$sample_data->{'TRANSCRIPT_PARAM'};
     my $transcript_text = $sample_data->{'TRANSCRIPT_TEXT'} || 'not available';
     
-    my $variation_url  = "$species_path/Variation/Summary?v=".$sample_data->{'VARIATION_PARAM'};
-    my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
-
     $data_menu->append( $self->create_node( 'Karyotype', $karyotype,
       [qw(location      EnsEMBL::Web::Component::Location::Genome)],
       { 'availability' => scalar(@{$sd->ENSEMBL_CHROMOSOMES||[]}),
@@ -116,10 +113,16 @@ sub populate_tree {
       [qw(location      EnsEMBL::Web::Component::Transcript::Summary)],
       { 'availability' => 1, 'url' => $transcript_url, 'raw' => 1 }
     ));
-    $data_menu->append( $self->create_node( 'Variation', "Variation ($variation_text)",
-      [qw(location      EnsEMBL::Web::Component::Variation::Summary)],
-      { 'availability' => 'database.variation', 'url' => $variation_url, 'raw' => 1 }
-    ));
+    
+    if ($sample_data->{'VARIATION_PARAM'}) {
+      my $variation_url  = "$species_path/Variation/Summary?v=".$sample_data->{'VARIATION_PARAM'};
+      my $variation_text = $sample_data->{'VARIATION_TEXT'} || 'not available';
+      
+      $data_menu->append( $self->create_node( 'Variation', "Variation ($variation_text)",
+        [qw(location      EnsEMBL::Web::Component::Variation::Summary)],
+        { 'availability' => 'database.variation', 'url' => $variation_url, 'raw' => 1 }
+      ));
+    }
 
     if ($sample_data->{'REGULATION_PARAM'}){
       my $regulation_url = "$species_path/Regulation/Details?fdb=funcgen;rf=". $sample_data->{'REGULATION_PARAM'};
