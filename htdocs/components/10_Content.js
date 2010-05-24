@@ -241,7 +241,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.elLk.dataTable.each(function (i) {
       var table  = $(this);
       var length = $('tbody tr', this).length;
-      var width  = table.hasClass('fixed_width') ? table.width() : '100%';
+      var width  = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
       var noSort = table.hasClass('no_sort');
       var menu   = '';
       var sDom;
@@ -276,25 +276,25 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         
         menu += '<option value="-1">All</option>';
       } else {
-        sDom = '<"dataTables_top"<"col_toggle">f<"invisible">>t';
+        sDom = '<"dataTables_top"<"col_toggle left">f<"invisible">>t';
       }
       
       var options = {
         sPaginationType: 'full_numbers',
         aoColumns: cols,
         aaSorting: [],
-        sDom: 't',
+        sDom: sDom,
         asStripClasses: [ 'bg1', 'bg2' ],
         iDisplayLength: -1,
         bAutoWidth: false,
         oLanguage: {
           sLengthMenu: 'Show <select>' + menu + '</select> entries',
-          sSearch: 'Search table:',
+          sSearch: 'Search: ',
           oPaginate: {
-            sFirst:    '<<',
-            sPrevious: '<',
-            sNext:     '>',
-            sLast:     '>>'
+            sFirst:    '&lt;&lt;',
+            sPrevious: '&lt;',
+            sNext:     '&gt;',
+            sLast:     '&gt;&gt;'
           }
         },
         fnInitComplete: function () {
@@ -342,8 +342,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       myself.elLk.colToggle = $('.col_toggle', myself.el);
       
       var columns    = dataTable.fnSettings().aoColumns;
-      var toggle     = $('<div class="toggle">Toggle columns</div>').click(function () { $(this).next().toggle(); });
       var toggleList = $('<ul class="floating_popup"></ul>');
+      var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).click(function (e) {
+        if (e.target == this) {
+          toggleList.toggle();
+        }
+      });
       
       $.each(columns, function (col) {
         var th = $(this.nTh);
@@ -378,7 +382,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         th = null; 
       });
       
-      $('.col_toggle', table.parent()).append(toggle, toggleList);
+      $('.col_toggle', table.parent()).append(toggle);
       
       myself.dataTables = myself.dataTables || [];
       myself.dataTables.push(dataTable);
