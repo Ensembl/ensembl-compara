@@ -72,7 +72,7 @@ sub content {
     push @rows, $tmp_row;
  } 
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'Individual asc' ] });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'Individual asc' ] });
   
   $table->add_columns(
     { key => 'Individual',  title => 'Individual<br />(gender)',       sort => 'html' },

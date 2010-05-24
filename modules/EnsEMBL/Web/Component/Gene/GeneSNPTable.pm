@@ -27,7 +27,7 @@ sub content {
   foreach my $transcript (@transcripts) {
     my $tsid       = $transcript->stable_id;
     my $table_rows = $self->variation_table($transcript);    
-    my $table      = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'chr asc' ] });
+    my $table      = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'chr asc' ] });
 
     $table->add_columns(
       { key => 'ID',        sort => 'html'                                                   },

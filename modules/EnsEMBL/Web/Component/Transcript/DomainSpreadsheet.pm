@@ -43,7 +43,7 @@ sub content {
   my $html = '';
   
   if (@domains) {
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1 });
+    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
     
     $table->add_columns(
       { key => 'type',     title => 'Domain type', width => '15%', align => 'center', sort => 'string'                        },
@@ -91,7 +91,7 @@ sub content {
   }
   
   if (@others) {
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1 });
+    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
     
     $table->add_columns(
       { key => 'type',  title => 'Feature type', width => '40%', align => 'center', sort => 'string'                        },

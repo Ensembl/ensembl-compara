@@ -34,7 +34,7 @@ sub content {
   my $source = $object->source;
   my $name   = $object->name;
  
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
   
   $table->add_columns(
     { key => 'gene',      title => 'Gene',                            sort => 'html'                        },

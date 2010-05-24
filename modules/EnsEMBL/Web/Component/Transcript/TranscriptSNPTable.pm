@@ -35,7 +35,7 @@ sub content {
  
   foreach my $sample (@samples) {
     my $flag  = 0;
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'chr asc' ] });  
+    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'chr asc' ] });  
   
     $table->add_columns (
       { key => 'ID',          sort => 'html'                                               },

@@ -127,7 +127,7 @@ sub content {
         { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
       ], 
       \@data, 
-      { margin => '1em 0px', data_table => 'no_sort' }
+      { data_table => 'no_sort' }
     );
     
     $html .= $table->render;

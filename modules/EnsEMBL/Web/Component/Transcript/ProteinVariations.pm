@@ -26,7 +26,7 @@ sub content {
   
   return unless @$snps;
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1 });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
   $table->add_columns(
     { key => 'res',    title => 'Residue',            width => '10%', align => 'center', sort => 'numeric' },
     { key => 'id',     title => 'Variation ID',       width => '15%', align => 'center', sort => 'html'    }, 

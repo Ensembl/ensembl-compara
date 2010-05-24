@@ -72,7 +72,7 @@ sub content {
   }
 
   ## Now do table
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 'no_sort' });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 'no_sort' });
 
   $table->add_columns(
     { key => 'id',   title => 'Gene',                   width => '30%', align => 'center' },

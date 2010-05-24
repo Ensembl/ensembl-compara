@@ -22,7 +22,7 @@ sub content {
   my $families       = $object->get_all_families($cdb);
   my $gene_stable_id = $object->stable_id;
 
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'id asc' ] });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'id asc' ] });
 
   $table->add_columns(
     { key => 'id',          title => 'Family ID',                            width => '20%', align => 'left', sort => 'html'   },

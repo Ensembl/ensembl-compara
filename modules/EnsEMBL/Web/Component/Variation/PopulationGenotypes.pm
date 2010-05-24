@@ -43,7 +43,7 @@ sub format_frequencies {
   my %freq_data = %{ $freq_data };
   my %columns;
   my @rows;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
 
   foreach my $pop_id (keys %freq_data) { 
     foreach my $ssid (keys %{$freq_data{$pop_id}}) { 

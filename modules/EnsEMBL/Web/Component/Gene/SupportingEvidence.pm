@@ -78,7 +78,7 @@ sub content {
     push @rows, $row;
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet(\@cols, \@rows, { margin => '1em 0px', data_table => 1, sorting => [ 'transcript asc' ] })->render;
+  return new EnsEMBL::Web::Document::SpreadSheet(\@cols, \@rows, { data_table => 1, sorting => [ 'transcript asc' ] })->render;
 }
 
 1;
