@@ -1145,6 +1145,10 @@ sub SeqLine {
     $xml .= qq(
     <field name="synonym">$syn</field>);
   }
+  if ($name =~ /^LRG_\d+/) {
+    $xml .= qq(
+    <field name="lrg">$name</field>);
+  }
   $xml .= qq(
   </additional_fields>);
   $counter->();
@@ -1276,7 +1280,6 @@ sub dumpGene {
          AND t.transcript_id = tsi.transcript_id
          AND t.gene_id = g.gene_id
          AND g.analysis_id = ad.analysis_id
-         AND ad.displayable = 1
        ORDER by gsi.stable_id, tsi.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute(); 
@@ -1287,7 +1290,10 @@ sub dumpGene {
       ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
-      next unless $displayable;
+      #got to be a better way to deal with LRGs
+      unless ($gsid =~ /^LRG/) {
+	next unless $displayable;
+      }
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
 	  my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
@@ -1397,7 +1403,6 @@ sub dumpGene {
 		 $counter),
 	$nogzip, $fh);
     print LOG "    Gene info query done ".&date_and_mem()."\n";
-
 
     my $other_count = 0;
     my %current_stable_ids =();
@@ -1575,6 +1580,14 @@ sub GeneLine {
     $xml .= qq(
     <field name="exon">$esi</field>);
   }
+  if ($gsid =~ /^LRG/) {
+    warn "1 - $gsid";
+    if ($gsid =~ s/^(LRG_\d+)_g\d+/$1/) {
+      warn "2- $gsid";
+      $xml .= qq(
+    <field name="lrg">$gsid</field>);
+    }
+  }
   $xml .= qq(
   </additional_fields>);
   $counter->();
@@ -1686,8 +1699,6 @@ sub dumpRegulatoryFeature {
 
   foreach my $f ( @$e) {
     my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name, $seq_region, $start, $end, $strand) = @$f;
- #   warn "$display_label -- $f_name -- $count -- $f_desc -- $f_class -- $fs_name -- $seq_region -- $start -- $end -- $strand";
- #   exit;
     my @ids = split ' ', $f_name;
     $params = { 'fs_name' => $fs_name, 'subtype' => 'RegulatoryFactor' };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
