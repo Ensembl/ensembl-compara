@@ -39,7 +39,6 @@ sub draw_features {
   foreach my $feature ( @$block_features ) {
     my $label = $feature->get_displayable_product_FeatureSet->display_label; 
     my $fset_cell_line = $feature->get_displayable_product_FeatureSet->cell_type->name;
-warn $fset_cell_line;
     my $colour = $self->my_colour($fset_cell_line) || 'steelblue';
     # render wiggle if wiggle
     if( $wiggle ) { 
