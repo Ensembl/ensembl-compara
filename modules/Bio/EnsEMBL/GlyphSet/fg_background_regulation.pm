@@ -11,10 +11,10 @@ sub _init {
   my $Config = $self->{'config'};
   my $slice = $self->{'container'}; 
   my $target_feature_id = $self->{'config'}->core_objects->regulation->stable_id;  
-  my $strand = $self->strand;
-  my $colour = 'wheat';
-  my $x = 10;
-  my $width = 40;
+  my $strand = $self->strand; 
+  my $colour = 'lightcoral';
+  my $x = 0;
+  my $x_end = 0;  
   my $pix_per_bp = $Config->transform->{'scalex'};
 
   return unless  $Config->get_parameter('opt_highlight') eq 'yes';
@@ -34,19 +34,19 @@ sub _init {
   foreach my $f (@$features){
     next unless $f->stable_id eq  $target_feature_id;
     $x = $f->start;
-    $width = $f->end - $f->start ;
+    $x_end = $f->end;
   }
    
   my $glyph = $self->Rect({
     x => $x,
     y => 0,
-    width => $width,
+    width => $x_end-$x+1,
     height => 0,
+    colour => $colour
   });
 
-
-  $self->join_tag($glyph, 'regfeat', $strand<0?0:1, 0, $colour, 'fill', -99);
-  $self->join_tag($glyph, 'regfeat', $strand<0?1:0, 0, $colour, 'fill', -99); 
+  $self->join_tag($glyph, 'regfeat-start', 0, 0, $colour, '', 99999);
+  $self->join_tag($glyph, 'regfeat-end',   1, 0, $colour, '', 99999);
   $self->push($glyph);
 
 return;
