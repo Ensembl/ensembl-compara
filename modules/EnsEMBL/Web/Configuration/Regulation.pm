@@ -16,25 +16,29 @@ sub set_default_action {
   my $self = shift;
   
   if (!ref $self->object){
-    $self->{'_data'}->{'default'} = 'Details';
+    $self->{'_data'}->{'default'} = 'Cell_line';
     return;
   }
   
   my $x = $self->object->availability || {};
   
   if ($x->{'regulation'}) {
-    $self->{'_data'}->{'default'} = 'Details';
+    $self->{'_data'}->{'default'} = 'Summary';
   }
 }
 
 sub populate_tree {
   my $self = shift;
-
-  $self->create_node('Details', 'Details',
+  $self->create_node('Summary', 'Summary',
     [qw( summary EnsEMBL::Web::Component::Regulation::FeatureDetails )],
-    { 'availability' => 'regulation', 'concise' => 'Feature in detail' }
+    { 'availability' => 'regulation', 'concise' => 'Summary' }
   );
-  
+
+  $self->create_node('Cell_line', 'Details by cell line',
+    [qw( summary EnsEMBL::Web::Component::Regulation::FeaturesByCellLine )],
+    { 'availability' => 'regulation', 'concise' => 'Features by cell line' }
+  );
+
   $self->create_node('Context', 'Context',
     [qw( summary EnsEMBL::Web::Component::Regulation::FeatureSummary )],
     { 'availability' => 'regulation', 'concise' => 'Feature context' }
