@@ -17,6 +17,7 @@ use warnings;
 no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Object);
+use Bio::EnsEMBL::Utils::Exception qw( throw );
 
 sub _filename {
   my $self = shift;
@@ -79,6 +80,29 @@ sub feature_type          { my $self = shift; return $self->Obj->feature_type;  
 sub slice                 { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length     { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
+sub fetch_all_objs {
+  my $self = shift;
+  my $db = $self->get_fg_db;
+  my $reg_feature_adaptor = $db->get_RegulatoryFeatureAdaptor;
+  my $reg_objs = $reg_feature_adaptor->fetch_all_by_stable_ID($self->stable_id);
+  return $reg_objs;
+}
+
+sub fetch_all_objs_by_slice {
+  my ($self, $slice) = @_;
+  my $db = $self->get_fg_db;
+  my $reg_feature_adaptor  = $db->get_RegulatoryFeatureAdaptor;
+  my $objects_on_slice = $reg_feature_adaptor->fetch_all_by_Slice($slice);
+  my @all_objects;
+  foreach my $rf (@$objects_on_slice){
+    my $all_cell_type_objs = $reg_feature_adaptor->fetch_all_by_stable_ID($rf->stable_id);
+    foreach (@$all_cell_type_objs) {
+      push @all_objects, $_;
+    }
+  }  
+
+  return \@all_objects;
+}
 
 sub get_attribute_list {
   my $self = shift;
@@ -138,10 +162,22 @@ sub get_location_url {
   my $self= shift;
   my $url = $self->_url({
     'type'  => 'Location',
-    'action'  => 'View',
+    'action' => 'View',
     'rf'    => $self->stable_id,
     'fdb'   => 'funcgen',
     'r'     => $self->location_string,
+  });
+  return $url;
+}
+
+sub get_bound_location_url {
+  my $self= shift;
+  my $url = $self->_url({
+    'type'  => 'Location',
+    'action'  => 'View',
+    'rf'    => $self->stable_id,
+    'fdb'   => 'funcgen',
+    'r'     => $self->bound_location_string,
   });
   return $url;
 }
@@ -164,7 +200,7 @@ sub get_details_page_url {
   my $self = shift; 
   my $url = $self->_url({
     'type'   => 'Regulation',
-    'action' => 'Details',
+    'action' => 'Cell_line',
     'rf'     => $self->stable_id,
     'fdb'    => 'funcgen',
   });
@@ -216,6 +252,164 @@ sub location_string {
   return sprintf( "%s:%s-%s", $self->seq_region_name, $start, $end );
 }
 
+sub bound_location_string {
+  my $self = shift;
+  my $start =  $self->bound_start;
+  my $end =  $self->bound_end;
+
+  return sprintf( "%s:%s-%s", $self->seq_region_name, $start, $end );
+}
+
+################ Calls for Feature in Detail Cell line view ###########################
+sub get_configured_tracks {
+  my $self = shift;
+  my %available_feature_sets;  
+
+  my %cell_lines        =  %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  my %evidence_features = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
+  my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'}};
+  my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'}};
+
+  $cell_lines{'MultiCell'} =1;
+  
+  foreach my $cell_line (keys %cell_lines){
+    $cell_line =~s/\:\d*//; 
+    my $cell = $cell_line;
+    if ($cell_line eq 'MultiCell'){ $cell = 'core';}
+    $available_feature_sets{$cell_line} = {};
+    foreach my $evidence_feature (keys %evidence_features){
+      my ($feature_name, $feature_id ) = split (/\:/, $evidence_feature); 
+      if (exists $feature_type_ids{$cell}{$feature_id}) {
+        unless (exists $available_feature_sets{$cell_line}{'available'}){ 
+           $available_feature_sets{$cell_line}{'available'}{'focus'} = []; 
+           $available_feature_sets{$cell_line}{'available'}{'non_focus'} = [];
+           $available_feature_sets{$cell_line}{'configured'}{'focus'} = [];
+           $available_feature_sets{$cell_line}{'configured'}{'non_focus'} = [];  
+        }
+        my $focus_flag = 'non_focus';
+        if ($cell eq 'core' || exists $focus_set_ids{$cell}{$feature_id}){
+          $focus_flag = 'focus';
+        }                                                            
+        push @{$available_feature_sets{$cell_line}{'available'}{$focus_flag}}, $feature_name;  
+        # add to configured features if turned on
+        if ( $self->param('opt_cft_'.$cell_line.':'.$feature_name) eq 'on') {
+          push @{$available_feature_sets{$cell_line}{'configured'}{$focus_flag}}, $feature_name;
+        }
+
+      }
+    }
+  }
+  return \%available_feature_sets;
+}
+
+sub get_multicell_evidence_data {
+  my ($self, $slice, $param_all_on ) = @_;
+  my $fset_a = $self->database('funcgen')->get_FeatureSetAdaptor;
+  my $dset_a = $self->database('funcgen')->get_DataSetAdaptor;
+  my %data;
+
+  foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){
+    next unless $regf_fset->cell_type->name =~/MultiCell/i;
+
+    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
+    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){
+      my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
+      my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
+      if(scalar(@sset) >> 1){#There should only be one
+        throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);  }
+      next if (scalar(@sset) == 0 );
+
+      my $reg_attr_rset = $sset[0];
+
+
+      my $focus_flag = 'non_focus';
+      if  ($reg_attr_fset->is_focus_set){
+        $focus_flag = 'focus';
+      }
+      my @block_features = @{$reg_attr_fset->get_Features_by_Slice($slice)};
+      my $unique_feature_set_id =  'MultiCell' .':'.$reg_attr_fset->feature_type->name;
+      my $name = 'opt_cft_' .$unique_feature_set_id;
+      $unique_feature_set_id .= ':'. $reg_attr_fset->cell_type->name;
+
+      if ( ( $self->param($name) eq 'on')  || $param_all_on ){
+        if (@block_features){
+          $data{'MultiCell'}{$focus_flag}{'block_features'}{$unique_feature_set_id} = $reg_attr_fset->get_Features_by_Slice($slice);
+         }
+        $data{'MultiCell'}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset;
+      } 
+    }
+  }
+  return \%data;
+}
+
+sub get_evidence_data {
+  my ($self, $slice, $param_all_on) = @_;
+ 
+  my $fset_a = $self->database('funcgen')->get_FeatureSetAdaptor;
+  my $dset_a = $self->database('funcgen')->get_DataSetAdaptor;
+
+  my %data;
+
+  foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){
+
+    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
+
+    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){
+      my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
+      my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
+   
+      if(scalar(@sset) >> 1){#There should only be one
+        throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);    }
+      next if (scalar(@sset) == 0 );
+    
+      my $reg_attr_rset = $sset[0];
+
+      # save_data
+      my $cell_type = $reg_attr_fset->cell_type->name;
+
+      unless (exists $data{$cell_type}){
+        $data{$cell_type} = {};
+      }
+
+      my $focus_flag = 'non_focus';    
+      if  ($reg_attr_fset->is_focus_set){
+        $focus_flag = 'focus'; 
+      }
+      my @block_features = @{$reg_attr_fset->get_Features_by_Slice($slice)};
+      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name;    
+      my $name = 'opt_cft_' .$unique_feature_set_id;
+
+      if ( ($self->param($name) eq 'on')  || $param_all_on){
+        if (@block_features){
+          $data{$cell_type}{$focus_flag}{'block_features'}{$unique_feature_set_id} = $reg_attr_fset->get_Features_by_Slice($slice);
+        } 
+        $data{$cell_type}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset; 
+      }
+    }
+  }
+
+return \%data;
+}
+
+sub get_all_cell_line_features {
+  my ($self) = @_;
+  my %all_cell_feature_combinations;
+
+  my %cell_lines =  %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  my %evidence_features = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
+
+  foreach my $cell_type (keys %cell_lines){
+    $cell_type =~s/\:\d+//;
+    foreach my $feature_type (keys %evidence_features){
+      $feature_type =~s/\:\d+//;
+      my $key = $feature_type .':'. $cell_type;
+      $all_cell_feature_combinations{$key} = 1;
+    }
+  }
+  
+  return  \%all_cell_feature_combinations;
+}
+
 ################ Calls for Feature in Detail view ###########################
 
 sub get_all_evidence_features {
@@ -246,7 +440,7 @@ sub get_nonfocus_block_features {
   my @attributes = @{$self->Obj->get_nonfocus_attributes};
   my %nonfocus_data;
 
-  foreach (@attributes) {
+  foreach (@attributes) {  
     my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
     next if $self->param('opt_ft_' .$unique_feature_set_id) eq 'off';
     my $histone_mod = substr($unique_feature_set_id, 0, 2);
