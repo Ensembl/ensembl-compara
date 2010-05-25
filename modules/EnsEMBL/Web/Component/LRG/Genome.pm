@@ -222,7 +222,7 @@ sub feature_tables {
     elsif ($feat_type eq 'LRG') {
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left', sort => "position_html" });
       $table->add_columns({'key'=>'length','title'=>'LRG length',  'width'=>'10%','align'=>'left', sort => "numeric" });
-      $table->add_columns({'key'=>'lrg',   'title'=>'LRG name',  'width' =>'15%','align'=>'left', sort => "html" });
+      $table->add_columns({'key'=>'lrg',   'title'=>'LRG name',  'width' =>'15%','align'=>'left', sort => "position_html" });
       $table->add_columns({'key'=>'hgnc',   'title'=>'HGNC name',  'width' =>'15%','align'=>'left', sort => "string" })
     }
     else {	    
@@ -306,7 +306,7 @@ sub feature_tables {
           '<a href="%s/LRG/Summary?lrg=%s">%s</a>',
           $hub->species_defs->species_path, $row->{'lrg_name'}, $row->{'lrg_name'}
         );
-        $data_row->{'lrg'} = $link;
+        $data_row->{'lrg'} = '<span style="display:none;visibility:hidden;">'.$row->{'lrg_number'}.'</span>'.$link;
         $data_row->{'hgnc'} = $row->{'hgnc_name'};
       } 
       
