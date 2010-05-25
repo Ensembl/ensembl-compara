@@ -11,13 +11,15 @@ Ensembl.LayoutManager.extend({
   initialize: function () {
     this.id = 'LayoutManager';
     
-    Ensembl.EventManager.register('reloadPage', this, this.reloadPage);
+    Ensembl.EventManager.register('reloadPage',    this, this.reloadPage);
     Ensembl.EventManager.register('validateForms', this, this.validateForms);
-    Ensembl.EventManager.register('makeZMenu', this, this.makeZMenu);
+    Ensembl.EventManager.register('makeZMenu',     this, this.makeZMenu);
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
-    Ensembl.EventManager.register('hashChange', this, this.hashChange);
+    Ensembl.EventManager.register('hashChange',    this, this.hashChange);
     
     $('#local-tools > p').show();
+    
+    $('#header a:not(#tabs a)').addClass('constant');
     
     $('.modal_link').show().live('click', function () {
       if (Ensembl.EventManager.trigger('modalOpen', this)) {
@@ -39,10 +41,7 @@ Ensembl.LayoutManager.extend({
     });
     
     $('form.check').validate().live('submit', function () {
-      var form = $(this);
-      var rtn = form.parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', form) : true;      
-      form = null;
-      return rtn;
+      return $(this).parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', $(this)) : true;      
     });
     
     // Close modal window if the escape key is pressed
@@ -62,10 +61,12 @@ Ensembl.LayoutManager.extend({
     if (userMessage) {
       userMessage = userMessage.split('\n');
       
-      $('<div class="hint" style="margin: 10px 25%;">' +
-        ' <h3><img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />' + userMessage[0] + '</h3>' +
-        ' <p>' + userMessage[1] + '</p>' +
-        '</div>').prependTo('#main').find('h3 img, a').click(function () {
+      $([
+        '<div class="hint" style="margin: 10px 25%;">',
+        ' <h3><img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />', userMessage[0], '</h3>',
+        ' <p>', userMessage[1], '</p>',
+        '</div>'
+      ].join('')).prependTo('#main').find('h3 img, a').click(function () {
         $(this).parents('div.hint').remove();
         Ensembl.cookie.set('user_message', '', -1);
       });
@@ -117,13 +118,13 @@ Ensembl.LayoutManager.extend({
   },
   
   hashChange: function (loc) {
-    function addCommas(nStr) {
+    function addCommas(str) {
       var rgx = /(\d+)(\d{3})/;
       
-      nStr += '';
-      x  = nStr.split('.');
-      x1 = x[0];
-      x2 = x.length > 1 ? '.' + x[1] : '';
+      str += '';
+      x    = str.split('.');
+      x1   = x[0];
+      x2   = x.length > 1 ? '.' + x[1] : '';
       
       while (rgx.test(x1)) {
         x1 = x1.replace(rgx, '$1' + ',' + '$2');
@@ -132,8 +133,8 @@ Ensembl.LayoutManager.extend({
       return x1 + x2;
     }
     
-    $('a').not('.constant').each(function () {
-      this.href = Ensembl.urlFromHash(this.href);
+    $('a:not(.constant)').attr('href', function () {
+      return Ensembl.urlFromHash(this.href);
     });
     
     $('input[name=r]', 'form:not(#core_params)').val(loc);
@@ -143,10 +144,10 @@ Ensembl.LayoutManager.extend({
     loc[1] = addCommas(loc[1]);
     loc[2] = addCommas(loc[2]);
     
-    $('#tab_location a').html('Location: ' + loc[0] + ':' + loc[1] + '-' + loc[2]);
+    $('a', '#tab_location').html('Location: ' + loc[0] + ':' + loc[1] + '-' + loc[2]);
     
-    $('h2.caption').each(function () {
-      $(this).html($(this).html().replace(/^(Chromosome ).+/, '$1' + loc[0] + ': ' + loc[1] + '-' + loc[2]));
+    $('h2.caption').html(function (i, html) {
+      return html.replace(/^(Chromosome ).+/, '$1' + loc[0] + ': ' + loc[1] + '-' + loc[2]);
     });
   }
 });
