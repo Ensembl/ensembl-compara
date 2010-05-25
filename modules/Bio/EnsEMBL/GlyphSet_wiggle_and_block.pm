@@ -88,14 +88,15 @@ sub draw_block_features {
   ### Arg2: colour of the track
   ### Returns 1
 
-  my ( $self, $features, $colour, $score ) = @_;
+  my ( $self, $features, $colour, $score, $display_summit) = @_;
   my $length = $self->{'container'}->length;
 
   my $h = 10;
   foreach my $f (@$features ) {
     my $start = $f->start;
     my $end   = $f->end;
-    $start = 1 if $start < 1;
+    my $midpoint =  $f->score;
+    $start = 1 if $start < 1; 
     $end   = $length if $end > $length;
     $self->push($self->Rect({
       'y'         => $self->_offset,
@@ -106,6 +107,18 @@ sub draw_block_features {
       'colour'    => $colour,
       'href'     => $self->block_features_zmenu($f, $score),
     }));
+    if ($midpoint && $display_summit){ 
+      $midpoint -= $self->{'container'}->start;
+      my $m_colour = $self->{'config'}->colourmap->mix($colour, 'black', '0.5');
+      $self->push($self->Rect({
+        'y'         => $self->_offset,
+        'height'    => $h,
+        'x'         => $midpoint -1,
+        'width'     => 1,
+        'absolutey' => 1,          # in pix rather than bp
+        'colour'    => $m_colour,
+      }));
+    }
   }
   $self->_offset( $h+3 );
   return 1;
@@ -117,7 +130,7 @@ sub draw_wiggle_plot {
   ### Description: draws wiggle plot using the score of the features
   ### Returns 1
 
-  my( $self, $features, $parameters, $colours ) = @_; 
+  my( $self, $features, $parameters, $colours, $labels ) = @_; 
 
 
   my $METHOD_ID      = $self->my_config( 'method_link_species_set_id' );
@@ -142,7 +155,93 @@ sub draw_wiggle_plot {
   my $label           = $parameters->{'description'} || $self->my_colour('score','text');
   my $name            = $self->my_config('short_name') || $self->my_config('name');
      $label =~ s/\[\[name\]\]/$name/;
+  my $axis_style = 1;
+  if ($parameters->{'graph_type'} eq 'line') { $axis_style = 0; }
 
+  # Draw the labels ----------------------------------------------
+  ## Only done if we have multiple data sets
+  if ($labels){
+    my $header_label = shift @$labels;
+
+    my $y = $self->_offset;
+    my $y_offset  =  0;
+    my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
+    my @res_analysis = $self->get_text_width(
+    0, 'Legend', '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
+    if($header_label eq 'CTCF'){
+      $y += 15; 
+      $colour = shift @$colours;
+    }else {
+      $self->push( $self->Text({
+        'text'      => $header_label,
+        'height'    => $res_analysis[3],
+        'width'     => $res_analysis[2],
+        'font'      => $fontname_i,
+        'ptsize'    => $fontsize_i,
+        'halign'    => 'left',
+        'valign'    => 'bottom',
+        'colour'    => 'black',
+        'y'         => $y,
+        'x'         => -118,
+        'absolutey' => 1,
+        'absolutex' => 1,
+      }));
+    }
+    my $legend_alt_text;  
+    my $max = scalar @$labels -1;
+    my %seen;
+    for( my $i = 0; $i <= $max; $i++){ 
+      my $name = $labels->[$i];
+      my $colour = $colours->[$i];
+      unless (exists $seen{$name}){  
+        $legend_alt_text .= $name.':'.$colour .',';
+        $seen{$name} = 1;
+      }
+    }
+    $legend_alt_text =~s/,$//;
+    # add colour key legend  
+    $y += 13;
+    $self->push( $self->Rect({
+      'width'     => $res_analysis[2] +15,
+      'height'    => $res_analysis[3] +2,
+      'y'         => $y,
+      'x'         => -109,
+      'absolutey' => 1,
+      'absolutex' => 1,
+      'title'     => "$header_label; [$legend_alt_text ]",
+      'absolutewidth' => $res_analysis[2] +15,
+      'class'         =>  'coloured',
+      'bordercolour'  => '#336699',
+      'colour'    => 'white',
+    }));
+    $self->push( $self->Text({
+      'text'      => 'Legend',
+      'height'    => $res_analysis[3],
+      'font'      => $fontname_i,
+      'ptsize'    => $fontsize_i,
+      'halign'    => 'left',
+      'valign'    => 'bottom',
+      'colour'    => '#336699',
+      'y'         => $y,
+      'x'         => -108,
+      'absolutey' => 1,
+      'absolutex' => 1,
+    }));
+    my $triangle_start =  -113 + $res_analysis[2] +6;
+    my $triangle_end =   -113 + $res_analysis[2] +12;
+    $self->push ( $self->Poly({
+      'points'    => [ $triangle_start, $y+4,
+                       -113 + $res_analysis[2] +9, $y+9, 
+                       $triangle_end, $y+4,
+                         ],
+      'colour'    => '#336699',
+      'absolutex' => 1,
+      'absolutey' => 1,
+    }));  
+    $y_offset += 12;
+    $offset += 15;
+    $self->_offset($y_offset); #unless $no_offset;        
+  }
   # Draw the axis ------------------------------------------------
   $self->push( $self->Line({ # horzi line
     'x'         => 0,
@@ -151,7 +250,7 @@ sub draw_wiggle_plot {
     'height'    => 0,
     'absolutey' => 1,
     'colour'    => $axis_colour,
-    'dotted'    => 1,
+    'dotted'    => $axis_style,
   }),$self->Line({ # vertical line
     'x'         => 0,
     'y'         => $offset,
@@ -160,7 +259,7 @@ sub draw_wiggle_plot {
     'absolutey' => 1,
     'absolutex' => 1,
     'colour'    => $axis_colour,
-    'dotted'    => 1,
+    'dotted'    => $axis_style,
   }));
 
 
@@ -220,8 +319,12 @@ sub draw_wiggle_plot {
   ## Check to see if we have multiple data sets to draw on one axis 
   if ( ref($features->[0]) eq 'ARRAY' ){
     foreach my $feature_set ( @$features){ 
-      $colour = shift @$colours; 
-      $self->draw_wiggle_points($feature_set, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset);
+      $colour = shift @$colours;
+      if ($parameters->{'graph_type'} eq 'line') {
+        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset);
+      } else{ 
+        $self->draw_wiggle_points($feature_set, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset);
+      }
     }
   }   
   else {
@@ -316,6 +419,66 @@ sub draw_wiggle_points {
 return 1;
 } 
 
+sub draw_wiggle_points_as_line {
+  my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset) = @_;
+  my $slice = $self->{'container'};
+  my $Config          = $self->{'config'}; 
+  my $vclen           = $slice->length(); 
+  my $im_width        = $Config->image_width();
+  my $window_size     = 10;
+  unless(ref($features->[0]) eq 'HASH') {$window_size = $features->[0]->window_size;}
+
+  if($window_size == 0){
+    my @temp = @{$features};
+     @temp = sort { $a->start <=> $b->start } @temp;
+    $features = \@temp;
+  }
+ 
+
+  my $previous_f = $features->[0]; 
+  my $previous_x = ($previous_f->{'end'} + $previous_f->{'start'}) / 2;
+  my $previous_score = $previous_f->{'score'};
+  if ($window_size == 0 ){
+    $previous_score = $previous_f->scores->[0];
+    $previous_x = ($previous_f->end + $previous_f->start)/2;
+  }
+  my $previous_y = $previous_score < 0 ? 0 : -$previous_score * $pix_per_score;
+  $previous_y = $offset + $red_line_offset + $previous_y;
+
+
+  for ( my $i = 1; $i <= @$features; $i++) {    
+    my $f = $features->[$i];
+    my $current_x = ($f->{'end'} + $f->{'start'}) / 2; 
+    my $current_score = $f->{'score'}; 
+    if ($window_size == 0){
+      next if (ref($f) eq 'HASH');
+      $current_score = $f->scores->[0]; 
+      $current_x = ($f->end + $f->start)/2; 
+    }
+    my $current_y =  $current_score < 0 ? 0 : -$current_score * $pix_per_score;
+
+    my $width = 1 - (($current_x - $previous_x) +1); 
+    next if ($width >= 1);
+    my $y_coord = $offset + $red_line_offset + $current_y;
+    my $height = 1 - ($y_coord - $previous_y);    
+
+    next unless ($current_x <= $vclen ); 
+    $self->push($self->Line({
+        'x'            => $current_x,
+        'y'            => $y_coord,
+        'width'        => $width,
+        'height'       => $height,
+        'colour'       => $colour,
+        'absolutey'    => 1,
+      }));
+  
+    $previous_x = $current_x;
+    $previous_y = $y_coord;
+    $previous_f = $f;
+    $previous_score = $current_score;  
+  }
+}
+
 sub draw_track_name {
 
   ### Predicted features
@@ -348,6 +511,32 @@ sub draw_track_name {
   }));
 
   $self->_offset($res_analysis[3]) unless $no_offset; 
+  return 1;
+}
+sub display_no_data_error{
+ my ($self, $error_string) = @_;
+  my $height = $self->errorTrack( $error_string, 0, $self->_offset );
+  $self->_offset($height + 4); 
+}
+
+sub draw_separating_line {
+  my ($self) = @_;
+  my $Config = $self->{'config'};
+  my $im_width        = $Config->image_width();
+
+  # Set up a separating line...
+  my $rect = $self->Rect({
+    'x'             => -125,
+    'y'             => $self->_offset +5,
+    'width'         => $im_width,
+    'height'        => 3,
+    'colour'        => 'grey40',
+    'absolutey'     => 1,
+    'absolutex'     => 1,
+    'absolutewidth' =>1,
+  });
+  $self->push($rect);
+  $self->_offset(8);
   return 1;
 }
 
