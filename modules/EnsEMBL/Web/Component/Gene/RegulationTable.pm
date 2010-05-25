@@ -39,7 +39,7 @@ sub content {
   my $offset = $gene_slice->start -1;
   my $str = "positive";
 
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' =>'1em 0px'});
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {data_table => 1,});
   $table->add_columns(
     { key => 'feature',  title => 'Reg. region',            width => '21%', align => 'left', sort => 'html'           },
     { key => 'analysis', title => 'Analysis',               width => '16%', align => 'left', sort => 'html'           },
