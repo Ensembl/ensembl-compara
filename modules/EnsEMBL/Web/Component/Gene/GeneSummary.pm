@@ -87,6 +87,57 @@ sub content {
     $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $object->species_defs->DISPLAY_NAME, join ', ', map $object->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
   }
   
+  ## LRG info
+  
+  # first link to direct xrefs (i.e. this gene has an LRG)
+  my @lrg_matches = grep {$_->dbname eq 'ENS_LRG_gene'} @$matches;
+  my $lrg_html;
+  my %xref_lrgs;    # this hash will store LRGs we don't need to re-print
+  
+  if(scalar @lrg_matches) {
+    my $lrg_link;
+    
+    for my $i(0..$#lrg_matches) {
+      my $lrg = $lrg_matches[$i];
+      
+      my $link = $object->get_ExtURL_link($lrg->display_id, 'ENS_LRG_gene', $lrg->display_id);
+      
+      if($i == 0) { # first one
+        $lrg_link .= $link;
+      }
+      elsif($i == $#lrg_matches) { # last one
+        $lrg_link .= " and ".$link;
+      }
+      else { # any other
+        $lrg_link .= ", ".$link;
+      }
+      
+      $xref_lrgs{$lrg->display_id} = 1;
+    }
+    
+    $lrg_link =
+      $lrg_link." provide".
+      (@lrg_matches > 1 ? "" : "s").
+      " a stable genomic reference framework ".
+      "for describing sequence variations for this gene";
+    
+    $lrg_html .= $lrg_link;
+  }
+  
+  # now look for lrgs that contain or partially overlap this gene
+  foreach my $attrib(@{$object->gene->get_all_Attributes('GeneInLRG')}, @{$object->gene->get_all_Attributes('GeneOverlapLRG')}) {
+    next if $xref_lrgs{$attrib->value};
+    my $link = $object->get_ExtURL_link($attrib->value, 'ENS_LRG_gene', $attrib->value);
+    $lrg_html .= '<br/>' if $lrg_html;
+    $lrg_html .=
+      'This gene is '.
+      ($attrib->code =~ /overlap/i ? "partially " : " ").
+      'overlapped by the stable genomic reference framework '.$link;
+  }
+  
+  # add a row to the table
+  $table->add_row('LRG', $lrg_html, 1) if $lrg_html;
+  
   # add some Vega info
   if ($db eq 'vega') {
     my $type    = $object->gene_type;
