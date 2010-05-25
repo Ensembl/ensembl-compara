@@ -17,13 +17,6 @@ sub content {
   my $object = $self->object;
   my $html = '';
 
-  my $feature_type = $object->display_label;  
-
-  $html .= qq(<dl class="summary">
-    <dt>Feature type</dt>
-    <dd>$feature_type</dd>
-  );
-
 
   my $url = $self->model->hub->url({
     'type'   => 'Location',
@@ -39,8 +32,30 @@ sub content {
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );  
   $html .= qq(
+    <dl class="summary">
     <dt>Location</dt>
-    <dd>$location_html </dd>
+    <dd>$location_html</dd>
+  );
+
+  my $table = '<table  margin = "3em 0px">';
+  $table .= '<thead><tr><th>Cell line</th><th>Feature type</th><th>Bound co-ordinates</th></tr></thead><tbody>';
+
+  my $all_objs = $object->fetch_all_objs;
+  foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ){
+    $table .= '<tr>';
+    $table .='<td>'. $reg_object->feature_set->cell_type->name .'</td>';
+    $table .='<td>'. $reg_object->feature_type->name . '</td>';
+    my $bound_ends;
+    $bound_ends .= $reg_object->bound_start ."-". $reg_object->bound_end;
+    $table .='<td>'. $bound_ends .'</td>';
+    $table .= '</tr>';
+  }
+  $table .='</tbody></table>';
+
+
+  $html .= qq(
+    <dt></dt>
+    <dd>$table</dd>
   </dl>
   );
 
