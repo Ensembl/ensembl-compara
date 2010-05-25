@@ -280,15 +280,19 @@ sub render_matrix {
   my $column_width = (100 - $fixed_column_width) / $number_of_variable_width_columns; 
   
   my $column_count =1;
+  my $header_flag;
   # First add table columns 
   foreach (@column_headers){
     my $label = '';
     if ($_){
-      $label = $_->label;
+      $label = $_->label; 
       $table->add_columns( {'key' => $column_count,   'title' => $label, 'align' => 'left', width => $column_width.'%', },);
       $column_count++; 
     } else {
-      $table->add_columns( {'key' => 'all',     'title' => '&nbsp'  , 'align' => 'left', 'width' => $fixed_column_width .'%', },);
+      unless( $header_flag){  
+        $table->add_columns( {'key' => 'header',  'title' => '&nbsp'  , 'align' => 'left', 'width' => $fixed_column_width .'%', },);
+        $header_flag =1;
+      }
     }
   }
 
@@ -298,19 +302,26 @@ sub render_matrix {
 
   # Now loop through a row at a time
   for( my $i = 1; $i <= $number_of_rows; $i++){
-    my $row;
+    my $row; 
     my @row_data = @{$data_matrix[$i]};
     my $label_element = shift(@row_data);
     my $row_label = $label_element->label;
-    $row_label = '<strong>'.$row_label.'</strong>'; 
-    $row->{'all'} = $row_label;    
+    $row_label = '<strong>'.$row_label.'</strong>';
+    $row->{'header'} = $row_label; 
 
     # Add check boxes
     my $column_pos =1;  
-    foreach my $element( @row_data){
-      my $checkbox = $self->_render_raw_element($element);
-      $row->{$column_pos} = $checkbox;
-      $column_pos++;      
+    foreach my $element( @row_data){  
+      if ($element){
+        my $checkbox .= $self->_render_raw_element($element);
+        if ($element->label =~/all/){
+          $checkbox .= 'Select all ' 
+        } 
+        $row->{$column_pos} = $checkbox; 
+      } else {
+        $row->{$column_pos} = '';   
+      }
+      $column_pos++;        
     }
 
     push @table_rows, $row;    
