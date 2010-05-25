@@ -277,8 +277,13 @@ sub write_output {
  		  
  		  #Trigger loading of seq adaptor to avoid locked table problems
  		  $slice_adaptor->db()->get_SequenceAdaptor();
+		  my $last_id;
+		  unless( $last_id = $slice_adaptor->dbc->db_handle->selectrow_array("SELECT max(seq_region_id) FROM seq_region") ){
+			my $seq_region_sth = $slice_adaptor->dbc->prepare("show table status like \"seq_region\"");
+			$seq_region_sth->execute;
+		  	$last_id = $seq_region_sth->fetchrow_hashref()->{"Auto_increment"} - 1; #hack to get auto_increment value
+		  }
  		  $slice_adaptor->dbc->db_handle->do("LOCK TABLES seq_region WRITE, dna WRITE");
- 		  my $last_id = $slice_adaptor->dbc->db_handle->selectrow_array("SELECT max(seq_region_id) FROM seq_region");
  		  $last_id++;
  		  my $name = "Ancestor_" . $mlss_id . "_$last_id";
  		  my $slice = new Bio::EnsEMBL::Slice(
