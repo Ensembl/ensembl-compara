@@ -15,65 +15,76 @@ sub _init {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my %evidence;
+  my $context      = $object->param( 'context' ) || 200;
+
+  my $object_slice = $object->get_bound_context_slice($context); 
+     $object_slice = $object_slice->invert if $object_slice->strand < 1;
+
+
+  my $evidence_multicell = $object->get_multicell_evidence_data($object_slice, 1); 
+  my $evidence_by_cell_line = $object->get_evidence_data($object_slice, 1); 
+  $evidence_by_cell_line->{'MultiCell'} = $evidence_multicell->{'MultiCell'};
 
   my $focus_attributes =  $object->regulation->get_focus_attributes; 
-  unless ($focus_attributes) {
+  my $number_of_cell_lines = scalar (keys %$evidence_by_cell_line);
+
+  unless ( $number_of_cell_lines  >>  0) {
     my $html = "<p>There is no evidence for this regulatory feature </p>";
     return $html;
   }
-  foreach ( @$focus_attributes){
-    $evidence{'Core'} = [] unless exists $evidence{'Core'};
-    push @{$evidence{'Core'}}, $_;
-  }
 
-
-
-  my $evidence_attributes = $object->regulation->get_nonfocus_attributes;
-  my %nonfocus_data;
-  foreach (@$evidence_attributes) {
-    my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name . ':' .$_->start; 
-    my $histone_mod = substr($unique_feature_set_id, 0, 2);
-    unless ($histone_mod =~/H\d/){ $histone_mod = 'Other';}
-    $evidence{$histone_mod} = [] unless exists $evidence{$histone_mod};
-    push @{$evidence{$histone_mod}}, $_;
-  }
-
-
-
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' =>'1em 0px'});
+  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   $table->add_columns(
-    {'key' => 'type',     'title' => 'Evidence type', 'align' => 'left'},
-    {'key' => 'location', 'title' => 'Location',      'align' => 'left'},
-    {'key' => 'feature',  'title' => 'Feature name',  'align' => 'left'},
-    {'key' => 'cell',     'title' => 'Cell type',     'align' => 'left'}
+    {'key' => 'cell',     'title' => 'Cell type',     'align' => 'left', sort => 'string'   },
+    {'key' => 'type',     'title' => 'Evidence type', 'align' => 'left', sort => 'string'   },
+    {'key' => 'feature',  'title' => 'Feature name',  'align' => 'left', sort => 'string'   },
+    {'key' => 'location', 'title' => 'Location',      'align' => 'left', sort => 'position' },
   ); 
 
   my @rows;
   my %seen_evidence_type;
 
-  foreach (sort keys %evidence ){ 
-    my $features = $evidence{$_};  
-    foreach my $f ( sort { $a->start <=> $b->start } @$features){  
-      my $location = $f->slice->seq_region_name .":".$f->start ."-" . $f->end;
-      my $cell_type = $f->feature_set->cell_type->name;
-      my $feature_type = $f->feature_set->feature_type->name;
-      my $evidence_type;
-      if (exists $seen_evidence_type{$_} ){ 
-        $evidence_type = '';    
-      } else {
-        $evidence_type = $_;
-        if ($evidence_type =~/H\d/){$evidence_type = 'Histone '. $evidence_type;} 
-        $seen_evidence_type{$_} =1;
-      }
 
-      my $row = {
-      'type'      => $evidence_type,
-      'location'  => $location,
-      'feature'   => $feature_type,
-      'cell'      => $cell_type 
-      };
-      push @rows, $row;
+  foreach my $cell_line (sort keys %{$evidence_by_cell_line}){ 
+    # Process core features first
+    my $core_features = $evidence_by_cell_line->{$cell_line}{'focus'}{'block_features'}; 
+    foreach my $f_set (sort { $core_features->{$a}->[0]->start <=> $core_features->{$b}->[0]->start  } keys %$core_features){ 
+      my $feature_name = $f_set;
+      my @temp = split (/:/, $feature_name);
+      $feature_name = $temp[1]; 
+      my $features = $core_features->{$f_set};
+      foreach my $f ( sort { $a->start <=> $b->start } @$features){
+        my $f_start = ($object_slice->start + $f->start) -1;
+        my $f_end = ($object_slice->start + $f->end) -1;
+        my $location = $f->slice->seq_region_name .":".$f_start ."-" . $f_end;
+        my $row = { 
+          'type'      => 'Core',
+          'location'  => $location,
+          'feature'   => $feature_name,
+          'cell'      => $cell_line
+        };
+        push @rows, $row;
+      }
+    }
+    # then process other features
+    my $other_features =  $evidence_by_cell_line->{$cell_line}{'non_focus'}{'block_features'};
+    foreach my $f_set ( sort { $other_features->{$a}->[0]->start <=> $other_features->{$b}->[0]->start} keys %$other_features){ 
+      my $feature_name = $f_set;
+      my @temp = split (/:/, $feature_name);
+      $feature_name = $temp[1]; 
+      my $features = $other_features->{$f_set};
+      foreach my $f ( sort { $a->start <=> $b->start } @$features){
+        my $f_start = ($object_slice->start + $f->start) -1;
+        my $f_end = ($object_slice->start + $f->end) -1;
+        my $location = $f->slice->seq_region_name .":".$f_start ."-" . $f_end;
+        my $row = {
+          'type'      => 'Other',
+          'location'  => $location,
+          'feature'   => $feature_name,
+          'cell'      => $cell_line
+        };
+        push @rows, $row;
+      }
     }
   }
 
