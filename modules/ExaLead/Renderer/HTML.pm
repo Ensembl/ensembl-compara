@@ -117,6 +117,7 @@ sub _render_hit {
   #two hacks for LRG
   $URL =~ s{Homo_sapiens/Gene/Summary\?g=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
   $URL =~ s{Homo_sapiens/Location/View\?r=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
+
  
   #remove url for unmapped features
   if ($URL =~ /Location\/Genome\?ftype=UnmappedObject/) {
@@ -139,6 +140,10 @@ sub _render_hit {
     my $desc     = $mappings->[2];
     my $new_URL  = $URL;
     $new_URL =~ s/$old_dest/$new_dest/;
+
+    #should be able to use g= but don't always get correct slice if we do; gene= does work consistently so use that for now
+    $new_URL =~ s{Location/View\?g=}{Location/View\?gene=};
+
     $extra = sprintf( ' [<a href="%s">%s</a>]' , $new_URL, $desc ) unless ($URL =~ /Summary\?lrg/);
   }
 
