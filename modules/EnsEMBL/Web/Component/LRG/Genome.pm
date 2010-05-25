@@ -202,7 +202,14 @@ sub feature_tables {
       $data_type = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
     }
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table;
+    
+    if($feat_type eq 'LRG') {
+      $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px', data_table => 1} );
+    }
+    else {
+      $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    }
     
     if ($feat_type =~ /Gene|Transcript|Domain/) {
       $table->add_columns({'key'=>'names',  'title'=>'Ensembl ID',      'width'=>'25%','align'=>'left' });
@@ -213,10 +220,10 @@ sub feature_tables {
       $table->add_columns({'key'=>'names', 'title'=>'Name(s)','width'=>'100px','align'=>'left' });
     } 
     elsif ($feat_type eq 'LRG') {
-      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location','width' =>'15%','align'=>'left' });
-      $table->add_columns({'key'=>'length','title'=>'LRG length',  'width'=>'10%','align'=>'left' });
-      $table->add_columns({'key'=>'lrg',   'title'=>'LRG name',  'width' =>'15%','align'=>'left' });
-      $table->add_columns({'key'=>'hgnc',   'title'=>'HGNC name',  'width' =>'15%','align'=>'left' })
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left', sort => "position_html" });
+      $table->add_columns({'key'=>'length','title'=>'LRG length',  'width'=>'10%','align'=>'left', sort => "numeric" });
+      $table->add_columns({'key'=>'lrg',   'title'=>'LRG name',  'width' =>'15%','align'=>'left', sort => "html" });
+      $table->add_columns({'key'=>'hgnc',   'title'=>'HGNC name',  'width' =>'15%','align'=>'left', sort => "string" })
     }
     else {	    
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
@@ -250,11 +257,9 @@ sub feature_tables {
      
       if ($row->{'region'}) {
         $contig_link = sprintf(
-          '%s:%d-%d',
-          $row->{'region'}, $row->{'start'}, $row->{'end'},
+          '%s:%d-%d(%d)',
+          $row->{'region'}, $row->{'start'}, $row->{'end'}, $row->{'strand'}
         );
-        
-        $contig_link .= '('.$row->{'strand'}.')' unless $feat_type eq 'LRG';
 
         if ($feat_type =~ /Gene|Transcript|Domain/ && $row->{'label'}) {
           $feat_type = 'Gene' if $feat_type eq 'Domain';
