@@ -20,8 +20,7 @@ sub get_block_features {
     $self->{'block_features'} = $features; 
   }
 
-  my $colour = "dodgerblue4";
-  return ( $self->{'block_features'}, $colour);
+  return $self->{'block_features'};
 }
 
 
@@ -33,21 +32,24 @@ sub draw_features {
 
   my ($self, $wiggle)= @_;  
   my $db =  $self->dbadaptor( 'homo sapiens', 'FUNCGEN' );  
-  my ($block_features, $colour) = $self->get_block_features($db);
+  my $block_features = $self->get_block_features($db);
   my $drawn_flag = 0;
   my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; 
   my $slice = $self->{'container'};
-  my $wiggle_colour = "steelblue";
   foreach my $feature ( @$block_features ) {
+    my $label = $feature->get_displayable_product_FeatureSet->display_label; 
+    my $fset_cell_line = $feature->get_displayable_product_FeatureSet->cell_type->name;
+warn $fset_cell_line;
+    my $colour = $self->my_colour($fset_cell_line) || 'steelblue';
     # render wiggle if wiggle
     if( $wiggle ) { 
       my $max_bins = $self->{'config'}->image_width();
       foreach my $result_set  ( @{ $feature->get_displayable_supporting_sets() } ){
-        my ($rfs, $config) =  @{$result_set->get_ResultFeatures_by_Slice($slice, undef, undef, $max_bins)};
+        my $rfs =  $result_set->get_ResultFeatures_by_Slice($slice, undef, undef, $max_bins);
         next unless @$rfs;
         $drawn_wiggle_flag = "wiggle";
 
-        my $wsize = $config->{'window_size'}; 
+        my $wsize = $rfs->[0]->window_size; 
         my $start = 1 - $wsize;#Do this here so we minimize the number of calcs done in the loop
         my $end   = 0;
         my $score;
@@ -73,7 +75,9 @@ sub draw_features {
         # render wiggle plot        
         $self->draw_wiggle_plot(
           \@features,                      ## Features array
-          { 'min_score' => $min_score, 'max_score' => $max_score }
+          { 'min_score' => $min_score, 'max_score' => $max_score },
+          [$colour],
+          ['CTCF', $label],
         );
       }
       $self->draw_space_glyph() if $drawn_wiggle_flag;
