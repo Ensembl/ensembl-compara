@@ -11,6 +11,7 @@ sub new {
   my %params = @_;
   my $self = $class->SUPER::new( %params );
   $self->checked = $params{'checked'};
+  $self->disabled = $params{'disabled'};
   if ($params{'long_label'}) {
     $self->add_class('checkbox-long');
   }
@@ -48,12 +49,13 @@ sub render {
 sub render_raw {
   my $self = shift;
    return sprintf(
-    qq( <input type="checkbox" name="%s" id="%s" value="%s" class="input-checkbox"%s%s/>),
+    qq( <input type="checkbox" name="%s" id="%s" value="%s" %s%s%s/>),
     encode_entities( $self->name ),
     encode_entities( $self->id ),
     $self->value || 'yes',
-    $self->checked ? ' checked="checked" ' : '',
-    $self->disabled ? ' disabled="disabled" ' : '',
+    $self->class_attrib,
+    $self->checked ? ' checked ' : '',
+    $self->disabled ? ' disabled ' : '',
   );
 }
                                                                                 
