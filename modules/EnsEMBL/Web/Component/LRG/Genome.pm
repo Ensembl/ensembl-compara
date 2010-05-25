@@ -306,7 +306,7 @@ sub feature_tables {
           '<a href="%s/LRG/Summary?lrg=%s">%s</a>',
           $hub->species_defs->species_path, $row->{'lrg_name'}, $row->{'lrg_name'}
         );
-        $data_row->{'lrg'} = '<span style="display:none;visibility:hidden;">'.$row->{'lrg_number'}.'</span>'.$link;
+        $data_row->{'lrg'} = '<span class="hidden">'.$row->{'lrg_number'}.'</span>'.$link;
         $data_row->{'hgnc'} = $row->{'hgnc_name'};
       } 
       
