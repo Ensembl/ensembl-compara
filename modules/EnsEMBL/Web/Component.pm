@@ -545,20 +545,18 @@ sub transcript_table {
       $acc = $object->Obj->stable_id;
       $description .= sprintf ' <span class="small">%s</span>', $object->get_ExtURL_link("Source: $edb", $edb . '_' . lc $page_type, $acc);
     } else {
-        $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-        $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
-        ($edb, $acc) = ($1, $2);
+      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
+      $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
+      ($edb, $acc) = ($1, $2);
 
-	my $l1 =  $object->get_ExtURL($edb, $acc);
-	$l1 =~ s/\&amp\;/\&/g;
-	my $t1 = "Source: $edb $acc";
-	my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
-        $description .= qq( <span class="small">@{[ $link ]}</span>) if ($acc ne 'content');
+      my $l1 =  $object->get_ExtURL($edb, $acc);
+      $l1 =~ s/\&amp\;/\&/g;
+      my $t1 = "Source: $edb $acc";
+      my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
+      $description .= qq( <span class="small">@{[ $link ]}</span>) if ($acc && $acc ne 'content');
     }
-    
     $description = "<p>$description</p>";
   }
-  
   my $url = $self->object->_url({
     type   => 'Location',
     action => 'View',
