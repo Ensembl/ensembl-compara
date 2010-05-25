@@ -35,6 +35,7 @@ sub content {
       { 'key' => 'chr' , 'title' => 'LRG: bp',  },
       { 'key' => 'Alleles', 'align' => 'center' },
       { 'key' => 'Ambiguity', 'align' => 'center', },
+      { 'key' => 'HGVS', 'title' => 'HGVS name(s)', 'align' => 'center', },
       { 'key' => 'aachange', 'title' => 'Amino Acid', 'align' => 'center' },
       { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' },
       { 'key' => 'class', 'title' => 'Class', 'align' => 'center' },
@@ -72,11 +73,18 @@ sub variation_table {
   return unless %snps;
 
   my @rows;
+  
   foreach my $gs ( @gene_snps ) {
     my $raw_id = $gs->[2]->dbID;
     my $transcript_variation  = $snps{$raw_id};
     next unless $transcript_variation;
+    
     my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
+    my @hgvs = @{$gs->[2]->get_all_hgvs_notations($transcript->transcript, 'c')};
+    push @hgvs, @{$gs->[2]->get_all_hgvs_notations($lrgslice, 'g', $gs->[2]->seq_region_name)};
+    s/ENS(...)?[TG]\d+\://g for @hgvs;
+    my $hgvs = join ", ", @hgvs;
+    
     if( $transcript_variation && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
       my $url = $transcript->_url({'type' => 'Variation', 'action' =>'Summary', 'v' => @{[$gs->[2]->variation_name]}, 'vf' => @{[$gs->[2]->dbID]}, 'source' => @{[$gs->[2]->source]} });   
       my $row = {
@@ -84,6 +92,7 @@ sub variation_table {
         'class'     => $gs->[2]->var_class() eq 'in-del' ? ( $gs->[4] > $gs->[5] ? 'insertion' : 'deletion' ) : $gs->[2]->var_class(),
         'Alleles'   => $gs->[2]->allele_string(),
         'Ambiguity' => $gs->[2]->ambig_code(),
+        'HGVS'        => ($hgvs || '-'),
         'status'    => (join( ', ',  @validation ) || "-"),
         'chr'       => $lrg->stable_id.": ".
                         ($gs->[4]==$gs->[5] ? $gs->[4]:  (join "-",$gs->[4], $gs->[5])),
@@ -96,6 +105,7 @@ sub variation_table {
       push (@rows, $row);
     }
   }
+  
 #  warn " SE : $tr_start * $tr_end * $extent * $cdna_coding_start\n";
 
   return \@rows;
@@ -126,8 +136,6 @@ sub configure_lrg{
 
   my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
   my $sub_slices       =  $object->__data->{'slices'}{'transcripts'}[2];
-  warn "TR $transcript_slice";
-  warn "SUB $sub_slices";
   my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice( $transcript_slice, $sub_slices  );
 
 
@@ -150,7 +158,7 @@ sub configure_lrg{
             $slice_trans->end - $_->[2]->start   + 1 )
       ]
   } sort { $a->[0] <=> $b->[0] } @{ $snps };
-
+  
   foreach my $trans_obj ( @{$object->get_all_transcripts} ) {
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
     $trans_obj->__data->{'transformed'}{'gene_snps'} = \@snps2;
