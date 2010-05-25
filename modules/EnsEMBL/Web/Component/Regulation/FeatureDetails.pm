@@ -33,18 +33,6 @@ sub content {
   if ($focus_set_blocks ) {
     $wuc->{'focus'}->{'data'}->{'block_features'} = $focus_set_blocks;
   }
-  my $focus_set_wiggle = $object->get_focus_set_wiggle_features($object_slice);
-  if ($focus_set_wiggle ) {
-    $wuc->{'focus'}->{'data'}->{'wiggle_features'} = $focus_set_wiggle;
-  }
-  my $attribute_blocks = $object->get_nonfocus_block_features($object_slice);
-  if ($attribute_blocks ) {
-    $wuc->{'attribute'}->{'data'}->{'block_features'} = $attribute_blocks;
-  }
-  my $attribute_wiggle = $object->get_nonfocus_wiggle_features($object_slice);
-  if ($attribute_wiggle ) {
-    $wuc->{'attribute'}->{'data'}->{'wiggle_features'} = $attribute_wiggle;
-  }
   my $all_evidence_features = $object->get_all_evidence_features();
   if ( $all_evidence_features) { 
     $wuc->{'evidence'}->{'data'}->{'all_features'} = $all_evidence_features;
