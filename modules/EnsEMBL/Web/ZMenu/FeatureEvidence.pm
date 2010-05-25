@@ -24,6 +24,13 @@ sub content {
     type  => 'bp',
     label => $object->param('pos')
   });
+
+  unless ($object->param('ps') =~/undetermined/ ){
+    $self->add_entry({
+      'type'  => 'Peak summit',
+      'label' => $object->param('ps')
+    });
+  }
 }
 
 1;
