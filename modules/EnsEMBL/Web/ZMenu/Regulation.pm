@@ -31,7 +31,6 @@ sub content {
   }
 
  my $reg_obj = $self->new_object('Regulation', $core_reg_obj, $object->__data); 
-
  
   $self->caption('Regulatory Feature');
   
@@ -47,10 +46,18 @@ sub content {
   });
   
   $self->add_entry({
-    type  => 'bp',
+    type  => 'Core bp',
     label => $reg_obj->location_string,
     link  => $reg_obj->get_location_url
   });
+
+  unless ($reg_obj->bound_start == $reg_obj->seq_region_start && $reg_obj->bound_end == $reg_obj->seq_region_end){
+    $self->add_entry({
+    type  => 'Bounds bp',
+    label => $reg_obj->bound_location_string,
+    link  => $reg_obj->get_bound_location_url
+    });
+  }
   
   $self->add_entry({
     type  => 'Attributes',
