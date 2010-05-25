@@ -36,8 +36,8 @@ sub init {
   );
 
   $self->add_tracks('other',
-    [ 'fg_wiggle',                '', 'fg_wiggle',                { display => 'tiling', strand => 'r', menu => 'no', colourset => 'feature_set' }],
-    [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', strand => 'b', menu => 'no', colours => 'bisque' }],
+    [ 'fg_wiggle',          '', 'fg_wiggle',          { display => 'tiling', strand => 'r', menu => 'no', colourset => 'feature_set' }],
+    [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', tag => 0, strand => 'b', menu => 'no', colours => 'bisque' }],
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }]
   );
@@ -50,19 +50,36 @@ sub init {
   $self->load_configured_das;
 
   $self->modify_configs(
-    [ 'fg_regulatory_features_funcgen_reg_feats' ],
-    { display => 'normal' }
-  );
-  
-  $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'collapsed_nolabel' }
   );
-  
   $self->modify_configs(
     [ 'alignment_compara_431_constrained' ], 
     { display => 'compact' }
  ); 
-
+ $self->modify_configs(
+    [qw(functional)],
+    {qw(display normal)}
+  );
+  $self->modify_configs(
+    [qw(ctcf_funcgen_Nessie_NG_STD_2)],
+    {qw(display tiling)}
+  );
+  $self->modify_configs(
+    [qw(ctcf_funcgen_blocks_Nessie_NG_STD_2)],
+    {qw(display compact)}
+  );
+  $self->modify_configs(
+    [qw(histone_modifications_funcgen_VSN_GLOG)],
+    {qw(display tiling)}
+  );
+  $self->modify_configs(
+    [qw(gene_legend)],
+    {qw(display off)}
+  );
+  $self->modify_configs(
+    [qw(regulatory_regions_funcgen_feature_set)],
+    {qw(depth 25 height 6)}
+  );
 }
 1;
