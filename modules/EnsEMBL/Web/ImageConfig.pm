@@ -1514,7 +1514,7 @@ sub add_regulation_feature {
   my %all_data          = (%$data, %$data_a);
   my $fg_data           = \%all_data;
   
-  foreach my $key_2 (@all_keys) { 
+  foreach my $key_2 (sort @all_keys) { 
     my $k = $fg_data->{$key_2}{'type'} || 'other';
     
     next if $k eq 'other';
@@ -1543,7 +1543,7 @@ sub add_regulation_feature {
   
     if ($key_2 =~/reg_feats/){
       my @cell_lines = keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-      unshift @cell_lines, 'MultiCell';
+      push @cell_lines, 'MultiCell';
       foreach my $cell_line (@cell_lines){
         $cell_line =~s/\:\w*//;
         my $track_key = $k . '_' . $key . '_' . $key_2. '_' .$cell_line;  
