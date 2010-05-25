@@ -29,6 +29,7 @@ sub content {
  
   $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
   $features = $self->model->munge_features_for_drawing;
+  
   if (keys %$features) { $table = $self->feature_tables($features); }
 
   while (my ($type, $feature_set) = each (%$features)) {
@@ -212,9 +213,10 @@ sub feature_tables {
       $table->add_columns({'key'=>'names', 'title'=>'Name(s)','width'=>'100px','align'=>'left' });
     } 
     elsif ($feat_type eq 'LRG') {
-      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
-      $table->add_columns({'key'=>'length','title'=>'Genomic length',  'width'=>'10%','align'=>'left' });
-      $table->add_columns({'key'=>'lrg',   'title'=>'Name',  'width' =>'15%','align'=>'left' });
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location','width' =>'15%','align'=>'left' });
+      $table->add_columns({'key'=>'length','title'=>'LRG length',  'width'=>'10%','align'=>'left' });
+      $table->add_columns({'key'=>'lrg',   'title'=>'LRG name',  'width' =>'15%','align'=>'left' });
+      $table->add_columns({'key'=>'hgnc',   'title'=>'HGNC name',  'width' =>'15%','align'=>'left' })
     }
     else {	    
       $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width' =>'15%','align'=>'left' });
@@ -248,10 +250,11 @@ sub feature_tables {
      
       if ($row->{'region'}) {
         $contig_link = sprintf(
-          '%s:%d-%d(%d)',
+          '%s:%d-%d',
           $row->{'region'}, $row->{'start'}, $row->{'end'},
-          $row->{'strand'}
         );
+        
+        $contig_link .= '('.$row->{'strand'}.')' unless $feat_type eq 'LRG';
 
         if ($feat_type =~ /Gene|Transcript|Domain/ && $row->{'label'}) {
           $feat_type = 'Gene' if $feat_type eq 'Domain';
@@ -299,6 +302,7 @@ sub feature_tables {
           $hub->species_defs->species_path, $row->{'lrg_name'}, $row->{'lrg_name'}
         );
         $data_row->{'lrg'} = $link;
+        $data_row->{'hgnc'} = $row->{'hgnc_name'};
       } 
       
       my $c = 1;
