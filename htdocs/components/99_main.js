@@ -13,7 +13,7 @@ if (!('console' in window) || !('firebug' in console)) {
 }
 
 // Interface between old and new javascript models - old plugins will still work
-function addLoadEvent(func) {
+window.addLoadEvent = function (func) {
   Ensembl.extend({
     initialize: function () {
       this.base();
