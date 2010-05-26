@@ -24,9 +24,9 @@ sub content {
   my $self = shift;
   my $hub = $self->model->hub;
   
-  return unless $hub->can('get_session');
+  return unless $hub->can('session');
   
-  my $session = $hub->get_session;
+  my $session = $hub->session;
   
   my @priority = EnsEMBL::Web::Constants::MESSAGE_PRIORITY;
   
