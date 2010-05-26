@@ -7,6 +7,7 @@ Ensembl.extend({
   
   initialize: function () {    
     var hints = this.cookie.get('ENSEMBL_HINTS');
+    var imagePanels = $('.image_panel');
     
     if (!window.name) {
       window.name = 'ensembl_' + new Date().getTime() + '_' + Math.floor(Math.random() * 10000);
@@ -15,8 +16,8 @@ Ensembl.extend({
     this.hashRegex = new RegExp(/[\?;&]r=([^;&]+)/);
     
     if (window.location.hash) {
-      $('.ajax_load').each(function () {
-        this.value = Ensembl.urlFromHash(this.value);
+      $('.ajax_load').val(function () {
+        return Ensembl.urlFromHash(this.value);
       });
     }
     
@@ -35,8 +36,6 @@ Ensembl.extend({
         Ensembl.hideHints[this] = 1;
       });
     }
-    
-    var imagePanels = $('.image_panel');
     
     // Store image panel details for highlighting
     this.images = {
@@ -87,6 +86,7 @@ Ensembl.extend({
     var regex = '[;&?]%s=(.+?)[;&]';
     var url   = window.location.search + ';';
     var hash  = window.location.hash.replace(/^#/, '?') + ';';
+    var match, m, i, r;
     
     this.coreParams   = {};
     this.initialR     = $('input[name=r]', '#core_params').val();
@@ -100,7 +100,7 @@ Ensembl.extend({
       Ensembl.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
     });
     
-    var match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
+    match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
     
     if (match) {
       this.location = { name: match[1], start: parseInt(match[2], 10), end: parseInt(match[3], 10) };
@@ -113,9 +113,7 @@ Ensembl.extend({
     
     match = url.match(/s\d+=.+?[;&]/g);
     
-    if (match) {      
-      var m, i, r;
-      
+    if (match) {            
       $.each(match, function () {
         m = this.split('=');
         i = m[0].substr(1);
@@ -145,10 +143,10 @@ Ensembl.extend({
   
   // Remove the old time stamp from a URL and replace with a new one
   replaceTimestamp: function (url) {
-    var d = new Date();
+    var d    = new Date();
     var time = d.getTime() + d.getMilliseconds() / 1000;
     
-    url = this.cleanURL(url);
+    url  = this.cleanURL(url);
     url += (url.match(/\?/) ? ';' : '?') + 'time=' + time;
     
     return url;
@@ -179,20 +177,24 @@ Ensembl.extend({
   loadScript: function (url, callback, caller) {
     var script = document.createElement('script');
     
+    function onload() {
+      if (caller) {
+        caller[callback]();
+      } else {
+        callback();
+      }
+    }
+    
     if (script.readyState) { //IE
       script.onreadystatechange = function () {
         if (script.readyState == 'loaded' || script.readyState == 'complete') {
           script.onreadystatechange = null;
           
-          if (caller) {
-            caller[callback]();
-          } else {
-            callback();
-          }
+          onload();
         }
       };
     } else { // others
-      script.onload = caller ? caller.callback : callback;
+      script.onload = onload;
     }
     
     script.src = url;
