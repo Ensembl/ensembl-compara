@@ -16,10 +16,14 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('makeZMenu',     this, this.makeZMenu);
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
     Ensembl.EventManager.register('hashChange',    this, this.hashChange);
-    
+        
     $('#local-tools > p').show();
     
     $('#header a:not(#tabs a)').addClass('constant');
+    
+    if (window.location.hash) {
+      this.hashChange(Ensembl.urlFromHash(window.location.href, true));
+    }
     
     $('.modal_link').show().live('click', function () {
       if (Ensembl.EventManager.trigger('modalOpen', this)) {
