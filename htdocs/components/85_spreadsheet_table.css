@@ -27,7 +27,7 @@ table.toggle_table th div            { padding: 0; }
 
 .dataTables_info     { float: left; }
 .dataTables_length   { float: left; width: 33%; }
-.dataTables_filter   { float: right; width: 33%; text-align: right; }
+.dataTables_filter   { float: right; text-align: right; }
 .dataTables_paginate { float: right; text-align: right; color: [[PAGE_TEXT]]; font-size: 10px; }
 
 .dataTables_length select,
