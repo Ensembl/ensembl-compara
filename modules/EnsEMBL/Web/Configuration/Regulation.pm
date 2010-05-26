@@ -14,16 +14,16 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  
-  if (!ref $self->object){
-    $self->{'_data'}->{'default'} = 'Cell_line';
+ 
+  if (!ref $self->object) {
+    $self->{'_data'}->{'default'} = 'Summary';
     return;
   }
-  
+ 
   my $x = $self->object->availability || {};
   
   if ($x->{'regulation'}) {
-    $self->{'_data'}->{'default'} = 'Summary';
+    $self->{'_data'}->{'default'} = 'Cell_line';
   }
 }
 
