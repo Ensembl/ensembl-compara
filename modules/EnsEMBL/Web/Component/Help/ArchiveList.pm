@@ -22,15 +22,19 @@ sub content {
   my $object = $self->object;
   
   my $html;
-  my $url = uri_unescape($object->param('url'));
+  my $referer = $self->_parse_referer;
+  my $url = $referer->{'uri'};
+  my $match = $url =~ m#^/#;
+  my ($path, $params) = split '\?', $url;
+  
   $url =~ s#^/##;
   
   # is this a species page?
-  my ($path, $params) = split '\?', $object->param('url');
+  
   my @check = split '/', $path;
   my ($part1, $part2, $part3, $part4, $species, $type, $action);
   
-  if ($object->param('url') =~ m#^/#) {
+  if ($match) {
     ($part1, $part2, $part3, $part4) = ($check[1], $check[2], $check[3], $check[4]);
   } else {
     ($part1, $part2, $part3) = ($check[0], $check[1], $check[2]);
@@ -80,7 +84,7 @@ sub content {
       } else {
         my $releases = get_archive_redirect($type, $action, $object);
         my ($old_params, $old_url) = get_old_params($params, $type, $action);
-
+        
         foreach my $poss_release (reverse sort keys %archive) {
           my $release_happened = 0;
           

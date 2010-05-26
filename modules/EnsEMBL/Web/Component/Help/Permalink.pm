@@ -19,7 +19,7 @@ sub content {
   my $object = $self->object;
 
   my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $url = $object->param('url');
+  my $url = $object->param('url') . $object->_parse_referer->{'uri'};
 
   my $html = qq(<p class="space-below">For a permanent link to this page, which will not change with the next release 
 of $sitename, use:</p>
