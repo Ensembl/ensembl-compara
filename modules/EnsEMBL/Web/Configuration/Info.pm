@@ -129,7 +129,7 @@ sub populate_tree {
       my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
 
       $data_menu->append( $self->create_node( 'Regulation', "Regulation ($regulation_text)",
-        [qw(location      EnsEMBL::Web::Component::Regulation::FeatureDetails)],
+        [qw(location      EnsEMBL::Web::Component::Regulation::FeaturesByCellLine)],
         { 'availability' => 1, 'url' => $regulation_url, 'raw' => 1 }
       ));
     }  
