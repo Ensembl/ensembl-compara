@@ -40,10 +40,10 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_paginate span.paginate_active       { background-color: #99B3FF; }
 
 .col_toggle              { float: left; width: 34%; text-align: center; color: [[PAGE_TEXT]]; }
-.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; width: 115px; padding: 1px 5px; margin: auto; }
+.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; width: 125px; padding: 1px 5px; margin: auto; }
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; }
-.col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 127px; }
+.col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 137px; }
 .col_toggle ul li        { list-style: none; list-style-image: none; margin: 0; border-top: 1px solid; padding: 0 6px 2px 2px; cursor: pointer; }
 .col_toggle ul li span   { position: relative; top: -2px; }
 .col_toggle ul li input  { margin-right: 6px; }
