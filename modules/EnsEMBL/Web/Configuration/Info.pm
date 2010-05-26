@@ -125,7 +125,7 @@ sub populate_tree {
     }
 
     if ($sample_data->{'REGULATION_PARAM'}){
-      my $regulation_url = "$species_path/Regulation/Details?fdb=funcgen;rf=". $sample_data->{'REGULATION_PARAM'};
+      my $regulation_url = "$species_path/Regulation/Cell_line?fdb=funcgen;rf=". $sample_data->{'REGULATION_PARAM'};
       my $regulation_text = $sample_data->{'REGULATION_TEXT'} || 'not_available';
 
       $data_menu->append( $self->create_node( 'Regulation', "Regulation ($regulation_text)",
