@@ -580,9 +580,10 @@ sub draw_cigar_feature {
   }
   
   my $strand  = $self->strand;
-  my $start   = $f->start;
-  my $hstart  = $f->hstart;
-  my $hend    = $f->hend;
+  my $o       = $params->{'do_not_flip'} ? 1 : $strand;
+  my $start   = $o == 1 ? $f->start : $f->end;
+  my $hstart  = $o == 1 ? $f->hstart : $f->hend; 
+  my $hend    = $o == 1 ? $f->hend : $f->hstart; 
   my $fstrand = $f->strand;
   my $hstrand = $f->hstrand;
   my @delete;
