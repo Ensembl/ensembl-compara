@@ -13,7 +13,7 @@ sub _init {
 }
 
 sub content_region {
-  return shift->content([ [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] ])
+  return shift->content([ [4,1e4], [6,5e4], [8,1e5], [10,5e5], [12,1e6], [14,2e6], [16,5e6], [18,1e7] ], 'region')
 }
 
 sub content {
@@ -33,7 +33,7 @@ sub content {
   $self->{'update'} = $object->param('update_panel');
   
   my $values = [
-    $self->ajax_url(undef, 1) . ';r=' . $object->param('r'),
+    $self->ajax_url(shift, 1) . ';r=' . $object->param('r'),
     $object->seq_region_name,
     $seq_region_start,
     $seq_region_end,
