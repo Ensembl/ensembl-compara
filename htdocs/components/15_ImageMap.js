@@ -44,8 +44,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap(); 
     
     $('.iexport a', this.el).click(function () {
-      myself.elLk.exportMenu.css({ left: $(this).offset().left }).toggle();
-
+      myself.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
+      
       return false;
     });
   },
