@@ -33,11 +33,11 @@ sub _init {
   my $features = $reg_feat_adaptor->fetch_all_by_Slice($slice);
   foreach my $f (@$features){
     next unless $f->stable_id eq  $target_feature_id;
-    $x = $f->start;
+    $x = $f->start -1;
     $x_end = $f->end;
   }
    
-  my $glyph = $self->Rect({
+  my $glyph = $self->Space({
     x => $x,
     y => 0,
     width => $x_end-$x+1,
