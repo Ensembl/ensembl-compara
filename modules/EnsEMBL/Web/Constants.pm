@@ -167,7 +167,7 @@ sub GENERAL_MARKUP_OPTIONS {
     },
     'pop_min_freq' => {
       'type'  => 'NonNegFloat', 
-      'label' => 'Minimum frequency for population filter',  
+      'label' => 'Minor allele frequency for population filter',  
       'name'  => 'min_frequency',
       'max'   => 0.5
     }
