@@ -317,7 +317,6 @@ sub get_multicell_evidence_data {
       my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
       if(scalar(@sset) >> 1){#There should only be one
         throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);  }
-      next if (scalar(@sset) == 0 );
 
       my $reg_attr_rset = $sset[0];
 
@@ -330,12 +329,13 @@ sub get_multicell_evidence_data {
       my $unique_feature_set_id =  'MultiCell' .':'.$reg_attr_fset->feature_type->name;
       my $name = 'opt_cft_' .$unique_feature_set_id;
       $unique_feature_set_id .= ':'. $reg_attr_fset->cell_type->name;
-
       if ( ( $self->param($name) eq 'on')  || $param_all_on ){
         if (@block_features){
-          $data{'MultiCell'}{$focus_flag}{'block_features'}{$unique_feature_set_id} = $reg_attr_fset->get_Features_by_Slice($slice);
+          $data{'MultiCell'}{$focus_flag}{'block_features'}{$unique_feature_set_id} = \@block_features;
+          $reg_attr_fset->get_Features_by_Slice($slice);
          }
-        $data{'MultiCell'}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset;
+## Disable for release 58
+#        $data{'MultiCell'}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset;
       } 
     }
   }
@@ -351,17 +351,14 @@ sub get_evidence_data {
   my %data;
 
   foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){
-
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-
     foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){
       my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
       my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
-   
+
       if(scalar(@sset) >> 1){#There should only be one
         throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);    }
-      next if (scalar(@sset) == 0 );
-    
+
       my $reg_attr_rset = $sset[0];
 
       # save_data
@@ -376,14 +373,15 @@ sub get_evidence_data {
         $focus_flag = 'focus'; 
       }
       my @block_features = @{$reg_attr_fset->get_Features_by_Slice($slice)};
-      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name;    
+      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name; 
       my $name = 'opt_cft_' .$unique_feature_set_id;
 
       if ( ($self->param($name) eq 'on')  || $param_all_on){
         if (@block_features){
-          $data{$cell_type}{$focus_flag}{'block_features'}{$unique_feature_set_id} = $reg_attr_fset->get_Features_by_Slice($slice);
-        } 
-        $data{$cell_type}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset; 
+          $data{$cell_type}{$focus_flag}{'block_features'}{$unique_feature_set_id} = \@block_features
+        } unless (scalar @sset  == 0){ 
+          $data{$cell_type}{$focus_flag}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset; 
+        }
       }
     }
   }
