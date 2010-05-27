@@ -15,6 +15,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       dataTable:   $('table.data_table', this.el)
     };
     
+    if ($(this.el).hasClass('ajax')) {
+      $.extend(fnEls.ajaxLoad, $(this.el));
+    }
+    
     $.extend(this.elLk, fnEls);
     
     for (var fn in fnEls) {
@@ -48,10 +52,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   
   ajaxLoad: function () {
     var myself = this;
-    
-    if ($(this.el).hasClass('ajax')) {
-      $.extend(this.elLk.ajaxLoad, $(this.el));
-    }    
     
     $('.navbar', this.el).width(Ensembl.width);
     
