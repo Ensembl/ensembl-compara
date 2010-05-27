@@ -14,7 +14,6 @@ sub init {
   $view_config->add_image_configs({ reg_detail => 'das' });
 
   $view_config->_set_defaults('opt_focus' => 'yes'); # Add config for focus feature track 
-  $view_config->_set_defaults('opt_highlight' => 'yes');
   $view_config->_set_defaults('opt_ft_' . $_ => 'on') for keys %{$view_config->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'analyses'}}; # Add config for different feature types
   
   $view_config->storable = 1;
@@ -43,12 +42,11 @@ sub form {
     ]
   });
 
-  my $reg_object = $object->Obj;
+  my $reg_object = $object->Obj; 
   return unless $reg_object;
   
   $view_config->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' }) if $reg_object->get_focus_attributes;
 
-  $view_config->add_form_element({ type => 'YesNo', name => 'opt_highlight', select => 'select', label => 'Highlight core region' }) if $reg_object->get_focus_attributes;
 }
 1;
 
