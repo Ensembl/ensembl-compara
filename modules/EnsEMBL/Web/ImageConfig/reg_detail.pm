@@ -63,11 +63,11 @@ sub init {
   );
   $self->modify_configs(
     [qw(ctcf_funcgen_Nessie_NG_STD_2)],
-    {qw(display tiling)}
+    {qw(display off)}
   );
   $self->modify_configs(
     [qw(ctcf_funcgen_blocks_Nessie_NG_STD_2)],
-    {qw(display compact)}
+    {qw(display off)}
   );
   $self->modify_configs(
     [qw(histone_modifications_funcgen_VSN_GLOG)],
