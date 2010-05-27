@@ -18,8 +18,11 @@ sub draw_features {
   foreach my $cell_line (keys %$data){   
     # First draw core block features
     if ($data->{$cell_line}{'focus'}{'block_features'}){
+      my $configured_tracks = scalar @{$Config->{'configured_tracks'}{$cell_line}{'configured'}{'focus'}};
+      my $available_tracks =  scalar @{$Config->{'configured_tracks'}{$cell_line}{'available' }{'focus'}};
+      my $tracks_on = "$configured_tracks/$available_tracks features turned on"; 
       my $feature_set_data = $data->{$cell_line}{'focus'}{'block_features'};
-      $self->draw_blocks($feature_set_data, 'Core Evidence' . $cell_line, undef, $colours);
+      $self->draw_blocks($feature_set_data, 'Core Evidence' . $cell_line, undef, $colours, $tracks_on);
       $drawn_data = 1;
     } else {
        $self->display_error_message($cell_line, 'focus', 'peaks');
@@ -36,8 +39,11 @@ sub draw_features {
     }
     # Next draw other block features
     if ($data->{$cell_line}{'non_focus'}{'block_features'}){
+      my $configured_tracks = scalar @{$Config->{'configured_tracks'}{$cell_line}{'configured'}{'non_focus'}};
+      my $available_tracks =  scalar @{$Config->{'configured_tracks'}{$cell_line}{'available' }{'non_focus'}};
+      my $tracks_on = "$configured_tracks/$available_tracks features turned on";
       my $feature_set_data = $data->{$cell_line}{'non_focus'}{'block_features'};
-      $self->draw_blocks($feature_set_data, 'Other Evidence for ' . $cell_line, undef, $colours);
+      $self->draw_blocks($feature_set_data, 'Other Evidence for ' . $cell_line, undef, $colours, $tracks_on);
       $drawn_data = 1;
     } else {
       $self->display_error_message($cell_line, 'non_focus', 'peaks');
@@ -66,9 +72,13 @@ sub draw_features {
 }
 
 sub draw_blocks { 
-  my ($self, $fs_data, $display_label, $bg_colour, $colours) = @_;
+  my ($self, $fs_data, $display_label, $bg_colour, $colours, $tracks_on) = @_;
   $self->draw_track_name($display_label, 'black', -118, 0);
-  $self->draw_space_glyph();
+  if ($tracks_on ){
+     $self->draw_track_name($tracks_on, 'grey40', -118, 0);
+  } else {  
+    $self->draw_space_glyph();
+  }
 
   foreach my $f_set (sort { $a cmp $b  } keys %$fs_data){
     my $feature_name = $f_set; 
@@ -114,8 +124,8 @@ sub process_wiggle_data {
     @features   = sort { $a->scores->[0] <=> $b->scores->[0]  } @features;
     my ($f_min_score, $f_max_score) = @{$features[0]->get_min_max_scores()};
     if ($wsize ==0){
-      $f_min_score = $features[0]->scores->[0];
-      $f_max_score = $features[-1]->scores->[0];
+      $f_min_score = $features[0]->scores->[0]; 
+      $f_max_score = $features[-1]->scores->[0]; 
     } else {
       my @rfs = ();
       foreach my $rf (@features){
@@ -142,7 +152,9 @@ sub process_wiggle_data {
 
   if ($max_score <=10){ 
     if ($cell_line =~/IMR90/) {
-      $max_score = 2;
+      unless ($max_score >= 2){
+        $max_score =2;
+      }
     } else {
       $max_score = 10;
     }
@@ -249,6 +261,7 @@ sub display_error_message {
       $self->draw_track_name('Core Evidence '.$cell_line , 'black', -118, 2, 1);
       $self->display_no_data_error($error_message);
     } elsif($type eq 'wiggle') {
+      return if $cell_line eq 'MultiCell'; 
       if ($number_available >= 1){
         my $error_message = "No core evidence supporting set features for $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
         $self->draw_track_name('Core support '.$cell_line , 'black', -118, 2, 1);
