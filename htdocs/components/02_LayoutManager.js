@@ -122,6 +122,10 @@ Ensembl.LayoutManager.extend({
   },
   
   hashChange: function (loc) {
+    if (!loc) {
+      return;
+    }
+    
     function addCommas(str) {
       var rgx = /(\d+)(\d{3})/;
       
