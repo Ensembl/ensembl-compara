@@ -171,7 +171,7 @@ Ensembl.extend({
     var match = hash.match(this.hashRegex);
     var r     = match ? match[1] : this.initialR;
     
-    return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : url + ';r=' + r;
+    return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : r ? url + ';r=' + r : url;
   },
   
   loadScript: function (url, callback, caller) {
