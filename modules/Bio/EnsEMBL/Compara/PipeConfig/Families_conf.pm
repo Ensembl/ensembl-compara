@@ -4,9 +4,7 @@
 # 
 # rel.57+:  init_pipeline.pl execution took 8m45;   pipeline execution took 100hours (4.2 x days-and-nights) including queue waiting
 # rel.58:   init_pipeline.pl execution took 5m (Albert's pipeline not working) or 50m (Albert's pipeline working);   pipeline execution took ...
-# rel.58b:  init_pipeline.pl execution took 6m30
-#
-# Note: in rel.57+ family_idmap analysis failed 4 times as part of pipeline, but ran successfully as via runWorker.pl
+# rel.58b:  init_pipeline.pl execution took 6m30, pipeline execution [with some debugging in between] took 5*24h. Should be 4*24h at most.
 
 #
 ## Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
@@ -44,8 +42,8 @@ sub default_options {
         mcl_name        => 'families_'.$self->o('rel_with_suffix').'.mcl',
 
             # resource requirements:
-        mcxload_gigs    => 20,                                      # 15G enough to load 450mln, 25G enough to load 850mln
-        mcl_gigs        => 40,
+        mcxload_gigs    => 30,                                      # old MCL: 15G was enough to load 450mln, 25G was enough to load 850mln; new MCL takes 25G to load 465mln edges.
+        mcl_gigs        => 40,                                      # new MCL took 30G to cluster 465mln edges (8 hours on 4 procs).
         mcl_procs       =>  4,
         himafft_gigs    => 14,
         dbresource      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara3, but will have to be set manually otherwise
@@ -140,7 +138,7 @@ sub resource_classes {
          2 => { -desc => 'long_blast',       'LSF' => '-q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').'] rusage['.$self->o('dbresource').'=10:duration=10:decay=1]"' },
          3 => { -desc => 'mcxload',          'LSF' => '-C0 -M'.$self->o('mcxload_gigs').'000000 -q hugemem -R"select[mem>'.$self->o('mcxload_gigs').'000] rusage[mem='.$self->o('mcxload_gigs').'000]"' },
          4 => { -desc => 'mcl',              'LSF' => '-C0 -M'.$self->o('mcl_gigs').'000000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-         5 => { -desc => 'himem_mafft',      'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
+         5 => { -desc => 'himem_mafft_idmap',   'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1:mem='.$self->o('himafft_gigs').'000]"' },
          6 => { -desc => 'lomem_mafft',      'LSF' => '-R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').'] rusage['.$self->o('dbresource').'=10:duration=10:decay=1]"' },
     };
 }
@@ -263,7 +261,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 1 => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#tcx_name# #work_dir#/#itab_name#' },
-                       'parse_mcl'          => undef,   # same as saying: "1 => [ 'parse_mcl' ]" (i.e. there is NO template)
+                       'parse_mcl'          => { 'mcl_name' => '#work_dir#/#mcl_name#' },
                 },
             },
             -rc_id => 4,
@@ -277,7 +275,7 @@ sub pipeline_analyses {
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => {
-                    'archive_long_files'   => { 'input_filenames' => '#work_dir#/#mcl_name#' },
+                    'archive_long_files'   => { 'input_filenames' => '#mcl_name#' },
                 },
             },
             -rc_id => 1,
@@ -308,7 +306,7 @@ sub pipeline_analyses {
             ],
             -wait_for => [ 'parse_mcl' ],
             -flow_into => {
-                1 => [ 'find_update_singleton_cigars' ],
+                1 => { 'find_update_singleton_cigars' => { } },
                 2 => [ 'family_mafft_big'  ],
                 3 => [ 'family_mafft_main' ],
             },
@@ -409,7 +407,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => { 'notify_pipeline_completed' => { } },
             },
-            -rc_id => 1,
+            -rc_id => 5,    # NB: make sure you give it enough memory or it will crash
         },
         
         {   -logic_name => 'notify_pipeline_completed',
