@@ -29,11 +29,51 @@ warn "--------------------------------------------------------------------------
   print O join "\n", sort keys %ignore;
   close O;
 
- #do not create/overwrite robots.txt if sitemaps are on the server (for google crawling). 
-  my $sitemap = `ls $root/sitemaps/sitemap-index.xml 2>&1`;
-  return if($sitemap !~ /No such file or directory/);
- 
-  if( open FH, ">$root/robots.txt" ) {
+ #Create a different Robots.txt for google sitemap
+  my $server_root = $sd->ENSEMBL_SERVERROOT;
+  my $sitemap = `ls $server_root/htdocs/sitemaps/sitemap-index.xml 2>&1`;  
+  if($sitemap !~ /No such file or directory/)
+  {
+warn "---------------------------------------------------------------
+  Creating robots.txt for google sitemap
+---------------------------------------------------------------
+";
+    my @letters = ('A'..'Z');    
+    open FH, ">$root/robots.txt";
+    
+    print FH qq(User-agent: *
+Disallow: /Multi/
+Disallow: /biomart/
+Disallow: /Account/
+Disallow: /UserData/
+Disallow: */Export/
+Disallow: */Location/
+Disallow: */blastview/
+Disallow: /ExternalData/
+Disallow: /UserAnnotation/
+Disallow: */Search/
+Disallow: */Variation/
+Disallow: */Regulation/
+Disallow: */LRG/);
+
+    foreach my $row(@letters){
+      if($row ne 'S')
+      {
+        my $row_lowercase = lc($row);
+        print FH qq(
+Disallow:*/Gene/$row_lowercase*
+Disallow:*/Gene/$row*
+Disallow:*/Transcript/$row_lowercase*
+Disallow:*/Transcript/$row*);      
+      }
+    }
+    
+    print FH qq(
+Sitemap: http://www.ensembl.org/sitemap-index.xml);
+
+    close FH;
+  }
+  elsif ( open FH, ">$root/robots.txt" ) {
 ## Allowed list is empty so we only allow access to the main
 ## index page... /index.html...
 
