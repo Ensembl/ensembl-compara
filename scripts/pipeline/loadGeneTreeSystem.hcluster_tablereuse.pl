@@ -1039,9 +1039,12 @@ sub build_GeneTreeSystem
   # OtherParalogs are calculated for every QuickTreeBreak, but only
   # after all clusters are analysed, to avoid descriptions clashing
   # between OrthoTree and OtherParalogs.
-  $ctrlRuleDBA->create_rule($orthotree,   $otherparalogs);
-  $ctrlRuleDBA->create_rule($njtree_phyml,$otherparalogs);
-  $ctrlRuleDBA->create_rule($mcoffee,     $otherparalogs);
+  $ctrlRuleDBA->create_rule($orthotree,      $otherparalogs);
+  $ctrlRuleDBA->create_rule($njtree_phyml,   $otherparalogs);
+  $ctrlRuleDBA->create_rule($mcoffee,        $otherparalogs);
+  $ctrlRuleDBA->create_rule($quicktreebreak, $otherparalogs);
+  $ctrlRuleDBA->create_rule($BuildHMMcds,    $otherparalogs);
+  $ctrlRuleDBA->create_rule($BuildHMMaa,     $otherparalogs);
 
   $dataflowRuleDBA->create_rule($njtree_phyml, $orthotree, 1);
 
