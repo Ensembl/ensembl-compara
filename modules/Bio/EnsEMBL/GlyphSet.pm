@@ -580,13 +580,21 @@ sub draw_cigar_feature {
   }
   
   my $strand  = $self->strand;
-  my $o       = $params->{'do_not_flip'} ? 1 : $strand;
-  my $start   = $o == 1 ? $f->start : $f->end;
-  my $hstart  = $o == 1 ? $f->hstart : $f->hend; 
-  my $hend    = $o == 1 ? $f->hend : $f->hstart; 
   my $fstrand = $f->strand;
   my $hstrand = $f->hstrand;
+  my ($start, $hstart, $hend);
   my @delete;
+  
+  if ($self->isa('Bio::EnsEMBL::GlyphSet::_oligo')) {
+    my $o   = $params->{'do_not_flip'} ? 1 : $strand;
+    $start  = $o == 1 ? $f->start : $f->end;
+    $hstart = $o == 1 ? $f->hstart : $f->hend; 
+    $hend   = $o == 1 ? $f->hend : $f->hstart; 
+  } else {
+    $start  = $f->start;
+    $hstart = $f->hstart;
+    $hend   = $f->hend;
+  }
   
   my ($slice_start, $slice_end, $tag1, $tag2);
   
