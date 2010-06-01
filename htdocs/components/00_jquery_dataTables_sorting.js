@@ -3,13 +3,13 @@
 
 $.extend($.fn.dataTableExt.oSort, {
   'numeric-asc': function (a, b) {
-    var x = isNaN(a) ? 1e100 : a;
-    var y = isNaN(b) ? 1e100 : b;
+    var x = isNaN($.trim(a) || 'a') ? 1e100 : a;
+    var y = isNaN($.trim(b) || 'a') ? 1e100 : b;
     return x - y;
   },
   'numeric-desc': function (a, b) {
-    var x = isNaN(a) ? -1e100 : a;
-    var y = isNaN(b) ? -1e100 : b;
+    var x = isNaN($.trim(a) || 'a') ? -1e100 : a;
+    var y = isNaN($.trim(b) || 'a') ? -1e100 : b;
     return y - x;
   },
   'position': function (dir, a, b) {
