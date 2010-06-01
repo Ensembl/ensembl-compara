@@ -31,7 +31,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       }
     }
     
-    Ensembl.EventManager.register('updatePanel', this, this.getContent);
+    Ensembl.EventManager.register('updatePanel',  this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
     
     if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
@@ -43,7 +43,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     // Links in a popup (help) window should make a new window in the main browser
     if (window.name.match(/^popup_/)) {
-      $('a', this.el).click(function () {
+      $('a', this.el).bind('click', function () {
         window.open(this.href, window.name.replace(/^popup_/, '') + '_1');
         return false;
       });
@@ -51,18 +51,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   ajaxLoad: function () {
-    var myself = this;
+    var panel = this;
     
     $('.navbar', this.el).width(Ensembl.width);
     
     this.elLk.ajaxLoad.each(function () {
-      var el = $(this);
-      var urls = [];
-      var content, caption, component;
-      
-      $('input.ajax_load', this).each(function () {
-        urls.push(this.value);
-      });
+      var el   = $(this);
+      var urls = $('input.ajax_load', this).map(function () { return this.value; });
+      var content, caption, component, referer, url, params, i, j;
       
       if (!urls.length) {
         return;
@@ -70,7 +66,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       if (urls[0].substr(0, 1) != '/') {
         caption = urls.shift();
-        
         content = $('<div class="content"></div>');
         
         el.append('<h4>' + caption + '</h4>').append(content);
@@ -78,15 +73,15 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         content = el;
       }
       
-      for (var i = 0; i < urls.length; i++) {
+      for (i = 0; i < urls.length; i++) {
         component = urls[i];
         
         if (component.substr(0, 1) == '/') {
           if (component.match(/\?/)) {
-            var referer = '';
-            var url = [];
-            var params = component.split(/;/);
-            var j = params.length;
+            referer = '';
+            url     = [];
+            params  = component.split(/;/);
+            j       = params.length;
             
             while (j--) {
               if (params[j].match(/^_referer=/)) {
@@ -99,11 +94,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
             component = Ensembl.replaceTimestamp(url.join(';')) + referer;
           }
           
-          myself.getContent(component, content, { updateURL: component + ';update_panel=1' });
+          panel.getContent(component, content, { updateURL: component + ';update_panel=1' });
         }
       }
       
-      el = null;
+      el      = null;
       content = null;
     });
   },
@@ -132,8 +127,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       context: this,
       success: function (html) {
         if (html) {
-          var type = $(html).find('input.panel_type').val() || 'Content';
-          Ensembl.EventManager.trigger('addPanel', undefined, type, html, el, params);
+          Ensembl.EventManager.trigger('addPanel', undefined, $(html).find('input.panel_type').val() || 'Content', html, el, params);
           Ensembl.EventManager.trigger('ajaxLoaded');
         } else {
           el.html('');
@@ -164,7 +158,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.elLk.hideHints.each(function () {
       var div = $(this);
       
-      $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').click(function () {
+      $('<img src="/i/close.gif" alt="Hide hint panel" title="Hide hint panel" />').bind('click', function () {
         var tmp = [];
         
         div.hide();
@@ -181,17 +175,17 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   toggleTable: function () {
-    var myself = this;
+    var panel  = this;
     var id     = this.elLk.toggleTable[0].id;
     var button = $('.toggle_button', this.el);
     var icon   = button.children('em').show();
     var info   = button.siblings('.toggle_info');
   
-    button.click(function () {
-      myself.elLk.toggleTable.toggle().parent('.toggleTable_wrapper').toggle();
+    button.bind('click', function () {
+      panel.elLk.toggleTable.toggle().parent('.toggleTable_wrapper').toggle();
       info.toggle();
       icon.toggleClass('open closed');
-      Ensembl.cookie.set('ENSEMBL_' + id, myself.elLk.toggleTable.is(':visible') ? 'open' : 'close');
+      Ensembl.cookie.set('ENSEMBL_' + id, panel.elLk.toggleTable.is(':visible') ? 'open' : 'close');
     });
     
     button = null;
@@ -203,7 +197,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       shut: { src: '/i/list_shut.gif', alt: '>' }
     };
     
-    this.elLk.toggleList.click(function () {
+    this.elLk.toggleList.bind('click', function () {
       var img = $('img', this);
       
       img.attr(attrs[img.hasClass('open') ? 'shut' : 'open']).toggleClass('open');
@@ -236,7 +230,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   dataTable: function () {
-    var myself = this;
+    var panel = this;
     
     this.elLk.dataTable.each(function (i) {
       var table  = $(this);
@@ -246,7 +240,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var menu   = '';
       var sDom;
       
-      var cookieId      = this.id || 'data_table' + myself.panelNumber;
+      var cookieId      = this.id || 'data_table' + panel.panelNumber;
       var cookieName    = 'DT#' + (table.hasClass('toggle_table') ? '' : window.location.pathname.replace(Ensembl.speciesPath, '') + '#') + cookieId.replace(/^data_table/, '');
       var cookieOptions = Ensembl.cookie.get(cookieName, true);
       
@@ -339,11 +333,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       var dataTable = table.dataTable(options);
       
-      myself.elLk.colToggle = $('.col_toggle', myself.el);
+      panel.elLk.colToggle = $('.col_toggle', panel.el);
       
       var columns    = dataTable.fnSettings().aoColumns;
       var toggleList = $('<ul class="floating_popup"></ul>');
-      var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).click(function (e) {
+      var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).bind('click', function (e) {
         if (e.target == this) {
           toggleList.toggle();
         }
@@ -352,47 +346,49 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       $.each(columns, function (col) {
         var th = $(this.nTh);
         
-        $('<li>').click(function () {
-          var input = $('input', this);
-          
-          if (!input.attr('disabled')) {
-            var visibility = !columns[col].bVisible;
+        $('<li>', {
+          html: '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
+          click: function () {
+            var input = $('input', this);
             
-            if (myself.elLk.colToggle.length == 1) {
-              input.attr('checked', visibility);
-            } else {
-              var index = input.index();
+            if (!input.attr('disabled')) {
+              var visibility = !columns[col].bVisible;
               
-              myself.elLk.colToggle.each(function () {
-                $('input', this).get(index).checked = visibility;
+              if (panel.elLk.colToggle.length == 1) {
+                input.attr('checked', visibility);
+              } else {
+                var index = input.index();
+                
+                panel.elLk.colToggle.each(function () {
+                  $('input', this).get(index).checked = visibility;
+                });
+              }
+              
+              $.each(panel.dataTables, function () {
+                this.fnSetColumnVis(col, visibility);
+                options.fnDrawCallback(this.fnSettings());
               });
             }
-            
-            $.each(myself.dataTables, function () {
-              this.fnSetColumnVis(col, visibility);
-              options.fnDrawCallback(this.fnSettings());
-            });
-          }
           
-          input = null;        
-        }).append(
-          '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>'
-        ).appendTo(toggleList);
+            input = null;
+          }
+        }).appendTo(toggleList);
         
         th = null; 
       });
       
       $('.col_toggle', table.parent()).append(toggle);
       
-      myself.dataTables = myself.dataTables || [];
-      myself.dataTables.push(dataTable);
+      panel.dataTables = panel.dataTables || [];
+      panel.dataTables.push(dataTable);
       
-      table = null;
+      table     = null;
       dataTable = null;
     });
   },
   
   getSequenceKey: function () {
+    var panel  = this;
     var params = {};
     var urlParams;
     
@@ -409,7 +405,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       });
       
-      this.getContent(this.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', this.el));
+      panel.getContent(panel.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', panel.el));
     }
     
     if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
