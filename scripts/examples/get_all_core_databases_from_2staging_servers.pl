@@ -23,6 +23,6 @@ my @core_dbas = grep { $_->species !~ /ancestral/i } @{ Bio::EnsEMBL::Registry->
 
 print "\n------------[Found a total of ".scalar(@core_dbas)."core databases on staging servers]------------\n";
 foreach my $dba (@core_dbas) {
-    print ''.$dba->species()."\n";
+    print 'dba_species: '.$dba->species()."\n";
 }
 
