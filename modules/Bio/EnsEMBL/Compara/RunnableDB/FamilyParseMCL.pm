@@ -4,6 +4,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::FamilyParseMCL;
 
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::Attribute;
 
