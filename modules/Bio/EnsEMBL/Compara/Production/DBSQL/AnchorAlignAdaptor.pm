@@ -228,7 +228,7 @@ sub fetch_all_by_anchor_id_and_mlss_id {
 		SELECT anchor_align_id, method_link_species_set_id, anchor_id, 
 		dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, score, 
 		num_of_organisms, num_of_sequences FROM anchor_align WHERE 
-		anchor_id = ? AND method_link_species_set_id = ?};
+		anchor_id = ? AND method_link_species_set_id = ? AND anchor_status IS NULL};
 	my $sth = $self->prepare($query);
 	$sth->execute($anchor_id, $method_link_species_set_id) or die $self->errstr;
 	return $sth->fetchall_hashref("anchor_align_id");
