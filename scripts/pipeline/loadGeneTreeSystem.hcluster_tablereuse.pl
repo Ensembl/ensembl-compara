@@ -993,6 +993,43 @@ sub build_GeneTreeSystem
     # Saturated jobs create new jobs of the same kind
     $dataflowRuleDBA->create_rule($Sitewise_dNdS, $Sitewise_dNdS, 2);
   }
+  $DB::single=1;1;
+  #
+  # CreateHDupsQCJobs
+  print STDERR "CreateHDupsQCJobs...\n";
+  #
+  my $CreateHDupsQCJobs = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateHDupsQCJobs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::CreateHDupsQCJobs'
+  );
+  $analysisDBA->store($CreateHDupsQCJobs);
+
+  if(defined($self->{'hiveDBA'})) {
+    my $stats = $analysisStatsDBA->fetch_by_analysis_id($CreateHDupsQCJobs->dbID);
+    $stats->batch_size(1);
+    $stats->hive_capacity(-1);
+    $stats->status('READY');
+    $stats->update();
+  }
+
+  #
+  # HDupsQC
+  #
+  print STDERR "HDupsQC...\n";
+  #
+  my $hdupsqc = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'HDupsQC',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HDupsQC',
+      );
+  $analysisDBA->store($hdupsqc);
+  $stats = $hdupsqc->stats;
+  $stats->batch_size(1);
+  my $hdupsqc_hive_capacity = 10;
+  $stats->hive_capacity($hdupsqc_hive_capacity);
+  $stats->update();
+
+
   #
   # build graph of control and dataflow rules
   #
@@ -1003,6 +1040,8 @@ sub build_GeneTreeSystem
   $ctrlRuleDBA->create_rule($blastrules_analysis, $CreateStoreSeqCDSJobs);
   $ctrlRuleDBA->create_rule($CreateStoreSeqExonBoundedJobs, $storeseqexonbounded);
   $ctrlRuleDBA->create_rule($CreateStoreSeqCDSJobs, $storeseqcds);
+  $ctrlRuleDBA->create_rule($CreateHDupsQCJobs, $hdupsqc);
+  $ctrlRuleDBA->create_rule($threshold_on_dS,$CreateHDupsQCJobs);
   $ctrlRuleDBA->create_rule($CreateHclusterPrepareJobs, $hclusterprepare);
   $ctrlRuleDBA->create_rule($hclusterprepare, $hclusterrun);
   $ctrlRuleDBA->create_rule($hclusterrun, $clustersetqc);
@@ -1029,7 +1068,7 @@ sub build_GeneTreeSystem
   $dataflowRuleDBA->create_rule($njtree_phyml, $njtree_phyml, 2);
   $dataflowRuleDBA->create_rule($njtree_phyml, $quicktreebreak, 3);
   $dataflowRuleDBA->create_rule($njtree_phyml, $otherparalogs, 3);
-  $DB::single=1;1;
+
   $dataflowRuleDBA->create_rule($orthotree, $BuildHMMaa, 1);
   $dataflowRuleDBA->create_rule($orthotree, $BuildHMMcds, 1);
   $dataflowRuleDBA->create_rule($orthotree, $quicktreebreak, 2);
@@ -1082,8 +1121,8 @@ sub build_GeneTreeSystem
  #       -analysis       => $paf_cluster,
         -analysis       => $hclusterrun,
        );
-   
-   if($analysis_template{reuse_db}) {
+
+   if($analysis_template{'-parameters'} =~ /reuse_db/) {
      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
          (
           -input_id       => 1,
@@ -1101,7 +1140,13 @@ sub build_GeneTreeSystem
    else {
      print STDERR "No reuse database detected in BLASTP_TEMPLATE. Skipping global checks for ClustersetQC and GeneTreesetQC\n";
    }
-   
+
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
+      (
+       -input_id       => 1,
+       -analysis       => $CreateHDupsQCJobs,
+      );
+
   print STDERR "Done.\n";
   return 1;
 }
