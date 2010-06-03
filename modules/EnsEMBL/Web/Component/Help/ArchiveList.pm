@@ -18,16 +18,22 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  
-  my $html;
+  my $self    = shift;
+  my $object  = $self->object;
   my $referer = $self->_parse_referer;
-  my $url = $referer->{'uri'};
-  my $match = $url =~ m#^/#;
-  my ($path, $params) = split '\?', $url;
+  my $url     = $referer->{'uri'};
+  my $r       = $object->param('r');
+  my $match   = $url =~ m/^\//;
   
-  $url =~ s#^/##;
+  if ($r) {
+    $url  =~ s/([\?;&]r=)[^;]+(;?)/$1$r$2/;
+    $url .= ($url =~ /\?/ ? ';r=' : '?r=') . $r unless $url =~ /[\?;&]r=[^;&]+/;
+  }
+  
+  my ($path, $params) = split '\?', $url;
+  my $html;
+  
+  $url =~ s/^\///;
   
   # is this a species page?
   
