@@ -1,12 +1,12 @@
 package EnsEMBL::Web::Apache::SendDecPage;
-       
+
 use strict;
 
 use Apache2::Const qw(:common :methods :http);
 use CGI;
 use Compress::Zlib;
 
-use SiteDefs qw(:ALL);
+use SiteDefs qw(:APACHE);
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Document::Panel;
@@ -34,7 +34,7 @@ sub handler {
     my $content = '';
     $content .= $buffer while $gz->gzread( $buffer ) > 0;
     $gz->gzclose(); 
-    if($ENV{PERL_SEND_HEADER}) {
+    if ($ENV{'PERL_SEND_HEADER'}) {
       print "Content-type: text/xml; charset=utf-8";
     } else {
       $r->content_type('text/xml; charset=utf-8');
@@ -115,7 +115,9 @@ sub handler {
     ## Read html file into memory to parse out SSI directives.
     {
       local($/) = undef;
-      $pageContent = ${ $r->slurp_filename() }; #<$fh>;
+      open FH, $r->filename;
+      $pageContent = <FH>;
+      close FH;
     }
 
     return DECLINED if $pageContent =~ /<!--#set var="decor" value="none"-->/;
