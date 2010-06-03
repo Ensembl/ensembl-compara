@@ -77,21 +77,18 @@ sub fetch_input {
             die "The required assembly_name '".$self->param('assembly_name')."' is different from the one found in the database: '$assembly_name', please investigate";
         }
 
-    } elsif( my $species_name = $self->param('species_name') ) {    # perform (multi)registry search
+    } elsif( my $species_name = $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
 
-=comment This part is not working yet, but hopefully with Ian's help we will be able to do something like this:
+        my $registry_dbs = $self->param('registry_dbs') || die "unless 'locator' is specified, 'registry_dbs' becomes obligatory parameter";
 
-        foreach my $registry_db (@{ $self->param('registry_dbs') }) {
-            # local %Bio::EnsEMBL::Registry::registry_register = ();
-            # Bio::EnsEMBL::Registry->clear();
-            # %Bio::EnsEMBL::Registry::registry_register = ();
-            # $Bio::EnsEMBL::Registry::registry_register{'_ALIAS'} = {};
+        for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
 
-            Bio::EnsEMBL::Registry->load_registry_from_db( %$registry_db );
+            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $r_ind );
 
-            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name, 'core') || next;
+            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$r_ind, 'core') || next;
+            my $this_assembly = $this_core_dba->extract_assembly_name();
 
-            $assembly_name ||= $this_core_dba->extract_assembly_name();
+            $assembly_name ||= $this_assembly;
 
             if($this_assembly eq $assembly_name) {
                 $core_dba = $this_core_dba;
@@ -102,19 +99,6 @@ sub fetch_input {
             }
 
         } # try next registry server
-
-=cut
-            # In the meantime, try to get as much as we can from load_registry_from_multiple_dbs (assuming no clashes are allowed) :
-
-        Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs( @{ $self->param('registry_dbs') } );
-        
-        $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name, 'core');
-        $assembly_name ||= $core_dba->extract_assembly_name();
-
-        if($assembly_name and $self->param('assembly_name') and ($assembly_name ne $self->param('assembly_name')) ) {
-            die "The required assembly_name '".$self->param('assembly_name')."' is different from the one found in the database: '$assembly_name', please investigate";
-        }
-
     }
 
     if( $core_dba ) {
