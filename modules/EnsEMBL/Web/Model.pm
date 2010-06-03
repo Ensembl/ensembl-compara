@@ -107,7 +107,7 @@ sub add_objects {
   ### Proxy Object(s)
   if (ref($data) eq 'ARRAY') {
     foreach my $object (@$data) {
-      if (ref($object) =~ /Object/ && $type ne 'MultipleLocation') {
+      if (ref($object) =~ /Object/ && $type !~ /^(MultipleLocation|DAS)$/) {
         $self->object($object->__objecttype, $object);
       }
       ### Other object type
