@@ -71,11 +71,17 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'           => $self->o('master_db'),
-                'inputquery'        => 'SELECT name FROM genome_db WHERE taxon_id AND assembly_default',
+                'inputquery'        => 'SELECT genome_db_id, name, assembly FROM genome_db WHERE taxon_id AND assembly_default',
                 'fan_branch_code'   => 2,
             },
             -input_ids  => [
-                { 'input_id'        => { 'species_name' => '#_range_start#', }, },
+                    #
+                    # Please note that if you do specify 'assembly_name' => '#_start_2#'
+                    # if would mean "load only those where master_db's assembly is in agreement with staging genomes and crash otherwise.
+                    # Skipping the 'assembly_name' would mean "load the latest assembly for the genome and let me fix the master later".
+                    #
+                # { 'input_id'        => { 'gdb' => '#_start_0#', 'species_name' => '#_start_1#' } },   
+                { 'input_id'        => { 'gdb' => '#_start_0#', 'species_name' => '#_start_1#', 'assembly_name' => '#_start_2#' } },   
             ],
             -flow_into => {
                 2 => [ 'load_genomedb' ],
