@@ -46,6 +46,7 @@ foreach my $gene (@$genes) {
     print $node_a->stable_id, ",",
           $node_b->stable_id, ",",
           $ancestor->get_tagvalue("taxon_name"), ",",
+          $ancestor->get_tagvalue("taxon_alias_mya"), ",",
           $distance_a, ",",
           $distance_b, "\n";
   }
