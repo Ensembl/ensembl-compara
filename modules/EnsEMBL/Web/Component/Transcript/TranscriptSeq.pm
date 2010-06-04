@@ -146,19 +146,14 @@ sub get_sequence_data {
       
       next if keys %population_filter && !$population_filter{$dbID};
       
-      my $var_class         = $var->var_class;
       my $variation_name    = $var->variation_name;
       my $alleles           = $var->allele_string;
       my $ambigcode         = $var->ambig_code || '*';
       my $pep_allele_string = $transcript_variation->pep_allele_string;
       my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
       my $consequence_type  = join ' ', @{$transcript_variation->consequence_type};
-      my $utr_var           = $consequence_type =~ /UTR/;
-      my $frameshift_var    = $consequence_type =~ /FRAMESHIFT/;
       my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
-      my $allele_count      = scalar split /\//, $pep_allele_string;
-      my $insert            = 0;
-      my $type              = lc $var->display_consequence;
+      my $type              = lc $transcript_variation->display_consequence;
       
       if ($var->strand == -1 && $trans_strand == -1) {
         $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
@@ -166,10 +161,7 @@ sub get_sequence_data {
       }
       
       # Variation is an insert if start > end
-      if ($start > $end) {
-        ($start, $end, $insert) = ($end, $start, 1);
-        $insert = 1;
-      }
+      ($start, $end) = ($end, $start) if $start > $end;
       
       ($_ += $start_pad)-- for $start, $end; # Adjust from start = 1 (slice coords) to start = 0 (sequence array)
       
