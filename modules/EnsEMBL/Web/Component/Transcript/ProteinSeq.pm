@@ -67,7 +67,7 @@ sub get_sequence_data {
       
       next if keys %population_filter && !$population_filter{$dbID};
       
-      $markup->{'variations'}->{$pos}->{'type'}      = lc $var->display_consequence;
+      $markup->{'variations'}->{$pos}->{'type'}      = lc $transcript_variation->display_consequence;
       $markup->{'variations'}->{$pos}->{'alleles'}   = $var->allele_string;
       $markup->{'variations'}->{$pos}->{'ambigcode'} = $var->ambig_code || '*';
       $markup->{'variations'}->{$pos}->{'href'} ||= {
