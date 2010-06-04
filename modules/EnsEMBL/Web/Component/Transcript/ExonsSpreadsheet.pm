@@ -272,7 +272,17 @@ sub add_variations {
   foreach my $vf (@$variation_features) {
     my $name = $vf->variation_name;
     
-    my $class = lc $vf->display_consequence;
+    my $class;
+    
+    # If this seems stupidly inefficient, it's because the variation API currently doesn't support
+    # getting a single TranscriptVariation associated with a given transcript. /sigh
+    for (@{$vf->get_all_TranscriptVariations}) {
+      if ($_->transcript->stable_id eq $object->stable_id) {
+        $class = lc $_->display_consequence;
+        last;
+      }
+    }
+    
     $config->{'key'}->{'variations'}->{$class} = 1;
     $class = " $class";
     
