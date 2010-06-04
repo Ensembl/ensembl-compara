@@ -127,7 +127,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       context: this,
       success: function (html) {
         if (html) {
-          Ensembl.EventManager.trigger('addPanel', undefined, $(html).find('input.panel_type').val() || 'Content', html, el, params);
+          Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class=".*?panel_type.*?".*?>/)||[])[0]).val() || 'Content', html, el, params);
           Ensembl.EventManager.trigger('ajaxLoaded');
         } else {
           el.html('');
