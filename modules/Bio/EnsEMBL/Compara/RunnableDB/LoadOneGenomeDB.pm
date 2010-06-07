@@ -136,8 +136,6 @@ sub run {
     $locator .= ';species_id='.$core_dba->species_id if ($core_dba->species_id); # shouldn't it be a part of DBConnection::locator ?
     $locator .= ';disconnect_when_inactive=1';
 
-    # ToDo: adapt the _get_name() subroutine from 'comparaLoadGenomes.pl'
-
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
     $genome_db->taxon_id( $taxon_id );
