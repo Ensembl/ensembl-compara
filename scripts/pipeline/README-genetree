@@ -241,6 +241,9 @@ Some 'gotchas' with the core databases should be checked;
 
 - There must be a genebuild.start_date set in the meta table,
   mysql> SELECT * FROM meta WHERE meta_key="genebuild.start_date";
+  
+- The meta_coord table must be correctly populated, e.g. using;
+  ensembl-live/ensembl/misc-scripts/meta_coord/update_meta_coord.pl
 
 - Only genes on slices marked as 'toplevel' will be included.
   mysql> SELECT count(*) 
@@ -447,7 +450,10 @@ If you are running this for the Ensembl production release, make sure
 that the method_link, species_set and method_link_species_set tables
 in your compara DB are in sycn with the method_link_species_set in the
 compara master db.
-TODO: How to do this?
+
+$ mysqldump -t ensembl_compara_master \
+  species_set method_link method_link_species_set \
+  | mysql $COMPARA_DBNAME
 
 If not, create the method_link_species_sets that you need with the
 create_mlss.pl script as follows;
@@ -475,7 +481,7 @@ create_mlss.pl script as follows;
      (consistent IDs make merging DBs easier)
 
   $ mysql $COMPARA_DBNAME -e \
-    'INSERT INTO method_link (method_link_id,type, class) \
+    'INSERT IGNORE INTO method_link (method_link_id,type, class) \
      VALUES (201,"ENSEMBL_ORTHOLOGUES","Homology.homology"), \
             (202,"ENSEMBL_PARALOGUES", "Homology.homology"), \
             (204,"ENSEMBL_HOMOLOGUES", "Homology.homology"), \
