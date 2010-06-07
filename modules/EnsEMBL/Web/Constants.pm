@@ -262,15 +262,15 @@ sub VARIATION_OPTIONS {
       'opt_noinfo'    =>  [ 'on', 'No information' ],
     }, 
     'class' =>  {
-      'opt_in-del'        =>  [ 'on', 'In-dels' ],
-      'opt_snp'           =>  [ 'on', 'SNPs' ],
-      'opt_mixed'         =>  [ 'on', 'Mixed variations' ],
-      'opt_microsat'      =>  [ 'on', 'Micro-satellite repeats' ],
-      'opt_named'         =>  [ 'on', 'Named variations' ],
-      'opt_mnp'           =>  [ 'on', 'MNPs' ],
-      'opt_het'           =>  [ 'on', 'Hetrozygous variations' ],
-      'opt_hgmd_mutation' =>  [ 'on', 'HGMD mutations' ],
-      'opt_'              =>  [ 'on', 'Unclassified' ]
+      'opt_class_in-del'        =>  [ 'on', 'In-dels' ],
+      'opt_class_snp'           =>  [ 'on', 'SNPs' ],
+      'opt_class_mixed'         =>  [ 'on', 'Mixed variations' ],
+      'opt_class_microsat'      =>  [ 'on', 'Micro-satellite repeats' ],
+      'opt_class_named'         =>  [ 'on', 'Named variations' ],
+      'opt_class_mnp'           =>  [ 'on', 'MNPs' ],
+      'opt_class_het'           =>  [ 'on', 'Hetrozygous variations' ],
+      'opt_class_hgmd_mutation' =>  [ 'on', 'HGMD mutations' ],
+      'opt_class_'              =>  [ 'on', 'Unclassified' ]
     }, 
     'type' => {
       'opt_essential_splice_site'   =>  [ 'on', 'Essential splice site', 1 ],

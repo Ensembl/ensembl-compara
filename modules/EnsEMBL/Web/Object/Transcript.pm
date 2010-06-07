@@ -638,18 +638,11 @@ sub getAllelesConsequencesOnSlice {
 
   my @filtered_af =
     sort { $a->[2]->start <=> $b->[2]->start }
-    
-    # [ fake_s, fake_e, AF ] Filter our unwanted classes
-    grep { $valids->{'opt_' . $self->var_class($_->[2])} }
-
-    # [ fake_s, fake_e, AF ] Filter our unwanted sources
-    grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->get_all_sources} }
-
-    # [ fake_s, fake_e, AlleleFeature ]   Filter out AFs not on munged slice...
-    map { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () } 
-    
-    # [ AF, offset ]   Map to fake coords.   Create a munged version AF
-    map  {[ $_, $self->munge_gaps($key, $_->start, $_->end) ]} @$allele_features;
+    grep { $valids->{'opt_class_' . $self->var_class($_->[2])} }                           # [ fake_s, fake_e, AF ] Filter our unwanted classes
+    grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->get_all_sources} } # [ fake_s, fake_e, AF ] Filter our unwanted sources
+    map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () }  # [ fake_s, fake_e, AlleleFeature ] Filter out AFs not on munged slice
+    map  {[ $_, $self->munge_gaps($key, $_->start, $_->end) ]}                             # [ AF, offset ] Map to fake coords. Create a munged version AF
+    @$allele_features;
   
   return ([], []) unless @filtered_af;
 
