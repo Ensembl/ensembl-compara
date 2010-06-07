@@ -801,10 +801,12 @@ sub get_gene_slices {
 # Valid user selections
 sub valids {
   my $self = shift;
-  my %valids = ();    ## Now we have to create the snp filter....
-  foreach( $self->param() ) {
-    $valids{$_} = 1 if $_=~/opt_/ && $self->param( $_ ) eq 'on';
+  my %valids = (); # Now we have to create the snp filter
+  
+  foreach ($self->param) {
+    $valids{$_} = 1 if $_ =~ /opt_/ && $self->param($_) eq 'on';
   }
+  
   return \%valids;
 }
 
@@ -861,21 +863,25 @@ sub store_TransformedTranscripts {
 }
 
 sub store_TransformedSNPS {
-  my $self = shift;
+  my $self   = shift;
   my $valids = $self->valids; 
-  foreach my $trans_obj ( @{$self->get_all_transcripts} ) {
-    my $T = $trans_obj->stable_id;
+  
+  foreach my $trans_obj (@{$self->get_all_transcripts}) {
+    my $T    = $trans_obj->stable_id;
     my $snps = {};
-    foreach my $S ( @{$self->__data->{'SNPS'}} ) {
-      foreach( @{$S->[2]->get_all_TranscriptVariations||[]} ) {
-  next unless  $T eq $_->transcript->stable_id;
-  foreach my $type ( @{ $_->consequence_type || []} ) {
-    next unless $valids->{'opt_'.lc($type)};
-    $snps->{ $S->[2]->dbID } = $_;
-    last;
-  }
+    
+    foreach my $S (@{$self->__data->{'SNPS'}}) {
+      foreach (@{$S->[2]->get_all_TranscriptVariations || []}) {
+        next unless $T eq $_->transcript->stable_id;
+        
+        foreach my $type (@{$_->consequence_type || []} ) {
+          next unless $valids->{'opt_' . lc $type};
+          $snps->{$S->[2]->dbID} = $_;
+          last;
+        }
       }
     }
+    
     $trans_obj->__data->{'transformed'}{'snps'} = $snps;
   }
 }
