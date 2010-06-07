@@ -263,25 +263,19 @@ sub get_flanking_sequence_data {
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
   
-  my $object = $self->object;
-  
+  my $object             = $self->object;
+  my $transcript         = $object->Obj;
   my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   
   my %href;
   
   foreach my $vf (@$variation_features) {
-    my $name = $vf->variation_name;
+    my $transcript_variation = $vf->get_all_TranscriptVariations([$transcript])->[0];
     
-    my $class;
+    next unless $transcript_variation;
     
-    # If this seems stupidly inefficient, it's because the variation API currently doesn't support
-    # getting a single TranscriptVariation associated with a given transcript. /sigh
-    for (@{$vf->get_all_TranscriptVariations}) {
-      if ($_->transcript->stable_id eq $object->stable_id) {
-        $class = lc $_->display_consequence;
-        last;
-      }
-    }
+    my $class = lc $transcript_variation->display_consequence;
+    my $name  = $vf->variation_name;
     
     $config->{'key'}->{'variations'}->{$class} = 1;
     $class = " $class";
