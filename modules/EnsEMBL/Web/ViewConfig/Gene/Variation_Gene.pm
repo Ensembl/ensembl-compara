@@ -10,7 +10,7 @@ sub init {
   
   $view_config->_set_defaults(qw(
     panel_image          on 
-    context              FULL
+    context              100
     hgvs                 transcript
     panel_transcript     on
     image_width          800
@@ -101,7 +101,7 @@ sub form {
   }
   
   # Add type selection
-  $view_config->add_fieldset('Variation type');
+  $view_config->add_fieldset('Consequence type');
   
   foreach (sort { $type{$a}->[2] <=> $type{$b}->[2] } keys %type) { 
     next if $_ eq 'opt_sara';
@@ -116,7 +116,7 @@ sub form {
   }
 
   # Add context selection
-  $view_config->add_fieldset('Context');
+  $view_config->add_fieldset('Intron Context');
   $view_config->add_form_element({
     type   => 'DropDown',
     select => 'select',
