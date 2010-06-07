@@ -26,7 +26,9 @@ sub content {
   my $extdbs         = $external_db_id ? $object->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name    = $extdbs->{$external_db_id}->{'db_name'} || 'External Feature';
   
-  $hit_db_name = 'TRACE' if $features->[0] && $features->[0]->analysis->logic_name =~ /sheep_bac_ends|BACends/; # hack to link sheep bac ends to trace archive;
+  my $logic_name     = $features->[0] ? $features->[0]->analysis->logic_name : undef;
+  
+  $hit_db_name = 'TRACE' if $logic_name =~ /sheep_bac_ends|BACends/; # hack to link sheep bac ends to trace archive;
 
   $self->caption("$id ($hit_db_name)");
   
@@ -46,6 +48,13 @@ sub content {
     link  => encode_entities($object->get_ExtURL($hit_db_name, $id))
   });
   
+  if ($logic_name and my $ext_url = $object->get_ExtURL($logic_name, $id)) {
+    $self->add_entry({
+      label => "View in external database",
+      link  => encode_entities($ext_url)
+    }); 
+  } 
+ 
   $self->add_entry({ 
     label => 'View all hits',
     link  => $object->_url({
