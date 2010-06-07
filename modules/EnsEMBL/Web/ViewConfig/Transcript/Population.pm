@@ -103,7 +103,7 @@ sub form {
   }
   
   # Add type selection
-  $view_config->add_fieldset('Variation type');
+  $view_config->add_fieldset('Consequence type');
   
   foreach (keys %type) {
     $view_config->add_form_element({
@@ -116,13 +116,13 @@ sub form {
   }
   
   # Add context selection
-  $view_config->add_fieldset('Context');
+  $view_config->add_fieldset('Intron Context');
 
   $view_config->add_form_element({
     type   => 'DropDown',
     select => 'select',
     name   => 'context',
-    label  => 'Context',
+    label  => 'Intron Context',
     values => [
       { value => '20',   name => '20bp' },
       { value => '50',   name => '50bp' },
