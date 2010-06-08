@@ -13,7 +13,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       return;
     }
     
-    $('.toggle_link', this.el).click(function () {
+    $('.toggle_link', this.el).bind('click', function () {
       reorder.toggle();
       full.toggle();
     });
@@ -33,7 +33,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       }
     });
     
-    $('select.dropdown_redirect', this.el).change(function () {
+    $('select.dropdown_redirect', this.el).bind('change', function () {
       Ensembl.redirect(this.value);
     });
   }

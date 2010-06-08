@@ -1,15 +1,15 @@
 // $Revision$
 
 Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
-  constructor: function (id) {
-    this.base(id);
+  constructor: function (id, params) {
+    this.base(id, params);
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('showConfiguration', this, this.show);
   },
   
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.base();
     
@@ -23,23 +23,28 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.lastQuery     = false;
     
     $.each(this.elLk.form.serializeArray(), function () {
-      myself.initialConfig[this.name] = this.value;
+      panel.initialConfig[this.name] = this.value;
     });
+    
+    if (this.params.hash) {
+      this.elLk.links.removeClass('active').has('.' + this.params.hash).addClass('active');
+      delete this.params.hash;
+    }
     
     this.getContent();
     
     $('input.submit', this.elLk.form).hide();
     
-    this.elLk.help.click(function () { myself.toggleDescription(this); });
+    this.elLk.help.bind('click', function () { panel.toggleDescription(this); });
     
     // Popup menus - displaying
-    $('.menu_option', this.elLk.form).click(function () {
+    $('.menu_option', this.elLk.form).bind('click', function () {
       var menu = $(this).siblings('.popup_menu');
       
       if (menu.children().length == 2 && !$(this).parent().hasClass('select_all')) {
         menu.children(':not(.' + $(this).siblings('input').val() + ')').trigger('click');
       } else {
-        myself.elLk.menus.filter(':visible').not(menu).hide();
+        panel.elLk.menus.filter(':visible').not(menu).hide();
         menu.toggle();
       }
       
@@ -47,13 +52,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     // Popup menus - setting values
-    $('li', this.elLk.menus).click(function () {
+    $('li', this.elLk.menus).bind('click', function () {
       var li    = $(this);
       var img   = li.children('img');
       var menu  = li.parents('.popup_menu');
       var dt    = menu.parent();
       var val   = li.attr('className');
-      var link  = myself.elLk.links.children('a.' + img.attr('className'));
+      var link  = panel.elLk.links.children('a.' + img.attr('className'));
       var label = link.html().split(/\b/);
       
       if (dt.hasClass('select_all')) {
@@ -62,12 +67,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         if (val == 'all_on') {
           // First li is off, so use the second (index 1) as default on setting.
           dt.find('li:eq(1)').each(function () {
-            li = $(this);
+            var text = $(this).text();
             
-            li.parent().siblings('img.menu_option').attr({ 
+            $(this).parent().siblings('img.menu_option').attr({ 
               src:   '/i/render/' + this.className + '.gif', 
-              alt:   li.text(),
-              title: li.text()
+              alt:   text,
+              title: text
             }).siblings('input').attr('newVal', this.className);
           });
         }
@@ -106,21 +111,21 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.search.bind({
       keyup: function () {
         if (this.value.length < 3) {
-          myself.lastQuery = this.value;
+          panel.lastQuery = this.value;
         }
         
-        if (this.value != myself.lastQuery) {
-          if (myself.searchTimer) {
-            clearTimeout(myself.searchTimer);
+        if (this.value != panel.lastQuery) {
+          if (panel.searchTimer) {
+            clearTimeout(panel.searchTimer);
           }
           
-          myself.query = this.value;
-          myself.regex = new RegExp(this.value, 'i');
+          panel.query = this.value;
+          panel.regex = new RegExp(this.value, 'i');
           
-          myself.searchTimer = setTimeout(function () {
-            myself.elLk.links.removeClass('active');
-            myself.elLk.searchResults.removeClass('disabled').parent().addClass('active');
-            myself.search(); 
+          panel.searchTimer = setTimeout(function () {
+            panel.elLk.links.removeClass('active');
+            panel.elLk.searchResults.removeClass('disabled').parent().addClass('active');
+            panel.search(); 
           }, 250);
         }
       },
@@ -130,14 +135,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     // Header on search results and active tracks sections will act like the links on the left
-    $('div.config > h2', this.elLk.form).css('cursor', 'pointer').click(function () {
+    $('div.config > h2', this.elLk.form).css('cursor', 'pointer').bind('click', function () {
       var link = $(this).parent().attr('className').replace(/\s*config\s*/, '');
-      $('a.' + link, myself.elLk.links).click();
+      $('a.' + link, panel.elLk.links).trigger('click');
     });
   },
   
-  show: function () {
+  show: function (active) {
     this.elLk.menus.hide();
+    
+    if (active) {
+      this.elLk.links.removeClass('active').has('.' + active).addClass('active');
+    }
+    
     this.base();
     this.getContent();
   },
@@ -147,13 +157,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var myself  = this;
+    var panel   = this;
     var d       = false;
     var diff    = { config: this.initialConfig.config };
     var checked = $.extend({}, this.initialConfig);
     
     $.each(this.elLk.form.serializeArray(), function () {
-      if (this.value != myself.initialConfig[this.name]) {
+      if (this.value != panel.initialConfig[this.name]) {
         diff[this.name] = this.value;
         d = true;
       }
@@ -252,8 +262,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       if (internal.siblings('.select_all').length) {
         internal.each(function () {
           var level = this.className.match(/level(\d+)/);
-          var mg = margin * (level ? parseInt(level[1], 10) : 1);
-          $(this).css('marginLeft', mg);
+          $(this).css('marginLeft', margin * (level ? parseInt(level[1], 10) : 1));
         });
       }
       
@@ -264,7 +273,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   
   // Filtering from the search box
   search: function () {
-    var myself = this;
+    var panel = this;
     var dts    = [];
     
     $('dl.config_menu', this.elLk.form).each(function () {
@@ -277,9 +286,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       menu.children('dt:not(.select_all, .external)').each(function () {
         var dt    = $(this);
-        var match = dt.children('span:not(.menu_help)').html().match(myself.regex);
+        var match = dt.children('span:not(.menu_help)').html().match(panel.regex);
         
-        if (match || dt.next('dd').text().match(myself.regex)) {
+        if (match || dt.next('dd').text().match(panel.regex)) {
           dt.show();
           div[0].show = true;
           
@@ -311,13 +320,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   toggleDescription: function (els, action) {
-    var dd, span;
+    var dd, span, i;
     
     if (typeof els.length == 'undefined') {
       els = [ els ];
     }
     
-    var i = els.length;
+    i = els.length;
     
     while (i--) {
       switch (els[i].nodeName) {

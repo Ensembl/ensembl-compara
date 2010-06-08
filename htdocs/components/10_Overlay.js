@@ -2,7 +2,7 @@
 
 Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   constructor: function (id) {
-    var myself = this;
+    var panel = this;
     
     this.base(id);
     this.storeWindowDimensions();
@@ -11,14 +11,17 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     this.background = $('#modal_bg');
 
     this.background.css({ display: 'none', opacity: 0.25 }).click(function(){
-      myself.hide();
+      panel.hide();
     });
     
-    $(window).resize(function () {
-      myself.pageResize();
-    }).scroll(function () {
-      if (myself.visible) {
-        myself.setPosition();
+    $(window).bind({
+      resize: function () {
+        panel.pageResize();
+      },
+      scroll: function () {
+        if (panel.visible) {
+          panel.setPosition();
+        }
       }
     });
   },

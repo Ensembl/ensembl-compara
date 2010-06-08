@@ -10,7 +10,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
   },
   
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.base();
     
@@ -31,16 +31,17 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.setSelection(true);
     
     this.elLk.included.sortable({
-      containment: myself.elLk.included.parent(),
-      stop: function () { myself.setSelection(); }
+      containment: panel.elLk.included.parent(),
+      stop: function () { panel.setSelection(); }
     });
     
-    this.buttonWidth = spans.filter('.switch').click(function () {
+    this.buttonWidth = spans.filter('.switch').bind('click', function () {
       var li = $(this).parent();
+      var excluded, i;
       
       if (li.parent().hasClass('included')) {
-        var excluded = $('li', myself.elLk.excluded);
-        var i = excluded.length;
+        excluded = $('li', panel.elLk.excluded);
+        i = excluded.length;
 
         while (i--) {
           if ($(excluded[i]).text() < li.text()) {
@@ -51,15 +52,15 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
         
         // item to be added is closer to the start of the alphabet than anything in the excluded list
         if (i == -1) {
-          myself.elLk.excluded.prepend(li);
+          panel.elLk.excluded.prepend(li);
         }
         
-        myself.setSelection();
+        panel.setSelection();
         
         excluded = null;
       } else {
-        myself.elLk.included.append(li);
-        myself.selection.push(li.attr('className'));
+        panel.elLk.included.append(li);
+        panel.selection.push(li.attr('className'));
       }
       
       li = null;

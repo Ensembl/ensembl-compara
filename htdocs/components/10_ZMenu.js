@@ -5,6 +5,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.base(id);
     
     var area = $(data.area.a);
+    var params, n;
     
     this.drag       = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
     this.align      = area.hasClass('align'); // TODO: implement alignslice menus
@@ -25,8 +26,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     if (this.drag) {
-      var params = this.href.split('|');
-      var n = parseInt(params[1], 10) - 1;
+      params = this.href.split('|');
+      n = parseInt(params[1], 10) - 1;
       
       this.speciesPath = params[3].replace(/-/, '/');
       this.species     = this.speciesPath.split('/').pop();
@@ -46,11 +47,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     delete this.areaCoords.a;
     
     Ensembl.EventManager.register('showExistingZMenu', this, this.showExisting);
-    Ensembl.EventManager.register('hideZMenu', this, this.hide);
+    Ensembl.EventManager.register('hideZMenu',         this, this.hide);
   },
   
   init: function () {
-    var myself = this;
+    var panel = this;
     
     var r = new RegExp('([\\?;]r' + (this.multi || '') + '=)[^;]+;?', 'g'); // The r parameter to remove from the current URL for this.baseURL
     
@@ -59,12 +60,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.elLk.caption = $('span.title', this.el);
     this.elLk.tbody   = $('tbody', this.el);
     
-    $(this.el).mousedown(function () {
-      Ensembl.EventManager.trigger('panelToFront', myself.id);
+    $(this.el).bind('mousedown', function () {
+      Ensembl.EventManager.trigger('panelToFront', panel.id);
     });
     
-    $('.close', this.el).click(function () { 
-      myself.hide();
+    $('.close', this.el).bind('click', function () { 
+      panel.hide();
     });
     
     // The location parameter that is due to be changed has its value replaced with %s
@@ -90,7 +91,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     $('a.expand', this.el).live('click', function () {
-      myself.populateAjax(this.href, $(this).parents('tr'));
+      panel.populateAjax(this.href, $(this).parents('tr'));
       return false;
     });
     
@@ -98,16 +99,16 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   getContent: function () {
-    var myself = this;
+    var panel = this;
     
     this.populated = false;
     
     clearTimeout(this.timeout);
     
     this.timeout = setTimeout(function () {
-      if (myself.populated === false) {
-        myself.elLk.caption.html('<p class="spinner" style="font-weight:normal">Loading component</p>');
-        myself.show();
+      if (panel.populated === false) {
+        panel.elLk.caption.html('<p class="spinner" style="font-weight:normal">Loading component</p>');
+        panel.show();
       }
     }, 300);
   
@@ -143,12 +144,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     var url = [
       window.location.pathname.replace(/\/(\w+)\/\w+$/, '/Zmenu/$1/Das'),
-      '?logic_name=' + this.logicName,
-      ';' + this.das + '_id=' + id,
-      ';start=' + start, 
-      ';end=' + end,
-      ';strand=' + strandMap[strand],
-      ';label=' + this.title.split('; ')[0]
+      '?logic_name=', this.logicName,
+      ';', this.das, '_id=', id,
+      ';start=', start, 
+      ';end=', end,
+      ';strand=', strandMap[strand],
+      ';label=', this.title.split('; ')[0]
     ].join('');
       
     for (var p in Ensembl.coreParams) {
@@ -220,9 +221,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   populateNoAjax: function () {
     var extra = '';
     var loc = this.title.match(/Location: (\S+)/);
+    var r;
     
     if (loc) {          
-      var r = loc[1].split(/\W/);
+      r = loc[1].split(/\W/);
       this.location = parseInt(r[1], 10) + (r[2] - r[1]) / 2;
       
       extra += '<tr><th></th><td><a href="' + this.zoomURL(1) + '">Centre on feature</a></td></tr>';
@@ -233,7 +235,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   populateRegion: function () {
-    var myself = this;
+    var panel = this;
     
     var menu, caption, start, end, tmp;
     
@@ -250,8 +252,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       url = url.replace(/.+\?/, '?');
       
       menu = [
-        '<a href="' + myself.speciesPath + '/Location/View' + url + '">Jump to location View</a>',
-        '<a href="' + myself.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
+        '<a href="' + panel.speciesPath + '/Location/View' + url + '">Jump to location View</a>',
+        '<a href="' + panel.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>'
       ];
     }
     
@@ -261,22 +263,22 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       menu = [ '<a href="' + url.replace(/;action=primary;id=\d+/, '') + '">Realign using this ' + label + '</a>' ];
         
-      if (myself.multi) {
+      if (panel.multi) {
         menu.push('<a href="' + url + '">Use ' + label + ' as primary</a>');
       } else {
         menu.push('<a href="' + url.replace(/[rg]\d+=[^;]+;?/g, '') + '">Jump to ' + label + '</a>');
       }
     
-      caption = myself.species.replace(/_/g, ' ') + ' ' + myself.chr + ':' + (start ? start + '-' + end : myself.location);
+      caption = panel.species.replace(/_/g, ' ') + ' ' + panel.chr + ':' + (start ? start + '-' + end : panel.location);
     }
     
     // AlignSlice view
     function align() {
       var label = start ? 'region' : 'location';
-      label += myself.species == Ensembl.species ? '' : ' on ' + Ensembl.species.replace(/_/g, ' ');
+      label += panel.species == Ensembl.species ? '' : ' on ' + Ensembl.species.replace(/_/g, ' ');
       
       menu = [ '<a href="' + url.replace(/%s/, Ensembl.coreParams.r + ';align_start=' + start + ';align_end=' + end) + '">Jump to best aligned ' + label + '</a>' ];
-      caption = 'Alignment: ' + (start ? start + '-' + end : myself.location);
+      caption = 'Alignment: ' + (start ? start + '-' + end : panel.location);
     }
     
     // Region select
@@ -285,9 +287,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       end   = Math.floor(min + (this.coords.s + this.coords.r - this.areaCoords.l) * scale);
       
       if (start > end) {
-        tmp = start;
+        tmp   = start;
         start = end;
-        end = tmp;
+        end   = tmp;
       }
       
       if (start < min) {
@@ -303,7 +305,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       } else {
         this.location = (2 * this.start + 2 * this.end - start - end) / 2;
         
-        tmp = start;
+        tmp   = start;
         start = this.end + this.start - end;
         end   = this.end + this.start - tmp;
       }
@@ -326,8 +328,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         }
       }
     } else { // Point select
-      var href;
-      
       this.location = Math.floor(min + (this.coords.x - this.areaCoords.l) * scale);
       
       if (this.align === true) {
@@ -346,12 +346,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
             '<a href="' + this.zoomURL(10) + '">Zoom out x10</a>',
             '<a href="' + this.zoomURL(5)  + '">Zoom out x5</a>',
             '<a href="' + this.zoomURL(2)  + '">Zoom out x2</a>',
-            '<a href="' + url  + '">Centre here</a>'
+            '<a href="' + url + '">Centre here</a>'
           ];
           
           // Only add zoom in links if there is space to zoom in to.
           $.each([2, 5, 10], function () {
-            href = myself.zoomURL(1 / this);
+            var href = panel.zoomURL(1 / this);
             
             if (href !== '') {
               menu.push('<a href="' + href + '">Zoom in x' + this + '</a>');

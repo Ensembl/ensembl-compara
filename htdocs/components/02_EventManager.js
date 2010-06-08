@@ -12,8 +12,8 @@ Ensembl.EventManager = {
     
     // if this is the first time an action is registered create space for it
     if (!this.registry[eventName]) {
-      this.registry[eventName] = {};
-      this.registry[eventName].ref = {};
+      this.registry[eventName]       = {};
+      this.registry[eventName].ref   = {};
       this.registry[eventName].count = 0;
     }
     
@@ -23,9 +23,9 @@ Ensembl.EventManager = {
         this.registry[eventName].count++;
       }
       
-      this.registry[eventName].ref[id] = {};  
+      this.registry[eventName].ref[id]      = {};  
       this.registry[eventName].ref[id].func = callFunc;
-      this.registry[eventName].ref[id].obj = callObj;
+      this.registry[eventName].ref[id].obj  = callObj;
     }
   },
    
@@ -100,21 +100,13 @@ Ensembl.EventManager = {
    * Triggers the event specified and calls all relevant functions
    */     
   trigger: function (eventName) {
-    var args = [];
-    var i = arguments.length;
-    var callId;
-    var rtn = [];
-    var r;
+    var args = [].slice.call(arguments, 1); // Make a copy of arguments, removing eventName
+    var rtn  = [];
+    var id, r;
     
     if (this.registry[eventName]) {
-      while (i--) {
-        args[i] = arguments[i]; // Make a copy of arguments
-      }
-      
-      for (callId in this.registry[eventName].ref) {
-        r = this.registry[eventName].ref[callId].func.apply(
-          this.registry[eventName].ref[callId].obj, args.slice(1, args.length) // remove eventName
-        );
+      for (id in this.registry[eventName].ref) {
+        r = this.registry[eventName].ref[id].func.apply(this.registry[eventName].ref[id].obj, args);
         
         if (typeof r != 'undefined') {
           rtn.push(r);
@@ -135,17 +127,10 @@ Ensembl.EventManager = {
    * Triggers the event on the specified id and calls all relevant functions
    */     
   triggerSpecific: function (eventName, id) {
-    var args = [];
-    var i = arguments.length;
+    var args = [].slice.call(arguments, 2); // Make a copy of arguments, removing eventName and id
     
     if (this.registry[eventName] && this.registry[eventName].ref[id]) {
-      while (i--) {
-        args[i] = arguments[i]; // Make a copy of arguments
-      }
-      
-      return this.registry[eventName].ref[id].func.apply(
-        this.registry[eventName].ref[id].obj, args.slice(2, args.length)
-      );
+      return this.registry[eventName].ref[id].func.apply(this.registry[eventName].ref[id].obj, args);
     }
   }
 };

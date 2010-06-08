@@ -1,14 +1,14 @@
 // $Revision$
 
 Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
-  constructor: function (id, params) {
-    this.base(id, params);
+  constructor: function () {
+    this.base.apply(this, arguments);
     
     Ensembl.EventManager.register('dataTableRedraw', this, this.initPopups);
   },
   
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.popups = {};
     
@@ -27,13 +27,14 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     });
     
     $('.info_popup .close', this.el).live('click', function () {
-      $(this).parent().fadeOut();
+      $(this).parent().hide();
     });
     
     $('pre a.sequence_info', this.el).live('click', function (e) {
         var el    = $(this);
         var data  = el.data();
         var popup = data.link.data('popup');
+        var position, maxLeft, scrollLeft;
         
         if (!data.position) {
           data.position  = el.position();
@@ -44,9 +45,9 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         }
         
         if (popup) {
-          var position   = $.extend({}, data.position); // modifying data.position changes the stored value too, so make a fresh copy
-          var maxLeft    = $(window).width() - popup.width() - 20;
-          var scrollLeft = $(window).scrollLeft();
+          position   = $.extend({}, data.position); // modifying data.position changes the stored value too, so make a fresh copy
+          maxLeft    = $(window).width() - popup.width() - 20;
+          scrollLeft = $(window).scrollLeft();
           
           if (position.left > maxLeft + scrollLeft) {
             position.left = maxLeft + scrollLeft;
@@ -55,7 +56,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
           popup.show().css(position);
         } else if (!data.processing) {
           el.data('processing', true);
-          myself.getPopup(el);
+          panel.getPopup(el);
         }
         
         el    = null;
@@ -66,17 +67,17 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
   
   initPopups: function () {
-    var myself = this;
+    var panel = this;
     
     $('.info_popup', this.el).hide();
     
     $('pre a.sequence_info', this.el).each(function () {
-      if (!myself.popups[this.href]) {
-        myself.popups[this.href] = $(this);
+      if (!panel.popups[this.href]) {
+        panel.popups[this.href] = $(this);
       }
       
-      $(this).data('link', myself.popups[this.href]); // Store a single reference <a> for all identical hrefs - don't duplicate the popups
-      $(this).data('position', null);                 // Clear the position data
+      $(this).data('link', panel.popups[this.href]); // Store a single reference <a> for all identical hrefs - don't duplicate the popups
+      $(this).data('position', null);                // Clear the position data
     }).css('cursor', 'pointer');
   },
   
@@ -102,13 +103,13 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       success: function (json) {
         if (json.length) {
           var classes = {};
-          var tbody, feature, caption, entry, childOf, cls, css, tag;
+          var i, j, tbody, feature, caption, entry, childOf, cls, css, tag, row, maxLeft, scrollLeft;
           
-          for (var i = 0; i < json.length; i++) {
+          for (i = 0; i < json.length; i++) {
             tbody = $('<tbody>').appendTo(popup.children('table'));
             feature = json[i];
              
-            for (var j = 0; j < feature.length; j++) {
+            for (j = 0; j < feature.length; j++) {
               caption = feature[j].caption || null;
               entry   = feature[j].entry   || [];
               childOf = feature[j].childOf || '';
@@ -135,7 +136,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
                 cls = 'header';
               }
               
-              var row = $('<tr>', { 'class': cls }).appendTo(tbody);
+              row = $('<tr>', { 'class': cls }).appendTo(tbody);
              
               if (caption !== null && entry.length) {
                 row.append($('<' + tag + '>', { html: caption, css: css })).append($('<' + tag + '>', { html: entry.join(' ') }));
@@ -166,8 +167,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
           
           popup.css('zIndex', ++Ensembl.PanelManager.zIndex).show();
           
-          var maxLeft    = $(window).width() - popup.width() - 20;
-          var scrollLeft = $(window).scrollLeft();
+          maxLeft    = $(window).width() - popup.width() - 20;
+          scrollLeft = $(window).scrollLeft();
           
           if (data.position.left > maxLeft + scrollLeft) {
             popup.css('left', maxLeft + scrollLeft);

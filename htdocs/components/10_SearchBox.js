@@ -2,7 +2,7 @@
 
 Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.base();
     
@@ -14,18 +14,18 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     
     var search = Ensembl.cookie.get('ENSEMBL_SEARCH');
     
-    $('dt', this.elLk.menu).click(function () {
+    $('dt', this.elLk.menu).bind('click', function () {
       var name = this.id.substr(3);
       
-      myself.elLk.menu.hide();
-      myself.elLk.img.attr('src', '/i/search/' + name + '.gif');
-      myself.elLk.siteInput.val(name);
+      panel.elLk.menu.hide();
+      panel.elLk.img.attr('src', '/i/search/' + name + '.gif');
+      panel.elLk.siteInput.val(name);
       
       Ensembl.cookie.set('ENSEMBL_SEARCH', name);
     });
     
-    this.elLk.sites.click(function () {
-      myself.elLk.menu.css({ left: myself.elLk.search.offset().left - 2, top: myself.elLk.search.height() }).toggle();
+    this.elLk.sites.bind('click', function () {
+      panel.elLk.menu.css({ left: panel.elLk.search.offset().left - 2, top: panel.elLk.search.height() }).toggle();
     });
     
     if (search) {

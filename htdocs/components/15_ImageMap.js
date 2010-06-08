@@ -14,8 +14,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.speciesCount     = 0;
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
-    Ensembl.EventManager.register('dragStop', this, this.dragStop);
-    Ensembl.EventManager.register('hashChange', this, this.hashChange);
+    Ensembl.EventManager.register('dragStop',       this, this.dragStop);
+    Ensembl.EventManager.register('hashChange',     this, this.hashChange);
     
     Ensembl.EventManager.register('highlightAllImages', this, function () {
       if (!this.align) {
@@ -25,7 +25,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.base();
     
@@ -44,7 +44,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.makeImageMap(); 
     
     $('.iexport a', this.el).click(function () {
-      myself.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
+      panel.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
       
       return false;
     });
@@ -72,11 +72,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   makeImageMap: function () {
-    var myself = this;
+    var panel = this;
     
     var highlight = !!(window.location.pathname.match(/\/Location\//) && !this.vdrag);
     var rect = [ 'l', 't', 'r', 'b' ];
-    var speciesNumber, c;
+    var speciesNumber, c, r, start, end, scale;
     
     this.elLk.areas.each(function () {
       c = { a: this };
@@ -88,34 +88,34 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $.each(this.coords.split(/[ ,]/), function (i) { c[rect[i]] = parseInt(this, 10); });
       }
       
-      myself.areas.push(c);
+      panel.areas.push(c);
       
       if (this.className.match(/drag/)) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
-        var r     = c.a.href.split('|');
-        var start = parseInt(r[5], 10);
-        var end   = parseInt(r[6], 10);
-        var scale = (end - start + 1) / (c.r - c.l); // bps per pixel on image
+        r     = c.a.href.split('|');
+        start = parseInt(r[5], 10);
+        end   = parseInt(r[6], 10);
+        scale = (end - start + 1) / (c.r - c.l); // bps per pixel on image
         
         c.range = { start: start, end: end, scale: scale };
         
-        myself.draggables.push(c);
+        panel.draggables.push(c);
         
         if (highlight === true) {
           r = this.href.split('|');
           speciesNumber = parseInt(r[1], 10) - 1;
           
-          if (myself.multi || !speciesNumber) {
-            if (!myself.highlightRegions[speciesNumber]) {
-              myself.highlightRegions[speciesNumber] = [];
-              myself.speciesCount++;
+          if (panel.multi || !speciesNumber) {
+            if (!panel.highlightRegions[speciesNumber]) {
+              panel.highlightRegions[speciesNumber] = [];
+              panel.speciesCount++;
             }
             
-            myself.highlightRegions[speciesNumber].push({ region: c });
-            myself.imageNumber = parseInt(r[2], 10);
+            panel.highlightRegions[speciesNumber].push({ region: c });
+            panel.imageNumber = parseInt(r[2], 10);
             
-            Ensembl.images[myself.imageNumber] = Ensembl.images[myself.imageNumber] || {};
-            Ensembl.images[myself.imageNumber][speciesNumber] = [ myself.imageNumber, speciesNumber, parseInt(r[5], 10), parseInt(r[6], 10) ];
+            Ensembl.images[panel.imageNumber] = Ensembl.images[panel.imageNumber] || {};
+            Ensembl.images[panel.imageNumber][speciesNumber] = [ panel.imageNumber, speciesNumber, parseInt(r[5], 10), parseInt(r[6], 10) ];
           }
         }
       }
@@ -130,23 +130,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         // Only draw the drag box for left clicks.
         // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
         if (!e.which || e.which == 1) {
-          myself.dragStart(e);
+          panel.dragStart(e);
         }
         
         return false;
       },
       click: function (e) {
-        if (myself.clicking) {
-          myself.makeZMenu(e, myself.getMapCoords(e));
+        if (panel.clicking) {
+          panel.makeZMenu(e, panel.getMapCoords(e));
         } else {
-          myself.clicking = true;
+          panel.clicking = true;
         }
       }
-    }).parent().mousemove(function (e) {
-      var area = myself.getArea(myself.getMapCoords(e));
+    }).parent().bind('mousemove', function (e) {
+      var area = panel.getArea(panel.getMapCoords(e));
       
       if (area && area.a) {
-        myself.elLk.img.attr({ title: area.a.alt });
+        panel.elLk.img.attr({ title: area.a.alt });
       }
       
       area = null;
@@ -154,7 +154,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   dragStart: function (e) {
-    var myself = this;
+    var panel = this;
     
     this.dragCoords.map    = this.getMapCoords(e);
     this.dragCoords.page   = { x: e.pageX, y : e.pageY };
@@ -164,18 +164,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (this.dragRegion) {
       this.elLk.img.mousemove(function (e2) {
-        myself.dragging = e; // store mousedown event
-        myself.drag(e2);
+        panel.dragging = e; // store mousedown event
+        panel.drag(e2);
         return false;
       });
     }
   },
   
   dragStop: function (e) {
+    var diff, range;
+    
     this.elLk.img.unbind('mousemove');
     
     if (this.dragging !== false) {
-      var diff = { 
+      diff = { 
         x: e.pageX - this.dragCoords.page.x, 
         y: e.pageY - this.dragCoords.page.y
       };
@@ -185,7 +187,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         this.clicking = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
         this.makeZMenu(this.dragging, this.dragCoords.map); // use the original mousedown (stored in this.dragging) to create the zmenu
       } else {
-        var range = this.vdrag ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
+        range = this.vdrag ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
         
         this.makeZMenu(e, range);
         
@@ -238,12 +240,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
+    var speciesNumber = 0;
+    var dragArea, range, location, fuzziness;
     
     if (($(area.a).hasClass('das') || $(area.a).hasClass('group')) && this.highlightRegions) {
-      var speciesNumber = 0;
-      
       if (this.speciesCount > 1) {
-        var dragArea = this.getArea(coords, true);
+        dragArea = this.getArea(coords, true);
         
         if (dragArea) {
           speciesNumber = parseInt(dragArea.a.href.split('|')[1], 10) - 1;
@@ -252,11 +254,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         dragArea = null;
       }
       
-      var range = this.draggables[speciesNumber] ? this.draggables[speciesNumber].range : undefined;
+      range = this.draggables[speciesNumber] ? this.draggables[speciesNumber].range : undefined;
       
-      if (range) {
-        var location, fuzziness;
-        
+      if (range) {        
         location  = range.start + (range.scale * (coords.x - this.dragRegion.l));
         fuzziness = range.scale * 2; // Increase the size of the click so we can have some measure of certainty for returning the right menu
         
@@ -318,9 +318,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return;
     }
     
-    var highlight;
     var i = this.highlightRegions[speciesNumber].length;
     var link = true; // Defines if the highlighted region has come from another image or the url
+    var highlight, coords;
     
     while (i--) {
       highlight = this.highlightRegions[speciesNumber][i];
@@ -347,7 +347,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         link = false;
       }
       
-      var coords = {
+      coords = {
         t: highlight.region.t + 2,
         b: highlight.region.b - 2,
         l: ((start - highlight.region.range.start) / highlight.region.range.scale) + highlight.region.l,
@@ -364,7 +364,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   highlight: function (coords, cl, speciesNumber, multi) {
     var w = coords.r - coords.l + 1;
     var h = coords.b - coords.t + 1;
-    var originalClass;
+    var originalClass, els;
     
     var style = {
       l: { left: coords.l, width: 1, top: coords.t, height: h },
@@ -378,7 +378,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       cl = cl + '_' + speciesNumber + (multi || '');
     }
     
-    var els = $('.' + cl, this.el);
+    els = $('.' + cl, this.el);
     
     if (!els.length) {
       els = $([

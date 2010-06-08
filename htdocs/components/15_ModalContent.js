@@ -1,14 +1,14 @@
 // $Revision$
 
 Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
-  constructor: function (id) {
-    this.base(id);
+  constructor: function () {
+    this.base.apply(this, arguments);
     
     Ensembl.EventManager.register('modalFormSubmit', this, this.formSubmit);
   },
   
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.activeLink = false;
     
@@ -16,13 +16,13 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     this.elLk.content = $('.modal_wrapper', this.el);
     
-    $('a', this.elLk.links).click(function () {
+    $('a', this.elLk.links).bind('click', function () {
       if (!$(this).hasClass('disabled')) {
         var link = $(this).parent();
         
         if (!link.hasClass('active')) {
-          myself.elLk.links.removeClass('active');
-          myself.getContent(link.addClass('active'), this.href);
+          panel.elLk.links.removeClass('active');
+          panel.getContent(link.addClass('active'), this.href);
         }
         
         link = null;
@@ -50,9 +50,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     Ensembl.EventManager.trigger('validateForms', this.el);
     
     if ($('.ajax', this.elLk.content).length) {
-      var panel = $('.ajax', this.elLk.content).parents('.js_panel');
-      Ensembl.EventManager.trigger('createPanel', panel.attr('id'), 'Content');
-      panel = null;
+      Ensembl.EventManager.trigger('createPanel', $('.ajax', this.elLk.content).parents('.js_panel')[0].id, 'Content');
     }
   },
   
@@ -77,8 +75,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         failures = failures || 1;
         
         if (e.status != 500 && failures < 3) {
-          var myself = this;
-          setTimeout(function () { myself.getContent(link, url, ++failures); }, 2000);
+          var panel = this;
+          setTimeout(function () { panel.getContent(link, url, ++failures); }, 2000);
         } else {
           this.elLk.content.html('<p class="ajax_error">Failure: The resource failed to load</p>');
         }

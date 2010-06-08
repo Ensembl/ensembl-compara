@@ -2,13 +2,13 @@
 
 Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   init: function () {
-    var myself = this;
+    var panel = this;
     
     this.base();
     this.filterInit();
     
     $('fieldset.general_options', this.elLk.content).find('select.output_type').live('change', function () {
-      myself.filter(this.value);
+      panel.filter(this.value);
     });
   },
   
@@ -17,7 +17,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   },
   
   filterInit: function () {
-    this.elLk.fieldsets = $('fieldset', this.el).filter('fieldset[class]').not('.general_options');
+    this.elLk.fieldsets = $('fieldset[class]:not(.general_options', this.el);
     this.filter($('fieldset.general_options', this.el).find('select.output_type').val());
   },
   
@@ -27,7 +27,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     $('input.input-checkbox', form).each(function () {
       // Give the value of "no" for deselected checkboxes
       if (this.checked === false) {
-        data += "&" + this.name + "=no";
+        data += '&' + this.name + '=no';
       }
     });
     

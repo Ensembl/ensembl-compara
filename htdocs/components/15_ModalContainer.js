@@ -10,8 +10,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   init: function () {
-    var myself = this;
-    var dims = this.getDimensions();
+    var panel = this;
+    var dims  = this.getDimensions();
     
     this.base(dims.w, dims.h);
     
@@ -26,32 +26,32 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.sectionReload = {};
     this.activePanel   = '';
     
-    // TODO: check functionality. myself.open() is probably wrong
+    // TODO: check functionality. panel.open() is probably wrong
     $('.modal_confirm', '#' + this.id).live('click', function () {
       var c = confirm(this.title + '\nAre you sure you want to continue?');
       
       this.title = '';
       
       if (c === true) {
-        myself.open(this);
+        panel.open(this);
       }
       
       return false;
     });
     
-    $('.modal_close', '#' + this.id).live('click', function () { myself.hide(); });
+    $('.modal_close', '#' + this.id).live('click', function () { panel.hide(); });
     
     // Changing tabs - update configuration and get new content
-    $('a', this.elLk.tabs).click(function () {
+    $('a', this.elLk.tabs).bind('click', function () {
       var li = $(this).parent();
       
       if (!li.hasClass('active')) {
         Ensembl.EventManager.trigger('updateConfiguration', true);
         
-        myself.elLk.tabs.removeClass('active');
+        panel.elLk.tabs.removeClass('active');
         li.addClass('active');
         
-        myself.getContent(this.href, this.rel);
+        panel.getContent(this.href, this.rel);
       }
       
       li = null;
@@ -89,7 +89,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     id = id || 'modal_default';
     
     var contentEl = this.elLk.content.filter('#' + id);
-    var reload = url.match('reset=1') || $('.modal_reload', this.el).remove().length;
+    var reload    = url.match(/reset=1/) || $('.modal_reload', this.el).remove().length;
+    var hash      = (url.match(/#(.+)$/) || [])[1];
     
     this.elLk.content.hide();
     this.activePanel = id;
@@ -97,8 +98,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     if (reload) {
       this.elLk.content.empty();
     } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
-      Ensembl.EventManager.triggerSpecific('showConfiguration', id);
-      this.changeTab(this.elLk.tabs.children().filter('[rel=' + id + ']').parent());
+      Ensembl.EventManager.triggerSpecific('showConfiguration', id, hash);
+      this.changeTab(this.elLk.tabs.children('[rel=' + id + ']').parent());
       this.elLk.closeButton.html('Save and close');
       
       return;
@@ -111,7 +112,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       dataType: 'json',
       context: this,
       success: function (json) {
-        var buttonText;
+        var params = hash ? $.extend(json.params || {}, { hash: hash }) : json.params;
+        var buttonText, forceReload;
         
         if (json.redirectURL) {
           return this.getContent(json.redirectURL, id);
@@ -137,21 +139,21 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         this.elLk.closeButton.html(buttonText);
         
-        var forceReload = !!$('.modal_reload', contentEl).length;
+        forceReload = !!$('.modal_reload', contentEl).length;
         
         // TODO: remove once config reseting is working without content being completely regenerated
         if (reload || forceReload) {
           this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
         
-        Ensembl.EventManager.trigger('createPanel', id, $(json.content).find('input.panel_type').val() || json.panelType, json.params);
+        Ensembl.EventManager.trigger('createPanel', id, $(json.content).find('input.panel_type').val() || json.panelType, params);
       },
       error: function (e) {
         failures = failures || 1;
         
         if (e.status != 500 && failures < 3) {
-          var myself = this;
-          setTimeout(function () { myself.getContent(url, id, ++failures); }, 2000);
+          var panel = this;
+          setTimeout(function () { panel.getContent(url, id, ++failures); }, 2000);
         } else {
           contentEl.html('<p class="ajax_error">Failure: The resource failed to load</p>');
         }
