@@ -13,7 +13,7 @@ sub render {
   return sprintf( '
   <tr class="hide">
     <th><label for="%s">%s: </label></th>
-    <td><textarea name="%s"></textarea>
+    <td><textarea id="%s"></textarea>
     </td>
   </tr>',
     encode_entities( $self->name ),

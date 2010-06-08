@@ -117,7 +117,7 @@ sub re_search {
   if ($q =~ /^(\S+?)(\d+)/) {
     my $ENS = $1;
     my $dig = $2;
-    if ( ($ENS =~ /ENS|OTT/) && ($ENS !~ /ENSFM/ ) && (length($dig) != 11) ) {
+    if ( ($ENS =~ /ENS|OTT/) && ($ENS !~ /[ENSFM|ENSSNP]/ ) && (length($dig) != 11) ) {
       $do_search = 1;
       my $newq = $ENS.sprintf("%011d",$dig);
       (my $newq_name = $newq) =~ s/(\d+)/<strong>$1<\/strong>/;

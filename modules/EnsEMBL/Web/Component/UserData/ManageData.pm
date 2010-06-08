@@ -9,6 +9,7 @@ no warnings 'uninitialized';
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::TmpFile::Text;
+use URI::Escape qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -194,9 +195,14 @@ sub content {
           $name .= "</strong><br />$file->{'format'} file for <em>$species</em>";
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
-          if ($file->{'format'} && ( $file->{'format'} eq "ID" || $file->{'format'} eq "CONSEQUENCE") ) { 
+          if ($file->{'format'} && $file->{'format'} eq "ID" ) { 
             $save = '';
-          } else {
+          }
+          elsif ($file->{'format'} && $file->{'format'} eq 'SNP_EFFECT') {
+            my $referer      = ';_referer=' . uri_escape($object->parent->{'uri'});
+            $save = sprintf '<a href="%s" class="modal_link">Download</a>', '/'.$file->{'species'}.'/UserData/PreviewConvertIDs?format=text;data_format=snp;species='.$file->{'species'}.';convert_file='.$file->{'filename'}.':'.$file->{'name'}.$referer;
+          } 
+          else {
             $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
           }
           $share = sprintf('<a href="%s/UserData/SelectShare?%s" class="modal_link">Share</a>', $dir, $extra);

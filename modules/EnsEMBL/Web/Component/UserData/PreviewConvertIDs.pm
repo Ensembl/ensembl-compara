@@ -24,7 +24,7 @@ sub content {
 <p>The first ten lines of each file are displayed below. Click on the file name to download the complete file</p>
 );
 
-  my @files = $object->param('converted');
+  my @files = $object->param('converted') || $object->param('convert_file');
   my $i = 1;
   foreach my $id (@files) {
     next unless $id; 
@@ -35,17 +35,18 @@ sub content {
     if ($name !~ /\.txt$/i) {
       $name .= '.txt';
     }
-    $name = 'converted_'.$name;
+    #$name = 'converted_'.$name;
 
     ## Fetch content
+    my $prefix = $object->param('data_format') eq 'snp' ? 'user_upload' : 'export';
     my $tmpfile = new EnsEMBL::Web::TmpFile::Text(
-                    filename => $file, prefix => 'export', extension => 'txt'
+                    filename => $file, prefix => $prefix, extension => 'txt'
     );
     next unless $tmpfile->exists;
     my $data = $tmpfile->retrieve;
     if ($data) {
       my $newname = $name || 'converted_data_'.$i.'.txt';
-      $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=export;format=txt">%s</a></h3>', $object->species, $file, $newname, $newname);
+      $html .= sprintf('<h3>File <a href="/%s/download?file=%s;name=%s;prefix=%s;format=txt">%s</a></h3>', $object->species, $file, $newname, $prefix, $newname);
       if ($gaps) {
         $html .= "<p>This data has $gaps gaps when mapped to the new assembly</p>";
       }

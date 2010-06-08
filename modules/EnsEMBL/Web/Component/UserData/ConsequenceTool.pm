@@ -23,16 +23,12 @@ sub content {
   $html .= qq(<br /><a href="$referer">Back to previous view</a><br />);
 
 
-  my @files = ($object->param('convert_file'));
+  my @files = ($object->param('code'));
   my $size_limit =  $object->param('variation_limit');
 
-  foreach my $file_name (@files) {
-    my ($file, $name) = split(':', $file_name);  
-    my ($table, $file_count) = $object->calculate_consequence_data($file, $size_limit);
-    if ($file_count){
-      $html .= $self->_hint ('', '<p>' .'Your file contained '.$file_count .' features however 
-       this web tool will only convert the first '. $size_limit .' features in the file.</p>');
-    }
+  foreach my $code (@files) {
+    my $data = $object->consequence_data_from_file($code); 
+    my $table = $object->consequence_table($data);
     $html .= $table->render;
   }
 

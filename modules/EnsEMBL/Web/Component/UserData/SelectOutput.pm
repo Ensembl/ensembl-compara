@@ -19,24 +19,31 @@ sub caption { return ''; }
 sub content {
   my $self = shift; 
   my $object = $self->object;
-  my ($html_target, $text_target, $title, $convert_file);
+  my ($html_target, $text_target, $title, $convert_file, $data_format);
   my $extra_param = "";
 
   if ($object->param('id_mapper') ) {
     $title = 'Stable ID Mapper';
     $html_target = 'IDConversion';
     $text_target = 'MapIDs';       
+    $data_format = 'id';
   } elsif ($object->param('consequence_mapper')) {
     $title = 'SNP Effect Predictor';  
     $html_target = 'ConsequenceCalculator';
-    $text_target = 'SNPConsequence';
+    $text_target = 'PreviewConvertIDs';
+    $data_format = 'snp';
   }
 
-  my $species_path = $object->species_path($object->data_species);
   my $html         = "<h2>$title</h2>";
+
+  if ($object->param('consequence_mapper') && $object->param('count')) {
+    $html .= $self->_info('Too many features', 'Your file contained '.$object->param('count') .' features; however this web tool will only convert the first '. $object->param('size_limit') .' features in the file.');
+  }
+
   my $text         = "Please select the format you would like your output in:";
   my $species      = ';species=' . $object->param('species');
   my $referer      = ';_referer=' . uri_escape($object->parent->{'uri'});
+  my $species_path = $object->species_path($object->data_species) || '/'.$species;
   
   $extra_param .= ';_time=' . $object->param('_time') if $object->param('_time');
   
@@ -44,8 +51,10 @@ sub content {
   $convert_file .= ';id_limit=' . $object->param('id_limit') if $object->param('id_limit');
   $convert_file .= ';variation_limit=' . $object->param('variation_limit') if $object->param('variation_limit');
   
-  my $html_url = "$species_path/UserData/$html_target?format=html" . $convert_file . $species . $referer;
-  my $text_url = "$species_path/UserData/$text_target?format=text" . $convert_file . $species . $extra_param;
+  my $html_url = "$species_path/UserData/$html_target?format=html;data_format=".$data_format . $convert_file . $species . $referer;
+  $html_url .= ';code='.$object->param('code') if $object->param('code');
+
+  my $text_url = "$species_path/UserData/$text_target?format=text;data_format=".$data_format . $convert_file . $species . $extra_param;
   
   my $list = [
     qq{<a href="$html_url">HTML</a>},
@@ -57,9 +66,20 @@ sub content {
   $form->add_fieldset;
   $form->add_notes({ class => undef, text => $text });
   $form->add_notes({ class => undef, list => $list });
-
-  $html .= $form->render;
   
+  $html .= $form->render;
+
+  if ($object->param('code')) {
+    my $session_data = $self->model->hub->session->get_data('code' => $object->param('code'));
+    my $nearest = $session_data->{'nearest'};
+    if ($nearest) {
+      $html .= qq(
+<p>or view a sample SNP in <a href="$species_path/Location/View?r=$nearest">Region in Detail</a></p>
+<p>(You can also view or download your converted file from 'Manage Your Data')</p>
+);
+    }
+  }
+
   return $html;
 }
 

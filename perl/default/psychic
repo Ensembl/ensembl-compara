@@ -44,7 +44,7 @@ $query=~ s/^\s+//g;
 $query=~ s/\s+$//g;
 $query=~ s/\s+/ /g;
 if ($query =~ /^ENS|OTT/) {
-  unless ($query =~ /ENSFM/) {
+  unless ($query =~ /[ENSFM|ENSSNP]/) {
     $query =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; #Make sure we've eleven digits
   }
 }

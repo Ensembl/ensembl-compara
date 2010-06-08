@@ -14,7 +14,7 @@ sub process {
 
   if ($object->param('id') =~ /\D/) {
     ## Fallback in case of XSS exploit
-    $url = $object->species_defs->ENSEMBL_BASEURL;
+    $url = $object->species_defs->ENSEMBL_BASE_URL;
   }
   else {
     my $bookmark;

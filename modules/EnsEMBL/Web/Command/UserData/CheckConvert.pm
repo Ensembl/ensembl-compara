@@ -2,6 +2,8 @@
 
 package EnsEMBL::Web::Command::UserData::CheckConvert;
 
+### Upload some data and add relevant parameters to the wizard workflow
+
 use strict;
 use warnings;
 
@@ -22,7 +24,7 @@ sub process {
     $url = $object->species_path($object->data_species).'/UserData/SelectOutput';
   } elsif ($object->param('consequence_mapper')) {
     $param->{'consequence_mapper'} = $object->param('consequence_mapper');
-    $url = $object->species_path($object->data_species).'/UserData/SelectOutput';
+    $url = $object->species_path($object->data_species).'/UserData/SNPConsequence';
     $param->{'upload_format'} = $object->param('upload_format');
   } else {
     $url = $object->species_path($object->data_species).'/UserData/ConvertFeatures';
@@ -63,11 +65,16 @@ sub process {
     $param->{'variation_limit'} = $object->param('variation_limit');
   }
 
-  if ($self->object->param('uploadto') eq 'iframe') {
+  ## This will need changing if we add more tools
+  ## FIXME - this wizard structure is getting a bit crazy!
+  my $next_node = $object->param('consequence_mapper') ? 'command' : 'component';
+
+  ## Go from a modal form (with file upload) directly to another web page
+  if ($next_node eq 'component' && $object->param('uploadto') eq 'iframe') {
     $url = encode_entities($self->url($url, $param));
 
     $self->r->content_type('text/html; charset=utf-8');
-    
+
     print qq{
     <html>
     <head>
@@ -81,7 +88,7 @@ sub process {
     </html>};
   } else {
     $self->ajax_redirect($url, $param);
-  }
+  }   
 
 }
 

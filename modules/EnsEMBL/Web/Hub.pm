@@ -49,7 +49,7 @@ sub new {
     _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
     _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
     _problem       => $args{'_problem'}       || {},    
-    _user          => $args{'_user'}          || undef,                    
+    _user          => $args{'_user'}          || $ENSEMBL_WEB_REGISTRY->get_user,                    
     _view_configs  => $args{'_view_configs_'} || {},
     _user_details  => $args{'_user_details'}  || 1,
     _timer         => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
@@ -398,47 +398,19 @@ sub get_tracks {
 
 sub fetch_userdata_by_id {
   my ($self, $record_id) = @_;
-
   return unless $record_id;
 
-  my $user = $self->user;
   my $data = {};
-
   my ($status, $type, $id) = split '-', $record_id;
 
   if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
-    my ($content, $format);
-
-    my $tempdata = {};
-    my $name;
-    if ($status eq 'temp') {
-      $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
-      $name = $tempdata->{'name'};
-    } else {
-      my $record = $user->urls($id);
-      $tempdata = { 'url' => $record->url };
-      $name = $record->url;
-    }
-
-    # NB this used to be new EnsEMBL::Web... etc but this does not work with the
-    # FeatureParser module for some reason, so have to use FeatureParser->new()
-    #my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
-    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
-
-    if ($type eq 'url') {
-      my $response = get_url_content($tempdata->{'url'});
-      $content = $response->{'content'};
-    } else {
-      my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
-      $content = $file->retrieve;
-      return {} unless $content;
-    }
-   
-    $parser->parse($content, $tempdata->{'format'});
-    $data = { 'parser' => $parser, 'name' => $name };
-  } else {
-    my $fa = $self->databases('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    my @records = $user->uploads($id);
+    $data = $self->get_data_from_session($status, $type, $id);
+  } 
+  else {
+    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
+    my $user = $self->user;
+    return unless $user;
+    my @records = $user->uploads($record_id);
     my $record = $records[0];
 
     if ($record) {
@@ -450,8 +422,45 @@ sub fetch_userdata_by_id {
       }
     }
   }
-
   return $data;
+  
 }
+
+sub get_data_from_session {
+  my ($self, $status, $type, $id) = @_;
+  my ($content, $format, $name);
+  my $tempdata = {};
+
+  if ($status eq 'temp') {
+    $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
+    $name = $tempdata->{'name'};
+  } 
+  else {
+    my $user = $self->user;
+    my $record = $user->urls($id);
+    $tempdata = { 'url' => $record->url };
+    $name = $record->url;
+  }
+
+  # NB this used to be new EnsEMBL::Web... etc but this does not work with the
+  # FeatureParser module for some reason, so have to use FeatureParser->new()
+  #my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
+
+  if ($type eq 'url') {
+    my $response = get_url_content($tempdata->{'url'});
+    $content = $response->{'content'};
+  } else {
+    my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
+    $content = $file->retrieve;
+    return {} unless $content;
+  }
+   
+  $parser->parse($content, $tempdata->{'format'});
+
+  return { 'parser' => $parser, 'name' => $name };
+}
+
+
 
 1;

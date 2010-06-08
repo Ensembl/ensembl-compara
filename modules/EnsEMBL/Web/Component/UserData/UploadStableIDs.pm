@@ -29,7 +29,8 @@ sub content {
   my $id_limit = 30;
 
   my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/CheckConvert");
-  $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text' => qq(<p>Please note that we limit the number of ID's processed to $id_limit. If the uploaded file contains more entries than this only the first $id_limit will be mapped.</p>) });
+  $form->add_notes({'heading'=>'IMPORTANT NOTE:', 'text' => qq(<p>Please note that we limit the number of ID's processed to $id_limit. If the uploaded file contains more entries than this only the first $id_limit will be mapped.</p>
+<p>If you would like to convert more IDs, please use our <a href="ftp://ftp.ensembl.org/pub/misc-scripts/ID_mapper_1.0/">api script</a>.</p>) });
   my $subheader = 'Upload file';
 
    ## Species now set automatically for the page you are on

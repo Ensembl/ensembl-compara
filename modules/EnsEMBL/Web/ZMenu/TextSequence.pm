@@ -20,27 +20,41 @@ sub _content {
   
   my $object = $self->object;
   
+  my $lrg_slice;
+  if ($object->param('lrg')) {
+    my $core_adaptor = $object->database('core')->get_SliceAdaptor;
+    eval { $lrg_slice = $core_adaptor->fetch_by_region('LRG', $object->param('lrg')) };
+  }
+
   my @v       = $object->param('v');
   my @vf      = $object->param('vf');
   my $adaptor = $object->database('variation')->get_VariationAdaptor;
-  
   for (0..$#v) {
     my $variation_object = $self->new_object('Variation', $adaptor->fetch_by_name($v[$_]), $object->__data);
-    $self->variation_content($variation_object, $v[$_], $vf[$_]);
+    $self->variation_content($variation_object, $lrg_slice, $v[$_], $vf[$_]);
   }
 }  
 
 sub variation_content {
-  my ($self, $object, $v, $vf) = @_;
+  my ($self, $object, $lrg, $v, $vf) = @_;
   
   my $variation   = $object->Obj;
   my $genes       = $variation->get_all_Genes;  
   my $feature     = $variation->get_VariationFeature_by_dbID($vf);
   my $allele      = $feature->allele_string;
+
   my $seq_region  = $feature->seq_region_name;
   my $chr_start   = $feature->start;
   my $chr_end     = $feature->end;
   my $position    = "$seq_region:$chr_start";
+
+  if ($lrg) {
+    my $fSlice = $lrg->feature_Slice;
+    my $lrg_start = $fSlice->start - 1;
+    $chr_start   -= $lrg_start;
+    $chr_end     -= $lrg_start;
+    $position     = $chr_start;
+  }
   my $link        = '<a href="%s">%s</a>';
   
   my %url_params  = (

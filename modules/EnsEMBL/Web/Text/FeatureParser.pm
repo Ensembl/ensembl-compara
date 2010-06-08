@@ -252,7 +252,7 @@ sub split_into_columns {
     $_ =~ s/\s+$//;
   }
   ## Remove any empty columns where these are not allowed by format 
-  if ($format && ($format eq 'BED' || $format eq 'SNP' || $format eq 'CONSEQUENCE')) {
+  if ($format && ($format eq 'BED' || $format =~ /SNP/)) {
     @columns = grep /\S/, @columns;
   }
   elsif (!$self->format) {

@@ -8,9 +8,13 @@ use Data::Dumper;
 BEGIN{
   unshift @INC, "$Bin/../conf";
   unshift @INC, "$Bin/../modules";
+
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+
+  unshift @INC, "$Bin/../public-plugins/memcached/modules";
 
   eval{ require EnsEMBL::Web::Cache };
   if ($@){ die "Can't use EnsEMBL::Web::Cache - $@\n"; }

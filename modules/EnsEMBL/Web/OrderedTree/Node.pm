@@ -311,7 +311,7 @@ sub add_after {
   my( $self, $node ) = @_;
   return undef if $self->is_descendant_of( $node ); # Cannot splice tree as part of parent
   $node->_node()->{parent_key} = $self->parent_key;
-  warn join ' - ',  $node->left,$node->right, $self->right+1;
+#  warn join ' - ',  $node->left,$node->right, $self->right+1;
   $self->_reorder_nodes( $node->left, $node->right, $self->right+1 );
   return 1;
 }
