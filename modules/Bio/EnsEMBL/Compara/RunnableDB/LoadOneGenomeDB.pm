@@ -51,6 +51,8 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+my $suffix_separator = '_cut_here_';
+
 sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {  # with much regret I have to introduce the highly demanded method this way
     my $self = shift @_;
 
@@ -58,6 +60,19 @@ sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {  # with much regret 
     my $assembly_name = $cs->version;
 
     return $assembly_name;
+}
+
+sub Bio::EnsEMBL::DBSQL::DBAdaptor::locator {  # this is another similar hack (to be included or at least offered for inclusion into Core codebase)
+    my $self         = shift @_;
+
+    my ($species_safe) = split(/$suffix_separator/, $self->species());  # The suffix was added to attain uniqueness and avoid collision, now we have to chop it off again.
+
+    my $dbc = $self->dbc();
+
+    return sprintf(
+          "%s/host=%s;port=%s;user=%s;pass=%s;dbname=%s;species=%s;species_id=%s;disconnect_when_inactive=%d",
+          ref($self), $dbc->host(), $dbc->port(), $dbc->username(), $dbc->password(), $dbc->dbname(), $species_safe, $self->species_id, 1,
+    );
 }
 
 sub fetch_input {
@@ -83,9 +98,9 @@ sub fetch_input {
 
         for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
 
-            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $r_ind );
+            Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind );
 
-            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$r_ind, 'core') || next;
+            my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$r_ind, 'core') || next;
             my $this_assembly = $this_core_dba->extract_assembly_name();
 
             $assembly_name ||= $this_assembly;
@@ -132,17 +147,13 @@ sub run {
     my $genome_name     = ( ($species_name ne $ncbi_biname) and $self->param('ensembl_genomes') and $species_name ) || $ncbi_biname || $species_name || $meta_biname
         || die "Could not figure out the genome_name, please investigate";
 
-    my $locator         = $core_dba->dbc->locator;
-    $locator .= ';species_id='.$core_dba->species_id if ($core_dba->species_id); # shouldn't it be a part of DBConnection::locator ?
-    $locator .= ';disconnect_when_inactive=1';
-
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
     $genome_db->taxon_id( $taxon_id );
     $genome_db->name( $genome_name );
     $genome_db->assembly( $assembly_name );
     $genome_db->genebuild( $genebuild );
-    $genome_db->locator( $locator );
+    $genome_db->locator( $core_dba->locator );
 
     $self->param('genome_db', $genome_db);
 }
