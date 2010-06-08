@@ -22,6 +22,7 @@ use Carp;
 use CGI::Cookie;
 use URI::Escape qw(uri_escape);
 
+use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::CoreObjects;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Problem;
