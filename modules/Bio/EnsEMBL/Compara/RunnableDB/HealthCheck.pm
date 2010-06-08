@@ -702,7 +702,8 @@ sub _run_compare_to_previous_db_test {
       #Catch throw if these species do not exist in the previous database
       #and return success.
       if ($@ || !defined $previous_mlss) {
-	  print "This pair of species (" .(join ",", @$species_set) . ") with this method_link $method_link_type not do exist in this database $previous_db_url \n";
+        my @names = map { $previous_genome_db_adaptor->fetch_by_dbID($_)->name() } @$previous_gdbs;
+	  print "This pair of species (" .(join ",", @names) . ") with this method_link $method_link_type not do exist in this database $previous_db_url \n";
 	  return;
       }
       $previous_mlss_id = $previous_mlss->dbID;
