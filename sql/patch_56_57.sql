@@ -114,3 +114,15 @@ CREATE TABLE lr_index_offset (
         PRIMARY KEY (table_name)
 );
 
+## ---------------------- species tags table structure
+#
+CREATE TABLE species_set_tag (
+  species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
+  tag                         varchar(50) DEFAULT NULL,
+  value                       mediumtext,
+
+  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+
+  UNIQUE KEY tag_species_set_id (species_set_id,tag)
+);
+
