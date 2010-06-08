@@ -244,23 +244,23 @@ sub _create_Domain {
 }
 
 sub _create_Phenotype {
-	my ($self, $db) = @_;	
-	my $slice;
-	my $features;
-	my $array = [];	
-	my $id = $self->param('id');
-				
-	my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};	
+  my ($self, $db) = @_;  
+  my $slice;
+  my $features;
+  my $array = [];  
+  my $id = $self->param('id');
+        
+  my @chrs = @{$self->species_defs->ENSEMBL_CHROMOSOMES};  
 
-	foreach my $chr (@chrs)
-	{
-		$slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);				
-		my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
+  foreach my $chr (@chrs)
+  {
+    $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $chr);        
+    my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
 
-		push(@$array,@$array2) if (@$array2);
-	}	
-	$features = {'Variation' => $array};			
-	return $features;
+    push(@$array,@$array2) if (@$array2);
+  }  
+  $features = {'Variation' => $array};      
+  return $features;
 }
 
 sub _create_ProbeFeature {
@@ -733,99 +733,90 @@ sub retrieve_Variation {
   my $results = [];
   my $phenotype_id = $self->param('id');
   
-  #getting associated phenotype with the variation
+  # getting associated phenotype with the variation
   my $species = $self->species;
   my $vaa = Bio::EnsEMBL::Registry->get_adaptor($species, "variation", "variationannotation");
   my $variation_array = $vaa->fetch_all_by_VariationFeature_list($data);
 
   foreach my $v (@$data) {  
-    #getting all genes located in that specific location
-    my ($seq_region, $start, $end ) = ($v->seq_region_name, $v->seq_region_start,$v->end);    
+    # getting all genes located in that specific location
+    my ($seq_region, $start, $end) = ($v->seq_region_name, $v->seq_region_start,$v->end);    
     my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
     my $genes = $slice->get_all_Genes();
     my ($gene_link, $add_comma,$associated_phenotype,$associated_gene,$p_value_log);
     
-    foreach my $row (@$genes) 
-    {
-        my $gene_symbol;
-        $gene_symbol = "(".$row->display_xref->display_id.")" if($row->{'stable_id'});
-        
-        my $gene_name = $row->{'stable_id'};
-        my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});        
-        $gene_link .= qq{, } if($gene_link);
-        $gene_link .= qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};        
-    }     
+    foreach my $row (@$genes) {
+      my $gene_symbol;
+      $gene_symbol = "(".$row->display_xref->display_id.")" if($row->{'stable_id'});
+      
+      my $gene_name = $row->{'stable_id'};
+      my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});        
+      $gene_link .= qq{, } if($gene_link);
+      $gene_link .= qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};        
+    }
+    
     my @associated_gene_array;
 
-    #getting associated phenotype and associated gene with the variation
-    foreach my $variation (@$variation_array)
-    {      
-      #only get associated gene and phenotype for matching variation id
-      if($variation->{'_variation_id'} eq $v->{'_variation_id'})
-      {          
-          $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /, $variation->{'phenotype_description'}/g);          
-                
-          if($variation->{'_phenotype_id'} eq $phenotype_id)
-          {
-            #if there is more than one associated gene (comma separated) split them to generate the URL for each of them          
-            if($variation->{'associated_gene'} =~ /,/g)
-            {            
-               push(@associated_gene_array,(split(/,/,$variation->{'associated_gene'})));
-            }
-            else
-            {
-              push(@associated_gene_array,$variation->{'associated_gene'});
-            }
-
-            $p_value_log = -(log($variation->{'p_value'})/log(10)) if($variation->{'p_value'} != 0);  #only get the p value log 10 for the pointer matching phenotype id and variation id
+    # getting associated phenotype and associated gene with the variation
+    foreach my $variation (@$variation_array) {      
+      # only get associated gene and phenotype for matching variation id
+      if ($variation->{'_variation_id'} eq $v->{'_variation_id'}) {          
+        $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /, $variation->{'phenotype_description'}/g);          
+              
+        if ($variation->{'_phenotype_id'} eq $phenotype_id) {
+          # if there is more than one associated gene (comma separated) split them to generate the URL for each of them          
+          if ($variation->{'associated_gene'} =~ /,/g) {            
+            push(@associated_gene_array,(split(/,/,$variation->{'associated_gene'})));
+          } else {
+            push(@associated_gene_array,$variation->{'associated_gene'});
           }
+
+          $p_value_log = -(log($variation->{'p_value'})/log(10)) if($variation->{'p_value'} != 0);  #only get the p value log 10 for the pointer matching phenotype id and variation id
+        }
       }      
     }  
     
-    #preparing the URL for all the associated genes and ignoring duplicate one
-    foreach my $gene (@associated_gene_array)
-    {              
-      if($gene)
-      {
+    # preparing the URL for all the associated genes and ignoring duplicate one
+    foreach my $gene (@associated_gene_array) {              
+      if ($gene) {
         $gene =~ s/\s//gi;
         my $associated_gene_url = $self->_url({type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID});                                                        
         $associated_gene .= qq{$gene, } if($gene eq 'Intergenic');
         $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /$gene/i && $gene ne 'Intergenic');
       }                            
     }
-    $associated_gene =~ s/\s$//g; #removing the last white space
-    $associated_gene =~ s/,$|^,//g; #replace the last or first comma if there is any
     
-    $associated_phenotype =~ s/\s$//g; #removing the last white space
-    $associated_phenotype =~ s/,$|^,//g; #replace the last or first comma if there is any
+    $associated_gene =~ s/\s$//g;        # removing the last white space
+    $associated_gene =~ s/,$|^,//g;      # replace the last or first comma if there is any
+    
+    $associated_phenotype =~ s/\s$//g;   # removing the last white space
+    $associated_phenotype =~ s/,$|^,//g; # replace the last or first comma if there is any
     
     if (ref($v) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($v);
       push(@$results, $unmapped);
-    }
-    else {
-      #making the location 10kb if it a one base pair
-      if($v->end-$v->start == 0)
-      {
-          $start = $start - 5000;
-          $end = $end + 5000;
+    } else {
+      # making the location 10kb if it a one base pair
+      if ($v->end-$v->start == 0) {
+        $start = $start - 5000;
+        $end = $end + 5000;
       }
       
       push @$results, {
-        'region'   		=> $v->seq_region_name,
-        'start'    		=> $start,
-        'end'      		=> $end,
-        'strand'   		=> $v->strand,        
-        'label'    		=> $v->variation_name,        
-        'href'        => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
-        'extra'       => [ $gene_link,$associated_gene,$associated_phenotype, sprintf("%.1f",$p_value_log) ],
-        'p_value'         => $p_value_log,  
-        'colour_scaling'  => 1,
+        'region'         => $v->seq_region_name,
+        'start'          => $start,
+        'end'            => $end,
+        'strand'         => $v->strand,        
+        'label'          => $v->variation_name,        
+        'href'           => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
+        'extra'          => [ $gene_link,$associated_gene,$associated_phenotype, sprintf("%.1f",$p_value_log) ],
+        'p_value'        => $p_value_log,  
+        'colour_scaling' => 1,
       }
     }
   }
   
-  return ( $results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], $type );
+  return ($results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], $type);
 }
 
 sub retrieve_Xref {
@@ -1068,60 +1059,59 @@ sub get_synteny_matches {
   my $self = shift;
 
   my @data;
-  my $OTHER = $self->param('otherspecies') || 
-              $self->param('species')      ||
-	      $self->_default_otherspecies;
-  my $gene2_adaptor = $self->database( 'core', $OTHER )->get_GeneAdaptor();
-  my $localgenes = $self->get_synteny_local_genes;
-  my $offset = $self->seq_region_start;
+  my $other_species = $self->param('otherspecies') || $self->param('species') || $self->_default_otherspecies;
+  my $gene2_adaptor = $self->database('core', $other_species)->get_GeneAdaptor;
+  my $localgenes    = $self->get_synteny_local_genes;
+  my $offset        = $self->seq_region_start;
 
   foreach my $localgene (@$localgenes){
-    my $homologues = $self->fetch_homologues_of_gene_in_species($localgene->stable_id, $OTHER);
-    my $homol_num = scalar @{$homologues};
+    my $homologues   = $self->fetch_homologues_of_gene_in_species($localgene->stable_id, $other_species);
+    my $homol_num    = scalar @$homologues;
     my $gene_synonym = $localgene->external_name || $localgene->stable_id;
 
-    if(@{$homologues}) {
-      foreach my $homol(@{$homologues}) {
-        #warn "....    ", $homol->stable_id;
-        my $gene       = $gene2_adaptor->fetch_by_stable_id( $homol->stable_id,1 );
+    if (@$homologues) {
+      foreach my $homol (@$homologues) {
+        my $gene       = $gene2_adaptor->fetch_by_stable_id($homol->stable_id, 1);
         my $homol_id   = $gene->external_name || $gene->stable_id;
         my $gene_slice = $gene->slice;
-        my $H_START    = $gene->start;
-        my $H_CHR;
-        if( $gene_slice->coord_system->name eq "chromosome" ) {
-          $H_CHR = $gene_slice->seq_region_name;
+        my $h_start    = $gene->start;
+        my $h_chr;
+        
+        if ($gene_slice->coord_system->name eq 'chromosome') {
+          $h_chr = $gene_slice->seq_region_name;
         } else {
-          my $coords =$gene_slice->project("chromosome");
-          $H_CHR = $coords->[0]->[2]->seq_region_name() if @$coords;
+          my $coords = $gene_slice->project('chromosome');
+          $h_chr = $coords->[0]->[2]->seq_region_name if @$coords;
         }
         push @data, {
-          'sp_stable_id'    =>  $localgene->stable_id,
-          'sp_synonym'      =>  $gene_synonym,
-          'sp_chr'          =>  $localgene->seq_region_name,
-          'sp_start'        =>  $localgene->seq_region_start,
-          'sp_end'          =>  $localgene->seq_region_end,
-          'sp_length'       =>  $self->bp_to_nearest_unit($localgene->start()+$offset),
-          'other_stable_id' =>  $homol->stable_id,
-          'other_synonym'   =>  $homol_id,
-          'other_chr'       =>  $H_CHR,
-          'other_start'     =>  $H_START,
-          'other_end'       =>  $gene->end,
-          'other_length'    =>  $self->bp_to_nearest_unit($gene->end - $H_START),
-          'homologue_no'    =>  $homol_num
+          'sp_stable_id'    => $localgene->stable_id,
+          'sp_synonym'      => $gene_synonym,
+          'sp_chr'          => $localgene->seq_region_name,
+          'sp_start'        => $localgene->seq_region_start,
+          'sp_end'          => $localgene->seq_region_end,
+          'sp_length'       => $self->bp_to_nearest_unit($localgene->start + $offset),
+          'other_stable_id' => $homol->stable_id,
+          'other_synonym'   => $homol_id,
+          'other_chr'       => $h_chr,
+          'other_start'     => $h_start,
+          'other_end'       => $gene->end,
+          'other_length'    => $self->bp_to_nearest_unit($gene->end - $h_start),
+          'homologue_no'    => $homol_num
         };
       }
     } else {
       push @data, { 
-        'sp_stable_id'      =>  $localgene->stable_id,
-        'sp_chr'            =>  $localgene->seq_region_name,
-        'sp_start'          =>  $localgene->seq_region_start,
-        'sp_end'            =>  $localgene->seq_region_end,
-        'sp_synonym'        =>  $gene_synonym,
-        'sp_length'         =>  $self->bp_to_nearest_unit($localgene->start()+$offset) 
+        'sp_stable_id' => $localgene->stable_id,
+        'sp_chr'       => $localgene->seq_region_name,
+        'sp_start'     => $localgene->seq_region_start,
+        'sp_end'       => $localgene->seq_region_end,
+        'sp_synonym'   => $gene_synonym,
+        'sp_length'    => $self->bp_to_nearest_unit($localgene->start + $offset) 
       };
     }
   }
-    return \@data;
+  
+  return \@data;
 }
 
 sub get_synteny_local_genes {
@@ -1146,47 +1136,11 @@ sub get_synteny_local_genes {
 }
 
 sub _default_otherspecies {
-  ## Needs moving to viewconfig so we don't have to work it out each time
- 
-    my $self = shift;
-    my $sd = $self->species_defs;
-    my %synteny = $sd->multi('DATABASE_COMPARA', 'SYNTENY');
-    my @has_synteny = sort keys %synteny;
-    my $sp;
-
-  ## Set default as primary species, if available
-
-    my $species = $self->species;
-    if (my $spg = $sd->SPECIES_GROUP($species)) {
-	foreach $sp (@has_synteny) {
-	    my $ospg = $sd->SPECIES_GROUP($sp);
-	    if ($ospg eq $spg)  {
-		if ($sp ne $species) {
-		    return $sp;
-		}
-	    }
-	}
-    }
-
-    unless ($ENV{'ENSEMBL_SPECIES'} eq $sd->ENSEMBL_PRIMARY_SPECIES) {
-	foreach my $sp (@has_synteny) {
-	    if ($sp eq $sd->ENSEMBL_PRIMARY_SPECIES) {
-		return $sp;
-	    }
-	}
-    }
-
-  ## Set default as secondary species, if primary not available
-    unless ($ENV{'ENSEMBL_SPECIES'} eq $sd->ENSEMBL_SECONDARY_SPECIES) {
-	foreach $sp (@has_synteny) {
-	    if ($sp eq $sd->ENSEMBL_SECONDARY_SPECIES) {
-		return $sp;
-	    }
-	}
-    }
-
-  ## otherwise choose first in list
-    return $has_synteny[0];
+  my $self         = shift;
+  my $species_defs = $self->species_defs;
+  my $species      = $self->species;
+  
+  return $species eq $species_defs->ENSEMBL_PRIMARY_SPECIES ? $species_defs->ENSEMBL_SECONDARY_SPECIES : $species_defs->ENSEMBL_PRIMARY_SPECIES;
 }
 
 ######## LDVIEW CALLS ################################################
