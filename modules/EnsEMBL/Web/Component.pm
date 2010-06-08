@@ -445,7 +445,6 @@ sub _sort_similarity_links {
         $text = $word;
       }
     }
-    
     if ($type->isa('Bio::EnsEMBL::IdentityXref')) {
       $text .= ' <span class="small"> [Target %id: ' . $type->target_identity . '; Query %id: ' . $type->query_identity . ']</span>';
       $join_links = 1;
@@ -485,20 +484,40 @@ sub _sort_similarity_links {
     }
 
     # add link to featureview
-    my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
-    my $link_type = $fv_type eq 'OligoFeature' ? $fv_type : "${fv_type}_$externalDB";
+    ## FIXME - another LRG hack! 
+    if ($externalDB eq 'ENS_LRG_gene') {
+      my $lrg_url = $self->model->hub->url({
+        type    => 'LRG',
+        action  => 'Genome',
+        lrg     => $display_id,
+      });
     
-    my $k_url = $self->model->hub->url({
-      type   => 'Location',
-      action => 'Genome',
-      id     => $link_name,
-      ftype  => $link_type
-    });
+      $text .= qq{ [<a href="$lrg_url">view all locations</a>]
+};
+    }
+    else {
     
-    $text .= qq{  [<a href="$k_url">view all locations</a>]};
-    $text .= '</div>';
+      my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
+      my $link_type = $fv_type eq 'OligoFeature' ? $fv_type : "${fv_type}_$externalDB";
     
-    push @{$object->__data->{'links'}{$type->type}}, [ $type->db_display_name || $externalDB, $text ];
+      my $k_url = $self->model->hub->url({
+        type   => 'Location',
+        action => 'Genome',
+        id     => $link_name,
+        ftype  => $link_type
+      });
+    
+      $text .= qq{  [<a href="$k_url">view all locations</a>]};
+      $text .= '</div>';
+    }
+
+    ## FIXME Yet another LRG hack!
+    my $label = $type->db_display_name || $externalDB;
+    if ($externalDB eq 'ENS_LRG_gene') {
+      $label = 'LRG';
+    }
+    
+    push @{$object->__data->{'links'}{$type->type}}, [ $label, $text ];
   }
 }
 
@@ -555,8 +574,10 @@ sub transcript_table {
       my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
       $description .= qq( <span class="small">@{[ $link ]}</span>) if ($acc && $acc ne 'content');
     }
+    
     $description = "<p>$description</p>";
   }
+  
   my $url = $self->object->_url({
     type   => 'Location',
     action => 'View',
