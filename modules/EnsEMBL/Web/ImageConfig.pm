@@ -14,6 +14,8 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::OrderedTree;
 use EnsEMBL::Web::RegObj;
 
+# use EnsEMBL::Web::Tools::Misc qw(style_by_filesize); # DO NOT UNCOMMENT OR DELETE THIS LINE - It can cause circular references.
+
 our @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
 
 our $alignment_renderers = [
@@ -210,7 +212,7 @@ sub load_user_vert_tracks {
           style       => $analysis->web_data,
         };
         
-        $track_info->{'render'} = EMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'});
+        $track_info->{'render'} = EnsEMBL::Web::Tools::Misc::style_by_filesize($source->{'filesize'});
         push @user_tracks, $track_info;
       }
     }
