@@ -594,55 +594,54 @@ sub get_homology_matches {
   $homology_description ||= 'ortholog';
   $compara_db           ||= 'compara';
   
-  my $key = $homology_source . '::' . $homology_description;
+  my $key = "$homology_source::$homology_description";
   
   if (!$self->{'homology_matches'}{$key}) {
     my $homologues = $self->fetch_homology_species_hash($homology_source, $homology_description, $compara_db);
     
     return $self->{'homology_matches'}{$key} = {} unless keys %$homologues;
     
-    my $gene          = $self->Obj;
-    my $geneid        = $gene->stable_id;
-    my $adaptor_call  = $self->param('gene_adaptor') || 'get_GeneAdaptor';
+    my $gene         = $self->Obj;
+    my $geneid       = $gene->stable_id;
+    my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
     my %homology_list;
 
     # Convert descriptions into more readable form
     my %desc_mapping = (
-      'ortholog_one2one'          => '1-to-1',
-      'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
-      'ortholog_one2many'         => '1-to-many',
-      'possible_ortholog'         => 'possible ortholog',
-      'ortholog_many2many'        => 'many-to-many',
-      'within_species_paralog'    => 'paralogue (within species)',
-      'other_paralog'             => 'other paralogue (within species)',
-      'putative_gene_split'       => 'putative gene split',
-      'contiguous_gene_split'     => 'contiguous gene split'
+      ortholog_one2one          => '1-to-1',
+      apparent_ortholog_one2one => '1-to-1 (apparent)', 
+      ortholog_one2many         => '1-to-many',
+      possible_ortholog         => 'possible ortholog',
+      ortholog_many2many        => 'many-to-many',
+      within_species_paralog    => 'paralogue (within species)',
+      other_paralog             => 'other paralogue (within species)',
+      putative_gene_split       => 'putative gene split',
+      contiguous_gene_split     => 'contiguous gene split'
     );
     
-    foreach my $display_spp (keys %$homologues){
+    foreach my $display_spp (keys %$homologues) {
       my $order = 0;
       
-      foreach my $homology (@{$homologues->{$display_spp}}){ 
+      foreach my $homology (@{$homologues->{$display_spp}}) { 
         my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $ancestor_node_id) = @$homology;
-  
+        
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
         
-        my $homologue_id = $homologue->stable_id;
+        $homology_list{$display_spp}{$homologue->stable_id} = { 
+          homology_desc       => $desc_mapping{$homology_desc} || 'no description',
+          description         => $homologue->description       || 'No description',
+          display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
+          homology_subtype    => $homology_subtype,
+          spp                 => $display_spp,
+          query_perc_id       => $query_perc_id,
+          target_perc_id      => $target_perc_id,
+          homology_dnds_ratio => $dnds_ratio,
+          ancestor_node_id    => $ancestor_node_id,
+          order               => $order,
+          location            => sprintf('%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand))
+        };
         
-        $homology_list{$display_spp}{$homologue_id}{'homology_desc'}       = $desc_mapping{$homology_desc} || 'no description';
-        $homology_list{$display_spp}{$homologue_id}{'homology_subtype'}    = $homology_subtype;
-        $homology_list{$display_spp}{$homologue_id}{'spp'}                 = $display_spp;
-        $homology_list{$display_spp}{$homologue_id}{'sp_common'}           = $homologue->taxon ? $homologue->taxon->common_name : '';
-        $homology_list{$display_spp}{$homologue_id}{'description'}         = $homologue->description || 'No description';
-        $homology_list{$display_spp}{$homologue_id}{'order'}               = $order;
-        $homology_list{$display_spp}{$homologue_id}{'query_perc_id'}       = $query_perc_id;
-        $homology_list{$display_spp}{$homologue_id}{'target_perc_id'}      = $target_perc_id;
-        $homology_list{$display_spp}{$homologue_id}{'homology_dnds_ratio'} = $dnds_ratio; 
-        $homology_list{$display_spp}{$homologue_id}{'display_id'}          = $homologue->display_label || 'Novel Ensembl prediction';
-        $homology_list{$display_spp}{$homologue_id}{'ancestor_node_id'}    = $ancestor_node_id;
-        $homology_list{$display_spp}{$homologue_id}{'stable_id'}           = $homologue_id;
-        $homology_list{$display_spp}{$homologue_id}{'location'}            = sprintf '%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand);
         $order++;
       }
     }
@@ -874,7 +873,7 @@ sub store_TransformedSNPS {
       foreach (@{$S->[2]->get_all_TranscriptVariations || []}) {
         next unless $T eq $_->transcript->stable_id;
         
-        foreach my $type (@{$_->consequence_type || []} ) {
+        foreach my $type (@{$_->consequence_type || []}) {
           next unless $valids->{'opt_' . lc $type};
           $snps->{$S->[2]->dbID} = $_;
           last;
