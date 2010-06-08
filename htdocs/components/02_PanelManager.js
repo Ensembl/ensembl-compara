@@ -15,11 +15,11 @@ Ensembl.PanelManager.extend({
     this.panelNumber = 0;
     this.zIndex      = 101;
     
-    Ensembl.EventManager.register('createPanel', this, this.createPanel);
+    Ensembl.EventManager.register('createPanel',  this, this.createPanel);
     Ensembl.EventManager.register('destroyPanel', this, this.destroyPanel);
-    Ensembl.EventManager.register('addPanel', this, this.addPanel);
+    Ensembl.EventManager.register('addPanel',     this, this.addPanel);
     Ensembl.EventManager.register('panelToFront', this, this.panelToFront);
-    Ensembl.EventManager.register('resetZIndex', this, this.resetZIndex);
+    Ensembl.EventManager.register('resetZIndex',  this, this.resetZIndex);
     
     Ensembl.EventManager.register('ajaxLoaded', this, function () {
       if (!$('.ajax_load').length) {
@@ -138,8 +138,8 @@ Ensembl.PanelManager.extend({
    * Reset the zIndex variable, keeping the panel display the same
    */
   resetZIndex: function () {
-    var p;
     var zInd = [];
+    var p;
     
     function sort(a, b) {
       return a.index - b.index;
