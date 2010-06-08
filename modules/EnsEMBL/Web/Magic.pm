@@ -22,7 +22,6 @@ use strict;
 use Apache2::RequestUtil;
 use CGI;
 
-use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Model;
 
