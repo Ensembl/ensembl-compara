@@ -42,6 +42,7 @@ sub content {
 
   my $all_objs = $object->fetch_all_objs;
   foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ){
+    next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
     $table .= '<tr>';
     $table .='<td>'. $reg_object->feature_set->cell_type->name .'</td>';
     $table .='<td>'. $reg_object->feature_type->name . '</td>';

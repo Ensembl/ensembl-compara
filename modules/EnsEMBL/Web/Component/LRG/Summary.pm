@@ -50,15 +50,14 @@ information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.
       if ($description ne 'No description') {
         my @genes = @{$self->object->Obj->get_all_Genes('LRG_import')||[]};
         my $db_entry = $genes[0]->get_all_DBLinks('HGNC');
-        warn ">>> XREF ".$db_entry->[0];
 		
-		my $gene_url = $object->_url({
-		  type           => 'Gene',
-		  action         => 'Summary',
-		  g              => $db_entry->[0]->display_id,
+		    my $gene_url = $object->_url({
+		      type           => 'Gene',
+		      action         => 'Summary',
+		      g              => $db_entry->[0]->display_id,
         });
 		
-        $description .= ' This LRG was created as a reference standard for the <a href="'.$gene_url.'">'.$db_entry->[0]->display_id.'</a> gene';
+        $description .= ' This LRG was created as a reference standard for the <a href="'.$gene_url.'">'.$db_entry->[0]->display_id.'</a> gene.';
       
         $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
         $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:(\w+)\]//g;
