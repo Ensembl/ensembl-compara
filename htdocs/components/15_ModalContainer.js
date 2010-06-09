@@ -146,7 +146,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
         
-        Ensembl.EventManager.trigger('createPanel', id, $(json.content).find('input.panel_type').val() || json.panelType, params);
+        Ensembl.EventManager.trigger('createPanel', id, $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/)||[])[0]).val() || json.panelType, params);
       },
       error: function (e) {
         failures = failures || 1;
