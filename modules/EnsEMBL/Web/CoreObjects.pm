@@ -234,25 +234,22 @@ sub _generate_transcript {
   
   return unless $tdb_adaptor;
   
-  if ($self->param('t')) {    
+  if ($self->param('t')) {
     my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
     
-    if ($tdb_adaptor) {
-      my $t = $tdb_adaptor->get_TranscriptAdaptor->fetch_by_stable_id($self->param('t'));
+    if ($t) {
+      $self->transcript = $t;
       
-      if ($t) {
-        $self->transcript = $t;
-        if ($t->stable_id =~ /LRG/) {
-          $self->_get_lrg_location_from_transcript($tdb_adaptor);
-        } else {
-          $self->_get_gene_location_from_transcript($tdb_adaptor);
-        }
+      if ($t->stable_id =~ /LRG/) {
+        $self->_get_lrg_location_from_transcript($tdb_adaptor);
       } else {
-        my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
-        
-        $t = $a->fetch_by_stable_id($self->param('t')); 
-        $self->transcript = $t if $t;
+        $self->_get_gene_location_from_transcript($tdb_adaptor);
       }
+    } else {
+      my $a = $tdb_adaptor->get_ArchiveStableIdAdaptor;
+      
+      $t = $a->fetch_by_stable_id($self->param('t')); 
+      $self->transcript = $t if $t;
     }
     
     $self->{'parameters'}{'t'} = $t->stable_id if $t;
