@@ -71,7 +71,7 @@ sub error_message {
 # within the individual Filter's catch method.
 sub redirect_url {
   my $self = shift;
-  my $url = $self->object->species_path . $self->redirect;
+  my $url = $self->object->species_defs->species_path . $self->redirect;
   my @ok_params;
   
   if (!$url) {
