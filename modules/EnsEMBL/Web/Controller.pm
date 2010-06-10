@@ -130,7 +130,10 @@ sub build_page {
   
   if (ref $object) { # Actual object
     $type = $object->__objecttype;
-    $object->viewconfig->form($object);
+    my $viewconfig = $object->viewconfig;
+    if ($viewconfig) {
+      $viewconfig->form($object);
+    }
   } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $type = $object;
   } elsif ($model->hub->type) { # No domain objects created on page startup
