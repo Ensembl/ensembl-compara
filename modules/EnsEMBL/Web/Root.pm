@@ -230,7 +230,7 @@ sub neat_sr_name {
 sub pretty_date {
   my ($self, $datetime, $format) = @_;
   
-  my ($date, $time) = split ' ', $datetime;
+  my ($date, $time) = split ' |T', $datetime;
   my ($year, $mon, $day) = split '-', $date;
   
   return '-' unless $year > 0;
@@ -240,9 +240,14 @@ sub pretty_date {
   
   $day =~ s/^0//;
   
-  if ($format && $format eq 'short') {
+  if ($format && $format eq 'full') {
+    my ($hour, $min, $sec) = split(':', $time);
+    return $day.'/'.$mon.'/'.$year.' at '.$hour.':'.$min;
+  } 
+  elsif ($format && $format eq 'short') {
     return $short_months[$mon] . ' ' . $year;
-  } else {
+  }
+  else {
     return $day . ' ' . $long_months[$mon] . ' ' . $year;
   }
 }
