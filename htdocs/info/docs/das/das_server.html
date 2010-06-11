@@ -88,7 +88,7 @@
 <li>First, the DAS server is queried using the <em>sources</em> command:<br/>
   <i>http://yourserver/das/sources</i><br/>
 Along with the label, description and other textual information, Ensembl extracts from each source details of the supported coordinate systems and the URL that should be used to query the source for features.</li>
-<li>If the server does not support the sources command (or if coordinates information is not provided), Ensembl queries using the older <i>dsn</i> command:<br/>
+<li>If the server is older and therefore does not support the sources command (or if coordinates information is not provided), Ensembl queries using the older <i>dsn</i> command:<br/>
   <i>http://yourserver/das/dsn</i><br/>
 Ensembl will then try to find coordinates information from the mapmaster, if one is specified.</li>
 </ol>
@@ -100,15 +100,13 @@ Ensembl will then try to find coordinates information from the mapmaster, if one
 </p>
 
 <ul>
-<li>The source supports the "features" command/capability.</li>
-<li>The source provides a mapmaster. Note that a source may support multiple coordinate systems - Ensembl will query the source in the most efficient manner.</li>
+<li>The source supports the <em>features</em> command/capability.</li>
+<li>If the server supports the <em>sources</em> command (DAS 1.53E onwards), each source should provide accurate coordinate system details.</li>
+<li>If the server supprots the <em>sources</em> command, the query URL for each source must be accessible from the Ensembl server. Check the "query_uri" in your server's XML response to the sources command. You will often need to manually set the hostname in your server's configuration. For example in ProServer, set the "hostname" or "response_hostname" property to a fully-qualified host (e.g. myhost.mycompany.com).</li>
+<li>If the server does not support the <em>sources</em> command (DAS 1.53 only), the <em>dsn</em> command should provide a mapmaster, which itself provides coordinate system details.</li>
 </ul>
 
-<p>Additionally, if your server supports the <em>sources</em> command:</p>
-<ul>
-<li>The query URL for each source must be accessible from the Ensembl server. Check the "query_uri" in your server's XML response to the sources command. You will often need to manually set the hostname in your server's configuration. For example in ProServer, set the "hostname" or "response_hostname" property to a fully-qualified host (e.g. myhost.mycompany.com).</li>
-<li>The server must provide complete and accurate coordinate system data for each source. See the server documentation for further detail.</li>
-</ul>
+<p>See the server and DAS protocol documentation for further details. Note that a source may support multiple coordinate systems - Ensembl will query the source in the most efficient manner.</p>
 
 <h2>Controlling appearance</h2>
 
