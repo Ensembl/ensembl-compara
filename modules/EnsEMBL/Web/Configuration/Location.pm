@@ -49,50 +49,6 @@ sub context_panel {
   }
 }
 
-sub modify_tree {
-  my $self = shift;
-  my $object = $self->object;
-  
-  # Links to external browsers - UCSC, NCBI, etc
-  my %browsers = %{$object->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
-  $browsers{'UCSC_DB'} = $object->species_defs->UCSC_GOLDEN_PATH;
-  $browsers{'NCBI_DB'} = $object->species_defs->NCBI_GOLDEN_PATH;
-  
-  my $url;
-  
-  if ($browsers{'UCSC_DB'}) {
-    if ($object->seq_region_name) {
-      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
-    } else {
-      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => '1', 'START' => '1', 'END' => '1000000' });
-    }
-    
-    $self->get_other_browsers_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
-    
-    delete($browsers{'UCSC_DB'});
-  }
-  
-  if ($browsers{'NCBI_DB'}) {
-    if ($object->seq_region_name) { 
-      $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
-    } else {
-      my $taxid = $object->species_defs->get_config($object->species, 'TAXONOMY_ID'); 
-      $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
-    }
-    
-    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
-    
-    delete($browsers{'NCBI_DB'});
-  }
-  
-  foreach (sort keys %browsers) {
-    next unless $browsers{$_};
-    
-    $url = $object->get_ExtURL($_, { 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
-    $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
-  }
-}
-
 sub populate_tree {
   my $self = shift;
   my $object = $self->object;
@@ -208,17 +164,54 @@ sub populate_tree {
     { 'availability' => 'slice', 'no_menu_entry' => 1 }
   );
 
-    #add vega link
-  $self->add_vega_link;  
+  $self->add_external_browsers;
 }
 
-=head2 add_vega_link
- 
- Example     : $self->get_vega_link;
- Description : Adds the link to Vega in the other browsers menu, in a location page
- Returns     : nothing
- Return type : undef
-=cut
+sub add_external_browsers {
+  my $self = shift;
+  my $object = $self->object;
+  
+  $self->add_vega_link;
+  
+  # Links to external browsers - UCSC, NCBI, etc
+  my %browsers = %{$object->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
+  $browsers{'UCSC_DB'} = $object->species_defs->UCSC_GOLDEN_PATH;
+  $browsers{'NCBI_DB'} = $object->species_defs->NCBI_GOLDEN_PATH;
+  
+  my $url;
+  
+  if ($browsers{'UCSC_DB'}) {
+    if ($object->seq_region_name) {
+      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    } else {
+      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => '1', 'START' => '1', 'END' => '1000000' });
+    }
+    
+    $self->get_other_browsers_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
+    
+    delete($browsers{'UCSC_DB'});
+  }
+  
+  if ($browsers{'NCBI_DB'}) {
+    if ($object->seq_region_name) { 
+      $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    } else {
+      my $taxid = $object->species_defs->get_config($object->species, 'TAXONOMY_ID'); 
+      $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
+    }
+    
+    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
+    
+    delete($browsers{'NCBI_DB'});
+  }
+  
+  foreach (sort keys %browsers) {
+    next unless $browsers{$_};
+    
+    $url = $object->get_ExtURL($_, { 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
+  }
+}
 
 sub add_vega_link {
   my $self = shift;
