@@ -297,7 +297,9 @@ sub ContigAwareNet {
   CHAIN: foreach my $c (@$chains) {
     my $time_start = gettimeofday();  
     my @blocks = @$c;  
-    $cnt_chain++; 
+    $cnt_chain++;  
+    next CHAIN if $cnt_chain < 62900; 
+
     print "Chains: $cnt_chain/". scalar(@$chains) ." - " . scalar(@blocks) ." blocks   (".scalar(@retained_blocks) . " retained blocks)\n" ; 
     printf ("Time C: %.2f - time elapsed\n", $time_start-$first_full_start); 
 
@@ -422,8 +424,13 @@ sub ContigAwareNet {
         $last_index  = binary_segment_search (\@query_seq_level_projection, $outer_block_start-1 ); 
 
          if (  $query_seq_level_projection[$last_index]->from_end >= $outer_block_start ) {  
-           throw(" something went wrong with the binary segment search\n");
-         } 
+           warning(" something went wrong with the binary segment search $last_index \n");  
+           # this can potentially be true. 
+           for ( @query_seq_level_projection) { 
+              print "warn: " . $_->from_start." ".$_->from_end ."  < $outer_block_start \n";  
+           }
+         }  
+
         SEGMENTS: for ( my $i = $last_index ; $i < @query_seq_level_projection ; $i++ ) {  
            my $seg = $query_seq_level_projection[$i]; 
            #print "$cnt_chain block $nrb / " . scalar(@blocks) ." : " .$qga->dnafrag_start."\t".$qga->dnafrag_end ." cmp: i=$i / " . scalar(@query_seq_level_projection) . "\t";   
