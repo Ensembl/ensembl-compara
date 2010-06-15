@@ -292,56 +292,32 @@ sub ContigAwareNet {
        throw ( " error \n" ); 
      }
   }    
-  my $first_full_start  = gettimeofday();  
 
   CHAIN: foreach my $c (@$chains) {
-    my $time_start = gettimeofday();  
     my @blocks = @$c;  
     $cnt_chain++;  
-    next CHAIN if $cnt_chain < 62900; 
 
     print "Chains: $cnt_chain/". scalar(@$chains) ." - " . scalar(@blocks) ." blocks   (".scalar(@retained_blocks) . " retained blocks)\n" ; 
-    printf ("Time C: %.2f - time elapsed\n", $time_start-$first_full_start); 
 
     my $keep_chain = 1; 
 
-     # sort get genomic extent of block ( min start + max. end ) 
+     # sort get genomic extent of block ( min start + max. end )  
+
     my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @blocks;  
     my @end_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_end, $_] } @blocks;  
-
     my $min_start_X  =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
-    my $max_end_X =  $end_blocks[-1]->reference_genomic_align->dnafrag_end; 
-
-    # sort get genomic extent of block ( min start + max. end ) 
-#    my $min_start_Y = $blocks[0]->reference_genomic_align->dnafrag_start; 
-#    my $max_end_Y = $blocks[0]->reference_genomic_align->dnafrag_end; 
-#
-#    for my $block ( @blocks ) { 
-#      my $rga = $block->reference_genomic_align;  
-#      if ( $rga->dnafrag_start < $min_start_Y ) {  
-#          $min_start_Y = $rga->dnafrag_start;
-#      } 
-#      if ( $rga->dnafrag_end > $max_end_Y ) {  
-#          $max_end_Y  = $rga->dnafrag_end;
-#      }
-#     } 
-    
+    my $max_end_X =  $end_blocks[-1]->reference_genomic_align->dnafrag_end;  
+   
+    # blocks are sorted by start 
     my $nr=0;
-    # blocks are sorted by start and should not overlap ... 
-    my $A = gettimeofday();
-    my $tdiff; 
-    my $tkdiff_3;
-    my $start_index =  0;
-    $start_index =  binary_search(\@retained_blocks, $min_start_X-1) ; # identify max. blcock where arry_end < min_start_X  
+    my $start_index =  binary_search(\@retained_blocks, $min_start_X-1) ; # identify max. block index where array_end < min_start_X  
 
     RETAINED_BLOCK: for ( my $i=$start_index; $i<@retained_blocks; $i++) { 
-      my $ret_block = $retained_blocks[$i];
-    #RETAINED_BLOCK: foreach my $ret_block (@retained_blocks) {  
+      my $ret_block = $retained_blocks[$i]; 
       $nr++;
-      #print "Chain $cnt_chain - retained block: $nr / " .scalar(@retained_blocks)." "; 
       my $ret = $ret_block->reference_genomic_align; 
       my $ret_start = $ret->dnafrag_start;
-      my $ret_end = $ret->dnafrag_end;
+      my $ret_end = $ret->dnafrag_end; 
       if ($ret_start <= $max_end_X and $ret_end >= $min_start_X ) {  
         # overlap          min_start-----------------max_END    
         #             ret_start-----------------------------ret_end
@@ -351,47 +327,16 @@ sub ContigAwareNet {
         #
         # genomic extent of block overlaps with retained block. check in detail  
         #
-         my $time_A = gettimeofday();   
-         $tkdiff_3=$time_A - $A ; 
-         printf ("Time A: %.2f - time needed to identify overlap. \n", $tkdiff_3); 
-         #print " $nr / " . scalar(@retained_blocks) . " ( how many retained block block have been inspected until overlap found ...)\n";
-         #print scalar(@blocks) ." outer blks vs " . scalar(@retained_blocks ) . " ret.b to compare \n";
-         my $overlap  = if_blocks_and_retained_blocks_overlap(\@blocks,\@retained_blocks,$cnt_chain,$nr,scalar(@$chains),scalar(@retained_blocks));
-         my $time_B = gettimeofday();   
-         $tdiff = $time_B-$time_A;
-         printf ("Time A: %.2f - time for inspection of block/retained block \n", $tdiff );   
-         #print scalar(@blocks) . " blocks - " . scalar(@retained_blocks). " retained blocks\n"; 
+         my $overlap  = if_blocks_and_retained_blocks_overlap(\@blocks,\@retained_blocks,$cnt_chain,$nr,scalar(@$chains),scalar(@retained_blocks)); 
          if ( $overlap == 1 ) { 
-           $keep_chain = 0;
+           $keep_chain = 0; 
            last RETAINED_BLOCK; 
          } else { 
+           # no overlap between retained block and genomic extend of block - we keep chain  
            last RETAINED_BLOCK; 
-          #print "good, no overlap so we keep chain \n";
-     #     print " no overlap between retained block and genomic extend of block"; # we keep chain  
          }
       }
     }
-   # print "\n"; 
-   my $B = gettimeofday(); 
-   my $tdiff_2 = $B - $A ; 
-   #printf ("Time B: %.2f \n",$tdiff_2 - ( $tdiff + $tkdiff_3)); 
-   printf ("TimeAB: %.2f \n",$tdiff_2); 
-   
-
-#    BLOCK: foreach my $block (@blocks) {
-#      my $qga = $block->reference_genomic_align;
-#      OTHER_BLOCK: foreach my $oblock (@retained_blocks) { # @retained populated while looping 
-#        my $oqga = $oblock->reference_genomic_align;
-#        if ($oqga->dnafrag_start <= $qga->dnafrag_end and $oqga->dnafrag_end >= $qga->dnafrag_start) { 
-#          # block and retained block overlap - we don't keep the chain 
-#          $keep_chain = 0;
-#          last BLOCK;
-#        } elsif ($oqga->dnafrag_start > $qga->dnafrag_end) {
-#          last OTHER_BLOCK;
-#        }
-#      }
-#    }  
-
 
     # the following chops the blocks into pieces such that each block
     # lies completely within a sequence-level region (contig). It's rare
@@ -403,24 +348,17 @@ sub ContigAwareNet {
     #   if reference genomic align lies in contig segement take it and process next block 
     #   if ref. genomic is overlapping the contig but not inside
     if ($keep_chain) { 
-        #print "keeping chain\n";
-        my $Ax= gettimeofday();
-      #   printf ("time A: %.2f\n",$B-$A);
       my (%contigs_of_blocks, @split_blocks);
 
       my $last_index = 0 ;  
-      #my $nrb =0;  
       # THIS SEARCH BELOW TAKES THE MOST TIME AS SOME 20.000 * 250.000 entries are compared.  
       MY_BLOCK: foreach my $block (@blocks) {
         my ($inside_seg, @overlap_segs);  
-        # $nrb++;
         my $qga = $block->reference_genomic_align;  
-        #print "processing block $nrb / " . scalar(@blocks) ." : " .$qga->dnafrag_start."\t".$qga->dnafrag_end ." cmp: ";   
         
-        my $outer_block_start= $block->reference_genomic_align->dnafrag_start;
-        #my $outer_block_end  = $block->reference_genomic_align->dnafrag_end; 
+        my $outer_block_start= $block->reference_genomic_align->dnafrag_start; 
+
         # get the index of the last segment which is 'below' outer_block_start 
-        #my $k3 = gettimeofday();
         $last_index  = binary_segment_search (\@query_seq_level_projection, $outer_block_start-1 ); 
 
          if (  $query_seq_level_projection[$last_index]->from_end >= $outer_block_start ) {  
@@ -432,11 +370,8 @@ sub ContigAwareNet {
          }  
 
         SEGMENTS: for ( my $i = $last_index ; $i < @query_seq_level_projection ; $i++ ) {  
-           my $seg = $query_seq_level_projection[$i]; 
-           #print "$cnt_chain block $nrb / " . scalar(@blocks) ." : " .$qga->dnafrag_start."\t".$qga->dnafrag_end ." cmp: i=$i / " . scalar(@query_seq_level_projection) . "\t";   
-           #print $seg->from_start."\t".$seg->from_end."\n";
-        #  print "b: $nrb / ".scalar(@blocks).   " qsl: $i / ".scalar(@query_seq_level_projection) ."  ".$seg->from_start." ".$seg->from_end."  -  ";  
-        #  print $qga->dnafrag_start ." ".$qga->dnafrag_end ."\t";
+          my $seg = $query_seq_level_projection[$i];  
+
           if ($qga->dnafrag_start >= $seg->from_start and $qga->dnafrag_end    <= $seg->from_end) { 
             # if qga [reference genomic align] falls inside the segement 
             #         QGAs------------QGAe                     BLOCK
@@ -455,10 +390,8 @@ sub ContigAwareNet {
             $last_index=$i-1;
             last SEGMENTS;
           } 
-        } 
-        #my $k4 = gettimeofday();
-        #printf ("Time K: %.2f - ( k4 segment - block processing )\n",$k4-$k3); # 0 seconds quick 
-        #my $k6 = gettimeofday();
+        }  
+
         if (defined $inside_seg) { 
           push @split_blocks, $block; 
           $contigs_of_blocks{$block} = $inside_seg;
@@ -479,13 +412,7 @@ sub ContigAwareNet {
           } 
           push @split_blocks, @cut_blocks;
         }
-        #my $k7 = gettimeofday();
-        #printf ("Time K: %.2f - ( k5 segment )\n",$k7-$k6); # this segment is 0 sec. / quick  
       }  # next block
-      my $k1 = gettimeofday();
-      my $k1_diff = $k1-$Ax ; 
-      printf ("Time K: %.2f - ( k1 segment - block processing )\n",$k1_diff);
-
 
 
       @blocks = @split_blocks;  
@@ -493,40 +420,14 @@ sub ContigAwareNet {
       
       my @diff_contig_blocks; 
 
-      my $tx = gettimeofday();  
-      #for ( keys %contigs_of_kept_blocks ) { 
-      #  print "contigs_of_kept_blocks key $_ $contigs_of_kept_blocks{$_}\n";
-      #} 
-      #print "reversing hash \n"; 
-      #my %kept_contigs = reverse %contigs_of_kept_blocks;   
-      #my $tx1 = gettimeofday();  
-      #my %tmp;
-      #@tmp{values %contigs_of_kept_blocks}=1;  # ~0.43 seconds
-      #my $tx2= gettimeofday();
-      #printf ("Time K: %.2f - ( k2a1 segment - hash reverse - the quick way )\n",$tx2-$tx1);  
-      #my $tx1 = gettimeofday();  
-      #my %kept_contigs = reverse %contigs_of_kept_blocks;   
-      #my $tx2= gettimeofday();
-      #printf ("Time K: %.2f - ( k2a1 segment - hash reverse 2)\n",$tx2-$tx1);  
-      #for ( keys %kept_contigs ) {  
-      #   print "kept $_ $kept_contigs{$_}\n";
-      #}
+      #my %kept_contigs = reverse %contigs_of_kept_blocks;    # this is very time expensive operation
 
-      #for ( keys %tmp ) {  
-      #   print "$_\n";
-      #}
       foreach my $block (@blocks) { 
-        #print "ctg $contigs_of_blocks{$block} \n"; 
         if (not exists $all_kept_contigs{$contigs_of_blocks{$block}}) {
-        #if (not exists $tmp{$contigs_of_blocks{$block}}) {
         #if (not exists $kept_contigs{$contigs_of_blocks{$block}}) {
           push @diff_contig_blocks, $block;
         }
       }
-      #my $tx3 = gettimeofday(); 
-      #printf ("Time K: %.2f - ( k2a2 segment )\n",$tx3-$tx2);  
-
-      #my $ty = gettimeofday(); 
 
       # calculate what proportion of the overall chain remains; reject if
       # the proportion is less than 50%
@@ -534,60 +435,21 @@ sub ContigAwareNet {
       my $total_len = 0; 
       map { $kept_len += $_->reference_genomic_align->dnafrag_end - $_->reference_genomic_align->dnafrag_start + 1; } @diff_contig_blocks;
       map { $total_len += $_->reference_genomic_align->dnafrag_end - $_->reference_genomic_align->dnafrag_start + 1; } @blocks;
-      #my $ty2 = gettimeofday(); 
-      #printf ("Time K: %.2f - ( k2b segment )\n",$ty2-$ty); 
       
       if ($kept_len / $total_len > 0.5) { 
-        #my $ty3a1 = gettimeofday();   
         foreach my $bid (keys %contigs_of_blocks) {
           $contigs_of_kept_blocks{$bid} = $contigs_of_blocks{$bid};
           $all_kept_contigs{$contigs_of_blocks{$bid}}=1;
         } 
-        #my $ty3a2 = gettimeofday();  
-        #printf ("Time K: %.2f - ( k2xa segment )\n",$ty3a2-$ty3a1);  # 0 seconds quick
         push @net_chains, \@diff_contig_blocks; 
-        #print "adding " .scalar(@diff_contig_blocks) . " to result\n"; 
-        #for( @diff_contig_blocks) { 
-        #   print "df: " . $_->rga_start . " " . $_->rga_end . "\n";
-        #}
-        #for( @retained_blocks ) { 
-        #   print "rt: " . $_->rga_start . " " . $_->rga_end . "\n";
-        #}
         push @retained_blocks, @diff_contig_blocks; 
-        #my $ty3a = gettimeofday(); 
-        #@retained_blocks = sort { $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start; } @retained_blocks; 
-        # usually 1.24 seconds for sorting with ABOVE method
-        #@retained_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @retained_blocks;  
-        #my $ty3b = gettimeofday(); 
-        #printf ("Time K: %.2f - ( k2y1 segment 1)\n",$ty3b-$ty3a); 
-          my $ty3a = gettimeofday();  
-        #@retained_blocks = sort { $a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start; } @retained_blocks; 
-         @retained_blocks = sort { $a->rga_start <=> $b->rga_start; } @retained_blocks;  
 
-          my $ty3b = gettimeofday(); 
-          printf ("Time K: %.2f - ( k2y2 segment 2)\n",$ty3b-$ty3a); 
-        #print scalar(@retained_blocks) . " retained blocks found .....\n"; 
+        @retained_blocks = sort { $a->rga_start <=> $b->rga_start; } @retained_blocks;  
       }  
-      #my $ty3 = gettimeofday(); 
-      #printf ("Time K: %.2f - ( k2c segment ( k2xa, k2y1 k2y2 )\n",$ty3-$ty2);  
-
-
-      my $ty = gettimeofday(); 
-      printf ("Time K: %.2f - ( k2 segment )\n",$ty-$tx); 
-      my $Bx = gettimeofday(); 
-      my $kt_diff = $Bx -$Ax ;  
-      printf ("Time K: %.2f - (Full time if keeping chain)\n",$kt_diff);
-    }else{   
-      #print " NOT KEEP CHAIN \n"; 
     }
-    my $time_end = gettimeofday();  
-    printf ("\nTime Z: %.2f  -  (time for chain)\n\n", $time_end-$time_start); 
-    #print  scalar(@blocks ) . " blocks \n"; 
   } # next chain 
 
-  # fetch all genomic_aligns from the result blocks to avoid cacheing issues
-  # when storing 
-  #print " all chains processed\n"; 
+  # fetch all genomic_aligns from the result blocks to avoid cacheing issues when storing 
   foreach my $ch (@net_chains) {
     foreach my $bl (@{$ch}) {
       foreach my $al (@{$bl->get_all_GenomicAligns}) {
@@ -598,7 +460,6 @@ sub ContigAwareNet {
   my $total; 
   print "returning " . scalar(@net_chains) . "  net chains \n" ; 
   for my $c( @net_chains ) {    
-      print scalar(@$c) . " blocks\n";
       $total+=scalar(@$c);
   } 
   print "TOTAL :  $total blocks \n"; 
@@ -611,91 +472,80 @@ sub if_blocks_and_retained_blocks_overlap {
       my ( $b_ref, $r_ref,$cnt_chain,$nr_rt,$cc,$rr ) = @_ ;  
     
      #pre-compute start and end of retained block   
-      #my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @$r_ref;
-      #my @end_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_end, $_] } @$r_ref;
+     my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @$r_ref;
+     my @end_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_end, $_] } @$r_ref;
 
-     #my $min_start  =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
-     #my $max_end  =  $end_blocks[-1]->reference_genomic_align->dnafrag_end; 
+     my $min_start  =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
+     my $max_end  =  $end_blocks[-1]->reference_genomic_align->dnafrag_end; 
      
      #print "doing deeper checking ......\n"; 
      my $outer_block = 0;   
      my $l_index = 0; 
      BLOCK: foreach my $block (@$b_ref ) { 
-      $outer_block++;
-      my $inner_block = 0 ; 
-      my $qga = $block->reference_genomic_align; 
-      # if block and retained block start/end do not overlap... 
-#      if ( $qga->dnafrag_start > $max_end  ) {   
-#        #                                qga_S ---------------- qga_E 
-#        #  min_start -------- max_end  
-#        print "$min_start ---- $max_end         <  "  . $qga->dnafrag_start . "     " .$qga->dnafrag_end . "  - skipping\n"; 
-#        next BLOCK; 
-#      }elsif ($qga->dnafrag_end < $min_start )  {   
-#        #     qga_S-----------qga_E
-#        #                            min_start-----------max_end 
-#        print    $qga->dnafrag_start . "     " .$qga->dnafrag_end . "    <<     $min_start ---- $max_end   skipping\n";
-#        next BLOCK; 
-#      }else {  
-#          print "no skipping\n"; 
-#      } 
-      # only test retained OTHER_BLOCK in detail if it overlaps with BLOCK 
-      my $outer_block_start= $block->reference_genomic_align->dnafrag_start;
-      my $outer_block_end  = $block->reference_genomic_align->dnafrag_end;
-      my $retained_block_start = $$r_ref[0]->reference_genomic_align->dnafrag_start;
-      my $retained_block_end = $$r_ref[-1]->reference_genomic_align->dnafrag_end;
-      #print "os : $outer_block_start - oe $outer_block_end     rs $retained_block_start  re $retained_block_end\n";  
+        $outer_block++;
+        my $qga = $block->reference_genomic_align; 
+        # if block and retained block start/end do not overlap... 
+        if ( $qga->dnafrag_start > $max_end  ) {   
+          #                                qga_S ---------------- qga_E 
+          #  min_start -------- max_end  
+          print "$min_start ---- $max_end         <  "  . $qga->dnafrag_start . "     " .$qga->dnafrag_end . "  - skipping\n"; 
+          print "OL\n";
+          #next BLOCK; 
+        }elsif ($qga->dnafrag_end < $min_start )  {   
+          #     qga_S-----------qga_E
+          #                            min_start-----------max_end 
+          print    $qga->dnafrag_start . "     " .$qga->dnafrag_end . "    <<     $min_start ---- $max_end   skipping\n"; 
+          print "OR\n";
+          #next BLOCK; 
+        } 
+  
+        # only test retained OTHER_BLOCK in detail if it overlaps with BLOCK 
+        my $outer_block_start= $block->reference_genomic_align->dnafrag_start;
+        my $outer_block_end  = $block->reference_genomic_align->dnafrag_end;
+        my $retained_block_start = $$r_ref[0]->reference_genomic_align->dnafrag_start;
+        my $retained_block_end = $$r_ref[-1]->reference_genomic_align->dnafrag_end;
+        #print "os : $outer_block_start - oe $outer_block_end     rs $retained_block_start  re $retained_block_end\n";  
+  
+        if ( $retained_block_end < $outer_block_start ) { 
+          # blocks will never overlap; retained block lies left of obs  
+          print "SL\n"; 
+          #next BLOCK;
+        }
+        if ( $retained_block_start >  $outer_block_end ) { 
+          # rs lies right of obs  RIGHT blocks will never overlap.
+          print "SR\n"; 
+          #next BLOCK;
+        } 
 
-      if ( $retained_block_end < $outer_block_start ) { 
-        # blocks will never overlap; retained block lies left of obs 
-        #print "SL : re < os : $retained_block_end < $outer_block_start : LEFT blocks will never overlap\n";
-        next BLOCK;
-      }
-      if ( $retained_block_start >  $outer_block_end ) { 
-        # rs lies right of obs .
-        #print "SR : rs > oe : $retained_block_start >  $outer_block_end : RIGHT blocks will never overlap\n";
-        next BLOCK;
-      } 
-      #OTHER_BLOCK: foreach my $oblock (@$r_ref ) { # @retained populated while looping  
-
-      # search in retained blocks for the index of the retained block which has end < outer_block_start
-      #print "searching for retained block where end is < $outer_block_start \n";
       $l_index = binary_search ($r_ref, $outer_block_start-1 ); # -1 as there could be multiple blocks which have same END and binary search is not returning the first.
-      #print "binary returned $l_index \n " ; 
-#      if (  $$r_ref[$l_index]->reference_genomic_align->dnafrag_end >= $outer_block_start ) {  
-#          print $l_index. " " .  $$r_ref[$l_index]->reference_genomic_align->dnafrag_start . " " ;
-#          print " " .  $$r_ref[$l_index]->reference_genomic_align->dnafrag_end . " " ;
-#          print " -- $outer_block_start $outer_block_end    rs :  $retained_block_start $retained_block_end \n";
-#         throw(" something went wrong with the binary search\n");
-#      }  
 
-      OTHER_BLOCK: for ( my $i = $l_index; $i<@$r_ref; $i++) { 
-        my $oblock = $$r_ref[$i];
-        $inner_block++;
-        #print "C $cnt_chain / $cc  RT $nr_rt / $rr  Outblock: $outer_block / " . scalar(@blocks) . " Inner : $i /  " . scalar( @retained_blocks) . "\t";
-        my $oqga = $oblock->reference_genomic_align;
-        # print $qga->dnafrag_start." ".$qga->dnafrag_end." - i=$i ".$oqga->dnafrag_start." ". $oqga->dnafrag_end."  ( ";  
-        # print "Oqgas " .$oqga->dnafrag_start." <= qgae ".$qga->dnafrag_end." && Oqgae ".$oqga->dnafrag_end." >= qgas ". $qga->dnafrag_start." ) ?";  
-         #print "os : $outer_block_start - oe $outer_block_end  - rs $retained_block_start re $retained_block_end ? ";  
-
+      RETAINED_BLOCK: for ( my $i = $l_index; $i<@$r_ref; $i++) { 
+        my $oqga = $$r_ref[$i]->reference_genomic_align;
         if ($oqga->dnafrag_start <= $qga->dnafrag_end and $oqga->dnafrag_end >= $qga->dnafrag_start) {  
-        #  print "               found : $outer_block / " . scalar(@$b_ref ) . " blocks  ;    $inner_block / " . scalar(@$r_ref). " retained block (deepness)\n";
           # block and retained block overlap; we don't keep this chain.  
-        #  print " Y \n";
           return 1 ; 
         } elsif ($oqga->dnafrag_start > $qga->dnafrag_end) {
           $l_index=$i-1; 
-        #  print " N - next retained block()\n"; 
-          last OTHER_BLOCK;
+          last RETAINED_BLOCK;
         } 
-        #print " N\n";
       }
     }   
     # no overlap between retained block and normal block. we return 0 as there is no overlap, we will keep the chain.
-    #print "all blocks inspected ..\n"; 
     return 0 ;
-   } 
+}  
 
 
+=head2 binary_segment_search
+
+    Title   :   binary_segment_search
+    Usage   :   binary_segment_search(\@array, ($outer_block_start-1) ) ; 
+    Function:   Does a binary search through an array of projetion segments; 
+    Returns :   The array and returns the index of the last element in @array where $element->from_end < $outer_block_start 
+    Args    :   none
+
+=cut
+
+ 
 sub binary_segment_search {
     my ($array, $outer_block_start) = @_;
     my $low = 0;                           
@@ -710,53 +560,40 @@ sub binary_segment_search {
         $high = $try-1, next if $array->[$try]->from_end > $outer_block_start;
         return $try;
     } 
-    #print "segment found : ".$array->[$high]->from_start."  " .  $array->[$high]->from_end."  < $outer_block_start\n"; 
     if (  $array->[$high]->from_end >= $outer_block_start ) {  
-      #thi is the cae when there was no elemet found which matches condition ...
-      $high=0; 
-      #for (my $i=0;$i<@$array; $i++) {  
-      #  my $a = $$array[$i]; 
-      #  print "i $i ".$a->from_start ."  " ;
-      #  print $a->from_end . " " ;
-      #  print " < " . $outer_block_start . " ? \n"; 
-      #}
-       #throw(" something went wrong with the binary segment search\n");
+      $high=0;  
     } 
     return $high;
 } 
+
+=head2 binary_search
+
+    Title   :   binary_search
+    Usage   :   binary_search(\@array, ($outer_block_start-1) ) ; 
+    Function:   Does a binary search through an array of GenomicAlignBlocks
+    Returns :   The index of the last element in @array where $element->reference_genomic_aling->dnafrag_end < $outer_block_start 
+    Args    :   none
+
+=cut
 
 
 sub binary_search {
     my ($array, $outer_block_start) = @_;
     my $low = 0;                    
-    my $high = @$array - 1;          
+    my $high = @$array - 1;           
+
     if ( scalar(@$array) == 0 ) {  
        return 0 ; 
     }
     while ( $low <= $high ) { 
-        my $try = int( ($low+$high) / 2 );  # 48 
-        #$low  = $try+1, next if $array->[$try] < $word;  
-        #$high = $try-1, next if $array->[$try] > $word; 
-    #    print "try $try low $low high $high : ";
-    #    print $array->[$try]->reference_genomic_align->dnafrag_end."  < $outer_block_start ? " ;  # 
-        $low  = $try+1, next if $array->[$try]->reference_genomic_align->dnafrag_end < $outer_block_start;  # 
+        my $try = int( ($low+$high) / 2 ); 
+        $low  = $try+1, next if $array->[$try]->reference_genomic_align->dnafrag_end < $outer_block_start; 
         $high = $try-1, next if $array->[$try]->reference_genomic_align->dnafrag_end > $outer_block_start; 
-    #    print "BS1a: " .  $array->[$try]->reference_genomic_align->dnafrag_end . " " . $array->[$try]->reference_genomic_align->dnafrag_end . " < ".$outer_block_start."\n";
         return $try;
     }
     if ( $array->[$high]->reference_genomic_align->dnafrag_end >= $outer_block_start ) {    
-      #for (my $i=0;$i<@$array; $i++) {  
-      # my $a = $$array[$i]; 
-      # print "i $i ".$a->reference_genomic_align->dnafrag_start."  " ;
-      # print $a->reference_genomic_align->dnafrag_end."  " ;
-      # print " < " . $outer_block_start . " ? \n"; 
-      #} 
-      #print "BS1b:  " .  $array->[$high]->reference_genomic_align->dnafrag_end . " " . $array->[$high]->reference_genomic_align->dnafrag_end . " < ".$outer_block_start." $high\n";
-      #print $array->[$high]->reference_genomic_align->dnafrag_end."  < $outer_block_start ? " ;  # 
-      $high = 0; 
-      #throw(" no match");
+      $high = 0 ; 
     } 
-    #print "returning $high\n"; 
     return $high;
 } 
 
