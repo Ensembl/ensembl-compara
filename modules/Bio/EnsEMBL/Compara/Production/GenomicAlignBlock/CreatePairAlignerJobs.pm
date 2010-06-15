@@ -242,7 +242,6 @@ sub createPairAlignerJobs
         );
       $count++;
     }
-    #printf("create_job : " . $target_dna->dbID . "\n" ) ; 
   } 
   
   printf("jhv created %d jobs for pair aligner\n", $count);    
@@ -287,6 +286,7 @@ sub write_dnafrag_chunk_set{
 
   my $chunk_array = $chunk_set->get_all_DnaFragChunks ;
 
+  $self->{'comparaDBA'}->no_cache(1);
   my $dna_frag_chunk_adaptor = $self->{'comparaDBA'}->get_DnaFragChunkAdaptor; 
   my $dis_con = $self->{'comparaDBA'}->disconnect_when_inactive() ;
   $self->{'comparaDBA'}->disconnect_when_inactive(0) ;
