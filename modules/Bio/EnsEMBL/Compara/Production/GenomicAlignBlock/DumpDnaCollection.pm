@@ -246,6 +246,8 @@ if ( 0 ) {
   }
 
    
+##THIBAUT: I added -1 to substr because its first position is 0 not 1
+#          Same as in DnaFragChunk integrate_assembly_exception_features
   print "got masked sequence - now integrating assembly execptions - substr call \n";
   if (defined $masking_options) {
     foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
@@ -255,11 +257,11 @@ if ( 0 ) {
 
       if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
         my $padstr = 'N' x ($length);
-        substr ($seq_string, ($ae->start), ($length)) = $padstr;
+        substr ($seq_string, ($ae->start-1), ($length)) = $padstr;
 
       } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) {
-        my $padstr = lc substr ($seq_string, $ae->start, $length);
-        substr ($seq_string, $ae->start, $length) = $padstr;
+        my $padstr = lc substr ($seq_string, $ae->start-1, $length);
+        substr ($seq_string, $ae->start-1, $length) = $padstr;
       }
     }
   } 
@@ -309,6 +311,7 @@ sub create_nib_file{
    } else {
      system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
    }
+      unlink $fastafile;
 }
 
 #  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) { 
@@ -388,6 +391,7 @@ sub create_nib_file{
 sub dumpDnaFiles {
   my $self = shift;
 
+  $self->{'comparaDBA'}->no_cache(1);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   my $starttime = time();
@@ -396,7 +400,7 @@ sub dumpDnaFiles {
   
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
   my $dump_loc = $dna_collection->dump_loc; 
-print "starting to dump dna files : dumpDnnaFilse() \n"; 
+print "starting to dump dna files : dumpDnaFiles() \n"; 
   unless (defined $dump_loc) {
     throw("dump_loc directory is not defined, can not dump dna files\n");
   }
