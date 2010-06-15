@@ -86,7 +86,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   
   formSubmit: function (form, data) {
     if (!form.parents('#' + this.id).length) {
-      return false;
+      return undefined;
     }
     
     if (form.hasClass('upload')) {
