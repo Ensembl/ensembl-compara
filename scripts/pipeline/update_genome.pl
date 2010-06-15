@@ -284,6 +284,7 @@ sub update_genome_db {
           $primary_species_binomial_name,
           $primary_species_assembly
       )};
+
   if ($genome_db and $genome_db->dbID) {
     return $genome_db if ($force);
     throw "GenomeDB with this name [$primary_species_binomial_name] and assembly".
@@ -493,6 +494,7 @@ sub update_dnafrags {
         AND at.code = 'toplevel'
         AND sr.seq_region_id = sra.seq_region_id
         AND sr.coord_system_id = cs.coord_system_id
+        AND cs.name != "lrg"
         AND cs.species_id =?
     };
   my $sth1 = $species_dba->dbc->prepare($sql1);
