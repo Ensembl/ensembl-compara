@@ -639,23 +639,24 @@ sub add_das_from_string {
 
   # Check if the source has already been added, otherwise add it
   my $source = $existing[0]->{$identifier} || $existing[1]->{"$server/$identifier"};
-
+  my $no_coord_system;
   unless ($source) {
     # If not, parse the DAS server to get a list of sources...
-    eval {
-      for ( @{ $parser->fetch_Sources( -location => $server ) } ) {
+    eval { 
+      for ( @{ $parser->fetch_Sources( -location => $server ) } ) { 
         # ... and look for one with a matcing URI or DSN
-        if ( $_->logic_name eq $identifier || $_->dsn eq $identifier ) {
-          if (!@{ $_->coord_systems }) {
-            return "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
-          }
-          $source = EnsEMBL::Web::DASConfig->new_from_hashref( $_ );
+        if ( $_->logic_name eq $identifier || $_->dsn eq $identifier ) { 
+          if (!@{ $_->coord_systems }) { 
+          $no_coord_system =  "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
+          return;  
+          } 
+          $source = EnsEMBL::Web::DASConfig->new_from_hashref( $_ ); 
           $self->add_das( $source );
           last;
         }
       }
     };
-    if ($@) {
+    if ($@) { 
       return "DAS error: $@";
     }
   }
@@ -663,7 +664,9 @@ sub add_das_from_string {
   if( $source ) {
     # so long as the source is 'suitable' for this view, turn it on
     $self->configure_das_views( $source, $view_details, $track_options );
-  } else {
+  } elsif ( $no_coord_system ) {
+    return $no_coord_system;
+  } else { 
     return "Unable to find a DAS source named $identifier on $server";
   }
 
