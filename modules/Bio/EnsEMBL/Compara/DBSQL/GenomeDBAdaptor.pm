@@ -361,11 +361,11 @@ sub fetch_by_core_DBAdaptor {
 
 sub get_species_name_from_core_MetaContainer {
 	my ($self, $meta_container) = @_;
-  my ($species_name) = @{$meta_container->list_value_by_key('species.compara_name')};
+  my ($species_name) = @{$meta_container->list_value_by_key('species.production_name')};
   unless(defined $species_name) {
     $species_name = $meta_container->get_Species->binomial;
 	}
-  throw('Species name was still empty/undefined after looking for species.compara_name and binomial name') unless $species_name;
+  throw('Species name was still empty/undefined after looking for species.production_name and binomial name') unless $species_name;
   return $species_name;
 }
 
