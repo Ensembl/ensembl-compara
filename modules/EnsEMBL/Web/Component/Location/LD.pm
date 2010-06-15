@@ -45,21 +45,20 @@ sub focus {
   ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
 
   my ( $self, $model ) = @_;
-  my $obj = $model->object;
+  my $obj = $model->object('Variation');
   my $hub = $model->hub;
 
   my ( $info, $focus );
   if ( $obj->param('v') && $obj->param('focus')) {
-    my $snp = $obj->core_objects->variation;
-    my $name = $snp->name; 
-    my $source = $snp->source;
+    my $name = $obj->name; 
+    my $source = $obj->source;
     my $link_name  = $obj->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
     my $var_url =  $obj->_url({ 'type' => 'Variation', 'action' => 'Summary', 'v' => $obj->param('v'), 'vf' => $obj->param('vf') });
-    $info .= "Variant $link_name ($source ". $snp->adaptor->get_source_version($source).")";
+    $info .= "Variant $link_name ($source ". $obj->adaptor->get_source_version($source).")";
     $info .= " <a href=$var_url>[View variation]</a>"; 
   } elsif ( $hub->core_param('g') ) {
     my $gene_id = $hub->core_param('g');
-    my $url = $obj->_url({ 'type' => 'Gene', 'action' => 'Summary', 'g' => $obj->param('g') });
+    my $url = $obj->_url({ 'type' => 'Gene', 'aceion' => 'Summary', 'g' => $obj->param('g') });
     $info .= "Gene <a href=$url>$gene_id</a>";
   } elsif ($hub->core_param('r')){
     my $location = $hub->core_param('r');
@@ -178,9 +177,9 @@ sub tagged_snp {
   ### returns no
 
   my ($self, $object, $pop_name)  = @_;
-  my $var = $object->core_objects->variation;
+  my $var = $self->model->object('Variation');
   my $snp = $self->new_object('Variation', $var, $object->__data);
-  
+
   my $snp_data  = $snp->tagged_snp;
   return unless keys %$snp_data;
 
