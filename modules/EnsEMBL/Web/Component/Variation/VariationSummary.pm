@@ -146,7 +146,7 @@ sub content {
   my $label = "Linkage disequilibrium data";
 
    ## First check that a location has been selected:
-  if ($object->core_objects->location) { 
+  if ($self->model->object('Location')) { 
     if  ($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
       my %pop_names = %{_ld_populations($object) ||{} };
       my %tag_data  = %{$object->tagged_snp ||{} };
