@@ -39,7 +39,7 @@ sub content {
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $object->species_defs->ENSEMBL_TMP_TMP;
 
   # if we have a location
-  if($object->core_objects->location) {
+  if($self->model->object('Location')) {
     
     # check we have LD populations defined
     if($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
