@@ -73,9 +73,9 @@ sub pipeline_analyses {
             },
             -hive_capacity => 5,       # allow several workers to perform identical tasks in parallel
             -input_ids => [
-                { 'gdb' =>  3, 'species_name' => 'Rattus norvegicus' },
-                { 'gdb' => 57, 'species_name' => 'Mus musculus' },
-                { 'gdb' => 90, 'species_name' => 'Homo sapiens' },
+                { 'genome_db_id' =>  3, 'species_name' => 'Rattus norvegicus' },
+                { 'genome_db_id' => 57, 'species_name' => 'Mus musculus' },
+                { 'genome_db_id' => 90, 'species_name' => 'Homo sapiens' },
             ],
             -flow_into => {
                 1 => [ 'dummy' ],   # each will flow into another one
