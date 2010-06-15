@@ -136,8 +136,16 @@ sub run {
     mkdir $query_nib_dir;
 
     my $seqio = Bio::SeqIO->new(-format => 'fasta',
-                                -file   => ">$query_nib_dir/$query_name.fa");
-    $seqio->write_seq($self->query_slice);
+                                -file   => ">$query_nib_dir/$query_name.fa");   
+
+    # prevent extensive disconnections when fetching sequence length etc.
+    my $disco = $self->query_slice->adaptor()->db->disconnect_when_inactive(); 
+    $self->query_slice->adaptor()->db->disconnect_when_inactive(0);  
+
+    $seqio->write_seq($self->query_slice); 
+
+    $self->query_slice->adaptor()->db->disconnect_when_inactive($disco);  
+
     $seqio->close;
     
     system($self->faToNib, "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib") 
@@ -167,7 +175,7 @@ sub run {
       my $seqio =  Bio::SeqIO->new(-format => 'fasta',
                                 -file   => ">$target_nib_dir/$target_name.fa");
       $seqio->write_seq($target);
-      $seqio->close;
+      $seqio->close; 
       
       system($self->faToNib, "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib") 
           and throw("Could not convert fasta file $target_nib_dir/$target_name.fa to nib");
@@ -188,7 +196,7 @@ sub run {
   # convert the lav file to axt
   ##############################
   system($self->lavToAxt, $lav_file, $query_nib_dir, $target_nib_dir, $axt_file)
-      and throw("Could not convert $lav_file to Axt format");
+      and throw("Could not convert $lav_file to Axt format\n");
   unlink $lav_file;
 
   ##################################
