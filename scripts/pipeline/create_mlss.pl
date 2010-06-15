@@ -243,7 +243,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
           my $gdb = $gdba->fetch_by_dbID($this_genome_db_id)
             || die( "Cannot fetch_by_dbID genome_db $this_genome_db_id" );
           my $species_name = $gdba->fetch_by_dbID($this_genome_db_id)->name;
-          $DB::single=1;1;
+
           $species_name =~ s/\b(\w)/\U$1/g;
           $species_name =~ s/(\S)\S+\_/$1\./;
           $species_name = substr($species_name, 0, 5);
