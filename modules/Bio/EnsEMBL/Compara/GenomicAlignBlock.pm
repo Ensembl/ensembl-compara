@@ -237,10 +237,10 @@ sub new {
   $self->perc_id($perc_id) if (defined ($perc_id));
   $self->length($length) if (defined ($length));
   $self->group_id($group_id) if (defined ($group_id));
-  $self->reference_genomic_align($reference_genomic_align)
-      if (defined($reference_genomic_align));
-  $self->reference_genomic_align_id($reference_genomic_align_id)
-      if (defined($reference_genomic_align_id));
+  $self->reference_genomic_align($reference_genomic_align) if (defined($reference_genomic_align)); 
+
+  $self->reference_genomic_align_id($reference_genomic_align_id) if (defined($reference_genomic_align_id)); 
+
   $self->genomic_align_array($genomic_align_array) if (defined($genomic_align_array));
 
   $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
@@ -501,14 +501,38 @@ sub starting_genomic_align_id {
 
 =cut
 
+sub rga_start {  
+  my ($self, $reference_genomic_align) = @_; 
+  if ( defined $reference_genomic_align ) { 
+    $self->{rga_start}=$reference_genomic_align->dnafrag_start;
+  } 
+  if ( !defined $self->{rga_start} ) {  
+    $self->{rga_start}= $self->reference_genomic_align->dnafrag_start;
+  }
+  return $self->{rga_start};
+} 
+sub rga_end {  
+  my ($self, $reference_genomic_align) = @_; 
+  if ( defined $reference_genomic_align ) { 
+    $self->{rga_end}=$reference_genomic_align->dnafrag_end;
+  } 
+  if ( !defined $self->{rga_end} ) {  
+    $self->{rga_end}= $self->reference_genomic_align->dnafrag_end;
+  }
+  return $self->{rga_end};
+} 
+
 sub reference_genomic_align {
   my ($self, $reference_genomic_align) = @_;
 
   if (defined($reference_genomic_align)) {
     throw("[$reference_genomic_align] must be a Bio::EnsEMBL::Compara::GenomicAlign object")
         unless($reference_genomic_align and  ref($reference_genomic_align) and
-            $reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+            $reference_genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign")); 
+
     $self->{'reference_genomic_align'} = $reference_genomic_align;
+    $self->rga_start($reference_genomic_align);
+    $self->rga_end($reference_genomic_align);
 
     ## Synchronises reference_genomic_align and reference_genomic_align_id attributes
     if (defined($self->{'reference_genomic_align'}->dbID)) {
@@ -524,6 +548,8 @@ sub reference_genomic_align {
       foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
         if ($this_genomic_align->dbID == $reference_genomic_align_id) {
           $self->{'reference_genomic_align'} = $this_genomic_align;
+          $self->rga_start($reference_genomic_align);
+          $self->rga_end($reference_genomic_align);
           return $this_genomic_align;
         }
       }
