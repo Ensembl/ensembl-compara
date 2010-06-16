@@ -294,11 +294,7 @@ sub ContigAwareNet {
 
      # sort get genomic extent of block ( min start + max. end ) 
     my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @blocks;  
-      
-    my $sort_start = gettimeofday();  
     my @end_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_end, $_] } @blocks;  
-    my $sort_end= gettimeofday();  
-    printf " sorting %.5f \n", $sort_end-$sort_start ;  
 
     my $min_start_X  =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
     my $max_end_X =  $end_blocks[-1]->reference_genomic_align->dnafrag_end; 
@@ -436,19 +432,6 @@ sub ContigAwareNet {
         push @net_chains, \@diff_contig_blocks; 
         push @retained_blocks, @diff_contig_blocks; 
         @retained_blocks = sort { $a->rga_start <=> $b->rga_start; } @retained_blocks;   
-
-#        # this is just for consistency checking...
-#        my $max_ret_end =0;
-#        for(my $i=0;$i<@retained_blocks;$i++ ) { 
-#           if ( $retained_blocks[$i]->rga_end >= $max_ret_end ) { 
-#             $max_ret_end=$retained_blocks[$i]->rga_end;
-#           }else { # rthere was a block with rga_end < this end earlier .... 
-#             for ( @retained_blocks ) { 
-#              print $_->rga_start ." - " . $_->rga_end . " max: $max_ret_end\n"; 
-#             throw("blocks overlap and need to be sorted by rga_end : $max_ret_end > " . $retained_blocks[$i]->rga_end ."\n");
-#             }
-#          }
-#        }
 
       }  
     }
