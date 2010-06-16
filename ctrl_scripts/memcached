@@ -44,7 +44,11 @@ if ($MEMD) {
   } elsif ($ARGV[0] =~ /flush/i) {
     print " Flushing cache:\n";
     shift @ARGV;
-    print $MEMD->delete_by_tags(@ARGV) . " cache items deleted\n";
+    if (@ARGV) {
+      print $MEMD->delete_by_tags(@ARGV) . " cache items deleted\n";
+    } else {
+      $MEMD->flush_all; print " done\n";
+    }
   } elsif ($ARGV[0] =~ /stats/i) {
     shift @ARGV;
     print " Stats:\n";
