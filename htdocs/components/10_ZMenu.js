@@ -163,8 +163,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   
   populateAjax: function (url, expand) {
     var timeout = this.timeout;
+    var href;
     
-    url = url || this.href.replace(/\/(\w+\/\w+)\?/, '/Zmenu/$1?');
+    if (!url) {
+      href    = this.href.split('?');
+      href[0] = href[0].split(Ensembl.species).join(Ensembl.species + '/Zmenu');
+      url     = href.join('?');
+    }
     
     if (this.group) {
       url += ';click_start=' + this.coords.clickStart + ';click_end=' + this.coords.clickEnd;
