@@ -167,38 +167,6 @@ sub get_params {
   return 1;
 }
 
-
-sub filter_dna_frag_chunks { 
-  my ( $dna_object_aref,$min_length) = @_;  
-
-  my %dna_href;
-  foreach my $dna_object (@$dna_object_aref){
-      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-        warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
-        next;
-      }
-      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
-         next if ($dna_object->length <= $min_length); 
-         # only save one dnafrag 
-         if (! exists $dna_href{$dna_object->dnafrag->dbID}) {
-           $dna_href{$dna_object->dnafrag->dbID}= $dna_object; 
-         }
-      }
-  }
-  return \%dna_href;
-} 
-
-sub check_dir { 
-  my ( $dump_loc ) = @_; 
-  unless (defined $dump_loc ) {  
-    throw("dump_loc directory is not defined in config or compara database\n");
-  }
-  unless ( -e $dump_loc ) {  
-    throw("dump_loc : $dump_loc does not exist\n");
-  } 
-}
-
-
 sub dumpNibFiles {
   my $self = shift;
 
@@ -209,11 +177,29 @@ sub dumpNibFiles {
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
   my $dump_loc = $dna_collection->dump_loc; 
 
-  check_dir($dump_loc);  
+  unless (defined $dump_loc ) {  
+    throw("dump_loc directory is not defined in config or compara database\n");
+  }
+  unless ( -e $dump_loc ) {  
+    throw("dump_loc : $dump_loc does not exist\n");
+  } 
 
-  my $dna_frag_hash = filter_dna_frag_chunks($dna_collection->get_all_dna_objects,$self->dump_min_size); 
+  my %dna_frag_hash ; 
+  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) {  
+      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+        warn "At this point you should get DnaFragChunk objects not DnaFragChunkSet objects!\n";
+        next;
+      }
+      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk')) { 
+         next if ($dna_object->length <= $self->dump_min_size);  
+         # only save one dnafrag 
+         if (! exists $dna_frag_hash{$dna_object->dnafrag->dbID}) {
+           $dna_frag_hash{$dna_object->dnafrag->dbID}= $dna_object; 
+         }
+      }
+  }
 
-  my @sq = values %$dna_frag_hash; 
+  my @sq = values %dna_frag_hash; 
 
   while ( my $dno = shift @sq ) {   
     my $masking_options; 
@@ -221,19 +207,17 @@ sub dumpNibFiles {
 
     my $name =  $dno->dnafrag->name; 
     print "processing $name\n"; 
-
     my $dba = $dno->dnafrag->genome_db->db_adaptor;
     my $sliceDBA = $dba->get_SliceAdaptor; 
     $dba->disconnect_when_inactive(0); 
-
     my $slice = $sliceDBA->fetch_by_region($dno->dnafrag->coord_system_name, $name);  
 
 
-if ( 0 ) { 
-    if(defined($dno->masking_options)) {
-     $masking_options = eval($dno->masking_options);
-     my $logic_names = $masking_options->{'logic_names'};
-     if(defined($masking_options->{'default_soft_masking'}) and $masking_options->{'default_soft_masking'} == 0) {
+  if(defined($dno->masking_options)) {
+    $masking_options = eval($dno->masking_options);
+    my $logic_names = $masking_options->{'logic_names'};
+    if(defined($masking_options->{'default_soft_masking'}) and $masking_options->{'default_soft_masking'} == 0)
+    {
       print "getting HARD masked sequence...\n";
       $seq_string = $slice->get_repeatmasked_seq($logic_names,0,$masking_options)->seq;
     } else {
@@ -244,10 +228,8 @@ if ( 0 ) {
     print "getting UNMASKED sequence...\n";
     $seq_string = $slice->seq; 
   }
+  my $seq_display_id = $slice->name ;  
 
-   
-##THIBAUT: I added -1 to substr because its first position is 0 not 1
-#          Same as in DnaFragChunk integrate_assembly_exception_features
   print "got masked sequence - now integrating assembly execptions - substr call \n";
   if (defined $masking_options) {
     foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
@@ -257,62 +239,40 @@ if ( 0 ) {
 
       if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
         my $padstr = 'N' x ($length);
-        substr ($seq_string, ($ae->start-1), ($length)) = $padstr;
+        substr ($seq_string, ($ae->start), ($length)) = $padstr;
 
       } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) {
-        my $padstr = lc substr ($seq_string, $ae->start-1, $length);
-        substr ($seq_string, $ae->start-1, $length) = $padstr;
+        my $padstr = lc substr ($seq_string, $ae->start, $length);
+        substr ($seq_string, $ae->start, $length) = $padstr;
       }
     }
   } 
+
     my $fastafile = "$dump_loc/". $name . ".fa";
     my $nibfile = "$dump_loc/". $name . ".nib";   
 
+
     open(OUTSEQ, ">$fastafile") or throw("Error opening $fastafile for write");
-    print OUTSEQ ">".$slice->name."\n"; 
+    print "bioseq sequence " .  $seq_display_id ."\n"; # chunkID122:1.38502
+    print OUTSEQ ">".$seq_display_id."\n"; 
      
     $seq_string =~ s/(.{60})/$1\n/g;
-    print OUTSEQ $seq_string."\n";
+    $seq_string =~ s/\n$//;
+    print OUTSEQ $seq_string;
     close OUTSEQ; 
     $seq_string =undef;
-    print "written : $fastafile\n";
-    create_nib_file($fastafile,$nibfile); 
-
-} else{
-    # alternative method
-    my $fastafile = "$dump_loc/". $name . ".fa";
-    my $nibfile = "$dump_loc/". $name . ".nib";   
-
-    open(OUTSEQ, ">$fastafile") or throw("Error opening $fastafile for write");
-    print OUTSEQ ">".$slice->name."\n"; 
-    my $seq_string_ref = $dno->fetch_masked_sequence_string_ref($slice); 
-    $$seq_string_ref =~ s/(.{60})/$1\n/g;
-    print OUTSEQ $$seq_string_ref."\n";
-    close OUTSEQ; 
-    print "written : $fastafile\n";
-    create_nib_file($fastafile,$nibfile); 
-}
-
-
-    #unlink $fastafile;
-  }  
-
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->dna_collection_name);}
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-  return 1;
-} 
-
-
-sub create_nib_file{
-  my ($fastafile,$nibfile)=@_;  
-
-  if (defined $BIN_DIR) {
-     system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
-   } else {
-     system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
-   }
-      unlink $fastafile;
-}
+ 
+    #my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta'); 
+    #$output_seq->write_seq($seq); 
+    print "sequence written $fastafile\n";
+    #concatenate_chunks_to_fasta_file(\@dna_objects,$fastafile);  
+    if (defined $BIN_DIR) {
+       system("$BIN_DIR/faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+     } else {
+       system("faToNib", "$fastafile", "$nibfile") and throw("Could not convert fasta file $fastafile to nib: $!\n");
+     }
+        #unlink $fastafile;
+  } 
 
 #  foreach my $dna_object (@{$dna_collection->get_all_dna_objects}) { 
 #    if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
@@ -351,7 +311,8 @@ sub create_nib_file{
 #        # ( chunkID18:1.30000000 and  
 #        
 #        # use this version to solve problem of very large chromosomes eg opossum 
-#        $dna_object->dump_chunks_to_fasta_file($fastafile);  # INCORRECT - headers don't correspond to file size.  that does not really 
+#        # faToNib only works on fa files containing a single sequence so we can't concatenate the sequences into one file. solution ? 
+#        $dna_object->dump_chunks_to_fasta_file($fastafile);  # INCORRECT - headers don't correspond to file size.  that does not really matter...
 #                                                             
 #        # dump_chunks_to_fasta_file 
 #        # writes multiple fa-files as we have the loop and multiple names ( 2x groupIV ) 
@@ -380,18 +341,60 @@ sub create_nib_file{
 #      $dna_object = undef;
 #    }
 #  }
-#  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->dna_collection_name);}
-#  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
-#  return 1;
-#}
 
+  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->dna_collection_name);}
 
+  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
+  return 1;
+}
+
+sub concatenate_chunks_to_fasta_file { 
+  my ( $aref_dna_objects, $fasta_file ) = @_ ;  
+
+  my $fasta_file_tmp = $fasta_file.".tmp"; 
+
+  unlink $fasta_file_tmp; 
+  unlink $fasta_file ;  
+  my $seq_length =0;  
+  my $seq_id ; 
+  while (my $dna_object = shift @$aref_dna_objects ) {   
+    my $bioseq = $dna_object->bioseq;
+
+    open(OUTSEQ, ">>$fasta_file_tmp") or throw("Error opening $fasta_file_tmp for write");
+    my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta'); 
+    $seq_id =  $bioseq->display_id ; # chunkID122:1.38502
+    $output_seq->write_seq($bioseq); 
+    $seq_length+=$bioseq->length; 
+    close OUTSEQ; 
+  } 
+  print $seq_length . "bp written \n" ; 
+
+  open(A, "$fasta_file_tmp") or throw("Error opening $fasta_file_tmp for write");
+  open(B, ">$fasta_file") or throw("Error opening $fasta_file for write"); 
+
+  my $write_header = 1 ;   
+  my ($main,$tail) = split /\./,$seq_id; 
+  my $header = $main.".$seq_length"; 
+
+  while (my $line =  <A> ) {   
+    if ( $write_header ) {  
+     print B ">$header"; 
+     $write_header = 0 ; 
+    } 
+    if ($line !~/\>/) {  
+      print B $line ;  
+    }
+  }
+    close(A);
+    close(B); 
+    unlink $fasta_file_tmp; 
+    print "written $fasta_file\n";
+}
 
 sub dumpDnaFiles {
   my $self = shift;
 
-  $self->{'comparaDBA'}->no_cache(1);
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
 
   my $starttime = time();
@@ -400,7 +403,7 @@ sub dumpDnaFiles {
   
   my $dna_collection = $self->{'comparaDBA'}->get_DnaCollectionAdaptor->fetch_by_set_description($self->dna_collection_name);
   my $dump_loc = $dna_collection->dump_loc; 
-print "starting to dump dna files : dumpDnaFiles() \n"; 
+print "starting to dump dna files : dumpDnnaFilse() \n"; 
   unless (defined $dump_loc) {
     throw("dump_loc directory is not defined, can not dump dna files\n");
   }
