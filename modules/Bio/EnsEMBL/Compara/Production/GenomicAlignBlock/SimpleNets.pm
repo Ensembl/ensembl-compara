@@ -305,29 +305,34 @@ sub ContigAwareNet {
 
     my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @blocks;  
     my @end_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_end, $_] } @blocks;  
-    my $min_start_X  =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
-    my $max_end_X =  $end_blocks[-1]->reference_genomic_align->dnafrag_end;  
-   
-    # blocks are sorted by start 
-    my $nr=0;
-    my $start_index =  binary_search(\@retained_blocks, $min_start_X-1) ; # identify max. block index where array_end < min_start_X  
 
-    RETAINED_BLOCK: for ( my $i=$start_index; $i<@retained_blocks; $i++) { 
+    my $block_range_start =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
+    my $block_range_end   =  $end_blocks[-1]->reference_genomic_align->dnafrag_end;  
+   
+    # blocks are sorted by start; we start searching with a retained block with the maximum index; we don't inspect retained blocks with smaller index
+    # as we can be sure they don't overlap with the block range.
+    my $start_index =  binary_search(\@retained_blocks, $block_range_start-1) ; # identify max. retained block index where ret.block_end < block_start 
+
+    # comparison of block vs. retained block 
+    
+    RETAINED_BLOCK: for ( my $i=$start_index; $i<@retained_blocks; $i++) {
+
       my $ret_block = $retained_blocks[$i]; 
-      $nr++;
       my $ret = $ret_block->reference_genomic_align; 
       my $ret_start = $ret->dnafrag_start;
       my $ret_end = $ret->dnafrag_end; 
-      if ($ret_start <= $max_end_X and $ret_end >= $min_start_X ) {  
-        # overlap          min_start-----------------max_END    
-        #             ret_start-----------------------------ret_end
+
+      if ($ret_start <= $block_range_end and $ret_end >= $block_range_start ) {  
+        # overlap          block_range_start                           block_range_end 
+        #                  |---------------------------------------------------------|
+        #                  |------|                                        |---------| 
         #
-        #                                               min_start-----------------max_END    
-        #      ret_start-----------------------------ret_end 
+        #             |===================|     |===================|                |===================|      # retained blocks
         #
-        # genomic extent of block overlaps with retained block. check in detail  
+        # genomic extent of block-range overlaps with retained block. Check each retained block in detail if they 
+        # overlap with a component from block_range.
         #
-         my $overlap  = if_blocks_and_retained_blocks_overlap(\@blocks,\@retained_blocks,$cnt_chain,$nr,scalar(@$chains),scalar(@retained_blocks)); 
+         my $overlap  = if_blocks_and_retained_blocks_overlap(\@blocks,\@retained_blocks,$i);
          if ( $overlap == 1 ) { 
            $keep_chain = 0; 
            last RETAINED_BLOCK; 
@@ -401,10 +406,8 @@ sub ContigAwareNet {
            my ($reg_start, $reg_end) = ($qga->dnafrag_start, $qga->dnafrag_end);
             $reg_start = $seg->from_start if $seg->from_start > $reg_start;
             $reg_end   = $seg->from_end   if $seg->from_end   < $reg_end;
-             
             my $cut_block = $block->restrict_between_reference_positions($reg_start, $reg_end);
             $cut_block->score($block->score);
-
             if (defined $cut_block) {
               push @cut_blocks, $cut_block;
               $contigs_of_blocks{$cut_block} = $seg;
@@ -412,7 +415,7 @@ sub ContigAwareNet {
           } 
           push @split_blocks, @cut_blocks;
         }
-      }  # next block
+      }  # MY_BLOCK next block
 
 
       @blocks = @split_blocks;  
@@ -420,11 +423,8 @@ sub ContigAwareNet {
       
       my @diff_contig_blocks; 
 
-      #my %kept_contigs = reverse %contigs_of_kept_blocks;    # this is very time expensive operation
-
       foreach my $block (@blocks) { 
         if (not exists $all_kept_contigs{$contigs_of_blocks{$block}}) {
-        #if (not exists $kept_contigs{$contigs_of_blocks{$block}}) {
           push @diff_contig_blocks, $block;
         }
       }
@@ -467,58 +467,48 @@ sub ContigAwareNet {
   printf ("run() -Time: %.2f  \n", $time_e1-$time_s1); 
   return \@net_chains;
 }
-   
+  
+# this routine checks if any of the components in the blocks overlap any of the components in the retained blocks 
+#
+
+ 
 sub if_blocks_and_retained_blocks_overlap { 
-      my ( $b_ref, $r_ref,$cnt_chain,$nr_rt,$cc,$rr ) = @_ ;  
+      my ( $b_ref, $r_ref,$retained_start_index) = @_ ;  
     
-     #pre-compute start and end of retained block   
-     my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @$r_ref;
+     # sort + pre-compute start and end of retained block   
+     # my @start_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_start, $_] } @$r_ref;
      my @end_blocks = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->reference_genomic_align->dnafrag_end, $_] } @$r_ref;
 
-     my $min_start  =  $start_blocks[0]->reference_genomic_align->dnafrag_start ;
-     my $max_end  =  $end_blocks[-1]->reference_genomic_align->dnafrag_end; 
-     
-     #print "doing deeper checking ......\n"; 
+     my $retained_block_range_start =  $$r_ref[0]->reference_genomic_align->dnafrag_start ;
+     my $retained_block_range_end  =  $end_blocks[-1]->reference_genomic_align->dnafrag_end; 
+    
      my $outer_block = 0;   
-     my $l_index = 0; 
+     my $l_index =  $retained_start_index;  
+
+      # overlap          block_range_start                           block_range_end 
+      #                  |---------------------------------------------------------|
+      #                  |------|                                        |---------| 
+      #
+      #             |===================|     |===================|                |===================|      # retained blocks
+      #
+      # genomic extent of block-range overlaps with retained block. Check each retained block in detail if they 
+      # overlap with a component from block_range.
+
      BLOCK: foreach my $block (@$b_ref ) { 
-        $outer_block++;
         my $qga = $block->reference_genomic_align; 
         # if block and retained block start/end do not overlap... 
-        if ( $qga->dnafrag_start > $max_end  ) {   
-          #                                qga_S ---------------- qga_E 
-          #  min_start -------- max_end  
-          print "$min_start ---- $max_end         <  "  . $qga->dnafrag_start . "     " .$qga->dnafrag_end . "  - skipping\n"; 
-          print "OL\n";
-          #next BLOCK; 
-        }elsif ($qga->dnafrag_end < $min_start )  {   
+        if ( $qga->dnafrag_start > $retained_block_range_end) {   
+          #                                               qga_S ---------------- qga_E 
+          #  min_start -------- retained_block_range_end
+          next BLOCK; 
+        }elsif ($qga->dnafrag_end < $retained_block_range_start )  {   
           #     qga_S-----------qga_E
-          #                            min_start-----------max_end 
-          print    $qga->dnafrag_start . "     " .$qga->dnafrag_end . "    <<     $min_start ---- $max_end   skipping\n"; 
-          print "OR\n";
-          #next BLOCK; 
+          #                            min_start-----------retained_block_range_end
+          next BLOCK; 
         } 
   
-        # only test retained OTHER_BLOCK in detail if it overlaps with BLOCK 
-        my $outer_block_start= $block->reference_genomic_align->dnafrag_start;
-        my $outer_block_end  = $block->reference_genomic_align->dnafrag_end;
-        my $retained_block_start = $$r_ref[0]->reference_genomic_align->dnafrag_start;
-        my $retained_block_end = $$r_ref[-1]->reference_genomic_align->dnafrag_end;
-        #print "os : $outer_block_start - oe $outer_block_end     rs $retained_block_start  re $retained_block_end\n";  
-  
-        if ( $retained_block_end < $outer_block_start ) { 
-          # blocks will never overlap; retained block lies left of obs  
-          print "SL\n"; 
-          #next BLOCK;
-        }
-        if ( $retained_block_start >  $outer_block_end ) { 
-          # rs lies right of obs  RIGHT blocks will never overlap.
-          print "SR\n"; 
-          #next BLOCK;
-        } 
 
-      $l_index = binary_search ($r_ref, $outer_block_start-1 ); # -1 as there could be multiple blocks which have same END and binary search is not returning the first.
-
+      $l_index = binary_search ($r_ref, $qga->dnafrag_start-1 ); # -1 as there could be multiple blocks which have same END and binary search is not returning the first.
       RETAINED_BLOCK: for ( my $i = $l_index; $i<@$r_ref; $i++) { 
         my $oqga = $$r_ref[$i]->reference_genomic_align;
         if ($oqga->dnafrag_start <= $qga->dnafrag_end and $oqga->dnafrag_end >= $qga->dnafrag_start) {  
