@@ -443,6 +443,15 @@ can be reset as follows (you need to re-run both);
   $ mysql $COMPARA_DBNAME -e"show tables like 'peptide_align_feature_%'"
   (drop each of these)
 
+There are occasions where big alignments are produced that are
+unmanagable by the backbone part of the pipeline, and need to be
+processed differently. These will cause fail jobs in certain analyses,
+only for a small percent of cases. You need to allow that to tolerate
+that with this command:
+
+ $ mysql $COMPARA_DBNAME \
+ -e "update analysis_stats left join analysis on analysis_stats.analysis_id=analysis.analysis_id set analysis_stats.failed_job_tolerance=5 where analysis.logic_name in (\"NJTREE_PHYML\",\"OrthoTree\",\"QuickTreeBreak\",\"OtherParalogs\",\"BuildHMMaa\",\"BuildHMMcds\")"
+
 7- Create the method_link_species_sets
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
