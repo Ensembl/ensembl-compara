@@ -59,17 +59,17 @@ done. Read README-homology for more information.
   setdb
       using /usr/local/ensembl/bin/setdb
   hcluster_sg
-      using /nfs/acari/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg (turing)
-      using /nfs/acari/avilella/src/treesoft/trunk/hcluster/hcluster_sg (x86_64)
+      using /nfs/users/nfs_a/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg (turing)
+      using /nfs/users/nfs_a/avilella/src/treesoft/trunk/hcluster/hcluster_sg (x86_64)
   mcoffee
-      using /nfs/acari/gj1/bin/t_coffee (needs library dir as well)
+      using /software/ensembl/compara/tcoffee-7.86b/t_coffee (needs library dir as well)
   muscle
       using /usr/local/ensembl/bin/muscle
   quicktree
-      using /nfs/acari/avilella/src/quicktree/quicktree_1.1/bin/quicktree
+      using /nfs/users/nfs_a/avilella/src/quicktree/quicktree_1.1/bin/quicktree
       needs /usr/local/ensembl/bin/sreformat
   njtree
-      using /nfs/acari/avilella/src/treesoft/trunk/treebest/treebest
+      using /nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest
   codeml
       using /usr/local/ensembl/bin/codeml
   Slr_ensembl
@@ -172,6 +172,24 @@ And set an environment variable containing the connection parameters
 to the DB as used by many of the compara scripts:
 
   $ set COMPARA_URL=mysql://<user>:<pass>@<host>:<port>/${COMPARA_DBNAME}
+
+If your mysql server supports table partitioning (v.5.1 or later), you
+should use the partitioned version of the paf tables now, with
+something like this:
+
+  $ mysql $COMPARA_DBNAME \
+    -e "rename table peptide_align_feature to peptide_align_feature_orig"
+  $ mysql $COMPARA_DBNAME \
+    -e "rename table peptide_align_feature_prod to peptide_align_feature"
+
+Unless you have a very good reason to stick to MyISAM, you should also
+change the engine to INNODB with a bash script like this:
+
+   for t in `mysql $COMPARA_DBNAME -N -e "show tables"`
+   do
+           mysql $COMPARA_DBNAME -N -e "ALTER TABLE $t engine=InnoDB"
+   done
+
 
 3- Load the NCBI taxonomy data 
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -399,6 +417,12 @@ will create a tree with the species in the compara DB, deleting
 the Coelomata internal node and adding the Sus scrofa species as
 completely sequenced.
 
+You also need to add the species tree string into the protein_tree_tag
+table, so that it doesnt overload the filesystem by asking for it
+every time, with a command like this:
+
+  $ mysql $COMPARA_DBNAME \
+    -e "insert into protein_tree_tag (node_id,tag,value) values (1,'species_tree_string','something')"
 
 6- Run the configure scripts
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -587,15 +611,20 @@ back into action using;
 
   $ beekeeper.pl -url $COMPARA_URL -sync
 
+If you or your queueing system killed all running jobs, you can bring
+the beekeeper.pl back to sync with something like:
+
+  $ beekeeper.pl -url $COMPARA_URL -alldead
+
 If you want to manually run one of the jobs in the pipeline in
 debugging mode to see if everything is working as expected, query the
 db for your analysis_job_id and use the runWorker.pl script like this:
 
  $ mysql $COMPARA_DBNAME -e \
    "select * from analysis_job aj, analysis a where \
-   a.analysis_id=aj.analysis_id and a.logic_name='Muscle' limit 10"
+   a.analysis_id=aj.analysis_id and a.logic_name='MCoffee' limit 10"
 
-This will print the first 10 Muscle jobs, then get the analysis_job_id
+This will print the first 10 MCoffee jobs, then get the analysis_job_id
 for one of them and run:
 
  $ runWorker.pl -bk LOCAL \
@@ -605,14 +634,14 @@ Sometimes you may need to reset a particular job (or even analysis) to
 rerun it. See the beekeeper's '-reset_job_id' and
 '-reset_all_jobs_for_analysis' flags.
 
-Sometimes Muscle jobs fail due to large genetrees, but sometimes it's
+Sometimes MCoffee jobs fail due to large genetrees, but sometimes it's
 simply that the aligner gets confused somehow. The following SQL lists
-the first 10 failed Muscle jobs;
+the first 10 failed MCoffee jobs;
  
   $ mysql $COMPARA_DBNAME -e \
    'select a.logic_name, aj.analysis_job_id, aj.input_id \
     from analysis a join analysis_job aj using( analysis_id ) \
-    where aj.status = "FAILED" and a.logic_name="Muscle" limit 10';
+    where aj.status = "FAILED" and a.logic_name="MCoffee" limit 10';
 
 For more details on the failed jobs, e.g. the gene_count, use the
 followimng SQL;
@@ -625,7 +654,7 @@ followimng SQL;
            FROM TRIM( LEADING "\{\'protein_tree_id\'\=\>" FROM aj.input_id)) \
      AS UNSIGNED INT) AS root_id, aj.analysis_job_id \
    FROM analysis_job aj JOIN analysis a using( analysis_id ) \
-   WHERE a.logic_name="Muscle" \
+   WHERE a.logic_name="MCoffee" \
    AND aj.status="Failed" ) AS aj \
    JOIN protein_tree_tag p ON p.node_id=aj.root_id \
    WHERE p.tag IN( "gene_count" ) \
