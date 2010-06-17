@@ -423,7 +423,12 @@ analysis.  These rows hold information like batch_size, hive_capacity,
 and run-time stats that the Hive's Queen will update.
 
 These scripts may give you warnings if the output directories are not
-available or if it's unable to connect to core databases.
+available or if it's unable to connect to core databases. You need a
+fasta_dir and a cluster_dir, and if you are using lustre, you need to
+change the type for the fasta dir like this:
+
+ $ FASTA_DIR=somewhere
+ $ lfs setstripe $FASTA_DIR -c -1
 
  $ cd $BASEDIR/ensembl-compara/scripts/pipeline
  $ perl comparaLoadGenomes.pl -conf my_compara.conf
