@@ -92,18 +92,11 @@ sub fetch_by_dbID {
     return $self->{'_dna_frag_id_cache'}->{$dbid};
   }
 
-  my $sth = $self->prepare(qq{
-          SELECT
-            dnafrag_id,
-            length,
-            name,
-            genome_db_id,
-            coord_system_name
-          FROM
-            dnafrag
-          WHERE
-            dnafrag_id = ?
-      });
+  my $columns = join(", ", $self->_columns);
+  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
+  my $sql = "SELECT $columns FROM $tablenames WHERE df.dnafrag_id = ?";
+
+  my $sth = $self->prepare($sql);
 
   $sth->execute($dbid);
 
@@ -155,19 +148,9 @@ sub fetch_by_GenomeDB_and_name {
     throw("[$genome_db] must be Bio::EnsEMBL::Compara::GenomeDB\n");
   }
 
-  my $sql = qq{
-          SELECT
-            dnafrag_id,
-            length,
-            name,
-            genome_db_id,
-            coord_system_name
-          FROM
-            dnafrag
-          WHERE
-            genome_db_id = ?
-            AND name = ?
-      };
+  my $columns = join(", ", $self->_columns);
+  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
+  my $sql = "SELECT $columns FROM $tablenames WHERE df.genome_db_id = ? AND df.name = ?";
 
   my $sth = $self->prepare($sql);
   $sth->execute($genome_db_id, $name);
@@ -217,28 +200,19 @@ sub fetch_all_by_GenomeDB_region {
 #    $self->throw('dnafrag_type argument must be defined');
 #  }
 
-  my $sql = qq{
-          SELECT
-            dnafrag_id,
-            length,
-            name,
-            genome_db_id,
-            coord_system_name
-          FROM
-            dnafrag d
-          WHERE
-            genome_db_id = ?
-      };
+  my $columns = join(", ", $self->_columns);
+  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
+  my $sql = "SELECT $columns FROM $tablenames WHERE df.genome_db_id = ?";
 
   my @bind_values = ($gdb_id);
 
   if(defined $coord_system_name) {
-    $sql .= ' AND coord_system_name = ?';
+    $sql .= ' AND df.coord_system_name = ?';
     push @bind_values, "$coord_system_name";
   }
 
   if(defined $name) {
-    $sql .= ' AND d.name = ?';
+    $sql .= ' AND df.name = ?';
     push @bind_values, "$name";
   }
 
@@ -287,19 +261,14 @@ sub fetch_by_Slice {
 sub fetch_all {
   my ($self) = @_;
 
-  my $sth = $self->prepare(qq{
-          SELECT
-            dnafrag_id,
-            length,
-            name,
-            genome_db_id,
-            coord_system_name
-          FROM
-            dnafrag
-      });
+  my $columns = join(", ", $self->_columns);
+  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
+  my $sql = "SELECT $columns FROM $tablenames";
 
-   $sth->execute;
-   return $self->_objs_from_sth( $sth );
+  my $sth = $self->prepare($sql);
+
+  $sth->execute;
+  return $self->_objs_from_sth( $sth );
 }
 
 =head2 _tables
@@ -337,7 +306,8 @@ sub _columns {
           'df.length',
           'df.name',
           'df.genome_db_id',
-          'df.coord_system_name'
+          'df.coord_system_name',
+          'df.is_reference'
           );
 }
 
@@ -361,13 +331,14 @@ sub _objs_from_sth {
 
   my $these_dnafrags = [];
 
-  my ($dbID, $length, $name, $genome_db_id, $coord_system_name);
+  my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference);
   $sth->bind_columns(
           \$dbID,
           \$length,
           \$name,
           \$genome_db_id,
-          \$coord_system_name
+          \$coord_system_name,
+          \$is_reference
       );
 
   my $gda = $self->db->get_GenomeDBAdaptor();
@@ -380,7 +351,8 @@ sub _objs_from_sth {
             'length' => $length,
             'name' => $name,
             'genome_db_id' => $genome_db_id,
-            'coord_system_name' => $coord_system_name}
+            'coord_system_name' => $coord_system_name,
+            'is_reference' => $is_reference}
         );
 
 
@@ -450,10 +422,10 @@ sub store {
 
    my $sth = $self->prepare("
      INSERT IGNORE INTO dnafrag ( genome_db_id, coord_system_name,
-                                  name, length )
-     VALUES (?,?,?,?)");
+                                  name, length, is_reference )
+     VALUES (?,?,?,?,?)");
 
-   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length);
+   my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference);
    
    if ($rows_inserted > 0) {
      $stored_id = $sth->{'mysql_insertid'};
@@ -598,10 +570,10 @@ sub update {
     return $self->store($dnafrag);
   }
 
-  if ($existing_dnafrag->length != $dnafrag->length) {
-    my $sql = "UPDATE dnafrag SET length = ? WHERE dnafrag_id = ?";
+  if ($existing_dnafrag->length != $dnafrag->length or $existing_dnafrag->is_reference != $dnafrag->is_reference) {
+    my $sql = "UPDATE dnafrag SET length = ?, is_reference = ? WHERE dnafrag_id = ?";
     my $sth = $self->prepare($sql);
-    $sth->execute($dnafrag->length, $existing_dnafrag->dbID);
+    $sth->execute($dnafrag->length, $dnafrag->is_reference, $existing_dnafrag->dbID);
   }
   $dnafrag->dbID($existing_dnafrag->dbID);
  

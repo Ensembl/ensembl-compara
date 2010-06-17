@@ -158,11 +158,11 @@ sub new {
 #      $self->contig($contig);
 #    }
 
-  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name,
+  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference,
           $start, $end, $genomedb, $type
       ) =
-    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME
-            START END GENOMEDB TYPE
+    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE
+            START END
         )],@args);
 
   $self->dbID($dbID) if (defined($dbID));
@@ -172,13 +172,12 @@ sub new {
   $self->genome_db($genome_db) if (defined($genome_db));
   $self->genome_db_id($genome_db_id) if (defined($genome_db_id));
   $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
+  $self->is_reference($is_reference) if (defined($is_reference));
 
   ###################################################################
   ## Support for backwards compatibility
   $self->start($start) if (defined($start));
   $self->end($end) if (defined($end));
-  $self->genomedb($genomedb) if (defined($genomedb));
-  $self->type($type) if (defined($type));
   ##
   ###################################################################
 
@@ -415,6 +414,34 @@ sub coord_system_name {
 }
 
 
+=head2 is_reference
+
+ Arg [1]   : bool $is_reference
+ Example   : $is_reference = $dnafrag->is_reference()
+ Example   : $dnafrag->is_reference(1)
+ Function  : get/set is_reference attribute. The default value
+             is 1 (TRUE).
+ Returns   : bool
+ Exeption  : none
+ Caller    : $object->is_reference
+ Status    : Stable
+
+=cut
+
+sub is_reference {
+  my ($self, $is_reference) = @_;
+
+  if (defined($is_reference)) {
+    $self->{'is_reference'} = $is_reference;
+  }
+  if (!defined($self->{'is_reference'})) {
+    $self->{'is_reference'} = 1;
+  }
+
+  return $self->{'is_reference'};
+}
+
+
 =head2 slice
 
  Arg 1      : -none-
@@ -554,61 +581,6 @@ sub end {
   deprecate("Use Bio::EnsEMBL::Compara::DnaFrag->length() method instead");
 
   return $self->length($end);
-}
-
-
-=head2 genomedb [DEPRECATED]
-
- DEPRECATD! Use Bio::EnsEMBL::Compara::DnaFrag->genome_db() method instead
-
- Title   : genomedb
- Usage   : $obj->genomedb($newval)
- Function: 
- Example : 
- Returns : value of genomedb
- Args    : newvalue (optional)
-
-=cut
-
-sub genomedb {
-  my ($self, @args) = @_;
-  deprecate("Calling Bio::EnsEMBL::Compara::DnaFrag::genome_db method instead");
-  return $self->genome_db(@args);
-}
-
-
-=head2 type [DEPRECATED]
-
- DEPRECATED! Use Bio::EnsEMBL::Compara::DnaFrag->coord_system_name() method instead
-
- Title   : type
- Usage   : $obj->type($newval)
- Function: 
- Example : 
- Returns : value of coord_system_name (former type)
- Args    : newvalue (optional)
-
-=cut
-
-sub type {
-  my ($self, @args) = @_;
-  deprecate("Calling Bio::EnsEMBL::Compara::DnaFrag::coord_system_name method instead");
-  return $self->coord_system_name(@args);
-}
-
-
-=head2 contig [DEPRECATED]
-
- DEPRECATED! Use Bio::EnsEMBL::Compara::DnaFrag->slice() method instead
-
-=cut
-
-sub contig {
-  my ($self, @args) = @_;
-
-  deprecated("Calling Bio::EnsEMBL::Compara::DnaFrag::slice method instead");
-   
-  return $self->slice(@args);
 }
 
 
