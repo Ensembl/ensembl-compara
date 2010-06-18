@@ -250,7 +250,7 @@ sub drop_temp_member_table {
   my $self = shift;
   my $starttime = time();
 
-  $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db}, 'compara');
+  $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db} . ';type=compara');
   unless (defined($self->{comparaDBA_reuse})) {
     my $reuse_db = $self->{p}{reuse_db};
     throw("Couldn't connect to reuse db $reuse_db: $!");
@@ -279,7 +279,7 @@ sub create_temp_member_table {
   my $self = shift;
   my $starttime = time();
 
-  $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db}, 'compara');
+  $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db} . ';type=compara');
   unless (defined($self->{comparaDBA_reuse})) {
     my $reuse_db = $self->{p}{reuse_db};
     throw("Couldn't connect to reuse db $reuse_db: $!");

@@ -54,7 +54,7 @@ if ($self->{'taxon_id'} && $self->{'scientific_name'}) {
 
 if ($help or !$state) { usage(); }
 
-$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
+$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara') if($url);
 unless(defined($self->{'comparaDBA'})) {
   print("no url\n\n");
   usage();
@@ -238,7 +238,7 @@ sub build_store_leftright_indexing {
 
 sub load_taxonomy_in_core {
   my $self = shift;
-  $self->{'coreDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url_core, 'compara') if($url_core);
+  $self->{'coreDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url_core . ';type=core') if($url_core);
   unless(defined($self->{'coreDBA'})) {
     print("no core url\n\n");
     usage();

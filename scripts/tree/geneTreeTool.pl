@@ -254,7 +254,7 @@ if ($url) {
     $compara_conf{-dbname} = $mydbname;
     eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
   } else {
-    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
+    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
   }
 } else {
   eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
@@ -2839,7 +2839,7 @@ sub _indelible {
 #     }
 #   }
 
-#   $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2}, 'compara');
+#   $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2} . ';type=compara');
 #   $self->{'temp'}  = $self->{'comparaDBA'};
 #   $self->{'comparaDBA'} = $self->{'comparaDBA2'};
 #   $self->{'comparaDBA2'} = $self->{'temp'};
@@ -3099,7 +3099,7 @@ sub _2xeval {
         -db_version => "$mydbversion",
         -verbose => "0" );
 
-  $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2}, 'compara');
+  $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2} . ';type=compara');
   $self->{memberDBA2} = $self->{'comparaDBA2'}->get_MemberAdaptor;
 
   my $tree_id = $self->{_2xeval};
@@ -8990,7 +8990,7 @@ sub _genetree_domains {
 #   $cluster_count = 1;
 #   $member_count = 0;
 
-#   $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2}, 'compara');
+#   $self->{'comparaDBA2'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{_url2} . ';type=compara');
 #   $self->{'temp'}  = $self->{'comparaDBA'};
 #   $self->{'comparaDBA'} = $self->{'comparaDBA2'};
 #   $self->{'comparaDBA2'} = $self->{'temp'};

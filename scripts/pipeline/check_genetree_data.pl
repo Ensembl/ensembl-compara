@@ -67,7 +67,7 @@ pod2usage(1) if $help;
 
 $url ||= $DEFAULT_URL;
 
-my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($url,'compara');
+my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
 
 my $doit = 0;
 $doit = 1 if ($long);

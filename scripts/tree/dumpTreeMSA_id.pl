@@ -81,7 +81,7 @@ if ($@) {
   $compara_conf{-dbname} = $mydbname;
   eval { $dba  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
 } else {
-  $dba  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
+  $dba  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
 }
 
 # Bio::EnsEMBL::Registry->no_version_check(1);

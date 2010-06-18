@@ -134,7 +134,7 @@ sub import_paf_table {
   my $gdb = $self->{'gdb'};
   return unless $gdb;
 
-  $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db}, 'compara');
+  $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db}. ';type=compara');
   my $reuse_username = $self->{comparaDBA_reuse}->dbc->username;
   my $reuse_password = $self->{comparaDBA_reuse}->dbc->password;
   my $pass = "-p$reuse_password " if ($reuse_password);

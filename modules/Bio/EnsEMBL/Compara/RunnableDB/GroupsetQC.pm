@@ -193,7 +193,7 @@ sub run_groupset_qc {
     $self->per_genome_mapping_stats($self->{gdb});
   } else {
     # Fetching the previous version of the pipeline
-    $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{reuse_db}, 'compara');
+    $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{reuse_db} . ';type=compara');
     throw("[GroupsetQC] Couldnt connect to comparaDBA reuse") unless (defined($self->{'comparaDBA_reuse'}));
 
     my $xtb_filename = $self->join_one_pair;
@@ -566,7 +566,7 @@ sub per_genome_mapping_stats {
   $self->{groupset_node}->store_tag("$gdb_id".'_prop_orphans' . '_' . $self->{groupset_tag},$proportion_orphan_genes);
   return 1 unless (defined($self->{reusable_gdb}{$gdb_id}));
 
-  $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{reuse_db}, 'compara');
+  $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{reuse_db} . ';type=compara');
   throw("[GroupsetQC] Couldnt connect to comparaDBA reuse") unless (defined($self->{'comparaDBA_reuse'}));
   my $reuse_orphans = $self->fetch_gdb_orphan_genes($self->{comparaDBA_reuse},$gdb_id);
   my $common_orphans; my $new_orphans; my $old_orphans;

@@ -91,7 +91,7 @@ if ($url) {
     $compara_conf{-port} = $myport;
     eval { $self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf); }
   } else {
-    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
+    $self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
   }
 }
 unless(defined($self->{'comparaDBA'})) {

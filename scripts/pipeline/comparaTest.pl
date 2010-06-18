@@ -56,7 +56,7 @@ if($dbname) { $self->{'compara_conf'}->{'-dbname'} = $dbname; }
 if($user)   { $self->{'compara_conf'}->{'-user'}   = $user; }
 if($pass)   { $self->{'compara_conf'}->{'-pass'}   = $pass; }
 
-$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara') if($url);
+$self->{'comparaDBA'}  = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara') if($url);
 if(defined($self->{'comparaDBA'})) {
   print("URL OK!!!\n");
 } else {

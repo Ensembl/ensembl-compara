@@ -101,7 +101,7 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
-  $self->{'comparaDBA_epo'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{epo_db}, 'compara');
+  $self->{'comparaDBA_epo'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{epo_db} . ';type=compara');
   $self->{gabDBA_epo} = $self->{'comparaDBA_epo'}->get_GenomicAlignBlockAdaptor;
   $self->{mlssDBA_epo} = $self->{'comparaDBA_epo'}->get_MethodLinkSpeciesSetAdaptor;
 

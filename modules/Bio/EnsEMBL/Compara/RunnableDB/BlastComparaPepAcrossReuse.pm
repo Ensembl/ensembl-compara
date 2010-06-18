@@ -368,7 +368,7 @@ sub try_reuse_blast {
                  && 
                  defined($self->{reusable_gdb}{$member->genome_db_id}));
 
-  $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($p->{reuse_db}, 'compara');
+  $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($p->{reuse_db} . ';type=compara');
   my $paf_adaptor = $self->{'comparaDBA_reuse'}->get_PeptideAlignFeatureAdaptor;
   my $member_adaptor = $self->{'comparaDBA_reuse'}->get_MemberAdaptor;
   my $member_reuse = $member_adaptor->fetch_by_source_stable_id('ENSEMBLPEP',$member->stable_id);

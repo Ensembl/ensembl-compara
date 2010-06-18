@@ -56,10 +56,10 @@ unless($url1) {
   usage();
 }
 
-$self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url1, 'compara');
+$self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url1 . ';type=compara');
 
 if(defined($url2)) {
-  $self->{'compara2DBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url2, 'compara');
+  $self->{'compara2DBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url2 . ';type=compara');
 }
 
 test_homology_set($self);
@@ -155,7 +155,7 @@ sub test_homology_set
   $homology_set1->print_stats;
 
   if ($brhurl1) {
-    $self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($brhurl1, 'compara');
+    $self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($brhurl1 . ';type=compara');
   }
   my $homology_set2; my $paralogues2_set1; my $paralogues2_set2;
   if (defined($url2)) {

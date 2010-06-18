@@ -36,7 +36,7 @@ unless($url) {
   usage();
 }
 
-$self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url, 'compara');
+$self->{'comparaDBA'} = Bio::EnsEMBL::Hive::URLFactory->fetch($url . ';type=compara');
 
 load_orthos($self);
 

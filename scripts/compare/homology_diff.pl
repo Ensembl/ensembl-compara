@@ -60,8 +60,8 @@ unless ($conf) {
   usage();
 }
 
-$self->{$url1} = Bio::EnsEMBL::Hive::URLFactory->fetch($url1, 'compara');
-$self->{$url2} = Bio::EnsEMBL::Hive::URLFactory->fetch($url2, 'compara');
+$self->{$url1} = Bio::EnsEMBL::Hive::URLFactory->fetch($url1 . ';type=compara');
+$self->{$url2} = Bio::EnsEMBL::Hive::URLFactory->fetch($url2 . ';type=compara');
 
 my ($homology_description_ranking_set1, $homology_description_ranking_set2) = @{do($conf)};
 

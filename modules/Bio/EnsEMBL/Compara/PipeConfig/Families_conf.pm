@@ -5,6 +5,7 @@
 # rel.57+:  init_pipeline.pl execution took 8m45;   pipeline execution took 100hours (4.2 x days-and-nights) including queue waiting
 # rel.58:   init_pipeline.pl execution took 5m (Albert's pipeline not working) or 50m (Albert's pipeline working);   pipeline execution took ...
 # rel.58b:  init_pipeline.pl execution took 6m30, pipeline execution [with some debugging in between] took 5*24h. Should be 4*24h at most.
+# rel.59:   init_pipeline.pl execution took 6m45, pipeline execution took ...
 
 #
 ## Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
@@ -21,8 +22,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        release         => '58',
-        rel_suffix      => 'b',    # an empty string by default, a letter otherwise
+        release         => '59',
+        rel_suffix      => '',    # an empty string by default, a letter otherwise
         rel_with_suffix => $self->o('release').$self->o('rel_suffix'),
 
         email           => $ENV{'USER'}.'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
@@ -30,7 +31,7 @@ sub default_options {
             # code directories:
         sec_root_dir    => '/software/ensembl/compara',
         blast_bin_dir   => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
-        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-10-105/bin',
+        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-09-308/bin',    # the new one is: mcl-10-105 , but we will be using the older one this time
         mafft_root_dir  => $self->o('sec_root_dir') . '/mafft-6.522',
             
             # data directories:
@@ -53,7 +54,7 @@ sub default_options {
 
             # family database connection parameters (our main database):
         pipeline_db => {
-            -host   => 'compara1',
+            -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -62,19 +63,19 @@ sub default_options {
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
         homology_db  => {
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'avilella_compara_homology_'.$self->o('release'),
+            -dbname => 'lg4_compara_homology_'.$self->o('release'),
         },
 
         prev_rel_db => {     # used by the StableIdMapper as the reference
-            -host   => 'compara1',
+            -host   => 'ens-livemirror',
             -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'lg4_ensembl_compara_57',
+            -user   => 'ensro',
+            -pass   => '',
+            -dbname => 'ensembl_compara_58',
         },
 
         master_db => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
