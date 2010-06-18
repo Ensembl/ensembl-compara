@@ -157,7 +157,7 @@ sub build_NCSystem
   $analysisDBA->store($load_genome);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($load_genome->dbID);
   $stats->batch_size(1);
-  $stats->hive_capacity(100);
+  $stats->hive_capacity(10);
   $stats->update();
 
   $dataflowRuleDBA->create_rule($submit_analysis, $load_genome);
@@ -175,7 +175,7 @@ sub build_NCSystem
   $analysisDBA->store($genestore);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($genestore->dbID);
   $stats->batch_size(1);
-  $stats->hive_capacity(400);
+  $stats->hive_capacity(20);
   $stats->update();
 
   $dataflowRuleDBA->create_rule($load_genome,$genestore);
