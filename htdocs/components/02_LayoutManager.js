@@ -22,9 +22,13 @@ Ensembl.LayoutManager.extend({
     $('#header a:not(#tabs a)').addClass('constant');
     
     if (window.location.hash) {
+      $('.ajax_load').val(function () {
+        return Ensembl.urlFromHash(this.value);
+      });
+      
       this.hashChange(Ensembl.urlFromHash(window.location.href, true));
     }
-    
+        
     $('.modal_link').show().live('click', function () {
       if (Ensembl.EventManager.trigger('modalOpen', this)) {
         return false;
@@ -58,6 +62,11 @@ Ensembl.LayoutManager.extend({
       mouseup: function (e) {
         Ensembl.EventManager.trigger('dragStop', e);
       }
+    });
+    
+    $(window).bind('hashchange', function (e) {
+      Ensembl.setCoreParams();
+      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
     });
     
     var userMessage = unescape(Ensembl.cookie.get('user_message'));
