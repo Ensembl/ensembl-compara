@@ -121,6 +121,9 @@ ensembl-hive code
 
 1.3 Perl environment
 
+  Beware the pipeline has been seen to misbehave when using csh, and
+  is mostly tested under bash terminals.
+
 in tcsh
   $ setenv BASEDIR   /some/path/to/modules
   $ setenv PERL5LIB ${BASEDIR}/ensembl/modules:${PERL5LIB}
