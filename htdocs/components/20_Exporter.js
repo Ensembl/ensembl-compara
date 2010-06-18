@@ -17,7 +17,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   },
   
   filterInit: function () {
-    this.elLk.fieldsets = $('fieldset[class]:not(.general_options', this.el);
+    this.elLk.fieldsets = $('fieldset[class]:not(.general_options)', this.el);
     this.filter($('fieldset.general_options', this.el).find('select.output_type').val());
   },
   
