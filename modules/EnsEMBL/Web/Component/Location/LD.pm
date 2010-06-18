@@ -45,7 +45,7 @@ sub focus {
   ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
 
   my ( $self, $model ) = @_;
-  my $obj = $model->object('Variation');
+  my $obj = $self->object;
   my $hub = $model->hub;
 
   my ( $info, $focus );
