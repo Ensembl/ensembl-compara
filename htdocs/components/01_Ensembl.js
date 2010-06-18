@@ -15,17 +15,6 @@ Ensembl.extend({
     
     this.hashRegex = new RegExp(/[\?;&]r=([^;&]+)/);
     
-    if (window.location.hash) {
-      $('.ajax_load').val(function () {
-        return Ensembl.urlFromHash(this.value);
-      });
-    }
-    
-    $(window).bind('hashchange', function (e) {
-      Ensembl.setCoreParams();
-      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
-    });
-    
     (this.ajax  = this.cookie.get('ENSEMBL_AJAX'))  || this.setAjax();
     (this.width = this.cookie.get('ENSEMBL_WIDTH')) || this.setWidth();
     
