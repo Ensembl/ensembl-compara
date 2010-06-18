@@ -56,7 +56,7 @@ sub content {
         start => $gene->seq_region_start,
         end   => $gene->seq_region_end,
         col   => $colour,
-        href  => $object->_url({ type => 'Gene', action => 'Summery', g => $stable_id })
+        href  => $object->_url({ type => 'Gene', action => 'Summary', g => $stable_id })
       };
       
       if (exists $high{$chr}) {
