@@ -7,7 +7,7 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::ImageConfig);
 
 sub mergeable_config {
-  return 1;
+  return 0;
 }
 
 sub init {
