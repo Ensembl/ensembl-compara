@@ -87,9 +87,10 @@ sub fetch_input {
   #
   $self->{'genome_db_id'}             = 0;  # 'gdb'
 
-  #set default store_seq to 1 so that the sequence table is populated during
-  #the chunking process rather than later during eg Blastz analysis.
-  $self->{'store_seq'}                = 1;
+  #set default store_seq to 0 so that the sequence table is NOT populated during
+  #the chunking process. Have now added separate module StoreSequence to deal
+  #with storing very fragmented genomes.
+  $self->{'store_seq'}                = 0;
   $self->{'store_chunk'}              = 0;
   $self->{'overlap'}                  = 0;
   $self->{'chunk_size'}               = undef;
@@ -153,8 +154,25 @@ sub write_output
   $outputHash->{'collection_id'} = $self->{'dna_collection'}->dbID;
   my $output_id = main::encode_hash($outputHash);
 
-  print("output_id = $output_id\n");
-  $self->input_id($output_id);                    
+  #print("output_id = $output_id\n");
+  $self->input_id($output_id);
+
+  #
+  #Create a StoreSequence job for each DnaFragChunk or DnaFragChunkSet object 
+  #to parallelise the storing of sequences in the Sequence table
+  #
+  my $dna_objects = $self->{'dna_collection'}->get_all_dna_objects;
+  foreach my $dna_object (@$dna_objects) {
+      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+	  my $store_seq_id = "{'chunkSetID' => '" . $dna_object->dbID . "'}";
+	  #Use branch1 to send data to StoreSequence
+	  $self->dataflow_output_id($store_seq_id,1);
+      } else {
+	  my $store_seq_id = "{'chunkID' => '" . $dna_object->dbID .  "'}";
+	  #Use branch1 to send data to StoreSequence
+	  $self->dataflow_output_id($store_seq_id,1);
+	  }
+  }
   return 1;
 }
 
@@ -201,7 +219,7 @@ sub get_params {
     if(defined($params->{'masking_options'}));
   $self->{'masking_analysis_data_id'} = $params->{'masking_analysis_data_id'}
     if(defined($params->{'masking_analysis_data_id'}));
-    
+
   $self->{'create_analysis_prefix'} = $params->{'analysis_template'} 
     if(defined($params->{'analysis_template'}));
   $self->{'analysis_job'} = $params->{'analysis_job'} if(defined($params->{'analysis_job'}));
@@ -254,24 +272,43 @@ sub create_chunks
   }
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->{'dna_collection'});
   
+
   $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   my $SliceAdaptor = $genome_db->db_adaptor->get_SliceAdaptor;
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
 
   my $chromosomes = [];
   if(defined $self->{'region'}) {
-    my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'});
-    if (defined $seq_region_name && $seq_region_name ne "") {
-      print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
-      push @{$chromosomes}, $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
-    } else {
-      print("fetch by region coord:$coord_system_name\n");
-      $chromosomes = $SliceAdaptor->fetch_all($coord_system_name);
+    #Support list of regions
+    my @regions = split(/,/, $self->{'region'});  
+
+    foreach my $region (@regions) {
+	my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $region);
+	if (defined $seq_region_name && $seq_region_name ne "") {
+	    print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
+	    my $slice;
+	    if (defined $seq_region_start && defined $seq_region_end) {
+		$slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
+		push @{$chromosomes}, $slice;
+	    } else {
+		if ($self->{'include_non_reference'}) {
+		    $slice = $SliceAdaptor->fetch_by_region_unique($coord_system_name, $seq_region_name);
+		    push @{$chromosomes}, @$slice;
+		} else {
+		    $slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
+		    push @{$chromosomes}, $slice;
+		}
+	    }
+	} else {
+	    print("fetch by region coord:$coord_system_name\n");
+	    push @{$chromosomes}, $SliceAdaptor->fetch_all($coord_system_name);
+	}
     }
   } else {
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->{'include_non_reference'}, $self->{'include_duplicates'});
   }
+
   print("number of seq_regions ".scalar @{$chromosomes}."\n");
 
   $self->{'chunkset_counter'} = 1;
@@ -314,7 +351,11 @@ sub create_chunks
       $dnafrag->name($chr->seq_region_name); #ie just 22
       $dnafrag->genome_db($genome_db);
       $dnafrag->coord_system_name($chr->coord_system->name());
-      $dnafrag->length($chr->length);
+
+      #Need total length of dnafrag, not just end-start+1, otherwise the dnafrag_chunks are created
+      #incorrectly because the chr->end becomes (end-start+1) but this could be less than chr->start
+      #$dnafrag->length($chr->length);
+      $dnafrag->length($chr->seq_region_length);
       $dnafragDBA->store_if_needed($dnafrag);
     }
     $self->create_dnafrag_chunks($dnafrag, $chr->start, $chr->end);
@@ -352,14 +393,6 @@ sub create_dnafrag_chunks {
 
   my $dnafragDBA = $self->{'comparaDBA'}->get_DnaFragAdaptor;
 
-  my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $self->{'region'})
-    if($self->{'region'});
-
-  if (defined $seq_region_start && defined $seq_region_end) {
-    $region_end = $seq_region_end;
-    $region_start = $seq_region_start;
-  }
-
   #If chunk_size is not set then set it to be the fragment length 
   #overlap must be 0 in this case.
   my $chunk_size = $self->{'chunk_size'};
@@ -371,6 +404,7 @@ sub create_dnafrag_chunks {
 
   #print "dnafrag : ", $dnafrag->display_id, "n";
   #print "  sequence length : ",$length,"\n";
+  #print "chunk_size $chunk_size\n";
 
   my $lasttime = time();
 
