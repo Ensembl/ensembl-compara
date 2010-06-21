@@ -279,9 +279,10 @@ sub store_gene_link_as_homology
   # Check is stored as within_species_paralog
   my $member_id1 = $protein1->gene_member->member_id;
   my $member_id2 = $protein2->gene_member->member_id;
+
   my @stored_paralogs = $self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2,1);
   if (defined(@stored_paralogs)) {
-    # $DB::single=1;1;
+
     if (1 < scalar @stored_paralogs) {
       throw("more than one paralog associated to this pair ($member_id1,$member_id2)\n");
 #       foreach my $stored_paralogy (@stored_paralogs) {
@@ -289,7 +290,11 @@ sub store_gene_link_as_homology
 #       }
     }
   }
-  next if (defined(@stored_paralogs)); # Already stored
+
+  if (defined (@stored_paralogs)) {
+    my $paralogy = shift @stored_paralogs;
+    next if (!defined($paralogy) || '' eq $paralogy);
+  }
 
   # create method_link_species_set
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
