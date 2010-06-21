@@ -170,10 +170,13 @@ sub createFilterDuplicatesJobs
   my $region = $self->{'region'};
   my $mlss_id = $self->{'method_link_species_set_id'};
 
-  my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
-  if (defined $region && $region =~ //) {
-    ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/, $region);
-  }
+  #Now that we allow more than one region, this causes too many complications here.
+  #Remove this as not restricting the region shouldn't make any difference because the alignments will
+  #only be on restricted regions of the dnafrag anyway.
+  #my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
+  #if (defined $region && $region =~ //) {
+  #  ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/, $region);
+  #}
 
   my $dnafrag_id_list = $dna_collection->get_all_dnafrag_ids;
 
@@ -183,8 +186,8 @@ sub createFilterDuplicatesJobs
     next if (defined $already_seen_dnafrag_ids{$dnafrag_id});
     my $input_hash = {};
     $input_hash->{'dnafrag_id'} = $dnafrag_id;
-    $input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
-    $input_hash->{'seq_region_end'} = $seq_region_end if (defined $seq_region_end);
+    #$input_hash->{'seq_region_start'} = $seq_region_start if (defined $seq_region_start);
+    #$input_hash->{'seq_region_end'} = $seq_region_end if (defined $seq_region_end);
     $input_hash->{'method_link_species_set_id'} = $mlss_id if (defined $mlss_id);
     
     my $input_id = main::encode_hash($input_hash);
