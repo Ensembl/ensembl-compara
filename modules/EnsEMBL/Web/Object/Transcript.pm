@@ -1436,7 +1436,7 @@ sub get_alignment {
   my $label_width  = '22'; # width of column for e! object label
   my $output_width = 61;   # width of alignment
   my $dnaAlignExe  = '%s/bin/matcher -asequence %s -bsequence %s -outfile %s %s';
-  my $pepAlignExe  = '%s/bin/psw -m %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s';
+  my $pepAlignExe  = '%s/bin/psw -m -dymem explicit %s/wisecfg/blosum62.bla %s %s -n %s -w %s > %s';
 
   my $out_file = time() . int(rand()*100000000) . $$;
   $out_file = $self->species_defs->ENSEMBL_TMP_DIR.'/' . $out_file . '.out';
