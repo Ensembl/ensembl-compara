@@ -294,7 +294,7 @@ sub fetch_by_Member_id_Member_id {
 
   my $homology = $self->generic_fetch($constraint, $join);
 
-  return undef unless (defined $homology);
+  return undef unless (defined $homology || 0 == scalar @$homology);
 
   # At production time, we may have more than one entry due to the
   # OtherParalogs code, so we allow fetching with the extra parameter,
@@ -335,7 +335,7 @@ sub fetch_by_PMember_id_PMember_id {
 
   my $homology = $self->generic_fetch($constraint, $join);
 
-  return undef unless (defined $homology);
+  return undef unless (defined $homology || 0 == scalar @$homology);
 
   # At production time, we may have more than one entry due to the
   # OtherParalogs code, so we allow fetching with the extra parameter,
