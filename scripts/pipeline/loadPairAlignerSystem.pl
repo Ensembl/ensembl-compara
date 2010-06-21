@@ -198,6 +198,22 @@ sub preparePairAlignerSystem
   $ctrlRuleDBA->create_rule($submit_analysis, $chunkAndGroupDnaAnalysis);
 
   #
+  # creating StoreSequence analysis
+  #
+  my $storeSequenceAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'StoreSequence',
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::StoreSequence',
+      -parameters      => ""
+    );
+  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($storeSequenceAnalysis);
+  $stats = $storeSequenceAnalysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(100); 
+  $stats->update();
+  $self->{'storeSequenceAnalysis'} = $storeSequenceAnalysis;
+
+  #
   # creating CreatePairAlignerJobs analysis
   #
   my $createPairAlignerJobsAnalysis = Bio::EnsEMBL::Analysis->new(
@@ -214,6 +230,7 @@ sub preparePairAlignerSystem
   $self->{'createPairAlignerJobsAnalysis'} = $createPairAlignerJobsAnalysis;
 
   $ctrlRuleDBA->create_rule($chunkAndGroupDnaAnalysis, $createPairAlignerJobsAnalysis);
+  $ctrlRuleDBA->create_rule($storeSequenceAnalysis, $createPairAlignerJobsAnalysis);
 
 }
 
@@ -442,8 +459,8 @@ sub createPairAlignerAnalysis
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($queryFilterDuplicatesAnalysis);
 
   $stats = $queryFilterDuplicatesAnalysis->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(200); 
+  $stats->batch_size(5);
+  $stats->hive_capacity(50); 
   $stats->status('BLOCKED');
   $stats->update();
   $self->{'queryFilterDuplicatesAnalysis'} = $queryFilterDuplicatesAnalysis;
@@ -671,16 +688,21 @@ sub createChunkAndGroupDnaJobs
   my $input_id = "{";
   my @keys = keys %{$dnaCollectionConf};
   foreach my $key (@keys) {
-    next unless(defined($dnaCollectionConf->{$key}));
-    print("    ",$key," : ", $dnaCollectionConf->{$key}, "\n");
-    $input_id .= "'$key'=>'" . $dnaCollectionConf->{$key} . "',";
-  }
+      next unless(defined($dnaCollectionConf->{$key}));
+      print("    ",$key," : ", $dnaCollectionConf->{$key}, "\n");
+      $input_id .= "'$key'=>'" . $dnaCollectionConf->{$key} . "',";
+      }
   $input_id .= "}";
-
+  
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
       (-input_id       => $input_id,
        -analysis       => $self->{'chunkAndGroupDnaAnalysis'},
        -input_job_id   => 0);
+
+  #Create dataflow rule to create sequence storing jobs on branch 1
+  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
+  $dataflowRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},1);
+
 }
 
 1;
