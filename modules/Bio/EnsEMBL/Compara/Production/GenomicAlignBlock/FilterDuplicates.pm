@@ -203,19 +203,41 @@ sub filter_duplicates {
   my $dnafrag_list = [$self->{'comparaDBA'}->get_DnaFragAdaptor->fetch_by_dbID($self->{'dnafrag_id'})];
 
   foreach my $dnafrag (@{$dnafrag_list}) {
-    my $region_start = $self->{'seq_region_start'};
-    $region_start = 1 unless (defined $region_start);
+    my $seq_region_start = $self->{'seq_region_start'};
+    $seq_region_start = 1 unless (defined $seq_region_start);
     #printf("dnafrag (%d)%s:%s len=%d\n", $dnafrag->dbID, $dnafrag->coord_system_name, $dnafrag->name, $dnafrag->length);
     my $seq_region_end = $self->{'seq_region_end'};
     $seq_region_end = $dnafrag->length unless (defined $seq_region_end);
 
-    #find identical matches over all the dnafrag
-    $self->find_identical_matches($region_start, $seq_region_end, $window_size, $mlss, $dnafrag);
+    if ($dnafrag->is_reference) {
+	#find identical matches over all the dnafrag
+	$self->find_identical_matches($seq_region_start, $seq_region_end, $window_size, $mlss, $dnafrag);
+	
+	#find edge artefacts only in the overlap regions
+	if (defined $overlap && $overlap > 0) {
+	    $self->find_edge_artefacts($seq_region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag);
+	}
+    } else {
+	#get correct start and end if non_reference eg haplotype. 
+	#NB cannot overwrite by defining seq_region_start and seq_region_end
+	if (!$dnafrag->is_reference) {
+	    my $slice_adaptor = $dnafrag->genome_db->db_adaptor->get_SliceAdaptor;
+	    my $slices = $slice_adaptor->fetch_by_region_unique($dnafrag->coord_system_name, $dnafrag->name);
+	    foreach my $slice (@$slices) {
+		my $seq_region_start = $slice->start;
+		my $seq_region_end = $slice->end;
 
-    #find edge artefacts only in the overlap regions
-    if (defined $overlap && $overlap > 0) {
-	$self->find_edge_artefacts($region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag);
+		#find identical matches over all the dnafrag
+		$self->find_identical_matches($seq_region_start, $seq_region_end, $window_size, $mlss, $dnafrag);
+		
+		#find edge artefacts only in the overlap regions
+		if (defined $overlap && $overlap > 0) {
+		    $self->find_edge_artefacts($seq_region_start, $seq_region_end, $overlap, $chunk_size, $mlss, $dnafrag);
+		}
+	    }
+	}
     }
+    
   }
 
   my @del_list = values(%{$self->{'delete_hash'}});
