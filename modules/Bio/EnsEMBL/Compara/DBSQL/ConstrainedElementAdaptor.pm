@@ -276,6 +276,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
        		constrained_element_id,
        		dnafrag_start,
        		dnafrag_end,
+                dnafrag_strand,
       		score,
       		p_value,
        		taxonomic_level
@@ -284,8 +285,8 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 
 	my $sth = $self->prepare($sql);
 	$sth->execute($mlss_id, $dnafrag_id, $start, $end, $lower_bound);
-	my ($dbID, $ce_start, $ce_end, $score, $p_value, $tax_level);
-	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$score, \$p_value, \$tax_level);
+	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value, $tax_level);
+	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value, \$tax_level);
 	while ($sth->fetch()) {
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
@@ -294,6 +295,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'slice' => $slice,
 				'start' =>  ($ce_start - $start + 1), 
 				'end' => ($ce_end - $start + 1),
+			        'strand' => $ce_strand,
 				'method_link_species_set_id' => $mlss_id,
 				'score' => $score,
 				'p_value' => $p_value,
