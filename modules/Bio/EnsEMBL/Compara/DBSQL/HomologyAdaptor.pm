@@ -294,6 +294,49 @@ sub fetch_by_Member_id_Member_id {
 
   my $homology = $self->generic_fetch($constraint, $join);
 
+  return undef unless (defined $homology);
+
+  # At production time, we may have more than one entry due to the
+  # OtherParalogs code, so we allow fetching with the extra parameter,
+  # but the duplicity is cleaned up afterwards
+  if (1 < scalar @$homology && !defined($allow_duplicates)) {
+    throw("Returns more than one element");
+  }
+
+  return shift @{$homology};
+}
+
+=head2 fetch_by_PMember_id_PMember_id
+
+  Arg [1]    : int $member_id1
+  Arg [2]    : int $member_id2
+  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_id_Member_id(
+                   $member_id1, $member_id2);
+  Description: fetch the homology relationships for a given peptide_member_id pair
+  Returntype : a Bio::EnsEMBL::Compara::Homology object
+  Exceptions : none
+  Caller     : 
+
+=cut
+
+sub fetch_by_PMember_id_PMember_id {
+  my ($self, $member_id1, $member_id2,$allow_duplicates) = @_;
+
+  unless ($member_id1 ne $member_id2) {
+    throw("The members should be different");
+  }
+  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
+
+  my $constraint .= " hm1.peptide_member_id = " . $member_id1;
+  $constraint .= " AND hm2.peptide_member_id = " . $member_id2;
+
+  # See in fetch_by_PMember what is this internal variable for
+  $self->{'_this_one_first'} = $member_id1;
+
+  my $homology = $self->generic_fetch($constraint, $join);
+
+  return undef unless (defined $homology);
+
   # At production time, we may have more than one entry due to the
   # OtherParalogs code, so we allow fetching with the extra parameter,
   # but the duplicity is cleaned up afterwards
