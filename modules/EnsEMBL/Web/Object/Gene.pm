@@ -532,12 +532,6 @@ sub created_date {
   return $self->date_format( $time,'%d/%m/%y' ), $self->date_format( $time, '%y/%m/%d' );
 }
 
-sub get_db {
-  my $self = shift;
-  my $db = $self->param('db') || 'core';
-  return $db eq 'est' ? 'otherfeatures' : $db;
-}
-
 sub get_author_name {
   my $self = shift;
   my $attribs = $self->Obj->get_all_Attributes('author');
