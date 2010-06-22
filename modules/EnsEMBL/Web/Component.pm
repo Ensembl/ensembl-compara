@@ -161,6 +161,15 @@ sub ajax_url {
   return $url;
 }
 
+sub EC_URL {
+  my ($self, $string) = @_;
+  
+  my $url_string = $string;
+     $url_string =~ s/-/\?/g;
+  
+  return $self->object->get_ExtURL_link("EC $string", 'EC_PATHWAY', $url_string);
+}
+
 sub glossary_mouseover {
   my ($self, $entry, $display_text) = @_;
   $display_text ||= $entry;
