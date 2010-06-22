@@ -34,6 +34,20 @@ sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the unde
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 sub problem           { return shift->hub->problem(@_); }
 
+sub _filename {
+  my $self = shift;
+  my $name = sprintf('%s-%s-%d-%s-%s',
+    $self->species,
+    lc $self->__objecttype,
+    $self->species_defs->ENSEMBL_VERSION,
+    $self->get_db,
+    $self->Obj->stable_id
+  );
+
+  $name =~ s/[^-\w\.]/_/g;
+  return $name;
+}
+
 sub count_alignments {
   my $self = shift;
   my $cdb = shift || 'DATABASE_COMPARA';
@@ -60,21 +74,6 @@ sub _availability {
   $hash->{'logged_in'} = 1 if $self->user;
   
   return $hash;
-}
-
-sub core_params {
-  my $self = shift;
-  
-  my $location     = $self->core_objects->location;
-  my $gene         = $self->core_objects->gene;
-  my $transcript   = $self->core_objects->transcript;
-  my $params       = [];
-  
-  push @$params, sprintf 'r=%s:%s-%s', $location->seq_region_name, $location->start, $location->end if $location;
-  push @$params, 'g=' . $gene->stable_id if $gene;
-  push @$params, 't=' . $transcript->stable_id if $transcript;
-  
-  return $params;
 }
 
 sub prefix {
@@ -262,6 +261,14 @@ sub viewconfig {
 
 sub get_viewconfig {
   return shift->hub->get_viewconfig(@_);
+}
+
+sub slice {
+  my $self = shift;
+  return 1 unless $self->Obj->can('feature_Slice');
+  my $slice = $self->Obj->feature_Slice;
+  my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
+  return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice;
 }
 
 1;
