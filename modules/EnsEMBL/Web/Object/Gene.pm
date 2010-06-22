@@ -383,7 +383,13 @@ sub get_Slice {
 
 sub short_caption {
   my $self = shift;
-  return 'Gene-based displays';
+  
+  return 'Gene-based displays' unless shift eq 'global';
+  
+  my $dxr   = $self->Obj->can('display_xref') ? $self->Obj->display_xref : undef;
+  my $label = $dxr ? $dxr->display_id : $self->Obj->stable_id;
+  
+  return "Gene: $label";  
 }
 
 sub caption {

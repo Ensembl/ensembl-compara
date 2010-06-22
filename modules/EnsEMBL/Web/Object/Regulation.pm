@@ -21,7 +21,9 @@ use Bio::EnsEMBL::Utils::Exception qw( throw );
 
 sub short_caption {
   my $self = shift;
-  return "Regulation-based displays";
+  
+  return "Regulation-based displays" unless shift eq 'global';
+  return 'Regulation: ' . $self->Obj->stable_id;
 }
 
 sub caption {

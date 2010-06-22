@@ -341,9 +341,14 @@ sub default_track_by_gene {
 
 sub short_caption {
   my $self = shift;
-  return 'Transcript-based displays';
-  my ($disp_id) = $self->display_xref;
-  return $self->type_name . ': ' . ($disp_id || $self->stable_id);
+   
+  return 'Transcript-based displays' unless shift eq 'global';
+  return ucfirst($self->Obj->type) . ': ' . $self->Obj->stable_id if $self->Obj->isa('EnsEMBL::Web::Fake');
+  
+  my $dxr   = $self->Obj->can('display_xref') ? $self->Obj->display_xref : undef;
+  my $label = $dxr ? $dxr->display_id : $self->Obj->stable_id;
+  
+  return length $label < 15 ? "Transcript: $label" : "Trans: $label" if($label);    
 }
 
 sub caption {
