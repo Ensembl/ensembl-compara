@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
   
   my $object    = $self->object;
-  my $slice     = $object->get_slice_object->Obj; # Object for this section is the slice
+  my $slice     = $object->slice;
   my $length    = $slice->length;
   my $species   = $object->species;
   my $type      = $object->type;
@@ -70,7 +70,7 @@ sub content_sub_slice {
   my $end    = $object->param('subslice_end');
   my $length = $object->param('length');
   
-  $slice ||= $object->get_slice_object->Obj;
+  $slice ||= $object->slice;
   
   $slice = $slice->sub_Slice($start, $end) if $start && $end;
   

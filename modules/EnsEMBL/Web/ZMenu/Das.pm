@@ -24,7 +24,7 @@ sub content {
   my $click_start = $object->param('click_start');
   my $click_end   = $object->param('click_end');
   my %das         = %{$ENSEMBL_WEB_REGISTRY->get_all_das($object->species)};
-  my $slice       = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  my $slice       = $object->slice;
   my %strand_map  = ( 1 => '+', -1 => '-' );
   
   my $coordinator = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
