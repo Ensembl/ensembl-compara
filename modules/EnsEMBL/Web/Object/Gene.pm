@@ -24,17 +24,6 @@ use base qw(EnsEMBL::Web::Object);
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
-sub _filename {
-  my $self = shift;
-  my $name = sprintf '%s-gene-%d-%s-%s',
-          $self->species,
-          $self->species_defs->ENSEMBL_VERSION,
-          $self->get_db,
-          $self->stable_id;
-  $name =~ s/[^-\w\.]/_/g;
-  return $name;
-}
-
 sub availability {
   my $self = shift;
   
@@ -376,15 +365,6 @@ sub add_evidence_links {
     push @{$links}, [$display,$hit_name];
   }
   return $links;
-}
-
-sub get_slice_object {
-  my $self = shift;
-  my $slice = $self->Obj->feature_Slice->expand( $self->param('flank5_display'), $self->param('flank3_display') );
-  return 1 unless $slice;
-  my $T = $self->new_object( 'Slice', $slice, $self->__data );
-  #  $T->highlight_display( $self->Obj->get_all_Exons );
-  return $T;
 }
 
 sub get_Slice {
