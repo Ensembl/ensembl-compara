@@ -379,7 +379,6 @@ sub _create_LRG {
   else {
     $slices = $sa->fetch_all('lrg', '', 1);
   }
-  warn "SLICES $slices";
  
   ## Map slices to chromosomal coordinates
   my $mapped_slices = [];
