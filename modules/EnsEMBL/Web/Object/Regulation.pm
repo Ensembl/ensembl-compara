@@ -19,17 +19,6 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Object);
 use Bio::EnsEMBL::Utils::Exception qw( throw );
 
-sub _filename {
-  my $self = shift;
-  my $name = sprintf '%s-regulation-%d-%s-%s',
-    $self->species,
-    $self->species_defs->ENSEMBL_VERSION,
-    $self->get_db,
-    $self->Obj->stable_id;
-  $name =~ s/[^-\w\.]/_/g;
-  return $name;
-}
-
 sub short_caption {
   my $self = shift;
   return "Regulation-based displays";
