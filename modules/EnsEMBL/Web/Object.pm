@@ -270,6 +270,14 @@ sub slice {
   my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
   return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice;
 }
+sub long_caption {
+  my $self = shift;
+  
+  my $dxr   = $self->Obj->can('display_xref') ? $self->Obj->display_xref : undef;
+  my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
+  
+  return $self->stable_id . $label;
+}
 
 1;
 
