@@ -12,46 +12,48 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return;
-}
-
-
 sub content {
-  my $self = shift;
-  
-  my $gene        = $self->configure_gene;
+  my $self        = shift;
+  my $object      = $self->object;
+  my $gene        = $self->configure($object->param('context') || 100, $object->get_imageconfig('genesnpview_transcript'));
   my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
-  my %var_tables;
+  my $tables      = {};
   
   foreach my $transcript (@transcripts) {
-    my $tsid       = $transcript->stable_id;
-    my $table_rows = $self->variation_table($transcript);    
-    my $table      = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'chr asc' ] });
-
-    $table->add_columns(
-      { key => 'ID',        sort => 'html'                                                   },
-      { key => 'snptype',   sort => 'string',   title => 'Type',                             },
-      { key => 'chr' ,      sort => 'position', title => 'Chr: bp'                           },
-      { key => 'Alleles',   sort => 'string',   align => 'center'                            },
-      { key => 'Ambiguity', sort => 'string',   align => 'center'                            },
-      #{ key => 'HGVS',      sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
-      { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
-      { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
-      { key => 'class',     sort => 'string',   title => 'Class',          align => 'center' },
-      { key => 'Source',    sort => 'string'                                                 },
-      { key => 'status',    sort => 'string',   title => 'Validation',     align => 'center' }
-   );
- 
-    if ($table_rows) {
-      $table->add_rows(@$table_rows);
-      $var_tables{$tsid} = $table->render;
-    }
+    my $table_rows = $self->variation_table($transcript);
+    
+    $tables->{$transcript->stable_id} = $self->make_table($table_rows) if $table_rows; 
   }
 
+  return $self->render_content($tables);
+}
+
+sub make_table {
+  my ($self, $table_rows) = @_;
+  
+  my $columns = [
+    { key => 'ID',        sort => 'html'                                                   },
+    { key => 'snptype',   sort => 'string',   title => 'Type',                             },
+    { key => 'chr' ,      sort => 'position', title => 'Chr: bp'                           },
+    { key => 'Alleles',   sort => 'string',   align => 'center'                            },
+    { key => 'Ambiguity', sort => 'string',   align => 'center'                            },
+    #{ key => 'HGVS',      sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
+    { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
+    { key => 'class',     sort => 'string',   title => 'Class',          align => 'center' },
+    { key => 'Source',    sort => 'string'                                                 },
+    { key => 'status',    sort => 'string',   title => 'Validation',     align => 'center' }
+  ];
+  
+  return new EnsEMBL::Web::Document::SpreadSheet($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
+}
+
+sub render_content {
+  my ($self, $tables) = @_;
+  
   my $html;
   
-  $html .= "<h2>Variations in $_:</h2>$var_tables{$_}" for keys %var_tables;
+  $html .= sprintf '<h2>Variations in %s:</h2>%s', $_, $tables->{$_}->render for keys %$tables;
   $html .= $self->_info(
     'Configuring the display',
     q{<p>The <strong>'Configure this page'</strong> link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables above and the variation image.
@@ -62,48 +64,56 @@ sub content {
 }
 
 sub variation_table {
-  my ($self, $object) = @_;
+  my ($self, $transcript) = @_;
   
-  my %snps = %{$object->__data->{'transformed'}{'snps'}||[]};
+  my %snps = %{$transcript->__data->{'transformed'}{'snps'}||{}};
  
   return unless %snps;
   
-  my $gene_snps         = $object->__data->{'transformed'}{'gene_snps'} || [];
-  my $tr_start          = $object->__data->{'transformed'}{'start'};
-  my $tr_end            = $object->__data->{'transformed'}{'end'};
-  my $extent            = $object->__data->{'transformed'}{'extent'};
-  my $cdna_coding_start = $object->Obj->cdna_coding_start;
+  my $object            = $self->object;
+  my $gene_snps         = $transcript->__data->{'transformed'}{'gene_snps'} || [];
+  my $tr_start          = $transcript->__data->{'transformed'}{'start'};
+  my $tr_end            = $transcript->__data->{'transformed'}{'end'};
+  my $extent            = $transcript->__data->{'transformed'}{'extent'};
+  my $cdna_coding_start = $transcript->Obj->cdna_coding_start;
+  my $gene              = $transcript->gene;
   my @rows;
   
   foreach (@$gene_snps) {
     my ($snp, $chr, $start, $end) = @$_;
     my $raw_id               = $snp->dbID;
-    my $validation           = $snp->get_all_validation_states || [];
-    my $variation_name       = $snp->variation_name;
     my $transcript_variation = $snps{$raw_id};
-    #my @hgvs = @{$snp->get_all_hgvs_notations($object->param('hgvs') eq 'transcript' ? ($object->transcript, 'c') : ($object->gene, 'g'))};
-    #s/ENS(...)?[TG]\d+\://g for @hgvs;
-    #my $hgvs = join ", ", @hgvs;
     
     if ($transcript_variation && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
-      my $url = $object->_url({ type => 'Variation', action => 'Summary', v => $variation_name, vf => $raw_id, source => $snp->source }); 
+      my $validation        = $snp->get_all_validation_states || [];
+      my $variation_name    = $snp->variation_name;
+      my $var_class         = $snp->var_class;
+      my $translation_start = $transcript_variation->translation_start;
+      
+      my ($aachange, $aacoord) = $translation_start ? 
+        ($transcript_variation->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
+        ('-', '-');
+      
+      my $url = $object->_url({
+        type   => 'Variation',
+        action => 'Summary',
+        v      => $variation_name,
+        vf     => $raw_id,
+        source => $snp->source 
+      });
       
       my $row = {
         ID        => qq{<a href="$url">$variation_name</a>},
-        class     => $snp->var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $snp->var_class,
+        class     => $var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $var_class,
         Alleles   => $snp->allele_string,
         Ambiguity => $snp->ambig_code,
-        #HGVS      => ($hgvs || '-'),
+        #HGVS      => $self->get_hgvs($snp, $transcript->Obj, $gene) || '-',
         status    => (join(', ',  @$validation) || '-'),
         chr       => "$chr:$start" . ($start == $end ? '' : "-$end"),
         Source    => (join ', ', @{$snp->get_all_sources||[]}) || '-',
-        snptype   => (join ', ', @{$transcript_variation->consequence_type||[]}), $transcript_variation->translation_start ? (
-          aachange => $transcript_variation->pep_allele_string,
-          aacoord  => sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1)),
-        ) : ( 
-          aachange => '-',
-          aacoord  => '-'
-        )
+        snptype   => (join ', ', @{$transcript_variation->consequence_type||[]}),
+        aachange  => $aachange,
+        aacoord   => $aacoord
       };
 
       push @rows, $row;
@@ -113,13 +123,11 @@ sub variation_table {
   return \@rows;
 }
 
-sub configure_gene {
-  my $self = shift;
+sub configure {
+  my ($self, $context, $master_config) = @_;
   
-  my $object        = $self->object;
-  my $context       = $object->param('context') || 100;
-  my $extent        = $context eq 'FULL' ? 1000 : $context;
-  my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
+  my $object = $self->object;
+  my $extent = $context eq 'FULL' ? 1000 : $context;
   
   $master_config->set_parameters({
     image_width     => 800,
@@ -151,14 +159,22 @@ sub configure_gene {
     ]
   } @$snps;
 
-  foreach my $trans_obj (@{$object->get_all_transcripts}) {
-    $trans_obj->__data->{'transformed'}{'extent'}    = $extent;
-    $trans_obj->__data->{'transformed'}{'gene_snps'} = \@snps2;
+  foreach (@{$object->get_all_transcripts}) {
+    $_->__data->{'transformed'}{'extent'}    = $extent;
+    $_->__data->{'transformed'}{'gene_snps'} = \@snps2;
   }
 
   return $object;
 }
 
+sub get_hgvs {
+  my ($self, $snp, $transcript, $gene) = @_;
+  
+  my @hgvs = @{$snp->get_all_hgvs_notations($self->object->param('hgvs') eq 'transcript' ? ($transcript, 'c') : ($gene, 'g'))};
+  
+  s/ENS(...)?[TG]\d+\://g for @hgvs;
+  
+  return join ', ', @hgvs;
+}
+
 1;
-
-
