@@ -22,7 +22,7 @@ sub content {
   my $self      = shift;
   my $object    = $self->object;
   my $cdb       = shift || $object->param('cdb') || 'compara';
-  my $slice     = $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  my $slice     = $object->slice;
   my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   my $species   = $object->species;
   my $type      = $object->type;
@@ -80,7 +80,7 @@ sub content_sub_slice {
   
   my $object = $self->object;
   
-  $slice ||= $object->can('slice') ? $object->slice : $object->get_slice_object->Obj;
+  $slice ||= $object->slice;
   $slice = $slice->invert if !$_[0] && $object->param('strand') == -1;
   
   my $start = $object->param('subslice_start');
