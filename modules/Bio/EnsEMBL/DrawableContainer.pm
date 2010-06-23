@@ -111,7 +111,7 @@ sub new {
       next unless $self->dynamic_use( $classname );
       my $GlyphSet;
       eval {
-        $GlyphSet = new $classname( $Container, $Config, $self->{'highlights'}, 1 );
+        $GlyphSet = $classname->new( $Container, $Config, $self->{'highlights'}, 1 );
       };
       $Config->container_width(1);
       push @glyphsets, $GlyphSet unless $@;
@@ -138,7 +138,7 @@ sub new {
           my $EW_Glyphset;
           
           eval { # Generic glyphsets need to have the type passed as a fifth parameter...
-            $EW_Glyphset = new $classname({
+            $EW_Glyphset = $classname->new({
               'container'   => $Container,
               'config'      => $Config,
               'my_config'   => $row_config,
