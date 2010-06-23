@@ -1605,37 +1605,6 @@ sub get_all_genotypes{
   return $genotypes_hash;
 }
 
-### Calls for LD view ##########################################################
-
-# FIXME: This function seems to be a duplicate of the one in Component::Location::LD
-sub focus {
-  ### Information_panel
-  ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
-  ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
-
-  my ( $obj ) = @_; 
-  my ( $info, $focus );
-  if ( $obj->param('v') ) {
-    $focus = "Variant";
-    my $snp = $obj->core_objects->variation;
-    my $name = $snp->name;
-    my $source = $snp->source;
-    my $link_name  = $obj->get_ExtURL_link($name, 'SNP', $name) if $source eq 'dbSNP';
-    $info .= "$link_name ($source ". $snp->adaptor->get_source_version($source).")";
-  }
-  elsif ( $obj->hub->core_param('g') ) {
-    $focus = "Gene";
-    my $gene_id = $obj->name;
-    $info = ("Gene ". $gene_id);
-    my $url = $obj->_url({ 'type' => 'Gene', 'action' => 'Summary', 'g' => $obj->param('g') });
-    $info .= "  [<a href=$url>View Gene</a>]";
-  }
-  else {
-    return 1;
-  }
-  return $info;
-}
-
 sub can_export {
   my $self = shift;
   return $self->action =~ /^(Export|Chromosome|Genome|Synteny)$/ ? 0 : $self->availability->{'slice'};
