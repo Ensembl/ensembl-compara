@@ -195,7 +195,7 @@ sub run_bootstrap_raxml {
   my $aln_file    = $self->{'input_aln'};
   return unless (defined($aln_file));
 
-  my $raxml_tag = $self->{nc_tree}->node_id . "." . $self->worker->hive_id . ".raxml";
+  my $raxml_tag = $self->{nc_tree}->node_id . "." . $self->worker->process_id . ".raxml";
   my $raxml_executable = $self->analysis->program_file;
     unless (-e $raxml_executable) {
       print "Using default cmalign executable!\n";
@@ -217,9 +217,10 @@ sub run_bootstrap_raxml {
   };
   next unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
-  # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
+  # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-PTHREADS-SSE3
   # -m GTRGAMMA -s nctree_20327.aln -N 10 -n nctree_20327.raxml.10
   my $cmd = $raxml_executable;
+  $cmd .= " -T 2"; # ATTN, you need the PTHREADS version of raxml for this
   $cmd .= " -m GTRGAMMA";
   $cmd .= " -s $aln_file";
   $cmd .= " -N $bootstrap_num";
@@ -229,7 +230,7 @@ sub run_bootstrap_raxml {
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $bootstrap_starttime = time()*1000;
-  $DB::single=1;1;
+  #  $DB::single=1;1;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     throw("error running raxml, $!\n");
   }
@@ -266,7 +267,7 @@ sub run_ncsecstructtree {
   return unless (defined($aln_file));
   my $struct_file = $self->{'struct_aln'};
 
-  my $raxml_tag = $self->{nc_tree}->node_id . "." . $self->worker->hive_id . ".raxml";
+  my $raxml_tag = $self->{nc_tree}->node_id . "." . $self->worker->process_id . ".raxml";
   my $raxml_executable = $self->analysis->program_file;
     unless (-e $raxml_executable) {
       print "Using default cmalign executable!\n";
@@ -291,6 +292,7 @@ sub run_ncsecstructtree {
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $cmd = $raxml_executable;
+    $cmd .= " -T 2"; # ATTN, you need the PTHREADS version of raxml for this
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -S $struct_file" if (defined($struct_file));
@@ -355,7 +357,7 @@ sub dumpMultipleAlignmentStructToWorkdir
   # njtree species_tree matching
   my %sa_params = ($self->{use_genomedb_id}) ?	('-APPEND_GENOMEDB_ID', 1) :
     ('-APPEND_TAXON_ID', 1);
-  $DB::single=1;1;
+
   my $sa = $tree->get_SimpleAlign
     (
      -id_type => 'MEMBER',
