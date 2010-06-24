@@ -329,7 +329,7 @@ sub build_NCSystem
   }
   $parameters .= "}";
 
-  my $ncsecstructtree_exe = $nctree_params{'ncsecstructtree'} || '/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3';
+  my $ncsecstructtree_exe = $nctree_params{'ncsecstructtree'} || '/nfs/users/nfs_a/avilella/src/raxml/latest/RAxML-7.2.6/raxmlHPC-PTHREADS-SSE3';
 
   my $ncsecstructtree = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCSecStructTree',
