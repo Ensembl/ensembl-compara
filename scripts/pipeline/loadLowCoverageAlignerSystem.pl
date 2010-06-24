@@ -202,38 +202,15 @@ sub submitGenome
   my $meta = $genomeDBA->get_MetaContainer;
   my $taxon_id = $meta->get_taxonomy_id;
 
-#   # If we are in E_G then we need to look for a taxon in meta by 'NAME.species.taxonomy_id'
-#   if($ensembl_genomes) {
-#     if(!defined $taxon_id or $taxon_id == 1) {
-#       # We make the same call as in the MetaContainer code, but with the NAME appendage
-#       my $key = $species->{eg_name}.'.'.'species.taxonomy_id';
-#       my $arrRef = $meta->list_value_by_key($key);
-#       if( @$arrRef ) {
-#         $taxon_id = $arrRef->[0];
-#         print "Found taxonid ${taxon_id}\n" if $verbose;
-#       }
-#       else {
-#         warning("Please insert meta_key '${key}' in meta table at core db.\n");
-#       }
-#     }
-#   }
-
-  my $ncbi_taxon = $self->{'comparaDBA'}->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
+  #Use meta->get_production_name if it exists and fail if it doesn't.
+  #If this causes issues, we may need to revert back to using the other 
+  #methods of setting the genome_db name.
   my $genome_name;
-  # check for ncbi table
-  if (defined $ncbi_taxon) {
-    $genome_name = $ncbi_taxon->binomial;
-  }
-  # Some NCBI taxons for complete genomes have no binomial, so one has
-  # to go to the species level - A.G.
-  if (!defined $genome_name ) {
-    $verbose && print"  Cannot get binomial from NCBITaxon, try Meta...\n";
-    # We assume that the species field is the binomial name
-    if (defined($species->{species})) {
-      $genome_name = $species->{species};
-    } else {
-      $genome_name = (defined $meta->get_Species) ? meta->get_Species->binomial : $species->{species};
-    }
+  if (defined $meta->get_production_name) {
+      print "Using meta production_name \n" if $verbose;
+      $genome_name =  $meta->get_production_name;
+  } else {
+      throw("The production_name entry in the " . $species->{dbname} . " meta table has not been set. This needs to be added.");
   }
 
   my ($cs) = @{$genomeDBA->get_CoordSystemAdaptor->fetch_all()};
