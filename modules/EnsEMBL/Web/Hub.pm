@@ -97,7 +97,7 @@ sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesD
 sub user_details  { return $_[0]{'_user_details'} ||= 1; }
 sub timer         { return $_[0]{'_timer'}; }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
-sub ExtURL        { return $_[0]{'_ext_url_'}; } 
+sub ExtURL        { return $_[0]{'_ext_url'}; } 
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
