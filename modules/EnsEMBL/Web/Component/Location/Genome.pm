@@ -21,7 +21,6 @@ sub content {
   my $self = shift;
   my $hub = $self->model->hub;
   my $species = $hub->species;
-  warn "DOING COMPONENT";
 
   my ($html, $table, $usertable, $features, $has_features, @all_features);
  
