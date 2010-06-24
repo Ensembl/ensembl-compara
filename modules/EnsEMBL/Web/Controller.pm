@@ -186,7 +186,7 @@ sub build_page {
         warn ">>> FUNCTION $func failed: $@";
         
         if ($type ne 'DAS' && $page) { 
-          $page->content->add_panel($page,
+          $self->add_error_panel($page,
             'Configuration module runtime error',
             '<p>Unable to execute configuration %s from configuration module <strong>%s</strong> due to the following error:</p><pre>%s</pre>', 
             $_, $config_module_name, $@
