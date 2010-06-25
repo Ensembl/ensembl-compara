@@ -139,8 +139,19 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   ###########################################################################
   my $genomic_align_trees = [];
   while (my ($reference_genomic_align_id, $root_node_id) = each %$ref_to_root_hash) {
-    $constraint = "WHERE gat.root_id = $root_node_id";
-    my $genomic_align_nodes = $self->_generic_fetch($constraint);
+
+    #This does not work. Use same fix as fetch_by_GenomicAlignBlock
+    #$constraint = "WHERE gat.root_id = $root_node_id";
+    #my $genomic_align_nodes = $self->_generic_fetch($constraint);
+
+      $sql = "SELECT " . join(",", @{$self->columns}) .  
+    " FROM genomic_align_tree gat". " LEFT JOIN genomic_align_group gag ON (gat.node_id = gag.node_id) LEFT JOIN genomic_align ga ON (gag.genomic_align_id = ga.genomic_align_id) WHERE gat.root_id = $root_node_id";
+
+      $sth = $self->prepare($sql);
+      $sth->execute;
+      my $genomic_align_nodes = $self->_objs_from_sth($sth);
+      $sth->finish;
+
     my $root = $self->_build_tree_from_nodes($genomic_align_nodes);
     my $all_leaves = $root->get_all_leaves;
     for (my $i = 0; $i < @$all_leaves; $i++) {
@@ -212,7 +223,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   my ($self, $method_link_species_set, $reference_slice, $limit_number, $limit_index_start, $restrict) = @_;
   my $all_genomic_align_trees = []; # Returned value
-
 
   ###########################################################################
   ## The strategy here is very much the same as in the corresponging method
@@ -1150,6 +1160,7 @@ sub _objs_from_sth {
 	  my $node = $self->create_instance_from_rowhash($rowhash);
 	  $genomic_align_group = $node->genomic_align_group;
 	  $genomic_align_groups->{$rowhash->{node_id}} = $genomic_align_group;
+
 	  push @$node_list, $node;
        }
        if (!defined($genomic_aligns->{$rowhash->{genomic_align_id}})) {
