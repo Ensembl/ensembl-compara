@@ -41,12 +41,38 @@ sub Features {
   $self->{'templates'}{'geneview_URL'}  = sprintf( '%s%s/Gene/Summary?g=%%s;db=%%s', $base_url,        $self->species_defs->species_path($self->real_species ));
   $self->{'templates'}{'location_URL'}  = sprintf( '%s%s/Location/View?g=%%s;db=%%s', $base_url,      $self->species_defs->species_path($self->real_species ));
   $self->{'templates'}{'regulation_URL'}  = sprintf( '%s%s/Gene/Regulation?g=%%s;db=%%s',    $base_url,      $self->species_defs->species_path($self->real_species ));
-  $self->{'templates'}{'image_URL'}  = sprintf( '%s%s/Component/Gene/Web/TranscriptsImage?export=png;g=%%s;db=%%s;i_width=400', $base_url,      $self->species_defs->species_path($self->real_species ));
+#  $self->{'templates'}{'image_URL'}  = sprintf( '%s%s/Component/Gene/Web/TranscriptsImage?export=png;g=%%s;db=%%s;i_width=400', $base_url,      $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'image2_URL'}  = sprintf( '%s%s/Component/Location/Web/MultiBottom?export=png;g=%%s;db=%%s;i_width=750', $base_url,      $self->species_defs->species_path($self->real_species ));
   $self->{'templates'}{'varview_URL'}  = sprintf( '%s%s/Gene/Variation_Gene/Image?g=%%s;db=%%s',    $base_url,      $self->species_defs->species_path($self->real_species ));
   $self->{'templates'}{'compara_URL'}  = sprintf( '%s%s/Gene/Compara_%%s?g=%%s;db=%%s',   $base_url,       $self->species_defs->species_path($self->real_species ));
 
 
   my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen');
+
+  my $sversion = $self->species_defs->SITE_RELEASE_VERSION ||  $self->species_defs->ENSEMBL_VERSION;
+  my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME;
+
+  my $enote1 = qq{
+      The goal of $slabel is to automatically annotate the genome, integrate this annotation with other available biological data and make all this publicly available via the web. };
+  my $enote2 = sprintf qq{
+      Current release %s provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, scalar($self->species_defs->valid_species);
+
+  my $ef = {
+              'ID'          => "ensembl",
+              'LABEL'       => "About $slabel",
+              'TYPE'        => 'summary',
+              'NOTE' => [ $enote1, $enote2 ],
+              'LINK' => [
+                         { 'text' => "Click here to visit $slabel.",
+                           'href' => $base_url,
+                       }
+                         ],
+          };
+
+
+
+
+  my $mcimage;
 
   if (my $cdb = $h->{'core'}) {
       my $ga = $cdb->get_adaptor('Gene');
@@ -61,8 +87,11 @@ sub Features {
 
 	  next unless $gene;
 
+	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $ef;
+
 	  my $description =  encode_entities( $gene->description() );
 	  $description =~ s/\(.+// if ($description);
+	  $description =~ s/\[.+// if ($description);
 
 	  my $gene_name = $gene->display_xref ? $gene->display_xref->display_id : $gene->stable_id;
 
@@ -86,29 +115,42 @@ sub Features {
 	      'LABEL'       => "Image ".$gene_name,
 	      'TYPE'        => 'image',
 	      'LINK' => [
-			 { 'text' => 'Gene Image',
+			 { 'text' => "Click here to jump to $slabel gene summary page",
 			   'href' => sprintf( $self->{'templates'}{'image_URL'}, $gene->stable_id, 'core' ),
 		       }
 			 ],
 	      
 	  };
 
-	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $fi;
+# Dont send the gene summary image - it will be replaced by karyotype image
+#	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $fi;
 
+
+	  $mcimage = {
+	      'ID'          => "image:".$gene->stable_id,
+	      'LABEL'       => "Image ".$gene_name,
+	      'TYPE'        => 'image-block',
+	      'LINK' => [
+			 { 'text' => "Click here to jump to the $slabel gene summary page.",
+			   'href' => sprintf( $self->{'templates'}{'image2_URL'}, $gene->stable_id, 'core' ),
+		       }
+			 ],
+	      
+	  };
 
 
 	  my $notes;
-	  push @$notes, sprintf ("%s spans %d bp of %s %s from %d to %d", $gene_name, ($gene->seq_region_end - $gene->seq_region_start), $gene->slice->coord_system()->name, $gene->slice->seq_region_name, $gene->seq_region_start, $gene->seq_region_end);
-	  push @$notes, sprintf ("%s has %d exons", $gene_name, scalar(@{ $gene->get_all_Exons }));
-	  push @$notes, sprintf ("%s has %d transcripts", $gene_name, scalar(@{ $gene->get_all_Transcripts }));
+	  push @$notes, sprintf ("%s spans %d bp of %s %s from %d to %d.", $gene_name, ($gene->seq_region_end - $gene->seq_region_start), $gene->slice->coord_system()->name, $gene->slice->seq_region_name, $gene->seq_region_start, $gene->seq_region_end);
+
+	  push @$notes, sprintf ("%s has %d transcripts containing a total of %d exons on the %s strand.", $gene_name, scalar(@{ $gene->get_all_Transcripts }),  scalar(@{ $gene->get_all_Exons }), $gene->strand > 0 ? 'forward' : 'reverse' );
 
 	  my $s1 = {
 	      'ID'          => "core_summary:".$gene->stable_id,
-	      'LABEL'       => "Gene Summary ",
+	      'LABEL'       => "Gene Info",
 	      'TYPE'        => 'summary',
 	      'NOTE' => $notes,
 	      'LINK' => [
-			 { 'text' => 'Location View',
+			 { 'text' => 'Click here to jump to a zoomable region of the chromosome for this gene.',
 			   'href' => sprintf( $self->{'templates'}{'location_URL'}, $gene->stable_id, 'core' ),
 		       }
 			 ],
@@ -121,15 +163,15 @@ sub Features {
 	      my $fs = $gene->feature_Slice();
 	      my $snps = $fs->get_all_VariationFeatures;
 	      my $notes1;
-	      push @$notes1, sprintf ("%s has %d SNPs", $gene_name, scalar(@{ $snps }));
+	      push @$notes1, sprintf ("%s has %d SNPs.", $gene_name, scalar(@{ $snps }));
 	  
 	      my $s2 = {
 		  'ID'          => "var_summary:".$gene->stable_id,
-		  'LABEL'       => "Variation Summary ",
+		  'LABEL'       => "Variations",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes1,
 		  'LINK' => [
-			     { 'text' => 'Variation Summary',
+			     { 'text' => 'Click here for sequence variations such as polymorphisms, along with genotypes and disease associations.',
 			       'href' => sprintf( $self->{'templates'}{'varview_URL'}, $gene->stable_id, 'core' ),
 			   }
 			     ],
@@ -158,36 +200,37 @@ sub Features {
 	      }
 
 	      my $notes2;
-	      push @$notes2, sprintf ("%s has %d orthologues", $gene_name, $hHash->{ortholog});
+
+	      push @$notes2, sprintf ("%s has %s orthologues.", $gene_name, $hHash->{ortholog} ?  $hHash->{ortholog} : 'no' );
 
 	  
 	      my $s3 = {
 		  'ID'          => "orthologue_summary:".$gene->stable_id,
-		  'LABEL'       => "Orthologue Summary",
+		  'LABEL'       => "Orthologues",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes2,
-		  'LINK' => [
-			     { 'text' => 'Orthologues',
+		  'LINK' =>  $hHash->{ortholog} ? [
+			     { 'text' => 'Click to view homology between species determined by a gene tree.',
 			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Ortholog', $gene->stable_id, 'core' ),
 			   }
-			     ],
+			     ] : [ ],
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s3;
 
 	      my $notes3;
-	      push @$notes3, sprintf ("%s has %d paralogues", $gene_name, $hHash->{paralog});
+	      push @$notes3, sprintf ("%s has %s paralogues.", $gene_name, $hHash->{paralog} ? $hHash->{paralog} : 'no');
 
 	  
 	      my $s4 = {
 		  'ID'          => "paralogue_summary:".$gene->stable_id,
-		  'LABEL'       => "Paralogue Summary",
+		  'LABEL'       => "Paralogues",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes3,
-		  'LINK' => [
-			     { 'text' => 'Paralogues',
+		  'LINK' => $hHash->{paralog} ? [
+			     { 'text' => 'Click to view homology arising from a duplication event, determined by a gene tree.',
 			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Paralog', $gene->stable_id, 'core' ),
 			   }
-			     ],
+			     ] : [ ],
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s4;
 
@@ -200,24 +243,28 @@ sub Features {
 	      my $feats = $reg_feat_adaptor->fetch_all_by_Slice($fs);
 
 
-	      my @reg_feats = @{$feats || []};
+	      my $reg_feats = scalar(@{$feats || []});
 	      my $notes1;
-	      push @$notes1, sprintf ("There are %d regulatory elements located in the region of %s", scalar(@reg_feats), $gene_name);
+	      
+	      push @$notes1, sprintf ("There are %s regulatory elements located in the region of %s.", $reg_feats ? $reg_feats : 'no', $gene_name);
 	  
 	      my $s2 = {
 		  'ID'          => "fg_summary:".$gene->stable_id,
-		  'LABEL'       => "Functional Summary",
+		  'LABEL'       => "Regulation",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes1,
-		  'LINK' => [
-			     { 'text' => 'Regulation',
+		  'LINK' => $reg_feats ? [
+			     { 'text' => 'Click to go to gene regulatory elements, such as promoters, transcription binding sites, and enhancers.',
 			       'href' => sprintf( $self->{'templates'}{'regulation_URL'}, $gene->stable_id, 'core' ),
 			   }
-			     ],
+			     ] : [ ],
 	      
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s2;
 	  }
+
+	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $mcimage if $mcimage;
+
       }
   }
 
