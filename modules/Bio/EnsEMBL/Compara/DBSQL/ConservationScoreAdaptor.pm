@@ -284,21 +284,20 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	    
 	} 
     }
+
+    if (scalar(@$scores) == 0) {
+	return $scores;
+    }
+
     #need to reverse scores
     if ($slice->strand == -1) {
 	#reverse scores array
 	@$scores = reverse(@$scores);
 	#reverse positions
-	my $max_pos = $scores->[0]->position;
 	foreach my $score (@$scores) {
-	    $score->position($max_pos - $score->position + 1);
+	    $score->position($slice->end - $score->seq_region_pos + 1);
 	}
 	#print "reverse scores\n";
-    }
-    
-
-    if (scalar(@$scores) == 0) {
-	return $scores;
     }
 
     #remove _no_score_values from aligned_scores array
