@@ -284,23 +284,22 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	    
 	} 
     }
-    #need to reverse scores
-    if ($slice->strand == -1) {
-	#reverse scores array
-	@$scores = reverse(@$scores);
-	#reverse positions
-	my $max_pos = $scores->[0]->position;
-	foreach my $score (@$scores) {
-	    $score->position($max_pos - $score->position + 1);
-	}
-	#print "reverse scores\n";
-    }
-    
 
     if (scalar(@$scores) == 0) {
 	return $scores;
     }
 
+    #need to reverse scores
+    if ($slice->strand == -1) {
+	#reverse scores array
+	@$scores = reverse(@$scores);
+	#reverse positions
+	foreach my $score (@$scores) {
+	    $score->position($slice->end - $score->seq_region_pos + 1);
+	}
+	#print "reverse scores\n";
+    }
+    
     #remove _no_score_values from aligned_scores array
     my $i = 0;
      while ($i < scalar(@$scores)) {
