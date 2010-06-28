@@ -395,7 +395,7 @@ sub _caption_with_helplink {
   my $id = $self->{'help'};
   my $html = '<h2 class="caption">';
   if ( $id ) {
-    $html .= sprintf(' <a href="/Help/View?id=%s" class="popup help-header" title="Click for Help">', encode_entities($id));
+    $html .= sprintf(' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for Help">', encode_entities($id));
   }
   $html .= $self->{'raw_caption'} ? $self->{'caption'} : encode_entities($self->{caption});
   if ( $id ) {
