@@ -25,15 +25,15 @@ sub _init {
     my @refseqs = $refseqs->get_binvalues();
 
     foreach (@refseqs){
-	$self->push($self->Rect({
-		'x'      => $_->{'chromosomestart'},
-		'y'      => 0,
-		'width'  => $_->{'chromosomeend'}-$_->{'chromosomestart'},
-		'height' => $_->{'scaledvalue'},
-		'bordercolour' => $refseqs_col,
-		'absolutey' => 1,
-		'href'   => "/@{[$self->{container}{web_species}]}/contigview?chr=$chr;vc_start=$_->{'chromosomestart'};vc_end=$_->{'chromosomeend'}"
-	}));
+      $self->push($self->Rect({
+        'x'            => $_->{'chromosomestart'},
+        'y'            => 0,
+        'width'        => $_->{'chromosomeend'}-$_->{'chromosomestart'},
+        'height'       => $_->{'scaledvalue'},
+        'bordercolour' => $refseqs_col,
+        'absolutey'    => 1,
+        'href'         => $self->_url({ type => 'Location', action => 'View', r => "$chr:$_->{'chromosomestart'}-$_->{'chromosomeend'}" })
+      }));
     }
 }
 
