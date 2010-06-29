@@ -3,6 +3,7 @@ package EnsEMBL::Web::Component::Search::Details;
 use strict;
 use warnings;
 no warnings "uninitialized";
+use ExaLead::Renderer::HTML;
 use base qw(EnsEMBL::Web::Component);
 
 sub _init {
