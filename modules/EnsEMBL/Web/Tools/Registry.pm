@@ -59,7 +59,7 @@ sub configure {
       
       next unless $TEMP->{'NAME'} && $TEMP->{'USER'};
 
-      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{'NAME'} );
+      my %arg = ( '-species' => $species, '-dbname' => $TEMP->{'NAME'}, '-species_id' =>  $self->{'conf'}->{'_storage'}{$species}->{SPECIES_META_ID} || 1 );
       
       ## Copy through the other parameters if defined
       foreach (qw(host pass port user driver)) {
