@@ -17,6 +17,7 @@ sub _init {
 sub content_other {
   my $self = shift;
   my $cdb = shift || $self->object->param('cdb') || 'compara';
+  
   my $object = $self->object;
   my $species = $object->species;
   my $family = $object->create_family($object->param('family'), $cdb);
@@ -32,6 +33,7 @@ sub content_other {
 
   foreach my $key ( sort keys %sources ) {
     my @peptides = map { $_->[0]->stable_id } @{$object->member_by_source($family, $sources{$key}{'key'} )};
+    my $row_count;
     if( @peptides ) {
       $count += @peptides; 
       unless( $object->param( "opt_$key" ) eq 'yes' ) {
@@ -53,9 +55,12 @@ sub content_other {
         push @table_data, $object->get_ExtURL_link( $_, uc($sources{$key}{'key'} ), $_ );
         next unless @table_data == 6;
         $pep_table->add_row( [@table_data] );
+        $row_count ++;
         @table_data = ();
       }
-      $html .= sprintf( '<h3>%s proteins in this family</h3>', $sources{$key}{'name'} ). $pep_table->render;
+      if ($row_count) { # don't render table unless we actually put something in it
+        $html .= sprintf( '<h3>%s proteins in this family</h3>', $sources{$key}{'name'} ). $pep_table->render;
+      }
     }
   }
   unless( $count ) {
@@ -76,11 +81,13 @@ sub content_other {
 sub content_ensembl {
   my $self = shift;
   my $cdb = shift || $self->object->param('cdb') || 'compara';
+  
   my $object = $self->object;
   my $species = $object->species;
   my $family = $object->create_family($object->param('family'), $cdb);
   return '' unless $family;
-  my $html = '';
+  my $html;
+  
   ## Ensembl proteins
   my %data = ();
   my $count = 0;
@@ -105,7 +112,7 @@ sub content_ensembl {
       {'key' => 'peptides', 'title' => 'Proteins', 'width' => '80%', 'align' => 'left'},
     );
     foreach my $species (sort {$a->binomial cmp $b->binomial} @taxa ){
-      my $display_species = $species->binomial;
+      my $display_species = $species->binomial || $species->name;
       (my $species_key = $display_species) =~ s/\s+/_/;
        
       unless( $object->param( "species_".lc($species_key) ) eq 'yes' ) {
