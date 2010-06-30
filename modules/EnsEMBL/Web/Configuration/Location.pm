@@ -241,19 +241,24 @@ sub add_vega_link {
       my $strand=$my_slice->strand;
 
       my $start_slice = $vega_sa->fetch_by_region( $coordinate_system->name, $chromosome,$start_location,$end_location,$strand,$coordinate_system->version );
-      my $start_V_projection = $start_slice->project($coordinate_system->name, @$alt_assemblies[0]);    
-      if(scalar(@$start_V_projection) ==1){
-        $vega_link = $urls->get_url("VEGA", "") . $species."/".$object->type."/".$object->action;
-        $vega_link.= "?r=".@$start_V_projection[0]->to_Slice->seq_region_name.":".@$start_V_projection[0]->to_Slice->start."-".@$start_V_projection[0]->to_Slice->end;                                      
-      }elsif(scalar(@$start_V_projection) > 1){
-        $vega_link="../Help/ListVegaMappings?type=".$object->type.";action=".$object->action.";"; #explicitly pass the type and action, as this is used in ListVegaMappings, to form the links to Vega        
-        my $parameters=$object->hub->core_objects->{'parameters'}; #add url parameters, so the list can get its location
-        while ((my $key, my $value) = each (%$parameters)){
-          $vega_link.=$key."=".$value.";";
+	  my $start_V_projection= undef;
+	  eval{
+        $start_V_projection = $start_slice->project($coordinate_system->name, @$alt_assemblies[0]) or die "print($coordinate_system->name): $!";
+	  };
+      if(defined($start_V_projection)){
+        if(scalar(@$start_V_projection) ==1){
+          $vega_link = $urls->get_url("VEGA", "") . $species."/".$object->type."/".$object->action;
+          $vega_link.= "?r=".@$start_V_projection[0]->to_Slice->seq_region_name.":".@$start_V_projection[0]->to_Slice->start."-".@$start_V_projection[0]->to_Slice->end;                                      
+        }elsif(scalar(@$start_V_projection) > 1){
+          $vega_link="../Help/ListVegaMappings?type=".$object->type.";action=".$object->action.";"; #explicitly pass the type and action, as this is used in ListVegaMappings, to form the links to Vega        
+          my $parameters=$object->hub->core_objects->{'parameters'}; #add url parameters, so the list can get its location
+          while ((my $key, my $value) = each (%$parameters)){
+            $vega_link.=$key."=".$value.";";
+          }
+          $vega_link.="species=".$species;
+          $link_class='modal_link';
         }
-        $vega_link.="species=".$species;
-        $link_class='modal_link';
-      }
+	  }
     }
     $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega' , [], { 'availability' => ($vega_link ne ''), 'url' => $vega_link, 'raw' => 1, 'external' => ($link_class eq '') , class=>$link_class }));      
   }
