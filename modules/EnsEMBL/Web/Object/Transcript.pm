@@ -1212,30 +1212,31 @@ sub sort_oligo_data {
 }
 
 sub rna_notation {
-  my $self = shift;
-  my $obj  = $self->Obj;
-  my $T = $obj->get_all_Attributes('miRNA');
-  my @strings = ();
+  my $self       = shift;
+  my $transcript = $self->Obj;
+  my $length     = $transcript->length;
+  my $miRNA      = $transcript->get_all_Attributes('miRNA');
+  my $ncRNA      = $transcript->get_all_Attributes('ncRNA');
+  my @strings;
   
-  if (@$T) {
-    my $string = '-' x $obj->length;
+  if (@$miRNA) {
+    my $string = '-' x $length;
     
-    foreach (@$T) {
+    foreach (@$miRNA) {
       my ($start, $end) = split /-/, $_->value;
-      substr($string, $start-1, $end-$start+1) = '#' x ($end-$start);
+      substr($string, $start - 1, $end - $start + 1) = '#' x ($end - $start + 1);
     }
     
     push @strings, $string;
   }
   
-  $T = $obj->get_all_Attributes('ncRNA');
-  
-  if (@$T) {
-    my $string = '-' x $obj->length;
+  if (@$ncRNA) {
+    my $string = '-' x $length;
     
-    foreach (@$T) {
+    foreach (@$ncRNA) {
       my ($start, $end, $packed) = $_->value =~ /^(\d+):(\d+)\s+(.*)/;
-      substr($string, $start-1, $end-$start+1) = join '', map { substr($_,0,1) x (substr($_,1)||1) } ($packed =~ /(\D\d*)/g);
+      
+      substr($string, $start - 1, $end - $start + 1) = join '', map { substr($_, 0, 1) x (substr($_, 1) || 1) } ($packed =~ /(\D\d*)/g);
     }
     
     push @strings, $string;
