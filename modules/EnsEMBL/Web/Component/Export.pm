@@ -191,26 +191,27 @@ sub flat {
   my $format = shift;
   
   my $object = $self->object;
-  my $slice = $self->slice;
+  my $slice  = $self->slice;
   my $params = $self->params;
-  
-
+  my $plist  = $object->species_defs->PROVIDER_NAME;
   my $dumper_params = {};
-# Check where the data came from.
-  if ( my $plist = $object->species_defs->PROVIDER_NAME) {
-      my @providers = ref $plist eq 'ARRAY' ? @$plist : ($plist);
-      my $purls = $object->species_defs->PROVIDER_URL;
-      my @providers_url =  ref $purls eq 'ARRAY' ? @$purls : ($purls);
-      my @plist;
+  
+  # Check where the data came from.
+  if ($plist) {
+    my $purls         = $object->species_defs->PROVIDER_URL;
+    my @providers     = ref $plist eq 'ARRAY' ? @$plist : ($plist);
+    my @providers_url = ref $purls eq 'ARRAY' ? @$purls : ($purls);
+    my @list;
 
-      foreach my $p (@providers) {
-	  my $ds = $p;
-	  if (my $purl = shift @providers_url) {
-	      $ds .= " ( $purl )";
-	  }
-	  push @plist, $ds;
-      }
-      $dumper_params->{_data_source} = join ', ' , @plist;
+    foreach my $ds (@providers) {
+      my $purl = shift @providers_url;
+      
+      $ds .= " ( $purl )" if $purl;
+      
+      push @list, $ds;
+    }
+    
+    $dumper_params->{'_data_source'} = join ', ' , @list;
   }
 
   my $seq_dumper = new EnsEMBL::Web::SeqDumper(undef, $dumper_params);
