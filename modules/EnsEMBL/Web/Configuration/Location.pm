@@ -171,7 +171,6 @@ sub add_external_browsers {
   my $self = shift;
   my $object = $self->object;
   
-  $self->add_vega_link;
   
   # Links to external browsers - UCSC, NCBI, etc
   my %browsers = %{$object->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
@@ -204,7 +203,8 @@ sub add_external_browsers {
     
     delete($browsers{'NCBI_DB'});
   }
-  
+
+  $self->add_vega_link;  
   foreach (sort keys %browsers) {
     next unless $browsers{$_};
     
