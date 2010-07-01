@@ -1045,6 +1045,9 @@ sub table_info_other {
 
 sub species_label {
   my ($self, $key, $no_formatting) = @_;
+  
+  $key = ucfirst $key;
+  
   return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_BIO_NAME');
   
   my $common = $self->get_config($key, 'SPECIES_COMMON_NAME');
