@@ -131,6 +131,10 @@ Data will be copied to this instance.
 Copy data for this species only. This option can be used several times in order to restrict
 the copy to several species.
 
+=item B<[--merge boolean]>
+
+If true, add new data to an existing data set in the release database. Default FALSE. 
+
 =back
 
 =head1 INTERNAL METHODS
@@ -141,6 +145,8 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Getopt::Long;
+
+$| = 1;
 
 my $help;
 
@@ -156,6 +162,9 @@ my $mlss_id = undef;
 #will only update the genomic_align table.
 my $trust_to = 0; 
 
+#If true, then add new data to existing set of alignments
+my $merge = 0;
+
 GetOptions(
     "help" => \$help,
     "reg-conf|reg_conf|registry=s" => \$reg_conf,
@@ -165,6 +174,7 @@ GetOptions(
     "to_url=s" => \$to_url,
     "mlss_id=i" => \$mlss_id,
     "trust_to!"  => \$trust_to,
+    "merge!" => \$merge,
   );
 
 # Print Help and exit if help is requested
@@ -190,7 +200,7 @@ exit(1) if !check_table("method_link_species_set", $from_dba, $to_dba, undef,
     "method_link_species_set_id = $mlss_id");
 
 if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
-  copy_genomic_align_blocks($from_dba, $to_dba, $mlss_id);
+  copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
 } elsif ($class =~ /^ConservationScore.conservation_score/) {
   copy_conservation_scores($from_dba, $to_dba, $mlss_id);
 } elsif ($class =~ /^ConstrainedElement.constrained_element/) {
@@ -347,11 +357,14 @@ sub check_table {
 =cut
 
 sub copy_genomic_align_blocks {
-  my ($from_dba, $to_dba, $mlss_id) = @_;
+  my ($from_dba, $to_dba, $mlss) = @_;
   my $fix_dnafrag = 0;
 
+  my $mlss_id = $mlss->dbID;
+
   exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default");
-  if (!check_table("dnafrag", $from_dba, $to_dba)) {
+  #ignore ancestral dnafrags, will add those later
+  if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63")) {
       $fix_dnafrag = 1;
       if ($fix_dnafrag && !$trust_to) {
 	  print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
@@ -382,52 +395,96 @@ sub copy_genomic_align_blocks {
 
   $sth->finish();
 
-  my $lower_limit = $mlss_id * 10**10;
-  my $upper_limit = ($mlss_id + 1) * 10**10;
   my $fix_gab;
   my $fix_ga;
   my $fix_gab_gid;
   my $fix_gag;
+
+  #Want to add more data. Must find out current max(genomic_align_block) in TO
+  #database and start from there
+  #Currently only tested for pairwise alignments
+  my ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gag, $to_max_gag, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start);
+
+  if ($merge) {
+      my $sth = $to_dba->dbc->prepare("SELECT
+        MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
+        MIN(gab.group_id), MAX(gab.group_id),
+        MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
+        MIN(gag.node_id), MAX(gag.node_id),
+	MIN(gat.node_id), MAX(gat.node_id),
+        MIN(gat.root_id), MAX(gat.root_id),
+	MIN(gat.left_index)
+      FROM genomic_align_block gab
+        LEFT JOIN genomic_align ga using (genomic_align_block_id)
+        LEFT JOIN genomic_align_group gag using (genomic_align_id)
+	LEFT JOIN genomic_align_tree gat ON gat.node_id = gag.node_id
+      WHERE
+        gab.method_link_species_set_id = ?");
+
+      $sth->execute($mlss_id);
+      ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gag, $to_max_gag, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start) =  $sth->fetchrow_array();
+
+      $sth->finish();
+      $fix_gab = $to_max_gab-$min_gab+1;
+      $fix_ga = $to_max_ga-$min_ga+1;
+      $fix_gab_gid = $to_max_gab_gid-$min_gab_gid+1;
+
+      #print "to max_gab $to_max_gab min_gab $to_min_gab max_ga $to_max_ga min_ga $to_min_ga max_gab_gid $to_max_gab_gid min_gab_gid $to_min_gab_gid\n";
+  }
+
+  #print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga max_gab_gid $max_gab_gid min_gab_gid $min_gab_gid\n";
+
+
+  my $lower_limit = $mlss_id * 10**10;
+  my $upper_limit = ($mlss_id + 1) * 10**10;
   my $index_offset = 0;
 
-  if ($max_gab < 10**10) {
-    $fix_gab = $lower_limit;
-  } elsif ($min_gab >= $lower_limit and $max_gab < $upper_limit) {
-    $fix_gab = 0;
-  } else {
-    die " ** ERROR **  Internal IDs are funny: genomic_align_block_ids between $min_gab and $max_gab\n";
+  if (!defined $fix_gab) {
+      if ($max_gab < 10**10) {
+	  $fix_gab = $lower_limit;
+      } elsif ($min_gab >= $lower_limit and $max_gab < $upper_limit) {
+	  $fix_gab = 0;
+      } else {
+	  die " ** ERROR **  Internal IDs are funny: genomic_align_block_ids between $min_gab and $max_gab\n";
+      }
   }
 
-  if ($max_ga < 10**10) {
-    $fix_ga = $lower_limit;
-  } elsif ($min_ga >= $lower_limit and $max_ga < $upper_limit) {
-    $fix_ga = 0;
-  } else {
-    die " ** ERROR **  Internal IDs are funny: genomic_align_ids between $min_ga and $max_ga\n";
+  if (!defined $fix_ga) {
+      if ($max_ga < 10**10) {
+	  $fix_ga = $lower_limit;
+      } elsif ($min_ga >= $lower_limit and $max_ga < $upper_limit) {
+	  $fix_ga = 0;
+      } else {
+	  die " ** ERROR **  Internal IDs are funny: genomic_align_ids between $min_ga and $max_ga\n";
+      }
   }
 
-  if (defined($max_gab_gid)) {
-    if ($max_gab_gid < 10**10) {
-      $fix_gab_gid = $lower_limit;
-    } elsif ($min_gab_gid >= $lower_limit and $max_gab_gid < $upper_limit) {
-      $fix_gab_gid = 0;
-    } else {
-      die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
-    }
-  } else {
-    $fix_gab_gid = 0;
+  if (!defined $fix_gab_gid) {
+      if (defined($max_gab_gid)) {
+	  if ($max_gab_gid < 10**10) {
+	      $fix_gab_gid = $lower_limit;
+	  } elsif ($min_gab_gid >= $lower_limit and $max_gab_gid < $upper_limit) {
+	      $fix_gab_gid = 0;
+	  } else {
+	      die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
+	  }
+      } else {
+	  $fix_gab_gid = 0;
+      }
   }
 
-  if (defined($max_gag)) {
-    if ($max_gag < 10**10) {
-      $fix_gag = $lower_limit;
-    } elsif ($min_gag >= $lower_limit and $max_gag < $upper_limit) {
-      $fix_gag = 0;
-    } else {
-      die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
-    }
-  } else {
-    $fix_gag = 0;
+  if (!defined $fix_gag) {
+      if (defined($max_gag)) {
+	  if ($max_gag < 10**10) {
+	      $fix_gag = $lower_limit;
+	  } elsif ($min_gag >= $lower_limit and $max_gag < $upper_limit) {
+	      $fix_gag = 0;
+	  } else {
+	      die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
+	  }
+      } else {
+	  $fix_gag = 0;
+      }
   }
 
   ## Check availability of the internal IDs in the TO database
@@ -437,7 +494,7 @@ sub copy_genomic_align_blocks {
           AND genomic_align_block_id < $upper_limit");
   $sth->execute();
   my ($count) = $sth->fetchrow_array();
-  if ($count) {
+  if ($count && !$merge) {
     print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
       " ** ERROR **  genomic_align_block table with IDs within the range defined by the\n",
       " ** ERROR **  convention!\n";
@@ -450,7 +507,7 @@ sub copy_genomic_align_blocks {
           AND genomic_align_id < $upper_limit");
   $sth->execute();
   ($count) = $sth->fetchrow_array();
-  if ($count) {
+  if ($count && !$merge) {
     print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
       " ** ERROR **  genomic_align table with IDs within the range defined by the\n",
       " ** ERROR **  convention!\n";
@@ -486,7 +543,7 @@ sub copy_genomic_align_blocks {
       exit(1);
    }
 
-       # make sure the left_index and right_index are unique in the *to* db
+   # make sure the left_index and right_index are unique in the *to* db
    my $sth_index = $to_dba->dbc->prepare("SELECT max(right_index) FROM genomic_align_tree");
    $sth_index->execute();
    my ($to_index_prev_range_max) = $sth_index->fetchrow_array();
@@ -568,8 +625,100 @@ sub copy_genomic_align_blocks {
         }
     }
   }
+
+  my $class = $mlss->method_link_class;
+  if ($class eq "GenomicAlignTree.ancestral_alignment") {
+      copy_ancestral_dnafrags($from_dba, $to_dba, $mlss_id, $lower_limit, $upper_limit);
+  }
 }
 
+
+=head2 copy_ancestral_dnafrags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $this_mlss
+  Arg[4]      : integer lower limit of dnafrag_id range ($mlss_id * 10**10)
+  Arg[5]      : integer upper limit of dnafrag_id range (($mlss_id + 1) * 10**10)
+
+  Description : copies ancestral dnafrags for this MethodLinkSpeciesSet.
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_ancestral_dnafrags {
+  my ($from_dba, $to_dba, $mlss_id, $lower_limit, $upper_limit) = @_;
+
+  #Check name is correct syntax
+  my $dnafrag_name = "Ancestor_" . $mlss_id . "_";
+  my $sth = $from_dba->dbc->prepare("SELECT name FROM genomic_align
+                                         LEFT JOIN dnafrag USING (dnafrag_id)
+                                         WHERE genome_db_id = 63
+                                         AND method_link_species_set_id = ?");
+  $sth->execute($mlss_id);
+  my @names = $sth->fetchrow_array();
+  $sth->finish();
+  #Just look at first name and assume all other names are of the same format
+  my $name = $names[0];
+  if ($name =~ /$dnafrag_name/) {
+      print "valid name\n";
+  } else {
+      throw("name is not $dnafrag_name format\n");
+  }
+  #Check name does not already exist in TO database
+  $sth = $to_dba->dbc->prepare("SELECT count(*) FROM dnafrag WHERE genome_db_id = 63 AND name LIKE '" . $dnafrag_name . "%'");
+  
+  $sth->execute();
+  my ($count) = $sth->fetchrow_array();
+  $sth->finish();
+  if ($count) {
+      throw("ERROR: $count rows in the dnafrag table with name like $dnafrag_name already exists in the release (TO) database\n");
+  }
+
+  #Check min and max of internal IDs in the FROM database
+  $sth = $from_dba->dbc->prepare("SELECT MIN(dnafrag_id), 
+                                         MAX(dnafrag_id)
+                                         FROM genomic_align
+                                         LEFT JOIN dnafrag USING (dnafrag_id)
+                                         WHERE genome_db_id = 63
+                                         AND method_link_species_set_id = ?");
+  $sth->execute($mlss_id);
+  my ($min_dnafrag_id, $max_dnafrag_id) = $sth->fetchrow_array();
+  $sth->finish();
+  my $fix_dnafrag_id;
+  if ($max_dnafrag_id < 10**10) {
+      $fix_dnafrag_id = $lower_limit;
+  } elsif ($min_dnafrag_id >= $lower_limit and $max_dnafrag_id < $upper_limit) {
+      $fix_dnafrag_id = 0;
+  } else {
+      die " ** ERROR **  Internal IDs are funny: dnafrag_ids between $min_dnafrag_id and $max_dnafrag_id\n";
+  }
+  
+  ## Check availability of the internal IDs in the TO database
+  $sth = $to_dba->dbc->prepare("SELECT count(*)
+      FROM dnafrag
+      WHERE dnafrag_id >= $lower_limit
+      AND dnafrag_id < $upper_limit");
+  $sth->execute();
+  ($count) = $sth->fetchrow_array();
+  if ($count) {
+      print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
+	" ** ERROR **  dnafrag table with IDs within the range defined by the\n",
+	  " ** ERROR **  convention!\n";
+      exit(1);
+  }
+  
+  #copy dnafrag table
+   copy_data($from_dba, $to_dba,
+       "dnafrag",
+       "dnafrag_id",
+       $min_dnafrag_id, $max_dnafrag_id,
+       "SELECT dnafrag_id+$fix_dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference".
+         " FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id)" .
+         " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=63");
+
+}
 
 =head2 copy_conservation_scores
 
@@ -806,13 +955,18 @@ sub copy_data {
   }
 
   #speed up writing of data by disabling keys, write the data, then enable 
-  $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
+  #but takes far too long to ENABLE again
+  if (!$merge) {
+      $to_dba->dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
+  }
   if ($binary_mode) {
     copy_data_in_binary_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step);
   } else {
     copy_data_in_text_mode($from_dba, $to_dba, $table_name, $index_name, $min_id, $max_id, $query, $step);
   }
-  $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
+  if (!$merge) {
+      $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
+  }
 }
 
 
