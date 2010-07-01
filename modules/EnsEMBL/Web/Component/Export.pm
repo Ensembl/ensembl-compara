@@ -19,16 +19,13 @@ sub export {
   my $object = $self->object;
   my $o      = $object->param('output');
   my $format = $object->param('_format');
-  my $flank5 = $object->param('flank5_display');
-  my $flank3 = $object->param('flank3_display');
   my $strand = $object->param('strand');
   
   $strand = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
   
-  my $slice = $object->can('slice') ? $object->slice : $object->Obj->feature_Slice;
+  my $slice = $object->slice('expand');
   my $feature_strand = $slice->strand;
   
-  $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
   $slice = $slice->invert if $strand && $strand != $feature_strand;
   
   my $params = { feature_strand => $feature_strand };
