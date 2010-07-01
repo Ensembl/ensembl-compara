@@ -51,8 +51,6 @@ sub legend {
   return undef;
 }
 
-## sub error_track_name { return $_[0]->my_label }
-
 sub href { 	 
   my ($self, $gene, $transcript) = @_;
   

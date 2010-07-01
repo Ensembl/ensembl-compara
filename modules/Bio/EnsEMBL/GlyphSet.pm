@@ -33,10 +33,9 @@ our %cache;
 sub _colour_background {
   return 1;
 }
-sub error_track_name {
-  my $self = shift;
-  return $self->my_config('caption');
-}
+
+sub error_track_name { return $_[0]->my_config('caption'); }
+sub my_label         { return $_[0]->my_config('caption'); }
 
 sub render_normal {
   my $self = shift;
@@ -735,9 +734,9 @@ sub draw_cigar_feature {
 }
 
 sub no_features {
-  my $self = shift;
-  return unless $self->can('my_label');
-  $self->errorTrack(sprintf 'No %s in this region', $self->my_label) if $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  my $self  = shift;
+  my $label = $self->my_label;
+  $self->errorTrack("No $label in this region") if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 }
 
 sub errorTrack {

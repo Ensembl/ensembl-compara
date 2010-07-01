@@ -1198,6 +1198,8 @@ sub render_genes {
       priority => $self->_pos,
       legend   => \@legend
     }
+  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+    $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
   }
 }
 

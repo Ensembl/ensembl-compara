@@ -145,11 +145,14 @@ sub draw_features {
   return 0 if $drawn_block && $drawn_wiggle;
 
   # Work out error message if some data is missing
-  my @errors = ();
+  my @errors;
 
-  push @errors, $self->my_colour($feature_type,'text' ) if !$drawn_block;
-  push @errors, $self->my_colour('score',      'text' ) if $wiggle && !$drawn_wiggle;
-  return join ' and ',@errors;
+  push @errors, $self->my_colour($feature_type, 'text') if !$drawn_block;
+  push @errors, $self->my_colour('score',       'text') if $wiggle && !$drawn_wiggle;
+  
+  s/\[\[name\]\]/$feature_text/ for @errors;
+  
+  return join ' and ', @errors;
 }
 
 ## Now generate the feature array refs...

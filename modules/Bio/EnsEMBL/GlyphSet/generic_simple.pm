@@ -6,7 +6,6 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish { return 1; }
 
-sub my_label       { return $_[0]->my_config( 'caption'     ); }
 sub my_helplink    { return $_[0]->my_config( 'helplink'    ) || 'markers' ; }
 sub my_description { return $_[0]->my_config( 'description' );
 sub features {

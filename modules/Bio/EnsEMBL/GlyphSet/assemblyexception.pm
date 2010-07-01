@@ -6,6 +6,8 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub squish {1;}
 
+sub my_label { return undef; }
+
 sub features {
   my ($self) = @_;
   return $self->{'container'}->get_all_AssemblyExceptionFeatures();

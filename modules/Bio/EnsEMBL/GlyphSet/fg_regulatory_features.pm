@@ -4,7 +4,7 @@ use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return "Reg. Features"; }
+sub my_label { return sprintf 'Reg. Features from cell line %s', $_[0]->my_config('cell_line'); }
 
 sub features {
   my ($self) = @_;
@@ -53,12 +53,7 @@ sub fetch_features {
   if (@$reg_feats && $self->{'config'}->{'fg_regulatory_features_legend_features'} ){
     $self->{'config'}->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = {'priority' =>1020, 'legend' => [] };	
   }
-
-  $self->errorTrack(sprintf 'No regulatory features from cell line %s in this region', $cell_line) unless scalar @$reg_feats >=1 || $self->{'config'}->get_parameter('opt_empty_tracks') == 0;
-
-  if ( scalar @$reg_feats == 0 && ($self->{'config'}->get_parameter('opt_empty_tracks') eq 'yes') ){
-    $self->errorTrack(sprintf 'No regulatory features from cell line %s in this region', $cell_line); 
-  }
+  
   return $reg_feats;
 }
 

@@ -108,6 +108,8 @@ sub _init {
       'href'          => $self->_url({'r'=>"$chr:$band_start-$band_end"})
     }));
   }
+  
+  $self->no_features unless @bands;
 }
 
 sub render_text {
