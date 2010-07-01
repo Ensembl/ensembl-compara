@@ -7,7 +7,7 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 sub render {
   my $self = shift;
   
-  return $self->render_highlighting if $self->strand > 0;
+  return $self->render_highlighting if $self->strand > 0 || $self->get_parameter('export');
 
   my $href = $self->get_parameter('base_url') . ';action=%s;id=' . --[split '|', $self->get_parameter('slice_number')]->[0];
   
@@ -31,10 +31,10 @@ sub render {
     right => [ 
       $sprite_pad * 2, 
       -$sprite_step,
-      [ 'right',       'right2' ],
-      [ 'nudge_right', 'right'  ],
-      [ 'zoom_in',     'in'     ],
-      [ 'realign',  'realign' ],
+      [ 'right',       'right2'  ],
+      [ 'nudge_right', 'right'   ],
+      [ 'zoom_in',     'in'      ],
+      [ 'realign',     'realign' ],
     ]
   };
   
