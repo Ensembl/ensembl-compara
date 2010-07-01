@@ -181,6 +181,8 @@ sub name{
 sub short_name {
   my $self = shift;
   my $name = $self->name;
+  $name =~ s/\b(\w)/\U$1/g;
+  $name =~ s/\_/\ /g;
   unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S)\S*\s(\S).*/$1$2$3$4/ ){
     unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S{2,2}).*/$1$2$3/ ){
       unless( $name =~  s/(\S)\S*\s(\S{3,3}).*/$1$2/ ){
