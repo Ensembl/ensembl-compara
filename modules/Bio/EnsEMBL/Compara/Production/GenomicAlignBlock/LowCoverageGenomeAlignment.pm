@@ -1086,14 +1086,14 @@ sub get_species_tree {
       my $name = $genome_db->name;
       $name =~ tr/ /_/;
       $leaf_name{$name} = $genome_db->dbID;
-      if ($name ne "Ancestral_sequences") {
+      if ($name ne "ancestral_sequences") {
 	  $leaf_check{$genome_db->dbID} = 2;
       }
   }
   foreach my $leaf (@{$species_tree->get_all_leaves}) {
       #check have names rather than genome_db_ids
       if ($leaf->name =~ /\D+/) {
-	  $leaf->name($leaf_name{$leaf->name});
+	  $leaf->name(($leaf_name{lc($leaf->name)}));
       }
       $leaf_check{$leaf->name}++;
   }
