@@ -116,10 +116,12 @@ sub caption {
 sub centrepoint      { return ( $_[0]->Obj->{'seq_region_end'} + $_[0]->Obj->{'seq_region_start'} ) / 2; }
 sub length           { return   $_[0]->Obj->{'seq_region_end'} - $_[0]->Obj->{'seq_region_start'} + 1; }
 
-sub slice            {
+sub slice {
   my $self = shift;
-  return $self->Obj->{'slice'} ||= $self->database('core',$self->real_species)->get_SliceAdaptor->fetch_by_region(
-    $self->seq_region_type, $self->seq_region_name, $self->seq_region_start, $self->seq_region_end, $self->seq_region_strand );
+  $self->Obj->{'slice'} ||= $self->database('core', $self->real_species)->get_SliceAdaptor->fetch_by_region(map $self->$_, qw(seq_region_type seq_region_name seq_region_start seq_region_end seq_region_strand));
+  return $self->Obj->{'slice'} unless shift eq 'expand';
+  my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
+  return $flank5 || $flank3 ? $self->Obj->{'slice'}->expand($flank5, $flank3) : $self->Obj->{'slice'};
 }
 
 # Find out if a slice exists for given coordinates
