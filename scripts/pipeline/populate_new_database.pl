@@ -226,6 +226,8 @@ copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs);
 if ($old_dba and !$skip_data) {
 ## Copy DNA-DNA alignemnts
   copy_dna_dna_alignements($old_dba, $new_dba, $all_default_method_link_species_sets);
+## Copy Ancestor dnafrags
+  copy_ancestor_dnafrag($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy Synteny data
   copy_synteny_data($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy Constrained elements
@@ -606,6 +608,54 @@ sub copy_dna_dna_alignements {
   $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` ENABLE KEYS");
 }
 
+=head2 copy_ancestor_dnafrag
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
+  Arg[3]      : listref Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $these_mlss
+  Description : copy ancestor dnafrags in the dnafrag_id range given by the 
+                MethodLinkSpeciesSet listed
+  Returns     :
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub copy_ancestor_dnafrag {
+  my ($old_dba, $new_dba, $method_link_species_sets) = @_;
+
+  my $old_user = $old_dba->dbc->username;
+  my $old_pass = $old_dba->dbc->password?"-p".$old_dba->dbc->password:"";
+  my $old_host = $old_dba->dbc->host;
+  my $old_port = $old_dba->dbc->port;
+  my $old_dbname = $old_dba->dbc->dbname;
+
+  my $new_user = $new_dba->dbc->username;
+  my $new_pass = $new_dba->dbc->password?"-p".$new_dba->dbc->password:"";
+  my $new_host = $new_dba->dbc->host;
+  my $new_port = $new_dba->dbc->port;
+  my $new_dbname = $new_dba->dbc->dbname;
+
+  my $mysqldump = "mysqldump -u$old_user $old_pass -h$old_host -P$old_port".
+      " --skip-disable-keys --insert-ignore -t $old_dbname";
+  my $mysql = "mysql -u$new_user $new_pass -h$new_host -P$new_port $new_dbname";
+
+  foreach my $this_method_link_species_set (@$method_link_species_sets) {
+      ## For ancestral dnafrags, the method_link_id is < 100.
+      next if ($this_method_link_species_set->method_link_id >= 100);
+      if ($this_method_link_species_set->method_link_class() eq 
+	  "GenomicAlignTree.ancestral_alignment") {
+	  print "Copying ancestral dnafrags for ", $this_method_link_species_set->name,
+	    " (", $this_method_link_species_set->dbID, "): ";
+	  my $where = "dnafrag_id >= ".
+	    ($this_method_link_species_set->dbID * 10**10)." AND dnafrag_id < ".
+	      (($this_method_link_species_set->dbID + 1) * 10**10);
+
+	  my $pipe = "$mysqldump -w \"$where\" dnafrag | $mysql";
+	  system($pipe);
+	  print "ok!\n";
+      }
+  }
+}
 
 =head2 copy_synteny_data
 
