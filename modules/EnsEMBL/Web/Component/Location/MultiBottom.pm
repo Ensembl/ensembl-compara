@@ -43,7 +43,6 @@ sub content {
   my $compara_db;
   my $primary_image_config;
   my @images;
-
   
   foreach (@$slices) {
     my $image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
@@ -117,6 +116,10 @@ sub content {
     }
     
     $i++;
+  }
+  
+  if ($object->param('export')) {
+    $_->set_parameter('export', 1) for grep $_->isa('EnsEMBL::Web::ImageConfig'), @images;
   }
   
   my $image = $self->new_image(\@images);
