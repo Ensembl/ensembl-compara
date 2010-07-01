@@ -48,7 +48,17 @@ sub get_sequence_data {
   my $variation_seq = { name => 'variation',   seq => [] };
   my $coding_seq    = { name => 'coding_seq',  seq => [] };
   my $protein_seq   = { name => 'translation', seq => [] };
-  my $rna_seq       = { name => 'rna',         seq => [ map {{ letter => $_ }} split //, $object->rna_notation ] };
+  my @rna_seq; 
+
+  if ($config->{'rna'}) {
+    my @rna_notation = $object->rna_notation;
+    
+    if (@rna_notation) {
+      @rna_seq = map {{ name => 'rna', seq => [ map {{ letter => $_ }} split //, $_ ] }} @rna_notation;
+    } else {
+      $config->{'rna'} = 0;
+    }
+  }
   
   if ($config->{'exons'}) {
     my $flip = 0;
@@ -203,7 +213,7 @@ sub get_sequence_data {
   push @sequence, \@reference_seq;
   push @markup, $mk;
   
-  for ($variation_seq, $coding_seq, $protein_seq, $rna_seq) {
+  for ($variation_seq, $coding_seq, $protein_seq, @rna_seq) {
     if ($config->{$_->{'name'}}) {
       if ($_->{'name'} eq 'variation') {
         unshift @sequence, $_->{'seq'};
@@ -260,9 +270,7 @@ sub content {
   $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);
   
   $config->{'codons'} = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
-  
   $config->{'variation'} = 0 unless $object->species_defs->databases->{'DATABASE_VARIATION'};
-  $config->{'rna'}       = 0 unless $object->rna_notation;
   
   my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
   
