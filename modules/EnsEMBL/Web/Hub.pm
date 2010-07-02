@@ -42,7 +42,12 @@ sub new {
   ## by a command-line script with no access to CGI parameters
   my $factorytype = $ENV{'ENSEMBL_FACTORY'};
   unless ($factorytype) {
-    $factorytype = $args{'_input'} ? $args{'_input'}->param('factorytype') : $type;
+    if ($args{'_input'} && $args{'_input'}->param('factorytype')) {
+      $factorytype = $args{'_input'}->param('factorytype');
+    }
+    else {
+      $factorytype = $type;
+    }
   }
   my ($session, $user, $timer);
   if ($ENSEMBL_WEB_REGISTRY) {
