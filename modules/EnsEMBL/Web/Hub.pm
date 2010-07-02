@@ -38,6 +38,19 @@ sub new {
   my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
   $type = 'DAS' if $type =~ /^DAS::.+/;
 
+  ## The following may seem a little clumsy, but it allows the Hub to be created
+  ## by a command-line script with no access to CGI parameters
+  my $factorytype = $ENV{'ENSEMBL_FACTORY'};
+  unless ($factorytype) {
+    $factorytype = $args{'_input'} ? $args{'_input'}->param('factorytype') : $type;
+  }
+  my ($session, $user, $timer);
+  if ($ENSEMBL_WEB_REGISTRY) {
+    $session  = $ENSEMBL_WEB_REGISTRY->get_session;
+    $user     = $args{'_user'} || $ENSEMBL_WEB_REGISTRY->get_user;
+    $timer    = $args{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
+  }
+
   my $self = {
     _apache_handle => $args{'_apache_handle'} || undef,
     _input         => $args{'_input'}         || undef,                        # extension of CGI
@@ -46,15 +59,15 @@ sub new {
     _action        => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
     _function      => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
     _script        => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action... ## deprecated
-    _factorytype   => $ENV{'ENSEMBL_FACTORY'} || $args{'_input'}->param('factorytype') || $type,
+    _factorytype   => $factorytype,
     _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
     _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
     _problem       => $args{'_problem'}       || {},    
-    _user          => $args{'_user'}          || $ENSEMBL_WEB_REGISTRY->get_user,                    
     _view_configs  => $args{'_view_configs_'} || {},
     _user_details  => $args{'_user_details'}  || 1,
-    _timer         => $args{'_timer'}         || $ENSEMBL_WEB_REGISTRY->timer, # Diagnostic object
-    _session       => $ENSEMBL_WEB_REGISTRY->get_session,
+    _session       => $session,
+    _user          => $user,                    
+    _timer         => $timer, 
   };
 
   bless $self, $class;
@@ -66,8 +79,10 @@ sub new {
   $self->{'_databases'} = $api_connection;
 
   ## TODO - remove core objects! 
-  $self->{'_core_objects'} = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
-  $self->_set_core_params;
+  if ($self->input) {
+    $self->{'_core_objects'} = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
+    $self->_set_core_params;
+  }
 
   $self->{'_ext_url'} = $args{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
   $self->species_defs->{'timer'} = $args{'_timer'};
@@ -261,6 +276,7 @@ sub url {
 
 sub param {
   my $self = shift;
+  return unless $self->input;
 
   if (@_) {
     my @T = map _sanitize($_), $self->input->param(@_);
