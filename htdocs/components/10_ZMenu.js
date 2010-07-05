@@ -170,7 +170,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       url += ';click_start=' + this.coords.clickStart + ';click_end=' + this.coords.clickEnd;
     }
     
-    if (url) {
+    if (url && url.match(/\/Zmenu\//)) {
       $.ajax({
         url: url,
         dataType: 'json',
