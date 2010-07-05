@@ -143,10 +143,10 @@ sub handler_species {
     $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
   }
   
-  if ($to_execute) {    
+  if ($to_execute && -e $to_execute) {    
     $ENV{'PATH_INFO'} = "/$path_info" if $path_info;
     
-    eval 'require $to_execute;';
+    eval 'do $to_execute;';
     
     if ($@) {
       warn $@;
