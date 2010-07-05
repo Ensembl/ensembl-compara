@@ -1,51 +1,51 @@
-3	10116	Rattus norvegicus	RGSC3.4	1	2009-03-Ensembl	
-4	31033	Takifugu rubripes	FUGU4	1	2007-11-Ensembl	
-16	8364	Xenopus tropicalis	JGI4.1	1	2005-11-Ensembl	
-18	7719	Ciona intestinalis	JGI2	1	2006-02-Ensembl	
-27	51511	Ciona savignyi	CSAV2.0	1	2006-04-Ensembl	
-31	9544	Macaca mulatta	MMUL_1	1	2006-01-Ensembl	
-33	9371	Echinops telfairi	TENREC	1	2006-08-Ensembl	
-36	69293	Gasterosteus aculeatus	BROADS1	1	2006-06-Ensembl	
-37	8090	Oryzias latipes	MEDAKA1	1	2006-05-Ensembl	
-38	9598	Pan troglodytes	CHIMP2.1	1	2008-02-Ensembl	
-39	9615	Canis familiaris	BROADD2	1	2006-11-Ensembl	
-42	9031	Gallus gallus	WASHUC2	1	2006-08-Ensembl	
-43	9258	Ornithorhynchus anatinus	OANA5	1	2007-01-Ensembl	
-44	4932	Saccharomyces cerevisiae	SGD1.01	1	2007-10-SGD	
-46	13616	Monodelphis domestica	BROADO5	1	2007-02-Ensembl	
-48	37347	Tupaia belangeri	TREESHREW	1	2006-10-Ensembl	
-49	9365	Erinaceus europaeus	HEDGEHOG	1	2006-10-Ensembl	
-51	30611	Otolemur garnettii	BUSHBABY1	1	2007-02-Ensembl	
-52	43179	Spermophilus tridecemlineatus	SQUIRREL	1	2006-10-Ensembl	
-53	59463	Myotis lucifugus	MICROBAT1	1	2007-01-Ensembl	
-55	42254	Sorex araneus	COMMON_SHREW1	1	2007-04-Ensembl	
-57	10090	Mus musculus	NCBIM37	1	2007-04-Ensembl	
-58	30608	Microcebus murinus	micMur1	1	2007-07-Ensembl	
-60	9600	Pongo pygmaeus	PPYG2	1	2007-10-Ensembl	
-61	9796	Equus caballus	EquCab2	1	2007-09-Ensembl	
-63	0	Ancestral sequences		1		
-64	9913	Bos taurus	Btau_4.0	1	2008-01-Ensembl	
-65	99883	Tetraodon nigroviridis	TETRAODON8	1	2007-11-Ensembl	
-66	9685	Felis catus	CAT	1	2008-02-Ensembl	
-67	9978	Ochotona princeps	pika	1	2008-01-Ensembl	
-69	10141	Cavia porcellus	cavPor3	1	2008-03-Ensembl	
-78	9358	Choloepus hoffmanni	choHof1	1	2008-11-Ensembl	
-79	9813	Procavia capensis	proCap1	1	2008-11-Ensembl	
-80	9739	Tursiops truncatus	turTru1	1	2008-11-Ensembl	
-82	9478	Tarsius syrichta	tarSyr1	1	2008-11-Ensembl	
-83	10020	Dipodomys ordii	dipOrd1	1	2008-11-Ensembl	
-84	30538	Vicugna pacos	vicPac1	1	2008-11-Ensembl	
-85	132908	Pteropus vampyrus	pteVam1	1	2008-11-Ensembl	
-86	9361	Dasypus novemcinctus	dasNov2	1	2008-11-Ensembl	
-87	59729	Taeniopygia guttata	taeGut3.2.4	1	2008-08-Ensembl	
-88	28377	Anolis carolinensis	AnoCar1.0	1	2008-07-Ensembl	
-89	7955	Danio rerio	Zv8	1	2009-01-Ensembl	
-90	9606	Homo sapiens	GRCh37	1	2009-03-Ensembl	
-91	9315	Macropus eugenii	Meug_1.0	1	2009-02-Ensembl	
-93	9823	Sus scrofa	Sscrofa9	1	2009-04-Ensembl	
-95	7227	Drosophila melanogaster	BDGP5.13	1	2009-01-FlyBase	
-98	9785	Loxodonta africana	loxAfr3	1	2009-07-Ensembl	
-99	9986	Oryctolagus cuniculus	oryCun2	1	2009-11-Ensembl	
-101	9593	Gorilla gorilla	gorGor3	1	2009-08-Ensembl	
-102	9483	Callithrix jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
-103	6239	Caenorhabditis elegans	WS210	1	2010-01-WormBase	
+3	10116	rattus_norvegicus	RGSC3.4	1	2009-03-Ensembl	
+4	31033	takifugu_rubripes	FUGU4	1	2007-11-Ensembl	
+16	8364	xenopus_tropicalis	JGI4.1	1	2005-11-Ensembl	
+18	7719	ciona_intestinalis	JGI2	1	2006-02-Ensembl	
+27	51511	ciona_savignyi	CSAV2.0	1	2006-04-Ensembl	
+31	9544	macaca_mulatta	MMUL_1	1	2006-01-Ensembl	
+33	9371	echinops_telfairi	TENREC	1	2006-08-Ensembl	
+36	69293	gasterosteus_aculeatus	BROADS1	1	2006-06-Ensembl	
+37	8090	oryzias_latipes	MEDAKA1	1	2006-05-Ensembl	
+38	9598	pan_troglodytes	CHIMP2.1	1	2008-02-Ensembl	
+39	9615	canis_familiaris	BROADD2	1	2006-11-Ensembl	
+42	9031	gallus_gallus	WASHUC2	1	2006-08-Ensembl	
+43	9258	ornithorhynchus_anatinus	OANA5	1	2007-01-Ensembl	
+46	13616	monodelphis_domestica	BROADO5	1	2007-02-Ensembl	
+48	37347	tupaia_belangeri	TREESHREW	1	2006-10-Ensembl	
+49	9365	erinaceus_europaeus	HEDGEHOG	1	2006-10-Ensembl	
+51	30611	otolemur_garnettii	BUSHBABY1	1	2007-02-Ensembl	
+52	43179	spermophilus_tridecemlineatus	SQUIRREL	1	2006-10-Ensembl	
+53	59463	myotis_lucifugus	MICROBAT1	1	2007-01-Ensembl	
+55	42254	sorex_araneus	COMMON_SHREW1	1	2007-04-Ensembl	
+57	10090	mus_musculus	NCBIM37	1	2007-04-Ensembl	
+58	30608	microcebus_murinus	micMur1	1	2007-07-Ensembl	
+60	9600	pongo_pygmaeus	PPYG2	1	2007-10-Ensembl	
+61	9796	equus_caballus	EquCab2	1	2007-09-Ensembl	
+63	0	ancestral_sequences		1		
+64	9913	bos_taurus	Btau_4.0	1	2008-01-Ensembl	
+65	99883	tetraodon_nigroviridis	TETRAODON8	1	2007-11-Ensembl	
+66	9685	felis_catus	CAT	1	2008-02-Ensembl	
+67	9978	ochotona_princeps	pika	1	2008-01-Ensembl	
+69	10141	cavia_porcellus	cavPor3	1	2008-03-Ensembl	
+78	9358	choloepus_hoffmanni	choHof1	1	2008-11-Ensembl	
+79	9813	procavia_capensis	proCap1	1	2008-11-Ensembl	
+80	9739	tursiops_truncatus	turTru1	1	2008-11-Ensembl	
+82	9478	tarsius_syrichta	tarSyr1	1	2008-11-Ensembl	
+83	10020	dipodomys_ordii	dipOrd1	1	2008-11-Ensembl	
+84	30538	vicugna_pacos	vicPac1	1	2008-11-Ensembl	
+85	132908	pteropus_vampyrus	pteVam1	1	2008-11-Ensembl	
+86	9361	dasypus_novemcinctus	dasNov2	1	2008-11-Ensembl	
+87	59729	taeniopygia_guttata	taeGut3.2.4	1	2008-08-Ensembl	
+88	28377	anolis_carolinensis	AnoCar1.0	1	2008-07-Ensembl	
+89	7955	danio_rerio	Zv8	1	2009-01-Ensembl	
+90	9606	homo_sapiens	GRCh37	1	2009-03-Ensembl	
+91	9315	macropus_eugenii	Meug_1.0	1	2009-02-Ensembl	
+93	9823	sus_scrofa	Sscrofa9	1	2009-04-Ensembl	
+98	9785	loxodonta_africana	loxAfr3	1	2009-07-Ensembl	
+99	9986	oryctolagus_cuniculus	oryCun2	1	2009-11-Ensembl	
+101	9593	gorilla_gorilla	gorGor3	1	2009-08-Ensembl	
+103	6239	caenorhabditis_elegans	WS210	1	2010-01-WormBase	
+104	9483	callithrix_jacchus	C_jacchus3.2.1	1	2010-02-Ensembl	
+105	7227	drosophila_melanogaster	BDGP5.25	1	2010-02-FlyBase	
+106	4932	saccharomyces_cerevisiae	EF2	1	2009-07-SGD	
