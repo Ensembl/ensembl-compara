@@ -73,7 +73,7 @@ our $VIEW_SCRIPT = $ENV{ENSEMBL_SCRIPT};
 
 MAIN:{
   if( is_script_suspended() ){ # Check for manual suspend. See sub for details
-    print( get_suspend_page() ); exit;
+    print( get_suspend_page() ); return 1;
   }
 
   # Populate package globals for each request.
@@ -156,7 +156,7 @@ MAIN:{
   $r->subprocess_env->{'ticket'} = $TICKET;
   if( $CGI->param('format') eq 'raw' ){
     &print_raw_format();
-    exit;
+    return 1;
   }
 
   # More cgi param processing - after retrieving state
@@ -242,7 +242,7 @@ print "
     $page->content->render();
     $page->render_end();
     $blast_adpt->dbc->disconnect_if_idle;
-    exit;
+    return 1;
   }
 
   #----------------------------------------------------------------------
@@ -1741,7 +1741,7 @@ sub populate_karyotype{
                                  'hsp_id=%s', 
                                  '_display=%s' ) );
 
-  my $ctgview_href_tmpl = ('/%s/Location/View?'.
+  my $ctgview_href_tmpl = ('/%s/Zmenu/Location/View?'.
                            join( ';',
                                  'r=%s:%s-%s',
                                  'h=BLAST_NEW:%s!!%s' ) );
