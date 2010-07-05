@@ -353,10 +353,10 @@ foreach my $this_species (split(&quot;:&quot;, $set_of_species)) {
     throw(&quot;Registry configuration file has no data for connecting to &lt;$this_species&amp;&quot;)
         if (!$this_meta_container_adaptor);
 
-    my $this_binomial_id = $this_meta_container_adaptor-&gt;get_Species-&gt;binomial;
+    my $this_production_name = $this_meta_container_adaptor-&gt;get_production_name;
 
     # Fetch Bio::EnsEMBL::Compara::GenomeDB object
-    my $genome_db = $genome_db_adaptor-&gt;fetch_by_name_assembly($this_binomial_id);
+    my $genome_db = $genome_db_adaptor-&gt;fetch_by_name_assembly($this_production_name);
 
     # Add Bio::EnsEMBL::Compara::GenomeDB object to the list
     push(@$genome_dbs, $genome_db);
