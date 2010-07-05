@@ -275,10 +275,14 @@ if (defined $species_tree_file) {
 
 foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
   foreach my $this_species (@{$this_method_link_species_set->species_set}) {
+      #need to modify the name 
+      my $scientific_name = $this_species->name;
+      $scientific_name =~ tr/_/ /d;
+      $scientific_name = ucfirst $scientific_name;
     next if ($this_species->{_found});
 
     foreach my $this_known_species (@$species) {
-      if ($this_known_species->{long_name} eq $this_species->name) {
+      if ($this_known_species->{long_name} eq $scientific_name) {
         $this_species->{_found} = 1;
 	#print $this_species->name . "\n";
         last;
@@ -361,13 +365,22 @@ sub order_count_tree {
 sub order_tree {
     my $genome_db_a = $genome_db_adaptor->fetch_by_dbID($a);
     my $genome_db_b = $genome_db_adaptor->fetch_by_dbID($b);
+
+    my $genome_db_a_name = $genome_db_a->name;
+    $genome_db_a_name =~ tr/_/ /d;
+    $genome_db_a_name = ucfirst $genome_db_a_name;
+
+    my $genome_db_b_name = $genome_db_b->name;
+    $genome_db_b_name =~ tr/_/ /d;
+    $genome_db_b_name = ucfirst $genome_db_b_name;
+
     my $cnt = 0;
     my ($a_idx, $b_idx);
     foreach my $spp (@$species) {
-	if ($spp->{long_name} eq $genome_db_a->name) {
+	if ($spp->{long_name} eq $genome_db_a_name) {
 	    $a_idx = $cnt;
 	}
-	if ($spp->{long_name} eq $genome_db_b->name) {
+	if ($spp->{long_name} eq $genome_db_b_name) {
 	    $b_idx = $cnt;
 	}
 	$cnt++;
@@ -397,11 +410,15 @@ sub getNameString {
     my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
     my $ncbi_taxon = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($genome_db->taxon_id);
     
+    my $scientific_name = $genome_db->name;
+    $scientific_name =~ tr/_/ /d;
+    $scientific_name = ucfirst $scientific_name;
+
     my $name;
     if ($ncbi_taxon->ensembl_alias_name) {
-       $name = $ncbi_taxon->ensembl_alias_name . " (" . $genome_db->name . ")";
+       $name = $ncbi_taxon->ensembl_alias_name . " (" . $scientific_name . ")";
     } else {
-	$name = $genome_db->name;
+	$name = $scientific_name;
     }
     return $name;
 }
@@ -415,10 +432,31 @@ sub print_html_list {
 
   my $these_method_link_species_sets = [];
 
+  my $species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'SpeciesSet');
+  my $species_set_tags = $species_set_adaptor->fetch_all_by_tag("name"); 
+
+
   foreach my $this_method_link_species_set (sort {scalar @{$a->species_set} <=> scalar @{$b->species_set}} @$all_method_link_species_sets) {
-      print "<h4>",
-	$this_method_link_species_set->name,
-	  "</h4>\r\n";
+      my $species_set_name;
+      foreach my $species_set_tag (@$species_set_tags) {
+	  if ($species_set_tag->dbID == $this_method_link_species_set->species_set_id) {
+	      $species_set_name = $species_set_tag->{_tags}->{name};
+	  }
+      }
+      if (defined $species_set_name) {
+	  my $type = $this_method_link_species_set->method_link_type;
+	  print "<h4>",
+	    $this_method_link_species_set->name,
+	      "</h4>";
+	    print "<h5>", 
+	      "(method_link_type=\"$type\" : species_set_name=\"$species_set_name\")",
+	      "</h5>";
+
+      } else {
+	  print "<h4>",
+	    $this_method_link_species_set->name,
+	      "</h4>\r\n";
+      }
 
       my $genome_ids;
       #store the other species which also have this reference
