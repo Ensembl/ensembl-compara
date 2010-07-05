@@ -16,7 +16,7 @@ send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
-3bis. The current (rel.58) compara_master database is sf5_ensembl_compara_master on compara1 
+3bis. The current (rel.59) compara_master database is sf5_ensembl_compara_master on compara1 
 
 4. Add in the master compara database
 (compara1:3306/sf5_ensembl_compara_master) the new entries in the
@@ -108,7 +108,8 @@ mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_58 < ~lg4/work/ensem
 
 time ~/work/ensembl-compara/scripts/pipeline/populate_new_database.pl \
     --reg-conf reg_conf.pl --master compara_master --old compara_57 --new compara_58
-#
+
+# took 2:09 hours for rel.59 (copied from rel.58)
 # took 2:15 hours for rel.58 (copied from rel.57)
 # took 3 hours for rel.57 (copied from rel.pre57)
 # took 3 hours for rel.pre57 (copied from rel.56)
@@ -143,6 +144,15 @@ like this:
     secondary.port=3364
     secondary.user=ensro
     secondary.driver=org.gjt.mm.mysql.Driver
+
+
+Make sure everything is up to date:
+cd ensj-healthcheck
+cvs update -Pd
+
+Recompile:
+export JAVA_HOME=/software/jdk
+bsub -Is ant
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
@@ -322,7 +332,7 @@ Merging each source into target is done in two steps (3) and (4) (assuming the t
             INSERT INTO lg4_ensembl_ancestral_58.dna (seq_region_id, sequence)
                 SELECT ts.seq_region_id, sd.sequence FROM lg4_ensembl_ancestral_57.dna sd
                                                     JOIN lg4_ensembl_ancestral_57.seq_region ss ON sd.seq_region_id=ss.seq_region_id
-                                                    JOIN lg4_ensembl_ancestral_58.seq_region ts ON ss.name=ts.name;
+                                                    JOIN lg4_ensembl_ancestral_58.seq_region ts ON ss.name=ts.name;c
 # 2min, 26min, 25min in rel.58
 
     5) Repeat steps (3) & (4) for all other sources
@@ -350,13 +360,10 @@ This step has to happen ASAP, but AFTER the Core name projections have been done
 !MAKE SURE YOU ARE IN SYNC WITH THE REST OF THE WORLD!
 )
 
-
-#################################################
-
-The following section is the new way of populating display labels for genes 
-and members using new code brought in by Ensembl Genomes. Should this not work
-then refer to the existing guide which is still made available in this
-document. Should it work delete this message and the old guide.
+I made a backup of the member table before starting:
+RENAME TABLE member TO member_orig;
+CREATE TABLE member LIKE member_orig;
+INSERT INTO member SELECT * FROM member_orig;
 
 12.1 Ensure your registry is correct
 
@@ -367,112 +374,12 @@ Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs() call on both servers.
 
 12.2 Run the command
 
-scripts/pipeline/populate_member_display_labels.pl -registry ~/release58/reg_conf.pl -compara multi -verbose
+bsub -o populate_member_display_labels.out -e populate_member_display_labels.err -R "select[mem>5000] rusage[mem=5000]" -M5000000 perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_member_display_labels.pl --registry reg_conf59 --compara compara_59 --verbose
 
 This will iterate over all GenomeDBs and update any label which is empty. Should
 you wish to replace existing labels then rerun with the -replace switch. 
 
-
-#################################################
-
-#################################################
-
-# Here we are creating a 'transferable' patch that is independent of the core databases being present on the same server,
-# so the same patch can be applied on compara1 and staging (if needed)
-#
-# Note the important tricks:
-# 0) copy the member tables to the staging servers, to be able to run queries that span multiple databases
-# 1) using the \""$1"\" for inserting strings (outer pair actually adds quotes, inner pair ends awk's quotes to insert $1, $2 values)
-# 2) obligatory usage of -F '\t' in the second awk to parse the tab-separated data that comes out of the mysql (but make sure there are no tabs in the string values!)
-# 3) substitute NULL instead of "NULL" (as they do not differ in their textual representation, but we happen to know which is which)
-# 4) don't forget that member's "stable_id" is not a unique identifier: you should use the (stable_id, source_name) pair.
-
-12.1 Create a copy of the compara member table on both staging servers in the form of a separate database:
-
-#
-mysql --defaults-group-suffix=_staging -e 'create database compara_member'
-time mysqldump --defaults-group-suffix=_compara1 lg4_ensembl_compara_58 member | mysql --defaults-group-suffix=_staging compara_member
-# rel.58:   6m
-# rel.57:   7m
-#
-# Actually, you can run the second dump-and-load process in parallel:
-#
-mysql --defaults-group-suffix=_staging2 -e 'create database compara_member'
-time mysqldump --defaults-group-suffix=_compara4 lg4_ensembl_compara_58 member | mysql --defaults-group-suffix=_staging2 compara_member
-# rel.58:   6m
-# rel.57:   10m
-
-
-12.2 Run the first set of 3 queries against ens-staging:
-
-time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_58\_%"' | \
-    awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT(m.display_label <=> x.display_label) ;"}' | \
-    mysql --defaults-group-suffix=_staging -N compara_member | \
-    awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
-    sed 's/"NULL"/NULL/' > gene_dlabel_transferable_patch.sql
-# rel.58:    2m
-# rel.57:   24m
-
-time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_58\_%"' | \
-    awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".transcript t, "$1".translation p, "$1".translation_stable_id psi, member m WHERE t.display_xref_id=x.xref_id AND t.transcript_id=p.transcript_id AND p.translation_id=psi.translation_id AND m.stable_id=psi.stable_id AND m.source_name=\"ENSEMBLPEP\" AND NOT (m.display_label <=> x.display_label) ;"}' | \
-    mysql --defaults-group-suffix=_staging -N compara_member | \
-    awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLPEP\"; "}' | \
-    sed 's/"NULL"/NULL/' > transcript_dlabel_transferable_patch.sql
-# rel.58:    1m
-# rel.57:   11m
-
-time mysql --defaults-group-suffix=_staging -N -e 'show databases like "%core\_58\_%"' | \
-    awk '{print "SELECT m.stable_id, g.description FROM "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT (m.description <=> g.description) ;"}' | \
-    mysql --defaults-group-suffix=_staging -N compara_member | \
-    awk -F '\t' '{print "UPDATE member SET description=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
-    sed 's/"NULL"/NULL/' > gene_description_transferable_patch.sql
-# rel.58:    1m
-# rel.57:   10m
-
-
-12.3 Run the same set of queries against ens-staging2 (can be done in parallel with 12.2) :
-
-time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_58\_%"' | \
-    awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.display_xref_id=x.xref_id AND g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT(m.display_label <=> x.display_label) ;"}' | \
-    mysql --defaults-group-suffix=_staging2 -N compara_member | \
-    awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
-    sed 's/"NULL"/NULL/' > gene_dlabel_transferable_patch2.sql
-# rel.58:    2m
-# rel.57:   47m
-
-time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_58\_%"' | \
-    awk '{print "SELECT m.stable_id, x.display_label FROM "$1".xref x, "$1".transcript t, "$1".translation p, "$1".translation_stable_id psi, member m WHERE t.display_xref_id=x.xref_id AND t.transcript_id=p.transcript_id AND p.translation_id=psi.translation_id AND m.stable_id=psi.stable_id AND m.source_name=\"ENSEMBLPEP\" AND NOT (m.display_label <=> x.display_label) ;"}' | \
-    mysql --defaults-group-suffix=_staging2 -N compara_member | \
-    awk -F '\t' '{print "UPDATE member SET display_label=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLPEP\"; "}' | \
-    sed 's/"NULL"/NULL/' > transcript_dlabel_transferable_patch2.sql
-# rel.58:   1m
-# rel.57:   8m
-
-time mysql --defaults-group-suffix=_staging2 -N -e 'show databases like "%core\_58\_%"' | \
-    awk '{print "SELECT m.stable_id, g.description FROM "$1".gene g, "$1".gene_stable_id gsi, member m WHERE g.gene_id=gsi.gene_id AND m.stable_id=gsi.stable_id AND m.source_name=\"ENSEMBLGENE\" AND NOT (m.description <=> g.description) ;"}' | \
-    mysql --defaults-group-suffix=_staging2 -N compara_member | \
-    awk -F '\t' '{print "UPDATE member SET description=\""$2"\" WHERE stable_id=\""$1"\" AND source_name=\"ENSEMBLGENE\"; "}' | \
-    sed 's/"NULL"/NULL/' > gene_description_transferable_patch2.sql
-# rel.58:    1m
-# rel.57:   43m
-
-
-12.4 Drop the compara_member databases from both staging servers:
-#
-mysql --defaults-group-suffix=_staging  -e 'drop database compara_member'
-mysql --defaults-group-suffix=_staging2 -e 'drop database compara_member'
-
-
-12.5 Apply the patches:
-#
-# (assuming there are no other .sql files in the current directory)
-#
-time cat *.sql | mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
-# rel.58:   10m
-
-
-12.6 Same patches to the member table can be retro-applied to homology and family production databases (if needed)
-
+Remember to DROP TABLE member_orig if made a backup.
 
 13. Run the healthchecks:
 
