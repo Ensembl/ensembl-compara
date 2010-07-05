@@ -20,7 +20,7 @@
   General font sizes and styles...
 ----------------------------------------------------------------------*/
 
-body { font-family: Luxi Sans, Geneva, Helvetica, Arial, sans-serif;
+body { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif;
     color:[[PAGE_TEXT]]; background-color:[[PAGE_BG]]; font-size: 80%; }
 pre, code, kbd {font-family: Courier New, Courier, monospace; }
 div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
