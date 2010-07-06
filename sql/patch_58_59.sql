@@ -14,4 +14,6 @@ UPDATE dnafrag, genome_db
  AND coord_system_name = "chromosome"
  AND (dnafrag.name like "H%" or dnafrag.name like "c%");
 
-
+# Adding indexes to the taxonomy tables to speed up searches
+ALTER TABLE ncbi_taxa_node ADD KEY left_index(left_index);
+ALTER TABLE ncbi_taxa_node ADD KEY right_index(right_index);
