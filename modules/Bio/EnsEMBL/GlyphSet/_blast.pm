@@ -80,13 +80,10 @@ sub features {
 }
 
 sub href {
-### Links to /Location/Genome
-  my( $self, $f ) = @_;
-
-  my( $qryname, $hsptoken ) = split( ':', $f->hseqname );
-  my( $ticket, $id, $date ) = split /!!/,$hsptoken;
-  return sprintf '/Multi/blastview?ticket=%s;hsp_id=%s!!%s;_display=ALIGN',
-    $ticket, $id,$date;
+  my ($self, $f) = @_;
+  my $hsptoken = [ split ':', $f->hseqname ]->[-1];
+  my ($ticket, $id, $date) = split /!!/, $hsptoken;
+  return sprintf "/Multi/blastview?ticket=$ticket;hsp_id=$id!!$date;_display=ALIGN";
 }
 
 
