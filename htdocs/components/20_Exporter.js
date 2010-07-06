@@ -7,7 +7,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
     this.base();
     this.filterInit();
     
-    $('fieldset.general_options', this.elLk.content).find('select.output_type').live('change', function () {
+    $('fieldset.general_options', this.elLk.content).find('select.output_type').change(function () {
       panel.filter(this.value);
     });
   },
