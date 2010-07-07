@@ -116,7 +116,7 @@ sub ramp {
   if ($self->{'update'}) {
     $ramp = 0;
     
-    for (0..$#{@$ramp_entries}) {
+    for (0..$#$ramp_entries) {
       my $r = shift @mp;
       
       if ($wd > $l && $wd <= $r) {
