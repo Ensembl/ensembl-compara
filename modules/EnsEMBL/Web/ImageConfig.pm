@@ -917,6 +917,7 @@ sub add_simple_feature {
       colourset   => 'simple',
       caption     => $data->{$key_2}{'caption'},
       description => $data->{$key_2}{'description'},
+      ext_url     => $data->{$key_2}{'ext_url'},
       display     => $data->{$key_2}{'display'} || 'off',
       renderers   => [qw(off Off normal Normal)],
       strand      => 'r',
