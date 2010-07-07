@@ -10,19 +10,18 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
-  my ($logic_name, $display_label, $score, $bp, $ext_url) = map $object->param($_), qw(logic_name display_label score bp ext_url);
+  my ($display_label, $ext_url) = map $object->param($_), qw(display_label ext_url);
   
-  $self->caption($logic_name . ($display_label ? ": $display_label" : ''));
+  $self->caption($object->param('logic_name') . ($display_label ? ": $display_label" : ''));
   
-  $self->add_entry({
-    type  => 'score',
-    label => $score
-  });
-  
-  $self->add_entry({
-    type  => 'bp',
-    label => $bp
-  });
+  for (qw(score bp)) {
+    if (my $param = $object->param($_)) {
+      $self->add_entry({
+        type  => $_,
+        label => $param
+      });
+    }
+  }
   
   if ($ext_url) {
     $self->add_entry({
