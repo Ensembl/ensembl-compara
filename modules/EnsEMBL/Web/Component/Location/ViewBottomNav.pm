@@ -160,6 +160,8 @@ sub nav_url {
   ($s, $e) = (1, $e - $s || 1) if $s < 1;
   ($s, $e) = ($max - ($e - $s), $max) if $e > $max;
   
+  $s = $e if $s > $e;
+  
   return $object->seq_region_name . ':' . $s . '-' . $e if $self->{'update'};
   
   return $object->_url({ 
