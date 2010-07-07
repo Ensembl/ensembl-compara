@@ -29,12 +29,19 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.elLk.updateURL    = $('.update_url', this.el);
     this.elLk.regionInputs = $('.location_selector', this.el);
     this.elLk.navLinks     = $('a', this.el).addClass('constant').bind('click', function (e) {
+      var newR;
+      
       if (panel.enabled === true) {
         if ($(this).hasClass('move')) {
           panel.reload = true;
         }
         
-        window.location.hash = 'r=' + this.href.match(panel.matchRegex)[1]; 
+        newR = this.href.match(panel.matchRegex)[1];
+        
+        if (newR != Ensembl.coreParams.r) {
+          window.location.hash = 'r=' + newR; 
+        }
+        
         return false;
       }
     });
