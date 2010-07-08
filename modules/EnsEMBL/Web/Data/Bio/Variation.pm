@@ -105,7 +105,7 @@ sub convert_to_drawing_parameters {
         'end'         => $end,
         'strand'      => $v->strand,
         'label'       => $v->variation_name,
-        'href'        => $hub->url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
+        'href'        => $hub->url({ type => 'Zmenu', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
         'extra'       => [ $gene_link,$associated_gene,$associated_phenotype, sprintf("%.1f",$p_value_log) ],
         'p_value'         => $p_value_log,
         'colour_scaling'  => 1,
