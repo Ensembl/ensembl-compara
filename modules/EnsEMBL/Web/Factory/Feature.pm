@@ -314,7 +314,7 @@ sub _create_Xref {
 ### Returns: hashref of API objects
   my ($self, $db, $subtype) = @_;
   my $t_features = [];
-  my ($xrefs, $genes);
+  my ($xrefs, $genes); 
 
   if ($subtype eq 'MIM') {
     my $mim_g = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, 'MIM_GENE'] );
@@ -324,8 +324,8 @@ sub _create_Xref {
   else {
     $t_features = $self->_generic_create( 'DBEntry', 'fetch_by_db_accession', [$db, $subtype] );
   }
-  if( $t_features && ref($t_features) eq 'ARRAY') {
-    ($xrefs, $genes) = $self->_create_XrefArray($t_features, $db);
+  if( $t_features && ref($t_features) eq 'ARRAY') { 
+    ($xrefs, $genes) = $self->_create_XrefArray($t_features, $db, $subtype);
   }
 
   my $features = {'Xref' => EnsEMBL::Web::Data::Bio::Xref->new($self->hub, @$xrefs)};
@@ -335,17 +335,17 @@ sub _create_Xref {
 
 sub _create_XrefArray {
 ### Helper method used by _create_Xref
-  my ($self, $t_features, $db) = @_;
+  my ($self, $t_features, $db, $subtype) = @_;
   my (@features, @genes);
 
-  foreach my $t (@$t_features) {
+  foreach my $t (@$t_features) { 
     ## we need to keep each xref and its matching genes together
     my @matches;
     push @matches, $t;
     ## get genes for each xref
     my $id = $t->primary_id;
-    my $t_genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, $id, 'no_errors' );
-    if ($t_genes && @$t_genes) {
+    my $t_genes = $self->_generic_create( 'Gene', 'fetch_all_by_external_name', $db, $id, 'no_errors', $subtype );
+    if ($t_genes && @$t_genes) { 
       push (@matches, @$t_genes);
       push (@genes, @$t_genes);
     }
@@ -400,8 +400,8 @@ sub _create_LRG {
 
 sub _generic_create {
 ### Helper method used by various _create_ methods to get API objects from the database
-  my( $self, $object_type, $accessor, $db, $id, $flag ) = @_; 
-  $db ||= 'core';
+  my( $self, $object_type, $accessor, $db, $id, $flag, $subtype ) = @_;  
+  $db ||= 'core'; 
   if (!$id ) {
     my @ids = $self->param( 'id' );
     $id = join(' ', @ids);
@@ -433,9 +433,9 @@ sub _generic_create {
     $id =~ s/\s+/ /g;
     $id =~s/^ //;
     $id =~s/ $//;
-    foreach my $fid ( split /\s+/, $id ) {
+    foreach my $fid ( split /\s+/, $id ) { 
       my $t_features;
-      if ($xref_db) {
+      if ($xref_db) { 
         eval {
          $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
         };
@@ -445,7 +445,12 @@ sub _generic_create {
          $t_features = [$db_adaptor->$adaptor_name->$accessor($fid)];
         };
       }
-      else {
+      elsif($subtype){
+         eval {
+         $t_features = $db_adaptor->$adaptor_name->$accessor($fid, $subtype);
+        };
+      }
+      else { 
         eval {
          $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
         };
