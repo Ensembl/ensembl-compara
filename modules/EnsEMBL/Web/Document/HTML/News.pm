@@ -29,7 +29,6 @@ sub render {
   
   ## Form for selecting other releases
   my @releases = EnsEMBL::Web::Data::Release->find_all;
-  warn ">>> RELEASES @releases";
   if (@releases) {
     $html .= qq(
 <div class="tinted-box float-right">
@@ -62,7 +61,7 @@ sub render {
   my $release_date = $self->pretty_date($release->date);
 
   ## get news stories
-  my @stories = EnsEMBL::Web::Data::NewsItem->fetch_news_items({'release_id' => $release_id, 'news_done' => 'Y', status => 'handed_over'});
+  my @stories = EnsEMBL::Web::Data::NewsItem->fetch_news_items({'release_id' => $release_id, 'status' => 'published'});
 
   ## Do lookup hashes
   my %species_lookup; 

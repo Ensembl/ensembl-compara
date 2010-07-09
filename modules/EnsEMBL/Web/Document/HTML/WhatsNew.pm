@@ -40,7 +40,7 @@ sub render {
     my $news_url = '/info/website/news/index.html';
 
     ## get news headlines
-    my $criteria = {'release_id' => $release_id, 'news_done' => 'Y'};
+    my $criteria = {'release_id' => $release_id, 'status' => 'published'};
     if ($user && $user->id) {
       $criteria->{'species'} = [];
       ## check for user filters

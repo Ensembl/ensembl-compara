@@ -16,7 +16,8 @@ __PACKAGE__->add_queriable_fields(
   declaration => 'text',
   notes       => 'text',
   priority    => 'int',
-  status      => "enum('declared','handed_over','postponed','cancelled')",
+  dec_status  => "enum('declared','handed_over','postponed','cancelled')",
+  status      => "enum('draft','published','dead')",
   news_done   => "enum('N','Y')",
 );
 
