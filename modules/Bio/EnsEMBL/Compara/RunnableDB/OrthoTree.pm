@@ -1597,13 +1597,17 @@ sub generate_attribute_arguments {
   }
   my $seq_length1 = $protein1->seq_length;
   unless (0 == $seq_length1) {
-    $perc_id1 = $identical_matches*100.0/$seq_length1;
-    $perc_pos1 = $positive_matches*100.0/$seq_length1;
+    $perc_id1  = (int((100.0 * $identical_matches / $seq_length1 + 0.5)));
+    $perc_pos1 = (int((100.0 * $positive_matches  / $seq_length1 + 0.5)));
+#     $perc_id1 = $identical_matches*100.0/$seq_length1;
+#     $perc_pos1 = $positive_matches*100.0/$seq_length1;
   }
   my $seq_length2 = $protein2->seq_length;
   unless (0 == $seq_length2) {
-    $perc_id2 = $identical_matches*100.0/$seq_length2;
-    $perc_pos2 = $positive_matches*100.0/$seq_length2;
+    $perc_id2  = (int((100.0 * $identical_matches / $seq_length2 + 0.5)));
+    $perc_pos2 = (int((100.0 * $positive_matches  / $seq_length2 + 0.5)));
+#     $perc_id2 = $identical_matches*100.0/$seq_length2;
+#     $perc_pos2 = $positive_matches*100.0/$seq_length2;
   }
 
 #   my $perc_id1 = $identical_matches*100.0/$protein1->seq_length;
