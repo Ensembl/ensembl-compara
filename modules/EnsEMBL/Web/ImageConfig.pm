@@ -1634,7 +1634,7 @@ sub add_decorations {
       strand        => 'x',
       label_strand  => 'r',
       short_labels  => 0,
-      description   => 'Haplotype (HAPs) and Pseudo autosomal regions (PARs)',
+      description   => 'GRC assembly patches, haplotype (HAPs) and pseudo autosomal regions (PARs)',
       colourset     => 'assembly_exception'
     }));
   }
