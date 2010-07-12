@@ -115,7 +115,7 @@ sub href {
   my $href = $self->_url
   ({
     'species' =>  $self->species, 
-    'action'  => 'Regulation',
+    'type'    => 'Regulation',
     'rf'      => $id,
     'fdb'     => 'funcgen', 
     'cl'      => $cell_line,  
