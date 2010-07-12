@@ -28,6 +28,7 @@ use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
+use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::ExtURL;
 
 use base qw(EnsEMBL::Web::Root);
@@ -111,6 +112,7 @@ sub ExtURL        { return $_[0]{'_ext_url'};       }
 sub timer         { return $_[0]{'_timer'};         }
 sub user_details  { return $_[0]{'_user_details'} ||= 1; }
 sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
+sub species_path  { return shift->species_defs->species_path(@_); }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
@@ -292,6 +294,29 @@ sub get_ExtURL_link {
   my $text = shift;
   my $url = $self->get_ExtURL(@_);
   return $url ? qq(<a href="$url">$text</a>) : $text;
+}
+
+# use PFETCH etc to get description and sequence of an external record
+sub get_ext_seq {
+  my ($self, $id, $ext_db) = @_;
+  my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs);
+  
+  return unless $indexer;
+  
+  my $seq_ary;
+  my %args;
+  $args{'ID'} = $id;
+  $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
+
+  eval { $seq_ary = $indexer->get_seq_by_id(\%args); };
+  
+  if (!$seq_ary) {
+    warn "The $ext_db server is unavailable: $@";
+    return '';
+  } else {
+    my $list = join ' ', @$seq_ary;
+    return $list =~ /no match/i ? '' : $list;
+  }
 }
 
 ### VIEW / IMAGE CONFIGS
