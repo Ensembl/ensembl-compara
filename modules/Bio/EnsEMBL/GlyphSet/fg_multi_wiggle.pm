@@ -3,68 +3,49 @@ package Bio::EnsEMBL::GlyphSet::fg_multi_wiggle;
 use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
-use Bio::EnsEMBL::Utils::Exception qw( throw );
-
 
 sub draw_features {
   my ($self, $wiggle) = @_;
-  my $Config = $self->{'config'};
-  my $data = $Config->{'data_by_cell_line'};
-  my $colours = $self->get_colours($Config->{'evidence'}->{'data'}->{'all_features'});
-  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle";
-  my $slice = $self->{'container'};
+  my $config            = $self->{'config'};
+  my $data              = $config->{'data_by_cell_line'};
+  my $colours           = $self->get_colours($config->{'evidence'}->{'data'}->{'all_features'});
+  my $drawn_wiggle_flag = $wiggle ? 0: 'wiggle';
+  my $slice             = $self->{'container'};
   my $drawn_data;
   
-  foreach my $cell_line (keys %$data){   
-    # First draw core block features
-    if ($data->{$cell_line}{'focus'}{'block_features'}){
-      my $configured_tracks = scalar @{$Config->{'configured_tracks'}{$cell_line}{'configured'}{'focus'}};
-      my $available_tracks =  scalar @{$Config->{'configured_tracks'}{$cell_line}{'available' }{'focus'}};
-      my $tracks_on = "$configured_tracks/$available_tracks features turned on"; 
-      my $feature_set_data = $data->{$cell_line}{'focus'}{'block_features'};
-      $self->draw_blocks($feature_set_data, 'Core Evidence' . $cell_line, undef, $colours, $tracks_on);
-      $drawn_data = 1;
-    } else {
-       $self->display_error_message($cell_line, 'focus', 'peaks');
-    }
-    # Then draw core supporting features
-    if ($data->{$cell_line}{'focus'}{'wiggle_features'}  && $wiggle){ 
-      my %wiggle_data = %{$data->{$cell_line}{'focus'}{'wiggle_features'}};
-      my $label = 'Core Support ' .$cell_line;
-      my @labels = ($label);
-      $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line);
-      $drawn_data =1;
-    } else {
-      $self->display_error_message($cell_line, 'focus', 'wiggle');
-    }
-    # Next draw other block features
-    if ($data->{$cell_line}{'non_focus'}{'block_features'}){
-      my $configured_tracks = scalar @{$Config->{'configured_tracks'}{$cell_line}{'configured'}{'non_focus'}};
-      my $available_tracks =  scalar @{$Config->{'configured_tracks'}{$cell_line}{'available' }{'non_focus'}};
-      my $tracks_on = "$configured_tracks/$available_tracks features turned on";
-      my $feature_set_data = $data->{$cell_line}{'non_focus'}{'block_features'};
-      $self->draw_blocks($feature_set_data, 'Other Evidence for ' . $cell_line, undef, $colours, $tracks_on);
-      $drawn_data = 1;
-    } else {
-      $self->display_error_message($cell_line, 'non_focus', 'peaks');
-    }
-    # Finally draw supporting sets for other features
-    if ($data->{$cell_line}{'non_focus'}{'wiggle_features'}  && $wiggle){
-      my %wiggle_data = %{$data->{$cell_line}{'non_focus'}{'wiggle_features'}};
-      my $label = 'Support for ' .$cell_line;
-      my @labels = ($label);
-      $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line);
-      $drawn_data = 1;
-    } else {
-       $self->display_error_message($cell_line, 'non_focus', 'wiggle');
-    }
-
-
-    # if we have drawn tracks for this cell line add a separating line    
-    if ($drawn_data || $Config->{'reg_feature'} || ($Config->get_parameter('opt_empty_tracks') eq 'yes')){  
-      unless (exists $data->{$cell_line}->{'last_cell_line'}){
-        $self->draw_separating_line;
+  foreach my $cell_line (keys %$data) {
+    foreach (qw(focus non_focus)) {
+      my @labels = $_ eq 'focus' ? ('Core Evidence', 'Core Support') : ('Other Evidence', 'Support');
+      
+      # First draw core block features
+      if ($data->{$cell_line}{$_}{'block_features'}) {
+        my $configured_tracks = scalar @{$config->{'configured_tracks'}{$cell_line}{'configured'}{$_}};
+        my $available_tracks  = scalar @{$config->{'configured_tracks'}{$cell_line}{'available'}{$_}};
+        my $tracks_on         = "$configured_tracks/$available_tracks features turned on"; 
+        my $feature_set_data  = $data->{$cell_line}{$_}{'block_features'};
+        
+        $self->draw_blocks($feature_set_data, "$labels[0] $cell_line", undef, $colours, $tracks_on);
+        
+        $drawn_data = 1;
+      } else {
+        $self->display_error_message($cell_line, $_, 'peaks');
       }
+      
+      # Then draw core supporting features
+      if ($data->{$cell_line}{$_}{'wiggle_features'} && $wiggle) {
+        my $wiggle_data = $data->{$cell_line}{$_}{'wiggle_features'};
+        
+        $self->process_wiggle_data($wiggle_data, $colours, [ "$labels[1] $cell_line" ], $cell_line);
+        
+        $drawn_data = 1;
+      } else {
+        $self->display_error_message($cell_line, $_, 'wiggle');
+      }
+    }
+    
+    # if we have drawn tracks for this cell line add a separating line    
+    if ($drawn_data || $config->{'reg_feature'} || ($config->get_parameter('opt_empty_tracks') eq 'yes')) {  
+      $self->draw_separating_line unless exists $data->{$cell_line}->{'last_cell_line'};
     }
   }
 
@@ -168,7 +149,7 @@ sub block_features_zmenu {
   my $pos = $f->slice->seq_region_name .":". ($offset + $f->start )."-".($f->end+$offset);
   my $feature_set = $f->feature_set->name;
   my $midpoint = $f->score || 'undetermined'; 
-  my $id = $self->{'config'}->core_objects->regulation->stable_id;
+  my $id = $self->{'config'}->core_objects->{'regulation'}->stable_id;
   my $href = $self->_url
   ({
     'action'  => 'FeatureEvidence',
@@ -247,12 +228,12 @@ sub get_colours {
 
 sub display_error_message {
   my ($self, $cell_line, $focus, $type) = @_;
-  my $Config = $self->{'config'};
-  my $configured_tracks = $Config->{'configured_tracks'};
+  my $config = $self->{'config'};
+  my $configured_tracks = $config->{'configured_tracks'};
    
   my $number_available = scalar @{$configured_tracks->{$cell_line}{'available'}{$focus}};
   my $number_configured  = scalar @{$configured_tracks->{$cell_line}{'configured'}{$focus}};
-  return unless $Config->get_parameter('opt_empty_tracks') eq 'yes'; 
+  return unless $config->get_parameter('opt_empty_tracks') eq 'yes'; 
    
   # For Peak focus tracks if no data display error message 
   if ($focus eq 'focus'){

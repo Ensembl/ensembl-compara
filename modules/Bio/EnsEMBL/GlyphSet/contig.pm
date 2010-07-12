@@ -168,11 +168,11 @@ sub _init_non_assembled_contig {
     
     if ($show_navigation && $species ne 'Ancestral_sequences') {
       my $url = $self->_url({
-        'species'  => $self->species,
-        'type'     => 'Location',
-        'action'   => 'Contig',
-        'region_n' => $region,
-        'r'        => undef
+        'species' => $self->species,
+        'type'    => 'Location',
+        'action'  => 'Contig',
+        'region'  => $region,
+        'r'       => undef
       });
       
       $dets->{'href'} = $url;
