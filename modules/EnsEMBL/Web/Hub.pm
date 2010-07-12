@@ -36,24 +36,17 @@ sub new {
   my ($class, %args) = @_;
 
   my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
-  $type = 'DAS' if $type =~ /^DAS::.+/;
-
+  
   ## The following may seem a little clumsy, but it allows the Hub to be created
   ## by a command-line script with no access to CGI parameters
-  my $factorytype = $ENV{'ENSEMBL_FACTORY'};
-  unless ($factorytype) {
-    if ($args{'_input'} && $args{'_input'}->param('factorytype')) {
-      $factorytype = $args{'_input'}->param('factorytype');
-    }
-    else {
-      $factorytype = $type;
-    }
-  }
+  my $factorytype = $ENV{'ENSEMBL_FACTORY'} || ($args{'_input'} && $args{'_input'}->param('factorytype') ? $args{'_input'}->param('factorytype') : $type)
+  
   my ($session, $user, $timer);
+  
   if ($ENSEMBL_WEB_REGISTRY) {
-    $session  = $ENSEMBL_WEB_REGISTRY->get_session;
-    $user     = $args{'_user'} || $ENSEMBL_WEB_REGISTRY->get_user;
-    $timer    = $args{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
+    $session = $ENSEMBL_WEB_REGISTRY->get_session;
+    $user    = $args{'_user'}  || $ENSEMBL_WEB_REGISTRY->get_user;
+    $timer   = $args{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
   }
 
   my $self = {
@@ -63,13 +56,16 @@ sub new {
     _type          => $type,
     _action        => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
     _function      => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
-    _script        => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action... ## deprecated
+    _script        => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action
     _factorytype   => $factorytype,
     _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
     _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
     _problem       => $args{'_problem'}       || {},    
     _view_configs  => $args{'_view_configs_'} || {},
     _user_details  => $args{'_user_details'}  || 1,
+    _object_types  => $args{'_object_types'}  || {},
+    _core_objects  => {},
+    _core_params   => {},
     _session       => $session,
     _user          => $user,                    
     _timer         => $timer, 
@@ -82,15 +78,13 @@ sub new {
   ## Get database connections 
   my $api_connection = $self->species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
   $self->{'_databases'} = $api_connection;
-
-  ## TODO - remove core objects! 
-  if ($self->input) {
-    $self->{'_core_objects'} = new EnsEMBL::Web::CoreObjects($self->input, $api_connection);
-    $self->_set_core_params;
-  }
+  
+  $self->_set_core_params;
 
   $self->{'_ext_url'} = $args{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
   $self->species_defs->{'timer'} = $args{'_timer'};
+  
+  $self->{'_parent'} = $self->_parse_referer;
   
   return $self;
 }
@@ -110,14 +104,14 @@ sub user        :lvalue { $_[0]{'_user'};        }
 
 sub input         { return $_[0]{'_input'};         }
 sub cookies       { return $_[0]{'_cookies'};       }
-sub core_objects  { return $_[0]{'_core_objects'};  }
+sub object_types  { return $_[0]{'_object_types'};  }
 sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
-sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
+sub ExtURL        { return $_[0]{'_ext_url'};       }
+sub timer         { return $_[0]{'_timer'};         }
 sub user_details  { return $_[0]{'_user_details'} ||= 1; }
-sub timer         { return $_[0]{'_timer'}; }
+sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
-sub ExtURL        { return $_[0]{'_ext_url'}; } 
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -130,9 +124,9 @@ sub clear_problems     { $_[0]{'_problem'} = {}; }
 # If only one cookie name is given, returns the value as a scalar
 # If more than one cookie name is given, returns a hash of name => value
 sub get_cookies {
-  my $self    = shift;
-  my %cookies = %{$self->cookies};
-  %cookies    = map { exists $cookies{$_} ? ($_ => $cookies{$_}) : () } @_ if @_;
+  my $self     = shift;
+  my %cookies  = %{$self->cookies};
+  %cookies     = map { exists $cookies{$_} ? ($_ => $cookies{$_}) : () } @_ if @_;
   $cookies{$_} = $cookies{$_}->value for grep exists $cookies{$_}, @_;
   return scalar keys %cookies > 1 ? \%cookies : [ values %cookies ]->[0];
 }
@@ -141,46 +135,6 @@ sub problem {
   my $self = shift;
   push @{$self->{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
   return $self->{'_problem'};
-}
-
-# The whole problem handling code possibly needs re-factoring 
-# Especially the stuff that may end up cyclic! (History/UnMapped)
-# where ID's don't exist but we have a "gene" based display
-# for them.
-sub handle_problem {
-  my ($self, $factory) = @_;
-
-  my $url;
-
-  if ($self->has_problem_type('redirect')) {
-    my ($p) = $self->get_problem_type('redirect');
-    $url  = $p->name;
-  } elsif ($self->has_problem_type('mapped_id')) {
-    my $feature = $factory->__data->{'objects'}[0];
-
-    $url = sprintf '%s/%s/%s?%s', $self->species_defs->species_path, $self->type, $self->action, join ';', map { "$_=$feature->{$_}" } keys %$feature;
-  } elsif ($self->has_problem_type('unmapped')) {
-    my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
-    my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
-
-    $url = sprintf '%s/%s/Genome?type=%s;id=%s', $self->species_defs->species_path, $self->type, $type, $id;
-  } elsif ($self->has_problem_type('archived')) {
-    my ($view, $param, $id) =
-      $self->param('peptide')    ? ('Transcript/Idhistory/Protein', 'p', $self->param('peptide'))    :
-      $self->param('transcript') ? ('Transcript/Idhistory',         't', $self->param('transcript')) :
-                                   ('Gene/Idhistory',               'g', $self->param('gene'));
-
-    $url = sprintf '%s/%s?%s=%s', $self->species_defs->species_path, $view, $param, $id;
-  } else {
-    my $p = $self->problem;
-    my @problems = map @{$p->{$_}}, keys %$p;
-    return \@problems;
-  }
- 
-  if ($url) {
-    $self->redirect($url);
-    return 'redirect';
-  }
 }
 
 sub database {
@@ -193,8 +147,15 @@ sub database {
   }
 }
 
+sub core_objects {
+  my $self = shift;
+  my $core_objects = shift;
+  $self->{'_core_objects'}->{lc $_}        = $core_objects->{$_} for keys %{$core_objects || {}};
+  $self->{'_core_objects'}->{'parameters'} = $self->core_params if $core_objects;
+  return $self->{'_core_objects'};
+}
 
-sub core_param  { 
+sub core_param { 
   my $self = shift;
   my $name = shift;
   return unless $name;
@@ -219,11 +180,11 @@ sub _set_core_params {
 # Does an ordinary redirect
 sub redirect {
   my ($self, $url) = @_;
-  $self->{'_input'}->redirect($url);
+  $self->input->redirect($url);
 }
 
 sub url {
-  my $self = shift;
+  my $self   = shift;
   my $params = shift || {};
 
   Carp::croak("Not a hashref while calling _url ($params @_)") unless ref $params eq 'HASH';
@@ -259,7 +220,7 @@ sub url {
     }
   }
 
-  my $url  = sprintf '%s/%s/%s', $self->species_defs->species_path($species), $type, $action . ($fn ? "/$fn" : '');
+  my $url  = join '/', map $_ || (), $self->species_defs->species_path($species), $type, $action, $fn;
   my $flag = shift;
 
   return [ $url, \%pars ] if $flag;
@@ -281,6 +242,7 @@ sub url {
 
 sub param {
   my $self = shift;
+  
   return unless $self->input;
 
   if (@_) {
@@ -367,50 +329,55 @@ sub attach_image_config {
   my ($self, $key, $image_key) = @_;
   my $session = $self->session;
   return undef unless $session;
-  my $T = $session->attachImageConfig($key, $image_key);
-  return $T;
+  return $session->attachImageConfig($key, $image_key);
 }
 
 sub get_tracks {
   my ($self, $key) = @_;
-  my $data = $self->fetch_userdata_by_id($key);
+  my $data   = $self->fetch_userdata_by_id($key);
   my $tracks = {};
  
   if (my $parser = $data->{'parser'}) {
-    while (my ($type, $track) = each(%{$parser->get_all_tracks})) {
+    while (my ($type, $track) = each (%{$parser->get_all_tracks})) {
       my @rows;
+      
       foreach my $feature (@{$track->{'features'}}) {
         my $data_row = {
-          'chr'     => $feature->seqname(),
-          'start'   => $feature->rawstart(),
-          'end'     => $feature->rawend(),
-          'label'   => $feature->id(),
-          'gene_id' => $feature->id(),
+          chr     => $feature->seqname,
+          start   => $feature->rawstart,
+          end     => $feature->rawend,
+          label   => $feature->id,
+          gene_id => $feature->id,
         };
-        push (@rows, $data_row);
+        
+        push @rows, $data_row;
       }
+      
       $track->{'config'}{'name'} = $data->{'name'};
-      $tracks->{$type} = {'features' => \@rows, 'config' => $track->{'config'}};
+      $tracks->{$type} = { features => \@rows, config => $track->{'config'} };
     }
   } else {
     while (my ($analysis, $track) = each(%{$data})) {
       my @rows;
+      
       foreach my $f (
-        map { $_->[0] }
+        map  { $_->[0] }
         sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-        map {[ $_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'}, $_->{'start'} ]}
+        map  {[ $_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'}, $_->{'start'} ]}
         @{$track->{'features'}}
-        ) {
+      ) {
         my $data_row = {
-          'chr'       => $f->{'region'},
-          'start'     => $f->{'start'},
-          'end'       => $f->{'end'},
-          'length'    => $f->{'length'},
-          'label'     => $f->{'label'},
-          'gene_id'   => $f->{'gene_id'},
+          chr     => $f->{'region'},
+          start   => $f->{'start'},
+          end     => $f->{'end'},
+          length  => $f->{'length'},
+          label   => $f->{'label'},
+          gene_id => $f->{'gene_id'},
         };
-        push (@rows, $data_row);
+        
+        push @rows, $data_row;
       }
+      
       $tracks->{$analysis} = {'features' => \@rows, 'config' => $track->{'config'}};
     }
   }
@@ -427,25 +394,26 @@ sub fetch_userdata_by_id {
 
   if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
     $data = $self->get_data_from_session($status, $type, $id);
-  } 
-  else {
-    my $fa = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
+  } else {
     my $user = $self->user;
+    
     return unless $user;
+    
+    my $fa      = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
     my @records = $user->uploads($record_id);
-    my $record = $records[0];
+    my $record  = $records[0];
 
     if ($record) {
       my @analyses = ($record->analyses);
 
       foreach (@analyses) {
         next unless $_;
-        $data->{$_} = {'features' => $fa->fetch_all_by_logic_name($_), 'config' => {'name' => $_}};
+        $data->{$_} = { features => $fa->fetch_all_by_logic_name($_), config => { name => $_ } };
       }
     }
   }
-  return $data;
   
+  return $data;
 }
 
 sub get_data_from_session {
@@ -455,26 +423,25 @@ sub get_data_from_session {
 
   if ($status eq 'temp') {
     $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
-    $name = $tempdata->{'name'};
-  } 
-  else {
-    my $user = $self->user;
+    $name     = $tempdata->{'name'};
+  } else {
+    my $user   = $self->user;
     my $record = $user->urls($id);
-    $tempdata = { 'url' => $record->url };
-    $name = $record->url;
+    $tempdata  = { url => $record->url };
+    $name      = $record->url;
   }
 
   # NB this used to be new EnsEMBL::Web... etc but this does not work with the
   # FeatureParser module for some reason, so have to use FeatureParser->new()
-  #my $parser = new EnsEMBL::Web::Text::FeatureParser($self->species_defs);
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
 
   if ($type eq 'url') {
     my $response = get_url_content($tempdata->{'url'});
-    $content = $response->{'content'};
+    $content     = $response->{'content'};
   } else {
     my $file = new EnsEMBL::Web::TmpFile::Text(filename => $tempdata->{'filename'});
     $content = $file->retrieve;
+    
     return {} unless $content;
   }
    
@@ -482,7 +449,5 @@ sub get_data_from_session {
 
   return { 'parser' => $parser, 'name' => $name };
 }
-
-
 
 1;

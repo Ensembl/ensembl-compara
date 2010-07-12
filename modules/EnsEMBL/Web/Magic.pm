@@ -74,25 +74,27 @@ sub ingredient {
   
   return unless $controller; # Cache hit
   
-  if ($model->object) {
-    # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
-    $ENV{'ENSEMBL_ACTION'} = $model->hub->parent->{'ENSEMBL_ACTION'};
-    $model->object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'};
-    $model->hub->action = $ENV{'ENSEMBL_ACTION'};
-    
-    if (!$ENV{'ENSEMBL_FUNCTION'}) {
-      $ENV{'ENSEMBL_FUNCTION'} = $model->hub->parent->{'ENSEMBL_FUNCTION'};
-      $model->object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'};
-      $model->hub->function = $ENV{'ENSEMBL_FUNCTION'};
-    }
-    
-    $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
-    $page->render;
-    
-    my $content = $page->renderer->content;
-    print $content;
-    $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
+  my $object  = $model->object;
+  my $hub     = $model->hub;
+  my $referer = $hub->parent;
+  
+  # Set action of component to be the same as the action of the parent page - needed for view configs to be correctly created
+  $ENV{'ENSEMBL_ACTION'}       = $referer->{'ENSEMBL_ACTION'};
+  $object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'} if $object;
+  $hub->action                 = $ENV{'ENSEMBL_ACTION'};
+  
+  if (!$ENV{'ENSEMBL_FUNCTION'}) {
+    $ENV{'ENSEMBL_FUNCTION'}       = $referer->{'ENSEMBL_FUNCTION'};
+    $object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'} if $object;
+    $hub->function                 = $ENV{'ENSEMBL_FUNCTION'};
   }
+  
+  $controller->build_page($page, 'Dynamic', $model, $ENV{'ENSEMBL_TYPE'} eq 'DAS' ? $ENV{'ENSEMBL_SCRIPT'} : 'ajax_content');
+  $page->render;
+  
+  my $content = $page->renderer->content;
+  print $content;
+  $controller->set_cached_content($content) if $page->{'format'} eq 'HTML' && !$problem;
 }
 
 sub configurator {
@@ -135,17 +137,16 @@ sub handler {
   my $outputtype   = $hub->type eq 'DAS' ? 'DAS' : undef;
   my $controller   = new EnsEMBL::Web::Controller($hub);
   
-  $controller->clear_cached_content if $requesttype eq 'page';                    # Conditional - only clears on force refresh of page. 
+  $controller->clear_cached_content if $requesttype eq 'page';                     # Conditional - only clears on force refresh of page. 
   
-  $CGI::POST_MAX = $hub->species_defs->CGI_POST_MAX;                              # Set max upload size
+  $CGI::POST_MAX = $hub->species_defs->CGI_POST_MAX;                               # Set max upload size
   
-  return if $controller->get_cached_content($requesttype || lc $doctype);         # Page retrieved from cache
-  return if $requesttype eq 'page' && $controller->update_configuration_from_url; # Configuration has been updated - will force a redirect
-
-  my $problem = $model->create_objects;
+  return if $controller->get_cached_content($requesttype || lc $doctype);          # Page retrieved from cache
+  return if $requesttype eq 'page' && $controller->update_configuration_from_url;  # Configuration has been updated - will force a redirect
+  return if $model->create_objects($hub->factorytype, $requesttype) eq 'redirect'; # Forcing a redirect - don't need to go any further
+  return ($controller, $model) if $requesttype eq 'menu';                          # Menus don't need the page code, so skip it
   
-  return if $problem eq 'redirect';                       # Forcing a redirect - don't need to go any further
-  return ($controller, $model) if $requesttype eq 'menu'; # Menus don't need the page code, so skip it
+  $hub->core_objects($model->all_objects);
   
   my $renderer_module = "EnsEMBL::Web::Document::Renderer::$renderertype";
   my $document_module = "EnsEMBL::Web::Document::Page::$doctype";
@@ -163,20 +164,21 @@ sub handler {
   
   $page->initialize; # Adds the components to be rendered to the page module
   
+  my @problems = map @$_, values %{$hub->problem};
+  
   # FIXME: Configurator can work even if factory has a fatal problem? Stupid.
-  if ($problem && $doctype ne 'Configurator') {
-    $page->add_error_panels($problem);
+  if (@problems && $doctype ne 'Configurator') {
+    $page->add_error_panels(\@problems);
     
     # Abort page construction if any fatal problems present
-    if (grep $_->isFatal, @$problem) {
+    if (grep $_->isFatal, @problems) {
       $page->render;
       print $page->renderer->content;
       return;
     }
   }
   
-  return ($controller, $model, $page, !!$problem);
+  return ($controller, $model, $page, !!@problems);
 }
-
 
 1;

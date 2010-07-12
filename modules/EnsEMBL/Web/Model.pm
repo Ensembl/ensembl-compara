@@ -1,14 +1,5 @@
 package EnsEMBL::Web::Model;
 
-### NAME: EnsEMBL::Web::Model
-### The M in the MVC design pattern - a container for domain objects
-
-### PLUGGABLE: No
-
-### STATUS: Under development
-### Currently being developed, along with its associated moduled E::W::Hub,
-### as a replacement for Proxy/Proxiable/CoreObjects code
-
 ### DESCRIPTION:
 ### Model is a container for domain objects such as Location, Gene, 
 ### and User plus a single helper module, Hub (see separate documentation).
@@ -36,159 +27,158 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $args) = @_;
-  my $self = { 
-    '_objects'      => {}, 
-  };
-
-  ## Create the hub - a mass of connections to databases, Apache, etc
-  $self->{'_hub'} = EnsEMBL::Web::Hub->new(
-    '_apache_handle'  => $args->{'_apache_handle'},
-    '_input'          => $args->{'_input'},
-  );
-
-  bless $self, $class;
   
-  $self->hub->parent = $self->_parse_referer;
+  my $object_params = [
+    [ 'Location',   'r'   ],
+    [ 'Gene',       'g'   ],
+    [ 'Transcript', 't'   ],
+    [ 'Variation',  'v'   ],
+    [ 'Regulation', 'rf'  ],
+    [ 'Marker',     'm'   ],
+    [ 'LRG',        'lrg' ],
+  ];
+    
+  my $self = { 
+    _objects         => {},
+    _object_params   => $object_params,
+    _object_types    => { map { $_->[0] => $_->[1] } @$object_params },
+    _ordered_objects => [ map $_->[0], @$object_params ]
+  };
+  
+  $self->{'_hub'} = new EnsEMBL::Web::Hub(
+    _apache_handle => $args->{'_apache_handle'},
+    _input         => $args->{'_input'},
+    _object_types  => $self->{'_object_types'}
+  );
+   
+  bless $self, $class;
   
   return $self; 
 }
 
-sub hub { return $_[0]->{'_hub'}; }
-sub all_objects { return $_[0]->{'_objects'}};
-
-sub objects {
-### Getter/setter for domain objects - acts on the default data type 
-### for this page if none is specified
-### Returns an array of objects of the appropriate type
-  my ($self, $type, $objects) = @_;
-  $type ||= $self->type;
-  if ($objects) {
-    my $m = $self->{'_objects'}{$type} || [];
-    my @a = ref($objects) eq 'ARRAY' ? @$objects : ($objects); 
-    push @$m, @a;
-    $self->{'_objects'}{$type} = $m;
-  }
-  return @{$self->{'_objects'}{$type}};
-}
+sub hub              { return $_[0]{'_hub'};             }
+sub all_objects      { return $_[0]{'_objects'};         }
+sub object_params    { return $_[0]{'_object_params'};   }
+sub object_types     { return $_[0]{'_object_types'};    }
+sub ordered_objects  { return $_[0]{'_ordered_objects'}; }
+#sub objects          { return shift->object(@_);         }
 
 sub object {
-### Getter/setter for data objects - acts on the default data type 
-### for this page if none is specified
-### Returns the first object in the array of the appropriate type
+  ### Getter/setter for data objects - acts on the default data type
+  ### for this page if none is specified
+  ### Returns the first object in the array of the appropriate type
+  
   my ($self, $type, $object) = @_;
-  $type ||= $self->hub->factorytype;
-  if ($object) {
-    my $m = $self->{'_objects'}{$type} || [];
-    push @$m, $object; 
-    $self->{'_objects'}{$type} = $m;
-  }
-  return $self->{'_objects'}{$type}[0];
+  my $hub = $self->hub;
+  $type ||= $hub->type;
+  
+  $self->{'_objects'}{$type} = $object if $object;
+  
+  my $object_type = $self->{'_objects'}{$type};
+  $object_type  ||= $self->{'_objects'}{$hub->factorytype} unless $_[1];
+  
+  return $object_type;
 }
 
 sub api_object {
-### returns the underlying API object(s)
-  my ($self, $type, $subtype) = @_;
-  my $object = $self->{'_objects'}{$type}[0];
-  return unless $object;
-  if ($type eq 'Location') {
-    return $object->slice;
-  }
-  else {
-    return $object->Obj;
-  }
-}
-
-sub add_objects {
-### Adds domain objects created by the factory to this Model
-  my ($self, $data, $type) = @_;
-  return unless $data;
-  $type ||= $self->hub->factorytype;
+  ### Returns the underlying API object(s)
   
-  ### Proxy Object(s)
-  if (ref($data) eq 'ARRAY') {
-    foreach my $object (@$data) {
-      if (ref($object) =~ /Object/ && $type !~ /^(MultipleLocation|DAS)$/) {
-        $self->object($object->__objecttype, $object);
-      }
-      ### Other object type
-      else {
-        $self->object($type, $object);
-      }
-    }
-  }
-}
-
-sub create_data_object_of_type {
-  my ($self, $type, $args) = @_;
-  my $object;
-  my $class = 'EnsEMBL::Web::Data::'.$type;
-  if ($self->dynamic_use($class)) {
-    $object = $class->new($self->hub, $args);
-    $self->object($object->type, $object) if $object;
-  }
+  my ($self, $type) = @_;
+  my $object = $self->object($type);
+  return $object->__objecttype eq 'Location' ? $object->slice : $object->Obj if $object;
 }
 
 sub create_objects {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $type    = shift || $hub->factorytype;
-  my $factory = $self->create_factory($type);
-  my $problem;
+  ### Used to generate the objects needed for the top tabs and the rest of the page
+  ### The object of type $type is the primary object, used for the page.
   
-  if ($factory) {
-    if ($hub->has_fatal_problem) {
-      $problem = $hub->problem('fatal', 'Fatal problem in the factory')->{'fatal'};
-    } else {
-      eval {
-        $factory->createObjects;
-      };
-      
-      $hub->problem('fatal', "Unable to execute createObject on Factory of type " . $type, $@) if $@;
-      
-      # $hub->handle_problem returns string 'redirect', or array ref of EnsEMBL::Web::Problem object
-      if ($hub->has_a_problem) {
-        $problem = $hub->handle_problem($factory); 
-      } else {
-        $self->add_objects($factory->DataObjects, $type);
-      }
-    }
+  my ($self, $type, $request) = @_;
+  
+  my $hub   = $self->hub;
+  my $url   = $hub->url;
+  my $input = $hub->input;
+  $type   ||= $hub->factorytype;
+  
+  my ($factory, $new_factory, $data);
+  
+  if ($request eq 'lazy') {
+    $factory = $self->create_factory($type) unless $self->object($type);
+    return $self->object($type);
   }
   
-  return $problem;
+  if ($self->object_types->{$type} && $input->param('r')) {
+    $factory = $self->create_factory('Location');
+    $data    = $factory->__data;
+  }
+  
+  $new_factory = $self->create_factory($type, $data) unless $type eq 'Location' && $factory; # If it's a Location page with an r parameter, don't duplicate the Location factory
+  $factory     = $new_factory if $new_factory;
+  
+  foreach (@{$self->object_params}) {
+    next if $_->[0] eq $type; # This factory already exists, so skip it
+    next unless $input->param($_->[1]) && !$self->object($_->[0]);
+    
+    $new_factory = $self->create_factory($_->[0], $factory->__data) || undef;
+    $factory     = $new_factory if $new_factory;
+  }
+  
+  if ($request eq 'page') {
+    my ($redirect) = $hub->get_problem_type('redirect');
+    my $new_url;
+    
+    if ($redirect) {
+      $new_url = $redirect->name;
+    } elsif (!$hub->has_fatal_problem) { # If there's a fatal problem, we want to show it, not redirect 
+      $hub->_set_core_params;
+      $new_url = $hub->url;
+    }
+    
+    if ($new_url && $new_url ne $url) {
+      $hub->redirect($new_url);
+      return 'redirect';
+    }
+  }
 }
 
 sub create_factory {
   ### Creates a Factory object which can then generate one or more 
   ### domain objects
   
-  my ($self, $type) = @_;
+  my ($self, $type, $data) = @_;
   
   return unless $type;
   
-  return $self->new_factory($type, {
-    _hub           => $self->hub,
-    _input         => $self->hub->input,
-    _apache_handle => $self->hub->apache_handle,
-    _databases     => $self->hub->databases,
-    _core_objects  => $self->hub->core_objects,
-    _parent        => $self->hub->parent,
-  });
-}
-
-sub munge_features_for_drawing {
-### Converts full objects into simple data structures that can be used by the drawing code
-  my ($self, $types) = @_;
-  my $drawable_features = {};
-  my $stored_features = $self->{'_objects'}{'Feature'}[0];
-
-  while (my ($type, $domain_object) = each(%$stored_features)) {
-    next unless $domain_object;
-    my $parameters = $domain_object->convert_to_drawing_parameters;
-    $drawable_features->{$type} = $parameters;
+  my $hub = $self->hub;
+  
+  $data ||= {
+    _hub           => $hub,
+    _input         => $hub->input,
+    _apache_handle => $hub->apache_handle,
+    _databases     => $hub->databases,
+    _parent        => $hub->parent
+  };
+  
+  my $factory = $self->new_factory($type, $data);
+  
+  if ($factory) {
+    $factory->createObjects;
+    
+    $self->object($_->__objecttype, $_) for @{$factory->DataObjects};
+    
+    return $factory;
   }
-  return $drawable_features;
 }
 
+sub create_data_object_of_type {
+  my ($self, $type, $args) = @_;
+  
+  my $class = "EnsEMBL::Web::Data::$type";
+  my $object;
+  
+  if ($self->dynamic_use($class)) {
+    $object = $class->new($self->hub, $args);
+    $self->object($object->type, $object) if $object;
+  }
+}
 
 1;
-
