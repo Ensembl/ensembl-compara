@@ -1,4 +1,5 @@
-## $ID:
+# $Id$
+
 package EnsEMBL::Web::Configuration::Info;
 
 use strict;
