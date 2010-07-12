@@ -11,22 +11,21 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {}
 
 sub archive_adaptor {
-  my $self   = shift;
-  my $object = $self->object;
-  
-  return $object->database($object->param('db') || 'core')->get_ArchiveStableIdAdaptor;
+  my $self = shift;
+  my $hub  = $self->hub;
+  return $hub->database($hub->param('db') || 'core')->get_ArchiveStableIdAdaptor;
 }
 
 sub archive_link {
   my ($self, $archive, $release) = @_;
   
-  my $object = $self->object;
+  my $hub = $self->hub;
   
-  return '' unless ($release || $archive->release) > $object->species_defs->EARLIEST_ARCHIVE;
+  return '' unless ($release || $archive->release) > $hub->species_defs->EARLIEST_ARCHIVE;
   
   my $type    = $archive->type eq 'Translation' ? 'peptide' : lc $archive->type;
   my $name    = $archive->stable_id . '.' . $archive->version;
-  my $current = $object->species_defs->ENSEMBL_VERSION;
+  my $current = $hub->species_defs->ENSEMBL_VERSION;
   my $view    = "${type}view";
   my ($action, $p, $url);
   
@@ -54,7 +53,7 @@ sub archive_link {
   }
   
   if ($archive->release == $current) {
-     $url = $object->_url({ type => $type, action => $action, $p => $name });
+     $url = $hub->url({ type => $type, action => $action, $p => $name });
   } else {
     my $release_id   = $archive->release;
     my $release      = new EnsEMBL::Web::Data::Release($archive->release);
@@ -64,9 +63,9 @@ sub archive_link {
       $url = "http://$archive_site.archive.ensembl.org";
       
       if ($archive->release >= 51) {
-        $url .= $object->_url({ type => $type, action => $action, $p => $name });
+        $url .= $hub->url({ type => $type, action => $action, $p => $name });
       } else {
-        $url .= $object->species_path . "/$view?$type=$name";
+        $url .= $hub->species_path . "/$view?$type=$name";
       }
     }
   }

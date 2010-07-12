@@ -7,11 +7,10 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object      = $self->object;
-  my $db_adaptor  = $object->database($object->param('fdb'));
-  my $feature_set = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($object->param('fs'));
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $db_adaptor  = $hub->database($hub->param('fdb'));
+  my $feature_set = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($hub->param('fs'));
  
   $self->caption('Evidence');
   
@@ -22,13 +21,13 @@ sub content {
   
   $self->add_entry({
     type  => 'bp',
-    label => $object->param('pos')
+    label => $hub->param('pos')
   });
 
-  unless ($object->param('ps') =~/undetermined/ ){
+  if ($hub->param('ps') !~ /undetermined/) {
     $self->add_entry({
-      'type'  => 'Peak summit',
-      'label' => $object->param('ps')
+      type  => 'Peak summit',
+      label => $hub->param('ps')
     });
   }
 }

@@ -7,8 +7,8 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
   my @xref   = $object->display_xref;
   
@@ -17,18 +17,18 @@ sub content {
   $self->add_entry({
     type  => 'Gene',
     label => $object->stable_id,
-    link  => $object->_url({ type => 'Gene', action => 'Summary' })
+    link  => $hub->url({ type => 'Gene', action => 'Summary' })
   });
   
   $self->add_entry({
     type  => 'Location',
     label => sprintf(
       '%s: %s-%s',
-      $object->neat_sr_name($object->seq_region_type, $object->seq_region_name),
-      $object->thousandify($object->seq_region_start),
-      $object->thousandify($object->seq_region_end)
+      $self->neat_sr_name($object->seq_region_type, $object->seq_region_name),
+      $self->thousandify($object->seq_region_start),
+      $self->thousandify($object->seq_region_end)
     ),
-    link  => $object->_url({
+    link  => $hub->url({
       type   => 'Location',
       action => 'View',
       r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end

@@ -7,13 +7,11 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-
-  my $object          = $self->object;
-  my $threshold       = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $slice_name      = $object->param('region');
-  
-  my $db_adaptor      = $object->database('core');
+  my $self            = shift;
+  my $hub             = $self->hub;
+  my $threshold       = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $slice_name      = $hub->param('region');
+  my $db_adaptor      = $hub->database('core');
   my $slice           = $db_adaptor->get_SliceAdaptor->fetch_by_region('seqlevel', $slice_name);
   my $slice_type      = $slice->coord_system_name;
   my $top_level_slice = $slice->project('toplevel')->[0]->to_Slice;
@@ -23,7 +21,7 @@ sub content {
   
   $self->add_entry({
     label => "Center on $slice_type $slice_name",
-    link  => $object->_url({ 
+    link  => $hub->url({ 
       type   => 'Location', 
       action => $action, 
       region => $slice_name 
@@ -33,7 +31,7 @@ sub content {
   $self->add_entry({
     label => "Export $slice_type sequence/features",
     class => 'modal_link',
-    link  => $object->_url({ 
+    link  => $hub->url({ 
       type   => 'Export',
       action => "Location/$action",
       r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
@@ -58,7 +56,7 @@ sub content {
     
     $self->add_entry({
       label => "Center on $new_slice_type $new_slice_name",
-      link  => $object->_url({
+      link  => $hub->url({
         type   => 'Location', 
         action => $action, 
         region => $new_slice_name
@@ -72,7 +70,7 @@ sub content {
     $self->add_entry({
       label => "Export $new_slice_type sequence/features",
       class => 'modal_link',
-      link  => $object->_url({
+      link  => $hub->url({
         type   => 'Export',
         action => "Location/$action",
         r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
@@ -85,14 +83,14 @@ sub content {
       $self->add_entry({
         type  => 'EMBL',
         label => $new_slice_name,
-        link  => $object->get_ExtURL('EMBL', $new_slice_name),
+        link  => $hub->get_ExtURL('EMBL', $new_slice_name),
         extra => { external => 1 }
       });
       
       $self->add_entry({
         type  => 'EMBL (latest version)',
         label => $short_name,
-        link  => $object->get_ExtURL('EMBL', $short_name),
+        link  => $hub->get_ExtURL('EMBL', $short_name),
         extra => { external => 1 }
       });
     }

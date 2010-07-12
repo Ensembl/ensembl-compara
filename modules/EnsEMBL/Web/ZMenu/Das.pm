@@ -12,26 +12,26 @@ use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object      = $self->object;
-  my $logic_name  = $object->param('logic_name') || die 'No logic name in params';
-  my $feature_id  = $object->param('feature_id');
-  my $group_id    = $object->param('group_id');
-  my $start       = $object->param('start');
-  my $end         = $object->param('end');
-  my $strand      = $object->param('strand');
-  my $click_start = $object->param('click_start');
-  my $click_end   = $object->param('click_end');
-  my %das         = %{$ENSEMBL_WEB_REGISTRY->get_all_das($object->species)};
-  my $slice       = $object->slice;
-  my %strand_map  = ( 1 => '+', -1 => '-' );
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $logic_name   = $hub->param('logic_name') || die 'No logic name in params';
+  my $feature_id   = $hub->param('feature_id');
+  my $group_id     = $hub->param('group_id');
+  my $start        = $hub->param('start');
+  my $end          = $hub->param('end');
+  my $strand       = $hub->param('strand');
+  my $click_start  = $hub->param('click_start');
+  my $click_end    = $hub->param('click_end');
+  my %das          = %{$ENSEMBL_WEB_REGISTRY->get_all_das($hub->species)};
+  my $slice        = $hub->slice;
+  my %strand_map   = ( 1 => '+', -1 => '-' );
   
   my $coordinator = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
     -sources => [ $das{$logic_name} ],
-    -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
-    -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
-    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT
+    -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
+    -noproxy => $species_defs->ENSEMBL_NO_PROXY,
+    -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT
   );
   
   my $features = $coordinator->fetch_Features($slice, ( feature => $feature_id, group => $group_id ));
@@ -43,18 +43,18 @@ sub content {
   
   $strand = $strand_map{$strand} || '0';
   
-  $self->caption($object->param('label'));
+  $self->caption($hub->param('label'));
   
   foreach (keys %{$features->{$logic_name}->{'features'}}) {
-    my $objects = $features->{$logic_name}->{'features'}->{$_}->{'objects'};
+    my $hubs = $features->{$logic_name}->{'features'}->{$_}->{'objects'};
     
-    next unless scalar @$objects;
+    next unless scalar @$hubs;
     
     my $nearest_feature = 1;    # Initialise so it exists
     my $nearest         = 1e12; # Arbitrary large number
     my ($left, $right, $min, @feat);
     
-    foreach (@$objects) {
+    foreach (@$hubs) {
       $left  = $_->seq_region_start - $click_start;
       $right = $click_end - $_->seq_region_end;
       

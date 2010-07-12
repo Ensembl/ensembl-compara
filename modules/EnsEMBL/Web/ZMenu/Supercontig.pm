@@ -8,15 +8,14 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
-  
-  my $object = $self->object;
-  my $r      = $object->param('r');
+  my $hub  = $self->hub;
+  my $r    = $hub->param('r');
  
-  $self->caption($object->param('ctg') . " $r");
+  $self->caption($hub->param('ctg') . " $r");
   
   $self->add_entry({
     label => 'Jump to Supercontig',
-    link  => $object->_url({
+    link  => $hub->url({
       type     => 'Location',
       action   => 'Overview',
       r        => $r,

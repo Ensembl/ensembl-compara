@@ -7,20 +7,19 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu::Gene);
 
 sub content {
-  my $self = shift;
-  
-  $self->SUPER::content;
-  
+  my $self         = shift;
+  my $hub          = $self->hub;
   my $object       = $self->object;
-
-  my $species      = $object->species;
-  my $species_path = $object->species_defs->species_path($species);
-
-  my $phy_link     = $object->get_ExtURL('PHYLOMEDB', $object->stable_id);
-  my $dyo_link     = $object->get_ExtURL('GENOMICUSSYNTENY', $object->stable_id);
-  my $treefam_link = $object->get_ExtURL('TREEFAMSEQ', $object->stable_id);
+  my $stable_id    = $object->stable_id;
+  my $species      = $hub->species;
+  my $species_path = $hub->species_path($species);
+  my $phy_link     = $hub->get_ExtURL('PHYLOMEDB', $stable_id);
+  my $dyo_link     = $hub->get_ExtURL('GENOMICUSSYNTENY', $stable_id);
+  my $treefam_link = $hub->get_ExtURL('TREEFAMSEQ', $stable_id);
   my $ens_tran     = $object->Obj->canonical_transcript; # Link to protein sequence for cannonical or longest translation
   my $ens_prot;
+  
+  $self->SUPER::content;
   
   if ($ens_tran) {
     $ens_prot = $ens_tran->translation;
@@ -71,7 +70,7 @@ sub content {
       type     => 'Protein',
       label    => $ens_prot->display_id,
       position => 6,
-      link     => $object->_url({
+      link     => $hub->url({
         type   => 'Transcript',
         action => 'Sequence_Protein',
         t      => $ens_tran->stable_id 

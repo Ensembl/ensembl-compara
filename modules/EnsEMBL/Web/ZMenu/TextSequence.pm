@@ -16,19 +16,20 @@ sub render {
 }
 
 sub _content {
-  my $self = shift; 
-  
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
-  
+  my @v       = $hub->param('v');
+  my @vf      = $hub->param('vf');
+  my $lrg     = $hub->param('lrg')
+  my $adaptor = $hub->database('variation')->get_VariationAdaptor;
   my $lrg_slice;
-  if ($object->param('lrg')) {
-    my $core_adaptor = $object->database('core')->get_SliceAdaptor;
-    eval { $lrg_slice = $core_adaptor->fetch_by_region('LRG', $object->param('lrg')) };
+  
+  if ($lrg) {
+    my $core_adaptor = $hub->database('core')->get_SliceAdaptor;
+    eval { $lrg_slice = $core_adaptor->fetch_by_region('LRG', $lrg); };
   }
-
-  my @v       = $object->param('v');
-  my @vf      = $object->param('vf');
-  my $adaptor = $object->database('variation')->get_VariationAdaptor;
+  
   for (0..$#v) {
     my $variation_object = $self->new_object('Variation', $adaptor->fetch_by_name($v[$_]), $object->__data);
     $self->variation_content($variation_object, $lrg_slice, $v[$_], $vf[$_]);
@@ -38,24 +39,24 @@ sub _content {
 sub variation_content {
   my ($self, $object, $lrg, $v, $vf) = @_;
   
+  my $hub         = $self->hub;
   my $variation   = $object->Obj;
   my $genes       = $variation->get_all_Genes;  
   my $feature     = $variation->get_VariationFeature_by_dbID($vf);
   my $allele      = $feature->allele_string;
-
   my $seq_region  = $feature->seq_region_name;
   my $chr_start   = $feature->start;
   my $chr_end     = $feature->end;
   my $position    = "$seq_region:$chr_start";
+  my $link        = '<a href="%s">%s</a>';
 
   if ($lrg) {
-    my $fSlice = $lrg->feature_Slice;
+    my $fSlice    = $lrg->feature_Slice;
     my $lrg_start = $fSlice->start - 1;
     $chr_start   -= $lrg_start;
     $chr_end     -= $lrg_start;
     $position     = $chr_start;
   }
-  my $link        = '<a href="%s">%s</a>';
   
   my %url_params  = (
     type   => 'Variation',
@@ -75,13 +76,13 @@ sub variation_content {
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
   
   my @entries = (
-    { caption => 'Variation', entry => sprintf $link, $object->_url({ action => 'Summary', %url_params }), $v},
+    { caption => 'Variation', entry => sprintf $link, $hub->url({ action => 'Summary', %url_params }), $v},
     { caption => 'Position',  entry => $position },
     { caption => 'Alleles',   entry => $allele   },
-    { entry => sprintf $link, $object->_url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
+    { entry => sprintf $link, $hub->url({ action => 'Mappings', %url_params }), 'Gene/Transcript Locations' }
   );
   
-  push @entries, { entry => sprintf $link, $object->_url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
+  push @entries, { entry => sprintf $link, $hub->url({ action => 'Phenotype', %url_params }), 'Phenotype Data' } if scalar @{$object->get_external_data};
   
   foreach my $pop (
     sort { $a->{'pop_info'}->{'Name'} cmp $b->{'pop_info'}->{'Name'} }
@@ -96,7 +97,7 @@ sub variation_content {
     $population_data{$name}{$key} .= ($population_data{$name}{$key} ? ' / ' : '') . $pop->{'submitter'}; # concatenate population submitters if they provide the same frequencies
   }
   
-  push @entries, { cls => 'population', entry => sprintf $link, $object->_url({ action => 'Population', %url_params }), 'Population Allele Frequencies' } if scalar keys %population_data;
+  push @entries, { cls => 'population', entry => sprintf $link, $hub->url({ action => 'Population', %url_params }), 'Population Allele Frequencies' } if scalar keys %population_data;
   
   foreach my $name (keys %population_data) {
     my %display = reverse %{$population_data{$name}};

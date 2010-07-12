@@ -7,11 +7,10 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu::Idhistory);
 
 sub content {
-  my $self = shift;
-  
-  my $object  = $self->object;
-  my $a_id    = $object->param('node') || die 'No node value in params';
-  my $archive = $self->archive_adaptor->fetch_by_stable_id_dbname($a_id, $object->param('db_name'));
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $a_id    = $hub->param('node') || die 'No node value in params';
+  my $archive = $self->archive_adaptor->fetch_by_stable_id_dbname($a_id, $hub->param('db_name'));
   my $id      = $archive->stable_id . '.' . $archive->version;
 
   $self->caption($id);

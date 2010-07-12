@@ -8,15 +8,14 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
-  
-  my $object = $self->object;
-  my $m      = $object->param('m');
+  my $hub  = $self->hub;
+  my $m    = $hub->param('m');
   
   $self->caption($m);
   
   $self->add_entry({
     label => 'Marker info.',
-    link  => $object->_url({
+    link  => $hub->url({
       type   => 'Marker',
       action => 'Details',
       m      => $m

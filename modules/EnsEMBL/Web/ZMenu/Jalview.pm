@@ -9,10 +9,9 @@ use URI::Escape qw(uri_unescape);
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object   = $self->object;
-  my $url_site = $self->object->species_defs->ENSEMBL_BASE_URL;
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $url_site = $hub->species_defs->ENSEMBL_BASE_URL;
   my $html     = sprintf(
     '<applet code="jalview.bin.JalviewLite" width="140" height="35" archive="%s/jalview/jalviewAppletOld.jar">
       <param name="file" value="%s">
@@ -21,8 +20,8 @@ sub content {
       <param name="defaultColour" value="clustal">
     </applet>', 
     $url_site, 
-    $url_site . uri_unescape($object->param('file')),
-    $url_site . uri_unescape($object->param('treeFile'))
+    $url_site . uri_unescape($hub->param('file')),
+    $url_site . uri_unescape($hub->param('treeFile'))
   );
   
   $self->add_entry({

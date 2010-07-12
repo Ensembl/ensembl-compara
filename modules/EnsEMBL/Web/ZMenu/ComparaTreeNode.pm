@@ -12,14 +12,15 @@ use EnsEMBL::Web::TmpFile::Text;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  my $cdb = shift || 'compara';
+  my $self     = shift;
+  my $cdb      = shift || 'compara';
+  my $hub      = $self->hub;
   my $object   = $self->object;
-  my $node_id  = $object->param('node')                || die 'No node value in params';
-  my $tree     = $object->get_GeneTree($cdb)                 || die 'No tree for gene';
+  my $node_id  = $hub->param('node')                   || die 'No node value in params';
+  my $tree     = $object->get_GeneTree($cdb)           || die 'No tree for gene';
   my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   
-  my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $object->param('collapse');
+  my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $hub->param('collapse');
   my $leaf_count      = scalar @{$node->get_all_leaves};
   my $is_leaf         = $node->is_leaf;
   my $parent_distance = $node->distance_to_parent || 0;
@@ -68,7 +69,7 @@ sub content {
       type  => 'Image',
       label => 'expand all sub-trees',
       order => 8,
-      link  => $object->_url({
+      link  => $hub->url({
         type     => 'Gene',
         action   => $action,
         collapse => '' 
@@ -84,7 +85,7 @@ sub content {
       type  => 'Image',
       label => 'collapse other nodes',
       order => 10,
-      link  => $object->_url({
+      link  => $hub->url({
         type     => 'Gene',
         action   => $action,
         collapse => join(',', keys %collapsed_ids, @adjacent_subtree_ids)
@@ -112,7 +113,7 @@ sub content {
         type  => 'Image',
         label => 'show all paralogs',
         order => 11,
-        link  => $object->_url({
+        link  => $hub->url({
           type     => 'Gene', 
           action   => $action,
           collapse => join(',', @collapse_node_ids)
@@ -155,7 +156,7 @@ sub content {
       
       if (defined $treefam_tree) {
         foreach my $treefam_id (split ';', $treefam_tree) {
-          my $treefam_link = $object->get_ExtURL('TREEFAMTREE', $treefam_id);
+          my $treefam_link = $hub->get_ExtURL('TREEFAMTREE', $treefam_id);
           
           if ($treefam_link) {
             $self->add_entry({
@@ -183,7 +184,7 @@ sub content {
         type  => 'Image',
         label => 'expand this sub-tree',
         order => 7,
-        link  => $object->_url({
+        link  => $hub->url({
           type     => 'Gene', 
           action   => $action,
           collapse => join(',', grep $_ != $node_id, keys %collapsed_ids)
@@ -195,7 +196,7 @@ sub content {
         type  => 'Image',
         label => 'collapse this node',
         order => 9,
-        link  => $object->_url({
+        link  => $hub->url({
           type     => 'Gene',
           action   => $action,
           collapse => join(',', $node_id, keys %collapsed_ids) 
@@ -210,7 +211,7 @@ sub content {
       for (@{$node->get_all_leaves}) {
         my $gene = $_->gene_member->stable_id;
         
-        next if $gene eq $object->param('g');
+        next if $gene eq $hub->param('g');
         
         ($url_params->{"s$s"} = $_->genome_db->name) =~ s/ /_/g;
         $url_params->{"g$s"}  = $gene;
@@ -220,7 +221,7 @@ sub content {
       $self->add_entry({
         type  => 'Comparison',
         label => 'Jump to Multi-species view',
-        link  => $object->_url($url_params),
+        link  => $hub->url($url_params),
         order => 13
       });
     }
@@ -250,7 +251,7 @@ sub content {
       label => 'Expand for Jalview',
       class => 'expand',
       order => 16,
-      link  => $object->_url({
+      link  => $hub->url({
         type     => 'Zmenu',
         action   => 'Gene',
         function => 'Jalview',

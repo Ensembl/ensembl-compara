@@ -7,15 +7,14 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu::Idhistory);
 
 sub content {
-  my $self = shift;
-  
-  my $object       = $self->object;
-  my $old_id       = $object->param('old') || die 'No old id value in params';
-  my $new_id       = $object->param('new') || die 'No new id value in params';
-  my $score        = $object->param('score');
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $old_id       = $hub->param('old') || die 'No old id value in params';
+  my $new_id       = $hub->param('new') || die 'No new id value in params';
+  my $score        = $hub->param('score');
   my $arch_adaptor = $self->archive_adaptor;
-  my $old_arch_obj = $arch_adaptor->fetch_by_stable_id_dbname($old_id, $object->param('old_db'));
-  my $new_arch_obj = $arch_adaptor->fetch_by_stable_id_dbname($new_id, $object->param('new_db'));
+  my $old_arch_obj = $arch_adaptor->fetch_by_stable_id_dbname($old_id, $hub->param('old_db'));
+  my $new_arch_obj = $arch_adaptor->fetch_by_stable_id_dbname($new_id, $hub->param('new_db'));
   my $old_release  = $old_arch_obj->release;
   
   my %types = (

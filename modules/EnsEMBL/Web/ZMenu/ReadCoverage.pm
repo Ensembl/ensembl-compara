@@ -7,10 +7,9 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object     = $self->object;
-  my $disp_level = $object->param('disp_level');
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $disp_level = $hub->param('disp_level');
   
   return unless $disp_level;
   
@@ -18,12 +17,12 @@ sub content {
   
   $self->add_entry({
     type  => 'bp',
-    label => $object->param('pos')
+    label => $hub->param('pos')
   });
   
   $self->add_entry({
     type  => 'Sample',
-    label => $object->param('sp')
+    label => $hub->param('sp')
   });
   
   $self->add_entry({

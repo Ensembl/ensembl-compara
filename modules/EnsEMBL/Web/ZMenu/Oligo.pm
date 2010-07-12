@@ -4,34 +4,32 @@ package EnsEMBL::Web::ZMenu::Oligo;
 
 use strict;
 
-
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object       = $self->object;
-  my $id           = $object->param('id');
-  my $db           = $object->param('fdb') || $object->param('db') || 'core';
-  my $object_type  = $object->param('ftype');
-  my $array_name   = $object->param('array');
-  my $db_adaptor   = $object->database(lc($db));
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $id           = $hub->param('id');
+  my $db           = $hub->param('fdb') || $hub->param('db') || 'core';
+  my $object_type  = $hub->param('ftype');
+  my $array_name   = $hub->param('array');
+  my $db_adaptor   = $hub->database(lc $db);
   my $adaptor_name = "get_${object_type}Adaptor";
   my $feat_adap    = $db_adaptor->$adaptor_name; 
   my $type         = 'Individual probes:';
   my $features     = [];
 
   # details of each probe within the probe set on the array that are found within the slice
-  my ($r_name, $r_start, $r_end) = $object->param('r') =~ /(\w+):(\d+)-(\d+)/;
+  my ($r_name, $r_start, $r_end) = $hub->param('r') =~ /(\w+):(\d+)-(\d+)/;
   my %probes;
   
-  if ($object->param('ptype') ne 'probe') {
+  if ($hub->param('ptype') ne 'probe') {
     $features = $feat_adap->can('fetch_all_by_hit_name') ? $feat_adap->fetch_all_by_hit_name($id) : 
           $feat_adap->can('fetch_all_by_probeset') ? $feat_adap->fetch_all_by_probeset($id) : [];
   }
   
   if (scalar @$features == 0 && $feat_adap->can('fetch_all_by_Probe')) {
-    my $probe_obj = $db_adaptor->get_ProbeAdaptor->fetch_by_array_probe_probeset_name($object->param('array'), $id);
+    my $probe_obj = $db_adaptor->get_ProbeAdaptor->fetch_by_array_probe_probeset_name($hub->param('array'), $id);
     
     $features = $feat_adap->fetch_all_by_Probe($probe_obj);
     
@@ -42,13 +40,13 @@ sub content {
   
   $self->add_entry({ 
     label => 'View all probe hits',
-    link  => $object->_url({
+    link  => $hub->url({
       type   => 'Location',
       action => 'Genome',
       id     => $id,
       fdb    => 'funcgen',
       ftype  => $object_type,
-      ptype  => $object->param('ptype'),
+      ptype  => $hub->param('ptype'),
       db     => 'core'
     })
   });
@@ -72,7 +70,7 @@ sub content {
   }
   
   foreach my $probe (sort {
-    $probes{$a}->{'chr'}   <=> $probes{$b}->{'chr'} ||
+    $probes{$a}->{'chr'}   <=> $probes{$b}->{'chr'}   ||
     $probes{$a}->{'start'} <=> $probes{$b}->{'start'} ||
     $probes{$a}->{'stop'}  <=> $probes{$b}->{'stop'}
   } keys %probes) {

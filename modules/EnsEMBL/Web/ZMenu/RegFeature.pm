@@ -7,40 +7,39 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $feature = $object->database('funcgen')->get_ExternalFeatureAdaptor->fetch_by_dbID($object->param('dbid'));
-  my $location = $feature->slice->seq_region_name . ':' . $feature->start . '-' . $feature->end;
-
-  my $display_label  = $feature->display_label;
-  my $feature_name   = $feature->feature_type->name;
-  my $external_link  = $self->get_external_link($feature); 
+  my $self              = shift;
+  my $hub               = $self->hub;
+  my $feature           = $hub->database('funcgen')->get_ExternalFeatureAdaptor->fetch_by_dbID($hub->param('dbid'));
+  my $location          = $feature->slice->seq_region_name . ':' . $feature->start . '-' . $feature->end;
+  my $display_label     = $feature->display_label;
+  my $feature_name      = $feature->feature_type->name;
+  my $external_link     = $self->get_external_link($feature); 
   my $feature_view_link = $self->get_feature_view_link($feature);
   
   $self->caption('Regulatory Region');
 
   $self->add_entry ({
-    type          => 'Name',
-    label         =>  $display_label,
+    type   => 'Name',
+    label  => $display_label,
   });
   
-  if ($external_link =~/http/){
+  if ($external_link =~ /http/) {
     $self->add_entry ({
-      type          => 'FeatureType',
-      label_html    =>  $feature_name,
-      link          =>  $external_link,
+      type       => 'FeatureType',
+      label_html => $feature_name,
+      link       => $external_link,
     });
   } else {
     $self->add_entry ({
-      type          => 'FeatureType',
-      label         =>  $feature_name,
+      type  => 'FeatureType',
+      label => $feature_name,
     });
   }
 
   $self->add_entry({
     type       => 'bp',
     label_html => $location,
-    link       => $object->_url({
+    link       => $hub->url({
       type   => 'Location',
       action => 'View',
       r      => $location
@@ -57,45 +56,51 @@ sub content {
 
 sub get_external_link {
   my ($self, $f) = @_;
-  my $type = $f->feature_type->name;
+  my $ext_id     = $f->display_label;
+  
+  return if $ext_id =~ /Search/;
+  
+  my $hub        = $self->hub;
+  my $type       = $f->feature_type->name;
   my $logic_name = $f->analysis->logic_name;
-  my $ext_id = $f->display_label;
   my $external_link;
-  return if $ext_id =~/Search/;
-
-  if ( $logic_name =~/cisred/i ){
-    $ext_id =~s/\D*//g;
-    $external_link = $self->object->get_ExtURL_link($f->display_label, uc($logic_name), $ext_id );
-  } elsif( $logic_name =~/miranda/i )  {
-    my @display_names = split(/:/, $f->display_label);
-    $external_link = $self->object->get_ExtURL_link($display_names[1], uc($logic_name),{ 'ID' => $display_names[1]});
-  } elsif($logic_name =~/MICA/){
-     $external_link = $self->object->get_ExtURL_link($type, uc($logic_name), $ext_id );
-  } elsif($logic_name=~/REDFLY/i){
+  
+  if ($logic_name =~ /cisred/i) {
+    $ext_id        =~ s/\D*//g;
+    $external_link = $hub->get_ExtURL_link($f->display_label, uc $logic_name, $ext_id);
+  } elsif ($logic_name =~ /miranda/i) {
+    my @display_names = split /:/, $f->display_label;
+    $external_link    = $hub->get_ExtURL_link($display_names[1], uc $logic_name, { ID => $display_names[1] });
+  } elsif ($logic_name =~ /MICA/) {
+     $external_link = $hub->get_ExtURL_link($type, uc $logic_name, $ext_id);
+  } elsif ($logic_name =~ /REDFLY/i) {
     $external_link = $f->display_label;
-  } elsif ($logic_name=~/VISTA/i){
-    $ext_id =~s/LBNL-//;
-    $external_link = $self->object->get_ExtURL_link($f->display_label, uc($logic_name).'EXT', $ext_id );
+  } elsif ($logic_name =~ /VISTA/i) {
+    $ext_id        =~ s/LBNL-//;
+    $external_link = $hub->get_ExtURL_link($f->display_label, uc($logic_name) . 'EXT', $ext_id );
   }
   
-  if ($external_link =~/href/){ 
-    my @link_info = split (/href\=|\>|\"/, $external_link);
+  if ($external_link =~ /href/) { 
+    my @link_info  = split /href\=|\>|\"/, $external_link;
     $external_link = $link_info[2]; 
   }
+  
   return $external_link;
 }
 
 sub get_feature_view_link {
   my ($self, $feature) = @_;
-  my $feature_id = $feature->display_label;
+  my $feature_id  = $feature->display_label;
   my $feature_set = $feature->feature_set->name;
-  return if $feature_set =~/cisRED|CRM/i;
-  my $link = $self->object->_url({
-    'type'    => 'Location',
-    'action'  => 'Genome',
-    'ftype'   => 'RegulatoryFactor',
-    'fset'    =>  $feature_set,
-    'id'      =>  $feature_id,
+  
+  return if $feature_set =~ /cisRED|CRM/i;
+  
+  my $link = $self->hub->url({
+    type   => 'Location',
+    action => 'Genome',
+    ftype  => 'RegulatoryFactor',
+    fset   => $feature_set,
+    id     => $feature_id,
   });
   
   return $link;

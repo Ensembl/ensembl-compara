@@ -8,9 +8,8 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
-  
-  my $object = $self->object;
-  my $ref    = $object->param('reference');
+  my $hub  = $self->hub;
+  my $ref  = $hub->param('reference');
   
   return unless $ref;
   
@@ -18,7 +17,7 @@ sub content {
   
   $self->add_entry({
     label_html => "Compare to $ref",
-    link       => $object->_url({ action => 'Population/Image', reference => $object->param('reference') })
+    link       => $hub->url({ action => 'Population/Image', reference => $ref })
   });
 }
 

@@ -7,12 +7,11 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object     = $self->object;
-  my $name       = $object->param('misc_feature');
-  my $db_adaptor = $object->database(lc $object->param('db') || 'core');
-  my $mf         = $db_adaptor->get_MiscFeatureAdaptor->fetch_by_dbID($object->param('mfid'));
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $name       = $hub->param('misc_feature');
+  my $db_adaptor = $hub->database(lc $hub->param('db') || 'core');
+  my $mf         = $db_adaptor->get_MiscFeatureAdaptor->fetch_by_dbID($hub->param('mfid'));
   my $type       = $mf->get_all_MiscSets->[0]->code;
   my $caption    = $type eq 'encode' ? 'Encode region' : $type eq 'ntctgs' ? 'NT Contig' : 'Clone';
   
@@ -68,7 +67,7 @@ sub content {
         label => $value
       };
       
-      $entry->{'link'} = $object->get_ExtURL($_->[2], $value) if $_->[2];
+      $entry->{'link'} = $hub->get_ExtURL($_->[2], $value) if $_->[2];
       
       $self->add_entry($entry);
     }
@@ -76,7 +75,7 @@ sub content {
   
   $self->add_entry({
     label => "Center on $caption",
-    link  => $object->_url({
+    link  => $hub->url({
       type   => 'Location', 
       action => 'View'
     })

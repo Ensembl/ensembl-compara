@@ -5,8 +5,10 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu::Transcript);
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
+  my $self        = shift;
+  my $object      = $self->object;
+  my $transcript  = $object->Obj;
+  my $translation = $transcript->translation;
 
   $self->caption('LRG Gene');
 
@@ -22,20 +24,20 @@ sub content {
 
   $self->add_entry({
     type  => 'Base pairs',
-    label => $object->thousandify($object->Obj->seq->length)
+    label => $self->thousandify($transcript->seq->length)
   });
 
-  if ($object->Obj->translation) {
+  if ($translation) {
     $self->add_entry({
       type     => 'Protein product',
-      label    => $object->Obj->translation->stable_id || $object->Obj->stable_id,
-      link     => $object->_url({ type => 'Transcript', action => 'ProteinSummary' }),
+      label    => $translation->stable_id || $object->stable_id,
+      link     => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
       position => 3
     });
 
     $self->add_entry({
       type  => 'Amino acids',
-      label => $object->thousandify($object->Obj->translation->length)
+      label => $self->thousandify($translation->length)
     });
   }
 

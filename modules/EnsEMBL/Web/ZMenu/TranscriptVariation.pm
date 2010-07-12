@@ -9,28 +9,27 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object           = $self->object; 
-  my $v_id             = $object->param('v');
-  my $vf               = $object->param('vf');
-  my $alt_allele       = $object->param('alt_allele');
-  my $aa_change        = $object->param('aa_change');
-  my $cov              = $object->param('cov');
-  my $db_adaptor       = $object->database('variation');
+  my $self             = shift;
+  my $hub              = $self->hub; 
+  my $v_id             = $hub->param('v');
+  my $vf               = $hub->param('vf');
+  my $alt_allele       = $hub->param('alt_allele');
+  my $aa_change        = $hub->param('aa_change');
+  my $cov              = $hub->param('cov');
+  my $db_adaptor       = $hub->database('variation');
   my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
   my $var              = $var_adaptor->fetch_by_name($v_id); 
   my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);  
-  my $strain           = $object->species_defs->translate('strain');
+  my $strain           = $hub->species_defs->translate('strain');
+  my $trans_id         = $self->object->stable_id;
   my $feature;
-  my $trans_id         = $object->stable_id;
  
   if (scalar @$vf == 1) {
     $feature = $vf->[0];
   } else {
     foreach (@$vf) {
-      $feature = $_ if $_->dbID eq $object->param('vf');
+      $feature = $_ if $_->dbID eq $vf;
     }
   }
 
@@ -47,7 +46,7 @@ sub content {
   my $chr_start  = $feature->start;
   my $chr_end    = $feature->end;
   my $ref_allele = $feature->ref_allele_string;
-  my $type       = $object->param('sara') ? 'SARA' : $feature->display_consequence;
+  my $type       = $hub->param('sara') ? 'SARA' : $feature->display_consequence;
   my $bp         = $chr_start;
   
   if ($chr_end < $chr_start) {
@@ -65,7 +64,7 @@ sub content {
   
   $self->add_entry({
     label_html => 'Variation properties',
-    link       => $object->_url({
+    link       => $hub->url({
       type   => 'Variation', 
       action => 'Summary',
       v      => $feature->variation_name,

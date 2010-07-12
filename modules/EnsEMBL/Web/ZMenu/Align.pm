@@ -9,9 +9,9 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self = shift;
   
-  my $object  = $self->object;
-  my $r       = $object->param('r');
-  my $break   = $object->param('break');
+  my $hub     = $self->hub;
+  my $r       = $hub->param('r');
+  my $break   = $hub->param('break');
   my $caption = 'AlignSlice';
   
   my @location = split /\b/, $r;
@@ -29,8 +29,8 @@ sub content {
     
     @entries = ([ 'Info', 'There is a gap in the original chromosome between these two alignments', 1 ]);
   } else {
-    my $strand   = $object->param('strand');
-    my $interval = $object->param('interval');
+    my $strand   = $hub->param('strand');
+    my $interval = $hub->param('interval');
     
     my ($i_start, $i_end) = split '-', $interval;
     
@@ -64,7 +64,7 @@ sub content {
   $self->add_entry({
     type  => 'Link',
     label => 'Region in detail',
-    link  => $object->_url({ action => 'View' }),
+    link  => $hub->url({ action => 'View' }),
     order => 7
   });
   

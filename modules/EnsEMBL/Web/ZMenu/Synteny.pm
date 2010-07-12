@@ -7,13 +7,12 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object = $self->object;
-  my $sp     = $object->species;
-  my $ori    = $object->param('ori');
-  my $r      = $object->param('r');
-  my $r1     = $object->param('r1');
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $sp     = $hub->species;
+  my $ori    = $hub->param('ori');
+  my $r      = $hub->param('r');
+  my $r1     = $hub->param('r1');
   
   my ($chr, $loc)    = split ':', $r;
   my ($start, $stop) = split '-', $loc;
@@ -21,11 +20,11 @@ sub content {
   $self->caption("$sp $chr:$loc");
   
   if ($r1) {
-    my $sp1 = $object->param('sp1');
+    my $sp1 = $hub->param('sp1');
     
     $self->add_entry({
       label => sprintf('%s Chr %s:%0.1fM-%0.1fM', $sp, $chr, $start/1e6, $stop/1e6),
-      link  => $object->_url({
+      link  => $hub->url({
         type   => 'Location',
         action => 'Overview',
         r      => $r
@@ -37,7 +36,7 @@ sub content {
 
     $self->add_entry({
       label => sprintf('%s Chr %s:%0.1fM-%0.1fM', $sp1, $chr1, $start1/1e6, $stop1/1e6),
-      link  => $object->_url({
+      link  => $hub->url({
         type    => 'Location',
         action  => 'Overview',
         r       => $r1,
@@ -47,7 +46,7 @@ sub content {
     
     my $new_start = int(($stop+$start)/2) - 5e5;
     my $new_end   = $new_start + 1e6 - 1;
-    my $synt_url  = $object->_url({
+    my $synt_url  = $hub->url({
       type         => 'Location',
       action       => 'Synteny',
       otherspecies => $sp1,
@@ -74,7 +73,7 @@ sub content {
     
     $self->add_entry({
       label => "Jump to $sp",
-      link  => $object->_url({
+      link  => $hub->url({
         type   => 'Location',
         action => 'Overview',
         r      => $r

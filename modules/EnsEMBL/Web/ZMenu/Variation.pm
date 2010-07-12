@@ -7,19 +7,18 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object           = $self->object;
-  my $v_id             = $object->param('v');
-  my $snp_fake         = $object->param('snp_fake');
-  my $var_box          = $object->param('var_box');
-  my $db_adaptor       = $object->database('variation');
+  my $self             = shift;
+  my $hub              = $self->hub;
+  my $v_id             = $hub->param('v');
+  my $snp_fake         = $hub->param('snp_fake');
+  my $var_box          = $hub->param('var_box');
+  my $db_adaptor       = $hub->database('variation');
   my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
   my $var              = $var_adaptor->fetch_by_name($v_id);
   my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);
   my $tvar_adaptor     = $db_adaptor->get_TranscriptVariationAdaptor;
-  my $trans_variation  = $tvar_adaptor->fetch_by_dbID($object->param('vf'));
+  my $trans_variation  = $tvar_adaptor->fetch_by_dbID($hub->param('vf'));
   my $type;
   my $feature;
 
@@ -27,16 +26,16 @@ sub content {
     $feature = $vf->[0];
   } else {
     foreach (@$vf) {
-      $feature = $_ if $_->dbID eq $object->param('vf');
+      $feature = $_ if $_->dbID eq $hub->param('vf');
     }
   }
   
   # alternate way to retrieve transcript_variation_feature if there are more than one with the same variation_feature id;
   if (!$trans_variation) {
-    my $trans_id = $object->param('vt');
+    my $trans_id = $hub->param('vt');
     
     if ($trans_id) {
-      my $trans_adaptor = $object->database('core')->get_TranscriptAdaptor;
+      my $trans_adaptor = $hub->database('core')->get_TranscriptAdaptor;
       my $transcript   = $trans_adaptor->fetch_by_stable_id($trans_id);
       
       foreach my $trv (@{$tvar_adaptor->fetch_all_by_Transcripts([$transcript])}) {
@@ -49,8 +48,8 @@ sub content {
     $type = $feature->display_consequence;
   } elsif ($trans_variation) {
     $type =  join ', ', @{$trans_variation->consequence_type||[]};
-  } elsif ($object->param('consequence')) {
-    $type = $object->param('consequence') || '';
+  } elsif ($hub->param('consequence')) {
+    $type = $hub->param('consequence') || '';
   } else {
     $type = $feature->display_consequence;
   }
@@ -81,9 +80,9 @@ sub content {
 
  
   my $tc;
-  if ($object->param('t_id')){
+  if ($hub->param('t_id')){
     foreach ( @{$feature->get_all_TranscriptVariations()} ){
-      if ($object->param('t_id') eq $_->transcript->stable_id){
+      if ($hub->param('t_id') eq $_->transcript->stable_id){
         my $codon = $_->codons;
         $codon =~s/([A-Z])/<strong>$1<\/strong>/g;
         next unless $codon =~/\w+/;
@@ -96,7 +95,7 @@ sub content {
   
   $self->add_entry({
     label_html => 'Variation Properties',
-    link       => $object->_url({
+    link       => $hub->url({
       type   => 'Variation', 
       action => 'Summary',
       v      => $feature->variation_name,
@@ -139,7 +138,7 @@ sub content {
         position => 5
       });
     }
-  } elsif ($object->type eq 'Variation') {
+  } elsif ($hub->type eq 'Variation') {
     my $status = join ', ', @{$feature->get_all_validation_states||[]};
     
     $self->add_entry({

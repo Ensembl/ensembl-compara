@@ -7,25 +7,24 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $id          = $hub->param('id');
+  my $object_type = $hub->param('ftype');
+  my $align       = $hub->param('align');
+  my $caption     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'name'};
   
-  my $object      = $self->object;
-  my $id          = $object->param('id');
-  my $object_type = $object->param('ftype');
-  my $align       = $object->param('align');
-  my $caption     = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'name'};
-  
-  my $url = $object->_url({
+  my $url = $hub->url({
     type   => 'Location',
     action => 'Compara_Alignments',
     align  => $align
   });
 
-  my ($chr, $start, $end) = split /[:-]/, $object->param('r');
+  my ($chr, $start, $end) = split /[:-]/, $hub->param('r');
   
   # if there's a score than show it and also change the name of the track (hacky)
   if ($object_type && $id) {
-    my $db_adaptor   = $object->database('compara');
+    my $db_adaptor   = $hub->database('compara');
     my $adaptor_name = "get_${object_type}Adaptor";
     my $feat_adap    = $db_adaptor->$adaptor_name;
     my $feature      = $feat_adap->fetch_by_dbID($id);
@@ -44,8 +43,8 @@ sub content {
       });
       
       $caption = "Constrained el. $1 way" if $caption =~ /^(\d+)/;
-    } elsif ($object_type eq 'GenomicAlignBlock' && $object->param('ref_id')) {
-      $feature->{'reference_genomic_align_id'} = $object->param('ref_id');
+    } elsif ($object_type eq 'GenomicAlignBlock' && $hub->param('ref_id')) {
+      $feature->{'reference_genomic_align_id'} = $hub->param('ref_id');
       $start = $feature->reference_genomic_align->dnafrag_start;
       $end = $feature->{'reference_genomic_align'}->dnafrag_end;
     }

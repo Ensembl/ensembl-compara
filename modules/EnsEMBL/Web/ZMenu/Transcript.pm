@@ -7,16 +7,18 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
+  my $self        = shift;
+  my $object      = $self->object;
+  my $stable_id   = $object->stable_id;
+  my $transcript  = $object->Obj;
+  my $translation = $transcript->translation;
+  my @xref        = $object->display_xref;
   
-  my $object = $self->object;
-  my @xref   = $object->display_xref;
-  
-  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $object->Obj->stable_id : 'Novel transcript');
+  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
   
   $self->add_entry({
     type  => 'Transcript',
-    label => $object->stable_id, 
+    label => $stable_id, 
     link  => $object->_url({ type => 'Transcript', action => 'Summary' })
   });
   
@@ -32,9 +34,9 @@ sub content {
       type  => 'Location',
       label => sprintf(
         '%s: %s-%s',
-        $object->neat_sr_name($object->seq_region_type,$object->seq_region_name),
-        $object->thousandify($object->seq_region_start),
-        $object->thousandify($object->seq_region_end)
+        $self->neat_sr_name($object->seq_region_type, $object->seq_region_name),
+        $self->thousandify($object->seq_region_start),
+        $self->thousandify($object->seq_region_end)
       ),
       link  => $object->_url({
         type   => 'Location',
@@ -63,28 +65,28 @@ sub content {
   
   $self->add_entry({
     type  => 'Base pairs',
-    label => $object->thousandify($object->Obj->seq->length)
+    label => $self->thousandify($transcript->seq->length)
   });
   
   # Protein coding transcripts only
-  if ($object->Obj->translation) {
+  if ($translation) {
     $self->add_entry({
       type     => 'Protein product',
-      label    => $object->Obj->translation->stable_id || $object->Obj->stable_id,
-      link     => $object->_url({ type => 'Transcript', action => 'ProteinSummary' }),
+      label    => $translation->stable_id || $stable_id,
+      link     => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
       position => 3
     });
     
     $self->add_entry({
       type  => 'Amino acids',
-      label => $object->thousandify($object->Obj->translation->length)
+      label => $self->thousandify($translation->length)
     });
   }
   
   if ($object->analysis) {
     $self->add_entry({
       type  => 'Analysis',
-      label => $object->Obj->analysis->display_label
+      label => $transcript->analysis->display_label
     });
 
     $self->add_entry({

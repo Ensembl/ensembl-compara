@@ -8,60 +8,56 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
-  
-  my $object = $self->object; 
+  my $hub  = $self->hub;
+  my $rf   = $hub->param('rf');
  
-  return unless $object->param('rf'); 
+  return unless $rf; 
   
-  my $core_reg_obj;
-  my $funcgen_db = $object->database('funcgen');
+  my $object              = $self->object;
+  my $cell_line           = $hub->param('cl');
+  my $funcgen_db          = $hub->database('funcgen');
   my $reg_feature_adaptor = $funcgen_db->get_RegulatoryFeatureAdaptor; 
-  my $reg_objs = $reg_feature_adaptor->fetch_all_by_stable_ID($object->param('rf'));  
-  foreach my $rf ( @$reg_objs){
-    if ($object->param('cl')){
-      my $cell_line = $object->param('cl');
-      if ($rf->feature_set->cell_type->name =~/$cell_line/i){
-        $core_reg_obj = $rf;
-      }
-    } else {
-      if ($rf->feature_set->cell_type->name =~/multi/i){
-        $core_reg_obj = $rf;
-      }
-    } 
+  my $reg_objs            = $reg_feature_adaptor->fetch_all_by_stable_ID($rf);
+  my $core_reg_obj;
+  
+  foreach my $rf (@$reg_objs) {
+    if ($cell_line) {
+      $core_reg_obj = $rf if $rf->feature_set->cell_type->name =~ /$cell_line/i;
+    } elsif ($rf->feature_set->cell_type->name =~ /multi/i) {
+      $core_reg_obj = $rf;
+    }
   }
-
- my $reg_obj = $self->new_object('Regulation', $core_reg_obj, $object->__data); 
- 
+  
   $self->caption('Regulatory Feature');
   
   $self->add_entry({
     type  => 'Stable ID',
-    label => $reg_obj->stable_id,
-    link  => $reg_obj->get_details_page_url
+    label => $object->stable_id,
+    link  => $object->get_details_page_url
   });
   
   $self->add_entry({
     type  => 'Type',
-    label => $reg_obj->feature_type->name
+    label => $object->feature_type->name
   });
   
   $self->add_entry({
     type  => 'Core bp',
-    label => $reg_obj->location_string,
-    link  => $reg_obj->get_location_url
+    label => $object->location_string,
+    link  => $object->get_location_url
   });
 
-  unless ($reg_obj->bound_start == $reg_obj->seq_region_start && $reg_obj->bound_end == $reg_obj->seq_region_end){
+  unless ($object->bound_start == $object->seq_region_start && $object->bound_end == $object->seq_region_end) {
     $self->add_entry({
-    type  => 'Bounds bp',
-    label => $reg_obj->bound_location_string,
-    link  => $reg_obj->get_bound_location_url
+      type  => 'Bounds bp',
+      label => $object->bound_location_string,
+      link  => $object->get_bound_location_url
     });
   }
   
   $self->add_entry({
     type  => 'Attributes',
-    label => $reg_obj->get_attribute_list
+    label => $object->get_attribute_list
   });
 }
 

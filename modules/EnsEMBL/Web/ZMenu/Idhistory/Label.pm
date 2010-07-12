@@ -8,14 +8,13 @@ use base qw(EnsEMBL::Web::ZMenu::Idhistory);
 
 sub content {
   my $self = shift;
-  
-  my $object = $self->object;
-  my $id     = $object->param('label') || die 'No label value in params';
-  my $type   = ucfirst $object->param('feat_type');
+  my $hub  = $self->hub;
+  my $id   = $hub->param('label') || die 'No label value in params';
+  my $type = ucfirst $hub->param('feat_type');
   my $url;
 
   if ($type eq 'Gene') {    
-    $url = $object->_url({
+    $url = $hub->url({
       type    => 'Gene',
       action  => 'Idhistory',
       r       => undef,
@@ -25,7 +24,7 @@ sub content {
       protein => undef,
     });
   } elsif ($type eq 'Transcript'){    
-    $url = $object->_url({
+    $url = $hub->url({
       type    => 'Transcript',
       action  => 'Idhistory',
       r       => undef,
@@ -35,7 +34,7 @@ sub content {
       protein => undef,
     });
   } else {
-    $url = $object->_url({
+    $url = $hub->url({
       type    => 'Transcript',
       action  => 'Idhistory/Protein',
       r       => undef,

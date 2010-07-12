@@ -1,27 +1,26 @@
 package EnsEMBL::Web::ZMenu::Gene::CCDS;
 
 use strict;
+
 use base qw(EnsEMBL::Web::ZMenu::Gene);
 
 sub content {
-  my $self = shift;
+  my $self      = shift;
+  my $stable_id = $self->object->stable_id;
+  
   $self->SUPER::content;
-  my $object = $self->object;
-
-  my $caption = $object->stable_id;
-  $self->caption($caption);
-
-  my $url = $object->get_ExtURL_link( $object->stable_id,'CCDS', $object->stable_id );
+  
+  $self->caption($stable_id);
+  
   $self->add_entry({
     type  => 'CCDS',
-    label => $object->stable_id,
-    link  => $url,
+    label => $stable_id,
+    link  => $self->hub->get_ExtURL_link($stable_id, 'CCDS', $stable_id),
     extra => { abs_url => 1 },
     position => 2,
   });
-
+  
   $self->delete_entry_by_type('Gene type');
-
 }
 
 1;

@@ -7,12 +7,11 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
-  my $self = shift;
-  
-  my $object           = $self->object;
-  my $v_id             = $object->param('v');
-  my $vtype            = $object->param('vtype');
-  my $db_adaptor       = $object->database('variation');
+  my $self             = shift;
+  my $hub              = $self->hub;
+  my $v_id             = $hub->param('v');
+  my $vtype            = $hub->param('vtype');
+  my $db_adaptor       = $hub->database('variation');
   my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
   my $var              = $var_adaptor->fetch_by_name($v_id);
@@ -24,7 +23,7 @@ sub content {
     $feature = $vf->[0];
   } else {
     foreach (@$vf) {
-      $feature = $_ if $_->dbID eq $object->param('vf');
+      $feature = $_ if $_->dbID eq $hub->param('vf');
     }
   }
   
@@ -34,19 +33,19 @@ sub content {
     $type .= 'ion'; 
     
     @entries = (
-      [ ucfirst $type, $object->param('indel') ],
-      [ 'Position',    $object->param('pos')   ],
-      [ 'Length',      $object->param('len')   ]
+      [ ucfirst $type, $hub->param('indel') ],
+      [ 'Position',    $hub->param('pos')   ],
+      [ 'Length',      $hub->param('len')   ]
     );
   } else {
     @entries = ([ 'Variation type', $feature->display_consequence ]);  
   }
   
   push @entries, (
-    [ 'Residue',              $object->param('res') ],
-    [ 'Alternative Residues', $object->param('ar')  ],
-    [ 'Codon',                $object->param('cod') ],
-    [ 'Alleles',              $object->param('al')  ]
+    [ 'Residue',              $hub->param('res') ],
+    [ 'Alternative Residues', $hub->param('ar')  ],
+    [ 'Codon',                $hub->param('cod') ],
+    [ 'Alleles',              $hub->param('al')  ]
   );
   
   $self->caption('Variation Information');
@@ -54,7 +53,7 @@ sub content {
   $self->add_entry({
     type       =>  'Variation ID',
     label_html => $feature->variation_name,
-    link       => $object->_url({
+    link       => $hub->url({
       type   => 'Variation', 
       action => 'Summary',
       v      => $feature->variation_name,
