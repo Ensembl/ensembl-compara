@@ -75,7 +75,12 @@ sub get_availability {
 
 sub populate_tree      {}
 sub modify_tree        {}
-sub set_default_action {}
+sub short_caption { return sprintf '%s-based displays', ucfirst $_[0]->type; } #return the caption for the tab
+
+sub set_default_action {  
+  my $self = shift;  
+  $self->{'_data'}->{'default'} = $self->object->default_action if $self->object;
+}
 
 sub model        { return $_[0]->{'model'}; }
 sub object       { return $_[0]->{'object'}; }
@@ -144,33 +149,26 @@ sub _get_valid_action {
 sub _global_context {
   my $self = shift;
   
-  return unless $self->page->can('global_context');
-  return unless $self->page->global_context;
+  return unless $self->page->can('global_context') && $self->page->global_context;
   
-  my $hub          = $self->model->hub;
-  my $object       = $self->object;
-  my $type         = $self->type;
-  my $qs           = $self->query_string;
-  my $core_objects = $hub->core_objects;
+  my $model = $self->model;
+  my $hub   = $model->hub;
+  my $type  = $self->type;
+  my $qs    = $self->query_string;
+  my @data;
+
+  foreach (@{$model->ordered_objects}) {
+    my $o = $model->object($_);
+    push @data, [ $_, $o->default_action, $o->short_caption('global') ] if $o;
+  }
   
-  return unless $core_objects;
-  
-  my @data = (
-    [ 'Location',   'View',    $core_objects->location_short_caption,   $core_objects->location   ],
-    [ 'LRG',        'Genome',  $core_objects->lrg_short_caption,        $core_objects->lrg,       ],
-    [ 'Gene',       'Summary', $core_objects->gene_short_caption,       $core_objects->gene       ],
-    [ 'Transcript', 'Summary', $core_objects->transcript_short_caption, $core_objects->transcript ],
-    [ 'Variation',  'Summary', $core_objects->variation_short_caption,  $core_objects->variation  ],
-    [ 'Regulation', 'Summary', $core_objects->regulation_short_caption, $core_objects->regulation ],
-  );
+  push @data, [ $self->type, $self->default_action, $self->{'_data'}->{'default'} ] unless @data;
   
   foreach my $row (@data) {
-    next unless $row->[3];
-    next if ($row->[0] eq 'Location' && $type eq 'LRG');
+    next if $row->[0] eq 'Location' && $type eq 'LRG';
     
-    my $action = $row->[3]->isa('EnsEMBL::Web::Fake') ? $row->[3]->view : $row->[3]->isa('Bio::EnsEMBL::ArchiveStableId') ? 'idhistory' : $row->[1];
-    my $url    = $hub->url({ type => $row->[0], action => $action, __clear => 1 });
-    $url .= "?$qs" if $qs;
+    my $url = $hub->url({ type => $row->[0], action => $row->[1], __clear => 1 });
+    $url   .= "?$qs" if $qs;
     
     $self->page->global_context->add_entry( 
       type    => $row->[0],
@@ -587,7 +585,7 @@ sub _local_context {
   $self->page->local_context->active($action);
   $self->page->local_context->caption(ref $object ? $object->short_caption : $self->short_caption);
   $self->page->local_context->counts($object->counts) if ref $object;
-  $self->page->local_context->availability($object->availability) if ref $object;
+  $self->page->local_context->availability(ref $object ? $object->availability : {});
 }
 
 sub _local_tools {
