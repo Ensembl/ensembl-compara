@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Component::Location::MarkerDetails;
 
 # FIXME: rename to MarkerList, update Configuration::Location

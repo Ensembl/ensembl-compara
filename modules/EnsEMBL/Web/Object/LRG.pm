@@ -1,4 +1,4 @@
-#$Id:#
+#$Id:4
 package EnsEMBL::Web::Object::LRG;
 
 use strict;

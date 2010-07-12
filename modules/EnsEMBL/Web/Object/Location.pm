@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Object::Location;
 
 ### NAME: EnsEMBL::Web::Object::Location

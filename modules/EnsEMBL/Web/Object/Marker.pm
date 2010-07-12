@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Object::Marker;
 
 use strict;

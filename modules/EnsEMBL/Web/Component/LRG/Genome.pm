@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Component::LRG::Genome;
 
 ### Hacky copy of Component::Location::Genome, as there's an AJAX bug that breaks

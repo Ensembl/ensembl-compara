@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Component::LRG::LRGSNPTable;
 
 use strict;

@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Component::LRG::Summary;
 
 ### NAME: EnsEMBL::Web::Component::LRG::Summary;

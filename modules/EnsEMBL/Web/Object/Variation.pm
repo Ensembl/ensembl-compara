@@ -1,4 +1,4 @@
-#$Id:#
+#$Id$
 package EnsEMBL::Web::Object::Variation;
 
 ### NAME: EnsEMBL::Web::Object::Variation
