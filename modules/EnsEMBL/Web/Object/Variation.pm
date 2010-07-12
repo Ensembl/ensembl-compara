@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Object::Variation;
 
 ### NAME: EnsEMBL::Web::Object::Variation
@@ -176,14 +177,12 @@ sub count_ldpops {
 
 sub short_caption {
   my $self = shift;
-  my $label = $self->name;
-  if( length($label)>30) {
-    return "Var: $label";
-  } else {
-    return "Variation: $label";
-  }
+  
+  return 'Variation-based displays' unless shift eq 'global';   
+  
+  my $label = $self->name;  
+  return length $label > 30 ? "Var: $label" : "Variation: $label";
 }
-
 
 sub caption {
  my $self = shift; 
@@ -1065,7 +1064,7 @@ sub get_variation_features {
   ### Description: gets the Variation features found  on a variation object;
   ### Returns Arrayref of Bio::EnsEMBL::Variation::VariationFeatures
 
-   my $self = shift;
+   my $self = shift; 
    return $self->vari ? $self->vari->get_all_VariationFeatures : [];
 }
 

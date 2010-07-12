@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Object::DAS;
 
 ### NAME: EnsEMBL::Web::Object::DAS
@@ -142,6 +143,8 @@ sub loc {
 #sub Obj { 
 #  return $_[0]{'data'}{'_object'}[0]->Obj; 
 #}
+
+sub __objecttype { return 'DAS'; }
 
 sub Locations { return @{$_[0]{data}{_object}}; }
 

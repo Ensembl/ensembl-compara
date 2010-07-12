@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Object::Regulation;
 
 ### NAME: EnsEMBL::Web::Object::Regulation
@@ -30,6 +31,12 @@ sub caption {
   my $self = shift;
   my $caption = 'Regulatory Feature: '. $self->Obj->stable_id;
   return $caption;    
+}
+
+sub default_action {
+  my $self         = shift;
+  my $availability = $self->availability;
+  return $availability->{'regulation'} ? 'Cell_line' : 'Summary';
 }
 
 sub availability {

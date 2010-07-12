@@ -64,6 +64,12 @@ sub availability {
   return $self->{'_availability'};
 }
 
+sub default_action {
+  my $self         = shift;
+  my $availability = $self->availability;
+  return $availability->{'either'} ? 'Summary' : $availability->{'idhistory'} ? 'Idhistory' : 'Summary';
+}
+
 sub counts {
   my $self = shift;
   my $sd = $self->species_defs;

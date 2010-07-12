@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Object::Export;
 
 ### NAME: EnsEMBL::Web::Object::Export
@@ -16,44 +17,20 @@ use strict;
 use base qw(EnsEMBL::Web::Object);
 
 sub caption { return 'Export Data'; }
+sub slice { return shift->get_location_object->slice };
 
-sub slice {
+sub get_location_object {
   my $self = shift;
+
+  $self->{'_location'} ||= $self->hub->core_objects->{'location'};
   
-  $self->{'_slice'} ||= $self->core_objects->location;
-  
-  return $self->{'_slice'};
+  return $self->{'_location'};
 }
 
 sub get_all_transcripts {
   my $self = shift;
-  
-  return $self->new_object('Gene', $self->core_objects->gene, $self->__data)->get_all_transcripts || [];
-}
 
-sub get_location_object {
-  my $self = shift;
-  
-  if (!$self->{'_location'}) {
-    my $l = $self->slice;
-    
-    $self->{'_location'} = $self->new_object('Location', {
-      type               => 'Location',
-      real_species       => $self->__data->{'__location'}{'species'},
-      name               => $l->seq_region_name,
-      seq_region_name    => $l->seq_region_name,
-      seq_region_start   => $l->start,
-      seq_region_end     => $l->end,
-      seq_region_strand  => 1,
-      seq_region_type    => $l->coord_system->name,
-      raw_feature_strand => 1,
-      seq_region_length  => $l->seq_region_length,
-    }, $self->__data);
-    
-    $self->{'_location'}->attach_slice($l);
-  }
-  
-  return $self->{'_location'};
+  return $self->hub->core_objects->{'gene'}->Obj->get_all_Transcripts || [];
 }
 
 sub check_slice {
@@ -157,21 +134,21 @@ sub modify_gene_options {
   my $options = { translation => 0, three => 0, five => 0 };
   
   foreach (@{$self->get_all_transcripts}) {
-    $options->{'translation'} = 1 if $_->Obj->translation;
-    $options->{'three'}       = 1 if $_->Obj->three_prime_utr;
-    $options->{'five'}        = 1 if $_->Obj->five_prime_utr;
+    $options->{'translation'} = 1 if $_->translation;
+    $options->{'three'}       = 1 if $_->three_prime_utr;
+    $options->{'five'}        = 1 if $_->five_prime_utr;
     
     last if $options->{'translation'} && $options->{'three'} && $options->{'five'};
   }
   
   $self->__data->{'config'}->{'fasta'}->{'params'} = [
-    [ 'cdna',    'cDNA' ],
+    [ 'cdna',    'cDNA'                                        ],
     [ 'coding',  'Coding sequence',  $options->{'translation'} ],
     [ 'peptide', 'Peptide sequence', $options->{'translation'} ],
-    [ 'utr5',    "5' UTR",           $options->{'five'} ],
-    [ 'utr3',    "3' UTR",           $options->{'three'} ],
-    [ 'exon',    'Exons' ],
-    [ 'intron',  'Introns' ]
+    [ 'utr5',    "5' UTR",           $options->{'five'}        ],
+    [ 'utr3',    "3' UTR",           $options->{'three'}       ],
+    [ 'exon',    'Exons'                                       ],
+    [ 'intron',  'Introns'                                     ]
   ];
 }
 

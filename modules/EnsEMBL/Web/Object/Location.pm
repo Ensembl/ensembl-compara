@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Object::Location;
 
 ### NAME: EnsEMBL::Web::Object::Location
@@ -37,6 +38,12 @@ sub _filename {
   return $name;
 }
 
+sub default_action {
+  my $self         = shift;
+  my $availability = $self->availability;
+  return $availability->{'slice'} ? 'View' : $availability->{'chromosome'} ? 'Chromosome' : 'Genome';
+}
+
 sub availability {
   my $self = shift;
   
@@ -51,14 +58,12 @@ sub availability {
     my $counts          = $self->counts;
     my $availability    = $self->_availability;
     
-    $availability->{'karyotype'}       = 1;
     $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
     $availability->{'has_chromosomes'} = scalar @chromosomes;
     $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
     $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->hub->core_param('r');
     $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
     $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
-    $availability->{'marker'}          = $self->core_objects->location->isa('EnsEMBL::Web::Fake') && $self->core_objects->location->type eq 'Marker';
     $availability->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
     $availability->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);
   
@@ -101,11 +106,12 @@ sub counts {
 
 sub short_caption {
   my $self = shift;
-  return 'Location-based displays';
-  #return $self->seq_region_name.': '.$self->thousandify($self->seq_region_start).'-'.
-  #  $self->thousandify($self->seq_region_end);
 
+  return shift eq 'global' ?
+    'Location: ' . $self->Obj->{'seq_region_name'} . ':' . $self->thousandify($self->Obj->{'seq_region_start'}) . '-' . $self->thousandify($self->Obj->{'seq_region_end'}) :
+    'Location-based displays';
 }
+
 
 sub caption {
   my $self = shift;
@@ -1117,23 +1123,22 @@ sub get_synteny_matches {
 }
 
 sub get_synteny_local_genes {
-  my $self = shift ;
-
-  my $flag = @_ ? 1 : 0;
-  my $slice = shift || $self->core_objects->location;
-  unless( $flag || $self->param('r') =~ /:/) {
-    $slice = $slice->sub_Slice(1,1e6) unless $slice->length < 1e6;
-  }
-  my $localgenes = [];
+  my $self  = shift ;
+  my $flag  = @_ ? 1 : 0;
+  my $slice = shift || $self->slice;
+  my @localgenes;
+  
+  $slice = $slice->sub_Slice(1, 1e6) if !$flag && $slice->length >= 1e6 && $self->param('r') !~ /:/;
 
   ## Ensures that only protein coding genes are included in syntenyview
   my @biotypes = ('protein_coding', 'V_segments', 'C_segments');
+  
   foreach my $type (@biotypes) {
     my $genes = $slice->get_all_Genes_by_type($type);
-    push @$localgenes, @$genes if scalar(@$genes);
+    push @localgenes, @$genes if scalar @$genes;
   }
 
-  my @sorted = sort {$a->start <=> $b->start} @$localgenes;
+  my @sorted = sort { $a->start <=> $b->start } @localgenes;
   return \@sorted;
 }
 
