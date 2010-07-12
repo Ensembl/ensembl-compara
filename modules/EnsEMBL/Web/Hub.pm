@@ -39,7 +39,7 @@ sub new {
   
   ## The following may seem a little clumsy, but it allows the Hub to be created
   ## by a command-line script with no access to CGI parameters
-  my $factorytype = $ENV{'ENSEMBL_FACTORY'} || ($args{'_input'} && $args{'_input'}->param('factorytype') ? $args{'_input'}->param('factorytype') : $type)
+  my $factorytype = $ENV{'ENSEMBL_FACTORY'} || ($args{'_input'} && $args{'_input'}->param('factorytype') ? $args{'_input'}->param('factorytype') : $type);
   
   my ($session, $user, $timer);
   
