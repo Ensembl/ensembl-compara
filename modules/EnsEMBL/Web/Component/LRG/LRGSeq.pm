@@ -1,9 +1,10 @@
+#$Id:#
 package EnsEMBL::Web::Component::LRG::LRGSeq;
 
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::LRG EnsEMBL::Web::Component::TextSequence);
+use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::LRG);
 
 sub _init {
   my $self = shift;
@@ -21,20 +22,27 @@ sub content {
   my $self = shift;
   
   my $object    = $self->object;
-#  my $slice     = $object->get_slice_object->Obj; # Object for this section is the slice
-  my $slice     = $object->Obj; # Object for this section is the slice
+  my $slice     = $object->Obj;
   my $length    = $slice->length;
   my $species   = $object->species;
   my $type      = $object->type;
   my $site_type = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
-  my $html = sprintf qq{
-    <form class="seq_blast external" action="/Multi/blastview" method="post">
-      <input type="submit" value="BLAST/BLAT this sequence" />
-      <input type="hidden" name="species" value="$species" />
-      <input type="hidden" name="_query_sequence" value="%s" />
-    </form>
-  }, uc $slice->seq(1);
+  my $html = sprintf('
+    <div class="other-tool">
+      <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
+      <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+        <fieldset>
+          <input type="hidden" name="_query_sequence" value="%s" />
+          <input type="hidden" name="query" value="peptide" />
+          <input type="hidden" name="database" value="peptide" />
+          <input type="hidden" name="species" value="%s" />
+        </fieldset>
+      </form>
+    </div>',
+    uc $slice->seq(1),
+    $species
+  );
   
   if ($length >= $self->{'subslice_length'}) {
     my $base_url = $self->ajax_url('sub_slice') . ";length=$length;name=" . $slice->name;
@@ -68,16 +76,12 @@ sub content_sub_slice {
   my $end    = $object->param('subslice_end');
   my $length = $object->param('length');
 
-  
-  $slice ||= $object->get_slice_object->Obj;
-  
-  warn "O: $object : $slice : ", join ' * ', $slice->name, $slice->start, $slice->end;
-
-  $slice = $slice->sub_Slice($start, $end) if $start && $end;
+  $slice ||= $object->slice;
+  $slice   = $slice->sub_Slice($start, $end) if $start && $end;
   
   my $config = {
     display_width   => $object->param('display_width') || 60,
-    site_type       => 'all', #ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
+    site_type       => 'all',
     gene_name       => $object->Obj->stable_id,
     species         => $object->species,
     title_display   => 'yes',
@@ -90,32 +94,29 @@ sub content_sub_slice {
   }
   
   my @lrg_exons;
-
-  my $sid = 1;
-  foreach my $t ( @{ $self->model->api_object('Transcript')}) {
-    next unless $t && $t->isa('Bio::EnsEMBL::Transcript');
-    foreach my $e (@{$t->get_all_Exons}) {
-      next unless $e && $e->isa('Bio::EnsEMBL::Exon');
-      next if ($e->stable_id);
-#    $e->stable_id(sprintf("tmpLRGExon%06d", $sid++));
-      $e->stable_id("LRG Exon");
-      push @lrg_exons, $e;
-    }
+  
+  foreach my $exon (@{$object->transcript->get_all_Exons}) {
+    next unless $exon && $exon->isa('Bio::EnsEMBL::Exon');
+    next if $exon->stable_id;
+    
+    $exon->stable_id('LRG Exon');
+    push @lrg_exons, $exon;
   }
+  
+  
   $config->{'exon_features'} = \@lrg_exons;
-
-  $config->{'slices'} = [{ slice => $slice, name => $config->{'species'} }];
-
+  $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
+  
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
-    $config->{'number'} = 1;
+    $config->{'number'}     = 1;
   }
-
+  
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
 
-  $self->markup_exons($sequence, $markup, $config) if $config->{'exon_display'};
+  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
   $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-  $self->markup_line_numbers($sequence, $config) if $config->{'line_numbering'};
+  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   if ($start == 1) {
     $config->{'html_template'} = qq{<pre class="text_sequence" style="margin-bottom:0">&gt;} . $object->param('name') . "\n%s</pre>";

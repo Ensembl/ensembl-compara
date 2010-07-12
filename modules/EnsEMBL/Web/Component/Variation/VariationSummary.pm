@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Component::Variation::VariationSummary;
 
 use strict;
@@ -170,7 +171,7 @@ sub content {
 }
 
 sub link_to_ldview {
-
+  
   ### LD
   ### Arg1        : object
   ### Arg2        : hash ref of population data
@@ -178,24 +179,36 @@ sub link_to_ldview {
   ### Description : Make links from these populations to LDView
   ### Returns  Table of HTML links to LDView
 
-  my ($object, $pops ) = @_;
-  my $output = "<table width='100%'  border=0><tr>";
-  $output .="<td> <b>Links to Linkage disequilibrium data  per population:</b></td></tr><tr>";
-  my $count = 0; 
-  for my $pop_name (sort {$a cmp $b} keys %$pops) {
-    my $tag = $pops->{$pop_name} eq 1 ? "" : " (Tag SNP)"; 
-    # reset r param based on variation feature location and a default context of 20 kb
-    my $ld_region = $object->ld_location;
-    my $url = $object->_url({ 'type' => 'Location', 'action' =>'LD','r' => $ld_region, 'v' => $object->name, 'vf' =>$object->vari->dbID, 'pop1' => $pop_name , 'focus' => 'variation'});
+  my ($object, $pops) = @_;
+  my $count = 0;
+  
+  my $output = '
+    <table width="100%" border="0">
+      <tr><td><b>Links to Linkage disequilibrium data per population:</b></td></tr>
+      <tr>
+  ';
+  
+  for my $pop_name (sort { $a cmp $b } keys %$pops) {
+    my $tag = $pops->{$pop_name} eq 1 ? '' : ' (Tag SNP)';
+    my $r   = $object->ld_location; # reset r param based on variation feature location and a default context of 20 kb
+    my $url = $object->_url({ type => 'Location', action => 'LD', r => $r, v => $object->name, vf => $object->param('vf'), pop1 => $pop_name , focus => 'variation' });
+    
+    $output .= "<td><a href=$url>$pop_name</a>$tag</td>";  
     $count++;
-     $output .= "<td><a href=$url>$pop_name</a>$tag</td>";  
-    if ($count ==3) {
+     
+    if ($count == 3) {
       $count = 0;
-      $output .= "</tr><tr>";
+      $output .= '</tr><tr>';
     }
   }
-  $output .= "</tr></table>";
-  return  $output;
+  
+  $output .= '
+      </tr>
+    </table>
+  ';
+  
+  return $output;
+
 }
 
 sub _ld_populations {

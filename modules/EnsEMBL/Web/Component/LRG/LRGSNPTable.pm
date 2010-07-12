@@ -1,9 +1,11 @@
+#$Id:#
 package EnsEMBL::Web::Component::LRG::LRGSNPTable;
 
 use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::LRG);
+use base qw(EnsEMBL::Web::Component::LRG EnsEMBL::Web::Component::Gene::GeneSNPTable);
 
 sub _init {
   my $self = shift;
@@ -17,98 +19,33 @@ sub caption {
 
 
 sub content {
-  my $self = shift;
-  my $object = $self->model->object('LRG');
-  my $lrg = configure_lrg($object);
-  my %var_tables;
-
-  my @transcripts = sort{ $a->stable_id cmp $b->stable_id } @{ $lrg->get_all_transcripts };
-  my $I = 0;
-  foreach my $transcript ( @transcripts ) {
-    my $tsid = $transcript->stable_id;
-    my $table_rows = $self->variation_table($lrg, $transcript);    
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );
-
-    $table->add_columns (
-      { 'key' => 'ID', },
-      { 'key' => 'snptype', 'title' => 'Type', },
-      { 'key' => 'chr' , 'title' => 'LRG: bp',  },
-      { 'key' => 'Alleles', 'align' => 'center' },
-      { 'key' => 'Ambiguity', 'align' => 'center', },
-      { 'key' => 'HGVS', 'title' => 'HGVS name(s)', 'align' => 'center', },
-      { 'key' => 'aachange', 'title' => 'Amino Acid', 'align' => 'center' },
-      { 'key' => 'aacoord',  'title' => 'AA co-ordinate', 'align' => 'center' },
-      { 'key' => 'class', 'title' => 'Class', 'align' => 'center' },
-      { 'key' => 'Source', },
-      { 'key' => 'status', 'title' => 'Validation', 'align' => 'center' }, 
-   );
- 
-    if ($table_rows){
-      foreach my $row (@$table_rows){
-        $table->add_row($row);
-      }  
-      $var_tables{$tsid} = $table->render;
-    }  
+  my $self        = shift;
+  my $object      = $self->object;
+  my $lrg         = $self->configure($object->param('context') || 'FULL', $object->get_imageconfig('lrgsnpview_transcript'));
+  my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
+  my $lrg_slice   = $lrg->Obj->feature_Slice;
+  my $tables      = {};
+  
+  foreach my $transcript (@transcripts) {
+    my $table_rows = $self->variation_table($transcript, $lrg_slice);
+    
+    $tables->{$transcript->stable_id} = $self->make_table($table_rows) if $table_rows; 
   }
 
-  my $html;
-  foreach (keys %var_tables){
-  $html .= "<p><h2>Variations in $_: </h2><p> $var_tables{$_}";
-  }
-  return $html;
+  return $self->render_content($tables);
 }
 
 sub variation_table {
-  my( $self, $lrg, $transcript ) = @_;
-  my %snps = %{$transcript->__data->{'transformed'}{'snps'}||{}};
-  my @gene_snps = @{$transcript->__data->{'transformed'}{'gene_snps'}||[]};
-
-  my $lrgslice = $lrg->Obj->feature_Slice;
-
-  my $tr_start = $transcript->__data->{'transformed'}{'start'};
-  my $tr_end   = $transcript->__data->{'transformed'}{'end'};
-  my $extent   = $transcript->__data->{'transformed'}{'extent'};
-  my $cdna_coding_start = $transcript->Obj->cdna_coding_start;
-
-  return unless %snps;
-
-  my @rows;
+  my ($self, $transcript, $lrg_slice) = @_;
   
-  foreach my $gs ( @gene_snps ) {
-    my $raw_id = $gs->[2]->dbID;
-    my $transcript_variation  = $snps{$raw_id};
-    next unless $transcript_variation;
-    
-    my @validation =  @{ $gs->[2]->get_all_validation_states || [] };
-    my @hgvs = @{$gs->[2]->get_all_hgvs_notations($transcript->transcript, 'c')};
-    push @hgvs, @{$gs->[2]->get_all_hgvs_notations($lrgslice, 'g', $gs->[2]->seq_region_name)};
-    s/ENS(...)?[TG]\d+\://g for @hgvs;
-    my $hgvs = join ", ", @hgvs;
-    
-    if( $transcript_variation && $gs->[5] >= $tr_start-$extent && $gs->[4] <= $tr_end+$extent ) {
-      my $url = $transcript->_url({'type' => 'Variation', 'action' =>'Summary', 'v' => @{[$gs->[2]->variation_name]}, 'vf' => @{[$gs->[2]->dbID]}, 'source' => @{[$gs->[2]->source]} });   
-      my $row = {
-        'ID'        => qq(<a href="$url">@{[$gs->[2]->variation_name]}</a>),
-        'class'     => $gs->[2]->var_class() eq 'in-del' ? ( $gs->[4] > $gs->[5] ? 'insertion' : 'deletion' ) : $gs->[2]->var_class(),
-        'Alleles'   => $gs->[2]->allele_string(),
-        'Ambiguity' => $gs->[2]->ambig_code(),
-        'HGVS'        => ($hgvs || '-'),
-        'status'    => (join( ', ',  @validation ) || "-"),
-        'chr'       => $lrg->stable_id.": ".
-                        ($gs->[4]==$gs->[5] ? $gs->[4]:  (join "-",$gs->[4], $gs->[5])),
-        'snptype'   => (join ", ", @{ $transcript_variation->consequence_type || []}), $transcript_variation->translation_start ? (
-        'aachange' => $transcript_variation->pep_allele_string,
-        'aacoord'   => $transcript_variation->translation_start.' ('.(($transcript_variation->cdna_start - $cdna_coding_start )%3+1).')'
-        ) : ( 'aachange' => '-', 'aacoord' => '-' ),
-        'Source'      => (join ", ", @{$gs->[2]->get_all_sources ||[] } )|| "-",
-      };
-      push (@rows, $row);
-    }
+  my $rows = shift->SUPER::variation_table($transcript);
+  
+  if ($rows) {
+    my $i = 0;
+    $rows->[$i++]->{'HGVS'} = $self->get_hgvs($_->[0], $transcript->Obj, $lrg_slice) || '-' for @{$transcript->__data->{'transformed'}{'gene_snps'}};
   }
   
-#  warn " SE : $tr_start * $tr_end * $extent * $cdna_coding_start\n";
-
-  return \@rows;
+  return $rows;
 }
 
 sub configure_lrg{
@@ -166,6 +103,14 @@ sub configure_lrg{
   return $object;
 }
 
+sub get_hgvs {
+  my ($self, $snp, $transcript, $lrg_slice) = @_;
+  
+  my @hgvs  = @{$snp->get_all_hgvs_notations($transcript, 'c')};
+  push @hgvs, @{$snp->get_all_hgvs_notations($lrg_slice, 'g', $snp->seq_region_name)};
+  
+  s/ENS(...)?[TG]\d+\://g for @hgvs;
+  
+  return join ', ', @hgvs;
+}
 1;
-
-
