@@ -23,7 +23,6 @@ use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::ExtURL;
-use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Problem;
 
@@ -179,29 +178,6 @@ sub get_ExtURL_link {
   my $text = shift;
   my $url = $self->get_ExtURL(@_);
   return $url ? qq(<a href="$url">$text</a>) : $text;
-}
-
-# use PFETCH etc to get description and sequence of an external record
-sub get_ext_seq {
-  my ($self, $id, $ext_db) = @_;
-  my $indexer = new EnsEMBL::Web::ExtIndex($self->species_defs);
-  
-  return unless $indexer;
-  
-  my $seq_ary;
-  my %args;
-  $args{'ID'} = $id;
-  $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
-
-  eval { $seq_ary = $indexer->get_seq_by_id(\%args); };
-  
-  if (!$seq_ary) {
-    warn "The $ext_db server is unavailable: $@";
-    return '';
-  } else {
-    my $list = join ' ', @$seq_ary;
-    return $list =~ /no match/i ? '' : $list;
-  }
 }
 
 1;
