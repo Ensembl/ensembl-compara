@@ -70,12 +70,12 @@ sub href {
   my $mfid = $f->dbID;
   my $r = $f->seq_region_name.':'.$f->seq_region_start.'-'.$f->seq_region_end;
   my $zmenu = {
-    'type'           => 'Location',
-    'action'         => 'MiscFeature',
-    'r'              => $r,
-    'misc_feature_n' => $name,
-    'mfid'           => $mfid,
-    'db'             => $db,
+    'type'         => 'Location',
+    'action'       => 'MiscFeature',
+    'r'            => $r,
+    'misc_feature' => $name,
+    'mfid'         => $mfid,
+    'db'           => $db,
   };
   return $self->_url($zmenu);
 }
