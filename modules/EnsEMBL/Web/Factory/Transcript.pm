@@ -2,109 +2,128 @@ package EnsEMBL::Web::Factory::Transcript;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
+no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
+use EnsEMBL::Web::Fake;
+
 use base qw(EnsEMBL::Web::Factory);
 
+sub createObjects {   
+  my $self       = shift;
+  my $transcript = shift;
+  my ($identifier, $param, $new_factory_type);
+  
+  my $db = $self->param('db') || 'core';
+     $db = 'otherfeatures' if $db eq 'est';
+  my $db_adaptor = $self->database($db);	
+  
+  return $self->problem('fatal', 'Database Error', $self->_help("Could not connect to the $db database.")) unless $db_adaptor; 
+  
+  if (!$transcript) {
+    $new_factory_type = 'Gene';
+    
+    # Mapping of supported URL parameters to function calls on TranscriptAdaptor and PredictionTranscriptAdaptor which should get a Transcript or PredictionTranscript for those parameters
+    # Ordered by most likely parameter to appear in the URL
+    my @params = (
+      [ [qw(t transcript     )], [qw(fetch_by_stable_id fetch_by_translation_stable_id)] ],
+      [ [qw(pt               )], [qw(fetch_by_stable_id                               )] ],
+      [ [qw(p peptide protein)], [qw(fetch_by_translation_stable_id fetch_by_stable_id)] ],
+      [ [qw(exon             )], [qw(fetch_all_by_exon_stable_id                      )] ],
+      [ [qw(anchor1          )], [qw(fetch_by_stable_id fetch_by_translation_stable_id)] ],
+    );
+    
+    # Loop through the parameters and the function calls, trying to find a Transcript or PredictionTranscript
+    foreach my $p (@params) {
+      foreach (@{$p->[0]}) {
+        if ($identifier = $self->param($_)) {
+          (my $t  = $identifier) =~ s/^(\S+)\.\d*/$1/g;                                  # Strip versions
+          (my $t2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1 . sprintf('%011d', $2)/eg; # Make sure we've got eleven digits
+          
+          $param = $_;
+          
+          @{$p->[1]} = reverse @{$p->[1]} if $_ eq 'anchor1' && $self->param('type1') eq 'peptide';
+          $new_factory_type = 'Location'  if $_ eq 'pt';
+          
+          foreach my $adapt_class ('TranscriptAdaptor', 'PredictionTranscriptAdaptor') {
+            my $func    = "get_$adapt_class";
+            my $adaptor = $db_adaptor->$func;
+        
+            foreach my $fetch_call (@{$p->[1]}) {
+              eval { $transcript = $adaptor->$fetch_call($identifier); };
+              last if $transcript;
+              eval { $transcript = $adaptor->$fetch_call($t2); };
+              last if $transcript;
+              eval { $transcript = $adaptor->$fetch_call($t);  };
+              last if $transcript;
+            }
+            
+            last if $transcript;
+          }
+          
+          last;
+        }
+      }
+      
+      last if $transcript;
+    }
+    
+    # Check if there is a domain parameter
+    if (!$transcript && ($identifier = $self->param('domain'))) {
+      my $sth = $db_adaptor->dbc->db_handle->prepare('select i.interpro_ac, x.display_label, x.description from interpro as i left join xref as x on i.interpro_ac = x.dbprimary_acc where i.interpro_ac = ?');
+      $sth->execute($identifier);
+      my ($t, $n, $d) = $sth->fetchrow;
+      
+      $transcript = new EnsEMBL::Web::Fake({ view => 'Domains/Genes', type => 'Interpro Domain', id => $t, name => $n, description => $d, adaptor => $db_adaptor->get_GeneAdaptor }) if $t;
+      $new_factory_type = undef;
+    }
+    
+    $transcript = $transcript->[0] if ref $transcript eq 'ARRAY'; # if fetch_call is type 'fetch_all', take first object
+    
+    if (!$transcript) {
+      $transcript = $self->_archive($param); # Check if this is an ArchiveStableId
+      $new_factory_type = undef if $transcript;
+    }
+    
+    $transcript ||= $self->_known_feature('Transcript', $param, 't'); # Last check to see if a feature can be found for the parameters supplied
+  }
+  
+  if ($transcript) {
+    $self->DataObjects($self->new_object('Transcript', $transcript, $self->__data));
+    
+    if ($new_factory_type) {
+      $self->generate_object('Location', $transcript->feature_Slice); # Generate a location from the transcript
+      
+      # Generate the transcript's gene unless it is a PredictionTranscript
+      if ($new_factory_type eq 'Gene') {
+        my $gene = $db_adaptor->get_GeneAdaptor->fetch_by_transcript_stable_id($transcript->stable_id);
+        
+        $self->param('g', $gene->stable_id) if $self->generate_object('Gene', $gene) && $self->param('g') ne $gene->stable_id;
+      }
+    }
+    
+    $self->param('t', $transcript->stable_id) unless $transcript->isa('Bio::EnsEMBL::PredictionTranscript');
+  }
+}
+
 sub _help {
-  my( $self, $string ) = @_;
+  my ($self, $string) = @_;
 
-  my %sample = %{$self->species_defs->SAMPLE_DATA ||{}};
-
-  my $help_text = $string ? sprintf( '
-  <p>
-    %s
-  </p>', encode_entities( $string ) ) : '';
-  my $url = $self->_url({ '__clear' => 1, 'action' => 'Transcript', 't' => $sample{'TRANSCRIPT_PARAM'} });
-
-
-  $help_text .= sprintf( '
-  <p>
-    This view requires a transcript or protein identifier in the URL. For example:
-  </p>
-  <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
-    encode_entities( $url ),
-    encode_entities( $self->species_defs->ENSEMBL_BASE_URL. $url )
+  my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
+  my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
+  my $url       = $self->_url({ __clear => 1, action => 'Transcript', t => $sample{'TRANSCRIPT_PARAM'} });
+  
+  $help_text .= sprintf('
+    <p>
+      This view requires a transcript or protein identifier in the URL. For example:
+    </p>
+    <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
+    encode_entities($url),
+    encode_entities($self->species_defs->ENSEMBL_BASE_URL . $url)
   );
-
+  
   return $help_text;
 }
-
-sub createObjects {   
-  my $self = shift;
-  my ($identifier, @fetch_calls, $transobj);
-  if( $self->core_objects->transcript ) {
-    $self->DataObjects($self->new_object( 'Transcript', $self->core_objects->transcript, $self->__data ));
-    return;
-  }
-
-  my $db          = $self->param( 'db' ) || 'core';
-     $db          = 'otherfeatures' if $db eq 'est';
-  my $db_adaptor  = $self->database($db) ;	
-  unless ($db_adaptor){
-    $self->problem('Fatal', 
-		   'Database Error', 
-		   $self->_help("Could not connect to the $db database.")  ); 
-    return ;
-  }
-
-  my $KEY = 'transcript';
-  if( $identifier = $self->param( 'peptide' ) ){ 
-    @fetch_calls = qw(fetch_by_translation_stable_id fetch_by_stable_id);
-  } elsif( $identifier = $self->param( 'transcript' )|| $self->param('t') ){ 
-    @fetch_calls = qw(fetch_by_stable_id fetch_by_translation_stable_id);
-  } elsif( $identifier = $self->param( 'exon' ) ){
-    @fetch_calls = qw(fetch_all_by_exon_stable_id);
-  } elsif( $identifier = $self->param( 'anchor1' ) ) {
-    @fetch_calls = qw(fetch_by_stable_id fetch_by_translation_stable_id);
-    @fetch_calls = reverse @fetch_calls if($self->param( 'type1' ) eq 'peptide');
-    $KEY = 'anchor1';
-  } else {
-    $self->problem('fatal', 'Please enter a valid identifier', $self->_help());
-    return;
-  }
-
-  foreach my $adapt_class("TranscriptAdaptor","PredictionTranscriptAdaptor"){
-    my $adapt_getter = "get_$adapt_class";
-    my $adaptor = $db_adaptor->$adapt_getter;
-    (my $T = $identifier) =~ s/^(\S+)\.\d*/$1/g ; # Strip versions
-    (my $T2 = $identifier) =~ s/^(\S+?)(\d+)(\.\d*)?/$1.sprintf("%011d",$2)/eg ; # Make sure we've eleven digits
-
-    foreach my $fetch_call (@fetch_calls) {
-    eval { $transobj = $adaptor->$fetch_call($identifier) };
-    last if $transobj;
-    eval { $transobj = $adaptor->$fetch_call($T2) };
-    last if $transobj;
-    eval { $transobj = $adaptor->$fetch_call($T) };
-    last if $transobj;
-    }
-    last if $transobj;
-  }
-
-  if( ref( $transobj ) eq 'ARRAY' ){ 
-    # if fetch_call is type 'fetch_all', take first object
-    $transobj = $transobj->[0];
-  }
-
-  if(!$transobj || $@) { 
-    # Query xref IDs
-    $self->_archive( 'Transcript', $KEY );
-    return if( $self->has_a_problem );
-    $self->_known_feature('Transcript', $KEY );
-    return ;	
-  }
-
-  # Set transcript param to Ensembl Stable ID
-  # $self->param( 'transcript',[ $transobj->stable_id ] );
-  if( $transobj->isa('Bio::EnsEMBL::PredictionTranscript') ) {
-    $self->problem( 'redirect', $self->_url({'db'=>$db, 'pt' =>$transobj->stable_id,'g'=>undef,'r'=>undef,'t'=>undef}));
-  } else {
-    $self->problem( 'redirect', $self->_url({'db'=>$db, 't' =>$transobj->stable_id,'g'=>undef,'r'=>undef,'pt'=>undef}));
-  }
-  return;
-}
-
 
 1;

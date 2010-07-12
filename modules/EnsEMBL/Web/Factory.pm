@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Factory;
 
 use strict;
@@ -21,52 +23,78 @@ sub param {
   return wantarray ? @params : $params[0];
 }
 
+sub generate_object {
+  ### Used to create an object of a different type to the current factory
+  ### For example, a Gene object will generate a Location object when the top tabs are created
+  
+  my $self = shift;
+  my $type = shift;
+  
+  return 0 if $self->DataObjectTypes->{$type};
+  
+  my $new_factory = $self->new_factory($type, $self->__data);
+  $new_factory->createObjects(@_);
+  $self->DataObjects(@{$new_factory->DataObjects});
+  
+  return 1;
+}
+
 sub DataObjects {
   my $self = shift;
-  push @{$self->{'data'}{'_dataObjects'}}, @_ if @_;
-  return $self->{'data'}{'_dataObjects'};
+  
+  if (@_) {
+    push @{$self->__data->{'_dataObjects'}}, @_;
+    $self->DataObjectTypes(@_);
+  }
+  
+  return $self->__data->{'_dataObjects'};
+}
+
+sub DataObjectTypes {
+  my $self = shift;
+  map $self->__data->{'_dataObjectTypes'}{$_->__objecttype} = 1, @_ if @_;
+  return $self->__data->{'_dataObjectTypes'} || {};
 }
 
 sub object {
   my $self = shift;
-  return $self->{'data'}{'_dataObjects'} ? $self->{'data'}{'_dataObjects'}[0] : undef;
+  return $self->__data->{'_dataObjects'} ? $self->__data->{'_dataObjects'}[0] : undef;
 }
 
 sub clearDataObjects {
   my $self = shift;
-  $self->{'data'}{'_dataObjects'} = [];
+  $self->__data->{'_dataObjects'} = [];
 }
 
 sub featureIds {
   my $self = shift;
-  $self->{'data'}{'_feature_IDs'} = shift if @_;
-  return $self->{'data'}{'_feature_IDs'};
+  $self->__data->{'_feature_IDs'} = shift if @_;
+  return $self->__data->{'_feature_IDs'};
 }
 
 sub _archive {
-  my ($self, $type, $parameter) = @_;
-
-  # Redirect -> now uses code in idhistory
-  my $db   = $self->param('db')||'core';
-  my $name = $self->param($parameter) || $self->param('peptide') || $self->param('transcript') || $self->param('gene');
-  my $var  = $self->param($parameter) ? lc(substr $parameter, 0, 1) : 
-    $self->param('peptide')    ? 'p' :
-    $self->param('transcript') ? 't' :
-    'g';
+  ### Returns an ArchiveStableId if the parameter supplied can generate one
+  ### Called by Factory::Gene and Factory::Transcript
+  
+  my ($self, $parameter) = @_;
+  
+  my $var = lc substr $parameter, 0, 1;
+  my $archive_stable_id;
+  
+  if ($var =~ /^[gtp]$/) {
+    my $db = $self->param('db') || 'core';
+    my $id = $self->param($parameter);
     
-  my $archiveStableID;
+    $id =~ s/(\S+)\.(\d+)/$1/; # remove version
+    
+    eval {
+      $archive_stable_id = $self->database($db)->get_ArchiveStableIdAdaptor->fetch_by_stable_id($id);
+    };
+  }
   
-  eval {
-    my $achiveStableIDAdaptor = $self->database($db)->get_ArchiveStableIdAdaptor;
-    $name =~ s/(\S+)\.(\d+)/$1/; # remove version
-    $archiveStableID = $achiveStableIDAdaptor->fetch_by_stable_id($name);
-  };
-
-  return unless $archiveStableID;
-  
-  $self->param($var, $name);
-  $self->problem('archived');
+  return $archive_stable_id;
 }
+
 
 sub _help {
   my ($self, $string) = @_;
@@ -74,20 +102,25 @@ sub _help {
 }
 
 sub _known_feature {
-  my ($self, $type, $parameter) = @_;
+  ### Returns a feature if one can be generated from the feature type and parameter supplied
+  ### Can generate mapped features from display_label or external_name, or unmapped features by identifier
+  ### Sets URL param for $var if a mapped feature is generated - makes sure the URL generated for redirect is correct
+  ### Called by Factory::Gene and Factory::Transcript
   
-  my $db           = $self->param('db')||'core';
-  my $name         = $self->param($parameter) || $self->param(lc(substr $parameter, 0 , 1)) || $self->param('peptide') || $self->param('transcript') || $self->param('gene') || $self->param('t') || $self->param('g');
-  my $sitetype     = $self->species_defs->ENSEMBL_SITETYPE || 'Ensembl';
-  my @features     = ();
-  my $adaptor_name = "get_$type".'Adaptor';
-  my $adaptor;
+  my ($self, $type, $parameter, $var) = @_;
   
-  eval { 
+  my $db           = $self->param('db') || 'core';
+  my $name         = $self->param($parameter);
+  my $species_defs = $self->species_defs;
+  my $sitetype     = $species_defs->ENSEMBL_SITETYPE || 'Ensembl';
+  my $adaptor_name = "get_${type}Adaptor";
+  my ($adaptor, @features, $feature);
+  
+  eval {
     $adaptor = $self->database($db)->$adaptor_name; 
   };
   
-  die "Datafactory: Unknown DBAdapter in get_known_feature: $@" if $@;
+  die "Factory: Unknown DBAdapter in get_known_feature: $@" if $@;
   
   eval {
     my $f = $adaptor->fetch_by_display_label($name);
@@ -102,28 +135,28 @@ sub _known_feature {
   
   if ($@) {
     $self->problem('fatal', "Error retrieving $type from database", $self->_help("An error occured while trying to retrieve the $type $name."));
-  } elsif (@features) {
-    $self->__data->{'objects'} = [ map {{ 'db' => $db, lc($type) => $_->stable_id }} @features ];
-    
-    if (scalar @features == 1) {
-      $self->problem('mapped_id', 'Re-Mapped Identifier', 'The identifer has been mapped to a synonym');
-    } else {
-      $self->problem('mapped_id', 'Multiple mapped IDs',  'This feature id maps to multiple synonyms');
-    }
+  } elsif (@features) { # Mapped features
+    $feature = $features[0];
+    $self->param($var, $feature->stable_id);
   } else {
-    my $db_adaptor = $self->database(lc $db);
-    my $uoa        = $db_adaptor->get_UnmappedObjectAdaptor;
+    $adaptor = $self->database(lc $db)->get_UnmappedObjectAdaptor;
     
     eval { 
-      @features = @{$uoa->fetch_by_identifier($name)}; 
+      @features = @{$adaptor->fetch_by_identifier($name)}; 
     };
     
-    if (!$@ && @features) {
-      $self->problem('unmapped');
+    if (@features && !$@) { # Unmapped features
+      my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
+      my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
+      my $url  = sprintf '%s/Location/Genome?type=%s;id=%s', $species_defs->species_path, $type, $id;
+      
+      $self->problem('redirect', $url);
     } else {
-      $self->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database. ") )  ;
+      $self->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database."));
     }
   }
+  
+  return $feature;
 }
 
 sub problem            { return shift->hub->problem(@_);            }

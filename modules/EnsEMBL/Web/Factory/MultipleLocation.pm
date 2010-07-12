@@ -11,11 +11,11 @@ use base qw(EnsEMBL::Web::Factory::Location);
 sub createObjects {
   my $self = shift;
   
-  return $self->SUPER::createObjects if !$self->core_objects->location || $self->core_objects->location->isa('EnsEMBL::Web::Fake') || ($self->param('region') && !$self->param('r'));
+  $self->SUPER::createObjects;
   
-  $self->_create_object_from_core;
+  my $object = $self->object;
   
-  my $object = $self->DataObjects->[0];
+  return unless $object;
   
   # Redirect if we need to generate a new url
   return if $self->generate_url($object->slice);
@@ -70,12 +70,12 @@ sub createObjects {
     my $slice;
     
     my $modifiers = {
-      in      => sub { ($s, $e) = ((3*$s + $e)/4, (3*$e + $s)/4) },     # Half the length
-      out     => sub { ($s, $e) = ((3*$s - $e)/2, (3*$e - $s)/2) },     # Double the length
+      in      => sub { ($s, $e) = ((3*$s + $e)/4,   (3*$e + $s)/4  ) }, # Half the length
+      out     => sub { ($s, $e) = ((3*$s - $e)/2,   (3*$e - $s)/2  ) }, # Double the length
       left    => sub { ($s, $e) = ($s - ($e-$s)/10, $e - ($e-$s)/10) }, # Shift left by length/10
-      left2   => sub { ($s, $e) = ($s - ($e-$s)/2,  $e - ($e-$s)/2) },  # Shift left by length/2
+      left2   => sub { ($s, $e) = ($s - ($e-$s)/2,  $e - ($e-$s)/2 ) }, # Shift left by length/2
       right   => sub { ($s, $e) = ($s + ($e-$s)/10, $e + ($e-$s)/10) }, # Shift right by length/10
-      right2  => sub { ($s, $e) = ($s + ($e-$s)/2,  $e + ($e-$s)/2) },  # Shift right by length/2
+      right2  => sub { ($s, $e) = ($s + ($e-$s)/2,  $e + ($e-$s)/2 ) }, # Shift right by length/2
       flip    => sub { ($strand ||= 1) *= -1 },
       realign => sub { $self->realign(\%inputs, $_) },
       primary => sub { $self->change_primary_species(\%inputs, $_) }
