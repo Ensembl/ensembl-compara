@@ -1,3 +1,4 @@
+## $ID:
 package EnsEMBL::Web::Configuration::Info;
 
 use strict;
@@ -120,7 +121,7 @@ sub populate_tree {
       
       $data_menu->append( $self->create_node( 'Variation', "Variation ($variation_text)",
         [qw(location      EnsEMBL::Web::Component::Variation::Summary)],
-        { 'availability' => 'database.variation', 'url' => $variation_url, 'raw' => 1 }
+        { 'availability' => 1, 'url' => $variation_url, 'raw' => 1 }
       ));
     }
 

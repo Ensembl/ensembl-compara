@@ -1,8 +1,10 @@
+# $Id$ 
 package EnsEMBL::Web::Configuration::Location;
 
 use strict;
 
 use base qw(EnsEMBL::Web::Configuration);
+use Bio::EnsEMBL::Registry;
 
 sub global_context { return $_[0]->_global_context; }
 sub ajax_content   { return $_[0]->_ajax_content;   }
@@ -11,42 +13,11 @@ sub local_tools    { return $_[0]->_local_tools;    }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub configurator   { return $_[0]->_configurator;   }
 sub context_panel  { return $_[0]->_context_panel;  }
+sub caption { return 'Karyotype'; }
 
 sub set_default_action {
   my $self = shift;
-  
-  if (!ref $self->object) {
-    $self->{'_data'}->{'default'} = 'Genome';
-    return;
-  }
-  
-  my $x = $self->object->availability || {};
-  
-  if ($x->{'slice'}) {
-    $self->{'_data'}->{'default'} = 'View';
-  } elsif ($x->{'chromosome'}) {
-    $self->{'_data'}->{'default'} = 'Chromosome';
-  } else {
-    $self->{'_data'}->{'default'} = 'Genome';
-  }
-}
-
-sub context_panel {
-  my $self   = shift;
-  my $object = $self->object;
-  
-  if ($object->action eq 'Multi') {
-    my $panel  = $self->new_panel('Summary',
-      'code'    => 'summary_panel',
-      'object'  => $object,
-      'caption' => $object->caption
-    );
-    
-    $panel->add_component('summary' => 'EnsEMBL::Web::Component::Location::MultiIdeogram');
-    $self->add_panel($panel);
-  } else {
-    $self->_context_panel;
-  }
+  $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Genome';
 }
 
 sub populate_tree {
@@ -55,7 +26,7 @@ sub populate_tree {
   
   $self->create_node('Genome', 'Whole genome',
     [qw( genome EnsEMBL::Web::Component::Location::Genome )],
-    { 'availability' => 'karyotype'},
+    { 'availability' => 1 },
   );
 
   $self->create_node('Chromosome', 'Chromosome summary',
@@ -155,7 +126,7 @@ sub populate_tree {
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
       marker EnsEMBL::Web::Component::Location::MarkerDetails
     )],
-    { 'availability' => 'slice|marker has_markers' }
+    { 'availability' => 'slice has_markers' }
   );
 
   $self->create_subnode(
@@ -167,111 +138,123 @@ sub populate_tree {
   $self->add_external_browsers;
 }
 
-sub add_external_browsers {
+sub context_panel {
   my $self = shift;
-  my $object = $self->object;
   
+  if ($self->action eq 'Multi') {
+    my $object = $self->object;
+    my $panel  = $self->new_panel('Summary',
+      code    => 'summary_panel',
+      object  => $object,
+      caption => $object->caption
+    );
+    
+    $panel->add_component('summary' => 'EnsEMBL::Web::Component::Location::MultiIdeogram');
+    $self->add_panel($panel);
+  } else {
+    $self->_context_panel;
+  }
+}
+
+sub add_external_browsers {
+  my $self         = shift;
+  my $hub          = $self->model->hub;
+  my $object       = $self->object;
+  my $species_defs = $hub->species_defs;
+  
+  $self->add_vega_link;
   
   # Links to external browsers - UCSC, NCBI, etc
-  my %browsers = %{$object->species_defs->EXTERNAL_GENOME_BROWSERS || {}};
-  $browsers{'UCSC_DB'} = $object->species_defs->UCSC_GOLDEN_PATH;
-  $browsers{'NCBI_DB'} = $object->species_defs->NCBI_GOLDEN_PATH;
+  my %browsers = %{$species_defs->EXTERNAL_GENOME_BROWSERS || {}};
+  $browsers{'UCSC_DB'} = $species_defs->UCSC_GOLDEN_PATH;
+  $browsers{'NCBI_DB'} = $species_defs->NCBI_GOLDEN_PATH;
   
+  my ($chr, $start, $end) = $object ? ($object->seq_region_name, int $object->seq_region_start, int $object->seq_region_end) : ();
   my $url;
   
   if ($browsers{'UCSC_DB'}) {
-    if ($object->seq_region_name) {
-      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    if ($chr) {
+      $url = $hub->get_ExtURL('EGB_UCSC', { UCSC_DB => $browsers{'UCSC_DB'}, CHR => $chr, START => $start, END => $end });
     } else {
-      $url = $object->get_ExtURL('EGB_UCSC', { 'UCSC_DB' => $browsers{'UCSC_DB'}, 'CHR' => '1', 'START' => '1', 'END' => '1000000' });
+      $url = $hub->get_ExtURL('EGB_UCSC', { UCSC_DB => $browsers{'UCSC_DB'}, CHR => 1, START => 1, END => 1000000 });
     }
     
-    $self->get_other_browsers_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
+    $self->get_other_browsers_menu->append($self->create_node('UCSC_DB', 'UCSC', [], { availability => 1, url => $url, raw => 1, external => 1 }));
     
-    delete($browsers{'UCSC_DB'});
+    delete $browsers{'UCSC_DB'};
   }
   
   if ($browsers{'NCBI_DB'}) {
-    if ($object->seq_region_name) { 
-      $url = $object->get_ExtURL('EGB_NCBI', { 'NCBI_DB' => $browsers{'NCBI_DB'}, 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
+    if ($chr) { 
+      $url = $hub->get_ExtURL('EGB_NCBI', { NCBI_DB => $browsers{'NCBI_DB'}, CHR => $chr, START => $start, END => $end });
     } else {
-      my $taxid = $object->species_defs->get_config($object->species, 'TAXONOMY_ID'); 
+      my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
       $url = "http://www.ncbi.nih.gov/mapview/map_search.cgi?taxid=$taxid";
     }
     
-    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
+    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { availability => 1, url => $url, raw => 1, external => 1 }));
     
-    delete($browsers{'NCBI_DB'});
+    delete $browsers{'NCBI_DB'};
   }
-
-  $self->add_vega_link;  
+  
   foreach (sort keys %browsers) {
     next unless $browsers{$_};
     
-    $url = $object->get_ExtURL($_, { 'CHR' => $object->seq_region_name, 'START' => int($object->seq_region_start), 'END' => int($object->seq_region_end) });
-    $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { 'availability' => 1, 'url' => $url, 'raw' => 1, 'external' => 1 }));
+    $url = $hub->get_ExtURL($_, { CHR => $chr, START => $start, END => $end });
+    $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { availability => 1, url => $url, raw => 1, external => 1 }));
   }
 }
 
 sub add_vega_link {
+  my $self           = shift;
+  my $hub            = $self->model->hub;
+  my $urls           = $hub->ExtURL;
+  my $species        = $hub->species;
+  my $species_defs   = $hub->species_defs;
+  my $type           = $hub->type;
+  my $action         = $hub->action;
+  my @alt_assemblies = @{$species_defs->ALTERNATIVE_ASSEMBLIES || []};
+  my ($vega_link, $link_class);
+
+  if (lc $species_defs->ENSEMBL_SITETYPE ne 'vega' && $action =~ /^(Chromosome|Overview|View)$/ && $alt_assemblies[0] =~ /VEGA/ && $urls->is_linked('VEGA')) {
+    my $object = $self->object;
+    
+    if ($object) {
+      Bio::EnsEMBL::Registry->add_DNAAdaptor($species, 'vega', $species, 'vega');
+      
+      my $adaptor         = Bio::EnsEMBL::Registry->get_adaptor($species, 'vega', 'Slice');
+      my $chromosome      = $object->name;
+      my $start           = $object->seq_region_start;
+      my $end             = $object->seq_region_end;
+      my $strand          = $object->seq_region_strand;
+      my $coord_system    = $object->slice->coord_system;
+      my $start_slice     = $adaptor->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
+      my $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]);
+      
+      if (scalar @$vega_projection == 1) {
+        my $vega_slice = $vega_projection->[0]->to_Slice;
+        
+        $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+        $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
+      } elsif (scalar @$vega_projection > 1) {
+        $vega_link  = $object->_url({ type => 'Help', action => 'ListVegaMappings' });      
+        $link_class = 'modal_link';
+      }
+    } else {
+      $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+    }
+    
+    $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => !!$vega_link, url => $vega_link, raw => 1, external => !$link_class, class => $link_class }));
+  }
+}
+
+sub get_other_browsers_menu {
   my $self = shift;
-  my $object = $self->object;
-  my $vega_link='';
-  my $urls = $object->ExtURL;
-  my $species=$object->species;
-  my $alt_assemblies;
-  my $link_class='';
-
-  if(defined($object) && (lc $object->species_defs->ENSEMBL_SITETYPE) ne 'vega' && $object->type eq 'Location' ##For the location page (if the site s not a vega website), add the Vega menu entry in other browsers menu
-    && ($alt_assemblies= $object->hub->species_defs->ALTERNATIVE_ASSEMBLIES)){ ##check we have alternate assemblies  
-    if( ($object->action eq "Chromosome" || $object->action eq "Overview" || $object->action eq "View") ##The link is only enabled for Chromosome, overview and View actions
-      && (scalar(@$alt_assemblies)!=0) && (@$alt_assemblies[0]=~ /VEGA/) && $urls && $urls->is_linked("VEGA")){ ## retreive the vega (base-) url
-      ## set dnadb to 'vega' so that the assembly mapping is retrieved from there		 
-      my $chromosome= $object->name;		   
-      my $reg = "Bio::EnsEMBL::Registry";
-      my $vega_dnadb = $reg->get_DNAAdaptor($species, 'vega');
-      $reg->add_DNAAdaptor($species, "vega", $species, 'vega');
-      ## get a Vega slice to do the projection
-      my $vega_sa = Bio::EnsEMBL::Registry->get_adaptor($species, 'vega', "Slice");
-      my $start_location = $object->hub->core_objects->location->start;
-      my $end_location = $object->hub->core_objects->location->end;
-
-      my $my_slice = $object->Obj->{"slice"};
-      my $coordinate_system=$my_slice->coord_system;
-      my $strand=$my_slice->strand;
-
-      my $start_slice = $vega_sa->fetch_by_region( $coordinate_system->name, $chromosome,$start_location,$end_location,$strand,$coordinate_system->version );
-	  my $start_V_projection= undef;
-	  eval{
-        $start_V_projection = $start_slice->project($coordinate_system->name, @$alt_assemblies[0]) or die "print($coordinate_system->name): $!";
-	  };
-      if(defined($start_V_projection)){
-        if(scalar(@$start_V_projection) ==1){
-          $vega_link = $urls->get_url("VEGA", "") . $species."/".$object->type."/".$object->action;
-          $vega_link.= "?r=".@$start_V_projection[0]->to_Slice->seq_region_name.":".@$start_V_projection[0]->to_Slice->start."-".@$start_V_projection[0]->to_Slice->end;                                      
-        }elsif(scalar(@$start_V_projection) > 1){
-          $vega_link="../Help/ListVegaMappings?type=".$object->type.";action=".$object->action.";"; #explicitly pass the type and action, as this is used in ListVegaMappings, to form the links to Vega        
-          my $parameters=$object->hub->core_objects->{'parameters'}; #add url parameters, so the list can get its location
-          while ((my $key, my $value) = each (%$parameters)){
-            $vega_link.=$key."=".$value.";";
-          }
-          $vega_link.="species=".$species;
-          $link_class='modal_link';
-        }
-	  }
-    }
-    $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega' , [], { 'availability' => ($vega_link ne ''), 'url' => $vega_link, 'raw' => 1, 'external' => ($link_class eq '') , class=>$link_class }));      
-  }
+  
+  # The menu may already have an other browsers sub menu from Ensembl, if so we add to this one, otherwise create it
+  $self->{'browser_menu'} ||= $self->get_submenu('OtherBrowsers') || $self->create_submenu('OtherBrowsers', 'Other genome browsers');
+  
+  return $self->{'browser_menu'};
 }
 
-sub get_other_browsers_menu{
-   my $self=shift;
-  #The menu may already have an other browsers sub menu from Ensembl, if so we add to this one, otherwise create it
-  if(!defined($self->{browser_menu})){
-    if(! $self->get_submenu('OtherBrowsers')){
-      $self->{browser_menu} = $self->create_submenu('OtherBrowsers', 'Other genome browsers');
-    }
-  }
-  return $self->{browser_menu};
-}
 1;

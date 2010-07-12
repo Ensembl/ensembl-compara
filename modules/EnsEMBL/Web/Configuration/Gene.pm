@@ -1,3 +1,4 @@
+##$Id:
 package EnsEMBL::Web::Configuration::Gene;
 
 use strict;
@@ -16,21 +17,7 @@ sub context_panel  { return $_[0]->_context_panel;  }
 
 sub set_default_action {
   my $self = shift;
-  
-  if (!ref $self->object) {
-    $self->{'_data'}->{'default'} = 'Summary';
-    return;
-  }
-  
-  my $x = $self->object->availability || {};
-  
-  if ($x->{'gene'}) {
-    $self->{'_data'}->{'default'} = 'Summary';
-  } elsif ($x->{'idhistory'}) {
-    $self->{'_data'}->{'default'} = 'Idhistory';
-  } elsif ($x->{'family'}) {
-    $self->{'_data'}->{'default'} = 'Family';
-  }
+  $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Summary';
 }
 
 sub populate_tree {
