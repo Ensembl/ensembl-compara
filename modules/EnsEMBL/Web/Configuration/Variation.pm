@@ -1,3 +1,4 @@
+#$Id$
 package EnsEMBL::Web::Configuration::Variation;
 
 use strict;
@@ -16,17 +17,7 @@ sub context_panel  { return $_[0]->_context_panel;  }
 
 sub set_default_action {
   my $self = shift;
-  
-  if (!ref $self->object){
-    $self->{'_data'}->{'default'} = 'Summary';
-    return;
-  }
-  
-  my $x = $self->object->availability || {};
-  
-  if ($x->{'variation'}) {
-    $self->{'_data'}->{'default'} = 'Summary';
-  }
+  $self->{'_data'}->{'default'} = 'Summary';
 }
 
 sub populate_tree {

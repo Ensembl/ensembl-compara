@@ -1,3 +1,4 @@
+#$Id$
 package EnsEMBL::Web::Configuration::Regulation;
 
 use strict;
@@ -14,17 +15,7 @@ use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
- 
-  if (!ref $self->object) {
-    $self->{'_data'}->{'default'} = 'Summary';
-    return;
-  }
- 
-  my $x = $self->object->availability || {};
-  
-  if ($x->{'regulation'}) {
-    $self->{'_data'}->{'default'} = 'Cell_line';
-  }
+  $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Summary';
 }
 
 sub populate_tree {

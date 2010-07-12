@@ -1,3 +1,4 @@
+#$Id$
 package EnsEMBL::Web::Configuration::LRG;
 
 use strict;
@@ -14,17 +15,7 @@ sub context_panel  { return $_[0]->_context_panel;  }
 
 sub set_default_action {
   my $self = shift;
-  
-  if (!ref $self->object) {
-    $self->{'_data'}->{'default'} = 'Summary';
-    return;
-  }
-  
-  my $x = $self->availability || {};
-  
-  if ($x->{'lrg'}) {
-    $self->{'_data'}->{'default'} = 'Summary';
-  }
+  $self->{'_data'}->{'default'} = $self->object ? $self->object->default_action : 'Genome';
 }
 
 sub short_caption {
@@ -125,10 +116,7 @@ sub populate_tree {
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
   $var_menu->append($self->create_node('Variation_LRG/Table', 'Variation Table',
-    [qw(
-      snptable EnsEMBL::Web::Component::LRG::LRGSNPTable
-      snpinfo  EnsEMBL::Web::Component::LRG::GeneSNPInfo
-    )],
+    [qw( snptable EnsEMBL::Web::Component::LRG::LRGSNPTable )],
     { 'availability' => $has_lrg }
   ));
 
