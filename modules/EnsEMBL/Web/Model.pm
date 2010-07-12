@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Model;
 
 ### DESCRIPTION:
@@ -61,7 +63,6 @@ sub all_objects      { return $_[0]{'_objects'};         }
 sub object_params    { return $_[0]{'_object_params'};   }
 sub object_types     { return $_[0]{'_object_types'};    }
 sub ordered_objects  { return $_[0]{'_ordered_objects'}; }
-#sub objects          { return shift->object(@_);         }
 
 sub object {
   ### Getter/setter for data objects - acts on the default data type
