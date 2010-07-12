@@ -9,9 +9,10 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $object, $existing_menu) = @_;
+  my ($class, $hub, $object, $existing_menu) = @_;
   
   my $self = {
+    hub            => $hub,
     object         => $object,
     entries        => [],
     stored_entries => \%{$existing_menu->{'stored_entries'}} || {},
@@ -30,6 +31,8 @@ sub new {
 }
 
 sub content {}
+
+sub hub { return $_[0]{'hub'}; }
 
 sub object {
   my $self = shift;
