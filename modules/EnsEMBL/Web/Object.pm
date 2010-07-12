@@ -1,3 +1,4 @@
+#$Id$
 package EnsEMBL::Web::Object;
 
 ### NAME: EnsEMBL::Web::Object
@@ -33,6 +34,7 @@ sub hub               { return $_[0]{'data'}{'_hub'}; }          # Gets the unde
 sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the underlying Ensembl object wrapped by the web object
 sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 sub problem           { return shift->hub->problem(@_); }
+sub default_action { return 'Summary'; }
 
 sub _filename {
   my $self = shift;

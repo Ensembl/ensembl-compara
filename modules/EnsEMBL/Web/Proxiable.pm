@@ -47,7 +47,6 @@ sub __data            { return $_[0]->{'data'}; }
 sub __objecttype      { return $_[0]->{'data'}{'_objecttype'}; }
 sub parent            { return $_[0]->hub->parent; }
 sub apache_handle     { return $_[0]->{'data'}{'_apache_handle'}; }
-sub core_objects      { return $_[0]->{'data'}{'_core_objects'}; }
 sub hub               { return $_[0]->{'data'}{'_hub'}; }
 sub type              { return $_[0]->{'data'}{'_type'}; }
 sub action            { return $_[0]->{'data'}{'_action'};  }
@@ -70,62 +69,7 @@ sub table_info {
   return $self->species_defs->table_info( @_ );
 }
 
-sub _url {
-  my $self = shift;
-  my $params = shift || {};
-  
-  die "Not a hashref while calling _url ($params @_)" unless ref($params) eq 'HASH';
-  
-  my $species = exists($params->{'species'})  ? $params->{'species'}  : $self->species;
-  my $type    = exists($params->{'type'})     ? $params->{'type'}     : $self->type;
-  my $action  = exists($params->{'action'})   ? $params->{'action'}   : $self->action;
-  my $fn      = exists($params->{'function'}) ? $params->{'function'} : ($action eq $self->action ? $self->function : undef);
-  my %pars    = %{$self->hub->core_params};
-  ### Remove any unused params
-  foreach (keys %pars) {
-    delete $pars{$_} unless $pars{$_};
-  }
-  
-  if ($params->{'__clear'}) {
-    %pars = ();
-    delete $params->{'__clear'};
-  }
-  
-  delete $pars{'t'}  if $params->{'pt'};
-  delete $pars{'pt'} if $params->{'t'};
-  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
-  delete $pars{'time'};
-  
-  foreach (keys %$params) {
-    next if $_ =~ /^(species|type|action|function)$/;
-    
-    if (defined $params->{$_}) {
-      $pars{$_} = $params->{$_};
-    } else {
-      delete $pars{$_};
-    }
-  }
-  
-  my $url = sprintf '%s/%s/%s', $self->species_path($species), $type, $action.( $fn ? "/$fn" : '' );
-  
-  my $flag = shift;
-  
-  return [$url, \%pars] if $flag;
-  
-  $url .= '?' if scalar keys %pars;
-  
-  # Sort the keys so that the url is the same for a given set of parameters
-  foreach my $p (sort keys %pars) {
-    next unless defined $pars{$p};
-    
-    # Don't escape :
-    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_.!~*'():") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
-  }
-  
-  $url =~ s/;$//;
-  
-  return $url;
-}
+sub _url { return shift->hub->url(@_); }  #same as the _url in hub
 
 sub timer_push {
   my $self = shift;

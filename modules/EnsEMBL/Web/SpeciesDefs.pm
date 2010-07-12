@@ -1,3 +1,4 @@
+#$Id$
 package EnsEMBL::Web::SpeciesDefs;
 
 ### SpeciesDefs - Ensembl web configuration accessor
@@ -77,38 +78,38 @@ sub new {
   ### c
   my $class = shift;
 
-  verbose($SiteDefs::ENSEMBL_API_VERBOSITY); 
-  
+  verbose($SiteDefs::ENSEMBL_API_VERBOSITY);
+
   my $self = bless({
-    _start_time => undef, 
-    _last_time  => undef, 
-    timer       => undef 
+    _start_time => undef,
+    _last_time  => undef,
+    timer       => undef
   }, $class);
-  
+
   my $conffile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/'. $ENSEMBL_CONFIG_FILENAME;
-  
+
   $self->{'_filename'} = $conffile;
 
   # TODO - these need to be pulled in dynamically from appropriate modules
-  my @params = qw/g h r t v m db pt rf vf fdb lrg vdb domain family protein/;
-  $self->{'_core_params'} = \@params; 
+  my @params = qw/g h r t v m db pt rf vf fdb lrg vdb/;
+  $self->{'_core_params'} = \@params;
   
   $self->parse unless $CONF;
-  
+
   ## Diagnostic - sets up back trace of point at which new was
   ## called - useful for trying to track down where the cacheing
   ## is taking place
   $self->{'_new_caller_array'} = [];
-  
+
   if (1) {
     my $C = 0;
-    
+
     while (my @T = caller($C)) {
-      $self->{'_new_caller_array'}[$C] = \@T; 
+      $self->{'_new_caller_array'}[$C] = \@T;
       $C++;
     }
   }
-  
+
   $self->{'_storage'} = $CONF->{'_storage'};
 
   return $self;

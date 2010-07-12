@@ -17,8 +17,8 @@ sub content {
   $self->add_entry({
     label => 'Marker info.',
     link  => $object->_url({
-      type   => 'Location',
-      action => 'Marker',
+      type   => 'Marker',
+      action => 'Details',
       m      => $m
     })
   });

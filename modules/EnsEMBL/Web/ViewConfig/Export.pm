@@ -50,13 +50,13 @@ sub form {
   
   return if $function !~ /Location|Gene|Transcript/;
   
-  my $config = $object->config;
-  my $slice = $object->slice;
-  my $form_action = $object->_url({ action => 'Form', function => $function }, 1);
+  my $config              = $object->config;
+  my $slice               = $object->slice;
+  my $form_action         = $object->_url({ action => 'Form', function => $function }, 1);
   my %gene_markup_options = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   
   $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
-  $view_config->get_form->{'_attributes'}{'id'} = 'export_configuration';
+  $view_config->get_form->{'_attributes'}{'id'}     = 'export_configuration';
   $view_config->get_form->{'_attributes'}{'class'} .= ' export';
   $view_config->get_form->{'_attributes'}{'method'} = 'get';
     
@@ -95,14 +95,14 @@ sub form {
       type  => 'NoEdit',
       name  => 'gene_to_export',
       label => 'Gene to export',
-      value => $object->core_objects->long_caption('gene')
+      value => $object->hub->core_objects->{'gene'}->long_caption
     });
-  } elsif ($function eq 'Transcript') {
+  } elsif ($function eq 'Transcript') {    
     $view_config->add_form_element({
       type  => 'NoEdit',
       name  => 'transcript_to_export',
       label => 'Transcript to export',
-      value => $object->core_objects->long_caption('transcript')
+      value => $object->hub->core_objects->{'transcript'}->long_caption
     });
   } 
   

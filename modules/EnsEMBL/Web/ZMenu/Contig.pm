@@ -8,10 +8,11 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self = shift;
-  
+
   my $object          = $self->object;
   my $threshold       = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $slice_name      = $object->param('region_n');
+  my $slice_name      = $object->param('region');
+  
   my $db_adaptor      = $object->database('core');
   my $slice           = $db_adaptor->get_SliceAdaptor->fetch_by_region('seqlevel', $slice_name);
   my $slice_type      = $slice->coord_system_name;

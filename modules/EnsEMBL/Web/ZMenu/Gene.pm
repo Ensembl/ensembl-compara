@@ -31,7 +31,7 @@ sub content {
     link  => $object->_url({
       type   => 'Location',
       action => 'View',
-      l      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
+      r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
     })
   });
   
