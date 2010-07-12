@@ -33,7 +33,7 @@ sub content {
   my $ext_db = $input->{'extdb'}->[0];
 
   #get external sequence and type (DNA or PEP)
-  my $ext_seq = $object->get_ext_seq( $hit_id, $ext_db);
+  my $ext_seq = $self->hub->get_ext_seq( $hit_id, $ext_db);
   $ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
   my $seq_type = $object->determine_sequence_type( $ext_seq );
 

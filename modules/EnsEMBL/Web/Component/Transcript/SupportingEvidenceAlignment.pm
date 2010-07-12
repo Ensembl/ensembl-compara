@@ -56,7 +56,7 @@ sub content {
   }
   else {
     foreach my $id ( @hit_ids ) {
-      $ext_seq = $object->get_ext_seq( $id,uc($query_db) );
+      $ext_seq = $self->hub->get_ext_seq( $id,uc($query_db) );
       if ($ext_seq) {
 	$hit_id = $id;
 	last;
