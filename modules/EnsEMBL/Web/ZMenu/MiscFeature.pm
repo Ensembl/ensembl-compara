@@ -10,7 +10,7 @@ sub content {
   my $self = shift;
   
   my $object     = $self->object;
-  my $name       = $object->param('misc_feature_n');
+  my $name       = $object->param('misc_feature');
   my $db_adaptor = $object->database(lc $object->param('db') || 'core');
   my $mf         = $db_adaptor->get_MiscFeatureAdaptor->fetch_by_dbID($object->param('mfid'));
   my $type       = $mf->get_all_MiscSets->[0]->code;
@@ -77,9 +77,8 @@ sub content {
   $self->add_entry({
     label => "Center on $caption",
     link  => $object->_url({
-      type         => 'Location', 
-      action       => 'View', 
-      misc_feature => $name
+      type   => 'Location', 
+      action => 'View'
     })
   });
 }
