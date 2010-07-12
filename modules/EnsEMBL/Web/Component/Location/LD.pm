@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Component::Location::LD;
 
 use strict;
@@ -13,27 +14,23 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $model = $self->model;
-  my $obj = $self->object;
-  my $html = '<dl class="summary">';
+  my $self   = shift;
+  my $object = $self->object;
+  my $html   = '<dl class="summary">';
 
-  if ($obj->param('pop1')){
-    my $focus = $self->focus($model);  
-    if ($focus) {
-      $html .= qq( <dt>Focus: </dt><dd>$focus</dd>); 
-    }
-    $html .= $self->prediction_method($obj);
- 
-    my $pop_html .= $self->population_info($obj);
-    $html .= qq( <dt>Populations: </dt><dd>$pop_html</dd>);
+  if ($object->param('pop1')) {
+    my $focus    = $self->focus;
+    my $pop_html = $self->population_info($object);
+
+    $html .= " <dt>Focus: </dt><dd>$focus</dd>" if $focus; 
+    $html .= $self->prediction_method($object);
+    $html .= " <dt>Populations: </dt><dd>$pop_html</dd>";
   } else {
-     $html .= $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations" link from menu on the left hand side of this page.</p>'
-  );
-
+     $html .= $self->_info('No Population Selected', '<p>You must select a population(s) using the "Select populations" link from menu on the left hand side of this page.</p>');
   }
 
-  $html .= "</dl><br />";
+  $html .= '</dl><br />';
+  
   return $html;
 }
 
@@ -44,31 +41,31 @@ sub focus {
   ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
   ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
 
-  my ( $self, $model ) = @_;
-  my $obj = $self->object;
-  my $hub = $model->hub;
+  my ($self, $model) = @_;
 
-  my ( $info, $focus );
-  if ( $obj->param('v') && $obj->param('focus')) {
-    my $name = $obj->name; 
-    my $source = $obj->source;
-    my $link_name  = $obj->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
-    my $var_url =  $obj->_url({ 'type' => 'Variation', 'action' => 'Summary', 'v' => $obj->param('v'), 'vf' => $obj->param('vf') });
-    $info .= "Variant $link_name ($source ". $obj->adaptor->get_source_version($source).")";
-    $info .= " <a href=$var_url>[View variation]</a>"; 
-  } elsif ( $hub->core_param('g') ) {
-    my $gene_id = $hub->core_param('g');
-    my $url = $obj->_url({ 'type' => 'Gene', 'aceion' => 'Summary', 'g' => $obj->param('g') });
-    $info .= "Gene <a href=$url>$gene_id</a>";
-  } elsif ($hub->core_param('r')){
-    my $location = $hub->core_param('r');
-    my $url = $obj->_url({ 'type' => 'Location', 'action' => 'View', 'r' => $obj->param('r') });
-    $info .= "Location <a href=$url>$location</a>";
-  } else {
-    return 1;
+  my $object  = $self->object;
+  my $model   = $self->model;
+  my $hub     = $self->hub;
+  my ($r, $v) = map $object->param($_), qw(r v);
+  my $info;
+  
+  if ($v && $object->param('focus')) {
+    my $snp       = $model->object('Variation');
+    my $name      = $snp->name; 
+    my $source    = $snp->source;
+    my $link_name = $object->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
+    my $url       = $object->_url({ type => 'Variation', action => 'Summary', v => $v, vf => $object->param('vf') });
+    
+    $info = sprintf 'Variant %s (%s %s) <a href="%s">[View variation]</a>', $link_name, $source, $snp->Obj->adaptor->get_source_version($source), $url;
+  } elsif ($r) {
+    my $url = $object->_url({ type => 'Location', action => 'View', r => $r });
+    
+    $info = qq{Location <a href="$url">$r</a>};
   }
+  
   return $info;
 }
+
 
 #-----------------------------------------------------------------------------
 
@@ -177,9 +174,8 @@ sub tagged_snp {
   ### returns no
 
   my ($self, $object, $pop_name)  = @_;
-  my $var = $self->model->object('Variation');
-  my $snp = $self->new_object('Variation', $var, $object->__data);
-
+  my $snp = $self->model->object('Variation');   
+  
   my $snp_data  = $snp->tagged_snp;
   return unless keys %$snp_data;
 

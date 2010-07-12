@@ -1,3 +1,4 @@
+#$Id:#
 package EnsEMBL::Web::Component::Location::Genome;
 
 ### Module to replace Karyoview
@@ -18,15 +19,16 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub = $self->model->hub;
+  my $self    = shift;
+  my $model   = $self->model;
+  my $hub     = $self->hub;
   my $species = $hub->species;
 
   my ($html, $table, $usertable, $features, $has_features, @all_features);
  
   if (my $id = $hub->param('id') || $hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
-    $self->model->create_objects('Feature'); ## For location pages, we create these on the fly
-    $features = $self->model->munge_features_for_drawing;
+    $features = $model->create_objects('Feature', 'lazy')->convert_to_drawing_parameters;
+    
     my @A = keys %$features;
     if (keys %$features) { $table = $self->feature_tables($features); }
   } 
@@ -105,14 +107,14 @@ sub content {
             $text = "Location of variants associated with phenotype $phenotype_name:";        
           }
         }        
-
+ 
         $used_colour{$data_type}++;        
         $html = qq(<h2>$text</h2>) unless $names{'LRG'};        
                 
         $image->image_name = "feature-$species";
         $image->imagemap = 'yes';
-       
-        while (my ($feat_type, $set) = each (%$features)) { 
+
+        while (my ($feat_type, $set) = each (%$features)) {           
           my $defaults = $pointer_default{$set->[2]};
           my $pointer_ref = $image->add_pointers($hub, {
             'config_name'   => 'Vkaryotype',

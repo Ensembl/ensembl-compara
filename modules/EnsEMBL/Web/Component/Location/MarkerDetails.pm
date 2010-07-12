@@ -1,5 +1,7 @@
+#$Id:#
 package EnsEMBL::Web::Component::Location::MarkerDetails;
 
+# FIXME: rename to MarkerList, update Configuration::Location
 use strict;
 use warnings;
 no warnings "uninitialized";
@@ -10,29 +12,65 @@ use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
-  $self->ajaxable(0);
+  $self->ajaxable(1);
 }
 
 sub content {
-	my $self = shift;
+  my $self      = shift;
+  my $object    = $self->object;
+  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   
-	my $object = $self->object;
-  my $html;
+  return $self->_warning('Region too large', '<p>The region selected is too large to display in this view</p>') if $object->length > $threshold;
   
-	if (my $m = $object->param('m')) {
-		my $adap = $object->database($object->param('db') || 'core')->get_adaptor('Marker');
+  my @found_mf = $object->sorted_marker_features($object->slice);
+  my ($html, %mfs);
+  
+  foreach my $mf (@found_mf) {
+    my $name    = $mf->marker->display_MarkerSynonym->name;
+    my $sr_name = $mf->seq_region_name;
+    my $cs      = $mf->coord_system_name;
     
-    $html = $self->render_marker_details($adap->fetch_all_by_synonym($m));
-	} else {
-		my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-		
-    return $self->_warning('Region too large', '<p>The region selected is too large to display in this view</p>') if $object->length > $threshold;
-    
-    $html = $self->render_marker_features;
-	}
+    push @{$mfs{$name}->{$sr_name}}, {
+      cs    => $cs,
+      mf    => $mf,
+      start => $mf->seq_region_start,
+      end   => $mf->seq_region_end
+    };
+  }
   
-	return $html
+  my $c = scalar keys %mfs;
+  
+  return '<h3>No markers found in this region</h3>' unless $c;
+  
+  my $s = $c > 1 ? 's' : '';
+  
+  $html = "
+    <h3>$c mapped marker$s found:</h3>
+    <table>
+  ";
+  
+  foreach my $name (sort keys %mfs) {
+    my ($link, $r);
+    
+    foreach my $chr (keys %{$mfs{$name}}) {
+      $link .= "<td><strong>$mfs{$name}->{$chr}[0]{'cs'} $chr:</strong></td>";
+      
+      foreach my $det (@{$mfs{$name}->{$chr}}) {
+        $link .= "<td>$det->{'start'}-$det->{'end'}</td>";
+        $r = "$chr:$det->{'start'}-$det->{'end'}";
+      }
+    }
+    
+    my $url = $object->_url({ type => 'Marker', action => 'Details', m => $name });
+    
+    $html .= qq{<tr><td><a href="$url">$name</a></td>$link</tr>};
+  }
+  
+  $html .= '</table>';
+  
+  return $html;
 }
+
 
 # depending on number print a list of marker_features, or show details for markers
 sub render_marker_features {
