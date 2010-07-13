@@ -369,34 +369,24 @@ if ($reg_conf) {
   Bio::EnsEMBL::Registry->load_registry_from_url($db);
 }
 
-# Getting all the Bio::EnsEMBL::Compara::GenomeDB objects
-my $genome_dbs;
-my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
-throw("Registry configuration file has no data for connecting to <$dbname>")
-    if (!$genome_db_adaptor);
-foreach my $this_species (split(":", $set_of_species)) {
-  my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-      $this_species, 'core', 'MetaContainer');
-  throw("Registry configuration file has no data for connecting to <$this_species>")
-      if (!$this_meta_container_adaptor);
-  my $this_binomial_id = $this_meta_container_adaptor->get_Species->binomial;
-  # Fetch Bio::EnsEMBL::Compara::GenomeDB object
-  my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($this_binomial_id);
-  # Add Bio::EnsEMBL::Compara::GenomeDB object to the list
-  push(@$genome_dbs, $genome_db);
-}
-
 # Getting Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
     $dbname, 'compara', 'MethodLinkSpeciesSet');
+throw("Registry configuration file has no data for connecting to <$dbname>")
+    if (!$method_link_species_set_adaptor);
 my $method_link_species_set;
 if ($method_link_species_set_id) {
   $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($method_link_species_set_id);
   throw("The database do not contain any alignments with a MLSS id = $method_link_species_set_id!")
       if (!$method_link_species_set);
-} else {
-  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs(
-          $alignment_type, $genome_dbs);
+} elsif ($set_of_species =~ /\:/) {
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases(
+          $alignment_type, [split(":", $set_of_species)]);
+  throw("The database do not contain any $alignment_type data for $set_of_species!")
+      if (!$method_link_species_set);
+} elsif ($set_of_species) {
+  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name(
+          $alignment_type, $set_of_species);
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
 }
