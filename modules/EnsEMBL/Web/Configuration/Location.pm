@@ -162,8 +162,6 @@ sub add_external_browsers {
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
   
-  $self->add_vega_link;
-  
   # Links to external browsers - UCSC, NCBI, etc
   my %browsers = %{$species_defs->EXTERNAL_GENOME_BROWSERS || {}};
   $browsers{'UCSC_DB'} = $species_defs->UCSC_GOLDEN_PATH;
@@ -196,6 +194,8 @@ sub add_external_browsers {
     
     delete $browsers{'NCBI_DB'};
   }
+
+  $self->add_vega_link;
   
   foreach (sort keys %browsers) {
     next unless $browsers{$_};
@@ -222,28 +222,29 @@ sub add_vega_link {
     if ($object) {
       Bio::EnsEMBL::Registry->add_DNAAdaptor($species, 'vega', $species, 'vega');
       
-      my $adaptor         = Bio::EnsEMBL::Registry->get_adaptor($species, 'vega', 'Slice');
+      my $vega_adaptor    = Bio::EnsEMBL::Registry->get_adaptor($species, 'vega', 'Slice');
       my $chromosome      = $object->name;
       my $start           = $object->seq_region_start;
       my $end             = $object->seq_region_end;
       my $strand          = $object->seq_region_strand;
       my $coord_system    = $object->slice->coord_system;
-      my $start_slice     = $adaptor->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
-      my $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]);
-      
-      if (scalar @$vega_projection == 1) {
-        my $vega_slice = $vega_projection->[0]->to_Slice;
-        
-        $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
-        $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
-      } elsif (scalar @$vega_projection > 1) {
-        $vega_link  = $object->_url({ type => 'Help', action => 'ListVegaMappings' });      
-        $link_class = 'modal_link';
+      my $start_slice     = $vega_adaptor->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
+      my $vega_projection;
+      eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]);};
+      if ($vega_projection) {
+	if (scalar @$vega_projection == 1) {
+	  my $vega_slice = $vega_projection->[0]->to_Slice;
+	  $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+	  $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
+	} elsif (scalar @$vega_projection > 1) {
+	  $vega_link  = $object->_url({ type => 'Help', action => 'ListVegaMappings' });
+	  $link_class = 'modal_link';
+	}
+      } else {
+	$vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
       }
-    } else {
-      $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
     }
-    
+
     $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => !!$vega_link, url => $vega_link, raw => 1, external => !$link_class, class => $link_class }));
   }
 }
