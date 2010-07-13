@@ -335,11 +335,7 @@ sub need_dna {
         } elsif( $key eq 'assembly' && $value eq 'Y' ) {
           $needed = 1;
           $reason = 'A new assembly has been declared';
-        } elsif ($key eq 'database' && $value eq 'new') {
-          next unless $row->[0] =~/Genebuild/;
-          $needed = 1;
-          $reason = 'A new database has been declared';  
-        }
+        } 
       } 
     }
     $sth->finish;
@@ -578,7 +574,7 @@ sub get_data {
   }
 
  # Sort these by incr slice length for more efficient memory usage
-  foreach my $slice( sort {$a->seq_region_length <=> $b->seq_region_length} @{$sliceAdaptor->fetch_all('toplevel', undef, 1,)} ){
+  foreach my $slice( sort {$a->seq_region_length <=> $b->seq_region_length} @{$sliceAdaptor->fetch_all('toplevel', undef, 1, undef, undef,)} ){
     info( 1, "Start toplevel ". $slice->name. " length:". $slice->seq_region_length );
     my $coord_system = $slice->coord_system->name;
 
