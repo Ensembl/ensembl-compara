@@ -130,9 +130,12 @@ format. The scores are dumped together with the orginal alignment.
 
 =item B<[--set_of_species species1:species2:species3:...]>
 
-The list of species used to get those alignments. The names should
-correspond to the name of the core database in the
-registry_configuration_file or any of its aliases
+=item B<[--set_of_species species_set_name]>
+
+The list of species used to get those alignments. The names
+should correspond to the name of the core database in the
+registry_configuration_file or any of its aliases. Alternatively,
+you can use a pre-defined species_set_name like mammals or primates.
 
 =back
 
@@ -275,9 +278,11 @@ perl DumpMultiAlign.pl
         NB: GERP_CONSERVATION_SCORES are only supported when dumping in emf
         format. The scores are dumped together with the orginal alignment.
     [--set_of_species species1:species2:species3:...]
+    [--set_of_species species_set_name]
         The list of species used to get those alignments. The names
         should correspond to the name of the core database in the
-        registry_configuration_file or any of its aliases
+        registry_configuration_file or any of its aliases. Alternatively,
+        you can use a pre-defined species_set_name like mammals or primates.
 
   Ouput:
     [--original_seq]
