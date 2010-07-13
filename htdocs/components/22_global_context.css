@@ -1,16 +1,15 @@
-div#tabs {clear: both; width: 100%; background-color:[[MH_BG]]; color:[[MH_TEXT]];}
-div#tabs dd a { color:[[MH_LINK]]; background: url(/i/tab-l-off.gif) no-repeat top left; }
-div#tabs dd span { color:[[NEUTRAL_BG]]; background: url(/i/tab-l-off.gif) no-repeat top left; }
-div#tabs dd.active a { color:[[MH_BG]]; background: url(/i/tab-l.gif) no-repeat top left; font-weight: bold }
-div#tabs dd a:hover { color:[[MH_HOVER]] }
-div#tabs dd.active a:hover { color:[[MH_HOVER]] }
-div#tabs dd { background: url(/i/tab-off.gif) no-repeat top right; }
-div#tabs dd.active { background: url(/i/tab.gif) no-repeat top right }
-div#tabs dt.hidden { color:[[MH_BG]]; }
+v#tabs { float:left; width:100%; line-height:normal; margin:0; padding: 0;
+           background:url(/i/tab_bg.gif) repeat-x bottom; }
 
-dl.tabs { margin: 0; padding: 0; font-size: 1em }
-dl.tabs a { text-decoration: none }
-dl.tabs dd { float: left; padding: 2px 0 0 0; margin:0 }
-dl.tabs dd a, dl.tabs dd span { padding: 0 0.5em 0 0.5em; }
-dl.tabs dt { padding: 2px 0 0 0; margin:0 }
+div#tabs ul { margin: 0; padding: 8px 8px 0 2px; list-style:none; }
+
+div#tabs li { background:url(/i/tab_off_r.gif) no-repeat right top;
+                float:left; margin: 0; padding: 0; list-style:none; }
+div#tabs li.active { background-image:url(/i/tab_on_r.gif); }
+
+div#tabs a { background:url(/i/tab_off_l.gif) no-repeat left top;
+              display:block; text-decoration: none;
+              padding: 3px 9px 2px 9px; }
+div#tabs li.active a { background-image:url(/i/tab_on_l.gif);
+              color:[[PAGE_TEXT]]; }
 
