@@ -697,11 +697,38 @@ sub dump_data_for_gene {
   foreach my $transcript( @{$gene->get_all_Transcripts} ){
     my $logic_name = lc($gene->analysis->logic_name);
     my $subtype;
-    if   ( $logic_name =~/ncrna/)       { $subtype = 'ncrna';      }
-    elsif( ! $transcript->translation ) { $subtype = 'pseudogene'; }
-    elsif( $transcript->is_known   )    { $subtype = 'known';      }
-    else                                { $subtype = 'novel';      }
-
+    if ( $logic_name =~/ncrna/ && $transcript->biotype =~ /RNA/i) {
+      # This will also get all ncRNA PSEUDOGENES.
+      # Question whether the ncRNA_pseudogene should be stored in the ncrna biotype
+      # or in the pseudogene biotype ?
+       $subtype = 'ncrna';
+    } elsif ( $logic_name =~/ncrna/ && $transcript->biotype !~ /RNA/i) {
+      # this combination should not happen, so we need to know when it does
+      throw("Transcript with logic_name $logic_name has biotype ".$transcript->biotype);
+    } elsif ( $logic_name =~/MT_genbank_import/i && $transcript->biotype =~ /RNA/i) {
+      # The genes on MT are both coding and noncoding. We only want
+      # the noncoding ones here.
+      $subtype = 'ncrna';
+    } elsif( $transcript->biotype =~ /pseudogene/i && ! $transcript->translation ) {
+      # This will get the transcript labelled as /pseudogene/
+      # but it will not get the POLYMORPHIC_PSEUDOGENE biotype because they should all have
+      # translations. Polymorphic pseudogenes are coding in some individuals 
+      # but a pseudogene in the reference.
+      $subtype = 'pseudogene';
+    } elsif( $transcript->is_known)    {
+      $subtype = 'known';
+    } elsif ($transcript->status eq 'NOVEL' || 
+             $transcript->status eq 'PUTATIVE' || 
+             $transcript->status eq 'PREDICTED' ||
+             $transcript->status eq 'KNOWN_BY_PROJECTION' ||
+             $transcript->status eq 'UNKNOWN') {
+      $subtype = 'novel';
+    } else {
+      # We should never get here because the novel subtype will catch
+      # all status other than known. Problems will only occur if the database
+      # enum changes to include new status types. 
+      throw("Transcript ".$transcript->stable_id." status ".$transcript->status." logic ".$logic_name." biotype ".$transcript->biotype);
+    }
     if ($logic_name eq 'pseudogene' && $subtype ne 'pseudogene') {
       utils::Tool::warning(1, "Logic name is set to pseudogene, but transcript has translation:".$transcript->translation);
     }
