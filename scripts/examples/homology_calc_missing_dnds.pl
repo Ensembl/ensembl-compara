@@ -2,12 +2,20 @@
 use strict;
 use Bio::EnsEMBL::Registry;
 
+use Getopt::Long;
+
+my ($input,$debug);
+
+GetOptions(
+	   'i|input:s' => \$input,
+           'd|debug:s' => \$debug,
+          );
+
 Bio::EnsEMBL::Registry->load_registry_from_db
     (-host=>"ensembldb.ensembl.org", 
-     -user=>"anonymous");
-my $human_gene_adaptor =
-    Bio::EnsEMBL::Registry->get_adaptor
-    ("Homo sapiens", "core", "Gene");
+     -user=>"anonymous",
+    -db_version=>'58');
+Bio::EnsEMBL::Registry->no_version_check(1) unless ($debug);
 my $member_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
     ("Compara", "compara", "Member");
@@ -15,18 +23,19 @@ my $homology_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
     ("Compara", "compara", "Homology");
 
-my $genes = $human_gene_adaptor->
-   fetch_all_by_external_name('PAX2');
-
 my $bioperl_dnastats = 0;
 eval {require Bio::Align::DNAStatistics;};
 unless ($@) { $bioperl_dnastats = 1; }
 
+$input = 'ENSG00000139618:ENSG00000073910' unless (length($input) > 1);
 my $result = undef;
-foreach my $gene (@$genes) {
+$DB::single=1;1;
+foreach my $gene_id (split(':',$input)) {
   my $member = $member_adaptor->
-  fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+  next unless (defined($member));
   my $all_homologies = $homology_adaptor->fetch_by_Member($member);
+  next unless (defined($all_homologies));
 
   print "spa,labela,spb,labelb,dn,ds\n";
   foreach my $this_homology (@$all_homologies) {
@@ -40,8 +49,8 @@ foreach my $gene (@$genes) {
     my ($a,$b) = @{$this_homology->gene_list};
     my $spa = $a->taxon->short_name;
     my $spb = $b->taxon->short_name;
-    my $labela = $a->display_label || $a->stable_id;
-    my $labelb = $b->display_label || $b->stable_id;
+    my $labela = $a->stable_id . "(" . $a->display_label . ")";
+    my $labelb = $b->stable_id . "(" . $b->display_label . ")";
     my $dn; my $ds;
     my $lnl = $this_homology->lnl;
     if (0 != $lnl) {
