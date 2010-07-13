@@ -162,11 +162,6 @@ sub get_imageconfig  {
   return $self->hub->get_imageconfig(@_);
 }
 
-sub attach_image_config {
-  my $self = shift;
-  return $self->hub->attach_image_config(@_);
-}
-
 sub get_ExtURL {
   my $self = shift;
   my $new_url = $self->ExtURL || return;

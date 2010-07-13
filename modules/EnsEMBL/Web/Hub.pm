@@ -350,13 +350,6 @@ sub get_imageconfig {
   return $image_config;
 }
 
-sub attach_image_config {
-  my ($self, $key, $image_key) = @_;
-  my $session = $self->session;
-  return undef unless $session;
-  return $session->attachImageConfig($key, $image_key);
-}
-
 sub get_tracks {
   my ($self, $key) = @_;
   my $data   = $self->fetch_userdata_by_id($key);

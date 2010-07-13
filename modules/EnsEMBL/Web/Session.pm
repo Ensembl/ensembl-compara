@@ -16,8 +16,7 @@ package EnsEMBL::Web::Session;
 ### to do this explicitly - because it is done implicitly by methods such as:
 ###
 ### {{EnsEMBL::Web::Hub::get_imageconfig}},
-### {{EnsEMBL::Web::Hub::get_viewconfig}},
-### {{EnsEMBL::Web::Hub::attach_image_config}} all of which create either
+### {{EnsEMBL::Web::Hub::get_viewconfig}} which create either
 ### {{EnsEMBL::Web::ViewConfig}} or {{EnsEMBL::Web::ImageConfig}} objects.
 ###
 ### These commands in turn access the database if we already have a session (whose is
@@ -670,16 +669,6 @@ sub add_das_from_string {
     return "Unable to find a DAS source named $identifier on $server";
   }
 
-  return;
-}
-
-sub attachImageConfig {
-  my $self   = shift;
-  my $script = shift;
-  return unless $self->{'configs'}{$script};
-  foreach my $image_config (@_) {
-    $self->{'configs'}{$script}{'image_configs'}{$image_config} = 1;
-  }
   return;
 }
 
