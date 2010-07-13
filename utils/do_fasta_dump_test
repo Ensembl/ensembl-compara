@@ -1258,6 +1258,10 @@ Swiss-Prot, RefSeq or SPTrEMBL are referred to in Ensembl as
 known genes.  Those that cannot be mapped are called novel
 (e.g. genes predicted on the basis of evidence from closely related species).
 
+For models annotated by HAVANA the status is set manually. Models that have 
+an HGNC name are referred to as known and the remaining models are referred to
+as novel.
+
 -------------------------------
 FASTA Sequence Header Lines
 ------------------------------
@@ -1321,6 +1325,10 @@ in Swiss-Prot, RefSeq or SPTrEMBL are referred to as known genes in Ensembl.
 Those that cannot be mapped are called novel genes (e.g. genes predicted on
 the basis of evidence from closely related species).
 
+For models annotated by HAVANA the status is set manually. Models that have 
+an HGNC name are referred to as known and the remaining models are referred to
+as novel.
+
 -------------------------------
 FASTA Sequence Header Lines
 ------------------------------
@@ -1360,7 +1368,7 @@ The files are consistently named following this pattern:
 <release>: The release number.
 <sequence type>: ncrna for non-coding RNA sequences
 <status>
-  * 'ncrna' - all non-coding RNA genes
+  * 'ncrna' - all non-coding RNA genes, including ncRNA_pseudogenes
 
 EXAMPLES
   for Human:
