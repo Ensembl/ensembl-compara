@@ -30,26 +30,39 @@ sub render {
   } else {
     $blast_dir = $sp_dir;
   }
-  
-  if ($self->logins) {
-    if ($ENV{'ENSEMBL_USER_ID'}) {
-      $html .= qq{
-        <a style="display:none" href="$dir/Account/Links" class="modal_link">Account</a> &nbsp;|&nbsp;
-        <a href="$dir/Account/Logout">Logout</a> &nbsp;|&nbsp;
-      };
+
+  my @links;
+
+  push @links, qq(<a href="/">Genome Browser</a>);
+  push @links, qq(<a href="/downloads.html">Downloads</a>);
+  push @links, qq(<a href="/tools.html">Data Tools</a>);
+
+  push @links, qq(<a href="/$blast_dir/blastview">BLAST/BLAT</a>) if $self->blast;
+  push @links, qq(<a href="/biomart/martview">BioMart</a>) if $self->biomart;
+  push @links, qq(<a href="/Help/Mirrors" class="modal_link">Mirrors</a>);
+
+  push @links, qq(<a href="/info/" id="help">Documentation</a>);
+  push @links, qq(<a href="/help.html" id="help">Help</a>);
+
+  if( $self->logins ) {
+    if( $ENV{'ENSEMBL_USER_ID'} ) {
+      push @links, qq(
+      <a style="display:none" href="$dir/Account/Links" class="modal_link">Account</a> &nbsp;&middot;&nbsp;
+      <a href="$dir/Account/Logout">Logout</a>
+      );
     } else {
-      $html .= qq{
-        <a style="display:none" href="$dir/Account/Login" class="modal_link">Login</a> / 
-        <a style="display:none" href="$dir/Account/User/Add" class="modal_link">Register</a> &nbsp;|&nbsp;
-      };
+      push @links, qq(
+      <a style="display:none" href="$dir/Account/Login" class="modal_link">Login</a> / 
+      <a style="display:none" href="$dir/Account/User/Add" class="modal_link">Register</a>
+      );
     }
   }
-  
-  $html .= qq{<a href="/$blast_dir/blastview">BLAST/BLAT</a> &nbsp;|&nbsp;} if $self->blast;
-  $html .= qq{<a href="/biomart/martview">BioMart</a> &nbsp;|&nbsp;}        if $self->biomart;
-  $html .= qq{<a href="/info/website/help/" id="help">Docs &amp; FAQs</a>};
-  $html .= '</div>';
-  
+
+  for (my $i = 0; $i < @links; $i++) {
+    $html .= '<td class="lnk_mid">'.$links[$i].'</td>';
+  }
+  $html .= '</tr>';
+
   $self->print($html);
 }
 
