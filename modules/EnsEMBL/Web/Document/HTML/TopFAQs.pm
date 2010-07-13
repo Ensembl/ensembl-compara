@@ -13,10 +13,10 @@ sub render {
 
   my $html = '
     <h2 class="first">FAQs</h2>
-    <h3>Top 3 Frequently Asked Questions</h3>
+    <h3>Top 5 Frequently Asked Questions</h3>
   ';
 
-  my @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted(3);
+  my @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted(5);
 
   if (scalar @faqs > 0) {
     $html .= '
