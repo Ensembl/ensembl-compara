@@ -842,44 +842,6 @@ sub get_submenu {
   }
 }
 
-sub update_configs_from_parameter {
-  my ($self, $parameter_name, @imageconfigs) = @_;
-  
-  my $hub         = $self->model->hub;
-  my $val         = $hub->param($parameter_name);
-  my $reset       = $hub->param('reset');
-  my @das         = $hub->param('add_das_source');
-  my $object      = $self->object;
-  my $view_config = $object ? $object->get_viewconfig : undef;
-
-  foreach my $config_name (@imageconfigs) {
-    $hub->attach_image_config($hub->script, $config_name);
-    $hub->get_imageconfig($config_name);
-  }
-  
-  foreach my $url (@das) {
-    my $das = EnsEMBL::Web::DASConfig->new_from_URL($url);
-    $hub->session->add_das($das);
-  }
-  
-  return unless $val || $reset;
-  
-  if ($view_config) {
-    $view_config->reset if $reset;
-    $view_config->update_config_from_parameter($val) if $val;
-  }
-  
-  foreach my $config_name (@imageconfigs) {
-    my $image_config = $hub->get_imageconfig($config_name);
-    
-    if ($image_config) {
-      $image_config->reset if $reset;
-      $image_config->update_config_from_parameter($val) if $val;
-      $hub->session->_temp_store($hub->script, $config_name);
-    }
-  }
-}
-
 sub new_panel {
   my ($self, $panel_type, %params) = @_;
   
