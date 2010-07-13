@@ -471,12 +471,29 @@ sub update_from_input {
   
   my $flag = 0;
   
-  foreach my $node ($self->tree->nodes) {
-    my $key = $node->key;
-    $flag += $node->set_user('display', $input->param($key)) if defined $input->param($key);
+  foreach my $param ($input->param) {
+    my $renderer = $input->param($param);
+    $flag += $self->update_track_renderer($param, $renderer);
   }
   
   $self->altered = 1 if $flag;
+  
+  return $flag;
+}
+
+sub update_track_renderer {
+  my ($self, $key, $renderer, $on_off) = @_;
+  
+  my $node = $self->get_node($key);
+  
+  return unless $node;
+  
+  my $flag = 0;
+
+  my %valid_renderers = @{$node->data->{'renderers'}};
+
+  # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
+  $flag += $node->set_user('display', $renderer) if $valid_renderers{$renderer} && (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   
   return $flag;
 }
@@ -1872,27 +1889,6 @@ sub get_option {
   my ($self, $code, $key) = @_;
   my $node = $self->get_node($code);
   return $node ? $node->get($key || 'values')->{$node->get('display')} : 0;
-}
-
-sub update_config_from_parameter {
-  my ($self, $string) = @_;
-  
-  my @array = split /\|/, $string;
-  shift @array;
-  
-  foreach (@array) {
-    my ($key, $value) = /^(.*):(.*)$/;
-    
-    if ($key =~ /bump_(.*)/) {
-      $self->set($1, 'compact', $value eq 'on' ? 0 : 1);
-    } elsif( $key eq 'imagemap' || $key=~/^opt_/ ) {
-      $self->set('_settings', $key, $value eq 'on' ? 1 : 0);
-    } elsif($key =~ /managed_(.*)/) {
-      $self->set($key, 'on', $value, 1);
-    } else {
-      $self->set($key, 'on', $value);
-    }
-  }
 }
 
 sub get_user_settings {
