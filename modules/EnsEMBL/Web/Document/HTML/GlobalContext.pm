@@ -35,15 +35,14 @@ sub get_json {
 sub render {
   my $self = shift;
   
-  my ($content) = $self->_content('dd');
+  my ($content) = $self->_content('li');
   
   if ($content) {
     $self->print(qq{
       <div id="tabs">
-        <dl class="tabs">
+        <ul>
           $content
-          <dt class="hidden">.</dt>
-        </dl>
+        </ul>
       </div>
     });
   }
