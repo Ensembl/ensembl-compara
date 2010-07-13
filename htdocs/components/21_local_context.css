@@ -22,8 +22,8 @@
 #local-tools a:hover   { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 #local-tools a:visited { color: [[BUTTON_TEXT]]; }
 
-#local-tools .config   { background-image: url(/i/config.png); }
-#local-tools .data     { background-image: url(/i/data.png); }
-#local-tools .export   { background-image: url(/i/export.png); }
-#local-tools .bookmark { background-image: url(/i/bookmark.png); }
-#local-tools .find     { background-image: url(/i/find.png); }
+#local-tools .config   { background-image: url(/i/config.png); background-repeat: no-repeat; }
+#local-tools .data     { background-image: url(/i/data.png); background-repeat: no-repeat; }
+#local-tools .export   { background-image: url(/i/export.png); background-repeat: no-repeat; }
+#local-tools .bookmark { background-image: url(/i/bookmark.png); background-repeat: no-repeat; }
+#local-tools .find     { background-image: url(/i/find.png); background-repeat: no-repeat; }

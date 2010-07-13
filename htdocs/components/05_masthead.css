@@ -1,22 +1,28 @@
-.mh { width: 100%; border: 0px; padding: 0px; margin: 0px; border-collapse: collapse; background-color: [[MH_BG]] }
-.mh td { border: 0; padding: 0; margin: 0 }
+/* Background DIV */
+#mh_bg { background:url(/i/blue_gradient.png) [[MH_BG]] repeat-x; }
+#mh_bg a { color: [[MH_LINK]]; text-decoration: none; }
+#mh_bg a:hover { color: [[MH_HOVER]]; }
 
-/** Table 1 Cell 1 - the main e! logo - currently 40x45 **/
-#mh_lo     { width: 50%; vertical-align: middle; white-space: nowrap; padding-left:3px }
-#mh_lo img { width: 150px; height: 40px; border: 0 }
+/* Individual layout tables */
+.mh { width: 100%; border: 0px; padding: 0px; margin: 0px; border-collapse: collapse; }
+.mh td { color: [[MH_TEXT]]; border: 0; padding: 0; margin: 0 }
 
-/** Table 2 Cell 1 - the breadcrumb links under the logo **/
-td#mh_bc { color: [[MH_TEXT]]; font-weight: bold; padding-left:4px; }
-#mh_bc a { color: [[MH_TEXT]]; text-decoration: none }
-#mh_bc a:hover { color: [[MH_HOVER]]; }
+/** Table 1 - Global navigation links **/
+td.lnk_left { text-align:left; padding:4px; }
+td.lnk_mid   { text-align:center; padding:4px; }
+td.lnk_right  { text-align:right; padding:4px; }
 
-/** Table 2 Cell 2 - the links at the bottom right **/
-td#mh_lnk { color: [[MH_TEXT]]; font-size:0.9em; font-weight: bold; float: right; text-align: right; white-space: nowrap; padding: 0 10px 4px 2px; }
-#mh_lnk a { color: [[MH_LINK]]; text-decoration: none }
-#mh_lnk a:hover { color: [[MH_HOVER]]; }
+/** Table 2 Cell 1 - the main e! logo - currently 40x45 **/
+#mh_lo     { width: 50%; margin:0; padding:0; vertical-align:middle; }
+#mh_lo img.screen { float:left; display:block; padding-right:4px; }
+#sp_header{ font-size: 1.5em; font-weight:bold; padding-top:10px; }
+#sp_header a { color:[[MH_HEADER]]; }
+
+/** Table 2 Cell 2 - the site search **/
+#mh_search { vertical-align:middle; }
 
 @media print {
-  .mh { background-color: #ffffff; }
-  #mh_lnk a { color: #000000; }
+  #mh_bg { background: #ffffff; }
+  #mh_bg a { color: #000000; }
 }
 

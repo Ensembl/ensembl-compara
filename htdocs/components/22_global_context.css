@@ -1,4 +1,4 @@
-v#tabs { float:left; width:100%; line-height:normal; margin:0; padding: 0;
+div#tabs { float:left; width:100%; line-height:normal; margin:0; padding: 0;
            background:url(/i/tab_bg.gif) repeat-x bottom; }
 
 div#tabs ul { margin: 0; padding: 8px 8px 0 2px; list-style:none; }
