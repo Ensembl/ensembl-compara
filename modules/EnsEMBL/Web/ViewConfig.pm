@@ -170,20 +170,6 @@ sub add_form_element {
   }
 }
 
-# Update the configuration from a pipe separated string
-sub update_config_from_parameter {
-  my ($self, $string) = @_;
-  my @array = split /\|/, $string;
-  
-  return unless @array;
-  
-  foreach (@array) {
-    next unless $_;
-    my ($key, $value) = split ':';
-    $self->set($key, $value);
-  }
-}
-
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_input {
   my ($self, $input) = @_;
@@ -210,9 +196,9 @@ sub update_from_input {
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_config_strings {
   my ($self, $session, $r) = @_;
-  my $input       = $session->input;
-  my $updated     = 0;
-  my $not_updated = 0;
+  
+  my $input   = $session->input;
+  my $updated = 0;
   my $params_removed;
   
   if ($input->param('config')) {
@@ -282,11 +268,12 @@ sub update_from_config_strings {
     }
     
     if (@values) {
-      my $ic = $session->getImageConfig($name, $name);
-      next unless $ic;
+      my $image_config = $session->getImageConfig($name, $name);
+      
+      next unless $image_config;
       
       foreach my $v (@values) {
-        my ($key, $render) = split /=/, $v, 2;
+        my ($key, $renderer) = split /=/, $v, 2;
         
         if ($key =~ /^(\w+)[\.:](.*)$/) {
           my ($type, $p) = ($1, $2);
@@ -314,29 +301,22 @@ sub update_from_config_strings {
             );
             
             # We then have to create a node in the user_config
-            $ic->_add_flat_file_track(undef, 'url', "url_$code", $n, 
+            $image_config->_add_flat_file_track(undef, 'url', "url_$code", $n, 
               sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
               'url' => $p
             );
             
-            my $nd = $ic->get_node("url_$code");
-            
-            if ($nd) {
-              my %valid_renderers = @{$nd->data->{'renderers'}};
-              $updated += $nd->set_user('display', $render) if $valid_renderers{$render}; # Then we have to set the renderer
-            }
+            $updated += $image_config->update_track_renderer("url_$code", $renderer);
           } elsif ($type eq 'das') {
             $p = uri_unescape($p);
             
-            if (my $error = $session->add_das_from_string($p, { 'ENSEMBL_IMAGE' => $name }, {'display' => $render })) {
+            if (my $error = $session->add_das_from_string($p, { ENSEMBL_IMAGE => $name }, { display => $renderer })) {
               $session->add_data(
                 type     => 'message',
                 function => '_warning',
                 code     => 'das:' . md5_hex($p),
                 message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', encode_entities($p), encode_entities($error))
               );
-              
-              warn $error;
             } else {
              $session->add_data(
                 type     => 'message',
@@ -349,18 +329,7 @@ sub update_from_config_strings {
             }
           }
         } else {
-          my $nd = $ic->get_node($key);          
-          
-          next unless $nd;
-          
-          my %valid_renderers = @{$nd->data->{'renderers'}};
-          
-          # Only allow track enabling/disabling. Don't allow enabled tracks' renders to be changed.
-          if ($valid_renderers{$render} && ($render eq 'off' || $nd->get('display') eq 'off')) {
-            $updated += $nd->set_user('display', $render);
-          } else {
-            $not_updated++;
-          }
+          $updated += $image_config->update_track_renderer($key, $renderer, 1);
         }
       }
     }
