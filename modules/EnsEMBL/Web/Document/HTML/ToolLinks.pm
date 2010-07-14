@@ -34,8 +34,8 @@ sub render {
   my @links;
 
   push @links, qq(<a href="/">Genome Browser</a>);
-  push @links, qq(<a href="/downloads.html">Downloads</a>);
-  push @links, qq(<a href="/tools.html">Data Tools</a>);
+  #push @links, qq(<a href="/downloads.html">Downloads</a>);
+  #push @links, qq(<a href="/tools.html">Data Tools</a>);
 
   push @links, qq(<a href="/$blast_dir/blastview">BLAST/BLAT</a>) if $self->blast;
   push @links, qq(<a href="/biomart/martview">BioMart</a>) if $self->biomart;
