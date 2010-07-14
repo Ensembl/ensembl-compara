@@ -214,7 +214,8 @@ sub add_vega_link {
   my $type           = $hub->type;
   my $action         = $hub->action;
   my @alt_assemblies = @{$species_defs->ALTERNATIVE_ASSEMBLIES || []};
-  my ($vega_link, $link_class);
+  my $vega_link= undef;
+  my $link_class=undef;
 
   if (lc $species_defs->ENSEMBL_SITETYPE ne 'vega' && $action =~ /^(Chromosome|Overview|View)$/ && $alt_assemblies[0] =~ /VEGA/ && $urls->is_linked('VEGA')) {
     my $object = $self->object;
@@ -232,20 +233,17 @@ sub add_vega_link {
       my $vega_projection;
       eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]);};
       if ($vega_projection) {
-	if (scalar @$vega_projection == 1) {
-	  my $vega_slice = $vega_projection->[0]->to_Slice;
-	  $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
-	  $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
-	} elsif (scalar @$vega_projection > 1) {
-	  $vega_link  = $object->_url({ type => 'Help', action => 'ListVegaMappings' });
-	  $link_class = 'modal_link';
-	}
-      } else {
-	$vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+	      if (scalar @$vega_projection == 1) {
+	        my $vega_slice = $vega_projection->[0]->to_Slice;
+	        $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+	        $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
+	      } elsif (scalar @$vega_projection > 1) {
+	        $vega_link  = $object->_url({ type => 'Help', action => 'ListVegaMappings' });
+  	      $link_class = 'modal_link';
+        }
       }
     }
-
-    $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => !!$vega_link, url => $vega_link, raw => 1, external => !$link_class, class => $link_class }));
+    $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => defined($vega_link), url => $vega_link, raw => 1, external => !defined($link_class), class => $link_class }));
   }
 }
 
