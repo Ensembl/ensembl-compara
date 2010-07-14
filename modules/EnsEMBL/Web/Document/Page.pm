@@ -365,25 +365,21 @@ sub render_HTML {
     $self->_render_head_and_body_tag;
     
     $html .= qq{
-    <div id="header">
+    <div id="mh_bg">
+      <table class="mh" summary="layout table">
+        [[tools]]
+      </table>
       <table class="mh" summary="layout table">
         <tr>
           <td id="mh_lo">[[logo]]</td>
           <td id="mh_search">[[search_box]]</td>
         </tr>
       </table>
-      <table class="mh" summary="layout table">
-        <tr>
-          <td id="mh_bc">[[breadcrumbs]]</td>
-          <td id="mh_lnk">[[tools]]</td>
-        </tr>
-      </table>
-      <table class="mh print_hide" summary="layout table">
-        <tr>
-          <td>[[global_context]]</td>
-        </tr>
-      </table>
+      <div class="print_hide">
+        [[global_context]]
+      </div>
     </div>
+    <p class="invisible">.</p>
     <div style="position: relative">
       $nav
       <div id="main">
