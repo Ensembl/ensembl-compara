@@ -55,10 +55,11 @@ sub content {
     $action  = $part2;
   }
 
-  my %archive;
+  my (%archive, %assemblies);
   
   if ($species) {
     %archive = %{$object->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
+    %assemblies = %{$object->species_defs->get_config($species, 'ASSEMBLIES')||{}};
     
     if (keys %archive) {
       $html .= '
@@ -71,7 +72,7 @@ sub content {
       if ($type =~ /\.html/ || $action =~ /\.html/) {
         foreach my $release (reverse sort keys %archive) {
           next if $release == $object->species_defs->ENSEMBL_VERSION;
-          $html .= $self->_output_link(\%archive, $release, $url);
+          $html .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
         }
       }
       
@@ -81,10 +82,10 @@ sub content {
           next if $release == $object->species_defs->ENSEMBL_VERSION;
           
           if ($release > 50) {
-            $html .= $self->_output_link(\%archive, $release, $url);
+            $html .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
           } else {
             $url = $species.'/index.html';
-            $html .= $self->_output_link(\%archive, $release, $url);
+            $html .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
           }
         }
       } else {
@@ -109,7 +110,7 @@ sub content {
             $url = "$species/" . ($old_url || $old_view) . $old_params if $poss_release < 51;
           }
           
-          $html .= $self->_output_link(\%archive, $poss_release, $url) if $release_happened;
+          $html .= $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}) if $release_happened;
         }
         
         $html .= "</ul>\n";
@@ -140,14 +141,19 @@ sub content {
 }
 
 sub _output_link {
-  my ($self, $archive, $release, $url) = @_;
+  my ($self, $archive, $release, $url, $assembly) = @_;
   
   my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
   my $date  = $archive->{$release};
   my $month = substr $date, 0, 3;
   my $year  = substr $date, 3, 4;
   
-  return qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a></li>};
+  my $string = qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>);
+  if ($assembly) {
+    $string .= sprintf ' (%s)', $assembly;
+  }
+  $string .= '</li>';
+  return $string;
 }
 
 # Map new parameters to old 
