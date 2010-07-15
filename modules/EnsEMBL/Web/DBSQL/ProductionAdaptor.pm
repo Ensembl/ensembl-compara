@@ -46,7 +46,7 @@ sub fetch_changelog {
   if ($criteria->{'species'}) {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, c.status 
+        c.changelog_id, c.title, c.content, c.team
       FROM
         changelog as c, species as s, changelog_species as cs 
       WHERE 
@@ -54,25 +54,27 @@ sub fetch_changelog {
         AND s.species_id = cs.species_id
         AND c.title != ''
         AND c.content != ''
+        AND c.status = 'handed_over'
         AND c.release_id = ?
         AND s.name = ?
       ORDER BY
-        c.team, c.status
+        c.team
     );
     push @args, $criteria->{'species'};
   }
   else {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, c.status 
+        c.changelog_id, c.title, c.content, c.team
       FROM
         changelog as c
       WHERE 
         c.release_id = ?
         AND c.title != ''
         AND c.content != ''
+        AND c.status = 'handed_over'
       ORDER BY
-        c.team, c.status
+        c.team
     );
   }
 
@@ -122,7 +124,6 @@ sub fetch_changelog {
       'title'         => $data[1],
       'content'       => $data[2],
       'team'          => $data[3],
-      'status'        => $data[4],
       'species'       => $species,
     };
     push @$changes, $record;
