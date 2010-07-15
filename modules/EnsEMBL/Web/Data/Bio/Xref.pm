@@ -1,3 +1,4 @@
+#$Id$
 package EnsEMBL::Web::Data::Bio::Xref;
 
 ### NAME: EnsEMBL::Web::Data::Bio::Xref
@@ -19,16 +20,20 @@ use base qw(EnsEMBL::Web::Data::Bio);
 sub convert_to_drawing_parameters {
 ### Converts a set of API objects into simple parameters 
 ### for use by drawing code and HTML components
+### href parameter in $results is used for ZMenu drawing
+
   my $self = shift;
   my $data = $self->data_objects;
   my $results = [];
+  my $hub = $self->hub;
 
   foreach my $array (@$data) {
     my $xref = shift @$array;
+    
     push @$results, {
       'label'     => $xref->primary_id,
       'xref_id'   => [ $xref->primary_id ],
-      'extname'   => $xref->display_id,
+      'extname'   => $xref->display_id,      
       'extra'     => [ $xref->description, $xref->dbname ]
     };
     ## also get genes
@@ -42,7 +47,8 @@ sub convert_to_drawing_parameters {
         'extname'  => $g->external_name,
         'label'    => $g->stable_id,
         'gene_id'  => [ $g->stable_id ],
-        'extra'    => [ $g->description ]
+        'extra'    => [ $g->description ],
+        'href'      => $hub->url({ type => 'Zmenu', action => 'Gene'}),
       }
     }
   }
