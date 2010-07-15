@@ -6,8 +6,8 @@ use SiteDefs qw(:ALL);
 use Apache2::Const qw(:common :methods :http);
 use Apache2::Util;
 
-use EnsEMBL::Web::Data::NewsItem;
-use EnsEMBL::Web::Data::Species;
+use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Cache;
 
 our $MEMD = EnsEMBL::Web::Cache->new;
@@ -21,12 +21,14 @@ sub handler {
   $r->err_headers_out->{ 'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::Rss' };
   $r->custom_response(SERVER_ERROR, '/Crash');
 
+  my $hub = new EnsEMBL::Web::Hub;
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $species = $hub->species;
+
   my $release_id = $SiteDefs::VERSION;
-  my ($species) = EnsEMBL::Web::Data::Species->find(name => $ENV{ENSEMBL_SPECIES});
-  my $species_id = $species ? $species->id : undef;
    
   $ENV{CACHE_KEY} = '::RSS';
-  $ENV{CACHE_KEY} .= '::'. $species->name if $species;
+  $ENV{CACHE_KEY} .= '::'. $species if $species;
 
   if( $MEMD && (my $rss = $MEMD->get($ENV{CACHE_KEY})) ) {
     
@@ -40,13 +42,7 @@ sub handler {
 
   } else {
 
-      my @news = EnsEMBL::Web::Data::NewsItem->fetch_news_items(
-        {
-          release_id  => $release_id,
-          $species    ? (species => $species->id) : (),
-        },
-        { order_by => 'priority' },
-      );
+      my @news = @{$adaptor->fetch_news({release => $release_id, species => $species})};
       $r->headers_out->set('Expires' => Apache2::Util::ht_time($r->pool, $r->request_time + 86400*30*12) );
       my $helpdesk = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
       my $webmaster = $SiteDefs::ENSEMBL_SERVERADMIN;
@@ -83,8 +79,8 @@ sub handler {
       );
 
       foreach my $item ( @news ) {
-        next unless $item->title && $item->content;
-        my $C = $item->content;
+        next unless $item->{'title'} && $item->{'content'};
+        my $C = $item->{'content'};
         if( $C =~ /^\s*<p>(.*)<\/p>/ ) {
           $C = $1;
         }
@@ -95,11 +91,11 @@ sub handler {
             <description>%s</description>
             <link>'.$url.'/info/website/news/index.html</link>
           </item>',
-          $item->title,
+          $item->{'title'},
           $C,
           undef, #$this_species,
           undef, #$release_id,
-          $item->id,
+          $item->{'id'},
         ); 
       }
 
