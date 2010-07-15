@@ -19,6 +19,7 @@ package EnsEMBL::Web::Hub;
 use strict;
 
 use Carp;
+use CGI;
 use CGI::Cookie;
 use URI::Escape qw(uri_escape);
 
@@ -37,10 +38,14 @@ sub new {
   my ($class, %args) = @_;
 
   my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
-  
+
+  ## Normally CGI is created in Model, however static pages have no access to the module
+  ## but still ought to be able to create a valid Hub
+  my $input = $args{'_input'} || new CGI;
+
   ## The following may seem a little clumsy, but it allows the Hub to be created
   ## by a command-line script with no access to CGI parameters
-  my $factorytype = $ENV{'ENSEMBL_FACTORY'} || ($args{'_input'} && $args{'_input'}->param('factorytype') ? $args{'_input'}->param('factorytype') : $type);
+  my $factorytype = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
   
   my ($session, $user, $timer);
   
@@ -52,7 +57,7 @@ sub new {
 
   my $self = {
     _apache_handle => $args{'_apache_handle'} || undef,
-    _input         => $args{'_input'}         || undef,                        # extension of CGI
+    _input         => $args{'_input'}         || $input,
     _species       => $args{'_species'}       || $ENV{'ENSEMBL_SPECIES'},    
     _type          => $type,
     _action        => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
