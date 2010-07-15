@@ -38,53 +38,38 @@ sub availability {
       my $counts      = $self->counts;
       my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
       my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
-      my $compara_db  = $self->database('compara');
-      my $gene_tree   = $self->get_GeneTree;
-      my $res         = 0;
-      my $has_gene_tree;
-      if ($gene_tree) {
-        eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->{'_member_compara'}); }
-      }
       
-      if ($compara_db) {
-        ($res) = $compara_db->get_MemberAdaptor->dbc->db_handle->selectrow_array(
-          'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->stable_id
-        );
-      } 
+      my $gene_tree_sub = sub {
+        my ($database_synonym) = @_;
+        my $gene_tree = $self->get_GeneTree($database_synonym);
+        my $has_gene_tree;
+        if ($gene_tree) {
+          eval { $has_gene_tree = !!$gene_tree->get_leaf_by_Member($self->get_compara_Member($database_synonym)); }
+        }
+        return $has_gene_tree;
+      };
+      
       $availability->{'history'}       = !!$rows;
       $availability->{'gene'}          = 1;
       $availability->{'core'}          = $self->get_db eq 'core';
       $availability->{'alt_allele'}    = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}    = !!$funcgen_res; 
-      $availability->{'family'}        = !!$res;
-      $availability->{'has_gene_tree'} = $has_gene_tree; # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
+      $availability->{'family'}        = !!$counts->{families};
+      $availability->{'has_gene_tree'} = $gene_tree_sub->('compara'); # FIXME: Once compara get their act together, revert to $gene_tree && $gene_tree->get_leaf_by_Member($self->{'_member_compara'});
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
 
-      if ( $compara_db  = $self->database('compara_pan_ensembl')) {
-	  my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
-	  my ($res2) = $compara_dbh->selectrow_array(
-						     'select stable_id from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? limit 1', {}, $self->Obj->stable_id
-						     );
-	  $availability->{'family_pan_ensembl'}     = !!$res2;
-	  $availability->{'family'}     = 1; # has to enable other family - otherwise nothing get displayed
-
-	  my $gene_tree_pan   = $self->get_GeneTree('compara_pan_ensembl');
-	  my $has_gene_tree_pan;
-      
-	  if ($gene_tree_pan) {
-	      eval { $has_gene_tree_pan = !!$gene_tree_pan->get_leaf_by_Member($self->{'_member_compara'}); }
-	  }
-	  $availability->{'has_gene_tree_pan'} = $has_gene_tree_pan;
-
-	  $availability->{"has_$_"}        = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
-
+      if ($self->database('compara_pan_ensembl')) {
+        $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
+        if($availability->{'family_pan_ensembl'}) {
+          #FIXME: Suspect flag; turning it off seems to have no effect on the ability to show pan-compara families. Left in until can be verified
+          $availability->{'family'} = 1; 
+        }
+        $availability->{'has_gene_tree_pan'}  = $gene_tree_sub->('compara_pan_ensembl');
+        $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
       }
-
-
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
     }
-  
     $self->{'_availability'} = $availability;
   }
   
