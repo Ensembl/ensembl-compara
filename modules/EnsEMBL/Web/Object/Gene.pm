@@ -779,7 +779,7 @@ sub getVariationsOnSlice {
   my( $self, $slice, $subslices, $gene ) = @_;
   my $sliceObj = $self->new_object('Slice', $slice, $self->__data);
   
-  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);  
+  my ($count_snps, $filtered_snps, $context_count) = $sliceObj->getFakeMungedVariationFeatures($subslices,$gene);
   $self->__data->{'sample'}{"snp_counts"} = [$count_snps, scalar @$filtered_snps];
   $self->__data->{'SNPS'} = $filtered_snps; 
   return ($count_snps, $filtered_snps, $context_count);
@@ -829,26 +829,25 @@ sub store_TransformedTranscripts {
 
 sub store_TransformedSNPS {
   my $self   = shift;
-  my $valids = $self->valids; 
+  my $valids = $self->valids;
   
-  foreach my $trans_obj (@{$self->get_all_transcripts}) {
-    my $T    = $trans_obj->stable_id;
-    my $snps = {};
-    
-    foreach my $S (@{$self->__data->{'SNPS'}}) {
-      foreach (@{$S->[2]->get_all_TranscriptVariations || []}) {
-        next unless $T eq $_->transcript->stable_id;
-        
-        foreach my $type (@{$_->consequence_type || []}) {
-          next unless $valids->{'opt_' . lc $type};
-          $snps->{$S->[2]->dbID} = $_;
-          last;
-        }
-      }
+  my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  
+  my @transcripts = @{$self->get_all_transcripts};
+  
+  # get all TVs and arrange them by transcript stable ID and VF ID, ignore non-valids
+  my $tvs_by_tr;
+  
+  foreach my $tv(@{$tva->fetch_all_by_Transcripts([map {$_->transcript} @transcripts])}) {
+    foreach my $type(@{$tv->consequence_type || []}) {
+      next unless $valids->{'opt_'.lc($type)};
+      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_vf_id'}} = $tv;
+      last;
     }
-    
-    $trans_obj->__data->{'transformed'}{'snps'} = $snps;
   }
+  
+  # then store them in the transcript's data hash
+  $_->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$_->stable_id} foreach @transcripts;
 }
 
 sub store_TransformedDomains {
