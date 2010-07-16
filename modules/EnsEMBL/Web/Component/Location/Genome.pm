@@ -68,7 +68,7 @@ sub content {
         'ProteinAlignFeature' => ['red', 'rharrow'],
         'RegulatoryFactor'    => ['red', 'rharrow'],
         'ProbeFeature'        => ['red', 'rharrow'],
-        'XRef'                => ['red', 'rharrow'],
+        'Xref'                => ['red', 'rharrow'],
         'Gene'                => ['blue','lharrow'],
         'Domain'              => ['blue','lharrow'], 
       );
@@ -203,7 +203,7 @@ sub feature_tables {
 
     # could show only gene links for xrefs, but probably not what is wanted:
     # next SET if ($feat_type eq 'Gene' && $data_type =~ /Xref/);
-    
+   
     my $data_type = ($feat_type eq 'Gene') ? 'Gene Information:'
       : ($feat_type eq 'Transcript') ? 'Transcript Information:'
       : 'Feature Information:';

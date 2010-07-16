@@ -78,7 +78,7 @@ sub pointer_default {
       'ProteinAlignFeature' => [ 'red', 'rharrow' ],
       'RegulatoryFactor'    => [ 'red', 'rharrow' ],
       'ProbeFeature'        => [ 'red', 'rharrow' ],
-      'XRef'                => [ 'red', 'rharrow' ],
+      'Xref'                => [ 'red', 'rharrow' ],
       'Gene'                => [ 'blue','lharrow' ]
   );
   
@@ -133,7 +133,7 @@ sub create_user_set {
       if ($render eq 'highlight') {
         push @$pointers, $image->add_pointers( $hub, {
           'config_name'   => 'Vkaryotype',
-          'features'      => $track->{'features'},
+          'features'      => $track->{'features'},          
           'color'         => $colour,
           'style'         => $style,
         });
