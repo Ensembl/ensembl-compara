@@ -156,22 +156,29 @@ The Ensembl webcode is designed to be extensible, so that you
 can customize your own installation without your changes being
 overwritten when you update to a new release.
 </p>
-
-<p>The Ensembl system of plugins allow a range of customizations:</p>
-<ul>
-<li>The <code>public-plugins/mirror</code> plugin enables you to apply your own server
-settings (domain name, admin email address, database names and passwords)
-to a standard install of Ensembl</li>
-<li>You can further use this plugin to operate a cut-down version of Ensembl
-with fewer species</li>
-<li>By creating your own plugin, you can completely change the available
+<p>By creating your own plugin, you can completely change the available
 species, alter the colour scheme or page template, or add your own views
-and static content.</li>
-</ul>
+and static content.</p>
 
-<div class="info-box embedded-box"><strong>Important note</strong>: Regardless of any changes you may
-make to your Ensembl website, you <em>must</em> check out all the Ensembl Perl API code,
-as the web code has extensive dependencies on all the API modules.</div>
+<h3>Public plugins</h3>
+
+<p>A selection of plugins are included as part of the standard Ensembl checkout, enabling you to include optional features in your site.</p>
+
+<dl>
+<dt>public-plugins/ensembl</dt>
+<dd>Used to configure the current set of Ensembl species (as seen on www.ensembl.org)
+- without this or a similar plugin, no data will appear on your site.</dd>
+<dt>public-plugins/mirror</dt>
+<dd>Used to configure your local server settings</dd>
+<dt>public-plugins/orm</dt>
+<dd>Under development. This plugin will be used to separate optional features (user accounts, ability to update databases through a web interface) from the core functionality of the Ensembl webcode. It uses Rose::DB::Object and its associated modules for database access, and thus has a lot of additional Perl dependencies</dd>
+<dt>public-plugins/admin</dt>
+<dd>Administrative interface for non-biological content, such as help and news. Depends on public-plugins/orm</dd>
+</dl>
+
+<h3>Using plugins</h3>
+
+<p>Most public plugins have a README file giving more detailed and up-to-date information on how to use them.</p>
 
 <p>Plugins are used to complement the normal system of inheritance in
 object-oriented Perl. Whereas a child object can inherit methods
@@ -191,16 +198,12 @@ $SiteDefs::ENSEMBL_PLUGINS = [
 ];
 </pre>
 
-<p>The plugins are processed in reverse order, starting with the last one:</p>
+<p>The plugins are processed in reverse order, starting with the last one.</p>
 
-<dl>
-<dt>/public-plugins/ensembl</dt>
-<dd>This is the plugin used by www.ensembl.org to add all Ensembl species
-and site-specific content to the base code</dd>
-<dt>/public-plugins/mirror</dt>
-<dd>This plugin over-rides /public-plugins/ensembl - normally it is used only
-to configure local server settings</dd>
-</dl>
+
+<div class="info-box embedded-box"><strong>Important note</strong>: Regardless of any changes you may
+make to your Ensembl website, you <em>must</em> check out all the Ensembl Perl API code,
+as the web code has extensive dependencies on all the API modules.</div>
 
 
 
