@@ -67,8 +67,8 @@ unless (defined $url) {
 my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url.';type=compara' );
 
 my ($prefix, $adaptor) = $nc
-    ? ('nc_tree_.', $dba->get_NCTreeAdaptor)
-    : ('protein_tree_.', $dba->get_ProteinTreeAdaptor);
+    ? ('ncrna_trees_.', $dba->get_NCTreeAdaptor)
+    : ('gene_trees_.', $dba->get_ProteinTreeAdaptor);
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {

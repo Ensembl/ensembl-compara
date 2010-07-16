@@ -3,15 +3,17 @@
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::DumpGeneTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGeneTrees_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type gene_trees
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type ncrna_trees
 
 =head1 DESCRIPTION  
 
-    A pipeline to dump the GeneTrees
+    A pipeline to dump either gene_trees or ncrna_trees
 
 =head1 CONTACT
 
@@ -19,7 +21,7 @@
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::DumpGeneTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
 
 use strict;
 use warnings;
@@ -29,12 +31,7 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
-                  In addition to the standard things it defines four options:
-                    o('capacity')       defines how many trees can be dumped in parallel
                 
-                  There are rules dependent on two options that do not have defaults (this makes them mandatory):
-                    o('password')       your read-write password for creation and maintenance of the hive database
-
 =cut
 
 sub default_options {
@@ -75,7 +72,7 @@ sub default_options {
 =head2 pipeline_create_commands
 
     Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
-                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates a directory for storing the output.
+                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates directories for storing the output.
 
 =cut
 
@@ -115,13 +112,15 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'inputquery'            => "SELECT DISTINCT ptm.root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
+                'gene_trees_query'      => "SELECT DISTINCT ptm.root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
+                'ncrna_trees_query'     => "SELECT DISTINCT ntm.root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntt.node_id=ntm.root_id AND ntt.tag='gene_count' AND ntt.value>1",
+                'inputquery'            => '#expr(($tree_type eq "gene_trees") ? $gene_trees_query : $ncrna_trees_query)expr#',
                 'hashed_column_number'  => 0,
-                'input_id'              => { 'tree_id' => '#_start_0#', 'hash_dir' => '#_start_1#' },
+                'input_id'              => { 'tree_type' => '#tree_type#', 'tree_id' => '#_start_0#', 'hash_dir' => '#_start_1#' },
                 'fan_branch_code'       => 2,
             },
             -input_ids => [
-                { },
+                { 'tree_type' => $self->o('tree_type') },
             ],
             -flow_into => {
                 1 => [ 'generate_collations' ],
@@ -132,10 +131,12 @@ sub pipeline_analyses {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'dump_script' => $self->o('dump_script'),
-                'work_dir'    => $self->o('work_dir'),
-                'db_url'      => $self->dbconn_2_url('rel_db'),
-                'cmd'         => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# -nh 1 -a 1 -nhx 1 -f 1 -fc 1 -nc 0',
+                'db_url'            => $self->dbconn_2_url('rel_db'),
+                'dump_script'       => $self->o('dump_script'),
+                'work_dir'          => $self->o('work_dir'),
+                'gene_trees_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -nc 0',
+                'ncrna_trees_args'  => '-nh 1 -a 1 -nhx 1 -f 1 -nc 1',
+                'cmd'         => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #expr(($tree_type eq "gene_trees") ? $gene_trees_args : $ncrna_trees_args)expr#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
@@ -144,10 +145,12 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_collations',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'       => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
-                'fan_branch_code' => 2,
-                'name_root'       => $self->o('name_root'),
-                'input_id'        => { 'extension' => '#_range_start#', 'dump_file_name' => '#name_root#.#_range_start#'},
+                'name_root'        => $self->o('name_root'),
+                'gene_trees_list'  => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
+                'ncrna_trees_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
+                'inputlist'        => '#expr(($tree_type eq "gene_trees") ? $gene_trees_list : $ncrna_trees_list)expr#',
+                'input_id'         => { 'tree_type' => '#tree_type#', 'extension' => '#_range_start#', 'dump_file_name' => '#name_root#.#_range_start#'},
+                'fan_branch_code'  => 2,
             },
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
@@ -159,7 +162,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'work_dir'       => $self->o('work_dir'),
-                'cmd'            => 'find #work_dir# -name "*.#extension#" | grep -v #dump_file_name# | sort -t . -k2 -n | xargs cat > #work_dir#/#dump_file_name#',
+                'cmd'            => 'find #work_dir# -name "#tree_type#*.#extension#" | grep -v #dump_file_name# | sort -t . -k2 -n | xargs cat > #work_dir#/#dump_file_name#',
             },
             -hive_capacity => 10,
             -flow_into => {
