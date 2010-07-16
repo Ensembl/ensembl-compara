@@ -22,6 +22,7 @@ sub convert_to_drawing_parameters {
   my $self = shift;
   my $data = $self->data_objects;
   my $results = [];
+  my $hub = $self->hub;
 
   foreach my $g (@$data) {
     if (ref($g) =~ /UnmappedObject/) {
@@ -38,7 +39,8 @@ sub convert_to_drawing_parameters {
         'extname'  => $g->external_name,
         'label'    => $g->stable_id,
         'gene_id'  => [ $g->stable_id ],
-        'extra'    => [ $g->description ]
+        'extra'    => [ $g->description ],
+        'href'     => $hub->url({ type => 'Zmenu', action => 'Gene'}),        
       }
     }
   }
