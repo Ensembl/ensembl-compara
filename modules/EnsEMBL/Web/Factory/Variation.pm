@@ -56,8 +56,13 @@ sub createObjects {
     
     $self->param('vdb', 'variation');
     $self->param('v', $variation->name);
-  } else {
-    return $self->problem('fatal', "Could not find variation $identifier", $self->_help("Either $identifier does not exist in the current Ensembl database, or there was a problem retrieving it."));
+  } else { 
+    my $dbsnp_version = "";
+    if ( $self->species_defs->databases->{'DATABASE_VARIATION'}->{'dbSNP_VERSION'}){
+      $dbsnp_version = "which includes data from dbSNP ". $self->species_defs->databases->{'DATABASE_VARIATION'}->{'dbSNP_VERSION'} .',';
+    }
+    my $help_message = "Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";
+    return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message));
   }
 }
 
