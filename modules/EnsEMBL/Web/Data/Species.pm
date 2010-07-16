@@ -19,7 +19,6 @@ __PACKAGE__->add_queriable_fields(
 );
 
 __PACKAGE__->has_many(releases   => 'EnsEMBL::Web::Data::Release');
-__PACKAGE__->has_many(news_items => 'EnsEMBL::Web::Data::NewsItem');
 
 __PACKAGE__->set_sql(in_release => qq{
   SELECT
