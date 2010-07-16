@@ -41,8 +41,8 @@ sub content {
     { key => 'trans',     title => 'Transcript',                      sort => 'html'                        },
     { key => 'type',      title => 'Type'  ,                          sort => 'string'                      },
     { key => 'hgvs',      title => 'HGVS names'  ,                    sort => 'string'                      },     
-    { key => 'trans_pos', title => 'Relative position in transcript', sort => 'position', align => 'center' },
-    { key => 'prot_pos',  title => 'Relative position in protein',    sort => 'position', align => 'center' },
+    { key => 'trans_pos', title => 'Position in transcript', sort => 'position', align => 'center' },
+    { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'center' },
     { key => 'aa',        title => 'Amino acid',                      sort => 'string'                      }
   );
   
