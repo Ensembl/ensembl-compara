@@ -26,6 +26,7 @@ sub new {
 
 sub db {
   my $self = shift;
+  return unless $self->{'NAME'};
   $self->{'dbh'} ||= DBI->connect(
       "DBI:mysql:database=$self->{'NAME'};host=$self->{'HOST'};port=$self->{'PORT'}",
       $self->{'USER'}, "$self->{'PASS'}"
@@ -35,6 +36,7 @@ sub db {
 
 sub fetch_release {
   my ($self, $release_id) = @_;
+  return unless $self->db;
 
   my $sql = qq(
     SELECT
@@ -60,10 +62,39 @@ sub fetch_release {
   return $record;
 }
 
+sub fetch_all_species {
+  my $self = shift;
+  my $species = [];
+  return [] unless $self->db;
+
+  my $sql = qq(
+    SELECT 
+      species_id, code, name, common_name
+    FROM
+      species
+    WHERE
+      online = ?
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute('Y');
+
+  while (my @data = $sth->fetchrow_array()) {
+    push @$species, {
+      'id'          => $data[0],
+      'code'        => $data[1],
+      'name'        => $data[2],
+      'common_name' => $data[3],
+    };
+  }
+  return $species;
+}
+
 sub fetch_news {
 ### Selects all news items for a given release and returns them as an arrayref of hashes
   my ($self, $criteria) = @_;
   my $news_items = [];
+  return [] unless $self->db;
 
   my ($sql, $sql2);
   my @args = ($criteria->{'release'});
