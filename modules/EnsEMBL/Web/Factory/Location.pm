@@ -28,16 +28,16 @@ sub __level         :lvalue { $_[0]->__species_hash->{'level'};                 
 sub __golden_path   :lvalue { $_[0]->__species_hash->{'golden_path'};                                  }
 sub __coord_systems :lvalue { $_[0]->__species_hash->{'coord_systems'};                                }
 
-sub _gene_adaptor                { return shift->_adaptor('Gene',                 @_);          }
-sub _transcript_adaptor          { return shift->_adaptor('Transcript',           @_);          }
-sub _predtranscript_adaptor      { return shift->_adaptor('PredictionTranscript', @_);          }
-sub _exon_adaptor                { return shift->_adaptor('Exon',                 @_);          }
-sub _variation_adaptor           { return shift->_adaptor('Variation',            'variation'); }
-sub _variation_feature_adaptor   { return shift->_adaptor('VariationFeature',     'variation'); }
-sub _structral_variation_adaptor { return shift->_adaptor('StructralVariation',   'variation'); }
-sub _slice_adaptor               { return shift->_adaptor('Slice');                             }
-sub _coord_system_adaptor        { return shift->_adaptor('CoordSystem');                       }
-sub _marker_adaptor              { return shift->_adaptor('Marker');                            }
+sub _gene_adaptor                 { return shift->_adaptor('Gene',                 @_);          }
+sub _transcript_adaptor           { return shift->_adaptor('Transcript',           @_);          }
+sub _predtranscript_adaptor       { return shift->_adaptor('PredictionTranscript', @_);          }
+sub _exon_adaptor                 { return shift->_adaptor('Exon',                 @_);          }
+sub _variation_adaptor            { return shift->_adaptor('Variation',            'variation'); }
+sub _variation_feature_adaptor    { return shift->_adaptor('VariationFeature',     'variation'); }
+sub _structural_variation_adaptor { return shift->_adaptor('StructuralVariation',  'variation'); }
+sub _slice_adaptor                { return shift->_adaptor('Slice');                             }
+sub _coord_system_adaptor         { return shift->_adaptor('CoordSystem');                       }
+sub _marker_adaptor               { return shift->_adaptor('Marker');                            }
 
 sub _adaptor {
   my $self = shift;
@@ -520,7 +520,7 @@ sub _location_from_StructuralVariation {
   my $structural_variation;
   
   eval {
-    $structural_variation = $self->_structral_variation_adaptor->fetch_by_name($id);
+    $structural_variation = $self->_structural_variation_adaptor->fetch_by_name($id);
   };
   
   return $self->_create_from_slice('StructuralVariation', $id, $self->expand($structural_variation->feature_Slice)) if $structural_variation;
