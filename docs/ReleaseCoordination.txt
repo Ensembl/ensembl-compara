@@ -34,6 +34,13 @@ perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/updat
  --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_48/v48.conf \
  --compara compara-master --species "Ochotona princeps"
 
+4.1. Update the species_set_tags.
+Run the script: update_species_sets.pl
+
+eg
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_species_sets.pl --master_url mysql://ensadmin:ensembl@compara1/sf5_ensembl_compara_master > update_species_sets.out
+
+
 5. Wait for the handover before starting to build the new database in case
 any of the new species cannot make it. Don't forget to switch the
 assembly_default values of genome_db in this case.
@@ -121,6 +128,13 @@ syntenies again.
 
 ~/work/ensembl-compara/scripts/pipeline/populate_new_database.pl \
     --reg-conf reg_conf.pl --master compara_master --new compara_58
+
+
+8.1. Copy the species_set_tag table. 
+This needs to be added to the populate_new_database script and not just copied from the master where all old tags need to be deleted.
+
+....
+
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
@@ -309,7 +323,26 @@ Note that the resulting table will probably need updating (either by hand or by 
         mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
 
 10.6 Put together ancestral database:
+This is now done using the script copy_ancestral_core.pl. You will need to add any ancestral sequences from the previous release if these have not changed, in addition to adding any new ones. 
 
+    1) Create a new core database:
+        mysql --defaults-group-suffix=_compara4 -e 'CREATE DATABASE lg4_ensembl_ancestral_58'
+        mysql --defaults-group-suffix=_compara4 lg4_ensembl_ancestral_58 <~lg4/work/ensembl/sql/table.sql
+
+    2) Copy over the ancestralsegment coord_system:
+        INSERT INTO lg4_ensembl_ancestral_58.coord_system SELECT * FROM lg4_ensembl_ancestral_57.coord_system;
+
+    3) Add data using copy_ancestral_core.pl script
+
+eg
+bsub -o copy_ancest_474.out -e copy_ancest_474.err -R "select[mem>5000] rusage[mem=5000]" -M5000000 perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl --from_url mysql://ensadmin:ensembl@compara3/sf5_ortheus_6way_e59_18_06_10_ancestral_core --to_url mysql://ensadmin:ensembl@compara1/kb3_ensembl_ancestral_59 --mlss 474
+
+    4) Check that you have done it correctly:
+        SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
+
+Below is the old way (e58) of doing things. Want to check the new method once more before removing this info.
+
+=============================
 Merge several ancestral core databases together, starting with the ancestors that haven't changed from prev.release.
     You need to make sure that 'dna' and 'seq_region' tables that are in sync via seq_region_id field
     stay in sync in the target database (but there may/need to be a new seq_region_id generated,
@@ -340,6 +373,7 @@ Merging each source into target is done in two steps (3) and (4) (assuming the t
     6) Check that you have done it correctly:
         SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
 
+======================================
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
