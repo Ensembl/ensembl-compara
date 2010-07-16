@@ -30,26 +30,26 @@ BEGIN{
   map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::Data::Release;
-use EnsEMBL::Web::Data::Species;
-use EnsEMBL::Web::Data::ReleaseSpecies;
+use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 print "\n\n";
 
-# Connect to web database and get news adaptor
-use EnsEMBL::Web::RegObj;
-
-$ENSEMBL_WEB_REGISTRY = EnsEMBL::Web::Registry->new();
-my $SD = $ENSEMBL_WEB_REGISTRY->species_defs;
+my $hub = new EnsEMBL::Web::Hub;
+my $SD = $hub->species_defs;
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
+
+my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+my ($sql, $sth, @args); 
+
 my $release_id = $SD->ENSEMBL_VERSION;
-my $release = EnsEMBL::Web::Data::Release->new($release_id);
+my $release = $adaptor->fetch_release($release_id);
 
 if ($release) {
 
-    print "Release $release_id is currently scheduled for ". $release->full_date .".
+    print "Release $release_id is currently scheduled for ". $release->{'date'} .".
             Is this correct? [y/n]";
 
     while (<STDIN>) {
@@ -60,8 +60,9 @@ if ($release) {
                 chomp;
                 if (/\d{4}-\d{2}-\d{2}/) {
                     print "Setting release date to $_\n\n";
-                    $release->date($_);
-                    $release->update;
+                    $sql = "UPDATE ens_release SET date = '$_' WHERE release_id = ?";
+                    $sth = $adaptor->db->prepare($sql);
+                    $sth->execute($release_id);
                     last INPUT;
                 }
                 print "Sorry, that was not a valid date format.\nPlease input a date in format yyyy-mm-dd:";
@@ -83,22 +84,18 @@ if ($release) {
         $date = $year.'-'.$nextmonth.'-01';
     }
     my $archive = $SiteDefs::ARCHIVE_VERSION;
-    $release = EnsEMBL::Web::Data::Release->new({
-        'release_id' => $release_id,
-        'number'     => $release_id,
-        'date'       => $date,
-        'archive'    => $archive,
-    });
-    $release->save;
-    
+    $sql = 'INSERT INTO ens_release values(?, ?, ?, ?, ?, ?)';
+    @args = ($release_id, $release_id, $date, $archive, 'Y', 'Y');
+    $sth = $adaptor->db->prepare($sql);
+    $sth->execute(@args);
     print "Inserting release $release_id ($archive), scheduled for $date.\n\n";
 }
 
 # get the hash of all species in the database
-my @db_spp = EnsEMBL::Web::Data::Species->find_all;
+my @db_spp = @{$adaptor->fetch_all_species}; 
 my %lookup;
 foreach my $sp (@db_spp) {
-  $lookup{$sp->name} = $sp->id;
+  $lookup{$sp->{'name'}} = $sp->{'id'};
 }
 
 # get a list of valid (configured) species
@@ -114,8 +111,11 @@ foreach my $sp (sort @species) {
       'common_name'   => $SD->get_config($sp, 'SPECIES_COMMON_NAME'),
       'code'          => $SD->get_config($sp, 'SPECIES_CODE'),
     };
-    my $new_sp = EnsEMBL::Web::Data::Species->new($record);
-    $species_id = $new_sp->save;
+    $sql = 'INSERT INTO species SET code = ?, name = ?, common_name = ?, vega = ?, online = ?';
+    @args = ($SD->get_config($sp, 'SPECIES_CODE'), $SD->get_config($sp, 'SPECIES_BIO_NAME'),
+              $SD->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
+    $sth = $adaptor->db->prepare($sql);
+    $sth->execute(@args);
     print "Adding new species $sp to database, with ID $species_id\n";
   }
   else {
@@ -123,19 +123,21 @@ foreach my $sp (sort @species) {
   }
 
   if ($species_id) {
-    my $rs = EnsEMBL::Web::Data::ReleaseSpecies->find('release_id' => $release_id, 'species_id' => $species_id);
-    my $rs_id = $rs->id;
-    unless ($rs_id) {
-      my $a_code = $SD->get_config($sp, 'ASSEMBLY_NAME');
-      my $a_name = $SD->get_config($sp, 'ASSEMBLY_DISPLAY_NAME');
-      my $record = { 
-        'release_id' => $release_id,
-        'species_id' => $species_id,
-        'assembly_code' => $a_code || '',
-        'assembly_name' => $a_name || '',
-      };
-      $rs = EnsEMBL::Web::Data::ReleaseSpecies->new($record);
-      $rs_id = $rs->save;
+    $sql = 'SELECT release_id FROM release_species WHERE release_id = ? AND species_id = ?';
+    @args = ($release_id, $species_id);
+    $sth = $adaptor->db->prepare($sql);
+    $sth->execute(@args);
+    my $already_done = 0;
+    while (my @data = $sth->fetchrow_array()) {
+      $already_done = 1;
+    }
+    unless ($already_done) {
+      my $a_code = $SD->get_config($sp, 'ASSEMBLY_NAME') || ''; 
+      my $a_name = $SD->get_config($sp, 'ASSEMBLY_DISPLAY_NAME') || '';
+      $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?)';
+      @args = ($release_id, $species_id, $a_code, $a_name, '', '');
+      $sth = $adaptor->db->prepare($sql);
+      $sth->execute(@args);
       print "ADDED $sp to release $release_id \n";
     }
   }
