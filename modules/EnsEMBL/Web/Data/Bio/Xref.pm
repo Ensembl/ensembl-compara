@@ -25,33 +25,25 @@ sub convert_to_drawing_parameters {
   my $self = shift;
   my $data = $self->data_objects;
   my $results = [];
-  my $hub = $self->hub;
+  my $hub = $self->hub;  
 
-  foreach my $array (@$data) {
-    my $xref = shift @$array;
-    
-    push @$results, {
-      'label'     => $xref->primary_id,
-      'xref_id'   => [ $xref->primary_id ],
-      'extname'   => $xref->display_id,      
-      'extra'     => [ $xref->description, $xref->dbname ]
-    };
-    ## also get genes
+  foreach my $array (@$data) {    
+    my $xref = shift @$array;  
     foreach my $g (@$array) {
+      
       push @$results, {
-        'region'   => $g->seq_region_name,
+        'label'    => $xref->db_display_name,
+        'xref_id'  => [ $xref->primary_id ],
+        'extname'  => $xref->display_id,  
         'start'    => $g->start,
         'end'      => $g->end,
+        'region'   => $g->seq_region_name,
         'strand'   => $g->strand,
-        'length'   => $g->end-$g->start+1,
-        'extname'  => $g->external_name,
-        'label'    => $g->stable_id,
-        'gene_id'  => [ $g->stable_id ],
-        'extra'    => [ $g->description ],
-        'href'      => $hub->url({ type => 'Zmenu', action => 'Gene'}),
-      }
+        'extra'    => [ $g->description, $xref->dbname ],
+        'href'     => $hub->url({ type => 'Zmenu', action => 'Xref'}),      
+      };
     }
-  }
+  }  
 
   return [$results, ['Description'], 'Xref'];
 }
