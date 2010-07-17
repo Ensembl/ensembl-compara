@@ -42,7 +42,7 @@ sub default_options {
         'rel'         => 59,                                                  # current release number
         'tree_type'   => 'gene_trees',                                        # currently this is the only option, but it may become a proper parameter once 'ncrna_trees' are also supported
 
-        'pipeline_name' => 'compara_dump_'.$self->o('tree_type').'_'.$self->o('rel'),    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => $self->o('tree_type').'_'.$self->o('rel').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara2',
@@ -62,10 +62,10 @@ sub default_options {
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
-        'work_dir'    => $ENV{'HOME'}.'/'.$self->o('tree_type').'_'.$self->o('rel').'/dump_hash',  # where to create the dirhash and store intermediate results of merger
         'name_root'   => 'Compara.'.$self->o('rel').'.'.$self->o('tree_type'),      # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',
-        'target_dir'  => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/'.$self->o('tree_type').'_'.$self->o('rel').'_dumps',   # target directory where the results will be stored
+        'target_dir'  => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/'.$self->o('pipeline_name'),   # where the final dumps will be stored
+        'work_dir'    => $self->o('target_dir').'/dump_hash',                       # where directory hash is created and maintained
     };
 }
 
@@ -81,15 +81,15 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
-        'mkdir -p '.$self->o('work_dir'),
         'mkdir -p '.$self->o('target_dir'),
+        'mkdir -p '.$self->o('work_dir'),
     ];
 }
 
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
-                  Here it defines six analyses:
+                  Here it defines seven analyses:
 
                     * 'generate_tree_ids'   generates a list of tree_ids to be dumped
 
@@ -99,9 +99,11 @@ sub pipeline_create_commands {
 
                     * 'collate_dumps'       actually merge/collate single trees into long dumps
 
+                    * 'remove_hash'         remove the temporary hash of directories
+
                     * 'archive_long_files'  zip the long dumps
 
-                    * 'move_to_target_dir'  move the long dumps into their final destination
+                    * 'md5sum'              compute md5sum for compressed files
 
 =cut
 
@@ -113,7 +115,7 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
                 'gene_trees_query'      => "SELECT DISTINCT ptm.root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
-                'ncrna_trees_query'     => "SELECT DISTINCT ntm.root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntt.node_id=ntm.root_id AND ntt.tag='gene_count' AND ntt.value>1",
+                'ncrna_trees_query'     => "SELECT root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntm.root_id=ntt.node_id AND ntt.tag='gene_count' AND ntt.value GROUP BY root_id HAVING sum(length(cigar_line))",
                 'inputquery'            => '#expr(($tree_type eq "gene_trees") ? $gene_trees_query : $ncrna_trees_query)expr#',
                 'hashed_column_number'  => 0,
                 'input_id'              => { 'tree_type' => '#tree_type#', 'tree_id' => '#_start_0#', 'hash_dir' => '#_start_1#' },
@@ -155,6 +157,7 @@ sub pipeline_analyses {
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
                 2 => [ 'collate_dumps'  ],
+                1 => [ 'remove_hash' ],
             },
         },
 
@@ -162,11 +165,25 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'work_dir'       => $self->o('work_dir'),
-                'cmd'            => 'find #work_dir# -name "#tree_type#*.#extension#" | grep -v #dump_file_name# | sort -t . -k2 -n | xargs cat > #work_dir#/#dump_file_name#',
+                'target_dir'     => $self->o('target_dir'),
+                'cmd'            => 'find #work_dir# -name "#tree_type#*.#extension#" | sort -t . -k2 -n | xargs cat > #target_dir#/#dump_file_name#',
             },
             -hive_capacity => 10,
             -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#work_dir#/#dump_file_name#' } },
+                1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#dump_file_name#' } },
+            },
+        },
+
+        {   -logic_name => 'remove_hash',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'work_dir'    => $self->o('work_dir'),
+                'cmd'         => 'rm -rf #work_dir#',
+            },
+            -hive_capacity => 10,
+            -wait_for => [ 'collate_dumps' ],
+            -flow_into => {
+                1 => [ 'md5sum' ],
             },
         },
 
@@ -176,17 +193,15 @@ sub pipeline_analyses {
                 'cmd'   => 'gzip #full_name#',
             },
             -hive_capacity => 10,
-            -flow_into => {
-                1 => { 'move_to_target_dir' => { 'full_name' => '#full_name#.gz' } },
-            }
         },
 
-        {   -logic_name => 'move_to_target_dir',
+        {   -logic_name => 'md5sum',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'target_dir'    => $self->o('target_dir'),
-                'cmd'           => 'mv #full_name# #target_dir#',
+                'target_dir'  => $self->o('target_dir'),
+                'cmd'         => 'cd #target_dir# ; md5sum *.gz >MD5SUM',
             },
+            -wait_for => [ 'archive_long_files' ],
             -hive_capacity => 10,
         },
     ];
