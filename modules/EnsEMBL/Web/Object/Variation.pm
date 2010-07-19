@@ -130,7 +130,7 @@ sub count_individuals {
     {}, $var->dbID
   );
   
-  return $multibp_samples if $multibp_samples;
+  #return $multibp_samples if $multibp_samples;
   
   my %sample_ids_for_variation;
   
@@ -164,7 +164,7 @@ sub count_individuals {
     }
   }
 
-  return scalar keys %sample_ids_for_variation;
+  return scalar keys %sample_ids_for_variation + $multibp_samples;
 }
 
 sub count_ldpops {
