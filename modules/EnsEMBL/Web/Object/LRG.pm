@@ -118,6 +118,7 @@ sub retrieve_features {
     $method = 'retrieve_'.$type; 
     push @$results, [$self->$method($data,$type)] if defined &$method;
   }
+  
   return $results;
 }
 
@@ -1100,29 +1101,26 @@ sub store_TransformedTranscripts {
 }
 
 sub store_TransformedSNPS {
-  my $self   = shift;
-  my $valids = $self->valids; 
-  my $tva    = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+    my $self = shift;
+    my $valids = $self->valids;
   
-  return unless defined $tva;
-  
-  foreach my $trans_obj (@{$self->get_all_transcripts}) {
-    my $snps = {};
-    
-    # get TVs by transcipt instead of by SNP - way faster and only gets the
-    # ones we are interested in
-    foreach my $tv (@{$tva->fetch_all_by_Transcripts([ $trans_obj->transcript ]) || []}) {
-      my $dbID = $tv->variation_feature->dbID;
-      
-      foreach my $type (@{$tv->consequence_type || []}) {
-        next unless $valids->{'opt_' . lc $type};
-        $snps->{$dbID} = $tv;
-        last;
-      }
-    }
-    
-    $trans_obj->__data->{'transformed'}{'snps'} = $snps;
-  }
+	my $tva = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+	
+	my @transcripts = @{$self->get_all_transcripts};
+	
+	# get all TVs and arrange them by transcript stable ID and VF ID, ignore non-valids
+	my $tvs_by_tr;
+	
+	foreach my $tv(@{$tva->fetch_all_by_Transcripts([map {$_->transcript} @transcripts])}) {
+	  foreach my $type(@{$tv->consequence_type || []}) {
+		next unless $valids->{'opt_'.lc($type)};
+		$tvs_by_tr->{$tv->transcript->stable_id}->{$tv->{'_vf_id'}} = $tv;
+		last;
+	  }
+	}
+	
+	# then store them in the transcript's data hash
+	$_->__data->{'transformed'}{'snps'} = $tvs_by_tr->{$_->stable_id} foreach @transcripts;
 }
 
 sub store_TransformedDomains {
