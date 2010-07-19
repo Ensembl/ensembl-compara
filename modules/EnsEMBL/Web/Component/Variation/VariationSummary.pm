@@ -100,7 +100,7 @@ sub content {
     }
     
     if(defined($vf)) {
-      my (@hgvs, $hgvs, $hgvs_html, $prev_trans);
+      my (%cdna_hgvs, %pep_hgvs, %by_allele, $hgvs_html, $prev_trans);
       
       # go via transcript variations (should be faster than slice)
       foreach my $tv(@{$vf->get_all_TranscriptVariations()}) {
@@ -108,33 +108,52 @@ sub content {
         next if $tv->{'_transcript_stable_id'} eq $prev_trans;
         $prev_trans = $tv->{'_transcript_stable_id'};
         
-        @hgvs = @{$vf->get_all_hgvs_notations($tv->transcript, 'c')};
-        $hgvs = join '<br/>', @hgvs;
-        $hgvs =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
-          type => 'Transcript',
-          action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-          db     => 'core',
-          r      => undef,
-          t      => $&,
-          v      => $object->name,
-          source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
-        $hgvs_html .= $hgvs.'<br/>' if $hgvs;
+        # get HGVS notations
+        %cdna_hgvs = %{$vf->get_all_hgvs_notations($tv->transcript, 'c')};
+        %pep_hgvs = %{$vf->get_all_hgvs_notations($tv->transcript, 'p')};
+        
+        # filter peptide ones for synonymous changes
+        map {delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/} keys %pep_hgvs;
+        
+        # group by allele
+        push @{$by_allele{$_}}, $cdna_hgvs{$_} foreach keys %cdna_hgvs;
+        push @{$by_allele{$_}}, $pep_hgvs{$_} foreach keys %pep_hgvs;
+      }
+        
+      # count alleles
+      my $allele_count = scalar keys %by_allele;
+      
+      # make HTML
+      my @temp = ();
+      foreach my $a(keys %by_allele) {
+        if($allele_count > 1) {
+          push @temp, (scalar @temp ? "<br/>" : "")."<b>Variant allele $a</b>";
+        }
+        
+        foreach my $h(@{$by_allele{$a}}) {
+          $h =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
+            type => 'Transcript',
+            action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
+            db     => 'core',
+            r      => undef,
+            t      => $&,
+            v      => $object->name,
+            source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
+      
+          $h =~ s/ENS(...)?P\d+/'<a href="'.$object->_url({
+            type => 'Transcript',
+            action => 'ProtVariations',
+            db     => 'core',
+            r      => undef,
+            p      => $&,
+            v      => $object->name,
+            source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
+          
+          push @temp, $h;
+        }
       }
       
-      # alternative method going via slice      
-      #foreach my $trans(@{$vf->feature_Slice->get_all_Transcripts()}) {
-      #  @hgvs = @{$vf->get_all_hgvs_notations($trans, 'c')};
-      #  $hgvs = join '<br/>', @hgvs;
-      #  $hgvs =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
-      #    type => 'Transcript',
-      #    action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-      #    db     => 'core',
-      #    r      => undef,
-      #    t      => $&,
-      #    v      => $object->name,
-      #    source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
-      #  $hgvs_html .= $hgvs.'<br/>' if $hgvs;
-      #}
+      $hgvs_html = join '<br/>', @temp;
       
       $hgvs_html ||= "<h5>None</h5>";
       
