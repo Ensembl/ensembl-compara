@@ -381,7 +381,7 @@ sub _create_LRG {
   if (@ids) {
     push @$slices, $sa->fetch_by_region('lrg', $_) for @ids;
   } else {
-    $slices = $sa->fetch_all('lrg', '', 1);
+    $slices = $sa->fetch_all('lrg', undef, 1, undef, 1);
   }
  
   ## Map slices to chromosomal coordinates
