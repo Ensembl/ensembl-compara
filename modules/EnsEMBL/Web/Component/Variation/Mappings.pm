@@ -77,11 +77,37 @@ sub content {
         source => $source
       });
       
-      # HGVS      
+      # HGVS
       my @vfs = grep {$_->dbID eq $varif_id} @{$object->vari->get_all_VariationFeatures};
-      my @hgvs = @{$vfs[0]->get_all_hgvs_notations($trans, 'c')};
+      my $vf = $vfs[0];
+      
+      
+      # get HGVS notations
+      my %cdna_hgvs = %{$vf->get_all_hgvs_notations($trans, 'c')};
+      my %pep_hgvs = %{$vf->get_all_hgvs_notations($trans, 'p')};
+      
+      # filter peptide ones for synonymous changes
+      #map {delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/} keys %pep_hgvs;
+      
+      my %by_allele;
+      
+      # group by allele
+      push @{$by_allele{$_}}, $cdna_hgvs{$_} foreach keys %cdna_hgvs;
+      push @{$by_allele{$_}}, $pep_hgvs{$_} foreach keys %pep_hgvs;
+      
+      my $allele_count = scalar keys %by_allele;
+      
+      my @temp = ();
+      foreach my $a(keys %by_allele) {
+        foreach my $h(@{$by_allele{$a}}) {
+          push @temp, $h.($allele_count > 1 ? " <b>($a)</b>" : "");
+        }
+      }
+      
+      #my @hgvs = values %{$vfs[0]->get_all_hgvs_notations($trans, 'c')};
+      #push @hgvs, values %{$vfs[0]->get_all_hgvs_notations($trans, 'p')};
       #s/ENS(...)?[TG]\d+\://g for @hgvs;
-      my $hgvs = join ", ", @hgvs;
+      my $hgvs = join "<br/>", @temp;
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
       my $row = {
