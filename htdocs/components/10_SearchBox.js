@@ -25,7 +25,7 @@ Ensembl.Panel.SearchBox = Ensembl.Panel.extend({
     });
     
     this.elLk.sites.bind('click', function () {
-      panel.elLk.menu.css({ left: panel.elLk.search.offset().left - 2, top: panel.elLk.search.height() }).toggle();
+      panel.elLk.menu.toggle();
     });
     
     if (search) {
