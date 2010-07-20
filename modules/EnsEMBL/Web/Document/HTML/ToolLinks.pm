@@ -25,12 +25,6 @@ sub render {
 
   my @links;
   
-  push @links, qq{<a href="/$blast_dir/blastview">BLAST/BLAT</a>} if $self->blast;
-  push @links, qq{<a href="/biomart/martview">BioMart</a>}        if $self->biomart;
-  push @links, qq{<a href="/Help/Mirrors" class="modal_link">Mirrors</a>};
-  push @links, qq{<a href="/info/docs/">Documentation</a>};
-  push @links, qq{<a href="/help.html">Help</a>};
-
   if ($self->logins) {
     if ($ENV{'ENSEMBL_USER_ID'}) {
       push @links, qq{<a style="display:none" href="$dir/Account/Links" class="modal_link">Account</a>};
@@ -40,6 +34,11 @@ sub render {
       push @links, qq{<a style="display:none" href="$dir/Account/User/Add" class="modal_link">Register</a>};
     }
   }
+  
+  push @links, qq{<a href="/$blast_dir/blastview">BLAST/BLAT</a>} if $self->blast;
+  push @links, qq{<a href="/biomart/martview">BioMart</a>}        if $self->biomart;
+  push @links, qq{<a href="/help.html">Help</a>};
+  push @links, qq{<a href="/info/docs/">Documentation</a>};
   
   my $last  = pop @links;
   my $tools = join '', map "<li>$_</li>", @links;
