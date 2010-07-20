@@ -6,6 +6,7 @@ no warnings "uninitialized";
 use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Component::Help);
 
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Component::Help::Movie;
 
 sub _init {
@@ -19,11 +20,15 @@ sub content {
   my $self = shift;
   my $hub = $self->model->hub;
 
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+
   my $html;
 
-  my $help = EnsEMBL::Web::Data::View->new(encode_entities($hub->param('id')));
-  if ($help) {
-    my $content = $help->content;
+  my @records = @{$adaptor->fetch_help_by_ids([$hub->param('id')])};
+  
+  if (@records) {
+    my $help = $records[0];
+    my $content = $help->{'content'};
     ### Parse help looking for embedded movie placeholders
     foreach my $line (split('\n', $content)) {
       if ($line =~ /\[\[movie=(\d+)/i) {
