@@ -35,6 +35,7 @@ Ensembl.extend({
     imagePanels = null;
     
     this.initialPanels = $('.initial_panel');
+    this.minWidthEl    = $('#min_width_container');
     
     this.setCoreParams();
     
