@@ -19,10 +19,10 @@ sub _init {
 
 sub content {
   my $self    = shift;
-  my $object  = $self->object;
+  my $hub     = $self->model->hub;
   my $referer = $self->_parse_referer;
   my $url     = $referer->{'uri'};
-  my $r       = $object->param('r');
+  my $r       = $hub->param('r');
   my $match   = $url =~ m/^\//;
   
   if ($r) {
@@ -58,35 +58,38 @@ sub content {
   my (%archive, %assemblies);
   
   if ($species) {
-    %archive = %{$object->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
-    %assemblies = %{$object->species_defs->get_config($species, 'ASSEMBLIES')||{}};
+    %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
+    %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
     
+    my @A = keys %archive;
+    warn "ARCHIVES @A";
+
+
     if (keys %archive) {
-      $html .= '
-      <p>The following archives are available for this page:</p>
-        <ul>
-      ';
-      
       my $missing = 0;
+      my $count = 0;
+      my $links;
       
       if ($type =~ /\.html/ || $action =~ /\.html/) {
         foreach my $release (reverse sort keys %archive) {
-          next if $release == $object->species_defs->ENSEMBL_VERSION;
-          $html .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+          next if $release == $hub->species_defs->ENSEMBL_VERSION;
+          $links .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+          $count++;
         }
       }
       
       # species home pages
       if ($type eq 'Info') {
         foreach my $release (reverse sort keys %archive) {
-          next if $release == $object->species_defs->ENSEMBL_VERSION;
+          next if $release == $hub->species_defs->ENSEMBL_VERSION;
           
           if ($release > 50) {
-            $html .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+            $links .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
           } else {
             $url = $species.'/index.html';
-            $html .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+            $links .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
           }
+          $count++;
         }
       } else {
         my $releases = get_archive_redirect($type, $action, $object);
@@ -95,7 +98,7 @@ sub content {
         foreach my $poss_release (reverse sort keys %archive) {
           my $release_happened = 0;
           
-          next if $poss_release == $object->species_defs->ENSEMBL_VERSION;
+          next if $poss_release == $hub->species_defs->ENSEMBL_VERSION;
           
           foreach my $r (@$releases) {
             my ($old_view, $initial_release, $final_release, $missing_releases) = @$r;
@@ -110,10 +113,11 @@ sub content {
             $url = "$species/" . ($old_url || $old_view) . $old_params if $poss_release < 51;
           }
           
-          $html .= $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}) if $release_happened;
+          $links .= $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}) if $release_happened;
+          $count++ unless $missing;
         }
         
-        $html .= "</ul>\n";
+        $links .= "</ul>\n";
       }
       
       $html .= "<p>Some earlier archives are available, but this view was not present in those releases</p>\n" if $missing;
@@ -122,19 +126,28 @@ sub content {
     }
   } else {
     # TODO - map static content moves
-    %archive = %{$object->species_defs->ENSEMBL_ARCHIVES};
+    %archive = %{$hub->species_defs->ENSEMBL_ARCHIVES};
     
     $html .= "<ul>\n";
     
     foreach my $poss_release (reverse sort keys %archive) {
-      next if $poss_release == $object->species_defs->ENSEMBL_VERSION;
+      next if $poss_release == $hub->species_defs->ENSEMBL_VERSION;
       
       $html .= $self->_output_link(\%archive, $poss_release, $url);
     }
     
     $html .= "</ul>\n";
   }
-  
+ 
+  if ($count) {
+    $html .= qq(
+      <p>The following archives are available for this page:</p>
+        <ul>
+        $links
+        </ul>
+      );
+  }
+ 
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';
 
   return $html;
@@ -142,8 +155,9 @@ sub content {
 
 sub _output_link {
   my ($self, $archive, $release, $url, $assembly) = @_;
+  warn ">>> $archive = $assembly";
   
-  my $sitename = $self->object->species_defs->ENSEMBL_SITETYPE;
+  my $sitename = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $date  = $archive->{$release};
   my $month = substr $date, 0, 3;
   my $year  = substr $date, 3, 4;

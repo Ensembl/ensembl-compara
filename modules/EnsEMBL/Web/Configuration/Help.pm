@@ -8,6 +8,8 @@ sub set_default_action {
   $self->{_data}{default} = 'Search';
 }
 
+sub caption {}
+
 sub global_context { return undef; }
 sub ajax_content   { return undef;   }
 sub local_context  { return $_[0]->_local_context;  }
@@ -21,7 +23,7 @@ sub local_context  { return $_[0]->_local_context;  }
 =cut
 sub local_context  { 
   my $self   = shift;
-  if ($self->object->action eq 'ListVegaMappings') {
+  if ($self->model->hub->action eq 'ListVegaMappings') {
     return undef;
   }else{
     return $self->_local_context;

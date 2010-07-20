@@ -15,7 +15,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
   my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/FeedbackPreview", 'post' );
 
@@ -29,12 +29,12 @@ sub content {
   $form->add_element(
     'type'    => 'NoEdit',
     'label'   => 'Movie title',
-    'value'   => $object->param('title'),
+    'value'   => $hub->param('title'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'title',
-    'value'   => $object->param('title'),
+    'value'   => $hub->param('title'),
   );
 
   $form->add_element(

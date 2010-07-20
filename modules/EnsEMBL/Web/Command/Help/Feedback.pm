@@ -7,26 +7,26 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
   my $help;
 
-  my $module = 'EnsEMBL::Web::Data::'.$object->param('type');
+  my $module = 'EnsEMBL::Web::Data::'.$hub->param('type');
   if ($self->dynamic_use($module)) {
-    $help = $module->new($object->param('record_id'));
-    foreach my $p ($object->param) {
+    $help = $module->new($hub->param('record_id'));
+    foreach my $p ($hub->param) {
       next unless $p =~ /help_feedback/;
-      if ($object->param($p) eq 'yes') {
+      if ($hub->param($p) eq 'yes') {
         $help->helpful($help->helpful + 1);
       }
-      elsif ($object->param($p) eq 'no') {
+      elsif ($hub->param($p) eq 'no') {
         $help->not_helpful($help->not_helpful + 1);
       }
     }
   }
   $help->save;
 
-  my $param_hash = {'feedback' => $object->param('record_id') };
-  $self->ajax_redirect($object->param('return_url'), $param_hash);
+  my $param_hash = {'feedback' => $hub->param('record_id') };
+  $self->ajax_redirect($hub->param('return_url'), $param_hash);
 }
 
 1;

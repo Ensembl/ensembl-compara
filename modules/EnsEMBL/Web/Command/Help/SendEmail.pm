@@ -12,15 +12,15 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
   my $url;
 
-  if ($object->param('submit') eq 'Back') {
+  if ($hub->param('submit') eq 'Back') {
     my $param = {
-      name    => $object->param('name'),
-      address => $object->param('address'),
-      subject => $object->param('subject'),
-      message => $object->param('message')
+      name    => $hub->param('name'),
+      address => $hub->param('address'),
+      subject => $hub->param('subject'),
+      message => $hub->param('message')
     };
     
     $url = $self->url('/Help/Contact', $param);
@@ -29,21 +29,21 @@ sub process {
 
     # Check honeypot fields first
     #will prob need a list of these blacklisted addresses, but do this for now to fix Vega spam
-    $spam = 1 if $object->param('address') eq 'neverdiespike@hanmail.net';
+    $spam = 1 if $hub->param('address') eq 'neverdiespike@hanmail.net';
 
-    if ($object->param('honeypot_1') || $object->param('honeypot_2')) {
+    if ($hub->param('honeypot_1') || $hub->param('honeypot_2')) {
       $spam = 1;
     }  else {
       # Check the user's input for spam _before_ we start adding all our crap!
 #     my $filter = new EnsEMBL::Web::Filter::Spam;
-#     $spam = $filter->check($object->param('message'), 1);
+#     $spam = $filter->check($hub->param('message'), 1);
     }
 
     if (!$spam) {
       my @mail_attributes;
       
-      my $species_defs = $object->species_defs;
-      my $subject      = ($object->param('subject') || $species_defs->ENSEMBL_SITETYPE . ' Helpdesk') . ' - ' . $species_defs->ENSEMBL_SERVERNAME;
+      my $species_defs = $hub->species_defs;
+      my $subject      = ($hub->param('subject') || $species_defs->ENSEMBL_SITETYPE . ' Helpdesk') . ' - ' . $species_defs->ENSEMBL_SERVERNAME;
       my @T            = localtime;
       my $date         = sprintf '%04d-%02d-%02d %02d:%02d:%02d', $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
       my $url          = $species_defs->ENSEMBL_BASE_URL;
@@ -52,19 +52,19 @@ sub process {
       
       push @mail_attributes, (
         [ 'Date',        $date ],
-        [ 'Name',        $object->param('name') ],
+        [ 'Name',        $hub->param('name') ],
         [ 'Referer',     $url || '-none-' ],
-        [ 'Last Search', $object->param('string')||'-none-' ],
+        [ 'Last Search', $hub->param('string')||'-none-' ],
         [ 'User agent',  $ENV{'HTTP_USER_AGENT'} ]
       );
       
       my $message = 'Support question from ' . $species_defs->ENSEMBL_SERVERNAME . "\n\n";
       $message .= join "\n", map { sprintf '%-16.16s %s', "$_->[0]:", $_->[1] } @mail_attributes;
-      $message .= "\n\nComments:\n\n" . $object->param('message') . "\n\n";
+      $message .= "\n\nComments:\n\n" . $hub->param('message') . "\n\n";
 
       my $mailer = new EnsEMBL::Web::Mailer({
         mail_server => 'localhost',
-        from        => $object->param('address'),
+        from        => $hub->param('address'),
         to          => $species_defs->ENSEMBL_HELPDESK_EMAIL,
         subject     => $subject,
         message     => $message

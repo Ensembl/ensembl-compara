@@ -34,6 +34,205 @@ sub db {
   return $self->{'dbh'};
 }
 
+##---------------- HELP ------------------------
+
+sub search_help {
+  my ($self, $string, $type) = @_;
+  return unless $self->db;
+  my $ids = [];
+
+  my $like = '%'.$string.'%';
+  my @args = ('live', $like, $like); ## checking two fields for same string
+
+  my $sql = qq(
+    SELECT
+      help_record_id
+    FROM
+      help_record
+    WHERE
+      status = ? 
+      AND (keyword like ? OR data like ?)
+  );
+
+  if ($type) {
+    push @args, $type;
+    $sql .= ' AND type = ?';
+  }
+
+  $sql .= ' ORDER BY type, helpful DESC, not_helpful ASC ';
+  warn "SQL: $sql";
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute(@args);
+
+  while (my @data = $sth->fetchrow_array()) {
+    push @$ids, $data[0];
+  }
+  return $ids;
+}
+
+sub fetch_help_by_ids {
+  my ($self, $ids) = @_;
+  return unless $self->db;
+  my $records = [];
+
+  ## For some reason, DBI doesn't like 'IN' arrays passed
+  ## as bound parameters - either that or I'm doing it wrong!
+  my $id_string = join(', ', @$ids);
+  my $sql = qq(
+    SELECT
+      help_record_id, type, data
+    FROM
+      help_record
+    WHERE
+      status = 'live'
+      AND help_record_id IN ($id_string)
+    ORDER BY type, helpful DESC, not_helpful ASC
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute();
+
+  while (my @data = $sth->fetchrow_array()) {
+    my $record = {
+      'id'    => $data[0],
+      'type'  => $data[1],
+    };
+    if ($data[2]) {
+      my $extra = eval($data[2]);
+      while (my ($k, $v) = each(%$extra)) {
+        $record->{$k} = $v;
+      }
+    }
+    push @$records, $record;
+  }
+  return $records;
+}
+
+sub fetch_faqs {
+  my ($self, $criteria) = @_;
+  return unless $self->db;
+  my $records = [];
+
+  my @args = ('live', 'faq');
+  my $sql = qq(
+    SELECT
+      help_record_id, data
+    FROM
+      help_record
+    WHERE
+      status = ?
+      AND type = ? 
+  );
+
+  ## Might seem a bit superfluous to add this to the above query
+  ## but we don't want to publish non-live content by accident!
+  if ($criteria->{'id'}) {
+    $sql .= ' AND help_record_id = ? ';
+    push @args, $criteria->{'id'};
+  }
+  elsif ($criteria->{'kw'}) {
+    $sql .= ' AND keyword = ? ';
+    push @args, $criteria->{'kw'};
+  }
+
+  $sql .= ' ORDER BY helpful DESC, not_helpful ASC ';
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute(@args);
+
+  while (my @data = $sth->fetchrow_array()) {
+    my $record = {
+      'id'    => $data[0],
+    };
+    if ($data[1]) {
+      my $extra = eval($data[1]);
+      while (my ($k, $v) = each(%$extra)) {
+        $record->{$k} = $v;
+      }
+    }
+    push @$records, $record;
+  }
+  return $records;
+}
+
+sub fetch_movies {
+  my $self = shift;
+  return unless $self->db;
+  my $records = [];
+
+  my $sql = qq(
+    SELECT
+      help_record_id, data
+    FROM
+      help_record
+    WHERE
+      status = 'live'
+      AND type = 'movie'
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute();
+
+  while (my @data = $sth->fetchrow_array()) {
+    my $record = {
+      'id'    => $data[0],
+    };
+    if ($data[1]) {
+      my $extra = eval($data[1]);
+      while (my ($k, $v) = each(%$extra)) {
+        $record->{$k} = $v;
+      }
+    }
+    push @$records, $record;
+  }
+  ## Have to sort post-query, since it's on a 'data' field
+  my @sorted = sort {
+      $a->{'list_position'} <=> $b->{'list_position'}                
+      || $a-{'>title'} cmp $b->{'title'}
+    } @$records;
+  return \@sorted;
+}
+
+sub fetch_glossary {
+  my $self = shift;
+  return unless $self->db;
+  my $records = [];
+
+  my $sql = qq(
+    SELECT
+      help_record_id, data
+    FROM
+      help_record
+    WHERE
+      status = 'live'
+      AND type = 'glossary'
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute();
+
+  while (my @data = $sth->fetchrow_array()) {
+    my $record = {
+      'id'    => $data[0],
+    };
+    if ($data[1]) {
+      my $extra = eval($data[1]);
+      while (my ($k, $v) = each(%$extra)) {
+        $record->{$k} = $v;
+      }
+    }
+    push @$records, $record;
+  }
+  ## Have to sort post-query, since it's on a 'data' field
+  my @sorted = sort {
+      lc($a->{'word'}) cmp lc($b->{'word'})
+    } @$records;
+  return \@sorted;
+}
+
+##---------------- NEWS ------------------------
+
 sub fetch_release {
   my ($self, $release_id) = @_;
   return unless $self->db;

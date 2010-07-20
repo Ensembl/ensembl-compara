@@ -5,29 +5,24 @@ package EnsEMBL::Web::Command::Help::DoSearch;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::Data::Help;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
-  my $new_param;
-  if ($object->param('hilite')) {
-    $new_param->{'hilite'} = $object->param('hilite');
-    $new_param->{'string'} = $object->param('string');
-  }
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $ids = $adaptor->search_help($hub->param('string'));
 
-  my $help = EnsEMBL::Web::Data::Help->new;
-  my @results;
-  my %matches = %{ $help->search({'string'=>$object->param('string')}) };
-  if (keys %matches) {
-    while (my ($k, $v) = each (%matches)) {
-      push @results, $v.'_'.$k;
-    }
+  my $new_param = {
+    'result' => $ids,
+  };
+  if ($hub->param('hilite')) {
+    $new_param->{'hilite'} = $hub->param('hilite');
+    $new_param->{'string'} = $hub->param('string');
   }
-  $new_param->{'result'} = \@results;
 
   $self->ajax_redirect('/Help/Results', $new_param);
 }

@@ -15,14 +15,14 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
   my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/Preview", 'post' );
 
-  if ($object->param('strong')) {
+  if ($hub->param('strong')) {
     $form->add_element(
       'type' => 'Information',
-      'value' => 'Sorry, no pages were found containing the term <strong>'.$object->param('kw')
+      'value' => 'Sorry, no pages were found containing the term <strong>'.$hub->param('kw')
                   .qq#</strong> (or more than 50% of articles contain this term). Please
 <a href="/Help/Search">try again</a> or use the form below to contact HelpDesk:#,
     );
@@ -32,7 +32,7 @@ sub content {
     'type'    => 'String',
     'name'    => 'name',
     'label'   => 'Your name',
-    'value'   => $object->param('name'),
+    'value'   => $hub->param('name'),
   );
 
   $form->add_element(
@@ -45,14 +45,14 @@ sub content {
     'type'    => 'Email',
     'name'    => 'address',
     'label'   => 'Your Email',
-    'value'   => $object->param('address'),
+    'value'   => $hub->param('address'),
   );
 
   $form->add_element(
     'type'    => 'String',
     'name'    => 'subject',
     'label'   => 'Subject',
-    'value'   => $object->param('subject'),
+    'value'   => $hub->param('subject'),
   );
 
  $form->add_element(
@@ -65,13 +65,13 @@ sub content {
     'type'    => 'Text',
     'name'    => 'message',
     'label'   => 'Message',
-    'value'   => $object->param('message'),
+    'value'   => $hub->param('message'),
   );
 
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'string',
-    'value'   => $object->param('string'),
+    'value'   => $hub->param('string'),
   );
 
   $form->add_element(

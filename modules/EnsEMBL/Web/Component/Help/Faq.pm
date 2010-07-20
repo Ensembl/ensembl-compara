@@ -3,8 +3,10 @@ package EnsEMBL::Web::Component::Help::Faq;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Data::Faq;
 
 sub _init {
   my $self = shift;
@@ -15,22 +17,22 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
-  my $id = $object->param('id') || $object->param('feedback');
+  my $hub = $self->model->hub;
+  my $id = $hub->param('id') || $hub->param('feedback');
   $id+=0;
   my $html = qq(<h2>FAQs</h2>);
   
-  my @faqs;
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $args;
+
   if ($id) {
-    @faqs = (EnsEMBL::Web::Data::Faq->find('help_record_id' => $id, 'status' => 'live'));
+    $args->{'id'} = $id;
   }
-  elsif (my $kw = $object->param('kw')) {
-    @faqs = EnsEMBL::Web::Data::Faq->find('keyword' => $kw, 'status' => 'live');
+  elsif ($hub->param('kw')) {
+    $args->{'kw'} = $hub->param('kw');
   }
-  else {
-    @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted;
-  }
-  
+  my @faqs = @{$adaptor->fetch_faqs($args)};  
+
   if (scalar(@faqs) > 0) {
   
     my $style = 'text-align:right;margin-right:2em';
@@ -38,11 +40,11 @@ sub content {
     foreach my $faq (@faqs) {
       next unless $faq;
 
-      $html .= sprintf(qq(<h3 id="faq%s">%s</h3>\n<p>%s</p>), $faq->help_record_id, $faq->question, $faq->answer);
-      if ($object->param('feedback') && $object->param('feedback') == $faq->help_record_id) {
+      $html .= sprintf(qq(<h3 id="faq%s">%s</h3>\n<p>%s</p>), $faq->{'id'}, $faq->{'question'}, $faq->{'answer'});
+      if ($hub->param('feedback') && $hub->param('feedback') == $faq->{'id'}) {
         $html .= qq(<div style="$style">Thank you for your feedback</div>);
       } else {
-        $html .= $self->help_feedback($style, $faq->help_record_id, return_url => '/Help/Faq', type => 'Faq');
+        $html .= $self->help_feedback($style, $faq->{'id'}, return_url => '/Help/Faq', type => 'Faq');
       }
 
     }
@@ -52,9 +54,9 @@ sub content {
     }
   }
 
-  $html .= qq(<p style="margin-top:1em">If you have any other questions about Ensembl, please do not hesitate to 
+  $html .= qq(<hr /><p style="margin-top:1em">If you have any other questions about Ensembl, please do not hesitate to 
 <a href="/Help/Contact" class="popup">contact our HelpDesk</a>. You may also like to subscribe to the 
-<a href="/info/about/contact/mailing.html" class="cp-external">developers' mailing list</a>.</p>);
+<a href="http://www.ensembl.org/info/about/contact/mailing.html" class="cp-external">developers' mailing list</a>.</p>);
 
   return $html;
 }

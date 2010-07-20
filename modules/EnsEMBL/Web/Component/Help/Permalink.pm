@@ -16,10 +16,10 @@ sub _init {
 
 sub content {
   my $self     = shift;
-  my $object   = $self->object;
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $url      = $object->param('url') . $object->_parse_referer->{'uri'};
-  my $r        = $object->param('r');
+  my $hub     = $self->model->hub;
+  my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $url      = $hub->param('url') . $hub->_parse_referer->{'uri'};
+  my $r        = $hub->param('r');
   
   if ($r) {
     $url  =~ s/([\?;&]r=)[^;]+(;?)/$1$r$2/;

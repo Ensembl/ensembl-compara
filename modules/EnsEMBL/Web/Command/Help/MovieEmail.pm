@@ -13,24 +13,24 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   
-  my $object = $self->object;
+  my $hub = $self->model->hub;
   my $spam;
 
    # Check honeypot fields first
-  if ($object->param('honeypot_1') || $object->param('honeypot_2')) {
+  if ($hub->param('honeypot_1') || $hub->param('honeypot_2')) {
     $spam = 1;
   }  else {
     # Check the user's input for spam _before_ we start adding all our crap!
 #    my $filter = new EnsEMBL::Web::Filter::Spam;
-#    $spam = $filter->check($object->param('message'), 1);
+#    $spam = $filter->check($hub->param('message'), 1);
   }
 
   
   if (!$spam) {
     my @mail_attributes;
     
-    my $species_defs = $object->species_defs;
-    my $subject      = ($object->param('subject') || $species_defs->ENSEMBL_SITETYPE . ' Helpdesk') . ' - ' . $species_defs->ENSEMBL_SERVERNAME;
+    my $species_defs = $hub->species_defs;
+    my $subject      = ($hub->param('subject') || $species_defs->ENSEMBL_SITETYPE . ' Helpdesk') . ' - ' . $species_defs->ENSEMBL_SERVERNAME;
     my @T            = localtime;
     my $date         = sprintf '%04d-%02d-%02d %02d:%02d:%02d', $T[5]+1900, $T[4]+1, $T[3], $T[2], $T[1], $T[0];
     my $url          = 'http://' . $species_defs->ENSEMBL_SERVERNAME . ':' . $species_defs->ENSEMBL_PORT if $species_defs->ENSEMBL_PORT != '80';
@@ -39,7 +39,7 @@ sub process {
     
     push @mail_attributes, (
       [ 'Date',       $date ],
-      [ 'Name',       $object->param('name') ],
+      [ 'Name',       $hub->param('name') ],
       [ 'Referer',    $url || '-none-' ],
       [ 'User agent', $ENV{'HTTP_USER_AGENT'} ]
     );
@@ -55,8 +55,8 @@ sub process {
       other     => 'Other (please describe below)'
     };
     
-    my @problems  = $object->param('problem');
-    my $title     = $object->param('title');
+    my @problems  = $hub->param('problem');
+    my $title     = $hub->param('title');
     my $problem_text = "\n\nProblem with video $title:\n\n";
     
     if (@problems) {
@@ -66,11 +66,11 @@ sub process {
     }
     
     $message .= $problem_text;
-    $message .= "\n\nComments:\n\n" . $object->param('message') . "\n\n";
+    $message .= "\n\nComments:\n\n" . $hub->param('message') . "\n\n";
     
     my $mailer = new EnsEMBL::Web::Mailer({
       mail_server => 'localhost',
-      from        => $object->param('email'),
+      from        => $hub->param('email'),
       to          => $species_defs->ENSEMBL_HELPDESK_EMAIL,
       subject     => $subject,
       message     => $message

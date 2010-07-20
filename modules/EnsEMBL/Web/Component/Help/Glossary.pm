@@ -3,8 +3,10 @@ package EnsEMBL::Web::Component::Help::Glossary;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Data::Glossary;
 
 sub _init {
   my $self = shift;
@@ -15,19 +17,20 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
+
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+
 
   my $html = qq(<h2>Glossary</h2>);
 
   my @words;
-  if ($object && $object->param('id')) {
-    my @ids = $object->param('id');
-    foreach my $id (@ids) {
-      push @words, EnsEMBL::Web::Data::Glossary->new($id);
-    }
+  if ($hub->param('id')) {
+    my @ids = $hub->param('id');
+    @words = @{$adaptor->fetch_help_by_ids(\@ids)};
   }
   else {
-    @words = sort {lc($a->word) cmp lc($b->word)} EnsEMBL::Web::Data::Glossary->find_all;
+    @words = @{$adaptor->fetch_glossary};
   }
 
   if (scalar(@words)) {
@@ -36,13 +39,11 @@ sub content {
     $html .= qq(<dl class="normal">\n); 
 
     foreach my $word (@words) {
-      next unless $word->status eq 'live';
-
-      $html .= sprintf(qq(<dt id="word%s">%s), $word->help_record_id, $word->word);
-      if ($word->expanded) {
-        $html .= ' ('.$word->expanded.')';
+      $html .= sprintf(qq(<dt id="word%s">%s), $word->{'id'}, $word->{'word'});
+      if ($word->{'expanded'}) {
+        $html .= ' ('.$word->{'expanded'}.')';
       }
-      $html .= "</dt>\n<dd>".$word->meaning."</dd>\n";
+      $html .= "</dt>\n<dd>".$word->{'meaning'}."</dd>\n";
     }
     $html .= "</dl>\n";
   }

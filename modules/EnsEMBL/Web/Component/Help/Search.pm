@@ -15,12 +15,12 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
+  my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
   my $html = qq(<h3>Search $sitename Help</h3>);
 
-  my $dir = $object->species_path;
+  my $dir = $hub->species_path;
   $dir = '' if $dir !~ /_/;
   my $form = EnsEMBL::Web::Form->new( 'help_search', "$dir/Help/DoSearch", 'get' );
 

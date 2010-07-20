@@ -3,8 +3,10 @@ package EnsEMBL::Web::Component::Help::Results;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Data::Faq;
 
 sub _init {
   my $self = shift;
@@ -15,10 +17,10 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
   my $html = qq(<h2>Search Results</h2>);
-  my @results = $object->param('result');
+  my @results = $hub->param('result');
 
   if (scalar(@results) && $results[0]) {
 
@@ -29,59 +31,49 @@ sub content {
       'view'      =>  'Page Help',
     );
 
-    ## Generate help records first so we can sort them
-    my @help_objects;
-    foreach my $result (@results) {
-      my ($type, $id) = split('_', $result);
-      my $help_obj = ucfirst($type);
-      my $module = 'EnsEMBL::Web::Data::'.$help_obj;
-      if ($self->dynamic_use($module)) {
-        my $help_obj = $module->new($id);
-        if ($help_obj && $help_obj->status eq 'live') {
-          push @help_objects, $help_obj;
-        }
-      }
-    }
-   
-    my @sorted = sort {$a->type cmp $b->type} @help_objects;
+    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
+    my @records = @{$adaptor->fetch_help_by_ids(\@results)};
 
     ## Now display results
     my ($title, $text); 
     my $prev_type = '';
-    foreach my $help (@sorted) {
-      if ($help->type ne $prev_type) {
-        $html .= '<h3>'.$header{$help->type}."</h3>\n";
+    foreach my $help (@records) {
+      if ($help->{'type'} ne $prev_type) {
+        $html .= '<h3>'.$header{$help->{'type'}}."</h3>\n";
       }
 
-      if ($help->type eq 'faq') {
-        $title  = '<p><strong>'.$help->question.'</strong></p>';
-        $text   = $help->answer;
+      if ($help->{'type'} eq 'faq') {
+        $title  = '<h4><strong>'.$help->{'question'}.'</strong></h4>';
+        $text   = $help->{'answer'};
         unless ($text =~ /$</) {
           $text = '<p class="space-below">'.$text.'</p>';
         }
+        ## Add feedback form
+        $text .= $self->help_feedback('text-align:right;margin-right:2em', $help->{'id'}, return_url => '/Help/Results', type => $help->{'type'});
       }
-      elsif ($help->type eq 'glossary') {
-        $title  = '<p class="space-below"><strong>'.$help->word.'</strong>: ';
-        $text   = $help->meaning.'</p>';
+      elsif ($help->{'type'} eq 'glossary') {
+        $title  = '<p class="space-below"><strong>'.$help->{'word'}.'</strong>: ';
+        $text   = $help->{'meaning'}.'</p>';
       }
-      elsif ($help->type eq 'view') {
-        $title = '<h4>'.$help->ensembl_object.'/'.$help->ensembl_action.'</h4>';
-        $text = $help->content;
-        unless ($text =~ /$</) {
-          $text = '<p>'.$text.'</p>';
-        }
+      elsif ($help->{'type'} eq 'view') {
+        $title = '<h4>'.$help->{'ensembl_object'}.'/'.$help->{'ensembl_action'}.'</h4>';
+        ## These entries can be quite long - strip the HTML and show just a short section
+        (my $content = $help->{'content'}) =~ s/<[^>]*>//gs;
+        $text = substr($content, 0, 500);
+        $text .= ' <a href="/Help/View?id='.$help->{'id'}.'">More...</a>';
       }
-      elsif ($help->type eq 'movie') {
-        $title  = '<p class="space-below"><strong><a href="/Help/Movie?id='.$help->id.'" class="popup">'.$help->title.'</a></strong></p>';
-        $text   = '';
+      elsif ($help->{'type'} eq 'movie') {
+        $title  = '<p class="space-below"><strong><a href="/Help/Movie?id='.$help->{'id'}.'" class="popup">'.$help->{'title'}.'</a></strong></p>';
       }
-      if ($object->param('hilite') eq 'yes') {
+      if ($hub->param('hilite') eq 'yes') {
         $title  = $self->kw_hilite($title);
         $text   = $self->kw_hilite($text);
       }
 
       $html .= qq($title\n$text); 
-      $prev_type = $help->type;
+
+
+      $prev_type = $help->{'type'};
     }
   } 
   else {
