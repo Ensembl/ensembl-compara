@@ -12,26 +12,12 @@ package EnsEMBL::Web::Object::Search;
 
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Object);
 
-sub short_caption {
-  my $self = shift;
-  return 'Search Ensembl';
-}
-
-sub caption {
-    my $self = shift;
-    my $caption = 'Ensembl text search';
-    return $caption;
-}
-
-sub counts {
-    my $self = shift;
-    return;
-}
-
+sub default_action { return 'New'; }
+sub short_caption  { return $_[1] eq 'global' ? 'New Search' : 'Search Ensembl'; }
+sub caption        { return 'Ensembl text search'; }
+sub counts         {}
 
 1;
