@@ -5,7 +5,7 @@ use warnings;
 no warnings "uninitialized";
 use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Component::Help);
-use EnsEMBL::Web::Data::View;
+
 use EnsEMBL::Web::Component::Help::Movie;
 
 sub _init {
