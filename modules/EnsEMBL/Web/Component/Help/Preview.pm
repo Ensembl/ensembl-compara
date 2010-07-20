@@ -18,70 +18,70 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
   my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/SendEmail", 'post' );
 
   $form->add_element(
     'type'    => 'NoEdit',
     'label'   => 'Your name',
-    'value'   => $object->param('name'),
+    'value'   => $hub->param('name'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'name',
-    'value'   => $object->param('name'),
+    'value'   => $hub->param('name'),
   );
 
   $form->add_element(
     'type'    => 'NoEdit',
     'label'   => 'Your email',
-    'value'   => $object->param('address'),
+    'value'   => $hub->param('address'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'address',
-    'value'   => $object->param('address'),
+    'value'   => $hub->param('address'),
   );
 
   $form->add_element(
     'type'    => 'NoEdit',
     'label'   => 'Subject',
-    'value'   => $object->param('subject'),
+    'value'   => $hub->param('subject'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'subject',
-    'value'   => $object->param('subject'),
+    'value'   => $hub->param('subject'),
   );
 
   $form->add_element(
     'type'    => 'NoEdit',
     'label'   => 'Message',
-    'value'   => $object->param('message'),
+    'value'   => $hub->param('message'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'message',
-    'value'   => $object->param('message'),
+    'value'   => $hub->param('message'),
   );
 
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'string',
-    'value'   => $object->param('string'),
+    'value'   => $hub->param('string'),
   );
 
   ## Pass honeypot fields, to weed out any persistent robots!
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'honeypot_1',
-    'value'   => $object->param('email'),
+    'value'   => $hub->param('email'),
   );
   $form->add_element(
     'type'    => 'Hidden',
     'name'    => 'honeypot_2',
-    'value'   => $object->param('comments'),
+    'value'   => $hub->param('comments'),
   );
 
   $form->add_element(

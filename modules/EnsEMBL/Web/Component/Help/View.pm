@@ -17,11 +17,11 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub = $self->model->hub;
 
   my $html;
 
-  my $help = EnsEMBL::Web::Data::View->new(encode_entities($object->param('id')));
+  my $help = EnsEMBL::Web::Data::View->new(encode_entities($hub->param('id')));
   if ($help) {
     my $content = $help->content;
     ### Parse help looking for embedded movie placeholders
