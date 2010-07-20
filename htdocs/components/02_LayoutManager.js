@@ -64,9 +64,14 @@ Ensembl.LayoutManager.extend({
       }
     });
     
-    $(window).bind('hashchange', function (e) {
-      Ensembl.setCoreParams();
-      Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+    $(window).bind({
+      resize: function () {
+        Ensembl.EventManager.trigger('windowResize');
+      },
+      hashchange: function (e) {
+        Ensembl.setCoreParams();
+        Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+      }
     });
     
     var userMessage = unescape(Ensembl.cookie.get('user_message'));

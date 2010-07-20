@@ -14,16 +14,13 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       panel.hide();
     });
     
-    $(window).bind({
-      resize: function () {
-        panel.pageResize();
-      },
-      scroll: function () {
-        if (panel.visible) {
-          panel.setPosition();
-        }
+    $(window).bind('scroll', function () {
+      if (panel.visible) {
+        panel.setPosition();
       }
     });
+    
+    Ensembl.EventManager.register('windowResize', this, this.pageResize);
   },
   
   init: function (width, height) {
