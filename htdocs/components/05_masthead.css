@@ -1,28 +1,36 @@
-/* Background DIV */
-#mh_bg { background:url(/i/blue_gradient.png) [[MH_BG]] repeat-x; }
-#mh_bg a { color: [[MH_LINK]]; text-decoration: none; }
-#mh_bg a:hover { color: [[MH_HOVER]]; }
+#masthead                     { background-color: [[MH_BG]]; color: [[MH_TEXT]]; }
+#masthead div                 { background-color: [[MH_BG]]; }
+#masthead a                   { color: [[MH_LINK]]; text-decoration: none; }
+#masthead a:hover             { color: [[MH_HOVER]] !important; }
+#masthead ul                  { list-style: none; margin: 0; padding: 0 }
+#masthead li                  { list-style-image: none; float: left; text-align: center; white-space: nowrap; }
+#masthead .content            { background-color: [[MH_BG]]; clear: both; }
+#masthead .content .mh        { padding: 5px 0 0 5px; }
+#masthead ul.tools            { margin-top: 16px; height: 16px; overflow: hidden; }
+#masthead ul.tools li         { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; }
+#masthead ul.tools li.last    { border: 0; }
+#masthead ul.tabs             { line-height: normal; margin: 0; padding: 8px 0 0 0; width: 100%; }
+#masthead ul.tabs li          { background: url(/i/tab_off_r.gif) no-repeat right top; margin: 0 2px; padding: 0; }
+#masthead ul.tabs li.long_tab { display: none; }
+#masthead ul.tabs a           { background: url(/i/tab_off_l.gif) no-repeat left top; display: block; text-decoration: none; padding: 3px 8px 2px; }
+#masthead ul.tabs li.active   { background-image: url(/i/tab_on_r.gif); }
+#masthead ul.tabs li.active a { background-image: url(/i/tab_on_l.gif); color: [[PAGE_TEXT]]; font-weight: bold; }
+#masthead .search_holder      { position: absolute; top: 17px; right: 5px; z-index: 150; margin-left: 10px; display: inline; }
+#masthead .tools_holder       { display: inline; }
+#masthead .tabs_holder        { height: 29px; background-color: [[MH_BG]]; clear: both; }
+#masthead .logo_holder        { float: left; }
+#masthead div.more            { display: none; float: left; margin: -16px 10px 0; position: relative; z-index: 250; }
+#masthead div.more a          { outline: 0; }
+#masthead ul.more_tools       { display: none; width: 10em; position: absolute; left: 0; top: 18px; border-top: 1px solid [[MH_BORDER]]; font-size: 0.8em; z-index: 200; }
+#masthead ul.more_tools li    { color: [[CONTRAST_TEXT]]; border: 1px solid [[MH_BORDER]]; border-top: 0; background-color: [[PANEL_BG]]; float: none; text-align: left; margin: 0; padding: 2px; }
+#masthead ul.more_tools li a  { color: [[CONTRAST_TEXT]]; }
 
-/* Individual layout tables */
-.mh { width: 100%; border: 0px; padding: 0px; margin: 0px; border-collapse: collapse; }
-.mh td { color: [[MH_TEXT]]; border: 0; padding: 0; margin: 0 }
-
-/** Table 1 - Global navigation links **/
-td.lnk_left { text-align:left; padding:4px; }
-td.lnk_mid   { text-align:center; padding:4px; }
-td.lnk_right  { text-align:right; padding:4px; }
-
-/** Table 2 Cell 1 - the main e! logo - currently 40x45 **/
-#mh_lo     { width: 50%; margin:0; padding:0; vertical-align:middle; }
-#mh_lo img.screen { float:left; display:block; padding-right:4px; }
-#sp_header{ font-size: 1.5em; font-weight:bold; padding-top:10px; }
-#sp_header a { color:[[MH_HEADER]]; }
-
-/** Table 2 Cell 2 - the site search **/
-#mh_search { vertical-align:middle; }
+body.no_tabs #masthead .tabs_holder { height: 13px; }
+body.mac #masthead ul.tabs li       { height: 21px; }
+body.mac #masthead ul.tabs li a     { height: 15px; padding-top: 4px; }
+body.mac #masthead .search_holder   { margin-left: 20px; }
 
 @media print {
-  #mh_bg { background: #ffffff; }
-  #mh_bg a { color: #000000; }
+  #masthead   { background: #ffffff; }
+  #masthead a { color: #000000; }
 }
-
