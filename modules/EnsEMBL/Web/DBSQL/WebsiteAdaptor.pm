@@ -60,7 +60,6 @@ sub search_help {
   }
 
   $sql .= ' ORDER BY type, helpful DESC, not_helpful ASC ';
-  warn "SQL: $sql";
 
   my $sth = $self->db->prepare($sql);
   $sth->execute(@args);
