@@ -164,7 +164,7 @@ sub count_individuals {
     }
   }
 
-  return scalar keys %sample_ids_for_variation + $multibp_samples;
+  return (scalar keys %sample_ids_for_variation) + $multibp_samples;
 }
 
 sub count_ldpops {
