@@ -51,6 +51,10 @@ sub init {
     [qw(transcript prediction variation)],
     {qw(display off)} 
   );
+  $self->modify_configs(	 
+    [qw(transcript_core_ensembl transcript_core_sg)],
+    {qw(display transcript_label)}
+  );
 }
 
 1;
