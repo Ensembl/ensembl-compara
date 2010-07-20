@@ -310,6 +310,9 @@ sub _render_head_and_body_tag {
   $self->print(qq{<?xml version="1.0" encoding="utf-8"?>\n}) if $self->{'doc_type'} eq 'XHTML';  
   $self->print($self->doc_type, $self->html_tag, "<head>\n");
   
+  $self->{'body_attr'}->{'class'} .= ' no_tabs' unless $self->can('global_context') && scalar @{$self->global_context->entries};
+  $self->{'body_attr'}->{'class'} .= ' mac' if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
+  
   foreach my $element (@{$self->{'head_order'}}) {
     my $attr = $element->[0];
     $self->$attr->render;
@@ -365,22 +368,21 @@ sub render_HTML {
     $self->_render_head_and_body_tag;
     
     $html .= qq{
-    <div id="mh_bg">
-      <table class="mh" summary="layout table">
-        [[tools]]
-      </table>
-      <table class="mh" summary="layout table">
-        <tr>
-          <td id="mh_lo">[[logo]]</td>
-          <td id="mh_search">[[search_box]]</td>
-        </tr>
-      </table>
-      <div class="print_hide">
-        [[global_context]]
+  <div id="min_width_container">
+  <div id="min_width_holder">
+    <div id="masthead" class="js_panel">
+      <input type="hidden" class="panel_type" value="Masthead" />
+      <div class="content">
+        <div class="mh print_hide">
+          <span class="logo_holder">[[logo]]</span>
+          <div class="tools_holder">[[tools]]</div>
+          <div class="search_holder print_hide">[[search_box]]</div>
+        </div>
+        <div class="tabs_holder print_hide">[[global_context]]</div>
       </div>
     </div>
-    <p class="invisible">.</p>
-    <div style="position: relative">
+    <div class="invisible"></div>
+    <div id="main_holder">
       $nav
       <div id="main">
         <!-- Start of real content --> 
@@ -436,7 +438,7 @@ sub render_HTML {
   }
   
   $self->print($html);
-  $self->print("\n</body>\n</html>") unless $flag eq 'start';
+  $self->print("\n</div>\n</div>\n</body>\n</html>") unless $flag eq 'start';
 }
 
 sub render_DAS {

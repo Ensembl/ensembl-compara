@@ -39,11 +39,9 @@ sub render {
   
   if ($content) {
     $self->print(qq{
-      <div id="tabs">
-        <ul>
-          $content
-        </ul>
-      </div>
+      <ul class="tabs">
+        $content
+      </ul>
     });
   }
 }
@@ -51,29 +49,39 @@ sub render {
 sub _content {
   my ($self, $node) = @_;
   
-  return '' unless scalar @{$self->entries};
+  my $count = scalar @{$self->entries};
   
-  my $content;
-  my $active;
+  return '' unless $count;
+  
+  my ($content, $active, $short_tabs, $long_tabs);
+  my @style = $count > 4 ? () : (' style="display:none"', ' style="display:block"');
   
   foreach my $entry (@{$self->entries}) {
     my $name = $entry->{'caption'};
-    my $id = lc('tab_' . ($entry->{'id'} || $entry->{'type'}));
+    my ($short_tab, $long_tab);
     
-    if ($name eq '-') {
-      $name =  qq{<span title="$entry->{'disabled'}">$entry->{'type'}</span>};
-    } else { 
+    if ($entry->{'url'} && $name ne '-') {
       $name =~ s/<\\\w+>//g;
       $name =~ s/<[^>]+>/ /g;
       $name =~ s/\s+/ /g;
       $name = encode_entities($name);
-      $name = qq{<a href="$entry->{'url'}">$name</a>} if $entry->{'url'};
+      
+      my ($short_name) = split /\b/, $name;
+      
+      $short_tab = qq{<a href="$entry->{'url'}" title="$name">$short_name</a>};
+      $long_tab  = qq{<a href="$entry->{'url'}">$name</a>};
+    } else {
+      $short_tab = qq{<span title="$entry->{'disabled'}">$entry->{'type'}</span>};
+      $long_tab  = $short_tab;
     }
     
-    $content .= qq{<$node id="$id" class="$entry->{'class'}">$name</$node>};
+    $short_tabs .= qq{<$node class="$entry->{'class'} short_tab"$style[0]>$short_tab</$node>};
+    $long_tabs  .= qq{<$node class="$entry->{'class'} long_tab"$style[1]>$long_tab</$node>};
 
     $active = $name if $entry->{'class'} =~ /\bactive\b/;
   }
+  
+  $content = $short_tabs . $long_tabs;
     
   return ($content, $active);
 }
