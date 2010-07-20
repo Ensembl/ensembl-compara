@@ -151,10 +151,13 @@ sub _global_context {
   
   return unless $self->page->can('global_context') && $self->page->global_context;
   
-  my $model = $self->model;
-  my $hub   = $model->hub;
-  my $type  = $self->type;
-  my $qs    = $self->query_string;
+  my $model        = $self->model;
+  my $hub          = $model->hub;
+  my $object       = $self->object;
+  my $type         = $self->type;
+  my $qs           = $self->query_string;
+  my $species_defs = $hub->species_defs;
+  my $species      = $species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME');
   my @data;
 
   foreach (@{$model->ordered_objects}) {
@@ -162,7 +165,16 @@ sub _global_context {
     push @data, [ $_, $o->default_action, $o->short_caption('global') ] if $o;
   }
   
+  push @data, [ $object->type, $object->default_action, $object->short_caption('global') ] if $object && !@data;
   push @data, [ $self->type, $self->default_action, $self->{'_data'}->{'default'} ] unless @data;
+  
+  if ($species) {
+    $self->page->global_context->add_entry(
+      type    => 'species',
+      caption => sprintf('%s (%s)', $species, $species_defs->ASSEMBLY_NAME),
+      url     => $hub->url({ type => 'Info', action => 'Index', __clear => 1 })
+    );
+  }
   
   foreach my $row (@data) {
     next if $row->[0] eq 'Location' && $type eq 'LRG';
@@ -170,8 +182,7 @@ sub _global_context {
     my $url = $hub->url({ type => $row->[0], action => $row->[1], __clear => 1 });
     $url   .= "?$qs" if $qs;
     
-    $self->page->global_context->add_entry( 
-      type    => $row->[0],
+    $self->page->global_context->add_entry(
       caption => $row->[2],
       url     => $url,
       class   => $row->[0] eq $type ? 'active' : ''
