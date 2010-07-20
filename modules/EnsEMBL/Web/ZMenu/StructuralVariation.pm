@@ -45,6 +45,7 @@ sub content {
   if ($description =~/PMID/) {
     my @description_string = split (':', $description);
     my $pubmed_id = pop @description_string;
+    $pubmed_id =~ s/\s+.+//g;
     $pubmed_link = $hub->get_ExtURL('PUBMED', $pubmed_id);  
   }    
 
