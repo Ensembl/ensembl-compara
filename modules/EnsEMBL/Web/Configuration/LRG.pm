@@ -112,6 +112,11 @@ sub populate_tree {
     [qw( exons EnsEMBL::Web::Component::LRG::LRGSeq )],
     { 'availability' => $has_lrg}
   );
+
+  $self->create_node('Differences', 'Reference comparison',
+    [qw( exons EnsEMBL::Web::Component::LRG::LRGDiff )],
+    { 'availability' => $has_lrg}
+  );
  
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
