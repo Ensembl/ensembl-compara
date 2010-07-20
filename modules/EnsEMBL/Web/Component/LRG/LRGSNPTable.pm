@@ -106,8 +106,8 @@ sub configure_lrg{
 sub get_hgvs {
   my ($self, $snp, $transcript, $lrg_slice) = @_;
   
-  my @hgvs  = @{$snp->get_all_hgvs_notations($transcript, 'c')};
-  push @hgvs, @{$snp->get_all_hgvs_notations($lrg_slice, 'g', $snp->seq_region_name)};
+  my @hgvs  = values %{$snp->get_all_hgvs_notations($transcript, 'c')};
+  push @hgvs, values %{$snp->get_all_hgvs_notations($lrg_slice, 'g', $snp->seq_region_name)};
   
   s/ENS(...)?[TG]\d+\://g for @hgvs;
   
