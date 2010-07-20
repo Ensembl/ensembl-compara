@@ -1,132 +1,133 @@
 /*----------------------------------------------------------------------
-  General settings
-----------------------------------------------------------------------*/
-.hidden { display:none }
-.hide   { display:none } /* need to remove this if we can */
-
-.ajax_error { font-weight: bold; color:[[ALERT_TEXT]]; background-color:[[ALERT_BG]]; margin: 1em; padding: 1em; border: solid 1px [[ALERT_TEXT]] }
-.spinner { 
-  height: 100px;width:100%;border:0; margin: 0 auto;
-  vertical-align: bottom;
-  background-position: bottom center;
-  background-repeat: no-repeat;
-  padding: 2px ; background-image: url(/i/e-loader.gif);
-  text-align: center;
-}
-
-.page { text-align: center; padding: 0.25em }
-
-/*----------------------------------------------------------------------
   General font sizes and styles...
 ----------------------------------------------------------------------*/
 
-body { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif;
-    color:[[PAGE_TEXT]]; background-color:[[PAGE_BG]]; font-size: 80%; }
-pre, code, kbd {font-family: Courier New, Courier, monospace; }
-div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size:1em; }
+body { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; font-size: 80%; padding: 0; margin: 0; border: 0; }
+pre, code, kbd { font-family: Courier New, Courier, monospace; }
+div, p, span, li, dd, dt, th, td, pre, code, kbd { font-size: 1em; }
 
 /*----------------------------------------------------------------------
   Default whitespace settings round features...
 ----------------------------------------------------------------------*/
 
-img  { border:  0; }
-body { padding: 0; margin: 0; border: 0; }
-pre  { margin-left: 1em }
-p    { margin-top:0.6em; margin-bottom:0.6em; }
-form { border:none; margin-top: 0; margin-bottom: 0; padding:0; }
+img  { border: 0; }
+pre  { margin-left: 1em; }
+p    { margin: 0.6em 0; }
+form { border: none; margin-top: 0; margin-bottom: 0; padding: 0; }
+
+/*----------------------------------------------------------------------
+  Minimum page width
+----------------------------------------------------------------------*/
+
+#min_width_container { position: relative; width: 100%; min-width: 775px; }
+#min_width_holder    { display: block; }
+
+/*----------------------------------------------------------------------
+  General settings
+----------------------------------------------------------------------*/
+
+.hidden  { display: none; }
+.hide    { display: none; } /* need to remove this if we can */
+.page    { text-align: center; padding: 0.25em; }
+.spinner { height: 100px; width: 100%; border: 0; margin: 0 auto; padding: 2px; vertical-align: bottom; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
 
 /*----------------------------------------------------------------------
   Headings
 ----------------------------------------------------------------------*/
 
-h1 { font-size:1.5em; color:[[PAGE_HEADER]]; margin-top:0px; padding:0px;}
-h2 { font-size:1.2em; color:[[CONTRAST_HEADER]]; }
-h3 { font-size:1.1em; color:[[CONTRAST_TEXT]]; }
-h4 { font-size:1em;   color:[[CONTRAST_TEXT]]; }
-.first { margin-top:0; }
+h1     { font-size: 1.5em; color: [[PAGE_HEADER]]; margin-top: 0; padding: 0; }
+h2     { font-size: 1.2em; color: [[CONTRAST_HEADER]]; }
+h3     { font-size: 1.1em; color: [[CONTRAST_TEXT]];   }
+h4     { font-size: 1em;   color: [[CONTRAST_TEXT]];   }
+.first { margin-top: 0; }
 
 /*----------------------------------------------------------------------
   Colours and backgrounds
 ----------------------------------------------------------------------*/
 
 /* TO REVISIT? - NUMBERS DON'T CORRESPOND 1:1 WITH TEMPLATE ONES! */
-.bg1 { background:[[PAGE_BG]]; }
-.bg2 { background:[[TINT_BG]]; } 
-.bg3 { background:[[NEUTRAL_BG]]; } 
-.bg4 { background:[[CONTRAST_BG]]; } 
-
-.hilite { background:[[CONTRAST_BORDER]]; }
-.red { color:#933; }
+.bg1    { background: [[PAGE_BG]];         }
+.bg2    { background: [[TINT_BG]];         } 
+.bg3    { background: [[NEUTRAL_BG]];      } 
+.bg4    { background: [[CONTRAST_BG]];     } 
+.hilite { background: [[CONTRAST_BORDER]]; }
+.red    { color: #933;                     }
 
 /*----------------------------------------------------------------------
   Additional fonts 
 ----------------------------------------------------------------------*/
-.serif    { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
-.latin    { font-style: italic; }
-.normal   { font-style: normal; font-weight:normal; }
-.small    { font-size: 80%; }
-span.sequence { font-family: Courier New, Courier, monospace }
+.serif        { font-family: Serif, Palatino, Times, "Times New Roman", serif; }
+span.sequence { font-family: Courier New, Courier, monospace; }
+.latin        { font-style: italic;                           }
+.normal       { font-style: normal; font-weight: normal;      }
+.small        { font-size: 80%;                               }
 
 /*----------------------------------------------------------------------
   Text layout
 ----------------------------------------------------------------------*/
 
-.nowrap             { white-space: nowrap; }
-.left               { text-align: left; }
-.right, .more       { text-align: right; }
-.center             { text-align: center; }
+.nowrap             { white-space: nowrap;    }
+.left               { text-align: left;       }
+.right, .more       { text-align: right;      }
+.center             { text-align: center;     }
 .middle             { vertical-align: middle; }
 .bottom             { vertical-align: bottom; }
-.autocenter_wrapper { text-align: center; }
-.autocenter         { margin: 0 auto; text-align: left; }
+.autocenter_wrapper { text-align: center;     }
+.autocenter         { text-align: left; margin: 0 auto; }
 .invisible          { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; } /* Force divs to wrap their contents using an invisible paragraph at the end! */
 
 /*----------------------------------------------------------------------
  Links 
 ----------------------------------------------------------------------*/
-a         { color:[[PAGE_LINK]]; } /* neutral style for anchor target */
-span.link { text-decoration: underline; color:[[PAGE_LINK]]; cursor: pointer }
-a:visited { color:[[PAGE_VISITED]]; }
-a:hover   { color:[[PAGE_HOVER]]; }
-a:active  { color:[[PAGE_HOVER]]; }
-a.button  { background-color:[[TINT_BG]]; border: 1px outset [[TINT_BG]]; 
-            padding:2px; font-weight:bold; text-decoration:none; }
+a         { color: [[PAGE_LINK]];    } /* neutral style for anchor target */
+a:visited { color: [[PAGE_VISITED]]; }
+a:hover   { color: [[PAGE_HOVER]];   }
+a:active  { color: [[PAGE_HOVER]];   }
+a.button  { background-color: [[TINT_BG]]; border: 1px outset [[TINT_BG]]; padding: 2px; font-weight: bold; text-decoration: none; }
+span.link { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
 
 /*----------------------------------------------------------------------
   Tables
 ----------------------------------------------------------------------*/
 
-tr     { vertical-align:top; }
-th, td { text-align:left; border:none; color:[[CONTRAST_TEXT]]; }
+tr     { vertical-align: top; }
+th, td { text-align: left; border: 0; color: [[CONTRAST_TEXT]]; }
 
 /*----------------------------------------------------------------------
   Lists
 ----------------------------------------------------------------------*/
-li { margin-bottom:0.5em; }
-li.compact { margin-bottom:0; }
+li         { margin-bottom: 0.5em; }
+li.compact { margin-bottom: 0; }
 
-ol li { list-style-type:decimal; list-style-image:none; }
+ol li                     { list-style-type: decimal; list-style-image: none; }
+ul li                     { list-style-image: url(/i/bullet_1.gif); }
+ul.checklist li           { list-style-image: url(/i/checkbox.gif); }
+ul li ul li, ul.level2 li { list-style-image: url(/i/bullet_2.gif); }
 
-ul li { list-style-image:url(/i/bullet_1.gif); }
-ul.checklist li { list-style-image:url(/i/checkbox.gif) }
-ul li ul li, ul.level2 li { list-style-image:url(/i/bullet_2.gif); }
+dt { font-weight: bold; }
+dd { margin-bottom: 1em; }
 
-dt { font-weight:bold; }
+/*----------------------------------------------------------------------
+  Errors and info boxes
+----------------------------------------------------------------------*/
 
-dd { margin-bottom:1em; }
+.error-pad { padding: 0.5em; }
 
-.syntax-error { color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]] }
+.error, .warning, .info, .hint { padding: 0; margin: 0.2em auto; background-color: #fff; border: 1px solid; }
 
-.error { margin: 0.2em auto; border:1px solid [[ALERT_BORDER]]; color:[[ALERT_BORDER]]; background-color: [[ALERT_BG]]; padding: 0; }
-.error h3, .error h4 { padding: 2px 0.5em 2px 20px; background-color:[[ALERT_BORDER]];color:[[ALERT_BG]];margin: 0;  background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
-.error-pad { padding: 0.5em }
-.warning { margin: 0.2em auto; border:1px solid #ffb90f;background-color: white; padding: 0; }
-.warning h3 { padding: 2px 0.5em 2px 20px; background-color:#ffb90f;color:black;margin: 0; background-image:url(/i/warning.gif); background-position: top left; background-repeat: no-repeat }
-.info { margin: 0.2em auto; border:1px solid #90ee90;background-color: white; padding: 0; }
-.info h3 { padding: 2px 0.5em 2px 20px; background-color:#90ee90;color:black;margin: 0; background-image:url(/i/info.gif); background-position: top left; background-repeat: no-repeat }
-.hint { margin: 0.2em auto; border:1px solid #90ee90;background-color: white; padding: 0; }
-.hint h3 { padding: 2px 0.5em 2px 20px; background-color:#90ee90;color:black;margin: 0; background-image:url(/i/info.gif); background-position: top left; background-repeat: no-repeat }
-.hint h3 img { float:right; vertical-align: top }
+.syntax-error, .error { color: [[ALERT_BORDER]]; background-color: [[ALERT_BG]]; }
+.error                { border-color: [[ALERT_BORDER]]; }
+.warning              { border-color: #ffb90f;          }
+.info, .hint          { border-color: #90ee90;          }
+
+.error h3, .error h4, .warning h3, .info h3, .hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: top left; background-repeat: no-repeat; color: #000; }
+.error h3, .error h4 { background-image: url(/i/warning.gif); background-color: [[ALERT_BORDER]]; color: [[ALERT_BG]]; }
+.warning h3          { background-image: url(/i/warning.gif); background-color: #ffb90f; }
+.info h3, .hint h3   { background-image: url(/i/info.gif); background-color: #90ee90;    }
+
+.hint h3 img { float: right; vertical-align: top; }
+
+.ajax_error { color: [[ALERT_TEXT]]; background-color: [[ALERT_BG]]; border: solid 1px [[ALERT_TEXT]]; font-weight: bold; margin: 1em; padding: 1em; }
 
 /***********************************************************************
 **
@@ -134,16 +135,15 @@ dd { margin-bottom:1em; }
 **
 ***********************************************************************/
 
-.screen_hide_inline, .screen_hide_block { display: none }
+.screen_hide_inline, .screen_hide_block { display: none; }
 
 @media print {
-  body, h1, h2, h4 { color:#000; }
-  .print_hide, .error, .warning, .info { display: none }
-  .screen_hide_inline { display: inline }
-  .screen_hide_block  { display: block }
+  body, h1, h2, h4                     { color: #000; }
+  .print_hide, .error, .warning, .info { display: none !important; }
+  .screen_hide_inline                  { display: inline; }
+  .screen_hide_block                   { display: block ; }
 }
 
 /* external links have an extra ..... ed line under them... */
 
-a._external_link_ { border-bottom: 1px dotted [[PAGE_LINK]] }
-
+a._external_link_ { border-bottom: 1px dotted [[PAGE_LINK]]; }
