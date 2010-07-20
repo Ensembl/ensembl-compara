@@ -325,7 +325,7 @@ sub help_feedback {
   my ($self, $style, $id, %args) = @_;
   
   my $html = qq{
-    <div style="$style">
+    <div style="text-align:right;margin-right:2em;">
       <form id="help_feedback_$id" class="std check" action="/Help/Feedback" method="get">
         <strong>Was this helpful?</strong>
         <input type="radio" class="autosubmit" name="help_feedback" value="yes" /><label>Yes</label>
