@@ -10,7 +10,7 @@ sub init {
   my $self = shift;
   
   $self->set_parameters({
-    title             => 'Feature evidence',
+    title             => 'Cell line evidence',
     show_buttons      => 'no',
     show_labels       => 'yes',
     label_width       => 113,
@@ -23,11 +23,11 @@ sub init {
     functional     => 'Functional Genomics',
     other          => 'Decorations',
   );
-
+=cut
   $self->add_tracks('other',
     [ 'fg_multi_wiggle',          '', 'fg_multi_wiggle',          { display => 'tiling', strand => 'r', menu => 'no', colourset => 'feature_set', height => 120 }],
 );
-
+=cut
   $self->load_tracks;
 
 }
