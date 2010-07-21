@@ -218,6 +218,7 @@ sub feature_tables {
     
     if ($feat_type =~ /Gene|Transcript|Domain/) {
       $table->add_columns({'key'=>'names',  'title'=>'Ensembl ID',      'width'=>'25%','align'=>'left' });
+      $table->add_columns({'key'=>'loc',   'title'=>'Genomic location(strand)','width'=>'170px','align'=>'left' });    
       $table->add_columns({'key'=>'extname','title'=>'External names',  'width'=>'25%','align'=>'left' });
     } 
     elsif ($feat_type =~ /Variation/i) {
@@ -281,7 +282,7 @@ sub feature_tables {
          
           my $extname = $row->{'extname'};
           my $desc =  $row->{'extra'}[0];
-          $data_row = { 'extname' => $extname, 'names' => $names };
+          $data_row = { 'extname' => $extname, 'names' => $names, 'loc' => $contig_link };
         } else {
           if ($feat_type !~ /align|RegulatoryFactor|ProbeFeature/i && $row->{'label'}) {
             $names = sprintf(
