@@ -87,6 +87,7 @@ if( $species[0] eq 'ALL' ) {
 # EnsEMBL::Web::IndexSupport takes path to conf, path to files, species
 my $conf = {};
 $dir ||= $debug ? 'input' : "/nfs/eureka/data/ensembl_$release";
+print LOG "Dumping xml files to $dir\n";
 #warn $dir; exit;
 mkdir $dir, 0777 unless -e "$dir";
 
@@ -446,9 +447,9 @@ sub dumpSNP {
 	$synonyms{$sname} = $sources->{$id};
 	$syn_c++;
       }
-      my (@K, $synonym_text);
+      my (@syns, @gene_syns,$synonym_text);
       foreach my $syn (keys %synonyms) {
-	push @K, $syn;
+	push @syns, $syn;
 	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
@@ -456,7 +457,9 @@ sub dumpSNP {
       my $extra      = '';
       my $x = $snp_extra{$vf_id};
       if( $x ) {
-	push @K,$x->[1],$x->[3],$x->[4];
+	push @syns,$x->[1],$x->[4];
+	push @gene_syns,$x->[3];
+	
 	$extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[6];
 	if( $x->[1] ) {
 	  $extra .= sprintf ', through %s', $x->[1];
@@ -469,10 +472,10 @@ sub dumpSNP {
 			  $snp_source,
 			  $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
 			: $syn_c     ? "with one synonym: $synonym_text"
-		        :             "with no synonyms",
+		        : 'with no synonyms',
 			  $extra
 			);
-      &p( SNPLine( $dbspecies, $name, \@K, $snp_source, $desc, $counter ), $nogzip, $fh);
+      &p( SNPLine( $dbspecies, $name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
 
     }
   }
@@ -480,7 +483,7 @@ sub dumpSNP {
 }
 
 sub SNPLine {
-  my ($species, $name, $IDS, $source, $desc, $counter ) = @_;
+  my ($species, $name, $IDS, $gene_IDS, $source, $desc, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
 <entry id="$name">
@@ -489,6 +492,12 @@ sub SNPLine {
   foreach my $id (@$IDS) {
     $xml .= qq(
     <field name="synonym">$id</field>);
+  }
+  foreach my $ids (@$gene_IDS) {
+    foreach my $id (split ',', $ids) {
+      $xml .= qq(
+    <field name="synonym">$id</field>);
+    }
   }
   $xml .= qq(
     <field name="species">$species</field>
@@ -895,7 +904,7 @@ sub dumpFamily {
            sum(  source_name = 'Uniprot/SWISSPROT'                                   ) as uniprot_swissprot
       from family as f, family_member as fm, member as m, genome_db as gd
      where f.family_id=fm.family_id and fm.member_id=m.member_id and
-           gd.name = '$species'
+           gd.name = '$dbspecies'
      group by f.family_id 
     having ensembl_genes_species > 0));
   $sth->execute();
@@ -906,8 +915,9 @@ sub dumpFamily {
     $uniprot_sptrembl_species, $uniprot_swissprot_species,
     $uniprot_sptrembl, $uniprot_swissprot
   ) = $sth->fetchrow_array()) {
-    my $desc = qq(Ensembl protein family $fid [$desc] has $total members: $ensembl_genes $X genes ($ensembl_genes_species in $species); $ensembl_peptides $X proteins ($ensembl_peptides_species in $species); $uniprot_swissprot UniProtKB/Swiss-Prot proteins ($uniprot_swissprot_species in $species); $uniprot_sptrembl UniProtUK/TrEMBL proteins ($uniprot_sptrembl_species in $species).);
-    &p( FamilyLine($dbspecies,$fid,$desc,$counter ), $nogzip, $fh);
+    $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
+    my $full_desc = qq(Ensembl protein family $fid [$desc] has $total members: $ensembl_genes $X genes ($ensembl_genes_species in $species); $ensembl_peptides $X proteins ($ensembl_peptides_species in $species); $uniprot_swissprot UniProtKB / Swiss-Prot proteins ($uniprot_swissprot_species in $species); $uniprot_sptrembl UniProtUK/TrEMBL proteins ($uniprot_sptrembl_species in $species).);
+    &p( FamilyLine($dbspecies,$fid,$full_desc,$counter ), $nogzip, $fh);
   }
   return footer( $counter->(),$nogzip,$fh);
 }
@@ -1249,7 +1259,7 @@ sub dumpGene {
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
-#    warn Dumper(\%xrefs);
+    warn Dumper(\%xrefs);
 
     my %exons = ();
     my $sql = qq(
@@ -1366,6 +1376,7 @@ sub dumpGene {
 	while (my ($xref_id,$dets) = each %{$xrefs{'Gene'}{$gid}}) {
 	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
 	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
+	  $dets->{'description'} = $external_dbs->{$dets->{'external_db_id'}}{'description'};
 	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
 	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
 	  }			 
@@ -1374,6 +1385,7 @@ sub dumpGene {
 	while (my ($xref_id,$dets) = each %{$xrefs{'Transcript'}{$tid}}) {
 	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
 	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
+	  $dets->{'description'} = $external_dbs->{$dets->{'external_db_id'}}{'description'};
 	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
 	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
 	  }			 
@@ -1382,6 +1394,7 @@ sub dumpGene {
 	while (my ($xref_id,$dets) = each %{$xrefs{'Translation'}{$tlid}}) {
 	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
 	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
+	  $dets->{'description'} = $external_dbs->{$dets->{'external_db_id'}}{'description'};
 	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
 	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
 	  }			 
@@ -1541,13 +1554,20 @@ sub GeneLine {
   <cross_references>);
   my %seen_syns;
   foreach my $xref (@$xrefs) {
-    my $dbname = $xref->{'db_name'};
-    my $dbkey  = $xref->{'label'};
+    my $dbname   = $xref->{'db_name'};
+    my $dbkey    = $xref->{'label'};
+    my $xrefdesc = $xref->{'description'} || '';
     next if $seen_syns{$dbkey}{$dbname};
     $seen_syns{$dbkey}{$dbname} = 1;
     $dbkey = &clean($dbkey,'dbkey');
-    $xml .= qq(
+    if ($xrefdesc) {
+      $xml .= qq(
+    <ref dbname="$dbname" dbkey="$dbkey" description="$xrefdesc"/>);
+    }
+    else {
+      $xml .= qq(
     <ref dbname="$dbname" dbkey="$dbkey"/>);
+    }
     foreach my $syn (@{$xref->{'synonyms'}}) {
       $dbkey = &clean($dbkey,'syn');
       $xml .= qq(
@@ -1811,3 +1831,4 @@ sub elapsed_time {
   my $hours = ($diff - $min) / 60;
   return "${hours}h ${min}min ${sec}sec";
 }
+
