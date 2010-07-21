@@ -68,6 +68,11 @@ sub init {
     ['variation_feature_structural'],
     { display => 'normal' }
   );
+    $self->modify_configs(
+    ['somatic_mutation_COSMIC'],
+    { display => 'normal' }
+  );
+
   
   # genes
   $self->modify_configs(
