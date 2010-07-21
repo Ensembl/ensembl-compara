@@ -11,12 +11,27 @@ sub set_default_action {
   $self->{_data}{default} = 'Index';
 }
 
-sub global_context { return undef; }
 sub ajax_content   { return undef;   }
 sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;  }
 sub content_panel  { return $_[0]->_content_panel;  }
 sub context_panel  { return $_[0]->_context_panel(1);  } ## RAW AS CONTAINS <i> tags
+
+sub global_context {
+  my $self         = shift;
+  my $hub          = $self->model->hub;
+  my $species_defs = $hub->species_defs;
+  my $species      = $species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME');
+  
+  if ($species) {
+    $self->page->global_context->add_entry(
+      type    => 'species',
+      caption => sprintf('%s (%s)', $species, $species_defs->ASSEMBLY_NAME),
+      url     => $hub->url({ type => 'Info', action => 'Index', __clear => 1 }),
+      class   => 'active'
+    );
+  }
+}
 
 sub caption { 
   my $self = shift;
