@@ -118,6 +118,9 @@ sub _render_hit {
   $URL =~ s{Homo_sapiens/Gene/Summary\?g=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
   $URL =~ s{Homo_sapiens/Location/View\?r=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
 
+  if ($URL =~ /(.+)\/Location\/Marker\?m=(.+)/) {
+    $URL = "$1/Marker/Details?m=$2";
+  }
  
   #remove url for unmapped features
   if ($URL =~ /Location\/Genome\?ftype=UnmappedObject/) {
