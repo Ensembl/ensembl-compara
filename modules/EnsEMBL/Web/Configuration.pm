@@ -256,6 +256,23 @@ sub _user_context {
     
       $flag = 0;
     }
+
+    if ( $action eq 'Location/View' && $object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}){
+      $self->page->$section->add_entry(
+        type    => 'Config',
+        id      => 'config_cell_page',
+        caption => 'Configure Cell/Tissue',
+        $active ? ( class => 'active' ) : (
+        url => $hub->url({
+          time     => time,
+          type     => 'Config',
+          action   => 'Location/Cell_line',
+          config   => '_page'
+        }))
+      );
+      $flag = 0;
+    }
+
   }
   
   $active = $section eq 'global_context' && $type eq 'UserData';
