@@ -33,9 +33,14 @@ sub content {
   if ($focus_set_blocks ) {
     $wuc->{'focus'}->{'data'}->{'block_features'} = $focus_set_blocks;
   }
-  my $all_evidence_features = $object->get_all_evidence_features();
-  if ( $all_evidence_features) { 
-    $wuc->{'evidence'}->{'data'}->{'all_features'} = $all_evidence_features;
+
+  if ($object->param('opt_focus') eq 'yes'){ 
+    $wuc->modify_configs(
+      [ 'reg_feats_core_MultiCell'],
+      {qw(display compact)}
+    );
+    my $focus_set_blocks = $object->get_focus_set_block_features($object_slice);
+    $wuc->{'data_by_cell_line'}{'MultiCell'}{'core'}{'block_features'} = $focus_set_blocks;
   }
 
   my $image    = $self->new_image( $object_slice, $wuc,[$object->stable_id] );
