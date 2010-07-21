@@ -408,49 +408,6 @@ sub get_all_cell_line_features {
 
 ################ Calls for Feature in Detail view ###########################
 
-sub get_all_evidence_features {
-  my ($self) = @_;
-  my %all_data;
-
-  unless ($self->param('opt_focus') eq 'no') {
-    my @annotated_features = @{$self->Obj->get_focus_attributes};
-    foreach (@annotated_features ){
-      my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
-      $all_data{$unique_feature_set_id} = 1;
-    }
-  }
-
-  my @attributes = @{$self->Obj->get_nonfocus_attributes};
-  foreach (@attributes) {
-    my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
-    next if $self->param('opt_ft_' .$unique_feature_set_id) eq 'off';
-    $all_data{$unique_feature_set_id} = 1;
-  }
-
-  return \%all_data;
-}
-
-
-sub get_nonfocus_block_features {
-  my ($self, $slice) = @_;
-  my @attributes = @{$self->Obj->get_nonfocus_attributes};
-  my %nonfocus_data;
-
-  foreach (@attributes) {  
-    my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
-    next if $self->param('opt_ft_' .$unique_feature_set_id) eq 'off';
-    my $histone_mod = substr($unique_feature_set_id, 0, 2);
-    unless ($histone_mod =~/H\d/){ $histone_mod = 'Other';}
-    $nonfocus_data{$histone_mod} = {} unless exists $nonfocus_data{$histone_mod};
-    $nonfocus_data{$histone_mod}{$unique_feature_set_id} = $_->feature_set->get_Features_by_Slice($slice);
-  }
-  return \%nonfocus_data;
-}
-
-sub get_nonfocus_wiggle_features {
-  return;
-}
-
 sub get_focus_set_block_features {
   my ($self, $slice) = @_;
   return unless $self->param('opt_focus') eq 'yes';
@@ -458,14 +415,10 @@ sub get_focus_set_block_features {
   my %data;
   my @annotated_features = @{$self->Obj->get_focus_attributes};
   foreach (@annotated_features ){ 
-   my $unique_feature_set_id =  $_->feature_set->feature_type->name .':'.$_->feature_set->cell_type->name;
+   my $unique_feature_set_id =  $_->feature_set->cell_type->name .':'.$_->feature_set->feature_type->name;
     $data{$unique_feature_set_id} = $_->feature_set->get_Features_by_Slice($slice); 
   } 
   return \%data;
-}
-
-sub get_focus_set_wiggle_features {
-  return;
 }
 
 1;
