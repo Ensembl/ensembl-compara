@@ -113,14 +113,14 @@ dd { margin-bottom: 1em; }
 
 .error-pad { padding: 0.5em; }
 
-.error, .warning, .info, .hint { padding: 0; margin: 0.2em auto; background-color: #fff; border: 1px solid; }
+.error, .warning, .info, .hint { padding: 0; margin: 0.2em auto; border: 1px solid; }
 
 .syntax-error, .error { color: [[ALERT_BORDER]]; background-color: [[ALERT_BG]]; }
 .error                { border-color: [[ALERT_BORDER]]; }
 .warning              { border-color: #ffb90f;          }
 .info, .hint          { border-color: #90ee90;          }
 
-.error h3, .error h4, .warning h3, .info h3, .hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: top left; background-repeat: no-repeat; color: #000; }
+.error h3, .error h4, .warning h3, .info h3, .hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: top left; background-repeat: no-repeat; }
 .error h3, .error h4 { background-image: url(/i/warning.gif); background-color: [[ALERT_BORDER]]; color: [[ALERT_BG]]; }
 .warning h3          { background-image: url(/i/warning.gif); background-color: #ffb90f; }
 .info h3, .hint h3   { background-image: url(/i/info.gif); background-color: #90ee90;    }
