@@ -48,10 +48,11 @@ Using this form, you can select Ensembl features to display on a karyotype (form
 
   my @types = (
     {'value' => 'Gene',                 'name' => 'Gene'},
-    {'value' => 'OligoProbe',           'name' => 'OligoProbe'},
     {'value' => 'DnaAlignFeature',      'name' => 'Sequence Feature'},
     {'value' => 'ProteinAlignFeature',  'name' => 'Protein Feature'},
   );
+  ## Disabled owing to API issues
+  ##  {'value' => 'OligoProbe',           'name' => 'OligoProbe'},
 
   $form->add_element(
       'type'    => 'DropDown',
