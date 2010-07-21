@@ -54,7 +54,7 @@ sub availability {
       } else { 
         $availability->{'variation'} = 1;
       }
-      
+
       $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments ldpops);
     }
     
@@ -134,7 +134,8 @@ sub count_individuals {
   
   my %sample_ids_for_variation;
   
-  foreach my $vf (@{$var->get_all_VariationFeatures}) {
+  foreach my $vf (@{$var->get_all_VariationFeatures}) {  
+    next unless ($vf->dbID  eq $self->param('vf'));
     my ($seq_region_id, $snp_pos) = ($vf->slice->get_seq_region_id, $vf->seq_region_start);
     
     # grab data from compressed genotype table
@@ -151,15 +152,16 @@ sub count_individuals {
       my @genotypes = unpack '(aan)*', $genotypes;
       my $pos = $slice_start;
       
-      while (my ($a1, $a2, $gap) = splice @genotypes, 0, 3) {
-        next if $gap == -1; # '2 snps in same location' so can skip rest of loop - don't think this works as ffff == 65535 not -1!
-        
-        if ($pos == $snp_pos) {
+      while (my ($a1, $a2, $gap) = splice @genotypes, 0, 3) { 
+        next if $gap == -1; # '2 snps in same location' so can skip rest of loop - don't think this works as ffff == 65535 not -1!      
+
+        if ($pos == $snp_pos) { 
           $sample_ids_for_variation{$sample_id} = 1;
+          #warn "... $sample_id ...";
           last; # We can skip out of this now don't need to walk along data anymore
         }
         
-        $pos += $gap + 1;
+        $pos += $gap + 1; 
       }
     }
   }
@@ -178,15 +180,18 @@ sub count_ldpops {
 sub short_caption {
   my $self = shift;
   
-  return 'Variation-based displays' unless shift eq 'global';   
+  my $type = $self->Obj->is_somatic ? 'Somatic mutation' : 'Variation';
+  my $short_type = $self->Obj->is_somatic ? 'S. mut' : 'Var';
+  return $type.' displays' unless shift eq 'global';   
   
   my $label = $self->name;  
-  return length $label > 30 ? "Var: $label" : "Variation: $label";
+  return length $label > 30 ? "$short_type: $label" : "$type: $label";
 }
 
 sub caption {
  my $self = shift; 
- my $caption = 'Variation: '.$self->name;
+ my $type = $self->Obj->is_somatic ? 'Somatic mutation' : 'Variation';
+ my $caption = $type.': '.$self->name;
 
  return $caption;
 }
