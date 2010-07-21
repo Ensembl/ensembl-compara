@@ -492,7 +492,7 @@ sub alleles {
   my %alleles;
   map { $alleles{$_->allele} = 1; } @allele_obj;
 
-  my $observed_alleles = "Observed alleles are: ". join ", ", (keys %alleles);
+  my $observed_alleles = join "/", (keys %alleles);
   if (@vari_mappings) {
     return "$observed_alleles";
   } else {
