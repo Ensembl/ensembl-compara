@@ -199,7 +199,7 @@ if (!$flag) {
     $query =~ /^BLA_\w+$/              ? url('/Multi/blastview/%s', $query) :                                                                 ## Blast ticket
     $query =~ /^\s*([ACGT]{20,})\s*$/i ? url('/Multi/blastview?species=%s;_query_sequence=%s;query=dna;database=dna', $species, $1) :         ## BLAST seq search
     $query =~ /^\s*([A-Z]{20,})\s*$/i  ? url('/Multi/blastview?species=%s;_query_sequence=%s;query=peptide;database=peptide', $species, $1) : ## BLAST seq search
-    url(($species eq 'ALL' || !$species ? '/default' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
+    url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
 }
 
 $url = $other_site_url . $url;
