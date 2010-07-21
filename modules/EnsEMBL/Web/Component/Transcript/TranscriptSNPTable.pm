@@ -173,9 +173,14 @@ sub get_page_data {
       my $source = $allele->source;
       my $vf = $allele->variation->dbID; 
       my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });
-      my @hgvs = @{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
-      s/ENS(...)?[TG]\d+\://g for @hgvs;
-      my $hgvs = join ", ", @hgvs;
+      my %hgvs = %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
+      my $hgvs;
+      while ( my ($a, $hgvs_str) = each %hgvs){
+        #$hgvs_str =~s/ENS(...)?[TG]\d+\.\d+\://g; 
+        $hgvs .= ", " .$hgvs_str;
+      }       
+      $hgvs =~s/^\,//;
+ 
  
       my $row = {
         'ID'          =>  qq(<a href = $url>@{[$allele->variation_name]}</a>),
