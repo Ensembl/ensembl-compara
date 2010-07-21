@@ -93,15 +93,16 @@ sub draw_block_features {
 
   my $h = 10;
   foreach my $f (@$features ) {
-    my $start = $f->start;
+    my $start = $f->start; 
     my $end   = $f->end;
     my $midpoint =  $f->score;
     $start = 1 if $start < 1; 
-    $end   = $length if $end > $length;
+    $end   = $length if $end > $length;  
+    my $y = $self->_offset; 
     $self->push($self->Rect({
-      'y'         => $self->_offset,
-      'height'    => $h,
       'x'         => $start -1,
+      'y'         => $y,
+      'height'    => $h,
       'width'     => $end - $start,
       'absolutey' => 1,          # in pix rather than bp
       'colour'    => $colour,
@@ -111,9 +112,9 @@ sub draw_block_features {
       $midpoint -= $self->{'container'}->start;
       my $m_colour = $self->{'config'}->colourmap->mix($colour, 'black', '0.5');
       $self->push($self->Rect({
-        'y'         => $self->_offset,
-        'height'    => $h,
         'x'         => $midpoint -1,
+        'y'         => $y,
+        'height'    => $h,
         'width'     => 1,
         'absolutey' => 1,          # in pix rather than bp
         'colour'    => $m_colour,
@@ -392,7 +393,6 @@ sub draw_wiggle_points {
     }
     $height *= $pix_per_score;
 
-    # warn(join('*', $f, $START, $END, $score));
     $self->push($self->Rect({
       'y'         => $offset + $red_line_offset + $y,
       'height'    => abs( $height ),
@@ -438,6 +438,7 @@ sub draw_wiggle_points_as_line {
   my $previous_f = $features->[0]; 
   my $previous_x = ($previous_f->{'end'} + $previous_f->{'start'}) / 2;
   my $previous_score = $previous_f->{'score'};
+
   if ($window_size == 0 ){
     $previous_score = $previous_f->scores->[0];
     $previous_x = ($previous_f->end + $previous_f->start)/2;
@@ -452,7 +453,7 @@ sub draw_wiggle_points_as_line {
     my $current_score = $f->{'score'}; 
     if ($window_size == 0){
       next if (ref($f) eq 'HASH');
-      $current_score = $f->scores->[0]; 
+      $current_score = $f->scores->[0];
       $current_x = ($f->end + $f->start)/2; 
     }
     my $current_y =  $current_score < 0 ? 0 : -$current_score * $pix_per_score;
@@ -487,25 +488,25 @@ sub draw_track_name {
   ### Arg2: colour of the track
   ### Returns 1
 
-  my ( $self, $name, $colour, $x_offset, $y_offset, $no_offset   ) = @_;
-  my $x = $x_offset || 1;
-  my $y = $self->_offset;
+  my ( $self, $name, $colour, $x_offset, $y_offset, $no_offset   ) = @_; 
+  my $x = $x_offset || 1;  
+  my $y = $self->_offset; 
   if ($y_offset) {$y += $y_offset;}
-  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
-  my @res_analysis = $self->get_text_width(
+  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' ); 
+  my @res_analysis = $self->get_text_width( 
     0, $name, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
 
   $self->push( $self->Text({
+    'x'         => $x,
+    'y'         => $y,
     'text'      => $name,
     'height'    => $res_analysis[3],
     'width'     => $res_analysis[2],
-    'font'      => $fontname_i,
-    'ptsize'    => $fontsize_i,
     'halign'    => 'left',
     'valign'    => 'bottom',
+    'font'      => $fontname_i,
+    'ptsize'    => $fontsize_i,
     'colour'    => $colour,
-    'y'         => $y,
-    'x'         => $x,
     'absolutey' => 1,
     'absolutex' => 1,
   }));
@@ -513,6 +514,7 @@ sub draw_track_name {
   $self->_offset($res_analysis[3]) unless $no_offset; 
   return 1;
 }
+
 sub display_no_data_error{
  my ($self, $error_string) = @_;
   my $height = $self->errorTrack( $error_string, 0, $self->_offset );
@@ -529,7 +531,7 @@ sub draw_separating_line {
     'x'             => -125,
     'y'             => $self->_offset +5,
     'width'         => $im_width,
-    'height'        => 3,
+    'height'        => 2,
     'colour'        => 'grey40',
     'absolutey'     => 1,
     'absolutex'     => 1,
