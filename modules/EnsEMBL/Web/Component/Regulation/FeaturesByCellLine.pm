@@ -22,79 +22,71 @@ sub content {
   my $object_slice = $object->get_bound_context_slice($context);
      $object_slice = $object_slice->invert if $object_slice->strand < 1;
 
-  my $wuc = $object->get_imageconfig( 'regulation_view' );
-  $wuc->set_parameters({
+  # First configure top part of image - displays tracks that are not cell-line related
+  my $image_config_top = $object->get_imageconfig( 'regulation_view' );
+  $image_config_top->set_parameters({
     'container_width'   => $object_slice->length,
     'image_width',      => $self->image_width || 800,
     'slice_number',     => '1|1',
     'opt_highlight'    => $object->param('opt_highlight')
   });
-  my @containers_and_configs = ( $object_slice, $wuc);
+  my @containers_and_configs = ( $object_slice, $image_config_top);
 
 
-  my $all_evidence_features = $object->get_all_cell_line_features();
-  if ( $all_evidence_features) {
-    $wuc->{'evidence'}->{'data'}->{'all_features'} = $all_evidence_features;
-  }
-  my $configured_tracks = $object->get_configured_tracks;
-  
-  # Get MultiCell data 
-  my $multi_data = $object->get_multicell_evidence_data($object_slice);
-  my $wuc_multi = $object->get_imageconfig( 'reg_detail_by_cell_line' );
-  $wuc_multi->set_parameters({
-      'container_width'   => $object_slice->length,
-      'image_width',      => $self->image_width || 800,
-      'opt_highlight'    => $object->param('opt_highlight'),
-      'opt_empty_tracks'  => $object->param('opt_empty_tracks')
-    });
-  $wuc_multi->modify_configs(
-    [ 'fg_regulatory_features_funcgen_reg_feats' ],
-    {qw(display on )}
-  );
-  $wuc_multi->{'evidence'}->{'data'}->{'all_features'} = $all_evidence_features;
-  $wuc_multi->{'data_by_cell_line'} = $multi_data;
-  $wuc_multi->{'configured_tracks'} = $configured_tracks;
-  $wuc_multi->{'reg_feature'} = 1;  
-  push @containers_and_configs, $object_slice, $wuc_multi;
+  # Next add cell line tracks
+  my $image_config_cell_line = $object->get_imageconfig( 'reg_detail_by_cell_line' );
+  $image_config_cell_line->set_parameters({
+    'container_width'   => $object_slice->length,
+    'image_width',      => $self->image_width || 800,
+    'opt_highlight'    => $object->param('opt_highlight'),
+    'opt_empty_tracks'  => $object->param('opt_empty_tracks')
+  });
 
 
-  # Add cell line specific data and configs  
-  my %cell_lines =  %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  my $data_all_cell_lines = $object->get_evidence_data($object_slice,);
+  my $web_slice_obj = $self->new_object( 'Slice', $object_slice, $object->__data );
+  my $cell_line_data = $web_slice_obj->get_cell_line_data($image_config_cell_line);
+  my @all_reg_objects = @{$object->fetch_all_objs_by_slice($object_slice)};
 
-  my $number_of_cell_lines = scalar (keys %cell_lines);
-  my $count =1;  
-  foreach my $cell_line (sort keys %cell_lines) { 
-    $cell_line =~s/\:\w*//;
-    my $wuc_cell_line = $object->get_imageconfig( 'reg_detail_by_cell_line' );
-    $wuc_cell_line->set_parameters({
-      'container_width'   => $object_slice->length,
-      'image_width',      => $self->image_width || 800,
-      'opt_highlight'     => $object->param('opt_highlight'),
-      'opt_empty_tracks'  => $object->param('opt_empty_tracks')
-    });
-    $wuc_cell_line->modify_configs(
-      [ 'fg_regulatory_features_funcgen_reg_feats_'. $cell_line ],
-      {qw(display on )} 
+  my @cell_lines =  sort keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  unshift @cell_lines, 'MultiCell';
+  my $number_of_cell_lines = scalar @cell_lines;
+  my $count =1;
+
+
+  foreach my $cell_line (@cell_lines) { 
+    $cell_line =~s/\:\d*//;
+
+    # Turn on reg features track
+    $image_config_cell_line->modify_configs(
+      [ 'reg_feats_' .$cell_line ],
+      {qw(display on )}
     );
-    my %data_by_cell_line;
-    $data_by_cell_line{$cell_line} = $data_all_cell_lines->{$cell_line} || {}; 
-    if ($count == $number_of_cell_lines){
-      $data_by_cell_line{$cell_line}{'last_cell_line'} =1;
-    }    
-    # do we have a reg_feature for this cell line?
-    foreach my $reg_obj (@{$object->fetch_all_objs_by_slice($object_slice)}){
+    # Turn on core evidence track
+    $image_config_cell_line->modify_configs(
+      [ 'reg_feats_core_' .$cell_line ],
+      {qw(display tiling_feature)}
+    );
+    # Turn on supporting evidence track
+    $image_config_cell_line->modify_configs(
+      [ 'reg_feats_other_' .$cell_line ],
+      {qw(display tiling_feature)}
+    );
+
+
+    foreach my $reg_obj (@all_reg_objects){
       if ( $reg_obj->feature_set->cell_type->name =~/$cell_line/){
-        $wuc_cell_line->{'reg_feature'} = 1;
+        $cell_line_data->{$cell_line}{'reg_feature'} = 1;
       }
     }
 
-    $wuc_cell_line->{'data_by_cell_line'} = \%data_by_cell_line;
-    $wuc_cell_line->{'evidence'}->{'data'}->{'all_features'} = $all_evidence_features;
-    $wuc_cell_line->{'configured_tracks'} = $configured_tracks; 
-    push @containers_and_configs, $object_slice, $wuc_cell_line;    
+    if ($count == $number_of_cell_lines){
+      $cell_line_data->{$cell_line}{'last_cell_line'} =1;
+    }    
     $count++;
   }
+ 
+  $image_config_cell_line->{'data_by_cell_line'} = $cell_line_data;
+  push @containers_and_configs, $object_slice, $image_config_cell_line;
 
   # Add config to draw legends and bottom ruler
   my $wuc_regulation_bottom = $object->get_imageconfig( 'regulation_view_bottom' );
