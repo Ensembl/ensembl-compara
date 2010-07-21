@@ -90,11 +90,12 @@ sub content {
       }
     }  
   }
-  
-  $self->caption('Variation: ' . $feature->variation_name);
+ 
+  my $type = $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation'; 
+  $self->caption($type .': ' . $feature->variation_name);
   
   $self->add_entry({
-    label_html => 'Variation Properties',
+    label_html => $type .' Properties',
     link       => $hub->url({
       type   => 'Variation', 
       action => 'Summary',
