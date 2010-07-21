@@ -39,6 +39,7 @@ sub render {
   my $release_date = $self->pretty_date($release->{'date'});
   $html .= qq(<h2 class="first">What's New in Release $release_id ($release_date)</h2>);
   my $news_url = '/info/website/news/index.html';
+  my ($news, $changelog);
 
   my @headlines = @{$adaptor->fetch_news({'release' => $release_id, 'limit' => 5})};
 
@@ -76,14 +77,27 @@ sub render {
 
     }
 
-    $html .= qq(</ul>
-<p><a href="$news_url">More news</a>...</p>\n);
+    $html .= "</ul>\n";
+    $news = 1;
   }
-  else {
+
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
+    $changelog = 1;
+    $html .= qq(<ul>
+      <li><a href="/info/website/news/changelog.html">Changelog</a> - Detailed list of data/code updates</li>
+      </ul>
+    );
+  }
+
+  if ($news) {
+    $html .= qq(<p><a href="$news_url">More news</a>...</p>\n);
+  }
+  elsif (!$news && !$changelog) {
     $html .= qq(<p>No news is currently available for release $release_id.</p>\n);
   }
 
   if ($hub->species_defs->ENSEMBL_BLOG_URL) {
+    $html .= '<h3>Latest blog posts</h3>';
     if ($hub->cookies->{'ENSEMBL_AJAX'}) {
     $html .= qq(<div class="js_panel ajax" id="blog"><input type="hidden" class="ajax_load" value="/blog.html" /><input type="hidden" class="panel_type" value="Content" /></div>);
     } 
