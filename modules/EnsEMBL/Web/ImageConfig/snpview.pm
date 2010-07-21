@@ -26,6 +26,7 @@ sub init {
     prediction  => 'Prediction transcripts',
     sequence    => 'Sequence',
     variation   => 'Variation',
+    functional  => 'Functional Genomics',
     information => 'Information', 
     other       => 'Decorations'
   );
@@ -78,6 +79,12 @@ sub init {
   $self->modify_configs(
     ['transcript_core_ensembl'],
     { display => 'transcript_nolabel' }
+  );
+  
+  # reg feats
+  $self->modify_configs(
+    [qw(functional)],
+    {qw(display normal)}
   );
 }
 
