@@ -141,6 +141,23 @@ sub init {
     [qw(regulatory_regions_funcgen_feature_set)],
     {qw(depth 25 height 6)}
   );
+
+  # Enable cell line displays 
+  my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  foreach my $cell_line (@cell_lines) {
+    $cell_line =~s/\:\d*//;
+    # Turn on core evidence track
+    $self->modify_configs(
+      [ 'reg_feats_core_' .$cell_line ],
+      {qw(menu yes)}
+    );
+    # Turn on supporting evidence track
+    $self->modify_configs(
+      [ 'reg_feats_other_' .$cell_line ],
+      {qw(menu yes)}
+    );
+  }
+
 }
 
 1;
