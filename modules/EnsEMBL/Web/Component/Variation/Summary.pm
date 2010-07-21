@@ -243,7 +243,8 @@ sub content {
       my $end             = $mappings{$varif_id}{'end'};
       my $str             = $mappings{$varif_id}{'strand'};
       my $display_region  = $region . ':' . ($start - 500) . '-' . ($end + 500); 
-      my $link            = $object->_url({ type => 'Location', action=> 'View', v => $id, source => $source, vf => $varif_id, contigviewbottom => 'variation_feature_variation=normal' });  
+      my $track_name      = $self->object->Obj->is_somatic ? 'somatic_mutation_COSMIC' : 'variation_feature_variation';  
+      my $link            = $object->_url({ type => 'Location', action=> 'View', v => $id, source => $source, vf => $varif_id, contigviewbottom => $track_name.'=normal' });  
       my $location_string = $start == $end ? "$region:$start" : "$region:$start-$end"; 
       my $location;
       
@@ -256,7 +257,7 @@ sub content {
         $location = qq(<a href="$link">$location_string</a>);
       }
       
-      my $location_link      = $object->_url({ type =>'Location', action => 'View', r => $display_region, v => $id, source => $source, vf => $varif_id, contigviewbottom => 'variation_feature_variation=normal' });
+      my $location_link      = $object->_url({ type =>'Location', action => 'View', r => $display_region, v => $id, source => $source, vf => $varif_id, contigviewbottom => $track_name.'=normal' });
       my $location_link_html = qq(<a href="$location_link">Jump to region in detail</a>);
       
       $html .= sprintf('
