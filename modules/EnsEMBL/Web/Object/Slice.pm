@@ -350,6 +350,117 @@ sub get_individuals {
 }
 
 
+# Cell line Data retrieval  ---------------------------------------------------
+sub get_cell_line_data {
+  my ($self, $image_config) = @_;
+  
+  # First work out which tracks have been turned on in image_config
+  my %cell_lines        =  %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+
+  my @types = ('core', 'other');  
+  my %data;
+
+  foreach my $cell_line (keys %cell_lines){
+    $cell_line =~s/\:\d*//;    
+    foreach my $type (@types){
+      my $display;
+      if ( $image_config->isa('EnsEMBL::Web::ImageConfig::reg_detail_by_cell_line') ){
+        $display = 'tiling_feature';
+      } else {
+        $display = $image_config->get_node('functional')->get_node('reg_feats_'.$type.'_'.$cell_line)->get('display'); 
+      }        
+      if( $display ne 'off') { $data{$cell_line}{$type}{'renderer'} = $display; }
+    }
+  }
+
+  %data = %{$self->get_configured_tracks($image_config, \%data)}; 
+  %data = %{$self->get_data(\%data)};
+
+  return \%data;
+}
+
+sub get_configured_tracks {
+  my ($self, $image_config, $data) = (@_);
+  my %cell_lines        =  %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  my %evidence_features = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
+  my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'}};
+  my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'}};
+  my $page_object = $self->hub->type; 
+  my $view_config = $self->get_viewconfig($page_object, 'Cell_line');
+  
+
+  foreach my $cell_line (keys %cell_lines){ 
+    $cell_line =~s/\:\d*//;
+    foreach my $evidence_feature (keys %evidence_features){ 
+      my ($feature_name, $feature_id ) = split (/\:/, $evidence_feature);
+      if (exists $feature_type_ids{$cell_line}{$feature_id}) { 
+        unless (exists $data->{$cell_line}{'core'}{'available'}){
+           $data->{$cell_line}{'core'}{'available'} = [];
+           $data->{$cell_line}{'other'}{'available'} = [];
+           $data->{$cell_line}{'core'}{'configured'} = [];
+           $data->{$cell_line}{'other'}{'configured'} = [];
+        }
+        my $focus_flag = 'other';
+        if ($cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id}){
+          $focus_flag = 'core';
+        }
+        push @{$data->{$cell_line}{$focus_flag}{'available'}}, $feature_name; 
+        # add to configured features if turned on
+        if ( $view_config->get('opt_cft_'.$cell_line.':'.$feature_name) eq 'on') {
+          push @{$data->{$cell_line}{$focus_flag}{'configured'}}, $feature_name;
+        }
+      }
+    }
+  }
+  return $data;
+}
+
+sub get_data {
+  my ($self, $data) = @_;
+  my $page_object = $self->hub->type;
+  my $view_config = $self->get_viewconfig($page_object, 'Cell_line');
+  my $fg_db = $self->database('funcgen');
+  my $fset_a = $fg_db->get_FeatureSetAdaptor;
+  my $dset_a = $fg_db->get_DataSetAdaptor;
+  
+  foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){
+    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
+    my $cell_line = $regf_data_set->cell_type->name;
+    next unless exists $data->{$cell_line};
+
+    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){
+      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name;
+      my $name = 'opt_cft_' .$unique_feature_set_id;
+      my $type = 'other';
+      if  ($reg_attr_fset->is_focus_set){
+        $type = 'core';
+      }
+      
+      if ( ($view_config->get($name) eq 'on') ){ 
+        my $display_style = $data->{$cell_line}{$type}{'renderer'};
+        if ($display_style  eq 'compact' || $display_style eq 'tiling_feature'){
+          my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
+          if (scalar @block_features >> 0){
+            $data->{$cell_line}{$type}{'block_features'}{$unique_feature_set_id} = \@block_features;
+          }
+        } if ($display_style  eq 'tiling' || $display_style eq 'tiling_feature'){
+          my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
+          my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
+
+          if(scalar(@sset) >> 1){#There should only be one
+            throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);    
+          }
+          my $reg_attr_rset = $sset[0];
+          unless (scalar @sset  == 0){ 
+            $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset;
+          }
+        }
+      }
+    }  
+  }
+  return $data;
+}
+
 
 1;
 
