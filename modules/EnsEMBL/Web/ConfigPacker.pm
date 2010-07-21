@@ -303,6 +303,12 @@ sub _summarise_variation_db {
   }
   $self->db_details($db_name)->{'tables'}{'source'}{'counts'} = { map {@$_} values %$temp};
   $self->db_details($db_name)->{'tables'}{'source'}{'descriptions'} = \%$temp_description;
+#---------- Store dbSNP version 
+ my $s_aref = $dbh->selectall_arrayref( 'select version from source where name = "dbSNP"' );
+ foreach (@$s_aref){
+    my ($version) = @$_;
+    $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'dbSNP_VERSION'} = $version;   
+  }
 #---------- Add in information about the display type from the sample table
    my $d_aref = $dbh->selectall_arrayref( "select name, display from sample where display not like 'UNDISPLAYABLE'" );
    my (@default, $reference, @display, @ld);
@@ -385,6 +391,19 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'supersets'} = \%super_sets;  
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'subsets'} = \%sub_sets;
 
+#--------- Add in somatic mutation information
+  my %somatic_mutations;
+  my $sm_aref =  $dbh->selectall_arrayref(  
+    'select distinct(p.description), va.phenotype_id, s.name 
+       from phenotype p, variation_annotation va, source s 
+      where p.phenotype_id=va.phenotype_id and va.source_id=s.source_id and s.somatic =1'
+  );
+
+  foreach (@$sm_aref){ 
+    $somatic_mutations{$_->[2]}->{$_->[0]} = $_->[1] ;
+  } 
+  
+  $self->db_tree->{'databases'}{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'} = \%somatic_mutations;
   $dbh->disconnect();
 }
 
@@ -516,9 +535,8 @@ sub _summarise_funcgen_db {
 
   my $c_aref =  $dbh->selectall_arrayref(
     'select  ct.name, ct.cell_type_id 
-       from  cell_type ct, feature_set fs, data_set ds, feature_set fs1, supporting_set ss 
-       where  fs1.type="regulatory" and fs1.feature_set_id=ds.feature_set_id and ds.data_set_id=ss.data_set_id 
-         and  ss.type="feature" and ss.supporting_set_id=fs.feature_set_id and fs.cell_type_id=ct.cell_type_id 
+       from  cell_type ct, feature_set fs  
+       where  fs.type="regulatory" and ct.cell_type_id=fs.cell_type_id 
     group by  ct.name order by ct.name'
   );
   foreach my $row (@$c_aref) {
