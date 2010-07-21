@@ -99,53 +99,151 @@ sub genbank_hidden_flag {
   return $self->{'_genbank_hidden_flag'};
 }
 
+=head2 classification
+
+  Arg[SEPARATOR]  : String (optional); used to separate the classification by
+                    when returning as a string. If not specified then a single
+                    space will be used.
+  Arg[FULL]       : Boolean (optional); indicates we want all nodes including
+                    those which Genbank sets as hidden
+  Arg[AS_ARRAY]   : Boolean (optional); says the return type will be an 
+                    ArrayRef of all nodes in the classification as instances
+                    of NCBITaxon.
+  Example         : my $classification_string = $node->classification();
+  Description     : Returns the String representation of a taxon node's 
+                    classification or the objects which constitute it (
+                    including the current node). The String return when
+                    split is compatible with BioPerl's Species classification
+                    code and will return a data structure compatible with
+                    that found in core species MetaContainers.
+                    
+                    This code is a redevelopment of existing code which
+                    descended down the taxonomy which had disadvanatages 
+                    when a classification was requested on nodes causing
+                    the taxonomy to bi/multi-furcate.
+                    
+                    Note the String representation does have some disadvantages
+                    when working with the poorer end of the taxonomy where
+                    species nodes are not well defined. For these situations
+                    you are better using the array representation and 
+                    capturing the required information from the nodes.
+                    
+                    Also to maintain the original functionality of the method
+                    we filter any species, subspecies or subgenus nodes above
+                    the current node. For the true classification always
+                    call using the array structure.
+                    
+                    Recalling this subroutine with the same parameters for
+                    separators will return a cached representation. Calling
+                    for AS_ARRAY will cause the classificaiton to be 
+                    recalculated each time.
+  Returntype      : String if not asking for an array otherwise the array
+  Exceptions      : - 
+  Caller          : Public
+
+=cut
+ 
 sub classification {
-  my $self =shift;
-  my @args = @_;
+  my ($self, @args) = @_;
+  my ($separator, $full, $as_array) = rearrange([qw( SEPARATOR FULL AS_ARRAY )], @args);
 
-  my ($separator, $full);
-  if (scalar @args) {
-    ($separator, $full) = rearrange([qw(SEPARATOR FULL)], @args);
-  }
-
-  $separator = " " unless(defined $separator);
+  #setup defaults
+  $separator = ' ' unless(defined $separator);
   $full = 0 unless (defined $full);
+  
+  if(!$as_array) {
+    #Reset the separators & classifications if we already had one & it 
+    #differed from the input
+    if(defined $self->{_separator} && $self->{_separator} ne $separator) {
+      $self->{_separator} = undef;
+      $self->{_classification} = undef;
+    }
+    if(defined $self->{_separator_full} && $self->{_separator_full} ne $separator) {
+      $self->{_separator_full} = undef;
+      $self->{_classification_full} = undef;
+    }
+    
+    $self->{_separator} = $separator unless (defined $self->{_separator});
+    $self->{_separator_full} = $separator unless (defined $self->{_separator_full});
+    
+    return $self->{_classification_full} if ($full && defined $self->{_classification_full});
+    return $self->{_classification} if (!$full && defined $self->{_classification});
+  }  
 
-  $self->{"_separator"} = $separator unless (defined $self->{"_separator"});
-  $self->{"_separator_full"} = $separator unless (defined $self->{"_separator_full"});
-
-  $self->{'_classification'} = undef unless ($self->{"_separator"} eq $separator);
-  $self->{'_classification_full'} = undef unless ($self->{"_separator_full"} eq $separator);
-
-  return $self->{'_classification_full'} if ($full && defined $self->{'_classification_full'});
-  return $self->{'_classification'} if (!$full && defined $self->{'_classification'});
-
-  my $root = $self->root;
+  my $node = $self;
   my @classification;
-  unless ($root->name eq "root") {
-    unshift @classification, $self->name;
+  while( $node->name() ne 'root' ) {
+    my $subgenus = $node->rank() eq 'subgenus';
+    if($full) {
+      push(@classification, $node);
+    }
+    else {
+      unless($node->genbank_hidden_flag() || $subgenus) {
+        push(@classification, $node);
+      }
+    }
+    
+    $node = $node->parent();
   }
-  unless ($root->get_child_count == 0) {
-    $root->_add_child_name_to_classification(\@classification, $full);
-  }
-  if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
-    my ($genus, $species, $subspecies) = split(" ", $self->binomial);
-    unshift @classification, $species;
-    unshift @classification, $subspecies if (defined $subspecies);
+  
+  if($as_array) {
+    return \@classification;
   }
 
-
+  #Once we have a normal array we can do top-down as before to replicate 
+  #the original functionality
+  my $text_classification = $self->_to_text_classification(\@classification);
+  
   if ($full) {
-    $self->{'_classification_full'} = join($separator,@classification);
-    $self->{"_separator_full"} = $separator;
-    return $self->{'_classification_full'};
+    $self->{_classification_full} = join($separator, @{$text_classification});
+    $self->{_separator_full} = $separator;
+    return $self->{_classification_full};
   } else {
-    $self->{'_classification'} = join($separator,@classification);
-    $self->{"_separator"} = $separator;
-    return $self->{'_classification'};
+    $self->{_classification} = join($separator, @{$text_classification});
+    $self->{_separator} = $separator;
+    return $self->{_classification};
   }
 }
 
+=head2 _to_text_classification
+
+  Arg[1]          : ArrayRef of the classification array to be converted to 
+                    the text classification 
+  Example         : my $array = $node->_to_text_classification(\@classification);
+  Description     : Returns the Array representation of a taxon node's 
+                    classification or the objects which constitute it (
+                    including the current node) as the species names or split
+                    according to the rules for working with BioPerl.
+  Returntype      : ArrayRef of Strings
+  Exceptions      : - 
+  Caller          : Private
+
+=cut
+
+sub _to_text_classification {
+  my ($self, $classification) = @_;
+  my @text_classification;
+  my $first = 1;
+  for my $node ( @{$classification}) {
+    my $subgenus = $node->rank() eq 'subgenus';
+    my $species = $node->rank() eq 'species';
+    my $subspecies = $node->rank() eq 'subspecies';
+    
+    if($first) {
+      if($species || $subspecies) {
+        my ($genus, $species, $subspecies) = split(q{ }, $node->binomial());
+        unshift @text_classification, $species;
+        unshift @text_classification, $subspecies if (defined $subspecies);
+      }
+      $first = 0;
+      next;
+    }
+    
+    next if $subgenus || $species || $subspecies;
+    push(@text_classification, $node->name());
+  }
+  return \@text_classification;
+}
 
 =head2 subspecies
 
@@ -220,31 +318,6 @@ sub genus {
 
   return $self->{'_genus'};
 }
-
-sub _add_child_name_to_classification {
-  my $self = shift;
-  my $classification = shift;
-  my $full = shift;
-
-  if ($self->get_child_count > 1) {
-    throw("Can't classification on a multifurcating tree\n");
-  } elsif ($self->get_child_count == 1) {
-    my $child = $self->children->[0];
-    if ($full) {
-      unshift @$classification, $child->name unless ($child->rank eq "subgenus"
-                                                     || $child->rank eq "subspecies"
-                                                     || $child->rank eq "species");
-    } else {
-      unless ($child->genbank_hidden_flag || $child->rank eq "subgenus") {
-        unshift @$classification, $child->name;
-      }
-    }
-    unless ($child->rank eq 'species') {
-      $child->_add_child_name_to_classification($classification, $full);
-    }
-  }
-}
-
 
 =head2 common_name
 
