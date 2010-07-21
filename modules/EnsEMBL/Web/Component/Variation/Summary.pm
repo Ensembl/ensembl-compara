@@ -128,6 +128,16 @@ sub content {
   }
 
   ## Add Alleles
+  # get slice for variation feature 
+  my @vfs = @{$self->object->Obj->get_all_VariationFeatures};
+  my $feature_slice;
+  foreach my $vf (@vfs){
+    if ($vf->dbID == $self->hub->core_param('vf')){
+      $feature_slice = $vf->feature_Slice;
+    } 
+  }  
+  
+
   my $label = 'Alleles';
   my $alleles = $object->alleles;
   my $vari_class = $object->vari_class || "Unknown";
@@ -143,12 +153,48 @@ sub content {
   my $ancestor  = $object->ancestor;
   $allele_html .= "<br /><em>Ancestral allele</em>: $ancestor" if $ancestor;
 
+  # Check somatic mutation base matches reference
+  if ($self->object->Obj->is_somatic){
+    my $ref_base = $feature_slice->seq();
+    my ($a1, $a2) = split(//,$alleles);
+    if ($ref_base ne $a1){
+       $allele_html .= "<br /><em>Note</em>: The reference base for this mutation ($a1) does not match the Ensembl reference base ($ref_base).";
+    }
+  }
+
    $html .= "
       <dt>Alleles</dt>
       <dd>$allele_html</dd>
     </dl>
   ";
+
+  # First add co-located variation info if count == 1
+  if ($feature_slice){
+    my $vfa = $self->object->database('variation')->get_VariationFeatureAdaptor;
+    my @variations;
+    if ($self->object->Obj->is_somatic){ 
+      @variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
+    } else {
+      @variations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
+    }
     
+    if (@variations) {
+      my $variation_string = $self->object->Obj->is_somatic ? 'with variation ' : 'with somatic mutation '  ; 
+      foreach my $v (@variations){
+        my $name = $v->variation_name; 
+        my $link = $object->_url({ v => $name, vf => $v->dbID,});
+        my $variation = qq(<a href="$link">$name</a>);  
+        $variation_string .= $variation;
+      }
+  
+      $html .= "
+      <dl class='summary'>
+        <dt>Co-located </dt>
+        <dd>$variation_string</dd>
+      </dl>";    
+    }
+  }
+
 
   ## Add location information
   my $location; 
@@ -163,6 +209,15 @@ sub content {
   if ($count < 1) {
     $html .= '<dt>Location</dt><dd>This feature has not been mapped.</dd></dl>';
   } else {
+
+    # First add co-located variation info if count == 1
+    if ($count ==1){
+      my $vf = $self->object->Obj->get_all_VariationFeatures->[0]; 
+      my $slice = $vf->slice; 
+      if ($self->object->Obj->is_somatic){
+      } 
+    }
+
     my $hide = $self->hub->get_cookies('ENSEMBL_locations') eq 'close';
     my @locations;
     my $select_html;
