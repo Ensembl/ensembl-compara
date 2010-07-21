@@ -3,76 +3,99 @@ package Bio::EnsEMBL::GlyphSet::fg_multi_wiggle;
 use strict;
 
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+use Bio::EnsEMBL::Utils::Exception qw( throw );
+
+sub label {
+  return undef;
+}
 
 sub draw_features {
   my ($self, $wiggle) = @_;
-  my $config            = $self->{'config'};
-  my $data              = $config->{'data_by_cell_line'};
-  my $colours           = $self->get_colours($config->{'evidence'}->{'data'}->{'all_features'});
-  my $drawn_wiggle_flag = $wiggle ? 0: 'wiggle';
-  my $slice             = $self->{'container'};
-  my $drawn_data;
+  my $Config = $self->{'config'};  
+  my $slice = $self->{'container'};
+  my $cell_line = $self->my_config('cell_line'); 
+  my $object_type = 'Regulation';
+  if ($Config->isa('EnsEMBL::Web::ImageConfig::contigviewbottom')){ $object_type = 'Location'; }
+  my $type = $self->my_config('type');  
+  my $data = $Config->{'data_by_cell_line'}; 
+  if (!$Config->{'colours'}){ $Config->{'colours'} = $self->get_colours; }
+  my $colours = $Config->{'colours'};
+  my $display_style = $self->my_config('display');
+  my ($drawn_data, $peaks, $wiggle);
   
-  foreach my $cell_line (keys %$data) {
-    foreach (qw(focus non_focus)) {
-      my @labels = $_ eq 'focus' ? ('Core Evidence', 'Core Support') : ('Other Evidence', 'Support');
-      
-      # First draw core block features
-      if ($data->{$cell_line}{$_}{'block_features'}) {
-        my $configured_tracks = scalar @{$config->{'configured_tracks'}{$cell_line}{'configured'}{$_}};
-        my $available_tracks  = scalar @{$config->{'configured_tracks'}{$cell_line}{'available'}{$_}};
-        my $tracks_on         = "$configured_tracks/$available_tracks features turned on"; 
-        my $feature_set_data  = $data->{$cell_line}{$_}{'block_features'};
-        
-        $self->draw_blocks($feature_set_data, "$labels[0] $cell_line", undef, $colours, $tracks_on);
-        
-        $drawn_data = 1;
-      } else {
-        $self->display_error_message($cell_line, $_, 'peaks');
+  if ($display_style eq 'compact'){ 
+    $peaks = 1;
+  } elsif ($display_style eq 'tiling_feature') {
+    $peaks =1;
+    $wiggle = 1;
+  } else {
+    $wiggle = 1;
+  } 
+
+  # First draw block features
+  if ($peaks){
+    if ($data->{$cell_line}{$type}{'block_features'} && $peaks){   
+      my $tracks_on = undef;
+      if ($data->{$cell_line}{$type}{'configured'}){
+        my $configured_tracks = scalar @{$data->{$cell_line}{$type}{'configured'}}; 
+        my $available_tracks =  scalar @{$data->{$cell_line}{$type}{'available' }}; 
+        $tracks_on = "$configured_tracks/$available_tracks features turned on";  
       }
-      
-      # Then draw core supporting features
-      if ($data->{$cell_line}{$_}{'wiggle_features'} && $wiggle) {
-        my $wiggle_data = $data->{$cell_line}{$_}{'wiggle_features'};
-        
-        $self->process_wiggle_data($wiggle_data, $colours, [ "$labels[1] $cell_line" ], $cell_line);
-        
-        $drawn_data = 1;
-      } else {
-        $self->display_error_message($cell_line, $_, 'wiggle');
-      }
+      my $feature_set_data = $Config->{'data_by_cell_line'}{$cell_line}{$type}{'block_features'}; 
+      $self->draw_blocks($feature_set_data, ucfirst($type) .' Evidence ' . $cell_line, undef, $colours, $tracks_on);
+      $drawn_data = 1;
+    } else {
+      $self->display_error_message($cell_line, $type, 'peaks');
     }
-    
-    # if we have drawn tracks for this cell line add a separating line    
-    if ($drawn_data || $config->{'reg_feature'} || ($config->get_parameter('opt_empty_tracks') eq 'yes')) {  
-      $self->draw_separating_line unless exists $data->{$cell_line}->{'last_cell_line'};
+  }
+  # Then draw wiggle features
+  if ($wiggle) { 
+    if ($Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'} && $wiggle){  
+      my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}};
+      my $label = $type .' Support ' .$cell_line; 
+      my @labels = (ucfirst($label));
+      $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line, $type);
+      $drawn_data =1;
+    } else {
+      $self->display_error_message($cell_line, $type, 'wiggle'); 
+    }
+  } 
+
+  # if we have drawn tracks for this cell line add a separating line    
+  if ($drawn_data || $data->{$cell_line}{'reg_feature'} || ($Config->get_parameter('opt_empty_tracks') eq 'yes')){ 
+    # do not draw on contig view
+    return if ($object_type eq 'Location' || $type eq 'core');
+    unless (exists $data->{$cell_line}->{'last_cell_line'}){
+      $self->draw_separating_line;
     }
   }
 
-  return 1;
+  return;
 }
 
 sub draw_blocks { 
   my ($self, $fs_data, $display_label, $bg_colour, $colours, $tracks_on) = @_;
-  $self->draw_track_name($display_label, 'black', -118, 0);
+  $self->draw_track_name($display_label, 'black', -118, undef);
   if ($tracks_on ){
      $self->draw_track_name($tracks_on, 'grey40', -118, 0);
   } else {  
     $self->draw_space_glyph();
   }
 
-  foreach my $f_set (sort { $a cmp $b  } keys %$fs_data){
-    my $feature_name = $f_set; 
+  foreach my $f_set (sort { $a cmp $b  } keys %$fs_data){ 
+    my $feature_name = $f_set;  
     my @temp = split (/:/, $feature_name);
-    $feature_name = $temp[1];
-    my $colour   = $colours->{$feature_name}; 
-    my $features = $fs_data->{$f_set};
-    my $display_label = $f_set;
-    $display_label =~s/\w*\://;
-    $self->draw_track_name($display_label, $colour, -108, 0, 'no_offset');
+    $feature_name = $temp[1];  
+    my $colour   = $colours->{$feature_name};  
+    my $features = $fs_data->{$f_set}; 
+    my $label = $f_set; 
+    unless ($display_label =~/MultiCell/){ $label =~s/\w*\://; } 
+    $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
     $self->draw_block_features ($features, $colour, $f_set, 1);
   }
+
   $self->draw_space_glyph();
+
 }
 
 sub draw_wiggle {
@@ -86,24 +109,29 @@ sub draw_wiggle {
 }
 
 sub process_wiggle_data {
-  my ($self, $wiggle_data, $colour_keys, $labels, $cell_line) = @_;
+  my ($self, $wiggle_data, $colour_keys, $labels, $cell_line, $type) = @_; 
   my $slice = $self->{'container'};
 
   my $max_bins = $self->image_width();
   my ($min_score, $max_score) ==  (0, 0);
   my @all_features;
   my @colours;
+  my $data_flag = 0;
 
-  foreach my $evidence_type (keys %{$wiggle_data}){ 
-    my $result_set =  $wiggle_data->{$evidence_type};
+  foreach my $evidence_type (keys %{$wiggle_data}){  
+    my $result_set =  $wiggle_data->{$evidence_type}; 
     my @features = @{$result_set->get_ResultFeatures_by_Slice($slice, undef, undef, $max_bins)};
+     
+    next unless scalar @features >> 0;
+    $data_flag = 1;
     my $wsize = $features[0]->window_size;
     my $start = 1 - $wsize;#Do this here so we minimize the number of calcs done in the loop
     my $end   = 0;
     my $score;
 
     @features   = sort { $a->scores->[0] <=> $b->scores->[0]  } @features;
-    my ($f_min_score, $f_max_score) = @{$features[0]->get_min_max_scores()};
+    my ($f_min_score, $f_max_score) = sort @{$features[0]->get_min_max_scores()};
+
     if ($wsize ==0){
       $f_min_score = $features[0]->scores->[0]; 
       $f_max_score = $features[-1]->scores->[0]; 
@@ -122,6 +150,7 @@ sub process_wiggle_data {
     }
     if ($f_min_score <= $min_score){ $min_score = $f_min_score; }
     if ($f_max_score >= $max_score){ $max_score = $f_max_score; }
+
     my $feature_name = $evidence_type;
     my @temp = split(/:/, $feature_name);
     $feature_name = $temp[1];
@@ -130,7 +159,7 @@ sub process_wiggle_data {
     push @all_features, \@features;
     push @colours, $colour; 
  }
-
+=cut
   if ($max_score <=10){ 
     if ($cell_line =~/IMR90/) {
       unless ($max_score >= 2){
@@ -139,8 +168,13 @@ sub process_wiggle_data {
     } else {
       $max_score = 10;
     }
-  }  
-  $self->draw_wiggle( \@all_features, $min_score, $max_score, \@colours, $labels );
+  } 
+=cut 
+  if ($data_flag == 1) {
+    $self->draw_wiggle( \@all_features, $min_score, $max_score, \@colours, $labels );
+  } else {
+    $self->display_error_message($cell_line, $type, 'wiggle');
+  }    
 }
 
 sub block_features_zmenu {
@@ -149,7 +183,8 @@ sub block_features_zmenu {
   my $pos = $f->slice->seq_region_name .":". ($offset + $f->start )."-".($f->end+$offset);
   my $feature_set = $f->feature_set->name;
   my $midpoint = $f->score || 'undetermined'; 
-  my $id = $self->{'config'}->core_objects->{'regulation'}->stable_id;
+#  my $id = $self->{'config'}->core_objects->regulation->stable_id if $self->{'config'}->core_objects->regulation;
+  my $id;
   my $href = $self->_url
   ({
     'action'  => 'FeatureEvidence',
@@ -164,7 +199,7 @@ sub block_features_zmenu {
 }
 
 sub get_colours {
-  my( $self, $f ) = @_;
+  my $self = shift;
   my %feature_colours;
 
   # First generate pool of colours we can draw from
@@ -228,52 +263,25 @@ sub get_colours {
 
 sub display_error_message {
   my ($self, $cell_line, $focus, $type) = @_;
-  my $config = $self->{'config'};
-  my $configured_tracks = $config->{'configured_tracks'};
+  my $Config = $self->{'config'}; 
+  my $number_available = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$focus}{'available'}};
+  my $number_configured  = scalar @{$Config->{'data_by_cell_line'}{$cell_line}{$focus}{'configured'}};
+  return unless $Config->get_parameter('opt_empty_tracks') eq 'yes'; 
+  my ($class,  $display_style); 
    
-  my $number_available = scalar @{$configured_tracks->{$cell_line}{'available'}{$focus}};
-  my $number_configured  = scalar @{$configured_tracks->{$cell_line}{'configured'}{$focus}};
-  return unless $config->get_parameter('opt_empty_tracks') eq 'yes'; 
-   
-  # For Peak focus tracks if no data display error message 
-  if ($focus eq 'focus'){
-    if ($type eq 'peaks'){
-      my $error_message = "No core evidence block features from $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
-      $self->draw_track_name('Core Evidence '.$cell_line , 'black', -118, 2, 1);
-      $self->display_no_data_error($error_message);
-    } elsif($type eq 'wiggle') {
-      return if $cell_line eq 'MultiCell'; 
-      if ($number_available >= 1){
-        my $error_message = "No core evidence supporting set features for $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
-        $self->draw_track_name('Core support '.$cell_line , 'black', -118, 2, 1);
-        $self->display_no_data_error($error_message);
-      } else {
-        # no data
-        return;
-      }      
-    }
-  } elsif ($focus eq 'non_focus'){ 
-    if ($type eq 'peaks'){  
-      if ($number_available >= 1){
-        my $error_message = "No evidence from other features for $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
-        $self->draw_track_name('Other Evidence '.$cell_line , 'black', -118, 2, 1);
-        $self->display_no_data_error($error_message);
-      } else {
-        # no data
-        return;
-      }
-    } elsif ($type eq 'wiggle'){
-      if ($number_available >= 1){
-        my $error_message = "No other evidence supporting set features for $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
-        $self->draw_track_name('Other support '.$cell_line , 'black', -118, 2, 1);
-        $self->display_no_data_error($error_message);
-      } else {
-        # no data 
-        return; 
-      }
-    }
-  }
+  if ($type eq 'peaks'){
+    $class = 'Evidence';
+    $display_style = 'block';
+  } elsif ($type eq 'wiggle'){
+    $class = 'Support';
+    $display_style = 'supporting set';
+  }  
 
+  my $error_message = "No $focus evidence $display_style features from $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
+  $self->draw_track_name( ucfirst($focus) . ' '.$class.' '.$cell_line , 'black', -118,  2, 1);
+  $self->display_no_data_error($error_message);
+    
   return 1;
 }
+
 1;
