@@ -36,7 +36,6 @@ sub init {
   );
 
   $self->add_tracks('other',
-    [ 'fg_wiggle',          '', 'fg_wiggle',          { display => 'tiling', strand => 'r', menu => 'no', colourset => 'feature_set' }],
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', tag => 0, strand => 'b', menu => 'no', colours => 'bisque' }],
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }]
@@ -81,5 +80,23 @@ sub init {
     [qw(regulatory_regions_funcgen_feature_set)],
     {qw(depth 25 height 6)}
   );
+
+  # Turn off cell line wiggle tracks
+  my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
+  foreach my $cell_line (@cell_lines){ 
+    $cell_line =~s/\:\d*//;
+    # Turn on core evidence track
+    $self->modify_configs(
+      [ 'reg_feats_core_' .$cell_line ],
+      { qw(display off)}
+    );
+    # Turn on supporting evidence track
+    $self->modify_configs(
+      [ 'reg_feats_other_' .$cell_line ],
+      {qw(display off)}
+    );
+  }
+
+
 }
 1;
