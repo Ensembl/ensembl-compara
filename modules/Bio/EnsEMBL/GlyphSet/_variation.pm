@@ -6,7 +6,11 @@ use Bio::EnsEMBL::Variation::VariationFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
-sub my_label { return 'Variations'; }
+sub my_label { 
+  my $self = shift;  
+  my $label = $self->{'my_config'}->key =~/somatic/ ?'Somatic Muttions' : 'Variations'; 
+  return $label; 
+}
 
 sub features {
   my $self         = shift;
@@ -44,25 +48,40 @@ sub fetch_features {
   my ($self) = @_;
 
   if (!$self->cache($self->{'my_config'}->key)) {
-    my $sources = $self->my_config('sources'); 
-       $sources = { map ($_, 1), @$sources } if $sources;
-    my $sets    = $self->my_config('sets');
-       $sets    = { map ($_, 1), @$sets } if $sets;
-    my %ct      = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
+    # different retrieval method for somatic mutations
+    if( $self->{'my_config'}->key =~/somatic/){
+      my @somatic_mutations;
+      if ($self->my_config('filter')){ 
+        @somatic_mutations = 
+        grep { $_->map_weight < 4 }
+        @{$self->{'container'}->get_all_somatic_VariationFeatures_with_annotation(undef, undef, $self->my_config('filter')) || []};
+
+      } else { 
+        @somatic_mutations = @{$self->{'container'}->get_all_somatic_VariationFeatures || []};
+      }
+      $self->cache($self->{'my_config'}->key, \@somatic_mutations);   
+    } else { # get standard variations
+
+      my $sources = $self->my_config('sources'); 
+        $sources = { map ($_, 1), @$sources } if $sources; 
+      my $sets    = $self->my_config('sets');
+        $sets    = { map ($_, 1), @$sets } if $sets;
+      my %ct      = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
     
-    ## Add a filtering step here
-    my @vari_features =
-      map  { $_->[1] }                                                ## Quick indexing schwartzian transform
-      sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
-      map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
-      grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
-      grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
-      grep { $_->map_weight < 4 }
-      @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};
+      ## Add a filtering step here
+      my @vari_features =
+        map  { $_->[1] }                                                ## Quick indexing schwartzian transform
+        sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
+        map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
+        grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
+        grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
+        grep { $_->map_weight < 4 }
+        @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};
       
-    $self->cache($self->{'my_config'}->key, \@vari_features);
+      $self->cache($self->{'my_config'}->key, \@vari_features);
+    }
   }
-  
+
   my $snps = $self->cache($self->{'my_config'}->key) || [];
 
   foreach my $f (@$snps) {
@@ -193,5 +212,6 @@ sub export_feature {
     values  => [ $variation_name, $feature->allele_string, $feature->var_class, $feature->display_consequence ]
   });
 }
+
 
 1;
