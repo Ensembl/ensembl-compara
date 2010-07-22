@@ -39,11 +39,14 @@ sub content {
     { key => 'source',  title => 'Source',                align => 'left', sort => 'html'    },
     { key => 'study',   title => $study,                  align => 'left', sort => 'html'    },
     { key => 'genes',   title => 'Associated Gene(s)',    align => 'left', sort => 'none'    },
-    { key => 'allele',  title => 'Strongest risk allele', align => 'left', sort => 'none'    },
     { key => 'variant', title => 'Associated variant',    align => 'left', sort => 'none'    },
-    { key => 'pvalue',  title => 'P value',               align => 'left', sort => 'numeric' }
   );
- 
+  unless( $object->Obj->is_somatic){
+    $table->add_columns(
+      { key => 'allele',  title => 'Strongest risk allele', align => 'left', sort => 'none'    },
+      { key => 'pvalue',  title => 'P value',               align => 'left', sort => 'numeric' }
+    );
+  } 
   $table->add_rows(@$_) for values %$table_rows;
   
   return $table->render;
