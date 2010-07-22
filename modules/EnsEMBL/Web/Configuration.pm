@@ -257,7 +257,7 @@ sub _user_context {
       $flag = 0;
     }
 
-    if ( $action eq 'Location/View' && $object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}){
+    if ( $action eq 'Location/View' && keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}){
       $self->page->$section->add_entry(
         type    => 'Config',
         id      => 'config_cell_page',
