@@ -551,7 +551,8 @@ sub dumpFamily {
   my $taxon_id = ($t_sth->fetchrow);
   return unless $taxon_id;
 
- ( my $species = $conf->{'species'} ) =~ s/_/ /g;
+  my $db_species = $conf->{'species'};
+  (my $species = $conf->{'species'} ) =~ s/_/ /g;
 
   my $sth = $conf->{'dbh_compara'}->prepare( "
 select f.stable_id,
@@ -567,7 +568,7 @@ select f.stable_id,
        sum(  source_name = 'Uniprot/SWISSPROT'                                   ) as uniprot_swissprot
   from family as f, family_member as fm, member as m, genome_db as gd
  where f.family_id=fm.family_id and fm.member_id=m.member_id and
-       gd.name = '$species'
+       gd.name = '$db_species'
  group by f.family_id 
 having ensembl_genes_species > 0"
   );
