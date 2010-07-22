@@ -56,7 +56,8 @@ sub content {
   );
 
   ## Are mappings available?
-  my $mappings = $object->species_defs->ASSEMBLY_MAPPINGS;
+  ## FIXME - reinstate auto-mapping option when we have a solution!
+  my $mappings; # = $object->species_defs->ASSEMBLY_MAPPINGS;
   my $current_assembly = $object->species_defs->get_config($current_species, 'ASSEMBLY_NAME');
   if ($mappings && ref($mappings) eq 'ARRAY') {
     my @values = {'name' => $current_assembly, 'value' => $current_assembly};
