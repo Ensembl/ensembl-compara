@@ -90,7 +90,7 @@ sub content {
  $html .= '<h2>Overlapping features</h2>';
  
  # structural variation table
- $html .= '<h3>Structural variations</h3>';
+ $html .= '<h3>Structural variants</h3>';
  $html .= $self->structural_variation_table($var_slice);
  
  # regulatory region table
