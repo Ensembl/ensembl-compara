@@ -14,9 +14,9 @@ GetOptions(
 my $self = bless {};
 
 Bio::EnsEMBL::Registry->load_registry_from_db
-  (-host=>"ens-staging", 
-   -user=>"ensro", 
-   -db_version=>'59');
+  (-host=>"ensembldb.ensembl.org", 
+   -user=>"anonymous", 
+   -db_version=>'58');
 Bio::EnsEMBL::Registry->no_version_check;
 my $human_gene_adaptor =
     Bio::EnsEMBL::Registry->get_adaptor
