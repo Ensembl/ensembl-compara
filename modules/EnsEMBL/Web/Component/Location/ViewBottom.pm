@@ -48,10 +48,12 @@ sub content {
   }
 
   # Add multicell configuration
-  my $web_slice_obj = $self->new_object( 'Slice', $slice, $object->__data );
-  my $cell_line_data = $web_slice_obj->get_cell_line_data($image_config);
-  $image_config->{'data_by_cell_line'} = $cell_line_data;
-   
+  if (keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}){
+    my $web_slice_obj = $self->new_object( 'Slice', $slice, $object->__data );
+    my $cell_line_data = $web_slice_obj->get_cell_line_data($image_config);
+    $image_config->{'data_by_cell_line'} = $cell_line_data;
+  } 
+
   # Lets see if we have any das sources
   $self->_attach_das($image_config);
   
