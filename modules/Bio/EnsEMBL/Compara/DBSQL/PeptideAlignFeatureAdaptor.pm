@@ -627,7 +627,8 @@ sub _create_PAF_from_BaseAlignFeature {
     if ($@) { throw("$1 is not an ENSEMBLPEP\n"); }
     $paf->query_member($query_member);
   } else {
-    my ($source_name, $stable_id) = split(/:/, $feature->seqname);
+    my ($source_name, @stable_id_array) = split(/:/, $feature->seqname);
+    my $stable_id = join(':', @stable_id_array);
     #printf("qseq: %s %s\n", $source_name, $stable_id);
     $paf->query_member($memberDBA->fetch_by_source_stable_id($source_name, $stable_id));
   }
@@ -639,13 +640,14 @@ sub _create_PAF_from_BaseAlignFeature {
     #printf("hseq: member_id = %d\n", $1);
     $paf->hit_member($memberDBA->fetch_by_dbID($1));
   } else {
-    my ($source_name, $stable_id) = split(/:/, $feature->hseqname);
+    my ($source_name, @stable_id_array) = split(/:/, $feature->hseqname);
+    my $stable_id = join(':', @stable_id_array);
     #printf("hseq: %s %s\n", $source_name, $stable_id);
     my $hit_member = $memberDBA->fetch_by_source_stable_id($source_name, $stable_id);
     if (defined($hit_member)) {
       $paf->hit_member($hit_member);
     } else {
-      die "couldnt find $stable_id\n";
+      throw "couldnt find $stable_id\n";
     }
   }
 
