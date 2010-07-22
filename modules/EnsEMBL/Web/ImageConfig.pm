@@ -1765,7 +1765,7 @@ sub add_variation_feature {
         $somatic_mutations->append($self->create_track('somatic_mutation_' . $k .'_'. $site, "$key_2 somatic mutations in $formatted_site", {
           db          => $key,
           glyphset    => '_variation',
-          caption     => $key_2 .' '. $site,
+          caption     => $key_2 .' '. $site .' tumours',
           filter      => $phenotype_id,
           strand      => 'r',
           depth       => 0.5,
