@@ -50,8 +50,8 @@ sub draw_features {
   }
   # Then draw wiggle features
   if ($wiggle) { 
-    if ($Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'} && $wiggle){  
-      my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}};
+    if ($Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'} && $wiggle){   
+      my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}}; 
       my $label = $type .' Support ' .$cell_line; 
       my @labels = (ucfirst($label));
       $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line, $type);
@@ -64,8 +64,11 @@ sub draw_features {
   # if we have drawn tracks for this cell line add a separating line    
   if ($drawn_data || $data->{$cell_line}{'reg_feature'} || ($Config->get_parameter('opt_empty_tracks') eq 'yes')){ 
     # do not draw on contig view
-    return if ($object_type eq 'Location' || $type eq 'core');
+    return if ($object_type eq 'Location');
     unless (exists $data->{$cell_line}->{'last_cell_line'}){
+      if ($type eq 'core') { 
+        return if $Config->get_node('functional')->get_node('reg_feats_other_'.$cell_line);
+      }
       $self->draw_separating_line;
     }
   }
@@ -110,9 +113,9 @@ sub draw_wiggle {
 
 sub process_wiggle_data {
   my ($self, $wiggle_data, $colour_keys, $labels, $cell_line, $type) = @_; 
-  my $slice = $self->{'container'};
+  my $slice = $self->{'container'}; 
 
-  my $max_bins = $self->image_width();
+  my $max_bins = $self->image_width(); 
   my ($min_score, $max_score) ==  (0, 0);
   my @all_features;
   my @colours;
@@ -182,7 +185,7 @@ sub block_features_zmenu {
   my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
   my $pos = $f->slice->seq_region_name .":". ($offset + $f->start )."-".($f->end+$offset);
   my $feature_set = $f->feature_set->name;
-  my $midpoint = $f->score || 'undetermined'; 
+  my $midpoint = $f->summit || 'undetermined'; 
 #  my $id = $self->{'config'}->core_objects->regulation->stable_id if $self->{'config'}->core_objects->regulation;
   my $id;
   my $href = $self->_url
