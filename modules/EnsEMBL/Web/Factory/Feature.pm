@@ -63,7 +63,7 @@ sub createObjects {
       ($subtype = $feature_type) =~ s/Xref_//;
       $feature_type = 'Xref';
     }
-    
+
     my $func  = "_create_$feature_type";
     $features = $self->can($func) ? $self->$func($db, $subtype) : [];
   }
@@ -91,20 +91,21 @@ sub _create_Phenotype {
   ### Args: db 
   ### Returns: hashref of API objects
   
-  my ($self, $db) = @_; 
-  my $slice;
-  my $features;
-  my $array = [];
-  my $id    = $self->param('id');
-  my @chrs  = @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES};
+  my ($self, $db) = @_;  
+  my $id    = $self->param('id');   
+  my $source = $self->param('source_name'); 
+  my $dbc = $self->hub->database('variation'); 
+  my $a = $dbc->get_adaptor('VariationFeature');  
+  my $variations;
 
-  foreach my $chr (@chrs) {
-    $slice = $self->hub->database('core')->get_adaptor('Slice')->fetch_by_region("chromosome", $chr);
-    my $array2 = $slice->get_all_VariationFeatures_with_annotation(undef, undef, $id);
+  if ($source eq 'COSMIC'){  
+    $variations = $a->fetch_all_somatic_with_annotation(undef, undef, $id);
+  } else {
+    $variations = $a->fetch_all_with_annotation(undef, undef, $id); 
+  } 
 
-    push @$array,@$array2 if @$array2;
-  }
-  return {'Variation' => EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$array)};
+  return unless $variations and scalar @$variations >> 0; 
+  return {'Variation' => EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations)};
 }
 
 sub _create_ProbeFeature {
