@@ -1580,34 +1580,47 @@ sub add_regulation_feature {
           renderers   => $render,
           cell_line   => $cell_line
         }));
-        # Add Core evidence tracks 
-        $cell_line_menu->append($self->create_track($key_2."_core_".$cell_line, "Core evidence " .$cell_line, {
-          db          => $key,
-          glyphset    => 'fg_multi_wiggle',
-          strand      => 'r',
-          depth       => $fg_data->{$key_2}{'depth'} || 0.5,
-          colourset   => 'feature_set',
-          description => $fg_data->{$key_2}{'description'},
-          display     => 'off',
-          menu        => 'no',
-          renderers   => [ 'off' => 'Off', 'compact' => 'Peaks', 'tiling' => 'Wiggle plot', 'tiling_feature' => 'Both'  ],         
-          cell_line   => $cell_line, 
-          type        => 'core',
-        }));
-        # Add 'Other' evidence tracks
-        $cell_line_menu->append($self->create_track($key_2."_other_".$cell_line, "Other evidence " .$cell_line, {
-          db          => $key,
-          glyphset    => 'fg_multi_wiggle',    
-          strand      => 'r',
-          depth       => $fg_data->{$key_2}{'depth'} || 0.5,
-          colourset   => 'feature_set',
-          description => $fg_data->{$key_2}{'description'},
-          display     => 'off',
-          menu        => 'no',
-          renderers   => [ 'off' => 'Off', 'compact' => 'Peaks', 'tiling' => 'Wiggle plot', 'tiling_feature' => 'Both' ],
-          cell_line   => $cell_line,
-          type        => 'other',
-        })); 
+    
+
+        ### Add tracks for cell_line peaks and wiggles only if we have data to display!
+        my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'}};
+        my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'}};
+        my @ftypes = keys %{$feature_type_ids{$cell_line}};  
+        my @focus_sets = keys %{$focus_set_ids{$cell_line}};  
+
+        if ( scalar @focus_sets <= scalar @ftypes) { 
+          # Add Core evidence tracks 
+          $cell_line_menu->append($self->create_track($key_2."_core_".$cell_line, "Core evidence " .$cell_line, {
+            db          => $key,
+            glyphset    => 'fg_multi_wiggle',
+            strand      => 'r',
+            depth       => $fg_data->{$key_2}{'depth'} || 0.5,
+            colourset   => 'feature_set',
+            description => $fg_data->{$key_2}{'description'},
+            display     => 'off',
+            menu        => 'no',
+            renderers   => [ 'off' => 'Off', 'compact' => 'Peaks', 'tiling' => 'Wiggle plot', 'tiling_feature' => 'Both'  ],         
+            cell_line   => $cell_line, 
+            type        => 'core',
+          }));
+        } 
+ 
+        if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell'){ 
+          # Add 'Other' evidence tracks
+          $cell_line_menu->append($self->create_track($key_2."_other_".$cell_line, "Other evidence " .$cell_line, {
+            db          => $key,
+            glyphset    => 'fg_multi_wiggle',    
+            strand      => 'r',
+            depth       => $fg_data->{$key_2}{'depth'} || 0.5,
+            colourset   => 'feature_set',
+            description => $fg_data->{$key_2}{'description'},
+            display     => 'off',
+            menu        => 'no',
+            renderers   => [ 'off' => 'Off', 'compact' => 'Peaks', 'tiling' => 'Wiggle plot', 'tiling_feature' => 'Both' ],
+            cell_line   => $cell_line,
+            type        => 'other',
+          })); 
+        }
         $menu->append($cell_line_menu);
       } 
     } else {
