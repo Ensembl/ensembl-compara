@@ -52,21 +52,6 @@ sub init {
   );
   
   $self->modify_configs(
-    [ 'ctcf_funcgen_Nessie_NG_STD_2 '],
-    { display => 'tiling' }
-  );
-  
-  $self->modify_configs(
-    [ 'ctcf_funcgen_blocks_Nessie_NG_STD_2' ],
-    { display => 'compact' }
-  );
-  
-  $self->modify_configs(
-    [ 'histone_modifications_funcgen_VSN_GLOG' ],
-    { display => 'tiling' }
-  );
-  
-  $self->modify_configs(
     [ 'transcript_core_ensembl' ],
     { display => 'transcript_nolabel' }
   );

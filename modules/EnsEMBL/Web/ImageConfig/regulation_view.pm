@@ -53,14 +53,6 @@ sub init {
     { display => 'off', menu => 'no' }
   );
   $self->modify_configs(
-    [qw(ctcf_funcgen_Nessie_NG_STD_2)],
-    {qw(menu yes)}
-  );
-  $self->modify_configs(
-    [qw(ctcf_funcgen_blocks_Nessie_NG_STD_2)],
-    {qw(menu yes)}
-  );
-  $self->modify_configs(
     [qw(regulatory_regions_funcgen_feature_set)],
     {qw(menu yes)}
   );
