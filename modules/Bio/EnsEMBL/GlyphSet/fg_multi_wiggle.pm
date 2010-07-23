@@ -162,17 +162,7 @@ sub process_wiggle_data {
     push @all_features, \@features;
     push @colours, $colour; 
  }
-=cut
-  if ($max_score <=10){ 
-    if ($cell_line =~/IMR90/) {
-      unless ($max_score >= 2){
-        $max_score =2;
-      }
-    } else {
-      $max_score = 10;
-    }
-  } 
-=cut 
+
   if ($data_flag == 1) {
     $self->draw_wiggle( \@all_features, $min_score, $max_score, \@colours, $labels );
   } else {
