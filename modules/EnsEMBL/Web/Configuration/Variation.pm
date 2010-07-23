@@ -42,22 +42,23 @@ sub populate_tree {
     [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
     { 'availability' => 'variation has_populations', 'concise' => $pop_long_name }
   );
-  
-  $self->create_node('Individual', 'Individual genotypes ([[counts::individuals]])',
-    [qw( summary EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
-    { 'availability' => 'variation has_individuals', 'concise' => 'Individual genotypes', 'no_menu_entry' => $self->object->Obj->is_somatic  }
-  );
-  
+  unless ($self->object->Obj->is_somatic){
+    $self->create_node('Individual', 'Individual genotypes ([[counts::individuals]])',
+      [qw( summary EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
+      { 'availability' => 'variation has_individuals', 'concise' => 'Individual genotypes'}
+    ); 
+  }
   $self->create_node('Context', 'Context',
     [qw( summary EnsEMBL::Web::Component::Variation::Context )],
     { 'availability' => 'variation', 'concise' => 'Context' }
   );
   
-  $self->create_node('HighLD', 'Linked variations',
-    [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
-    { 'availability' => 'variation has_ldpops variation has_individuals', 'concise' => 'Linked variations', 'no_menu_entry' => $self->object->Obj->is_somatic }
-  );
-  
+  unless ($self->object->Obj->is_somatic){
+   $self->create_node('HighLD', 'Linked variations',
+      [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
+      { 'availability' => 'variation has_ldpops variation has_individuals', 'concise' => 'Linked variations'}
+    );
+  }
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',
     [qw( summary EnsEMBL::Web::Component::Variation::Phenotype )],
     { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
