@@ -667,6 +667,22 @@ sub get_external_data {
   return \@data;
 }
 
+sub is_somatic_with_different_ref_base {
+  my $self = shift;
+  return unless $self->Obj->is_somatic;
+  # get slice for variation feature
+  my @vfs = @{$self->Obj->get_all_VariationFeatures};
+  my $feature_slice;
+  foreach my $vf (@vfs){
+    if ($vf->dbID == $self->hub->core_param('vf')){
+      $feature_slice = $vf->feature_Slice;
+    }
+  }
+  return unless $feature_slice;
+  my $ref_base = $feature_slice->seq();
+  my ($a1, $a2) = split(//,$self->alleles);
+  return  $ref_base ne $a1 ? 1 : undef;
+}
 # Population genotype and allele frequency table calls ----------------
 
 sub pop_genotype_obj {
