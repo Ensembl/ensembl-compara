@@ -1534,24 +1534,20 @@ sub add_regulation_feature {
   my $fg_data           = \%all_data;
   
   foreach my $key_2 (sort @all_keys) { 
-    my $k = $fg_data->{$key_2}{'type'} || 'other';
-    
-    next if $k eq 'other';
+    my $k = $fg_data->{$key_2}{'type'} || 'other';    
+    next if $k eq 'other' || $k eq 'ctcf' || $k =~/histone/;
     
     my $render      = [ 'off' => 'Off', 'normal' => 'Normal' ];
     my $legend_flag = 0; 
-    my $wiggle_flag = 0;
     my $cisred_flag = 0;
 
     if ($fg_data->{$key_2}{'renderers'}) {
       my %renderers = %{$fg_data->{$key_2}{'renderers'}};
       my @temp;
       
-      foreach (sort keys %renderers){
-
-        my $value = $renderers{$_};         
+      foreach (sort keys %renderers){      
+        my $value = $renderers{$_};          
         push @temp, $_ => $value; 
-        $wiggle_flag = 1 if /tiling/ && $fg_data->{$key_2}{'type'} !~ /histone/; 
       }
       
       $render = \@temp;
@@ -1628,7 +1624,7 @@ sub add_regulation_feature {
         renderers   => $render, 
       }));
     } 
-    
+=cut    
     if ($wiggle_flag) {
       $menu->append($self->create_track($k . '_' . $key .  '_blocks_' . $key_2, ($fg_data->{$key_2}{'name'} || $fg_data->{$key_2}{'logic_names'}) . ' peaks', {
         db          => $key,
@@ -1643,7 +1639,7 @@ sub add_regulation_feature {
         renderers   => [ 'off' => 'Off', 'compact' => 'Normal' ],
       }));
     }
-    
+=cut    
     $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $legend_flag;
     
     if ($cisred_flag) {
