@@ -147,6 +147,20 @@ sub _info_panel {
   );
 }
 
+sub config_msg {
+  my $self = shift;
+  my $param = { 'species'   => $self->model->hub->species,
+                'type'      => 'Config',
+                'action'    => $self->model->hub->type,
+                'function'  => 'ExternalData',
+                'config'    => '_page'
+              };
+  my $url = $self->hub->url($param);
+  return qq(Click '<a href="$url" class="modal_link">configure this page</a>' 
+            to change the sources of external annotations that are available 
+            in the External Data menu.);
+}
+
 sub ajax_url {
   my ($self, $function_name, $no_query_string) = @_;
   

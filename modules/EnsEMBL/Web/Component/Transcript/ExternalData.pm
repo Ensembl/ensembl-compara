@@ -26,8 +26,10 @@ sub content {
     return $self->_error( 'No protein product', $msg, '100%' );
   }
   
-  my $msg = "Click 'configure this page' to change the sources of external ".
-             "annotations that are available in the External Data menu.";
+  my $msg = $self->config_msg;
+
+  #my $msg = "Click 'configure this page' to change the sources of external ".
+  #           "annotations that are available in the External Data menu.";
   return $self->_info('Info',        $msg, '100%');
 }
 

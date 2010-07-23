@@ -18,8 +18,7 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $msg = "Click 'configure this page' to change the sources of external ".
-             "annotations that are available in the External Data menu.";
+  my $msg = $self->config_msg; 
   return $self->_info('Info', $msg, '100%');
   
 }
