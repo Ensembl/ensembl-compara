@@ -364,6 +364,7 @@ sub get_cell_line_data {
     $cell_line =~s/\:\d*//;    
     foreach my $type (@types){
       my $display;
+      next unless $image_config->get_node('functional')->get_node('reg_feats_'.$type.'_'.$cell_line);
       if ( $image_config->isa('EnsEMBL::Web::ImageConfig::reg_detail_by_cell_line') ){
         $display = 'tiling_feature';
       } else {
@@ -423,13 +424,13 @@ sub get_data {
   my $fset_a = $fg_db->get_FeatureSetAdaptor;
   my $dset_a = $fg_db->get_DataSetAdaptor;
   
-  foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){
+  foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){ 
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
     my $cell_line = $regf_data_set->cell_type->name;
     next unless exists $data->{$cell_line};
 
-    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){
-      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name;
+    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){   
+      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name; 
       my $name = 'opt_cft_' .$unique_feature_set_id;
       my $type = 'other';
       if  ($reg_attr_fset->is_focus_set){
@@ -440,18 +441,18 @@ sub get_data {
         my $display_style = $data->{$cell_line}{$type}{'renderer'};
         if ($display_style  eq 'compact' || $display_style eq 'tiling_feature'){
           my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
-          if (scalar @block_features >> 0){
+          if (scalar @block_features >> 0){ 
             $data->{$cell_line}{$type}{'block_features'}{$unique_feature_set_id} = \@block_features;
           }
         } if ($display_style  eq 'tiling' || $display_style eq 'tiling_feature'){
-          my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
+          my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset); 
           my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
 
           if(scalar(@sset) >> 1){#There should only be one
             throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);    
           }
           my $reg_attr_rset = $sset[0];
-          unless (scalar @sset  == 0){ 
+          unless (scalar @sset  == 0){  
             $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset;
           }
         }
