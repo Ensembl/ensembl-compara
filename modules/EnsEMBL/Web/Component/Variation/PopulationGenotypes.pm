@@ -77,12 +77,13 @@ sub format_frequencies {
       $pop_row{'pop'}  = _pop_url($object, $freq_data{$pop_id}{$ssid}{'pop_info'}{'Name'}, $freq_data{$pop_id}{$ssid}{'pop_info'}{'PopLink'}) . '&nbsp;';
       $pop_row{'Size'} = $freq_data{$pop_id}{$ssid}{'pop_info'}{'Size'};
       
-      # Descriptions too long. Only display first sentence
-      (my $description = $freq_data{$pop_id}{$ssid}{'pop_info'}{'Description'}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
-      $description =~ s/<.*?>//g;
-      $description = substr($description, 0, 220) . '...' if length $description > 220;
-      
-      $pop_row{'Description'} = sprintf '<small>%s</small>', $description || '-';
+      # wm2 - REMOVED DESCRIPTIONS AS THEY LOOKED BAD - CAN STILL VIEW BY CLICKING POP NAME TO LINK OUT TO dbSNP
+      ## Descriptions too long. Only display first sentence
+      #(my $description = $freq_data{$pop_id}{$ssid}{'pop_info'}{'Description'}) =~ s/International HapMap project.*/International HapMap project\.\.\./;
+      #$description =~ s/<.*?>//g;
+      #$description = substr($description, 0, 220) . '...' if length $description > 220;
+      #
+      #$pop_row{'Description'} = sprintf '<small>%s</small>', $description || '-';
       
       # Super and sub populations ----------------------------------------------
       my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{'pop_info'}{'Super-Population'});
