@@ -1558,14 +1558,21 @@ sub add_regulation_feature {
   
     if ($key_2 =~/reg_feats/){
       my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-      foreach my $cell_line ( @cell_lines){
-        $cell_line =~s/\:\w*//;
+      # Add MultiCell first
+      unshift @cell_lines, 'AAAMultiCell';   
+      my $multi_flag;
+
+      foreach my $cell_line (sort  @cell_lines){ 
+        $cell_line =~s/AAA|\:\w*//g;
+        return if $cell_line eq 'MultiCell' && $multi_flag;
+
         my $track_key = $key_2. '_' .$cell_line;  
         my $display = 'off';
         my $name = $fg_data->{$key_2}{'name'} .' '. $cell_line;
         if ($cell_line =~/MultiCell/){  
           $display = $fg_data->{$key_2}{'display'} || 'off';
           $name = $fg_data->{$key_2}{'name'}; 
+          $multi_flag =1;
         }
         my $cell_line_menu = $self->create_submenu('regulatory_features' .$cell_line, $cell_line .' tracks', {submenu => 1} );
         $cell_line_menu->append($self->create_track($track_key, $name || $fg_data->{$key_2}{'logic_names'}, {
@@ -1587,10 +1594,11 @@ sub add_regulation_feature {
         my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'}};
         my @ftypes = keys %{$feature_type_ids{$cell_line}};  
         my @focus_sets = keys %{$focus_set_ids{$cell_line}};  
-
+        my $config_link = ', use the "Configure Cell/Tissue" tab to select features sets to display.';
+        
         if ( scalar @focus_sets <= scalar @ftypes) { 
           # Add Core evidence tracks 
-          $cell_line_menu->append($self->create_track($key_2."_core_".$cell_line, "Core evidence " .$cell_line, {
+          $cell_line_menu->append($self->create_track($key_2."_core_".$cell_line, "Core evidence " .$cell_line . $config_link, {
             db          => $key,
             glyphset    => 'fg_multi_wiggle',
             strand      => 'r',
@@ -1607,7 +1615,7 @@ sub add_regulation_feature {
  
         if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell'){ 
           # Add 'Other' evidence tracks
-          $cell_line_menu->append($self->create_track($key_2."_other_".$cell_line, "Other evidence " .$cell_line, {
+          $cell_line_menu->append($self->create_track($key_2."_other_".$cell_line, "Other evidence " .$cell_line . $config_link, {
             db          => $key,
             glyphset    => 'fg_multi_wiggle',    
             strand      => 'r',
