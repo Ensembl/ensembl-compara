@@ -87,9 +87,6 @@ sub content {
     }
   
     if(defined($sa)) {
-      # return if somatic mutation with mutation ref base different to ensembl ref base 
-      $object->is_somatic_with_different_ref_base;
-    
       # get vf object
       my $vf;
     
