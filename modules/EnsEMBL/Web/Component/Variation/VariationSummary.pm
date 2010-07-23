@@ -74,90 +74,95 @@ sub content {
   
 
   ## HGVS NOTATIONS
-  my $sa = $object->vari->adaptor->db->dnadb->get_SliceAdaptor();
+  # skip if somatic mutation with mutation ref base different to ensembl ref base
+  unless (  $object->is_somatic_with_different_ref_base){
+    my $sa = $object->vari->adaptor->db->dnadb->get_SliceAdaptor();
   
-  my %mappings = %{ $object->variation_feature_mapping }; 
-  my $loc;
-  if( keys %mappings == 1 ) {
-    ($loc) = values %mappings;
-  } else { 
-    $loc = $mappings{$object->param('vf')};
-  }
-  
-  if(defined($sa)) {
-    
-    # get vf object
-    my $vf;
-    
-    foreach my $test_vf(@{$object->vari->get_all_VariationFeatures()}) {
-      if(
-        $test_vf->seq_region_start == $loc->{start}
-        && $test_vf->seq_region_end == $loc->{end}
-        && $test_vf->seq_region_name eq $loc->{Chr}
-      ) {
-        $vf = $test_vf;
-      }
+    my %mappings = %{ $object->variation_feature_mapping }; 
+    my $loc;
+    if( keys %mappings == 1 ) {
+      ($loc) = values %mappings;
+    } else { 
+      $loc = $mappings{$object->param('vf')};
     }
+  
+    if(defined($sa)) {
+      # return if somatic mutation with mutation ref base different to ensembl ref base 
+      $object->is_somatic_with_different_ref_base;
     
-    if(defined($vf)) {
-      my (%cdna_hgvs, %pep_hgvs, %by_allele, $hgvs_html, $prev_trans);
-      
-      # go via transcript variations (should be faster than slice)
-      foreach my $tv(@{$vf->get_all_TranscriptVariations()}) {
-        next unless defined($tv->{'_transcript_stable_id'});
-        next if $tv->{'_transcript_stable_id'} eq $prev_trans;
-        $prev_trans = $tv->{'_transcript_stable_id'};
-        
-        # get HGVS notations
-        %cdna_hgvs = %{$vf->get_all_hgvs_notations($tv->transcript, 'c')};
-        %pep_hgvs = %{$vf->get_all_hgvs_notations($tv->transcript, 'p')};
-        
-        # filter peptide ones for synonymous changes
-        map {delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/} keys %pep_hgvs;
-        
-        # group by allele
-        push @{$by_allele{$_}}, $cdna_hgvs{$_} foreach keys %cdna_hgvs;
-        push @{$by_allele{$_}}, $pep_hgvs{$_} foreach keys %pep_hgvs;
+      # get vf object
+      my $vf;
+    
+      foreach my $test_vf(@{$object->vari->get_all_VariationFeatures()}) {
+        if(
+          $test_vf->seq_region_start == $loc->{start}
+          && $test_vf->seq_region_end == $loc->{end}
+          && $test_vf->seq_region_name eq $loc->{Chr}
+        ) {
+          $vf = $test_vf;
+        }
       }
-        
-      # count alleles
-      my $allele_count = scalar keys %by_allele;
+    
+      if(defined($vf)) {
+        my (%cdna_hgvs, %pep_hgvs, %by_allele, $hgvs_html, $prev_trans);
       
-      # make HTML
-      my @temp = ();
-      foreach my $a(keys %by_allele) {
-        if($allele_count > 1) {
-          push @temp, (scalar @temp ? "<br/>" : "")."<b>Variant allele $a</b>";
+        # go via transcript variations (should be faster than slice)
+        foreach my $tv(@{$vf->get_all_TranscriptVariations()}) {
+          next unless defined($tv->{'_transcript_stable_id'});
+          next if $tv->{'_transcript_stable_id'} eq $prev_trans;
+          $prev_trans = $tv->{'_transcript_stable_id'};
+        
+          # get HGVS notations
+          %cdna_hgvs = %{$vf->get_all_hgvs_notations($tv->transcript, 'c')};
+          %pep_hgvs = %{$vf->get_all_hgvs_notations($tv->transcript, 'p')};
+        
+          # filter peptide ones for synonymous changes
+          map {delete $pep_hgvs{$_} if $pep_hgvs{$_} =~ /p\.\=/} keys %pep_hgvs;
+        
+          # group by allele
+          push @{$by_allele{$_}}, $cdna_hgvs{$_} foreach keys %cdna_hgvs;
+          push @{$by_allele{$_}}, $pep_hgvs{$_} foreach keys %pep_hgvs;
         }
         
-        foreach my $h(@{$by_allele{$a}}) {
-          $h =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
-            type => 'Transcript',
-            action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
-            db     => 'core',
-            r      => undef,
-            t      => $&,
-            v      => $object->name,
-            source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
+        # count alleles
+        my $allele_count = scalar keys %by_allele;
       
-          $h =~ s/ENS(...)?P\d+/'<a href="'.$object->_url({
-            type => 'Transcript',
-            action => 'ProtVariations',
-            db     => 'core',
-            r      => undef,
-            p      => $&,
-            v      => $object->name,
-            source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
+        # make HTML
+        my @temp = ();
+        foreach my $a(keys %by_allele) {
+          if($allele_count > 1) {
+            push @temp, (scalar @temp ? "<br/>" : "")."<b>Variant allele $a</b>";
+          }
+        
+          foreach my $h(@{$by_allele{$a}}) {
+            $h =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
+              type => 'Transcript',
+              action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
+              db     => 'core',
+              r      => undef,
+              t      => $&,
+              v      => $object->name,
+              source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
+      
+            $h =~ s/ENS(...)?P\d+/'<a href="'.$object->_url({
+              type => 'Transcript',
+              action => 'ProtVariations',
+              db     => 'core',
+              r      => undef,
+              p      => $&,
+              v      => $object->name,
+              source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
           
-          push @temp, $h;
+            push @temp, $h;
+          }
         }
+      
+        $hgvs_html = join '<br/>', @temp;
+      
+        $hgvs_html ||= "<h5>None</h5>";
+      
+        $html .= qq{<dl class="summary"><dt>HGVS names</dt><dd>$hgvs_html</dd></dl>};
       }
-      
-      $hgvs_html = join '<br/>', @temp;
-      
-      $hgvs_html ||= "<h5>None</h5>";
-      
-      $html .= qq{<dl class="summary"><dt>HGVS names</dt><dd>$hgvs_html</dd></dl>};
     }
   }
 
