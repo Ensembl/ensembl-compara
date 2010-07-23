@@ -102,10 +102,14 @@ sub variation_table {
         source => $snp->source 
       });
       
+      # break up allele string if too long
+      my $as = $snp->allele_string;
+      $as =~ s/(.{30})/$1\n/g;
+      
       my $row = {
         ID        => qq{<a href="$url">$variation_name</a>},
         class     => $var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $var_class,
-        Alleles   => $snp->allele_string,
+        Alleles   => qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},#$snp->allele_string,
         Ambiguity => $snp->ambig_code,
         #HGVS      => $self->get_hgvs($snp, $transcript->Obj, $gene) || '-',
         status    => (join(', ',  @$validation) || '-'),
