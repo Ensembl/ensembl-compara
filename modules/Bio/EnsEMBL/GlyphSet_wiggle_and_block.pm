@@ -95,7 +95,7 @@ sub draw_block_features {
   foreach my $f (@$features ) {
     my $start = $f->start; 
     my $end   = $f->end;
-    my $midpoint =  $f->score;
+    my $midpoint =  $f->summit;
     $start = 1 if $start < 1; 
     $end   = $length if $end > $length;  
     my $y = $self->_offset; 
