@@ -58,6 +58,7 @@ sub _init {
   $self->push($gline);
   
   my @segments = @{$Container->project('seqlevel')||[]};
+
   my @features;
   my @coord_systems;
   
@@ -73,8 +74,8 @@ sub _init {
     my $start      = $segment->from_start;
     my $end        = $segment->from_end;
     my $ctg_slice  = $segment->to_Slice;
-    
-    my $feature  = { 
+
+    my $feature  = {
       'start' => $start, 
       'end'   => $end, 
       'name'  => $ctg_slice->seq_region_name,
@@ -111,7 +112,7 @@ sub _init {
     
     push @features, $feature;
   }
-  
+
   if (@features) {
     $self->_init_non_assembled_contig($h, $box_h, $fontname, $fontsize, \@features);
   } else {
@@ -155,7 +156,7 @@ sub _init_non_assembled_contig {
 
     my $region = $tile->{'name'};
     my $species = $self->species;
-    
+
     my $dets = {
       'x'         => $rstart - 1,
       'y'         => 0,
@@ -174,36 +175,13 @@ sub _init_non_assembled_contig {
         'region'  => $region,
         'r'       => undef
       });
-      
+     
       $dets->{'href'} = $url;
     }
     
     my $glyph = $self->Rect($dets);
 
     push @{$colours[$i]}, shift @{@colours[$i]};
-    
-
-    ## This section will be usefull when we come to put vega on new web code, when the
-    ## time comes put it in vega plugin and remove from here
-    #
-    # my $species_sr7= $self->species_defs->SPECIES_COMMON_NAME;
-    # if($species_sr7 eq 'Zebrafish'){
-    #   if($region=~/(.+\.\d+)\.\d+\.\d+/){
-    #     $region= $1;
-    #   }
-    # }
-    # (my $T=ucfirst($_))=~s/contig/Contig/g;
-    #
-    ## add links to Ensembl and FPC (vega danio)
-    # if( /clone/) {
-    #   my $ens_URL = $self->ID_URL('EGB_ENSEMBL', $name);
-    #   $glyph->{'zmenu'}{"$POS:View in Ensembl"} = $ens_URL if $ens_URL;
-    #   $POS++;
-    #   my $internal_clone_name = $tile->{'internal_name'};
-    #   my $fpc_URL = $self->ID_URL('FPC',$internal_clone_name); 
-    #   $glyph->{'zmenu'}{"$POS:View in WebFPC"} = $fpc_URL if $fpc_URL && $internal_clone_name;
-    #   $POS++;
-    # }
 
     $self->push($glyph);
 
