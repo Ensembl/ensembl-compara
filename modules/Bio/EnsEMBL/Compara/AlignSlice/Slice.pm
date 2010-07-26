@@ -202,7 +202,7 @@ sub display_Slice_name {
     $self->{display_Slice_name} = $display_slice_name;
   }
 
-  return $self->{display_Slice_name};
+  return ucfirst $self->{display_Slice_name};
 }
 
 
