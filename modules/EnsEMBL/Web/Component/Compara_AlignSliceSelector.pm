@@ -13,36 +13,28 @@ sub _init {
 }
 
 sub content {
-  my $self    = shift;
-  my $cdb     = shift || $self->object->param('cdb') || 'compara';
-  my $object  = $self->object;
-  my $db_hash = $object->species_defs->multi_hash;
-  my $params  = $object->can('multi_params') ? $object->multi_params : {};
-  my $url     = $object->_url({ %$params, align => undef}, 1);
-  my $extra_inputs;
-  
-  foreach (sort keys %{$url->[1]||{}}) {
-    $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_});
-  }
-
-  my $align = $object->param('align');
-  my $hash = $cdb =~ /pan_ensembl/ ? $db_hash->{'DATABASE_COMPARA_PAN_ENSEMBL'}{'ALIGNMENTS'}||{} : $db_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}||{}; # Get the compara database hash
+  my $self         = shift;
+  my $cdb          = shift || $self->object->param('cdb') || 'compara';
+  my $object       = $self->object;
+  my $db_hash      = $object->species_defs->multi_hash;
+  my $params       = $object->can('multi_params') ? $object->multi_params : {};
+  my $align        = $object->param('align');
+  my $url          = $object->_url({ %$params, align => undef }, 1);
+  my $extra_inputs = join '', map qq{<input type="hidden" name="$_" value="$url->[1]{$_}" />}, sort keys %{$url->[1] || {}};
+  my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
   my $species = $object->species;
   my $options = '<option value="">-- Select an alignment --</option>';
   
-  foreach my $row_key (grep { $hash->{$_}{'class'} !~ /pairwise/ } keys %$hash) {
-    my $row = $hash->{$row_key};
-    
-    next unless $row->{'species'}->{$species};
-    
-    $row->{'name'} =~ s/_/ /g;
+  # Order by number of species (name is in the form "6 primates EPO"
+  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
+    (my $name = $row->{'name'}) =~ s/_/ /g;
     
     $options .= sprintf(
       '<option value="%d"%s>%s</option>',
-      $row_key,
-      $row_key eq $align ? ' selected="selected"' : '',
-      encode_entities($row->{'name'})
+      $row->{'id'},
+      $row->{'id'} == $align ? ' selected="selected"' : '',
+      encode_entities($name)
     );
   }
   
@@ -52,10 +44,10 @@ sub content {
 
     my %species_hash;
     
-    foreach my $i (grep { $hash->{$_}{'class'} =~ /pairwise/ } keys %$hash) {
-      foreach (keys %{$hash->{$i}->{'species'}}) {
-        if ($hash->{$i}->{'species'}->{$species} && $_ ne $species) {
-          my $type = lc $hash->{$i}->{'type'};
+    foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
+      foreach (keys %{$alignments->{$i}->{'species'}}) {
+        if ($alignments->{$i}->{'species'}->{$species} && $_ ne $species) {
+          my $type = lc $alignments->{$i}->{'type'};
           
           $type =~ s/_net//;
           $type =~ s/_/ /g;
