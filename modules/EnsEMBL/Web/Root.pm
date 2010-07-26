@@ -323,6 +323,7 @@ sub seq_region_sort {
 
 sub help_feedback {
   my ($self, $style, $id, %args) = @_;
+  return ''; ## FIXME - this needs to be reenabled when we have time
   
   my $html = qq{
     <div style="text-align:right;margin-right:2em;">
