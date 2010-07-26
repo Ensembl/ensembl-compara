@@ -1,8 +1,7 @@
 package EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+
 use EnsEMBL::Web::Constants;
 
 sub init {
@@ -90,19 +89,16 @@ sub form {
   my $species_defs = $view_config->species_defs;
   my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'} || {};
   
-  # From release to release the alignment ids change so we need to check that the passed id is still valid.
-  foreach my $row_key (grep { $alignments->{$_}{'class'} !~ /pairwise/ } keys %$alignments) {
-    my $row = $alignments->{$row_key};
+  # Order by number of species (name is in the form "6 primates EPO"
+  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
     my $sp = $row->{'species'};
-    
-    next unless $sp->{$species};
     
     $sp->{$_} = $species_defs->species_label($_) for keys %$sp;
     
-    $view_config->add_fieldset(ucfirst "$row->{'name'}");
+    $view_config->add_fieldset($row->{'name'});
     
     foreach (sort { ($sp->{$a} =~ /^<.*?>(.+)/ ? $1 : $sp->{$a}) cmp ($sp->{$b} =~ /^<.*?>(.+)/ ? $1 : $sp->{$b}) } keys %$sp) {
-      my $name = sprintf 'species_%s_%s', $row_key, lc;
+      my $name = sprintf 'species_%s_%s', $row->{'id'}, lc;
       
       if ($_ eq $species) {
         $view_config->add_form_element({
@@ -112,7 +108,7 @@ sub form {
       } else {
         $view_config->add_form_element({
           type  => 'CheckBox', 
-          label => $row->{'species'}->{$_},
+          label => $sp->{$_},
           name  => $name,
           value => 'yes',
           raw   => 1
