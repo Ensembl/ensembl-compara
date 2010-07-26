@@ -21,7 +21,7 @@ sub _content {
   my $object = $self->object;
   my @v       = $hub->param('v');
   my @vf      = $hub->param('vf');
-  my $lrg     = $hub->param('lrg')
+  my $lrg     = $hub->param('lrg');
   my $adaptor = $hub->database('variation')->get_VariationAdaptor;
   my $lrg_slice;
   
