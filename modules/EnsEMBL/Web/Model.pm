@@ -96,7 +96,7 @@ sub create_objects {
   my ($self, $type, $request) = @_;
   
   my $hub   = $self->hub;
-  my $url   = $hub->url;
+  my $url   = $hub->url($hub->multi_params);
   my $input = $hub->input;
   $type   ||= $hub->factorytype;
   
@@ -116,12 +116,15 @@ sub create_objects {
   $factory     = $new_factory if $new_factory;
   
   foreach (@{$self->object_params}) {
-    next if $_->[0] eq $type; # This factory already exists, so skip it
-    next unless $input->param($_->[1]) && !$self->object($_->[0]);
+    last if $hub->get_problem_type('redirect');                    # Don't continue if a redirect has been requested
+    next if $_->[0] eq $type;                                      # This factory already exists, so skip it
+    next unless $input->param($_->[1]) && !$self->object($_->[0]); # This parameter doesn't exist in the URL, or the object has already been created, so skip it
     
     $new_factory = $self->create_factory($_->[0], $factory->__data) || undef;
     $factory     = $new_factory if $new_factory;
   }
+  
+  $hub->clear_problem_type('fatal') if $type eq 'MultipleLocation' && $self->object('Location');
   
   if ($request eq 'page') {
     my ($redirect) = $hub->get_problem_type('redirect');
@@ -129,9 +132,9 @@ sub create_objects {
     
     if ($redirect) {
       $new_url = $redirect->name;
-    } elsif (!$hub->has_fatal_problem) { # If there's a fatal problem, we want to show it, not redirect 
+    } elsif (!$hub->has_fatal_problem) { # If there's a fatal problem, we want to show it, not redirect
       $hub->_set_core_params;
-      $new_url = $hub->url;
+      $new_url = $hub->url($hub->multi_params);
     }
     
     if ($new_url && $new_url ne $url) {
