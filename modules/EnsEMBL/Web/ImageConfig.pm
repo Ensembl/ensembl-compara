@@ -40,33 +40,33 @@ our $MEMD = EnsEMBL::Web::Cache->new;
 # (1) - the adaptor (i.e. an EnsEMBL::Web::Session object)
 # (2) - the species to use (defaults to the current species)
 
-  sub new {
-    my $class   = shift;
-    my $adaptor = shift;
-    my $species = @_ ? shift : ($ENV{'ENSEMBL_SPECIES'} || '');
-    my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
-    my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
-    
-    my $self = {
-      _colourmap   => $adaptor->colourmap,
-      _font_face   => $style->{'GRAPHIC_FONT'} || 'Arial',
-      _font_size   => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
-      _texthelper  => new Sanger::Graphics::TextHelper,
-      _db          => $adaptor->get_adaptor,
-      type         => $type,
-      species      => $species,
-      species_defs => $adaptor->get_species_defs,
-      exturl       => $adaptor->exturl,
-      general      => {},
-      user         => {},
-      _useradded   => {}, # contains list of added features
-      _r           => undef,
-      no_load      => undef,
-      storable     => 1,
-      altered      => 0,
-      _core        => undef,
-      _tree        => EnsEMBL::Web::OrderedTree->new,
-      _parameters  => {},
+sub new {
+  my $class   = shift;
+  my $adaptor = shift;
+  my $species = @_ ? shift : ($ENV{'ENSEMBL_SPECIES'} || '');
+  my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
+  my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
+  
+  my $self = {
+    _colourmap   => $adaptor->colourmap,
+    _font_face   => $style->{'GRAPHIC_FONT'} || 'Arial',
+    _font_size   => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
+    _texthelper  => new Sanger::Graphics::TextHelper,
+    _db          => $adaptor->get_adaptor,
+    type         => $type,
+    species      => $species,
+    species_defs => $adaptor->get_species_defs,
+    exturl       => $adaptor->exturl,
+    general      => {},
+    user         => {},
+    _useradded   => {}, # contains list of added features
+    _r           => undef,
+    no_load      => undef,
+    storable     => 1,
+    altered      => 0,
+    _core        => undef,
+    _tree        => EnsEMBL::Web::OrderedTree->new,
+    _parameters  => {},
   };
 
   bless $self, $class;
@@ -1590,8 +1590,8 @@ sub add_regulation_feature {
     
 
         ### Add tracks for cell_line peaks and wiggles only if we have data to display!
-        my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'}};
-        my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'}};
+        my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'} || {}};
+        my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'} || {}};
         my @ftypes = keys %{$feature_type_ids{$cell_line}};  
         my @focus_sets = keys %{$focus_set_ids{$cell_line}};  
         my $config_link = ', use the "Configure Cell/Tissue" tab to select features sets to display.';
@@ -1773,7 +1773,7 @@ sub add_variation_feature {
       $somatic_flag = 1;
       
       ## Add tracks for each tumour site
-      my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2}}; 
+      my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}}; 
       foreach my $description (sort  keys %tumour_sites){
         my $phenotype_id = $tumour_sites{$description}; 
         my ($source, $type, $site ) = split(/\:/, $description);
