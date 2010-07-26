@@ -24,7 +24,7 @@ sub content {
     $html .=  qq( <dt>No Evidence</dt><dd>);
     #show message for transcripts with no evidence
     if ($object->type =~ /otter/ || $object->db_type eq 'vega' ){
-      $html .= qq(<p>Although this Vega Havana transcript has been manually annotated and it's structure is supported by experimental evidence, this evidence is currently missing from the database. We are adding the evidence to the database as time permits</p>);
+      $html .= qq(<p>Although this Vega Havana transcript has been manually annotated and its structure is supported by experimental evidence, this evidence is currently missing from the database. We are adding the evidence to the database as time permits</p>);
     }
     else {
       $html .= qq(<p>There is no supporting evidence available for this transcript</p>);
@@ -89,6 +89,18 @@ sub _content {
     [$wuc->get_track_key( 'TSE_transcript', $object )],
     {qw(display supporting_evidence_transcript strand f)}  ## show on the forward strand only
   );
+
+  #turn off exon support tracks for vega genes - always empty
+  if ($ln =~ /otter/) {
+    $wuc->modify_configs(
+      [ 'SE_generic_match_label' ],
+      { qw(display off)}
+    );
+    $wuc->modify_configs(
+      [ 'SE_generic_match' ],
+      { qw(display off)}
+    );
+  }
 
   #info needed to get at web_data
   my $db           = $object->get_db();
@@ -206,6 +218,7 @@ sub _content {
   foreach my $evi (@{$transcript->get_all_supporting_features}) {
     my $coords;
     my $hit_name = $evi->hseqname;
+
     $t_ids{$hit_name}++;
 
     #don't store any transcript_supporting_features for a vega gene
@@ -239,7 +252,7 @@ sub _content {
           }
         }
       }
-      
+
       #is the first feature beyond the end of the transcript
       if ($first_feature){
         if ($transcript->strand == 1) {
@@ -254,13 +267,13 @@ sub _content {
         }
         $first_feature = 0; 
       }
-      
+
       #is the last feature beyond the end of the transcript
       if ($c == scalar(@features)-1) {
         if ($transcript->strand == 1) {
           if ($feature->start > $exons->[-1]->seq_region_end) {
             $munged_coords->[0]{'rh-ext'} = $feature->start - $exons->[-1]->seq_region_end;
-          }    
+          }
         }
         else {
           if ($feature->end < $exons->[-1]->seq_region_start) {
@@ -268,7 +281,7 @@ sub _content {
           }
         }
       }
-      
+
       $last_end = $feature->hend;
 
       #reverse the exon order if on the reverse strand
