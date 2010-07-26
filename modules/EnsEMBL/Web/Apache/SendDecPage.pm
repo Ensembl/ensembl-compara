@@ -148,7 +148,7 @@ sub handler {
       if($attr =~ /src="(.*?)"/ ) {
         $page->stylesheet->add_sheet( $media, $1 );
       } else {
-        $page->stylesheet->add( $media, $cont );
+        $page->stylesheet->add_sheet( $media, $cont );
       }
     }
   
