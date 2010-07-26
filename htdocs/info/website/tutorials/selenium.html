@@ -1,0 +1,112 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Tutorials</title>
+</head>
+
+<body>
+
+<h1>Selenium Documentation</h1>
+
+<h2>Prerequisites</h2>
+
+<p>For the Selenium server to run you’ll need Java installed and the PATH environment variable correctly configured to run it from the console. You can check that you have Java correctly installed by running the following command on a console:</p>
+
+<b>java -version</b>
+
+<p>If you get a version number (which needs to be 1.5 or later), you’re ready to start using Selenium-RC</p>
+<h4>If you don't have Java installed or its version is lower than 1.5 you need to download Java:</h4>
+<ul>
+<li><a href="http://www.java.com/en/download/manual.jsp" target=_blank>Java Downloads for All Operating Systems</a></li>
+<li><a href="http://www.java.com/en/download/help/5000010500.xml" target=_blank>Java Download and Install for Linux</a></li>
+</ul>
+
+
+
+<br>
+<h2>Selenium Remote Control (RC)</h2>
+
+<p>Selenium Remote Control (RC) is a test tool that allows you to write and/or execute automated web application UI tests in any programming language against any HTTP website using any mainstream JavaScript-enabled browser.</p>
+
+<h4>Selenium RC comes in two parts:</h4>
+<ul>
+<li>1. A server which automatically launches and kills browsers, and acts as a HTTP proxy for web requests from them.</li>
+<li>2. Client libraries for a number of computer languages.</li>
+</ul>
+
+
+<h4>Downloading the Selenium-RC</h4>
+<ul>
+<li><a href="http://release.seleniumhq.org/selenium-remote-control/1.0.1/selenium-remote-control-1.0.1-dist.zip" target=_blank>Download the Selenium RC directly</a><p>or</p></li>
+<li><a href="http://seleniumhq.org/download/" target=_blank>Go to Selenium downloads page</a></li>
+</ul>
+<p>After downloading and unzipping the Selenium-RC zip file, you will see a folder <b>selenium-remote-control-&lt;version&gt;</b> containing the following sub-directories:</p>
+<p><b>selenium-dotnet-client-driver-&lt;version&gt;</b></p>
+<p><b>selenium-java-client-driver-&lt;version&gt;</b></p>
+<p><b>selenium-perl-client-driver-&lt;version&gt;</b></p>
+<p><b>selenium-php-client-driver-&lt;version&gt;</b></p>
+<p><b>selenium-python-client-driver-&lt;version&gt;</b></p>
+<p><b>selenium-ruby-client-driver-&lt;version&gt;</b></p>
+<p><b>selenium-server-&lt;version&gt;</b></p>
+<p>These folders have all the components you need for using Selenium-RC with the programming language of your choice.</p>
+
+<h4>Now you simply need to:</h4>
+<ul>
+<li>Install the Selenium-RC Server.</li>
+<li>Set up a language specific client driver (in this particular case Perl client driver).</li>
+</ul>
+
+
+<h3>Installing Selenium Server</h3>
+<p>The Selenium-RC server is simply a Java jar file, which doesn’t require any special installation. Just extracting the server in the desired directory is sufficient.</p> 
+<p>After unzipping of Selenium-RC zip file the path to the Java jar file should be: <b>selenium-remote-control-&lt;version&gt;/selenium-server-&lt;version&gt;/selenium-server.jar</b>
+
+
+<h3>Set up Perl client driver</h3>
+<p>The driver  which you need to install is <b>selenium-perl-client-driver-&lt;version&gt;</b>.</p>
+<p>The path to the Makefile.PL file should be: <b>selenium-remote-control-&lt;version&gt;/selenium-perl-client-driver-&lt;version&gt;/Makefile.PL</b>
+</p>
+<p>In order to install the driver go to the directory where the Makefile.PL is located and run it (from a command-line console) as shown below:</p>
+<b>perl Makefile.PL </b>
+<p>Once the perl driver is install, you can start the selenium server.</p>
+
+
+<br>
+<h2>The Test Scripts</h2>
+<h3>Check-out the test scripts from CVS:</h3>
+<pre class="code">
+$ mkdir selenium_tests
+$ cvs co -d selenium_tests eg-plugins/testsuite/selenium_Location.pl
+$ cvs co -d selenium_tests eg-plugins/testsuite/selenium_Gene.pl
+$ cvs co -d selenium_tests eg-plugins/testsuite/selenium_Transcript.pl
+</pre>
+<br>
+<p>The script <b>selenium_Location.pl</b> is meant to test for broken or non-existent links in the Location section of Human genome page in Ensembl website.</p>
+<p>Respectively, the script <b>selenium_Gene.pl</b> is meant to test for broken or non-existent links in the Gene section and the script <b>selenium_Transcript.pl</b> is for testing of the Transcript section of Human genome page in Ensembl website.</p>
+
+<br>
+<h2>Running Selenium Server</h2>
+<p>Before starting any tests you must start the server. Go to the directory where Selenium-RC’s server is located and run the following from a command-line console.</p>
+<b>java -jar selenium-server.jar</b>
+
+<p>This can be simplified by creating a batch or shell executable file (.sh on Linux) containing the command above.</p>
+<p>After the successful starting of the server the tests are ready to be run.</p>
+
+
+<br>
+<h2>Running Test Scripts</h2>
+<p>Each of the scripts can accept two (optional) parameters:</p>
+<ul>
+<li><b>url</b> - the URL address of the website which is supposed to undergo testing. By default the URL address is set to <b>http://www.ensembl.org</b></li>
+<li><b>skip</b> - a list of links (comma separated) which will be skipped during the test. By default all available links from the left vertical menu of the current web page undergo testing.</li>
+</ul>
+<h3>Running a test script with passed parameters</h3>
+<pre class="code">
+$ perl selenium_Gene.pl  --url="http://www.ensembl.org"  --skip="External Data, Gene history"
+</pre>
+<br>
+<b>Remark:</b> The launching of the browser normally takes a couple of seconds.</font>
+
+
+</body>
+</html>
