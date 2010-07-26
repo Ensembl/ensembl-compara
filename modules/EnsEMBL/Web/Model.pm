@@ -120,7 +120,7 @@ sub create_objects {
     next if $_->[0] eq $type;                                      # This factory already exists, so skip it
     next unless $input->param($_->[1]) && !$self->object($_->[0]); # This parameter doesn't exist in the URL, or the object has already been created, so skip it
     
-    $new_factory = $self->create_factory($_->[0], $factory->__data) || undef;
+    $new_factory = $self->create_factory($_->[0], $factory->__data, $_->[1]) || undef;
     $factory     = $new_factory if $new_factory;
   }
   
@@ -148,7 +148,7 @@ sub create_factory {
   ### Creates a Factory object which can then generate one or more 
   ### domain objects
   
-  my ($self, $type, $data) = @_;
+  my ($self, $type, $data, $param) = @_;
   
   return unless $type;
   
@@ -165,11 +165,15 @@ sub create_factory {
   my $factory = $self->new_factory($type, $data);
   
   if ($factory) {
-    $factory->createObjects;
+    my $problem = $factory->createObjects;
     
-    $self->object($_->__objecttype, $_) for @{$factory->DataObjects};
-    
-    return $factory;
+    if ($problem && ref $problem eq 'HASH' && $problem->{'fatal'}) {
+      $factory->delete_param($param);
+    } else {
+      $self->object($_->__objecttype, $_) for @{$factory->DataObjects};
+      
+      return $factory;
+    }
   }
 }
 
