@@ -48,6 +48,26 @@ sub variation_table {
   return $rows;
 }
 
+sub make_table {
+  my ($self, $table_rows) = @_;
+  
+  my $columns = [
+    { key => 'ID',        sort => 'html'                                                   },
+    { key => 'snptype',   sort => 'string',   title => 'Type',                             },
+    { key => 'chr' ,      sort => 'position', title => 'Chr: bp'                           },
+    { key => 'Alleles',   sort => 'string',   align => 'center'                            },
+    { key => 'Ambiguity', sort => 'string',   align => 'center'                            },
+    { key => 'HGVS',      sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
+    { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
+    { key => 'class',     sort => 'string',   title => 'Class',          align => 'center' },
+    { key => 'Source',    sort => 'string'                                                 },
+    { key => 'status',    sort => 'string',   title => 'Validation',     align => 'center' }
+  ];
+  
+  return new EnsEMBL::Web::Document::SpreadSheet($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
+}
+
 sub configure_lrg{
   my $object = shift;
 
@@ -110,6 +130,11 @@ sub get_hgvs {
   push @hgvs, values %{$snp->get_all_hgvs_notations($lrg_slice, 'g', $snp->seq_region_name)};
   
   s/ENS(...)?[TG]\d+\://g for @hgvs;
+  
+  # word-wrap long ones
+  foreach(@hgvs) {
+    $_ =~ s/(.{35})/$1\n/g if length($_) > 50;
+  }
   
   return join ', ', @hgvs;
 }
