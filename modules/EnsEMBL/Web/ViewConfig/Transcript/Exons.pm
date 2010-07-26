@@ -86,6 +86,7 @@ sub form {
       $view_config->add_form_element($general_markup_options{'pop_min_freq'});
     }
   }
+  $_->{'select_all'}= 1 for @{$view_config->get_form->{'_fieldsets'}}
 }
 
 1;
