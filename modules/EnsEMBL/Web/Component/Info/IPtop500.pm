@@ -3,6 +3,7 @@ package EnsEMBL::Web::Component::Info::IPtop500;
 use strict;
 use warnings;
 no warnings "uninitialized";
+use EnsEMBL::Web::Apache::SendDecPage;
 use base qw(EnsEMBL::Web::Component);
 
 sub _init {
