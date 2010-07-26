@@ -117,7 +117,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
               css     = childOf ? { paddingLeft: '12px' } : {};
               tag     = 'td';
               
-              if (typeof entry == 'string') {
+              if (typeof entry != 'object') {
                 entry = [ entry ];
               }
               
