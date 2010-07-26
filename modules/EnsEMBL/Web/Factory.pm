@@ -153,6 +153,7 @@ sub _known_feature {
       $self->problem('redirect', $url);
     } else {
       $self->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database."));
+      $self->delete_param($var);
     }
   }
   
