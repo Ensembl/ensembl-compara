@@ -37,7 +37,7 @@ sub init {
      'colours' => $self->species_defs->colour('feature')
     }
   ], [
-    'TSE_generic_match_label', 'Transcript evidence:',   'TSE_generic_match_label', {
+    'TSE_generic_match_label', 'Transc. evidence:',   'TSE_generic_match_label', {
       'display' => 'normal',
       'strand'  => 'r'
     }
