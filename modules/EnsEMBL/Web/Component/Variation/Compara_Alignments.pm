@@ -163,7 +163,7 @@ sub markup_variation {
       $seq->[$_]->{'class'} .= "$variation->{'type'} ";
       $seq->[$_]->{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]->{'class'} .= 'var '  if $config->{'v'} eq $variation->{'v'}; # The page's variation
-      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
+      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'}) if $variation->{'href'};
       
       $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1 if $variation->{'type'};
     }
