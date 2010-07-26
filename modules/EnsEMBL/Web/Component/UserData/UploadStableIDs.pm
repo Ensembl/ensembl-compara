@@ -34,7 +34,21 @@ sub content {
   my $subheader = 'Upload file';
 
    ## Species now set automatically for the page you are on
-  $form->add_element( type => 'NoEdit', name => 'show_species', label => 'Species', 'value' => $self->object->species_defs->species_label($current_species));
+  my @species;
+  foreach my $sp ($object->species_defs->valid_species) {
+    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1)};
+  }
+  @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
+
+  $form->add_element(
+      'type'    => 'DropDown',
+      'name'    => 'species',
+      'label'   => "Species",
+      'values'  => \@species,
+      'value'   => $current_species,
+      'select'  => 'select',
+  );
+
   $form->add_element( type => 'Hidden', name => 'species', 'value' => $current_species);
   $form->add_element( type => 'Hidden', name => 'id_mapper', 'value' => 1);
   $form->add_element( type => 'Hidden', name => 'id_limit', 'value' => $id_limit);
