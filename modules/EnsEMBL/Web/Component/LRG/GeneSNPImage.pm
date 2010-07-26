@@ -7,7 +7,7 @@ use base qw(EnsEMBL::Web::Component::Gene);
 use Data::Dumper;
 use EnsEMBL::Web::Proxy::Object;
 use EnsEMBL::Web::Proxy::Factory;
-use EnsEMBL::Web::CoreObjects;
+use EnsEMBL::Web::CoreObjects; ## PLEASE NOTE THAT COREOBJECTS HAS BEEN REPLACED BY FACTORY. If this is code is going to be rewritten, this need to be removed.......
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::RegObj;
 use SiteDefs;
@@ -36,7 +36,8 @@ sub _content {
   my $input = new CGI;
   my $db_connection = new EnsEMBL::Web::DBSQL::DBConnection($ENV{'ENSEMBL_SPECIES'}, $ENSEMBL_WEB_REGISTRY->species_defs) if $ENV{'ENSEMBL_SPECIES'} ne 'common';
 
-  my $core_objects = new EnsEMBL::Web::CoreObjects($input, $db_connection, undef);
+  ## PLEASE NOTE THAT COREOBJECTS HAS BEEN REPLACED BY FACTORY. If this is code is going to be rewritten, this need to be removed.......
+  my $core_objects = new EnsEMBL::Web::CoreObjects($input, $db_connection, undef); 
   my $factory = new EnsEMBL::Web::Proxy::Factory('Gene', {
     _input         => $input,
     _apache_handle => undef,
