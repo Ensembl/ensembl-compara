@@ -148,7 +148,6 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config) . $warnings;
 }
 
-
 sub get_slices {
   my $self = shift;
   my ($object, $slice, $align, $species, $start, $end, $cdb) = @_;
@@ -163,7 +162,7 @@ sub get_slices {
   } else {
     push @slices, $slice; # If no alignment selected then we just display the original sequence as in geneseqview
   }
-
+  
   foreach (@slices) {
     my $name         = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
     my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
@@ -207,7 +206,7 @@ sub get_alignments {
   foreach (grep { /species_$align/ } $object->param) {
     if ($object->param($_) eq 'yes') {
       /species_${align}_(.+)/;
-      push @selected_species, ucfirst $1 unless $1 =~ /$species/i;
+      push @selected_species, $1 unless $1 =~ /$species/i;
     }
   }
   
@@ -217,10 +216,10 @@ sub get_alignments {
   # So we need to add the reference species to the list of selected species.
   # In case of pairwise alignments the list remains empty - that will force the display
   # of all available species in the alignment
-  unshift @selected_species, $species if scalar @selected_species;
+  unshift @selected_species, lc $species if scalar @selected_species;
   
   $align_slice = $align_slice->sub_AlignSlice($start, $end) if $start && $end;
-
+  
   return $align_slice->$func(@selected_species);
 }
 
