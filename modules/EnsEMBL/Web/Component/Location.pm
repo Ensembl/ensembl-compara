@@ -28,25 +28,27 @@ sub _configure_display {
 
 # TODO: Needs moving to viewconfig so we don't have to work it out each time
 sub default_otherspecies {
-  my $self        = shift;
-  my $object      = $self->object;
-  my $species     = $object->species;
-  my $sd          = $object->species_defs;
-  my %synteny     = $sd->multi('DATABASE_COMPARA', 'SYNTENY');
-  my @has_synteny = sort keys %synteny;
+  my $self         = shift;
+  my $object       = $self->object;
+  my $species_defs = $object->species_defs;
+  my $species      = $object->species;
+  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
+  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my @has_synteny  = sort keys %synteny;
   my $sp;
 
   # Set default as primary species, if available
-  unless ($species eq $sd->ENSEMBL_PRIMARY_SPECIES) {
+  unless ($species eq $primary_sp) {
     foreach my $sp (@has_synteny) {
-      return $sp if $sp eq $sd->ENSEMBL_PRIMARY_SPECIES;
+      return $sp if $sp eq $primary_sp;
     }
   }
 
   # Set default as secondary species, if primary not available
-  unless ($species eq $sd->ENSEMBL_SECONDARY_SPECIES) {
+  unless ($species eq $secondary_sp) {
     foreach $sp (@has_synteny) {
-      return $sp if $sp eq $sd->ENSEMBL_SECONDARY_SPECIES;
+      return $sp if $sp eq $secondary_sp;
     }
   }
 

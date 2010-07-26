@@ -18,15 +18,9 @@ sub content {
   my $object = $self->object;
 
   ## Don't show this component if the slice covers or exceeds the whole chromosome!
-  if ( 
-    $object->chromosome->length < 1e6 ||
-    ($object->param('r') =~ /:/ &&
-    $object->seq_region_start < 2 && 
-    $object->seq_region_end > ($object->chromosome->end - 1))
-  ) {
-    return;
-  } 
+  return if $object->chromosome->length < 1e6 || ($object->param('r') =~ /:/ && $object->seq_region_start < 2 && $object->seq_region_end > ($object->chromosome->end - 1));
   
+  my $other_species  = $object->param('otherspecies') || $object->param('species');
   my $max_len        = $object->seq_region_end < 1e6 ? $object->seq_region_end : 1e6;
   my $seq_region_end = $object->param('r') =~ /:/ ? $object->seq_region_end : $max_len;
   my $chr            = $object->seq_region_name; 
@@ -59,7 +53,7 @@ sub content {
     
     $up_link = sprintf('
       <a href="%s"><img src="/i/nav-l2-old.gif" class="homology_move" alt="<<"/> %s upstream %s</a>',
-      $object->_url({ type => 'Location', action => 'Synteny', otherspecies =>  $object->param('otherspecies'), r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
+      $object->_url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
     );
   } else {
     $up_link = 'No upstream homologues';
@@ -84,7 +78,7 @@ sub content {
     
     $down_link = sprintf('
       <a href="%s">%s downstream %s <img src="/i/nav-r2-old.gif" class="homology_move" alt="<<"/></a>',
-      $object->_url({ type => 'Location', action => 'Synteny', otherspecies =>  $object->param('otherspecies'), r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
+      $object->_url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
     );
   } else {
     $down_link = 'No downstream homologues';
