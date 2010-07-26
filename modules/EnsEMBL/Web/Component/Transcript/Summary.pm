@@ -26,10 +26,10 @@ sub content {
   if ($object->gene) {
     $html .= $self->_hint('transcript', 'Transcript and Gene level displays', sprintf('
       <p>
-        In %s a gene is made up of one or more transcripts. 
-        Views in Ensembl are separated into Gene based views and Transcript based views according to which level the information is more appropriately associated with. 
+        In %s a gene is made up of one or more transcripts.
+        Views in %s are separated into Gene based views and Transcript based views according to which level the information is more appropriately associated with. 
         This view is a transcript level view. To flip between the two sets of views you can click on the Gene and Transcript tabs in the menu bar at the top of the page.
-      </p>', $object->species_defs->ENSEMBL_SITETYPE
+      </p>', $object->species_defs->ENSEMBL_SITETYPE, $object->species_defs->ENSEMBL_SITETYPE
     ));
   }
   
