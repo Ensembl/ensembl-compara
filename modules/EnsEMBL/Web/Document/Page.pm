@@ -378,6 +378,7 @@ sub render_HTML {
           <div class="tools_holder">[[tools]]</div>
           <div class="search_holder print_hide">[[search_box]]</div>
         </div>
+        [[breadcrumbs]]
         <div class="tabs_holder print_hide">[[global_context]]</div>
       </div>
     </div>
