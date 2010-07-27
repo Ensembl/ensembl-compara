@@ -1130,54 +1130,61 @@ sub _parse_das_server {
 
 sub _munge_meta {
   my $self = shift;
-
+  
+  ##########################################
+  # SPECIES_COMMON_NAME     = Human        #
+  # SPECIES_PRODUCTION_NAME = homo_sapiens #
+  # SPECIES_SCIENTIFIC_NAME = Homo sapiens #
+  ##########################################
+  
   my %keys = qw(
-    species.taxonomy_id         TAXONOMY_ID
-    species.ensembl_alias_name  SPECIES_COMMON_NAME
-    assembly.default            ASSEMBLY_NAME
-    assembly.name               ASSEMBLY_DISPLAY_NAME
-    liftover.mapping            ASSEMBLY_MAPPINGS
-    genebuild.method            GENEBUILD_METHOD
-    provider.name      PROVIDER_NAME
-    provider.url       PROVIDER_URL
-    provider.logo      PROVIDER_LOGO
-    species.strain     SPECIES_STRAIN
-    species.sql_name   SYSTEM_NAME
+    species.taxonomy_id        TAXONOMY_ID
+    species.ensembl_alias_name SPECIES_COMMON_NAME
+    species.production_name    SPECIES_PRODUCTION_NAME
+    species.scientific_name    SPECIES_SCIENTIFIC_NAME
+    assembly.default           ASSEMBLY_NAME
+    assembly.name              ASSEMBLY_DISPLAY_NAME
+    liftover.mapping           ASSEMBLY_MAPPINGS
+    genebuild.method           GENEBUILD_METHOD
+    provider.name              PROVIDER_NAME
+    provider.url               PROVIDER_URL
+    provider.logo              PROVIDER_LOGO
+    species.strain             SPECIES_STRAIN
+    species.sql_name           SYSTEM_NAME
   );
-  my @months = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-
+  
+  my @months    = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
   my $meta_info = $self->_meta_info('DATABASE_CORE') || {};
+  my @sp_count  = grep { $_ > 0 } keys %$meta_info;
 
-  my @sp_count = grep {$_ > 0} keys %$meta_info;
-
-  if (scalar(@sp_count) > 1) {
+  if (scalar @sp_count > 1) {
     ## Database contains more than one species
     $self->tree->{'SPP_ARE_GROUPED'} = 1;
+    
     if ($meta_info->{0}{'species.group'}) {
       $self->tree->{'DISPLAY_NAME'} = $meta_info->{0}{'species.group'};
-    }
-    else {
+    } else {
       (my $group_name = $self->{'_species'}) =~ s/_collection//;
       $self->tree->{'DISPLAY_NAME'} = $group_name;
     }
-  }
-  else {
+  } else {
     $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'species.ensembl_alias_name'}[0];
   }
 
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';
-
-
+    
     ## Do species name and group
     my ($species, $bioname, $bioshort);
     my $taxonomy = $meta_hash->{'species.classification'};
+    
     if ($taxonomy && scalar(@$taxonomy)) {
-      $species = $taxonomy->[1].'_'.$taxonomy->[0];
-      $bioname = $taxonomy->[1].' '.$taxonomy->[0];
-      $bioshort = substr($taxonomy->[1],0,1).'.'.$taxonomy->[0];
-
+      $species  = "$taxonomy->[1]_$taxonomy->[0]";
+      $bioname  = "$taxonomy->[1] $taxonomy->[0]";
+      $bioshort = substr($taxonomy->[1], 0, 1) . '.' . $taxonomy->[0];
+      
       my $order = $self->tree->{'TAXON_ORDER'};
+      
       foreach my $taxon (@$taxonomy) {
         foreach my $group (@$order) {
           if ($taxon eq $group) {
@@ -1185,63 +1192,66 @@ sub _munge_meta {
             last;
           }
         }
+        
         last if $self->tree->{$species}{'SPECIES_GROUP'};
       }
-    }
-    else {
+    } else {
       ## Default to same name as database 
-      $species = $self->{'_species'};
-      ($bioname = $species) =~ s/_/ /g;
+      $species   = $self->{'_species'};
+      ($bioname  = $species) =~ s/_/ /g;
       ($bioshort = $bioname) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
     }
-    $self->tree->{$species}{'SPECIES_BIO_NAME'} = $bioname;
+    
+    $self->tree->{$species}{'SPECIES_BIO_NAME'}  = $bioname;
     $self->tree->{$species}{'SPECIES_BIO_SHORT'} = $bioshort;
-
-
+    
     if ($self->tree->{'ENSEMBL_SPECIES'}) {
       push @{$self->tree->{'DB_SPECIES'}}, $species;
-    }
-    else {
-      $self->tree->{'DB_SPECIES'} = [$species];
+    } else {
+      $self->tree->{'DB_SPECIES'} = [ $species ];
     }
 
     ## Get assembly info 
     while (my ($meta_key, $key) = each (%keys)) {
       next unless $meta_hash->{$meta_key};
-      my $value = scalar(@{$meta_hash->{$meta_key}}) > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
+      
+      my $value = scalar @{$meta_hash->{$meta_key}} > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
       $self->tree->{$species}{$key} = $value;
     }
+    
     $self->tree->{$species}{'SPECIES_META_ID'} = $species_id;
 
     ## Munge genebuild info
-    my $gb_start = $meta_hash->{'genebuild.start_date'}[0];
-    my @A = split('-', $gb_start);
-    $self->tree->{$species}{'GENEBUILD_START'} = $months[$A[1]].' '.$A[0];
-    $self->tree->{$species}{'GENEBUILD_BY'} = $A[2];
+    my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
+    
+    $self->tree->{$species}{'GENEBUILD_START'} = "$months[$A[1]] $A[0]";
+    $self->tree->{$species}{'GENEBUILD_BY'}    = $A[2];
 
-    my $gb_release = $meta_hash->{'genebuild.initial_release_date'}[0];
-    @A = split('-', $gb_release);
-    $self->tree->{$species}{'GENEBUILD_RELEASE'} = $months[$A[1]].' '.$A[0];
-    my $gb_latest = $meta_hash->{'genebuild.last_geneset_update'}[0];
-    @A = split('-', $gb_latest);
-    $self->tree->{$species}{'GENEBUILD_LATEST'} = $months[$A[1]].' '.$A[0];
-    my $assembly_date = $meta_hash->{'assembly.date'}[0];
-    @A = split('-', $assembly_date);
-    $self->tree->{$species}{'ASSEMBLY_DATE'} = $months[$A[1]].' '.$A[0];
-
-# check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
-# they can be overwritten at a later stage  via INI files
+    @A = split '-', $meta_hash->{'genebuild.initial_release_date'}[0];
+    
+    $self->tree->{$species}{'GENEBUILD_RELEASE'} = "$months[$A[1]] $A[0]";
+    
+    @A = split '-', $meta_hash->{'genebuild.last_geneset_update'}[0];
+    
+    $self->tree->{$species}{'GENEBUILD_LATEST'} = "$months[$A[1]] $A[0]";
+    
+    @A = split '-', $meta_hash->{'assembly.date'}[0];
+    
+    $self->tree->{$species}{'ASSEMBLY_DATE'} = "$months[$A[1]] $A[0]";
+    
+    # check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
+    # they can be overwritten at a later stage  via INI files
     my @ks = grep { /^sample\./ } keys %{$meta_hash || {}};
     my $shash;
 
     foreach my $k (@ks) {
-        (my $k1 = $k) =~ s/^sample\.//;
-        $shash->{ uc($k1) } = $meta_hash->{$k}->[0];
+      (my $k1 = $k) =~ s/^sample\.//;
+      $shash->{uc $k1} = $meta_hash->{$k}->[0];
     }
+    
+    $self->tree->{$species}{'SAMPLE_DATA'} = $shash if $shash;
 
-    $self->tree->{$species}{SAMPLE_DATA} = $shash if ($shash);
-
-# check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
+    # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree($species)->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
   }
 }
