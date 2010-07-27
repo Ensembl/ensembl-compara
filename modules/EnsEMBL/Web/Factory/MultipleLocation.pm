@@ -236,13 +236,13 @@ sub best_guess {
   my ($self, $slice, $id, $species, $seq_region_name) = @_;
   
   my $width = $slice->end - $slice->start + 1;
-  (my $sp = $species) =~ s/_/ /g;
+  my $production_species = $self->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   
   foreach my $method (qw( BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
     my ($seq_region, $cp, $strand);
     
     eval {
-      ($seq_region, $cp, $strand) = $self->dna_align_feature_adaptor->interpolate_best_location($slice, $sp, $method, $seq_region_name);
+      ($seq_region, $cp, $strand) = $self->dna_align_feature_adaptor->interpolate_best_location($slice, $production_species, $method, $seq_region_name);
     };
     
     if ($seq_region) {

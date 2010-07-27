@@ -1338,7 +1338,6 @@ sub add_alignments {
       $other_species ||= $species if $vega && $row->{'species'}->{$species} && scalar keys %{$row->{'species'}} == 2;
       
       my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
-      (my $other_species_hr = $other_species) =~ s/_/ /g;
       my $menu_key;
       my $description;
       
@@ -1362,7 +1361,6 @@ sub add_alignments {
         caption                    => $row->{'name'},
         type                       => $row->{'type'},
         species                    => $other_species,
-        species_hr                 => $other_species_hr,
         method_link_species_set_id => $row->{'id'},
         description                => $description,
         order                      => $other_label,

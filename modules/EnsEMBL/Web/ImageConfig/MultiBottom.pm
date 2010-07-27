@@ -131,7 +131,6 @@ sub multi {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
       
       my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
-      (my $other_species_hr = $other_species) =~ s/_/ /g;
       
       $self->get_node('decorations')->add_before(
         $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
@@ -139,7 +138,6 @@ sub multi {
           colourset  => 'pairwise',
           name       => $other_label,
           species    => $other_species,
-          species_hr => $other_species_hr,
           strand     => $strand,
           display    => $methods->{$align->{'type'}},
           db         => $align->{'db'},
