@@ -80,14 +80,14 @@ sub get_redirect {
 }
 
 sub get_archive_redirect {
-  my ($type, $action, $object) = @_;
+  my ($type, $action, $hub) = @_;
   
   my $releases;
   
   while (my ($old_view, $new_views) = each (%mapping)) {
     foreach (@$new_views) {
       if ($_->{'type'} eq $type && $_->{'action'} eq $action) {
-        my $final_release = $_->{'final_release'} || $object ? $object->species_defs->ENSEMBL_VERSION : undef;
+        my $final_release = $_->{'final_release'} || $hub ? $hub->species_defs->ENSEMBL_VERSION : undef;
         
         push @$releases, [ $old_view, $_->{'initial_release'}, $final_release, $_->{'missing_releases'} || [] ];
       }

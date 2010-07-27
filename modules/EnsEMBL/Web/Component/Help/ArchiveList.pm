@@ -55,20 +55,17 @@ sub content {
     $action  = $part2;
   }
 
-  my (%archive, %assemblies);
+  my (%archive, %assemblies, $links);
+  my $count = 0;
   
   if ($species) {
     %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
     %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
     
     my @A = keys %archive;
-    warn "ARCHIVES @A";
-
 
     if (keys %archive) {
       my $missing = 0;
-      my $count = 0;
-      my $links;
       
       if ($type =~ /\.html/ || $action =~ /\.html/) {
         foreach my $release (reverse sort keys %archive) {
@@ -92,7 +89,7 @@ sub content {
           $count++;
         }
       } else {
-        my $releases = get_archive_redirect($type, $action, $object);
+        my $releases = get_archive_redirect($type, $action, $hub);
         my ($old_params, $old_url) = get_old_params($params, $type, $action);
         
         foreach my $poss_release (reverse sort keys %archive) {
@@ -155,7 +152,6 @@ sub content {
 
 sub _output_link {
   my ($self, $archive, $release, $url, $assembly) = @_;
-  warn ">>> $archive = $assembly";
   
   my $sitename = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $date  = $archive->{$release};
