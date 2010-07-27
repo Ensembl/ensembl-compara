@@ -57,7 +57,7 @@ sub content {
     next if $_ eq $primary_species;
     
     push @skipped, $_ if $align_details->{'class'} !~ /pairwise/ && ($object->param(sprintf 'species_%d_%s', $align, lc)||'off') eq 'off';
-    push @missing, $_ unless $aligned_species{$_} || $_ eq 'Ancestral_sequences';
+    push @missing, $_ unless $aligned_species{$_} || $_ eq 'ancestral_sequences';
   }
   
   foreach (@$slices) {
@@ -70,7 +70,8 @@ sub content {
       compara         => $i == 1 ? 'primary' : 'secondary'
     });
     
-    my ($species_name,$slice_name) = split ':',$_->{'display_name'};
+    my ($species_name, $slice_name) = split ':', $_->{'name'};
+    
     my $panel_caption = $object->species_defs->get_config($species_name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
     $panel_caption .= " $slice_name" if $slice_name;
 
