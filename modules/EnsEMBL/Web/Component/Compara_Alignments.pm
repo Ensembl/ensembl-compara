@@ -164,8 +164,8 @@ sub get_slices {
   }
   
   foreach (@slices) {
-    my $name         = $species_defs->get_config($_->can('display_Slice_name') ? $_->display_Slice_name : $species, 'SPECIES_SCIENTIFIC_NAME') || 'Ancestral sequences';
-    my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
+    my $name         = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    my $display_name = $vega_compara ? $self->get_full_name($_) : $species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME') || 'Ancestral sequences';
     
     push @formatted_slices, { 
       slice             => $_,
@@ -301,8 +301,8 @@ sub get_slice_table {
         $region_padding = length $region if length $region > $region_padding;
         $number_padding = length $end if length $end > $number_padding;
       }
-
-      if ($species eq 'Ancestral_sequences') {
+      
+      if ($species eq 'Ancestral sequences') {
         $table_rows .= $slice->{'_tree'};
         $ancestral_sequences = 1;
       } else {
@@ -361,8 +361,6 @@ sub get_full_name {
   } else {
     $id = $object->species;
   }
-  
-  $id =~ s/ /_/g;
 
   return $id;
 }
