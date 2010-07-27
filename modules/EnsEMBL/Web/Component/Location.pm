@@ -160,26 +160,26 @@ sub create_user_set {
   if( $data_type =~ 'Xref')
   {    
     $has_table = 1;    
+    my $hash;
     
     foreach my $row (@$non_user_tracks){             
       my $style = $row->{'style'};
       
       #the right hand arrow is xref and is red
       my $label = ($style eq 'rharrow') ? "Xref" : "Gene";
-      my $colour = ($style eq 'rharrow') ? "red" : "blue";     
+      $hash->{$label} = ($style eq 'rharrow') ? "red" : "blue";     #using hash to remove duplicate when there are more than 1 xref and genes      
 
       push @$pointers, $image->add_pointers( $hub, {
           'config_name'   => 'Vkaryotype',
           'features'      => [],
-          'color'         => $colour,
+          'color'         => $hash->{$label},
           'style'         => $style,
         });        
                 
         my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
-        $swatch .= $colour.'" title="'.$colour.'" />';
+        $swatch .= $hash->{$label}.'" title="'.$hash->{$label}.'" />';
         $table->add_row({'colour' => $swatch, 'track' => $label});
-      }
-      
+      }      
    }            
   ## delete table if no tracks turned on
   $table = undef unless $has_table;
