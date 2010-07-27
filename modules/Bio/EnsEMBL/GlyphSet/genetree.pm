@@ -462,161 +462,156 @@ sub _draw_tree_connectors {
 }
 
 sub features {
-  my $self = shift;
-  my $tree = shift;
-  my $rank = shift || 0;
+  my $self       = shift;
+  my $tree       = shift;
+  my $rank       = shift || 0;
   my $parent_id  = shift || 0;
-  my $x_offset = shift  || 0;
+  my $x_offset   = shift || 0;
   my $show_exons = shift || 0;
 
   # Scale the branch length
   my $distance = $tree->distance_to_parent;
   my $cut      = 0;
+  
   while ($distance > 1) {
     $distance /= 10;
-    $cut ++;
+    $cut++;
   }
+  
   $x_offset += $distance;
 
   # Create the feature for this recursion
   my $node_id  = $tree->node_id;
-  my @features = ();
+  my @features;
+  
   my $f = {
-    '_distance'    => $distance,
-    '_x_offset'    => $x_offset,
-    '_dup'         => $tree->get_tagvalue("Duplication"),
-    '_dubious_dup' => $tree->get_tagvalue("dubious_duplication"),
-    '_id'          => $node_id, 
-    '_rank'        => $rank++,
-    '_parent'      => $parent_id,
-    '_cut'         => $cut,
+    _distance    => $distance,
+    _x_offset    => $x_offset,
+    _dup         => $tree->get_tagvalue('Duplication'),
+    _dubious_dup => $tree->get_tagvalue('dubious_duplication'),
+    _id          => $node_id, 
+    _rank        => $rank++,
+    _parent      => $parent_id,
+    _cut         => $cut,
   };
-
+  
   # Initialised colouring
-  if( $self->{_fg_coloured_nodes}->{$node_id} ){
-    $f->{_fg_colour} = $self->{_fg_coloured_nodes}->{$node_id}->{colour};
-  }
-  if( $self->{_bg_coloured_nodes}->{$node_id} ){
-    $f->{_bg_colour} = $self->{_bg_coloured_nodes}->{$node_id}->{colour};
-  }
+  $f->{'_fg_colour'} = $self->{'_fg_coloured_nodes'}->{$node_id}->{'colour'} if $self->{'_fg_coloured_nodes'}->{$node_id};
+  $f->{'_bg_colour'} = $self->{'_bg_coloured_nodes'}->{$node_id}->{'colour'} if $self->{'_bg_coloured_nodes'}->{$node_id};
 
   # Initialised collapsed nodes
-  if( $self->{_collapsed_nodes}->{$node_id} ){
+  if ($self->{'_collapsed_nodes'}->{$node_id}) {
     # What is the size of the collapsed node?
-    my $leaf_count = 0;
+    my $leaf_count    = 0;
     my $paralog_count = 0;
-    my $sum_dist = 0;
+    my $sum_dist      = 0;
     my %genome_dbs;
     my %genes;
     my %leaves;
-    foreach my $leaf( @{$tree->get_all_leaves} ){
+    
+    foreach my $leaf (@{$tree->get_all_leaves}) {
       my $dist = $leaf->distance_to_ancestor($tree);
       $leaf_count++;
       $sum_dist += $dist || 0;
-      $genome_dbs{$leaf->genome_db->dbID} ++;
-      $genes{$leaf->gene_member->stable_id} ++;
-      $leaves{$leaf->node_id} ++;
-    }
-    $f->{_collapsed}          = 1,
-    $f->{_collapsed_count}    = $leaf_count;
-    $f->{_collapsed_distance} = $sum_dist/$leaf_count;
-    $f->{_collapsed_cut}      = 0;
-    $f->{_height}             = 12 * log( $f->{_collapsed_count} );
-    #while ($f->{_collapsed_distance} > 1) { # Scale the length
-    #  $f->{_collapsed_distance} /= 10;
-    #  $f->{_collapsed_cut} ++;
-    #}
-    $f->{_genome_dbs} = {%genome_dbs};
-    $f->{_genes}      = {%genes};
-    $f->{_leaves}     = {%leaves};
-    $f->{label} = sprintf( '%s: %d homologs', 
-                           $tree->get_tagvalue('taxon_name'), $leaf_count );
-  }
-  #----------
-  #----------
-  # Recurse for each child node
-  if (!$f->{_collapsed} and @{$tree->sorted_children}){
-    foreach my $child_node (@{$tree->sorted_children}) {  
-      $f->{_child_count} ++;
-      push( @features, 
-            @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons)} );
-    }
-  }
-  #----------
-
-  # Assign 'y' coordinates
-  if ( @features > 0) { # Internal node
-    $f->{y} = ($features[0]->{y} + $features[-1]->{y}) / 2;
-    $f->{y_from} = $features[0]->{y_from};
-    $f->{y_to} = $features[-1]->{y_to};
-  } else { # Leaf node or collapsed
-    my $height = int( $f->{_height} || 0 ) + 1;
-    if( $height < $MIN_ROW_HEIGHT ){ $height = $MIN_ROW_HEIGHT }
-    #$f->{y} = ($CURRENT_ROW++) * 20;
-    $f->{y} = $CURRENT_Y + ($height/2);
-    $f->{y_from} = $CURRENT_Y;
-    $CURRENT_Y += $height;
-    $f->{y_to} = $CURRENT_Y;
-  }
-
-  #----------
-  # Process alignment
-  if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-
-    if ($tree->genome_db) {
-      $f->{_species} = $tree->genome_db->name;
-      $f->{_genome_dbs} ||= {};
-      $f->{_genome_dbs}->{$tree->genome_db->dbID} ++;
-    }
-    if ($tree->stable_id) {
-      $f->{_protein} = $tree->stable_id;
-      $f->{label} = sprintf("%s %s", $f->{_stable_id}, $f->{_species});
+      $genome_dbs{$leaf->genome_db->dbID}++;
+      $genes{$leaf->gene_member->stable_id}++;
+      $leaves{$leaf->node_id}++;
     }
     
-    if(my $member = $tree->gene_member) {
+    $f->{'_collapsed'}          = 1,
+    $f->{'_collapsed_count'}    = $leaf_count;
+    $f->{'_collapsed_distance'} = $sum_dist/$leaf_count;
+    $f->{'_collapsed_cut'}      = 0;
+    $f->{'_height'}             = 12 * log($f->{'_collapsed_count'});
+    $f->{'_genome_dbs'}         = \%genome_dbs;
+    $f->{'_genes'}              = \%genes;
+    $f->{'_leaves'}             = \%leaves;
+    $f->{'label'}               = sprintf '%s: %d homologs', $tree->get_tagvalue('taxon_name'), $leaf_count;
+  }
+  
+  # Recurse for each child node
+  if (!$f->{'_collapsed'} && @{$tree->sorted_children}) {
+    foreach my $child_node (@{$tree->sorted_children}) {  
+      $f->{'_child_count'}++;
+      push @features, @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons)};
+    }
+  }
+
+  # Assign 'y' coordinates
+  if (@features > 0) { # Internal node
+    $f->{'y'}      = ($features[0]->{'y'} + $features[-1]->{'y'}) / 2;
+    $f->{'y_from'} = $features[0]->{'y_from'};
+    $f->{'y_to'}   = $features[-1]->{'y_to'};
+  } else { # Leaf node or collapsed
+    my $height = int($f->{'_height'} || 0) + 1;
+    $height    = $MIN_ROW_HEIGHT if $height < $MIN_ROW_HEIGHT;
+    
+    $f->{'y'}      = $CURRENT_Y + ($height/2);
+    $f->{'y_from'} = $CURRENT_Y;
+    
+    $CURRENT_Y += $height;
+    
+    $f->{'y_to'} = $CURRENT_Y;
+  }
+  
+  # Process alignment
+  if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+    if ($tree->genome_db) {
+      # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
+      # There should be a way of retrieving this name correctly instead.
+      $f->{'_species'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME');
+      $f->{'_genome_dbs'} ||= {};
+      $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
+    }
+    
+    if ($tree->stable_id) {
+      $f->{'_protein'} = $tree->stable_id;
+      $f->{'label'}    = "$f->{'_stable_id'} $f->{'_species'}";
+    }
+    
+    if (my $member = $tree->gene_member) {
       my $stable_id = $member->stable_id;
       my $chr_name  = $member->chr_name;
       my $chr_start = $member->chr_start;
       my $chr_end   = $member->chr_end;
-      $f->{_gene} = $stable_id;
-      $f->{_genes} ||= {};
-      $f->{_genes}->{$stable_id} ++;
       
-      my $treefam_link = sprintf
-          ("http://www.treefam.org/cgi-bin/TFseq.pl?id=%s", $stable_id);
+      $f->{'_gene'} = $stable_id;
+      $f->{'_genes'} ||= {};
+      $f->{'_genes'}->{$stable_id}++;
       
-      $f->{label} = sprintf("%s %s", $stable_id, $f->{_species});
-      push @{$f->{_link}}, { 'text' => 'View in TreeFam', 
-                             'href' => $treefam_link };
-      $f->{_location}  = sprintf("%s:%d-%d",
-                                 $chr_name, 
-                                 $chr_start, 
-                                 $chr_end);
-      $f->{_length}  = $chr_end - $chr_start;
-      $f->{_cigar_line} = $tree->cigar_line;
-      eval {
-        my $aligned_sequences_bounded_by_exon = $tree->alignment_string_bounded;
-        my (@bounded_exons) = split(' ',$aligned_sequences_bounded_by_exon);
-        pop(@bounded_exons);
-        $f->{_aligned_exon_lengths} = [map {length($_)} @bounded_exons];
-      } if ($show_exons);
+      my $treefam_link = "http://www.treefam.org/cgi-bin/TFseq.pl?id=$stable_id";
+      
+      $f->{'label'} = "$stable_id, $f->{'_species'}";
+      
+      push @{$f->{'_link'}}, { text => 'View in TreeFam', href => $treefam_link };
+      
+      $f->{'_location'}   = "$chr_name:$chr_start-$chr_end";
+      $f->{'_length'}     = $chr_end - $chr_start;
+      $f->{'_cigar_line'} = $tree->cigar_line;
+      
+      if ($show_exons) {
+        eval {
+          my $aligned_sequences_bounded_by_exon = $tree->alignment_string_bounded;
+          my (@bounded_exons) = split ' ', $aligned_sequences_bounded_by_exon;
+          pop @bounded_exons;
+          
+          $f->{'_aligned_exon_lengths'} = [ map length($_), @bounded_exons ];
+        };
+      }
       
       if (my $display_label = $member->display_label) {
-        $f->{label} 
-        = $f->{_display_id} 
-        =  sprintf("%s %s", $display_label, $f->{_species});
+        $f->{'label'} = $f->{'_display_id'} = "$display_label, $f->{'_species'}";
       }
     }
-  } elsif( $f->{'_collapsed'} ) { # Collapsed node
-    $f->{'_name'} = $tree->name;
-    if( UNIVERSAL::can($tree, 'consensus_cigar_line' ) ){
-      $f->{'_cigar_line'} = $tree->consensus_cigar_line;
-    }
+  } elsif ($f->{'_collapsed'}) { # Collapsed node
+    $f->{'_name'}       = $tree->name;
+    $f->{'_cigar_line'} = $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');
   } else { # Internal node
     $f->{'_name'} = $tree->name;
   }
   
-  push @features, $f;  
+  push @features, $f;
+  
   return \@features;
 }
 
