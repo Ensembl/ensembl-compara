@@ -19,13 +19,15 @@
 #masthead .tools_holder       { display: inline; }
 #masthead .tabs_holder        { height: 29px; background-color: [[MH_BG]]; clear: both; }
 #masthead .logo_holder        { float: left; }
+#masthead .breadcrumbs        { clear: both; padding: 5px 0 8px 8px; margin-top: -5px; font-weight: bold; }
+#masthead .breadcrumbs a      { color: [[MH_TEXT]]; }
 #masthead div.more            { display: none; float: left; margin: -16px 10px 0; position: relative; z-index: 250; }
 #masthead div.more a          { outline: 0; }
 #masthead ul.more_tools       { display: none; width: 10em; position: absolute; left: 0; top: 18px; border-top: 1px solid [[MH_BORDER]]; font-size: 0.8em; z-index: 200; }
 #masthead ul.more_tools li    { color: [[CONTRAST_TEXT]]; border: 1px solid [[MH_BORDER]]; border-top: 0; background-color: [[PANEL_BG]]; float: none; text-align: left; margin: 0; padding: 2px; }
 #masthead ul.more_tools li a  { color: [[CONTRAST_TEXT]]; }
 
-body.no_tabs #masthead .tabs_holder { height: 13px; }
+body.no_tabs #masthead .tabs_holder { display: none; }
 body.mac #masthead ul.tabs li       { height: 21px; }
 body.mac #masthead ul.tabs li a     { height: 15px; padding-top: 4px; }
 body.mac #masthead .search_holder   { margin-left: 20px; }
