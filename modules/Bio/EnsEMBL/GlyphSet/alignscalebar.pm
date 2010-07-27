@@ -146,7 +146,7 @@ sub render_align_bar {
     
     if ($s2t eq 'GAP') {
       $title = 'AlignSlice; Gap in the alignment';
-    } elsif ($species eq 'Ancestral_sequences') {
+    } elsif ($species eq 'ancestral_sequences') {
       $title = "AlignSlice; ID: $s2t; $s2->{'_tree'}";
     } else {
       $href = $self->_url({ 

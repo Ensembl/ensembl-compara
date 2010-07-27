@@ -167,7 +167,7 @@ sub _init_non_assembled_contig {
       'title'     => $region 
     };
     
-    if ($show_navigation && $species ne 'Ancestral_sequences') {
+    if ($show_navigation && $species ne 'ancestral_sequences') {
       my $url = $self->_url({
         'species' => $self->species,
         'type'    => 'Location',
