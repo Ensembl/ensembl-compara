@@ -151,11 +151,10 @@ sub content_sub_slice {
 sub get_slices {
   my $self = shift;
   my ($object, $slice, $align, $species, $start, $end, $cdb) = @_;
-
-  my @slices;
-  my @formatted_slices;
-  my $length;
-  my $vega_compara = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  
+  my $species_defs = $object->species_defs;
+  my $vega_compara = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
+  my (@slices, @formatted_slices, $length);
 
   if ($align) {
     push @slices, @{$self->get_alignments(@_)};
@@ -164,7 +163,7 @@ sub get_slices {
   }
   
   foreach (@slices) {
-    my $name         = $_->can('display_Slice_name') ? $_->display_Slice_name : $species;
+    my $name         = $species_defs->get_config($_->can('display_Slice_name') ? $_->display_Slice_name : $species, 'SPECIES_SCIENTIFIC_NAME');
     my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
     
     push @formatted_slices, { 

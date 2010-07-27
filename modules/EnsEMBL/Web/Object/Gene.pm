@@ -619,72 +619,78 @@ sub get_homology_matches {
 }
 
 sub fetch_homology_species_hash {
-  my $self = shift;
-  my $homology_source = shift;
+  my $self                 = shift;
+  my $homology_source      = shift;
   my $homology_description = shift;
-  my $compara_db = shift || 'compara';
+  my $compara_db           = shift || 'compara';
   
-  $homology_source = "ENSEMBL_HOMOLOGUES" unless (defined $homology_source);
-  $homology_description= "ortholog" unless (defined $homology_description);
+  $homology_source      = 'ENSEMBL_HOMOLOGUES' unless defined $homology_source;
+  $homology_description = 'ortholog' unless defined $homology_description;
   
-  my $geneid = $self->stable_id;
-  my $database = $self->database($compara_db) ;
+  my $geneid   = $self->stable_id;
+  my $database = $self->database($compara_db);
   my %homologues;
 
   return {} unless $database;
-  $self->timer_push( 'starting to fetch' , 6 );
+  
+  $self->timer_push('starting to fetch', 6);
 
   my $member_adaptor = $database->get_MemberAdaptor;
-  my $query_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$geneid);
+  my $query_member   = $member_adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $geneid);
 
-  return {} unless defined $query_member ;
+  return {} unless defined $query_member;
+  
   my $homology_adaptor = $database->get_HomologyAdaptor;
-#  It is faster to get all the Homologues and discard undesired entries
-#  my $homologies_array = $homology_adaptor->fetch_all_by_Member_method_link_type($query_member,$homology_source);
-  my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member);
+  my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
 
-  $self->timer_push( 'fetched' , 6 );
+  $self->timer_push('fetched', 6);
 
   # Strategy: get the root node (this method gets the whole lineage without getting sister nodes)
   # We use right - left indexes to get the order in the hierarchy.
   
-  my %classification;
-  $classification{'Undetermined'} = 99999999;
+  my %classification = ( Undetermined => 99999999 );
+  
   if (my $taxon = $query_member->taxon) {
-    my $node = $taxon->root();
+    my $node = $taxon->root;
 
-    while ($node){
+    while ($node) {
       $node->get_tagvalue('scientific name');
+      
       # Found a speed boost with nytprof -- avilella
       # $classification{$node->get_tagvalue('scientific name')} = $node->right_index - $node->left_index;
-      $classification{$node->{_tags}{'scientific name'}} = $node->{_right_index} - $node->{_left_index};
+      $classification{$node->{_tags}{'scientific name'}} = $node->{'_right_index'} - $node->{'_left_index'};
       $node = $node->children->[0];
     }
   }
-  $self->timer_push( 'classification' , 6 );
- 
- foreach my $homology (@{$homologies_array}){
-    next unless ($homology->description =~ /$homology_description/);
+  
+  $self->timer_push('classification', 6);
+  
+  foreach my $homology (@$homologies_array) {
+    next unless $homology->description =~ /$homology_description/;
+    
     my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio);
+    
     foreach my $member_attribute (@{$homology->get_all_Member_Attribute}) {
-      my ($member, $attribute) = @{$member_attribute};
+      my ($member, $attribute) = @$member_attribute;
+      
       if ($member->stable_id eq $query_member->stable_id) {
-        $query_perc_id  = $attribute->perc_id;
+        $query_perc_id = $attribute->perc_id;
       } else {
         $target_perc_id = $attribute->perc_id;
         $genome_db_name = $member->genome_db->name;
         $target_member  = $member;
         $dnds_ratio     = $homology->dnds_ratio; 
       }
-    }  
-    push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->ancestor_node_id]);
+    }
+    
+    # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
+    # There should be a way of retrieving this name correctly instead.
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->ancestor_node_id];
   }
-
-  $self->timer_push( 'homologies hacked', 6 );
-  foreach my $species_name (keys %homologues){
-    @{$homologues{$species_name}} = sort {$classification{$a->[2]} <=> $classification{$b->[2]}} @{$homologues{$species_name}};
-
-  }
+  
+  $self->timer_push('homologies hacked', 6);
+  
+  @{$homologues{$_}} = sort { $classification{$a->[2]} <=> $classification{$b->[2]} } @{$homologues{$_}} for keys %homologues;
   
   return \%homologues;
 }
