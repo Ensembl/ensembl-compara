@@ -18,11 +18,11 @@ sub chr_sort {
 sub _init {
   my $self = shift;
 
-  my $Config = $self->{'config'};
+  my $config = $self->{'config'};
   
-  return unless $Config->container_width > 0;
+  return unless $config->container_width > 0;
   
-  my $cmap   = $Config->colourmap;
+  my $cmap   = $config->colourmap;
   my $white  = 'white';
   my $black  = 'black';
   my $grey   = 'grey60';
@@ -35,36 +35,32 @@ sub _init {
   @BORDERS = ( @BORDERS, @BORDERS, @BORDERS );
   @COLOURS = ( @COLOURS, @COLOURS, @COLOURS );
   
-  my $bg            = $Config->get_parameter( 'bgcolor');
-  my $chr           = $self->{'container'}->{'chr'} || 1;
-  my $kba           = $self->{'container'}->{'ka_main'};
-  my $kba2          = $self->{'container'}->{'ka_secondary'};
-  my $sa            = $self->{'container'}->{'sa_main'};
-  my $sa2           = $self->{'container'}->{'sa_secondary'};
-  my $synteny_data  = $self->{'container'}->{'synteny'};
-  my $OTHER         = $self->{'container'}->{'other_species'};
-  my $OTHER_T       = $OTHER; $OTHER_T =~s/_/ /g;
-  my $SPECIES_T     = $self->{container}{web_species}; $SPECIES_T =~s/_/ /g;
-  my $OTHER_SHORT   = $self->species_defs->get_config($OTHER,'SPECIES_COMMON_NAME');
-  my $SPECIES_SHORT = $self->species_defs->SPECIES_COMMON_NAME;
-  
-  $SPECIES_T =~ s/_/ /g;
-  
-  my %other_chrs          = map {( $_ , 1 )} @{$self->species_defs->get_config($OTHER, 'ENSEMBL_CHROMOSOMES')}; # This is the list of chromosomes we will be drawing
-  my $chr_length          = $sa->fetch_by_region('toplevel', $chr)->length; 
-  my $bands               = $kba->fetch_all_by_chr_name($chr) || [];
-  my $im_width            = $Config->image_width;
-  my $length              = $Config->get_parameter('image_height'); 
-  my $top_margin          = $Config->get_parameter('top_margin');
-  my $main_width          = $Config->get_parameter('main_width');
-  my $padding             = $Config->get_parameter('padding');
-  my $outer_padding       = $Config->get_parameter('outer_padding');
-  my $inner_padding       = $Config->get_parameter('inner_padding');
-  my $secondary_width     = $Config->get_parameter('secondary_width');
-  my $spacing             = $Config->get_parameter('spacing');    
-  my $h_offset            = $im_width - $top_margin * 2 - $length;
-  my $v_offset            = $Config->container_width;
-  my $done_1_acen         = 0; # flag for tracking place in chromsome
+  my $species_defs          = $self->species_defs;
+  my $bg                    = $config->get_parameter('bgcolor');
+  my $chr                   = $self->{'container'}->{'chr'} || 1;
+  my $kba                   = $self->{'container'}->{'ka_main'};
+  my $kba2                  = $self->{'container'}->{'ka_secondary'};
+  my $sa                    = $self->{'container'}->{'sa_main'};
+  my $sa2                   = $self->{'container'}->{'sa_secondary'};
+  my $synteny_data          = $self->{'container'}->{'synteny'};
+  my $other_species         = $self->{'container'}->{'other_species'};
+  my $other_species_text    = $species_defs->get_config($other_species, 'SPECIES_SCIENTIFIC_NAME');
+  my $other_production_name = $species_defs->get_config($other_species, 'SPECIES_PRODUCTION_NAME');
+  my %other_chrs            = map {( $_, 1 )} @{$species_defs->get_config($other_species, 'ENSEMBL_CHROMOSOMES')}; # This is the list of chromosomes we will be drawing
+  my $chr_length            = $sa->fetch_by_region('toplevel', $chr)->length; 
+  my $bands                 = $kba->fetch_all_by_chr_name($chr) || [];
+  my $im_width              = $config->image_width;
+  my $length                = $config->get_parameter('image_height'); 
+  my $top_margin            = $config->get_parameter('top_margin');
+  my $main_width            = $config->get_parameter('main_width');
+  my $padding               = $config->get_parameter('padding');
+  my $outer_padding         = $config->get_parameter('outer_padding');
+  my $inner_padding         = $config->get_parameter('inner_padding');
+  my $secondary_width       = $config->get_parameter('secondary_width');
+  my $spacing               = $config->get_parameter('spacing');    
+  my $h_offset              = $im_width - $top_margin * 2 - $length;
+  my $v_offset              = $config->container_width;
+  my $done_1_acen           = 0; # flag for tracking place in chromsome
 
   # Synteny drawing stage 1....
   #   Part 2: Draw the central karyotype
@@ -80,13 +76,13 @@ sub _init {
   my $SIDE;
   my $BORD;
   my $highlights_main = { $chr => [] };
-  my $CANSEE_OTHER = $Config->{'other_species_installed'};
+  my $CANSEE_OTHER = $config->{'other_species_installed'};
 
   foreach my $box (@$synteny_data) {
     my ($main_dfr, $other_dfr);
     
     foreach my $dfr (@{$box->children}) {
-      if ($dfr->dnafrag->genome_db->name eq $OTHER_T) {
+      if ($dfr->dnafrag->genome_db->name eq $other_production_name) {
         $other_dfr = $dfr;
       } else {
         $main_dfr = $dfr;
@@ -121,7 +117,7 @@ sub _init {
       't'       => undef,
       'r'       => "$chr:" . $main_dfr->dnafrag_start . '-' . $main_dfr->dnafrag_end,
       'r1'      => "$other_chr:" . $other_dfr->dnafrag_start . '-' . $other_dfr->dnafrag_end,
-      'sp1'     => $OTHER,
+      'sp1'     => $other_species,
       'ori'     => '',
     });
     
@@ -141,7 +137,7 @@ sub _init {
       
       my $url = $self->_url({
         'action'  => 'Synteny',
-        'species' => $OTHER,
+        'species' => $other_species,
         't'       => undef,
         'r1'      => "$chr:" . $main_dfr->dnafrag_start . '-' . $main_dfr->dnafrag_end,
         'r'       => "$other_chr:" . $other_dfr->dnafrag_start . '-' . $other_dfr->dnafrag_end,
@@ -282,20 +278,20 @@ sub _init {
   
   $self->unshift($self->Text({
     'x'             => $im_width - $h - 2 - $top_margin,
-    'y'             => $outer_padding + $secondary_width/2 - $w * length($OTHER_T)/2,
+    'y'             => $outer_padding + $secondary_width/2 - $w * length($other_species_text)/2,
     'font'          => 'Tiny',
     'colour'        => $black,
-    'text'          => $OTHER_T,
+    'text'          => $other_species_text,
     'absolutey'     => 1, 
     'absolutex'     => 1,
     'absolutewidth' => 1,
   }));
   $self->unshift($self->Text({
     'x'          => $im_width - $h - 2 - $top_margin ,
-    'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($OTHER_T)/2,
+    'y'          => $outer_padding + $inner_padding*2 + $main_width + 3*$secondary_width/2 - $w * length($other_species_text)/2,
     'font'       => 'Tiny',
     'colour'     => $black,
-    'text'       => $OTHER_T,
+    'text'       => $other_species_text,
     'absolutey'  => 1, 
     'absolutex' => 1,
     'absolutewidth'=>1,
