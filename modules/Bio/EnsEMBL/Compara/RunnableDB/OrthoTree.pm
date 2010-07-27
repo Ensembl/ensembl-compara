@@ -516,7 +516,7 @@ sub load_species_tree_from_tax
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   my $root=undef;
   foreach my $gdb (@$gdb_list) {
-    next if ($gdb->name =~ /Ancestral/);
+    next if ($gdb->name =~ /ancestral/);
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
     $taxon->no_autoload_children;
     # $taxon->add_tag("taxon_id") = $taxon->taxon_id; # homogenize with load_species_tree_from_file

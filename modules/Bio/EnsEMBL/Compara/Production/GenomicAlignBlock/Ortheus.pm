@@ -207,7 +207,7 @@ sub run
   }
 
   #disconnect ancestral core database
-  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
+  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
   my $ancestor_dba = $ancestor_genome_db->db_adaptor;
   $ancestor_dba->dbc->disconnect_if_idle;
 
@@ -245,7 +245,7 @@ sub write_output {
 
   my $gata = $self->{'comparaDBA'}->get_GenomicAlignTreeAdaptor;
 
-  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
+  my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
   my $ancestor_dba = $ancestor_genome_db->db_adaptor;
   my $slice_adaptor = $ancestor_dba->get_SliceAdaptor();
   my $ancestor_coord_system_adaptor = $ancestor_dba->get_CoordSystemAdaptor();
@@ -1051,7 +1051,7 @@ sub get_species_tree {
       my $name = $genome_db->name;
       $name =~ tr/ /_/;
       $leaf_name{$name} = $genome_db->dbID;
-      if ($name ne "Ancestral_sequences") {
+      if ($name ne "ancestral_sequences") {
 	  $leaf_check{$genome_db->dbID} = 2;
       }
   }

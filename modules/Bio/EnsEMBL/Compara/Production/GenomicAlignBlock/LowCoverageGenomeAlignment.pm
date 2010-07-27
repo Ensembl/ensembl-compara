@@ -190,7 +190,7 @@ sub run
 
   #disconnect ancestral core database
   #Don't need anymore because I don't use the ancestors
-  #my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
+  #my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
   #my $ancestor_dba = $ancestor_genome_db->db_adaptor;
   #$ancestor_dba->dbc->disconnect_if_idle if (defined $ancestor_dba);
 
@@ -249,7 +249,7 @@ sub write_output {
   my $ancestor_coord_system;
   my $ancestor_genome_db;
   if ($ancestors) { 
-     $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("Ancestral sequences");
+     $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
       my $ancestor_dba = $ancestor_genome_db->db_adaptor;
       $slice_adaptor = $ancestor_dba->get_SliceAdaptor();
       my $ancestor_coord_system_adaptor = $ancestor_dba->get_CoordSystemAdaptor();

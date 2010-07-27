@@ -1094,7 +1094,7 @@ sub _add_GenomicAlign_to_a_Slice {
 
   ## This creates a link between the slice and the tree node. This is required to display
   ## the tree on the web interface.
-  if ($this_genomic_align->genome_db->name eq "Ancestral sequences") {
+  if ($this_genomic_align->genome_db->name eq "ancestral_sequences") {
     foreach my $genomic_align_node (@{$this_genomic_align_block->get_all_sorted_genomic_align_nodes}) {
       my $genomic_align_group = $genomic_align_node->genomic_align_group;
       next if (!$genomic_align_group);

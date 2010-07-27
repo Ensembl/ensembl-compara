@@ -908,7 +908,7 @@ sub _build_tree_string {
 	my $name = $genome_db->name;
 	$name =~ tr/ /_/;
 	$leaf_name{$name} = $genome_db->dbID;
-	if ($name ne "Ancestral_sequences") {
+	if ($name ne "Ancestral_sequences" and $name ne "ancestral_sequences") {
 	    $leaf_check{$genome_db->dbID} = 2;
 	} 
     }  

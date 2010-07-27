@@ -392,7 +392,7 @@ sub _combine_genomic_align_trees {
     $existing_node_ids->{$this_node_id} = 1;
     push(@$next_species_names, $this_genomic_align_node->genomic_align_group->genome_db->name)
         if ($this_genomic_align_node->genomic_align_group and 
-            $this_genomic_align_node->genomic_align_group->genome_db->name ne "Ancestral sequences");
+            $this_genomic_align_node->genomic_align_group->genome_db->name ne "ancestral_sequences");
   }
   foreach my $species_def (@$species_order) {
     my $right_node_id = $species_def->{right_node_id};
