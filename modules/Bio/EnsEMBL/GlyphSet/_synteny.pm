@@ -21,47 +21,46 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 ## KNOW ABOUT THE COMPARA DATABASE... WHICH THE WEBCODE WILL PASS IN!!
 
 sub features {
-  my ($self) = @_;
-  my $species    = $self->my_config('species');
-  my $species_hr = $self->my_config('species_hr');
-
-  my $T       = $self->{'container'}->get_all_compara_Syntenies(
-    $species_hr,
-    "SYNTENY",
-    $self->dbadaptor( "multi", $self->my_config('db') )
-  );
-  my $offset  = $self->{'container'}->start - 1;
-  my @RET     = ();
+  my $self      = shift;
+  my $species   = $self->species_defs->get_config($self->my_config('species'), 'SPECIES_PRODUCTION_NAME');
+  my $syntenies = $self->{'container'}->get_all_compara_Syntenies($species, 'SYNTENY', $self->dbadaptor('multi', $self->my_config('db')));
+  my $offset    = $self->{'container'}->start - 1;
+  my @features;
   
-  foreach my $argh (@$T) {
+  foreach (@$syntenies) {
     my ($main_dfr, $other_dfr);
-    foreach my $dfr (@{$argh->children}) {
-      if($dfr->dnafrag->genome_db->name eq $species_hr) {
+    
+    foreach my $dfr (@{$_->children}) {
+      if ($dfr->dnafrag->genome_db->name eq $species) {
         $other_dfr = $dfr;
       } else {
         $main_dfr = $dfr;
       }
     }
-## Glyphset simple requires real Bio::EnsEMBL::Feature objects so 
-## create one and set the start/end etc..
+    
+    ## Glyphset simple requires real Bio::EnsEMBL::Feature objects so 
+    ## create one and set the start/end etc..
     my $f = Bio::EnsEMBL::Feature->new(
       -start   => $main_dfr->dnafrag_start - $offset,
       -end     => $main_dfr->dnafrag_end   - $offset,
       -strand  => $main_dfr->dnafrag_strand,
       -seqname => $main_dfr->dnafrag->name
     );
+    
     $f->{'hit_chr_name'}  = $other_dfr->dnafrag->name;
     $f->{'hit_chr_start'} = $other_dfr->dnafrag_start;
     $f->{'hit_chr_end'}   = $other_dfr->dnafrag_end;
     $f->{'chr_name'}      = $main_dfr->dnafrag->name;
     $f->{'chr_start'}     = $main_dfr->dnafrag_start;
     $f->{'chr_end'}       = $main_dfr->dnafrag_end;
-    $f->{'rel_ori'}       = $main_dfr->dnafrag_strand *
-                            $other_dfr->dnafrag_strand;
-    push @RET, $f;
-    $argh->release_tree;
+    $f->{'rel_ori'}       = $main_dfr->dnafrag_strand * $other_dfr->dnafrag_strand;
+    
+    push @features, $f;
+    
+    $_->release_tree;
   }
-  return \@RET;
+  
+  return \@features;
 }
 
 ## Colour is "nasty" we have a pool of colours we allocate in a loop!

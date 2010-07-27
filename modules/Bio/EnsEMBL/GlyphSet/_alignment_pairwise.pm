@@ -392,12 +392,12 @@ sub features {
   my $self = shift;
   
   my $features = $self->{'container'}->get_all_compara_DnaAlignFeatures(
-    $self->my_config('species_hr'),
+    $self->species_defs->get_config($self->my_config('species'), 'SPECIES_PRODUCTION_NAME'),
     $self->my_config('assembly'),
     $self->my_config('type'),
     $self->dbadaptor('multi', $self->my_config('db'))
   );
-
+  
   my $target = $self->my_config('target');
   
   $features = [ grep $_->hseqname eq $target, @{$features||[]} ] if $target;
