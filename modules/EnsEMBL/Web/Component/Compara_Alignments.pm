@@ -92,6 +92,7 @@ sub content_sub_slice {
     display_width   => $object->param('display_width') || 60,
     site_type       => ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $object->species,
+    display_species => $object->species_defs->SPECIES_SCIENTIFIC_NAME,
     comparison      => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
     sub_slice_start => $start,

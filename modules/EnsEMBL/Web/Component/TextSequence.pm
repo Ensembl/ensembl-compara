@@ -819,9 +819,9 @@ sub build_sequence {
         
         if ($config->{'comparison'}) {
           if (scalar keys %{$config->{'padded_species'}}) {
-            $pre = $config->{'padded_species'}->{$config->{'seq_order'}->[$s]} || $config->{'species'};
+            $pre = $config->{'padded_species'}->{$config->{'seq_order'}->[$s]} || $config->{'display_species'};
           } else {
-            $pre = $config->{'species'};
+            $pre = $config->{'display_species'};
           }
           
           $pre .= '  ';
