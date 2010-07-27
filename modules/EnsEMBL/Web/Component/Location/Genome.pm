@@ -136,7 +136,7 @@ sub content {
         push @$ok_colours, $colour;
       }
       my $user_pointers;
-      ($user_pointers, $usertable) = $self->create_user_set($image, $ok_colours);
+      ($user_pointers, $usertable) = $self->create_user_set($image, $ok_colours, $pointers);  #adding pointers to enable key display for non-user track for now its only xref
 
       ## Add some settings, if there is any user data
       if( @$user_pointers ) {
@@ -178,8 +178,8 @@ sub content {
 
   if ($table || $usertable) {
     $html .= $table if $table;
-    if ($usertable) {
-      $html .= '<h3>Key to user data tracks</h3>'.$usertable->render;
+    if ($usertable) {                  
+      $html .= '<h3 style="margin-bottom:-5px">Key to tracks</h3>'.$usertable->render;
     };
   } else {
     my $file = '/ssi/species/stats_'.$hub->species.'.html';

@@ -89,7 +89,7 @@ sub pointer_default {
 
 # Adds a set of userdata pointers to vertical drawing code
 sub create_user_set {
-  my ($self, $image, $colours) = @_;
+  my ($self, $image, $colours, $non_user_tracks) = @_;
   my $object = $self->object;
   my $hub = $self->hub;
 
@@ -107,7 +107,7 @@ sub create_user_set {
   );
 
   my $i = 0;
-  
+
   foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
     $i = 0 if $i > scalar(@$colours) - 1; # reset if we have loads of tracks (unlikely)
     
@@ -155,9 +155,35 @@ sub create_user_set {
       }
     }
   }
+  
+  my $data_type = $hub->param('ftype');  
+  if( $data_type =~ 'Xref')
+  {    
+    $has_table = 1;    
+    
+    foreach my $row (@$non_user_tracks){             
+      my $style = $row->{'style'};
+      
+      #the right hand arrow is xref and is red
+      my $label = ($style eq 'rharrow') ? "Xref" : "Gene";
+      my $colour = ($style eq 'rharrow') ? "red" : "blue";     
+
+      push @$pointers, $image->add_pointers( $hub, {
+          'config_name'   => 'Vkaryotype',
+          'features'      => [],
+          'color'         => $colour,
+          'style'         => $style,
+        });        
+                
+        my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
+        $swatch .= $colour.'" title="'.$colour.'" />';
+        $table->add_row({'colour' => $swatch, 'track' => $label});
+      }
+      
+   }            
   ## delete table if no tracks turned on
   $table = undef unless $has_table;
-
+  
   return ($pointers, $table );
 }
 
