@@ -41,7 +41,7 @@ sub configure {
 
   for my $species (keys %{$self->{'conf'}->{'_storage'}}, 'MULTI') {
     (my $sp = $species) =~ s/_/ /g;
-    $sp = 'Ancestral sequences' if $sp eq 'MULTI';
+    $sp = 'ancestral_sequences' if $sp eq 'MULTI';
     
     next unless ref $self->{'conf'}->{'_storage'}{$species};
     
@@ -52,7 +52,7 @@ sub configure {
       my $TEMP = $self->{'conf'}->{'_storage'}{$species}{'databases'}{$type};
       
       ## Skip if the name hasn't been set (mis-configured database)
-      if ($sp ne 'merged' && $sp ne 'Ancestral sequences') {
+      if ($sp ne 'merged' && $sp ne 'ancestral_sequences') {
         warn((' ' x 10) . "[WARN] no NAME for $sp $type") unless $TEMP->{'NAME'};
         warn((' ' x 10) . "[WARN] no USER for $sp $type") unless $TEMP->{'USER'};
       }

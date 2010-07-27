@@ -237,7 +237,7 @@ sub content {
     my $other_species_dbs = $species_defs->get_config($s->{'name'}, 'databases');
     my $name = $species_defs->species_label($s->{'name'});
     
-    if ($s->{'name'} eq 'Ancestral_sequences') {
+    if ($s->{'name'} eq 'ancestral_sequences') {
       $ancestral_seq = $name;
       $s->{'no_variations'} = 1;
     } else {
@@ -268,7 +268,7 @@ sub content {
   my %aligned_names = map { $_->{'name'} => 1 } @aligned_slices;
   
   foreach (keys %$align_species) {
-    next if $_ eq 'Ancestral_sequences';
+    next if $_ eq 'ancestral_sequences';
     $non_aligned_slices{$species_defs->species_label($_)} = 1 unless $aligned_names{$_};
   }
   

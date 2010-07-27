@@ -674,7 +674,7 @@ sub _summarise_compara_db {
       $key = 'CONSTRAINED_ELEMENTS';
       $constrained_elements->{$species_set_id} = $id;
     } elsif ($type !~ /EPO_LOW_COVERAGE/ && ($class =~ /tree_alignment/ || $type  =~ /EPO/)) {
-      $self->db_tree->{$db_name}{$key}{$id}{'species'}{'Ancestral_sequences'} = 1 unless exists $self->db_tree->{$db_name}{$key}{$id};
+      $self->db_tree->{$db_name}{$key}{$id}{'species'}{'ancestral_sequences'} = 1 unless exists $self->db_tree->{$db_name}{$key}{$id};
     }
     
     $species =~ tr/ /_/;
