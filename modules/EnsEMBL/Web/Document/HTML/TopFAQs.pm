@@ -4,7 +4,8 @@ package EnsEMBL::Web::Document::HTML::TopFAQs;
 
 use strict;
 
-use EnsEMBL::Web::Data::Faq;
+use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -16,7 +17,11 @@ sub render {
     <h3>Top 5 Frequently Asked Questions</h3>
   ';
 
-  my @faqs = EnsEMBL::Web::Data::Faq->fetch_sorted(5);
+  my $hub = new EnsEMBL::Web::Hub;
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+
+  my $args = {'limit' => 5};
+  my @faqs = @{$adaptor->fetch_faqs($args)};
 
   if (scalar @faqs > 0) {
     $html .= '
@@ -25,7 +30,7 @@ sub render {
     foreach my $faq (@faqs) {
       $html .= sprintf('
         <li><strong>%s</strong><br /><a href="/Help/Faq?id=%s" class="popup">See answer &rarr;</a></li>', 
-        $faq->question, $faq->help_record_id
+        $faq->{'question'}, $faq->{'id'}
       );
     }
 
