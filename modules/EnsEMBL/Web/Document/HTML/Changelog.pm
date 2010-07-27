@@ -34,13 +34,26 @@ sub render {
  
     if (scalar(@changes) > 0) {
 
-      my $prev_team = undef;
+      my ($record, $prev_team);;
+
+      ## Quick'n'dirty TOC
+      $html .= "<ul>\n";
+      foreach $record (@changes) {
+        if ($record->{'team'} ne $prev_team) {
+          $html .= sprintf '<li><a href="#team-%s">%s</a></li>', $record->{'team'}, $record->{'team'};
+        }
+        $prev_team = $record->{'team'};
+      }
+      $html .= "</ul>\n\n";
+      $prev_team = undef;
+
+
       ## format news changes
       foreach my $record (@changes) {
 
         ## is it a new category?
         if ($prev_team ne $record->{'team'}) {
-          $html .= "<h2>".$record->{'team'}."</h2>\n";
+          $html .= sprintf '<h2 id="team-%s">%s</h2>', $record->{'team'}, $record->{'team'};;
         }
 
         $prev_team = $record->{'team'};
