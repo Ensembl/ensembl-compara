@@ -163,7 +163,7 @@ sub get_slices {
   }
   
   foreach (@slices) {
-    my $name         = $species_defs->get_config($_->can('display_Slice_name') ? $_->display_Slice_name : $species, 'SPECIES_SCIENTIFIC_NAME');
+    my $name         = $species_defs->get_config($_->can('display_Slice_name') ? $_->display_Slice_name : $species, 'SPECIES_SCIENTIFIC_NAME') || 'Ancestral sequences';
     my $display_name = $vega_compara ? $self->get_full_name($_) : $name;
     
     push @formatted_slices, { 
