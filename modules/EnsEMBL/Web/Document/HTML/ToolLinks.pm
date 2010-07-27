@@ -11,7 +11,6 @@ sub new { return shift->SUPER::new('logins' => '?'); }
 sub logins      :lvalue { $_[0]{'logins'};      }
 sub blast       :lvalue { $_[0]{'blast'};       }
 sub biomart     :lvalue { $_[0]{'biomart'};     }
-sub mirror_icon :lvalue { $_[0]{'mirror_icon'}; }
 
 sub render {
   my $self = shift;
@@ -37,9 +36,15 @@ sub render {
   
   push @links, qq{<a href="/$blast_dir/blastview">BLAST/BLAT</a>} if $self->blast;
   push @links, qq{<a href="/biomart/martview">BioMart</a>}        if $self->biomart;
+  push @links, qq{<a href="/downloads.html">Downloads</a>};
+  push @links, qq{<a href="/tools.html">Tools</a>};
   push @links, qq{<a href="/help.html">Help</a>};
   push @links, qq{<a href="/info/docs/">Documentation</a>};
-  
+
+  if ($species_defs->ENSEMBL_MIRRORS && keys %{$species_defs->ENSEMBL_MIRRORS}) {
+    push @links, qq(<a href="/Help/Mirrors" class="modal_link">Mirrors</a>);
+  }
+
   my $last  = pop @links;
   my $tools = join '', map "<li>$_</li>", @links;
   
