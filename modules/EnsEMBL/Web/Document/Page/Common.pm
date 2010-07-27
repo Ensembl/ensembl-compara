@@ -97,7 +97,6 @@ sub _common_HTML {
     $self->tools->logins      = $species_defs->ENSEMBL_LOGINS;
     $self->tools->blast       = $species_defs->ENSEMBL_BLAST_ENABLED;
     $self->tools->biomart     = $species_defs->ENSEMBL_MART_ENABLED;
-    $self->tools->mirror_icon = $style->{'MIRROR_ICON'};
   }
   
   if ($self->{'input'}) {
