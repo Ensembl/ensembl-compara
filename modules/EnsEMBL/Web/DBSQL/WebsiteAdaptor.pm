@@ -137,6 +137,11 @@ sub fetch_faqs {
 
   $sql .= ' ORDER BY helpful DESC, not_helpful ASC ';
 
+  if ($criteria->{'limit'}) {
+    $sql .= ' LIMIT ?';
+    push @args, $criteria->{'limit'};
+  }
+
   my $sth = $self->db->prepare($sql);
   $sth->execute(@args);
 
