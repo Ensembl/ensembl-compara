@@ -209,6 +209,7 @@ sub regulatory_feature_table{
               action => 'View',
               r => $loc_string,
               v => $object->name,
+              contigviewbottom => 'reg_feats_'.$set_name.'=normal',
             });
             
             my %row = (
