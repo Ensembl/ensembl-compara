@@ -208,13 +208,15 @@ sub content {
       my $url_params = { type => 'Location', action => 'Multi', r => undef };
       my $s = 1;
       
-      for (@{$node->get_all_leaves}) {
+      foreach (@{$node->get_all_leaves}) {
         my $gene = $_->gene_member->stable_id;
         
         next if $gene eq $hub->param('g');
         
-        ($url_params->{"s$s"} = $_->genome_db->name) =~ s/ /_/g;
-        $url_params->{"g$s"}  = $gene;
+        # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
+        # There should be a way of retrieving this name correctly instead.
+        $url_params->{"s$s"} = ucfirst $_->genome_db->name;
+        $url_params->{"g$s"} = $gene;
         $s++;
       }
       
