@@ -1159,11 +1159,12 @@ sub get_SimpleAlign {
 
   foreach my $genomic_align (@$all_genomic_aligns) {
     my $alignSeq = $genomic_align->aligned_sequence;
+    next if($alignSeq=~/^[\.\-]+$/);
     
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
                                          -START  => $genomic_align->dnafrag_start,
                                          -END    => $genomic_align->dnafrag_end,
-                                         -ID     => $display_id ? $genomic_align->display_id : $genomic_align->dnafrag->name,
+                                         -ID     => $display_id ? $genomic_align->display_id : ($genomic_align->dnafrag->genome_db->name . "/" . $genomic_align->dnafrag->name),
                                          -STRAND => $genomic_align->dnafrag_strand);
 
     $loc_seq->seq($uc ? uc $loc_seq->translate->seq
