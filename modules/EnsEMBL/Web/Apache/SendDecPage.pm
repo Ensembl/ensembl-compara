@@ -120,7 +120,10 @@ sub handler {
       close FH;
     }
 
-    return DECLINED if $pageContent =~ /<!--#set var="decor" value="none"-->/;
+    if ($pageContent =~ /<!--#set var="decor" value="none"-->/) {
+      $r->print($pageContent);
+      return OK;
+    }
 
     $pageContent =~ s/\[\[([A-Z]+)::([^\]]*)\]\]/my $m = "template_$1"; no strict 'refs'; &$m($r, $2);/ge;
 
