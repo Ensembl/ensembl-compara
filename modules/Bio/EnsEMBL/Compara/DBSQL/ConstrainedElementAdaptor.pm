@@ -209,6 +209,57 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	return \@constrained_elements;
 }
 
+
+=head2 fetch_all_by_Slice
+
+  Arg  1     : Bio::EnsEMBL::Slice $slice_obj
+  Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->
+  		fetch_all_by_Slice($slice_obj);
+  Description: Retrieve the corresponding
+               Bio::EnsEMBL::Compara::ConstrainedElement object listref
+  Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement objects
+  Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Slice object
+  Caller     : object::methodname
+
+=cut
+
+sub fetch_all_by_Slice {
+	my ($self, $slice_obj) = @_;
+	if (defined($slice_obj)) {
+		throw("$slice_obj is not a Bio::EnsEMBL::Slice object")	
+		unless ($slice_obj->isa("Bio::EnsEMBL::Slice"));
+	} else {
+		throw("undefined Bio::EnsEMBL::Slice object");
+	}
+	my $all_mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type("GERP_CONSTRAINED_ELEMENT");
+	@{ $all_mlss }  = sort{ $b->max_alignment_length <=> $a->max_alignment_length } @{ $all_mlss };
+	my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
+	my $dnafrag = $dnafrag_adp->fetch_by_Slice($slice_obj);
+	my $sql = qq{
+		WHERE
+		dnafrag_id = ? 
+	};
+	my (@constrained_elements, $lower_bound);
+
+	if(defined($slice_obj->start) && defined($slice_obj->end) && 
+		($slice_obj->start <= $slice_obj->end)) {
+		my $max_alignment_length = $all_mlss->[0]->max_alignment_length;
+		$lower_bound = $slice_obj->start - $max_alignment_length;
+			$sql .= qq{
+				AND
+				dnafrag_end >= ?
+				AND
+				dnafrag_start <= ?
+				AND
+				dnafrag_start >= ?
+			};
+	}
+	
+	$self->_fetch_all_ConstrainedElements($sql, \@constrained_elements,
+		undef, $dnafrag->dbID, $slice_obj->start, $slice_obj->end, $lower_bound, $slice_obj);
+	return \@constrained_elements;
+}
+
 =head2 fetch_all_by_MethodLinkSpeciesSet_Dnafrag
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet mlss_obj
@@ -229,8 +280,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
 	if (defined($mlss_obj)) {
 		throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
 		unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-	} else {
-		throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
 	} 
 	if(defined($dnafrag_obj)) {
 		throw("$dnafrag_obj is not a Bio::EnsEMBL::Compara::DnaFrag object")
@@ -276,16 +325,22 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
        		constrained_element_id,
        		dnafrag_start,
        		dnafrag_end,
+                dnafrag_strand,
       		score,
       		p_value,
-       		taxonomic_level
+       		taxonomic_level,
+		method_link_species_set_id
        		FROM
        		constrained_element} . $sql;
 
 	my $sth = $self->prepare($sql);
-	$sth->execute($mlss_id, $dnafrag_id, $start, $end, $lower_bound);
-	my ($dbID, $ce_start, $ce_end, $score, $p_value, $tax_level);
-	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$score, \$p_value, \$tax_level);
+	if($mlss_id) {
+		$sth->execute($mlss_id, $dnafrag_id, $start, $end, $lower_bound);
+	} else {
+		$sth->execute($dnafrag_id, $start, $end, $lower_bound);#get all the constrained elements regardless of mlss_id
+	}
+	my ($dbID, $ce_start, $ce_end, $ce_strand, $score, $p_value, $tax_level);
+	$sth->bind_columns(\$dbID, \$ce_start, \$ce_end, \$ce_strand, \$score, \$p_value, \$tax_level, \$mlss_id);
 	while ($sth->fetch()) {
 		my $constrained_element = Bio::EnsEMBL::Compara::ConstrainedElement->new_fast (
 			{
@@ -294,6 +349,7 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 				'slice' => $slice,
 				'start' =>  ($ce_start - $start + 1), 
 				'end' => ($ce_end - $start + 1),
+			        'strand' => $ce_strand,
 				'method_link_species_set_id' => $mlss_id,
 				'score' => $score,
 				'p_value' => $p_value,
