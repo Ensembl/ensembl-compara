@@ -796,7 +796,7 @@ sub get_ImageConfig {
 ### Return a new image config object...
   my( $self, $type, @species ) = @_; ## @species is a optional scalar!!!
 
-  return undef if $type eq '_page';
+  return undef if $type eq '_page' || $type eq 'cell_page';
   my $classname = '';
 ## Let us hack this for the moment....
 ## If a site is defined in the configuration look for

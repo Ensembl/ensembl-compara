@@ -257,7 +257,9 @@ sub _user_context {
       $flag = 0;
     }
 
-    if ( $action eq 'Location/View' && keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}){
+    if ($action eq 'Location/View' && keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}) {
+      $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq 'cell_page';
+      
       $self->page->$section->add_entry(
         type    => 'Config',
         id      => 'config_cell_page',
@@ -267,12 +269,10 @@ sub _user_context {
           time     => time,
           type     => 'Config',
           action   => 'Location/Cell_line',
-          config   => '_page'
+          config   => 'cell_page'
         }))
       );
-      $flag = 0;
     }
-
   }
   
   $active = $section eq 'global_context' && $type eq 'UserData';
@@ -392,7 +392,7 @@ sub _configurator {
   my $config_key = $hub->param('config');
   my $action     = join '/', map $hub->$_ || (), qw(type action function);
   my $url        = $hub->url({ type => 'Config', action => $action }, 1);
-  my $conf       = $hub->param('config') ? $hub->get_imageconfig($hub->param('config'), undef, 'merged') : undef;
+  my $conf       = $config_key ? $hub->get_imageconfig($config_key, undef, 'merged') : undef;
   
   # This must be the view config
   if (!$conf) {
