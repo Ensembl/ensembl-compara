@@ -477,7 +477,6 @@ sub _configurator {
       
       if ($track_node->get('submenu')) {
         $submenu = $track_node->get('caption');
-        $submenu = lc $submenu if $submenu =~ /^[A-Z][a-z]/; # Assume that a word starting with two capitals is an abbreviation, so don't use lower case in this situation 
         $pre_config_group = '</dl><dl class="config_menu submenu">' if $config_group;
       } else {
         $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;   
