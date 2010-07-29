@@ -84,6 +84,7 @@ sub format_frequencies {
       #$description = substr($description, 0, 220) . '...' if length $description > 220;
       #
       #$pop_row{'Description'} = sprintf '<small>%s</small>', $description || '-';
+      $pop_row{'Description'} = $freq_data{$pop_id}{$ssid}{'pop_info'}{'Description'} if $object->Obj->is_somatic;
       
       # Super and sub populations ----------------------------------------------
       my $super_string = _sort_extra_pops($object, $freq_data{$pop_id}{$ssid}{'pop_info'}{'Super-Population'});
@@ -102,13 +103,13 @@ sub format_frequencies {
   my @header_row;
   
   foreach my $col (sort { $b cmp $a } keys %columns) {
-    next if $col =~ /pop|ssid|submitter/;
+    next if $col =~ /pop|ssid|submitter|Description/;
     
-    if ($col eq 'Description') {
-      push @header_row, { key => $col, align => 'left', title => $col, sort => 'none' };
-    } else {
+    #if ($col eq 'Description') {
+    #  push @header_row, { key => $col, align => 'left', title => $col, sort => 'none' };
+    #} else {
       unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numeric' };
-    }
+    #}
   }
   
   if (exists $columns{'ssid'}) {
@@ -116,7 +117,11 @@ sub format_frequencies {
     unshift @header_row, { key => 'ssid',      align => 'left', title => 'ssID',      sort => 'string' };
   }
   
-  unshift @header_row, { key => 'pop', align =>'left', title => 'Population', sort => 'html' };
+  if (exists $columns{'Description'}) {
+    unshift @header_row, { key => 'Description', align => 'left', title => 'Description', sort => 'none' };
+  }
+  
+  unshift @header_row, { key => 'pop', align =>'left', title => ($object->Obj->is_somatic ? 'Sample' : 'Population'), sort => 'html' };
   
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
