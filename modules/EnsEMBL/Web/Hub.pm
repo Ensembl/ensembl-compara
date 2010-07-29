@@ -158,6 +158,7 @@ sub core_objects {
   my $core_objects = shift;
   $self->{'_core_objects'}->{lc $_}        = $core_objects->{$_} for keys %{$core_objects || {}};
   $self->{'_core_objects'}->{'parameters'} = $self->core_params if $core_objects;
+  $self->{'_core_objects'}->{'parameters'}->{'db'} ||= 'core';
   return $self->{'_core_objects'};
 }
 
