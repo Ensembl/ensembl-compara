@@ -38,12 +38,13 @@ sub content {
   
   $table->add_columns(
     { key => 'gene',      title => 'Gene',                            sort => 'html'                        },
-    { key => 'trans',     title => 'Transcript',                      sort => 'html'                        },
+    { key => 'trans',     title => 'Transcript (strand)',             sort => 'html'                        },
     { key => 'type',      title => 'Type'  ,                          sort => 'string'                      },
     { key => 'hgvs',      title => 'HGVS names'  ,                    sort => 'string'                      },     
     { key => 'trans_pos', title => 'Position in transcript', sort => 'position', align => 'center' },
     { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'center' },
-    { key => 'aa',        title => 'Amino acid',                      sort => 'string'                      }
+    { key => 'aa',        title => 'Amino acid',                      sort => 'string'                      },
+    { key => 'codon',     title => 'Codon',                           sort => 'string'                      },
   );
   
   my $gene_adaptor = $object->database('core')->get_GeneAdaptor;
@@ -110,14 +111,24 @@ sub content {
       }
 
       # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
+      
+      my $codon = $transcript_data->{'codon'} || '-';
+      if($codon ne '-') {
+        $codon =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
+        $codon =~ tr/acgt/ACGT/;
+      }
+      
+      my $strand = $trans->strand;
+      
       my $row = {
         gene      => qq{<a href="$gene_url">$gene_name</a>},
-        trans     => qq{<a href="$transcript_url">$trans_name</a>},
+        trans     => qq{<a href="$transcript_url">$trans_name</a> ($strand)},
         type      => $transcript_data->{'conseq'},
         hgvs      => ($hgvs || '-'),
         trans_pos => $self->_sort_start_end($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}),
         prot_pos  => $self->_sort_start_end($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}),
-        aa        => $transcript_data->{'pepallele'} || 'n/a'
+        aa        => $transcript_data->{'pepallele'} || '-',
+        codon     => $codon
       };
       
       $table->add_row($row);
@@ -143,7 +154,7 @@ sub _sort_start_end {
   if ($start || $end) {
     return "$start-$end";
   } else {
-    return 'n/a';
+    return '-';
   };
 }
 
