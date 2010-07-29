@@ -57,26 +57,18 @@ sub _content {
   my @style = $count > 4 ? () : (' style="display:none"', ' style="display:block"');
   
   foreach my $entry (@{$self->entries}) {
+    $entry->{'url'} ||= '#';
+    
     my $name = $entry->{'caption'};
-    my ($short_tab, $long_tab);
+    $name =~ s/<\\\w+>//g;
+    $name =~ s/<[^>]+>/ /g;
+    $name =~ s/\s+/ /g;
+    $name = encode_entities($name);
     
-    if ($entry->{'url'} && $name ne '-') {
-      $name =~ s/<\\\w+>//g;
-      $name =~ s/<[^>]+>/ /g;
-      $name =~ s/\s+/ /g;
-      $name = encode_entities($name);
-      
-      my ($short_name) = split /\b/, $name;
-      
-      $short_tab = qq{<a href="$entry->{'url'}" title="$name">$short_name</a>};
-      $long_tab  = qq{<a href="$entry->{'url'}">$name</a>};
-    } else {
-      $short_tab = qq{<span title="$entry->{'disabled'}">$entry->{'type'}</span>};
-      $long_tab  = $short_tab;
-    }
+    my ($short_name) = split /\b/, $name;
     
-    $short_tabs .= qq{<$node class="$entry->{'class'} short_tab"$style[0]>$short_tab</$node>};
-    $long_tabs  .= qq{<$node class="$entry->{'class'} long_tab"$style[1]>$long_tab</$node>};
+    $short_tabs .= qq{<$node class="$entry->{'class'} short_tab"$style[0]><a href="$entry->{'url'}" title="$name">$short_name</a></$node>};
+    $long_tabs  .= qq{<$node class="$entry->{'class'} long_tab"$style[1]><a href="$entry->{'url'}">$name</a></$node>};
 
     $active = $name if $entry->{'class'} =~ /\bactive\b/;
   }
