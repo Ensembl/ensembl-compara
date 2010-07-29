@@ -64,7 +64,7 @@ sub table_data {
     if($is_somatic){
       $disorder =~s/\:/ /;
       $disorder =~s/\:/\: /;
-      $disorder =~s/\_/ /g; 
+      $disorder =~s/\_/ /g;
     }
     my @data_row;
         
@@ -81,8 +81,14 @@ sub table_data {
     my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
     if ($is_somatic){ 
       my @tumour_info =  split (/\:/, $disorder);
-      $study = $tumour_info[1]; 
+      $study = $tumour_info[1];
+      my $s_link = "$tumour_info[1]";
       $study =~s/\_//g;
+      
+      $s_link =~ s/ /\_/g;
+      $s_link =~ s/^\_+//g;
+      
+      $study = '<a href="http://www.sanger.ac.uk/perl/genetics/CGP/cosmic?action=byhist&s=3&sn='.$s_link.'" target="_blank">'.$study.'</a>';
     }
    
     my $gene         = $self->gene_links($va->associated_gene);
