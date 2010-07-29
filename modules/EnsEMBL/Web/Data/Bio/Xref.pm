@@ -26,11 +26,12 @@ sub convert_to_drawing_parameters {
   my $data = $self->data_objects;
   my $results = [];
   my $hub = $self->hub;  
+  my $ftype = $hub->param('ftype');
 
   foreach my $array (@$data) {    
     my $xref = shift @$array;  
-    foreach my $g (@$array) {
-      
+    
+    foreach my $g (@$array) {      
       push @$results, {
         'label'    => $xref->db_display_name,
         'xref_id'  => [ $xref->primary_id ],
@@ -40,7 +41,7 @@ sub convert_to_drawing_parameters {
         'region'   => $g->seq_region_name,
         'strand'   => $g->strand,
         'extra'    => [ $g->description, $xref->dbname ],
-        'href'     => $hub->url({ type => 'Zmenu', action => 'Feature', function => 'Xref', ftype => 'Xref', id => $xref->display_id}),
+        'href'     => $hub->url({ type => 'Zmenu', action => 'Feature', function => 'Xref', ftype => $ftype, id => $xref->primary_id, r => undef }),
       };
     }
   }  
