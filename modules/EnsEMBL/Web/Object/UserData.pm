@@ -668,12 +668,10 @@ sub calculate_consequence_data {
           }
 
           my $strand;
-          if ($f->strand =~/\+|1/){
-            $strand =1;
-          } elsif($f->strand =~/\-|\-1/){
+          if($f->strand =~ /\-/) {
             $strand = -1;
           } else {
-            $strand = 0;
+            $strand = 1;
           }
 
           unless ($f->can('allele_string')){
@@ -718,12 +716,12 @@ sub calculate_consequence_data {
             foreach my $consequence (@{$tv->consequence_type}){
 
               ## Set default values
-              my $gene_id       = 'N/A';
-              my $transcript_id = 'N/A';
-              my $cdna_pos      = 'N/A';
-              my $prot_pos      = 'N/A';
-              my $aa            = $tv->pep_allele_string || 'N/A';;
-              my $snp           = 'N/A';
+              my $gene_id       = '-';
+              my $transcript_id = '-';
+              my $cdna_pos      = '-';
+              my $prot_pos      = '-';
+              my $aa            = $tv->pep_allele_string || '-';;
+              my $snp           = '-';
 
               if ($tv->transcript){
                 $transcript_id = $tv->transcript->stable_id;
