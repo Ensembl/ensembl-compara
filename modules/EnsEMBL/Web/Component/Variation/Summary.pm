@@ -31,6 +31,9 @@ sub content {
   } elsif ($source =~ /SGRP/) {
     $name = $object->get_ExtURL_link($source, 'SGRP', $name);
     $name = "$class (source $name - $source_description)";
+  } elsif ($source =~ /COSMIC/) {
+    $name = $object->get_ExtURL_link($source, 'COSMIC', $name);
+    $name = "$class (source $name - $source_description)";
   } elsif ($source =~ /HGMD/) { # HACK - should get its link properly somehow
     # get a va adaptor
     my $vaa = $object->vari->adaptor->db->get_VariationAnnotationAdaptor();
@@ -237,7 +240,7 @@ sub content {
       $hide ? ' style="display:none"' : ''
     );
 
-    foreach my $varif_id (keys %mappings) {
+    foreach my $varif_id (sort {$mappings{$a}->{'Chr'} cmp $mappings{$b}->{'Chr'} || $mappings{$a}->{'start'} <=> $mappings{$b}->{'start'}} keys %mappings) {
       my $region          = $mappings{$varif_id}{'Chr'}; 
       my $start           = $mappings{$varif_id}{'start'};
       my $end             = $mappings{$varif_id}{'end'};
