@@ -212,7 +212,7 @@ sub get_colours {
   my %ratio = ('1' => '0.6', '2' => '0.4', '3' => '0.2', '4' => '0');
   my %feature_types = %{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
 
-  foreach my $name ( keys %feature_types){ 
+  foreach my $name (sort keys %feature_types){ 
     $name =~s/\:\d*//;
     my $histone_pattern = $name;
     unless ( exists $feature_colours{$name}) { 
