@@ -22,10 +22,7 @@ sub content {
   my $self       = shift;
   my $object     = $self->object;
   my $html       = '<h2>Stable ID Mapper Results:</h2>';
-  my $referer    = $object->param('_referer');
   my $size_limit = $object->param('id_limit'); 
-  
-  $html .= qq(<br /><a href="$referer">Back to previous view</a><br />);
   
   my @files = ($object->param('convert_file'));
 

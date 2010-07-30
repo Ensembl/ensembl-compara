@@ -42,7 +42,6 @@ sub content {
 
   my $text         = "Please select the format you would like your output in:";
   my $species      = ';species=' . $object->param('species');
-  my $referer      = ';_referer=' . uri_escape($object->parent->{'uri'});
   my $species_path = $object->species_path($object->data_species) || '/'.$species;
   
   $extra_param .= ';_time=' . $object->param('_time') if $object->param('_time');
@@ -51,13 +50,13 @@ sub content {
   $convert_file .= ';id_limit=' . $object->param('id_limit') if $object->param('id_limit');
   $convert_file .= ';variation_limit=' . $object->param('variation_limit') if $object->param('variation_limit');
   
-  my $html_url = "$species_path/UserData/$html_target?format=html;data_format=".$data_format . $convert_file . $species . $referer;
+  my $html_url = "$species_path/UserData/$html_target?format=html;data_format=".$data_format . $convert_file . $species;
   $html_url .= ';code='.$object->param('code') if $object->param('code');
 
   my $text_url = "$species_path/UserData/$text_target?format=text;data_format=".$data_format . $convert_file . $species . $extra_param;
   
   my $list = [
-    qq{<a href="$html_url">HTML</a>},
+    qq{<a class="modal_link" href="$html_url">HTML</a>},
     qq{<a class="modal_link" href="$text_url">Text</a>}
   ];
   

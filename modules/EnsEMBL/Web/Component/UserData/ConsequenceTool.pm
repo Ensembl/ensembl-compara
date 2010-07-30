@@ -19,9 +19,6 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   my $html = '<h2>SNP Effect Predictor  Results:</h2>';
-  my $referer =  $object->param('_referer');
-  $html .= qq(<br /><a href="$referer">Back to previous view</a><br />);
-
 
   my @files = ($object->param('code'));
   my $size_limit =  $object->param('variation_limit');
