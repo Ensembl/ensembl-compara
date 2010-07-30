@@ -9,6 +9,7 @@ sub local_context  { return $_[0]->_local_context;  }
 sub local_tools    { return $_[0]->_local_tools;    }
 sub context_panel  { return undef;                  }
 sub content_panel  { return $_[0]->_content_panel;  }
+sub query_string   { return ''; }
 
 sub set_default_action {
   my $self = shift;
