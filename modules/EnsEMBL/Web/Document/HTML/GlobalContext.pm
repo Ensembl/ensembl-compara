@@ -66,9 +66,10 @@ sub _content {
     $name = encode_entities($name);
     
     my ($short_name) = split /\b/, $name;
+    my $constant     = $entry->{'constant'} ? ' class="constant"' : '';
     
-    $short_tabs .= qq{<$node class="$entry->{'class'} short_tab"$style[0]><a href="$entry->{'url'}" title="$name">$short_name</a></$node>};
-    $long_tabs  .= qq{<$node class="$entry->{'class'} long_tab"$style[1]><a href="$entry->{'url'}">$name</a></$node>};
+    $short_tabs .= qq{<$node class="$entry->{'class'} short_tab"$style[0]><a href="$entry->{'url'}" title="$name"$constant>$short_name</a></$node>};
+    $long_tabs  .= qq{<$node class="$entry->{'class'} long_tab"$style[1]><a href="$entry->{'url'}"$constant>$name</a></$node>};
 
     $active = $name if $entry->{'class'} =~ /\bactive\b/;
   }
