@@ -61,13 +61,12 @@ sub fetch_features {
       }
       $self->cache($self->{'my_config'}->key, \@somatic_mutations);   
     } else { # get standard variations
-
       my $sources = $self->my_config('sources'); 
-        $sources = { map ($_, 1), @$sources } if $sources; 
+         $sources = { map { $_ => 1 } @$sources } if $sources; 
       my $sets    = $self->my_config('sets');
-        $sets    = { map ($_, 1), @$sets } if $sets;
+         $sets    = { map { $_ => 1 } @$sets } if $sets;
       my %ct      = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-    
+     
       ## Add a filtering step here
       my @vari_features =
         map  { $_->[1] }                                                ## Quick indexing schwartzian transform
