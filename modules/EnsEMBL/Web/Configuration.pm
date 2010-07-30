@@ -170,9 +170,10 @@ sub _global_context {
   
   if ($species) {
     $self->page->global_context->add_entry(
-      type    => 'species',
-      caption => sprintf('%s (%s)', $species, $species_defs->ASSEMBLY_NAME),
-      url     => $hub->url({ type => 'Info', action => 'Index', __clear => 1 })
+      type     => 'species',
+      caption  => sprintf('%s (%s)', $species, $species_defs->ASSEMBLY_NAME),
+      constant => 1,
+      url      => $hub->url({ type => 'Info', action => 'Index', __clear => 1 })
     );
   }
   
