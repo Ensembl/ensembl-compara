@@ -1808,7 +1808,7 @@ sub LRGLine {
   $xml .= qq(
   <cross_references>
     <ref dbname="$dbname" dbkey="$dbkey"/>
-  </cross references>);
+  </cross_references>);
   $xml .= qq(
   <additional_fields>
     <field name="action">LRG_Summary</field>
