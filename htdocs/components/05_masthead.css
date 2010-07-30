@@ -1,4 +1,4 @@
-#masthead                     { background-color: [[MH_BG]]; color: [[MH_TEXT]]; }
+#masthead                     { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 74px; }
 #masthead div                 { background-color: [[MH_BG]]; }
 #masthead a                   { color: [[MH_LINK]]; text-decoration: none; }
 #masthead a:hover             { color: [[MH_HOVER]] !important; }
