@@ -233,6 +233,7 @@ sub getFakeMungedVariationFeatures {
 
   my ( $self, $subslices, $gene ) = @_;
   my $all_snps = $self->Obj->get_all_VariationFeatures();
+  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures()};
 
   my @on_slice_snps = 
 # [ fake_s, fake_e, SNP ]   Filter out any SNPs not on munged slice...
