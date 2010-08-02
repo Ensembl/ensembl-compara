@@ -187,7 +187,7 @@ sub content {
         my $variation = qq(<a href="$link">$name</a>);  
         $variation_string .= ', '.$variation;
       }
-      $variation_string =~s/^\,\s+//;  
+      $variation_string =~s/,\s+//;  
 
       $html .= "
       <dl class='summary'>
