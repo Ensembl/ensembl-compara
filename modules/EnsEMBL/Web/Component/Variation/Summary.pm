@@ -39,10 +39,9 @@ sub content {
     my $vaa = $object->vari->adaptor->db->get_VariationAnnotationAdaptor();
     foreach my $va(@{$vaa->fetch_all_by_Variation($object->vari)}) {
       next unless $va->source_name =~ /HGMD/;
-      $name =
-        $class.' (source <a href="http://www.hgmd.cf.ac.uk/ac/gene.php?gene='.
-        $va->associated_gene.'&accession='.$object->name.'">'.
-        $source.'</a> - '.$source_description.')';
+      my $source_link =  $object->get_ExtURL_link($va->source_name, 'HGMD', {'ID' => $va->associated_gene, 'ACC' => $name });
+      $name = 
+        $class.' (source '. $source_link. ' '.$source_description.')';
     }
   }
   else {
@@ -97,8 +96,7 @@ sub content {
         foreach my $va(@{$vaa->fetch_all_by_Variation($object->vari)}) {
           next unless $va->source_name =~ /HGMD/;
           push @urls, 
-            '<a href="http://www.hgmd.cf.ac.uk/ac/gene.php?gene='.
-            $va->associated_gene.'&accession='.$_.'">'.$_.'</a>';
+              $object->get_ExtURL_link($_, 'HGMD', {'ID' => $va->associated_gene, 'ACC' => $_ });
         }
       }
     } else {
@@ -187,9 +185,10 @@ sub content {
         my $name = $v->variation_name; 
         my $link = $object->_url({ v => $name, vf => $v->dbID,});
         my $variation = qq(<a href="$link">$name</a>);  
-        $variation_string .= $variation;
+        $variation_string .= ', '.$variation;
       }
-  
+      $variation_string =~s/^\,\s+//;  
+
       $html .= "
       <dl class='summary'>
         <dt>Co-located </dt>
