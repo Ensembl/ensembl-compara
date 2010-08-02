@@ -199,8 +199,7 @@ sub content {
             $save = '';
           }
           elsif ($file->{'format'} && $file->{'format'} eq 'SNP_EFFECT') {
-            my $referer      = ';_referer=' . uri_escape($object->parent->{'uri'});
-            $save = sprintf '<a href="%s" class="modal_link">Download</a>', '/'.$file->{'species'}.'/UserData/PreviewConvertIDs?format=text;data_format=snp;species='.$file->{'species'}.';convert_file='.$file->{'filename'}.':'.$file->{'name'}.$referer;
+            $save = sprintf '<a href="%s" class="modal_link">Download</a>', '/'.$file->{'species'}.'/UserData/PreviewConvertIDs?format=text;data_format=snp;species='.$file->{'species'}.';convert_file='.$file->{'filename'}.':'.$file->{'name'};
           } 
           else {
             $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);

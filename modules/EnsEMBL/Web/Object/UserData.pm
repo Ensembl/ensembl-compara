@@ -861,11 +861,10 @@ sub consequence_table {
       my $url_location = $f->seqname .":". ($f->rawstart -500) .
             "-".($f->rawend + 500);
       my $location_url = $self->_url({
-          'type'              => 'Location',
-          'action'            => 'View',
-          'r'                 =>  $url_location,
-          '_referer'          => undef,
-          'contigviewbottom'  => 'variation_feature_variation=normal',
+          'type'             => 'Location',
+          'action'           => 'View',
+          'r'                =>  $url_location,
+          'contigviewbottom' => 'variation_feature_variation=normal',
       });
 
       my $uploaded_loc      = $f->id;
@@ -883,30 +882,27 @@ sub consequence_table {
 
       if ($transcript_id ne 'N/A') { 
         my $transcript_url = $self->_url({
-          'type'      => 'Transcript',
-          'action'    => 'Summary',
-          't'         =>  $transcript_id,
-          '_referer'  => undef,
+          'type'   => 'Transcript',
+          'action' => 'Summary',
+          't'      =>  $transcript_id,
         });
         $transcript_string = qq(<a href="$transcript_url">$transcript_id</a>);
       }
 
       if ($gene_id ne 'N/A') { 
         my $gene_url = $self->_url({
-          'type'      => 'Gene',
-          'action'    => 'Summary',
-          'g'         =>  $gene_id,
-          '_referer'  => undef,
+          'type'   => 'Gene',
+          'action' => 'Summary',
+          'g'      =>  $gene_id,
         });
         $gene_string = qq(<a href="$gene_url">$gene_id</a>);
       }
 
       if ($snp_id =~/^\w/ ){
         my $snp_url =  $self->_url({
-          'type'      => 'Variation',
-          'action'    => 'Summary',
-          'v'         =>  $snp_id,
-          '_referer'  =>  undef,
+          'type'   => 'Variation',
+          'action' => 'Summary',
+          'v'      =>  $snp_id,
         });
         $snp_string = qq(<a href="$snp_url">$snp_id</a>);
       }

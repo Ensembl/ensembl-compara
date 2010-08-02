@@ -81,11 +81,10 @@ sub consequence_table {
           my $url_location = $var_feature->seq_region_name .":". ($var_feature->seq_region_start -500) .
             "-".($var_feature->seq_region_end + 500);
           my $location_url = $object->_url({
-            'type'              => 'Location',
-            'action'            => 'View',
-            'r'                 =>  $url_location,
-            '_referer'          => undef,
-            'contigviewbottom'  => 'variation_feature_variation=normal',
+            'type'             => 'Location',
+            'action'           => 'View',
+            'r'                =>  $url_location,
+            'contigviewbottom' => 'variation_feature_variation=normal',
           });
 
           my $transcript_string = "N/A";
@@ -97,18 +96,16 @@ sub consequence_table {
             my $gene_id = $gene->stable_id;
 
             my $transcript_url = $object->_url({
-              'type'      => 'Transcript',
-              'action'    => 'Summary',
-              't'         =>  $transcript,
-              '_referer'  => undef,
+              'type'   => 'Transcript',
+              'action' => 'Summary',
+              't'      =>  $transcript,
             });
             $transcript_string = qq(<a href="$transcript_url">$transcript</a>);
 
             my $gene_url = $object->_url({
-              'type'      => 'Gene',
-              'action'    => 'Summary',
-              'g'         =>  $gene_id,
-              '_referer'  => undef,
+              'type'   => 'Gene',
+              'action' => 'Summary',
+              'g'      =>  $gene_id,
             });
             $gene_string = qq(<a href="$gene_url">$gene_id</a>);
           }
@@ -174,10 +171,9 @@ sub consequence_table {
 
             if ($snp_id =~/^\w/ ){
               my $snp_url =  $object->_url({
-                'type'      => 'Variation',
-                'action'    => 'Summary',
-                'v'         =>  $snp_id,
-                '_referer'  =>  undef,
+                'type'   => 'Variation',
+                'action' => 'Summary',
+                'v'      =>  $snp_id,
               });
               $snp_string = qq(<a href="$snp_url">$snp_id</a>);
             }
