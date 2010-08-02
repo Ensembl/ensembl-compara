@@ -91,21 +91,16 @@ sub _create_Phenotype {
   ### Args: db 
   ### Returns: hashref of API objects
   
-  my ($self, $db) = @_;  
-  my $id    = $self->param('id');   
-  my $source = $self->param('source_name'); 
-  my $dbc = $self->hub->database('variation'); 
-  my $a = $dbc->get_adaptor('VariationFeature');  
-  my $variations;
-
-  if ($source eq 'COSMIC'){  
-    $variations = $a->fetch_all_somatic_with_annotation(undef, undef, $id);
-  } else {
-    $variations = $a->fetch_all_with_annotation(undef, undef, $id); 
-  } 
-
-  return unless $variations and scalar @$variations >> 0; 
-  return {'Variation' => EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations)};
+  my ($self, $db) = @_;
+  
+  my $id         = $self->param('id');   
+  my $dbc        = $self->hub->database('variation'); 
+  my $a          = $dbc->get_adaptor('VariationFeature');
+  my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_annotation' : 'fetch_all_with_annotation';
+  my $variations = $a->$func(undef, undef, $id);
+  
+  return unless $variations and scalar @$variations > 0; 
+  return { 'Variation' => EnsEMBL::Web::Data::Bio::Variation->new($self->hub, @$variations) };
 }
 
 sub _create_ProbeFeature {
