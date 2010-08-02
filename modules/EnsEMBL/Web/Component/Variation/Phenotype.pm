@@ -84,14 +84,12 @@ sub table_data {
     
     if ($is_somatic) { 
       my @tumour_info =  split /\:/, $disorder;
-      $study = $tumour_info[1];
-      my $s_link = "$tumour_info[1]";
-      $study =~ s/\_//g;
-      
-      $s_link =~ s/ /\_/g;
-      $s_link =~ s/^\_+//g;
-      
-      $study = '<a href="http://www.sanger.ac.uk/perl/genetics/CGP/cosmic?action=byhist&s=3&sn='.$s_link.'" target="_blank">'.$study.'</a>';
+      my $tissue = $tumour_info[1]; 
+      $tissue =~s/^\s+//;
+      my $tissue_formatted = $tissue; 
+      $tissue_formatted =~ s/\s+/\_/g; 
+      my $source_study = uc($source_name) .'_STUDY';         
+      $study = $object->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
     }
    
     my $gene         = $self->gene_links($va->associated_gene);
