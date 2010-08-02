@@ -61,11 +61,13 @@ sub table_data {
   
   foreach my $va (@$external_data) { 
     my $disorder = $va->phenotype_description;
-    if($is_somatic){
-      $disorder =~s/\:/ /;
-      $disorder =~s/\:/\: /;
-      $disorder =~s/\_/ /g;
+    
+    if ($is_somatic) {
+      $disorder =~ s/\:/ /;
+      $disorder =~ s/\:/\: /;
+      $disorder =~ s/\_/ /g;
     }
+    
     my @data_row;
         
     if (exists $rows{lc $disorder}) { 
@@ -76,14 +78,15 @@ sub table_data {
     my $id           = $va->{'_phenotype_id'};
     my $code         = $va->phenotype_name;
     my $source_name  = $va->source_name;
-    my $disease_url  = $object->_url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', phenotype_name => $disorder, source_name => $source_name  }); 
+    my $disease_url  = $object->_url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic }); 
     my $source       = $self->source_link($va, $code);
     my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
-    if ($is_somatic){ 
-      my @tumour_info =  split (/\:/, $disorder);
+    
+    if ($is_somatic) { 
+      my @tumour_info =  split /\:/, $disorder;
       $study = $tumour_info[1];
       my $s_link = "$tumour_info[1]";
-      $study =~s/\_//g;
+      $study =~ s/\_//g;
       
       $s_link =~ s/ /\_/g;
       $s_link =~ s/^\_+//g;
