@@ -72,10 +72,7 @@ sub get_sequence_data {
   }  
   
   delete $mk->{$length}; # We get a key which is too big, causing an empty span to be printed later 
-  
-  # Used to se the initial sequence colour
-  $mk->{'exons'}->{0}->{'type'} = [ 'exon0' ] if $config->{'exons'};
-  
+    
   $config->{'length'}    = $length;
   $config->{'numbering'} = [1];
   $config->{'seq_order'} = [ $config->{'species'} ];
@@ -240,16 +237,23 @@ sub get_sequence_data {
       splice @$_, 0, $cd_start-1;
     }
     
+    $length = scalar @{$sequence[0]};
+    
     foreach my $mk (grep scalar keys %$_, @markup) {
       my $shifted;
       
       foreach my $type (keys %$mk) {
-        my %tmp = map { $_-$cd_start+1 => $mk->{$type}->{$_} } keys %{$mk->{$type}};
+        my %tmp = map { $_-$cd_start+1 >= 0 && $_-$cd_start+1 < $length ? ($_-$cd_start+1 => $mk->{$type}->{$_}) : () } keys %{$mk->{$type}};
         $shifted->{$type} = \%tmp;
       }
       
       $mk = $shifted;
     }
+  }
+  
+  # Used to set the initial sequence colour
+  if ($config->{'exons'}) {
+    $_->{'exons'}->{0}->{'type'} = [ 'exon0' ] for @markup;
   }
   
   return (\@sequence, \@markup, $seq);
