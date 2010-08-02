@@ -65,17 +65,17 @@ sub convert_to_drawing_parameters {
     my $genes        = $slice->get_all_Genes;
     my @gene_links;
 
-    foreach my $row (@$genes) {
-      my $gene_name   = $row->{'stable_id'};
-      my $gene_symbol = $gene_name ? sprintf ' (%s)', $row->display_xref->display_id : '';
-      my $gene_url    = $hub->url({ type => 'Gene', action => 'Summary', g => $gene_name });
-      
-      $gene_link .= ', ' if $gene_link;
-      $gene_link .= qq{<a href="$gene_url">$gene_name</a>$gene_symbol};
+    foreach (@$genes) {
+      push @gene_links, sprintf(
+        '<a href="%s">%s</a>%s',
+        $hub->url({ type => 'Gene', action => 'Summary', g => $_->{'stable_id'} }),
+        $_->{'stable_id'},
+        $_->{'stable_id'} ? sprintf ' (%s)', $_->display_xref->display_id : ''
+      );
     }
     
     # preparing the URL for all the associated genes and ignoring duplicate one
-    $_ = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $_, v => $name, vf => $dbID }), $_ for grep !/intergenic/i, values %{$associated_genes{$variation_id} || {};
+    $_ = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $_, v => $name, vf => $dbID }), $_ for grep !/intergenic/i, values %{$associated_genes{$variation_id} || {}};
     
     # making the location 10kb if it a one base pair
     if ($end == $start) {
@@ -94,12 +94,12 @@ sub convert_to_drawing_parameters {
       colour_scaling => 1,
       somatic        => $vf->is_somatic,
       extra          => [
-        $gene_link, 
+        join(', ', @gene_links), 
         join(', ', map $associated_genes{$variation_id}{$_}, sort keys %{$associated_genes{$variation_id} || {}}),
         join(', ', @{$associated_phenotypes{$variation_id} || []}), 
         sprintf('%.1f', $p_value_logs{$variation_id})
       ]
-    }
+    };
   }
 
   return [ \@results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], 'Variation' ];
