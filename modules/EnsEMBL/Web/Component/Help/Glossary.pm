@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
+use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Help);
@@ -17,7 +18,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->model ? $self->model->hub : new EnsEMBL::Web::Hub;
 
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
 
