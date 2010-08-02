@@ -37,6 +37,7 @@ sub content {
       action  => 'View',
       species => $sp1,
       r       => $n1,
+      __clear => 1
     });
 
     $self->add_entry({
@@ -99,6 +100,7 @@ sub content {
       action  => 'View',
       species => $sp1,
       r       => $r1,
+      __clear => 1
     });
 
     $self->add_entry({
