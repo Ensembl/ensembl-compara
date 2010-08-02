@@ -84,7 +84,8 @@ sub render {
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
     $changelog = 1;
     $html .= qq(<ul>
-      <li><a href="/info/website/news/changelog.html">Changelog</a> - Detailed list of data/code updates</li>
+      <li><strong><a href="/info/website/news/changelog.html" style="text-decoration:none">Details of data updates, API 
+changes, etc</a></strong></li>
       </ul>
     );
   }
