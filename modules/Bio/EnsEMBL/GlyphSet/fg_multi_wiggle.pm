@@ -264,13 +264,11 @@ sub display_error_message {
    
   if ($type eq 'peaks'){
     $class = 'Evidence';
-    $display_style = 'block';
   } elsif ($type eq 'wiggle'){
     $class = 'Support';
-    $display_style = 'supporting set';
   }  
 
-  my $error_message = "No $focus evidence $display_style features from $cell_line in this region. $number_configured/$number_available of the available feature sets are currently turned on";
+  my $error_message = "$number_configured/$number_available available feature sets turned on";
   $self->draw_track_name( ucfirst($focus) . ' '.$class.' '.$cell_line , 'black', -118,  2, 1);
   $self->display_no_data_error($error_message);
     
