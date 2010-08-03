@@ -284,6 +284,19 @@ $ENSEMBL_PRIVATE_AUTH   = undef;
   $ENSEMBL_SERVERROOT.'/biomart-perl/htdocs'
 );
 
+@ENSEMBL_LIB_DIRS     = (
+  $APACHE_DIR."lib/perl5/site_perl/$Config{'version'}/$Config{archname}/",
+  $ENSEMBL_SERVERROOT.'/ensembl/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
+  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
+  $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
+  $BIOPERL_DIR,
+  $ENSEMBL_SERVERROOT.'/modules',
+);
+
 ###############################################################################
 ######################### END OF LOCAL CONFIGURATION SECTION ##################
 ###############################################################################
@@ -485,18 +498,6 @@ $APACHE_BIN ||= "$APACHE_DIR/bin/httpd";
 ###############################################################################
 # You should not change anything below here
 ###############################################################################
-@ENSEMBL_LIB_DIRS     = (
-  $APACHE_DIR."lib/perl5/site_perl/$Config{'version'}/$Config{archname}/",
-  $ENSEMBL_SERVERROOT.'/ensembl/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-compara/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-draw/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-variation/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-functgenomics/modules',
-  $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
-  $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
-  $BIOPERL_DIR,
-  $ENSEMBL_SERVERROOT.'/modules',
-);
 
 @T = reverse @{$ENSEMBL_PLUGINS||[]}; ## These have to go on in reverse order...
 $ENSEMBL_PLUGIN_ROOTS = ();
