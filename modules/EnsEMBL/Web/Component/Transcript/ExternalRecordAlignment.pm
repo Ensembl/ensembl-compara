@@ -28,9 +28,9 @@ sub content {
   my $trans = $object->Obj;
   my $tsi = $object->stable_id;
   my $input = $object->input;
-  my $hit_id = $input->{'sequence'}->[0];
+  my $hit_id = $input->{'params'}->{'sequence'}->[0];
 # Check if there is external db name argument
-  my $ext_db = $input->{'extdb'}->[0];
+  my $ext_db = $input->{'params'}->{'extdb'}->[0];
 
   #get external sequence and type (DNA or PEP)
   my $ext_seq = $self->hub->get_ext_seq( $hit_id, $ext_db);
