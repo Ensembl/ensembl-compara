@@ -49,7 +49,7 @@ sub get_leaf_by_Member {
   if($member->isa('Bio::EnsEMBL::Compara::NCTree')) {
     return $self->find_leaf_by_node_id($member->node_id);
   } elsif ($member->isa('Bio::EnsEMBL::Compara::Member')) {
-    return $self->find_leaf_by_name($member->get_canonical_peptide_Member->stable_id);
+    return $self->find_leaf_by_name($member->get_canonical_transcript_Member->stable_id);
   } else {
     die "Need a Member object!";
   }

@@ -183,6 +183,20 @@ sub fetch_by_source_stable_id {
   return $obj;
 }
 
+sub fetch_all_by_source_stable_ids {
+  my ($self,$source_name, $stable_ids) = @_;
+  return [] if (!$stable_ids or !@$stable_ids);
+
+  #construct a constraint like 't1.table1_id = 1'
+  my $constraint = "";
+  $constraint = "m.source_name = '$source_name' AND " if ($source_name);
+  $constraint .= "m.stable_id IN ('".join("','", @$stable_ids). "')";
+
+  #return first element of _generic_fetch list
+  my $obj = $self->_generic_fetch($constraint);
+  return $obj;
+}
+
 =head2 fetch_all
 
   Arg        : None
@@ -698,6 +712,34 @@ sub fetch_canonical_peptide_member_for_gene_member_id {
   my $obj = undef;
   eval {
     ($obj) = @{$self->_generic_fetch($constraint, $join)};
+  };
+  $self->_final_clause("");
+  return $obj;
+}
+
+
+=head2 fetch_canonical_transcript_member_for_gene_member_id
+
+  Arg [1]    : int member_id of a gene member
+  Example    : $pepMembers = $memberAdaptor->fetch_peptides_for_gene_member_id($gene_member_id);
+  Description: given a member_id of a gene member,
+               fetches all peptide members for this gene
+  Returntype : Bio::EnsEMBL::Compara::Member object
+  Exceptions :
+  Caller     : general
+
+=cut
+
+sub fetch_canonical_transcript_member_for_gene_member_id {
+  my ($self, $gene_member_id) = @_;
+
+  throw() unless (defined $gene_member_id);
+
+  my $constraint = "m.gene_member_id = '$gene_member_id'";
+
+  my $obj = undef;
+  eval {
+    ($obj) = @{$self->_generic_fetch($constraint)};
   };
   $self->_final_clause("");
   return $obj;
