@@ -264,7 +264,7 @@ sub _user_context {
       $self->page->$section->add_entry(
         type    => 'Config',
         id      => 'config_cell_page',
-        caption => 'Configure Cell/Tissue',
+        caption => 'Cell/Tissue',
         $active ? ( class => 'active' ) : (
         url => $hub->url({
           time     => time,
