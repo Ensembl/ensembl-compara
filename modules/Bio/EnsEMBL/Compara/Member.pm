@@ -1046,6 +1046,55 @@ sub get_canonical_peptide_Member {
 }
 
 
+=head2 get_canonical_transcript_Member
+
+  Args       : none
+  Example    : $canonical_trans_member = $member->get_canonical_transcript_Member
+  Description: if member is an "ENSEMBLGENE" it will return the canonical transcript member
+               if member is an 'ENSEMBLTRANS' it will get its gene member and have it
+               return the canonical transcript (which could be the same as the starting member).
+               Note: This method is intended for ncRNA genes only. To access the canonical
+               transcript for a protein-coding gene, please refer to the
+               get_canonical_peptide_Member method
+  Returntype : Bio::EnsEMBL::Compara::Member or undef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub get_canonical_transcript_Member {
+  my $self = shift;
+
+  return undef unless($self->adaptor);
+  my $canonical_trans_member = undef;
+  if($self->source_name eq 'ENSEMBLGENE') {
+    if ($self->adaptor) {
+      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
+      # As of now (e! 57), all AlignedMembers are ENSEMBLPEP, but we will use the same check
+      # as below to be on the safe side
+      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
+        $canonical_trans_member = $self->adaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
+      } else {
+        $canonical_trans_member = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($self->dbID);
+      }
+    }
+  }
+  if($self->source_name eq 'ENSEMBLPEP') {
+    my $gene_member = $self->gene_member;
+    return undef unless($gene_member);
+    if ($self->adaptor) {
+      # Starting from a tree, a leaf is an AlignedMembers and the adaptor is a ProteinTreeAdaptor
+      if (UNIVERSAL::isa($self->adaptor, "Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor")) {
+        $canonical_trans_member = $self->adaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member->dbID);
+      } else {
+        $canonical_trans_member = $self->adaptor->db->get_MemberAdaptor->fetch_canonical_transcript_member_for_gene_member_id($gene_member->dbID);
+      }
+    }
+  }
+  return $canonical_trans_member;
+}
+
+
 =head2 get_all_peptide_Members
 
   Args       : none
