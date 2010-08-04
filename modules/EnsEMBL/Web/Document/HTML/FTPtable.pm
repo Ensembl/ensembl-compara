@@ -13,7 +13,7 @@ sub render {
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
 
-  my $rel = $ENV{'ENSEMBL_SERVERNAME'} =~ 'archive' ? 'release-'.$ENV{'VERSION'} : 'current';
+  my $rel = ($species_defs->ENSEMBL_SERVERNAME =~ 'archive') ? 'release-'.$species_defs->ENSEMBL_VERSION : 'current';
 
   my $html = qq(
 <table class="ss tint" cellpadding="4">
@@ -38,11 +38,11 @@ sub render {
     }
     my $emf = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
-      $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/$sp_var/">EMF</a>);
+      $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/$sp_var/">EMF</a>);
     }
     my $funcgen = '-';
     if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
-      $funcgen = qq(<a rel="external" title="Functional genomics data in GFF format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_functional_genomics/$sp_dir/">FUNCGEN</a>);
+      $funcgen = qq(<a rel="external" title="Functional genomics data in GFF format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/functional_genomics/$sp_dir/">FUNCGEN</a>);
     }
     my $bed = '-';
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
@@ -50,14 +50,14 @@ sub render {
     $html .= qq(
 <tr class="$class">
 <td><strong><i>$sp_name</i></strong> ($common)</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/dna/">FASTA</a> (DNA)</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/cdna/">FASTA</a> (cDNA)</td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/$sp_dir/dna/">FASTA</a> (DNA)</td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/$sp_dir/cdna/">FASTA</a> (cDNA)</td>
 <td>$ncrna</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/pep/">FASTA</a> (protein)</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_embl/$sp_dir/">EMBL</a></td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_genbank/$sp_dir/">GenBank</a></td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_mysql/">MySQL</a></td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_gtf/">GTF</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/$sp_dir/pep/">FASTA</a> (protein)</td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/embl/$sp_dir/">EMBL</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/genbank/$sp_dir/">GenBank</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/gtf/">GTF</a></td>
 <td>$emf</td>
 <td>$funcgen</td>
 <td>$bed</td>
@@ -76,11 +76,11 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_mysql/">mySQL</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">mySQL</a></td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_emf/">EMF</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_bed/">BED</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
 </tr>
 <tr class="$rev">
 <td><strong>Ensembl Mart</strong></td>
@@ -90,7 +90,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_mysql/">mySQL</a></td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">mySQL</a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
