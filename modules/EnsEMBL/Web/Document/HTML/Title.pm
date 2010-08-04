@@ -6,6 +6,7 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
+## FIXME - this is a temporary hack until we rewrite the BLAST front end
 sub new { 
   my $title = $ENV{'ENSEMBL_TYPE'} eq 'blastview' ? 'BLAST Search' : 'Untitled document';
   return shift->SUPER::new( 'title' => $title ); 
