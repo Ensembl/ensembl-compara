@@ -80,7 +80,7 @@ sub render {
   $content .= qq{
       </ul>
       <div class="modal_caption"></div>
-      <span class="modal_close modal_but">Close</span>
+      <img class="modal_close" src="/i/cp_close.png" alt="Save and close" title="Save and close" />
     </div>
     $panels
     <div id="modal_default" class="modal_content js_panel" style="display:none"></div>
