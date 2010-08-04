@@ -6,7 +6,11 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub new { return shift->SUPER::new( 'title' => 'Untitled document' ); }
+sub new { 
+  my $title = $ENV{'ENSEMBL_TYPE'} eq 'blastview' ? 'BLAST Search' : 'Untitled document';
+  return shift->SUPER::new( 'title' => $title ); 
+}
+
 sub set { $_[0]{'title'} = $_[1]; }
 sub get { return $_[0]{'title'}; }
 
