@@ -1574,6 +1574,7 @@ sub GeneLine {
     $xml .= qq(
     <ref dbname="$dbname" dbkey="$dbkey"/>);
     if ($xrefdesc) {
+      $xrefdesc = &clean($xrefdesc,'xref description');
       $xml .= qq(
     <ref dbname="$dbname" description="$xrefdesc"/>);
     }
@@ -1618,18 +1619,19 @@ sub GeneLine {
 
 #deal with those pesky gene names and descriptions (order of regexps is important)
 sub clean {
-  my ($dbkey,$field) = @_;
-  $dbkey =~ s/<i>//g;
-  $dbkey =~ s/<\/i>//g;
-  $dbkey =~ s/<em>//g;
-  $dbkey =~ s/<\/em>//g;
-  $dbkey =~ s/</&lt;/g;
-  $dbkey =~ s/>/&gt;/g;
-  $dbkey =~ s/ & / &amp; /g;
-  if ($dbkey =~ /[<>]/) {
-    print LOG "WARNING: Unsupported character $dbkey in dbkey field\n";
+  my ($text,$field) = @_;
+  $text =~ s/<i>//g;
+  $text =~ s/<\/i>//g;
+  $text =~ s/<em>//g;
+  $text =~ s/<\/em>//g;
+  $text =~ s/</&lt;/g;
+  $text =~ s/>/&gt;/g;
+  $text =~ s/'/&#44;/;
+  $text =~ s/ & / &amp; /g;
+  if ($text =~ /[<>]/) {
+    print LOG "WARNING: Unsupported character $text in field $field\n";
   }
-  return $dbkey;
+  return $text;
 }
 
 sub GeneStableIdMappingLine {
@@ -1816,7 +1818,7 @@ sub LRGLine {
     <field name="featuretype">$type</field>);
   foreach my $tsi (@$tsids) {
     $xml .= qq(
-    <ref transcript="$tsi"/>);
+    <field name="transcript">$tsi</field>);
   }
   return $xml . qq( 
   </additional_fields>
