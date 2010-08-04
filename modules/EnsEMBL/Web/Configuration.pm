@@ -420,6 +420,25 @@ sub _configurator {
       $content .= $vc->get_form->render;
       
       $panel->set_content($content);
+
+      # hack to display help message for Cell line configuration on region in detail
+      if ($vc->type eq 'Location' && $vc->action eq 'Cell_line'){  warn $vc->action;
+        my $info_panel = $self->new_panel('Configurator',
+          code   => 'configurator_info',
+          object => $object
+        );
+
+        my $configuration_link = $hub->url({
+          type      =>  'Config',
+          action    => 'Location',
+          function  => 'View',
+          config    => 'contigviewbottom'
+         });
+        $info_panel->set_content('<div class="info"><h3>Note:</h3><div class ="error-pad"><p>Any cell lines that you configure here must also be turned on in the <a href="' .$configuration_link .'#functional" class="modal_link" title="Configure this page">functional genomics</a> section of the "Main Panel" tab before any data will be displayed.</p></div></div>');
+
+        $self->add_panel($info_panel);
+      }
+
       $self->add_panel($panel);
       $self->_reset_config_panel($vc->title, $action);
       
