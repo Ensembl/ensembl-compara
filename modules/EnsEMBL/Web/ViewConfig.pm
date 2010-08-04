@@ -33,7 +33,8 @@ sub new {
     _url                => undef,
     _tree               => new EnsEMBL::Web::OrderedTree,
     _custom             => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $adaptor->custom_page_config($type) : [],
-    _type               => $type
+    _type               => $type,
+    _action             => $action
   };
   
   bless $self, $class;
@@ -55,6 +56,7 @@ sub species                { return $_[0]->{'_species'}; }
 sub species_defs           { return $_[0]->{'_species_defs'}; }
 sub is_custom              { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
 sub type                   { return $_[0]->{'_type'}; }
+sub action                 { return $_[0]->{'_action'}; }
 sub tree                   { return $_[0]->{'_tree'}; }
 
 # Value indidates that the track can be configured for DAS (das) or not (nodas)
