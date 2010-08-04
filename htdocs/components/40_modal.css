@@ -26,9 +26,7 @@
 
 .modal_reload { display: none }
 
-.modal_but { font-size: 0.8em; float: left; width: 80px; padding:2px; background-color:[[PANEL_BORDER]] !important; margin: 2px; text-align: center; font-weight: bold; color: [[CONTRAST_TEXT]]; cursor:pointer; }
-
-.modal_title .modal_close { float: right; margin-top: 1px; padding: 0; width: 10em; text-align: center; }
+.modal_title .modal_close { position: absolute; top: -10px; right: -10px; cursor: pointer; }
 
 div.multi_selector_list    { width: 48%; font-weight: normal; float: left; margin: 0 0.5%; }
 div.multi_selector_list ul { padding: 0; margin-left: 5px; margin-right: 5px; }
