@@ -70,7 +70,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   open: function (el) {
     this.elLk.menu.hide();
     this.elLk.caption.html(el.title || el.innerHTML).show();
-    this.elLk.closeButton.html('Close');
+    this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
     this.show();
     this.getContent(el.href, this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel);
     
@@ -100,7 +100,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
       Ensembl.EventManager.triggerSpecific('showConfiguration', id, hash);
       this.changeTab(this.elLk.tabs.children('[rel=' + id + ']').parent());
-      this.elLk.closeButton.html('Save and close');
+      this.elLk.closeButton.attr({ title: 'Save and close', alt: 'Save and close' });
       
       return;
     }
@@ -137,7 +137,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
         
-        this.elLk.closeButton.html(buttonText);
+        this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
         forceReload = !!$('.modal_reload', contentEl).length;
         
