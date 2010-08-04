@@ -1626,7 +1626,8 @@ sub clean {
   $text =~ s/<\/em>//g;
   $text =~ s/</&lt;/g;
   $text =~ s/>/&gt;/g;
-  $text =~ s/'/&#44;/;
+  $text =~ s/'/&#44;/g;
+  $text =~ s/"/&quot;/g;
   $text =~ s/ & / &amp; /g;
   if ($text =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $text in field $field\n";
