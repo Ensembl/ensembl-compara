@@ -78,7 +78,7 @@ sub modify_tree        {}
 sub short_caption { return sprintf '%s-based displays', ucfirst $_[0]->type; } #return the caption for the tab
 
 sub set_default_action {  
-  my $self = shift;  
+  my $self = shift; 
   $self->{'_data'}->{'default'} = $self->object->default_action if $self->object;
 }
 
