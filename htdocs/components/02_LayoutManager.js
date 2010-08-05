@@ -48,9 +48,7 @@ Ensembl.LayoutManager.extend({
       this.target = '_blank';
     });
     
-    $('form.check').validate().live('submit', function () {
-      return $(this).parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', $(this)) : true;      
-    });
+    this.validateForms(document);
     
     // Close modal window if the escape key is pressed
     $(document).bind({
@@ -104,7 +102,9 @@ Ensembl.LayoutManager.extend({
   },
   
   validateForms: function (context) {
-    $('form.check', context).validate();
+    $('form.check', context).validate().bind('submit', function () {
+      return $(this).parents('#modal_panel').length ? Ensembl.EventManager.trigger('modalFormSubmit', $(this)) : true;
+    });
   },
   
   makeZMenu: function (id, params) {
