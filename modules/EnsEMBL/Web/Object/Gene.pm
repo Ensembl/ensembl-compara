@@ -57,10 +57,6 @@ sub availability {
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
-        if($availability->{'family_pan_ensembl'}) {
-          #FIXME: Suspect flag; turning it off seems to have no effect on the ability to show pan-compara families. Left in until can be verified
-          $availability->{'family'} = 1; 
-        }
         $availability->{'has_gene_tree_pan'}  = $gene_tree_sub->('compara_pan_ensembl');
         $availability->{"has_$_"}             = $counts->{$_} for qw(alignments_pan paralogs_pan orthologs_pan);
       }
