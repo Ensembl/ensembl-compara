@@ -12,6 +12,7 @@ use Config;
 use Fcntl ':flock';
 use Sys::Hostname;
 use Time::HiRes qw(time);
+use URI::Escape qw(uri_escape);
 
 use SiteDefs qw(:APACHE);
 
