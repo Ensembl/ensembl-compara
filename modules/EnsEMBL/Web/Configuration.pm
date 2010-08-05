@@ -79,7 +79,7 @@ sub short_caption { return sprintf '%s-based displays', ucfirst $_[0]->type; } #
 
 sub set_default_action {  
   my $self = shift;  
-  $self->{'_data'}->{'default'} = $self->object->default_action if $self->object;
+  $self->{'_data'}->{'default'} = $self->object->default_action if $self->object;
 }
 
 sub model        { return $_[0]->{'model'}; }
