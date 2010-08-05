@@ -78,7 +78,7 @@ sub table_data {
     my $id           = $va->{'_phenotype_id'};
     my $code         = $va->phenotype_name;
     my $source_name  = $va->source_name;
-    my $disease_url  = $object->_url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $code }); 
+    my $disease_url  = $object->_url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
     my $source       = $self->source_link($va, $code);
     my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
     
