@@ -31,7 +31,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    this.base(form, data);
+    return this.base(form, data);
   },
   
   updateContent: function (json) {
