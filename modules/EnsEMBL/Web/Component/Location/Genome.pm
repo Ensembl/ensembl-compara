@@ -7,6 +7,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+ use HTML::Entities qw(encode_entities);
+
 use EnsEMBL::Web::Apache::SendDecPage;
 use EnsEMBL::Web::Document::SpreadSheet;
 
@@ -102,7 +104,7 @@ sub content {
           }
         
           if ($hub->param('ftype') eq 'Phenotype'){
-            my $phenotype_name = $hub->param('phenotype_name') || $hub->param('id');
+            my $phenotype_name = encode_entities($hub->param('phenotype_name') || $hub->param('id'));
             $text = "Location of variants associated with phenotype $phenotype_name:";        
           }
         }        
