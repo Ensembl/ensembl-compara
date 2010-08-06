@@ -199,7 +199,7 @@ sub dynamic_use_failure {
 
 # Loops through array of filters and returns the first one that fails
 sub not_allowed {
-  my ($self, $object, $caller) = @_;
+  my ($self, $hub, $caller) = @_;
   
   my $filters = $self->filters || [];
   
@@ -207,7 +207,7 @@ sub not_allowed {
     my $class = 'EnsEMBL::Web::Filter::'.$name;
     
     if ($self->dynamic_use($class)) {
-      my $filter = $class->new({ object => $object });
+      my $filter = $class->new({ hub => $hub });
       $filter->catch;
       return $filter if $filter->error_code;
     }  else {
@@ -240,9 +240,9 @@ sub pretty_date {
   
   $day =~ s/^0//;
   
-  if ($format && $format eq 'full') {
+  if ($format && $format eq 'simple_datetime') {
     my ($hour, $min, $sec) = split(':', $time);
-    return $day.'/'.$mon.'/'.$year.' at '.$hour.':'.$min;
+    return $day.'/'.$mon.'/'.substr($year, 2, 2).' at '.$hour.':'.$min;
   } 
   elsif ($format && $format eq 'short') {
     return $short_months[$mon] . ' ' . $year;

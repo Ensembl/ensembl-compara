@@ -24,7 +24,7 @@ sub new {
 
 sub init {} # implemented in child modules
 
-sub object     :lvalue { $_[0]->{'object'};     }
+sub hub     :lvalue { $_[0]->{'hub'};     }
 sub redirect   :lvalue { $_[0]->{'redirect'};   }
 sub error_code :lvalue { $_[0]->{'error_code'}; }
 sub messages   :lvalue { $_[0]->{'messages'};   }
@@ -71,14 +71,14 @@ sub error_message {
 # within the individual Filter's catch method.
 sub redirect_url {
   my $self = shift;
-  my $url = $self->object->species_defs->species_path . $self->redirect;
+  my $url = $self->hub->species_defs->species_path . $self->redirect;
   my @ok_params;
   
   if (!$url) {
     $url = '/' . $self->type . '/' . $self->action;
     
-    foreach my $p ($self->object->input_param) {
-      push @ok_params, "$p=" . $self->object->param($p);
+    foreach my $p ($self->hub->input_param) {
+      push @ok_params, "$p=" . $self->hub->param($p);
     }
     
     $url .= '?' . join ';', @ok_params if @ok_params;

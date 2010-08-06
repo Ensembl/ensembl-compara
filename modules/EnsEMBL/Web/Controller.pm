@@ -449,7 +449,7 @@ sub access_ok {
   my ($self, $model, $page) = @_;
   
   my $r      = $self->{'r'};
-  my $filter = $self->not_allowed($model->object);
+  my $filter = $self->not_allowed($model->hub);
   
   if ($filter) {
     my $url = $filter->redirect_url;
