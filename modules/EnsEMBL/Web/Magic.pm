@@ -27,7 +27,7 @@ use EnsEMBL::Web::Model;
 
 use base qw(Exporter);
 
-our @EXPORT = our @EXPORT_OK = qw(stuff modal_stuff ingredient configurator menu);
+our @EXPORT = our @EXPORT_OK = qw(stuff modal_stuff ingredient configurator menu export);
 
 sub stuff {
   ### Prints the main web page - header, footer, navigation etc, and non dynamically loaded content.
@@ -66,6 +66,13 @@ sub modal_stuff {
   
   stuff(shift, 'Popup', 'modal'); 
 }
+
+sub export {
+  ### Wrapper for stuff. Prints export pages.
+  
+  stuff(shift, undef, 'export'); 
+}
+
 
 sub ingredient {
   ### Prints the dynamically created components. Loaded either via AJAX (if available) or parallel HTTP requests.

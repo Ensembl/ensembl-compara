@@ -7,7 +7,7 @@ use Apache2::Const qw(:common :http :methods);
 use SiteDefs qw(:APACHE);
 
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::Magic qw(stuff modal_stuff ingredient configurator menu);
+use EnsEMBL::Web::Magic qw(stuff modal_stuff ingredient configurator menu export);
 use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
@@ -108,9 +108,12 @@ sub handler_species {
     action    => \&stuff,
     component => \&ingredient,
     config    => \&configurator,
+    export    => \&export,
     modal     => \&modal_stuff,
     zmenu     => \&menu
   );
+  
+  $script = 'export' if $action eq 'Export';
   
   if ($web_functions{$script}) {    
     $web_functions{$script}($r);
