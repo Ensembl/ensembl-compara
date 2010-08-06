@@ -87,15 +87,16 @@ sub render_normal {
       bordercolour => $feature_colour,
     });
     
-    (my $url_species = $features[0][1]->species) =~ s/ /_/g;
+    my $url_species = ucfirst $features[0][1]->species; # FIXME: ucfirst hack for compara species names
     my ($rs, $re) = $self->slice2sr($features[0][1]->start, $features[-1][1]->end);
     
     #######################################################
 
-    my $internal_boxes = [];
+    my @internal_boxes;
+    
     foreach (@features) {
       my $f = $_->[1];
-
+      
       ## Make sure we have the right start and end of the nets on the other species
       $hs_net = $f->hstart if $f->hstart < $hs_net;
       $he_net = $f->hend   if $f->hend   > $he_net;
@@ -134,11 +135,10 @@ sub render_normal {
           width     => $e - $s + 1,
           height    => $h,
           colour    => $feature_colour,
-#           bordercolour    => "red",
           absolutey => 1,
         });
 
-        push(@$internal_boxes, [$box, $r, $r1, $ori]);
+        push @internal_boxes, [ $box, $r, $r1, $ori ];
 
         if ($link) {
           my $slice_start = $f->slice->start;
@@ -179,24 +179,30 @@ sub render_normal {
         
       }
     }
+    
     my $n1 = $features[0][1]->hseqname . ":$hs_net-$he_net";
+    
     $net_composite->href($self->_url({
-      type   => 'Location',
-      'action' => 'PairwiseAlignment',
-      n0     => $n0,
-      n1     => $n1,
-      s1     => $other_species,
-      method => $self->my_config('type'),
-      align  => $mlss_id,
-      orient => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
+      type    => 'Location',
+      action  => 'PairwiseAlignment',
+      species => $url_species,
+      n0      => $n0,
+      n1      => $n1,
+      s1      => $other_species,
+      method  => $self->my_config('type'),
+      align   => $mlss_id,
+      orient  => $features[0][1]->hstrand * $features[0][1]->strand > 0 ? 'Forward' : 'Reverse'
     }));
+    
     $self->push($net_composite);
-    foreach my $internal_box (@$internal_boxes) {
-      my ($box, $r, $r1, $ori) = @$internal_box;
-      my $zmenu = {
+    
+    foreach (@internal_boxes) {
+      my ($box, $r, $r1, $ori) = @$_;
+      
+      $box->href($self->_url({
         type    => 'Location',
         action  => 'PairwiseAlignment',
-        species => $self_species,
+        species => $url_species,
         r       => $r,
         r1      => $r1,
         n0      => $n0,
@@ -205,11 +211,10 @@ sub render_normal {
         method  => $self->my_config('type'),
         align   => $mlss_id,
         orient  => $ori,
-      };
-      $box->href($self->_url($zmenu));
+      }));
+      
       $self->push($box);
     }
-
   }
   
   # No features show "empty track line" if option set
@@ -272,13 +277,12 @@ sub render_compact {
     $c++;
     
     my $composite;
-    (my $url_species = $f->species) =~ s/ /_/g;
     
     # zmenu links depend on whether jumping within or between species;
     my $zmenu = {
       type    => 'Location',
       action  => 'PairwiseAlignment',
-      species => $url_species,
+      species => ucfirst $f->species, # FIXME: ucfirst hack for compara species names
       r       => "$chr:$rs-$re",
       r1      => $f->hseqname . ':' . $f->hstart . '-' . $f->hend,
       s1      => $other_species,
