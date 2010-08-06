@@ -19,7 +19,7 @@ sub init {
 sub catch {
   my $self = shift;
   
-  $self->error_code = 'duplicate' if EnsEMBL::Web::Data::User->find(email => $self->object->param('email'));
+  $self->error_code = 'duplicate' if EnsEMBL::Web::Data::User->find(email => $self->hub->param('email'));
 }
 
 1;

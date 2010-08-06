@@ -19,12 +19,12 @@ sub init {
 
 sub catch {
   my $self   = shift;
-  my $object = $self->object;
-  my $user   = EnsEMBL::Web::Data::User->find(email => $object->param('email'));
+  my $hub = $self->hub;
+  my $user   = EnsEMBL::Web::Data::User->find(email => $hub->param('email'));
   my $code;
 
   if ($user) {
-    $code = $object->param('code');
+    $code = $hub->param('code');
     $code =~ s/[^\w]//g; # Strip all the non \w chars
   }
   

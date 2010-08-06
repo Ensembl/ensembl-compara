@@ -21,9 +21,9 @@ sub catch {
   
   $self->redirect = '/Account/Password';
   
-  my $object     = $self->object;
-  my $password_1 = $object->param('new_password_1');
-  my $password_2 = $object->param('new_password_2');
+  my $hub     = $self->hub;
+  my $password_1 = $hub->param('new_password_1');
+  my $password_2 = $hub->param('new_password_2');
 
   if ($password_1 eq $password_2) {
     $self->error_code = 'insecure' unless length $password_1 > 5 && $password_1 =~ /[a-zA-Z]+/ && $password_1 =~ /[0-9]+/;

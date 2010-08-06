@@ -16,7 +16,7 @@ sub init {
 
 sub catch {
   my $self = shift;
-  my $user = $self->object->user;
+  my $user = $self->hub->user;
   
   $self->error_code = 'not_logged_in' unless $user;
 }

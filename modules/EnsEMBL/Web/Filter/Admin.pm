@@ -18,8 +18,8 @@ sub init {
 
 sub catch {
   my $self   = shift;
-  my $object = $self->object;
-  my $id     = $object->param('id');
+  my $hub = $self->hub;
+  my $id     = $hub->param('id');
   
   # First check we have a sensible value for 'id'
   if ($id && $id =~ /\D/) {
@@ -27,8 +27,8 @@ sub catch {
     return;
   }
   
-  my $user     = $object->user;
-  my $group_id = $object->param('group_id');
+  my $user     = $hub->user;
+  my $group_id = $hub->param('group_id');
   
   if ($group_id) {
     $self->error_code = 'not_admin' unless $user->is_administrator_of($group_id);

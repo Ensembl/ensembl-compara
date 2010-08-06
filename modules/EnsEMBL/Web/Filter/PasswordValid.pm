@@ -20,13 +20,13 @@ sub init {
 
 sub catch {
   my $self     = shift;
-  my $object   = $self->object;
-  my $password = $object->param('password');
+  my $hub   = $self->hub;
+  my $password = $hub->param('password');
   
   $self->redirect = '/Account/Login';
   
   if ($password) {
-    my $user = EnsEMBL::Web::Data::User->find(email => $object->param('email'));
+    my $user = EnsEMBL::Web::Data::User->find(email => $hub->param('email'));
     
     if ($user) { 
       my $encrypted = encryptPassword($password, $user->salt);

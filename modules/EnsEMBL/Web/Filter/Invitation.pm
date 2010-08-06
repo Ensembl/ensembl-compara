@@ -19,10 +19,10 @@ sub init {
 
 sub catch {
   my $self = shift;
-  my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($self->object->param('id'));
+  my $invitation = EnsEMBL::Web::Data::Record::Invite::Group->new($self->hub->param('id'));
   
   if ($invitation) {
-    $self->error_code = 'invalid' unless $invitation->code eq $self->object->param('code');
+    $self->error_code = 'invalid' unless $invitation->code eq $self->hub->param('code');
   } else {
     $self->error_code = 'not_found';
   }

@@ -17,7 +17,7 @@ sub init {
 
 sub catch {
   my $self  = shift;
-  my $email = $self->object->param('email');
+  my $email = $self->hub->param('email');
   
   if (!$email) {
     $self->error_code = 'empty';

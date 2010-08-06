@@ -25,7 +25,7 @@ sub catch {
   # Process any errors
   if (!ref $sources) {
     # Store the server's message in the session
-    $self->object->get_session->add_data(
+    $self->hub->get_session->add_data(
       type     => 'message',
       code     => 'DAS_server_error',
       message  => "Unable to access DAS source. Server response: $sources",

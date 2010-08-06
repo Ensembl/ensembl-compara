@@ -19,8 +19,8 @@ sub init {
 
 sub catch {
   my $self   = shift;
-  my $object = $self->object;
-  my $id     = $object->param('id');
+  my $hub = $self->hub;
+  my $id     = $hub->param('id');
   
   # Don't fail if no ID - implies new record
   if ($id) {
@@ -29,8 +29,8 @@ sub catch {
       $self->error_code = 'bogus_id';
       return;
     } else {
-      my $user  = $object->user;
-      my $group = $object->param('group');
+      my $user  = $hub->user;
+      my $group = $hub->param('group');
       
       if ($group) {
         ## First check we have a sensible value for 'id'

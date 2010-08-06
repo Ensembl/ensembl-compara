@@ -8,11 +8,11 @@ use base qw(EnsEMBL::Web::Filter);
 
 sub catch {
   my $self   = shift;
-  my $object = $self->object;
+  my $hub = $self->hub;
   
-  foreach my $field ($object->param) {
-    my $value = $object->param($field);
-    $object->param($field, $self->clean($value));
+  foreach my $field ($hub->param) {
+    my $value = $hub->param($field);
+    $hub->param($field, $self->clean($value));
   }
 }
 

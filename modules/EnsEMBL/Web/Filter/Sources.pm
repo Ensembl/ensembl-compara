@@ -21,7 +21,7 @@ sub catch {
   $self->redirect = '/UserData/SelectDAS';
   
   # Process any errors
-  if (!$self->object->param('dsn')) {
+  if (!$self->hub->param('dsn')) {
     $self->error_code = 'none'; # Store the server's message in the session
   }
 }

@@ -16,11 +16,11 @@ sub init {
 
 sub catch {
   my $self   = shift;
-  my $object = $self->object;
-  my $user   = $object->user;
+  my $hub = $self->hub;
+  my $user   = $hub->user;
   
   ## TODO: finally decide which param to use
-  my $group_id = $object->param('webgroup_id') || $object->param('group_id') || $object->param('id');
+  my $group_id = $hub->param('webgroup_id') || $hub->param('group_id') || $hub->param('id');
   
   $self->error_code = 'not_member' unless $user->is_member_of($group_id);
 }

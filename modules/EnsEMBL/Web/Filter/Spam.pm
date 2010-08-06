@@ -24,19 +24,19 @@ sub init {
 
 sub catch {
   my $self   = shift;
-  my $object = $self->object;
+  my $hub = $self->hub;
   
   ## Check honeypot fields for content - they should be empty!
-  foreach my $field (@{$object->interface->honeypots}) {
-    if ($object->param($field)) {
+  foreach my $field (@{$hub->interface->honeypots}) {
+    if ($hub->param($field)) {
       $self->error_code = 'spam';
       warn "@@@ FILTERED DUE TO CONTENT IN HONEYPOT $field.....";
     }
   }
 
   ## Check legitimate fields for bogus content
-  foreach my $field ($object->param) {
-    $self->check($object->param($field), 1);
+  foreach my $field ($hub->param) {
+    $self->check($hub->param($field), 1);
   }
 }
 
