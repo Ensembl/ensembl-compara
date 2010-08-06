@@ -45,8 +45,8 @@ sub id {
   return $self->{'id'};
 }
 
-sub model { return $_[0]->{'model'};        }
-sub hub   { return $_[0]->{'model'}{'hub'}; }
+sub model { return $_[0]->{'model'};      }
+sub hub   { return $_[0]->{'model'}->hub; }
 
 sub content_pan_compara {
   my $self = shift;
