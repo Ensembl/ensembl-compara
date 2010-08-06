@@ -75,6 +75,7 @@ sub get_availability {
 
 sub populate_tree      {}
 sub modify_tree        {}
+sub delete_tree { my $self = shift; $self->tree->_flush_tree; } 
 sub short_caption { return sprintf '%s-based displays', ucfirst $_[0]->type; } #return the caption for the tab
 
 sub set_default_action {  
