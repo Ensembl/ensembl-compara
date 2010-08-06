@@ -252,7 +252,7 @@ sub content {
       
       $strand = $str <= 0 ? '(reverse strand)' : '(forward strand)';
       
-      if ($varif_id eq $self->model->hub->core_param('vf')) {
+      if ($varif_id eq $self->hub->core_param('vf')) {
         $location = $location_string;
       } else {
         my $link = $object->_url({ v => $id, source => $source, vf => $varif_id,});
@@ -267,7 +267,7 @@ sub content {
           <td><strong>%s</strong> %s</td>
           <td>%s</td> 
         </tr>',
-        $varif_id eq $self->model->hub->core_param('vf') ? ' class="active"' : '',
+        $varif_id eq $self->hub->core_param('vf') ? ' class="active"' : '',
         $location,
         $strand,
         $location_link_html

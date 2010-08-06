@@ -18,7 +18,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
 

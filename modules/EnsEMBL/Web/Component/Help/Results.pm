@@ -17,7 +17,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $html = qq(<h2>Search Results</h2>);
   my @results = $hub->param('result');

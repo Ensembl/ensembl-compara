@@ -18,7 +18,7 @@ sub content {
   my $self = shift;
   
   my $object = $self->object;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   
   return if $object->param('show_panels') eq 'top';
   

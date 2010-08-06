@@ -27,7 +27,6 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $model  = $self->model;
   my $hub    = $self->hub;
   my $html   = '';
 

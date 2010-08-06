@@ -41,8 +41,7 @@ sub focus {
   ### Purpose : outputs focus of page e.g.. gene, SNP (rs5050)or slice
   ### Description : adds pair of values (type of focus e.g gene or snp and the ID) to panel if the paramater "gene" or "snp" is defined
 
-  my ($self, $model) = @_;
-
+  my $self    = shift;
   my $object  = $self->object;
   my $model   = $self->model;
   my $hub     = $self->hub;

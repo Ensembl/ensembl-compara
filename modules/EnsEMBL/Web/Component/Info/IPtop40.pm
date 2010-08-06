@@ -16,7 +16,7 @@ sub content {
   my $self   = shift;
   my $html; 
 
-  my $file = '/ssi/species/stats_'.$self->model->hub->species.'_IPtop40.html';
+  my $file = '/ssi/species/stats_'.$self->hub->species.'_IPtop40.html';
   $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
 
   return $html;

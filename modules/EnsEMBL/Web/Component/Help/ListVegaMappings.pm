@@ -18,7 +18,7 @@ sub _init {
 
 sub content {
   my $self           = shift;
-  my $hub            = $self->model->hub;
+  my $hub            = $self->hub;
   my $species        = $hub->species;
   my $location       = $self->model->object('Location');
   my $chromosome     = $location->seq_region_name;

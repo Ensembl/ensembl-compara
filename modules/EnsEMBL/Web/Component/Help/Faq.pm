@@ -17,7 +17,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $id = $hub->param('id') || $hub->param('feedback');
   $id+=0;
   my $html = qq(<h2>FAQs</h2>);

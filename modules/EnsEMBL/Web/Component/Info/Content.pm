@@ -17,7 +17,7 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $file = $hub->param('file');
 
   $file =~ s/\s+//g;

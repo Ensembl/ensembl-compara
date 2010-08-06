@@ -18,7 +18,7 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $error_messages = \%EnsEMBL::Web::Apache::Error::error_messages;
   my $error_text     = $error_messages->{$hub->function}->[1];

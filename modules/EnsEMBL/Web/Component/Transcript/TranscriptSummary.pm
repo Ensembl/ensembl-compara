@@ -15,7 +15,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
   my $sp     = $hub->species_defs->DISPLAY_NAME;
 

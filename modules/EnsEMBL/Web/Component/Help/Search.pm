@@ -15,7 +15,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
   my $html = qq(<h3>Search $sitename Help</h3>);

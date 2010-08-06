@@ -119,7 +119,7 @@ sub EC_URL {
   my ($self, $string) = @_;
   my $URL_string = $string;
   $URL_string =~ s/-/\?/g;
-  return $self->model->hub->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
+  return $self->hub->get_ExtURL_link( "EC $string", 'EC_PATHWAY', $URL_string );
 }
 
 1;

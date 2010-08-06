@@ -16,7 +16,7 @@ sub _init {
 
 sub content {
   my $self     = shift;
-  my $hub     = $self->model->hub;
+  my $hub      = $self->hub;
   my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
   my $url      = $hub->param('url') . $hub->_parse_referer->{'uri'};
   my $r        = $hub->param('r');

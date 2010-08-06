@@ -29,8 +29,8 @@ sub new {
   my $class = shift;
   
   my $self = {
-    'model' => shift,
-    'id' => [split /::/, $class]->[-1] . 'Panel'
+    model => shift,
+    id    => [split /::/, $class]->[-1] . 'Panel'
   };
   
   bless $self, $class;
@@ -45,8 +45,8 @@ sub id {
   return $self->{'id'};
 }
 
-sub model { return $_[0]->{'model'}; }
-sub hub { return $_[0]->{'model'}{'_hub'}; }
+sub model { return $_[0]->{'model'};        }
+sub hub   { return $_[0]->{'model'}{'hub'}; }
 
 sub content_pan_compara {
   my $self = shift;
@@ -77,8 +77,8 @@ sub object {
   my $self = shift;
   $self->{'object'} = shift if @_;
   my $object;
-  if ($self->{'model'}) {
-    $object = $self->{'model'}->object;
+  if ($self->model) {
+    $object = $self->model->object;
   }
   else { 
     $self->{'object'};
@@ -149,9 +149,9 @@ sub _info_panel {
 
 sub config_msg {
   my $self = shift;
-  my $param = { 'species'   => $self->model->hub->species,
+  my $param = { 'species'   => $self->hub->species,
                 'type'      => 'Config',
-                'action'    => $self->model->hub->type,
+                'action'    => $self->hub->type,
                 'function'  => 'ExternalData',
                 'config'    => '_page'
               };
@@ -317,7 +317,7 @@ sub new_karyotype_image {
 
 sub _export_image {
   my ($self, $image, $flag) = @_;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   
   $image->{'export'} = 'iexport' . ($flag ? " $flag" : '');
   
@@ -509,7 +509,7 @@ sub _sort_similarity_links {
     # add link to featureview
     ## FIXME - another LRG hack! 
     if ($externalDB eq 'ENS_LRG_gene') {
-      my $lrg_url = $self->model->hub->url({
+      my $lrg_url = $self->hub->url({
         type    => 'LRG',
         action  => 'Genome',
         lrg     => $display_id,
@@ -523,7 +523,7 @@ sub _sort_similarity_links {
       my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
       my $link_type = $fv_type eq 'OligoFeature' ? $fv_type : "${fv_type}_$externalDB";
     
-      my $k_url = $self->model->hub->url({
+      my $k_url = $self->hub->url({
         type   => 'Location',
         action => 'Genome',
         id     => $link_name,

@@ -15,7 +15,7 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $html = EnsEMBL::Web::Document::HTML::News->render($self->model->hub->param('id')); 
+  my $html = EnsEMBL::Web::Document::HTML::News->render($self->hub->param('id')); 
 
   return $html;
 }

@@ -15,7 +15,7 @@ sub content {
   my $self = shift;
   
   my $location = $self->object;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
 		
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view</p>') if $location->length > $threshold;

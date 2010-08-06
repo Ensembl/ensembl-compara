@@ -15,7 +15,7 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $form = EnsEMBL::Web::Form->new( 'contact', "/Help/FeedbackPreview", 'post' );
 

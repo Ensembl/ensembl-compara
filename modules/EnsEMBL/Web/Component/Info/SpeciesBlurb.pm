@@ -15,7 +15,7 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $name_string;
   my $bio_name = $hub->species;
   my $common_name = $hub->species_defs->get_config($bio_name, 'SPECIES_COMMON_NAME');

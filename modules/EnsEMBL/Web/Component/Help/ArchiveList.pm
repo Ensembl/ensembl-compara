@@ -19,7 +19,7 @@ sub _init {
 
 sub content {
   my $self    = shift;
-  my $hub     = $self->model->hub;
+  my $hub     = $self->hub;
   my $referer = $self->_parse_referer;
   my $url     = $referer->{'uri'};
   my $r       = $hub->param('r');

@@ -69,7 +69,7 @@ sub content {
   $html .= $form->render;
 
   if ($object->param('code')) {
-    my $session_data = $self->model->hub->session->get_data('code' => $object->param('code'));
+    my $session_data = $self->hub->session->get_data('code' => $object->param('code'));
     my $nearest = $session_data->{'nearest'};
     if ($nearest) {
       $html .= qq(

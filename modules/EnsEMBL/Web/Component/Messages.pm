@@ -22,7 +22,7 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   
   return unless $hub->can('session');
   
