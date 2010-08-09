@@ -4,6 +4,7 @@ package EnsEMBL::Web::Document::Page;
 
 use strict;
 
+use Apache2::Const;
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Document::Panel;
