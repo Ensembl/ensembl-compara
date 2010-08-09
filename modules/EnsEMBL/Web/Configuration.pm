@@ -926,13 +926,14 @@ sub new_panel {
   my $panel;
   
   eval {
-    $panel = $module_name->new('model' => $self->model, 'object' => $self->object, %params);
+    $panel = $module_name->new('model' => $self->model, 'hub' => $self->model->hub, 'object' => $self->object, %params);
   };
   
   return $panel unless $@;
   
   $self->page->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
+      hub     => $self->model->hub,
       model   => $self->model,
       object  => $self->object,
       code    => "error_$params{'code'}",
