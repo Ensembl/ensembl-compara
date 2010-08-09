@@ -77,9 +77,14 @@ $ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/biomart co -r release-0_6 bi
 <p>More information on  <a href="biomart.html">tweaking and configuring BioMart to work within the Ensembl website</a> is available; for general instructions on installing biomart (including creating the cached configuration file and templates) see the <a href="http://www.biomart.org/install.html" rel="external">biomart website</a>.</p>
 </li>
 
-<li><strong>Install the BioPerl modules (BioPerl 1.2.3)</strong>
+<li><strong>Install the BioPerl modules</strong>
 
-<p class="notice">Important note: you must install <strong>version 1.2.3</strong>, not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API which have made it incompatible with Ensembl</p> 
+<p class="notice">Recent versions of BioPerl are compatible with the Ensembl API but 
+<em>not</em> with the current, rather old, blastview code. If you wish to install BLAST/BLAT 
+on your mirror site, you will need to find a copy of BioPerl <strong>version 1.2.3</strong>, 
+not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API 
+which made it incompatible with Ensembl blastview. We are hoping to replace the BLAST
+interface code and parser in the not-too-distant future.</p> 
 
   <ol>
   <li>Log into the BioPerl CVS server (using a password of: cvs):
@@ -87,7 +92,7 @@ $ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/biomart co -r release-0_6 bi
   </li>
   <li>Check-out the BioPerl code:
   <pre class="code">cvs -d :pserver:cvs@cvs.open-bio.org:/home/repository/bioperl \
-&nbsp; co -r bioperl-release-1-2-3 bioperl-live</pre>
+&nbsp; co bioperl-live</pre>
   </li>
   </ol>
   <p>A listing of your server-root should now look something like:</p>
