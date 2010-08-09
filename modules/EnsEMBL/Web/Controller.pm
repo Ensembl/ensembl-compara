@@ -376,10 +376,12 @@ sub process_command {
   
   my ($self, $model, $page, $problem) = @_;
 
+  my $hub = $model->hub;
+
   if ($self->{'command'} eq 'db_frontend') {
-    my $type     = $model->hub->type;
-    my $action   = $model->hub->action;
-    my $function = $model->hub->function || 'Display';
+    my $type     = $hub->type;
+    my $action   = $hub->action;
+    my $function = $hub->function || 'Display';
 
     # Look for all possible modules for this URL, in order of specificity and likelihood
     my @classes = (
@@ -394,6 +396,7 @@ sub process_command {
         if ($class =~ /Command/) {
           my $command = $class->new({
             object => $model->object,
+            hub    => $hub,
             page   => $page
           });
           
@@ -414,7 +417,7 @@ sub process_command {
     if ($class && $self->dynamic_use($class) && $self->access_ok($model, $page)) {    
       my $command = $class->new({
         object => $model->object,
-        model => $model,
+        hub    => $hub,
         page   => $page
       });
     
