@@ -23,7 +23,6 @@ sub _init {
 
 sub content {
   my $self         = shift;
-  my $model        = $self->model;
   my $hub          = $self->hub;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
@@ -31,7 +30,7 @@ sub content {
 
   my ($html, @all_features);
   
-  my $features = $model->create_objects('Feature', 'lazy')->convert_to_drawing_parameters('LRG')->[0];
+  my $features = $self->model->create_objects('Feature', 'lazy')->convert_to_drawing_parameters('LRG')->[0];
   my $table    = $self->feature_tables($features);
   
   if ($chromosomes && scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
@@ -48,7 +47,7 @@ sub content {
     $image->caption    = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
     $image->imagemap   = 'yes';
     $image->set_button('drag', 'title' => 'Click on a chromosome');
-    $image->karyotype($model, [ $pointers ], 'Vkaryotype');
+    $image->karyotype($hub, $self->object, [ $pointers ], 'Vkaryotype');
     
     $html .= $image->render;
   } else {

@@ -65,7 +65,7 @@ sub content {
             $high{$chr} = [ $point ];
           }
         }
-        $image->karyotype( $self->model, [ \%high ]);
+        $image->karyotype($self->hub, $object, [ \%high ]);
 ##      }
       $html .= $image->render if $image;
     }

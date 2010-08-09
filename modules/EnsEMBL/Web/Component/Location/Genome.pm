@@ -22,7 +22,6 @@ sub _init {
 
 sub content {
   my $self         = shift;
-  my $model        = $self->model;
   my $hub          = $self->hub;
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
@@ -31,7 +30,7 @@ sub content {
   my ($html, $table, $user_pointers, $usertable, $features, $has_features, @all_features);
  
   if (my $id = $hub->param('id') || $hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
-    $features = $model->create_objects('Feature', 'lazy');
+    $features = $self->model->create_objects('Feature', 'lazy');
     $features = $features ? $features->convert_to_drawing_parameters : {};
     $table    = $self->feature_tables($features) if keys %$features;
   } 
@@ -154,7 +153,7 @@ sub content {
       $image->set_button('drag', 'title' => 'Click on a chromosome');
       $image->caption  = 'Click on the image above to jump to a chromosome, or click and drag to select a region';
       $image->imagemap = 'yes';
-      $image->karyotype($self->model, $pointers, 'Vkaryotype');
+      $image->karyotype($hub, $self->object, $pointers, 'Vkaryotype');
 
       $html .= $image->render;
       

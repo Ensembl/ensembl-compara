@@ -67,7 +67,7 @@ sub content {
     }
     
     $image->set_button('drag');
-    $image->karyotype($self->model, [ \%high ]);
+    $image->karyotype($self->hub, $object, [ \%high ]);
     $html .= sprintf '<div style="margin-top:10px">%s</div>', $image->render;
   }
 
