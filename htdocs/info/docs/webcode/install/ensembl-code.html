@@ -79,12 +79,17 @@ $ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/biomart co -r release-0_6 bi
 
 <li><strong>Install the BioPerl modules</strong>
 
-<p class="notice">Recent versions of BioPerl are compatible with the Ensembl API but 
-<em>not</em> with the current, rather old, blastview code. If you wish to install BLAST/BLAT 
-on your mirror site, you will need to find a copy of BioPerl <strong>version 1.2.3</strong>, 
-not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API 
-which made it incompatible with Ensembl blastview. We are hoping to replace the BLAST
-interface code and parser in the not-too-distant future.</p> 
+<div class="embedded-box info-box">
+<p class="space-below"><strong>Important note</strong>: Recent versions of BioPerl 
+are compatible with the Ensembl API but <em>not</em> with the current, rather old, 
+blastview code.</p>
+<p class="space-below">If you wish to install BLAST/BLAT on your mirror site, you will need to find a copy 
+of BioPerl <strong>version 1.2.3</strong> (unfortunately no longer available through
+the BioPerl CVS repository), not a more recent version. Starting with 1.2.4, major
+changes were made to the BioPerl API which make it incompatible with Ensembl blastview.</p> 
+<p>We are aiming to resolve this issue in in the not-too-distant future, by rewriting 
+the Ensembl BLAST interface and parser.</p> 
+</div>
 
   <ol>
   <li>Log into the BioPerl CVS server (using a password of: cvs):
