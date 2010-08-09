@@ -56,6 +56,7 @@ sub new {
     }
   }
 
+  $self->add_external_browsers;
   $self->modify_tree;
   $self->set_default_action;
   $self->set_action($ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'});
@@ -74,9 +75,11 @@ sub get_availability {
   return $hash;
 }
 
-sub populate_tree      {}
-sub modify_tree        {}
-sub delete_tree { my $self = shift; $self->tree->_flush_tree; } 
+sub populate_tree         {}
+sub modify_tree           {}
+sub delete_tree           { my $self = shift; $self->tree->_flush_tree; } 
+sub add_external_browsers {}
+
 sub short_caption { return sprintf '%s-based displays', ucfirst $_[0]->type; } #return the caption for the tab
 
 sub set_default_action {  
