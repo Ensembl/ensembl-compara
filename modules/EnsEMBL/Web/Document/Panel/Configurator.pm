@@ -20,21 +20,13 @@ sub set_content {
 sub render {
   my ($self, $first) = @_;
   
-  my $content = $self->{'delayed_write'} ? $self->_content_delayed : '';
-  
-  if ($self->{'_delayed_write_'}) {
-    $self->renderer->print($content);
-  } elsif ($self->{'json'}) {
+  if ($self->{'json'}) {
     return $self->{'content'};
   } else {
     $self->content;
   }
 }
 
-sub _error {
-  my ($self, $caption, $body) = @_;
-  
-  $self->printf('<h1>AJAX error - %s</h1><pre>%s</pre>', $caption, $body);
-}
+sub _error { shift->printf('<h1>AJAX error - %s</h1><pre>%s</pre>', @_); }
 
 1;
