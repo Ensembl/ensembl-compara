@@ -6,7 +6,7 @@ no warnings 'uninitialized';
 
 use Bio::EnsEMBL::StableIdHistoryTree;
 
-use EnsEMBL::Web::Data::Release;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -162,13 +162,14 @@ sub _archive_link {
      $url = $self->object->_url({ type => $type, action => $action, $p => $name });
      return $url;
   } else {
-    my $release_info = EnsEMBL::Web::Data::Release->new($release);
+    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
+    my $release_info = $adaptor->fetch_release($release);
     
     return unless $release_info;
     
-    my $archive_site = $release_info->archive;
+    my $archive_site = $release_info->{'archive'};
     
-    return unless $archive_site && $release_info->online eq 'Y';
+    return unless $archive_site && $release_info->{'online'} eq 'Y';
     
     $url = "http://$archive_site.archive.ensembl.org";
     

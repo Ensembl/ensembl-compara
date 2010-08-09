@@ -5,7 +5,6 @@ use strict;
 use EnsEMBL::Web::Document::Panel::SpreadSheet;
 use EnsEMBL::Web::Document::Panel::Information;
 use EnsEMBL::Web::Document::Panel::Image;
-use EnsEMBL::Web::Data::Release;
 use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Configuration);

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Gene);
-use EnsEMBL::Web::Data::Release;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 sub _init {
   my $self = shift;
@@ -142,8 +142,9 @@ sub _archive_link {
      $url = $object->_url({'type' => $type, 'action' => $action, $p => $name });
      return $url;
   } else {
-    my $release_info = EnsEMBL::Web::Data::Release->new($archive_object->release);
-    my $archive_site = $release_info->archive;
+    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
+    my $release_info = $adaptor->fetch_release($archive_object->release);
+    my $archive_site = $release_info->{'archive'};
     $url = "http://$archive_site.archive.ensembl.org";
     if ($archive_object->release >=51){
       $url .= $object->_url({'type' => $type, 'action' => $action, $p => $name });

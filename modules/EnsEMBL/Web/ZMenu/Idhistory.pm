@@ -4,7 +4,7 @@ package EnsEMBL::Web::ZMenu::Idhistory;
 
 use strict;
 
-use EnsEMBL::Web::Data::Release;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -56,8 +56,9 @@ sub archive_link {
      $url = $hub->url({ type => $type, action => $action, $p => $name });
   } else {
     my $release_id   = $archive->release;
-    my $release      = new EnsEMBL::Web::Data::Release($archive->release);
-    my $archive_site = $release ? $release->archive : '';
+    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+    my $release = $adaptor->fetch_release($release_id); 
+    my $archive_site = $release ? $release->{'archive'} : '';
     
     if ($archive_site) {
       $url = "http://$archive_site.archive.ensembl.org";
