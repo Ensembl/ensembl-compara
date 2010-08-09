@@ -154,7 +154,7 @@ sub build_page {
   };
   
   my $config_module_name = "EnsEMBL::Web::Configuration::$type"; # Work out what the module name is, to see if it can be used
-  my ($configuration, $error) = $self->_use($config_module_name, $page, $model, $common_conf);
+  my ($configuration, $error) = $self->_use($config_module_name, $page, $model->hub, $model, $common_conf);
   
   if ($error) {
     # Handle "use" failures gracefully, but skip "Can't locate" errors
