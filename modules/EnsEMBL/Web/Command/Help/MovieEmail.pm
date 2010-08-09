@@ -13,7 +13,7 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $spam;
 
    # Check honeypot fields first

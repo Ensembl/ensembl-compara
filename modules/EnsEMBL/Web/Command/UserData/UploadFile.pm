@@ -16,7 +16,7 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $url = $object->species_path($object->data_species);
   my $param = {};
   my $error = $hub->input->cgi_error;

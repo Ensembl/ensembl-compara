@@ -7,7 +7,7 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $help;
 
   my $module = 'EnsEMBL::Web::Data::'.$hub->param('type');
