@@ -134,8 +134,6 @@ sub populate_tree {
     [qw( export EnsEMBL::Web::Component::Export::Location )],
     { 'availability' => 'slice', 'no_menu_entry' => 1 }
   );
-
-  $self->add_external_browsers;
 }
 
 sub context_panel {
