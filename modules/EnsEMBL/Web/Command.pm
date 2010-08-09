@@ -18,7 +18,7 @@ sub new {
 }
 
 sub object :lvalue { $_[0]->{'object'}; }
-sub model  :lvalue { $_[0]->{'model'}; }
+sub hub    :lvalue { $_[0]->{'hub'};    }
 sub page   :lvalue { $_[0]->{'page'};   }
 sub r              { return $_[0]->page->renderer->r; }
 
