@@ -18,10 +18,11 @@ use base qw(EnsEMBL::Web::Root);
 our $MEMD = new EnsEMBL::Web::Cache;
 
 sub new {
-  my ($class, $page, $model, $common_conf) = @_;
+  my ($class, $page, $hub, $model, $common_conf) = @_;
   
   my $self = {
     page   => $page,
+    hub    => $hub,
     model  => $model,
     object => $model->object,
     _data  => $common_conf,
@@ -64,7 +65,7 @@ sub new {
 
 sub get_availability {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $hash = { map { ('database:'. lc(substr $_, 9) => 1) } keys %{$hub->species_defs->databases} };
   $hash->{'database:compara'} = 1 if $hub->species_defs->compara_like_databases;
@@ -83,6 +84,7 @@ sub set_default_action {
   $self->{'_data'}->{'default'} = $self->object->default_action if $self->object;
 }
 
+sub hub          { return $_[0]->{'hub'}; }
 sub model        { return $_[0]->{'model'}; }
 sub object       { return $_[0]->{'object'}; }
 sub page         { return $_[0]->{'page'}; }
@@ -119,7 +121,7 @@ sub default_action {
 sub _get_valid_action {
   my ($self, $action, $func) = @_;
   my $object = $self->object;
-  my $hub = $self->model->hub;  
+  my $hub = $self->hub;  
 
   return $action if $action eq 'Wizard';
   
@@ -153,7 +155,7 @@ sub _global_context {
   return unless $self->page->can('global_context') && $self->page->global_context;
   
   my $model        = $self->model;
-  my $hub          = $model->hub;
+  my $hub          = $self->hub;
   my $object       = $self->object;
   my $type         = $self->type;
   my $qs           = $self->query_string;
@@ -211,7 +213,7 @@ sub user_context {
 sub _user_context {
   my $self          = shift;
   my $section       = shift || 'global_context';
-  my $hub           = $self->model->hub;
+  my $hub           = $self->hub;
   my $object        = $self->object;
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
@@ -332,7 +334,7 @@ sub _reset_config_panel {
     object => $object
   );
   
-  my $url = $self->model->hub->url({ 
+  my $url = $self->hub->url({ 
     type     => 'Config', 
     action   => $action, 
     reset    => 1, 
@@ -389,7 +391,7 @@ sub _configurator {
   my $self = shift;
   
   my $object     = $self->object;
-  my $hub        = $self->model->hub;
+  my $hub        = $self->hub;
   my $vc         = $object->viewconfig;
   my $config_key = $hub->param('config');
   my $action     = join '/', map $hub->$_ || (), qw(type action function);
@@ -626,7 +628,7 @@ sub _local_context {
   return unless $self->page->can('local_context') && $self->page->local_context;
   
   my $object = $self->object;
-  my $hub    = $self->model->hub;
+  my $hub    = $self->hub;
   my $action = $self->_get_valid_action($hub->action, $hub->function);
   
   $self->page->local_context->tree($self->{'_data'}{'tree'});
@@ -642,7 +644,7 @@ sub _local_tools {
   return unless $self->page->can('local_tools');
   return unless $self->page->local_tools;
   
-  my $hub    = $self->model->hub;
+  my $hub    = $self->hub;
   my $object = $self->object;
   my $vc     = $object ? $object->viewconfig : undef;
   my $config = $vc && $vc->real ? $vc->default_config : undef;
@@ -723,7 +725,7 @@ sub _local_tools {
 sub _user_tools {
   my $self = shift;
 
-  my $sitename = $self->model->hub->species_defs->ENSEMBL_SITETYPE;
+  my $sitename = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my @data     = ([ "Back to $sitename", '/index.html' ]);
   my $rel;
   
@@ -757,7 +759,7 @@ sub _context_panel {
 sub _content_panel {
   my $self   = shift;
   my $object = $self->object;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
 
   my $action = $self->_get_valid_action($hub->action, $hub->function);
   my $node   = $self->get_node($action);
@@ -819,7 +821,7 @@ sub get_node {
 sub query_string {
   my $self   = shift;
   
-  my %parameters = (%{$self->model->hub->core_params}, @_);
+  my %parameters = (%{$self->hub->core_params}, @_);
   my @query_string = map "$_=$parameters{$_}", grep defined $parameters{$_}, sort keys %parameters;
   
   return join ';', @query_string;
@@ -909,7 +911,7 @@ sub new_panel {
     
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
-        hub        => $self->model->hub,
+        hub        => $self->hub,
         model      => $self->model,
         object     => $self->object,
         code       => "error_$params{'code'}",
@@ -927,14 +929,14 @@ sub new_panel {
   my $panel;
   
   eval {
-    $panel = $module_name->new('model' => $self->model, 'hub' => $self->model->hub, 'object' => $self->object, %params);
+    $panel = $module_name->new('model' => $self->model, 'hub' => $self->hub, 'object' => $self->object, %params);
   };
   
   return $panel unless $@;
   
   $self->page->content->add_panel(
     new EnsEMBL::Web::Document::Panel(
-      hub     => $self->model->hub,
+      hub     => $self->hub,
       model   => $self->model,
       object  => $self->object,
       code    => "error_$params{'code'}",
