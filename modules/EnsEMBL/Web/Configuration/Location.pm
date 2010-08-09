@@ -158,7 +158,7 @@ sub context_panel {
 
 sub add_external_browsers {
   my $self         = shift;
-  my $hub          = $self->model->hub;
+  my $hub          = $self->hub;
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
   
@@ -207,7 +207,7 @@ sub add_external_browsers {
 
 sub add_vega_link {
   my $self           = shift;
-  my $hub            = $self->model->hub;
+  my $hub            = $self->hub;
   my $urls           = $hub->ExtURL;
   my $species        = $hub->species;
   my $species_defs   = $hub->species_defs;

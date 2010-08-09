@@ -17,7 +17,7 @@ sub context_panel  { return undef;                 }
 
 sub caption { 
   my $self = shift;
-  my $marker = $self->model->hub->param('m');
+  my $marker = $self->hub->param('m');
   return "Marker $marker"; 
 }
 

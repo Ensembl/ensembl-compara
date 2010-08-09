@@ -23,7 +23,7 @@ sub local_context  { return $_[0]->_local_context;  }
 =cut
 sub local_context  { 
   my $self   = shift;
-  if ($self->model->hub->action eq 'ListVegaMappings') {
+  if ($self->hub->action eq 'ListVegaMappings') {
     return undef;
   }else{
     return $self->_local_context;

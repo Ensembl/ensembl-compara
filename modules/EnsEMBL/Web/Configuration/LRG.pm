@@ -35,8 +35,8 @@ sub caption           {
     $caption .= $self->object->stable_id;
   }
 =cut
-  if ($self->model->hub->param('lrg')) {
-    $caption = 'LRG: '.$self->model->hub->param('lrg'); 
+  if ($self->hub->param('lrg')) {
+    $caption = 'LRG: '.$self->hub->param('lrg'); 
   }
   else {
     $caption = 'LRGs';
@@ -47,9 +47,9 @@ sub caption           {
 sub availability {
   my $self = shift;
   my $hash = $self->get_availability;
-  $hash->{'lrg'} = $self->model->api_object('LRG') ? 1 : 0;
+  $hash->{'lrg'} = $self->object ? 1 : 0;
 
-  my $lrg = $self->model->object('LRG');
+  my $lrg = $self->object;
   if ($lrg) {
     my $rows = $lrg->table_info( $lrg->get_db, 'stable_id_event' )->{'rows'};
     $hash->{'either'}   = 1;
@@ -66,7 +66,7 @@ sub availability {
 
 sub counts {
   my $self = shift;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my $obj = $self->model->api_object('Gene');
 
   return {} unless $obj;
@@ -91,7 +91,7 @@ sub populate_tree {
   my $self = shift;
 
   ## HACK THE AVAILABILITY, BECAUSE WE ARE MIXING OBJECT TYPES
-  my $has_lrg = $self->model->api_object('LRG') ? 1 : 0;
+  my $has_lrg = $self->object ? 1 : 0;
 
   $self->create_node('Genome', 'All LRGs',
     [qw(

@@ -19,7 +19,7 @@ sub context_panel  { return $_[0]->_context_panel(1);  } ## RAW AS CONTAINS <i> 
 
 sub global_context {
   my $self         = shift;
-  my $hub          = $self->model->hub;
+  my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $species      = $species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME');
   
@@ -35,7 +35,7 @@ sub global_context {
 
 sub caption { 
   my $self = shift;
-  my $species_defs = $self->model->hub->species_defs;
+  my $species_defs = $self->hub->species_defs;
   my $caption = 'Search '.$species_defs->ENSEMBL_SITETYPE.' '.$species_defs->SPECIES_COMMON_NAME;
   return $caption; 
 }
@@ -46,13 +46,13 @@ sub availability {
   my $self = shift;
   my $hash = $self->get_availability;
   $hash->{'database.variation'} =
-    exists $self->model->hub->species_defs->databases->{'DATABASE_VARIATION'}  ? 1 : 0;
+    exists $self->hub->species_defs->databases->{'DATABASE_VARIATION'}  ? 1 : 0;
   return $hash;
 }
 
 sub populate_tree {
   my $self  = shift;
-  my $sd    = $self->model->hub->species_defs;
+  my $sd    = $self->hub->species_defs;
 
   my $index = $self->create_node( 'Index', "Description",
     [qw(blurb    EnsEMBL::Web::Component::Info::SpeciesBlurb)],
