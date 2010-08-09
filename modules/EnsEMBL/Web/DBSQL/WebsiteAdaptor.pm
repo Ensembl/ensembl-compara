@@ -239,30 +239,50 @@ sub fetch_glossary {
 
 sub fetch_release {
   my ($self, $release_id) = @_;
-  return unless $self->db;
+  my $records = $self->fetch_releases($release_id);
+  return $records->[0];
+}
 
+sub fetch_releases {
+  ## Allow a release argument so we can fetch a  single release 
+  ## using the same function 
+  my ($self, $release_id) = @_;
+  return unless $self->db;
+  
+  my @args;
   my $sql = qq(
     SELECT
-      number, date, archive
+      number, date, archive, online
     FROM
       ens_release
-    WHERE
-      release_id = ?
-    LIMIT 1
   );
+  if ($release_id) {
+    $sql .= qq(
+      WHERE
+        release_id = ?
+      LIMIT 1
+    );
+    @args = ($release_id);
+  }
+  else {
+    $sql .= qq(
+      ORDER BY number ASC
+    );
+  }
 
   my $sth = $self->db->prepare($sql);
-  $sth->execute($release_id);
+  $sth->execute(@args);
 
-  my $record;
+  my $records;
   while (my @data = $sth->fetchrow_array()) {
-    $record = {
+    push $records, {
       'id'      => $data[0],
       'date'    => $data[1],
       'archive' => $data[2],
+      'online'  => $data[3],
     };
   }
-  return $record;
+  return $records;
 }
 
 sub fetch_all_species {
