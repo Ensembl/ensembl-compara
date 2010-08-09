@@ -909,6 +909,7 @@ sub new_panel {
     
     $self->page->content->add_panel(
       new EnsEMBL::Web::Document::Panel(
+        hub        => $self->model->hub,
         model      => $self->model,
         object     => $self->object,
         code       => "error_$params{'code'}",
