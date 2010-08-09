@@ -14,10 +14,5 @@ sub non_coding_error {
   return $self->_error('No protein product', '<p>This transcript does not have a protein product</p>');
 }
 
-sub _flip_URL {
-  my ($transcript, $code) = @_;
-  return sprintf '/%s/%s?transcript=%s;db=%s;%s', $transcript->species, $transcript->script, $transcript->stable_id, $transcript->get_db, $code;
-}
-
 1;
 

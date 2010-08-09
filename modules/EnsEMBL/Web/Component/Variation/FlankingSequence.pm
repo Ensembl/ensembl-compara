@@ -24,8 +24,6 @@ sub content {
   my $f_html ;
 
   my $status   = 'status_ambig_sequence';
-  my $URL = _flip_URL( $object, $status );
-  #if( $object->param( $status ) eq 'off' ) { $panel->add_row( $label, '', "$URL=on" ); return 0; }
 
   my $ambig_code = $object->vari->ambig_code;
   unless ($ambig_code) {
@@ -147,11 +145,6 @@ sub content {
 
 
   return $html;
-}
-
-sub _flip_URL {
-  my( $object, $code ) = @_;
-  return sprintf '/%s/%s?snp=%s;db=%s;%s', $object->species, $object->script, $object->name, $object->param('source'), $code;
 }
 
 1;
