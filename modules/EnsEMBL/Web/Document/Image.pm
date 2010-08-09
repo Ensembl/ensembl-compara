@@ -64,9 +64,7 @@ sub prefix {
 #----------------------------------------------------------------------------
 
 sub karyotype {
-  my ($self, $model, $highs, $config_name) = @_;
-  my $hub = $model->hub;
-  my $object = $model->object;
+  my ($self, $hub, $object, $highs, $config_name) = @_;
   my @highlights = ref($highs) eq 'ARRAY' ? @$highs : ($highs);
 
   $config_name ||= 'Vkaryotype';
