@@ -273,9 +273,9 @@ sub fetch_releases {
   my $sth = $self->db->prepare($sql);
   $sth->execute(@args);
 
-  my $records;
+  my $records = [];
   while (my @data = $sth->fetchrow_array()) {
-    push $records, {
+    push @$records, {
       'id'      => $data[0],
       'date'    => $data[1],
       'archive' => $data[2],
