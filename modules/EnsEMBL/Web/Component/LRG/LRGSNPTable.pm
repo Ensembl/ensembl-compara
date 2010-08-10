@@ -42,7 +42,11 @@ sub variation_table {
   
   if ($rows) {
     my $i = 0;
-    $rows->[$i++]->{'HGVS'} = $self->get_hgvs($_->[0], $transcript->Obj, $lrg_slice) || '-' for @{$transcript->__data->{'transformed'}{'gene_snps'}};
+    
+    for(@{$transcript->__data->{'transformed'}{'gene_snps'}}) {      
+      $rows->[$i]->{'HGVS'} = $self->get_hgvs($_->[0], $transcript->Obj, $lrg_slice) || '-' if defined($rows->[$i]);
+      $i++;
+    }
   }
   
   return $rows;
