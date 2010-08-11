@@ -11,6 +11,10 @@ sub create {
   my $sd      = shift;
   my $root    = $sd->ENSEMBL_HTDOCS_DIRS->[0];
   my @allowed = @{$sd->ENSEMBL_EXTERNAL_SEARCHABLE||[]};
+  
+  #check if directory for creating .cvsignore and robots.txt exist
+  my $root_exist = `ls $root 2>&1`;
+  `mkdir -p $root` if($root_exist =~ /No such file or directory/);
 
   my %ignore = qw(robots.txt 1 .cvsignore 1);
   if( -e "$root/.cvsignore" ) {
@@ -103,7 +107,7 @@ Allow: /info
 );
     close FH;
   } else {
-    warn "Unable to creates robots.txt file in $root-robots";
+    warn "\n*********************************** UNABLE TO CREATES ROBOTS.TXT FILE IN $root/ ****************************************************";
   }
   return;
 }
