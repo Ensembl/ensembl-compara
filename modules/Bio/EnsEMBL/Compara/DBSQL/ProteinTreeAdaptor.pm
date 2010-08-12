@@ -89,6 +89,34 @@ sub fetch_by_Member_root_id {
 }
 
 
+=head2 fetch_by_stable_id
+
+  Arg[1]     : string $protein_tree_stable_id
+  Example    : $protein_tree = $proteintree_adaptor->fetch_by_stable_id("ENSGT00590000083078");
+
+  Description: Fetches from the database the protein_tree for that stable ID
+  Returntype : Bio::EnsEMBL::Compara::ProteinTree
+  Exceptions : returns undef if $stable_id is not found.
+  Caller     :
+
+=cut
+
+sub fetch_by_stable_id {
+  my ($self, $stable_id) = @_;
+
+  my $root_id = $self->db->get_ProteinTreeStableIdAdaptor->fetch_node_id_by_stable_id($stable_id);
+  return undef unless (defined $root_id);
+
+  my $protein_tree = $self->fetch_node_by_node_id($root_id);
+
+  return $protein_tree;
+}
+
+
+=head2 fetch_by_gene_Member_root_id
+
+=cut
+
 sub fetch_by_gene_Member_root_id {
   my ($self, $member, $clusterset_id) = @_;
   $clusterset_id = 1 if ! defined $clusterset_id;
