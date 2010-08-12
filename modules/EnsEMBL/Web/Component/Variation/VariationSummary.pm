@@ -132,7 +132,7 @@ sub content {
           }
         
           foreach my $h(@{$by_allele{$a}}) {
-            $h =~ s/ENS(...)?T\d+/'<a href="'.$object->_url({
+            $h =~ s/ENS(...)?T\d+(\.\d+)?/'<a href="'.$object->_url({
               type => 'Transcript',
               action => $object->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary',
               db     => 'core',
@@ -141,7 +141,7 @@ sub content {
               v      => $object->name,
               source => $object->vari->source}).'">'.$&.'<\/a>'/eg;
       
-            $h =~ s/ENS(...)?P\d+/'<a href="'.$object->_url({
+            $h =~ s/ENS(...)?P\d+(\.\d+)?/'<a href="'.$object->_url({
               type => 'Transcript',
               action => 'ProtVariations',
               db     => 'core',
