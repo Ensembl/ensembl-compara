@@ -298,6 +298,8 @@ sub content_Text {
 sub render {
   my ($self, $first) = @_;
   
+  return $self->renderer->print($self->{'raw'}) if exists $self->{'raw'};
+  
   my $hub        = $self->{'hub'};
   my $status     = $hub ? $hub->param($self->{'status'}) : undef;
   my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
