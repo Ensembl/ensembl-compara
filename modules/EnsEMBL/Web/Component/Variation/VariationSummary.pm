@@ -40,7 +40,7 @@ sub content {
   my (@status_list, $hapmap_html);
   foreach my $status (@status) {
     if ($status eq 'hapmap') {
-      $hapmap_html = "<b>HapMap SNP</b>", $object->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
+      $hapmap_html = "<b>HapMap variant</b>", $object->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
     }
     elsif ($status eq 'failed') {
       my $description = $object->vari->failed_description;
@@ -176,7 +176,7 @@ sub content {
       if  (keys %ld) {
         $ld_html = link_to_ldview( $object, \%ld); 
       } else {
-        $ld_html = "<h5>No linkage data for this SNP</h5>";
+        $ld_html = "<h5>No linkage data for this variant</h5>";
       }  
     } else {
       $ld_html = "<h5>No linkage data available for this species</h5>";
