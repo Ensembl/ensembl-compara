@@ -7,14 +7,12 @@ use URI::Escape qw(uri_unescape);
 use base 'EnsEMBL::Web::Component::Export';
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  
-  my $form_action = $object->_url({ action => 'Configure', function => $object->function }, 1);
-  my $slice = $object->param('slice');
-  my $href = $object->param('base_url');
-  
-  my $form = $self->modal_form('export_output_configuration', $form_action->[0], { label => '< Back', method => 'get' });
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $form_action = $hub->url({ action => 'Configure', function => $hub->function }, 1);
+  my $slice       = $hub->param('slice');
+  my $href        = $hub->param('base_url');
+  my $form        = $self->modal_form('export_output_configuration', $form_action->[0], { label => '< Back', method => 'get' });
   
   $form->add_fieldset;
   
@@ -31,9 +29,9 @@ sub content {
       $note = 'Please choose the output format for your export';
     } else {
       @formats = (
-        [ 'Sequence data',   $object->param('seq_file'),  '', ' rel="external"', ' [FASTA format]' ],
-        [ 'Annotation data', $object->param('anno_file'), '', ' rel="external"', ' [pipmaker format]' ],
-        [ 'Combined file',   $object->param('tar_file') ]
+        [ 'Sequence data',   $hub->param('seq_file'),  '', ' rel="external"', ' [FASTA format]' ],
+        [ 'Annotation data', $hub->param('anno_file'), '', ' rel="external"', ' [pipmaker format]' ],
+        [ 'Combined file',   $hub->param('tar_file') ]
       );
       
       $note = 'Your export has been processed successfully. You can download the exported data by following the links below';

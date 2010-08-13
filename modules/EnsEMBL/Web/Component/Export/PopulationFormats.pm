@@ -8,7 +8,7 @@ use base 'EnsEMBL::Web::Component::Export';
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
   
   my $params = {
     action   => 'Export', 
@@ -17,14 +17,14 @@ sub content {
     output   => 'gen_var'
   };
   
-  my $vc = $object->get_viewconfig('Transcript', 'Population');
+  my $vc = $hub->get_viewconfig('Transcript', 'Population');
   
   foreach ($vc->options) {
     my $option = $vc->get($_);
     $params->{$_} = $option unless $option =~ /^off|no$/;
   }
   
-  my $href = uri_unescape($object->_url($params));
+  my $href = uri_unescape($hub->url($params));
   
   my @formats = (
     [ 'HTML', 'HTML', ' rel="external"' ],
