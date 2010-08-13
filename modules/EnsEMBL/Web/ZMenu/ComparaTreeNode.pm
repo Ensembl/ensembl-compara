@@ -15,7 +15,6 @@ sub content {
   my $self     = shift;
   my $cdb      = shift || 'compara';
   my $hub      = $self->hub;
-  my $id        = $hub->param('genetree_id');
   my $object   = $self->object;
   my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
   die 'No tree for gene' unless $tree;

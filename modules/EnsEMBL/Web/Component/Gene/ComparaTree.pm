@@ -119,7 +119,6 @@ sub content {
     'image_width'     => $image_width,
     'slice_number'    => '1|1',
     'cdb'             => $cdb,
-    'genetree_id'     => $hub->param('genetree_id'),
   });
 
   #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
