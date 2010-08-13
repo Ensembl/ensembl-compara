@@ -664,7 +664,7 @@ sub _local_tools {
         time     => time, 
         type     => 'Config', 
         action   => $action,
-        config   => $config
+        config   => $config,
       })
     );
   } else {
