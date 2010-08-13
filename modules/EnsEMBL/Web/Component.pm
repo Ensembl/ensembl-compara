@@ -812,12 +812,12 @@ sub transcript_table {
       $html .= $_ for @{$biotype_rows{$type}};
     }   
 
-    $html .= '
+    $html .= qq{
       </tbody>
     </table>
     <form class="data_table_config">
-      <input type="hidden" name="asStripClasses" value="[]" />
-    </form>';
+      <input type="hidden" name="asStripClasses" value="['','']" />
+    </form>};
   }
   
   return qq{<div class="summary_panel">$html</div>};
