@@ -9,7 +9,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use Carp qw(cluck);
 use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
@@ -19,7 +18,6 @@ sub createObjects {
   return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
   my $id = $self->param('genetree_id');
-  cluck "CREATING OBJECT $id";
      
   return $self->problem('fatal', 'Valid Gene Tree ID required', 'Please enter a valid gene tree ID in the URL.') unless $id;
   
