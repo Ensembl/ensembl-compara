@@ -160,8 +160,9 @@ sub _init {
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     my $node_href = $self->_url({ 
-      'action'   => 'ComparaTreeNode',
-      'node'     => $f->{'_id'}
+      'action'      => 'ComparaTreeNode',
+      'node'        => $f->{'_id'},
+      'genetree_id' => $Config->get_parameter('genetree_id'),
     });
 
     my $collapsed_xoffset = 0;
