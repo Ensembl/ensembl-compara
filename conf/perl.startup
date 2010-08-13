@@ -28,6 +28,10 @@ $Data::Dumper::Indent = 1;
 use EnsEMBL::Web::Tools::DHTMLmerge;
 use EnsEMBL::Web::SpeciesDefs;
 
+# EnsEMBL::Web::Registry must be used here in order to uncover any use errors in dependant modules.
+# If it is not used here, the only error you will see is 'Global symbol "$ENSEMBL_WEB_REGISTRY" requires explicit package name' from some plugin module
+use EnsEMBL::Web::Registry;
+
 my $conf = new EnsEMBL::Web::SpeciesDefs;
 
 my ($i, @plugins, @plugin_dirs);
