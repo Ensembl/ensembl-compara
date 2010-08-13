@@ -375,7 +375,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
               
               $.each(panel.dataTables, function () {
                 this.fnSetColumnVis(col, visibility);
-                options.fnDrawCallback(this.fnSettings());
               });
             }
           
