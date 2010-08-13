@@ -14,11 +14,12 @@ sub local_context  { return $_[0]->_local_context; }
 sub local_tools    { return $_[0]->_local_tools;   }
 sub content_panel  { return $_[0]->_content_panel; }
 sub context_panel  { return undef;                 }
+sub configurator   { return $_[0]->_configurator;  }
 
 sub caption { 
   my $self = shift;
-  my $id = $self->model->hub->param('genetree_id');
-  return "Gene Tree $id"; 
+  my $gt = $self->model->hub->param('gt');
+  return "Gene Tree $gt"; 
 }
 
 sub availability {

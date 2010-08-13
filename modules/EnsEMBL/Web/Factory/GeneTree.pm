@@ -17,20 +17,20 @@ sub createObjects {
   
   return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
-  my $id = $self->param('genetree_id');
+  my $gt = $self->param('gt');
      
-  return $self->problem('fatal', 'Valid Gene Tree ID required', 'Please enter a valid gene tree ID in the URL.') unless $id;
+  return $self->problem('fatal', 'Valid Gene Tree ID required', 'Please enter a valid gene tree ID in the URL.') unless $gt;
   
-  my $tree = $database->get_ProteinTreeAdaptor->fetch_by_stable_id($id);
+  my $tree = $database->get_ProteinTreeAdaptor->fetch_by_stable_id($gt);
  
   if ($tree) {
     $self->DataObjects($self->new_object('GeneTree', $tree, $self->__data));
   }
   else { 
-    return $self->problem('fatal', "Could not find Marker $id", "Either $id does not exist in the current Ensembl database, or there was a problem retrieving it.");
+    return $self->problem('fatal', "Could not find Marker $gt", "Either $gt does not exist in the current Ensembl database, or there was a problem retrieving it.");
   }
   
-  $self->param('genetree_id', $id);
+  $self->param('gt', $gt);
 }
 
 1;
