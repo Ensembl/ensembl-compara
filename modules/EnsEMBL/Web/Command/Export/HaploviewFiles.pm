@@ -10,14 +10,10 @@ use EnsEMBL::Web::TmpFile::Text;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self = shift;
-  my $object = $self->object;
-  
-  my $url = sprintf '/%s/Export/LDFormats/%s', $object->species, $object->function;
-  
-  my $params = $self->make_files;
-  $params->{'type'} = 'haploview';
-  map { $params->{$_} = $object->param($_) } $object->param;
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $url    = $hub->url({ action => 'LDFormats', function => $hub->function });
+  my $params = { type => 'haploview', %{$self->make_files} };
   
   $self->ajax_redirect($url, $params);
 }

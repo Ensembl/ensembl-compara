@@ -11,11 +11,9 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self   = shift;
-  my $object = $self->object;
-  my $url    = sprintf '/%s/Export/LDFormats/%s', $object->species, $object->function;
+  my $hub    = $self->hub;
+  my $url    = $hub->url({ action => 'LDFormats', function => $hub->function });
   my $params = { type => 'excel', excel_file => $self->make_file };
-  
-  map { $params->{$_} = $object->param($_) } $object->param;
   
   $self->ajax_redirect($url, $params);
 }
