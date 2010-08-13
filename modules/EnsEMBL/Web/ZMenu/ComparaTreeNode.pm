@@ -15,9 +15,11 @@ sub content {
   my $self     = shift;
   my $cdb      = shift || 'compara';
   my $hub      = $self->hub;
+  my $id        = $hub->param('genetree_id');
   my $object   = $self->object;
+  my $tree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_GeneTree($cdb);
+  die 'No tree for gene' unless $tree;
   my $node_id  = $hub->param('node')                   || die 'No node value in params';
-  my $tree     = $object->get_GeneTree($cdb)           || die 'No tree for gene';
   my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   
   my %collapsed_ids   = map { $_ => 1 } grep $_, split ',', $hub->param('collapse');
