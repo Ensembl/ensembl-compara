@@ -1,15 +1,9 @@
 // $Revision$
 
 Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
-  init: function () {
-    var panel = this;
-    
+  init: function () {    
     this.base();
     this.filterInit();
-    
-    $('fieldset.general_options', this.elLk.content).find('select.output_type').change(function () {
-      panel.filter(this.value);
-    });
   },
   
   filter: function (val) {
@@ -17,6 +11,12 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   },
   
   filterInit: function () {
+    var panel = this;
+    
+    this.elLk.outputTypes = $('fieldset.general_options', this.elLk.content).find('select.output_type').change(function () {
+      panel.filter(this.value);
+    });
+  
     this.elLk.fieldsets = $('fieldset[class]:not(.general_options)', this.el);
     this.filter($('fieldset.general_options', this.el).find('select.output_type').val());
   },
@@ -31,6 +31,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
       }
     });
     
+    this.elLk.outputTypes.unbind();
     return this.base(form, data);
   },
   
