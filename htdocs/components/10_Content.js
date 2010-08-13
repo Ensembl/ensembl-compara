@@ -237,7 +237,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var length = $('tbody tr', this).length;
       var width  = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
       var noSort = table.hasClass('no_sort');
-      var menu   = '';
+      var menu   = [[],[]];
       var sDom;
       
       var cookieId      = this.id || 'data_table' + panel.panelNumber;
@@ -264,11 +264,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         
         $.each([ 10, 25, 50, 100 ], function () {
           if (this < length) {
-            menu += '<option value="' + this + '">' + this + '</option>';
+            menu[0].push(this);
+            menu[1].push(this);
           }
         });
         
-        menu += '<option value="-1">All</option>';
+        menu[0].push(-1);
+        menu[1].push('All');
       } else {
         sDom = '<"dataTables_top"<"col_toggle left">f<"invisible">>t';
       }
@@ -277,12 +279,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         sPaginationType: 'full_numbers',
         aoColumns: cols,
         aaSorting: [],
+        aoColumnDefs: [],
         sDom: sDom,
         asStripClasses: [ 'bg1', 'bg2' ],
         iDisplayLength: -1,
         bAutoWidth: false,
+        aLengthMenu: menu,
         oLanguage: {
-          sLengthMenu: 'Show <select>' + menu + '</select> entries',
           sSearch: 'Search: ',
           oPaginate: {
             sFirst:    '&lt;&lt;',
@@ -309,7 +312,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       // Extend options from config defined in the html
       $('input', table.siblings('form.data_table_config')).each(function () {
-        options[this.name] = JSON.parse(this.value.replace(/'/g, '"'));
+        var val = JSON.parse(this.value.replace(/'/g, '"'));
+        
+        if (typeof options[this.name] == 'object') {
+          $.extend(true, options[this.name], val);
+        } else {
+          options[this.name] = val;
+        }
       });
       
       // Extend options from the cookie
