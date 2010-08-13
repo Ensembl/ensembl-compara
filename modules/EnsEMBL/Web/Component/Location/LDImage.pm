@@ -10,8 +10,9 @@ use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 1 );
-  $self->ajaxable(  1 );
+  $self->cacheable(1);
+  $self->ajaxable(1);
+  $self->has_image(1);
 }
 
 sub caption {
