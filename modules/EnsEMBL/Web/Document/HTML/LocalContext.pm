@@ -13,6 +13,9 @@ use base qw(EnsEMBL::Web::Document::HTML);
 sub new {
   my $class = shift;
   my $self = $class->SUPER::new('counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context');
+  $self->{'timer'} = shift;
+  $self->{'input'} = shift;
+  warn $self->{'input'};
   return $self;
 }
 
@@ -20,6 +23,12 @@ sub tree {
   my $self = shift;
   $self->{'tree'} = shift if @_;
   return $self->{'tree'};
+}
+
+sub input {
+  my $self = shift;
+  $self->{'input'} = shift if @_;
+  return $self->{'input'};
 }
 
 sub active {
@@ -96,10 +105,11 @@ sub _content {
   
   return "$content</dl>" unless $active_node;
   
-  my $active_l = $active_node->left;
-  my $active_r = $active_node->right;
-  my $counts   = $self->counts;
-  my $r        = 0;
+  my $active_l     = $active_node->left;
+  my $active_r     = $active_node->right;
+  my $counts       = $self->counts;
+  my $query_string = $self->input->query_string;
+  my $r            = 0;
   my $previous_node;
   
   foreach my $node (@nodes) {
@@ -140,7 +150,7 @@ sub _content {
           $url .= "$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
 
           my @ok_params;
-          my @cgi_params = split /;|&/, $ENV{'QUERY_STRING'};
+          my @cgi_params = split /;|&/, $query_string;
 
           if ($ENV{'ENSEMBL_TYPE'} =~ /LRG|Location|Gene|Transcript|Variation|Regulation/) {
             @ok_params = grep !/^time=/, @cgi_params;
