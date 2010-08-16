@@ -19,6 +19,10 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     this.base();
     
+    if (Ensembl.ajax == 'disabled') {
+      return; // If the user has ajax disabled, don't create the slider. The navigation will then be based on the ramp links.
+    }
+    
     this.enabled = this.params.enabled || false;
     this.reload  = false;
     
