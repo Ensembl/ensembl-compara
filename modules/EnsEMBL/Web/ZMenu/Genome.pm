@@ -57,11 +57,12 @@ sub content {
   $self->add_entry({ 
     label => 'View all hits',
     link  => $hub->url({
-      type   => 'Location',
-      action => 'Genome',
-      ftype  => $object_type,
-      id     => $id,
-      db     => $db
+      type    => 'Location',
+      action  => 'Genome',
+      ftype   => $object_type,
+      id      => $id,
+      db      => $db,
+      __clear => 1
     })
   });
 }
