@@ -58,6 +58,12 @@ sub content_other {
         $row_count ++;
         @table_data = ();
       }
+
+      if (@table_data) {
+        $pep_table->add_row( [@table_data] );
+        $row_count ++;
+      }
+
       if ($row_count) { # don't render table unless we actually put something in it
         $html .= sprintf( '<h3>%s proteins in this family</h3>', $sources{$key}{'name'} ). $pep_table->render;
       }
