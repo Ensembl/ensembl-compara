@@ -18,9 +18,11 @@ sub content {
   my $seq_region      = $variation->slice->seq_region_name; 
   my $seq_region_type = $variation->slice->coord_system->name;
   my $neat_sr_name    = $self->neat_sr_name($seq_region_type, $seq_region);
-  my $start           = $self->thousandify(($variation->slice->start  + $variation->start) - 1);
-  my $end             = $self->thousandify(($variation->slice->start + $variation->end) - 1);
-  my $position        = $neat_sr_name . ':' . $start . '-' . $end;
+  my $start           = ($variation->slice->start  + $variation->start) - 1;
+  my $formatted_start = $self->thousandify($start);
+  my $end             = ($variation->slice->start + $variation->end) - 1;
+  my $formatted_end   = $self->thousandify($end);
+  my $position        = $neat_sr_name . ':' . $formatted_start . '-' . $formatted_end;
   my $length          = $end - $start;
   my $max_length      = ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1) * 1e6; 
   my $description     = $variation->source_description; 
@@ -32,7 +34,7 @@ sub content {
       type     => 'Location',
       action   => 'Overview',
       r        => $seq_region . ':' . $start . '-' . $end,
-      cytoview => 'variation_feature_structural=normal'
+      cytoview => 'variation_feature_structural=normal',
     });
   } else {
     $location_link = $hub->url({
