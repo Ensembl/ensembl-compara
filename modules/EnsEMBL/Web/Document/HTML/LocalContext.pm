@@ -15,7 +15,7 @@ sub new {
   my $self = $class->SUPER::new('counts' => {}, 'tree' => undef, 'active' => undef, 'caption' => 'Local context');
   $self->{'timer'} = shift;
   $self->{'input'} = shift;
-  warn $self->{'input'};
+  
   return $self;
 }
 
