@@ -233,7 +233,7 @@ sub _init {
     my $html_module;
     
     eval { 
-      $html_module = $classname->new($self->{'timer'}); # Construct the module
+      $html_module = $classname->new($self->{'timer'}, $self->{'input'}); # Construct the module
       $html_module->{'species_defs'} = $self->species_defs;
       $html_module->{'_renderer'}    = $self->renderer;
     };
