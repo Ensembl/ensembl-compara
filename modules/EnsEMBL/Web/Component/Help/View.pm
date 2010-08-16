@@ -32,8 +32,10 @@ sub content {
     ### Parse help looking for embedded movie placeholders
     foreach my $line (split('\n', $content)) {
       if ($line =~ /\[\[movie=(\d+)/i) {
-        $line = EnsEMBL::Web::Component::Help::Movie::embed_movie($1);
+        my $movies = $adaptor->fetch_help_by_ids([$1]) || [];
+        $line = EnsEMBL::Web::Component::Help::Movie::embed_movie($movies->[0]);
       }
+      
       $html .= $line;
     }
   }
