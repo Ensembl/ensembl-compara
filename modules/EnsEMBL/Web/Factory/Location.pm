@@ -140,7 +140,7 @@ sub createObjects {
       $end   = $self->evaluate_bp($end);
       $slice = $self->get_slice($seq_region || $identifier, $start, $end); 
       
-      return $self->_map_assembly($slice->seq_region_name, $slice->start, $slice->end, 1) if $self->param('a');                                # Mapping from one assembly to another
+      return if $self->param('a') && $self->_map_assembly($slice->seq_region_name, $slice->start, $slice->end, 1);                             # Mapping from one assembly to another
       return $self->_create_from_sub_align_slice($slice) if $self->param('align_start') && $self->param('align_end') && $self->param('align'); # Mapping from an AlignSlice to a real location
       
       $location = $self->new_location($slice);
@@ -839,6 +839,8 @@ sub _map_assembly {
   my %params        = map { $_ => $self->param($_) } $self->param;
   my $assembly_name = $self->species_defs->ASSEMBLY_NAME;
   
+  return 0 if uc $assembly_name eq uc $assembly;
+  
   ## Check if requested assembly is in %mappings
   if (grep uc $_ eq uc $assembly, @mappings) {
     my $old_slice = $self->_slice_adaptor->fetch_by_region(
@@ -932,7 +934,7 @@ sub _map_assembly {
     );
   }
   
-  $self->hub->problem('redirect', $self->_url(\%params));
+  return $self->hub->problem('redirect', $self->_url(\%params));
 }
 
 sub _help {
