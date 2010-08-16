@@ -2,6 +2,7 @@
 .navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
 .navbar div { margin: 0 5px; }
 
+.navbar span.ramp                { position: relative; float: left; bottom: 3px; text-align: center; width: 80px; }
 .navbar span.ramp img            { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; }
 .navbar span.ramp a.selected img { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
 
