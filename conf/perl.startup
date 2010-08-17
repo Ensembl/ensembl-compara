@@ -202,7 +202,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'flags'}||[]};
   }
 
-  if (1 || $conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
+  if ($conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
     my $i = 1;
     my $T = $conf->ENSEMBL_DEBUG_FLAGS;
     $extra .= '
