@@ -375,6 +375,12 @@ sub _matches {
   $entry =~ s/bio::ensembl:://;
 
   # add table call here
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
+  $table->add_columns(
+    { 'key' => 'dbtype', 'align'=>'left', 'title' => 'External database type'},
+    { 'key' => 'dbid', 'align'=>'left', 'title' => 'Database identifier' }
+  );
+  my @rows;
   my $html;
   
   if ($self->hub->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
@@ -383,31 +389,21 @@ sub _matches {
     $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
   }
   
-  $html .= '<table cellpadding="4">';
+  
   
   @links = $self->remove_redundant_xrefs(@links) if $keys[0] eq 'ALT_TRANS';
   
   return unless @links;
   
-  my $old_key = '';
-  
   foreach my $link (@links) {
     my ($key, $text) = @$link;
     
-    if ($key ne $old_key) {
-      $html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $old_key eq 'GO';
-      $html .= '</td></tr>' if $old_key ne '';
-      $html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em">$key:</th><td>};
-      
-      $old_key = $key;
-    }
-    
-    $html .= $text;
+    $html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
+    push(@rows,{dbtype=> $key, dbid => $text });
   }
-  
-  $html .= '</td></tr></table>';
+  $table->add_rows(@rows);  
 
-  return $html;
+  return $html.$table->render;
 }
 
 sub _sort_similarity_links {
