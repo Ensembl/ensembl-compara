@@ -53,7 +53,7 @@ find(\&load_plugins, @plugin_dirs);
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
 # Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
 sub load_plugins {
-  if (/\.pm$/ && !/(SpeciesDefs|ConfigPacker|DHTMLmerge)\.pm/) {
+  if (/\.pm$/ && !/(SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/) {
     my $dir  = $File::Find::topdir;
     my $file = $File::Find::name;
     
