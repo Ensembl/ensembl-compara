@@ -178,10 +178,10 @@ sub dynamic_use {
   eval "require $classname";
   
   if ($@) {
-    my $module = $classname; 
-    $module =~ s/::/\//g;
+    my $path = $classname; 
+    $path =~ s/::/\//g;
     
-    cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~/^Can't locate $module/;
+    cluck "EnsEMBL::Web::Root: failed to use $classname\nEnsEMBL::Web::Root: $@" unless $@ =~ /^Can't locate $path/;
     
     $failed_modules->{$classname} = $@ || 'Unknown failure when dynamically using module';
     return 0;
@@ -216,6 +216,12 @@ sub not_allowed {
   }
   
   return undef;
+}
+
+sub strip_HTML {
+  my ($self, $string) = @_;
+  $string =~ s/<[^>]+>//g;
+  return $string;
 }
 
 # Returns seq-region name formatted neatly
