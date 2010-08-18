@@ -23,12 +23,6 @@ sub new {
   bless $self, $class;
 }
 
-sub strip_HTML {
-  my ($self, $string) = @_;
-  $string =~ s/<[^>]+>//g;
-  return $string;
-}
-
 sub render {
   my $self = shift;
   
