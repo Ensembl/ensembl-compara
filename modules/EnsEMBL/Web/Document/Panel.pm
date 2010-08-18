@@ -58,12 +58,6 @@ sub _error {
   $self->print("<h4>$caption</h4>$message");
 }
 
-sub strip_HTML {
-  my ($self, $string) = @_;
-  $string =~ s/<[^>]+>//g;
-  return $string;
-}
-
 sub parse {
   my $self   = shift;
   my $string = shift;
@@ -408,145 +402,124 @@ sub content {
   $self->print($self->{'content'}) if $self->{'content'};
   
   my $model = $self->{'model'};
+  my $hub   = $self->{'hub'};
   
   return unless $model;
   
-  my $hub = $self->{'hub'};
-  
   $self->{'object'}->prefix($self->prefix) if $self->{'object'};
-
-  foreach my $component ($self->components) {
-    if ($component eq 'das_features') {
-      foreach my $function_name (@{$self->{'components'}{$component}}) {
-        my $result;
-        (my $module_name = $function_name) =~ s/::\w+$//;
-        
-        if ($self->dynamic_use($module_name)) {          
-          no strict 'refs';
-          
-          eval {
-            $result = &$function_name($self, $model);
-          };
-          
-          if ($@) {
-            my $error = sprintf('<pre>%s</pre>', $self->_format_error($@));
-            
-            $self->_error(
-              qq{Runtime Error in component "<b>$component</b>"},
-              qq{<p>Function <strong>$function_name</strong> fails to execute due to the following error:</p>$error}
-            );
-            
-            warn "Component $function_name (runtime failure)";
-          }
-        } else {
-          $self->_error(
-            qq{Compile error in component "<b>$component</b>"},
-            qq{
-              <p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong> due to syntax error.</p>
-              <pre>@{[$self->_format_error($self->dynamic_use_failure($module_name))]}</pre>
-            }
-          );
-          
-          warn "Component $function_name (compile failure)";
-        }
-        
-        last if $result;
+  
+  $self->das_content if $self->{'components'}->{'das_features'};
+  
+  foreach my $entry (map @{$self->{'components'}->{$_}}, $self->components) {
+    my ($module_name, $function_name) = split /\//, $entry;
+    my $component;
+    
+    if ($self->dynamic_use($module_name)) {
+      eval {
+        $component = $module_name->new($model);
+      };
+      
+      if ($@) {
+        $self->component_failure($@, $entry, $module_name);
+        next;
       }
     } else {
-      foreach my $temp (@{$self->{'components'}{$component}}) {
-        my ($module_name, $function_name) = split /\//, $temp;
-        my $result;
+      $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
+      next;
+    }
+    
+    if (!$self->{'disable_ajax'} && $component->ajaxable && !$self->_is_ajax_request) {
+      my $url   = $component->ajax_url($function_name);
+      my $class = 'initial_panel' . ($component->has_image ? ' image_panel' : '');
+      
+      # Check if ajax enabled
+      if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
+        # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
+        # $panel_name is the memory location of the current object, so unique for each panel.
+        # Without this, ajax panels don't load, or load the wrong content.
+        my ($panel_name) = $self =~ /\((.+)\)$/;
         
-        if ($self->dynamic_use($module_name)) {
-          no strict 'refs';
+        $self->printf(qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url));
+      } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
+        # if ajax disabled - we get all content by parallel requests to ourself
+        $self->print(qq{<div class="$class">}, HTTP::Request->new('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url), '</div>');
+      }
+    } else {
+      my $content;
+      
+      eval {
+        my $func = $self->_is_ajax_request ? lc $hub->function : $function_name;
+        $func    = "content_$func" if $func;
+        $content = $func && $component->can($func) ? $component->$func : $component->content;
+      };
+      
+      if ($@) {
+        $self->component_failure($@, $entry, $module_name);
+        next;
+      }
+      
+      if ($content) {
+        if ($self->_is_ajax_request) {
+          my $id         = $hub->function eq 'sub_slice' ? '' : $component->id;
+          my $panel_type = $self->renderer->{'_modal_dialog_'} || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
           
-          my $comp_obj;
-          
-          eval {
-            $comp_obj = $module_name->new($model);
-          };
-          
-          $result = $comp_obj->{'_end_processing_'};
-
-          if ($@) {
-            warn $@;
-            
-            $self->_error(
-              qq{Runtime Error in component "<strong>$component</strong> [new]"},
-              qq{<p>Function <strong>$module_name</strong> fails to execute due to the following error:</p>} . $self->_format_error($@),
-            );
-            
-            $self->timer_push("Component $module_name (runtime failure [new])");
-          } else {
-            my $caption = $comp_obj->caption;
-            
-            if (!$self->{'disable_ajax'} && $comp_obj->ajaxable && !$self->_is_ajax_request) {
-              my $url = $comp_obj->ajax_url($function_name);
-              
-              my $class = 'initial_panel' . ($comp_obj->has_image ? ' image_panel' : '');
-              
-              # Check if ajax enabled
-              if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
-                # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
-                # $panel_name is the memory location of the current object, so unique for each panel.
-                # Without this, ajax panels don't load, or load the wrong content.
-                my ($panel_name) = $self =~ /\((.+)\)$/;
-                $self->printf(qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url));
-              } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
-                # if ajax disabled - we get all content by parallel requests to ourself
-                $self->print(qq{<div class="$class">}, HTTP::Request->new('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url), '</div>');
-              }
-            } else {
-              my $content;
-              
-              eval {
-                my $FN = $self->_is_ajax_request ? lc $hub->function : $function_name;
-                $FN = $FN ? "content_$FN" : $FN;
-                $content = $comp_obj->can($FN) ? $comp_obj->$FN : $comp_obj->content;
-              };
-              
-              if ($@) {
-                warn $@;
-                
-                $self->_error(
-                  qq{Runtime Error in component "<strong>$component</strong> [content]"},
-                  qq{<p>Function <strong>$module_name</strong> fails to execute due to the following error:</p>} . $self->_format_error($@)
-                );
-                
-                $self->timer_push("Component $module_name (runtime failure [content])");
-              } else {
-                if ($content) {
-                  if ($self->_is_ajax_request) {
-                    my $id         = $hub->function eq 'sub_slice' ? '' : $comp_obj->id;
-                    my $panel_type = $self->renderer->{'_modal_dialog_'} || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
-                    
-                    # Only add the wrapper if $content is html, and the update_panel parameter isn't present
-                    $content = qq{<div class="js_panel" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
-                  } else {
-                    my $caption = $comp_obj->caption;
-                    $self->printf('<h2>%s</h2>', encode_entities($caption)) if $caption;
-                  }
-                  
-                  $self->print($content);
-                }
-                
-                $self->timer_push("Component $module_name succeeded");
-              }
-            }
-          }
+          # Only add the wrapper if $content is html, and the update_panel parameter isn't present
+          $content = qq{<div class="js_panel" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
         } else {
-          $self->_error(
-            qq{Compile error in component "<strong>$component</strong>"},
-            qq{<p>Component <strong>$module_name</strong> not used as unable to compile module.</p>} . $self->_format_error($self->dynamic_use_failure($module_name))
-          );
-          
-          $self->timer_push("Component $module_name (compile failure)");
+          my $caption = $component->caption;
+          $self->printf('<h2>%s</h2>', encode_entities($caption)) if $caption;
         }
         
-        last if $result;
+        $self->print($content);
       }
+      
+      $self->timer_push("Component $module_name succeeded");
     }
   }
+}
+
+sub das_content {
+  my $self  = shift;
+  my $model = $self->{'model'};
+  
+  foreach my $function_name (@{$self->{'components'}->{'das_features'}}) {
+    my $result;
+    (my $module_name = $function_name) =~ s/::\w+$//;
+    
+    if ($self->dynamic_use($module_name)) {          
+      no strict 'refs';
+      
+      eval {
+        $result = &$function_name($self, $model);
+      };
+      
+      $self->component_failure($@, 'das_features', $function_name) if $@;
+    } else {
+      warn "Component $function_name (compile failure)";
+      
+      $self->_error(
+        qq{Compile error in component "<strong>das_features</strong>"},
+        qq{<p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong> due to syntax error.</p>} . $self->_format_error($self->dynamic_use_failure($module_name))
+      );
+    }
+    
+    last if $result;
+  }
+  
+  delete $self->{'components'}->{'das_features'};
+}
+
+sub component_failure {
+  my ($self, $error, $component, $module_name) = @_;
+  
+  warn $error;
+  
+  $self->_error(
+    qq{Runtime Error in component "<strong>$component</strong> [content]"},
+    qq{<p>Function <strong>$module_name</strong> fails to execute due to the following error:</p>} . $self->_format_error($error)
+  );
+  
+  $self->timer_push("Component $module_name (runtime failure [content])");
 }
 
 1;
