@@ -29,4 +29,11 @@ sub species_defs     { return $_[0]->{'species_defs'}; }
 sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
 
+sub render {
+  my $self = shift;
+  return $self->print($self->_content);
+}
+
+sub _content {}
+
 1;
