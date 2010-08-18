@@ -31,7 +31,7 @@ sub content {
     $self->add_entry({
       type     => 'Protein product',
       label    => $translation->stable_id || $object->stable_id,
-      link     => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
+      #link     => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }), # no link for LRGs yet
       position => 3
     });
 
