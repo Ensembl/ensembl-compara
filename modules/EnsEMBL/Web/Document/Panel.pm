@@ -410,7 +410,7 @@ sub content {
   
   $self->das_content if $self->{'components'}->{'das_features'};
   
-  foreach my $entry (map @{$self->{'components'}->{$_}}, $self->components) {
+  foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
     my ($module_name, $function_name) = split /\//, $entry;
     my $component;
     
