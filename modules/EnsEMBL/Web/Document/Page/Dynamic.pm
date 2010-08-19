@@ -52,12 +52,7 @@ sub _initialize_Excel {
 
 sub _initialize_XML {
   my $self = shift;
-  my $doctype_version = shift;
-  
-  if (!$doctype_version) {
-    $doctype_version = 'xhtml';
-    warn '[WARN] No DOCTYPE_VERSION (hence DTD) specified. Defaulting to xhtml, which is probably not what is required.';
-  }
+  my $doctype_version = shift || 'xhtml';
   
   $self->set_doc_type('XML', $doctype_version);
   $self->add_body_elements(qw(content EnsEMBL::Web::Document::XML::Content));
