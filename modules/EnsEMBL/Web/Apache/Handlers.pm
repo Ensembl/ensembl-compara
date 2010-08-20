@@ -25,6 +25,7 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 
 use EnsEMBL::Web::Apache::DasHandler;
+use EnsEMBL::Web::Apache::SendDecPage;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
@@ -415,8 +416,8 @@ sub handler {
   }
   
   if ($filename =~ /^! (.*)$/) {
-    $r->uri($r->uri . ($r->uri =~ /\/$/ ? '' : '/' ). 'index.html');
-    $r->filename($1 . ($r->filename =~ /\/$/ ? '' : '/'). 'index.html');
+    $r->uri($r->uri . ($r->uri      =~ /\/$/ ? '' : '/') . 'index.html');
+    $r->filename($1 . ($r->filename =~ /\/$/ ? '' : '/') . 'index.html');
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
@@ -427,7 +428,6 @@ sub handler {
     $r->content_type('text/html');
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "OK"', undef, 'Apache');
     
-    use EnsEMBL::Web::Apache::SendDecPage;
     EnsEMBL::Web::Apache::SendDecPage::handler($r);
     
     return OK;
