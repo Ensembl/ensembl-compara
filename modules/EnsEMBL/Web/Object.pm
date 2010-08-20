@@ -78,12 +78,6 @@ sub _availability {
   return $hash;
 }
 
-sub prefix {
-  my ($self, $value) = @_;
-  $self->{'prefix'} = $value if $value;
-  return $self->{'prefix'};
-}
-
 # Gets the database name used to create the object
 sub get_db {
   my $self = shift;

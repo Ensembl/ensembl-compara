@@ -18,7 +18,6 @@ sub new {
     _renderer       => undef,
     components      => {},
     component_order => [],
-    prefix          => 'p',
     disable_ajax    => 0,
     @_
   };
@@ -44,12 +43,6 @@ sub caption {
   my $self = shift;
   $self->{'caption'} = shift if (@_);
   return $self->{'caption'};
-}
-
-sub prefix {
-  my ($self, $value) = @_;
-  $self->{'prefix'} = $value if $value;
-  return $self->{'prefix'};
 }
 
 sub _error {
@@ -405,8 +398,6 @@ sub content {
   my $hub   = $self->{'hub'};
   
   return unless $model;
-  
-  $self->{'object'}->prefix($self->prefix) if $self->{'object'};
   
   $self->das_content if $self->{'components'}->{'das_features'};
   
