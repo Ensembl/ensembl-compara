@@ -26,9 +26,7 @@ sub new {
     button_title       => undef,
     button_name        => undef,
     button_id          => undef,
-    image_id           => undef,
     format             => 'png',
-    prefix             => 'p',
   };
 
   bless $self, $class;
@@ -44,7 +42,6 @@ sub button_name        : lvalue { $_[0]->{'button_name'}; }
 sub button_title       : lvalue { $_[0]->{'button_title'}; }
 sub image_type         : lvalue { $_[0]->{'image_type'}; }
 sub image_name         : lvalue { $_[0]->{'image_name'}; }
-sub image_id           : lvalue { $_[0]->{'image_id'}; }
 sub introduction       : lvalue { $_[0]->{'introduction'}; }
 sub tailnote           : lvalue { $_[0]->{'tailnote'}; }
 sub caption            : lvalue { $_[0]->{'caption'}; }
@@ -52,12 +49,6 @@ sub format             : lvalue { $_[0]->{'format'}; }
 sub panel              : lvalue { $_[0]->{'panel'}; }
 
 sub image_width { $_[0]->drawable_container->{'config'}->get_parameter('image_width'); }
-
-sub prefix {
-  my ($self, $value) = @_;
-  $self->{'prefix'} = $value if $value;
-  return $self->{'prefix'};
-}
 
 #----------------------------------------------------------------------------
 # FUNCTIONS FOR CONFIGURING AND CREATING KARYOTYPE IMAGES
@@ -207,7 +198,7 @@ sub extra_html {
   my $extra = qq{class="imagemap" };
 
 #  if ($self->imagemap eq 'yes') {
-#    my $map_name = $self->{'image_id'} || $self->{'token'};
+#    my $map_name = $self->{'token'};
 #    $extra .= qq{usemap="#$map_name" };
 #  }
   
@@ -257,12 +248,11 @@ sub render_image_button {
   my ($self, $image) = @_;
 
   return sprintf(
-    '<input style="width: %dpx; height: %dpx; %s display: block" type="image" name="%s" id="%s" src="%s" alt="%s" title="%s" %s />',
+    '<input style="width: %dpx; height: %dpx; %s display: block" type="image" name="%s" src="%s" alt="%s" title="%s" %s />',
     $image->width,
     $image->height,
     $self->extra_style,
     $self->{'button_name'},
-    $self->{'image_id'} || $self->{'button_name'},
     $image->URL,
     $self->{'button_title'},
     $self->{'button_title'}
@@ -273,10 +263,10 @@ sub render_image_map {
   my ($self, $image) = @_;
 
   my $imagemap = $self->drawable_container->render('imagemap');
-  my $map_name = $self->{'image_id'} || $image->token;
+  my $map_name = $image->token;
 
   my $map = qq{
-    <map name="$map_name" id="$map_name">
+    <map name="$map_name">
       $imagemap
     </map>
   };
@@ -307,7 +297,6 @@ sub render {
     my $image_html = $self->render_image_button($image);
     my $inputs;
     
-    $self->{'image_id'} = $self->{'button_id'};
     $self->{'hidden'}{'total_height'} = $image->height;
     
     $image_html .= sprintf '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption if $self->caption;
@@ -332,13 +321,9 @@ sub render {
     
     $self->{'counter'}++;
   } elsif ($self->button eq 'yes') {
-    $self->{'image_id'} = $self->{'button_id'};
-    
     $html .= $self->render_image_button($image);
     $html .= sprintf '<div style="text-align: center; font-weight: bold">%s</div>', $self->caption if $self->caption;
   } elsif ($self->button eq 'drag') {
-    $self->{'image_id'} = "$self->{'prefix'}_$self->{'panel_number'}_i";
-
     my $img = $self->render_image_tag($image);
 
     # continue with tag html
@@ -384,12 +369,10 @@ sub render {
     }
     
     my $wrapper = sprintf('
-      <div class="drag_select" id="%s_%s" style="margin:0px auto; border:solid 1px black; position:relative; width:%dpx">
+      <div class="drag_select" style="margin:0px auto; border:solid 1px black; position:relative; width:%dpx">
         %s
         %s
       </div>',
-      $self->{'prefix'},
-      $self->{'panel_number'},
       $image->width,
       $img,
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : ''
