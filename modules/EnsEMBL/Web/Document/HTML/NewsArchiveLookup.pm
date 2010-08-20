@@ -4,8 +4,6 @@ package EnsEMBL::Web::Document::HTML::NewsArchiveLookup;
 ### The functionality was split out in several subs, to make plugin development easier
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
@@ -13,64 +11,40 @@ use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
-  my $self = shift;
-  
-  ## Form for selecting other releases
-  return $self->format_releases(
-            $self->sort_releases(
-              $self->filter(
-                $self->get_releases              
-              )  
-            )
-         );
-}
-
-sub get_releases{
-  my $self = shift;
+  my $self            = shift;
+  my $hub             = new EnsEMBL::Web::Hub;
+  my $id              = $hub->param('id');
+  my $ensembl_version = $hub->species_defs->ENSEMBL_VERSION;
+  my @releases        = $self->get_releases(new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub), $hub->species_defs->ENSEMBL_VERSION);
   my $html;
-
-  ## Form for selecting other releases
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
-  return @{$adaptor->fetch_releases};
-}
-
-sub sort_releases{
-  my ($self, @releases_to_sort) = @_;
-  return sort { $b->{'id'} <=> $a->{'id'} } @releases_to_sort;
-}
-
-sub filter{
-  my ($self, @releases_to_filter) = @_;
-  my $ensembl_version = $self->hub->species_defs->ENSEMBL_VERSION;
-  return grep { ($_->{'id'} != $ensembl_version) && ($_->{'id'} <= $ensembl_version) } @releases_to_filter;
-}
-
-sub format_release{
-  my ($self, $release)=@_;
-
-  my $formated_html= '<option value="'.$release->{'id'}.'"';
-  $formated_html .= ' selected="selected"' if $release->{'id'} == $self->hub->param('id');
-  $formated_html .= sprintf '>Release %s (%s)</option>', $release->{'id'}, $self->pretty_date($release->{'date'}, 'short');
-  return $formated_html;
-}
-
-sub format_releases{
-  my ($self, @releases)=@_;
-  my $formated_html;
+  
   if (@releases) {
-    $formated_html .= qq(
-    <form action="/info/website/news/archive.html" method="get">
-      <select name="id">);
-    map($formated_html.=$self->format_release($_),@releases);
-    $formated_html .= qq(
-      </select> <input type="submit" name="submit" value="Go">
-    </form>
-    );
+    $html .= $self->format_release($_, $id) for @releases;
+    $html  = qq{
+      <form action="/info/website/news/archive.html" method="get">
+        <select name="id">
+          $html
+        </select> <input type="submit" name="submit" value="Go" />
+      </form>
+    };
   }
-  return $formated_html  ;
+  
+  return $html;
 }
 
-sub hub{
-  return new EnsEMBL::Web::Hub;
+sub get_releases {
+  my ($self, $adaptor, $ensembl_version) = @_;
+  return sort { $b->{'id'} <=> $a->{'id'} } grep { $_->{'id'} != $ensembl_version && $_->{'id'} <= $ensembl_version } @{$adaptor->fetch_releases};
 }
+
+sub format_release {
+  my ($self, $release, $id) = @_;
+
+  my $html = qq{<option value="$release->{'id'}"};
+  $html   .= ' selected="selected"' if $release->{'id'} == $id;
+  $html   .= sprintf '>Release %s (%s)</option>', $release->{'id'}, $self->pretty_date($release->{'date'}, 'short');
+  
+  return $html;
+}
+
 1;
