@@ -12,14 +12,8 @@ use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-  my EnsEMBL::Web::Hub $hub = undef;
-  my $ensembl_version = new EnsEMBL::Web::Hub->species_defs->ENSEMBL_VERSION;
- 
- 
 sub render {
   my $self = shift;
-  $hub = new EnsEMBL::Web::Hub;
-
   
   ## Form for selecting other releases
   return $self->format_releases(
@@ -36,7 +30,7 @@ sub get_releases{
   my $html;
 
   ## Form for selecting other releases
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
   return @{$adaptor->fetch_releases};
 }
 
@@ -47,6 +41,7 @@ sub sort_releases{
 
 sub filter{
   my ($self, @releases_to_filter) = @_;
+  my $ensembl_version = $self->hub->species_defs->ENSEMBL_VERSION;
   return grep { ($_->{'id'} != $ensembl_version) && ($_->{'id'} <= $ensembl_version) } @releases_to_filter;
 }
 
@@ -54,7 +49,7 @@ sub format_release{
   my ($self, $release)=@_;
 
   my $formated_html= '<option value="'.$release->{'id'}.'"';
-  $formated_html .= ' selected="selected"' if $release->{'id'} == $hub->param('id');
+  $formated_html .= ' selected="selected"' if $release->{'id'} == $self->hub->param('id');
   $formated_html .= sprintf '>Release %s (%s)</option>', $release->{'id'}, $self->pretty_date($release->{'date'}, 'short');
   return $formated_html;
 }
@@ -75,4 +70,7 @@ sub format_releases{
   return $formated_html  ;
 }
 
+sub hub{
+  return new EnsEMBL::Web::Hub;
+}
 1;
