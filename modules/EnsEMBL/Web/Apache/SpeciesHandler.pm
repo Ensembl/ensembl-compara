@@ -39,7 +39,7 @@ sub handler_species {
   $function = shift @path_segments;
   
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
-    
+  
   if ($flag && $script) {
     if ($script eq 'action' || $script eq 'modal') {
       $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action eq 'Multi';
@@ -120,6 +120,8 @@ sub handler_species {
     
     return OK;
   }
+  
+  $script = join '/', map $_ || (), $action, $function if $script eq 'private';
   
   # Search the perl directories for a script to run if it wasn't one of the functions from EnsEMBL::Web::Magic
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
