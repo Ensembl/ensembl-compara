@@ -114,8 +114,8 @@ sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
 sub ExtURL        { return $_[0]{'_ext_url'};       }
 sub timer         { return $_[0]{'_timer'};         }
-sub user_details  { return $_[0]{'_user_details'} ||= 1; }
-sub species_defs  { return $_[0]{'_species_defs'} ||= new EnsEMBL::Web::SpeciesDefs; }
+sub user_details  { return $_[0]{'_user_details'};  }
+sub species_defs  { return $_[0]{'_species_defs'};  }
 sub species_path  { return shift->species_defs->species_path(@_); }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
 
