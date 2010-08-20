@@ -285,7 +285,6 @@ sub new_image {
   
   my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_);
-  $image->prefix($object->prefix) if $object->prefix;
   $image->{'no_panel_type'} = $image_config->{'no_panel_type'};
   
   return $image;
