@@ -927,7 +927,7 @@ sub chunked_content {
   }
 
   if ($renderer) {
-    $renderer->process;
+    $renderer->close;
     $html = $renderer->content;
   }
 
