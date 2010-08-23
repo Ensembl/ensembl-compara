@@ -9,22 +9,20 @@ use base qw(EnsEMBL::Web::Document::Renderer);
 
 sub new {
   my $class = shift;
-
-  my $self = $class->SUPER::new(content => [], @_);
+  my $self  = $class->SUPER::new(content => [], @_);
   return $self;
 }
 
-sub printf  { push @{ shift->{content} }, sprintf( shift, @_ ); }
-sub print   { push @{ shift->{content} }, @_; }
-sub close   { shift->process; }
-sub content { return join '', @{ shift->{content} } }
+sub printf  { push @{shift->{'content'}}, sprintf @_; }
+sub print   { push @{shift->{'content'}}, @_; }
+sub content { return join '', @{shift->{'content'}} }
 
-sub process {
+sub close {
   my $self = shift;
 
-  my $agent = LWP::Parallel::UserAgent->new();
+  my $agent = new LWP::Parallel::UserAgent;
 
-  foreach my $request (@{ $self->{content} }) {
+  foreach my $request (@{$self->{'content'}}) {
     next unless ref $request;
 
     my $content;
@@ -32,10 +30,8 @@ sub process {
     if ($self->cache) {
       ## Check the cache
       my $key = $request->uri->path_query;
-      $key .= '::SESSION['.$self->session->get_session_id.']'
-                if $self->session && $self->session->get_session_id;
-      $key .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]"
-                if $ENV{'ENSEMBL_IMAGE_WIDTH'};
+      $key   .= '::SESSION[' . $self->session->get_session_id . ']' if $self->session && $self->session->get_session_id;
+      $key   .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
 
       $content = $self->cache->get($key);
     }
@@ -45,20 +41,16 @@ sub process {
     } else {
       $request->header(
         Cookie  => $self->r->headers_in->{'Cookie'},
-        Referer => $request->uri->scheme . '://' . $request->uri->host_port . $ENV{REQUEST_URI},
+        Referer => $request->uri->scheme . '://' . $request->uri->host_port . $ENV{'REQUEST_URI'},
       );
+      
       $agent->register($request);
     }
-
   }
 
   my $entries = $agent->wait;
-
-  for my $i (0..@{ $self->{content} }) {
-    $self->{content}->[$i] = $entries->{$self->{content}->[$i]}->response->content
-      if ref $self->{content}->[$i] && ref $entries->{$self->{content}->[$i]};
-  }
-
+  
+  $_ = $entries->{$_}->response->content for grep { ref $_ && ref $entries->{$_} } @{$self->{'content'}};
 }
 
 1;
