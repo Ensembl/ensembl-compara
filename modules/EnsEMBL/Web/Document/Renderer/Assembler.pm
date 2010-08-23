@@ -13,7 +13,7 @@ sub new {
   return $self;
 }
 
-sub printf  { push @{shift->{'content'}}, sprintf @_; }
+sub printf  { push @{shift->{'content'}}, sprintf shift, @_; }
 sub print   { push @{shift->{'content'}}, @_; }
 sub content { return join '', @{shift->{'content'}} }
 
