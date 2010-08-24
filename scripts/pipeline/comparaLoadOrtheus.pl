@@ -23,7 +23,14 @@ my $bl2seq = "/software/bin/bl2seq";
 my $logic_name = "Ortheus";
 my $parameters = "{max_block_size=>1000000,java_options=>'-server -Xmx1000M',}";
 my $module = "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Ortheus";
-my $ancestral_seqs = "Ancestral sequences";
+my $ancestral_seqs = "ancestral_sequences";
+my $addMT = 0;
+
+##tables to change to both innodb (I) and set autoincrement (AI). 
+my %tables2change = (
+	AI => ["genomic_align", "genomic_align_block", "genomic_align_group", "genomic_align_tree"],
+	I  => ["dna", "seq_region"],
+);
 
 my $description = q'
  PROGRAM: 
@@ -37,13 +44,11 @@ my $description = q'
 
  OPTIONS:
   --reg-conf <registry configuration file> [default: -none-] 
+}
 	This should contain all the core databases
 	of the species in the enredo.out file (the species names in the enredo.out file
 	must be aliased in the reg-conf file). Also include the master db and the ancestral 
 	core db.
-  --ch-conf <compara-hive cinfiguration file> [default: -none-]
-	This can contain additional information for setting internal IDs, db-engine type 
-	(eg INNODB) and the LSF job name.
 	
   --master <registry name of the master db> [default: compara-master] 
 	This should correspond to "-species" value for the master db in the registry 
@@ -60,9 +65,13 @@ my $description = q'
   --species_tree <newick format species tree> [default: -none-]
 	Can be presented as a string or a file
 
+  --addMT <1> [default: 0]
+        if set, will add rows to analysis_job/dnafrag_region/synteny_region
+        tables for MT alignments
+
  EXAMPLE: 
-  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --ch-conf <compara_hive_conf_file> \
-  --master <compara-master> --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> -i enredo.out
+  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara-master> \
+  --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> --addMT 1 -i enredo.out
 '; 
 
 my $help = sub {
@@ -75,11 +84,11 @@ GetOptions(
     "to_db=s" => \$to_db,
     "mlss_id=s" => \$ortheus_mlss_id,
     "species_tree=s" => \$species_tree,
-    "ch-conf=s" => \$compara_hive_conf,
     "i=s" => \$input_file,
+    "addMT=i" => \$addMT,
   );
 
-unless(( -f $reg_conf) && defined( -f $compara_hive_conf) && defined($to_db) && defined($ortheus_mlss_id) 
+unless(( -f $reg_conf) && defined($to_db) && defined($ortheus_mlss_id) 
 	&& defined($species_tree) && ( -f $input_file)) {
         $help->();
         exit(0);
@@ -150,9 +159,12 @@ foreach my $genome_db ( @{ $ortheus_mlss->species_set() }, $ancestral_gdb ) {
 	my $port = $core_db_data{ $species_name }{"port"} || $ancestral_db->dbc->port;
 	my $host = $core_db_data{ $species_name }{"host"} || $ancestral_db->dbc->host;
 	my $user = $core_db_data{ $species_name }{"user"} || $ancestral_db->dbc->username;
-	my $pass = $core_db_data{ $species_name }{"pass"} || $ancestral_db->dbc->password;
-	my $locator_string = $pass ? "Bio::EnsEMBL::DBSQL::DBAdaptor/pass=" . $pass . ";host=" : 
-				"Bio::EnsEMBL::DBSQL::DBAdaptor/host=";
+	my $locator_string;
+	if ("$species_name" eq "$ancestral_seqs") {
+		$locator_string = "Bio::EnsEMBL::DBSQL::DBAdaptor/pass=" . $ancestral_db->dbc->password . ";host=";
+	} else { 
+		$locator_string = "Bio::EnsEMBL::DBSQL::DBAdaptor/host=";
+	}
 	$locator_string .= "$host;port=$port;user=$user;dbname=$db_name;species=$species_name;disconnect_when_inactive=1"; 
 	$genome_db->locator($locator_string);
 	$to_db_gdb_a->store($genome_db);
@@ -186,68 +198,37 @@ $enredo_mlss = $to_db_mlss_a->store($enredo_mlss);
 
 parse_and_store_enredo($input_file);
 
-parse_hive_compara_config_file( realpath($compara_hive_conf) ) if (-e $compara_hive_conf);
+update_schema_tables(\%tables2change);
 
 
-=head2 parse_hive_compara_config_file
+=head2 update_schema_tables
 
-  Arg[1]  string $path_to_hive_compara_config file
-  Example parse_hive_compara_config_file( realpath($compara_hive_conf) )
-  Description: sets the database values to those present in the file
-	example file:
-	{       HIVE_NAME  => "HsMmBlastz",
-        	INNODB_TABLES  => ["synteny_region", "dna", "seq_region"],
-        	NO_SET_DNA_TABLES => 0,
-	}
-	INNODB_TABLES : list of table name to be changed from MyISAM to INNODB
-	NO_SET_DNA_TABLES : do NOT set the autoincrement value to $mlssid * 10000000000 + 1 for the tables genomic_align*
- 
+  Arg[1]  listref of tables to alter. 
+  Description: alters the database tables (myisam => innodb and reset autoincrement value to $mlssid * 10000000000 + 1)
   ReturnType: none
 
 =cut
 
-sub parse_hive_compara_config_file {
-	my $ch_file = shift;
-	my $conf_list = do $ch_file;
-	unless( exists( $conf_list->{"NO_SET_DNA_TABLES"} ) && $conf_list->{"NO_SET_DNA_TABLES"} ) { #set the correct autoincrement on these tables unless told not to.
-		auto_increment_table($ortheus_mlss_id, [ "genomic_align", "genomic_align_block", 
-		"genomic_align_group", "genomic_align_tree" ]);
-	}
-	foreach my $type(sort keys %{$conf_list}) {
-		switch ($type) {
-			case "INNODB_TABLES" {
-				my $db_to_access;
-				foreach my $table2change (@{ $conf_list->{$type} }) {
-					if(exists($ortheus_dbs{ $db_to_populate->dbc->dbname }{ $table2change })) { #its a compara-hive table
-						$db_to_access = $db_to_populate;
-					}
-					elsif(exists($ortheus_dbs{ $ancestral_db->dbc->dbname }{ $table2change })) { #its an ancestral-core table
-						$db_to_access = $ancestral_db;
-					}
-					else {
-						throw("Table $table2change does not exist in either the compara-hive db or the ancestral-core db\n");
-					}
-					my $sql_statement = "ALTER TABLE $table2change ENGINE = INNODB";
-					my $sth = $db_to_access->dbc->prepare( $sql_statement );
-					$sth->execute();
-				}
-			}
-			case "HIVE_NAME" {
-				my $sql_statement = "INSERT INTO meta (meta_key, meta_value) VALUES (?,?)";
-				my $sth = $db_to_populate->dbc->prepare( $sql_statement );
-				$sth->execute("name", $conf_list->{$type});
-			}
-			case "SET_INTERNAL_IDS" {
-				foreach my $table_name (sort keys %{ $conf_list->{$type} }) {
-					my $mlssid = $conf_list->{$type}->{$table_name};
-					auto_increment_table($mlssid, [ $table_name ]);
-				}
-			}
-			case "NO_SET_DNA_TABLES" {
-				print STDERR "autoincrement for genomic_align* tables have not been set\n" if($conf_list->{$type}); 
-			}
-			else { throw("Don't recognise this option $type in the file $ch_file"); }
+sub update_schema_tables {
+	my ($tables) = shift;
+	auto_increment_table($ortheus_mlss_id, $tables->{AI}) if $tables;
+	my $sql_statement = "REPLACE INTO meta (meta_key, meta_value) VALUES (?,?)";
+	my $sth = $db_to_populate->dbc->prepare( $sql_statement );
+	$sth->execute("name", "ortheus_$ortheus_mlss_id");
+	foreach my $table2change (@{ $tables->{I}, $tables->{AI} } ) {
+		my $db_to_access;
+		if(exists($ortheus_dbs{ $db_to_populate->dbc->dbname }{ $table2change })) { #its a compara-hive table
+			$db_to_access = $db_to_populate;
 		}
+		elsif(exists($ortheus_dbs{ $ancestral_db->dbc->dbname }{ $table2change })) { #its an ancestral-core table
+			$db_to_access = $ancestral_db;
+		}
+		else {
+			throw("Table $table2change does not exist in either the compara-hive db or the ancestral-core db\n");
+		}
+		my $sql_statement = "ALTER TABLE $table2change ENGINE = INNODB";
+		my $sth = $db_to_access->dbc->prepare( $sql_statement );
+		$sth->execute();
 	}
 }
 
@@ -288,80 +269,98 @@ sub auto_increment_table {
 sub parse_and_store_enredo {
 	my $enredo_file = shift;
 	my %sql_statements = (
-	  add_synteny_region => "INSERT INTO synteny_region (method_link_species_set_id) VALUES (?)",
-	  get_synteny_region_id => "SELECT MAX(synteny_region_id) FROM synteny_region",
-	  add_dnafrag_region => "INSERT INTO dnafrag_region 
-		(synteny_region_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand) VALUES (?,?,?,?,?)",	
-	  add_analysis => "INSERT INTO analysis (created, logic_name, parameters, module) VALUES 
+	  add_analysis => "REPLACE INTO analysis (created, logic_name, parameters, module) VALUES 
 			((SELECT CURRENT_TIMESTAMP FROM DUAL),?,?,?)",
 	  get_analysis_id => "SELECT MAX(analysis_id) from analysis", 
-	  add_analysis_job => "INSERT INTO analysis_job (analysis_id, input_id) values (?,?)",
-	  add_analysis_data => "INSERT INTO analysis_data (data) VALUES (?)",
+	  add_analysis_job => "REPLACE INTO analysis_job (analysis_id, input_id) values (?,?)",
+	  add_analysis_data => "REPLACE INTO analysis_data (data) VALUES (?)",
 	  get_analysis_data_id => "SELECT MAX(analysis_data_id) from analysis_data",
+	  add_synteny_region => "REPLACE INTO synteny_region (method_link_species_set_id) VALUES (?)",
+	  get_synteny_region_id => "SELECT MAX(synteny_region_id) FROM synteny_region",
+	  add_dnafrag_region => "REPLACE INTO dnafrag_region 
+		(synteny_region_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand) VALUES (?,?,?,?,?)",	
+	  get_MT_dnafrag_ids => "SELECT dnafrag_id FROM dnafrag WHERE name = \"MT\"", 
 	);
 	open(FILE, $enredo_file) or return undef;
-	{
-		my $dnafrag_a = $db_to_populate->get_adaptor('DnaFrag');
-		foreach my$sql_statement(keys %sql_statements) {##prepare all the sql statements	
-			$sql_statements{$sql_statement} = $db_to_populate->dbc->prepare($sql_statements{$sql_statement});
+	my $dnafrag_a = $db_to_populate->get_adaptor('DnaFrag');
+	foreach my$sql_statement(keys %sql_statements) {##prepare all the sql statements	
+		$sql_statements{$sql_statement} = $db_to_populate->dbc->prepare($sql_statements{$sql_statement});
+	}
+	$db_to_populate->dbc->do("LOCK TABLE analysis WRITE");
+	##Add ortheus to the analysis table
+	$sql_statements{'add_analysis'}->execute($logic_name, $parameters, $module);
+ 	my $analysis_id = $sql_statements{'get_analysis_id'}->execute();
+	$db_to_populate->dbc->do("LOCK TABLE analysis_data WRITE");
+	##add the species tree to analysis_data table
+	$sql_statements{'add_analysis_data'}->execute($species_tree);
+	my $tree_id = $sql_statements{'get_analysis_data_id'}->execute();
+	$db_to_populate->dbc->do("UNLOCK TABLES");
+	my (%dnafrags, %genome_dbs, $z, $dnafrag_regions);
+	local $/ = "block";
+	while(<FILE>) {
+		next if /#/;
+		my ($zero_strand, $non_zero_strand);
+		$dnafrag_regions = undef;
+		$z++;
+		foreach my $seg(split("\n", $_)){
+			next unless $seg=~/:/;
+			my($species,$chromosome,$start,$end,$strand) = 
+			$seg=~/^([^\:]+):([^\:]+):(\d+):(\d+) \[(.*)\]/;
+			($start,$end) = ($start+1,$end-1); ##assuming anchors have been split and have a one base overlap
+			$zero_strand = 1 unless $strand; ##set to true if there is a least one zero strand
+			$non_zero_strand = 1 if $strand; ##set to true if there is a least one non-zero strand
+			unless(exists($dnafrags{$species}{$chromosome})) {
+				unless(exists($genome_dbs{$species})) {
+					$genome_dbs{$species} = $to_db_gdb_a->fetch_by_registry_name($species);
+				}
+				my $dnafrag = $dnafrag_a->fetch_by_GenomeDB_and_name( $genome_dbs{$species}->dbID, $chromosome );
+				$dnafrags{$species}{$chromosome}{'dnafrag'} = $dnafrag;
+			}
+			push(@$dnafrag_regions, [ $dnafrags{$species}{$chromosome}{'dnafrag'}, $start, $end, $strand ]);
 		}
-		$db_to_populate->dbc->do("LOCK TABLE analysis WRITE");
-		$sql_statements{'add_analysis'}->execute($logic_name, $parameters, $module); ##Add ortheus to the analysis table
-		my $analysis_id = $sql_statements{'get_analysis_id'}->execute();
-		$db_to_populate->dbc->do("LOCK TABLE analysis_data WRITE");
-		##add the species tree to analysis_data table
-		$sql_statements{'add_analysis_data'}->execute($species_tree);
-		my $tree_id = $sql_statements{'get_analysis_data_id'}->execute();
-		$db_to_populate->dbc->do("UNLOCK TABLES");
-		my (%dnafrags, %genome_dbs, $z);
-		local $/ = "block";
-		while(<FILE>) {
-			next if /#/;
-			my ($zero_strand, $non_zero_strand, $dnafrag_regions);
-			$z++;
-			foreach my $seg(split("\n", $_)){
-				next unless $seg=~/:/;
-				my($species,$chromosome,$start,$end,$strand) = 
-				$seg=~/^([^\:]+):([^\:]+):(\d+):(\d+) \[(.*)\]/;
-				($start,$end) = ($start+1,$end-1); ##assuming anchors have been split and have a one base overlap
-				$zero_strand = 1 unless $strand; ##set to true if there is a least one zero strand
-				$non_zero_strand = 1 if $strand; ##set to true if there is a least one non-zero strand
-				unless(exists($dnafrags{$species}{$chromosome})) {
-					unless(exists($genome_dbs{$species})) {
-						$genome_dbs{$species} = $to_db_gdb_a->fetch_by_registry_name($species);
-					}
-					my $dnafrag = $dnafrag_a->fetch_by_GenomeDB_and_name( $genome_dbs{$species}->dbID, $chromosome );
-					$dnafrags{$species}{$chromosome}{'dnafrag'} = $dnafrag;
-				}
-				push(@$dnafrag_regions, [ $dnafrags{$species}{$chromosome}{'dnafrag'}, $start, $end, $strand ]);
-			}
-			if($zero_strand) {
-				##if none of the sequences have a defined strand then set the first sequence strand to 1
-				##this will be the target sequence against which to blast the remaining "query" sequences
-				$dnafrag_regions->[0]->[3] = 1 unless ($non_zero_strand);
-				my $matches = find_strand($dnafrag_regions, $z);
-			}
-				 
-			if(@$dnafrag_regions) {
-				$db_to_populate->dbc->do("LOCK TABLE synteny_region WRITE");
-				##set/get synteny_region_id
-				$sql_statements{'add_synteny_region'}->execute($enredo_mlss->dbID);
-				$sql_statements{'get_synteny_region_id'}->execute();
-				my $synteny_region_id = $sql_statements{get_synteny_region_id}->fetchrow_arrayref->[0];
-				$db_to_populate->dbc->do("UNLOCK TABLES");
-				##set analysis_job for this synteny_region
-				my $input_id = "{synteny_region_id=>" . $synteny_region_id . ",method_link_species_set_id=>" . 
-					$ortheus_mlss_id . ",tree_analysis_data_id=>" . $tree_id . "}";
-				$sql_statements{'add_analysis_job'}->execute($analysis_id, $input_id);
-				##insert segments for this synteny_region into dnafrag_region table 
-				foreach my $this_dnafrag_region (@$dnafrag_regions) {
-					my($dnafrag,$start,$end,$strand) = @$this_dnafrag_region;
-					$sql_statements{'add_dnafrag_region'}->execute($synteny_region_id,$dnafrag->dbID,$start,$end,$strand);
-				}
-			}
+		if($zero_strand) {
+			##if none of the sequences have a defined strand then set the first sequence strand to 1
+			##this will be the target sequence against which to blast the remaining "query" sequences
+			$dnafrag_regions->[0]->[3] = 1 unless ($non_zero_strand);
+			my $matches = find_strand($dnafrag_regions, $z);
+		}
+		if(@$dnafrag_regions) {
+			_add_synt_dnafrag_regions($dnafrag_regions, \%sql_statements, $tree_id, $analysis_id);
 		}
 	}
+	if($addMT) {
+		$dnafrag_regions = undef;
+		$sql_statements{'get_MT_dnafrag_ids'}->execute;	
+		foreach my $dnafrag_id ( @{ $sql_statements{'get_MT_dnafrag_ids'}->fetchall_arrayref } ) {
+			my $dnafrag = $dnafrag_a->fetch_by_dbID( $dnafrag_id->[0] );
+			push(@$dnafrag_regions, [ $dnafrag, 1, $dnafrag->length, 1 ]);
+		} 
+		if(@$dnafrag_regions) {
+			_add_synt_dnafrag_regions($dnafrag_regions, \%sql_statements, $tree_id, $analysis_id);
+		}	
+	}
 }
+
+
+sub _add_synt_dnafrag_regions {
+	my ($dnafrag_regions, $sql_statements, $tree_id, $analysis_id) = @_;
+	$db_to_populate->dbc->do("LOCK TABLE synteny_region WRITE");
+	##set/get synteny_region_id
+	$sql_statements->{'add_synteny_region'}->execute($enredo_mlss->dbID);
+	$sql_statements->{'get_synteny_region_id'}->execute();
+	my $synteny_region_id = $sql_statements->{get_synteny_region_id}->fetchrow_arrayref->[0];
+	$db_to_populate->dbc->do("UNLOCK TABLES");
+	##set analysis_job for this synteny_region
+	my $input_id = "{synteny_region_id=>" . $synteny_region_id . ",method_link_species_set_id=>" . 
+	$ortheus_mlss_id . ",tree_analysis_data_id=>" . $tree_id . "}";
+	$sql_statements->{'add_analysis_job'}->execute($analysis_id, $input_id);
+	##insert segments for this synteny_region into dnafrag_region table 
+	foreach my $this_dnafrag_region (@$dnafrag_regions) {
+		my($dnafrag,$start,$end,$strand) = @$this_dnafrag_region;
+		$sql_statements->{'add_dnafrag_region'}->execute($synteny_region_id,$dnafrag->dbID,$start,$end,$strand);
+	}
+}
+
 
 =head2 find_strand
 
@@ -542,4 +541,4 @@ sub copy_table {
   $mysql_pipe .= "mysql -u$to_user -p$to_pass -h$to_host -P$to_port -D$to_dbname";
   system($mysql_pipe);
 }
-	
+
