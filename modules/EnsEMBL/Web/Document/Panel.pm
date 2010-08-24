@@ -265,8 +265,9 @@ sub render_Text {
   $self->content_Text;
 }
 
-sub render_XML   { $_[0]->content; }
-sub render_Excel { $_[0]->content; }
+sub render_TextGz { $_[0]->render_Text; }
+sub render_XML    { $_[0]->content;     }
+sub render_Excel  { $_[0]->content;     }
 
 sub content_Text { 
   my $self = shift;
