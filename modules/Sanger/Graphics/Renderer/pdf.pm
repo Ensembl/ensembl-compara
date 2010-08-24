@@ -97,7 +97,6 @@ sub render_Text {
 
 	my $h = $y - $b;
 
-	warn "      $x $y [$h] $a $b [$text]";
   my $S = ($glyph->{'ptsize'}||8)* $self->{sf};
   my $T = $self->{'canvas'}{'t'};
      $T->font( $self->{'canvas'}{'font'}, $S );
