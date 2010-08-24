@@ -266,6 +266,7 @@ sub render_Text {
 }
 
 sub render_TextGz { $_[0]->render_Text; }
+sub render_DAS    { $_[0]->render_XML;  }
 sub render_XML    { $_[0]->content;     }
 sub render_Excel  { $_[0]->content;     }
 
