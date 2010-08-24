@@ -108,7 +108,7 @@ sub render_Text {
   } else {
     $y = $b;
 	}
-  warn "$glyph->{valign} $y";
+  
   if( $glyph->{'halign'} eq 'right' ) {
     $T->translate( $a, $y );
     $T->text_right( $text );
