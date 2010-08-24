@@ -11,13 +11,13 @@ sub _initialize_HTML {
 
 sub _initialize_Text {
   my $self = shift; 
-  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Text::Content));
+  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
   $self->_init;
 }
 
 sub _initialize_Excel {
   my $self = shift; 
-  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Excel::Content));
+  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
   $self->_init;
 }
 
@@ -31,7 +31,7 @@ sub _initialize_XML {
   }
   
   $self->set_doc_type('XML', $doctype_version);
-  $self->add_body_elements(qw(content EnsEMBL::Web::Document::XML::Content));
+  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
   $self->_init;
 }
 
