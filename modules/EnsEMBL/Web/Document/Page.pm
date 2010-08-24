@@ -225,17 +225,18 @@ sub replace_element {
 sub _init {
   my $self = shift;
   
-  foreach my $entry (@{$self->{'head_order'}}, @{$self->{'body_order'}}) {
+  foreach my $entry (@{$self->head_order}, @{$self->body_order}) {
     my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::HTML::Content' ]
     
     next unless $self->dynamic_use($classname); 
     
-    my $html_module;
+    my $doc_module;
     
     eval { 
-      $html_module = $classname->new($self->{'timer'}, $self->{'input'}); # Construct the module
-      $html_module->{'species_defs'} = $self->species_defs;
-      $html_module->{'_renderer'}    = $self->renderer;
+      $doc_module = $classname->new($self->{'timer'}, $self->{'input'}); # Construct the module
+      $doc_module->{'species_defs'} = $self->species_defs;
+      $doc_module->{'_renderer'}    = $self->renderer;
+      $doc_module->{'format'}       = $self->{'format'};
     };
     
     if ($@) {
@@ -243,7 +244,7 @@ sub _init {
       next;
     }
     
-    $self->{$element} = $html_module;
+    $self->{$element} = $doc_module;
     
     no strict 'refs';
     my $method_name = ref($self) . "::$element";
