@@ -324,6 +324,26 @@ sub get_ext_seq {
   }
 }
 
+sub get_all_das {
+  my $self    = shift;
+  my $species = shift || $self->species;
+
+  if ( $species eq 'common' ) {
+    $species = '';
+  }
+ 
+  my @spec_das = $self->species_defs->get_all_das( $species );
+  my @sess_das = $self->session->get_all_das( $species );
+  my @user_das = $self->user ? $self->user->get_all_das( $species ) : ({},{});
+
+  # TODO: group data??
+
+  # First hash is keyed by logic_name, second is keyed by full_url
+  my %by_name = ( %{ $spec_das[0] }, %{ $user_das[0] }, %{ $sess_das[0] } );
+  my %by_url  = ( %{ $spec_das[1] || {}}, %{ $user_das[1] || {} }, %{ $sess_das[1] || {}} );
+  return wantarray ? ( \%by_name, \%by_url ) : \%by_name;
+}
+
 ### VIEW / IMAGE CONFIGS
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
