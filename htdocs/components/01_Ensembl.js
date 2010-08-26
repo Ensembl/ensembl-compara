@@ -81,7 +81,7 @@ Ensembl.extend({
     this.coreParams   = {};
     this.initialR     = $('input[name=r]', '#core_params').val();
     this.location     = { width: 100000 };
-    this.speciesPath  = $('#species_path').val();
+    this.speciesPath  = $('#species_path').val() || '';
     this.species      = this.speciesPath.split('/').pop();
     this.multiSpecies = {};
     
