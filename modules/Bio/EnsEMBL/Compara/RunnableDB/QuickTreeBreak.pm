@@ -284,8 +284,8 @@ sub check_job_fail_options {
 
   if ($self->input_job->retry_count > 8) {
     # $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-    $self->input_job->update_status('FAILED');
     $self->DESTROY;
+    $self->input_job->transient_error(0);
     throw("QuickTree job failed");
   }
 }

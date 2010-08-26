@@ -164,8 +164,8 @@ sub write_output {
   my $self = shift;
 
   unless (defined($self->{results})) {
-    $self->input_job->update_status('FAILED');
-    return undef;
+    $self->input_job->transient_error(0);
+    die;
   }
   $self->check_if_exit_cleanly;
   if (defined($self->{'results'}{saturated})) {
@@ -202,12 +202,10 @@ sub write_output {
         $self->dataflow_output_id($output_id, 2);
       }
     }
-    $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    warn("Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it");
-    return undef;
-    #throw("Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it");
+    $self->input_job->transient_error(0);
+    throw "Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it";
 
   } elsif (defined($self->{'results'}{sites})) {
     $self->store_sitewise_dNdS;
@@ -513,12 +511,12 @@ sub check_job_fail_options
 
     if ($self->input_job->retry_count >= 2) {
       $self->dataflow_output_id($self->input_id, 2);
-      $self->input_job->update_status('FAILED');
 
       if ($self->{'protein_tree'}) {
         $self->{'protein_tree'}->release_tree;
         $self->{'protein_tree'} = undef;
       }
+      $self->input_job->transient_error(0);
       throw("Sitewise_dNdS job failed >=3 times: try something else and FAIL it");
     }
   }

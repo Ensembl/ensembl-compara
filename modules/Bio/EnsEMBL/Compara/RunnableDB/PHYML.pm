@@ -112,9 +112,9 @@ sub fetch_input {
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
     $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
+    $self->input_job->transient_error(0);
     throw("PHYML : cluster size over threshold and FAIL it");
   }
   
@@ -273,12 +273,12 @@ sub check_job_fail_options
 
   if($self->input_job->retry_count >= 2) {
     $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
   
     if($self->{'protein_tree'}) {
       $self->{'protein_tree'}->release_tree;
       $self->{'protein_tree'} = undef;
     }
+    $self->input_job->transient_error(0);
     throw("PHYML job failed >=3 times: try something else and FAIL it");
   }
 }

@@ -192,9 +192,9 @@ sub check_job_fail_options
   if($self->input_job->retry_count >= 2) {
     # Send to QuickTreeBreak
     $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
 
     $self->DESTROY;
+    $self->input_job->transient_error(0);
     throw("NCOrthoTree job failed >=3 times: try something else and FAIL it");
   }
 

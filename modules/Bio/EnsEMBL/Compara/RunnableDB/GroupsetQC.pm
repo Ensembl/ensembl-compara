@@ -543,9 +543,8 @@ sub quantify_mapping {
   my $unmap_tolerance = $self->{unmap_tolerance};
   print STDERR "# Unmap tolerance parameter set to $unmap_tolerance\n";
   if ($proportion_novel_clusters > $unmap_tolerance) {
-    $self->input_job->update_status('FAILED');
-    print STDERR "[GroupsetQC] Quality Check FAILED: Proportion of novel clusters $proportion_novel_clusters > $unmap_tolerance\n";
-    return;
+    $self->input_job->transient_error(0);
+    die "Quality Check FAILED: Proportion of novel clusters $proportion_novel_clusters > $unmap_tolerance\n";
   }
 
   return;

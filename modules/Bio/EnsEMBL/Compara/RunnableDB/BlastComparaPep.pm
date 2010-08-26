@@ -95,8 +95,8 @@ sub fetch_input {
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   throw("No member in compara for member_id = $member_id") unless defined($member);
   if (10 > $member->bioseq->length) {
-	$self->input_job->update_status('DONE');
-	throw("BLAST : Peptide is too short for BLAST");
+    $self->input_job->incomplete(0);    # to say "the execution completed successfully, but please record the thown message"
+    die "Peptide is too short for BLAST";
   }
 
   my $query = $member->bioseq();  

@@ -119,10 +119,10 @@ sub fetch_input {
       > $self->{'max_gene_count'}) {
     # 3 is QuickTreeBreak -- 2 is NJTREE_PHYML jackknife
     $self->dataflow_output_id($self->input_id, 3);
-    $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    throw("NJTREE_PHYML : cluster size over threshold and FAIL it");
+    $self->input_job->incomplete(0);
+    die "cluster size over threshold; dataflowing to QuickTreeBreak\n";
   }
 
   return 1;
@@ -337,15 +337,14 @@ sub run_njtree_phyml
           my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>1, 'jackknife'=>$jackknife_value}", $self->{'protein_tree'}->node_id);
           $self->input_job->input_id($output_id);
           $self->dataflow_output_id($output_id, 2);
-          $self->input_job->update_status('FAILED');
           $self->{'protein_tree'}->release_tree;
           $self->{'protein_tree'} = undef;
-          warn("NJTREE_PHYML : NNI error, resubmitting as jackknife NJTREE_PHYML");
-          return undef;
+          $self->input_job->incomplete(0);
+          die "NNI error, resubmitting as jackknife NJTREE_PHYML\n";
         }
       }
       $self->check_job_fail_options;
-      throw("error running njtree phyml, $!\n");
+      $self->throw("error running njtree phyml, $!\n");
     }
 
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
@@ -418,10 +417,10 @@ sub check_job_fail_options
   # This will go to QuickTreeBreak
   if($self->input_job->retry_count >= 1 && !defined($self->{'jackknife'})) {
     $self->dataflow_output_id($self->input_id, 3);
-    $self->input_job->update_status('FAILED');
 
     $self->DESTROY;
-    $self->throw("NJTREE PHYML job failed >=3 times: try something else and FAIL it");
+    $self->input_job->incomplete(0);
+    die "job failed >=3 times; dataflowing into QuickTreeBreak\n";
   }
 }
 

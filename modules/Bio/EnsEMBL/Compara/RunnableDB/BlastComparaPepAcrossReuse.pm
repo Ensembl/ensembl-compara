@@ -95,9 +95,9 @@ sub fetch_input {
   my $member_id = $self->input_id;
   my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
   throw("No member in compara for member_id = $member_id") unless defined($member);
-  if (10 > $member->bioseq->length) {
-	$self->input_job->update_status('DONE');
-	throw("BLAST : Peptide is too short for BLAST");
+  if ($member->bioseq->length < 10) {
+    $self->input_job->incomplete(0);    # to say "the execution completed successfully, but please record the thown message"
+    die "Peptide is too short for BLAST";
   }
 
   my $query = $member->bioseq();
@@ -131,8 +131,7 @@ sub fetch_input {
   $cluster_analysis = $self->analysis->adaptor->fetch_by_logic_name('HclusterPrepare') unless (defined($cluster_analysis));
   my $cluster_parameters = eval($cluster_analysis->parameters);
   if (!defined($cluster_parameters)) {
-    my $message = "cluster_parameters is undef in analysis_id=" . $cluster_analysis->dbID;
-    throw ("$message");
+    throw ("cluster_parameters is undef in analysis_id=" . $cluster_analysis->dbID);
   }
   my @gdbs;
   foreach my $gdb_id (@{$cluster_parameters->{species_set}}) {
@@ -186,7 +185,6 @@ sub run {
   my $cross_pafs;
 
   foreach my $gdb (@{$self->{cross_gdbs}}) {
-    $DB::single=1;1;
     my $fastafile .= $gdb->name() . "_" . $gdb->assembly() . ".fasta";
     $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fastafile =~ s/\/\//\//g;  # converts any // in path to /
@@ -197,7 +195,6 @@ sub run {
     # Here we can look at a previous build and try to reuse the blast
     # results for this query peptide against this hit genome
     my $reusable_pafs = 1 if (defined($p->{reuse_db}) && defined($self->{reusable_gdb}{$gdb->dbID}) && defined(($self->{reusable_gdb}{$member->genome_db_id})));
-#     my $reusable_pafs = $self->try_reuse_blast($p,$gdb->dbID,$member) if (defined $p->{reuse_db});
     if (defined($reusable_pafs)) {
       # PAFs have been stored during BlastTableReuse, so this gdb is done
     } else {
@@ -308,94 +305,6 @@ sub global_cleanup {
     rmdir($g_BlastComparaPep_workdir);
   }
   return 1;
-}
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-# using the genome_db and longest peptides subset, create a fasta
-# file which can be used as a blast database
-sub dumpPeptidesToFasta
-{
-  my $self = shift;
-
-  my $startTime = time();
-  my $params = eval($self->analysis->parameters);
-  my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($params->{'genome_db_id'});
-  
-  # create logical path name for fastafile
-  my $species = $genomeDB->name();
-  $species =~ s/\s+/_/g;  # replace whitespace with '_' characters
-
-  #create temp directory to hold fasta databases
-  $g_BlastComparaPep_workdir = "/tmp/worker.$$/";
-  mkdir($g_BlastComparaPep_workdir, 0777);
-  
-  my $fastafile = $g_BlastComparaPep_workdir.
-                  $species . "_" .
-                  $genomeDB->assembly() . ".fasta";
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-  print("fastafile = '$fastafile'\n");
-
-  # write fasta file to local /tmp/disk
-  my $subset   = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($params->{'subset_id'});
-  $self->{'comparaDBA'}->get_SubsetAdaptor->dumpFastaForSubset($subset, $fastafile);
-
-  # configure the fasta file for use as a blast database file
-  my $blastdb     = new Bio::EnsEMBL::Analysis::Runnable::BlastDB (
-      -dbfile     => $fastafile,
-      -type       => 'PROTEIN');
-  $blastdb->run;
-  print("registered ". $blastdb->dbname . " for ".$blastdb->dbfile . "\n");
-
-  printf("took %d secs to dump database to local disk\n", (time() - $startTime));
-
-  return $fastafile;
-}
-
-sub try_reuse_blast {
-  my $self = shift;
-  my $p = shift;
-  my $gdb_id = shift;
-  my $member = shift;
-
-  my $hit_genome_db_id = $gdb_id;
-  return undef unless (defined($self->{reusable_gdb}{$hit_genome_db_id}) 
-                 && 
-                 defined($self->{reusable_gdb}{$member->genome_db_id}));
-
-  $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($p->{reuse_db} . ';type=compara');
-  my $paf_adaptor = $self->{'comparaDBA_reuse'}->get_PeptideAlignFeatureAdaptor;
-  my $member_adaptor = $self->{'comparaDBA_reuse'}->get_MemberAdaptor;
-  my $member_reuse = $member_adaptor->fetch_by_source_stable_id('ENSEMBLPEP',$member->stable_id);
-  return undef unless (defined $member_reuse);
-  # 2 - Check that the query member is an identical sequence in both dbs
-  unless ($member_reuse->sequence eq $member->sequence) {
-    print STDERR "Different query sequence for ", $member->stable_id ," when trying to reuse blast from previous build.\n" if ($self->debug);
-    return undef;
-  }
-
-  my $pafs = $paf_adaptor->fetch_all_by_qmember_id_hgenome_db_id($member_reuse->member_id,$hit_genome_db_id);
-  my $num_reusable_pafs = 0;
-  foreach my $paf (@$pafs) {
-    my $hit_member_reuse = $paf->hit_member;
-    my $hit_member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP',$hit_member_reuse->stable_id);
-    # 3 - Check that the hit member is an identical sequence in both dbs
-    unless (defined ($hit_member)) { return undef; }
-    unless ($hit_member_reuse->sequence eq $hit_member->sequence) {
-          print STDERR "Different hit sequence for ", $hit_member->stable_id ," when trying to reuse blast from previous build.\n" if ($self->debug);
-          return undef;
-    }
-    print STDERR "Reusing ", $hit_member->member_id, " ", $hit_member->stable_id, " - ", $member->member_id, " ", $member->stable_id, " (",$hit_member->genome_db_id, ":", $member->genome_db_id, ")", " from previous build.\n" if ($self->debug);
-
-    # Now we can reuse this paf
-    $num_reusable_pafs++;
-  }
-  return $num_reusable_pafs;
 }
 
 1;

@@ -207,8 +207,8 @@ sub fetch_input {
 #   }
   # Retry count >= 5.
   if ($self->input_job->retry_count >= 5) {
-    $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
+#    $self->dataflow_output_id($self->input_id, 2);
+    $self->input_job->transient_error(0);
     $self->DESTROY;
     throw("Mcoffee job failed >=5 times: try something else and FAIL it");
   }

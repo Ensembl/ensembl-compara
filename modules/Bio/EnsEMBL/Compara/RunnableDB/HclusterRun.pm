@@ -369,9 +369,8 @@ sub dataflow_clusters {
   foreach my $cluster (@{$clusters}) {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
                             $cluster->node_id, $clusterset->node_id);
-    if (defined($self->{retry})) {
-      my $readded_cluster_tag = $cluster->get_tagvalue("readded_cluster");
-      next unless (1 == $readded_cluster_tag || 11 != ($self->{retry})); # Will skip flow unless is one of the readded
+    if (defined($self->{retry}) and $self->{retry}==11 and $cluster->get_tagvalue("readded_cluster")!=1 ) {
+      next; # Will skip flow unless is one of the readded
     }
     $self->dataflow_output_id($output_id, 2);
     printf("%10d clusters flowed\n", $counter) if($counter % 20 == 0);
@@ -384,7 +383,7 @@ sub check_job_fail_options
   my $self = shift;
 
   if($self->input_job->retry_count >= 5) {
-    $self->input_job->update_status('FAILED');
+    $self->input_job->transient_error(0);
 
     throw("HclusterRun job failed >=5 times: try something else and FAIL it");
   }

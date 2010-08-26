@@ -186,19 +186,19 @@ sub check_job_fail_options
 
   if ( $self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'} ) {
     $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    throw("OrthoTree : cluster size over threshold and FAIL it");
+    $self->input_job->incomplete(0);
+    throw("OrthoTree : cluster size over threshold; dataflowing to QuickTreeBreak");
   }
 
   if($self->input_job->retry_count >= 2) {
     # Send to QuickTreeBreak
     $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->update_status('FAILED');
 
     $self->DESTROY;
-    throw("OrthoTree job failed >=3 times: try something else and FAIL it");
+    $self->input_job->incomplete(0);
+    throw("OrthoTree job failed >=3 times; dataflowing to QuickTreeBreak");
   }
 
 #   if ($self->input_job->retry_count >= 1) {

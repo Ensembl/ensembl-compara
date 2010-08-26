@@ -310,10 +310,10 @@ sub run_infernal {
   my $ret1 = $self->dump_model('model_id',$self->{model_id});
   my $ret2 = $self->dump_model('name',$self->{model_id}) if (1 == $ret1);
   if (1 == $ret2) {
-    $self->input_job->update_status('FAILED');
     $self->{'nc_tree'}->release_tree;
     $self->{'nc_tree'} = undef;
-    exit;
+    $self->input_job->transient_error(0);
+    die;
   }
 
   my $cmd = $infernal_executable;

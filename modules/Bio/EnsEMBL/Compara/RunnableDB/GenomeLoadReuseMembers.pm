@@ -474,7 +474,7 @@ sub store_gene_and_all_transcripts
         } else {
           my $stable_id = $gene_member->stable_id;
           if (1 == $self->{reuse_this}) {
-            $self->input_job->update_status('FAILED');
+            $self->input_job->transient_error(0);
             throw ("Reuse member set non identical for $stable_id: $!");
           }
           $self->{memberDBA}->store($gene_member);
@@ -493,7 +493,7 @@ sub store_gene_and_all_transcripts
     } else {
       my $stable_id = $pep_member->stable_id;
       if (1 == $self->{reuse_this}) {
-            $self->input_job->update_status('FAILED');
+            $self->input_job->transient_error(0);
             throw ("Reuse member set non identical for $stable_id: $!");
       }
       $self->{memberDBA}->store($pep_member);

@@ -170,24 +170,6 @@ sub print_params {
   print("  species_tree_file : ", $self->{'species_tree_file'},"\n") if($self->{'species_tree_file'});
 }
 
-
-sub check_job_fail_options
-{
-  my $self = shift;
-  
-  printf("RAP failed : ");
-  $self->input_job->print_job;
-  
-  $self->dataflow_output_id($self->input_id, 2);
-  $self->input_job->update_status('FAILED');
-  
-  if($self->{'protein_tree'}) {
-    $self->{'protein_tree'}->release_tree;
-    $self->{'protein_tree'} = undef;
-  }
-}
-
-
 #####################################
 #
 # main code
