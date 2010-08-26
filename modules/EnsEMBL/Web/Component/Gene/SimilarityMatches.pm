@@ -28,6 +28,7 @@ sub content {
 
 sub matches_to_html{
   my $self=shift;
+  my $object=$self->object;
   my $return_html="";
   my @types = @_;
   my $count_ext_refs =0;
@@ -35,11 +36,14 @@ sub matches_to_html{
   my @colums = ({ key => 'transcriptid' , title => 'Transcript ID' , align => 'left', sort => 'string', priority =>2147483647, display_id=> '', link_text=>''}); #give transcriptid the highest priority as we want it to be the 1st colum
   my %existing_display_names;
   my @rows;
-  foreach (@{$self->object->gene->get_all_Transcripts()}){
-    my $row= {transcriptid => $_->stable_id };
+  foreach (@{$object->gene->get_all_Transcripts()}){
+    my %url_params = (type     => 'Transcript', action   => 'Summary' , function => undef );
+	my $url = $self->object->_url({ %url_params, t => $_->stable_id });	
+	$url="<a href=\"".$url."\">".$_->stable_id."</a>";
+    my $row= {transcriptid => $url };
     my @transcript_matches = $self->get_matches_by_transcript($_,@types);
     foreach (@transcript_matches){
-      my $show_colum = (($self->object->param($_->db_display_name) ne "off") ? 1:0 ) || 0;
+      my $show_colum = (($object->param($_->db_display_name) ne "off") ? 1:0 ) || 0;
       if($show_colum){
         my %similarity_links=$self->get_similarity_links_hash($_);
         my $ext_db_entry= $similarity_links{'link'} ? "<a href=\"".$similarity_links{'link'}."\">".$similarity_links{'link_text'}."</a>"  :  $similarity_links{'link_text'};
