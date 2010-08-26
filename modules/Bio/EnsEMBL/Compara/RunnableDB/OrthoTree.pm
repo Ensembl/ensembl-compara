@@ -189,7 +189,7 @@ sub check_job_fail_options
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
     $self->input_job->incomplete(0);
-    throw("OrthoTree : cluster size over threshold; dataflowing to QuickTreeBreak");
+    die $self->analysis->logic_name().": cluster size over threshold; dataflowing to QuickTreeBreak\n";
   }
 
   if($self->input_job->retry_count >= 2) {
@@ -198,7 +198,7 @@ sub check_job_fail_options
 
     $self->DESTROY;
     $self->input_job->incomplete(0);
-    throw("OrthoTree job failed >=3 times; dataflowing to QuickTreeBreak");
+    die $self->analysis->logic_name()." job failed >=2 times; dataflowing to QuickTreeBreak\n";
   }
 
 #   if ($self->input_job->retry_count >= 1) {

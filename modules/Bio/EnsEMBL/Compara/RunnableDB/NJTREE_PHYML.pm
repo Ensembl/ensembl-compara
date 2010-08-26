@@ -122,7 +122,7 @@ sub fetch_input {
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
     $self->input_job->incomplete(0);
-    die "cluster size over threshold; dataflowing to QuickTreeBreak\n";
+    die $self->analysis->logic_name().": cluster size over threshold; dataflowing to QuickTreeBreak\n";
   }
 
   return 1;
@@ -340,7 +340,7 @@ sub run_njtree_phyml
           $self->{'protein_tree'}->release_tree;
           $self->{'protein_tree'} = undef;
           $self->input_job->incomplete(0);
-          die "NNI error, resubmitting as jackknife NJTREE_PHYML\n";
+          die $self->analysis->logic_name().": NNI error, dataflowing to NJTREE_PHYML+jackknife\n";
         }
       }
       $self->check_job_fail_options;
@@ -420,7 +420,7 @@ sub check_job_fail_options
 
     $self->DESTROY;
     $self->input_job->incomplete(0);
-    die "job failed >=3 times; dataflowing into QuickTreeBreak\n";
+    die $self->analysis->logic_name()." job failed >=3 times; dataflowing into QuickTreeBreak\n";
   }
 }
 
