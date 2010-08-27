@@ -22,6 +22,8 @@ sub content {
   my $families       = $object->get_all_families($cdb);
   my $gene_stable_id = $object->stable_id;
 
+  my $ckey = $cdb eq 'compara_pan_ensembl' ? '_pan_compara' : '';
+
   my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'id asc' ] });
 
   $table->add_columns(
@@ -38,7 +40,7 @@ sub content {
     my $url_params = { function => 'Genes', family => $family_id, g => $gene_stable_id };
     
     $row->{'id'}          .= scalar @$genes > 1 ? sprintf('(<a href="%s">%s genes</a>)', $object->_url($url_params), scalar @$genes) : '(1 gene)';
-    $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $object->_url({ function => 'Proteins', family => $family_id });
+    $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $object->_url({ function => "Proteins$ckey", family => $family_id });
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
     $row->{'transcripts'}  = '<ul>';
     $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a> (%s)</li>', $object->_url($url_params), $_->stable_id, $_->display_xref for @{$family->{'transcripts'}}; 
