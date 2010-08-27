@@ -6,6 +6,7 @@ use warnings;
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Object::DAS);
+use Data::Dumper;
 
 sub Types {
   my $self = shift;
@@ -45,22 +46,24 @@ sub Features {
   $self->{'templates'}{'image2_URL'}  = sprintf( '%s%s/Component/Location/Web/MultiBottom?export=png;g=%%s;db=%%s;i_width=750', $base_url,      $self->species_defs->species_path($self->real_species ));
   $self->{'templates'}{'varview_URL'}  = sprintf( '%s%s/Gene/Variation_Gene/Image?g=%%s;db=%%s',    $base_url,      $self->species_defs->species_path($self->real_species ));
   $self->{'templates'}{'compara_URL'}  = sprintf( '%s%s/Gene/Compara_%%s?g=%%s;db=%%s',   $base_url,       $self->species_defs->species_path($self->real_species ));
+  $self->{'templates'}{'sequence_URL'}  = sprintf( '%s%s/Gene/Sequence?g=%%s;db=%%s',   $base_url,       $self->species_defs->species_path($self->real_species ));
 
 
   my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen');
 
   my $sversion = $self->species_defs->SITE_RELEASE_VERSION ||  $self->species_defs->ENSEMBL_VERSION;
   my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME;
+  my $sdate =  $self->species_defs->SITE_RELEASE_DATE || $self->species_defs->ENSEMBL_RELEASE_DATE;
 
   my $enote1 = qq{
       The goal of $slabel is to automatically annotate the genome, integrate this annotation with other available biological data and make all this publicly available via the web. };
   my $enote2 = sprintf qq{
-      Current release %s provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, scalar($self->species_defs->valid_species);
+      Current release %s ( %s ) provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, $sdate, scalar($self->species_defs->valid_species);
 
   my $ef = {
               'ID'          => "ensembl",
               'LABEL'       => "About $slabel",
-              'TYPE'        => 'summary',
+              'TYPE'        => 'ensembl-provenance',
               'NOTE' => [ $enote1, $enote2 ],
               'LINK' => [
                          { 'text' => "Click here to visit $slabel.",
@@ -76,6 +79,7 @@ sub Features {
 
   if (my $cdb = $h->{'core'}) {
       my $ga = $cdb->get_adaptor('Gene');
+
       foreach my $segment (@segments) {
 	  if( ref($segment) eq 'HASH' && $segment->{'TYPE'} eq 'ERROR' ) {
 	      push @features, $segment;
@@ -83,6 +87,7 @@ sub Features {
 	  }
 
 	  my $gene_id = $segment->{REGION} or next;
+	  
 	  my $gene = $ga->fetch_by_stable_id($gene_id);
 
 	  next unless $gene;
@@ -100,7 +105,7 @@ sub Features {
 	      'LABEL'       => $gene_name,
 	      'TYPE'        => 'description',
 	      'ORIENTATION' => $self->ori($gene->strand),
-	      'NOTE' => [ $description ],
+	      'NOTE' => [ ucfirst($description) ],
 	      'LINK' => [
 			 { 'text' => 'Ensembl Gene View',
 			   'href' => sprintf( $self->{'templates'}{'geneview_URL'}, $gene->stable_id, 'core' ),
@@ -140,16 +145,26 @@ sub Features {
 
 
 	  my $notes;
+
+
+
 	  push @$notes, sprintf ("%s spans %d bp of %s %s from %d to %d.", $gene_name, ($gene->seq_region_end - $gene->seq_region_start), $gene->slice->coord_system()->name, $gene->slice->seq_region_name, $gene->seq_region_start, $gene->seq_region_end);
 
 	  push @$notes, sprintf ("%s has %d transcripts containing a total of %d exons on the %s strand.", $gene_name, scalar(@{ $gene->get_all_Transcripts }),  scalar(@{ $gene->get_all_Exons }), $gene->strand > 0 ? 'forward' : 'reverse' );
 
+	  if ($gene->can('analysis') && $gene->analysis && $gene->analysis->description) {
+	      push @$notes, $gene->analysis->description;
+	  }
+
 	  my $s1 = {
 	      'ID'          => "core_summary:".$gene->stable_id,
-	      'LABEL'       => "Gene Info",
+	      'LABEL'       => "Gene Information and Sequence",
 	      'TYPE'        => 'summary',
 	      'NOTE' => $notes,
 	      'LINK' => [
+			 { 'text' => 'Click here to jump to the gene sequence.',
+			   'href' => sprintf( $self->{'templates'}{'sequence_URL'}, $gene->stable_id, 'core' ),
+		       },
 			 { 'text' => 'Click here to jump to a zoomable region of the chromosome for this gene.',
 			   'href' => sprintf( $self->{'templates'}{'location_URL'}, $gene->stable_id, 'core' ),
 		       }
