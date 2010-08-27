@@ -114,9 +114,9 @@ sub escape_url_parameters {
   
   while (my ($k, $v) = each (%$param)) {
     if (ref $v eq 'ARRAY') {
-      push @$clean_params, "$k=" . encode_entities(uri_escape($_)) for @$v;
+      push @$clean_params, "$k=" . uri_escape($_) for @$v;
     } else {
-      push @$clean_params, "$k=" . encode_entities(uri_escape($v));
+      push @$clean_params, "$k=" . uri_escape($v);
     }
   }
   return $clean_params;
