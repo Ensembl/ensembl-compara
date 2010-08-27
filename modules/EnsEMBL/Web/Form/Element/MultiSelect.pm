@@ -67,6 +67,7 @@ sub render {
     foreach my $V ( @{$self->values} ) {
       my $checked = 'no';
       # check if we want to tick this box
+      $self->{'value'} = [$self->{'value'}] unless ref($self->{'value'}) =~ /array/i; #fix if single value is selected - hr5
       foreach my $M ( @{$self->value||[]} ) {
         if ($M eq $V->{'value'}) {
           $checked = 'yes';
