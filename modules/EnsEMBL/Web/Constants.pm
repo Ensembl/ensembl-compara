@@ -315,4 +315,25 @@ sub MESSAGE_PRIORITY {
   ); 
 }
 
+sub ERROR_MESSAGES {
+  return (
+    404 => [
+      'Page not found' ,
+      'Sorry, the page you requested was not found on this server.',
+    ], 
+    400 => [
+      'Bad method' ,
+      'Sorry, the way you were asking for the file was not recognised',
+    ], 
+    403 => [
+      'No permission',
+      'The webserver does not have permission to view that file'
+    ], 
+    401 => [
+      'Not authorised',
+      'You were not authorised to view that page, an username and password is required',
+    ]
+  );
+}
+
 1;
