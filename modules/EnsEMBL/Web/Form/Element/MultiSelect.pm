@@ -74,6 +74,7 @@ sub render {
           last;
         }
       }
+      
       if ($V->{'checked'}) {
         $checked = 'yes';
       }
