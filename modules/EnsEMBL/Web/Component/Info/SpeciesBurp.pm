@@ -1,33 +1,24 @@
 package EnsEMBL::Web::Component::Info::SpeciesBurp;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
-use EnsEMBL::Web::Apache::Error;
+use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Apache::SendDecPage;
 
 use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
-
 sub content {
-  my $self   = shift;
-  my $hub = $self->hub;
-
-  my $error_messages = \%EnsEMBL::Web::Apache::Error::error_messages;
-  my $error_text     = $error_messages->{$hub->function}->[1];
+  my $self           = shift;
+  my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
+  my $error_text     = $error_messages{$self->hub->function}->[1];
   
-  my $html .= "<p>$error_text</p><br>";
-  my $file  = '/ssi/species/ERROR_4xx.html';
-  $html    .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file); 
-
-  return $html;
+  return "<p>$error_text</p><br>" . EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, '/ssi/species/ERROR_4xx.html');
 }
 
 1;
