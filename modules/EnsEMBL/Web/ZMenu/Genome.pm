@@ -10,6 +10,7 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self         = shift;
+
   my $hub          = $self->hub;
   my $id           = $hub->param('id');
   my $db           = $hub->param('fdb') || $hub->param('db') || 'core'; 
@@ -25,28 +26,33 @@ sub content {
   my $extdbs         = $external_db_id ? $hub->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name    = $extdbs->{$external_db_id}->{'db_name'} || 'External Feature';
   
+  
+  
   my $logic_name     = $features->[0] ? $features->[0]->analysis->logic_name : undef;
   
   $hit_db_name = 'TRACE' if $logic_name =~ /sheep_bac_ends|BACends/; # hack to link sheep bac ends to trace archive;
 
   $self->caption("$id ($hit_db_name)");
-  
-  my @seq  = $hit_db_name =~ /CCDS/ ? () : split "\n", $hub->get_ext_seq($id, $hit_db_name); # don't show EMBL desc for CCDS
-  my $desc = $seq[0];
-  
+
+  my (@seq, $desc);
+  eval {
+    @seq  = $hit_db_name =~ /CCDS/ ? () : split "\n", $hub->get_ext_seq($id, $hit_db_name)->[0]; # don't show EMBL desc for CCDS
+    $desc = $seq[0];
+  };
   if ($desc) {
+    $desc =~ s/^\s//;
     if ($desc =~ s/^>//) {
       $self->add_entry({
         label => $desc
       });
     }
   }
-  
+
   $self->add_entry({
     label => $hit_db_name eq 'TRACE' ? 'View Trace archive' : $id,
     link  => encode_entities($hub->get_ExtURL($hit_db_name, $id))
   });
-  
+
   if ($logic_name and my $ext_url = $hub->get_ExtURL($logic_name, $id)) {
     $self->add_entry({
       label => "View in external database",
@@ -65,6 +71,7 @@ sub content {
       __clear => 1
     })
   });
+  
 }
 
 1;
