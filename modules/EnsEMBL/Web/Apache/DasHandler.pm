@@ -50,8 +50,7 @@ sub handler_das {
   if ($assembly =~ /geneid/i && $das_species =~ /multi/i) {
     # this a site-wide request - try to figure out the species from the ID
     $das_species = '';
-    
-    if ($querystring =~ /segment=([^;]+);?.+?$/) {
+    if ($querystring =~ /segment=([^;]+)\;?(.+)?$/) {
       my ($s) = Bio::EnsEMBL::Registry->get_species_and_object_type($1);
       $das_species = $s if $s;
     }
