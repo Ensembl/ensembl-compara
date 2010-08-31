@@ -40,226 +40,181 @@ sub _get_details {
 
 sub content {
   my $self   = shift;
-  my $cdb     = shift || 'compara';
-  my $hub = $self->hub;
-  my $gene = $self->object->isa('EnsEMBL::Web::Object::GeneTree') ? undef : $self->object;
+  my $cdb    = shift || 'compara';
+  my $hub    = $self->hub;
+  my $object = $self->object;
+  my $gene   = $object->isa('EnsEMBL::Web::Object::GeneTree') ? undef : $object;
 
   # Get the Member and ProteinTree objects and draw the tree
 
   my ($member, $tree, $node) = $self->_get_details($cdb);
 
-  if ($hub->param('g') && !$member) {
-    return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
-  }
+  return $tree . $self->genomic_alignment_links($cdb) if $object->param('g') && !defined $member;
 
-  my $leaves = $tree->get_all_leaves;
-
-  my $highlight_gene     = $hub->param('g1');
-  my $highlight_ancestor = $hub->param('anc');
-  my $highlight_species;
-  my $highlight_genome_db_id;
+  my $leaves               = $tree->get_all_leaves;
+  my $highlight_gene       = $object->param('g1');
+  my $highlight_ancestor   = $object->param('anc');
+  my $image_width          = $self->image_width               || 800;
+  my $collapsability       = $object->param('collapsability') || 'gene';
+  my $colouring            = $object->param('colouring')      || 'background';
+  my $show_exons           = $object->param('exons');
+  my $image_config         = $hub->get_imageconfig('genetreeview');
+  my @hidden_clades        = grep { $_ =~ /^group_/ && $object->param($_) eq 'hide'     } $object->param;
+  my @collapsed_clades     = grep { $_ =~ /^group_/ && $object->param($_) eq 'collapse' } $object->param;
+  my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : ();
+  my $hidden_genes_counter = 0;
+  my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id, $html);
+  
   if ($highlight_gene) {
     my $highlight_gene_display_label;
+    
     foreach my $this_leaf (@$leaves) {
-      if ($highlight_gene and $this_leaf->gene_member->stable_id eq $highlight_gene) {
+      if ($highlight_gene && $this_leaf->gene_member->stable_id eq $highlight_gene) {
         $highlight_gene_display_label = $this_leaf->gene_member->display_label || $highlight_gene;
-
-
-
-        $highlight_species = $this_leaf->gene_member->genome_db->name;
-        $highlight_genome_db_id = $this_leaf->gene_member->genome_db_id;
+        $highlight_species            = $this_leaf->gene_member->genome_db->name;
+        $highlight_genome_db_id       = $this_leaf->gene_member->genome_db_id;
         last;
       }
     }
 
     if ($member && $gene && $highlight_species) {
-      print $self->_info( 'Highlighted genes', "In addition to all <I>".$member->genome_db->name. "</I> genes,".
-          " the $highlight_gene_display_label gene (<I>$highlight_species</I>) and its paralogues have been highlighted. ".
-          "<a href=".$gene->_url().">Click here to switch off highlighting</a>." );
+      $html .= $self->_info('Highlighted genes',
+        sprintf(
+          'In addition to all <I>%s</I> genes, the %s gene (<I>%s</I>) and its paralogues have been highlighted. <a href="%s">Click here to switch off highlighting</a>.', 
+          $member->genome_db->name, $highlight_gene_display_label, $highlight_species, $hub->url
+        )
+      );
     } else {
-      print $self->_warning( 'WARNING', "$highlight_gene gene is not in this Gene Tree" );
+      $html .= $self->_warning('WARNING', "$highlight_gene gene is not in this Gene Tree");
       $highlight_gene = undef;
     }
   }
-
-  my $wuc            = $hub->get_imageconfig( 'genetreeview' );
-  my $image_width    = $self->image_width || 800;
-  my $collapsability = $hub->param('collapsability') || 'gene';
-  my $colouring      = $hub->param('colouring') || 'background';
-  my $show_exons     = $hub->param('exons');
-  my @hidden_clades  = grep {$_ =~ /^group_/ and $hub->param($_) eq "hide"} $hub->param();
-  my @collapsed_clades  = grep {$_ =~ /^group_/ and $hub->param($_) eq "collapse"} $hub->param();
-
-  my $hidden_genome_db_ids;
-  my $hidden_genes_counter = 0;
+  
   if (@hidden_clades) {
-    $hidden_genome_db_ids = "_";
+    $hidden_genome_db_ids = '_';
+    
     foreach my $clade (@hidden_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
-      $hidden_genome_db_ids .= $hub->param("group_${clade_name}_genome_db_ids") . "_";
+      $hidden_genome_db_ids .= $object->param("group_${clade_name}_genome_db_ids") . '_';
     }
+    
     foreach my $this_leaf (@$leaves) {
       my $genome_db_id = $this_leaf->genome_db_id;
-      next if ($highlight_genome_db_id and $genome_db_id eq $highlight_genome_db_id);
-      next if ($highlight_gene and $this_leaf->gene_member->stable_id eq $highlight_gene);
-      next if ($genome_db_id == $member->genome_db_id);
+      
+      next if $highlight_genome_db_id && $genome_db_id eq $highlight_genome_db_id;
+      next if $highlight_gene && $this_leaf->gene_member->stable_id eq $highlight_gene;
+      next if $genome_db_id == $member->genome_db_id;
+      
       if ($hidden_genome_db_ids =~ /_${genome_db_id}_/) {
         $hidden_genes_counter++;
         $this_leaf->disavow_parent;
         $tree = $tree->minimize_tree;
       }
     }
-    if ($hidden_genes_counter) {
-      print $self->_info("Hidden genes", "There are $hidden_genes_counter hidden genes in the tree. Use the 'configure page' link in the left panel to change the options.");
-    }
+
+    $html .= $self->_info('Hidden genes', "There are $hidden_genes_counter hidden genes in the tree. Use the 'configure page' link in the left panel to change the options.") if $hidden_genes_counter;
   }
 
-  $wuc->set_parameters({
-    'container_width' => $image_width,
-    'image_width'     => $image_width,
-    'slice_number'    => '1|1',
-    'cdb'             => $cdb,
+  $image_config->set_parameters({
+    container_width => $image_width,
+    image_width     => $image_width,
+    slice_number    => '1|1',
+    cdb             => $cdb
   });
-
-  #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
-  my @highlights;
-  if ($gene && $member) {
-    @highlights = ($gene->stable_id, $member->genome_db->dbID);
-  }
-  # Keep track of collapsed nodes
-
-  my $collapsed_nodes = $hub->param('collapse');
   
-  my $collapsed_to_gene = $self->_collapsed_nodes($tree,$node, 'gene', $highlight_genome_db_id, $highlight_gene);
-  my $collapsed_to_para = $self->_collapsed_nodes($tree,$node, 'paralogs', $highlight_genome_db_id, $highlight_gene);
-  my $collapsed_to_dups = $self->_collapsed_nodes($tree,$node, 'duplications', $highlight_genome_db_id, $highlight_gene);
+  # Keep track of collapsed nodes
+  my $collapsed_nodes   = $object->param('collapse');
+  my $collapsed_to_gene = $self->_collapsed_nodes($tree, $node, 'gene',         $highlight_genome_db_id, $highlight_gene);
+  my $collapsed_to_para = $self->_collapsed_nodes($tree, $node, 'paralogs',     $highlight_genome_db_id, $highlight_gene);
+  my $collapsed_to_dups = $self->_collapsed_nodes($tree, $node, 'duplications', $highlight_genome_db_id, $highlight_gene);
 
-  unless( defined( $collapsed_nodes ) ){ #Examine collapsabilty
-    $collapsed_nodes = $collapsed_to_gene if( $collapsability eq 'gene');
-    $collapsed_nodes = $collapsed_to_para if( $collapsability eq 'paralogs');
-    $collapsed_nodes = $collapsed_to_dups if( $collapsability eq 'duplications');
+  if (!defined $collapsed_nodes) { # Examine collapsabilty
+    $collapsed_nodes = $collapsed_to_gene if $collapsability eq 'gene';
+    $collapsed_nodes = $collapsed_to_para if $collapsability eq 'paralogs';
+    $collapsed_nodes = $collapsed_to_dups if $collapsability eq 'duplications';
     $collapsed_nodes ||= '';
   }
 
-  # print $self->_info("Collapsed nodes",  join(" -- ", split(",", $collapsed_nodes)));
   if (@collapsed_clades) {
     foreach my $clade (@collapsed_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
-      my $extra_collapsed_nodes = _find_nodes_by_genome_db_ids($tree,
-          [split("_", $hub->param("group_${clade_name}_genome_db_ids"))], "internal");
+      my $extra_collapsed_nodes = _find_nodes_by_genome_db_ids($tree, [ split '_', $object->param("group_${clade_name}_genome_db_ids") ], 'internal');
+      
       if (%$extra_collapsed_nodes) {
-        $collapsed_nodes .= "," if ($collapsed_nodes);
-        $collapsed_nodes .= join(",", keys %$extra_collapsed_nodes);
+        $collapsed_nodes .= ',' if $collapsed_nodes;
+        $collapsed_nodes .= join ',', keys %$extra_collapsed_nodes;
       }
     }
-    # print $self->_info("Collapsed nodes",  join(" -- ", split(",", $collapsed_nodes)));
   }
 
   my $coloured_nodes;
-  if (($colouring eq "background") or ($colouring eq "foreground")) {
-    my $mode = "bg";
-    $mode = "fg" if ($colouring eq "foreground");
-
-    my @clades = grep {$_ =~ /^group_.+_${mode}colour/ } $hub->param();
+  
+  if ($colouring =~ /^(back|fore)ground$/) {
+    my $mode   = $1 eq 'back' ? 'bg' : 'fg';
+    my @clades = grep { $_ =~ /^group_.+_${mode}colour/ } $object->param;
 
     # Get all the genome_db_ids in each clade
     my $genome_db_ids_by_clade;
+    
     foreach my $clade (@clades) {
       my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
-      $genome_db_ids_by_clade->{$clade_name} = [split("_", $hub->param("group_${clade_name}_genome_db_ids"))]
+      $genome_db_ids_by_clade->{$clade_name} = [ split '_', $object->param("group_${clade_name}_genome_db_ids") ];
     }
 
     # Sort the clades by the number of genome_db_ids. First the largest clades,
     # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
-    foreach my $clade_name (sort {
-          scalar(@{$genome_db_ids_by_clade->{$b}}) <=> scalar(@{$genome_db_ids_by_clade->{$a}})
-	} keys %$genome_db_ids_by_clade) {
+    foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
-      my $colour = $hub->param("group_${clade_name}_${mode}colour") || "magenta";
-      my $these_coloured_nodes;
-      if ($mode eq "fg") {
-        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, "all");
-      } else {
-        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids);
-      }
-      if (%$these_coloured_nodes) {
-        push(@$coloured_nodes, {
-	    'clade' => $clade_name,
-	    'colour' => $colour,
-	    'mode' => $mode,
-	    'node_ids' => [keys %$these_coloured_nodes],
-	    });
-        # print $self->_info("Coloured nodes ($clade_name - $colour)",  join(" -- ", keys %$these_coloured_nodes));
-      }
+      my $colour        = $object->param("group_${clade_name}_${mode}colour") || 'magenta';
+      my $nodes         = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, $mode eq 'fg' ? 'all' : undef);
+      
+      push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
     }
   }
 
-  if ($show_exons and $show_exons eq "on") {
+  if ($show_exons && $show_exons eq 'on') {
     $show_exons = 1;
   } else {
     $show_exons = 0;
   }
 
-  push @highlights, $collapsed_nodes || undef;
-
-  push @highlights, $coloured_nodes || undef;
-
+  push @highlights, $collapsed_nodes        || undef;
+  push @highlights, $coloured_nodes         || undef;
   push @highlights, $highlight_genome_db_id || undef;
-
-  push @highlights, $highlight_gene || undef;
-
-  push @highlights, $highlight_ancestor || undef;
-
+  push @highlights, $highlight_gene         || undef;
+  push @highlights, $highlight_ancestor     || undef;
   push @highlights, $show_exons;
 
-  my $image  = $self->new_image
-      ( $tree, $wuc, [@highlights] );
-  return if $self->_export_image($image, 'no_text');
+  my $image = $self->new_image($tree, $image_config, \@highlights);
+  
+  return $html if $self->_export_image($image, 'no_text');
 
-#  $image->cacheable   = 'yes';
-
-  $image->image_type  = 'genetree';
   my $image_id = $gene ? $gene->stable_id : $tree->stable_id;
-  $image->image_name  = ($hub->param('image_width')).'-'.$image_id;
-  $image->imagemap    = 'yes';
-
-  $image->{'panel_number'} = 'tree';
-  $image->set_button( 'drag', 'title' => 'Drag to select region' );
-
-  my $info;
-  my $li_tmpl = qq(<li><a href="%s">%s</a></li>);
+  my $li_tmpl  = '<li><a href="%s">%s</a></li>';
   my @view_links;
-
+  
+  $image->image_type       = 'genetree';
+  $image->image_name       = ($object->param('image_width')) . "-$image_id";
+  $image->imagemap         = 'yes';
+  $image->{'panel_number'} = 'tree';
+  $image->set_button('drag', 'title' => 'Drag to select region');
+  
   if ($gene) {
-    push @view_links, sprintf( $li_tmpl,
-                             $gene->_url({'collapse'=>$collapsed_to_gene,'g1'=>$highlight_gene}),
-                             $highlight_gene?'View current genes only':'View current gene only');
-
-    push @view_links, sprintf( $li_tmpl,
-                             $gene->_url({'collapse'=>$collapsed_to_para,'g1'=>$highlight_gene}),
-                             $highlight_gene?'View paralogs of current genes':'View paralogs of current gene');
-
-    push @view_links, sprintf( $li_tmpl,
-                             $gene->_url({'collapse'=>$collapsed_to_dups,'g1'=>$highlight_gene}),
-                             'View all duplication nodes');
-
-    push @view_links, sprintf( $li_tmpl,
-                             $gene->_url({'collapse'=>'','g1'=>$highlight_gene}),
-                             'View fully expanded tree');
-
-    if ($highlight_gene) {
-      push @view_links, sprintf( $li_tmpl,
-                             $gene->_url(),
-                             'Switch off highlighting');
-    }
+    push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_gene, g1 => $highlight_gene }), $highlight_gene ? 'View current genes only'        : 'View current gene only';
+    push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_para, g1 => $highlight_gene }), $highlight_gene ? 'View paralogs of current genes' : 'View paralogs of current gene';
+    push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_dups, g1 => $highlight_gene }), 'View all duplication nodes';
+    push @view_links, sprintf $li_tmpl, $hub->url({ collapse => '', g1 => $highlight_gene }), 'View fully expanded tree';
+    push @view_links, sprintf $li_tmpl, $hub->url, 'Switch off highlighting' if $highlight_gene;
   }
 
-  my $view_options_html = sprintf( qq(
-<div style="margin-top:1em"><b>View options:</b><br/>
-<small><ul>%s</ul></small>
-Use the 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.</div>), join( '', @view_links) );
-
-  return $image->render . $info . $view_options_html ;
+  $html .= $image->render;
+  $html .= sprintf(qq{
+    <div style="margin-top:1em"><b>View options:</b><br/>
+    <small><ul>%s</ul></small>
+    Use the 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.</div>
+  }, join('', @view_links));
+  
+  return $html;
 }
 
 sub _collapsed_nodes{
