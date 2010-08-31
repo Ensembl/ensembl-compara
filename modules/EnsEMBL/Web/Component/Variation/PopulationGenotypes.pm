@@ -161,7 +161,7 @@ sub _format_number {
   ### Returns "unknown" if null or formats the number to 3 decimal places
 
   my $number = shift;
-  if ($number) {
+  if (defined $number) {
     return sprintf("%.3f", $number );
   }
   return  "unknown";
