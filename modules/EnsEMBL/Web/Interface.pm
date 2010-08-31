@@ -8,7 +8,6 @@ use strict;
 use warnings;
 
 use Class::Std;
-use Data::Dumper;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::CDBI;
@@ -383,7 +382,7 @@ sub configure {
   my $type      = $object->type;
   my $data      = $object->action;
   my $function  = $object->function || 'Display';
-  
+
   if ($function eq 'Save' || $function eq 'Delete') { ## Process database command
     ## Do we have a custom interface module, or shall we use the generic one?
     my $class = 'EnsEMBL::Web::Command::'.$type.'::Interface::'.$data.$function;
@@ -616,15 +615,11 @@ sub preview_fields {
         foreach my $option (@values) {
           $lookup{$option->{'value'}} = $option->{'name'};
         }
-        warn Dumper(\%lookup);
-        warn ">>> VAR $var";
         if (keys %lookup) {
           if (ref($var) eq 'ARRAY') {
-            warn "...DOING ARRAY @$var";
             my @readable;
             foreach my $key (@$var) {
               if ($key ne '') {
-                warn "...ADDING $key = ".$lookup{$key};
                 push @readable, $lookup{$key};
               }
             }
@@ -634,7 +629,6 @@ sub preview_fields {
             $param{'value'} = $lookup{$var};
           }
         } 
-        warn ">>> $field VALUE SET TO ".$param{'value'};
       }
       elsif ($element->type eq 'Text' && $var =~ m#</|/>#) {
         $param{'value'} = '<pre>'.$var.'</pre>';
