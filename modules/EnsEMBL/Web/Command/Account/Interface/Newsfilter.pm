@@ -5,7 +5,6 @@ use warnings;
 
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::Data::Species;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
