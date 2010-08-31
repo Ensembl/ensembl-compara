@@ -11,7 +11,7 @@ sub process {
   my $object = $self->object;
   my $url = '/Account/Group';
 
-  my $interface = $self->interface;
+  my $interface = $object->interface;
   $interface->cgi_populate($object);
 
   if ($interface->data->id) { ## Update group record
