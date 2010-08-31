@@ -140,10 +140,14 @@ sub createObjects {
       $end   = $self->evaluate_bp($end);
       $slice = $self->get_slice($seq_region || $identifier, $start, $end); 
       
-      return if $self->param('a') && $self->_map_assembly($slice->seq_region_name, $slice->start, $slice->end, 1);                             # Mapping from one assembly to another
-      return $self->_create_from_sub_align_slice($slice) if $self->param('align_start') && $self->param('align_end') && $self->param('align'); # Mapping from an AlignSlice to a real location
-      
-      $location = $self->new_location($slice);
+      if ($slice) {
+        return if $self->param('a') && $self->_map_assembly($slice->seq_region_name, $slice->start, $slice->end, 1);                             # Mapping from one assembly to another
+        return $self->_create_from_sub_align_slice($slice) if $self->param('align_start') && $self->param('align_end') && $self->param('align'); # Mapping from an AlignSlice to a real location
+        
+        $location = $self->new_location($slice);
+      } else {
+        $location = $self->_location_from_SeqRegion($seq_region || $identifier, $start, $end); 
+      }
     } else {
       $seq_region = $self->param('region')    || $self->param('contig')     ||
                     $self->param('clone')     || $self->param('seqregion')  ||
