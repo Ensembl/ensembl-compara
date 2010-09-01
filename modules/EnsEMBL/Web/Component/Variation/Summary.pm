@@ -227,11 +227,11 @@ sub content {
     $select_html = "<br />Please select a location to display information relating to $id in that genomic region. " if $count > 1;
     
     $html .= sprintf(qq{
-          <dt class="toggle_button" title="Click to toggle genomic locations"><span>Location</span><em class="%s"></em></dt>
+          <dt id="locations" class="toggle_button" title="Click to toggle genomic locations"><span>Location</span><em class="%s"></em></dt>
           <dd>This feature maps to $count genomic location%s. $select_html</dd>
           <dd class="toggle_info"%s>Click the plus to show genomic locations</dd>
         </dl>
-        <table class="toggle_table" id="locations"%s>
+        <table class="toggle_table" id="locations_table"%s>
       },
       $hide ? 'closed' : 'open',
       $count > 1 ? 's' : '',

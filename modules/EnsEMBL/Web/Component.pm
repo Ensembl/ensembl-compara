@@ -719,11 +719,11 @@ sub transcript_table {
     
     $html .= sprintf(qq{
       <dl class="summary">
-        <dt class="toggle_button" title="Click to toggle the transcript table"><span>%s</span><em class="%s"></em></dt>
+        <dt id="transcripts" class="toggle_button" title="Click to toggle the transcript table"><span>%s</span><em class="%s"></em></dt>
         <dd>%s</dd>
         <dd class="toggle_info"%s>Click the plus to show the transcript table</dd>
       </dl>
-      <table class="toggle_table data_table fixed_width" id="transcripts" summary="List of transcripts for this gene - along with translation information and type"%s>
+      <table class="toggle_table data_table fixed_width" id="transcripts_table" summary="List of transcripts for this gene - along with translation information and type"%s>
         <thead>
           <tr>
             <th>Name</th>

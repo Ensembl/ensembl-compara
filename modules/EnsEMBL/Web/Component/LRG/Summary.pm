@@ -97,12 +97,12 @@ sub content {
     
     $html .= sprintf(qq{
       <dl class="summary">
-        <dt class="toggle_button" title="Click to toggle the transcript table"><span>Transcripts</span><em class="%s"></em></dt>
+        <dt id="transcripts" class="toggle_button" title="Click to toggle the transcript table"><span>Transcripts</span><em class="%s"></em></dt>
         <dd>There $plural_1 $count $plural_2 in this region:</dd>
         <dd class="toggle_info"%s>Click the plus to show the transcript table</dd>
       </dl>
       <div class="toggleTable_wrapper">
-        <table class="toggle_table" id="transcripts" summary="List of transcripts for this region - along with translation information and type"%s>
+        <table class="toggle_table" id="transcripts_table" summary="List of transcripts for this region - along with translation information and type"%s>
           <thead>
             <tr>
               <th>Name</th>
