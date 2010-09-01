@@ -366,7 +366,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
               if (panel.elLk.colToggle.length == 1) {
                 input.attr('checked', visibility);
               } else {
-                var index = input.index();
+                var index = $(this).index();
                 
                 panel.elLk.colToggle.each(function () {
                   $('input', this).get(index).checked = visibility;
