@@ -12,8 +12,6 @@ Ensembl.Panel = Base.extend({
   },
   
   destructor: function (action) {
-    $('*', this.el).unbind();
-    
     if (action == 'empty') {
       $(this.el).empty();
     } else if (action != 'cleanup') {
