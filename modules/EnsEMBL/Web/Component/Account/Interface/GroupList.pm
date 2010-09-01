@@ -71,8 +71,8 @@ sub content {
   }
 
   if ($object->param('id')) {
-    my $group = EnsEMBL::Web::Data::Group->new($object->param('id'));   
-    my $user  = $object->get_user;
+    my $group = EnsEMBL::Web::Data::Group->new($object->param('id'));
+    my $user  = $object->user;
     if ($user->is_administrator_of($group)) {
       $html .= $self->_show_group_details($group);
     }
