@@ -35,7 +35,6 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     
     $('select.dropdown_redirect', this.el).bind('change', function () {
       Ensembl.redirect(this.value);
-      return true;
     });
   }
 });
