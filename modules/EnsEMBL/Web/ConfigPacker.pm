@@ -26,6 +26,7 @@ sub munge_databases {
   my @tables = qw(core cdna vega otherfeatures);
   
   $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
+  $self->_summarise_xref_types;
   $self->_summarise_variation_db('variation', 'DATABASE_VARIATION');
   $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
 }
@@ -285,6 +286,26 @@ sub _summarise_core_tables {
   $dbh->disconnect();
 }
 
+sub _summarise_xref_types {
+  my $self   = shift;
+  my $db_name = "DATABASE_CORE"; 
+  my $dbh    = $self->db_connect( $db_name ); 
+  return unless $dbh; 
+
+#----------
+  my $aref =  $dbh->selectall_arrayref(qq(
+  SELECT distinct(edb.db_display_name), max(priority) as m
+  FROM object_xref ox join xref x on ox.xref_id=x.xref_id  join external_db edb on x.external_db_id = edb.external_db_id
+    where edb.type IN ('MISC', 'LIT')
+    and (ox.ensembl_object_type ='Transcript' or ox.ensembl_object_type ='Translation' ) group by edb.db_display_name order by m desc) );
+  my @xref_types;
+  foreach my $row (@$aref) {
+    my $xref_type=$row->[0]."=".$row->[1];
+	push(@xref_types,$xref_type);
+  }
+  $self->db_tree->{'XREF_TYPES'} = join(',', @xref_types);
+  $dbh->disconnect();
+}
 sub _summarise_variation_db {
   my($self,$code,$db_name) = @_;
   my $dbh     = $self->db_connect( $db_name );
