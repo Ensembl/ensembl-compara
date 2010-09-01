@@ -172,7 +172,8 @@ sub dumpSNP {
 
   my $sth = $conf->{'dbh'}->prepare(
     "SELECT vf.variation_id, vf.variation_name, vf.source_id, group_concat(vs.source_id, ' ',vs.name), vf.consequence_type
-       FROM $SNPDB.variation_feature vf left join $SNPDB.variation_synonym vs on vf.variation_id = vs.variation_id group by vf.variation_id"
+       FROM $SNPDB.variation_feature vf left join $SNPDB.variation_synonym vs on vf.variation_id = vs.variation_id
+      GROUP BY vf.variation_id"
   );
   $sth->execute() or die "Error:", $DBI::errstr;
   while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
@@ -219,6 +220,61 @@ sub dumpSNP {
       );
     }
   }
+
+  $sth = $conf->{'dbh'}->prepare(qq(
+    SELECT v.variation_id, v.name, v.source_id, fd.description, group_concat(vs.source_id, ' ',vs.name)
+      FROM $SNPDB.failed_description fd, $SNPDB.failed_variation fv, $SNPDB.variation v left join $SNPDB.variation_synonym vs on v.variation_id = vs.variation_id
+     WHERE v.variation_id = fv.variation_id
+       AND fv.failed_description_id = fd.failed_description_id
+     GROUP BY v.variation_id));
+  $sth->execute() or die "Error:", $DBI::errstr;
+  while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
+    while ( my $row = shift( @{$rowcache} ) ) {
+      my $vf_id      = $row->[0];
+      my $name       = $row->[1];
+      my $snp_source = $sources->{ $row->[2] };
+      my $extra      = '';#$row->[3];
+      my %synonyms;
+      my @K;
+      my $syn_c = 0;
+      foreach my $syn (split /,/, @$row->[4]) {
+	my ($id,$sname) = split / /,$syn;
+	$synonyms{$sname} = $sources->{$id};
+	$syn_c++;
+      }
+      my (@K, $synonym_text);
+      foreach my $syn (keys %synonyms) {
+	push @K, $syn;
+	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
+      }
+
+      my $x = $snp_extra{$vf_id};
+      if( $x ) {
+	push @K,$x->[1],$x->[3],$x->[4];
+	$extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
+	if( $x->[1] ) {
+	  $extra .= sprintf ', through %s', $x->[1];
+	}
+	if( $x->[2] ) {
+	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
+	}
+      }
+      $extra = $row->[3] if $row->[3];
+      print O join "\t",
+	"$snp_source SNP",
+	$name,
+        "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
+	"$name @K",
+	sprintf( "A %s SNP %s. %s\n",
+          $snp_source,
+          $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
+        : $syn_c     ? "with one synonym: $synonym_text"
+	:             "with no synonyms",
+        $extra
+      );
+    }
+  }
+
   close O;
 }
 
