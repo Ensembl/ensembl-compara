@@ -175,20 +175,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   toggleTable: function () {
-    var panel  = this;
-    var id     = this.elLk.toggleTable[0].id;
-    var button = $('.toggle_button', this.el);
-    var icon   = button.children('em').show();
-    var info   = button.siblings('.toggle_info');
-  
-    button.bind('click', function () {
-      panel.elLk.toggleTable.toggle().parent('.toggleTable_wrapper').toggle();
-      info.toggle();
-      icon.toggleClass('open closed');
-      Ensembl.cookie.set('ENSEMBL_' + id, panel.elLk.toggleTable.is(':visible') ? 'open' : 'close');
-    });
+    var panel = this;
     
-    button = null;
+    $('.toggle_button', this.el).bind('click', function () {
+      var visible = panel.elLk.toggleTable.filter('#' + this.id + '_table').toggle().parent('.toggleTable_wrapper').toggle().end().is(':visible');
+      $(this).siblings('.toggle_info').toggle().end().children('em').toggleClass('open closed');
+      Ensembl.cookie.set('ENSEMBL_' + this.id, visible ? 'open' : 'close');
+    }).children('em').show();
   },
   
   toggleList: function () {
