@@ -272,8 +272,9 @@ sub check_for_errors {
 
 # Displays slices for all species above the sequence
 sub get_slice_table {
-  my $self = shift;
-  my ($slices, $return_padding) = @_;
+  my ($self, $slices, $return_padding) = @_;
+  my $hub             = $self->hub;
+  my $primary_species = $hub->species;
   
   my ($table_rows, $species_padding, $region_padding, $number_padding, $ancestral_sequences);
 
@@ -282,14 +283,20 @@ sub get_slice_table {
     
     next unless $species;
     
+    my %url_params = (
+      species => $_->{'name'},
+      type    => 'Location',
+      action  => 'View'
+    );
+    
+    $url_params{'__clear'} = 1 unless $_->{'name'} eq $primary_species;
+
     $species_padding = length $species if $return_padding && length $species > $species_padding;
 
     $table_rows .= qq{
     <tr>
       <th>$species &gt;&nbsp;</th>
       <td>};
-
-    my $species_path = $self->object->species_path([split ':', $species]->[0]);
 
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
@@ -299,15 +306,14 @@ sub get_slice_table {
 
       if ($return_padding) {
         $region_padding = length $region if length $region > $region_padding;
-        $number_padding = length $end if length $end > $number_padding;
+        $number_padding = length $end    if length $end    > $number_padding;
       }
       
       if ($species eq 'Ancestral sequences') {
         $table_rows .= $slice->{'_tree'};
         $ancestral_sequences = 1;
       } else {
-        $table_rows .= qq{
-          <a href="$species_path/Location/View?r=$region:$start-$end">$slice_name</a><br />};
+        $table_rows .= sprintf qq{<a href="%s">$slice_name</a><br />}, $hub->url({ %url_params, r => "$region:$start-$end" });
       }
     }
 
