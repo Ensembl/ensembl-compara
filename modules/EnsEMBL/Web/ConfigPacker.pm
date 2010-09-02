@@ -26,7 +26,7 @@ sub munge_databases {
   my @tables = qw(core cdna vega otherfeatures);
   
   $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
-  $self->_summarise_xref_types;
+  $self->_summarise_xref_types('DATABASE_' . uc $_) for @tables;
   $self->_summarise_variation_db('variation', 'DATABASE_VARIATION');
   $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
 }
@@ -288,24 +288,48 @@ sub _summarise_core_tables {
 
 sub _summarise_xref_types {
   my $self   = shift;
-  my $db_name = "DATABASE_CORE"; 
+  my $db_name = shift; 
   my $dbh    = $self->db_connect( $db_name ); 
+warn "xref types:--------------------------------------------";
+use Data::Dumper;
+  
   return unless $dbh; 
+  my @xref_types;
+  my %xrefs_types_hash;
 
-#----------
+
+  if($self->db_tree->{'XREF_TYPES'}){
+  warn "yes!";
+    @xref_types=  split(/,/, $self->db_tree->{'XREF_TYPES'});
+	foreach(@xref_types){
+	  my @type_priority=  split(/=/, $_);
+	  $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
+	}
+  }else{
+  warn "no!";
+  }
+
   my $aref =  $dbh->selectall_arrayref(qq(
   SELECT distinct(edb.db_display_name), max(priority) as m
   FROM object_xref ox join xref x on ox.xref_id=x.xref_id  join external_db edb on x.external_db_id = edb.external_db_id
     where edb.type IN ('MISC', 'LIT')
     and (ox.ensembl_object_type ='Transcript' or ox.ensembl_object_type ='Translation' ) group by edb.db_display_name order by m desc) );
-  my @xref_types;
   foreach my $row (@$aref) {
-    my $xref_type=$row->[0]."=".$row->[1];
-	push(@xref_types,$xref_type);
+    if($xrefs_types_hash{$row->[0]} ){
+      $xrefs_types_hash{$row->[0]}= ($row->[1]>$xrefs_types_hash{$row->[0]})?$row->[1]:$xrefs_types_hash{$row->[0]};
+	}else{
+      $xrefs_types_hash{$row->[0]}=$row->[1];
+	}
   }
-  $self->db_tree->{'XREF_TYPES'} = join(',', @xref_types);
+  my $xref_types_string="";
+  for my $key ( keys %xrefs_types_hash ) {
+      my $value = $xrefs_types_hash{$key};
+	  $xref_types_string.=$key."=".$value.",";
+  }
+  $self->db_tree->{'XREF_TYPES'} = $xref_types_string;
   $dbh->disconnect();
 }
+
 sub _summarise_variation_db {
   my($self,$code,$db_name) = @_;
   my $dbh     = $self->db_connect( $db_name );
