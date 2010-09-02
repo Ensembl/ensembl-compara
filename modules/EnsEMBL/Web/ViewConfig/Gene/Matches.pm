@@ -7,7 +7,7 @@ use EnsEMBL::Web::Constants;
 sub init {
 my $view_config = shift;
 my $help  = shift;
-my $nr_on_by_default  = 5;
+my $nr_on_by_default  = 10;
   
   $view_config->storable = 1;
   $view_config->nav_tree = 1;
