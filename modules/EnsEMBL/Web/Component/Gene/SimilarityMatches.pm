@@ -43,7 +43,7 @@ sub matches_to_html{
     my $row= {transcriptid => $url };
     my @transcript_matches = $self->get_matches_by_transcript($_,@types);
     foreach (@transcript_matches){
-      my $show_colum = (($object->param($_->db_display_name) ne "off") ? 1:0 ) || 0;
+	    my $show_colum = defined($object->param($_->db_display_name)) &&  ($object->param($_->db_display_name) ne "off");
       if($show_colum){
         my %similarity_links=$self->get_similarity_links_hash($_);
         my $ext_db_entry= $similarity_links{'link'} ? "<a href=\"".$similarity_links{'link'}."\">".$similarity_links{'link_text'}."</a>"  :  $similarity_links{'link_text'};
