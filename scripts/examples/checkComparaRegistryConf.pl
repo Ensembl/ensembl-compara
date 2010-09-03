@@ -13,11 +13,12 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $comparaDBA  = Bio::EnsEMBL::Registry->get_DBAdaptor('compara', 'compara');
 
-print($comparaDBA, "\n");
-
 my $genomes = $comparaDBA->get_GenomeDBAdaptor->fetch_all;
 foreach my $genomeDB (@{$genomes}) {
-  my $compara_class = join(" ", $genomeDB->taxon->classification);
+
+  #skip ancestral sequences which have no entry in core dbs
+  next if ($genomeDB->name eq "ancestral_sequences");
+
   printf("genome_db(%d)\n", $genomeDB->dbID);
   printf(" compara(%d) %s : %s : %s\n",
      $genomeDB->taxon_id, $genomeDB->name, $genomeDB->assembly, $genomeDB->genebuild);
@@ -29,12 +30,11 @@ foreach my $genomeDB (@{$genomes}) {
 
   my $taxon_id = $meta->get_taxonomy_id;
   my $taxon = $meta->get_Species;
+  my $genome_name = $meta->get_production_name;
 
-  my $genome_name = $taxon->binomial;
   my ($cs) = @{$genomeDB->db_adaptor->get_CoordSystemAdaptor->fetch_all()};
   my $assembly = $cs->version;
   my $genebuild = $meta->get_genebuild;
-  my $core_class = join(" ", $taxon->classification);
 
   printf(" core   (%d) %s : %s : %s\n", 
      $taxon_id, $genome_name, $assembly, $genebuild);
@@ -47,7 +47,11 @@ foreach my $genomeDB (@{$genomes}) {
 	 )
   {
     print("=== MISMATCH ===\n\n");
-    printf("%s\n%s\n", $compara_class, $core_class);
+    printf("taxon_id compara=%d core=%d\n", $genomeDB->taxon_id, $taxon_id);
+    printf("name compara=%s core=%s\n", $genomeDB->name, $genome_name);
+    printf("assembly compara=%s core=%s\n", $genomeDB->assembly, $assembly);
+    printf("genebuild compara=%s core=%s\n", $genomeDB->genebuild, $genebuild);
+
   }
 
 }
