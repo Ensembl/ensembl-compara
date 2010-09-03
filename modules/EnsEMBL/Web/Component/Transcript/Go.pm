@@ -2,6 +2,7 @@ package EnsEMBL::Web::Component::Transcript::Go;
 
 use strict;
 use warnings;
+use URI::Escape;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -43,10 +44,30 @@ sub content {
   my $go_slim_hash = $object->get_go_list('goslim_goa');
   if (%$go_slim_hash){
     $html .= "<p><strong>The following GO terms are the closest ones in the GOSlim GOA subset
-      for the above terms:</strong></p>";
-    my $go_slim_table = $self->table;
-    $self->process_data($go_slim_table, $go_slim_hash);
-    $html .= $go_slim_table->render;
+    for the above terms:</strong> (click to enlarge)</p>";  
+    my $species_defs = $self->object->species_defs;
+    my $go_sub_dir="/GO/";
+    my $go_dir =$species_defs->ENSEMBL_TMP_DIR_IMG.$go_sub_dir;
+    my $go_url = $species_defs->ENSEMBL_BASE_URL.$species_defs->ENSEMBL_TMP_URL_IMG.$go_sub_dir;
+    my $go_image;
+    my $amino_json;
+    for my $key ( sort(keys %$go_slim_hash )) {
+      $amino_json->{"$key"}={"fill"=>"#ccccff","font"=>"#0000ff","border"=>"red"};
+      $go_image.=$key;
+    }
+    $go_image.=".png";
+    my $remote_go_image=qq(http://amigo.geneontology.org/cgi-bin/amigo/visualize?inline=false&term_data=).uri_escape($self->jsonify($amino_json)).qq(&format=png&mode=basic&term_data_type=json);
+    if (-e $go_dir.$go_image) {
+      -e warn "File exists!";
+    }else {
+      mkdir($go_dir);
+      exec ('wget "'.$remote_go_image.'" -O '.$go_dir.$go_image);      
+    }
+    $html.=qq(<a href=").$go_url.$go_image.qq(" target="_blank"><img style="max-width:900px;" src=").$go_url.$go_image.qq(" border="0"></a>);
+
+    # my $go_slim_table = $self->table;
+    # $self->process_data($go_slim_table, $go_slim_hash);
+    # $html .= $go_slim_table->render;
   }
 
  return $html;
