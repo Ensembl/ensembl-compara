@@ -8,6 +8,7 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Object::DAS);
 use Data::Dumper;
 
+
 sub Types {
   my $self = shift;
 
@@ -55,8 +56,8 @@ sub Features {
   my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME;
   my $sdate =  $self->species_defs->SITE_RELEASE_DATE || $self->species_defs->ENSEMBL_RELEASE_DATE;
 
-  my $enote1 = qq{
-      The goal of $slabel is to automatically annotate the genome, integrate this annotation with other available biological data and make all this publicly available via the web. };
+  my $enote1 = $self->species_defs->SITE_MISSION || qq{ The Ensembl project produces genome databases for vertebrates and other eukaryotic species, and makes this information freely available online.}; 
+
   my $enote2 = sprintf qq{
       Current release %s ( %s ) provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, $sdate, scalar($self->species_defs->valid_species);
 
