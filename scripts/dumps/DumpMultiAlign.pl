@@ -274,7 +274,7 @@ perl DumpMultiAlign.pl
         in conjunction with the --seq_region option to specify the right
         coordinate system.
     [--skip_species species]
-        Usefull for multiple alignments only. This will dump all the
+        Useful for multiple alignments only. This will dump all the
         multiple alignments with no "species" part, i.e. you can get
         all the alignments with no mouse. This option overwrites the
         previous ones.
@@ -293,7 +293,9 @@ perl DumpMultiAlign.pl
         you can use a pre-defined species_set_name like mammals or primates.
     [--restrict]
         Choose to restrict the alignments to the query slice. Off by default.
-
+    [--file_of_genomic_align_block_ids filename]
+        A file containing a list of the genomic_align_block_ids to dump. Note
+        skip_species has no affect.
 
   Ouput:
     [--original_seq]
@@ -347,6 +349,7 @@ my $output_file = undef;
 my $output_format = "fasta";
 my $split_size = 0;
 my $chunk_num;
+my $file_of_genomic_align_block_ids;
 my $help;
 
 GetOptions(
@@ -371,6 +374,7 @@ GetOptions(
     "output_file=s" => \$output_file,
     "split_size=s" => \$split_size,
     "chunk_num=s" => \$chunk_num,
+    "file_of_genomic_align_block_ids=s" => \$file_of_genomic_align_block_ids,
   );
 
 # Print Help and exit
@@ -410,7 +414,6 @@ if ($method_link_species_set_id) {
   throw("The database do not contain any $alignment_type data for $set_of_species!")
       if (!$method_link_species_set);
 }
-
 my $conservation_score_mlss;
 if ($method_link_species_set->method_link_class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
@@ -485,8 +488,9 @@ if (!$use_several_files) {
 }
 
 ## Get the full list of alignments with no $skip_species in $skip_species mode
+## Do not do this if have defined a $file_of_genomic_align_block_ids
 my $skip_genomic_align_blocks = [];
-if ($skip_species) {
+if ($skip_species && !$file_of_genomic_align_block_ids) {
   my $this_meta_container_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
       $skip_species, 'core', 'MetaContainer');
   throw("Registry configuration file has no data for connecting to <$skip_species>")
@@ -515,7 +519,15 @@ if ($skip_species) {
 ## MAIN DUMPING LOOP
 do {
   my $genomic_align_blocks = [];
-  if (!@query_slices) {
+  if ($file_of_genomic_align_block_ids) {
+    open(FILE, $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
+    while (<FILE>) {
+	chomp;
+	my $gab = $genomic_align_block_adaptor->fetch_by_dbID($_);
+	push @$genomic_align_blocks, $gab;
+    }
+    close(FILE);
+  } elsif (!@query_slices) {
     ## We are fetching all the alignments
     if ($skip_species) {
       # skip_species mode: Use previoulsy obtained list of alignments
