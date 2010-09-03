@@ -46,7 +46,7 @@ sub populate_tree {
     
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
     [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
-    { 'availability' => 'variation has_populations not_somatic', 'concise' => 'Population genotypes and allele frequencies', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_populations not_somatic', 'concise' => 'Population genetics', 'no_menu_entry' => $somatic }
   );
   
   $self->create_node('Populations', 'Sample information ([[counts::populations]])',
