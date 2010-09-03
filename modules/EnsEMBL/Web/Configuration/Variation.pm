@@ -46,17 +46,17 @@ sub populate_tree {
     
   $self->create_node('Population', 'Population genetics ([[counts::populations]])',
     [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
-    { 'availability' => 'variation has_populations', 'concise' => 'Population genotypes and allele frequencies', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_populations not_somatic', 'concise' => 'Population genotypes and allele frequencies', 'no_menu_entry' => $somatic }
   );
   
   $self->create_node('Populations', 'Sample information ([[counts::populations]])',
     [qw( summary EnsEMBL::Web::Component::Variation::PopulationGenotypes )],
-    { 'availability' => 'variation has_populations', 'concise' => 'Sample information', 'no_menu_entry' => !$somatic }
+    { 'availability' => 'variation has_populations is_somatic', 'concise' => 'Sample information', 'no_menu_entry' => !$somatic }
   );
   
   $self->create_node('Individual', 'Individual genotypes ([[counts::individuals]])',
     [qw( summary EnsEMBL::Web::Component::Variation::IndividualGenotypes )],
-    { 'availability' => 'variation has_individuals', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_individuals not_somatic', 'concise' => 'Individual genotypes', 'no_menu_entry' => $somatic }
   ); 
 
   $self->create_node('Context', 'Context',
@@ -66,7 +66,7 @@ sub populate_tree {
   
   $self->create_node('HighLD', 'Linked variations',
     [qw( summary EnsEMBL::Web::Component::Variation::HighLD )],
-    { 'availability' => 'variation has_ldpops variation has_individuals', 'concise' => 'Linked variations', 'no_menu_entry' => $somatic }
+    { 'availability' => 'variation has_ldpops variation has_individuals not_somatic', 'concise' => 'Linked variations', 'no_menu_entry' => $somatic }
   );
     
   $self->create_node('Phenotype', 'Phenotype Data ([[counts::ega]])',

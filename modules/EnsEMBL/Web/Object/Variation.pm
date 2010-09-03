@@ -55,7 +55,9 @@ sub availability {
         $availability->{'variation'} = 1;
       }
 
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts populations individuals ega alignments ldpops);
+      $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega alignments ldpops);
+      $availability->{'is_somatic'}  = $obj->is_somatic;
+      $availability->{'not_somatic'} = !$obj->is_somatic;
     }
     
     $self->{'_availability'} = $availability;
