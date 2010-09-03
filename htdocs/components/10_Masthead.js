@@ -25,14 +25,16 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.elLk.shortTabs  = $('li.short_tab', tabs);
     this.elLk.longTabs   = $('li.long_tab', tabs);
-    this.elLk.dropdown   = $('div.dropdown', tabsHolder);
     this.elLk.toolsUl    = $('.tools', tools);
     this.elLk.tools      = $('li', this.elLk.toolsUl);
     this.elLk.toolMore   = $('.more', tools);
     this.elLk.toolMoreUl = $('<ul class="more_tools" />').appendTo(this.elLk.toolMore);
+    this.elLk.dropdown   = $('div.dropdown', tabsHolder).each(function () {
+      $(this).css('left', $(this).parent().position().left);
+    });
     
     $('.toggle', tabs).bind('click', function () {
-      panel.elLk.dropdown.has('ul.' + this.rel).css('left', $(this).parent().position().left).toggle();
+      panel.elLk.dropdown.has('ul.' + this.rel).toggle();
       return false;
     });
     
