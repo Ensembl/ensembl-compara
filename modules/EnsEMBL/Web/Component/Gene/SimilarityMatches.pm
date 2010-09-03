@@ -38,8 +38,8 @@ sub matches_to_html{
   my @rows;
   foreach (@{$object->gene->get_all_Transcripts()}){
     my %url_params = (type     => 'Transcript', action   => 'Summary' , function => undef );
-	my $url = $self->object->_url({ %url_params, t => $_->stable_id });	
-	$url="<a href=\"".$url."\">".$_->stable_id."</a>";
+	  my $url = $self->object->_url({ %url_params, t => $_->stable_id });	
+	  $url="<a href=\"".$url."\">".$_->stable_id."</a>";
     my $row= {transcriptid => $url };
     my @transcript_matches = $self->get_matches_by_transcript($_,@types);
     foreach (@transcript_matches){
@@ -47,7 +47,11 @@ sub matches_to_html{
       if($show_colum){
         my %similarity_links=$self->get_similarity_links_hash($_);
         my $ext_db_entry= $similarity_links{'link'} ? "<a href=\"".$similarity_links{'link'}."\">".$similarity_links{'link_text'}."</a>"  :  $similarity_links{'link_text'};
-        $row->{$_->db_display_name} =$ext_db_entry ;
+
+        if(defined($row->{$_->db_display_name})){
+          $row->{$_->db_display_name}.=" ";
+        }
+        $row->{$_->db_display_name}.=$ext_db_entry ;
         $count_ext_refs++;
         if(! defined($existing_display_names{$_->db_display_name} ) ){
           my $display_name = $self->format_colum_header($_->db_display_name, $similarity_links{'link_text'});
