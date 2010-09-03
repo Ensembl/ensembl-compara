@@ -18,18 +18,25 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.base();
     
-    var tabs  = $('.tabs', this.el);
-    var tools = $('.tools_holder', this.el);
-    var logo  = $('.logo_holder', this.el);
+    var tabsHolder = $('.tabs_holder', this.el);
+    var tabs       = $('.tabs', tabsHolder);
+    var tools      = $('.tools_holder', this.el);
+    var logo       = $('.logo_holder', this.el);
     
     this.elLk.shortTabs  = $('li.short_tab', tabs);
     this.elLk.longTabs   = $('li.long_tab', tabs);
+    this.elLk.dropdown   = $('div.dropdown', tabsHolder);
     this.elLk.toolsUl    = $('.tools', tools);
     this.elLk.tools      = $('li', this.elLk.toolsUl);
     this.elLk.toolMore   = $('.more', tools);
     this.elLk.toolMoreUl = $('<ul class="more_tools" />').appendTo(this.elLk.toolMore);
     
-    this.elLk.toolMore.children('a').click(function () {
+    $('.toggle', tabs).bind('click', function () {
+      panel.elLk.dropdown.has('ul.' + this.rel).css('left', $(this).parent().position().left).toggle();
+      return false;
+    });
+    
+    this.elLk.toolMore.children('a').bind('click', function () {
       panel.elLk.toolMoreUl.html(panel.elLk.toolsOverflow.clone()).toggle();
       panel.moreShown = true;
       return false;
@@ -51,9 +58,10 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.resize();
     
-    tabs  = null;
-    tools = null;
-    logo  = null;
+    tabsHolder = null;
+    tabs       = null;
+    tools      = null;
+    logo       = null;
   },
   
   setWidth: function (type) {
