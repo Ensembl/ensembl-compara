@@ -17,7 +17,7 @@ my $description = q{
 ##    database. It writes the GERP score for each alignment position in a
 ##    chromosome for a given species. If automatic_bsub is set, each toplevel 
 ##    region can be submitted as a separate job to LSF.
-##    It currently only writes in wigFix format
+##    It currently only writes in wigFix and bed format
 ##    http://genome.ucsc.edu/goldenPath/help/wiggle.html
 ##
 ###########################################################################
@@ -229,6 +229,8 @@ my $seq_region_start;
 my $seq_region_end;
 my $automatic_bsub = 0;
 my $out_filename;
+my $add_seq_name_prefix = 0;
+my $seq_name_prefix = "";
 
 my $num_args = @ARGV;
 
@@ -253,6 +255,8 @@ eval{
                "output_format=s" => \$format,
 	       "output_file=s" => \$out_filename,
 	       "method_name=s" => \$method_name,
+	       "add_seq_name_prefix" => \$add_seq_name_prefix,
+	       "seq_name_prefix=s" => \$seq_name_prefix,
 	      ) or die;
 };
 
@@ -311,7 +315,7 @@ perl dump_conservationScores_in_wigfix.pl
     --output_dir output directory
          Location of directory to write output files. Default: current directory
     --output_format output format
-          Currently only wigFix format is supported
+          Currently only wigFix and bed format are supported
     --output_file filename
           File to contain conservation scores. Automatically generated in auotmatic_bsub mode
     --method_name method_name
@@ -325,8 +329,9 @@ if ($help || $num_args == 0) {
 }
 
 #Check the format is valid
-if (lc($format) ne "wigfix") {
+unless (lc($format) eq "wigfix" || lc($format) eq "bed") {
     print STDERR "Currently $format is not supported. Only wigFix format is supported\n";
+    exit;
 }
 
 #Read in registry information and start building up a bsub_cmd for later use
@@ -424,7 +429,15 @@ if($automatic_bsub) {
 	my $out_filename = $output_dir . "/" . $method_name . ".chr" . $unique_name . "." . $format;
 
 	#Create final string ready for submission
-	my $bsub_string = "bsub -qlong -J$job_name -o $bsub_out -e $bsub_err $0 --seq_region $seq_region_name --seq_region_start $seq_region_start --seq_region_end $seq_region_end --output_file $out_filename " . $bsub_cmd; 
+	my $bsub_string = "bsub -qlong -J$job_name -o $bsub_out -e $bsub_err $0 --seq_region $seq_region_name --seq_region_start $seq_region_start --seq_region_end $seq_region_end --output_file $out_filename ";
+
+	
+	#add on "chr" to the beginning of chromosomes if needed
+	if (($seq_region->coord_system->name eq "chromosome") &&
+	    $add_seq_name_prefix) {
+	    $bsub_string .= " --seq_name_prefix chr ";
+	}
+	$bsub_string .= $bsub_cmd;
 
 	#print "$bsub_string\n";
 	#Submit the job which calls this script with seq_region defined
@@ -438,6 +451,8 @@ if($automatic_bsub) {
 	my $seq_region_end = $seq_region->end;
 	if (lc($format) eq "wigfix") {
 	    write_wigFix($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $method_name);
+	} elsif (lc($format) eq "bed") {
+	    write_bed($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $method_name);
 	}
     }
 }
@@ -538,3 +553,71 @@ sub print_wigFix_header {
         print $fh "fixedStep chrom=$chrom_name start=$position step=$step\n";
 }
 
+
+#Write scores in bed format
+sub write_bed {
+    my ($species, $seq_region_name, $seq_region_start, $seq_region_end, $output_dir, $method_name) = @_;
+
+    my $seq_region_length = ($seq_region_end-$seq_region_start+1);
+
+    #Open filehandle. If no filename is defined, use STDOUT
+    my $fh;
+    if (!defined $out_filename) {
+	$fh =  *STDOUT;
+    } else {
+	open $fh, '>'. $out_filename or throw("Error opening $out_filename for write");
+    }
+
+    #Chunk seq_region to speed up score retrieval
+    my @chunk_regions;
+    my $chunk_number = int($seq_region_length / $chunk_size);
+    $chunk_number += $seq_region_length % $chunk_size ? 1 : 0;
+    my $chunk_start = $seq_region_start;
+    for(my$j=1;$j<$chunk_number;$j++) {
+	my $chunk_end = $chunk_start + $chunk_size;
+	push(@chunk_regions, [ $chunk_start, $chunk_end ]);
+	$chunk_start = $chunk_end;
+    }
+    push(@chunk_regions, [ $chunk_start, $seq_region_end ]);
+    my $first_score_seen = 1;
+    my $previous_position = 0;
+    
+    my $cs_adaptor = $reg->get_adaptor($dbname, 'compara', 'ConservationScore');
+    foreach my $chunk_region(@chunk_regions) {
+	my $display_size = $chunk_region->[1] - $chunk_region->[0] + 1;
+	my $chunk_slice = $slice_adaptor->fetch_by_region('toplevel', $seq_region_name, $chunk_region->[0], $chunk_region->[1]);
+
+	#Add prefix to name if required
+	my $name = $seq_region_name;
+	if ($seq_name_prefix ne "") {
+	    $name = $seq_name_prefix . $seq_region_name;
+	}
+	
+	#Get scores
+	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
+	for(my$i=0;$i<@$scores;$i++) {
+	    my $line = "";
+	    if (defined $scores->[$i]->diff_score) {
+		#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks
+		if ($chunk_region->[0] + $scores->[$i]->position > $previous_position && $i > 0) { 
+		    $previous_position = $chunk_region->[0] + $scores->[$i]->position;
+		} elsif ($chunk_region->[0] + $scores->[$i]->position >= $previous_position && $i == 0) {
+		} else { 
+		    next;
+		}
+
+		my $pos = $chunk_region->[0] + $scores->[$i]->position - 1;
+		#bed coords are 0 based
+		printf $fh ("%s\t%d\t%d\t%.4f\n", $name, $pos-1, $pos, $scores->[$i]->diff_score);
+	    }
+	}
+    }
+    close($fh) or die "Couldn't close file properly";
+
+    #Remove empty files.
+    if (defined $out_filename && -s $out_filename == 0) {
+	print STDERR "$out_filename is empty. Deleting \n";
+	unlink($out_filename);
+    } 
+
+}
