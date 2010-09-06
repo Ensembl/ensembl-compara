@@ -401,6 +401,8 @@ sub store_clusters {
     $cluster->store_tag('original_cluster', $self->{'original_cluster'}->node_id);
     print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
+    next if($leafcount<2);
+
     # Dataflow clusters
     # This will create a new MSA alignment job for each of the newly generated clusters
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
