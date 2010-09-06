@@ -79,20 +79,16 @@ sub content {
       # (3) links to multi-contigview and align view
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
       my $link_url = $object->_url({
-          species => $spp,
-          action  => 'Summary',
-          g       => $stable_id,
-          r       => undef
-	  });
+        species => $spp,
+        action  => 'Summary',
+        g       => $stable_id,
+        __clear => 1
+      });
 
-      my $object_stable_id_link = sprintf(
-        '<a href="%s">%s</a>',
-	$link_url,				  
-        $stable_id
-      );
+      my $object_stable_id_link = qq{<a href="$link_url">$stable_id</a>};
 
       # Check the target species are on the same portal - otherwise the multispecies link does not make sense
-      my $local_species =  ($link_url =~ /^\//) ? 1 : 0;      
+      my $local_species = ($link_url =~ /^\//) ? 1 : 0;      
 
       my $target_links =  ($local_species && ($cdb eq 'compara')) ? sprintf(
         '<a href="%s">Multi-species view</a>',
@@ -103,7 +99,7 @@ sub content {
           s1     => $spp,
           r      => undef
         })
-      )  : '';
+      ) : '';
    
       
       my $location_link = $object->_url({
@@ -111,7 +107,8 @@ sub content {
         type    => 'Location',
         action  => 'View',
         r       => $orthologue->{'location'},
-        g       => $stable_id
+        g       => $stable_id,
+        __clear => 1
       });
       
       if ($orthologue_desc ne 'DWGA') {
