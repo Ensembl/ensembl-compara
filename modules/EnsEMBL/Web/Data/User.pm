@@ -36,6 +36,7 @@ __PACKAGE__->add_has_many(
   specieslists   => 'EnsEMBL::Web::Data::Record::SpeciesList',
   uploads        => 'EnsEMBL::Web::Data::Record::Upload',
   urls           => 'EnsEMBL::Web::Data::Record::URL',
+  histories      => 'EnsEMBL::Web::Data::Record::History',
 );
 
 __PACKAGE__->has_many(_groups => ['EnsEMBL::Web::Data::Membership' => 'webgroup']);
