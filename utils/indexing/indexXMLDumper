@@ -68,7 +68,7 @@ unless ($debug) {
   open (STDERR, ">&LOG") or die "Can't open $log: $!";
 }
 
-## HACK 1 - if the INDEX is set to all grab all dumper methods...
+## HACK 1 - if the INDEX is set to ALL grab all dumper methods...
 @indexes = map { /dump(\w+)/?$1:() } keys %indexXMLDumper:: if $indexes[0] eq 'ALL';
 
 ## HACK 2 - if the SPECIES is set to ALL grab stuff from config...
@@ -335,15 +335,15 @@ sub QTLLine {
 }
 
 
-########################################################################## SNP Phenotypes
+########################################################################## Variation Phenotypes
 
-sub dumpSNPPhenotype {
+sub dumpVariationPhenotype {
   my $conf = shift;
-  my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
-  return unless $SNPDB;
+  my $VariationDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
+  return unless $VariationDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/${SNPDB}_SNPPhenotype.xml";
+  my $file = $conf->{'directory'}."/${VariationDB}_VariationPhenotype.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
@@ -356,19 +356,19 @@ sub dumpSNPPhenotype {
   else {
     open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print LOG "  Dumping $SNPDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
-  header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  print LOG "  Dumping $VariationDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
+  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   #phenotype info
-  my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $SNPDB.phenotype",'description');
+  my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $VariationDB.phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
-    &p( SNPPhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
+    &p( VariationPhenLine( $dbspecies, $phen, $phenotype_info->{$phen}{'phenotype_id'}, $counter ), $nogzip, $fh);
   }
 
   return footer( $counter->(),$nogzip,$fh);
 }
 
-sub SNPPhenLine {
+sub VariationPhenLine {
   my ($species, $name, $id, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
@@ -383,15 +383,15 @@ sub SNPPhenLine {
   return $xml . '</entry>';
 }
 
-########################################################################## SNPs
+########################################################################## Variations
 
-sub dumpSNP {
+sub dumpVariation {
   my $conf = shift;
-  my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
-  return unless $SNPDB;
+  my $VariationDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
+  return unless $VariationDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/${SNPDB}_SNP.xml";
+  my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
@@ -404,11 +404,11 @@ sub dumpSNP {
   else {
     open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print LOG "  Dumping $SNPDB SNPs to $file ... ", format_datetime($start_time), "\n";
-  header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  print LOG "  Dumping $VariationDB Variations to $file ... ", format_datetime($start_time), "\n";
+  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
-  #SNPs
-  my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $SNPDB.source" )} };
+  #Variations
+  my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
       "select va.variation_id,
@@ -424,15 +424,15 @@ sub dumpSNP {
                 )
                 SEPARATOR '; '
               ) as phen
-         from $SNPDB.variation_annotation as va left join
-              $SNPDB.phenotype as p on p.phenotype_id = va.phenotype_id
+         from $VariationDB.variation_annotation as va left join
+              $VariationDB.phenotype as p on p.phenotype_id = va.phenotype_id
         group by va.variation_id
         order by va.variation_id"
     )};
 
   my $sth = $conf->{'dbh'}->prepare(
     "SELECT vf.variation_id, vf.variation_name, vf.source_id, group_concat(vs.source_id, ' ',vs.name), vf.consequence_type
-       FROM $SNPDB.variation_feature vf left join $SNPDB.variation_synonym vs on vf.variation_id = vs.variation_id group by vf.variation_id"
+       FROM $VariationDB.variation_feature vf left join $VariationDB.variation_synonym vs on vf.variation_id = vs.variation_id group by vf.variation_id"
   );
   $sth->execute() or die "Error:", $DBI::errstr;
   while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
@@ -467,21 +467,21 @@ sub dumpSNP {
 	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
 	}
       }
-      my $desc = sprintf( "A %s SNP %s%s",
+      my $desc = sprintf( "A %s Variation %s%s",
 			  $snp_source,
 			  $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
 			: $syn_c     ? "with one synonym: $synonym_text"
 		        : 'with no synonyms',
 			  $extra
 			);
-      &p( SNPLine( $dbspecies, $name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
+      &p( VariationLine( $dbspecies, $name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
 
     }
   }
   return footer( $counter->(),$nogzip,$fh);
 }
 
-sub SNPLine {
+sub VariationLine {
   my ($species, $name, $IDS, $gene_IDS, $source, $desc, $counter ) = @_;
   $species =~ s/_/ /;
   my $xml = qq(
@@ -500,7 +500,7 @@ sub SNPLine {
   }
   $xml .= qq(
     <field name="species">$species</field>
-    <field name="featuretype">SNP</field>
+    <field name="featuretype">Variation</field>
     <field name="source">$source</field>
   </additional_fields>);
   $counter->();
@@ -511,11 +511,11 @@ sub SNPLine {
 
 sub dumpStructuralVariations {
   my $conf = shift;
-  my $SNPDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
-  return unless $SNPDB;
+  my $VariationDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
+  return unless $VariationDB;
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $file = $conf->{'directory'}."/${SNPDB}_StructuralVariations.xml";
+  my $file = $conf->{'directory'}."/${VariationDB}_StructuralVariations.xml";
   $file .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
@@ -528,8 +528,8 @@ sub dumpStructuralVariations {
   else {
     open( FILE, ">$file" ) or die "Can't open $file: $!";
   }
-  print LOG "  Dumping $SNPDB to $file ... ", format_datetime($start_time), "\n";
-  header( $SNPDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  print LOG "  Dumping $VariationDB to $file ... ", format_datetime($start_time), "\n";
+  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
 
   my $scale           = $SD->ENSEMBL_GENOME_SIZE || 1;
   my $max_length      = $scale *= 1e6;
@@ -542,7 +542,7 @@ sub dumpStructuralVariations {
            r.name,
            v.seq_region_start,
            v.seq_region_end
-      from $SNPDB.structural_variation as v, $SNPDB.source as s, $SNPDB.seq_region as r
+      from $VariationDB.structural_variation as v, $VariationDB.source as s, $VariationDB.seq_region as r
      where s.source_id = v.source_id and r.seq_region_id = v.seq_region_id
      order by v.structural_variation_id"
   );
@@ -1237,7 +1237,8 @@ sub dumpGene {
     if ($db eq 'core') {
       my $lrgs = &dumpLRGs($conf);
       if (@$lrgs) {
-	&sort_lrgs($dbspecies,'Gene',$fh,$lrgs);
+	&sort_lrgs($dbspecies,'Gene',$fh,$lrgs); 
+	print LOG "    Printed LRGs to $file ... ".&date_and_mem()."\n";
       }
     }
 
@@ -1250,6 +1251,7 @@ sub dumpGene {
     foreach (@$es) {
       $external_synonyms->{$_->[0]}{$_->[1]} = 1;
     }
+#    warn Dumper($external_synonyms);
     my %xrefs = ();
     foreach my $type( qw(Gene Transcript Translation) ) {
 #      print LOG "starting memory usage for type $type = ".&date_and_mem()."\n";
@@ -1261,8 +1263,8 @@ sub dumpGene {
             AND ox.xref_id = x.xref_id );
       my $T = $conf->{'dbh'}->selectall_arrayref($sql);
       foreach (@$T) {
-	$xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_display_name'}} = {
-	  'description'     => $_->[3],
+	$xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_name'}} = {
+	  'xref_description'=> $_->[3],
 	  'db_acc'          => $_->[2],
 	  'label'           => $_->[1],
 	  'external_db_id'  => $_->[4],
@@ -1271,7 +1273,7 @@ sub dumpGene {
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
-#    warn Dumper(\%xrefs);
+#    warn Dumper(\%xrefs); exit;
 
     my %exons = ();
     my $sql = qq(
@@ -1307,7 +1309,7 @@ sub dumpGene {
          AND a.logic_name != 'LRG_import'
        ORDER by gsi.stable_id, tsi.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
-    $sth->execute(); 
+    $sth->execute();
 
     my $old;
     my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype);
@@ -1328,6 +1330,7 @@ sub dumpGene {
 		       $old->{'disp_xref'},
 		       $old->{'desc'},
 		       $old->{'xrefs'},
+		       $old->{'xref_descriptions'},
 		       $db,
 		       $counter),
 	      $nogzip, $fh);
@@ -1345,6 +1348,7 @@ sub dumpGene {
 	  'biotype'   => $biotype,
 	  'ad_dl'     => $ad_dl,
           'xrefs'     => [],
+	  'xref_descriptions' => {},
           'disp_xref' => $disp_xref ? " $disp_xref" : "novel gene",
           'status'    => $status,
           'biotype'   => $biotype,
@@ -1354,63 +1358,42 @@ sub dumpGene {
         $old->{'exons'}  = $exons{$gid};
 
 	#add xref details
-	while (my ($xref_id,$dets) = each %{$xrefs{'Gene'}{$gid}}) {
-	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
-	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
-	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
-	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
-	  }			 
-	  push @{$old->{'xrefs'}}, $dets;
+	foreach my $type (qw(Gene Transcript Translation)) {
+	  my $id = ($type eq 'Gene')        ? $gid
+                 : ($type eq 'Transcript')  ? $tid
+                 : ($type eq 'Translation') ? $tlid
+                 : '';
+	  while (my ($db_name,$dets) = each %{$xrefs{$type}{$id}}) {
+	    my $xref_id = $dets->{'xref_id'};
+	    $dets->{'db_name'} = $db_name;
+	    $old->{'xref_descriptions'}{$dets->{'xref_description'}}++ ;
+	    foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+	      push @{$dets->{'synonyms'}},$syn;
+	    }
+	    push @{$old->{'xrefs'}}, $dets;
+	  }
 	}
-	while (my ($xref_id,$dets) = each %{$xrefs{'Transcript'}{$tid}}) {
-	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
-	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
-	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
-	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
-	  }			 
-	  push @{$old->{'xrefs'}}, $dets;
-        }
-	while (my ($xref_id,$dets) = each %{$xrefs{'Translation'}{$tlid}}) {
-	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
-	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
-	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
-	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
-	  }			 
-	  push @{$old->{'xrefs'}}, $dets;
-        }
       }
       else {
-
         $old->{'tsids' }{$tsid }=1;
         $old->{'tlsids'}{$tlsid}=1 if $tlsid;
 
-	while (my ($xref_id,$dets) = each %{$xrefs{'Gene'}{$gid}}) {
-	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
-	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
-	  $dets->{'description'} = $external_dbs->{$dets->{'external_db_id'}}{'description'};
-	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
-	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
-	  }			 
-	  push @{$old->{'xrefs'}}, $dets;
+	#add xref details
+	foreach my $type (qw(Gene Transcript Translation)) {
+	  my $id = ($type eq 'Gene')        ? $gid
+                 : ($type eq 'Transcript')  ? $tid
+                 : ($type eq 'Translation') ? $tlid
+                 : '';
+	  while (my ($db_name,$dets) = each %{$xrefs{$type}{$id}}) {
+	    my $xref_id = $dets->{'xref_id'};
+	    $dets->{'db_name'} = $db_name;
+	    $old->{'xref_descriptions'}{$dets->{'xref_description'}}++;
+	    foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+	      push @{$dets->{'synonyms'}},$syn;
+	    }
+	    push @{$old->{'xrefs'}}, $dets;
+	  }
 	}
-	while (my ($xref_id,$dets) = each %{$xrefs{'Transcript'}{$tid}}) {
-	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
-	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
-	  $dets->{'description'} = $external_dbs->{$dets->{'external_db_id'}}{'description'};
-	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
-	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
-	  }			 
-	  push @{$old->{'xrefs'}}, $dets;
-        }
-	while (my ($xref_id,$dets) = each %{$xrefs{'Translation'}{$tlid}}) {
-	  $dets->{'db_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_name'};
-	  $dets->{'db_display_name'} = $external_dbs->{$dets->{'external_db_id'}}{'db_display_name'};
-	  $dets->{'description'} = $external_dbs->{$dets->{'external_db_id'}}{'description'};
-	  foreach my $k (keys %{$external_synonyms->{$xref_id}}) {
-	    push @{$dets->{'synonyms'}},$external_synonyms->{$xref_id}{$k};
-	  }			 
-	  push @{$old->{'xrefs'}}, $dets;
-        }
       }
     }
     &p( GeneLine($dbspecies,
@@ -1423,10 +1406,12 @@ sub dumpGene {
 		 $old->{'disp_xref'},
 		 $old->{'desc'},
 		 $old->{'xrefs'},
+		 $old->{'xref_descriptions'},
 		 $db,
 		 $counter),
 	$nogzip, $fh);
     print LOG "    Gene info query done ".&date_and_mem()."\n";
+#    exit;
 
     my $other_count = 0;
     my %current_stable_ids =();
@@ -1554,7 +1539,7 @@ sub dumpGene {
 }
 
 sub GeneLine {
-  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $db, $counter) = @_;
+  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $db, $counter) = @_;
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
@@ -1563,23 +1548,19 @@ sub GeneLine {
 <entry id="$gsid">
   <description>$description</description>
   <cross_references>);
-  my %seen_syns;
+  my (%seen_labels,%seen_syns);
   foreach my $xref (@$xrefs) {
     my $dbname   = $xref->{'db_name'};
     my $dbkey    = $xref->{'label'};
-    my $xrefdesc = $xref->{'description'} || '';
-    next if $seen_syns{$dbkey}{$dbname};
-    $seen_syns{$dbkey}{$dbname} = 1;
+    next if $seen_labels{$dbkey};
+    $seen_labels{$dbkey} = 1;
     $dbkey = &clean($dbkey,'dbkey');
     $xml .= qq(
     <ref dbname="$dbname" dbkey="$dbkey"/>);
-    if ($xrefdesc) {
-      $xrefdesc = &clean($xrefdesc,'xref description');
-      $xml .= qq(
-    <ref dbname="$dbname" description="$xrefdesc"/>);
-    }
-    foreach my $syn (@{$xref->{'synonyms'}}) {
-      $dbkey = &clean($dbkey,'syn');
+    foreach my $syn (@{$xref->{'synonyms'}}) { 
+      next if $seen_syns{$syn};
+      $seen_syns{$syn} = 1;
+      $syn = &clean($syn,'syn');
       $xml .= qq(
     <ref dbname="$dbname" dbkey="$syn"/>);
     }
@@ -1594,9 +1575,18 @@ sub GeneLine {
     <field name="featuretype">Gene</field>
     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
+
+  foreach my $xref_description (keys %{$xref_descriptions}) {
+    if ($xref_description) {
+      $xref_description = &clean($xref_description,'xref description');
+      $xml .= qq(
+    <field name="xref_description">$xref_description</field>);
+    }
+  }
+
   unless ($db eq 'core') {
     $xml .= qq(
-   <field name="db">$db</field>);
+    <field name="db">$db</field>);
   }
   foreach my $tsi (keys %$tsids) {
     $xml .= qq(
@@ -1617,9 +1607,10 @@ sub GeneLine {
 </entry>);
 }
 
-#deal with those pesky gene names and descriptions (order of regexps is important)
+#deal with those pesky non-standard characters in gene names and descriptions (order of regexps is important)
 sub clean {
   my ($text,$field) = @_;
+  $text =~ s/&/&amp;/g;
   $text =~ s/<i>//g;
   $text =~ s/<\/i>//g;
   $text =~ s/<em>//g;
@@ -1629,6 +1620,9 @@ sub clean {
   $text =~ s/'/&#44;/g;
   $text =~ s/"/&quot;/g;
   $text =~ s/ & / &amp; /g;
+  $text =~ s/</&lt;/g;
+  $text =~ s/>/&gt;/g;
+
   if ($text =~ /[<>]/) {
     print LOG "WARNING: Unsupported character $text in field $field\n";
   }
@@ -1821,7 +1815,7 @@ sub LRGLine {
     $xml .= qq(
     <field name="transcript">$tsi</field>);
   }
-  return $xml . qq( 
+  return $xml . qq(
   </additional_fields>
 </entry>);
 }
