@@ -290,8 +290,6 @@ sub _summarise_xref_types {
   my $self   = shift;
   my $db_name = shift; 
   my $dbh    = $self->db_connect( $db_name ); 
-warn "xref types:--------------------------------------------";
-use Data::Dumper;
   
   return unless $dbh; 
   my @xref_types;
@@ -299,14 +297,11 @@ use Data::Dumper;
 
 
   if($self->db_tree->{'XREF_TYPES'}){
-  warn "yes!";
     @xref_types=  split(/,/, $self->db_tree->{'XREF_TYPES'});
-	foreach(@xref_types){
-	  my @type_priority=  split(/=/, $_);
-	  $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
-	}
-  }else{
-  warn "no!";
+	  foreach(@xref_types){
+      my @type_priority=  split(/=/, $_);
+	    $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
+	  }
   }
 
   my $aref =  $dbh->selectall_arrayref(qq(
