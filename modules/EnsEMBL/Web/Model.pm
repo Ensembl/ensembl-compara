@@ -120,7 +120,7 @@ sub create_objects {
     next if $_->[0] eq $type;                                      # This factory already exists, so skip it
     next unless $input->param($_->[1]) && !$self->object($_->[0]); # This parameter doesn't exist in the URL, or the object has already been created, so skip it
     
-    $new_factory = $self->create_factory($_->[0], $factory->__data, $_->[1]) || undef;
+    $new_factory = $self->create_factory($_->[0], $factory ? $factory->__data : undef, $_->[1]) || undef;
     $factory     = $new_factory if $new_factory;
   }
   
