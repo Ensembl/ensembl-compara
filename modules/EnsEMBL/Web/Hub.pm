@@ -445,8 +445,14 @@ sub fetch_userdata_by_id {
     my ($type, $user_id, $track_id) = split '_', $record_id;
     return unless $user && $user->id == $user_id;
     
-    my $fa      = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    $data->{$record_id} = { features => $fa->fetch_all_by_logic_name($record_id), config => { name => $record_id } };
+    my $fa        = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
+    my $aa        = $self->database('userdata', $self->species)->get_AnalysisAdaptor;
+    my $features  = $fa->fetch_all_by_logic_name($record_id);
+    my $analysis  = $aa->fetch_by_logic_name($record_id);
+    my $config    = $analysis->web_data;
+    $config->{'track_name'} = $analysis->description || $record_id;
+    $config->{'track_label'} = $analysis->display_label || $analysis->description || $record_id;
+    $data->{$record_id} = { features => $features, config => $config };
   }
   
   return $data;
