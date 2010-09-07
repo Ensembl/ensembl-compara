@@ -52,7 +52,7 @@ sub availability {
       $availability->{'alt_allele'}    = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}    = !!$funcgen_res; 
       $availability->{'family'}        = !!$counts->{families};
-      $availability->{'has_gene_tree'} = $gene_tree_sub->('compara'); 
+      $availability->{'has_gene_tree'} = $gene_tree_sub->('compara');
       $availability->{"has_$_"}        = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches);
 
       if ($self->database('compara_pan_ensembl')) {
@@ -65,7 +65,7 @@ sub availability {
     }
     $self->{'_availability'} = $availability;
   }
-  
+
   return $self->{'_availability'};
 }
 
@@ -109,7 +109,6 @@ sub counts {
       
       $counts->{'alignments'} = $self->count_alignments->{'all'} if $self->get_db eq 'core';
     }
-
     if (my $compara_db = $self->database('compara_pan_ensembl')) {
       my $compara_dbh = $compara_db->get_MemberAdaptor->dbc->db_handle;
 
@@ -129,11 +128,11 @@ sub counts {
       $pan_counts->{'alignments'} = $self->count_alignments('DATABASE_COMPARA_PAN_ENSEMBL')->{'all'} if $self->get_db eq 'core';
 
       foreach (keys %$pan_counts) {
-	  my $key = $_."_pan";
-	  $counts->{$key} = $pan_counts->{$_};
+        my $key = $_."_pan";
+        $counts->{$key} = $pan_counts->{$_};
       }
     }
-    
+
     $counts = {%$counts, %{$self->_counts}};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
@@ -507,6 +506,12 @@ sub get_author_name {
   }
 }
 
+sub retrieve_remarks {
+  my $self = shift;
+  my @remarks = map { $_->value } @{ $self->Obj->get_all_Attributes('remark') };
+  return \@remarks;
+}
+
 sub gene_type {
   my $self = shift;
   my $db = $self->get_db;
@@ -586,6 +591,9 @@ sub get_homology_matches {
         
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
+        
+        # Avoid displaying duplicated (within-species and other paralogs) entries in the homology table (e!59). Skip the other_paralog (or overwrite it)
+        next if $homology_list{$display_spp}{$homologue->stable_id} && $homology_desc eq 'other_paralog';
         
         $homology_list{$display_spp}{$homologue->stable_id} = { 
           homology_desc       => $desc_mapping{$homology_desc} || 'no description',

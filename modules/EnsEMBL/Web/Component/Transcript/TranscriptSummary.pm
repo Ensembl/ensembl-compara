@@ -15,7 +15,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $hub = $self->hub;
+  my $hub    = $self->hub;
   my $table  = new EnsEMBL::Web::Document::HTML::TwoCol;
   my $sp     = $hub->species_defs->DISPLAY_NAME;
 
@@ -62,6 +62,18 @@ sub content {
     my $auth  = $object->get_author_name;
     $table->add_row('Author',
 		    "This transcript was annotated by $auth");
+    # remarks
+    my $remarks = $object->retrieve_remarks;
+    if ( @$remarks ) {
+      my $text;
+      foreach my $rem (@$remarks) {
+	next unless $rem;  #ignore remarks with a value of 0
+	$text .= "<p>$rem</p>";
+      }
+      $table->add_row('Remarks',
+		      qq($text),
+		      1);
+    }
   }
 
 ## type for core genes

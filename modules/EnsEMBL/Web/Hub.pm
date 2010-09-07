@@ -321,8 +321,18 @@ sub get_ext_seq {
     warn "The $ext_db server is unavailable: $@";
     return '';
   } else {
-    my $list = join ' ', @$seq_ary;
-    return $list =~ /no match/i ? '' : $list;
+    my ($list, $l);
+    
+    foreach (@$seq_ary) {
+      if (!/^>/) {
+        $l += length;
+        $l-- if /\n/; # don't count carriage returns
+      }
+      
+      $list .= $_;
+    }
+    
+    return $list =~ /no match/i ? [] : [ $list, $l ];
   }
 }
 

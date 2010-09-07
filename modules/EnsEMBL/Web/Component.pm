@@ -468,12 +468,19 @@ sub _sort_similarity_links {
       $join_links = 1;
     }
     
-    if ($object->species_defs->ENSEMBL_PFETCH_SERVER
-	&& $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i
-        && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript' ) {
+    if ($object->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript') {
       my $seq_arg = $display_id;
-      $seq_arg = "LL_$seq_arg" if $externalDB eq 'LocusLink';
-      $text .= sprintf ' [<a href="%s/Transcript/Similarity/Align?t=%s;sequence=%s;db=%s;extdb=%s">align</a>] ', $object->species_defs->species_path, $object->stable_id, $seq_arg, $db, lc($externalDB);
+      $seq_arg    = "LL_$seq_arg" if $externalDB eq 'LocusLink';
+      
+      my $url = $self->hub->url({
+        type     => 'Transcript',
+        action   => 'Similarity',
+        fucntion => 'Align',
+        sequence => $seq_arg,
+        extdb    => lc $externalDB
+      });
+      
+      $text .= qq{ [<a href="$url">align</a>] };
     }
     
     $text .= sprintf ' [<a href="%s">Search GO</a>]', $urls->get_url('GOSEARCH', $primary_id) if $externalDB =~ /^(SWISS|SPTREMBL)/i; # add Search GO link;

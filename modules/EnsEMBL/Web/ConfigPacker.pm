@@ -849,7 +849,7 @@ sub _summarise_compara_db {
       if ($id eq $prev_id) {
         my $this_method    = $methods{$mlss_id};
         my $this_sr        = $genomic_regions{$df_id}->{'seq_region'};
-        my $this_species   = $genomic_regions{$df_id}->{'species'};
+        my $this_species   = ucfirst $genomic_regions{$df_id}->{'species'};
         my $this_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
         my $comparison     = "$this_sr:$prev_sr";
         my $coords         = "$this_coord_sys:$prev_coord_sys";
@@ -869,7 +869,7 @@ sub _summarise_compara_db {
         $prev_start     = $start;
         $prev_end       = $end;
         $prev_sr        = $genomic_regions{$df_id}->{'seq_region'};
-        $prev_species   = $genomic_regions{$df_id}->{'species'};
+        $prev_species   = ucfirst $genomic_regions{$df_id}->{'species'};
         $prev_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
       }        
     }
@@ -920,8 +920,8 @@ sub _summarise_compara_db {
             my $mlss_id      = $config{$method}{$p_species}{$s_species}{$comp}{'mlss_id'};
             my $name         = $names{$mlss_id};
             
-            push @{$region_summary->{$p_species}{$source_name}}, {
-              secondary_species => $s_species,
+            push @{$region_summary->{ucfirst $p_species}{$source_name}}, {
+              secondary_species => ucfirst $s_species,
               target_name       => $target_name,
               start             => $source_start,
               end               => $source_end,

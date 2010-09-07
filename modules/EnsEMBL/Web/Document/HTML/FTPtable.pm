@@ -20,7 +20,7 @@ sub render {
 
 <tr>
 <th>Species</th>
-<th colspan="11" style="text-align:center">Files</th>
+<th colspan="12" style="text-align:center">Files</th>
 </tr>
 
 );
@@ -45,6 +45,7 @@ sub render {
       $funcgen = qq(<a rel="external" title="Functional genomics data in GFF format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/functional_genomics/$sp_dir/">FUNCGEN</a>);
     }
     my $bed = '-';
+    my $tarball = '-';
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
     $html .= qq(
@@ -61,6 +62,7 @@ sub render {
 <td>$emf</td>
 <td>$funcgen</td>
 <td>$bed</td>
+<td>$tarball</td>
 </tr>
       );
     $row++;
@@ -81,6 +83,7 @@ sub render {
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
 <td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
+<td>-</td>
 </tr>
 <tr class="$rev">
 <td><strong>Ensembl Mart</strong></td>
@@ -95,6 +98,22 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
+<td>-</td>
+</tr>
+<tr class="$class">
+<td><strong>Ensembl API</strong></td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td><a rel="external" href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz ">Tarball</td>
 </tr>
 </table>
   );
