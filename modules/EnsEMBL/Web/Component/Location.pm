@@ -141,7 +141,7 @@ sub create_user_set {
       }
       if ($has_table) {
         ## Create key entry
-        my $label = $key;
+        my $label = $track->{'config'}{'track_label'} || $key;
         if ($key eq 'default') {
           $label = $track->{'config'}{'name'};
         }
