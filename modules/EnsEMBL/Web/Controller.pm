@@ -126,6 +126,7 @@ sub build_page {
   my ($self, $page, $doctype, $model, @functions) = @_;
   
   my $object = $model->object;
+  my $hub = $model->hub;
   my $type;
   
   if (ref $object) { # Actual object
@@ -136,8 +137,12 @@ sub build_page {
     }
   } elsif ($object =~ /^\w+$/) { # String (type of E::W object)
     $type = $object;
-  } elsif ($model->hub->type) { # No domain objects created on page startup
-    $type = $model->hub->type;
+  } elsif ($hub->type) { # No domain objects created on page startup
+    $type = $hub->type;
+    my $viewconfig = $hub->get_viewconfig;
+    if ($viewconfig) {
+      $viewconfig->form($hub);
+    }
   } else {
     $type = 'Static';
   }
