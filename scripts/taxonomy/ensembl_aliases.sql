@@ -778,6 +778,11 @@ SET @this_value='Simians';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+SET @this_taxon_id=379584;
+SET @this_value='Dog/Giant Panda ancestor';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
 -- -- Use these to ADD new internal node aliases
 
 -- SET @this_taxon_id=;
