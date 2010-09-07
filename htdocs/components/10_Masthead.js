@@ -7,7 +7,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.longTabs  = false;
     this.moreShown = false;
-    this.zIndex    = 10000;
+    this.zIndex    = 1000;
   
     this.base(id);
     
@@ -26,11 +26,13 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     this.elLk.shortTabs  = $('li.short_tab', tabs);
     this.elLk.longTabs   = $('li.long_tab', tabs);
-    this.elLk.dropdowns  = $('div.dropdown', tabsHolder);
     this.elLk.toolsUl    = $('.tools', tools);
     this.elLk.tools      = $('li', this.elLk.toolsUl);
     this.elLk.toolMore   = $('.more', tools);
     this.elLk.toolMoreUl = $('<ul class="more_tools" />').appendTo(this.elLk.toolMore);
+    this.elLk.dropdowns  = $('div.dropdown', tabsHolder).bind('click', function () {
+      $(this).css('zIndex', panel.zIndex++);
+    });
     
     $('.toggle', tabs).bind('click', function () {
       var tab      = $(this).parent();
@@ -49,6 +51,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       }
       
       dropdown.not(':visible').css('zIndex', panel.zIndex++).end().toggle();
+      $(this).html(dropdown.is(':visible') ? '&#9650;' : '&#9660;');
       
       tab      = null;
       dropdown = null;
