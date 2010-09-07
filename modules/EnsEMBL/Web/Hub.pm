@@ -388,7 +388,7 @@ sub get_tracks {
       
       foreach my $feature (@{$track->{'features'}}) {
         my $data_row = {
-          chr     => $feature->seqname,
+          chr     => $feature->seqname || $feature->slice->name,
           start   => $feature->rawstart,
           end     => $feature->rawend,
           label   => $feature->id,
@@ -404,19 +404,19 @@ sub get_tracks {
   } else {
     while (my ($analysis, $track) = each(%{$data})) {
       my @rows;
-      
+     
       foreach my $f (
         map  { $_->[0] }
         sort { $a->[1] <=> $b->[1] || $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
-        map  {[ $_, $_->{'region'} =~ /^(\d+)/ ? $1 : 1e20 , $_->{'region'}, $_->{'start'} ]}
+        map  {[ $_, $_->{'slice'}->seq_region_name, $_->{'start'}, $_->{'end'} ]}
         @{$track->{'features'}}
       ) {
         my $data_row = {
-          chr     => $f->{'region'},
+          chr     => $f->{'slice'}->seq_region_name,
           start   => $f->{'start'},
           end     => $f->{'end'},
           length  => $f->{'length'},
-          label   => $f->{'label'},
+          label   => $f->{'start'}.'-'.$f->{'end'},
           gene_id => $f->{'gene_id'},
         };
         
