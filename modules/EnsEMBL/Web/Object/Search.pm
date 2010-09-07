@@ -16,8 +16,8 @@ use strict;
 use base qw(EnsEMBL::Web::Object);
 
 sub default_action { return 'New'; }
-sub short_caption  { return $_[1] eq 'global' ? 'New Search' : 'Search Ensembl'; }
-sub caption        { return 'Ensembl text search'; }
+sub short_caption  { my $sitetype = $_[0]->species_defs->ENSEMBL_SITETYPE || 'Ensembl'; return $_[1] eq 'global' ? 'New Search' : "Search $sitetype"; }
+sub caption        { my $sitetype = $_[0]->species_defs->ENSEMBL_SITETYPE || 'Ensembl'; return "$sitetype text search"; }
 sub counts         {}
 
 1;

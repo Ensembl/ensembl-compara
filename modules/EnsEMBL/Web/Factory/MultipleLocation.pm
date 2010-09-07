@@ -298,8 +298,12 @@ sub check_slice_exists {
     ($start, $end) = ($end, $start) if $start > $end;
     
     $strand ||= 1;
-    
-    foreach my $system (@{$self->__coord_systems}) {
+
+    my $db = $self->database('core');
+    my $csa = $db->get_CoordSystemAdaptor();
+    my @coord_systems = @{$csa->fetch_all()};
+    push(@coord_systems, @{$self->__coord_systems} );
+    foreach my $system (@coord_systems) {  
       my $slice;
       
       eval { $slice = $self->slice_adaptor->fetch_by_region($system->name, $chr, $start, $end, $strand); };

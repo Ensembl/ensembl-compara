@@ -113,7 +113,13 @@ sub _render_hit {
 #  $URL =~ s{Location/\?ftype=}{Location/Genome\?type=}; #cope with stuffed Vega Genomic alignments
 #  $URL =~ s{markerview\?marker=}{Location/Marker\?m=}; #cope with stuffed Vega Markers (r37 only)
 #  $URL =~ s/Transcript\/Domains\/Genes\?domain=(IPR\d{6}).*/Location\/Genome\?ftype=Domain;id=$1/; #no need to have Transcript IDs on Domain results
- 
+
+  #Factory can't cope with start and stop on location URLs so strip these off
+  if ($URL =~ /Location\/View\?r=[A-Za-z]+\d+\./) {
+    $URL =~ s{r=}{region=};
+    $URL =~ s{:\d+-\d+$}{};
+  }
+
   #two hacks for LRG
   $URL =~ s{Homo_sapiens/Gene/Summary\?g=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};
   $URL =~ s{Homo_sapiens/Location/View\?r=(LRG_\d+).*}{Homo_sapiens/LRG/Summary\?lrg=$1};

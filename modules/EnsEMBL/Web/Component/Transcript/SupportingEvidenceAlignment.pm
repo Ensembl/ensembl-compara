@@ -29,12 +29,12 @@ sub content {
   my $table       = new EnsEMBL::Web::Document::HTML::TwoCol;
   my $tsi         = $object->stable_id;
   my $input       = $object->input;
-  my $hit_id      = $input->{'sequence'}->[0];
+  my $hit_id      = $object->param('sequence');
   my $hit_db_name = $object->get_sf_hit_db_name($hit_id);
   my $html;
 
   #get external sequence and type (DNA or PEP) - refseq try with and without version
-  my ($query_db, $ext_seq);
+  my ($query_db, $ext_seq, $ext_seq_length);
   my @hit_ids = ( $hit_id );
   $query_db = $hit_db_name;
   if ($hit_db_name =~ /^RefSeq/) {
@@ -56,7 +56,9 @@ sub content {
   }
   else {
     foreach my $id ( @hit_ids ) {
-      $ext_seq = $self->hub->get_ext_seq( $id,uc($query_db) );
+      my $rec = $self->hub->get_ext_seq( $id,uc($query_db) );
+      $ext_seq        = $rec->[0] || '';
+      $ext_seq_length = $rec->[1] || '';
       if ($ext_seq) {
 	$hit_id = $id;
 	last;
@@ -79,7 +81,6 @@ sub content {
 
   if ( $ext_seq) {
     my $hit_url = $object->get_ExtURL_link( $hit_id, $hit_db_name, $hit_id );
-    my $ext_seq_length = length($ext_seq);
     $table->add_row('External record',
 		    "$hit_url ($hit_db_name), length = $ext_seq_length $label",
 		    1, );

@@ -21,18 +21,19 @@ sub caption {
 }
 
 sub content {
-  my $self = shift;
-  my $cdb = shift || $self->object->param('cdb') || 'compara';  
-  my $object      = $self->object;
-  my $species     = $object->species;
-  my $gene_id     = $object->stable_id;
-  my $input       = $object->input;
-  my $second_gene = $object->param('g1');
-  my $seq         = $object->param('seq');
-  my $text_format = $object->param('text_format');
-  my $databases   = $object->database($cdb);
-  my $ma          = $databases->get_MemberAdaptor;
-  my $qm          = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
+  my $self         = shift;
+  my $cdb          = shift || $self->object->param('cdb') || 'compara';  
+  my $object       = $self->object;
+  my $species      = $object->species;
+  my $species_defs = $object->species_defs;
+  my $gene_id      = $object->stable_id;
+  my $input        = $object->input;
+  my $second_gene  = $object->param('g1');
+  my $seq          = $object->param('seq');
+  my $text_format  = $object->param('text_format');
+  my $databases    = $object->database($cdb);
+  my $ma           = $databases->get_MemberAdaptor;
+  my $qm           = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
   my ($homologies, $html, %skipped);
   
   eval {
@@ -63,20 +64,18 @@ sub content {
         $flag = 1 if $member->stable_id eq $second_gene;
         
         my $peptide        = $member->{'_adaptor'}->db->get_MemberAdaptor->fetch_by_dbID($attribute->peptide_member_id);
-        my $member_species = $member->genome_db->name;
+        my $member_species = ucfirst $member->genome_db->name;
         my $location       = sprintf '%s:%d-%d', $member->chr_name, $member->chr_start, $member->chr_end;
         
-        (my $species2 = $member_species) =~ s/ /_/g;
-        
-        if (!$second_gene && $species2 ne $species && $object->param('species_' . lc $species2) eq 'off') {
+        if (!$second_gene && $member_species ne $species && $object->param('species_' . lc $member_species) eq 'off') {
           $flag = 0;
-          $skipped{$object->species_defs->species_label($species2)}++;
+          $skipped{$species_defs->species_label($member_species)}++;
           next;
         }
         
         if ($member->stable_id eq $gene_id) {
           push @$data, [
-            $member_species,
+            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
             $member->stable_id,
             $peptide->stable_id,
             sprintf('%d aa', $peptide->seq_length),
@@ -84,18 +83,18 @@ sub content {
           ]; 
         } else {
           push @$data, [
-            $member_species,
+            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
             sprintf('<a href="%s">%s</a>',
-              $object->_url({ species => $species2, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
+              $object->_url({ species => $member_species, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
               $member->stable_id
             ),
             sprintf('<a href="%s">%s</a>',
-              $object->_url({ species => $species2, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
+              $object->_url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
               $peptide->stable_id
             ),
             sprintf('%d aa', $peptide->seq_length),
             sprintf('<a href="%s">%s</a>',
-              $object->_url({ species => $species2, type => 'Location', action => 'View', g => $member->stable_id, r => $location, t => undef }),
+              $object->_url({ species => $member_species, type => 'Location', action => 'View', g => $member->stable_id, r => $location, t => undef }),
               $location
             )
           ];
