@@ -12,7 +12,7 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $data) = @_;
-  my $self = $data ? {%$data} : {};
+  my $self = $data ? $data : {};
   
   bless $self, $class;
   
@@ -24,7 +24,8 @@ sub new {
 
 sub init {} # implemented in child modules
 
-sub hub     :lvalue { $_[0]->{'hub'};     }
+sub hub        :lvalue { $_[0]->{'hub'};     }
+sub object     :lvalue { $_[0]->{'object'};     }
 sub redirect   :lvalue { $_[0]->{'redirect'};   }
 sub error_code :lvalue { $_[0]->{'error_code'}; }
 sub messages   :lvalue { $_[0]->{'messages'};   }
