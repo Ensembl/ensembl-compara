@@ -220,7 +220,7 @@ sub _user_context {
   my $object        = $self->object;
   my $type          = $self->type;
   my $action        = join '/', grep $_, $type, $ENV{'ENSEMBL_ACTION'}, $ENV{'ENSEMBL_FUNCTION'};
-  my $vc            = $object ? $object->viewconfig : undef;
+  my $vc            = $object ? $object->viewconfig : $hub->get_viewconfig;
   my %ics           = $vc ? $vc->image_configs : undef;
   my $active_config = $hub->param('config') || ($vc ? $vc->default_config : undef);
   my $active        = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq '_page';
@@ -264,7 +264,7 @@ sub _user_context {
       $flag = 0;
     }
 
-    if ($action eq 'Location/View' && keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}) {
+    if ($action eq 'Location/View' && keys %{$hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}) {
       $active = $section eq 'global_context' && $type ne 'Account' && $type ne 'UserData' && $active_config eq 'cell_page';
       
       $self->page->$section->add_entry(
@@ -395,7 +395,7 @@ sub _configurator {
   
   my $object     = $self->object;
   my $hub        = $self->hub;
-  my $vc         = $object->viewconfig;
+  my $vc         = $object ? $object->viewconfig : $hub->get_viewconfig;
   my $config_key = $hub->param('config');
   my $action     = join '/', map $hub->$_ || (), qw(type action function);
   my $url        = $hub->url({ type => 'Config', action => $action }, 1);
@@ -418,7 +418,8 @@ sub _configurator {
       
       my $panel = $self->new_panel('Configurator',
         code   => 'configurator',
-        object => $object
+        object => $object,
+        hub    => $hub,
       );
       
       my $content = '';
@@ -431,7 +432,8 @@ sub _configurator {
       if ($vc->type eq 'Location' && $vc->action eq 'Cell_line'){  warn $vc->action;
         my $info_panel = $self->new_panel('Configurator',
           code   => 'configurator_info',
-          object => $object
+          object => $object,
+          hub    => $hub,
         );
 
         my $configuration_link = $hub->url({
@@ -649,7 +651,7 @@ sub _local_tools {
   
   my $hub    = $self->hub;
   my $object = $self->object;
-  my $vc     = $object ? $object->viewconfig : undef;
+  my $vc     = $object ? $object->viewconfig : $hub->get_viewconfig;
   my $config = $vc && $vc->real ? $vc->default_config : undef;
   
   if ($config) {
