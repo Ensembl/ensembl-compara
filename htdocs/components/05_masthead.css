@@ -25,8 +25,8 @@
 #masthead div.dropdown ul                 { margin-top: 4px; }
 #masthead div.dropdown ul li              { display: block; width: 130px; margin: 2px 6px; padding: 0 10px 3px; text-align: left;  }
 #masthead div.dropdown ul li a            { color: [[PAGE_LINK]]; }
-#masthead div.dropdown.history            { width: auto!important; }
-#masthead div.dropdown.history ul li      { float: none; width: auto!important; }
+#masthead div.dropdown.history            { width: auto; }
+#masthead div.dropdown.history ul li      { float: none; width: auto; }
 #masthead .search_holder                  { position: absolute; top: 17px; right: 5px; z-index: 150; margin-left: 10px; display: inline; }
 #masthead .tools_holder                   { display: inline; }
 #masthead .tabs_holder                    { height: 29px; background-color: [[MH_BG]]; clear: both; }
