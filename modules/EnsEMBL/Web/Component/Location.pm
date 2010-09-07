@@ -5,6 +5,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use EnsEMBL::Web::Document::SpreadSheet;
+use Sanger::Graphics::ColourMap;
 use Digest::MD5 qw(md5_hex);
 
 use base qw(EnsEMBL::Web::Component);
@@ -90,7 +91,6 @@ sub pointer_default {
 # Adds a set of userdata pointers to vertical drawing code
 sub create_user_set {
   my ($self, $image, $colours, $non_user_tracks) = @_;
-  my $object = $self->object;
   my $hub = $self->hub;
 
   my $user = $hub->user;
@@ -111,13 +111,12 @@ sub create_user_set {
   foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
     $i = 0 if $i > scalar(@$colours) - 1; # reset if we have loads of tracks (unlikely)
     
-    my $track = {};
     my ($status, $type, $id) = split '-', $key;
     my $details = $image_config->get_node($key);
     my $display = $details->{'_user_data'}{$key}{'display'};
+    next if (!$display || $display eq 'off');
     my ($render, $style) = split '_', $display;
     
-    next if (!$display || $display eq 'off');
     $has_table = 1;
 
     ## Create pointer configuration
@@ -147,7 +146,12 @@ sub create_user_set {
           $label = $track->{'config'}{'name'};
         }
         my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
-        if ($colour =~ /^[a-z0-9]{6}$/i) {
+        if ($colour =~ /,/) {
+          ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
+          my @rgb = split ',', $colour;
+          $colour = '#'.Sanger::Graphics::ColourMap::hex_by_rgb(undef, \@rgb);
+        }
+        elsif ($colour =~ /^[0-9a-f]{6}$/i) { ## Hex with no initial hash symbol
           $colour = '#'.$colour;
         }
         $swatch .= $colour.'" title="'.$colour.'" />';
