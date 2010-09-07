@@ -30,6 +30,8 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::ExtURL;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -437,23 +439,14 @@ sub fetch_userdata_by_id {
 
   if ($type eq 'url' || ($type eq 'upload' && $status eq 'temp')) {
     $data = $self->get_data_from_session($status, $type, $id);
-  } else {
+  } 
+  else {
     my $user = $self->user;
-    
-    return unless $user;
+    my ($type, $user_id, $track_id) = split '_', $record_id;
+    return unless $user && $user->id == $user_id;
     
     my $fa      = $self->database('userdata', $self->species)->get_DnaAlignFeatureAdaptor;
-    my @records = $user->uploads($record_id);
-    my $record  = $records[0];
-
-    if ($record) {
-      my @analyses = ($record->analyses);
-
-      foreach (@analyses) {
-        next unless $_;
-        $data->{$_} = { features => $fa->fetch_all_by_logic_name($_), config => { name => $_ } };
-      }
-    }
+    $data->{$record_id} = { features => $fa->fetch_all_by_logic_name($record_id), config => { name => $record_id } };
   }
   
   return $data;
