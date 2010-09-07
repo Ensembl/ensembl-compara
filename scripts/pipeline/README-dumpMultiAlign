@@ -1,0 +1,43 @@
+A description on how to run the DumpMultiAlign pipeline.
+=======================================================
+
+The problem with running the DumpMultiAlign.pl script for a whole alignment set is that there are problems with overloading the sequence and compara databases. To overcome these issues, I developed a Hive pipeline which will use the beekeeper to schedule the jobs instead of relying on the lsf scheduler.
+
+The pipeline will create all the necessary jobs, run scripts/dumps/DumpMultiAlign.pl, optionally run emf2maf, compress, create the MD5SUM and also create a stanadard readme file. The pipeline looks something like:
+
+                  InitJobs           Readme
+             /       |         \
+ CreateChrJobs CreateSuperJobs CreateOtherJobs
+              \      |         /
+               DumpMultiAlign
+                     |     \
+                     |     emf2maf
+                     |     /
+                  Compress
+                     |
+		   MD5SUM 
+
+
+You need a reg_conf file containing the location of the EnsEMBL core sequences and the location of the compara database containing the alignments to dump.
+
+Running
+-------
+There are a number of examples:
+Emf is the default format.
+To output emf and maf, you need to define --maf_output_dir. 
+To output the correct readme file for low coverage epo pipeline, you need to define the high_coverage_mlss_id
+To output conservation scores aswell as the alignment, need to use the conservation score mlss_id
+
+1) Run low coverage epo pipeline:
+emf, maf and conservation scores
+
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password ensembl --dump_mlss_id 50022 --output_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_59/emf_dumps/epo_33_eutherian --compara_dbname epo_33_59 --reg_conf /nfs/users/nfs_k/kb3/work/compara_releases/release_59/kb3_epo_33way_59/reg.conf --maf_output_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_59/maf_dumps/epo_33_eutherian --high_coverage_mlss_id 475
+
+beekeeper.pl -url mysql://ensadmin:ensembl@compara1:3306/kb3_dumpMultiAlign
+
+2) 6way primates
+emf
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password ensembl --dump_mlss_id 474 --output_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_59/emf_dumps/epo_6_primate --compara_dbname compara_59 --reg_conf /nfs/users/nfs_k/kb3/work/compara_releases/release_59/kb3_epo_6way_59/reg.conf --pipeline_name dumpMultiAlign_6_primate_59
+
+beekeeper.pl -url mysql://ensadmin:ensembl@compara1:3306/kb3_dumpMultiAlign_6_primate_59
+
