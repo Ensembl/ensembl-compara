@@ -72,7 +72,7 @@ sub content {
  
       my $show_all = $object->param('show_all') ? 1 : 0; 
       my $inactive = 0;
-      foreach my $m (@members) {
+      foreach my $m (sort {$a->name cmp $b->name} @members) {
         my $row = {};
         $inactive++ if $m->member_status eq 'inactive';
         next unless ($show_all || $m->member_status eq 'active');
