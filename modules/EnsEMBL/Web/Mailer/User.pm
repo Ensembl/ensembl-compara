@@ -5,7 +5,6 @@ use warnings;
 no warnings 'uninitialized';
 
 use EnsEMBL::Web::Data::User;
-
 use base qw(EnsEMBL::Web::Mailer);
 
 sub send_activation_email {
@@ -109,6 +108,23 @@ If you have any problems please don't hesitate to contact %s (%s) or the %s Help
   $self->message = $message;
   $self->send($object);
 }
+
+sub send_subscription_email {
+  ### Sends an empty email to dev and announce from newly registered users.
+  ##  Info: Set 'from' parameter to be set to the email id of the user before calling this function
+  my ($self, $object) = @_;
+
+  my @to = qw(announce-join@ensembl.org dev-join@ensembl.org);
+  
+  $self->subject = "Subscription";    
+  $self->message = "Subscription";
+
+  for (@to) {
+    $self->to = $_;
+    $self->send($object);
+  }
+}
+
 
 sub email_footer {
   my $self = shift;
