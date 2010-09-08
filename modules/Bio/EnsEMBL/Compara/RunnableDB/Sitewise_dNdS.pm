@@ -93,7 +93,6 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  $self->check_job_fail_options;
   throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -165,7 +164,7 @@ sub write_output {
 
   unless (defined($self->{results})) {
     $self->input_job->transient_error(0);
-    die;
+    die "Results are missing for unknown reason";
   }
   $self->check_if_exit_cleanly;
   if (defined($self->{'results'}{saturated})) {
@@ -204,8 +203,10 @@ sub write_output {
     }
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    $self->input_job->transient_error(0);
-    throw "Sitewise_dNdS : cluster saturated, creating jobs for subtrees and FAIL it";
+
+    $self->input_job->incomplete(0);
+    die $self->analysis->logic_name()." cluster saturated; dataflowing the subtrees back into Sitewise_dNdS\n";
+
 
   } elsif (defined($self->{'results'}{sites})) {
     $self->store_sitewise_dNdS;
@@ -395,7 +396,7 @@ sub run_sitewise_dNdS
     my $exit_status;
     chdir($tmpdir);
     my $run;
-    my $quiet = ''; $quiet = ' 2>/dev/null' unless ($self->debug);
+    my $quiet = $self->debug ? '2>/dev/null' : '';
     $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
     open($run, "$slrexe $quiet |") or throw("Cannot open exe $slrexe");
     my @output = <$run>;
@@ -503,23 +504,6 @@ sub run_sitewise_dNdS
 
   return undef;
 }
-
-
-sub check_job_fail_options
-  {
-    my $self = shift;
-
-    if ($self->input_job->retry_count >= 2) {
-      $self->dataflow_output_id($self->input_id, 2);
-
-      if ($self->{'protein_tree'}) {
-        $self->{'protein_tree'}->release_tree;
-        $self->{'protein_tree'} = undef;
-      }
-      $self->input_job->transient_error(0);
-      throw("Sitewise_dNdS job failed >=3 times: try something else and FAIL it");
-    }
-  }
 
 
 sub run_gblocks
