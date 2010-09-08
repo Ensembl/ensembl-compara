@@ -35,6 +35,10 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       $(this).css('zIndex', panel.zIndex++);
     });
     
+    if (window.location.hash) {
+      this.hashChange(Ensembl.urlFromHash(window.location.href, true));
+    }
+    
     $('.toggle', tabs).bind('click', function () {
       var tab      = $(this).parent();
       var dropdown = panel.elLk.dropdowns.has('ul.' + this.rel);
