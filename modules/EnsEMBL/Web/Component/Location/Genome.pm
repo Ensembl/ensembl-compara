@@ -128,16 +128,7 @@ sub content {
         }
       }       
       
-      my $colours    = $self->colour_array;
-      my $ok_colours = [];
-      
-      ## Remove any colours being used by features from the highlight colour array
-      foreach my $colour (@$colours) {
-        next if $used_colour{$colour};
-        push @$ok_colours, $colour;
-      }
-      
-      ($user_pointers, $usertable) = $self->create_user_set($image, $ok_colours, $pointers);  #adding pointers to enable key display for non-user track for now its only xref
+      ($user_pointers, $usertable) = $self->create_user_set($image, $pointers);  #adding pointers to enable key display for non-user track for now its only xref
 
       ## Add some settings, if there is any user data
       if (@$user_pointers) {
