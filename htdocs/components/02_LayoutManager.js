@@ -135,41 +135,22 @@ Ensembl.LayoutManager.extend({
     });
   },
   
-  hashChange: function (loc) {
-    if (!loc) {
+  hashChange: function (r) {
+    if (!r) {
       return;
     }
     
-    function addCommas(str) {
-      var rgx = /(\d+)(\d{3})/;
-      
-      str += '';
-      x    = str.split('.');
-      x1   = x[0];
-      x2   = x.length > 1 ? '.' + x[1] : '';
-      
-      while (rgx.test(x1)) {
-        x1 = x1.replace(rgx, '$1' + ',' + '$2');
-      }
-      
-      return x1 + x2;
-    }
+    var text = r.split(/\W/);
+    text     = text[0] + ': ' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
     
     $('a:not(.constant)').attr('href', function () {
       return Ensembl.urlFromHash(this.href);
     });
     
-    $('input[name=r]', 'form:not(#core_params)').val(loc);
-    
-    loc = loc.split(/\W/);
-    
-    loc[1] = addCommas(loc[1]);
-    loc[2] = addCommas(loc[2]);
-    
-    $('a', '#tab_location').html('Location: ' + loc[0] + ':' + loc[1] + '-' + loc[2]);
+    $('input[name=r]', 'form:not(#core_params)').val(r);
     
     $('h2.caption').html(function (i, html) {
-      return html.replace(/^(Chromosome ).+/, '$1' + loc[0] + ': ' + loc[1] + '-' + loc[2]);
+      return html.replace(/^(Chromosome ).+/, '$1' + text);
     });
   }
 });
