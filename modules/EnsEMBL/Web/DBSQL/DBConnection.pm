@@ -345,16 +345,6 @@ sub _get_compara_database{
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor' );
 }
 
-=head2 _get_go_database
-
- Arg[1]      : none
- 
- Example     : $self->_get_go_database
- Description : Gets go database connection
- Return type : Bio::EnsEMBL::ExternalData::GO::GOAdaptor
-
-=cut
-
 sub _get_help_database{
   my $self = shift;
   my $db_info = $self->{'species_defs'}->multidb->{DATABASE_WEBSITE} ||
@@ -362,11 +352,22 @@ sub _get_help_database{
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
 }
 
+=head2 _get_go_database
+
+ Arg[1]      : none
+ 
+ Example     : $self->_get_go_database
+ Description : Gets go database connection
+ Return type : Bio::EnsEMBL::DBSQL::OntologyDBAdaptor
+
+=cut
+
 sub _get_go_database{
   my $self = shift;
   my $db_info = $self->{'species_defs'}->multidb->{DATABASE_GO} ||
      die( "No go database for this species" );
-  return  $self->_get_database( $db_info, 'Bio::EnsEMBL::ExternalData::GO::GOAdaptor' );
+  use Bio::EnsEMBL::DBSQL::OntologyDBAdaptor;     
+  return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor' );
 }
 
 =head2 _get_blast_database
