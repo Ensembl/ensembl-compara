@@ -94,12 +94,9 @@ sub create_objects {
   ### The object of type $type is the primary object, used for the page.
   
   my ($self, $type, $request) = @_;
-  my $hub = $self->hub;
-  
-  return if $hub->species eq 'common';
-  
-  my $url   = $hub->url($hub->multi_params);
-  my $input = $hub->input;
+  my $hub     = $self->hub;
+  my $url     = $hub->url($hub->multi_params);
+  my $species = $hub->species;
   $type   ||= $hub->factorytype;
   
   my ($factory, $new_factory, $data);
@@ -109,7 +106,7 @@ sub create_objects {
     return $self->object($type);
   }
   
-  if ($self->object_types->{$type} && $input->param('r')) {
+  if ($self->object_types->{$type} && $hub->param('r')) {
     $factory = $self->create_factory('Location');
     $data    = $factory->__data;
   }
@@ -118,9 +115,10 @@ sub create_objects {
   $factory     = $new_factory if $new_factory;
   
   foreach (@{$self->object_params}) {
-    last if $hub->get_problem_type('redirect');                    # Don't continue if a redirect has been requested
-    next if $_->[0] eq $type;                                      # This factory already exists, so skip it
-    next unless $input->param($_->[1]) && !$self->object($_->[0]); # This parameter doesn't exist in the URL, or the object has already been created, so skip it
+    last if $hub->get_problem_type('redirect');                  # Don't continue if a redirect has been requested
+    next if $_->[0] eq $type;                                    # This factory already exists, so skip it
+    next unless $hub->param($_->[1]) && !$self->object($_->[0]); # This parameter doesn't exist in the URL, or the object has already been created, so skip it
+    next if $_->[0] eq 'Location' && $species eq 'common';       # Skip the Location factory when a hash change (using the location nav slider) has added a r parameter to a link without a species
     
     $new_factory = $self->create_factory($_->[0], $factory ? $factory->__data : undef, $_->[1]) || undef;
     $factory     = $new_factory if $new_factory;
