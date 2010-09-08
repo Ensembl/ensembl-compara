@@ -90,7 +90,7 @@ Ensembl.extend({
       Ensembl.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
     });
     
-    match = (this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false) || ($('a', '#tab_location').html() || '').replace(/,/g, '').match(/^Location: (.+):(\d+)-(\d+)$/);
+    match = this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false;
     
     if (match) {
       this.location = { name: match[1], start: parseInt(match[2], 10), end: parseInt(match[3], 10) };
@@ -162,6 +162,21 @@ Ensembl.extend({
     var r     = match ? match[1] : this.initialR;
     
     return paramOnly ? r : url.match(this.hashRegex) ? url.replace(/([\?;]r=)[^;]+(;?)/, '$1' + r + '$2') : r ? url + (url.match(/\?/) ? ';r=' : '?r=') + r : url;
+  },
+  
+  thousandify: function (str) {
+    var rgx = /(\d+)(\d{3})/;
+    
+    str += '';
+    x    = str.split('.');
+    x1   = x[0];
+    x2   = x.length > 1 ? '.' + x[1] : '';
+    
+    while (rgx.test(x1)) {
+      x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    }
+    
+    return x1 + x2;
   },
   
   loadScript: function (url, callback, caller) {
