@@ -6,6 +6,7 @@ use warnings;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Filter::DuplicateUser;
 use EnsEMBL::Web::Tools::RandomString;
+use EnsEMBL::Web::Mailer::User;
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -61,6 +62,14 @@ sub process {
           $param->{'email'} = $object->param('email');
           $interface->data->created_by($interface->data->id);
           $interface->data->save;
+          
+          #if subscription request, send blank email to subscription emails
+          if ($object->param('subscription') =~ /yes/i) {
+            
+            my $mailer = EnsEMBL::Web::Mailer::User->new();
+            $mailer->from = $object->param('email');
+            $mailer->send_subscription_email($object);
+          }
         }
         else {
           $url .= '/Problem';
