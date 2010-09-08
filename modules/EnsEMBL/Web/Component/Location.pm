@@ -90,7 +90,7 @@ sub pointer_default {
 
 # Adds a set of userdata pointers to vertical drawing code
 sub create_user_set {
-  my ($self, $image, $colours, $non_user_tracks) = @_;
+  my ($self, $image, $non_user_tracks) = @_;
   my $hub = $self->hub;
 
   my $user = $hub->user;
@@ -109,7 +109,6 @@ sub create_user_set {
   my $i = 0;
 
   foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
-    $i = 0 if $i > scalar(@$colours) - 1; # reset if we have loads of tracks (unlikely)
     
     my ($status, $type, $id) = split '-', $key;
     my $details = $image_config->get_node($key);
@@ -121,14 +120,15 @@ sub create_user_set {
 
     ## Create pointer configuration
     my $tracks = $hub->get_tracks($key);
+    my @A = keys %$tracks;
     while (my ($key, $track) = each (%$tracks)) {
       my $colour; 
+      my @B = keys %{$track->{'config'}};
       if ($track->{'config'} && $track->{'config'}{'color'}) {
         $colour = $track->{'config'}{'color'};
       }
       else {
-        $colour = $colours->[$i];
-        $i++;
+        $colour = 'black';
       }
         
       if ($render eq 'highlight') {
