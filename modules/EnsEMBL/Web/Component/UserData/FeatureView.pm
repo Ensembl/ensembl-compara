@@ -81,7 +81,7 @@ Using this form, you can select Ensembl features to display on a karyotype (form
 =cut
 
   my @colours;
-  foreach my $colour (@{$self->colour_array}) {
+  foreach my $colour (@{$species_defs->TRACK_COLOUR_ARRAY}) {
     my $colourname = ucfirst($colour);
     $colourname =~ s/Dark/Dark /;
     push @colours, {'name' => ucfirst($colourname), 'value' => $colour};
