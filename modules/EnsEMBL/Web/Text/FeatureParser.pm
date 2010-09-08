@@ -8,10 +8,11 @@ use warnings;
 no warnings "uninitialized";
 use EnsEMBL::Web::Root;
 use List::MoreUtils;
+use Carp qw(cluck);
 
 sub new {
   my ($class, $species_defs, $location) = @_;
-  my $data = {
+  my $self = {
   'format'            => '',
   'style'             => '',
   'feature_count'     => 0,
@@ -21,16 +22,20 @@ sub new {
   'valid_coords'      => {},
   'browser_switches'  => {},
   'tracks'            => {},
+  'colourmap'         => {},
   'filter'            => undef,
   '_current_key'      => 'default',
   '_find_nearest'     => {},
   };
   my $all_chrs = $species_defs->ALL_CHROMOSOMES;
-  foreach my $chr (@{$data->{'drawn_chrs'}}) {
-    $data->{'valid_coords'}{$chr} = $all_chrs->{$chr};  
+  foreach my $chr (@{$self->{'drawn_chrs'}}) {
+    $self->{'valid_coords'}{$chr} = $all_chrs->{$chr};  
   }
-  bless $data, $class;
-  return $data;
+  bless $self, $class;
+  $self->{'colourlist'} = $species_defs->TRACK_COLOUR_ARRAY;
+  my %colourmap         = map { $_ => 0} @{$species_defs->TRACK_COLOUR_ARRAY}; 
+  $self->{'colourmap'}  = \%colourmap; 
+  return $self;
 }
 
 sub get_all_tracks{$_[0]->{'tracks'}}
@@ -407,6 +412,7 @@ sub _is_strand {
 sub add_track {
   my ($self, $row) = @_;
   my $config = {'name' => 'default'};
+  #cluck 'Adding track';;
 
   ## Pull out any parameters with "-delimited strings (without losing internal escaped '"')
   while ($row =~ s/(\w+)\s*=\s*"(([\\"]|[^"])+?)"//) {
@@ -421,14 +427,37 @@ sub add_track {
     }
   }
 
+  ## Set a (ideally unique) colour if none given
+  $self->_set_track_colour($config);
+
   $self->current_key($config->{'name'});
   $self->{'tracks'}{ $self->current_key } = { 'features' => [], 'config' => $config };
+}
+
+sub _set_track_colour {
+  my ($self, $config) = @_;
+  my @colours = @{$self->{'colourlist'}};
+  if ($config->{'color'}) {
+    $self->{'colourmap'}{$config->{'color'}} = 1;
+  }
+  else {
+    foreach my $colour (@colours) {
+      if (!$self->{'colourmap'}{$colour}) {
+        $config->{'color'} = $colour;
+        $self->{'colourmap'}{$colour} = 1;
+        last;
+      }
+    }
+  }
 }
  
 sub store_feature {
   my ( $self, $feature ) = @_; 
-  unless ($self->{'tracks'}{$self->current_key}) {
+  if (!$self->{'tracks'}{$self->current_key}) {
     $self->add_track();
+  }
+  elsif (!$self->{'tracks'}{$self->current_key}{'config'}{'color'}) {
+    $self->_set_track_colour($self->{'tracks'}{$self->current_key}{'config'});
   }
   push @{$self->{'tracks'}{$self->current_key}{'features'}}, $feature;
 }
@@ -451,9 +480,12 @@ sub bin_size {
 
 sub store_density_feature {
   my ( $self, $chr, $start, $end ) = @_;
-  $chr =~ s/chr//;
-  unless ($self->{'tracks'}{$self->current_key}) {
+  $chr =~ s/chr//;  
+  if (!$self->{'tracks'}{$self->current_key}) {
     $self->add_track();
+  }
+  elsif (!$self->{'tracks'}{$self->current_key}{'config'}{'color'}) {
+    $self->_set_track_colour($self->{'tracks'}{$self->current_key}{'config'});
   }
   $start = int($start / $self->{'_bin_size'} );
   $end = int( $end / $self->{'_bin_size'} );
