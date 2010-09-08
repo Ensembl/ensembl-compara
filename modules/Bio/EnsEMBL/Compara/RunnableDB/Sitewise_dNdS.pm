@@ -120,8 +120,9 @@ sub fetch_input {
   if ($num_leaves < 4) {
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
-    return undef;
-    # throw("Sitewise_dNdS : cluster size under 4 threshold and FAIL it");
+
+    $self->input_job->incomplete(0);
+    die $self->analysis->logic_name().": cluster size < 4; we do not attempt to run Sitewise_dNdS for such small clusters\n";
   }
   $self->{'cds_aln'} = $self->{'protein_tree'}->get_SimpleAlign(-cdna => 1);
   $self->{'tree'} = $self->{'protein_tree'}->newick_format("int_node_id");
