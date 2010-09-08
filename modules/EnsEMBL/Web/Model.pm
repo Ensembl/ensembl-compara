@@ -94,8 +94,10 @@ sub create_objects {
   ### The object of type $type is the primary object, used for the page.
   
   my ($self, $type, $request) = @_;
+  my $hub = $self->hub;
   
-  my $hub   = $self->hub;
+  return if $hub->species eq 'common';
+  
   my $url   = $hub->url($hub->multi_params);
   my $input = $hub->input;
   $type   ||= $hub->factorytype;
