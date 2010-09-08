@@ -22,6 +22,7 @@ __PACKAGE__->add_queriable_fields(
 __PACKAGE__->add_fields(
   address         => 'text',
   surname         => 'text',
+  subscription    => 'text', #not honeypot, but for sending subscription email - does not go to db, so kept here
 );
 
 __PACKAGE__->add_has_many(
