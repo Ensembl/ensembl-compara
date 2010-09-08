@@ -864,13 +864,4 @@ sub _warn_block {
   warn "\n";
 }
 
-sub colour_array {
-  return [qw(red blue green purple orange grey brown magenta darkgreen darkblue violet darkgrey)];
-} 
-
-sub density_colour_array {
-## Darker colours as they show better when drawn as lines
-  return [qw(darkred darkblue darkgreen black purple grey red blue green brown violet darkgrey)];
-} 
-
 1;
