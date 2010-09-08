@@ -12,6 +12,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     this.base(id);
     
     Ensembl.EventManager.register('windowResize', this, this.resize);
+    Ensembl.EventManager.register('hashChange',   this, this.hashChange);
   },
   
   init: function () {
@@ -147,5 +148,12 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       this.elLk.toolMore.hide();
       this.elLk.toolsUl.width('auto');
     };
+  },
+  
+  hashChange: function (r) {
+    var text = r.split(/\W/);
+    text     = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
+    this.elLk.shortTabs.filter('.location').find('a:not(.toggle)').attr('title', text);
+    this.elLk.longTabs.filter('.location').find('a:not(.toggle)').html(text);
   }
 });
