@@ -27,11 +27,12 @@ sub process {
 ## Form elements
   $interface->modify_element('name', {'label' => 'Your name', 'required' => 'yes'});
   $interface->modify_element('email', {'label' => 'Your email address', 'required' => 'yes', 'notes' => "You'll use this to log in to Ensembl", 'type' => 'Email' });
+  $interface->element('subscription', {'name' => 'subscription', 'label' => 'Ensembl Newsletters Subscription', 'type' => 'CheckBox', 'value'=>'Yes','notes' => 'Tick the box if you wish to receive email from Ensembl.'});
   $interface->extra_data('record_id');
   ## Honeypot fields, hidden from user
   $interface->element('surname', {'type' => 'Honeypot'});
   $interface->element('address', {'type' => 'Honeypot'});
-  $interface->element_order(['name', 'surname', 'address', 'email', 'organisation']);
+  $interface->element_order(['name', 'surname', 'address', 'email', 'organisation', 'subscription']);
 
   ## Render page or munge data, as appropriate
   $interface->configure($self->page, $object);
