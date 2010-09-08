@@ -32,7 +32,7 @@ sub init {
 }
 
 sub form {
-  my( $view_config, $object ) = @_;
+  my( $view_config, $hub ) = @_;
 
   $view_config->add_fieldset('Chromosome layout');
 
