@@ -1085,6 +1085,8 @@ sub get_go_list {
   my $self = shift ;
   my $trans = $self->transcript;
   my $goadaptor = $self->get_databases('go')->{'go'};
+  my $go_term_adaptor = $goadaptor->get_GOTermAdaptor();
+  my $so_term_adaptor = $goadaptor->get_SOTermAdaptor();
   my @dblinks = @{$trans->get_all_DBLinks};
   my $dbname_to_match = shift || 'GO';  
   my @goxrefs = grep { $_->dbname eq $dbname_to_match } @dblinks;
@@ -1112,23 +1114,26 @@ sub get_go_list {
     $hash{$go2} = 1;
     my $term_name;
     
-    if ($goadaptor) {
-      my $term;
-      eval { 
-        $term = $goadaptor->get_term({ acc => $go2 }); 
-      };
-      
-      warn $@ if $@;
-      
-      $term_name = $term ? $term->name : '';
+    foreach($goadaptor->get_GOTermAdaptor(), $goadaptor->get_SOTermAdaptor()){
+      if($_){
+        my $term;
+        eval { 
+          $term = $_->fetch_by_accession($go2); 
+        };
+
+        warn $@ if $@;
+        
+        $term_name = $term ? $term->name : '';
+
+        $term_name ||= $goxref->description || '';
+        $go_hash{$go} = [ $evidence, $term_name, $info_text ];
+      }
     }
-    
-    $term_name ||= $goxref->description || '';
-    $go_hash{$go} = [ $evidence, $term_name, $info_text ];
   }
   
   return \%go_hash;
 }
+
 
 =head2 get_oligo_probe_data
  Arg[1]       : none 
