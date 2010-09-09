@@ -91,7 +91,6 @@ sub fetch_input {
 
   $self->{'max_gene_count'} = 1000000;
 
-  $self->check_job_fail_options;
   $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
@@ -142,11 +141,11 @@ sub fetch_input {
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') 
       > $self->{'max_gene_count'}) {
-    $self->dataflow_output_id($self->input_id, 2);
+    $self->dataflow_output_id($self->input_id, 2);      # this does not seem to be wired to anything at the moment?
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
     $self->input_job->transient_error(0);
-    throw("BuildHMM : cluster size over threshold and FAIL it");
+    throw("BuildHMM : cluster size over threshold");    # maybe we should make the success/failure dependent on the success of the dataflow?
   }
 
   my @to_delete;
@@ -322,7 +321,6 @@ sub run_buildhmm
   my $worker_temp_directory = $self->worker_temp_directory;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
-    $self->check_job_fail_options;
     throw("error running hmmbuild, $!\n");
   }
 
@@ -345,7 +343,6 @@ sub run_buildhmm
 #   $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 #   unless(system("cd $worker_temp_directory; $cmd") == 0) {
 #     print("$cmd\n");
-#     $self->check_job_fail_options;
 #     throw("error running hmmcalibrate, $!\n");
 #   }
 
@@ -353,23 +350,6 @@ sub run_buildhmm
   my $runtime = time()*1000-$starttime;
 
   $self->{'protein_tree'}->store_tag('BuildHMM_runtime_msec', $runtime);
-}
-
-
-sub check_job_fail_options
-{
-  my $self = shift;
-
-  if($self->input_job->retry_count >= 2) {
-    $self->dataflow_output_id($self->input_id, 2);
-  
-    if($self->{'protein_tree'}) {
-      $self->{'protein_tree'}->release_tree;
-      $self->{'protein_tree'} = undef;
-    }
-    $self->input_job->transient_error(0);
-    throw("BuildHMM job failed >=3 times: try something else and FAIL it");
-  }
 }
 
 
@@ -428,7 +408,6 @@ sub dumpTreeMultipleAlignmentToWorkdir
   my $cmd = "$sreformat stockholm $aln_file > $stk_file";
   unless( system("$cmd") == 0) {
     print("$cmd\n");
-    $self->check_job_fail_options;
     throw("error running sreformat, $!\n");
   }
 
