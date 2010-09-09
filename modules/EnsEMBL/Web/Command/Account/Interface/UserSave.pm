@@ -67,8 +67,7 @@ sub process {
           if ($object->param('subscription') =~ /yes/i) {
             
             my $mailer = EnsEMBL::Web::Mailer::User->new();
-            $mailer->from = $object->param('email');
-            $mailer->send_subscription_email($object);
+            $mailer->send_subscription_email($object->param('email'), $object);
           }
         }
         else {
