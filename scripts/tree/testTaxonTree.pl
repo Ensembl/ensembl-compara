@@ -274,7 +274,7 @@ sub create_species_tree {
   }
 
   #$root = $root->minimize_tree if($self->{'minimize_tree'});
-  $root = $root->minimize_tree;
+  $root = $root->minimize_tree if (defined($root));
 
 #   print STDERR "# Before multifurcation_deletes_node\n\n";
 #   $root->print_tree($self->{'scale'});
