@@ -298,28 +298,30 @@ sub _summarise_xref_types {
 
   if($self->db_tree->{'XREF_TYPES'}){
     @xref_types=  split(/,/, $self->db_tree->{'XREF_TYPES'});
-	  foreach(@xref_types){
+    foreach(@xref_types){
       my @type_priority=  split(/=/, $_);
-	    $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
-	  }
+      $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
+    }
   }
 
   my $aref =  $dbh->selectall_arrayref(qq(
-  SELECT distinct(edb.db_display_name), max(priority) as m
-  FROM object_xref ox join xref x on ox.xref_id=x.xref_id  join external_db edb on x.external_db_id = edb.external_db_id
-    where edb.type IN ('MISC', 'LIT')
-    and (ox.ensembl_object_type ='Transcript' or ox.ensembl_object_type ='Translation' ) group by edb.db_display_name order by m desc) );
+  SELECT distinct(edb.db_display_name), max(edb.priority) as m
+    FROM object_xref ox JOIN xref x ON ox.xref_id =x.xref_id JOIN external_db edb ON x.external_db_id = edb.external_db_id
+   WHERE edb.type IN ('MISC', 'LIT')
+     AND (ox.ensembl_object_type ='Transcript' OR ox.ensembl_object_type ='Translation' )
+   GROUP BY edb.db_display_name
+   ORDER BY m desc) );
   foreach my $row (@$aref) {
     if($xrefs_types_hash{$row->[0]} ){
       $xrefs_types_hash{$row->[0]}= ($row->[1]>$xrefs_types_hash{$row->[0]})?$row->[1]:$xrefs_types_hash{$row->[0]};
-	}else{
+    }else{
       $xrefs_types_hash{$row->[0]}=$row->[1];
-	}
+    }
   }
   my $xref_types_string="";
   for my $key ( keys %xrefs_types_hash ) {
-      my $value = $xrefs_types_hash{$key};
-	  $xref_types_string.=$key."=".$value.",";
+    my $value = $xrefs_types_hash{$key};
+    $xref_types_string.=$key."=".$value.",";
   }
   $self->db_tree->{'XREF_TYPES'} = $xref_types_string;
   $dbh->disconnect();
