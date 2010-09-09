@@ -23,16 +23,17 @@ use Bio::EnsEMBL::Compara::Member;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-    my $self = shift @_;
-
-    $self->param_init(  # these defaults take the lowest priority after input_id and parameters
+sub param_defaults {
+    return {
         'fasta_name'  => 'metazoa.pep', # you should definitely change it
         'split_width' => 72,            # split sequence lines into readable format (set to 0 to disable)
         'idprefixed'  => 1,             # introduce sequence_id as a part of the name (for faster mapping)
         'removeXed'   => undef,         # do not filter sequences that contain that many X-es consecutively
         'source_names'=> [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL', 'EXTERNALPEP' ],
-    );
+    };
+}
+
+sub fetch_input {
 }
 
 sub run {

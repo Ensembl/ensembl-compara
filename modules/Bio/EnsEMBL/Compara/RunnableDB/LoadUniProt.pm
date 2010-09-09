@@ -61,10 +61,8 @@ use Bio::SeqIO;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-    my $self = shift @_;
-
-    $self->param_init(  # these defaults take the lowest priority after input_id and parameters
+sub param_defaults {
+    return {
         'uniprot'           => 'uniprot',   # but you can ask for a specific version of uniprot that mfetch would recognize
         'srs'               => 'SWISSPROT', # either 'SWISSPROT' or 'SPTREMBL'
         'taxon_id'          => undef,       # no ncbi_taxid filter means get all Fungi/Metazoa
@@ -74,7 +72,11 @@ sub fetch_input {
         'tax_div'           => undef,       # metazoa can be split into 6 parts and loaded in parallel
         'seq_loader_name'   => 'mfetch',    # you can choose between 'mfetch' and 'pfetch'
         'min_length'        => 80,          # we don't want to load sequences that are shorter than this (set to 0 to switch off)
-    );
+    };
+}
+
+sub fetch_input {
+    my $self = shift @_;
 
     $self->compara_dba()->dbc->disconnect_when_inactive(0);
 
