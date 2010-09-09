@@ -179,7 +179,7 @@ sub prepareMembersFromCoreSlices
 
   # Make sure we only flow the jobs for each gene that is found, and
   # not a useless autoflow when non genes are found.
-  $self->autoflow_inputjob(0);
+  $self->input_job->autoflow(0);
 
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;

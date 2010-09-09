@@ -222,7 +222,7 @@ sub write_output {
   #consist entirely of Ns)
   if (!$self->genomic_aligns) {
       #do not produce gerp jobs
-      $self->autoflow_inputjob(0);
+      $self->input_job->autoflow(0);
       return 1;
   }
 
