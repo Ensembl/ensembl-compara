@@ -15,7 +15,7 @@ unless(scalar(@ARGV)==2) {
     die "Correct usage:\n\t$0 <current_on_livemirror> <current_release>\n";
 }
 
-my ($curr_on_livemirror, $curr_release, $species_name) = @ARGV;
+my ($curr_on_livemirror, $curr_release) = @ARGV;
 my $prev_release = $curr_release-1;
 
 my @sources_of_previous_release = (
