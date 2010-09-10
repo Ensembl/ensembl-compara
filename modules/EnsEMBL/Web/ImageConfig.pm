@@ -1324,6 +1324,7 @@ sub add_alignments {
   my ($self, $key, $hashref, $species) = @_;
 
   return unless $self->_check_menus(qw( multiple_align pairwise_tblat pairwise_blastz pairwise_other ));
+  return if $self->species_defs->ENSEMBL_SITETYPE eq 'Pre';
   
   my $alignments = {};
   my $vega       = $self->species_defs->ENSEMBL_SITETYPE eq 'Vega';
