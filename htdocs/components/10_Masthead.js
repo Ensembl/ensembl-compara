@@ -5,9 +5,10 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     var minWidth    = Ensembl.minWidthEl.width();
     var windowWidth = $(window).width();
     
-    this.longTabs  = false;
-    this.moreShown = false;
-    this.zIndex    = 1000;
+    this.longTabs        = false;
+    this.moreShown       = false;
+    this.zIndex          = 1000;
+    this.recentLocations = {};
   
     this.base(id);
     
@@ -35,13 +36,17 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       $(this).css('zIndex', panel.zIndex++);
     });
     
+    this.elLk.dropdowns.filter('.location').find('ul.recent li a').each(function () {
+      panel.recentLocations[$(this).text()] = 1;
+    })
+    
     if (window.location.hash) {
-      this.hashChange(Ensembl.urlFromHash(window.location.href, true));
+      this.hashChange(Ensembl.urlFromHash(window.location.href, true), true);
     }
     
     $('.toggle', tabs).bind('click', function () {
       var tab      = $(this).parent();
-      var dropdown = panel.elLk.dropdowns.has('ul.' + this.rel);
+      var dropdown = panel.elLk.dropdowns.filter('.' + this.rel);
       var tabWidth, dropdownWidth;
       
       if (!dropdown.data('positioning')) {
@@ -154,10 +159,20 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     };
   },
   
-  hashChange: function (r) {
-    var text = r.split(/\W/);
-    text     = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
+  hashChange: function (r, init) {
+    var recent = Ensembl.speciesCommon + ': ' + Ensembl.lastR;
+    var text   = r.split(/\W/);
+    text       = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
+    
     this.elLk.shortTabs.filter('.location').find('a:not(.toggle)').attr('title', text);
     this.elLk.longTabs.filter('.location').find('a:not(.toggle)').html(text);
+    
+    if (this.elLk.dropdowns.length && !init && !this.recentLocations[recent]) {
+      this.elLk.dropdowns.filter('.location').find('ul.recent').prepend(
+        '<li><a href="' + Ensembl.urlFromHash(window.location.href).replace(/([\?;]r=)[^;]+(;?)/, '$1' + Ensembl.lastR + '$2') + '">' + recent + '</a></li>'
+      );
+      
+      this.recentLocations[recent] = 1;
+    }
   }
 });
