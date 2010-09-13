@@ -345,7 +345,7 @@ sub run_hcluster {
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
-    throw("error running hcluster, $!\n");
+    throw("error running hcluster command ' $cmd ': $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   printf("%1.3f secs to execute\n", (time()-$starttime));
