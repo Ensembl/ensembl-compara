@@ -76,19 +76,23 @@ Ensembl.extend({
     var regex = '[;&?]%s=(.+?)[;&]';
     var url   = window.location.search + ';';
     var hash  = window.location.hash.replace(/^#/, '?') + ';';
+    var lastR = this.coreParams ? this.coreParams.r : '';
     var match, m, i, r;
     
-    this.coreParams   = {};
-    this.initialR     = $('input[name=r]', '#core_params').val();
-    this.location     = { width: 100000 };
-    this.speciesPath  = $('#species_path').val() || '';
-    this.species      = this.speciesPath.split('/').pop();
-    this.multiSpecies = {};
+    this.coreParams    = {};
+    this.initialR      = $('input[name=r]', '#core_params').val();
+    this.location      = { width: 100000 };
+    this.speciesPath   = $('#species_path').val() || '';
+    this.speciesCommon = $('#species_common_name').val() || '';
+    this.species       = this.speciesPath.split('/').pop();
+    this.multiSpecies  = {};
     
     $('input', '#core_params').each(function () {
       var hashMatch = hash.match(regex.replace('%s', this.name));
       Ensembl.coreParams[this.name] = hashMatch ? unescape(hashMatch[1]) : this.value;
     });
+    
+    this.lastR = lastR || (hash ? this.coreParams.r : this.initialR);
     
     match = this.coreParams.r ? this.coreParams.r.match(/(.+):(\d+)-(\d+)/) : false;
     
