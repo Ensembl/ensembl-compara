@@ -151,7 +151,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       this.xhr = false;
     }
     
-    this.getContent();
+    this.getContent(Ensembl.replaceTimestamp(this.params.updateURL + ';hash_change=' + Ensembl.lastR));
   },
   
   hideHints: function () {
