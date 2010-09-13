@@ -9,8 +9,10 @@ __PACKAGE__->set_type('bookmark');
 __PACKAGE__->add_fields(
   url         => 'text',
   name        => 'text',
+  shortname   => 'text',
   description => 'text',
   click       => 'int',
+  object      => 'text',
 );
 
 1;
