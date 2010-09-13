@@ -159,19 +159,22 @@ sub write_output
 
   #
   #Create a StoreSequence job for each DnaFragChunk or DnaFragChunkSet object 
-  #to parallelise the storing of sequences in the Sequence table
+  #to parallelise the storing of sequences in the Sequence table. Only do this if
+  #chunk_size is defined
   #
-  my $dna_objects = $self->{'dna_collection'}->get_all_dna_objects;
-  foreach my $dna_object (@$dna_objects) {
-      if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-	  my $store_seq_id = "{'chunkSetID' => '" . $dna_object->dbID . "'}";
-	  #Use branch1 to send data to StoreSequence
-	  $self->dataflow_output_id($store_seq_id,1);
-      } else {
-	  my $store_seq_id = "{'chunkID' => '" . $dna_object->dbID .  "'}";
-	  #Use branch1 to send data to StoreSequence
-	  $self->dataflow_output_id($store_seq_id,1);
+  if (defined $self->{'chunk_size'}) {
+      my $dna_objects = $self->{'dna_collection'}->get_all_dna_objects;
+      foreach my $dna_object (@$dna_objects) {
+	  if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+	      my $store_seq_id = "{'chunkSetID' => '" . $dna_object->dbID . "'}";
+	      #Use branch1 to send data to StoreSequence
+	      $self->dataflow_output_id($store_seq_id,1);
+	  } else {
+	      my $store_seq_id = "{'chunkID' => '" . $dna_object->dbID .  "'}";
+	      #Use branch1 to send data to StoreSequence
+	      $self->dataflow_output_id($store_seq_id,1);
 	  }
+      }
   }
   return 1;
 }
