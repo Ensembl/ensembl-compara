@@ -51,7 +51,7 @@ use warnings;
 
 use base qw( Bio::EnsEMBL::Compara::Production::Projection::ProjectionEngine );
 
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder;
@@ -207,5 +207,44 @@ sub _dbentry_predicate_builder {
   #Build it together & return
   return p_and($correct_type_predicate, $go_term_removal_predicate, $dbentry_has_allowed_linkage_predicate);
 }
+
+=pod
+
+Override to provide more specific rules about allowing go xref transfer
+based on evidence tags.
+
+=cut
+
+sub _transfer_dbentry_by_targets {
+  my ($self, $source, $targets) = @_;
+  
+  my $source_ref = ref($source);
+  
+  my $link_join = sub {
+    my ($xref) = @_;
+    return join(q{}, sort @{$source->get_all_linkage_types()});
+  };
+  
+  foreach my $target_xref (@{$targets}) {
+    
+    next unless check_ref($target_xref, $source_ref);
+    
+    #Reject if it was the same
+    if ( $source->dbname() eq $target_xref->dbname() &&
+	    $source->primary_id() eq $target_xref->primary_id() &&
+	    $link_join->($source) eq $link_join->($target_xref)) {
+      return 0;
+    }
+
+    # if a GO term with the same accession, but IEA evidence code, exists, also don't project, as this
+    # will lead to duplicates when the projected term has its evidence code changed to IEA after projection
+    if ($target_xref->primary_id() eq $target_xref->primary_id()) {
+      foreach my $evidence_code (@{$target_xref->get_all_linkage_types()}) {
+	     return 0 if ($evidence_code eq "IEA");
+      }
+    }
+  }
+}
+
 
 1;

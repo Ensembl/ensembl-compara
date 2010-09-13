@@ -328,24 +328,14 @@ sub _filter_dbentry {
 sub _transfer_dbentry_by_targets {
   my ($self, $source, $targets) = @_;
 
+  my $source_ref = ref($source);
+
   foreach my $target_xref (@{$targets}) {
-
-    next if ref($source) ne "Bio::EnsEMBL::OntologyXref" || ref($target_xref) ne "Bio::EnsEMBL::OntologyXref";
-
+    next unless check_ref($target_xref, $source_ref);
     #Reject if it was the same
     if ( $source->dbname() eq $target_xref->dbname() &&
-	    $source->primary_id() eq $target_xref->primary_id() &&
-	    join("", @{$source->get_all_linkage_types()}) eq join("", @{$target_xref->get_all_linkage_types()})) {
-	      
+	    $source->primary_id() eq $target_xref->primary_id()) {
       return 0;
-    }
-
-    # if a GO term with the same accession, but IEA evidence code, exists, also don't project, as this
-    # will lead to duplicates when the projected term has its evidence code changed to IEA after projection
-    if ($target_xref->primary_id() eq $target_xref->primary_id()) {
-      foreach my $evidence_code (@{$target_xref->get_all_linkage_types()}) {
-	     return 0 if ($evidence_code eq "IEA");
-      }
     }
   }
 
