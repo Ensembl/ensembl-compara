@@ -35,10 +35,10 @@ sub id       { my $self = shift; return $self->{'__raw__'}[3]; }
 sub score    { 
   my $self = shift;
   my $score = 0;
-  if ( exists($self->{'__raw__'}[4]) && $self->{'__raw__'}[4] =~ /^\d+\.?\d*$/) {
+  if ( exists($self->{'__raw__'}[4]) && $self->{'__raw__'}[4] =~ /^-*\d+\.?\d*$/) {
     $score = $self->{'__raw__'}[4];
   }
-  elsif ($self->{'__raw__'}[3] =~ /^\d+\.?\d*$/) { ## Possible bedGraph format
+  elsif ($self->{'__raw__'}[3] =~ /^-*\d+\.?\d*$/) { ## Possible bedGraph format
     $score = $self->{'__raw__'}[3];
   } 
   return $score;
