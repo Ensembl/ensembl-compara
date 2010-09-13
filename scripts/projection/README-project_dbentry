@@ -1,0 +1,111 @@
+1. Requirements
+===============
+
+	- ensembl (v60+)
+	- ensembl-compara
+	- ensembl-hive
+	- Data::Predicate
+	- Text::CSV (for flat file writing)
+	- Log::Log4perl (optional for logging; otherwise it uses STDOUT)
+	
+2. Configuration
+================
+
+The only thing that is required is an Ensembl Registry file with the source
+core database, target core database and a compara database where the 
+homologies lie. The target database should have read/write access if you
+wish to write the results back. Configuration can look like the following:
+
+	use strict;
+	use warnings;
+	use Bio::EnsEMBL::DBSQL::DBAdaptor;
+	use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+	
+	Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+		-HOST => 'ensembldb.ensembl.org',
+		-PORT => 5306,
+		-USER => 'anonymous',
+		-DBNAME => 'homo_sapiens_core_59_37d',
+		-SPECIES => 'homo_sapiens',
+		-GROUP => 'core'
+	);
+	
+	Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+		-HOST => 'myensembl.localserver',
+		-PORT => 3306,
+		-USER => 'writer',
+		-PASS => 'mypass',
+		-DBNAME => 'gorilla_gorilla_core_59_3b',
+		-SPECIES => 'gorilla_gorilla',
+		-GROUP => 'core'
+	);
+	
+	Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+		-HOST => 'ensembldb.ensembl.org',
+		-PORT => 5306,
+		-USER => 'anonymous',
+		-DBNAME =>'ensembl_compara_59',
+		-SPECIES => 'multi',
+		-GROUP => 'compara'
+	);
+	
+	1;
+	
+Please note that we need to work with v60 DBs so the specific values here
+are wrong at the moment.
+
+To add aliases for the core DBAdaptors use the following code in your Registry:
+
+	use Bio::EnsEMBL::Registry;
+	Bio::EnsEMBL::Registry->find_and_add_aliases(-GROUP => 'core');
+	1;
+
+3. Running
+==========
+
+Ensure that all libraries are on your PERL5LIB:
+
+	code='/home/user/ensembl/
+	export PERL5LIB=${code}/ensembl/modules:${code}/ensembl-compara/modules:${code}/ensembl-hive/modules
+	
+Help and a manual page for the script is available from the program by invoking
+
+	./scripts/projection/project_dbentry.pl -help
+	./scripts/projection/project_dbentry.pl -man
+	
+The main way of invoking the program should look like the following:
+
+	./scripts/projection/project_dbentry.pl -registry reg.pm \
+	-source homo_sapiens \
+	-target gorilla_gorilla \
+	-compara multi \
+	-file /tmp/output.txt \
+	-write_to_db \
+	-verbose
+	
+The names used in the call should be synonyms to the databases specified
+in your Registry file. This means if you added the call to find_and_add_aliases
+you will be able to specify the species using other names e.g. human & gorilla.
+
+You can specify a different projection engine to use by giving the --engine
+option. This value should be a full resolved package name e.g. 
+Bio::EnsEMBL::Compara::Production::Projection::GOAProjectionEngine (this
+is the default engine used).
+
+4. Writing
+==========
+ 
+Writing will occur to a file (or to an automatically created file if the
+value was a directory location) or to a database if specified. If you
+did want database writing make sure your registry had a read-write connection
+available for the target otherwise all your results will be lost.
+
+5. Reruns
+=========
+
+The ability to safely rerun depends on the engine. The GOAProjectionEngine
+checks to see if an entry already exists and will only add when it does
+not. This means we can rerun with the only penalty being the time
+to discover potential linkages and then to exclude them.
+
+ 
