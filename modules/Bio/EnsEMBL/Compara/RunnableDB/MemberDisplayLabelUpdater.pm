@@ -26,7 +26,7 @@ By not specifying a GenomeDB ID you are asking to run this code over every
 GenomeDB. 
 
 Using it in the hive manner expects the above values (lowercased) filled in 
-any of the fields ProcessWithParams can detect values in. The exception to 
+any of the fields Process can detect values in. The exception to 
 this is db_adaptor which is created from the current Hive DBAdaptor instance.
 
 =head1 DESCRIPTION
@@ -65,7 +65,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use base qw(Bio::EnsEMBL::Hive::ProcessWithParams);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 #--- Non-hive methods
 =head2 new_without_hive()

@@ -28,13 +28,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs;
 
 use strict;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use POSIX qw(ceil);
 
 =head2 strict_hash_format
 
-    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::ProcessWithParams that is used to set the strictness level of the parameters' parser.
+    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
                   Here we return 0 in order to indicate that neither input_id() nor parameters() is required to contain a hash.
 
 =cut

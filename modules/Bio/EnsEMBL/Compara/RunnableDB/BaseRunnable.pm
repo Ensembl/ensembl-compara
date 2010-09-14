@@ -16,7 +16,7 @@ Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
 
 All Compara RunnableDBs *should* inherit from this module in order to work with module parameters and compara_dba in a neat way.
 
-It inherits the parameter parsing functionality from Bio::EnsEMBL::Hive::ProcessWithParams
+It inherits the parameter parsing functionality from Bio::EnsEMBL::Hive::Process
 and provides a convenience method for creating the compara_dba from almost anything that can provide connection parameters.
 
 Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
@@ -28,7 +28,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable;
 use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Hive::Process');
 
 =head2 compara_dba
 
