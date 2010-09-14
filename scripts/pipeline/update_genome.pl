@@ -502,11 +502,17 @@ sub update_dnafrags {
   my $current_verbose = verbose();
   verbose('EXCEPTION');
   while (my ($coordinate_system_name, $name, $length) = $sth1->fetchrow_array) {
+
+    #Find out if region is_reference or not
+    my $slice = $species_dba->get_SliceAdaptor->fetch_by_region($coordinate_system_name,$name);
+    my $is_reference = $slice->is_reference;
+
     my $new_dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
             -genome_db => $genome_db,
             -coord_system_name => $coordinate_system_name,
             -name => $name,
-            -length => $length
+            -length => $length,
+            -is_reference => $is_reference
         );
     my $dnafrag_id = $dnafrag_adaptor->update($new_dnafrag);
     delete($old_dnafrags_by_id->{$dnafrag_id});
