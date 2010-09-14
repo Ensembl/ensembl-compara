@@ -36,11 +36,11 @@ sub new {
 sub filters :lvalue { $_[0]->{'filters'}; }
 
 sub _parse_referer {
-  my ($self, $uri) = @_;
+  my $self = shift;
   
-  $uri ||= $ENV{'HTTP_REFERER'}; 
-  $uri =~ s/^(https?:\/\/.*?)?\///i;
-  $uri =~ s/[;&]$//;
+  my $uri = $ENV{'HTTP_REFERER'}; 
+  $uri    =~ s/^(https?:\/\/.*?)?\///i;
+  $uri    =~ s/[;&]$//;
   
   my ($url, $query_string) = split /\?/, $uri;
   my ($sp, $ot, $view, $subview) = split /\//, $url;
@@ -81,12 +81,13 @@ sub _parse_referer {
   }
   
   return {
-    'ENSEMBL_SPECIES'  => $sp,
-    'ENSEMBL_TYPE'     => $ot,
-    'ENSEMBL_ACTION'   => $view,
-    'ENSEMBL_FUNCTION' => $subview,
-    'params'           => $params,
-    'uri'              => "/$uri"
+    ENSEMBL_SPECIES  => $sp,
+    ENSEMBL_TYPE     => $ot,
+    ENSEMBL_ACTION   => $view,
+    ENSEMBL_FUNCTION => $subview,
+    params           => $params,
+    uri              => "/$uri",
+    absolute_url     => $ENV{'HTTP_REFERER'}
   };
 }
 
