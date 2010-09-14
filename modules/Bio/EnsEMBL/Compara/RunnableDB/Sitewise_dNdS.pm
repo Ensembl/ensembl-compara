@@ -66,17 +66,13 @@ use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-
 use Bio::AlignIO;
 use Bio::TreeIO;
 use Bio::SimpleAlign;
-
 use Cwd;
-
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -94,13 +90,6 @@ sub fetch_input {
   my( $self) = @_;
 
   throw("No input_id") unless defined($self->input_id);
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -172,7 +161,7 @@ sub write_output {
     $self->{'protein_tree'}->store_tag('Sitewise_dNdS_saturated', $self->{'results'}{saturated});
     # create another job for each subtree
     if (defined($self->{'results'}{trees})) {
-      $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+      $self->{treeDBA} = $self->compara_dba->get_ProteinTreeAdaptor;
       foreach my $subtree_num (keys %{$self->{'results'}{trees}}) {
         my $subtree = $self->{'results'}{trees}{$subtree_num};
         my @nodes;
@@ -261,7 +250,7 @@ sub get_params {
 
   if (defined($params->{'protein_tree_id'})) {
     $self->{'protein_tree'} = 
-      $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
+      $self->compara_dba->get_ProteinTreeAdaptor->
         fetch_node_by_node_id($params->{'protein_tree_id'});
   } 
   if (defined($params->{'saturated'})) {
@@ -398,11 +387,11 @@ sub run_sitewise_dNdS
     chdir($tmpdir);
     my $run;
     my $quiet = $self->debug ? '2>/dev/null' : '';
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
     open($run, "$slrexe $quiet |") or throw("Cannot open exe $slrexe");
     my @output = <$run>;
     $exit_status = close($run);
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
     $self->{error_string} = (join('',@output));
     if ( (grep { /is saturated/ } @output)) {
       $results->{saturated} = $self->{'saturated'};
@@ -568,7 +557,7 @@ sub store_sitewise_dNdS
   my $results = $self->{'results'};
   my $aa_aln = $self->{'protein_tree'}->get_SimpleAlign;
   my @gap_col_matrix = @{$aa_aln->gap_col_matrix};
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
   my $root_id = $self->{'protein_tree'}->node_id;
 
   # We store a tag with the subroot_id so that we can do easy mapping
@@ -587,7 +576,7 @@ sub store_sitewise_dNdS
       my ($site, $neutral, $optimal, $omega, $lower, $upper, $lrt_stat, $pval, $adj_pval, $q_value) = @$position;
       my $nseq_ngaps = 0; foreach my $val (values %{$gap_col_matrix[$site-1]}) {$nseq_ngaps++ unless (1 == $val)};
       my $optimalc; if (0 != $nseq_ngaps) {$optimalc = $optimal / $nseq_ngaps;} else {$optimalc = $optimal;}
-      $sth = $self->{'comparaDBA'}->dbc->prepare
+      $sth = $self->compara_dba->dbc->prepare
         ("INSERT INTO sitewise_aln 
                            (aln_position,
                             node_id,
@@ -631,7 +620,7 @@ sub store_sitewise_dNdS
 #             my $member_id = $member->dbID;
 #             my $member_position = $seq_location->start;
 #             my $aa = $seq->subseq($seq_location->start,$seq_location->end);
-#             my $sth = $self->{'comparaDBA'}->dbc->prepare
+#             my $sth = $self->compara_dba->dbc->prepare
 #               ("INSERT INTO sitewise_member 
 #                            (sitewise_id,
 #                             member_id,

@@ -58,14 +58,14 @@ use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -87,13 +87,6 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -107,8 +100,8 @@ sub fetch_input {
 
   my $starttime = time();
 
-  $self->{'streeDBA'} = $self->{'comparaDBA'}->get_SuperProteinTreeAdaptor;
-  $self->{homologyDBA} = $self->{'comparaDBA'}->get_HomologyAdaptor;
+  $self->{'streeDBA'} = $self->compara_dba->get_SuperProteinTreeAdaptor;
+  $self->{homologyDBA} = $self->compara_dba->get_HomologyAdaptor;
   $self->{'protein_tree'} =  $self->{'streeDBA'}->fetch_node_by_node_id($self->{'protein_tree_id'});
 
   if($self->debug) {
@@ -300,7 +293,7 @@ sub store_gene_link_as_homology
   my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
   $mlss->method_link_type("ENSEMBL_PARALOGUES");
   $mlss->species_set([$protein1->genome_db]);
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;

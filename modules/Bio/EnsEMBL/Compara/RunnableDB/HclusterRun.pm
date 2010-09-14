@@ -53,7 +53,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::HclusterRun;
 
 use strict;
 use Switch;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Homology;
@@ -61,7 +60,12 @@ use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
+
 
 sub fetch_input {
   my( $self) = @_;
@@ -70,10 +74,6 @@ sub fetch_input {
   $self->{'clusterset_id'} = 1;
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-
   $self->get_params($self->parameters);
 
   my @species_set = @{$self->{'species_set'}};
@@ -81,17 +81,11 @@ sub fetch_input {
   $self->{'cluster_mlss'}->method_link_type('PROTEIN_TREES');
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
-    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
     throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
     push @genomeDB_set, $gdb;
   }
   $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
-
-  #  $self->{gdba} = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
-  #   my $input_gdb_id = $self->input_id;
-  #   my $gdb = $self->{gdba}->fetch_by_dbID($input_gdb_id);
-  #   throw("no genome_db for $input_gdb_id") unless(defined($gdb));
-  #   $self->{gdb} = $gdb;
 
   return 1;
 }
@@ -167,9 +161,9 @@ sub store_clusters {
 
   $self->{retry} = $self->input_job->retry_count if ($self->input_job->retry_count > 10);
 
-  my $mlssDBA = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $mlssDBA = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  my $pafDBA = $self->compara_dba->get_PeptideAlignFeatureAdaptor;
+  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
   my $filename;
@@ -205,10 +199,10 @@ sub store_clusters {
   }
 
   my $mlss_id = $self->{'cluster_mlss'}->dbID;
-  $mlss_id = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
+  $mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
 
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
-  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
+  $self->{treeDBA} = $self->compara_dba->get_ProteinTreeAdaptor;
 
   open FILE, "$filename" or die $!;
   my $counter=1;
@@ -333,7 +327,7 @@ sub run_hcluster {
     }
   }
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
 
   my $cmd = $hcluster_executable;
   my $max_count = int($self->{'max_gene_count'}/2); # hcluster can joint up to (max_count+(max_count-1))
@@ -347,7 +341,7 @@ sub run_hcluster {
     $self->check_job_fail_options;
     throw("error running hcluster command ' $cmd ': $!\n");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
   return 1;
@@ -356,7 +350,7 @@ sub run_hcluster {
 sub dataflow_clusters {
   my $self = shift;
 
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
   my $clusterset;

@@ -51,14 +51,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS;
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
-
 use Bio::Tools::Run::Phylo::PAML::Codeml;
 use Bio::EnsEMBL::Hive;
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my( $self) = @_;
@@ -66,10 +63,7 @@ sub fetch_input {
   $self->{'codeml_parameters_href'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{ha} = $self->{'comparaDBA'}->get_HomologyAdaptor;
+  $self->{ha} = $self->compara_dba->get_HomologyAdaptor;
 
   $self->get_params($self->parameters);
   my $homology_id = $self->input_id;
@@ -135,7 +129,7 @@ sub run
 sub write_output {
   my $self = shift;
 
-  my $homologyDBA = $self->{'comparaDBA'}->get_HomologyAdaptor;
+  my $homologyDBA = $self->compara_dba->get_HomologyAdaptor;
   foreach my $homology (@{$self->{'homology'}}) {
     $homologyDBA->update_genetic_distance($homology);
   }
@@ -160,7 +154,7 @@ sub calc_genetic_distance
   # second argument will change selenocyteine TGA codons to NNN
   my $aln = $homology->get_SimpleAlign("cdna", 1);
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
   my $possible_exe = $self->analysis->program_file;
@@ -256,7 +250,7 @@ sub calc_genetic_distance
     }
   }
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   return $homology;
 }

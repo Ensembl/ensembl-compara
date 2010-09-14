@@ -65,16 +65,14 @@ use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthoTree; # check_for_split_gene method
-
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Compara::RunnableDB::OrthoTree);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree');
 
 
 =head2 fetch_input
@@ -97,14 +95,7 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  $self->{'memberDBA'} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{'memberDBA'} = $self->compara_dba->get_MemberAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -214,8 +205,7 @@ sub get_params {
   if(defined($params->{'protein_tree_id'})) {
 
     $self->{'protein_tree'} =  
-         $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
-         fetch_node_by_node_id($params->{'protein_tree_id'});
+         $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   if(defined($params->{'clusterset_id'})) {
     $self->{'clusterset_id'} = $params->{'clusterset_id'};
@@ -322,7 +312,7 @@ sub run_njtree_phyml
     $cmd .= " 1>$logfile 2>$errfile";
     #     $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
 
@@ -347,7 +337,7 @@ sub run_njtree_phyml
       $self->throw("error running njtree phyml, $!\n");
     }
 
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
   } elsif (0 == $self->{'bootstrap'}) {
     # first part
     # ./njtree phyml -nS -f species_tree.nh -p 0.01 -o $BASENAME.cons.nh $BASENAME.nucl.mfa
@@ -380,7 +370,7 @@ sub run_njtree_phyml
     $cmd .= " 1> " . $self->{'newick_file'};
     $cmd .= " 2> /dev/null" unless($self->debug);
 
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
     my $worker_temp_directory = $self->worker_temp_directory;
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
@@ -388,7 +378,7 @@ sub run_njtree_phyml
       $self->check_job_fail_options;
       $self->throw("error running njtree phyml noboot (step 2 of 2), $!\n");
     }
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
   } else {
     $self->throw("NJTREE PHYML -- wrong bootstrap option");
   }
@@ -567,7 +557,7 @@ sub store_proteintree
   return unless($self->{'protein_tree'});
 
   printf("PHYML::store_proteintree\n") if($self->debug);
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
   $treeDBA->sync_tree_leftright_index($self->{'protein_tree'});
   $self->{'protein_tree'}->clusterset_id($self->{clusterset_id});
   $treeDBA->store($self->{'protein_tree'});
@@ -760,7 +750,7 @@ sub _store_tree_tags {
     my $self = shift;
 
     my $tree = $self->{'protein_tree'};
-    my $pta = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+    my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Tree tags...\n";
     $tree->_load_tags();

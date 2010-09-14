@@ -56,8 +56,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my $self = shift;
@@ -82,7 +81,6 @@ sub fetch_input {
   #the -DBCONN options uses the dbname,user,pass,port,host,driver from the
   #variable DBConnection to create the new connection (in essence a copy)
 
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
   if (defined $self->{'cr_analysis_logic_name'}) {
     $self->{'cr_analysis'} = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'cr_analysis_logic_name'});
     throw($self->{'cr_analysis_logic_name'} . " analysis is missing, can't proceed\n")

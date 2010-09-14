@@ -45,21 +45,19 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::CreateHclusterPrepareJobs;
 
 use strict;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
 
 sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_set'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
   $self->get_params($self->parameters);
   return 1;

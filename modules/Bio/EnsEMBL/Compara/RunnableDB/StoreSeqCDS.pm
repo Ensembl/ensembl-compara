@@ -58,12 +58,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::StoreSeqCDS;
 use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::Member;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process Bio::EnsEMBL::Compara::Member);
 
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
@@ -81,16 +79,7 @@ sub fetch_input {
 
   $self->{'clusterset_id'} = 1;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
-
-  # Get the needed adaptors here
-  # $self->{silly_adaptor} = $self->{'comparaDBA'}->get_SillyAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
 
   $self->get_params($self->parameters);
   my $input_id = $self->input_id;
@@ -110,7 +99,7 @@ sub fetch_input {
   # For long parameters, look at analysis_data
   if($self->{blast_template_analysis_data_id}) {
     my $analysis_data_id = $self->{blast_template_analysis_data_id};
-    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
+    my $analysis_data_params = $self->compara_dba->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
     $self->get_params($analysis_data_params);
   }
   return 1;
@@ -202,7 +191,7 @@ sub store_seq_cds {
 
   return 0 unless($sequence_cds && $member_id);
 
-  my $sth = $self->dbc->prepare("SELECT sequence_cds_id FROM sequence_cds WHERE member_id = ?");
+  my $sth = $self->compara_dba->prepare("SELECT sequence_cds_id FROM sequence_cds WHERE member_id = ?");
   $sth->execute($member_id);
   ($seqID) = $sth->fetchrow_array();
   $sth->finish;
@@ -210,7 +199,7 @@ sub store_seq_cds {
   if(!$seqID) {
     my $length = length($sequence_cds);
 
-    my $sth2 = $self->dbc->prepare("INSERT INTO sequence_cds (member_id, sequence_cds, length) VALUES (?,?,?)");
+    my $sth2 = $self->compara_dba->prepare("INSERT INTO sequence_cds (member_id, sequence_cds, length) VALUES (?,?,?)");
     $sth2->execute($member_id, $sequence_cds, $length);
     $seqID = $sth2->{'mysql_insertid'};
     $sth2->finish;

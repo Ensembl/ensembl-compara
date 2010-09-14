@@ -65,12 +65,12 @@ use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::URLFactory;               # Blast_reuse
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;   # Blast_reuse
 use File::Basename;
-use vars qw(@ISA);
 
-@ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-# 
-# our @ISA = qw(Bio::EnsEMBL::Analysis::RunnableDB::Blast);
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
 
 my $g_BlastComparaPep_workdir;
 
@@ -90,10 +90,9 @@ sub fetch_input {
   throw("No input_id") unless defined($self->input_id);
 
   ## Get the query (corresponds to the member with a member_id = input_id)
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $member_id = $self->input_id;
-  my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_dbID($member_id);
+  my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($member_id);
   throw("No member in compara for member_id = $member_id") unless defined($member);
   if ($member->bioseq->length < 10) {
     $self->input_job->incomplete(0);    # to say "the execution completed successfully, but please record the thown message"
@@ -135,7 +134,7 @@ sub fetch_input {
   }
   my @gdbs;
   foreach my $gdb_id (@{$cluster_parameters->{species_set}}) {
-    my $genomeDB = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+    my $genomeDB = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
     push @gdbs, $genomeDB;
   }
   print STDERR "Found ", scalar(@gdbs), " genomes to blast this member against.\n" if ($self->debug);
@@ -247,7 +246,7 @@ sub run {
       $self->runnable($runnable);
 
       # Only run if the blasts are not being reused
-      $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+      $self->compara_dba->dbc->disconnect_when_inactive(1);
 
       ## call runnable run method in eval block
       eval { $self->runnable->run(); };
@@ -260,7 +259,7 @@ sub run {
           die("$@$_");
         }
       }
-      $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+      $self->compara_dba->dbc->disconnect_when_inactive(0);
       #since the Blast runnable takes in analysis parameters rather than an
       #analysis object, it creates new Analysis objects internally
       #(a new one for EACH FeaturePair generated)
@@ -285,7 +284,7 @@ sub write_output {
 
   print STDERR "Inserting PAFs...\n" if ($self->debug);
   foreach my $gdb_id (keys %{$self->{cross_pafs}}) {
-    $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor->store(@{$self->{cross_pafs}{$gdb_id}});
+    $self->compara_dba->get_PeptideAlignFeatureAdaptor->store(@{$self->{cross_pafs}{$gdb_id}});
   }
 }
 

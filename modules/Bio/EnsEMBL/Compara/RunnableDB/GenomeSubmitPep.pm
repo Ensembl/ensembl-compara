@@ -56,7 +56,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
@@ -77,11 +77,10 @@ sub fetch_input {
   my $input_hash = eval($self->input_id);
   
   #create a Compara::DBAdaptor which shares the same DBConnection as $self->db
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
   $self->{'analysisStatsDBA'} = $self->db->get_AnalysisStatsAdaptor;
 
   $self->db->dbc->disconnect_when_inactive(0);
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
     
   my $genome_db_id = $input_hash->{'gdb'};
   my $subset_id    = $input_hash->{'ss'};
@@ -91,7 +90,7 @@ sub fetch_input {
     print("gdb = $genome_db_id\n");
 
     #get the Compara::GenomeDB object for the genome_db_id
-    $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+    $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 
     $self->{'reference_name'} = $self->{'genome_db'}->dbID()."_".$self->{'genome_db'}->assembly();
 
@@ -104,7 +103,7 @@ sub fetch_input {
   throw("no subset defined, can't figure out which peptides to use\n") 
     unless(defined($subset_id));
   
-  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw( "Cannot SubsetAdaptor->fetch_by_dbID($subset_id))" ); 
+  $self->{'pepSubset'} = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw( "Cannot SubsetAdaptor->fetch_by_dbID($subset_id))" ); 
 
   unless($self->{'reference_name'}) {
     $self->{'reference_name'} = $self->{'pepSubset'}->description;
@@ -161,7 +160,7 @@ sub getSubsetIdForGenomeDBId {
             "AND subset.description like '%longest%' ".
             "AND member.member_id=subset_member.member_id ".
             "AND member.genome_db_id=$genome_db_id;";
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  my $sth = $self->compara_dba->prepare( $sql );
   $sth->execute();
 
   $sth->bind_columns( undef, \$subset_id );
@@ -292,13 +291,13 @@ sub create_peptide_align_feature_table {
   my $table_name = "peptide_align_feature_${species_name}_${genome_db_id}";
   my $sql = "CREATE TABLE IF NOT EXISTS $table_name like peptide_align_feature";
 
-  my $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
 
   # Disable keys makes inserts faster
   $sql = "ALTER TABLE $table_name DISABLE KEYS";
 
-  $sth = $self->{'comparaDBA'}->dbc->prepare($sql);
+  $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   $sth->finish();
 }

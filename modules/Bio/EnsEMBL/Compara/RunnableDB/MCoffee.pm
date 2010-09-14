@@ -60,16 +60,14 @@ use IO::File;
 use File::Basename;
 use File::Path;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::BaseAlignFeature;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Time::HiRes qw(time gettimeofday tv_interval);
 # use POSIX qw(ceil floor);
-
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -84,8 +82,6 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my( $self) = @_;
-
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
   ### DEFAULT PARAMETERS ###
   my $p = '';
@@ -110,7 +106,7 @@ sub fetch_input {
 
   $self->check_if_exit_cleanly;
 
-  $self->{treeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  $self->{treeDBA} = $self->compara_dba->get_ProteinTreeAdaptor;
   my $id = $self->{'protein_tree_id'};
 
   $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
@@ -481,7 +477,7 @@ sub run_mcoffee
   #
   # Run the command.
   #
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   my $rc;
   if ($self->{'method'} eq 'mafft') {
   	my ($mafft_env, $mafft_executable);
@@ -501,7 +497,7 @@ sub run_mcoffee
     $DB::single=1;
     $rc = system($prefix.$cmd);
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   unless($rc == 0) {
       $self->DESTROY;
@@ -524,7 +520,7 @@ sub update_single_peptide_tree
     next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     next unless($member->sequence);
     $member->cigar_line(length($member->sequence)."M");
-    $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
+    $self->compara_dba->get_ProteinTreeAdaptor->store($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -735,7 +731,7 @@ sub parse_and_store_alignment_into_proteintree
       if ($self->{'output_table'} eq 'protein_tree_member') {
 	  #
 	  # We can use the default store method for the $member.
-          $self->{'comparaDBA'}->get_ProteinTreeAdaptor->store($member);
+          $self->compara_dba->get_ProteinTreeAdaptor->store($member);
       } else {
 	  #
 	  # Do a manual insert into the correct output table.
@@ -789,7 +785,7 @@ sub _store_aln_tags {
     my $self = shift;
     my $tree = shift || $self->{'protein_tree'};
     my $output_table = $self->{'output_table'};
-    my $pta = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+    my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Alignment tags...\n";
 

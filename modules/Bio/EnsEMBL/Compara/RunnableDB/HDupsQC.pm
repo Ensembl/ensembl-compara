@@ -59,11 +59,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::HDupsQC;
 use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
@@ -81,16 +79,9 @@ sub fetch_input {
 
   $self->{'clusterset_id'} = 1;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   # Get the needed adaptors here
-  $self->{treeDBA}  = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  $self->{streeDBA} = $self->{'comparaDBA'}->get_SuperProteinTreeAdaptor;
+  $self->{treeDBA}  = $self->compara_dba->get_ProteinTreeAdaptor;
+  $self->{streeDBA} = $self->compara_dba->get_SuperProteinTreeAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -176,7 +167,7 @@ sub run_dupsqc {
   my $secs = int(rand(10)); `sleep $secs`;
 
   my $starttime=time();
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute($self->{mlss});
   printf("%1.3f secs to query\n", time()-$starttime) if($self->debug);
   my $same_tree_duplicates;
@@ -255,7 +246,7 @@ sub run_dupsorthologyqc {
   `sleep $secs`;
 
   my $starttime=time();
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute($self->{mlss});
   printf("%1.3f secs to query\n", time()-$starttime) if($self->debug);
   while (my $aref = $sth->fetchrow_arrayref) {

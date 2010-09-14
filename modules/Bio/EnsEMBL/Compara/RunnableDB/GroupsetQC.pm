@@ -60,10 +60,13 @@ use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Hive::URLFactory;               # reuse_db
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
 
 =head2 fetch_input
 
@@ -81,16 +84,9 @@ sub fetch_input {
 
   # $self->{'clusterset_id'} = 1;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   # Get the needed adaptors here
-  $self->{proteintreeDBA} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{proteintreeDBA} = $self->compara_dba->get_ProteinTreeAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -275,7 +271,7 @@ sub join_one_pair {
   my $from_clustername= $from_dataset->{clustername};
 
   print STDERR "Fetching groupset for $this_dbname\n" if ($self->debug);
-  my $to_dataset   = $self->fetch_groupset($self->{comparaDBA});
+  my $to_dataset   = $self->fetch_groupset($self->compara_dba);
   my $to_membership = $to_dataset->{membership};
   my $to_clustername= $to_dataset->{clustername};
 
@@ -557,7 +553,7 @@ sub per_genome_mapping_stats {
 
   print STDERR "per_genome_mapping_stats\n" if ($self->debug);
 
-  my $this_orphans  = $self->fetch_gdb_orphan_genes($self->{comparaDBA},$gdb_id);
+  my $this_orphans  = $self->fetch_gdb_orphan_genes($self->compara_dba,$gdb_id);
   my $total_orphans_num   = scalar keys (%$this_orphans);
   $self->{groupset_node}->store_tag("$gdb_id".'_total_orphans_num' . '_' . $self->{groupset_tag},$total_orphans_num);
   my $total_num_genes = scalar @{$self->{memberDBA}->fetch_all_by_source_genome_db_id('ENSEMBLGENE',$gdb_id)};

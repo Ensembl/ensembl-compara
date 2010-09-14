@@ -70,15 +70,13 @@ use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
-
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -99,17 +97,9 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   $self->print_params if($self->debug);
-  $self->check_job_fail_options;
   $self->check_if_exit_cleanly;
 
   unless($self->{'protein_tree'}) {
@@ -117,7 +107,7 @@ sub fetch_input {
   }
 
   # We fetch the mlssID that is later needed for the newly stored leaves
-  $self->{mlssDBA} = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor;
+  $self->{mlssDBA} = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my @protein_trees_mlsses = @{$self->{mlssDBA}->fetch_all_by_method_link_type('PROTEIN_TREES')};
   $self->{mlssID} = $protein_trees_mlsses[0]->dbID || 0;
 
@@ -207,7 +197,7 @@ sub get_params {
   }
 
   if(defined($params->{'protein_tree_id'})) {
-    $self->{'protein_tree'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor->fetch_node_by_node_id($params->{'protein_tree_id'});
+    $self->{'protein_tree'} = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($params->{'protein_tree_id'});
   }
   
   foreach my $key (qw[max_gene_count use_genomedb_id clusterset_id sreformat_exe]) {
@@ -256,7 +246,7 @@ sub run_quicktreebreak {
   #/nfs/users/nfs_a/avilella/src/quicktree/quicktree_1.1/bin/quicktree -out t
   # -in a /tmp/worker.12270/proteintree_517373.stk
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   open(RUN, "$cmd |") or $self->throw("error running quicktree, $!\n");
   my @output = <RUN>;
@@ -264,7 +254,7 @@ sub run_quicktreebreak {
   if (!$exit_status) {
     $self->throw("error running quicktree, $!\n");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   foreach my $line (@output) {
     $line =~ s/\n//;
@@ -276,18 +266,6 @@ sub run_quicktreebreak {
 
   my $runtime = time()*1000-$starttime;
   $self->{'protein_tree'}->store_tag('QuickTreeBreak_runtime_msec', $runtime);
-}
-
-
-sub check_job_fail_options {
-  my $self = shift;
-
-  if ($self->input_job->retry_count > 8) {
-    # $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-    $self->DESTROY;
-    $self->input_job->transient_error(0);
-    throw("QuickTree job failed");
-  }
 }
 
 
@@ -352,7 +330,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   unless( system("$cmd") == 0) {
     print("$cmd\n");
-    $self->check_job_fail_options;
     throw("error running sreformat with cmd $cmd: $!\n");
   }
 
@@ -377,9 +354,9 @@ sub store_proteintrees {
 sub store_clusters {
   my $self = shift;
 
-  my $mlssDBA = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-  my $pafDBA = $self->{'comparaDBA'}->get_PeptideAlignFeatureAdaptor;
-  my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
+  my $mlssDBA = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  my $pafDBA = $self->compara_dba->get_PeptideAlignFeatureAdaptor;
+  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
   my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});

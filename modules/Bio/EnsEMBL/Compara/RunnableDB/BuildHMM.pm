@@ -64,16 +64,13 @@ use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
-
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
@@ -93,13 +90,6 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   $self->print_params if($self->debug);
@@ -107,7 +97,7 @@ sub fetch_input {
 
   if(defined($self->{'protein_tree_id'})) {
     $self->{'protein_tree'} =
-         $self->{'comparaDBA'}->get_ProteinTreeAdaptor->
+         $self->compara_dba->get_ProteinTreeAdaptor->
          fetch_node_by_node_id($self->{'protein_tree_id'});
   }
 
@@ -127,7 +117,7 @@ sub fetch_input {
   $self->{hmm_type} = $hmm_type;
   my $query = "SELECT hmmprofile FROM $table_name WHERE type=\"$hmm_type\" AND node_id=$node_id";
   print STDERR "$query\n" if ($self->debug);
-  my $sth = $self->{comparaDBA}->dbc->prepare($query);
+  my $sth = $self->compara_dba->dbc->prepare($query);
   $sth->execute;
   my $result = $sth->fetch;
   if (defined($result)) {
@@ -316,7 +306,7 @@ sub run_buildhmm
   $cmd .= " ". $self->{'input_aln'};
   $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $worker_temp_directory = $self->worker_temp_directory;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
@@ -346,7 +336,7 @@ sub run_buildhmm
 #     throw("error running hmmcalibrate, $!\n");
 #   }
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $runtime = time()*1000-$starttime;
 
   $self->{'protein_tree'}->store_tag('BuildHMM_runtime_msec', $runtime);
@@ -430,7 +420,7 @@ sub store_hmmprofile
 
   my $type = undef; $type = 'dna' if defined($self->{'cdna'});
   my $table_name = 'protein_tree_hmmprofile';
-  my $sth = $self->{comparaDBA}->dbc->prepare("INSERT INTO $table_name VALUES (?,?,?)");
+  my $sth = $self->compara_dba->dbc->prepare("INSERT INTO $table_name VALUES (?,?,?)");
   $sth->execute($tree->node_id, $self->{hmm_type},$self->{hmm_text});
 
   return undef;

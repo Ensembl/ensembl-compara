@@ -48,7 +48,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::HclusterPrepare;
 
 use strict;
 use Switch;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Homology;
@@ -56,7 +55,11 @@ use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
 
 sub fetch_input {
   my( $self) = @_;
@@ -64,10 +67,7 @@ sub fetch_input {
   $self->{'species_set'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{gdba} = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  $self->{gdba} = $self->compara_dba->get_GenomeDBAdaptor;
 
   $self->get_params($self->parameters);
 
@@ -163,13 +163,13 @@ sub analyze_table {
   my $sql = "ALTER TABLE $tbl_name ENABLE KEYS";
 
   print("$sql\n") if ($self->debug);
-  my $sth = $self->dbc->prepare($sql);
+  my $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
 
   $sql = "ANALYZE TABLE $tbl_name";
 
   #print("$sql\n");
-  $sth = $self->dbc->prepare($sql);
+  $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
   printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));
 }
@@ -195,7 +195,7 @@ sub fetch_distances {
             "IF(evalue<1e-199,100,ROUND(-log10(evalue)/2)) ".
              "FROM $tbl_name WHERE qgenome_db_id=$gdb_id and hgenome_db_id in ($species_set_string);";
   print("$sql\n");
-  my $sth = $self->dbc->prepare($sql);
+  my $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
@@ -228,7 +228,7 @@ sub fetch_categories {
             "qmember_id ".
              "FROM $tbl_name WHERE qgenome_db_id=$gdb_id;";
   print("$sql\n");
-  my $sth = $self->dbc->prepare($sql);
+  my $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");

@@ -66,8 +66,6 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Scalar::Util qw(looks_like_number);
 use List::Util qw(max);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
@@ -77,9 +75,9 @@ use Bio::EnsEMBL::Compara::Homology;
 
 use Bio::SimpleAlign;
 use Bio::AlignIO;
-
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -104,13 +102,6 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -123,8 +114,8 @@ sub fetch_input {
   $self->print_params if($self->debug);
 
   my $starttime = time();
-  $self->{'treeDBA'} = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
-  $self->{homologyDBA} = $self->{'comparaDBA'}->get_HomologyAdaptor;
+  $self->{'treeDBA'} = $self->compara_dba->get_ProteinTreeAdaptor;
+  $self->{homologyDBA} = $self->compara_dba->get_HomologyAdaptor;
   $self->{'protein_tree'} =  $self->{'treeDBA'}->
          fetch_tree_at_node_id($self->{'protein_tree_id'});
   $self->check_job_fail_options;
@@ -201,13 +192,6 @@ sub check_job_fail_options
     die $self->analysis->logic_name()." job failed >=2 times; dataflowing to QuickTreeBreak\n";
   }
 
-#   if ($self->input_job->retry_count >= 1) {
-#     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 400 && !defined($self->worker->{HIGHMEM})) {
-#       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-#       $self->DESTROY;
-#       throw("OrthoTree job too big: try something else and FAIL it");
-#     }
-#   }
 }
 
 sub DESTROY {
@@ -511,9 +495,9 @@ sub load_species_tree_from_tax
 
   printf("load_species_tree_from_tax\n") if($self->debug);
   my $starttime = time();
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $taxonDBA = $self->compara_dba->get_NCBITaxonAdaptor;
 
-  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+  my $gdb_list = $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
   my $root=undef;
   foreach my $gdb (@$gdb_list) {
     next if ($gdb->name =~ /ancestral/);
@@ -531,8 +515,8 @@ sub load_species_tree_from_tax
 sub load_species_tree_from_file {
   my ($self) = @_;
 
-  my $taxonDBA  = $self->{'comparaDBA'}->get_NCBITaxonAdaptor();
-  my $genomeDBA = $self->{'comparaDBA'}->get_GenomeDBAdaptor();
+  my $taxonDBA  = $self->compara_dba->get_NCBITaxonAdaptor();
+  my $genomeDBA = $self->compara_dba->get_GenomeDBAdaptor();
   
   if($self->debug()) {
   	print "load_species_tree_from_file\n";
@@ -684,7 +668,7 @@ sub get_ancestor_taxon_level {
 			throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
   	}
   	else {
-  		my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+  		my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
   		$taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
   		throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
   	}
@@ -773,7 +757,7 @@ sub genepairlink_fetch_homology
   return undef unless($homology_id);
 
   my $homology = 
-    $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
+    $self->compara_dba->get_HomologyAdaptor->fetch_by_dbID($homology_id);
   $genepairlink->add_tag("old_homology", $homology);
 
   return $homology;
@@ -787,20 +771,6 @@ sub delete_old_orthotree_tags
 
   print "deleting old orthotree tags\n" if ($self->debug);
   my @node_ids;
-
-#   # Old method -- too slow
-#   my $left_index  = $self->{'protein_tree'}->left_index;
-#   my $right_index = $self->{'protein_tree'}->right_index;
-#   my $tree_root_node_id = $self->{'protein_tree'}->node_id;
-#   # Include the root_id as well as the rest of the nodes within the tree
-#   push @node_ids, $tree_root_node_id;
-#   my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
-#   my $sth = $self->dbc->prepare($sql);
-#   $sth->execute;
-#   while (my $aref = $sth->fetchrow_arrayref) {
-#     my ($node_id) = @$aref;
-#     push @node_ids, $node_id;
-#   }
 
   foreach my $node ($self->{'protein_tree'}->get_all_subnodes) {
     push @node_ids, $node->node_id;
@@ -846,49 +816,6 @@ sub delete_old_homologies
   $sth1->finish;
   printf("%1.3f secs build links and features\n", time()-$delete_time);
 
-#   # Old method one by one
-#   my %homology_ids;
-#   my $sql = "select homology_id from homology_member where member_id = ?";
-#   my $sth = $self->dbc->prepare($sql);
-
-#   foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
-#     $sth->execute($leaf->gene_member->member_id);
-#     while (my $aref = $sth->fetchrow_arrayref) {
-#       my ($homology_id) = @$aref;
-#       $homology_ids{$homology_id} = 1;
-#     }
-#   }
-
-#   my @list_ids;
-#   foreach my $id (keys %homology_ids) {
-#     my $delete_time = time();
-#     push @list_ids, $id;
-#     if (scalar @list_ids == 2000) {
-#       my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
-#       my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
-#       my $sth1 = $self->dbc->prepare($sql1);
-#       my $sth2 = $self->dbc->prepare($sql2);
-#       $sth1->execute;
-#       $sth2->execute;
-#       $sth1->finish;
-#       $sth2->finish;
-#       @list_ids = ();
-#     }
-#     printf("%1.3f secs build links and features\n", time()-$delete_time);
-#   }
-
-#   if (scalar @list_ids) {
-#     my $sql1 = "delete from homology where homology_id in (".join(",",@list_ids).")";
-#     my $sql2 = "delete from homology_member where homology_id in (".join(",",@list_ids).")";
-#     my $sth1 = $self->dbc->prepare($sql1);
-#     my $sth2 = $self->dbc->prepare($sql2);
-#     $sth1->execute;
-#     $sth2->execute;
-#     $sth1->finish;
-#     $sth2->finish;
-#     @list_ids = ();
-#   }
-
   $self->{old_homologies_deleted} = 1;
   return undef;
 }
@@ -902,9 +829,9 @@ sub delete_old_homologies_old
 
   my ($member1, $member2) = $genepairlink->get_nodes;
 
-  my @homologies = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
+  my @homologies = @{$self->compara_dba->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
                        ($member1->gene_member, $member2->gene_member, 'ENSEMBL_ORTHOLOGUES')};
-  push @homologies, @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
+  push @homologies, @{$self->compara_dba->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
                         ($member1->gene_member, $member2->gene_member, 'ENSEMBL_PARALOGUES')};
 
   my $sql1 = "DELETE FROM homology WHERE homology_id=?";
@@ -1251,7 +1178,7 @@ sub store_gene_link_as_homology
   } else {
     $mlss->species_set([$protein1->genome_db, $protein2->genome_db]);
   }
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->{'_readonly'});
+  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->{'_readonly'});
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;

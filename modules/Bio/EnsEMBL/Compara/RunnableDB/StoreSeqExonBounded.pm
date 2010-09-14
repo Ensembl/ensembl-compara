@@ -58,10 +58,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::StoreSeqExonBounded;
 use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -80,16 +79,10 @@ sub fetch_input {
 
   $self->{'clusterset_id'} = 1;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
 
   # Get the needed adaptors here
-  # $self->{silly_adaptor} = $self->{'comparaDBA'}->get_SillyAdaptor;
+  # $self->{silly_adaptor} = $self->compara_dba->get_SillyAdaptor;
 
   $self->get_params($self->parameters);
   my $input_id = $self->input_id;

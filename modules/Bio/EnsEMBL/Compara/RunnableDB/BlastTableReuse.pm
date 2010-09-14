@@ -55,7 +55,7 @@ use Bio::EnsEMBL::Hive::URLFactory;               # Blast_reuse
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my( $self) = @_;
@@ -64,8 +64,7 @@ sub fetch_input {
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
-  $self->{gdba}         = $self->{'comparaDBA'}->get_GenomeDBAdaptor;
+  $self->{gdba}         = $self->compara_dba->get_GenomeDBAdaptor;
 
   my $p = eval($self->analysis->parameters);
   if (defined $p->{'blast_template_analysis_data_id'}) {

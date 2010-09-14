@@ -49,23 +49,16 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS;
 
 use strict;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 use Statistics::Descriptive;
 
-use vars qw(@ISA);
-
-@ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_sets_aref'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
   $self->get_params($self->input_id);
   return 1;
@@ -134,7 +127,7 @@ sub calc_threshold_on_dS {
   my $aa = $self->db->get_AnalysisAdaptor;
   my $Threshold_on_dS_analysis = $aa->fetch_by_logic_name('Threshold_on_dS');
 
-  my $compara_dbc = $self->{'comparaDBA'}->dbc;
+  my $compara_dbc = $self->compara_dba->dbc;
 
   my $sql = "select ds from homology where method_link_species_set_id = ? and ds is not NULL";
   my $sth = $compara_dbc->prepare($sql);
@@ -142,7 +135,7 @@ sub calc_threshold_on_dS {
   $sql = "update homology set threshold_on_ds = ? where method_link_species_set_id = ?";
   my $sth2 = $compara_dbc->prepare($sql);
 
-  my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+  my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $genome_db_id1 = shift @{$species_set}) {
       foreach my $genome_db_id2 (@{$species_set}) {

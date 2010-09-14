@@ -48,21 +48,15 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::CreateHomology_dNdSJobs;
 
 use strict;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_sets_aref'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the pipeline DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN=>$self->db->dbc);
 
   $self->get_params($self->input_id);
   return 1;
@@ -137,7 +131,7 @@ sub create_analysis_jobs {
   my $sql = "select homology_id from homology where method_link_species_set_id = ?";
   my $sth = $self->db->dbc->prepare($sql);
 
-  my $mlssa = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
+  my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my @homologies;
   foreach my $species_set (@{$species_sets_aref}) {
     while (my $genome_db_id1 = shift @{$species_set}) {

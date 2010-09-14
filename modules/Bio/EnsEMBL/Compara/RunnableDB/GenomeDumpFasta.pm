@@ -52,13 +52,15 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta;
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Analysis::Tools::BlastDB;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
 
 
 =head2 fetch_input
@@ -81,7 +83,6 @@ sub fetch_input {
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
 
   my $genome_db_id = $input_hash->{'gdb'};
   my $subset_id    = $input_hash->{'ss'};
@@ -91,7 +92,7 @@ sub fetch_input {
     print("gdb = $genome_db_id\n");
 
     #get the Compara::GenomeDB object for the genome_db_id
-    $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+    $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 
     $self->{'logic_name'} = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
 
@@ -104,7 +105,7 @@ sub fetch_input {
   throw("no subset defined, can't figure out which peptides to use\n") 
     unless(defined($subset_id));
   
-  $self->{'pepSubset'} = $self->{'comparaDBA'}->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw("Cannot SubsetAdaptor->fetch_by_dbID($subset_id)");  
+  $self->{'pepSubset'} = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw("Cannot SubsetAdaptor->fetch_by_dbID($subset_id)");  
   
   unless($self->{'logic_name'}) {
     $self->{'logic_name'} = "blast_" . $self->{'pepSubset'}->description;
@@ -158,7 +159,7 @@ sub getSubsetIdForGenomeDBId {
             "AND subset.description like '%longest%' ".
             "AND member.member_id=subset_member.member_id ".
             "AND member.genome_db_id=$genome_db_id;";
-  my $sth = $self->{'comparaDBA'}->prepare( $sql );
+  my $sth = $self->compara_dba->prepare( $sql );
   $sth->execute();
 
   $sth->bind_columns( undef, \$subset_id );
@@ -201,7 +202,7 @@ sub dumpPeptidesToFasta
   print("fastafile = '$fastafile'\n");
 
   # write fasta file
-  $self->{'comparaDBA'}->get_SubsetAdaptor->dumpFastaForSubset($self->{'pepSubset'}, $fastafile);
+  $self->compara_dba->get_SubsetAdaptor->dumpFastaForSubset($self->{'pepSubset'}, $fastafile);
 
   # configure the fasta file for use as a blast database file
   my $blastdb        = new Bio::EnsEMBL::Analysis::Tools::BlastDB (
