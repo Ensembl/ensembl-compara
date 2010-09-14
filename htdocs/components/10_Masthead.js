@@ -57,7 +57,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
           // If not, hide the toggle arrow, and trigger the click event on it, which ensures the dropdown is hidden
           // and the arrow will be pointing the right way if it is shown again later
           if (!ul.siblings('ul').length) {
-            panel.elLk.allTabs.filter(ul.parent().data('type')).find('.toggle').hide().first().trigger('click');
+            panel.elLk.allTabs.filter(ul.parent().data('type')).find('.toggle').hide().first().trigger('click').end().parent().addClass('empty');
           }
           
           lis = null;
@@ -222,7 +222,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     // since the HTML will already be correct
     if (!init) {
       $.each([ shortTab, longTab ], function () {
-        this.find('.toggle').show();
+        this.children('.dropdown').removeClass('empty').children('.toggle').show();
       });
       
       
