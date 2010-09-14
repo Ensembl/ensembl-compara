@@ -268,7 +268,8 @@ sub content {
   my $config = { 
     display_width   => $object->param('display_width') || 60,
     species         => $object->species,
-    maintain_colour => 1
+    maintain_colour => 1,
+    transcript      => 1
   };
   
   $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);

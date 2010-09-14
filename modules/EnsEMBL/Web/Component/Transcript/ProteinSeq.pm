@@ -95,7 +95,8 @@ sub content {
   my $config = { 
     display_width   => $object->param('display_width') || 60,
     species         => $object->species,
-    maintain_colour => 1
+    maintain_colour => 1,
+    transcript      => 1
   };
   
   for (qw(exons variation number)) {
