@@ -76,7 +76,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     $('.toggle', tabs).bind('click', function () {
       var dropdown = panel.elLk.dropdowns.filter('.' + this.rel);
       
-      panel.dropdownPosition(dropdown, $(this).parent());
+      panel.dropdownPosition(dropdown, $(this).parents('li'));
       dropdown.not(':visible').css('zIndex', panel.zIndex++).end().toggle(); 
       panel.elLk.allTabs.filter('.' + this.rel).find('a.toggle').html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
       dropdown.data('type', '.' + this.rel); // Cache the selector to find the tab for use later
@@ -118,15 +118,20 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   // Set the width of the dropdown to be the width of the tab if the tab is wider
   // Cache the position so this only has to be done once
   dropdownPosition: function (dropdown, tab) {
-    var tabWidth, dropdownWidth, left, width;
+    var css = {};
+    var tabWidth, dropdownWidth;
     
     if (!dropdown.data('positioning:' + this.longTabs)) {
       tabWidth      = tab.outerWidth();
       dropdownWidth = dropdown.outerWidth();
-      left          = tab.offset().left;
-      width         = tabWidth > dropdownWidth ? tabWidth - (dropdownWidth - dropdown.width()) : 'auto';
       
-      dropdown.data('positioning:' + this.longTabs, { left: left, width: width });
+      css.left = tab.offset().left;
+      
+      if (!tab.hasClass('species')) {
+        css.width = tabWidth > dropdownWidth ? tabWidth - (dropdownWidth - dropdown.width()) : 'auto';
+      }
+      
+      dropdown.data('positioning:' + this.longTabs, css);
     }
     
     dropdown.css(dropdown.data('positioning:' + this.longTabs));
