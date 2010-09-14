@@ -7,7 +7,13 @@ use base qw(EnsEMBL::Web::Command);
 sub process {
   my $self = shift;
   my $user = $self->object->user;
-  $user->histories->delete_all;
+  my $object = $self->hub->param('object');
+  
+  if ($object) {
+    $_->delete for grep $_->{'object'} eq $object, $user->histories;
+  } else {
+    $user->histories->delete_all;
+  }
 }
 
 1;
