@@ -134,8 +134,9 @@ foreach my $sp (sort @species) {
     unless ($already_done) {
       my $a_code = $SD->get_config($sp, 'ASSEMBLY_NAME') || ''; 
       my $a_name = $SD->get_config($sp, 'ASSEMBLY_DISPLAY_NAME') || '';
-      $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?)';
-      @args = ($release_id, $species_id, $a_code, $a_name, '', '');
+      my $latest = $SD->get_config($sp, 'GENEBUILD_LATEST') || '';
+      $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?)';
+      @args = ($release_id, $species_id, $a_code, $a_name, '', '', $latest);
       $sth = $adaptor->db->prepare($sql);
       $sth->execute(@args);
       print "ADDED $sp to release $release_id \n";
