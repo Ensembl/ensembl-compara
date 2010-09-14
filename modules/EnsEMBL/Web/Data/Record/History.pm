@@ -12,7 +12,7 @@ __PACKAGE__->add_fields(
   object  => 'text', # Location, Gene etc
   param   => 'text',
   value   => 'text',
-  uri     => 'text',
+  url     => 'text',
 );
 
 1;
