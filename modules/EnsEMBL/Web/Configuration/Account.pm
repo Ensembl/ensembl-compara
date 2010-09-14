@@ -131,6 +131,10 @@ sub user_populate_tree {
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::ResetFavourites',
         'filters' => [qw(Owner)]}
     );
+    $self->create_node( 'ClearHistory', '', [],
+      { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::ClearHistory',
+        'filters' => [qw(Owner)]}
+    );
     ## 1b. Group membership
     $self->create_node( 'SelectGroup', '',
       [qw(select_group EnsEMBL::Web::Component::Account::SelectGroup)],
