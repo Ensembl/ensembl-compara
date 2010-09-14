@@ -14,7 +14,8 @@
 #masthead ul.tabs li.long_tab             { display: none; }
 #masthead ul.tabs a,
 #masthead ul.tabs span.dropdown           { background: url(/i/tab_off_l.gif) no-repeat left top; display: block; text-decoration: none; padding: 3px 8px 2px; outline: 0; }
-#masthead ul.tabs span.dropdown           { padding-left: 0; }
+#masthead ul.tabs span.dropdown           { padding-left:  0; }
+#masthead ul.tabs span.dropdown.empty     { padding-right: 0; }
 #masthead ul.tabs li.active               { background-image: url(/i/tab_on_r.gif); }
 #masthead ul.tabs li.active a,
 #masthead ul.tabs li.active span.dropdown { background-image: url(/i/tab_on_l.gif); color: [[PAGE_TEXT]]; font-weight: bold; }
