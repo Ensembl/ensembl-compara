@@ -446,7 +446,7 @@ sub markup_variation {
       $variation  = $data->{'variations'}->{$_};
       ($ambiguity = ambiguity_code($variation->{'alleles'}) || undef) =~ s/-//g;
 
-      $seq->[$_]->{'letter'} = $ambiguity if $ambiguity;
+      $seq->[$_]->{'letter'} = $ambiguity if $ambiguity && !$config->{'transcript'};
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]->{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
