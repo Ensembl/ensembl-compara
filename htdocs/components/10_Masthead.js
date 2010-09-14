@@ -26,6 +26,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     var tools      = $('.tools_holder', this.el);
     var logo       = $('.logo_holder', this.el);
     
+    this.elLk.allTabs    = $('li', tabs);
     this.elLk.shortTabs  = $('li.short_tab', tabs);
     this.elLk.longTabs   = $('li.long_tab', tabs);
     this.elLk.toolsUl    = $('.tools', tools);
@@ -36,34 +37,50 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       $(this).css('zIndex', panel.zIndex++);
     });
     
+    // Cache the text on the recent location links, to stop hash changes in the URL from duplicating entries in the menu
     this.elLk.dropdowns.filter('.location').find('ul.recent li a').each(function () {
       panel.recentLocations[$(this).text()] = 1;
     })
+    
+    // Send an ajax request to clear the user's history for a tab/dropdown
+    $('a.clear_history', this.elLk.dropdowns).bind('click', function () {
+      var lis = $(this).parent().siblings();
+      var ul  = $(this).parents('ul');
+      
+      $.ajax({
+        url: this.href,
+        success: function () {
+          ul.hide().prev('h4').hide();
+          lis.remove();
+          
+          // The ul variable will only have a ul sibling if there are bookmarks in this dropdown.
+          // If not, hide the toggle arrow, and trigger the click event on it, which ensures the dropdown is hidden
+          // and the arrow will be pointing the right way if it is shown again later
+          if (!ul.siblings('ul').length) {
+            panel.elLk.allTabs.filter(ul.parent().data('type')).find('.toggle').hide().first().trigger('click');
+          }
+          
+          lis = null;
+          ul  = null;
+        }
+      });
+      
+      return false;
+    });
     
     if (window.location.hash) {
       this.hashChange(Ensembl.urlFromHash(window.location.href, true), true);
     }
     
+    // Show the relevant dropdown when a toggle link is clicked
     $('.toggle', tabs).bind('click', function () {
-      var tab      = $(this).parent();
       var dropdown = panel.elLk.dropdowns.filter('.' + this.rel);
-      var tabWidth, dropdownWidth;
       
-      if (!dropdown.data('positioning')) {
-        tabWidth      = tab.outerWidth();
-        dropdownWidth = dropdown.outerWidth();
-        
-        if (tabWidth > dropdownWidth) {
-          dropdown.width(tabWidth - (dropdownWidth - dropdown.width()));
-        }
-        
-        dropdown.css('left', tab.position().left).data('positioning', 1);
-      }
+      panel.dropdownPosition(dropdown, $(this).parent());
+      dropdown.not(':visible').css('zIndex', panel.zIndex++).end().toggle(); 
+      panel.elLk.allTabs.filter('.' + this.rel).find('a.toggle').html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
+      dropdown.data('type', '.' + this.rel); // Cache the selector to find the tab for use later
       
-      dropdown.not(':visible').css('zIndex', panel.zIndex++).end().toggle();
-      $(this).html(dropdown.is(':visible') ? '&#9650;' : '&#9660;');
-      
-      tab      = null;
       dropdown = null;
       
       return false;
@@ -97,6 +114,24 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     logo       = null;
   },
   
+  // Set the left position of a dropdown as the left position of its related tab
+  // Set the width of the dropdown to be the width of the tab if the tab is wider
+  // Cache the position so this only has to be done once
+  dropdownPosition: function (dropdown, tab) {
+    var tabWidth, dropdownWidth, left, width;
+    
+    if (!dropdown.data('positioning:' + this.longTabs)) {
+      tabWidth      = tab.outerWidth();
+      dropdownWidth = dropdown.outerWidth();
+      left          = tab.offset().left;
+      width         = tabWidth > dropdownWidth ? tabWidth - (dropdownWidth - dropdown.width()) : 'auto';
+      
+      dropdown.data('positioning:' + this.longTabs, { left: left, width: width });
+    }
+    
+    dropdown.css(dropdown.data('positioning:' + this.longTabs));
+  },
+  
   setWidth: function (type) {
     var panel = this;
     
@@ -118,18 +153,27 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     var threshold   = windowWidth < minWidth ? minWidth : windowWidth;
     var longTabs    = this.widths.longTabs < threshold;
     var shortTools  = this.widths.tools > threshold - this.widths.search - this.widths.logo;
-    var holderWidth, i, left;
+    var holderWidth, i, left, tabs;
     
     if (longTabs !== this.longTabs) {
       if (longTabs) {
         this.elLk.shortTabs.hide();
         this.elLk.longTabs.show();
+        tabs = this.elLk.longTabs;
       } else {
         this.elLk.shortTabs.show();
         this.elLk.longTabs.hide();
+        tabs = this.elLk.shortTabs;
       }
       
       this.longTabs = longTabs;
+      
+      // Move any visible dropdowns to line up with the newly visible tabs
+      this.elLk.dropdowns.filter(':visible').each(function () {
+        panel.dropdownPosition($(this), tabs.filter($(this).data('type')));
+      });
+      
+      tabs = null;
     }
     
     if (shortTools) {
@@ -160,19 +204,31 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   },
   
   hashChange: function (r, init) {
-    var recent = Ensembl.speciesCommon + ': ' + Ensembl.lastR;
-    var text   = r.split(/\W/);
-    text       = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
+    var shortTab = this.elLk.shortTabs.filter('.location');
+    var longTab  = this.elLk.longTabs.filter('.location');
+    var recent   = Ensembl.speciesCommon + ': ' + Ensembl.lastR;
+    var text     = r.split(/\W/);
+    text         = 'Location: ' + text[0] + ':' + Ensembl.thousandify(text[1]) + '-' + Ensembl.thousandify(text[2]);
     
-    this.elLk.shortTabs.filter('.location').find('a:not(.toggle)').attr('title', text);
-    this.elLk.longTabs.filter('.location').find('a:not(.toggle)').html(text);
+    shortTab.find('a:not(.toggle)').attr('title', text);
+    longTab.find('a:not(.toggle)').html(text);
     
-    if (this.elLk.dropdowns.length && !init && !this.recentLocations[recent]) {
-      this.elLk.dropdowns.filter('.location').find('ul.recent').prepend(
-        '<li><a href="' + Ensembl.urlFromHash(window.location.href).replace(/([\?;]r=)[^;]+(;?)/, '$1' + Ensembl.lastR + '$2') + '">' + recent + '</a></li>'
-      );
+    // If there is a hash in the URL when the page is loaded, don't perform the following actions,
+    // since the HTML will already be correct
+    if (!init) {
+      $.each([ shortTab, longTab ], function () {
+        this.find('.toggle').show();
+      });
       
-      this.recentLocations[recent] = 1;
+      
+      if (this.elLk.dropdowns.length && !this.recentLocations[recent]) {
+        // Add the URL before the hash change to the top of the recent locations list
+        this.elLk.dropdowns.filter('.location').find('ul.recent').prepend(
+          '<li><a href="' + Ensembl.urlFromHash(window.location.href).replace(/([\?;]r=)[^;]+(;?)/, '$1' + Ensembl.lastR + '$2') + '">' + recent + '</a></li>'
+        ).show().prev('h4').show();
+        
+        this.recentLocations[recent] = 1;
+      }
     }
   }
 });
