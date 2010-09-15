@@ -12,8 +12,9 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   
     this.base(id);
     
-    Ensembl.EventManager.register('windowResize', this, this.resize);
-    Ensembl.EventManager.register('hashChange',   this, this.hashChange);
+    Ensembl.EventManager.register('windowResize',   this, this.resize);
+    Ensembl.EventManager.register('hashChange',     this, this.hashChange);
+    Ensembl.EventManager.register('deleteBookmark', this, this.deleteBookmark);
   },
   
   init: function () {
@@ -44,24 +45,18 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     
     // Send an ajax request to clear the user's history for a tab/dropdown
     $('a.clear_history', this.elLk.dropdowns).bind('click', function () {
-      var lis = $(this).parent().siblings();
-      var ul  = $(this).parents('ul');
+      var li = $(this).parent();
       
       $.ajax({
         url: this.href,
         success: function () {
-          ul.hide().prev('h4').hide();
-          lis.remove();
+          var lis = li.siblings();
           
-          // The ul variable will only have a ul sibling if there are bookmarks in this dropdown.
-          // If not, hide the toggle arrow, and trigger the click event on it, which ensures the dropdown is hidden
-          // and the arrow will be pointing the right way if it is shown again later
-          if (!ul.siblings('ul').length) {
-            panel.elLk.allTabs.filter(ul.parent().data('type')).find('.toggle').hide().first().trigger('click').end().parent().addClass('empty');
-          }
+          li.remove();
+          panel.deleteFromDropdown(lis);
           
           lis = null;
-          ul  = null;
+          li  = null;
         }
       });
       
@@ -117,11 +112,11 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   // Set the left position of a dropdown as the left position of its related tab
   // Set the width of the dropdown to be the width of the tab if the tab is wider
   // Cache the position so this only has to be done once
-  dropdownPosition: function (dropdown, tab) {
+  dropdownPosition: function (dropdown, tab, force) {
     var css = {};
     var tabWidth, dropdownWidth;
     
-    if (!dropdown.data('positioning:' + this.longTabs)) {
+    if (force || !dropdown.data('positioning:' + this.longTabs)) {
       tabWidth      = tab.outerWidth();
       dropdownWidth = dropdown.outerWidth();
       
@@ -135,6 +130,32 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     }
     
     dropdown.css(dropdown.data('positioning:' + this.longTabs));
+  },
+    
+  deleteFromDropdown: function (lis) {
+    var ul = lis.parent();
+    
+    lis.remove();
+    
+    if (!ul.children().length) {
+      ul.hide().prev('h4').hide();
+    }
+    
+    // The ul variable will only have a visible ul sibling if there were bookmarks and history entries in this dropdown.
+    // If not, hide the toggle arrow, and trigger the click event on it, which ensures the dropdown is hidden
+    // and the arrow will be pointing the right way if it is shown again later
+    if (!ul.siblings('ul:visible').length) {
+      this.elLk.allTabs.filter(ul.parent().data('type')).find('.toggle').hide().first().trigger('click').end().parent().addClass('empty');
+    } else {
+      this.dropdownPosition(ul.parent(), this.elLk.allTabs.filter(ul.parent().data('type') + ':visible'), true);
+    }
+    
+    lis = null;
+    ul  = null;
+  },
+  
+  deleteBookmark: function (id) {
+    this.deleteFromDropdown($('.bookmarks .' + id, this.elLk.dropdowns).parent());
   },
   
   setWidth: function (type) {
