@@ -411,11 +411,11 @@ sub dumpVariation {
   my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
-      "select va.variation_id,
-              group_concat( distinct va.local_stable_id SEPARATOR '; ') as lsi,
-              group_concat( distinct va.study           SEPARATOR '; ') as st,
-              group_concat( distinct va.associated_gene SEPARATOR '; ') as gn,
-              group_concat( distinct va.variation_names SEPARATOR '; ') as vars,
+      "SELECT va.variation_id,
+              group_concat( distinct va.local_stable_id SEPARATOR '; ') AS lsi,
+              group_concat( distinct va.study           SEPARATOR '; ') AS st,
+              group_concat( distinct va.associated_gene SEPARATOR '; ') AS gn,
+              group_concat( distinct va.variation_names SEPARATOR '; ') AS vars,
               group_concat( distinct
                 if(
                   isnull(p.name),
@@ -423,27 +423,50 @@ sub dumpVariation {
                   concat( p.description,' (',p.name,')' )
                 )
                 SEPARATOR '; '
-              ) as phen
-         from $VariationDB.variation_annotation as va left join
-              $VariationDB.phenotype as p on p.phenotype_id = va.phenotype_id
-        group by va.variation_id
-        order by va.variation_id"
+              ) AS phen
+         FROM $VariationDB.variation_annotation AS va left join
+              $VariationDB.phenotype AS p ON p.phenotype_id = va.phenotype_id
+        GROUP BY va.variation_id
+        ORDER BY va.variation_id"
     )};
 
-  my $sth = $conf->{'dbh'}->prepare(
-    "SELECT vf.variation_id, vf.variation_name, vf.source_id, group_concat(vs.source_id, ' ',vs.name), vf.consequence_type
-       FROM $VariationDB.variation_feature vf left join $VariationDB.variation_synonym vs on vf.variation_id = vs.variation_id group by vf.variation_id"
-  );
+  # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
+  my $sth = $conf->{'dbh'}->prepare(qq{
+    SELECT
+        v.variation_id,
+        v.name,
+        v.source_id,
+        GROUP_CONCAT(
+            vs.source_id,
+            ' ',
+            vs.name
+        ),
+        fd.description
+    FROM
+        $VariationDB.variation v LEFT JOIN
+        $VariationDB.variation_synonym vs USING (variation_id) LEFT JOIN (
+            $VariationDB.failed_variation fv JOIN
+            $VariationDB.failed_description fd USING (failed_description_id)
+        ) USING (variation_id)
+    GROUP BY
+        v.variation_id
+    ORDER BY
+        NULL});
+
   $sth->execute() or die "Error:", $DBI::errstr;
   while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
     while ( my $row = shift( @{$rowcache} ) ) {
-      my $vf_id = $row->[0];
-      my $name  = $row->[1];
+      my $variation_id       = $row->[0];
+      my $variation_name     = $row->[1];
+      my $source_id          = $row->[2];
+      my $synonyms           = $row->[3];
+      my $failed_description = $row->[4];
+
       my %synonyms;
       my $syn_c = 0;
-      foreach my $syn (split /,/, @$row->[3]) {
-	my ($id,$sname) = split / /,$syn;
-	$synonyms{$sname} = $sources->{$id};
+      foreach my $syn (split /,/, $synonyms) {
+	my ($source_id,$sname) = split / /,$syn;
+	$synonyms{$sname} = $sources->{$source_id};
 	$syn_c++;
       }
       my (@syns, @gene_syns,$synonym_text);
@@ -452,14 +475,14 @@ sub dumpVariation {
 	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
-      my $snp_source = $sources->{ $row->[2] };
+      my $snp_source = $sources->{ $source_id };
       my $extra      = '';
-      my $x = $snp_extra{$vf_id};
+      my $x = $snp_extra{$variation_id};
       if( $x ) {
 	push @syns,$x->[1],$x->[4];
 	push @gene_syns,$x->[3];
 	
-	$extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[6];
+	$extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[6];
 	if( $x->[1] ) {
 	  $extra .= sprintf ', through %s', $x->[1];
 	}
@@ -467,14 +490,16 @@ sub dumpVariation {
 	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
 	}
       }
+      $extra .= '.' if $extra;
+      $extra .= ' '.$failed_description if $failed_description;
       my $desc = sprintf( "A %s Variation %s%s",
 			  $snp_source,
-			  $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
-			: $syn_c     ? "with one synonym: $synonym_text"
-		        : 'with no synonyms',
+			  $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
+			: $syn_c     ? "with one synonym: $synonym_text."
+		        : 'with no synonyms.',
 			  $extra
 			);
-      &p( VariationLine( $dbspecies, $name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
+      &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
 
     }
   }
