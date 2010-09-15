@@ -133,6 +133,10 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   },
     
   deleteFromDropdown: function (lis) {
+    if (!lis.length) {
+      return;
+    }
+    
     var ul = lis.parent();
     
     lis.remove();
