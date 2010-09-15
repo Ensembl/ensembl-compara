@@ -175,6 +175,10 @@ sub write_output
 	      $self->dataflow_output_id($store_seq_id,1);
 	  }
       }
+  } else {
+      #Do not produce any StoreSequence jobs
+      $self->input_job->autoflow(0);
+      #$self->autoflow_inputjob(0);
   }
   return 1;
 }
