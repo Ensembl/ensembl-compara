@@ -28,9 +28,19 @@ Ensembl.PanelManager.extend({
       }
     });
     
-    $('.js_panel').each(function () {      
+    $('.js_panel').each(function () {
+      var panelType   = $('input.panel_type', this).val();
+      var parentPanel = {};
+      
       Ensembl.PanelManager.generateId(this);
-      Ensembl.PanelManager.createPanel(this.id, $('input.panel_type', this).val());
+      
+      $(this).parents('.js_panel').each(function () {
+        parentPanel[Ensembl.PanelManager.panels[this.id].panelType] = 1;
+      });
+      
+      if (!parentPanel[panelType]) {
+        Ensembl.PanelManager.createPanel(this.id, panelType);
+      }
     });
   },
   
@@ -107,6 +117,7 @@ Ensembl.PanelManager.extend({
     }
     
     this.panels[id].panelNumber = this.panelNumber++;
+    this.panels[id].panelType   = type;
     this.panels[id].init();
   },
   
