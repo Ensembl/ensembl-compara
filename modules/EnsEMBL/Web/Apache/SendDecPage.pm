@@ -175,7 +175,7 @@ sub handler {
       $panelContent = $html;
     }
     else {
-      $panelContent = qq(\n<div id="static">\n$html\n$hr\n</div>\n); 
+      $panelContent = qq(\n<div id="static">\n$html\n</div>\n$hr\n); 
     }
 
     $page->content->add_panel(
