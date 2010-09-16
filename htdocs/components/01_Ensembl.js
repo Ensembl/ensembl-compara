@@ -5,7 +5,7 @@ var Ensembl = new Base();
 Ensembl.extend({
   constructor: null,
   
-  initialize: function () {    
+  initialize: function () {
     var hints = this.cookie.get('ENSEMBL_HINTS');
     var imagePanels = $('.image_panel');
     
@@ -42,9 +42,9 @@ Ensembl.extend({
     this.LayoutManager.initialize();
     this.PanelManager.initialize();
   },
-   
+  
   cookie: {
-    set: function (name, value, expiry, unescaped) {  
+    set: function (name, value, expiry, unescaped) {
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
         '; expires=',
@@ -81,7 +81,7 @@ Ensembl.extend({
     
     this.coreParams    = {};
     this.initialR      = $('input[name=r]', '#core_params').val();
-    this.location      = { width: 100000 };
+    this.location      = { length: 100000 };
     this.speciesPath   = $('#species_path').val() || '';
     this.speciesCommon = $('#species_common_name').val() || '';
     this.species       = this.speciesPath.split('/').pop();
@@ -98,16 +98,16 @@ Ensembl.extend({
     
     if (match) {
       this.location = { name: match[1], start: parseInt(match[2], 10), end: parseInt(match[3], 10) };
-      this.location.width = this.location.end - this.location.start + 1;
+      this.location.length = this.location.end - this.location.start + 1;
       
-      if (this.location.width > 1000000) {
-        this.location.width = 1000000;
+      if (this.location.length > 1000000) {
+        this.location.length = 1000000;
       }
     }
     
     match = url.match(/s\d+=.+?[;&]/g);
     
-    if (match) {            
+    if (match) {
       $.each(match, function () {
         m = this.split('=');
         i = m[0].substr(1);

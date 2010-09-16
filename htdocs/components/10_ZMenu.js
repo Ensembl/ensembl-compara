@@ -401,8 +401,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       
       this.location = Math.floor(min + (this.coords.y - this.areaCoords.t) * scale);
       
-      start = Math.floor(this.location - (Ensembl.location.width / 2));
-      end   = Math.floor(this.location + (Ensembl.location.width / 2));
+      start = Math.floor(this.location - (Ensembl.location.length / 2));
+      end   = Math.floor(this.location + (Ensembl.location.length / 2));
       
       if (start < 1) {
         start = 1;
@@ -468,7 +468,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   zoomURL: function (scale) {
-    var w = Ensembl.location.width * scale;
+    var w = Ensembl.location.length * scale;
     
     if (w < 1) {
       return '';
