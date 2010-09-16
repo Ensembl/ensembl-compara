@@ -104,7 +104,8 @@ Ensembl.EventManager = {
    */     
   trigger: function (eventName) {
     var args = [].slice.call(arguments, 1); // Make a copy of arguments, removing eventName
-    var rtn  = [];
+    var rtn  = {};
+    var ids  = [];
     var id, r;
     
     if (this.registry[eventName]) {
@@ -112,14 +113,15 @@ Ensembl.EventManager = {
         r = this.registry[eventName].ref[id].func.apply(this.registry[eventName].ref[id].obj, args);
         
         if (typeof r != 'undefined') {
-          rtn.push(r);
+          rtn[id] = r;
+          ids.push(id);
         }
       }
     }
     
-    if (rtn.length == 1) {
-      rtn = rtn[0];
-    } else if (rtn.length === 0) {
+    if (ids.length == 1) {
+      rtn = rtn[ids[0]];
+    } else if (ids.length === 0) {
       rtn = undefined;
     }
     
