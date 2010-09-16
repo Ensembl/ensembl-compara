@@ -19,7 +19,6 @@ Ensembl.PanelManager.extend({
     Ensembl.EventManager.register('destroyPanel', this, this.destroyPanel);
     Ensembl.EventManager.register('addPanel',     this, this.addPanel);
     Ensembl.EventManager.register('panelToFront', this, this.panelToFront);
-    Ensembl.EventManager.register('resetZIndex',  this, this.resetZIndex);
     
     Ensembl.EventManager.register('ajaxLoaded', this, function () {
       if (!$('.ajax_load').length) {
