@@ -35,7 +35,7 @@
 
 #. /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_56"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_59"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/htdocs/info/docs/Pdoc"    # where you want Pdocs created
@@ -82,7 +82,7 @@ do
     SOURCE="$PERLMOD_LOC/$i"
 #  fi
   if test $i = "ensembl"
-   then	echo "$P2WDOCER -skip Collection,Utils,chimp,Lite,misc-scripts,docs,t -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+   then	echo "$P2WDOCER -skip Collection,chimp,Lite,misc-scripts,docs,t -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
  elif test $i = "ensembl-variation"
    then	echo "$P2WDOCER -skip scripts -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
  else
