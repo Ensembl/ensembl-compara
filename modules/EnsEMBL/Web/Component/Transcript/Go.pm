@@ -11,6 +11,7 @@ use base qw(EnsEMBL::Web::Component::Transcript);
 
 my $existing_terms;
 my $existing_edges;
+my $node_description;
 
 sub _init {
   my $self = shift;
@@ -49,9 +50,11 @@ sub content {
   # then add  GOSlim info
   my $go_slim_hash = $object->get_go_list('goslim_goa');
   if (%$go_slim_hash){
-    $html .= "<p><strong>The following GO terms are the closest ones in the GOSlim GOA subset
-    for the above terms:</strong> (click to enlarge)</p>";  
-    my $species_defs = $self->object->species_defs;
+    my $species_defs = $self->object->species_defs;  
+    my $node_fill_text = $species_defs->colour('goimage','node_fill_text') || 'blue';
+    $node_fill_text =~ s/_/ /g;
+    $html .= "<p><strong>Below is the minimal graph of the GO terms (highlighted in ".$node_fill_text.") and their parents terms (not highlighted) closest ones in the GOSlim GOA subset for the above terms.</strong><br/>
+    Nodes are links to GO, mouse over for a description.</p>";
     my $go_sub_dir="/GO/";
     my $go_dir =$species_defs->ENSEMBL_TMP_DIR_IMG.$go_sub_dir;
     my $go_url = $species_defs->ENSEMBL_BASE_URL.$species_defs->ENSEMBL_TMP_URL_IMG.$go_sub_dir; 
@@ -67,8 +70,12 @@ sub content {
     $node_border='#'.$node_border if ($node_border ne 'transparent');
 
     my $ontology_term_adaptor = $object->get_databases('go')->{'go'}->get_GOTermAdaptor();
-    my $graph = GraphViz->new(bgcolor=>$image_background, style=>'filled', node => {shape => 'box', fontsize => '16pt', fontname=>'Times-Roman', fontname=>'Helvetica', fontnames=>'ps'});
     my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";
+
+    my $graph;
+    $graph = GraphViz->new(layout => 'dot', ratio => 'compress',
+    width => 15, height => 40, 
+    directed=>1, bgcolor=>$image_background, style=>'filled', landscape=>'true',node => {margin=>'0.2,0', ratio => 'compress',shape => 'box', fontsize => '8pt', height=>'.2',fontname=>'Times-Roman', fontname=>'Helvetica', fontnames=>'ps'});    
     for my $key ( sort(keys %$go_slim_hash )) {#add the nodes we retreived, and highlight them
       $go_image.=$key;
      
@@ -82,16 +89,15 @@ sub content {
     }
     for my $key ( sort(keys %$go_slim_hash )) {#add all parents of the nodes we retreived
       my $term = $ontology_term_adaptor->fetch_by_accession($key);
-    $self->add_parents($term,$graph,$ontology_term_adaptor,$GOIDURL);
+      $self->add_parents($term,$graph,$ontology_term_adaptor,$GOIDURL);
     }      
     $go_image.=".png";
     mkdir($go_dir);
-    # warn $graph->as_cmapx;
     open (MYFILE, '>>'.$go_dir.$go_image);
     print MYFILE $graph->as_png;
     close (MYFILE);
     my $image_map = $graph->as_cmapx;
-    $image_map =~ s/\\n/ /g;
+    $image_map =~ s/title="([^"]*)" alt=""/ title="$node_description->{$1}" alt="$node_description->{$1}"/g;
     $html.=$image_map;
     $html.=qq(<img usemap="#test" src=").$go_url.$go_image.qq(" border="0">);
   }
@@ -142,9 +148,13 @@ sub add_parents{
 sub format_node_name{
   my $self=shift;
   my $trm = shift;
-  my $len = (length ($trm->name) > length ($trm->accession) )?  length($trm->name) - length($trm->accession) :0;
   my $return_string = $trm->accession;
-  $return_string.="\n".$trm->name;
+  $return_string=$trm->name;
+  $return_string=~ s/_/ /g;
+
+  my $descr=$trm->name;
+  $descr =~ s/_/ /g;
+  $node_description->{$return_string}=$trm->accession." ".$descr;
   return $return_string;
 }
 
