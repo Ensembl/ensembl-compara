@@ -74,6 +74,8 @@ sub new {
   throw("You must supply a database") if not $self->database; 
   throw("You must supply a query") if not $self->query;
 
+  $self->unknown_error_string('FAILED');
+
   $self->program("blat-32") if not $self->program;
 
   return $self;
@@ -116,7 +118,15 @@ sub run {
 	  " core dump");
 
   my $results = parse_results($blat_output_pipe);
-  close $blat_output_pipe;
+  unless(close $blat_output_pipe){
+      # checking for failures when closing.
+      # we should't get here but if we do then $? is translated 
+      #below see man perlvar
+      throw("Error running Blat cmd <$cmd>. Returned ".
+              "error $? BLAT EXIT: '" . ($? >> 8) . 
+              "', SIGNAL '" . ($? & 127) . "', There was " . 
+              ($? & 128 ? 'a' : 'no') . " core dump");
+  }
   $self->output($results);
 }
 
@@ -443,6 +453,12 @@ sub _translate_6frames {
     $seq2->id($tmp);
   }
   return @seqs, @seqs2;
+}
+
+sub unknown_error_string{
+  my $self = shift;
+  $self->{'unknown_error_string'} = shift if(@_);
+  return $self->{'unknown_error_string'};
 }
 
 
