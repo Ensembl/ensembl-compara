@@ -55,12 +55,16 @@ sub content {
     $action  = $part2;
   }
 
-  my (%archive, %assemblies, $links);
+  my (%archive, %assemblies, $genebuilds, @links);
   my $count = 0;
   
+  ## NB: we create an array of links in ascending date order so we can build the
+  ## 'New genebuild' bit correctly, then we reverse the links for display
+
   if ($species) {
     %archive = %{$hub->species_defs->get_config($species, 'ENSEMBL_ARCHIVES')||{}};
     %assemblies = %{$hub->species_defs->get_config($species, 'ASSEMBLIES')||{}};
+    $genebuilds = $hub->species_defs->get_config($species, 'GENEBUILDS')||{};
     
     my @A = keys %archive;
 
@@ -68,9 +72,9 @@ sub content {
       my $missing = 0;
       
       if ($type =~ /\.html/ || $action =~ /\.html/) {
-        foreach my $release (reverse sort keys %archive) {
+        foreach my $release (sort keys %archive) {
           next if $release == $hub->species_defs->ENSEMBL_VERSION;
-          $links .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+          push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $genebuilds);
           $count++;
         }
       }
@@ -81,10 +85,10 @@ sub content {
           next if $release == $hub->species_defs->ENSEMBL_VERSION;
           
           if ($release > 50) {
-            $links .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $genebuilds);
           } else {
             $url = $species.'/index.html';
-            $links .= $self->_output_link(\%archive, $release, $url, $assemblies{$release});
+            push @links, $self->_output_link(\%archive, $release, $url, $assemblies{$release}, $genebuilds);
           }
           $count++;
         }
@@ -110,11 +114,9 @@ sub content {
             $url = "$species/" . ($old_url || $old_view) . $old_params if $poss_release < 51;
           }
           
-          $links .= $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}) if $release_happened;
+          push @links, $self->_output_link(\%archive, $poss_release, $url, $assemblies{$poss_release}, $genebuilds) if $release_happened;
           $count++ unless $missing;
         }
-        
-        $links .= "</ul>\n";
       }
       
       $html .= "<p>Some earlier archives are available, but this view was not present in those releases</p>\n" if $missing;
@@ -140,7 +142,9 @@ sub content {
     $html .= qq(
       <p>The following archives are available for this page:</p>
         <ul>
-        $links
+      );
+    $html .= join(' ', @links);
+    $html .= qq(
         </ul>
       );
   }
@@ -151,16 +155,22 @@ sub content {
 }
 
 sub _output_link {
-  my ($self, $archive, $release, $url, $assembly) = @_;
+  my ($self, $archive, $release, $url, $assembly, $genebuilds) = @_;
   
   my $sitename = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $date  = $archive->{$release};
   my $month = substr $date, 0, 3;
   my $year  = substr $date, 3, 4;
-  
+ 
+  my $current_genebuild = $genebuilds->{$release};
+  my $previous_genebuild = $genebuilds->{$release-1};
+ 
   my $string = qq(<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>);
   if ($assembly) {
     $string .= sprintf ' (%s)', $assembly;
+  }
+  if ($current_genebuild && $previous_genebuild && $current_genebuild ne $previous_genebuild) {
+    $string .= sprintf ' - new genebuild %s', $current_genebuild;
   }
   $string .= '</li>';
   return $string;
