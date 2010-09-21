@@ -129,8 +129,7 @@ sub fetch_input {
   unless($self->{'protein_tree'}) {
     throw("undefined ProteinTree as input\n");
   }
-  if ($self->{'protein_tree'}->get_tagvalue('gene_count') 
-      > $self->{'max_gene_count'}) {
+  if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
     $self->dataflow_output_id($self->input_id, 2);      # this does not seem to be wired to anything at the moment?
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
@@ -309,32 +308,10 @@ sub run_buildhmm
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $worker_temp_directory = $self->worker_temp_directory;
-  unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    print("$cmd\n");
-    throw("error running hmmbuild, $!\n");
+  $cmd = "cd $worker_temp_directory; $cmd";
+  if(system($cmd)) {
+    throw("could not run '$cmd': $!\n");
   }
-
-# HMMER3
-#   my $calibratehmm_executable;
-#   $DB::single=1;1;
-#   unless (-e $calibratehmm_executable) {
-#     if (-e "/proc/version") {
-#       $calibratehmm_executable = $hmmer_dir . "hmmcalibrate";
-#     }
-#   }
-#   throw("can't find a hmmcalibrate executable to run\n") 
-#     unless(-e $calibratehmm_executable);
-
-#   $cmd = '';
-#   $cmd = $calibratehmm_executable;
-#   $cmd .= ' --cpu 1';
-#   $cmd .= ' --num 5000';
-#   $cmd .= " " . $self->{'hmm_file'};
-#   $cmd .= " 2>&1 > /dev/null" unless($self->debug);
-#   unless(system("cd $worker_temp_directory; $cmd") == 0) {
-#     print("$cmd\n");
-#     throw("error running hmmcalibrate, $!\n");
-#   }
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $runtime = time()*1000-$starttime;
@@ -396,9 +373,8 @@ sub dumpTreeMultipleAlignmentToWorkdir
   my $stk_file = $self->{'file_root'} . ".stk";
   my $sreformat = $self->{sreformat} || '/usr/local/ensembl/bin/sreformat';
   my $cmd = "$sreformat stockholm $aln_file > $stk_file";
-  unless( system("$cmd") == 0) {
-    print("$cmd\n");
-    throw("error running sreformat, $!\n");
+  if(system($cmd)) {
+    throw("could not run '$cmd': $!\n");
   }
 
   $self->{'input_aln'} = $stk_file;

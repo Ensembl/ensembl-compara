@@ -99,7 +99,7 @@ sub fetch_input {
   # For long parameters, look at analysis_data
   if($self->{blast_template_analysis_data_id}) {
     my $analysis_data_id = $self->{blast_template_analysis_data_id};
-    my $analysis_data_params = $self->compara_dba->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
+    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
     $self->get_params($analysis_data_params);
   }
   return 1;

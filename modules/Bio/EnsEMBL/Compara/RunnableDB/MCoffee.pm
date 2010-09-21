@@ -111,23 +111,11 @@ sub fetch_input {
 
   $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
 
-#   if ($self->input_job->retry_count >= 1) {
-#     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200) {
-#       $self->{'method'} = 'mafft';
-#       # # HIGHMEM ensembl-hive code still experimental
-#       #       unless (defined($self->worker->{HIGHMEM})) {
-#       #         $self->input_job->update_status('HIGHMEM');
-#       #         $self->DESTROY;
-#       #         throw("Mcoffee job too big: try something else and FAIL it");
-#       #       }
-#     }
-#   }
-
   # Auto-switch to fmcoffee on two failures.
   if ($self->input_job->retry_count >= 2) {
     $self->{'method'} = 'fmcoffee';
   }
-  # Auto-switch to muscle on a third failure.
+  # Auto-switch to mafft on a third failure.
   if ($self->input_job->retry_count >= 3) {
     $self->{'method'} = 'mafft';
     # actually, we are going to run mafft directly here, not through mcoffee
@@ -154,7 +142,6 @@ sub fetch_input {
   }
 
   if ( 'mafft' == $self->{'method'}) { $self->{'use_exon_boundaries'} = undef; }
-
 
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
@@ -192,21 +179,7 @@ sub fetch_input {
   # Error writing input Fasta file.
   if (!$self->{'input_fasta'}) {
     $self->DESTROY;
-    throw("MCoffee job, error writing input Fasta");
-  }
-#  # Gene count too big.
-#   if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
-#     $self->dataflow_output_id($self->input_id, 2);
-#     $self->input_job->update_status('FAILED');
-#     $self->DESTROY;
-#     throw("Mcoffee job too big: try something else and FAIL it");
-#   }
-  # Retry count >= 5.
-  if ($self->input_job->retry_count >= 5) {
-#    $self->dataflow_output_id($self->input_id, 2);
-    $self->input_job->transient_error(0);
-    $self->DESTROY;
-    throw("Mcoffee job failed >=5 times: try something else and FAIL it");
+    throw("MCoffee: error writing input Fasta");
   }
 
   return 1;
@@ -259,8 +232,8 @@ sub DESTROY {
     my $self = shift;
 
     if($self->{'protein_tree'}) {
-	$self->{'protein_tree'}->release_tree;
-	$self->{'protein_tree'} = undef;
+        $self->{'protein_tree'}->release_tree;
+        $self->{'protein_tree'} = undef;
     }
 
     # Cleanup temp files and stuff.
@@ -851,6 +824,5 @@ sub _get_alternate_alignment_tree {
     }
     return $tree;
 }
-
 
 1;
