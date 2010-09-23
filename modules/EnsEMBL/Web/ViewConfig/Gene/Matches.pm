@@ -17,7 +17,6 @@ my $help  = shift;
   foreach (@xref_types){
     if($_->{'type'} eq 'MISC' || $_->{'type'} eq 'LIT'){
       $defaults{$_->{'name'}}=(grep {m|^$_->{'name'}?$|} @default_on)?'yes':undef;
-      $nr_on_by_default--;
     }
   }
   $view_config->_set_defaults(%defaults);
