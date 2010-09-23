@@ -7,16 +7,16 @@ use EnsEMBL::Web::Constants;
 sub init {
 my $view_config = shift;
 my $help  = shift;
-my $nr_on_by_default  = 10;
   
   $view_config->storable = 1;
   $view_config->nav_tree = 1;
   my %defaults;
   my @xref_types = get_xref_types();  
 
+  my @default_on = ('Ensembl Human Transcript' , 'HGNC (curated)', 'HGNC (automatic)', 'EntrezGene', 'CCDS', 'RefSeq RNA', 'UniProtKB/ Swiss-Prot', 'RefSeq peptide', 'RefSeq DNA', 'RFAM', 'miRBase', 'Vega transcript', 'MIM disease');
   foreach (@xref_types){
-    $defaults{$_->{'name'}}=($nr_on_by_default > 0)?'yes':undef;
-	$nr_on_by_default--;
+    $defaults{$_->{'name'}}=(grep {m|^$_->{'name'}?$|} @default_on)?'yes':undef;
+    $nr_on_by_default--;
   }
   $view_config->_set_defaults(%defaults);
 }
