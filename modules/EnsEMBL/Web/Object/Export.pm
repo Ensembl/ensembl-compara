@@ -71,6 +71,7 @@ sub config {
         [ 'tab',  'Tab separated values' ],
         [ 'gff',  'Generic Feature Format' ],
         [ 'gff3', 'Generic Feature Format Version 3' ],
+        [ 'bed',  'BED Format' ],
       ],
       params => [
         [ 'similarity', 'Similarity features' ],

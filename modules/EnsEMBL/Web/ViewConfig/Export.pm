@@ -23,7 +23,8 @@ sub init {
   
   $defaults{'fasta_' . $_} = 'yes' for qw(cdna coding peptide utr5 utr3 exon intron);
   $defaults{'gff3_'  . $_} = 'yes' for qw(gene transcript exon intron cds);
-  
+  $defaults{'bed_'  . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
+    
   $defaults{'fasta_genomic'} = 'unmasked';
   
   foreach my $f (qw(csv tab gff)) {

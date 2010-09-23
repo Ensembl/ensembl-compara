@@ -70,6 +70,7 @@ sub get_formats {
       tab      => 'features',
       gff      => 'features',
       gff3     => 'features',
+      bed      => 'features',
       embl     => 'flat',
       genbank  => 'flat',
       pipmaker => 'pip',

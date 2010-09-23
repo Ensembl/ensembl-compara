@@ -41,6 +41,7 @@ sub export {
       fasta     => sub { return $self->fasta(@inputs); },
       csv       => sub { return $self->features('csv'); },
       tab       => sub { return $self->features('tab'); },
+      bed       => sub { return $self->features('bed'); },
       gff       => sub { return $self->features('gff'); },
       gff3      => sub { return $self->gff3_features; },
       embl      => sub { return $self->flat('embl'); },
@@ -48,7 +49,7 @@ sub export {
       alignment => sub { return $self->alignment; },
       %$custom_outputs
     };
-    
+
     if ($outputs->{$o}) {
       map { $params->{$_} = 1 if $_ } $object->param('param');
       map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('misc_set');
