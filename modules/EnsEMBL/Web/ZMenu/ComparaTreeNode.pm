@@ -61,7 +61,7 @@ sub content {
     order => 13
   });
   
-  my $action = 'Compara_Tree';
+  my $action = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 'Image' : 'Compara_Tree';
   $action .= '/pan_compara' if ($cdb =~ /pan/);
 
   # Expand all nodes
@@ -71,7 +71,7 @@ sub content {
       label => 'expand all sub-trees',
       order => 8,
       link  => $hub->url({
-        type     => 'Gene',
+        type     => $hub->type,
         action   => $action,
         collapse => '' 
       })
@@ -87,7 +87,7 @@ sub content {
       label => 'collapse other nodes',
       order => 10,
       link  => $hub->url({
-        type     => 'Gene',
+        type     => $hub->type,
         action   => $action,
         collapse => join(',', keys %collapsed_ids, @adjacent_subtree_ids)
       })
@@ -115,7 +115,7 @@ sub content {
         label => 'show all paralogs',
         order => 11,
         link  => $hub->url({
-          type     => 'Gene', 
+          type     => $hub->type,
           action   => $action,
           collapse => join(',', @collapse_node_ids)
         })
@@ -186,7 +186,7 @@ sub content {
         label => 'expand this sub-tree',
         order => 7,
         link  => $hub->url({
-          type     => 'Gene', 
+          type     => $hub->type,
           action   => $action,
           collapse => join(',', grep $_ != $node_id, keys %collapsed_ids)
         })
@@ -198,7 +198,7 @@ sub content {
         label => 'collapse this node',
         order => 9,
         link  => $hub->url({
-          type     => 'Gene',
+          type     => $hub->type,
           action   => $action,
           collapse => join(',', $node_id, keys %collapsed_ids) 
         })

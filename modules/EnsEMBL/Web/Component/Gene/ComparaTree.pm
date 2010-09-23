@@ -24,8 +24,9 @@ sub caption {
 sub _get_details {
   my $self = shift;
   my $cdb = shift;
+  my $stable_id = shift;
   my $object = $self->object;
-  my $member = $object->get_compara_Member($cdb);
+  my $member = $object->get_compara_Member($cdb, $stable_id);
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
@@ -40,14 +41,20 @@ sub _get_details {
 
 sub content {
   my $self   = shift;
-  my $cdb    = shift || 'compara';
-  my $hub    = $self->hub;
-  my $object = $self->object;
-  my $gene   = $object->isa('EnsEMBL::Web::Object::GeneTree') ? undef : $object;
-
+  my $cdb     = shift || 'compara';
+  my $hub = $self->hub;
+  my ($gene, $member, $tree, $node);
+  if ($self->object->isa('EnsEMBL::Web::Object::GeneTree')) {
+    $tree = $self->object->Obj;
+    $node = $tree->find_node_by_node_id($hub->param('collapse'));
+    $member = undef;
+  }
+  else {
+    $gene = $self->object;
+    ($member, $tree, $node) = $self->_get_details($cdb);
+  }
   # Get the Member and ProteinTree objects and draw the tree
 
-  my ($member, $tree, $node) = $self->_get_details($cdb);
 
   return $tree . $self->genomic_alignment_links($cdb) if $object->param('g') && !defined $member;
 
@@ -89,6 +96,19 @@ sub content {
       $highlight_gene = undef;
     }
   }
+
+  my $wuc            = $hub->get_imageconfig( 'genetreeview' );
+  my $image_width    = $self->image_width || 800;
+  my $collapsability = $hub->param('collapsability');
+  unless ($collapsability) {
+    $collapsability = $self->object->isa('EnsEMBL::Web::Object::GeneTree') ? 'duplications' : 'gene';
+  }
+  my $colouring      = $hub->param('colouring') || 'background';
+  my $show_exons     = $hub->param('exons');
+  my @hidden_clades  = grep {$_ =~ /^group_/ and $hub->param($_) eq "hide"} $hub->param();
+
+  my $hidden_genome_db_ids;
+  my $hidden_genes_counter = 0;
   
   if (@hidden_clades) {
     $hidden_genome_db_ids = '_';
@@ -121,7 +141,15 @@ sub content {
     slice_number    => '1|1',
     cdb             => $cdb
   });
-  
+
+  #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
+  my @highlights;
+  if ($gene && $member) {
+    @highlights = ($gene->stable_id, $member->genome_db->dbID);
+  }
+  else {
+    @highlights = (undef, undef);
+  }
   # Keep track of collapsed nodes
   my $collapsed_nodes   = $object->param('collapse');
   my $collapsed_to_gene = $self->_collapsed_nodes($tree, $node, 'gene',         $highlight_genome_db_id, $highlight_gene);
@@ -135,6 +163,9 @@ sub content {
     $collapsed_nodes ||= '';
   }
 
+  # print $self->_info("Collapsed nodes",  join(" -- ", split(",", $collapsed_nodes)));
+  ## FIXME - this doesn't appear to be implemented!
+  my @collapsed_clades  = grep {$_ =~ /^group_/ and $hub->param($_) eq "collapse"} $hub->param();
   if (@collapsed_clades) {
     foreach my $clade (@collapsed_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
@@ -163,12 +194,26 @@ sub content {
 
     # Sort the clades by the number of genome_db_ids. First the largest clades,
     # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
-    foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
+    foreach my $clade_name (sort {
+          scalar(@{$genome_db_ids_by_clade->{$b}}) <=> scalar(@{$genome_db_ids_by_clade->{$a}})
+	        } keys %$genome_db_ids_by_clade) {
       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
-      my $colour        = $object->param("group_${clade_name}_${mode}colour") || 'magenta';
-      my $nodes         = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, $mode eq 'fg' ? 'all' : undef);
-      
-      push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
+      my $colour = $hub->param("group_${clade_name}_${mode}colour") || "magenta";
+      my $these_coloured_nodes;
+      if ($mode eq "fg") {
+        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, "all");
+      } else {
+        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids);
+      }
+      if (%$these_coloured_nodes) {
+        push(@$coloured_nodes, {
+	        'clade' => $clade_name,
+	        'colour' => $colour,
+	        'mode' => $mode,
+	        'node_ids' => [keys %$these_coloured_nodes],
+	      });
+        # print $self->_info("Coloured nodes ($clade_name - $colour)",  join(" -- ", keys %$these_coloured_nodes));
+      }
     }
   }
 
@@ -231,8 +276,10 @@ sub _collapsed_nodes{
   $tree->isa('Bio::EnsEMBL::Compara::ProteinTree') 
       || die( "Need a ProteinTree, not a $tree" );
   return unless $node;
-  $node->isa('Bio::EnsEMBL::Compara::AlignedMember')
-      || die( "Need an AlignedMember, not a $node" );
+  if (!$self->object->Obj->isa('Bio::EnsEMBL::Compara::ProteinTree') 
+        && !$node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+    die( "Need an AlignedMember, not a $node" );
+  }
 
   my %collapsed_nodes;
   my %expanded_nodes;
