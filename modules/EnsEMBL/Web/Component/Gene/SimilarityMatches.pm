@@ -68,7 +68,7 @@ sub matches_to_html{
   $table->add_columns(@colums);   
   $table->add_rows(@rows);
   if ($count_ext_refs==0){
-    $return_html.= "<p><strong>No external database identifiers correspond to Transcripts of this Gene:</strong></p>";
+    $return_html.= "<p><strong>No external database identifiers correspond to Transcripts of this Gene: <br/>(note: empty columns are hidden)</strong></p>";
   }else{
     $return_html.= "<p><strong>The following database identifier" . (($count_ext_refs>1)?"s":"") ." correspond". (($count_ext_refs>1)?"":"s") . " to Transcripts of this Gene:</strong></p>";
     $return_html.=$table->render;
