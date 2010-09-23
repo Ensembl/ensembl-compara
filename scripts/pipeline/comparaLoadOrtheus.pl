@@ -26,8 +26,9 @@ my $module = "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Ortheus";
 my $ancestral_seqs = "ancestral_sequences";
 my $addMT = 0;
 
-##tables to change to both innodb (I) and set autoincrement (AI). 
+##tables to change to innodb (I) or autoincrement (A) or both (AI). 
 my %tables2change = (
+	A  => ["dnafrag"],
 	AI => ["genomic_align", "genomic_align_block", "genomic_align_group", "genomic_align_tree"],
 	I  => ["dna", "seq_region"],
 );
@@ -211,7 +212,7 @@ update_schema_tables(\%tables2change);
 
 sub update_schema_tables {
 	my ($tables) = shift;
-	auto_increment_table($ortheus_mlss_id, $tables->{AI}) if $tables;
+	auto_increment_table($ortheus_mlss_id, [ @{ $tables->{AI} }, @{ $tables->{A} } ]) if $tables;
 	my $sql_statement = "REPLACE INTO meta (meta_key, meta_value) VALUES (?,?)";
 	my $sth = $db_to_populate->dbc->prepare( $sql_statement );
 	$sth->execute("name", "ortheus_$ortheus_mlss_id");
