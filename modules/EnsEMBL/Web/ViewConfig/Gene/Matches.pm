@@ -15,8 +15,10 @@ my $help  = shift;
 
   my @default_on = ('Ensembl Human Transcript' , 'HGNC (curated)', 'HGNC (automatic)', 'EntrezGene', 'CCDS', 'RefSeq RNA', 'UniProtKB/ Swiss-Prot', 'RefSeq peptide', 'RefSeq DNA', 'RFAM', 'miRBase', 'Vega transcript', 'MIM disease');
   foreach (@xref_types){
-    $defaults{$_->{'name'}}=(grep {m|^$_->{'name'}?$|} @default_on)?'yes':undef;
-    $nr_on_by_default--;
+    if($_->{'type'} eq 'MISC' || $_->{'type'} eq 'LIT'){
+      $defaults{$_->{'name'}}=(grep {m|^$_->{'name'}?$|} @default_on)?'yes':undef;
+      $nr_on_by_default--;
+    }
   }
   $view_config->_set_defaults(%defaults);
 }
