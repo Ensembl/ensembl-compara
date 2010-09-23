@@ -2,16 +2,13 @@ package EnsEMBL::Web::Component::Transcript::Go;
 
 use strict;
 use warnings;
-use URI::Escape;
 use GraphViz;
+use EnsEMBL::Web::Tools::OntologyVisualisation;
 
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
 no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Transcript);
 
-my $existing_terms;
-my $existing_edges;
-my $node_description;
 
 sub _init {
   my $self = shift;
@@ -26,6 +23,33 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
+  my $species_defs = $self->object->species_defs;  
+  my $ontology_term_adaptor = $object->get_databases('go')->{'go'}->get_GOTermAdaptor();
+    
+  my $go_sub_dir="/GO/";  
+  my $go_dir =$species_defs->ENSEMBL_TMP_DIR_IMG.$go_sub_dir;
+  my $go_url = $species_defs->ENSEMBL_BASE_URL.$species_defs->ENSEMBL_TMP_URL_IMG.$go_sub_dir;   
+  my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";  
+  my $image_background_colour = $species_defs->colour('goimage','image_background');
+  my $node_fill_colour = $species_defs->colour('goimage','node_fill');
+  my $node_font_colour = $species_defs->colour('goimage','node_font');
+  my $node_border_colour = $species_defs->colour('goimage','node_border');
+  my $non_highlight_fill_colour = $species_defs->colour('goimage','non_highlight_fill');
+  my $non_highlight_font_colour = $species_defs->colour('goimage','non_highlight_font');
+  my $non_highlight_border_colour = $species_defs->colour('goimage','non_highlight_border');    
+  
+  my $node_fill_text = $species_defs->colour('goimage','node_fill_text');
+  $node_fill_text=~s/_/ /g;
+  
+  my $get_relation_type_colour = sub {
+    my $relation_type=shift;
+    return $species_defs->colour('goimage',$relation_type);
+  };  
+  my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new($ontology_term_adaptor,$go_dir, $go_url, $GOIDURL, $image_background_colour, $node_fill_colour, $node_font_colour, $node_border_colour, $non_highlight_fill_colour, $non_highlight_font_colour, $non_highlight_border_colour,$get_relation_type_colour);
+$ontovis->add_cluster_by_parent_accession("GO:0005575");
+$ontovis->add_cluster_by_parent_accession("GO:0008150");
+$ontovis->add_cluster_by_parent_accession("GO:0003674");
+  
   return $self->non_coding_error unless $object->translation_object;
 
   my $label = 'GO';
@@ -41,121 +65,19 @@ sub content {
   # First process GO terms
   my $html;
   my $go_hash  = $object->get_go_list();
-  if (%$go_hash){
-    $html =  "<p><strong>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</strong></p>";
-    my $table = $self->table;
-    $self->process_data($table, $go_hash);
-    $html .= $table->render;
-  }
-  # then add  GOSlim info
   my $go_slim_hash = $object->get_go_list('goslim_goa');
-  if (%$go_slim_hash){
-    my $species_defs = $self->object->species_defs;  
-    my $node_fill_text = $species_defs->colour('goimage','node_fill_text') || 'blue';
-    $node_fill_text =~ s/_/ /g;
-    $html .= "<p><strong>Below is the minimal graph of the GO terms (highlighted in ".$node_fill_text.") and their parents terms (not highlighted) closest ones in the GOSlim GOA subset for the above terms.</strong><br/>
-    Nodes are links to GO, mouse over for a description.</p>";
-    my $go_sub_dir="/GO/";
-    my $go_dir =$species_defs->ENSEMBL_TMP_DIR_IMG.$go_sub_dir;
-    my $go_url = $species_defs->ENSEMBL_BASE_URL.$species_defs->ENSEMBL_TMP_URL_IMG.$go_sub_dir; 
-    my $go_image;
-    my $image_background = $species_defs->colour('goimage','image_background') || 'transparent';
-    $image_background='#'.$image_background if ($image_background ne 'transparent');
 
-    my $node_fill = $species_defs->colour('goimage','node_fill') || 'transparent';
-    $node_fill='#'.$node_fill if ($node_fill ne 'transparent');
-    my $node_font = $species_defs->colour('goimage','node_font') || '000000' ;
-    $node_font='#'.$node_font if ($node_font ne 'transparent');
-    my $node_border = $species_defs->colour('goimage','node_border') || '000000';
-    $node_border='#'.$node_border if ($node_border ne 'transparent');
-
-    my $ontology_term_adaptor = $object->get_databases('go')->{'go'}->get_GOTermAdaptor();
-    my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";
-
-    my $graph;
-    $graph = GraphViz->new(layout => 'dot', ratio => 'compress',
-    width => 15, height => 40, 
-    directed=>1, bgcolor=>$image_background, style=>'filled', landscape=>'true',node => {margin=>'0.2,0', ratio => 'compress',shape => 'box', fontsize => '8pt', height=>'.2',fontname=>'Times-Roman', fontname=>'Helvetica', fontnames=>'ps'});    
-    for my $key ( sort(keys %$go_slim_hash )) {#add the nodes we retreived, and highlight them
-      $go_image.=$key;
-     
-      #get term from go
-      my $term = $ontology_term_adaptor->fetch_by_accession($key);
-      #add the node if needed
-      if(! $existing_terms->{$key}){
-        $existing_terms->{$key}=1;
-        $graph->add_node($self->format_node_name($term),title=>'bla', URL=>$GOIDURL.$term->accession, style=>'filled', color=>$node_border,fillcolor=>$node_fill, fontcolor=>$node_font);
-      }
+  if (%$go_hash){
+    $html.=  "<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq:<br/>";
+    if (%$go_slim_hash){
+      $html .= "The GOSlim and GOA terms closest to the matched terms have been highlighted in <span style=\"color:".$ontovis->node_fill_colour."\" >".$node_fill_text.". The nodes are clickable links to GO</div>";
     }
-    for my $key ( sort(keys %$go_slim_hash )) {#add all parents of the nodes we retreived
-      my $term = $ontology_term_adaptor->fetch_by_accession($key);
-      $self->add_parents($term,$graph,$ontology_term_adaptor,$GOIDURL);
-    }      
-    $go_image.=".png";
-    mkdir($go_dir);
-    open (MYFILE, '>>'.$go_dir.$go_image);
-    print MYFILE $graph->as_png;
-    close (MYFILE);
-    my $image_map = $graph->as_cmapx;
-    $image_map =~ s/title="([^"]*)" alt=""/ title="$node_description->{$1}" alt="$node_description->{$1}"/g;
-    $html.=$image_map;
-    $html.=qq(<img usemap="#test" src=").$go_url.$go_image.qq(" border="0">);
+    $html.=  "</strong></p>";
   }
+  $ontovis->highlighted_term_accessions(keys %$go_slim_hash);
+  $ontovis->non_highlighted_term_accessions(keys %$go_hash);
+  $html.=$ontovis->render;  
   return $html;
-}
-
-sub add_parents{
-  my $self=shift;
-  my $term = shift;
-  my $graph=shift;
-  my $ontology_term_adaptor = shift;
-  my $parents = $ontology_term_adaptor->fetch_all_by_child_term($term);
-  my $GOIDURL = shift;
-  my $species_defs = $self->object->species_defs;
-  my $non_highlight_fill = $species_defs->colour('goimage','non_highlight_fill') || 'transparent';
-  $non_highlight_fill='#'.$non_highlight_fill if ($non_highlight_fill ne 'transparent');
-  my $non_highlight_font = $species_defs->colour('goimage','non_highlight_font') || '000000';
-  $non_highlight_font='#'.$non_highlight_font if ($non_highlight_font ne 'transparent');    
-  my $non_highlight_border = $species_defs->colour('goimage','non_highlight_border') || '000000';
-  $non_highlight_border='#'.$non_highlight_border if ($non_highlight_border ne 'transparent');    
-
-  my $ancestors = $ontology_term_adaptor->_fetch_ancestor_chart($term);      
-  foreach (keys %$ancestors)  {
-    my $ancestor_terms=$ancestors->{$_};
-    foreach my $relation (keys %$ancestor_terms ){
-      if(ref $ancestor_terms->{$relation} eq "ARRAY" ){#all parents are in 'name' =>[term,term] form
-        foreach my $trm (@{$ancestor_terms->{$relation}}){
-          foreach (@$parents){
-            if($trm->accession eq $_->accession){#check that the parent is a direct parent
-              if(! $existing_terms->{$trm->accession}){
-                $existing_terms->{$trm->accession}=1;
-                $graph->add_node($self->format_node_name($trm), URL=>$GOIDURL.$trm->accession, style=>'filled', color=>$non_highlight_border,fillcolor=>$non_highlight_fill, fontcolor=>$non_highlight_font);
-              }
-              if(! $existing_edges->{$term->accession.$trm->accession.$relation}){
-                $existing_edges->{$term->accession.$trm->accession.$relation}=1;
-                my $edge_colour = "#".($species_defs->colour('goimage',$relation)|| '000000' );
-                $graph->add_edge($self->format_node_name($term) => $self->format_node_name($trm), label=>$relation, color=>$edge_colour, fontcolor=>$edge_colour, tooltip=>'nnnn');
-              }
-              $self->add_parents($trm,$graph,$ontology_term_adaptor,$GOIDURL);            
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-sub format_node_name{
-  my $self=shift;
-  my $trm = shift;
-  my $return_string = $trm->accession;
-  $return_string=$trm->name;
-  $return_string=~ s/_/ /g;
-
-  my $descr=$trm->name;
-  $descr =~ s/_/ /g;
-  $node_description->{$return_string}=$trm->accession." ".$descr;
-  return $return_string;
 }
 
 sub table {
