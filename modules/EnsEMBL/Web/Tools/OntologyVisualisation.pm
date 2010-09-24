@@ -184,6 +184,7 @@ sub render{
     $self->_add_parents($term,$ontology_term_adaptor);
   }
   my $return_html='';
+  my $images_html='';
   mkdir($self->img_base_dir);
   foreach(keys %{$self->{_clusters}}){
     my $cluster=$self->{_clusters}->{$_};
@@ -194,9 +195,10 @@ sub render{
     my $image_map = $cluster->as_cmapx;
     $image_map =~ s/title="([^"]*)" alt=""/ title="$self->{_node_descriptions}->{$1}" alt="$self->{_node_descriptions}->{$1}"/g;
 	  $image_map =~ s/id="test" name="test"/id="$_" name="$_"/g;
-	  $return_html.=$image_map.qq(<img usemap="#).$_.qq(" src=").$self->img_base_url.$file.qq(" border="0">);
+	  $return_html.=$image_map;
+    $images_html.=qq(<img style="float:none;" usemap="#).$_.qq(" src=").$self->img_base_url.$file.qq(" border="0">);
   }
-  return $return_html;
+  return $return_html.$images_html;
 }
 
 sub _add_node{
