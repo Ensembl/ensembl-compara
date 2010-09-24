@@ -310,33 +310,34 @@ sub _get_cluster{
 sub _format_node_name{
   my $self=shift;
   my $trm = shift;
-  my $term_acc = $trm->accession;
-  $term_acc=$trm->name;
-  $term_acc=~ s/_/ /g;
-  $term_acc=~s/ /\n/g;
-  my $max_len=0;
-  my @return_string_parts=split(/\n/, $term_acc);
-  foreach(@return_string_parts){
-    $max_len=($max_len< length($_))?length($_):$max_len;
-  }
+  my $return_string = $trm->accession;
+  $return_string=$trm->name;
+  $return_string=~ s/_/ /g;
+  $return_string=~s/ /\n/g;
+  # my $max_len=0;
+  # my @return_string_parts=split(/\n/, $term_acc);
+  # foreach(@return_string_parts){
+    # $max_len=($max_len< length($_))?length($_):$max_len;
+  # }
 
-  my $return_string = "";
- my $key="";
-  for(my $i=0; $i<scalar(@return_string_parts); $i++){
-    if($i!=0){
-      $return_string.="\n";
-      $key.="\n";
-    }
-    if (length($return_string_parts[$i])==$max_len){
-      $return_string.="  ";
-      $key.=" &#160;";
-    }
-    $return_string.=$return_string_parts[$i];
-    $key.=$return_string_parts[$i];
-  }
+  # my $return_string = "";
+  # my $key="";
+  # for(my $i=0; $i<scalar(@return_string_parts); $i++){
+    # if($i!=0){
+      # $return_string.="\n";
+      # $key.="\n";
+    # }
+    # if (length($return_string_parts[$i])==$max_len){
+      # $return_string.="  ";
+      # $key.=" &#160;";
+    # }
+    # $return_string.=$return_string_parts[$i];
+    # $key.=$return_string_parts[$i];
+  # }
   
   
   my $descr=$trm->name;
+  my $key = $return_string;
   $descr =~ s/_/ /g;
   $key=~ s/\n/\\n/g;
   $key=~ s/-/&#45;/g;
