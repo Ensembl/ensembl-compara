@@ -251,10 +251,8 @@ sub _add_parents{
                 }elsif(1){
                   $edge_colour = _format_colour_code($edge_colour_function,'000000');
                 }
-                # $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
-                # $edge_colour, dir=>'back'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
-                $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), color=>$edge_colour, fontcolor=>
-                $edge_colour, dir=>'back'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.                
+                 $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
+                 $edge_colour, dir=>'back'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
               }
               $self->_add_parents($trm,$ontology_term_adaptor, $edge_colour_function);
             }
