@@ -157,7 +157,7 @@ sub add_cluster_by_parent_accession{
   my $new_cluster = shift;
   if(!$self->{_clusters}->{$new_cluster}){
     $self->{_clusters}->{$new_cluster}= GraphViz->new(nodesep=>0.5, ranksep=>2,layout => 'dot', ratio => 'compress', fontname=>"courier", bgcolor=>$self->image_background_colour, style=>'filled', landscape=>'true',
-      nojustify=>'false',node => {nojustify=>'false', margin=>'0,0', ratio => 'compress',shape => 'box', fontsize => '10pt', fontname=>"courier",  fontnames=>'ps'});
+      nojustify=>'false',node => {height=>'0.02', width=>'0.02',nojustify=>'false', margin=>'0,0', ratio => 'compress',shape => 'box', fontsize => '10pt', fontname=>"courier",  fontnames=>'ps'});
   }
 }
 
@@ -217,7 +217,8 @@ sub _add_node{
   if(! $self->existing_terms->{$key}){
     $self->existing_terms->{$key}=1;
     my $node_name = $self->_format_node_name($term);
-    $cluster->add_node($node_name,URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
+#    $cluster->add_node($node_name,URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
+    $cluster->add_node($node_name,URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour);
   }  
 }
 
@@ -260,8 +261,10 @@ sub _add_parents{
               if(! $self->existing_terms->{$trm->accession}){
                 $self->existing_terms->{$trm->accession}=1;
                 my $node_name = $self->_format_node_name($trm);
+                # $cluster->add_node($node_name, URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
+                # fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
                 $cluster->add_node($node_name, URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
-                fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
+                fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour);
               }
               if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
                 $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
