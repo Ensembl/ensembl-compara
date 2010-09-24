@@ -157,7 +157,7 @@ sub add_cluster_by_parent_accession{
   my $new_cluster = shift;
   if(!$self->{_clusters}->{$new_cluster}){
     $self->{_clusters}->{$new_cluster}= GraphViz->new(nodesep=>0.5, ranksep=>2,layout => 'dot', ratio => 'compress', fontname=>"courier", bgcolor=>$self->image_background_colour, style=>'filled', landscape=>'true',
-      node => {labeljust=>'r', margin=>'0.03,0', ratio => 'compress',shape => 'box', fontsize => '10pt', height=>'.2', fontname=>"courier",  fontnames=>'ps'});
+      nojustify=>'false',node => {nojustify=>'false', margin=>'0,0', ratio => 'compress',shape => 'box', fontsize => '10pt', fontname=>"courier",  fontnames=>'ps'});
   }
 }
 
@@ -216,8 +216,27 @@ sub _add_node{
   #add the node if needed
   if(! $self->existing_terms->{$key}){
     $self->existing_terms->{$key}=1;
-    $cluster->add_node($self->_format_node_name($term),URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour);
+    my $node_name = $self->_format_node_name($term);
+    $cluster->add_node($node_name,URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
   }  
+}
+
+sub _get_height{ #0.16 inch per line
+  my $self=shift;
+  my $node_name=shift;
+  my $count=1;
+  while ($node_name =~ /\n/g) { $count++ }
+  return $count*.16;
+}
+
+sub _get_width{
+  my $self=shift;
+  my $node_name=shift;
+  my $length=0;
+  foreach(split(/\n/, $node_name)){
+    $length=($length< length($_))?length($_):$length;
+  }
+  return $length*.07;
 }
 
 sub _add_parents{
@@ -240,8 +259,9 @@ sub _add_parents{
             if($trm->accession eq $_->accession){#check that the parent is a direct parent
               if(! $self->existing_terms->{$trm->accession}){
                 $self->existing_terms->{$trm->accession}=1;
-                $cluster->add_node($self->_format_node_name($trm), URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
-                fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour);
+                my $node_name = $self->_format_node_name($trm);
+                $cluster->add_node($node_name, URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
+                fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
               }
               if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
                 $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
@@ -290,14 +310,34 @@ sub _get_cluster{
 sub _format_node_name{
   my $self=shift;
   my $trm = shift;
-  my $return_string = $trm->accession;
-  $return_string=$trm->name;
-  $return_string=~ s/_/ /g;
-  $return_string=~s/ /\n/g;
+  my $term_acc = $trm->accession;
+  $term_acc=$trm->name;
+  $term_acc=~ s/_/ /g;
+  $term_acc=~s/ /\n/g;
+  my $max_len=0;
+  my @return_string_parts=split(/\n/, $term_acc);
+  foreach(@return_string_parts){
+    $max_len=($max_len< length($_))?length($_):$max_len;
+  }
+
+  my $return_string = "";
+ my $key="";
+  for(my $i=0; $i<scalar(@return_string_parts); $i++){
+    if($i!=0){
+      $return_string.="\n";
+      $key.="\n";
+    }
+    if (length($return_string_parts[$i])==$max_len){
+      $return_string.="  ";
+      $key.=" &#160;";
+    }
+    $return_string.=$return_string_parts[$i];
+    $key.=$return_string_parts[$i];
+  }
+  
   
   my $descr=$trm->name;
   $descr =~ s/_/ /g;
-  my $key=$return_string;
   $key=~ s/\n/\\n/g;
   $key=~ s/-/&#45;/g;
   $self->node_descriptions->{$key}=$trm->accession." ".$descr;
