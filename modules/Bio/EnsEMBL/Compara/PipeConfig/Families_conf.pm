@@ -5,7 +5,8 @@
 # rel.57+:  init_pipeline.pl execution took 8m45;   pipeline execution took 100hours (4.2 x days-and-nights) including queue waiting
 # rel.58:   init_pipeline.pl execution took 5m (Albert's pipeline not working) or 50m (Albert's pipeline working);   pipeline execution took ...
 # rel.58b:  init_pipeline.pl execution took 6m30, pipeline execution [with some debugging in between] took 5*24h. Should be 4*24h at most.
-# rel.59:   init_pipeline.pl execution took 6m45, pipeline execution took ...
+# rel.59:   init_pipeline.pl execution took 6m45, pipeline execution took 13.5 days [prob. because of MyISAM engine left there by mistake]
+# rel.60:   init_pipeline.pl execution took 16m, pipeline execution took ...
 
 #
 ## Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
@@ -22,7 +23,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        release         => '59',
+        release         => '60',
         rel_suffix      => '',    # an empty string by default, a letter otherwise
         rel_with_suffix => $self->o('release').$self->o('rel_suffix'),
 
@@ -31,16 +32,18 @@ sub default_options {
             # code directories:
         sec_root_dir    => '/software/ensembl/compara',
         blast_bin_dir   => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
-        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-09-308/bin',    # the new one is: mcl-10-105 , but we will be using the older one this time
+        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-10-201/bin',    # the newest and never tested with Families, OMG...
         mafft_root_dir  => $self->o('sec_root_dir') . '/mafft-6.522',
             
             # data directories:
         work_dir        => $ENV{'HOME'}.'/families_'.$self->o('rel_with_suffix'),
-        blastdb_dir     => '/lustre/scratch103/ensembl/'.$ENV{'USER'}.'/families_'.$self->o('rel_with_suffix'),
+        blastdb_dir     => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/families_'.$self->o('rel_with_suffix'),
         blastdb_name    => 'metazoa_'.$self->o('rel_with_suffix').'.pep',
         tcx_name        => 'families_'.$self->o('rel_with_suffix').'.tcx',
         itab_name       => 'families_'.$self->o('rel_with_suffix').'.itab',
         mcl_name        => 'families_'.$self->o('rel_with_suffix').'.mcl',
+
+        blast_params    => ' ', # '-seg yes' is the module default (but we switch it off, forcing no parameters by using a space)
 
             # resource requirements:
         mcxload_gigs    => 30,                                      # old MCL: 15G was enough to load 450mln, 25G was enough to load 850mln; new MCL takes 25G to load 465mln edges.
@@ -75,7 +78,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_58',
+            -dbname => 'ensembl_compara_59',
         },
 
         master_db => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
@@ -99,7 +102,7 @@ sub pipeline_create_commands {
                     .'| mysql '.$self->dbconn_2_mysql('pipeline_db', 1),
 
         'mysqldump '.$self->dbconn_2_mysql('homology_db', 0).' '.$self->o('homology_db','-dbname')
-                   .' -t member sequence family family_member | sed "s/ENGINE=MyISAM/ENGINE=InnoDB/" '
+                   .' member sequence family family_member | sed "s/ENGINE=MyISAM/ENGINE=InnoDB/" ' # make sure we dump the schema as well - this allows us to fix the ENGINE!
                    .'| mysql '.$self->dbconn_2_mysql('pipeline_db', 1),
 
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'ALTER TABLE member   AUTO_INCREMENT=100000001'",
@@ -115,12 +118,10 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
-        'pipeline_name'     => 'fam'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'pipeline_name'     => 'FAM_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
-        # 'blastdb_dir'       => $self->o('blastdb_dir'),
-        # 'blastdb_name'      => $self->o('blastdb_name'),
 
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
@@ -238,6 +239,9 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'family_blast',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast',
+            -parameters    => {
+                'blast_params' => $self->o('blast_params'),
+            },
             -hive_capacity => $self->o('blast_capacity'),
             -rc_id => 2,
         },
