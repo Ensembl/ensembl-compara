@@ -590,7 +590,7 @@ sub configure_das_views {
   } keys %this_ics;
     
   # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
-  if ( $das->is_on( "$this_type/$this_action" ) ) {
+  if ( $das->is_on( "$this_type" ) ) {
     # Need to set default to 'no' before we can set it to 'yes'
     if ( !$this_vc->is_option( $das->logic_name ) ) {
       $this_vc->_set_defaults( $das->logic_name, 'no'  );
