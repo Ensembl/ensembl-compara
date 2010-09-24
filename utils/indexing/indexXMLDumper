@@ -482,7 +482,7 @@ sub dumpVariation {
 	push @syns,$x->[1],$x->[4];
 	push @gene_syns,$x->[3];
 	
-	$extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[6];
+	$extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[5];
 	if( $x->[1] ) {
 	  $extra .= sprintf ', through %s', $x->[1];
 	}
@@ -1374,7 +1374,7 @@ sub dumpGene {
 	  'ad_dl'     => $ad_dl,
           'xrefs'     => [],
 	  'xref_descriptions' => {},
-          'disp_xref' => $disp_xref ? " $disp_xref" : "novel gene",
+          'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
           'status'    => $status,
           'biotype'   => $biotype,
 	  'ad_dl'     => $ad_dl,
@@ -1434,7 +1434,7 @@ sub dumpGene {
 		 $old->{'xref_descriptions'},
 		 $db,
 		 $counter),
-	$nogzip, $fh);
+	$nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Gene info query done ".&date_and_mem()."\n";
 #    exit;
 
@@ -1568,9 +1568,11 @@ sub GeneLine {
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
+  $disp_xref = &clean($disp_xref,'name');
   my $description = $desc . " [Type: $biotype $ad_label]";
   my $xml = qq(
 <entry id="$gsid">
+  <name>$disp_xref</name>
   <description>$description</description>
   <cross_references>);
   my (%seen_labels,%seen_syns);
@@ -1580,14 +1582,19 @@ sub GeneLine {
     next if $seen_labels{$dbkey};
     $seen_labels{$dbkey} = 1;
     $dbkey = &clean($dbkey,'dbkey');
-    $xml .= qq(
-    <ref dbname="$dbname" dbkey="$dbkey"/>);
-    foreach my $syn (@{$xref->{'synonyms'}}) { 
-      next if $seen_syns{$syn};
-      $seen_syns{$syn} = 1;
-      $syn = &clean($syn,'syn');
+    if (! $dbname) {
+      print LOG "WARNING: $gsid has a xref ($dbkey) with no dbname - check db and refer to release coordinator\n";
+    }
+    else {
       $xml .= qq(
+    <ref dbname="$dbname" dbkey="$dbkey"/>);
+      foreach my $syn (@{$xref->{'synonyms'}}) { 
+	next if $seen_syns{$syn};
+	$seen_syns{$syn} = 1;
+	$syn = &clean($syn,'syn');
+	$xml .= qq(
     <ref dbname="$dbname" dbkey="$syn"/>);
+      }
     }
     $cross_references{$dbname}++;
   }
@@ -1638,6 +1645,8 @@ sub clean {
   $text =~ s/&/&amp;/g;
   $text =~ s/<i>//g;
   $text =~ s/<\/i>//g;
+  $text =~ s/<sup>/-/g;
+  $text =~ s/<\/sup>/-/g;
   $text =~ s/<em>//g;
   $text =~ s/<\/em>//g;
   $text =~ s/</&lt;/g;
