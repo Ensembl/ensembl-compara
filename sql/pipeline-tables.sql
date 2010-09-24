@@ -230,3 +230,55 @@ CREATE TABLE peptide_align_feature_prod (
   PRIMARY KEY (peptide_align_feature_id)
 ) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
 
+
+## These are non-coding RNA pipeline specific tables:
+
+DROP TABLE IF EXISTS ktreedist_score;
+CREATE TABLE ktreedist_score (
+  node_id int(10) unsigned NOT NULL,
+  tag varchar(50) DEFAULT NULL,
+  k_score_rank int(10) default NULL,
+  k_score float(10,5) DEFAULT NULL,
+  scale_factor float(10,5) DEFAULT NULL,
+  symm_difference int(10) unsigned DEFAULT NULL,
+  n_partitions int(10) unsigned DEFAULT NULL,
+  UNIQUE KEY tag_node_id (node_id,tag),
+  KEY node_id (node_id),
+  KEY tag (tag)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+DROP TABLE IF EXISTS recovered_member; 
+CREATE TABLE recovered_member (
+  recovered_id  int(10) unsigned NOT NULL AUTO_INCREMENT,
+  node_id int(10) unsigned NOT NULL,
+  stable_id varchar(128) NOT NULL,
+  genome_db_id int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (recovered_id),
+  UNIQUE KEY (stable_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS removed_member; 
+CREATE TABLE removed_member (
+  removed_id  int(10) unsigned NOT NULL AUTO_INCREMENT,
+  node_id int(10) unsigned NOT NULL,
+  stable_id varchar(128) NOT NULL,
+  genome_db_id int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (removed_id),
+  UNIQUE KEY (stable_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS cmsearch_hit; 
+CREATE TABLE cmsearch_hit (
+  hit_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  recovered_id int(10) unsigned NOT NULL,
+  node_id int(10) unsigned NOT NULL,
+  target_start int(10) NOT NULL,
+  target_stop  int(10) NOT NULL,
+  query_start int(10) NOT NULL,
+  query_stop  int(10) NOT NULL,
+  bit_sc float(10,5) DEFAULT NULL,
+  evalue double DEFAULT NULL,
+  PRIMARY KEY (hit_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
