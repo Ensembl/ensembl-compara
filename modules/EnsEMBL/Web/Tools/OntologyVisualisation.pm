@@ -236,7 +236,7 @@ sub _get_width{
   foreach(split(/\n/, $node_name)){
     $length=($length< length($_))?length($_):$length;
   }
-  return $length*.08;
+  return $length*.085;
 }
 
 sub _add_parents{
