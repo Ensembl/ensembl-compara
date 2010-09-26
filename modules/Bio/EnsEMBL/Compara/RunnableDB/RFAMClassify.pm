@@ -64,11 +64,9 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use LWP::Simple;
 
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -87,16 +85,9 @@ sub fetch_input {
 
   $self->{'clusterset_id'} = 1;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  $self->{mlssDBA} = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-  $self->{treeDBA} = $self->{'comparaDBA'}->get_NCTreeAdaptor;
-  $self->{ssDBA} = $self->{'comparaDBA'}->get_SpeciesSetAdaptor;
+  $self->{mlssDBA} = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  $self->{treeDBA} = $self->compara_dba->get_NCTreeAdaptor;
+  $self->{ssDBA} = $self->compara_dba->get_SpeciesSetAdaptor;
 
   $self->get_params($self->parameters);
 
@@ -105,7 +96,7 @@ sub fetch_input {
   $self->{'cluster_mlss'}->method_link_type('NC_TREES');
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
-    my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
     unless (defined $gdb) {
       $DB::single=1;1;
       throw("gdb not defined for gdb_id = $gdb_id\n");
@@ -226,7 +217,7 @@ sub run_rfamclassify {
     printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
   }
   my $mlss_id = $self->{'cluster_mlss'}->dbID;
-  $mlss_id = $self->{comparaDBA}->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
+  $mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
 
   # Classify the cluster that already have an RFAM id or mir id
   print STDERR "Storing clusters...\n" if ($self->debug);
@@ -324,7 +315,7 @@ sub build_hash_models {
     "AND transcript.gene_member_id=gene.member_id ".
     "AND transcript.description not like '%Acc:NULL%' ".
     "AND transcript.description not like '%Acc:'";
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($gene_member_id, $gene_description, $transcript_member_id, $transcript_description) = @$ref;
@@ -365,7 +356,7 @@ sub build_hash_cms {
   my $field = shift;
 
   my $sql = "SELECT $field, type from nc_profile";
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($field_value, $type) = @$ref;
@@ -378,7 +369,7 @@ sub load_model_id_names {
   my $field = shift;
 
   my $sql = "SELECT model_id, name from nc_profile";
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($model_id, $name) = @$ref;

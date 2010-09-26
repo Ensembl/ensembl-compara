@@ -63,8 +63,9 @@ use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Scalar::Util qw(looks_like_number);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::SimpleAlign;
+use Bio::AlignIO;
+
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
@@ -72,11 +73,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Homology;
 
-use Bio::SimpleAlign;
-use Bio::AlignIO;
-
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -101,13 +98,6 @@ sub fetch_input {
 
   $self->throw("No input_id") unless defined($self->input_id);
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
@@ -120,8 +110,8 @@ sub fetch_input {
   $self->print_params if($self->debug);
 
   my $starttime = time();
-  $self->{'treeDBA'} = $self->{'comparaDBA'}->get_NCTreeAdaptor;
-  $self->{homologyDBA} = $self->{'comparaDBA'}->get_HomologyAdaptor;
+  $self->{'treeDBA'} = $self->compara_dba->get_NCTreeAdaptor;
+  $self->{homologyDBA} = $self->compara_dba->get_HomologyAdaptor;
   $self->{'nc_tree'} =  $self->{'treeDBA'}->
          fetch_tree_at_node_id($self->{'nc_tree_id'});
   $self->check_job_fail_options;
@@ -507,9 +497,9 @@ sub load_species_tree_from_tax
 
   printf("load_species_tree_from_tax\n") if($self->debug);
   my $starttime = time();
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $taxonDBA = $self->compara_dba->get_NCBITaxonAdaptor;
 
-  my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
+  my $gdb_list = $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
   my $root=undef;
   foreach my $gdb (@$gdb_list) {
     next if ($gdb->name =~ /ancestral/);
@@ -527,7 +517,7 @@ sub load_species_tree_from_tax
 sub load_species_tree_from_file {
   my $self = shift @_;
 
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
+  my $taxonDBA = $self->compara_dba->get_NCBITaxonAdaptor;
   print "load_species_tree_from_file\n" if $self->debug;
   my $newick = $self->_slurp($self->{species_tree_file});
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
@@ -639,7 +629,7 @@ sub get_ancestor_taxon_level
 
   foreach my $gdbID (keys(%$species_hash)) {
     my $gdb = 
-      $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
+      $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
     my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
 
     unless($taxon) {
@@ -718,7 +708,7 @@ sub genepairlink_fetch_homology
   return undef unless($homology_id);
 
   my $homology = 
-    $self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_dbID($homology_id);
+    $self->compara_dba->get_HomologyAdaptor->fetch_by_dbID($homology_id);
   $genepairlink->add_tag("old_homology", $homology);
 
   return $homology;
@@ -804,9 +794,9 @@ sub delete_old_homologies_old
 
   my ($member1, $member2) = $genepairlink->get_nodes;
 
-  my @homologies = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
+  my @homologies = @{$self->compara_dba->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
                        ($member1->gene_member, $member2->gene_member, 'ENSEMBL_ORTHOLOGUES')};
-  push @homologies, @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
+  push @homologies, @{$self->compara_dba->get_HomologyAdaptor->fetch_by_Member_Member_method_link_type
                         ($member1->gene_member, $member2->gene_member, 'ENSEMBL_PARALOGUES')};
 
   my $sql1 = "DELETE FROM homology WHERE homology_id=?";
@@ -1155,7 +1145,7 @@ sub store_gene_link_as_homology
   } else {
     $mlss->species_set([$nc1->genome_db, $nc2->genome_db]);
   }
-  $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->{'_readonly'});
+  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->{'_readonly'});
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;

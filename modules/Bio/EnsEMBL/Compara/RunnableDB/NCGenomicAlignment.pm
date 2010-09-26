@@ -58,18 +58,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::NCGenomicAlignment;
 use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use POSIX qw(ceil floor);
 
 use Bio::AlignIO;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::BaseAlignFeature;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Member;
 
-use Bio::EnsEMBL::Hive;
-use POSIX qw(ceil floor);
-
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -91,15 +87,8 @@ sub fetch_input {
   $self->{'ncgenomicalignment_starttime'} = time()*1000;
   $self->{'method'} = 'NCGenomicAlignment';
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
-  $self->{treeDBA} = $self->{'comparaDBA'}->get_NCTreeAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
+  $self->{treeDBA} = $self->compara_dba->get_NCTreeAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -141,7 +130,7 @@ sub get_params {
   }
   if(defined($params->{'nc_tree_id'})) {
     $self->{'nc_tree'} = 
-         $self->{'comparaDBA'}->get_NCTreeAdaptor->
+         $self->compara_dba->get_NCTreeAdaptor->
          fetch_node_by_node_id($params->{'nc_tree_id'});
     printf("  nc_tree_id : %d\n", $self->{'nc_tree_id'});
   }
@@ -259,7 +248,7 @@ sub update_single_peptide_tree
     next unless($member->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     next unless($member->sequence);
     $member->cigar_line(length($member->sequence)."M");
-    $self->{'comparaDBA'}->get_NCTreeAdaptor->store($member);
+    $self->compara_dba->get_NCTreeAdaptor->store($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -287,12 +276,12 @@ sub run_ncgenomicalignment {
   $cmd .= " -noxml -notree -f=Fasta -o=" . $mfa_output;
   $cmd .= " -d=" . $self->{input_fasta};
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     throw("error running ncgenomicalignment, $!\n");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   # Prank renames the output by adding ".2.fas"
   my $fasta_output = $mfa_output . ".2.fas";
@@ -340,7 +329,7 @@ sub run_ncgenomic_tree {
   $cmd .= $self->{'species_tree_file'};
   $cmd .= " ". $input_aln;
   $cmd .= " > " . $self->{'newick_file'};
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $worker_temp_directory = $self->worker_temp_directory;
   $DB::single=1;1;
@@ -349,7 +338,7 @@ sub run_ncgenomic_tree {
     throw("error running treebest $method, $!\n");
   }
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   $self->store_newick_into_protein_tree_tag_string($method);
   return;

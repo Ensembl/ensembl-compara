@@ -58,12 +58,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO;
 use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::AlignIO;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -82,18 +80,11 @@ sub fetch_input {
 
   $self->{'clusterset_id'} = 1;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   # Get the needed adaptors here
-  $self->{memberDBA} = $self->{comparaDBA}->get_MemberAdaptor;
-  $self->{treeDBA}   = $self->{'comparaDBA'}->get_NCTreeAdaptor;
-  $self->{mlssDBA}   = $self->{'comparaDBA'}->get_MethodLinkSpeciesSetAdaptor;
-  $self->{ssDBA}   = $self->{'comparaDBA'}->get_SpeciesSetAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
+  $self->{treeDBA}   = $self->compara_dba->get_NCTreeAdaptor;
+  $self->{mlssDBA}   = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  $self->{ssDBA}   = $self->compara_dba->get_SpeciesSetAdaptor;
 
   my @nc_trees_mlsses = @{$self->{mlssDBA}->fetch_all_by_method_link_type('NC_TREES')};
   $self->{mlssID} = $nc_trees_mlsses[0]->dbID || 0;
@@ -111,13 +102,6 @@ sub fetch_input {
   foreach my $gdb (@{$low_cov_ss->genome_dbs}) {
     $self->{low_cov_gdbs}{$gdb->dbID} = 1;
   }
-
-# # For long parameters, look at analysis_data
-#   if($self->{analysis_data_id}) {
-#     my $analysis_data_id = $self->{analysis_data_id};
-#     my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-#     $self->get_params($analysis_data_params);
-#   }
 
   return 1;
 }
@@ -146,7 +130,7 @@ sub get_params {
 
   if(defined($params->{'nc_tree_id'})) {
     $self->{'nc_tree'} = 
-         $self->{'comparaDBA'}->get_NCTreeAdaptor->
+         $self->compara_dba->get_NCTreeAdaptor->
          fetch_node_by_node_id($params->{'nc_tree_id'});
     printf("  nc_tree_id : %d\n", $self->{'nc_tree_id'});
   }
@@ -292,7 +276,7 @@ sub run_ncrecoverepo {
           if (defined($found_prediction) && 0 == $validated_prediction) {
             foreach my $found_gene_stable_id (keys %$found_prediction) {
               # Store it in the table
-              my $sth = $self->{'comparaDBA'}->dbc->prepare
+              my $sth = $self->compara_dba->dbc->prepare
                 ("INSERT IGNORE INTO recovered_member 
                            (node_id,
                             stable_id,
@@ -333,7 +317,7 @@ sub run_ncrecoverepo {
             next if (($self->{avg_seq_length}/$length) > 1.2 ||
                      ($self->{avg_seq_length}/$length) < 0.8);
             my $found_gene_stable_id = "$seqname:$start-$end";
-            my $sth = $self->{'comparaDBA'}->dbc->prepare
+            my $sth = $self->compara_dba->dbc->prepare
               ("INSERT IGNORE INTO recovered_member 
                            (node_id,
                             stable_id,
@@ -478,7 +462,7 @@ sub remove_low_cov_predictions {
       my $removed_genome_db_id = $leaf->genome_db_id;
       $leaf->disavow_parent;
       $self->{treeDBA}->delete_flattened_leaf($leaf);
-      my $sth = $self->{'comparaDBA'}->dbc->prepare
+      my $sth = $self->compara_dba->dbc->prepare
         ("INSERT IGNORE INTO removed_member 
                            (node_id,
                             stable_id,

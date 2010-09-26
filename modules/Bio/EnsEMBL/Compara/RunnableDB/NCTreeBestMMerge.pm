@@ -59,11 +59,10 @@ use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::AlignIO;
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -81,16 +80,6 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'clusterset_id'} = 1;
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  # Get the needed adaptors here
-  # $self->{silly_adaptor} = $self->{'comparaDBA'}->get_SillyAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -141,7 +130,7 @@ sub get_params {
   # Fetch nc_tree
   if(defined($params->{'nc_tree_id'})) {
     $self->{'nc_tree'} =  
-         $self->{'comparaDBA'}->get_NCTreeAdaptor->
+         $self->compara_dba->get_NCTreeAdaptor->
          fetch_node_by_node_id($params->{'nc_tree_id'});
   }
   if(defined($params->{'clusterset_id'})) {
@@ -453,7 +442,7 @@ sub store_nctree
   return unless($self->{'nc_tree'});
 
   printf("NCTreeBestMMerge::store_nctree\n") if($self->debug);
-  my $treeDBA = $self->{'comparaDBA'}->get_NCTreeAdaptor;
+  my $treeDBA = $self->compara_dba->get_NCTreeAdaptor;
   $treeDBA->sync_tree_leftright_index($self->{'nc_tree'});
   $self->{'nc_tree'}->clusterset_id($self->{clusterset_id});
   $treeDBA->store($self->{'nc_tree'});
@@ -616,7 +605,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
 sub _store_tree_tags {
     my $self = shift;
     my $tree = $self->{'nc_tree'};
-    my $pta = $self->{'comparaDBA'}->get_NCTreeAdaptor;
+    my $pta = $self->compara_dba->get_NCTreeAdaptor;
 
     print "Storing Tree tags...\n";
     $tree->_load_tags();

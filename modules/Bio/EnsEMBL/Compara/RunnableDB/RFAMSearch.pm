@@ -58,11 +58,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::RFAMSearch;
 use strict;
 use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -82,15 +80,8 @@ sub fetch_input {
   $self->{'clusterset_id'} = 1;
   $self->{context_size} = '120%';
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
   # Get the needed adaptors here
-  $self->{gdbDBA} = $self->{comparaDBA}->get_GenomeDBAdaptor;
+  $self->{gdbDBA} = $self->compara_dba->get_GenomeDBAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -130,7 +121,7 @@ sub get_params {
   # Fetch nc_tree
   if(defined($params->{'nc_tree_id'})) {
     $self->{'nc_tree'} =  
-         $self->{'comparaDBA'}->get_NCTreeAdaptor->
+         $self->compara_dba->get_NCTreeAdaptor->
          fetch_node_by_node_id($params->{'nc_tree_id'});
   }
   if(defined($params->{'clusterset_id'})) {
@@ -207,7 +198,7 @@ sub dump_model {
   my $sql = 
     "SELECT hc_profile FROM nc_profile ".
       "WHERE $field=\"$model_id\"";
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   my $nc_profile  = $sth->fetchrow;
   unless (defined($nc_profile)) {
@@ -229,5 +220,5 @@ sub fetch_orphan_member_entries {
   return 0;
 }
 
-
 1;
+

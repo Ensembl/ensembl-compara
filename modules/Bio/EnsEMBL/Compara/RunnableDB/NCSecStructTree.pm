@@ -60,9 +60,8 @@ use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -80,16 +79,6 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'clusterset_id'} = 1;
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  # Get the needed adaptors here
-  # $self->{silly_adaptor} = $self->{'comparaDBA'}->get_SillyAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -139,7 +128,7 @@ sub get_params {
 
   if(defined($params->{'nc_tree_id'})) {
     $self->{'nc_tree'} = 
-         $self->{'comparaDBA'}->get_NCTreeAdaptor->
+         $self->compara_dba->get_NCTreeAdaptor->
          fetch_node_by_node_id($params->{'nc_tree_id'});
   }
 
@@ -227,14 +216,14 @@ sub run_bootstrap_raxml {
   $cmd .= " -n $raxml_tag.$bootstrap_num";
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $bootstrap_starttime = time()*1000;
   #  $DB::single=1;1;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     throw("error running raxml, $!\n");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
 
   my $ideal_msec = 30000; # 5 minutes
@@ -301,14 +290,14 @@ sub run_ncsecstructtree {
     $cmd .= " -N " . $self->{bootstrap_num} if (defined($self->{bootstrap_num}));
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
 
     my $starttime = time()*1000;
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
       throw("error running raxml, $!\n");
     }
-    $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
     my $runtime_msec = int(time()*1000-$starttime);
 
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$model";

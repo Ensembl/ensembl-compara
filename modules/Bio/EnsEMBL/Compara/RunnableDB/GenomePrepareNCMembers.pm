@@ -63,8 +63,7 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
@@ -95,13 +94,10 @@ sub fetch_input {
   my $p = eval($self->analysis->parameters);
   $self->{p} = $p;
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-DBCONN => $self->db->dbc);
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor();
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor();
 
   #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+  $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
   
   
   #using genome_db_id, connect to external core database
@@ -128,7 +124,7 @@ sub run
 {
   my $self = shift;
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
   $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);
 
   # main routine which takes a genome_db_id (from input_id) and
@@ -137,7 +133,7 @@ sub run
   # and convert them into members to be stored into compara
   $self->prepareMembersFromCoreSlices();
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
 
   return 1;
@@ -168,8 +164,8 @@ sub prepareMembersFromCoreSlices
   $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(
       -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' genes');
 
-  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'pepSubset'});
-  $self->{'comparaDBA'}->get_SubsetAdaptor->store($self->{'geneSubset'});
+  $self->compara_dba->get_SubsetAdaptor->store($self->{'pepSubset'});
+  $self->compara_dba->get_SubsetAdaptor->store($self->{'geneSubset'});
 
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara

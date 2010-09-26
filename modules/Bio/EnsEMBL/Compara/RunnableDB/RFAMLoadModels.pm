@@ -62,11 +62,8 @@ use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use LWP::Simple;
 
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Hive;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
-
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
@@ -81,13 +78,6 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my( $self) = @_;
-
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
 
   $self->{type} = 'infernal';
 
@@ -230,7 +220,7 @@ sub load_cmfile {
   close(FH);
 
   my $table_name = 'nc_profile';
-  my $sth = $self->{comparaDBA}->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
+  my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
   $sth->execute($model_id, $name, $self->{type},$hmm_text);
   $sth->finish;
 
@@ -246,7 +236,7 @@ sub load_cmprofile {
   print("load profile $model_id\n") if($self->debug);
 
   my $table_name = 'nc_profile';
-  my $sth = $self->{comparaDBA}->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
+  my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
   $sth->execute($model_id, $name, $self->{type},$cm_profile);
   $sth->finish;
 

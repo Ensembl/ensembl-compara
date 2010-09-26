@@ -57,18 +57,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::Infernal;
 
 use strict;
 use Getopt::Long;
+use POSIX qw(ceil floor);
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::AlignIO;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::BaseAlignFeature;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 
-use Bio::EnsEMBL::Hive;
-use POSIX qw(ceil floor);
-
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
@@ -90,15 +86,8 @@ sub fetch_input {
   $self->{'infernal_starttime'} = time()*1000;
   $self->{'method'} = 'Infernal';
 
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
-  $self->{'comparaDBA'} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new
-    (
-     -DBCONN=>$self->db->dbc
-    );
-
-  $self->{memberDBA} = $self->{'comparaDBA'}->get_MemberAdaptor;
-  $self->{treeDBA} = $self->{'comparaDBA'}->get_NCTreeAdaptor;
+  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
+  $self->{treeDBA} = $self->compara_dba->get_NCTreeAdaptor;
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -140,7 +129,7 @@ sub get_params {
   }
   if(defined($params->{'nc_tree_id'})) {
     $self->{'nc_tree'} = 
-         $self->{'comparaDBA'}->get_NCTreeAdaptor->
+         $self->compara_dba->get_NCTreeAdaptor->
          fetch_node_by_node_id($params->{'nc_tree_id'});
     printf("  nc_tree_id : %d\n", $self->{'nc_tree_id'});
   }
@@ -275,7 +264,7 @@ sub update_single_peptide_tree
     next unless($member->sequence);
     $DB::single=1;1;
     $member->cigar_line(length($member->sequence)."M");
-    $self->{'comparaDBA'}->get_NCTreeAdaptor->store($member);
+    $self->compara_dba->get_NCTreeAdaptor->store($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
   }
 }
@@ -324,13 +313,13 @@ sub run_infernal {
   $cmd .= " " . $self->{profile_file};
   $cmd .= " " . $self->{input_fasta};
 
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   $DB::single=1;1;
   unless(system($cmd) == 0) {
     throw("error running infernal, $!\n");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   # cmbuild --refine the alignment
   ######################
@@ -356,13 +345,13 @@ sub run_infernal {
   $cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   $DB::single=1;1;
   unless(system($cmd) == 0) {
     throw("error running cmbuild refine, $!\n");
   }
-  $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   $self->{stk_output} = $refined_stk_output;
   # Reformat with sreformat
@@ -386,7 +375,7 @@ sub dump_model {
   my $sql = 
     "SELECT hc_profile FROM nc_profile ".
       "WHERE $field=\"$model_id\"";
-  my $sth = $self->{comparaDBA}->dbc->prepare($sql);
+  my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   my $nc_profile  = $sth->fetchrow;
   unless (defined($nc_profile)) {
@@ -509,7 +498,7 @@ sub parse_and_store_alignment_into_tree
     }
     #
     printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);
-    $self->{'comparaDBA'}->get_NCTreeAdaptor->store($member);
+    $self->compara_dba->get_NCTreeAdaptor->store($member);
   }
 
   return undef;
@@ -520,7 +509,7 @@ sub _store_aln_tags {
     my $tree = $self->{'nc_tree'};
     return unless($tree);
 
-    my $pta = $self->{'comparaDBA'}->get_NCTreeAdaptor;
+    my $pta = $self->compara_dba->get_NCTreeAdaptor;
 
     print "Storing Alignment tags...\n";
     my $sa = $tree->get_SimpleAlign;
