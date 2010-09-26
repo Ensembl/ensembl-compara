@@ -528,12 +528,12 @@ sub build_NCSystem
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
        (
-        -input_id       => 1,
+        -input_id       => '{}',
         -analysis       => $rfam_classify,
        );
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
        (
-        -input_id       => 1,
+        -input_id       => '{}',
         -analysis       => $rfam_loadmodels,
        );
 
