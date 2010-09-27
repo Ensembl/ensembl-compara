@@ -9,7 +9,7 @@
 
 
 <p>
-This document refers to the schema of EnsEMBL Compara version <strong>56</strong>.
+This document refers to the schema of EnsEMBL Compara version <strong>60</strong>.
 </p>
 
 
@@ -52,6 +52,7 @@ protein coding Ensembl gene. Homologies are derived from them.
       <li><a href="#ncbi_taxa_name">ncbi_taxa_name</a></li>
       <li><a href="#genome_db">genome_db</a></li>
       <li><a href="#species_set">species_set</a></li>
+      <li><a href="#species_set_tag">species_set_tag</a></li>
       <li><a href="#method_link">method_link</a></li>
       <li><a href="#method_link_species_set">method_link_species_set</a></li>
       <li><a href="#analysis">analysis</a></li>
@@ -565,6 +566,75 @@ table.</p>
 +----------------+-------------------+----------+
 </pre>
 
+
+<!--
+#####################################################################
+TABLE SPECIES_SET_TAG
+#####################################################################
+-->
+<h4 id="species_set_tag">species_set_tag</h4>
+
+
+<p>Contains descriptive tags for the species_set_ids in the 
+<a href="#species_set">species_set</a>
+table.</p>
+
+
+<table class="spreadsheet">
+
+
+  <caption>species_set_tag table description</caption>
+  <thead><tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Null</th>
+    <th>Key</th>
+    <th>Default</th>
+    <th>Extra</th>
+    <th>Description</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>species_set_id</td>
+      <td>int(10) unsigned</td>
+      <td>NO</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td>0</td>
+      <td>internal (non-unique) ID</td>
+    </tr>
+    <tr>
+      <td>tag</td>
+      <td>varchar(50)</td>
+      <td>YES</td>
+      <td>MUL</td>
+      <td>NULL</td>
+      <td>0</td>
+      <td>external reference to <a href="#species_set">species_set.species_set_id</a></td>
+    </tr>
+    <tr>
+      <td>value</td>
+      <td>mediumtext</td>
+      <td>YES</td>
+      <td></td>
+      <td></td>
+      <td>0</td>
+      <td>more informative description for the species_set_id</a></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<p>E.g. the rows</p>
+
+<pre>mysql&gt; SELECT * FROM species_set_tag WHERE value LIKE "%fish%";
++----------------+------+-------+
+| species_set_id | tag  | value |
++----------------+------+-------+
+|          32729 | name | fish  | 
++----------------+------+-------+
+</pre>
 
 <!--
 #####################################################################
