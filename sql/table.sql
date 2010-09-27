@@ -122,7 +122,7 @@ CREATE TABLE species_set (
 
 CREATE TABLE species_set_tag (
   species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
-  tag                         varchar(50) DEFAULT NULL,
+  tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
   # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
