@@ -207,7 +207,7 @@ sub content {
     
     if ($leaf_count <= 10) {
       my $url_params = { type => 'Location', action => 'Multi', r => undef };
-      my $s = 1;
+      my $s = $self->hub->species eq 'Multi' ? 0 : 1;
       
       foreach (@{$node->get_all_leaves}) {
         my $gene = $_->gene_member->stable_id;
@@ -216,8 +216,14 @@ sub content {
         
         # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
         # There should be a way of retrieving this name correctly instead.
-        $url_params->{"s$s"} = ucfirst $_->genome_db->name;
-        $url_params->{"g$s"} = $gene;
+        if ($s == 0) {
+          $url_params->{'species'} = ucfirst $_->genome_db->name;
+          $url_params->{'g'} = $gene;
+        } 
+        else {
+          $url_params->{"s$s"} = ucfirst $_->genome_db->name;
+          $url_params->{"g$s"} = $gene;
+        }
         $s++;
       }
       
