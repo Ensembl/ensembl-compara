@@ -70,7 +70,7 @@ sub content {
       #if ($has_groups) {
       #  $row->{'share'}   = $self->share_link('bookmark', $bookmark->id);
       #}
-      $row->{'delete'}  = $self->delete_link('Bookmark', $bookmark->id);
+      $row->{'delete'}  = $self->delete_link('Bookmark', $bookmark->id, 'Delete', 'delete_bookmark');
       $table->add_row($row);
       $has_bookmarks = 1;
     }
