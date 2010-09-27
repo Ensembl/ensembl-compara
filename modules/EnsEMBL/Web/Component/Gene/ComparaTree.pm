@@ -24,9 +24,8 @@ sub caption {
 sub _get_details {
   my $self = shift;
   my $cdb = shift;
-  my $stable_id = shift;
   my $object = $self->object;
-  my $member = $object->get_compara_Member($cdb, $stable_id);
+  my $member = $object->get_compara_Member($cdb);
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
@@ -41,40 +40,42 @@ sub _get_details {
 
 sub content {
   my $self   = shift;
-  my $cdb     = shift || 'compara';
-  my $hub     = $self->hub;
-  my $object  = $self->object;
+  my $cdb    = shift || 'compara';
+  my $hub    = $self->hub;
+  my $object = $self->object;
   my ($gene, $member, $tree, $node);
   if ($self->object->isa('EnsEMBL::Web::Object::GeneTree')) {
     $tree = $self->object->Obj;
-    $node = $tree->find_node_by_node_id($hub->param('collapse'));
+    $node = $tree->find_node_by_node_id($object->param('collapse'));
     $member = undef;
   }
   else {
     $gene = $self->object;
     ($member, $tree, $node) = $self->_get_details($cdb);
   }
-  # Get the Member and ProteinTree objects and draw the tree
 
-  my @A = $hub->param;
-  warn ">>> PARAM @A";
-
-  return $tree . $self->genomic_alignment_links($cdb) if $hub->param('g') && !defined $member;
+  return $tree . $self->genomic_alignment_links($cdb) if $object->param('g') && !defined $member;
 
   my $leaves               = $tree->get_all_leaves;
-  my $highlight_gene       = $hub->param('g1');
-  my $highlight_ancestor   = $hub->param('anc');
-  my $wuc                  = $hub->get_imageconfig( 'genetreeview' );
-  my $collapsability       = $hub->param('collapsability');
+  my $highlight_gene       = $object->param('g1');
+  my $highlight_ancestor   = $object->param('anc');
+  my $image_width          = $self->image_width               || 800;
+  my $collapsability       = $object->param('collapsability');
   unless ($collapsability) {
     $collapsability = $self->object->isa('EnsEMBL::Web::Object::GeneTree') ? 'duplications' : 'gene';
   }
-  my $image_width          = $self->image_width               || 800;
-  my $colouring            = $hub->param('colouring')      || 'background';
-  my $show_exons           = $hub->param('exons');
+  my $colouring            = $object->param('colouring')      || 'background';
+  my $show_exons           = $object->param('exons');
   my $image_config         = $hub->get_imageconfig('genetreeview');
-  my @hidden_clades        = grep { $_ =~ /^group_/ && $hub->param($_) eq 'hide'     } $hub->param;
-  my @collapsed_clades     = grep { $_ =~ /^group_/ && $hub->param($_) eq 'collapse' } $hub->param;
+  my @hidden_clades        = grep { $_ =~ /^group_/ && $object->param($_) eq 'hide'     } $object->param;
+  my @collapsed_clades     = grep { $_ =~ /^group_/ && $object->param($_) eq 'collapse' } $object->param;
+  my @highlights;
+  if ($gene && $member) {
+    @highlights = ($gene->stable_id, $member->genome_db->dbID);
+  }
+  else {
+    @highlights = (undef, undef);
+  }
   my $hidden_genes_counter = 0;
   my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id, $html);
   
@@ -108,7 +109,7 @@ sub content {
     
     foreach my $clade (@hidden_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
-      $hidden_genome_db_ids .= $hub->param("group_${clade_name}_genome_db_ids") . '_';
+      $hidden_genome_db_ids .= $object->param("group_${clade_name}_genome_db_ids") . '_';
     }
     
     foreach my $this_leaf (@$leaves) {
@@ -116,7 +117,7 @@ sub content {
       
       next if $highlight_genome_db_id && $genome_db_id eq $highlight_genome_db_id;
       next if $highlight_gene && $this_leaf->gene_member->stable_id eq $highlight_gene;
-      next if $genome_db_id == $member->genome_db_id;
+      next if $member && $genome_db_id == $member->genome_db_id;
       
       if ($hidden_genome_db_ids =~ /_${genome_db_id}_/) {
         $hidden_genes_counter++;
@@ -134,23 +135,15 @@ sub content {
     slice_number    => '1|1',
     cdb             => $cdb
   });
-
-  #$wuc->tree->dump("GENE TREE CONF", '([[caption]])');
-  my @highlights;
-  if ($gene && $member) {
-    @highlights = ($gene->stable_id, $member->genome_db->dbID);
-  }
-  else {
-    @highlights = (undef, undef);
-  }
+  
   # Keep track of collapsed nodes
-  my $collapsed_nodes   = $hub->param('collapse');
+  my $collapsed_nodes   = $object->param('collapse');
   my ($collapsed_to_gene, $collapsed_to_para);
   unless ($self->object->isa('EnsEMBL::Web::Object::GeneTree')) {
     $collapsed_to_gene = $self->_collapsed_nodes($tree, $node, 'gene',         $highlight_genome_db_id, $highlight_gene);
     $collapsed_to_para = $self->_collapsed_nodes($tree, $node, 'paralogs',     $highlight_genome_db_id, $highlight_gene);
   }
-  my $collapsed_to_dups = $self->_collapsed_nodes($tree, $node, 'duplications', $highlight_genome_db_id, $highlight_gene);
+  my $collapsed_to_dups = $self->_collapsed_nodes($tree, undef, 'duplications', $highlight_genome_db_id, $highlight_gene);
 
   if (!defined $collapsed_nodes) { # Examine collapsabilty
     $collapsed_nodes = $collapsed_to_gene if $collapsability eq 'gene';
@@ -159,11 +152,10 @@ sub content {
     $collapsed_nodes ||= '';
   }
 
-  # print $self->_info("Collapsed nodes",  join(" -- ", split(",", $collapsed_nodes)));
   if (@collapsed_clades) {
     foreach my $clade (@collapsed_clades) {
       my ($clade_name) = $clade =~ /group_([\w\-]+)_display/;
-      my $extra_collapsed_nodes = _find_nodes_by_genome_db_ids($tree, [ split '_', $hub->param("group_${clade_name}_genome_db_ids") ], 'internal');
+      my $extra_collapsed_nodes = _find_nodes_by_genome_db_ids($tree, [ split '_', $object->param("group_${clade_name}_genome_db_ids") ], 'internal');
       
       if (%$extra_collapsed_nodes) {
         $collapsed_nodes .= ',' if $collapsed_nodes;
@@ -176,38 +168,24 @@ sub content {
   
   if ($colouring =~ /^(back|fore)ground$/) {
     my $mode   = $1 eq 'back' ? 'bg' : 'fg';
-    my @clades = grep { $_ =~ /^group_.+_${mode}colour/ } $hub->param;
+    my @clades = grep { $_ =~ /^group_.+_${mode}colour/ } $object->param;
 
     # Get all the genome_db_ids in each clade
     my $genome_db_ids_by_clade;
     
     foreach my $clade (@clades) {
       my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
-      $genome_db_ids_by_clade->{$clade_name} = [ split '_', $hub->param("group_${clade_name}_genome_db_ids") ];
+      $genome_db_ids_by_clade->{$clade_name} = [ split '_', $object->param("group_${clade_name}_genome_db_ids") ];
     }
 
     # Sort the clades by the number of genome_db_ids. First the largest clades,
     # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
-    foreach my $clade_name (sort {
-          scalar(@{$genome_db_ids_by_clade->{$b}}) <=> scalar(@{$genome_db_ids_by_clade->{$a}})
-	        } keys %$genome_db_ids_by_clade) {
+    foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
-      my $colour = $hub->param("group_${clade_name}_${mode}colour") || "magenta";
-      my $these_coloured_nodes;
-      if ($mode eq "fg") {
-        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, "all");
-      } else {
-        $these_coloured_nodes = _find_nodes_by_genome_db_ids($tree, $genome_db_ids);
-      }
-      if (%$these_coloured_nodes) {
-        push(@$coloured_nodes, {
-	        'clade' => $clade_name,
-	        'colour' => $colour,
-	        'mode' => $mode,
-	        'node_ids' => [keys %$these_coloured_nodes],
-	      });
-        # print $self->_info("Coloured nodes ($clade_name - $colour)",  join(" -- ", keys %$these_coloured_nodes));
-      }
+      my $colour        = $object->param("group_${clade_name}_${mode}colour") || 'magenta';
+      my $nodes         = _find_nodes_by_genome_db_ids($tree, $genome_db_ids, $mode eq 'fg' ? 'all' : undef);
+      
+      push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
     }
   }
 
@@ -233,7 +211,7 @@ sub content {
   my @view_links;
   
   $image->image_type       = 'genetree';
-  $image->image_name       = ($hub->param('image_width')) . "-$image_id";
+  $image->image_name       = ($object->param('image_width')) . "-$image_id";
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'tree';
   $image->set_button('drag', 'title' => 'Drag to select region');
@@ -269,9 +247,7 @@ sub _collapsed_nodes{
   my $highlight_gene = shift;
   $tree->isa('Bio::EnsEMBL::Compara::ProteinTree') 
       || die( "Need a ProteinTree, not a $tree" );
-  return unless $node;
-  if (!$self->object->Obj->isa('Bio::EnsEMBL::Compara::ProteinTree') 
-        && !$node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
+  if ($node && !$node->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     die( "Need an AlignedMember, not a $node" );
   }
 
@@ -370,7 +346,7 @@ sub _find_nodes_by_genome_db_ids {
 sub content_align {
   my $self           = shift;
   my $cdb     = shift || 'compara';
-  my $hub         = $self->hub;
+  my $object         = $self->object;
 
   #----------
   # Get the ProteinTree object
@@ -388,7 +364,7 @@ sub content_align {
   #----------
   # Determine the format
   my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS();
-  my $mode = $hub->param('text_format');
+  my $mode = $object->param('text_format');
      $mode = 'fasta' unless $formats{$mode};
   my $fmt_caption = $formats{$mode} || $mode;
 
@@ -400,7 +376,7 @@ sub content_align {
   my $aio = Bio::AlignIO->new( -format => $align_format, -fh => $SH );
   $aio->write_aln( $tree->get_SimpleAlign );
 
-  return $hub->param('_format') eq 'Text'
+  return $object->param('_format') eq 'Text'
        ? $formatted 
        : sprintf( $htmlt, $fmt_caption, $formatted )
        ;
@@ -409,7 +385,7 @@ sub content_align {
 sub content_text {
   my $self           = shift;
   my $cdb     = shift || 'compara';
-  my $hub         = $self->hub;
+  my $object         = $self->object;
 
   #----------
   # Get the ProteinTree object
@@ -428,20 +404,20 @@ sub content_text {
   #----------
   # Return the text representation of the tree
   my %formats = EnsEMBL::Web::Constants::TREE_FORMATS();
-  my $mode = $hub->param('tree_format');
+  my $mode = $object->param('tree_format');
      $mode = 'newick' unless $formats{$mode};
   my $fn   = $formats{$mode}{'method'};
   my $fmt_caption = $formats{$mode}{caption} || $mode;
 
-  my @params = ( map { $hub->param( $_ ) } 
+  my @params = ( map { $object->param( $_ ) } 
                  @{ $formats{$mode}{'parameters'} || [] } );
   my $string = $tree->$fn(@params);
-  if( $formats{$mode}{'split'} && $hub->param('_format') ne 'Text') {
+  if( $formats{$mode}{'split'} && $object->param('_format') ne 'Text') {
     my $reg = '(['.quotemeta($formats{$mode}{'split'}).'])';
     $string =~ s/$reg/$1\n/g;
   }
 
-  return $hub->param('_format') eq 'Text'
+  return $object->param('_format') eq 'Text'
        ? $string 
        : sprintf( $htmlt, $fmt_caption, $string )
        ;
@@ -449,13 +425,13 @@ sub content_text {
 
 sub genomic_alignment_links {
   my $self       = shift;
-  my $cdb = shift || $self->hub->param('cdb') || 'compara';
+  my $cdb = shift || $self->object->param('cdb') || 'compara';
   (my $ckey = $cdb) =~ s/compara//;
 
-  my $hub     = $self->hub;
-  my $alignments = $hub->species_defs->multi_hash->{$ckey}{'ALIGNMENTS'}||{};
-  my $species    = $hub->species;
-  my $url        = $hub->_url({ action => "Compara_Alignments$ckey", align => undef });
+  my $object     = $self->object;
+  my $alignments = $object->species_defs->multi_hash->{$ckey}{'ALIGNMENTS'}||{};
+  my $species    = $object->species;
+  my $url        = $object->_url({ action => "Compara_Alignments$ckey", align => undef });
   my (%species_hash, $list);
   
   foreach my $row_key (grep $alignments->{$_}{'class'} !~ /pairwise/, keys %$alignments) {
@@ -476,7 +452,7 @@ sub genomic_alignment_links {
         $type =~ s/_net//;
         $type =~ s/_/ /g;
         
-        $species_hash{$hub->species_defs->species_label($_) . "###$type"} = $i;
+        $species_hash{$object->species_defs->species_label($_) . "###$type"} = $i;
       }
     } 
   }
