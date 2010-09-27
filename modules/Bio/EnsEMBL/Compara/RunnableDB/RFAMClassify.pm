@@ -61,6 +61,7 @@ use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::NestedSet;
@@ -439,10 +440,10 @@ sub tag_assembly_coverage_depth {
     next unless (defined($assembly_coverage_depth) || $assembly_coverage_depth ne '');
     if ($assembly_coverage_depth eq 'low' || $assembly_coverage_depth eq '2x') {
       push @{$self->{low_coverage}}, $gdb;
-    } elsif ($assembly_coverage_depth eq 'high' || $assembly_coverage_depth eq '6x') {
+    } elsif ($assembly_coverage_depth eq 'high' || $assembly_coverage_depth eq '6x' || $assembly_coverage_depth >= 6) {
       push @{$self->{high_coverage}}, $gdb;
     } else {
-      throw('Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n');
+      throw("Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n");
     }
   }
   return undef unless(defined($self->{low_coverage}));
