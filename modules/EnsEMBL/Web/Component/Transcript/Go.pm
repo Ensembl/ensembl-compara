@@ -37,15 +37,20 @@ sub content {
   my $non_highlight_fill_colour = $species_defs->colour('goimage','non_highlight_fill');
   my $non_highlight_font_colour = $species_defs->colour('goimage','non_highlight_font');
   my $non_highlight_border_colour = $species_defs->colour('goimage','non_highlight_border');    
-  
+  my $goslim_goa_fill = $species_defs->colour('goimage','goslim_goa_fill');
+  my $goslim_goa_font = $species_defs->colour('goimage','goslim_goa_font');
+  my $goslim_goa_border = $species_defs->colour('goimage','goslim_goa_border');
+
   my $node_fill_text = $species_defs->colour('goimage','node_fill_text');
   $node_fill_text=~s/_/ /g;
+  my $goslim_goa_fill_text = $species_defs->colour('goimage','goslim_goa_fill_text');
+  $goslim_goa_fill_text=~s/_/ /g;
   
   my $get_relation_type_colour = sub {
     my $relation_type=shift;
     return $species_defs->colour('goimage',$relation_type);
   };  
-  my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new($ontology_term_adaptor,$go_dir, $go_url, $GOIDURL, $image_background_colour, $node_fill_colour, $node_font_colour, $node_border_colour, $non_highlight_fill_colour, $non_highlight_font_colour, $non_highlight_border_colour,$get_relation_type_colour);
+  my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new($ontology_term_adaptor,$go_dir, $go_url, $GOIDURL, $image_background_colour, $node_fill_colour, $node_font_colour, $node_border_colour, $non_highlight_fill_colour, $non_highlight_font_colour, $non_highlight_border_colour,$goslim_goa_fill, $goslim_goa_font, $goslim_goa_border, $get_relation_type_colour);
 $ontovis->add_cluster_by_parent_accession("GO:0005575");
 $ontovis->add_cluster_by_parent_accession("GO:0008150");
 $ontovis->add_cluster_by_parent_accession("GO:0003674");
@@ -68,14 +73,14 @@ $ontovis->add_cluster_by_parent_accession("GO:0003674");
   my $go_slim_hash = $object->get_go_list('goslim_goa');
 
   if (%$go_hash){
-    $html.=  "<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq:<br/>";
+    $html.=  "<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq. The Maped Terms are highlighted in <span style=\"color:".$ontovis->node_fill_colour."\" >".$node_fill_text."</span><br/>";
     if (%$go_slim_hash){
-      $html .= "The GOSlim and GOA terms closest to the matched terms have been highlighted in <span style=\"color:".$ontovis->node_fill_colour."\" >".$node_fill_text.". The nodes are clickable links to GO</div>";
+      $html .= "Terms from the GOSlim GOA subset of GO, closest to the matched terms have been highlighted in <span style=\"color:".$ontovis->highlighted_fill_colour."\" >".$goslim_goa_fill_text.".</span> The nodes are clickable links to GO";
     }
     $html.=  "</strong></p>";
   }
+  $ontovis->normal_term_accessions(keys %$go_hash);
   $ontovis->highlighted_term_accessions(keys %$go_slim_hash);
-  $ontovis->non_highlighted_term_accessions(keys %$go_hash);
   $html.=$ontovis->render;  
   return $html;
 }
