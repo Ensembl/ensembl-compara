@@ -164,30 +164,33 @@ sub content {
   }
 
   ## Add LD data  
-  my $ld_html;
-  my $label = "Linkage disequilibrium data";
+  unless ( $object->Obj->is_somatic ){
+    my $ld_html;
+    my $label = "Linkage disequilibrium data";
 
-   ## First check that a location has been selected:
-  if ($self->model->object('Location')) { 
-    if  ($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
-      my %pop_names = %{_ld_populations($object) ||{} };
-      my %tag_data  = %{$object->tagged_snp ||{} };
-      my %ld = (%pop_names, %tag_data);
-      if  (keys %ld) {
-        $ld_html = link_to_ldview( $object, \%ld); 
+    ## First check that a location has been selected:
+    if ($self->model->object('Location')) { 
+      if  ($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
+        my %pop_names = %{_ld_populations($object) ||{} };
+        my %tag_data  = %{$object->tagged_snp ||{} };
+        my %ld = (%pop_names, %tag_data);
+        if  (keys %ld) {
+          $ld_html = link_to_ldview( $object, \%ld); 
+        } else {
+          $ld_html = "<h5>No linkage data for this variant</h5>";
+        }  
       } else {
-        $ld_html = "<h5>No linkage data for this variant</h5>";
-      }  
-    } else {
-      $ld_html = "<h5>No linkage data available for this species</h5>";
-    }
-  } ## If no location selected direct the user to pick one from the summary panel 
-   else {
+        $ld_html = "<h5>No linkage data available for this species</h5>";
+      }
+    } ## If no location selected direct the user to pick one from the summary panel 
+    else {
      $ld_html = "You must select a location from the panel above to see Linkage disequilibrium data";
-  }
-   $html .= qq(<dt>$label</dt>
-      <dd> $ld_html</dd></dl>);
-       
+    }
+
+    $html .= qq(<dt>$label</dt>
+                <dd> $ld_html</dd></dl>);
+  }       
+
   return $html;
 }
 
