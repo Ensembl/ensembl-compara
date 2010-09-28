@@ -1083,10 +1083,11 @@ sub get_similarity_hash {
 
 sub get_go_list {
   my $self = shift ;
+  my $dbname_to_match = shift || 'GO';  
+  my $ancestor=shift;
   my $trans = $self->transcript;
   my $goadaptor = $self->get_databases('go')->{'go'};
   my @dblinks = @{$trans->get_all_DBLinks};
-  my $dbname_to_match = shift || 'GO';  
   my @goxrefs = grep { $_->dbname eq $dbname_to_match } @dblinks;
 
   my %go_hash;
@@ -1124,7 +1125,18 @@ sub get_go_list {
         $term_name = $term ? $term->name : '';
 
         $term_name ||= $goxref->description || '';
-        $go_hash{$go} = [ $evidence, $term_name, $info_text ];
+        my $has_ancestor = (!defined ($ancestor));
+        if (!$has_ancestor){
+          $has_ancestor=($go eq $ancestor);
+          my $ancestors = $_->fetch_all_by_descendant_term($_->fetch_by_accession($go));
+          for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
+            $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+          }
+        }
+        
+        if($has_ancestor){
+          $go_hash{$go} = [ $evidence, $term_name, $info_text ];
+        }
       }
     }
   }
