@@ -4,6 +4,8 @@ package EnsEMBL::Web::Component::DAS::Reference;
 
 use strict;
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component::DAS);
 
 sub entry_points {
