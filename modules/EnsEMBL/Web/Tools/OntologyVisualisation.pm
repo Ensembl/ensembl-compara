@@ -16,20 +16,23 @@ sub new {
   $self->{_img_base_url}= shift;
   $self->{_idurl}= shift;
   $self->{_image_background_colour}=_format_colour_code(shift,'transparent');
-  $self->{_node_fill_colour}=_format_colour_code(shift,'transparent');
+  $self->{_node_fill_colour}=_format_colour_code(shift,'transparent');  
   $self->{_node_font_colour}=_format_colour_code(shift,'000000');
   $self->{_node_border_colour}=_format_colour_code(shift,'000000');
   $self->{_non_highlight_fill_colour}=_format_colour_code(shift,'transparent');
   $self->{_non_highlight_font_colour}=_format_colour_code(shift,'000000');
   $self->{_non_highlight_border_colour}=_format_colour_code(shift,'000000');
+  $self->{_highlighted_fill_colour}=_format_colour_code(shift,'transparent');
+  $self->{_highlighted_font_colour}=_format_colour_code(shift,'000000');
+  $self->{_highlighted_border_colour}=_format_colour_code(shift,'000000');
   $self->{_get_relation_type_colour}=shift;
   
   $self->{_existing_terms}=_init_hash(shift);
   $self->{_node_descriptions}=_init_hash(shift);
   $self->{_existing_edges}=_init_hash(shift);
   my @array=();
+  $self->{_normal_term_accessions}=\@array;
   $self->{_highlighted_term_accessions}=\@array;
-  $self->{_non_highlighted_term_accessions}=\@array;  
   $self->{_clusters}={};
 
   if(defined($self->{_get_relation_type_colour}) && ref $self->{_get_relation_type_colour} ne "CODE"){
@@ -131,18 +134,38 @@ sub non_highlight_border_colour{
   return $self->{_non_highlight_border_colour};
 }
 
+sub highlighted_fill_colour{
+  my $self=shift;
+  my $colour = shift;
+  $self->{_highlighted_fill_colour}= $colour if defined($colour);
+  return $self->{_highlighted_fill_colour};
+}
+
+sub highlighted_font_colour{
+  my $self=shift;
+  my $colour = shift;
+  $self->{_highlighted_font_colour}= $colour if defined($colour);
+  return $self->{_highlighted_font_colour};
+}
+
+sub highlighted_border_colour{
+  my $self=shift;
+  my $colour = shift;
+  $self->{_highlighted_border_colour}= $colour if defined($colour);
+  return $self->{_highlighted_border_colour};
+}
+sub normal_term_accessions{
+  my $self=shift;
+  my @normal_term_accessions = @_;
+  $self->{_normal_term_accessions}=\@normal_term_accessions if (scalar(@normal_term_accessions)>0);
+  return $self->{_normal_term_accessions};
+}
+
 sub highlighted_term_accessions{
   my $self=shift;
   my @highlighted_term_accessions = @_;
   $self->{_highlighted_term_accessions}=\@highlighted_term_accessions if (scalar(@highlighted_term_accessions)>0);
   return $self->{_highlighted_term_accessions};
-}
-
-sub non_highlighted_term_accessions{
-  my $self=shift;
-  my @non_highlighted_term_accessions = @_;
-  $self->{_non_highlighted_term_accessions}=\@non_highlighted_term_accessions if (scalar(@non_highlighted_term_accessions)>0);
-  return $self->{_non_highlighted_term_accessions};
 }
 
 sub ontology_term_adaptor{
@@ -169,15 +192,15 @@ sub render{
   my $term = shift;
   
   for my $key ( @{$self->highlighted_term_accessions} ) {#add the nodes we retreived, and highlight them
+    $self->_add_node($key, $self->highlighted_border_colour,$self->highlighted_fill_colour, $self->highlighted_font_colour);
+  }
+  
+  for my $key ( @{$self->normal_term_accessions} ) {#add the nodes we retreived, and highlight them
     $self->_add_node($key, $self->node_border_colour,$self->node_fill_colour, $self->node_font_colour);
   }
 
-  for my $key ( @{$self->non_highlighted_term_accessions} ) {#add the nodes we retreived, and highlight them
-    $self->_add_node($key, $self->non_highlight_border_colour,$self->non_highlight_fill_colour, $self->non_highlight_font_colour);
-  }
-
-  my @all_terms =  @{$self->highlighted_term_accessions} ;
-  push(@all_terms,@{$self->non_highlighted_term_accessions});
+  my @all_terms =  @{$self->normal_term_accessions} ;
+  push(@all_terms,@{$self->highlighted_term_accessions});
   
   for my $key ( @all_terms ) {#add all parents of the nodes we retreived
     my $term = $ontology_term_adaptor->fetch_by_accession($key);
@@ -261,8 +284,6 @@ sub _add_parents{
               if(! $self->existing_terms->{$trm->accession}){
                 $self->existing_terms->{$trm->accession}=1;
                 my $node_name = $self->_format_node_name($trm);
-                # $cluster->add_node($node_name, URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
-                # fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
                 $cluster->add_node($node_name, URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
                 fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour);
               }
@@ -275,7 +296,7 @@ sub _add_parents{
                   $edge_colour = _format_colour_code($edge_colour_function,'000000');
                 }
                  $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
-                 $edge_colour, dir=>'back'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
+                 $edge_colour, dir=>'back', fontsize => '8pt'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
               }
               $self->_add_parents($trm,$ontology_term_adaptor, $edge_colour_function);
             }
