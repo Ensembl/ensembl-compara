@@ -481,18 +481,18 @@ sub build_NCSystem
 
 
   $parameters = "{max_gene_count=>".$nctree_params{'max_gene_count'}."}";
-  my $ncquicktreebreak = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'NCQuickTreeBreak',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCQuickTreeBreak',
-      -parameters      => $parameters
-      );
-  $analysisDBA->store($ncquicktreebreak);
-  $stats = $ncquicktreebreak->stats;
-  $stats->batch_size(1);
-  my $quicktreebreak_hive_capacity = 10;
-  $stats->hive_capacity($quicktreebreak_hive_capacity);
-
-  $stats->update();
+  #my $ncquicktreebreak = Bio::EnsEMBL::Analysis->new(
+  #    -logic_name      => 'NCQuickTreeBreak',
+  #    -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCQuickTreeBreak',
+  #    -parameters      => $parameters
+  #    );
+  #$analysisDBA->store($ncquicktreebreak);
+  #$stats = $ncquicktreebreak->stats;
+  #$stats->batch_size(1);
+  #my $quicktreebreak_hive_capacity = 10;
+  #$stats->hive_capacity($quicktreebreak_hive_capacity);
+  #
+  #$stats->update();
 
   #
   # build graph of control and dataflow rules
@@ -516,8 +516,9 @@ sub build_NCSystem
   $dataflowRuleDBA->create_rule($ncsecstructtree, $ncgenomicalignment, 1);
   $dataflowRuleDBA->create_rule($ncgenomicalignment, $treebest_mmerge, 1);
 
-  $dataflowRuleDBA->create_rule($treebest_mmerge, $ncquicktreebreak, 3);
-  $dataflowRuleDBA->create_rule($ncorthotree, $ncquicktreebreak, 2);
+  #$dataflowRuleDBA->create_rule($treebest_mmerge, $ncquicktreebreak, 3);
+  #$dataflowRuleDBA->create_rule($ncorthotree, $ncquicktreebreak, 2);
+
   $dataflowRuleDBA->create_rule($treebest_mmerge, $ncorthotree, 1);
   $dataflowRuleDBA->create_rule($treebest_mmerge, $ktreedist, 1);
 
