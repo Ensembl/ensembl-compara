@@ -16,8 +16,9 @@ sub caption {}
 sub modify_page_elements {
   my $self = shift;
   my $page = $self->page;
-  $page->remove_body_element('global_context');
-  $page->remove_body_element('local_context') if $self->hub->action eq 'ListVegaMappings';
+  
+  $page->remove_body_element('tabs');
+  $page->remove_body_element('navigation') if $self->hub->action eq 'ListVegaMappings';
 }
 
 sub populate_tree {

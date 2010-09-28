@@ -1,27 +1,27 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Page::Component;
 
 use strict;
-use base qw(EnsEMBL::Web::Document::Page::Common);
 
-sub _initialize_HTML {
+use base qw(EnsEMBL::Web::Document::Page);
+
+sub initialize_HTML {
   my $self = shift;
-  $self->add_body_elements(qw(content EnsEMBL::Web::Document::HTML::Content));
-  $self->_init;
+  $self->add_body_elements(qw(content EnsEMBL::Web::Document::Element::Content));
 }
 
-sub _initialize_Text {
+sub initialize_Text {
   my $self = shift; 
   $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
-  $self->_init;
 }
 
-sub _initialize_Excel {
+sub initialize_Excel {
   my $self = shift; 
   $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
-  $self->_init;
 }
 
-sub _initialize_XML {
+sub initialize_XML {
   my $self = shift;
   my $doctype_version = shift;
   
@@ -32,10 +32,9 @@ sub _initialize_XML {
   
   $self->set_doc_type('XML', $doctype_version);
   $self->add_body_elements(qw(content EnsEMBL::Web::Document::Content));
-  $self->_init;
 }
 
-sub _initialize_TextGz { shift->_initialize_Text; }
-sub _initialize_DAS    { shift->_initialize_XML('DASGFF'); }
+sub initialize_TextGz { shift->initialize_Text; }
+sub initialize_DAS    { shift->initialize_XML('DASGFF'); }
 
 1;

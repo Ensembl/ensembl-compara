@@ -4,22 +4,20 @@ package EnsEMBL::Web::Document::Content;
 
 use strict;
 
+use base qw(EnsEMBL::Web::Document::Element);
+
 sub new {
-  my $class = shift;
+  my ($class, $args) = @_;
   
   my $self = {
-    _renderer => undef,
-    panels    => []
+    %$args,
+    panels => []
   };
   
   bless $self, $class;
+  
   return $self;
 }
-
-sub renderer :lvalue { $_[0]->{'_renderer'}; }
-
-sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
-sub print  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
 
 sub add_panel {
   my ($self, $panel) = @_;
@@ -36,12 +34,7 @@ sub panel {
   return undef;
 }
 
-sub render {
-  my $self = shift;
-  return $self->print($self->_content);
-}
-
-sub _content {
+sub content {
   my $self = shift;
   my $content;
   
@@ -75,7 +68,7 @@ sub init {
     omit_header => 1
   );
   
-  my $panel = $configuration->new_panel('Navigation', %params);
+  my $panel = $self->new_panel('Navigation', $controller, %params);
    
   if ($panel) {
     $panel->add_components(@{$node->data->{'components'}});

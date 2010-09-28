@@ -31,6 +31,6 @@ sub populate_tree {
   );
 }
 
-sub modify_page_elements { shift->page->remove_body_element('context_panel'); }
+sub modify_page_elements { $_[0]->page->remove_body_element('summary'); }
 
 1;

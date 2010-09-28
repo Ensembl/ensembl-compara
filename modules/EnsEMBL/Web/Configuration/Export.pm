@@ -29,8 +29,8 @@ sub modify_page_elements {
   my $self = shift;
   my $page = $self->page;
   
-  $page->remove_body_element('global_context');
-  $page->remove_body_element('local_context');
+  $page->remove_body_element('tabs');
+  $page->remove_body_element('navigation');
 }
 
 1;

@@ -185,19 +185,19 @@ sub render_page {
   my $self     = shift;
   my $page     = $self->page;
   my $hub      = $self->hub;
-  my $func     = $self->renderer->{'_modal_dialog_'} ? 'get_json' : '_content';
+  my $func     = $self->renderer->{'_modal_dialog_'} ? 'get_json' : 'content';
   my $elements = $page->elements;
   my @order    = map $_->[0], @{$page->head_order}, @{$page->body_order};
   my $content  = {};
   
   foreach my $element (@order) {
-    my $html_module = $elements->{$element};
-    $html_module->init($self) if $html_module->can('init');
+    my $module = $elements->{$element};
+    $module->init($self) if $module->can('init');
   }
   
   foreach my $element (@order) {
-    my $html_module = $elements->{$element};
-    $content->{$element} = $html_module->$func();
+    my $module = $elements->{$element};
+    $content->{$element} = $module->$func();
   }
   
   my $page_content = $page->render($content);

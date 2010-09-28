@@ -4,39 +4,39 @@ package EnsEMBL::Web::Document::Page::Popup;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Document::Page::Common);
+use base qw(EnsEMBL::Web::Document::Page);
 
-sub _initialize_HTML {
+sub initialize_HTML {
   my $self = shift;
 
-  return $self->_initialize_JSON if $self->renderer->{'_modal_dialog_'};
+  return $self->initialize_JSON if $self->renderer->{'_modal_dialog_'};
   
   $self->include_navigation(1);
   
   # General layout for popup pages
   $self->add_head_elements(qw(
-    title      EnsEMBL::Web::Document::HTML::Title
-    stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
-    links      EnsEMBL::Web::Document::HTML::Links
-    meta       EnsEMBL::Web::Document::HTML::Meta
+    title      EnsEMBL::Web::Document::Element::Title
+    stylesheet EnsEMBL::Web::Document::Element::Stylesheet
+    links      EnsEMBL::Web::Document::Element::Links
+    meta       EnsEMBL::Web::Document::Element::Meta
   ));
 
   $self->add_body_elements(qw(
-    logo            EnsEMBL::Web::Document::HTML::Logo
-    global_context  EnsEMBL::Web::Document::HTML::ModalTabs
-    local_context   EnsEMBL::Web::Document::HTML::LocalContext
-    content         EnsEMBL::Web::Document::HTML::Content
-    body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
+    logo            EnsEMBL::Web::Document::Element::Logo
+    tabs            EnsEMBL::Web::Document::Element::ModalTabs
+    navigation      EnsEMBL::Web::Document::Element::Navigation
+    content         EnsEMBL::Web::Document::Element::Content
+    body_javascript EnsEMBL::Web::Document::Element::BodyJavascript
   ));
 }
 
-sub _initialize_JSON {
+sub initialize_JSON {
   my $self = shift;
   
   $self->add_body_elements(qw(
-    global_context EnsEMBL::Web::Document::HTML::ModalTabs
-    local_context  EnsEMBL::Web::Document::HTML::LocalContext
-    content        EnsEMBL::Web::Document::HTML::Content
+    tabs       EnsEMBL::Web::Document::Element::ModalTabs
+    navigation EnsEMBL::Web::Document::Element::Navigation
+    content    EnsEMBL::Web::Document::Element::Content
   ));
 }
 

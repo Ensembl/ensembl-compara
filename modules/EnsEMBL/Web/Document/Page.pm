@@ -76,15 +76,15 @@ sub new {
   return $self;
 }
 
-sub head_order     :lvalue { $_[0]{'head_order'}           }
-sub body_order     :lvalue { $_[0]{'body_order'}           }
-sub renderer       :lvalue { $_[0]{'renderer'}             }
-sub hub                    { return $_[0]->{'hub'};      }
-sub elements               { return $_[0]->{'elements'}; }
-sub species_defs           { return $_[0]{'species_defs'}; }
-sub printf                 { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
-sub print                  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
-sub timer_push             { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
+sub head_order :lvalue { $_[0]{'head_order'}           }
+sub body_order :lvalue { $_[0]{'body_order'}           }
+sub renderer   :lvalue { $_[0]{'renderer'}             }
+sub elements           { return $_[0]->{'elements'};   }
+sub hub                { return $_[0]->{'hub'};        }
+sub species_defs       { return $_[0]{'species_defs'}; }
+sub printf             { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
+sub print              { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
+sub timer_push         { $_[0]->{'timer'} && $_[0]->{'timer'}->push($_[1], 1); }
 
 sub set_doc_type {
   my ($self, $type, $version) = @_;
@@ -225,21 +225,34 @@ sub replace_element {
   }
 }
 
+sub initialize {
+  my $self   = shift;
+  my $method = 'initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('_initialize_error') ? 'error' : $self->{'format'});
+  
+  $self->$method;
+  $self->modify_elements;
+  $self->_init;
+  $self->extra_configuration;
+}
+
 sub _init {
   my $self = shift;
   
   foreach my $entry (@{$self->head_order}, @{$self->body_order}) {
-    my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::HTML::Content' ]
+    my ($element, $classname) = @$entry; # example: $entry = [ 'content', 'EnsEMBL::Web::Document::Element::Content' ]
     
     next unless $self->dynamic_use($classname); 
     
-    my $doc_module;
+    my $module;
     
     eval { 
-      $doc_module = $classname->new($self->{'timer'}, $self->{'input'}); # Construct the module
-      $doc_module->{'species_defs'} = $self->species_defs;
-      $doc_module->{'_renderer'}    = $self->renderer;
-      $doc_module->{'format'}       = $self->{'format'};
+      $module = $classname->new({
+        timer        => $self->{'timer'},
+        input        => $self->{'input'},
+        format       => $self->{'format'},
+        species_defs => $self->species_defs,
+        _renderer    => $self->renderer
+      });
     };
     
     if ($@) {
@@ -247,7 +260,7 @@ sub _init {
       next;
     }
     
-    $self->{'elements'}->{$element} = $doc_module;
+    $self->{'elements'}->{$element} = $module;
     
     no strict 'refs';
     my $method_name = ref($self) . "::$element";
@@ -255,12 +268,8 @@ sub _init {
   }
 }
 
-sub initialize {
-  my $self = shift;
-  my $method = '_initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('_initialize_error') ? 'error' : $self->{'format'});
-  $self->$method;
-  $self->_init;
-}
+sub modify_elements     {} # Implemented in plugins: configuration before _init
+sub extra_configuration {} # Implemented in plugins: configuration after  _init
 
 sub clear_body_attr {
   my ($self, $key) = @_;
@@ -375,7 +384,7 @@ sub html_template {
   $self->set_doc_type('XHTML',  '1.0 Trans');
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')     if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  $self->add_body_attr('class', 'no_tabs') unless $elements->{'global_context'};
+  $self->add_body_attr('class', 'no_tabs') unless $elements->{'tabs'};
   
   my $species_path        = $self->species_defs->species_path;
   my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
@@ -391,8 +400,8 @@ sub html_template {
   
   if ($self->include_navigation) {
     $nav = qq{<div id="nav" class="print_hide js_panel">
-          $elements->{'local_context'}
-          $elements->{'local_tools'}
+          $elements->{'navigation'}
+          $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
           <p class="invisible">.</p>
         </div>
@@ -420,7 +429,7 @@ $html_tag
             <div class="search_holder print_hide">$elements->{'search_box'}</div>
           </div>
           $elements->{'breadcrumbs'}
-          <div class="tabs_holder print_hide">$elements->{'global_context'}</div>
+          <div class="tabs_holder print_hide">$elements->{'tabs'}</div>
         </div>
       </div>
       <div class="invisible"></div>
@@ -439,7 +448,7 @@ $html_tag
   </form>
   <input type="hidden" id="species_path" name="species_path" value="$species_path" />
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
-  $elements->{'modal_context'}
+  $elements->{'modal'}
   $elements->{'body_javascript'}
 </body>
 </html>
