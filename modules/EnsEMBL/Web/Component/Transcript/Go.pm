@@ -41,7 +41,7 @@ sub content {
   my @cluster_descr = ('cellular_component', 'biological_process', 'molecular_function');
   $html =  "<p><h3>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</h3></p>";  
   for(my $i=0; $i< scalar(@clusters); $i++){
-    $html .=  '<h4>The following terms are descendants of '.$cluster_descr[$i].'</h4>';
+    $html .=  '<p><h3>The following terms are descendants of '.$cluster_descr[$i].'</h3>';
     my $go_hash  = $object->get_go_list('GO', $clusters[$i]);
     if (%$go_hash){
       my $table = $self->table;
@@ -59,7 +59,7 @@ sub content {
     }
   }
 
- return $html;
+ return "</p>".$html;
 }
 
 sub table {
