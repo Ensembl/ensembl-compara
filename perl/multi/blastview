@@ -33,11 +33,8 @@ use EnsEMBL::Web::BlastView::PanelMain;
 use EnsEMBL::Web::BlastView::PanelTop;
 use EnsEMBL::Web::BlastView::PanelStatus;
 
-use EnsEMBL::Web::Document::Renderer::Apache;
-use EnsEMBL::Web::Document::Page::Static;
-use EnsEMBL::Web::Document::Page::Dynamic;
+use EnsEMBL::Web::Controller::Blast;
 use EnsEMBL::Web::Document::Panel;
-
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::TmpFile::Image;
 
@@ -72,8 +69,8 @@ our $VERBOSE = 0; # Debug setting
 our $VIEW_SCRIPT = $ENV{ENSEMBL_SCRIPT};
 
 MAIN:{
-  if( is_script_suspended() ){ # Check for manual suspend. See sub for details
-    print( get_suspend_page() ); return 1;
+  if( is_script_suspended()){ # Check for manual suspend. See sub for details
+    get_suspend_page(); return 1;
   }
 
   # Populate package globals for each request.
@@ -84,20 +81,21 @@ MAIN:{
   # Create a new CGI object
   # TODO: Use EnsEMBL::Web::Input for CGI handling
   $CGI = CGI->new();
+  
   unless( $CGI->param ) {
     my $tsp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
     $CGI->param( 'species', $tsp );
   }
 
-  # Create a new Page object
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
-  my $page     = new EnsEMBL::Web::Document::Page::Dynamic({ renderer => $renderer, species_defs => $SPECIES_DEFS });
-  $page->_initialize_HTML;
-  $page->include_navigation(0);
-
+  # Create a new Controller object
+  my $controller = new EnsEMBL::Web::Controller::Blast;
+  my $page       = $controller->page;
+  
   # Get BlastAdaptor object
-  my $blast_adpt = &fetch_blast_adaptor( $page );
-
+  my $blast_adpt = fetch_blast_adaptor($controller);
+  
+  return 1 unless $blast_adpt;
+  
   # Process name/value pairs from image submits
   process_image_submits();
 
@@ -186,13 +184,7 @@ MAIN:{
 
 
   $| = 1;
-  CGI::header;
-  $page->render_start;
-print "
 
-<!- THIS IS A HACK ->
-
-";
   if( my $disp_type = $CGI->param('_display') ){
 
     my @errs = ();
@@ -239,8 +231,8 @@ print "
     if( @errs ){ $content .= join '', map { "<h3>$_</h3>" } @errs }
     &save_state;
     $page->content->add_panel( EnsEMBL::Web::Document::Panel->new( 'raw' => $content ) );
-    $page->content->render();
-    $page->render_end();
+    $controller->render_page;
+
     $blast_adpt->dbc->disconnect_if_idle;
     return 1;
   }
@@ -347,8 +339,7 @@ warn "STORED....";
   $CGI       = undef();
   $BLAST     = undef();
   $page->content->add_panel( EnsEMBL::Web::Document::Panel->new( 'raw' => $content ) );
-  $page->content->render();
-  $page->render_end();
+  $controller->render_page;
 } # MAIN
 
 
@@ -366,43 +357,47 @@ sub is_script_suspended{
 #----------------------------------------------------------------------
 # 
 
-sub get_suspend_page{
-  my $msg = shift;
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Apache( );
-  my $page     = new EnsEMBL::Web::Document::Page::Static({ renderer => $renderer, species_defs => $SPECIES_DEFS });
-  my $page->content->add_panel(
-    new EnsEMBL::Web::Document::Panel( 'caption' => 'Ensembl Web site message',
-      content => "<p>Sorry, BlastView is unavailable at the moment due to essential maintenance work.</p><p>$msg</p><p>Normal service will be resumed shortly</p>"
+sub get_suspend_page {
+  my $message    = shift;
+  my $controller = new EnsEMBL::Web::Controller::Blast;
+
+  $controller->page->content->add_panel(
+    new EnsEMBL::Web::Document::Panel(
+      caption => 'Blast is unavailable',
+      content => "<p>Sorry, BlastView is unavailable at the moment due to essential maintenance work.</p><p>$message</p><p>Normal service will be resumed shortly</p>"
     )
   );
-  CGI::header;
-  $page->render();
+  
+  $controller->render_page;
 }
 
 #----------------------------------------------------------------------
 # Creates new BlastAdaptor object with web-specific error-handling
 # TODO: Use methods in EnsEMBL::Web...
-sub fetch_blast_adaptor{
+sub fetch_blast_adaptor {
+  my $controller = shift;
+  my $species    = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
   my $blast_adaptor;
-  my $page = shift;
-  my $sp = $ENV{'ENSEMBL_SPECIES'} eq 'Multi' ? $SPECIES_DEFS->ENSEMBL_PRIMARY_SPECIES : $ENV{'ENSEMBL_SPECIES'};
+  
   eval {
-    $blast_adaptor = $DBCONNECTION->get_databases_species( $sp, 'blast' )->{'blast'};
+    $blast_adaptor = $DBCONNECTION->get_databases_species($species, 'blast')->{'blast'};
   };
 
-  $blast_adaptor && return $blast_adaptor;
+  return $blast_adaptor if $blast_adaptor;
 
   # Still here? Something gone wrong!
-  my $err = "Can not connect to blast database...";
-  warn( "$err: $@" );
-  CGI::header;
-  $page->content->add_panel( EnsEMBL::Web::Document::Panel->new( 'raw' => qq(
-    <h2>Blast adaptor error</h2>
-    <p>Unable to connect to the blast adaptor: error message is:</p>
-    <pre>$@</pre>
-  )));
-  $page->render();
-  exit;
+  warn "Can not connect to blast database: $@";
+  
+  $controller->page->content->add_panel(
+    new EnsEMBL::Web::Document::Panel(
+      caption => 'Blast adaptor error',
+      content => qq{
+      <p>Unable to connect to the blast adaptor: error message is:</p>
+      <pre>$@</pre>
+    })
+  );
+  
+  $controller->render_page;
 }
 
 #----------------------------------------------------------------------
@@ -1845,7 +1840,6 @@ sub populate_karyotype{
 
   my $fi = new EnsEMBL::Web::Document::Image( $SPECIES_DEFS );
      $fi->drawable_container = $karyo_dc;
-     $fi->image_id           = 'blast_karyo_i';
      #$fi->{'img_map'} = 1;
      #$fi->{'border'}  = 1;
 
@@ -3324,5 +3318,7 @@ sub log_blast_error{
   return 1;
 }
 
-use Bio::EnsEMBL::Registry; Bio::EnsEMBL::Registry->disconnect_all();1;
+use Bio::EnsEMBL::Registry;
+Bio::EnsEMBL::Registry->disconnect_all;
 
+1;
