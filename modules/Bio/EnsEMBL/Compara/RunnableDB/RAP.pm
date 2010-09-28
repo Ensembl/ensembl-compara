@@ -83,7 +83,7 @@ sub fetch_input {
 
   $self->{'tree_scale'} = 20;
   
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -297,7 +297,7 @@ sub dumpTreeToWorkdir
   print("rap_infile = '$rap_infile'\n") if($self->debug);
 
   open(OUTFILE, ">$rap_infile")
-    or $self->throw("Error opening $rap_infile for write");
+    or throw("Error opening $rap_infile for write");
 
   printf(OUTFILE "$treeName\n[\n");
   

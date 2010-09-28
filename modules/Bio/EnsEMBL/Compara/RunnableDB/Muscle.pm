@@ -98,7 +98,7 @@ sub fetch_input {
 #    throw("Muscle job failed >3 times: try something else and FAIL it");
 #  }
   
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -325,7 +325,7 @@ sub dumpFamilyPeptidesToWorkdir
   
   
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
+    or throw("Error opening $fastafile for write");
 
   foreach my $member_attribute (@members_attributes) {
     my ($member,$attribute) = @{$member_attribute};
@@ -441,7 +441,7 @@ sub dumpProteinTreeToWorkdir
   print("fastafile = '$fastafile'\n") if($self->debug);
 
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
+    or throw("Error opening $fastafile for write");
 
   my $seq_id_hash = {};
   my $residues = 0;

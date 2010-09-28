@@ -516,7 +516,7 @@ sub dumpProteinTreeToWorkdir {
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
+    or throw("Error opening $fastafile for write!");
 
   my $seq_id_hash = {};
   my $residues = 0;

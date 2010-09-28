@@ -97,7 +97,7 @@ sub fetch_input {
 #    throw("PHYML job failed >3 times: try something else and FAIL it");
 #  }
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -312,7 +312,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   }
 
   open(OUTSEQ, ">$clw_file")
-    or $self->throw("Error opening $clw_file for write");
+    or throw("Error opening $clw_file for write");
 
   my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'}, -stop2x => 1);
   

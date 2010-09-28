@@ -100,7 +100,7 @@ sub fetch_input {
   $self->{all_between} = 0;
   $self->{no_between} = 0.25; # dont store all possible_orthologs
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -731,7 +731,7 @@ sub duplication_confidence_score {
   }
   if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->{_readonly})) {
     my $ancestor_node_id = $ancestor->node_id;
-    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
+    throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
   }
 }
 
@@ -1251,7 +1251,7 @@ sub store_gene_link_as_homology
       my $tree_id = $self->{protein_tree}->node_id;
       my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
       my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
-      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
+      throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
     my $stored_homology = $self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2);
     if (defined($stored_homology)) {
@@ -1318,7 +1318,7 @@ sub check_homology_consistency {
     my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
     if ($count > 1) {
       my ($mlss, $member_id) = split("_",$mlss_member_id);
-      $self->throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
+      throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
     }
   }
 }

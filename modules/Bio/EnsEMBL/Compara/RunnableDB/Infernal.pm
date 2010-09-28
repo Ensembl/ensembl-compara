@@ -81,7 +81,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->{'infernal_starttime'} = time()*1000;
   $self->{'method'} = 'Infernal';
@@ -211,7 +211,7 @@ sub dump_sequences_to_workdir {
   $self->{'tag_gene_count'} = scalar(@{$member_list});
 
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
+    or throw("Error opening $fastafile for write!");
   my $count = 0;
   foreach my $member (@{$member_list}) {
     my $sequence_id;

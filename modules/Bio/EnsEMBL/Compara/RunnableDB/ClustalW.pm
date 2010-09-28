@@ -87,7 +87,7 @@ sub fetch_input {
   $self->{'parse_output'} = 1;
   $self->{'mpi'} = undef;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -315,7 +315,7 @@ sub dumpFamilyPeptidesToWorkdir
   
   
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
+    or throw("Error opening $fastafile for write");
 
   foreach my $member_attribute (@members_attributes) {
     my ($member,$attribute) = @{$member_attribute};
@@ -428,7 +428,7 @@ sub dumpTreePeptidesToWorkdir
   return $fastafile if(-e $fastafile);
 
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write");
+    or throw("Error opening $fastafile for write");
 
   my $seq_id_hash = {};
   my $member_list = $tree->get_all_leaves;  
@@ -461,7 +461,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   print("clw_file = '$clw_file'\n") if($self->debug);
 
   open(OUTSEQ, ">$clw_file")
-    or $self->throw("Error opening $clw_file for write");
+    or throw("Error opening $clw_file for write");
 
 
   my $seq_id_hash = {};

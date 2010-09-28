@@ -78,9 +78,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
   ########################################
   my $p = eval($self->analysis->parameters);
@@ -98,7 +98,7 @@ sub fetch_input {
   my $input_hash = eval($self->input_id);
   my $genome_db_id = $input_hash->{'gdb'};
   print("gdb = $genome_db_id\n");
-  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  throw("No genome_db_id in input_id") unless defined($genome_db_id);
 
   if($input_hash->{'pseudo_stableID_prefix'}) {
     $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
@@ -127,7 +127,7 @@ sub fetch_input {
   
   #using genome_db_id, connect to external core database
   $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();  
-  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
+  throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
   
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;
@@ -315,7 +315,7 @@ sub create_temp_member_table {
 
   my $cmd = "mysqldump --skip-quote-names --where=\"genome_db_id=$gdb_id\" -u $reuse_username $pass -h $reuse_host -P$reuse_port $reuse_dbname member";
   print("Running: # $cmd\n") if($self->debug);
-  open(INRUN, "$cmd |") or $self->throw("Error mysqldump $tbl_name, $!\n");
+  open(INRUN, "$cmd |") or throw("Error mysqldump $tbl_name, $!\n");
   my @output = <INRUN>;
   my $exit_status = close(INRUN);
   foreach my $line (@output) {
@@ -323,7 +323,7 @@ sub create_temp_member_table {
   }
 
   my $tempfile = $self->worker_temp_directory . "$tbl_name.sql";
-  open(OUTRUN, ">$tempfile") or $self->throw("Error writing mysqldump $tempfile, $!\n");
+  open(OUTRUN, ">$tempfile") or throw("Error writing mysqldump $tempfile, $!\n");
   print OUTRUN @output;
   close OUTRUN;
   $cmd = "cat $tempfile | mysql -u $dest_username $dest_pass -h $dest_host -P$dest_port $dest_dbname";

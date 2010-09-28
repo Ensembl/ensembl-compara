@@ -96,7 +96,7 @@ sub fetch_input {
   $self->{all_between} = 0;
   $self->{no_between} = 0.25;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -1199,7 +1199,7 @@ sub store_gene_link_as_homology
       my $tree_id = $self->{nc_tree}->node_id;
       my $pmember_id1 = $nc1->member_id; my $pstable_id1 = $nc1->stable_id;
       my $pmember_id2 = $nc2->member_id; my $pstable_id2 = $nc2->stable_id;
-      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
+      throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
     my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
     if (defined($stored_homology)) {
@@ -1266,7 +1266,7 @@ sub check_homology_consistency {
     my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
     if ($count > 1) {
       my ($mlss, $member_id) = split("_",$mlss_member_id);
-      $self->throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
+      throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
     }
   }
 }

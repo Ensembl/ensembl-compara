@@ -95,7 +95,7 @@ sub fetch_input {
 
   $self->{'max_gene_count'} = 1500; # Can be overriden later
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -248,11 +248,11 @@ sub run_quicktreebreak {
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
-  open(RUN, "$cmd |") or $self->throw("error running quicktree, $!\n");
+  open(RUN, "$cmd |") or throw("error running quicktree, $!\n");
   my @output = <RUN>;
   my $exit_status = close(RUN);
   if (!$exit_status) {
-    $self->throw("error running quicktree, $!\n");
+    throw("error running quicktree, $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
@@ -298,7 +298,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+    or throw("Error opening $aln_file for write");
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
@@ -531,13 +531,13 @@ sub generate_subtrees {
   $self->{new_subtree} = $self->{new_subtree}->minimize_tree;
 
   # Some checks
-  $self->throw("QuickTreeBreak: Failed to generate subtrees: $!\n")  unless(defined($self->{'new_subtree'}) && defined($self->{'remaining_subtree'}));
+  throw("QuickTreeBreak: Failed to generate subtrees: $!\n")  unless(defined($self->{'new_subtree'}) && defined($self->{'remaining_subtree'}));
   my  $final_original_num = scalar @{$self->{protein_tree}->get_all_leaves};
   my       $final_max_num = scalar @{$self->{new_subtree}->get_all_leaves};
   my $final_remaining_num = scalar @{$self->{remaining_subtree}->get_all_leaves};
 
   if(($final_max_num + $final_remaining_num) != $final_original_num) {
-    $self->throw("QuickTreeBreak: Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]: $!\n");
+    throw("QuickTreeBreak: Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]: $!\n");
   }
 
   $self->{'original_cluster'} = $self->{protein_tree};

@@ -93,7 +93,7 @@ sub fetch_input {
   $self->{'bootstrap'}      = 1;
   $self->{'max_gene_count'} = 410;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->{'memberDBA'} = $self->compara_dba->get_MemberAdaptor;
 
@@ -104,7 +104,7 @@ sub fetch_input {
   $self->check_if_exit_cleanly;
 
   unless($self->{'protein_tree'}) {
-    $self->throw("undefined ProteinTree as input\n");
+    throw("undefined ProteinTree as input\n");
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') 
       > $self->{'max_gene_count'}) {
@@ -266,7 +266,7 @@ sub run_njtree_phyml
     }
   }
 
-  $self->throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
+  throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
 
   # Defining a species_tree
   # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
@@ -284,7 +284,7 @@ sub run_njtree_phyml
 
   if($@) {
     unless(-e $self->{'species_tree_file'}) {
-      $self->throw("can't find species_tree\n");
+      throw("can't find species_tree\n");
     }
   } else {
     $self->{species_tree_string} = $species_tree_string->{value};
@@ -334,7 +334,7 @@ sub run_njtree_phyml
         }
       }
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml, $!\n");
+      throw("error running njtree phyml, $!\n");
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -357,7 +357,7 @@ sub run_njtree_phyml
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml noboot (step 1 of 2), $!\n");
+      throw("error running njtree phyml noboot (step 1 of 2), $!\n");
     }
     # second part
     # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
@@ -376,11 +376,11 @@ sub run_njtree_phyml
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
       print("$cmd\n");
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml noboot (step 2 of 2), $!\n");
+      throw("error running njtree phyml noboot (step 2 of 2), $!\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0);
   } else {
-    $self->throw("NJTREE PHYML -- wrong bootstrap option");
+    throw("NJTREE PHYML -- wrong bootstrap option");
   }
 
   #parse the tree into the datastucture
@@ -400,7 +400,7 @@ sub check_job_fail_options
 #     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 205 && !defined($self->worker->{HIGHMEM})) {
 #       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
 #       $self->DESTROY;
-#       $self->throw("NJTREE PHYML job too big: try something else and FAIL it");
+#       throw("NJTREE PHYML job too big: try something else and FAIL it");
 #     }
 #   }
 
@@ -445,7 +445,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   }
 
   open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+    or throw("Error opening $aln_file for write");
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
@@ -698,7 +698,7 @@ sub parse_newick_into_proteintree
   #parse newick into a new tree object structure
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
+  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
@@ -739,7 +739,7 @@ sub parse_newick_into_proteintree
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      $self->throw("Phyml tree does not have all leaves as AlignedMember\n");
+      throw("Phyml tree does not have all leaves as AlignedMember\n");
     }
   }
 

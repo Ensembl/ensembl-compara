@@ -88,7 +88,7 @@ sub fetch_input {
 
   $self->{'max_gene_count'} = 1000000;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -345,7 +345,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   }
 
   open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+    or throw("Error opening $aln_file for write");
 
   my $sa = $tree->get_SimpleAlign
     (

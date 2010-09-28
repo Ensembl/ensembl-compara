@@ -72,7 +72,7 @@ sub fetch_input {
 
   $self->{'species_set'} = undef;
   $self->{'clusterset_id'} = 1;
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
 

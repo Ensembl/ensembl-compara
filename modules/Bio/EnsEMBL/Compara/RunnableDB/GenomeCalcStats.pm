@@ -101,13 +101,13 @@ sub carrying_capacity { return 20; }
 sub fetch_input {
   my( $self) = @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
   my $input_hash = eval($self->input_id);
   my $genome_db_id = $input_hash->{'gdb'};
-  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  throw("No genome_db_id in input_id") unless defined($genome_db_id);
   
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable

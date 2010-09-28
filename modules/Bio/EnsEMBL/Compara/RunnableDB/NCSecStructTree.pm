@@ -340,7 +340,7 @@ sub dumpMultipleAlignmentStructToWorkdir
   }
 
   open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+    or throw("Error opening $aln_file for write");
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
@@ -382,7 +382,7 @@ sub dumpMultipleAlignmentStructToWorkdir
     # No struct file
   } else {
     open(STRUCT, ">$struct_file")
-      or $self->throw("Error opening $struct_file for write");
+      or throw("Error opening $struct_file for write");
     print STRUCT "$struct_string\n";
     close STRUCT;
   }

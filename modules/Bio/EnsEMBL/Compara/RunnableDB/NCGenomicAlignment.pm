@@ -82,7 +82,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->{'ncgenomicalignment_starttime'} = time()*1000;
   $self->{'method'} = 'NCGenomicAlignment';
@@ -201,7 +201,7 @@ sub dump_sequences_to_workdir {
   $self->{'tag_gene_count'} = scalar(@{$member_list});
 
   open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
+    or throw("Error opening $fastafile for write!");
   my $count = 0;
   if (2 > scalar @{$member_list}) {
     $self->{single_peptide_tree} = 1;
@@ -212,12 +212,12 @@ sub dump_sequences_to_workdir {
     $description =~ /Acc\:(\w+)/;
     my $acc = $1;
     my $gene_member = $member->gene_member;
-    $self->throw("Error fetching gene member") unless (defined($gene_member));
+    throw("Error fetching gene member") unless (defined($gene_member));
     my $gene = $gene_member->get_Gene;
-    $self->throw("Error fetching gene") unless (defined($gene));
+    throw("Error fetching gene") unless (defined($gene));
     # We fetch a slice that is 500% the size of the gene
     my $slice = $gene->slice->adaptor->fetch_by_Feature($gene,'500%');
-    $self->throw("Error fetching slice") unless (defined($slice));
+    throw("Error fetching slice") unless (defined($slice));
     my $seq = $slice->seq;
     $residues += length($seq);
     $seq =~ s/(.{72})/$1\n/g;

@@ -85,7 +85,7 @@ sub fetch_input {
   $self->{'tree_scale'} = 1;
   $self->{'store_homologies'} = 1;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+  throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -349,7 +349,7 @@ sub store_gene_link_as_homology
       my $tree_id = $self->{protein_tree}->node_id;
       my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
       my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
-      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
+      throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
     my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
     if (defined($stored_homology)) {
