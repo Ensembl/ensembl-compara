@@ -98,7 +98,7 @@ sub fetch_input {
   unless (-e $ktreedist_executable) {
     $ktreedist_executable = "/software/ensembl/compara/ktreedist/Ktreedist.pl";
   }
-  throw("can't find a ktreedist executable to run\n") unless(-e $ktreedist_executable);
+  $self->throw("can't find a ktreedist executable to run\n") unless(-e $ktreedist_executable);
   $self->{ktreedist_executable} = $ktreedist_executable;
 
   return 1;
@@ -198,7 +198,7 @@ sub run_ktreedist {
     my $inputtree = $self->{inputtrees_rooted}{$method};
     my $comparison_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree);
     my $newick_string = $comparison_tree->newick_simple_format;
-    throw("error with newick tree") unless (defined($newick_string));
+    $self->throw("error with newick tree") unless (defined($newick_string));
     print CTFILE "TREE    $method = $newick_string\n";
   }
   print CTFILE "End;\n\n";
@@ -208,7 +208,7 @@ sub run_ktreedist {
   print RTFILE "#NEXUS\n\n";
   print RTFILE "Begin TREES;\n\n";
   my $reference_string = $self->{nc_tree}->newick_format('member_id_taxon_id');
-  throw("error with newick tree") unless (defined($reference_string));
+  $self->throw("error with newick tree") unless (defined($reference_string));
   print RTFILE "TREE    treebest = $reference_string\n";
   print CTFILE "End;\n\n";
   close RTFILE;
@@ -216,10 +216,10 @@ sub run_ktreedist {
   my $cmd = "$ktreedist_executable -a -rt $referencefilename -ct $comparisonfilename";
   print("$cmd\n") if($self->debug);
   my $run; my $exit_status;
-  open($run, "$cmd |") or throw("Cannot run ktreedist with: $cmd");
+  open($run, "$cmd |") or $self->throw("Cannot run ktreedist with: $cmd");
   my @output = <$run>;
   $exit_status = close($run);
-  throw("Error exit status running Ktreedist") if (!$exit_status);
+  $self->throw("Error exit status running Ktreedist") if (!$exit_status);
   foreach my $line (@output) {
     if ($line =~ /\s+(\S+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(\d+)/) {
       my ($tag,$k_score,$scale_factor,$symm_difference,$n_partitions) = ($1,$2,$3,$4,$5);
@@ -283,12 +283,12 @@ sub reroot_inputtrees {
 
     unless(system("$cmd") == 0) {
       print("$cmd\n");
-      throw("error running treebest sdi, $!\n");
+      $self->throw("error running treebest sdi, $!\n");
     }
 
     # Parse the rooted tree string
     my $rootedstring;
-    open (FH, $rootedfilename) or throw("Couldnt open rooted file [$rootedfilename]");
+    open (FH, $rootedfilename) or $self->throw("Couldnt open rooted file [$rootedfilename]");
     while(<FH>) {
       chomp $_;
       $rootedstring .= $_;
@@ -320,7 +320,7 @@ sub load_species_tree {
 
   if($@) {
     unless(-e $self->{'species_tree_file'}) {
-      throw("can't find species_tree\n");
+      $self->throw("can't find species_tree\n");
     }
   } else {
     $self->{species_tree_string} = $species_tree_string->{value};
@@ -351,7 +351,7 @@ sub parse_newick_into_nctree
   #parse newick into a new tree object structure
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
@@ -391,7 +391,7 @@ sub parse_newick_into_nctree
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->{'nc_tree'}->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      throw("TreeBestMMerge tree does not have all leaves as AlignedMember\n");
+      $self->throw("TreeBestMMerge tree does not have all leaves as AlignedMember\n");
     }
   }
 

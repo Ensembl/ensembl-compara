@@ -93,7 +93,7 @@ sub fetch_input {
     }
     $self->{members} = \@members;
   } else {
-    throw("Incorrect input_id. Should be array-based like 'ids'=>[1,2,3,4,5]\n");
+    $self->throw("Incorrect input_id. Should be array-based like 'ids'=>[1,2,3,4,5]\n");
   }
 
   # For long parameters, look at analysis_data

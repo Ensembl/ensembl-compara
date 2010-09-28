@@ -96,7 +96,7 @@ sub fetch_input {
   $self->{all_between} = 0;
   $self->{no_between} = 0.25;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -121,7 +121,7 @@ sub fetch_input {
     printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
   }
   unless($self->{'nc_tree'}) {
-    throw("undefined NCTree as input\n");
+    $self->throw("undefined NCTree as input\n");
   }
   $self->delete_old_homologies;
   $self->delete_old_ncorthotree_tags;
@@ -176,7 +176,7 @@ sub check_job_fail_options
 #     $self->input_job->update_status('FAILED');
 #     $self->{'nc_tree'}->release_tree;
 #     $self->{'nc_tree'} = undef;
-#     throw("NCOrthoTree : cluster size over threshold and FAIL it");
+#     $self->throw("NCOrthoTree : cluster size over threshold and FAIL it");
 #   }
 
   if($self->input_job->retry_count >= 2) {
@@ -185,14 +185,14 @@ sub check_job_fail_options
 
     $self->DESTROY;
     $self->input_job->transient_error(0);
-    throw("NCOrthoTree job failed >=3 times: try something else and FAIL it");
+    $self->throw("NCOrthoTree job failed >=3 times: try something else and FAIL it");
   }
 
 #   if ($self->input_job->retry_count >= 1) {
 #     if ($self->{'nc_tree'}->get_tagvalue('gene_count') > 400 && !defined($self->worker->{HIGHMEM})) {
 #       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
 #       $self->DESTROY;
-#       throw("NCOrthoTree job too big: try something else and FAIL it");
+#       $self->throw("NCOrthoTree job too big: try something else and FAIL it");
 #     }
 #   }
 }
@@ -468,7 +468,7 @@ sub load_species_tree {
   };
   if($@) {
     unless(-e $self->{'species_tree_file'}) {
-      throw("can't find species_tree\n");
+      $self->throw("can't find species_tree\n");
     }
   } else {
     $self->{species_tree_string} = $species_tree_string->{value};
@@ -633,7 +633,7 @@ sub get_ancestor_taxon_level
     my $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
 
     unless($taxon) {
-      throw("oops missing taxon " . $gdb->taxon_id ."\n");
+      $self->throw("oops missing taxon " . $gdb->taxon_id ."\n");
     }
 
     if($taxon_level) {
@@ -662,7 +662,7 @@ sub duplication_confidence_score {
 
   # This assumes bifurcation!!! No multifurcations allowed
   my ($child_a, $child_b, $dummy) = @{$ancestor->children};
-  throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
+  $self->throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
   my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
   my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
   my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
@@ -1199,7 +1199,7 @@ sub store_gene_link_as_homology
       my $tree_id = $self->{nc_tree}->node_id;
       my $pmember_id1 = $nc1->member_id; my $pstable_id1 = $nc1->stable_id;
       my $pmember_id2 = $nc2->member_id; my $pstable_id2 = $nc2->stable_id;
-      throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
+      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
     my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
     if (defined($stored_homology)) {
@@ -1266,7 +1266,7 @@ sub check_homology_consistency {
     my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
     if ($count > 1) {
       my ($mlss, $member_id) = split("_",$mlss_member_id);
-      throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
+      $self->throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
     }
   }
 }

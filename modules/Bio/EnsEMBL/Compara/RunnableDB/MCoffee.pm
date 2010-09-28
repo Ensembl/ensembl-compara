@@ -174,12 +174,12 @@ sub fetch_input {
   # No input specified.
   if (!defined($self->{'protein_tree'})) {
     $self->DESTROY;
-    throw("MCoffee job no input protein_tree");
+    $self->throw("MCoffee job no input protein_tree");
   }
   # Error writing input Fasta file.
   if (!$self->{'input_fasta'}) {
     $self->DESTROY;
-    throw("MCoffee: error writing input Fasta");
+    $self->throw("MCoffee: error writing input Fasta");
   }
 
   return 1;
@@ -348,7 +348,7 @@ sub run_mcoffee
         # path to t_coffee components:
       $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
   }
-  throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_executable);
+  $self->throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_executable);
 
   #
   # Make the t_coffee temp dir.
@@ -363,7 +363,7 @@ sub run_mcoffee
   my $paramsfile = $self->{'input_params'};
   $paramsfile =~ s/\/\//\//g;  # converts any // in path to /
   open(OUTPARAMS, ">$paramsfile")
-    or throw("Error opening $paramsfile for write");
+    or $self->throw("Error opening $paramsfile for write");
 
   my $method_string = '-method=';
   if ($self->{'method'} && $self->{'method'} eq 'cmcoffee') {
@@ -408,7 +408,7 @@ sub run_mcoffee
 
   my $t_env_filename = $tempdir . "t_coffee_env";
   open(TCOFFEE_ENV, ">$t_env_filename")
-    or throw("Error opening $t_env_filename for write");
+    or $self->throw("Error opening $t_env_filename for write");
   print TCOFFEE_ENV "http_proxy_4_TCOFFEE=\n";
   print TCOFFEE_ENV "EMAIL_4_TCOFFEE=cedric.notredame\@europe.com\n";
   close TCOFFEE_ENV;
@@ -474,7 +474,7 @@ sub run_mcoffee
 
   unless($rc == 0) {
       $self->DESTROY;
-      throw("MCoffee job, error running executable: $!\n");
+      $self->throw("MCoffee job, error running executable: $!\n");
   }
 }
 
@@ -516,7 +516,7 @@ sub dumpProteinTreeToWorkdir {
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write!");
+    or $self->throw("Error opening $fastafile for write!");
 
   my $seq_id_hash = {};
   my $residues = 0;
@@ -567,7 +567,7 @@ sub dumpProteinTreeToWorkdir {
   }
   close OUTSEQ;
 
-  throw("Cluster has canonical transcript issues: [$has_canonical_issues]\n") if (0 < $has_canonical_issues);
+  $self->throw("Cluster has canonical transcript issues: [$has_canonical_issues]\n") if (0 < $has_canonical_issues);
 
   if(scalar keys (%{$seq_id_hash}) <= 1) {
     $self->update_single_peptide_tree($tree);
@@ -606,7 +606,7 @@ sub parse_and_store_alignment_into_proteintree
   foreach my $seq ($aln->each_seq) {
     my $id = $seq->display_id;
     my $sequence = $seq->seq;
-    throw("Error fetching sequence from output alignment") unless(defined($sequence));
+    $self->throw("Error fetching sequence from output alignment") unless(defined($sequence));
     print STDERR "# ", $sequence, "\n" if ($self->debug);
     $align_hash{$id} = $sequence;
     # Lowercase aminoacids in the output alignment -- decaf has found overalignments
@@ -621,7 +621,7 @@ sub parse_and_store_alignment_into_proteintree
   my %score_hash;
   if (defined $mcoffee_scores) {
     my $FH = IO::File->new();
-    $FH->open($mcoffee_scores) || throw("Could not open alignment scores file [$mcoffee_scores]");
+    $FH->open($mcoffee_scores) || $self->throw("Could not open alignment scores file [$mcoffee_scores]");
     <$FH>; #skip header
     my $i=0;
     while(<$FH>) {
@@ -655,7 +655,7 @@ sub parse_and_store_alignment_into_proteintree
     } else {
       if ($alignment_length != length($alignment_string)) {
         $DB::single=1;1;
-        throw("While parsing the alignment, some id did not return the expected alignment length\n");
+        $self->throw("While parsing the alignment, some id did not return the expected alignment length\n");
       }
     }
     # Call the method to do the actual conversion
@@ -666,7 +666,7 @@ sub parse_and_store_alignment_into_proteintree
     # We clone the tree, attach it to the new clusterset_id, then store it.
     # protein_tree_member is now linked to the new one
     my ($from_clusterset_id, $to_clusterset_id) = split(":",$self->{'redo'});
-    throw("malformed redo option: ". $self->{'redo'}." should be like 1:1000000")
+    $self->throw("malformed redo option: ". $self->{'redo'}." should be like 1:1000000")
       unless (defined($from_clusterset_id) && defined($to_clusterset_id));
     my $clone_tree = $self->{protein_tree}->copy;
     my $clusterset = $self->{treeDBA}->fetch_node_by_node_id($to_clusterset_id);
@@ -685,7 +685,7 @@ sub parse_and_store_alignment_into_proteintree
   foreach my $member (@{$tree->get_all_leaves}) {
       # Redo alignment is member_id based, new alignment is sequence_id based
       if ($align_hash{$member->sequence_id} eq "" && $align_hash{$member->member_id} eq "") {
-	  throw("mcoffee produced an empty cigar_line for ".$member->stable_id."\n");
+	  $self->throw("mcoffee produced an empty cigar_line for ".$member->stable_id."\n");
       }
       # Redo alignment is member_id based, new alignment is sequence_id based
       $member->cigar_line($align_hash{$member->sequence_id} || $align_hash{$member->member_id});
@@ -698,7 +698,7 @@ sub parse_and_store_alignment_into_proteintree
       my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
       if ($seq_cigar_length != length($member_sequence)) {
 	  print $member_sequence."\n".$member->cigar_line."\n" if ($self->debug);
-	  throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+	  $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
 
       if ($self->{'output_table'} eq 'protein_tree_member') {

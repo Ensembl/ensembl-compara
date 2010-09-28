@@ -87,20 +87,20 @@ my $g_BlastComparaPep_workdir;
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   ## Get the query (corresponds to the member with a member_id = input_id)
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $member_id = $self->input_id;
   my $member = $self->compara_dba->get_MemberAdaptor->fetch_by_dbID($member_id);
-  throw("No member in compara for member_id = $member_id") unless defined($member);
+  $self->throw("No member in compara for member_id = $member_id") unless defined($member);
   if ($member->bioseq->length < 10) {
     $self->input_job->incomplete(0);    # to say "the execution completed successfully, but please record the thown message"
     die "Peptide is too short for BLAST";
   }
 
   my $query = $member->bioseq();
-  throw("Unable to make bioseq for member_id = $member_id") unless defined($query);
+  $self->throw("Unable to make bioseq for member_id = $member_id") unless defined($query);
   $self->{query} = $query;
   $self->{member} = $member;
 

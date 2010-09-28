@@ -68,7 +68,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_set'} = undef;
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -447,7 +447,7 @@ sub store_clusters {
   my $starttime = time();
 
   my $clusterset = $self->{'ccEngine'}->clusterset;
-  throw("no clusters generated") unless($clusterset);
+  $self->throw("no clusters generated") unless($clusterset);
 
   $clusterset->node_id($self->{'original_cluster'}->root->node_id);
   $clusterset->adaptor($treeDBA);

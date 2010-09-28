@@ -67,7 +67,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_set'} = undef;
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -89,7 +89,7 @@ sub fetch_input {
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
     my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
+    $self->throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
     push @genomeDB_set, $gdb;
   }
   $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
@@ -439,7 +439,7 @@ sub store_clusters {
   my $starttime = time();
 
   my $clusterset = $self->{'ccEngine'}->clusterset;
-  throw("no clusters generated") unless($clusterset);
+  $self->throw("no clusters generated") unless($clusterset);
 
   $clusterset->name("PROTEIN_TREES");
   $treeDBA->store_node($clusterset);

@@ -106,7 +106,7 @@ sub _create_specific_readme {
 	#If define compara_url, must also define core_url(s)
 	Bio::EnsEMBL::Registry->load_registry_from_url($self->param('compara_url'));
 	if (!defined($self->param('core_url'))) {
-	    throw("Must define core_url if define compara_url");
+	    $self->throw("Must define core_url if define compara_url");
 	}
 	my @core_urls = split ",", $self->param('core_url');
 
@@ -170,7 +170,7 @@ sub _get_species_tree {
 	my $analysis_data_adaptor = $hive_dba->get_AnalysisDataAdaptor;
 	$newick_species_tree = $analysis_data_adaptor->fetch_by_dbID($self->param('species_tree_data_id'));
     } elsif ($self->param('species_tree_file') ne "") {
-	open(TREE_FILE, $self->param('species_tree_file')) or throw("Cannot open file ".$self->('species_tree_file'));
+	open(TREE_FILE, $self->param('species_tree_file')) or $self->throw("Cannot open file ".$self->('species_tree_file'));
 	$newick_species_tree = join("", <TREE_FILE>);
 	close(TREE_FILE);
     }

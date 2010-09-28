@@ -61,7 +61,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'codeml_parameters_href'} = undef;
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->{ha} = $self->compara_dba->get_HomologyAdaptor;
 

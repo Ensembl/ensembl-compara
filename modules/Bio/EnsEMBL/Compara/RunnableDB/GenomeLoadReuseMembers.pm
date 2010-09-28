@@ -78,9 +78,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
   ########################################
   my $p = eval($self->analysis->parameters);
@@ -98,7 +98,7 @@ sub fetch_input {
   my $input_hash = eval($self->input_id);
   my $genome_db_id = $input_hash->{'gdb'};
   print("gdb = $genome_db_id\n");
-  throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
 
   if($input_hash->{'pseudo_stableID_prefix'}) {
     $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
@@ -127,7 +127,7 @@ sub fetch_input {
   
   #using genome_db_id, connect to external core database
   $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();  
-  throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
+  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
   
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;
@@ -251,7 +251,7 @@ sub drop_temp_member_table {
   $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db} . ';type=compara');
   unless (defined($self->{comparaDBA_reuse})) {
     my $reuse_db = $self->{p}{reuse_db};
-    throw("Couldn't connect to reuse db $reuse_db: $!");
+    $self->throw("Couldn't connect to reuse db $reuse_db: $!");
   }
   return unless($self->{'genome_db'});
   my $gdb = $self->{'genome_db'};
@@ -280,7 +280,7 @@ sub create_temp_member_table {
   $self->{comparaDBA_reuse} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{p}{reuse_db} . ';type=compara');
   unless (defined($self->{comparaDBA_reuse})) {
     my $reuse_db = $self->{p}{reuse_db};
-    throw("Couldn't connect to reuse db $reuse_db: $!");
+    $self->throw("Couldn't connect to reuse db $reuse_db: $!");
   }
   return unless($self->{'genome_db'});
   my $gdb = $self->{'genome_db'};
@@ -315,7 +315,7 @@ sub create_temp_member_table {
 
   my $cmd = "mysqldump --skip-quote-names --where=\"genome_db_id=$gdb_id\" -u $reuse_username $pass -h $reuse_host -P$reuse_port $reuse_dbname member";
   print("Running: # $cmd\n") if($self->debug);
-  open(INRUN, "$cmd |") or throw("Error mysqldump $tbl_name, $!\n");
+  open(INRUN, "$cmd |") or $self->throw("Error mysqldump $tbl_name, $!\n");
   my @output = <INRUN>;
   my $exit_status = close(INRUN);
   foreach my $line (@output) {
@@ -323,14 +323,14 @@ sub create_temp_member_table {
   }
 
   my $tempfile = $self->worker_temp_directory . "$tbl_name.sql";
-  open(OUTRUN, ">$tempfile") or throw("Error writing mysqldump $tempfile, $!\n");
+  open(OUTRUN, ">$tempfile") or $self->throw("Error writing mysqldump $tempfile, $!\n");
   print OUTRUN @output;
   close OUTRUN;
   $cmd = "cat $tempfile | mysql -u $dest_username $dest_pass -h $dest_host -P$dest_port $dest_dbname";
   my $ret = system($cmd);
   printf("  %1.3f secs to mysqldump $tbl_name\n", (time()-$starttime));
   if (0 != $ret) {
-    throw("Error importing $tempfile: $ret\n");
+    $self->throw("Error importing $tempfile: $ret\n");
   }
 
   return 1;
@@ -346,7 +346,7 @@ sub loadMembersFromCoreSlices
 
   my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
   print("fetched ",scalar(@slices), " slices to load from\n");
-  throw("problem: no toplevel slices") unless(scalar(@slices));
+  $self->throw("problem: no toplevel slices") unless(scalar(@slices));
 
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
@@ -435,7 +435,7 @@ sub store_gene_and_all_transcripts
     print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
 
     unless (defined $translation->stable_id) {
-      throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
+      $self->throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
       next;
     }
 

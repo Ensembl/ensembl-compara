@@ -100,7 +100,7 @@ sub fetch_input {
     my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
     unless (defined $gdb) {
       $DB::single=1;1;
-      throw("gdb not defined for gdb_id = $gdb_id\n");
+      $self->throw("gdb not defined for gdb_id = $gdb_id\n");
     }
     push @genomeDB_set, $gdb;
   }
@@ -207,7 +207,7 @@ sub run_rfamclassify {
   if (!defined($clusterset)) {
     $self->{'ccEngine'} = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
     $clusterset = $self->{'ccEngine'}->clusterset;
-    throw("no clusters generated") unless($clusterset);
+    $self->throw("no clusters generated") unless($clusterset);
 
     $clusterset->name("NC_TREES"); # FIXME: NC_TREES?
     $self->{treeDBA}->store_node($clusterset);
@@ -400,17 +400,17 @@ sub load_mirbase_families {
   my $cmd = "rm -f $mifam";
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
-    throw("error deleting previously downloaded file $!\n");
+    $self->throw("error deleting previously downloaded file $!\n");
   }
 
   my $cmd = "gunzip $tmp_file";
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
-    throw("error expanding mirbase families $!\n");
+    $self->throw("error expanding mirbase families $!\n");
   }
 
 
-  open (FH, $mifam) or throw("Couldnt open miFam file [$mifam]");
+  open (FH, $mifam) or $self->throw("Couldnt open miFam file [$mifam]");
   my $family_ac; my $family_id;
   while (<FH>) {
     if ($_ =~ /^AC\s+(\S+)/) {
@@ -422,7 +422,7 @@ sub load_mirbase_families {
       $self->{mirbase_families}{$mi_id}{$family_id}{$family_ac}{$mir_id} = 1;
     } elsif ($_ =~ /\/\//) {
     } else {
-      throw("Unexpected line: [$_] in mifam file\n");
+      $self->throw("Unexpected line: [$_] in mifam file\n");
     }
   }
 
@@ -443,7 +443,7 @@ sub tag_assembly_coverage_depth {
     } elsif ($assembly_coverage_depth eq 'high' || $assembly_coverage_depth eq '6x' || $assembly_coverage_depth >= 6) {
       push @{$self->{high_coverage}}, $gdb;
     } else {
-      throw("Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n");
+      $self->throw("Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n");
     }
   }
   return undef unless(defined($self->{low_coverage}));

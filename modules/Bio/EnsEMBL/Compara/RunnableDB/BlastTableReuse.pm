@@ -60,7 +60,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the Pipeline::DBAdaptor that is based into this runnable
@@ -162,7 +162,7 @@ sub import_paf_table {
   my $ret = system($cmd);
   printf("  %1.3f secs to mysqldump $tbl_name\n", (time()-$starttime));
   if (0 != $ret) {
-    throw("Error importing $tbl_name: $ret\n");
+    $self->throw("Error importing $tbl_name: $ret\n");
   }
 }
 

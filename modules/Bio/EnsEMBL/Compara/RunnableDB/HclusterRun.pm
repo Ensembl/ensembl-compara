@@ -72,7 +72,7 @@ sub fetch_input {
 
   $self->{'species_set'} = undef;
   $self->{'clusterset_id'} = 1;
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
 
@@ -82,7 +82,7 @@ sub fetch_input {
   my @genomeDB_set;
   foreach my $gdb_id (@species_set) {
     my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
+    $self->throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
     push @genomeDB_set, $gdb;
   }
   $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
@@ -188,7 +188,7 @@ sub store_clusters {
   if (!defined($clusterset)) {
     $self->{'ccEngine'} = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
     $clusterset = $self->{'ccEngine'}->clusterset;
-    throw("no clusters generated") unless($clusterset);
+    $self->throw("no clusters generated") unless($clusterset);
 
     $clusterset->name("PROTEIN_TREES");
     $treeDBA->store_node($clusterset);
@@ -299,13 +299,13 @@ sub gather_input {
   $cmd ="cat $cluster_dir/*.hcluster.cat > $output_dir/hcluster.cat";
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
-    throw("error gathering category files for Hcluster, $!\n");
+    $self->throw("error gathering category files for Hcluster, $!\n");
   }
   printf("%1.3f secs to gather category entries\n", (time()-$starttime));
   $cmd ="cat $cluster_dir/*.hcluster.txt > $output_dir/hcluster.txt";
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
-    throw("error gathering distance files for Hcluster, $!\n");
+    $self->throw("error gathering distance files for Hcluster, $!\n");
   }
   printf("%1.3f secs to gather distance entries\n", (time()-$starttime));
 }
@@ -339,7 +339,7 @@ sub run_hcluster {
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
-    throw("error running hcluster command ' $cmd ': $!\n");
+    $self->throw("error running hcluster command ' $cmd ': $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   printf("%1.3f secs to execute\n", (time()-$starttime));
@@ -379,7 +379,7 @@ sub check_job_fail_options
   if($self->input_job->retry_count >= 5) {
     $self->input_job->transient_error(0);
 
-    throw("HclusterRun job failed >=5 times: try something else and FAIL it");
+    $self->throw("HclusterRun job failed >=5 times: try something else and FAIL it");
   }
 }
 

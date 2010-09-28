@@ -95,10 +95,10 @@ sub fetch_input {
 #  if($self->input_job->retry_count >= 3) {
 #    $self->dataflow_output_id($self->input_id, 2);
 #    $self->input_job->update_status('FAILED');
-#    throw("Muscle job failed >3 times: try something else and FAIL it");
+#    $self->throw("Muscle job failed >3 times: try something else and FAIL it");
 #  }
   
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -117,11 +117,11 @@ sub fetch_input {
       $self->{'protein_tree'}->release_tree;
       $self->{'protein_tree'} = undef;
       $self->input_job->transient_error(0);
-      throw("Muscle : cluster size over threshold and FAIL it");
+      $self->throw("Muscle : cluster size over threshold and FAIL it");
     }
     $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'});
   } else {
-    throw("undefined family as input\n");
+    $self->throw("undefined family as input\n");
   }
 
   return 1;
@@ -169,7 +169,7 @@ sub write_output {
     #done so release the tree
     $self->{'protein_tree'}->release_tree;
   } else {
-    throw("undefined family as input\n");
+    $self->throw("undefined family as input\n");
   }
   
   $self->cleanup_job_tmp_files unless($self->debug);
@@ -241,7 +241,7 @@ sub run_muscle
       $muscle_executable = "/nfs/acari/abel/bin/i386/muscle";
     }
   }
-  throw("can't find a muscle executable to run\n") unless(-e $muscle_executable);
+  $self->throw("can't find a muscle executable to run\n") unless(-e $muscle_executable);
 
   my $cmd = $muscle_executable;
   $cmd .= " ". "-maxiters 3 " if($self->input_job->retry_count >= 2);
@@ -254,7 +254,7 @@ sub run_muscle
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     $self->check_job_fail_options;
-    throw("error running muscle, $!\n");
+    $self->throw("error running muscle, $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
 
@@ -286,7 +286,7 @@ sub check_job_fail_options
       $self->{'protein_tree'} = undef;
     }
     $self->input_job->transient_error(0);
-    throw("Muscle job failed >=3 times: try something else and FAIL it");
+    $self->throw("Muscle job failed >=3 times: try something else and FAIL it");
   }
 }
 
@@ -325,7 +325,7 @@ sub dumpFamilyPeptidesToWorkdir
   
   
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write");
+    or $self->throw("Error opening $fastafile for write");
 
   foreach my $member_attribute (@members_attributes) {
     my ($member,$attribute) = @{$member_attribute};
@@ -441,7 +441,7 @@ sub dumpProteinTreeToWorkdir
   print("fastafile = '$fastafile'\n") if($self->debug);
 
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write");
+    or $self->throw("Error opening $fastafile for write");
 
   my $seq_id_hash = {};
   my $residues = 0;
@@ -484,7 +484,7 @@ sub parse_and_store_alignment_into_proteintree
   #
   my %align_hash;
   my $FH = IO::File->new();
-  $FH->open($muscle_output) || throw("Could not open alignment file [$muscle_output]");
+  $FH->open($muscle_output) || $self->throw("Could not open alignment file [$muscle_output]");
 
   <$FH>; #skip header
   while(<$FH>) {
@@ -506,7 +506,7 @@ sub parse_and_store_alignment_into_proteintree
       $alignment_length = length($alignment_string);
     } else {
       if ($alignment_length != length($alignment_string)) {
-        throw("While parsing the alignment, some id did not return the expected alignment length\n");
+        $self->throw("While parsing the alignment, some id did not return the expected alignment length\n");
       }
     }
     $alignment_string =~ s/\-([A-Z])/\- $1/g;
@@ -532,7 +532,7 @@ sub parse_and_store_alignment_into_proteintree
   #
   foreach my $member (@{$tree->get_all_leaves}) {
     if ($align_hash{$member->sequence_id} eq "") {
-      throw("muscle did produce an empty cigar_line for ".$member->stable_id."\n");
+      $self->throw("muscle did produce an empty cigar_line for ".$member->stable_id."\n");
     }
     $member->cigar_line($align_hash{$member->sequence_id});
     ## Check that the cigar length (Ms) matches the sequence length
@@ -540,7 +540,7 @@ sub parse_and_store_alignment_into_proteintree
     my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
     my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
     if ($seq_cigar_length != length($member_sequence)) {
-        throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+        $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
     }
     #
     printf("update protein_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);

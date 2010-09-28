@@ -190,7 +190,7 @@ sub run_ncrecoversearch {
       print "Using default cmsearch executable!\n";
       $cmsearch_executable = "/nfs/users/nfs_a/avilella/src/infernal/infernal-1.0/src/cmsearch";
   }
-  throw("can't find a cmalign executable to run\n") unless(-e $cmsearch_executable);
+  $self->throw("can't find a cmalign executable to run\n") unless(-e $cmsearch_executable);
 
   my $worker_temp_directory = $self->worker_temp_directory;
   my $root_id = $self->{nc_tree}->node_id;
@@ -241,7 +241,7 @@ sub run_ncrecoversearch {
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
-    throw("error running cmsearch, $!\n");
+    $self->throw("error running cmsearch, $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 

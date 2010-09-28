@@ -65,7 +65,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_set'} = undef;
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->{gdba} = $self->compara_dba->get_GenomeDBAdaptor;
 
@@ -73,7 +73,7 @@ sub fetch_input {
 
   my $input_gdb_id = $self->input_id;
   my $gdb = $self->{gdba}->fetch_by_dbID($input_gdb_id);
-  throw("no genome_db for $input_gdb_id") unless(defined($gdb));
+  $self->throw("no genome_db for $input_gdb_id") unless(defined($gdb));
   $self->{gdb} = $gdb;
 
   return 1;

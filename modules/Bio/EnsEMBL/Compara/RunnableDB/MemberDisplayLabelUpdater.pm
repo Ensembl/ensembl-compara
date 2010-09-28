@@ -257,7 +257,7 @@ module to work over all GenomeDBs)
 sub genome_db_ids {
   my ($self, $genome_db_ids) = @_;
   if(defined $genome_db_ids) {
-    throw( 'Not an array or no data: ['.$genome_db_ids.']')
+    $self->throw( 'Not an array or no data: ['.$genome_db_ids.']')
       unless ref($genome_db_ids) eq 'ARRAY' && @{$genome_db_ids};
     $self->{genome_db_ids} = $genome_db_ids;
   }
@@ -268,7 +268,7 @@ sub _add_to_process_list {
   my ($self, $genome_db, $members) = @_;
   return unless defined $members && ref($members) eq 'ARRAY' && @{$members};
   my $id = $genome_db->dbID();
-  throw('Already have data for GenomeDB '.$id) if exists $self->{_process_list}->{$id};
+  $self->throw('Already have data for GenomeDB '.$id) if exists $self->{_process_list}->{$id};
   $self->{_process_list}->{$id} = $members;
   return;
 }
@@ -283,9 +283,9 @@ sub _process_list {
 sub _assert_state {
   my ($self) = @_;
   my $dba = $self->db_adaptor();
-  throw('A suitable Compara DBAdaptor was not found') 
+  $self->throw('A suitable Compara DBAdaptor was not found') 
     unless defined $dba;
-  throw('Found DBAaptor is not a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor') 
+  $self->throw('Found DBAaptor is not a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor') 
     unless $dba->isa('Bio::EnsEMBL::Compara::DBSQL::DBAdaptor');
   return;
 }
@@ -313,7 +313,7 @@ sub _process_genome_db {
 	print "Processing ${name}\n" if $self->debug();
 	
 	if(!$genome_db->db_adaptor()) {
-		throw('Cannot get an adaptor for GenomeDB '.$name) if $self->die_if_no_adaptor();
+		$self->throw('Cannot get an adaptor for GenomeDB '.$name) if $self->die_if_no_adaptor();
 		return;
 	}
 	
@@ -487,7 +487,7 @@ sub _update_genome_db {
 	$dbc->disconnect_when_inactive($original_dwi);
 	
 	if($error) {
-	  throw('Cannot insert member '.$last_member->stable_id().' because of error raised during insertion: '.$error);
+	  $self->throw('Cannot insert member '.$last_member->stable_id().' because of error raised during insertion: '.$error);
 	}
 	
 	print "Inserted ${total} member(s) for ${name}\n" if $self->debug();
@@ -518,7 +518,7 @@ sub _execute_to_array {
   }
   eval { $sth->finish(); };
   
-  throw("Error when executing '${sql}' with params [@params]: $error") if $error;
+  $self->throw("Error when executing '${sql}' with params [@params]: $error") if $error;
   
   return \@res;
 }

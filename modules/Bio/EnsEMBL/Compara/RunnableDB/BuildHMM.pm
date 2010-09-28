@@ -88,7 +88,7 @@ sub fetch_input {
 
   $self->{'max_gene_count'} = 1000000;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -127,14 +127,14 @@ sub fetch_input {
   }
 
   unless($self->{'protein_tree'}) {
-    throw("undefined ProteinTree as input\n");
+    $self->throw("undefined ProteinTree as input\n");
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
     $self->dataflow_output_id($self->input_id, 2);      # this does not seem to be wired to anything at the moment?
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
     $self->input_job->transient_error(0);
-    throw("BuildHMM : cluster size over threshold");    # maybe we should make the success/failure dependent on the success of the dataflow?
+    $self->throw("BuildHMM : cluster size over threshold");    # maybe we should make the success/failure dependent on the success of the dataflow?
   }
 
   my @to_delete;
@@ -292,7 +292,7 @@ sub run_buildhmm
       $buildhmm_executable = $hmmer_dir . "hmmbuild";
     }
   }
-  throw("can't find a hmmbuild executable to run\n") 
+  $self->throw("can't find a hmmbuild executable to run\n") 
     unless(-e $buildhmm_executable);
 
   ## as in treefam
@@ -310,7 +310,7 @@ sub run_buildhmm
   my $worker_temp_directory = $self->worker_temp_directory;
   $cmd = "cd $worker_temp_directory; $cmd";
   if(system($cmd)) {
-    throw("could not run '$cmd': $!\n");
+    $self->throw("could not run '$cmd': $!\n");
   }
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -345,7 +345,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   }
 
   open(OUTSEQ, ">$aln_file")
-    or throw("Error opening $aln_file for write");
+    or $self->throw("Error opening $aln_file for write");
 
   my $sa = $tree->get_SimpleAlign
     (
@@ -374,7 +374,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   my $sreformat = $self->{sreformat} || '/usr/local/ensembl/bin/sreformat';
   my $cmd = "$sreformat stockholm $aln_file > $stk_file";
   if(system($cmd)) {
-    throw("could not run '$cmd': $!\n");
+    $self->throw("could not run '$cmd': $!\n");
   }
 
   $self->{'input_aln'} = $stk_file;
@@ -390,7 +390,7 @@ sub store_hmmprofile
   
   #parse hmmer file
   print("load from file $hmm_file\n") if($self->debug);
-  open (FH, $hmm_file) or throw("Couldnt open hmm_file [$hmm_file]");
+  open (FH, $hmm_file) or $self->throw("Couldnt open hmm_file [$hmm_file]");
   $self->{'hmm_text'} = join('', <FH>);
   close(FH);
 

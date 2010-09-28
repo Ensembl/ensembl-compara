@@ -633,7 +633,7 @@ sub _run_compare_to_previous_db_test {
     }
   }
 
-  throw("Must define previous database url") if (!defined($previous_db_url));
+  $self->throw("Must define previous database url") if (!defined($previous_db_url));
 
   $self->test_table("genomic_align_block");
   $self->test_table("genomic_align");
@@ -675,7 +675,7 @@ sub _run_compare_to_previous_db_test {
 	  $current_mlss_id = $current_mlss->dbID;
       }
   } elsif (!defined $current_mlss_id) {
-      throw("No current_mlss_id or method_link_type and current_genome_db_ids set\n");
+      $self->throw("No current_mlss_id or method_link_type and current_genome_db_ids set\n");
   }
 
   #get the previous method_link_species_set object from the method_link_type and
@@ -708,7 +708,7 @@ sub _run_compare_to_previous_db_test {
       }
       $previous_mlss_id = $previous_mlss->dbID;
   } elsif (!defined $previous_mlss_id) {
-      throw("No previous_mlss_id or method_link_type and current_genome_db_ids set\n");
+      $self->throw("No previous_mlss_id or method_link_type and current_genome_db_ids set\n");
   }
 
   #get the name for the method_link_species_set_id

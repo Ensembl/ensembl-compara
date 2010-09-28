@@ -79,14 +79,14 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
 
   my $input_hash = eval($self->input_id);
   my $genome_db_id = $input_hash->{'gdb'};
   print("gdb = $genome_db_id\n");
-  throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
   if($input_hash->{'pseudo_stableID_prefix'}) {
     $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
   }
@@ -105,7 +105,7 @@ sub fetch_input {
   
   #using genome_db_id, connect to external core database
   $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();  
-  throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
+  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
   
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;
@@ -177,7 +177,7 @@ sub loadMembersFromCoreSlices
   #and then all transcripts in gene to store as members in compara
   my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
   print("fetched ",scalar(@slices), " slices to load from\n");
-  throw("problem: no toplevel slices") unless(scalar(@slices));
+  $self->throw("problem: no toplevel slices") unless(scalar(@slices));
 
   SLICE: foreach my $slice (@slices) {
     $self->{'sliceCount'}++;
@@ -209,7 +209,7 @@ sub loadMembersFromCoreSlices
   print("       ".$self->{'longestCount'}." longest transcripts\n");
   print("       ".$self->{'pepSubset'}->count()." in Subset\n");
   
-  throw("problem: no real genes") unless $self->{'realGeneCount'};
+  $self->throw("problem: no real genes") unless $self->{'realGeneCount'};
 }
 
 
@@ -255,7 +255,7 @@ sub store_gene_and_all_transcripts
     print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
 
     unless (defined $translation->stable_id) {
-      throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
+      $self->throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
       next;
     }
 

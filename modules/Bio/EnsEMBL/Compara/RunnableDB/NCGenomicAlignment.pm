@@ -82,7 +82,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->{'ncgenomicalignment_starttime'} = time()*1000;
   $self->{'method'} = 'NCGenomicAlignment';
@@ -201,7 +201,7 @@ sub dump_sequences_to_workdir {
   $self->{'tag_gene_count'} = scalar(@{$member_list});
 
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write!");
+    or $self->throw("Error opening $fastafile for write!");
   my $count = 0;
   if (2 > scalar @{$member_list}) {
     $self->{single_peptide_tree} = 1;
@@ -212,12 +212,12 @@ sub dump_sequences_to_workdir {
     $description =~ /Acc\:(\w+)/;
     my $acc = $1;
     my $gene_member = $member->gene_member;
-    throw("Error fetching gene member") unless (defined($gene_member));
+    $self->throw("Error fetching gene member") unless (defined($gene_member));
     my $gene = $gene_member->get_Gene;
-    throw("Error fetching gene") unless (defined($gene));
+    $self->throw("Error fetching gene") unless (defined($gene));
     # We fetch a slice that is 500% the size of the gene
     my $slice = $gene->slice->adaptor->fetch_by_Feature($gene,'500%');
-    throw("Error fetching slice") unless (defined($slice));
+    $self->throw("Error fetching slice") unless (defined($slice));
     my $seq = $slice->seq;
     $residues += length($seq);
     $seq =~ s/(.{72})/$1\n/g;
@@ -267,7 +267,7 @@ sub run_ncgenomicalignment {
       print "Using default cmalign executable!\n";
       $ncgenomicalignment_executable = "/software/ensembl/compara/prank/090707/src/prank";
   }
-  throw("can't find a prank executable to run\n") unless(-e $ncgenomicalignment_executable);
+  $self->throw("can't find a prank executable to run\n") unless(-e $ncgenomicalignment_executable);
 
   my $cmd = $ncgenomicalignment_executable;
   # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast
@@ -279,7 +279,7 @@ sub run_ncgenomicalignment {
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
-    throw("error running ncgenomicalignment, $!\n");
+    $self->throw("error running ncgenomicalignment, $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
@@ -312,7 +312,7 @@ sub run_ncgenomic_tree {
     my @leaves = @{$eval_species_tree->get_all_leaves};
   };
 
-  throw("can't find species_tree\n") if ($@);
+  $self->throw("can't find species_tree\n") if ($@);
   $self->{species_tree_string} = $species_tree_string->{value};
   my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
   open SPECIESTREE, ">$spfilename" or die "$!";
@@ -335,7 +335,7 @@ sub run_ncgenomic_tree {
   $DB::single=1;1;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
-    throw("error running treebest $method, $!\n");
+    $self->throw("error running treebest $method, $!\n");
   }
 
   $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -351,7 +351,7 @@ sub store_newick_into_protein_tree_tag_string {
   my $newick_file =  $self->{'newick_file'};
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
   while(<FH>) {
     chomp $_;
     $newick .= $_;

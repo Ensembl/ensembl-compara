@@ -105,7 +105,7 @@ sub fetch_input {
   }
 
   $self->{groupset_node} = $self->{proteintreeDBA}->fetch_all_roots->[0];
-  throw("[GroupsetQC] Couldnt find clusterset node") unless (defined($self->{groupset_node}));
+  $self->throw("[GroupsetQC] Couldnt find clusterset node") unless (defined($self->{groupset_node}));
 
   unless (defined($self->{groupset_tag})) {
     $self->{groupset_tag} = $self->input_job->dbID;
@@ -190,7 +190,7 @@ sub run_groupset_qc {
   } else {
     # Fetching the previous version of the pipeline
     $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{reuse_db} . ';type=compara');
-    throw("[GroupsetQC] Couldnt connect to comparaDBA reuse") unless (defined($self->{'comparaDBA_reuse'}));
+    $self->throw("[GroupsetQC] Couldnt connect to comparaDBA reuse") unless (defined($self->{'comparaDBA_reuse'}));
 
     my $xtb_filename = $self->join_one_pair;
 
@@ -244,7 +244,7 @@ sub fetch_groupset {
       $dataset->{membership}{$member} = $cluster_id;
       $dataset->{clustername}{$cluster_id} = $cluster_name;
     } else {
-      throw("Missing member for $cluster_id\n");
+      $self->throw("Missing member for $cluster_id\n");
     }
 
     if ($self->debug && ($counter++ % 50000 == 0)) { printf("%10d loaded\n", $counter); }
@@ -562,7 +562,7 @@ sub per_genome_mapping_stats {
   return 1 unless (defined($self->{reusable_gdb}{$gdb_id}));
 
   $self->{'comparaDBA_reuse'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{reuse_db} . ';type=compara');
-  throw("[GroupsetQC] Couldnt connect to comparaDBA reuse") unless (defined($self->{'comparaDBA_reuse'}));
+  $self->throw("[GroupsetQC] Couldnt connect to comparaDBA reuse") unless (defined($self->{'comparaDBA_reuse'}));
   my $reuse_orphans = $self->fetch_gdb_orphan_genes($self->{comparaDBA_reuse},$gdb_id);
   my $common_orphans; my $new_orphans; my $old_orphans;
   foreach my $this_orphan_id (keys %$this_orphans) {

@@ -147,7 +147,7 @@ sub download_rfam_models {
 
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
     print("$cmd\n");
-    throw("error expanding RFAMLoadModels $!\n");
+    $self->throw("error expanding RFAMLoadModels $!\n");
   }
   printf("time for RFAMLoadModels fetch : %1.3f secs\n" , time()-$starttime);
 
@@ -167,7 +167,7 @@ sub store_hmmprofile_dir {
     my $model_id;
     if ($cm_file =~ /(\w+)\.cm$/) {
       $model_id = $1;
-      throw("wrong file") unless ($model_id =~ /RF/);
+      $self->throw("wrong file") unless ($model_id =~ /RF/);
       my $tmp_cm_file = $worker_temp_directory . $cm_file;
       $self->load_cmfile($tmp_cm_file,$model_id);
     }
@@ -191,7 +191,7 @@ sub store_hmmprofile {
       $model_id = $accession;
     } elsif ($_ =~ /\/\//) {
       # End of profile, let's store it
-      throw("Error loading cm profile [$model_id]\n") unless (defined($model_id) && defined($profile_content));
+      $self->throw("Error loading cm profile [$model_id]\n") unless (defined($model_id) && defined($profile_content));
       $self->load_cmprofile($profile_content,$model_id,$name);
       $model_id = undef;
       $profile_content = undef;
@@ -208,7 +208,7 @@ sub load_cmfile {
 
   print("load from file $cm_file\n") if($self->debug);
 
-  open (FH, $cm_file) or throw("Couldnt open cm_file [$cm_file]");
+  open (FH, $cm_file) or $self->throw("Couldnt open cm_file [$cm_file]");
   my $name;
   my $hmm_text;
   while (<FH>) {

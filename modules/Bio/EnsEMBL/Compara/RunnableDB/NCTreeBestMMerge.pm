@@ -99,7 +99,7 @@ sub fetch_input {
   unless (-e $treebest_mmerge_executable) {
     $treebest_mmerge_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
   }
-  throw("can't find a treebest executable to run\n") unless(-e $treebest_mmerge_executable);
+  $self->throw("can't find a treebest executable to run\n") unless(-e $treebest_mmerge_executable);
   $self->{treebest_mmerge_executable} = $treebest_mmerge_executable;
 
   return 1;
@@ -223,7 +223,7 @@ sub run_treebest_mmerge {
   $DB::single=1;1;#??
   unless(system("$cmd") == 0) {
     print("$cmd\n");
-    throw("error running treebest sdi, $!\n");
+    $self->throw("error running treebest sdi, $!\n");
   }
 
   $self->{mmerge_output} = $mmerge_output_filename;
@@ -260,7 +260,7 @@ sub calculate_branch_lengths {
 
   unless(system("$cmd") == 0) {
     print("$cmd\n");
-    throw("error running treebest sdi, $!\n");
+    $self->throw("error running treebest sdi, $!\n");
   }
 
   $self->{mmerge_blengths_output} = $tree_with_blengths;
@@ -296,12 +296,12 @@ sub reroot_inputtrees {
     $DB::single=1;1;
     unless(system("$cmd") == 0) {
       print("$cmd\n");
-      throw("error running treebest sdi, $!\n");
+      $self->throw("error running treebest sdi, $!\n");
     }
 
     # Parse the rooted tree string
     my $rootedstring;
-    open (FH, $rootedfilename) or throw("Couldnt open rooted file [$rootedfilename]");
+    open (FH, $rootedfilename) or $self->throw("Couldnt open rooted file [$rootedfilename]");
     while(<FH>) {
       chomp $_;
       $rootedstring .= $_;
@@ -357,7 +357,7 @@ sub load_species_tree {
 
   if($@) {
     unless(-e $self->{'species_tree_file'}) {
-      throw("can't find species_tree\n");
+      $self->throw("can't find species_tree\n");
     }
   } else {
     $self->{species_tree_string} = $species_tree_string->{value};
@@ -388,7 +388,7 @@ sub parse_newick_into_nctree
   #parse newick into a new tree object structure
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
 
@@ -428,7 +428,7 @@ sub parse_newick_into_nctree
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->{'nc_tree'}->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      throw("TreeBestMMerge tree does not have all leaves as AlignedMember\n");
+      $self->throw("TreeBestMMerge tree does not have all leaves as AlignedMember\n");
     }
   }
 
@@ -574,7 +574,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   }
 
   open(OUTSEQ, ">$aln_file")
-    or throw("Error opening $aln_file for write");
+    or $self->throw("Error opening $aln_file for write");
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching

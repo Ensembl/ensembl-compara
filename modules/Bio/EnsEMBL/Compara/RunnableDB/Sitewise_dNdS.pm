@@ -89,7 +89,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -102,7 +102,7 @@ sub fetch_input {
   $self->check_if_exit_cleanly;
 
   unless ($self->{'protein_tree'}) {
-    throw("undefined ProteinTree as input\n");
+    $self->throw("undefined ProteinTree as input\n");
   }
   my $num_leaves = $self->{'protein_tree'}->num_leaves;
   $self->{'protein_tree'}->print_tree(10) if ($self->debug);
@@ -286,7 +286,7 @@ sub run_sitewise_dNdS
     $slrexe = "/software/ensembl/compara/bin/Slr_ensembl";
   }
 
-  throw("can't find an slr executable to run\n") 
+  $self->throw("can't find an slr executable to run\n") 
     unless(-e $slrexe);
 
   my $aln = $self->{'cds_aln'};
@@ -298,8 +298,8 @@ sub run_sitewise_dNdS
      -format => 'newick');
   my $tree = $treein->next_tree;
   $treein->close;
-  throw("can't find cds_aln\n") if ( ! $aln );
-  throw("can't find tree\n") if ( ! $tree );
+  $self->throw("can't find cds_aln\n") if ( ! $aln );
+  $self->throw("can't find tree\n") if ( ! $tree );
 
   # Reorder the alignment according to the tree
   my $ct = 1;
@@ -340,7 +340,7 @@ sub run_sitewise_dNdS
     }
     $seq->seq($seqstring);
   }
-  throw("malformed masked alignment of the wrong length") unless ($aln_length == $sorted_aln->length);
+  $self->throw("malformed masked alignment of the wrong length") unless ($aln_length == $sorted_aln->length);
   ####
 
   my $tmpdir = $self->worker_temp_directory;
@@ -366,7 +366,7 @@ sub run_sitewise_dNdS
   # many of the these programs are finicky about what the filename is 
   # and won't even run without the properly named file.
   my $slr_ctl = "$tmpdir/slr.ctl";
-  open(SLR, ">$slr_ctl") or throw("cannot open $slr_ctl for writing");
+  open(SLR, ">$slr_ctl") or $self->throw("cannot open $slr_ctl for writing");
   print SLR "seqfile\: aln\n";
   print SLR "treefile\: tree\n";
   my $outfile = "slr.res";
@@ -388,7 +388,7 @@ sub run_sitewise_dNdS
     my $run;
     my $quiet = $self->debug ? '2>/dev/null' : '';
     $self->compara_dba->dbc->disconnect_when_inactive(1);
-    open($run, "$slrexe $quiet |") or throw("Cannot open exe $slrexe");
+    open($run, "$slrexe $quiet |") or $self->throw("Cannot open exe $slrexe");
     my @output = <$run>;
     $exit_status = close($run);
     $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -504,7 +504,7 @@ sub run_gblocks
 
     printf("Sitewise_dNdS::run_gblocks\n") if($self->debug);
 
-    throw("Sitewise_dNdS : error getting Peptide SimpleAlign") unless (defined($aln));
+    $self->throw("Sitewise_dNdS : error getting Peptide SimpleAlign") unless (defined($aln));
 
     my $aln_length = $aln->length;
     my $tree_id = $self->{'protein_tree'}->node_id;

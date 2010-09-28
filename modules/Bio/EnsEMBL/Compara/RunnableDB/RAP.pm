@@ -83,7 +83,7 @@ sub fetch_input {
 
   $self->{'tree_scale'} = 20;
   
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -94,7 +94,7 @@ sub fetch_input {
   $self->print_params if($self->debug);
 
   unless($self->{'protein_tree'}) {
-    throw("undefined ProteinTree as input\n");
+    $self->throw("undefined ProteinTree as input\n");
   }
 
   return 1;
@@ -197,7 +197,7 @@ sub run_rap
   #unless (-e $rap_executable) {
   #  $rap_executable = "/usr/local/ensembl/bin/rap.jar";
   #}
-  #throw("can't find a RAP executable to run\n") unless(-e $rap_executable);
+  #$self->throw("can't find a RAP executable to run\n") unless(-e $rap_executable);
 
   my $cmd = "java -jar /usr/local/ensembl/bin/rap.jar";
   if ($rap_executable) {
@@ -218,7 +218,7 @@ sub run_rap
   print("$cmd\n") if($self->debug);
   unless(system($cmd) == 0) {
     print("$cmd\n");
-    throw("error running rap, $!\n");
+    $self->throw("error running rap, $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   
@@ -297,7 +297,7 @@ sub dumpTreeToWorkdir
   print("rap_infile = '$rap_infile'\n") if($self->debug);
 
   open(OUTFILE, ">$rap_infile")
-    or throw("Error opening $rap_infile for write");
+    or $self->throw("Error opening $rap_infile for write");
 
   printf(OUTFILE "$treeName\n[\n");
   
@@ -370,7 +370,7 @@ sub parse_RAP_output
 
   #parse newick into a new tree object structure
   print("load from file $rap_outfile\n") if($self->debug);
-  open (FH, $rap_outfile) or throw("Could not open newick file [$rap_outfile]");
+  open (FH, $rap_outfile) or $self->throw("Could not open newick file [$rap_outfile]");
   my $chew_rap = 1;
   while($chew_rap>0) { 
     my $line = <FH>;
@@ -444,7 +444,7 @@ sub parse_rap_newick_into_tree
           $node->add_tag("Duplication", 1);
           $token = next_token(\$newick, "(");  
           if($debug) { printf("state %d : '%s'\n", $state, $token); };
-          if($token ne "(") { throw("parse error: expected ( after #\n"); }
+          if($token ne "(") { $self->throw("parse error: expected ( after #\n"); }
         }
         $node->print_node if($debug);
 
@@ -471,7 +471,7 @@ sub parse_rap_newick_into_tree
           if($debug) { print("    naming leaf"); $node->print_node; }
           $token = next_token(\$newick, "\""); #eat end "
           unless($token eq '"') {
-            throw("parse error: expected matching \"");
+            $self->throw("parse error: expected matching \"");
           }
           $token = next_token(\$newick, "/(:,)"); #eat it
         }
@@ -504,16 +504,16 @@ sub parse_rap_newick_into_tree
           $state=1;
         } elsif($token eq ';') {
           #done with tree
-          throw("parse error: unbalanced ()\n") if($bracket_level ne 0);
+          $self->throw("parse error: unbalanced ()\n") if($bracket_level ne 0);
           $state=13;
           $token = next_token(\$newick, "(");
         } else {
-          throw("parse error: expected ; or ) or ,\n");
+          $self->throw("parse error: expected ; or ) or ,\n");
         }
       }
       
       case 13 {
-        throw("parse error: nothing expected after ;");
+        $self->throw("parse error: nothing expected after ;");
       }
     }
   }
@@ -542,7 +542,7 @@ sub next_token {
     }
   }
   unless(defined($index)) {
-    throw("couldn't find delimiter $delim\n");
+    $self->throw("couldn't find delimiter $delim\n");
   }
 
   my $token ='';

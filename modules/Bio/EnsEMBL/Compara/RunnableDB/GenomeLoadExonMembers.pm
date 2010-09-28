@@ -58,16 +58,16 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 sub fetch_input {
   my( $self) = @_;
   
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  throw("Improper formated input_id") unless ($self->input_id =~ /^\s*\{/);
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /^\s*\{/);
   
   my $input_hash = eval($self->input_id);
   my $genome_db_id = $input_hash->{'gdb'};
   print("gdb = $genome_db_id\n");
-  throw("No genome_db_id in input_id") unless defined($genome_db_id);
+  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
 
-  throw("Improper formated analysis parameters") unless ($self->analysis->parameters =~ /^\s*\{/);
+  $self->throw("Improper formated analysis parameters") unless ($self->analysis->parameters =~ /^\s*\{/);
   $input_hash = eval($self->analysis->parameters);
   my $min_length = $input_hash->{'min_length'};
   $min_length = 0 unless (defined $min_length);
@@ -83,7 +83,7 @@ sub fetch_input {
   
   #using genome_db_id, connect to external core database
   $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();
-  throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
+  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
   
   #global boolean control value (whether the genes are also stored as members)
   $self->{'store_genes'} = 1;

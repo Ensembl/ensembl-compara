@@ -100,7 +100,7 @@ sub fetch_input {
   $self->{all_between} = 0;
   $self->{no_between} = 0.25; # dont store all possible_orthologs
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
@@ -125,7 +125,7 @@ sub fetch_input {
     printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
   }
   unless($self->{'protein_tree'}) {
-    throw("undefined ProteinTree as input\n");
+    $self->throw("undefined ProteinTree as input\n");
   }
   $self->delete_old_homologies;
   $self->delete_old_orthotree_tags;
@@ -466,7 +466,7 @@ sub load_species_tree {
   };
   if($@) {
     unless(-e $self->{'species_tree_file'}) {
-      throw("can't find species_tree\n");
+      $self->throw("can't find species_tree\n");
     }
   } else {
     $self->{species_tree_string} = $species_tree_string->{value};
@@ -541,7 +541,7 @@ sub load_species_tree_from_file {
       
       if($self->{use_genomedb_id}) {
       	my $gdb = $genomeDBA->fetch_by_dbID($id);
-      	throw("Cannot find a GenomeDB for the ID ${id}. Ensure your tree is correct and you are using use_genomedb_id correctly") if !defined $gdb;
+      	$self->throw("Cannot find a GenomeDB for the ID ${id}. Ensure your tree is correct and you are using use_genomedb_id correctly") if !defined $gdb;
       	$node->name($gdb->name());
       	$used_ids{$id} = 1;
       	$node->add_tag('_found_genomedb', 1);
@@ -665,12 +665,12 @@ sub get_ancestor_taxon_level {
 
   	if($self->{use_genomedb_id}) {
 			$taxon = $taxon_tree->find_node_by_node_id($gdbID);
-			throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
+			$self->throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
   	}
   	else {
   		my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
   		$taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
-  		throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
+  		$self->throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
   	}
 
     if($taxon_level) {
@@ -699,7 +699,7 @@ sub duplication_confidence_score {
 
   # This assumes bifurcation!!! No multifurcations allowed
   my ($child_a, $child_b, $dummy) = @{$ancestor->children};
-  throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
+  $self->throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
   my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
   my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
   my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
@@ -731,7 +731,7 @@ sub duplication_confidence_score {
   }
   if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->{_readonly})) {
     my $ancestor_node_id = $ancestor->node_id;
-    throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
+    $self->throw("Inconsistency in the ProteinTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
   }
 }
 
@@ -1251,7 +1251,7 @@ sub store_gene_link_as_homology
       my $tree_id = $self->{protein_tree}->node_id;
       my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
       my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
-      throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
+      $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
     my $stored_homology = $self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2);
     if (defined($stored_homology)) {
@@ -1318,7 +1318,7 @@ sub check_homology_consistency {
     my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
     if ($count > 1) {
       my ($mlss, $member_id) = split("_",$mlss_member_id);
-      throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
+      $self->throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
     }
   }
 }

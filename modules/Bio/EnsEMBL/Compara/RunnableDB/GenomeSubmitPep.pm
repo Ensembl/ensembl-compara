@@ -71,9 +71,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my $self = shift;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  throw("Improper formated input_id") unless ($self->input_id =~ /\{/);
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /\{/);
   my $input_hash = eval($self->input_id);
   
   #create a Compara::DBAdaptor which shares the same DBConnection as $self->db
@@ -100,10 +100,10 @@ sub fetch_input {
     }
   }
   
-  throw("no subset defined, can't figure out which peptides to use\n") 
+  $self->throw("no subset defined, can't figure out which peptides to use\n") 
     unless(defined($subset_id));
   
-  $self->{'pepSubset'} = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || throw( "Cannot SubsetAdaptor->fetch_by_dbID($subset_id))" ); 
+  $self->{'pepSubset'} = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || $self->throw( "Cannot SubsetAdaptor->fetch_by_dbID($subset_id))" ); 
 
   unless($self->{'reference_name'}) {
     $self->{'reference_name'} = $self->{'pepSubset'}->description;
@@ -193,7 +193,7 @@ sub createSubmitPepAnalysis {
   my $subset  = shift;
 
   if (!UNIVERSAL::isa($subset, "Bio::EnsEMBL::Compara::Subset")) {
-    throw("Calling createSubmitPepAnalysis without a proper subset [$subset]");
+    $self->throw("Calling createSubmitPepAnalysis without a proper subset [$subset]");
   }
   
   print("\ncreateSubmitPepAnalysis\n");

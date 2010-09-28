@@ -81,7 +81,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->{'infernal_starttime'} = time()*1000;
   $self->{'method'} = 'Infernal';
@@ -211,7 +211,7 @@ sub dump_sequences_to_workdir {
   $self->{'tag_gene_count'} = scalar(@{$member_list});
 
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write!");
+    or $self->throw("Error opening $fastafile for write!");
   my $count = 0;
   foreach my $member (@{$member_list}) {
     my $sequence_id;
@@ -283,14 +283,14 @@ sub run_infernal {
       print "Using default cmalign executable!\n";
       $infernal_executable = "/nfs/users/nfs_a/avilella/src/infernal/infernal-1.0/src/cmalign";
   }
-  throw("can't find a cmalign executable to run\n") unless(-e $infernal_executable);
+  $self->throw("can't find a cmalign executable to run\n") unless(-e $infernal_executable);
 
   if (1 < scalar keys %{$self->{model_id_hash}}) {
     # We revert to the clustering_id tag, which maps to the RFAM
     # 'name' field in nc_profile (e.g. 'mir-135' instead of 'RF00246')
     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->{model_id_hash}}), "\n";
     $self->{model_id} = $self->{nc_tree}->get_tagvalue('clustering_id');
-    # throw("This cluster has more than one associated model");
+    # $self->throw("This cluster has more than one associated model");
   } else {
     my @models = keys %{$self->{model_id_hash}};
     $self->{model_id} = $models[0];
@@ -317,7 +317,7 @@ sub run_infernal {
   print("$cmd\n") if($self->debug);
   $DB::single=1;1;
   unless(system($cmd) == 0) {
-    throw("error running infernal, $!\n");
+    $self->throw("error running infernal, $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
@@ -349,7 +349,7 @@ sub run_infernal {
   print("$cmd\n") if($self->debug);
   $DB::single=1;1;
   unless(system($cmd) == 0) {
-    throw("error running cmbuild refine, $!\n");
+    $self->throw("error running cmbuild refine, $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
@@ -359,7 +359,7 @@ sub run_infernal {
   my $cmd = "/usr/local/ensembl/bin/sreformat a2m $refined_stk_output > $fasta_output";
   unless( system("$cmd") == 0) {
     print("$cmd\n");
-    throw("error running sreformat, $!\n");
+    $self->throw("error running sreformat, $!\n");
   }
 
   $self->{infernal_output} = $fasta_output;
@@ -403,13 +403,13 @@ sub parse_and_store_alignment_into_tree
   #
 
   my $stk_output = $self->{stk_output};
-  open (STKFILE, $stk_output) or throw("Couldnt open STK file [$stk_output]");
+  open (STKFILE, $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
   my $ss_cons_string = '';
   while(<STKFILE>) {
     next unless ($_ =~ /SS_cons/);
     my $line = $_;
     $line =~ /\#=GC\s+SS_cons\s+(\S+)\n/;
-    throw("Malformed SS_cons line") unless (defined($1));
+    $self->throw("Malformed SS_cons line") unless (defined($1));
     $ss_cons_string .= $1;
   }
   close(STKFILE);
@@ -441,7 +441,7 @@ sub parse_and_store_alignment_into_tree
       $alignment_length = length($alignment_string);
     } else {
       if ($alignment_length != length($alignment_string)) {
-        throw("While parsing the alignment, some id did not return the expected alignment length\n");
+        $self->throw("While parsing the alignment, some id did not return the expected alignment length\n");
       }
     }
 
@@ -485,7 +485,7 @@ sub parse_and_store_alignment_into_tree
   #
   foreach my $member (@{$tree->get_all_leaves}) {
     if ($align_hash{$member->sequence_id} eq "") {
-      throw("infernal produced an empty cigar_line for ".$member->stable_id."\n");
+      $self->throw("infernal produced an empty cigar_line for ".$member->stable_id."\n");
     }
     $DB::single=1;1;
     $member->cigar_line($align_hash{$member->sequence_id});
@@ -494,7 +494,7 @@ sub parse_and_store_alignment_into_tree
     my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
     my $member_sequence = $member->sequence; $member_sequence =~ s/\*//g;
     if ($seq_cigar_length != length($member_sequence)) {
-      throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+      $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
     }
     #
     printf("update nc_tree_member %s : %s\n",$member->stable_id, $member->cigar_line) if($self->debug);

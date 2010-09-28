@@ -56,7 +56,7 @@ sub strict_hash_format { # allow this Runnable to parse parameters in its own wa
 sub fetch_input {
   my( $self) = @_;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   $self->{mlssDBA} = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 

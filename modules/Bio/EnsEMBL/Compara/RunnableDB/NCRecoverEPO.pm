@@ -253,7 +253,7 @@ sub run_ncrecoverepo {
           my $ga_gdb = $genomic_align->genome_db;
           next if ($ga_gdb->dbID == $leaf->genome_db_id);
           my $core_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($ga_gdb->name, "core");
-          throw("Cannot access core db") unless(defined($core_adaptor));
+          $self->throw("Cannot access core db") unless(defined($core_adaptor));
           $core_adaptor->dbc->disconnect_when_inactive(0);
           $genomic_align->dnafrag->genome_db->db_adaptor($core_adaptor);
           my $other_slice = $genomic_align->get_Slice;
@@ -391,7 +391,7 @@ sub run_low_coverage_best_in_alignment {
     next unless (defined($self->{low_cov_gdbs}{$leaf->genome_db_id}));
     next unless (defined($self->{epo_low_cov_gdbs}{$leaf->genome_db_id}));
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
-    throw("Unable to fetch slice for this genome_db leaf: $gdb_name") unless (defined($slice));
+    $self->throw("Unable to fetch slice for this genome_db leaf: $gdb_name") unless (defined($slice));
     $self->{low_cov_slice_seqs}{$leaf->genome_db_id}{$leaf->member_id} = $slice;
     my $low_cov_genomic_align_blocks = $self->{gabDBA_epo}->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {

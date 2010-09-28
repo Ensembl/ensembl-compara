@@ -190,7 +190,7 @@ sub run_bootstrap_raxml {
       print "Using default cmalign executable!\n";
       $raxml_executable = "/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3";
   }
-  throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
+  $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
   my $bootstrap_num = 10;
   my $root_id = $self->{nc_tree}->node_id;
@@ -221,7 +221,7 @@ sub run_bootstrap_raxml {
   my $bootstrap_starttime = time()*1000;
   #  $DB::single=1;1;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    throw("error running raxml, $!\n");
+    $self->throw("error running raxml, $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
@@ -262,7 +262,7 @@ sub run_ncsecstructtree {
       print "Using default cmalign executable!\n";
       $raxml_executable = "/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3";
   }
-  throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
+  $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
   my $root_id = $self->{nc_tree}->node_id;
   foreach my $model ( qw(S16B S16A S7B S7C S6A S6B S6C S6D S6E S7A S7D S7E S7F S16) ) {
@@ -295,7 +295,7 @@ sub run_ncsecstructtree {
 
     my $starttime = time()*1000;
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
-      throw("error running raxml, $!\n");
+      $self->throw("error running raxml, $!\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0);
     my $runtime_msec = int(time()*1000-$starttime);
@@ -340,7 +340,7 @@ sub dumpMultipleAlignmentStructToWorkdir
   }
 
   open(OUTSEQ, ">$aln_file")
-    or throw("Error opening $aln_file for write");
+    or $self->throw("Error opening $aln_file for write");
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
@@ -382,7 +382,7 @@ sub dumpMultipleAlignmentStructToWorkdir
     # No struct file
   } else {
     open(STRUCT, ">$struct_file")
-      or throw("Error opening $struct_file for write");
+      or $self->throw("Error opening $struct_file for write");
     print STRUCT "$struct_string\n";
     close STRUCT;
   }
@@ -398,7 +398,7 @@ sub store_newick_into_protein_tree_tag_string {
 
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Couldnt open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
   while(<FH>) {
     chomp $_;
     $newick .= $_;

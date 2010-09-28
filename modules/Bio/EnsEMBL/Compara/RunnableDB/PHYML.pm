@@ -94,10 +94,10 @@ sub fetch_input {
 #  if($self->input_job->retry_count >= 3) {
 #    $self->dataflow_output_id($self->input_id, 2);
 #    $self->input_job->update_status('FAILED');
-#    throw("PHYML job failed >3 times: try something else and FAIL it");
+#    $self->throw("PHYML job failed >3 times: try something else and FAIL it");
 #  }
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -108,14 +108,14 @@ sub fetch_input {
   $self->print_params if($self->debug);
 
   unless($self->{'protein_tree'}) {
-    throw("undefined ProteinTree as input\n");
+    $self->throw("undefined ProteinTree as input\n");
   }
   if ($self->{'protein_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'}) {
     $self->dataflow_output_id($self->input_id, 2);
     $self->{'protein_tree'}->release_tree;
     $self->{'protein_tree'} = undef;
     $self->input_job->transient_error(0);
-    throw("PHYML : cluster size over threshold and FAIL it");
+    $self->throw("PHYML : cluster size over threshold and FAIL it");
   }
   
   return 1;
@@ -236,7 +236,7 @@ sub run_phyml
     $phyml_executable = "/usr/local/ensembl/bin/phyml";
   }
 
-  throw("can't find a phyml executable to run\n") unless(-e $phyml_executable);
+  $self->throw("can't find a phyml executable to run\n") unless(-e $phyml_executable);
 
   #./phyml seqs2 1 i 1 0 JTT 0.0 4 1.0 BIONJ n n 
   my $cmd = $phyml_executable;
@@ -253,7 +253,7 @@ sub run_phyml
   unless(system($cmd) == 0) {
     print("$cmd\n");
     $self->check_job_fail_options;
-    throw("error running phyml, $!\n");
+    $self->throw("error running phyml, $!\n");
   }
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(0);
   
@@ -279,7 +279,7 @@ sub check_job_fail_options
       $self->{'protein_tree'} = undef;
     }
     $self->input_job->transient_error(0);
-    throw("PHYML job failed >=3 times: try something else and FAIL it");
+    $self->throw("PHYML job failed >=3 times: try something else and FAIL it");
   }
 }
 
@@ -312,7 +312,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   }
 
   open(OUTSEQ, ">$clw_file")
-    or throw("Error opening $clw_file for write");
+    or $self->throw("Error opening $clw_file for write");
 
   my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', -cdna=>$self->{'cdna'}, -stop2x => 1);
   
@@ -374,7 +374,7 @@ sub parse_newick_into_proteintree
   #parse newick into a new tree object structure
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
-  open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Could not open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
   my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
@@ -405,7 +405,7 @@ sub parse_newick_into_proteintree
   # minimize_tree/minimize_node might not work properly
   foreach my $leaf (@{$self->{'protein_tree'}->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
-      throw("Phyml tree does not have all leaves as AlignedMember\n");
+      $self->throw("Phyml tree does not have all leaves as AlignedMember\n");
     }
   }
 

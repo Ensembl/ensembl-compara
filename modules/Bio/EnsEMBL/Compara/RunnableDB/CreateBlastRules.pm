@@ -61,9 +61,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my $self = shift;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
   print("input_id = ".$self->input_id."\n");
-  throw("Improper formated input_id") unless ($self->input_id =~ /\s*\{/);
+  $self->throw("Improper formated input_id") unless ($self->input_id =~ /\s*\{/);
 
   $self->{'selfBlast'} = 1;
   $self->{'phylumBlast'} = 0;
@@ -83,7 +83,7 @@ sub fetch_input {
 
   if (defined $self->{'cr_analysis_logic_name'}) {
     $self->{'cr_analysis'} = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'cr_analysis_logic_name'});
-    throw($self->{'cr_analysis_logic_name'} . " analysis is missing, can't proceed\n")
+    $self->throw($self->{'cr_analysis_logic_name'} . " analysis is missing, can't proceed\n")
       unless(defined($self->{'cr_analysis'}));
 
   }

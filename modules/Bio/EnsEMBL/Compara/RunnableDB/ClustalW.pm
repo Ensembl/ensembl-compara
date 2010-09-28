@@ -87,7 +87,7 @@ sub fetch_input {
   $self->{'parse_output'} = 1;
   $self->{'mpi'} = undef;
 
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -114,7 +114,7 @@ sub fetch_input {
   }
   
   unless($self->{'family'} or $self->{'protein_tree'}) {
-    throw("no defined family to gene_tree to process");
+    $self->throw("no defined family to gene_tree to process");
   }
 
 
@@ -230,7 +230,7 @@ sub run_clustalw
   my $self = shift;
 
   my $clustalw_executable = $self->analysis->program_file;
-  throw("can't find a clustalw executable to run\n") 
+  $self->throw("can't find a clustalw executable to run\n") 
      unless($clustalw_executable and (-e $clustalw_executable));
 
   $self->{'comparaDBA'}->dbc->disconnect_when_inactive(1);
@@ -251,7 +251,7 @@ sub run_clustalw
       $align_cmd .= $clustalw_executable . " " . $self->{'input_fasta'} . " ". $job_url;
       print("$align_cmd\n") if($self->debug);
       unless(system($align_cmd) == 0) {
-        throw("error running clustalw, $!\n");
+        $self->throw("error running clustalw, $!\n");
       }
     } else {
       my $align_cmd = $clustalw_executable;
@@ -259,7 +259,7 @@ sub run_clustalw
       print("$align_cmd\n") if($self->debug);
       $align_cmd .= " 2>&1 > /dev/null" unless($self->debug);
       unless(system($align_cmd) == 0) {
-        throw("error running clustalw, $!\n");
+        $self->throw("error running clustalw, $!\n");
       }
     }
   }
@@ -270,7 +270,7 @@ sub run_clustalw
     print("$tree_cmd\n") if($self->debug);
     $tree_cmd .= " 2>&1 > /dev/null" unless($self->debug);
     unless(system($tree_cmd) == 0) {
-      throw("error running clustalw, $!\n");
+      $self->throw("error running clustalw, $!\n");
     }
     $self->{'newick_file'} = $self->{'file_root'} . ".ph";
   }
@@ -315,7 +315,7 @@ sub dumpFamilyPeptidesToWorkdir
   
   
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write");
+    or $self->throw("Error opening $fastafile for write");
 
   foreach my $member_attribute (@members_attributes) {
     my ($member,$attribute) = @{$member_attribute};
@@ -428,7 +428,7 @@ sub dumpTreePeptidesToWorkdir
   return $fastafile if(-e $fastafile);
 
   open(OUTSEQ, ">$fastafile")
-    or throw("Error opening $fastafile for write");
+    or $self->throw("Error opening $fastafile for write");
 
   my $seq_id_hash = {};
   my $member_list = $tree->get_all_leaves;  
@@ -461,7 +461,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   print("clw_file = '$clw_file'\n") if($self->debug);
 
   open(OUTSEQ, ">$clw_file")
-    or throw("Error opening $clw_file for write");
+    or $self->throw("Error opening $clw_file for write");
 
 
   my $seq_id_hash = {};
@@ -518,7 +518,7 @@ sub parse_alignment_into_proteintree
   #
   my %align_hash;
   my $FH = IO::File->new();
-  $FH->open($clustalw_output) || throw("Could not open alignment file [$clustalw_output]");
+  $FH->open($clustalw_output) || $self->throw("Could not open alignment file [$clustalw_output]");
 
   <$FH>; #skip header
   while(<$FH>) {
@@ -586,7 +586,7 @@ sub parse_newick_into_proteintree
 
   #parse newick into a new tree object structure
   my $newick = '';
-  open (FH, $newick_file) or throw("Could not open newick file [$newick_file]");
+  open (FH, $newick_file) or $self->throw("Could not open newick file [$newick_file]");
   while(<FH>) { $newick .= $_;  }
   close(FH);
   my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);

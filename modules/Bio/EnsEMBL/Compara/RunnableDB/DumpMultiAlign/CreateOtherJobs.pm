@@ -72,7 +72,7 @@ sub write_output {
 	#If define compara_url, must also define core_url(s)
 	Bio::EnsEMBL::Registry->load_registry_from_url($self->param('compara_url'));
 	if (!defined($self->param('core_url'))) {
-	    throw("Must define core_url if define compara_url");
+	    $self->throw("Must define core_url if define compara_url");
 	}
 	my @core_urls = split ",", $self->param('core_url');
 

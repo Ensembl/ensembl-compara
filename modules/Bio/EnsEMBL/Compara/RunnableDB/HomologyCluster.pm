@@ -66,7 +66,7 @@ sub fetch_input {
   my( $self) = @_;
 
   $self->{'species_set'} = undef;
-  throw("No input_id") unless defined($self->input_id);
+  $self->throw("No input_id") unless defined($self->input_id);
 
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with the pipeline DBAdaptor that is based into this runnable
@@ -306,7 +306,7 @@ sub build_cluster_around_gene_stable_id {
   my $MA = $self->{'comparaDBA'}->get_MemberAdaptor;
   my $gene_member = $MA->fetch_by_source_stable_id("ENSEMBLGENE", $gene_stable_id);
 
-  throw("couldn't find gene member $gene_stable_id") unless($gene_member);
+  $self->throw("couldn't find gene member $gene_stable_id") unless($gene_member);
   
   my $start = time();
   my $ortho_set = {};
