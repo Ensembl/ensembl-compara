@@ -44,8 +44,8 @@ sub content {
     _apache_handle => undef,
     _core_objects  => $core_objects,
     _databases     => $db_connection,
-    _parent        => undef
-    });
+    _referer       => undef
+  });
 
 #  warn "GS: $gene_s
   my $newObj = new EnsEMBL::Web::Proxy::Object('Gene', $gene_s, $factory->__data);

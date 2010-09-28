@@ -65,6 +65,7 @@ sub new {
     format           => $format || $defaults->{'doc_type'},
     head_order       => [],
     body_order       => [],
+    elements         => {},
     %$data,
     document_types   => $document_types
   };
@@ -78,6 +79,8 @@ sub new {
 sub head_order     :lvalue { $_[0]{'head_order'}           }
 sub body_order     :lvalue { $_[0]{'body_order'}           }
 sub renderer       :lvalue { $_[0]{'renderer'}             }
+sub hub                    { return $_[0]->{'hub'};      }
+sub elements               { return $_[0]->{'elements'}; }
 sub species_defs           { return $_[0]{'species_defs'}; }
 sub printf                 { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print                  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
@@ -244,18 +247,19 @@ sub _init {
       next;
     }
     
-    $self->{$element} = $doc_module;
+    $self->{'elements'}->{$element} = $doc_module;
     
     no strict 'refs';
     my $method_name = ref($self) . "::$element";
-    *$method_name = sub :lvalue { $_[0]->{$element} }; # Make the element name into function call on Document::Page.
+    *$method_name = sub :lvalue { $_[0]->{'elements'}->{$element} }; # Make the element name into function call on Document::Page.
   }
 }
 
 sub initialize {
   my $self = shift;
-  my $method = '_initialize_' . ($self->{'format'});
+  my $method = '_initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('_initialize_error') ? 'error' : $self->{'format'});
   $self->$method;
+  $self->_init;
 }
 
 sub clear_body_attr {
@@ -265,7 +269,7 @@ sub clear_body_attr {
 
 sub add_body_attr {
   my ($self, $key, $value) = @_;
-  $self->{'body_attr'}{lc $key} .= $value;
+  $self->{'body_attr'}{lc $key} .= ($self->{'body_attr'}{lc $key} ? ' ' : '') . encode_entities($value);
 }
 
 sub include_navigation {
@@ -276,177 +280,16 @@ sub include_navigation {
 
 sub render {
   my $self = shift;
-  my $format = $self->{'format'};
-  my $r = $self->renderer->{'r'};
-  
-  if ($format eq 'Text') { 
-    $r->content_type('text/plain'); 
-    $self->render_Text;
-  } elsif ($format eq 'DAS') { 
-    $self->{'subtype'} = $self->{'subtype'};
-    $r->content_type('text/xml');
-    $self->render_DAS;
-  } elsif ($format eq 'XML') { 
-    $r->content_type('text/xml');
-    $self->render_XML;
-  } elsif ($format eq 'Excel') { 
-    $r->content_type('application/x-msexcel');
-    $r->headers_out->add('Content-Disposition' => 'attachment; filename=ensembl.xls');
-    $self->render_Excel;
-  } elsif ($format eq 'TextGz') { 
-    $r->content_type('application/octet-stream');
-    $r->headers_out->add('Content-Disposition' => 'attachment; filename=ensembl.txt.gz');
-    $self->render_TextGz;
-  } else {
-    $r->content_type('text/html; charset=utf-8');
-    $self->render_HTML(@_);
-  }
+  my $func = $self->can("render_$self->{'format'}") ? "render_$self->{'format'}" : 'render_HTML';
+  return $self->$func(@_);
 }
 
 sub render_start { shift->render_HTML('start'); }
 sub render_end   { shift->render_HTML('end');   }
 
-sub _render_head_and_body_tag {
-  my $self = shift;
-  
-  $self->print(qq{<?xml version="1.0" encoding="utf-8"?>\n}) if $self->{'doc_type'} eq 'XHTML';  
-  $self->print($self->doc_type, $self->html_tag, "<head>\n");
-  
-  $self->{'body_attr'}->{'class'} .= ' no_tabs' unless $self->can('global_context') && scalar @{$self->global_context->entries};
-  $self->{'body_attr'}->{'class'} .= ' mac' if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
-  
-  foreach my $element (@{$self->{'head_order'}}) {
-    my $attr = $element->[0];
-    $self->$attr->render;
-    $self->timer_push("Rendered $attr");
-  }
-  
-  $self->print("</head>\n<body");
-  
-  foreach (keys %{$self->{'body_attr'}}) {
-    next unless $self->{'body_attr'}{$_};
-    $self->printf(' %s="%s"', $_ , encode_entities($self->{'body_attr'}{$_}));
-  }
-  
-  $self->print('>');
-}
-
-sub render_HTML {
-  ### Main page printing function
-  
-  my $self = shift;
-  my $flag = shift;
-  
-  # If this is an AJAX request then we will not render the page wrapper
-  if ($self->renderer->{'_modal_dialog_'}) {
-    my %json = map %{$self->$_->get_json}, qw(global_context local_context content);
-    $self->print($self->jsonify(\%json));
-    return;
-  } elsif ($self->renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
-    $self->content->render; # Render content only for components
-    return;
-  }
-  
-  # This is a full page
-  
-  my $html;
-  my $footer_id = 'wide-footer';
-  
-  if ($flag ne 'end') {
-    my $nav;
-    
-    if ($self->include_navigation) {
-      $nav = '
-      <div id="nav" class="print_hide js_panel">
-        [[local_context]]
-        [[local_tools]]
-        [[acknowledgements]]
-        <p class="invisible">.</p>
-      </div>';
-      
-      $footer_id = 'footer';
-    }
-    
-    $self->_render_head_and_body_tag;
-    
-    $html .= qq{
-  <div id="min_width_container">
-  <div id="min_width_holder">
-    <div id="masthead" class="js_panel">
-      <input type="hidden" class="panel_type" value="Masthead" />
-      <div class="content">
-        <div class="mh print_hide">
-          <span class="logo_holder">[[logo]]</span>
-          <div class="tools_holder">[[tools]]</div>
-          <div class="search_holder print_hide">[[search_box]]</div>
-        </div>
-        [[breadcrumbs]]
-        <div class="tabs_holder print_hide">[[global_context]]</div>
-      </div>
-    </div>
-    <div class="invisible"></div>
-    <div id="main_holder">
-      $nav
-      <div id="main">
-        <!-- Start of real content --> 
-    };
-  }
-  
-  $html .= '[[message]]';
-  $html .= '[[content]]' unless $flag;
-      
-  if ($flag ne 'start') {
-    my $species_path     = $self->species_defs->species_path;
-    my $core_params      = $self->{'hub'} ? $self->{'hub'}->core_params : {};
-    my $core_params_html = join '', map qq{<input type="hidden" name="$_" value="$core_params->{$_}" />}, keys %$core_params;
-    
-    $html .= qq{
-        <!-- End of real content -->
-      </div>
-      <div id="$footer_id">[[copyright]][[footerlinks]]</div>
-    </div>
-    <form id="core_params" action="#" style="display:none">
-      <fieldset>$core_params_html</fieldset>
-    </form>
-    <input type="hidden" id="species_path" name="species_path" value="$species_path" />
-    [[body_javascript]]
-    };
-  }
-  
-  $html .= '[[modal_context]]';
-  
-  if ($self->can('panel_type') && $self->panel_type) {
-    $html = sprintf('
-      <div class="js_panel">
-        %s
-        %s
-      </div>',
-      $self->panel_type,
-      $html
-    );
-  }
-  
-  $self->timer_push('template generated');
-  
-  while ($html =~ s/(.*?)\[\[([\w:]+)\]\]//sm) {
-    my ($start, $page_element) = ($1, $2);
-    
-    $self->print($start);
-    
-    eval { 
-      $self->$page_element->render if $self->can($page_element); 
-    };
-    
-    $self->printf('%s - %s', $page_element, $@) if $@;
-  }
-  
-  $self->print($html);
-  $self->print("\n</div>\n</div>\n</body>\n</html>") unless $flag eq 'start';
-}
-
 sub render_DAS {
   my $self = shift;
-  my $r = $self->renderer->{'r'};
+  my $r    = $self->renderer->r;
   
   $self->{'subtype'} = 'das'; # Possibly should come from somewhere higher up 
   
@@ -456,108 +299,151 @@ sub render_DAS {
   }
   
   $self->{'xsl'} = "/das/$self->{'subtype'}.xsl" if $self->{'subtype'};
-  $self->render_XML;
+  $self->render_XML(@_);
 }
 
 sub render_XML {
-  my $self = shift;
-
-  $self->print(qq{<?xml version="1.0" standalone="no"?>\n});
-  $self->print(qq{<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n}) if $self->{'xsl'};
-  $self->print($self->doc_type);
-  $self->print("\<$self->{'doc_type_version'}\>\n");
-
-  foreach my $element (@{$self->{'body_order'}}) {
-    my $attr = $element->[0];
-    $self->$attr->render;
-  }
+  my $self     = shift;
+  my $content .= qq{<?xml version="1.0" standalone="no"?>\n};
+  $content    .= qq{<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n} if $self->{'xsl'};
+  $content    .= $self->doc_type;
+  $content    .= "\<$self->{'doc_type_version'}\>\n";
+  $content    .= shift->{'content'};
+  $content    .= "\<\/$self->{'doc_type_version'}\>\n";
   
-  $self->print("\<\/$self->{'doc_type_version'}\>\n");
-
+  $self->renderer->r->content_type('text/xml');
+  
+  print $content;
 }
 
 sub render_Excel {
   my $self = shift;
+  
+  # Switch in the Excel file renderer.
+  # Requires the filehandle from the current renderer (works with Renderer::Apache and Renderer::File)
+  my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($self->renderer->fh, r => $self->renderer->r);
 
-  # Switch in the Excel file renderer
-  # requires the filehandle from the current renderer (works with Renderer::Apache and Renderer::File)
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($self->renderer->fh);
-  
-  foreach my $element (@{$self->{'body_order'}}) {
-    my $attr = $element->[0];
-    $self->$attr->{'_renderer'} = $renderer;
-    $self->$attr->render;
-  }
-  
+  $renderer->print(shift->{'content'});
   $renderer->close;
 }
 
 sub render_Text {
   my $self = shift;
-  
-  foreach my $element (@{$self->{'body_order'}}) {
-    my $attr = $element->[0];
-    $self->$attr->render;
-  }
+  $self->renderer->r->content_type('text/plain');
+  print shift->{'content'};
 }
 
 sub render_TextGz {
-  my $self = shift;
-  
+  my $self     = shift;
+  my $content  = shift->{'content'};
   my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
- 
-  foreach my $element (@{$self->{'body_order'}}) {
-    my $attr = $element->[0];
-    $self->$attr->{'_renderer'} = $renderer;
-    $self->$attr->render;
-  }
   
+  $renderer->print($content);
   $renderer->close;
-  $self->renderer->print($renderer->raw_content);
   
+  print $renderer->raw_content;
   unlink $renderer->{'filename'};
 }
 
-sub add_error_panels { 
-  my ($self, $problems) = @_;
+sub render_HTML {
+  my ($self, $elements) = @_;
+  my $renderer = $self->renderer;
+  my $r        = $renderer->r;
+  my $content;
   
-  if (scalar @$problems) {
-    $self->{'format'} = 'HTML';
-    $self->set_doc_type('HTML', '4.01 Trans');
+  # If this is an AJAX request then we will not render the page wrapper
+  if ($renderer->{'_modal_dialog_'}) {
+    my %json = map %{$elements->{$_}}, keys %$elements;
+    $content = $self->jsonify(\%json);
+  } elsif ($renderer->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
+    $content = $elements->{'content'}; # Render content only for components
+  } else {
+    $content = $self->html_template($elements);
   }
   
-  foreach my $problem (sort { $b->isFatal <=> $a->isFatal } @$problems) {
-    next if $problem->isRedirect;
-    next if !$problem->isFatal && $self->{'show_fatal_only'};
-    
-    my $desc = $problem->description;
-    
-    $desc = "<p>$desc</p>" unless $desc =~ /<p/;
-    
-    my @eg; # Find an example for the page
-    my $view = uc $ENV{'ENSEMBL_SCRIPT'};
-    my $ini_examples = $self->species_defs->SEARCH_LINKS;
+  $r->content_type('text/html; charset=utf-8') unless $r->content_type;
+  
+  print  $content;
+  return $content;
+}
 
-    foreach (map { $_ =~/^$view(\d)_TEXT/ ? [$1, $_] : () } keys %$ini_examples) {
-      my $url = $ini_examples->{"$view$_->[0]_URL"};
-      
-      push @eg, qq{ <a href="$url">$ini_examples->{$_->[1]}</a>};
-    }
-
-    my $eg_html = join ', ', @eg;
-    $eg_html = '<p>Try an example: $eg_html or use the search box.</p>' if $eg_html;
-
-    $self->content->add_panel(
-      new EnsEMBL::Web::Document::Panel(
-        'caption' => $problem->name,
-        'content' => qq{
-          $desc
-          $eg_html
-          <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.</p>
-        }
-      )
-    );
+sub html_template {
+  ### Main page printing function
+  
+  my ($self, $elements) = @_;
+  
+  $self->set_doc_type('XHTML',  '1.0 Trans');
+  $self->add_body_attr('id',    'ensembl-webpage');
+  $self->add_body_attr('class', 'mac')     if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
+  $self->add_body_attr('class', 'no_tabs') unless $elements->{'global_context'};
+  
+  my $species_path        = $self->species_defs->species_path;
+  my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
+  my $core_params         = $self->hub ? $self->hub->core_params : {};
+  my $core_params_html    = join '', map qq{<input type="hidden" name="$_" value="$core_params->{$_}" />}, keys %$core_params;
+  my $html_tag            = join '', $self->doc_type, $self->html_tag;
+  my $head                = join "\n", map $elements->{$_->[0]} || (), @{$self->head_order};  
+  my $body_attrs          = join ' ', map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
+  my $footer_id           = 'wide-footer';
+  my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
+  my $main_holder         = $panel_type ? qq{<div id="main_holder" class="js_panel">$panel_type} : '<div id="main_holder">';
+  my $nav;
+  
+  if ($self->include_navigation) {
+    $nav = qq{<div id="nav" class="print_hide js_panel">
+          $elements->{'local_context'}
+          $elements->{'local_tools'}
+          $elements->{'acknowledgements'}
+          <p class="invisible">.</p>
+        </div>
+    };
+    
+    $footer_id = 'footer';
   }
+  
+  $html_tag = qq{<?xml version="1.0" encoding="utf-8"?>\n$html_tag} if $self->{'doc_type'} eq 'XHTML';
+  
+  return qq{
+$html_tag
+<head>
+  $head
+</head>
+<body $body_attrs>
+  <div id="min_width_container">
+    <div id="min_width_holder">
+      <div id="masthead" class="js_panel">
+        <input type="hidden" class="panel_type" value="Masthead" />
+        <div class="content">
+          <div class="mh print_hide">
+            <span class="logo_holder">$elements->{'logo'}</span>
+            <div class="tools_holder">$elements->{'tools'}</div>
+            <div class="search_holder print_hide">$elements->{'search_box'}</div>
+          </div>
+          $elements->{'breadcrumbs'}
+          <div class="tabs_holder print_hide">$elements->{'global_context'}</div>
+        </div>
+      </div>
+      <div class="invisible"></div>
+      $main_holder
+        $nav
+        <div id="main">
+          $elements->{'message'}
+          $elements->{'content'}
+        </div>
+        <div id="$footer_id">$elements->{'copyright'}$elements->{'footerlinks'}</div>
+      </div>
+    </div>
+  </div>
+  <form id="core_params" action="#" style="display:none">
+    <fieldset>$core_params_html</fieldset>
+  </form>
+  <input type="hidden" id="species_path" name="species_path" value="$species_path" />
+  <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
+  $elements->{'modal_context'}
+  $elements->{'body_javascript'}
+</body>
+</html>
+};
 }
 
 1;

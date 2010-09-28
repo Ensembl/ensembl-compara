@@ -1,92 +1,72 @@
-=head1 NAME
-
-EnsEMBL::Web::Component::DAS
-
-=head1 SYNOPSIS
-
-Show information about the webserver
-
-=head1 DESCRIPTION
-
-A series of functions used to render server information
-
-=head1 CONTACT
-
-Contact the EnsEMBL development mailing list for info <ensembl-dev@ebi.ac.uk>
-
-=head1 AUTHOR
-
-Eugene Kulesha, ek3@sanger.ac.uk
-
-=cut
+# $Id$
 
 package EnsEMBL::Web::Component::DAS;
 
 use strict;
-use warnings;
 
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component);
 
 sub types {
-  my( $panel, $model ) = @_;
-  my $object = $model->object;
-
-  my $features = $object->Types();
-
+  my $self     = shift;
+  my $object   = $self->object;
+  my $features = $object->Types;
+  my $url      = $object->species_defs->ENSEMBL_BASE_URL . encode_entities($ENV{'REQUEST_URI'});
   my $template = qq{<TYPE id="%s"%s%s>%s</TYPE>\n};
-  (my $url = lc($ENV{SERVER_PROTOCOL})) =~ s/\/.+//;
-  $url .= "://$ENV{SERVER_NAME}";
-#    $url .= "\:$ENV{SERVER_PORT}" unless $ENV{SERVER_PORT} == 80;
-  $url .="$ENV{REQUEST_URI}";
-
-  $panel->printf( qq(\n<GFF href=\"%s\" version=\"1.0\">), encode_entities($url));
+  my $xml      = qq{<GFF href="$url" version="1.0">};
 
   foreach my $segment (@{$features || []}) {
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
       if ($segment->{'START'} && $segment->{'END'}) {
-        $panel->printf( qq(\n<ERRORSEGMENT id="%s" start="%s" stop="%s" />),
-          $segment->{'REGION'}, $segment->{'START'}, $segment->{'STOP'} );
+        $xml .= qq{\n<ERRORSEGMENT id="$segment->{'REGION'}" start="$segment->{'START'}" stop="$segment->{'STOP'}" />};
+      } else {
+        $xml .= qq{\n<ERRORSEGMENT id="$segment->{'REGION'}" />};
       }
-      else {
-        $panel->printf( qq(\n<ERRORSEGMENT id="%s" />), $segment->{'REGION'} );
-      }
+      
       next;
     }
+    
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'UNKNOWN') {
       if ($segment->{'START'} && $segment->{'END'}) {
-        $panel->printf( qq(\n<UNKNOWNSEGMENT id="%s" start="%s" stop="%s" />),
-          $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' );
+        $xml .= qq{\n<UNKNOWNSEGMENT id="$segment->{'REGION'}" start="$segment->{'START'}" stop="$segment->{'STOP'}" />};
+      } else {
+        $xml .= qq{\n<UNKNOWNSEGMENT id="$segment->{'REGION'}" />};
       }
-      else {
-        $panel->printf( qq(\n<UNKNOWNSEGMENT id="%s" />), $segment->{'REGION'} );
-      }
+      
       next;
     }
-    if( $segment->{'REGION'} ) { 
-      $panel->printf( qq(\n<SEGMENT id="%s" start="%s" stop="%s"%s>),
-        $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '',
-        $segment->{'TYPE'} ? qq( type="$segment->{'TYPE'}") : '' );
+    
+    if ($segment->{'REGION'}) { 
+      $xml .= sprintf qq{\n<SEGMENT id="$segment->{'REGION'}" start="$segment->{'START'}" stop="$segment->{'STOP'}"%s>}, $segment->{'TYPE'} ? qq{ type="$segment->{'TYPE'}"} : '';
     } else {
-      $panel->print( qq(\n<SEGMENT>) );
+      $xml .= "\n<SEGMENT>";
     }
-    foreach my $feature (@{$segment->{'FEATURES'}||[]}) {
+    
+    foreach my $feature (@{$segment->{'FEATURES'} || []}) {
       my $extra = '';
-      $extra .= qq( method="$feature->{'method'}")     if exists $feature->{'method'};
-      $extra .= qq( category="$feature->{'category'}") if exists $feature->{'category'};
-      $panel->printf( qq(\n  <TYPE id="%s"%s>%s</TYPE>), $feature->{'id'}, $extra, $feature->{'text'});
+      $extra   .= qq{ method="$feature->{'method'}"}     if exists $feature->{'method'};
+      $extra   .= qq{ category="$feature->{'category'}"} if exists $feature->{'category'};
+      
+      $xml .= qq{\n  <TYPE id="$feature->{'id'}"$extra>$feature->{'text'}</TYPE>};
     }
-    $panel->print( qq(\n</SEGMENT>) );
+    
+    $xml .= "\n</SEGMENT>";
   }
-  $panel->print( qq(\n</GFF>\n) );
+  
+  $xml .= "\n</GFF>\n";
+  
+  return $xml;
 }
 
 sub features {
-  my( $panel, $model ) = @_;
-  my $object = $model->object;
-
-  my $feature_template = qq(
+  my $self     = shift;
+  my $object   = $self->object;
+  my $features = $object->Features;
+  my $url      = $object->species_defs->ENSEMBL_BASE_URL . encode_entities($ENV{'REQUEST_URI'});
+  my $xml      = qq{<GFF href="$url" version="1.0">};
+  
+  my $feature_template = qq{
   <FEATURE id="%s"%s>
     <START>%d</START>
     <END>%d</END>
@@ -94,78 +74,62 @@ sub features {
     <METHOD id="%s">%s</METHOD>
     <SCORE>%s</SCORE>
     <ORIENTATION>%s</ORIENTATION>%s
-  </FEATURE>);
-
-  my $features = $object->Features();
-  my $url = $object->species_defs->ENSEMBL_BASE_URL. encode_entities($ENV{REQUEST_URI});
-  $panel->print(qq{<GFF version="1.01" href="$url">});
+  </FEATURE>};
+  
   foreach my $segment (@{$features || []}) {
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'ERROR') {
-      $panel->printf( qq(\n<ERRORSEGMENT id="%s" start="%s" stop="%s" />),
-        $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' );
+      $xml .= qq{\n<ERRORSEGMENT id="$segment->{'REGION'}" start="$segment->{'START'}" stop="$segment->{'STOP'}" />};
       next;
     }
+    
     if ($segment->{'TYPE'} && $segment->{'TYPE'} eq 'UNKNOWN') {
-      $panel->printf( qq(\n<UNKNOWNSEGMENT id="%s" start="%s" stop="%s" />),
-        $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' );
+      $xml .= qq{\n<UNKNOWNSEGMENT id="$segment->{'REGION'}" start="$segment->{'START'}" stop="$segment->{'STOP'}" />};
       next;
     }
 
-    $panel->printf( qq(\n<SEGMENT id="%s" start="%s" stop="%s"%s>),
-      $segment->{'REGION'}, $segment->{'START'} || '', $segment->{'STOP'} || '' ,
-      $segment->{'TYPE'} ? qq( type="$segment->{'TYPE'}") : '' );
+    $xml .= sprintf qq{\n<SEGMENT id="$segment->{'REGION'}" start="$segment->{'START'}" stop="$segment->{'STOP'}"%s>}, $segment->{'TYPE'} ? qq{ type="$segment->{'TYPE'}"} : '';
 
     foreach my $feature (@{$segment->{'FEATURES'} || []}) {
-      my $extra_tags = '';
-
-## Firstly dump tag information for each group.....
-      foreach my $g (@{$feature->{'GROUP'}||[]}) {
-        $extra_tags .= sprintf qq(\n    <GROUP id="%s" %s %s>),
-          $g->{'ID'},
-          $g->{'TYPE'}  ? qq(type="$g->{'TYPE'}") : '',
-          $g->{'LABEL'} ? qq(label="$g->{LABEL}")  : '';
-        foreach my $l ( @{$g->{'LINK'}||[]} ) {
-          $extra_tags .= sprintf qq(\n      <LINK href="%s">%s</LINK>), encode_entities( $l->{href} ), encode_entities( $l->{text} || $l->{href} );
-        }
-        foreach my $n ( @{$g->{'NOTE'}||[]} ) {
-          $extra_tags .= sprintf qq(\n      <NOTE>%s</NOTE>), encode_entities( $n );
-        }
-        $extra_tags .= qq(\n    </GROUP>);
+      my ($extra_tags, $extra_type);
+      
+      foreach my $g (@{$feature->{'GROUP'} || []}) {
+        $extra_tags .= sprintf qq{\n    <GROUP id="$g->{'ID'}"%s%s>}, $g->{'TYPE'} ? qq{ type="$g->{'TYPE'}"} : '', $g->{'LABEL'} ? qq{ label="$g->{'LABEL'}"}  : '';
+        $extra_tags .= sprintf qq{\n      <LINK href="%s">%s</LINK>}, encode_entities($_->{'href'}), encode_entities($_->{'text'} || $_->{'href'}) for @{$g->{'LINK'} || []};
+        $extra_tags .= sprintf qq{\n      <NOTE>%s</NOTE>}, encode_entities($_) for @{$g->{'NOTE'} || []};
+        $extra_tags .= "\n    </GROUP>";
       }
-      foreach my $l ( @{$feature->{'LINK'}||[]} ) {
-        $extra_tags .=  sprintf qq(\n    <LINK href="%s">%s</LINK>), encode_entities( $l->{href} ), encode_entities( $l->{text} || $l->{href} );
-      }
-      foreach my $n ( @{$feature->{'NOTE'}||[]} ) {
-        $extra_tags .= sprintf qq(\n    <NOTE>%s</NOTE>), encode_entities( $n );
-      }
-      if( exists $feature->{'TARGET'} ) {
-        $extra_tags .= sprintf qq(\n    <TARGET id="%s" start="%s" stop="%s" />), encode_entities($feature->{'TARGET'}{'ID'}),$feature->{'TARGET'}{'START'},$feature->{'TARGET'}{'STOP'};
-      }
-      my $extra_type = '';
-      if( $feature->{'REFERENCE'} ) {
-        $extra_type .= sprintf qq( reference="yes" superparts="%s" subparts="%s"), $feature->{'SUPERPARTS'} || 'no', $feature->{'SUBPARTS'} || 'no';
-      }
-      $extra_type .= qq( category="$feature->{'CATEGORY'}") if exists $feature->{'CATEGORY'};
-      $panel->printf( $feature_template,
-        $feature->{'ID'}      || '', exists $feature->{'LABEL'}   ? qq( label="$feature->{'LABEL'}") : '',
-        $feature->{'START'}   || '',
-        $feature->{'END'}     || '',
-        $feature->{'TYPE'}    || '', $extra_type, $feature->{'TYPE'}    || '',
-        $feature->{'METHOD'}  || '', $feature->{'METHOD'}    || '',
-        $feature->{'SCORE'}   || '-',
+      
+      $extra_tags .= sprintf qq{\n    <LINK href="%s">%s</LINK>}, encode_entities($_->{'href'}), encode_entities($_->{'text'} || $_->{'href'}) for @{$feature->{'LINK'} || []};
+      $extra_tags .= sprintf qq{\n    <NOTE>%s</NOTE>}, encode_entities($_) for @{$feature->{'NOTE'} || []};
+      $extra_tags .= sprintf qq{\n    <TARGET id="%s" start="$feature->{'TARGET'}{'START'}" stop="$feature->{'TARGET'}{'STOP'}" />}, encode_entities($feature->{'TARGET'}{'ID'}) if exists $feature->{'TARGET'};
+      
+      $extra_type .= sprintf ' reference="yes" superparts="%s" subparts="%s"', $feature->{'SUPERPARTS'} || 'no', $feature->{'SUBPARTS'} || 'no' if $feature->{'REFERENCE'};
+      $extra_type .= qq{ category="$feature->{'CATEGORY'}"} if exists $feature->{'CATEGORY'};
+      
+      $xml .= sprintf($feature_template,
+        $feature->{'ID'}          || '',
+        exists $feature->{'LABEL'} ? qq{ label="$feature->{'LABEL'}"} : '',
+        $feature->{'START'}       || '',
+        $feature->{'END'}         || '',
+        $feature->{'TYPE'}        || '',
+        $extra_type,
+        $feature->{'TYPE'}        || '',
+        $feature->{'METHOD'}      || '',
+        $feature->{'METHOD'}      || '',
+        $feature->{'SCORE'}       || '-',
         $feature->{'ORIENTATION'} || '.',
         $extra_tags
       );
     }
-    $panel->print( qq(\n</SEGMENT>) );
+    
+    $xml .= "\n</SEGMENT>";
   }
-  $panel->print( qq(\n</GFF>\n) );
+  
+  $xml .= "\n</GFF>\n";
+  
+  return $xml;
 }
 
-sub stylesheet {
-  my( $panel, $model ) = @_;
-  my $object = $model->object;
-  $panel->print($object->Stylesheet());
-}
+sub stylesheet { return shift->object->Stylesheet; }
 
 1;

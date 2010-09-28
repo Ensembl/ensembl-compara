@@ -375,42 +375,46 @@ sub create_select_values {
 
 sub configure {
   ### Determines which interface component/command is required by this step
-  my ($self, $page, $object) = @_;
-
+  my ($self, $command) = @_;
+  
+  my $object   = $command->object;
+  my $type     = $object->type;
+  my $data     = $object->action;
+  my $function = $object->function || 'Display';
+  
   ## Make interface available from components, by attaching to Object
   $object->interface($self);
-  my $type      = $object->type;
-  my $data      = $object->action;
-  my $function  = $object->function || 'Display';
-
-  if ($function eq 'Save' || $function eq 'Delete') { ## Process database command
+  
+  ## Process database command
+  if ($function eq 'Save' || $function eq 'Delete') {
     ## Do we have a custom interface module, or shall we use the generic one?
-    my $class = 'EnsEMBL::Web::Command::'.$type.'::Interface::'.$data.$function;
-    if (!EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-      $class = 'EnsEMBL::Web::Command::Interface::'.$function;
-    }
+    my $class = "EnsEMBL::Web::Command::${type}::Interface::$data$function";
+    $class    = "EnsEMBL::Web::Command::Interface::$function" unless EnsEMBL::Web::Root::dynamic_use(undef, $class);
+  
     if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-      my $command = $class->new({ object => $object, page => $page });
-      $command->process;
-    }
-    else {
+      my $new_command = $class->new({
+        object => $object,
+        hub    => $command->hub,
+        page   => $command->page,
+        node   => $command->node
+      });
+      
+      $new_command->process;
+    } else {
       warn "CANNOT USE COMMAND MODULE $class";
     }
-  }
-  else {
+    
+    return 1;
+  } else {
     ## Do we have a custom interface module, or shall we use the generic one?
-    my $class   = 'EnsEMBL::Web::Component::'.$type.'::Interface::'.$data.$function;
-    if (!EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
-      $class = 'EnsEMBL::Web::Component::Interface::'.$function;
-    }
-    my $key     = lc($type);
-    my $panel = $page->content->panel('main');
-    $panel->add_components($key, $class);
-    $page->render;
-    print $page->renderer->content;
+    my $class = "EnsEMBL::Web::Component::${type}::Interface::$data$function";
+    $class    = "EnsEMBL::Web::Component::Interface::$function" unless EnsEMBL::Web::Root::dynamic_use(undef, $class);
+    
+    push @{$command->node->data->{'components'}}, lc $type, $class;
+    
+    return 0;
   }
 }
-
 
 sub record_list {
   ### a

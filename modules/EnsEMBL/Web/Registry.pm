@@ -109,17 +109,6 @@ sub species_defs {
     EnsEMBL::Web::SpeciesDefs->new();
 }
 
-sub check_ajax {
-### Checks whether ajax enabled or not
-  my $self = shift;
-  if (@_) {
-    my $ajax = shift;
-    $self->set_ajax( $ajax && $ajax->value eq 'enabled' ? 1 : 0 );
-  } else {
-    return $self->get_ajax;
-  }
-}
-
 sub initialize_user {
 ###
   my ($self, $arg_ref) = @_;

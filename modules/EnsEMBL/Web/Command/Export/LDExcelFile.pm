@@ -21,7 +21,7 @@ sub process {
 sub make_file {
   my $self       = shift;
   my $object     = $self->object;
-  my $params     = $object->parent->{'params'};
+  my $params     = $object->referer->{'params'};
   my %pop_params = map { $object->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $object->param;
   
   warn 'ERROR: No population defined', return unless %pop_params;

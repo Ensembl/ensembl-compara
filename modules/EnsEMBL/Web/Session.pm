@@ -52,27 +52,28 @@ use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my( $class, $args ) = @_;
+  my ($class, $args) = @_;
+  
   my $self = {
-    'adaptor'            => $args->{'adaptor'},
-    'configs'            => {},
-    'cookie'             => $args->{'cookie'},
-    'colourmap'          => $args->{'colourmap'},
-    'das_parser'         => $args->{'das_parser'},
-    'das_sources'        => $args->{'das_sources'},
-    'data'               => {},
-    'exturl'             => $args->{'exturl'},
-    'image_configs'      => {},
-    'input'              => $args->{'input'},
-    'path'               => ['EnsEMBL::Web', reverse @{$args->{'path'}||[]}],
-    'request'            => $args->{'request'},
-    'session_id'         => $args->{'session_id'},
-    'species'            => $args->{'species'},
-    'species_defs'       => $args->{'species_defs'},
-    'das_image_defaults' => [ 'display', 'off' ],
+    adaptor            => $args->{'adaptor'},
+    configs            => {},
+    cookie             => $args->{'cookie'},
+    colourmap          => $args->{'colourmap'} || new Bio::EnsEMBL::ColourMap($args->{'species_defs'}),
+    das_parser         => $args->{'das_parser'},
+    das_sources        => $args->{'das_sources'},
+    data               => {},
+    exturl             => $args->{'exturl'},
+    image_configs      => {},
+    input              => $args->{'input'},
+    path               => [ 'EnsEMBL::Web', reverse @{$args->{'path'}||[]} ],
+    request            => $args->{'request'},
+    session_id         => $args->{'session_id'},
+    species            => $args->{'species'},
+    species_defs       => $args->{'species_defs'},
+    das_image_defaults => [ 'display', 'off' ],
   };
 
-  bless $self, $class;
+  bless $self, $class;  
   return $self;
 }
 
@@ -672,7 +673,66 @@ sub add_das_from_string {
   return;
 }
 
+sub apply_to_view_config {
+  ### Adds session data to a view config
+  
+  my ($self, $view_config, $type, $key) = @_;
+  
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(
+    session_id => $self->get_session_id,
+    type       => $type,
+    code       => $key
+  );  
+  
+  $view_config->add_class("${_}::ViewConfig::$key") for @{$self->get_path};
+  
+  my $image_config_data = {};
+  
+  if ($self->get_session_id && $view_config->storable) {
+    # Let us see if there is an entry in the database and load it into the script config and store any other data which comes back
+    my $config = EnsEMBL::Web::Data::Session->get_config(
+      session_id => $self->get_session_id,
+      type       => 'script',
+      code       => $key,
+    );
+    
+    if ($config && $config->data) {
+      $view_config->set_user_settings($config->data->{'diffs'});
+      $image_config_data = $config->data->{'image_configs'};
+    }
+  }
+  
+  $self->{'configs'}{$key} = {
+    config            => $view_config,
+    image_configs     => {},                # List of attached image configs
+    image_config_data => $image_config_data # Data retrieved from database to define image config settings.
+  };
+}
+
+sub apply_to_image_config {
+  ### Adds session data to an image config
+  
+  my ($self, $image_config, $type, $key) = @_;
+  
+  EnsEMBL::Web::Data::Session->propagate_cache_tags(
+    session_id => $self->get_session_id,
+    type       => $type,
+    code       => $key,
+  ); 
+  
+  foreach my $script (keys %{$self->{'configs'} || {}}) {
+    my $ic = $self->{'configs'}{$script}{'image_config_data'}{$type} || {};
+    
+    $image_config->tree->{'_user_data'}{$_} = $self->deepcopy($ic->{$_}) for keys %$ic;
+  }
+  
+  ## Store if $key is set
+  $self->{'image_configs'}{$key} = $image_config if $key;
+}
+
 sub getViewConfig {
+  warn 'DEPRECATED. Use EnsEMBL::Web::Hub->get_viewconfig';
+  
   ### Create a new {{EnsEMBL::Web::ViewConfig}} object for the script passed
   ### Loops through core and all plugins looking for a EnsEMBL::*::ViewConfig::$script
   ### package and if it exists calls the function init() on the package to set
@@ -757,14 +817,14 @@ sub set_view_config_from_string {
 }
 
 sub getImageConfig {
-### Returns an image Config object...
-### If passed one parameter then it loads the data (and doesn't cache it)
-### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
-### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
+  ### Returns an image Config object...
+  ### If passed one parameter then it loads the data (and doesn't cache it)
+  ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
+  ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
   my( $self, $type, $key, @species ) = @_;
 
-### Third parameter is the species! if passed this gets pushed through to new ImageConfig call
-### via the call get_ImageConfig below...
+  ### Third parameter is the species! if passed this gets pushed through to new ImageConfig call
+  ### via the call get_ImageConfig below...
 
   ## TODO: get rid of session getters,
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
@@ -793,15 +853,16 @@ sub getImageConfig {
 }
 
 sub get_ImageConfig {
-### Return a new image config object...
+  ### Return a new image config object...
   my( $self, $type, @species ) = @_; ## @species is a optional scalar!!!
 
   return undef if $type eq '_page' || $type eq 'cell_page';
   my $classname = '';
-## Let us hack this for the moment....
-## If a site is defined in the configuration look for
-## an the user config object in the namespace EnsEMBL::Web::ImageConfig::{$site}::{$type}
-## Otherwise fall back on the module EnsEMBL::Web::ImageConfig::{$type}
+  
+  ## Let us hack this for the moment....
+  ## If a site is defined in the configuration look for
+  ## an the user config object in the namespace EnsEMBL::Web::ImageConfig::{$site}::{$type}
+  ## Otherwise fall back on the module EnsEMBL::Web::ImageConfig::{$type}
 
   if( $self->get_site ) {
     $classname = "EnsEMBL::Web::ImageConfig::".$self->get_site."::$type";
@@ -811,18 +872,20 @@ sub get_ImageConfig {
     my $classname_old = $classname;
     $classname = "EnsEMBL::Web::ImageConfig::$type";
     eval "require $classname";
-## If the module can't be required throw and error and return undef;
+    
+    ## If the module can't be required throw and error and return undef;
     if($@) {
       warn(qq(ImageConfigAdaptor failed to require $classname_old OR $classname: $@\n));
       return undef;
     }
   }
-## Import the module
+  
+  ## Import the module
   $classname->import();
   $self->colourmap;
   my $image_config = eval { $classname->new( $self, @species ); };
   if( $@ || !$image_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
-## Return the respectiv config.
+  ## Return the respectiv config.
   return $image_config;
 }
 

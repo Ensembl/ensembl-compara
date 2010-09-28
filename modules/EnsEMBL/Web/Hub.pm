@@ -21,28 +21,29 @@ use strict;
 use Carp;
 use CGI;
 use CGI::Cookie;
-use URI::Escape qw(uri_escape);
+use URI::Escape qw(uri_escape uri_unescape);
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DBSQL::DBConnection;
+use EnsEMBL::Web::ExtIndex;
+use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::ExtIndex;
-use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::ViewConfig;
 
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, %args) = @_;
+  my ($class, $args) = @_;
 
-  my $type = $args{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
+  my $type = $args->{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
 
   ## Normally CGI is created in Model, however static pages have no access to the module
   ## but still ought to be able to create a valid Hub
-  my $input = $args{'_input'} || new CGI;
+  my $input = $args->{'_input'} || new CGI;
 
   ## The following may seem a little clumsy, but it allows the Hub to be created
   ## by a command-line script with no access to CGI parameters
@@ -52,25 +53,25 @@ sub new {
   
   if ($ENSEMBL_WEB_REGISTRY) {
     $session = $ENSEMBL_WEB_REGISTRY->get_session;
-    $user    = $args{'_user'}  || $ENSEMBL_WEB_REGISTRY->get_user;
-    $timer   = $args{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
+    $user    = $args->{'_user'}  || $ENSEMBL_WEB_REGISTRY->get_user;
+    $timer   = $args->{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
   }
 
   my $self = {
-    _apache_handle => $args{'_apache_handle'} || undef,
-    _input         => $args{'_input'}         || $input,
-    _species       => $args{'_species'}       || $ENV{'ENSEMBL_SPECIES'},    
+    _apache_handle => $args->{'_apache_handle'} || undef,
+    _input         => $args->{'_input'}         || $input,
+    _species       => $args->{'_species'}       || $ENV{'ENSEMBL_SPECIES'},    
     _type          => $type,
-    _action        => $args{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
-    _function      => $args{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
-    _script        => $args{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action
+    _action        => $args->{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
+    _function      => $args->{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
+    _script        => $args->{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action
     _factorytype   => $factorytype,
-    _species_defs  => $args{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
-    _cache         => $args{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
-    _problem       => $args{'_problem'}       || {},    
-    _view_configs  => $args{'_view_configs_'} || {},
-    _user_details  => $args{'_user_details'}  || 1,
-    _object_types  => $args{'_object_types'}  || {},
+    _species_defs  => $args->{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
+    _cache         => $args->{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
+    _problem       => $args->{'_problem'}       || {},    
+    _view_configs  => $args->{'_view_configs_'} || {},
+    _user_details  => $args->{'_user_details'}  || 1,
+    _object_types  => $args->{'_object_types'}  || {},
     _core_objects  => {},
     _core_params   => {},
     _session       => $session,
@@ -80,7 +81,7 @@ sub new {
 
   bless $self, $class;
   
-  $self->{'_cookies'} = $args{'_apache_handle'} ? CGI::Cookie->parse($args{'_apache_handle'}->headers_in->{'Cookie'}) : {};
+  $self->{'_cookies'} = $args->{'_apache_handle'} ? CGI::Cookie->parse($args->{'_apache_handle'}->headers_in->{'Cookie'}) : {};
   
   ## Get database connections 
   my $api_connection = $self->species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
@@ -88,10 +89,10 @@ sub new {
   
   $self->_set_core_params;
 
-  $self->{'_ext_url'} = $args{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
-  $self->species_defs->{'timer'} = $args{'_timer'};
+  $self->{'_ext_url'} = $args->{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
+  $self->species_defs->{'timer'} = $args->{'_timer'};
   
-  $self->{'_parent'} = $self->_parse_referer;
+  $self->{'_referer'} = $self->_parse_referer;
   
   return $self;
 }
@@ -103,7 +104,7 @@ sub type        :lvalue { $_[0]{'_type'};        }
 sub action      :lvalue { $_[0]{'_action'};      }
 sub function    :lvalue { $_[0]{'_function'};    }
 sub factorytype :lvalue { $_[0]{'_factorytype'}; }
-sub parent      :lvalue { $_[0]{'_parent'};      }
+sub referer     :lvalue { $_[0]{'_referer'};     }
 sub session     :lvalue { $_[0]{'_session'};     }
 sub databases   :lvalue { $_[0]{'_databases'};   } 
 sub cache       :lvalue { $_[0]{'_cache'};       }
@@ -120,6 +121,7 @@ sub user_details  { return $_[0]{'_user_details'};  }
 sub species_defs  { return $_[0]{'_species_defs'};  }
 sub species_path  { return shift->species_defs->species_path(@_); }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
+sub check_ajax    { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -127,6 +129,23 @@ sub has_problem_type   { return scalar @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub clear_problem_type { $_[0]{'_problem'}{$_[1]} = []; }
 sub clear_problems     { $_[0]{'_problem'} = {}; }
+
+sub get_adaptor {
+  my ($self, $method, $db, $species) = @_;
+  
+  $db      ||= 'core';
+  $species ||= $self->species;
+  
+  my $adaptor;
+  eval { $adaptor = $self->database($db, $species)->$method(); };
+
+  if ($@) {
+    warn $@;
+    $self->problem('fatal', "Sorry, can't retrieve required information.", $@);
+  }
+  
+  return $adaptor;
+}
 
 # Returns the values of cookies
 # If only one cookie name is given, returns the value as a scalar
@@ -194,7 +213,9 @@ sub redirect {
 
 sub url {
   my $self   = shift;
+  my $extra  = $_[0] && !ref $_[0] ? shift : undef;
   my $params = shift || {};
+  my ($flag, $all_params) = @_;
 
   Carp::croak("Not a hashref while calling _url ($params @_)") unless ref $params eq 'HASH';
 
@@ -202,36 +223,41 @@ sub url {
   my $type    = exists $params->{'type'}     ? $params->{'type'}     : $self->type;
   my $action  = exists $params->{'action'}   ? $params->{'action'}   : $self->action;
   my $fn      = exists $params->{'function'} ? $params->{'function'} : $action eq $self->action ? $self->function : undef;
-  my %pars    = %{$self->core_params};
+  my %pars;
+  
+  if ($all_params) {
+    %pars = map { /^time=/ ? () : split /=/ } split /;|&/, uri_unescape($self->input->query_string);
+  } else {
+    %pars = %{$self->core_params};
 
-  # Remove any unused params
-  foreach (keys %pars) {
-    delete $pars{$_} unless $pars{$_};
-  }
+    # Remove any unused params
+    foreach (keys %pars) {
+      delete $pars{$_} unless $pars{$_};
+    }
+    
+    if ($params->{'__clear'}) {
+      %pars = ();
+      delete $params->{'__clear'};
+    }
 
-  if ($params->{'__clear'}) {
-    %pars = ();
-    delete $params->{'__clear'};
-  }
+    delete $pars{'t'}  if $params->{'pt'};
+    delete $pars{'pt'} if $params->{'t'};
+    delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
+    delete $pars{'time'};
 
-  delete $pars{'t'}  if $params->{'pt'};
-  delete $pars{'pt'} if $params->{'t'};
-  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
-  delete $pars{'time'};
+    foreach (keys %$params) {
+      next if $_ =~ /^(species|type|action|function)$/;
 
-  foreach (keys %$params) {
-    next if $_ =~ /^(species|type|action|function)$/;
-
-    if (defined $params->{$_}) {
-      $pars{$_} = $params->{$_};
-    } else {
-      delete $pars{$_};
+      if (defined $params->{$_}) {
+        $pars{$_} = $params->{$_};
+      } else {
+        delete $pars{$_};
+      }
     }
   }
 
-  my $url  = join '/', map $_ || (), $self->species_defs->species_path($species), $type, $action, $fn;
-  my $flag = shift;
-
+  my $url = join '/', map $_ || (), $self->species_defs->species_path($species), $extra, $type, $action, $fn;
+  
   return [ $url, \%pars ] if $flag;
 
   $url .= '?' if scalar keys %pars;
@@ -360,31 +386,45 @@ sub get_all_das {
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
 sub get_viewconfig {
-  my ($self, $type, $action) = @_;
+  my $self   = shift;
+  my $type   = shift || $self->type;
+  my $action = shift || $self->action;
+  
   my $session = $self->session;
+  my $key     = "${type}::$action";
   
   return undef unless $session;
+  return $session->get_configs->{$key}{'config'} if $session->get_configs->{$key};
   
-  return $session->getViewConfig($type || $self->type, $action || $self->action);
+  my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $session);
+  
+  $session->apply_to_view_config($view_config, $type, $key);
+  
+  return $view_config;
 }
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig {
   my $self    = shift;
   my $type    = shift;
+  my $key     = shift || $type;
   my $session = $self->session;
   
+  return undef if $type eq '_page' || $type eq 'cell_page';
   return undef unless $session;
+  return $session->get_image_configs->{$key} if $key && $session->get_image_configs->{$key};
   
-  $_[0] ||= $type if scalar @_;
+  my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
+  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($session, @_) : undef;
   
-  my $image_config = $session->getImageConfig($type, @_);
-  
-  return unless $image_config;
-  
-  $image_config->_set_core($self->core_objects);
-  
-  return $image_config;
+  if ($image_config) {
+    $session->apply_to_image_config($image_config, $type, $key);
+    $image_config->_set_core($self->core_objects);
+    
+    return $image_config;
+  } else {
+    $self->dynamic_use_failure($module_name);
+  }
 }
 
 sub get_tracks {

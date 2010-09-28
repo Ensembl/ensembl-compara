@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::SearchBox;
 
 ### Generates small search box (used in top left corner of pages)
@@ -16,9 +18,9 @@ sub search_url {
 
 sub add_index { push @{$_[0]->{'indexes'}}, $_[1]; }
 
-sub render {
-  my $self   = shift;
-  my $i_url = $self->img_url;
+sub _content {
+  my $self       = shift;
+  my $i_url      = $self->img_url;
   my $search_url = $self->search_url;
   
   my @options = (
@@ -33,7 +35,7 @@ sub render {
   my $search_options;
   $search_options .= qq{<dt id="se_$_->[0]"><img src="/i/search/$_->[0].gif" alt="$_->[1]"/>$_->[1]</dt>\n} for @options;
   
-  $self->printf( '
+  return sprintf('
       <div id="searchPanel" class="js_panel">
         <input type="hidden" class="panel_type" value="SearchBox" />
         <form action="%s">
@@ -59,7 +61,4 @@ sub render {
   );
 }
 
-
 1;
-
-

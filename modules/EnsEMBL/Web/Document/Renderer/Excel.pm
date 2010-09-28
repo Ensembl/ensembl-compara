@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Renderer::Excel;
 
 use strict;
@@ -7,16 +9,18 @@ use Spreadsheet::WriteExcel;
 use EnsEMBL::Web::Document::Renderer::Excel::Table;
 use EnsEMBL::Web::Document::Renderer::Excel::CellFormat;
 
+use base qw(EnsEMBL::Web::Document::Renderer);
+
 sub new {
   ### Builder function
   ### Creates a new build function which sets sheets to -1 (i.e. no sheet created)
   ### rows and columns to 0 and creates the workbook
   
-  my ($class, $fh) = @_;
-  
+  my $class    = shift;
+  my $fh       = shift;
   my $workbook = new Spreadsheet::WriteExcel($fh);
   
-  my $self = {
+  my $self = $class->SUPER::new(
     sheet    => -1,
     row      => 0,
     col      => 0,
@@ -26,10 +30,13 @@ sub new {
       _max_value => 9,
       000000     => $workbook->set_custom_color(8, 0, 0, 0),
       ffffff     => $workbook->set_custom_color(9, 255, 255, 255),
-    }
-  };
+    },
+    @_
+  );
   
-  bless $self, $class;
+  
+  $self->r->content_type('application/x-msexcel');
+  $self->r->headers_out->add('Content-Disposition' => 'attachment; filename=ensembl.xls');
   
   return $self;
 }

@@ -1,25 +1,21 @@
 package EnsEMBL::Web::Component::Info::SpeciesStats;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::Controller::SSI;
+
 use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::Apache::SendDecPage;
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub content {
-  my $self   = shift;
-  my $html; 
-
-  my $file = '/ssi/species/stats_'.$self->hub->species.'.html';
-  $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file);
-
-  return $html;
+  my $self = shift;
+  my $file = '/ssi/species/stats_' . $self->hub->species . '.html';
+  return EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file);
 }
 
 1;

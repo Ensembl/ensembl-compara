@@ -5,7 +5,7 @@ use strict;
 use EnsEMBL::Web::Configuration;
 our @ISA = qw( EnsEMBL::Web::Configuration);
 
-sub _get_valid_action {
+sub get_valid_action {
   my $self = shift;
   my $action = shift;
   my $func   = shift;

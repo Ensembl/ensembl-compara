@@ -9,30 +9,35 @@ use base qw(EnsEMBL::Web::Document::Page::Common);
 sub _initialize_HTML {
   my $self = shift;
 
+  return $self->_initialize_JSON if $self->renderer->{'_modal_dialog_'};
+  
   $self->include_navigation(1);
   
   # General layout for popup pages
   $self->add_head_elements(qw(
     title      EnsEMBL::Web::Document::HTML::Title
     stylesheet EnsEMBL::Web::Document::HTML::Stylesheet
-    javascript EnsEMBL::Web::Document::HTML::Javascript
     links      EnsEMBL::Web::Document::HTML::Links
     meta       EnsEMBL::Web::Document::HTML::Meta
   ));
 
   $self->add_body_elements(qw(
     logo            EnsEMBL::Web::Document::HTML::Logo
-    breadcrumbs     EnsEMBL::Web::Document::HTML::Empty
-    content         EnsEMBL::Web::Document::HTML::Content
-    global_context  EnsEMBL::Web::Document::HTML::GlobalContext
+    global_context  EnsEMBL::Web::Document::HTML::ModalTabs
     local_context   EnsEMBL::Web::Document::HTML::LocalContext
-    local_tools     EnsEMBL::Web::Document::HTML::LocalTools
-    copyright       EnsEMBL::Web::Document::HTML::Empty
-    footerlinks     EnsEMBL::Web::Document::HTML::Empty
+    content         EnsEMBL::Web::Document::HTML::Content
     body_javascript EnsEMBL::Web::Document::HTML::BodyJavascript
   ));
+}
+
+sub _initialize_JSON {
+  my $self = shift;
   
-  $self->_common_HTML;
+  $self->add_body_elements(qw(
+    global_context EnsEMBL::Web::Document::HTML::ModalTabs
+    local_context  EnsEMBL::Web::Document::HTML::LocalContext
+    content        EnsEMBL::Web::Document::HTML::Content
+  ));
 }
 
 sub panel_type {

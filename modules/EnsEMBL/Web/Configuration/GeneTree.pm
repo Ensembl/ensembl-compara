@@ -1,24 +1,19 @@
+# $Id$
+
 package EnsEMBL::Web::Configuration::GeneTree;
 
 use strict;
-use base qw( EnsEMBL::Web::Configuration );
+
+use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
   $self->{'_data'}{'default'} = 'Image';
 }
 
-sub global_context { return $_[0]->_global_context }
-sub ajax_content   { return $_[0]->_ajax_content;  }
-sub local_context  { return $_[0]->_local_context; }
-sub local_tools    { return $_[0]->_local_tools;   }
-sub content_panel  { return $_[0]->_content_panel; }
-sub context_panel  { return undef;                 }
-sub configurator   { return $_[0]->_configurator;  }
-
 sub caption { 
   my $self = shift;
-  my $gt = $self->model->hub->param('gt');
+  my $gt = $self->hub->param('gt');
   return "Gene Tree $gt"; 
 }
 
@@ -35,5 +30,7 @@ sub populate_tree {
     { 'availability' => 1 }
   );
 }
+
+sub modify_page_elements { shift->page->remove_body_element('context_panel'); }
 
 1;

@@ -1,16 +1,15 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::Location::LD;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 sub content {
@@ -43,13 +42,13 @@ sub focus {
 
   my $self    = shift;
   my $object  = $self->object;
-  my $model   = $self->model;
+  my $builder = $self->builder;
   my $hub     = $self->hub;
   my ($r, $v) = map $object->param($_), qw(r v);
   my $info;
   
   if ($v && $object->param('focus')) {
-    my $snp       = $model->object('Variation');
+    my $snp       = $builder->object('Variation');
     my $name      = $snp->name; 
     my $source    = $snp->source;
     my $link_name = $object->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
@@ -173,7 +172,7 @@ sub tagged_snp {
   ### returns no
 
   my ($self, $object, $pop_name)  = @_;
-  my $snp = $self->model->object('Variation');   
+  my $snp = $self->builder->object('Variation');   
   
   my $snp_data  = $snp->tagged_snp;
   return unless keys %$snp_data;

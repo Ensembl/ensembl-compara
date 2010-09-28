@@ -1,18 +1,13 @@
 # $Id$ 
+
 package EnsEMBL::Web::Configuration::Location;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Configuration);
 use Bio::EnsEMBL::Registry;
 
-sub global_context { return $_[0]->_global_context; }
-sub ajax_content   { return $_[0]->_ajax_content;   }
-sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return $_[0]->_local_tools;    }
-sub content_panel  { return $_[0]->_content_panel;  }
-sub configurator   { return $_[0]->_configurator;   }
-sub context_panel  { return $_[0]->_context_panel;  }
+use base qw(EnsEMBL::Web::Configuration);
+
 sub caption { return 'Karyotype'; }
 
 sub set_default_action {
@@ -136,24 +131,6 @@ sub populate_tree {
   );
 }
 
-sub context_panel {
-  my $self = shift;
-  
-  if ($self->action eq 'Multi') {
-    my $object = $self->object;
-    my $panel  = $self->new_panel('Summary',
-      code    => 'summary_panel',
-      object  => $object,
-      caption => $object->caption
-    );
-    
-    $panel->add_component('summary' => 'EnsEMBL::Web::Component::Location::MultiIdeogram');
-    $self->add_panel($panel);
-  } else {
-    $self->_context_panel;
-  }
-}
-
 sub add_external_browsers {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -212,8 +189,7 @@ sub add_vega_link {
   my $type           = $hub->type;
   my $action         = $hub->action;
   my @alt_assemblies = @{$species_defs->ALTERNATIVE_ASSEMBLIES || []};
-  my $vega_link= undef;
-  my $link_class=undef;
+  my ($vega_link, $link_class);
 
   if (lc $species_defs->ENSEMBL_SITETYPE ne 'vega' && $action =~ /^(Chromosome|Overview|View)$/ && $alt_assemblies[0] =~ /VEGA/ && $urls->is_linked('VEGA')) {
     my $object = $self->object;
@@ -229,7 +205,9 @@ sub add_vega_link {
       my $coord_system    = $object->slice->coord_system;
       my $start_slice     = $vega_adaptor->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
       my $vega_projection;
-      eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]);};
+      
+      eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]); };
+      
       if ($vega_projection) {
 	      if (scalar @$vega_projection == 1) {
 	        my $vega_slice = $vega_projection->[0]->to_Slice;
@@ -241,17 +219,15 @@ sub add_vega_link {
         }
       }
     }
+    
     $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => defined($vega_link), url => $vega_link, raw => 1, external => !defined($link_class), class => $link_class }));
   }
 }
 
 sub get_other_browsers_menu {
   my $self = shift;
-  
   # The menu may already have an other browsers sub menu from Ensembl, if so we add to this one, otherwise create it
-  $self->{'browser_menu'} ||= $self->get_submenu('OtherBrowsers') || $self->create_submenu('OtherBrowsers', 'Other genome browsers');
-  
-  return $self->{'browser_menu'};
+  return $self->{'browser_menu'} ||= $self->get_submenu('OtherBrowsers') || $self->create_submenu('OtherBrowsers', 'Other genome browsers');
 }
 
 1;

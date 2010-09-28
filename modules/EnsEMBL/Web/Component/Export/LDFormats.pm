@@ -58,7 +58,7 @@ sub get_formats {
     );
   } else {
 
-    my %params  = %{$object->parent->{'params'}};
+    my %params  = %{$object->referer->{'params'}};
     my %populations;
     foreach (keys %params) {
       if ($_ =~/pop\d+/){

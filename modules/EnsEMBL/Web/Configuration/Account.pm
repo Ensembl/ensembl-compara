@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Configuration::Account;
 
 ### Configuration for all views based on the Account object, including
@@ -7,10 +9,10 @@ use strict;
 
 use  base qw(EnsEMBL::Web::Configuration);
 
-sub _get_valid_action {
+sub get_valid_action {
   my $self = shift;
   return $_[0] if $_[0] eq 'SetCookie';
-  return $self->SUPER::_get_valid_action( @_ );
+  return $self->SUPER::get_valid_action( @_ );
 }
 
 sub set_default_action {
@@ -22,13 +24,6 @@ sub set_default_action {
     $self->{'_data'}{'default'} = 'Login';
   }
 }
-
-sub global_context { return $_[0]->_user_context; }
-sub ajax_content   { return $_[0]->_ajax_content;   }
-sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return undef; }
-sub content_panel  { return $_[0]->_content_panel;   }
-sub context_panel  { return undef; }
 
 sub user_populate_tree {
   my $self = shift;
@@ -179,9 +174,7 @@ sub user_populate_tree {
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::ChangeStatus',
         'filters' => [qw(Admin)]}
     );
-
-  }
-   
+  }  
 }
 
 sub populate_tree {
@@ -247,7 +240,6 @@ sub populate_tree {
     { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::AcceptInvitation',
       'filters' => [qw(Invitation)]}
   );
-
 }
 
 sub tree_cache_key {

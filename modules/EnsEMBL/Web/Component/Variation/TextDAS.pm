@@ -42,7 +42,7 @@ sub content {
   my $object = $self->object;
   
   # The DAS source this page represents:
-  my $logic_name = $object->hub->parent->{'ENSEMBL_FUNCTION'} || $object->function;
+  my $logic_name = $self->hub->referer->{'ENSEMBL_FUNCTION'} || $object->function;
 
   if (! $logic_name ) {
     return $self->_error( 'No DAS source specified',

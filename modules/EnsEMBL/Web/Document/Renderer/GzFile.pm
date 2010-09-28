@@ -1,35 +1,37 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Renderer::GzFile;
 
 use strict;
 
 use Compress::Zlib;
 
-use base qw(EnsEMBL::Web::Root);
+use base qw(EnsEMBL::Web::Document::Renderer EnsEMBL::Web::Root);
 
 sub new {
   my $class    = shift;
   my $filename = shift;
-
-  my $self = { 'exists' => 'yes' };
-  bless $self, $class;
-    $self->{ 'filename' } =  $filename;
-  return $self if $self->exists( $filename );
-  $self->make_directory( $filename );
-
-  $self->{'exists'} = 'no';
-  if( my $gz = gzopen( $filename, 'wb' ) ) {
-    $self->{'file'} = $gz;
-  } else {
-    $self->{'file'} = undef;
+  
+  my $self = $class->SUPER::new(
+    filename => $filename,
+    @_
+  );
+  
+  if (!$self->exists($filename)) {
+    $self->make_directory($filename);
+    $self->{'file'} = gzopen($filename, 'wb') || undef;
   }
+  
+  $self->r->content_type('application/octet-stream');
+  $self->r->headers_out->add('Content-Disposition' => 'attachment; filename=ensembl.txt.gz');
+  
   return $self;
 }
 
-sub valid   { return $_[0]->{'file'}; }
-sub printf  { my $self = shift; my $FH = $self->{'file'}; my $template = shift; return unless $FH; $FH->gzwrite( sprintf $template, @_ ); }
-sub print   { my $self = shift; my $FH = $self->{'file'}; return unless $FH; foreach(@_) { $FH->gzwrite( $_ ); } }
-
-sub exists  { my $filename = $_[0]->{'filename'}; return $filename && -e $filename && -f $filename; }
+sub valid  { return $_[0]->{'file'}; }
+sub printf { my $self = shift; my $FH = $self->{'file'}; return unless $FH; $FH->gzwrite(sprintf shift, @_); }
+sub print  { my $self = shift; my $FH = $self->{'file'}; return unless $FH; $FH->gzwrite($_) for @_; }
+sub exists { my $filename = $_[0]->{'filename'}; return $filename && -e $filename && -f $filename; }
 
 sub raw_content {
   my $self = shift;
@@ -41,13 +43,14 @@ sub raw_content {
 }
 
 sub content {
-  my $self = shift;
-  
-  my $gz = gzopen( $self->{'filename'}, 'rb' ) || return '';
-  my $buffer = '';
+  my $self    = shift;
+  my $gz      = gzopen($self->{'filename'}, 'rb') || return '';
+  my $buffer  = '';
   my $content = '';
-  $content .= $buffer while $gz->gzread( $buffer ) > 0;
-  $gz->gzclose; 
+  $content   .= $buffer while $gz->gzread($buffer) > 0;
+  
+  $gz->gzclose;
+  
   return $content;
 }
 

@@ -25,7 +25,7 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::SpeciesDefs;
 
 use EnsEMBL::Web::Apache::DasHandler;
-use EnsEMBL::Web::Apache::SendDecPage;
+use EnsEMBL::Web::Apache::SSI;
 use EnsEMBL::Web::Apache::SpeciesHandler;
 
 our $species_defs = new EnsEMBL::Web::SpeciesDefs;
@@ -196,7 +196,6 @@ sub postReadRequestHandler {
   
   ## Ajax cookie
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
-  $ENSEMBL_WEB_REGISTRY->check_ajax($cookies{'ENSEMBL_AJAX'});
   
   $r->subprocess_env->{'ENSEMBL_AJAX_VALUE'}  = $cookies{'ENSEMBL_AJAX'}  && $cookies{'ENSEMBL_AJAX'}->value  ? $cookies{'ENSEMBL_AJAX'}->value  : 'none';
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'} = $cookies{'ENSEMBL_WIDTH'} && $cookies{'ENSEMBL_WIDTH'}->value ? $cookies{'ENSEMBL_WIDTH'}->value : ($ENSEMBL_IMAGE_WIDTH || 800);
@@ -428,7 +427,7 @@ sub handler {
     $r->content_type('text/html');
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "OK"', undef, 'Apache');
     
-    EnsEMBL::Web::Apache::SendDecPage::handler($r);
+    EnsEMBL::Web::Apache::SSI::handler($r);
     
     return OK;
   }

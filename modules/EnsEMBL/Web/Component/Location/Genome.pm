@@ -1,15 +1,14 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::Location::Genome;
 
 ### Module to replace Karyoview
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
- use HTML::Entities qw(encode_entities);
+use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Apache::SendDecPage;
+use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Location);
@@ -29,8 +28,8 @@ sub content {
 
   my ($html, $table, $user_pointers, $usertable, $features, $has_features, @all_features);
  
-  if (my $id = $hub->param('id') || $hub->parent->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
-    $features = $self->model->create_objects('Feature', 'lazy');
+  if (my $id = $hub->param('id') || $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
+    $features = $self->builder->create_objects('Feature', 'lazy');
     $features = $features ? $features->convert_to_drawing_parameters : {};
     $table    = $self->feature_tables($features) if keys %$features;
   } 
@@ -177,7 +176,7 @@ sub content {
     $html .= $table if $table;
     $html .= '<h3 style="margin-bottom:-5px">Key to tracks</h3>' . $usertable->render if $usertable;
   } else {
-    $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, "/ssi/species/stats_$species.html");
+    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, "/ssi/species/stats_$species.html");
   }
   
   return $html;

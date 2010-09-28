@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::Logo;
 
 ### Generates the logo wrapped in a link to the homepage
@@ -6,12 +8,12 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub image   :lvalue { $_[0]{'image'};   }
-sub width   :lvalue { $_[0]{'width'};   }
-sub height  :lvalue { $_[0]{'height'};   }
-sub alt     :lvalue { $_[0]{'alt'};   }
-sub href     :lvalue { $_[0]{'href'}  }
-sub print_image   :lvalue { $_[0]{'print_image'};   }
+sub image       :lvalue { $_[0]{'image'};       }
+sub width       :lvalue { $_[0]{'width'};       }
+sub height      :lvalue { $_[0]{'height'};      }
+sub alt         :lvalue { $_[0]{'alt'};         }
+sub href        :lvalue { $_[0]{'href'}         }
+sub print_image :lvalue { $_[0]{'print_image'}; }
 
 sub logo_img {
 ### a
@@ -31,12 +33,23 @@ sub logo_print {
   ) if ($self->print_image);
 }
 
-sub render {
+sub _content {
   my $self = shift;
-  my $url = $self->href || $self->home_url;
-  $self->printf( '<a href="%s">%s</a>%s',
-    $url, $self->logo_img, $self->logo_print
-  );
+  my $url  = $self->href || $self->home_url;
+  
+  return sprintf '<a href="%s">%s</a>%s', $url, $self->logo_img, $self->logo_print;
+}
+
+sub init {
+  my $self  = shift;
+  my $style = $self->species_defs->ENSEMBL_STYLE;
+  
+  $self->image       = $style->{'SITE_LOGO'};
+  $self->width       = $style->{'SITE_LOGO_WIDTH'};
+  $self->height      = $style->{'SITE_LOGO_HEIGHT'};
+  $self->alt         = $style->{'SITE_LOGO_ALT'};
+  $self->href        = $style->{'SITE_LOGO_HREF'};
+  $self->print_image = $style->{'PRINT_LOGO'};
 }
 
 1;

@@ -12,7 +12,7 @@ sub content {
   my $self = shift;
   my $object = $self->object;
   
-  my $align = $object->parent->{'params'}->{'align'}->[0];
+  my $align = $object->referer->{'params'}->{'align'}->[0];
   
   my $params = {
     action   => 'Export', 

@@ -17,16 +17,6 @@ sub set_content {
   </div>};
 }
 
-sub render {
-  my ($self, $first) = @_;
-  
-  if ($self->{'json'}) {
-    return $self->{'content'};
-  } else {
-    $self->content;
-  }
-}
-
-sub _error { shift->printf('<h1>AJAX error - %s</h1><pre>%s</pre>', @_); }
+sub _error { my $self = shift; return sprintf '<h1>AJAX error - %s</h1><pre>%s</pre>', @_; }
 
 1;

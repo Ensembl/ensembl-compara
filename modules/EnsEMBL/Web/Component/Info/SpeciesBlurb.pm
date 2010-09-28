@@ -1,37 +1,28 @@
 package EnsEMBL::Web::Component::Info::SpeciesBlurb;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::Controller::SSI;
+
 use base qw(EnsEMBL::Web::Component);
-use EnsEMBL::Web::Apache::SendDecPage;
+
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
-
 sub content {
-  my $self   = shift;
-  my $hub = $self->hub;
-  my $name_string;
-  my $bio_name = $hub->species;
-  my $common_name = $hub->species_defs->get_config($bio_name, 'SPECIES_COMMON_NAME');
-  $bio_name =~ s/_/ /g;
-  if ($common_name =~ /\./) {
-    $name_string = "<i>$bio_name</i>";
-  }
-  else {
-    $name_string = "$common_name (<i>$bio_name</i>)";
-  }
-  my $html = qq(<h1>$name_string</h1>); 
-
-  my $file = '/ssi/species/about_'.$hub->species.'.html';
-  $html .= EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, $file); 
-
-  return $html;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $species     = $hub->species;
+  my $common_name = $hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+  my $file        = "/ssi/species/about_$species.html";
+  $species        =~ s/_/ /g;
+  my $name_string = $common_name =~ /\./ ? "<i>$species</i>" : "$common_name (<i>$species</i>)";
+  
+  return "<h1>$name_string</h1>" . EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file); 
 }
 
 1;

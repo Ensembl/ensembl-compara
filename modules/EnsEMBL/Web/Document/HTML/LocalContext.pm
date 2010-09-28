@@ -74,9 +74,21 @@ sub get_json {
   return { nav => $self->_content };
 }
 
-sub render {
-  my $self = shift;
-  return $self->print($self->_content);
+sub init {
+  my $self          = shift;
+  my $controller    = shift;    
+  my $object        = $controller->object;
+  my $hub           = $controller->hub;
+  my $configuration = $controller->configuration;
+  my $action        = $configuration->get_valid_action($hub->action, $hub->function);
+ 
+  $self->tree($configuration->{'_data'}{'tree'});
+  $self->active($action);
+  $self->caption(ref $object ? $object->short_caption : $configuration->short_caption);
+  $self->counts($object->counts) if ref $object;
+  $self->availability(ref $object ? $object->availability : {});     
+  
+  $self->{'hub'} = $hub;
 }
 
 sub _content {
@@ -85,10 +97,7 @@ sub _content {
   
   return unless $tree;
   
-  my $caption = $self->caption;
-  $caption =~ s/<\\\w+>//g;
-  $caption =~ s/<[^>]+>/ /g;
-  $caption =~ s/\s+/ /g;
+  my $caption = encode_entities($self->strip_HTML($self->caption));
   
   my $content = sprintf('
     %s
@@ -105,10 +114,11 @@ sub _content {
   
   return "$content</dl>" unless $active_node;
   
+  my $hub          = $self->{'hub'};
   my $active_l     = $active_node->left;
   my $active_r     = $active_node->right;
   my $counts       = $self->counts;
-  my $query_string = $self->input->query_string;
+  my $all_params   = !!$hub->object_types->{$hub->type};
   my $r            = 0;
   my $previous_node;
   
@@ -134,32 +144,14 @@ sub _content {
         # e.g. on Location/Compara_Alignments/Image the url for Alignments (Text) will also be Location/Compara_Alignments/Image, rather than Location/Compara_Alignments
         my $external = $node->data->{'external'} ? ' rel="external"' : '';
         my $class    = $node->data->{'class'};
-        my $url      = $node->data->{'url'};
+        my $url      = $node->data->{'url'} || $hub->url({ action => $node->data->{'code'} }, undef, $all_params);
         $class = qq{ class="$class"} if $class;
         
         for ($title, $name) {
           s/\[\[counts::(\w+)\]\]/$counts->{$1}||0/eg;
           $_ = encode_entities($_);
         }
-       
-        # This is a tmp hack since we do not have an object here
-        # TODO: propagate object here and use object->_url method
-        if (!$url) {
-          $url = $ENV{'ENSEMBL_SPECIES'} eq 'common' ? '' : $self->species_defs->species_path;
-          $url .= '/' unless $url eq '/';
-          $url .= "$ENV{'ENSEMBL_TYPE'}/" . $node->data->{'code'};
-
-          my @ok_params;
-          my @cgi_params = split /;|&/, $query_string;
-
-          if ($ENV{'ENSEMBL_TYPE'} =~ /LRG|Location|Gene|Transcript|Variation|Regulation/) {
-            @ok_params = grep !/^time=/, @cgi_params;
-          }
-
-          $url .= '?' . join ';', @ok_params if scalar @ok_params;
-        }
-
- 
+        
         $name = qq{<a href="$url" title="$title"$class$external>$name</a>};
       } else {
         $name =~ s/\(\[\[counts::(\w+)\]\]\)//eg;

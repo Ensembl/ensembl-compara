@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::Panel;
 
 use strict;
@@ -7,7 +9,6 @@ use HTTP::Request;
 
 use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Document::Renderer::String;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -18,7 +19,6 @@ sub new {
     _renderer       => undef,
     components      => {},
     component_order => [],
-    disable_ajax    => 0,
     @_
   };
   
@@ -47,8 +47,7 @@ sub caption {
 
 sub _error {
   my ($self, $caption, $message) = @_;
-  
-  $self->print("<h4>$caption</h4>$message");
+  return "<h4>$caption</h4>$message";
 }
 
 sub parse {
@@ -259,17 +258,6 @@ sub remove_component {
   }
 }
 
-sub render_Text {
-  my $self = shift;
-  $self->{'disable_ajax'} = 1;
-  $self->content_Text;
-}
-
-sub render_TextGz { $_[0]->render_Text; }
-sub render_DAS    { $_[0]->render_XML;  }
-sub render_XML    { $_[0]->content;     }
-sub render_Excel  { $_[0]->content;     }
-
 sub content_Text { 
   my $self = shift;
   
@@ -284,222 +272,202 @@ sub content_Text {
   $self->renderer->print($value)
 }
 
-sub render {
-  my ($self, $first) = @_;
-  
-  return $self->renderer->print($self->{'raw'}) if exists $self->{'raw'};
-  
-  my $hub        = $self->{'hub'};
-  my $status     = $hub ? $hub->param($self->{'status'}) : undef;
-  my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
-  my $html       = qq{<div class="panel js_panel"><input type="hidden" class="panel_type" value="$panel_type" />};
-  my $counts     = {};
-
-  if (!$self->{'omit_header'}) {
-    if ((exists $self->{'previous'} || exists $self->{'next'}) && $hub && $hub->type ne 'Search') {
-      my @buttons = (
-        [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
-        [ 'next',     'right', '%s&nbsp;&raquo;' ]
-      );
-      
-      $html .= '<div class="nav-heading">';
-      
-      foreach (@buttons) {
-        my $label = $_->[0];
-        my $button_text = exists $self->{$label} && !$self->{$label}->{'external'} ? $self->{$label}->{'concise'} || $self->{$label}->{'caption'} : undef;
-        
-        $html .= qq{
-          <div class="$_->[1]-button print_hide">};
-        
-        if ($button_text) {
-          my $url = $self->{$label}->{'url'} || $hub->url({ action => $self->{$label}->{'code'}, function => undef });
-          
-          $html .= sprintf qq{<a href="%s">$_->[2]</a>}, encode_entities($url), encode_entities($button_text);
-        } else {
-          $html .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
-        }
-        
-        $html .= '</div>';
-      }
-      
-      $html .= $self->_caption_with_helplink if exists $self->{'caption'};
-      $html .= '
-      <p class="invisible">.</p></div>';
-    } elsif (exists $self->{'caption'}) {
-      $html .= $self->_caption_with_helplink;
-    }
-  }
-  
-  $self->renderer->print($html) unless $self->{'json'};
-  
-  if ($status ne 'off') {
-    my $temp_renderer = $self->renderer;
-    
-    $self->renderer = new EnsEMBL::Web::Document::Renderer::Assembler(
-      r              => $temp_renderer->r,
-      cache          => $temp_renderer->cache,
-      session        => $hub ? $hub->session : undef,
-      _modal_dialog_ => $temp_renderer->{'_modal_dialog_'}
-    );
-    
-    $self->_render_content;
-    $self->renderer->close;
-
-    my $content = $self->renderer->content;
-    
-    return qq{$content<p class="invisible">.</p>} if $self->{'json'};
-    
-    $self->renderer = $temp_renderer;
-    $self->renderer->print($content);
-  }
-  
-  $self->renderer->print('
-  <p class="invisible">.</p></div>');
-}
-
 sub _caption_with_helplink {
   my $self = shift;
   my $id   = $self->{'help'};
   my $html = '<h2 class="caption">';
   $html   .= sprintf ' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for Help">', encode_entities($id) if $id;
-  $html   .= $self->{'raw_caption'} ? $self->{'caption'} : encode_entities($self->{'caption'});
+  $html   .= $self->{'caption'};
   $html   .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" class="print_hide" /></a>' if $id;
   $html   .= '</h2>';
   
   return $html; 
 }
 
-sub _render_content {
+sub content {
   my $self = shift;
   
-  $self->renderer->print('
-    <div class="content">'
-   );
+  return $self->{'raw'} if exists $self->{'raw'};
+  
+  my $hub        = $self->{'hub'};
+  my $status     = $hub ? $hub->param($self->{'status'}) : undef;
+  my $content    = sprintf '%s<p class="invisible">.</p>', $status ne 'off' ? sprintf('<div class="content">%s</div>', $self->component_content) : '';
+  my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
+  my $counts     = {};
+  
+  if (!$self->{'omit_header'}) {
+    my $caption = exists $self->{'caption'} ? $self->_caption_with_helplink : '';
+    my $button_html;
+    
+    if ((exists $self->{'previous'} || exists $self->{'next'}) && $hub && $hub->type ne 'Search') {
+      my @buttons = (
+        [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
+        [ 'next',     'right', '%s&nbsp;&raquo;' ]
+      );
       
-  $self->content;
-  
-  my $caption = exists $self->{'caption'} ? encode_entities($self->parse($self->{'caption'})) : '';
-  
-  if ($self->{'link'}) {
-    $self->renderer->printf('
-      <div class="more"><a href="%s">more about %s ...</a></div>', $self->{'link'}, $caption
-    );
+      foreach (@buttons) {
+        my $label       = $_->[0];
+        my $button_text = exists $self->{$label} && !$self->{$label}->{'external'} ? $self->{$label}->{'concise'} || $self->{$label}->{'caption'} : undef;
+        
+        $button_html .= qq{<div class="$_->[1]-button print_hide">};
+        
+        if ($button_text) {
+          my $url = $self->{$label}->{'url'} || $hub->url({ action => $self->{$label}->{'code'}, function => undef });
+          
+          $button_html .= sprintf qq{<a href="%s">$_->[2]</a>}, encode_entities($url), encode_entities($button_text);
+        } else {
+          $button_html .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
+        }
+        
+        $button_html .= '</div>';
+      }
+    }
+    
+    $content = qq{
+      <div class="nav-heading">
+        $button_html
+        $caption
+        <p class="invisible">.</p>
+      </div>
+      $content
+    };
   }
   
-  $self->renderer->print('
-    </div>'
-  );
+  return qq{
+    <div class="panel js_panel">
+      <input type="hidden" class="panel_type" value="$panel_type" />
+      $content
+    </div>
+  };
 }
 
-sub content {
-  my ($self) = @_;
+sub component_content {
+  my $self    = shift;
+  my $html    = $self->{'content'};
+  my $builder = $self->{'builder'};
+  my $hub     = $self->{'hub'};
   
-  $self->print($self->{'content'}) if $self->{'content'};
+  return $html unless $builder;
+  return $self->das_content if $self->{'components'}->{'das_features'};
+  return $html unless scalar keys %{$self->{'components'}};
   
-  my $model = $self->{'model'};
-  my $hub   = $self->{'hub'};
+  my $modal        = $self->renderer->{'_modal_dialog_'};
+  my $ajax_request = $self->_is_ajax_request;
+  my $base_url     = $hub->species_defs->ENSEMBL_BASE_URL;
+  my $function     = $hub->function;
   
-  return unless $model;
-  
-  $self->das_content if $self->{'components'}->{'das_features'};
+  # Check if ajax enabled
+  my $renderer = $hub->check_ajax ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(
+    r              => $self->renderer->r,
+    cache          => $self->renderer->cache,
+    session        => $hub ? $hub->session : undef,
+    _modal_dialog_ => $modal
+  );
   
   foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
-    my ($module_name, $function_name) = split /\//, $entry;
+    my ($module_name, $content_function) = split /\//, $entry;
     my $component;
     
+    ### Attempt to require the Component module
     if ($self->dynamic_use($module_name)) {
       eval {
-        $component = $module_name->new($model);
+        $component = $module_name->new($builder);
       };
       
       if ($@) {
-        $self->component_failure($@, $entry, $module_name);
+        $html .= $self->component_failure($@, $entry, $module_name);
         next;
       }
     } else {
-      $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
+      $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
       next;
     }
     
-    if (!$self->{'disable_ajax'} && $component->ajaxable && !$self->_is_ajax_request) {
-      my $url   = $component->ajax_url($function_name);
-      my $class = 'initial_panel' . ($component->has_image ? ' image_panel' : '');
+    ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
+    ### If the user has AJAX disabled, use Renderer::Assembler to build the page using parallel HTTP requests
+    if ($component->ajaxable && !$ajax_request) {
+      my $url   = $component->ajax_url($content_function);
+      my $class = 'initial_panel' . ($component->has_image ? ' image_panel' : ''); # classes required by the javascript
       
-      # Check if ajax enabled
-      if ($ENSEMBL_WEB_REGISTRY->check_ajax) {
+      if ($renderer) {
+        $renderer->print(qq{<div class="$class">}, HTTP::Request->new('GET', "$base_url$url"), '</div>');
+      } else {
         # Safari requires a unique name on inputs when using browser-cached content (eq when the user presses the back button)
         # $panel_name is the memory location of the current object, so unique for each panel.
         # Without this, ajax panels don't load, or load the wrong content.
         my ($panel_name) = $self =~ /\((.+)\)$/;
         
-        $self->printf(qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url));
-      } elsif ($self->renderer->isa('EnsEMBL::Web::Document::Renderer::Assembler')) {
-        # if ajax disabled - we get all content by parallel requests to ourself
-        $self->print(qq{<div class="$class">}, HTTP::Request->new('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url), '</div>');
+        $html .= sprintf qq{<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="%s" /></div>}, encode_entities($url);
       }
     } else {
       my $content;
       
+      ### Try to call the required content function on the Component module
       eval {
-        my $func = $self->_is_ajax_request ? lc $hub->function : $function_name;
+        my $func = $ajax_request ? lc $function : $content_function;
         $func    = "content_$func" if $func;
         $content = $func && $component->can($func) ? $component->$func : $component->content;
       };
       
       if ($@) {
-        $self->component_failure($@, $entry, $module_name);
-        next;
-      }
-      
-      if ($content) {
-        if ($self->_is_ajax_request) {
-          my $id         = $hub->function eq 'sub_slice' ? '' : $component->id;
-          my $panel_type = $self->renderer->{'_modal_dialog_'} || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
+        $html .= $self->component_failure($@, $entry, $module_name);
+      } elsif ($content) {
+        if ($ajax_request) {
+          my $id         = $function eq 'sub_slice' ? '' : $component->id;
+          my $panel_type = $modal || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
           
           # Only add the wrapper if $content is html, and the update_panel parameter isn't present
           $content = qq{<div class="js_panel" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
         } else {
           my $caption = $component->caption;
-          $self->printf('<h2>%s</h2>', encode_entities($caption)) if $caption;
+          $html .= sprintf '<h2>%s</h2>', encode_entities($caption) if $caption;
         }
         
-        $self->print($content);
+        $html .= $content;
       }
-      
-      $self->timer_push("Component $module_name succeeded");
     }
   }
+  
+  ### If the has AJAX disabled, process the HTTP requests stored in Renderer::Assembler
+  if ($renderer) {
+    $renderer->close;
+    $html .= $renderer->content;
+  }
+  
+  $html .= sprintf '<div class="more"><a href="%s">more about %s ...</a></div>', $self->{'link'}, encode_entities($self->parse($self->{'caption'})) if $self->{'link'};
+  
+  return $html;
 }
 
 sub das_content {
-  my $self  = shift;
-  my $model = $self->{'model'};
+  my $self    = shift;
+  my $builder = $self->{'builder'};
+  my $xml;
   
   foreach my $function_name (@{$self->{'components'}->{'das_features'}}) {
-    my $result;
-    (my $module_name = $function_name) =~ s/::\w+$//;
+     my ($module_name, $func) = split /::(\w+)$/, $function_name;
     
-    if ($self->dynamic_use($module_name)) {          
-      no strict 'refs';
-      
+    if ($self->dynamic_use($module_name)) {
       eval {
-        $result = &$function_name($self, $model);
+        $xml = $module_name->new($builder)->$func;
       };
       
       $self->component_failure($@, 'das_features', $function_name) if $@;
     } else {
       warn "Component $function_name (compile failure)";
       
-      $self->_error(
+      $xml .= $self->_error(
         qq{Compile error in component "<strong>das_features</strong>"},
         qq{<p>Function <strong>$function_name</strong> not executed as unable to use module <strong>$module_name</strong> due to syntax error.</p>} . $self->_format_error($self->dynamic_use_failure($module_name))
       );
     }
     
-    last if $result;
+    last if $xml;
   }
   
   delete $self->{'components'}->{'das_features'};
+  
+  return $xml;
 }
 
 sub component_failure {
@@ -507,12 +475,10 @@ sub component_failure {
   
   warn $error;
   
-  $self->_error(
+  return $self->_error(
     qq{Runtime Error in component "<strong>$component</strong> [content]"},
     qq{<p>Function <strong>$module_name</strong> fails to execute due to the following error:</p>} . $self->_format_error($error)
   );
-  
-  $self->timer_push("Component $module_name (runtime failure [content])");
 }
 
 1;

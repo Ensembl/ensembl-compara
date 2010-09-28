@@ -114,7 +114,7 @@ sub options {
 
 sub has_form {
   my $self = shift;
-  return $self->{'_form'};
+  return $self->{'_form'} || $self->has_images || grep $_->can('form'), @{$self->{'_classes'}};
 }
 
 sub get_form {
@@ -197,9 +197,11 @@ sub update_from_input {
 
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_config_strings {
-  my ($self, $session, $r) = @_;
+  my ($self, $hub, $r) = @_;
   
-  my $input   = $session->input;
+  my $session = $hub->session;
+  my $input   = $hub->input;
+  my $species = $hub->species;
   my $updated = 0;
   my $params_removed;
   
@@ -270,7 +272,7 @@ sub update_from_config_strings {
     }
     
     if (@values) {
-      my $image_config = $session->getImageConfig($name, $name);
+      my $image_config = $hub->get_imageconfig($name, $name);
       
       next unless $image_config;
       
@@ -284,13 +286,13 @@ sub update_from_config_strings {
             $p = uri_unescape($p);
             
             # We have to create a URL upload entry in the session
-            my $code = md5_hex("$ENV{'ENSEMBL_SPECIES'}:$p");
+            my $code = md5_hex("$species:$p");
             my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
             
             $session->set_data(
               type    => 'url',
               url     => $p,
-              species => $ENV{'ENSEMBL_SPECIES'},
+              species => $species,
               code    => $code, 
               name    => $n
             );
@@ -349,7 +351,7 @@ sub update_from_config_strings {
   $self->altered = 1 if $updated;
   $session->store;
 
-  return $params_removed ? join '?', [split /\?/, $ENV{'REQUEST_URI'}]->[0], $input->query_string : undef;
+  return $params_removed ? join '?', $r->uri, $input->query_string : undef;
 }
 
 # Delete a key from the user settings

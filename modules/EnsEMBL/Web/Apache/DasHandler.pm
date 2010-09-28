@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Apache::DasHandler;
 
 use strict;
@@ -8,7 +10,7 @@ use SiteDefs qw(:APACHE);
 
 use Bio::EnsEMBL::Registry;
 
-use EnsEMBL::Web::Magic qw(ingredient);
+use EnsEMBL::Web::Controller::DAS;
 use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
 
@@ -50,7 +52,8 @@ sub handler_das {
   if ($assembly =~ /geneid/i && $das_species =~ /multi/i) {
     # this a site-wide request - try to figure out the species from the ID
     $das_species = '';
-    if ($querystring =~ /segment=([^;]+)\;?(.+)?$/) {
+    
+    if ($querystring =~ /segment=([^;]+)/) {
       my ($s) = Bio::EnsEMBL::Registry->get_species_and_object_type($1);
       $das_species = $s if $s;
     }
@@ -76,7 +79,7 @@ sub handler_das {
   $ENV{'ENSEMBL_DAS_SUBTYPE'}  = $subtype;
   $ENV{'ENSEMBL_SCRIPT'}       = $command;
   
-  ingredient($r);
+  new EnsEMBL::Web::Controller::DAS($r);
   
   return OK;
 }

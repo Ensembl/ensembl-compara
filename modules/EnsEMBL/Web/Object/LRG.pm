@@ -1,14 +1,13 @@
-#$Id:4
+# $Id$
 package EnsEMBL::Web::Object::LRG;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-
-use EnsEMBL::Web::Cache;
-use Bio::EnsEMBL::Compara::GenomeDB;
 
 use Time::HiRes qw(time);
+
+use Bio::EnsEMBL::Compara::GenomeDB;
+
+use EnsEMBL::Web::Cache;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -179,7 +178,7 @@ sub availability {
 
 sub analysis {
   my $self = shift;
-  return $self->model->object('Gene')->analysis;
+  return $self->builder->object('Gene')->analysis;
 }
 
 sub counts {

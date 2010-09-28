@@ -1,9 +1,8 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::Marker::Details;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use EnsEMBL::Web::Document::HTML::TwoCol;
 use EnsEMBL::Web::Document::SpreadSheet;
@@ -175,7 +174,7 @@ sub render_location {
   my ($self, $m) = @_;
   
   my $object   = $self->object;
-  my $location = $self->model->create_objects('Location', 'lazy');
+  my $location = $self->builder->create_objects('Location', 'lazy');
   my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
   my $name     = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
   my $html;

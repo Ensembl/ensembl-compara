@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Apache::SpeciesHandler;
 
 use strict;
@@ -7,7 +9,6 @@ use Apache2::Const qw(:common :http :methods);
 use SiteDefs qw(:APACHE);
 
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::Magic qw(stuff modal_stuff ingredient configurator menu export);
 use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Registry;
 use EnsEMBL::Web::RegObj;
@@ -19,7 +20,7 @@ sub handler_species {
   
   my $redirect_if_different = 1;
   my @path_segments         = @$raw_path_segments;
-  my ($ajax, $plugin, $type, $action, $function);
+  my ($plugin, $type, $action, $function);
   
   s/\W//g for @path_segments; # clean up dodgy characters
   
@@ -28,9 +29,8 @@ sub handler_species {
   my $script = $OBJECT_TO_SCRIPT->{$seg};
   
   if ($seg eq 'Component' || $seg eq 'Zmenu' || $seg eq 'Config') {
-    $ajax   = $seg;
     $type   = shift @path_segments if $OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'Zmenu';
-    $plugin = shift @path_segments if $ajax eq 'Component';
+    $plugin = shift @path_segments if $seg eq 'Component';
   } else {
     $type = $seg;
   }
@@ -39,19 +39,11 @@ sub handler_species {
   $function = shift @path_segments;
   
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
-  
-  if ($flag && $script) {
-    if ($script eq 'action' || $script eq 'modal') {
-      $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action eq 'Multi';
-    } elsif ($script eq 'component') {
-      $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action;
-      $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram|Top|Bottom)$/;
-      
-      @path_segments = ();
-    }
     
-    # Make an ENV flag for custom pages
-    $ENV{'ENSEMBL_CUSTOM_PAGE'} = 1 if $action eq 'Custom' || $script =~ /^(config|component)$/ && $ENV{'HTTP_REFERER'} =~ /\/Custom(\?|(?!.))/;
+  if ($flag && $script) {
+    $ENV{'ENSEMBL_FACTORY'}     = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram|Top|Bottom)?$/;
+    $ENV{'ENSEMBL_COMPONENT'}   = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action if $script eq 'component';
+    $ENV{'ENSEMBL_CUSTOM_PAGE'} = 1 if $action eq 'Custom' || $script =~ /^(config|component)$/ && $ENV{'HTTP_REFERER'} =~ /\/Custom(\?|(?!.))/; # Make an ENV flag for custom pages
     
     $redirect_if_different = 0;
   } else {
@@ -73,8 +65,7 @@ sub handler_species {
   
   my $newfile = join '/', @$raw_path_segments;
   
-  # Path is changed; HTTP_TEMPORARY_REDIRECT
-  
+  # Path is changed: HTTP_TEMPORARY_REDIRECT
   if (!$flag || ($redirect_if_different && $newfile ne $file)) {
     $r->uri($newfile);
     $r->headers_out->add('Location' => join '?', $newfile, $querystring || ());
@@ -103,25 +94,27 @@ sub handler_species {
     type    => $type,
     action  => $action,
   });
-
+  
   my %web_functions = (
-    action    => \&stuff,
-    component => \&ingredient,
-    config    => \&configurator,
-    export    => \&export,
-    modal     => \&modal_stuff,
-    zmenu     => \&menu
+    action    => 'Page',
+    component => 'Component',
+    config    => 'Config',
+    export    => 'Export',
+    modal     => 'Modal',
+    zmenu     => 'ZMenu'
   );
   
   $script = 'export' if $action eq 'Export';
   
-  if ($web_functions{$script}) {    
-    $web_functions{$script}($r);
+  if ($web_functions{$script}) {
+    my $controller = "EnsEMBL::Web::Controller::$web_functions{$script}";
+    
+    eval "use $controller";
+    
+    $controller->new($r);
     
     return OK;
   }
-  
-  $script = join '/', map $_ || (), $action, $function if $script eq 'private';
   
   # Search the perl directories for a script to run if it wasn't one of the functions from EnsEMBL::Web::Magic
   my $to_execute = $MEMD ? $MEMD->get("::SCRIPT::$script") : '';
@@ -148,7 +141,7 @@ sub handler_species {
     $MEMD->set("::SCRIPT::$script", $to_execute, undef, 'SCRIPT') if $MEMD;
   }
   
-  if ($to_execute && -e $to_execute) {    
+  if ($to_execute && -e $to_execute) {
     $ENV{'PATH_INFO'} = "/$path_info" if $path_info;
     
     eval 'do $to_execute;';

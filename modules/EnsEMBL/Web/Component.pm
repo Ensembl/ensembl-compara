@@ -29,8 +29,8 @@ sub new {
   my $class = shift;
   
   my $self = {
-    model => shift,
-    id    => [split /::/, $class]->[-1] . 'Panel'
+    builder => shift,
+    id      => [split /::/, $class]->[-1] . 'Panel'
   };
   
   bless $self, $class;
@@ -45,8 +45,8 @@ sub id {
   return $self->{'id'};
 }
 
-sub model { return $_[0]->{'model'};      }
-sub hub   { return $_[0]->{'model'}->hub; }
+sub builder { return $_[0]->{'builder'};      }
+sub hub     { return $_[0]->{'builder'}->hub; }
 
 sub content_pan_compara {
   my $self = shift;
@@ -73,17 +73,10 @@ sub content_other_pan_compara {
 }
 
 sub object {
-## Tries to be backwards compatible!
+  ## Tries to be backwards compatible
   my $self = shift;
   $self->{'object'} = shift if @_;
-  my $object;
-  if ($self->model) {
-    $object = $self->model->object;
-  }
-  else { 
-    $self->{'object'};
-  }
-  return $object;
+  return $self->builder ? $self->builder->object : $self->{'object'};
 }
 
 sub cacheable {

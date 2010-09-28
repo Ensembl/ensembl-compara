@@ -12,7 +12,7 @@ use base 'EnsEMBL::Web::Controller::Command';
 sub process {
   my $self = shift;
   my $object = $self->object;
-  my $hub = $self->model->hub;
+  my $hub = $self->hub;
   my ($script, $new_param);
 
   my $ticket = $object->submit_query;

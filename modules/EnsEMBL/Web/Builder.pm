@@ -1,9 +1,9 @@
 # $Id$
 
-package EnsEMBL::Web::Model;
+package EnsEMBL::Web::Builder;
 
 ### DESCRIPTION:
-### Model is a container for domain objects such as Location, Gene, 
+### Builder is a container for domain objects such as Location, Gene, 
 ### and User plus a single helper module, Hub (see separate documentation).
 ### Domain objects are stored as a hash of key-arrayref pairs, since 
 ### theoretically a page can have more than one domain object of a 
@@ -14,55 +14,29 @@ package EnsEMBL::Web::Model;
 ###   'Gene'      => [$a, $b, $c],
 ###   'UserData'  => [$bed, $gff],
 ### };
-### Note: Currently, most domain objects are Proxy::Object objects, but an
-### alternative implementation is under development 
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use URI::Escape qw(uri_escape);
-
-use EnsEMBL::Web::Hub;
 
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $args) = @_;
   
-  my $object_params = [
-    [ 'Location',   'r'   ],
-    [ 'Gene',       'g'   ],
-    [ 'Transcript', 't'   ],
-    [ 'Variation',  'v'   ],
-    [ 'Regulation', 'rf'  ],
-    [ 'Marker',     'm'   ],
-    [ 'LRG',        'lrg' ],
-  ];
-    
   my $self = { 
-    _objects         => {},
-    _object_params   => $object_params,
-    _object_types    => { map { $_->[0] => $_->[1] } @$object_params },
-    _ordered_objects => [ map $_->[0], @$object_params ]
+    objects => {},
+    %$args
   };
-  
-  $self->{'_hub'} = new EnsEMBL::Web::Hub(
-    _apache_handle => $args->{'_apache_handle'},
-    _input         => $args->{'_input'},
-    _object_types  => $self->{'_object_types'}
-  );
    
   bless $self, $class;
   
   return $self; 
 }
 
-sub hub              { return $_[0]{'_hub'};             }
-sub all_objects      { return $_[0]{'_objects'};         }
-sub object_params    { return $_[0]{'_object_params'};   }
-sub object_types     { return $_[0]{'_object_types'};    }
-sub ordered_objects  { return $_[0]{'_ordered_objects'}; }
+sub hub             { return $_[0]{'hub'};             }
+sub all_objects     { return $_[0]{'objects'};         }
+sub object_params   { return $_[0]{'object_params'};   }
+sub object_types    { return $_[0]{'object_types'};    }
+sub ordered_objects { return $_[0]{'ordered_objects'}; }
 
 sub object {
   ### Getter/setter for data objects - acts on the default data type
@@ -73,10 +47,10 @@ sub object {
   my $hub = $self->hub;
   $type ||= $hub->type;
   
-  $self->{'_objects'}{$type} = $object if $object;
+  $self->{'objects'}{$type} = $object if $object;
   
-  my $object_type = $self->{'_objects'}{$type};
-  $object_type  ||= $self->{'_objects'}{$hub->factorytype} unless $_[1];
+  my $object_type = $self->{'objects'}{$type};
+  $object_type  ||= $self->{'objects'}{$hub->factorytype} unless $_[1];
   
   return $object_type;
 }
@@ -97,7 +71,7 @@ sub create_objects {
   my $hub     = $self->hub;
   my $url     = $hub->url($hub->multi_params);
   my $species = $hub->species;
-  $type   ||= $hub->factorytype;
+  $type     ||= $hub->factorytype;
   
   my ($factory, $new_factory, $data);
   
@@ -142,6 +116,8 @@ sub create_objects {
       return 'redirect';
     }
   }
+  
+  $hub->core_objects($self->all_objects);
 }
 
 sub create_factory {
@@ -159,7 +135,7 @@ sub create_factory {
     _input         => $hub->input,
     _apache_handle => $hub->apache_handle,
     _databases     => $hub->databases,
-    _parent        => $hub->parent
+    _referer       => $hub->referer
   };
   
   my $factory = $self->new_factory($type, $data);

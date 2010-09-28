@@ -1,12 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Configuration::Export;
 
 use strict;
-use base 'EnsEMBL::Web::Configuration';
 
-sub global_context { return undef; }
-sub local_context  { return undef; }
-sub local_tools    { return undef; }
-sub content_panel  { return $_[0]->_content_panel; }
+use base qw(EnsEMBL::Web::Configuration);
 
 sub populate_tree {
   my $self = shift; 
@@ -25,6 +23,14 @@ sub populate_tree {
   $self->create_node('LDFormats/Location',      '', [ 'ld_formats',  'EnsEMBL::Web::Component::Export::LDFormats' ],  \%config);
   
   $self->create_node('PopulationFormats/Transcript', '', [ 'pop_formats', 'EnsEMBL::Web::Component::Export::PopulationFormats' ], \%config);
+}
+
+sub modify_page_elements {
+  my $self = shift;
+  my $page = $self->page;
+  
+  $page->remove_body_element('global_context');
+  $page->remove_body_element('local_context');
 }
 
 1;

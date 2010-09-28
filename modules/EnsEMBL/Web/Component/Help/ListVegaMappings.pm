@@ -1,13 +1,14 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::Help::ListVegaMappings;
 
 use strict;
-use warnings;
+
+use Bio::EnsEMBL::Registry;
+
+use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Help);
-use Bio::EnsEMBL::Registry;
-no warnings "uninitialized";
-use EnsEMBL::Web::Document::SpreadSheet;
 
 sub _init {
   my $self = shift;
@@ -20,11 +21,11 @@ sub content {
   my $self           = shift;
   my $hub            = $self->hub;
   my $species        = $hub->species;
-  my $location       = $self->model->object('Location');
+  my $location       = $self->builder->object('Location');
   my $chromosome     = $location->seq_region_name;
   my $ensembl_start  = $location->seq_region_start;
   my $alt_assemblies = $hub->species_defs->ALTERNATIVE_ASSEMBLIES;
-  my $referer        = $self->hub->parent;
+  my $referer        = $hub->referer;
   
   # get coordinates of other assemblies (Vega)  
   if ($alt_assemblies) {

@@ -43,8 +43,8 @@ sub _content {
     _apache_handle => undef,
     _core_objects  => $core_objects,
     _databases     => $db_connection,
-    _parent        => undef
-    });
+    _referer       => undef
+  });
 
   my $object = new EnsEMBL::Web::Proxy::Object('Gene', $gene_s, $factory->__data);
   #added for lrg EOF                                                                                                                                                                                              

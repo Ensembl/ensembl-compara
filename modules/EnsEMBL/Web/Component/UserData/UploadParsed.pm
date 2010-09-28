@@ -22,7 +22,7 @@ sub caption {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-  my $url    = $self->ajax_url('ajax', 1) . ';r=' . $object->parent->{'params'}->{'r'}[0] . ';code=' .  $object->param('code');
+  my $url    = $self->ajax_url('ajax', 1) . ';r=' . $object->referer->{'params'}->{'r'}[0] . ';code=' .  $object->param('code');
 
   return qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div><div class="modal_reload"></div>};
 }
@@ -56,7 +56,7 @@ sub content_ajax {
       $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
       
       if ($parser->nearest) {
-        $html .= sprintf '<p class="space-below"><strong>Go to %s region with data</strong>: ', $object->parent->{'params'}{'r'} ? 'nearest' : 'first';
+        $html .= sprintf '<p class="space-below"><strong>Go to %s region with data</strong>: ', $object->referer->{'params'}{'r'} ? 'nearest' : 'first';
         $html .= sprintf '<a href="%s/Location/View?r=%s">%s</a></p>', $object->species_path($upload->{'species'}), $parser->nearest, $parser->nearest;
         $html .= '<p class="space-below">or</p>';
       }

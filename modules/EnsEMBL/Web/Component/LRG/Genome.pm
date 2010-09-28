@@ -1,4 +1,5 @@
-#$Id$
+#$ Id: Genome.pm,v 1.9 2010-08-09 11:59:35 sb23 Exp $
+
 package EnsEMBL::Web::Component::LRG::Genome;
 
 ### Hacky copy of Component::Location::Genome, as there's an AJAX bug that breaks
@@ -6,10 +7,8 @@ package EnsEMBL::Web::Component::LRG::Genome;
 ## FIXME - remove this module when bug is fixed!!
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
-use EnsEMBL::Web::Apache::SendDecPage;
+use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Component::Location;
 
@@ -30,7 +29,7 @@ sub content {
 
   my ($html, @all_features);
   
-  my $features = $self->model->create_objects('Feature', 'lazy')->convert_to_drawing_parameters('LRG')->[0];
+  my $features = $self->builder->create_objects('Feature', 'lazy')->convert_to_drawing_parameters('LRG')->[0];
   my $table    = $self->feature_tables($features);
   
   if ($chromosomes && scalar @$chromosomes && $species_defs->MAX_CHR_LENGTH) {
@@ -54,7 +53,7 @@ sub content {
     $html .= $self->_info('Unassembled genome', '<p>This genome has yet to be assembled into chromosomes</p>');
   }
   
-  $html .= $table || EnsEMBL::Web::Apache::SendDecPage::template_INCLUDE(undef, "/ssi/species/stats_$species.html");
+  $html .= $table || EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, "/ssi/species/stats_$species.html");
   
   return $html;
 }

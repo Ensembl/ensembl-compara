@@ -1,17 +1,10 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Configuration::LRG;
 
 use strict;
 
-use base qw( EnsEMBL::Web::Configuration );
-
-sub global_context { return $_[0]->_global_context; }
-sub ajax_content   { return $_[0]->_ajax_content;   }
-sub configurator   { return $_[0]->_configurator;   }
-sub local_context  { return $_[0]->_local_context;  }
-sub local_tools    { return $_[0]->_local_tools;    }
-sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return $_[0]->_context_panel;  }
+use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
@@ -23,61 +16,51 @@ sub short_caption {
   return 'LRG-based displays';
 }
 
-sub caption           {
+sub caption {
   my $self = shift;
   my $caption;
-=pod
-  my( $disp_id ) = $self->object->display_xref;
-  my $caption = $self->object->type_name.': ';
-  if( $disp_id ) {
-    $caption .= "$disp_id (".$self->object->stable_id.")";
-  } else {
-    $caption .= $self->object->stable_id;
-  }
-=cut
+  
   if ($self->hub->param('lrg')) {
-    $caption = 'LRG: '.$self->hub->param('lrg'); 
-  }
-  else {
+    $caption = 'LRG: ' . $self->hub->param('lrg'); 
+  } else {
     $caption = 'LRGs';
   }
+  
   return $caption;
 }
 
 sub availability {
   my $self = shift;
   my $hash = $self->get_availability;
+  
   $hash->{'lrg'} = $self->object ? 1 : 0;
 
   my $lrg = $self->object;
+  
   if ($lrg) {
-    my $rows = $lrg->table_info( $lrg->get_db, 'stable_id_event' )->{'rows'};
-    $hash->{'either'}   = 1;
-    $hash->{'core'}     = $lrg->get_db eq 'core' ? 1 : 0;
-    my $funcgen_db = $lrg->get_db('funcgen');
-    my $funcgen_res = 0;
-    if ($funcgen_db){
-     $funcgen_res = $lrg->table_info('funcgen', 'feature_set' )->{'rows'} ? 1 : 0;
-    }
-    $hash->{'regulation'} = $funcgen_res ? 1 : 0;
+    my $rows = $lrg->table_info($lrg->get_db, 'stable_id_event')->{'rows'};
+    $hash->{'either'}     = 1;
+    $hash->{'core'}       = $lrg->get_db eq 'core' ? 1 : 0;
+    $hash->{'regulation'} = $lrg->get_db('funcgen') ? $lrg->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
   }
+  
   return $hash;
 }
 
 sub counts {
   my $self = shift;
   my $hub = $self->hub;
-  my $obj = $self->model->api_object('Gene');
+  my $obj = $self->builder->api_object('Gene');
 
   return {} unless $obj;
 
-  my $key = '::COUNTS::GENE::'.$hub->species.'::'.$hub->param('db').'::'.$hub->param('lrg').'::';
+  my $key = sprintf '::COUNTS::GENE::%s::%s::%s::', $hub->species, $hub->param('db'), $hub->param('lrg');
   my $counts = $hub->cache ? $hub->cache->get($key) : undef;
 
   if (!$counts) {
     $counts = {
-      transcripts   => scalar @{$self->model->api_object('Transcript')},
-      genes         => 1,
+      transcripts => scalar @{$self->builder->api_object('Transcript')},
+      genes       => 1,
     };
 
     $hub->cache->set($key, $counts, undef, 'COUNTS') if $hub->cache;

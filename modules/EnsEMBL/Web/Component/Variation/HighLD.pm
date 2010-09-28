@@ -1,22 +1,23 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::HighLD;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Variation);
+
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
+use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 sub content {
-  my $self = shift;
+  my $self   = shift;
   my $object = $self->object;
-  my $html = '';
+  my $html   = '';
  
   ## first check we have a location.
   if ( $object->not_unique_location ){
@@ -39,7 +40,7 @@ sub content {
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $object->species_defs->ENSEMBL_TMP_TMP;
 
   # if we have a location
-  if($self->model->object('Location')) {
+  if($self->builder->object('Location')) {
     
     # check we have LD populations defined
     if($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {

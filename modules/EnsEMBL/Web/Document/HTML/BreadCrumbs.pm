@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::BreadCrumbs;
 
 use strict;
@@ -19,7 +21,7 @@ sub title {
   return $self->{'title'};
 }
 
-sub render {
+sub _content {
   my $self = shift;
   my $path = $ENV{'SCRIPT_NAME'};
   my $html = $path eq '/index.html' ? 'Home' : '<a href="/">Home</a>';
@@ -37,8 +39,12 @@ sub render {
     $html .= ' &gt; ' . $self->title if $self->title;
   }
   
-  $self->print(qq{<div class="breadcrumbs print_hide">$html</div>});
+  return qq{<div class="breadcrumbs print_hide">$html</div>};
+}
+
+sub init {
+  my ($self, $controller) = @_;
+  $self->title($controller->content =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: ' . $controller->r->uri) if $controller->request eq 'ssi';
 }
 
 1;
-

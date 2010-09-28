@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::HTML::Acknowledgements;
 
 ### Generates acknowledgements
@@ -11,33 +13,36 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub render {
+sub _content {
   my $self = shift;
   
   my $species_defs = $self->species_defs;
   my $species_path = $species_defs->species_path;
   my $ack_text     = $species_defs->ACKNOWLEDGEMENT;
   my $db_provider  = $species_defs->DB_BUILDER;
+  my $content;
   
   if ($ack_text) {
-    $self->print(qq{
+    $content .= qq{
       <div>
         <ul>
           <li style="list-style:none"><a href="/info/acknowledgement.html">$ack_text</a></li>
         </ul>
       </div>
-    });
+    };
   }
 
   if ($db_provider) {
-    $self->print(qq{
+    $content .= qq{
       <div>
         <ul>
           <li style="list-style:none"><a href="$species_path/Info/Index">DB built by $db_provider</a></li>
         </ul>
       </div>
-    });
+    };
   }
+  
+  return $content;
 }
 
 1;

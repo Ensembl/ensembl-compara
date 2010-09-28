@@ -1,20 +1,18 @@
 package EnsEMBL::Web::Command::Account::Interface::Newsfilter;
 
 use strict;
-use warnings;
 
-use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Data::Group;
+use EnsEMBL::Web::Data::User;
+
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self = shift;
-  my $object = $self->object;
+  my $self         = shift;
+  my $object       = $self->object;
   my $species_defs = $object->species_defs;
+  my $interface    = $self->interface; ## Create interface object, which controls the forms
   my $data;
-
-  ## Create interface object, which controls the forms
-  my $interface = $self->interface;
 
   ## TODO: make new constructor accept 'record_type' parameter
   if ($object->param('record_type') && $object->param('record_type') eq 'group') {
@@ -30,22 +28,22 @@ sub process {
   my @species_list = sort { $a->{'name'} cmp $b->{'name'} } map {{ name => $species_defs->get_config($_, 'SPECIES_COMMON_NAME', 1), value => $_ }} $species_defs->valid_species;
   
   ## Customization
-  $interface->caption({add  => 'Set news filter'});
-  $interface->caption({edit => 'Edit news filter'});
+  $interface->caption({ add  => 'Set news filter'  });
+  $interface->caption({ edit => 'Edit news filter' });
   $interface->permit_delete('yes');
+  
   $interface->element('species', {
-                                  name   => 'species',
-                                  type   => 'MultiSelect',
-                                  label  => 'Species',
-                                  values => \@species_list,
-                                 }
-  );
+    name   => 'species',
+    type   => 'MultiSelect',
+    label  => 'Species',
+    values => \@species_list,
+  });
 
-  $interface->modify_element('owner_type', { type => 'Hidden'});
-  $interface->element_order(['species', 'owner_type']);
+  $interface->modify_element('owner_type', { type => 'Hidden' });
+  $interface->element_order([ 'species', 'owner_type' ]);
 
   ## Render page or munge data, as appropriate
-  $interface->configure($self->page, $object);
+  return $interface->configure($self);
 }
 
 1;

@@ -1,38 +1,24 @@
+# $Id$
+
 package EnsEMBL::Web::Configuration::Help;
 
 use strict;
-use base qw( EnsEMBL::Web::Configuration );
+
+use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
-  $self->{_data}{default} = 'Search';
+  $self->{'_data'}{'default'} = 'Search';
 }
 
 sub caption {}
 
-sub global_context { return undef; }
-sub ajax_content   { return undef;   }
-sub local_context  { return $_[0]->_local_context;  }
-
-=head2 local_context
- Example     : gets called from core ensembl (don't call manually!)
- Description : hide all menu and contact panels for ListVegaMappings
- Returns     : if action==ListVegaMappings -> undef
-               ||else -> $self->_local_context
- Return type : scalar
-=cut
-sub local_context  { 
-  my $self   = shift;
-  if ($self->hub->action eq 'ListVegaMappings') {
-    return undef;
-  }else{
-    return $self->_local_context;
-  }
+sub modify_page_elements {
+  my $self = shift;
+  my $page = $self->page;
+  $page->remove_body_element('global_context');
+  $page->remove_body_element('local_context') if $self->hub->action eq 'ListVegaMappings';
 }
-
-sub local_tools    { return undef;  }
-sub content_panel  { return $_[0]->_content_panel;  }
-sub context_panel  { return undef;  }
 
 sub populate_tree {
   my $self = shift;
@@ -129,7 +115,6 @@ sub populate_tree {
    [qw( ListVegaMappings EnsEMBL::Web::Component::Help::ListVegaMappings )],
     { 'class'=>'modal_link', 'availability' => 1, 'concise' => 'ListVegaMappings', 'no_menu_entry' => 1 }
   );  
-
 }
 
 1;

@@ -28,7 +28,7 @@ sub process {
   });
 
   $user_cookie->clear($self->r);
-  $object->redirect($object->parent->{'uri'});
+  $object->redirect($object->referer->{'uri'});
 }
 
 1;

@@ -1,17 +1,17 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::VariationSummary;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Variation);
+
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
+use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 sub content {
@@ -163,13 +163,13 @@ sub content {
     }
   }
 
-  ## Add LD data  
-  unless ( $object->Obj->is_somatic ){
+  unless ($object->Obj->is_somatic) {
+    ## Add LD data  
     my $ld_html;
     my $label = "Linkage disequilibrium data";
 
-    ## First check that a location has been selected:
-    if ($self->model->object('Location')) { 
+     ## First check that a location has been selected:
+    if ($self->builder->object('Location')) { 
       if  ($object->species_defs->databases->{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}) {
         my %pop_names = %{_ld_populations($object) ||{} };
         my %tag_data  = %{$object->tagged_snp ||{} };
@@ -183,14 +183,13 @@ sub content {
         $ld_html = "<h5>No linkage data available for this species</h5>";
       }
     } ## If no location selected direct the user to pick one from the summary panel 
-    else {
-     $ld_html = "You must select a location from the panel above to see Linkage disequilibrium data";
+     else {
+       $ld_html = "You must select a location from the panel above to see Linkage disequilibrium data";
     }
-
-    $html .= qq(<dt>$label</dt>
-                <dd> $ld_html</dd></dl>);
-  }       
-
+     $html .= qq(<dt>$label</dt>
+        <dd> $ld_html</dd></dl>);
+  }
+  
   return $html;
 }
 
