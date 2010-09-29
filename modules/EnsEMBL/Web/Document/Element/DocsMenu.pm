@@ -6,6 +6,8 @@ package EnsEMBL::Web::Document::Element::DocsMenu;
 
 use strict;
 
+use base qw(EnsEMBL::Web::Document::Element);
+
 sub content {
   my $self              = shift;
   my $tree              = $self->species_defs->STATIC_INFO;
