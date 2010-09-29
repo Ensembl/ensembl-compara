@@ -15,17 +15,6 @@ use EnsEMBL::Web::RegObj;
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
-sub script_to_controller {
-  return {
-    action    => 'Page',
-    component => 'Component',
-    config    => 'Config',
-    export    => 'Export',
-    modal     => 'Modal',
-    zmenu     => 'ZMenu'
-  };
-}
-
 sub handler_species {
   my ($r, $session_cookie, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
   
@@ -39,8 +28,8 @@ sub handler_species {
   my $seg    = shift @path_segments;
   my $script = $OBJECT_TO_SCRIPT->{$seg};
   
-  if ($seg eq 'Component' || $seg eq 'Zmenu' || $seg eq 'Config') {
-    $type   = shift @path_segments if $OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'Zmenu';
+  if ($seg eq 'Component' || $seg eq 'ZMenu' || $seg eq 'Config') {
+    $type   = shift @path_segments if $OBJECT_TO_SCRIPT->{$path_segments[0]} || $seg eq 'ZMenu';
     $plugin = shift @path_segments if $seg eq 'Component';
   } else {
     $type = $seg;
@@ -53,8 +42,8 @@ sub handler_species {
     
   if ($flag && $script) {
     $ENV{'ENSEMBL_FACTORY'}     = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram|Top|Bottom)?$/;
-    $ENV{'ENSEMBL_COMPONENT'}   = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action if $script eq 'component';
-    $ENV{'ENSEMBL_CUSTOM_PAGE'} = 1 if $action eq 'Custom' || $script =~ /^(config|component)$/ && $ENV{'HTTP_REFERER'} =~ /\/Custom(\?|(?!.))/; # Make an ENV flag for custom pages
+    $ENV{'ENSEMBL_COMPONENT'}   = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action if $script eq 'Component';
+    $ENV{'ENSEMBL_CUSTOM_PAGE'} = 1 if $action eq 'Custom' || $script =~ /^(Config|Component)$/ && $ENV{'HTTP_REFERER'} =~ /\/Custom(\?|(?!.))/; # Make an ENV flag for custom pages
     
     $redirect_if_different = 0;
   } else {
@@ -106,17 +95,14 @@ sub handler_species {
     action  => $action,
   });
   
-  my $script_to_controller = script_to_controller;
+  $script = 'Export' if $action eq 'Export';
   
-  $script = 'export' if $action eq 'Export';
+  my $controller = "EnsEMBL::Web::Controller::$script";
   
-  if ($script_to_controller->{$script}) {
-    my $controller = "EnsEMBL::Web::Controller::$script_to_controller->{$script}";
-    
-    eval "use $controller";
-    
+  eval "use $controller";
+  
+  if (!$@) {
     $controller->new($r);
-    
     return OK;
   }
   
