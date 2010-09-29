@@ -155,7 +155,7 @@ sub Features {
 
 	  if ($gene->can('analysis') && $gene->analysis && $gene->analysis->description) {
 # disable for the time being - need to take care of the html tags
-#	      push @$notes, $gene->analysis->description;
+	      push @$notes, $gene->analysis->description;
 	  }
 
 	  my $s1 = {
