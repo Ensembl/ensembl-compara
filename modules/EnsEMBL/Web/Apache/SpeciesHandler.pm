@@ -15,6 +15,17 @@ use EnsEMBL::Web::RegObj;
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
+sub script_to_controller {
+  return {
+    action    => 'Page',
+    component => 'Component',
+    config    => 'Config',
+    export    => 'Export',
+    modal     => 'Modal',
+    zmenu     => 'ZMenu'
+  };
+}
+
 sub handler_species {
   my ($r, $session_cookie, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
   
@@ -95,19 +106,12 @@ sub handler_species {
     action  => $action,
   });
   
-  my %web_functions = (
-    action    => 'Page',
-    component => 'Component',
-    config    => 'Config',
-    export    => 'Export',
-    modal     => 'Modal',
-    zmenu     => 'ZMenu'
-  );
+  my $script_to_controller = script_to_controller;
   
   $script = 'export' if $action eq 'Export';
   
-  if ($web_functions{$script}) {
-    my $controller = "EnsEMBL::Web::Controller::$web_functions{$script}";
+  if ($script_to_controller->{$script}) {
+    my $controller = "EnsEMBL::Web::Controller::$script_to_controller->{$script}";
     
     eval "use $controller";
     
