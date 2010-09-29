@@ -16,7 +16,7 @@ my $description = q{
 ##
 ## DESCRIPTION
 ##    This script copies ancestral data over core DBs. It has been
-##    specifically developped to copy data from a production to a
+##    specifically developed to copy data from a production to a
 ##    release database.
 ##
 ###########################################################################
@@ -258,7 +258,7 @@ sub copy_data {
     $sth->execute();
     my ($num_sr) = $sth->fetchrow_array();
     $sth->finish;
-    print "num sr $num_sr\n";
+
     if ($num_sr == 0) {
 	throw("Invalid seq_region name. Should be of the form: $name" . "_%");
     }
@@ -271,15 +271,15 @@ sub copy_data {
     $sth->execute();
     my ($coord_system_id) = $sth->fetchrow_array();
     $sth->finish;
-    print "cs $coord_system_id\n";
+    #print "cs $coord_system_id\n";
 
     $cs_sql = "SELECT count(*) FROM seq_region WHERE coord_system_id = $coord_system_id";
     $sth = $from_dba->dbc->prepare($cs_sql);
     $sth->execute();
     my ($num_cs) = $sth->fetchrow_array();
     $sth->finish;
-    print "num cs $num_cs\n";
-    if ($num_cs != $num_sr) {
+
+    if ($num_cs == 0) {
 	throw("coord_system_id $coord_system_id does not exist in the production database. This needs to be fixed.");
     }
     
@@ -288,7 +288,7 @@ sub copy_data {
     $sth->execute();
     my ($num_to_sr) = $sth->fetchrow_array();
     $sth->finish;
-    print "num to sr $num_to_sr\n";
+
     if ($num_to_sr != 0) {
 	throw("Already have names of $name in the production database. This needs to be fixed");
 
@@ -303,7 +303,6 @@ sub copy_data {
     $sth->execute();
     my ($min_sr, $max_sr) = $sth->fetchrow_array();
     $sth->finish;
-    #print "min $min_sr $max_sr\n";
 
     #
     #Create correct number of spaceholder rows in seq_region table in to_db 
@@ -318,7 +317,6 @@ sub copy_data {
     $sth->execute();
     my ($new_min_sr, $new_max_sr) = $sth->fetchrow_array();
     $sth->finish;
-    #print "new min $new_min_sr $new_max_sr\n";
 
     #
     #Create temporary table in from_db to store mappings
@@ -356,7 +354,7 @@ sub copy_data {
     #
     #Copy over the dna with new seq_region_ids
     #
-    my $query = "SELECT new_seq_region_id, sequence FROM dna LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE seq_region_id > 0";
+    $query = "SELECT new_seq_region_id, sequence FROM tmp_seq_region_mapping JOIN dna USING (seq_region_id) WHERE seq_region_id > 0";
 
     print "copying dna\n";
     copy_data_in_text_mode($from_dba, $to_dba, "dna", "seq_region_id", $min_sr, $max_sr, $query, 1000);
@@ -420,10 +418,10 @@ sub copy_data_in_text_mode {
     #print "time " . ($start-$min_id) . " " . (time - $start_time) . "\n";
 
     if (defined $replace && $replace) {
-	print "replace mode\n";
+	#print "replace mode\n";
 	system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -r $dbname $filename");
     } else {
-	print "ignore mode\n";
+	#print "ignore mode\n";
 	system("mysqlimport -h$host -P$port -u$user ".($pass ? "-p$pass" : '')." -L -l -i $dbname $filename");
     }
     unlink("$filename");
