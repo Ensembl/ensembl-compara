@@ -200,7 +200,7 @@ sub _url {
     }
   }
   
-  my $url  = join '/', map $_ || (), $species, 'Zmenu', $type, $action, $fn;
+  my $url  = join '/', map $_ || (), $species, 'ZMenu', $type, $action, $fn;
   $url    .= '?' if scalar keys %pars;
 
   # Sort the keys so that the url is the same for a given set of parameters
