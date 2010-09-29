@@ -13,7 +13,7 @@ following notes should help you begin to find your way around!</p>
 <ol>
 <li><a href="#dirs">Web code directories</a></li>
 <li><a href="#routing">URL routing</a></li>
-<li><a href="#scripts">perl/default/* scripts</a></li>
+<li><a href="#scripts">Allowed scripts</a></li>
 <li><a href="#plugins">Plugins</a></li>
 </ol>
 
@@ -75,7 +75,7 @@ page is dynamically generated.</p>
 
 <p>The URL is split on '/' into the following parts:</p>
 
-<ol>
+<dl>
 <dt>Species path</dt>
 <dd>Usually just a single "directory", e.g. 'Homo_sapiens', although on some Ensembl-powered sites
 such as <a href="http://bacteria.ensemblgenomes.org/">EnsEMBL Bacteria</a>, a multi-directory
@@ -92,22 +92,23 @@ the Action is "Summary", meaning this is the page summarising useful information
 <dd>This is an optional fourth component of the URL. It is mainly used with interactive code
 such as user account management, e.g. /Account/Bookmark/Edit is the URL for the form where
 you edit the information stored in a user bookmark.</dd>
-</ol>
+</dl>
 
 <p>The parameters after the ? are handled as per normal CGI parameters; in this case, we have
 the name of the gene we want to display information about.</p>
 
-<p>The URL is parsed in E::W::Apache::Handlers - this module should be left well alone unless you
+<p>The URL is parsed in E::W::Apache::SpeciesHandler (or E::W::Apache::DASHandler for DAS URLs) - these modules should be left well alone unless you
 know exactly what you are doing!</p>
 
-<h2 id="scripts">perl/default/* scripts</h2>
+<h2 id="scripts">Allowed scripts</h2>
 
-<p>These are several extremely simple scripts that pass the URL parameters parsed by E::W::Apache::Handlers 
-into the rest of the web code. They are used to create HTML pages (or HTML fragments) as follows:
+<p>
+In order to determine what type of response a URL requires (full pages, HTML fragments etc.), the Type part of the URL is assigned a script, as follows:
+</p>
 
 <dl>
 <dt>action</dt>
-<dd>Normal web pages (do not confuse /perl/default/action with the 'Action' parameter, above!)</dd>
+<dd>Normal web pages (not to be confused with the 'Action' parameter, above)</dd>
 <dt>modal</dt>
 <dd>Popup "control panel" (data export, account management)</dd>
 <dt>config</dt>
@@ -118,36 +119,52 @@ into the rest of the web code. They are used to create HTML pages (or HTML fragm
 <dd>Small popup menus used for contextual navigation</dd>
 </dl> 
 
-
-<p>To define which data Types use which script, there is a hash in conf/SiteDefs.pm 
-(which can be extended in your plugin if you want to add data Types to Ensembl):
-
+<p>
+This script definition takes place in the <kbd>$OBJECT_TO_SCRIPT</kbd> hash in conf/SiteDefs.pm (which can be extended in your plugin if you want to add data Types to Ensembl):
+</p>
 <pre class="code">
 ## ALLOWABLE DATA OBJECTS
 $OBJECT_TO_SCRIPT = {
-  Config      =&gt; 'config',
-  Component   =&gt; 'component',
-  Zmenu       =&gt; 'zmenu',
+  Config     =&gt; 'config',
+  Component  =&gt; 'component',
+  Zmenu      =&gt; 'zmenu',
 
-  Gene        =&gt; 'action',
-  Transcript  =&gt; 'action',
-  Location    =&gt; 'action',
-  Variation   =&gt; 'action',
-  Regulation  =&gt; 'action',
-  Marker      =&gt; 'action',
-  LRG         =&gt; 'action',
-  Info        =&gt; 'action',
-  Search      =&gt; 'action',
-  UniSearch   =&gt; 'action',
-  News        =&gt; 'action',
+  Gene       =&gt; 'action',
+  Transcript =&gt; 'action',
+  Location   =&gt; 'action',
+  Variation  =&gt; 'action',
+  Regulation =&gt; 'action',
+  Marker     =&gt; 'action',
+  LRG        =&gt; 'action',
+  Info       =&gt; 'action',
+  Search     =&gt; 'action',
+  UniSearch  =&gt; 'action',
+  News       =&gt; 'action',
 
-  Account     =&gt; 'modal',
-  UserData    =&gt; 'modal',
-  Help        =&gt; 'modal',
-  Export      =&gt; 'modal',
+  Account    =&gt; 'modal',
+  UserData   =&gt; 'modal',
+  Help       =&gt; 'modal',
+  Export     =&gt; 'modal',
 };
-
 </pre>
+
+
+<p>
+The script is then checked by the mapping function below in E::W::Apache::SpeciesHandler to decide which child of E::W::Controller will be used to process the request.
+</p>
+<pre class="code">
+sub script_to_controller {
+  return {
+    action    =&gt; 'Page',
+    component =&gt; 'Component',
+    config    =&gt; 'Config',
+    export    =&gt; 'Export',
+    modal     =&gt; 'Modal',
+    zmenu     =&gt; 'ZMenu'
+  };
+}
+</pre>
+
 
 <h2 id="plugins">Plugins</h2>
 

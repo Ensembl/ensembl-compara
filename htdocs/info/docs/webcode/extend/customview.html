@@ -12,17 +12,17 @@
 <h2>Creating the page</h2>
 
 <ol>
-<li>Create a directory in your plugin to contain your custom code. If you want to put your code in the mirror plugin, it should be<br /><kbd>public-plugins/mirror/modules/EnsEMBL/Mirror</kbd></li>
+<li>Create a directory in your plugin to contain your custom code. If you want to put your code in the mirror plugin, it should be<br /><kbd>public-plugins/mirror/modules/EnsEMBL/Web</kbd></li>
 <li>Decide on the Action for your new page. For example if you are basing your view around gene information, your URL might be <br />&lt;species&gt;/Gene/MyViewName</li>
-<li>Create a module which will add this URL to the available views. In our example, <kbd>public-plugins/mirror/modules/EnsEMBL/Mirror/Configuration/Gene.pm</kbd> will extend the current set of gene-based displays:
+<li>Create a module which will add this URL to the available views. In our example, <kbd>public-plugins/mirror/modules/EnsEMBL/Web/Configuration/Gene.pm</kbd> will extend the current set of gene-based displays:
 <pre class="code">
-package EnsEMBL::Mirror::Configuration::Gene;
+package EnsEMBL::Web::Configuration::Gene;
 
 use strict;
-use base qw( EnsEMBL::Web::Configuration );
 
-sub populate_tree {
-  my $self   = shift;
+sub modify_tree {
+  my $self = shift;
+  
   $self-&gt;create_node('MyViewName', 'My Possibly Long Title for this View',
     [],
     { 'availability' =&gt; 'gene', 'concise' =&gt; 'My Short Title' }
@@ -39,19 +39,19 @@ sub populate_tree {
 package EnsEMBL::Mirror::Component::Gene::MyViewImage;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
-  $self-&gt;cacheable( 1 );
-  $self-&gt;ajaxable(  1 );
-  $self-&gt;configurable( 0 );
+  $self-&gt;cacheable(1);
+  $self-&gt;ajaxable(1);
+  $self-&gt;configurable(0);
 }
 
 sub content {
   my $self = shift;
+  
   ## The web 'object' is a wrapper around the Ensembl API object
   ## which a) makes the object extensible via plugins and
   ## b) usually includes methods that munge data into a web-friendly format
@@ -83,21 +83,25 @@ $self-&gt;create_node('MyViewName', 'My Possibly Long Title for this View',
 <li>Restart your server, and your completed page should now be accessible on your Ensembl installation!</li>
 </ol>
 
+<h3>Important note</h3>
+<p>You will note that the example in stage 3 has the package name <kbd>EnsEMBL::Web::Configuration::Gene</kbd>, while the one in stage 4 is <kbd>EnsEMBL::Mirror::Component::Gene::MyViewImage</kbd>.<br />
+When writing a plugin for an existing module, use the <kbd>EnsEMBL::Web</kbd> namespace.<br />
+In this situation the only functions you need to write are ones which replace existing functions, using the same function name (overwriting), or completely new functions (extending).<br />
+You do not even need the <kbd>use base</kbd> statement.<br />
+When writing a plugin for a new module, as in stage 4, use the <kbd>EnsEMBL::Mirror</kbd> namespace (where "Mirror" is whatever you've chosen as your plugin's namespace). These modules must be written in their entirety.
+</p>
+
 <h3>Custom data calls</h3>
 
 <p>If your new components need data that is not already available through the standard Object::Gene module, you can extend the module in the same way as Configuration and Component code:</p>
 <pre class="code">
-package EnsEMBL::Mirror::Object::Gene;
+package EnsEMBL::Web::Object::Gene;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-  
-use base qw(EnsEMBL::Web::Object::Gene);
 
 sub my_gene_info {
-  my $self    = shift;
-  my $api_obj = $self-&gt;Obj; ## Bio::Ensembl::Gene object
+  my $self      = shift;
+  my $api_obj   = $self-&gt;Obj; ## Bio::Ensembl::Gene object
   my $gene_info = {};
 
   ## Make API calls here!
@@ -111,10 +115,6 @@ sub my_gene_info {
 
 1;
 </pre>
-
-<h2>Adding configuration options</h2>
-
-<p>To Do</p>
 
 </body>
 </html>

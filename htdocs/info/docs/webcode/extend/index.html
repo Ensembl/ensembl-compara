@@ -7,91 +7,65 @@
 
 <h1>Dynamic (database-driven) web pages</h1>
 
-<p>Ensembl uses a complex structure of templating modules in order to create its pages. The 
-diagram below shows the process for constructing the human karyotype page; other dynamic pages
-are constructed in a similar manner..</p>
+<p>
+Ensembl uses a complex structure of templating modules in order to create its pages.<br />
+The diagram below shows the process for constructing a dynamic page.<br />
+The code is loosely written using an MVC (Model/View/Controller) style, as shown by the colours of the boxes.<br />
 
-<pre>
-                             www.ensembl.org/Homo_sapiens/Location/Genome
-                                                |
-                                                V
-                                          Apache::Handlers
-                                                |
-                                                V
-                                         perl/default/action
-                                                |
-                                                V
-                                            E::W::Magic  
-                                                |
-                                    --------------------------------------------------------------
-                                    |                                        |                   | 
-                                    V                                        |                   V                   
-                              E::W::Controller                               |              E::W::Builder
-                                    |                                        |                   |     
-                      ---------------------------                            |                   |   
-                      |                         |                            |                   V       
-                      V                         V                            |         E::W::Factory::Location         
-            E::W::Document::Page   E::W::Configuration::Location             |                   |          
-                      |                         |                            |                   |
-        -------------------------------         |                            V                   V
-        |                             |         |                        E::W::Model &lt;----E::W::Object::Location 
-        V                             V         V                            |                     
-  template modules                 E::W::Document::Panel                     |                     
-(E::W::Document::HTML::Logo, etc)             |                              |                     
-                                              V                              |                     
-                                  dynamic content modules  &lt;------------------
-                              (E::W::Component::Location::Genome)  
-                                                                         
-</pre>                                     
+<img src="flow_diagram.jpg" alt="flow_diagram" style="margin:1em 0" /><br />
+
+Using a human region in detail page as an example, the diagram can be explained as follows:
 
 <dl>
-<dt>Apache::Handlers</dt>
+<dt>URL</dt>
+<dd>http://www.ensembl.org/Homo_sapiens/Location/View?r=6:133017695-133161157</dd>
 
-<dd>Analyses the URL and redirects to the appropriate script</dd>
+<dt>Handler - Apache::SpeciesHandler</dt>
+<dd>
+The initial E::W::Handler hands off either to the SpeciesHandler or the DASHandler for dynamic pages. Since this is not a DAS request, SpeciesHandler is used.
+The URL is analyzed to choose the appropriate Controller.
+</dd>
 
-<dt>perl/default/action</dt>
+<dt>Controller - Controller::Page</dt>
+<dd>
+The Page controller is used to generate the page. After it has been loaded, additional components will be requested via AJAX. These will use E::W::Controller::Component.
+See <a href="/info/docs/webcode/code_intro.html#scripts">here</a> for a more detailed explanation of how the Controller module is chosen.
+</dd>
 
-<dd>One of a number of lightweight wrapper scripts (others are 'modal', 'config', etc) which direct the request to an appropriate method within the Magic module</dd>
-
-<dt>Magic</dt>
- 
-<dd>Principal Controller module, which instantiates the Model</dd>
-
-<dt>Controller</dt>
-
-<dd>Secondary Controller object, which instantiates the main View object (usually Page)</dd>
-
-<dt>Model</dt>
-
-<dd>Model module, containing zero or more domain objects plus a Hub - a holder object for all the database connections, CGI parameters, session data, etc. required by any dynamic page</dd>
+<dt>Hub</dt>
+<dd>A holder for all the database connections, CGI parameters, session data, etc. required by any dynamic page</dd>
 
 <dt>Builder</dt>
+<dd>Creates a Factory for each CGI parameter which is linked to an Object, and stores the Objects generated</dd>
 
-<dd>Creates one or more domain objects which are passed back to the Model</dd>
+<dt>Factories - Factory::Location</dt>
+<dd>
+Parses the CGI parameters to generate an Object with the required data.
+In this case, only a Factory::Location is generated. If the URL also contained, for example, a "g" parameter (e.g. g=ENSG00000139618), a Factory::Gene would be created too.
+</dd>
 
-<dt>Document::Page</dt>
+<dt>Objects - Object::Location</dt>
+<dd>A wrapper for a Bio::EnsEMBL::Slice, containing functions required by the web code.</dd>
 
-<dd>The principal View object, which instantiates subordinate View objects</dd>
+<dt>Configuration - Configuration::Location</dt>
+<dd>Builds a tree of available pages for the current Location, from which the left-hand navigation menu is built. Also defines the set of components that belong to each page</dd>
 
-<dt>template modules</dt>
+<dt>Elements - Document::Element::[Tabs, Logo etc]</dt>
+<dd>A series of more-or-less static modules which output HTML for various sections of the page template: logo, search box, footer, etc, as well as the left-hand navigation menu and top tabs</dd>
 
-<dd>A series of more-or-less static modules which output HTML for various sections of the page template: logo, search box, footer, etc</dd>
-
-<dt>Configuration::Location</dt>
-
-<dd>Builds a tree of available pages for the current Location, from which the lefthand navigation menu is built. Also defines the set of components that belong to each page</dd>
-
-<dt>Document::Panel</dt>
-
-<dd>A "container" for a set of output modules</dd>
+<dt>Panels - Document::Panel</dt>
+<dd>A container for a set of Elements and/or Components</dd>
 
 <dt>Components (dynamic content modules)</dt>
-
 <dd>One or more modules attached to a Panel, each of which outputs a chunk of HTML and/or images</dd>
+
+<dt>Page - Document::Page</dt>
+<dd>Takes HTML output from Elements, Panels and Components, puts them into the whole page template, and renders the page</dd>
+
 </dl>
+</p>
 
 <p style="margin-top:2em"><strong>Next</strong>: <a href="customview.html">Creating a simple custom page</a></p>
-
 
 </body>
 </html>
