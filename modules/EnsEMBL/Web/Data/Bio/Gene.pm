@@ -40,7 +40,7 @@ sub convert_to_drawing_parameters {
         'label'    => $g->stable_id,
         'gene_id'  => [ $g->stable_id ],
         'extra'    => [ $g->description ],
-        'href'     => $hub->url({ type => 'Zmenu', action => 'Gene'}),        
+        'href'     => $hub->url({ type => 'ZMenu', action => 'Gene'}),        
       }
     }
   }

@@ -237,7 +237,7 @@ sub get_sequence_data {
 
           $mk->{'variations'}->{$_}->{'href'} ||= {
             species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
-            type        => 'Zmenu',
+            type        => 'ZMenu',
             action      => 'TextSequence',
             factorytype => 'Location'
           };

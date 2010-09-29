@@ -193,7 +193,7 @@ sub get_sequence_data {
         }
         
         $mk->{'variations'}->{$_}->{'href'} ||= {
-          type        => 'Zmenu',
+          type        => 'ZMenu',
           action      => 'TextSequence',
           factorytype => 'Location'
         };

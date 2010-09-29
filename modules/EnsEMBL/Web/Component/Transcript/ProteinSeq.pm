@@ -71,7 +71,7 @@ sub get_sequence_data {
       $markup->{'variations'}->{$pos}->{'alleles'}   = $var->allele_string;
       $markup->{'variations'}->{$pos}->{'ambigcode'} = $var->ambig_code || '*';
       $markup->{'variations'}->{$pos}->{'href'} ||= {
-        type        => 'Zmenu',
+        type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location'
       };

@@ -41,7 +41,7 @@ sub convert_to_drawing_parameters {
         'region'   => $g->seq_region_name,
         'strand'   => $g->strand,
         'extra'    => [ $g->description, $xref->dbname ],
-        'href'     => $hub->url({ type => 'Zmenu', action => 'Feature', function => 'Xref', ftype => $ftype, id => $xref->primary_id, r => undef }),
+        'href'     => $hub->url({ type => 'ZMenu', action => 'Feature', function => 'Xref', ftype => $ftype, id => $xref->primary_id, r => undef }),
       };
     }
   }  

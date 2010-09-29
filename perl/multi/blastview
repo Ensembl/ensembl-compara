@@ -1736,7 +1736,7 @@ sub populate_karyotype{
                                  'hsp_id=%s', 
                                  '_display=%s' ) );
 
-  my $ctgview_href_tmpl = ('/%s/Zmenu/Location/View?'.
+  my $ctgview_href_tmpl = ('/%s/ZMenu/Location/View?'.
                            join( ';',
                                  'r=%s:%s-%s',
                                  'h=BLAST_NEW:%s!!%s' ) );

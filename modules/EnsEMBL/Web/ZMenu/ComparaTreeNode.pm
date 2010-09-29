@@ -261,7 +261,7 @@ sub content {
       class => 'expand',
       order => 16,
       link  => $hub->url({
-        type     => 'Zmenu',
+        type     => 'ZMenu',
         action   => 'Gene',
         function => 'Jalview',
         file     => uri_escape($url_align),

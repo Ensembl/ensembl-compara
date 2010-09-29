@@ -285,7 +285,7 @@ sub add_variations {
       $sequence->[$_]->{'title'}  = $name;
        
       $href{$_} ||= {
-        type        => 'Zmenu',
+        type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location'
       };

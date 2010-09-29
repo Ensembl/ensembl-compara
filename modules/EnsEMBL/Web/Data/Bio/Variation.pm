@@ -89,7 +89,7 @@ sub convert_to_drawing_parameters {
       end            => $end,
       strand         => $vf->strand,
       label          => $name,
-      href           => $hub->url({ type => 'Zmenu', action => 'Variation', v => $name, vf => $dbID, vdb => 'variation' }),
+      href           => $hub->url({ type => 'ZMenu', action => 'Variation', v => $name, vf => $dbID, vdb => 'variation' }),
       p_value        => $p_value_logs{$variation_id},
       colour_scaling => 1,
       somatic        => $vf->is_somatic,
