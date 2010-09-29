@@ -138,7 +138,7 @@ sub load_cigars_from_fasta {
     (-file => "$file",
      -format => "fasta");
 
-  my $aln = $alignio->next_aln;
+  my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
 
   #place all member attributes in a hash on their member name
   my @members_attributes = ();

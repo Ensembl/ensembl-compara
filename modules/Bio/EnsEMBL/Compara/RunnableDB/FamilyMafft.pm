@@ -15,7 +15,7 @@ sub fetch_input {
     $self->param('family', $family); # and save it for the future
 
     if(!defined($family)) {
-        die "Failed: family $family_id could not have been fetched by the adaptor";
+        die "family $family_id could not have been fetched by the adaptor";
     }
 
     my $aln;
@@ -33,7 +33,7 @@ sub fetch_input {
     push @members_attributes,@{$family->get_Member_Attribute_by_source('Uniprot/SPTREMBL')};
 
     if(scalar @members_attributes == 0) {
-        die "Failed: family $family_id does not seem to contain any members";
+        die "family $family_id does not seem to contain any members";
 
     } elsif(scalar @members_attributes == 1) {    # the simple singleton case: just load the fake cigar_line
 
@@ -42,7 +42,7 @@ sub fetch_input {
         my $cigar_line = length($member->sequence).'M';
         eval { $attribute->cigar_line($cigar_line) };
         if($@) {
-            die "Failed: could not set the cigar_line for singleton family $family_id, because: $@ ";
+            die "could not set the cigar_line for singleton family $family_id, because: $@ ";
         }
 
             # by setting this parameter we will trigger the update in write_output()
@@ -56,6 +56,7 @@ sub fetch_input {
     my $rand = time().rand(1000);
     my $pep_file   = "/tmp/family_${family_id}.pep.$rand";
     my $mafft_file = "/tmp/family_${family_id}.mafft.$rand";
+    my $pep_counter = 0;
 
     open PEP, ">$pep_file";
     foreach my $member_attribute (@members_attributes) {
@@ -67,11 +68,17 @@ sub fetch_input {
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
         unless (defined($seq)) {
-            die "Failed: member $member_stable_id in family $family_id doesn't have a sequence";
+            die "member $member_stable_id in family $family_id doesn't have a sequence";
         }
         print PEP $seq,"\n";
+        $pep_counter++;
     }
     close PEP;
+
+    if($pep_counter>=20000) {
+        my $mafft_args = $self->param('mafft_args') || '';
+        $self->param('mafft_args', $mafft_args.' --parttree' );
+    }
 
         # if these two parameters are set, run() will need to actually execute mafft
     $self->param('pep_file', $pep_file);
@@ -83,7 +90,6 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $debug                   = $self->param('debug')          || 0;
     my $family_id               = $self->param('family_id');
     my $mafft_root_dir          = $self->param('mafft_root_dir') || '/software/ensembl/compara/mafft-6.522';
     my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
@@ -99,24 +105,24 @@ sub run {
     $ENV{MAFFT_BINARIES} = $mafft_root_dir; # set it for all exec'd processes
 
     my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
-    if($debug) {
+    if($self->debug) {
         warn "About to execute: $cmd_line\n";
     }
 
     if(system($cmd_line)) {
-        die "Failed: running mafft on family $family_id failed, because: $! ";
+        die "running mafft on family $family_id failed, because: $! ";
+    } elsif(-z $mafft_file) {
+        die "running mafft on family $family_id produced zero-length output";
     }
 
         # the file(s) will be removed on success and should stay undeleted on failure
-    unless($debug) {
+    unless($self->debug) {
         unlink $pep_file;
     }
 }
 
 sub write_output {
     my $self = shift @_;
-
-    my $debug                   = $self->param('debug')       || 0;
 
     if(my $singleton_relation = $self->param('singleton_relation')) {
 
@@ -127,7 +133,7 @@ sub write_output {
         my $family = $self->param('family');
         $family->load_cigars_from_fasta($mafft_file, 1);
 
-        unless($debug) {
+        unless($self->debug) {
             unlink $mafft_file;
         }
     } # otherwise we had no work to do and no files to remove
