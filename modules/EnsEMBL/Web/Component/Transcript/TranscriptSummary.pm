@@ -22,7 +22,11 @@ sub content {
 ## add transcript stats
   my $exons     = @{ $object->Obj->get_all_Exons };
   my $basepairs = $object->thousandify( $object->Obj->seq->length );
-  my $residues  = $object->Obj->translation ? $object->thousandify( $object->Obj->translation->length ): 0;
+  my $residues  = 0;
+  my $translation;
+  if ($translation = $object->Obj->translation) {
+    $residues = $object->thousandify( $translation->length );
+  }
 
   my $HTML = "
 	  <strong>Exons:</strong> $exons 
@@ -106,13 +110,6 @@ sub content {
 		  $text,
 		  1 );
 
-  ## add alternative transcript info
-  my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
-  if ($temp) {
-    $table->add_row('Alternative transcripts',
-		    "<p>$temp</p>",
-		    1 );
-  }
   ## add frameshift introns info
   my $frameshift_introns = $object->get_frameshift_introns;
   if ($frameshift_introns){
@@ -158,8 +155,29 @@ sub content {
     $table->add_row('Stop codons',
       "<p>$codons</p>",
       1
-    );  
+    );
   }
+
+  if ($translation) {
+    my $missing_evidence_attribs = $translation->get_all_Attributes('NoEvidence') || [];
+    if (@{$missing_evidence_attribs}) {
+      my $description = lcfirst($missing_evidence_attribs->[0]->description);
+      my $string = join ', ', map {$_->value } @{$missing_evidence_attribs};
+      $table->add_row(
+	'Evidence Removed',
+	"<p>The following $description: $string</p>",
+	1);
+    }
+  }
+
+  ## add alternative transcript info
+  my $temp =  $self->_matches( 'alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS' );
+  if ($temp) {
+    $table->add_row('Alternative transcripts',
+		    "<p>$temp</p>",
+		    1 );
+  }
+
   return $table->render;
 }
 
