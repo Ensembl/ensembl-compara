@@ -226,6 +226,16 @@ sub write_output {
 
   print "WRITE OUTPUT\n" if $self->debug;
 
+  #
+  #Start transaction
+  #
+  my $dbh = $self->{'comparaDBA'}->dbc->db_handle;
+  my $rc = $dbh->begin_work or die $dbh->errstr;
+
+  #Set use_autoincrement to 1 otherwise the GenomicAlignBlockAdaptor will use
+  #LOCK TABLES which does an implicit commit and prevent any rollback
+  $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor->use_autoincrement(1);
+
   if ($self->{'_runnable'}->{tree_to_save}) {
     my $meta_container = $self->{'comparaDBA'}->get_MetaContainer;
     $meta_container->store_key_value("synteny_region_tree_".$self->synteny_region_id,
@@ -237,9 +247,7 @@ sub write_output {
   my $mlss_id = $mlss->dbID;
   my $dnafrag_adaptor = $self->{'comparaDBA'}->get_DnaFragAdaptor;
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
-#   $gaba->use_autoincrement(0);
   my $gaa = $self->{'comparaDBA'}->get_GenomicAlignAdaptor;
-#   $gaa->use_autoincrement(0);
 
   my $gaga = $self->{'comparaDBA'}->get_GenomicAlignGroupAdaptor;
 
@@ -247,6 +255,15 @@ sub write_output {
 
   my $ancestor_genome_db = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
   my $ancestor_dba = $ancestor_genome_db->db_adaptor;
+
+  #
+  #Start transaction on ancestral database
+  #
+  my $original_core_dwi = $ancestor_dba->dbc->disconnect_when_inactive();
+  $ancestor_dba->dbc->disconnect_when_inactive(0);
+  my $dbh_core = $ancestor_dba->dbc->db_handle;
+  my $rc_core = $dbh_core->begin_work or die $dbh_core->errstr;
+
   my $slice_adaptor = $ancestor_dba->get_SliceAdaptor();
   my $ancestor_coord_system_adaptor = $ancestor_dba->get_CoordSystemAdaptor();
   my $ancestor_coord_system;
@@ -264,6 +281,9 @@ sub write_output {
     $ancestor_coord_system_adaptor->store($ancestor_coord_system);
   }
 
+  my $seq_region_sql = "UPDATE seq_region SET name = ? WHERE seq_region_id = ?";
+  my $sth = $ancestor_coord_system_adaptor->prepare($seq_region_sql);
+
   foreach my $genomic_align_tree (@{$self->{'_runnable'}->output}) {
        foreach my $genomic_align_node (@{$genomic_align_tree->get_all_nodes}) {
 	   foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
@@ -277,25 +297,24 @@ sub write_output {
  		  
  		  #Trigger loading of seq adaptor to avoid locked table problems
  		  $slice_adaptor->db()->get_SequenceAdaptor();
-		  my $last_id;
-		  unless( $last_id = $slice_adaptor->dbc->db_handle->selectrow_array("SELECT max(seq_region_id) FROM seq_region") ){
-			my $seq_region_sth = $slice_adaptor->dbc->prepare("show table status like \"seq_region\"");
-			$seq_region_sth->execute;
-		  	$last_id = $seq_region_sth->fetchrow_hashref()->{"Auto_increment"} - 1; #hack to get auto_increment value
-		  }
- 		  $slice_adaptor->dbc->db_handle->do("LOCK TABLES seq_region WRITE, dna WRITE");
- 		  $last_id++;
- 		  my $name = "Ancestor_" . $mlss_id . "_$last_id";
+
+		  #Insert into seq_region with dummy name to get the seq_region_id and then update with the new name
+		  #"Ancestor_" . $mlss_id . "_$seq_region_id";
+		  #Need to make unique dummy name
+		  my $dummy_name = "dummy_" . $$;
  		  my $slice = new Bio::EnsEMBL::Slice(
- 						      -seq_region_name   => $name,
+ 						      -seq_region_name   => $dummy_name,
  						      -start             => 1,
  						      -end               => $length,
  						      -seq_region_length => $length,
  						      -strand            => 1,
  						      -coord_system      => $ancestor_coord_system,
  						     );
- 		  $slice_adaptor->store($slice, \$genomic_align->original_sequence);
- 		  $slice_adaptor->dbc->db_handle->do("UNLOCK TABLES");
+ 		  my $this_seq_region_id = $slice_adaptor->store($slice, \$genomic_align->original_sequence);
+
+ 		  my $name = "Ancestor_" . $mlss_id . "_" . $this_seq_region_id;
+		  #print "name $name\n";
+		  $sth->execute($name, $this_seq_region_id);
  		  my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
 					   -name => $name,
 					   -genome_db => $ancestor_genome_db,
@@ -337,6 +356,13 @@ sub write_output {
 			    $mlss);
        }
    }
+  #
+  #Commit transaction
+  #
+  $dbh->commit;
+  $dbh_core->commit;
+  $ancestor_dba->dbc->disconnect_when_inactive($original_core_dwi);
+
   chdir("$self->worker_temp_directory");
   foreach(glob("*")){
       #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
@@ -344,7 +370,7 @@ sub write_output {
       #the previous job.
       unlink($_);
   }
-	
+
   return 1;
 }
 
@@ -1058,9 +1084,9 @@ sub get_species_tree {
   foreach my $leaf (@{$species_tree->get_all_leaves}) {
       #check have names rather than genome_db_ids
       if ($leaf->name =~ /\D+/) {
-	  $leaf->name($leaf_name{$leaf->name});
+	  $leaf->name($leaf_name{lc($leaf->name)});
       }
-      $leaf_check{$leaf->name}++;
+      $leaf_check{lc($leaf->name)}++;
   }
 
   #Check have one instance in the tree of each genome_db in the database
