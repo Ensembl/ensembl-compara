@@ -11,8 +11,6 @@ sub set_default_action {
   $self->{'_data'}{'default'} = 'Search';
 }
 
-sub caption {}
-
 sub modify_page_elements {
   my $self = shift;
   my $page = $self->page;
