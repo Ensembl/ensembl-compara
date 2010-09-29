@@ -154,7 +154,6 @@ sub Features {
 	  push @$notes, sprintf ("%s has %d transcripts containing a total of %d exons on the %s strand.", $gene_name, scalar(@{ $gene->get_all_Transcripts }),  scalar(@{ $gene->get_all_Exons }), $gene->strand > 0 ? 'forward' : 'reverse' );
 
 	  if ($gene->can('analysis') && $gene->analysis && $gene->analysis->description) {
-# disable for the time being - need to take care of the html tags
 	      push @$notes, $gene->analysis->description;
 	  }
 
