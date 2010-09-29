@@ -67,6 +67,7 @@ sub populate_tree         {}
 sub modify_tree           {}
 sub add_external_browsers {}
 sub modify_page_elements  {}
+sub caption               {}
 
 sub delete_tree   { my $self = shift; $self->tree->_flush_tree;              } 
 sub hub           { return $_[0]->{'hub'};                                   }
