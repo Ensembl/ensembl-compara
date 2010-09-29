@@ -107,15 +107,15 @@ In order to determine what type of response a URL requires (full pages, HTML fra
 </p>
 
 <dl>
-<dt>action</dt>
-<dd>Normal web pages (not to be confused with the 'Action' parameter, above)</dd>
-<dt>modal</dt>
+<dt>Page</dt>
+<dd>Normal web pages</dd>
+<dt>Modal</dt>
 <dd>Popup "control panel" (data export, account management)</dd>
-<dt>config</dt>
+<dt>Config</dt>
 <dd>A variation on the modal page, used to create the image configuration control panels</dd>
-<dt>component</dt>
+<dt>Component</dt>
 <dd>Asynchronously generated page elements (the ones that replace the animated spinner)</dd>
-<dt>zmenu</dt>
+<dt>ZMenu</dt>
 <dd>Small popup menus used for contextual navigation</dd>
 </dl> 
 
@@ -125,45 +125,32 @@ This script definition takes place in the <kbd>$OBJECT_TO_SCRIPT</kbd> hash in c
 <pre class="code">
 ## ALLOWABLE DATA OBJECTS
 $OBJECT_TO_SCRIPT = {
-  Config     =&gt; 'config',
-  Component  =&gt; 'component',
-  Zmenu      =&gt; 'zmenu',
+  Config     =&gt; 'Config',
+  Component  =&gt; 'Component',
+  ZMenu      =&gt; 'ZMenu',
 
-  Gene       =&gt; 'action',
-  Transcript =&gt; 'action',
-  Location   =&gt; 'action',
-  Variation  =&gt; 'action',
-  Regulation =&gt; 'action',
-  Marker     =&gt; 'action',
-  LRG        =&gt; 'action',
-  Info       =&gt; 'action',
-  Search     =&gt; 'action',
-  UniSearch  =&gt; 'action',
-  News       =&gt; 'action',
+  Gene       =&gt; 'Page',
+  Transcript =&gt; 'Page',
+  Location   =&gt; 'Page',
+  Variation  =&gt; 'Page',
+  Regulation =&gt; 'Page',
+  Marker     =&gt; 'Page',
+  LRG        =&gt; 'Page',
+  Info       =&gt; 'Page',
+  Search     =&gt; 'Page',
+  UniSearch  =&gt; 'Page',
+  News       =&gt; 'Page',
 
-  Account    =&gt; 'modal',
-  UserData   =&gt; 'modal',
-  Help       =&gt; 'modal',
-  Export     =&gt; 'modal',
+  Account    =&gt; 'Modal',
+  UserData   =&gt; 'Modal',
+  Help       =&gt; 'Modal',
+  Export     =&gt; 'Modal',
 };
 </pre>
 
-
 <p>
-The script is then checked by the mapping function below in E::W::Apache::SpeciesHandler to decide which child of E::W::Controller will be used to process the request.
+The script is then used in E::W::Apache::SpeciesHandler to decide which child of E::W::Controller will be used to process the request.
 </p>
-<pre class="code">
-sub script_to_controller {
-  return {
-    action    =&gt; 'Page',
-    component =&gt; 'Component',
-    config    =&gt; 'Config',
-    export    =&gt; 'Export',
-    modal     =&gt; 'Modal',
-    zmenu     =&gt; 'ZMenu'
-  };
-}
-</pre>
 
 
 <h2 id="plugins">Plugins</h2>
