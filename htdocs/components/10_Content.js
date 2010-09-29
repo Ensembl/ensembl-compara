@@ -226,11 +226,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var panel = this;
     
     this.elLk.dataTable.each(function (i) {
-      var table  = $(this);
-      var length = $('tbody tr', this).length;
-      var width  = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
-      var noSort = table.hasClass('no_sort');
-      var menu   = [[],[]];
+      var table    = $(this);
+      var length   = $('tbody tr', this).length;
+      var width    = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
+      var noSort   = table.hasClass('no_sort');
+      var noToggle = table.hasClass('no_col_toggle');
+      var menu     = [[],[]];
       var sDom;
       
       var cookieId      = this.id || 'data_table' + panel.panelNumber;
@@ -253,7 +254,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
       
       if (length > 10) {
-        sDom = '<"dataTables_top"l<"col_toggle">f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
+        sDom = '<"dataTables_top"l' + (noToggle ? '' : '<"col_toggle">') + 'f<"invisible">>t<"dataTables_bottom"ip<"invisible">>';
         
         $.each([ 10, 25, 50, 100 ], function () {
           if (this < length) {
@@ -265,7 +266,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         menu[0].push(-1);
         menu[1].push('All');
       } else {
-        sDom = '<"dataTables_top"<"col_toggle left">f<"invisible">>t';
+        sDom = '<"dataTables_top"' + (noToggle ? '' : '<"col_toggle left">') + 'f<"invisible">>t';
       }
       
       var options = {
@@ -335,50 +336,52 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       var dataTable = table.dataTable(options);
       
-      panel.elLk.colToggle = $('.col_toggle', panel.el);
-      
-      var columns    = dataTable.fnSettings().aoColumns;
-      var toggleList = $('<ul class="floating_popup"></ul>');
-      var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).bind('click', function (e) {
-        if (e.target == this) {
-          toggleList.toggle();
-        }
-      });
-      
-      $.each(columns, function (col) {
-        var th = $(this.nTh);
+      if (!noToggle) {
+        panel.elLk.colToggle = $('.col_toggle', panel.el);
         
-        $('<li>', {
-          html: '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
-          click: function () {
-            var input = $('input', this);
-            
-            if (!input.attr('disabled')) {
-              var visibility = !columns[col].bVisible;
+        var columns    = dataTable.fnSettings().aoColumns;
+        var toggleList = $('<ul class="floating_popup"></ul>');
+        var toggle     = $('<div class="toggle">Show/hide columns</div>').append(toggleList).bind('click', function (e) {
+          if (e.target == this) {
+            toggleList.toggle();
+          }
+        });
+        
+        $.each(columns, function (col) {
+          var th = $(this.nTh);
+          
+          $('<li>', {
+            html: '<input type="checkbox"' + (th.hasClass('no_hide') ? ' disabled' : '') + (columns[col].bVisible ? ' checked' : '') + ' /><span>' + th.text() + '</span>',
+            click: function () {
+              var input = $('input', this);
               
-              if (panel.elLk.colToggle.length == 1) {
-                input.attr('checked', visibility);
-              } else {
-                var index = $(this).index();
+              if (!input.attr('disabled')) {
+                var visibility = !columns[col].bVisible;
                 
-                panel.elLk.colToggle.each(function () {
-                  $('input', this).get(index).checked = visibility;
+                if (panel.elLk.colToggle.length == 1) {
+                  input.attr('checked', visibility);
+                } else {
+                  var index = $(this).index();
+                  
+                  panel.elLk.colToggle.each(function () {
+                    $('input', this).get(index).checked = visibility;
+                  });
+                }
+                
+                $.each(panel.dataTables, function () {
+                  this.fnSetColumnVis(col, visibility);
                 });
               }
-              
-              $.each(panel.dataTables, function () {
-                this.fnSetColumnVis(col, visibility);
-              });
+            
+              input = null;
             }
+          }).appendTo(toggleList);
           
-            input = null;
-          }
-        }).appendTo(toggleList);
+          th = null; 
+        });
         
-        th = null; 
-      });
-      
-      $('.col_toggle', table.parent()).append(toggle);
+        $('.col_toggle', table.parent()).append(toggle);
+      }
       
       panel.dataTables = panel.dataTables || [];
       panel.dataTables.push(dataTable);
