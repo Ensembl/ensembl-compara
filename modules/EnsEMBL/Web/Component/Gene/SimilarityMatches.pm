@@ -32,7 +32,7 @@ sub matches_to_html{
   my $return_html="";
   my @types = @_;
   my $count_ext_refs =0;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'transcriptid asc' ]});
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 'no_col_toggle', sorting => [ 'transcriptid asc' ]});
   my @colums = ({ key => 'transcriptid' , title => 'Transcript ID' , align => 'left', sort => 'string', priority =>2147483647, display_id=> '', link_text=>''}); #give transcriptid the highest priority as we want it to be the 1st colum
   my %existing_display_names;
   my @rows;
