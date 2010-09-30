@@ -16,19 +16,7 @@ use EnsEMBL::Web::RegObj;
 
 # use EnsEMBL::Web::Tools::Misc qw(style_by_filesize); # DO NOT UNCOMMENT OR DELETE THIS LINE - It can cause circular references.
 
-our @TRANSCRIPT_TYPES = qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene);
-
-our $alignment_renderers = [
-  off         => 'Off',
-  normal      => 'Normal',
-  labels      => 'Labels',
-  half_height => 'Half height',
-  stack       => 'Stacked',
-  unlimited   => 'Stacked unlimited',
-  ungrouped   => 'Ungrouped',
-];
-
-our $MEMD = EnsEMBL::Web::Cache->new;
+our $MEMD = new EnsEMBL::Web::Cache;
 
 #########
 # 'general' settings contain defaults.
@@ -48,25 +36,35 @@ sub new {
   my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
   
   my $self = {
-    _colourmap   => $adaptor->colourmap,
-    _font_face   => $style->{'GRAPHIC_FONT'} || 'Arial',
-    _font_size   => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
-    _texthelper  => new Sanger::Graphics::TextHelper,
-    _db          => $adaptor->get_adaptor,
-    type         => $type,
-    species      => $species,
-    species_defs => $adaptor->get_species_defs,
-    exturl       => $adaptor->exturl,
-    general      => {},
-    user         => {},
-    _useradded   => {}, # contains list of added features
-    _r           => undef,
-    no_load      => undef,
-    storable     => 1,
-    altered      => 0,
-    _core        => undef,
-    _tree        => EnsEMBL::Web::OrderedTree->new,
-    _parameters  => {},
+    _colourmap          => $adaptor->colourmap,
+    _font_face          => $style->{'GRAPHIC_FONT'} || 'Arial',
+    _font_size          => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
+    _texthelper         => new Sanger::Graphics::TextHelper,
+    _db                 => $adaptor->get_adaptor,
+    type                => $type,
+    species             => $species,
+    species_defs        => $adaptor->get_species_defs,
+    exturl              => $adaptor->exturl,
+    general             => {},
+    user                => {},
+    _useradded          => {}, # contains list of added features
+    _r                  => undef,
+    no_load             => undef,
+    storable            => 1,
+    altered             => 0,
+    _core               => undef,
+    _tree               => new EnsEMBL::Web::OrderedTree,
+    _parameters         => {},
+    transcript_types    => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript gene)],
+    alignment_renderers => [
+      off         => 'Off',
+      normal      => 'Normal',
+      labels      => 'Labels',
+      half_height => 'Half height',
+      stack       => 'Stacked',
+      unlimited   => 'Stacked unlimited',
+      ungrouped   => 'Ungrouped',
+    ]
   };
 
   bless $self, $class;
@@ -118,19 +116,18 @@ sub new {
   return $self;
 }
 
-sub storable :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
-sub altered  :lvalue { $_[0]->{'altered'};  } # Set to one if the configuration has been updated
+sub storable     :lvalue { $_[0]->{'storable'};     } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
+sub altered      :lvalue { $_[0]->{'altered'};      } # Set to one if the configuration has been updated
+sub core_objects :lvalue { $_[0]->{'core_objects'}; }
 
 sub mergeable_config { return 0; }
-sub _set_core        { $_[0]->{'_core'} = $_[1]; }
-sub core_objects     { return $_[0]->{'_core'}; }
-sub set_species      { my $self = shift; $self->{'species'} = shift; }
 sub species_defs     { return $_[0]->{'species_defs'}; }
-sub colourmap        { return $_[0]->{'_colourmap'}; }
-sub bgcolor          { return $_[0]->get_parameter('bgcolor') || 'background1'; }
-sub bgcolour         { return $_[0]->bgcolor; }
-sub texthelper       { return $_[0]->{'_texthelper'}; }
-sub transform        { return $_[0]->{'transform'}; }
+sub colourmap        { return $_[0]->{'_colourmap'};   }
+sub texthelper       { return $_[0]->{'_texthelper'};  }
+sub transform        { return $_[0]->{'transform'};    }
+
+sub bgcolor  { return $_[0]->get_parameter('bgcolor') || 'background1'; }
+sub bgcolour { return $_[0]->bgcolor; }
 
 # We load less data on vertical drawing code, as it shows regions 
 # at a much smaller scale. We also need to distinguish between
@@ -318,7 +315,7 @@ sub load_user_tracks {
       }
     } else {
       my $display   = 'normal';
-      my $renderers = $alignment_renderers;
+      my $renderers = $self->{'alignment_renderers'};
       my $strand   = 'b'; 
       
       if ($entry->{'style'} eq 'wiggle') {
@@ -392,7 +389,7 @@ sub load_user_tracks {
       next unless $analysis;
       
       my $display   = 'normal';
-      my $renderers = $alignment_renderers;
+      my $renderers = $self->{'alignment_renderers'};
       my $strand    = 'b'; 
       
       if ($analysis->program_version eq 'WIG') {
@@ -455,7 +452,7 @@ sub _add_flat_file_track {
     colourset   => 'classes',
     caption     => $name,
     sub_type    => $sub_type,
-    renderers   => $alignment_renderers,
+    renderers   => $self->{'alignment_renderers'},
     description => $description,
     %options
   });
@@ -722,8 +719,8 @@ sub add_das_track {
   my ($self, $menu, $source, @extra) = @_;
   my $node = $self->get_node($menu); 
   
-  if (!$node && grep { $menu eq $_ } @TRANSCRIPT_TYPES) {
-    for (@TRANSCRIPT_TYPES) {
+  if (!$node && grep { $menu eq $_ } @{$self->{'transcript_types'}}) {
+    for (@{$self->{'transcript_types'}}) {
       $node = $self->get_node($_);
       last if $node;
     }
@@ -839,19 +836,19 @@ sub add_dna_align_feature {
     my $k = $data->{$key_2}{'type'} || 'other';
     my $menu = $self->tree->get_node("dna_align_$k");
     if ($menu) {
-      my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
+      my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
       $menu->append($self->create_track('dna_align_' . $key . '_' . $key_2, $data->{$key_2}{'name'}, {
         db           => $key,
         glyphset     => '_alignment',
         sub_type     => lc($k),
         colourset    => 'feature',
-	colour_key   => $data->{$key_2}{'colour_key'},
-	zmenu        => $data->{$key_2}{'zmenu'},
+        colour_key   => $data->{$key_2}{'colour_key'},
+        zmenu        => $data->{$key_2}{'zmenu'},
         logicnames   => $data->{$key_2}{'logic_names'},
         caption      => $data->{$key_2}{'caption'},
         description  => $data->{$key_2}{'description'},
         display      => $display,
-        renderers    => $alignment_renderers,
+        renderers    => $self->{'alignment_renderers'},
         strand       => 'b',
         show_strands => $data->{$key_2}{'show_strands'} || '', # show alignments all on one strand if configured as such
       }));
@@ -872,7 +869,7 @@ sub add_protein_align_feature {
   
   foreach my $key_2 (@$keys) {
     # needed because the same logic_name can be a gene and an alignment, need to fix default rederer  the web_data
-    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$alignment_renderers}) ? $data->{$key_2}{'display'} : 'off';
+    my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off';
     
     $menu->append($self->create_track('protein_' . $key . '_' . $key_2, $data->{$key_2}{'name'}, {
       db          => $key,
@@ -884,7 +881,7 @@ sub add_protein_align_feature {
       caption     => $data->{$key_2}{'caption'},
       description => $data->{$key_2}{'description'},
       display     => $display,
-      renderers   => $alignment_renderers,
+      renderers   => $self->{'alignment_renderers'},
       strand      => 'b'
     }));
   }
@@ -1002,12 +999,12 @@ sub add_gene {
   my ($self, $key, $hashref) = @_;
   
   # Gene features end up in each of these menus
-  return unless $self->_check_menus(@TRANSCRIPT_TYPES);
+  return unless $self->_check_menus(@{$self->{'transcript_types'}});
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $flag = 0;
   
-  foreach my $type (@TRANSCRIPT_TYPES) {
+  foreach my $type (@{$self->{'transcript_types'}}) {
     my $menu = $self->get_node($type);
 
     next unless $menu;
@@ -1021,7 +1018,7 @@ sub add_gene {
         caption     => $data->{$key_2}{'caption'},
         colour_key  => $data->{$key_2}{'colour_key'},
         label_key   => $data->{$key_2}{'label_key'},
-	zmenu       => $data->{$key_2}{'zmenu'},
+        zmenu       => $data->{$key_2}{'zmenu'},
         description => $data->{$key_2}{'description'},
         display     => $data->{$key_2}{'display'} || 'off',
         strand      => $type eq 'gene' ? 'r' : 'b',
@@ -1156,7 +1153,7 @@ sub add_oligo_probe {
       caption     => $key_3,
       strand      => 'b',
       display     => 'off',
-      renderers   => $alignment_renderers
+      renderers   => $self->{'alignment_renderers'}
     }));
   }
 }
