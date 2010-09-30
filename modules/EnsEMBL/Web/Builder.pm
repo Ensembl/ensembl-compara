@@ -133,7 +133,6 @@ sub create_factory {
   $data ||= {
     _hub           => $hub,
     _input         => $hub->input,
-    _apache_handle => $hub->apache_handle,
     _databases     => $hub->databases,
     _referer       => $hub->referer
   };
@@ -144,7 +143,7 @@ sub create_factory {
     my $problem = $factory->createObjects;
     
     if ($problem && ref $problem eq 'HASH' && $problem->{'fatal'}) {
-      $factory->delete_param($param);
+      $hub->delete_param($param);
     } else {
       $self->object($_->__objecttype, $_) for @{$factory->DataObjects};
       
