@@ -43,8 +43,9 @@ sub content {
   my $cdb    = shift || 'compara';
   my $hub    = $self->hub;
   my $object = $self->object;
+  my $is_genetree = $self->object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node);
-  if ($self->object->isa('EnsEMBL::Web::Object::GeneTree')) {
+  if ($is_genetree) {
     $tree = $self->object->Obj;
     $node = $tree->find_node_by_node_id($object->param('collapse'));
     $member = undef;
@@ -62,7 +63,7 @@ sub content {
   my $image_width          = $self->image_width               || 800;
   my $collapsability       = $object->param('collapsability');
   unless ($collapsability) {
-    $collapsability = $self->object->isa('EnsEMBL::Web::Object::GeneTree') ? 'duplications' : 'gene';
+    $collapsability = $is_genetree ? 'duplications' : 'gene';
   }
   my $colouring            = $object->param('colouring')      || 'background';
   my $show_exons           = $object->param('exons');
@@ -139,7 +140,7 @@ sub content {
   # Keep track of collapsed nodes
   my $collapsed_nodes   = $object->param('collapse');
   my ($collapsed_to_gene, $collapsed_to_para);
-  unless ($self->object->isa('EnsEMBL::Web::Object::GeneTree')) {
+  unless ($is_genetree) {
     $collapsed_to_gene = $self->_collapsed_nodes($tree, $node, 'gene',         $highlight_genome_db_id, $highlight_gene);
     $collapsed_to_para = $self->_collapsed_nodes($tree, $node, 'paralogs',     $highlight_genome_db_id, $highlight_gene);
   }
