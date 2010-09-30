@@ -3,20 +3,29 @@
 package EnsEMBL::Web::Factory;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
-use base qw(EnsEMBL::Web::Proxiable);
-
-# Additional Factory functionality
+use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $data) = @_;
-  my $self = $class->SUPER::new($data);
-  return $self;
+  my $self = { data => $data };
+  bless $self, $class;
+  return $self; 
 }
+
+sub __data             { return $_[0]{'data'};                      }
+sub hub                { return $_[0]{'data'}{'_hub'};              }
+sub species            { return $_[0]->hub->species;                }
+sub species_defs       { return shift->hub->species_defs(@_);       }
+sub species_path       { return shift->hub->species_path(@_);       }
+sub database           { return shift->hub->database(@_);           }
+sub problem            { return shift->hub->problem(@_);            }
+sub has_a_problem      { return shift->hub->has_a_problem(@_);      }
+sub clear_problems     { return shift->hub->clear_problems(@_);     }
+sub clear_problem_type { return shift->hub->clear_problem_type(@_); }
+sub delete_param       { shift->hub->delete_param(@_);              }
 
 sub param {
   my @params = shift->hub->param(@_);
@@ -95,7 +104,6 @@ sub _archive {
   return $archive_stable_id;
 }
 
-
 sub _help {
   my ($self, $string) = @_;
   return sprintf '<p>%s</p>', encode_entities($string);
@@ -160,10 +168,7 @@ sub _known_feature {
   return $feature;
 }
 
-sub problem            { return shift->hub->problem(@_);            }
-sub has_a_problem      { return shift->hub->has_a_problem(@_);      }
-sub clear_problems     { return shift->hub->clear_problems(@_);     }
-sub clear_problem_type { return shift->hub->clear_problem_type(@_); }
+
 
 1;
 

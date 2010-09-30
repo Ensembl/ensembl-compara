@@ -1,40 +1,68 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Object;
 
 ### NAME: EnsEMBL::Web::Object
 ### Base class - wrapper around a Bio::EnsEMBL API object  
-
-### PLUGGABLE: Yes, using Proxy::Object 
 
 ### STATUS: At Risk
 ### Contains a lot of functionality not directly related to
 ### manipulation of the underlying API object 
 
 ### DESCRIPTION
-### All Ensembl web data objects are derived from this class,
-### which is derived from Proxiable - as it is usually proxied 
-### through an {{EnsEMBL::Web::Proxy}} object to handle the dynamic 
-### multiple inheritance functionality.
+### All Ensembl web data objects are derived from this class
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
-use base qw(EnsEMBL::Web::Proxiable);
+use base qw(EnsEMBL::Web::Root);
 
-sub counts            { return {}; }
-sub _counts           { return {}; }                             # Implemented in plugins
-sub availability      { return {}; }
-sub can_export        { return 0; }
-sub hub               { return $_[0]{'data'}{'_hub'}; }          # Gets the underlying Ensembl object wrapped by the web object
-sub Obj               { return $_[0]{'data'}{'_object'}; }       # Gets the underlying Ensembl object wrapped by the web object
-sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
-sub problem           { return shift->hub->problem(@_); }
-sub default_action { return 'Summary'; }
+sub new {
+  my ($class, $data) = @_;
+  my $self = { data => $data };
+  bless $self, $class;
+  return $self; 
+}
+
+sub counts            { return {};        }
+sub _counts           { return {};        } # Implemented in plugins
+sub availability      { return {};        }
+sub can_export        { return 0;         }
+sub default_action    { return 'Summary'; }
+sub __data            { return $_[0]{'data'};                  }
+sub __objecttype      { return $_[0]{'data'}{'_objecttype'};   }
+sub Obj               { return $_[0]{'data'}{'_object'};       } # Gets the underlying Ensembl object wrapped by the web object
+sub hub               { return $_[0]{'data'}{'_hub'};          }
+
+sub species           { return $_[0]->hub->species;                   }
+sub type              { return $_[0]->hub->type;                      }
+sub action            { return $_[0]->hub->action;                    }
+sub function          { return $_[0]->hub->function;                  }
+sub script            { return $_[0]->hub->script;                    }
+sub referer           { return $_[0]->hub->referer;                   }
+sub species_defs      { return shift->hub->species_defs(@_);          }
+sub species_path      { return shift->hub->species_path(@_);          }
+sub problem           { return shift->hub->problem(@_);               }
+sub param             { return shift->hub->param(@_);                 }
+sub get_session       { return shift->hub->session(@_);               }
+sub session           { return shift->hub->session(@_);               }
+sub user              { return shift->hub->user(@_);                  }
+sub redirect          { return shift->hub->redirect(@_);              }
+sub multi_params      { return shift->hub->multi_params(@_);          }
+sub database          { return shift->hub->database(@_);              }
+sub DBConnection      { return shift->hub->database(@_);              }
+sub get_databases     { return shift->hub->get_databases(@_);         }
+sub databases_species { return shift->hub->get_databases_species(@_); }
+sub ExtURL            { return $_[0]->hub->ExtURL;                    }
+sub get_ExtURL        { return shift->hub->get_ExtURL(@_);            }
+sub get_ExtURL_link   { return shift->hub->get_ExtURL_link(@_);       }
+sub timer_push        { return shift->hub->timer_push(@_);            }
+sub table_info        { return shift->hub->table_info(@_);            }
+sub data_species      { return shift->hub->data_species(@_);          }
+sub _url              { return shift->hub->url(@_);                   }
 
 sub _filename {
   my $self = shift;
@@ -136,6 +164,8 @@ sub highlights {
   
   return $self->{'data'}{'_highlights'};
 }
+
+sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
 
 # Returns the type of seq_region in "human readable form" (in this case just first letter captialised)
 sub seq_region_type_human_readable {
