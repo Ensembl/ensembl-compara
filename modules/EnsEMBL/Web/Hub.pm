@@ -43,11 +43,8 @@ sub new {
   my $species      = $args->{'_species'}      || $ENV{'ENSEMBL_SPECIES'};
   my $input        = $args->{'_input'}        || new CGI;
   my $species_defs = $args->{'_species_defs'} || new EnsEMBL::Web::SpeciesDefs;
-
-  ## The following may seem a little clumsy, but it allows the Hub to be created
-  ## by a command-line script with no access to CGI parameters
-  my $factorytype = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
-  
+  my $factorytype  = $ENV{'ENSEMBL_FACTORY'}  || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
+  my $cookies      = $args->{'_apache_handle'} ? CGI::Cookie->parse($args->{'_apache_handle'}->headers_in->{'Cookie'}) : {};
   my ($session, $user, $timer);
   
   if ($ENSEMBL_WEB_REGISTRY) {
@@ -55,7 +52,9 @@ sub new {
     $user    = $args->{'_user'}  || $ENSEMBL_WEB_REGISTRY->get_user;
     $timer   = $args->{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
   }
-
+  
+  $species_defs->{'timer'} = $args->{'_timer'};
+  
   my $self = {
     _input         => $input,
     _species       => $species,    
@@ -72,22 +71,18 @@ sub new {
     _user_details  => $args->{'_user_details'}  || 1,
     _object_types  => $args->{'_object_types'}  || {},
     _apache_handle => $args->{'_apache_handle'} || undef,
-    _cookies       => $args->{'_apache_handle'} ?  CGI::Cookie->parse($args->{'_apache_handle'}->headers_in->{'Cookie'}) : undef,
-    _databases     => $species ne 'common'      ?  new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs)        : undef,
+    _databases     => $species ne 'common'      ?  new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef,
+    _cookies       => $cookies,
+    _session       => $session,
+    _user          => $user,
+    _timer         => $timer,
     _core_objects  => {},
     _core_params   => {},
-    _cookies       => {},
-    _session       => $session,
-    _user          => $user,                    
-    _timer         => $timer, 
   };
 
   bless $self, $class;
   
-  $self->{'_referer'} = ;
   $self->_set_core_params;
-  
-  $species_defs->{'timer'} = $args->{'_timer'};
   
   return $self;
 }
@@ -99,7 +94,6 @@ sub type        :lvalue { $_[0]{'_type'};        }
 sub action      :lvalue { $_[0]{'_action'};      }
 sub function    :lvalue { $_[0]{'_function'};    }
 sub factorytype :lvalue { $_[0]{'_factorytype'}; }
-sub referer     :lvalue { $_[0]{'_referer'};     }
 sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
