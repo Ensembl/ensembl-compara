@@ -750,7 +750,7 @@ sub fetch_by_method_link_type_registry_aliases {
   Arg  1     : string method_link_type
   Arg  2     : string species_set_name
   Example    : my $method_link_species_set =
-                     $mlssa->fetch_all_by_method_link_type_Species_set_tag("EPO", "mammals")
+                     $mlssa->fetch_by_method_link_type_species_set_name("EPO", "mammals")
   Description: Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
                corresponding to the given method_link_type and and species_set_tag value
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
