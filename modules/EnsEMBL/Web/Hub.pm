@@ -111,7 +111,9 @@ sub species_defs  { return $_[0]{'_species_defs'};  }
 
 sub check_ajax    { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
 sub referer       { return $_[0]{'referer'}    ||= $_[0]->_parse_referer; }
+sub viewconfig    { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig; } # Store default viewconfig so we don't have to keep getting it from session
 sub species_path  { return shift->species_defs->species_path(@_); }
+sub table_info    { return shift->species_defs->table_info(@_); }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
@@ -196,6 +198,14 @@ sub _set_core_params {
   $self->{'_core_params'} = $core_params;
 }
 
+# Determines the species for userdata pages (mandatory, since userdata databases are species-specific)
+sub data_species {
+  my $self    = shift;
+  my $species = $self->species;
+  $species    = $self->species_defs->ENSEMBL_PRIMARY_SPECIES if !$species || $species eq 'common';
+  return $species;
+}
+
 # Does an ordinary redirect
 sub redirect {
   my ($self, $url) = @_;
@@ -269,15 +279,24 @@ sub url {
 sub param {
   my $self = shift;
   
-  return unless $self->input;
-
-  if (@_) {
+  if (@_) { 
     my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
+    my $view_config = $self->viewconfig;
+    
+    if ($view_config) {
+      $view_config->set(@_) if @_ > 1;
+      my @val = $view_config->get(@_);
+      return wantarray ? @val : $val[0];
+    }
+    
     return wantarray ? () : undef;
   } else {
     my @params = map _sanitize($_), $self->input->param;
+    my $view_config = $self->viewconfig;
+    push @params, $view_config->options if $view_config;
     my %params = map { $_, 1 } @params; # Remove duplicates
+    
     return keys %params;
   }
 }
@@ -294,8 +313,8 @@ sub multi_params {
   my $input = $self->input;
 
   my %params = defined $realign ?
-  map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
-  map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
+    map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
+    map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
 }
@@ -410,7 +429,7 @@ sub get_imageconfig {
   
   if ($image_config) {
     $session->apply_to_image_config($image_config, $type, $key || $type);
-    $image_config->_set_core($self->core_objects);
+    $image_config->core_objects = $self->core_objects;
     
     return $image_config;
   } else {
