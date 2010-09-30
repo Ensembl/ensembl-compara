@@ -1,14 +1,13 @@
 package EnsEMBL::Web::Component::Gene::HistoryMap;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 sub caption {
@@ -17,86 +16,70 @@ sub caption {
 
 sub content_protein {
   my $self = shift;
-  $self->content( 1 );
+  $self->content(1);
 }
 
 sub content {
-  my $self = shift;
+  my $self    = shift;
   my $protein = shift;
-  my $OBJ = $self->object;
-  my $object;
+  my $object  = $self->object;
+  my $archive;
   my $htree;
 
-if ($protein == 1){ ;
-    my $translation_object;
-    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId') || $OBJ->transcript->isa('EnsEMBL::Web::Fake') ){ 
-       my $p;
-       $p = $self->object->param('p') || $self->object->param('protein'); 
-       unless ($p) {  
-         my $p_archive = shift @{$OBJ->transcript->get_all_translation_archive_ids};  
-         $p = $p_archive->stable_id;
-       }
-       my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
-       my $db_adaptor = $self->object->database($db);
-       my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
-       $object = $a->fetch_by_stable_id( $p );
-       ## get tree from Archve stableid object
-       $htree = $a->fetch_history_tree_by_stable_id($p);
+  if ($protein == 1) {
+    my $transcript = $object->transcript;
+    
+    if ($transcript->isa('Bio::EnsEMBL::ArchiveStableId') || $transcript->isa('EnsEMBL::Web::Fake')) { 
+       my $p  = $object->param('p')  || $object->param('protein') || $transcript->get_all_translation_archive_ids->[0]->stable_id; 
+       my $db = $object->param('db') || 'core';
+       my $a  = $object->database($db)->get_ArchiveStableIdAdaptor;
+       
+       $archive = $a->fetch_by_stable_id($p);
+       $htree   = $a->fetch_history_tree_by_stable_id($p); ## get tree from Archve stableid object
     } else {
-       $translation_object = $OBJ->translation_object;
-       $object = $translation_object->get_archive_object();
-       $htree = $translation_object->history;
+       my $translation = $object->translation_object;
+       $archive        = $translation->get_archive_object;
+       $htree          = $translation->history;
     }
-  } else {    # retrieve archive object
-    $object = $OBJ->get_archive_object();
+  } else {
+    $archive = $object->get_archive_object; # retrieve archive object
   }
 
-  my $name = $object->stable_id .".". $object->version;
+  my $name        = $archive->stable_id . '.' . $archive->version;
+  my $historytree = $htree || $object->history; 
 
-  my $historytree = $OBJ->history; 
-  if ($htree) {$historytree = $htree;}
+  return '<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>' unless defined $historytree;
+  return '<p style="text-align:center"><b>There is no history for $name stored in the database.</b></p>' if scalar @{$historytree->get_release_display_names} < 2;
 
-  unless (defined $historytree) {
-    my $html =  qq(<p style="text-align:center"><b>There are too many stable IDs related to $name to draw a history tree.</b></p>);
-    return $html;
-  }
+  my $tree = $self->_create_idhistory_tree($archive, $historytree);
+  my $html = $historytree->is_incomplete ? '<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>' : '';
 
-  my $size = scalar(@{ $historytree->get_release_display_names });
-  if ($size < 2) {
-    my $html =  qq(<p style="text-align:center"><b>There is no history for $name stored in the database.</b></p>);
-    return $html;
-  }
-
-  my $tree = $self->_create_idhistory_tree($object, $historytree, $OBJ);
-  my $T = $tree->render;
-  if ($historytree->is_incomplete) {
-    $T = qq(<p>Too many related stable IDs found to draw complete tree - tree shown is only partial.</p>) . $T;
-  }
-
-  return $T;
+  return $html . $tree->render;
 }
 
 sub _create_idhistory_tree {
-  my ($self, $object, $tree, $OBJ) = @_;
+  my ($self, $archive, $tree) = @_;
 
-  #user defined width in pixels
-  my $wuc = $OBJ->get_imageconfig( 'idhistoryview' );
-   $wuc->set_parameters({
-      'container_width' => $self->image_width || 800,
-      'image_width'     => $self->image_width || 800, ## hack at the moment....
-      'slice_number',     => '1|1',
+  my $object       = $self->object;
+  my $image_config = $object->get_imageconfig('idhistoryview');
+  
+  $image_config->set_parameters({
+    container_width => $self->image_width || 800,
+    image_width     => $self->image_width || 800, ## hack at the moment....
+    slice_number    => '1|1',
   });
 
-  $wuc->{_object} = $object;
-
+  $image_config->{'_object'} = $archive;
   
-  my $image = $self->new_image($tree, $wuc, [$object->stable_id], $OBJ );
+  my $image = $self->new_image($tree, $image_config, [ $archive->stable_id ], $object);
+  
   return if $self->_export_image($image, 'no_text');
-  $image->image_type = 'idhistorytree';
-  $image->image_name = $OBJ->param('image_width').'-'.$object->stable_id;
-  $image->imagemap = 'yes';
+  
+  $image->image_type       = 'idhistorytree';
+  $image->image_name       = $object->param('image_width') . '-' . $archive->stable_id;
+  $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'top';
-  $image->set_button( 'drag', 'title' => 'Drag to select region' );
+  $image->set_button('drag', 'title' => 'Drag to select region');
 
   return $image;
 }
