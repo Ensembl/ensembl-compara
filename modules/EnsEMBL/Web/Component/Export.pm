@@ -245,7 +245,7 @@ sub alignment {
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   
-  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $object, $self->slice, $object->param('align'), $object->species);
+  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $self->slice, $object->param('align'), $object->species);
   my $export;
 
   my $align_io = Bio::AlignIO->newFh(
