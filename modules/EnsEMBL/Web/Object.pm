@@ -50,7 +50,6 @@ sub param             { return shift->hub->param(@_);             }
 sub get_session       { return shift->hub->session(@_);           }
 sub session           { return shift->hub->session(@_);           }
 sub user              { return shift->hub->user(@_);              }
-sub redirect          { return shift->hub->redirect(@_);          }
 sub multi_params      { return shift->hub->multi_params(@_);      }
 sub database          { return shift->hub->database(@_);          }
 sub get_databases     { return shift->hub->get_databases(@_);     }
