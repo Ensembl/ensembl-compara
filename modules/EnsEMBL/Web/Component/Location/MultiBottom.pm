@@ -15,14 +15,12 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  
+  my $self   = shift;
   my $object = $self->object;
-  my $hub = $self->hub;
   
   return if $object->param('show_panels') eq 'top';
   
-  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
@@ -45,8 +43,8 @@ sub content {
   my @images;
   
   foreach (@$slices) {
-    my $image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
-    my $highlight_gene = $hub->param('g' . ($i-1));
+    my $image_config   = $object->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
+    my $highlight_gene = $object->param('g' . ($i-1));
     
     if (!defined $join_alignments) {
       $methods->{'BLASTZ_NET'}          = $image_config->get_option('opt_pairwise_blastz', 'values');

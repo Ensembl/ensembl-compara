@@ -1,8 +1,6 @@
 package EnsEMBL::Web::Component::Gene::ComparaTree;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use Bio::AlignIO;
 use IO::Scalar;
@@ -15,10 +13,6 @@ sub _init {
   my $self = shift;
   $self->cacheable(0);
   $self->ajaxable(1);
-}
-
-sub caption {
-  return undef;
 }
 
 sub _get_details {
@@ -39,19 +33,19 @@ sub _get_details {
 }
 
 sub content {
-  my $self   = shift;
-  my $cdb    = shift || 'compara';
-  my $hub    = $self->hub;
-  my $object = $self->object;
-  my $is_genetree = $self->object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
+  my $self        = shift;
+  my $cdb         = shift || 'compara';
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node);
+  
   if ($is_genetree) {
-    $tree = $self->object->Obj;
-    $node = $tree->find_node_by_node_id($object->param('collapse'));
+    $tree   = $object->Obj;
+    $node   = $tree->find_node_by_node_id($object->param('collapse'));
     $member = undef;
-  }
-  else {
-    $gene = $self->object;
+  } else {
+    $gene = $object;
     ($member, $tree, $node) = $self->_get_details($cdb);
   }
 
@@ -61,22 +55,13 @@ sub content {
   my $highlight_gene       = $object->param('g1');
   my $highlight_ancestor   = $object->param('anc');
   my $image_width          = $self->image_width               || 800;
-  my $collapsability       = $object->param('collapsability');
-  unless ($collapsability) {
-    $collapsability = $is_genetree ? 'duplications' : 'gene';
-  }
+  my $collapsability       = $object->param('collapsability') || ($is_genetree ? 'duplications' : 'gene');
   my $colouring            = $object->param('colouring')      || 'background';
-  my $show_exons           = $object->param('exons');
-  my $image_config         = $hub->get_imageconfig('genetreeview');
+  my $show_exons           = $object->param('exons') eq 'on' ? 1 : 0;
+  my $image_config         = $object->get_imageconfig('genetreeview');
   my @hidden_clades        = grep { $_ =~ /^group_/ && $object->param($_) eq 'hide'     } $object->param;
   my @collapsed_clades     = grep { $_ =~ /^group_/ && $object->param($_) eq 'collapse' } $object->param;
-  my @highlights;
-  if ($gene && $member) {
-    @highlights = ($gene->stable_id, $member->genome_db->dbID);
-  }
-  else {
-    @highlights = (undef, undef);
-  }
+  my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
   my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id, $html);
   
@@ -138,12 +123,14 @@ sub content {
   });
   
   # Keep track of collapsed nodes
-  my $collapsed_nodes   = $object->param('collapse');
+  my $collapsed_nodes = $object->param('collapse');
   my ($collapsed_to_gene, $collapsed_to_para);
-  unless ($is_genetree) {
-    $collapsed_to_gene = $self->_collapsed_nodes($tree, $node, 'gene',         $highlight_genome_db_id, $highlight_gene);
-    $collapsed_to_para = $self->_collapsed_nodes($tree, $node, 'paralogs',     $highlight_genome_db_id, $highlight_gene);
+  
+  if (!$is_genetree) {
+    $collapsed_to_gene = $self->_collapsed_nodes($tree, $node, 'gene',     $highlight_genome_db_id, $highlight_gene);
+    $collapsed_to_para = $self->_collapsed_nodes($tree, $node, 'paralogs', $highlight_genome_db_id, $highlight_gene);
   }
+  
   my $collapsed_to_dups = $self->_collapsed_nodes($tree, undef, 'duplications', $highlight_genome_db_id, $highlight_gene);
 
   if (!defined $collapsed_nodes) { # Examine collapsabilty
@@ -189,13 +176,7 @@ sub content {
       push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => [ keys %$nodes ] } if %$nodes;
     }
   }
-
-  if ($show_exons && $show_exons eq 'on') {
-    $show_exons = 1;
-  } else {
-    $show_exons = 0;
-  }
-
+  
   push @highlights, $collapsed_nodes        || undef;
   push @highlights, $coloured_nodes         || undef;
   push @highlights, $highlight_genome_db_id || undef;
@@ -221,6 +202,7 @@ sub content {
     push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_gene, g1 => $highlight_gene }), $highlight_gene ? 'View current genes only'        : 'View current gene only';
     push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_para, g1 => $highlight_gene }), $highlight_gene ? 'View paralogs of current genes' : 'View paralogs of current gene';
   }
+  
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_dups, g1 => $highlight_gene }), 'View all duplication nodes';
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => '', g1 => $highlight_gene }), 'View fully expanded tree';
   push @view_links, sprintf $li_tmpl, $hub->url, 'Switch off highlighting' if $highlight_gene;
@@ -230,12 +212,12 @@ sub content {
     <div style="margin-top:1em"><b>View options:</b><br/>
     <small><ul>%s</ul></small>
     Use the 'configure page' link in the left panel to set the default. Further options are available from menus on individual tree nodes.</div>
-  }, join('', @view_links));
+  }, join '', @view_links);
   
   return $html;
 }
 
-sub _collapsed_nodes{
+sub _collapsed_nodes {
   # Takes the ProteinTree and node related to this gene and a view action
   # ('gene', 'paralogs', 'duplications' ) and returns the list of
   # tree nodes that should be collapsed according to the view action.
