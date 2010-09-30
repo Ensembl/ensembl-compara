@@ -153,7 +153,7 @@ sub fetch_coord_systems {
 
   my $runnable = $self->retrieve_runnable;
   my $species = $runnable->result->database_species;
-  my $DBAdaptor = $self->DBConnection->get_databases_species($species, 'core')->{'core'};
+  my $DBAdaptor = $self->hub->databases_species($species, 'core')->{'core'};
   my $coord_systems = {};
   my $CoordSystemAdaptor = $DBAdaptor->get_CoordSystemAdaptor;
   foreach my $CoordSystem( @{$CoordSystemAdaptor->fetch_all} ) {

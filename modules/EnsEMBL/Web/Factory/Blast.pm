@@ -10,7 +10,7 @@ sub blast_adaptor {
   my $blast_adaptor; 
 
   eval {
-    $blast_adaptor = $self->hub->get_databases_species($species, 'blast')->{'blast'};
+    $blast_adaptor = $self->hub->databases_species($species, 'blast')->{'blast'};
   };
 
   return $blast_adaptor if $blast_adaptor;

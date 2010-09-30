@@ -1,26 +1,27 @@
 package EnsEMBL::Web::Component::Blast::Alignment;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Blast);
+
 use EnsEMBL::Web::Form;
+
+use base qw(EnsEMBL::Web::Component::Blast);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-  $self->configurable( 0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
+  $self->configurable(0);
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $ticket = $object->param('ticket');
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $object  = $self->object;
+  my $ticket  = $object->param('ticket');
   my $species = $object->param('species');
-  my $run = $object->retrieve_runnable;
-  my $hit = $object->retrieve_hit;
-  my $hsp = $object->retrieve_hsp;
+  my $run     = $object->retrieve_runnable;
+  my $hit     = $object->retrieve_hit;
+  my $hsp     = $object->retrieve_hsp;
 
   $object->param('species')       || return "No species";
   $hsp->can('genomic_hit')        || return "HSP cannot genomic_hit";
@@ -84,7 +85,7 @@ sub content {
 
   # Get slice corresponding to top level and  selected coord system
   # Need to reinstate slice adaptor, as this is lost during storage
-  my $db_adaptor = $object->DBConnection->get_databases_species($species, 'core')->{'core'};
+  my $db_adaptor = $hub->databases_species($species, 'core')->{'core'};
   my $sl_adaptor = $db_adaptor->get_SliceAdaptor;
   my $tlfeature  = $hsp->genomic_hit;
   my $feature    = $hsp->genomic_hit($csystem);
@@ -153,14 +154,14 @@ sub content {
       map { @{$_->get_all_Exons } } @{$slice->get_all_PredictionTranscripts }
     );
   } elsif( $exontype eq 'vega'){
-    my $db_adaptor = $object->DBConnection->get_databases_species($species, 'vega')->{'vega'};
+    my $db_adaptor = $hub->databases_species($species, 'vega')->{'vega'};
     $slice->adaptor->db->add_db_adaptor($exontype,$db_adaptor);
     @exons = (
       grep{ $_->seq_region_start<=$send && $_->seq_region_end>=$sstart }
       map{@{$_->get_all_Exons } } @{$slice->get_all_Genes('',$exontype) }
     );
   } elsif( $exontype eq 'estgene'){
-    my $db_adaptor = $object->DBConnection->get_databases_species($species, 'est')->{'est'};
+    my $db_adaptor = $hub->databases_species($species, 'est')->{'est'};
     $slice->adaptor->db->add_db_adaptor($exontype,$db_adaptor);
     @exons = (
       grep{ $_->seq_region_start<=$send && $_->seq_region_end>=$sstart }
