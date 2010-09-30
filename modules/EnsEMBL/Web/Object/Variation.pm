@@ -662,11 +662,7 @@ sub calculate_allele_freqs_from_genotype {
 
 sub get_external_data {
   my $self = shift;
-  my $v = $self->vari;
-  my $vdb = $self->DBConnection->get_DBAdaptor('variation');
-  my $vaa = $vdb->get_VariationAnnotationAdaptor(); 
-  my @data = @{$vaa->fetch_all_by_Variation($v)}; 
-  return \@data;
+  return $self->hub->database('variation')->get_VariationAnnotationAdaptor->fetch_all_by_Variation($self->vari);
 }
 
 sub is_somatic_with_different_ref_base {
@@ -979,14 +975,12 @@ sub get_individuals_pops {
 
 # Variation sets ##############################################################
 
-sub get_formatted_variation_set_string{
+sub get_formatted_variation_set_string {
   my $self = shift;
-
-  my $dbs = $self->DBConnection->get_DBAdaptor('variation');
-  my $vari_set_adaptor = $dbs->get_VariationSetAdaptor;
+  my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
   my $sets = $vari_set_adaptor->fetch_all_by_Variation($self->vari);
 
-  my $toplevel_sets = $vari_set_adaptor->fetch_all_top_VariationSets();
+  my $toplevel_sets = $vari_set_adaptor->fetch_all_top_VariationSets;
   my $variation_string;
   my %sets_observed; 
   foreach (sort { $a->name cmp $b->name } @$sets){
@@ -1015,9 +1009,7 @@ sub get_formatted_variation_set_string{
 
 sub get_variation_sets {
   my $self = shift;
-
-  my $dbs = $self->DBConnection->get_DBAdaptor('variation');
-  my $vari_set_adaptor = $dbs->get_VariationSetAdaptor;
+  my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
   my $sets = $vari_set_adaptor->fetch_all_by_Variation($self->vari); 
   return $sets;
 }
@@ -1134,8 +1126,9 @@ sub transcript_variation {
   ### Returns arrayref of transcript variation objs
 
   my ($self, $vari_feature) = @_;
-  my $dbs = $self->DBConnection->get_DBAdaptor('variation');
-  $dbs->dnadb($self->database('core'));
+  
+  $self->hub->database('variation')->dnadb($self->database('core'));
+  
   my $transcript_variation_obj =  $vari_feature->get_all_TranscriptVariations;
   return [] unless $transcript_variation_obj;
 

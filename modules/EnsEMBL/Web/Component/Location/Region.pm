@@ -1,8 +1,7 @@
 package EnsEMBL::Web::Component::Location::Region;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
@@ -13,13 +12,10 @@ sub _init {
 }
 
 sub content {
-  my $self   = shift;
-  my $object = $self->object;
-
-  $object->DBConnection->get_databases('core', 'compara');
-  
-  my $slice = $object->slice;
-  my $length = $slice->end - $slice->start + 1;
+  my $self         = shift;
+  my $object       = $self->object;
+  my $slice        = $object->slice;
+  my $length       = $slice->end - $slice->start + 1;
   my $image_config = $object->get_imageconfig('cytoview');
   
   $image_config->set_parameters({
@@ -40,13 +36,11 @@ sub content {
   
   return if $self->_export_image($image);
   
-   $image->imagemap = 'yes';
-   $image->{'panel_number'} = 'top';
-   $image->set_button('drag', 'title' => 'Click or drag to centre display');
+  $image->imagemap         = 'yes';
+  $image->{'panel_number'} = 'top';
+  $image->set_button('drag', 'title' => 'Click or drag to centre display');
 
-  my $html = $image->render . $self->_configure_display($info->{'count'});
-  
-  return $html;
+  return $image->render . $self->_configure_display($info->{'count'});
 }
 
 1;

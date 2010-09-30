@@ -346,17 +346,13 @@ sub add_evidence_links {
 }
 
 sub get_Slice {
-  my( $self, $context, $ori ) = @_;
-  my $db  = $self->get_db ;
-  my $dba = $self->DBConnection->get_DBAdaptor($db);
+  my ($self, $context, $ori) = @_;
+  
   my $slice = $self->Obj->feature_Slice;
-  if( $context =~ /(\d+)%/ ) {
-    $context = $slice->length * $1 / 100;
-  }
-  if( $ori && $slice->strand != $ori ) {
-    $slice = $slice->invert();
-  }
-  return $slice->expand( $context, $context );
+  $context  = $slice->length * $1 / 100 if $context =~ /(\d+)%/;
+  $slice    = $slice->invert if $ori && $slice->strand != $ori;
+  
+  return $slice->expand($context, $context);
 }
 
 sub short_caption {

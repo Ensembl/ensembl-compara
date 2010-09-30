@@ -60,7 +60,7 @@ sub content {
   $slice = $slice->invert if $object->param('strand') == -1;
   
   # Get all slices for the gene
-  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align_param, $species, undef, undef, $cdb);
+  my ($slices, $slice_length) = $self->get_slices($slice, $align_param, $species, undef, undef, $cdb);
   
   if ($align && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
@@ -111,7 +111,7 @@ sub content_sub_slice {
   $config = { %$config, %$defaults } if $defaults;
   
   # Requesting data from a sub slice
-  ($slices) = $self->get_slices($object, $slice, $config->{'align'}, $config->{'species'}, $start, $end, $cdb) if $start && $end;
+  ($slices) = $self->get_slices($slice, $config->{'align'}, $config->{'species'}, $start, $end, $cdb) if $start && $end;
   
   $config->{'slices'} = $slices;
   
@@ -151,8 +151,9 @@ sub content_sub_slice {
 
 sub get_slices {
   my $self = shift;
-  my ($object, $slice, $align, $species, $start, $end, $cdb) = @_;
+  my ($slice, $align, $species, $start, $end, $cdb) = @_;
   
+  my $object       = $self->object;
   my $species_defs = $object->species_defs;
   my $vega_compara = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
   my (@slices, @formatted_slices, $length);
@@ -182,20 +183,21 @@ sub get_slices {
 
 sub get_alignments {
   my $self = shift;
-  my ($object, $slice, $selected_alignment, $species, $start, $end, $cdb) = @_;
+  my ($slice, $selected_alignment, $species, $start, $end, $cdb) = @_;
   
+  my $hub = $self->hub;
   my $target_slice;
   my ($align, $target_species, $target_slice_name) = split '--', $selected_alignment;
   $align ||= 'NONE';
   $cdb   ||= 'compara';
   
   if ($target_slice_name) {
-    my $target_slice_adaptor = $object->DBConnection->get_DBAdaptor('core', $target_species)->get_SliceAdaptor;
+    my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
     $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name);
   }
   
   my $func                    = $self->{'alignments_function'} || 'get_all_Slices';
-  my $compara_db              = $object->database($cdb);
+  my $compara_db              = $hub->database($cdb);
   my $as_adaptor              = $compara_db->get_adaptor('AlignSlice');
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
@@ -203,8 +205,8 @@ sub get_alignments {
   
   my @selected_species;
   
-  foreach (grep { /species_$align/ } $object->param) {
-    if ($object->param($_) eq 'yes') {
+  foreach (grep { /species_$align/ } $hub->param) {
+    if ($hub->param($_) eq 'yes') {
       /species_${align}_(.+)/;
       push @selected_species, $1 unless $1 =~ /$species/i;
     }

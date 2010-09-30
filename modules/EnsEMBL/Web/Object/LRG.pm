@@ -462,8 +462,6 @@ sub get_slice_object {
 sub get_Slice {
   my ($self, $context, $ori) = @_;
   
-  my $db    = $self->get_db;
-  my $dba   = $self->DBConnection->get_DBAdaptor($db);
   my @genes = @{$self->Obj->get_all_Genes('LRG_import')||[]};
   my $slice = $genes[0]->feature_Slice;
 

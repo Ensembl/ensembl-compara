@@ -53,7 +53,6 @@ sub user              { return shift->hub->user(@_);              }
 sub redirect          { return shift->hub->redirect(@_);          }
 sub multi_params      { return shift->hub->multi_params(@_);      }
 sub database          { return shift->hub->database(@_);          }
-sub DBConnection      { return shift->hub->database(@_);          }
 sub get_databases     { return shift->hub->get_databases(@_);     }
 sub databases_species { return shift->hub->databases_species(@_); }
 sub ExtURL            { return $_[0]->hub->ExtURL;                }
