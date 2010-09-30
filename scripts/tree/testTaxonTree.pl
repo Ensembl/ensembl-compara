@@ -28,6 +28,8 @@ $self->{'extrataxon_sequenced'} = undef;
 $self->{'extrataxon_incomplete'} = undef;
 $self->{'multifurcation_deletes_node'} = undef;
 $self->{'multifurcation_deletes_all_subnodes'} = undef;
+$self->{'njtree_output_filename'} = undef;
+$self->{'no_other_files'} = undef;
 my $state = 4;
 
 my $conf_file;
@@ -46,11 +48,14 @@ GetOptions('help'        => \$help,
            'query_ncbi_name=s'     => \$self->{'query_ncbi_name'},
            'tag=s'     => \$self->{'tag'},
            'no_previous'             => \$self->{'no_previous'},
+
            'create_species_tree'     => \$self->{'create_species_tree'},
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
            'extrataxon_incomplete=s' => \$self->{'extrataxon_incomplete'},
            'multifurcation_deletes_node=s' => \$self->{'multifurcation_deletes_node'},
            'multifurcation_deletes_all_subnodes=s' => \$self->{'multifurcation_deletes_all_subnodes'},
+           'njtree_output_filename=s'   => \$self->{'njtree_output_filename'},  # we need to be able to feed the filename from outside to make some automation possible
+           'no_other_files'             => \$self->{'no_other_files'},          # and shut up the rest of it :)
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
@@ -330,16 +335,21 @@ sub create_species_tree {
   unless ($@) {
     print("\n\n$newick_common\n\n");
     $newick_common =~ s/\ /\_/g;
-    open T,">newick_common.$outname.nh" or die "$!";
-    print T $newick_common;
-    close T;
+
+    unless($self->{'no_other_files'}) {
+        open T,">newick_common.$outname.nh" or die "$!";
+        print T $newick_common;
+        close T;
+    }
   }
   my $newick = $root->newick_format;
   print("\n\n$newick\n\n");
 
-  open T,">newick.$outname.nh" or die "$!";
-  print T $newick;
-  close T;
+    unless($self->{'no_other_files'}) {
+        open T,">newick.$outname.nh" or die "$!";
+        print T $newick;
+        close T;
+    }
 
   my $newick_simple = $newick;
   $newick_simple =~ s/\:\d\.\d+//g;
@@ -347,24 +357,36 @@ sub create_species_tree {
 
   print "$newick_simple\n\n";
 
-  open T,">newick_simple.$outname.nh" or die "$!";
-  print T $newick_simple;
-  close T;
+    unless($self->{'no_other_files'}) {
+        open T,">newick_simple.$outname.nh" or die "$!";
+        print T $newick_simple;
+        close T;
+    }
 
   my $species_short_name = $root->newick_format('species_short_name');
   print("$species_short_name\n\n");
 
-  open T,">species_short_name.$outname.nh" or die "$!";
-  print T $species_short_name;
-  close T;
+    unless($self->{'no_other_files'}) {
+        open T,">species_short_name.$outname.nh" or die "$!";
+        print T $species_short_name;
+        close T;
+    }
 
   my $njtree_tree = $root->newick_format('njtree');
   print STDERR "==== Your njtree file njtree.$outname.nh ====\n";
   print("$njtree_tree\n\n");
 
-  open T,">njtree.$outname.nh" or die "$!";
-  print T $njtree_tree;
-  close T;
+    unless($self->{'no_other_files'}) {
+        open T,">njtree.$outname.nh" or die "$!";
+        print T $njtree_tree;
+        close T;
+    }
+
+    if($self->{'njtree_output_filename'}) {   # we need to feed the filename from outside for some automation
+        open(T,'>'.$self->{'njtree_output_filename'}) or die "$!";
+        print T $njtree_tree;
+        close T;
+    }
 
   my $s = join (":", map {$_->name} (@{$root->get_all_leaves}));
   $s =~ s/\ /\_/g;
