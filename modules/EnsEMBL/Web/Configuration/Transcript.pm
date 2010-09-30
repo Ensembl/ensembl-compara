@@ -75,12 +75,12 @@ sub populate_tree {
   ));
   
   my $go_menu = $self->create_submenu('GO', 'Gene ontology ([[counts::go]])');
-  $go_menu->append($self->create_node('Ontology/Table', 'Ontology image ([[counts::go]])',
+  $go_menu->append($self->create_node('Ontology/Image', 'Ontology image ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Goimage )],
     { 'availability' => 'transcript has_go', 'concise' => 'Gene ontology image' }
   ));
 
-  $go_menu->append($self->create_node('Ontology/Image', 'Ontology table ([[counts::go]])',
+  $go_menu->append($self->create_node('Ontology/Table', 'Ontology table ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
     { 'availability' => 'transcript has_go', 'concise' => 'Gene ontology table' }
   ));
