@@ -256,7 +256,13 @@ sub viewconfig {
 }
 
 sub get_viewconfig {
-  return shift->hub->get_viewconfig(@_);
+  my $self = shift;
+  return $self->hub->get_viewconfig(@_);
+}
+
+sub get_imageconfig  {
+  my $self = shift;
+  return $self->hub->get_imageconfig(@_);
 }
 
 sub slice {
