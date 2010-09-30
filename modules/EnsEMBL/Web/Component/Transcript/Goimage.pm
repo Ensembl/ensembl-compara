@@ -29,7 +29,7 @@ sub content {
   my $go_sub_dir="/GO/";  
   my $go_dir =$species_defs->ENSEMBL_TMP_DIR_IMG.$go_sub_dir;
   my $go_url = $species_defs->ENSEMBL_BASE_URL.$species_defs->ENSEMBL_TMP_URL_IMG.$go_sub_dir;   
-  my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";  
+  my $GOIDURL = $species_defs->ENSEMBL_EXTERNAL_URLS->{'GO'};
   my $image_background_colour = $species_defs->colour('goimage','image_background');
   my $node_fill_colour = $species_defs->colour('goimage','node_fill');
   my $node_font_colour = $species_defs->colour('goimage','node_font');
@@ -100,7 +100,7 @@ sub process_data {
 
   my $object = $self->object;
   my $goview    = $object->database('go') ? 1 : 0;
-  my $GOIDURL  = "http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=";
+  my $GOIDURL = $object->species_defs->ENSEMBL_EXTERNAL_URLS->{'GO'};
 
   foreach my $go (sort keys %{$data_hash}){
     my $row = {};
