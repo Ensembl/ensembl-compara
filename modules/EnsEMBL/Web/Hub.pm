@@ -3,14 +3,8 @@ package EnsEMBL::Web::Hub;
 ### NAME: EnsEMBL::Web::Hub 
 ### A centralised object giving access to data connections and the web environment 
 
-### STATUS: Under development
-### Currently being developed, along with its associated moduled E::W::Resource,
-### as a replacement for Proxy/Proxiable code
-
 ### DESCRIPTION:
-### Hub is intended as a replacement for both the non-object-specific
-### portions of Proxiable and the global variable ENSEMBL_WEB_REGISTRY
-### It uses the Flyweight design pattern to create a single object that is 
+### Hub uses the Flyweight design pattern to create a single object that is 
 ### passed around between all other objects that require data connectivity.
 ### The Hub stores information about the current web page and its environment, 
 ### including cgi parameters, settings parsed from the URL, browser session, 
@@ -109,12 +103,15 @@ sub timer         { return $_[0]{'_timer'};         }
 sub user_details  { return $_[0]{'_user_details'};  }
 sub species_defs  { return $_[0]{'_species_defs'};  }
 
-sub check_ajax    { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
-sub referer       { return $_[0]{'referer'}    ||= $_[0]->_parse_referer; }
-sub viewconfig    { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig; } # Store default viewconfig so we don't have to keep getting it from session
-sub species_path  { return shift->species_defs->species_path(@_); }
-sub table_info    { return shift->species_defs->table_info(@_); }
-sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
+sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef; }
+sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
+sub referer           { return $_[0]{'referer'}    ||= $_[0]->_parse_referer; }
+sub viewconfig        { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig; } # Store default viewconfig so we don't have to keep getting it from session
+sub species_path      { return shift->species_defs->species_path(@_);         }
+sub table_info        { return shift->species_defs->table_info(@_);           }
+sub get_databases     { return shift->databases->get_databases(@_);           }
+sub databases_species { return shift->databases->get_databases_species(@_);   }
+sub delete_param      { shift->input->delete(@_); }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
