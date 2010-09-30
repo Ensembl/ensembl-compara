@@ -35,6 +35,8 @@ sub new {
   $self->{_highlighted_term_accessions}=\@array;
   $self->{_clusters}={};
 
+  $self->{_idurl_per_cluster}= {};
+  
   if(defined($self->{_get_relation_type_colour}) && ref $self->{_get_relation_type_colour} ne "CODE"){
     $self->{_get_relation_type_colour}=_format_colour_code($self->{_get_relation_type_colour},'000000');
   }
@@ -83,6 +85,23 @@ sub idurl{
   my $idurl = shift;
   $self->{_idurl}= $idurl if defined($idurl);
   return $self->{_idurl};
+}
+
+sub get_url{
+  my $self=shift;
+  my $accession=shift;
+  my $cluster=shift;
+warn $cluster;
+warn $self->{_idurl_per_cluster}->{$cluster};
+  my $id_url = $self->{_idurl_per_cluster}->{$cluster};
+  if(!defined($id_url)){
+    $id_url = $self->idurl;
+  }
+  $id_url =~ s/(###ID###)/$accession/g;
+  if(!$1){
+    $id_url .=$accession;
+  }  
+  return $id_url;
 }
 
 sub image_background_colour{
@@ -178,6 +197,12 @@ sub ontology_term_adaptor{
 sub add_cluster_by_parent_accession{
   my $self=shift;
   my $new_cluster = shift;
+  my $idurl = shift;
+warn $idurl;
+warn $new_cluster;
+  if(defined $idurl){
+    $self->{_idurl_per_cluster}->{$new_cluster}=$idurl;
+  }
   if(!$self->{_clusters}->{$new_cluster}){
     $self->{_clusters}->{$new_cluster}= GraphViz->new(nodesep=>0.5, ranksep=>2,layout => 'dot', ratio => 'compress', fontname=>"courier", bgcolor=>$self->image_background_colour, style=>'filled', landscape=>'true',
       nojustify=>'false',node => {nodesep=>'0.03',height=>'0.02', width=>'0.02',nojustify=>'false', margin=>'0.03,0', ratio => 'compress',shape => 'box', fontsize => '10pt', fontname=>"courier",  fontnames=>'ps'});
@@ -234,14 +259,14 @@ sub _add_node{
   my $ontology_term_adaptor = $self->ontology_term_adaptor;  
   #get term from go
   my $term = $ontology_term_adaptor->fetch_by_accession($key);
-  my $cluster = $self->_get_cluster($term, $ontology_term_adaptor);
+  my $cluster_name= $self->_get_cluster_name($term, $ontology_term_adaptor);
+  my $cluster = $self->_get_cluster($cluster_name);
   
   #add the node if needed
   if(! $self->existing_terms->{$key}){
     $self->existing_terms->{$key}=1;
     my $node_name = $self->_format_node_name($term);
-#    $cluster->add_node($node_name,URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour, height=>$self->_get_height($node_name), width=>$self->_get_width($node_name), fixedsize=>'true');
-    $cluster->add_node($node_name,URL=>$self->idurl.$term->accession, style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour);
+    $cluster->add_node($node_name,URL=>$self->get_url($term->accession,$cluster_name), style=>'filled', color=>$border_colour,fillcolor=>$fill_colour, fontcolor=>$font_colour);
   }  
 }
 
@@ -271,8 +296,8 @@ sub _add_parents{
 
   my $parents = $ontology_term_adaptor->fetch_all_by_child_term($term);
   my $ancestors = $ontology_term_adaptor->_fetch_ancestor_chart($term);
-  
-  my $cluster = $self->_get_cluster($term, $ontology_term_adaptor);
+  my $cluster_name= $self->_get_cluster_name($term, $ontology_term_adaptor);
+  my $cluster = $self->_get_cluster($cluster_name);
   
   foreach (keys %$ancestors)  {
     my $ancestor_terms=$ancestors->{$_};
@@ -284,7 +309,7 @@ sub _add_parents{
               if(! $self->existing_terms->{$trm->accession}){
                 $self->existing_terms->{$trm->accession}=1;
                 my $node_name = $self->_format_node_name($trm);
-                $cluster->add_node($node_name, URL=>$self->idurl.$trm->accession, style=>'filled', color=>$self->non_highlight_border_colour,
+                $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->non_highlight_border_colour,
                 fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour);
               }
               if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
@@ -309,26 +334,35 @@ sub _add_parents{
 
 sub _get_cluster{
   my $self=shift;
-  my $term = shift;  
-  my $ontology_term_adaptor = shift;
+  my $name = shift;  
   
-  my $all_parents = $ontology_term_adaptor->fetch_all_by_descendant_term($term);  
+  return $self->{_clusters}->{$name};
+}
+
+sub _get_cluster_name{
+  my $self=shift;
+  my $term = shift;
+  my $ontology_term_adaptor = shift;
+
+  my $all_parents = $ontology_term_adaptor->fetch_all_by_descendant_term($term);
   #find out which cluster this belongs to
-  my $cluster;
+  my $cluster_name;
+
   if($self->{_clusters}->{$term->accession}){
-    $cluster = $self->{_clusters}->{$term->accession};
+    $cluster_name = $term->accession;
   }else{
     foreach(@$all_parents){
-      if($self->{_clusters}->{$_->accession}){	
-        $cluster = $self->{_clusters}->{$_->accession};
+      if($self->{_clusters}->{$_->accession}){
+        $cluster_name = $_->accession;
       }
     }
   }
-  if(!defined($cluster)){
+
+  if(!defined($cluster_name)){
     $self->add_cluster_by_parent_accession("\n");
-    $cluster=$self->{_clusters}->{"\n"};
+    $cluster_name="\n";
   }
-  return $cluster;  
+  return $cluster_name;
 }
 
 sub _format_node_name{
