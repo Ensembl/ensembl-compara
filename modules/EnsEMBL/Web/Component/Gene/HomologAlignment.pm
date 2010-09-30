@@ -1,14 +1,13 @@
 package EnsEMBL::Web::Component::Gene::HomologAlignment;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Gene);
+
 use Bio::AlignIO;
-use EnsEMBL::Web::ExtIndex;
-use EnsEMBL::Web::Document::HTML::TwoCol;
+
 use EnsEMBL::Web::Constants;
-use POSIX;
+use EnsEMBL::Web::Document::SpreadSheet;
+
+use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
@@ -16,38 +15,32 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
   my $self         = shift;
-  my $cdb          = shift || $self->object->param('cdb') || 'compara';  
   my $object       = $self->object;
+  my $cdb          = shift || $object->param('cdb') || 'compara';  
   my $species      = $object->species;
   my $species_defs = $object->species_defs;
   my $gene_id      = $object->stable_id;
-  my $input        = $object->input;
   my $second_gene  = $object->param('g1');
   my $seq          = $object->param('seq');
   my $text_format  = $object->param('text_format');
-  my $databases    = $object->database($cdb);
-  my $ma           = $databases->get_MemberAdaptor;
-  my $qm           = $ma->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
+  my $database     = $object->database($cdb);
+  my $qm           = $database->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
   my ($homologies, $html, %skipped);
   
   eval {
-    my $ha = $databases->get_HomologyAdaptor;
+    my $ha = $database->get_HomologyAdaptor;
     $homologies = $ha->fetch_by_Member($qm);
   };
   
   my %desc_mapping = (
-    'ortholog_one2one'          => '1 to 1 orthologue',
-    'apparent_ortholog_one2one' => '1 to 1 orthologue (apparent)',
-    'ortholog_one2many'         => '1 to many orthologue',
-    'between_species_paralog'   => 'paralogue (between species)',
-    'ortholog_many2many'        => 'many to many orthologue',
-    'within_species_paralog'    => 'paralogue (within species)',
+    ortholog_one2one          => '1 to 1 orthologue',
+    apparent_ortholog_one2one => '1 to 1 orthologue (apparent)',
+    ortholog_one2many         => '1 to many orthologue',
+    between_species_paralog   => 'paralogue (between species)',
+    ortholog_many2many        => 'many to many orthologue',
+    within_species_paralog    => 'paralogue (within species)',
   );
   
   foreach my $homology (@{$homologies}) {
@@ -113,12 +106,12 @@ sub content {
 
       $html .= "<h2>Ortholog type: $homology_desc_mapped</h2>";
       
-      my $ss = EnsEMBL::Web::Document::SpreadSheet->new([
-          { 'title' => 'Species',          'width' => '20%' },
-          { 'title' => 'Gene ID',          'width' => '20%' },
-          { 'title' => 'Peptide ID',       'width' => '20%' },
-          { 'title' => 'Peptide length',   'width' => '20%' },
-          { 'title' => 'Genomic location', 'width' => '20%' }
+      my $ss = new EnsEMBL::Web::Document::SpreadSheet([
+          { title => 'Species',          width => '20%' },
+          { title => 'Gene ID',          width => '20%' },
+          { title => 'Peptide ID',       width => '20%' },
+          { title => 'Peptide length',   width => '20%' },
+          { title => 'Genomic location', width => '20%' }
         ],
         $data
       );
