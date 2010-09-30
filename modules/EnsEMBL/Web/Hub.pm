@@ -39,11 +39,10 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my ($class, $args) = @_;
 
-  my $type = $args->{'_type'} || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL:  Gene, UserData, etc
-
-  ## Normally CGI is created in Model, however static pages have no access to the module
-  ## but still ought to be able to create a valid Hub
-  my $input = $args->{'_input'} || new CGI;
+  my $type         = $args->{'_type'}         || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL: Gene, UserData, etc
+  my $species      = $args->{'_species'}      || $ENV{'ENSEMBL_SPECIES'};
+  my $input        = $args->{'_input'}        || new CGI;
+  my $species_defs = $args->{'_species_defs'} || new EnsEMBL::Web::SpeciesDefs;
 
   ## The following may seem a little clumsy, but it allows the Hub to be created
   ## by a command-line script with no access to CGI parameters
@@ -58,22 +57,26 @@ sub new {
   }
 
   my $self = {
-    _apache_handle => $args->{'_apache_handle'} || undef,
-    _input         => $args->{'_input'}         || $input,
-    _species       => $args->{'_species'}       || $ENV{'ENSEMBL_SPECIES'},    
-    _type          => $type,
-    _action        => $args->{'_action'}        || $ENV{'ENSEMBL_ACTION'},       # View, Summary etc
-    _function      => $args->{'_function'}      || $ENV{'ENSEMBL_FUNCTION'},     # Extra path info
-    _script        => $args->{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},       # name of script in this case action
+    _input         => $input,
+    _species       => $species,    
+    _species_defs  => $species_defs, 
     _factorytype   => $factorytype,
-    _species_defs  => $args->{'_species_defs'}  || new EnsEMBL::Web::SpeciesDefs, 
+    _type          => $type,
+    _action        => $args->{'_action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
+    _function      => $args->{'_function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
+    _script        => $args->{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
     _cache         => $args->{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
+    _ext_url       => $args->{'_ext_url'}       || new EnsEMBL::Web::ExtURL($species, $species_defs),
     _problem       => $args->{'_problem'}       || {},    
     _view_configs  => $args->{'_view_configs_'} || {},
     _user_details  => $args->{'_user_details'}  || 1,
     _object_types  => $args->{'_object_types'}  || {},
+    _apache_handle => $args->{'_apache_handle'} || undef,
+    _cookies       => $args->{'_apache_handle'} ?  CGI::Cookie->parse($args->{'_apache_handle'}->headers_in->{'Cookie'}) : undef,
+    _databases     => $species ne 'common'      ?  new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs)        : undef,
     _core_objects  => {},
     _core_params   => {},
+    _cookies       => {},
     _session       => $session,
     _user          => $user,                    
     _timer         => $timer, 
@@ -81,18 +84,10 @@ sub new {
 
   bless $self, $class;
   
-  $self->{'_cookies'} = $args->{'_apache_handle'} ? CGI::Cookie->parse($args->{'_apache_handle'}->headers_in->{'Cookie'}) : {};
-  
-  ## Get database connections 
-  my $api_connection = $self->species ne 'common' ? new EnsEMBL::Web::DBSQL::DBConnection($self->species, $self->species_defs) : undef;
-  $self->{'_databases'} = $api_connection;
-  
+  $self->{'_referer'} = ;
   $self->_set_core_params;
-
-  $self->{'_ext_url'} = $args->{'_ext_url'} || new EnsEMBL::Web::ExtURL($self->species, $self->species_defs); 
-  $self->species_defs->{'timer'} = $args->{'_timer'};
   
-  $self->{'_referer'} = $self->_parse_referer;
+  $species_defs->{'timer'} = $args->{'_timer'};
   
   return $self;
 }
@@ -106,12 +101,12 @@ sub function    :lvalue { $_[0]{'_function'};    }
 sub factorytype :lvalue { $_[0]{'_factorytype'}; }
 sub referer     :lvalue { $_[0]{'_referer'};     }
 sub session     :lvalue { $_[0]{'_session'};     }
-sub databases   :lvalue { $_[0]{'_databases'};   } 
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
 
 sub input         { return $_[0]{'_input'};         }
 sub cookies       { return $_[0]{'_cookies'};       }
+sub databases     { return $_[0]{'_databases'};     }
 sub object_types  { return $_[0]{'_object_types'};  }
 sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
@@ -119,9 +114,11 @@ sub ExtURL        { return $_[0]{'_ext_url'};       }
 sub timer         { return $_[0]{'_timer'};         }
 sub user_details  { return $_[0]{'_user_details'};  }
 sub species_defs  { return $_[0]{'_species_defs'};  }
+
+sub check_ajax    { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
+sub referer       { return $_[0]{'referer'}    ||= $_[0]->_parse_referer; }
 sub species_path  { return shift->species_defs->species_path(@_); }
 sub timer_push    { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? $_[0]->timer->push(@_) : undef; }
-sub check_ajax    { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
 sub has_fatal_problem  { return scalar @{$_[0]{'_problem'}{'fatal'}||[]}; }
@@ -170,7 +167,7 @@ sub database {
   if ($_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0]);
   } else {
-    return $self->{'_databases'}->get_DBAdaptor(@_);
+    return $self->databases->get_DBAdaptor(@_);
   }
 }
 
@@ -407,7 +404,7 @@ sub get_viewconfig {
 sub get_imageconfig {
   my $self    = shift;
   my $type    = shift;
-  my $key     = shift || $type;
+  my $key     = shift;
   my $session = $self->session;
   
   return undef if $type eq '_page' || $type eq 'cell_page';
@@ -418,7 +415,7 @@ sub get_imageconfig {
   my $image_config = $self->dynamic_use($module_name) ? $module_name->new($session, @_) : undef;
   
   if ($image_config) {
-    $session->apply_to_image_config($image_config, $type, $key);
+    $session->apply_to_image_config($image_config, $type, $key || $type);
     $image_config->_set_core($self->core_objects);
     
     return $image_config;
