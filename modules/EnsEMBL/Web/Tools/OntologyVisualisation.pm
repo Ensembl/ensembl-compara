@@ -91,8 +91,7 @@ sub get_url{
   my $self=shift;
   my $accession=shift;
   my $cluster=shift;
-warn $cluster;
-warn $self->{_idurl_per_cluster}->{$cluster};
+
   my $id_url = $self->{_idurl_per_cluster}->{$cluster};
   if(!defined($id_url)){
     $id_url = $self->idurl;
@@ -198,8 +197,7 @@ sub add_cluster_by_parent_accession{
   my $self=shift;
   my $new_cluster = shift;
   my $idurl = shift;
-warn $idurl;
-warn $new_cluster;
+
   if(defined $idurl){
     $self->{_idurl_per_cluster}->{$new_cluster}=$idurl;
   }
