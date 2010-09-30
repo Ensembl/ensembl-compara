@@ -78,7 +78,13 @@ sub handler_das {
   $ENV{'ENSEMBL_TYPE'}         = 'DAS';
   $ENV{'ENSEMBL_DAS_SUBTYPE'}  = $subtype;
   $ENV{'ENSEMBL_SCRIPT'}       = $command;
-  
+ 
+  ## Access control headers - supported by ProServer and Dazzle
+  $r->headers_out->add(
+    'Access-Control-Allow-Origin'   => '*',
+    'Access-Control-Expose-Headers' => 'X-DAS-Version X-DAS-Status X-DAS-Capabilities',
+  );
+ 
   new EnsEMBL::Web::Controller::DAS($r);
   
   return OK;
