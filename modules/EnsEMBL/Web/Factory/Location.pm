@@ -125,7 +125,7 @@ sub createObjects {
     
     $location = $self->new_location($slice);
   } else {
-    $self->get_databases($self->__gene_databases, 'compara', 'blast');
+    $self->hub->get_databases($self->__gene_databases, 'compara', 'blast');
     
     my ($seq_region, $start, $end, $strand);
     
@@ -621,11 +621,9 @@ sub _location_from_SeqRegion {
       return $self->_create_from_slice($system->name , $chr, $self->expand($slice), $chr) if $slice;
     }
     
-    my $action = $self->action;
-    
     if ($chr) {
       $self->problem('fatal', 'Locate error', $self->_help("Cannot locate region $chr on the current assembly."));
-    } elsif ($action && $action eq 'Genome' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
+    } elsif ($self->hub->action eq 'Genome' && $self->species_defs->ENSEMBL_CHROMOSOMES) {
       # Create a slice of the first chromosome to force this page to work
       my @chrs  = @{$self->species_defs->ENSEMBL_CHROMOSOMES};
       my $slice = $self->_slice_adaptor->fetch_by_region('chromosome', $chrs[0]) if scalar @chrs;
@@ -642,7 +640,8 @@ sub _location_from_SeqRegion {
 
 sub _create_from_sub_align_slice {
   my ($self, $slice) = @_;
-  
+  my $hub         = $self->hub;
+  my $session     = $hub->session;
   my $compara_db  = $self->database('compara');
   my $align_slice = $compara_db->get_adaptor('AlignSlice')->fetch_by_Slice_MethodLinkSpeciesSet(
     $slice, 
@@ -682,7 +681,7 @@ sub _create_from_sub_align_slice {
     $align_end += $step unless $end;
     
     if (time - $time > $time_limit) {
-      $self->session->add_data(
+      $session->add_data(
         type     => 'message',
         function => '_warning',
         code     => 'align_slice_failure',
@@ -704,7 +703,7 @@ sub _create_from_sub_align_slice {
   
   my %params = map { $_ => $self->param($_) } $self->param;
   
-  $self->hub->problem('redirect', $self->_url(\%params));
+  $hub->problem('redirect', $hub->url(\%params));
 }
 
 sub _create_from_slice {
@@ -832,18 +831,21 @@ sub merge {
 
 sub _map_assembly {
   my ($self, $seq_region, $start, $end, $strand) = @_;
-  my $assembly = $self->param('a');
+  
+  my $assembly_name = $self->species_defs->ASSEMBLY_NAME;
+  my $assembly      = $self->param('a');
   
   $self->delete_param('a');
   
+  return 0 if uc $assembly_name eq uc $assembly;
+  
   ## Check if we have this assembly in the list
   ## Get chromosome:XXXX->chromosome:CURRENT_ASSEMBLY  mappings
-  my %mappings      = map { reverse(/^chromosome:(.+)#chromosome:(.+)$/) } @{$self->species_defs->ASSEMBLY_MAPPINGS};
-  my @mappings      = keys %mappings;
-  my %params        = map { $_ => $self->param($_) } $self->param;
-  my $assembly_name = $self->species_defs->ASSEMBLY_NAME;
-  
-  return 0 if uc $assembly_name eq uc $assembly;
+  my %mappings = map { reverse(/^chromosome:(.+)#chromosome:(.+)$/) } @{$self->species_defs->ASSEMBLY_MAPPINGS};
+  my @mappings = keys %mappings;
+  my %params   = map { $_ => $self->param($_) } $self->param;
+  my $hub      = $self->hub;
+  my $session  = $hub->session;
   
   ## Check if requested assembly is in %mappings
   if (grep uc $_ eq uc $assembly, @mappings) {
@@ -860,7 +862,7 @@ sub _map_assembly {
       my $new_slice = $segments->[0]->to_Slice;
       my $r = sprintf '%s:%s-%s', $seq_region, $new_slice->start, $new_slice->end;
       
-      $self->session->add_data(
+      $session->add_data(
         type     => 'message',
         function => '_info',
         code     => 'new_coordinates',
@@ -890,13 +892,13 @@ sub _map_assembly {
           '%s-%s projects to <a href="%s">%s-%s</a><br />',
           $old_slice->start + $segment->from_start - 1,
           $old_slice->start + $segment->from_end - 1,
-          $self->_url(\%new_params),
+          $hub->url(\%new_params),
           $new_slice->start,
           $new_slice->end
         );
       }
 
-      $self->session->add_data(
+      $session->add_data(
         type     => 'message',
         function => '_info',
         code     => 'several_new_coordinates',
@@ -908,7 +910,7 @@ sub _map_assembly {
 
       %params = ( %params, r => "$seq_region:$new_start-$new_end" );      
     } else {
-        $self->session->add_data(
+        $session->add_data(
           type     => 'message',
           function => '_info',
           code     => 'no_mappings_for_assembly',
@@ -918,7 +920,7 @@ sub _map_assembly {
   } elsif (@mappings) {
     ## Assembly is not recognised among list of possible ones
     ## Put warning message and redirect
-    $self->session->add_data(
+    $session->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'assembly_not_recognised',
@@ -930,7 +932,7 @@ sub _map_assembly {
     );
   } else {
     ## We do not have any assemblies to map
-    $self->session->add_data(
+    $session->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'no_assemblies',
@@ -938,16 +940,16 @@ sub _map_assembly {
     );
   }
   
-  return $self->hub->problem('redirect', $self->_url(\%params));
+  return $hub->problem('redirect', $hub->url(\%params));
 }
 
 sub _help {
   my ($self, $string) = @_;
-  
-  my %sample         = %{$self->species_defs->SAMPLE_DATA || {}};
-  my $assembly_level = scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES || []}) ? 'chromosomal' : 'scaffold';
-  my $help_text      = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url            = $self->_url({ __clear => 1, action => 'View', r => $sample{'LOCATION_PARAM'} });
+  my $hub             = $self->hub;
+  my %sample          = %{$self->species_defs->SAMPLE_DATA || {}};
+  my $assembly_level  = scalar(@{$self->species_defs->ENSEMBL_CHROMOSOMES || []}) ? 'chromosomal' : 'scaffold';
+  my $help_text       = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
+  my $url             = $hub->url({ __clear => 1, action => 'View', r => $sample{'LOCATION_PARAM'} });
   
   $help_text .= sprintf('
     <p>
@@ -962,7 +964,7 @@ sub _help {
   );
   
   if (scalar @{$self->species_defs->ENSEMBL_CHROMOSOMES}) {
-    my $url = $self->_url({ __clear => 1, action => 'Genome' });
+    my $url = $hub->url({ __clear => 1, action => 'Genome' });
     
     $help_text .= sprintf('
       <p class="space-below">

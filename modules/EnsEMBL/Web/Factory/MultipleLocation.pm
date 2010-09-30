@@ -20,10 +20,11 @@ sub createObjects {
   # Redirect if we need to generate a new url
   return if $self->generate_url($object->slice);
   
-  my @slices;
-  my $gene = 0;
+  my $hub       = $self->hub;
   my $action_id = $self->param('id');
-  my $invalid = 0;
+  my $gene      = 0;
+  my $invalid   = 0;
+  my @slices;
   my $chr_flag;
   
   my %inputs = (
@@ -50,7 +51,7 @@ sub createObjects {
   
   # If we had bad parameters, redirect to remove them from the url.
   # If we came in on an a gene, redirect so that we use the location in the url instead.
-  return $self->problem('redirect', $self->_url($self->multi_params)) if $invalid || $self->input_genes(\%inputs) || $self->change_all_locations(\%inputs);
+  return $self->problem('redirect', $hub->url($hub->multi_params)) if $invalid || $self->input_genes(\%inputs) || $self->change_all_locations(\%inputs);
   
   foreach (sort { $a <=> $b } keys %inputs) {
     my $species = $inputs{$_}->{'s'};
@@ -87,7 +88,7 @@ sub createObjects {
       
       $self->check_slice_exists($_, $chr, $s, $e, $strand);
       
-      return $self->problem('redirect', $self->_url($self->multi_params));
+      return $self->problem('redirect', $hub->url($hub->multi_params));
     }
     
     eval { $slice = $self->slice_adaptor->fetch_by_region(undef, $chr, $s, $e, $strand); };
@@ -122,6 +123,9 @@ sub generate_url {
 sub add_species {
   my ($self, $slice, $add) = @_;
   
+  
+  my $hub           = $self->hub;
+  my $session       = $hub->session;
   my %valid_species = map { $_ => 1 } $self->species_defs->valid_species;
   my @no_alignment;
   my @no_species;
@@ -165,7 +169,7 @@ sub add_species {
   $self->remove_species(\@remove) if scalar @remove;
   
   if (scalar @no_species) {
-    $self->session->add_data(
+    $session->add_data(
       type     => 'message',
       function => '_error',
       code     => 'invalid_species',
@@ -176,7 +180,7 @@ sub add_species {
   }
   
   if (scalar @no_alignment) {
-    $self->session->add_data(
+    $session->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
@@ -187,7 +191,7 @@ sub add_species {
   }
   
   if ($paralogues) {
-    $self->session->add_data(
+    $session->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'missing_species',
@@ -197,7 +201,7 @@ sub add_species {
   
   if (!scalar @remove) {
     $self->clear_problem_type('redirect');
-    $self->problem('redirect', $self->_url($self->multi_params));
+    $self->problem('redirect', $hub->url($hub->multi_params));
   }
 }
 
@@ -210,7 +214,8 @@ sub remove_species {
     $self->delete_param("$_$i") for qw(s g r);
   }
   
-  my $new_params = $self->multi_params;
+  my $hub        = $self->hub;
+  my $new_params = $hub->multi_params;
   my $params;
   my $i = 1;
   
@@ -229,7 +234,7 @@ sub remove_species {
   $params->{'species'} = $primary_species if $primary_species;
   
   $self->clear_problem_type('redirect');
-  $self->problem('redirect', $self->_url($params));
+  $self->problem('redirect', $hub->url($params));
 }
 
 sub best_guess {
@@ -329,9 +334,9 @@ sub check_slice_exists {
 
 sub realign {
   my ($self, $inputs, $id) = @_;
-  
-  my $species = $inputs->{0}->{'s'};
-  my $params = $self->multi_params($id);
+  my $hub        = $self->hub;
+  my $species    = $inputs->{0}->{'s'};
+  my $params     = $hub->multi_params($id);
   my $alignments = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
   
   my %allowed;
@@ -350,7 +355,7 @@ sub realign {
     $params->{"g$_"} = $inputs->{$_}->{'g'};
   }
   
-  $self->problem('redirect', $self->_url($params));
+  $self->problem('redirect', $hub->url($params));
 }
 
 sub change_primary_species {

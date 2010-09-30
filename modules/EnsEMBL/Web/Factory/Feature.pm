@@ -46,7 +46,7 @@ sub createObjects {
     my @exdb  = $self->param('xref_db');
     $features = $self->search_Xref($db, \@exdb, $self->param('xref_term'));
   } else {
-    if ($self->type eq 'LRG') {
+    if ($self->hub->type eq 'LRG') {
       $feature_type = 'LRG';
     } else {
       $feature_type = $self->param('ftype') || $self->param('type') || 'ProbeFeature';
@@ -242,9 +242,9 @@ sub _create_ProteinAlignFeature {
 
 sub create_UserDataFeature {
   my ($self, $logic_name) = @_;
-  my $dbs                 = EnsEMBL::Web::DBSQL::DBConnection->new( $self->species );
-  my $dba                 = $dbs->get_DBAdaptor('userdata');
-  my $features            = [];
+  my $hub      = $self->hub;
+  my $dba      = $hub->database('userdata');
+  my $features = [];
   
   return [] unless $dba;
 
@@ -258,7 +258,7 @@ sub create_UserDataFeature {
     push @$features, @{$dba->get_adaptor('DnaAlignFeature')->fetch_all_by_Slice($slice, $logic_name)} if $slice;
   }
   
-  return { UserDataAlignFeature => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$features) };
+  return { UserDataAlignFeature => EnsEMBL::Web::Data::Bio::AlignFeature->new($hub, @$features) };
 }
 
 sub _create_Gene {

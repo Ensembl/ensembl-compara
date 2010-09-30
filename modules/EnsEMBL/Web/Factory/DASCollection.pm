@@ -56,12 +56,14 @@ use base qw(EnsEMBL::Web::Factory);
 =cut
 
 sub createObjects {
-  my $self = shift;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
 # Get the view that is requesting DASCollection Factory
-  my $conf_script = $self->param("conf_script") || $self->script;
+  my $conf_script = $self->param("conf_script") || $hub->script;
 
   my %sources_conf;
-  my $daslist = $self->get_session->get_internal_das; 
+  my $daslist = $session->get_internal_das; 
   for my $source( keys %$daslist ) {
     my $source_config = $daslist->{$source}->get_data;
     my %valid_scripts = map{ $_, 1 } @{$source_config->{enable} || [] };
@@ -72,7 +74,7 @@ sub createObjects {
     $sources_conf{$source}    = $source_config;
   }
 # Add external sources (ones added by user)
-  $daslist = $self->get_session->get_das;
+  $daslist = $session->get_das;
    
   for my $source ( keys %$daslist ) {
     my $source_config = $daslist->{$source}->get_data;
@@ -127,7 +129,7 @@ sub createObjects {
   }
 
 # Get the sources selection, i.e which sources' annotation should be displayed
-  my $config = $self->hub->get_imageconfig('dasconfview');
+  my $config = $hub->get_imageconfig('dasconfview');
   my $section = $conf_script;
 
   $config->reset_subsection($section);
@@ -147,7 +149,7 @@ sub createObjects {
   my %das_edit   = map{$_,1} ($self->param( "_das_edit" ) || ());
 
   foreach (keys (%das_del)){
-    $self->get_session->remove_das_source($_);
+    $session->remove_das_source($_);
     delete($sources_conf{$_});
   }
   foreach (keys %urldas_del){
@@ -206,7 +208,7 @@ sub createObjects {
         $sources_conf{$das_name}->{$key} = $das_data->{$key};
       }
 
-      $self->session->add_das_source_from_hashref($das_data);
+      $session->add_das_source_from_hashref($das_data);
       $DASsel{$das_name} = 1;
     } else {
       my $err = 0;
@@ -275,7 +277,7 @@ sub createObjects {
         }
 #	warn "DATA ($das_name)";
 #warn Dumper($das_data);
-        $self->session->add_das_source_from_hashref($das_data);
+        $session->add_das_source_from_hashref($das_data);
         $DASsel{$das_name} = 1;
       }
     }
@@ -332,7 +334,7 @@ sub createObjects {
       -assembly_version	  => $source_conf->{assembly} || '',
     );        
     if ($das_adapt) {
-      $das_adapt->ensembldb( $self->DBConnection('core') );
+      $das_adapt->ensembldb( $hub->database('core') );
       if( my $p = $self->species_defs->ENSEMBL_WWW_PROXY ){
         $das_adapt->proxy($p);
       }
@@ -342,7 +344,7 @@ sub createObjects {
     } else {
       $DASsel{$source} = 0;
 ### Replace with sesssion call
-      $self->get_session->remove_das_source( $source );
+      $session->remove_das_source( $source );
     }
   }
   my @selection = grep {$DASsel{$_}} keys %DASsel;

@@ -18,7 +18,7 @@ sub createObjects {
   return $self->problem ('fatal', 'Database Error', 'There is no variation database for this species.') unless $db;
    
   if (!$variation) {
-    my $dbs = $self->get_databases(qw(core variation));
+    my $dbs = $self->hub->get_databases(qw(core variation));
     
     return $self->problem('fatal', 'Database Error', 'Could not connect to the core database.') unless $dbs;
     
@@ -71,7 +71,7 @@ sub _help {
 
   my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->_url({ __clear => 1, action => 'Summary', v => $sample{'VARIATION_PARAM'} });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', v => $sample{'VARIATION_PARAM'} });
 
   $help_text .= sprintf('
     <p>

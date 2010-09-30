@@ -10,40 +10,40 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self   = shift;
-  my $object = $self->object;
-  my $back   = $object->param('wizard_back'); # Check if we're going back
-  my @steps  = $object->param('_backtrack');
+  my $hub    = $self->hub;
+  my $back   = $hub->param('wizard_back'); # Check if we're going back
+  my @steps  = $hub->param('_backtrack');
   my $params = {};
   my $url;
   
   if ($back) {
     my $current_node = 'Summary'; ## Default value to stop Magic from barfing
-    my $species = $object->type eq 'UserData' ? $object->data_species : $object->species;
+    my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
     
-    $url .= $object->species_path($species) if $species;
-    $url .= '/' . $object->type;
+    $url .= $hub->species_path($species) if $species;
+    $url .= '/' . $hub->type;
     
     pop @steps;
     $current_node = pop @steps;
     $url .= "/$current_node";
   } else {
-    $url = $object->param('wizard_next');
+    $url = $hub->param('wizard_next');
   }
   
   # Pass the "normal" parameters but munge the wizard ones
-  foreach my $name ($object->param) {
+  foreach my $name ($hub->param) {
     next if $name =~ /^wizard_/;
     
-    my @value = $object->param($name);
+    my @value = $hub->param($name);
     my $value = (@value) ? \@value : $value[0];
     
     if ($name eq '_backtrack' && $back) {
       $value = \@steps;
       
       if (scalar @steps) {
-        $object->param('_backtrack', @steps);
+        $hub->param('_backtrack', @steps);
       } else {
-        $object->delete_param('_backtrack');
+        $hub->delete_param('_backtrack');
       }
     };
     

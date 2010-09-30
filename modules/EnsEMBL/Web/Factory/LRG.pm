@@ -29,10 +29,9 @@ sub createObjects {
 
 sub _help {
   my ($self, $string) = @_;
-
-  my %sample    = %{$self->hub->species_defs->SAMPLE_DATA ||{}};
+  my %sample    = %{$self->species_defs->SAMPLE_DATA ||{}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->_url({ __clear => 1, action => 'Summary', lrg => $sample{'LRG_PARAM'} });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', lrg => $sample{'LRG_PARAM'} });
 
   $help_text .= sprintf('
     <p>
@@ -40,7 +39,7 @@ sub _help {
     </p>
     <blockquote class="space-below"><a href="%s">%s</a></blockquote>',
     encode_entities($url),
-    encode_entities($self->hub->species_defs->ENSEMBL_BASE_URL . $url)
+    encode_entities($self->species_defs->ENSEMBL_BASE_URL . $url)
   );
 
   return $help_text;
