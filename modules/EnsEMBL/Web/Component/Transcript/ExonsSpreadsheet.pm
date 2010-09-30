@@ -310,7 +310,6 @@ sub export_sequence {
   my $self = shift;
   my ($sequence, $config, $filename) = @_;
   
-  my $object         = $self->object;
   my @colours        = (undef);
   my $class_to_style = $self->class_to_style;
   my $space          = ' ' x $config->{'display_width'};
@@ -381,7 +380,7 @@ sub export_sequence {
   
   $file->save;
   
-  $object->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
+  $self->hub->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
   
   return $file->content;
 }
