@@ -1,7 +1,6 @@
 package EnsEMBL::Web::Command::Account::UseBookmark;
 
 use strict;
-use warnings;
 
 use EnsEMBL::Web::Data::Record::Bookmark;
 
@@ -9,36 +8,36 @@ use base qw(EnsEMBL::Web::Command);
 
 sub process {
   my $self = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
   my $url;
 
-  if ($object->param('id') =~ /\D/) {
+  if ($hub->param('id') =~ /\D/) {
     ## Fallback in case of XSS exploit
-    $url = $object->species_defs->ENSEMBL_BASE_URL;
-  }
-  else {
+    $url = $hub->species_defs->ENSEMBL_BASE_URL;
+  } else {
     my $bookmark;
-    if ( $object->param('group') 
-          || ($object->param('owner_type') && $object->param('owner_type') eq 'group')) {
-      $bookmark = EnsEMBL::Web::Data::Record::Bookmark::Group->new($object->param('id'));
-    }
-    else {
-      $bookmark = EnsEMBL::Web::Data::Record::Bookmark::User->new($object->param('id'));
+    
+    if ($hub->param('group') || ($hub->param('owner_type') && $hub->param('owner_type') eq 'group')) {
+      $bookmark = EnsEMBL::Web::Data::Record::Bookmark::Group->new($hub->param('id'));
+    } else {
+      $bookmark = EnsEMBL::Web::Data::Record::Bookmark::User->new($hub->param('id'));
     }
 
     my $click = $bookmark->click;
+    
     if ($click) {
       $bookmark->click($click + 1)
     } else {
       $bookmark->click(1);
     }
+    
     $bookmark->save;
+    
     $url = $bookmark->url;
-    if ($url !~ /^http/ && $url !~ /^ftp/) { ## bare addresses of type 'www.domain.com' don't redirect
-      $url = 'http://'.$url;
-    }
+    $url = "http://$url" if $url !~ /^http/ && $url !~ /^ftp/; ## bare addresses of type 'www.domain.com' don't redirect
   }
-  $object->redirect($url);
+  
+  $hub->redirect($url);
 }
 
 1;

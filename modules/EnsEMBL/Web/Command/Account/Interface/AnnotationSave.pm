@@ -3,22 +3,22 @@
 package EnsEMBL::Web::Command::Account::Interface::AnnotationSave;
 
 use strict;
-use warnings;
 
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
-  my $self = shift;
-  my $object = $self->object;
-
+  my $self      = shift;
+  my $hub       = $self->hub;
   my $interface = $self->interface;
-  $interface->cgi_populate($object);
+  
+  $interface->cgi_populate($hub);
 
   ## Add user ID to new entries in the user/group_record tables
-  if (!$object->param('id') && ref($interface->data) =~ /Record/) {
-    my $user = $object->user;
+  if (!$hub->param('id') && ref($interface->data) =~ /Record/) {
+    my $user = $hub->user;
     $interface->data->user_id($user->id);
   }
+  
   $interface->data->save;
 
   ## We need to close down the popup window if using AJAX and refresh the page!
@@ -29,11 +29,12 @@ sub process {
     $r->content_type('text/plain');
     print '{"success":true}';
   } else {
-    my $data = $interface->data;
-    my $var = lc(substr($data->type, 0, 1));
-    my $url = $object->species_path($data->species).'/'.$data->type.'/UserAnnotation';
+    my $data  = $interface->data;
+    my $var   = lc(substr $data->type, 0, 1);
+    my $url   = $hub->species_path($data->species).'/'.$data->type.'/UserAnnotation';
     my $param = {$var => $data->stable_id};
-    $object->redirect($self->url($url, $param));
+    
+    $hub->redirect($self->url($url, $param));
   }
 }
 
