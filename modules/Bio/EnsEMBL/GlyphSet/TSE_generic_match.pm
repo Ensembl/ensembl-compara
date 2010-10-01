@@ -37,13 +37,14 @@ sub draw_glyphs {
     my $last_end_x = 0; #position of end of last box - needed to draw line
     my ($lh_ext,$rh_ext) = (0,0); #booleans for drawing of extensions to lh or rh side of image
     my $last_mismatch = 0; #will be set to the label for the amount of mismatch, but also defines whether the line is drawn
-    my $colour = $self->my_colour($hit_type);
+    my $colour = $hit_details->{'evidence_removed'} ? $self->my_colour('evidence_removed') : $self->my_colour($hit_type);
 
-    #used for legend        
-    $legend->{$hit_type}{'found'}++;
-    $legend->{$hit_type}{'priority'} = $legend_priority;
-    $legend->{$hit_type}{'height'}   = $h;
-    $legend->{$hit_type}{'colour'}   = $colour;
+    #used for legend
+    my $hit_key = $hit_details->{'evidence_removed'} ? 'evidence_removed' : $hit_type;
+    $legend->{$hit_key}{'found'}++;
+    $legend->{$hit_key}{'priority'} = $legend_priority;
+    $legend->{$hit_key}{'height'}   = $h;
+    $legend->{$hit_key}{'colour'}   = $colour;
 
   BLOCK:
     foreach my $block (@{$hit_details->{'data'}}) {
@@ -68,7 +69,7 @@ sub draw_glyphs {
           'title'     => "Evidence extends $mis bp beyond the end of the transcript",
           'colour'    => $c,
           'dotted'    => 1,
-          'absolutey' => 1,});                        
+          'absolutey' => 1,});
         $self->push($G);
 
         $G = $self->Line({
@@ -104,16 +105,16 @@ sub draw_glyphs {
           'colour'    => $c,
           'title'     => "Evidence extends $lh_ext bp beyond the end of the transcript",
           'absolutey' => 1,
-          'dotted'    => 1});                                
+          'dotted'    => 1});
         $self->push($G);
-        
+
         $G = $self->Line({
           'x'         => 0,
           'y'         => $H,
           'height'    => $h,
           'width'     => 0,
           'colour'    => $c,
-          'absolutey' => 1,});                                
+          'absolutey' => 1,});
         $self->push($G);
         $lh_ext = 0;
       }
@@ -165,6 +166,9 @@ sub draw_glyphs {
         'exon'        => $exon->stable_id,
         'exon_length' => $block->{'exon_length'},
       };
+      if ($hit_details->{'evidence_removed'}) {
+	$zmenu_dets->{'er'} = 1;
+      }
 
       #if there is a mismatch between exon and hit boundries then add a zmenu entry and also
       #note the position for drawing coloured lines later
@@ -179,7 +183,7 @@ sub draw_glyphs {
         }
         else {
           $zmenu_dets->{'three_end_mismatch'} = $gap;
-        }                
+        }
       }
       if (my $gap = $block->{'right_end_mismatch'}) {
         my $c = $gap > 0 ? $self->my_colour('evi_long') : $self->my_colour('evi_short');
@@ -192,20 +196,28 @@ sub draw_glyphs {
         }
         else {
           $zmenu_dets->{'five_end_mismatch'} = $gap;
-        }                
+        }
       }
 
       ##draw the actual hit
-      my $G = $self->Rect({
-        'x'            => $block->{'munged_start'} ,
-        'y'            => $H,
-        'width'        => $width,
-        'height'       => $h,
-        'colour'       => $colour,
-        'absolutey'    => 1,
-        'title'        => $hit_name,
-        'href'         => $self->_url($zmenu_dets),
-      });
+      my $hit = {
+	'x'            => $block->{'munged_start'} ,
+	'y'            => $H,
+	'width'        => $width,
+	'height'       => $h,
+	'colour'       => $colour,
+	'absolutey'    => 1,
+	'title'        => $hit_name,
+	'href'         => $self->_url($zmenu_dets),
+      };
+
+## commented out because even though having unfilled blocks would be god, it's not straightforward - end up
+## with having intron lines down the middle of the blocks. Fair bit of refactoring would be needed
+#      if ($hit_details->{'evidence_removed'}) {
+#	$hit->{'colour'} = 'white';
+#	$hit->{'bordercolour'} = $colour;
+#      }
+      my $G = $self->Rect($hit);
       $self->push( $G );
     }
 
