@@ -97,14 +97,14 @@ sub process_command {
   
   my $self    = shift;
   my $command = $self->command;
+  my $action  = $self->action;
   
-  return unless $command;
+  return unless $command || $action eq 'Wizard';
   
   my $object  = $self->object;
   my $page    = $self->page;
   my $builder = $self->builder;
   my $hub     = $self->hub;
-  my $action  = $self->action;
   my $node    = $self->node;
   
   if ($command eq 'db_frontend') {
