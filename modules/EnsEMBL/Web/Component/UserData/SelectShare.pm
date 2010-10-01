@@ -1,33 +1,31 @@
+# $Id$
+
 package EnsEMBL::Web::Component::UserData::SelectShare;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub caption {
-  my $self = shift;
   return 'Share Your Data';
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $html;
-
-  my $form = $self->modal_form('share', $object->species_path($object->data_species).'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
-
-  my ($has_groups, @groups);
-  my $user = $object->user;
-  if ($user && !$object->param('code')) { ## Can't share temp data with group
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $session  = $hub->session;
+  my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $form     = $self->modal_form('share', $hub->species_path($hub->data_species).'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
+  my $user     = $hub->user;
+  my ($html $has_groups, @groups);
+  
+  if ($user && !$hub->param('code')) { ## Can't share temp data with group
     @groups = $user->find_administratable_groups;
     $has_groups = $#groups > -1 ? 1 : 0;
   }
@@ -57,7 +55,7 @@ sub content {
       push @ids, {'value'=>$group->id, 'name'=>$group->name};
     }
     $form->add_element('type'  => 'RadioGroup', 'name'  => 'webgroup_id', 'values' => \@ids);
-    $form->add_element('type' => 'Hidden', 'name' => 'type', 'value' => $object->param('type'));
+    $form->add_element('type' => 'Hidden', 'name' => 'type', 'value' => $hub->param('type'));
   }
 
   $form->add_attribute('class', 'narrow-labels');
@@ -65,7 +63,7 @@ sub content {
 
   my @values = ();
 
-  my @session_uploads = $object->get_session->get_data(type => 'upload');
+  my @session_uploads = $session->get_data(type => 'upload');
   foreach my $upload (@session_uploads) {
     push @values, {
       name  => 'Temporary upload: ' . $upload->{name},
@@ -81,7 +79,7 @@ sub content {
       };
     }
   }
-  my @session_urls = $object->get_session->get_data(type => 'url');
+  my @session_urls = $session->get_data(type => 'url');
   foreach my $url (@session_urls) {
     push @values, {
       name  => 'Temporary URL: ' . $url->{name},
@@ -99,8 +97,8 @@ sub content {
   }
 
   ## If only one record, have the checkbox automatically checked
-  my @autoselect = $object->param('id');
-  push @autoselect, $object->param('code'); 
+  my @autoselect = $hub->param('id');
+  push @autoselect, $hub->param('code'); 
   warn "SELECTED: @autoselect";
 
   $form->add_element(

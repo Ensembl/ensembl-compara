@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Object::Account;
 
 ### NAME: EnsEMBL::Web::Object::Account
@@ -15,24 +17,24 @@ use strict;
 
 use base qw(EnsEMBL::Web::Object);
 
-sub caption           {
-  my $self = shift;
+sub caption  {
   return 'Your Account';
 }
 
 sub short_caption {
-  my $self = shift;
   return 'Account Management';
 }
 
 sub counts {
-  my $self = shift;
-  my $user = $self->user;
-  my $counts = {};
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $user    = $hub->user;
+  my $session = $hub->session;
+  my $counts  = {};
 
   if ($user && $user->id) {
-    my @uploads = $self->get_session->get_data('type' => 'upload');
-    my @urls    = $self->get_session->get_data('type' => 'url');
+    my @uploads = $session->get_data('type' => 'upload');
+    my @urls    = $session->get_data('type' => 'url');
     my @groups  = $user->find_nonadmin_groups;
     
     $counts->{'bookmarks'}      = $user->bookmarks->count;
@@ -41,7 +43,7 @@ sub counts {
     $counts->{'userdata'}       = $user->uploads->count + $user->dases->count + $user->urls->count;
     $counts->{'userdata'}      += @uploads;
     $counts->{'userdata'}      += @urls;
-    $counts->{'userdata'}      += scalar keys %{$self->get_session->get_all_das};
+    $counts->{'userdata'}      += scalar keys %{$session->get_all_das};
     
     foreach my $group (@groups) {
       $counts->{'bookmarks'}      += $group->bookmarks->count;
@@ -56,6 +58,5 @@ sub counts {
 
   return $counts;
 }
-
 
 1;

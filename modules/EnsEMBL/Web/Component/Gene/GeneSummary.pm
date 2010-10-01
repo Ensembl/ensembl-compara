@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::GeneSummary;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Document::HTML::TwoCol;
 
@@ -15,27 +15,29 @@ sub _init {
 }
 
 sub content {
-  my $self      = shift;
-  my $object    = $self->object;
-  my $table     = new EnsEMBL::Web::Document::HTML::TwoCol;
-  my $location  = $object->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
-  my $site_type = $object->species_defs->ENSEMBL_SITETYPE;
-  my $matches   = $object->get_database_matches;
-  my @CCDS      = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
-  my $db        = $object->get_db;
-  my $alt_genes = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE');
-  my $disp_syn  = 0;
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $object       = $self->object;
+  my $species_defs = $hub->species_defs;
+  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $location     = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
+  my $site_type    = $species_defs->ENSEMBL_SITETYPE;
+  my $matches      = $object->get_database_matches;
+  my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
+  my $db           = $object->get_db;
+  my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE');
+  my $disp_syn     = 0;
   
   my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
   my ($prefix, $name, $disp_id_table, $HGNC_table, %syns, %text_info, $syns_html);
 
   # remove prefix from the URL for Vega External Genes
-  if ($object->species eq 'Mus_musculus' && $object->source eq 'vega_external') {
+  if ($hub->species eq 'Mus_musculus' && $object->source eq 'vega_external') {
     ($prefix, $name) = split ':', $display_name;
     $display_name = $name;
   }
   
-  my $linked_display_name = $object->get_ExtURL_link($display_name, $dbname, $ext_id);
+  my $linked_display_name = $hub->get_ExtURL_link($display_name, $dbname, $ext_id);
   $linked_display_name = $prefix . ':' . $linked_display_name if $prefix;
   $linked_display_name = $display_name if $dbname_disp =~ /^Projected/; # i.e. don't have a hyperlink
   $info_text = '';
@@ -66,7 +68,7 @@ sub content {
     my $syn_entry;
     
     if ($disp_syn == 1) {
-      my $url = $object->_url({
+      my $url = $hub->url({
         type   => 'Location',
         action => 'Genome', 
         r      => $location,
@@ -84,7 +86,7 @@ sub content {
   if (scalar @CCDS) {
     my %temp = map { $_->primary_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
-    $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $object->species_defs->DISPLAY_NAME, join ', ', map $object->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
+    $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS), 1);
   }
   
   ## LRG info
@@ -100,7 +102,7 @@ sub content {
     for my $i(0..$#lrg_matches) {
       my $lrg = $lrg_matches[$i];
       
-      my $link = $object->get_ExtURL_link($lrg->display_id, 'ENS_LRG_gene', $lrg->display_id);
+      my $link = $hub->get_ExtURL_link($lrg->display_id, 'ENS_LRG_gene', $lrg->display_id);
       
       if($i == 0) { # first one
         $lrg_link .= $link;
@@ -127,7 +129,7 @@ sub content {
   # now look for lrgs that contain or partially overlap this gene
   foreach my $attrib(@{$object->gene->get_all_Attributes('GeneInLRG')}, @{$object->gene->get_all_Attributes('GeneOverlapLRG')}) {
     next if $xref_lrgs{$attrib->value};
-    my $link = $object->get_ExtURL_link($attrib->value, 'ENS_LRG_gene', $attrib->value);
+    my $link = $hub->get_ExtURL_link($attrib->value, 'ENS_LRG_gene', $attrib->value);
     $lrg_html .= '<br/>' if $lrg_html;
     $lrg_html .=
       'This gene is '.

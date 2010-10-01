@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::ComparaOrthologs;
 
 use strict;
@@ -14,16 +16,13 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
-  my $self = shift;
-  my $cdb = shift || $self->object->param('cdb') || 'compara';
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $object        = $self->object;
+  my $species_defs  = $hub->species_defs;
+  my $cdb           = shift || $hub->param('cdb') || 'compara';
   (my $ckey = $cdb) =~ s/compara//;  
-
-  my $object = $self->object;
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
@@ -36,9 +35,9 @@ sub content {
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
-      my $label    = $object->species_defs->species_label($species);
+      my $label    = $species_defs->species_label($species);
       $orthologue_list{$label} = {%{$orthologue_list{$label}||{}}, %{$homology_type->{$_}}};
-      $skipped{$label}        += keys %{$homology_type->{$_}} if $object->param('species_' . lc $species) eq 'off';
+      $skipped{$label}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
     }
   }
   
@@ -78,7 +77,7 @@ sub content {
       # (2) information about %ids
       # (3) links to multi-contigview and align view
       (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
-      my $link_url = $object->_url({
+      my $link_url = $hub->url({
         species => $spp,
         action  => 'Summary',
         g       => $stable_id,
@@ -92,7 +91,7 @@ sub content {
 
       my $target_links =  ($local_species && ($cdb eq 'compara')) ? sprintf(
         '<a href="%s">Multi-species view</a>',
-        $object->_url({
+        $hub->url({
           type   => 'Location',
           action => 'Multi',
           g1     => $stable_id,
@@ -102,7 +101,7 @@ sub content {
       ) : '';
    
       
-      my $location_link = $object->_url({
+      my $location_link = $hub->url({
         species => $spp,
         type    => 'Location',
         action  => 'View',
@@ -116,7 +115,7 @@ sub content {
         
         $target_links .= sprintf(
           '<br /><a href="%s">Alignment</a>',
-          $object->_url({
+          $hub->url({
             action   => 'Compara_Ortholog', 
             function => "Alignment$ckey",
             g1       => $stable_id,
@@ -128,7 +127,7 @@ sub content {
       
       $target_links .= sprintf(
         '<br /><a href="%s">Gene Tree (image)</a>',
-        $object->_url({
+        $hub->url({
           type   => 'Gene',
           action => "Compara_Tree$ckey",
           g1     => $stable_id,
@@ -143,7 +142,7 @@ sub content {
          
       if ($description =~ s/\[\w+:([-\/\w]+)\;\w+:(\w+)\]//g) {
         my ($edb, $acc) = ($1, $2);
-        $description   .= sprintf '[Source: %s; acc: %s]', $edb, $object->get_ExtURL_link($acc, $edb, $acc) if $acc;
+        $description   .= sprintf '[Source: %s; acc: %s]', $edb, $hub->get_ExtURL_link($acc, $edb, $acc) if $acc;
       }
       
       my @external = qq{<span class="small">$description</span>};
@@ -163,13 +162,12 @@ sub content {
   }
   
   my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ] });
-  
-  my $html = '<p>The following gene(s) have been identified as putative orthologues:</p>' . $table->render;
+  my $html  = '<p>The following gene(s) have been identified as putative orthologues:</p>' . $table->render;
   
   if ($alignview && keys %orthologue_list) {
     $html .= sprintf(
       '<p><a href="%s">View sequence alignments of these homologues</a>.</p>', 
-      $object->_url({ action => "Compara_Ortholog$ckey", function => 'Alignment' })
+      $hub->url({ action => "Compara_Ortholog$ckey", function => 'Alignment' })
     );
   }
   

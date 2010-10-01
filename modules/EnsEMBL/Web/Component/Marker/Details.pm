@@ -16,8 +16,7 @@ sub _init {
 
 sub content {
   my $self    = shift;
-  my $object  = $self->object;
-  my $markers = $object->Obj;
+  my $markers = $self->object->Obj;
   my $hub     = $self->hub;
   my $species = $hub->species;
   my $html;
@@ -173,9 +172,9 @@ sub marker_synonyms {
 sub render_location {
   my ($self, $m) = @_;
   
-  my $object   = $self->object;
+  my $hub      = $self->hub;
   my $location = $self->builder->create_objects('Location', 'lazy');
-  my $sitetype = $object->species_defs->ENSEMBL_SITETYPE;
+  my $sitetype = $hub->species_defs->ENSEMBL_SITETYPE;
   my $name     = $m->display_MarkerSynonym ? $m->display_MarkerSynonym->name : '';
   my $html;
   
@@ -202,7 +201,7 @@ sub render_location {
         my $sr_name = $mf->seq_region_name;
         my $start   = $mf->start;
         my $end     = $mf->end;
-        my $url     = $object->_url({ type => 'Location', action => 'View', r => "$sr_name:$start-$end", m => $name, contigviewbottom => 'marker_core_marker=normal' }); # Force markers to be on
+        my $url     = $hub->url({ type => 'Location', action => 'View', r => "$sr_name:$start-$end", m => $name, contigviewbottom => 'marker_core_marker=normal' }); # Force markers to be on
         my $extra   = $m->priority < $priority ? " [Note that for reasons of clarity this marker is not shown on 'Region in detail']" : '';
         
         $html .= sprintf '<tr><td>%s%s <a href="%s">%s:%s-%s</a>%s</td></tr>', $c > 1 ? '&nbsp;' : '', $mf->coord_system_name, $url, $sr_name, $start, $end, $extra;

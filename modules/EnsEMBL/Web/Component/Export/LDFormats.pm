@@ -1,21 +1,21 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Export::LDFormats;
 
 use strict;
 
 use URI::Escape qw(uri_unescape);
 
-use base 'EnsEMBL::Web::Component::Export';
+use base qw(EnsEMBL::Web::Component::Export);
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-
-  my $type = $object->param('type');
-  my $form_action = $object->_url({ pop1 => $object->param('pop1') }, 1); 
-  my $text = 'Please choose a format for your exported data';
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $type        = $hub->param('type');
+  my $form_action = $hub->url({ pop1 => $hub->param('pop1') }, 1); 
+  my $text        = 'Please choose a format for your exported data';
+  my $form        = $self->modal_form('export_output_configuration', $form_action->[0], { no_button => 1, method => 'get' });
   my (@list, $params);
-  
-  my $form = $self->modal_form('export_output_configuration', $form_action->[0], { no_button => 1, method => 'get' });
   
   $form->add_fieldset;
   
@@ -28,7 +28,7 @@ sub content {
   }
   
   foreach ($self->get_formats($type)) {    
-    my $url = uri_unescape($_->[1] . ($_->[2] ? ";_format=$_->[2]" : ''));
+    my $url   = uri_unescape($_->[1] . ($_->[2] ? ";_format=$_->[2]" : ''));
     my $class = $_->[5] || 'modal_close';
     
     push @list, qq{<a class="$class" href="$url"$_->[3]>$_->[0]</a>$_->[4]};
@@ -42,24 +42,25 @@ sub content {
 sub get_formats {
   my $self = shift;
   my $type = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
   
   my @formats;
 
   if ($type eq 'haploview') {
     @formats = (
-      [ 'Genotype file',     $object->param('gen_file'),   '', ' rel="external"', ' [Genotypes in linkage format]' ],
-      [ 'Locus information', $object->param('locus_file'), '', ' rel="external"', ' [Locus information file]' ],
-      [ 'Combined file',     $object->param('tar_file') ]
+      [ 'Genotype file',     $hub->param('gen_file'),   '', ' rel="external"', ' [Genotypes in linkage format]' ],
+      [ 'Locus information', $hub->param('locus_file'), '', ' rel="external"', ' [Locus information file]' ],
+      [ 'Combined file',     $hub->param('tar_file') ]
     );
   } elsif ($type eq 'excel') {
     @formats = (
-      [ 'Excel', $object->param('excel_file') ]
+      [ 'Excel', $hub->param('excel_file') ]
     );
   } else {
-
-    my %params  = %{$object->referer->{'params'}};
+    my %params   = %{$hub->referer->{'params'}};
+    my $function = $hub->function;
     my %populations;
+
     foreach (keys %params) {
       if ($_ =~/pop\d+/){
         my $name = $params{$_}->[0];
@@ -67,24 +68,24 @@ sub get_formats {
       }
     }
     
-    my $href = $object->_url({
-      type    => $object->function, 
+    my $href = $hub->url({
+      type    => $function, 
       action  => 'Export', 
       output  => 'ld', 
       %populations
     });
     
-    my $excel = $object->_url({
+    my $excel = $hub->url({
       type     => 'Export',
       action   => 'LDExcelFile',
-      function => $object->function, 
+      function => $function, 
       %populations
     });
     
-    my $haploview = $object->_url({
+    my $haploview = $hub->url({
       type     => 'Export',
       action   => 'HaploviewFiles',
-      function => $object->function, 
+      function => $function, 
       %populations
     });
     

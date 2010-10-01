@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Export::Alignments;
 
 use strict;
@@ -9,14 +11,13 @@ use EnsEMBL::Web::Constants;
 use base 'EnsEMBL::Web::Component::Export';
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  
-  my $align = $object->referer->{'params'}->{'align'}->[0];
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $align = $hub->referer->{'params'}->{'align'}->[0];
   
   my $params = {
     action   => 'Export', 
-    type     => $object->function, 
+    type     => $hub->function, 
     function => 'Alignment',
     output   => 'alignment',
     align    => $align
@@ -27,10 +28,9 @@ sub content {
   $form->add_fieldset;
   
   if ($align) {
-    my $href = uri_unescape($object->_url($params));
+    my $href    = uri_unescape($hub->url($params));
     my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-    
-    my @list = map qq{<a class="modal_close" href="$href;format=$_;_format=Text" rel="external">$formats{$_}</a>}, sort keys %formats;
+    my @list    = map qq{<a class="modal_close" href="$href;format=$_;_format=Text" rel="external">$formats{$_}</a>}, sort keys %formats;
     
     $form->add_notes({ class => undef, text => 'Please choose a format for your exported data' });
     $form->add_notes({ class => undef, list => \@list });

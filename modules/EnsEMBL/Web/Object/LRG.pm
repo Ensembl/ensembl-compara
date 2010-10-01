@@ -444,7 +444,7 @@ sub add_evidence_links {
   my $links = [];
   foreach my $hit_name (sort keys %$ids) {
     my $db_name = $ids->{$hit_name};
-    my $display = $self->get_ExtURL_link( $hit_name, $db_name, $hit_name );
+    my $display = $self->hub->get_ExtURL_link( $hit_name, $db_name, $hit_name );
     push @{$links}, [$display,$hit_name];
   }
   return $links;

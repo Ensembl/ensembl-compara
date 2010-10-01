@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::ViewBottomNav;
 
 use strict;
@@ -19,6 +21,7 @@ sub content_region {
 sub content {
   my $self             = shift;
   my $ramp_entries     = shift || [ [4,1e3], [6,5e3], [8,1e4], [10,5e4], [12,1e5], [14,2e5], [16,5e5], [18,1e6] ];
+  my $hub              = $self->hub;
   my $object           = $self->object;
   my $image_width      = $self->image_width . 'px';
   my $seq_region_start = $object->seq_region_start;
@@ -26,10 +29,10 @@ sub content {
   my $cp               = int(($seq_region_end + $seq_region_start) / 2);
   my $wd               = $seq_region_end - $seq_region_start + 1;
   
-  $self->{'update'} = $object->param('update_panel');
+  $self->{'update'} = $hub->param('update_panel');
   
   my $values = [
-    $self->ajax_url(shift, 1) . ';r=' . $object->param('r'),
+    $self->ajax_url(shift, 1) . ';r=' . $hub->param('r'),
     $object->seq_region_name,
     $seq_region_start,
     $seq_region_end,
@@ -51,9 +54,9 @@ sub content {
 sub navbar {
   my ($self, $ramp, $wd, $values) = @_;
   
-  my $object       = $self->object;
+  my $hub          = $self->hub;
   my $image_width  = $self->image_width . 'px';
-  my $url          = $object->_url({ %{$object->multi_params(0)}, r => undef }, 1);
+  my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef }, 1);
   my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1]||{}};
   
   return sprintf (qq{
@@ -95,7 +98,7 @@ sub navbar {
 sub ramp {
   my ($self, $ramp_entries, $wd, @url_params) = @_;
   
-  my $scale = $self->object->species_defs->ENSEMBL_GENOME_SIZE || 1;
+  my $scale = $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1;
   my $x     = 0;
   my ($ramp, @mp);
   
@@ -150,8 +153,9 @@ sub ramp_url {
 
 sub nav_url {
   my ($self, $s, $e) = @_;
+  my $hub    = $self->hub;
   my $object = $self->object;
-  my $max = $object->seq_region_length;
+  my $max    = $object->seq_region_length;
   
   ($s, $e) = (1, $e - $s || 1) if $s < 1;
   ($s, $e) = ($max - ($e - $s), $max) if $e > $max;
@@ -160,8 +164,8 @@ sub nav_url {
   
   return $object->seq_region_name . ':' . $s . '-' . $e if $self->{'update'};
   
-  return $object->_url({ 
-    %{$object->multi_params(0)},
+  return $hub->url({ 
+    %{$hub->multi_params(0)},
     r => $object->seq_region_name . ':' . $s . '-' . $e
   });
 }

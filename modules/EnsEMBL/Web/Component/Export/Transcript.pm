@@ -1,10 +1,12 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Export::Transcript;
 
 use strict;
 
 use EnsEMBL::Web::Document::SpreadSheet;
 
-use base 'EnsEMBL::Web::Component::Export';
+use base qw(EnsEMBL::Web::Component::Export);
 
 sub content {
   my $self = shift;
@@ -19,21 +21,22 @@ sub content {
 
 
 sub genetic_variation {
-  my $self = shift;
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
   
   my $params;
-  map { /opt_pop_(.+)/; $params->{$1} = 1 if $object->param($_) ne 'off' } grep { /opt_pop_/ } $object->param;
+  map { /opt_pop_(.+)/; $params->{$1} = 1 if $hub->param($_) ne 'off' } grep { /opt_pop_/ } $hub->param;
   
-  my @samples = $object->get_samples(undef, $params);
+  my @samples  = $object->get_samples(undef, $params);
   my $snp_data = $object->get_genetic_variations(@samples);
   
   $self->html(sprintf '<h2>Variation data for strains on transcript %s</h2>', $object->stable_id);
   $self->html('<p>Format: tab separated per strain (SNP id; Type; Amino acid change;)</p>');
   $self->html('');
   
-  my $colours = $object->species_defs->colour('variation');
-  my $colour_map = $object->get_session->colourmap;
+  my $colours    = $hub->species_defs->colour('variation');
+  my $colour_map = $hub->session->colourmap;
   
   my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
   

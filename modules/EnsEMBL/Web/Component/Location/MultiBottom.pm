@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::MultiBottom;
 
 use strict;
@@ -16,23 +18,24 @@ sub _init {
 
 sub content {
   my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
   
-  return if $object->param('show_panels') eq 'top';
+  return if $hub->param('show_panels') eq 'top';
   
-  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
   
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
   my $image_width     = $self->image_width;
   my $primary_slice   = $object->slice;
-  my $primary_species = $object->species;
+  my $primary_species = $hub->species;
   my $primary_strand  = $primary_slice->strand;
   my $slices          = $object->multi_locations;
   my $short_name      = $slices->[0]->{'short_name'};
   my $max             = scalar @$slices;
-  my $base_url        = $object->_url($object->multi_params);
-  my $s               = $object->param('show_panels') eq 'both' ? 3 : 2;
+  my $base_url        = $hub->url($hub->multi_params);
+  my $s               = $hub->param('show_panels') eq 'both' ? 3 : 2;
   my $gene_join_types = EnsEMBL::Web::Constants::GENE_JOIN_TYPES;
   my $i               = 1;
   my $methods         = {};
@@ -43,8 +46,8 @@ sub content {
   my @images;
   
   foreach (@$slices) {
-    my $image_config   = $object->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
-    my $highlight_gene = $object->param('g' . ($i-1));
+    my $image_config   = $hub->get_imageconfig('MultiBottom', "contigview_bottom_$i", $_->{'species'});
+    my $highlight_gene = $hub->param('g' . ($i-1));
     
     if (!defined $join_alignments) {
       $methods->{'BLASTZ_NET'}          = $image_config->get_option('opt_pairwise_blastz', 'values');
@@ -60,7 +63,7 @@ sub content {
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
-      image_width    => $object->param('i_width') || $self->image_width,
+      image_width    => $hub->param('i_width') || $self->image_width,
       slice_number    => "$i|$s",
       multi           => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
@@ -91,7 +94,7 @@ sub content {
         if ($join_alignments) {
           my @sl = map { $slices->[$_]->{'species'} eq $primary_species ? {} : { species => $slices->[$_]->{'species'}, ori => $slices->[$_]->{'strand'} }} $i-1, $i;
           
-          $primary_image_config = $object->get_imageconfig('MultiBottom', "contigview_bottom_1_$i", $primary_species);
+          $primary_image_config = $hub->get_imageconfig('MultiBottom', "contigview_bottom_1_$i", $primary_species);
           
           $primary_image_config->set_parameters({
             container_width => $primary_slice->length,
@@ -116,7 +119,7 @@ sub content {
     $i++;
   }
   
-  if ($object->param('export')) {
+  if ($hub->param('export')) {
     $_->set_parameter('export', 1) for grep $_->isa('EnsEMBL::Web::ImageConfig'), @images;
   }
   

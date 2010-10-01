@@ -20,9 +20,10 @@ sub process {
 
 sub make_file {
   my $self       = shift;
+  my $hub        = $self->hub;
   my $object     = $self->object;
-  my $params     = $object->referer->{'params'};
-  my %pop_params = map { $object->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $object->param;
+  my $params     = $hub->referer->{'params'};
+  my %pop_params = map { $hub->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $hub->param;
   
   warn 'ERROR: No population defined', return unless %pop_params;
   
@@ -30,10 +31,10 @@ sub make_file {
   my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($file); 
   my $table    = $renderer->new_table_renderer;
   
-  my @colour_gradient = ('ffffff', $object->get_imageconfig('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
+  my @colour_gradient = ('ffffff', $hub->get_imageconfig('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
   
   foreach (values %pop_params){ 
-    my $pop_param   = $object->param('pop'.$_); 
+    my $pop_param   = $hub->param('pop'.$_); 
     my $zoom        = 20000; # Currently non-configurable
     my $ld_values   = $object->get_ld_values($pop_param, $params->{'v'}->[0], $zoom);
     my $populations = {};

@@ -4,8 +4,8 @@ package EnsEMBL::Web::Component::TextSequence;
 
 use strict;
 
-use URI::Escape qw(uri_unescape);
 use HTTP::Request;
+use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
@@ -33,17 +33,17 @@ sub get_sequence_data {
   my $self = shift;
   my ($slices, $config) = @_;
   
-  my $object = $self->object;
+  my $hub = $self->hub;
   my @sequence;
   my @markup;
   my $population;
   
   if ($config->{'snp_display'}) {
-    my $filter = $object->param('population_filter');
+    my $filter = $hub->param('population_filter');
     
     if ($filter && $filter ne 'off') {
-      $population = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
-      $config->{'min_frequency'} = $object->param('min_frequency');
+      $population = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
+      $config->{'min_frequency'} = $hub->param('min_frequency');
       $config->{'population_filter'} = $filter;
     }
   }
@@ -214,7 +214,7 @@ sub get_sequence_data {
         # Add the chromosome number for the link text if we're doing species comparisons or resequencing.
         $snp_start = $snp->seq_region_name . ":$snp_start" if scalar keys %$u_snps && $config->{'line_numbering'} eq 'slice';
         
-        my $url = $object->_url({
+        my $url = $hub->url({
           species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
           type    => 'Variation',
           action  => 'Summary',
@@ -430,8 +430,8 @@ sub markup_variation {
   my ($sequence, $markup, $config) = @_;
 
   my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
-  my $object = $self->object;
-  my $i = 0;
+  my $hub = $self->hub;
+  my $i   = 0;
   
   my $class = {
     snp    => 'sn',
@@ -449,7 +449,7 @@ sub markup_variation {
       $seq->[$_]->{'letter'} = $ambiguity if $ambiguity && !$config->{'transcript'};
       $seq->[$_]->{'title'} .= ($seq->[$_]->{'title'} ? '; ' : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]->{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
-      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'});
+      $seq->[$_]->{'href'}   = $hub->url($variation->{'href'});
       $seq->[$_]->{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
 
       $snps    = 1 if $variation->{'type'} eq 'snp';
@@ -899,12 +899,12 @@ sub chunked_content {
   my $self = shift;
   my ($total_length, $chunk_length, $base_url) = @_;
 
-  my $object = $self->object;
+  my $hub = $self->hub;
 
   my $i        = 1;
   my $j        = $chunk_length;
   my $end      = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
-  my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $object->get_session);
+  my $renderer = ($ENV{'ENSEMBL_AJAX_VALUE'} eq 'enabled') ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(session => $hub->session);
   my ($url, $html);
   
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
@@ -912,9 +912,9 @@ sub chunked_content {
     $url = qq{$base_url;subslice_start=$i;subslice_end=$j};
 
     if ($renderer) {
-      map { $url .= ";$_=" . $object->param($_) } $object->param;
+      map { $url .= ";$_=" . $hub->param($_) } $hub->param;
 
-      $renderer->print(new HTTP::Request('GET', $object->species_defs->ENSEMBL_BASE_URL . $url));
+      $renderer->print(new HTTP::Request('GET', $hub->species_defs->ENSEMBL_BASE_URL . $url));
     } else {
       $html .= qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div>};
     }
@@ -939,7 +939,7 @@ sub class_to_style {
   
   if (!$self->{'class_to_style'}) {
     my $colourmap    = $self->colour_map;
-    my $species_defs = $self->object->species_defs;
+    my $species_defs = $self->hub->species_defs;
     my $styles       = $species_defs->colour('sequence_markup');
     my $var_styles   = $species_defs->colour('variation');
     my $i            = 1;
@@ -991,19 +991,18 @@ sub class_to_style {
 sub content_key {
   my $self   = shift;
   my $config = shift || {};
+  my $hub    = $self->hub;
   
-  my $object = $self->object;
-  
-  $config->{'site_type'} = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
+  $config->{'site_type'} = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
   for (@{$self->{'key_params'}}, qw(exon_display population_filter min_frequency)) {
-    $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
+    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
-  $config->{'key'}->{$_} = $object->param($_) for @{$self->{'key_types'}};
+  $config->{'key'}->{$_} = $hub->param($_) for @{$self->{'key_types'}};
   
-  for my $p (grep $object->param($_), qw(exons variations)) {
-    $config->{'key'}->{$p}->{$_} = 1 for $object->param($p);
+  for my $p (grep $hub->param($_), qw(exons variations)) {
+    $config->{'key'}->{$p}->{$_} = 1 for $hub->param($p);
   }
 
   return $self->get_key($config);
@@ -1012,10 +1011,10 @@ sub content_key {
 sub get_key {
   my ($self, $config, $k) = @_;
   
-  my $object         = $self->object;
+  my $hub            = $self->hub;
   my $class_to_style = $self->class_to_style;
-  my $var_styles     = $object->species_defs->colour('variation');
-  my $image_config   = $object->get_imageconfig('text_seq_legend');
+  my $var_styles     = $hub->species_defs->colour('variation');
+  my $image_config   = $hub->get_imageconfig('text_seq_legend');
     
   my $exon_type;
   $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';

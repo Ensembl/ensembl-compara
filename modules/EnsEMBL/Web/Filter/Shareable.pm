@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Filter::Shareable;
 
 use strict;
@@ -18,13 +20,13 @@ sub init {
 }
 
 sub catch {
-  my $self   = shift;
-  my $hub = $self->hub;
-  my $user   = $hub->user;
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $user = $hub->user;
   
   $self->redirect = '/UserData/SelectFile';
   
-  my @temp_uploads = $hub->get_session->get_data(type => 'upload');
+  my @temp_uploads = $hub->session->get_data(type => 'upload');
   my @user_uploads = $user ? $user->uploads : ();
 
   $self->error_code = 'none' unless @temp_uploads || @user_uploads;

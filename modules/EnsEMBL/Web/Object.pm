@@ -42,7 +42,6 @@ sub type              { return $_[0]->hub->type;                  }
 sub action            { return $_[0]->hub->action;                }
 sub function          { return $_[0]->hub->function;              }
 sub script            { return $_[0]->hub->script;                }
-sub referer           { return $_[0]->hub->referer;               }
 sub species_defs      { return shift->hub->species_defs(@_);      }
 sub species_path      { return shift->hub->species_path(@_);      }
 sub problem           { return shift->hub->problem(@_);           }
@@ -50,13 +49,10 @@ sub param             { return shift->hub->param(@_);             }
 sub get_session       { return shift->hub->session(@_);           }
 sub session           { return shift->hub->session(@_);           }
 sub user              { return shift->hub->user(@_);              }
-sub multi_params      { return shift->hub->multi_params(@_);      }
 sub database          { return shift->hub->database(@_);          }
 sub get_databases     { return shift->hub->get_databases(@_);     }
 sub databases_species { return shift->hub->databases_species(@_); }
-sub ExtURL            { return $_[0]->hub->ExtURL;                }
-sub get_ExtURL        { return shift->hub->get_ExtURL(@_);        }
-sub get_ExtURL_link   { return shift->hub->get_ExtURL_link(@_);   }
+sub get_adaptor       { return shift->hub->get_adaptor(@_);       }
 sub timer_push        { return shift->hub->timer_push(@_);        }
 sub table_info        { return shift->hub->table_info(@_);        }
 sub data_species      { return shift->hub->data_species(@_);      }
@@ -123,23 +119,6 @@ sub command {
   my $self = shift;
   $self->{'command'} = shift if (@_);
   return $self->{'command'};
-}
-
-sub get_adaptor {
-  my ($self, $method, $db, $species) = @_;
-  
-  $db      = 'core' if !$db;
-  $species = $self->species if !$species;
-  
-  my $adaptor;
-  eval { $adaptor = $self->database($db, $species)->$method(); };
-
-  if ($@) {
-    warn $@;
-    $self->problem('fatal', "Sorry, can't retrieve required information.", $@);
-  }
-  
-  return $adaptor;
 }
 
 # The highlights array is passed between web-requests to highlight selected items (e.g. Gene around
@@ -223,7 +202,7 @@ sub fetch_userdata_by_id {
 
     my $tempdata = {};
     if ($status eq 'temp') {
-      $tempdata = $self->get_session->get_data('type' => $type, 'code' => $id);
+      $tempdata = $self->hub->session->get_data('type' => $type, 'code' => $id);
     } else {
       my $record = $user->urls($id);
       $tempdata = { 'url' => $record->url };

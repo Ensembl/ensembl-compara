@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment;
 
 use strict;
@@ -14,16 +16,17 @@ sub _init {
 
 sub content {
   my $self         = shift;
+  my $hub          = $self->hub;
   my $object       = $self->object;
-  my $trans        = $object->Obj;
-  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
+  my $transcript   = $object->Obj;
   my $tsi          = $object->stable_id;
   my $hit_id       = $object->param('sequence');
   my $exon_id      = $object->param('exon');
   my $hit_db_name  = $object->get_sf_hit_db_name($hit_id);
-  my $trans_length = $trans->length;
-  my $e_count      = scalar @{$trans->get_all_Exons};
-  my $translation  = $trans->translation;
+  my $trans_length = $transcript->length;
+  my $e_count      = scalar @{$transcript->get_all_Exons};
+  my $translation  = $transcript->translation;
+  my $table        = new EnsEMBL::Web::Document::HTML::TwoCol;
   my ($cds_aa_length, $cds_length, $e_alignment, $html);
 
   # get external sequence and type (DNA or PEP) - refseq try with and without version
@@ -33,7 +36,7 @@ sub content {
   
   if ($hit_db_name =~ /^RefSeq/) {
     $query_db = 'RefSeq';
-    $hit_id =~ s/\.\d+//;
+    $hit_id   =~ s/\.\d+//;
     push @hit_ids, $hit_id;
   } elsif ($hit_db_name eq 'Uniprot/Varsplic') {
     $hit_id =~ /(\w+)-\d+/; # hack - strip off isoform version for uniprot
@@ -42,11 +45,11 @@ sub content {
   
   # As yet don't do anything if we have a DnaDnaAlignFeature as an ENS_ supporting_feature (only a limited number in Fugu at presents (e58))
   # if we decide to use these then will have to modify ENSEMBL_RETRIEVE.pm
-  if (($hit_db_name =~ /ENS/) && ($object->get_hit($hit_id)->isa('Bio::EnsEMBL::DnaDnaAlignFeature'))) {
+  if ($hit_db_name =~ /ENS/ && $object->get_hit($hit_id)->isa('Bio::EnsEMBL::DnaDnaAlignFeature')) {
     $ext_seq = '';
   } else {
     foreach my $id (@hit_ids) {
-      my $rec = $self->hub->get_ext_seq($id, uc $query_db);
+      my $rec = $hub->get_ext_seq($id, uc $query_db);
       
       $ext_seq        = $rec->[0] || '';
       $ext_seq_length = $rec->[1] || '';
@@ -72,8 +75,8 @@ sub content {
   my $label    = $seq_type eq 'PEP' ? 'aa' : 'bp';
 
   if ($ext_seq) {
-    my $hit_url = $object->get_ExtURL_link($hit_id, $hit_db_name, $hit_id);
-    $table->add_row('External record',  "$hit_url ($hit_db_name), length = $ext_seq_length $label", 1);
+    my $hit_url = $hub->get_ExtURL_link($hit_id, $hit_db_name, $hit_id);
+    $table->add_row('External record', "$hit_url ($hit_db_name), length = $ext_seq_length $label", 1);
   } else {
     $table->add_row('External record', "<p>Unable to retrieve sequence for $hit_id</p>", 1);
   }
@@ -90,7 +93,7 @@ sub content {
     my $exon;
     
     # get cached exon off the transcript
-    foreach my $e (@{$trans->get_all_Exons}) {
+    foreach my $e (@{$transcript->get_all_Exons}) {
       if ($e->stable_id eq $exon_id) {
         $exon = $e;
         last;
@@ -98,11 +101,11 @@ sub content {
     }
 
     # get exon sequence
-    my ($e_sequence,$e_sequence_length) = @{$object->get_int_seq( $exon, $seq_type, $trans)};
+    my ($e_sequence, $e_sequence_length) = @{$object->get_int_seq($exon, $seq_type, $transcript)};
 
-    #get position of exon in the transcript
-    my $cdna_start = $exon->cdna_start($trans);
-    my $cdna_end   = $exon->cdna_end($trans);
+    # get position of exon in the transcript
+    my $cdna_start = $exon->cdna_start($transcript);
+    my $cdna_end   = $exon->cdna_end($transcript);
 
     # length of exon in the CDS
     my $e_length      = $exon->length;
@@ -112,11 +115,11 @@ sub content {
     my $exon_cds_pos;
     
     if ($seq_type eq 'PEP' && $translation) {
-      #postions of everything we need in cDNA coords
-      my $tl_start  = $exon->cdna_coding_start($trans);
-      my $tl_end    = $exon->cdna_coding_end($trans);
-      my $cds_start = $trans->cdna_coding_start;
-      my $cds_end   = $trans->cdna_coding_end;
+      # postions of everything we need in cDNA coords
+      my $tl_start  = $exon->cdna_coding_start($transcript);
+      my $tl_end    = $exon->cdna_coding_end($transcript);
+      my $cds_start = $transcript->cdna_coding_start;
+      my $cds_end   = $transcript->cdna_coding_end;
       
       if ($tl_start && $tl_end) {
         my $start = int(($tl_start - $cds_start) / 3  + 1);
@@ -152,7 +155,7 @@ sub content {
 
   if ($ext_seq) {
     # get transcript sequence
-    my $trans_sequence = $object->get_int_seq($trans,$seq_type)->[0];
+    my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];
     my $table2         = new EnsEMBL::Web::Document::HTML::TwoCol;
     my $type           = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
     

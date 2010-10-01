@@ -119,7 +119,7 @@ sub populate_tree {
   $self->create_node('Marker', 'Markers',
     [qw(
       botnav EnsEMBL::Web::Component::Location::ViewBottomNav
-      marker EnsEMBL::Web::Component::Location::MarkerDetails
+      marker EnsEMBL::Web::Component::Location::MarkerList
     )],
     { 'availability' => 'slice has_markers' }
   );

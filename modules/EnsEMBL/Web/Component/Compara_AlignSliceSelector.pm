@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Compara_AlignSliceSelector;
 
 use strict;
@@ -14,16 +16,16 @@ sub _init {
 
 sub content {
   my $self         = shift;
-  my $cdb          = shift || $self->object->param('cdb') || 'compara';
-  my $object       = $self->object;
-  my $db_hash      = $object->species_defs->multi_hash;
-  my $params       = $object->can('multi_params') ? $object->multi_params : {};
-  my $align        = $object->param('align');
-  my $url          = $object->_url({ %$params, align => undef }, 1);
+  my $hub          = $self->hub;
+  my $cdb          = shift || $hub->param('cdb') || 'compara';
+  my $species_defs = $hub->species_defs;
+  my $db_hash      = $species_defs->multi_hash;
+  my $align        = $hub->param('align');
+  my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
   my $extra_inputs = join '', map qq{<input type="hidden" name="$_" value="$url->[1]{$_}" />}, sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
-  my $species = $object->species;
+  my $species = $hub->species;
   my $options = '<option value="">-- Select an alignment --</option>';
   
   # Order by number of species (name is in the form "6 primates EPO"
@@ -39,7 +41,7 @@ sub content {
   }
   
   # For the variation compara view, only allow multi-way alignments
-  if ($object->type ne 'Variation') {
+  if ($hub->type ne 'Variation') {
     $options .= '<optgroup label="Pairwise alignments">';
 
     my %species_hash;
@@ -52,7 +54,7 @@ sub content {
           $type =~ s/_net//;
           $type =~ s/_/ /g;
           
-          $species_hash{$object->species_defs->species_label($_, 1) . "###$type"} = $i;
+          $species_hash{$species_defs->species_label($_, 1) . "###$type"} = $i;
         }
       } 
     }

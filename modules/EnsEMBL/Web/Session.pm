@@ -307,7 +307,6 @@ sub set_data {
 }
 
 sub purge_data {
-### $object->get_session->purge_data()
   my $self = shift; 
   my %args = (
     type => 'upload',
@@ -325,7 +324,6 @@ sub purge_data {
 
 ## For multiple objects, such as upload or urls
 sub add_data {
-### $object->get_session->add_data()
   my $self = shift; 
   my %args = (
     type => 'upload',

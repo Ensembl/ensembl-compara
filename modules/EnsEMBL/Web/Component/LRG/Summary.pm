@@ -1,4 +1,5 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::LRG::Summary;
 
 ### NAME: EnsEMBL::Web::Component::LRG::Summary;
@@ -12,11 +13,11 @@ package EnsEMBL::Web::Component::LRG::Summary;
 ### by the factory
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component::LRG);
-use CGI qw(escapeHTML);
+
 
 sub _init {
   my $self = shift;
@@ -39,12 +40,12 @@ sub content {
       'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.';
   } else {
     my $lrg         = $object->Obj;
-    my $param       = $object->param('lrg');
+    my $param       = $hub->param('lrg');
     my $description = qq{LRG region <a rel="external" href="http://www.lrg-sequence.org/LRG/$param">$param</a>.};
     my @genes       = @{$lrg->get_all_Genes('LRG_import')||[]};
     my $db_entry    = $genes[0]->get_all_DBLinks('HGNC');
     my $slice       = $lrg->feature_Slice;
-    my $gene_url    = $object->_url({
+    my $gene_url    = $hub->url({
       type   => 'Gene',
       action => 'Summary',
       g      => $db_entry->[0]->display_id,
@@ -55,13 +56,13 @@ sub content {
     $description  =~ s/\[\w+:([-\w\/\_]+)\;\w+:(\w+)\]//g;
     
     my ($edb, $acc) = ($1, $2);
-    my $link        = $object->get_ExtURL_link("Source: $edb $acc", $edb, $acc);
+    my $link        = $hub->get_ExtURL_link("Source: $edb $acc", $edb, $acc);
     
     $description .= qq{<span class="small">$link</span>} unless $acc eq 'content';
     $html        .= "<p>$description</p>";
     
     
-    my $url = $object->_url({
+    my $url = $hub->url({
       type   => 'Location',
       action => 'View',
       r      => $slice->seq_region_name . ':' . $slice->start . '-' . $slice->end
@@ -69,9 +70,9 @@ sub content {
     
     my $location_html = sprintf(
       '%s: %s-%s %s.',
-      $object->neat_sr_name($slice->coord_system->name, $slice->seq_region_name),
-      $object->thousandify($slice->start),
-      $object->thousandify($slice->end),
+      $self->neat_sr_name($slice->coord_system->name, $slice->seq_region_name),
+      $self->thousandify($slice->start),
+      $self->thousandify($slice->end),
       $slice->strand < 0 ? ' reverse strand' : 'forward strand'
     );
     
@@ -118,7 +119,7 @@ sub content {
       $hide ? ' style="display:none"' : ''
     );
  
-    foreach ( map $_->[2], sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map [$_->external_name, $_->stable_id, $_], @$transcripts) {
+    foreach (map $_->[2], sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map [$_->external_name, $_->stable_id, $_], @$transcripts) {
       my $transcript = encode_entities($_->stable_id); 
       my $protein    = $_->translation ? 'LRG Protein' : 'No protein product';
       

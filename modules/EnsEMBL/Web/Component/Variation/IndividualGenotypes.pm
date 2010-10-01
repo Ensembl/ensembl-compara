@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::IndividualGenotypes;
 
 use strict;
@@ -12,19 +14,13 @@ sub _init {
   $self->ajaxable(1);
 }
 
-
 sub content {
   my $self   = shift;
   my $object = $self->object;
   my $html   = '';
 
   ## first check we have uniquely determined variation
-  if ( $object->not_unique_location ){
-    return $self->_info(
-      'A unique location can not be determined for this Variation',
-      $object->not_unique_location
-    );
-  }
+  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
 
   ## return if no data
   my %ind_data = %{$object->individual_table};
@@ -97,7 +93,7 @@ sub format_parent {
 sub pop_url {
   my ($self, $pop_name, $pop_dbSNP) = @_;
   return $pop_name unless $pop_dbSNP;
-  return $self->object->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]);
+  return $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]);
 }
 
 

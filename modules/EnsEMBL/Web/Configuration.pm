@@ -9,7 +9,6 @@ use Time::HiRes qw(time);
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -29,8 +28,8 @@ sub new {
   
   bless $self, $class;
 
-  my $user       = $ENSEMBL_WEB_REGISTRY->get_user;
-  my $session    = $ENSEMBL_WEB_REGISTRY->get_session;
+  my $user       = $hub->user;
+  my $session    = $hub->session;
   my $session_id = $session->get_session_id;
   my $user_tree  = $self->can('user_populate_tree') && ($user || $session_id);
   my $tree       = $user_tree && $MEMD && $self->tree_cache_key($user, $session) ? $MEMD->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache

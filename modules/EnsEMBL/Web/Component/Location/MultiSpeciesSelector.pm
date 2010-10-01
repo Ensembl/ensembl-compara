@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::MultiSpeciesSelector;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::MultiSelector);
 
@@ -20,11 +20,12 @@ sub _init {
 
 sub content_ajax {
   my $self            = shift;
-  my $object          = $self->object;
-  my $params          = $object->multi_params; 
-  my $alignments      = $object->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
-  my $primary_species = $object->species;
-  my %shown           = map { $object->param("s$_") => $_ } grep s/^s(\d+)$/$1/, $object->param; # get species (and parameters) already shown on the page
+  my $hub             = $self->hub;
+  my $species_defs    = $hub->species_defs;
+  my $params          = $hub->multi_params; 
+  my $alignments      = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
+  my $primary_species = $hub->species;
+  my %shown           = map { $hub->param("s$_") => $_ } grep s/^s(\d+)$/$1/, $hub->param; # get species (and parameters) already shown on the page
   my %species;
   
   foreach my $i (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
@@ -39,7 +40,7 @@ sub content_ajax {
         if ($species{$_}) {
           $species{$_} .= "/$type";
         } else {
-          $species{$_} = $object->species_defs->species_label($_, 1) . " - $type";
+          $species{$_} = $species_defs->species_label($_, 1) . " - $type";
         }
       }
     }
@@ -47,7 +48,7 @@ sub content_ajax {
   
   if ($shown{$primary_species}) {
     my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
-    $species{$primary_species} = $object->species_defs->species_label($primary_species, 1) . " - chromosome $chr";
+    $species{$primary_species} = $species_defs->species_label($primary_species, 1) . " - chromosome $chr";
   }
   
   $self->{'all_options'}      = \%species;

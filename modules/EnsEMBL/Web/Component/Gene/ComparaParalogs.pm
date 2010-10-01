@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::ComparaParalogs;
 
 use strict;
@@ -12,16 +14,11 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
-  my $self = shift;
-  my $cdb = shift || $self->object->param('cdb') || 'compara';
-
-  my $object = $self->object;
-  my %paralogue_list = %{$object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $cdb            = shift || $hub->param('cdb') || 'compara';
+  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   
@@ -52,12 +49,12 @@ sub content {
       my $paralogue_dnds_ratio        = $paralogue->{'homology_dnds_ratio'}           || '&nbsp;';
       (my $spp = $paralogue->{'spp'}) =~ tr/ /_/;
       
-      my $link = $object->_url({
+      my $link = $hub->url({
         g => $stable_id,
         r => undef
       });
       
-      my $location_link = $object->_url({
+      my $location_link = $hub->url({
         type   => 'Location',
         action => 'View',
         r      => $paralogue->{'location'},
@@ -66,7 +63,7 @@ sub content {
       
       my $links = sprintf (
         '<a href="%s">Multi-location view</a>',
-        $object->_url({
+        $hub->url({
           type   => 'Location',
           action => 'Multi',
           g1     => $stable_id,
@@ -80,7 +77,7 @@ sub content {
       if ($paralogue_desc ne 'DWGA') {          
         $links .= sprintf(
           '<br /><a href="%s">Alignment</a>', 
-          $object->_url({
+          $hub->url({
             action   => 'Compara_Paralog', 
             function => 'Alignment', 
             g1       => $stable_id
@@ -93,7 +90,7 @@ sub content {
       
       if ($description =~ s/\[\w+:([-\w\/]+)\;\w+:(\w+)\]//g) {
         my ($edb, $acc) = ($1, $2);
-        $description .= '[' . $object->get_ExtURL_link("Source: $edb ($acc)", $edb, $acc). ']' if $acc;
+        $description .= '[' . $hub->get_ExtURL_link("Source: $edb ($acc)", $edb, $acc). ']' if $acc;
       }
       
       my @external = qq{<span class="small">$description</span>};
@@ -112,13 +109,12 @@ sub content {
   }
   
   my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1 });
-  
-  my $html = '<p>The following gene(s) have been identified as putative paralogues (within species):</p>' . $table->render;
+  my $html  = '<p>The following gene(s) have been identified as putative paralogues (within species):</p>' . $table->render;
   
   if ($alignview && keys %paralogue_list) {
     $html .= sprintf(
       '<p><a href="%s">View sequence alignments of all homologues</a>.</p>', 
-      $object->_url({ action => 'Compara_Paralog', function => 'Alignment' })
+      $hub->url({ action => 'Compara_Paralog', function => 'Alignment' })
     );
   }
   

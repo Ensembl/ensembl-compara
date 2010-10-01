@@ -76,7 +76,7 @@ sub new {
 
   bless $self, $class;
   
-  $self->_set_core_params;
+  $self->set_core_params;
   
   return $self;
 }
@@ -120,23 +120,6 @@ sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub clear_problem_type { $_[0]{'_problem'}{$_[1]} = []; }
 sub clear_problems     { $_[0]{'_problem'} = {}; }
 
-sub get_adaptor {
-  my ($self, $method, $db, $species) = @_;
-  
-  $db      ||= 'core';
-  $species ||= $self->species;
-  
-  my $adaptor;
-  eval { $adaptor = $self->database($db, $species)->$method(); };
-
-  if ($@) {
-    warn $@;
-    $self->problem('fatal', "Sorry, can't retrieve required information.", $@);
-  }
-  
-  return $adaptor;
-}
-
 # Returns the values of cookies
 # If only one cookie name is given, returns the value as a scalar
 # If more than one cookie name is given, returns a hash of name => value
@@ -152,6 +135,23 @@ sub problem {
   my $self = shift;
   push @{$self->{'_problem'}{$_[0]}}, new EnsEMBL::Web::Problem(@_) if @_;
   return $self->{'_problem'};
+}
+
+sub get_adaptor {
+  my ($self, $method, $db, $species) = @_;
+  
+  $db      ||= 'core';
+  $species ||= $self->species;
+  
+  my $adaptor;
+  eval { $adaptor = $self->database($db, $species)->$method(); };
+
+  if ($@) {
+    warn $@;
+    $self->problem('fatal', "Sorry, can't retrieve required information.", $@);
+  }
+  
+  return $adaptor;
 }
 
 sub database {
@@ -181,7 +181,7 @@ sub core_param {
   return $self->{'_core_params'}->{$name};
 }
 
-sub _set_core_params {
+sub set_core_params {
   ### Initialises core parameter hash from CGI parameters
 
   my $self = shift;

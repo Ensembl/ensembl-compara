@@ -174,7 +174,7 @@ sub EC_URL {
   my $url_string = $string;
      $url_string =~ s/-/\?/g;
   
-  return $self->object->get_ExtURL_link("EC $string", 'EC_PATHWAY', $url_string);
+  return $self->hub->get_ExtURL_link("EC $string", 'EC_PATHWAY', $url_string);
 }
 
 sub glossary_mouseover {
@@ -218,15 +218,15 @@ sub _attach_das {
 sub modal_form {
   my ($self, $name, $action, $options) = @_;
   
-  my $object      = $self->object;
+  my $hub         = $self->hub;
   my $form_action = $action;
   my $form_class  = 'std check';
   
   if ($options->{'wizard'}) {
-    my $species = $object->type eq 'UserData' ? $object->data_species : $object->species;
+    my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
     
-    $form_action  = $object->species_path($species) if $species;
-    $form_action .= sprintf '/%s/Wizard', $object->type;
+    $form_action  = $hub->species_path($species) if $species;
+    $form_action .= sprintf '/%s/Wizard', $hub->type;
     
     $form_class .= ' wizard';
   }
@@ -238,7 +238,7 @@ sub modal_form {
     $form->add_button('type' => 'Button', 'name' => 'wizard_back', 'value' => '< Back', 'classes' => [ 'back', 'submit' ]) unless defined $options->{'back_button'} && $options->{'back_button'} == 0;
     
     # Include current and former nodes in _backtrack
-    if (my @tracks = $object->param('_backtrack')) {
+    if (my @tracks = $hub->param('_backtrack')) {
       foreach my $step (@tracks) {
         next unless $step;
         $form->add_element('type' => 'Hidden', 'name' => '_backtrack', 'value' => $step);
@@ -246,7 +246,7 @@ sub modal_form {
     }
     
     $form->add_button('type'  => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
-    $form->add_element('type' => 'Hidden', 'name' => '_backtrack',    'value' => $object->action);
+    $form->add_element('type' => 'Hidden', 'name' => '_backtrack',    'value' => $hub->action);
     $form->add_element('type' => 'Hidden', 'name' => 'wizard_next',   'value' => $action);
   } elsif (!$options->{'no_button'}) {
     $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => $label);
@@ -257,7 +257,7 @@ sub modal_form {
 
 sub new_image {
   my $self = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
   
   my %formats = EnsEMBL::Web::Constants::FORMATS;
   my ($image_config, $id);
@@ -274,9 +274,9 @@ sub new_image {
   $self->id($id) unless $image_config->{'no_panel_type'};
   
   # Set text export on image config
-  $image_config->set_parameter('text_export', $object->param('export')) if $formats{$object->param('export')}{'extn'} eq 'txt';
+  $image_config->set_parameter('text_export', $hub->param('export')) if $formats{$hub->param('export')}{'extn'} eq 'txt';
   
-  my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
+  my $image = new EnsEMBL::Web::Document::Image($hub->species_defs);
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_);
   $image->{'no_panel_type'} = $image_config->{'no_panel_type'};
   
@@ -285,11 +285,10 @@ sub new_image {
 
 sub new_vimage {
   my $self = shift;
-  my $object = $self->object;
   
   $self->id($_[1]->{'type'}); # $_[1] is image config
   
-  my $image = new EnsEMBL::Web::Document::Image($object->species_defs);
+  my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
   $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_);
   
   return $image;
@@ -297,12 +296,11 @@ sub new_vimage {
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;
-  my $object = $self->object;
   
   $self->id($image_config->{'type'}) if $image_config;
   
   my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
-  $image->{'object'} = $object;
+  $image->{'object'} = $self->object;
   
   return $image;
 }
@@ -399,13 +397,14 @@ sub _matches {
 }
 
 sub _sort_similarity_links {
-  my $self = shift;
+  my $self             = shift;
   my @similarity_links = @_;
-  my $object   = $self->object;
-  my $database = $object->database;
-  my $db       = $object->get_db;
-  my $urls     = $object->ExtURL;
-  my $fv_type  = $object->action eq 'Oligos' ? 'OligoFeature' : 'Xref'; # default link to featureview is to retrieve an Xref
+  my $hub              = $self->hub;
+  my $object           = $self->object;
+  my $database         = $hub->database;
+  my $db               = $object->get_db;
+  my $urls             = $hub->ExtURL;
+  my $fv_type          = $hub->action eq 'Oligos' ? 'OligoFeature' : 'Xref'; # default link to featureview is to retrieve an Xref
   my (%affy, %exdb);
   
   foreach my $type (sort {
@@ -461,7 +460,7 @@ sub _sort_similarity_links {
       $join_links = 1;
     }
     
-    if ($object->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript') {
+    if ($hub->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i && ref($object->Obj) eq 'Bio::EnsEMBL::Transcript') {
       my $seq_arg = $display_id;
       $seq_arg    = "LL_$seq_arg" if $externalDB eq 'LocusLink';
       
@@ -568,7 +567,9 @@ sub remove_redundant_xrefs {
 sub transcript_table {
   my $self = shift;
   
+  my $hub       = $self->hub;
   my $object    = $self->object;
+  my $species   = $hub->species;
   my $page_type = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   
   my $description = encode_entities($object->gene_description);
@@ -580,13 +581,13 @@ sub transcript_table {
     if ($object->get_db eq 'vega') {
       $edb = 'Vega';
       $acc = $object->Obj->stable_id;
-      $description .= sprintf ' <span class="small">%s</span>', $object->get_ExtURL_link("Source: $edb", $edb . '_' . lc $page_type, $acc);
+      $description .= sprintf ' <span class="small">%s</span>', $hub->get_ExtURL_link("Source: $edb", $edb . '_' . lc $page_type, $acc);
     } else {
       $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
       $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
       ($edb, $acc) = ($1, $2);
 
-      my $l1 =  $object->get_ExtURL($edb, $acc);
+      my $l1 =  $hub->get_ExtURL($edb, $acc);
       $l1 =~ s/\&amp\;/\&/g;
       my $t1 = "Source: $edb $acc";
       my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
@@ -596,45 +597,49 @@ sub transcript_table {
     $description = "<p>$description</p>";
   }
   
-  my $url = $self->object->_url({
+  my $seq_region_name  = $object->seq_region_name;
+  my $seq_region_start = $object->seq_region_start;
+  my $seq_region_end   = $object->seq_region_end;
+  
+  my $url = $hub->url({
     type   => 'Location',
     action => 'View',
-    r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
+    r      => "$seq_region_name:$seq_region_start-$seq_region_end"
   });
   
   my $location_html = sprintf(
     '<a href="%s">%s: %s-%s</a> %s.',
     $url,
-    $object->neat_sr_name($object->seq_region_type, $object->seq_region_name),
-    $object->thousandify($object->seq_region_start),
-    $object->thousandify($object->seq_region_end),
+    $self->neat_sr_name($object->seq_region_type, $seq_region_name),
+    $self->thousandify($seq_region_start),
+    $self->thousandify($seq_region_end),
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );
   
   # alternative (Vega) coordinates
   if ($object->get_db eq 'vega') {
-    my $alt_assemblies = $object->species_defs->ALTERNATIVE_ASSEMBLIES || [];
+    my $alt_assemblies = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
     my ($vega_assembly) = map { $_ =~ /VEGA/; $_ } @$alt_assemblies;
     
     # set dnadb to 'vega' so that the assembly mapping is retrieved from there
-    my $reg = 'Bio::EnsEMBL::Registry';
-    my $orig_group = $reg->get_DNAAdaptor($object->species, 'vega')->group;
+    my $reg        = 'Bio::EnsEMBL::Registry';
+    my $orig_group = $reg->get_DNAAdaptor($species, 'vega')->group;
     
-    $reg->add_DNAAdaptor($object->species, 'vega', $object->species, 'vega');
+    $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
 
     my $alt_slices = $object->vega_projection($vega_assembly); # project feature slice onto Vega assembly
     
     # link to Vega if there is an ungapped mapping of whole gene
     if (scalar @$alt_slices == 1 && $alt_slices->[0]->length == $object->feature_length) {
       my $l   = $alt_slices->[0]->seq_region_name . ':' . $alt_slices->[0]->start . '-' . $alt_slices->[0]->end;
-      my $url = $object->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
+      my $url = $hub->ExtURL->get_url('VEGA_CONTIGVIEW', $l);
       
       $location_html .= ' [<span class="small">This corresponds to ';
       $location_html .= sprintf(
         '<a href="%s" target="external">%s-%s</a>',
         $url,
-        $object->thousandify($alt_slices->[0]->start),
-        $object->thousandify($alt_slices->[0]->end)
+        $self->thousandify($alt_slices->[0]->start),
+        $self->thousandify($alt_slices->[0]->end)
       );
       
       $location_html .= " in $vega_assembly coordinates</span>]";
@@ -642,7 +647,7 @@ sub transcript_table {
       $location_html .= sprintf qq{ [<span class="small">There is no ungapped mapping of this %s onto the $vega_assembly assembly</span>]}, lc $object->type_name;
     }
     
-    $reg->add_DNAAdaptor($object->species, 'vega', $object->species, $orig_group); # set dnadb back to the original group
+    $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
   }
   
   if ($page_type eq 'gene') {
@@ -659,9 +664,9 @@ sub transcript_table {
         
         $location_html .= sprintf('
           <li><a href="/%s/Location/View?l=%s:%s-%s">%s : %s-%s</a></li>', 
-          $object->species, $altchr, $altstart, $altend, $altchr,
-          $object->thousandify($altstart),
-          $object->thousandify($altend)
+          $species, $altchr, $altstart, $altend, $altchr,
+          $self->thousandify($altstart),
+          $self->thousandify($altend)
         );
       }
       
@@ -683,12 +688,12 @@ sub transcript_table {
   my $gene = $object->gene;
   
   if ($gene) {
-    my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $object->param('t');
+    my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
     my $count       = @$transcripts;
     my $plural_1    = 'are';
     my $plural_2    = 'transcripts';
-    my $action      = $object->action;
+    my $action      = $hub->action;
     my %biotype_rows;
     
     my %url_params = (
@@ -706,7 +711,7 @@ sub transcript_table {
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
-      my $gene_url = $object->_url({
+      my $gene_url = $hub->url({
         type   => 'Gene',
         action => 'Summary',
         g      => $gene_id
@@ -740,7 +745,7 @@ sub transcript_table {
       $hide ? ' style="display:none"' : ''
     );
 
-    $html .= '<th class="sort_html">CCDS</th>' if $object->species =~ /^Homo|Mus/;
+    $html .= '<th class="sort_html">CCDS</th>' if $species =~ /^Homo|Mus/;
     $html .= '
         </tr>
       </thead>
@@ -752,12 +757,12 @@ sub transcript_table {
       my $protein           = 'No protein product';
       my $protein_length    = '-';
       my $ccds              = '-';
-      my $url               = $self->object->_url({ %url_params, t => $_->stable_id });
+      my $url               = $hub->url({ %url_params, t => $_->stable_id });
       
       if ($_->translation) {
         $protein = sprintf(
           '<a href="%s">%s</a>',
-          $self->object->_url({
+          $hub->url({
             type   => 'Transcript',
             action => 'ProteinSummary',
             t      => $_->stable_id
@@ -771,7 +776,7 @@ sub transcript_table {
       if (my @CCDS = grep { $_->dbname eq 'CCDS' } @{$_->get_all_DBLinks}) {
         my %T = map { $_->primary_id => 1 } @CCDS;
         @CCDS = sort keys %T;
-        $ccds = join ', ', map $object->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
+        $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
       }
 
       (my $biotype = $_->biotype) =~ s/_/ /g;
@@ -794,7 +799,7 @@ sub transcript_table {
         $self->glossary_mouseover(ucfirst $biotype)
       );
 
-      $html_row .= "<td>$ccds</td>" if $object->species =~ /^Homo|Mus/;
+      $html_row .= "<td>$ccds</td>" if $species =~ /^Homo|Mus/;
       $html_row .= '</tr>';
       
       $biotype = '.' if $biotype eq 'protein coding';

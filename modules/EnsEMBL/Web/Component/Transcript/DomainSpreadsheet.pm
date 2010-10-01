@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Transcript::DomainSpreadsheet;
 
 use strict;
@@ -12,31 +14,29 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
-  my $self   = shift;
-  my $object = $self->object;
+  my $self        = shift;
+  my $object      = $self->object;
+  my $translation = $object->translation_object;
   
-  return $self->non_coding_error unless $object->translation_object;
+  return $self->non_coding_error unless $translation;
   
+  my $hub      = $self->hub;
   my $analyses = $object->table_info($object->get_db, 'protein_feature')->{'analyses'} || {};
   my (@others, @domains);
   
   foreach (keys %$analyses) {
     if ($analyses->{$_}{'web'}{'type'} eq 'domain') {
-      push @domains, @{$object->translation_object->get_all_ProteinFeatures($_)};
+      push @domains, @{$translation->get_all_ProteinFeatures($_)};
     } else {
-      push @others,  @{$object->translation_object->get_all_ProteinFeatures($_)};
+      push @others,  @{$translation->get_all_ProteinFeatures($_)};
     }
   }
   
   my @domain_keys = grep { $analyses->{$_}{'web'}{'type'} eq 'domain' } keys %$analyses;
   my @other_keys  = grep { $analyses->{$_}{'web'}{'type'} ne 'domain' } keys %$analyses;
-  my @domains     = map  { @{$object->translation_object->get_all_ProteinFeatures($_)} } @domain_keys;
-  my @others      = map  { @{$object->translation_object->get_all_ProteinFeatures($_)} } @other_keys;
+  my @domains     = map  { @{$translation->get_all_ProteinFeatures($_)} } @domain_keys;
+  my @others      = map  { @{$translation->get_all_ProteinFeatures($_)} } @other_keys;
 
   return unless @others || @domains;
 
@@ -65,11 +65,11 @@ sub content {
       my $db            = $domain->analysis->db;
       my $id            = $domain->hseqname;
       my $interpro_acc  = $domain->interpro_ac;
-      my $interpro_link = $object->get_ExtURL_link($interpro_acc,'INTERPRO',$interpro_acc);
+      my $interpro_link = $hub->get_ExtURL_link($interpro_acc,'INTERPRO',$interpro_acc);
       my $other_urls;
       
       if ($interpro_acc) {
-        my $url     = $object->_url({ action => 'Domains/Genes', domain => $interpro_acc });
+        my $url     = $hub->url({ action => 'Domains/Genes', domain => $interpro_acc });
         $other_urls = qq{ [<a href="$url">Display all genes with this domain</a>]};
       } else {
         $interpro_link = '-';
@@ -79,7 +79,7 @@ sub content {
       $table->add_row({
         type     => $db,
         desc     => $domain->idesc || '-',
-        acc      => $object->get_ExtURL_link($id, uc $db, $id),
+        acc      => $hub->get_ExtURL_link($id, uc $db, $id),
         start    => $domain->start,
         end      => $domain->end,
         interpro => $interpro_link.$other_urls,

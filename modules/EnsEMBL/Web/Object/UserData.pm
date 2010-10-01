@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Object::UserData;
 
 ### NAME: EnsEMBL::Web::Object::UserData
@@ -11,32 +13,30 @@ package EnsEMBL::Web::Object::UserData;
 ### This module does not wrap around a data object, it merely
 ### accesses user data via the session                                                                                   
 use strict;
-use warnings;
-no warnings "uninitialized";
-
-use base qw(EnsEMBL::Web::Object);
 
 use Digest::MD5 qw(md5_hex);
 
-use Bio::EnsEMBL::Utils::Exception qw(try catch);
-
-use EnsEMBL::Web::Cache;
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::Data::Record::Upload;
-use EnsEMBL::Web::Data::Session;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::DASConfig;
 use Bio::EnsEMBL::StableIdHistoryTree;
+use Bio::EnsEMBL::Utils::Exception qw(try catch);
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::TranscriptVariationAdaptor;
+
+use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::DASConfig;
+use EnsEMBL::Web::Data::Record::Upload;
+use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Text::Feature::SNP_EFFECT;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::TmpFile::Text;
+
+use base qw(EnsEMBL::Web::Object);
 
 my $DEFAULT_CS = 'DnaAlignFeature';
 
-sub data        : lvalue { $_[0]->{'_data'}; }
-sub data_type   : lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_data_type'} = $p} return $_[0]->{'_data_type' }; }
+sub data      :lvalue { $_[0]->{'_data'}; }
+sub data_type :lvalue {  my ($self, $p) = @_; if ($p) {$_[0]->{'_data_type'} = $p} return $_[0]->{'_data_type' }; }
 
-sub caption           {
+sub caption  {
   my $self = shift;
   return 'Custom Data';
 }
@@ -47,8 +47,8 @@ sub short_caption {
 }
 
 sub counts {
-  my $self = shift;
-  my $user = $self->user;
+  my $self   = shift;
+  my $user   = $self->user;
   my $counts = {};
   return $counts;
 }
@@ -64,10 +64,10 @@ sub availability {
 #---------------------------------- userdata DB functionality ----------------------------------
 
 sub save_to_db {
-  my $self = shift;
-  my %args = @_;
-
-  my $tmpdata  = $self->get_session->get_data(%args);
+  my $self     = shift;
+  my %args     = @_;
+  my $session  = $self->hub->session;
+  my $tmpdata  = $session->get_data(%args);
   my $assembly = $tmpdata->{'assembly'};
 
   ## TODO: proper error exceptions !!!!!
@@ -96,7 +96,7 @@ sub save_to_db {
     $config->{'id'} = $user->id;
     $config->{'track_type'} = 'user';
   } else {
-    $config->{'id'} = $self->session->get_session_id;
+    $config->{'id'} = $session->get_session_id;
     $config->{'track_type'} = 'session';
   }
   
@@ -132,19 +132,21 @@ sub move_to_user {
     @_,
   );
 
-  my $user = $self->user;
+  my $hub     = $self->hub;
+  my $user    = $hub->user;
+  my $session = $hub->session;
 
-  my $data = $self->get_session->get_data(%args);
+  my $data = $session->get_data(%args);
   my $record;
   
   $record = $user->add_to_uploads($data)
-    if $args{type} eq 'upload';
+    if $args{'type'} eq 'upload';
 
   $record = $user->add_to_urls($data)
-    if $args{type} eq 'url';
+    if $args{'type'} eq 'url';
 
   if ($record) {
-    $self->get_session->purge_data(%args);
+    $session->purge_data(%args);
     return $record;
   }
   
@@ -156,10 +158,12 @@ sub store_data {
   my $self = shift;
   my %args = @_;
   
-  my $session = $self->get_session;
+  my $hub     = $self->hub;
+  my $user    = $hub->user;
+  my $session = $hub->session;
   
   my $tmp_data = $session->get_data(%args);
-  $tmp_data->{'name'} = $self->param('name') if $self->param('name');
+  $tmp_data->{'name'} = $hub->param('name') if $hub->param('name');
 
   my $report = $self->save_to_db(%args);
   
@@ -177,7 +181,7 @@ sub store_data {
 
     my $session_id = $session->get_session_id;    
     
-    if (my $user = $self->user) {
+    if ($user) {
       my $upload = $user->add_to_uploads(
         %$tmp_data,
         type     => 'upload',
@@ -220,24 +224,25 @@ sub store_data {
 }
   
 sub delete_upload {
-  my $self = shift;
-
-  my $type = $self->param('type');
-  my $code = $self->param('code');
-  my $id   = $self->param('id');
-  my $user = $self->user;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $type    = $hub->param('type');
+  my $code    = $hub->param('code');
+  my $id      = $hub->param('id');
+  my $user    = $hub->user;
+  my $session = $hub->session;
   
   if ($type eq 'upload') { 
-    my $upload = $self->get_session->get_data(type => $type, code => $code);
+    my $upload = $session->get_data(type => $type, code => $code);
+    
     if ($upload->{'filename'}) {
-      EnsEMBL::Web::TmpFile::Text->new(
-        filename => $upload->{'filename'},
-      )->delete;
+      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete;
     } else {
       my @analyses = split(', ', $upload->{'analyses'});
       $self->_delete_datasource($upload->{'species'}, $_) for @analyses;
-    }    
-    $self->get_session->purge_data(type => $type, code => $code);
+    } 
+    
+    $session->purge_data(type => $type, code => $code);
   } elsif ($id && $user) {
     my ($upload) = $user->uploads($id);
     
@@ -256,22 +261,23 @@ sub delete_upload {
 }
 
 sub delete_remote {
-  my $self = shift;
-
-  my $type = $self->param('type');
-  my $code = $self->param('code');
-  my $id   = $self->param('id');
-  my $user = $self->user;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $type    = $hub->param('type');
+  my $code    = $hub->param('code');
+  my $id      = $hub->param('id');
+  my $user    = $hub->user;
+  my $session = $hub->session;
   
   if ($type eq 'url') { 
-    $self->get_session->purge_data(type => $type, code => $code);
+    $session->purge_data(type => $type, code => $code);
   }
   elsif ($self->param('logic_name')) {
-    my $temp_das = $self->get_session->get_all_das;
+    my $temp_das = $session->get_all_das;
     if ($temp_das) {
       my $das = $temp_das->{$self->param('logic_name')};
-      $das->mark_deleted() if $das;
-      $self->get_session->save_das();
+      $das->mark_deleted if $das;
+      $session->save_das;
     }
   } 
   elsif ($id && $user) {
@@ -998,7 +1004,7 @@ THIS CODE IS WRONG - FILTERING IS DONE BY SOURCEPARSER!
     my $sources = [];
  
     try {
-      my $parser = $self->get_session->get_das_parser();
+      my $parser = $self->hub->session->get_das_parser();
       $sources = $parser->fetch_Sources(
         -location   => $server,
         -species    => $species || undef,

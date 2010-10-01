@@ -107,7 +107,7 @@ sub create_objects {
     if ($redirect) {
       $new_url = $redirect->name;
     } elsif (!$hub->has_fatal_problem) { # If there's a fatal problem, we want to show it, not redirect
-      $hub->_set_core_params;
+      $hub->set_core_params;
       $new_url = $hub->url($hub->multi_params);
     }
     

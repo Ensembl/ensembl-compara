@@ -3,13 +3,12 @@
 package EnsEMBL::Web::Component::UserData::ManageData;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+
+use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::TmpFile::Text;
-use URI::Escape qw(uri_escape);
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -20,19 +19,19 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $sd = $object->species_defs;
-
-  my $user = $object->user;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $logins  = $hub->species_defs->ENSEMBL_LOGINS;
+  my $user    = $hub->user;
   my @data; 
   
   # Control panel fixes
-  my $dir = $object->species_path;
+  my $dir = $hub->species_path;
   $dir = '' if $dir !~ /_/;
   
   my $html;
-  $html .= '<div class="modal_reload"></div>' if $object->param('reload');
+  $html .= '<div class="modal_reload"></div>' if $hub->param('reload');
   $html .= '<h3>Your data</h3>'; # Uploads
  
   my ($saved_data, $temp_data);
@@ -51,15 +50,15 @@ sub content {
     } 
   }
   my @tmp;
-  if (@tmp = $object->get_session->get_data('type' => 'upload')) {
+  if (@tmp = $session->get_data('type' => 'upload')) {
     push @data, @tmp;
     $temp_data = 1;
   }
-  if (@tmp = $object->get_session->get_data('type' => 'url')) {
+  if (@tmp = $session->get_data('type' => 'url')) {
     push @data, @tmp;
     $temp_data = 1;
   }
-  if (@tmp = values %{$object->get_session->get_all_das}) {
+  if (@tmp = values %{$session->get_all_das}) {
     push @data, @tmp;
     $temp_data = 1;
   }
@@ -72,7 +71,7 @@ sub content {
       { 'key' => 'name', 'title' => 'File', 'width' => '30%', 'align' => 'left' }
     );
     
-    if ($sd->ENSEMBL_LOGINS) {
+    if ($logins) {
       $table->add_columns(
         { 'key' => 'date', 'title' => 'Last updated', 'width' => '15%', 'align' => 'left' },
         { 'key' => 'save', 'title' => '', 'width' => '15%', 'align' => 'left' },
@@ -144,7 +143,7 @@ sub content {
           $delete = sprintf('<a href="%s/UserData/DeleteRemote?id=%s" class="%s">Delete</a>', $dir, $file->id, $delete_class);
         }
         
-        if ($sd->ENSEMBL_LOGINS) {
+        if ($logins) {
           $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'rename' => $rename, 'share' => $share, 'save' => 'Saved' };
         } else {
           $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'share' => $share };
@@ -158,7 +157,7 @@ sub content {
           $type = 'DAS';
           $name = $file->label;
           
-          if ($sd->ENSEMBL_LOGINS && $user) {
+          if ($logins && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?dsn=%s" class="modal_link">Save to account</a>', $dir, $file->logic_name);
           }
           
@@ -175,7 +174,7 @@ sub content {
           }
           $name .= "</strong><br />$file->{'url'} (<em>$species</em>)";
           
-          if ($sd->ENSEMBL_LOGINS && $user) {
+          if ($logins && $user) {
             $save = sprintf('<a href="%s/UserData/SaveRemote?code=%s;species=%s" class="modal_link">Save to account</a>', $dir, $file->{'code'}, $file->{'species'});
           }
           $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $delete_class, $title);
@@ -202,7 +201,7 @@ sub content {
             $save = sprintf '<a href="%s" class="modal_link">Download</a>', '/'.$file->{'species'}.'/UserData/PreviewConvertIDs?format=text;data_format=snp;species='.$file->{'species'}.';convert_file='.$file->{'filename'}.':'.$file->{'name'};
           } 
           else {
-            $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($sd->ENSEMBL_LOGINS && $user);
+            $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($logins && $user);
           }
           $share = sprintf('<a href="%s/UserData/SelectShare?%s" class="modal_link">Share</a>', $dir, $extra);
           $rename = sprintf('<a href="%s/UserData/RenameTempData?code=%s" class="%s"%s>Rename</a>', $dir, $file->{'code'}, $delete_class, $title);
@@ -213,9 +212,9 @@ sub content {
             my $type = $1;
             my $id = $2;
             
-            if (($type eq 'session' && $id != $object->get_session->get_session_id)   || 
-                ($type eq 'user' && $sd->ENSEMBL_LOGINS && $user && $id != $user->id) ||
-                ($type eq 'user' && !($sd->ENSEMBL_LOGINS && $user))) {
+            if (($type eq 'session' && $id != $session->get_session_id)   || 
+                ($type eq 'user' && $logins && $user && $id != $user->id) ||
+                ($type eq 'user' && !($logins && $user))) {
                 $save = '';
                 $delete = '';
                 $share = '';
@@ -224,7 +223,7 @@ sub content {
           }
         }
         
-        if ($sd->ENSEMBL_LOGINS) {
+        if ($logins) {
           $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => '-', 'share' => $share, 'rename' => $rename, 'save' => $save };
         } else {
           $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'share' => $share, 'rename' => $rename };

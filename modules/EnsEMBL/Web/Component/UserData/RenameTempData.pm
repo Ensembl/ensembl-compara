@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Component::UserData::RenameTempData;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Form;
 
@@ -10,22 +10,16 @@ use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return '';
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub content {
   my $self = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
+  my $form = EnsEMBL::Web::Form->new('rename_tempdata', $hub->species_path($hub->data_species).'/UserData/SaveTempData', 'post');
 
-  my $form = EnsEMBL::Web::Form->new('rename_tempdata', $object->species_path($object->data_species).'/UserData/SaveTempData', 'post');
-
-  my $tempdata = $object->get_session->get_data('code' => $object->param('code'));
+  my $tempdata = $hub->session->get_data('code' => $hub->param('code'));
 
   return unless $tempdata;
 
@@ -38,11 +32,11 @@ sub content {
   $form->add_element(
     'type'  => 'Hidden',
     'name'  =>  'code',
-    'value' => $object->param('code'),
+    'value' => $hub->param('code'),
   );
 
   ## navigation elements
-  $form->add_element( 'type' => 'Submit', 'value' => 'Save');
+  $form->add_element('type' => 'Submit', 'value' => 'Save');
 
   return $form->render;
 }

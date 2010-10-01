@@ -1,32 +1,33 @@
+# $Id$
+
 package EnsEMBL::Web::Component::UserData::SelectFeatures;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub caption {
-  my $self = shift;
   return 'Select File to Upload';
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-
-  my $sitename = $object->species_defs->ENSEMBL_SITETYPE;
-  my $current_species = $object->data_species;
+  my $self            = shift;
+  my $hub             = $self->hub;
+  my $session         = $hub->session;
+  my $species_defs    = $hub->species_defs;
+  my $sitename        = $species_defs->ENSEMBL_SITETYPE;
+  my $species         = $hub->species;
+  my $current_species = $hub->data_species;
   my $html;
 
   ## Get assembly info
-  my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/CheckConvert");
+  my $form = $self->modal_form('select', $hub->species_path($current_species) . "/UserData/CheckConvert");
   $form->add_notes({'heading' => 'Tips',
   'text' => qq(<p class="space-below">Map your data to the current assembly. Accepted file formats: GFF, GTF, BED, PSL</p>
 <p class="space-below">N.B. Export is currently in GFF only</p>
@@ -36,8 +37,8 @@ sub content {
 
   ## Species now set automatically for the page you are on
   my @species;
-  foreach my $sp ($object->species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1)};
+  foreach my $sp ($species_defs->valid_species) {
+    push @species, {'value' => $sp, 'name' => $species_defs->species_label($sp, 1)};
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
 
@@ -51,7 +52,7 @@ sub content {
   );
 
   ## Which conversion?
-  my @mappings = reverse sort @{$object->species_defs->ASSEMBLY_MAPPINGS};
+  my @mappings = reverse sort @{$species_defs->ASSEMBLY_MAPPINGS};
   my (@forward, @backward);
   foreach my $string (@mappings) {
     my ($to, $from) = split('#', $string);
@@ -68,23 +69,23 @@ sub content {
   );
 
   ## Check for uploaded data for this species
-  my $user = $object->user;
+  my $user = $hub->user;
   if ($user) {
     my (@data, @temp);
     foreach my $upload ($user->uploads) {
-      next unless $upload->species eq $object->species;
+      next unless $upload->species eq $species;
       push @data, $upload; 
     } 
-    foreach my $upload ($object->get_session->get_data('type' => 'upload')) {
-      next unless $upload->{'species'} eq $object->species;
+    foreach my $upload ($session->get_data('type' => 'upload')) {
+      next unless $upload->{'species'} eq $species;
       push @data, $upload;
     } 
     foreach my $url ($user->urls) {
-      next unless $url->species eq $object->species;
+      next unless $url->species eq $species;
       push @data, $url;
     } 
-    foreach my $url ($object->get_session->get_data('type' => 'url')) {
-      next unless $url->{'species'} eq $object->species;
+    foreach my $url ($session->get_data('type' => 'url')) {
+      next unless $url->{'species'} eq $species;
       push @data, $url;
     } 
     

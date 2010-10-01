@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::Phenotype;
 
 use strict;
@@ -12,41 +14,38 @@ sub _init {
   $self->ajaxable(1);
 }
 
-
 sub content {
   my $self = shift;
   my $object = $self->object;
 
   ## first check we have uniquely determined variation
-  if ($object->not_unique_location) {
-    return $self->_info(
-      'A unique location can not be determined for this Variation',
-      $object->not_unique_location
-    );
-  }
+  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
   
   my $data = $object->get_external_data;
   
   return 'We do not have any external data for this variation' unless scalar @$data;
   
+  my $is_somatic = $object->Obj->is_somatic;
+  my $study      = $is_somatic ? 'Tumour site' : 'Study'; 
   my $table_rows = $self->table_data($data);
-
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
-  my $study = $object->Obj->is_somatic ? 'Tumour site' :'Study';  
+  my $table      = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+   
 
   $table->add_columns(
-    { key => 'disease', title => 'Disease/Trait',         align => 'left', sort => 'html'    },  
-    { key => 'source',  title => 'Source',                align => 'left', sort => 'html'    },
-    { key => 'study',   title => $study,                  align => 'left', sort => 'html'    },
-    { key => 'genes',   title => 'Associated Gene(s)',    align => 'left', sort => 'none'    },
-    { key => 'variant', title => 'Associated variant',    align => 'left', sort => 'none'    },
+    { key => 'disease', title => 'Disease/Trait',         align => 'left', sort => 'html' },  
+    { key => 'source',  title => 'Source',                align => 'left', sort => 'html' },
+    { key => 'study',   title => $study,                  align => 'left', sort => 'html' },
+    { key => 'genes',   title => 'Associated Gene(s)',    align => 'left', sort => 'none' },
+    { key => 'variant', title => 'Associated variant',    align => 'left', sort => 'none' },
   );
-  unless( $object->Obj->is_somatic){
+  
+  if (!$is_somatic) {
     $table->add_columns(
       { key => 'allele',  title => 'Strongest risk allele', align => 'left', sort => 'none'    },
       { key => 'pvalue',  title => 'P value',               align => 'left', sort => 'numeric' }
     );
-  } 
+  }
+  
   $table->add_rows(@$_) for values %$table_rows;
   
   return $table->render;
@@ -55,7 +54,8 @@ sub content {
 sub table_data { 
   my ($self, $external_data) = @_;
   
-  my $object = $self->object;
+  my $hub        = $self->hub;
+  my $object     = $self->object;
   my $is_somatic = $object->Obj->is_somatic;
   my %rows;
   
@@ -78,18 +78,18 @@ sub table_data {
     my $id           = $va->{'_phenotype_id'};
     my $code         = $va->phenotype_name;
     my $source_name  = $va->source_name;
-    my $disease_url  = $object->_url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
+    my $disease_url  = $hub->url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
     my $source       = $self->source_link($va, $code);
     my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
     
     if ($is_somatic) { 
-      my @tumour_info =  split /\:/, $disorder;
-      my $tissue = $tumour_info[1]; 
-      $tissue =~s/^\s+//;
-      my $tissue_formatted = $tissue; 
-      $tissue_formatted =~ s/\s+/\_/g; 
-      my $source_study = uc($source_name) .'_STUDY';         
-      $study = $object->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
+      my @tumour_info      = split /\:/, $disorder;
+      my $tissue           = $tumour_info[1];
+      my $tissue_formatted = $tissue;
+      my $source_study     = uc($source_name) . '_STUDY'; 
+      $tissue              =~ s/^\s+//;
+      $tissue_formatted    =~ s/\s+/\_/g; 
+      $study               = $hub->get_ExtURL_link($tissue, $source_study, $tissue_formatted);
     }
    
     my $gene         = $self->gene_links($va->associated_gene);
@@ -122,15 +122,15 @@ sub gene_links {
   
   return unless $data;
   
-  my $object = $self->object;
-  my @genes  = split /,/, $data;
+  my $hub   = $self->hub;
+  my @genes = split /,/, $data;
   my @links;
   
   foreach my $g (@genes) {
     if ($g =~ /Intergenic/) {
       push @links, $g;
     } else { 
-      my $url = $object->_url({ type => 'Gene', action => 'Summary', g => $g });
+      my $url = $hub->url({ type => 'Gene', action => 'Summary', g => $g });
       push @links, qq{<a href="$url">$g</a>};
     }
   }
@@ -146,7 +146,7 @@ sub source_link {
   my $source    = $va->source_name; 
   my $source_uc = uc $source;
   $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
-  my $url       = $self->object->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
+  my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   
   if ($url =~ /ega/) {
     my $ext_id = $va->local_stable_id;
@@ -171,7 +171,7 @@ sub study_link {
 
 sub variation_link {
   my ($self, $v) = @_;
-  my $url = $self->object->_url({ type => 'Variation', action => 'Summary', v => $v });
+  my $url = $self->hub->url({ type => 'Variation', action => 'Summary', v => $v });
   return qq{<a href="$url">$v</a>};
 }
 

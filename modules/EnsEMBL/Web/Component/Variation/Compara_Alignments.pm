@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::Compara_Alignments;
 
 use strict;
@@ -197,11 +199,13 @@ sub markup_conservation {
 
 sub content {  
   my $self         = shift;
+  my $hub          = $self->hub;
   my $object       = $self->object;
-  my $species_defs = $object->species_defs;
+  my $species      = $hub->species;
+  my $species_defs = $hub->species_defs;
   my $width        = 20;
   my %mappings     = %{$object->variation_feature_mapping}; 
-  my $v            = keys %mappings == 1 ? [values %mappings]->[0] : $mappings{$object->param('vf')};
+  my $v            = keys %mappings == 1 ? [values %mappings]->[0] : $mappings{$hub->param('vf')};
   
   return $self->_info('Unable to draw SNP neighbourhood', $object->not_unique_location) if $object->not_unique_location;
   
@@ -209,7 +213,7 @@ sub content {
     snp_display          => 1, 
     title_display        => 1, 
     conservation_display => 1,
-    v                    => $object->param('v')
+    v                    => $hub->param('v')
   };
   
   my $seq_type   = $v->{'type'}; 
@@ -217,16 +221,16 @@ sub content {
   my $start      = $v->{'start'} - ($width/2);  
   my $end        = $v->{'start'} + abs($v->{'end'} - $v->{'start'}) + ($width / 2);
   
-  my $slice   = $object->database('core')->get_SliceAdaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
-  my $align   = $object->param('align');
-  my ($error) = $self->check_for_errors($object, $align, $object->species);
+  my $slice   = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
+  my $align   = $hub->param('align');
+  my ($error) = $self->check_for_errors($object, $align, $species);
   
   return $error if $error;
   
   my ($html, $info);
  
   # Get all slices for the gene
-  my ($slices, $slice_length) = $self->get_slices($object, $slice, $align, $object->species);
+  my ($slices, $slice_length) = $self->get_slices($slice, $align, $species);
   
   my @aligned_slices;
   my %non_aligned_slices;
