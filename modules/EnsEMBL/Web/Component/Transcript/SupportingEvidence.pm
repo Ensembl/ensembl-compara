@@ -84,6 +84,14 @@ sub _content {
   $trans_obj->{'transcript'}     = $transcript;
   $trans_obj->{'web_transcript'} = $object;
 
+  my @missing_evidence;
+  if (my $translation = $transcript->translation) {
+    my $missing_evidence_attribs = $translation->get_all_Attributes('NoEvidence') || [];
+    if (@{$missing_evidence_attribs}) {
+      @missing_evidence =  map {$_->value } @{$missing_evidence_attribs};
+    }
+  }
+
   ## Turn on track associated with this db/logic name
   $wuc->modify_configs(
     [$wuc->get_track_key( 'TSE_transcript', $object )],
@@ -114,8 +122,8 @@ sub _content {
   }
 
   my $transcript_slice = $object->__data->{'slices'}{'supporting_evidence_transcript'}[1];
-  my $sub_slices     = $object->__data->{'slices'}{'supporting_evidence_transcript'}[2];
-  my $fake_length    = $object->__data->{'slices'}{'supporting_evidence_transcript'}[3];
+  my $sub_slices       = $object->__data->{'slices'}{'supporting_evidence_transcript'}[2];
+  my $fake_length      = $object->__data->{'slices'}{'supporting_evidence_transcript'}[3];
 
   $wuc->container_width( $fake_length ); #sets width of image
   $trans_obj->{'subslices'}   = $sub_slices; #used to draw lines for exons
@@ -221,12 +229,10 @@ sub _content {
 
     $t_ids{$hit_name}++;
 
-    #don't store any transcript_supporting_features for a vega gene
-    next if ($ln =~ /otter/);
-
     $t_evidence->{$hit_name}{'hit_name'} = $hit_name;
     $t_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
     $t_evidence->{$hit_name}{'hit_type'} = ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) ? 'protein' : $self->hit_type($info_summary,$evi);
+    $t_evidence->{$hit_name}{'evidence_removed'} = 1 if  grep {$hit_name eq $_} @missing_evidence;
 
     #split evidence into ungapped features (ie parse cigar string),
     #map onto exons ie determine mismatches
@@ -305,83 +311,79 @@ sub _content {
   }
   $al_obj->{'transcript_evidence'} = $t_evidence;
 
-  #add info on additional supporting_evidence (exon level)
+  #add info on additional supporting_evidence (exon level) (although new vega dbs don't have any, old ones do and so need to skip these)
   my $e_evidence = {};
   my $evidence_checks;
   my %evidence_ends;
-  foreach my $exon (@$exons) {
+  if ($ln !~ /otter/) {
+    foreach my $exon (@$exons) {
     EVI:
-    foreach my $evi (@{$exon->get_all_supporting_features}) {
-      my $hit_name = $evi->hseqname;
-      my $hit_seq_region_start = $evi->seq_region_start;
-      my $hit_seq_region_end = $evi->seq_region_end;
-      if ($ln =~ /otter/) {
-        ###only proceed for vega if this hit name has been used as transcript evidence
-        next EVI unless ($t_ids{$hit_name});
+      foreach my $evi (@{$exon->get_all_supporting_features}) {
+	my $hit_name = $evi->hseqname;
+
+	#only proceed (for ensembl) if this hit name has *not* been used as transcript evidence
+	next EVI if (exists($t_evidence->{$hit_name}));
+
+	my $hit_seq_region_start = $evi->seq_region_start;
+	my $hit_seq_region_end = $evi->seq_region_end;	
+
+	#calculate beginning and end of the combined hit (first steps are needed to autovivify)
+	$evidence_ends{$hit_name}{'start'} = $hit_seq_region_start unless exists($evidence_ends{$hit_name}{'start'});
+	$evidence_ends{$hit_name}{'start'} = $hit_seq_region_start if ($hit_seq_region_start < $evidence_ends{$hit_name}{'start'});
+	$evidence_ends{$hit_name}{'end'}   = $hit_seq_region_end unless exists($evidence_ends{$hit_name}{'end'});
+	$evidence_ends{$hit_name}{'end'}   = $hit_seq_region_end if ($hit_seq_region_end > $evidence_ends{$hit_name}{'end'});
+
+	#ignore duplicate entries
+	if ( defined(@{$evidence_ends{$hit_name}{'starts_and_ends'}})
+	       && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_ends{$hit_name}{'starts_and_ends'}}) {
+	  next EVI;
+	}
+	push @{$evidence_ends{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
+
+	my $hit_mismatch;
+	my $hit_start = $evi->hstart;
+
+	#compare the start of this hit with the end of the last one -
+	#only DNA features have to match exactly, protein features have a tolerance of +- 3
+	if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+	  if (   ($evidence_ends{$hit_name}{'last_end'})
+		   && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 3 )) {
+	    $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
+	  }
+	}
+	else {
+	  if (   ($evidence_ends{$hit_name}{'last_end'})
+		   && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 1) ) {
+	    $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
+	  }
+	  elsif ($hit_start == $evidence_ends{$hit_name}{'last_end'}) {
+	    $hit_mismatch = 0;
+	  }
+	}
+
+	#note position of end of the hit for next iteration
+	$evidence_ends{$hit_name}{'last_end'} = $evi->hend;
+
+	# coordinate munging:
+	# pass it a single exon but could pass it all if them if we wanted to match the hit across all exons
+	my $munged_coords = $self->split_evidence_and_munge_gaps($evi,[$exon],$offset,[$raw_coding_start+$offset,$raw_coding_end+$offset],ref($evi));
+	foreach my $munged_hit (@$munged_coords) {
+	  #add tag if there is a mismatch between exon / hit boundries
+	  if (defined($hit_mismatch)) {
+	    $munged_hit->{'hit_mismatch'} = $hit_mismatch;
+	  }
+	  if ($transcript->strand == 1) {
+	    push @{$e_evidence->{$hit_name}{'data'}}, $munged_hit ;
+	  }
+	  else {
+	    unshift @{$e_evidence->{$hit_name}{'data'}}, $munged_hit ;
+	  }
+	}
+	$e_evidence->{$hit_name}{'hit_name'} = $hit_name;
+	$e_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
+	$e_evidence->{$hit_name}{'hit_type'} = ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) ? 'protein' : $self->hit_type($info_summary,$evi);
+	$e_evidence->{$hit_name}{'evidence_removed'} = 1 if  grep {$hit_name eq $_} @missing_evidence;
       }
-      else {
-        #only proceed for ensembl if this hit name has *not* been used as transcript evidence
-        next EVI if (exists($t_evidence->{$hit_name}));
-      }
-
-      #calculate beginning and end of the combined hit (first steps are needed to autovivify)
-      $evidence_ends{$hit_name}{'start'} = $hit_seq_region_start unless exists($evidence_ends{$hit_name}{'start'});
-      $evidence_ends{$hit_name}{'start'} = $hit_seq_region_start if ($hit_seq_region_start < $evidence_ends{$hit_name}{'start'});
-      $evidence_ends{$hit_name}{'end'} = $hit_seq_region_end unless exists($evidence_ends{$hit_name}{'end'});
-      $evidence_ends{$hit_name}{'end'} = $hit_seq_region_end if ($hit_seq_region_end > $evidence_ends{$hit_name}{'end'});
-
-      #ignore duplicate entries
-      if ( defined(@{$evidence_ends{$hit_name}{'starts_and_ends'}})
-           && grep {$_ eq "$hit_seq_region_start:$hit_seq_region_end"} @{$evidence_ends{$hit_name}{'starts_and_ends'}}) {
-        next EVI;
-      }
-      push @{$evidence_ends{$hit_name}{'starts_and_ends'}}, "$hit_seq_region_start:$hit_seq_region_end";
-
-      my $hit_mismatch;
-      my $hit_start = $evi->hstart;
-
-      #compare the start of this hit with the end of the last one -
-      #only DNA features have to match exactly, protein features have a tolerance of +- 3
-      if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-        if (   ($evidence_ends{$hit_name}{'last_end'})
-               && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 3 )) {
-          $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
-        }
-      }
-      else {
-        if (   ($evidence_ends{$hit_name}{'last_end'})
-               && (abs($hit_start - $evidence_ends{$hit_name}{'last_end'}) > 1) ) {
-          $hit_mismatch = $hit_start - $evidence_ends{$hit_name}{'last_end'};
-        }
-        elsif ($hit_start == $evidence_ends{$hit_name}{'last_end'}) {
-          $hit_mismatch = 0;
-        }
-      }
-
-      #don't show duplicated bits of the hit for vega since sadly the data has lots of this
-      $hit_mismatch = 0 if ($ln =~ /otter/ && $hit_mismatch < 0);
-
-      #note position of end of the hit for next iteration
-      $evidence_ends{$hit_name}{'last_end'} = $evi->hend;
-
-      # coordinate munging:
-      # pass it a single exon but could pass it all if them if we wanted to match the hit across all exons
-      my $munged_coords = $self->split_evidence_and_munge_gaps($evi,[$exon],$offset,[$raw_coding_start+$offset,$raw_coding_end+$offset],ref($evi));
-      foreach my $munged_hit (@$munged_coords) {
-        #add tag if there is a mismatch between exon / hit boundries
-        if (defined($hit_mismatch)) {
-          $munged_hit->{'hit_mismatch'} = $hit_mismatch;
-        }
-        if ($transcript->strand == 1) {
-          push @{$e_evidence->{$hit_name}{'data'}}, $munged_hit ;
-        }
-        else {
-          unshift @{$e_evidence->{$hit_name}{'data'}}, $munged_hit ;
-        }
-      }
-      $e_evidence->{$hit_name}{'hit_name'} = $hit_name;
-      $e_evidence->{$hit_name}{'hit_db'}   = $dbentry_adap->get_db_name_from_external_db_id($evi->external_db_id);
-      $e_evidence->{$hit_name}{'hit_type'} = ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) ? 'protein' : $self->hit_type($info_summary,$evi);
     }
   }
 
@@ -409,17 +411,14 @@ sub _content {
     }
   }
 
-  #add tags if the merged hit extends beyond the end of the transcript (but not for Vega db genes since they don't mean anything)
-  if ($ln =~ /otter/) {
-    while ( my ($hit_name, $coords) = each (%evidence_ends)) {
-      if ( @{$e_evidence->{$hit_name}{'data'}}) {
-        if ($coords->{'start'} < $transcript->start) {
-          my $diff =  $transcript->start - $coords->{'start'};
-          $e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'start'};
-        }
-        if ($coords->{'end'} > $transcript->end) {
-          $e_evidence->{$hit_name}{'data'}[-1]{'rh_ext'} = $coords->{'end'} - $transcript->end;
-        }
+  while ( my ($hit_name, $coords) = each (%evidence_ends)) {
+    if ( @{$e_evidence->{$hit_name}{'data'}}) {
+      if ($coords->{'start'} < $transcript->start) {
+	my $diff =  $transcript->start - $coords->{'start'};
+	$e_evidence->{$hit_name}{'data'}[0]{'lh_ext'}  = $transcript->start - $coords->{'start'};
+      }
+      if ($coords->{'end'} > $transcript->end) {
+	$e_evidence->{$hit_name}{'data'}[-1]{'rh_ext'} = $coords->{'end'} - $transcript->end;
       }
     }
   }
@@ -434,15 +433,8 @@ sub _content {
     $e_evidence->{$hit_name}{'hit_length'} = $tot_length;
   }
 
-  #we want to show the vega evidence as transcript evidence but we can't munge the cigar strings for vega evidence
-  #therefore use the supporting_features as transcript_supporting_features - they should be the same anyway
-  if ($ln =~ /otter/) {
-      $al_obj->{'transcript_evidence'} = $e_evidence;
-      $al_obj->{'evidence'} = {};
-  }
-  else {
-      $al_obj->{'evidence'} = $e_evidence;
-  }
+  #store it
+  $al_obj->{'evidence'} = $e_evidence;
 
   #modify track captions if there is no evidence for a particular type
   if (! %{$al_obj->{'transcript_evidence'}}) {
