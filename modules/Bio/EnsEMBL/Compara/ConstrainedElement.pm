@@ -556,14 +556,14 @@ sub get_SimpleAlign {
 		($self->slice->start + $self->end - 1),
 		$reference_genomic_align,
 		$skip_empty_GenomicAligns);
+	print "dbID: ", $this_genomic_align_block->dbID, ". "; 
 	foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
 		my $alignSeq = $genomic_align->aligned_sequence;
 		my $loc_seq = Bio::LocatableSeq->new(
 			-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
 			-START  => $genomic_align->dnafrag_start,
 			-END    => $genomic_align->dnafrag_end,
-			-ID     => $this_genomic_align_block->dbID . "/" .
-			 $genomic_align->dnafrag->genome_db_id . "/" . $genomic_align->dnafrag->name,
+			-ID     => $genomic_align->dnafrag->genome_db->name . "/" . $genomic_align->dnafrag->name,
 			-STRAND => $genomic_align->dnafrag_strand);
 
 		if($bio07) { 
