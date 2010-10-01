@@ -46,7 +46,6 @@ sub species_defs      { return shift->hub->species_defs(@_);      }
 sub species_path      { return shift->hub->species_path(@_);      }
 sub problem           { return shift->hub->problem(@_);           }
 sub param             { return shift->hub->param(@_);             }
-sub get_session       { return shift->hub->session(@_);           }
 sub session           { return shift->hub->session(@_);           }
 sub user              { return shift->hub->user(@_);              }
 sub database          { return shift->hub->database(@_);          }
