@@ -1314,7 +1314,15 @@ sub dumpGene {
     $sth->finish;
     print LOG "    Exon query done ".&date_and_mem()."\n";
 
-    my $sql = qq(
+    my $gene_locations = $conf->{'dbh'}->selectall_hashref(qq(
+      SELECT gsi.stable_id, sr.name as sr_name, g.seq_region_start, g.seq_region_end, g.seq_region_strand, cs.name as sr_type, cs.version
+        FROM gene_stable_id gsi, gene g, seq_region sr, coord_system cs
+       WHERE gsi.gene_id = g.gene_id
+         AND g.seq_region_id = sr.seq_region_id
+         AND sr.coord_system_id = cs.coord_system_id),
+      'stable_id');
+
+    $sql = qq(
       SELECT gsi.gene_id, tsi.transcript_id, trsi.translation_id,
              gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
              g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype
@@ -1356,6 +1364,7 @@ sub dumpGene {
 		       $old->{'desc'},
 		       $old->{'xrefs'},
 		       $old->{'xref_descriptions'},
+		       $gene_locations->{$old->{'gsid'}},
 		       $db,
 		       $counter),
 	      $nogzip, $fh);
@@ -1432,6 +1441,7 @@ sub dumpGene {
 		 $old->{'desc'},
 		 $old->{'xrefs'},
 		 $old->{'xref_descriptions'},
+		 $gene_locations->{$old->{'gsid'}},
 		 $db,
 		 $counter),
 	$nogzip, $fh) if ($old->{'gsid'});
@@ -1564,7 +1574,7 @@ sub dumpGene {
 }
 
 sub GeneLine {
-  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $db, $counter) = @_;
+  my ($species, $gsid, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $xref_descriptions, $gene_loc, $db, $counter) = @_;
   $species =~ s/_/ /;
   $biotype =~ s/_/ /;
   $desc = &clean($desc,'desc');
@@ -1608,6 +1618,12 @@ sub GeneLine {
     <field name="action">Summary</field>
     <field name="source">$ad_label</field>);
 
+  if ($gene_loc) {
+    my $loc = $gene_loc->{'sr_name'} .':'. $gene_loc->{'seq_region_start'} .'-'. $gene_loc->{'seq_region_end'} .':'. $gene_loc->{'seq_region_strand'};
+    $xml .= qq(
+    <field name="location">$loc</field>);
+  }
+
   foreach my $xref_description (keys %{$xref_descriptions}) {
     if ($xref_description) {
       $xref_description = &clean($xref_description,'xref description');
@@ -1632,6 +1648,7 @@ sub GeneLine {
     $xml .= qq(
     <field name="exon">$esi</field>);
   }
+
   $xml .= qq(
   </additional_fields>);
   $counter->();
