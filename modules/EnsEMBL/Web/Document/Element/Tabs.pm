@@ -23,54 +23,21 @@ sub new {
 
 sub entries :lvalue { $_[0]->{'entries'}; }
 sub active  :lvalue { $_[0]->{'active'};  }
-
-sub add_entry { push @{shift->{'entries'}}, @_; }
+sub add_entry       { push @{shift->{'entries'}}, @_; }
 
 sub init {
   my $self          = shift;
   my $controller    = shift;
   my $builder       = $controller->builder;
-  my $hub           = $controller->hub;
   my $object        = $controller->object;
-  my $type          = $controller->type;
   my $configuration = $controller->configuration;
-  my $species_defs  = $self->species_defs;
-  my $species       = $hub->species;
-  my $user          = $hub->user;
+  my $hub           = $controller->hub;
+  my $type          = $hub->type;
+  my $species_defs  = $hub->species_defs;
   my @data          = ([ 'Info', 'Index', sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_NAME), 1 ]);
   
-  if ($user) {
-    my $referer    = $hub->referer;
-    my %clear      = $referer->{'ENSEMBL_SPECIES'} eq $hub->species ? () : ( __clear => 1 );
-    my $same_type  = $referer->{'ENSEMBL_TYPE'} eq $type;
-    my $servername = $species_defs->ENSEMBL_SERVERNAME;
-    my (%history, %bookmarks);
-    
-    push @{$history{$_->{'object'}}},   $_ for grep $_->{'object'} && $builder->object($_->{'object'}) && $_->{'url'} =~ /$servername/, $user->histories;
-    push @{$bookmarks{$_->{'object'}}}, $_ for grep $_->{'object'} && $_->{'url'} =~ /\/$_->{'object'}\// && $builder->object($_->{'object'}) && $_->{'url'} =~ /$servername/, $user->bookmarks;
-    
-    foreach my $t (keys %history) {
-      unshift @{$self->{'history'}{lc $t}}, [ $same_type && $type eq $t ? $hub->url({ species => $_->{'species'}, $_->{'param'} => $_->{'value'}, %clear }) : $_->{'url'}, $_->{'name'} ] for @{$history{$t}};
-      push    @{$self->{'history'}{lc $t}}, [ "/Account/ClearHistory?object=$t", 'Clear history', ' clear_history bold' ] if scalar @{$history{$t}};
-    }
-    
-    foreach my $t (keys %bookmarks) {
-      my $i;
-      
-      foreach (sort { $b->{'click'} <=> $a->{'click'} || $b->{'modified_at'} cmp $a->{'modified_at'} } @{$bookmarks{$t}}) {
-        push @{$self->{'bookmarks'}{lc $t}}, [ '/Account/UseBookmark?id=' . $_->id, $_->{'shortname'} && length $_->{'shortname'} < length $_->{'name'} ? $_->{'shortname'} : $_->{'name'}, $_->id ];
-        last if ++$i == 5;
-      }
-      
-      push @{$self->{'bookmarks'}{lc $t}}, [ '/Account/Bookmark/List', 'More...',  ' modal_link bold' ] if scalar @{$bookmarks{$t}} > 5;
-    }
-  }
-  
-  $self->{'species_list'} = [ 
-    sort { $a->[1] cmp $b->[1] } 
-    map  { $_ eq $species ? () : [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]}
-    $species_defs->valid_species
-  ];
+  $self->init_history($hub, $builder) if $hub->user;
+  $self->init_species_list($hub);
   
   foreach (@{$builder->ordered_objects}) {
     my $o = $builder->object($_);
@@ -92,6 +59,51 @@ sub init {
       class    => $class . ($row->[0] eq $type ? ' active' : ''),
       dropdown => $row->[3] ? $class : ''
     });
+  }
+}
+
+sub init_species_list {
+  my ($self, $hub) = @_;
+  my $species      = $hub->species;
+  my $species_defs = $hub->species_defs;
+  
+  $self->{'species_list'} = [ 
+    sort { $a->[1] cmp $b->[1] } 
+    map  { $_ eq $species ? () : [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]}
+    $species_defs->valid_species
+  ];
+}
+
+sub init_history {
+  my ($self, $hub, $builder) = @_;
+  my $user         = $hub->user;
+  my $species_defs = $hub->species_defs;
+  my $type         = $hub->type;
+  my $species      = $hub->species;
+  my $servername   = $species_defs->ENSEMBL_SERVERNAME;
+  my (%history, %bookmarks);
+  
+  push @{$history{$_->{'object'}}},   $_ for grep $_->{'object'} && $builder->object($_->{'object'}) && $_->{'url'} =~ /$servername/, $user->histories;
+  push @{$bookmarks{$_->{'object'}}}, $_ for grep $_->{'object'} && $_->{'url'} =~ /\/$_->{'object'}\// && $builder->object($_->{'object'}) && $_->{'url'} =~ /$servername/, $user->bookmarks;
+  
+  foreach my $t (keys %history) {
+    foreach (@{$history{$t}}) {
+      my %clear = $_->{'species'} eq $species ? () : ( __clear => 1 );
+      unshift @{$self->{'history'}{lc $t}}, [ $type eq $t ? $hub->url({ species => $_->{'species'}, $_->{'param'} => $_->{'value'}, %clear }) : $_->{'url'}, $_->{'name'} ];
+    }
+    
+    push @{$self->{'history'}{lc $t}}, [ "/Account/ClearHistory?object=$t", 'Clear history', ' clear_history bold' ] if scalar @{$history{$t}};
+  }
+  
+  foreach my $t (keys %bookmarks) {
+    my $i;
+    
+    foreach (sort { $b->{'click'} <=> $a->{'click'} || $b->{'modified_at'} cmp $a->{'modified_at'} } @{$bookmarks{$t}}) {
+      push @{$self->{'bookmarks'}{lc $t}}, [ '/Account/UseBookmark?id=' . $_->id, $_->{'shortname'} && length $_->{'shortname'} < length $_->{'name'} ? $_->{'shortname'} : $_->{'name'}, $_->id ];
+      last if ++$i == 5;
+    }
+    
+    push @{$self->{'bookmarks'}{lc $t}}, [ '/Account/Bookmark/List', 'More...',  ' modal_link bold' ] if scalar @{$bookmarks{$t}} > 5;
   }
 }
 
