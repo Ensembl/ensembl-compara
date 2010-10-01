@@ -358,6 +358,7 @@ $OBJECT_TO_SCRIPT = {
   Variation  => 'Page',
   Regulation => 'Page',
   Marker     => 'Page',
+  GeneTree   => 'Page',
   LRG        => 'Page',
   Blast      => 'Page',
   Info       => 'Page',
