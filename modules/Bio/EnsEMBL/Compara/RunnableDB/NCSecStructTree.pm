@@ -83,7 +83,7 @@ sub fetch_input {
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
 
-  my $self = shift;
+#  my $self = shift;
 
   my $starttime = time()*1000;
 
@@ -195,16 +195,25 @@ sub run_bootstrap_raxml {
   my $bootstrap_num = 10;
   my $root_id = $self->{nc_tree}->node_id;
   my $tag = 'ml_IT_' . $bootstrap_num;
+
+  # Checks if the bootstrap tree is already in the DB (is this a rerun?)
   my $sql1 = "select value from nc_tree_tag where node_id=$root_id and tag='$tag'";
   my $sth1 = $self->dbc->prepare($sql1);
   $sth1->execute;
   my $raxml_tree_string = $sth1->fetchrow_hashref;
   $sth1->finish;
-  my $eval_tree;
-  eval {
-    $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
-  };
-  next unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
+  if ($raxml_tree_string->{value}) {
+    my $eval_tree;
+    # Checks the tree string can be parsed succsesfully
+    eval {
+      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
+    };
+  }
+  if (defined($raxml_tree_string->{value}) and !$@ and !$self->debug) {
+    # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
+    return;
+  }
+#  return 0 unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
   # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-PTHREADS-SSE3
   # -m GTRGAMMA -s nctree_20327.aln -N 10 -n nctree_20327.raxml.10
@@ -219,9 +228,9 @@ sub run_bootstrap_raxml {
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $bootstrap_starttime = time()*1000;
-  #  $DB::single=1;1;
+#    $DB::single=1;1;
   unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    $self->throw("error running raxml, $!\n");
+    $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n $!\n");
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
@@ -272,11 +281,18 @@ sub run_ncsecstructtree {
     $sth1->execute;
     my $raxml_tree_string = $sth1->fetchrow_hashref;
     $sth1->finish;
-    my $eval_tree;
-    eval {
-      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
-    };
-    next unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
+    if ($raxml_tree_string->{value}) {
+      my $eval_tree;
+      # Checks the tree string can be parsed succsesfully
+      eval {
+        $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
+      };
+    }
+    if (defined($raxml_tree_string->{value}) and !$@ and !$self->debug) {
+      # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
+      return;
+    }
+#    next unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
@@ -295,7 +311,7 @@ sub run_ncsecstructtree {
 
     my $starttime = time()*1000;
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
-      $self->throw("error running raxml, $!\n");
+      $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n $!\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0);
     my $runtime_msec = int(time()*1000-$starttime);
