@@ -616,7 +616,6 @@ sub member_by_source {
   return $family->get_Member_Attribute_by_source($source) || [];
 }
 
-
 sub chromosome {
   my $self = shift;
   return undef if lc($self->coord_system) ne 'chromosome';
@@ -639,12 +638,6 @@ sub created_date {
   my $self = shift;
   my $time = $self->gene()->created_date;
   return $self->date_format( $time,'%d/%m/%y' ), $self->date_format( $time, '%y/%m/%d' );
-}
-
-sub get_db {
-  my $self = shift;
-  my $db = $self->param('db') || 'core';
-  return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
 sub get_author_name {
