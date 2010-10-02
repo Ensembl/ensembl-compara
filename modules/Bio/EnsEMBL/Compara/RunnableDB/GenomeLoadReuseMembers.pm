@@ -114,6 +114,7 @@ sub fetch_input {
     $self->{reusable_gdb}{$reusable_gdb} = 1;
   }
   $self->{reuse_this} = 1  if (defined($self->{reusable_gdb}{$input_hash->{'gdb'}}));
+  $self->{reuse_this} = 1  if ($p->{reuse_gdb} eq 'all');
   ########################################
 
   #create a Compara::DBAdaptor which shares the same DBI handle
