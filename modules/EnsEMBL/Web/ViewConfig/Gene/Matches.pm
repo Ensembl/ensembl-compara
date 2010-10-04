@@ -4,6 +4,28 @@ use strict;
 
 use EnsEMBL::Web::Constants;
 
+my %default_on = ('Ensembl Human Transcript' =>1, 
+'HGNC (curated)' =>1, 
+'HGNC (automatic)' =>1, 
+'EntrezGene' =>1, 
+'CCDS' =>1, 
+'RefSeq RNA' =>1, 
+'UniProtKB/ Swiss-Prot' =>1, 
+'RefSeq peptide' =>1, 
+'RefSeq DNA' =>1, 
+'RFAM' =>1, 
+'miRBase' =>1, 
+'Vega transcript' =>1, 
+'MIM disease' =>1, 
+'MGI' =>1, 
+'MGI_curated_gene' =>1, 
+'MGI_automatic_gene' =>1, 
+'MGI_curated_transcript' =>1, 
+'MGI_automatic_transcript' =>1, 
+'ZFIN_ID' =>1,
+'ZFIN_xpat' =>1, 
+'Projected HGNC' =>1);
+
 sub init {
 my $view_config = shift;
 my $help  = shift;
@@ -12,8 +34,7 @@ my $help  = shift;
   $view_config->nav_tree = 1;
   my %defaults;
   my %defaults_off;
-  my @xref_types = get_xref_types();  
-  my @default_on = ('Ensembl Human Transcript' , 'HGNC (curated)', 'HGNC (automatic)', 'EntrezGene', 'CCDS', 'RefSeq RNA', 'UniProtKB/ Swiss-Prot', 'RefSeq peptide', 'RefSeq DNA', 'RFAM', 'miRBase', 'Vega transcript', 'MIM disease');
+  my @xref_types = get_xref_types(); 
   
   foreach (@xref_types){
     my $default_enabled=0;
@@ -65,12 +86,6 @@ sub get_xref_types {
 
 sub sort_by_default_on{
   my $value=shift;
-  my @default_on = ('Ensembl Human Transcript' , 'HGNC (curated)', 'HGNC (automatic)', 'EntrezGene', 'CCDS', 'RefSeq RNA', 'UniProtKB/ Swiss-Prot', 'RefSeq peptide', 'RefSeq DNA', 'RFAM', 'miRBase', 'Vega transcript', 'MIM disease');  
-  my $return=0;
-  
-  for (my $i=0; $i< scalar(@default_on) && !$return; $i++){
-    $return = ($default_on[$i] eq $value->{'name'});
-  }
-  return $return;
+  return $default_on{lc($value->{'name'})};
 }
 1;
