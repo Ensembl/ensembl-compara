@@ -369,7 +369,7 @@ sub _create_LRG {
   my $slices = [];
   my @ids    = $self->param('id');
   
-  if (@ids) {
+  if (@ids && $ids[0]) {
     push @$slices, $sa->fetch_by_region('lrg', $_) for @ids;
   } else {
     $slices = $sa->fetch_all('lrg', undef, 1, undef, 1);
@@ -385,8 +385,10 @@ sub _create_LRG {
 
   foreach my $s (@$slices) {
     my @coords = $mapper->map($s->seq_region_name, $s->start, $s->end, $s->strand, $old_cs);
-    
-    push @$mapped_slices, { lrg => $s, chr => $sa->fetch_by_seq_region_id($_->id, $_->start, $_->end) } for @coords;
+    for (@coords) {
+      next if (ref($_) eq 'Bio::EnsEMBL::Mapper::Gap'); 
+      push @$mapped_slices, { lrg => $s, chr => $sa->fetch_by_seq_region_id($_->id, $_->start, $_->end) };
+    }
   }
  
   return { LRG => EnsEMBL::Web::Data::Bio::LRG->new($self->hub, @$mapped_slices) };
