@@ -106,7 +106,6 @@ sub species_defs  { return $_[0]{'_species_defs'};  }
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef; }
 sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
 sub referer           { return $_[0]{'referer'}    ||= $_[0]->_parse_referer; }
-sub viewconfig        { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig; } # Store default viewconfig so we don't have to keep getting it from session
 sub species_path      { return shift->species_defs->species_path(@_);         }
 sub table_info        { return shift->species_defs->table_info(@_);           }
 sub get_databases     { return shift->databases->get_databases(@_);           }
@@ -188,7 +187,7 @@ sub set_core_params {
   my $core_params = {};
 
   foreach (@{$self->species_defs->core_params}) {
-    my @param = $self->param($_);
+    my @param = $self->param($_, 'no_cache');
     $core_params->{$_} = scalar @param == 1 ? $param[0] : \@param if scalar @param;
   }
 
@@ -274,12 +273,14 @@ sub url {
 }
 
 sub param {
-  my $self = shift;
+  my $self     = shift;
+  my $no_cache = scalar @_ > 1 && $_[-1] eq 'no_cache';
+  pop @_ if $no_cache;
   
-  if (@_) { 
+  if (@_) {
     my @T = map _sanitize($_), $self->input->param(@_);
     return wantarray ? @T : $T[0] if @T;
-    my $view_config = $self->viewconfig;
+    my $view_config = $no_cache ? $self->get_viewconfig : $self->viewconfig;
     
     if ($view_config) {
       $view_config->set(@_) if @_ > 1;
@@ -290,7 +291,7 @@ sub param {
     return wantarray ? () : undef;
   } else {
     my @params = map _sanitize($_), $self->input->param;
-    my $view_config = $self->viewconfig;
+    my $view_config = $no_cache ? $self->get_viewconfig : $self->viewconfig;
     push @params, $view_config->options if $view_config;
     my %params = map { $_, 1 } @params; # Remove duplicates
     
@@ -393,10 +394,9 @@ sub get_all_das {
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
 sub get_viewconfig {
-  my $self   = shift;
-  my $type   = shift || $self->type;
-  my $action = shift || $self->action;
-  
+  my $self    = shift;
+  my $type    = shift || $self->type;
+  my $action  = shift || $self->action;
   my $session = $self->session;
   my $key     = "${type}::$action";
   
@@ -408,6 +408,24 @@ sub get_viewconfig {
   $session->apply_to_view_config($view_config, $type, $key);
   
   return $view_config;
+}
+
+# Store default viewconfig so we don't have to keep getting it from session
+sub viewconfig {
+  my $self = shift;
+  
+  if (!$self->{'viewconfig'}) {
+    my $view_config = $self->get_viewconfig;
+    my $type        = $self->type;
+    
+    if ($type ne 'Transcript' && $self->action ne 'ExternalData' && !$view_config->external_data) {
+      $view_config->external_data = 1 if $view_config->add_class("EnsEMBL::Web::ViewConfig::${type}::ExternalData");
+    }
+    
+    $self->{'viewconfig'} = $view_config;
+  }
+  
+  return $self->{'viewconfig'};
 }
 
 # Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
