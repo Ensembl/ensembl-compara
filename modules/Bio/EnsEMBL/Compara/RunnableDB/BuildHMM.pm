@@ -276,14 +276,14 @@ sub run_buildhmm
 
   my $starttime = time()*1000;
 
-  $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir
+  my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir
     (
      $self->{'protein_tree'}
     );
-  return unless($self->{'input_aln'});
+  return unless($stk_file);
   return if(defined($self->{done}));
 
-  $self->{'hmm_file'} = $self->{'input_aln'} . "_hmmbuild.hmm ";
+  $self->{'hmm_file'} = $stk_file . "_hmmbuild.hmm ";
 
   my $hmmer_dir = "/software/ensembl/compara/hmmer3/hmmer-3.0/src/";
   my $buildhmm_executable = $self->analysis()->program_file();
@@ -302,13 +302,13 @@ sub run_buildhmm
   $cmd .= " --dna "   if      defined($self->{'cdna'});
   $cmd .= " --amino " unless  defined($self->{'cdna'});
   $cmd .= $self->{'hmm_file'};
-  $cmd .= " ". $self->{'input_aln'};
+  $cmd .= " ". $stk_file;
   $cmd .= " 2>&1 > /dev/null" unless($self->debug);
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $worker_temp_directory = $self->worker_temp_directory;
-  $cmd = "cd $worker_temp_directory; $cmd";
+  $cmd = "cd $worker_temp_directory ; $cmd";
   if(system($cmd)) {
     $self->throw("could not run '$cmd': $!\n");
   }
@@ -338,7 +338,7 @@ sub dumpTreeMultipleAlignmentToWorkdir
   $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
 
   my $aln_file = $self->{'file_root'} . ".aln";
-  return $aln_file if(-e $aln_file);
+#  return $aln_file if(-e $aln_file);
   if($self->debug) {
     printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
     print("aln_file = '$aln_file'\n");
@@ -370,14 +370,20 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   close OUTSEQ;
 
+  unless(-e $aln_file and -s $aln_file) {
+    $self->throw("There are no alignments in '$aln_file', cannot continue");
+  }
+
   my $stk_file = $self->{'file_root'} . ".stk";
   my $sreformat = $self->{sreformat} || '/usr/local/ensembl/bin/sreformat';
   my $cmd = "$sreformat stockholm $aln_file > $stk_file";
   if(system($cmd)) {
     $self->throw("could not run '$cmd': $!\n");
   }
+  unless(-e $stk_file and -s $stk_file) {
+    $self->throw("'$cmd' did not produce any data in '$stk_file'");
+  }
 
-  $self->{'input_aln'} = $stk_file;
   return $stk_file;
 }
 

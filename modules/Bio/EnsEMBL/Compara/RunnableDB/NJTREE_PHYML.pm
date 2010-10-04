@@ -317,6 +317,7 @@ sub run_njtree_phyml
     my $worker_temp_directory = $self->worker_temp_directory;
 
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
+      my $njtree_error = $!;
       print("$cmd\n");
       open ERRFILE,"$errfile" or die "couldnt open logfile $errfile: $!\n";
       while (<ERRFILE>) {
@@ -334,7 +335,7 @@ sub run_njtree_phyml
         }
       }
       $self->check_job_fail_options;
-      $self->throw("error running njtree phyml, $!\n");
+      $self->throw("error running njtree phyml: $njtree_error\n");
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
