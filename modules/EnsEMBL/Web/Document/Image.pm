@@ -62,7 +62,7 @@ sub karyotype {
   my $chr_name;
 
   my $image_config = $hub->get_imageconfig($config_name);
-  my $view_config  = $hub->get_viewconfig;
+  my $view_config  = $hub->viewconfig;
 
   # set some dimensions based on number and size of chromosomes
   if ($image_config->get_parameter('all_chromosomes') eq 'yes') {
