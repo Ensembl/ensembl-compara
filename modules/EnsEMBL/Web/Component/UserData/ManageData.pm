@@ -105,17 +105,14 @@ sub content {
         ($species = $file->species) =~ s/_/&nbsp;/;
         if (ref ($file) =~ /Upload/) {
           $type = 'Upload';
-          $name = '<strong>';
+          $name = '<strong>'.$file->{'name'}.'</strong>';
           if ($file->{'nearest'}) {
-            $name .= '<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
-                        .'" title="Jump to sample region with data">'.$file->{'name'}.'</a>';
+            $name .= ' [<a href="/'.$file->{'species'}.'/Location/View?r='.$file->{'nearest'}
+                        .'" title="Jump to sample region with data">view location</a>]';
           }
-          else {
-            $name .= $file->{'name'};
-          }
-          $name .= '</strong><br />'.$file->format." file for <em>$species</em>";
+          $name .= '<br />'.$file->format." file for <em>$species</em>";
           $date = $file->modified_at || $file->created_at;
-          $date = $self->pretty_date($date);
+          $date = $self->pretty_date($date, 'simple_datetime');
           $rename = sprintf('<a href="%s/UserData/RenameRecord?accessor=uploads;id=%s" class="%s"%s>Rename</a>', $dir, $file->id, $delete_class, $title);
           $share = sprintf('<a href="%s/UserData/SelectShare?id=%s" class="modal_link">Share</a>', $dir, $file->id);
           $delete = sprintf('<a href="%s/UserData/DeleteUpload?type=user;id=%s" class="%s"%s>Delete</a>', $dir, $file->id, $delete_class, $title);
@@ -192,13 +189,14 @@ sub content {
             $name .= $file->{'name'};
           }
           $name .= "</strong><br />$file->{'format'} file for <em>$species</em>";
+          $date = $self->pretty_date($file->{'timestamp'}, 'simple_datetime');
           my $extra = "type=$file->{'type'};code=$file->{'code'}"; 
           
           if ($file->{'format'} && $file->{'format'} eq "ID" ) { 
             $save = '';
           }
           elsif ($file->{'format'} && $file->{'format'} eq 'SNP_EFFECT') {
-            $save = sprintf '<a href="%s" class="modal_link">Download</a>', '/'.$file->{'species'}.'/UserData/PreviewConvertIDs?format=text;data_format=snp;species='.$file->{'species'}.';convert_file='.$file->{'filename'}.':'.$file->{'name'};
+            $save = sprintf '<a href="%s" class="modal_link">View results</a>', '/'.$file->{'species'}.'/UserData/PreviewConvertIDs?format=text;data_format=snp;species='.$file->{'species'}.';convert_file='.$file->{'filename'}.':'.$file->{'name'};
           } 
           else {
             $save = qq{<a href="$dir/UserData/SaveUpload?$extra" class="modal_link">Save to account</a>} if ($logins && $user);
@@ -224,9 +222,9 @@ sub content {
         }
         
         if ($logins) {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => '-', 'share' => $share, 'rename' => $rename, 'save' => $save };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'share' => $share, 'rename' => $rename, 'save' => $save };
         } else {
-          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'share' => $share, 'rename' => $rename };
+          $row = { 'type' => $type, 'name' => $name, 'delete' => $delete, 'date' => $date, 'share' => $share, 'rename' => $rename };
         }
       }
       
