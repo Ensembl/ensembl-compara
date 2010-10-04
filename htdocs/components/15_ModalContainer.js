@@ -155,7 +155,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           var panel = this;
           setTimeout(function () { panel.getContent(url, id, ++failures); }, 2000);
         } else {
-          contentEl.html('<p class="ajax_error">Failure: The resource failed to load</p>');
+          contentEl.html('<p class="ajax_error">Sorry, the page request timed out.</p>');
         }
       }
     });

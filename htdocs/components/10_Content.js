@@ -134,7 +134,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       },
       error: function (e) {
-        el.html('<p class="ajax_error">Failure: the resource "' + url + '" failed to load</p>');
+        el.html('<p class="ajax_error">Sorry, the page request "' + url + '" timed out. Please try selecting less data.</p>');
       },
       complete: function () {
         el = null;
