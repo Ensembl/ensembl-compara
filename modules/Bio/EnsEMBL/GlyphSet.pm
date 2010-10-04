@@ -158,7 +158,7 @@ sub Text       { my $self = shift; return new Sanger::Graphics::Glyph::Text(    
 sub core {
   my $self = shift;
   my $k    = shift;
-  return $self->{'config'}{'_core'}{'parameters'}{$k};
+  return $self->{'config'}->core_objects->{'parameters'}{$k};
 }
 
 sub _url {
@@ -173,7 +173,7 @@ sub _url {
   my $fn       = exists $params->{'function'} ? $params->{'function'} : $ENV{'ENSEMBL_FUNCTION'};
   $fn          = '' if $action ne $ENV{'ENSEMBL_ACTION'};
   
-  my %pars = %{$self->{'config'}{'_core'}{'parameters'} || {}};
+  my %pars = %{$self->{'config'}->core_objects->{'parameters'} || {}};
 
   # Remove any unused params
   foreach (keys %pars) {

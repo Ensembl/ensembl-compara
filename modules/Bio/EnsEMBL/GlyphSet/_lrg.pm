@@ -87,7 +87,7 @@ sub _init {
   foreach my $g (@{$regions || []}) {
     my $gene_col   = 'skyblue3'; 
     my $label      = $g->seq_region_name;
-    my $high = $g->seq_region_name eq $self->{'config'}{'_core'}{'parameters'}{'lrg'};
+    my $high = $g->seq_region_name eq $self->{'config'}->core_objects->{'parameters'}{'lrg'};
 
     my $gslice = $g->{_chrom_slice};
 
@@ -248,7 +248,7 @@ sub old_init {
   foreach my $g (@$genes) {
     my $gene_col   = 'skyblue3'; 
     my $label      = $g->external_name || $g->stable_id;
-    my $high = $g->stable_id eq $self->{'config'}{'_core'}{'parameters'}{'g'};
+    my $high = $g->stable_id eq $self->{'config'}->core_objects->{'parameters'}{'g'};
 
     my $start = $g->start;
     my $end   = $g->end;
