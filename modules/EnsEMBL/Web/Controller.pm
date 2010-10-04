@@ -144,7 +144,7 @@ sub page {
 sub view_config {
   my $self = shift;
   my $hub  = $self->hub;
-  return $self->{'view_config'} ||= $hub->object_types->{$hub->type} ? $hub->get_viewconfig : undef;
+  return $self->{'view_config'} ||= $hub->object_types->{$hub->type} ? $hub->viewconfig : undef;
 }
 
 sub configure {
