@@ -249,7 +249,7 @@ sub pretty_date {
   
   if ($format && $format eq 'simple_datetime') {
     my ($hour, $min, $sec) = split(':', $time);
-    return $day.'/'.$mon.'/'.substr($year, 2, 2).' at '.$hour.':'.$min;
+    return sprintf '%02d/%02d/%s at %02d:%02d', $day, $mon, substr($year, 2, 2), $hour, $min;
   } 
   elsif ($format && $format eq 'short') {
     return $short_months[$mon] . ' ' . $year;
