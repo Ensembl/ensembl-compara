@@ -280,7 +280,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         bAutoWidth: false,
         aLengthMenu: menu,
         oLanguage: {
-          sSearch: 'Search: ',
+          sSearch: 'Filter: ',
           oPaginate: {
             sFirst:    '&lt;&lt;',
             sPrevious: '&lt;',
