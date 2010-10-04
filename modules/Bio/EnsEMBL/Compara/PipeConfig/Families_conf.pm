@@ -6,11 +6,21 @@
 # rel.58:   init_pipeline.pl execution took 5m (Albert's pipeline not working) or 50m (Albert's pipeline working);   pipeline execution took ...
 # rel.58b:  init_pipeline.pl execution took 6m30, pipeline execution [with some debugging in between] took 5*24h. Should be 4*24h at most.
 # rel.59:   init_pipeline.pl execution took 6m45, pipeline execution took 13.5 days [prob. because of MyISAM engine left there by mistake]
-# rel.60:   init_pipeline.pl execution took 16m, pipeline execution took ...
+# rel.60:   init_pipeline.pl execution took 16m, pipeline execution took 6 full days (lost about one day on debugging an unusual case, code fixed)
 
 #
 ## Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
 #
+
+
+# Some rel60 stats:
+#
+#   2,725,421 sequences to cluster
+# 484,837,915 distances computed by Blast with -seg masking off (default in C++ binary)
+#
+# mcxload step took 11.2h
+# mcl     step took  3.1h
+
 
 package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 
@@ -43,11 +53,11 @@ sub default_options {
         itab_name       => 'families_'.$self->o('rel_with_suffix').'.itab',
         mcl_name        => 'families_'.$self->o('rel_with_suffix').'.mcl',
 
-        blast_params    => ' ', # '-seg yes' is the module default (but we switch it off, forcing no parameters by using a space)
+        blast_params    => '', # By default C++ binary has composition stats on and -seg masking off
 
             # resource requirements:
-        mcxload_gigs    => 30,                                      # old MCL: 15G was enough to load 450mln, 25G was enough to load 850mln; new MCL takes 25G to load 465mln edges.
-        mcl_gigs        => 40,                                      # new MCL took 30G to cluster 465mln edges (8 hours on 4 procs).
+        mcxload_gigs    => 30,                                      # 13G RAM + 13G SWAP according to bacct -l in rel.60
+        mcl_gigs        => 40,                                      # 15G RAM + 16G SWAP accorting to bacct -l in rel.60
         mcl_procs       =>  4,
         himafft_gigs    => 14,
         dbresource      => 'my'.$self->o('pipeline_db', '-host'),   # will work for compara1..compara3, but will have to be set manually otherwise
