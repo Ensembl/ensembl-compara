@@ -1274,20 +1274,4 @@ sub get_source {
 
 }
 
-sub viewconfig {
-  my $self = shift;
-  
-  return $self->{'data'}->{'_viewconfig'} if $self->{'data'}->{'_viewconfig'} && !@_;
-  
-  my $vc = $self->get_viewconfig(@_);
-  
-  if ($self->action ne 'ExternalData' && !$vc->external_data) {
-    $vc->external_data = 1 if $vc->add_class(sprintf 'EnsEMBL::Web::ViewConfig::%s::ExternalData', $self->type);
-  }
-  
-  $self->{'data'}->{'_viewconfig'} ||= $vc unless @_;
-  
-  return $vc;
-}
-
 1;

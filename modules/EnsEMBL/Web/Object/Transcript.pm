@@ -730,7 +730,7 @@ sub get_samples {
   }
 
   my %configured_pops = (%default_pops, %db_pops);
-  my $view_config = $self->get_viewconfig;
+  my $view_config = $self->viewconfig;
   my @pops;
   
   if ($options eq 'display') { # return list of pops with default first
