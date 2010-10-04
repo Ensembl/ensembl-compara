@@ -6,7 +6,7 @@ use strict;
 
 use EnsEMBL::Web::RegObj;
 
-use base qw( EnsEMBL::Web::Configuration );
+use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
   my $self = shift;
@@ -14,7 +14,9 @@ sub set_default_action {
 }
 
 sub populate_tree {
-  my $self = shift;
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
   
   $self->create_node('Summary', 'Gene summary',
     [qw(
@@ -108,10 +110,7 @@ sub populate_tree {
     { 'availability' => 'family', 'concise' => 'Protein families' }
   );
   
-  my $sd   = ref $self->{'object'} ? $self->{'object'}->species_defs : undef;
-  my $name = $sd ? $sd->get_config($self->{'object'}->species, 'SPECIES_COMMON_NAME') : '';
-  
-  $fam_node->append($self->create_subnode('Family/Genes', uc($name) . ' genes in this family',
+  $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
     [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
     { 'availability'  => 'family', 'no_menu_entry' => 1 }
   ));
@@ -149,7 +148,7 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
   
-  if ($self->object->species_defs->ENSEMBL_LOGINS) {
+  if ($species_defs->ENSEMBL_LOGINS) {
     $external->append($self->create_node('UserAnnotation', 'Personal annotation',
       [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
       { 'availability' => 'logged_in gene' }
@@ -174,27 +173,21 @@ sub populate_tree {
 }
 
 sub user_populate_tree {
-  my $self = shift;
-  
-  my $object = $self->object;
-  
-  return unless $object && ref $object;
-  
-  my $all_das    = $ENSEMBL_WEB_REGISTRY->get_all_das;
-  my $vc         = $object->get_viewconfig(undef, 'ExternalData');
-  my @active_das = grep { $vc->get($_) eq 'yes' && $all_das->{$_} } $vc->options;
-  my $ext_node   = $self->tree->get_node('ExternalData');
+  my $self        = shift;
+  my $all_das     = $ENSEMBL_WEB_REGISTRY->get_all_das;
+  my $view_config = $self->hub->get_viewconfig(undef, 'ExternalData');
+  my @active_das  = grep { $view_config->get($_) eq 'yes' && $all_das->{$_} } $view_config->options;
+  my $ext_node    = $self->tree->get_node('ExternalData');
   
   for my $logic_name (sort { lc($all_das->{$a}->caption) cmp lc($all_das->{$b}->caption) } @active_das) {
     my $source = $all_das->{$logic_name};
     
     $ext_node->append($self->create_subnode("ExternalData/$logic_name", $source->caption,
-      [qw( textdas EnsEMBL::Web::Component::Gene::TextDAS )],
-      {
-        'availability' => 'gene', 
-        'concise'      => $source->caption, 
-        'caption'      => $source->caption, 
-        'full_caption' => $source->label
+      [qw( textdas EnsEMBL::Web::Component::Gene::TextDAS )], {
+        availability => 'gene', 
+        concise      => $source->caption, 
+        caption      => $source->caption, 
+        full_caption => $source->label
       }
     ));	 
   }
