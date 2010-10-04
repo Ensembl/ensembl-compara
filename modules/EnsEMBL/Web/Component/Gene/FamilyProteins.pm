@@ -100,7 +100,7 @@ sub content_ensembl {
   
   return '' unless $family;
   
-  my $species_defs  = $hub->species_defs
+  my $species_defs  = $hub->species_defs;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my $current_taxon = $hub->database('core')->get_MetaContainer->get_taxonomy_id;
   my @taxa          = @{$family->get_all_taxa_by_member_source_name('ENSEMBLPEP')}; ## Ensembl proteins
