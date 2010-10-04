@@ -25,31 +25,13 @@ sub content {
   my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
   my $lrg_slice   = $lrg->Obj->feature_Slice;
   my $tables      = {};
-  
-  foreach my $transcript (@transcripts) {
-    my $table_rows = $self->variation_table($transcript, $lrg_slice);
-    
-    $tables->{$transcript->stable_id} = $self->make_table($table_rows) if $table_rows; 
-  }
 
-  return $self->render_content($tables);
-}
-
-sub variation_table {
-  my ($self, $transcript, $lrg_slice) = @_;
+###
+  my $table_rows = $self->variation_table(\@transcripts, $lrg_slice);
   
-  my $rows = shift->SUPER::variation_table($transcript);
+  my $table = $self->make_table($table_rows) if $table_rows;
   
-  if ($rows) {
-    my $i = 0;
-    
-    for(@{$transcript->__data->{'transformed'}{'gene_snps'}}) {      
-      $rows->[$i]->{'HGVS'} = $self->get_hgvs($_->[0], $transcript->Obj, $lrg_slice) || '-' if defined($rows->[$i]);
-      $i++;
-    }
-  }
-  
-  return $rows;
+  return $self->render_content($table);
 }
 
 sub make_table {
@@ -57,16 +39,17 @@ sub make_table {
   
   my $columns = [
     { key => 'ID',        sort => 'html'                                                   },
-    { key => 'snptype',   sort => 'string',   title => 'Type',                             },
     { key => 'chr' ,      sort => 'position', title => 'Chr: bp'                           },
     { key => 'Alleles',   sort => 'string',   align => 'center'                            },
     { key => 'Ambiguity', sort => 'string',   align => 'center'                            },
     { key => 'HGVS',      sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
-    { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
-    { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
     { key => 'class',     sort => 'string',   title => 'Class',          align => 'center' },
     { key => 'Source',    sort => 'string'                                                 },
-    { key => 'status',    sort => 'string',   title => 'Validation',     align => 'center' }
+    { key => 'status',    sort => 'string',   title => 'Validation',     align => 'center' },
+    { key => 'snptype',   sort => 'string',   title => 'Type',                             },
+    { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
+    { key => 'Transcript', sort => 'string'},
   ];
   
   return new EnsEMBL::Web::Document::SpreadSheet($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
@@ -127,19 +110,4 @@ sub configure_lrg{
   return $object;
 }
 
-sub get_hgvs {
-  my ($self, $snp, $transcript, $lrg_slice) = @_;
-  
-  my @hgvs  = values %{$snp->get_all_hgvs_notations($transcript, 'c')};
-  push @hgvs, values %{$snp->get_all_hgvs_notations($lrg_slice, 'g', $snp->seq_region_name)};
-  
-  s/ENS(...)?[TG]\d+\://g for @hgvs;
-  
-  # word-wrap long ones
-  foreach(@hgvs) {
-    $_ =~ s/(.{35})/$1\n/g if length($_) > 50;
-  }
-  
-  return join ', ', @hgvs;
-}
 1;
