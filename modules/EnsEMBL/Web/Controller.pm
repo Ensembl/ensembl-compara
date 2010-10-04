@@ -223,7 +223,8 @@ sub update_user_history {
       my $db           = $referer->{'params'}->{'db'}->[0] || 'core';
       $db              = 'otherfeatures' if $db eq 'est';
       my $func         = "get_${referer_type}Adaptor";
-      my $display_xref = $hub->get_adaptor($func, $db, $referer_species)->fetch_by_stable_id($value)->display_xref;
+      my $feature      = $hub->get_adaptor($func, $db, $referer_species)->fetch_by_stable_id($value);
+      my $display_xref = $feature ? $feature->display_xref : undef;
       
       $name .= ': ' . ($display_xref ? $display_xref->display_id : $value);
     } else {
