@@ -1,23 +1,15 @@
 # $Id$
-
 package EnsEMBL::Web::Component::Transcript::Goimage;
-
 use strict;
-
 use GraphViz;
-
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
-
 use EnsEMBL::Web::Tools::OntologyVisualisation;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
-
 sub _init {
   my $self = shift;
   $self->cacheable(1);
   $self->ajaxable(1);
 }
-
 sub content {
   my $self                        = shift;
   my $hub                         = $self->hub;
@@ -67,7 +59,6 @@ sub content {
   $ontovis->add_cluster_by_parent_accession('GO:0003674');
   
   return $self->non_coding_error unless $object->translation_object;
-
   my $label = 'GO';
   
   unless ($object->__data->{'links'}) {
@@ -77,14 +68,11 @@ sub content {
     
     $self->_sort_similarity_links(@similarity_links);
   }
-
   return "<p>No GO terms have been mapped to this entry via UniProt and/or RefSeq.</p>"  unless $object->__data->{'links'}{'go'}; 
-
   # First process GO terms
   my $html;
   my $go_hash      = $object->get_go_list;
   my $go_slim_hash = $object->get_go_list('goslim_goa');
-
   if (%$go_hash) {
     $html .= sprintf(
       '<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq. The Maped Terms are highlighted in <span style="color:%s" >%s</span><br/>',
@@ -108,7 +96,6 @@ sub content {
   
   return $html;
 }
-
 sub table {
   my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', cellpadding => '2px' });
   
@@ -121,5 +108,4 @@ sub table {
   
   return $table;
 }
-
 1;
