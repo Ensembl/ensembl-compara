@@ -24,6 +24,7 @@ sub content {
   my $session = $hub->session;
   my $logins  = $hub->species_defs->ENSEMBL_LOGINS;
   my $user    = $hub->user;
+  my $enabled_save_uploaded_data = defined($hub->species_defs->SAVE_UPLOADED_DATA) ? $hub->species_defs->SAVE_UPLOADED_DATA : 1;  
   my @data; 
   
   # Control panel fixes
@@ -72,11 +73,11 @@ sub content {
     );
     
     if ($logins) {
-      $table->add_columns(
-        { 'key' => 'date', 'title' => 'Last updated', 'width' => '15%', 'align' => 'left' },
-        { 'key' => 'save', 'title' => '', 'width' => '15%', 'align' => 'left' },
-        { 'key' => 'rename', 'title' => '', 'width' => '15%', 'align' => 'left' },
-      );
+      $table->add_columns({ 'key' => 'date', 'title' => 'Last updated', 'width' => '15%', 'align' => 'left' },
+                          { 'key' => 'rename', 'title' => '', 'width' => '15%', 'align' => 'left' });
+      if($enabled_save_uploaded_data){
+        $table->add_columns({ 'key' => 'save', 'title' => '', 'width' => '15%', 'align' => 'left' });
+      }
     }
     
     $table->add_columns(
