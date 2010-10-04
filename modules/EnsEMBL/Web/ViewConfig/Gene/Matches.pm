@@ -23,7 +23,6 @@ my %default_on = ('Ensembl Human Transcript' =>1,
 'MGI_curated_transcript' =>1, 
 'MGI_automatic_transcript' =>1, 
 'ZFIN_ID' =>1,
-'ZFIN_xpat' =>1, 
 'Projected HGNC' =>1);
 
 sub init {
