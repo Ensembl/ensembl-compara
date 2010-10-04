@@ -19,20 +19,23 @@ sub init {
   my $hub     = $self->hub;
   my $referer = $hub->referer;
   
+  # Set action of component to be the same as the action of the referer page - needed for view configs to be correctly created
+  $ENV{'ENSEMBL_ACTION'} = $referer->{'ENSEMBL_ACTION'};
+  $hub->action           = $ENV{'ENSEMBL_ACTION'};
+  
+  if (!$ENV{'ENSEMBL_FUNCTION'}) {
+    $ENV{'ENSEMBL_FUNCTION'} = $referer->{'ENSEMBL_FUNCTION'};
+    $hub->function           = $ENV{'ENSEMBL_FUNCTION'};
+  }
+  
   $self->builder->create_objects;
   $self->page->initialize; # Adds the components to be rendered to the page module
   
   my $object = $self->object;
   
-  # Set action of component to be the same as the action of the referer page - needed for view configs to be correctly created
-  $ENV{'ENSEMBL_ACTION'}       = $referer->{'ENSEMBL_ACTION'};
-  $object->__data->{'_action'} = $ENV{'ENSEMBL_ACTION'} if $object;
-  $hub->action                 = $ENV{'ENSEMBL_ACTION'};
-  
-  if (!$ENV{'ENSEMBL_FUNCTION'}) {
-    $ENV{'ENSEMBL_FUNCTION'}       = $referer->{'ENSEMBL_FUNCTION'};
-    $object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'} if $object;
-    $hub->function                 = $ENV{'ENSEMBL_FUNCTION'};
+  if ($object) {
+    $object->__data->{'_action'}   = $ENV{'ENSEMBL_ACTION'};
+    $object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'} unless $ENV{'ENSEMBL_FUNCTION'};
   }
   
   if ($hub->user) {

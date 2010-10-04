@@ -257,8 +257,7 @@ sub alternative_object_from_factory {
 # Store default viewconfig so we don't have to keep getting it from session
 sub viewconfig {
   my $self = shift;
-  $self->__data->{'_viewconfig'} ||= $self->get_viewconfig;
-  return $self->__data->{'_viewconfig'};
+  return $self->hub->viewconfig;
 }
 
 sub get_viewconfig {

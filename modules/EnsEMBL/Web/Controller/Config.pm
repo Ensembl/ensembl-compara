@@ -35,7 +35,7 @@ sub update_configuration {
     
     $session->set_input($input);
     
-    my $view_config = $hub->get_viewconfig;
+    my $view_config = $hub->viewconfig;
     
     # Updating an image config
     if ($config && $view_config->has_image_config($config)) {
