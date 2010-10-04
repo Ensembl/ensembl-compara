@@ -57,7 +57,7 @@ if ($hub->has_problem_type('fatal')) {
     ($object->param('type2') eq 'bp' ? () : $object->param('anchor2'))
   );
   
-  $factory->redirect($url);
+  $hub->redirect($url);
 }
 
 1;
