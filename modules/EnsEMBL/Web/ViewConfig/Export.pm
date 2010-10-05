@@ -11,24 +11,23 @@ use EnsEMBL::Web::Constants;
 
 sub init {
   my $view_config = shift;
-  
-  my $misc_sets = $view_config->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
+  my $misc_sets  = $view_config->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
   
   my %defaults;
   
   $defaults{'output'} = 'fasta';
-  $defaults{'strand'} = $ENV{'ENSEMBL_ACTION'} eq 'Location' ? 'forward' : 'feature';
+  $defaults{'strand'} = $view_config->hub->action eq 'Location' ? 'forward' : 'feature';
   
   $defaults{$_} = 0 for qw(flank5_display flank3_display);
   
   $defaults{'fasta_' . $_} = 'yes' for qw(cdna coding peptide utr5 utr3 exon intron);
   $defaults{'gff3_'  . $_} = 'yes' for qw(gene transcript exon intron cds);
-  $defaults{'bed_'  . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
+  $defaults{'bed_'   . $_} = 'yes' for qw(similarity repeat genscan contig variation marker gene vegagene estgene);
     
   $defaults{'fasta_genomic'} = 'unmasked';
   
   foreach my $f (qw(csv tab gff)) {
-    $defaults{$f . '_' . $_}         = 'yes' for qw(similarity repeat genscan variation gene);
+    $defaults{$f . '_' . $_} = 'yes' for qw(similarity repeat genscan variation gene);
     
     next if $f eq 'gff';
     
@@ -40,20 +39,22 @@ sub init {
   }
   
   $view_config->_set_defaults(%defaults);
-  $view_config->storable = 1;
+  $view_config->storable       = 1;
   $view_config->default_config = 0;
 }
 
 sub form {
   my ($view_config, $object) = @_;
   
-  my $function = $object->function;
+  my $hub      = $view_config->hub;
+  my $function = $hub->function;
   
   return if $function !~ /Location|Gene|Transcript/;
   
+  my $action              = $hub->action;
   my $config              = $object->config;
   my $slice               = $object->slice;
-  my $form_action         = $object->_url({ action => 'Form', function => $function }, 1);
+  my $form_action         = $hub->url({ action => 'Form', function => $function }, 1);
   my %gene_markup_options = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   
   $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
@@ -96,14 +97,14 @@ sub form {
       type  => 'NoEdit',
       name  => 'gene_to_export',
       label => 'Gene to export',
-      value => $object->hub->core_objects->{'gene'}->long_caption
+      value => $hub->core_objects->{'gene'}->long_caption
     });
   } elsif ($function eq 'Transcript') {    
     $view_config->add_form_element({
       type  => 'NoEdit',
       name  => 'transcript_to_export',
       label => 'Transcript to export',
-      value => $object->hub->core_objects->{'transcript'}->long_caption
+      value => $hub->core_objects->{'transcript'}->long_caption
     });
   } 
   
@@ -184,7 +185,7 @@ sub form {
           { value => '5_3_flanking', name => "5' and 3' Flanking sequences" }
         ];
 
-        push @$genomic, { value => 'off', name => 'None' } unless $ENV{'ENSEMBL_ACTION'} eq 'Location';
+        push @$genomic, { value => 'off', name => 'None' } unless $action eq 'Location';
         
         $view_config->add_form_element({
           type     => 'DropDown', 
