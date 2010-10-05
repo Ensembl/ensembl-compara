@@ -1086,7 +1086,7 @@ sub get_go_list {
   my $dbname_to_match = shift || 'GO';  
   my $ancestor=shift;
   my $trans = $self->transcript;
-  my $goadaptor = $self->get_databases('go')->{'go'};
+  my $goadaptor = $self->hub->get_databases('go')->{'go'};
   my @dblinks = @{$trans->get_all_DBLinks};
   my @goxrefs = grep { $_->dbname eq $dbname_to_match } @dblinks;
 

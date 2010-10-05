@@ -9,11 +9,12 @@ our @ISA = qw(EnsEMBL::Web::Object::DAS::transcript);
 sub _group_info {
   my( $self, $transcript, $gene, $db ) = @_;
   my $links = $transcript->get_all_DBLinks;
+  my $exturl = $self->hub->ExtURL;
   my @link_array = ();
   foreach my $link (@$links) {
     push @link_array, { 
       'text' => $link->db_display_name.': '.$link->display_id,
-      'href' => $self->session->exturl()->get_url( $link->dbname, $link->primary_id )
+      'href' => $exturl->get_url( $link->dbname, $link->primary_id )
     };
   }
   @link_array = sort { $a->{'text'} cmp $b->{'text'} } @link_array;

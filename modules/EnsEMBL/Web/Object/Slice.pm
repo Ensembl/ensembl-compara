@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Object::Slice;
 
 ### NAME: EnsEMBL::Web::Object::Slice
@@ -15,14 +17,10 @@ package EnsEMBL::Web::Object::Slice;
 ### e.g.  my ($count_snps, $filtered_snps) = $sliceObj->getVariationFeatures();
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
-use EnsEMBL::Web::Object;
-our @ISA = qw(EnsEMBL::Web::Object);
+use base qw(EnsEMBL::Web::Object);
+
 our %ct = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
-
-
 
 sub snp_display {
 
@@ -382,84 +380,78 @@ sub get_cell_line_data {
 }
 
 sub get_configured_tracks {
-  my ($self, $image_config, $data) = (@_);
-  my %cell_lines        =  %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  my %evidence_features = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
-  my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'}};
-  my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'}};
-  my $page_object = $self->hub->type; 
-  my $view_config = $self->get_viewconfig($page_object, 'Cell_line');
+  my ($self, $image_config, $data) = @_;
+  my $hub               = $self->hub;
+  my $tables            = $hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'};
+  my %cell_lines        = %{$tables->{'cell_type'}{'ids'}};
+  my %evidence_features = %{$tables->{'feature_type'}{'ids'}};
+  my %focus_set_ids     = %{$tables->{'meta'}{'focus_feature_set_ids'}};
+  my %feature_type_ids  = %{$tables->{'meta'}{'feature_type_ids'}};
+  my $page_object       = $hub->type; 
+  my $view_config       = $hub->get_viewconfig($page_object, 'Cell_line');
   
-
-  foreach my $cell_line (keys %cell_lines){ 
-    $cell_line =~s/\:\d*//;
-    foreach my $evidence_feature (keys %evidence_features){ 
-      my ($feature_name, $feature_id ) = split (/\:/, $evidence_feature);
+  foreach my $cell_line (keys %cell_lines) { 
+    $cell_line =~ s/\:\d*//;
+    
+    foreach my $evidence_feature (keys %evidence_features) { 
+      my ($feature_name, $feature_id ) = split /\:/, $evidence_feature;
+      
       if (exists $feature_type_ids{$cell_line}{$feature_id}) { 
-        unless (exists $data->{$cell_line}{'core'}{'available'}){
-           $data->{$cell_line}{'core'}{'available'} = [];
-           $data->{$cell_line}{'other'}{'available'} = [];
-           $data->{$cell_line}{'core'}{'configured'} = [];
+        if (!exists $data->{$cell_line}{'core'}{'available'}) {
+           $data->{$cell_line}{'core'}{'available'}   = [];
+           $data->{$cell_line}{'other'}{'available'}  = [];
+           $data->{$cell_line}{'core'}{'configured'}  = [];
            $data->{$cell_line}{'other'}{'configured'} = [];
         }
-        my $focus_flag = 'other';
-        if ($cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id}){
-          $focus_flag = 'core';
-        }
-        push @{$data->{$cell_line}{$focus_flag}{'available'}}, $feature_name; 
-        # add to configured features if turned on
-        if ( $view_config->get('opt_cft_'.$cell_line.':'.$feature_name) eq 'on') {
-          push @{$data->{$cell_line}{$focus_flag}{'configured'}}, $feature_name;
-        }
+        
+        my $focus_flag = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'other';
+        
+        push @{$data->{$cell_line}{$focus_flag}{'available'}},  $feature_name; 
+        push @{$data->{$cell_line}{$focus_flag}{'configured'}}, $feature_name if $view_config->get("opt_cft_$cell_line:$feature_name") eq 'on'; # add to configured features if turned on
       }
     }
   }
+  
   return $data;
 }
 
 sub get_data {
   my ($self, $data) = @_;
+  my $hub         = $self->hub;
   my $page_object = $self->hub->type;
-  my $view_config = $self->get_viewconfig($page_object, 'Cell_line');
-  my $fg_db = $self->database('funcgen');
-  my $fset_a = $fg_db->get_FeatureSetAdaptor;
-  my $dset_a = $fg_db->get_DataSetAdaptor;
+  my $view_config = $hub->get_viewconfig($page_object, 'Cell_line');
+  my $dset_a      = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
   
-  foreach my $regf_fset(@{$fset_a->fetch_all_by_type('regulatory')}){ 
+  foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_type('regulatory')}) { 
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-    my $cell_line = $regf_data_set->cell_type->name;
+    my $cell_line     = $regf_data_set->cell_type->name;
+    
     next unless exists $data->{$cell_line};
 
-    foreach my $reg_attr_fset(@{$regf_data_set->get_supporting_sets}){   
-      my $unique_feature_set_id =  $reg_attr_fset->cell_type->name .':'.$reg_attr_fset->feature_type->name; 
-      my $name = 'opt_cft_' .$unique_feature_set_id;
-      my $type = 'other';
-      if  ($reg_attr_fset->is_focus_set){
-        $type = 'core';
-      }
+    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {   
+      my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $reg_attr_fset->feature_type->name; 
+      my $name = "opt_cft_$unique_feature_set_id";
+      my $type = $reg_attr_fset->is_focus_set ? 'core' : 'other';
       
-      if ( ($view_config->get($name) eq 'on') ){ 
+      if ($view_config->get($name) eq 'on') { 
         my $display_style = $data->{$cell_line}{$type}{'renderer'};
-        if ($display_style  eq 'compact' || $display_style eq 'tiling_feature'){
+        
+        if ($display_style  eq 'compact' || $display_style eq 'tiling_feature') {
           my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
-          if (scalar @block_features >> 0){ 
-            $data->{$cell_line}{$type}{'block_features'}{$unique_feature_set_id} = \@block_features;
-          }
-        } if ($display_style  eq 'tiling' || $display_style eq 'tiling_feature'){
+          $data->{$cell_line}{$type}{'block_features'}{$unique_feature_set_id} = \@block_features if scalar @block_features;
+        } if ($display_style eq 'tiling' || $display_style eq 'tiling_feature') {
           my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset); 
-          my @sset = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
+          my $sset          = $reg_attr_dset->get_displayable_supporting_sets('result');
 
-          if(scalar(@sset) >> 1){#There should only be one
-            throw ("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t".$reg_attr_dset->name);    
-          }
-          my $reg_attr_rset = $sset[0];
-          unless (scalar @sset  == 0){  
-            $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = $reg_attr_rset;
-          }
+          # There should only be one
+          throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
+          
+          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = $sset->[0] if scalar @$sset;
         }
       }
     }  
   }
+  
   return $data;
 }
 
