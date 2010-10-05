@@ -13,11 +13,12 @@ use EnsEMBL::Web::OrderedTree;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $type, $action, $adaptor) = @_;
+  my ($class, $type, $action, $hub) = @_;
 
   my $self = {
-    _species            => $adaptor->get_species,
-    _species_defs       => $adaptor->get_species_defs,
+    hub                 => $hub,
+    species             => $hub->species,
+    species_defs        => $hub->species_defs,
     real                => 0,
     external_data       => 0,
     nav_tree            => 0,
@@ -25,39 +26,40 @@ sub new {
     _classes            => [],
     _options            => {},
     _image_config_names => {},
-    _default_config     => '_page',
-    _can_upload         => 0,
-    _has_images         => 0,
+    default_config      => '_page',
+    can_upload          => 0,
+    has_images          => 0,
     _form               => undef,
     _form_id            => sprintf('%s_%s_configuration', lc $type, lc $action),
-    _url                => undef,
-    _tree               => new EnsEMBL::Web::OrderedTree,
-    _custom             => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $adaptor->custom_page_config($type) : [],
-    _type               => $type,
-    _action             => $action
+    url                 => undef,
+    tree                => new EnsEMBL::Web::OrderedTree,
+    custom              => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $hub->session->custom_page_config($type) : [],
+    type                => $type,
+    action              => $action
   };
   
   bless $self, $class;
   return $self;
 }
 
-sub default_config :lvalue { $_[0]->{'_default_config'}; }
-sub real           :lvalue { $_[0]->{'real'}; }
-sub external_data  :lvalue { $_[0]->{'external_data'}; }
-sub nav_tree       :lvalue { $_[0]->{'nav_tree'}; }
-sub url            :lvalue { $_[0]->{'_url'}; }
-sub title          :lvalue { $_[0]->{'title'}; }
-sub can_upload     :lvalue { $_[0]->{'_can_upload'} }
-sub has_images     :lvalue { $_[0]->{'_has_images'}; }
-sub altered        :lvalue { $_[0]->{'altered'}; }  # Set to one if the configuration has been updated
-sub storable       :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
-sub custom         :lvalue { $_[0]->{'_custom'}; }
-sub species                { return $_[0]->{'_species'}; }
-sub species_defs           { return $_[0]->{'_species_defs'}; }
-sub is_custom              { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
-sub type                   { return $_[0]->{'_type'}; }
-sub action                 { return $_[0]->{'_action'}; }
-sub tree                   { return $_[0]->{'_tree'}; }
+sub hub            :lvalue { $_[0]->{'hub'};            }
+sub default_config :lvalue { $_[0]->{'default_config'}; }
+sub real           :lvalue { $_[0]->{'real'};           }
+sub external_data  :lvalue { $_[0]->{'external_data'};  }
+sub nav_tree       :lvalue { $_[0]->{'nav_tree'};       }
+sub url            :lvalue { $_[0]->{'url'};            }
+sub title          :lvalue { $_[0]->{'title'};          }
+sub can_upload     :lvalue { $_[0]->{'can_upload'}      }
+sub has_images     :lvalue { $_[0]->{'has_images'};     }
+sub altered        :lvalue { $_[0]->{'altered'};        } # Set to one if the configuration has been updated
+sub storable       :lvalue { $_[0]->{'storable'};       } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
+sub custom         :lvalue { $_[0]->{'custom'};         }
+sub species       { return $_[0]->{'species'};          }
+sub species_defs  { return $_[0]->{'species_defs'};     }
+sub is_custom     { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
+sub type          { return $_[0]->{'type'};             }
+sub action        { return $_[0]->{'action'};           }
+sub tree          { return $_[0]->{'tree'};             }
 
 # Value indidates that the track can be configured for DAS (das) or not (nodas)
 sub add_image_configs {
@@ -71,7 +73,7 @@ sub add_image_configs {
 }
 
 sub has_image_config {
-  my $self = shift;
+  my $self   = shift;
   my $config = shift;
   return exists $self->{'_image_config_names'}{$config};
 }
@@ -197,8 +199,9 @@ sub update_from_input {
 
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_config_strings {
-  my ($self, $hub, $r) = @_;
+  my ($self, $r) = @_;
   
+  my $hub     = $self->hub;
   my $session = $hub->session;
   my $input   = $hub->input;
   my $species = $hub->species;
