@@ -56,6 +56,9 @@ sub timer_push        { return shift->hub->timer_push(@_);        }
 sub table_info        { return shift->hub->table_info(@_);        }
 sub data_species      { return shift->hub->data_species(@_);      }
 sub _url              { return shift->hub->url(@_);               }
+sub viewconfig        { return shift->hub->viewconfig;            }
+sub get_viewconfig    { return shift->hub->get_viewconfig(@_);    }
+sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }
 
 sub _filename {
   my $self = shift;
@@ -254,22 +257,6 @@ sub alternative_object_from_factory {
   }
 }
 
-# Store default viewconfig so we don't have to keep getting it from session
-sub viewconfig {
-  my $self = shift;
-  return $self->hub->viewconfig;
-}
-
-sub get_viewconfig {
-  my $self = shift;
-  return $self->hub->get_viewconfig(@_);
-}
-
-sub get_imageconfig  {
-  my $self = shift;
-  return $self->hub->get_imageconfig(@_);
-}
-
 sub slice {
   my $self = shift;
   return 1 unless $self->Obj->can('feature_Slice');
@@ -277,6 +264,7 @@ sub slice {
   my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
   return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice;
 }
+
 sub long_caption {
   my $self = shift;
   
