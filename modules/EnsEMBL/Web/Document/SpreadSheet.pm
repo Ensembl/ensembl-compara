@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Document::SpreadSheet;
 
 use strict;
@@ -22,6 +24,8 @@ sub new {
   
   bless $self, $class;
 }
+
+sub has_rows { return !!@{$_[0]->{'_data'}}; }
 
 sub render {
   my $self = shift;
