@@ -403,7 +403,7 @@ sub get_viewconfig {
   return undef unless $session;
   return $session->get_configs->{$key}{'config'} if $session->get_configs->{$key};
   
-  my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $session);
+  my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $self);
   
   $session->apply_to_view_config($view_config, $type, $key);
   

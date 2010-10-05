@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Session;
 
 ### NAME: EnsEMBL::Web::Session
@@ -29,25 +31,24 @@ package EnsEMBL::Web::Session;
 ### where this is done (by the {{EnsEMBL::Web::Hub::fix_session}} method.
 ###
 
-use warnings;
-no warnings 'uninitialized';
 use strict;
 
-use Storable qw(nfreeze thaw);
-use Bio::EnsEMBL::ColourMap;
 use Apache2::RequestUtil;
 use Data::Dumper qw(Dumper);
+use Storable qw(nfreeze thaw);
 use Time::HiRes qw(time);
 
-use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Tools::Encryption 'checksum';
-use EnsEMBL::Web::Cookie;
-use EnsEMBL::Web::ExtURL;
-use EnsEMBL::Web::ViewConfig;
-use EnsEMBL::Web::ImageConfig;
+use Bio::EnsEMBL::ColourMap;
+use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
+
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
-use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
+use EnsEMBL::Web::Data::User;
+use EnsEMBL::Web::Cookie;
+use EnsEMBL::Web::ExtURL;
+use EnsEMBL::Web::ImageConfig;
+use EnsEMBL::Web::Tools::Encryption 'checksum';
+use EnsEMBL::Web::ViewConfig;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -561,13 +562,14 @@ warn ">> $new_name <<";
 
 # Switch on a DAS source for the current view/image (if it is suitable)
 sub configure_das_views {
-  my ($self, $das, $referer_hash, $track_options) = @_;
-  my $this_type   = $referer_hash->{'ENSEMBL_TYPE'  } || $ENV{'ENSEMBL_TYPE'};
-  my $this_action = $referer_hash->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
-  my $this_image  = $referer_hash->{'ENSEMBL_IMAGE'};
+  my ($self, $das, $hub, $track_options) = @_;
+  my $referer     = $hub->referer;
+  my $this_type   = $referer->{'ENSEMBL_TYPE'}   || $ENV{'ENSEMBL_TYPE'};
+  my $this_action = $referer->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
+  my $this_image  = $referer->{'ENSEMBL_IMAGE'};
   $track_options->{'display'} ||= 'normal';
-  my $this_vc     = $self->getViewConfig( $this_type, $this_action );
-  my %this_ics    = $this_vc->image_configs();
+  my $this_vc     = $self->getViewConfig($this_type, $this_action, $hub);
+  my %this_ics    = $this_vc->image_configs;
   
   # This method has to deal with two types of configurations - those of views
   # and those of images. Non-positional DAS sources are attached to views, and
@@ -744,10 +746,8 @@ sub getViewConfig {
   ### Then loop through the {{EnsEMBL::Web::Input}} object and set anything in this
   ### Keep a record of what the user has changed
   
-  my $self   = shift;
-  my $type   = shift;
-  my $action = shift;
-  my $key    = "${type}::$action";
+  my ($self, $type, $action, $hub) = @_;
+  my $key = "${type}::$action";
 
   # TODO: get rid of session getters,
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
@@ -757,7 +757,7 @@ sub getViewConfig {
   );  
 
   if (!$self->{'configs'}{$key}) {
-    my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $self);
+    my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $hub);
     
     foreach my $root (@{$self->get_path}) {
       $view_config->add_class("${root}::ViewConfig::$key");
