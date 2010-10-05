@@ -168,6 +168,23 @@ sub get_page_data {
         $status        = join ', ',  @validation;
         $status        =~ s/freq/frequency/;
       }
+
+      # Other
+      my $chr = $sample_slice->seq_region_name;
+      my $aa_alleles = $conseq_type->aa_alleles || [];
+      my $aa_coord = $conseq_type->aa_start;
+      $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
+      my $cds_coord = $conseq_type->cds_start;
+      $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
+      my $sources = join ", " , @{$allele->get_all_sources || [] };
+      my $vid = $allele->variation_name;
+      my $source = $allele->source;
+      my $vf = $allele->variation->dbID; 
+      my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });
+      my @hgvs = values %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
+      s/ENS(...)?[TG]\d+(\.\d+)?\://g for @hgvs;
+      my $hgvs = join ", ", @hgvs;
+      my %hgvs = %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
       
       my $row = {
         ID          => sprintf('<a href="%s">%s</a>', $url, $allele->variation_name),
