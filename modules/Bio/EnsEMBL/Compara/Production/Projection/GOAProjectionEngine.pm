@@ -61,7 +61,7 @@ use Data::Predicate::Predicates qw(:all);
 
 =head2 new()
 
-  Arg[-dbentry_types] : Percentage identity in the source. Defaults to GO
+  Arg[-dbentry_types] : The DBEntry database name to use. Defaults to GO
   Description : New method used for a new instance of the given object. 
                 Required fields are indicated accordingly. Fields are specified
                 using the Arguments syntax (case insensitive).
@@ -109,7 +109,9 @@ sub excluded_terms {
 =head2 dbentry_source_object()
 
 Override of the method from the super engine which uses the FakeXrefHolder
-object to get Xrefs quickly.
+object to get Xrefs quickly. The class returned responds to the
+C<get_all_DBEntries()> subroutine call returning all of those Translation
+based DBEntry objects.
 
 =cut
 
@@ -117,32 +119,6 @@ sub dbentry_source_object {
   my ($self, $member) = @_;
   return Bio::EnsEMBL::Compara::Production::Projection::FakeXrefHolder->build_peptide_dbentries_from_Member($member);
 }
-
-=head2 build_projection()
-
-  Arg[1]      : Member; source member of projection
-  Arg[2]      : Member; target member of projection
-  Arg[3]      : Source attribute
-  Arg[4]      : Target attribute
-  Arg[5]      : DBEntry projected
-  Arg[6]      : The homology used for projection
-  Description : Returns a Projection which is between Peptide members
-  Returntype  : Projection object
-
-=cut
-
-sub build_projection {
-  my ($self, $query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology) = @_;
-  return Bio::EnsEMBL::Compara::Production::Projection::Projection->new(
-    -ENTRY => $dbentry,
-    -FROM => $query_member->get_canonical_peptide_Member(),
-    -TO => $target_member->get_canonical_peptide_Member(),
-    -FROM_IDENTITY => $query_attribute->perc_id(),
-    -TO_IDENTITY => $target_attribute->perc_id(),
-    -TYPE => $homology->description()
-  );
-}
-
 
 ###### BUILDERS
 

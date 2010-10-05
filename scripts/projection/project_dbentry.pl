@@ -23,6 +23,9 @@ my @options = qw(
   engine=s 
   compara=s 
   write_to_db 
+  display_xrefs
+  all_sources
+  one_to_many
   file=s 
   registry=s 
   verbose help man 
@@ -59,7 +62,16 @@ sub _get_opts {
 	Bio::EnsEMBL::Registry->load_all(@args);
 	
 	#Engine work
-	$opts->{engine} = 'Bio::EnsEMBL::Compara::Production::Projection::GOAProjectionEngine' if ! $opts->{engine};
+	if(! $opts->{engine}) {
+	  my $base = 'Bio::EnsEMBL::Compara::Production::Projection::';
+	  if($opts->{display_xrefs}) {
+	    $opts->{engine} = $base.'DisplayXrefProjectionEngine';
+	  }
+	  else {
+	    $opts->{engine} = $base.'GOAProjectionEngine';
+	  }
+	}
+	
 	if(! $opts->{write_to_db} && ! $opts->{file}) {
 	  _exit('-write_to_db and -file were not specified. We need one', 3, 1);
 	}
@@ -83,11 +95,14 @@ sub _build_engine {
   my ($opts) = @_;
   my $mod = $opts->{engine};
   _runtime_import($mod, 1);
-  return $mod->new(
+  my %args = (
     -GENOME_DB => _get_genome_db($opts, $opts->{source}),
     -DBA => _get_adaptor($opts->{compara}, 'compara'),
     _log()
   );
+  $args{-ALL_SOURCES} = 1 if $opts->{all_sources};
+  $args{-ONE_TO_MANY} = 1 if $opts->{one_to_many};
+  return $mod->new(%args);
 }
 
 sub _get_genome_db {
@@ -152,7 +167,7 @@ project_dbentry.pl
 
 =head1 SYNOPSIS
 
-  ./project_dbentry.pl -registry REG -source SRC -target TRG -compara COM [-engine ENG] [-write_to_db] [-file FILE] [-verbose] [-help | -man]
+  ./project_dbentry.pl -registry REG -source SRC -target TRG -compara COM [-display_xrefs] [-engine ENG] [-write_to_db] [-file FILE] [-verbose] [-help | -man]
 
 =head1 DESCRIPTION
 
@@ -182,7 +197,13 @@ will produce a CSV of what I<would> have been written back to the DB.
 
 =item B<--compara> - The compara database to use
 
-=item B<--engine> - The engine to use; defaults to GOAProjectionEngine (must be a fully qualified package)
+=item B<--engine> - The engine to use; defaults to GOAProjectionEngine or DisplayXrefProjectionEngine. Must be a fully qualified package
+
+=item B<--display_xrefs> - Flags we wish to project display Xrefs
+
+=item B<--all_sources> - Allow the input of any sources of information
+
+=item B<--one_to_many> - Bring in 1:m relationships rather than just 1:1
 
 =item B<--write_to_db> - Indicates we want Xrefs going back to the core DB. If used we assume the registry's core DBAdaptor is writable
 

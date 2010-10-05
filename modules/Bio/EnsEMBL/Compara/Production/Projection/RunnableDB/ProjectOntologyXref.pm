@@ -46,7 +46,7 @@ use base qw(
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 
 use File::Spec;
 
@@ -54,6 +54,7 @@ use Bio::EnsEMBL::Hive::URLFactory;
 
 use Bio::EnsEMBL::Compara::Production::Projection::RunnableDB::RunnableLogger;
 use Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryWriter;
+use Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDisplayXrefWriter;
 use Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedFileWriter;
 use Bio::EnsEMBL::Compara::Production::Projection::Writer::MultipleWriter;
 
@@ -129,6 +130,8 @@ Expect to see the following params:
 
 =item file - String indicating a directory to write to (auto generated file name) or a target file name. We do not automatically create directories
 
+=item engine_params = Give optional parameters to the engine if required
+
 =back
 
 =cut
@@ -148,6 +151,7 @@ sub fetch_input {
   my $log = Bio::EnsEMBL::Compara::Production::Projection::RunnableDB::RunnableLogger->new(-DEBUG => $self->debug());
   my $params = { -GENOME_DB => $source_gdb, -DBA => $compara_dba, -LOG => $log };
   $params->{-METHOD_LINK} = $self->param('method_link') if $self->param('method_link');
+  %{$params} = %{$self->param('engine_params')} if $self->param('engine_params');
   my $engine = $self->_build_engine($params);
   $self->projection_engine($engine);
   
@@ -258,10 +262,18 @@ sub _writer {
     my $writers = [];
     
     if($self->write_dba()) {
-      push(@$writers, Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryWriter->new(
-        -PROJECTIONS  => $projections,
-        -DBA          => $self->write_dba()
-      ));
+      if(check_ref($self->projection_engine(), 'Bio::EnsEMBL::Compara::Production::Projection::DisplayXrefProjectionEngine')) {
+        push(@$writers, Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDisplayXrefWriter->new(
+          -PROJECTIONS  => $projections,
+          -DBA          => $self->write_dba()
+        ));
+      }
+      else {
+        push(@$writers, Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedDBEntryWriter->new(
+          -PROJECTIONS  => $projections,
+          -DBA          => $self->write_dba()
+        ));
+      }
     }
     if($self->file()) {
       push(@$writers, Bio::EnsEMBL::Compara::Production::Projection::Writer::ProjectedFileWriter->new(

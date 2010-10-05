@@ -96,6 +96,35 @@ sub get_all_DBEntries {
 
 ### Factory
 
+=head2 build_display_xref_from_Member()
+
+  Arg[1]      : Bio::EnsEMBL::Compara::Member; The member to search by
+  Description : Returns the display DBEntry from the given Member. If the 
+                member was an ENSEMBLGENE we consult the Gene otherwise
+                for ENSEMBLPEP we consult the Translation (both from core). If
+                the DBEntry was empty we will return an object 
+                containing no elements
+  Returntype  : Instance of FakeXrefHolder
+
+=cut
+
+sub build_display_xref_from_Member {
+  my ($class, $member) = @_;
+  my $display_xref;
+  my $source_name = $member->source_name();
+  if($source_name eq 'ENSEMBLGENE') {
+    $display_xref = $member->get_Gene()->display_xref();
+  }
+  elsif($source_name eq 'ENSEMBLPEP') {
+    $display_xref = $member->get_Translation()->display_xref();
+  }
+  else {
+    throw('I do not understand how to process the source_name '.$source_name);
+  }
+  my @entries = (defined $display_xref) ? ($display_xref) : () ;
+  return $class->new(-DBENTRIES => \@entries);
+}
+
 =head2 build_peptide_dbentries_from_member()
 
   Arg[1]      : Bio::EnsEMBL::Compara::Member; The member to search by
@@ -104,7 +133,7 @@ sub get_all_DBEntries {
                 a gene member it will look for the cannonical links and if
                 given a peptide member it assumes this is the correct 
                 identifier to use.
-  Returntype  : ArrayRef of DBEntry objects.
+  Returntype  : Instance of FakeXrefHolder
 
 =cut
 

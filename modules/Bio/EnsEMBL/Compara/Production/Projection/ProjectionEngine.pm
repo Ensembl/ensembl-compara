@@ -272,9 +272,9 @@ sub project {
     foreach my $dbentry (@{$db_entries}) {
       my $filter_dbentry = $self->_filter_dbentry($dbentry, $target_dbentry_holder);
       if($filter_dbentry) {
-        if($self->_transfer_dbentry_by_targets($dbentry, $target_dbentry_holder->get_all_DBEntries())) {
+        if($self->_transfer_dbentry_by_targets($dbentry, $target_dbentry_holder->get_all_DBEntries(), $target_member->stable_id())) {
           my $projection = $self->build_projection($query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology);
-          push(@projections, $projection);
+          push(@projections, $projection) if defined $projection;
         }
       }
     }
@@ -294,13 +294,22 @@ sub project {
   Arg[5]      : DBEntry projected
   Arg[6]      : The homology used for projection
   Description : Provides an abstraction to building a projection from a 
-                set of elements. Override in your class
-  Returntype  : Projection object
+                set of elements.
+  Returntype  : Projection object. Can be null & the current projection code
+                will ignore it
 
 =cut
 
 sub build_projection {
-  throw('Unsupported operation; override in sub-classes');
+  my ($self, $query_member, $target_member, $query_attribute, $target_attribute, $dbentry, $homology) = @_;
+  return Bio::EnsEMBL::Compara::Production::Projection::Projection->new(
+    -ENTRY => $dbentry,
+    -FROM => $query_member->get_canonical_peptide_Member(),
+    -TO => $target_member->get_canonical_peptide_Member(),
+    -FROM_IDENTITY => $query_attribute->perc_id(),
+    -TO_IDENTITY => $target_attribute->perc_id(),
+    -TYPE => $homology->description()
+  );
 }
 
 sub _get_mlss {
@@ -313,15 +322,16 @@ sub _get_mlss {
 
 sub _homologies {
   my ($self, $mlss) = @_;
+  $self->log()->debug('Retriving homologies');
   my $homologies = $self->_get_homologies($mlss);
-  $self->log()->debug('Filtering them');
+  $self->log()->debug('Filtering homologies');
   my $filtered = $self->homology_predicate()->filter($homologies);
   $self->log()->debug('Finished filtering');
   return $filtered;
 }
 
 sub _filter_dbentry {
-  my ($self, $dbentry, $target_object) = @_;
+  my ($self, $dbentry, $target_dbentry_holder) = @_;
   return $self->dbentry_predicate()->apply($dbentry);
 }
 
