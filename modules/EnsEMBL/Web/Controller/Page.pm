@@ -77,7 +77,7 @@ sub update_configuration_from_url {
   }
   
   my $view_config = $hub->viewconfig;
-  my $new_url     = $view_config->update_from_config_strings($hub, $r); # This should push a message onto the message queue
+  my $new_url     = $view_config->update_from_config_strings($r); # This should push a message onto the message queue
   
   $url = $new_url if $new_url;
   
