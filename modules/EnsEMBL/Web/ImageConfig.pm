@@ -44,7 +44,6 @@ sub new {
     type                => $type,
     species             => $species,
     species_defs        => $adaptor->get_species_defs,
-    exturl              => $adaptor->exturl,
     general             => {},
     user                => {},
     _useradded          => {}, # contains list of added features

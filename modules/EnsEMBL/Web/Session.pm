@@ -45,7 +45,6 @@ use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::Cookie;
-use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::ImageConfig;
 use EnsEMBL::Web::Tools::Encryption 'checksum';
 use EnsEMBL::Web::ViewConfig;
@@ -63,7 +62,6 @@ sub new {
     das_parser         => $args->{'das_parser'},
     das_sources        => $args->{'das_sources'},
     data               => {},
-    exturl             => $args->{'exturl'},
     image_configs      => {},
     input              => $args->{'input'},
     path               => [ 'EnsEMBL::Web', reverse @{$args->{'path'}||[]} ],
@@ -118,16 +116,6 @@ sub input {
     $self->{'input'} = @_;
   }
   return $self->{'input'};
-}
-
-sub exturl {
-  my $self = shift;
-  my $exturl = $self->{'exturl'};
-  unless ($exturl) {
-    $self->{'exturl'} = EnsEMBL::Web::ExtURL->new( $self->get_species, $self->get_species_defs );
-    $exturl = $self->{'exturl'};
-  }
-  return $exturl;
 }
 
 sub colourmap {
