@@ -164,62 +164,6 @@ sub content {
               
               # iterate through all VAs
               foreach(values %{$ld->{annotations}}) {
-                #
-                ## name part
-                #$va_string .=
-                #  '<a href="../Location/Genome?ftype=Phenotype;'.
-                #    $vf_link_bit.
-                #    ';id='.$_->{_phenotype_id}.';phenotype_name='.$_->phenotype_description.'">'.
-                #    ($_->phenotype_name ? $_->phenotype_name : $_->phenotype_description).
-                #  '</a>';
-                #  
-                ## p value part
-                #if(defined $_->p_value) {
-                #  
-                #  # scale the p-value to an integer that might fall in @colour_scale
-                #  my $p_scaled = sprintf("%.0f", (-log($_->p_value)/log(10)));
-                #  
-                #  # set a colour
-                #  my $colour = $colour_scale[($p_scaled > $#colour_scale ? $#colour_scale : $p_scaled)];
-                #  
-                #  $va_string .= ' <span style="color:#'.$colour.';">('.$_->p_value.')</span>';
-                #}
-                #
-                #$va_string .= ', ';
-                
-                ## p value part
-                #if(defined $_->p_value) {
-                #  
-                #  # scale the p-value to an integer that might fall in @colour_scale
-                #  my $p_scaled = sprintf("%.0f", (-log($_->p_value)/log(10)));
-                #  
-                #  # set a colour
-                #  my $colour = $colour_scale[($p_scaled > $#colour_scale ? $#colour_scale : $p_scaled)];
-                #  
-                #  $va_string .= '<span style="-webkit-border-radius:1em; -moz-border-radius:1em; padding-left:0.5em; padding-right:0.5em; background:#'.$colour.';" title="'.$_->p_value.'">&nbsp;</span>';
-                #}
-                
-                # name part
-                #$va_string .=
-                #  ' <a href="../Location/Genome?ftype=Phenotype;'.
-                #    $vf_link_bit.
-                #    ';id='.$_->{_phenotype_id}.';phenotype_name='.$_->phenotype_description.'">'.
-                #    ($_->phenotype_name ? $_->phenotype_name : $_->phenotype_description).
-                #  '</a>';
-                #
-                ## p value part
-                #if(defined $_->p_value) {
-                #  
-                #  # scale the p-value to an integer that might fall in @colour_scale
-                #  my $p_scaled = sprintf("%.0f", (-log($_->p_value)/log(10)));
-                #  
-                #  # set a colour
-                #  my $colour = $colour_scale[($p_scaled > $#colour_scale ? $#colour_scale : $p_scaled)];
-                #  
-                #  $va_string .= ' <span style="float:right; color:#'.$colour.';">('.$_->p_value.')</span>';
-                #}
-                #  
-                #$va_string .= '<br/>';
                 
                 my $va_url = $object->_url({
                   type           => 'Location',
@@ -245,7 +189,7 @@ sub content {
                   # set a colour
                   my $colour = $colour_scale[($p_scaled > $#colour_scale ? $#colour_scale : $p_scaled)];
                   
-                  $va_string .= '<span style="float:right; color:#'.$colour.';">('.$_->p_value.')</span>';
+                  $va_string .= '<nobr><span style="float:right; color:#'.$colour.';">('.$_->p_value.')</span></nobr>';
                 }
                   
                 $va_string .= '</td></tr>';
