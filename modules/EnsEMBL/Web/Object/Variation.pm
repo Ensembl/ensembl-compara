@@ -966,7 +966,7 @@ sub get_individuals_pops {
 
   foreach (@populations) {
     push (@pop_string,  {Name => $self->pop_name($_), 
-       Link => $self->pop_links($_)});
+       Link => $self->pop_links($_), ID => $_->dbID});
   }
   return \@pop_string;
 }
@@ -1169,7 +1169,7 @@ sub ld_pops_for_snp {
   return [] unless @vari_mappings;
 
   my @pops;
-  foreach ( @vari_mappings ) {
+  foreach ( @vari_mappings ) {    
     my $ldcontainer = $_->get_all_LD_values; #warn scalar @{$ldcontainer->get_all_populations};
     push @pops, @{$ldcontainer->get_all_populations};
 
