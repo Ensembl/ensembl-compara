@@ -10,22 +10,23 @@ use base qw(EnsEMBL::Web::Component::TextSequence);
 
 sub _init {
   my $self = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
   
   $self->cacheable(1);
   $self->ajaxable(1);
   
-  $self->{'subslice_length'} = $object->param('force') || 100 * ($object->param('display_width') || 60) if $object;
+  $self->{'subslice_length'} = $hub->param('force') || 100 * ($hub->param('display_width') || 60);
 }
 
 sub content {
   my $self      = shift;
+  my $hub       = $self->hub;
   my $object    = $self->object;
-  my $cdb       = shift || $object->param('cdb') || 'compara';
+  my $cdb       = shift || $hub->param('cdb') || 'compara';
   my $slice     = $object->slice;
-  my $threshold = 1000100 * ($object->species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $species   = $object->species;
-  my $type      = $object->type;
+  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE||1);
+  my $species   = $hub->species;
+  my $type      = $hub->type;
   
   if ($type eq 'Location' && $slice->length > $threshold) {
     return $self->_warning(
@@ -34,10 +35,10 @@ sub content {
     );
   }
   
-  my $align_param = $object->param('align');
+  my $align_param = $hub->param('align');
   my ($align) = split '--', $align_param;
   
-  my ($error, $warnings) = $self->check_for_errors($object, $align, $species, $cdb);
+  my ($error, $warnings) = $self->check_for_errors($align, $species, $cdb);
 
   return $error if $error;
   
@@ -48,7 +49,7 @@ sub content {
     
     $html .= sprintf(
       '<p style="padding:0.5em 0 1.5em"><strong><a href="%s">Go to a graphical view</a> (Genomic align slice) of this alignment</strong></p>',
-      $object->_url({
+      $hub->url({
         type   => 'Location',
         action => 'Compara_Alignments/Image',
         align  => $align,
@@ -57,7 +58,7 @@ sub content {
     );
   }
   
-  $slice = $slice->invert if $object->param('strand') == -1;
+  $slice = $slice->invert if $hub->param('strand') == -1;
   
   # Get all slices for the gene
   my ($slices, $slice_length) = $self->get_slices($slice, $align_param, $species, undef, undef, $cdb);
@@ -78,21 +79,21 @@ sub content_sub_slice {
   my $self = shift;
   my ($slice, $slices, $warnings, $defaults, $cdb) = @_;
   
-  my $object = $self->object;
-  
-  $slice ||= $object->slice;
-  $slice = $slice->invert if !$_[0] && $object->param('strand') == -1;
-  
-  my $start = $object->param('subslice_start');
-  my $end = $object->param('subslice_end');
-  my $padding = $object->param('padding');
-  my $slice_length = $object->param('length') || $slice->length;
+  my $hub          = $self->hub;
+  my $object       = $self->object;
+  $slice         ||= $object->slice;
+  $slice           = $slice->invert if !$_[0] && $hub->param('strand') == -1;
+  my $species_defs = $hub->species_defs;
+  my $start        = $hub->param('subslice_start');
+  my $end          = $hub->param('subslice_end');
+  my $padding      = $hub->param('padding');
+  my $slice_length = $hub->param('length') || $slice->length;
 
   my $config = {
-    display_width   => $object->param('display_width') || 60,
-    site_type       => ucfirst lc $object->species_defs->ENSEMBL_SITETYPE || 'Ensembl',
-    species         => $object->species,
-    display_species => $object->species_defs->SPECIES_SCIENTIFIC_NAME,
+    display_width   => $hub->param('display_width') || 60,
+    site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
+    species         => $hub->species,
+    display_species => $species_defs->SPECIES_SCIENTIFIC_NAME,
     comparison      => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
     sub_slice_start => $start,
@@ -100,7 +101,7 @@ sub content_sub_slice {
   };
   
   for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {
-    $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
+    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
   if ($config->{'line_numbering'}) {
@@ -153,8 +154,7 @@ sub get_slices {
   my $self = shift;
   my ($slice, $align, $species, $start, $end, $cdb) = @_;
   
-  my $object       = $self->object;
-  my $species_defs = $object->species_defs;
+  my $species_defs = $self->hub->species_defs;
   my $vega_compara = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'VEGA_COMPARA'};
   my (@slices, @formatted_slices, $length);
 
@@ -227,11 +227,12 @@ sub get_alignments {
 
 sub check_for_errors {
   my $self = shift;
-  my ($object, $align, $species, $cdb) = @_;
+  my ($align, $species, $cdb) = @_;
 
   return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
   
-  my $species_defs  = $object->species_defs;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
   my $db_key        = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
   my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
   
@@ -254,7 +255,7 @@ sub check_for_errors {
 
       next if $species eq $_;
       
-      push @skipped, $_ if ($object->param($key)||'off') eq 'off';
+      push @skipped, $_ if ($hub->param($key)||'off') eq 'off';
     }
 
     if (scalar @skipped) {
@@ -263,7 +264,7 @@ sub check_for_errors {
         sprintf(
           '<p>The following %d species in the alignment are not shown. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
           scalar @skipped,
-          join "</li>\n<li>", sort map { $object->species_defs->species_label($_) } @skipped
+          join "</li>\n<li>", sort map { $species_defs->species_label($_) } @skipped
         )
       );
     }
@@ -356,18 +357,17 @@ sub markup_region_change {
 
 # get full name of seq-region from which the alignment comes
 sub get_full_name {
-  my $self   = shift;
-  my $sl     = shift;
-  my $object = $self->object;
+  my $self  = shift;
+  my $slice = shift;
   my $id;  
   
-  if (ref $sl eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
-    my $species_name = $sl->seq_region_name;
-    my $chr_name     = $sl->{'slice_mapper_pairs'}->[0]->{'slice'}->{'seq_region_name'};
+  if (ref $slice eq 'Bio::EnsEMBL::Compara::AlignSlice::Slice') {
+    my $species_name = $slice->seq_region_name;
+    my $chr_name     = $slice->{'slice_mapper_pairs'}->[0]->{'slice'}->{'seq_region_name'};
     
     $id = "$species_name:$chr_name";
   } else {
-    $id = $object->species;
+    $id = $self->hub->species;
   }
 
   return $id;

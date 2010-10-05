@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::SupportingEvidence;
 
 ### Displays supporting evidence for all transcripts of a gene
@@ -16,6 +18,7 @@ sub _init {
 
 sub content {
   my $self       = shift;
+  my $hub        = $self->hub;
   my $object     = $self->object;
   my $logic_name = $object->logic_name;
   my $evidence   = $object->get_gene_supporting_evidence;
@@ -64,14 +67,14 @@ sub content {
       t      => $transcript
     );
     
-    my $row = { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $transcript, $object->_url(\%url_params)) };
+    my $row = { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $transcript, $hub->url(\%url_params)) };
     $row->{'exon'} = scalar keys %{$evidence->{$transcript}{'extra_evidence'}} if $evidence->{$transcript}{'extra_evidence'};
     
     $url_params{'function'} = 'Alignment';
     
     if ($ev) {
       foreach my $type (grep $ev->{$_}, qw(CDS UTR UNKNOWN)) {
-        $row->{$type} .= sprintf '<p>[<a href="%s">align</a>] %s</p>', $object->_url({ %url_params, sequence => $_->[1] }), $_->[0] for @{$object->add_evidence_links($ev->{$type})};
+        $row->{$type} .= sprintf '<p>[<a href="%s">align</a>] %s</p>', $hub->url({ %url_params, sequence => $_->[1] }), $_->[0] for @{$object->add_evidence_links($ev->{$type})};
       }
     }
     

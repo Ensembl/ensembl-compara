@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::SyntenyMatches;
 
 ### Module to replace part of the former SyntenyView, in this case displaying 
@@ -20,12 +22,11 @@ sub caption {
 }
 
 sub content {
-  my $self = shift;
-  
-  my $object      = $self->object;
-  my $species     = $object->species;
-  my $other       = $object->param('otherspecies') || $object->param('species') || $self->default_otherspecies;
-  my $data        = $object->get_synteny_matches;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $species     = $hub->species;
+  my $other       = $hub->param('otherspecies') || $hub->param('species') || $self->default_otherspecies;
+  my $data        = $self->object->get_synteny_matches;
   (my $sp_tidy    = $species) =~ s/_/ /; 
   (my $other_tidy = $other)   =~ s/_/ /; 
   my $html;
@@ -58,8 +59,8 @@ sub content {
       my $r = sprintf '%s:%s-%s', $row->{'sp_chr'}, $row->{'sp_start'}, $row->{'sp_end'};
       
       if ($old_id ne $sp_stable_id) {        
-        $sp_ids = sprintf '<a href="%s"><strong>%s</strong></a> (%s)', $object->_url({ type => 'Gene', action => 'Summary', r => $r, g => $sp_stable_id }), $row->{'sp_synonym'}, $sp_stable_id;
-        $sp_loc = sprintf '<a href="%s">%s</a>', $object->_url({ action => 'View', r => $r, g => $sp_stable_id }), $r;
+        $sp_ids = sprintf '<a href="%s"><strong>%s</strong></a> (%s)', $hub->url({ type => 'Gene', action => 'Summary', r => $r, g => $sp_stable_id }), $row->{'sp_synonym'}, $sp_stable_id;
+        $sp_loc = sprintf '<a href="%s">%s</a>', $hub->url({ action => 'View', r => $r, g => $sp_stable_id }), $r;
         $old_id = $sp_stable_id;
       }
       
@@ -68,13 +69,13 @@ sub content {
         
         $other_ids = sprintf(
           '<a href="%s"><strong>%s</strong></a> (%s)', 
-          $object->_url({ species => $other, type => 'Gene', action => 'Summary', r => $other_r, g => $other_stable_id }), 
+          $hub->url({ species => $other, type => 'Gene', action => 'Summary', r => $other_r, g => $other_stable_id }), 
           $row->{'other_synonym'}, 
           $other_stable_id
         );
         
-        $other_loc = sprintf '<a href="%s">%s</a>', $object->_url({ species => $other, action => 'View', r => $other_r, g => $other_stable_id }), $other_r;
-        $multi     = sprintf '<a href="%s">Multi-species view</a>', $object->_url({ action => 'Multi', r => $r, s1 => $other, r1 => $other_r, g1 => $other_stable_id });
+        $other_loc = sprintf '<a href="%s">%s</a>', $hub->url({ species => $other, action => 'View', r => $other_r, g => $other_stable_id }), $other_r;
+        $multi     = sprintf '<a href="%s">Multi-species view</a>', $hub->url({ action => 'Multi', r => $r, s1 => $other, r1 => $other_r, g1 => $other_stable_id });
       } else {
         $other_ids = 'No homologues';
       }

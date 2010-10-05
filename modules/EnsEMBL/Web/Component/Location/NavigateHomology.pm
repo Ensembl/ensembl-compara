@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::NavigateHomology;
 
 ### Module to replace part of the former SyntenyView, in this case 
@@ -14,23 +16,26 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $object         = $self->object;
+  my $chromosome     = $object->chromosome;
+  my $chromosome_end = $chromosome->end;
+  my $start          = $object->seq_region_start;
+  my $end            = $object->seq_region_end;
 
   ## Don't show this component if the slice covers or exceeds the whole chromosome!
-  return if $object->chromosome->length < 1e6 || ($object->param('r') =~ /:/ && $object->seq_region_start < 2 && $object->seq_region_end > ($object->chromosome->end - 1));
+  return if $chromosome->length < 1e6 || ($hub->param('r') =~ /:/ && $start < 2 && $end > ($chromosome_end - 1));
   
-  my $other_species  = $object->param('otherspecies') || $object->param('species');
-  my $max_len        = $object->seq_region_end < 1e6 ? $object->seq_region_end : 1e6;
-  my $seq_region_end = $object->param('r') =~ /:/ ? $object->seq_region_end : $max_len;
+  my $other_species  = $hub->param('otherspecies') || $hub->param('species');
+  my $max_len        = $end < 1e6 ? $end : 1e6;
+  my $seq_region_end = $hub->param('r') =~ /:/ ? $object->seq_region_end : $max_len;
   my $chr            = $object->seq_region_name; 
-  my $sliceAdaptor   = $object->get_adaptor('get_SliceAdaptor');
+  my $sliceAdaptor   = $hub->get_adaptor('get_SliceAdaptor');
   my $max_index      = 15;
   my $max_minus      = -15;
-  my $start          = $object->seq_region_start || 100;
-  my $end            = $seq_region_end || ($object->chromosome->end - 100);
-  my $upstream       = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $object->seq_region_start - 1 );
-  my $downstream     = $sliceAdaptor->fetch_by_region('chromosome', $chr, $seq_region_end + 1, $object->chromosome->end );
+  my $upstream       = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $start - 1 );
+  my $downstream     = $sliceAdaptor->fetch_by_region('chromosome', $chr, $seq_region_end + 1, $chromosome_end );
   my @up_genes       = $upstream ?   reverse @{$object->get_synteny_local_genes($upstream)} : ();
   my @down_genes     = $downstream ? @{$object->get_synteny_local_genes($downstream)}       : ();
   my $up_count       = @up_genes;
@@ -48,12 +53,12 @@ sub content {
     $up_count  = @up_sample;
     $gene_text = $up_count > 1 ? 'genes' : 'gene';
     
-    my $up_start  = @up_sample ? $object->seq_region_start - $up_sample[-1]->end  : 0;
-    my $up_end    = @up_sample ? $object->seq_region_start - $up_sample[0]->start : 0;
+    my $up_start  = @up_sample ? $start - $up_sample[-1]->end  : 0;
+    my $up_end    = @up_sample ? $start - $up_sample[0]->start : 0;
     
     $up_link = sprintf('
       <a href="%s"><img src="/i/nav-l2-old.gif" class="homology_move" alt="<<"/> %s upstream %s</a>',
-      $object->_url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
+      $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
     );
   } else {
     $up_link = 'No upstream homologues';
@@ -78,7 +83,7 @@ sub content {
     
     $down_link = sprintf('
       <a href="%s">%s downstream %s <img src="/i/nav-r2-old.gif" class="homology_move" alt="<<"/></a>',
-      $object->_url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
+      $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
     );
   } else {
     $down_link = 'No downstream homologues';

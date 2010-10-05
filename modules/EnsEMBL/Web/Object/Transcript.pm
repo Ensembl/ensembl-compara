@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Object::Transcript;
 
 ### NAME: EnsEMBL::Web::Object::Transcript
@@ -12,8 +14,6 @@ package EnsEMBL::Web::Object::Transcript;
 ### DESCRIPTION
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Utils::TranscriptAlleles qw(get_all_ConsequenceType);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
@@ -447,20 +447,20 @@ sub get_families {
 }
 
 sub get_frameshift_introns {
-  my $self = shift;
+  my $self               = shift;
   my $transcript_attribs = $self->Obj->get_all_Attributes('Frameshift'); 
-  my %unique;
-  my $link = $self->_url({ 'type' => 'Transcript', 'action' => 'Exons', 't' => $self->Obj->stable_id });
-  foreach my $attrib (@{$transcript_attribs}) {
-    $unique{$attrib->value} = $link;
-  }
-  my $frameshift_introns;  
-  foreach ( sort { $a <=> $b } keys %unique){
-    my $url = $unique{$_};
+  my $link               = $self->hub->url({ type => 'Transcript', action => 'Exons', t => $self->Obj->stable_id });
+  my %unique             = map { $_->value => $link } @$transcript_attribs;
+  my $frameshift_introns;
+  
+  foreach (sort { $a <=> $b } keys %unique) {
+    my $url       = $unique{$_};
     my $link_text = qq{<a href="$url">$_</a>};
-    $frameshift_introns .= $link_text .", ";
+    $frameshift_introns .= "$link_text, ";
   }
-  $frameshift_introns =~s/,\s+$//;
+  
+  $frameshift_introns =~ s/,\s+$//;
+  
   return $frameshift_introns;
 }
 
@@ -1212,18 +1212,18 @@ sub get_oligo_probe_data {
 }
 
 sub sort_oligo_data {
-  my ($self, $data) = @_; 
-  my %probe_data = %$data;
+  my ($self, $probe_data) = @_; 
+  my $hub        = $self->hub;
 
-  foreach my $array (sort keys %probe_data) {
+  foreach my $array (sort keys %$probe_data) {
     my $text;
     my $p_type = 'pset';
-    my %data = %{$probe_data{$array}};
+    my %data   = %{$probe_data->{$array}};
     
     foreach my $probe_name (sort keys %data) {
       my ($p_type, $probe_text) = @{$data{$probe_name}};
       
-      my $url = $self->_url({
+      my $url = $hub->url({
         'type'   => 'Location',
         'action' => 'Genome',
         'id'     => $probe_name,
@@ -1238,7 +1238,7 @@ sub sort_oligo_data {
       $text .= qq{  [<a href="$url">view all locations</a>]</div>};
     }
     
-    push @{$self->__data->{'links'}{'ARRAY'}}, [ $array || $array, $text ]
+    push @{$self->__data->{'links'}{'ARRAY'}}, [ $array || $array, $text ];
   }
 }
 
@@ -1526,15 +1526,15 @@ sub get_alignment {
 #end of alignview support features
 
 sub get_genetic_variations {
-  my $self = shift;
-  my @samples = @_;
-  
-  my $tsv_extent = $self->param('context') eq 'FULL' ? 1000 : $self->param('context');
-  my $snp_data = {};
+  my $self       = shift;
+  my @samples    = @_;
+  my $hub        = $self->hub;
+  my $tsv_extent = $hub->param('context') eq 'FULL' ? 1000 : $hub->param('context');
+  my $snp_data   = {};
 
   foreach my $sample (@samples) {
     my $munged_transcript = $self->get_munged_slice('tsv_transcript',  $tsv_extent, 1);    
-    my $sample_slice = $munged_transcript->[1]->get_by_strain($sample);
+    my $sample_slice      = $munged_transcript->[1]->get_by_strain($sample);
     my ($allele_info, $consequences) = $self->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
     
     next unless @$consequences && @$allele_info;
@@ -1542,7 +1542,7 @@ sub get_genetic_variations {
     my $index = 0;
     
     foreach my $allele_ref (@$allele_info) {
-      my $allele = $allele_ref->[2];
+      my $allele      = $allele_ref->[2];
       my $conseq_type = $consequences->[$index];
       
       $index++;
@@ -1551,13 +1551,13 @@ sub get_genetic_variations {
 
       # Type
       my $type = join ', ', @{$conseq_type->type || []};
-      $type .= ' (Same As Ref. Assembly)' if $type eq 'SARA';
+      $type   .= ' (Same As Ref. Assembly)' if $type eq 'SARA';
 
       # Position
-      my $offset = $sample_slice->strand > 0 ? $sample_slice->start - 1 : $sample_slice->end + 1;
+      my $offset    = $sample_slice->strand > 0 ? $sample_slice->start - 1 : $sample_slice->end + 1;
       my $chr_start = $allele->start + $offset;
-      my $chr_end = $allele->end + $offset;
-      my $pos = $chr_start;
+      my $chr_end   = $allele->end + $offset;
+      my $pos       = $chr_start;
       
       if ($chr_end < $chr_start) {
         $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
@@ -1565,14 +1565,14 @@ sub get_genetic_variations {
         $pos = "$chr_start&nbsp;-&nbsp;$chr_end";
       }
       
-      my $chr = $sample_slice->seq_region_name;
+      my $chr        = $sample_slice->seq_region_name;
       my $aa_alleles = $conseq_type->aa_alleles || [];
-      my $sources = join ', ' , @{$allele->get_all_sources || []};
-      my $vid = $allele->variation_name;
-      my $source = $allele->source;
-      my $vf = $allele->variation->dbID;
+      my $sources    = join ', ' , @{$allele->get_all_sources || []};
+      my $vid        = $allele->variation_name;
+      my $source     = $allele->source;
+      my $vf         = $allele->variation->dbID;
       
-      my $url = $self->_url({ 
+      my $url = $hub->url({
         type   => 'Variation', 
         action => 'Summary', 
         v      => $vid , 
@@ -1580,13 +1580,11 @@ sub get_genetic_variations {
         source => $source 
      });
       
-      my $row = {
+      push @{$snp_data->{"$chr:$pos"}->{$sample}}, {
         ID          => qq{<a href="$url">$vid</a>},
         consequence => $type,
         aachange    => $conseq_type->aa_alleles ? (join "/", @$aa_alleles) || '' : '-'
       };
-      
-      push @{$snp_data->{"$chr:$pos"}->{$sample}}, $row;
     }
   }
   

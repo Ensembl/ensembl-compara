@@ -1,4 +1,5 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Object::Gene;
 
 ### NAME: EnsEMBL::Web::Object::Gene
@@ -13,8 +14,6 @@ package EnsEMBL::Web::Object::Gene;
 ### DESCRIPTION
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use EnsEMBL::Web::Cache;
 use Bio::EnsEMBL::Compara::GenomeDB;
@@ -1032,19 +1031,20 @@ sub get_fg_db {
 
 sub get_feature_view_link {
   my ($self, $feature) = @_;
-  my $feature_id = $feature->display_label;
+  my $feature_id  = $feature->display_label;
   my $feature_set = $feature->feature_set->name;
-  return if $feature_set =~/cisRED|CRM/i;
-  my $link = $self->_url({
-    'type'    => 'Location',
-    'action'  => 'Genome',
-    'ftype'   => 'RegulatoryFactor',
-    'fset'    =>  $feature_set,
-    'id'      =>  $feature_id,
+  
+  return if $feature_set =~ /cisRED|CRM/i;
+  
+  my $link = $self->hub->url({
+    type   => 'Location',
+    action => 'Genome',
+    ftype  => 'RegulatoryFactor',
+    fset   =>  $feature_set,
+    id     =>  $feature_id,
   });
 
-  my $url = "<span class='small'><a href=$link>[view all]</a></span>";
-  return $url;
+  return qq{<span class="small"><a href="$link">[view all]</a></span>};
 }
 
 sub get_extended_reg_region_slice {

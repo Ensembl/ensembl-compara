@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Transcript::TranscriptSeq;
 
 use strict;
@@ -18,6 +20,7 @@ sub get_sequence_data {
   my $self = shift;
   my ($object, $config) = @_;
   
+  my $hub          = $self->hub;
   my $trans        = $object->Obj;
   my @exons        = @{$trans->get_all_Exons};
   my $trans_strand = $exons[0]->strand;
@@ -132,14 +135,14 @@ sub get_sequence_data {
   
   if ($config->{'variation'}) {
     my $slice  = $trans->feature_Slice;
-    my $filter = $object->param('population_filter');
+    my $filter = $hub->param('population_filter');
     my %population_filter;
     
     if ($filter && $filter ne 'off') {
       %population_filter = map { $_->dbID => $_ }
         @{$slice->get_all_VariationFeatures_by_Population(
-          $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
-          $object->param('min_frequency')
+          $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
+          $hub->param('min_frequency')
         )};
     }
     
@@ -177,7 +180,7 @@ sub get_sequence_data {
         $mk->{'variations'}->{$_}->{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
         $mk->{'variations'}->{$_}->{'transcript'} = 1;
         
-        my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $object->_url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
+        my $url = $mk->{'variations'}->{$_}->{'url_params'} ? $hub->url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}->{$_}->{'url_params'}} }) : '';
         
         $mk->{'variations'}->{$_}->{'type'} = $type;
         
@@ -260,22 +263,23 @@ sub get_sequence_data {
 }
 
 sub content {
-  my $self = shift;
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
   
   my $html;
   
   my $config = { 
-    display_width   => $object->param('display_width') || 60,
-    species         => $object->species,
+    display_width   => $hub->param('display_width') || 60,
+    species         => $hub->species,
     maintain_colour => 1,
     transcript      => 1
   };
   
-  $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);
+  $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);
   
   $config->{'codons'} = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
-  $config->{'variation'} = 0 unless $object->species_defs->databases->{'DATABASE_VARIATION'};
+  $config->{'variation'} = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
   my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
   
@@ -286,7 +290,7 @@ sub content {
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   
-  if ($object->param('export')) {
+  if ($hub->param('export')) {
     $html = $self->export_sequence($sequence, $config, sprintf 'cDNA-Sequence-%s-%s', $config->{'species'}, $object->stable_id);
   } else {    
     $html = sprintf('

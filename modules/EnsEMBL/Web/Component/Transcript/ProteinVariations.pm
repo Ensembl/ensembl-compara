@@ -1,10 +1,12 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Transcript::ProteinVariations;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Transcript);
+
 use EnsEMBL::Web::Document::SpreadSheet;
+
+use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
@@ -12,21 +14,20 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub caption {
-  return undef;
-}
-
 sub content {
-  my $self = shift;
-  my $object = $self->object;
+  my $self        = shift;
+  my $translation = $self->object->translation_object;
   
-  return $self->non_coding_error unless $object->translation_object;
+  return $self->non_coding_error unless $translation;
 
-  my $snps = $object->translation_object->pep_snps;
+  my $snps = $translation->pep_snps;
   
   return unless @$snps;
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+  my $hub     = $self->hub;
+  my $counter = 0;
+  my $table   = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+  
   $table->add_columns(
     { key => 'res',    title => 'Residue',            width => '10%', align => 'center', sort => 'numeric' },
     { key => 'id',     title => 'Variation ID',       width => '15%', align => 'center', sort => 'html'    }, 
@@ -35,8 +36,6 @@ sub content {
     { key => 'ambig',  title => 'Ambiguity code',     width => '15%', align => 'center', sort => 'string'  },
     { key => 'alt',    title => 'Alternate residues', width => '20%', align => 'center', sort => 'string'  }
   );
-
-  my $counter = 0;
   
   foreach my $residue (@$snps) {
     $counter++;
@@ -47,7 +46,7 @@ sub content {
     my $snp_id = $residue->{'snp_id'};
     my $source = $residue->{'snp_source'} ? ";source=$residue->{'snp_source'}" : '';
     my $vf     = $residue->{'vdbid'}; 
-    my $url    = $object->_url({ type => 'Variation', action => 'Summary', v => $snp_id, vf => $vf, vdb => 'variation' });
+    my $url    = $hub->url({ type => 'Variation', action => 'Summary', v => $snp_id, vf => $vf, vdb => 'variation' });
     
     $table->add_row({
       res    => $counter,

@@ -17,7 +17,6 @@ sub set_default_action {
 
 sub populate_tree {
   my $self = shift;
-  my $object = $self->object;
   
   $self->create_node('Genome', 'Whole genome',
     [qw( genome EnsEMBL::Web::Component::Location::Genome )],
@@ -214,7 +213,7 @@ sub add_vega_link {
 	        $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
 	        $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
 	      } elsif (scalar @$vega_projection > 1) {
-	        $vega_link  = $object->_url({ type => 'Help', action => 'ListVegaMappings' });
+	        $vega_link  = $self>hub->url({ type => 'Help', action => 'ListVegaMappings' });
   	      $link_class = 'modal_link';
         }
       }

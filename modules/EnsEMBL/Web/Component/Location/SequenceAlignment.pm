@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location::SequenceAlignment;
 
 use strict;
@@ -16,37 +18,33 @@ sub _init {
 sub content_key { return shift->SUPER::content_key({ resequencing => 1 }); }
 
 sub content {
-  my $self = shift;
-  
+  my $self      = shift;
   my $object    = $self->object;
   my $threshold = 50001;
   
-  if ($object->length > $threshold) {
-    return $self->_warning(
-      'Region too large',
-      '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>'
-    );
-  }
+  return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
+  my $hub            = $self->hub;
+  my $species_defs   = $hub->species_defs;
   my $original_slice = $object->slice;
-  $original_slice    = $original_slice->invert if $object->param('strand') == -1;
+  $original_slice    = $original_slice->invert if $hub->param('strand') == -1;
   my $ref_slice      = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
   my $ref_slice_obj  = $ref_slice->Obj;
-  my $var_db         = $object->species_defs->databases->{'DATABASE_VARIATION'};
+  my $var_db         = $species_defs->databases->{'DATABASE_VARIATION'};
   my @individuals;
   my $html;
     
   my $config = {
-    display_width  => $object->param('display_width') || 60,
-    site_type      => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
-    species        => $object->species,
+    display_width  => $hub->param('display_width') || 60,
+    site_type      => ucfirst(lc $species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
+    species        => $hub->species,
     comparison     => 1,
     resequencing   => 1,
     ref_slice_name => $ref_slice->get_individuals('reference')
   };
   
   foreach ('exon_ori', 'match_display', 'snp_display', 'line_numbering', 'codons_display', 'title_display') {
-    $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
+    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
   }
   
   # FIXME: Nasty hack to allow the parameter to be defined, but false. Used when getting variations.
@@ -62,7 +60,7 @@ sub content {
   
   foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS') {
     foreach my $ind (@{$var_db->{$_}}) {
-      push @individuals, $ind if $object->param($ind) eq 'yes';
+      push @individuals, $ind if $hub->param($ind) eq 'yes';
     }
   }
   
@@ -81,7 +79,7 @@ sub content {
     my $slice_name = $original_slice->name;
     
     my (undef, undef, $region, $start, $end) = split /:/, $slice_name;
-    my $url = $object->_url({ action => 'View', r => "$region:$start-$end" });
+    my $url = $hub->url({ action => 'View', r => "$region:$start-$end" });
     
     my $table = qq{
       <table>
@@ -101,7 +99,7 @@ sub content {
       '<p>You can choose which strains to display from the "<b>Resequenced individuals</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>'
     );
   } else {
-    my $strains = ($object->species_defs->translate('strain') || 'strain') . 's';
+    my $strains = ($species_defs->translate('strain') || 'strain') . 's';
     
     if ($ref_slice->get_individuals('reseq')) {
       $html = $self->_info(
@@ -120,15 +118,15 @@ sub get_slices {
   my $self = shift;
   my ($ref_slice_obj, $individuals, $config) = @_;
   
-  my $object = $self->object;
+  my $hub = $self->hub;
   
   # Chunked request
   if (!defined $individuals) {
-    my $var_db = $object->species_defs->databases->{'DATABASE_VARIATION'};
+    my $var_db = $hub->species_defs->databases->{'DATABASE_VARIATION'};
     
     foreach ('DEFAULT_STRAINS', 'DISPLAY_STRAINS') {
       foreach my $ind (@{$var_db->{$_}}) {
-        push @$individuals, $ind if $object->param($ind) eq 'yes';
+        push @$individuals, $ind if $hub->param($ind) eq 'yes';
       }
     }
   }

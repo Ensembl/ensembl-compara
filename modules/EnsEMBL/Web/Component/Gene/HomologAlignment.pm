@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::HomologAlignment;
 
 use strict;
@@ -17,21 +19,20 @@ sub _init {
 
 sub content {
   my $self         = shift;
-  my $object       = $self->object;
-  my $cdb          = shift || $object->param('cdb') || 'compara';  
-  my $species      = $object->species;
-  my $species_defs = $object->species_defs;
-  my $gene_id      = $object->stable_id;
-  my $second_gene  = $object->param('g1');
-  my $seq          = $object->param('seq');
-  my $text_format  = $object->param('text_format');
-  my $database     = $object->database($cdb);
+  my $hub          = $self->hub;
+  my $cdb          = shift || $hub->param('cdb') || 'compara';
+  my $species      = $hub->species;
+  my $species_defs = $hub->species_defs;
+  my $gene_id      = $self->object->stable_id;
+  my $second_gene  = $hub->param('g1');
+  my $seq          = $hub->param('seq');
+  my $text_format  = $hub->param('text_format');
+  my $database     = $hub->database($cdb);
   my $qm           = $database->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
   my ($homologies, $html, %skipped);
   
   eval {
-    my $ha = $database->get_HomologyAdaptor;
-    $homologies = $ha->fetch_by_Member($qm);
+    $homologies = $database->get_HomologyAdaptor->fetch_by_Member($qm);
   };
   
   my %desc_mapping = (
@@ -45,7 +46,10 @@ sub content {
   
   foreach my $homology (@{$homologies}) {
     my $sa;
-    eval { $sa = $homology->get_SimpleAlign($seq eq 'cDNA' ? 'cdna' : undef); };
+    
+    eval {
+      $sa = $homology->get_SimpleAlign($seq eq 'cDNA' ? 'cdna' : undef);
+    };
     
     if ($sa) {
       my $data = [];
@@ -60,7 +64,7 @@ sub content {
         my $member_species = ucfirst $member->genome_db->name;
         my $location       = sprintf '%s:%d-%d', $member->chr_name, $member->chr_start, $member->chr_end;
         
-        if (!$second_gene && $member_species ne $species && $object->param('species_' . lc $member_species) eq 'off') {
+        if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
           $flag = 0;
           $skipped{$species_defs->species_label($member_species)}++;
           next;
@@ -78,16 +82,16 @@ sub content {
           push @$data, [
             $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
             sprintf('<a href="%s">%s</a>',
-              $object->_url({ species => $member_species, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
+              $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
               $member->stable_id
             ),
             sprintf('<a href="%s">%s</a>',
-              $object->_url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
+              $hub->url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
               $peptide->stable_id
             ),
             sprintf('%d aa', $peptide->seq_length),
             sprintf('<a href="%s">%s</a>',
-              $object->_url({ species => $member_species, type => 'Location', action => 'View', g => $member->stable_id, r => $location, t => undef }),
+              $hub->url({ species => $member_species, type => 'Location', action => 'View', g => $member->stable_id, r => $location, t => undef }),
               $location
             )
           ];
@@ -148,8 +152,8 @@ sub content {
 
 sub renderer_type {
   my $self = shift;
-  my $K = shift;
-  my %T = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+  my $K    = shift;
+  my %T    = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
   return $T{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
 }
 

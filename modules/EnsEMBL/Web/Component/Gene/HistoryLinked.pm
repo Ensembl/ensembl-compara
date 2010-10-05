@@ -1,93 +1,91 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::HistoryLinked;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub caption {
-  return "Associated archived IDs for this stable ID version";
+  return 'Associated archived IDs for this stable ID version';
 }
 
 sub content_protein {
   my $self = shift;
-  $self->content( 1 );
+  $self->content(1);
 }
 
 sub content {
-  my $self = shift;
+  my $self    = shift;
   my $protein = shift;
-  my $OBJ = $self->object;
-  my $object;
+  my $hub     = $self->hub;
+  my $object  = $self->object;
+  my $archive_object;
 
- if ($protein == 1){
+ if ($protein == 1) {
+    my $transcript = $object->transcript;
     my $translation_object;
-    if ($OBJ->transcript->isa('Bio::EnsEMBL::ArchiveStableId') || $OBJ->transcript->isa('EnsEMBL::Web::Fake')){
-       my $p;
-       $p = $self->object->param('p') || $self->object->param('protein');       
-       unless ($p) {                                                                 
-         my $p_archive = shift @{$OBJ->transcript->get_all_translation_archive_ids};
+    
+    if ($transcript->isa('Bio::EnsEMBL::ArchiveStableId') || $transcript->isa('EnsEMBL::Web::Fake')){
+       my $p = $hub->param('p') || $hub->param('protein');    
+       
+       if (!$p) {                                                                 
+         my $p_archive = shift @{$transcript->get_all_translation_archive_ids};
          $p = $p_archive->stable_id;
        }
-       my $db    = $self->{'parameters'}{'db'}  = $self->object->param('db')  || 'core';
-       my $db_adaptor = $self->object->database($db);
-       my $a = $db_adaptor->get_ArchiveStableIdAdaptor;
-       $object = $a->fetch_by_stable_id( $p );
+       my $db          = $hub->param('db') || 'core';
+       my $db_adaptor  = $hub->database($db);
+       my $a           = $db_adaptor->get_ArchiveStableIdAdaptor;
+       $archive_object = $a->fetch_by_stable_id($p);
     } else {
-       $translation_object = $OBJ->translation_object;
-       $object = $translation_object->get_archive_object();
+       $translation_object = $object->translation_object;
+       $archive_object     = $translation_object->get_archive_object;
     }
   } else {    # retrieve archive object
-    $object = $OBJ->get_archive_object();
+    $archive_object = $object->get_archive_object;
   }
 
-  my $assoc = get_assoc($object, $OBJ);
-  if ($assoc ==0) { 
-    my $html = "<p>No associated ID's found</p>";
-    return $html;
-  } else {
-    my @associated = @$assoc;
-    return "<p>No associated ID's found</p>" unless scalar @associated > 0;
+  my $assoc = $self->get_assoc($archive_object);
+  
+  return '<p>No associated IDs found</p>' unless scalar @$assoc;
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px' } );    
-    $table->add_columns (      
-      { 'key' => 'release',     'title' => 'Release', },
-      { 'key' => 'gene' ,       'title' => "Gene" },   
-      { 'key' => 'transcript',  'title' => 'Transcript', },
-      { 'key' => 'translation', 'title' => "Protein" },  
-    );  
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+  
+  $table->add_columns (      
+    { key => 'release',     title => 'Release'    },
+    { key => 'gene' ,       title => 'Gene'       },   
+    { key => 'transcript',  title => 'Transcript' },
+    { key => 'translation', title => 'Protein'    },  
+  );  
+  
+  $table->add_row($_) for @$assoc;  
 
-    foreach (@associated){ 
-      $table->add_row($_);
-    }   
-
-    return $table->render;
-  }
+  return $table->render;
 }
 
 sub get_assoc {
-  my $object = shift;
-  my $OBJ = shift;
+  my ($self, $archive_object) = @_; 
+  my @associated = @{$archive_object->get_all_associated_archived};
+  
+  return [] unless @associated;
 
-  my @associated = @{ $object->get_all_associated_archived };  
-  return 0 unless (@associated);
-
-  my @sorted = sort { $a->[0]->release <=> $b->[0]->release ||
-                      $a->[0]->stable_id cmp $b->[0]->stable_id } @associated;
+  my @sorted = sort { $a->[0]->release <=> $b->[0]->release || $a->[0]->stable_id cmp $b->[0]->stable_id } @associated;
 
   my $last_release;
   my $last_gsi;
   my @a; 
 
-  while (my $r = shift(@sorted)) { 
-  my %temp;
-  my ($release, $gsi, $tsi, $tlsi, $pep_seq);
+  while (my $r = shift @sorted) {
+    my %temp;
+    my ($release, $gsi, $tsi, $tlsi, $pep_seq);
 
     # release
     if ($r->[0]->release == $last_release) {
@@ -100,54 +98,53 @@ sub get_assoc {
     if ($r->[0]->stable_id eq $last_gsi) {
       $gsi = undef;
     } else {
-      $gsi = _idhistoryview_link($OBJ, 'Gene', 'g', $r->[0]->stable_id);
+      $gsi = $self->idhistoryview_link('Gene', 'g', $r->[0]->stable_id);
     }
 
     # transcript
-    $tsi = _idhistoryview_link($OBJ, 'Transcript','t', $r->[1]->stable_id);
+    $tsi = $self->idhistoryview_link('Transcript', 't', $r->[1]->stable_id);
+    
     # translation
     if ($r->[2]) {
-      $tlsi = _idhistoryview_link($OBJ,'Transcript','p', $r->[2]->stable_id);
-      $tlsi .= '<br />'._get_formatted_pep_seq($r->[3], $r->[2]->stable_id);
+      $tlsi  = $self->idhistoryview_link('Transcript', 'p', $r->[2]->stable_id);
+      $tlsi .= '<br />' . $self->get_formatted_pep_seq($r->[3], $r->[2]->stable_id);
     } else {
       $tlsi = 'none';
     }
 
     $last_release = $r->[0]->release;
-    $last_gsi = $r->[0]->stable_id;
+    $last_gsi     = $r->[0]->stable_id;
 
-    $temp{'release'} = $release;
-    $temp{'gene'} = $gsi;
-    $temp{'transcript'} = $tsi;
+    $temp{'release'}     = $release;
+    $temp{'gene'}        = $gsi;
+    $temp{'transcript'}  = $tsi;
     $temp{'translation'} = $tlsi;
-    push (@a, \%temp);
+    
+    push @a, \%temp;
   }
 
   return \@a;
 }
 
 
-sub _idhistoryview_link {
-  my ($OBJ, $type, $param, $stable_id) = @_;
-  return undef unless ($stable_id);
- 
-  my $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory', $param => $stable_id});
-  if ($param eq 'p') { $url = $OBJ->_url({'type' => $type, 'action' => 'Idhistory/Protein', $param => $stable_id}); }
-  else {$url=~s/\/Protein//; } 
-  my $link = sprintf( '<a href="%s">%s</a>',
-  $url,
-  $stable_id); ;
-  return $link;                          
+sub idhistoryview_link {
+  my ($self, $type, $param, $stable_id) = @_;
+  
+  return undef unless $stable_id;
+  
+  my $hub        = $self->hub;
+  my $url_params = { type => $type, action => 'Idhistory', $param => $stable_id, __clear => 1 };
+  my $url        = $hub->url({ %$url_params, function => $param eq 'p' ? 'Protein' : undef });
+  
+  return qq{<a href="$url">$stable_id</a>};
 }
 
-sub _get_formatted_pep_seq {
-  my $seq = shift;
-  my $stable_id = shift;
-
+sub get_formatted_pep_seq {
+  my ($self, $seq, $stable_id) = @_;
   my $html;
 
   if ($seq) {
-    $seq =~ s#(.{1,60})#$1<br />#g;
+    $seq  =~ s#(.{1,60})#$1<br />#g;
     $html = "<kbd>$seq</kbd>";
   }
 

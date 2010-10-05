@@ -20,19 +20,17 @@ sub _init {
 
 sub content {
   my $self = shift;
-  
-  my $object = $self->object;
-  my $url    = $self->ajax_url('ajax');
+  my $url  = $self->ajax_url('ajax');
   
   return qq{<div class="other-tool"><p><a class="config modal_link" href="$url">$self->{'link_text'}</a></p></div>};
 }
 
 sub content_ajax {
   my $self     = shift;
-  my $object   = $self->object;
+  my $hub      = $self->hub;
   my %all      = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
   my %included = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
-  my $url      = $self->{'url'} || $object->_url({ function => undef, align => $object->param('align') }, 1);
+  my $url      = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
   my ($include_list, $exclude_list, $extra_inputs);
   
   $extra_inputs .= sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) for sort keys %{$url->[1]};

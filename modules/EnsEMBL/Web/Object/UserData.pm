@@ -25,6 +25,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Record::Upload;
 use EnsEMBL::Web::Data::Session;
+use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Text::Feature::SNP_EFFECT;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
@@ -841,38 +842,32 @@ sub consequence_data_from_file {
 
 sub consequence_table {
   my ($self, $consequence_data) = @_;
-
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+  my $hub   = $self->hub;
+  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+  
   $table->add_columns(
-    { 'key' => 'var',         'title' =>'Uploaded Variation', 'align' => 'center'},
-    { 'key' => 'location',    'title' =>'Location', 'align' => 'center' },
-    { 'key' => 'gene',        'title' =>'Gene', 'align' => 'center'      },
-    { 'key' => 'trans',       'title' =>'Transcript', 'align' => 'center'},
-    { 'key' => 'con',         'title' =>'Consequence', 'align' => 'center'},
-    { 'key' => 'cdna_pos',    'title' =>'Position in cDNA', 'align' => 'center'},
-    { 'key' => 'prot_pos',    'title' =>'Position in protein', 'align' => 'center'},
-    { 'key' => 'aa',          'title' =>'Amino acid change', 'align' => 'center'},
-    { 'key' => 'snp',         'title' =>'Corresponding Variation', 'align' => 'center'}
+    { key => 'var',      title =>'Uploaded Variation',      align => 'center' },
+    { key => 'location', title =>'Location',                align => 'center' },
+    { key => 'gene',     title =>'Gene',                    align => 'center' },
+    { key => 'trans',    title =>'Transcript',              align => 'center' },
+    { key => 'con',      title =>'Consequence',             align => 'center' },
+    { key => 'cdna_pos', title =>'Position in cDNA',        align => 'center' },
+    { key => 'prot_pos', title =>'Position in protein',     align => 'center' },
+    { key => 'aa',       title =>'Amino acid change',       align => 'center' },
+    { key => 'snp',      title =>'Corresponding Variation', align => 'center' }
   );
 
   my @table_rows;
-  my %data = %{$consequence_data};
+  my %data = %$consequence_data;
 
   foreach my $feature_set (keys %data) {
     my $features = $data{$feature_set};
-    foreach my $f (@{$features}){ 
+    
+    foreach my $f (@$features) { 
       my $row = {};
 
-      my $location = $f->location;
-      my $url_location = $f->seqname .":". ($f->rawstart -500) .
-            "-".($f->rawend + 500);
-      my $location_url = $self->_url({
-          'type'             => 'Location',
-          'action'           => 'View',
-          'r'                =>  $url_location,
-          'contigviewbottom' => 'variation_feature_variation=normal',
-      });
-
+      my $location          = $f->location;
+      my $url_location      = $f->seqname . ':' . ($f->rawstart - 500) . '-' . ($f->rawend + 500);
       my $uploaded_loc      = $f->id;
       my $transcript_id     = $f->transcript;
       my $gene_id           = $f->gene;
@@ -881,55 +876,62 @@ sub consequence_table {
       my $prot_pos          = $f->protein_position;
       my $aa                = $f->aa_change;
       my $snp_id            = $f->snp;
-
       my $transcript_string = $transcript_id;
       my $gene_string       = $gene_id;
       my $snp_string        = $snp_id;
-
+      
+      my $location_url = $hub->url({
+        type             => 'Location',
+        action           => 'View',
+        r                =>  $url_location,
+        contigviewbottom => 'variation_feature_variation=normal',
+      });
+      
       if ($transcript_id ne 'N/A') { 
-        my $transcript_url = $self->_url({
-          'type'   => 'Transcript',
-          'action' => 'Summary',
-          't'      =>  $transcript_id,
+        my $transcript_url = $hub->url({
+          type   => 'Transcript',
+          action => 'Summary',
+          t      =>  $transcript_id,
         });
-        $transcript_string = qq(<a href="$transcript_url">$transcript_id</a>);
+        
+        $transcript_string = qq{<a href="$transcript_url">$transcript_id</a>};
       }
 
       if ($gene_id ne 'N/A') { 
-        my $gene_url = $self->_url({
-          'type'   => 'Gene',
-          'action' => 'Summary',
-          'g'      =>  $gene_id,
+        my $gene_url = $hub->url({
+          type   => 'Gene',
+          action => 'Summary',
+          g      =>  $gene_id,
         });
-        $gene_string = qq(<a href="$gene_url">$gene_id</a>);
+        
+        $gene_string = qq{<a href="$gene_url">$gene_id</a>};
+      }
+      
+      if ($snp_id =~ /^\w/){
+        my $snp_url =  $hub->url({
+          type   => 'Variation',
+          action => 'Summary',
+          v      =>  $snp_id,
+        });
+        
+        $snp_string = qq{<a href="$snp_url">$snp_id</a>};
       }
 
-      if ($snp_id =~/^\w/ ){
-        my $snp_url =  $self->_url({
-          'type'   => 'Variation',
-          'action' => 'Summary',
-          'v'      =>  $snp_id,
-        });
-        $snp_string = qq(<a href="$snp_url">$snp_id</a>);
-      }
+      $row->{'var'}      = $uploaded_loc;
+      $row->{'location'} = qq{<a href="$location_url">$location</a>};
+      $row->{'gene'}     = $gene_string;
+      $row->{'trans'}    = $transcript_string;
+      $row->{'con'}      = $consequence;
+      $row->{'cdna_pos'} = $cdna_pos;
+      $row->{'prot_pos'} = $prot_pos;
+      $row->{'aa'}       = $aa;
+      $row->{'snp'}      = $snp_string;
 
-      $row->{'var'}       = $uploaded_loc;
-      $row->{'location'}  = qq(<a href="$location_url">$location</a>);
-      $row->{'gene'}      = $gene_string;
-      $row->{'trans'}     = $transcript_string;
-      $row->{'con'}       = $consequence;
-      $row->{'cdna_pos'}  = $cdna_pos;
-      $row->{'prot_pos'}  = $prot_pos;
-      $row->{'aa'}        = $aa;
-      $row->{'snp'}       = $snp_string;
-
-      push (@table_rows, $row);
+      push @table_rows, $row;
     }
   }
 
-  foreach my $row ( sort { $a->{'var'} cmp $b->{'var'} } @table_rows){
-     $table->add_row($row);
-  }
+  $table->add_row($_) for sort { $a->{'var'} cmp $b->{'var'} } @table_rows;
 
   return $table;
 }
@@ -944,7 +946,7 @@ sub get_das_servers {
   my @domains = ();
   my @urls    = ();
 
-  my $reg_url = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL');
+  my $reg_url  = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL');
   my $reg_name = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_NAME') || $reg_url;
 
   push( @domains, {'name'  => $reg_name, 'value' => $reg_url} );

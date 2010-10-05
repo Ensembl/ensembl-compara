@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Command::Export::Form;
 
 use strict;
@@ -26,20 +28,20 @@ sub process {
 
 # Returns either the location of temp files for vista/pipmaker export, or a url based on the input parameters for other types
 sub get_formats {
-  my $self = shift;
-  my $object = $self->object;
-  
-  my $output     = $object->param('output');
-  my $new_region = $object->param('new_region');
-  my $strand     = $object->param('strand');
-  my $r          = $object->param('r');
+  my $self       = shift;
+  my $hub        = $self->hub;
+  my $object     = $self->object;
+  my $output     = $hub->param('output');
+  my $new_region = $hub->param('new_region');
+  my $strand     = $hub->param('strand');
+  my $r          = $hub->param('r');
   
   my $config = $object->config;
   my $check_slice = 1;
 
   if ($new_region) {
-    my $s = $object->param('new_start'); 
-    my $e = $object->param('new_end');
+    my $s = $hub->param('new_start'); 
+    my $e = $hub->param('new_end');
     
     # Flip start and end if end is less than start
     if ($e < $s) {
@@ -55,11 +57,11 @@ sub get_formats {
   my $params = {};
   
   if ($check_slice) {
-    my $href = $object->_url({ 
+    my $href = $hub->url({ 
      r        => $r,
      strand   => $strand, 
      output   => $output,
-     type     => $object->function,
+     type     => $hub->function,
      action   => 'Export'
     });
     
@@ -81,16 +83,16 @@ sub get_formats {
     foreach (@{$config->{$key}->{'params'}}) {
       $checked_params->{"${output}_$_->[0]"} = 1;
       
-      if ($object->param("${output}_$_->[0]") eq 'yes') {
+      if ($hub->param("${output}_$_->[0]") eq 'yes') {
         $_->[0] =~ s/(miscset_)//;
         
         $href .= $1 ? ";misc_set=$_->[0]" : ";param=$_->[0]";
       }
     }
     
-    foreach (grep { /${output}_/ } $object->param) {
+    foreach (grep { /${output}_/ } $hub->param) {
       (my $param = $_) =~ s/${output}_//;
-      $href .= ";$param=" . $object->param($_) unless $checked_params->{$_};
+      $href .= ";$param=" . $hub->param($_) unless $checked_params->{$_};
     }
     
     $params = $key eq 'pip' ? $self->make_temp_files : { base_url => uri_escape($href) };
@@ -102,10 +104,8 @@ sub get_formats {
 }
 
 sub make_temp_files {
-  my $self = shift;
-  my $object = $self->object;
-  
-  my $output = $object->param('output');
+  my $self   = shift;  
+  my $output = $self->hub->param('output');
   
   my $seq_file = new EnsEMBL::Web::TmpFile::Text(
     extension    => 'fa',
@@ -206,7 +206,7 @@ sub pip_anno_file {
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
       # get UTR/exon lines
       my @exons = @{$transcript->get_all_Exons};
-      @exons = reverse @exons if ($gene->strand == -1);
+      @exons    = reverse @exons if ($gene->strand == -1);
       
       my $out = $outputs->{$o}($transcript, \@exons);
       # write output to file if there are exons in the exported region
@@ -257,30 +257,29 @@ sub pip_anno_file_pipmaker {
   my ($transcript, $exons) = @_;
   
   my $coding_start = $transcript->coding_region_start;
-  my $coding_end = $transcript->coding_region_end;
+  my $coding_end   = $transcript->coding_region_end;
   
   # do nothing for non-coding transcripts
   return unless $coding_start;
 
   my $out = "+ $coding_start $coding_end\r\n" if $transcript->start < $coding_start || $transcript->end > $coding_end; # UTR line
-  $out .= join ' ', $_->start, $_->end, "\r\n" for @$exons; # exon lines
+  $out   .= join ' ', $_->start, $_->end, "\r\n" for @$exons; # exon lines
   
   return "$out\r\n";
 }
 
 # Returns the slice, expanded or flipped as required
 sub slice {
-  my $self = shift;
+  my $self   = shift;
+  my $hub    = $self->hub;
+  my $flank5 = $hub->param('flank5_display');
+  my $flank3 = $hub->param('flank3_display');
+  my $strand = $hub->param('strand');
+ $strand     = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
   
-  my $object = $self->object;
-  my $flank5 = $object->param('flank5_display');
-  my $flank3 = $object->param('flank3_display');
-  my $strand = $object->param('strand');
- $strand = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
-  
-  my $slice = $object->slice;
-  $slice = $slice->invert if $strand && $strand != $slice->strand;
-  $slice = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
+  my $slice = $self->object->slice;
+  $slice    = $slice->invert if $strand && $strand != $slice->strand;
+  $slice    = $slice->expand($flank5, $flank3) if $flank5 || $flank3;
   
   return $slice;
 }

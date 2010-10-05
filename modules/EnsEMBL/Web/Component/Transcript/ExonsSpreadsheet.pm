@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Transcript::ExonsSpreadsheet;
 
 use strict;
@@ -17,11 +19,12 @@ sub _init {
 
 sub content {
   my $self       = shift;
-  my $object     = $self->object; 
-  my $only_exon  = $object->param('oexon') eq 'yes'; # display only exons
-  my $entry_exon = $object->param('exon');
-  my $export     = $object->param('export');
-  my $transcript = $object->Obj;
+  my $hub        = $self->hub;
+  my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
+  my $entry_exon = $hub->param('exon');
+  my $export     = $hub->param('export');
+  my $object     = $self->object;
+  my $transcript = $self->object->Obj;
   my @exons      = @{$transcript->get_all_Exons};
   my $strand     = $exons[0]->strand;
   my $chr_name   = $exons[0]->slice->seq_region_name;
@@ -29,24 +32,24 @@ sub content {
   my @data;
   
   my $config = {
-    display_width => $object->param('seq_cols') || 60,
-    sscon         => $object->param('sscon')    || 25,   # no of bp to show either side of a splice site
-    flanking      => $object->param('flanking') || 50,   # no of bp up/down stream of transcript
-    full_seq      => $object->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
-    variation     => $object->param('variation'),
+    display_width => $hub->param('seq_cols') || 60,
+    sscon         => $hub->param('sscon')    || 25,   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking') || 50,   # no of bp up/down stream of transcript
+    full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
+    variation     => $hub->param('variation'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand
   };
   
-  $config->{'variation'} = 'off' unless $object->species_defs->databases->{'DATABASE_VARIATION'};
+  $config->{'variation'} = 'off' unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
   if ($config->{'variation'} ne 'off') {
-    my $filter = $object->param('population_filter');
+    my $filter = $hub->param('population_filter');
     
     if ($filter && $filter ne 'off') {
-      $config->{'population'}    = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
-      $config->{'min_frequency'} = $object->param('min_frequency');
+      $config->{'population'}    = $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter);
+      $config->{'min_frequency'} = $hub->param('min_frequency');
     }
   }
   
@@ -62,7 +65,7 @@ sub content {
     
     push @data, $export ? $exon_seq : {
       Number     => $i,
-      exint      => sprintf('<a href="%s">%s</a>', $object->_url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $exon_id),
+      exint      => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $exon_id),
       Start      => $self->thousandify($exon_start),
       End        => $self->thousandify($exon_end),
       StartPhase => $exon->phase     >= 0 ? $exon->phase     : '-',
@@ -75,12 +78,12 @@ sub content {
     if ($next_exon && !$only_exon) {
       my ($intron_start, $intron_end) = $strand == 1 ? ($exon_end + 1, $next_exon->start - 1) : ($next_exon->end + 1, $exon_start - 1);
       my $intron_length = $intron_end - $intron_start + 1;
-      my $intron_id     = "Intron $i-" . ($i+1);
+      my $intron_id     = "Intron $i-" . ($i + 1);
       my $intron_seq    = $self->get_intron_sequence_data($config, $exon, $next_exon, $intron_start, $intron_end, $intron_length);
       
       push @data, $export ? $intron_seq : {
         Number   => '&nbsp;',
-        exint    => sprintf('<a href="%s">%s</a>', $object->_url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $intron_id),
+        exint    => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $intron_id),
         Start    => $self->thousandify($intron_start),
         End      => $self->thousandify($intron_end),
         Length   => $self->thousandify($intron_length),
@@ -107,7 +110,7 @@ sub content {
   my $html;
   
   if ($export) {
-    $html = $self->export_sequence(\@data, $config, sprintf 'Exons-%s-%s', $object->species, $object->stable_id);
+    $html = $self->export_sequence(\@data, $config, sprintf 'Exons-%s-%s', $hub->species, $object->stable_id);
   } else {    
     $html = sprintf('
       <div class="other-tool">
@@ -263,8 +266,7 @@ sub get_flanking_sequence_data {
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
   
-  my $object             = $self->object;
-  my $transcript         = $object->Obj;
+  my $transcript         = $self->object->Obj;
   my $variation_features = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   
   my %href;
@@ -295,7 +297,7 @@ sub add_variations {
     }
   }
   
-  $sequence->[$_]->{'href'} = $object->_url($href{$_}) for keys %href;
+  $sequence->[$_]->{'href'} = $self->hub->url($href{$_}) for keys %href;
 }
 
 sub build_sequence {

@@ -14,8 +14,8 @@ sub _init {
 
 sub content {
   my $self        = shift;
-  my $object      = $self->object;
-  my $gene        = $self->configure($object->param('context') || 100, $object->get_imageconfig('genesnpview_transcript'));
+  my $hub         = $self->hub;
+  my $gene        = $self->configure($hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
   my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   my $tables      = {};
   
@@ -73,7 +73,7 @@ sub variation_table {
    
     return unless %snps;
     
-    my $object            = $self->object;
+    my $hub               = $self->hub;
     my $gene_snps         = $transcript->__data->{'transformed'}{'gene_snps'} || [];
     my $tr_start          = $transcript->__data->{'transformed'}{'start'};
     my $tr_end            = $transcript->__data->{'transformed'}{'end'};
@@ -96,7 +96,7 @@ sub variation_table {
           ($transcript_variation->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
           ('-', '-');
         
-        my $url = $object->_url({
+        my $url = $hub->url({
           type   => 'Variation',
           action => 'Summary',
           v      => $variation_name,
@@ -104,7 +104,7 @@ sub variation_table {
           source => $snp->source 
         });
         
-        my $trans_url = $object->_url({
+        my $trans_url = $hub->url({
           type => 'Transcript',
           action => 'Summary',
           t => $transcript->stable_id,

@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::Family;
 
 ### Displays a list of protein families for this gene
@@ -15,10 +17,11 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $cdb = shift || $self->object->param('cdb') || 'compara';
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $cdb            = shift || $hub->param('cdb') || 'compara';
   my $object         = $self->object;
-  my $sp             = $object->species_defs->DISPLAY_NAME;
+  my $sp             = $hub->species_defs->DISPLAY_NAME;
   my $families       = $object->get_all_families($cdb);
   my $gene_stable_id = $object->stable_id;
 
@@ -39,11 +42,11 @@ sub content {
     my $genes      = $families->{$family_id}{'info'}{'genes'};
     my $url_params = { function => 'Genes', family => $family_id, g => $gene_stable_id };
     
-    $row->{'id'}          .= scalar @$genes > 1 ? sprintf('(<a href="%s">%s genes</a>)', $object->_url($url_params), scalar @$genes) : '(1 gene)';
-    $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $object->_url({ function => "Proteins$ckey", family => $family_id });
+    $row->{'id'}          .= scalar @$genes > 1 ? sprintf('(<a href="%s">%s genes</a>)', $hub->url($url_params), scalar @$genes) : '(1 gene)';
+    $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $hub->url({ function => "Proteins$ckey", family => $family_id });
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
     $row->{'transcripts'}  = '<ul>';
-    $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a> (%s)</li>', $object->_url($url_params), $_->stable_id, $_->display_xref for @{$family->{'transcripts'}}; 
+    $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a> (%s)</li>', $hub->url($url_params), $_->stable_id, $_->display_xref for @{$family->{'transcripts'}}; 
     $row->{'transcripts'} .= '</ul>';
 
     my $fam_obj         = $object->create_family($family_id, $cdb);
@@ -66,10 +69,9 @@ sub jalview_link {
   my ($self, $family, $type, $refs, $cdb) = @_;
   my $count = @$refs;
   (my $ckey = $cdb) =~ s/compara//;
-  my $url   = $self->object->_url({ function => "Alignments$ckey", family => $family });
-  return qq(
-  <p class="space-below">$count $type members of this family <a href="$url">JalView</a></p>
-);
+  my $url   = $self->hub->url({ function => "Alignments$ckey", family => $family });
+  
+  return qq{<p class="space-below">$count $type members of this family <a href="$url">JalView</a></p>};
 }
 
 1;

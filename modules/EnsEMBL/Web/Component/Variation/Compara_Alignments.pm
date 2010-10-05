@@ -9,7 +9,7 @@ use base qw(EnsEMBL::Web::Component::Compara_Alignments);
 sub get_sequence_data {
   my $self = shift;
   my ($slices, $config) = @_;
-  my $object = $self->object;
+  my $hub = $self->hub;
 
   my @sequence;
   my @markup;
@@ -73,7 +73,7 @@ sub get_sequence_data {
         my $end            = $_->end;
         my $alleles        = $_->allele_string;
         my $ambigcode      = $var_class eq 'in-del' ? '*' : $_->ambig_code;
-        my $url            = $object->_url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
+        my $url            = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
         my $var            = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
         
         # If gene is reverse strand we need to reverse parts of allele, i.e AGT/- should become TGA/-
@@ -151,7 +151,7 @@ sub markup_variation {
   my $self = shift;
   my ($sequence, $markup, $config) = @_;
 
-  my $object = $self->object;
+  my $hub = $self->hub;
   my ($snps, $inserts, $deletes, $seq, $variation, $ambiguity);
   my $i = 0;
 
@@ -165,7 +165,7 @@ sub markup_variation {
       $seq->[$_]->{'class'} .= "$variation->{'type'} ";
       $seq->[$_]->{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]->{'class'} .= 'var '  if $config->{'v'} eq $variation->{'v'}; # The page's variation
-      $seq->[$_]->{'href'}   = $object->_url($variation->{'href'}) if $variation->{'href'};
+      $seq->[$_]->{'href'}   = $hub->url($variation->{'href'}) if $variation->{'href'};
       
       $config->{'key'}->{'variations'}->{$variation->{'type'}} = 1 if $variation->{'type'};
     }
@@ -223,7 +223,7 @@ sub content {
   
   my $slice   = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
   my $align   = $hub->param('align');
-  my ($error) = $self->check_for_errors($object, $align, $species);
+  my ($error) = $self->check_for_errors($align, $species);
   
   return $error if $error;
   

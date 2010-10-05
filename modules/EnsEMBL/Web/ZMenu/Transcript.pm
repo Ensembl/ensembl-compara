@@ -8,6 +8,7 @@ use base qw(EnsEMBL::Web::ZMenu);
 
 sub content {
   my $self        = shift;
+  my $hub         = $self->hub;
   my $object      = $self->object;
   my $stable_id   = $object->stable_id;
   my $transcript  = $object->Obj;
@@ -19,7 +20,7 @@ sub content {
   $self->add_entry({
     type  => 'Transcript',
     label => $stable_id, 
-    link  => $object->_url({ type => 'Transcript', action => 'Summary' })
+    link  => $hub->url({ type => 'Transcript', action => 'Summary' })
   });
   
   # Only if there is a gene (not Prediction transcripts)
@@ -27,7 +28,7 @@ sub content {
     $self->add_entry({
       type  => 'Gene',
       label => $object->gene->stable_id,
-      link  => $object->_url({ type => 'Gene', action => 'Summary' })
+      link  => $hub->url({ type => 'Gene', action => 'Summary' })
     });
     
     $self->add_entry({
@@ -38,7 +39,7 @@ sub content {
         $self->thousandify($object->seq_region_start),
         $self->thousandify($object->seq_region_end)
       ),
-      link  => $object->_url({
+      link  => $hub->url({
         type   => 'Location',
         action => 'View',
         r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end

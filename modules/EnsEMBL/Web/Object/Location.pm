@@ -1,4 +1,5 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Object::Location;
 
 ### NAME: EnsEMBL::Web::Object::Location
@@ -15,8 +16,6 @@ package EnsEMBL::Web::Object::Location;
 ### Genome (e.g. to display the karyotype)
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
@@ -29,10 +28,10 @@ sub _filename {
   my $name = sprintf '%s-%d-%s_%s_%s_%s',
     $self->species,
     $self->species_defs->ENSEMBL_VERSION,
-    $self->Obj->{seq_region_name},
-    $self->Obj->{seq_region_start},
-    $self->Obj->{seq_region_end},
-    $self->Obj->{seq_region_strand};
+    $self->Obj->{'seq_region_name'},
+    $self->Obj->{'seq_region_start'},
+    $self->Obj->{'seq_region_end'},
+    $self->Obj->{'seq_region_strand'};
 
   $name =~ s/[^-\w\.]/_/g;
   return $name;
@@ -738,29 +737,28 @@ sub retrieve_Transcript {
 
 sub retrieve_Variation {
   my ($self, $data, $type) = @_;
-  my $results = [];
-  my $phenotype_id = $self->param('id');
+  my $hub          = $self->hub;
+  my $phenotype_id = $hub->param('id');
+  my $results      = [];
   
   # getting associated phenotype with the variation
-  my $species = $self->species;
-  my $vaa = Bio::EnsEMBL::Registry->get_adaptor($species, "variation", "variationannotation");
-  my $variation_array = $vaa->fetch_all_by_VariationFeature_list($data);
+  my $variation_array = Bio::EnsEMBL::Registry->get_adaptor($hub->species, 'variation', 'variationannotation')->fetch_all_by_VariationFeature_list($data);
 
   foreach my $v (@$data) {  
     # getting all genes located in that specific location
-    my ($seq_region, $start, $end) = ($v->seq_region_name, $v->seq_region_start,$v->end);    
-    my $slice = $self->database('core')->get_SliceAdaptor()->fetch_by_region("chromosome", $seq_region, $start, $end);
-    my $genes = $slice->get_all_Genes();
-    my ($gene_link, $add_comma,$associated_phenotype,$associated_gene,$p_value_log);
+    my ($seq_region, $start, $end) = ($v->seq_region_name, $v->seq_region_start, $v->end);    
+    my $slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('chromosome', $seq_region, $start, $end);
+    my $genes = $slice->get_all_Genes;
+    my ($gene_link, $add_comma, $associated_phenotype, $associated_gene, $p_value_log);
     
     foreach my $row (@$genes) {
       my $gene_symbol;
-      $gene_symbol = "(".$row->display_xref->display_id.")" if($row->{'stable_id'});
+      $gene_symbol = '(' . $row->display_xref->display_id . ')' if $row->{'stable_id'};
       
       my $gene_name = $row->{'stable_id'};
-      my $gene_url = $self->_url({ type => 'Gene', action => 'Summary', g => $gene_name});        
-      $gene_link .= qq{, } if($gene_link);
-      $gene_link .= qq{<a href='$gene_url'>$gene_name</a> $gene_symbol};        
+      my $gene_url  = $hub->url({ type => 'Gene', action => 'Summary', g => $gene_name});        
+      $gene_link   .= qq{, } if $gene_link;
+      $gene_link   .= qq{<a href="$gene_url">$gene_name</a> $gene_symbol};        
     }
     
     my @associated_gene_array;
@@ -769,17 +767,17 @@ sub retrieve_Variation {
     foreach my $variation (@$variation_array) {      
       # only get associated gene and phenotype for matching variation id
       if ($variation->{'_variation_id'} eq $v->{'_variation_id'}) {          
-        $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if($associated_phenotype !~ /, $variation->{'phenotype_description'}/g);          
+        $associated_phenotype .= qq{$variation->{'phenotype_description'}, } if $associated_phenotype !~ /, $variation->{'phenotype_description'}/g;          
               
         if ($variation->{'_phenotype_id'} eq $phenotype_id) {
           # if there is more than one associated gene (comma separated) split them to generate the URL for each of them          
           if ($variation->{'associated_gene'} =~ /,/g) {            
-            push(@associated_gene_array,(split(/,/,$variation->{'associated_gene'})));
+            push @associated_gene_array, split /,/, $variation->{'associated_gene'};
           } else {
-            push(@associated_gene_array,$variation->{'associated_gene'});
+            push @associated_gene_array, $variation->{'associated_gene'};
           }
 
-          $p_value_log = -(log($variation->{'p_value'})/log(10)) if($variation->{'p_value'} != 0);  #only get the p value log 10 for the pointer matching phenotype id and variation id
+          $p_value_log = -(log($variation->{'p_value'}) / log(10)) if $variation->{'p_value'} != 0; # only get the p value log 10 for the pointer matching phenotype id and variation id
         }
       }      
     }  
@@ -788,7 +786,7 @@ sub retrieve_Variation {
     foreach my $gene (@associated_gene_array) {              
       if ($gene) {
         $gene =~ s/\s//gi;
-        my $associated_gene_url = $self->_url({type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID});                                                        
+        my $associated_gene_url = $hub->url({ type => 'Gene', action => 'Summary', g => $gene, v => $v->variation_name, vf => $v->dbID });                                                        
         $associated_gene .= qq{$gene, } if($gene eq 'Intergenic');
         $associated_gene .= qq{<a href=$associated_gene_url>$gene</a>, } if($associated_gene !~ /$gene/i && $gene ne 'Intergenic');
       }                            
@@ -802,58 +800,61 @@ sub retrieve_Variation {
     
     if (ref($v) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($v);
-      push(@$results, $unmapped);
+      push @$results, $unmapped;
     } else {
       # making the location 10kb if it a one base pair
-      if ($v->end-$v->start == 0) {
+      if ($v->end - $v->start == 0) {
         $start = $start - 5000;
         $end = $end + 5000;
       }
       
       push @$results, {
-        'region'         => $v->seq_region_name,
-        'start'          => $start,
-        'end'            => $end,
-        'strand'         => $v->strand,        
-        'label'          => $v->variation_name,        
-        'href'           => $self->_url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
-        'extra'          => [ $gene_link,$associated_gene,$associated_phenotype, sprintf("%.1f",$p_value_log) ],
-        'p_value'        => $p_value_log,  
-        'colour_scaling' => 1,
+        region         => $v->seq_region_name,
+        start          => $start,
+        end            => $end,
+        strand         => $v->strand,        
+        label          => $v->variation_name,        
+        href           => $hub->url({ type => 'Variation', action => 'Variation', v => $v->variation_name, vf => $v->dbID, vdb => 'variation' }),
+        extra          => [ $gene_link, $associated_gene, $associated_phenotype, sprintf '%.1f', $p_value_log ],
+        p_value        => $p_value_log,  
+        colour_scaling => 1,
       }
     }
   }
   
-  return ($results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], $type);
+  return ($results, [ 'Located in gene(s)', 'Associated Gene(s)', 'Associated Phenotype(s)', 'P value (negative log)' ], $type);
 }
 
 sub retrieve_Xref {
   my ($self, $data, $type) = @_;
   my $results = [];
+  
   foreach my $array (@$data) {
     my $xref = shift @$array;
+    
     push @$results, {
-      'label'     => $xref->primary_id,
-      'xref_id'   => [ $xref->primary_id ],
-      'extname'   => $xref->display_id,
-      'extra'     => [ $xref->description, $xref->dbname ]
+      label     => $xref->primary_id,
+      xref_id   => [ $xref->primary_id ],
+      extname   => $xref->display_id,
+      extra     => [ $xref->description, $xref->dbname ]
     };
+    
     ## also get genes
     foreach my $g (@$array) {
       push @$results, {
-        'region'   => $g->seq_region_name,
-        'start'    => $g->start,
-        'end'      => $g->end,
-        'strand'   => $g->strand,
-        'length'   => $g->end-$g->start+1,
-        'extname'  => $g->external_name,
-        'label'    => $g->stable_id,
-        'gene_id'  => [ $g->stable_id ],
-        'extra'    => [ $g->description ]
+        region   => $g->seq_region_name,
+        start    => $g->start,
+        end      => $g->end,
+        strand   => $g->strand,
+        length   => $g->end - $g->start + 1,
+        extname  => $g->external_name,
+        label    => $g->stable_id,
+        gene_id  => [ $g->stable_id ],
+        extra    => [ $g->description ]
       }
     }
   }
-  return ( $results, ['Description'], $type );
+  return ($results, ['Description'], $type);
 }
 
 sub retrieve_ProbeFeature {
@@ -862,98 +863,102 @@ sub retrieve_ProbeFeature {
   
   foreach my $probefeature (@$data) { 
     my $probe = $probefeature->probe;
+    
     if (ref($probe) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($probe);
       push(@$results, $unmapped);
-    }
-    else {
-      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names()};
-      foreach my $f (@{$probe->get_all_ProbeFeatures()}) {  
+    } else {
+      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe->get_all_complete_names};
+      
+      foreach my $f (@{$probe->get_all_ProbeFeatures}) {  
         push @$results, {
-          'region'   => $f->seq_region_name,
-          'start'    => $f->start,
-          'end'      => $f->end,
-          'strand'   => $f->strand,
-          'length'   => $f->end-$f->start+1,
-          'label'    => $names,
-          'gene_id'  => [$names],
-          'extra'    => [ $f->mismatchcount, $f->cigar_string ]
+          region   => $f->seq_region_name,
+          start    => $f->start,
+          end      => $f->end,
+          strand   => $f->strand,
+          length   => $f->end - $f->start + 1,
+          label    => $names,
+          gene_id  => [ $names ],
+          extra    => [ $f->mismatchcount, $f->cigar_string ]
         }
       }
     }
   }
-  return ( $results, ['Mismatches', 'Cigar String'], $type );
+  return ($results, ['Mismatches', 'Cigar String'], $type);
 }
 
 sub retrieve_Domain {
   my ($self, $data, $type) = @_;
+  my $hub     = $self->hub;
   my $results = [];
-  foreach my $f (@$data){
+  
+  foreach my $f (@$data) {
     if (ref($f) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($f);
-      push(@$results, $unmapped);
-    }
-    else {
-      my $location = $f->seq_region_name .":" .$f->start ."-". $f->end;
-      my $location_url = $self->_url({'type' => 'Location', 'action' => 'View', 'r' => $location});
-      my $location_link = "<a href=$location_url>$location</a>";
+      push @$results, $unmapped;
+    } else {
+      my $location      = $f->seq_region_name . ':' . $f->start . '-' . $f->end;
+      my $location_url  = $hub->url({ type => 'Location', action => 'View', r => $location });
+      my $location_link = qq{<a href="$location_url">$location</a>};
+      
       push @$results,{
-        'region'    => $f->seq_region_name,
-        'start'     => $f->start,
-        'end'       => $f->end,
-        'strand'    => $f->strand,
-        'length'    => $f->end-$f->start+1,
-        'extname'   => $f->external_name,
-        'label'     => $f->stable_id,
-        'gene_id'   => [$f->stable_id],
-        'extra'     => [$location_link, $f->description, ]
+        region  => $f->seq_region_name,
+        start   => $f->start,
+        end     => $f->end,
+        strand  => $f->strand,
+        length  => $f->end - $f->start + 1,
+        extname => $f->external_name,
+        label   => $f->stable_id,
+        gene_id => [ $f->stable_id ],
+        extra   => [ $location_link, $f->description ]
       }
     }
   }
 
-  return ( $results, [ 'Genomic Location', 'Description' ], $type );
+  return ($results, [ 'Genomic Location', 'Description' ], $type);
 }
 
 sub retrieve_DnaAlignFeature {
   my ($self, $data, $type) = @_;
   my $results = [];
-  foreach my $f ( @$data ) {
+  
+  foreach my $f (@$data) {
     if (ref($f) =~ /UnmappedObject/) {
       my $unmapped = $self->unmapped_object($f);
       push(@$results, $unmapped);
-    }
-    else {
-#     next unless ($f->score > 80);
-      my $coord_systems = $self->coord_systems();
-      my( $region, $start, $end, $strand ) = ( $f->seq_region_name, $f->start, $f->end, $f->strand );
-      if( $f->coord_system_name ne $coord_systems->[0] ) {
+    }  else {
+      my $coord_systems = $self->coord_systems;
+      my ($region, $start, $end, $strand) = ($f->seq_region_name, $f->start, $f->end, $f->strand);
+      
+      if ($f->coord_system_name ne $coord_systems->[0]) {
         foreach my $system ( @{$coord_systems} ) {
-          # warn "Projecting feature to $system";
           my $slice = $f->project( $system );
-          # warn @$slice;
-          if( @$slice == 1 ) {
-            ($region,$start,$end,$strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand );
+          
+          if (scalar @$slice == 1) {
+            ($region, $start, $end, $strand) = ($slice->[0][2]->seq_region_name, $slice->[0][2]->start, $slice->[0][2]->end, $slice->[0][2]->strand);
             last;
           }
         }
       }
+      
       push @$results, {
-        'region'   => $region,
-        'start'    => $start,
-        'end'      => $end,
-        'strand'   => $strand,
-        'length'   => $f->end-$f->start+1,
-        'label'    => $f->display_id." (@{[$f->hstart]}-@{[$f->hend]})",
-        'gene_id'  => ["@{[$f->hstart]}-@{[$f->hend]}"],
-        'extra' => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
+        region  => $region,
+        start   => $start,
+        end     => $end,
+        strand  => $strand,
+        length  => $f->end - $f->start + 1,
+        label   => sprintf('%s %s-%s', $f->display_id, $f->hstart, $f->hend),
+        gene_id => [ sprintf('%s-%s', $f->hstart, $f->hend) ],
+        extra   => [ $f->alignment_length, $f->hstrand * $f->strand, $f->percent_id, $f->score, $f->p_value ]
       };
     }
   }
+  
   my $feature_mapped = 1; ## TODO - replace with $self->feature_mapped call once unmapped feature display is added
+  
   if ($feature_mapped) {
     return $results, [ 'Alignment length', 'Rel ori', '%id', 'score', 'p-value' ], $type;
-  }
-  else {
+  }  else {
     return $results, [], $type;
   }
 }
@@ -965,37 +970,42 @@ sub retrieve_ProteinAlignFeature {
 
 sub retrieve_RegulatoryFactor {
   my ($self, $data, $type) = @_;
+  my $hub     = $self->hub;
   my $results = [];
-  my $flag = 0;
+  my $flag    = 0;
+  
   foreach my $reg (@$data) {
     my @stable_ids;
     my $gene_links;
     my $db_ent = $reg->get_all_DBEntries;
-    foreach ( @{ $db_ent} ) {
+    
+    foreach (@$db_ent) {
       push @stable_ids, $_->primary_id;
-      my $url = $self->_url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_ids[-1] }); 
-      $gene_links  .= qq(<a href="$url">$stable_ids[-1]</a>);  
+      my $url      = $hub->url({ type => 'Gene', action => 'Summary', g => $stable_ids[-1] }); 
+      $gene_links .= qq(<a href="$url">$stable_ids[-1]</a>);  
     }
-
+    
     my @extra_results = $reg->analysis->description;
     $extra_results[0] =~ s/(https?:\/\/\S+[\w\/])/<a rel="external" href="$1">$1<\/a>/ig;
 
-    unshift (@extra_results, $gene_links);# if $gene_links;
+    unshift @extra_results, $gene_links;
 
     push @$results, {
-      'region'   => $reg->seq_region_name,
-      'start'    => $reg->start,
-      'end'      => $reg->end,
-      'strand'   => $reg->strand,
-      'length'   => $reg->end-$reg->start+1,
-      'label'    => $reg->display_label,
-      'gene_id'  => \@stable_ids,
-      'extra'    => \@extra_results,
+      region  => $reg->seq_region_name,
+      start   => $reg->start,
+      end     => $reg->end,
+      strand  => $reg->strand,
+      length  => $reg->end-$reg->start+1,
+      label   => $reg->display_label,
+      gene_id => \@stable_ids,
+      extra   => \@extra_results,
     }
   }
-  my $extras = ["Feature analysis"];
-  unshift @$extras, "Associated gene";# if $flag;
-  return ( $results, $extras, $type );
+  
+  my $extras = [ 'Feature analysis' ];
+  unshift @$extras, 'Associated gene';
+  
+  return ($results, $extras, $type);
 }
 
 sub unmapped_object {
@@ -1003,11 +1013,11 @@ sub unmapped_object {
   my $analysis = $unmapped->analysis;
 
   my $result = {
-    'label'     => $unmapped->{'_id_'},
-    'reason'    => $unmapped->description,
-    'object'    => $unmapped->ensembl_object_type,
-    'score'     => $unmapped->target_score,
-    'analysis'  => $$analysis{'_description'},
+    label    => $unmapped->{'_id_'},
+    reason   => $unmapped->description,
+    object   => $unmapped->ensembl_object_type,
+    score    => $unmapped->target_score,
+    analysis => $$analysis{'_description'},
   };
 
   return $result;
