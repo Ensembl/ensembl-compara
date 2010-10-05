@@ -176,7 +176,7 @@ sub content {
     $html .= $table if $table;
     $html .= '<h3 style="margin-bottom:-5px">Key to tracks</h3>' . $usertable->render if $usertable;
   } else {
-    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, "/ssi/species/stats_$species.html");
+    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
   }
   
   return $html;
