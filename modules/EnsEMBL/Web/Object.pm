@@ -46,19 +46,33 @@ sub species_defs      { return shift->hub->species_defs(@_);      }
 sub species_path      { return shift->hub->species_path(@_);      }
 sub problem           { return shift->hub->problem(@_);           }
 sub param             { return shift->hub->param(@_);             }
-sub session           { return shift->hub->session(@_);           }
 sub user              { return shift->hub->user(@_);              }
 sub database          { return shift->hub->database(@_);          }
-sub get_databases     { return shift->hub->get_databases(@_);     }
-sub databases_species { return shift->hub->databases_species(@_); }
 sub get_adaptor       { return shift->hub->get_adaptor(@_);       }
 sub timer_push        { return shift->hub->timer_push(@_);        }
 sub table_info        { return shift->hub->table_info(@_);        }
 sub data_species      { return shift->hub->data_species(@_);      }
-sub _url              { return shift->hub->url(@_);               }
-sub viewconfig        { return shift->hub->viewconfig;            }
-sub get_viewconfig    { return shift->hub->get_viewconfig(@_);    }
 sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }
+
+sub viewconfig        { DEPRECATED();           return shift->hub->viewconfig;            }
+sub get_viewconfig    { DEPRECATED();           return shift->hub->get_viewconfig(@_);    }
+sub _url              { DEPRECATED('url');      return shift->hub->url(@_);               }
+sub session           { DEPRECATED();           return shift->hub->session(@_);           }
+sub get_session       { DEPRECATED('session');  return shift->hub->session(@_);           }
+sub multi_params      { DEPRECATED();           return shift->hub->multi_params(@_);      }
+sub referer           { DEPRECATED();           return $_[0]->hub->referer;               }
+sub redirect          { DEPRECATED();           return shift->hub->redirect(@_);          }
+sub DBConnection      { DEPRECATED('database'); return shift->hub->database(@_);          }
+sub get_databases     { DEPRECATED();           return shift->hub->get_databases(@_);     }
+sub databases_species { DEPRECATED();           return shift->hub->databases_species(@_); }
+
+sub DEPRECATED {
+  my @caller = caller(1);
+  my $warn   = "$caller[3] is deprecated and will be removed in release 61. ";
+  my $func   = shift || [split '::', $caller[3]]->[-1];
+  $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
+  warn $warn;
+}
 
 sub _filename {
   my $self = shift;
