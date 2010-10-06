@@ -81,6 +81,22 @@ sub variation_table {
     my $cdna_coding_start = $transcript->Obj->cdna_coding_start;
     my $gene              = $transcript->gene;
     
+    my $base_url = $hub->url({
+      type   => 'Variation',
+      action => 'Summary',
+      vf     => undef,
+      v      => undef,
+      source => undef,
+    });
+    
+    my $base_trans_url = $hub->url({
+      type => 'Transcript',
+      action => 'Summary',
+      t => undef,
+    });
+    
+    my $transcript_stable_id = $transcript->stable_id;
+    
     foreach (@$gene_snps) {
       my ($snp, $chr, $start, $end) = @$_;
       my $raw_id               = $snp->dbID;
@@ -91,24 +107,14 @@ sub variation_table {
         my $variation_name    = $snp->variation_name;
         my $var_class         = $snp->var_class;
         my $translation_start = $transcript_variation->translation_start;
+        my $source            = $snp->source;
         
         my ($aachange, $aacoord) = $translation_start ? 
           ($transcript_variation->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
           ('-', '-');
         
-        my $url = $hub->url({
-          type   => 'Variation',
-          action => 'Summary',
-          v      => $variation_name,
-          vf     => $raw_id,
-          source => $snp->source 
-        });
-        
-        my $trans_url = $hub->url({
-          type => 'Transcript',
-          action => 'Summary',
-          t => $transcript->stable_id,
-        });
+        my $url .= $base_url.';v='.$variation_name.';vf='.$raw_id.';source='.$source;
+        my $trans_url .= $base_trans_url.';t='.$transcript_stable_id;
         
         # break up allele string if too long
         my $as = $snp->allele_string;
@@ -122,16 +128,16 @@ sub variation_table {
           #HGVS      => $self->get_hgvs($snp, $transcript->Obj, $gene) || '-',
           status    => (join(', ',  @$validation) || '-'),
           chr       => "$chr:$start" . ($start == $end ? '' : "-$end"),
-          Source    => (join ', ', @{$snp->get_all_sources||[]}) || '-',
+          Source    => $source, #(join ', ', @{$snp->get_all_sources||[]}) || '-',
           snptype   => (join ', ', @{$transcript_variation->consequence_type||[]}),
-          Transcript => '<a href="'.$trans_url.'">'.$transcript->stable_id.'</a>',
+          Transcript => '<a href="'.$trans_url.'">'.$transcript_stable_id.'</a>',
           aachange  => $aachange,
           aacoord   => $aacoord,
           '_raw_id' => $raw_id
         };
         
         # add HGVS if LRG
-        if($transcript->stable_id =~ /^LRG/) {
+        if($transcript_stable_id =~ /^LRG/) {
           $row->{'HGVS'} = $self->get_hgvs($snp, $transcript->Obj, $slice) || '-';
         }
         
