@@ -66,6 +66,14 @@ sub fetch_input {
   $self->{gdbDBA} = $self->compara_dba->get_GenomeDBAdaptor;
 
   $self->get_params($self->parameters);
+
+  # For long parameters, look at analysis_data
+  if($self->{analysis_data_id}) {
+    my $analysis_data_id = $self->{analysis_data_id};
+    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
+    $self->get_params($analysis_data_params);
+  }
+
   return 1;
 }
 
