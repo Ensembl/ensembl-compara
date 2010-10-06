@@ -42,7 +42,7 @@ sub content {
   
   my $image_width = $self->image_width;
   my $slice = $object->slice;
-  my ($slices) = $self->get_slices($object, $slice, $align_params, $primary_species);
+  my ($slices) = $self->get_slices($slice, $align_params, $primary_species);
   
   my @skipped;
   my @missing;
