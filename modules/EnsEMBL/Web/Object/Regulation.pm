@@ -195,8 +195,7 @@ sub get_regulation_slice {
 sub get_context_slice {
   my $self    = shift;
   my $padding = shift || 25000;
-  my $slice   = $self->Obj->feature_Slice->expand($padding, $padding);
-  return $slice ? $self->new_object('Slice', $slice, $self->__data) : 1;
+  return $self->Obj->feature_Slice->expand($padding, $padding) || 1;
 }
 
 sub get_seq {
