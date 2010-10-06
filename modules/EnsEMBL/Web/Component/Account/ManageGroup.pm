@@ -81,7 +81,7 @@ sub content {
           $status .= ' ('.$m->member_status.')';
         }
         my ($remove, $promote);
-        if ($m->id == $user->id) {
+        if ($m->user_id == $user->id) {
           $remove = qq(<a href="/Account/Unsubscribe?id=$ok_id" class="modal_link">Unsubscribe</a> (N.B. You will no longer have any access to this group!));
         }
         else {
