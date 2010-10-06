@@ -63,6 +63,7 @@ sub _content {
   my $db_key           = 'DATABASE_' . uc $db;
   my $info_summary     = $hub->species_defs->databases->{$db_key}{'tables'};
   my @slice_defs       = ([ 'supporting_evidence_transcript', 'munged', $extent ]); # get both real slice and normalised slice (ie introns set to fixed width)
+
   my $trans_obj        = {}; # used to store details of transcript
   my $al_obj           = {}; # used to store all details of alignments
   
@@ -70,7 +71,7 @@ sub _content {
     container_width => $length,
     image_width     => $image_width,
   });
-  
+
   $trans_obj->{'transcript'}     = $transcript;
   $trans_obj->{'web_transcript'} = $object;
 
@@ -220,49 +221,50 @@ sub _content {
     $t_evidence->{$hit_name}{'hit_type'}         = $evi->isa('Bio::EnsEMBL::DnaPepAlignFeature') ? 'protein' : $self->hit_type($info_summary, $evi);
     $t_evidence->{$hit_name}{'evidence_removed'} = 1 if grep $hit_name eq $_, @missing_evidence;
 
-    # split evidence into ungapped features (ie parse cigar string),
-    # map onto exons ie determine mismatches
-    # and munge (ie account for gaps)
+    #for non-vega genes, split evidence into ungapped features (ie parse cigar string),
+    #map onto exons ie determine mismatches and munge (ie account for gaps)
+
     my $first_feature = 1;
     my $last_end      = 0;
     my @features      = $evi->ungapped_features;
-    
+
     for (my $c; $c < scalar @features; $c++) {
       my $feature       = $features[$c];
       my $munged_coords = $self->split_evidence_and_munge_gaps($feature, $exons, $offset, [ $raw_coding_start + $offset, $raw_coding_end + $offset ], ref $evi);
-      
-      if ($last_end) {
-        if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
-          $munged_coords->[0]{'hit_mismatch'} = $feature->hstart - $last_end if abs($feature->hstart - $last_end) > 3;
-        } else {
-          if (abs($feature->hstart - $last_end) > 1) {
-            $munged_coords->[0]{'hit_mismatch'} = $feature->hstart - $last_end;
-          } elsif ($feature->hstart == $last_end) {
-            $munged_coords->[0]{'hit_mismatch'} = 0;
-          }
-        }
-      }
 
-      # is the first feature beyond the end of the transcript
-      if ($first_feature) {
-        if ($transcript->strand == 1) {
-          $munged_coords->[0]{'lh-ext'} = $exons->[0]->seq_region_start - $feature->end if $feature->end < $exons->[0]->seq_region_start;
-        } elsif ($feature->start > $exons->[0]->seq_region_end) {
-          $munged_coords->[0]{'rh-ext'} = $feature->start - $exons->[0]->seq_region_end;
-        }
-        
-        $first_feature = 0; 
-      }
-      
-      # is the last feature beyond the end of the transcript
-      if ($c == scalar(@features) - 1) {
-        if ($transcript->strand == 1) {
-          $munged_coords->[0]{'rh-ext'} = $feature->start - $exons->[-1]->seq_region_end if $feature->start > $exons->[-1]->seq_region_end;
-        } elsif ($feature->end < $exons->[-1]->seq_region_start) {
-          $munged_coords->[0]{'lh-ext'} = $exons->[-1]->seq_region_start - $feature->end;
-        }
-      }
+      if ($logic_name !~ /otter/) {
+	if ($last_end) {
+	  if ($evi->isa('Bio::EnsEMBL::DnaPepAlignFeature')) {
+	    $munged_coords->[0]{'hit_mismatch'} = $feature->hstart - $last_end if abs($feature->hstart - $last_end) > 3;
+	  } else {
+	    if (abs($feature->hstart - $last_end) > 1) {
+	      $munged_coords->[0]{'hit_mismatch'} = $feature->hstart - $last_end;
+	    } elsif ($feature->hstart == $last_end) {
+	      $munged_coords->[0]{'hit_mismatch'} = 0;
+	    }
+	  }
+	}
+	
+	# is the first feature beyond the end of the transcript
+	if ($first_feature) {
+	  if ($transcript->strand == 1) {
+	    $munged_coords->[0]{'lh-ext'} = $exons->[0]->seq_region_start - $feature->end if $feature->end < $exons->[0]->seq_region_start;
+	  } elsif ($feature->start > $exons->[0]->seq_region_end) {
+	    $munged_coords->[0]{'rh-ext'} = $feature->start - $exons->[0]->seq_region_end;
+	  }
+	  $first_feature = 0;
+	}
 
+	# is the last feature beyond the end of the transcript
+	if ($c == scalar(@features) - 1) {
+	  if ($transcript->strand == 1) {
+	    $munged_coords->[0]{'rh-ext'} = $feature->start - $exons->[-1]->seq_region_end if $feature->start > $exons->[-1]->seq_region_end;
+	  } elsif ($feature->end < $exons->[-1]->seq_region_start) {
+	    $munged_coords->[0]{'lh-ext'} = $exons->[-1]->seq_region_start - $feature->end;
+	  }
+	}
+      }
+	
       $last_end = $feature->hend;
 
       # reverse the exon order if on the reverse strand
@@ -277,7 +279,7 @@ sub _content {
   # calculate total length of the hit (used for sorting the display)
   while (my ($hit_name, $hit_details) = each (%$t_evidence)) {
     my $tot_length;
-    
+
     foreach my $match (@{$hit_details->{'data'}}) {
       my $len = abs($match->{'munged_end'} - $match->{'munged_start'}) + 1;
       $tot_length += $len;
@@ -288,7 +290,7 @@ sub _content {
   
   $al_obj->{'transcript_evidence'} = $t_evidence;
 
-  # add info on additional supporting_evidence (exon level) (although new vega dbs don't have any, old ones do and so need to skip these)
+  # add info on additional supporting_evidence (exon level) (mot Vega)
   my $e_evidence = {};
   my $evidence_checks;
   my %evidence_ends;
@@ -303,7 +305,7 @@ sub _content {
         next EVI if exists $t_evidence->{$hit_name};
 
         my $hit_seq_region_start = $evi->seq_region_start;
-        my $hit_seq_region_end   = $evi->seq_region_end;        
+        my $hit_seq_region_end   = $evi->seq_region_end;
 
         #calculate beginning and end of the combined hit (first steps are needed to autovivify)
         $evidence_ends{$hit_name}{'start'} = $hit_seq_region_start unless exists $evidence_ends{$hit_name}{'start'};
@@ -477,6 +479,7 @@ sub split_evidence_and_munge_gaps {
   my $hit_seq_region_end   = $hit->end;
   my $hit_name             = $hit->hseqname;
   my $past_hit_end         = 0;
+  my $ln                   = $object->logic_name;
   my ($cod_start, $cod_end, $coords, $last_end, $evidence_type);
 
   # note evidence type
@@ -505,7 +508,7 @@ sub split_evidence_and_munge_gaps {
     my $extra_exon = 0;
     
     if ($last_end && $last_end < $hit_seq_region_end && $estart > $hit_seq_region_end) {
-      $extra_exon = $hit;
+      $extra_exon = $hit;# if ($ln !~ /otter/); #uncomment to switch off mismatches for Vega transcripts
       $last_end   = $eend;
     } elsif ($eend < $hit_seq_region_start || $estart > $hit_seq_region_end) {
       $last_end = $eend;
