@@ -96,17 +96,19 @@ sub url {
 ### returns a URL string
 ### This is a simple version, that can be extended in children as needed
 # TODO: add site base url
-  my ($self, $path, $param) = @_;
-
+  my ($self, $path, $param, $anchor) = @_;
+  $anchor = '' unless defined $anchor;
   my $clean_params = $self->escape_url_parameters($param);
-  return $self->reassemble_url($path, $clean_params);
+  return $self->reassemble_url($path, $clean_params, sprintf('%s', $anchor));
 }
 
 sub reassemble_url {
-  my ($self, $path, $param) = @_;
+  my ($self, $path, $param, $anchor) = @_;
   return $path unless $param;
   $path .= $path =~ /\?/ ? ';' : '?';
-  return $path . (join ';', @$param);
+  $path .= (join ';', @$param);
+  $path .= qq(#$anchor) if defined $anchor && $anchor ne '';
+  return $path;
 }
 
 sub escape_url_parameters {
