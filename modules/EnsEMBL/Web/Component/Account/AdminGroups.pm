@@ -29,7 +29,7 @@ sub content {
   my $html;
   
   ## Control panel fixes
-  my $dir = $object->site_path;
+  my $dir = $object->species_path;
   $dir = '' if $dir !~ /_/;
   
   my @groups = $user->find_administratable_groups;

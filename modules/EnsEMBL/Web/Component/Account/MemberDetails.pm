@@ -34,7 +34,7 @@ sub content {
   if ($group) {
 
     ## Control panel fixes
-    my $dir = $object->site_path;
+    my $dir = $object->species_path;
     $dir = '' if $dir !~ /_/;
 
     my $creator = EnsEMBL::Web::Data::User->new($group->created_by);
