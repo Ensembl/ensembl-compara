@@ -32,8 +32,8 @@ sub script_name {
 }
 
 sub ajax_redirect {
-  my ($self, $url, $param) = @_;
-  $self->page->ajax_redirect($self->url($url, $param));
+  my ($self, $url, $param, $anchor) = @_;
+  $self->page->ajax_redirect($self->url($url, $param, $anchor));
 }
 
 sub interface {
