@@ -17,7 +17,7 @@ sub draw_glyphs {
   my $h            = 8; #height of glyph
   my $pix_per_bp   = $wuc->transform->{'scalex'};
   my( $fontname, $fontsize ) = $self->get_font_details( 'outertext' );
-  my($font_w_bp, $font_h_bp) = $wuc->texthelper->px2bp($fontname);        
+  my($font_w_bp, $font_h_bp) = $wuc->texthelper->px2bp($fontname);
   my $length       = $wuc->container_width(); 
   my $strand       = $wuc->cache('trans_object')->{'transcript'}->strand;
 
@@ -78,8 +78,8 @@ sub draw_glyphs {
           'height'    => $h,
           'width'     => 0,
           'colour'    => $c,
-          'absolutey' => 1,});                                
-        $self->push($G);        
+          'absolutey' => 1,});
+        $self->push($G);
       }
       next BLOCK unless (my $exon = $block->{'exon'});
 
@@ -138,7 +138,7 @@ sub draw_glyphs {
           'colour'    => $colour,
           'width'     => $w,
           'absolutey' => 1,});
-        
+
         #add attributes if there is a part of the hit missing, or an extra bit
         my $mismatch;
         if ( $block->{'hit_mismatch'} || $last_mismatch) {
@@ -147,12 +147,11 @@ sub draw_glyphs {
           $G->{'colour'} = $mismatch > 0 ? $self->my_colour('evi_missing') : $self->my_colour('evi_extra');
           $G->{'title'}  = $mismatch > 0 ? "$mismatch bp of $hit_name missing" : abs($mismatch)." bp of $hit_name overlaps";
         }
-        $self->push($G);                                
+        $self->push($G);
       }
 
       $last_mismatch = $last_mismatch ? 0 : $last_mismatch;
       $last_end = $block->{'munged_end'};
-
 
       #save location of edge of box in case we need to draw a line to the end of it later
       $last_end_x = $block->{'munged_start'}+ $width;
