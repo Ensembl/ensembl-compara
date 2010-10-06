@@ -16,9 +16,29 @@ send the DOI after the Genebuilders
 
 3. Define priorities and assign jobs to the team members.
 
-3bis. The current (rel.59) compara_master database is sf5_ensembl_compara_master on compara1 
+3bis. The current (rel.60) compara_master database is sf5_ensembl_compara_master on compara1 
 
-4. Add in the master compara database
+4. Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
+ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
+This is usually done by the person who runs the orthologs/paralogs.
+Check that the ens-livemirror ncbi_taxonomy database has been updated. This is usually done when the GeneBuilders request a change (ie before handover to compara)
+For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
+
+time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress --delayed-insert ncbi_taxonomy \
+ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 sf5_ensembl_compara_master
+
+Release 60: 1 min
+
+Some of the species need fixing to be webcode-compatible. This is usually done in ens-livemirror, so it's not needed anywhere else. E.g.:
+
+ "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
+ "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
+
+ "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9600 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
+ "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
+
+
+5. Add in the master compara database
 (compara1:3306/sf5_ensembl_compara_master) the new entries in the
 genome_db and dnafrag tables. You can set up your registry and use the
 ~ensembl-compara/scripts/pipeline/update_genome.pl script. This script
@@ -34,36 +54,13 @@ perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/updat
  --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_48/v48.conf \
  --compara compara-master --species "Ochotona princeps"
 
-4.1. Update the species_set_tags.
-Run the script: update_species_sets.pl
+5.1 Add in extra non-reference patches 
 
-eg
-perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_species_sets.pl --master_url mysql://ensadmin:ensembl@compara1/sf5_ensembl_compara_master > update_species_sets.out
+To add extra non-reference patches to an assembly, eg human, you need the -force option to just add those dnafrags which aren't already in the database.
 
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg_conf --compara compara_master --species human --force
 
-5. Wait for the handover before starting to build the new database in case
-any of the new species cannot make it. Don't forget to switch the
-assembly_default values of genome_db in this case.
- [1] for species making it / used in the pipeline
- [0] for species not making it / or old assemblies
-
-6. Update the ncbi_taxa_node and ncbi_taxa_name in the master DB using the
-ncbi_taxonomy database located in mysql::/ens-livemirror:3306/ncbi_taxonomy
-This is usually done by the person who runs the orthologs/paralogs.
-For more information, here is the doc ensembl-compara/scripts/taxonomy/README-taxonomy
-
-time mysqldump -u ensro -h ens-livemirror -P3306 --extended-insert --compress --delayed-insert ncbi_taxonomy \
-ncbi_taxa_node ncbi_taxa_name | mysql -u ensadmin -pxxxx -h compara1 sf5_ensembl_compara_master
-
-Some of the species need fixing to be webcode-compatible. This is usually done in ens-livemirror, so it's not needed anywhere else. E.g.:
-
- "update ncbi_taxa_name set name = \"Canis familiaris\" where taxon_id = 9615 and name_class = \"scientific name\" and name = \"Canis lupus familiaris\""
- "update ncbi_taxa_name set name = \"Canis lupus familiaris\" where taxon_id = 9615 and name_class = \"synonym\" and name = \"Canis familiaris\""
-
- "update ncbi_taxa_name set name = \"Pongo abelii\" where taxon_id = 9600 and name_class = \"scientific name\" and name = \"Pongo pygmaeus abelii\""
- "update ncbi_taxa_name set name = \"Pongo pygmaeus abelii\" where taxon_id = 9600 and name_class = \"synonym\" and name = \"Pongo pygmaeus abelii\""
-
-7. New method_link_species_set entries might be added using the
+6. New method_link_species_set entries might be added using the
 ~ensembl-compara/scripts/pipeline/create_mlss.pl script. The release
 coordinator (or any team member) should create a new
 method_link_species_set in the master database before starting a new
@@ -94,7 +91,32 @@ echo -e "401\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_ma
 # families
 echo -e "301\n" | /usr/local/ensembl/bin/perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --f --reg_conf /lustre/work1/ensembl/avilella/hive/avilella_compara_homology_53/mlss_53.conf --name "families" --genome_db_id "3,4,5,16,18,22,27,29,31,33,34,36,37,38,39,42,43,44,46,48,49,51,52,53,55,56,57,58,60,61,62,64,65,66,67,68,69,77,78,79,80,81,82,83,84,85,86,87,88" 1>create_mlss.FAMILY.301.out 2>create_mlss.FAMILY.301.err
 
+6.1. Update the species_set_tags.
+Run the script: update_species_sets.pl
 
+eg
+perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/update_species_sets.pl  --conf reg_conf60 --dbname compara_master >& update_species_sets.out
+
+Add/Update any dna tags if necessary. There should be a tag for each of the multiple alignments. Note that fish will already have had a species_set_tag added by the above script.
+eg
+6way epo
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33161,"name","primates");
+
+11way epo
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33162,"name","mammals");
+
+16way mercator/pecan
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33012,"name","amniotes");
+
+33way low coverage
+INSERT INTO species_set_tag (species_set_id, tag,value) VALUES (33163,"name","mammals");
+ 
+
+7. Wait for the handover before starting to build the new database in case
+any of the new species cannot make it. Don't forget to switch the
+assembly_default values of genome_db in this case.
+ [1] for species making it / used in the pipeline
+ [0] for species not making it / or old assemblies
 
 8. Create the new database for the new release and add it to your
 registry configuration file. Use the ~ensembl-compara/sql/table.sql
@@ -116,6 +138,7 @@ mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_58 < ~lg4/work/ensem
 time ~/work/ensembl-compara/scripts/pipeline/populate_new_database.pl \
     --reg-conf reg_conf.pl --master compara_master --old compara_57 --new compara_58
 
+# took 3 hours for rel. 60 (copied from rel.59)
 # took 2:09 hours for rel.59 (copied from rel.58)
 # took 2:15 hours for rel.58 (copied from rel.57)
 # took 3 hours for rel.57 (copied from rel.pre57)
@@ -132,9 +155,28 @@ syntenies again.
 
 8.1. Copy the species_set_tag table. 
 This needs to be added to the populate_new_database script and not just copied from the master where all old tags need to be deleted.
+But copy from master till this is done.
+INSERT INTO species_set_tag SELECT * FROM sf5_ensembl_compara_master.species_set_tag;
 
-....
 
+8.2. Add new species to phylogenetic tree
+The easiest way to use this is to use the phylowidget.
+From the EnsEMBL home page:
+View full list of all Ensembl species
+Species tree (Requires Java)
+
+Select Arrow and select where you want the new species to go (use ncbi taxonomy or wikipedia etc) eg  Canis familiaris
+Tree Edit
+Add
+Sister
+
+Click on empty node
+Edit Name (add new name)
+
+The tree should appear in the Toolbox but if not, then save the tree
+Copy the new tree into
+ensembl-compara/scripts/pipeline/species_tree_blength.nh
+cvs commit
 
 9. Check that primary data (species data, dnafrags...) in the new compara DB
 match the data in the corresponding core databases using the healthchecks. You
@@ -177,8 +219,16 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58
 
 10. Merge data.
 
+10.0 Human patches for high coverage blastz-net alignments
+     Need all the relevant mlss_ids and use "merge" option of copy_data
+     eg   select distinct(method_link_species_set_id) from kb3_hsap_blastz_hap_60.genomic_align join dnafrag using (dnafrag_id) where genome_db_id=90 and method_link_species_set_id< 1000;   
+
+     for i in 384 385 388 390 392 393 394 404 405 410 428 433 455 473; do echo $i; ~/src/ensembl_main/ensembl-compara/scripts/pipeline/copy_data.pl --from_url mysql://ensro@compara1/kb3_hsap_blastz_hap_60 --to_url mysql://ensadmin:ensembl@compara1/kb3_ensembl_compara_60 --mlss $i --merge; done
+
+
 10.1 TRANSLATED_BLAT_NET, BlastZ-Net, Pecan, Gerp
 
+    The removal of old data shouldn't be necessary unless the skip_mlss entries are not up to date.
     Removal of old data :
         # constrained elements are removed directly by mlss_id OF THE CONSTRAINED_ELEMENT:
             DELETE FROM constrained_element WHERE method_link_species_set_id=CE_MLSS_ID;
@@ -210,33 +260,12 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58
     Note_2: for copying conservation scores you have to provide rw_user and password for --from_url,
     because the script needs to write into the production database.
 
-    Note_3: before copying multiple alignments THAT PRODUCE ANCESTRAL SEQUENCES (not all of them do),
-    you may need to manually copy the dnafrags that correspond to the ancestral sequences
-    from the production database into the release database.
-
-    If they live on the same mysql instance:
-        1) check that there is no collision of dnafrag_ids:
-            select * from sf5_compara_12wayOrtheus_e58.dnafrag src join lg4_ensembl_compara_58.dnafrag using (dnafrag_id) where src.name like 'Ancestor_467_%';
-        2) copy dnafrags over:
-            insert into lg4_ensembl_compara_58.dnafrag select * from sf5_compara_12wayOrtheus_e58.dnafrag where name like 'Ancestor_467_%';
-
-    If they live on different instances:
-        1) filter the needed sequences in the source database into separate table:
-            create table ancestor_468 select * from dnafrag where name like 'Ancestor_468_%';
-        2) transfer the table across instances:
-            mysqldump --defaults-group-suffix=_compara3 sf5_compara_6way_primate_e58 ancestor_468 | mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
-        3) check that there are no id collisions in the destination:
-            select * from dnafrag join ancestor_468 using (dnafrag_id);
-        4) merge the data in:
-            insert into dnafrag select * from ancestor_468;
-        5) drop the "temporary" table:
-            drop table ancestor_468;
+    Note_3: multiple alignments THAT PRODUCE ANCESTRAL SEQUENCES (not all of them do) eg EPO alignments, will also need
+    the ancestral sequences copying to the core ancestral database. The copy_data script has been altered to automatically copy 
+    the ancestral dnafrags into the compara database.
 
     Note_4: for multiple alignments that SHOULD HAVE BEEN automatically copied from the prev.release,
-    check that you have the ancestral dnafrags copied (because they probably won't copy automatically),
-    so follow the same steps as in Note_3.
-
-# ToDo: "Note_3&Note_4" should become a part of the copy_data script (before the consistency check that would fall over)
+    check that you have the ancestral dnafrags copied. Again this should now happen automatically.
 
 
 # rel.58
@@ -316,12 +345,6 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58
 # 0.5m in rel.58
 
 
-10.5 Populate the species_set_tag table from the previous release (should be in a script, really!)
-Note that the resulting table will probably need updating (either by hand or by a healtchcheck)
-
-    mysqldump --defaults-group-suffix=_compara1 --port=3366 lg4_ensembl_compara_57 species_set_tag | \
-        mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
-
 10.6 Put together ancestral database:
 This is now done using the script copy_ancestral_core.pl. You will need to add any ancestral sequences from the previous release if these have not changed, in addition to adding any new ones. 
 
@@ -340,7 +363,7 @@ bsub -o copy_ancest_474.out -e copy_ancest_474.err -R "select[mem>5000] rusage[m
     4) Check that you have done it correctly:
         SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
 
-Below is the old way (e58) of doing things. Want to check the new method once more before removing this info.
+Below is the old way (e58) of doing things. 
 
 =============================
 Merge several ancestral core databases together, starting with the ancestors that haven't changed from prev.release.
