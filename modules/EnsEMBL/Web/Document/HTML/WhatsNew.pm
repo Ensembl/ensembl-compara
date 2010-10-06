@@ -9,7 +9,6 @@ use strict;
 
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Document::HTML::Blog;
 use EnsEMBL::Web::Hub;
 
 use base qw(EnsEMBL::Web::Document::HTML);
@@ -18,17 +17,18 @@ sub render {
   my $self         = shift;
   my $hub          = new EnsEMBL::Web::Hub;
   my $species_defs = $hub->species_defs;
+
+  ## Are we using static news content output from a script?
   my $file         = '/ssi/whatsnew.html';
   my $fpath        = $species_defs->ENSEMBL_SERVERROOT . $file;
   
   return EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file) if -e $fpath;
 
+  ## Return dynamic content from the ensembl_website database
   my $release_id = $hub->species_defs->ENSEMBL_VERSION;
-  
   return unless $release_id;
 
   my $adaptor = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub);
-  
   return unless $adaptor;
 
   my $release      = $adaptor->fetch_release($release_id);
@@ -36,7 +36,7 @@ sub render {
   my $html         = qq{<h2 class="first">What's New in Release $release_id ($release_date)</h2>};
   my $news_url     = '/info/website/news/index.html';
   my @headlines    = @{$adaptor->fetch_news({ release => $release_id, limit => 5 })};
-  my ($news, $changelog);
+  my $news;
   
   if (scalar @headlines > 0) {
     $html .= "<ul>\n";
@@ -72,27 +72,12 @@ sub render {
     $news = 1;
   }
 
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
-    $changelog = 1;
-    $html .= qq{<ul><li><strong><a href="/info/website/news/changelog.html" style="text-decoration:none">Details of data updates, API changes, etc</a></strong></li></ul>};
-  }
-
   if ($news) {
     $html .= qq{<p><a href="$news_url">More news</a>...</p>\n};
-  } elsif (!$news && !$changelog) {
+  } else {
     $html .= "<p>No news is currently available for release $release_id.</p>\n";
   }
 
-  if ($hub->species_defs->ENSEMBL_BLOG_URL) {
-    $html .= '<h3>Latest blog posts</h3>';
-    
-    if ($hub->cookies->{'ENSEMBL_AJAX'}) {
-      $html .= qq(<div class="js_panel ajax" id="blog"><input type="hidden" class="ajax_load" value="/blog.html" /><input type="hidden" class="panel_type" value="Content" /></div>);
-    } else {
-      $html .= EnsEMBL::Web::Document::HTML::Blog::render;
-    }    
-  }
-  
   return $html;
 }
 
