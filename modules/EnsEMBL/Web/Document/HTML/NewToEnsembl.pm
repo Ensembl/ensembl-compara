@@ -25,6 +25,8 @@ sub render {
   my $html = '<h2 class="first">New to '.$sitename.'?</h2>'; 
   my @generic_images = qw(new data help);
 
+## FIXME - Needs updating to use OAuth (via Net::Twitter?)
+=pod
   ## Ensembl twitter feed (twitter.com/ensembl_tips)
   my $tweets = $MEMD && $MEMD->get('::TWEETS') || [];
   
@@ -57,6 +59,7 @@ sub render {
       if ($response->is_success && (my $xml = $parser->XMLin($response->content, ForceArray => [qw(status)], KeyAttr => []))) {
         foreach my $details (@{ $xml->{'status'} }) {
           my $tweet = $details->{'text'};
+          warn ">>> TWEET $tweet";
           next unless $tweet;
           my $miniad;
           ## Add an image
@@ -94,6 +97,7 @@ sub render {
 
     $html .= qq(\n</div>\n);
   }
+=cut
 
   $html .= qq(
   <p>
