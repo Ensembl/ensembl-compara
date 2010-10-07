@@ -11,8 +11,6 @@ use SiteDefs qw(:APACHE);
 use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Controller::DAS;
-use EnsEMBL::Web::Registry;
-use EnsEMBL::Web::RegObj;
 
 sub handler_das {
   my ($r, $session_cookie, $das_species, $path_segments, $querystring) = @_;
@@ -64,14 +62,6 @@ sub handler_das {
   
   return DECLINED unless $das_species;
   
-  # Initialize session and set various environment variables
-  $ENSEMBL_WEB_REGISTRY->initialize_session({
-    r       => $r, 
-    cookie  => $session_cookie, 
-    species => $das_species, 
-    script  => $command
-  });
-  
   $ENV{'ENSEMBL_SPECIES'}      = $das_species;
   $ENV{'ENSEMBL_DAS_ASSEMBLY'} = $assembly;
   $ENV{'ENSEMBL_DAS_TYPE'}     = $type;
@@ -85,7 +75,7 @@ sub handler_das {
     'Access-Control-Expose-Headers' => 'X-DAS-Version X-DAS-Status X-DAS-Capabilities',
   );
  
-  new EnsEMBL::Web::Controller::DAS($r);
+  new EnsEMBL::Web::Controller::DAS($r, $session_cookie);
   
   return OK;
 }

@@ -10,8 +10,6 @@ use SiteDefs qw(:APACHE);
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
-use EnsEMBL::Web::Registry;
-use EnsEMBL::Web::RegObj;
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
@@ -86,15 +84,6 @@ sub handler_species {
     return HTTP_TEMPORARY_REDIRECT;
   }
   
-  $ENSEMBL_WEB_REGISTRY->initialize_session({
-    r       => $r,
-    cookie  => $session_cookie,
-    species => $species,
-    script  => $script,
-    type    => $type,
-    action  => $action,
-  });
-  
   $script = 'Export' if $action eq 'Export';
   
   my $controller = "EnsEMBL::Web::Controller::$script";
@@ -102,7 +91,7 @@ sub handler_species {
   eval "use $controller";
   
   if (!$@) {
-    $controller->new($r);
+    $controller->new($r, $session_cookie);
     return OK;
   }
   
