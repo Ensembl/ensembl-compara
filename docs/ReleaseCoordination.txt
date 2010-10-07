@@ -388,12 +388,12 @@ Merging each source into target is done in two steps (3) and (4) (assuming the t
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
     This pipeline will merge the protein side tables into the main release database.
 
-10.6 Cleanup
+10.6 Cleanup and CVS commit
 
     After you are happy about the result of both mergers
     you can drop both "compara_homology_merged" and "compara_full_merge" databases.
 
-
+    Also, please commit the changes to the PipeConfig files that you have made.
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
