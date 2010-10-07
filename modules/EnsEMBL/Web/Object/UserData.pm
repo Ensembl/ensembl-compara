@@ -97,7 +97,7 @@ sub save_to_db {
     $config->{'id'} = $user->id;
     $config->{'track_type'} = 'user';
   } else {
-    $config->{'id'} = $session->get_session_id;
+    $config->{'id'} = $session->session_id;
     $config->{'track_type'} = 'session';
   }
   
@@ -180,7 +180,7 @@ sub store_data {
     my $analyses = $report->{'analyses'};
     my @logic_names = ref($analyses) eq 'ARRAY' ? @$analyses : ($analyses);
 
-    my $session_id = $session->get_session_id;    
+    my $session_id = $session->session_id;    
     
     if ($user) {
       my $upload = $user->add_to_uploads(
@@ -1006,7 +1006,7 @@ THIS CODE IS WRONG - FILTERING IS DONE BY SOURCEPARSER!
     my $sources = [];
  
     try {
-      my $parser = $self->hub->session->get_das_parser();
+      my $parser = $self->hub->session->das_parser;
       $sources = $parser->fetch_Sources(
         -location   => $server,
         -species    => $species || undef,

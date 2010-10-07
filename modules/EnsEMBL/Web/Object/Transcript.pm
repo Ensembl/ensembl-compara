@@ -702,10 +702,10 @@ sub ambig_code {
 # Description: returns selected samples (by default)
 # Returns type list
 sub get_samples {
-  my $self    = shift;
-  my $options = shift;
-  my $params  = shift;
-
+  my $self         = shift;
+  my $options      = shift;
+  my $params       = shift;
+  my $hub          = $self->hub;
   my $vari_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation');
   
   unless ($vari_adaptor) {
@@ -730,13 +730,13 @@ sub get_samples {
   }
 
   my %configured_pops = (%default_pops, %db_pops);
-  my $view_config = $self->viewconfig;
+  my $view_config = $hub->viewconfig;
   my @pops;
   
   if ($options eq 'display') { # return list of pops with default first
     return (sort keys %default_pops), (sort keys %db_pops); 
-  } elsif ($self->param('strain')) { # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on. Only occurs when tweak URL
-    foreach my $sample ($self->param('strain')) {
+  } elsif ($hub->param('strain')) { # This elsif allows a user to manually add in an optional strain. Use format strain=xxx:on. Only occurs when tweak URL
+    foreach my $sample ($hub->param('strain')) {
       next unless $sample =~ /(.*):(\w+)/;
       
       $view_config->set("opt_pop_$1", $2, 1);
