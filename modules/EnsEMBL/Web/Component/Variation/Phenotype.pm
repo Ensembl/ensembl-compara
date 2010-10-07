@@ -165,8 +165,27 @@ sub source_link {
 }
 
 sub study_link {
-  my ($self, $study) = @_; 
-  return $study =~ /pubmed/ ? qq{<a href="http://www.ncbi.nlm.nih.gov/$study">$study</a>} : '';
+  my ($self, $study) = @_;
+  
+  if($study =~ /pudbmed/) {
+    return qq{<a href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
+  }
+  
+  elsif($study =~ /^MIM\:/) {
+    my $link;
+    
+    foreach my $mim(split /\,\s*/, $study) {
+      my $id = (split /\:/, $mim)[-1];
+      $link .= ', '.$self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+      $link =~ s/^\, //g;
+    }
+    
+    return $link;
+  }
+  
+  else {
+    return '';
+  }
 }
 
 sub variation_link {
