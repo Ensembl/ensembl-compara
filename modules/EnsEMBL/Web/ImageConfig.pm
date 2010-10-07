@@ -12,7 +12,6 @@ use Sanger::Graphics::TextHelper;
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::OrderedTree;
-use EnsEMBL::Web::RegObj;
 
 # use EnsEMBL::Web::Tools::Misc qw(style_by_filesize); # DO NOT UNCOMMENT OR DELETE THIS LINE - It can cause circular references.
 
@@ -279,7 +278,7 @@ sub load_user_tracks {
     $self->add_das_track('user_data', $source);
   }
 
-  my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
+  my $user = $hub->user;
 
   # Get the tracks that are temporarily stored - as "files" not in the DB....
   # Firstly "upload data" not yet committed to the database...

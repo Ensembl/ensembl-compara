@@ -8,8 +8,6 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Document::Element);
 
 sub add_entry {
@@ -144,7 +142,7 @@ sub init {
       caption => 'Your account',
       url     => $hub->url({
         type     => 'Account',
-        action   => $ENSEMBL_WEB_REGISTRY->get_user ? 'Links' : 'Login',
+        action   => $hub->user ? 'Links' : 'Login',
          time    => time,
          __clear => 1
       })
