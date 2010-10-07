@@ -6,8 +6,8 @@ use strict;
 
 use HTML::Entities qw(encode_entities decode_entities);
 use XHTML::Validator;
+
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -23,7 +23,7 @@ sub content {
   my $strand       = $hub->param('strand');
   my $click_start  = $hub->param('click_start');
   my $click_end    = $hub->param('click_end');
-  my %das          = %{$ENSEMBL_WEB_REGISTRY->get_all_das($hub->species)};
+  my %das          = %{$hub->get_all_das($hub->species)};
   my $slice        = $hub->slice;
   my %strand_map   = ( 1 => '+', -1 => '-' );
   

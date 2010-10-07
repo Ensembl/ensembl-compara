@@ -33,7 +33,7 @@ sub content {
   my $fieldset = $form->add_fieldset('name' => 'sources', 'stripes' => 1);
 
   my $count_added;
-  my @all_das = $ENSEMBL_WEB_REGISTRY->get_all_das();
+  my @all_das = $self->hub->get_all_das;
 
   my $filter = EnsEMBL::Web::Filter::DAS->new({'object' => $object});
   my $sources = $filter->catch($object->param('das_server'));

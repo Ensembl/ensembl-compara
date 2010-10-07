@@ -4,8 +4,6 @@ package EnsEMBL::Web::Configuration::Transcript;
 
 use strict;
 
-use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Configuration);
 
 sub set_default_action {
@@ -165,8 +163,9 @@ sub populate_tree {
 
 sub user_populate_tree {
   my $self        = shift;
-  my $all_das     = $ENSEMBL_WEB_REGISTRY->get_all_das;
-  my $view_config = $self->hub->get_viewconfig(undef, 'ExternalData');
+  my $hub         = $self->hub;
+  my $all_das     = $hub->get_all_das;
+  my $view_config = $hub->get_viewconfig(undef, 'ExternalData');
   my @active_das  = grep { $view_config->get($_) eq 'yes' && $all_das->{$_} } $view_config->options;
   my $ext_node    = $self->tree->get_node('ExternalData');
 
