@@ -11,7 +11,6 @@ use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 use EnsEMBL::Web::Document::HTML::TwoCol;
 use EnsEMBL::Web::Document::SpreadSheet;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -32,7 +31,7 @@ sub content {
 
   return $self->_error('No DAS source specified', 'No parameter passed!', '100%') unless $logic_name;
   
-  my $source = $ENSEMBL_WEB_REGISTRY->get_das_by_logic_name($logic_name);
+  my $source = $hub->get_das_by_logic_name($logic_name);
   
   return $self->_error(qq{DAS source "$logic_name" specified does not exist}, 'Cannot find the specified DAS source key supplied', '100%') unless $source;
   
