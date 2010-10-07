@@ -1,17 +1,20 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Variation::TextDAS;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
-use EnsEMBL::Web::RegObj; # exports web registry
-use EnsEMBL::Web::Document::HTML::TwoCol;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use EnsEMBL::Web::Document::SpreadSheet;
+
 use HTML::Entities qw(encode_entities decode_entities);
 use XHTML::Validator;
-use base qw(EnsEMBL::Web::Component::Variation);
+
+use EnsEMBL::Web::Document::HTML::TwoCol;
+use EnsEMBL::Web::Document::SpreadSheet;
+
 use Data::Dumper;
+
+use base qw(EnsEMBL::Web::Component::Variation);
 
 our $VALIDATE_ERROR = 'Data provided by this DAS source contains HTML markup, '.
                       'but it contains errors or has dangerous content. As a '.
@@ -21,13 +24,9 @@ our $TIMEOUT_MULTIPLIER = 3;
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 1 );
-  $self->ajaxable(  1 );
-  $self->{'validator'} = XHTML::Validator->new('extended');
-}
-
-sub caption {
-  return undef;
+  $self->cacheable(1);
+  $self->ajaxable(1);
+  $self->{'validator'} = new XHTML::Validator('extended');
 }
 
 sub _das_query_object {
@@ -36,50 +35,41 @@ sub _das_query_object {
 }
 
 sub content {
-  my $self = shift;
-  
-  # The proxy object we're operating on variation
-  my $object = $self->object;
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $object       = $self->object;
+  my $species_defs = $hub->species_defs;
   
   # The DAS source this page represents:
-  my $logic_name = $self->hub->referer->{'ENSEMBL_FUNCTION'} || $object->function;
+  my $logic_name = $hub->referer->{'ENSEMBL_FUNCTION'} || $hub->function;
 
-  if (! $logic_name ) {
-    return $self->_error( 'No DAS source specified',
-                          'No parameter passed!',
-                          '100%' );
-  }
+  return $self->_error('No DAS source specified', 'No parameter passed!', '100%') unless $logic_name;
   
-  my $source = $ENSEMBL_WEB_REGISTRY->get_das_by_logic_name( $logic_name );
+  my $source = $hub->get_das_by_logic_name($logic_name);
   
-  if (! $source ) {
-    return $self->_error( sprintf( 'DAS source "%s" specified does not exist', $logic_name ),
-                                   'Cannot find the specified DAS source key supplied',
-                                   '100%' );
-  }
+  return $self->_error(qq{DAS source "$logic_name" specified does not exist}, 'Cannot find the specified DAS source key supplied', '100%') unless $source;
   
   my $html = '';
   
-  # Some sources (e.g. UniProt) have taken to using HTML descriptions...
-  # my ($desc, $warning) = $self->_decode_and_validate( $source->description );
-  # $html .= $warning;
-  # But we don't really want to support this everywhere on the site...
+  # Some sources (e.g. UniProt) have taken to using HTML descriptions
+  # But we don't really want to support this everywhere on the site
   my $desc = $source->description;
   
-  my $table = EnsEMBL::Web::Document::HTML::TwoCol->new();
-  $table->add_row( 'Description', $desc, 1 );
-  if ( my $homepage = $source->homepage ) {
-    $table->add_row( 'Homepage', qq(<a href="$homepage">$homepage</a>), 1 );
+  my $table = new EnsEMBL::Web::Document::HTML::TwoCol;
+  $table->add_row('Description', $desc, 1);
+  
+  if (my $homepage = $source->homepage) {
+    $table->add_row('Homepage', qq{<a href="$homepage">$homepage</a>}, 1);
   }
   
   $html .= $table->render;
   my $query_object = $self->_das_query_object;
   
-  my $engine = Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
+  my $engine = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
     -sources => [ $source ],
-    -proxy   => $object->species_defs->ENSEMBL_WWW_PROXY,
-    -noproxy => $object->species_defs->ENSEMBL_NO_PROXY,
-    -timeout => $object->species_defs->ENSEMBL_DAS_TIMEOUT * $TIMEOUT_MULTIPLIER
+    -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
+    -noproxy => $species_defs->ENSEMBL_NO_PROXY,
+    -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT * $TIMEOUT_MULTIPLIER
   );
   # Perform DAS requests...
   my $data = $engine->fetch_Features( $query_object )->{$logic_name};
