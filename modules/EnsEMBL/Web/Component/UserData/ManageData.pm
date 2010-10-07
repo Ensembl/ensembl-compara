@@ -211,7 +211,7 @@ sub content {
             my $type = $1;
             my $id = $2;
             
-            if (($type eq 'session' && $id != $session->get_session_id)   || 
+            if (($type eq 'session' && $id != $session->session_id)   || 
                 ($type eq 'user' && $logins && $user && $id != $user->id) ||
                 ($type eq 'user' && !($logins && $user))) {
                 $save = '';

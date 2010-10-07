@@ -34,7 +34,7 @@ sub process {
   my $configuration = EnsEMBL::Web::Data::Record::Configuration::User->new($hub->param('id'));
 
   my $string = $configuration->viewconfig;
-  $session->create_session_id($self->r);
+  $session->create_session_id;
   
   foreach my $script_name (@scripts) {
     warn "SETTING CONFIG ", $hub->param('id'), " FOR SCRIPT: ", $script_name;

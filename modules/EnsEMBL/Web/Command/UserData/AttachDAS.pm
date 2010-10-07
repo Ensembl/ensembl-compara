@@ -53,7 +53,7 @@ sub process {
           push @skipped, $source->logic_name;
         }
         
-        $session->configure_das_views($source, $hub); # Turn the source on
+        $session->configure_das_views($source); # Turn the source on
       }
       
       $session->save_das;

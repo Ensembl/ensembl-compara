@@ -123,7 +123,7 @@ sub upload {
   
     if ($file->content) {
       if ($file->save) {
-        my $code = $file->md5 . '_' . $hub->session->get_session_id;
+        my $code = $file->md5 . '_' . $hub->session->session_id;
      
         $param->{'species'} = $hub->param('species') || $hub->species;
         ## Attach data species to session

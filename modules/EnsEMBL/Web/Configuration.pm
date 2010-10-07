@@ -30,7 +30,7 @@ sub new {
 
   my $user       = $hub->user;
   my $session    = $hub->session;
-  my $session_id = $session->get_session_id;
+  my $session_id = $session->session_id;
   my $user_tree  = $self->can('user_populate_tree') && ($user || $session_id);
   my $tree       = $user_tree && $MEMD && $self->tree_cache_key($user, $session) ? $MEMD->get($self->tree_cache_key($user, $session)) : undef; # Trying to get user + session version of the tree from cache
   
@@ -114,7 +114,7 @@ sub tree_cache_key {
   my $key = join '::', ref $self, $self->species, 'TREE';
 
   $key .= '::USER[' . $user->id . ']' if $user;
-  $key .= '::SESSION[' . $session->get_session_id . ']' if $session && $session->get_session_id;
+  $key .= '::SESSION[' . $session->session_id . ']' if $session && $session->session_id;
   
   return $key;
 }
