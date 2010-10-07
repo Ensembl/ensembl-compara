@@ -166,7 +166,12 @@ sub is_child_of {
   return $self->parent_key eq $node->key;
 }
 
-
+sub modify_node {
+  my ($self, $args) = @_;
+  while (my ($k, $v) = each(%$args)) {
+    $self->{$k} = $v;
+  }
+}
 
 sub remove_node {
 ### Remove a node - only if is a leaf node!!
