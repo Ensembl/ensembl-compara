@@ -324,7 +324,7 @@ warn "STORED....";
   my $current_state = save_state();
 
   my $top_panel   = get_top_panel();
-  my $page_tmpl   = get_page_tmpl();
+  my $page_tmpl   = get_page_tmpl($controller->hub);
 
   get_onload();
 
@@ -1038,14 +1038,16 @@ sub get_top_panel{
 
 #----------------------------------------------------------------------
 # 
-sub get_page_tmpl{
-    # Still here? need to build the main table and update the cache
+sub get_page_tmpl {
+  # Still here? need to build the main table and update the cache
+  
+  my $hub = shift;
   my $t = HTML::Template->new( filename => 'page.html.tmpl',
                                cache    => 0,
                                die_on_bad_params => 0,
                                case_sensitive => 1 );
 
-  my( $main_box, $suffix_html ) = get_main_panel();
+  my( $main_box, $suffix_html ) = get_main_panel($hub);
   my %params;
   map{ $params{$_}="<TMPL_VAR $_>" } $t->query;
   $t->param(%params); 
@@ -1065,8 +1067,10 @@ sub get_page_tmpl{
 
 #----------------------------------------------------------------------
 # Generates HTML for main panel
-sub get_main_panel{
+sub get_main_panel {
   # --- MainPanel --
+  
+  my $hub        = shift;
   my $main_panel = EnsEMBL::Web::BlastView::PanelMain->new;
   my $panel_tmpl = '';
 
@@ -1387,7 +1391,7 @@ sub get_main_panel{
         $main_panel->add_block();
         $main_panel->add_block_header({ LABEL => $toggle.$label });
         if( $CGI->param('viewreskaryo') ){
-          &populate_karyotype( $main_panel, $runnable, $result, $alignments );
+          &populate_karyotype($hub, $main_panel, $runnable, $result, $alignments);
         }
       }
 
@@ -1405,7 +1409,7 @@ sub get_main_panel{
         $main_panel->add_block();
         $main_panel->add_block_header({ LABEL => $toggle.$label });
         if( $CGI->param($toggleparam) ){
-          &draw_hsp_vs_query( $main_panel, $runnable, $result, 
+          &draw_hsp_vs_query($hub, $main_panel, $runnable, $result, 
                               $alignments, );
         }
       }
@@ -1664,8 +1668,8 @@ sub update_selection{
 
 #----------------------------------------------------------------------
 # Generates a karyotype image
-sub populate_karyotype{
-
+sub populate_karyotype {
+  my $hub        = shift;
   my $main_panel = shift;
   my $runnable   = shift;
   my $result     = shift;
@@ -1818,12 +1822,10 @@ sub populate_karyotype{
   my $ka = $db->get_KaryotypeBandAdaptor;
   my $sa = $db->get_SliceAdaptor;
 
-  my $chrs_ref = $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_CHROMOSOMES' );
-  my $chr_maxln= $SPECIES_DEFS->get_config( $sp, 'MAX_CHR_LENGTH'      );
-  my $site_type= $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_SITETYPE'    );
-
-  my $session      = $ENSEMBL_WEB_REGISTRY->get_session;
-  my $web_config   = $session->getImageConfig('Vkaryoblast');
+  my $chrs_ref   = $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_CHROMOSOMES' );
+  my $chr_maxln  = $SPECIES_DEFS->get_config( $sp, 'MAX_CHR_LENGTH'      );
+  my $site_type  = $SPECIES_DEFS->get_config( $sp, 'ENSEMBL_SITETYPE'    );
+  my $web_config = $hub->get_imageconfig('Vkaryoblast');
 
   my $num_chrs = scalar( @$chrs_ref );
   $web_config->set_parameters({
@@ -1868,13 +1870,14 @@ sub populate_karyotype{
 #----------------------------------------------------------------------
 # Graphical representation of Hit coverage of HSP sequence
 sub draw_hsp_vs_query{
+  my $hub        = shift;
   my $main_panel = shift;
   my $runnable   = shift;
   my $result     = shift;
   my $aligns     = shift;
 
   my $bucket = EnsEMBL::Web::Container::HSPContainer->new($result, $aligns);
-  my $web_config  = $ENSEMBL_WEB_REGISTRY->get_session->getImageConfig('hsp_query_plot');
+  my $web_config = $hub->get_imageconfig('hsp_query_plot');
   $web_config->set_parameter( 'container_width', $bucket->length );
   $web_config->set_parameter( 'image_width',     640 );
 
