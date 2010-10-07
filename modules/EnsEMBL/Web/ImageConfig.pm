@@ -25,25 +25,24 @@ our $MEMD = new EnsEMBL::Web::Cache;
 #
 
 # Takes two parameters
-# (1) - the adaptor (i.e. an EnsEMBL::Web::Session object)
+# (1) - the hub (i.e. an EnsEMBL::Web::Hub object)
 # (2) - the species to use (defaults to the current species)
 
 sub new {
   my $class   = shift;
-  my $adaptor = shift;
-  my $species = @_ ? shift : ($ENV{'ENSEMBL_SPECIES'} || '');
+  my $hub     = shift;
+  my $species = shift || $hub->species;
   my $type    = $class =~ /([^:]+)$/ ? $1 : $class;
-  my $style   = $adaptor->get_species_defs->ENSEMBL_STYLE || {};
+  my $style   = $hub->species_defs->ENSEMBL_STYLE || {};
+  my $session = $hub->session;
   
   my $self = {
-    _colourmap          => $adaptor->colourmap,
+    hub                 => $hub,
     _font_face          => $style->{'GRAPHIC_FONT'} || 'Arial',
     _font_size          => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
     _texthelper         => new Sanger::Graphics::TextHelper,
-    _db                 => $adaptor->get_adaptor,
     type                => $type,
     species             => $species,
-    species_defs        => $adaptor->get_species_defs,
     general             => {},
     user                => {},
     _useradded          => {}, # contains list of added features
@@ -69,7 +68,7 @@ sub new {
   bless $self, $class;
 
   # Special code here to set species back to default if cannot merge
-  $self->{'species'} = $ENV{'ENSEMBL_SPECIES'} if $species eq 'merged' && !$self->mergeable_config;
+  $self->{'species'} = $hub->species if $species eq 'merged' && !$self->mergeable_config;
   $species = $self->{'species'};
      
   # Check to see if we have a user/session saved copy of tree.... 
@@ -107,23 +106,24 @@ sub new {
   
   # Add user defined data sources
   if ($class =~ /ImageConfig::V/) {
-    $self->load_user_vert_tracks($adaptor);
+    $self->load_user_vert_tracks($session);
   } else {
-    $self->load_user_tracks($adaptor);
+    $self->load_user_tracks($session);
   }
   
   return $self;
 }
 
-sub storable     :lvalue { $_[0]->{'storable'};     } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
-sub altered      :lvalue { $_[0]->{'altered'};      } # Set to one if the configuration has been updated
-sub core_objects :lvalue { $_[0]->{'core_objects'}; }
+sub storable :lvalue { $_[0]->{'storable'}; } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
+sub altered  :lvalue { $_[0]->{'altered'};  } # Set to one if the configuration has been updated
 
+sub hub              { return $_[0]->{'hub'};           }
+sub core_objects     { return $_[0]->hub->core_objects; }
+sub colourmap        { return $_[0]->hub->colourmap;    }
+sub species_defs     { return $_[0]->hub->species_defs; }
+sub texthelper       { return $_[0]->{'_texthelper'};   }
+sub transform        { return $_[0]->{'transform'};     }
 sub mergeable_config { return 0; }
-sub species_defs     { return $_[0]->{'species_defs'}; }
-sub colourmap        { return $_[0]->{'_colourmap'};   }
-sub texthelper       { return $_[0]->{'_texthelper'};  }
-sub transform        { return $_[0]->{'transform'};    }
 
 sub bgcolor  { return $_[0]->get_parameter('bgcolor') || 'background1'; }
 sub bgcolour { return $_[0]->bgcolor; }
@@ -171,7 +171,7 @@ sub load_user_vert_tracks {
   # Add saved tracks, if any
   my $user_sources = {};
   
-  if (my $user = $session->get_adaptor->get_user) {    
+  if (my $user = $self->hub->user) {    
     foreach my $entry ($user->uploads) {
       next unless  $entry->species eq $self->{'species'};
       
@@ -270,7 +270,7 @@ sub load_user_tracks {
   
   return unless $menu;
   
-  my $das = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_all_das;
+  my $das = $self->hub->get_all_das;
 
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
     next if $self->get_node('das_'.$source->logic_name);
@@ -460,7 +460,8 @@ sub _add_flat_file_track {
 }
 
 sub update_from_input {
-  my ($self, $input) = @_;
+  my $self  = shift;
+  my $input = $self->hub->input;
   
   return $self->tree->flush_user if $input->param('reset');
   
