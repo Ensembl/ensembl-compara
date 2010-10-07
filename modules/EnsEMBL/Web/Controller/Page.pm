@@ -68,8 +68,6 @@ sub update_configuration_from_url {
   my @share_ref = $input->param('share_ref');
   my $url;
   
-  $session->set_input($input);
-  
   if (@share_ref) {
     $session->receive_shared_data(@share_ref); # This should push a message onto the message queue
     $input->delete('share_ref');
