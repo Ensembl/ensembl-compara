@@ -300,52 +300,7 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58
         /lustre/scratch103/ensembl/kb3/scratch/hive/release_58/kb3_hsap_cjac_synteny_58/synteny/all.100000.100000.BuildSynteny
     3) Check that the MLSS object in the method_link_species_set is fully defined (the loading script may need fixing?)
 
-10.3 Protein trees/homologues/RNA trees:
-
-  The merge is done by the person in charge of the protein compara production
-  side. The compara release coordinator needs to let him/her know where is the
-  database to merge to. It involves:
-
-  copying the homology db (usually from compara2 to compara1):
-
-  ssh mysqlens@compara1
-  emacs -nw /tmp/avilella_compara_homology_48.copy_options
-  compara2        3306    avilella_compara_homology_48        compara1        3306    avilella_compara_homology_48
-  perl ~avilella/src/ensembl_main/ensembl/misc-scripts/CopyDBoverServer.pl \
-    -pass xxxx -noflush /tmp/avilella_compara_homology_48.copy_options \
-    > /tmp/avilella_compara_homology_47.copy.err 2>&1 &
-
-  and then merging the data in compara1 with:
-
-  ssh mysqlens@compara1
-  bash
-  cd /mysql/data_3306/tmp
-  perl /nfs/acari/avilella/src/ensembl_main/ensembl-compara/scripts/pipeline/merge_protein_data.pl \
-    -host compara1 -user ensadmin -pass xxxx \
-     -src_db avilella_compara_homology_48 \
-    -dest_db avilella_ensembl_compara_48 -socket /mysql/data_3306/mysql.sock
-
-10.4 Families 
-
-    1) Top-up the member and sequence tables using -t and --insert-ignore:
-        time mysqldump --defaults-group-suffix=_compara4 -t --insert-ignore lg4_compara_family_58 \
-            member sequence family family_member mapping_session stable_id_history | \
-        mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
-# 10m in rel.58
-
-    2) Add the previous mapping_session and stable_id_history entries:
-        time mysqldump --defaults-group-suffix=_staging -t --insert-ignore ensembl_compara_57 mapping_session stable_id_history | \
-        mysql --defaults-group-suffix=_compara4 lg4_ensembl_compara_58
-# 3m in rel.58
-
-    3) Check and change to MyISAM tables that need it:
-        ALTER TABLE member   engine=MyISAM;
-# 2.5m in rel.58
-        ALTER TABLE sequence engine=MyISAM;
-# 0.5m in rel.58
-
-
-10.6 Put together ancestral database:
+10.3 Put together ancestral database:
 This is now done using the script copy_ancestral_core.pl. You will need to add any ancestral sequences from the previous release if these have not changed, in addition to adding any new ones. 
 
     1) Create a new core database:
@@ -397,6 +352,48 @@ Merging each source into target is done in two steps (3) and (4) (assuming the t
         SELECT left(name,12) na, count(*), min(seq_region_id), max(seq_region_id), max(seq_region_id)-min(seq_region_id)+1 FROM seq_region GROUP BY na;
 
 ======================================
+
+
+10.4 Merging GeneTrees+Families+NCTrees together is now done by running a mini-pipeline.
+
+    Go to ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file MergeHomologySideTogether_conf.pm
+    
+    It has 6 sections for connecting to databases where you will have to change the names of the databases and possibly their locations:
+        pipeline_db  - is your intermediate target (all protein side pipelines merged together)
+        master_db    - is the main compara master
+        prevrel_db   - should point to the previous release database
+        genetrees_db - should point to the current GeneTrees pipeline database
+        families_db  - should point to the current Families pipeline database
+        nctrees_db   - should point to the current ncRNAtrees pipeline database
+
+    Save the changes, exit the editor and run init_pipeline.pl with this file:
+        init_pipeline.pl MergeHomologySideTogether_conf.pm -password <our_most_secret_password>
+
+    Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
+    This pipeline will create a database with protein side pipeline databases merged together.
+
+
+10.5 Final merger of "protein side" into the release database is done by running another mini-pipeline.
+
+    Go to (or stay in) ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file MergeHomologyIntoRelease_conf.pm
+    
+    It has 3 sections for connecting to databases where you will have to change the names of the databases and possibly their locations:
+        pipeline_db        - is a hive database that is only used for job tracking - it may/should be removed right after the pipeline is done
+        merged_homology_db - is the result of the previous step (protein side databases merged together)
+        rel_db             - is the main release database
+
+    Save the changes, exit the editor and run init_pipeline.pl with this file:
+        init_pipeline.pl MergeHomologyIntoRelease_conf.pm -password <our_most_secret_password>
+
+    Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
+    This pipeline will merge the protein side tables into the main release database.
+
+10.6 Cleanup
+
+    After you are happy about the result of both mergers
+    you can drop both "compara_homology_merged" and "compara_full_merge" databases.
+
+
 
 11. Drop method_link_species_set entries for alignments which did not make it.
 
