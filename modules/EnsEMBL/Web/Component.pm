@@ -189,27 +189,32 @@ sub glossary_mouseover {
 
 # Attach all das sources from an image config
 sub _attach_das {
-  my ($self, $wuc) = @_;
+  my ($self, $image_config) = @_;
 
   # Look for all das sources which are configured and turned on
   my @das_nodes = map {
     $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logicnames')||[]} : ()
-  }  $wuc->tree->nodes;
+  }  $image_config->tree->nodes;
   
   return unless @das_nodes; # Return if no sources to be drawn
- 
+  
+  my $hub = $self->hub;
+
   # Check to see if they really exists, and get entries from get_all_das call
-  my %T = %{$ENSEMBL_WEB_REGISTRY->get_all_das($self->hub->species)};
+  my %T = %{$hub->get_all_das};
   my @das_sources = @T{@das_nodes};
+
   return unless @das_sources; # Return if no sources exist
+  
+  my $species_defs = $hub->species_defs;
 
   # Cache the DAS Coordinator object (with key das_coord)
-  $wuc->cache('das_coord',  
+  $image_config->cache('das_coord',  
     Bio::EnsEMBL::ExternalData::DAS::Coordinator->new(
       -sources => \@das_sources,
-      -proxy   => $self->hub->species_defs->ENSEMBL_WWW_PROXY,
-      -noproxy => $self->hub->species_defs->ENSEMBL_NO_PROXY,
-      -timeout => $self->hub->species_defs->ENSEMBL_DAS_TIMEOUT
+      -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
+      -noproxy => $species_defs->ENSEMBL_NO_PROXY,
+      -timeout => $species_defs->ENSEMBL_DAS_TIMEOUT
     )
   );
 }
