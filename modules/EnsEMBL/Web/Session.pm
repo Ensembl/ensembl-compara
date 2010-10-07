@@ -34,17 +34,13 @@ package EnsEMBL::Web::Session;
 use strict;
 
 use Apache2::RequestUtil;
-use Data::Dumper qw(Dumper);
-use Storable qw(nfreeze thaw);
 use Time::HiRes qw(time);
 
-use Bio::EnsEMBL::ColourMap;
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
 use EnsEMBL::Web::DASConfig;
 use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::ImageConfig;
 use EnsEMBL::Web::Tools::Encryption 'checksum';
 use EnsEMBL::Web::ViewConfig;
@@ -52,160 +48,149 @@ use EnsEMBL::Web::ViewConfig;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $args) = @_;
+  my ($class, $hub, $cookie, $args) = @_;
+  my $session_id;
+  
+  $args ||= {};
+  
+  if ($cookie) {
+    $cookie->retrieve($hub->apache_handle);
+    $session_id = $cookie->get_value;
+  }
   
   my $self = {
-    adaptor            => $args->{'adaptor'},
-    configs            => {},
-    cookie             => $args->{'cookie'},
-    colourmap          => $args->{'colourmap'} || new Bio::EnsEMBL::ColourMap($args->{'species_defs'}),
+    hub                => $hub,
+    cookie             => $cookie,
+    session_id         => $session_id,
+    species            => $hub->species,
     das_parser         => $args->{'das_parser'},
     das_sources        => $args->{'das_sources'},
+    path               => [ 'EnsEMBL::Web', reverse @{$args->{'path'} || []} ],
+    das_image_defaults => [ 'display', 'off' ],
+    view_configs       => {},
     data               => {},
     image_configs      => {},
-    input              => $args->{'input'},
-    path               => [ 'EnsEMBL::Web', reverse @{$args->{'path'}||[]} ],
-    request            => $args->{'request'},
-    session_id         => $args->{'session_id'},
-    species            => $args->{'species'},
-    species_defs       => $args->{'species_defs'},
-    das_image_defaults => [ 'display', 'off' ],
   };
 
   bless $self, $class;  
   return $self;
 }
 
-sub get_cookie { return $_[0]->{'cookie'}; }
-sub set_cookie { $_[0]->{'cookie'} = $_[1]; }
+sub hub  { return $_[0]{'hub'};  }
+sub path { return $_[0]{'path'}; }
+sub site { return '';            }
 
-sub get_adaptor { return $_[0]->{'adaptor'}; }
-sub set_adaptor { $_[0]->{'adaptor'} = $_[1]; }
+sub session_id    :lvalue { $_[0]{'session_id'};    }
+sub cookie        :lvalue { $_[0]{'cookie'};        }
+sub view_configs  :lvalue { $_[0]{'view_configs'};  }
+sub image_configs :lvalue { $_[0]{'image_configs'}; }
 
-sub get_input { return $_[0]->{'input'}; }
-sub set_input { $_[0]->{'input'} = $_[1]; }
-
-sub get_request { return $_[0]->{'request'}; }
-sub set_request { $_[0]->{'request'} = $_[1]; }
-
-sub get_species_defs { return $_[0]->{'species_defs'}; }
-sub set_species_defs { $_[0]->{'species_defs'} = $_[1]; }
-
-sub get_session_id { return $_[0]->{'session_id'}; }
-sub set_session_id { $_[0]->{'session_id'} = $_[1]; }
-
-sub get_configs { return $_[0]->{'configs'}; }
-sub set_configs { $_[0]->{'configs'} = $_[1]; }
-
-sub get_das_sources { return $_[0]->{'das_sources'}; }
-
-sub get_image_configs { return $_[0]->{'image_configs'}; }
-sub set_image_configs { $_[0]->{'image_configs'} = $_[1]; }
-
-sub get_path { return $_[0]->{'path'}; }
-
-sub get_species { return $_[0]->{'species'}; }
-sub set_species { $_[0]->{'species'} = $_[1]; }
-
-sub get_site { return ''; }
-
-sub input {
-### Wrapper accessor to keep code simple...
-  my $self = shift;
-  if (@_) {
-    $self->{'input'} = @_;
-  }
-  return $self->{'input'};
+sub DEPRECATED {
+  my @caller = caller(1);
+  my $warn   = "$caller[3] is deprecated and will be removed in release 61. ";
+  my $func   = shift || [split '::', $caller[3]]->[-1];
+  $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
+  warn $warn;
 }
 
-sub colourmap {
-### Gets the colour map
-  my $self = shift;
-  my $colourmap = $self->{'colourmap'};
-  unless ($colourmap) {
-    $self->{'colourmap'} = Bio::EnsEMBL::ColourMap->new( $self->get_species_defs );
-    $colourmap = $self->{'colourmap'};
-  }
-  return $colourmap;
-}
+sub getImageConfig { DEPRECATED('get_imageconfig'); return shift->hub->get_imageconfig(@_); }
+sub getViewConfig  { DEPRECATED('get_viewconfig');  return shift->hub->get_viewconfig(@_);  }
 
 sub create_session_id {
-### Gets session ID if the session ID doesn't exist
-### a new one is grabbed and added to the users cookies
-  my ($self, $r) = @_;
-  $r = (!$r && Apache2::RequestUtil->can('request')) ? Apache2::RequestUtil->request() : undef;
-  my $session_id = $self->get_session_id;
-  return $session_id if $session_id;
-  $session_id = EnsEMBL::Web::Data::Session->create_session_id;
-  $self->set_session_id( $session_id );
-  $self->get_cookie->create( $r, $session_id ) if $r;  
-  return $session_id;
+  ### Gets session ID if the session ID doesn't exist
+  ### a new one is grabbed and added to the users cookies
+  
+  my $self = shift;
+  
+  if (!$self->session_id) {
+    my $session_id = EnsEMBL::Web::Data::Session->create_session_id;
+    $self->cookie->create($self->hub->apache_handle, $session_id);
+    $self->session_id = $session_id;
+  }
+  
+  return $self->session_id;
 }
 
-sub _temp_store {
-  my( $self, $name, $code ) = @_;
-### At any point can copy back value from image_config into the temporary storage space for the config!!
-  $self->{'configs'}{$name}{'image_config_data'}{$code} =
-    $self->{'configs'}{$name}{'user'}{'image_configs'}{$code} =
-      $self->deepcopy( $self->{'image_configs'}{$code}{'user'} );
-# warn Dumper( $self->{'configs'}{$name}{'user'}{'image_configs'}{$code} );
+sub das_parser {
+  my $self         = shift;
+  my $species_defs = $self->hub->species_defs;
+  
+  return $self->{'das_parser'} ||= new Bio::EnsEMBL::ExternalData::DAS::SourceParser(
+    -timeout  => $species_defs->ENSEMBL_DAS_TIMEOUT,
+    -proxy    => $species_defs->ENSEMBL_WWW_PROXY,
+    -noproxy  => $species_defs->ENSEMBL_NO_PROXY
+  );
 }
 
+# TODO: Doesn't seem to be used. Delete? 
 sub reset_config {
-### Reset the config given by $config name in the storage hash
-  my( $self, $configname ) = @_;
-  return unless exists $self->{'configs'}{ $configname };
-  $self->{'configs'}{ $configname }{ 'config' }->reset();
+  ### Reset the config given by $config name in the storage hash
+  
+  my ($self, $configname) = @_;
+  
+  return unless exists $self->{'view_configs'}{$configname};
+  $self->{'view_configs'}{$configname}{'config'}->reset;
 }
 
 sub store {
-### Write session back to the database if required...
-### Only work with storable configs and only if they or attached
-### image configs have been altered!
-### 
-### Comment: not really, we also have das and tmp data which needs
-### to be stored as well
-  my ($self, $r) = @_;
-  my @storables = @{ $self->storable_data($r) };
-  foreach my $storable (@storables) {
+  ### Write session back to the database if required...
+  ### Only work with storable configs and only if they or attached
+  ### image configs have been altered!
+  ### 
+  ### Comment: not really, we also have das and tmp data which needs
+  ### to be stored as well
+  
+  my $self = shift;
+  
+  foreach my $storable (grep $_->{'config_key'}, @{$self->storable_data}) {
     EnsEMBL::Web::Data::Session->set_config(
-      session_id => $self->create_session_id($r),
+      session_id => $self->create_session_id,
       type       => 'script',
-      code       => $storable->{config_key},
-      data       => $storable->{data},
-    ) if $storable->{config_key};
+      code       => $storable->{'config_key'},
+      data       => $storable->{'data'},
+    );
   }
+  
   $self->save_das;
 }
 
 sub storable_data {
   ### Returns an array ref of hashes suitable for dumping to a database record. 
-  my($self,$r) = @_;
+  
+  my $self        = shift;
+  my $hub         = $self->hub;
   my $return_data = [];
-  foreach my $config_key ( keys %{$self->{'configs'}||{}} ) {
-    my $sc_hash_ref = $self->{'configs'}{$config_key}||{};
+  
+  foreach my $config_key (keys %{$self->{'view_configs'} || {}}) {
+    my $sc_hash_ref = $self->{'view_configs'}{$config_key} || {};
+    
     ## Cannot store unless told to do so by script config
     next unless $sc_hash_ref->{'config'}->storable;
+    
     ## Start by setting the to store flag to 1 if the script config has been updated!
     my $to_store = $sc_hash_ref->{'config'}->altered;
+    
     my $data = {
-      'diffs'         => $sc_hash_ref->{'config'}->get_user_settings(),
-      'image_configs' => {}
+      diffs         => $sc_hash_ref->{'config'}->get_user_settings,
+      image_configs => {}
     };
-
+    
     ## get the script config diffs
-    foreach my $image_config_key ( keys %{$sc_hash_ref->{'config'}->{'_image_config_names'}||{} }) {
-      my $image_config = $self->{'image_configs'}{$image_config_key};
-      $image_config = $self->getImageConfig($image_config_key,$image_config_key) unless $image_config;
-      next          unless $image_config->storable; ## Cannot store unless told to do so by image config
-      $to_store = 1 if     $image_config->altered;  ## Only store if image config has changed...
-      $data->{'image_configs'}{$image_config_key}  = $image_config->get_user_settings();
+    foreach my $image_config_key (keys %{$sc_hash_ref->{'config'}->{'_image_config_names'} || {}}) {
+      my $image_config = $self->{'image_configs'}{$image_config_key} || $hub->get_imageconfig($image_config_key, $image_config_key);
+      
+      next unless $image_config->storable;      ## Cannot store unless told to do so by image config
+      
+      $to_store = 1 if $image_config->altered;  ## Only store if image config has changed
+      
+      $data->{'image_configs'}{$image_config_key} = $image_config->get_user_settings;
     }
-    push @{ $return_data }, { config_key => $config_key, data => $data } if $to_store;
+    
+    push @$return_data, { config_key => $config_key, data => $data } if $to_store;
   }
+  
   return $return_data; 
 }
-
 
 ###################################################################################################
 ##
@@ -214,139 +199,122 @@ sub storable_data {
 ###################################################################################################
 
 sub get_cached_data {
-### Retrieve the data from cache
+  ### Retrieve the data from cache
+  
   my $self = shift;
-  my %args = (
-    type => 'tmp',
-    @_,
-  );
+  my %args = ( type => 'tmp', @_ );
 
-  if ($args{code}) {
-    ## Code is spcified
-    $self->{'data'}{$args{type}}{$args{code}}
-      if $self->{'data'}{$args{type}}{$args{code}};
-  } elsif ($self->{'data'}{$args{type}}) {
-    ## Code is not spcified // wantarray or not?
-    my ($code) = keys %{ $self->{'data'}{$args{type}} };
-    return wantarray ? values %{ $self->{'data'}{$args{type}} }
-                     : $self->{'data'}{$args{type}}{$code};
+  if ($args{'code'}) {
+    ## Code is specified
+    return $self->{'data'}{$args{'type'}}{$args{'code'}} if $self->{'data'}{$args{'type'}}{$args{'code'}};
+  } elsif ($self->{'data'}{$args{'type'}}) {
+    ## Code is not specified // wantarray or not?
+    my ($code) = keys %{$self->{'data'}{$args{'type'}}};
+    return wantarray ? values %{$self->{'data'}{$args{'type'}}} : $self->{'data'}{$args{'type'}}{$code};
   }
-
 }
 
 sub get_data {
-### Retrieve the data
+  ### Retrieve the data
+  
   my $self = shift;
-  my %args = (
-    type => 'upload',
-    @_,
-  );
+  my %args = ( type => 'upload', @_ );
 
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->get_session_id,
-    type       => $args{type},
-    code       => $args{code},
+    session_id => $self->session_id,
+    type       => $args{'type'},
+    code       => $args{'code'},
   );
 
   ## No session so cannot have anything configured!
-  return unless $self->get_session_id;
+  return unless $self->session_id;
 
   ## Have a look in the cache
-  return $self->get_cached_data(%args)
-      if $self->get_cached_data(%args);
+  return $self->get_cached_data(%args) if $self->get_cached_data(%args);
 
-  $self->{'data'}{$args{type}} ||= {};
+  $self->{'data'}{$args{'type'}} ||= {};
 
   ## Get all data of the given type from the database!
   my @entries = EnsEMBL::Web::Data::Session->get_config(
-    session_id => $self->get_session_id,
+    session_id => $self->session_id,
     %args,
   );
   
-  $self->{'data'}{$args{type}}{$_->code} = $_->data for @entries;
+  $self->{'data'}{$args{'type'}}{$_->code} = $_->data for @entries;
 
   return $self->get_cached_data(%args);
 }
 
 sub set_data {
   my $self = shift; 
-  my %args = (
-    type => 'upload',
-    @_,
-  );
+  my %args = ( type => 'upload', @_ );
 
-  return unless $args{type} && $args{code};
+  return unless $args{'type'} && $args{'code'};
 
   my $data = $self->get_data(
-    type => $args{type},
-    code => $args{code},
+    type => $args{'type'},
+    code => $args{'code'},
   );
 
-  $self->{'data'}{$args{type}}{$args{code}} = {
-    %{ $data || {} },
-    type => $args{type},
-    code => $args{code},
+  $self->{'data'}{$args{'type'}}{$args{'code'}} = {
+    %{$data || {}},
+    type => $args{'type'},
+    code => $args{'code'},
     %args,
   };
   
   $self->save_data(
-    type => $args{type},
-    code => $args{code},
+    type => $args{'type'},
+    code => $args{'code'},
   );
 }
 
 sub purge_data {
   my $self = shift; 
-  my %args = (
-    type => 'upload',
-    @_,
-  );
+  my %args = ( type => 'upload', @_ );
   
-  if ($args{code}) {
-    delete $self->{'data'}{$args{type}}{$args{code}};
+  if ($args{'code'}) {
+    delete $self->{'data'}{$args{'type'}}{$args{'code'}};
   } else {
-    $self->{'data'}{$args{type}} = {};
+    $self->{'data'}{$args{'type'}} = {};
   }
   
   $self->save_data(%args);
 }
 
-## For multiple objects, such as upload or urls
 sub add_data {
+  ### For multiple objects, such as upload or urls
+  
   my $self = shift; 
-  my %args = (
-    type => 'upload',
-    @_,
-  );
+  my %args = ( type => 'upload', @_ );
   
   ## Unique code
-  $args{code} ||= time;
+  $args{'code'} ||= time;
   $self->set_data(%args);
 
-  return $self->get_data(type => $args{type}, code => $args{code});
+  return $self->get_data(type => $args{'type'}, code => $args{'code'});
 }
 
 sub save_data {
-### Save all data back to the database
+  ### Save all data back to the database
+  
   my $self = shift;
-  my %args = (
-    type => 'upload',
-    @_,
-  );
+  my %args = ( type => 'upload', @_ );
+  
   $self->create_session_id;
   
   EnsEMBL::Web::Data::Session->reset_config(
     %args,
-    session_id => $self->get_session_id,
+    session_id => $self->session_id,
   );
   
   foreach my $data ($self->get_data(%args)) {
     next unless $data && %$data;
     
     EnsEMBL::Web::Data::Session->set_config(
-      session_id => $self->get_session_id,
-      type       => $args{type},
-      code       => $data->{code},
+      session_id => $self->session_id,
+      type       => $args{'type'},
+      code       => $data->{'code'},
       data       => $data,
     );    
   }
@@ -360,7 +328,6 @@ sub save_data {
 ###################################################################################################
 
 sub receive_shared_data {
-  # Share
   my ($self, @share_refs) = @_; 
   
   my (@success, @failure);
@@ -370,12 +337,12 @@ sub receive_shared_data {
     
     if ($share_ref =~ /^(\d+)-(\w+)$/) {
       # User record:
-      my $id = $1;
+      my $id       = $1;
       my $checksum = $2;
       
       die 'Sharing violation' unless checksum($id) ne $checksum;
       
-      $record = EnsEMBL::Web::Data::Record::Upload::User->new($id);
+      $record = new EnsEMBL::Web::Data::Record::Upload::User($id);
     } else {
       # Session record:
       $record = EnsEMBL::Web::Data::Session->retrieve(code => $share_ref);
@@ -390,25 +357,25 @@ sub receive_shared_data {
   }
   
   if (@failure) {
-    my $n = scalar @failure;
+    my $n   = scalar @failure;
     my $msg = "The data has been removed from $n of the shared sets that you are looking for.";
     
     $self->add_data(
-      type => 'message', 
-      code => 'no_data:' . (join ',', sort @failure), 
-      message => $msg, 
+      type     => 'message', 
+      code     => 'no_data:' . (join ',', sort @failure), 
+      message  => $msg, 
       function => '_warning'
     );
   }
   
   if (@success) {
     my $tracks = join '</li><li>', @success;
-    $tracks = "<ul><li>$tracks</li></ul>";
+    $tracks    = "<ul><li>$tracks</li></ul>";
     
     $self->add_data(
-      type => 'message', 
-      code => 'shared_data:' . (join ',', map $_[0], @share_refs),
-      message => "The following added tracks displayed in the image below are shared data:$tracks", 
+      type     => 'message', 
+      code     => 'shared_data:' . (join ',', map $_[0], @share_refs),
+      message  => "The following added tracks displayed in the image below are shared data:$tracks", 
       function => '_info'
     );
   }
@@ -422,51 +389,47 @@ sub receive_shared_data {
 sub get_all_das {
   my $self    = shift;
   my $species = shift || $ENV{'ENSEMBL_SPECIES'};
-  
-  if ( $species eq 'common' ) {
-    $species = '';
-  }
+  $species    = '' if $species eq 'common';
   
   ## TODO: get rid of session getters,
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->get_session_id,
+    session_id => $self->session_id,
     type       => 'das',
   );  
 
   # If there is no session, there are no configs
-  return ({},{}) unless $self->get_session_id;
+  return ({}, {}) unless $self->session_id;
   
   # If the cache hasn't been initialised, do it
-  if ( ! $self->{'das_sources'} ) {
-    
+  if (!$self->{'das_sources'}) {
     $self->{'das_sources'} = {};
     
     # Retrieve all DAS configurations from the database
     my @configs = EnsEMBL::Web::Data::Session->get_config(
-      session_id => $self->get_session_id,
+      session_id => $self->session_id,
       type       => 'das'
     );
     
     foreach my $config (@configs) {
       $config->data || next;
-      # Create new DAS source from value in database...
-      my $das = EnsEMBL::Web::DASConfig->new_from_hashref( $config->data );
-      $das->category( 'session' ); # paranoia...
-      $self->{'das_sources'}{ $das->logic_name } = $das;
+      # Create new DAS source from value in database
+      my $das = EnsEMBL::Web::DASConfig->new_from_hashref($config->data);
+      $das->category('session');
+      $self->{'das_sources'}{$das->logic_name} = $das;
     }
   }
   
-  my %by_name = ();
-  my %by_url  = ();
-  for my $das ( values %{ $self->{'das_sources'}} ) {
-    unless ($species eq 'ANY') {
-      $das->matches_species( $species ) || next;
-    }
+  my %by_name;
+  my %by_url;
+  
+  foreach my $das (values %{$self->{'das_sources'}}) {
+    next unless $species eq 'ANY' && $das->matches_species($species);
+    
     $by_name{$das->logic_name} = $das;
-    $by_url {$das->full_url  } = $das;
+    $by_url {$das->full_url}   = $das;
   }
   
-  return wantarray ? ( \%by_name, \%by_url ) : \%by_name;
+  return wantarray ? (\%by_name, \%by_url) : \%by_name;
 }
 
 # Save all session-specific DAS sources back to the database
@@ -479,19 +442,19 @@ sub get_all_das {
 sub save_das {
   my $self = shift;
   
-  foreach my $source ( values %{ $self->get_all_das('ANY') } ) {
+  foreach my $source (values %{$self->get_all_das('ANY')}) {
     # If the source hasn't changed in some way, skip it
     next unless $source->is_altered;
+    
     # Delete moved or deleted records
-    if( $source->is_deleted || !$source->is_session ) {
+    if ($source->is_deleted || !$source->is_session) {
       EnsEMBL::Web::Data::Session->reset_config(
         session_id => $self->create_session_id,
         type       => 'das',
         code       => $source->logic_name,
       );
-    }
-    # Create new source records
-    else {
+    } else {
+      # Create new source records
       EnsEMBL::Web::Data::Session->set_config(
         session_id => $self->create_session_id,
         type       => 'das',
@@ -500,7 +463,6 @@ sub save_das {
       );
     }
   }
-  
 }
 
 # This function will make sure that a das source is attached with a unique name
@@ -509,38 +471,34 @@ sub save_das {
 # If it's only the name that is the same then the function will provide a unique
 # name for the new source , e.g name_1
 sub _get_unique_source_name {
-  my( $self, $source ) = @_;
+  my ($self, $source) = @_;
+  my @sources = $self->hub->get_all_das;
   
-  my @sources = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_all_das;
-  for ( my $i = 0; 1; $i++ ) {
+  for (my $i = 0; 1; $i++) {
     my $test_name = $i ? $source->logic_name . "_$i" : $source->logic_name;
     my $test_url  = $i ? $source->full_url   . "_$i" : $source->full_url;
     
     my $test_source = $sources[0]->{$test_name} || $sources[1]->{$test_url};
-    if ( $test_source ) {
-      if ( $source->equals( $test_source ) ) {
-        return;
-      }
+    
+    if ($test_source) {
+      return if $source->equals($test_source);
       next;
     }
     
     return $test_name;
   }
-  
 }
 
 # Add a new DAS source within the session
 sub add_das {
-  my ( $self, $das ) = @_;
+  my ($self, $das) = @_;
   
   # If source is different to any thing added so far, add it
-warn "ADD $das...";
-  if( my $new_name = $self->_get_unique_source_name($das) ) {
-warn ">> $new_name <<";
-    $das->logic_name( $new_name );
-    $das->category  ( 'session' );
+  if (my $new_name = $self->_get_unique_source_name($das)) {
+    $das->logic_name($new_name);
+    $das->category('session');
     $das->mark_altered;
-    $self->{'das_sources'}{ $new_name } = $das;
+    $self->{'das_sources'}{$new_name} = $das;
     return  1;
   }
   
@@ -550,14 +508,16 @@ warn ">> $new_name <<";
 
 # Switch on a DAS source for the current view/image (if it is suitable)
 sub configure_das_views {
-  my ($self, $das, $hub, $track_options) = @_;
+  my ($self, $das, $track_options) = @_;
+  my $hub         = $self->hub;
   my $referer     = $hub->referer;
   my $this_type   = $referer->{'ENSEMBL_TYPE'}   || $ENV{'ENSEMBL_TYPE'};
   my $this_action = $referer->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
   my $this_image  = $referer->{'ENSEMBL_IMAGE'};
-  $track_options->{'display'} ||= 'normal';
-  my $this_vc     = $self->getViewConfig($this_type, $this_action, $hub);
+  my $this_vc     = $hub->get_viewconfig($this_type, $this_action, $hub);
   my %this_ics    = $this_vc->image_configs;
+  
+  $track_options->{'display'} ||= 'normal';
   
   # This method has to deal with two types of configurations - those of views
   # and those of images. Non-positional DAS sources are attached to views, and
@@ -573,91 +533,84 @@ sub configure_das_views {
   # an override. But don't trust the override to always indentify an image that
   # supports DAS!
   my @this_images = grep {
-    $this_ics{$_} eq 'das' && # DAS-compatible image
+    $this_ics{$_} eq 'das'              && # DAS-compatible image
     (!$this_image || $this_image eq $_) && # optional override
-    $das->is_on( $_ ) # DAS source is suitable for this image
+    $das->is_on($_)                        # DAS source is suitable for this image
   } keys %this_ics;
     
   # If source is suitable for this VIEW (i.e. not image) - Gene/Protein DAS
-  if ( $das->is_on( "$this_type" ) ) {
+  if ($das->is_on($this_type)) {
     # Need to set default to 'no' before we can set it to 'yes'
-    if ( !$this_vc->is_option( $das->logic_name ) ) {
-      $this_vc->_set_defaults( $das->logic_name, 'no'  );
-    }
-    $this_vc->set( $das->logic_name, 'yes' );
+    $this_vc->_set_defaults($das->logic_name, 'no') unless $this_vc->is_option($das->logic_name);
+    $this_vc->set($das->logic_name, 'yes');
   }
+  
   # For all IMAGES the source needs to be turned on for
-  for my $image ( @this_images ) {
-    my $ic = $self->getImageConfig( $image, $image );
-    my $n = $ic->get_node( 'das_' . $das->logic_name );
-    if( !$n ) {
-      my %tmp = ( map( { ($_=>'') } keys %$track_options ), @{$self->{'das_image_defaults'}} );
-      $n = $ic->tree->create_node( 'das_' . $das->logic_name, \%tmp );
+  foreach my $image (@this_images) {
+    my $ic = $hub->get_imageconfig($image, $image);
+    my $n  = $ic->get_node('das_' . $das->logic_name);
+    
+    if (!$n) {
+      my %tmp = ( map( { $_ => '' } keys %$track_options ), @{$self->{'das_image_defaults'}} );
+      $n = $ic->tree->create_node('das_' . $das->logic_name, \%tmp);
     }
-    $n->set_user( %{ $track_options } );
+    
+    $n->set_user(%$track_options);
     $ic->altered = 1;
   }
   
   return;
 }
 
-sub get_das_parser {
-  my $self = shift;
-  $self->{'das_parser'} ||= Bio::EnsEMBL::ExternalData::DAS::SourceParser->new(
-    -timeout  => $self->get_species_defs->ENSEMBL_DAS_TIMEOUT,
-    -proxy    => $self->get_species_defs->ENSEMBL_WWW_PROXY,
-    -noproxy  => $self->get_species_defs->ENSEMBL_NO_PROXY,
-  );
-  return $self->{'das_parser'};
-}
-
 sub add_das_from_string {
-  my ( $self, $string, $view_details, $track_options ) = @_;
+  my ($self, $string, $view_details, $track_options) = @_;
 
-  my @existing = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_all_das();
-  my $parser = $self->get_das_parser();
-  my ($server, $identifier) = $parser->parse_das_string( $string );
+  my @existing = $self->hub->get_all_das;
+  my $parser   = $self->das_parser;
+  my ($server, $identifier) = $parser->parse_das_string($string);
+  
   # If we couldn't reliably parse an identifier (i.e. string is not a URL),
   # assume it is a registry ID
-#warn "... $string - $server - $identifier";
-  if ( !$identifier ) {
+  if (!$identifier) {
     $identifier = $string;
-    $server     = $self->get_species_defs->DAS_REGISTRY_URL;
+    $server     = $self->hub->species_defs->DAS_REGISTRY_URL;
   }
 
   # Check if the source has already been added, otherwise add it
   my $source = $existing[0]->{$identifier} || $existing[1]->{"$server/$identifier"};
   my $no_coord_system;
-  unless ($source) {
+  
+  if (!$source) {
     # If not, parse the DAS server to get a list of sources...
     eval { 
-      for ( @{ $parser->fetch_Sources( -location => $server ) } ) { 
+      foreach (@{$parser->fetch_Sources( -location => $server )}) { 
         # ... and look for one with a matcing URI or DSN
-        if ( $_->logic_name eq $identifier || $_->dsn eq $identifier ) { 
-          if (!@{ $_->coord_systems }) { 
-          $no_coord_system =  "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
-          return;  
-          } 
-          $source = EnsEMBL::Web::DASConfig->new_from_hashref( $_ ); 
-          $self->add_das( $source );
+        if ($_->logic_name eq $identifier || $_->dsn eq $identifier) { 
+        
+          if (!@{$_->coord_systems}) { 
+            $no_coord_system =  "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
+            return;  
+          }
+          
+          $source = EnsEMBL::Web::DASConfig->new_from_hashref($_); 
+          $self->add_das($source);
           last;
         }
       }
     };
-    if ($@) { 
-      return "DAS error: $@";
-    }
+    
+    return "DAS error: $@" if $@;
   }
 
-  if( $source ) {
+  if ($source) {
     # so long as the source is 'suitable' for this view, turn it on
-    $self->configure_das_views( $source, $view_details, $track_options );
-  } elsif ( $no_coord_system ) {
+    $self->configure_das_views($source, $view_details, $track_options);
+  } elsif ($no_coord_system) {
     return $no_coord_system;
   } else { 
     return "Unable to find a DAS source named $identifier on $server";
   }
-
+  
   return;
 }
 
@@ -667,19 +620,19 @@ sub apply_to_view_config {
   my ($self, $view_config, $type, $key) = @_;
   
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->get_session_id,
+    session_id => $self->session_id,
     type       => $type,
     code       => $key
   );  
   
-  $view_config->add_class("${_}::ViewConfig::$key") for @{$self->get_path};
+  $view_config->add_class("${_}::ViewConfig::$key") for @{$self->path};
   
   my $image_config_data = {};
   
-  if ($self->get_session_id && $view_config->storable) {
+  if ($self->session_id && $view_config->storable) {
     # Let us see if there is an entry in the database and load it into the script config and store any other data which comes back
     my $config = EnsEMBL::Web::Data::Session->get_config(
-      session_id => $self->get_session_id,
+      session_id => $self->session_id,
       type       => 'script',
       code       => $key,
     );
@@ -690,7 +643,7 @@ sub apply_to_view_config {
     }
   }
   
-  $self->{'configs'}{$key} = {
+  $self->{'view_configs'}{$key} = {
     config            => $view_config,
     image_configs     => {},                # List of attached image configs
     image_config_data => $image_config_data # Data retrieved from database to define image config settings.
@@ -703,13 +656,13 @@ sub apply_to_image_config {
   my ($self, $image_config, $type, $key) = @_;
   
   EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->get_session_id,
+    session_id => $self->session_id,
     type       => $type,
-    code       => $key,
-  ); 
+    code       => $key || $type,
+  );
   
-  foreach my $script (keys %{$self->{'configs'} || {}}) {
-    my $ic = $self->{'configs'}{$script}{'image_config_data'}{$type} || {};
+  foreach my $script (keys %{$self->{'view_configs'} || {}}) {
+    my $ic = $self->{'view_configs'}{$script}{'image_config_data'}{$type} || {};
     
     $image_config->tree->{'_user_data'}{$_} = $self->deepcopy($ic->{$_}) for keys %$ic;
   }
@@ -718,71 +671,12 @@ sub apply_to_image_config {
   $self->{'image_configs'}{$key} = $image_config if $key;
 }
 
-sub getViewConfig {
-  warn 'DEPRECATED. Use EnsEMBL::Web::Hub->get_viewconfig';
-  
-  ### Create a new {{EnsEMBL::Web::ViewConfig}} object for the script passed
-  ### Loops through core and all plugins looking for a EnsEMBL::*::ViewConfig::$script
-  ### package and if it exists calls the function init() on the package to set
-  ### (a) the default values, (b) whether or not the user can over-ride these settings
-  ### loaded in the order: core first, followed each of the plugin directories
-  ### (from bottom to top in the list in conf/Plugins.pm)
-  ###
-  ### If a session exists and the code is storable connect to the database and retrieve
-  ### the data from the session_data table
-  ###
-  ### Then loop through the {{EnsEMBL::Web::Input}} object and set anything in this
-  ### Keep a record of what the user has changed
-  
-  my ($self, $type, $action, $hub) = @_;
-  my $key = "${type}::$action";
-
-  # TODO: get rid of session getters,
-  EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->get_session_id,
-    type       => $type,
-    code       => $key
-  );  
-
-  if (!$self->{'configs'}{$key}) {
-    my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $hub);
-    
-    foreach my $root (@{$self->get_path}) {
-      $view_config->add_class("${root}::ViewConfig::$key");
-    }
-    
-    my $image_config_data = {};
-    
-    if ($self->get_session_id && $view_config->storable) {
-      # Let us see if there is an entry in the database and load it into the script config and store any other data which comes back
-      my $config = EnsEMBL::Web::Data::Session->get_config(
-        session_id => $self->get_session_id,
-        type       => 'script',
-        code       => $key,
-      );
-      
-      if ($config && $config->data) {
-        $view_config->set_user_settings($config->data->{'diffs'});
-        $image_config_data = $config->data->{'image_configs'};
-      }
-    }
-    
-    $self->{'configs'}{$key} = {
-      config            => $view_config,
-      image_configs     => {},                # List of attached image configs
-      image_config_data => $image_config_data # Data retrieved from database to define image config settings.
-    };
-  }
-  
-  return $self->{'configs'}{$key}{'config'};
-}
-
 sub get_view_config_as_string {
   my ($self, $type, $action ) = @_;
 
-  if( $self->get_session_id ) {
+  if( $self->session_id ) {
     my $config = EnsEMBL::Web::Data::Session->get_config(
-      session_id => $self->get_session_id,
+      session_id => $self->session_id,
       type       => 'view',
       code       => $type.'::'.$action,
     );
@@ -795,84 +689,11 @@ sub get_view_config_as_string {
 sub set_view_config_from_string {
   my ($self, $type, $action, $string) = @_;
   EnsEMBL::Web::Data::Session->set_config(
-    session_id => $self->get_session_id,
+    session_id => $self->session_id,
     type       => 'view',
     code       => $type.'::'.$action,
     data       => $string,
   );
-}
-
-sub getImageConfig {
-  ### Returns an image Config object...
-  ### If passed one parameter then it loads the data (and doesn't cache it)
-  ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
-  ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
-  my( $self, $type, $key, @species ) = @_;
-
-  ### Third parameter is the species! if passed this gets pushed through to new ImageConfig call
-  ### via the call get_ImageConfig below...
-
-  ## TODO: get rid of session getters,
-  EnsEMBL::Web::Data::Session->propagate_cache_tags(
-    session_id => $self->get_session_id,
-    type       => $type,
-    code       => $key,
-  );  
-  
-## If key is not set we aren't worried about caching it!
-  if( $key && exists $self->{'image_configs'}{$key} ) {
-    return $self->{'image_configs'}{$key};
-  }
-  my $image_config = $self->get_ImageConfig( $type, @species ) ;
-
-  foreach my $script ( keys %{$self->{'configs'}||{}} ) {
-    if( $self->{'configs'}{$script}{'image_config_data'}{$type} ) {
-      my $T = $self->{'configs'}{$script}{'image_config_data'}{$type}||{};
-      foreach (keys %$T) {
-        $image_config->tree->{_user_data}{$_} = $self->deepcopy( $T->{$_} );
-      }
-    }
-  }
-## Store if $key is set!
-  $self->{'image_configs'}{ $key } = $image_config if $key;
-  return $image_config;
-}
-
-sub get_ImageConfig {
-  ### Return a new image config object...
-  my( $self, $type, @species ) = @_; ## @species is a optional scalar!!!
-
-  return undef if $type eq '_page' || $type eq 'cell_page';
-  my $classname = '';
-  
-  ## Let us hack this for the moment....
-  ## If a site is defined in the configuration look for
-  ## an the user config object in the namespace EnsEMBL::Web::ImageConfig::{$site}::{$type}
-  ## Otherwise fall back on the module EnsEMBL::Web::ImageConfig::{$type}
-
-  if( $self->get_site ) {
-    $classname = "EnsEMBL::Web::ImageConfig::".$self->get_site."::$type";
-    eval "require $classname";
-  }
-  if($@ || !$self->get_site ) {
-    my $classname_old = $classname;
-    $classname = "EnsEMBL::Web::ImageConfig::$type";
-    eval "require $classname";
-    
-    ## If the module can't be required throw and error and return undef;
-    if($@) {
-      warn(qq(ImageConfigAdaptor failed to require $classname_old OR $classname: $@\n));
-      return undef;
-    }
-  }
-  
-  ## Import the module
-  $classname->import();
-  $self->colourmap;
-  my $image_config = eval { $classname->new( $self, @species ); };
-  if( $@ || !$image_config ) { warn(qq(ImageConfigAdaptor failed to create new $classname: $@\n)); }
-  ## Return the respectiv config.
-  return $image_config;
 }
 
 sub save_custom_page {
@@ -897,4 +718,3 @@ sub custom_page_config {
 }
 
 1;
-
