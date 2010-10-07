@@ -17,12 +17,15 @@ use CGI;
 use CGI::Cookie;
 use URI::Escape qw(uri_escape uri_unescape);
 
+use Bio::EnsEMBL::ColourMap;
+
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
+use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
@@ -33,21 +36,14 @@ use base qw(EnsEMBL::Web::Root);
 sub new {
   my ($class, $args) = @_;
 
-  my $type         = $args->{'_type'}         || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL: Gene, UserData, etc
-  my $species      = $args->{'_species'}      || $ENV{'ENSEMBL_SPECIES'};
-  my $input        = $args->{'_input'}        || new CGI;
-  my $species_defs = $args->{'_species_defs'} || new EnsEMBL::Web::SpeciesDefs;
+  my $type         = $args->{'type'}         || $ENV{'ENSEMBL_TYPE'}; # Parsed from URL: Gene, UserData, etc
+  my $species      = $args->{'species'}      || $ENV{'ENSEMBL_SPECIES'};
+  my $input        = $args->{'input'}        || new CGI;
+  my $species_defs = $args->{'species_defs'} || new EnsEMBL::Web::SpeciesDefs;
   my $factorytype  = $ENV{'ENSEMBL_FACTORY'}  || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
-  my $cookies      = $args->{'_apache_handle'} ? CGI::Cookie->parse($args->{'_apache_handle'}->headers_in->{'Cookie'}) : {};
-  my ($session, $user, $timer);
+  my $cookies      = $args->{'apache_handle'} ? CGI::Cookie->parse($args->{'apache_handle'}->headers_in->{'Cookie'}) : {};
   
-  if ($ENSEMBL_WEB_REGISTRY) {
-    $session = $ENSEMBL_WEB_REGISTRY->get_session;
-    $user    = $args->{'_user'}  || $ENSEMBL_WEB_REGISTRY->get_user;
-    $timer   = $args->{'_timer'} || $ENSEMBL_WEB_REGISTRY->timer;
-  }
-  
-  $species_defs->{'timer'} = $args->{'_timer'};
+  $species_defs->{'timer'} = $args->{'timer'};
   
   my $self = {
     _input         => $input,
@@ -55,26 +51,32 @@ sub new {
     _species_defs  => $species_defs, 
     _factorytype   => $factorytype,
     _type          => $type,
-    _action        => $args->{'_action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
-    _function      => $args->{'_function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
-    _script        => $args->{'_script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
-    _cache         => $args->{'_cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
-    _ext_url       => $args->{'_ext_url'}       || new EnsEMBL::Web::ExtURL($species, $species_defs),
-    _problem       => $args->{'_problem'}       || {},    
-    _view_configs  => $args->{'_view_configs_'} || {},
-    _user_details  => $args->{'_user_details'}  || 1,
-    _object_types  => $args->{'_object_types'}  || {},
-    _apache_handle => $args->{'_apache_handle'} || undef,
+    _action        => $args->{'action'}        || $ENV{'ENSEMBL_ACTION'},   # View, Summary etc
+    _function      => $args->{'function'}      || $ENV{'ENSEMBL_FUNCTION'}, # Extra path info
+    _script        => $args->{'script'}        || $ENV{'ENSEMBL_SCRIPT'},   # Page, Component, Config etc
+    _cache         => $args->{'cache'}         || new EnsEMBL::Web::Cache(enable_compress => 1, compress_threshold => 10000),
+    _ext_url       => $args->{'ext_url'}       || new EnsEMBL::Web::ExtURL($species, $species_defs),
+    _problem       => $args->{'problem'}       || {},    
+    _view_configs  => $args->{'view_configs_'} || {},
+    _user_details  => $args->{'user_details'}  || 1,
+    _object_types  => $args->{'object_types'}  || {},
+    _apache_handle => $args->{'apache_handle'} || undef,
+    _user          => $args->{'user'}          || undef,
+    _timer         => $args->{'timer'}         || undef,
     _databases     => $species ne 'common'      ?  new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef,
     _cookies       => $cookies,
-    _session       => $session,
-    _user          => $user,
-    _timer         => $timer,
     _core_objects  => {},
     _core_params   => {},
   };
 
   bless $self, $class;
+  
+  $self->session = new EnsEMBL::Web::Session($self, $args->{'session_cookie'});
+  
+  if ($ENSEMBL_WEB_REGISTRY) {
+    $self->user  ||= $ENSEMBL_WEB_REGISTRY->get_user;
+    $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer;
+  }
   
   $self->set_core_params;
   
@@ -91,6 +93,7 @@ sub factorytype :lvalue { $_[0]{'_factorytype'}; }
 sub session     :lvalue { $_[0]{'_session'};     }
 sub cache       :lvalue { $_[0]{'_cache'};       }
 sub user        :lvalue { $_[0]{'_user'};        }
+sub timer       :lvalue { $_[0]{'_timer'};       }
 
 sub input         { return $_[0]{'_input'};         }
 sub cookies       { return $_[0]{'_cookies'};       }
@@ -99,13 +102,14 @@ sub object_types  { return $_[0]{'_object_types'};  }
 sub core_params   { return $_[0]{'_core_params'};   }
 sub apache_handle { return $_[0]{'_apache_handle'}; }
 sub ExtURL        { return $_[0]{'_ext_url'};       }
-sub timer         { return $_[0]{'_timer'};         }
 sub user_details  { return $_[0]{'_user_details'};  }
 sub species_defs  { return $_[0]{'_species_defs'};  }
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef; }
-sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled'; }
-sub referer           { return $_[0]{'referer'}    ||= $_[0]->_parse_referer; }
+sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled';    }
+sub referer           { return $_[0]{'referer'}    ||= $_[0]->_parse_referer;                              }
+sub colourmap         { return $_[0]{'colourmap'}  ||= new Bio::EnsEMBL::ColourMap($_[0]->species_defs);   }
+
 sub species_path      { return shift->species_defs->species_path(@_);         }
 sub table_info        { return shift->species_defs->table_info(@_);           }
 sub get_databases     { return shift->databases->get_databases(@_);           }
@@ -370,30 +374,39 @@ sub get_ext_seq {
   }
 }
 
+# This method gets all configured DAS sources for the current species.
+# Source configurations are retrieved first from SpeciesDefs, then additions and
+# modifications are added from the User and Session.
+# Returns a hashref, indexed by logic_name.
 sub get_all_das {
-  my $self    = shift;
-  my $species = shift || $self->species;
-
-  if ( $species eq 'common' ) {
-    $species = '';
-  }
- 
-  my @spec_das = $self->species_defs->get_all_das( $species );
-  my @sess_das = $self->session->get_all_das( $species );
-  my @user_das = $self->user ? $self->user->get_all_das( $species ) : ({},{});
+  my $self     = shift;
+  my $species  = shift || $self->species;
+  $species     = '' if $species eq 'common';
+  my @spec_das = $self->species_defs->get_all_das($species);
+  my @sess_das = $self->session->get_all_das($species);
+  my @user_das = $self->user ? $self->user->get_all_das($species) : ({}, {});
 
   # TODO: group data??
 
   # First hash is keyed by logic_name, second is keyed by full_url
-  my %by_name = ( %{ $spec_das[0] }, %{ $user_das[0] }, %{ $sess_das[0] } );
-  my %by_url  = ( %{ $spec_das[1] || {}}, %{ $user_das[1] || {} }, %{ $sess_das[1] || {}} );
-  return wantarray ? ( \%by_name, \%by_url ) : \%by_name;
+  my %by_name = ( %{$spec_das[0]},       %{$user_das[0]},       %{$sess_das[0]}       );
+  my %by_url  = ( %{$spec_das[1] || {}}, %{$user_das[1] || {}}, %{$sess_das[1] || {}} );
+  
+  return wantarray ? (\%by_name, \%by_url) : \%by_name;
 }
 
-### VIEW / IMAGE CONFIGS
+# This method gets a single named DAS source for the current species.
+# The source's configuration is an amalgam of species, user and session data.
+sub get_das_by_logic_name {
+  my ($self, $name) = @_;
+  return $self->get_all_das->{$name};
+}
 
-# Returns the named (or one based on script) {{EnsEMBL::Web::ViewConfig}} object
+# VIEW / IMAGE CONFIGS
+
 sub get_viewconfig {
+  ### Create a new EnsEMBL::Web::ViewConfig object for the type and action passed
+  
   my $self    = shift;
   my $type    = shift || $self->type;
   my $action  = shift || $self->action;
@@ -401,7 +414,7 @@ sub get_viewconfig {
   my $key     = "${type}::$action";
   
   return undef unless $session;
-  return $session->get_configs->{$key}{'config'} if $session->get_configs->{$key};
+  return $session->view_configs->{$key}{'config'} if $session->view_configs->{$key};
   
   my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $self);
   
@@ -410,8 +423,10 @@ sub get_viewconfig {
   return $view_config;
 }
 
-# Store default viewconfig so we don't have to keep getting it from session
+
 sub viewconfig {
+  ### Store default viewconfig so we don't have to keep getting it from session
+  
   my $self = shift;
   
   if (!$self->{'viewconfig'}) {
@@ -428,23 +443,27 @@ sub viewconfig {
   return $self->{'viewconfig'};
 }
 
-# Returns the named (or one based on script) {{EnsEMBL::Web::ImageConfig}} object
 sub get_imageconfig {
+  ### Returns an EnsEMBL::Web::ImageConfig object
+  ### If passed one parameter then it loads the data (and doesn't cache it)
+  ### If passed two parameters it loads the data (and caches it against the second name - NOTE you must use the
+  ### second name version IF you want the configuration to be saved by the session - otherwise it will be lost
+  
   my $self    = shift;
   my $type    = shift;
   my $key     = shift;
+  my $species = shift;
   my $session = $self->session;
   
   return undef if $type eq '_page' || $type eq 'cell_page';
   return undef unless $session;
-  return $session->get_image_configs->{$key} if $key && $session->get_image_configs->{$key};
+  return $session->image_configs->{$key} if $key && $session->image_configs->{$key};
   
   my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
-  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($session, @_) : undef;
+  my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species) : undef;
   
   if ($image_config) {
-    $session->apply_to_image_config($image_config, $type, $key || $type);
-    $image_config->core_objects = $self->core_objects;
+    $session->apply_to_image_config($image_config, $type, $key);
     
     return $image_config;
   } else {
