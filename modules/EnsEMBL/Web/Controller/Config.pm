@@ -22,38 +22,34 @@ sub update_configuration {
   ### Checks to see if the page's view config or image config has been changed
   ### If it has, returns 1 to force a redirect to the updated page
   
-  my $self  = shift;
-  my $input = $self->input;
+  my $self = shift;
+  my $hub  = $self->hub;
   
-  if ($input->param('submit') || $input->param('reset')) {
-    my $r          = $self->r;
-    my $hub        = $self->hub;
-    my $session    = $hub->session;
-    my $type       = $self->type;
-    my $action     = $self->action;
-    my $config     = $input->param('config');
-    
-    $session->set_input($input);
-    
+  if ($hub->param('submit') || $hub->param('reset')) {
+    my $r           = $self->r;
+    my $session     = $hub->session;
+    my $type        = $self->type;
+    my $action      = $self->action;
+    my $config      = $hub->param('config');
     my $view_config = $hub->viewconfig;
     
     # Updating an image config
     if ($config && $view_config->has_image_config($config)) {
       # If we have multiple species in the view (e.g. Align Slice View) then we would
       # need to make sure that the image config we have is a merged image config, with
-      # each of the trees for each species combined
-      $view_config->altered = $hub->get_imageconfig($config, $config, 'merged')->update_from_input($input);
+      # each of the trees for each species combined      
+      $view_config->altered = $hub->get_imageconfig($config, $config, 'merged')->update_from_input;
     } else { # Updating a view config
-      $view_config->update_from_input($input);
+      $view_config->update_from_input;
       
       if ($action ne 'ExternalData') {
         my $vc_external_data = $hub->get_viewconfig($type, 'ExternalData');
-        $vc_external_data->update_from_input($input) if $vc_external_data;
+        $vc_external_data->update_from_input if $vc_external_data;
       }
       
       my $cookie_host  = $self->species_defs->ENSEMBL_COOKIEHOST;
-      my $cookie_width = $input->param('cookie_width');
-      my $cookie_ajax  = $input->param('cookie_ajax');
+      my $cookie_width = $hub->param('cookie_width');
+      my $cookie_ajax  = $hub->param('cookie_ajax');
       
       # Set width
       if ($cookie_width && $cookie_width != $ENV{'ENSEMBL_IMAGE_WIDTH'}) {
@@ -86,12 +82,12 @@ sub update_configuration {
     
     $session->store;
     
-    if ($input->param('submit')) {
+    if ($hub->param('submit')) {
       if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
         $r->content_type('text/plain');
         print 'SUCCESS';
       } else {
-        $input->redirect; # refreshes the page
+        $hub->redirect; # refreshes the page
       }
       
       return 1;
