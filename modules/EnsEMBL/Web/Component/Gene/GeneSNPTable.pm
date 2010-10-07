@@ -109,6 +109,9 @@ sub variation_table {
         my $translation_start = $transcript_variation->translation_start;
         my $source            = $snp->source;
         
+        # store the transcript variation so that HGVS doesn't try and calculate it again
+        $snp->{'transcriptVariations'} = [$transcript_variation];
+        
         my ($aachange, $aacoord) = $translation_start ? 
           ($transcript_variation->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
           ('-', '-');
@@ -173,7 +176,7 @@ sub configure {
   my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
   
   $object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
-  $object->store_TransformedSNPS;        ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
+  $object->store_TransformedSNPS();      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
 
   ## Map SNPs for the last SNP display  
   my @snps2 = map {
