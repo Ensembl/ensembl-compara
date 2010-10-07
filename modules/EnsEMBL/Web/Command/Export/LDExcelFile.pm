@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Command::Export::LDExcelFile;
 
 use strict;
@@ -31,7 +33,7 @@ sub make_file {
   my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($file); 
   my $table    = $renderer->new_table_renderer;
   
-  my @colour_gradient = ('ffffff', $hub->get_imageconfig('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
+  my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
   
   foreach (values %pop_params){ 
     my $pop_param   = $hub->param('pop'.$_); 

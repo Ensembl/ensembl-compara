@@ -36,7 +36,7 @@ sub genetic_variation {
   $self->html('');
   
   my $colours    = $hub->species_defs->colour('variation');
-  my $colour_map = $hub->session->colourmap;
+  my $colour_map = $hub->colourmap;
   
   my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
   

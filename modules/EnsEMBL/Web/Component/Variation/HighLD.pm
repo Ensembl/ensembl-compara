@@ -48,7 +48,7 @@ sub content {
   my $min_d_prime     = defined $hub->param('min_d_prime') ? $hub->param('min_d_prime') : 0.8;
   my $min_p_log       = $hub->param('min_p_log');
   my $only_phenotypes = $hub->param('only_phenotypes') eq 'yes';
-  my @colour_scale    = $hub->get_imageconfig('ldview')->colourmap->build_linear_gradient(40, '#0000FF', '#770088', '#BB0044', 'red'); # define a colour scale for p-values
+  my @colour_scale    = $hub->colourmap->build_linear_gradient(40, '#0000FF', '#770088', '#BB0044', 'red'); # define a colour scale for p-values
   my %mappings        = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my ($vf, $loc, $html);
   

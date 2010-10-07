@@ -9,8 +9,6 @@ use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
-use Sanger::Graphics::ColourMap;
-
 use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Fake;
 
@@ -25,8 +23,6 @@ sub new {
   
   return $self;
 }
-
-sub colour_map { return $_[0]->{'colour_map'} ||= new Sanger::Graphics::ColourMap; }
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
@@ -938,8 +934,9 @@ sub class_to_style {
   my $self = shift;
   
   if (!$self->{'class_to_style'}) {
-    my $colourmap    = $self->colour_map;
-    my $species_defs = $self->hub->species_defs;
+    my $hub          = $self->hub;
+    my $colourmap    = $hub->colourmap;
+    my $species_defs = $hub->species_defs;
     my $styles       = $species_defs->colour('sequence_markup');
     my $var_styles   = $species_defs->colour('variation');
     my $i            = 1;

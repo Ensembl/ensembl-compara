@@ -133,7 +133,6 @@ sub add_pointers {
 
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
-  my $config      = $hub->get_imageconfig($config_name);
   my $species     = $hub->species;
   my $color       = lc($hub->param('col'))   || lc($extra->{'color'}) || 'red';     # set sensible defaults
   my $style       = lc($hub->param('style')) || lc($extra->{'style'}) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
@@ -143,7 +142,7 @@ sub add_pointers {
   
   # colour gradient bit for phenotype
   if (grep $_->{'colour_scaling'}, @data) {    
-    my @colour_scale = $config->colourmap->build_linear_gradient(90, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale
+    my @colour_scale = $hub->colourmap->build_linear_gradient(90, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale
 
     foreach my $colour (@colour_scale) {
       $p_value_sorted->{$j} = $colour;

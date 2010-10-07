@@ -1,11 +1,14 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Export::Location;
+
 use strict;
 
 use POSIX qw(floor);
 
 use EnsEMBL::Web::Document::SpreadSheet;
 
-use base 'EnsEMBL::Web::Component::Export';
+use base qw(EnsEMBL::Web::Component::Export);
 
 sub content {
   my $self = shift;
@@ -29,7 +32,7 @@ sub ld_dump {
     my $zoom = 20000; # Currently non-configurable
   
   
-    my @colour_gradient = ('ffffff', $object->get_imageconfig('ldview')->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
+    my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
   
     my $ld_values = $object->get_ld_values($pop_param, $object->param('v'), $zoom);
   

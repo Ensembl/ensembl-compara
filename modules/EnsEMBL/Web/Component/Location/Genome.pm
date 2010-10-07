@@ -150,7 +150,7 @@ sub content {
       if ($hub->param('ftype') eq 'Phenotype') { # making colour scale for pointers
         $html .= '<h3>Colour Scale:</h3>';
         
-        my @colour_scale = $config->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale to make the scale
+        my @colour_scale = $hub->colourmap->build_linear_gradient(30, '#0000FF', '#770088', '#BB0044', 'red'); # making an array of the colour scale to make the scale
         
         foreach my $colour (@colour_scale) {      
           $html .= qq{<div style="border-style:solid;border-width:2px;float:left;width:20px;height:20px;background:#$colour"></div>};
