@@ -42,7 +42,7 @@ sub format_frequencies {
       # SSID + Submitter  -----------------------------------------
       if ($freq_data->{$pop_id}{$ssid}{'ssid'}) {
         my $submitter         = $freq_data->{$pop_id}{$ssid}{'submitter'};
-        $pop_row{'ssid'}      = $freq_data->{$pop_id}{$ssid}{'ssid'};
+        $pop_row{'ssid'}      = $hub->get_ExtURL_link($freq_data->{$pop_id}{$ssid}{'ssid'}, 'DBSNPSS', $freq_data->{$pop_id}{$ssid}{'ssid'});
         $pop_row{'submitter'} = $hub->get_ExtURL_link($submitter, 'DBSNPSSID', $submitter);
       }  
       
