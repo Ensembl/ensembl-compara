@@ -22,7 +22,7 @@ sub init {
     margin       => 5,     # margin
     spacing      => 2,     # spacing
     opt_lines    => 1,     # register lines
-    spritelib    => { default => $self->{'species_defs'}->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
+    spritelib    => { default => $self->species_defs->ENSEMBL_SERVERROOT . '/htdocs/img/sprites' }
   });
 
   # Add menus in the order you want them for this display
