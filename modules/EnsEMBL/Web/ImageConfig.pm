@@ -269,7 +269,11 @@ sub load_user_tracks {
   
   return unless $menu;
   
-  my $das = $self->hub->get_all_das;
+  my $hub  = $self->hub;
+  my $user = $hub->user;
+  my $das  = $hub->get_all_das;
+  my %url_sources;
+  my %user_sources;
 
   foreach my $source (sort { ($a->caption || $a->label) cmp ($b->caption || $b->label) } values %$das) {
     next if $self->get_node('das_'.$source->logic_name);
@@ -278,17 +282,12 @@ sub load_user_tracks {
     $self->add_das_track('user_data', $source);
   }
 
-  my $user = $hub->user;
-
   # Get the tracks that are temporarily stored - as "files" not in the DB....
   # Firstly "upload data" not yet committed to the database...
   # Then those attached as URLs to either the session or the User
   # Now we deal with the url sources... again flat file
-
-  my %url_sources;
-  my %user_sources;
   
-  foreach my $entry ($session->get_data( type => 'url' )) {
+  foreach my $entry ($session->get_data(type => 'url')) {
     next unless $entry->{'species'} eq $self->{'species'};
     
     $url_sources{$entry->{'url'}} = {
