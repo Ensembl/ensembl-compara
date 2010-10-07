@@ -180,7 +180,7 @@ sub get_page_data {
       my $vid = $allele->variation_name;
       my $source = $allele->source;
       my $vf = $allele->variation->dbID; 
-      my $url = $object->_url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });
+      my $url = $hub->url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });
       my @hgvs = values %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
       s/ENS(...)?[TG]\d+(\.\d+)?\://g for @hgvs;
       my $hgvs = join ", ", @hgvs;
