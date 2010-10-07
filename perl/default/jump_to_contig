@@ -11,7 +11,7 @@ use CGI;
 use URI::Escape qw(uri_escape);
 use EnsEMBL::Web::Factory::Location;
 
-my $hub           = new EnsEMBL::Web::Hub( _input => new CGI );
+my $hub           = new EnsEMBL::Web::Hub;
 my $species_defs  = $hub->species_defs;
 my $species_path  = $species_defs->species_path;
 my $factory       = new EnsEMBL::Web::Factory::Location({
