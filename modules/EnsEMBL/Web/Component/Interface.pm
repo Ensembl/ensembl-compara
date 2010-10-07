@@ -1,13 +1,14 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Interface;
 
 ### Module to create generic forms for Document::Interface and its associated modules
 
 use strict;
-use warnings;
-no warnings "uninitialized";
 
 use EnsEMBL::Web::Form;
-use base qw( EnsEMBL::Web::Component);
+
+use base qw(EnsEMBL::Web::Component);
 
 ## Some methods common to two or more interface child modules
 
@@ -19,57 +20,57 @@ sub script_name {
 sub data_form {
   ### Function to build a record editing form
   my ($self, $name, $next) = @_;
-  my $object = $self->object;
-  my $url = '/'.$object->species;
-  $url = '' if $url !~ /_/;
-  $url .= '/'.$self->script_name.'/'.$next;
-  my $form = EnsEMBL::Web::Form->new($name, $url, 'post');
+  my $hub       = $self->hub;
+  my $object    = $self->object;
+  my $interface = object->interface;
+  my $url       = '/' . $hub->species;
+  $url          = '' if $url !~ /_/;
+  $url         .= '/' . $self->script_name . "/$next";
+  
+  my $form = new EnsEMBL::Web::Form($name, $url, 'post');
   $form->add_attribute('class', 'narrow-labels');
 
   ## form widgets
-  my ($key) = $object->interface->data->primary_columns;
-  if ($object->param('owner_type')) {
-    #$object->interface->data->attach_owner($object->param('owner_type'));
-  }
-  my $id = $object->param($key) || $object->param('id');
-  if ($id) {
-    #$object->interface->data->populate($id);
-  } else {
-    $object->interface->cgi_populate($object);
-  }
-  my $widgets = $object->interface->edit_fields($object);
+  my ($key) = $interface->data->primary_columns;
 
-  foreach my $element (@$widgets) {
-    $form->add_element(%$element);
+  my $id = $hub->param($key) || $hub->param('id');
+  
+  if ($id) {
+    #$interface->data->populate($id);
+  } else {
+    $interface->cgi_populate($object);
   }
+  
+  $form->add_element(%$_) for @{$interface->edit_fields($object)};
+  
   return $form;
 }
 
 sub record_select {
   ### Function to build a record selection form
-  my($self, $object, $action) = @_;
+  my ($self, $object, $action) = @_;
   
-  my $script = $self->script_name($object);
-  my $form = EnsEMBL::Web::Form->new('interface_select', "/$script/$action", 'post');
+  my $interface = $object->interface;
+  my $script    = $self->script_name($object);
+  my $select    = $interface->dropdown ? 'select' : '';
+  my $form      = new EnsEMBL::Web::Form('interface_select', "/$script/$action", 'post');
+  
   $form->add_attribute('class', 'narrow-labels');
-
-  my $select  = $object->interface->dropdown ? 'select' : '';
+  
   my @options;
-  if ($select) {
-    push @options, {'name'=>'--- Choose ---', 'value'=>''};
-  }
+  push @options, { name => '--- Choose ---', value => '' } if $select;
 
   ## Get record index
-  my @unsorted_list = $object->interface->record_list;
-  my @columns = @{$object->interface->option_columns};
+  my @unsorted_list = $interface->record_list(undef, $self->hub->user);
+  my @columns       = @{$interface->option_columns};
 
   ## Create field type lookup, for sorting purposes
-  my %all_fields = %{ $object->interface->data->get_all_fields };
+  my %all_fields = %{$interface->data->get_all_field};
 
   ## Do custom sort
   my ($sort_code, $repeat, @list);
-  if ($object->interface->option_order && ref($object->interface->option_order) eq 'ARRAY') {
-    foreach my $sort_col (@{$object->interface->option_order}) {
+  if ($interface->option_order && ref $interface->option_order eq 'ARRAY') {
+    foreach my $sort_col (@{$interface->option_order}) {
       my $col_name = $sort_col->{'column'};
       my $col_order = $sort_col->{'order'} || 'ASC';
       if ($repeat > 0) {
