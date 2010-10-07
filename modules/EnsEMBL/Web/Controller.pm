@@ -18,10 +18,11 @@ use EnsEMBL::Web::OrderedTree;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $input = new CGI;
+  my $class          = shift;
+  my $r              = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $session_cookie = ref $_[0] eq 'HASH' ? undef : shift;
+  my $args           = shift || {};
+  my $input          = new CGI;
   
   my $object_params = [
     [ 'Location',   'r'   ],
@@ -37,9 +38,10 @@ sub new {
   my $ordered_objects = [ map $_->[0], @$object_params ];
   
   my $hub = new EnsEMBL::Web::Hub({
-    _apache_handle => $r,
-    _input         => $input,
-    _object_types  => $object_types
+    apache_handle  => $r,
+    input          => $input,
+    object_types   => $object_types,
+    session_cookie => $session_cookie
   });
   
   my $builder = new EnsEMBL::Web::Builder({
@@ -72,7 +74,7 @@ sub new {
     # Add parameters useful for caching functions
     $self = {
       %$self,
-      session_id  => $hub->session->get_session_id,
+      session_id  => $hub->session->session_id,
       url_tag     => $species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'},
       cache_debug => $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_MEMCACHED
     }
