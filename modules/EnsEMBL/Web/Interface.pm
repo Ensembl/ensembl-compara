@@ -9,7 +9,6 @@ use warnings;
 
 use Class::Std;
 use EnsEMBL::Web::Root;
-use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::CDBI;
 use EnsEMBL::Web::Interface::Element;
 
@@ -419,13 +418,12 @@ sub configure {
 sub record_list {
   ### a
   ### Returns: array of data objects of the same type as the parent
-  my ($self, $criteria) = @_;
+  my ($self, $criteria, $user) = @_;
   my @records;
 
   ## Get data
   if (ref($self->data) =~ /User/) {
     my $method = lc($ENV{'ENSEMBL_ACTION'}).'s';
-    my $user = $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->get_user;
     @records = $user->$method;
   }
   elsif (ref($self->data)) {
