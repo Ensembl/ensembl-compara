@@ -137,7 +137,7 @@ sub timer_push {
   my($self,$capt,$dep,$flag) = @_;
   $dep  ||= 3;
   $flag ||= 'draw';
-  $self->{'config'}{'species_defs'}->timer()->push($capt,$dep,$flag);
+  $self->{'config'}->species_defs->timer->push($capt,$dep,$flag);
 }
 
 ### Helper functions to wrap round Glyphs...
@@ -258,7 +258,7 @@ sub init_label {
 sub species_defs {
 ### a
   my $self = shift;
-  return $self->{'config'}->{'species_defs'};
+  return $self->{'config'}->species_defs;
 }
 
 sub get_textheight {

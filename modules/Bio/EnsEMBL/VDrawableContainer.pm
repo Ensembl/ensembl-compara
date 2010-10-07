@@ -29,7 +29,7 @@ sub _init {
     'spacing'       => $spacing || $Contents->[0][1]->get_parameter('spacing') || 0,
     'strandedness'  => $strandedness || 0,
     '__extra_block_spacing__'    => 0,
-    'timer'         => $Contents->[0][1]{'species_defs'}->timer
+    'timer'         => $Contents->[0][1]->species_defs->timer
   };
 
   $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
@@ -57,7 +57,7 @@ sub new {
     my @chromosomes = ($Container->{'chr'});
     my $flag        = 0;
     if( $Config->get_parameter('all_chromosomes') eq 'yes' ) { 
-      @chromosomes = @{$Config->{'species_defs'}->get_config($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[]};
+      @chromosomes = @{$Config->species_defs->get_config($Container->{'web_species'}, 'ENSEMBL_CHROMOSOMES')||[]};
       $flag = 1;
     }
     

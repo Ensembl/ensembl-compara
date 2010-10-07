@@ -261,7 +261,7 @@ sub new {
   return $self;
 }
 
-sub species_defs { return $_[0]->{'config'}->{'species_defs'}; }
+sub species_defs { return $_[0]->{'config'}->species_defs; }
 
 sub _init {
   my $class = shift;
@@ -287,7 +287,7 @@ sub _init {
     'highlights'    => $highlights || [],
     'strandedness'  => $strandedness || 0,
     '__extra_block_spacing__'    => 0,
-    'timer'         => $Contents->[0][1]{'species_defs'}->timer
+    'timer'         => $Contents->[0][1]->species_defs->timer
   };
   
   $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
