@@ -44,7 +44,7 @@ sub init {
   my $configuration = $controller->configuration;
   my $view_config   = $controller->view_config;
   my $config_key    = $hub->param('config');
-  my $image_config  = $config_key ? $hub->get_imageconfig($config_key, undef, 'merged') : undef;
+  my $image_config  = $config_key ? $hub->get_imageconfig($config_key, $config_key, 'merged') : undef;
   my $action        = join '/', map $hub->$_ || (), qw(type action function);
   my $url           = $hub->url({ type => 'Config', action => $action }, 1);
   
