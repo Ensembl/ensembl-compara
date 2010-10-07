@@ -176,8 +176,9 @@ sub add_form_element {
 
 # Loop through the parameters and update the config based on the parameters passed
 sub update_from_input {
-  my ($self, $input) = @_;
-  my $flag = 0;
+  my $self  = shift;
+  my $input = $self->hub->input;
+  my $flag  = 0;
   
   return $self->reset if $input->param('reset');
   
