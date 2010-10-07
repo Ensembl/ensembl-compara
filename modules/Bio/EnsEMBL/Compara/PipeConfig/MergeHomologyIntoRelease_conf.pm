@@ -42,7 +42,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'compara_full_merge',            # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_60',         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara2',
@@ -57,7 +57,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_merged',
+            -dbname => 'lg4_compara_homology_merged_60',
         },
 
         'rel_db' => {
@@ -65,7 +65,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => 'kb3_ensembl_compara_59',
+            -dbname => 'kb3_ensembl_compara_60',
         },
 
         'skipped_tables' => [ 'meta', 'analysis', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set' ],

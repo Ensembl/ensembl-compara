@@ -42,7 +42,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'compara_homology_merged',       # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_60',       # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara2',
@@ -66,7 +66,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_58',
+            -dbname => 'ensembl_compara_59',
         },
         'prevrel_merge_tables' => [ 'stable_id_history' ],
         
@@ -75,7 +75,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_59',
+            -dbname => 'lg4_compara_homology_60',
         },
         'genetrees_copy_tables'  => [ 'lr_index_offset', 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
         'genetrees_merge_tables' => [ 'member', 'sequence', 'stable_id_history', 'homology', 'homology_member' ],
@@ -85,17 +85,17 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_families_59',
+            -dbname => 'lg4_compara_families_60',
         },
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => {
-            -host   => 'ens-research',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'avilella_compara_nc_59b',
+            -dbname => 'lg4_compara_nctrees_60',
         },
         'nctrees_copy_tables'  => [ 'nc_profile', 'nc_tree_member', 'nc_tree_node', 'nc_tree_tag' ],
         'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member' ],
