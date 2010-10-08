@@ -46,12 +46,12 @@ $| = 1;
 
 my (@species,@indexes,$debug,$dry_run,$log,$dir);
 GetOptions('species=s' => \@species,
-	   'index=s'   => \@indexes,
-	   'debug'     => \$debug,
-	   'dry_run|n' => \$dry_run,
-	   'log=s'     => \$log,
-	   'dir=s'     => \$dir,
-	 );
+           'index=s'   => \@indexes,
+           'debug'     => \$debug,
+           'dry_run|n' => \$dry_run,
+           'log=s'     => \$log,
+           'dir=s'     => \$dir,
+         );
 
 (@species) = split ',',@species[0];
 (@indexes) = split ',',@indexes[0];
@@ -110,30 +110,30 @@ foreach my $index (@indexes) {
       $c++;
       $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
       if ($index eq 'Family') {
-	$conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
+        $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
       }
       my $function = "dump$index";
       no strict "refs";
       eval {
-	$total_c += &$function( $conf );
+        $total_c += &$function( $conf );
       };
       if ($@) {
-	unless ($debug) {
-	  if ($c < 6) {
-	    print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
-	    sleep (5*60);}
-	  else {
-	    print LOG "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
-	    $no_success = 0;
-	  }
-	}
-	else {
-	   print LOG "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
-	   exit;
-	 }
+        unless ($debug) {
+          if ($c < 6) {
+            print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+            sleep (5*60);}
+          else {
+            print LOG "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
+            $no_success = 0;
+          }
+        }
+        else {
+           print LOG "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+           exit;
+         }
       }
       else {
-	$no_success = 0;
+        $no_success = 0;
       }
     }
   }
@@ -188,7 +188,7 @@ LEFT JOIN marker_synonym as ms2 on ms2.marker_synonym_id = m.display_marker_syno
       push @$names, $synonym;
     } else {
       if ($old_ID) {
-	&p( markerLine( $dbspecies, $names, $params, $counter ), $nogzip, $fh);
+        &p( markerLine( $dbspecies, $names, $params, $counter ), $nogzip, $fh);
       }
       $names    = [ $synonym ];
       $old_ID  = $ID;
@@ -285,7 +285,7 @@ sub dumpQTL {
       $desc .= " $T->{source_database}:$T->{source_primary_id}";
     } else {
       if ($old_ID) {
-	&p( QTLLine( $dbspecies, $old_ID, $old_pos, $old_action, $IDS, $desc, $counter ), $nogzip, $fh);
+        &p( QTLLine( $dbspecies, $old_ID, $old_pos, $old_action, $IDS, $desc, $counter ), $nogzip, $fh);
       }
       $IDS = [ "$T->{trait} $T->{source_primary_id}" ];
       push @$IDS, $T->{fm1_name} if $T->{fm1_name};
@@ -393,6 +393,8 @@ sub dumpVariation {
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
   $file .= ".gz" unless $nogzip;
+  my $file2 = $conf->{'directory'}."/${VariationDB}_SomaticMutation.xml";
+  $file2 .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
   my $fh;
@@ -400,15 +402,22 @@ sub dumpVariation {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
       or die("Can't open compressed stream to $file: $!");
+    $fh2 = new IO::Zlib;
+    $fh2->open( "$file", "wb9" )
+      or die("Can't open compressed stream to $file2: $!");
   }
   else {
     open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( FILE2, ">$file2" ) or die "Can't open $file2: $!";
   }
   print LOG "  Dumping $VariationDB Variations to $file ... ", format_datetime($start_time), "\n";
   header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  header( $VariationDB, $dbspecies, 'somatic mutation', $nogzip, $fh2, $release );
+
 
   #Variations
   my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
+  my $somatic = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, somatic from $VariationDB.source" )} };
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
       "SELECT va.variation_id,
@@ -465,45 +474,59 @@ sub dumpVariation {
       my %synonyms;
       my $syn_c = 0;
       foreach my $syn (split /,/, $synonyms) {
-	my ($source_id,$sname) = split / /,$syn;
-	$synonyms{$sname} = $sources->{$source_id};
-	$syn_c++;
+        my ($source_id,$sname) = split / /,$syn;
+        $synonyms{$sname} = $sources->{$source_id};
+        $syn_c++;
       }
       my (@syns, @gene_syns,$synonym_text);
       foreach my $syn (keys %synonyms) {
-	push @syns, $syn;
-	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
+        push @syns, $syn;
+        $synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
+      my $somatic_mutation = $sources->{$source_id};
       my $snp_source = $sources->{ $source_id };
       my $extra      = '';
       my $x = $snp_extra{$variation_id};
       if( $x ) {
-	push @syns,$x->[1],$x->[4];
-	push @gene_syns,$x->[3];
-	
-	$extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[5];
-	if( $x->[1] ) {
-	  $extra .= sprintf ', through %s', $x->[1];
-	}
-	if( $x->[2] ) {
-	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
-	}
+        push @syns,$x->[1],$x->[4];
+        push @gene_syns,$x->[3];
+        
+        $extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[5];
+        if( $x->[1] ) {
+          $extra .= sprintf ', through %s', $x->[1];
+        }
+        if( $x->[2] ) {
+          $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
+        }
       }
       $extra .= '.' if $extra;
       $extra .= ' '.$failed_description if $failed_description;
-      my $desc = sprintf( "A %s Variation %s%s",
-			  $snp_source,
-			  $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
-			: $syn_c     ? "with one synonym: $synonym_text."
-		        : 'with no synonyms.',
-			  $extra
-			);
-      &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
-
+      if ($somatic_mutation == 1){
+        my $desc = sprintf( "A %s Somatic Mutation %s%s",
+                            $snp_source,
+                            $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
+                          : $syn_c     ? "with one synonym: $synonym_text."
+                          : 'with no synonyms.',
+                            $extra
+                          );
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh2);
+      } else {
+        my $desc = sprintf( "A %s Variation %s%s",
+                            $snp_source,
+                            $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
+                          : $syn_c     ? "with one synonym: $synonym_text."
+                          : 'with no synonyms.',
+                            $extra
+                          );
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh);
+      }
     }
   }
-  return footer( $counter->(),$nogzip,$fh);
+
+  my $c = footer( $counter->(),$nogzip,$fh);
+  $c += footer( $counter->(),$nogzip,$fh2);
+  return $c;
 }
 
 sub VariationLine {
@@ -645,7 +668,7 @@ sub dumpGenomicAlignment {
       $source .= ";db=$db" unless $db eq 'core';
       my $type   = $tables{ $table }[1];
       my $sth    = $conf->{'dbh'}->prepare(
-	"select ad.display_label, a.logic_name, ad.displayable, t.hit_name, ad.web_data, edb.db_name, count(*) as hits
+        "select ad.display_label, a.logic_name, ad.displayable, t.hit_name, ad.web_data, edb.db_name, count(*) as hits
                 from (($dbname.analysis as a, $dbname.$table as t) left join
                      $dbname.analysis_description ad on a.analysis_id = ad.analysis_id) 
            left join $dbname.external_db edb on t.external_db_id = edb.external_db_id
@@ -655,22 +678,22 @@ sub dumpGenomicAlignment {
       $sth->execute();
       my $c = 0;
       while( my( $label, $logic_name, $displayable, $hid, $webdata, $db_name, $count  ) = $sth->fetchrow_array ) {
-	my $wd = eval($webdata);
-	next if $wd->{$table}{'do_not_display'};
-	next unless $displayable;
-	$c++;
-	$label ||= '';
-	my $desc = "$label $hid hits the genome in $count locations.";
-	(my $track_name = $table) =~ s/feature//;
-	my $renderer = $track_name . $db . '_' . lc($logic_name) . '=stack' ;
-	my $params = { 'contigviewbottom' => $renderer };
-	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $params, $counter ), $nogzip, $fh);
+        my $wd = eval($webdata);
+        next if $wd->{$table}{'do_not_display'};
+        next unless $displayable;
+        $c++;
+        $label ||= '';
+        my $desc = "$label $hid hits the genome in $count locations.";
+        (my $track_name = $table) =~ s/feature//;
+        my $renderer = $track_name . $db . '_' . lc($logic_name) . '=stack' ;
+        my $params = { 'contigviewbottom' => $renderer };
+        &p( GenomicAlignmentLine( $dbspecies, $hid, $desc, $db_name, $db, $tables{$table}->[0], $params, $counter ), $nogzip, $fh);
       }
       print LOG "  ...Dumped $c $table entries\n";
     }
     if ($db eq 'cdna') {
       my $sth    = $conf->{'dbh'}->prepare(
-	"select ad.display_label, uo.identifier,  ur.summary_description, 'Unmapped feature'
+        "select ad.display_label, uo.identifier,  ur.summary_description, 'Unmapped feature'
            from $dbname.unmapped_object uo, $dbname.unmapped_reason ur, $dbname.analysis a 
                 left join $dbname.analysis_description ad on a.analysis_id = ad.analysis_id
           where a.analysis_id = uo.analysis_id
@@ -678,10 +701,10 @@ sub dumpGenomicAlignment {
       $sth->execute();
       my $c++;
       while (my ($label, $hid, $reason, $type) = $sth->fetchrow_array ) {
-	$c++;
-	$label ||= '';
-	my $desc = "$label $hid fails to map to the genome. Reason: $reason.";
-	&p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', {}, $counter ), $nogzip, $fh);
+        $c++;
+        $label ||= '';
+        my $desc = "$label $hid fails to map to the genome. Reason: $reason.";
+        &p( GenomicAlignmentLine( $dbspecies, $hid, $desc, undef, $db, 'Unmapped feature', {}, $counter ), $nogzip, $fh);
       }
       print LOG "  ...Dumped $c Unmapped features\n";
     }
@@ -847,8 +870,8 @@ sub dumpDomain {
     }
     else {
       if ($old_acc) {
-	$description = "Interpro domain $old_acc [$old_desc] has";
-	&p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $nogzip, $fh);
+        $description = "Interpro domain $old_acc [$old_desc] has";
+        &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $nogzip, $fh);
       }
       $IDS      = [ $id ];
       $old_acc  = $acc;
@@ -986,7 +1009,7 @@ sub dumpSequence {
     unless ($nogzip) {
       $fh = new IO::Zlib;
       $fh->open( "$file", "wb9" )
-	or die("Can't open compressed stream to $file: $!");
+        or die("Can't open compressed stream to $file: $!");
     }
     else {
       open( FILE, ">$file" ) or die "Can't open $file: $!";
@@ -997,13 +1020,13 @@ sub dumpSequence {
     if ($db eq 'core') {
       my $lrgs = &dumpLRGs($conf);
       if (@$lrgs) {
-	&sort_lrgs($dbspecies,'Sequence',$fh,$lrgs);
+        &sort_lrgs($dbspecies,'Sequence',$fh,$lrgs);
       }
     }
 
     #get all types of misc features - used for 'type' label
     my $feat_types = $conf->{'dbh'}->selectall_hashref(qq(
-		  SELECT ms.code, ms.misc_set_id, ma.value as type 
+                  SELECT ms.code, ms.misc_set_id, ma.value as type 
                     FROM $dbname.attrib_type at, $dbname.misc_attrib ma, $dbname.misc_feature_misc_set mfms, $dbname.misc_set ms
                    WHERE at.attrib_type_id = ma.attrib_type_id
                      AND ma.misc_feature_id = mfms.misc_feature_id 
@@ -1032,36 +1055,36 @@ sub dumpSequence {
       $sth->execute();
       my ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$NAMES,$ftype);
       while( my($ID,$sr,$sr_type,$start,$end,$len,$ms_id,$code,$val) = $sth->fetchrow_array() ) {
-	if($ID == $old_ID) {
-	  if (! $ftype && $code eq 'type') {
-	    $ftype = $feat_types->{$ms_id}{'type'};
-	    #some hacks for the display of the type
-	    $ftype =~ s/_/ /;
-	    $ftype =~ s/arrayclone/clone/;
-	    $ftype = ucfirst($ftype);
-	  }
-	  if (grep {$code eq $_} @name_order) {
-	    push @$NAMES, [$code,$val];
-	  }
-	}
-	else {
-	  if ($old_ID) {
-	    my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
-	    &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
-	    $NAMES = undef;
-	    $ftype = undef;
-	  }
-	  if (! $ftype && $code eq 'type') {
-	    $ftype = $feat_types->{$ms_id}{'type'};
-	    $ftype =~ s/_/ /;
-	    $ftype =~ s/arrayclone/clone/;
-	    $ftype = ucfirst($ftype);
-	  }
-	  if (grep {$code eq $_} @name_order) {
-	    push @$NAMES, [$code,$val];
-	  }
-	  ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len) = ($ID,$sr,$sr_type,$start,$end,$len);
-	}
+        if($ID == $old_ID) {
+          if (! $ftype && $code eq 'type') {
+            $ftype = $feat_types->{$ms_id}{'type'};
+            #some hacks for the display of the type
+            $ftype =~ s/_/ /;
+            $ftype =~ s/arrayclone/clone/;
+            $ftype = ucfirst($ftype);
+          }
+          if (grep {$code eq $_} @name_order) {
+            push @$NAMES, [$code,$val];
+          }
+        }
+        else {
+          if ($old_ID) {
+            my ($name, $synonyms) = &sort_mf_names($NAMES,\@name_order);
+            &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
+            $NAMES = undef;
+            $ftype = undef;
+          }
+          if (! $ftype && $code eq 'type') {
+            $ftype = $feat_types->{$ms_id}{'type'};
+            $ftype =~ s/_/ /;
+            $ftype =~ s/arrayclone/clone/;
+            $ftype = ucfirst($ftype);
+          }
+          if (grep {$code eq $_} @name_order) {
+            push @$NAMES, [$code,$val];
+          }
+          ($old_ID,$old_sr,$old_sr_type,$old_start,$old_end,$old_len) = ($ID,$sr,$sr_type,$start,$end,$len);
+        }
       }
       my ( $name, $synonyms) = sort_mf_names($NAMES,\@name_order);
       &p( SeqLine($dbspecies,$old_sr,$old_sr_type,$old_start,$old_end,$old_len,$name,$synonyms,$ftype,$sanger,$counter), $nogzip, $fh);
@@ -1106,21 +1129,21 @@ sub dumpSequence {
     while( my($name,$length,$type,$cs_id) = $sth->fetchrow_array() ) {
       my ($prev_name,$prev_length,$mapping_text);
       if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
-	# if this is an old seq_region mapped to a new one of the same name then skip it
-	if ($mapped_ids->{$cs_id}{$name}) {
-	  $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
-	  if ($prev_name ne $name) {
-	    print LOG "WARNING: found assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
-	  }
-	  next;
-	}
-	else {
-	  print LOG "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
-	  next;
-	}
+        # if this is an old seq_region mapped to a new one of the same name then skip it
+        if ($mapped_ids->{$cs_id}{$name}) {
+          $prev_name   = $mapped_ids->{$cs_id}{$name}{'name'};
+          if ($prev_name ne $name) {
+            print LOG "WARNING: found assembly mapped seq_region $prev_name instead of $name - please check this is correct since this we haven't come across this before\n";
+          }
+          next;
+        }
+        else {
+          print LOG "WARNING: not dumping $name on coord_system $cs_id since it's an old assembly with no mapping - investigate what this means!\n";
+          next;
+        }
       }
       unless ($name eq 'lrg') {
-	&p( SeqLine($dbspecies,$name,$type,1,$length,$length,$name,[],$type,$sanger,$counter), $nogzip, $fh);
+        &p( SeqLine($dbspecies,$name,$type,1,$length,$length,$name,[],$type,$sanger,$counter), $nogzip, $fh);
       }
     }
 
@@ -1136,9 +1159,9 @@ sub sort_mf_names {
   foreach my $name_type ( @$name_order ) {
     unless ($name_to_use) {
       foreach my $name (@$all_names) {
-	if ($name->[0] eq $name_type) {
-	  $name_to_use = $name->[1];
-	}
+        if ($name->[0] eq $name_type) {
+          $name_to_use = $name->[1];
+        }
       }
     }
   }
@@ -1251,7 +1274,7 @@ sub dumpGene {
     unless ($nogzip) {
       $fh = new IO::Zlib;
       $fh->open( "$file", "wb9" )
-	or die("Can't open compressed stream to $file: $!");
+        or die("Can't open compressed stream to $file: $!");
     }
     else {
       open( FILE, ">$file" ) or die "Can't open $file: $!";
@@ -1262,8 +1285,8 @@ sub dumpGene {
     if ($db eq 'core') {
       my $lrgs = &dumpLRGs($conf);
       if (@$lrgs) {
-	&sort_lrgs($dbspecies,'Gene',$fh,$lrgs); 
-	print LOG "    Printed LRGs to $file ... ".&date_and_mem()."\n";
+        &sort_lrgs($dbspecies,'Gene',$fh,$lrgs); 
+        print LOG "    Printed LRGs to $file ... ".&date_and_mem()."\n";
       }
     }
 
@@ -1288,13 +1311,13 @@ sub dumpGene {
             AND ox.xref_id = x.xref_id );
       my $T = $conf->{'dbh'}->selectall_arrayref($sql);
       foreach (@$T) {
-	$xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_name'}} = {
-	  'xref_description'=> $_->[3],
-	  'db_acc'          => $_->[2],
-	  'label'           => $_->[1],
-	  'external_db_id'  => $_->[4],
-	  'xref_id'         => $_->[5],
-	};
+        $xrefs{$type}{$_->[0]}{$external_dbs->{$_->[4]}{'db_name'}} = {
+          'xref_description'=> $_->[3],
+          'db_acc'          => $_->[2],
+          'label'           => $_->[1],
+          'external_db_id'  => $_->[4],
+          'xref_id'         => $_->[5],
+        };
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
@@ -1352,99 +1375,99 @@ sub dumpGene {
       next if $wd->{'gene'}{'do_not_display'};
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
-	  my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-	  &p( GeneLine($dbspecies,
-		       $old->{'gsid'},
-		       $old->{'tsids'},
-		       $old->{'tlsids'},
-		       $old->{'exons'},
-		       $old->{'biotype'},
-		       $old->{'ad_dl'},
-		       $old->{'disp_xref'},
-		       $old->{'desc'},
-		       $old->{'xrefs'},
-		       $old->{'xref_descriptions'},
-		       $gene_locations->{$old->{'gsid'}},
-		       $db,
-		       $counter),
-	      $nogzip, $fh);
-	}
-	
-	#only use status for vega#
-	
+          my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
+          &p( GeneLine($dbspecies,
+                       $old->{'gsid'},
+                       $old->{'tsids'},
+                       $old->{'tlsids'},
+                       $old->{'exons'},
+                       $old->{'biotype'},
+                       $old->{'ad_dl'},
+                       $old->{'disp_xref'},
+                       $old->{'desc'},
+                       $old->{'xrefs'},
+                       $old->{'xref_descriptions'},
+                       $gene_locations->{$old->{'gsid'}},
+                       $db,
+                       $counter),
+              $nogzip, $fh);
+        }
+        
+        #only use status for vega#
+        
         $old = {
           'gid'       => $gid,
           'gsid'      => $gsid,
-	  'tlsids'    => {$tlsid?($tlsid=>1):()},
+          'tlsids'    => {$tlsid?($tlsid=>1):()},
           'tsids'     => {$tsid ?($tsid=>1) :()}, 
-	  'desc'      => $desc,
+          'desc'      => $desc,
           'exons'     => {},
-	  'biotype'   => $biotype,
-	  'ad_dl'     => $ad_dl,
+          'biotype'   => $biotype,
+          'ad_dl'     => $ad_dl,
           'xrefs'     => [],
-	  'xref_descriptions' => {},
+          'xref_descriptions' => {},
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
           'status'    => $status,
           'biotype'   => $biotype,
-	  'ad_dl'     => $ad_dl,
+          'ad_dl'     => $ad_dl,
         };
 
         $old->{'exons'}  = $exons{$gid};
 
-	#add xref details
-	foreach my $type (qw(Gene Transcript Translation)) {
-	  my $id = ($type eq 'Gene')        ? $gid
+        #add xref details
+        foreach my $type (qw(Gene Transcript Translation)) {
+          my $id = ($type eq 'Gene')        ? $gid
                  : ($type eq 'Transcript')  ? $tid
                  : ($type eq 'Translation') ? $tlid
                  : '';
-	  while (my ($db_name,$dets) = each %{$xrefs{$type}{$id}}) {
-	    my $xref_id = $dets->{'xref_id'};
-	    $dets->{'db_name'} = $db_name;
-	    $old->{'xref_descriptions'}{$dets->{'xref_description'}}++ ;
-	    foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
-	      push @{$dets->{'synonyms'}},$syn;
-	    }
-	    push @{$old->{'xrefs'}}, $dets;
-	  }
-	}
+          while (my ($db_name,$dets) = each %{$xrefs{$type}{$id}}) {
+            my $xref_id = $dets->{'xref_id'};
+            $dets->{'db_name'} = $db_name;
+            $old->{'xref_descriptions'}{$dets->{'xref_description'}}++ ;
+            foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+              push @{$dets->{'synonyms'}},$syn;
+            }
+            push @{$old->{'xrefs'}}, $dets;
+          }
+        }
       }
       else {
         $old->{'tsids' }{$tsid }=1;
         $old->{'tlsids'}{$tlsid}=1 if $tlsid;
 
-	#add xref details
-	foreach my $type (qw(Gene Transcript Translation)) {
-	  my $id = ($type eq 'Gene')        ? $gid
+        #add xref details
+        foreach my $type (qw(Gene Transcript Translation)) {
+          my $id = ($type eq 'Gene')        ? $gid
                  : ($type eq 'Transcript')  ? $tid
                  : ($type eq 'Translation') ? $tlid
                  : '';
-	  while (my ($db_name,$dets) = each %{$xrefs{$type}{$id}}) {
-	    my $xref_id = $dets->{'xref_id'};
-	    $dets->{'db_name'} = $db_name;
-	    $old->{'xref_descriptions'}{$dets->{'xref_description'}}++;
-	    foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
-	      push @{$dets->{'synonyms'}},$syn;
-	    }
-	    push @{$old->{'xrefs'}}, $dets;
-	  }
-	}
+          while (my ($db_name,$dets) = each %{$xrefs{$type}{$id}}) {
+            my $xref_id = $dets->{'xref_id'};
+            $dets->{'db_name'} = $db_name;
+            $old->{'xref_descriptions'}{$dets->{'xref_description'}}++;
+            foreach my $syn (keys %{$external_synonyms->{$xref_id}}) {
+              push @{$dets->{'synonyms'}},$syn;
+            }
+            push @{$old->{'xrefs'}}, $dets;
+          }
+        }
       }
     }
     &p( GeneLine($dbspecies,
-		 $old->{'gsid'},
-		 $old->{'tsids'},
-		 $old->{'tlsids'},
-		 $old->{'exons'},
-		 $old->{'biotype'},
-		 $old->{'ad_dl'},
-		 $old->{'disp_xref'},
-		 $old->{'desc'},
-		 $old->{'xrefs'},
-		 $old->{'xref_descriptions'},
-		 $gene_locations->{$old->{'gsid'}},
-		 $db,
-		 $counter),
-	$nogzip, $fh) if ($old->{'gsid'});
+                 $old->{'gsid'},
+                 $old->{'tsids'},
+                 $old->{'tlsids'},
+                 $old->{'exons'},
+                 $old->{'biotype'},
+                 $old->{'ad_dl'},
+                 $old->{'disp_xref'},
+                 $old->{'desc'},
+                 $old->{'xrefs'},
+                 $old->{'xref_descriptions'},
+                 $gene_locations->{$old->{'gsid'}},
+                 $db,
+                 $counter),
+        $nogzip, $fh) if ($old->{'gsid'});
     print LOG "    Gene info query done ".&date_and_mem()."\n";
 #    exit;
 
@@ -1468,39 +1491,39 @@ sub dumpGene {
       next if $current_stable_ids{$type}{$osi}; ## Don't need to cope with current IDS already searchable...
       $mapping{$type}{$osi}{$nsi}=1;
       if($mapping{$type}{$nsi}) {
-	foreach( keys %{$mapping{$type}{$nsi}} ) {
-	  $mapping{$type}{$osi}{$_}=1;
-	}
+        foreach( keys %{$mapping{$type}{$nsi}} ) {
+          $mapping{$type}{$osi}{$_}=1;
+        }
       }
     }
     foreach my $type ( keys %mapping ) {
       foreach my $osi ( keys %{$mapping{$type}} ) {
-	my @current_sis = ();
-	my @deprecated_sis = ();
-	foreach ( keys %{$mapping{$type}{$osi}} ) {
-	  next if $osi eq $_;
-	  if( $current_stable_ids{$_} ) {
-	    push @current_sis,$_;
-	  } elsif( $_ ne 'NULL' ) {
-	    push @deprecated_sis,$_;
-	  }
-	}
-	if( @current_sis ) {
-	  $other_count++;
-	  my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
-	  $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
-	  &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-	}
-	elsif( @deprecated_sis ) {
-	  $other_count++;
-	  my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
-	  &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
-	}
-	else {
-	  $other_count++;
-	  my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
-	  &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
-	}
+        my @current_sis = ();
+        my @deprecated_sis = ();
+        foreach ( keys %{$mapping{$type}{$osi}} ) {
+          next if $osi eq $_;
+          if( $current_stable_ids{$_} ) {
+            push @current_sis,$_;
+          } elsif( $_ ne 'NULL' ) {
+            push @deprecated_sis,$_;
+          }
+        }
+        if( @current_sis ) {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following current identifiers: @current_sis);
+          $desc .= @deprecated_sis ? qq(; and the following deprecated identifiers: @deprecated_sis) : '';
+          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,\@current_sis,\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+        }
+        elsif( @deprecated_sis ) {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database but it has been mapped to the following identifiers: @deprecated_sis);
+          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],\@deprecated_sis,$type,$db,$counter),$nogzip, $fh);
+        }
+        else {
+          $other_count++;
+          my $desc = qq(Ensembl $type $osi is no longer in the database and has not been mapped to any newer identifiers);
+          &p (&GeneStableIdMappingLine($dbspecies,$desc,$osi,[],[],$type,$db,$counter),$nogzip, $fh);
+        }
       }
     }
     print LOG "    Stable_id mapping querying done ".&date_and_mem()."\n";
@@ -1555,17 +1578,17 @@ sub dumpGene {
     );
 
       foreach my $FLAG (keys %unmapped_queries) {
-	my $SQL = $unmapped_queries{$FLAG};
-	my $sth = $conf->{'dbh'}->prepare($SQL);
-	$sth->execute;
-	while( my $T = $sth->fetchrow_arrayref() ) {
-	  print O join "\t",
-	    (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
-	      "$T->[1] $T->[2]",
-		"/$conf->{'species'}/Location/Genome?ftype=Gene;id=$T->[2]",
-		  "$T->[2] $T->[4]",
-		    "$T->[3]; $T->[4]\n";
-	}
+        my $SQL = $unmapped_queries{$FLAG};
+        my $sth = $conf->{'dbh'}->prepare($SQL);
+        $sth->execute;
+        while( my $T = $sth->fetchrow_arrayref() ) {
+          print O join "\t",
+            (INC_SPECIES?"$conf->{'species'}\t":"").qq(Unmapped feature),
+              "$T->[1] $T->[2]",
+                "/$conf->{'species'}/Location/Genome?ftype=Gene;id=$T->[2]",
+                  "$T->[2] $T->[4]",
+                    "$T->[3]; $T->[4]\n";
+        }
       }
     }
     close O;
@@ -1599,10 +1622,10 @@ sub GeneLine {
       $xml .= qq(
     <ref dbname="$dbname" dbkey="$dbkey"/>);
       foreach my $syn (@{$xref->{'synonyms'}}) { 
-	next if $seen_syns{$syn};
-	$seen_syns{$syn} = 1;
-	$syn = &clean($syn,'syn');
-	$xml .= qq(
+        next if $seen_syns{$syn};
+        $seen_syns{$syn} = 1;
+        $syn = &clean($syn,'syn');
+        $xml .= qq(
     <ref dbname="$dbname" dbkey="$syn"/>);
       }
     }
@@ -1806,7 +1829,7 @@ sub RegulatoryFeatureLine {
 sub dumpLRGs {
   my $conf = shift;
   return $conf->{'dbh'}->selectall_arrayref(
-	qq(SELECT gsi.stable_id, x.display_label, edb.db_name, tsi.stable_id, sr.length
+        qq(SELECT gsi.stable_id, x.display_label, edb.db_name, tsi.stable_id, sr.length
              FROM gene_stable_id gsi, gene g, analysis a, object_xref ox, xref x, external_db edb, transcript t, transcript_stable_id tsi, seq_region sr
             WHERE gsi.gene_id = g.gene_id
               AND g.analysis_id = a.analysis_id
@@ -1834,8 +1857,8 @@ sub sort_lrgs {
     }
     else {
       if ($prev_gsi) {
-	&p(LRGLine($dbspecies,$type,$prev_gsi,$prev_disp_label,$prev_db_name,$query_terms,$prev_length),
-	   $nogzip, $fh);
+        &p(LRGLine($dbspecies,$type,$prev_gsi,$prev_disp_label,$prev_db_name,$query_terms,$prev_length),
+           $nogzip, $fh);
       }
       $prev_gsi = $gsi;
       $prev_disp_label = $rec->[1];
