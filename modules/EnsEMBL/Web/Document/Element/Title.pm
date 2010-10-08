@@ -9,10 +9,9 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Document::Element);
 
 sub new {
-  return shift->SUPER::new({
-    %{$_[0]},
-    title => $ENV{'ENSEMBL_TYPE'} eq 'blastview' ? 'BLAST Search' : 'Untitled document' ## FIXME - this is a temporary hack until we rewrite the BLAST front end
-  });
+  my $self = shift->SUPER::new(@_);
+  $self->set('BLAST Search') if $self->hub->type eq 'blastview'; ## FIXME - this is a temporary hack until we rewrite the BLAST front end
+  return $self;
 }
 
 sub set       { $_[0]{'title'} = $_[1]; }
@@ -39,7 +38,8 @@ sub init {
   
     return unless $node && ($object || $configuration);
     
-    my $species_defs = $self->species_defs;
+    my $hub          = $self->hub;
+    my $species_defs = $hub->species_defs;
     my $caption      = $object ? $object->caption : $configuration->caption;
     my $title        = $node->data->{'concise'} || $node->data->{'caption'};
     $title           =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
@@ -47,8 +47,8 @@ sub init {
     $self->set(sprintf '%s %s: %s %s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, " - $title - $caption");
     
     ## Short title to be used in the bookmark link
-    if ($controller->hub->user) {
-      my $type = $controller->type;
+    if ($hub->user) {
+      my $type = $hub->type;
     
       if ($type eq 'Location' && $caption =~ /: ([\d,-]+)/) {
         (my $strip_commas = $1) =~ s/,//g;

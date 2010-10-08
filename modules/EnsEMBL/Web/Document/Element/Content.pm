@@ -261,7 +261,7 @@ sub ajax_content {
 sub add_error_panels { 
   my ($self, $problems) = @_;
   
-  my $view         = uc $ENV{'ENSEMBL_SCRIPT'};
+  my $view         = uc $self->hub->script;
   my $ini_examples = $self->species_defs->SEARCH_LINKS;
   my @example      = map { /^$view(\d)_TEXT/ ? qq{ <a href="$ini_examples->{"$view${1}_URL"}">$ini_examples->{$_}</a>} : () } keys %$ini_examples; # Find an example for the page
   my $example_html = join ', ', @example;

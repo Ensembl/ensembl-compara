@@ -50,10 +50,9 @@ sub content {
 
 sub init {
   my $self         = shift;
-  my $controller   = shift;
   my $species_defs = $self->species_defs;
   
-  if ($controller->input->param('debug') eq 'js') {
+  if ($self->hub->param('debug') eq 'js') {
     foreach my $root (reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS}) {
       my $dir = "$root/components";
 

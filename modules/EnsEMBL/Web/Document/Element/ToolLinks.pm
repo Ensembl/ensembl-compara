@@ -8,49 +8,34 @@ use strict;
 
 use base qw(EnsEMBL::Web::Document::Element);
 
-sub new {
-  return shift->SUPER::new({
-    %{$_[0]},
-    logins => '?'
-  });
-}
-
 sub logins  :lvalue { $_[0]{'logins'};  }
 sub blast   :lvalue { $_[0]{'blast'};   }
 sub biomart :lvalue { $_[0]{'biomart'}; }
 
 sub content {
-  my $self = shift;
-  
-  my $species_defs = $self->species_defs;
-  my $dir          = $species_defs->species_path;
-  my $sp_dir       = $ENV{'ENSEMBL_SPECIES'};
-  my $blast_dir    = !$sp_dir || $sp_dir eq 'Multi' || $sp_dir eq 'common' ? 'Multi' : $sp_dir;
-  
-  $dir = '' if $dir !~ /_/;
-
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $species   = $hub->species;
+  my $blast_dir = !$species || $species eq 'Multi' || $species eq 'common' ? 'Multi' : $species;
   my @links;
   
   if ($self->logins) {
-    if ($ENV{'ENSEMBL_USER_ID'}) {
-      push @links, qq{<a class="constant modal_link" style="display:none" href="$dir/Account/Links">Account</a>};
-      push @links, qq{<a class="constant" href="$dir/Account/Logout">Logout</a>};
+    if ($hub->user) {
+      push @links, sprintf '<a class="constant modal_link" style="display:none" href="%s">Account</a>',  $hub->url({ __clear => 1, type => 'Account', action => 'Links'  });
+      push @links, sprintf '<a class="constant" href="%s">Logout</a>',                                   $hub->url({ __clear => 1, type => 'Account', action => 'Logout' });
     } else {
-      push @links, qq{<a class="constant modal_link" style="display:none" href="$dir/Account/Login">Login</a>};
-      push @links, qq{<a class="constant modal_link" style="display:none" href="$dir/Account/User/Add">Register</a>};
+      push @links, sprintf '<a class="constant modal_link" style="display:none" href="%s">Login</a>',    $hub->url({ __clear => 1, type => 'Account', action => 'Login' });
+      push @links, sprintf '<a class="constant modal_link" style="display:none" href="%s">Register</a>', $hub->url({ __clear => 1, type => 'Account', action => 'User', function => 'Add' });
     }
   }
   
   push @links, qq{<a class="constant" href="/$blast_dir/blastview">BLAST/BLAT</a>} if $self->blast;
-  push @links, qq{<a class="constant" href="/biomart/martview">BioMart</a>}        if $self->biomart;
-  push @links, qq{<a class="constant" href="/tools.html">Tools</a>};
-  push @links, qq{<a class="constant" href="/downloads.html">Downloads</a>};
-  push @links, qq{<a class="constant" href="/help.html">Help</a>};
-  push @links, qq{<a class="constant" href="/info/docs/">Documentation</a>};
-
-  if ($species_defs->ENSEMBL_MIRRORS && keys %{$species_defs->ENSEMBL_MIRRORS}) {
-    push @links, qq(<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>);
-  }
+  push @links,   '<a class="constant" href="/biomart/martview">BioMart</a>'        if $self->biomart;
+  push @links,   '<a class="constant" href="/tools.html">Tools</a>';
+  push @links,   '<a class="constant" href="/downloads.html">Downloads</a>';
+  push @links,   '<a class="constant" href="/help.html">Help</a>';
+  push @links,   '<a class="constant" href="/info/docs/">Documentation</a>';
+  push @links,   '<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>' if keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}};
 
   my $last  = pop @links;
   my $tools = join '', map "<li>$_</li>", @links;

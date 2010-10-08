@@ -11,9 +11,10 @@ use base qw(EnsEMBL::Web::Document::Element);
 sub init {
   my $self       = shift;
   my $controller = shift;
+  my $hub        = $self->hub;
   my $object     = $controller->object;
   my $caption    = $object ? $object->caption : $controller->configuration->caption;
-  my $component  = sprintf 'EnsEMBL::Web::Component::%s::%s', $controller->type, $controller->action eq 'Multi' ? 'MultiIdeogram' : 'Summary';
+  my $component  = sprintf 'EnsEMBL::Web::Component::%s::%s', $hub->type, $hub->action eq 'Multi' ? 'MultiIdeogram' : 'Summary';
   
   return unless $self->dynamic_use($component);
   

@@ -13,8 +13,9 @@ use base qw(EnsEMBL::Web::Document::Element::Tabs EnsEMBL::Web::Document::Elemen
 sub init {
   my $self       = shift;
   my $controller = shift;
-  my $type       = $controller->page_type eq 'Configurator' ? 'Config' : $controller->type;
-  my $config     = 'config_' . $controller->input->param('config');
+  my $hub        = $self->hub;
+  my $type       = $controller->page_type eq 'Configurator' ? 'Config' : $hub->type;
+  my $config     = 'config_' . $hub->param('config');
   $config        =~ s/__/_/; # config paramenter can be _page, so in this case make sure we have the correct value
   
   $self->EnsEMBL::Web::Document::Element::Modal::init($controller);
