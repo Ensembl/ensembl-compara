@@ -10,23 +10,18 @@ use EnsEMBL::Web::RegObj;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $args) = @_;
-  
-  my $self = {
-    %$args,
-    _home_url => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WEB_ROOT   || '/',
-    _img_url  => $ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_IMAGE_ROOT || '/i/',
-  };
-  
+  my $class = shift;
+  my $self  = shift;
   bless $self, $class;
-  
   return $self;
 }
 
-sub renderer :lvalue { $_[0]->{'_renderer'};           }
-sub home_url :lvalue { $_[0]->{'_home_url'};           }
-sub img_url  :lvalue { $_[0]->{'_img_url'};            }
-sub species_defs     { return $_[0]->{'species_defs'}; }
+sub renderer :lvalue { $_[0]->{'renderer'};             }
+sub hub              { return $_[0]->{'hub'};           }
+sub species_defs     { return $_[0]->hub->species_defs; }
+
+sub home_url  { return $_[0]->{'home_url'} ||= $_[0]->species_defs->ENSEMBL_WEB_ROOT   || '/';   }
+sub img_url   { return $_[0]->{'img_url'}  ||= $_[0]->species_defs->ENSEMBL_IMAGE_ROOT || '/i/'; }
 
 sub printf { my $self = shift; $self->renderer->printf(@_) if $self->renderer; }
 sub print  { my $self = shift; $self->renderer->print(@_)  if $self->renderer; }
@@ -52,7 +47,7 @@ sub new_panel {
     
     push @{$controller->errors},
       new EnsEMBL::Web::Document::Panel(
-        hub        => $controller->hub,
+        hub        => $self->hub,
         builder    => $controller->builder,
         object     => $controller->object,
         code       => "error_$params{'code'}",
@@ -68,8 +63,8 @@ sub new_panel {
   
   eval {
     $panel = $module_name->new(
+      hub     => $self->hub,
       builder => $controller->builder, 
-      hub     => $controller->hub,
       object  => $controller->object,
       %params
     );
@@ -79,7 +74,7 @@ sub new_panel {
   
   push @{$controller->errors},
     new EnsEMBL::Web::Document::Panel(
-      hub     => $controller->hub,
+      hub     => $self->hub,
       builder => $controller->builder,
       object  => $controller->object,
       code    => "error_$params{'code'}",

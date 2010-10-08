@@ -250,8 +250,8 @@ sub _init {
         timer        => $self->{'timer'},
         input        => $self->{'input'},
         format       => $self->{'format'},
-        species_defs => $self->species_defs,
-        _renderer    => $self->renderer
+        hub          => $self->hub,
+        renderer     => $self->renderer
       });
     };
     
