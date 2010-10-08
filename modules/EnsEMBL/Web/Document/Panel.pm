@@ -299,7 +299,7 @@ sub content {
     my $caption = exists $self->{'caption'} ? $self->_caption_with_helplink : '';
     my $button_html;
     
-    if ((exists $self->{'previous'} || exists $self->{'next'}) && $hub && $hub->type ne 'Search') {
+    if ((exists $self->{'previous'} || exists $self->{'next'}) && $hub && $hub->type !~ /^Search|Lucene$/) {
       my @buttons = (
         [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
         [ 'next',     'right', '%s&nbsp;&raquo;' ]
