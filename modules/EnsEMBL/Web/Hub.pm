@@ -74,7 +74,7 @@ sub new {
   $self->session = new EnsEMBL::Web::Session($self, $args->{'session_cookie'});
   
   if ($ENSEMBL_WEB_REGISTRY) {
-    $self->user  ||= $ENSEMBL_WEB_REGISTRY->get_user;
+    $self->user  ||= $ENSEMBL_WEB_REGISTRY->user;
     $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer;
   }
   

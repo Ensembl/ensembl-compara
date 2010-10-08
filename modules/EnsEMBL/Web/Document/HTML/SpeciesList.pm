@@ -12,7 +12,7 @@ sub render {
   my $class        = shift;
   my $fragment     = shift eq 'fragment';
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $user         = $ENSEMBL_WEB_REGISTRY->get_user;
+  my $user         = $ENSEMBL_WEB_REGISTRY->user;
   my $species_info = {};
  
   foreach ($species_defs->valid_species) {

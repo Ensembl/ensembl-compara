@@ -189,10 +189,7 @@ sub postReadRequestHandler {
   
   # Initialize the user (and possibly group) objects
   # Unlikely to go to db - just store the IDs
-  $ENSEMBL_WEB_REGISTRY->initialize_user({
-    cookie => $user_cookie,
-    r      => $r
-  });
+  $ENSEMBL_WEB_REGISTRY->initialize_user($user_cookie, $r);
   
   ## Ajax cookie
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
@@ -339,8 +336,6 @@ sub handler {
   my $path_info = undef;
   my $species_name = $species_map{lc $species};
   my $return;
-  
-  $ENSEMBL_WEB_REGISTRY->set_species($species_name);
   
   if (!$species && $raw_path[-1] !~ /\./) {
     $species      = 'common';
