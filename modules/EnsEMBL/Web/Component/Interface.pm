@@ -22,7 +22,7 @@ sub data_form {
   my ($self, $name, $next) = @_;
   my $hub       = $self->hub;
   my $object    = $self->object;
-  my $interface = object->interface;
+  my $interface = $object->interface;
   my $url       = '/' . $hub->species;
   $url          = '' if $url !~ /_/;
   $url         .= '/' . $self->script_name . "/$next";
