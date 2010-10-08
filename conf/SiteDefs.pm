@@ -351,6 +351,7 @@ $OBJECT_TO_SCRIPT = {
   Config     => 'Config',
   Component  => 'Component',
   ZMenu      => 'ZMenu',
+  psychic    => 'Psychic',
 
   Gene       => 'Page',
   Transcript => 'Page',
