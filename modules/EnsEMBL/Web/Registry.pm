@@ -99,14 +99,6 @@ sub initialize_user {
 ##  defer => 'yes',
 }
 
-# TODO: delete if possible
-sub initialize_session {
-  my ($self, $hub) = @_;
-  $self->set_species($hub->species);
-  $self->set_script($hub->script);
-  $self->set_action($hub->action);
-  $self->set_type($hub->type);
-  $self->set_session($hub->session);
-}
+
 
 1;
