@@ -12,6 +12,7 @@
 =head1 DESCRIPTION  
 
     A pipeline to merge together the "homology side" of the Compara release: gene_trees, families and ncrna_trees.
+    (Took 2h15m to execute for release 60)
 
 =head1 CONTACT
 
@@ -42,7 +43,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'compara_homology_merged_60',       # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_60',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
             -host   => 'compara2',
@@ -78,7 +79,7 @@ sub default_options {
             -dbname => 'lg4_compara_homology_60',
         },
         'genetrees_copy_tables'  => [ 'lr_index_offset', 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
-        'genetrees_merge_tables' => [ 'member', 'sequence', 'stable_id_history', 'homology', 'homology_member' ],
+        'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member' ],
 
         'families_db' => {
             -host   => 'compara3',
@@ -137,7 +138,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'input_id' => { 'source_myconn' => '#mysql_conn:db_conn#', 'table_name' => '#_range_start#' },
+                'input_id' => { 'src_db_conn' => '#db_conn#', 'table' => '#_range_start#' },
             },
             -input_ids => [
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('master_db'),    'inputlist' => $self->o('master_copy_tables') },
@@ -162,21 +163,20 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'dest_myconn' => $self->dbconn_2_mysql('pipeline_db', 1),
-                'cmd'         => 'mysqldump #source_myconn# #table_name# | sed "s/ENGINE=InnoDB/ENGINE=MyISAM/" | mysql #dest_myconn#',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
         {   -logic_name    => 'merge_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'dest_myconn' => $self->dbconn_2_mysql('pipeline_db', 1),
-                'cmd'         => 'mysqldump #source_myconn# --no-create-info --insert-ignore #table_name# | mysql #dest_myconn#',
+                'mode'          => 'topup',
             },
-            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -hive_capacity => 1,    # prevent several workers from updating the same table (brute force)
         },
     ];
 }

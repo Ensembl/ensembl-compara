@@ -12,6 +12,7 @@
 =head1 DESCRIPTION  
 
     A pipeline to merge the "homology side" of the Compara release into the main release database
+    (Took 2h10m to execute for release 60)
 
 =head1 CONTACT
 
@@ -68,7 +69,9 @@ sub default_options {
             -dbname => 'kb3_ensembl_compara_60',
         },
 
-        'skipped_tables' => [ 'meta', 'analysis', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set' ],
+        'skipped_tables' => [ 'meta', 'analysis', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
+                              'analysis_data', 'analysis_job', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
+                              'dataflow_rule', 'hive', 'job_message', 'monitor', 'resource_description' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
@@ -105,7 +108,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'input_id'        => { 'table_name' => '#_range_start#' },
+                'input_id'        => { 'table' => '#_range_start#' },
                 'db_conn'         => $self->o('merged_homology_db'),
                 'skipped_tables'  => $self->o('skipped_tables'),
                 'fan_branch_code' => 2,
@@ -119,14 +122,16 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'db_conn'     => $self->o('merged_homology_db'),
-                'dest_conn'   => $self->o('rel_db'),
-                'cmd'         => 'mysqldump #mysql_conn:db_conn# #table_name# | sed "s/ENGINE=InnoDB/ENGINE=MyISAM/" | mysql #mysql_conn:dest_conn#',
+                'src_db_conn'   => $self->o('merged_homology_db'),
+                'dest_db_conn'  => $self->o('rel_db'),
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
+
     ];
 }
 
