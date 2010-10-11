@@ -123,8 +123,10 @@ sub upload {
   
     if ($file->content) {
       if ($file->save) {
-        my $code = $file->md5 . '_' . $hub->session->session_id;
-     
+        my $code = $file->md5 . '_' . $hub->session->get_session_id;
+        my ($sec, $min, $hr, $mday, $mon, $year) = localtime();
+        my $timestamp = sprintf '%s-%s-%s %s:%s:%s', (1900 + $year), ($mon + 1), $mday, $hr, $min, $sec;
+
         $param->{'species'} = $hub->param('species') || $hub->species;
         ## Attach data species to session
         $hub->session->add_data(
@@ -137,6 +139,7 @@ sub upload {
           species   => $hub->param('species'),
           format    => $format,
           assembly  => $hub->param('assembly'),
+          timestamp => $timestamp,
         );
 
         $param->{'code'} = $code;
