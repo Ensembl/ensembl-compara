@@ -56,9 +56,9 @@ sub content {
   foreach my $exon (@exons) {
     my $next_exon  = $exons[++$i];
     my $exon_id    = $exon->stable_id;
-    my $exon_start = $exon->start;
-    my $exon_end   = $exon->end;
-    
+    my $exon_start = $exon->seq_region_start;
+    my $exon_end   = $exon->seq_region_end;
+
     $exon_id = "<strong>$exon_id</strong>" if $entry_exon && $entry_exon eq $exon_id;
     
     my $exon_seq = $self->get_exon_sequence_data($config, $exon);
@@ -73,7 +73,7 @@ sub content {
       Length     => $self->thousandify(scalar @$exon_seq),
       Sequence   => $self->build_sequence($exon_seq, $config)
     };
-    
+
     # Add intronic sequence
     if ($next_exon && !$only_exon) {
       my ($intron_start, $intron_end) = $strand == 1 ? ($exon_end + 1, $next_exon->start - 1) : ($next_exon->end + 1, $exon_start - 1);
@@ -91,7 +91,7 @@ sub content {
       };
     }
   }
-  
+
   # Add flanking sequence
   if ($config->{'flanking'} && !$only_exon) {
     my ($upstream, $downstream) = $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]);
@@ -148,6 +148,7 @@ sub get_exon_sequence_data {
   my $coding_end   = $config->{'coding_end'};
   my $strand       = $config->{'strand'};
   my $seq          = uc $exon->seq->seq;
+
   my $seq_length   = length $seq;
   my $exon_start   = $exon->start;
   my $exon_end     = $exon->end;
@@ -155,7 +156,7 @@ sub get_exon_sequence_data {
   my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
   my $class        = $coding_start && $coding_end ? 'e0' : 'eu';   # if the transcript is entirely UTR, use utr class for the whole sequence
   my @sequence     = map {{ letter => $_, class => $class }} split //, $seq;
-  
+
   if ($utr_start || $utr_end) {
     my ($coding_length, $utr_length);
     
@@ -177,9 +178,9 @@ sub get_exon_sequence_data {
       $sequence[$_]->{'class'} = 'eu' for 0..($utr_length < $seq_length ? $utr_length : $seq_length) - 1;
     }
   }
-  
+
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'variation'} ne 'off';
-  
+
   return \@sequence;
 }
 
@@ -227,7 +228,7 @@ sub get_flanking_sequence_data {
   my $flanking      = $config->{'flanking'};
   my @dots          = map {{ letter => $_, class => 'ef' }} split //, '.' x ($display_width - ($flanking % $display_width));
   my ($upstream, $downstream);
-  
+
   if ($strand == 1) {
     $upstream = { 
       slice => $first_exon->slice->sub_Slice($first_exon->start - $flanking, $first_exon->start - 1, $strand),
