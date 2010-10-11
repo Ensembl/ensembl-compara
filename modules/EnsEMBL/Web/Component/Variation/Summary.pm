@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::Variation::Summary;
 use strict;
 
 use base qw(EnsEMBL::Web::Component::Variation);
+use EnsEMBL::Web::Form;
 
 sub _init {
   my $self = shift;
@@ -196,68 +197,116 @@ sub content {
   
   if ($count < 1) {
     $html .= '<dt>Location</dt><dd>This feature has not been mapped.</dd></dl>';
-  } else {
-    # First add co-located variation info if count == 1
+  }
+  else {
+    my @values;
+    my $selected_vf;
+    my $loc_html;
+    
+    # selected_vf is used to construct a link to location view
+    # when count is one we just want the VF ID (the only one)
     if ($count == 1) {
-      my $vf    = $variation_features->[0]; 
-      my $slice = $vf->slice; 
+      $selected_vf = $variation_features->[0]->dbID;
     }
-
-    my $hide = $hub->get_cookies('ENSEMBL_locations') eq 'close';
-    my @locations;
-    my $select_html;
     
-    $select_html = "<br />Please select a location to display information relating to $id in that genomic region. " if $count > 1;
-    
-    $html .= sprintf(qq{
-          <dt id="locations" class="toggle_button" title="Click to toggle genomic locations"><span>Location</span><em class="%s"></em></dt>
-          <dd>This feature maps to $count genomic location%s. $select_html</dd>
-          <dd class="toggle_info"%s>Click the plus to show genomic locations</dd>
-        </dl>
-        <table class="toggle_table" id="locations_table"%s>
-      },
-      $hide ? 'closed' : 'open',
-      $count > 1 ? 's' : '',
-      $hide ? '' : ' style="display:none"',
-      $hide ? ' style="display:none"' : ''
-    );
-
-    foreach my $varif_id (sort {$mappings{$a}->{'Chr'} cmp $mappings{$b}->{'Chr'} || $mappings{$a}->{'start'} <=> $mappings{$b}->{'start'}} keys %mappings) {
-      my $region          = $mappings{$varif_id}{'Chr'}; 
-      my $start           = $mappings{$varif_id}{'start'};
-      my $end             = $mappings{$varif_id}{'end'};
-      my $str             = $mappings{$varif_id}{'strand'};
-      my $display_region  = $region . ':' . ($start - 500) . '-' . ($end + 500); 
-      my $track_name      = $is_somatic ? 'somatic_mutation_COSMIC' : 'variation_feature_variation';  
-      my $link            = $hub->url({ type => 'Location', action => 'View', v => $id, source => $source, vf => $varif_id, contigviewbottom => $track_name.'=normal' });  
-      my $location_string = $start == $end ? "$region:$start" : "$region:$start-$end"; 
-      my $location;
+    else {
       
-      $strand = $str <= 0 ? '(reverse strand)' : '(forward strand)';
+      # add default value
+      push @values, {value => 'null', name => 'None selected'};
       
-      if ($varif_id eq $hub->core_param('vf')) {
-        $location = $location_string;
-      } else {
-        my $link  = $hub->url({ v => $id, source => $source, vf => $varif_id,});
-        $location = qq{<a href="$link">$location_string</a>};
+      # get selected VF from the params
+      $selected_vf = $self->hub->core_param('vf');
+      
+      # add values for each mapping
+      foreach my $varif_id (sort
+      {
+        $mappings{$a}->{'Chr'} cmp $mappings{$b}->{'Chr'} ||
+        $mappings{$a}->{'start'} <=> $mappings{$b}->{'start'}
+      } keys %mappings) {
+        
+        my $region          = $mappings{$varif_id}{'Chr'}; 
+        my $start           = $mappings{$varif_id}{'start'};
+        my $end             = $mappings{$varif_id}{'end'};
+        my $str             = $mappings{$varif_id}{'strand'};
+        my $display_region  = $region . ':' . ($start - 500) . '-' . ($end + 500);
+        my $location_string =
+          ($start == $end ? "$region:$start" : "$region:$start-$end").
+          ' ('.($str > 0 ? "forward" : "reverse").' strand)';
+        
+        push @values, {value => $varif_id, name => $location_string};
       }
       
-      my $location_link      = $hub->url({ type =>'Location', action => 'View', r => $display_region, v => $id, source => $source, vf => $varif_id, contigviewbottom => $track_name.'=normal' });
-      my $location_link_html = qq{<a href="$location_link">Jump to region in detail</a>};
+      # create form
+      my $url = $object->_url({ vf => undef, v => $id, source => $source, });
+      my $form  = new EnsEMBL::Web::Form('select_loc', $url, 'get', 'nonstd check');
       
-      $html .= sprintf('
-        <tr%s>
-          <td><strong>%s</strong> %s</td>
-          <td>%s</td> 
-        </tr>',
-        $varif_id eq $hub->core_param('vf') ? ' class="active"' : '',
-        $location,
-        $strand,
-        $location_link_html
+      # add dropdown
+      $form->add_element(
+        type         => 'DropDown',
+        select       => 'select',
+        name         => 'vf',
+        values       => \@values,
+        value        => $selected_vf, # default to selected_vf
       );
+      
+      # add hidden values for all other params
+      my %params = %{$self->hub->core_params};
+      foreach my $param(keys %params) {
+        
+        # ignore vf and region as we want them to be overwritten
+        next if $param eq 'vf' or $param eq 'r';
+        
+        $form->add_element(
+          type => 'Hidden',
+          name => $param,
+          value => $params{$param},
+        ) if defined $params{$param};
+      }
+      
+      # render to string
+      $loc_html = 'This feature maps to '.$count.' genomic locations'.$form->render;
+      
+      # strip off unwanted HTML layout tags from form
+      $loc_html =~ s/\<\/?(div|tr|th|td|table|tbody|fieldset)+.*?\>\n?//g;
+      
+      # add onchange event to select
+      $loc_html =~ s/\<select/$&.' onchange="this.form.submit()"'/e;
+      
+      # insert text
+      $loc_html =~ s/\<form.*?\>/$&.'<span style="font-weight: bold;">Selected location: <\/span>'/e;
     }
     
-    $html .= '</table>';
+    # construct location view link and other strings
+    my ($location_string, $location_string_long, $location_link_html);
+    
+    if(defined($selected_vf)) {
+      my $region          = $mappings{$selected_vf}{'Chr'}; 
+      my $start           = $mappings{$selected_vf}{'start'};
+      my $end             = $mappings{$selected_vf}{'end'};
+      my $str             = $mappings{$selected_vf}{'strand'};
+      my $display_region  = $region . ':' . ($start - 500) . '-' . ($end + 500);
+      
+      $location_string = ($start == $end ? "$region:$start" : "$region:$start-$end");
+      $location_string_long = $location_string.' ('.($str > 0 ? "forward" : "reverse").' strand)';
+      
+      # turn on somatic or normal variation track
+      my $track_name = $self->object->Obj->is_somatic ? 'somatic_mutation_COSMIC' : 'variation_feature_variation';
+      
+      my $location_link = $object->_url({ type =>'Location', action => 'View', r => $display_region, v => $id, source => $source, vf => $selected_vf, contigviewbottom => $track_name.'=normal' });
+      $location_link_html = qq( | <a href="$location_link">View in location tab</a>);
+    }
+    
+    # finish off html
+    if($count == 1) {
+      $loc_html = 'This feature maps to '.$location_string_long.$location_link_html;
+    }
+    else {
+      #insert location link
+      $loc_html =~ s/\<\/form\>/$location_link_html.$&/e;
+    }
+    
+    # add to main $html
+    $html .= '<dt>Location</dt><dd>'.$loc_html.'</dd></dl>';
   }
 
   return qq{<div class="summary_panel">$html</div>};
