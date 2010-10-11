@@ -1095,34 +1095,55 @@ sub species_path {
   
   my $url;
 
-  ## EK :: This bit about local species needs reworking as it will not work for bacteria - they need clade name in front
   ## Is this species found on this site?
   my $local = grep $species, $self->valid_species;
-  
-  if ($local) {
+  my $is_bacteria = $self->ENSEMBL_TYPE =~ /acteria/ ? 1 : 0;
+
+  if ($local && !$is_bacteria) {
     $url = "/$species";
   } else { 
     ## At the moment the mapping between species name and its source (full url) is stored in DEFAULTs.ini
-    ## But it really should come from compara db
-    my $current_species = $self->SYSTEM_NAME($ENV{'ENSEMBL_SPECIES'}) || $ENV{'ENSEMBL_SPECIES'};
+    ## But it really should come from somewhere else ( compara db ? another registry service ? )
 
-    my $nospaces = $self->SYSTEM_NAME($species) || $species; 
-    $nospaces =~ s/ /_/g;
+    my $current_species = $self->production_name();
+    $current_species = $self->ENSEMBL_PRIMARY_SPECIES if $current_species eq 'common';
 
-    my $site_hash = $self->ENSEMBL_SPECIES_SITE($current_species) || return "/$nospaces";
-    my $url_hash  = $self->ENSEMBL_EXTERNAL_URLS($current_species);
-    my $spsite    = uc $site_hash->{lc $nospaces};        # Get the location of the requested species 
-    my $cssite    = uc $site_hash->{lc $current_species}; # Get the location of the current site species
+    my $site_hash = $self->ENSEMBL_SPECIES_SITE($current_species) || $self->ENSEMBL_SPECIES_SITE;
+    my $url_hash = $self->ENSEMBL_EXTERNAL_URLS($current_species) || $self->ENSEMBL_EXTERNAL_URLS;
 
-    # Get the URL for the location
+    my $nospaces = $self->production_name($species);
+
+# Get the location of the requested species
+    my $spsite = uc($site_hash->{lc($nospaces)});
+
+# Get the location of the current site species
+    my $cssite = uc($site_hash->{lc($current_species)});
+
+# Get the URL for the location
     my $base_url = $url_hash->{$spsite} || '';
 
-    # Replace ###SPECIES### with the species name
-    ($url = $base_url) =~ s/###SPECIES###/$nospaces/;
+# Replace ###SPECIES### with the species name
+    (my $URL = $base_url) =~ s/\#\#\#SPECIES\#\#\#/$nospaces/;
+
+# To deal with clades in bacteria
+# If we had to do the substitution let's check the species are not on the same site
+# as the current species - in that case we don't need the host name bit
+
+    if ($base_url =~ /\#\#\#SPECIES\#\#\#/) {
+	if (substr($spsite, 0, 5) eq substr($cssite,0, 5)) {
+	    $URL =~ s/^http\:\/\/[^\/]+\//\//;
+	}
+    }
+
+# in case species have not made to the SPECIES_SITE there is a good chance the species name as it is will do
+    return "/$species" unless $URL; 
+    $URL =~ s/\/$//;
+    $url = $URL;
   }
 
   return $url;
 }
+
 
 sub species_display_label {
   ### This function will return the display name of all known (by Compara) species.
@@ -1135,7 +1156,7 @@ sub species_display_label {
   
   (my $ss = lc $species) =~ s/_/ /g;
   
-  my $current_species = $self->SYSTEM_NAME($ENV{'ENSEMBL_SPECIES'}) || $ENV{'ENSEMBL_SPECIES'};
+  my $current_species = $self->production_name();
   my $sdhash          = $self->SPECIES_DISPLAY_NAME($current_species);
   
   return $sdhash->{$ss} if $sdhash->{$ss};
@@ -1148,6 +1169,40 @@ sub species_display_label {
   my $url_hash  = $self->ENSEMBL_EXTERNAL_URLS($current_species);
   
   return $site_hash->{$ss} ? $species : 'Ancestral sequence';
+}
+
+sub production_name {
+    my ($self, $species) = @_;
+
+    $species ||= $ENV{'ENSEMBL_SPECIES'};
+    return unless $species;
+
+    return $species if ($species eq 'common');
+
+# Try simple thing first
+    if (my $sp_name = $self->get_config($species, 'SPECIES_PRODUCTION_NAME')) {
+	return $sp_name;
+    }
+
+
+# species name is either has not been registered as an alias, or it comes from a different website, e.g in pan compara
+# then it has to appear in SPECIES_DISPLAY_NAME section of DEFAULTS ini
+# check if it matches any key or any value in that section
+    (my $nospaces  = $species) =~ s/ /_/g;
+
+    if (my $sdhash = $self->SPECIES_DISPLAY_NAME) {
+	return $species if exists $sdhash->{lc($species)};
+
+	return $nospaces if exists $sdhash->{lc($nospaces)};
+	my %sdrhash = map { $sdhash->{$_} => $_ } keys %{$sdhash || {}};
+
+	(my $with_spaces  = $species) =~ s/_/ /g;
+	my $sname = $self->SPECIES_PRODUCTION_NAME($sdrhash{$species} || $sdrhash{$with_spaces} || $nospaces);
+	$sname ||= $self->SYSTEM_NAME($sdrhash{$species} || $sdrhash{$with_spaces} || $nospaces);
+	return $sname if $sname;
+    }
+
+    return $nospaces;
 }
 
 sub DESTROY {}
