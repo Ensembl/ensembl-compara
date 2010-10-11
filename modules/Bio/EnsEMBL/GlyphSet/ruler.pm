@@ -48,7 +48,8 @@ sub _init {
     :                                                                         ( 'bar',   'arrow', '', $con_strand < 0 ? 'Forward strand' : 'Reverse strand' )
     ;
 
-  my $length     = int( $global_end - $global_start + 1 );
+  my $length     = $len;
+
   my $unit       = [qw( bp Kb Mb Gb Tb )]->[my $power = int( ( length( abs($length) ) - 1 ) / 3 )];
   my $centretext = $unit eq 'bp' ? "$length bp" : sprintf( "%.2f %s", $length / 1000**$power, $unit );
 
