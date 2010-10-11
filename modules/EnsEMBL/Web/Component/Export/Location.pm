@@ -21,30 +21,27 @@ sub content {
 }
 
 sub ld_dump {
-  my $self = shift;
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
+  my $v      = $hub->param('v');
 
-  my %pop_params = map { $object->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $object->param;    
+  my %pop_params = map { $hub->param("pop$_") => $_ } grep s/^pop(\d+)$/$1/, $hub->param;    
   warn 'ERROR: No population defined' and return unless %pop_params;
 
-  foreach (values %pop_params){
-    my $pop_param = $object->param('pop'.$_);
-    my $zoom = 20000; # Currently non-configurable
-  
-  
+  foreach (values %pop_params) {
+    my $pop_param       = $hub->param("pop$_");
+    my $zoom            = 20000; # Currently non-configurable
     my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
-  
-    my $ld_values = $object->get_ld_values($pop_param, $object->param('v'), $zoom);
-  
-    my $populations = {};
-    map { $populations->{$_} = 1 } map { keys %{$ld_values->{$_}} } keys %$ld_values;
+    my $ld_values       = $object->get_ld_values($pop_param, $v, $zoom);
+    my %populations     = map { $_ => 1 } map { keys %$_ } values %$ld_values;
   
     my $header_style = 'background-color:#CCCCCC;font-weight:bold;';
   
-    foreach my $pop_name (sort { $a cmp $b } keys %$populations) {
+    foreach my $pop_name (sort { $a cmp $b } keys %populations) {
       foreach my $ld_type (keys %$ld_values) {
         my $ld = $ld_values->{$ld_type}->{$pop_name};
-      
+        
         next unless $ld->{'data'};
       
         my ($starts, $snps, $data) = (@{$ld->{'data'}});
