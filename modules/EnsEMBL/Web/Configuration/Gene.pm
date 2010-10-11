@@ -135,7 +135,7 @@ sub populate_tree {
     { 'availability' => 'gene database:variation core' }
   ));
   
-  $var_menu->append($self->create_node('Variation_Gene',  'Variation Image',
+  $var_menu->append($self->create_node('Variation_Gene/Image',  'Variation Image',
     [qw( image EnsEMBL::Web::Component::Gene::GeneSNPImage )],
     { 'availability' => 'gene database:variation' }
   ));
