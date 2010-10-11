@@ -58,6 +58,15 @@ sub _init {
       # We are finished if this exon starts outside the slice
     my($box_start, $box_end);
       # only draw this exon if is inside the slice
+
+    if ($exon->[0] < 0 && $transcript->slice->is_circular) { # Features overlapping chromosome origin
+        $exon->[0] += $transcript->slice->seq_region_length;
+        $exon->[1] += $transcript->slice->seq_region_length;
+        $coding_start += $transcript->slice->seq_region_length;
+        $coding_end += $transcript->slice->seq_region_length;
+    }
+    
+
     $box_start = $exon->[0];
     $box_start = 1 if $box_start < 1 ;
     $box_end   = $exon->[1];
