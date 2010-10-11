@@ -44,7 +44,7 @@ sub init {
     my $title        = $node->data->{'concise'} || $node->data->{'caption'};
     $title           =~ s/\s*\(.*\[\[.*\]\].*\)\s*//;
     
-    $self->set(sprintf '%s %s: %s %s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, " - $title - $caption");
+    $self->set(sprintf '%s %s: %s %s', $species_defs->ENSEMBL_SITE_NAME, $species_defs->SITE_RELEASE_VERSION || $species_defs->ENSEMBL_VERSION, $species_defs->SPECIES_BIO_NAME, " - $title - $caption");
     
     ## Short title to be used in the bookmark link
     if ($hub->user) {
