@@ -39,6 +39,9 @@ sub _init {
   my $Config        = $self->{'config'};
   my $bitmap_width = $Config->image_width(); 
 
+  my $cdb = $Config->get_parameter('cdb');
+  my $skey = $cdb =~ /pan/ ? "_pan_compara" : '';
+
   $CURRENT_ROW = 1;
   $CURRENT_Y   = 1;
 #  warn ("A-0:".localtime());
@@ -160,7 +163,7 @@ sub _init {
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     my $node_href = $self->_url({ 
-      'action'      => 'ComparaTreeNode',
+      'action'      => "ComparaTreeNode$skey",
       'node'        => $f->{'_id'},
       'genetree_id' => $Config->get_parameter('genetree_id'),
     });
@@ -560,7 +563,7 @@ sub features {
     if ($tree->genome_db) {
       # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
       # There should be a way of retrieving this name correctly instead.
-      $f->{'_species'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME');
+      $f->{'_species'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME') || $tree->genome_db->name;
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
