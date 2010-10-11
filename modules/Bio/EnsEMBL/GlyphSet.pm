@@ -200,7 +200,24 @@ sub _url {
     }
   }
   
-  my $url  = join '/', map $_ || (), $species, 'ZMenu', $type, $action, $fn;
+  my $url;
+
+  my $species_path = $self->{'config'}->species_defs->species_path($species);
+  if ($species_path !~ /^\//) {
+## if the species path does not start with / it means the requested species are
+## external to this site.
+
+## if the species path contains the species name we assume the external site is "powered by ensembl"
+## in this case the link should go to the gene summary
+      if ($species_path =~ /$species/) {
+          $action = 'Summary';
+      } else {
+# Otherwise just use the link
+          $url = $species_path;
+      }
+  }
+
+  $url  ||= join '/', map $_ || (), $species, 'ZMenu', $type, $action, $fn;
   $url    .= '?' if scalar keys %pars;
 
   # Sort the keys so that the url is the same for a given set of parameters
