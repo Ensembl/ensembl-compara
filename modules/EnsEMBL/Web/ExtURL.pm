@@ -36,7 +36,7 @@ sub get_url {
   $data->{'DB'}      = $db;
 ## Sets URL to the the entry for the given name, OR the default value OTHERWISE returns....
   my $url= $self->{'URLS'}{$species}{ uc($db) } || $self->{'URLS'}{$species}{'DEFAULT'};
-  $url =~ s/###(\w+)###/uri_escape( exists $data->{$1} ? $data->{$1} : "(($1))" )/ge;
+  $url =~ s/###(\w+)###/uri_escape( exists $data->{$1} ? $data->{$1} : "(($1))",  "^A-Za-z0-9\-_.!~*'():" )/ge;
   return encode_entities($url);
 }
 
