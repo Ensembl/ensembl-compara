@@ -2,8 +2,6 @@ package EnsEMBL::Web::Component::Gene::GeneSNPTable;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -44,7 +42,7 @@ sub make_table {
     { key => 'Transcript', sort => 'string'},
   ];
   
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
 }
 
 sub render_content {

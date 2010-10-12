@@ -6,8 +6,6 @@ use strict;
 
 use POSIX qw(floor);
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Export);
 
 sub content {
@@ -45,7 +43,7 @@ sub ld_dump {
         next unless $ld->{'data'};
       
         my ($starts, $snps, $data) = (@{$ld->{'data'}});
-        my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
+        my $table = $self->html_format ? $self->new_table : undef;
       
         unshift (@$data, []);
       

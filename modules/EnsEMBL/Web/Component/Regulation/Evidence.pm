@@ -1,49 +1,40 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Regulation::Evidence;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Regulation);
 
+use base qw(EnsEMBL::Web::Component::Regulation);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
+  $self->cacheable(0);
+  $self->ajaxable(0);
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $context      = $object->param( 'context' ) || 200;
-
-  my $object_slice = $object->get_bound_context_slice($context); 
-     $object_slice = $object_slice->invert if $object_slice->strand < 1;
-
-
-  my $evidence_multicell = $object->get_multicell_evidence_data($object_slice, 1); 
+  my $self                  = shift;
+  my $object                = $self->object;
+  my $context               = $self->hub->param('context') || 200;
+  my $object_slice          = $object->get_bound_context_slice($context); 
+     $object_slice          = $object_slice->invert if $object_slice->strand < 1;
+  my $evidence_multicell    = $object->get_multicell_evidence_data($object_slice, 1); 
   my $evidence_by_cell_line = $object->get_evidence_data($object_slice, 1); 
+  
   $evidence_by_cell_line->{'MultiCell'} = $evidence_multicell->{'MultiCell'};
 
-  my $focus_attributes =  $object->regulation->get_focus_attributes; 
-  my $number_of_cell_lines = scalar (keys %$evidence_by_cell_line);
+  return '<p>There is no evidence for this regulatory feature </p>' unless scalar keys %$evidence_by_cell_line;
 
-  unless ( $number_of_cell_lines  >>  0) {
-    my $html = "<p>There is no evidence for this regulatory feature </p>";
-    return $html;
-  }
-
-  my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   $table->add_columns(
-    {'key' => 'cell',     'title' => 'Cell type',     'align' => 'left', sort => 'string'   },
-    {'key' => 'type',     'title' => 'Evidence type', 'align' => 'left', sort => 'string'   },
-    {'key' => 'feature',  'title' => 'Feature name',  'align' => 'left', sort => 'string'   },
-    {'key' => 'location', 'title' => 'Location',      'align' => 'left', sort => 'position' },
+    { 'key' => 'cell',     'title' => 'Cell type',     'align' => 'left', sort => 'string'   },
+    { 'key' => 'type',     'title' => 'Evidence type', 'align' => 'left', sort => 'string'   },
+    { 'key' => 'feature',  'title' => 'Feature name',  'align' => 'left', sort => 'string'   },
+    { 'key' => 'location', 'title' => 'Location',      'align' => 'left', sort => 'position' },
   ); 
 
   my @rows;
   my %seen_evidence_type;
-
 
   foreach my $cell_line (sort keys %{$evidence_by_cell_line}){ 
     # Process core features first
@@ -87,10 +78,8 @@ sub content {
       }
     }
   }
-
-  foreach (@rows){
-    $table->add_row($_);
-  }
+  
+  $table->add_rows(@rows);
 
   return $table->render;
 }

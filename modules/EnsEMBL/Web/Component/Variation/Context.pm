@@ -149,7 +149,7 @@ sub structural_variation_table{
     }
   }
    
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
 }
 
 sub regulatory_feature_table{
@@ -212,7 +212,7 @@ sub regulatory_feature_table{
     }
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
 }
 
 sub constrained_element_table {
@@ -255,7 +255,7 @@ sub constrained_element_table {
     }
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
 }
 
 1;

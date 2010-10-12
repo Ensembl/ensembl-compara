@@ -9,8 +9,6 @@ package EnsEMBL::Web::Component::LRG::Genome;
 use strict;
 
 use EnsEMBL::Web::Controller::SSI;
-use EnsEMBL::Web::Document::SpreadSheet;
-use EnsEMBL::Web::Component::Location;
 
 use base qw(EnsEMBL::Web::Component::LRG);
 
@@ -80,7 +78,7 @@ sub feature_tables {
     };
   }
   
-  return '<strong>LRG Information</strong>' .  new EnsEMBL::Web::Document::SpreadSheet($columns, $rows, { data_table => 1, sorting => [ 'loc asc' ] })->render if scalar @$rows;
+  return '<strong>LRG Information</strong>' . $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'loc asc' ] })->render if scalar @$rows;
 }
 
 1;

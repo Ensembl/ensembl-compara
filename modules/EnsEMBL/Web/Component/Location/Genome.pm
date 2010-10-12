@@ -9,7 +9,6 @@ use strict;
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Controller::SSI;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Location);
 
@@ -207,7 +206,7 @@ sub feature_tables {
       $data_type        = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
     }
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+    my $table = $self->new_table([], [], { margin => '1em 0px' });
     
     if ($feat_type =~ /Gene|Transcript|Domain/) {
       $table->add_columns({ key => 'names',   title => 'Ensembl ID',               width => '25%',   align => 'left' });

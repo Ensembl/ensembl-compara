@@ -6,8 +6,6 @@ use strict;
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -73,7 +71,7 @@ sub content {
   
   foreach my $pop (sort { $a->name cmp $b->name } @pops) {
     my $pop_id = $pop->dbID;
-    my $table  = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+    my $table  = $self->new_table([], [], { data_table => 1 });
     
     # add header row
     $table->add_columns(

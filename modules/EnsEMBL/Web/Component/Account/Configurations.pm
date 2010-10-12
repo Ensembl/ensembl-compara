@@ -1,12 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::Configurations;
 
 ### Module to create user saved config list
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -40,20 +38,20 @@ sub content {
     ## Sort user configs by name if required
 
     ## Display user configs
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
-        { 'key' => 'rename',    'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'name',   'title' => 'Name',        'width' => '20%', 'align' => 'left' },
+        { 'key' => 'desc',   'title' => 'Description', 'width' => '50%', 'align' => 'left' },
+        { 'key' => 'rename', 'title' => '',            'width' => '10%', 'align' => 'left' },
     );
     if ($has_groups) {
       $table->add_columns(
-        { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'share', 'title' => '',  'width' => '10%', 'align' => 'left' },
       );
     }
     $table->add_columns(
-        { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'delete', 'title' => '', 'width' => '10%', 'align' => 'left' },
     );
 
     foreach my $config (@configs) {
@@ -95,12 +93,12 @@ sub content {
     ## Sort group configs by name if required
 
     ## Display group configs
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '40%', 'align' => 'left' },
-        { 'key' => 'group',     'title' => 'Group(s)',      'width' => '40%', 'align' => 'left' },
+        { 'key' => 'name',  'title' => 'Name',        'width' => '20%', 'align' => 'left' },
+        { 'key' => 'desc',  'title' => 'Description', 'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group', 'title' => 'Group(s)',    'width' => '40%', 'align' => 'left' },
     );
 
     foreach my $config_id (keys %group_configs) {

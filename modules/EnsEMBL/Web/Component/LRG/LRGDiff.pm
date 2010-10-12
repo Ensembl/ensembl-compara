@@ -1,4 +1,5 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Component::LRG::LRGDiff;
 
 ### NAME: EnsEMBL::Web::Component::LRG::LRGDiff;
@@ -12,12 +13,10 @@ package EnsEMBL::Web::Component::LRG::LRGDiff;
 ### by the factory
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Component::LRG);
-use EnsEMBL::Web::Document::SpreadSheet;
-use CGI qw(escapeHTML);
 
 sub _init {
   my $self = shift;
@@ -26,40 +25,32 @@ sub _init {
 }
 
 sub content {
-  my $self   = shift;
-  my $object = $self->object;
-  
+  my $self = shift;
+  my $lrg  = $self->object->Obj;
   my $html;
   
   my $columns = [
     { key => 'location', sort => 'position_html', title => 'Location'           },
-    { key => 'Type',     sort => 'string',                                      },
+    { key => 'type',     sort => 'string',        title => 'Type'               },
     { key => 'lrg' ,     sort => 'string',        title => 'LRG sequence'       },
     { key => 'ref',      sort => 'string',        title => 'Reference sequence' },
   ];
   
-  my $rows;
+  my @rows;
   
-  foreach my $diff(@{$object->Obj->get_all_differences}) {
-	my %row = (
-	  'location' => $object->Obj->seq_region_name.':'.$diff->{start}.($diff->{end} == $diff->{start} ? '' : '-'.$diff->{end}),
-	  'Type'     => $diff->{type},
-	  'lrg'      => $diff->{seq},
-	  'ref'      => $diff->{ref},
-	);
-	
-	push @$rows, \%row;
+  foreach my $diff (@{$lrg->get_all_differences}) {
+    push @rows, {
+      location => $lrg->seq_region_name . ":$diff->{'start'}" . ($diff->{'end'} == $diff->{'start'} ? '' : "-$diff->{'end'}"),
+      type     => $diff->{'type'},
+      lrg      => $diff->{'seq'},
+      ref      => $diff->{'ref'},
+    };
   }
   
-  if($rows) {
-  
-	my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] });
-	
-	$html .= $table->render;
-  }
-  
-  else {
-	$html .= '<h3>No differences found - LRG sequence matches reference</h3>';
+  if (@rows) {
+    $html .= $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+  } else {
+    $html .= '<h3>No differences found - LRG sequence matches reference</h3>';
   }
   
   return $html;

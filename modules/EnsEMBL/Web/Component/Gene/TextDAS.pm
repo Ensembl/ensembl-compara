@@ -10,7 +10,6 @@ use XHTML::Validator;
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 
 use EnsEMBL::Web::Document::HTML::TwoCol;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -83,7 +82,7 @@ sub content {
     my $num_positional_features    = 0;
     my $num_nonpositional_features = 0;
     
-    my $table2 = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', triangle => 1 });
+    my $table2 = $self->new_table([], [], { margin => '1em 0px', triangle => 1 });
     
     $table2->add_columns(
       { key => 'type',  title => 'Type',  width => '15%' },

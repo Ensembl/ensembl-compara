@@ -1,12 +1,12 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Location;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
-use EnsEMBL::Web::Document::SpreadSheet;
-use Sanger::Graphics::ColourMap;
 use Digest::MD5 qw(md5_hex);
+
+use Sanger::Graphics::ColourMap;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -99,7 +99,7 @@ sub create_user_set {
 
   # Key to track colours
   my $has_table;
-  my $table =  new EnsEMBL::Web::Document::SpreadSheet([], [], { 'width' => '500px', 'margin' => '1em 0px' });
+  my $table = $self->new_table([], [], { width => '500px', margin => '1em 0px' });
   
   $table->add_columns(
     {'key' => 'colour', 'title' => 'Track colour', 'align' => 'center' },

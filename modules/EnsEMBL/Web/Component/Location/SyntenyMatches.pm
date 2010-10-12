@@ -7,8 +7,6 @@ package EnsEMBL::Web::Component::Location::SyntenyMatches;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Location);
 
 sub _init {
@@ -32,7 +30,7 @@ sub content {
   my $html;
 
   if (scalar @$data) {
-    my $table = new EnsEMBL::Web::Document::SpreadSheet; 
+    my $table = $self->new_table; 
 
     $table->add_spanning_headers(
       { title => "<i>$sp_tidy</i> Genes",         colspan => 2, width => '45%' },

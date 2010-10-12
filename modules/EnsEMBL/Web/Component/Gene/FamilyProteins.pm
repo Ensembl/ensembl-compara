@@ -46,7 +46,7 @@ sub content_other {
         next;
       }
       
-      my $pep_table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', header => 'no' });
+      my $pep_table = $self->new_table([], [], { margin => '1em 0px', header => 'no' });
       
       $pep_table->add_columns(
         { key => '', title => '', align => 'center' },
@@ -121,7 +121,7 @@ sub content_ensembl {
   $html .= "<h3>$sitename proteins in this family</h3>";
   
   if ($count > 0) {
-    my $ens_table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin  => '1em 0px' });
+    my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });
     
     $ens_table->add_columns(
       { key => 'species',  title => 'Species',  width => '20%', align => 'left' },

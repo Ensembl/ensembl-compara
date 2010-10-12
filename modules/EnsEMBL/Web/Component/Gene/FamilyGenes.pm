@@ -75,7 +75,7 @@ sub content {
 
     if (@$genes) {
       ## Table of gene info
-      my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+      my $table = $self->new_table([], [], { margin => '1em 0px' });
       
       $table->add_columns(
         { key => 'id',   title => 'Gene ID and Location',  width => '30%', align => 'center' },

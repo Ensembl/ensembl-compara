@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Variation::PopulationGenotypes;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -33,7 +31,7 @@ sub format_frequencies {
   my $is_somatic = $self->object->Obj->is_somatic;
   my %columns;
   my @rows;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
 
   foreach my $pop_id (keys %$freq_data) { 
     foreach my $ssid (keys %{$freq_data->{$pop_id}}) { 

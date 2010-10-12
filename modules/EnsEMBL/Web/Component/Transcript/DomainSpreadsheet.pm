@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::DomainSpreadsheet;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -43,7 +41,7 @@ sub content {
   my $html = '';
   
   if (@domains) {
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+    my $table = $self->new_table([], [], { data_table => 1 });
     
     $table->add_columns(
       { key => 'type',     title => 'Domain type', width => '15%', align => 'center', sort => 'string'                        },
@@ -91,7 +89,7 @@ sub content {
   }
   
   if (@others) {
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+    my $table = $self->new_table([], [], { data_table => 1 });
     
     $table->add_columns(
       { key => 'type',  title => 'Feature type', width => '40%', align => 'center', sort => 'string'                        },

@@ -6,8 +6,6 @@ use strict;
 
 use Bio::EnsEMBL::Registry;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Help);
 
 sub _init {
@@ -29,7 +27,7 @@ sub content {
   
   # get coordinates of other assemblies (Vega)  
   if ($alt_assemblies) {
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'ensemblcoordinates asc' ] });
+    my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'ensemblcoordinates asc' ] });
 
     $table->add_columns(
       { key => 'ensemblcoordinates', title => 'Ensembl coordinates',               align => 'left', sort => 'position'      },

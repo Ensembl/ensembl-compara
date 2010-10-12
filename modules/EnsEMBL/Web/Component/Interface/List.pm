@@ -6,8 +6,6 @@ package EnsEMBL::Web::Component::Interface::List;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Interface);
 
 sub _init {
@@ -30,7 +28,7 @@ sub content {
   my @records   = $interface->record_list(undef, $self->hub->user);
   my $columns   = $interface->option_columns || $interface->element_order;
 
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '0px' });
+  my $table = $self->new_table([], [], { margin => '0px' });
   my $width = int(100/scalar(@$columns));
   
   foreach my $column (@$columns) {

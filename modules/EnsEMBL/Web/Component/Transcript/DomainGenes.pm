@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::DomainGenes;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -16,7 +14,7 @@ sub _init {
 
 sub caption {
   my $self = shift;
-  my $accession = $self->object->param('domain');
+  my $accession = $self->hub->param('domain');
   
   return "Other genes with domain $accession" if $accession;
 }
@@ -74,7 +72,7 @@ sub content {
   }
 
   ## Now do table
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 'no_sort' });
+  my $table = $self->new_table([], [], { data_table => 'no_sort' });
 
   $table->add_columns(
     { key => 'id',   title => 'Gene',                   width => '30%', align => 'center' },

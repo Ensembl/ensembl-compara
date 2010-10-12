@@ -1,14 +1,13 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::ManageGroup;
 
 ### Module to create list of groups that a user is an admin of
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Data::Group;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -62,12 +61,12 @@ sub content {
 
     if (@members) {
 
-      my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0.5em 0px'} );
+      my $table = $self->new_table([], [], { margin => '0.5em 0px' });
       $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '25%', 'align' => 'left' },
-        { 'key' => 'status',    'title' => 'Status',        'width' => '25%', 'align' => 'left' },
-        { 'key' => 'remove',    'title' => '',              'width' => '25%', 'align' => 'left' },
-        { 'key' => 'promote',   'title' => '',              'width' => '25%', 'align' => 'left' },
+        { 'key' => 'name',    'title' => 'Name',   'width' => '25%', 'align' => 'left' },
+        { 'key' => 'status',  'title' => 'Status', 'width' => '25%', 'align' => 'left' },
+        { 'key' => 'remove',  'title' => '',       'width' => '25%', 'align' => 'left' },
+        { 'key' => 'promote', 'title' => '',       'width' => '25%', 'align' => 'left' },
       );
  
       my $show_all = $object->param('show_all') ? 1 : 0; 
@@ -119,7 +118,7 @@ sub content {
 
     if (@invites) {
 
-      my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0.5em 0px'} );
+      my $table = $self->new_table([], [], { margin => '0.5em 0px' });
       $table->add_columns(
         { 'key' => 'email',    'title' => 'Email',        'width' => '50%', 'align' => 'left' },
         { 'key' => 'remove',   'title' => '',             'width' => '50%', 'align' => 'left' },

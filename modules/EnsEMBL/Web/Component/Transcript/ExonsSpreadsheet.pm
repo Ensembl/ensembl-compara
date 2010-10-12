@@ -6,7 +6,6 @@ use strict;
 
 use RTF::Writer;
 
-use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
@@ -119,7 +118,7 @@ sub content {
       $self->ajax_url
     );
     
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([
+    my $table = $self->new_table([
         { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
         { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
         { key => 'Start',      title => 'Start',         width => '10%', align => 'left' },

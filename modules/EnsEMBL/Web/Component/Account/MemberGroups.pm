@@ -1,13 +1,12 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::MemberGroups;
 
 ### Module to create list of groups that a user belongs to
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -39,14 +38,14 @@ sub content {
 
     $html .= qq(<h3>Your subscribed groups</h3>);
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = $self->new_table([], [], { margin => '1em 0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '40%', 'align' => 'left' },
-        { 'key' => 'admin',     'title' => 'Administrator', 'width' => '20%', 'align' => 'left' },
-        { 'key' => 'details',   'title' => '',              'width' => '10%', 'align' => 'left' },
-        { 'key' => 'leave',     'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'name',    'title' => 'Name',          'width' => '20%', 'align' => 'left' },
+        { 'key' => 'desc',    'title' => 'Description',   'width' => '40%', 'align' => 'left' },
+        { 'key' => 'admin',   'title' => 'Administrator', 'width' => '20%', 'align' => 'left' },
+        { 'key' => 'details', 'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'leave',   'title' => '',              'width' => '10%', 'align' => 'left' },
     );
 
     foreach my $group (@groups) {

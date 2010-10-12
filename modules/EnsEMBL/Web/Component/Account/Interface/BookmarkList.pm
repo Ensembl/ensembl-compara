@@ -1,12 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::Interface::BookmarkList;
 
 ### Module to create user bookmark list
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -14,11 +12,6 @@ sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return undef;
 }
 
 sub content {
@@ -42,20 +35,20 @@ sub content {
     ## Sort user bookmarks by name if required 
 
     ## Display user bookmarks
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '50%', 'align' => 'left' },
-        { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'name',  'title' => 'Name',        'width' => '20%', 'align' => 'left' },
+        { 'key' => 'desc',  'title' => 'Description', 'width' => '50%', 'align' => 'left' },
+        { 'key' => 'edit',  'title' => '',            'width' => '10%', 'align' => 'left' },
     );
     #if ($has_groups) {
     #  $table->add_columns(
-    #    { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+    #    { 'key' => 'share', 'title' => '',  'width' => '10%', 'align' => 'left' },
     #  );
     #}
     $table->add_columns(
-        { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'delete', 'title' => '',  'width' => '10%', 'align' => 'left' },
     );
 
     foreach my $bookmark (@bookmarks) {
@@ -100,12 +93,12 @@ sub content {
     ## Sort group bookmarks by name if required 
 
     ## Display group bookmarks
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'desc',      'title' => 'Description',   'width' => '40%', 'align' => 'left' },
-        { 'key' => 'group',     'title' => 'Group(s)',      'width' => '40%', 'align' => 'left' },
+        { 'key' => 'name',  'title' => 'Name',        'width' => '20%', 'align' => 'left' },
+        { 'key' => 'desc',  'title' => 'Description', 'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group', 'title' => 'Group(s)',    'width' => '40%', 'align' => 'left' },
     );
 
     foreach my $bookmark_id (keys %group_bookmarks) {

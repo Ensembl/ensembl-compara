@@ -1,12 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::Interface::AnnotationList;
 
 ### Module to create user gene annotation list
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -14,11 +12,6 @@ sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return undef;
 }
 
 sub content {
@@ -46,21 +39,21 @@ sub content {
     ## Sort user notes by name if required
 
     ## Display user notes
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-        { 'key' => 'type',      'title' => 'Type',          'width' => '10%', 'align' => 'left' },
-        { 'key' => 'id',        'title' => 'Stable ID',     'width' => '20%', 'align' => 'left' },
-        { 'key' => 'title',     'title' => 'Title',         'width' => '40%', 'align' => 'left' },
-        { 'key' => 'edit',      'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'type',  'title' => 'Type',      'width' => '10%', 'align' => 'left' },
+        { 'key' => 'id',    'title' => 'Stable ID', 'width' => '20%', 'align' => 'left' },
+        { 'key' => 'title', 'title' => 'Title',     'width' => '40%', 'align' => 'left' },
+        { 'key' => 'edit',  'title' => '',          'width' => '10%', 'align' => 'left' },
     );
     if ($has_groups) {
       $table->add_columns(
-        { 'key' => 'share',     'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'share', 'title' => '',  'width' => '10%', 'align' => 'left' },
       );
     }
     $table->add_columns(
-        { 'key' => 'delete',    'title' => '',              'width' => '10%', 'align' => 'left' },
+        { 'key' => 'delete', 'title' => '', 'width' => '10%', 'align' => 'left' },
     );
 
     foreach my $note (@notes) {
@@ -110,12 +103,12 @@ sub content {
     ## Sort group notes by name if required
 
     ## Display group notes
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'title',     'title' => 'Title',         'width' => '40%', 'align' => 'left' },
-        { 'key' => 'group',     'title' => 'Group(s)',      'width' => '40%', 'align' => 'left' },
+        { 'key' => 'name',  'title' => 'Name',     'width' => '20%', 'align' => 'left' },
+        { 'key' => 'title', 'title' => 'Title',    'width' => '40%', 'align' => 'left' },
+        { 'key' => 'group', 'title' => 'Group(s)', 'width' => '40%', 'align' => 'left' },
     );
 
     foreach my $note_id (keys %group_notes) {

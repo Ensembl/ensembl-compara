@@ -7,7 +7,6 @@ use strict;
 use Bio::AlignIO;
 
 use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -110,7 +109,7 @@ sub content {
 
       $html .= "<h2>Ortholog type: $homology_desc_mapped</h2>";
       
-      my $ss = new EnsEMBL::Web::Document::SpreadSheet([
+      my $ss = $self->new_table([
           { title => 'Species',          width => '20%' },
           { title => 'Gene ID',          width => '20%' },
           { title => 'Peptide ID',       width => '20%' },

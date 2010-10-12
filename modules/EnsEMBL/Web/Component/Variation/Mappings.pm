@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Variation::Mappings;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -29,7 +27,7 @@ sub content {
   my $source = $object->source;
   my $name   = $object->name;
  
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'gene asc', 'trans asc' ] });
   
   $table->add_columns(
     { key => 'gene',      title => 'Gene',                   sort => 'html'                        },

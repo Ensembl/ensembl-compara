@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Export::Transcript;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Export);
 
 sub content {
@@ -18,7 +16,6 @@ sub content {
   
   return $self->export($custom_outputs, [ $object ]);
 }
-
 
 sub genetic_variation {
   my $self   = shift;
@@ -37,8 +34,7 @@ sub genetic_variation {
   
   my $colours    = $hub->species_defs->colour('variation');
   my $colour_map = $hub->colourmap;
-  
-  my $table = new EnsEMBL::Web::Document::SpreadSheet if $self->html_format;
+  my $table      = $self->html_format ? $self->new_table : undef;
   
   if ($table) {
     $table->add_option('cellspacing', 2);
@@ -48,7 +44,7 @@ sub genetic_variation {
   }
   
   foreach my $snp_pos (sort keys %$snp_data) {
-    my @info = ($snp_pos);
+    my @info      = ($snp_pos);
     my @row_style = ('');
     
     foreach my $sample (@samples) {

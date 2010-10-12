@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Variation::IndividualGenotypes;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -68,7 +66,7 @@ sub content {
     push @rows, $tmp_row;
  } 
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'Individual asc' ] });
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'Individual asc' ] });
   
   $table->add_columns(
     { key => 'Individual',  title => 'Individual<br />(gender)',       sort => 'html' },

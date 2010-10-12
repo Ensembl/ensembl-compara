@@ -1,12 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::Interface::NewsfilterList;
 
 ### Module to create user news filter list - duh!
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -14,11 +12,6 @@ sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return undef;
 }
 
 sub content {
@@ -37,13 +30,13 @@ sub content {
     ## Sort user filters by name if required
 
     ## Display user filters
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = $self->new_table([], [], { margin => '1em 0px' });
 
     $table->add_columns(
-        { 'key' => 'type',      'title' => 'Type',          'width' => '20%', 'align' => 'left' },
-        { 'key' => 'options',   'title' => 'Options',       'width' => '40%', 'align' => 'left' },
-        { 'key' => 'edit',      'title' => '',              'width' => '20%', 'align' => 'left' },
-        { 'key' => 'delete',    'title' => '',              'width' => '20%', 'align' => 'left' },
+        { 'key' => 'type',    'title' => 'Type',    'width' => '20%', 'align' => 'left' },
+        { 'key' => 'options', 'title' => 'Options', 'width' => '40%', 'align' => 'left' },
+        { 'key' => 'edit',    'title' => '',        'width' => '20%', 'align' => 'left' },
+        { 'key' => 'delete',  'title' => '',        'width' => '20%', 'align' => 'left' },
     );
 
     foreach my $filter (@filters) {

@@ -1,12 +1,10 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::AdminGroups;
 
 ### Module to create list of groups that a user is an admin of
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
-
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -14,11 +12,6 @@ sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return undef;
 }
 
 sub content {
@@ -38,7 +31,7 @@ sub content {
 
     $html .= qq(<h3>Your groups</h3>);
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = $self->new_table([], [], { margin' => '1em 0px' });
 
     $table->add_columns(
         { 'key' => 'name',      'title' => 'Name',  'width' => '25%', 'align' => 'left' },

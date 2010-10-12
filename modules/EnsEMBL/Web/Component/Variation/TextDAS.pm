@@ -10,9 +10,6 @@ use HTML::Entities qw(encode_entities decode_entities);
 use XHTML::Validator;
 
 use EnsEMBL::Web::Document::HTML::TwoCol;
-use EnsEMBL::Web::Document::SpreadSheet;
-
-use Data::Dumper;
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -104,7 +101,7 @@ sub content {
     my $num_positional_features = 0;
     my $num_nonpositional_features = 0;
     
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px','triangle'=>1} );
+    my $table = $self->new_table([], [], { margin => '1em 0px', triangle => 1 });
     $table->add_columns(
       { 'key' => 'type',  'title' => 'Type',  'width' => '15%' },
 #      { 'key' => 'label', 'title' => 'Label', 'width' => '15%' },
@@ -122,7 +119,6 @@ sub content {
       
       my @notes = ();
       my @links = ();
-#      warn Dumper $f;
 
       for my $raw ( @{ $f->notes } ) {
         # OK, we apparently need to support non-spec HTML embedded in notes,

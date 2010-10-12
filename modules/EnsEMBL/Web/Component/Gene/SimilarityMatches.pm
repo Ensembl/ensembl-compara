@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Gene::SimilarityMatches;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -28,7 +26,7 @@ sub matches_to_html {
   my @types          = @_;
   my $hub            = $self->hub;
   my $count_ext_refs = 0;
-  my $table          = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 'no_col_toggle', sorting => [ 'transcriptid asc' ] });
+  my $table          = $self->new_table([], [], { data_table => 'no_col_toggle', sorting => [ 'transcriptid asc' ] });
   my (%existing_display_names, @rows, $html);
   
   my @columns = ({

@@ -1,14 +1,13 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::AdimnDetails;
 
 ### Module to show details of a particular group that an administrator belongs to
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -44,7 +43,7 @@ sub content {
     $html .= '<h3>Bookmarks</h3>';
 
     if ($group->bookmarks) {
-      my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { 'margin' => '0px' });
+      my $table = $self->new_table([], [], { margin => '0px' });
 
       $table->add_columns(
         { 'key' => 'name', 'title' => 'Name',        'width' => '30%', 'align' => 'left' },

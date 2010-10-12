@@ -4,10 +4,8 @@ package EnsEMBL::Web::Component::UserData::ManageData;
 
 use strict;
 
-use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Data::Session;
-use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Component::UserData);
@@ -65,7 +63,7 @@ sub content {
   }
 
   if (@data) {
-    my $table = EnsEMBL::Web::Document::SpreadSheet->new;
+    my $table = $self->new_table;
     
     $table->add_columns(
       { 'key' => 'type', 'title' => 'Type', 'width' => '10%', 'align' => 'left' },

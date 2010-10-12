@@ -6,8 +6,6 @@ package EnsEMBL::Web::Component::Gene::SupportingEvidence;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -81,7 +79,7 @@ sub content {
     push @rows, $row;
   }
   
-  return new EnsEMBL::Web::Document::SpreadSheet(\@cols, \@rows, { data_table => 1, sorting => [ 'transcript asc' ] })->render;
+  return $self->new_table(\@cols, \@rows, { data_table => 1, sorting => [ 'transcript asc' ] })->render;
 }
 
 1;

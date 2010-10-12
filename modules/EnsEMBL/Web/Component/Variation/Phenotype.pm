@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Variation::Phenotype;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -28,7 +26,7 @@ sub content {
   my $is_somatic = $object->Obj->is_somatic;
   my $study      = $is_somatic ? 'Tumour site' : 'Study'; 
   my $table_rows = $self->table_data($data);
-  my $table      = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+  my $table      = $self->new_table([], [], { data_table => 1 });
    
 
   $table->add_columns(

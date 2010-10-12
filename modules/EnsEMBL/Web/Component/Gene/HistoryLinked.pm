@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Gene::HistoryLinked;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -57,7 +55,7 @@ sub content {
   
   return '<p>No associated IDs found</p>' unless scalar @$assoc;
 
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+  my $table = $self->new_table([], [], { margin => '1em 0px' });
   
   $table->add_columns (      
     { key => 'release',     title => 'Release'    },

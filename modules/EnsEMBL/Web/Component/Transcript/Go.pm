@@ -8,8 +8,6 @@ package EnsEMBL::Web::Component::Transcript::Go;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -40,14 +38,21 @@ sub content {
   my @clusters      = ( 'GO:0005575', 'GO:0008150', 'GO:0003674' );
   my @cluster_descr = ( 'cellular_component', 'biological_process', 'molecular_function ');
   my $html          =  '<p><h3>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</h3></p>';
+  my $columns       = [
+    { key => 'go',          title => 'GO Accession',      width => '5%',  align => 'left'   },
+    { key => 'description', title => 'GO Term',           width => '55%', align => 'left'   },
+    { key => 'evidence',    title => 'Evidence',          width => '3%',  align => 'center' },
+    { key => 'desc',        title => 'Annotation Source', width => '35%', align => 'centre' }
+  ];
+  
   
   for (my $i = 0; $i <  scalar @clusters; $i++) {
     $html .= "<p><h3>The following terms are descendants of $cluster_descr[$i]</h3>";
     
     my $go_hash  = $object->get_go_list('GO', $clusters[$i]);
     
-    if (%$go_hash){
-      my $table = $self->table;
+    if (%$go_hash) {
+      my $table = $self->new_table($columns, [], { margin => '1em 0px', cellpadding => '2px' });
       $self->process_data($table, $go_hash);
       $html .= $table->render;
     }
@@ -57,26 +62,13 @@ sub content {
     
     if (%$go_slim_hash) {
       $html .= "<p><strong>The following GO terms are the closest ones in the GOSlim GOA subset for the above terms:</strong></p>";
-      my $go_slim_table = $self->table;
+      my $go_slim_table = $self->new_table($columns, [], { margin => '1em 0px', cellpadding => '2px' });
       $self->process_data($go_slim_table, $go_slim_hash);
       $html .= $go_slim_table->render;
     }
   }
 
   return "</p>$html";
-}
-
-sub table {
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', cellpadding => '2px' });
-  
-  $table->add_columns(
-    { key => 'go',          title => 'GO Accession',      width => '5%',  align => 'left'   },
-    { key => 'description', title => 'GO Term',           width => '55%', align => 'left'   },
-    { key => 'evidence',    title => 'Evidence',          width => '3%',  align => 'center' },
-    { key => 'desc',        title => 'Annotation Source', width => '35%', align => 'centre' }
-  );
-  
-  return $table;
 }
 
 sub process_data {

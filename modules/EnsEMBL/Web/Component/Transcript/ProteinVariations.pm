@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::ProteinVariations;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -26,7 +24,7 @@ sub content {
   
   my $hub     = $self->hub;
   my $counter = 0;
-  my $table   = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1 });
+  my $table   = $self->new_table([], [], { data_table => 1 });
   
   $table->add_columns(
     { key => 'res',    title => 'Residue',            width => '10%', align => 'center', sort => 'numeric' },

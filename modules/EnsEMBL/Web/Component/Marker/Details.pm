@@ -5,7 +5,6 @@ package EnsEMBL::Web::Component::Marker::Details;
 use strict;
 
 use EnsEMBL::Web::Document::HTML::TwoCol;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -124,7 +123,7 @@ sub content {
     $html .= $table->render;
     
     if (my @mml = @{$m->get_all_MapLocations}) {
-      my $map_table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+      my $map_table = $self->new_table([], [], { margin => '1em 0px' });
       
       $map_table->add_columns(
         { key => 'map', align => 'left', title => 'Map Name'   },

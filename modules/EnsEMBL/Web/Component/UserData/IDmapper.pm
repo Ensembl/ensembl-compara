@@ -7,7 +7,6 @@ use strict;
 use Bio::EnsEMBL::StableIdHistoryTree;
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -54,7 +53,7 @@ sub format_mapped_ids {
   
   return '<p>No IDs were succesfully converted</p>' if scalar keys %stable_ids < 1;
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
+  my $table = $self->new_table([], [], { margin => '1em 0px' });
   
   $table->add_option('triangular', 1);
   $table->add_columns(

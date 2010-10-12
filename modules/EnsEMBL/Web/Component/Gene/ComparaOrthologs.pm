@@ -6,8 +6,6 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -161,7 +159,7 @@ sub content {
     }
   }
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ] });
+  my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ] });
   my $html  = '<p>The following gene(s) have been identified as putative orthologues:</p>' . $table->render;
   
   if ($alignview && keys %orthologue_list) {

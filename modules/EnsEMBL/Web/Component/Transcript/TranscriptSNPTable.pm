@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Transcript::TranscriptSNPTable;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -32,7 +30,7 @@ sub content {
  
   foreach my $sample (@samples) {
     my $flag  = 0;
-    my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'chr asc' ] });  
+    my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'chr asc' ] });  
   
     $table->add_columns (
       { key => 'ID',          sort => 'html'                                               },

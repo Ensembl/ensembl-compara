@@ -1,15 +1,19 @@
 # $Id$
+
 package EnsEMBL::Web::Component::Transcript::Goimage;
+
 use strict;
-use GraphViz;
-use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
+
 use EnsEMBL::Web::Tools::OntologyVisualisation;
+
 use base qw(EnsEMBL::Web::Component::Transcript);
+
 sub _init {
   my $self = shift;
   $self->cacheable(1);
   $self->ajaxable(1);
 }
+
 sub content {
   my $self                        = shift;
   my $hub                         = $self->hub;
@@ -96,16 +100,5 @@ sub content {
   
   return $html;
 }
-sub table {
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px', cellpadding => '2px' });
-  
-  $table->add_columns(
-    { key => 'go',          title => 'GO Accession',      width => '5%',  align => 'left'   },
-    { key => 'description', title => 'GO Term',           width => '55%', align => 'left'   },
-    { key => 'evidence',    title => 'Evidence',          width => '3%',  align => 'center' },
-    { key => 'desc',        title => 'Annotation Source', width => '35%', align => 'centre' }
-  );
-  
-  return $table;
-}
+
 1;

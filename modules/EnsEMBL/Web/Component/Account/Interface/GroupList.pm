@@ -1,14 +1,13 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Account::Interface::GroupList;
 
 ### Module to display a list of groups that a user is an admin of
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Data::Group;
 use EnsEMBL::Web::Data::User;
-use EnsEMBL::Web::Document::SpreadSheet;
 
 use base qw(EnsEMBL::Web::Component::Account);
 
@@ -16,11 +15,6 @@ sub _init {
   my $self = shift;
   $self->cacheable( 0 );
   $self->ajaxable(  0 );
-}
-
-sub caption {
-  my $self = shift;
-  return undef;
 }
 
 sub content {
@@ -34,14 +28,14 @@ sub content {
   if (@groups) {
     $html .= qq(<h3>Your groups</h3>);
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '1em 0px'} );
+    my $table = $self->new_table([], [], { margin => '1em 0px' });
 
     $table->add_columns(
-        { 'key' => 'name',      'title' => 'Name',  'width' => '25%', 'align' => 'left' },
-        { 'key' => 'edit',      'title' => '',      'width' => '20%', 'align' => 'left' },
-        { 'key' => 'details',   'title' => '',      'width' => '20%', 'align' => 'left' },
-        { 'key' => 'members',   'title' => '',      'width' => '20%', 'align' => 'left' },
-        { 'key' => 'delete',    'title' => '',      'width' => '15%', 'align' => 'left' },
+        { 'key' => 'name',    'title' => 'Name',  'width' => '25%', 'align' => 'left' },
+        { 'key' => 'edit',    'title' => '',      'width' => '20%', 'align' => 'left' },
+        { 'key' => 'details', 'title' => '',      'width' => '20%', 'align' => 'left' },
+        { 'key' => 'members', 'title' => '',      'width' => '20%', 'align' => 'left' },
+        { 'key' => 'delete',  'title' => '',      'width' => '15%', 'align' => 'left' },
     );
 
     foreach my $group (@groups) {
@@ -93,11 +87,11 @@ sub _show_group_details {
   $html .= '<h3>Bookmarks</h3>';
   if ($group->bookmarks) {
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-      { 'key' => 'name',      'title' => 'Name',          'width' => '30%', 'align' => 'left' },
-      { 'key' => 'desc',      'title' => 'Description',   'width' => '70%', 'align' => 'left' },
+      { 'key' => 'name', 'title' => 'Name',        'width' => '30%', 'align' => 'left' },
+      { 'key' => 'desc', 'title' => 'Description', 'width' => '70%', 'align' => 'left' },
     );
 
     foreach my $bookmark ($group->bookmarks) {
@@ -119,12 +113,12 @@ sub _show_group_details {
   $html .= '<h3>Annotations</h3>';
   if ($group->annotations) {
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-      { 'key' => 'type',    'title' => 'Type',          'width' => '20%', 'align' => 'left' },
-      { 'key' => 'id',      'title' => 'Stable ID',     'width' => '30%', 'align' => 'left' },
-      { 'key' => 'title',   'title' => 'Title',         'width' => '50%', 'align' => 'left' },
+      { 'key' => 'type',  'title' => 'Type',      'width' => '20%', 'align' => 'left' },
+      { 'key' => 'id',    'title' => 'Stable ID', 'width' => '30%', 'align' => 'left' },
+      { 'key' => 'title', 'title' => 'Title',     'width' => '50%', 'align' => 'left' },
     );
 
     foreach my $note ($group->annotations) {
@@ -150,11 +144,11 @@ sub _show_group_details {
   $html .= '<h3>Custom data</h3>';
   if ($group->uploads || $group->urls) {
 
-    my $table = new EnsEMBL::Web::Document::SpreadSheet( [], [], {'margin' => '0px'} );
+    my $table = $self->new_table([], [], { margin => '0px' });
 
     $table->add_columns(
-      { 'key' => 'type',    'title' => 'Type',    'width' => '20%', 'align' => 'left' },
-      { 'key' => 'name',   'title' => 'Name',     'width' => '50%', 'align' => 'left' },
+      { 'key' => 'type', 'title' => 'Type', 'width' => '20%', 'align' => 'left' },
+      { 'key' => 'name', 'title' => 'Name', 'width' => '50%', 'align' => 'left' },
     );
 
     my @records = ($group->uploads, $group->urls);

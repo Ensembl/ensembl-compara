@@ -6,8 +6,6 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 sub _init {
   my $self = shift;
   $self->cacheable(1);
@@ -108,7 +106,7 @@ sub content {
     }
   }
   
-  my $table = new EnsEMBL::Web::Document::SpreadSheet($columns, \@rows, { data_table => 1 });
+  my $table = $self->new_table($columns, \@rows, { data_table => 1 });
   my $html  = '<p>The following gene(s) have been identified as putative paralogues (within species):</p>' . $table->render;
   
   if ($alignview && keys %paralogue_list) {

@@ -6,8 +6,6 @@ package EnsEMBL::Web::Component::Gene::Family;
 
 use strict;
 
-use EnsEMBL::Web::Document::SpreadSheet;
-
 use base qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
@@ -27,7 +25,7 @@ sub content {
 
   my $ckey = $cdb eq 'compara_pan_ensembl' ? '_pan_compara' : '';
 
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { data_table => 1, sorting => [ 'id asc' ] });
+  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'id asc' ] });
 
   $table->add_columns(
     { key => 'id',          title => 'Family ID',                            width => '20%', align => 'left', sort => 'html'   },
