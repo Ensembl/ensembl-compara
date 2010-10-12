@@ -28,14 +28,13 @@ sub content {
   my $seq_region_end   = $object->seq_region_end;
   my $cp               = int(($seq_region_end + $seq_region_start) / 2);
   my $wd               = $seq_region_end - $seq_region_start + 1;
+  my $r                = $hub->param('r');
   
   $self->{'update'} = $hub->param('update_panel');
   
   my $values = [
-    $self->ajax_url(shift, 1) . ';r=' . $hub->param('r'),
-    $object->seq_region_name,
-    $seq_region_start,
-    $seq_region_end,
+    $self->ajax_url(shift, 1) . ";r=$r",
+    $r,
     $self->nav_url($seq_region_start - 1e6, $seq_region_end - 1e6),
     $self->nav_url($seq_region_start - $wd, $seq_region_end - $wd),
     $self->nav_url($cp - int($wd/4) + 1, $cp + int($wd/4)),
@@ -68,9 +67,7 @@ sub navbar {
           <form action="$url->[0]" method="get">
             Location:
               $extra_inputs
-              <label class="hidden" for="region">Region</label><input name="region" id="region" class="location_selector" style="width:3em" value="%s" type="text" /> :
-              <label class="hidden" for="start">Start</label><input name="start" id="start" class="location_selector" style="width:5em" value="%s" type="text" /> - 
-              <label class="hidden" for="end">End</label><input name="end" id="end" class="location_selector" style="width:5em" value="%s" type="text" />
+              <label class="hidden" for="r">Location</label><input name="r" id="r" class="location_selector" style="width:20em" value="%s" type="text" />
               <input value="Go &gt;" type="submit" class="go-button" />
           </form>
         </div>

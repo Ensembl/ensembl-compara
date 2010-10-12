@@ -21,9 +21,7 @@ sub content {
   
   my $values = [
     $self->ajax_url,
-    $object->seq_region_name,
-    $seq_region_start,
-    $seq_region_end,
+    $hub->param('r'),
     $self->nav_url(-1e6),
     $self->nav_url(-$wd),
     $self->nav_url($wd/2, 'resize'),
