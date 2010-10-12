@@ -376,7 +376,7 @@ sub _matches {
   $entry =~ s/bio::ensembl:://;
 
   # add table call here
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
+  my $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
   $table->add_columns(
     { 'key' => 'dbtype', 'align'=>'left', 'title' => 'External database type'},
     { 'key' => 'dbid', 'align'=>'left', 'title' => 'Database identifier' }
