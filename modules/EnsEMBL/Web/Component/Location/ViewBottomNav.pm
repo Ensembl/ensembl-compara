@@ -56,6 +56,7 @@ sub navbar {
   my $hub          = $self->hub;
   my $image_width  = $self->image_width . 'px';
   my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef }, 1);
+  my $form_action  = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
   my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1]||{}};
   
   return sprintf (qq{
@@ -64,10 +65,10 @@ sub navbar {
         <input type="hidden" class="panel_type" value="LocationNav" />
         <input type="hidden" class="update_url" value="%s" />
         <div class="relocate">
-          <form action="$url->[0]" method="get">
+          <form action="$form_action" method="get">
             Location:
               $extra_inputs
-              <label class="hidden" for="r">Location</label><input name="r" id="r" class="location_selector" style="width:20em" value="%s" type="text" />
+              <label class="hidden" for="q">Location</label><input name="q" id="q" class="location_selector" style="width:20em" value="%s" type="text" />
               <input value="Go &gt;" type="submit" class="go-button" />
           </form>
         </div>
