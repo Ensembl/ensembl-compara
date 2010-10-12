@@ -385,6 +385,7 @@ sub html_template {
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')     if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
   $self->add_body_attr('class', 'no_tabs') unless $elements->{'tabs'};
+  $self->add_body_attr('class', 'static')  if $self->isa('EnsEMBL::Web::Document::Page::Static');
   
   my $species_path        = $self->species_defs->species_path;
   my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
