@@ -1,23 +1,5 @@
 #!/usr/local/bin/perl
 
-#usage:
-# ./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) (--log index.log) (--dir dir)
-# 'ALL' can be used for both species and indexes
-# The script will retry five times if it loses database connections, unless
-# --debug is specified in which case it will exit.
-# --dry_run|n does everything apart from actually write the xml [note that this
-# option will delete any preexisting file]
-# In the abscence of --debug option, STDOUT and STDERR are sent to a log file
-# (dumping_log.log by default). If you run with --debug then output is sent to STDOUT
-# The locations of the actual xml files can be specified with the dir option. If not specified then it is
-# dumped locally with debug, or in the correct location for indexing without
-
-# ./indexXMLDumper --species=ALL --index=ALL --debug                 #all log output to STDOUT; xml to input
-# ./indexXMLDumper --species=ALL --index=ALL --debug -log debug.log  #all log output to debug.log; xml to input
-# ./indexXMLDumper --species=ALL --index=ALL                         #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release
-# ./indexXMLDumper --species=ALL --index=ALL --dir new_input         #all log output to dumping_$release.log; xml to new_input
-# ./indexXMLDumper --species=ALL --index=ALL -log dumping.log        #all log output to all_log.log; xml to /nfs/eureka/data/ensembl_$release"
-
 use strict;
 package indexXMLDumper;
 
@@ -44,14 +26,20 @@ use CGI;
 
 $| = 1;
 
-my (@species,@indexes,$debug,$dry_run,$log,$dir);
+my (@species,@indexes,$debug,$dry_run,$log,$dir,$help);
 GetOptions('species=s' => \@species,
            'index=s'   => \@indexes,
            'debug'     => \$debug,
            'dry_run|n' => \$dry_run,
            'log=s'     => \$log,
            'dir=s'     => \$dir,
+	   'help'      => \$help,
          );
+
+if ($help){
+  &about;
+  exit;
+}
 
 (@species) = split ',',@species[0];
 (@indexes) = split ',',@indexes[0];
@@ -79,7 +67,9 @@ if( $species[0] eq 'ALL' ) {
 } else {
   @species = grep {$_} map { $X{lc($_)} } @species;
   if (@species ne $input_c) {
-    print LOG "WARNING - one or more of your species names is not recognised, please check your spelling\n";
+    print LOG "WARNING - one or more of your species names is not recognised, please check your spelling. Available species are:\n";
+    print LOG join "\n", @{$SD->ENSEMBL_DATASETS};
+    print LOG "\n";
     exit;
   }
 }
@@ -397,7 +387,7 @@ sub dumpVariation {
   $file2 .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
-  my $fh;
+  my ($fh,$fh2);
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
@@ -737,6 +727,10 @@ sub GenomicAlignmentLine {
   while (my ($param,$value) = each %$params) {
     $xml .= qq(
     <field name="$param">$value</field>);
+  }
+  if ( $id =~ /^(\w+)\.\d+$/) {
+    $xml .= qq(
+    <field name="non_versioned">$1</field>);
   }
   $xml .= qq(
   </additional_fields>);
@@ -1259,7 +1253,7 @@ sub dumpGene {
   my $SANGDB    = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   my %dbs = ( 'core' => $COREDB );
-  $dbs{'vega'}          = $SANGDB    if $SANGDB;
+#  $dbs{'vega'}          = $SANGDB    if $SANGDB;   #commented out since we don't need these in e60!
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 
   my $total_c;
@@ -1976,3 +1970,30 @@ sub elapsed_time {
   return "${hours}h ${min}min ${sec}sec";
 }
 
+sub about {
+  print STDERR <<ABOUT_END;
+
+usage:
+./indexXMLDumper --species=aaa,bbb --index=xxx,yyy (--debug) (--log index.log) (--dir dir) (--dry_run|n)
+
+'ALL' can be used for both 'species' and 'index'
+
+The script will retry five times if it loses database connections, unless --debug is specified in which case it will exit on the first failure.
+
+In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dumping_log.log by default). If you run with --debug then output is sent to STDOUT
+
+The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped locally with debug, or in the correct location for indexing without (/nfs/eureka/data - you have to be a member of the www-search UNIX group to write here)
+
+ --dry_run|n does everything apart from actually write the xml [note that this option will delete any preexisting file]
+
+Examples:
+
+./indexXMLDumper --species=ALL --index=ALL --debug                 #all log output to STDOUT; xml to input
+./indexXMLDumper --species=ALL --index=ALL --debug -log debug.log  #all log output to debug.log; xml to input
+./indexXMLDumper --species=ALL --index=ALL                         #all log output to dumping_$release.log; xml to /nfs/eureka/data/ensembl_$release
+./indexXMLDumper --species=ALL --index=ALL --dir new_input         #all log output to dumping_$release.log; xml to new_input
+./indexXMLDumper --species=ALL --index=ALL -log dumping.log        #all log output to all_log.log; xml to /nfs/eureka/data/ensembl_$release"
+
+
+ABOUT_END
+}
