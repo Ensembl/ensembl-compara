@@ -16,8 +16,10 @@ sub content {
   my $object = $self->object;
   my $html = '';
   ## first check we have a location
-  return if $object->not_unique_location;
-
+  return if $object->not_unique_location =~ /select/;
+  
+  ## count locations
+  my $mapping_count = scalar keys %{$object->variation_feature_mapping};
 
   ## Add flanking sequence
   my $f_label;
@@ -49,7 +51,7 @@ sub content {
   my $flank_size = $object->param('flank_size') || 400;
   my $show_mismatches = $object->param('show_mismatches') || 1;
   
-  if(defined($sa)) {
+  if(defined($sa) && $mapping_count) {
     # get up slice
     $up_slice = $sa->fetch_by_region(
       undef,

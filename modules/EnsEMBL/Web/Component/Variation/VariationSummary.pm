@@ -23,7 +23,14 @@ sub content {
   my $html;
  
   ## first check we have a location
-  return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
+  my $unique = $object->not_unique_location;
+  
+  if($unique =~ /select/) {
+    return $self->_info('A unique location can not be determined for this Variation', $unique);
+  }
+  
+  ## count locations
+  my $mapping_count = scalar keys %{$object->variation_feature_mapping};
   
   ## set path information for LD calculations
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
@@ -75,7 +82,7 @@ sub content {
   
   ## HGVS NOTATIONS
   # skip if somatic mutation with mutation ref base different to ensembl ref base
-  if (!$object->is_somatic_with_different_ref_base) {
+  if (!$object->is_somatic_with_different_ref_base && $mapping_count) {
     my $sa = $variation->adaptor->db->dnadb->get_SliceAdaptor;
   
     my %mappings = %{$object->variation_feature_mapping}; 
@@ -158,7 +165,7 @@ sub content {
     }
   }
 
-  if (!$variation->is_somatic) {
+  if (!$variation->is_somatic && $mapping_count) {
     ## Add LD data  
     my $ld_html;
     my $label = 'Linkage disequilibrium data';
