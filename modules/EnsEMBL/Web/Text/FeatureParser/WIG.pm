@@ -9,21 +9,21 @@ sub parse_row {
   my( $self, $row ) = @_;
   my $columns;
 
-  if ($row =~ /variableStep\s+chrom=([^\s]+)(\s+span=)?(\d+)?/i) {
+  if ($row =~ /variableStep\s+chrom=(chr)?([^\s]+)(\s+span=)?(\d+)?/i) {
     my $wigConfig = {
 		  'format' => 'v',
-		  'region' => $1,
-		  'span' => $3 || 1,
+		  'region' => $2,
+		  'span' => $4 || 1,
 	  };
 	  $self->{'tracks'}{ $self->current_key }->{'mode'} = $wigConfig;
   } 
-  elsif ($row =~ /fixedStep\s+chrom=(.+)\s+start=(\d+)\s+step=(\d+)(\s+span=)?(\d+)?/i) {
+  elsif ($row =~ /fixedStep\s+chrom=(chr)?(.+)\s+start=(\d+)\s+step=(\d+)(\s+span=)?(\d+)?/i) {
 	  my $wigConfig = {
 		  'format' => 'f',
-		  'region' => $1,
-		  'span' => $5 || 1,
-		  'start' => $2,
-		  'step' => $3,
+		  'region' => $2,
+		  'span' => $6 || 1,
+		  'start' => $3,
+		  'step' => $4,
 	  };
 	  $self->{'tracks'}{ $self->current_key }->{'mode'} = $wigConfig;
 	} 
