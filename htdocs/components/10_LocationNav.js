@@ -30,9 +30,9 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     var sliderLabel  = $('.slider_label', this.el);
     var hash, boundaries, r, l, i;
     
-    this.elLk.updateURL    = $('.update_url', this.el);
-    this.elLk.regionInputs = $('.location_selector', this.el);
-    this.elLk.navLinks     = $('a', this.el).addClass('constant').bind('click', function (e) {
+    this.elLk.updateURL     = $('.update_url', this.el);
+    this.elLk.locationInput = $('.location_selector', this.el);
+    this.elLk.navLinks      = $('a', this.el).addClass('constant').bind('click', function (e) {
       var newR;
       
       if (panel.enabled === true) {
@@ -143,10 +143,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
           }
         
           panel.elLk.updateURL.val(json.shift());
-          
-          panel.elLk.regionInputs.val(function () {
-            return json.shift();
-          });
+          panel.elLk.locationInput.val(json.shift());
           
           panel.elLk.navLinks.not('.ramp').attr('href', function () {
             return this.href.replace(panel.replaceRegex, '$1' + json.shift() + '$2');
