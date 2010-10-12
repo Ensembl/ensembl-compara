@@ -16,14 +16,16 @@ use EnsEMBL::Web::Hub;
 use base qw(EnsEMBL::Web::Controller);
 
 sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $input = new CGI;
+  my $class          = shift;
+  my $r              = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $session_cookie = ref $_[0] eq 'HASH' ? undef : shift;
+  my $args           = shift || {};
+  my $input          = new CGI;
   
   my $hub = new EnsEMBL::Web::Hub({
     apache_handle  => $r,
-    input          => $input
+    input          => $input,
+    session_cookie => $session_cookie
   });
   
   my $self = {
@@ -35,7 +37,11 @@ sub new {
   
   bless $self, $class;
   
-  $self->psychic;
+  if ($hub->action eq 'Location') {
+    $self->psychic_location;
+  } else {
+    $self->psychic;
+  }
   
   return $self;
 }
@@ -210,6 +216,48 @@ sub psychic {
   }
   
   $hub->redirect($site . $url);
+}
+
+sub psychic_location {
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $query         = $hub->param('q');
+  my $url;
+  
+  if ($query =~ /^\w+:(\d+)-(\d+)(:-?1)?$/) {
+    my $action = $hub->referer->{'ENSEMBL_ACTION'};
+    
+    $url = $hub->url({
+      %{$hub->multi_params(0)},
+      type   => 'Location',
+      action => $action eq 'Overview' || $2 - $1 > 1000000 ? 'Overview' : $action,
+      r      => $query
+    });
+  } else {
+    my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor');
+    my $gene         = $gene_adaptor->fetch_by_display_label($query) || $gene_adaptor->fetch_by_stable_id($query);
+    
+    if ($gene) {
+      $url = $hub->url({
+        %{$hub->multi_params(0)},
+        type   => 'Location',
+        action => 'View',
+        g      => $gene->stable_id
+      });
+    } else {
+      $url = $hub->referer->{'absolute_url'};
+      
+      $hub->session->add_data(
+        type     => 'message',
+        function => '_warning',
+        code     => 'location_search',
+        message  => 'The gene you searched for could not be found.'
+      );
+    }
+  }
+  
+  $hub->redirect($url);
 }
 
 sub escaped_url {
