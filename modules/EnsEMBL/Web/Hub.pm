@@ -338,7 +338,7 @@ sub get_ExtURL_link {
   my $self = shift;
   my $text = shift;
   my $url = $self->get_ExtURL(@_);
-  return $url ? qq(<a href="$url">$text</a>) : $text;
+  return $url ? qq(<a href="$url" rel="external">$text</a>) : $text;
 }
 
 # use PFETCH etc to get description and sequence of an external record
