@@ -1,9 +1,11 @@
 /* The CSS for the panel headings */
 
-div#content { margin:0 0 0 14em; padding:0; border:none; }
+div#content { margin:0 0 0 14em; padding:0; border: none; }
+body.static div#content { margin-left: 20em; }
 @media print {
-   div#content { margin:0; padding:0; border:none; }
+   div#content { margin: 0; padding:0; border:none; }
 }
+
 div#content div.panel { border:1px solid #ccc; background-color:[[PANEL_BG]]; }
 
 a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
@@ -26,7 +28,7 @@ a.help-header { color:[[CONTRAST_HEADER]];text-decoration:none; }
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
-#static { margin:1% 1% 0 1%; padding:1em; }
+#static { margin: 3px 1% 0 1%; padding:1em; }
 .onecol { margin:0 0 1% 0; padding:1% }
 .twocol-left { float:left; width:47%; margin:0 0 1% 0; padding:1%; clear:left; }
 .twocol-right { float:right; width:47%; margin:0 0 1% 0; padding:1%; }
@@ -45,6 +47,6 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 .unpadded { margin:0 1%; padding:0; }
 .noclear { clear:none; }
 
-hr.end-of-doc { height:1px; color:[[PANEL_BORDER]]; background-color:[[PANEL_BORDER]]; border:0; 
-                margin:2em 1em 0 1em; padding: 0; clear:both; }
-hr.with-nav { margin-left:15em; }
+hr.end-of-doc { height: 1px; color:[[PANEL_BORDER]]; background-color:[[PANEL_BORDER]]; border:0; margin: 2em 1em 0 1em; padding: 0; clear:both; }
+hr.with-nav { margin-left: 15em; }
+body.static hr.with-nav { margin-left: 21em; }
