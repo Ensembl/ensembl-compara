@@ -212,8 +212,8 @@ my $genome_db_adaptor = Bio::EnsEMBL::Registry-&gt;get_adaptor(
     'Multi', 'compara', 'GenomeDB');
 
 # Fetching GenomeDB objects for human and mouse:
-my $human_genome_db = $genome_db_adaptor-&gt;fetch_by_name_assembly('Homo sapiens');
-my $mouse_genome_db = $genome_db_adaptor-&gt;fetch_by_name_assembly('Mus musculus');
+my $human_genome_db = $genome_db_adaptor-&gt;fetch_by_name_assembly('homo_sapiens');
+my $mouse_genome_db = $genome_db_adaptor-&gt;fetch_by_name_assembly('mus_musculus');
 
 # Getting the MethodLinkSpeciesSet adaptor:
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry-&gt;get_adaptor(
