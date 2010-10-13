@@ -254,9 +254,11 @@ if (defined $species_tree_file) {
     $species = undef;
     foreach my $this_leaf (@$all_leaves) {
 	my $name = $this_leaf->name;
-	$name =~ tr/_/ /d;
+	my $long_name = $name;
+	$long_name =~ tr/_/ /d;
+	$name = lcfirst $name;
 	my $spp;
-	$spp->{long_name} = $name;
+	$spp->{long_name} = $long_name;
 	my $genome_db;
 
 	#not all species in the species tree are in the compara database so
@@ -320,8 +322,9 @@ sub print_blastz_net_list {
     #find reference species by parsing name field of mlss table
     foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
 	
-        if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET") {
-            print "only to be used for BLASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
+        if ($this_method_link_species_set->method_link_type ne "BLASTZ_NET" && 
+	   $this_method_link_species_set->method_link_type ne "LASTZ_NET") {
+            print "only to be used for BLASTZ_NET or LASTZ_NET not " . $this_method_link_species_set->method_link_type . "\n";
             next;
         }
 
@@ -610,6 +613,8 @@ sub print_half_html_table {
     my $genome_db_names;
     foreach my $genome_db (@{$this_method_link_species_set->species_set}) {
       my $genome_db_name = $genome_db->name;
+      $genome_db_name =~ tr/_/ /d;
+      $genome_db_name = ucfirst $genome_db_name;
       push (@$genome_db_names, $genome_db_name);
     }
     foreach my $genome_db_name_1 (@$genome_db_names) {
