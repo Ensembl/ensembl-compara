@@ -292,7 +292,8 @@ sub load_user_tracks {
     
     $url_sources{$entry->{'url'}} = {
       source_name => $entry->{'name'} || $entry->{'url'},
-      source_type => 'session'
+      source_type => 'session',
+      format      => $entry->{'format'},
     };
   }
   
@@ -369,7 +370,8 @@ sub load_user_tracks {
         Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', 
         encode_entities($url_sources{$_}{'source_type'}), encode_entities($_)
       ),
-      'url' => $_
+      'url' => $_,
+      'format' => $url_sources{$_}{'format'},
     );
   }
   
