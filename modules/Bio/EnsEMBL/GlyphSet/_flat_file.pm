@@ -72,7 +72,7 @@ sub features {
   if( $sub_type eq 'url' ) {
     my $response = EnsEMBL::Web::Tools::Misc::get_url_content( $self->my_config('url') );
     if (my $data = $response->{'content'}) {
-      $parser->parse($data);
+      $parser->parse($data, $self->my_config('format'));
     }
     else {
       warn "!!! ".$response->{'error'};
