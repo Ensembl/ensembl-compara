@@ -4,6 +4,7 @@
 11	GERP_CONSTRAINED_ELEMENT	ConstrainedElement.constrained_element
 13	EPO	GenomicAlignTree.ancestral_alignment
 14	EPO_LOW_COVERAGE	GenomicAlignTree.tree_alignment
+16	LASTZ_NET	GenomicAlignBlock.pairwise_alignment
 101	SYNTENY	SyntenyRegion.synteny
 201	ENSEMBL_ORTHOLOGUES	Homology.homology
 202	ENSEMBL_PARALOGUES	Homology.homology
