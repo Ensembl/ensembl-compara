@@ -38,11 +38,14 @@ sub content {
   my @clusters      = ( 'GO:0005575', 'GO:0008150', 'GO:0003674' );
   my @cluster_descr = ( 'cellular_component', 'biological_process', 'molecular_function ');
   my $html          =  '<p><h3>The following GO terms have been mapped to this entry via UniProt and/or RefSeq:</h3></p>';
-  my $columns       = [
-    { key => 'go',          title => 'GO Accession',      width => '5%',  align => 'left'   },
-    { key => 'description', title => 'GO Term',           width => '55%', align => 'left'   },
-    { key => 'evidence',    title => 'Evidence',          width => '3%',  align => 'center' },
-    { key => 'desc',        title => 'Annotation Source', width => '35%', align => 'centre' }
+  my $columns       = [   
+    { key => 'go',              title => 'GO Accession',      width => '5%',  align => 'left'   },
+    { key => 'description',     title => 'GO Term',           width => '30%', align => 'left'   },
+    { key => 'evidence',        title => 'Evidence',          width => '3%',  align => 'center' },
+    { key => 'desc',            title => 'Annotation Source', width => '24%', align => 'centre' },
+    { key => 'goslim_goa_acc',  title => 'Closest GOSlim and GOA Accessions', width => '5%', align => 'centre' },
+    { key => 'goslim_goa_title',title => 'Closest GOSlim and GOA Terms', width => '30%', align => 'centre' },
+    { key => 'distance',title => 'Distance', width => '3%', align => 'centre' }    
   ];
   
   
@@ -52,22 +55,32 @@ sub content {
     my $go_hash  = $object->get_go_list('GO', $clusters[$i]);
     
     if (%$go_hash) {
+      #add closest goslim_goa
+      my $go_database=$self->hub->get_databases('go')->{'go'};    
+      foreach (keys %$go_hash){
+        my $query = qq(        
+          SELECT t.accession, t.name,c.distance
+          FROM closure c join term t on c.parent_term_id= t.term_id
+          where child_term_id = (SELECT term_id FROM term where accession='$_')
+          and parent_term_id in (SELECT term_id FROM term t where subsets like '%goslim_goa%')
+          order by distance         
+        );
+        my $result = $go_database->dbc->db_handle->selectall_arrayref($query);
+        my $distance = undef;
+        for (my $i=0; (($i< scalar(@$result)) && (@{@$result[$i]}[2] <= $distance ))|| not defined $distance; $i++){
+          my $accession=@{@$result[$i]}[0];
+          my $name=@{@$result[$i]}[1];
+          $distance=@{@$result[$i]}[2];
+          $go_hash->{$_}[3]->{$accession}->{'name'} = $name;
+          $go_hash->{$_}[3]->{$accession}->{'distance'} = $distance;
+        }
+      }
+      
       my $table = $self->new_table($columns, [], { margin => '1em 0px', cellpadding => '2px' });
       $self->process_data($table, $go_hash);
       $html .= $table->render;
     }
-    
-    # then add  GOSlim info
-    my $go_slim_hash = $object->get_go_list('goslim_goa', $clusters[$i]);
-    
-    if (%$go_slim_hash) {
-      $html .= "<p><strong>The following GO terms are the closest ones in the GOSlim GOA subset for the above terms:</strong></p>";
-      my $go_slim_table = $self->new_table($columns, [], { margin => '1em 0px', cellpadding => '2px' });
-      $self->process_data($go_slim_table, $go_slim_hash);
-      $html .= $go_slim_table->render;
-    }
   }
-
   return "</p>$html";
 }
 
@@ -75,23 +88,16 @@ sub process_data {
   my ($self, $table, $data_hash) = @_;
   my $hub     = $self->hub;
   my $object  = $self->object;
-  my $goview  = $hub->database('go') ? 1 : 0;
   my $species = $hub->species;
 
   foreach my $go (sort keys %$data_hash) {
     my $row     = {};
     my @go_data = @{$data_hash->{$go} || []};
-    my ($evidence, $description, $info_text) = @go_data;
-    my $link_name = $description;
-    $link_name    =~ s/ /\+/g;
+    my ($evidence, $description, $info_text,$goslim_goa_hash) = @go_data;
 
-    my $go_link    = qq{<a href="http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=$go">$go</a>};
-    my $query_link = qq{<a href="http://amigo.geneontology.org/cgi-bin/amigo/term-details.cgi?term=$go">$description</a>};
-    
-    if (!$goview) {
-      $go_link    = $hub->get_ExtURL_link($go, 'GO', $go);
-      $query_link = $hub->get_ExtURL_link($description, 'GOTERMNAME', $link_name);
-    }
+
+    my $go_link    = $hub->get_ExtURL_link($go, 'GO', $go);
+    my $query_link = $hub->get_ExtURL_link($description, 'GO', $go);
     
     my $info_text_html;
     my $info_text_url;
@@ -119,10 +125,22 @@ sub process_data {
       $info_text_html = '';
     }
 
+    my $goslim_goa_acc='';
+    my $goslim_goa_desc='';
+    my $distance;
+    foreach (keys %$goslim_goa_hash){
+      $distance = $goslim_goa_hash->{$_}->{'distance'};   
+      $goslim_goa_acc.=$hub->get_ExtURL_link($_, 'GOSLIM_GOA', $_)."<br/>";
+      $goslim_goa_desc.=$hub->get_ExtURL_link($goslim_goa_hash->{$_}->{'name'}, 'GOSLIM_GOA', $_)."<br/>";
+    }
     $row->{'go'}          = $go_link;
     $row->{'description'} = $query_link;
     $row->{'evidence'}    = $evidence;
     $row->{'desc'}        = $info_text_html;
+    $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
+    $row->{'goslim_goa_title'} = $goslim_goa_desc;
+    $row->{'distance'} = $distance;    
+    
     
     $table->add_row($row);
   }
