@@ -13,9 +13,9 @@ sub new {
     'thick_start' => [ $args->[6] ],
     'thick_end'   => [ $args->[7] ],
     'item_colour' => [ $args->[8] ],
-    'expCount'    => [ $args->[11] ],
-    'expIds'      => [ split ',', $args->[12] ],
-    'expScores'   => [ split ',', $args->[13] ]
+    'BlockCount'  => [ $args->[9] ],
+    'BlockSizes'  => [ $args->[10] ],
+    'BlockStart'  => [ $args->[11] ]
   };
 
   return bless { '__raw__' => $args, '__extra__' => $extra }, $class;
