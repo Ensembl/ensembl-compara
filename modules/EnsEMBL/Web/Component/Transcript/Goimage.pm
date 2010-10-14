@@ -85,7 +85,7 @@ sub content {
     
     if (%$go_slim_hash) {
       $html .= sprintf(
-        'Terms from the GOSlim GOA subset of GO, closest to the matched terms have been highlighted in <span style="color:%s" >%s</span> The nodes are clickable links to GO',
+        'Terms from the GOSlim and GOA subset of GO, closest to the matched terms have been highlighted in <span style="color:%s" >%s</span> The nodes are clickable links to GO',
         $ontovis->highlighted_fill_colour, $goslim_goa_fill_text
       )
     }
