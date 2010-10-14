@@ -312,15 +312,7 @@ sub load_user_tracks {
         $self->_compare_assemblies($entry, $session);
       }
     } else {
-      my $display   = 'normal';
-      my $renderers = $self->{'alignment_renderers'};
-      my $strand   = 'b'; 
-      
-      if ($entry->{'style'} eq 'wiggle') {
-        $display   = 'tiling';
-        $strand    = 'r';
-        $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
-      }
+      my ($display, $strand, $renderers) = $self->_user_track_settings($entry->{'style'});
       
       $menu->append($self->create_track("tmp_$entry->{'code'}", $entry->{'name'}, {
         _class      => 'tmp',
@@ -370,8 +362,8 @@ sub load_user_tracks {
         Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', 
         encode_entities($url_sources{$_}{'source_type'}), encode_entities($_)
       ),
-      'url' => $_,
-      'format' => $url_sources{$_}{'format'},
+      'url'     => $_,
+      'format'  => $url_sources{$_}{'format'},
     );
   }
   
@@ -387,15 +379,7 @@ sub load_user_tracks {
       
       next unless $analysis;
       
-      my $display   = 'normal';
-      my $renderers = $self->{'alignment_renderers'};
-      my $strand    = 'b'; 
-      
-      if ($analysis->program_version eq 'WIG') {
-        $display   = 'tiling';
-        $strand    = 'r';
-        $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
-      }
+      my ($display, $strand, $renderers) = $self->_user_track_settings($analysis->program_version);
       
       my $description = encode_entities($analysis->description) || 'User data from dataset ' . encode_entities($user_sources{$logic_name}{'source_name'});
       
@@ -424,6 +408,21 @@ sub load_user_tracks {
   return;
 }
 
+sub _user_track_settings {
+  my ($self, $style) = @_;
+
+  my $renderers = $self->{'alignment_renderers'};
+  my $strand    = 'b'; 
+  my $display   = 'normal';
+      
+  if ($style eq 'wiggle' || $style eq 'WIG') {
+    $display   = 'tiling';
+    $strand    = 'r';
+    $renderers = [ 'off' => 'Off', 'tiling' => 'Wiggle plot' ];
+  }
+  return ($display, $strand, $renderers);
+}
+
 sub _compare_assemblies {
   my ($self, $entry, $session) = @_;
 
@@ -443,15 +442,17 @@ sub _add_flat_file_track {
   $menu ||= $self->get_node('user_data');
   return unless $menu;
   
+  my ($display, $strand, $renderers) = $self->_user_track_settings($options{'style'});
+
   my $track = $self->create_track($key, $name, {
-    display     => 'normal',
-    strand      => 'b',
+    display     => $display,
+    strand      => $strand,
     _class      => 'url',
     glyphset    => '_flat_file',
     colourset   => 'classes',
     caption     => $name,
     sub_type    => $sub_type,
-    renderers   => $self->{'alignment_renderers'},
+    renderers   => $renderers,
     description => $description,
     %options
   });
