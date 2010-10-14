@@ -56,6 +56,15 @@ use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Process;
 our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
+=head2 strict_hash_format 
+
+  Relaxed rules since we can work with an input_id of 1
+
+=cut
+
+sub strict_hash_format {
+  return 0;
+}
 
 =head2 fetch_input
 
