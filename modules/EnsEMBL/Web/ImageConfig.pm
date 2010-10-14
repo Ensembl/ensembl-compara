@@ -294,6 +294,7 @@ sub load_user_tracks {
       source_name => $entry->{'name'} || $entry->{'url'},
       source_type => 'session',
       format      => $entry->{'format'},
+      style       => $entry->{'style'},
     };
   }
   
@@ -364,6 +365,7 @@ sub load_user_tracks {
       ),
       'url'     => $_,
       'format'  => $url_sources{$_}{'format'},
+      'style'   => $url_sources{$_}{'style'},
     );
   }
   
