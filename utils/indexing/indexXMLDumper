@@ -1029,7 +1029,7 @@ sub dumpSequence {
                    GROUP by ms.code, ma.value), 'misc_set_id');
     if (%$feat_types) {
       my $mapsets = join ',', keys %$feat_types;
-      #get al misc_features
+      #get all misc_features
       my $sth = $conf->{'dbh'}->prepare(qq(
        SELECT mf.misc_feature_id, sr.name, cs.name, mf.seq_region_start, mf.seq_region_end,
               mf.seq_region_end-mf.seq_region_start+1 as len, ms.misc_set_id, at.code, ma.value
@@ -1136,7 +1136,7 @@ sub dumpSequence {
           next;
         }
       }
-      unless ($name eq 'lrg') {
+      unless ($type eq 'lrg') {
         &p( SeqLine($dbspecies,$name,$type,1,$length,$length,$name,[],$type,$sanger,$counter), $nogzip, $fh);
       }
     }
