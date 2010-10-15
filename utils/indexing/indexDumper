@@ -317,37 +317,37 @@ sub dumpVariation {
       my @K;
       my $syn_c = 0;
       foreach my $syn (split /,/, @$row->[3]) {
-  my ($id,$sname) = split / /,$syn;
-  $synonyms{$sname} = $sources->{$id};
-  $syn_c++;
+	my ($id,$sname) = split / /,$syn;
+	$synonyms{$sname} = $sources->{$id};
+	$syn_c++;
       }
       my (@K, $synonym_text);
       foreach my $syn (keys %synonyms) {
-  push @K, $syn;
-  $synonym_text .= $synonyms{$syn}.':'.$syn.' ';
+	push @K, $syn;
+	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
       my $x = $snp_extra{$v_id};
       if( $x ) {
-  push @K,$x->[1],$x->[3],$x->[4];
-  $extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
-  if( $x->[1] ) {
-    $extra .= sprintf ', through %s', $x->[1];
-  }
-  if( $x->[2] ) {
-    $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
-  }
+	push @K,$x->[1],$x->[3],$x->[4];
+	$extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
+	if( $x->[1] ) {
+	  $extra .= sprintf ', through %s', $x->[1];
+	}
+	if( $x->[2] ) {
+	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
+	}
       }
       print O join "\t",
-  "$snp_source Variation",
-  $name,
-        "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
-  "$name @K",
-  sprintf( "A %s Variation %s. %s\n",
+	"$snp_source Variation",
+	  $name,
+	  "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
+          "$name @K",
+	  sprintf( "A %s Variation %s. %s\n",
           $snp_source,
           $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
         : $syn_c     ? "with one synonym: $synonym_text"
-  :              "with no synonyms",
+        :              "with no synonyms",
         $extra
       );
     }
@@ -747,7 +747,7 @@ sub dumpGene {
   my $SANGDB = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   my %DBS = ( 'core' => $COREDB );
-  $DBS{'vega'}          = $SANGDB    if $SANGDB;
+#  $DBS{'vega'}          = $SANGDB    if $SANGDB;   #commented out since we don't need these in e60!
   $DBS{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
   open O, ">$conf->{'directory'}/Gene.txt";
   my $core_xrefs;
