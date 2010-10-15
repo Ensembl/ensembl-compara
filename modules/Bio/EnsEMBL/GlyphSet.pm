@@ -1068,7 +1068,7 @@ sub sort_features_by_priority {
 
   my $prioritize = 0;
   while (my ($k, $v) = each (%features)) {
-    if (@$v > 1 && $v->[1]{'priority'}) {
+    if ($v && @$v > 1 && $v->[1]{'priority'}) {
       $prioritize = 1;
     }
   }
