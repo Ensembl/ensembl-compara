@@ -159,6 +159,7 @@ sub render_normal {
     ## Fix for userdata with per-track config
     my ($config, @features);
     $self->{'track_key'} = $feature_key;
+    next unless $features{$feature_key};
     my @T = @{$features{$feature_key}};
     if (ref($T[0]) eq 'ARRAY') {
       @features =  @{$T[0]};
