@@ -139,7 +139,7 @@ sub dumpVariation {
   return unless $VarDB;
   open O,  ">$conf->{'directory'}/Variation.txt";
   open P,  ">$conf->{'directory'}/VariationPhenotype.txt";
-  open SM, ">$conf->{'directory'}/SomaticMutation.txt";
+  open S,  ">$conf->{'directory'}/SomaticMutation.txt";
 
   my $phenotype_info = $conf->{'dbh'}->selectall_hashref("select description, phenotype_id from $VarDB.phenotype",'description');
   foreach my $phen (keys %$phenotype_info) {
@@ -151,6 +151,8 @@ sub dumpVariation {
       "\n",
   }
   my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VarDB.source" )} };
+  my $somatic = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, somatic from $VarDB.source" )} };
+
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
       "select va.variation_id,
@@ -171,20 +173,19 @@ sub dumpVariation {
         group by va.variation_id
         order by va.variation_id"
     )};
-  my $sth = $conf->{'dbh'}->prepare(qq(
-     SELECT vf.variation_id, vf.variation_name, vf.source_id, group_concat(vs.source_id, ' ',vs.name), vf.consequence_type, s.somatic
+ my $sth = $conf->{'dbh'}->prepare(qq(
+     SELECT vf.variation_id, vf.variation_name, vf.source_id, group_concat(vs.source_id, ' ',vs.name), vf.consequence_type
        FROM $VarDB.variation_feature vf left join $VarDB.variation_synonym vs on vf.variation_id = vs.variation_id, $VarDB.source s
       WHERE vf.source_id = s.source_id
       GROUP BY vf.variation_id));
   $sth->execute() or die "Error:", $DBI::errstr;
   while (my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
-    my $rowcache;
     while ( my $row = shift( @{$rowcache} ) ) {
       my $v_id  = $row->[0];
       my $name  = $row->[1];
-      my $somatic = $row->[5];
       my %synonyms;
       my $syn_c = 0;
+      my $somatic_mutation = $somatic->{$row->[2]};
       foreach my $syn (split /,/, @$row->[3]) {
         my ($id,$sname) = split / /,$syn;
         $synonyms{$sname} = $sources->{$id};
@@ -201,7 +202,7 @@ sub dumpVariation {
       my $x = $snp_extra{$v_id};
       if( $x ) {
         push @K,$x->[1],$x->[3],$x->[4];
-        $extra = 'It is associated with following phenotypes:'. $x->[4].','.$x->[5];
+        $extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[5];
         if( $x->[1] ) {
           $extra .= sprintf ', through %s', $x->[1];
         }
@@ -210,8 +211,8 @@ sub dumpVariation {
         }
       }
 
-      if ( $somatic == 1){
-        print SM join "\t",
+      if ( $somatic_mutation == 1){
+        print S join "\t",
                 $name,
         "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
         "$name @K",
@@ -247,7 +248,8 @@ sub dumpVariation {
        AND fv.failed_description_id = fd.failed_description_id
      GROUP BY v.variation_id));
   $sth->execute() or die "Error:", $DBI::errstr;
-  while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
+#  while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
+ while ( my $rowcache = $sth->fetchall_arrayref( undef, 100 ) ) {
     while ( my $row = shift( @{$rowcache} ) ) {
       my $v_id       = $row->[0];
       my $name       = $row->[1];
@@ -317,44 +319,44 @@ sub dumpVariation {
       my @K;
       my $syn_c = 0;
       foreach my $syn (split /,/, @$row->[3]) {
-	my ($id,$sname) = split / /,$syn;
-	$synonyms{$sname} = $sources->{$id};
-	$syn_c++;
+  my ($id,$sname) = split / /,$syn;
+  $synonyms{$sname} = $sources->{$id};
+  $syn_c++;
       }
       my (@K, $synonym_text);
       foreach my $syn (keys %synonyms) {
-	push @K, $syn;
-	$synonym_text .= $synonyms{$syn}.':'.$syn.' ';
+  push @K, $syn;
+  $synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
       my $x = $snp_extra{$v_id};
       if( $x ) {
-	push @K,$x->[1],$x->[3],$x->[4];
-	$extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
-	if( $x->[1] ) {
-	  $extra .= sprintf ', through %s', $x->[1];
-	}
-	if( $x->[2] ) {
-	  $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
-	}
+  push @K,$x->[1],$x->[3],$x->[4];
+  $extra = '; and is associated with following phenotypes:'. $x->[4].','.$x->[5];
+  if( $x->[1] ) {
+    $extra .= sprintf ', through %s', $x->[1];
+  }
+  if( $x->[2] ) {
+    $extra .= sprintf ', through study(s): %s, and associated with following gene(s): %s', $x->[2], $x->[3];
+  }
       }
       print O join "\t",
-	"$snp_source Variation",
-	  $name,
-	  "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
-          "$name @K",
-	  sprintf( "A %s Variation %s. %s\n",
+  "$snp_source Variation",
+  $name,
+        "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
+  "$name @K",
+  sprintf( "A %s Variation %s. %s\n",
           $snp_source,
           $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
         : $syn_c     ? "with one synonym: $synonym_text"
-        :              "with no synonyms",
+  :              "with no synonyms",
         $extra
       );
     }
   }
 
   close O;
-  close SM;
+  close S;
   close P;
 }
 
