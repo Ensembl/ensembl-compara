@@ -564,6 +564,17 @@ SET @this_value='giant panda';
 SET @this_name_class='ensembl common name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
+SET @this_taxon_id=61853;
+SET @this_value='Gibbon';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=61853;
+SET @this_value='Northern white-cheeked gibbon';
+SET @this_name_class='ensembl common name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+
 -- -- Use these to ADD new species
 
 -- SET @this_taxon_id=;
