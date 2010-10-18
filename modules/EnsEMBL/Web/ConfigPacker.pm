@@ -63,53 +63,6 @@ sub munge_config_tree_multi {
   $self->_munge_website_multi;
 }
 
-sub munge_genes {
-  my $self = shift;
-  
-  foreach my $db (qw(DATABASE_CORE DATABASE_OTHERFEATURES)) {
-    my $dbh = $self->db_connect($db);
-    
-    next unless $dbh;
-    
-    my %analysis_ids;
-    
-    my $results = $dbh->selectall_arrayref('
-      select ad.analysis_id, ad.web_data 
-        from analysis_description ad, analysis a 
-        where a.analysis_id = ad.analysis_id and 
-              a.logic_name != "estgene" and 
-              ad.displayable = 1'
-    );
-    
-    foreach my $row (@$results) {
-      next if $analysis_ids{$row->[0]};
-      
-      my $web_data = eval($row->[1]);
-      $analysis_ids{$row->[0]} = 1 unless $web_data->{'gene'}->{'do_not_display'};
-    }
-    
-    my $ids = join ',', keys %analysis_ids;
-    
-    next unless $ids;
-    
-    $results = $dbh->selectall_arrayref(
-      "select x.display_label, gs.stable_id 
-        from gene g, gene_stable_id gs, xref x
-        where g.display_xref_id = x.xref_id and
-              g.gene_id = gs.gene_id and
-              g.analysis_id in ($ids)"
-    );
-    
-    foreach my $row (sort { $a->[0] cmp $b->[0] } @$results) {
-      push @{$self->genes_tree->{'names'}}, $row->[0];
-      push @{$self->genes_tree->{'ids'}},   $row->[1];
-      $self->genes_tree->{'db'}->{$row->[1]} = 'est' if $db eq 'DATABASE_OTHERFEATURES';
-    }
-  }
-}
-
-sub modify_genes {}
-
 # Implemented in plugins
 sub modify_databases         {}
 sub modify_databases_multi   {}

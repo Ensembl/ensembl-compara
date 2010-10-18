@@ -4,13 +4,12 @@ use strict;
 use DBI;
 
 sub new {
-  my ($class, $tree, $db_tree, $das_tree, $genes_tree) = @_;
+  my( $class, $tree, $db_tree, $das_tree ) =@_;
   my $self = {
-    _tree       => $tree       || {},
-    _db_tree    => $db_tree    || {},
-    _das_tree   => $das_tree   || {},
-    _genes_tree => $genes_tree || {},
-    _species    => undef
+    _tree     => $tree     || {},
+    _db_tree  => $db_tree  || {},
+    _das_tree => $das_tree || {},
+    _species  => undef
   };
   bless $self, $class;
   return $self;
@@ -61,12 +60,6 @@ sub das_tree {
   my $self = shift;
   my $species = $self->{'_species'};
   return $self->{'_das_tree'}{$species}||={};
-}
-
-sub genes_tree {
-  my $self = shift;
-  my $species = $self->{'_species'};
-  return $self->{'_genes_tree'}{$species}||={};
 }
 
 sub species {
