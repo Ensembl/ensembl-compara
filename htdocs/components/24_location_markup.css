@@ -1,4 +1,4 @@
-.navbar     { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin-top: 3px; margin-bottom: 1em; padding: 7px 0 10px; font-weight: bold; border: 1px solid #67718D; position: relative; }
+.navbar     { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin-top: 3px; margin-bottom: 1em; padding: 5px 0 8px; font-weight: bold; border: 1px solid #67718D; position: relative; }
 .navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
 .navbar div { margin: 0 5px; }
 
@@ -11,8 +11,10 @@
 .relocate             { float: left; }
 .relocate input       { border: 1px solid [[TINT_BORDER]]; padding: 2px; }
 .relocate input:hover { background-color: [[CONTRAST_BG]]; }
+.relocate form        { float: left; padding: 2px 0; }
+.relocate form label  { float: left; display: block; width: 5em; margin-top: 3px; padding-right: 5px; }
 
-input.go-button       { padding: 1px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
+input.go-button       { padding: 1px 3px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 input.go-button:hover { background-color: [[TINT_BORDER]]; }
 
 .image_nav { position: relative; top: 2px; float: right; }
@@ -34,3 +36,8 @@ a.move                        { margin: 0 2px; }
 .slider .ui-state-focus,   .slider .ui-widget-content .ui-state-focus   { border: 1px solid #CC0000; background: #DDDDDD; color: #212121; }
 
 .slider_label { position: absolute; display: none; font-weight: bold; bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
+
+ul.auto_complete                   { position: absolute; display: none; margin: 0; padding: 0; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
+ul.auto_complete li                { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; cursor: pointer; }
+ul.auto_complete li.focused        { background-color: [[CONTRAST_BG]]; }
+ul.auto_complete li span.stable_id { float: right; }
