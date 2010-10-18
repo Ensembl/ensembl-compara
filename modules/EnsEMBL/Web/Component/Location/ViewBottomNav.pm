@@ -55,9 +55,11 @@ sub navbar {
   
   my $hub          = $self->hub;
   my $image_width  = $self->image_width . 'px';
-  my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef }, 1);
-  my $form_action  = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
-  my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1]||{}};
+  my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef, g => undef }, 1);
+  my $psychic      = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
+  my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]->{$_}) } keys %{$url->[1] || {}};
+  my $g            = $hub->param('g');
+  my $g_input      = $g ? qq{<input name="g" value="$g" type="hidden" />} : '';
   
   return sprintf (qq{
     <div class="autocenter_wrapper">
@@ -65,11 +67,19 @@ sub navbar {
         <input type="hidden" class="panel_type" value="LocationNav" />
         <input type="hidden" class="update_url" value="%s" />
         <div class="relocate">
-          <form action="$form_action" method="get">
-            Location:
-              $extra_inputs
-              <label class="hidden" for="q">Location</label><input name="q" id="q" class="location_selector" style="width:20em" value="%s" type="text" />
-              <input value="Go &gt;" type="submit" class="go-button" />
+          <form action="$url->[0]" method="get">
+            <label for="loc_r">Location:</label>
+            $extra_inputs
+            $g_input
+            <input name="r" id="loc_r" class="location_selector" style="width:20em" value="%s" type="text" />
+            <input value="Go" type="submit" class="go-button" />
+          </form>
+          <form action="$psychic" method="get" class="gene_location">
+            <label for="loc_q">Gene:</label>
+            $extra_inputs
+            <input name="g" value="" type="hidden" />
+            <input name="q" id="loc_q" class="gene_selector" style="width:20em" value="" type="text" />
+            <input value="Go" type="submit" class="go-button" />
           </form>
         </div>
         <div class="image_nav">
