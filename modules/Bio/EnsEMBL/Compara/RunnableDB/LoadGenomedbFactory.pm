@@ -72,10 +72,7 @@ sub write_output {
     my $genome_dbs = (ref($species_set) eq 'ARRAY') ? $species_set : $species_set->genome_dbs();
 
     foreach my $genome_db (@$genome_dbs) {
-        my $genome_db_id = $genome_db->dbID();
 
-        my $species_name = $genome_db->name();
-        my $assembly     = $genome_db->assembly();
         $self->dataflow_output_id( {
             'genome_db_id'  => $genome_db->dbID(),
             'species_name'  => $genome_db->name(),
