@@ -131,15 +131,15 @@ sub build_NCSystem
   # SubmitGenome
   print STDERR "SubmitGenome\n";
   #
-  my $submit_analysis = Bio::EnsEMBL::Analysis->new(
+  my $submit_genome_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
 
-  $analysisDBA->store($submit_analysis); # although it's stored in comparaLoadGenomes.pl
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_analysis->dbID);
+  $analysisDBA->store($submit_genome_analysis); # although it's stored in comparaLoadGenomes.pl
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($submit_genome_analysis->dbID);
   $stats->batch_size(100);
   $stats->hive_capacity(-1);
   $stats->update();
@@ -148,48 +148,46 @@ sub build_NCSystem
   # GenomePrepareNCMembers
   print STDERR "GenomePrepareNCMembers\n";
   #
-  my $load_genome = Bio::EnsEMBL::Analysis->new(
+  my $genome_prepare_ncmembers_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GenomePrepareNCMembers',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomePrepareNCMembers',
       -parameters      => "{type => 'ncRNA'}"
     );
-  $analysisDBA->store($load_genome);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($load_genome->dbID);
+  $analysisDBA->store($genome_prepare_ncmembers_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($genome_prepare_ncmembers_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(10);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($submit_analysis, $load_genome);
 
   #
   # GeneStoreNCMembers
   print STDERR "GeneStoreNCMembers\n";
   #
-  my $genestore = Bio::EnsEMBL::Analysis->new(
+  my $gene_store_ncmembers_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'GeneStoreNCMembers',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers',
       -parameters      => "{type => 'ncRNA'}"
     );
-  $analysisDBA->store($genestore);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($genestore->dbID);
+  $analysisDBA->store($gene_store_ncmembers_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($gene_store_ncmembers_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(20);
   $stats->update();
 
-  $dataflowRuleDBA->create_rule($load_genome,$genestore);
 
   #
   # RFAMLoadModels
   print STDERR "RFAMLoadModels\n";
   #
-  my $rfam_loadmodels = Bio::EnsEMBL::Analysis->new(
+  my $rfam_load_models_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'RFAMLoadModels',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMLoadModels'
     );
-  $analysisDBA->store($rfam_loadmodels);
-  $stats = $rfam_loadmodels->stats;
+  $analysisDBA->store($rfam_load_models_analysis);
+  $stats = $rfam_load_models_analysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
   $stats->status('BLOCKED');
@@ -204,48 +202,16 @@ sub build_NCSystem
   $parameters .= "}";
   $parameters =~ s/\A{//;
   $parameters =~ s/}\Z//;
-  my $rfam_classify = Bio::EnsEMBL::Analysis->new(
+  my $rfam_classify_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'RFAMClassify',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMClassify',
       -parameters      => $parameters
     );
-  $analysisDBA->store($rfam_classify);
-  $stats = $rfam_classify->stats;
+  $analysisDBA->store($rfam_classify_analysis);
+  $stats = $rfam_classify_analysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
   $stats->status('BLOCKED');
-  $stats->update();
-
-  #
-  # RFAMSearch
-  print STDERR "RFAMSearch\n";
-  #
-  my $cmsearch_exe = $nctree_params{'cmsearch'} || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch';
-  my $rfamsearch = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'RFAMSearch',
-      -program_file    => $cmsearch_exe,
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMSearch',
-    );
-  $analysisDBA->store($rfamsearch);
-  $stats = $rfamsearch->stats;
-  $stats->batch_size(5);
-  $stats->failed_job_tolerance(10);
-  $stats->hive_capacity(500);
-  $stats->update();
-
-
-  #
-  # Clusterset_staging
-  print STDERR "Clusterset_staging\n";
-  #
-  my $clusterset_staging = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'Clusterset_staging',
-      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-    );
-  $analysisDBA->store($clusterset_staging);
-  $stats = $clusterset_staging->stats;
-  $stats->batch_size(-1);
-  $stats->hive_capacity(1);
   $stats->update();
 
   #
@@ -258,13 +224,13 @@ sub build_NCSystem
   $parameters =~ s/\A{//;
   $parameters =~ s/}\Z//;
 
-  my $ncrecoverepo = Bio::EnsEMBL::Analysis->new(
+  my $ncrecover_epo_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCRecoverEPO',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO',
       -parameters      => $parameters
     );
-  $analysisDBA->store($ncrecoverepo);
-  $stats = $ncrecoverepo->stats;
+  $analysisDBA->store($ncrecover_epo_analysis);
+  $stats = $ncrecover_epo_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(80);
   $stats->hive_capacity(-1);
@@ -274,14 +240,14 @@ sub build_NCSystem
   # NCRecoverSearch
   print STDERR "NCRecoverSearch\n";
   #
-  $cmsearch_exe = $nctree_params{'cmsearch'} || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch';
-  my $ncrecoversearch = Bio::EnsEMBL::Analysis->new(
+  my $cmsearch_exe = $nctree_params{'cmsearch'} || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch';
+  my $ncrecover_search_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCRecoverSearch',
       -program_file    => $cmsearch_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch',
     );
-  $analysisDBA->store($ncrecoversearch);
-  $stats = $ncrecoversearch->stats;
+  $analysisDBA->store($ncrecover_search_analysis);
+  $stats = $ncrecover_search_analysis->stats;
   $stats->batch_size(5);
   $stats->failed_job_tolerance(80);
   $stats->hive_capacity(500);
@@ -303,14 +269,14 @@ sub build_NCSystem
 
   my $infernal_exe = $nctree_params{'infernal'} || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign';
 
-  my $infernal = Bio::EnsEMBL::Analysis->new(
+  my $infernal_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Infernal',
       -program_file    => $infernal_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Infernal',
       -parameters      => $parameters
     );
-  $analysisDBA->store($infernal);
-  $stats = $infernal->stats;
+  $analysisDBA->store($infernal_analysis);
+  $stats = $infernal_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(80);
   $stats->hive_capacity(-1);
@@ -331,14 +297,14 @@ sub build_NCSystem
 
   my $ncsecstructtree_exe = $nctree_params{'ncsecstructtree'} || '/nfs/users/nfs_a/avilella/src/raxml/latest/RAxML-7.2.6/raxmlHPC-PTHREADS-SSE3';
 
-  my $ncsecstructtree = Bio::EnsEMBL::Analysis->new(
+  my $ncsec_struct_tree_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCSecStructTree',
       -program_file    => $ncsecstructtree_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCSecStructTree',
       -parameters      => $parameters
     );
-  $analysisDBA->store($ncsecstructtree);
-  $stats = $ncsecstructtree->stats;
+  $analysisDBA->store($ncsec_struct_tree_analysis);
+  $stats = $ncsec_struct_tree_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(80);
   $stats->hive_capacity(-1);
@@ -361,14 +327,14 @@ sub build_NCSystem
 
   my $ncgenomicalignment_exe = $nctree_params{'ncgenomicalignment'} || '/software/ensembl/compara/prank/091007/src/prank';
 
-  my $ncgenomicalignment = Bio::EnsEMBL::Analysis->new(
+  my $nc_genomic_alignment_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCGenomicAlignment',
       -program_file    => $ncgenomicalignment_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCGenomicAlignment',
       -parameters      => $parameters
     );
-  $analysisDBA->store($ncgenomicalignment);
-  $stats = $ncgenomicalignment->stats;
+  $analysisDBA->store($nc_genomic_alignment_analysis);
+  $stats = $nc_genomic_alignment_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(20);
   $stats->hive_capacity(-1);
@@ -401,14 +367,14 @@ sub build_NCSystem
     $parameters = "{'treebest_mmerge_data_id'=>'$treebest_mmerge_analysis_data_id'}";
   }
   my $tree_best_program = $nctree_params{'treebest'} || '/nfs/acari/avilella/src/treesoft/trunk/treebest_ncrna/treebest';
-  my $treebest_mmerge = Bio::EnsEMBL::Analysis->new(
+  my $nc_treebest_mmerge_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCTreeBestMMerge',
       -program_file    => $tree_best_program,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge',
       -parameters      => $parameters
     );
-  $analysisDBA->store($treebest_mmerge);
-  $stats = $treebest_mmerge->stats;
+  $analysisDBA->store($nc_treebest_mmerge_analysis);
+  $stats = $nc_treebest_mmerge_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(20);
   my $njtree_hive_capacity = $hive_params{'njtree_hive_capacity'};
@@ -446,13 +412,13 @@ sub build_NCSystem
     $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
   }
 
-  my $ncorthotree = Bio::EnsEMBL::Analysis->new(
+  my $nc_orthotree_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NCOrthoTree',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree',
       -parameters      => $parameters
       );
-  $analysisDBA->store($ncorthotree);
-  $stats = $ncorthotree->stats;
+  $analysisDBA->store($nc_orthotree_analysis);
+  $stats = $nc_orthotree_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(10);
   my $ortho_tree_hive_capacity = $hive_params{'ortho_tree_hive_capacity'};
@@ -466,13 +432,13 @@ sub build_NCSystem
   #
   my $ktreedist_exe = $nctree_params{'ktreedist_exe'} || '/software/ensembl/compara/ktreedist/Ktreedist.pl';
 
-  my $ktreedist = Bio::EnsEMBL::Analysis->new(
+  my $ktreedist_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'Ktreedist',
       -program_file    => $ktreedist_exe,
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Ktreedist',
     );
-  $analysisDBA->store($ktreedist);
-  $stats = $ktreedist->stats;
+  $analysisDBA->store($ktreedist_analysis);
+  $stats = $ktreedist_analysis->stats;
   $stats->batch_size(1);
   $stats->failed_job_tolerance(80);
   $stats->hive_capacity(-1);
@@ -480,63 +446,36 @@ sub build_NCSystem
 
 
 
-  $parameters = "{max_gene_count=>".$nctree_params{'max_gene_count'}."}";
-  #my $ncquicktreebreak = Bio::EnsEMBL::Analysis->new(
-  #    -logic_name      => 'NCQuickTreeBreak',
-  #    -module          => 'Bio::EnsEMBL::Compara::RunnableDB::NCQuickTreeBreak',
-  #    -parameters      => $parameters
-  #    );
-  #$analysisDBA->store($ncquicktreebreak);
-  #$stats = $ncquicktreebreak->stats;
-  #$stats->batch_size(1);
-  #my $quicktreebreak_hive_capacity = 10;
-  #$stats->hive_capacity($quicktreebreak_hive_capacity);
-  #
-  #$stats->update();
-
   #
   # build graph of control and dataflow rules
   #
 
-  $ctrlRuleDBA->create_rule($genestore, $rfam_classify);
-  $ctrlRuleDBA->create_rule($genestore, $rfam_loadmodels);
-  $ctrlRuleDBA->create_rule($rfam_loadmodels, $rfam_classify);
-  $ctrlRuleDBA->create_rule($rfam_classify, $clusterset_staging);
-  $ctrlRuleDBA->create_rule($rfamsearch, $clusterset_staging);
-  $ctrlRuleDBA->create_rule($ncrecoverepo, $clusterset_staging);
-  $ctrlRuleDBA->create_rule($ncrecoversearch, $clusterset_staging);
-  # $dataflowRuleDBA->create_rule($rfam_classify, $clusterset_staging, 1); # This may be redundant here
-  $dataflowRuleDBA->create_rule($rfam_classify, $ncrecoverepo, 2);
-  $dataflowRuleDBA->create_rule($rfam_classify, $rfamsearch, 3);
-  $dataflowRuleDBA->create_rule($rfamsearch, $infernal, 1);
-  $dataflowRuleDBA->create_rule($ncrecoverepo, $ncrecoversearch, 1);
-  $dataflowRuleDBA->create_rule($ncrecoversearch, $infernal, 1);
-  $dataflowRuleDBA->create_rule($clusterset_staging, $infernal, 1);
-  $dataflowRuleDBA->create_rule($infernal, $ncsecstructtree, 1);
-  $dataflowRuleDBA->create_rule($ncsecstructtree, $ncgenomicalignment, 1);
-  $dataflowRuleDBA->create_rule($ncgenomicalignment, $treebest_mmerge, 1);
+  $dataflowRuleDBA->create_rule($submit_genome_analysis, $genome_prepare_ncmembers_analysis);
+  $dataflowRuleDBA->create_rule($genome_prepare_ncmembers_analysis, $gene_store_ncmembers_analysis);
 
-  #$dataflowRuleDBA->create_rule($treebest_mmerge, $ncquicktreebreak, 3);
-  #$dataflowRuleDBA->create_rule($ncorthotree, $ncquicktreebreak, 2);
+  $ctrlRuleDBA->create_rule($gene_store_ncmembers_analysis, $rfam_load_models_analysis); # funnel
 
-  $dataflowRuleDBA->create_rule($treebest_mmerge, $ncorthotree, 1);
-  $dataflowRuleDBA->create_rule($treebest_mmerge, $ktreedist, 1);
+  $dataflowRuleDBA->create_rule($rfam_load_models_analysis, $rfam_classify_analysis);    # backbone
+  $dataflowRuleDBA->create_rule($rfam_classify_analysis, $ncrecover_epo_analysis, 2);    # fan
+
+  $dataflowRuleDBA->create_rule($ncrecover_epo_analysis, $ncrecover_search_analysis, 1);
+  $dataflowRuleDBA->create_rule($ncrecover_search_analysis, $infernal_analysis, 1);
+  $dataflowRuleDBA->create_rule($infernal_analysis, $ncsec_struct_tree_analysis, 1);
+  $dataflowRuleDBA->create_rule($ncsec_struct_tree_analysis, $nc_genomic_alignment_analysis, 1);
+  $dataflowRuleDBA->create_rule($nc_genomic_alignment_analysis, $nc_treebest_mmerge_analysis, 1);
+
+  $dataflowRuleDBA->create_rule($nc_treebest_mmerge_analysis, $nc_orthotree_analysis, 1);
+  $dataflowRuleDBA->create_rule($nc_treebest_mmerge_analysis, $ktreedist_analysis, 1);
 
   #
   print STDERR "Create initial jobs\n";
   # create initial jobs
   #
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-       (
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => '{}',
-        -analysis       => $rfam_classify,
-       );
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-       (
-        -input_id       => '{}',
-        -analysis       => $rfam_loadmodels,
-       );
+        -analysis       => $rfam_load_models_analysis,
+  );
 
   print STDERR "Finished\n";
 
