@@ -8,7 +8,7 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { 
   my $self = shift;  
-  my $label = $self->{'my_config'}->key =~/somatic/ ?'Somatic Muttions' : 'Variations'; 
+  my $label = $self->{'my_config'}->key =~/somatic/ ?'Somatic Mutations' : 'Variations'; 
   return $label; 
 }
 
