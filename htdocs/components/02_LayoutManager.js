@@ -58,7 +58,10 @@ Ensembl.LayoutManager.extend({
         }
       },
       mouseup: function (e) {
-        Ensembl.EventManager.trigger('mouseUp', e);
+        // only fired on left click
+        if (!e.which || e.which == 1) {
+          Ensembl.EventManager.trigger('mouseUp', e);
+        }
       }
     });
     
