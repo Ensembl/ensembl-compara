@@ -650,7 +650,8 @@ sub _parse {
   my $tree          = {};
   my $db_tree       = {};
   my $das_tree      = {};
-  my $config_packer = new EnsEMBL::Web::ConfigPacker($tree, $db_tree, $das_tree);
+  my $genes_tree    = {};
+  my $config_packer = new EnsEMBL::Web::ConfigPacker($tree, $db_tree, $das_tree, $genes_tree);
   
   $self->_info_line('Parser', 'Child objects attached');
 
@@ -677,6 +678,7 @@ sub _parse {
     
     if ($species ne 'MULTI') {
       $self->process_ini_files($species, 'das', $config_packer, $defaults);
+      $self->process_ini_files($species, 'genes', $config_packer, $defaults);
       $self->_merge_db_tree($tree, $das_tree, $species);
     }
   }
@@ -701,7 +703,7 @@ sub _parse {
 sub process_ini_files {
   my ($self, $species, $type, $config_packer, $defaults) = @_;
   
-  my $msg  = "$species " . ($type eq 'das' ? 'DAS sources' : 'database');
+  my $msg  = "$species " . ($type eq 'das' ? 'DAS sources' : $type eq 'genes' ? 'genes' : 'database');
   my $file = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', "$species.$type.packed");
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
@@ -719,7 +721,7 @@ sub process_ini_files {
     $config_packer->{$tree_type}->{$species} = lock_retrieve($file);
     $self->_info_line('Retrieve', $species eq 'MULTI' ? 'MULTI ini file' : $msg);
   } else {
-    $config_packer->munge($type eq 'db' ? 'databases' : 'das');
+    $config_packer->munge($type eq 'db' ? 'databases' : $type);
     $self->_info_line(sprintf('** %s **', uc $type), $msg);
     
     lock_nstore($config_packer->{$tree_type}->{$species} || {}, $file);
