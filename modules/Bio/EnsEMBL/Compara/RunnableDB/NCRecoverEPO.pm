@@ -56,8 +56,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO;
 
 use strict;
-use Getopt::Long;
-use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::AlignIO;
 use Bio::EnsEMBL::Registry;
 
@@ -84,7 +82,7 @@ sub fetch_input {
   $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
   $self->{treeDBA}   = $self->compara_dba->get_NCTreeAdaptor;
   $self->{mlssDBA}   = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  $self->{ssDBA}   = $self->compara_dba->get_SpeciesSetAdaptor;
+  $self->{ssDBA}     = $self->compara_dba->get_SpeciesSetAdaptor;
 
   my @nc_trees_mlsses = @{$self->{mlssDBA}->fetch_all_by_method_link_type('NC_TREES')};
   $self->{mlssID} = $nc_trees_mlsses[0]->dbID || 0;
@@ -96,9 +94,16 @@ sub fetch_input {
   $self->{gabDBA_epo} = $self->{'comparaDBA_epo'}->get_GenomicAlignBlockAdaptor;
   $self->{mlssDBA_epo} = $self->{'comparaDBA_epo'}->get_MethodLinkSpeciesSetAdaptor;
 
-  my $low_cov_ss = $self->{ssDBA}->fetch_by_tag_value('name','low-coverage-assembly');
+  my ($low_cov_ss) = $self->{ssDBA}->fetch_all_by_tag_value('name','low-coverage-assembly');
 
-  $low_cov_ss = $self->{ssDBA}->fetch_by_tag_value('name','low-coverage') if (!defined($low_cov_ss) || $low_cov_ss eq '');
+  unless($low_cov_ss) {
+    ($low_cov_ss) = $self->{ssDBA}->fetch_all_by_tag_value('name','low-coverage');
+  }
+
+  unless($low_cov_ss) {
+    die "A SpeciesSet named either 'low-coverage-assembly' or 'low-coverage' must be present in the database to run this analysis\n";
+  }
+
   foreach my $gdb (@{$low_cov_ss->genome_dbs}) {
     $self->{low_cov_gdbs}{$gdb->dbID} = 1;
   }

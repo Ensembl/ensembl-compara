@@ -56,13 +56,17 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge;
 
 use strict;
-use Getopt::Long;
-use Time::HiRes qw(time gettimeofday tv_interval);
-
 use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    return {
+        'clusterset_id'  => 1,
+    };
+}
 
 
 =head2 fetch_input
@@ -79,66 +83,18 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'clusterset_id'} = 1;
-
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
-# For long parameters, look at analysis_data
-  if($self->{treebest_mmerge_data_id}) {
-    my $analysis_data_id = $self->{treebest_mmerge_data_id};
-    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-    $self->get_params($analysis_data_params);
-  }
+      # Fetch sequences:
+  $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id')) );
 
   $self->load_input_trees;
   $self->load_species_tree;
 
-  # Define executable
-  my $treebest_mmerge_executable = $self->analysis->program_file || '';
-  unless (-e $treebest_mmerge_executable) {
-    $treebest_mmerge_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
-  }
+      # Define executable:
+  my $treebest_mmerge_executable = $self->analysis->program_file || "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest_ncrna/treebest";
   $self->throw("can't find a treebest executable to run\n") unless(-e $treebest_mmerge_executable);
-  $self->{treebest_mmerge_executable} = $treebest_mmerge_executable;
+  $self->param('treebest_mmerge_executable', $treebest_mmerge_executable);
 
   return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[param1 param2 param3 treebest_mmerge_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  # Fetch nc_tree
-  if(defined($params->{'nc_tree_id'})) {
-    $self->{'nc_tree'} =  
-         $self->compara_dba->get_NCTreeAdaptor->
-         fetch_node_by_node_id($params->{'nc_tree_id'});
-  }
-  if(defined($params->{'clusterset_id'})) {
-    $self->{'clusterset_id'} = $params->{'clusterset_id'};
-  }
-
-
-  return;
 }
 
 
@@ -155,7 +111,7 @@ sub get_params {
 sub run {
   my $self = shift;
 
-  if (defined($self->{inputtrees_unrooted})) {
+  if (defined($self->param('inputtrees_unrooted'))) {
     $self->reroot_inputtrees;
     $self->run_treebest_mmerge;
     $self->calculate_branch_lengths;
@@ -177,16 +133,16 @@ sub run {
 sub write_output {
   my $self = shift;
 
-  $self->store_nctree if (defined($self->{inputtrees_unrooted}));
+  $self->store_nctree if (defined($self->param('inputtrees_unrooted')));
 }
 
 sub DESTROY {
   my $self = shift;
 
-  if($self->{'nc_tree'}) {
+  if($self->param('nc_tree')) {
     printf("NctreeBestMMerge::DESTROY  releasing tree\n") if($self->debug);
-    $self->{'nc_tree'}->release_tree;
-    $self->{'nc_tree'} = undef;
+    $self->param('nc_tree')->release_tree;
+    $self->param('nc_tree', undef);
   }
 
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
@@ -204,16 +160,16 @@ sub DESTROY {
 sub run_treebest_mmerge {
   my $self = shift;
 
-  my $root_id = $self->{nc_tree}->node_id;
-  my $species_tree_file = $self->{'species_tree_file'};
-  my $treebest_mmerge_executable = $self->{treebest_mmerge_executable};
+  my $root_id = $self->param('nc_tree')->node_id;
+  my $species_tree_file = $self->param('species_tree_file');
+  my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
   my $temp_directory = $self->worker_temp_directory;
 
   my $mmergefilename = $temp_directory . $root_id . ".mmerge";
   my $mmerge_output_filename = $mmergefilename . ".output";
   open FILE,">$mmergefilename" or die $!;
-  foreach my $method (keys %{$self->{inputtrees_rooted}}) {
-    my $inputtree = $self->{inputtrees_rooted}{$method};
+  foreach my $method (keys %{$self->param('inputtrees_rooted')}) {
+    my $inputtree = $self->param('inputtrees_rooted')->{$method};
     print FILE "$inputtree\n";
   }
   close FILE;
@@ -226,35 +182,30 @@ sub run_treebest_mmerge {
     $self->throw("error running treebest sdi, $!\n");
   }
 
-  $self->{mmerge_output} = $mmerge_output_filename;
+  $self->param('mmerge_output', $mmerge_output_filename);
 
   return 1;
 }
 
 sub calculate_branch_lengths {
   my $self = shift;
-  my $starttime = time()*1000;
 
-  $self->{'cdna'} = 1; #always use cdna for njtree_phyml
-  $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir
-    (
-     $self->{'nc_tree'}
-    );
+  $self->param('input_aln', $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree')) );
 
-  my $leafcount = scalar(@{$self->{nc_tree}->get_all_leaves});
+  my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
   if($leafcount<3) {
     printf(STDERR "tree cluster %d has <3 genes - can not build a tree\n", 
-           $self->{nc_tree}->node_id);
-    $self->{mmerge_blengths_output} = $self->{mmerge_output};
+           $self->param('nc_tree')->node_id);
+    $self->param('mmerge_blengths_output', $self->param('mmerge_output'));
     $self->parse_newick_into_nctree;
     return;
   }
 
-  my $treebest_mmerge_executable = $self->{treebest_mmerge_executable};
-  my $constrained_tree = $self->{'mmerge_output'};
-  my $tree_with_blengths = $self->{'mmerge_output'} . ".blengths.nh";
-  my $input_aln = $self->{input_aln};
-  my $species_tree_file = $self->{'species_tree_file'};
+  my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
+  my $constrained_tree = $self->param('mmerge_output');
+  my $tree_with_blengths = $self->param('mmerge_output') . ".blengths.nh";
+  my $input_aln = $self->param('input_aln');
+  my $species_tree_file = $self->param('species_tree_file');
   my $cmd = "$treebest_mmerge_executable nj -c $constrained_tree -s $species_tree_file $input_aln > $tree_with_blengths";
   print("$cmd\n") if($self->debug);
 
@@ -263,7 +214,7 @@ sub calculate_branch_lengths {
     $self->throw("error running treebest sdi, $!\n");
   }
 
-  $self->{mmerge_blengths_output} = $tree_with_blengths;
+  $self->param('mmerge_blengths_output', $tree_with_blengths);
 
   #parse the tree into the datastucture
   $self->parse_newick_into_nctree;
@@ -273,18 +224,18 @@ sub calculate_branch_lengths {
 sub reroot_inputtrees {
   my $self = shift;
 
-  my $root_id = $self->{nc_tree}->node_id;
-  my $species_tree_file = $self->{'species_tree_file'};
-  my $treebest_mmerge_executable = $self->{treebest_mmerge_executable};
+  my $root_id = $self->param('nc_tree')->node_id;
+  my $species_tree_file = $self->param('species_tree_file');
+  my $treebest_mmerge_executable = $self->param('treebest_mmerge_executable');
 
   my $temp_directory = $self->worker_temp_directory;
   my $template_cmd = "$treebest_mmerge_executable sdi -rs $species_tree_file";
 
-  foreach my $method (keys %{$self->{inputtrees_unrooted}}) {
+  foreach my $method (keys %{$self->param('inputtrees_unrooted')}) {
     my $cmd = $template_cmd;
     my $unrootedfilename = $temp_directory . $root_id . "." . $method . ".unrooted";
     my $rootedfilename = $temp_directory . $root_id . "." . $method . ".rooted";
-    my $inputtree = $self->{inputtrees_unrooted}{$method};
+    my $inputtree = $self->param('inputtrees_unrooted')->{$method};
     open FILE,">$unrootedfilename" or die $!;
     print FILE $inputtree;
     close FILE;
@@ -308,7 +259,11 @@ sub reroot_inputtrees {
     }
     close(FH);
 
-    $self->{inputtrees_rooted}{$method} = $rootedstring;
+      # manual vivification needed:
+    unless($self->param('inputtrees_rooted')) {
+        $self->param('inputtrees_rooted', {});
+    }
+    $self->param('inputtrees_rooted')->{$method} = $rootedstring;
   }
 
   return 1;
@@ -317,7 +272,7 @@ sub reroot_inputtrees {
 sub load_input_trees {
   my $self = shift;
 
-  my $root_id = $self->{nc_tree}->node_id;
+  my $root_id = $self->param('nc_tree')->node_id;
 
   my $sql1 = "select tag,value from nc_tree_tag where node_id=$root_id and tag like '%\\\_IT\\\_%'";
   my $sth1 = $self->dbc->prepare($sql1);
@@ -330,7 +285,12 @@ sub load_input_trees {
       my @leaves = @{$eval_inputtree->get_all_leaves};
     };
     unless ($@) {
-      $self->{inputtrees_unrooted}{$inputtree_string->{tag}} = $inputtree_string->{value};
+        # manual vivification needed:
+      unless($self->param('inputtrees_unrooted')) {
+          $self->param('inputtrees_unrooted', {});
+      }
+
+      $self->param('inputtrees_unrooted')->{$inputtree_string->{tag}} = $inputtree_string->{value};
     }
   }
   $sth1->finish;
@@ -356,16 +316,16 @@ sub load_species_tree {
   };
 
   if($@) {
-    unless(-e $self->{'species_tree_file'}) {
+    unless(-e $self->param('species_tree_file')) {
       $self->throw("can't find species_tree\n");
     }
   } else {
-    $self->{species_tree_string} = $species_tree_string->{value};
+    $self->param('species_tree_string', $species_tree_string->{value});
     my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
     open SPECIESTREE, ">$spfilename" or die "$!";
-    print SPECIESTREE $self->{species_tree_string};
+    print SPECIESTREE $self->param('species_tree_string');
     close SPECIESTREE;
-    $self->{'species_tree_file'} = $spfilename;
+    $self->param('species_tree_file', $spfilename);
   }
 
 }
@@ -373,14 +333,14 @@ sub load_species_tree {
 sub parse_newick_into_nctree
 {
   my $self = shift;
-  my $newick_file =  $self->{'mmerge_blengths_output'};
-  my $tree = $self->{'nc_tree'};
+  my $newick_file =  $self->param('mmerge_blengths_output');
+  my $nc_tree = $self->param('nc_tree');
   
   #cleanup old tree structure- 
   #  flatten and reduce to only AlignedMember leaves
-  $tree->flatten_tree;
-  $tree->print_tree(20) if($self->debug);
-  foreach my $node (@{$tree->get_all_leaves}) {
+  $nc_tree->flatten_tree;
+  $nc_tree->print_tree(20) if($self->debug);
+  foreach my $node (@{$nc_tree->get_all_leaves}) {
     next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     $node->disavow_parent;
   }
@@ -405,7 +365,7 @@ sub parse_newick_into_nctree
   # Leaves of newick tree are named with member_id of members from
   # input tree move members (leaves) of input tree into newick tree to
   # mirror the 'member_id' nodes
-  foreach my $member (@{$tree->get_all_leaves}) {
+  foreach my $member (@{$nc_tree->get_all_leaves}) {
     my $tmpnode = $newtree->find_node_by_name($member->member_id);
     if($tmpnode) {
       $tmpnode->add_child($member, 0.0);
@@ -418,15 +378,15 @@ sub parse_newick_into_nctree
 
   # Merge the trees so that the children of the newick tree are now
   # attached to the input tree's root node
-  $tree->merge_children($newtree);
+  $nc_tree->merge_children($newtree);
 
   # Newick tree is now empty so release it
   $newtree->release_tree;
 
-  $tree->print_tree if($self->debug);
+  $nc_tree->print_tree if($self->debug);
   # check here on the leaf to test if they all are AlignedMembers as
   # minimize_tree/minimize_node might not work properly
-  foreach my $leaf (@{$self->{'nc_tree'}->get_all_leaves}) {
+  foreach my $leaf (@{$nc_tree->get_all_leaves}) {
     unless($leaf->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
       $self->throw("TreeBestMMerge tree does not have all leaves as AlignedMember\n");
     }
@@ -439,21 +399,21 @@ sub store_nctree
 {
   my $self = shift;
 
-  return unless($self->{'nc_tree'});
+  my $nc_tree = $self->param('nc_tree') or return;
 
   printf("NCTreeBestMMerge::store_nctree\n") if($self->debug);
   my $treeDBA = $self->compara_dba->get_NCTreeAdaptor;
-  $treeDBA->sync_tree_leftright_index($self->{'nc_tree'});
-  $self->{'nc_tree'}->clusterset_id($self->{clusterset_id});
-  $treeDBA->store($self->{'nc_tree'});
-  $treeDBA->delete_nodes_not_in_tree($self->{'nc_tree'});
+  $treeDBA->sync_tree_leftright_index($nc_tree);
+  $nc_tree->clusterset_id($self->param('clusterset_id'));
+  $treeDBA->store($nc_tree);
+  $treeDBA->delete_nodes_not_in_tree($nc_tree);
 
   if($self->debug >1) {
     print("done storing - now print\n");
-    $self->{'nc_tree'}->print_tree;
+    $nc_tree->print_tree;
   }
 
-  $self->store_tags($self->{'nc_tree'});
+  $self->store_tags($nc_tree);
 
   $self->_store_tree_tags;
 
@@ -560,14 +520,13 @@ sub store_tags
 sub dumpTreeMultipleAlignmentToWorkdir
 {
   my $self = shift;
-  my $tree = shift;
+  my $nc_tree = shift;
 
-  $self->{'file_root'} = 
-    $self->worker_temp_directory. "nctree_". $tree->node_id;
+  $self->param('file_root', $self->worker_temp_directory. "nctree_". $nc_tree->node_id);
 
-  my $aln_file = $self->{'file_root'} . ".aln";
+  my $aln_file = $self->param('file_root') . ".aln";
   return $aln_file if(-e $aln_file);
-  my $leafcount = scalar(@{$tree->get_all_leaves});
+  my $leafcount = scalar(@{$nc_tree->get_all_leaves});
   if($self->debug) {
     printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
     print("aln_file = '$aln_file'\n");
@@ -578,10 +537,9 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
-  my %sa_params = ($self->{use_genomedb_id}) ?	('-APPEND_GENOMEDB_ID', 1) :
-    ('-APPEND_TAXON_ID', 1);
+  my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
-  my $sa = $tree->get_SimpleAlign
+  my $sa = $nc_tree->get_SimpleAlign
     (
      -id_type => 'MEMBER',
      %sa_params,
@@ -597,49 +555,49 @@ sub dumpTreeMultipleAlignmentToWorkdir
 
   close OUTSEQ;
 
-  $self->{'input_aln'} = $aln_file;
+  $self->param('input_aln', $aln_file);
 
   return $aln_file;
 }
 
 sub _store_tree_tags {
     my $self = shift;
-    my $tree = $self->{'nc_tree'};
+    my $nc_tree = $self->param('nc_tree');
     my $pta = $self->compara_dba->get_NCTreeAdaptor;
 
     print "Storing Tree tags...\n";
-    $tree->_load_tags();
+    $nc_tree->_load_tags();
 
-    my @leaves = @{$tree->get_all_leaves};
-    my @nodes = @{$tree->get_all_nodes};
+    my @leaves = @{$nc_tree->get_all_leaves};
+    my @nodes = @{$nc_tree->get_all_nodes};
 
     # Node is a root node (full tree).
 #     my $node_is_root = 0;
 #     my @roots = @{$pta->fetch_all_roots()};
 #     foreach my $root (@roots) {
-# 	$node_is_root = 1 if ($root->node_id == $tree->parent->node_id);
+# 	$node_is_root = 1 if ($root->node_id == $nc_tree->parent->node_id);
 #     }
-#     $tree->store_tag("node_is_root",$node_is_root);
+#     $nc_tree->store_tag("node_is_root",$node_is_root);
 
     # Node is leaf node.
     my $node_is_leaf = 0;
-    $node_is_leaf = 1 if ($tree->is_leaf);
-    $tree->store_tag("node_is_leaf",$node_is_leaf);
+    $node_is_leaf = 1 if ($nc_tree->is_leaf);
+    $nc_tree->store_tag("node_is_leaf",$node_is_leaf);
 
     # Tree number of leaves.
     my $tree_num_leaves = scalar(@leaves);
-    $tree->store_tag("tree_num_leaves",$tree_num_leaves);
+    $nc_tree->store_tag("tree_num_leaves",$tree_num_leaves);
 
     # Tree number of human peptides contained.
     my $num_hum_peps = 0;
     foreach my $leaf (@leaves) {
 	$num_hum_peps++ if ($leaf->taxon_id == 9606);
     }
-    $tree->store_tag("tree_num_human_genes",$num_hum_peps);
+    $nc_tree->store_tag("tree_num_human_genes",$num_hum_peps);
 
     # Tree max root-to-tip distance.
-    my $tree_max_length = $tree->max_distance;
-    $tree->store_tag("tree_max_length",$tree_max_length);
+    my $tree_max_length = $nc_tree->max_distance;
+    $nc_tree->store_tag("tree_max_length",$tree_max_length);
 
     # Tree max single branch length.
     my $tree_max_branch = 0;
@@ -647,13 +605,13 @@ sub _store_tree_tags {
 	my $dist = $node->distance_to_parent;
 	$tree_max_branch = $dist if ($dist > $tree_max_branch);
     }
-    $tree->store_tag("tree_max_branch",$tree_max_branch);
+    $nc_tree->store_tag("tree_max_branch",$tree_max_branch);
 
     # Tree number of duplications and speciations.
-    my $tree_num_leaves = scalar(@{$tree->get_all_leaves});
+    my $tree_num_leaves = scalar(@{$nc_tree->get_all_leaves});
     my $num_dups = 0;
     my $num_specs = 0;
-    foreach my $node (@{$tree->get_all_nodes}) {
+    foreach my $node (@{$nc_tree->get_all_nodes}) {
 	my $dup = $node->get_tagvalue("Duplication");
 	if ($dup ne '' && $dup > 0) {
 	    $num_dups++;
@@ -661,8 +619,8 @@ sub _store_tree_tags {
 	    $num_specs++;
 	}
     }
-    $tree->store_tag("tree_num_dup_nodes",$num_dups);
-    $tree->store_tag("tree_num_spec_nodes",$num_specs);
+    $nc_tree->store_tag("tree_num_dup_nodes",$num_dups);
+    $nc_tree->store_tag("tree_num_spec_nodes",$num_specs);
 
     print "Done storing stuff!\n" if ($self->debug);
 }

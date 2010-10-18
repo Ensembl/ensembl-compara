@@ -27,11 +27,8 @@ $g_load_members->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+A job factory that first iterates through all top-level slices of the corresponding core database and collects ncRNA gene stable_ids,
+then creates downstream jobs that will be loading individual ncRNA members.
 
 =cut
 
@@ -51,164 +48,108 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::GenomePrepareNCMembers;
 
 use strict;
-
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Utils::Exception;
-
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Member;
+use Bio::EnsEMBL::Slice;
+use Bio::EnsEMBL::Gene;
 use Bio::EnsEMBL::Compara::Subset;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 =head2 fetch_input
 
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   prepares global variables and DB connections
-    Returns :   none
-    Args    :   none
+    Read the parameters and set up all necessary objects.
 
 =cut
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
-  print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+    $self->input_job->transient_error(0);
+    my $genome_db_id = $self->param('gdb') || die "'gdb' parameter is an obligatory one, please specify";
+    $self->input_job->transient_error(1);
 
-  my $input_hash = eval($self->input_id);
-  my $genome_db_id = $input_hash->{'gdb'};
-
-  print("gdb = $genome_db_id\n");
-  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
-  if($input_hash->{'pseudo_stableID_prefix'}) {
-    $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
-  }
-
-  my $p = eval($self->analysis->parameters);
-  $self->{p} = $p;
-
-  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor();
-
-  #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+        # fetch the Compara::GenomeDB object for the genome_db_id
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with id=$genome_db_id";
+    $self->param('genome_db', $genome_db);
   
-  
-  #using genome_db_id, connect to external core database
-  $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();  
-  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
-  
-  #global boolean control value (whether the genes are also stored as members)
-  $self->{'store_genes'} = 1;
+        # using genome_db_id connect to external core database
+    my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
+    $self->param('core_db', $core_db);
 
-  $self->{'verbose'} = 0;
 
-  #variables for tracking success of process  
-  $self->{'sliceCount'}       = 0;
-  $self->{'geneCount'}        = 0;
-  $self->{'realGeneCount'}    = 0;
-  $self->{'transcriptCount'}  = 0;
-  $self->{'longestCount'}     = 0;
+        # create subsets for the gene members, and the longest peptide members
+    my $subset_adaptor = $self->compara_dba->get_SubsetAdaptor;
 
-  return 1;
+# FIXME: change the fan dataflow branch to 2, allowing branch 1 to output something too
+    my $genome_db_name = $genome_db->name;
+    my $ncrna_subset = Bio::EnsEMBL::Compara::Subset->new( -name=>"gdb:${genome_db_id} ${genome_db_name} longest ncRNAs" );
+    my $gene_subset  = Bio::EnsEMBL::Compara::Subset->new( -name=>"gdb:${genome_db_id} ${genome_db_name} ncRNA genes" );
+
+    my $ncrna_subset_id = $subset_adaptor->store($ncrna_subset) or die "Could not store ncRNA subset";
+    my $gene_subset_id  = $subset_adaptor->store($gene_subset)  or die "Could not store gene subset";
+
+    $self->param('ncrna_subset_id', $ncrna_subset_id);
+    $self->param('gene_subset_id',  $gene_subset_id);
 }
 
 
-sub run
-{
-  my $self = shift;
+=head2 run
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-  $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);
+    Iterate through all top-level slices of the corresponding core database and collect ncRNA gene stable_ids
 
-  # main routine which takes a genome_db_id (from input_id) and
-  # access the ensembl_core database, useing the SliceAdaptor
-  # it will load all slices, all genes, and all transcripts
-  # and convert them into members to be stored into compara
-  $self->prepareMembersFromCoreSlices();
+=cut
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
+sub run {
+    my $self = shift @_;
 
-  return 1;
-}
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    $self->param('core_db')->dbc->disconnect_when_inactive(0);
 
-sub write_output 
-{
-  my $self = shift;
+    my @stable_ids = ();
 
-  return 1;
-}
+        # from core database, get all slices, and then all genes in slice
+        # and then all transcripts in gene to store as members in compara
+    my @slices = @{$self->param('core_db')->get_SliceAdaptor->fetch_all('toplevel')};
+    print("fetched ",scalar(@slices), " slices to load from\n");
+    die "No toplevel slices, cannot fetch anything" unless(scalar(@slices));
 
-
-######################################
-#
-# subroutines
-#
-#####################################
-
-
-sub prepareMembersFromCoreSlices
-{
-  my $self = shift;
-
-  #create subsets for the gene members, and the longest peptide members
-  $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' longest translations');
-  $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' genes');
-
-  $self->compara_dba->get_SubsetAdaptor->store($self->{'pepSubset'});
-  $self->compara_dba->get_SubsetAdaptor->store($self->{'geneSubset'});
-
-  #from core database, get all slices, and then all genes in slice
-  #and then all transcripts in gene to store as members in compara
-  my @slices = @{$self->{'coreDBA'}->get_SliceAdaptor->fetch_all('toplevel')};
-  print("fetched ",scalar(@slices), " slices to load from\n");
-  $self->throw("problem: no toplevel slices") unless(scalar(@slices));
-
-  # Make sure we only flow the jobs for each gene that is found, and
-  # not a useless autoflow when non genes are found.
-  $self->input_job->autoflow(0);
-
-  SLICE: foreach my $slice (@slices) {
-    $self->{'sliceCount'}++;
-    #print("slice " . $slice->name . "\n");
-    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
-      $self->{'geneCount'}++;
-
-      # LV and C are for the Ig/TcR family, which rearranges
-      # somatically so is considered as a different biotype in EnsEMBL
-      # D and J are very short or have no translation at all
-      if ($self->{p}{type} =~ /ncrna/i) {
-        if ($gene->biotype =~ /rna/i) {
-        # if ($gene->analysis->logic_name eq 'ncRNA') {
-          $self->{'realGeneCount'}++;
-          my $output_id = $self->input_id;
-          my $gene_stable_id = $gene->stable_id;
-          $output_id =~ s/\}/'stable_id'=>'$gene_stable_id'\}/;
-          $self->dataflow_output_id($output_id, 1);
-          print STDERR $self->{'realGeneCount'} , " ncRNA genes sent to store analysis\n" if ($self->debug && (0 == ($self->{'realGeneCount'} % 10)));
+    foreach my $slice (@slices) {
+        foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
+            if ($gene->biotype =~ /rna/i) {
+                my $gene_stable_id = $gene->stable_id or die "Could not get stable_id from gene with id=".$gene->dbID();
+                push @stable_ids, $gene_stable_id;
+            }
         }
-      }
-      # if($self->{'transcriptCount'} >= 100) { last SLICE; }
-      # if($self->{'geneCount'} >= 1000) { last SLICE; }
     }
-    # last SLICE;
-  }
 
-  print("loaded ".$self->{'sliceCount'}." slices\n");
-  print("       ".$self->{'geneCount'}." genes\n");
-  print("       ".$self->{'realGeneCount'}." real genes\n");
-  print("       ".$self->{'transcriptCount'}." transcripts\n");
-  print("       ".$self->{'longestCount'}." longest transcripts\n");
-  print("       ".$self->{'pepSubset'}->count()." in Subset\n");
+    $self->param('stable_ids', \@stable_ids);
+
+    $self->param('core_db')->dbc->disconnect_when_inactive(1);
+}
+
+
+=head2 write_output
+
+    Create downstream jobs that will be loading individual ncRNA members
+
+=cut
+
+sub write_output {
+    my $self = shift @_;
+
+    my $genome_db_id    = $self->param('gdb');
+    my $ncrna_subset_id = $self->param('ncrna_subset_id');
+    my $gene_subset_id  = $self->param('gene_subset_id');
+
+    foreach my $stable_id (@{ $self->param('stable_ids') }) {
+        $self->dataflow_output_id( {
+            'gdb'             => $genome_db_id,
+            'ncrna_subset_id' => $ncrna_subset_id,
+            'gene_subset_id'  => $gene_subset_id,
+            'stable_id'       => $stable_id,
+        }, 1);
+    }
 }
 
 1;
+

@@ -56,10 +56,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::NCGenomicAlignment;
 
 use strict;
-use Getopt::Long;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use POSIX qw(ceil floor);
-
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
@@ -82,64 +78,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
-
-  $self->{'ncgenomicalignment_starttime'} = time()*1000;
-  $self->{'method'} = 'NCGenomicAlignment';
-
-  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
-  $self->{treeDBA} = $self->compara_dba->get_NCTreeAdaptor;
-
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
-  # Fetch sequences
-  $self->{'input_fasta'} = $self->dump_sequences_to_workdir($self->{'nc_tree'});
-
-# For long parameters, look at analysis_data
-  if($self->{analysis_data_id}) {
-    my $analysis_data_id = $self->{analysis_data_id};
-    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-    $self->get_params($analysis_data_params);
-  }
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return if ($param_string eq "1");
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
-  }
-
-  print("parameters...\n");
-  if (defined $params->{'max_gene_count'}) {
-    $self->{'max_gene_count'} = $params->{'max_gene_count'};
-    printf("  max_gene_count : %d\n", $self->{'max_gene_count'});
-  }
-  if(defined($params->{'nc_tree_id'})) {
-    $self->{'nc_tree'} = 
-         $self->compara_dba->get_NCTreeAdaptor->
-         fetch_node_by_node_id($params->{'nc_tree_id'});
-    printf("  nc_tree_id : %d\n", $self->{'nc_tree_id'});
-  }
-  if(defined($params->{'clusterset_id'})) {
-    $self->{'clusterset_id'} = $params->{'clusterset_id'};
-    printf("  clusterset_id : %d\n", $self->{'clusterset_id'});
-  }
-
-  return;
+      # Fetch sequences:
+  $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('nc_tree_id')) );
+  $self->param('input_fasta', $self->dump_sequences_to_workdir($self->param('nc_tree')) );
 }
 
 
@@ -156,7 +97,7 @@ sub get_params {
 sub run {
   my $self = shift;
 
-  return if (defined($self->{single_peptide_tree}));
+  return if ($self->param('single_peptide_tree'));
   $self->run_ncgenomicalignment;
   $self->run_ncgenomic_tree('phyml');
   $self->run_ncgenomic_tree('nj'); # Useful for 3-membered trees
@@ -198,13 +139,13 @@ sub dump_sequences_to_workdir {
   my $residues = 0;
   print "fetching sequences...\n" if ($self->debug);
   my $member_list = $cluster->get_all_leaves;
-  $self->{'tag_gene_count'} = scalar(@{$member_list});
+  $self->param('tag_gene_count', scalar(@{$member_list}) );
 
   open(OUTSEQ, ">$fastafile")
     or $self->throw("Error opening $fastafile for write!");
   my $count = 0;
   if (2 > scalar @{$member_list}) {
-    $self->{single_peptide_tree} = 1;
+    $self->param('single_peptide_tree', 1);
     return 1;
   }
   foreach my $member (@{$member_list}) {
@@ -231,10 +172,10 @@ sub dump_sequences_to_workdir {
 
   if(scalar (@{$member_list}) <= 1) {
     $self->update_single_peptide_tree($cluster);
-    $self->{single_peptide_tree} = 1;
+    $self->param('single_peptide_tree', 1);
   }
 
-  $self->{'tag_residue_count'} = $residues;
+  $self->param('tag_residue_count', $residues);
 
   return $fastafile;
 }
@@ -257,16 +198,12 @@ sub update_single_peptide_tree
 sub run_ncgenomicalignment {
   my $self = shift;
 
-  return if (1 == $self->{single_peptide_tree});
-  my $input_fasta = $self->{'input_fasta'};
+  return if ($self->param('single_peptide_tree'));
+  my $input_fasta = $self->param('input_fasta');
 
   my $mfa_output = $self->worker_temp_directory . "output.mfa";
 
-  my $ncgenomicalignment_executable = $self->analysis->program_file;
-    unless (-e $ncgenomicalignment_executable) {
-      print "Using default cmalign executable!\n";
-      $ncgenomicalignment_executable = "/software/ensembl/compara/prank/090707/src/prank";
-  }
+  my $ncgenomicalignment_executable = $self->analysis->program_file || "/software/ensembl/compara/prank/090707/src/prank";
   $self->throw("can't find a prank executable to run\n") unless(-e $ncgenomicalignment_executable);
 
   my $cmd = $ncgenomicalignment_executable;
@@ -274,7 +211,7 @@ sub run_ncgenomicalignment {
 
   $cmd .= " -quiet " unless ($self->debug);
   $cmd .= " -noxml -notree -f=Fasta -o=" . $mfa_output;
-  $cmd .= " -d=" . $self->{input_fasta};
+  $cmd .= " -d=" . $input_fasta;
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
@@ -286,15 +223,13 @@ sub run_ncgenomicalignment {
   # Prank renames the output by adding ".2.fas"
   my $fasta_output = $mfa_output . ".2.fas";
 
-  $self->{ncgenomicalignment_output} = $fasta_output;
-
-  return 0;
+  $self->param('ncgenomicalignment_output', $fasta_output);
 }
 
 sub run_ncgenomic_tree {
   my $self = shift;
   my $method = shift;
-  my $input_aln = $self->{ncgenomicalignment_output};
+  my $input_aln = $self->param('ncgenomicalignment_output');
 
   my $njtree_phyml_executable = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest";
 
@@ -313,22 +248,22 @@ sub run_ncgenomic_tree {
   };
 
   $self->throw("can't find species_tree\n") if ($@);
-  $self->{species_tree_string} = $species_tree_string->{value};
+  $self->param('species_tree_string', $species_tree_string->{value});
   my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
   open SPECIESTREE, ">$spfilename" or die "$!";
-  print SPECIESTREE $self->{species_tree_string};
+  print SPECIESTREE $self->param('species_tree_string');
   close SPECIESTREE;
-  $self->{'species_tree_file'} = $spfilename;
+  $self->param('species_tree_file', $spfilename);
 
-  $self->{'newick_file'} = $input_aln . ".treebest.$method.nh";
+  $self->param('newick_file',  $input_aln . ".treebest.$method.nh");
 
   my $cmd = $njtree_phyml_executable;
   $cmd .= " $method ";
   $cmd .= " -Snf " if ($method eq 'phyml');
   $cmd .= " -s "   if ($method eq 'nj');
-  $cmd .= $self->{'species_tree_file'};
+  $cmd .= $self->param('species_tree_file');
   $cmd .= " ". $input_aln;
-  $cmd .= " > " . $self->{'newick_file'};
+  $cmd .= " > " . $self->param('newick_file');
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);
   my $worker_temp_directory = $self->worker_temp_directory;
@@ -341,14 +276,13 @@ sub run_ncgenomic_tree {
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   $self->store_newick_into_protein_tree_tag_string($method);
-  return;
 }
 
 sub store_newick_into_protein_tree_tag_string {
   my $self = shift;
 
   my $method = shift;
-  my $newick_file =  $self->{'newick_file'};
+  my $newick_file =  $self->param('newick_file');
   my $newick = '';
   print("load from file $newick_file\n") if($self->debug);
   open (FH, $newick_file) or $self->throw("Couldnt open newick file [$newick_file]");
@@ -360,7 +294,7 @@ sub store_newick_into_protein_tree_tag_string {
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
   return if ($newick eq '_null_;');
   my $tag = "pg_IT_" . $method;
-  $self->{'nc_tree'}->store_tag($tag, $newick);
+  $self->param('nc_tree')->store_tag($tag, $newick);
 }
 
 1;

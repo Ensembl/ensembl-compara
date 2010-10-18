@@ -57,7 +57,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree;
 
 use strict;
-use Getopt::Long;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -90,37 +89,24 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  $self->{'tree_scale'} = 1;
-  $self->{'store_homologies'} = 1;
-  $self->{'max_gene_count'} = 999999;
-  $self->{all_between} = 0;
-  $self->{no_between} = 0.25;
+  $self->param('tree_scale', 1);
+  $self->param('store_homologies', 1);
+  $self->param('no_between', 0.25);
 
   $self->throw("No input_id") unless defined($self->input_id);
-
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
-  if($self->{analysis_data_id}) {
-    my $analysis_data_id = $self->{analysis_data_id};
-    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-    $self->get_params($analysis_data_params);
-  }
 
   $self->print_params if($self->debug);
 
   my $starttime = time();
-  $self->{'treeDBA'} = $self->compara_dba->get_NCTreeAdaptor;
-  $self->{homologyDBA} = $self->compara_dba->get_HomologyAdaptor;
-  $self->{'nc_tree'} =  $self->{'treeDBA'}->
-         fetch_tree_at_node_id($self->{'nc_tree_id'});
-  $self->check_job_fail_options;
+  $self->param('treeDBA', $self->compara_dba->get_NCTreeAdaptor);
+  $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
+  $self->param('nc_tree',  $self->param('treeDBA')->fetch_tree_at_node_id($self->param('nc_tree_id')) );
 
   if($self->debug) {
-    $self->{'nc_tree'}->print_tree($self->{'tree_scale'});
+    $self->param('nc_tree')->print_tree($self->param('tree_scale'));
     printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
   }
-  unless($self->{'nc_tree'}) {
+  unless($self->param('nc_tree')) {
     $self->throw("undefined NCTree as input\n");
   }
   $self->delete_old_homologies;
@@ -167,48 +153,18 @@ sub write_output {
 }
 
 
-sub check_job_fail_options
-{
-  my $self = shift;
-
-#   if ( $self->{'nc_tree'}->get_tagvalue('gene_count') > $self->{'max_gene_count'} ) {
-#     $self->dataflow_output_id($self->input_id, 2);
-#     $self->input_job->update_status('FAILED');
-#     $self->{'nc_tree'}->release_tree;
-#     $self->{'nc_tree'} = undef;
-#     $self->throw("NCOrthoTree : cluster size over threshold and FAIL it");
-#   }
-
-  if($self->input_job->retry_count >= 2) {
-    # Send to QuickTreeBreak
-    $self->dataflow_output_id($self->input_id, 2);
-
-    $self->DESTROY;
-    $self->input_job->transient_error(0);
-    $self->throw("NCOrthoTree job failed >=3 times: try something else and FAIL it");
-  }
-
-#   if ($self->input_job->retry_count >= 1) {
-#     if ($self->{'nc_tree'}->get_tagvalue('gene_count') > 400 && !defined($self->worker->{HIGHMEM})) {
-#       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-#       $self->DESTROY;
-#       $self->throw("NCOrthoTree job too big: try something else and FAIL it");
-#     }
-#   }
-}
-
 sub DESTROY {
   my $self = shift;
 
-  if($self->{'nc_tree'}) {
+  if($self->param('nc_tree')) {
     printf("NCOrthoTree::DESTROY  releasing nc_tree\n") if($self->debug);
-    $self->{'nc_tree'}->release_tree;
-    $self->{'nc_tree'} = undef;
+    $self->param('nc_tree')->release_tree;
+    $self->param('nc_tree', undef);
   }
-  if($self->{'taxon_tree'}) {
+  if($self->param('taxon_tree')) {
     printf("NCOrthoTree::DESTROY  releasing taxon_tree\n") if($self->debug);
-    $self->{'taxon_tree'}->release_tree;
-    $self->{'taxon_tree'} = undef;
+    $self->param('taxon_tree')->release_tree;
+    $self->param('taxon_tree', undef);
   }
 
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
@@ -221,36 +177,12 @@ sub DESTROY {
 #
 ##########################################
 
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[cdna species_tree_file nc_tree_id use_genomedb_id max_gene_count analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  return;
-}
-
 
 sub print_params {
   my $self = shift;
 
   print("params:\n");
-  printf("  tree_id   : %d\n", $self->{'nc_tree_id'});
+  printf("  tree_id   : %d\n", $self->param('nc_tree_id'));
 }
 
 
@@ -259,7 +191,7 @@ sub run_analysis {
 
   my $starttime = time()*1000;
   my $tmp_time = time();
-  my $tree = $self->{'nc_tree'};
+  my $tree = $self->param('nc_tree');
 
   print "Getting all leaves\n";
   my @all_nc_leaves = @{$tree->get_all_leaves};
@@ -271,7 +203,7 @@ sub run_analysis {
   $self->get_ancestor_species_hash($tree);
 
   if($self->debug) {
-    $self->{'nc_tree'}->print_tree($self->{'tree_scale'});
+    $self->param('nc_tree')->print_tree($self->param('tree_scale'));
     printf("%d ncs in tree\n", scalar(@all_nc_leaves));
   }
 
@@ -289,7 +221,7 @@ sub run_analysis {
     foreach my $nc2 (@all_nc_leaves) {
       my $ancestor = $nc1->find_first_shared_ancestor($nc2);
       # Line below will is a speed-up of the find_first_shared_ancestor, but relies on root_id/clusterset_id schema
-      # my $ancestor = $self->{'treeDBA'}->fetch_first_shared_ancestor_indexed($nc1,$nc2);
+      # my $ancestor = $self->param('treeDBA')->fetch_first_shared_ancestor_indexed($nc1,$nc2);
       my $taxon_level = $self->get_ancestor_taxon_level($ancestor);
       my $distance = $nc1->distance_to_ancestor($ancestor) +
                      $nc2->distance_to_ancestor($ancestor);
@@ -308,7 +240,7 @@ sub run_analysis {
   printf("%1.3f secs build links and features\n", time()-$tmp_time) 
     if($self->debug>1);
 
-  $self->{'nc_tree'}->print_tree($self->{'tree_scale'}) 
+  $self->param('nc_tree')->print_tree($self->param('tree_scale')) 
     if($self->debug);
 
   #sort the gene/gene links by distance
@@ -323,8 +255,8 @@ sub run_analysis {
   printf("analyze links\n") if($self->debug);
   printf("%d links\n", scalar(@genepairlinks)) if ($self->debug);
   $tmp_time = time();
-  $self->{'old_homology_count'} = 0;
-  $self->{'ncorthotree_homology_counts'} = {};
+  $self->param('old_homology_count', 0);
+  $self->param('ncorthotree_homology_counts', {});
   foreach my $genepairlink (@sorted_genepairlinks) {
     $self->analyze_genepairlink($genepairlink);
   }
@@ -333,21 +265,18 @@ sub run_analysis {
   
   #display summary stats of analysis 
   my $runtime = time()*1000-$starttime;  
-  $self->{'nc_tree'}->store_tag('NCOrthoTree_runtime_msec', $runtime) 
-    unless ($self->{'_readonly'});
+  $self->param('nc_tree')->store_tag('NCOrthoTree_runtime_msec', $runtime) 
+    unless ($self->param('_readonly'));
   if($self->debug) {
     printf("%d ncs in tree\n", scalar(@{$tree->get_all_leaves}));
     printf("%d pairings\n", scalar(@genepairlinks));
-    printf("%d old homologies\n", $self->{'old_homology_count'});
+    printf("%d old homologies\n", $self->param('old_homology_count'));
     printf("ncorthotree homologies\n");
-    foreach my $type (keys(%{$self->{'ncorthotree_homology_counts'}})) {
-      printf
-        (
-         "  %13s : %d\n", $type, $self->{'ncorthotree_homology_counts'}->{$type}
-        );
+    foreach my $type (keys(%{$self->param('ncorthotree_homology_counts')})) {
+      printf ( "  %13s : %d\n", $type, $self->param('ncorthotree_homology_counts')->{$type});
     }
   }
-  $self->{'homology_links'} = \@sorted_genepairlinks;
+  $self->param('homology_links', \@sorted_genepairlinks);
 
   return undef;
 }
@@ -379,15 +308,15 @@ sub analyze_genepairlink
       );
   }
 
-  $self->{'old_homology_count'}++ 
+  $self->param('old_homology_count', $self->param('old_homology_count')+1 )
     if($genepairlink->get_tagvalue('old_homology'));
 
   my $type = $genepairlink->get_tagvalue('ncorthotree_type');
   if($type) {
-    if(!defined($self->{'ncorthotree_homology_counts'}->{$type})) {
-      $self->{'ncorthotree_homology_counts'}->{$type} = 1;
+    if(!defined($self->param('ncorthotree_homology_counts')->{$type})) {
+      $self->param('ncorthotree_homology_counts')->{$type} = 1;
     } else {
-      $self->{'ncorthotree_homology_counts'}->{$type}++;
+      $self->param('ncorthotree_homology_counts')->{$type}++;
     }
   }
 
@@ -467,23 +396,23 @@ sub load_species_tree {
     my @leaves = @{$eval_species_tree->get_all_leaves};
   };
   if($@) {
-    unless(-e $self->{'species_tree_file'}) {
+    unless(-e $self->param('species_tree_file')) {
       $self->throw("can't find species_tree\n");
     }
   } else {
-    $self->{species_tree_string} = $species_tree_string->{value};
+    $self->param('species_tree_string', $species_tree_string->{value});
     my $spfilename = $self->worker_temp_directory . "spec_tax.nh";
     open SPECIESTREE, ">$spfilename" or die "$!";
-    print SPECIESTREE $self->{species_tree_string};
+    print SPECIESTREE $self->param('species_tree_string');
     close SPECIESTREE;
-    $self->{'species_tree_file'} = $spfilename;
+    $self->param('species_tree_file', $spfilename);
   }
 
-  my $tree = (exists $self->{'species_tree_file'})
+  my $tree = $self->param('species_tree_file')
     ? $self->load_species_tree_from_file
       : $self->load_species_tree_from_tax
 	;
-  $self->{'taxon_tree'} = $tree;
+  $self->param('taxon_tree', $tree);
 
   if($self->debug) {
     $tree->print_tree(1);
@@ -519,7 +448,7 @@ sub load_species_tree_from_file {
 
   my $taxonDBA = $self->compara_dba->get_NCBITaxonAdaptor;
   print "load_species_tree_from_file\n" if $self->debug;
-  my $newick = $self->_slurp($self->{species_tree_file});
+  my $newick = $self->_slurp($self->param('species_tree_file'));
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   foreach my $node (@{$tree->all_nodes_in_graph}) {
     my ($id) = split('-',$node->name);
@@ -588,7 +517,7 @@ sub get_ancestor_species_hash
   #$node->print_tree(20);
   
   $node->add_tag("species_hash", $species_hash);
-  if($is_dup && !($self->{'_treefam'})) {
+  if($is_dup && !($self->param('_treefam'))) {
     my $original_duplication_value = $node->get_tagvalue("Duplication");
     $original_duplication_value = 0 
       unless (defined $original_duplication_value && $original_duplication_value ne '');
@@ -596,18 +525,18 @@ sub get_ancestor_species_hash
     if ($original_duplication_value == 0) {
       # RAP did not predict a duplication here
       $node->add_tag("duplication_hash", $duplication_hash);
-      $node->store_tag("Duplication", 1)  unless ($self->{'_readonly'});
+      $node->store_tag("Duplication", 1)  unless ($self->param('_readonly'));
       $node->store_tag("Duplication_alg", 'species_count') 
-        unless ($self->{'_readonly'});
+        unless ($self->param('_readonly'));
 
     } elsif ($original_duplication_value == 1) {
       my $dup_alg = $node->get_tagvalue("Duplication_alg");
       if (defined $dup_alg and $dup_alg ne 'species_count') {
         # RAP did predict a duplication here but not species_count
         $node->add_tag("duplication_hash", $duplication_hash);
-        $node->store_tag("Duplication", 2) unless ($self->{'_readonly'});
+        $node->store_tag("Duplication", 2) unless ($self->param('_readonly'));
         $node->store_tag("Duplication_alg", 'species_count') 
-          unless ($self->{'_readonly'});
+          unless ($self->param('_readonly'));
       }
     }
   }
@@ -624,7 +553,7 @@ sub get_ancestor_taxon_level
   return $taxon_level if($taxon_level);
 
   #printf("\ncalculate ancestor taxon level\n");
-  my $taxon_tree = $self->{'taxon_tree'};
+  my $taxon_tree = $self->param('taxon_tree');
   my $species_hash = $self->get_ancestor_species_hash($ancestor);
 
   foreach my $gdbID (keys(%$species_hash)) {
@@ -645,11 +574,11 @@ sub get_ancestor_taxon_level
   my $taxon_id = $taxon_level->get_tagvalue("taxon_id");
   $ancestor->add_tag("taxon_level", $taxon_level);
   $ancestor->store_tag("taxon_id", $taxon_id) 
-    unless ($self->{'_readonly'});
+    unless ($self->param('_readonly'));
   $ancestor->store_tag("taxon_name", $taxon_level->name) 
-    unless ($self->{'_readonly'});
+    unless ($self->param('_readonly'));
 
-  #$ancestor->print_tree($self->{'tree_scale'});
+  #$ancestor->print_tree($self->param('tree_scale'));
   #$taxon_level->print_tree(10);
 
   return $taxon_level;
@@ -683,7 +612,7 @@ sub duplication_confidence_score {
     (
      "duplication_confidence_score",
      $duplication_confidence_score
-    ) unless ($self->{'_readonly'});
+    ) unless ($self->param('_readonly'));
 }
 
 
@@ -724,9 +653,9 @@ sub delete_old_ncorthotree_tags
   my @node_ids;
 
 #   # Old method -- too slow
-#   my $left_index  = $self->{'nc_tree'}->left_index;
-#   my $right_index = $self->{'nc_tree'}->right_index;
-#   my $tree_root_node_id = $self->{'nc_tree'}->node_id;
+#   my $left_index  = $self->param('nc_tree')->left_index;
+#   my $right_index = $self->param('nc_tree')->right_index;
+#   my $tree_root_node_id = $self->param('nc_tree')->node_id;
 #   # Include the root_id as well as the rest of the nodes within the tree
 #   push @node_ids, $tree_root_node_id;
 #   my $sql = "select ptn.node_id from nc_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
@@ -737,7 +666,7 @@ sub delete_old_ncorthotree_tags
 #     push @node_ids, $node_id;
 #   }
 
-  foreach my $node ($self->{'nc_tree'}->get_all_subnodes) {
+  foreach my $node ($self->param('nc_tree')->get_all_subnodes) {
     push @node_ids, $node->node_id;
   }
 
@@ -774,14 +703,14 @@ sub delete_old_homologies
 
   # New method all in one go -- requires key on tree_node_id
   my $delete_time = time();
-  my $tree_node_id = $self->{nc_tree}->node_id;
+  my $tree_node_id = $self->param('nc_tree')->node_id;
   my $sql1 = "delete h.*, hm.* from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$tree_node_id";
   my $sth1 = $self->dbc->prepare($sql1);
   $sth1->execute;
   $sth1->finish;
   printf("%1.3f secs build links and features\n", time()-$delete_time);
 
-  $self->{old_homologies_deleted} = 1;
+  $self->param('old_homologies_deleted', 1);
   return undef;
 }
 
@@ -899,7 +828,7 @@ sub direct_ortholog_test
   return undef if($count2>1);
 
   #passed all the tests -> it's a simple ortholog
-#  $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#  $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
   $genepairlink->add_tag("ncorthotree_type", 'ortholog_one2one');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
@@ -929,7 +858,7 @@ sub inspecies_paralog_test
 
   #passed all the tests -> it's an inspecies_paralog
 #  $genepairlink->add_tag("ncorthotree_type", 'inspecies_paralog');
-#  $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#  $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
   $genepairlink->add_tag("ncorthotree_type", 'within_species_paralog');
   $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
   # Duplication_confidence_score
@@ -969,7 +898,7 @@ sub ancient_residual_test
   # print $ancestor->node_id, " ", $ancestor->name,"\n";
 
   # little hack to work around some weird treefam trees
-  if ($self->{'_treefam'}) {
+  if ($self->param('_treefam')) {
     my $dup_value = $ancestor->get_tagvalue("Duplication");
     if ($dup_value eq '') {
       $dup_value = 0;
@@ -980,7 +909,7 @@ sub ancient_residual_test
 #  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
   my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   if($ancestor->get_tagvalue("Duplication") > 0 && $sis_value ne '0') {
-#    $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#    $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
     $genepairlink->add_tag("ncorthotree_type", 'apparent_ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
@@ -990,7 +919,7 @@ sub ancient_residual_test
       $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
     }
   } else {
-#    $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#    $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
     $genepairlink->add_tag("ncorthotree_type", 'ortholog_one2one');
     my $taxon = $self->get_ancestor_taxon_level($ancestor);
     $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
@@ -1036,7 +965,7 @@ sub one2many_ortholog_test
   }
 
   #passed all the tests -> it's a one2many ortholog
-#  $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#  $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
   $genepairlink->add_tag("ncorthotree_type", 'ortholog_one2many');
   my $taxon = $self->get_ancestor_taxon_level($ancestor);
   $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
@@ -1065,7 +994,7 @@ sub outspecies_test
   my $sis_value = $ancestor->get_tagvalue("duplication_confidence_score");
   unless ($dup_value eq '') {
     if($dup_value > 0 && $sis_value ne '0') {
-#      $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#      $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
       $genepairlink->add_tag("ncorthotree_type", 'possible_ortholog');
       $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
       # Duplication_confidence_score
@@ -1074,7 +1003,7 @@ sub outspecies_test
        $genepairlink->{duplication_confidence_score} = $ancestor->get_tagvalue("duplication_confidence_score");
       }
     } else {
-#      $self->delete_old_homologies_old($genepairlink) unless ($self->{'_readonly'});
+#      $self->delete_old_homologies_old($genepairlink) unless ($self->param('_readonly'));
       $genepairlink->add_tag("ncorthotree_type", 'ortholog_many2many');
       $genepairlink->add_tag("ncorthotree_subtype", $taxon->name);
     }
@@ -1094,26 +1023,24 @@ sub store_homologies
   my $self = shift;
   my $a=1;
   my $hlinkscount = 0;
-  foreach my $genepairlink (@{$self->{'homology_links'}}) {
+  foreach my $genepairlink (@{$self->param('homology_links')}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
-#     unless (defined($self->{all_between})) {
     my $type = $genepairlink->get_tagvalue("ncorthotree_type");
     my $dcs = $genepairlink->{duplication_confidence_score};
 
-    next if ($type eq 'possible_ortholog' && $dcs > $self->{no_between});
-#     }
+    next if ($type eq 'possible_ortholog' && $dcs > $self->param('no_between'));
     $self->store_gene_link_as_homology($genepairlink);
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
 
-  my $counts_str = $self->encode_hash($self->{'ncorthotree_homology_counts'});
+  my $counts_str = $self->encode_hash($self->param('ncorthotree_homology_counts'));
   printf("$counts_str\n");
 
   $self->check_homology_consistency;
 
-  $self->{'nc_tree'}->store_tag(
+  $self->param('nc_tree')->store_tag(
       'NCOrthoTree_types_hashstr', 
-      $self->encode_hash($self->{'ncorthotree_homology_counts'})) unless ($self->{'_readonly'});
+      $self->encode_hash($self->param('ncorthotree_homology_counts'))) unless ($self->param('_readonly'));
 
   return undef;
 }
@@ -1145,7 +1072,7 @@ sub store_gene_link_as_homology
   } else {
     $mlss->species_set([$nc1->genome_db, $nc2->genome_db]);
   }
-  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->{'_readonly'});
+  $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss) unless ($self->param('_readonly'));
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
@@ -1158,7 +1085,13 @@ sub store_gene_link_as_homology
   $homology->method_link_species_set($mlss);
 
   my $key = $mlss->dbID . "_" . $nc1->dbID;
-  $self->{_homology_consistency}{$key}{$type} = 1;
+
+      # manual vivification needed:
+  unless($self->param('_homology_consistency')) {
+        $self->param('_homology_consistency', {});
+  }
+
+  $self->param('_homology_consistency')->{$key}{$type} = 1;
   #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
@@ -1192,16 +1125,16 @@ sub store_gene_link_as_homology
 
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
-  if ($self->input_job->retry_count > 0 && !defined($self->{old_homologies_deleted})) {
+  if ($self->input_job->retry_count > 0 && !defined($self->param('old_homologies_deleted'))) {
     my $member_id1 = $nc1->gene_member->member_id;
     my $member_id2 = $nc2->gene_member->member_id;
     if ($member_id1 == $member_id2) {
-      my $tree_id = $self->{nc_tree}->node_id;
+      my $tree_id = $self->param('nc_tree')->node_id;
       my $pmember_id1 = $nc1->member_id; my $pstable_id1 = $nc1->stable_id;
       my $pmember_id2 = $nc2->member_id; my $pstable_id2 = $nc2->stable_id;
       $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
-    my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
+    my $stored_homology = @{$self->param('homologyDBA')->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
     if (defined($stored_homology)) {
       $matching_homology = 1;
       $matching_homology = 0 if ($stored_homology->description ne $homology->description);
@@ -1225,8 +1158,8 @@ sub store_gene_link_as_homology
       $sth2->finish;
     }
   }
-  if($self->{'store_homologies'} && 0 == $matching_homology) {
-    $self->{'homologyDBA'}->store($homology);
+  if($self->param('store_homologies') && 0 == $matching_homology) {
+    $self->param('homologyDBA')->store($homology);
   }
 
   my $stable_id;
@@ -1251,10 +1184,10 @@ sub store_gene_link_as_homology
 sub check_homology_consistency {
   my $self = shift;
 
-  if ($self->{debug}) {
+  if ($self->debug) {
     print "checking homology consistency\n";
-    foreach my $mlss_member_id ( keys %{$self->{_homology_consistency}} ) {
-      my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
+    foreach my $mlss_member_id ( keys %{$self->param('_homology_consistency')} ) {
+      my $count = scalar(keys %{$self->param('_homology_consistency')->{$mlss_member_id}});
       if ($count > 1) {
         my ($mlss, $member_id) = split("_",$mlss_member_id);
         print "mlss member_id : $mlss $member_id\n";
@@ -1262,8 +1195,8 @@ sub check_homology_consistency {
     }
   }
 
-  foreach my $mlss_member_id ( keys %{$self->{_homology_consistency}} ) {
-    my $count = scalar(keys %{$self->{_homology_consistency}{$mlss_member_id}});
+  foreach my $mlss_member_id ( keys %{$self->param('_homology_consistency')} ) {
+    my $count = scalar(keys %{$self->param('_homology_consistency')->{$mlss_member_id}});
     if ($count > 1) {
       my ($mlss, $member_id) = split("_",$mlss_member_id);
       $self->throw("Inconsistent homologies in mlss $mlss and member_id $member_id");
@@ -1379,7 +1312,7 @@ sub generate_attribute_arguments {
 sub get_matrix_hash {
   my $self = shift;
 
-  return $self->{'matrix_hash'} if (defined $self->{'matrix_hash'});
+  return $self->param('matrix_hash') if (defined $self->param('matrix_hash'));
 
   my $BLOSUM62 = "#  Matrix made by matblas from blosum62.iij
 #  * column uses minimum score
@@ -1447,9 +1380,9 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
     }
   }
 
-  $self->{'matrix_hash'} = \%matrix_hash;
+  $self->param('matrix_hash', \%matrix_hash);
 
-  return $self->{'matrix_hash'};
+  return $self->param('matrix_hash');
 }
 
 1;

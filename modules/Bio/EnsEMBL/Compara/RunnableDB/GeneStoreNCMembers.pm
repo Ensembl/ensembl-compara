@@ -27,11 +27,7 @@ $g_load_members->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Pipeline::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Pipeline::DBSQL::Obj is
-required for databse access.
+Create members from a given ncRNA gene (both ncRNA members and gene member).
 
 =cut
 
@@ -51,19 +47,16 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers;
 
 use strict;
-
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Utils::Exception;
-
-use Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Member;
-use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Subset;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    return {
+        'store_genes'  => 1,    # whether genes are also stored as members
+    };
+}
 
 =head2 fetch_input
 
@@ -76,78 +69,58 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 =cut
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
-  print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
+    $self->input_job->transient_error(0);
+    my $genome_db_id = $self->param('gdb')    || die "'gdb' parameter is an obligatory one, please specify";
+    my $stable_id = $self->param('stable_id') || die "'stable_id' parameter is an obligatory one, please specify";
+    $self->input_job->transient_error(1);
 
-  my $input_hash = eval($self->input_id);
-  my $genome_db_id = $input_hash->{'gdb'};
-  $self->{'input_stable_id'} = $input_hash->{'stable_id'};
-
-  print("gdb = $genome_db_id\n");
-  $self->throw("No genome_db_id in input_id") unless defined($genome_db_id);
-  if($input_hash->{'pseudo_stableID_prefix'}) {
-    $self->{'pseudo_stableID_prefix'} = $input_hash->{'pseudo_stableID_prefix'};
-  }
-
-  my $p = eval($self->analysis->parameters);
-  $self->{p} = $p;
-
-  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor();
-
-  #get the Compara::GenomeDB object for the genome_db_id
-  $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+        # fetch the Compara::GenomeDB object for the genome_db_id
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with id=$genome_db_id";
+    $self->param('genome_db', $genome_db);
   
+        # using genome_db_id connect to external core database
+    my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
+    $self->param('core_db', $core_db);
   
-  #using genome_db_id, connect to external core database
-  $self->{'coreDBA'} = $self->{'genome_db'}->db_adaptor();  
-  $self->throw("Can't connect to genome database for id=$genome_db_id") unless($self->{'coreDBA'});
-  
-  #global boolean control value (whether the genes are also stored as members)
-  $self->{'store_genes'} = 1;
+        # connect to the subsets in order to start adding to them:
+    my $subset_adaptor = $self->compara_dba->get_SubsetAdaptor;
 
-  $self->{'verbose'} = 0;
+    my $ncrna_subset_id = $self->param('ncrna_subset_id');
+    my $gene_subset_id  = $self->param('gene_subset_id');
 
-  #variables for tracking success of process  
-  $self->{'sliceCount'}       = 0;
-  $self->{'geneCount'}        = 0;
-  $self->{'realGeneCount'}    = 0;
-  $self->{'transcriptCount'}  = 0;
-  $self->{'longestCount'}     = 0;
+    my $ncrna_subset = $subset_adaptor->fetch_by_dbID($ncrna_subset_id) or die "Could not fetch subset for id=$ncrna_subset_id";
+    my $gene_subset  = $subset_adaptor->fetch_by_dbID($gene_subset_id)  or die "Could not fetch subset for id=$gene_subset_id";
 
-  return 1;
+    $self->param('ncrna_subset', $ncrna_subset);
+    $self->param('gene_subset',  $gene_subset);
 }
 
 
-sub run
-{
-  my $self = shift;
+sub run {
+    my $self = shift @_;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-  $self->{'coreDBA'}->dbc->disconnect_when_inactive(0);
+    my $core_db     = $self->param('core_db');
+    my $stable_id   = $self->param('stable_id');
 
-  # main routine which takes a genome_db_id (from input_id) and
-  # access the ensembl_core database, useing the SliceAdaptor
-  # it will load all slices, all genes, and all transcripts
-  # and convert them into members to be stored into compara
-  $self->loadMembersFromCoreSlices();
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    $core_db->dbc->disconnect_when_inactive(0);
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  $self->{'coreDBA'}->dbc->disconnect_when_inactive(1);
+    my $gene_adaptor = $core_db->get_GeneAdaptor or die "Could not create the core GeneAdaptor";
 
-  return 1;
+    my $gene = $gene_adaptor->fetch_by_stable_id( $stable_id ) or die "Could not fetch gene with stable_id '$stable_id'";
+
+        # Store gene:
+    $self->store_ncrna_gene($gene);
+
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    $core_db->dbc->disconnect_when_inactive(1);
 }
 
-sub write_output 
-{
-  my $self = shift;
+sub write_output {
+    my $self = shift @_;
 
-  my $output_id = "{'gdb'=>" . $self->{'genome_db'}->dbID .
-                  ",'ss'=>" . $self->{'pepSubset'}->dbID . "}";
-  $self->input_job->input_id($output_id);
-  return 1;
 }
 
 
@@ -158,229 +131,80 @@ sub write_output
 #####################################
 
 
-sub loadMembersFromCoreSlices
-{
-  my $self = shift;
-
-  #create subsets for the gene members, and the longest peptide members
-  $self->{'pepSubset'}  = Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' longest translations');
-  $self->{'geneSubset'} = Bio::EnsEMBL::Compara::Subset->new(
-      -name=>"gdb:".$self->{'genome_db'}->dbID ." ". $self->{'genome_db'}->name . ' genes');
-
-  $self->compara_dba->get_SubsetAdaptor->store($self->{'pepSubset'});
-  $self->compara_dba->get_SubsetAdaptor->store($self->{'geneSubset'});
-
-  #from core database, get all slices, and then all genes in slice
-  #and then all transcripts in gene to store as members in compara
-
-  $self->{geneDBA} = $self->{'coreDBA'}->get_GeneAdaptor;
-  my $input_stable_id = $self->{input_stable_id};
-  my $gene = $self->{geneDBA}->fetch_by_stable_id($input_stable_id);
-  $self->throw("problem: no gene object for $input_stable_id") unless(defined($gene));
-
-  # Store gene
-  $self->store_ncrna_gene($gene);
-}
-
-
-sub store_gene_and_all_transcripts
-{
-  my $self = shift;
-  my $gene = shift;
-  
-  my @longestPeptideMember;
-  my $maxLength=0;
-  my $gene_member;
-  my $gene_member_not_stored = 1;
-
-  my $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor();
-
-  if(defined($self->{'pseudo_stableID_prefix'})) {
-    $gene->stable_id($self->{'pseudo_stableID_prefix'} ."G_". $gene->dbID);
-  }
-
-  foreach my $transcript (@{$gene->get_all_Transcripts}) {
-    unless (defined $transcript->translation) {
-      warn("COREDB error: No translation for transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-      next;
-    }
-#    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
-#    my $next = 0;
-#    try {
-#      $transcript->translate;
-#    } catch {
-#      warn("COREDB error: transcript does not translate", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-#      $next = 1;
-#    };
-#    next if ($next);
-    my $translation = $transcript->translation;
-
-    if(defined($self->{'pseudo_stableID_prefix'})) {
-      $transcript->stable_id($self->{'pseudo_stableID_prefix'} ."T_". $transcript->dbID);
-      $translation->stable_id($self->{'pseudo_stableID_prefix'} ."P_". $translation->dbID);
-    }
-
-    $self->{'transcriptCount'}++;
-    #print("gene " . $gene->stable_id . "\n");
-    print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
-
-    unless (defined $translation->stable_id) {
-      $self->throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
-      next;
-    }
-
-    my $description = $self->fasta_description($gene, $transcript);
-
-    my $pep_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
-         -transcript=>$transcript,
-         -genome_db=>$self->{'genome_db'},
-         -translate=>'yes',
-         -description=>$description);
-
-    print(" => member " . $pep_member->stable_id) if($self->{'verbose'});
-
-    unless($pep_member->sequence) {
-      print("  => NO SEQUENCE!\n") if($self->{'verbose'});
-      next;
-    }
-    print(" len=",$pep_member->seq_length ) if($self->{'verbose'});
-
-    # store gene_member here only if at least one peptide is to be loaded for
-    # the gene.
-    if($self->{'store_genes'} && $gene_member_not_stored) {
-      print("     gene       " . $gene->stable_id ) if($self->{'verbose'});
-      $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
-                                                                  -gene=>$gene,
-                                                                  -genome_db=>$self->{'genome_db'});
-      print(" => member " . $gene_member->stable_id) if($self->{'verbose'});
-
-      eval {
-        $self->{memberDBA}->store($gene_member);
-        print(" : stored") if($self->{'verbose'});
-      };
-
-      $self->{'geneSubset'}->add_member($gene_member);
-      print("\n") if($self->{'verbose'});
-      $gene_member_not_stored = 0;
-    }
-
-    $self->{memberDBA}->store($pep_member);
-    $self->{memberDBA}->store_gene_peptide_link($gene_member->dbID, $pep_member->dbID);
-    print(" : stored\n") if($self->{'verbose'});
-
-    if($pep_member->seq_length > $maxLength) {
-      $maxLength = $pep_member->seq_length;
-      @longestPeptideMember = ($transcript, $pep_member);
-    }
-
-  }
-
-  if(@longestPeptideMember) {
-    my ($transcript, $member) = @longestPeptideMember;
-    $self->{'pepSubset'}->add_member($member);
-    $self->{'longestCount'}++;
-    # print("     LONGEST " . $transcript->stable_id . "\n");
-  }
-}
-
-sub store_ncrna_gene
-{
+sub store_ncrna_gene {
   my $self = shift;
   my $gene = shift;
 
-  my @longestncRNAMember;
-  my $maxLength=0;
+  my $longest_ncrna_member;
+  my $max_ncrna_length = 0;
   my $gene_member;
   my $gene_member_not_stored = 1;
 
+    my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
 
-  if(defined($self->{'pseudo_stableID_prefix'})) {
-    $gene->stable_id($self->{'pseudo_stableID_prefix'} ."G_". $gene->dbID);
-  }
+    my $pseudo_stableID_prefix = $self->param('pseudo_stableID_prefix');
+
+    if($pseudo_stableID_prefix) {
+        $gene->stable_id($pseudo_stableID_prefix ."G_". $gene->dbID);
+    }
 
   foreach my $transcript (@{$gene->get_all_Transcripts}) {
     if (defined $transcript->translation) {
       warn("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
       next;
     }
-#    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
-#    my $next = 0;
-#    try {
-#      $transcript->translate;
-#    } catch {
-#      warn("COREDB error: transcript does not translate", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-#      $next = 1;
-#    };
-#    next if ($next);
-    # my $translation = $transcript->translation;
 
-    if(defined($self->{'pseudo_stableID_prefix'})) {
-      $transcript->stable_id($self->{'pseudo_stableID_prefix'} ."T_". $transcript->dbID);
-      # $translation->stable_id($self->{'pseudo_stableID_prefix'} ."P_". $translation->dbID);
+    if($pseudo_stableID_prefix) {
+        $transcript->stable_id($pseudo_stableID_prefix ."T_". $transcript->dbID);
     }
 
-    $self->{'transcriptCount'}++;
     #print("gene " . $gene->stable_id . "\n");
-    print("     transcript " . $transcript->stable_id ) if($self->{'verbose'});
-
-#     unless (defined $translation->stable_id) {
-#       $self->throw("COREDB error: does not contain translation stable id for translation_id ". $translation->dbID."\n");
-#       next;
-#     }
-
-    my $description = $self->fasta_description($gene, $transcript);
+    print("     transcript " . $transcript->stable_id ) if($self->debug);
 
     my $ncrna_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
-         -transcript=>$transcript,
-         -genome_db=>$self->{'genome_db'},
-         -translate=>'ncrna',
-         -description=>$description);
+         -transcript  => $transcript,
+         -genome_db   => $self->param('genome_db'),
+         -translate   => 'ncrna',
+         -description => $self->fasta_description($gene, $transcript),
+   );
 
-    print(" => member " . $ncrna_member->stable_id) if($self->{'verbose'});
+    print(" => member " . $ncrna_member->stable_id) if($self->debug);
 
-#     unless($ncrna_member->sequence) {
-#       print("  => NO SEQUENCE!\n") if($self->{'verbose'});
-#       next;
-#     }
-#     print(" len=",$ncrna_member->seq_length ) if($self->{'verbose'});
     my $transcript_spliced_seq = $transcript->spliced_seq;
 
     # store gene_member here only if at least one peptide is to be loaded for
     # the gene.
-    if($self->{'store_genes'} && $gene_member_not_stored) {
-      print("     gene       " . $gene->stable_id ) if($self->{'verbose'});
+    if($self->param('store_genes') and $gene_member_not_stored) {
+      print("     gene       " . $gene->stable_id ) if($self->debug);
       $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
-                                                                  -gene=>$gene,
-                                                                  -genome_db=>$self->{'genome_db'});
-      print(" => member " . $gene_member->stable_id) if($self->{'verbose'});
+          -gene      => $gene,
+          -genome_db => $self->param('genome_db'),
+      );
+      print(" => member " . $gene_member->stable_id) if($self->debug);
 
       eval {
-        $self->{memberDBA}->store($gene_member);
-        print(" : stored") if($self->{'verbose'});
+        $member_adaptor->store($gene_member);
+        print(" : stored") if($self->debug);
       };
 
-      $self->{'geneSubset'}->add_member($gene_member);
-      print("\n") if($self->{'verbose'});
+      $self->param('gene_subset')->add_member($gene_member);
+      print("\n") if($self->debug);
       $gene_member_not_stored = 0;
     }
 
-    $self->{memberDBA}->store($ncrna_member);
-    $self->{memberDBA}->store_gene_peptide_link($gene_member->dbID, $ncrna_member->dbID);
-    print(" : stored\n") if($self->{'verbose'});
+    $member_adaptor->store($ncrna_member);
+    $member_adaptor->store_gene_peptide_link($gene_member->dbID, $ncrna_member->dbID);
+    print(" : stored\n") if($self->debug);
 
-    if(length($transcript_spliced_seq) > $maxLength) {
-      $maxLength = length($transcript_spliced_seq);
-      @longestncRNAMember = ($transcript, $ncrna_member);
+    if(length($transcript_spliced_seq) > $max_ncrna_length) {
+      $max_ncrna_length     = length($transcript_spliced_seq);
+      $longest_ncrna_member = $ncrna_member;
     }
 
   }
 
-  if(@longestncRNAMember) {
-    my ($transcript, $member) = @longestncRNAMember;
-    $self->{'pepSubset'}->add_member($member);
-    $self->{'longestCount'}++;
-    # print("     LONGEST " . $transcript->stable_id . "\n");
+  if($longest_ncrna_member) {
+    $self->param('ncrna_subset')->add_member( $longest_ncrna_member );
   }
 }
 

@@ -56,14 +56,20 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::RFAMLoadModels;
 
 use strict;
-use Getopt::Long;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use LWP::Simple;
 
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    return {
+        'type'  => 'infernal',
+    };
+}
+
 
 =head2 fetch_input
 
@@ -75,13 +81,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =cut
 
-
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{type} = 'infernal';
-
-  return 1;
 }
 
 
@@ -97,9 +99,9 @@ sub fetch_input {
 
 
 sub run {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->download_rfam_models;
+    $self->download_rfam_models;
 }
 
 
@@ -115,9 +117,9 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->store_hmmprofile;
+    $self->store_hmmprofile;
 }
 
 
@@ -151,7 +153,7 @@ sub download_rfam_models {
   }
   printf("time for RFAMLoadModels fetch : %1.3f secs\n" , time()-$starttime);
 
-  $self->{multicm_file} = $expanded_file;
+  $self->param('multicm_file', $expanded_file);
 
   return 1;
 }
@@ -177,7 +179,7 @@ sub store_hmmprofile_dir {
 sub store_hmmprofile {
   my $self = shift;
 
-  my $multicm_file = $self->{multicm_file};
+  my $multicm_file = $self->param('multicm_file');
   open MULTICM,$multicm_file or die "$!\n";
   my $name; my $model_id;
   my $profile_content = undef;
@@ -221,7 +223,7 @@ sub load_cmfile {
 
   my $table_name = 'nc_profile';
   my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
-  $sth->execute($model_id, $name, $self->{type},$hmm_text);
+  $sth->execute($model_id, $name, $self->param('type'), $hmm_text);
   $sth->finish;
 
   return undef;
@@ -237,7 +239,7 @@ sub load_cmprofile {
 
   my $table_name = 'nc_profile';
   my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
-  $sth->execute($model_id, $name, $self->{type},$cm_profile);
+  $sth->execute($model_id, $name, $self->param('type'), $cm_profile);
   $sth->finish;
 
   return undef;
