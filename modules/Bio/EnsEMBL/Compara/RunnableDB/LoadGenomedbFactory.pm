@@ -27,9 +27,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadGenomedbFactory;
 
 use strict;
 
+use Data::Dumper;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::SpeciesSet;
-use Bio::SeqIO;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -69,7 +69,9 @@ sub write_output {
 
     my $species_set = $self->param('species_set');
 
-    foreach my $genome_db (@{ $species_set->genome_dbs() }) {
+    my $genome_dbs = (ref($species_set) eq 'ARRAY') ? $species_set : $species_set->genome_dbs();
+
+    foreach my $genome_db (@$genome_dbs) {
         my $genome_db_id = $genome_db->dbID();
 
         my $species_name = $genome_db->name();
