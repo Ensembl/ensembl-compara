@@ -65,7 +65,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->input_job->transient_error(0);
-    my $genome_db_id = $self->param('gdb') || die "'gdb' parameter is an obligatory one, please specify";
+    my $genome_db_id = $self->param('genome_db_id') || die "'genome_db_id' parameter is an obligatory one, please specify";
     $self->input_job->transient_error(1);
 
         # fetch the Compara::GenomeDB object for the genome_db_id
@@ -82,8 +82,8 @@ sub fetch_input {
 
 # FIXME: change the fan dataflow branch to 2, allowing branch 1 to output something too
     my $genome_db_name = $genome_db->name;
-    my $ncrna_subset = Bio::EnsEMBL::Compara::Subset->new( -name=>"gdb:${genome_db_id} ${genome_db_name} longest ncRNAs" );
-    my $gene_subset  = Bio::EnsEMBL::Compara::Subset->new( -name=>"gdb:${genome_db_id} ${genome_db_name} ncRNA genes" );
+    my $ncrna_subset = Bio::EnsEMBL::Compara::Subset->new( -name=>"genome_db_id:${genome_db_id} ${genome_db_name} longest ncRNAs" );
+    my $gene_subset  = Bio::EnsEMBL::Compara::Subset->new( -name=>"genome_db_id:${genome_db_id} ${genome_db_name} ncRNA genes" );
 
     my $ncrna_subset_id = $subset_adaptor->store($ncrna_subset) or die "Could not store ncRNA subset";
     my $gene_subset_id  = $subset_adaptor->store($gene_subset)  or die "Could not store gene subset";
@@ -137,17 +137,17 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    my $genome_db_id    = $self->param('gdb');
+    my $genome_db_id    = $self->param('genome_db_id');
     my $ncrna_subset_id = $self->param('ncrna_subset_id');
     my $gene_subset_id  = $self->param('gene_subset_id');
 
     foreach my $stable_id (@{ $self->param('stable_ids') }) {
         $self->dataflow_output_id( {
-            'gdb'             => $genome_db_id,
+            'genome_db_id'    => $genome_db_id,
             'ncrna_subset_id' => $ncrna_subset_id,
             'gene_subset_id'  => $gene_subset_id,
             'stable_id'       => $stable_id,
-        }, 1);
+        }, 2);
     }
 }
 

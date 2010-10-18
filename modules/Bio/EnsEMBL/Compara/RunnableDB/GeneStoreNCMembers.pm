@@ -72,8 +72,8 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->input_job->transient_error(0);
-    my $genome_db_id = $self->param('gdb')    || die "'gdb' parameter is an obligatory one, please specify";
-    my $stable_id = $self->param('stable_id') || die "'stable_id' parameter is an obligatory one, please specify";
+    my $genome_db_id = $self->param('genome_db_id') || die "'genome_db_id' parameter is an obligatory one, please specify";
+    my $stable_id = $self->param('stable_id')       || die "'stable_id' parameter is an obligatory one, please specify";
     $self->input_job->transient_error(1);
 
         # fetch the Compara::GenomeDB object for the genome_db_id
