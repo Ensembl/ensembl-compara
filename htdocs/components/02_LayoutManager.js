@@ -58,7 +58,7 @@ Ensembl.LayoutManager.extend({
         }
       },
       mouseup: function (e) {
-        Ensembl.EventManager.trigger('dragStop', e);
+        Ensembl.EventManager.trigger('mouseUp', e);
       }
     });
     

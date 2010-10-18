@@ -14,7 +14,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.speciesCount     = 0;
     
     Ensembl.EventManager.register('highlightImage', this, this.highlightImage);
-    Ensembl.EventManager.register('dragStop',       this, this.dragStop);
+    Ensembl.EventManager.register('mouseUp',        this, this.dragStop);
     Ensembl.EventManager.register('hashChange',     this, this.hashChange);
     
     Ensembl.EventManager.register('highlightAllImages', this, function () {
