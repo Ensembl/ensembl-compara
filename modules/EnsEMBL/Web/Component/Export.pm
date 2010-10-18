@@ -35,13 +35,15 @@ sub export {
   if ($slice->length > 5000000) {
     my $error = 'The region selected is too large to export. Please select a region of less than 5Mb.';
     
-    $self->string($html_format ? $self->_warning('Region too large', "<p>$error</p>") : $error);
+    $self->string($html_format ? $self->_warning('Region too large', "<p>$error</p>") : $error);    
   } else {
     my $outputs = {
       fasta     => sub { return $self->fasta(@inputs); },
       csv       => sub { return $self->features('csv'); },
       tab       => sub { return $self->features('tab'); },
-      bed       => sub { return $self->features('bed'); },
+      bed       => sub { return $self->bed_features; },
+      gtf       => sub { return $self->features('gtf'); },
+      psl       => sub { return $self->psl_features; },
       gff       => sub { return $self->features('gff'); },
       gff3      => sub { return $self->gff3_features; },
       embl      => sub { return $self->flat('embl'); },
@@ -67,7 +69,7 @@ sub export {
   
   if ($html_format) {
     $string = "<pre>$string</pre>" if $string;
-  } else {
+  } else {    
     s/<.*?>//g for $string, $html; # Strip html tags;
     $string .= "\r\n" if $string && $html;
   }
@@ -239,7 +241,7 @@ sub flat {
 
 sub alignment {
   my $self = shift;
-  
+
   my $object = $self->object;
   my $species = $object->species;
   
@@ -268,6 +270,8 @@ sub features {
   
   my @common_fields = qw( seqname source feature start end score strand frame );
   my @extra_fields  = qw( hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name );
+  
+  @extra_fields = qw( gene_id transcript_id) if($format eq 'gtf');
   
   $self->{'config'} = {
     extra_fields  => \@extra_fields,
@@ -321,7 +325,7 @@ sub features {
     foreach my $db (@dbs) {
       foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
         foreach my $t (@{$g->get_all_Transcripts}) {
-          foreach my $e (@{$t->get_all_Exons}) {
+          foreach my $e (@{$t->get_all_Exons}) {            
             $self->feature('gene', $e, { 
                exon_id       => $e->stable_id, 
                transcript_id => $t->stable_id, 
@@ -333,8 +337,115 @@ sub features {
       }
     }
   }
-  
+ 
   $self->misc_sets(keys %{$params->{'misc_set'}}) if $params->{'misc_set'};
+}
+
+sub bed_features {
+  my $self = shift;
+  my $object = $self->object;
+  my $slice  = $self->slice;
+  my $params = $self->params;
+  my $hub = $self->hub;
+   
+  $self->{'config'} = {   
+    format        => 'bed',
+    delim         => "\t"
+  };
+  my $config = $self->{'config'}; 
+  my (%vals, @column, $trackname);
+
+  my $title = 'Browser position chr'.$slice->seq_region_name.': '.$slice->start.'-'.$slice->end;
+  $self->string(join "\t", $title);
+#  my $track_description = qq{Track name= description="$f->{'description'}"};
+#  $self->string(join "\t", $track_description);  
+  
+#displaying the basic bed file (name, start, end)
+  foreach my $t (@{$slice->get_all_PredictionTranscripts}) {
+    foreach my $feature (@{$t->get_all_Exons}) {
+      if ($feature->can('seq_region_name')) {
+        %vals = (
+          chrom  => 'chr'.$feature->seq_region_name,
+          start  => $feature->seq_region_start,
+          end    => $feature->seq_region_end,          
+        );
+      } else {
+        %vals = (
+          chrom  => $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : $feature->can('seqname') ? $feature->seqname : undef,
+          start  => $feature->can('start') ? $feature->start : undef,
+          end    => $feature->can('end') ? $feature->end : undef,          
+        );
+      }
+      @column = qw(chrom start end);
+      my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } @column;  
+      $self->string(join $self->{'config'}->{'delim'}, @results);      
+    }
+  }
+  
+  #get data from files user uploaded if any and display   
+  if($params->{'userdata'}){
+    my $user = $object->user;
+    my @user_file = $hub->session->get_data('type' => 'upload');
+    $self->string(join "\t");
+    foreach my $row (@user_file) {
+       next unless ($row->{'code'} && $row->{'format'} eq 'BED');
+       my $file = 'temp-upload-'.$row->{'code'};
+       my $name = $row->{'name'};
+       my $data = $object->fetch_userdata_by_id($file);
+       my (@fs, $class, $start, $end, $seqname);
+    
+       if (my $parser = $data->{'parser'}) {
+         foreach my $type (keys %{$parser->{'tracks'}}) {
+           my $features = $parser->fetch_features_by_tracktype($type);
+           ## Convert each feature into a proper API object
+           foreach (@$features) {
+             my $ddaf = Bio::EnsEMBL::DnaDnaAlignFeature->new($_->cigar_string);
+             $ddaf->species($object->species);
+             $ddaf->start($_->rawstart);
+             $ddaf->end($_->rawend);
+             $ddaf->strand($_->strand);
+             $ddaf->seqname($_->seqname);
+             $ddaf->score($_->score);
+             $ddaf->extra_data($_->external_data);
+             $ddaf->{'bedname'} = $_->id;
+             $ddaf->{'trackname'} = $type;
+             $ddaf->{'description'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'name'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'name'} : '';
+             $ddaf->{'usescore'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'useScore'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'useScore'} : '';
+             $ddaf->{'color'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'color'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'color'} : '';
+             push @fs, $ddaf;
+           }
+         }
+       }
+       elsif ($data->{'features'}) {
+         @fs = @{$data->{'features'}};
+       }
+       
+       #displaying Uploaded data
+       foreach my $f (@fs)
+       {        
+         if(!$trackname || $trackname ne $f->{'trackname'})
+         {
+           $self->string(join $self->{'config'}->{'delim'});
+           $trackname = $f->{'trackname'};
+           $title = qq{Browser position chr$f->{'seqname'}: $f->{'start'}-$f->{'end'} };
+           $self->string(join $self->{'config'}->{'delim'}, $title);
+              
+           if($params->{'description'}){
+             my $track_description .= qq{Track name=$trackname description="$f->{'description'}" useScore=$f->{'usescore'} color=$f->{'color'}};
+             $self->string(join $self->{'config'}->{'delim'}, $track_description);
+           }
+         }
+         $f->{strand} = ($f->{strand} eq -1) ? '-' : '+';
+         my $string = qq{chr$f->{seqname}   $f->{start}   $f->{end}   $f->{bedname}   $f->{score}   $f->{strand}    $f->{extra_data}->{thick_start}[0]   $f->{extra_data}->{thick_end}[0]   $f->{extra_data}->{item_color}[0]    $f->{extra_data}->{BlockCount}[0]    $f->{extra_data}->{BlockSizes}[0]    $f->{extra_data}->{BlockStart}[0]};
+         $self->string(join $self->{'config'}->{'delim'}, $string);
+       }
+     }
+   }
+}
+
+sub psl_features {
+  my $self = shift;
+   
 }
 
 sub gff3_features {
@@ -426,10 +537,10 @@ sub gff3_features {
 sub feature {
   my $self = shift;
   my ($type, $feature, $attributes, $properties) = @_;
-  
+
   my $config = $self->{'config'};
   
-  my %vals;
+  my (%vals, @mapping_result);
   
   if ($feature->can('seq_region_name')) {
     %vals = (
@@ -446,12 +557,13 @@ sub feature {
       strand => $feature->can('strand') ? $feature->strand : undef
     );
   }   
+  @mapping_result = qw(seqid source type start end score strand phase);
   %vals = (%vals, (
-    type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.'),
-    source => $feature->can('source_tag') ? $feature->source_tag : $feature->can('source') ? $feature->source : 'Ensembl',
-    score  => $feature->can('score') ? $feature->score : '.',
-    phase  => '.'
-  ));
+     type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.sdf'),
+     source => $feature->can('source_tag') ? $feature->source_tag : $feature->can('source') ? $feature->source : 'Ensembl',
+     score  => $feature->can('score') ? $feature->score : '.',
+     phase  => '.'
+   ));   
   
   # Overwrite values where passed in
   foreach (keys %$properties) {
@@ -470,8 +582,8 @@ sub feature {
   $vals{'strand'} ||= '.';
   $vals{'seqid'}  ||= 'SEQ';
   
-  my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } qw(seqid source type start end score strand phase);
-  
+  my @results = map { $vals{$_} =~ s/ /_/g; $vals{$_} } @mapping_result;
+
   if ($config->{'format'} eq 'gff') {
     push @results, join ';', map { defined $attributes->{$_} ? "$_=$attributes->{$_}" : () } @{$config->{'extra_fields'}};
   } elsif ($config->{'format'} eq 'gff3') {
@@ -479,7 +591,6 @@ sub feature {
   } else {
     push @results, map { $attributes->{$_} } @{$config->{'extra_fields'}};
   }
-  
   if ($config->{'format'} eq 'gff3') {
     $config->{'feature_order'}->{$type} ||= ++$config->{'feature_type_count'};
     $self->output($type, join "\t", @results);
@@ -529,7 +640,7 @@ sub misc_sets {
     }
     
     @sets = $_ eq '_gene' ? $self->misc_set_genes : $self->misc_set($_, $sets->{$_}->{'name'}, $db);
-    
+  
     if (scalar @sets) {
       foreach (@sets) {
         if ($table) {
