@@ -148,7 +148,10 @@ sub write_output {      # store the genome_db and dataflow
 
     my $pseudo_stableID_prefix  = $self->param('pseudo_stableID_prefix');
 
-    $self->dataflow_output_id( { 'genome_db' => $genome_db_id, ($pseudo_stableID_prefix ? ('pseudo_stableID_prefix' => $pseudo_stableID_prefix) : ()) }, 1);
+    $self->dataflow_output_id( {
+        'genome_db_id' => $genome_db_id,
+        ($pseudo_stableID_prefix ? ('pseudo_stableID_prefix' => $pseudo_stableID_prefix) : ())
+    }, 1);
 }
 
 # ------------------------- non-interface subroutines -----------------------------------
