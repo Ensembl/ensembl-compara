@@ -24,13 +24,15 @@ sub content {
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
   my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
-
+  my $sortable; #to make the data table sortable
+  
   my ($html, $table, $user_pointers, $usertable, $features, $has_features, @all_features);
  
   if (my $id = $hub->param('id') || $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') { ## "FeatureView"
     $features = $self->builder->create_objects('Feature', 'lazy');
     $features = $features ? $features->convert_to_drawing_parameters : {};
-    $table    = $self->feature_tables($features) if keys %$features;
+    $sortable = 1 if ($hub->param('ftype') eq 'Phenotype');
+    $table    = $self->feature_tables($features,$sortable) if keys %$features;
   } 
 
   while (my ($type, $feature_set) = each (%$features)) {
@@ -101,7 +103,7 @@ sub content {
           }
         
           if ($hub->param('ftype') eq 'Phenotype'){
-            my $phenotype_name = encode_entities($hub->param('phenotype_name') || $hub->param('id'));
+            my $phenotype_name = encode_entities($hub->param('phenotype_name') || $hub->param('id'));            
             $text = "Location of variants associated with phenotype $phenotype_name:";        
           }
         }        
@@ -184,11 +186,12 @@ sub content {
 sub feature_tables {
   my $self         = shift;
   my $feature_dets = shift;
+  my $sortable     = shift;
   my $hub          = $self->hub;
   my $data_type    = $hub->param('ftype');  
-  my $html;
+  my ($html, $table_style);
   my @tables;  
- 
+
   while (my ($feat_type, $feature_set) = each (%$feature_dets)) {
     my $features      = $feature_set->[0];
     my $extra_columns = $feature_set->[1];
@@ -206,14 +209,21 @@ sub feature_tables {
       $data_type        = "Domain $domain_id maps to $feature_count Genes. The gene Information is shown below:";
     }
 
-    my $table = $self->new_table([], [], { margin => '1em 0px' });
+    if($sortable){
+      $table_style->{'data_table'} = 1;
+      $table_style->{'sorting'} = [ 'extra_4 desc'] if($hub->param('ftype') eq 'Phenotype'); #making the p value field auto sorting by descending order
+    }
+    else{
+      $table_style->{'margin'} = '1em 0px';
+    }    
+    my $table = $self->new_table([], [], $table_style);
     
     if ($feat_type =~ /Gene|Transcript|Domain/) {
       $table->add_columns({ key => 'names',   title => 'Ensembl ID',               width => '25%',   align => 'left' });
       $table->add_columns({ key => 'loc',     title => 'Genomic location(strand)', width => '170px', align => 'left' });    
       $table->add_columns({ key => 'extname', title => 'External names',           width => '25%',   align => 'left' });
     } elsif ($feat_type =~ /Variation/i) {
-      $table->add_columns({ key => 'loc',    title => 'Genomic location(strand)', width => '170px', align => 'left' });    
+      $table->add_columns({ key => 'loc',    title => 'Genomic location(strand)', width => '170px', align => 'left', sort => $sortable ?  'position_html' : 'none'});
       $table->add_columns({ key => 'names',  title => 'Name(s)',                  width => '100px', align => 'left' });
     } elsif ($feat_type eq 'LRG') {
       $table->add_columns({ key => 'lrg',    title => 'Name',                     width => '15%', align => 'left' });
@@ -224,10 +234,24 @@ sub feature_tables {
       $table->add_columns({ key => 'length', title => 'Genomic length',           width => '10%', align => 'left' });
       $table->add_columns({ key => 'names',  title => 'Name(s)',                  width => '25%', align => 'left' });
     }
-        
-    my $c = 1;
-    $table->add_columns({ key => 'extra_' . $c++, title => $_, width => $feat_type =~ /Variation/i ? '300px' : '10%', align => 'left' }) for @{$extra_columns||[]};
-        
+
+    my $c = 1;    
+    foreach my $field (@{$extra_columns||[]}){
+      my $table_feature = { key => 'extra_' . $c++, title => $field, width => $feat_type =~ /Variation/i ? '300px' : '10%', align => 'left' };      
+      if ($hub->param('ftype') eq 'Phenotype'){
+        if($field =~ /P value/){
+          $table_feature->{'sort'} = 'numeric';
+        }
+        elsif($field =~ /Associated Phenotype/){
+          $table_feature->{'sort'} = 'none';
+        }
+        else{
+          $table_feature->{'sort'} = 'html';
+        }        
+      }
+      $table->add_columns($table_feature)      
+    }
+            
     my @data;
     
     if ($feat_type eq 'LRG') {
