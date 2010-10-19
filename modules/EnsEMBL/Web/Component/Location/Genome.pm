@@ -211,7 +211,7 @@ sub feature_tables {
 
     if($sortable){
       $table_style->{'data_table'} = 1;
-      $table_style->{'sorting'} = [ 'extra_4 desc'] if($hub->param('ftype') eq 'Phenotype'); #making the p value field auto sorting by descending order
+      $table_style->{'sorting'} = [ 'extra_4 asc'] if($hub->param('ftype') eq 'Phenotype'); #making the p value field auto sorting by descending order
     }
     else{
       $table_style->{'margin'} = '1em 0px';
