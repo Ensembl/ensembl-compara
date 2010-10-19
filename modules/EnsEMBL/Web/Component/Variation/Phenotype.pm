@@ -125,7 +125,7 @@ sub gene_links {
   my @links;
   
   foreach my $g (@genes) {
-    if ($g =~ /Intergenic/) {
+    if ($g =~ /Intergenic|pseudogene/i) {
       push @links, $g;
     } else { 
       my $url = $hub->url({ type => 'Gene', action => 'Summary', g => $g });
