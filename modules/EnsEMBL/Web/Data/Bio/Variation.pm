@@ -75,7 +75,7 @@ sub convert_to_drawing_parameters {
     }
     
     # preparing the URL for all the associated genes and ignoring duplicate one
-    $_ = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $_, v => $name, vf => $dbID }), $_ for grep !/intergenic/i, values %{$associated_genes{$variation_id} || {}};
+    $_ = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $_, v => $name, vf => $dbID }), $_ for grep !/intergenic|psuedogene/i, values %{$associated_genes{$variation_id} || {}};
     
     # making the location 10kb if it a one base pair
     if ($end == $start) {
