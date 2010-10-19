@@ -2,8 +2,7 @@
 
 package EnsEMBL::Web::Controller::Psychic;
 
-### Prints the main web page - header, footer, navigation etc, and non dynamically loaded content.
-### Deals with Command modules if required.
+### Pyschic search
 
 use strict;
 
@@ -219,13 +218,11 @@ sub psychic {
 }
 
 sub psychic_gene_location {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $query        = $hub->param('q');
-  my $db           = $hub->param('db');
-     $db           = 'otherfeatures' if $db eq 'est';
-  my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor', $db);
-  my $gene         = $gene_adaptor->fetch_by_stable_id($query) || $gene_adaptor->fetch_by_display_label($query);
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $query   = $hub->param('q');
+  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', $hub->param('db'));
+  my $gene    = $adaptor->fetch_by_stable_id($query) || $adaptor->fetch_by_display_label($query);
   my $url;
   
   if ($gene) {
