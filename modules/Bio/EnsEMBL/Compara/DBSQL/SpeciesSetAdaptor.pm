@@ -57,49 +57,54 @@ sub store {
 
   # Check that the data do not exist already in the DB.
   my $existing_species_set = $self->fetch_by_GenomeDBs($species_set->genome_dbs);
-  return $existing_species_set if ($existing_species_set);
 
-  # Check the species_set_id. Assign it if it doesn't exist
-  my $species_set_id = $species_set->dbID;
-  my $lock_tables = 0;
-  if (!$species_set_id) {
-    $lock_tables = 1;
-    $self->dbc->do("LOCK TABLES species_set WRITE");
-
-    my $sql = "SELECT MAX(species_set_id) FROM species_set";
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    $species_set_id = ($sth->fetchrow_array() or 0);
-    $species_set_id++;
-    $species_set->dbID($species_set_id);
-  }
-  throw if (!$species_set_id);
-
-  # Add the data into the DB
-  my $sql = qq{
-          INSERT INTO species_set(species_set_id,genome_db_id)
-          VALUES (?, ?)
-      };
-  my $sth = $self->prepare($sql);
-  foreach my $genome_db (@{$species_set->genome_dbs}) {
-    my $genome_db_id = $genome_db->dbID;
-#     print "$species_set_id, $genome_db_id\n";
-    $sth->execute($species_set_id, $genome_db_id);
-  }
-  $sth->finish();
+  my $species_set_id;
   
-  # Only unlock the table after adding the entries to make sure that not 2 threads try to use the species_set_id
-  if ($lock_tables) {
-    $self->dbc->do("UNLOCK TABLES");
+  if ($existing_species_set) {
+    $species_set_id = $existing_species_set->dbID;
+  } else {
+    # Check the species_set_id. Assign it if it doesn't exist
+    $species_set_id = $species_set->dbID;
+    my $lock_tables = 0;
+    if (!$species_set_id) {
+      $lock_tables = 1;
+      $self->dbc->do("LOCK TABLES species_set WRITE");
+
+      my $sql = "SELECT MAX(species_set_id) FROM species_set";
+      my $sth = $self->prepare($sql);
+      $sth->execute();
+      $species_set_id = ($sth->fetchrow_array() or 0);
+      $species_set_id++;
+      $species_set->dbID($species_set_id);
+    }
+    throw if (!$species_set_id);
+
+    # Add the data into the DB
+    my $sql = qq{
+            INSERT INTO species_set(species_set_id,genome_db_id)
+            VALUES (?, ?)
+        };
+    my $sth = $self->prepare($sql);
+    foreach my $genome_db (@{$species_set->genome_dbs}) {
+      my $genome_db_id = $genome_db->dbID;
+#       print "$species_set_id, $genome_db_id\n";
+      $sth->execute($species_set_id, $genome_db_id);
+    }
+    $sth->finish();
+    
+    # Only unlock the table after adding the entries to make sure that not 2 threads try to use the species_set_id
+    if ($lock_tables) {
+      $self->dbc->do("UNLOCK TABLES");
+    }
   }
 
   # Add the tags if any
   my $tag_value_hash = $species_set->get_tagvalue_hash();
   if ($tag_value_hash) {
-    $sql = "INSERT INTO species_set_tag (species_set_id, tag, value) VALUES (?, ?, ?)";
-    $sth = $self->prepare($sql);
+    my $sql = "INSERT IGNORE INTO species_set_tag (species_set_id, tag, value) VALUES (?, ?, ?)";
+    my $sth = $self->prepare($sql);
     while (my ($tag, $value) = each %$tag_value_hash) {
-#     print "$species_set_id, $tag, $value\n";
+#       print "$species_set_id, $tag, $value\n";
       $sth->execute($species_set_id, $tag, $value);
     }
     $sth->finish;
