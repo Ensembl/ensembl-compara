@@ -61,7 +61,7 @@ sub Features {
   my $enote1 = $self->species_defs->SITE_MISSION || qq{ The Ensembl project produces genome databases for vertebrates and other eukaryotic species, and makes this information freely available online.}; 
 
   my $enote2 = sprintf qq{
-      Current release %s ( %s ) provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, $sdate, scalar($self->species_defs->valid_species);
+      Current release %s ( %s ) of %s provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, $sdate, $slabel, scalar($self->species_defs->valid_species);
 
   my $ef = {
               'ID'          => "ensembl",
