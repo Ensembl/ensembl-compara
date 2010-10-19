@@ -348,29 +348,30 @@ $ENSEMBL_LONGPROCESS_MINTIME    = 10;
 
 ## ALLOWABLE DATA OBJECTS
 $OBJECT_TO_SCRIPT = {
-  Config     => 'Config',
-  Component  => 'Component',
-  ZMenu      => 'ZMenu',
-  psychic    => 'Psychic',
+  Config       => 'Config',
+  Component    => 'Component',
+  ZMenu        => 'ZMenu',
+  psychic      => 'Psychic',
+  autocomplete => 'AutoComplete',
 
-  Gene       => 'Page',
-  Transcript => 'Page',
-  Location   => 'Page',
-  Variation  => 'Page',
-  Regulation => 'Page',
-  Marker     => 'Page',
-  GeneTree   => 'Page',
-  LRG        => 'Page',
-  Blast      => 'Page',
-  Info       => 'Page',
-  Search     => 'Page',
-  UniSearch  => 'Page',
-  News       => 'Page',
-  
-  Account    => 'Modal',
-  UserData   => 'Modal',
-  Help       => 'Modal',
-  Export     => 'Modal',
+  Gene         => 'Page',
+  Transcript   => 'Page',
+  Location     => 'Page',
+  Variation    => 'Page',
+  Regulation   => 'Page',
+  Marker       => 'Page',
+  GeneTree     => 'Page',
+  LRG          => 'Page',
+  Blast        => 'Page',
+  Info         => 'Page',
+  Search       => 'Page',
+  UniSearch    => 'Page',
+  News         => 'Page',
+               
+  Account      => 'Modal',
+  UserData     => 'Modal',
+  Help         => 'Modal',
+  Export       => 'Modal',
 };
 
 sub tmp {
