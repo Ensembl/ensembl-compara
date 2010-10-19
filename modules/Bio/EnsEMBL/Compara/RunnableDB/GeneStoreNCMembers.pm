@@ -58,13 +58,10 @@ sub param_defaults {
     };
 }
 
+
 =head2 fetch_input
 
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   prepares global variables and DB connections
-    Returns :   none
-    Args    :   none
+    Read the parameters and set up all necessary objects.
 
 =cut
 
@@ -84,19 +81,16 @@ sub fetch_input {
     my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
     $self->param('core_db', $core_db);
   
-        # connect to the subsets in order to start adding to them:
-    my $subset_adaptor = $self->compara_dba->get_SubsetAdaptor;
-
-    my $ncrna_subset_id = $self->param('ncrna_subset_id');
-    my $gene_subset_id  = $self->param('gene_subset_id');
-
-    my $ncrna_subset = $subset_adaptor->fetch_by_dbID($ncrna_subset_id) or die "Could not fetch subset for id=$ncrna_subset_id";
-    my $gene_subset  = $subset_adaptor->fetch_by_dbID($gene_subset_id)  or die "Could not fetch subset for id=$gene_subset_id";
-
-    $self->param('ncrna_subset', $ncrna_subset);
-    $self->param('gene_subset',  $gene_subset);
+    $self->param('to_ncrna_subset', []);
+    $self->param('to_gene_subset',  []);
 }
 
+
+=head2 run
+
+    Fetch a particular gene and create members from its' non-coding transcript(s?) and the gene itself
+
+=cut
 
 sub run {
     my $self = shift @_;
@@ -118,9 +112,36 @@ sub run {
     $core_db->dbc->disconnect_when_inactive(1);
 }
 
+
+=head2 write_output
+
+    Dataflow the (subset_id,member_id) pairs if the corresponding subset_ids were passed as parameters.
+    These pairs will end up in the subset_member table if everything is wired correctly.
+
+=cut
+
 sub write_output {
     my $self = shift @_;
 
+    if(my $ncrna_subset_id = $self->param('ncrna_subset_id')) {
+
+        foreach my $member_id (@{$self->param('to_ncrna_subset')}) {
+            $self->dataflow_output_id({
+                'subset_id' => $ncrna_subset_id,
+                'member_id' => $member_id,
+            }, 3);
+        }
+    }
+
+    if(my $gene_subset_id = $self->param('gene_subset_id')) {
+
+        foreach my $member_id (@{$self->param('to_gene_subset')}) {
+            $self->dataflow_output_id({
+                'subset_id' => $gene_subset_id,
+                'member_id' => $member_id,
+            }, 4);
+        }
+    }
 }
 
 
@@ -172,8 +193,7 @@ sub store_ncrna_gene {
 
     my $transcript_spliced_seq = $transcript->spliced_seq;
 
-    # store gene_member here only if at least one peptide is to be loaded for
-    # the gene.
+    # store gene_member here only if at least one ncRNA is to be loaded for the gene.
     if($self->param('store_genes') and $gene_member_not_stored) {
       print("     gene       " . $gene->stable_id ) if($self->debug);
       $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
@@ -187,7 +207,7 @@ sub store_ncrna_gene {
         print(" : stored") if($self->debug);
       };
 
-      $self->param('gene_subset')->add_member($gene_member);
+      push @{$self->param('to_gene_subset')}, $gene_member->dbID;
       print("\n") if($self->debug);
       $gene_member_not_stored = 0;
     }
@@ -204,7 +224,7 @@ sub store_ncrna_gene {
   }
 
   if($longest_ncrna_member) {
-    $self->param('ncrna_subset')->add_member( $longest_ncrna_member );
+    push @{$self->param('to_ncrna_subset')}, $longest_ncrna_member->dbID;
   }
 }
 
@@ -220,9 +240,9 @@ sub fasta_description {
       $self->throw("unexpected miRNA with more than one exon") if (1 < scalar @exons);
       my $exon = $exons[0];
       my @supporting_features = @{$exon->get_all_supporting_features};
-      if (1 < scalar @supporting_features || 0 == scalar @supporting_features) {
-        warn("unexpected miRNA supporting features");
-        next;
+      if (scalar(@supporting_features)!=1) {
+            # should we simply discard those?
+        die "unexpected miRNA supporting features";
       }
       my $supporting_feature = $supporting_features[0];
       eval { $acc = $supporting_feature->hseqname; };
