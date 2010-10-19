@@ -56,6 +56,14 @@ perl populate_new_database.pl
     [--species human --species mouse...]
     [--mlss 123 --mlss 321]
 
+perl populate_new_database.pl
+    [--skip-data]
+    --master mysql://user@host/master_db_name
+    [--old mysql://user@host/old_db_name]
+    --new mysql://user@host/new_db_name
+    [--species human --species mouse...]
+    [--mlss 123 --mlss 321]
+
 =head1 REQUIREMENTS
 
 This script uses mysql, mysqldump and mysqlimport programs.
@@ -83,15 +91,24 @@ the --insert-ignore option.
 The master compara database. You can use either the original name or any of the
 aliases given in the registry_configuration_file. DEFAULT VALUE: compara-master
 
+Alternatively, you can use an URL for the MySQL database. The URL format is:
+mysql://username[:passwd]@host[:port]/db_name
+
 =item B<--old old_compara_db_name>
 
 The old compara database. You can use either the original name or any of the
 aliases given in the registry_configuration_file.
 
+Alternatively, you can use an URL for the MySQL database. The URL format is:
+mysql://username[:passwd]@host[:port]/db_name
+
 =item B<--new new_compara_db_name>
 
 The new compara database. You can use either the original name or any of the
 aliases given in the registry_configuration_file.
+
+Alternatively, you can use an URL for the MySQL database. The URL format is:
+mysql://username[:passwd]@host[:port]/db_name
 
 =back
 
@@ -181,18 +198,32 @@ if ($help or !$master or !$new) {
 ## Get the DBAdaptors from the Registry
 Bio::EnsEMBL::Registry->load_all($reg_conf, 1);
 
-my $master_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($master, "compara");
+my $master_dba;
+if ($master =~ /mysql:\/\//) {
+  $master_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$master);
+} else {
+  $master_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($master, "compara");
+}
 die "Cannot connect to master compara database: $master\n" if (!$master_dba);
 $master_dba->get_MetaContainer; # tests that the DB exists
 
 my $old_dba;
 if ($old) {
-  $old_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($old, "compara");
+  if ($old =~ /mysql:\/\//) {
+    $old_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$old);
+  } else {
+    $old_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($old, "compara");
+  }
   die "Cannot connect to old compara database: $old\n" if (!$old_dba);
   $old_dba->get_MetaContainer; # tests that the DB exists
 }
 
-my $new_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new, "compara");
+my $new_dba;
+if ($new =~ /mysql:\/\//) {
+  $new_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$new);
+} else {
+  $new_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new, "compara");
+}
 die "Cannot connect to new compara database: $new\n" if (!$new_dba);
 $new_dba->get_MetaContainer; # tests that the DB exists
 #
@@ -219,6 +250,13 @@ my $all_default_method_link_species_sets = get_all_method_link_species_sets($mas
 ## Store them in the new DB
 store_objects($new_dba->get_MethodLinkSpeciesSetAdaptor, $all_default_method_link_species_sets,
     "all previous valid method_link_species_sets");
+
+## Get all the SpeciesSet tags for the default assemblies
+my $all_default_species_sets = get_all_species_sets_with_tags($master_dba, $all_default_genome_dbs, $mlsss);
+
+## Store them in the new DB
+store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
+    "all previous valid species_sets");
 
 ## Copy all the DnaFrags for the default assemblies
 copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs);
@@ -481,6 +519,64 @@ sub get_all_method_link_species_sets {
   }
 
   return [sort {$a->dbID <=> $b->dbID} values %$all_method_link_species_sets];
+}
+
+
+=head2 get_all_species_sets_with_tags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : listref Bio::EnsEMBL::Compara::GenomeDB $genome_dbs
+  Arg[3]      : (optional) listref_of_ints $MLSS_ids
+  Description : get the list of all the SpeciesSets which
+                contain GenomeDBs from the $genome_dbs list only.
+  Returns     : listref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+  Exceptions  : throw if argument test fails
+
+=cut
+
+sub get_all_species_sets_with_tags {
+  my ($compara_dba, $genome_dbs, $mlss_ids) = @_;
+  my $all_species_sets = {};
+
+  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
+      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+
+  my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor();
+  throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor")
+      unless ($species_set_adaptor);
+
+  ## Get the list of MLSS to skip from the meta table of the master DB
+  my $meta_container = $compara_dba->get_MetaContainer();
+  throw("Error while getting the MetaContainer") unless ($meta_container);
+  my $skip_ss;
+  foreach my $this_skip_ss (@{$meta_container->list_value_by_key("skip_ss")}) {
+    $skip_ss->{$this_skip_ss} = 1;
+  }
+
+  my $these_genome_dbs = {};
+  foreach my $this_genome_db (@$genome_dbs) {
+    throw("[$this_genome_db] should be a Bio::EnsEMBL::Compara::GenomeDB")
+        unless (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
+  }
+
+  my $these_species_sets = $species_set_adaptor->fetch_all();
+  foreach my $this_species_set (@{$these_species_sets}) {
+    next if ($skip_ss->{$this_species_set->dbID});
+    next if (!$this_species_set->get_all_tags);
+    my $all_included = 1;
+    foreach my $this_included_genome_db (@{$this_species_set->genome_dbs}) {
+      if (!defined($these_genome_dbs->{$this_included_genome_db->dbID})) {
+        $all_included = 0;
+        last;
+      }
+    }
+    if ($all_included) {
+      $all_species_sets->{$this_species_set->dbID} = $this_species_set;
+    }
+  }
+
+  return [sort {$a->dbID <=> $b->dbID} values %$all_species_sets];
 }
 
 
