@@ -69,6 +69,7 @@ sub config {
       formats => [
         [ 'csv',  'CSV (Comma separated values)' ],
         [ 'tab',  'Tab separated values' ],
+        [ 'gtf',  'Gene Transfer Format (GTF)' ],
         [ 'gff',  'Generic Feature Format' ],
         [ 'gff3', 'Generic Feature Format Version 3' ],
       ],
@@ -81,9 +82,28 @@ sub config {
         [ 'transcript', 'Transcripts' ],
         [ 'exon',       'Exons' ],
         [ 'intron',     'Introns' ],
-        [ 'cds',        'Coding sequences' ],
+        [ 'cds',        'Coding sequences' ]
       ]
     },
+#     bed => {
+#       label => 'Bed Format',
+#       formats => [
+#         [ 'bed',  'BED Format' ],
+#       ],
+#       params => [
+#         [ 'userdata',  'Uploaded Data' ],
+#         [ 'description', 'Track name & Description' ],
+#       ]
+#     },
+#     PSL => {
+#       label => 'PSL Format',
+#       formats => [
+#         [ 'PSL',  'PSL Format' ],
+#       ],
+#       params => [
+#           [ 'name',  'Bed Line Name' ],
+#         ]
+#     },
     flat => {
       label => 'Flat File',
       formats => [
