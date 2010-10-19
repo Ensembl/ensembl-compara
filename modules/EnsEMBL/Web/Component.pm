@@ -353,6 +353,7 @@ sub _export_image {
 
 sub _matches {
   my ($self, $key, $caption, @keys) = @_;
+  my $output_as_table=$keys[-1] eq "RenderAsTables";
   
   my $object = $self->object;
   my $label  = $self->hub->species_defs->translate($caption);
@@ -364,7 +365,7 @@ sub _matches {
     
     return unless @similarity_links;
     
-    $self->_sort_similarity_links(@similarity_links);
+    $self->_sort_similarity_links($output_as_table, @similarity_links);
   }
 
   my @links = map { @{$object->__data->{'links'}{$_}||[]} } @keys;
@@ -375,12 +376,7 @@ sub _matches {
   my $entry = lc(ref $obj);
   $entry =~ s/bio::ensembl:://;
 
-  # add table call here
-  my $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
-  $table->add_columns(
-    { 'key' => 'dbtype', 'align'=>'left', 'title' => 'External database type'},
-    { 'key' => 'dbid', 'align'=>'left', 'title' => 'Database identifier' }
-  );
+  my $table;
   my @rows;
   my $html;
   
@@ -400,15 +396,31 @@ sub _matches {
     my ($key, $text) = @$link;
     
     $html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
-    push(@rows,{dbtype=> $key, dbid => $text });
+    if($output_as_table){
+      push(@rows,{dbtype=> $key, dbid => $text });    
+    }else{
+      $html .= '</td></tr>' if $key ne '';
+      $html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong> $text</th><td>};    
+    }
   }
-  $table->add_rows(@rows);  
-
-  return $html.$table->render;
+  if($output_as_table){
+    # add table call here
+    $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
+    $table->add_columns(
+      { 'key' => 'dbtype', 'align'=>'left', 'title' => 'External database type'},
+      { 'key' => 'dbid', 'align'=>'left', 'title' => 'Database identifier' }
+    );
+    $table->add_rows(@rows);  
+    return $html.$table->render;    
+  }else{
+    $html .= '</td></tr></table>';
+    return $html;
+  }
 }
 
 sub _sort_similarity_links {
   my $self             = shift;
+  my $output_as_table = shift || 0;  
   my @similarity_links = @_;
   my $hub              = $self->hub;
   my $object           = $self->object;
@@ -495,10 +507,12 @@ sub _sort_similarity_links {
       $join_links = 1;
     }
     
-    if ($join_links) {
-      $text = qq{\n <div>$text};
-    } else {
-      $text = qq{\n <div class="multicol">$text};
+    if($output_as_table){
+      if ($join_links) {
+        $text = qq{\n <div>$text};
+      } else {
+        $text = qq{\n <div class="multicol">$text};
+      }
     }
     
     # override for Affys - we don't want to have to configure each type, and
