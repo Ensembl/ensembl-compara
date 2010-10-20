@@ -63,7 +63,7 @@ sub navbar {
   
   return sprintf (qq{
     <div class="autocenter_wrapper">
-      <div class="autocenter navbar print_hide js_panel" style="width:$image_width">
+      <div class="autocenter navbar print_hide" style="width:$image_width">
         <input type="hidden" class="panel_type" value="LocationNav" />
         <input type="hidden" class="update_url" value="%s" />
         <div class="relocate">
@@ -74,13 +74,16 @@ sub navbar {
             <input name="r" id="loc_r" class="location_selector" style="width:20em" value="%s" type="text" />
             <input value="Go" type="submit" class="go-button" />
           </form>
-          <form action="$psychic" method="get" class="gene_location">
-            <label for="loc_q">Gene:</label>
-            $extra_inputs
-            <input name="g" value="" type="hidden" />
-            <input name="q" id="loc_q" class="gene_selector" style="width:20em" value="" type="text" />
-            <input value="Go" type="submit" class="go-button" />
-          </form>
+          <div class="js_panel" style="float: left; margin: 0">
+            <input type="hidden" class="panel_type" value="AutoComplete" />
+            <form action="$psychic" method="get" class="autocomplete">
+              <label for="loc_q">Gene:</label>
+              $extra_inputs
+              <input name="g" value="" type="hidden" />
+              <input name="q" id="loc_q" class="autocomplete" style="width:20em" value="" type="text" />
+              <input value="Go" type="submit" class="go-button" />
+            </form>
+          </div>
         </div>
         <div class="image_nav">
           <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left" /></a>
@@ -170,11 +173,11 @@ sub nav_url {
   
   $s = $e if $s > $e;
   
-  return $object->seq_region_name . ':' . $s . '-' . $e if $self->{'update'};
+  return $object->seq_region_name . ":$s-$e" if $self->{'update'};
   
   return $hub->url({ 
     %{$hub->multi_params(0)},
-    r => $object->seq_region_name . ':' . $s . '-' . $e
+    r => $object->seq_region_name . ":$s-$e"
   });
 }
 
