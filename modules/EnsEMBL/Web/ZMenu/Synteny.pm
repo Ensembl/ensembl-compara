@@ -10,6 +10,8 @@ sub content {
   my $self   = shift;
   my $hub    = $self->hub;
   my $sp     = $hub->species;
+  my $ref_sp = $hub->referer->{'ENSEMBL_SPECIES'};
+  my %clear  = $ref_sp eq $sp ? () : (__clear => 1);
   my $ori    = $hub->param('ori');
   my $r      = $hub->param('r');
   my $r1     = $hub->param('r1');
@@ -20,14 +22,16 @@ sub content {
   $self->caption("$sp $chr:$loc");
   
   if ($r1) {
-    my $sp1 = $hub->param('sp1');
+    my $sp1    = $hub->param('sp1');
+    my %clear1 = $ref_sp eq $sp1 ? () : (__clear => 1);
     
     $self->add_entry({
       label => sprintf('%s Chr %s:%0.1fM-%0.1fM', $sp, $chr, $start/1e6, $stop/1e6),
       link  => $hub->url({
-        type   => 'Location',
-        action => 'Overview',
-        r      => $r
+        type    => 'Location',
+        action  => 'Overview',
+        r       => $r,
+        %clear
       })
     });
     
@@ -40,7 +44,8 @@ sub content {
         type    => 'Location',
         action  => 'Overview',
         r       => $r1,
-        species => $sp1
+        species => $sp1,
+        __clear => %clear1
       })
     });
     
@@ -50,7 +55,8 @@ sub content {
       type         => 'Location',
       action       => 'Synteny',
       otherspecies => $sp1,
-      r            => "$chr:$new_start-$new_end"
+      r            => "$chr:$new_start-$new_end",
+      %clear
     });
     
     if ($ori) {
@@ -74,9 +80,10 @@ sub content {
     $self->add_entry({
       label => "Jump to $sp",
       link  => $hub->url({
-        type   => 'Location',
-        action => 'Overview',
-        r      => $r
+        type    => 'Location',
+        action  => 'Overview',
+        r       => $r,
+        %clear
       })
     });
     
