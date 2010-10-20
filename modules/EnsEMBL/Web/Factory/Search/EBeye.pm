@@ -18,7 +18,7 @@ sub _search_all {
     my $self = shift;
     my $idx = shift;
     my $species = shift;
-     my $ebeye = new EBeyeSearch;
+     my $ebeye = new EBeyeSearch({__species_defs => $self->species_defs});
 
      ( my $SPECIES   = $ENV{'ENSEMBL_SPECIES'} ) =~ s/_/ /g;
      my $q = CGI->new();
