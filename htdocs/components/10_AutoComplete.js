@@ -6,7 +6,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
     
     this.cache      = {};
     this.query      = false;
-    this.reposition = false;
+    this.reposition = true;
     this.focused    = false;
     
     Ensembl.EventManager.register('windowResize', this, this.resize);
@@ -22,7 +22,7 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
     this.elLk.input = $('input.autocomplete', this.elLk.form).attr('autocomplete', 'off');
     this.elLk.g     = $('input[name=g]',      this.elLk.form);
     this.elLk.db    = $('input[name=db]',     this.elLk.form);
-    this.elLk.list  = $('<ul>', { className: 'autocomplete', css: this.position() }).insertAfter(this.elLk.input);    
+    this.elLk.list  = $('<ul>', { className: 'autocomplete' }).appendTo(document.body);
     
     // On gene form submit, stop the request going to psychic search if the user has selected a gene from the dropdown,
     // or has typed in something which matches (case insensitive) a name from the dropdown.
@@ -45,9 +45,10 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
     });
     
     this.elLk.input.bind('keyup', function (e) {
+      var input = this;
       var value = this.value;
             
-      // e.keyCode = 38: escape
+      // e.keyCode = 27: escape
       if (e.keyCode == 27) {
         panel.elLk.list.hide();
         return;
@@ -74,18 +75,13 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
       // e.keyCode = 46:      delete
       // e.keyCode > 47:      alphanumeric/symbols
       // e.keyCode = 111-123: F keys
-      if (
-        value.length < 3 || 
-        e.ctrlKey || e.altKey || 
-        (e.keyCode < 46 && e.keyCode != 8 && e.keyCode != 32) || 
-        (e.keyCode > 111 && e.keyCode < 124) || 
-        value.match(/^\w+:\d+/)
-      ) {
+      if (value.length < 3 || e.ctrlKey || e.altKey || (e.keyCode < 46 && e.keyCode != 8 && e.keyCode != 32) || (e.keyCode > 111 && e.keyCode < 124)) {
         return;
       }
       
       if (panel.reposition === true) {
         panel.elLk.list.css(panel.position());
+        panel.reposition = false;
       }
       
       // Clear timeout and abort xhr to stop ongoing requests and avoid conflicts
@@ -109,7 +105,11 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
               panel.cache[value] = json;
               
               panel.buildList(json);
-              panel.filter(value); // Call filter again in case the user has typed more since the ajax request was made
+              
+              // Call filter again if the user has typed more since the ajax request was made
+              if (input.value != value) {
+                panel.filter(input.value);
+              }
             }
           });
         }, 100);
@@ -122,11 +122,12 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
   // Returns false if a new search term has been entered (the user deleted back past the limit of the current query, and nothing in the cache matches the new query)
   filter: function (query) {
     var results = [];
-    var cache   = (this.query && query.match('^' + this.query) ? this.cache[this.query] : this.cache[query]) || [];
+    var cache   = (this.query && query.match(new RegExp('^' + this.query, 'i')) ? this.cache[this.query] : this.cache[query]) || [];
+    var regex   = new RegExp('^' + query, 'i');
     
     if (cache.length) {
       for (var i = 0; i < cache.length; i++) {
-        if (cache[i][0].match('^' + query, 'i')) {
+        if (cache[i][0].match(regex)) {
           results.push(cache[i]);
           
           if (results.length == 10) {
@@ -181,12 +182,11 @@ Ensembl.Panel.AutoComplete = Ensembl.Panel.extend({
   },
   
   position: function () {
-    var pos = this.elLk.input.position();
+    var offset = this.elLk.input.offset();
     
     return {
-      top:   pos.top + this.elLk.input.innerHeight(),
-      left:  pos.left,
-      width: this.elLk.input.innerWidth()
+      top:  offset.top + this.elLk.input.innerHeight(),
+      left: offset.left
     };
   },
   
