@@ -107,7 +107,7 @@ Ensembl.PanelManager.extend({
         this.createPanel(id, type, params);
       }
       
-      this.init($('.js_panel', container).not('#' + id));
+      this.init($('.js_panel', this.panels[id].el));
     }
   },
   
