@@ -136,7 +136,7 @@ Flag      Cumulative     Section
     $diagnostics .= ("  | " x $_->[2]).$_->[1];
 
   }
-  my %X = %{$self->{'times'}};
+  my %X = %{$self->{'totals'}};
   $diagnostics .='
 --------------------------------------------------------------------------------
       Time       %age   Category
