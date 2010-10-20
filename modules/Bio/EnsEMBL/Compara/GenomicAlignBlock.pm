@@ -1354,13 +1354,17 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
 }
 
 
-=head2 get_all_ungapped_GenomicAlignBlocks (testing)
+=head2 get_all_ungapped_GenomicAlignBlocks
 
-  Args       : none
+  Args       : (optional) listref $genome_dbs
   Example    : my $ungapped_genomic_align_blocks =
                    $self->get_all_ungapped_GenomicAlignBlocks();
+  Example    : my $ungapped_genomic_align_blocks =
+                   $self->get_all_ungapped_GenomicAlignBlocks([$human_genome_db, $mouse_genome_db]);
   Description: split the GenomicAlignBlock object into a set of ungapped
-               alignments
+               alignments. If a list of genome_dbs is provided, only those
+               sequences will be taken into account. This can be used to extract
+               ungapped pairwise alignments from multiple alignments.
   Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlocks objects
   Exceptions : none
   Caller     : general
@@ -1369,10 +1373,23 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
 =cut
 
 sub get_all_ungapped_GenomicAlignBlocks {
-  my ($self) = @_;
+  my ($self, $genome_dbs) = @_;
   my $ungapped_genomic_align_blocks = [];
 
   my $genomic_aligns = $self->get_all_GenomicAligns;
+  if ($genome_dbs and @$genome_dbs) {
+    my $these_genomic_aligns = [];
+    foreach my $this_genomic_align (@$genomic_aligns) {
+      if (grep {$this_genomic_align->genome_db->name eq $_->name} @$genome_dbs) {
+        push(@$these_genomic_aligns, $this_genomic_align);
+      }
+    }
+    if (@$these_genomic_aligns > 1) {
+      $genomic_aligns = $these_genomic_aligns;
+    } else {
+      return [];
+    }
+  }
   my $aln_length = CORE::length($genomic_aligns->[0]->aligned_sequence("+FAKE_SEQ"));
 #   foreach my $this_genomic_align (@$genomic_aligns) {
 #     print STDERR join(" - ", $this_genomic_align->dnafrag_start, $this_genomic_align->dnafrag_end,
