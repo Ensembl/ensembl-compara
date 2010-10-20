@@ -17,13 +17,28 @@ sub new {
   
   bless $self, $class;
   
-  my $hub = new EnsEMBL::Web::Hub;
-  my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
-  my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $hub->species, $dbh->quote($hub->param('q') . '%'));
+  my $hub     = new EnsEMBL::Web::Hub;
+  my $cache   = $hub->cache;
+  my $species = $hub->species;
+  my $query   = $hub->param('q');
+  my ($key, $results);
   
-  $sth->execute;
+  if ($cache) {
+    $key     = sprintf '::AUTOCOMPLETE::GENE::%s::%s::', $hub->species, $query;
+    $results = $cache->get($key);
+  }
   
-  print $self->jsonify($sth->fetchall_arrayref);
+  if (!$results) {
+    my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
+    my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
+    
+    $sth->execute;
+    
+    $results = $sth->fetchall_arrayref;
+    $cache->set($key, $results, undef, 'AUTOCOMPLETE') if $cache;
+  }
+  
+  print $self->jsonify($results);
   
   return $self;
 }
