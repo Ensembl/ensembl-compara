@@ -9,12 +9,12 @@
 .navbar .homology_move { position: relative; top: 3px; }
 
 .relocate             { float: left; }
-.relocate input       { border: 1px solid [[TINT_BORDER]]; padding: 2px; }
+.relocate input       { border: 1px solid [[TINT_BORDER]]; height: 18px; padding: 2px 4px; }
 .relocate input:hover { background-color: [[CONTRAST_BG]]; }
 .relocate form        { float: left; padding: 2px 0; }
-.relocate form label  { float: left; display: block; width: 5em; margin-top: 3px; padding-right: 5px; }
+.relocate form label  { float: left; display: block; width: 5em; margin-top: 5px; padding-right: 5px; }
 
-input.go-button       { padding: 1px 3px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
+input.go-button       { padding: 0; height: 25px; width: 34px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 input.go-button:hover { background-color: [[TINT_BORDER]]; }
 
 .image_nav { position: relative; top: 2px; float: right; }
@@ -37,7 +37,8 @@ a.move                        { margin: 0 2px; }
 
 .slider_label { position: absolute; display: none; font-weight: bold; bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
 
-ul.autocomplete                   { position: absolute; display: none; margin: 0; padding: 0; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
-ul.autocomplete li                { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; cursor: pointer; }
+ul.autocomplete                   { position: absolute; display: none; margin: 0; padding: 0; width: 258px; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
+ul.autocomplete li                { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; height: 14px; cursor: pointer; clear: both; }
 ul.autocomplete li.focused        { background-color: [[CONTRAST_BG]]; }
+ul.autocomplete li span.name      { float: left; }
 ul.autocomplete li span.stable_id { float: right; }
