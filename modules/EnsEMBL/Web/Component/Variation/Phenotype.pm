@@ -96,7 +96,8 @@ sub table_data {
     my $pval         = $va->p_value;
     
     my $disease;
-    $disease = $code ? qq{<dt>$disorder ($code) <a href="$disease_url">[View on Karyotype]</a></dt>} : qq{<dt>$disorder <a href="$disease_url">[View on Karyotype]</a></dt>} if $disorder =~ /^\w+/;    
+    $disease = $code ? qq{<dt>$disorder ($code)} : qq{<dt>$disorder} if $disorder =~ /^\w+/;
+    $disease .= qq{ <a href="$disease_url">[View on Karyotype]</a></dt>} unless $disease =~ /HGMD_MUTATION/;
     
     my $row = {
       disease => $disease,
