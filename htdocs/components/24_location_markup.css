@@ -37,7 +37,7 @@ a.move                        { margin: 0 2px; }
 
 .slider_label { position: absolute; display: none; font-weight: bold; bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
 
-ul.auto_complete                   { position: absolute; display: none; margin: 0; padding: 0; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
-ul.auto_complete li                { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; cursor: pointer; }
-ul.auto_complete li.focused        { background-color: [[CONTRAST_BG]]; }
-ul.auto_complete li span.stable_id { float: right; }
+ul.autocomplete                   { position: absolute; display: none; margin: 0; padding: 0; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
+ul.autocomplete li                { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; cursor: pointer; }
+ul.autocomplete li.focused        { background-color: [[CONTRAST_BG]]; }
+ul.autocomplete li span.stable_id { float: right; }
