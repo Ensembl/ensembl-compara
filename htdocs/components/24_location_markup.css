@@ -17,7 +17,7 @@
 input.go-button       { padding: 0; height: 24px; width: 34px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 input.go-button:hover { background-color: [[TINT_BORDER]]; }
 
-.image_nav { position: relative; top: 2px; float: right; }
+.image_nav { position: relative; top: 5px; float: right; }
 
 a.move, a.zoom_in, a.zoom_out { float: left; top: 0; margin: 0; }
 a.zoom_in                     { margin-left:  4px; }
