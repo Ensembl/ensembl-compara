@@ -27,7 +27,11 @@ Ensembl.PanelManager.extend({
       }
     });
     
-    $('.js_panel').each(function () {
+    this.init($('.js_panel'));
+  },
+  
+  init: function (panels) {
+    panels.each(function () {
       var panelType   = $('input.panel_type', this).val();
       var parentPanel = {};
       
@@ -102,6 +106,8 @@ Ensembl.PanelManager.extend({
       if (id) {
         this.createPanel(id, type, params);
       }
+      
+      this.init($('.js_panel', container).not('#' + id));
     }
   },
   
