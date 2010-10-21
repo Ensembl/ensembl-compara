@@ -129,7 +129,7 @@ Ensembl.LayoutManager.extend({
     var localTools = $('#local-tools');
     
     tools.each(function () {
-      localTools.append($(this).children().addClass('additional')).children().show();
+      $(this).children().addClass('additional').appendTo(localTools).not('.hidden').show();
     }).remove();
     
     $('a.seq_blast', localTools).click(function () {
