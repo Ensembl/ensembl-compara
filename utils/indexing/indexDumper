@@ -45,6 +45,7 @@ my $conf = {};
 mkdir 'input', 0777 unless -e 'input';
 
 foreach my $species ( @species ) {
+
   $conf->{'directory'} = "input/$species";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
   $conf->{'species'}   = $species;
@@ -55,6 +56,7 @@ foreach my $species ( @species ) {
   my $core = $dbs{'DATABASE_CORE'};
   $conf->{'dbh_compara'} = DBI->connect( "dbi:mysql:ensembl_compara_".$SD->ENSEMBL_VERSION.";host=ensdb-1-13;port=5307", $core->{'USER'}, $core->{'PASS'} );
   $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'} );
+#  $conf->{'dbh'}         = DBI->connect( "dbi:mysql:$core->{'NAME'};host=ens-staging;port=3306", $core->{'USER'}, $core->{'PASS'} );
   warn join ' ', $species, Data::Dumper::Dumper $conf;
   foreach my $index (@indexes) {
     warn "  Index: $species $index";
@@ -761,6 +763,7 @@ sub dumpGene {
     my $extra = $DB ne 'core' ? ";db=$DB" : '';
     my %xrefs = ();
     my %xrefs_desc = ();
+
     foreach my $type( qw(Gene Transcript Translation) ) {
       my $T = $conf->{'dbh'}->selectall_arrayref(
         "select ox.ensembl_id,
@@ -777,6 +780,8 @@ sub dumpGene {
       warn "XREF $type query done";
     }
     my %exons = ();
+#    $conf->{'dbh'}->disconnect;
+#    $conf->{'dbh'} = DBI->connect( "dbi:mysql:homo_sapiens_core_60_37e;host=ensdb-1-13;port=5307", 'ensadmin', 'ensembl' );
     my $T = $conf->{'dbh'}->selectall_arrayref(
       "select distinct t.gene_id, esi.stable_id
          from $DBNAME.transcript as t, $DBNAME.exon_transcript as et, $DBNAME.exon_stable_id as esi
@@ -791,13 +796,14 @@ sub dumpGene {
              g.description, ed.db_display_name, x.dbprimary_acc,x.display_label, ad.display_label, ad.description, g.source, g.status, g.biotype
         from (((( $DBNAME.gene_stable_id as gsi, $DBNAME.gene as g,
              $DBNAME.transcript_stable_id as tsi,
+             $DBNAME.analysis as a,
              $DBNAME.analysis_description as ad,
              $DBNAME.transcript as t) left join
              $DBNAME.translation as tr on t.transcript_id = tr.transcript_id) left join
              $DBNAME.translation_stable_id as trsi on tr.translation_id = trsi.translation_id) left join
              $DBNAME.xref as x on g.display_xref_id = x.xref_id) left join
              $DBNAME.external_db as ed on ed.external_db_id = x.external_db_id
-       where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = ad.analysis_id
+       where t.gene_id = gsi.gene_id and t.transcript_id = tsi.transcript_id and t.gene_id = g.gene_id and g.analysis_id = a.analysis_id and a.analysis_id = ad.analysis_id AND a.logic_name != 'LRG_import'
        order by gsi.stable_id, tsi.stable_id
     ");
     warn "Gene info query done";
@@ -914,7 +920,6 @@ sub dumpGene {
     $gene_count++;
     print STDOUT "$gene_count $DB genes indexed\n";
   }
-
 #  warn Dumper($core_xrefs->{'ARSE'});
   my $other_count = 0;
   my %current_stable_ids =();
@@ -1123,7 +1128,16 @@ sub dumpSequence {
   
   my $COREDB   = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTDB    = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+
   open O, ">$conf->{'directory'}/Sequence.txt";
+
+  my $lrgs = &dumpLRGs($conf);
+  if (@$lrgs) {
+    foreach (@{&sort_lrgs($lrgs)}) {
+      print O $_;
+    }
+  }
+
   my @types = @{$config{$conf->{'species'}}||[]};
   foreach my $arrayref ( @types ) {
     my( $TYPE, $mapsets, $annotationtypes,$DB ) = @$arrayref;
@@ -1236,14 +1250,16 @@ sub dumpSequence {
     }
     my $r   = "$name:1-$length";
     my $ids = $prev_name ? "$prev_name$extra_IDS" : "$name$extra_IDS";
-    print O join "\t",
-      (INC_SPECIES?"$conf->{'species'}\t":"").ucfirst($type), 
-      $prev_name ? $prev_name : $name,
-      ($type eq 'chromosome' && length( $name ) < 5) ? "/$conf->{'species'}/Location/Chromosome?r=$r" 
+    unless ($type eq 'lrg') {
+      print O join "\t",
+	(INC_SPECIES?"$conf->{'species'}\t":"").ucfirst($type), 
+        $prev_name ? $prev_name : $name,
+        ($type eq 'chromosome' && length( $name ) < 5) ? "/$conf->{'species'}/Location/Chromosome?r=$r" 
          : ($length > 0.5e6) ? "/$conf->{'species'}/Location/Overview?r=$r" 
          : "/$conf->{'species'}/Location/View?r=$r",
-      "$ids",
-      "$name is a @{[ucfirst($type)]} (of length $length)$extra_desc\n";
+        "$ids",
+        "$name is a @{[ucfirst($type)]} (of length $length)$extra_desc\n";
+    }
   }
   close O;
 }
@@ -1272,6 +1288,66 @@ sub seqLine {
     "$name $Q$extra_IDS",
     "$type $name is mapped to Chromosome $chr, and has". (($val &&  ($val ne "")) ? " EMBL accession(s)/synonyms $val and " : "").
     " length $len bps$extra_desc\n";
+}
+
+
+
+########################################################################## LRGs
+
+sub dumpLRGs {
+  my $conf = shift;
+  return $conf->{'dbh'}->selectall_arrayref(
+        qq(SELECT gsi.stable_id, x.display_label, edb.db_name, tsi.stable_id, sr.length
+             FROM gene_stable_id gsi, gene g, analysis a, object_xref ox, xref x, external_db edb, transcript t, transcript_stable_id tsi, seq_region sr
+            WHERE gsi.gene_id = g.gene_id
+              AND g.analysis_id = a.analysis_id
+              AND g.gene_id = ox.ensembl_id
+              AND ox.xref_id = x.xref_id
+              AND x.external_db_id = edb.external_db_id
+              AND g.gene_id = t.gene_id
+              AND t.transcript_id = tsi.transcript_id
+              AND gsi.stable_id = sr.name
+              AND ox.ensembl_object_type = 'Gene'
+              AND edb.db_name = 'HGNC'
+              AND a.logic_name = 'LRG_import'
+            ORDER by gsi.stable_id, tsi.stable_id)
+      );
+}
+
+sub sort_lrgs {
+  my ($lrgs, $fh) = @_;
+  my ($prev_gsi,$prev_disp_label,$prev_db_name,$prev_length);
+  my $query_terms = [];
+  my $to_print;
+  foreach my $rec (@$lrgs) {
+    my $gsi = $rec->[0];
+    if ($gsi eq $prev_gsi) {
+      push @$query_terms, $rec->[3];
+    }
+    else {
+      if ($prev_gsi) {
+        push @$to_print, (LRGLine($prev_gsi,$prev_disp_label,$prev_db_name,$query_terms,$prev_length));
+      }
+      $prev_gsi = $gsi;
+      $prev_disp_label = $rec->[1];
+      $prev_db_name = $rec->[2];
+      $query_terms = [ $gsi, $prev_disp_label, $rec->[3] ];
+      $prev_length = $rec->[4];
+    }
+  }
+  push @$to_print, &LRGLine($prev_gsi,$prev_disp_label,$prev_db_name,$query_terms,$prev_length);
+  return $to_print;
+}
+
+sub LRGLine {
+  my ($gsi,$dbkey,$dbname,$tsids,$length) = @_;
+  my $ids = join ' ', @$tsids;
+  return join "\t",
+    'LRG Sequence',
+    $gsi,
+    "/Homo_sapiens/LRG/Summary?lrg=$gsi",
+    $ids,
+    "<br />$gsi is a fixed reference sequence of length $length with a fixed transcript(s) for reporting purposes. It was created for $dbname gene $dbkey\n";
 }
 
 ########################################################################## Sanger Projects
