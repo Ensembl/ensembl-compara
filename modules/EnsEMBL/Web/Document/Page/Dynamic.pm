@@ -63,6 +63,8 @@ sub initialize_DAS    { shift->initialize_XML(@_); }
 sub initialize_error {
   my $self = shift;
   
+  $self->include_navigation(1);
+  
   $self->add_head_elements(qw(
     title      EnsEMBL::Web::Document::Element::Title
     stylesheet EnsEMBL::Web::Document::Element::Stylesheet
@@ -74,6 +76,9 @@ sub initialize_error {
     logo             EnsEMBL::Web::Document::Element::Logo
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
+    tabs             EnsEMBL::Web::Document::Element::Tabs
+    navigation       EnsEMBL::Web::Document::Element::Navigation
+    tool_buttons     EnsEMBL::Web::Document::Element::ToolButtons
     content          EnsEMBL::Web::Document::Element::Content
     modal            EnsEMBL::Web::Document::Element::Modal
     acknowledgements EnsEMBL::Web::Document::Element::Acknowledgements
