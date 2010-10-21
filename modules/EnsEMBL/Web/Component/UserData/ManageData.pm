@@ -86,6 +86,9 @@ sub content {
     my $not_found = 0;
      
     foreach my $file (@data) { 
+      # EnsembleGenomes sites share session and user account - only count data that is attached to species in current site
+      next unless $hub->species_defs->valid_species(ref ($file) =~ /Record/ ? $file->species : $file->{species}); 
+      
       if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'}, extension => $file->{'extension'})->exists) {
         $file->{'name'} .= ' (File could not be found)';
         $not_found++;

@@ -26,25 +26,34 @@ sub short_caption {
 }
 
 sub counts {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $user    = $hub->user;
-  my $session = $hub->session;
-  my $counts  = {};
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $user         = $hub->user;
+  my $session      = $hub->session;
+  my $species_defs = $hub->species_defs;
+  my $counts       = {};
 
   if ($user && $user->id) {
-    my @uploads = $session->get_data('type' => 'upload');
-    my @urls    = $session->get_data('type' => 'url');
-    my @groups  = $user->find_nonadmin_groups;
-    
     $counts->{'bookmarks'}      = $user->bookmarks->count;
     $counts->{'configurations'} = $user->configurations->count;
     $counts->{'annotations'}    = $user->annotations->count;
-    $counts->{'userdata'}       = $user->uploads->count + $user->dases->count + $user->urls->count;
-    $counts->{'userdata'}      += @uploads;
-    $counts->{'userdata'}      += @urls;
-    $counts->{'userdata'}      += scalar keys %{$session->get_all_das};
     
+    # EnsembleGenomes sites share session and user account - only count data that is attached to species in current site
+    $counts->{'userdata'} = 0;
+    my @userdata = (
+      $session->get_data('type' => 'upload'),
+      $session->get_data('type' => 'url'), 
+      $session->get_all_das,
+      $user->uploads,
+      $user->dases, 
+      $user->urls
+    );
+    foreach my $item (@userdata) {
+      next unless $item and $species_defs->valid_species(ref ($item) =~ /Record/ ? $item->species : $item->{species});
+      $counts->{'userdata'} ++;
+    }
+    
+    my @groups  = $user->find_nonadmin_groups;
     foreach my $group (@groups) {
       $counts->{'bookmarks'}      += $group->bookmarks->count;
       $counts->{'configurations'} += $group->configurations->count;
