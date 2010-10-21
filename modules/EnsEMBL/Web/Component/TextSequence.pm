@@ -5,12 +5,14 @@ package EnsEMBL::Web::Component::TextSequence;
 use strict;
 
 use HTTP::Request;
+use RTF::Writer;
 use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code);
 
 use EnsEMBL::Web::Document::Renderer::Assembler;
 use EnsEMBL::Web::Fake;
+use EnsEMBL::Web::TmpFile::Text;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -1078,6 +1080,119 @@ sub get_key {
   $key_html  = "<ul>$key_html</ul>" if $key_html;
   
   return '<h4>Key</h4>' . $self->new_image(new EnsEMBL::Web::Fake({}), $image_config)->render . $key_html;
+}
+
+sub export_sequence {
+  my $self = shift;
+  my ($sequence, $config, $filename, $block_mode) = @_;
+  
+  my @colours        = (undef);
+  my $class_to_style = $self->class_to_style;
+  my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
+  my $c              = 1;
+  my $i              = 0;
+  my $j              = 0;
+  my @output;
+  
+  foreach my $class (sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } keys %$class_to_style) {
+    my $rtf_style = {};
+    
+    $rtf_style->{'\cf' . $c++}      = substr $class_to_style->{$class}->[1]->{'color'}, 1            if $class_to_style->{$class}->[1]->{'color'};
+    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}->[1]->{'background-color'}, 1 if $class_to_style->{$class}->[1]->{'background-color'};
+    $rtf_style->{'\b'}              = 1                                                              if $class_to_style->{$class}->[1]->{'font-weight'} eq 'bold';
+    
+    $class_to_style->{$class}->[1] = $rtf_style;
+    
+    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
+  }
+  
+  foreach my $lines (@$sequence) {
+    my ($section, $class, $previous_class, $count);
+    
+    $lines->[-1]->{'end'} = 1;
+    
+    foreach my $seq (@$lines) {
+      if ($seq->{'class'}) {
+        $class = $seq->{'class'};
+       
+        if ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/ && $class !~ /\s*(e\w)\s*/) {
+          $class .= " $1";
+        }
+      } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
+        $class = $1;
+      } else {
+        $class = '';
+      }
+      
+      $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $class;
+      
+      if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
+        my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
+        
+        $section .= $seq->{'letter'} if $seq->{'end'};
+        
+        if (!scalar @{$output[$i][$j] || []} && $config->{'number'}) {
+          my $num  = shift @{$config->{'line_numbers'}->{$i}};
+          my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
+          my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'start'});
+          
+          push @{$output[$i][$j]}, [ \'', $config->{'h_space'} . sprintf '%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}" ];
+        }
+        
+        push @{$output[$i][$j]}, [ \$style, $section ];
+        
+        if ($count == $config->{'display_width'}) {
+          $count = 0;
+          $j++;
+        }
+        
+        $section = '';
+      }
+      
+      if ($seq->{'url'}) {
+        $class .= qq{ HYPERLINK "$seq->{'url'}" }; # FIXME: Doesn't work
+        $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/;
+      }
+      
+      $section .= $seq->{'letter'};
+      $previous_class = $class;
+      $count++;
+    }
+    
+    $i++;
+    $j = 0;
+  }
+  
+  my $string;
+  my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
+  my $rtf  = RTF::Writer->new_to_string(\$string);
+  
+  $rtf->prolog(
+    fonts  => [ 'Courier New' ],
+    colors => \@colours,
+  );
+  
+  if ($block_mode) {
+    foreach my $block (@output) {
+      $rtf->paragraph(\'\fs20', $_)      for @$block;
+      $rtf->paragraph(\'\fs20', $spacer) if $spacer;
+    }
+  } else {  
+    for my $i (0..$#{$output[0]}) {
+      $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
+      $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
+    }
+  }
+  
+  $rtf->close;
+  
+  print $file $string;
+  
+  $file->save;
+  
+  $self->hub->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
+  
+  return $file->content;
 }
 
 1;
