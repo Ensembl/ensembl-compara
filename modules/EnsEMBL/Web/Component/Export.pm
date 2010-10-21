@@ -240,24 +240,30 @@ sub flat {
 }
 
 sub alignment {
-  my $self = shift;
-
-  my $object = $self->object;
-  my $species = $object->species;
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $species = $hub->species;
+  my $action  = $hub->action;
+  
+  # Nasty hack to link export to the view config for alignments. Eww.
+  $hub->action = 'Compara_Alignments';
+  delete $hub->{'viewconfig'};
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   
-  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $self->slice, $object->param('align'), $object->species);
+  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $self->slice, $hub->param('align'), $species);
   my $export;
 
   my $align_io = Bio::AlignIO->newFh(
     -fh     => new IO::String($export),
-    -format => $object->param('format')
+    -format => $hub->param('format')
   );
 
   print $align_io $alignments;
   
   $self->string($export);
+  
+  $hub->action = $action;
 }
 
 sub features {
