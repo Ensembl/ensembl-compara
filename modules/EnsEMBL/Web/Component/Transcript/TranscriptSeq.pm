@@ -3,10 +3,6 @@
 package EnsEMBL::Web::Component::Transcript::TranscriptSeq;
 
 use strict;
-
-use RTF::Writer;
-
-use EnsEMBL::Web::TmpFile::Text;
   
 use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::TextSequence);
 
@@ -262,12 +258,10 @@ sub get_sequence_data {
   return (\@sequence, \@markup, $seq);
 }
 
-sub content {
+sub initialize {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object;
-  
-  my $html;
   
   my $config = { 
     display_width   => $hub->param('display_width') || 60,
@@ -278,7 +272,7 @@ sub content {
   
   $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna variation number utr);
   
-  $config->{'codons'} = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
+  $config->{'codons'}    = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
   $config->{'variation'} = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
   
   my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
@@ -290,139 +284,43 @@ sub content {
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   
-  if ($hub->param('export')) {
-    $html = $self->export_sequence($sequence, $config, sprintf 'cDNA-Sequence-%s-%s', $config->{'species'}, $object->stable_id);
-  } else {    
-    $html = sprintf('
-      <div class="other-tool">
-        <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
-      </div>
-      <div class="other-tool">
-        <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
-        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-          <fieldset>
-            <input type="hidden" name="_query_sequence" value="%s" />
-            <input type="hidden" name="species" value="%s" />
-          </fieldset>
-        </form>
-      </div>', 
-      $self->ajax_url,
-      $raw_seq,
-      $config->{'species'}
-    );
-    
-    $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
-    $html .= $self->build_sequence($sequence, $config);
-  }
+  return ($sequence, $config, $raw_seq);
+}
+
+sub content {
+  my $self = shift;
+  my $hub  = $self->hub;
   
+  my ($sequence, $config, $raw_seq) = $self->initialize;
+  
+  my $html = sprintf('
+    <div class="other-tool">
+      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
+    </div>
+    <div class="other-tool">
+      <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
+      <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+        <fieldset>
+          <input type="hidden" name="_query_sequence" value="%s" />
+          <input type="hidden" name="species" value="%s" />
+        </fieldset>
+      </form>
+    </div>', 
+    $self->ajax_url('rtf'),
+    $raw_seq,
+    $config->{'species'}
+  );
+  
+  $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
+  $html .= $self->build_sequence($sequence, $config);
+
   return $html;
 }
 
-sub export_sequence {
+sub content_rtf {
   my $self = shift;
-  my ($sequence, $config, $filename) = @_;
-  
-  my @colours        = (undef);
-  my $class_to_style = $self->class_to_style;
-  my $c              = 1;
-  my (@output, $i, $j);
-  
-  foreach my $class (sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } keys %$class_to_style) {
-    my $rtf_style = {};
-    
-    $rtf_style->{'\cf' . $c++}      = substr $class_to_style->{$class}->[1]->{'color'}, 1            if $class_to_style->{$class}->[1]->{'color'};
-    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}->[1]->{'background-color'}, 1 if $class_to_style->{$class}->[1]->{'background-color'};
-    $rtf_style->{'\b'}              = 1                                                              if $class_to_style->{$class}->[1]->{'font-weight'} eq 'bold';
-    
-    $class_to_style->{$class}->[1] = $rtf_style;
-    
-    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
-  }
-  
-  foreach my $lines (@$sequence) {
-    my ($section, $class, $previous_class, $count);
-    
-    $lines->[-1]->{'end'} = 1;
-    
-    foreach my $seq (@$lines) {
-      if ($seq->{'class'}) {
-        $class = $seq->{'class'};
-       
-        if ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/ && $class !~ /\s*(e\w)\s*/) {
-          $class .= " $1";
-        }
-      } elsif ($config->{'maintain_colour'} && $previous_class =~ /\s*(e\w)\s*/) {
-        $class = $1;
-      } else {
-        $class = '';
-      }
-      
-      $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $class;
-      
-      if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
-        
-        $section .= $seq->{'letter'} if $seq->{'end'};
-        
-        if (scalar !@{$output[$i][$j]||[]}) {
-          if ($config->{'number'}) {
-            my $num = shift @{$config->{'line_numbers'}->{$i}};
-            
-            my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $num->{'label'});
-            my $pad2 = ' ' x ($config->{'padding'}->{'number'} - length $num->{'start'});
-            
-            push @{$output[$i][$j]}, [ \'', $config->{'h_space'} . sprintf('%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}") ];
-          }
-        }
-        
-        push @{$output[$i][$j]}, [ \$style, $section ];
-        
-        if ($count == $config->{'display_width'}) {
-          $count = 0;
-          $j++;
-        }
-        
-        $section = '';
-      }
-      
-      if ($seq->{'url'}) {
-        $class .= qq{ HYPERLINK "$seq->{'url'}" }; # FIXME: Doesn't work
-        $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/;
-      }
-      
-      $section .= $seq->{'letter'};
-      $previous_class = $class;
-      $count++;
-    }
-    
-    $i++;
-    $j = 0;
-  }
-  
-  my $string;
-  my $file   = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
-  my $rtf    = RTF::Writer->new_to_string(\$string);
-  my $spacer = ' ' x $config->{'display_width'} if $config->{'v_space'};
-  
-  $rtf->prolog(
-    fonts  => [ 'Courier New' ],
-    colors => \@colours,
-  );
-  
-  for my $i (0..$#{$output[0]}) {
-    $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
-    $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
-  }
-  
-  $rtf->close;
-  
-  print $file $string;
-  
-  $file->save;
-  
-  $self->hub->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
-  
-  return $file->content;
+  my ($sequence, $config) = $self->initialize;
+  return $self->export_sequence($sequence, $config, sprintf 'cDNA-Sequence-%s-%s', $config->{'species'}, $self->object->stable_id);
 }
 
 1;

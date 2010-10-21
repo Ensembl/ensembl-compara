@@ -16,14 +16,13 @@ sub _init {
   $self->ajaxable(1);
 }
 
-sub content {
-  my $self       = shift;
+sub initialize {
+  my ($self, $export) = @_;
   my $hub        = $self->hub;
   my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
   my $entry_exon = $hub->param('exon');
-  my $export     = $hub->param('export');
   my $object     = $self->object;
-  my $transcript = $self->object->Obj;
+  my $transcript = $object->Obj;
   my @exons      = @{$transcript->get_all_Exons};
   my $strand     = $exons[0]->strand;
   my $chr_name   = $exons[0]->slice->seq_region_name;
@@ -106,37 +105,46 @@ sub content {
     };
   }
   
-  my $html;
+  return (\@data, $config);
+}
+
+sub content {
+  my $self = shift;
+
+  my ($data, $config) = $self->initialize;
   
-  if ($export) {
-    $html = $self->export_sequence(\@data, $config, sprintf 'Exons-%s-%s', $hub->species, $object->stable_id);
-  } else {    
-    $html = sprintf('
-      <div class="other-tool">
-        <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
-      </div>', 
-      $self->ajax_url
-    );
-    
-    my $table = $self->new_table([
-        { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
-        { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
-        { key => 'Start',      title => 'Start',         width => '10%', align => 'left' },
-        { key => 'End',        title => 'End',           width => '10%', align => 'left' },
-        { key => 'StartPhase', title => 'Start Phase',   width => '7%',  align => 'left' },
-        { key => 'EndPhase',   title => 'End Phase',     width => '7%',  align => 'left' },
-        { key => 'Length',     title => 'Length',        width => '10%', align => 'left' },
-        { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
-      ], 
-      \@data, 
-      { data_table => 'no_sort' }
-    );
-    
-    $html .= $table->render;
-    $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'variation'} ne 'off';
-  }
+  my $html = sprintf('
+    <div class="other-tool">
+      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
+    </div>', 
+    $self->ajax_url('rtf')
+  );
+  
+  my $table = $self->new_table([
+      { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
+      { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
+      { key => 'Start',      title => 'Start',         width => '10%', align => 'left' },
+      { key => 'End',        title => 'End',           width => '10%', align => 'left' },
+      { key => 'StartPhase', title => 'Start Phase',   width => '7%',  align => 'left' },
+      { key => 'EndPhase',   title => 'End Phase',     width => '7%',  align => 'left' },
+      { key => 'Length',     title => 'Length',        width => '10%', align => 'left' },
+      { key => 'Sequence',   title => 'Sequence',      width => '15%', align => 'left' }
+    ], 
+    $data, 
+    { data_table => 'no_sort' }
+  );
+  
+  $html .= $table->render;
+  $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'variation'} ne 'off';
   
   return $html;
+}
+
+sub content_rtf {
+  my $self = shift;
+  my ($data, $config) = $self->initialize(1);
+  $config->{'v_space'} = "\n";
+  return $self->export_sequence($data, $config, sprintf('Exons-%s-%s', $self->hub->species, $self->object->stable_id), 1);
 }
 
 sub get_exon_sequence_data {
@@ -306,85 +314,6 @@ sub build_sequence {
   $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
   
   return $self->SUPER::build_sequence([ $sequence ], $config);
-}
-
-sub export_sequence {
-  my $self = shift;
-  my ($sequence, $config, $filename) = @_;
-  
-  my @colours        = (undef);
-  my $class_to_style = $self->class_to_style;
-  my $space          = ' ' x $config->{'display_width'};
-  my $c              = 1;
-  my (@output, $i, $j);
-  
-  foreach my $class (sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } keys %$class_to_style) {
-    my $rtf_style = {};
-    
-    $rtf_style->{'\cf' . $c++}      = substr $class_to_style->{$class}->[1]->{'color'}, 1            if $class_to_style->{$class}->[1]->{'color'};
-    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}->[1]->{'background-color'}, 1 if $class_to_style->{$class}->[1]->{'background-color'};
-    $rtf_style->{'\b'}              = 1                                                              if $class_to_style->{$class}->[1]->{'font-weight'} eq 'bold';
-    
-    $class_to_style->{$class}->[1] = $rtf_style;
-    
-    push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
-  }
-  
-  foreach my $part (@$sequence) {
-    my ($section, $class, $previous_class, $count);
-    
-    $part->[-1]->{'end'} = 1;
-    
-    foreach my $seq (@$part) {
-      $class = join ' ', sort { $class_to_style->{$a}->[0] <=> $class_to_style->{$b}->[0] } split /\s+/, $seq->{'class'};
-      
-      if ($count == $config->{'display_width'} || $seq->{'end'} || defined $previous_class && $class ne $previous_class) {
-        my $style = join '', map keys %{$class_to_style->{$_}->[1]}, split / /, $previous_class;
-        
-        $section .= $seq->{'letter'} if $seq->{'end'};
-        
-        push @{$output[$i][$j]}, [ \$style, $section ];
-        
-        if ($count == $config->{'display_width'}) {
-          $count = 0;
-          $j++;
-        }
-        
-        $section = '';
-      }
-      
-      $section .= $seq->{'letter'};
-      $previous_class = $class;
-      $count++;
-    }
-    
-    $i++;
-    $j = 0;
-  }
-  
-  my $string;
-  my $file = new EnsEMBL::Web::TmpFile::Text(extension => 'rtf', prefix => '');
-  my $rtf  = RTF::Writer->new_to_string(\$string);
-
-  $rtf->prolog(
-    'fonts'  => [ 'Courier New' ],
-    'colors' => \@colours,
-  );
-  
-  foreach my $block (@output) {
-    $rtf->paragraph(\'\fs20', $_) for @$block;
-    $rtf->paragraph(\'\fs20', $space);
-  }
-  
-  $rtf->close;
-  
-  print $file $string;
-  
-  $file->save;
-  
-  $self->hub->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
-  
-  return $file->content;
 }
 
 1;
