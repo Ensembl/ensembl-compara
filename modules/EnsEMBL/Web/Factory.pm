@@ -117,15 +117,16 @@ sub _known_feature {
   
   my ($self, $type, $parameter, $var) = @_;
   
-  my $db           = $self->param('db') || 'core';
-  my $name         = $self->param($parameter);
-  my $species_defs = $self->species_defs;
+  my $hub          = $self->hub;
+  my $db           = $hub->param('db') || 'core';
+  my $name         = $hub->param($parameter);
+  my $species_defs = $hub->species_defs;
   my $sitetype     = $species_defs->ENSEMBL_SITETYPE || 'Ensembl';
   my $adaptor_name = "get_${type}Adaptor";
   my ($adaptor, @features, $feature);
   
   eval {
-    $adaptor = $self->database($db)->$adaptor_name; 
+    $adaptor = $hub->database($db)->$adaptor_name; 
   };
   
   die "Factory: Unknown DBAdapter in get_known_feature: $@" if $@;
@@ -142,26 +143,26 @@ sub _known_feature {
   }
   
   if ($@) {
-    $self->problem('fatal', "Error retrieving $type from database", $self->_help("An error occured while trying to retrieve the $type $name."));
+    $hub->problem('fatal', "Error retrieving $type from database", $self->_help("An error occured while trying to retrieve the $type $name."));
   } elsif (@features) { # Mapped features
     $feature = $features[0];
-    $self->param($var, $feature->stable_id);
+    $hub->param($var, $feature->stable_id);
   } else {
-    $adaptor = $self->database(lc $db)->get_UnmappedObjectAdaptor;
+    $adaptor = $hub->database(lc $db)->get_UnmappedObjectAdaptor;
     
     eval { 
       @features = @{$adaptor->fetch_by_identifier($name)}; 
     };
     
     if (@features && !$@) { # Unmapped features
-      my $id   = $self->param('peptide') || $self->param('transcript') || $self->param('gene');
-      my $type = $self->param('gene') ? 'Gene' : $self->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
+      my $id   = $hub->param('peptide') || $hub->param('transcript') || $hub->param('gene');
+      my $type = $hub->param('gene') ? 'Gene' : $hub->param('peptide') ? 'ProteinAlignFeature' : 'DnaAlignFeature';
       my $url  = sprintf '%s/Location/Genome?type=%s;id=%s', $species_defs->species_path, $type, $id;
       
-      $self->problem('redirect', $url);
+      $hub->problem('redirect', $url);
     } else {
-      $self->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database."));
-      $self->delete_param($var);
+      $hub->problem('fatal', "$type '$name' not found", $self->_help("The identifier '$name' is not present in the current release of the $sitetype database.")) if $type eq $hub->type;
+      $hub->delete_param($var);
     }
   }
   
