@@ -81,7 +81,7 @@ sub content {
           <div style="padding:2px;">
             <label for="align">Alignment:</label> <select name="align" id="align">%s</select>
             %s
-            <input value="Go &gt;" type="submit" class="go-button" />
+            <input value="Go" type="submit" class="go-button" />
           </div>
         </form>
       </div>
