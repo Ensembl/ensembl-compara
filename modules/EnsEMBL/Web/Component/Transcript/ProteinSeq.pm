@@ -41,8 +41,8 @@ sub get_sequence_data {
   }
   
   if ($config->{'variation'}) {
-    my $object = $self->object;
-    my $filter = $object->param('population_filter');
+    my $hub    = $self->hub;
+    my $filter = $hub->param('population_filter');
     my %population_filter;
     
     my $slice  = $translation->get_Slice;
@@ -50,12 +50,12 @@ sub get_sequence_data {
     if ($filter && $filter ne 'off') {
       %population_filter = map { $_->dbID => $_ }
         @{$slice->get_all_VariationFeatures_by_Population(
-          $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
-          $object->param('min_frequency')
+          $hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_by_name($filter), 
+          $hub->param('min_frequency')
         )};
     }
     
-    foreach my $transcript_variation (@{$object->get_transcript_variations}) {
+    foreach my $transcript_variation (@{$self->object->get_transcript_variations}) {
       my $pos = $transcript_variation->translation_start;
       
       next unless $pos;
@@ -84,23 +84,20 @@ sub get_sequence_data {
   return (\@sequence, [ $markup ]);
 }
 
-sub content {
-  my $self = shift;
+sub initialize {
+  my ($self, $translation) = @_;
   
-  my $object      = $self->object;
-  my $translation = $object->translation_object;
+  my $hub = $self->hub;
   
-  return $self->non_coding_error unless $translation;
-  
-  my $config = { 
-    display_width   => $object->param('display_width') || 60,
-    species         => $object->species,
+  my $config = {
+    display_width   => $hub->param('display_width') || 60,
+    species         => $hub->species,
     maintain_colour => 1,
     transcript      => 1
   };
   
   for (qw(exons variation number)) {
-    $config->{$_} = $object->param($_) eq 'yes' ? 1 : 0;
+    $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0;
   }
 
   my ($sequence, $markup) = $self->get_sequence_data($translation, $config);
@@ -109,7 +106,21 @@ sub content {
   $self->markup_variation($sequence, $markup, $config) if $config->{'variation'};
   $self->markup_line_numbers($sequence, $config)       if $config->{'number'};
   
+  return ($sequence, $config);
+}
+
+sub content {
+  my $self        = shift;
+  my $translation = $self->object->translation_object;
+  
+  return $self->non_coding_error unless $translation;
+  
+  my ($sequence, $config) = $self->initialize($translation);
+  
   my $html = sprintf('
+    <div class="other-tool">
+      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
+    </div>
     <div class="other-tool">
       <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
       <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
@@ -121,6 +132,7 @@ sub content {
         </fieldset>
       </form>
     </div>',
+    $self->ajax_url('rtf'),
     $translation->Obj->seq,
     $config->{'species'}
   );
@@ -129,6 +141,15 @@ sub content {
   $html .= $self->build_sequence($sequence, $config);
 
   return $html;
+}
+
+sub content_rtf {
+  my $self        = shift;
+  my $translation = $self->object->translation_object;
+  
+  my ($sequence, $config) = $self->initialize($translation);
+  
+  return $self->export_sequence($sequence, $config, sprintf 'Protein-Sequence-%s-%s', $config->{'species'}, $translation->stable_id);
 }
 
 1;

@@ -6,25 +6,63 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene)
 
 sub _init {
   my $self = shift;
-  my $object = $self->object;
+  my $hub  = $self->hub;
   
   $self->cacheable(1);
   $self->ajaxable(1);
   
-  $self->{'subslice_length'} = $object->param('force') || 5000 * ($object->param('display_width') || 60) if $object;
+  $self->{'subslice_length'} = $hub->param('force') || 5000 * ($hub->param('display_width') || 60);
+}
+
+sub initialize {
+  my ($self, $slice, $start, $end) = @_;
+  my $hub    = $self->hub;
+  my $object = $self->object;
+  
+  my $config = {
+    display_width   => $hub->param('display_width') || 60,
+    site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
+    gene_name       => $object->stable_id,
+    species         => $hub->species,
+    title_display   => 'yes',
+    sub_slice_start => $start,
+    sub_slice_end   => $end
+  };
+
+  for (qw(exon_display exon_ori snp_display line_numbering)) {
+    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
+  }
+  
+  $config->{'exon_features'} = $object->Obj->get_all_Exons;
+  $config->{'slices'} = [{ slice => $slice, name => $config->{'species'} }];
+
+  if ($config->{'line_numbering'}) {
+    $config->{'end_number'} = 1;
+    $config->{'number'} = 1;
+  }
+
+  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
+
+  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
+  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
+  
+  return ($sequence, $config);
 }
 
 sub content {
-  my $self = shift;
-  
-  my $object    = $self->object;
-  my $slice     = $object->slice;
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $slice     = $self->object->slice;
   my $length    = $slice->length;
-  my $species   = $object->species;
-  my $type      = $object->type;
-  my $site_type = ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
+  my $species   = $hub->species;
+  my $type      = $hub->type;
+  my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   
   my $html = sprintf('
+    <div class="other-tool">
+      <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
+    </div>
     <div class="other-tool">
       <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
       <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
@@ -34,6 +72,7 @@ sub content {
         </fieldset>
       </form>
     </div>',
+    $self->ajax_url('rtf'),
     uc $slice->seq(1),
     $species
   );
@@ -64,46 +103,18 @@ sub content {
 
 sub content_sub_slice {
   my ($self, $slice) = @_;
+  my $hub    = $self->hub;
+  my $start  = $hub->param('subslice_start');
+  my $end    = $hub->param('subslice_end');
+  my $length = $hub->param('length');
   
-  my $object = $self->object;
-  my $start  = $object->param('subslice_start');
-  my $end    = $object->param('subslice_end');
-  my $length = $object->param('length');
+  $slice ||= $self->object->slice;
+  $slice   = $slice->sub_Slice($start, $end) if $start && $end;
   
-  $slice ||= $object->slice;
-  
-  $slice = $slice->sub_Slice($start, $end) if $start && $end;
-  
-  my $config = {
-    display_width   => $object->param('display_width') || 60,
-    site_type       => ucfirst(lc $object->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
-    gene_name       => $object->Obj->stable_id,
-    species         => $object->species,
-    title_display   => 'yes',
-    sub_slice_start => $start,
-    sub_slice_end   => $end
-  };
-
-  for (qw(exon_display exon_ori snp_display line_numbering)) {
-    $config->{$_} = $object->param($_) unless $object->param($_) eq 'off';
-  }
-  
-  $config->{'exon_features'} = $object->Obj->get_all_Exons;
-  $config->{'slices'} = [{ slice => $slice, name => $config->{'species'} }];
-
-  if ($config->{'line_numbering'}) {
-    $config->{'end_number'} = 1;
-    $config->{'number'} = 1;
-  }
-
-  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
-
-  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
-  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
+  my ($sequence, $config) = $self->initialize($slice, $start, $end);
   
   if ($start == 1) {
-    $config->{'html_template'} = qq{<pre class="text_sequence" style="margin-bottom:0">&gt;} . $object->param('name') . "\n%s</pre>";
+    $config->{'html_template'} = qq{<pre class="text_sequence" style="margin-bottom:0">&gt;} . $hub->param('name') . "\n%s</pre>";
   } elsif ($end && $end == $length) {
     $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
@@ -115,6 +126,12 @@ sub content_sub_slice {
   $config->{'html_template'} .= '<p class="invisible">.</p>';
     
   return $self->build_sequence($sequence, $config);
+}
+
+sub content_rtf {
+  my $self = shift;
+  my ($sequence, $config) = $self->initialize($self->object->slice);
+  return $self->export_sequence($sequence, $config, "Gene-Sequence-$config->{'species'}-$config->{'gene_name'}");
 }
 
 sub get_key {
