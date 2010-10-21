@@ -227,7 +227,7 @@ sub replace_element {
 
 sub initialize {
   my $self   = shift;
-  my $method = 'initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('_initialize_error') ? 'error' : $self->{'format'});
+  my $method = 'initialize_' . ($self->hub && $self->hub->has_fatal_problem && $self->can('initialize_error') ? 'error' : $self->{'format'});
   
   $self->$method;
   $self->modify_elements;
@@ -247,11 +247,11 @@ sub _init {
     
     eval { 
       $module = $classname->new({
-        timer        => $self->{'timer'},
-        input        => $self->{'input'},
-        format       => $self->{'format'},
-        hub          => $self->hub,
-        renderer     => $self->renderer
+        timer    => $self->{'timer'},
+        input    => $self->{'input'},
+        format   => $self->{'format'},
+        hub      => $self->hub,
+        renderer => $self->renderer
       });
     };
     
