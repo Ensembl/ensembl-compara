@@ -24,7 +24,7 @@ sub content {
   my $click_start  = $hub->param('click_start');
   my $click_end    = $hub->param('click_end');
   my %das          = %{$hub->get_all_das($hub->species)};
-  my $slice        = $hub->slice;
+  my $slice        = $self->object->slice;
   my %strand_map   = ( 1 => '+', -1 => '-' );
   
   my $coordinator = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
