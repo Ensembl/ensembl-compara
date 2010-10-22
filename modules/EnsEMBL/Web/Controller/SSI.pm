@@ -199,7 +199,9 @@ sub template_SCRIPT {
   if ($error) {
     warn "Cannot dynamic_use $include: $error";
   } elsif ($module) {
-    return $module->$function;
+    return $module->$function;  # Object oriented module
+  } else {
+    return $include->$function; # Non object oriented script
   }
 }
 
