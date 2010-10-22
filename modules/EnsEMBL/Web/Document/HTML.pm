@@ -5,7 +5,6 @@ package EnsEMBL::Web::Document::HTML;
 use strict;
 
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::RegObj;
 
 use base qw(EnsEMBL::Web::Root);
 
