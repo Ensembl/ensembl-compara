@@ -109,11 +109,12 @@ sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift
 sub check_ajax        { return $_[0]{'check_ajax'} ||= $_[0]->get_cookies('ENSEMBL_AJAX') eq 'enabled';    }
 sub referer           { return $_[0]{'referer'}    ||= $_[0]->_parse_referer;                              }
 sub colourmap         { return $_[0]{'colourmap'}  ||= new Bio::EnsEMBL::ColourMap($_[0]->species_defs);   }
+sub viewconfig        { return $_[0]{'viewconfig'} ||= $_[0]->get_viewconfig;                              } # Store default viewconfig so we don't have to keep getting it from session
 
-sub species_path      { return shift->species_defs->species_path(@_);         }
-sub table_info        { return shift->species_defs->table_info(@_);           }
-sub get_databases     { return shift->databases->get_databases(@_);           }
-sub databases_species { return shift->databases->get_databases_species(@_);   }
+sub species_path      { return shift->species_defs->species_path(@_);       }
+sub table_info        { return shift->species_defs->table_info(@_);         }
+sub get_databases     { return shift->databases->get_databases(@_);         }
+sub databases_species { return shift->databases->get_databases_species(@_); }
 sub delete_param      { shift->input->delete(@_); }
 
 sub has_a_problem      { return scalar keys %{$_[0]{'_problem'}}; }
@@ -422,26 +423,6 @@ sub get_viewconfig {
   $session->apply_to_view_config($view_config, $type, $key);
   
   return $view_config;
-}
-
-
-sub viewconfig {
-  ### Store default viewconfig so we don't have to keep getting it from session
-  
-  my $self = shift;
-  
-  if (!$self->{'viewconfig'}) {
-    my $view_config = $self->get_viewconfig;
-    my $type        = $self->type;
-    
-    if ($type ne 'Transcript' && $self->action ne 'ExternalData' && !$view_config->external_data) {
-      $view_config->external_data = 1 if $view_config->add_class("EnsEMBL::Web::ViewConfig::${type}::ExternalData");
-    }
-    
-    $self->{'viewconfig'} = $view_config;
-  }
-  
-  return $self->{'viewconfig'};
 }
 
 sub get_imageconfig {
