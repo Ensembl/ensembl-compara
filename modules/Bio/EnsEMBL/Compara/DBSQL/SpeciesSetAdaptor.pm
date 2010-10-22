@@ -184,31 +184,19 @@ sub fetch_by_dbID {
 
 sub fetch_all_by_tag_value {
   my ($self, $tag, $value) = @_;
-  my $species_sets; # returned object
 
-  my $sql = qq{
-          SELECT
-              species_set_id
-          FROM
-              species_set_tag
-          WHERE
-              tag = ?
-          AND
-              value = ?
-      };
+  my @species_sets = ();
 
+  my $sql = "SELECT species_set_id FROM species_set_tag WHERE tag='$tag' AND value='$value'";
   my $sth = $self->prepare($sql);
-  $sth->execute($tag,$value);
-  my $species_set_id;
-  $sth->bind_columns(\$species_set_id);
-  while ($sth->fetch) {
-    push(@$species_sets, $self->fetch_by_dbID($species_set_id));
-  }
+  $sth->execute();
 
+  while (my ($species_set_id) = $sth->fetchrow) {
+    push @species_sets, $self->fetch_by_dbID($species_set_id);
+  }
   $sth->finish;
 
-  return $species_sets;
-
+  return \@species_sets;
 }
 
 
