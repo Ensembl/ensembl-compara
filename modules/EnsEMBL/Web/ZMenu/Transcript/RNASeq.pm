@@ -23,7 +23,7 @@ sub content {
   # add new entries for attributes
   foreach my $attrib (@{$gene->get_all_Attributes('AltThreePrime') || []}) {
     $self->add_entry({
-      type  => $attrib->{'description'},
+      type  => $attrib->{'name'},
       label => $attrib->{'value'},
     });
   }
