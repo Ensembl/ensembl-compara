@@ -61,7 +61,7 @@ sub new {
       stack       => 'Stacked',
       unlimited   => 'Stacked unlimited',
       ungrouped   => 'Ungrouped',
-    ]
+    ],
   };
 
   bless $self, $class;
@@ -839,6 +839,16 @@ sub add_dna_align_feature {
     my $k = $data->{$key_2}{'type'} || 'other';
     my $menu = $self->tree->get_node("dna_align_$k");
     if ($menu) {
+      my $alignment_renderers = [ @{$self->{'alignment_renderers'}} ];
+      if (my @other_renderers = @{$data->{$key_2}{'additional_renderers'} || [] } ) {
+	my $i = 0;
+	while ($i < scalar(@other_renderers)) {
+	  splice(@$alignment_renderers, $i+2, 0, $other_renderers[$i]);
+	  splice(@$alignment_renderers, $i+3, 0, $other_renderers[$i+1]);
+	  $i += 2;
+	}
+      }
+
       my $display = (grep { $data->{$key_2}{'display'} eq $_ } @{$self->{'alignment_renderers'}}) ? $data->{$key_2}{'display'} : 'off'; # needed because the same logic_name can be a gene and an alignment
       $menu->append($self->create_track('dna_align_' . $key . '_' . $key_2, $data->{$key_2}{'name'}, {
         db           => $key,
@@ -851,7 +861,7 @@ sub add_dna_align_feature {
         caption      => $data->{$key_2}{'caption'},
         description  => $data->{$key_2}{'description'},
         display      => $display,
-        renderers    => $self->{'alignment_renderers'},
+        renderers    => $alignment_renderers,
         strand       => 'b',
         show_strands => $data->{$key_2}{'show_strands'} || '', # show alignments all on one strand if configured as such
       }));
