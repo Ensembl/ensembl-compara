@@ -20,7 +20,6 @@ sub new {
     species             => $hub->species,
     species_defs        => $hub->species_defs,
     real                => 0,
-    external_data       => 0,
     nav_tree            => 0,
     title               => undef,
     _classes            => [],
@@ -45,7 +44,6 @@ sub new {
 sub hub            :lvalue { $_[0]->{'hub'};            }
 sub default_config :lvalue { $_[0]->{'default_config'}; }
 sub real           :lvalue { $_[0]->{'real'};           }
-sub external_data  :lvalue { $_[0]->{'external_data'};  }
 sub nav_tree       :lvalue { $_[0]->{'nav_tree'};       }
 sub url            :lvalue { $_[0]->{'url'};            }
 sub title          :lvalue { $_[0]->{'title'};          }
@@ -178,24 +176,29 @@ sub add_form_element {
 sub update_from_input {
   my $self  = shift;
   my $input = $self->hub->input;
-  my $flag  = 0;
   
   return $self->reset if $input->param('reset');
   
+  my $flag = 0;
+  my $altered;
+  
   foreach my $key ($self->options) {
-    if (defined $input->param($key) && $input->param($key) ne $self->{'_options'}{$key}{'user'}) {
+    my @values = $input->param($key);
+    
+    if (scalar @values && $values[0] ne $self->{'_options'}{$key}{'user'}) {
       $flag = 1;
-      my @values = $input->param($key);
       
       if (scalar @values > 1) {
         $self->set($key, \@values);
       } else {
-        $self->set($key, $input->param($key));
+        $self->set($key, $values[0]);
       }
+      
+      $altered ||= $key if $values[0] !~  /^(off|no)$/;
     }
   }
   
-  $self->altered = 1 if $flag;
+  $self->altered = $altered || 1 if $flag;
 }
 
 # Loop through the parameters and update the config based on the parameters passed
