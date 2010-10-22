@@ -2,9 +2,6 @@
 
 Ensembl.Panel.Masthead = Ensembl.Panel.extend({
   constructor: function (id) {
-    var minWidth    = Ensembl.minWidthEl.width();
-    var windowWidth = $(window).width();
-    
     this.longTabs        = false;
     this.moreShown       = false;
     this.zIndex          = 1000;
@@ -41,7 +38,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     // Cache the text on the recent location links, to stop hash changes in the URL from duplicating entries in the menu
     this.elLk.dropdowns.filter('.location').find('ul.recent li a').each(function () {
       panel.recentLocations[$(this).text()] = 1;
-    })
+    });
     
     // Send an ajax request to clear the user's history for a tab/dropdown
     $('a.clear_history', this.elLk.dropdowns).bind('click', function () {
@@ -230,7 +227,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       this.elLk.tools.show();
       this.elLk.toolMore.hide();
       this.elLk.toolsUl.width('auto');
-    };
+    }
   },
   
   hashChange: function (r, init) {

@@ -198,12 +198,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           Ensembl.EventManager.trigger('queuePageReload', diff.config, !delayReload);
         } else if (json.redirect) {
           Ensembl.redirect(json.redirect);
-        } else {
-          // TODO: show message on main page
         }
-      },
-      error: function (e) {
-       // TODO: show message on main page
       }
     });
   },

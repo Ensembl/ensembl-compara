@@ -20,7 +20,7 @@ window.addLoadEvent = function (func) {
       func();
     }
   });
-}
+};
 
 $(function () {
   Ensembl.initialize();
