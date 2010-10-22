@@ -172,25 +172,6 @@ sub postReadRequestHandler {
   $ENSEMBL_WEB_REGISTRY->timer->clear_times;
   $ENSEMBL_WEB_REGISTRY->timer_push('Handling script', undef, 'Apache');
   
-  my $user_cookie = new EnsEMBL::Web::Cookie({
-    host    => $ENSEMBL_COOKIEHOST,
-    name    => $ENSEMBL_USER_COOKIE,
-    value   => '',
-    env     => 'ENSEMBL_USER_ID',
-    hash    => {
-      offset  => $ENSEMBL_ENCRYPT_0,
-      key1    => $ENSEMBL_ENCRYPT_1,
-      key2    => $ENSEMBL_ENCRYPT_2,
-      key3    => $ENSEMBL_ENCRYPT_3,
-      expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
-      refresh => $ENSEMBL_ENCRYPT_REFRESH
-    }
-  });
-  
-  # Initialize the user (and possibly group) objects
-  # Unlikely to go to db - just store the IDs
-  $ENSEMBL_WEB_REGISTRY->initialize_user($user_cookie, $r);
-  
   ## Ajax cookie
   my %cookies = CGI::Cookie->parse($r->headers_in->{'Cookie'});
   
@@ -238,21 +219,37 @@ sub handler {
   my $file        = $u->path;
   my $querystring = $u->query;
   
-  my $session_cookie = new EnsEMBL::Web::Cookie({
-    host    => $ENSEMBL_COOKIEHOST,
-    name    => $ENSEMBL_SESSION_COOKIE,
-    value   => '',
-    env     => 'ENSEMBL_SESSION_ID',
-    hash    => {
-      offset  => $ENSEMBL_ENCRYPT_0,
-      key1    => $ENSEMBL_ENCRYPT_1,
-      key2    => $ENSEMBL_ENCRYPT_2,
-      key3    => $ENSEMBL_ENCRYPT_3,
-      expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
-      refresh => $ENSEMBL_ENCRYPT_REFRESH
-    }
-  });
-
+  my $cookies = {
+    session_cookie => new EnsEMBL::Web::Cookie({
+      host    => $ENSEMBL_COOKIEHOST,
+      name    => $ENSEMBL_SESSION_COOKIE,
+      value   => '',
+      env     => 'ENSEMBL_SESSION_ID',
+      hash    => {
+        offset  => $ENSEMBL_ENCRYPT_0,
+        key1    => $ENSEMBL_ENCRYPT_1,
+        key2    => $ENSEMBL_ENCRYPT_2,
+        key3    => $ENSEMBL_ENCRYPT_3,
+        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
+        refresh => $ENSEMBL_ENCRYPT_REFRESH
+      }
+    }),
+    user_cookie => new EnsEMBL::Web::Cookie({
+      host    => $ENSEMBL_COOKIEHOST,
+      name    => $ENSEMBL_USER_COOKIE,
+      value   => '',
+      env     => 'ENSEMBL_USER_ID',
+      hash    => {
+        offset  => $ENSEMBL_ENCRYPT_0,
+        key1    => $ENSEMBL_ENCRYPT_1,
+        key2    => $ENSEMBL_ENCRYPT_2,
+        key3    => $ENSEMBL_ENCRYPT_3,
+        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
+        refresh => $ENSEMBL_ENCRYPT_REFRESH
+      }
+    })
+  };
+  
   my @raw_path = split m|/|, $file;
   shift @raw_path; # Always empty
 
@@ -347,11 +344,11 @@ sub handler {
   if ($raw_path[0] eq 'das') {
     my ($das_species) = split /\./, $path_segments[0];
     
-    $return = EnsEMBL::Web::Apache::DasHandler::handler_das($r, $session_cookie, $species_map{lc $das_species}, \@path_segments, $querystring);
+    $return = EnsEMBL::Web::Apache::DasHandler::handler_das($r, $cookies, $species_map{lc $das_species}, \@path_segments, $querystring);
     
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler for DAS scripts finished', undef, 'Apache');
   } elsif ($species && $species_name) { # species script
-    $return = EnsEMBL::Web::Apache::SpeciesHandler::handler_species($r, $session_cookie, $species_name, \@path_segments, $querystring, $file, $species_name eq $species);
+    $return = EnsEMBL::Web::Apache::SpeciesHandler::handler_species($r, $cookies, $species_name, \@path_segments, $querystring, $file, $species_name eq $species);
     
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler for species scripts finished', undef, 'Apache');
     
