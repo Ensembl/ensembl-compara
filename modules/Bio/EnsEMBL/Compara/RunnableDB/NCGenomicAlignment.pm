@@ -203,7 +203,7 @@ sub run_ncgenomicalignment {
 
   my $mfa_output = $self->worker_temp_directory . "output.mfa";
 
-  my $ncgenomicalignment_executable = $self->analysis->program_file || "/software/ensembl/compara/prank/090707/src/prank";
+  my $ncgenomicalignment_executable = $self->analysis->program_file || '/software/ensembl/compara/prank/090707/src/prank';
   $self->throw("can't find a prank executable to run\n") unless(-e $ncgenomicalignment_executable);
 
   my $cmd = $ncgenomicalignment_executable;

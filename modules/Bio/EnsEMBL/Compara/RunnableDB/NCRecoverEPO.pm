@@ -61,6 +61,11 @@ use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'clusterset_id'  => 1,
+    };
+}
 
 =head2 fetch_input
 
@@ -74,84 +79,50 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+  my $self = shift @_;
 
-  $self->{'clusterset_id'} = 1;
+  $self->input_job->transient_error(0);
+  my $mlss_id    = $self->param('mlss_id')    || die "'mlss_id' is an obligatory numeric parameter\n";
+  my $epo_db     = $self->param('epo_db')     || die "'epo_db' is an obligatory hash parameter\n";
+  my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+  $self->input_job->transient_error(1);
 
-  # Get the needed adaptors here
-  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
-  $self->{treeDBA}   = $self->compara_dba->get_NCTreeAdaptor;
-  $self->{mlssDBA}   = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  $self->{ssDBA}     = $self->compara_dba->get_SpeciesSetAdaptor;
+  $self->param('nc_tree', $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id));
 
-  my @nc_trees_mlsses = @{$self->{mlssDBA}->fetch_all_by_method_link_type('NC_TREES')};
-  $self->{mlssID} = $nc_trees_mlsses[0]->dbID || 0;
+  $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
+  $self->param('nctree_adaptor', $self->compara_dba->get_NCTreeAdaptor);
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
+  my $epo_dba = $self->go_figure_compara_dba($epo_db);
+  $self->param('epo_gab_adaptor', $epo_dba->get_GenomicAlignBlockAdaptor);
+  $self->param('epo_mlss_adaptor', $epo_dba->get_MethodLinkSpeciesSetAdaptor);
 
-  $self->{'comparaDBA_epo'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{epo_db} . ';type=compara');
-  $self->{gabDBA_epo} = $self->{'comparaDBA_epo'}->get_GenomicAlignBlockAdaptor;
-  $self->{mlssDBA_epo} = $self->{'comparaDBA_epo'}->get_MethodLinkSpeciesSetAdaptor;
+  my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 
-  my ($low_cov_ss) = $self->{ssDBA}->fetch_all_by_tag_value('name','low-coverage-assembly');
+# Do we need two pass in and support two identical sets (epo_gdb and low_cov_gdbs)?
+# Aren't they supposed to be different?
 
-  unless($low_cov_ss) {
-    ($low_cov_ss) = $self->{ssDBA}->fetch_all_by_tag_value('name','low-coverage');
+  my ($epo_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
+  unless($epo_ss) {
+    die "Could not fetch a SpeciesSet named 'low-coverage-assembly' from the database\n";
+  }
+  $self->param('epo_gdb', {});
+  foreach my $epo_gdb (@{$epo_ss->genome_dbs}) {
+      $self->param('epo_gdb')->{$epo_gdb} = 1;
   }
 
+  my ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
+  unless($low_cov_ss) {
+    ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage') };
+  }
   unless($low_cov_ss) {
     die "A SpeciesSet named either 'low-coverage-assembly' or 'low-coverage' must be present in the database to run this analysis\n";
   }
-
+  $self->param('low_cov_gdbs', {});
   foreach my $gdb (@{$low_cov_ss->genome_dbs}) {
-    $self->{low_cov_gdbs}{$gdb->dbID} = 1;
+    $self->param('low_cov_gdbs')->{$gdb->dbID} = 1;
   }
 
-  return 1;
 }
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[epo_db analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  if(defined($params->{'nc_tree_id'})) {
-    $self->{'nc_tree'} = 
-         $self->compara_dba->get_NCTreeAdaptor->
-         fetch_node_by_node_id($params->{'nc_tree_id'});
-    printf("  nc_tree_id : %d\n", $self->{'nc_tree_id'});
-  }
-  if(defined($params->{'clusterset_id'})) {
-    $self->{'clusterset_id'} = $params->{'clusterset_id'};
-    printf("  clusterset_id : %d\n", $self->{'clusterset_id'});
-  }
-
-  if(defined($params->{epo_gdb})) {
-    foreach my $epo_gdb (@{$params->{epo_gdb}}) {
-      $self->{epo_gdb}{$epo_gdb} = 1;
-    }
-  }
-  return;
-}
-
 
 =head2 run
 
@@ -164,7 +135,7 @@ sub get_params {
 =cut
 
 sub run {
-  my $self = shift;
+  my $self = shift @_;
 
   $self->run_ncrecoverepo;
   $self->run_low_coverage_best_in_alignment;
@@ -183,8 +154,9 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+  my $self = shift @_;
 
+  $self->param('predictions_to_add', {});
   $self->remove_low_cov_predictions;
   $self->add_matching_predictions;
 }
@@ -199,40 +171,51 @@ sub write_output {
 sub run_ncrecoverepo {
   my $self = shift;
 
-  my $root_id = $self->{nc_tree}->node_id;
+  my $root_id = $self->param('nc_tree')->node_id;
+
+  my %present_gdbs     = ();
+  my %absent_gdbs      = ();
+  my %present_epo_gdbs = ();
+  
   # Find absent gdbs
-  foreach my $leaf (@{$self->{nc_tree}->get_all_leaves}) {
-    $self->{present_gdbs}{$leaf->genome_db_id}++;
+  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
+    $present_gdbs{$leaf->genome_db_id}++;
   }
-  foreach my $present_gdb (keys %{$self->{present_gdbs}}) {
-    if (defined($self->{epo_gdb}{$present_gdb})) {
-      $self->{present_epo_gdb}{$present_gdb} = 1;
+  foreach my $present_gdb (keys %present_gdbs) {
+    if (defined($self->param('epo_gdb')->{$present_gdb})) {
+      $present_epo_gdbs{$present_gdb} = 1;
     }
   }
-  foreach my $epo_gdb (keys %{$self->{epo_gdb}}) {
-    if (!defined($self->{present_gdbs}{$epo_gdb})) {
-      $self->{absent_gdbs}{$epo_gdb} = 1;
+  foreach my $epo_gdb (keys %{$self->param('epo_gdb')}) {
+    if (!defined($present_gdbs{$epo_gdb})) {
+      $absent_gdbs{$epo_gdb} = 1;
     }
   }
 
-  my $leaves = $self->{nc_tree}->get_all_leaves;
+  my %nc_tree_gene_ids = ();
+  my $seq_length = 0;
+
+  my $leaves = $self->param('nc_tree')->get_all_leaves;
   foreach my $leaf (@$leaves) {
     my $description = $leaf->description; $description =~ /Gene\:(\S+)/; my $gene_id = $1;
-    $self->{nc_tree_gene_ids}{$gene_id} = 1;
-    $self->{seq_length} += length($leaf->sequence);
+    $nc_tree_gene_ids{$gene_id} = 1;
+    $seq_length += length($leaf->sequence);
   }
-  $self->{avg_seq_length} = $self->{seq_length}/(scalar @$leaves);
+  
+  my $avg_seq_length = $seq_length/(scalar @$leaves);
 
-  if (defined($self->{absent_gdbs})) {
-    my $pecan_mlss = @{$self->{mlssDBA_epo}->fetch_all_by_method_link_type('PECAN')}->[0];
+  my %pecan_restricted_gab_hash = ();
 
-    foreach my $leaf (@{$self->{nc_tree}->get_all_leaves}) {
+  if (keys %absent_gdbs) {
+    my $pecan_mlss = @{$self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('PECAN')}->[0];
+
+    foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
       my $gdb_name = $leaf->genome_db->name;
       print STDERR "# PECAN $gdb_name\n" if ($self->debug);
-      next unless(defined($self->{present_epo_gdb}{$leaf->genome_db_id})); # Only for the ones in genomic alignments
+      next unless(defined($present_epo_gdbs{$leaf->genome_db_id})); # Only for the ones in genomic alignments
       my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
       next unless (defined($slice));
-      my $genomic_align_blocks = $self->{gabDBA_epo}->fetch_all_by_MethodLinkSpeciesSet_Slice($pecan_mlss,$slice);
+      my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($pecan_mlss,$slice);
       next unless(0 < scalar(@$genomic_align_blocks));
       foreach my $genomic_align_block (@$genomic_align_blocks) {
         my $pecan_restricted_gab = $genomic_align_block->restrict_between_reference_positions($slice->start,$slice->end);
@@ -240,20 +223,20 @@ sub run_ncrecoverepo {
         my $gab_start = $pecan_restricted_gab->{restricted_aln_start};
         my $gab_end   = $genomic_align_block->length - $pecan_restricted_gab->{restricted_aln_end};
         my $boundary = 10;
-        if (defined($self->{pecan_restricted_gab}{$genomic_align_block->dbID})) {
+        if (defined($pecan_restricted_gab_hash{$genomic_align_block->dbID})) {
           if (
-              abs($self->{pecan_restricted_gab}{$genomic_align_block->dbID}{start} - $gab_start) < $boundary &&
-              abs($self->{pecan_restricted_gab}{$genomic_align_block->dbID}{end}   - $gab_end) < $boundary &&
-              abs($self->{pecan_restricted_gab}{$genomic_align_block->dbID}{slice_length} - $slice->length) < $boundary
+              abs($pecan_restricted_gab_hash{$genomic_align_block->dbID}{start} - $gab_start) < $boundary &&
+              abs($pecan_restricted_gab_hash{$genomic_align_block->dbID}{end}   - $gab_end) < $boundary &&
+              abs($pecan_restricted_gab_hash{$genomic_align_block->dbID}{slice_length} - $slice->length) < $boundary
              ) {
             # same genomic alignment region, dont need to go through it again
             print STDERR "#   same genomic alignment region, dont need to go through it again\n" if ($self->debug);
             next;
           }
         }
-        $self->{pecan_restricted_gab}{$genomic_align_block->dbID}{start}          = $gab_start;
-        $self->{pecan_restricted_gab}{$genomic_align_block->dbID}{end}            = $gab_end;
-        $self->{pecan_restricted_gab}{$genomic_align_block->dbID}{slice_length}   = $slice->length;
+        $pecan_restricted_gab_hash{$genomic_align_block->dbID}{start}          = $gab_start;
+        $pecan_restricted_gab_hash{$genomic_align_block->dbID}{end}            = $gab_end;
+        $pecan_restricted_gab_hash{$genomic_align_block->dbID}{slice_length}   = $slice->length;
         foreach my $genomic_align (@{$pecan_restricted_gab->get_all_GenomicAligns}) {
           my $ga_gdb = $genomic_align->genome_db;
           next if ($ga_gdb->dbID == $leaf->genome_db_id);
@@ -269,8 +252,7 @@ sub run_ncrecoverepo {
           print STDERR "#   Other genome: ", $genomic_align->genome_db->name, "\n" if ($self->debug);
           foreach my $gene (@$genes) {
             my $gene_stable_id = $gene->stable_id;
-            if (defined($self->{nc_tree_gene_ids}{$gene_stable_id})) {
-              $self->{validated_nc_tree_gene_ids}{$gene_stable_id} = 1;
+            if (defined($nc_tree_gene_ids{$gene_stable_id})) {
               $found_prediction->{$gene_stable_id} = 1;
               $validated_prediction = 1;
             } elsif ($gene->biotype !~ /coding/) {
@@ -291,9 +273,9 @@ sub run_ncrecoverepo {
                             $other_genome_db_id);
               $sth->finish;
               # See if we can match the RFAM name or RFAM id
-              my $gene_member = $self->{memberDBA}->fetch_by_source_stable_id('ENSEMBLGENE',$found_gene_stable_id);
+              my $gene_member = $self->param('member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$found_gene_stable_id);
               next unless (defined($gene_member));
-              my $other_tree = $self->{treeDBA}->fetch_by_Member_root_id($gene_member);
+              my $other_tree = $self->param('nctree_adaptor')->fetch_by_Member_root_id($gene_member);
               if (defined($other_tree)) {
                 my $other_tree_id = $other_tree->node_id;
                 print STDERR  "#     found_description and gene_member, but already in tree $other_tree_id [$root_id]\n" if ($self->debug);
@@ -302,10 +284,10 @@ sub run_ncrecoverepo {
               my $description = $gene_member->description;
               $description =~ /Acc:(\w+)/;
               my $acc_description = $1 if (defined($1));
-              my $clustering_id = $self->{nc_tree}->get_tagvalue('clustering_id');
-              my $model_id = $self->{nc_tree}->get_tagvalue('model_id');
+              my $clustering_id = $self->param('nc_tree')->get_tagvalue('clustering_id');
+              my $model_id = $self->param('nc_tree')->get_tagvalue('model_id');
               if ($acc_description eq $clustering_id || $acc_description eq $model_id) {
-                $self->{predictions_to_add}->{$found_gene_stable_id} = 1;
+                $self->param('predictions_to_add')->{$found_gene_stable_id} = 1;
               } else {
                 print STDERR "#     found_prediction but Acc not mapped: $acc_description [$clustering_id - $model_id]\n" if ($self->debug);
               }
@@ -319,8 +301,8 @@ sub run_ncrecoverepo {
             my $sequence = $other_slice->seq; $sequence =~ s/N//g;
             my $length = length($sequence);
             next if (0 == $length);
-            next if (($self->{avg_seq_length}/$length) > 1.2 ||
-                     ($self->{avg_seq_length}/$length) < 0.8);
+            next if (($avg_seq_length/$length) > 1.2 ||
+                     ($avg_seq_length/$length) < 0.8);
             my $found_gene_stable_id = "$seqname:$start-$end";
             my $sth = $self->compara_dba->dbc->prepare
               ("INSERT IGNORE INTO recovered_member 
@@ -345,29 +327,31 @@ sub run_ncrecoverepo {
 sub run_low_coverage_best_in_alignment {
   my $self = shift;
 
-  my $epo_low_mlss = @{$self->{mlssDBA_epo}->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')}->[0];
+  $self->param('epo_low_cov_gdbs', {});
+
+  my $epo_low_mlss = @{$self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')}->[0];
   foreach my $genome_db (@{$epo_low_mlss->species_set}) {
-    $self->{epo_low_cov_gdbs}{$genome_db->dbID}++;
+    $self->param('epo_low_cov_gdbs')->{$genome_db->dbID}++;
   }
 
+  my %epo_low_restricted_gab_hash = ();
+  my %epo_low_restricted_gabIDs = ();
+
   # First round to get the candidate GenomicAlignTrees
-  foreach my $leaf (@{$self->{nc_tree}->get_all_leaves}) {
+  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
     my $gdb_name = $leaf->genome_db->name;
-    if (defined($self->{low_cov_gdbs}{$leaf->genome_db_id})) {
-      $self->{low_cov_leaves_pmember_id}{$leaf->member_id} = 1;
-      $self->{low_cov_leaves_stable_id}{$leaf->stable_id} = 1;
-      next;
-    }
-    next unless (defined($self->{epo_low_cov_gdbs}{$leaf->genome_db_id}));
+    next if (defined($self->param('low_cov_gdbs')->{$leaf->genome_db_id}));
+
+    next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     next unless (defined($slice));
-    my $genomic_align_blocks = $self->{gabDBA_epo}->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
+    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     next unless(0 < scalar(@$genomic_align_blocks));
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $genomic_align_block (@$genomic_align_blocks) {
       if (!defined($genomic_align_block->dbID)) {
         # It's considered 2x in the epo_low_cov, so add to the list and skip
-        $self->{epo_low_cov_gdbs}{$leaf->genome_db_id}++;
+        $self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}++;
         next;
       }
       my $epo_low_restricted_gab = $genomic_align_block->restrict_between_reference_positions($slice->start,$slice->end);
@@ -375,33 +359,36 @@ sub run_low_coverage_best_in_alignment {
       my $gab_start = $epo_low_restricted_gab->{restricted_aln_start};
       my $gab_end   = $genomic_align_block->length - $epo_low_restricted_gab->{restricted_aln_end};
       my $boundary = 10;
-      $self->{epo_low_restricted_gab}{$leaf->genome_db_id}{gabID}          = $genomic_align_block->dbID;
-      $self->{epo_low_restricted_gab}{$leaf->genome_db_id}{start}          = $gab_start;
-      $self->{epo_low_restricted_gab}{$leaf->genome_db_id}{end}            = $gab_end;
-      $self->{epo_low_restricted_gab}{$leaf->genome_db_id}{slice_length}   = $slice->length;
-      $self->{epo_low_restricted_gab}{$leaf->genome_db_id}{gdb_name}       = $gdb_name;
-      $self->{epo_low_restricted_gabIDs}{$genomic_align_block->dbID}++;
+      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{gabID}          = $genomic_align_block->dbID;
+      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{start}          = $gab_start;
+      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{end}            = $gab_end;
+      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{slice_length}   = $slice->length;
+      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{gdb_name}       = $gdb_name;
+      $epo_low_restricted_gabIDs{$genomic_align_block->dbID}++;
     }
   }
-  my $epo_low_gabIDS = scalar keys %{$self->{epo_low_restricted_gabIDs}};
   my $max = 0; my $max_gabID;
-  foreach my $gabID (keys %{$self->{epo_low_restricted_gabIDs}}) {
-    my $count = $self->{epo_low_restricted_gabIDs}{$gabID};
+  foreach my $gabID (keys %epo_low_restricted_gabIDs) {
+    my $count = $epo_low_restricted_gabIDs{$gabID};
     if ($count > $max) {$max = $count; $max_gabID = $gabID};
   }
 
+  my %low_cov_leaves_pmember_id_slice_to_check_coord_system = ();
+  my %low_cov_slice_seqs = ();
+  $self->param('low_cov_leaves_to_delete_pmember_id', {});
+
   # Second round to get the low-covs on the max_gabID
-  foreach my $leaf (@{$self->{nc_tree}->get_all_leaves}) {
+  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
     my $gdb_name = $leaf->genome_db->name;
-    next unless (defined($self->{low_cov_gdbs}{$leaf->genome_db_id}));
-    next unless (defined($self->{epo_low_cov_gdbs}{$leaf->genome_db_id}));
+    next unless (defined($self->param('low_cov_gdbs')->{$leaf->genome_db_id}));
+    next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     $self->throw("Unable to fetch slice for this genome_db leaf: $gdb_name") unless (defined($slice));
-    $self->{low_cov_slice_seqs}{$leaf->genome_db_id}{$leaf->member_id} = $slice;
-    my $low_cov_genomic_align_blocks = $self->{gabDBA_epo}->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
+    $low_cov_slice_seqs{$leaf->genome_db_id}{$leaf->member_id} = $slice;
+    my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
-      $self->{low_cov_leaves_to_delete_pmember_id}{$leaf->member_id} = $leaf->gene_member->stable_id;
+      $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
       next;
     }
     print STDERR "# EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
@@ -409,21 +396,23 @@ sub run_low_coverage_best_in_alignment {
       unless ($low_cov_genomic_align_block->{original_dbID} == $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
-        $self->{low_cov_leaves_to_delete_pmember_id}{$leaf->member_id} = $leaf->gene_member->stable_id;
+        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
       } else {
-        $self->{low_cov_leaves_pmember_id_slice_to_check_coord_system}{$leaf->member_id} = $leaf->gene_member->stable_id;
+        $low_cov_leaves_pmember_id_slice_to_check_coord_system{$leaf->member_id} = $leaf->gene_member->stable_id;
       }
     }
   }
 
-  foreach my $genome_db_id (keys %{$self->{low_cov_slice_seqs}}) {
-    my @member_ids = keys %{$self->{low_cov_slice_seqs}{$genome_db_id}};
+  my %low_cov_same_slice = ();
+
+  foreach my $genome_db_id (keys %low_cov_slice_seqs) {
+    my @member_ids = keys %{$low_cov_slice_seqs{$genome_db_id}};
     next if (2 > scalar @member_ids);
     while (my $member_id1 = shift (@member_ids)) {
       foreach my $member_id2 (@member_ids) {
-        my $slice1 = $self->{low_cov_slice_seqs}{$genome_db_id}{$member_id1};
+        my $slice1 = $low_cov_slice_seqs{$genome_db_id}{$member_id1};
         my $coord_level1 = $slice1->coord_system->is_top_level;
-        my $slice2 = $self->{low_cov_slice_seqs}{$genome_db_id}{$member_id2};
+        my $slice2 = $low_cov_slice_seqs{$genome_db_id}{$member_id2};
         my $coord_level2 = $slice2->coord_system->is_top_level;
         if (0 < abs($coord_level1-$coord_level2)) {
           if ($coord_level2 < $coord_level1) {
@@ -437,36 +426,35 @@ sub run_low_coverage_best_in_alignment {
         if ($slice1->seq_region_name eq $proj_slice2->seq_region_name &&
             $slice1->start           eq $proj_slice2->start           &&
             $slice1->end             eq $proj_slice2->end) {
-          $self->{low_cov_same_slice}{$member_id1} = $member_id2;
+          $low_cov_same_slice{$member_id1} = $member_id2;
         }
       }
     }
   }
 
-  foreach my $member_id1 (keys %{$self->{low_cov_same_slice}}) {
-    my $member_id2 = $self->{low_cov_same_slice}{$member_id1};
-    if (defined ($self->{low_cov_leaves_pmember_id_slice_to_check_coord_system}{$member_id2})) {
+  foreach my $member_id1 (keys %low_cov_same_slice) {
+    my $member_id2 = $low_cov_same_slice{$member_id1};
+    if (defined ($low_cov_leaves_pmember_id_slice_to_check_coord_system{$member_id2})) {
       # We found this slice in the genomic alignment, but it's same
       # slice as another higher rank slice, so goes to the delete list
-      my $stable_id2 = $self->{low_cov_leaves_pmember_id_slice_to_check_coord_system}{$member_id2};
+      my $stable_id2 = $low_cov_leaves_pmember_id_slice_to_check_coord_system{$member_id2};
       # $DB::single=1;1;
-      $self->{low_cov_leaves_to_delete_pmember_id}{$member_id2} = $stable_id2;
+      $self->param('low_cov_leaves_to_delete_pmember_id')->{$member_id2} = $stable_id2;
     }
   }
 }
 
 sub remove_low_cov_predictions {
   my $self = shift;
-  my $root_id = $self->{nc_tree}->node_id;
+  my $root_id = $self->param('nc_tree')->node_id;
 
   # Remove low cov members that are not best in alignment
-  foreach my $leaf (@{$self->{nc_tree}->get_all_leaves}) {
-    if (defined($self->{low_cov_leaves_to_delete_pmember_id}{$leaf->member_id})) {
-      my $removed_stable_id = $self->{low_cov_leaves_to_delete_pmember_id}{$leaf->member_id};
+  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
+    if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id}) {
       print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
       my $removed_genome_db_id = $leaf->genome_db_id;
       $leaf->disavow_parent;
-      $self->{treeDBA}->delete_flattened_leaf($leaf);
+      $self->param('nctree_adaptor')->delete_flattened_leaf($leaf);
       my $sth = $self->compara_dba->dbc->prepare
         ("INSERT IGNORE INTO removed_member 
                            (node_id,
@@ -479,8 +467,8 @@ sub remove_low_cov_predictions {
     }
   }
   #calc residue count total
-  my $leafcount = scalar(@{$self->{nc_tree}->get_all_leaves});
-  $self->{nc_tree}->store_tag('gene_count', $leafcount);
+  my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
+  $self->param('nc_tree')->store_tag('gene_count', $leafcount);
 
   return 1;
 }
@@ -489,32 +477,31 @@ sub add_matching_predictions {
   my $self = shift;
 
   # Insert the members that are found new and have matching Acc
-  foreach my $gene_stable_id_to_add (keys %{$self->{predictions_to_add}}) {
-    my $gene_member = $self->{memberDBA}->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
+  foreach my $gene_stable_id_to_add (keys %{$self->param('predictions_to_add')}) {
+    my $gene_member = $self->param('member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
     # Incorporate this member into the cluster
     my $node = new Bio::EnsEMBL::Compara::NestedSet;
     $node->node_id($gene_member->get_canonical_peptide_Member->member_id);
-    $self->{nc_tree}->add_child($node);
-    $self->{nc_tree}->clusterset_id($self->{'clusterset_id'});
+    $self->param('nc_tree')->add_child($node);
+    $self->param('nc_tree')->clusterset_id($self->param('clusterset_id'));
     #leaves are NestedSet objects, bless to make into AlignedMember objects
     bless $node, "Bio::EnsEMBL::Compara::AlignedMember";
 
     #the building method uses member_id's to reference unique nodes
     #which are stored in the node_id value, copy to member_id
     $node->member_id($node->node_id);
-    $node->method_link_species_set_id($self->{mlssID});
+    $node->method_link_species_set_id($self->param('mlss_id'));
     # We won't do the store until the end, otherwise it will affect the main loop
     print STDERR "adding matching prediction $gene_stable_id_to_add\n" if($self->debug);
   }
-  my $clusterset = $self->{treeDBA}->fetch_node_by_node_id($self->{'clusterset_id'});
-  $self->{treeDBA}->store($self->{nc_tree});
+  my $clusterset = $self->param('nctree_adaptor')->fetch_node_by_node_id($self->param('clusterset_id'));
+  $self->param('nctree_adaptor')->store($self->param('nc_tree'));
 
   #calc residue count total
-  my $leafcount = scalar(@{$self->{nc_tree}->get_all_leaves});
-  $self->{nc_tree}->store_tag('gene_count', $leafcount);
+  my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
+  $self->param('nc_tree')->store_tag('gene_count', $leafcount);
 
   return 1;
 }
-
 
 1;

@@ -56,7 +56,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::RFAMClassify;
 
 use strict;
-use Getopt::Long;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -69,6 +68,11 @@ use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'clusterset_id'  => 1,
+    };
+}
 
 =head2 fetch_input
 
@@ -82,62 +86,15 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'clusterset_id'} = 1;
+    $self->input_job->transient_error(0);
+    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter\n";
+    $self->input_job->transient_error(1);
 
-  $self->{mlssDBA} = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  $self->{treeDBA} = $self->compara_dba->get_NCTreeAdaptor;
-  $self->{ssDBA} = $self->compara_dba->get_SpeciesSetAdaptor;
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch MLSS with dbID=$mlss_id";
 
-  $self->get_params($self->parameters);
-
-  my @species_set = @{$self->{'species_set'}};
-  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $self->{'cluster_mlss'}->method_link_type('NC_TREES');
-  my @genomeDB_set;
-  foreach my $gdb_id (@species_set) {
-    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    unless (defined $gdb) {
-      $DB::single=1;1;
-      $self->throw("gdb not defined for gdb_id = $gdb_id\n");
-    }
-    push @genomeDB_set, $gdb;
-  }
-  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return if ($param_string eq "1");
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
-  }
-
-  if (defined $params->{'species_set'}) {
-    $self->{'species_set'} = $params->{'species_set'};
-  }
-  if (defined $params->{'max_gene_count'}) {
-    $self->{'max_gene_count'} = $params->{'max_gene_count'};
-  }
-
-  print("parameters...\n");
-  printf("  species_set    : (%s)\n", join(',', @{$self->{'species_set'}}));
-  printf("  max_gene_count : %d\n", $self->{'max_gene_count'});
-
-  return;
+    $self->param('cluster_mlss', $mlss);
 }
 
 
@@ -152,11 +109,11 @@ sub get_params {
 =cut
 
 sub run {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->tag_assembly_coverage_depth;
-  $self->load_mirbase_families;
-  $self->run_rfamclassify;
+    $self->tag_assembly_coverage_depth;
+    $self->load_mirbase_families;
+    $self->run_rfamclassify;
 }
 
 
@@ -172,16 +129,9 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->dataflow_clusters;
-
-  # modify input_job so that it now contains the clusterset_id
-  my $outputHash = {};
-  $outputHash = eval($self->input_id) if(defined($self->input_id) && $self->input_id =~ /^\s*\{.*\}\s*$/);
-  $outputHash->{'clusterset_id'} = $self->{'clusterset_id'};
-  my $output_id = $self->encode_hash($outputHash);
-
+    $self->dataflow_clusters;
 }
 
 
@@ -191,44 +141,42 @@ sub write_output {
 #
 ##########################################
 
-1;
-
 sub run_rfamclassify {
   my $self = shift;
+
+    # vivification:
+  $self->param('rfamcms', {});
 
   $self->build_hash_cms('model_id');
   $self->build_hash_cms('name');
   $self->build_hash_models;
   $self->load_model_id_names;
 
+  my $nctree_adaptor = $self->compara_dba->get_NCTreeAdaptor;
+
   # Create the clusterset and associate mlss
   my $clusterset;
-  eval {$clusterset = $self->{treeDBA}->fetch_node_by_node_id($self->{'clusterset_id'});};
+  eval {$clusterset = $nctree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));};
   if (!defined($clusterset)) {
-    $self->{'ccEngine'} = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
-    $clusterset = $self->{'ccEngine'}->clusterset;
+    $self->param('ccEngine', new Bio::EnsEMBL::Compara::Graph::ConnectedComponents);
+    $clusterset = $self->param('ccEngine')->clusterset;
     $self->throw("no clusters generated") unless($clusterset);
 
     $clusterset->name("NC_TREES"); # FIXME: NC_TREES?
-    $self->{treeDBA}->store_node($clusterset);
+    $nctree_adaptor->store_node($clusterset);
     printf("clusterset_id %d\n", $clusterset->node_id);
-    $self->{'clusterset_id'} = $clusterset->node_id;
-
-    $self->{mlssDBA}->store($self->{'cluster_mlss'});
-    printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
+    $self->param('clusterset_id', $clusterset->node_id);
   }
-  my $mlss_id = $self->{'cluster_mlss'}->dbID;
-  $mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
+  my $mlss_id = $self->param('mlss_id');
 
   # Classify the cluster that already have an RFAM id or mir id
   print STDERR "Storing clusters...\n" if ($self->debug);
   my $counter = 1;
   foreach my $field ('model_id','name') {
-    foreach my $cm_id (keys %{$self->{rfamcms}{$field}}) {
-      if (defined($self->{rfamclassify}{$cm_id})) {
-        my @cluster_list = keys %{$self->{rfamclassify}{$cm_id}};
+    foreach my $cm_id (keys %{$self->param('rfamcms')->{$field}}) {
+      if (defined($self->param('rfamclassify')->{$cm_id})) {
+        my @cluster_list = keys %{$self->param('rfamclassify')->{$cm_id}};
 
-        $self->{used_cm_id}{$cm_id} = 1;
         # If it's a singleton, we don't store it as a nc tree
         next if (2 > scalar(@cluster_list));
 
@@ -236,8 +184,8 @@ sub run_rfamclassify {
         $counter++;
 
         my $model_name = undef;
-        if    (defined($self->{model_id_names}{$cm_id})) { $model_name = $self->{model_id_names}{$cm_id}; }
-        elsif (defined($self->{model_name_ids}{$cm_id})) { $model_name = $cm_id; }
+        if    (defined($self->param('model_id_names')->{$cm_id})) { $model_name = $self->param('model_id_names')->{$cm_id}; }
+        elsif (defined($self->param('model_name_ids')->{$cm_id})) { $model_name = $cm_id; }
 
         my $cluster = new Bio::EnsEMBL::Compara::NestedSet;
         $clusterset->add_child($cluster);
@@ -246,7 +194,7 @@ sub run_rfamclassify {
           my $node = new Bio::EnsEMBL::Compara::NestedSet;
           $node->node_id($pmember_id);
           $cluster->add_child($node);
-          $cluster->clusterset_id($self->{'clusterset_id'});
+          $cluster->clusterset_id($self->param('clusterset_id'));
           #leaves are NestedSet objects, bless to make into AlignedMember objects
           bless $node, "Bio::EnsEMBL::Compara::AlignedMember";
 
@@ -257,7 +205,7 @@ sub run_rfamclassify {
         }
         $DB::single=1;1;
         # Store the cluster
-        $self->{treeDBA}->store($cluster);
+        $nctree_adaptor->store($cluster);
 
         #calc residue count total
         my $leaves = $cluster->get_all_leaves;
@@ -279,28 +227,24 @@ sub run_rfamclassify {
 }
 
 sub dataflow_clusters {
-  my $self = shift;
+    my $self = shift;
 
-  my $starttime = time();
+    my $clusterset = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($self->param('clusterset_id')) || $self->param('ccEngine')->clusterset;
 
-  my $clusterset;
-  $clusterset = $self->{treeDBA}->fetch_node_by_node_id($self->{'clusterset_id'});
-  if (!defined($clusterset)) {
-    $clusterset = $self->{'ccEngine'}->clusterset;
-  }
-  my $clusters = $clusterset->children;
-  my $counter = 0;
-  foreach my $cluster (@{$clusters}) {
-    my $output_id = sprintf("{'nc_tree_id'=>%d, 'clusterset_id'=>%d}", 
-                            $cluster->node_id, $clusterset->node_id);
-    $self->dataflow_output_id($output_id, 2);
-    printf("%10d clusters flowed\n", $counter) if($counter % 20 == 0);
-    $counter++;
-  }
+    foreach my $cluster (@{$clusterset->children}) {
+        $self->dataflow_output_id( {
+            'nc_tree_id'    => $cluster->node_id,
+            'clusterset_id' => $clusterset->node_id,
+        } , 2);
+    }
 }
 
 sub build_hash_models {
   my $self = shift;
+
+    # vivification:
+  $self->param('rfamclassify', {});
+  $self->param('orphan_transcript_model_id', {});
 
   # We only take the longest transcript by doing a join with subset_member.
   # Right now, this only affects a few transcripts in Drosophila, but it's safer this way.
@@ -324,7 +268,7 @@ sub build_hash_models {
     my $transcript_model_id = $1;
     if ($transcript_model_id =~ /MI\d+/) {
       # We use mirbase families to link
-      my @family_ids = keys %{$self->{mirbase_families}{$transcript_model_id}};
+      my @family_ids = keys %{$self->param('mirbase_families')->{$transcript_model_id}};
       my $family_id = $family_ids[0];
       if (defined $family_id) {
         $transcript_model_id = $family_id;
@@ -340,11 +284,11 @@ sub build_hash_models {
       }
     }
     # A simple hash classified by the Acc model ids
-    $self->{rfamclassify}{$transcript_model_id}{$transcript_member_id} = 1;
+    $self->param('rfamclassify')->{$transcript_model_id}{$transcript_member_id} = 1;
 
     # Store list of orphan ids
-    unless (defined($self->{rfamcms}{'model_id'}{$transcript_model_id}) || defined($self->{rfamcms}{'name'}{$transcript_model_id})) {
-      $self->{orphan_transcript_model_id}{$transcript_model_id}++;
+    unless (defined($self->param('rfamcms')->{'model_id'}{$transcript_model_id}) || defined($self->param('rfamcms')->{'name'}{$transcript_model_id})) {
+      $self->param('orphan_transcript_model_id')->{$transcript_model_id}++;     # NB: this data is never used afterwards
     }
   }
 
@@ -361,7 +305,7 @@ sub build_hash_cms {
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($field_value, $type) = @$ref;
-    $self->{rfamcms}{$field}{$field_value} = 1;
+    $self->param('rfamcms')->{$field}{$field_value} = 1;
   }
 }
 
@@ -369,13 +313,17 @@ sub load_model_id_names {
   my $self = shift;
   my $field = shift;
 
+    # vivification:
+  $self->param('model_id_names', {});
+  $self->param('model_name_ids', {});
+
   my $sql = "SELECT model_id, name from nc_profile";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute;
   while( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($model_id, $name) = @$ref;
-    $self->{model_id_names}{$model_id} = $name;
-    $self->{model_name_ids}{$name} = $model_id;
+    $self->param('model_id_names')->{$model_id} = $name;
+    $self->param('model_name_ids')->{$name} = $model_id;
   }
 }
 
@@ -409,6 +357,8 @@ sub load_mirbase_families {
     $self->throw("error expanding mirbase families $!\n");
   }
 
+    # vivfication:
+  $self->param('mirbase_families', {});
 
   open (FH, $mifam) or $self->throw("Couldnt open miFam file [$mifam]");
   my $family_ac; my $family_id;
@@ -419,7 +369,7 @@ sub load_mirbase_families {
       $family_id = $1;
     } elsif ($_ =~ /^MI\s+(\S+)\s+(\S+)/) {
       my $mi_id = $1; my $mir_id = $2;
-      $self->{mirbase_families}{$mi_id}{$family_id}{$family_ac}{$mir_id} = 1;
+      $self->param('mirbase_families')->{$mi_id}{$family_id}{$family_ac}{$mir_id} = 1;
     } elsif ($_ =~ /\/\//) {
     } else {
       $self->throw("Unexpected line: [$_] in mifam file\n");
@@ -432,42 +382,47 @@ sub load_mirbase_families {
 sub tag_assembly_coverage_depth {
   my $self = shift;
 
-  foreach my $gdb (@{$self->{'cluster_mlss'}->species_set}) {
+  my @low_coverage  = ();
+  my @high_coverage = ();
+
+  foreach my $gdb (@{$self->param('cluster_mlss')->species_set}) {
     my $name = $gdb->name;
     my $coreDBA = $gdb->db_adaptor;
     my $metaDBA = $coreDBA->get_MetaContainerAdaptor;
     my $assembly_coverage_depth = @{$metaDBA->list_value_by_key('assembly.coverage_depth')}->[0];
     next unless (defined($assembly_coverage_depth) || $assembly_coverage_depth ne '');
     if ($assembly_coverage_depth eq 'low' || $assembly_coverage_depth eq '2x') {
-      push @{$self->{low_coverage}}, $gdb;
+      push @low_coverage, $gdb;
     } elsif ($assembly_coverage_depth eq 'high' || $assembly_coverage_depth eq '6x' || $assembly_coverage_depth >= 6) {
-      push @{$self->{high_coverage}}, $gdb;
+      push @high_coverage, $gdb;
     } else {
       $self->throw("Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n");
     }
   }
-  return undef unless(defined($self->{low_coverage}));
+  return undef unless(scalar(@low_coverage));
 
-  my $ss = $self->{ssDBA}->fetch_all_by_GenomeDBs($self->{low_coverage});
+  my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
+
+  my $ss = $species_set_adaptor->fetch_all_by_GenomeDBs(\@low_coverage);
   if (defined($ss)) {
     my $value = $ss->get_tagvalue('name');
     if ($value eq 'low-coverage') {
       # Already stored, nothing needed
     } else {
       # We need to add the tag
-      $self->{ssDBA}->_store_tagvalue($ss->species_set_id,'name','low-coverage');
+      $species_set_adaptor->_store_tagvalue($ss->species_set_id,'name','low-coverage');
     }
   } else {
     # We need to create the species_set, then add the tag
     my $species_set_id;
     my $sth2 = $self->dbc->prepare("INSERT INTO species_set VALUES (?, ?)");
-    foreach my $genome_db (@{$self->{low_coverage}}) {
+    foreach my $genome_db (@low_coverage) {
       my $genome_db_id = $genome_db->dbID;
       $sth2->execute(($species_set_id or "NULL"), $genome_db_id);
       $species_set_id = $sth2->{'mysql_insertid'};
     }
     $sth2->finish();
-    $self->{ssDBA}->_store_tagvalue($species_set_id,'name','low-coverage');
+    $species_set_adaptor->_store_tagvalue($species_set_id,'name','low-coverage');
   }
 }
 

@@ -153,13 +153,12 @@ sub write_output {
 
 
 sub store_ncrna_gene {
-  my $self = shift;
-  my $gene = shift;
+    my ($self, $gene) = @_;
 
-  my $longest_ncrna_member;
-  my $max_ncrna_length = 0;
-  my $gene_member;
-  my $gene_member_not_stored = 1;
+    my $longest_ncrna_member;
+    my $max_ncrna_length = 0;
+    my $gene_member;
+    my $gene_member_not_stored = 1;
 
     my $member_adaptor = $self->compara_dba->get_MemberAdaptor();
 
@@ -169,63 +168,64 @@ sub store_ncrna_gene {
         $gene->stable_id($pseudo_stableID_prefix ."G_". $gene->dbID);
     }
 
-  foreach my $transcript (@{$gene->get_all_Transcripts}) {
-    if (defined $transcript->translation) {
-      warn("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-      next;
+    TRANSCRIPT: foreach my $transcript (@{$gene->get_all_Transcripts}) {
+        if (defined $transcript->translation) {
+            warn("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
+            next;
+        }
+
+        if($pseudo_stableID_prefix) {
+            $transcript->stable_id($pseudo_stableID_prefix ."T_". $transcript->dbID);
+        }
+
+        print("     transcript " . $transcript->stable_id ) if($self->debug);
+
+        my $fasta_description = $self->fasta_description($gene, $transcript) or next TRANSCRIPT;
+
+        my $ncrna_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
+            -transcript  => $transcript,
+            -genome_db   => $self->param('genome_db'),
+            -translate   => 'ncrna',
+            -description => $fasta_description,
+        );
+
+        print(" => member " . $ncrna_member->stable_id) if($self->debug);
+
+        my $transcript_spliced_seq = $transcript->spliced_seq;
+
+            # store gene_member here only if at least one ncRNA is to be loaded for the gene.
+        if($self->param('store_genes') and $gene_member_not_stored) {
+            print("     gene       " . $gene->stable_id ) if($self->debug);
+
+            $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
+                -gene      => $gene,
+                -genome_db => $self->param('genome_db'),
+            );
+            print(" => member " . $gene_member->stable_id) if($self->debug);
+
+            eval {
+                $member_adaptor->store($gene_member);
+                print(" : stored") if($self->debug);
+            };
+
+            push @{$self->param('to_gene_subset')}, $gene_member->dbID;
+            print("\n") if($self->debug);
+            $gene_member_not_stored = 0;
+        }
+
+        $member_adaptor->store($ncrna_member);
+        $member_adaptor->store_gene_peptide_link($gene_member->dbID, $ncrna_member->dbID);
+        print(" : stored\n") if($self->debug);
+
+        if(length($transcript_spliced_seq) > $max_ncrna_length) {
+            $max_ncrna_length     = length($transcript_spliced_seq);
+            $longest_ncrna_member = $ncrna_member;
+        }
     }
 
-    if($pseudo_stableID_prefix) {
-        $transcript->stable_id($pseudo_stableID_prefix ."T_". $transcript->dbID);
+    if($longest_ncrna_member) {
+        push @{$self->param('to_ncrna_subset')}, $longest_ncrna_member->dbID;
     }
-
-    #print("gene " . $gene->stable_id . "\n");
-    print("     transcript " . $transcript->stable_id ) if($self->debug);
-
-    my $ncrna_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
-         -transcript  => $transcript,
-         -genome_db   => $self->param('genome_db'),
-         -translate   => 'ncrna',
-         -description => $self->fasta_description($gene, $transcript),
-   );
-
-    print(" => member " . $ncrna_member->stable_id) if($self->debug);
-
-    my $transcript_spliced_seq = $transcript->spliced_seq;
-
-    # store gene_member here only if at least one ncRNA is to be loaded for the gene.
-    if($self->param('store_genes') and $gene_member_not_stored) {
-      print("     gene       " . $gene->stable_id ) if($self->debug);
-      $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
-          -gene      => $gene,
-          -genome_db => $self->param('genome_db'),
-      );
-      print(" => member " . $gene_member->stable_id) if($self->debug);
-
-      eval {
-        $member_adaptor->store($gene_member);
-        print(" : stored") if($self->debug);
-      };
-
-      push @{$self->param('to_gene_subset')}, $gene_member->dbID;
-      print("\n") if($self->debug);
-      $gene_member_not_stored = 0;
-    }
-
-    $member_adaptor->store($ncrna_member);
-    $member_adaptor->store_gene_peptide_link($gene_member->dbID, $ncrna_member->dbID);
-    print(" : stored\n") if($self->debug);
-
-    if(length($transcript_spliced_seq) > $max_ncrna_length) {
-      $max_ncrna_length     = length($transcript_spliced_seq);
-      $longest_ncrna_member = $ncrna_member;
-    }
-
-  }
-
-  if($longest_ncrna_member) {
-    push @{$self->param('to_ncrna_subset')}, $longest_ncrna_member->dbID;
-  }
 }
 
 sub fasta_description {
@@ -241,8 +241,8 @@ sub fasta_description {
       my $exon = $exons[0];
       my @supporting_features = @{$exon->get_all_supporting_features};
       if (scalar(@supporting_features)!=1) {
-            # should we simply discard those?
-        die "unexpected miRNA supporting features";
+        warn "unexpected miRNA supporting features";
+        next;
       }
       my $supporting_feature = $supporting_features[0];
       eval { $acc = $supporting_feature->hseqname; };

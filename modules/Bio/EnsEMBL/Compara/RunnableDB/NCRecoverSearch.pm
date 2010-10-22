@@ -56,12 +56,17 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch;
 
 use strict;
-use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'clusterset_id' => 1,
+        'context_size'  => '120%',
+    };
+}
 
 =head2 fetch_input
 
@@ -75,67 +80,22 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'clusterset_id'} = 1;
-  $self->{context_size} = '120%';
+    $self->input_job->transient_error(0);
+    my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+    $self->input_job->transient_error(1);
 
-  # Get the needed adaptors here
-  $self->{gdbDBA} = $self->compara_dba->get_GenomeDBAdaptor;
+    my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    $self->param('nc_tree', $nc_tree);
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
+    $self->param('model_id', $nc_tree->get_tagvalue('clustering_id'));
 
-# # For long parameters, look at analysis_data
-#   if($self->{analysis_data_id}) {
-#     my $analysis_data_id = $self->{analysis_data_id};
-#     my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-#     $self->get_params($analysis_data_params);
-#   }
+    $self->fetch_recovered_member_entries($nc_tree->node_id);
 
-  return 1;
+        # Get the needed adaptors here:
+    $self->param('genomedb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
 }
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[param1 param2 param3 analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  # Fetch nc_tree
-  if(defined($params->{'nc_tree_id'})) {
-    $self->{'nc_tree'} =  
-         $self->compara_dba->get_NCTreeAdaptor->
-         fetch_node_by_node_id($params->{'nc_tree_id'});
-  }
-  if(defined($params->{'clusterset_id'})) {
-    $self->{'clusterset_id'} = $params->{'clusterset_id'};
-  }
-
-  $self->{model_id} = $self->{nc_tree}->get_tagvalue('clustering_id');
-
-  # Fetch recovered_member entries
-  $self->fetch_recovered_member_entries($self->{nc_tree}->node_id);
-
-  return;
-}
-
 
 =head2 run
 
@@ -170,7 +130,6 @@ sub write_output {
   my $self = shift;
 
   # Default autoflow
-  return 1;
 }
 
 
@@ -183,35 +142,31 @@ sub write_output {
 sub run_ncrecoversearch {
   my $self = shift;
 
-  next unless(defined($self->{recovered_members}));
+  next unless(keys %{$self->param('recovered_members')});
 
-  my $cmsearch_executable = $self->analysis->program_file;
-    unless (-e $cmsearch_executable) {
-      print "Using default cmsearch executable!\n";
-      $cmsearch_executable = "/nfs/users/nfs_a/avilella/src/infernal/infernal-1.0/src/cmsearch";
-  }
-  $self->throw("can't find a cmalign executable to run\n") unless(-e $cmsearch_executable);
+  my $cmsearch_executable = $self->analysis->program_file || '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmsearch';
+  die "can't find a cmsearch executable to run\n" unless(-e $cmsearch_executable);
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  my $root_id = $self->{nc_tree}->node_id;
+  my $root_id = $self->param('nc_tree')->node_id;
 
   my $input_fasta = $worker_temp_directory . $root_id . ".db";
   open FILE,">$input_fasta" or die "$!\n";
 
-  foreach my $genome_db_id (keys %{$self->{recovered_members}}) {
-    my $gdb = $self->{gdbDBA}->fetch_by_dbID($genome_db_id);
-    my $slice_adaptor = $gdb->db_adaptor->get_SliceAdaptor;
-    foreach my $recovered_entry (keys %{$self->{recovered_members}{$genome_db_id}}) {
-      my $recovered_id = $self->{recovered_members}{$genome_db_id}{$recovered_entry};
+  foreach my $genome_db_id (keys %{$self->param('recovered_members')}) {
+    my $gdb = $self->param('genomedb_adaptor')->fetch_by_dbID($genome_db_id);
+    my $core_slice_adaptor = $gdb->db_adaptor->get_SliceAdaptor;
+    foreach my $recovered_entry (keys %{$self->param('recovered_members')->{$genome_db_id}}) {
+      my $recovered_id = $self->param('recovered_members')->{$genome_db_id}{$recovered_entry};
       unless ($recovered_entry =~ /(\S+)\:(\S+)\-(\S+)/) {
         warn("failed to parse coordinates for recovered entry: [$genome_db_id] $recovered_entry\n");
         next;
       } else {
         my ($seq_region_name,$start,$end) = ($1,$2,$3);
         my $temp; if ($start > $end) { $temp = $start; $start = $end; $end = $temp;}
-        my $size = $self->{context_size};
+        my $size = $self->param('context_size');
         $size = int( ($1-100)/200 * ($end-$start+1) ) if( $size =~/([\d+\.]+)%/ );
-        my $slice = $slice_adaptor->fetch_by_region('toplevel',$seq_region_name,$start-$size,$end+$size);
+        my $slice = $core_slice_adaptor->fetch_by_region('toplevel',$seq_region_name,$start-$size,$end+$size);
         my $seq = $slice->seq; $seq =~ s/(.{60})/$1\n/g; chomp $seq;
         print FILE ">$recovered_id\n$seq\n";
       }
@@ -219,13 +174,14 @@ sub run_ncrecoversearch {
   }
   close FILE;
 
-  my $ret1 = $self->dump_model('model_id',$self->{model_id});
-  my $ret2 = $self->dump_model('name',$self->{model_id}) if (1 == $ret1);
+  my $model_id = $self->param('model_id');
+  my $ret1 = $self->dump_model('model_id', $model_id);
+  my $ret2 = $self->dump_model('name',     $model_id) if (1 == $ret1);
   if (1 == $ret2) {
-    $self->{'nc_tree'}->release_tree;
-    $self->{'nc_tree'} = undef;
+    $self->param('nc_tree')->release_tree;
+    $self->param('nc_tree', undef);
     $self->input_job->transient_error(0);
-    die;
+    die "Failed to find '$model_id' both in 'model_id' and 'name' fields of 'nc_profile' table";
   }
 
   my $cmd = $cmsearch_executable;
@@ -235,7 +191,7 @@ sub run_ncrecoversearch {
 
   my $tabfilename = $worker_temp_directory . $root_id . ".tab";
   $cmd .= " --tabfile " . $tabfilename;
-  $cmd .= " " . $self->{profile_file};
+  $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $input_fasta;
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
@@ -294,13 +250,15 @@ sub dump_model {
   print FILE $nc_profile;
   close FILE;
 
-  $self->{profile_file} = $profile_file;
+  $self->param('profile_file', $profile_file);
   return 0;
 }
 
 sub fetch_recovered_member_entries {
   my $self = shift;
   my $root_id = shift;
+
+  $self->param('recovered_members', {});
 
   my $sql = 
     "SELECT rcm.recovered_id, rcm.node_id, rcm.stable_id, rcm.genome_db_id ".
@@ -312,10 +270,8 @@ sub fetch_recovered_member_entries {
   $sth->execute();
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($recovered_id, $node_id, $stable_id, $genome_db_id) = @$ref;
-    $self->{recovered_members}{$genome_db_id}{$stable_id} = $recovered_id;
+    $self->param('recovered_members')->{$genome_db_id}{$stable_id} = $recovered_id;
   }
-
-  return 0;
 }
 
 

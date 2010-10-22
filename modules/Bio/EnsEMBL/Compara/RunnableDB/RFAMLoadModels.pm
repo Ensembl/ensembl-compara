@@ -158,23 +158,6 @@ sub download_rfam_models {
   return 1;
 }
 
-sub store_hmmprofile_dir {
-  my $self = shift;
-
-  my $worker_temp_directory = $self->worker_temp_directory;
-  opendir DIR, $worker_temp_directory or die "couldnt find $worker_temp_directory:$!";
-  my $cm_file;
-  while (( defined($cm_file = readdir(DIR)) )) {
-    #Look for the alignments in the dir
-    my $model_id;
-    if ($cm_file =~ /(\w+)\.cm$/) {
-      $model_id = $1;
-      $self->throw("wrong file") unless ($model_id =~ /RF/);
-      my $tmp_cm_file = $worker_temp_directory . $cm_file;
-      $self->load_cmfile($tmp_cm_file,$model_id);
-    }
-  }
-}
 
 sub store_hmmprofile {
   my $self = shift;
@@ -203,31 +186,6 @@ sub store_hmmprofile {
   return 1;
 }
 
-sub load_cmfile {
-  my $self = shift;
-  my $cm_file = shift;
-  my $model_id = shift;
-
-  print("load from file $cm_file\n") if($self->debug);
-
-  open (FH, $cm_file) or $self->throw("Couldnt open cm_file [$cm_file]");
-  my $name;
-  my $hmm_text;
-  while (<FH>) {
-    if ($_ =~ /NAME\s+(\S+)/) {
-      $name = $1;
-    }
-    $hmm_text .= $_;
-  }
-  close(FH);
-
-  my $table_name = 'nc_profile';
-  my $sth = $self->compara_dba->dbc->prepare("INSERT IGNORE INTO $table_name VALUES (?,?,?,?)");
-  $sth->execute($model_id, $name, $self->param('type'), $hmm_text);
-  $sth->finish;
-
-  return undef;
-}
 
 sub load_cmprofile {
   my $self = shift;

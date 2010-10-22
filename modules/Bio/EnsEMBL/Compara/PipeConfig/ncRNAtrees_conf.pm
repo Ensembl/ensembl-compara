@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION  
 
-    Load GenomeDB entries, subsets and ncRNA members starting from a mlss_id or species_set_id (work in progress)
+    This is an experimental PipeConfig file for ncRNAtrees pipeline (work in progress)
 
 =head1 CONTACT
 
@@ -31,9 +31,10 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'mlss_id'           => 40066,
+        'max_gene_count'    => 1500,
 
         'release'           => '60',
-        'rel_suffix'        => 'b',    # an empty string by default, a letter otherwise
+        'rel_suffix'        => 'c',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
@@ -71,7 +72,7 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        'rel_db' => {
+        'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
@@ -181,7 +182,7 @@ sub pipeline_analyses {
             -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
             -flow_into => {
                 2 => [ 'load_genomedb' ],
-                1 => [ 'create_species_tree' ],
+                1 => [ 'create_species_tree', 'create_lca_species_set', 'load_rfam_models' ],
             },
         },
 
@@ -190,31 +191,9 @@ sub pipeline_analyses {
             -parameters => {
                 'registry_dbs'  => [ $self->o('reg1'), $self->o('reg2'), ],
             },
+            -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
             -flow_into => {
                 1 => [ 'load_members_factory' ],   # each will flow into another one
-            },
-        },
-
-# ---------------------------------------------[load ncRNA and gene members and subsets]---------------------------------------------
-
-        {   -logic_name    => 'load_members_factory',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomePrepareNCMembers',
-            -hive_capacity => 10,
-#temporary:
--wait_for => [ 'create_species_tree', 'store_species_tree' ],
-            -flow_into => {
-                2 => [ 'load_members' ],   # per-genome fan
-            },
-        },
-
-        {   -logic_name    => 'load_members',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers',
-            -hive_capacity => 20,
-#temporary:
--wait_for => [ 'create_species_tree', 'store_species_tree' ],
-            -flow_into => {
-                3 => [ 'mysql:////subset_member' ],   # every ncrna member is added to the corresponding subset
-                4 => [ 'mysql:////subset_member' ],   # every gene  member is added to the corresponding subset
             },
         },
 
@@ -228,23 +207,166 @@ sub pipeline_analyses {
                 'cmd'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/tree/testTaxonTree.pl -url #db_url# -create_species_tree -multifurcation_deletes_node 33316_129949_314146 -multifurcation_deletes_all_subnodes 9347_186625_32561 -njtree_output_filename #species_tree_file# -no_other_files 2>/dev/null',
             },
             -wait_for => [ 'load_genomedb_factory', 'load_genomedb' ],  # have to wait for both to complete (so is a funnel)
+            -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 1 => { 'store_species_tree' => { 'species_tree_file' => '#species_tree_file#' } },
             },
         },
 
         {   -logic_name    => 'store_species_tree',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
             -parameters => {
                 'inputcmd'        => 'cat #species_tree_file#',
                 'input_id'        => { 'node_id' => 1, 'tag' => 'species_tree_string', 'value' => '#_range_start#' },
                 'fan_branch_code' => 3,
             },
+            -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 3 => [ 'mysql:////nc_tree_tag' ],
-
-                # can continue the backbone from here (but make sure to sync with the double fan!)
             },
+        },
+
+# ---------------------------------------------[create the low-coverage-assembly species set]-----------------------------------------
+
+        {   -logic_name => 'create_lca_species_set',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [  "INSERT INTO species_set VALUES ()",   # insert a dummy pair (auto_increment++, 0) into the table
+                            "DELETE FROM species_set WHERE species_set_id IN (#_insert_id_0#)",     # delete the previously inserted row, but keep the auto_increment
+                ],
+            },
+            -hive_capacity => -1,   # to allow for parallelization
+            -flow_into => {
+                2 => {
+                    'store_lca_species_set'     => { 'lca_species_set_id' => '#_insert_id_0#' },     # pass it on to the query
+                    'mysql:////species_set_tag' => { 'species_set_id' => '#_insert_id_0#', 'tag' => 'name', 'value' => 'low-coverage-assembly' },   # record the id in ss_tag table
+                },
+            },
+        },
+
+        {   -logic_name => 'store_lca_species_set',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
+            -parameters => {
+                'db_conn'         => $self->o('epo_db'),
+                'inputquery'      => "SELECT DISTINCT(g.genome_db_id) FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
+                'input_id'        => { 'species_set_id' => '#lca_species_set_id#', 'genome_db_id' => '#_range_start#' },
+                'fan_branch_code' => 3,
+            },
+            -hive_capacity => -1,   # to allow for parallelization
+            -flow_into => {
+                3 => [ 'mysql:////species_set' ],
+            },
+        },
+
+# ---------------------------------------------[load ncRNA and gene members and subsets]---------------------------------------------
+
+        {   -logic_name    => 'load_members_factory',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomePrepareNCMembers',
+            -hive_capacity => 10,
+            -flow_into => {
+                2 => [ 'load_members' ],   # per-genome fan
+            },
+        },
+
+        {   -logic_name    => 'load_members',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers',
+            -hive_capacity => 30,
+            -flow_into => {
+                3 => [ 'mysql:////subset_member' ],   # every ncrna member is added to the corresponding subset
+                4 => [ 'mysql:////subset_member' ],   # every gene  member is added to the corresponding subset
+            },
+        },
+
+# ---------------------------------------------[load RFAM models]---------------------------------------------------------------------
+
+        {   -logic_name    => 'load_rfam_models',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMLoadModels',
+            -hive_capacity => -1,   # to allow for parallelization
+            -flow_into => {
+                1 => [ 'rfam_classify' ],
+            },
+        },
+
+# ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
+
+        {   -logic_name    => 'rfam_classify',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMClassify',
+            -parameters    => {
+                'mlss_id'        => $self->o('mlss_id'),
+            },
+            -wait_for => [ 'create_species_tree', 'store_species_tree', 'create_lca_species_set', 'store_lca_species_set', 'load_members_factory', 'load_members' ], # mega-funnel
+            -flow_into => {
+                2 => [ 'recover_epo' ],
+            },
+        },
+
+# ---------------------------------------------[by-cluster branches]----------------------------------------------------------------------
+
+        {   -logic_name    => 'recover_epo',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO',
+            -parameters    => {
+                'mlss_id'        => $self->o('mlss_id'),
+                'epo_db'         => $self->o('epo_db'),
+            },
+            -hive_capacity => 100,
+            -flow_into => {
+                1 => [ 'recover_search' ],
+            },
+        },
+
+        {   -logic_name    => 'recover_search',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch',
+            -batch_size    => 5,
+            -hive_capacity => -1,
+            -flow_into => {
+                1 => [ 'infernal' ],
+            },
+        },
+
+        {   -logic_name    => 'infernal',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Infernal',
+            -hive_capacity => -1,
+            -failed_job_tolerance => 10,    # that many per cent jobs are allowed to fail
+            -flow_into => {
+                1 => [ 'sec_struct_tree' ],
+            },
+        },
+
+        {   -logic_name    => 'sec_struct_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCSecStructTree',
+            -hive_capacity => -1,
+            -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
+            -flow_into => {
+                1 => [ 'genomic_alignment' ],
+            },
+        },
+
+        {   -logic_name    => 'genomic_alignment',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCGenomicAlignment',
+            -hive_capacity => -1,
+            -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
+            -flow_into => {
+                1 => [ 'treebest_mmerge' ],
+            },
+        },
+
+        {   -logic_name    => 'treebest_mmerge',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge',
+            -hive_capacity => 400,
+            -flow_into => {
+                1 => [ 'orthotree', 'ktreedist' ],
+            },
+        },
+
+        {   -logic_name    => 'orthotree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree',
+            -hive_capacity => 200,
+        },
+
+        {   -logic_name    => 'ktreedist',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Ktreedist',
+            -hive_capacity => -1,
+            -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
         },
 
     ];

@@ -56,9 +56,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::NCSecStructTree;
 
 use strict;
-use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -76,63 +74,20 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'clusterset_id'} = 1;
+    $self->input_job->transient_error(0);
+    my $nc_tree_id = $self->param('nc_tree_id') || die "'nc_tree_id' is an obligatory numeric parameter\n";
+    $self->input_job->transient_error(1);
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
+    my $nc_tree    = $self->compara_dba->get_NCTreeAdaptor->fetch_node_by_node_id($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    $self->param('nc_tree', $nc_tree);
 
-#  my $self = shift;
-
-  my $starttime = time()*1000;
-
-  $self->{'cdna'} = 1; #always use cdna for njtree_phyml
-  $self->{'input_aln'} = $self->dumpMultipleAlignmentStructToWorkdir
-    (
-     $self->{'nc_tree'}
-    );
-  return unless($self->{'input_aln'});
-
-# For long parameters, look at analysis_data
-  if($self->{analysis_data_id}) {
-    my $analysis_data_id = $self->{analysis_data_id};
-    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-    $self->get_params($analysis_data_params);
-  }
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
+    if(my $input_aln = $self->dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
+        $self->param('input_aln', $input_aln);
+    } else {
+        return;
     }
-  }
-
-  foreach my $key (qw[param1 param2 param3 analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  if(defined($params->{'nc_tree_id'})) {
-    $self->{'nc_tree'} = 
-         $self->compara_dba->get_NCTreeAdaptor->
-         fetch_node_by_node_id($params->{'nc_tree_id'});
-  }
-
-  return;
 }
 
 
@@ -147,10 +102,10 @@ sub get_params {
 =cut
 
 sub run {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->run_bootstrap_raxml;
-  $self->run_ncsecstructtree;
+    $self->run_bootstrap_raxml;
+    $self->run_ncsecstructtree;
 }
 
 
@@ -166,7 +121,7 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
 }
 
@@ -181,19 +136,15 @@ sub write_output {
 sub run_bootstrap_raxml {
   my $self = shift;
 
-  my $aln_file    = $self->{'input_aln'};
+  my $aln_file = $self->param('input_aln');
   return unless (defined($aln_file));
 
-  my $raxml_tag = $self->{nc_tree}->node_id . "." . $self->worker->process_id . ".raxml";
-  my $raxml_executable = $self->analysis->program_file;
-    unless (-e $raxml_executable) {
-      print "Using default cmalign executable!\n";
-      $raxml_executable = "/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3";
-  }
+  my $raxml_tag = $self->param('nc_tree')->node_id . "." . $self->worker->process_id . ".raxml";
+  my $raxml_executable = $self->analysis->program_file || '/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3';
   $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
   my $bootstrap_num = 10;
-  my $root_id = $self->{nc_tree}->node_id;
+  my $root_id = $self->param('nc_tree')->node_id;
   my $tag = 'ml_IT_' . $bootstrap_num;
 
   # Checks if the bootstrap tree is already in the DB (is this a rerun?)
@@ -239,12 +190,12 @@ sub run_bootstrap_raxml {
   my $time_per_sample = $bootstrap_msec / $bootstrap_num;
   my $ideal_bootstrap_num = $ideal_msec / $time_per_sample;
   if ($ideal_bootstrap_num < 10) {
-    if   ($ideal_bootstrap_num < 5) { $self->{bootstrap_num} = 1; }
-    else                            { $self->{bootstrap_num} = 10; }
+    if   ($ideal_bootstrap_num < 5) { $self->param('bootstrap_num',  1); }
+    else                            { $self->param('bootstrap_num', 10); }
   } elsif ($ideal_bootstrap_num > 100) {
-    $self->{bootstrap_num} = 100;
+    $self->param('bootstrap_num', 100);
   } else {
-    $self->{bootstrap_num} = int($ideal_bootstrap_num);
+    $self->param('bootstrap_num', int($ideal_bootstrap_num) );
   }
 
   my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$bootstrap_num";
@@ -261,19 +212,15 @@ sub run_bootstrap_raxml {
 sub run_ncsecstructtree {
   my $self = shift;
 
-  my $aln_file    = $self->{'input_aln'};
+  my $aln_file    = $self->param('input_aln');
   return unless (defined($aln_file));
-  my $struct_file = $self->{'struct_aln'};
+  my $struct_file = $self->param('struct_aln');
 
-  my $raxml_tag = $self->{nc_tree}->node_id . "." . $self->worker->process_id . ".raxml";
-  my $raxml_executable = $self->analysis->program_file;
-    unless (-e $raxml_executable) {
-      print "Using default cmalign executable!\n";
-      $raxml_executable = "/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3";
-  }
+  my $raxml_tag = $self->param('nc_tree')->node_id . "." . $self->worker->process_id . ".raxml";
+  my $raxml_executable = $self->analysis->program_file || '/software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3';
   $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
-  my $root_id = $self->{nc_tree}->node_id;
+  my $root_id = $self->param('nc_tree')->node_id;
   foreach my $model ( qw(S16B S16A S7B S7C S6A S6B S6C S6D S6E S7A S7D S7E S7F S16) ) {
     my $tag = 'ss_IT_' . $model;
     my $sql1 = "select value from nc_tree_tag where node_id=$root_id and tag='$tag'";
@@ -303,7 +250,7 @@ sub run_ncsecstructtree {
     $cmd .= " -S $struct_file" if (defined($struct_file));
     $cmd .= " -A $model";
     $cmd .= " -n $raxml_tag.$model";
-    $cmd .= " -N " . $self->{bootstrap_num} if (defined($self->{bootstrap_num}));
+    $cmd .= " -N " . $self->param('bootstrap_num') if (defined($self->param('bootstrap_num')));
 
     my $worker_temp_directory = $self->worker_temp_directory;
     $self->compara_dba->dbc->disconnect_when_inactive(1);
@@ -317,11 +264,11 @@ sub run_ncsecstructtree {
     my $runtime_msec = int(time()*1000-$starttime);
 
     my $raxml_output = $self->worker_temp_directory . "RAxML_bestTree." . "$raxml_tag.$model";
-    $self->{model} = $model;
+    $self->param('model', $model);
 
     $self->store_newick_into_protein_tree_tag_string($tag,$raxml_output);
-    my $model_runtime = $self->{model} . "_runtime_msec";
-    $self->{'nc_tree'}->store_tag($model_runtime, $runtime_msec);
+    my $model_runtime = $self->param('model') . "_runtime_msec";
+    $self->param('nc_tree')->store_tag($model_runtime, $runtime_msec);
 
     # Unlink run files
     my $temp_dir = $self->worker_temp_directory;
@@ -333,8 +280,7 @@ sub run_ncsecstructtree {
   return 1;
 }
 
-sub dumpMultipleAlignmentStructToWorkdir
-{
+sub dumpMultipleAlignmentStructToWorkdir {
   my $self = shift;
   my $tree = shift;
 
@@ -345,11 +291,10 @@ sub dumpMultipleAlignmentStructToWorkdir
     return undef;
   }
 
-  $self->{'file_root'} = 
-    $self->worker_temp_directory. "nctree_". $tree->node_id;
-  $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
+  my $file_root = $self->worker_temp_directory. "nctree_". $tree->node_id;
+  $file_root    =~ s/\/\//\//g;  # converts any // in path to /
 
-  my $aln_file = $self->{'file_root'} . ".aln";
+  my $aln_file = $file_root . ".aln";
   if($self->debug) {
     printf("dumpMultipleAlignmentStructToWorkdir : %d members\n", $leafcount);
     print("aln_file = '$aln_file'\n");
@@ -360,8 +305,7 @@ sub dumpMultipleAlignmentStructToWorkdir
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
-  my %sa_params = ($self->{use_genomedb_id}) ?	('-APPEND_GENOMEDB_ID', 1) :
-    ('-APPEND_TAXON_ID', 1);
+  my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
   my $sa = $tree->get_SimpleAlign
     (
@@ -389,10 +333,10 @@ sub dumpMultipleAlignmentStructToWorkdir
   }
   close OUTSEQ;
 
-  my $struct_string = $self->{nc_tree}->get_tagvalue('ss_cons');
+  my $struct_string = $self->param('nc_tree')->get_tagvalue('ss_cons');
   # Allowed Characters are "( ) < > [ ] { } " and "."
   $struct_string =~ s/[^\(^\)^\<^\>^\[^\]^\{^\}^\.]/\./g;
-  my $struct_file = $self->{'file_root'} . ".struct";
+  my $struct_file = $file_root . ".struct";
   if ($struct_string =~ /^\.+$/) {
     $struct_file = undef;
     # No struct file
@@ -402,10 +346,11 @@ sub dumpMultipleAlignmentStructToWorkdir
     print STRUCT "$struct_string\n";
     close STRUCT;
   }
-  $self->{'input_aln'} = $aln_file;
-  $self->{'struct_aln'} = $struct_file;
+  $self->param('input_aln', $aln_file);
+  $self->param('struct_aln', $struct_file);
   return $aln_file;
 }
+
 
 sub store_newick_into_protein_tree_tag_string {
   my $self = shift;
@@ -422,10 +367,10 @@ sub store_newick_into_protein_tree_tag_string {
   close(FH);
   $newick =~ s/(\d+\.\d{4})\d+/$1/g; # We round up to only 4 digits
 
-  $self->{'nc_tree'}->store_tag($tag, $newick);
-  if (defined($self->{model})) {
-    my $bootstrap_tag = $self->{model} . "_bootstrap_num";
-    $self->{'nc_tree'}->store_tag($bootstrap_tag, $self->{bootstrap_num});
+  $self->param('nc_tree')->store_tag($tag, $newick);
+  if (defined($self->param('model'))) {
+    my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
+    $self->param('nc_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
   }
 }
 
