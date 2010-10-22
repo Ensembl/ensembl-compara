@@ -125,12 +125,30 @@ sub gene_links {
   my @genes = split /,/, $data;
   my @links;
   
+  my $gene_adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core');
+  my $arch_adaptor = $hub->get_adaptor('get_ArchiveStableIdAdaptor', 'core');
+  
   foreach my $g (@genes) {
-    if ($g =~ /Intergenic|pseudogene/i) {
-      push @links, $g;
-    } else { 
+    
+    # try to fetch gene
+    my $linkable = 0;
+    
+    # external name
+    $linkable = 1 if scalar @{$gene_adaptor->fetch_all_by_external_name($g)};
+    # stable_id
+    unless($linkable) {
+      $linkable = 1 if $gene_adaptor->fetch_by_stable_id($g);
+    }
+    # archive stable_id
+    unless($linkable) {
+      $linkable = 1 if $arch_adaptor->fetch_by_stable_id($g);
+    }
+    
+    if ($linkable) {
       my $url = $hub->url({ type => 'Gene', action => 'Summary', g => $g });
       push @links, qq{<a href="$url">$g</a>};
+    } else { 
+      push @links, $g;
     }
   }
   
