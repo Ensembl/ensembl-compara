@@ -13,7 +13,7 @@ use Bio::EnsEMBL::Registry;
 use EnsEMBL::Web::Controller::DAS;
 
 sub handler_das {
-  my ($r, $session_cookie, $das_species, $path_segments, $querystring) = @_;
+  my ($r, $cookies, $das_species, $path_segments, $querystring) = @_;
   
   my $DSN = $path_segments->[0];
   
@@ -75,7 +75,7 @@ sub handler_das {
     'Access-Control-Expose-Headers' => 'X-DAS-Version X-DAS-Status X-DAS-Capabilities',
   );
  
-  new EnsEMBL::Web::Controller::DAS($r, $session_cookie);
+  new EnsEMBL::Web::Controller::DAS($r, $cookies);
   
   return OK;
 }

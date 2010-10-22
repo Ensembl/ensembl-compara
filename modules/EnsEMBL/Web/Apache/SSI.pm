@@ -4,7 +4,10 @@ use strict;
 
 use Apache2::Const qw(:common :methods :http);
 
+use SiteDefs qw(:APACHE);
+
 use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Cookie;
 
 #############################################################
 # Mod_perl request handler all /htdocs pages
@@ -54,7 +57,38 @@ sub handler {
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
   return DECLINED                if -d $r->filename;
   
-  return new EnsEMBL::Web::Controller::SSI($r)->status;
+  my $cookies = {
+    session_cookie => new EnsEMBL::Web::Cookie({
+      host    => $ENSEMBL_COOKIEHOST,
+      name    => $ENSEMBL_SESSION_COOKIE,
+      value   => '',
+      env     => 'ENSEMBL_SESSION_ID',
+      hash    => {
+        offset  => $ENSEMBL_ENCRYPT_0,
+        key1    => $ENSEMBL_ENCRYPT_1,
+        key2    => $ENSEMBL_ENCRYPT_2,
+        key3    => $ENSEMBL_ENCRYPT_3,
+        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
+        refresh => $ENSEMBL_ENCRYPT_REFRESH
+      }
+    }),
+    user_cookie => new EnsEMBL::Web::Cookie({
+      host    => $ENSEMBL_COOKIEHOST,
+      name    => $ENSEMBL_USER_COOKIE,
+      value   => '',
+      env     => 'ENSEMBL_USER_ID',
+      hash    => {
+        offset  => $ENSEMBL_ENCRYPT_0,
+        key1    => $ENSEMBL_ENCRYPT_1,
+        key2    => $ENSEMBL_ENCRYPT_2,
+        key3    => $ENSEMBL_ENCRYPT_3,
+        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
+        refresh => $ENSEMBL_ENCRYPT_REFRESH
+      }
+    })
+  };
+  
+  return new EnsEMBL::Web::Controller::SSI($r, $cookies)->status;
 }
 
 1;

@@ -14,7 +14,7 @@ use EnsEMBL::Web::OldLinks qw(get_redirect);
 our $MEMD = new EnsEMBL::Web::Cache;
 
 sub handler_species {
-  my ($r, $session_cookie, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
+  my ($r, $cookies, $species, $raw_path_segments, $querystring, $file, $flag) = @_;
   
   my $redirect_if_different = 1;
   my @path_segments         = @$raw_path_segments;
@@ -91,7 +91,7 @@ sub handler_species {
   eval "use $controller";
   
   if (!$@) {
-    $controller->new($r, $session_cookie);
+    $controller->new($r, $cookies);
     return OK;
   }
   
