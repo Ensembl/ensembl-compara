@@ -142,7 +142,7 @@ sub draw_wiggle_plot {
   };
 
   my $slice           = $self->{'container'};
-  my $row_height      = $self->my_config('height') || 60;
+  my $row_height      = $self->{'height'} || $self->my_config('height') || 60;
   my $offset          = $self->_offset();
 
   my $P_MAX           = $parameters->{'max_score'} > 0 ? $parameters->{'max_score'} : 0; 
@@ -243,26 +243,27 @@ sub draw_wiggle_plot {
     $offset += 15;
     $self->_offset($y_offset); #unless $no_offset;        
   }
-  # Draw the axis ------------------------------------------------
-  $self->push( $self->Line({ # horzi line
-    'x'         => 0,
-    'y'         => $offset + $red_line_offset,
-    'width'     => $slice->length,
-    'height'    => 0,
-    'absolutey' => 1,
-    'colour'    => $axis_colour,
-    'dotted'    => $axis_style,
-  }),$self->Line({ # vertical line
-    'x'         => 0,
-    'y'         => $offset,
-    'width'     => 0,
-    'height'    => $row_height,
-    'absolutey' => 1,
-    'absolutex' => 1,
-    'colour'    => $axis_colour,
-    'dotted'    => $axis_style,
-  }));
-
+  unless ($parameters->{'no_axis'}) {
+    # Draw the axis ------------------------------------------------
+    $self->push( $self->Line({ # horzi line
+      'x'         => 0,
+      'y'         => $offset + $red_line_offset,
+      'width'     => $slice->length,
+      'height'    => 0,
+      'absolutey' => 1,
+      'colour'    => $axis_colour,
+      'dotted'    => $axis_style,
+    }),$self->Line({ # vertical line
+      'x'         => 0,
+      'y'         => $offset,
+      'width'     => 0,
+      'height'    => $row_height,
+      'absolutey' => 1,
+      'absolutex' => 1,
+      'colour'    => $axis_colour,
+      'dotted'    => $axis_style,
+    }));
+  }
 
   # Draw max and min score ---------------------------------------------
   my $display_max_score = sprintf("%.2f", $P_MAX); 
@@ -271,8 +272,8 @@ sub draw_wiggle_plot {
     0, $display_max_score, '', 'font'=>$fontname_i, 'ptsize' => $fontsize_i );
   my $textheight_i = $res_i[3];
   my $pix_per_bp = $self->scalex;
-  my $axis_label_flag = $parameters->{'axis_label'} ? "off": "on"; 
-  
+  my $axis_label_flag = $parameters->{'axis_label'} ? "off": "on";
+
   if ($axis_label_flag eq 'on'){ 
     $self->push( $self->Text({ 
       'text'          => $display_max_score,
@@ -356,8 +357,10 @@ sub draw_wiggle_plot {
 }
 
 sub draw_wiggle_points { 
-  my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset) = @_; 
+  my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset) = @_;
+  my $hrefs = $parameters->{'hrefs'};
   foreach my $f (@$features) { 
+    my $href = $hrefs->{$f->id} || '';
     my ($START, $END, $score, $min_score);
 
     if (ref($f) eq 'HASH'){ # Data is from a Funcgen result set collection, windowsize > 0
@@ -392,16 +395,24 @@ sub draw_wiggle_points {
       $height = $score;
     }
     $height *= $pix_per_score;
+    my $this_colour = $colour;
 
-    $self->push($self->Rect({
+    # alter colour if the intron supporting feature has a name of non_canonical
+    if ($f->display_id =~ /non canonical$/ && $f->analysis->logic_name =~ /_intron$/) {
+      $this_colour = $parameters->{'non_can_score_colour'} ||  $colour;
+    }
+ 
+    my $dets = {
       'y'         => $offset + $red_line_offset + $y,
       'height'    => abs( $height ),
       'x'         => $START-1,
       'width'     => $END - $START+1,
       'absolutey' => 1,
       'title'     => sprintf("%.2f", $score),
-      'colour'    => $colour,
-    }));
+      'colour'    => $this_colour,
+    };
+    $dets->{'href'} = $href if $href;
+    $self->push($self->Rect($dets));
     if ($min_score){
       my $y = $score < 0 ? 0 : -$min_score * $pix_per_score;
       $self->push($self->Rect({
