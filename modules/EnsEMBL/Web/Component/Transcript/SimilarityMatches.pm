@@ -18,7 +18,7 @@ sub caption {
 sub content {
   my $self = shift;
   my $object   = $self->object;
-  my $matches =  $self->_matches( 'similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' );
+  my $matches =  $self->_matches( 'similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' ,'RenderAsTables');
   my $html = $matches ? $matches : '<p>No external records attached to this transcript</p>';
   return $html;
 }
