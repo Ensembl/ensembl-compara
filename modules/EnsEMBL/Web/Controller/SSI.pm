@@ -189,35 +189,18 @@ sub template_INCLUDE {
   return $content;
 }
 
-# FIXME: can't do this unless all Document::HTML modules have new functions
-# sub template_SCRIPT {
-#   my $self     = shift;
-#   my $include  = shift;
-#   my $function = shift || 'render';
-#   
-#   my ($module, $error) = $self->_use($include);
-#   
-#   if ($error) {
-#     warn "Cannot dynamic_use $include: $error";
-#   } else {
-#     return $module->$function;
-#   }
-# }
-
 sub template_SCRIPT {
   my $self     = shift;
   my $include  = shift;
   my $function = shift || 'render';
-  my $content;
   
-  eval {
-    $self->dynamic_use($include);
-    $content = $include->$function;
-  };
+  my ($module, $error) = $self->_use($include, $self->hub);
   
-  warn "Cannot dynamic_use $include: $@" if $@;
-  
-  return $content;  
+  if ($error) {
+    warn "Cannot dynamic_use $include: $error";
+  } elsif ($module) {
+    return $module->$function;
+  }
 }
 
 sub template_COMPONENT {
