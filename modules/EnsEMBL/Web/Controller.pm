@@ -18,11 +18,10 @@ use EnsEMBL::Web::OrderedTree;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my $class          = shift;
-  my $r              = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $session_cookie = ref $_[0] eq 'HASH' ? undef : shift;
-  my $args           = shift || {};
-  my $input          = new CGI;
+  my $class = shift;
+  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $args  = shift || {};
+  my $input = new CGI;
   
   my $object_params = [
     [ 'Location',   'r'   ],
@@ -41,7 +40,8 @@ sub new {
     apache_handle  => $r,
     input          => $input,
     object_types   => $object_types,
-    session_cookie => $session_cookie
+    session_cookie => $args->{'session_cookie'},
+    user_cookie    => $args->{'user_cookie'},
   });
   
   my $builder = new EnsEMBL::Web::Builder({
@@ -324,7 +324,7 @@ sub _use {
   my $self        = shift;
   my $module_name = shift;
   
-  my $module = $self->dynamic_use($module_name) ? $module_name->new(@_) : undef;
+  my $module = $self->dynamic_use($module_name) && $module_name->can('new') ? $module_name->new(@_) : undef;
   my $error;
   
   if (!$module) {
