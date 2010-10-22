@@ -20,6 +20,7 @@ use URI::Escape qw(uri_escape uri_unescape);
 use Bio::EnsEMBL::ColourMap;
 
 use EnsEMBL::Web::Cache;
+use EnsEMBL::Web::Data::User;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::ExtIndex;
 use EnsEMBL::Web::ExtURL;
@@ -40,7 +41,7 @@ sub new {
   my $species      = $args->{'species'}      || $ENV{'ENSEMBL_SPECIES'};
   my $input        = $args->{'input'}        || new CGI;
   my $species_defs = $args->{'species_defs'} || new EnsEMBL::Web::SpeciesDefs;
-  my $factorytype  = $ENV{'ENSEMBL_FACTORY'}  || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
+  my $factorytype  = $ENV{'ENSEMBL_FACTORY'} || ($input && $input->param('factorytype') ? $input->param('factorytype') : $type);
   my $cookies      = $args->{'apache_handle'} ? CGI::Cookie->parse($args->{'apache_handle'}->headers_in->{'Cookie'}) : {};
   
   $species_defs->{'timer'} = $args->{'timer'};
@@ -63,7 +64,7 @@ sub new {
     _apache_handle => $args->{'apache_handle'} || undef,
     _user          => $args->{'user'}          || undef,
     _timer         => $args->{'timer'}         || undef,
-    _databases     => $species ne 'common'      ?  new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef,
+    _databases     => $species ne 'common'      ? new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef,
     _cookies       => $cookies,
     _core_objects  => {},
     _core_params   => {},
@@ -71,12 +72,9 @@ sub new {
 
   bless $self, $class;
   
+  $self->initialize_user($args->{'user_cookie'}) if $args->{'user_cookie'};
   $self->session = new EnsEMBL::Web::Session($self, $args->{'session_cookie'});
-  
-  if ($ENSEMBL_WEB_REGISTRY) {
-    $self->user  ||= $ENSEMBL_WEB_REGISTRY->user;
-    $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer;
-  }
+  $self->timer ||= $ENSEMBL_WEB_REGISTRY->timer if $ENSEMBL_WEB_REGISTRY;
   
   $self->set_core_params;
   
@@ -566,6 +564,31 @@ sub get_data_from_session {
   $parser->parse($content, $tempdata->{'format'});
 
   return { 'parser' => $parser, 'name' => $name };
+}
+
+sub initialize_user {
+  my ($self, $cookie) = @_;
+  my $r = $self->apache_handle;
+  
+  $cookie->retrieve($r);
+
+  my $id = $cookie->get_value;
+
+  if ($id) {
+    my $user;
+    
+    # try to log in with user id from cookie
+    eval { 
+      $self->user = new EnsEMBL::Web::Data::User($id);
+    };
+      
+    if ($@) {
+      # login failed (because the connection to the used db has gone away)
+      # so log the user out by clearing the cookie
+      $cookie->clear($r);
+      $self->user = undef;
+    }
+  }
 }
 
 1;
