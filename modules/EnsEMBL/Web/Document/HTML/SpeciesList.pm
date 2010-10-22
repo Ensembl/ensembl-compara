@@ -13,38 +13,50 @@ sub new {
   
   my $self = $class->SUPER::new(
     species_defs => $hub->species_defs,
-    user         => $hub->user,
-    image_type   => '.png'
+    user         => $hub->user
   );
   
   bless $self, $class;
   
+  $self->{'species_info'} = $self->set_species_info;
+  
   return $self;
 }
 
-sub user { return $_[0]{'user'}; }
+sub user         { return $_[0]{'user'};         }
+sub species_info { return $_[0]{'species_info'}; }
+sub image_type   { return '.png';                }
+
+sub set_species_info {
+  my $self         = shift;
+  my $species_defs = $self->species_defs;
+  
+  if (!$self->{'species_info'}) {
+    my $species_info = {};
+
+    foreach ($species_defs->valid_species) {
+      $species_info->{$_} = {
+        name     => $species_defs->get_config($_, 'SPECIES_BIO_NAME',    1),
+        common   => $species_defs->get_config($_, 'SPECIES_COMMON_NAME', 1),
+        assembly => $species_defs->get_config($_, 'ASSEMBLY_NAME',       1)
+      };
+    }
+
+    # give the possibility to add extra info to $species_info via the function
+    $self->modify_species_info($species_info);
+    
+    $self->{'species_info'} = $species_info;
+  }
+  
+  return $self->{'species_info'};
+}
 
 sub modify_species_info {}
 
 sub render {
-  my $self         = shift;
-  my $fragment     = shift eq 'fragment';
-  my $species_defs = $self->species_defs;
-  my $species_info = {};
-
-  foreach ($species_defs->valid_species) {
-    $species_info->{$_} = {
-      name     => $species_defs->get_config($_, 'SPECIES_BIO_NAME',    1),
-      common   => $species_defs->get_config($_, 'SPECIES_COMMON_NAME', 1),
-      assembly => $species_defs->get_config($_, 'ASSEMBLY_NAME',       1)
-    };
-  }
-
-  # give the possibility to add extra info to $species_info via the function
-  $self->modify_species_info($species_info);
-  
-  my %description = map { $_ => qq{ <span class="small normal">$species_info->{$_}->{'assembly'}</span>} } grep { $_ && $species_info->{$_}->{'assembly'} } keys %$species_info;
-  my $full_list   = $self->render_species_list($species_info, \%description, $fragment);
+  my $self      = shift;
+  my $fragment  = shift eq 'fragment';
+  my $full_list = $self->render_species_list($fragment);
   
   my $html = $fragment ? $full_list : sprintf('
     <div id="species_list" class="js_panel">
@@ -56,24 +68,24 @@ sub render {
         %s 
       </div>
     </div>
-  ', $self->render_ajax_reorder_list($species_info), $full_list);
+  ', $self->render_ajax_reorder_list, $full_list);
 
   return $html;
 }
 
 sub render_species_list {
-  my ($self, $species_info, $description, $fragment) = @_;
+  my ($self, $fragment) = @_;
   my $logins = $self->species_defs->ENSEMBL_LOGINS;
   my $user   = $self->user;
   
   my (%check_faves, @ok_faves);
   
-  foreach ($self->get_favourites($species_info)) {
+  foreach ($self->get_favourites) {
     push @ok_faves, $_ unless $check_faves{$_}++;
   }
   
   my $count    = @ok_faves;
-  my $fav_html = $self->render_favourites($count, \@ok_faves, $description, $species_info);
+  my $fav_html = $self->render_favourites($count, \@ok_faves);
   
   return $fav_html if $fragment;
   
@@ -103,14 +115,13 @@ sub render_species_list {
     <div class="static_all_species">
       %s
     </div>
-  ', $fav_html, $self->render_species_dropdown($species_info, $description));
+  ', $fav_html, $self->render_species_dropdown);
   
   return $html;
 }
 
 sub render_favourites {
-  my ($self, $count, $ok_faves, $description, $species_info) = @_;
-  
+  my ($self, $count, $ok_faves) = @_;
   my $html;
   
   if ($count > 3) {
@@ -124,21 +135,21 @@ sub render_favourites {
           <td style="width:50%">%s</td>
         </tr>
       </table>',
-      $self->render_with_images(\@first_half, $description, $species_info),
-      $self->render_with_images($ok_faves,    $description, $species_info)
+      $self->render_with_images(\@first_half),
+      $self->render_with_images($ok_faves)
     );
   } else {
-    $html = $self->render_with_images($ok_faves, $description, $species_info);
+    $html = $self->render_with_images($ok_faves);
   }
   
   return $html;
 }
 
 sub render_species_dropdown {
-  my ($self, $species_info, $description) = @_; 
+  my $self         = shift; 
   my $species_defs = $self->species_defs;
   my $sitename     = $species_defs->ENSEMBL_SITETYPE;
-  my @all_species  = keys %$species_info;
+  my @all_species  = keys %{$self->species_info};
   my $labels       = $species_defs->TAXON_LABEL; ## sort out labels
   my (@group_order, %label_check);
   
@@ -205,11 +216,11 @@ sub render_species_dropdown {
 }
 
 sub render_ajax_reorder_list {
-  my ($self, $species_info) = @_;
+  my $self         = shift;
   my $species_defs = $self->species_defs;
-  my @favourites   = $self->get_favourites($species_info);
+  my @favourites   = $self->get_favourites;
   my @fav_list     = map { sprintf '<li id="favourite-%s">%s (<em>%s</em>)</li>', $_, $species_defs->get_config($_, 'SPECIES_COMMON_NAME'), $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME') } @favourites;
-  my %sp_to_sort   = %$species_info;
+  my %sp_to_sort   = %{$self->species_info};
   
   delete $sp_to_sort{$_} for map s/ /_/, @favourites;
   
@@ -234,9 +245,10 @@ sub render_ajax_reorder_list {
 
 sub get_favourites {
   ## Returns a list of species as Genus_species strings
-  my ($self, $species_info) = @_;
+  my $self          = shift;
   my $species_defs  = $self->species_defs;
   my $user          = $self->user;
+  my $species_info  = $self->species_info;
   my @species_lists = $user ? $user->specieslists : ();
   my @favourites    = @species_lists && $species_lists[0] ? map { $species_info->{$_} ? $_ : () } split /,/, $species_lists[0]->favourites : @{$species_defs->DEFAULT_FAVOURITES || []}; # Omit any species not currently online
   @favourites       = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
@@ -245,32 +257,32 @@ sub get_favourites {
 }
 
 sub render_with_images {
-  my ($self, $species_list, $description, $species_info) = @_;
+  my ($self, $species_list) = @_;
   my $species_defs = $self->species_defs;
-  
-  my $html = qq{
-    <dl class="species-list">
-  };
+  my $species_info = $self->species_info;
+  my $html;
   
   foreach (@$species_list) {
     my $common_name  = $species_info->{$_}{'common'} || $species_defs->get_config($_, 'SPECIES_COMMON_NAME')     || '';
     my $species_name = $species_info->{$_}{'name'}   || $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME') || '';
     
-    $html .= qq{
+    $html .= sprintf('
       <dt>
-        <a href="/$_/Info/Index"><img src="/img/species/thumb_$_$self->{'image_type'}" alt="$species_name" title="Browse $species_name" class="sp-thumb" height="40" width="40" /></a>
-        <a href="/$_/Info/Index" title="$species_name">$common_name</a>
+        <a href="%s/Info/Index">
+          <img src="/img/species/thumb_%s%s" alt="%s" title="Browse %s" class="sp-thumb" height="40" width="40" />
+          %s
+        </a>
       </dt>
-    };
-    
-    $html .= "<dd>$description->{$_}</dd>\n" if $description->{$_};
+      <dd><span class="small normal">%s</span></dd>', 
+      $_, $_, $self->image_type, $species_name, $species_name, $common_name, $species_info->{$_}{'assembly'}
+    );
   }
   
-  $html .= '
+  return qq{
+    <dl class="species-list">
+      $html
     </dl>
-  ';
-  
-  return $html;
+  };
 }
 
 1;
