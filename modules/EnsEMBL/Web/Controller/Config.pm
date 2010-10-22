@@ -28,8 +28,7 @@ sub update_configuration {
   if ($hub->param('submit') || $hub->param('reset')) {
     my $r           = $self->r;
     my $session     = $hub->session;
-    my $type        = $self->type;
-    my $action      = $self->action;
+    my $type        = $hub->type;
     my $config      = $hub->param('config');
     my $view_config = $hub->viewconfig;
     
@@ -42,12 +41,7 @@ sub update_configuration {
     } else { # Updating a view config
       $view_config->update_from_input;
       
-      if ($action ne 'ExternalData') {
-        my $vc_external_data = $hub->get_viewconfig($type, 'ExternalData');
-        $vc_external_data->update_from_input if $vc_external_data;
-      }
-      
-      my $cookie_host  = $self->species_defs->ENSEMBL_COOKIEHOST;
+      my $cookie_host  = $hub->species_defs->ENSEMBL_COOKIEHOST;
       my $cookie_width = $hub->param('cookie_width');
       my $cookie_ajax  = $hub->param('cookie_ajax');
       
@@ -84,8 +78,25 @@ sub update_configuration {
     
     if ($hub->param('submit')) {
       if ($r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest') {
+        my $json;
+        
+        if ($hub->action eq 'ExternalData') {
+          my $function = $view_config->altered == 1 ? undef : $view_config->altered;
+          
+          $json = {
+            redirect => $hub->url({ 
+              action   => 'ExternalData', 
+              function => $function, 
+              %{$hub->referer->{'params'}}
+            })
+          };
+        } else {
+          $json = { updated => 1 };
+        }
+        
         $r->content_type('text/plain');
-        print 'SUCCESS';
+        
+        print $self->jsonify($json);
       } else {
         $hub->redirect; # refreshes the page
       }
