@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/localsw/bin/perl
 
 ##############################################################################
 #
@@ -153,7 +153,9 @@ foreach my $spp (@valid_spp) {
     $b_latest || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_LATEST!";
     my $b_id    = $SD->get_config($spp, 'GENEBUILD_BY') || '';
     $b_id   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_BY!" unless $pre;
-    my $b_method  = ucfirst($SD->get_config($spp, 'GENEBUILD_METHOD')) || '';
+    #my $b_method  = ucfirst($SD->get_config($spp, 'GENEBUILD_METHOD')) || '';
+    my @A = @{$meta_container->list_value_by_key('genebuild.method')};
+    my $b_method  = ucfirst($A[0]) || '';
     $b_method =~ s/_/ /g;
     $b_method   || warn "[ERROR] $spp missing SpeciesDefs->GENEBUILD_METHOD!" unless $pre;
 
@@ -167,7 +169,8 @@ foreach my $spp (@valid_spp) {
     ## logicnames for valid genes
     my $genetypes = "'ensembl', 'ensembl_havana_gene', 'havana', 'ensembl_projection',
       'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
-      'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN'";
+      'ncRNA_pseudogene', 'havana_IG_gene',
+      'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN', 'ensembl_IG_gene', 'MT_genbank_import'";
 
     my $authority = $SD->get_config($spp, 'AUTHORITY');
     if( $authority ){
@@ -327,7 +330,7 @@ foreach my $spp (@valid_spp) {
         ($snps) = &query ( $var_db,
           "SELECT COUNT(DISTINCT variation_id) FROM variation_feature",
           );
-        print "SNPs:$snps\n" if $DEBUG;
+        print "Variations:$snps\n" if $DEBUG;
       }
     }
 
@@ -550,7 +553,7 @@ foreach my $spp (@valid_spp) {
       $snps = thousandify($snps);
       $row = stripe_row($rowcount);
       print STATS qq($row
-          <td class="data">SNPs:</td>
+          <td class="data">Variations:</td>
           <td class="value">$snps</td>
           </tr>);
     }
