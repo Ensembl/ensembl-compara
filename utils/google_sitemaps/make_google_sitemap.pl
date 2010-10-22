@@ -1,0 +1,186 @@
+#!/usr/local/bin/perl
+
+use strict;
+use FindBin qw($Bin);
+
+
+# Load libraries needed for reading config # 
+
+use DBI;
+use Carp;
+use Getopt::Long;
+use Data::Dumper;
+use Search::Sitemap;
+use Search::Sitemap::Index;
+use Search::Sitemap::URL;
+
+use Regexp::Common qw /URI/;
+
+BEGIN {
+
+   unshift @INC, "$Bin/../../conf";
+   unshift @INC, "$Bin/../..";
+   eval { require SiteDefs };
+   if ($@) { die "Can't use SiteDefs.pm - $@\n"; }
+   map { unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS; }
+
+use EnsEMBL::Web::BlastView::BlastDefs;
+our $DEFS = EnsEMBL::Web::BlastView::BlastDefs->new;
+
+my ( $host, $user, $pass, $port, $inifile );
+
+#use Bio::SeqIO;
+#use utils::Tool;
+
+use EnsEMBL::Web::SpeciesDefs;
+
+#removing the sitemaps from the previous release first
+`rm sitemaps/*`;
+
+my %rHash = map { $_ } @ARGV;
+if ( $inifile = $rHash{'-inifile'} ) {
+   my $icontent = `cat $inifile`;
+   warn $icontent;
+   eval $icontent;
+}
+
+GetOptions(
+   "host=s", \$host, "port=i",    \$port, "user=s", \$user,"pass=s", \$pass, "inifile=s", \$inifile, );
+
+my $species_list = [ $DEFS->dice( -out => 'species' ) ];
+
+my $SPECIES_DEFS = EnsEMBL::Web::SpeciesDefs->new(); $host ||= $SPECIES_DEFS->DATABASE_HOST; $port ||= $SPECIES_DEFS->DATABASE_HOST_PORT;$user ||= 'ensro';
+
+#no need to create robots.txt here as we got one created manually when the apache restart
+#open( ROBOTS, '>', 'robots.txt' ) || die 'error opening robots.txt file'; print ROBOTS "User-agent: *\n"; print ROBOTS "Disallow: /$_/\n"
+#for qw/info
+#                                      biomart
+#                                      Account
+#                                      Multi/;
+
+my $sitemap_index = Search::Sitemap::Index->new();
+
+my $COUNTER;
+my $SITEMAP_NUM = 1;
+
+my %lookup = (
+   'gene' =>
+     sub { return "$_[0]->{species_path}/Gene/Summary?g=$_[0]->{stable_id}" },
+   'transcript' => sub {
+       return "$_[0]->{species_path}/Transcript/Summary?t=$_[0]->{stable_id}";
+   },
+);
+
+my $sample_sp_path = $SPECIES_DEFS->species_path( @{$species_list}->[0] );
+$sample_sp_path =~ /$RE{URI}{HTTP}{-keep}/; my $toplevel = 'http://www.ensembl.org' . $3 . '/';
+
+my $map = Search::Sitemap->new();
+
+#$map->pretty(1);
+
+$map->add(
+   Search::Sitemap::URL->new(
+       loc        => $toplevel,
+       changefreq => 'monthly',
+       priority   => 1.0,
+       lastmod    => 'now'
+   )
+);
+
+$COUNTER++;
+
+foreach my $species (@$species_list) {
+   warn $species;
+
+   my $sp_path = $SPECIES_DEFS->species_path($species);
+   $sp_path =~ /$RE{URI}{HTTP}{-keep}/;
+
+#   print ROBOTS "Disallow: $5/$_/\n" for qw/UserData
+#     Export
+#     Location
+#     Account
+#     blastview
+#     ExternalData
+#     UserAnnotation
+#     Search/;
+
+   warn $species;
+
+   #    next ;exit;
+
+   my $dsn = "DBI:mysql:host=$host";
+   $dsn .= ";port=$port" if ($port);
+   my $db_name =
+     $SPECIES_DEFS->get_config( $species, 'databases' )->{DATABASE_CORE}->{NAME};
+
+   my $dbh = DBI->connect( "$dsn:$db_name", $user, $pass )or die "DBI::error";
+   warn $species;
+   my $entry;
+   $entry->{species_path} = $SPECIES_DEFS->species_path($species);
+
+   foreach my $type (qw/gene transcript/) {
+
+       my $query = qq{select stable_id from $type} . qq{_stable_id}; 
+       my $stable_ids = $dbh->selectall_arrayref($query);
+
+       foreach my $stable_id (@$stable_ids) {
+
+           $entry->{stable_id} = $stable_id->[0];
+           my $url = eval { $lookup{$type}($entry) };
+
+           # print $url,"\n";
+
+           $map->add(
+               loc        => $url,
+               priority   => 1.0,
+               lastmod    => 'now',
+               changefreq => 'monthly'
+           );
+
+           $COUNTER++;
+
+           if ( $COUNTER == 20000 ) {
+
+               #write out what's there
+               my $sitemap_name = 'sitemaps/sitemap' . $SITEMAP_NUM . '.xml';
+               my $sitemap_path = $toplevel . $sitemap_name;
+               $map->write($sitemap_name);
+
+               # add that to the index
+               $sitemap_path =~ s/sitemaps\///;
+               $sitemap_index->add(
+                   Search::Sitemap::URL->new(
+                       loc     => $sitemap_path,
+                       lastmod => 'now',
+                   )
+               );
+
+               # create a new map
+               $map = Search::Sitemap->new();
+
+               #               $map->pretty(1);
+               # reset the counter
+
+               $COUNTER = 0;
+
+               $SITEMAP_NUM++;
+           }
+
+       }
+   }
+
+}
+
+my $sitemap_name = 'sitemaps/sitemap' . $SITEMAP_NUM . '.xml'; my $sitemap_path = $toplevel . $sitemap_name; $map->write($sitemap_name);
+
+# add that to the index
+$sitemap_path =~ s/sitemaps\///;
+$sitemap_index->add(
+   Search::Sitemap::URL->new(
+       loc     => $sitemap_path,
+       lastmod => 'now',
+   )
+);
+
+$sitemap_index->write('sitemaps/sitemap-index.xml');
+#print ROBOTS 'Sitemap: ' . $toplevel . 'sitemap-index.xml';
