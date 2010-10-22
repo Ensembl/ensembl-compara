@@ -2,7 +2,7 @@ package Bio::EnsEMBL::GlyphSet::_alignment;
 
 use strict;
 
-use base qw(Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block );
 use Data::Dumper;
 
 #==============================================================================
@@ -101,6 +101,63 @@ sub render_labels {
   my $self = shift;
   $self->{'show_labels'} = 1;
   $self->render_normal();
+}
+
+#variable height renderer
+sub render_histogram {
+  my $self = shift;
+
+  #configuration options for this track - OK when all tracks use these (although better done in imageconfig),
+  #but might have move to web_data when more tracks added
+  $self->{'max_score'} = 50; # any feature with a score >= this shown at max height
+  $self->{'height'} = 30; #scaling factor for track height
+
+  my $strand = $self->strand;
+  my %features = $self->features;
+  foreach my $feature_key (keys %features) {
+    my $colour_key     = $self->colour_key( $feature_key );
+    my $feature_colour = $self->my_colour( $colour_key, undef  );
+    my $non_can_feature_colour = $self->my_colour( $colour_key.'_non_can', undef) || '';
+    my $join_colour    = $self->my_colour( $colour_key, 'join' );
+    my ($sorted_feats, $sorted_can_feats, $sorted_non_can_feats, $hrefs) = ([],[],[],{});
+    my $feats = $features{$feature_key};
+    foreach my $f (
+	map { $_->[1] }
+        sort{ $a->[0] <=> $b->[0] }
+	map { [$_->start,$_ ] }
+	  @{$feats->[0]}
+	){
+      next if ($f->strand ne $strand);
+
+      #artificially set score to the max allowed score if it's greater than that
+      if ($f->score > $self->{'max_score'}) {
+	$f->score($self->{'max_score'});
+      }
+
+      #sort into canonical and non-canonical
+      if ($f->display_id =~ /non canonical$/) {
+	push @$sorted_non_can_feats, $f;
+      }
+      else {
+	push @$sorted_can_feats, $f;
+      }
+      $hrefs->{$f->display_id} = $self->href($f);
+    }
+    #draw canonical first and then non-canonical features
+    push @{$sorted_feats}, @$_ for $sorted_can_feats, $sorted_non_can_feats;
+
+    $self->draw_wiggle_plot(
+      $sorted_feats,                      ## Features array
+      { 'min_score'    => 0,
+	'max_score'    => $self->{'max_score'},
+	'score_colour' => $feature_colour,
+	'no_axis'      => 1,
+	'axis_label'   => 'off',
+	'hrefs'        => $hrefs,
+	'non_can_score_colour'  => $non_can_feature_colour,
+      }
+    );
+  }
 }
 
 sub render_normal {
