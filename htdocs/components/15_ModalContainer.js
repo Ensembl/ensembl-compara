@@ -141,7 +141,6 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         forceReload = !!$('.modal_reload', contentEl).length;
         
-        // TODO: remove once config reseting is working without content being completely regenerated
         if (reload || forceReload) {
           this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
