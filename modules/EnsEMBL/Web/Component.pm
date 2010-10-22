@@ -354,6 +354,9 @@ sub _export_image {
 sub _matches {
   my ($self, $key, $caption, @keys) = @_;
   my $output_as_table=$keys[-1] eq "RenderAsTables";
+  if($output_as_table){ #if output_as_table the last value isn't maningful
+    pop(@keys);
+  }
   
   my $object = $self->object;
   my $label  = $self->hub->species_defs->translate($caption);
@@ -385,24 +388,40 @@ sub _matches {
   } else {
     $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
   }
+
   
-  
+  if(!$output_as_table){#use tables for formatting if we are not outputting a data table
+    $html .= '<table cellpadding="4">';  
+  }
   
   @links = $self->remove_redundant_xrefs(@links) if $keys[0] eq 'ALT_TRANS';
   
   return unless @links;
+
   
-  foreach my $link (@links) {
-    my ($key, $text) = @$link;
-    
+  while (scalar(@links)>0){#in order to preserve the order, we use @links for acces to keys
+    my ($key , $text) = @{$links[0]};
     $html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
+    $html .= '</td></tr>' if $key ne '';    
     if($output_as_table){
-      push(@rows,{dbtype=> $key, dbid => $text });    
+      push(@rows,{dbtype=> $key, dbid => $text });
+      shift @links;
     }else{
-      $html .= '</td></tr>' if $key ne '';
-      $html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong> $text</th><td>};    
+      $html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
+      my $j=0;
+      while($j<scalar(@links)){#display all other vales for the same key
+        my ($other_key , $other_text) = @{$links[$j]};
+        if($key eq $other_key){
+          $html.=$other_text;
+          splice (@links,$j,1);          
+        }else{
+          $j++;
+        }
+      }
+      $html .= qq{</td></tr>};      
     }
   }
+  
   if($output_as_table){
     # add table call here
     $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
@@ -413,7 +432,7 @@ sub _matches {
     $table->add_rows(@rows);  
     return $html.$table->render;    
   }else{
-    $html .= '</td></tr></table>';
+    $html .= '</table>';
     return $html;
   }
 }
@@ -507,12 +526,10 @@ sub _sort_similarity_links {
       $join_links = 1;
     }
     
-    if($output_as_table){
-      if ($join_links) {
-        $text = qq{\n <div>$text};
-      } else {
-        $text = qq{\n <div class="multicol">$text};
-      }
+    if ($join_links) {
+      $text = qq{\n <div>$text};
+    } else {
+      $text = qq{\n <div class="multicol">$text};
     }
     
     # override for Affys - we don't want to have to configure each type, and
@@ -534,8 +551,7 @@ sub _sort_similarity_links {
         lrg     => $display_id,
       });
     
-      $text .= qq{ [<a href="$lrg_url">view all locations</a>]
-};
+      $text .= qq{ [<a href="$lrg_url">view all locations</a>]};
     }
     else {
     
@@ -550,9 +566,10 @@ sub _sort_similarity_links {
       });
     
       $text .= qq{  [<a href="$k_url">view all locations</a>]};
+    }
+    if ($join_links) {
       $text .= '</div>';
     }
-
     ## FIXME Yet another LRG hack!
     my $label = $type->db_display_name || $externalDB;
     if ($externalDB eq 'ENS_LRG_gene') {
