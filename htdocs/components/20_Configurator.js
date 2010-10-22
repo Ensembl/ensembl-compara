@@ -192,10 +192,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       url:  this.elLk.form.attr('action'),
       type: this.elLk.form.attr('method'),
       data: diff,
-      dataType: 'html',
-      success: function (html) {
-        if (html == 'SUCCESS') {
+      dataType: 'json',
+      success: function (json) {
+        if (json.updated) {
           Ensembl.EventManager.trigger('queuePageReload', diff.config, !delayReload);
+        } else if (json.redirect) {
+          Ensembl.redirect(json.redirect);
         } else {
           // TODO: show message on main page
         }
