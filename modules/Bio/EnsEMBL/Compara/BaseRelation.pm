@@ -1,8 +1,79 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2010 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <ensembl-dev@ebi.ac.uk>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=cut
+
+=head1 NAME
+
+BaseRelation - A superclass for pairwise or multiple relationships, base of
+Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and
+Bio::EnsEMBL::Compara::Domain.
+
+=head1 DESCRIPTION
+
+A superclass for pairwise and multiple relationships
+
+Currently the AlignedMember objects are used in the ProteinTree, SuperProteinTree
+and NCTree structures to represent the leaves of the trees. Each leaf contains an
+aligned sequence, which is represented as an AlignedMember object.
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::BaseRelation
+
+=head1 METHODS
+
+=cut
+
 package Bio::EnsEMBL::Compara::BaseRelation;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+
+=head2 new
+
+  Arg [-DBID]  : 
+       int - internal ID for this object
+  Arg [-ADAPTOR]:
+        Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor - the object adaptor
+  Arg [-STABLE_ID] :
+        string - the stable identifier of this object
+  Arg [-VERSION] :
+        int - the version of the stable identifier of this object
+  Arg [-METHOD_LINK_SPECIES_SET_ID] :
+        int - the internal ID for the MethodLinkSpeciesSet object
+  Arg [-METHOD_LINK_TYPE] :
+        string - the method_link_type
+  Arg [-DESCRIPTION]:
+        string - the description for the object
+  Example    : $family = Bio::EnsEMBL::Compara::BaseRelation->new(...);
+  Description: Creates a new BaseRelation object
+  Returntype : Bio::EnsEMBL::Compara::BaseRelation
+  Exceptions : none
+  Caller     : subclass->new
+  Status     : Stable
+
+=cut
 
 sub new {
   my ($class, @args) = @_;
@@ -24,7 +95,7 @@ sub new {
   }
   
   return $self;
-}   
+}
 
 =head2 new_fast
 
@@ -35,6 +106,7 @@ sub new {
   Returntype : 
   Exceptions : none
   Caller     : 
+  Status     : Stable
 
 =cut
 
@@ -48,10 +120,11 @@ sub new_fast {
 
   Arg [1]    : int $dbID (optional)
   Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Description: Getter/setter for the internal ID of this relation
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -65,10 +138,11 @@ sub dbID {
 
   Arg [1]    : string $stable_id (optional)
   Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Description: Getter/setter for the stable ID of this relation
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -82,10 +156,11 @@ sub stable_id {
 
   Arg [1]    : string $version (optional)
   Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Description: Getter/setter for the version number of the stable ID
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -99,10 +174,11 @@ sub version {
 
   Arg [1]    : string $description (optional)
   Example    : 
-  Description: 
+  Description: Getter/setter for the description corresponding to this relation
   Returntype : string
-  Exceptions : 
-  Caller     : 
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -116,10 +192,13 @@ sub description {
 
   Arg [1]    : MethodLinkSpeciesSet object (optional)
   Example    : 
-  Description: getter/setter method for the MethodLinkSpeciesSet for this relation
+  Description: getter/setter method for the MethodLinkSpeciesSet for this relation.
+               Can lazy-load the method_link_species_set from the method_link_species_set_id
+               if that one is set and the adaptor is set.
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
-  Exceptions : 
-  Caller     : 
+  Exceptions : throws if setting to an unsuitable object 
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -149,10 +228,12 @@ sub method_link_species_set {
 
   Arg [1]    : integer (optional)
   Example    : 
-  Description: 
+  Description: getter/setter method for the internal ID of the MethodLinkSpeciesSet
+               for this relation.
   Returntype : integer
-  Exceptions : 
-  Caller     : 
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -167,10 +248,13 @@ sub method_link_species_set_id {
 
   Arg [1]    : string $method_link_type (optional)
   Example    : 
-  Description: 
+  Description: getter/setter method for the method_link_type for this relation.
+               Can obtain the data from the method_link_species_set object.
   Returntype : string
-  Exceptions : 
-  Caller     : 
+  Exceptions : Throws when getting if both this value and the method_link_species_set
+               are unset.
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -191,10 +275,13 @@ sub method_link_type {
 
   Arg [1]    : integer (optional)
   Example    : 
-  Description: 
+  Description: getter/setter method for the method_link_id for this relation.
+               Can obtain the data from the method_link_species_set object.
   Returntype : integer
-  Exceptions : 
-  Caller     : 
+  Exceptions : Throws when getting if both this value and the method_link_species_set
+               are unset.
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -204,6 +291,7 @@ sub method_link_id {
   $self->{'_method_link_id'} = shift if (@_);
   unless (defined $self->{'_method_link_id'}) {
     my $mlss = $self->method_link_species_set;
+    throw("method_link_type needs a valid method_link_species_set") unless($mlss);
     $self->{'_method_link_id'} = $mlss->method_link_id;
   }
 
@@ -215,10 +303,13 @@ sub method_link_id {
   Arg [1]    : string $adaptor (optional)
                corresponding to a perl module
   Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Description: getter/setter method for the adaptor for this relation. Usually
+               this will be an object from a subclass of
+               Bio::EnsEMBL::Compara::BaseRelationAdaptor
+  Returntype : Bio::EnsEMBL::Compara::BaseRelationAdaptor object
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
 
 =cut
 
@@ -227,6 +318,19 @@ sub adaptor {
   $self->{'_adaptor'} = shift if(@_);
   return $self->{'_adaptor'};
 }
+
+
+=head2 add_Member_Attribute
+
+  Arg [1]    : arrayref of (Member, Attribute) objects
+  Example    : 
+  Description: Add a new pair of Member, Attribute objects to this relation
+  Returntype : none
+  Exceptions : Throws if input objects don't check
+  Caller     : general
+  Status     : Stable
+
+=cut
 
 sub add_Member_Attribute {
   my ($self, $member_attribute) = @_;
