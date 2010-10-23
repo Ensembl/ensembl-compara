@@ -1,3 +1,27 @@
+=head1 LICENSE
+
+  Copyright (c) 1999-2010 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <ensembl-dev@ebi.ac.uk>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the CVS log.
+
+=cut
+
 =head1 NAME
 
 AlignedMember - DESCRIPTION of Object
@@ -8,18 +32,18 @@ A subclass of Member which extends it to allow it to be aligned with other
 AlignedMember objects.  General enough to allow for global, local, pair-wise and 
 multiple alignments.  To be used primarily in NestedSet Tree data-structure.
 
-=head1 CONTACT
+Currently the AlignedMember objects are used in the ProteinTree, SuperProteinTree
+and NCTree structures to represent the leaves of the trees. Each leaf contains an
+aligned sequence, which is represented as an AlignedMember object.
 
-Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
-Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
-Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+=head1 INHERITANCE TREE
 
-=cut
+  Bio::EnsEMBL::Compara::AlignedMember
+  +- Bio::EnsEMBL::Compara::Member
+   +- Bio::EnsEMBL::Compara::Graph::Node
+    +- Bio::EnsEMBL::Compara::Graph::CGObject
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+=head1 METHODS
 
 =cut
 
@@ -35,6 +59,18 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Member);
 ##################################
 # overriden superclass methods
 ##################################
+
+=head2 copy
+
+  Arg [1]     : none
+  Example     : $copy = $aligned_member->copy();
+  Description : Creates a new AlignedMember object from an existing one
+  Returntype  : Bio::EnsEMBL::Compara::AlignedMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub copy {
   my $self = shift;
@@ -52,6 +88,23 @@ sub copy {
   
   return $mycopy;
 }
+
+
+=head2 print_node (overrides default method in Bio::EnsEMBL::Compara::NestedSet)
+
+  Arg [1]     : none
+  Example     : $aligned_member->print_node();
+  Description : Outputs the info for this AlignedMember. First, the node_id, the
+                left and right indexes are printed, then the species name. If the
+                gene member can be determined, the methods prints the stable_id,
+                the display label and location of the gene member, otherwise the
+                member_id and stable_id of the object are printed.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub print_node {
   my $self  = shift;
@@ -75,12 +128,48 @@ sub print_node {
 
 
 
-#####################################################
+=head2 name (overrides default method in Bio::EnsEMBL::Compara::Graph::CGObject)
+
+  Arg [1]     : none
+  Example     : $aligned_member->name();
+  Description : Returns the stable_id of the object (from the Bio::EnsEMBL::Compara::Member object).
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub name {
   my $self = shift;
   return $self->stable_id(@_);
 }
+
+#####################################################
+
+
+=head2 cigar_line
+
+  Arg [1]     : (optional) $cigar_line
+  Example     : $object->cigar_line($cigar_line);
+  Example     : $cigar_line = $object->cigar_line();
+  Description : Getter/setter for the cigar_line attribute. The cigar line
+                represents the modifications that are required to go from
+                the original sequence to the aligned sequence. In particular,
+                it shows the location of the gaps in the sequence. The cigar
+                line is built with a series of numbers and characters where
+                the number represents the number of positions in the mode
+                defined by the next charcater. When the number is 1, it can be
+                omitted. For example, the cigar line '23MD4M' means that there
+                are 23 matches or mismatches, then 1 deletion (gap) and then
+                another 4 matches or mismatches. The aligned sequence is
+                obtained by inserting 1 gap at the right location.
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub cigar_line {
   my $self = shift;
@@ -88,11 +177,49 @@ sub cigar_line {
   return $self->{'_cigar_line'};
 }
 
+
+=head2 cigar_start
+
+  Arg [1]     : (optional) $cigar_start
+  Example     : $object->cigar_start($cigar_start);
+  Example     : $cigar_start = $object->cigar_start();
+  Description : Getter/setter for the cigar_start attribute. For non-global
+                alignments, this represent the starting point of the local
+                alignment.
+                Currently the data provided as AlignedMembers (leaves of the
+                ProteinTree, SuperProteinTree and NCTree) are obtained using
+                global alignments and the cigar_start is always undefined.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub cigar_start {
   my $self = shift;
   $self->{'_cigar_start'} = shift if(@_);
   return $self->{'_cigar_start'};
 }
+
+
+=head2 cigar_end
+
+  Arg [1]     : (optional) $cigar_end
+  Example     : $object->cigar_end($cigar_end);
+  Example     : $cigar_end = $object->cigar_end();
+  Description : Getter/setter for the cigar_end attribute. For non-global
+                alignments, this represent the ending point of the local
+                alignment.
+                Currently the data provided as AlignedMembers (leaves of the
+                ProteinTree, SuperProteinTree and NCTree) are obtained using
+                global alignments and the cigar_end is always undefined.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub cigar_end {
   my $self = shift;
@@ -101,11 +228,50 @@ sub cigar_end {
 }
 
 
+=head2 perc_cov
+
+  Arg [1]     : (optional) $perc_cov
+  Example     : $object->perc_cov($perc_cov);
+  Example     : $perc_cov = $object->perc_cov();
+  Description : Getter/setter for the perc_cov attribute. For non-global
+                alignments, this represent the coverage of the alignment in
+                percentage of the total length of the sequence.
+                Currently the data provided as AlignedMembers (leaves of the
+                ProteinTree, SuperProteinTree and NCTree) are obtained using
+                global alignments (the whole sequence is always included) and
+                the perc_cov is always undefined.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub perc_cov {
   my $self = shift;
   $self->{'perc_cov'} = shift if(@_);
   return $self->{'perc_cov'};
 }
+
+
+=head2 perc_id
+
+  Arg [1]     : (optional) $perc_id
+  Example     : $object->perc_id($perc_id);
+  Example     : $perc_id = $object->perc_id();
+  Description : Getter/setter for the perc_id attribute. This is generally
+                used for pairwise relationships. The percentage identity
+                reprensents the number of positions that are identical in
+                the alignment in both sequences.
+                Currently the data provided as AlignedMembers (leaves of the
+                ProteinTree, SuperProteinTree and NCTree) are obtained using
+                multiple alignments and the perc_id is always undefined.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub perc_id {
   my $self = shift;
@@ -113,11 +279,48 @@ sub perc_id {
   return $self->{'perc_id'};
 }
 
+
+=head2 perc_pos
+
+  Arg [1]     : (optional) $perc_pos
+  Example     : $object->perc_pos($perc_pos);
+  Example     : $perc_pos = $object->perc_pos();
+  Description : Getter/setter for the perc_pos attribute. This is generally
+                used for pairwise relationships. The percentage positivity
+                reprensents the number of positions that are positive in
+                the alignment in both sequences. Currently, this is calculated
+                for protein sequences using the BLOSUM62 scoring matrix.
+                Currently the data provided as AlignedMembers (leaves of the
+                ProteinTree, SuperProteinTree and NCTree) are obtained using
+                multiple alignments and the perc_cov is always undefined.
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub perc_pos {
   my $self = shift;
   $self->{'perc_pos'} = shift if(@_);
   return $self->{'perc_pos'};
 }
+
+
+=head2 method_link_species_set_id
+
+  Arg [1]     : (optional) $method_link_species_set_id
+  Example     : $object->method_link_species_set_id($method_link_species_set_id);
+  Example     : $method_link_species_set_id = $object->method_link_species_set_id();
+  Description : Getter/setter for the method_link_species_set_id attribute. Please,
+                refer to the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet module
+                for more information on the method_link_species_set_id.
+  Returntype  : int
+  Exceptions  : Returns 0 if the method_link_species_set_id is not defined.
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub method_link_species_set_id {
   my $self = shift;
@@ -127,6 +330,27 @@ sub method_link_species_set_id {
 }
 
 
+=head2 alignment_string
+
+  Arg [1]     : (optional) bool $exon_cased
+  Example     : my $alignment_string = $object->alignment_string();
+  Example     : my $alignment_string = $object->alignment_string(1);
+  Description : Returns the aligned sequence for this object. For sequences
+                split in exons, the $exon_cased flag permits to request
+                that each exon is represented in alternative upper and lower
+                case.
+                For local alignments, when the alignment does not cover the
+                whole protein, only the part of the sequence in the alignemnt
+                is returned. Currently only global alignments are provided.
+                Therefore the alignment_string always returns the whole aligned
+                sequence.
+  Returntype  : string
+  Exceptions  : throws if the cigar_line is not defined for this object.
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub alignment_string {
   my $self = shift;
   my $exon_cased = shift;
@@ -134,7 +358,17 @@ sub alignment_string {
   unless (defined $self->cigar_line && $self->cigar_line ne "") {
     throw("To get an alignment_string, the cigar_line needs to be define\n");
   }
-  unless (defined $self->{'alignment_string'}) {
+
+  # Use different keys for exon-cased and non exon-cased sequences
+  my $key = 'alignment_string';
+  if ($exon_cased) {
+    $key = 'alignment_string_cased';
+  } elsif (defined $self->{'alignment_string_cased'} and !defined($self->{'alignment_string'})) {
+    # non exon-cased sequence can be easily obtained from the exon-cased one.
+    $self->{'alignment_string'} = uc($self->{'alignment_string_cased'})
+  }
+
+  unless (defined $self->{$key}) {
     my $sequence;
     if ($exon_cased) {
       $sequence = $self->sequence_exon_cased;
@@ -168,11 +402,26 @@ sub alignment_string {
         $seq_start += $length;
       }
     }
-    $self->{'alignment_string'} = $alignment_string;
+    $self->{$key} = $alignment_string;
   }
 
-  return $self->{'alignment_string'};
+  return $self->{$key};
 }
+
+
+=head2 alignment_string_bounded
+
+  Arg [1]     : none
+  Example     : my $alignment_string_bounded = $object->alignment_string_bounded();
+  Description : Returns the aligned sequence for this object with padding characters
+                representing the introns.
+  Returntype  : string
+  Exceptions  : throws if the cigar_line is not defined for this object or if the
+                cigar_start or cigar_end are defined.
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub alignment_string_bounded {
   my $self = shift;
@@ -224,7 +473,7 @@ sub alignment_string_bounded {
   Example    : my $cdna_alignment = $aligned_member->cdna_alignment_string();
   Description: Converts the peptide alignment string to a cdna alignment
                string.  This only works for EnsEMBL peptides whose cdna can
-               be retrieved from the attached EnsEMBL databse.
+               be retrieved from the attached core databse.
                If the cdna cannot be retrieved undef is returned and a
                warning is thrown.
   Returntype : string
@@ -282,31 +531,5 @@ sub cdna_alignment_string {
   return $self->{'cdna_alignment_string'};
 }
 
-
-#############################################################
-#
-# orthologue and paralogue searching
-#
-#############################################################
-
-
-sub orthologue_in_genome {
-  my $self = shift;
-  my $genomedb = shift;
-  
-  throw("[$genomedb] must be a Bio::EnsEMBL::Compara::GenomeDB object")
-       unless ($genomedb and $genomedb->isa("Bio::EnsEMBL::Compara::GenomeDB"));
-
-#  my $starttime = time();
-  my $all_leaves = $self->root->get_all_leaves;
-  foreach my $member (@{$all_leaves}) {
-  }
-  
-#  printf("%1.3f secs to find orthologue\n", (time()-$starttime));
-}
-
-sub get_leaves_in_genome {
-  my $self = shift;
-}
 
 1;
