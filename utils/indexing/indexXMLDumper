@@ -93,6 +93,7 @@ foreach my $index (@indexes) {
     $conf->{'dbs'}       = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
     $conf->{'dbs'}{'DATABASE_COMPARA'} = 'ensembl_compara_'.$SD->ENSEMBL_VERSION;
     my $core = $dbs{'DATABASE_CORE'};
+    $conf->{'core_details'} = $core;
     my $no_success = 1;
     my $c;
     print LOG "Starting: $index $species\n";
@@ -155,7 +156,7 @@ sub dumpMarker {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -238,7 +239,7 @@ sub dumpQTL {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -344,7 +345,7 @@ sub dumpVariationPhenotype {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open $fh, '>', $file  or die "Can't open $file: $!";
   }
   print LOG "  Dumping $VariationDB Phenotype info to $file ... ", format_datetime($start_time), "\n";
   header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
@@ -397,11 +398,11 @@ sub dumpVariation {
       or die("Can't open compressed stream to $file2: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
-    open( FILE2, ">$file2" ) or die "Can't open $file2: $!";
+    open( $fh,  ">$file"  ) or die "Can't open $file: $!";
+    open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
   }
   print LOG "  Dumping $VariationDB Variations to $file ... ", format_datetime($start_time), "\n";
-  header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
+  header( $VariationDB, $dbspecies, 'variation',        $nogzip, $fh,  $release );
   header( $VariationDB, $dbspecies, 'somatic mutation', $nogzip, $fh2, $release );
 
 
@@ -564,7 +565,7 @@ sub dumpStructuralVariations {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $VariationDB to $file ... ", format_datetime($start_time), "\n";
   header( $VariationDB, $dbspecies, 'variation', $nogzip, $fh, $release );
@@ -648,7 +649,7 @@ sub dumpGenomicAlignment {
       $fh->open( "$file", "wb9" ) or die("Can't open compressed stream to $file: $!");
     }
     else {
-      open( FILE, ">$file" ) or die "Can't open $file: $!";
+      open( $fh, ">$file" ) or die "Can't open $file: $!";
     }
     print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -758,7 +759,7 @@ sub dumpOligoProbe {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $FUNCDB to $file ... ", format_datetime($start_time), "\n";
   header( $FUNCDB, $dbspecies, $db, $nogzip, $fh, $release );
@@ -841,7 +842,7 @@ sub dumpDomain {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -924,7 +925,7 @@ sub dumpFamily {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -1006,7 +1007,7 @@ sub dumpSequence {
         or die("Can't open compressed stream to $file: $!");
     }
     else {
-      open( FILE, ">$file" ) or die "Can't open $file: $!";
+      open( $fh, ">$file" ) or die "Can't open $file: $!";
     }
     print LOG "  Dumping $dbname to $file ... ", format_datetime($start_time), "\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -1271,18 +1272,19 @@ sub dumpGene {
         or die("Can't open compressed stream to $file: $!");
     }
     else {
-      open( FILE, ">$file" ) or die "Can't open $file: $!";
+      open( $fh, ">$file" ) or die "Can't open $file: $!";
     }
     print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
     header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
 
-    if ($db eq 'core') {
-      my $lrgs = &dumpLRGs($conf);
-      if (@$lrgs) {
-        &sort_lrgs($dbspecies,'Gene',$fh,$lrgs); 
-        print LOG "    Printed LRGs to $file ... ".&date_and_mem()."\n";
-      }
-    }
+    #commented out since removed from Gene in e60
+#    if ($db eq 'core') {
+#      my $lrgs = &dumpLRGs($conf);
+#      if (@$lrgs) {
+#        &sort_lrgs($dbspecies,'Gene',$fh,$lrgs); 
+#        print LOG "    Printed LRGs to $file ... ".&date_and_mem()."\n";
+#      }
+#    }
 
     my $external_dbs = $conf->{'dbh'}->selectall_hashref(
       'select external_db_id, db_name, db_display_name
@@ -1315,6 +1317,12 @@ sub dumpGene {
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
+
+    #disconnect and then connect to free up memory
+    my $core = $conf->{'core_details'};
+    $conf->{'dbh'}->disconnect;
+    $conf->{'dbh'} = DBI->connect( "dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}", $core->{'USER'}, $core->{'PASS'}, { PrintError => 0, RaiseError => 0} );
+
 #    warn Dumper(\%xrefs); exit;
 
     my %exons = ();
@@ -1740,7 +1748,7 @@ sub dumpRegulatoryFeature {
       or die("Can't open compressed stream to $file: $!");
   }
   else {
-    open( FILE, ">$file" ) or die "Can't open $file: $!";
+    open( $fh, ">$file" ) or die "Can't open $file: $!";
   }
   print LOG "  Dumping $dbname to $file ... ".&date_and_mem()."\n";
   header( $dbname, $dbspecies, $db, $nogzip, $fh, $release );
@@ -1915,7 +1923,7 @@ sub footer {
   p("</database>",$nogzip,$fh);
   print LOG "  ...Dumped $ecount entries\n";
   if ($nogzip) {
-    close(FILE) or die $!;
+    close($fh) or die $!;
   }
   else {
     $fh->close();
@@ -1930,7 +1938,7 @@ sub p {
   $str .= "\n";
   if ($nogzip) {
     if (! $dry_run) {
-      print FILE $str or die "Can't write to file ", $!;
+      print $fh $str or die "Can't write to file ", $!;
     }
   }
   else {
