@@ -1131,7 +1131,7 @@ sub dumpSequence {
 
   open O, ">$conf->{'directory'}/Sequence.txt";
 
-  my $lrgs = &dumpLRGs($conf);
+  my $lrgs = &retrieveLRGs($conf);
   if (@$lrgs) {
     foreach (@{&sort_lrgs($lrgs)}) {
       print O $_;
@@ -1294,7 +1294,7 @@ sub seqLine {
 
 ########################################################################## LRGs
 
-sub dumpLRGs {
+sub retrieveLRGs {
   my $conf = shift;
   return $conf->{'dbh'}->selectall_arrayref(
         qq(SELECT gsi.stable_id, x.display_label, edb.db_name, tsi.stable_id, sr.length
