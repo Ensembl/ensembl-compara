@@ -125,7 +125,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           default: buttonText = 'Update options'; break;
         }
         
-        if (json.activeTab !== null) {
+        if (json.activeTab) {
           this.changeTab(this.elLk.tabs.filter('[textContent=' + json.activeTab + ']'));
         }
         
