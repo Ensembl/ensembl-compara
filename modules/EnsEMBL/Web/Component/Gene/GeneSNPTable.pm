@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::GeneSNPTable;
 
 use strict;
@@ -15,11 +17,8 @@ sub content {
   my $hub         = $self->hub;
   my $gene        = $self->configure($hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
   my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
-  my $tables      = {};
-  
-  my $table_rows = $self->variation_table(\@transcripts);
-  
-  my $table = $self->make_table($table_rows) if $table_rows;
+  my $table_rows  = $self->variation_table(\@transcripts);
+  my $table       = $table_rows ? $self->make_table($table_rows) : undef;
   
   return $self->render_content($table);
 }
@@ -28,37 +27,30 @@ sub make_table {
   my ($self, $table_rows) = @_;
   
   my $columns = [
-    { key => 'ID',        sort => 'html'                                                   },
-    { key => 'chr' ,      sort => 'position', title => 'Chr: bp'                           },
-    { key => 'Alleles',   sort => 'string',   align => 'center'                            },
-    { key => 'Ambiguity', sort => 'string',   align => 'center'                            },
-    #{ key => 'HGVS',      sort => 'string',   title => 'HGVS name(s)',   align => 'center' },
-    { key => 'class',     sort => 'string',   title => 'Class',          align => 'center' },
-    { key => 'Source',    sort => 'string'                                                 },
-    { key => 'status',    sort => 'string',   title => 'Validation',     align => 'center' },
-    { key => 'snptype',   sort => 'string',   title => 'Type',                             },
-    { key => 'aachange',  sort => 'string',   title => 'Amino Acid',     align => 'center' },
-    { key => 'aacoord',   sort => 'position', title => 'AA co-ordinate', align => 'center' },
-    { key => 'Transcript', sort => 'string'},
+    { key => 'ID',         sort => 'html'                                                   },
+    { key => 'chr' ,       sort => 'position', title => 'Chr: bp'                           },
+    { key => 'Alleles',    sort => 'string',                              align => 'center' },
+    { key => 'Ambiguity',  sort => 'string',                              align => 'center' },
+    { key => 'class',      sort => 'string',   title => 'Class',          align => 'center' },
+    { key => 'Source',     sort => 'string'                                                 },
+    { key => 'status',     sort => 'string',   title => 'Validation',     align => 'center' },
+    { key => 'snptype',    sort => 'string',   title => 'Type',                             },
+    { key => 'aachange',   sort => 'string',   title => 'Amino Acid',     align => 'center' },
+    { key => 'aacoord',    sort => 'position', title => 'AA co-ordinate', align => 'center' },
+    { key => 'Transcript', sort => 'string'                                                 }
   ];
   
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
 }
 
 sub render_content {
-  my ($self, $tables) = @_;
-  
-  my $html;
-  
-  $html .= '<h2>Variations in '.$self->object->stable_id.'</h2>'.$tables->render;
-  #$html .= sprintf '<h2>Variations in %s:</h2>%s', $_, $tables->{$_}->render for keys %$tables;
-  $html .= $self->_info(
+  my ($self, $table) = @_;
+
+  return ($table ? $table->render : '') . $self->_info(
     'Configuring the display',
-    q{<p>The <strong>'Configure this page'</strong> link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables above and the variation image.
-    <br /> Please note the default 'Context' settings will probably filter out some intronic SNPs.</p><br />}
+    '<p>The <strong>"Configure this page"</strong> link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables above and the variation image.
+    <br /> Please note the default "Context" settings will probably filter out some intronic SNPs.</p><br />'
   );
-  
-  return $html;
 }
 
 sub variation_table {
@@ -66,7 +58,7 @@ sub variation_table {
   
   my @rows;
   
-  foreach my $transcript(@$transcripts) {  
+  foreach my $transcript (@$transcripts) {  
     my %snps = %{$transcript->__data->{'transformed'}{'snps'}||{}};
    
     return unless %snps;
@@ -108,39 +100,32 @@ sub variation_table {
         my $source            = $snp->source;
         
         # store the transcript variation so that HGVS doesn't try and calculate it again
-        $snp->{'transcriptVariations'} = [$transcript_variation];
+        $snp->{'transcriptVariations'} = [ $transcript_variation ];
         
         my ($aachange, $aacoord) = $translation_start ? 
-          ($transcript_variation->pep_allele_string, sprintf('%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1))) : 
+          ($transcript_variation->pep_allele_string, sprintf '%s (%s)', $transcript_variation->translation_start, (($transcript_variation->cdna_start - $cdna_coding_start) % 3 + 1)) : 
           ('-', '-');
-        
-        my $url .= $base_url.';v='.$variation_name.';vf='.$raw_id.';source='.$source;
-        my $trans_url .= $base_trans_url.';t='.$transcript_stable_id;
-        
+                
         # break up allele string if too long
         my $as = $snp->allele_string;
-        $as =~ s/(.{30})/$1\n/g;
+        $as    =~ s/(.{30})/$1\n/g;
         
         my $row = {
-          ID        => qq{<a href="$url">$variation_name</a>},
-          class     => $var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $var_class,
-          Alleles   => qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
-          Ambiguity => $snp->ambig_code,
-          #HGVS      => $self->get_hgvs($snp, $transcript->Obj, $gene) || '-',
-          status    => (join(', ',  @$validation) || '-'),
-          chr       => "$chr:$start" . ($start == $end ? '' : "-$end"),
-          Source    => $source, #(join ', ', @{$snp->get_all_sources||[]}) || '-',
-          snptype   => (join ', ', @{$transcript_variation->consequence_type||[]}),
-          Transcript => '<a href="'.$trans_url.'">'.$transcript_stable_id.'</a>',
-          aachange  => $aachange,
-          aacoord   => $aacoord,
-          '_raw_id' => $raw_id
+          ID         => qq{<a href="$base_url;v=$variation_name;vf=$raw_id;source=$source">$variation_name</a>},
+          class      => $var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $var_class,
+          Alleles    => qq{<kbd>$as</kbd>},
+          Ambiguity  => $snp->ambig_code,
+          status     => join(', ',  @$validation) || '-',
+          chr        => "$chr:$start" . ($start == $end ? '' : "-$end"),
+          Source     => $source,
+          snptype    => join(', ', @{$transcript_variation->consequence_type||[]}),
+          Transcript => qq{<a href="$base_trans_url;t=$transcript_stable_id">$transcript_stable_id</a>},
+          aachange   => $aachange,
+          aacoord    => $aacoord
         };
         
         # add HGVS if LRG
-        if($transcript_stable_id =~ /^LRG/) {
-          $row->{'HGVS'} = $self->get_hgvs($snp, $transcript->Obj, $slice) || '-';
-        }
+        $row->{'HGVS'} = $self->get_hgvs($snp, $transcript->Obj, $slice) || '-' if $transcript_stable_id =~ /^LRG/;
         
         push @rows, $row;
       }
@@ -174,7 +159,7 @@ sub configure {
   my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
   
   $object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
-  $object->store_TransformedSNPS();      ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
+  $object->store_TransformedSNPS;        ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
 
   ## Map SNPs for the last SNP display  
   my @snps2 = map {
@@ -199,7 +184,7 @@ sub get_hgvs {
   my ($self, $vf, $trans, $slice) = @_;
   
   my %cdna_hgvs = %{$vf->get_all_hgvs_notations($trans, 'c')};
-  my %pep_hgvs = %{$vf->get_all_hgvs_notations($trans, 'p')};
+  my %pep_hgvs  = %{$vf->get_all_hgvs_notations($trans, 'p')};
 
   # group by allele
   my %by_allele;
@@ -207,23 +192,24 @@ sub get_hgvs {
   # get genomic ones if given a slice
   if(defined($slice)) {
     my %genomic_hgvs = %{$vf->get_all_hgvs_notations($slice, 'g', $vf->seq_region_name)};
-    push @{$by_allele{$_}}, $genomic_hgvs{$_} foreach keys %genomic_hgvs;
+    push @{$by_allele{$_}}, $genomic_hgvs{$_} for keys %genomic_hgvs;
   }
 
-  push @{$by_allele{$_}}, $cdna_hgvs{$_} foreach keys %cdna_hgvs;
-  push @{$by_allele{$_}}, $pep_hgvs{$_} foreach keys %pep_hgvs;
+  push @{$by_allele{$_}}, $cdna_hgvs{$_} for keys %cdna_hgvs;
+  push @{$by_allele{$_}}, $pep_hgvs{$_}  for keys %pep_hgvs;
   
   my $allele_count = scalar keys %by_allele;
 
-  my @temp = ();
-  foreach my $a(keys %by_allele) {
-    foreach my $h(@{$by_allele{$a}}) {
-      $h =~ s/(.{35})/$1\n/g if length($h) > 50; #wordwrap
-      push @temp, $h.($allele_count > 1 ? " <b>($a)</b>" : "");
+  my @temp;
+  
+  foreach my $a (keys %by_allele) {
+    foreach my $h (@{$by_allele{$a}}) {
+      $h =~ s/(.{35})/$1\n/g if length $h > 50; # wordwrap
+      push @temp, $h . ($allele_count > 1 ? " <b>($a)</b>" : '');
     }
   }
 
-  return join ", ", @temp;
+  return join ', ', @temp;
 }
 
 1;
