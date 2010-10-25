@@ -1,4 +1,4 @@
-package EnsEMBL::Web::Document::Renderer::Excel::Cell;
+package EnsEMBL::Web::Document::Renderer::Excel::CellFormat;
 
 use strict;
 
