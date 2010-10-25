@@ -16,7 +16,7 @@ sub caption { return 'Transcripts'; }
 sub content {
   my $self         = shift;
   my $object       = $self->object;
-  my $slice        = $object->Obj->expand(10e3, 10e3);
+  my $slice        = $object->Obj;
   my $gene         = $object->gene;
   my $image_config = $object->get_imageconfig('lrg_summary');
   
