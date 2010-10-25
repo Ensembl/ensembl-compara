@@ -7,7 +7,7 @@ use strict;
 use Spreadsheet::WriteExcel;
 
 use EnsEMBL::Web::Document::Renderer::Excel::Table;
-use EnsEMBL::Web::Document::Renderer::Excel::CellFormat;
+use EnsEMBL::Web::Document::Renderer::Excel::Cell;
 
 use base qw(EnsEMBL::Web::Document::Renderer);
 
@@ -90,7 +90,7 @@ sub print {
   my $worksheet = $self->workbook->sheets($self->sheet);
   my $format;
   
-  if (@_ && ref($_[-1]) eq 'EnsEMBL::Web::Document::Renderer::Excel::CellFormat') {
+  if (@_ && ref($_[-1]) eq 'EnsEMBL::Web::Document::Renderer::Excel::Cell') {
     $format = pop @_;
   } else {
     $format = $self->new_cell_renderer;
