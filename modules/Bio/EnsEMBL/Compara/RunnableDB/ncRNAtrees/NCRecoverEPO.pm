@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $nc_recover_epo = Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO->new
+my $nc_recover_epo = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -53,7 +53,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO;
 
 use strict;
 use Bio::AlignIO;

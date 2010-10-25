@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $g_load_members = Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers->new (
+my $g_load_members = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers->new (
                                                     -db      => $db,
                                                     -input_id   => $input_id
                                                     -analysis   => $analysis );
@@ -44,7 +44,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers;
 
 use strict;
 use Bio::EnsEMBL::Compara::Member;

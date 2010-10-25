@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $ncrecoversearch = Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch->new
+my $ncrecoversearch = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -53,7 +53,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);

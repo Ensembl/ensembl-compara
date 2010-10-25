@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db    = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $otree = Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree->new ( 
+my $otree = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree->new ( 
                                                     -db      => $db,
                                                     -input_id   => $input_id,
                                                     -analysis   => $analysis );
@@ -54,7 +54,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree;
 
 use strict;
 use IO::File;

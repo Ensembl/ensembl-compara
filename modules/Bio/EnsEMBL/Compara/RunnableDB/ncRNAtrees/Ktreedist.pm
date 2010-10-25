@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::Ktreedist
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $ktreedist = Bio::EnsEMBL::Compara::RunnableDB::Ktreedist->new
+my $ktreedist = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -53,7 +53,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::Ktreedist;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist;
 
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;

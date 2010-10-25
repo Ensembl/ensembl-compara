@@ -261,7 +261,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[load ncRNA and gene members and subsets]---------------------------------------------
 
         {   -logic_name    => 'load_members_factory',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomePrepareNCMembers',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomePrepareNCMembers',
             -hive_capacity => 10,
             -flow_into => {
                 2 => [ 'load_members' ],   # per-genome fan
@@ -269,7 +269,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'load_members',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneStoreNCMembers',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GeneStoreNCMembers',
             -hive_capacity => 30,
             -flow_into => {
                 3 => [ 'mysql:////subset_member' ],   # every ncrna member is added to the corresponding subset
@@ -280,7 +280,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[load RFAM models]---------------------------------------------------------------------
 
         {   -logic_name    => 'load_rfam_models',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMLoadModels',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMLoadModels',
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 1 => [ 'rfam_classify' ],
@@ -290,7 +290,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
 
         {   -logic_name    => 'rfam_classify',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RFAMClassify',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
             },
@@ -303,7 +303,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[by-cluster branches]----------------------------------------------------------------------
 
         {   -logic_name    => 'recover_epo',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCRecoverEPO',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
             -parameters    => {
                 'mlss_id'        => $self->o('mlss_id'),
                 'epo_db'         => $self->o('epo_db'),
@@ -315,7 +315,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'recover_search',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCRecoverSearch',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch',
             -batch_size    => 5,
             -hive_capacity => -1,
             -flow_into => {
@@ -324,7 +324,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'infernal',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Infernal',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Infernal',
             -hive_capacity => -1,
             -failed_job_tolerance => 10,    # that many per cent jobs are allowed to fail
             -flow_into => {
@@ -333,7 +333,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'sec_struct_tree',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCSecStructTree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCSecStructTree',
             -hive_capacity => -1,
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
             -flow_into => {
@@ -342,7 +342,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'genomic_alignment',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCGenomicAlignment',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
             -hive_capacity => -1,
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
             -flow_into => {
@@ -351,7 +351,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'treebest_mmerge',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge',
             -hive_capacity => 400,
             -flow_into => {
                 1 => [ 'orthotree', 'ktreedist' ],
@@ -359,12 +359,12 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'orthotree',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::NCOrthoTree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCOrthoTree',
             -hive_capacity => 200,
         },
 
         {   -logic_name    => 'ktreedist',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Ktreedist',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::Ktreedist',
             -hive_capacity => -1,
             -failed_job_tolerance =>  5,    # that many per cent jobs are allowed to fail
         },

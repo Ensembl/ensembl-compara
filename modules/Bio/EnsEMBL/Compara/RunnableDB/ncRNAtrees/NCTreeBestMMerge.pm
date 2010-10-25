@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $treebest_mmerge = Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge->new
+my $treebest_mmerge = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -53,7 +53,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::NCTreeBestMMerge;
+package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge;
 
 use strict;
 use Bio::AlignIO;
