@@ -265,8 +265,16 @@ sub store {
               AND mlss1.method_link_species_set_id < 10000 * (1 + $method_link_id DIV 100)
             ");
         $sth2->execute();
+        my $count;
         ($dbID) = $sth2->fetchrow_array();
-        $dbID = 10000 * int($method_link_id / 100) + 1 if (!defined($dbID));
+        #If we got no dbID i.e. we have exceeded the bounds of the range then
+        #assign to the next available identifeir
+        if (!defined($dbID)) {
+          $sth2->finish();
+          $sth2 = $self->prepare("SELECT MAX(mlss1.method_link_species_set_id + 1) FROM method_link_species_set mlss1");
+          $sth2->execute();
+          ($dbID) = $sth2->fetchrow_array();
+        }
         $sth2->finish();
       }
       my $species_set_id;
