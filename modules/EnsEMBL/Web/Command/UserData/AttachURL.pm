@@ -5,6 +5,7 @@ package EnsEMBL::Web::Command::UserData::AttachURL;
 use strict;
 
 use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
+use EnsEMBL::Web::Root;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -16,9 +17,20 @@ sub process {
   my $name     = $hub->param('name');
   my $param    = {};
   
-  if (!$name) {
-    my @path = split '/', $hub->param('url');
-    $name    = $path[-1];
+  my @path = split '/', $hub->param('url');
+  my $filename = $path[-1];
+  $name ||= $filename;
+  ## Try to guess format from file name
+  my $format;
+  my @bits = split /\./, $filename;
+  my $extension = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
+  $extension = uc($extension);
+  my $package = 'EnsEMBL::Web::Text::Feature::'.$extension;
+  if (EnsEMBL::Web::Root::dynamic_use(undef, $package)) {
+    $format = $extension;
+  }
+  else {
+    warn ">>> UNKNOWN FORMAT";
   }
 
   if (my $url = $hub->param('url')) {
@@ -49,11 +61,13 @@ sub process {
       $redirect .= 'SelectURL';
       $param->{'filter_module'} = 'Data';
       $param->{'filter_code'}   = 'empty';
-    } else {
+    } else { 
       my $data = $session->add_data(
         type     => 'url',
         url      => $url,
         name     => $name,
+        format   => $format,
+        style    => $format,
         species  => $hub->data_species,
         filesize => $feedback->{'filesize'},
       );
