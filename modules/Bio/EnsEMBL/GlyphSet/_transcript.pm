@@ -14,7 +14,14 @@ sub features {
   my $slice = $self->{'container'};
   my $db_alias = $self->my_config('db');
   my $analyses = $self->my_config('logicnames');
-  my @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
+  my @T;
+  ## FIXME - this is an ugly hack!
+  if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
+    @T = map { @{$slice->feature_Slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
+  }
+  else {
+    @T = map { @{$slice->get_all_Genes( $_, $db_alias )||[]} } @$analyses;
+  }
   $self->timer_push( 'Fetched transcripts', undef, 'fetch' );
   return \@T;
 }
