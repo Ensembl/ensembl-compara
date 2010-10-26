@@ -96,6 +96,7 @@ sub filter {
 sub parse {
   my ($self, $data, $format) = @_;
   return 'No data supplied' unless $data;
+  #use Carp qw(cluck); cluck $format;
 
   my $error = $self->check_format($data, $format);
   if ($error) {
@@ -126,6 +127,7 @@ sub parse {
       $current_index = List::MoreUtils::first_index {$_ eq $current_region} @{$self->drawn_chrs} if $current_region;
     }
 
+    my ($track_def, $track_def_base);
     foreach my $row ( split /\n|\r/, $data ) { 
       ## Clean up the row
       next if $row =~ /^#/;
@@ -137,17 +139,38 @@ sub parse {
       if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
         $self->{'browser_switches'}{$1} = $2;
       }
-      elsif ($row =~ /^track/) { 
-        $row =~ s/^track\s+(.*)$/$1/i;
-        $self->add_track($row);
-        if ($row =~ /type=bedGraph/ || $row =~ /type=wiggle/ || $row =~ /useScore=[3|4]/) {
-          $self->style('wiggle');
+      ## Build track definition - could be multiple lines
+      elsif ($row =~ /^track/) {
+        $track_def_base = $row;
+        $track_def      = $track_def_base;
+      }
+      elsif ($format eq 'WIG' && $row !~ /^\d+/) {
+        ## Some WIG files have partial track definitions
+        if (!$track_def) {
+          $track_def = $track_def_base;
         }
-        ## Reset max and min in case this is a multi-track file
-        $current_max = 0;
-        $current_min = 0;
+        $track_def .= ' '.$row;
       }
       else { 
+        ## Parse track definition, if any
+        if ($track_def) {
+          my $config = $self->parse_track_def($track_def);
+          $self->add_track($config);
+          if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser::WIG') {
+            $self->style('wiggle');
+            $self->set_wig_config;
+          }
+          elsif ($config->{'type'} eq 'bedGraph' || $config->{'type'} =~ /^wiggle/ 
+                || ($config->{'useScore'} && $config->{'useScore'} > 2)) {
+            $self->style('wiggle');
+          }
+
+          ## Reset values in case this is a multi-track file
+          $track_def = '';
+          $current_max = 0;
+          $current_min = 0;
+        }
+
         my $columns; 
         if (ref($self) eq 'EnsEMBL::Web::Text::FeatureParser') { 
           ## 'Normal' format consisting of a straightforward feature 
@@ -409,12 +432,12 @@ sub _is_strand {
   }
 }
 
-sub add_track {
+sub parse_track_def {
   my ($self, $row) = @_;
   my $config = {'name' => 'default'};
-  #cluck 'Adding track';;
 
   ## Pull out any parameters with "-delimited strings (without losing internal escaped '"')
+  $row =~ s/^track\s+(.*)$/$1/i;
   while ($row =~ s/(\w+)\s*=\s*"(([\\"]|[^"])+?)"//) {
     my $key = $1;
     (my $value = $2) =~ s/\\//g;
@@ -426,16 +449,49 @@ sub add_track {
       $config->{$1} = $2;
     }
   }
+  ## Now any value-less parameters (e.g. WIG style)
+  if ($row) {
+    while ($row =~ s/(\w+)//) {
+      $config->{$1} = 1;
+    }
+  }
+  ## Clean up chromosome names
+  if (defined $config->{'chrom'}) {
+    my $chr = $config->{'chrom'};
+    $chr =~ s/chr//;
+    $config->{'chrom'} = $chr;
+  }
+  ## Add a description
+  unless (defined $config->{'description'}) {
+    $config->{'description'} = $config->{'name'};
+  }
 
-  ## Set a (ideally unique) colour if none given
-  $self->_set_track_colour($config);
+  return $config;
+}
 
-  $self->current_key($config->{'name'});
-  $self->{'tracks'}{ $self->current_key } = { 'features' => [], 'config' => $config };
+sub add_track {
+  my ($self, $config) = @_;
+
+  if (defined $self->{'tracks'}{ $config->{'name'} }) {
+    ## Just reset config
+    my $old_config = $self->{'tracks'}{ $self->current_key }{'config'};
+    while (my($k, $v) = each(%$config)) {
+      $old_config->{$k} = $v;
+    }
+    $self->{'tracks'}{ $self->current_key }{'config'} = $old_config;
+  }
+  else {
+    $self->current_key($config->{'name'});
+    $self->{'tracks'}{ $self->current_key } = { 'features' => [], 'config' => $config };
+    $self->_set_track_colour($config);
+  }
 }
 
 sub _set_track_colour {
+## Set a (ideally unique) colour if none given
   my ($self, $config) = @_;
+  return unless $config;
+
   my @colours = @{$self->{'colourlist'}};
   if ($config->{'color'}) {
     $self->{'colourmap'}{$config->{'color'}} = 1;
