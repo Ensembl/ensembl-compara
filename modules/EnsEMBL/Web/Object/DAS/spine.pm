@@ -101,7 +101,7 @@ sub Features {
 
 	  if (length($description) > $MAX_LEN) {
 	      $description = substr($description, 0, $MAX_LEN);
-	      my $sindex = index($description, ' ');
+	      my $sindex = rindex($description, ' ');
 	      $description = substr($description, 0, $sindex). ' ...';
 	  }
 
