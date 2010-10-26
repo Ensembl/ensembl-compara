@@ -3,84 +3,32 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Feature;
 my $registry = "Bio::EnsEMBL::Registry";
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => "compara1",
-    -user => "ensro",
-    -species => "Multi",
-    -dbname => "lg4_ensembl_compara_57",
-  );
+$registry->load_registry_from_url('mysql://ensro@ens-livemirror');
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => "compara1",
-    -user => "ensro",
-    -group => "core",
-    -species => "Ancestral sequences",
-    -dbname => "lg4_ensembl_ancestral_57",
-  );
+my $species_name = "Homo sapiens";
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => "ens-staging1",
-    -user => "ensro",
-    -group => "core",
-    -species => "Gorilla gorilla",
-    -dbname => "gorilla_gorilla_core_57_3",
-  );
+my $species_assembly = $registry->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => "ens-staging1",
-    -user => "ensro",
-    -group => "core",
-    -species => "Homo sapiens",
-    -dbname => "homo_sapiens_core_57_37b",
-  );
-
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => "ens-staging2",
-    -user => "ensro",
-    -group => "core",
-    -species => "Pongo pygmaeus",
-    -dbname => "pongo_pygmaeus_core_57_1c",
-  );
-
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => "ens-staging2",
-    -user => "ensro",
-    -group => "core",
-    -species => "Pan troglodytes",
-    -dbname => "pan_troglodytes_core_57_21l",
-  );
-
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => "ens-staging1",
-    -user => "ensro",
-    -group => "core",
-    -species => "Macaca mulatta",
-    -dbname => "macaca_mulatta_core_57_10l",
-  );
-
-my $slice_adaptor = $registry->get_adaptor("Homo sapiens", "core", "Slice");
+my $slice_adaptor = $registry->get_adaptor($species_name, "core", "Slice");
 
 my $method_link_species_set_adaptor = $registry->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
 
 my $genomic_align_tree_adaptor = $registry->get_adaptor("Multi", "compara", "GenomicAlignTree");
 
-my $mlss = $method_link_species_set_adaptor->fetch_by_dbID(456);
+my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO", "primates");
 
-my $compara_dba = $registry->get_DBAdaptor("Multi", "compara");
-my $sql = "
-SELECT DISTINCT dnafrag.name
-FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id)
-WHERE method_link_species_set_id = 456 AND genome_db.name = 'Homo sapiens'";
-my $dnafrags = $compara_dba->dbc->db_handle->selectall_arrayref($sql);
+my $compara_dbc = $registry->get_DBAdaptor("Multi", "compara")->dbc;
+
+print_header($species_name, $species_assembly, $compara_dbc, $mlss);
+exit;
 
 my $slices = $slice_adaptor->fetch_all("toplevel", undef, 0, 1);
 my $step = 10000000;
+
 foreach my $slice (@$slices) {
-  next if (!grep {$_->[0] eq $slice->seq_region_name} @$dnafrags);
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
@@ -107,18 +55,22 @@ sub dump_ancestral_sequence {
   my ($slice, $mlss) = @_;
   my $num_of_blocks = 0;
 
+  # Fill in the ancestral sequence with dots ('.') - default character
   my $sequence_length = $slice->length;
   my $sequence = "." x $sequence_length;
+
+  # Get all the GenomicAlignTrees
   my $genomic_align_trees = $genomic_align_tree_adaptor->
       fetch_all_by_MethodLinkSpeciesSet_Slice(
           $mlss, $slice, undef, undef, "restrict");
+  # Parse the GenomicAlignTree (sorted by their location on the query_genome
   foreach my $this_genomic_align_tree (sort {
 #       scalar(@{$b->get_all_nodes}) <=> scalar(@{$a->get_all_nodes}) ||
       $a->reference_slice_start <=> $b->reference_slice_start ||
       $a->reference_slice_end <=> $b->reference_slice_end}
       @$genomic_align_trees) {
     my $ref_gat = $this_genomic_align_tree->reference_genomic_align_node;
-    next if (!$ref_gat);
+    next if (!$ref_gat); # This should not happen as we get the GAT using a query Slice
     my $ref_aligned_sequence = $ref_gat->aligned_sequence;
     my $ancestral_sequence = $ref_gat->parent->aligned_sequence;
     my $sister_sequence;
@@ -237,4 +189,40 @@ sub deep_clean {
     }
     undef($this_genomic_align_group);
   }
+}
+
+sub print_header {
+  my ($species_name, $species_assembly, $compara_dbc, $mlss) = @_;
+
+  my $database = $compara_dbc->dbname . '@' . $compara_dbc->host . ':' . $compara_dbc->port;
+  my $mlss_name = $mlss->name . " (" . $mlss->dbID . ")";
+
+  open(README, ">README") or die "Cannot open README file\n";
+  print README qq"This directory contains the ancestral sequences for $species_name ($species_assembly).
+
+The data have been extracted from the following alignment set:
+# Database: $database
+# MethodLinkSpeciesSet: $mlss_name
+
+In the EPO (Enredo-Pecan-Ortheus) pipeline, Ortheus infers ancestral states
+from the Pecan alignments. The confidence in the ancestral call is determined
+by comparing the call to the ancestor of the ancestral sequence as well as
+the 'sister' sequence of the query species. For instance, using a human-chimp-
+macaque alignment to get the ancestral state of human, the human-chimp ancestor
+sequence is compared to the chimp and to the human-chimp-macaque ancestor. A
+high-confidence call is made whn all three sequences agree. If the ancestral
+sequence agrees with one of the other two sequences only, we tag the call as
+a low-confidence call. If there is more disagreement, the call is not made.
+
+The convention for the sequence is:
+ACTG : high-confidence call, ancestral state supproted by the other two sequences
+actg : low-confindence call, ancestral state supported by one sequence only
+N    : failure, the ancestral state is not supported by any other sequence
+-    : the extant species contains an insertion at this postion
+.    : no coverage in the alignment
+
+You should find a summary.txt file, which contains statistics about the quality
+of the calls.
+";
+  close(README);
 }
