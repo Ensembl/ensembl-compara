@@ -11,7 +11,7 @@ opendir(DIR, $dir) or die;
 my @fasta_files = sort grep {/\.fa$/} readdir(DIR);
 closedir(DIR);
 
-print join("\t", "FILENAME", "uppercase", "perc", "lowercase", "perc", "Ns", "perc", "gaps", "perc", "dots", "perc", "total"), "\n";
+print join("\t", "FILENAME", "high-conf(ACTG)", "perc", "low-conf(actg)", "perc", "fail(N)", "perc", "insertions(-)", "perc", "no coverage(.)", "perc", "total"), "\n";
 
 foreach my $this_file (@fasta_files) {
   open(FASTA, $this_file) or die;
@@ -38,6 +38,6 @@ foreach my $this_file (@fasta_files) {
   }
   close(FASTA);
   my $total = $uc + $lc + $n + $gaps + $dots;
-#  print join("\t", $this_file, (map {sprintf("%d\t%.2f%%", $_, $_*100/$total)} ($uc, $lc, $n, $gaps, $dots)), $total), "\n";
-  print join("\t", $this_file, (map {sprintf("%d\t%.2f%%", $_, $_*100/$total)} ($base_A, $base_C, $base_G, $base_T)), $total), "\n";
+  print join("\t", $this_file, (map {sprintf("%d\t%.2f%%", $_, $_*100/$total)} ($uc, $lc, $n, $gaps, $dots)), $total), "\n";
+#  print join("\t", $this_file, (map {sprintf("%d\t%.2f%%", $_, $_*100/$total)} ($base_A, $base_C, $base_G, $base_T)), $total), "\n";
 }
