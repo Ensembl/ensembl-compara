@@ -123,7 +123,7 @@ sub upload {
   
     if ($file->content) {
       if ($file->save) {
-        my $code = $file->md5 . '_' . $hub->session->get_session_id;
+        my $code = $file->md5 . '_' . $hub->session->session_id;
         my ($sec, $min, $hr, $mday, $mon, $year) = localtime();
         my $timestamp = sprintf '%s-%s-%s %s:%s:%s', (1900 + $year), ($mon + 1), $mday, $hr, $min, $sec;
 
