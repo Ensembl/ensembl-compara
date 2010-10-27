@@ -21,7 +21,7 @@ Ensembl.LayoutManager.extend({
     
     $('#header a:not(#tabs a)').addClass('constant');
     
-    if (window.location.hash) {
+    if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex)) {
       $('.ajax_load').val(function () {
         return Ensembl.urlFromHash(this.value);
       });
@@ -70,8 +70,10 @@ Ensembl.LayoutManager.extend({
         Ensembl.EventManager.trigger('windowResize');
       },
       hashchange: function (e) {
-        Ensembl.setCoreParams();
-        Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+        if ((window.location.hash.replace(/^#/, '?') + ';').match(Ensembl.hashRegex)) {
+          Ensembl.setCoreParams();
+          Ensembl.EventManager.trigger('hashChange', Ensembl.urlFromHash(window.location.href, true));
+        }
       }
     });
     

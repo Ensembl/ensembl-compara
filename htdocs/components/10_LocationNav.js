@@ -26,6 +26,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.enabled = this.params.enabled || false;
     this.reload  = false;
     
+    var match        = (window.location.hash.replace(/^#/, '?') + ';').match(this.matchRegex);
     var sliderConfig = $('span.ramp', this.el).hide().children();
     var sliderLabel  = $('.slider_label', this.el);
     var hash, boundaries, r, l, i;
@@ -50,10 +51,11 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }
     });
     
-    if (window.location.hash) {
-      hash = window.location.hash.replace(/^#/, '?') + ';';
-      r    = hash.match(this.matchRegex)[1].split(/\W/);
-      l    = r[2] - r[1] + 1;
+    
+    
+    if (match) {
+      r = match[1].split(/\W/);
+      l = r[2] - r[1] + 1;
       
       sliderLabel.html(l);
       sliderConfig.removeClass('selected');
