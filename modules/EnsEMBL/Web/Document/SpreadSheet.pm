@@ -16,14 +16,19 @@ sub new {
   $s ||= [];
   
   my $self = {
-    _columns  => $c,
-    _data     => $d,
-    _options  => $o,
-    _spanning => $s
+    _columns    => $c,
+    _data       => $d,
+    _options    => $o,
+    _spanning   => $s,
+    _format     => 'HTML',
+    _exportable => $o->{'exportable'} || undef
   };
   
   bless $self, $class;
 }
+
+sub format     :lvalue { $_[0]{'_format'};     }
+sub exportable :lvalue { $_[0]{'_exportable'}; }
 
 sub has_rows { return !!@{$_[0]->{'_data'}}; }
 
@@ -32,12 +37,15 @@ sub render {
   
   return unless @{$self->{'_columns'} || []};
   
-  my $options = $self->{'_options'}       || {};
-  my $width   = $options->{'width'}       || '100%';
-  my $margin  = $options->{'margin'}      || '0px';
-  my $padding = $options->{'cellpadding'} || 0;
-  my $spacing = $options->{'cellspacing'} || 0;
+  my $func = 'render_' . $self->format;
   
+  return $self->$func if $self->can($func);
+  
+  my $options     = $self->{'_options'}          || {};
+  my $width       = $options->{'width'}          || '100%';
+  my $margin      = $options->{'margin'}         || '0px';
+  my $padding     = $options->{'cellpadding'}    || 0;
+  my $spacing     = $options->{'cellspacing'}    || 0;
   my $table_class = 'ss ' . ($options->{'align'} || 'autocenter');
   my $config;
   
@@ -105,23 +113,21 @@ sub render {
     $config
   };
   
-  $table = qq{<div class="autocenter_wrapper">$table</div>} if $width ne '100%' && $table_class =~ /\s*autocenter\s*/;
+  $table  = qq{<div class="autocenter_wrapper">$table</div>} if $width ne '100%' && $table_class =~ /\s*autocenter\s*/;
+  $table .= sprintf qq{<div class="other-tool"><p><a class="export" href="%s;_format=Excel">Download view as CSV</a></p></div>}, $self->exportable if $self->exportable;
   
   return $table;
 }
 
 sub render_Text {
-  my $self    = shift;
+  my $self = shift;
   
   return unless @{$self->{'_columns'} || []};
   
   my $options = $self->{'_options'} || {};
   my $align   = $options->{'align'} ? $options->{'align'} : 'autocenter';
   my $width   = $options->{'width'} ? $options->{'width'} : '100%';
-
-  my $output = '';
-  
-  $self->sort_config if $options->{'data_table'};
+  my $output  = '';
   
   foreach my $row (@{$self->_process}) {
     $output .= join "\t", map $self->strip_HTML($_->{'value'}), @{$row->{'cols'}};
@@ -130,6 +136,31 @@ sub render_Text {
   
   return $output;
 }
+
+sub render_Excel {
+  my $self = shift;
+  
+  return unless @{$self->{'_columns'} || []};
+  
+  my $options = $self->{'_options'} || {};
+  my $align   = $options->{'align'} ? $options->{'align'} : 'autocenter';
+  my $width   = $options->{'width'} ? $options->{'width'} : '100%';
+  my $output  = '';
+  
+  foreach my $row (@{$self->_process}) {
+    $output .= sprintf qq{"%s"\n}, join '","', map $self->csv_escape($_->{'value'}), @{$row->{'cols'}};
+  }
+  
+  return $output;
+}
+
+sub csv_escape {
+  my $self  = shift;
+  my $value = $self->strip_HTML(shift);
+  $value    =~ s/"/""/g;
+  return $value;
+}
+
 
 # Returns a hidden input used to configure the sorting options for a javascript data table
 sub sort_config {
@@ -368,5 +399,5 @@ sub get_value {
   
   return $rtn;
 }
-       
+   
 1;
