@@ -46,8 +46,11 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   usage(); 
 }
 
-$self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
-$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+$self->{'comparaDBA'}       = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'hiveDBA'}          = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+$self->{'analysis_adaptor'} = $self->{'hiveDBA'}->get_AnalysisAdaptor;
+$self->{'dataflow_adaptor'} = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
+$self->{'ctrlflow_adaptor'} = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
 
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'}) && $hive_params{'hive_output_dir'} ne "") {
@@ -123,10 +126,10 @@ exit(0);
 #######################
 
 sub usage {
-  print "loadGenomicAlignSystem.pl [options]\n";
+  print "loadPairAlignerSystem.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -conf <path>           : config file describing compara, templates\n";
-  print "loadPairAlignerSystem.pl v1.1\n";
+  print "loadPairAlignerSystem.pl v1.2\n";
   
   exit(1);  
 }
@@ -174,13 +177,10 @@ sub parse_conf {
 # the full information to access the genome will be in the compara database
 # also creates 'GenomeLoadMembers' analysis and
 # 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
-sub preparePairAlignerSystem
-{
-  #yes this should be done with a config file and a loop, but...
+
+sub preparePairAlignerSystem {
   my $self = shift;
 
-  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
-  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
   #
@@ -192,7 +192,7 @@ sub preparePairAlignerSystem
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($submit_analysis);
+  $self->{'analysis_adaptor'}->store($submit_analysis);
   $stats = $submit_analysis->stats;
   $stats->batch_size(100);
   $stats->hive_capacity(-1);
@@ -207,14 +207,14 @@ sub preparePairAlignerSystem
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
       -parameters      => ""
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkAndGroupDnaAnalysis);
+  $self->{'analysis_adaptor'}->store($chunkAndGroupDnaAnalysis);
   $stats = $chunkAndGroupDnaAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
   $self->{'chunkAndGroupDnaAnalysis'} = $chunkAndGroupDnaAnalysis;
 
-  $ctrlRuleDBA->create_rule($submit_analysis, $chunkAndGroupDnaAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($submit_analysis, $chunkAndGroupDnaAnalysis);
 
   #
   # creating StoreSequence analysis
@@ -225,7 +225,7 @@ sub preparePairAlignerSystem
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::StoreSequence',
       -parameters      => ""
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($storeSequenceAnalysis);
+  $self->{'analysis_adaptor'}->store($storeSequenceAnalysis);
   $stats = $storeSequenceAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(100); 
@@ -241,15 +241,15 @@ sub preparePairAlignerSystem
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreatePairAlignerJobs',
       -parameters      => ""
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createPairAlignerJobsAnalysis);
+  $self->{'analysis_adaptor'}->store($createPairAlignerJobsAnalysis);
   $stats = $createPairAlignerJobsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(1);
   $stats->update();
   $self->{'createPairAlignerJobsAnalysis'} = $createPairAlignerJobsAnalysis;
 
-  $ctrlRuleDBA->create_rule($chunkAndGroupDnaAnalysis, $createPairAlignerJobsAnalysis);
-  $ctrlRuleDBA->create_rule($storeSequenceAnalysis, $createPairAlignerJobsAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($chunkAndGroupDnaAnalysis, $createPairAlignerJobsAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($storeSequenceAnalysis, $createPairAlignerJobsAnalysis);
 
 }
 
@@ -258,9 +258,6 @@ sub createPairAlignerAnalysis
   my $self              = shift;
   my $pair_aligner_conf = shift;  #hash reference
   my $gdb_suffix        = shift;
-
-  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
-  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
 
   print("creating PairAligner jobs\n") if($verbose);
 
@@ -336,7 +333,7 @@ sub createPairAlignerAnalysis
 
   print "logic_name $logic_name\n";
   $pairAlignerAnalysis->logic_name($logic_name);
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($pairAlignerAnalysis);
+  $self->{'analysis_adaptor'}->store($pairAlignerAnalysis);
   my $stats = $pairAlignerAnalysis->stats;
   $stats->hive_capacity(200);
   if($pair_aligner_conf->{'max_parallel_workers'}) {
@@ -376,7 +373,7 @@ sub createPairAlignerAnalysis
 
       $dumpDnaAnalysis->logic_name($dump_dna_logic_name);
 
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($dumpDnaAnalysis);
+      $self->{'analysis_adaptor'}->store($dumpDnaAnalysis);
 
       my $stats = $dumpDnaAnalysis->stats;
       $stats->hive_capacity(1);
@@ -391,8 +388,8 @@ sub createPairAlignerAnalysis
       }
 
       ## Create new rule: DumpDna before running Blat!!
-      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $dumpDnaAnalysis);
-      $ctrlRuleDBA->create_rule($dumpDnaAnalysis, $pairAlignerAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $dumpDnaAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($dumpDnaAnalysis, $pairAlignerAnalysis);
   }
 
   unless (defined $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}) {
@@ -407,7 +404,7 @@ sub createPairAlignerAnalysis
        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
        -parameters      => "");
     
-    $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthBeforeFDAnalysis);
+    $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthBeforeFDAnalysis);
     my $stats = $updateMaxAlignmentLengthBeforeFDAnalysis->stats;
     $stats->hive_capacity(1);
     $stats->update();
@@ -423,7 +420,7 @@ sub createPairAlignerAnalysis
          -analysis       => $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'});
   }
 
-  $ctrlRuleDBA->create_rule($pairAlignerAnalysis, $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'});
+  $self->{'ctrlflow_adaptor'}->create_rule($pairAlignerAnalysis, $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'});
 
   #
   # create CreatePairAlignerJobs job
@@ -473,7 +470,7 @@ sub createPairAlignerAnalysis
      -logic_name      => 'QueryFilterDuplicates-'.$gdb_suffix,
      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
      -parameters      => $parameters);
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($queryFilterDuplicatesAnalysis);
+  $self->{'analysis_adaptor'}->store($queryFilterDuplicatesAnalysis);
 
   $stats = $queryFilterDuplicatesAnalysis->stats;
   $stats->batch_size(5);
@@ -482,7 +479,7 @@ sub createPairAlignerAnalysis
   $stats->update();
   $self->{'queryFilterDuplicatesAnalysis'} = $queryFilterDuplicatesAnalysis;
 
-  $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}, $queryFilterDuplicatesAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}, $queryFilterDuplicatesAnalysis);
 
   unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
         
@@ -496,7 +493,7 @@ sub createPairAlignerAnalysis
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	 -parameters      => "");
       
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterFDAnalysis);
+      $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterFDAnalysis);
       my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
       $stats->hive_capacity(1);
       $stats->update();
@@ -512,7 +509,7 @@ sub createPairAlignerAnalysis
 	   -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
   }
   
-  $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  $self->{'ctrlflow_adaptor'}->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
   
   #
   # create CreateFilterDuplicatesJobs analysis
@@ -523,7 +520,7 @@ sub createPairAlignerAnalysis
 	 -logic_name      => 'CreateFilterDuplicatesJobs',
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
 	 -parameters      => "");
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createFilterDuplicatesJobsAnalysis);
+      $self->{'analysis_adaptor'}->store($createFilterDuplicatesJobsAnalysis);
       $stats = $createFilterDuplicatesJobsAnalysis->stats;
       $stats->batch_size(1);
       if($pair_aligner_conf->{'max_parallel_workers'}) {
@@ -532,7 +529,7 @@ sub createPairAlignerAnalysis
       $stats->update();
       $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
       
-      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
   }
   
   #
@@ -570,7 +567,7 @@ sub createPairAlignerAnalysis
      -logic_name      => 'TargetFilterDuplicates-'.$gdb_suffix,
      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
      -parameters      => $parameters);
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($targetFilterDuplicatesAnalysis);
+  $self->{'analysis_adaptor'}->store($targetFilterDuplicatesAnalysis);
   $stats = $targetFilterDuplicatesAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(200);
@@ -579,9 +576,9 @@ sub createPairAlignerAnalysis
   $self->{'targetFilterDuplicatesAnalysis'} = $targetFilterDuplicatesAnalysis;
   
   if (defined $queryFilterDuplicatesAnalysis) {
-      $ctrlRuleDBA->create_rule($queryFilterDuplicatesAnalysis, $targetFilterDuplicatesAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($queryFilterDuplicatesAnalysis, $targetFilterDuplicatesAnalysis);
   } else {
-      $ctrlRuleDBA->create_rule($pairAlignerAnalysis, $targetFilterDuplicatesAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($pairAlignerAnalysis, $targetFilterDuplicatesAnalysis);
   }
   
   unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
@@ -596,7 +593,7 @@ sub createPairAlignerAnalysis
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	 -parameters      => "");
       
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterFDAnalysis);
+      $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterFDAnalysis);
       my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
       $stats->hive_capacity(1);
       $stats->update();
@@ -612,7 +609,7 @@ sub createPairAlignerAnalysis
 	   -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
   }
   
-$ctrlRuleDBA->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+$self->{'ctrlflow_adaptor'}->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
   
   #
   # create CreateFilterDuplicatesJobs analysis
@@ -623,7 +620,7 @@ $ctrlRuleDBA->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlig
 	 -logic_name      => 'CreateFilterDuplicatesJobs',
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
 	 -parameters      => "");
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createFilterDuplicatesJobsAnalysis);
+      $self->{'analysis_adaptor'}->store($createFilterDuplicatesJobsAnalysis);
       $stats = $createFilterDuplicatesJobsAnalysis->stats;
       $stats->batch_size(1);
       if($pair_aligner_conf->{'max_parallel_workers'}) {
@@ -632,7 +629,7 @@ $ctrlRuleDBA->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlig
       $stats->update();
       $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
       
-      $ctrlRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $createFilterDuplicatesJobsAnalysis);
   }
 
   #
@@ -716,9 +713,8 @@ sub createChunkAndGroupDnaJobs
        -analysis       => $self->{'chunkAndGroupDnaAnalysis'},
        -input_job_id   => 0);
 
-  #Create dataflow rule to create sequence storing jobs on branch 1
-  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
-  $dataflowRuleDBA->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},1);
+      #Create dataflow rule to create sequence storing jobs on branch 1
+  $self->{'dataflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},1);
 
 }
 

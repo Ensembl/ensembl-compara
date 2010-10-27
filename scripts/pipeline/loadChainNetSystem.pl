@@ -48,8 +48,12 @@ unless(defined($compara_conf{'-host'}) and defined($compara_conf{'-user'}) and d
   usage();
 }
 
-$self->{'comparaDBA'}   = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
-$self->{'hiveDBA'}      = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+$self->{'comparaDBA'}       = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%compara_conf);
+$self->{'hiveDBA'}          = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(-DBCONN => $self->{'comparaDBA'}->dbc);
+$self->{'analysis_adaptor'} = $self->{'hiveDBA'}->get_AnalysisAdaptor;
+$self->{'dataflow_adaptor'} = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
+$self->{'ctrlflow_adaptor'} = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
+
 
 if(%hive_params) {
   if(defined($hive_params{'hive_output_dir'})) {
@@ -59,6 +63,7 @@ if(%hive_params) {
     $self->{'comparaDBA'}->get_MetaContainer->store_key_value('hive_output_dir', $hive_params{'hive_output_dir'});
   }
 }
+
 
 #
 # creating (another copy of) ChunkAndGroupDna analysis
@@ -70,12 +75,20 @@ my $noChunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
       -parameters      => ""
     );
-$self->{'hiveDBA'}->get_AnalysisAdaptor()->store($noChunkAndGroupDnaAnalysis);
+$self->{'analysis_adaptor'}->store($noChunkAndGroupDnaAnalysis);
 $stats = $noChunkAndGroupDnaAnalysis->stats;
 $stats->batch_size(1);
 $stats->hive_capacity(-1); #unlimited
 $stats->update();
 $self->{'noChunkAndGroupDnaAnalysis'} = $noChunkAndGroupDnaAnalysis;
+
+
+#
+# link to the previously loaded half of the pipeline:
+#
+if(my $UpdateMaxAlignmentLengthAfterFDanalysis = $self->{'analysis_adaptor'}->fetch_by_logic_name('UpdateMaxAlignmentLengthAfterFD') ) {
+    $self->{'ctrlflow_adaptor'}->create_rule($UpdateMaxAlignmentLengthAfterFDanalysis, $noChunkAndGroupDnaAnalysis);
+}
 
 
 $self->{'dna_collection_conf_selected_hash'} = {};
@@ -211,8 +224,6 @@ sub prepareChainSystem
 
   return unless($chainConf);
 
-  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
-  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
   #
@@ -224,14 +235,14 @@ sub prepareChainSystem
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection',
       -parameters      => "{'dump_nib'=>1}"
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($dumpLargeNibForChainsAnalysis);
+  $self->{'analysis_adaptor'}->store($dumpLargeNibForChainsAnalysis);
   $stats = $dumpLargeNibForChainsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(1);
   $stats->update();
   $self->{'dumpLargeNibForChainsAnalysis'} = $dumpLargeNibForChainsAnalysis;
 
-  $ctrlRuleDBA->create_rule($noChunkAndGroupDnaAnalysis, $dumpLargeNibForChainsAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($noChunkAndGroupDnaAnalysis, $dumpLargeNibForChainsAnalysis);
 
   #
   # createAlignmentChainsJobs Analysis
@@ -255,14 +266,14 @@ sub prepareChainSystem
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateAlignmentChainsJobs',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createAlignmentChainsJobsAnalysis);
+  $self->{'analysis_adaptor'}->store($createAlignmentChainsJobsAnalysis);
   $stats = $createAlignmentChainsJobsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(1);
   $stats->update();
   $self->{'createAlignmentChainsJobsAnalysis'} = $createAlignmentChainsJobsAnalysis;
 
-  $ctrlRuleDBA->create_rule($dumpLargeNibForChainsAnalysis, $createAlignmentChainsJobsAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($dumpLargeNibForChainsAnalysis, $createAlignmentChainsJobsAnalysis);
 
   #
   # AlignmentChains Analysis
@@ -294,7 +305,7 @@ sub prepareChainSystem
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($alignmentChainsAnalysis);
+  $self->{'analysis_adaptor'}->store($alignmentChainsAnalysis);
   $stats = $alignmentChainsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(10);
@@ -303,7 +314,7 @@ sub prepareChainSystem
   $self->{'alignmentChainsAnalysis'} = [] unless defined $self->{'alignmentChainsAnalysis'};
   push(@{$self->{'alignmentChainsAnalysis'}}, $alignmentChainsAnalysis);
 
-  $ctrlRuleDBA->create_rule($createAlignmentChainsJobsAnalysis, $alignmentChainsAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($createAlignmentChainsJobsAnalysis, $alignmentChainsAnalysis);
 
   $chainConf->{'logic_name'} = $alignmentChainsAnalysis->logic_name;
   #$self->prepCreateAlignmentChainsJobs($chainConf,$alignmentChainsAnalysis->logic_name);
@@ -320,15 +331,15 @@ sub prepareChainSystem
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	 -parameters      => $parameters);
       
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterChainAnalysis);
+      $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterChainAnalysis);
       $stats = $updateMaxAlignmentLengthAfterChainAnalysis->stats;
       $stats->hive_capacity(1);
       $stats->update();
       $self->{'updateMaxAlignmentLengthAfterChainAnalysis'} = $updateMaxAlignmentLengthAfterChainAnalysis;
       
   }
-  $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
-  $dataflowRuleDBA->create_rule($createAlignmentChainsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, 2);
+  $self->{'ctrlflow_adaptor'}->create_rule($alignmentChainsAnalysis, $self->{'updateMaxAlignmentLengthAfterChainAnalysis'});
+  $self->{'dataflow_adaptor'}->create_rule($createAlignmentChainsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, 2);
 
   #Create healthcheck jobs if I don't have any net jobs
   if (!defined $self->{'net_conf_list'}) {
@@ -344,8 +355,6 @@ sub prepareNetSystem {
 
   return unless($netConf);
 
-  my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
-  my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
   my $stats;
 
   #allow 'query_collection_name' or 'reference_collection_name'
@@ -376,7 +385,7 @@ sub prepareNetSystem {
   my $setInternalIdsAnalysis;
   if ($self->{'set_internal_ids'}) {
      $setInternalIdsAnalysis = $self->create_set_internal_ids_analysis($output_method_link_type, $netConf);
-     $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $setInternalIdsAnalysis); 
+     $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $setInternalIdsAnalysis); 
   } 
 
   my $createAlignmentNetsJobsAnalysis = Bio::EnsEMBL::Analysis->new(
@@ -385,7 +394,7 @@ sub prepareNetSystem {
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateAlignmentNetsJobs',
       -parameters      => ""
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($createAlignmentNetsJobsAnalysis);
+  $self->{'analysis_adaptor'}->store($createAlignmentNetsJobsAnalysis);
   $stats = $createAlignmentNetsJobsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(1);
@@ -393,12 +402,12 @@ sub prepareNetSystem {
   $self->{'createAlignmentNetsJobsAnalysis'} = $createAlignmentNetsJobsAnalysis;
 
   if ($self->{'set_internal_ids'}) {
-     $ctrlRuleDBA->create_rule($setInternalIdsAnalysis, $createAlignmentNetsJobsAnalysis);
+     $self->{'ctrlflow_adaptor'}->create_rule($setInternalIdsAnalysis, $createAlignmentNetsJobsAnalysis);
   }
 
   #Iterate through all of the created chain jobs & add them as a blocker
   foreach my $alignmentChainsAnalysis (@{$self->{'alignmentChainsAnalysis'}}) {
-      $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $createAlignmentNetsJobsAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($alignmentChainsAnalysis, $createAlignmentNetsJobsAnalysis);
   }
 
   #
@@ -426,14 +435,14 @@ sub prepareNetSystem {
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentNets',
       -parameters      => $parameters
     );
-  $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($alignmentNetsAnalysis);
+  $self->{'analysis_adaptor'}->store($alignmentNetsAnalysis);
   $stats = $alignmentNetsAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(10);
   $stats->update();
   $self->{'alignmentNetsAnalysis'} = $alignmentNetsAnalysis;
 
-  $ctrlRuleDBA->create_rule($createAlignmentNetsJobsAnalysis, $alignmentNetsAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($createAlignmentNetsJobsAnalysis, $alignmentNetsAnalysis);
 
   $self->prepCreateAlignmentNetsJobs($netConf,$alignmentNetsAnalysis->logic_name);
 
@@ -449,7 +458,7 @@ sub prepareNetSystem {
        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
        -parameters      => $parameters);
 
-    $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterNetAnalysis);
+    $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterNetAnalysis);
     $stats = $updateMaxAlignmentLengthAfterNetAnalysis->stats;
     $stats->hive_capacity(1);
     $stats->update();
@@ -457,8 +466,8 @@ sub prepareNetSystem {
 
 }
 
-  $ctrlRuleDBA->create_rule($alignmentNetsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
-  $dataflowRuleDBA->create_rule($createAlignmentNetsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, 2);
+  $self->{'ctrlflow_adaptor'}->create_rule($alignmentNetsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'});
+  $self->{'dataflow_adaptor'}->create_rule($createAlignmentNetsJobsAnalysis,$self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, 2);
 
   #
   #creating FilterStack analysis
@@ -476,7 +485,7 @@ sub prepareNetSystem {
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterStack',
 	 -parameters      => $parameters);
       
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($filterStackAnalysis);
+      $self->{'analysis_adaptor'}->store($filterStackAnalysis);
       $stats = $filterStackAnalysis->stats;
       $stats->hive_capacity(1);
       $stats->update();
@@ -484,7 +493,7 @@ sub prepareNetSystem {
 
       $self->createFilterStackJob($target_collection_name);
 
-      $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $filterStackAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $filterStackAnalysis);
 
       #
       # creating UpdateMaxAlignmentLengthAfterStack analysis
@@ -496,13 +505,13 @@ sub prepareNetSystem {
 	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	 -parameters      => $parameters);
       
-      $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($updateMaxAlignmentLengthAfterStackAnalysis);
+      $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterStackAnalysis);
       $stats = $updateMaxAlignmentLengthAfterStackAnalysis->stats;
       $stats->hive_capacity(1);
       $stats->update();
       $self->{'updateMaxAlignmentLengthAfterStackAnalysis'} = $updateMaxAlignmentLengthAfterStackAnalysis;
       
-      $ctrlRuleDBA->create_rule($self->{'filterStackAnalysis'}, $updateMaxAlignmentLengthAfterStackAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($self->{'filterStackAnalysis'}, $updateMaxAlignmentLengthAfterStackAnalysis);
       $self->createUpdateMaxAlignmentLengthAfterStackJob($gdb_id1, $gdb_id2); 
   }
 
@@ -513,14 +522,12 @@ sub prepareNetSystem {
 sub create_set_internal_ids_analysis {
     my ($self, $output_method_link_type, $netConf) = @_;
     
-    my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
-    
     my $setInternalIdsAnalysis = Bio::EnsEMBL::Analysis->new(
        -logic_name      => 'SetInternalIds',
        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::SetInternalIds',
      );
 
-    $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($setInternalIdsAnalysis);
+    $self->{'analysis_adaptor'}->store($setInternalIdsAnalysis);
     my $stats = $setInternalIdsAnalysis->stats;
     $stats->batch_size(1);
     $stats->hive_capacity(1);
@@ -546,14 +553,12 @@ sub create_set_internal_ids_analysis {
  sub create_pairwise_healthcheck_analysis {
      my ($self, $output_method_link_type) = @_;
 
-     my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
-
      my $pairwise_healthcheck_analysis = Bio::EnsEMBL::Analysis->new(
        -logic_name      => 'PairwiseHealthCheck',
        -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
      );
 
-     $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($pairwise_healthcheck_analysis);
+     $self->{'analysis_adaptor'}->store($pairwise_healthcheck_analysis);
       my $stats = $pairwise_healthcheck_analysis->stats;
       $stats->batch_size(1);
       $stats->hive_capacity(1);
@@ -632,10 +637,10 @@ sub create_set_internal_ids_analysis {
      #these for now since we don't have a "do last" analysis control rule.
      if (defined $self->{'updateMaxAlignmentLengthAfterNetAnalysis'}) {
 
-	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $pairwise_healthcheck_analysis);
+	 $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthAfterNetAnalysis'}, $pairwise_healthcheck_analysis);
      } else {
 	 #After Chaining (self-self blastz)
-	 $ctrlRuleDBA->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $pairwise_healthcheck_analysis);
+	 $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthAfterChainAnalysis'}, $pairwise_healthcheck_analysis);
      }
  }
 
