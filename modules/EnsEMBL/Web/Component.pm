@@ -398,28 +398,26 @@ sub _matches {
   
   return unless @links;
 
-  
+  my $list_html='';  
   while (scalar(@links)>0){#in order to preserve the order, we use @links for acces to keys
-    my ($key , $text) = @{$links[0]};
-    $html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
-    $html .= '</td></tr>' if $key ne '';    
-    if($output_as_table){
-      push(@rows,{dbtype=> $key, dbid => $text });
-      shift @links;
-    }else{
-      $html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
-      my $j=0;
-      while($j<scalar(@links)){#display all other vales for the same key
-        my ($other_key , $other_text) = @{$links[$j]};
-        if($key eq $other_key){
-          $html.=$other_text;
-          splice (@links,$j,1);          
-        }else{
-          $j++;
-        }
+    my $key = $links[0][0];
+	my $text;
+    $list_html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
+    $list_html .= '</td></tr>' if $key ne '';    
+	$list_html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
+    my $j=0;
+    while($j<scalar(@links)){#display all other vales for the same key
+      my ($other_key , $other_text) = @{$links[$j]};
+      if($key eq $other_key){
+        $list_html.=$other_text;
+		$text.=$other_text.'<br/>';
+        splice (@links,$j,1);          
+      }else{
+        $j++;
       }
-      $html .= qq{</td></tr>};      
     }
+    $list_html .= qq{</td></tr>}; 	
+    push(@rows,{dbtype=> $key, dbid => $text });
   }
   
   if($output_as_table){
@@ -432,8 +430,8 @@ sub _matches {
     $table->add_rows(@rows);  
     return $html.$table->render;    
   }else{
-    $html .= '</table>';
-    return $html;
+    $list_html .= '</table>';
+    return $html.$list_html;
   }
 }
 
