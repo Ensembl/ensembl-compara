@@ -4,6 +4,7 @@ package EnsEMBL::Web::DOM::Node;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 use HTML::Entities qw(encode_entities decode_entities);
 use Clone qw(clone);
 

@@ -2,6 +2,8 @@ package EnsEMBL::Web::Form;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
+
 use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Form EnsEMBL::Web::Form::Box);
@@ -119,19 +121,20 @@ sub set_layout {
 
 sub add_hidden {
   ## Adds hidden input(s) inside the form
-  ## @params ArrayRef of HashRef of name to value - { 'name' => 'value', 'name1' => 'value1' }
+  ## @params ArrayRef of HashRef of name to value - { 'name' => ?, 'value' => ?, 'class' => ? }
   ## @return HashRef of name to input object with same keys as argument provided
-  my ($self, $name_value) = @_;
+  my ($self, $params) = @_;
   my $all_hiddens = {};
   unless (exists $self->{'__hidden'}) {
     $self->{'__hidden'} = $self->dom->create_element('div');
     $self->{'__hidden'}->set_attribute('class', $self->CSS_CLASS_HIDDEN);
     $self->fieldset->insert_at_beginning($self->{'__hidden'});
   } 
-  for (keys %{ $name_value }) {
+  for (@$params) {
     my $hidden = $self->dom->create_element('inputhidden');
-    $hidden->set_attribute('name', $_);
-    $hidden->set_attribute('value', $name_value->{ $_ });
+    $hidden->set_attribute('name', $_->{'name'});
+    $hidden->set_attribute('value', $_->{'value'});
+    $hidden->set_attribute('class', $_->{'class'});
     $self->{'__hidden'}->append_child($hidden);
     $all_hiddens->{ $_ } = $hidden;
   }
@@ -208,7 +211,9 @@ sub add_element {
   my $options     = [];
   my $footnotes   = {};
   $new_type = 'text' if defined $validate_as;
-  
+
+  $params{'classes'} = [ $params{'classes'} ] unless ref($params{'classes'}) eq 'ARRAY';
+
   if ($old_type eq 'password') {
     $new_type = 'password';
   }
@@ -230,9 +235,11 @@ sub add_element {
   }
   
   if ($old_type =~ /^hidden$/i) {
-    $self->add_hidden({
-      $params{'name'} => $params{'value'},
-    });
+    $self->add_hidden([{
+      'name'  => $params{'name'},
+      'value' => $params{'value'},
+      'class' => $params{'classes'} ? join(' ', @{$params{'classes'}}) : '',
+    }]);
     warn "Method EnsEMBL::Web::Form::add_element is deprecated. Use Form::add_hidden for adding hidden elements" if $do_warn;
     return;
   }
@@ -302,7 +309,7 @@ sub add_element {
       'name'          => $params{'name'} || '',
       'inline'        => 0,
       'options'       => $options,
-      'class'         => (join ' ', $params{'classes'}) || '',
+      'class'         => $params{'classes'} ? join(' ', @{$params{'classes'}}) : '',
       'validate_as'   => $validate_as,
       'disabled'      => 0,
       'readonly'      => 0,

@@ -5,6 +5,7 @@ package EnsEMBL::Web::DOM::Node::Element;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node);
 
@@ -23,7 +24,7 @@ sub render {
   
   #attribute W3C validation - generate warning only
   for (@{ $self->mandatory_attributes }) {
-    warn "Attribute $_ missing for tag $tag - will cause error in W3C validation." unless exists $self->{'_attributes'}{ $_ };
+    #warn "Attribute $_ missing for tag $tag - will cause error in W3C validation." unless exists $self->{'_attributes'}{ $_ };
   }
 
   my $attributes = [];
@@ -131,7 +132,7 @@ sub set_attribute {
   if ($attrib =~ /^(class|style)$/) {
     return unless $value;
     $self->{'_attributes'}{ $attrib } = {} unless defined $self->{'_attributes'}{ $attrib };
-    $self->{'_attributes'}{ $attrib }{ $value } = 1;  #does not allow any duplicates
+    $self->{'_attributes'}{ $attrib }{ $_ } = 1 for split(' ', $value);  #does not allow any duplicates
   }
   else {
     $self->{'_attributes'}{ $attrib } = $value if defined $value;
@@ -204,7 +205,7 @@ sub inner_text {
 }
 
 sub add_attribute {
-  warn "Use set_attribute(), not add_attribute()!";
+  #warn "Use set_attribute(), not add_attribute()!";
   return shift->set_attribute(@_);
 }
 

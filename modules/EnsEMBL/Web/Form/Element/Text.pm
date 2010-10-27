@@ -2,6 +2,7 @@ package EnsEMBL::Web::Form::Element::Text;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw( EnsEMBL::Web::DOM::Node::Element::Input::Text EnsEMBL::Web::Form::Element);
 

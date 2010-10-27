@@ -2,6 +2,7 @@ package EnsEMBL::Web::Form::Element::YesNo;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Form::Element::Dropdown);
 

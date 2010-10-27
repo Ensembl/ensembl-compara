@@ -2,6 +2,7 @@ package EnsEMBL::Web::Form::Element;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use EnsEMBL::Web::Tools::RandomString;
 

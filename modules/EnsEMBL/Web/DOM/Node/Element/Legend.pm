@@ -4,6 +4,7 @@ package EnsEMBL::Web::DOM::Node::Element::Legend;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 

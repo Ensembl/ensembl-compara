@@ -5,6 +5,7 @@ package EnsEMBL::Web::DOM;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Root);
 use EnsEMBL::Web::DOM::Node::Text;

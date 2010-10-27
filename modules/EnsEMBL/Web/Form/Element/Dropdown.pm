@@ -2,6 +2,7 @@ package EnsEMBL::Web::Form::Element::Dropdown;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw( EnsEMBL::Web::DOM::Node::Element::Select EnsEMBL::Web::Form::Element);
 

@@ -2,6 +2,7 @@ package EnsEMBL::Web::Form::Element::DASCheckBox;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Div EnsEMBL::Web::Form::Element);
 

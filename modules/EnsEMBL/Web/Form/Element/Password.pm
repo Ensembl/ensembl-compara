@@ -2,6 +2,7 @@ package EnsEMBL::Web::Form::Element::Password;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
 use base qw( EnsEMBL::Web::DOM::Node::Element::Input::Password EnsEMBL::Web::Form::Element::Text);
 
