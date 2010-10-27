@@ -68,11 +68,13 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   },
   
   open: function (el) {
+    var rel = $(this.el).is(':visible') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
+    
     this.elLk.menu.hide();
     this.elLk.caption.html(el.title || el.innerHTML).show();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
     this.show();
-    this.getContent(el.href, this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel);
+    this.getContent(el.href, rel);
     
     return true;
   },
