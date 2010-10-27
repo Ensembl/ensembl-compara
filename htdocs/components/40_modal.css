@@ -8,6 +8,7 @@
 .modal_content { overflow: scroll; height: 100%; width: 100%; position: absolute; }
 .modal_content .panel { margin-left: 17.75em; }
 .modal_content .no_local_context { margin-left: 0.25em; }
+.modal_content .panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; }
 
 .modal_title ul { margin: 0; padding: 0 }
 .modal_title li { list-style: none; padding: 0 0.5em 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
