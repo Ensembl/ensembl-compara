@@ -74,7 +74,7 @@ sub init_viewconfig {
   
   if ($view_config && $view_config->has_form) {
     $view_config->form($controller->object);
-    $view_config->get_form->{'_attributes'}{'action'} = $url->[0];
+    $view_config->get_form->set_attribute('action', $url->[0]);
     $view_config->add_form_element({ type => 'Hidden', name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
     
     # hack to display help message for Cell line configuration on region in detail
