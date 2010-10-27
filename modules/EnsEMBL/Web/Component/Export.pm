@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Export;
 
 use strict;
@@ -9,28 +11,21 @@ use EnsEMBL::Web::Component::Compara_Alignments;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::SeqDumper;
 
-use base 'EnsEMBL::Web::Component';
+use base qw(EnsEMBL::Web::Component);
 
 sub export {
-  my $self = shift;
+  my $self           = shift;
   my $custom_outputs = shift || {};
-  my @inputs = @_;
-  
-  my $object = $self->object;
-  my $o      = $object->param('output');
-  my $format = $object->param('_format');
-  my $strand = $object->param('strand');
-  
-  $strand = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
-  
-  my $slice = $object->slice('expand');
+  my @inputs         = @_;
+  my $hub            = $self->hub;
+  my $o              = $hub->param('output');
+  my $strand         = $hub->param('strand');
+  my $slice          = $self->object->slice('expand');
   my $feature_strand = $slice->strand;
-  
-  $slice = $slice->invert if $strand && $strand != $feature_strand;
-  
-  my $params = { feature_strand => $feature_strand };
-  
-  my $html_format = !$format || $format eq 'HTML';
+  $strand            = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
+  $slice             = $slice->invert if $strand && $strand != $feature_strand;
+  my $params         = { feature_strand => $feature_strand };
+  my $html_format    = $self->html_format;
   
   if ($slice->length > 5000000) {
     my $error = 'The region selected is too large to export. Please select a region of less than 5Mb.';
@@ -38,27 +33,26 @@ sub export {
     $self->string($html_format ? $self->_warning('Region too large', "<p>$error</p>") : $error);    
   } else {
     my $outputs = {
-      fasta     => sub { return $self->fasta(@inputs); },
+      fasta     => sub { return $self->fasta(@inputs);  },
       csv       => sub { return $self->features('csv'); },
       tab       => sub { return $self->features('tab'); },
-      bed       => sub { return $self->bed_features; },
+      bed       => sub { return $self->bed_features;    },
       gtf       => sub { return $self->features('gtf'); },
-      psl       => sub { return $self->psl_features; },
+      psl       => sub { return $self->psl_features;    },
       gff       => sub { return $self->features('gff'); },
-      gff3      => sub { return $self->gff3_features; },
-      embl      => sub { return $self->flat('embl'); },
+      gff3      => sub { return $self->gff3_features;   },
+      embl      => sub { return $self->flat('embl');    },
       genbank   => sub { return $self->flat('genbank'); },
-      alignment => sub { return $self->alignment; },
+      alignment => sub { return $self->alignment;       },
       %$custom_outputs
     };
 
     if ($outputs->{$o}) {
-      map { $params->{$_} = 1 if $_ } $object->param('param');
-      map { $params->{'misc_set'}->{$_} = 1 if $_ } $object->param('misc_set');
+      map { $params->{$_} = 1 if $_ } $hub->param('param');
+      map { $params->{'misc_set'}->{$_} = 1 if $_ } $hub->param('misc_set');
       
-      $self->slice($slice);
-      $self->params($params);
-      $self->html_format($html_format);
+      $self->slice  = $slice;
+      $self->params = $params;
       
       $outputs->{$o}();
     }
@@ -77,49 +71,30 @@ sub export {
   return ($string . $html) || 'No data available';
 }
 
-sub slice {
-  my $self = shift;
-  $self->{'slice'} = $_[0] if $_[0];
-  return $self->{'slice'};
-}
-
-sub params {
-  my $self = shift;
-  $self->{'params'} = $_[0] if $_[0];
-  return $self->{'params'};
-}
-
-sub html_format {
-  my $self = shift;
-  $self->{'html_format'} = $_[0] if $_[0];
-  return $self->{'html_format'};
-}
+sub slice  :lvalue { $_[0]->{'slice'};  }
+sub params :lvalue { $_[0]->{'params'}; }
 
 sub string { return shift->output('string', @_); }
 sub html   { return shift->output('html',   @_); }
 
 sub output {
   my ($self, $key, $string) = @_;
-  
   $self->{$key} .= "$string\r\n" if defined $string;
   return $self->{$key};
 }
 
 sub fasta {
-  my $self = shift;
-  my ($trans_objects, $object_id) = @_;
-  
-  my $object = $self->object;
-  my $slice  = $self->slice;
-  my $params = $self->params;
-  
-  my $genomic         = $object->param('genomic');
+  my ($self, $trans_objects, $object_id) = @_;
+  my $hub             = $self->hub;
+  my $object          = $self->object;
+  my $slice           = $self->slice;
+  my $params          = $self->params;
+  my $genomic         = $hub->param('genomic');
   my $seq_region_name = $object->seq_region_name;
   my $seq_region_type = $object->seq_region_type;
   my $slice_name      = $slice->name;
   my $slice_length    = $slice->length;
   my $strand          = $slice->strand;
-  
   my $fasta;
   
   if (scalar keys %$params) {
@@ -165,9 +140,9 @@ sub fasta {
       for (5, 3) {
         if ($genomic =~ /$_/) {
           if ($strand == $params->{'feature_strand'}) {
-            ($start, $end) = $_ == 3 ? ($slice_length - $object->param('flank3_display') + 1, $slice_length) : (1, $object->param('flank5_display'));
+            ($start, $end) = $_ == 3 ? ($slice_length - $hub->param('flank3_display') + 1, $slice_length) : (1, $hub->param('flank5_display'));
           } else {
-            ($start, $end) = $_ == 5 ? ($slice_length - $object->param('flank5_display') + 1, $slice_length) : (1, $object->param('flank3_display'));
+            ($start, $end) = $_ == 5 ? ($slice_length - $hub->param('flank5_display') + 1, $slice_length) : (1, $hub->param('flank3_display'));
           }
           
           $flank_slice = $slice->sub_Slice($start, $end);
@@ -190,18 +165,20 @@ sub fasta {
 }
 
 sub flat {
-  my $self = shift;
-  my $format = shift;
-  
-  my $object = $self->object;
-  my $slice  = $self->slice;
-  my $params = $self->params;
-  my $plist  = $object->species_defs->PROVIDER_NAME;
+  my $self          = shift;
+  my $format        = shift;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $slice         = $self->slice;
+  my $params        = $self->params;
+  my $plist         = $species_defs->PROVIDER_NAME;
+  my $vega_db       = $hub->database('vega');
+  my $estgene_db    = $hub->database('otherfeatures');
   my $dumper_params = {};
   
   # Check where the data came from.
   if ($plist) {
-    my $purls         = $object->species_defs->PROVIDER_URL;
+    my $purls         = $species_defs->PROVIDER_URL;
     my @providers     = ref $plist eq 'ARRAY' ? @$plist : ($plist);
     my @providers_url = ref $purls eq 'ARRAY' ? @$purls : ($purls);
     my @list;
@@ -222,9 +199,6 @@ sub flat {
   foreach (qw( genscan similarity gene repeat variation contig marker )) {
     $seq_dumper->disable_feature_type($_) unless $params->{$_};
   }
-  
-  my $vega_db = $object->database('vega');
-  my $estgene_db = $object->database('otherfeatures');
 
   if ($params->{'vegagene'} && $vega_db) {
     $seq_dumper->enable_feature_type('vegagene');
@@ -267,17 +241,12 @@ sub alignment {
 }
 
 sub features {
-  my $self = shift;
-  my $format = shift;
-  
-  my $object = $self->object;
-  my $slice  = $self->slice;
-  my $params = $self->params;
-  
-  my @common_fields = qw( seqname source feature start end score strand frame );
-  my @extra_fields  = qw( hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name );
-  
-  @extra_fields = qw( gene_id transcript_id) if($format eq 'gtf');
+  my $self          = shift;
+  my $format        = shift;
+  my $slice         = $self->slice;
+  my $params        = $self->params;
+  my @common_fields = qw(seqname source feature start end score strand frame);
+  my @extra_fields  = $format eq 'gtf' ? qw(gene_id transcript_id) : qw(hid hstart hend genscan gene_id transcript_id exon_id gene_type variation_name);
   
   $self->{'config'} = {
     extra_fields  => \@extra_fields,
@@ -322,10 +291,10 @@ sub features {
   }
   
   if ($params->{'gene'}) {
-    my $species_defs = $object->species_defs;
+    my $species_defs = $self->hub->species_defs;
     
     my @dbs = ('core');
-    push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
+    push @dbs, 'vega'          if $species_defs->databases->{'DATABASE_VEGA'};
     push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
     
     foreach my $db (@dbs) {
@@ -348,16 +317,17 @@ sub features {
 }
 
 sub bed_features {
-  my $self = shift;
+  my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
   my $slice  = $self->slice;
   my $params = $self->params;
-  my $hub = $self->hub;
-   
+  
   $self->{'config'} = {   
-    format        => 'bed',
-    delim         => "\t"
+    format => 'bed',
+    delim  => "\t"
   };
+  
   my $config = $self->{'config'}; 
   my (%vals, @column, $trackname);
 
@@ -390,7 +360,7 @@ sub bed_features {
   
   #get data from files user uploaded if any and display   
   if($params->{'userdata'}){
-    my $user = $object->user;
+    my $user = $hub->user;
     my @user_file = $hub->session->get_data('type' => 'upload');
     $self->string(join "\t");
     foreach my $row (@user_file) {
@@ -406,7 +376,7 @@ sub bed_features {
            ## Convert each feature into a proper API object
            foreach (@$features) {
              my $ddaf = Bio::EnsEMBL::DnaDnaAlignFeature->new($_->cigar_string);
-             $ddaf->species($object->species);
+             $ddaf->species($hub->species);
              $ddaf->start($_->rawstart);
              $ddaf->end($_->rawend);
              $ddaf->strand($_->strand);
@@ -455,12 +425,10 @@ sub psl_features {
 }
 
 sub gff3_features {
-  my $self = shift;
-  
-  my $object       = $self->object;
+  my $self         = shift;
   my $slice        = $self->slice;
   my $params       = $self->params;
-  my $species_defs = $object->species_defs;
+  my $species_defs = $self->hub->species_defs;
   
   # Always use the forward strand, else CDS coordinates are incorrect (Bio::EnsEMBL::Exon->coding_region_start and _end return coords for forward strand only. Thanks, Core API team.)
   $slice = $slice->invert if $slice->strand == -1;
@@ -488,7 +456,7 @@ sub gff3_features {
   };
   
   my @dbs = ('core');
-  push @dbs, 'vega' if $species_defs->databases->{'DATABASE_VEGA'};
+  push @dbs, 'vega'          if $species_defs->databases->{'DATABASE_VEGA'};
   push @dbs, 'otherfeatures' if $species_defs->databases->{'DATABASE_OTHERFEATURES'};
   
   my ($g_id, $t_id);
@@ -541,9 +509,7 @@ sub gff3_features {
 }
 
 sub feature {
-  my $self = shift;
-  my ($type, $feature, $attributes, $properties) = @_;
-
+  my ($self, $type, $feature, $attributes, $properties) = @_;
   my $config = $self->{'config'};
   
   my (%vals, @mapping_result);
@@ -558,15 +524,15 @@ sub feature {
   } else {
     %vals = (
       seqid  => $feature->can('entire_seq') && $feature->entire_seq ? $feature->entire_seq->name : $feature->can('seqname') ? $feature->seqname : undef,
-      start  => $feature->can('start') ? $feature->start : undef,
-      end    => $feature->can('end') ? $feature->end : undef,
+      start  => $feature->can('start')  ? $feature->start  : undef,
+      end    => $feature->can('end')    ? $feature->end    : undef,
       strand => $feature->can('strand') ? $feature->strand : undef
     );
   }   
   @mapping_result = qw(seqid source type start end score strand phase);
   %vals = (%vals, (
      type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.sdf'),
-     source => $feature->can('source_tag') ? $feature->source_tag : $feature->can('source') ? $feature->source : 'Ensembl',
+     source => $feature->can('source_tag') ? $feature->source_tag  : $feature->can('source') ? $feature->source : 'Ensembl',
      score  => $feature->can('score') ? $feature->score : '.',
      phase  => '.'
    ));   
@@ -584,7 +550,7 @@ sub feature {
     $vals{'phase'}  = $feature->end_phase if $feature->can('end_phase');
   }
   
-  $vals{'phase'} = '.' if $vals{'phase'} == -1;
+  $vals{'phase'}    = '.' if $vals{'phase'} == -1;
   $vals{'strand'} ||= '.';
   $vals{'seqid'}  ||= 'SEQ';
   
@@ -597,6 +563,7 @@ sub feature {
   } else {
     push @results, map { $attributes->{$_} } @{$config->{'extra_fields'}};
   }
+  
   if ($config->{'format'} eq 'gff3') {
     $config->{'feature_order'}->{$type} ||= ++$config->{'feature_type_count'};
     $self->output($type, join "\t", @results);
@@ -606,19 +573,17 @@ sub feature {
 }
 
 sub misc_sets {
-  my $self = shift;
-  
-  my $object = $self->object;
-  my $slice  = $self->slice;
-  
-  my $sets = $object->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $slice     = $self->slice;
+  my $sets      = $hub->species_defs->databases->{'DATABASE_CORE'}->{'tables'}->{'misc_feature'}->{'sets'};
   my @misc_sets = sort { $sets->{$a}->{'name'} cmp $sets->{$b}->{'name'} } @_;
-  
-  my $region = $slice->seq_region_name;
-  my $start  = $slice->start;
-  my $end    = $slice->end;
-  my $db     = $object->database('core');
-  my $delim  = $self->{'config'}->{'delim'};
+  my $region    = $slice->seq_region_name;
+  my $start     = $slice->start;
+  my $end       = $slice->end;
+  my $db        = $hub->database('core');
+  my $delim     = $self->{'config'}->{'delim'};
+  my ($header, $table, @sets);
   
   my $header_map = {
     _gene   => { 
@@ -630,8 +595,6 @@ sub misc_sets {
       columns => [ 'SeqRegion', 'Start', 'End', 'Name', 'Well name', 'Sanger', 'EMBL Acc', 'FISH', 'Centre', 'State' ]
     }
   };
-  
-  my ($header, $table, @sets);
   
   foreach (@misc_sets, '_gene') {
     $header = $header_map->{$_} || $header_map->{'default'};
@@ -666,9 +629,7 @@ sub misc_sets {
 }
 
 sub misc_set {
-  my $self = shift;
-  my ($misc_set, $name, $db) = @_;
-  
+  my ($self, $misc_set, $name, $db) = @_;
   my $adaptor;
   my @rows;
 
@@ -684,7 +645,7 @@ sub misc_set {
         $_->seq_region_end,
         join (';', @{$_->get_all_attribute_values('clone_name')}, @{$_->get_all_attribute_values('name')}),
         join (';', @{$_->get_all_attribute_values('well_name')}),
-        join (';', @{$_->get_all_attribute_values('synonym')}, @{$_->get_all_attribute_values('sanger_project')}),
+        join (';', @{$_->get_all_attribute_values('synonym')},    @{$_->get_all_attribute_values('sanger_project')}),
         join (';', @{$_->get_all_attribute_values('embl_acc')}),
         $_->get_scalar_attribute('fish'),
         $_->get_scalar_attribute('org'),
@@ -697,18 +658,17 @@ sub misc_set {
 }
 
 sub misc_set_genes {
-  my $self = shift;
-  
+  my $self  = shift;
   my $slice = $self->slice;
   my @rows;
   
-  foreach (sort { $a->seq_region_start <=> $b->seq_region_start } map @{$slice->get_all_Genes($_)||[]}, qw(ensembl havana ensembl_havana_gene)) {
+  foreach (sort { $a->seq_region_start <=> $b->seq_region_start } map @{$slice->get_all_Genes($_) || []}, qw(ensembl havana ensembl_havana_gene)) {
     push @rows, [
       $_->seq_region_name,
       $_->seq_region_start,
       $_->seq_region_end,
       $_->stable_id,
-      $_->external_db || '-',
+      $_->external_db   || '-',
       $_->external_name || '-novel-'
     ];
   }
@@ -719,18 +679,15 @@ sub misc_set_genes {
 # Orders attributes - predefined array first, then all other keys in alphabetical order
 # Also strip any attributes for which we have keys but no values
 sub order_attributes {
-  my $self = shift;
-  my ($key, $attrs) = @_;
-  
+  my ($self, $key, $attrs) = @_;
   my $attributes = $self->{'config'}->{'ordered_attributes'};
   
   return @{$attributes->{$key}} if $key && $attributes->{$key}; # Reduce the work done
   
-  my $i = 1;
-  
+  my $i          = 1;
   my %predefined = map { $_ => $i++ } qw(ID Name Alias Parent Target Gap Derives_from Note Dbxref Ontology_term);
-  my %order = map { defined $attrs->{$_} ? ($predefined{$_} || $i++ => $_) : () } sort keys %$attrs;
-  my @rtn = map { $order{$_} } sort { $a <=> $b } keys %order;
+  my %order      = map { defined $attrs->{$_} ? ($predefined{$_} || $i++ => $_) : () } sort keys %$attrs;
+  my @rtn        = map { $order{$_} } sort { $a <=> $b } keys %order;
   
   @{$attributes->{$key}} = @rtn if $key;
   
@@ -739,19 +696,16 @@ sub order_attributes {
 
 sub id_counter {
   my ($self, $type) = @_;
-  
   return sprintf '%s%05d', $type, ++$self->{'id_counter'}->{$type};
 }
 
 sub escape {
-  my $self = shift;
-  my ($string, $match) = @_;
+  my ($self, $string, $match) = @_;
   
   return '' unless defined $string;
   
   $match ||= '([^a-zA-Z0-9.:^*$@!+_?-|])';
-  
-  $string =~ s/$match/sprintf("%%%02x",ord($1))/eg;
+  $string  =~ s/$match/sprintf("%%%02x",ord($1))/eg;
   
   return $string;
 }
