@@ -56,10 +56,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       if (url) {
         if (!panel.elLk[url].show().length) {
-          panel.elLk[url] = panel.addContent(url);
+          panel.elLk[url] = panel.addContent(url, this.rel);
         }
         
-        return false;
+        // Jump to the newly added content
+        window.location.hash = '#' + panel.elLk[url][0].id;
       }
     });
     
@@ -164,8 +165,22 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     });
   },
   
-  addContent: function (url) {
+  addContent: function (url, rel) {
     var newContent = $('<div class="js_panel">').appendTo(this.el);
+    var i = 1;
+    
+    if (rel) {
+      newContent.addClass(rel);
+    } else {
+      rel = 'anchor';
+    }
+    
+    // Ensure unique id
+    while (document.getElementById(rel)) {
+      rel += i++;
+    }
+    
+    newContent.attr('id', rel);
     
     this.getContent(url, newContent);
     
