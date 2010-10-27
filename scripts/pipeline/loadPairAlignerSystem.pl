@@ -84,15 +84,33 @@ if (%engine_params) {
 
 $self->preparePairAlignerSystem;
 
-foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
-  print("creating ChunkAndGroup jobs\n");
+$self->{'dna_collection_conf_selected_hash'} = {};
+foreach my $pairAlignerConf (@{$self->{'pair_aligner_conf_list'}}) {
+  my $ref_dna_collection_name    = $pairAlignerConf->{'reference_collection_name'};
+  my $nonref_dna_collection_name = $pairAlignerConf->{'non_reference_collection_name'};
+  print("filtering DNA_COLLECTIONs used for PairAligner('$ref_dna_collection_name','$nonref_dna_collection_name')\n");
+
+  $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}    = $self->{'dna_collection_conf_full_hash'}{$ref_dna_collection_name}; 
+  $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name} = $self->{'dna_collection_conf_full_hash'}{$nonref_dna_collection_name}; 
+}
+
+foreach my $dnaCollectionConf (values %{$self->{'dna_collection_conf_selected_hash'}}) {
+  my $dna_collection_name = $dnaCollectionConf->{'collection_name'};
+  print("creating ChunkAndGroup jobs for '$dna_collection_name'\n");
   $self->storeMaskingOptions($dnaCollectionConf);
   $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
 }
 
 foreach my $pairAlignerConf (@{$self->{'pair_aligner_conf_list'}}) {
-  print("creating PairAligner analysis\n");
-  $self->createPairAlignerAnalysis($pairAlignerConf);
+
+    my $ref_dna_collection_name    = $pairAlignerConf->{'reference_collection_name'};
+    my $nonref_dna_collection_name = $pairAlignerConf->{'non_reference_collection_name'};
+
+    my $gdb_suffix = $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}{'genome_db_id'}
+               .'-'. $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'};
+
+  print "createPairAlignerAnalysis($gdb_suffix)\n";
+  $self->createPairAlignerAnalysis($pairAlignerConf, $gdb_suffix);
 }
 
 exit(0);
@@ -118,8 +136,8 @@ sub parse_conf {
   my $self = shift;
   my $conf_file = shift;
 
-  $self->{'genomic_align_conf_list'} = [];
-  $self->{'dna_collection_conf_list'} = [];
+  $self->{'genomic_align_conf_list'}  = [];
+  $self->{'dna_collection_conf_full_hash'} = {};
   $self->{'chunkCollectionHash'} = {};
   
   if($conf_file and (-e $conf_file)) {
@@ -140,9 +158,10 @@ sub parse_conf {
         push @{$self->{'pair_aligner_conf_list'}} , $confPtr;
       }
       elsif($type eq 'DNA_COLLECTION') {
-        push @{$self->{'dna_collection_conf_list'}} , $confPtr;
+        my $dna_collection_name = $confPtr->{'collection_name'};
+        $self->{'dna_collection_conf_full_hash'}{$dna_collection_name} = $confPtr;
     } elsif($type eq 'ENGINE') {
-	%engine_params = %{$confPtr};
+        %engine_params = %{$confPtr};
     }
     }
   }
@@ -236,8 +255,9 @@ sub preparePairAlignerSystem
 
 sub createPairAlignerAnalysis
 {
-  my $self        = shift;
-  my $pair_aligner_conf  = shift;  #hash reference
+  my $self              = shift;
+  my $pair_aligner_conf = shift;  #hash reference
+  my $gdb_suffix        = shift;
 
   my $dataflowRuleDBA = $self->{'hiveDBA'}->get_DataflowRuleAdaptor;
   my $ctrlRuleDBA = $self->{'hiveDBA'}->get_AnalysisCtrlRuleAdaptor;
@@ -296,11 +316,8 @@ sub createPairAlignerAnalysis
     $pair_aligner_conf->{'method_link_species_set_id'} = $mlss->dbID;
   }
       
-  my $hexkey = sprintf("%x", rand(time()));
-  print("hexkey = $hexkey\n");
-
   #
-  # creating PairAligner_$hexkey analysis
+  # creating PairAligner_$gdb_suffix analysis
   #
 
   my $pairAlignerAnalysis = new Bio::EnsEMBL::Analysis(%{$pair_aligner_conf->{'analysis_template'}});
@@ -313,8 +330,8 @@ sub createPairAlignerAnalysis
       $pairAlignerAnalysis->parameters($parameters);
   }
 
-  my $logic_name = "PairAligner-".$hexkey;
-  $logic_name = $pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
+  my $logic_name = "PairAligner-".$gdb_suffix;
+  $logic_name = $pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix
     if (defined $pair_aligner_conf->{'logic_name_prefix'});
 
   print "logic_name $logic_name\n";
@@ -353,8 +370,8 @@ sub createPairAlignerAnalysis
 						       -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
 						       -parameters => $analysis_parameters, 
 						      );
-      my $dump_dna_logic_name = "DumpDnaForPairAligner-".$hexkey;
-      $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$hexkey
+      my $dump_dna_logic_name = "DumpDnaForPairAligner-".$gdb_suffix;
+      $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix
 	if (defined $pair_aligner_conf->{'logic_name_prefix'});
 
       $dumpDnaAnalysis->logic_name($dump_dna_logic_name);
@@ -453,7 +470,7 @@ sub createPairAlignerAnalysis
 
   $queryFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
     (-db_version      => '1',
-     -logic_name      => 'QueryFilterDuplicates-'.$hexkey,
+     -logic_name      => 'QueryFilterDuplicates-'.$gdb_suffix,
      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
      -parameters      => $parameters);
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($queryFilterDuplicatesAnalysis);
@@ -550,7 +567,7 @@ sub createPairAlignerAnalysis
   
   my $targetFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
     (-db_version      => '1',
-     -logic_name      => 'TargetFilterDuplicates-'.$hexkey,
+     -logic_name      => 'TargetFilterDuplicates-'.$gdb_suffix,
      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
      -parameters      => $parameters);
   $self->{'hiveDBA'}->get_AnalysisAdaptor()->store($targetFilterDuplicatesAnalysis);

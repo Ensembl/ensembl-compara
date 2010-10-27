@@ -25,8 +25,6 @@ my $help;
 
 my %compara_conf;
 $compara_conf{'-port'} = 3306;
-my %chain_conf;
-my %net_conf;
 my %healthcheck_conf;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -63,40 +61,59 @@ if(%hive_params) {
 }
 
 #
-# creating ChunkAndGroupDna analysis
+# creating (another copy of) ChunkAndGroupDna analysis
 #
 my $stats;
-my $chunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
+my $noChunkAndGroupDnaAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'ChunkAndGroupDna',
+      -logic_name      => 'NoChunkAndGroupDna',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
       -parameters      => ""
     );
-$self->{'hiveDBA'}->get_AnalysisAdaptor()->store($chunkAndGroupDnaAnalysis);
-$stats = $chunkAndGroupDnaAnalysis->stats;
+$self->{'hiveDBA'}->get_AnalysisAdaptor()->store($noChunkAndGroupDnaAnalysis);
+$stats = $noChunkAndGroupDnaAnalysis->stats;
 $stats->batch_size(1);
 $stats->hive_capacity(-1); #unlimited
 $stats->update();
-$self->{'chunkAndGroupDnaAnalysis'} = $chunkAndGroupDnaAnalysis;
+$self->{'noChunkAndGroupDnaAnalysis'} = $noChunkAndGroupDnaAnalysis;
 
-foreach my $dnaCollectionConf (@{$self->{'dna_collection_conf_list'}}) {
-    print("creating ChunkAndGroup jobs\n");
-    #  $self->storeMaskingOptions($dnaCollectionConf);
-    $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
+
+$self->{'dna_collection_conf_selected_hash'} = {};
+foreach my $chainConf (@{$self->{'chain_conf_list'}}) {
+  my $ref_dna_collection_name    = $chainConf->{'reference_collection_name'};
+  my $nonref_dna_collection_name = $chainConf->{'non_reference_collection_name'};
+  print("filtering DNA_COLLECTIONs used for Chaining('$ref_dna_collection_name','$nonref_dna_collection_name')\n");
+
+  $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}    = $self->{'dna_collection_conf_full_hash'}{$ref_dna_collection_name}; 
+  $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name} = $self->{'dna_collection_conf_full_hash'}{$nonref_dna_collection_name}; 
 }
- 
+
+foreach my $dnaCollectionConf (values %{$self->{'dna_collection_conf_selected_hash'}}) {
+  my $dna_collection_name = $dnaCollectionConf->{'collection_name'};
+  print("creating ChunkAndGroup jobs for '$dna_collection_name'\n");
+  #$self->storeMaskingOptions($dnaCollectionConf);
+  $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
+}
+
 foreach my $chainConf (@{$self->{'chain_conf_list'}}) {
 
-    $self->prepareChainSystem($chainConf);
+    my $ref_dna_collection_name    = $chainConf->{'reference_collection_name'};
+    my $nonref_dna_collection_name = $chainConf->{'non_reference_collection_name'};
+
+    my $gdb_suffix = $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}{'genome_db_id'}
+               .'-'. $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'};
+
+    print "prepareChainSystem($gdb_suffix)\n";
+    $self->prepareChainSystem($chainConf, $gdb_suffix);
 
     #allow 'query_collection_name' or 'reference_collection_name'
     if ($chainConf->{'reference_collection_name'} && !$chainConf->{'query_collection_name'}) {
-	$chainConf->{'query_collection_name'} = $chainConf->{'reference_collection_name'};
+        $chainConf->{'query_collection_name'} = $chainConf->{'reference_collection_name'};
     }
 
     #allow 'target_collection_name' or 'non_reference_collection_name'
     if ($chainConf->{'non_reference_collection_name'} && !$chainConf->{'target_collection_name'}) {
-	$chainConf->{'target_collection_name'} = $chainConf->{'non_reference_collection_name'};
+        $chainConf->{'target_collection_name'} = $chainConf->{'non_reference_collection_name'};
     }
 
     $self->create_dump_nib_job($chainConf->{'query_collection_name'});
@@ -105,8 +122,14 @@ foreach my $chainConf (@{$self->{'chain_conf_list'}}) {
 }
 
 foreach my $netConf (@{$self->{'net_conf_list'}}) {
-  print("prepChunkGroupJob\n");
-  $self->prepareNetSystem($netConf);
+    my $ref_dna_collection_name    = $netConf->{'reference_collection_name'};
+    my $nonref_dna_collection_name = $netConf->{'non_reference_collection_name'};
+
+    my $gdb_suffix = $self->{'dna_collection_conf_selected_hash'}{$ref_dna_collection_name}{'genome_db_id'}
+               .'-'. $self->{'dna_collection_conf_selected_hash'}{$nonref_dna_collection_name}{'genome_db_id'};
+
+    print "prepareNetSystem($gdb_suffix)\n";
+    $self->prepareNetSystem($netConf, $gdb_suffix);
 }
 
 exit(0);
@@ -131,6 +154,7 @@ sub parse_conf {
   my $self = shift;
   my $conf_file = shift;
 
+  $self->{'dna_collection_conf_full_hash'} = {};
   $self->{'chunk_group_conf_list'} = [];
   $self->{'chunkCollectionHash'} = {};
   $self->{'set_internal_ids'} = 0;
@@ -150,15 +174,14 @@ sub parse_conf {
         %hive_params = %{$confPtr};
       }
       elsif($type eq 'DNA_COLLECTION') {
-        push @{$self->{'dna_collection_conf_list'}} , $confPtr;
+        my $dna_collection_name = $confPtr->{'collection_name'};
+        $self->{'dna_collection_conf_full_hash'}{$dna_collection_name} = $confPtr;
       }
       elsif($type eq 'CHAIN_CONFIG') {
         push @{$self->{'chain_conf_list'}} , $confPtr;
-        #%chain_conf = %{$confPtr};
       }
       elsif($type eq 'NET_CONFIG') {
         push @{$self->{'net_conf_list'}} , $confPtr;
-#        %net_conf = %{$confPtr};
       }
       elsif($type eq 'SET_INTERNAL_IDS') {
 	  $self->{'set_internal_ids'} = 1;
@@ -184,6 +207,7 @@ sub prepareChainSystem
   #yes this should be done with a config file and a loop, but...
   my $self = shift;
   my $chainConf = shift;
+  my $gdb_suffix = shift;
 
   return unless($chainConf);
 
@@ -207,7 +231,7 @@ sub prepareChainSystem
   $stats->update();
   $self->{'dumpLargeNibForChainsAnalysis'} = $dumpLargeNibForChainsAnalysis;
 
-  $ctrlRuleDBA->create_rule($chunkAndGroupDnaAnalysis, $dumpLargeNibForChainsAnalysis);
+  $ctrlRuleDBA->create_rule($noChunkAndGroupDnaAnalysis, $dumpLargeNibForChainsAnalysis);
 
   #
   # createAlignmentChainsJobs Analysis
@@ -240,9 +264,6 @@ sub prepareChainSystem
 
   $ctrlRuleDBA->create_rule($dumpLargeNibForChainsAnalysis, $createAlignmentChainsJobsAnalysis);
 
-  my $hexkey = sprintf("%x", rand(time()));
-  print("hexkey = $hexkey\n");
-
   #
   # AlignmentChains Analysis
   #
@@ -269,7 +290,7 @@ sub prepareChainSystem
 
   my $alignmentChainsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'AlignmentChains-'.$hexkey,
+      -logic_name      => 'AlignmentChains-'.$gdb_suffix,
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentChains',
       -parameters      => $parameters
     );
@@ -319,6 +340,7 @@ sub prepareChainSystem
 sub prepareNetSystem {
   my $self = shift;
   my $netConf = shift;
+  my $gdb_suffix = shift;
 
   return unless($netConf);
 
@@ -379,9 +401,6 @@ sub prepareNetSystem {
       $ctrlRuleDBA->create_rule($alignmentChainsAnalysis, $createAlignmentNetsJobsAnalysis);
   }
 
-  my $hexkey = sprintf("%x", rand(time()));
-  print("hexkey = $hexkey\n");
-
   #
   # AlignmentNets Analysis
   #
@@ -403,7 +422,7 @@ sub prepareNetSystem {
 
   my $alignmentNetsAnalysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'AlignmentNets-'.$hexkey,
+      -logic_name      => 'AlignmentNets-'.$gdb_suffix,
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::AlignmentNets',
       -parameters      => $parameters
     );
@@ -556,7 +575,7 @@ sub create_set_internal_ids_analysis {
 	 $params .= "method_link_type=>\'$output_method_link_type\',";
 	 $params .= "genome_db_ids=>'[";
 
-	 $params .= join ",", map $_->{'genome_db_id'}, @{$self->{'dna_collection_conf_list'}};
+	 $params .= join ",", map $_->{'genome_db_id'}, values %{$self->{'dna_collection_conf_selected_hash'}};
 
 	 $params .= "]'";
 	 $input_id .= "params=>{$params}";
@@ -593,7 +612,7 @@ sub create_set_internal_ids_analysis {
 	 $params .= "method_link_type=>\'$output_method_link_type\',";
 	 
 	 $params .= "current_genome_db_ids=>'[";
-	 $params .= join ",", map $_->{'genome_db_id'}, @{$self->{'dna_collection_conf_list'}};
+	 $params .= join ",", map $_->{'genome_db_id'}, values %{$self->{'dna_collection_conf_selected_hash'}};
 	 $params .= "]'";
 	 $input_id .= "params=>{$params}";
      }
@@ -680,7 +699,7 @@ sub createChunkAndGroupDnaJobs
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
       (-input_id       => $input_id,
-       -analysis       => $self->{'chunkAndGroupDnaAnalysis'},
+       -analysis       => $self->{'noChunkAndGroupDnaAnalysis'},
        -input_job_id   => 0);
 }
 
