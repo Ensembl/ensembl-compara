@@ -30,8 +30,9 @@ sub new {
   my $class = shift;
   
   my $self = {
-    builder => shift,
-    id      => [split /::/, $class]->[-1] . 'Panel'
+    builder  => shift,
+    renderer => shift,
+    id       => [split /::/, $class]->[-1] . 'Panel'
   };
   
   bless $self, $class;
@@ -46,8 +47,9 @@ sub id {
   return $self->{'id'};
 }
 
-sub builder { return $_[0]->{'builder'};      }
-sub hub     { return $_[0]->{'builder'}->hub; }
+sub builder  { return $_[0]->{'builder'};      }
+sub hub      { return $_[0]->{'builder'}->hub; }
+sub renderer { return $_[0]->{'renderer'};     }
 
 sub content_pan_compara {
   my $self = shift;
@@ -112,6 +114,16 @@ sub cache_print {
   $cache->print($$string_ref) if $string_ref;
 }
 
+sub format {
+  my $self = shift;
+  return $self->{'format'} ||= $self->hub->param('_format') || 'HTML';
+}
+
+sub html_format {
+  my $self = shift;
+  return $self->{'html_format'} ||= $self->format eq 'HTML';
+}
+
 sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub has_image   { return 0; }
@@ -131,28 +143,27 @@ sub _hint    {                                              # Extra information,
 sub _info_panel {
   my ($self, $class, $caption, $desc, $width, $id) = @_;
   
-  return sprintf (
+  return $self->html_format ? sprintf(
     '<div%s style="width:%s" class="%s"><h3>%s</h3><div class="error-pad">%s</div></div>',
     $id ? qq{ id="$id"} : '',
     $width || $self->image_width . 'px', 
     $class, 
     $caption, 
     $desc
-  );
+  ) : '';
 }
 
 sub config_msg {
   my $self = shift;
-  my $param = { 'species'   => $self->hub->species,
-                'type'      => 'Config',
-                'action'    => $self->hub->type,
-                'function'  => 'ExternalData',
-                'config'    => '_page'
-              };
-  my $url = $self->hub->url($param);
-  return qq(Click '<a href="$url" class="modal_link">configure this page</a>' 
-            to change the sources of external annotations that are available 
-            in the External Data menu.);
+  my $url  = $self->hub->url({
+    species   => $self->hub->species,
+    type      => 'Config',
+    action    => $self->hub->type,
+    function  => 'ExternalData',
+    config    => '_page'
+ });
+  
+  return qq{Click <a href="$url" class="modal_link">"Configure this page"</a> to change the sources of external annotations that are available in the External Data menu.};
 }
 
 sub ajax_url {
@@ -193,9 +204,7 @@ sub _attach_das {
   my ($self, $image_config) = @_;
 
   # Look for all das sources which are configured and turned on
-  my @das_nodes = map {
-    $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logicnames')||[]} : ()
-  }  $image_config->tree->nodes;
+  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logicnames')||[]} : () } $image_config->tree->nodes;
   
   return unless @das_nodes; # Return if no sources to be drawn
   
@@ -237,7 +246,7 @@ sub modal_form {
     $form_class .= ' wizard';
   }
   
-  my $form = new EnsEMBL::Web::Form($name, $form_action, $options->{'method'} || 'post', $form_class);
+  my $form  = new EnsEMBL::Web::Form($name, $form_action, $options->{'method'} || 'post', $form_class);
   my $label = $options->{'label'} || 'Next >';
   
   if ($options->{'wizard'}) {
@@ -312,8 +321,18 @@ sub new_karyotype_image {
 }
 
 sub new_table {
-  my $self = shift;
-  return new EnsEMBL::Web::Document::SpreadSheet(@_);
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $table    = new EnsEMBL::Web::Document::SpreadSheet(@_);
+  (my $comp    = ref $self) =~ s/[^\w\.]+/_/g;
+  my $filename = $self->object ? $self->object->_filename : $hub->filename;
+  
+  $table->format     = $hub->param('_format') || 'HTML';
+  $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
+  
+  $self->renderer->{'filename'} = join '-', $comp, $filename;
+  
+  return $table;
 }
 
 sub _export_image {
@@ -353,14 +372,15 @@ sub _export_image {
 
 sub _matches {
   my ($self, $key, $caption, @keys) = @_;
-  my $output_as_table=$keys[-1] eq "RenderAsTables";
-  if($output_as_table){ #if output_as_table the last value isn't maningful
-    pop(@keys);
-  }
   
-  my $object = $self->object;
-  my $label  = $self->hub->species_defs->translate($caption);
-  my $obj    = $object->Obj;
+  my $output_as_table = $keys[-1] eq 'RenderAsTables';
+  
+  pop @keys if $output_as_table; # if output_as_table the last value isn't maningful
+  
+  my $object       = $self->object;
+  my $species_defs = $self->hub->species_defs;
+  my $label        = $species_defs->translate($caption);
+  my $obj          = $object->Obj;
 
   # Check cache
   if (!$object->__data->{'links'}) {
@@ -379,65 +399,67 @@ sub _matches {
   my $entry = lc(ref $obj);
   $entry =~ s/bio::ensembl:://;
 
-  my $table;
   my @rows;
   my $html;
   
-  if ($self->hub->species_defs->ENSEMBL_SITETYPE eq 'Vega') {
+  if ($species_defs->ENSEMBL_SITETYPE eq 'Vega') {
     $html = '<p></p>';
   } else {
     $html = "<p><strong>This $entry corresponds to the following database identifiers:</strong></p>";
   }
-
   
-  if(!$output_as_table){#use tables for formatting if we are not outputting a data table
-    $html .= '<table cellpadding="4">';  
-  }
+  # use tables for formatting if we are not outputting a data table
+  $html .= '<table cellpadding="4">' unless $output_as_table;
   
   @links = $self->remove_redundant_xrefs(@links) if $keys[0] eq 'ALT_TRANS';
   
   return unless @links;
 
-  my $list_html='';  
-  while (scalar(@links)>0){#in order to preserve the order, we use @links for acces to keys
+  my $list_html;  
+  
+  # in order to preserve the order, we use @links for acces to keys
+  while (scalar @links) {
     my $key = $links[0][0];
-	my $text;
+    my $j   = 0;
+    my $text;
+    
     $list_html .= '<div class="small">GO mapping is inherited from swissprot/sptrembl</div>' if $key eq 'GO';
     $list_html .= '</td></tr>' if $key ne '';    
-	$list_html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
-    my $j=0;
-    while($j<scalar(@links)){#display all other vales for the same key
+    $list_html .= qq{<tr><th style="white-space: nowrap; padding-right: 1em"><strong>$key:</strong></th><td>};
+    
+    # display all other vales for the same key
+    while ($j < scalar @links) {
       my ($other_key , $other_text) = @{$links[$j]};
-      if($key eq $other_key){
-        $list_html.=$other_text;
-		$text.=$other_text.'<br/>';
-        splice (@links,$j,1);          
-      }else{
+      
+      if ($key eq $other_key) {
+        $list_html .= $other_text;
+        $text      .= "$other_text<br />";
+        
+        splice @links, $j, 1;          
+      } else {
         $j++;
       }
     }
-    $list_html .= qq{</td></tr>}; 	
-    push(@rows,{dbtype=> $key, dbid => $text });
+    
+    $list_html .= "</td></tr>";
+    
+    push @rows, { dbtype => $key, dbid => $text };
   }
   
-  if($output_as_table){
-    # add table call here
-    $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'dbid asc' ]});  
-    $table->add_columns(
-      { 'key' => 'dbtype', 'align'=>'left', 'title' => 'External database type'},
-      { 'key' => 'dbid', 'align'=>'left', 'title' => 'Database identifier' }
-    );
-    $table->add_rows(@rows);  
-    return $html.$table->render;    
-  }else{
-    $list_html .= '</table>';
-    return $html.$list_html;
+  if ($output_as_table) {
+    return $html . $self->new_table([ 
+        { key => 'dbtype', align => 'left', title => 'External database type' },
+        { key => 'dbid',   align => 'left', title => 'Database identifier'    }
+      ], \@rows, { data_table => 1, sorting => [ 'dbid asc' ]}
+    )->render;
+  } else {
+    return "$html$list_html</table>";
   }
 }
 
 sub _sort_similarity_links {
   my $self             = shift;
-  my $output_as_table = shift || 0;  
+  my $output_as_table  = shift || 0;  
   my @similarity_links = @_;
   my $hub              = $self->hub;
   my $object           = $self->object;
@@ -448,20 +470,18 @@ sub _sort_similarity_links {
   my (%affy, %exdb);
   
   foreach my $type (sort {
-    $b->priority        <=> $a->priority ||
+    $b->priority        <=> $a->priority        ||
     $a->db_display_name cmp $b->db_display_name ||
     $a->display_id      cmp $b->display_id
   } @similarity_links) {
-    my $link = '';
+    my $link       = '';
     my $join_links = 0;
     my $externalDB = $type->database;
     my $display_id = $type->display_id;
     my $primary_id = $type->primary_id;
 
-    #hack for LRG in e58
-    if ( $externalDB eq 'ENS_LRG_gene') {
-      $primary_id =~ s/_g\d*$//;
-    };
+    # hack for LRG
+    $primary_id =~ s/_g\d*$// if $externalDB eq 'ENS_LRG_gene';
    
     next if $type->status eq 'ORTH';                            # remove all orthologs
     next if lc $externalDB eq 'medline';                        # ditch medline entries - redundant as we also have pubmed
@@ -484,7 +504,7 @@ sub _sort_similarity_links {
     
     (my $A = $externalDB) =~ s/_predicted//;
     
-    if ($urls and $urls->is_linked($A)) {
+    if ($urls && $urls->is_linked($A)) {
       my $link = $urls->get_url($A, $primary_id);
       my $word = $display_id;
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
@@ -550,11 +570,9 @@ sub _sort_similarity_links {
       });
     
       $text .= qq{ [<a href="$lrg_url">view all locations</a>]};
-    }
-    else {
-    
+    } else {
       my $link_name = $fv_type eq 'OligoFeature' ? $display_id : $primary_id;
-      my $link_type = $fv_type eq 'OligoFeature' ? $fv_type : "${fv_type}_$externalDB";
+      my $link_type = $fv_type eq 'OligoFeature' ? $fv_type    : "${fv_type}_$externalDB";
     
       my $k_url = $self->hub->url({
         type   => 'Location',
@@ -565,14 +583,11 @@ sub _sort_similarity_links {
     
       $text .= qq{  [<a href="$k_url">view all locations</a>]};
     }
-    if ($join_links) {
-      $text .= '</div>';
-    }
-    ## FIXME Yet another LRG hack!
+    
+    $text .= '</div>' if $join_links;
+    
     my $label = $type->db_display_name || $externalDB;
-    if ($externalDB eq 'ENS_LRG_gene') {
-      $label = 'LRG';
-    }
+    $label    = 'LRG' if $externalDB eq 'ENS_LRG_gene'; ## FIXME Yet another LRG hack!
     
     push @{$object->__data->{'links'}{$type->type}}, [ $label, $text ];
   }
@@ -605,13 +620,11 @@ sub remove_redundant_xrefs {
 }
 
 sub transcript_table {
-  my $self = shift;
-  
-  my $hub       = $self->hub;
-  my $object    = $self->object;
-  my $species   = $hub->species;
-  my $page_type = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
-  
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $object      = $self->object;
+  my $species     = $hub->species;
+  my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = encode_entities($object->gene_description);
   $description    = '' if $description eq 'No description';
   
@@ -627,11 +640,12 @@ sub transcript_table {
       $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
       ($edb, $acc) = ($1, $2);
 
-      my $l1 =  $hub->get_ExtURL($edb, $acc);
-      $l1 =~ s/\&amp\;/\&/g;
-      my $t1 = "Source: $edb $acc";
+      my $l1   =  $hub->get_ExtURL($edb, $acc);
+      $l1      =~ s/\&amp\;/\&/g;
+      my $t1   = "Source: $edb $acc";
       my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
-      $description .= qq( <span class="small">@{[ $link ]}</span>) if ($acc && $acc ne 'content');
+      
+      $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
     }
     
     $description = "<p>$description</p>";
@@ -658,7 +672,7 @@ sub transcript_table {
   
   # alternative (Vega) coordinates
   if ($object->get_db eq 'vega') {
-    my $alt_assemblies = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
+    my $alt_assemblies  = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
     my ($vega_assembly) = map { $_ =~ /VEGA/; $_ } @$alt_assemblies;
     
     # set dnadb to 'vega' so that the assembly mapping is retrieved from there
@@ -878,8 +892,7 @@ sub transcript_table {
 #  #                         #
 #  ###########################
 sub _warn_block {
-  my $self = shift;
-  
+  my $self        = shift;
   my $width       = 128;
   my $border_char = '#';
   my $template    = sprintf "%s %%-%d.%ds %s\n", $border_char, $width-4,$width-4, $border_char;
