@@ -8,7 +8,6 @@ use Apache2::Const;
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Document::Panel;
-use EnsEMBL::Web::Document::Renderer::Excel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
 
 use base qw(EnsEMBL::Web::Root);
@@ -287,6 +286,14 @@ sub include_navigation {
   return $self->{'_has_navigation'};
 }
 
+sub clean_HTML {
+  my ($self, $content) = @_;
+  $content =~ s/<(div|p|h\d|br).*?>/\n/g;   # Replace the start of block elements with a new line
+  $content =~ s/<(\/(div|p|h\d).*)>/\n\n/g; # Replace the end of block elements with two new lines
+  $content =~ s/^\n+//;                     # Strip leading new lines
+  return $self->strip_HTML($content);
+}
+
 sub render {
   my $self = shift;
   my $func = $self->can("render_$self->{'format'}") ? "render_$self->{'format'}" : 'render_HTML';
@@ -312,13 +319,13 @@ sub render_DAS {
 }
 
 sub render_XML {
-  my $self     = shift;
-  my $content .= qq{<?xml version="1.0" standalone="no"?>\n};
-  $content    .= qq{<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n} if $self->{'xsl'};
-  $content    .= $self->doc_type;
-  $content    .= "\<$self->{'doc_type_version'}\>\n";
-  $content    .= shift->{'content'};
-  $content    .= "\<\/$self->{'doc_type_version'}\>\n";
+  my $self    = shift;
+  my $content = qq{<?xml version="1.0" standalone="no"?>\n};
+  $content   .= qq{<?xml-stylesheet type="text/xsl" href="$self->{'xsl'}"?>\n} if $self->{'xsl'};
+  $content   .= $self->doc_type;
+  $content   .= "\<$self->{'doc_type_version'}\>\n";
+  $content   .= shift->{'content'};
+  $content   .= "\<\/$self->{'doc_type_version'}\>\n";
   
   $self->renderer->r->content_type('text/xml');
   
@@ -326,31 +333,33 @@ sub render_XML {
 }
 
 sub render_Excel {
-  my $self = shift;
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $renderer = $self->renderer;
+  my $r        = $renderer->r;
   
-  # Switch in the Excel file renderer.
-  # Requires the filehandle from the current renderer (works with Renderer::Apache and Renderer::File)
-  my $renderer = new EnsEMBL::Web::Document::Renderer::Excel($self->renderer->fh, r => $self->renderer->r);
-
-  $renderer->print(shift->{'content'});
-  $renderer->close;
+  $r->content_type('application/octet-string');
+  $r->headers_out->add('Content-Disposition' => sprintf 'attachment; filename=%s.csv', $renderer->{'filename'});
+  
+  print $self->clean_HTML(shift->{'content'});
 }
 
 sub render_Text {
   my $self = shift;
+  
   $self->renderer->r->content_type('text/plain');
-  print shift->{'content'};
+  
+  print $self->clean_HTML(shift->{'content'});
 }
 
 sub render_TextGz {
   my $self     = shift;
-  my $content  = shift->{'content'};
   my $renderer = new EnsEMBL::Web::Document::Renderer::GzFile($self->species_defs->ENSEMBL_TMP_DIR . '/' . $self->temp_file_name . '.gz');
   
-  $renderer->print($content);
+  $renderer->print(shift->{'content'});
   $renderer->close;
   
-  print $renderer->raw_content;
+  print  $renderer->raw_content;
   unlink $renderer->{'filename'};
 }
 
