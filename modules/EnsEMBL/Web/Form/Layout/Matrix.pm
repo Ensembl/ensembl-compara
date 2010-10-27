@@ -30,7 +30,7 @@ sub add_subheading_row {
   my ($self, $heading) = @_;
   
   #add columns HTML if not already there - or refuse to add subheading if no columns were added
-  unless ($self->inner_div->has_child_nodes || $self->_add_columns)
+  unless ($self->inner_div->has_child_nodes || $self->_add_columns){
     warn 'No column added yet. Add columns before adding a subheading';
     return;
   }
