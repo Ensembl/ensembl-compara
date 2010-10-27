@@ -626,98 +626,36 @@ CVS commit these files.
 CVS commit the changes.
 
 
-#### Remind Javier to do the DNA part of the dumps.
-#
-#
-#
-#### The following part is usually done by Albert.
-#### So if you are not Albert, pass the baton over to Albert; if you are Albert, just keep the baton.
+21. Remind Javier to do the DNA part of the dumps.
 
 
-21. Don't forget to dump the EMF files to go on the FTP sites, for multiple alignment, and protein trees.
+22. Run the pipelines for dumping GeneTrees and ncRNAtrees yourself:
 
-For protein tree (multiple alignments and newick trees), the person in
-charge of the pipeline uses ensembl-compara/scripts/tree/dumpTreeMSA.pl script. 
-It can dump both files in emf gzip format at the same time.
+22a. Go to ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig and open the PipeConfig file DumpTrees_conf.pm
 
-This is the process to dump the genetree data from Ensembl Compara:
+    Check that you are happy about all parameters:
+        rel             being the current release number (sometimes this is the only thing to change),
+        rel_db          pointing at the release database,
+        target_dir      suitable for creating and storing the dumps in
+    If not happy, edit the changes, save the config file and exit the editor.
 
-21.0 - Create a dir where to dump each file:
+    Run init_pipeline.pl with this file:
+        init_pipeline.pl DumpTrees_conf.pm -tree_type gene_trees -password <our_most_secret_password>
 
-mkdir -p /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps
-cd /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps
+    Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
+    This pipeline will produce gene_tree dumps in the directory pointed at by 'target_dir' parameter.
 
-21.1 - Create a file with the genetree ids with this sql command:
+# rel_60: took 5 hours on a "bad lustre" day. On one of such days you're better off pointing at your home directory!
+    
+22b. Stay in the same directory, but now create another pipeline from the same config file:
+        init_pipeline.pl DumpTrees_conf.pm -tree_type ncrna_trees -password <our_most_secret_password>
 
-mysql -hens-staging1 -uensro ensembl_compara_57 -N -e "select distinct ptm.root_id from protein_tree_member ptm, protein_tree_tag ptt where ptt.node_id=ptm.root_id and ptt.tag='gene_count' and ptt.value>1" > tree_id_list.txt
+    Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
+    This pipeline will produce ncrna_tree dumps in the directory pointed at by 'target_dir' parameter.
 
-21.2 - Create a hash of subdirectories to dump the data evenly:
+# rel_60: took 8 minutes. The other extreme.
 
-perl ~/src/ensembl_main/ensembl-personal/avilella/scripts/split_infile.pl -i tree_id_list.txt -l 1 -hashed tree_id_list.txt
-Final dir: 01:92:97
-# 01:92:44 
-wc -l tree_id_list.txt
-19298 tree_id_list.txt
+22c. Commit the DumpTrees_conf.pm file into the CVS if you'd like to keep the changes.
 
-21.3 - Create a job for each genetree in a generic hive db like this:
+22d. Report the locations of the dumps to the main Release Coordinator and/or the web people.
 
-perl ~/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl -url mysql://ensadmin:ensembl@compara1/avilella_hive_generic -input_id 'perl ~avilella/dumpTreeMSA_id.pl --list /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/$h1/$h2/$h3/tree_id_list.txt --url mysql://ensadmin:ensembl@ens-staging1/ensembl_compara_57 -nh 1 -a 1 -nhx 1 -f 1 -fc 1' -hashed_a 00:00:00 -hashed_b 01:92:97 -hive_capacity 100 -batch_size 5 -logic_name h_emf_dumps_v57f_1_1_2 1>out 2>err &
-
-tail -f ???
-
-21.4 - Run the jobs with throttling:
-
-beekeeper.pl -url mysql://ensadmin:ensembl@compara1/avilella_hive_generic -loop -lsf_options '-q normal -R"select[myens_staging1<500] rusage[myens_staging1=10:duration=10:decay=1]"' -lifespan 1200 -logic_name h_emf_dumps_v57f_1_1_2
-
-# beekeeper.pl -url mysql://ensadmin:ensembl@compara1/avilella_hive_generic -loop -logic_name h_emf_dumps_v57f_1_1_2
-
-21.5 - Once the jobs are finished, cat all the files into one by type:
-
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/ -name "*.aln*" | sort | xargs cat > Compara.gene_trees.57.emf'
-sleep 1
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/ -name "*.nhx.*" | sort | xargs cat > Compara.nhx_trees.57.emf'
-sleep 1
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/ -name "*.nh.emf" | sort | xargs cat > Compara.newick_trees.57.emf'
-sleep 1
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/ -name "*[^cds].fasta" | sort | xargs cat > Compara.gene_trees.57.fasta'
-sleep 1
-export TIMESTAMP=`date +2%3y%m%d_%H%M%S`
-bsub -q long -o $TIMESTAMP.out -e $TIMESTAMP.err 'find /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/ -name "*.cds.fasta" | sort | xargs cat > Compara.gene_trees.57.cds.fasta'
-
-while [ 1 ] ; do bjobs -q long -w | grep find; date; sleep 10; done
-
-21.6 - Compress the files and make an MD5SUM file
-
-Make sure all the trees where dumped (all have 19245 trees):
-
-grep -c '\/\/' Compara.newick_trees.57.emf 
-grep -c '\/\/' Compara.nhx_trees.57.emf 
-grep -c '\/\/' Compara.gene_trees.57.emf 
-grep -c '\/\/' Compara.gene_trees.57.fasta 
-grep -c '\/\/' Compara.gene_trees.57.cds.fasta 
-
-bsub -o /dev/null  -q yesterday  gzip Compara.newick_trees.57.emf
-bsub -o /dev/null  -q yesterday  gzip Compara.nhx_trees.57.emf
-bsub -o /dev/null  -q yesterday  gzip Compara.gene_trees.57.emf
-bsub -o /dev/null  -q yesterday  gzip Compara.gene_trees.57.fasta
-bsub -o /dev/null  -q yesterday  gzip Compara.gene_trees.57.cds.fasta
-
-while [ 1 ] ; do bjobs -q yesterday -w | grep gzip; date; sleep 10; done
-
-md5sum Compara.* > MD5SUM
-
-21.7 - Create the final dump directory, copy the README.* files from the previous release and update if needed:
-
-mkdir -p /warehouse/ensembl02/avilella/hive/avilella_compara_homology_57f/dumps/
-wget ftp://ftp.ensembl.org/pub/current_emf/ensembl-compara/homologies/README.emf
-wget ftp://ftp.ensembl.org/pub/current_emf/ensembl-compara/homologies/README.protein_trees
-cp /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/README.* /warehouse/ensembl02/avilella/hive/avilella_compara_homology_57f/dumps/
-cp /lustre/scratch103/ensembl/avilella/hive/avilella_compara_homology_57f/dumps/*.gz /warehouse/ensembl02/avilella/hive/avilella_compara_homology_57f/dumps/
-
-ls -l /warehouse/ensembl02/avilella/hive/avilella_compara_homology_57f/dumps/
-
-21.8 - Send an email to the release coordinator pointing to the files.
