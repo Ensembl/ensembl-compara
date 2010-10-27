@@ -666,7 +666,7 @@ sub _summarise_website_db {
   );
   foreach my $row ( @$t_aref ) {
     my @R = @$row;
-    warn ">>> ROW @R";
+#    warn ">>> ROW @R";
     $self->db_tree->{'ASSEMBLIES'}->{$row->[0]}{$row->[1]}=$row->[2];
     $self->db_tree->{'GENEBUILDS'}->{$row->[0]}{$row->[1]}=$row->[3];
   }
