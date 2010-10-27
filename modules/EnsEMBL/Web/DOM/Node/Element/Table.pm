@@ -25,7 +25,7 @@ sub _appendable {
   return
     $child->node_type == $self->ELEMENT_NODE
     &&
-    $child->node_name =~ /^(caption|colgroup|tbody|tfoot|thead|tr)$/;
+    $child->node_name =~ /^(caption|colgroup|tbody|tfoot|thead|tr)$/
     ? 1
     : 0  
   ;
