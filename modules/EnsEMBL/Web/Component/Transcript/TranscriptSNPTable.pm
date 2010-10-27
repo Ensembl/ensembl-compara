@@ -13,9 +13,10 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my $hub  = $self->hub;
-  my @samples;
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $strain_name = $hub->species_defs->translate('strain');
+  my ($html, @samples, %tables);
   
   foreach my $param ($hub->param) {
     if ($param =~ /opt_pop/ && $hub->param($param) eq 'on') {
@@ -24,59 +25,46 @@ sub content {
     }
   }
   
-  my $snp_data    = $self->get_page_data(\@samples);
-  my $strain_name = $hub->species_defs->translate('strain');
-  my %tables;
+  my $snp_data = $self->get_page_data(\@samples);
+  my $columns  = [
+    { key => 'ID',          sort => 'html'                                               },
+    { key => 'consequence', sort => 'string',   title => 'Type'                          },
+    { key => 'chr' ,        sort => 'position', title => 'Chr: bp'                       },
+    { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
+    { key => 'Alleles',     sort => 'string',   title => ucfirst "$strain_name genotype" },
+    { key => 'Ambiguity',   sort => 'string',   title => 'Ambiguity'                     },
+    { key => 'HGVS',        sort => 'string',   title => 'HGVS name(s)'                  },
+    { key => 'Codon',       sort => 'html',     title => 'Transcript codon'              },
+    { key => 'cdscoord',    sort => 'numeric',  title => 'CDS coord.'                    },
+    { key => 'aachange',    sort => 'string',   title => 'AA change'                     },
+    { key => 'aacoord',     sort => 'numeric',  title => 'AA coord.'                     },
+    { key => 'Class',       sort => 'string'                                             },
+    { key => 'Source',      sort => 'string'                                             },
+    { key => 'Status',      sort => 'string',   title => 'Validation'                    }
+  ];
+ 
  
   foreach my $sample (@samples) {
-    my $flag  = 0;
-    my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'chr asc' ] });  
-  
-    $table->add_columns (
-      { key => 'ID',          sort => 'html'                                               },
-      { key => 'consequence', sort => 'string',   title => 'Type'                          },
-      { key => 'chr' ,        sort => 'position', title => 'Chr: bp'                       },
-      { key => 'ref_alleles', sort => 'string',   title => 'Ref. allele'                   },
-      { key => 'Alleles',     sort => 'string',   title => ucfirst "$strain_name genotype" },
-      { key => 'Ambiguity',   sort => 'string',   title => 'Ambiguity'                     },
-      { key => 'HGVS',        sort => 'string',   title => 'HGVS name(s)'                  },
-      { key => 'Codon',       sort => 'html',     title => 'Transcript codon'              },
-      { key => 'cdscoord',    sort => 'numeric',  title => 'CDS coord.'                    },
-      { key => 'aachange',    sort => 'string',   title => 'AA change'                     },
-      { key => 'aacoord',     sort => 'numeric',  title => 'AA coord.'                     },
-      { key => 'Class',       sort => 'string'                                             },
-      { key => 'Source',      sort => 'string'                                             },
-      { key => 'Status',      sort => 'string',   title => 'Validation'                    }
-    );
+    my @rows = map @{$snp_data->{$_}{$sample} || []}, sort keys %$snp_data;
     
-    foreach my $snp_row (sort keys %$snp_data) { 
-      foreach my $row (@{$snp_data->{$snp_row}{$sample} || []}) {  
-        $flag = 1;
-        $table->add_row($row);
-      }
+    if (scalar @rows) {      
+      $tables{$sample} = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc' ] })->render;
+    } else {
+      $tables{$sample} = '
+        <p>
+          There are no variations in this region in this strain, or the variations have been filtered out by the options set in the page configuration. 
+          To change the filtering options select the "Configure this page" link from the menu on the left hand side of this page.
+        </p><br />
+      ';
     }
-    
-    $tables{$sample} = $flag ? $table->render : q{
-      <p>
-        There are no variations in this region in this strain, or the variations have been filtered out by the options set in the page configuration. 
-        To change the filtering options select the 'Configure this page' link from the menu on the left hand side of this page.
-      </p><br />};
   }
   
-  $strain_name .= 's';
-  
-  my $html;
-  
   $html .= "<h2>Variations in $_:</h2>$tables{$_}" for keys %tables;
-  
-  $html .= $self->_info(
-    'Configuring the display',
-    sprintf(
-      q{<p>These %s are displayed by default:<b> %s.</b>
-      <br /> Select the 'Configure this page' link in the left hand menu to customise which %s and types of variation are displayed in the tables above.</p>},
-      $strain_name, join(', ', $self->object->get_samples('default')), $strain_name
-    )
-  );  
+  $html .= $self->_info('Configuring the display', sprintf('
+    <p>These %ss are displayed by default: <b>%s.</b><br />
+    Select the "Configure this page" link in the left hand menu to customise which %ss and types of variation are displayed in the tables above.</p>',
+    $strain_name, join(', ', $self->object->get_samples('default')), $strain_name
+  ));  
   
   return $html;
 }

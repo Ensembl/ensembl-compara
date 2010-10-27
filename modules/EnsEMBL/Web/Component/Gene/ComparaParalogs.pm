@@ -41,7 +41,7 @@ sub content {
       
       my $description = $paralogue->{'description'};
          $description = 'No description' if $description eq 'NULL';
-         
+      
       my $paralogue_desc              = $paralogue_map{$paralogue->{'homology_desc'}} || $paralogue->{'homology_desc'};
       my $paralogue_subtype           = $paralogue->{'homology_subtype'}              || '&nbsp;';
       my $paralogue_dnds_ratio        = $paralogue->{'homology_dnds_ratio'}           || '&nbsp;';
@@ -97,7 +97,7 @@ sub content {
       push @rows, {
         'Taxonomy Level'  => $paralogue_subtype,
         'Type'            => ucfirst $paralogue_desc,
-        'Gene identifier' => qq{<a href="$link">$stable_id</a><br /><span class="small">$links</span>},
+        'Gene identifier' => qq{<a href="$link">$stable_id</a><br />} . ($self->html_format ? qq{<span class="small">$links</span>} : ''),
         'Location'        => qq{<a href="$location_link">$paralogue->{'location'}</a>},
         'Target %id'      => $target,
         'Query %id'       => $query,

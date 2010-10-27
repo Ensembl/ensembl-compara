@@ -343,7 +343,7 @@ sub content_align {
   
   $aio->write_aln($tree->get_SimpleAlign);
 
-  return $hub->param('_format') eq 'Text' ? $formatted : sprintf(q{
+  return $self->format eq 'Text' ? $formatted : sprintf(q{
     <p>Multiple sequence alignment in "<i>%s</i>" format:</p>
     <p>The sequence alignment format can be configured using the
     'configure page' link in the left panel.<p>
@@ -369,12 +369,12 @@ sub content_text {
   my @params  = map $hub->param($_), @{$formats{$mode}{'parameters'} || []};
   my $string  = $tree->$fn(@params);
   
-  if ($formats{$mode}{'split'} && $hub->param('_format') ne 'Text') {
+  if ($formats{$mode}{'split'} && $self->format ne 'Text') {
     my $reg = '([' . quotemeta($formats{$mode}{'split'}) . '])';
     $string =~ s/$reg/$1\n/g;
   }
 
-  return $hub->param('_format') eq 'Text' ? $string : sprintf(q{
+  return $self->format eq 'Text' ? $string : sprintf(q{
     <p>The following is a representation of the tree in "<i>%s</i>" format</p>
     <p>The tree representation can be configured using the
     'configure page' link in the left panel.<p>

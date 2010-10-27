@@ -150,7 +150,7 @@ sub content {
         'Species'            => join('<br />(', split /\s*\(/, $species),
         'Type'               => ucfirst $orthologue_desc,
         'dN/dS'              => $orthologue_dnds_ratio,
-        'Ensembl identifier' => qq{$object_stable_id_link<br /><span class="small">$target_links</span>},
+        'Ensembl identifier' => qq{$object_stable_id_link<br />} . ($self->html_format ? qq{<span class="small">$target_links</span>} : ''),
         'Location'           => qq{<a href="$location_link">$orthologue->{'location'}</a>},
         'Target %id'         => $target,
         'Query %id'          => $query,
