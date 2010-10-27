@@ -76,6 +76,11 @@ sub form {
   }
   
   $view_config->add_fieldset('Evidence types', 'matrix');
+#  my $matrix = $view_config->add_form_layout({'heading' => 'Evidence types', 'type'=> 'matrix'});
+#  $matrix->set_input_prefix
+#  $matrix->add_subheading_row
+#  $matrix->add_columns('name'=> , 'caption'=> , 'selectall' => 1)
+#  $matrix->add_add_row
   
   # Add row headers
   $view_config->add_form_element({

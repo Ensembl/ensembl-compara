@@ -30,6 +30,7 @@ sub new {
     has_images          => 0,
     _form               => undef,
     _form_id            => sprintf('%s_%s_configuration', lc $type, lc $action),
+    _form_layouts       => {},
     url                 => undef,
     tree                => new EnsEMBL::Web::OrderedTree,
     custom              => $ENV{'ENSEMBL_CUSTOM_PAGE'} ? $hub->session->custom_page_config($type) : [],
@@ -126,50 +127,62 @@ sub get_form {
 sub add_fieldset {
   my ($self, $legend, $class) = @_;
   
-  (my $div_class = $legend) =~ s/ /_/g;
-  my $fieldset = $self->get_form->add_fieldset('form' => $self->{'_form_id'});
-  $fieldset->legend($legend);
-  $fieldset->class($div_class);
-  $fieldset->extra(qq{ class="$class"}) if $class;
+  return $self->add_form_layout({'heading' => $legend, 'class' => $class });
+}
+
+sub add_form_layout {
+  my ($self, $params) = @_;
+  my $layout_type = {
+    'onecolumn'=> $self->get_form->ONE_COLUMN,
+    'matrix'   => $self->get_form->MATRIX,
+  };
   
-  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $div_class }) if $self->nav_tree;
-  
-  return $fieldset;
+  (my $div_class = $params->{'heading'}) =~ s/ /_/g; 
+   
+  return $self->{'_form_layouts'}{ $params->{'heading'} } if $params->{'heading'} && exists $self->{'_form_layouts'}{ $params->{'heading'} };
+
+  my $layout = $self->get_form->set_layout(
+    $params->{'type'} && exists $layout_type->{ $params->{'type'} }
+      ? $layout_type->{ $params->{'type'} } 
+      : $self->get_form->TWO_COLUMN
+    )
+  ;
+  $layout->set_heading($params->{'heading'}) if $params->{'heading'};
+  $layout->set_attribute('class', $div_class) if $params->{'heading'};
+  $layout->inner_div->set_attribute('class', $params->{'class'}) if $params->{'class'};
+  $layout->set_attribute('class', 'vc_div');
+
+  $self->{'_form_layouts'}{ $params->{'heading'} } = $layout if $params->{'heading'};
+  $self->tree->create_node(undef, { url => '#', availability => 1, caption => $params->{'heading'}, class => $div_class }) if $self->nav_tree;
+  return $layout;
 }
 
 sub get_fieldset {
   my ($self, $i) = @_;
   
-  my $fieldsets = $self->get_form->{'_fieldsets'};
-  my $fieldset;
-  
-  if (int $i eq $i) {
-    $fieldset = $fieldsets->[$i]; # $i is an array index
-  } else {
-    ($fieldset) = grep $_->legend eq $i, @$fieldsets; # $i is a legend
+  if ($i =~ /^[0-9]+$/) {
+    return exists $self->get_form->layouts->[ $i ] ? $self->get_form->layouts->[ $i ] : undef;
   }
   
-  return $fieldset;
+  return exists $self->{'_form_layouts'}{ $i } ? $self->{'_form_layouts'}{ $i } : undef;
 }
 
 sub add_form_element {
   my ($self, $element) = @_;
   
-  my @extra;
   my $value = $self->get($element->{'name'});
-  
   if ($element->{'type'} =~ /CheckBox/) {
-    push @extra, 'checked' => $value eq $element->{'value'} ? 1 : 0;
+    $element->{'checked'} = $value eq $element->{'value'} ? 1 : 0;
   } elsif (!exists $element->{'value'}) {
-    push @extra, 'value' => $value;
+    $element->{'value'} = $value;
   }
   
-  my $new_fieldset = $self->get_form->add_element(%$element, @extra);
-  
-  if ($new_fieldset) {
-    $new_fieldset->legend('Display options');
+  my $layout = $self->get_form->layouts->[1]; #layouts->[0] is added to form by default... so that would have not been added by viewConfig
+  unless (defined $layout) {
+    $layout = $self->add_fieldset('Display options');
     $self->tree->create_node(undef, { url => '#', availability => 1, caption => 'Display options', class => 'generic' }) if $self->nav_tree;
   }
+  $self->get_form->add_element(%$element);
 }
 
 # Loop through the parameters and update the config based on the parameters passed
@@ -413,6 +426,7 @@ sub add_class {
 }
 
 sub form {
+
   my ($self, $object, $no_extra_bits) = @_;
   
   foreach my $classname (@{$self->{'_classes'}}) {
@@ -421,39 +435,34 @@ sub form {
     eval { no strict 'refs'; &$method($self, $object); };
     warn $@ if $@; # TODO: proper error exception
   }
+   
+  foreach my $layout (@{$self->get_form->layouts}) {
   
-  foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
-    next if $fieldset->{'select_all'};
-       
-    my %element_types;
+    next unless ref($layout) =~ /twocolumn/i;
     
-    foreach my $element (@{$fieldset->elements}) {
-      $element_types{lc $_->type}++ for @$element;
+    my $inputs = $layout->get_elements_by_tag_name('input');
+    next unless scalar @$inputs;
+    next if $inputs->[0]->get_attribute('name') eq 'select_all'; 
+    
+    my $count = { map {$_ => 0} qw(checkbox text password) };
+    for (@$inputs) {
+      $count->{ $_->get_attribute('type') }++ if exists $count->{ $_->get_attribute('type') };
     }
     
-    delete $element_types{$_} for qw(hidden submit noedit);
-    
-    # If the fieldset is mostly checkboxes, provide a select/deselect all option
-    if ($element_types{'checkbox'} > 1 && [ sort { $element_types{$b} <=> $element_types{$a} } keys %element_types ]->[0] eq 'checkbox') {
-      my $position = 0;
-      
-      foreach my $element (@{$fieldset->elements}) {
-        last if grep $_->type eq 'CheckBox', @$element;
-        $position++;
-      }
-      
-      $fieldset->add_element(
-        type    => 'CheckBox',
-        name    => 'select_all',
-        label   => 'Select/deselect all',
-        value   => 'select_all',
-        classes => [ 'select_all' ]
-      );
-      
-      splice @{$fieldset->{'_element_order'}}, $position, 0, pop @{$fieldset->{'_element_order'}}; # Make it the first checkbox
-      
-      $fieldset->{'select_all'} = 1;
-    }
+    if ($count->{'checkbox'} > 1 && [ sort { $count->{ $b } <=> $count->{ $a } } keys %$count ]->[0] eq 'checkbox') {
+      my $field = $layout->add_field({
+        'label'     => 'Select/deselect all',
+        'class'     => 'select_all',
+        'elements'  => [{
+          'type'      => 'checklist',
+          'name'      => 'select_all',
+          'options'   => [{
+            'value'   => 'select_all',
+          }],
+        }],
+      });
+      $layout->inner_div->insert_at_beginning($field);
+    } 
   }
   
   return if $no_extra_bits;
@@ -461,17 +470,20 @@ sub form {
   if ($self->has_images) {
     my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
     
-    $fieldset->add_element(
-      type   => 'DropDown',
-      select => 'select',
-      name   => 'cookie_width',
-      value  => $ENV{'ENSEMBL_IMAGE_WIDTH'},
-      label  => 'Width of image',
-      values => [
-        { value => 'bestfit', name => 'best fit' },
-        map {{ value => $_, name => "$_ pixels" }} map $_*100, 5..20
-      ]
-    );
+    $fieldset->add_field({
+      'label'   => 'Width of image',
+      'elements' => [{
+        'type'    => 'dropdown',
+        'name'    => 'cookie_width',
+        'value'   => $ENV{'ENSEMBL_IMAGE_WIDTH'},
+        'options' => [{
+          'value'   => 'bestfit',
+          'caption' => 'best fit'
+          },
+          map { { 'value' => $_, 'caption' => "$_ pixels" } } map $_*100, 5..20
+        ],
+      }],
+    });
   }
   
   $self->tree->create_node('form_conf', { availability => 0, caption => 'Configure' }) unless $self->nav_tree;
