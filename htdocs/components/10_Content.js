@@ -55,7 +55,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       var url = $('input.url', this).val();
       
       if (url) {
-        if (!panel.elLk[url].show().length) {
+        if (panel.elLk[url]) {
+          panel.elLk[url].show();
+        } else {
           panel.elLk[url] = panel.addContent(url, this.rel);
         }
         
