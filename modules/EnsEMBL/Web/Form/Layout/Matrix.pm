@@ -92,7 +92,7 @@ sub add_columns {
     push @{ $self->{'__columns'} }, {
       'name'      => $_->{'name'},
       'caption'   => $_->{'caption'} || '',
-      'selectall' => exists $_->{'selectall'} && $_->{'selectall'} == 0 ? 0 : 1;
+      'selectall' => exists $_->{'selectall'} && $_->{'selectall'} == 0 ? 0 : 1
     };
   }
 }
@@ -125,7 +125,7 @@ sub add_row {
   }
   
   #add columns HTML if not already there - or refuse to add rows if no columns were added
-  unless ($self->inner_div->has_child_nodes || $self->_add_columns)
+  unless ($self->inner_div->has_child_nodes || $self->_add_columns){
     warn 'No column added yet. Add columns before adding a row';
     return;
   }
@@ -174,7 +174,7 @@ sub _add_columns {
   my $self  = shift;
   my $table = $self->dom->create_element('table');
   my $thead = $self->dom->create_element('thead');
-  $tbody    = $self->dom->create_element('tbody');
+  my $tbody    = $self->dom->create_element('tbody');
   my $tr1   = $self->dom->create_element('tr');
   my $tr2   = $self->dom->create_element('tr');
   
