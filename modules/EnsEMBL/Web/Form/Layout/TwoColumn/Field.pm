@@ -61,7 +61,7 @@ sub set_label {
   ## Sets label for the field
   ## @params inner_text for label tag
   my ($self, $text) = @_;
-  $self->label->inner_text($text || '');
+  $self->label->inner_HTML($text) if defined $text;
 }
 
 sub add_element {
