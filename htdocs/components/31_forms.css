@@ -1,0 +1,69 @@
+div.form-hnotes {
+  padding:4px; margin-bottom:10px; 
+  background-color:[[CONTRAST_BG]]; border:1px [[CONTRAST_BORDER]] solid;
+}
+div.form-hnotes h4 {
+  background-image: url('/i/infoicon.gif');
+  background-repeat: no-repeat;
+  background-position: top left;
+  margin:0 0 5px 0;
+  padding-left:16px;
+}
+div.form-fnotes {
+  padding: 10px 0;
+}
+div.form-field {
+  overflow: hidden;
+  margin-top: 9px;
+}
+label.form-field-label {
+  float: left;
+  width: 50%;
+}
+div.form-field-right {
+  padding-left: 50%;
+}
+div.form-field-notes {
+  padding: 6px 0 6px 50%;
+}
+.form-field-text, .form-field-ta {
+  border: [[PANEL_BORDER]] solid 1px;
+  width: 300px;
+}
+.form-field-file {
+  border: [[PANEL_BORDER]] solid 1px;
+}
+.form-field-ta {
+  height: 100px;
+}
+.form-field-button {
+  background-color:[[MH_BG]]; border:outset [[MH_BG]] 2px;
+  color:#fff; font-weight:bold;
+}
+.form-field-select {
+  width: 300px;
+}
+.inline .form-field-text, .inline .form-field-ta, .inline .form-field-select, .inline .form-field-button, .inline .form-field-file {
+  width: auto;
+  margin-right: 6px;
+}
+div.form-fnotes div, div.form-hnotes div {
+  margin-bottom: 10px;
+}
+div.select_all label {
+  text-decoration: underline;
+}
+div.ele-das {
+  overflow: hidden;
+  margin-top: 9px;
+}
+.ele-das-left {
+  float: left;
+  width: 60px;
+}
+.ele-das-right {
+  padding-left: 60px;
+}
+.ele-das-right p {
+  font-weight: bold;
+}
