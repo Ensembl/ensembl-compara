@@ -355,6 +355,7 @@ sub component_content {
   my $ajax_request = $self->_is_ajax_request;
   my $base_url     = $hub->species_defs->ENSEMBL_BASE_URL;
   my $function     = $hub->function;
+  my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
   
   # Check if ajax enabled
   my $renderer = $hub->check_ajax ? undef : new EnsEMBL::Web::Document::Renderer::Assembler(
@@ -371,7 +372,7 @@ sub component_content {
     ### Attempt to require the Component module
     if ($self->dynamic_use($module_name)) {
       eval {
-        $component = $module_name->new($builder);
+        $component = $module_name->new($builder, $self->renderer);
       };
       
       if ($@) {
@@ -385,7 +386,7 @@ sub component_content {
     
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
     ### If the user has AJAX disabled, use Renderer::Assembler to build the page using parallel HTTP requests
-    if ($component->ajaxable && !$ajax_request) {
+    if ($component->ajaxable && !$ajax_request && $is_html) {
       my $url   = $component->ajax_url($content_function);
       my $class = 'initial_panel' . ($component->has_image ? ' image_panel' : ''); # classes required by the javascript
       
