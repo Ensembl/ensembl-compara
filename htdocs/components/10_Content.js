@@ -2,6 +2,8 @@
 
 Ensembl.Panel.Content = Ensembl.Panel.extend({
   init: function () {
+    var panel = this;
+    
     this.base();
     
     this.xhr = false;
@@ -48,6 +50,18 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return false;
       });
     }
+    
+    $('a.ajax_add', this.el).bind('click', function () {
+      var url = $('input.url', this).val();
+      
+      if (url) {
+        if (!panel.elLk[url].show().length) {
+          panel.elLk[url] = panel.addContent(url);
+        }
+        
+        return false;
+      }
+    });
   },
   
   ajaxLoad: function () {
@@ -141,6 +155,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         this.xhr = false;
       }
     });
+  },
+  
+  addContent: function (url) {
+    var newContent = $('<div class="js_panel">').appendTo(this.el);
+    
+    this.getContent(url, newContent);
+    
+    return newContent;
   },
   
   hashChange: function () {
