@@ -302,7 +302,7 @@ sub add_element {
       'name'          => $params{'name'} || '',
       'inline'        => 0,
       'options'       => $options,
-      'class'         => $params{'style'} || '',
+      'class'         => (join ' ', $params{'classes'}) || '',
       'validate_as'   => $validate_as,
       'disabled'      => 0,
       'readonly'      => 0,
