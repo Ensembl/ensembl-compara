@@ -62,6 +62,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         return false;
       }
     });
+    
+    $('a.toggle[rel]', this.el).bind('click', function () {
+      $('.' + this.rel, panel.el).toggle();
+      $(this).toggleClass('open closed');
+      
+      return false;
+    });
   },
   
   ajaxLoad: function () {
