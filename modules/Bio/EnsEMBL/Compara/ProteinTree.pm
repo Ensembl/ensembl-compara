@@ -116,7 +116,7 @@ sub get_SimpleAlign {
     if ($append_sp_short_name) {
       my $species = $member->genome_db->short_name;
       $species =~ s/\s/_/g;
-      $seqID .= "(" . $species . ")";
+      $seqID .= "_" . $species . "_";
     }
 
 #    $seqID .= "_" . $member->genome_db->taxon_id if($append_taxon_id); # this may be needed if you have subspecies or things like that
