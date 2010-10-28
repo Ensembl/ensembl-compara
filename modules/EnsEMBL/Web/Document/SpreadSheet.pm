@@ -47,6 +47,7 @@ sub render {
   my $padding     = $options->{'cellpadding'}    || 0;
   my $spacing     = $options->{'cellspacing'}    || 0;
   my $table_class = 'ss ' . ($options->{'align'} || 'autocenter');
+  my $table_id    = $options->{'id'} ? qq{ id="$options->{'id'}"} : '';
   my $config;
   
   if ($options->{'data_table'}) {
@@ -105,7 +106,7 @@ sub render {
   
   # Yes, tfoot does come before tbody. Confusing I know, but that's the spec.
   my $table = qq{
-    <table class="$table_class" style="width:$width;margin:$margin" cellpadding="$padding" cellspacing="$spacing">
+    <table$table_id class="$table_class" style="width:$width;margin:$margin" cellpadding="$padding" cellspacing="$spacing">
       $elements{'thead'}
       $elements{'tfoot'}
       $elements{'tbody'}
@@ -350,7 +351,7 @@ sub _process {
 
 sub add_option {
   my $self = shift;
-  my $key = shift;
+  my $key  = shift;
   
   if (ref $self->{'_options'}->{$key} eq 'HASH') {
     $self->{'_options'}->{$key} = { %{$self->{'_options'}->{$key}}, %{$_[0]} };
