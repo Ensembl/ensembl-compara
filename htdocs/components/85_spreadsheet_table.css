@@ -17,8 +17,7 @@ table.data_table th.sorting_disabled { cursor: text; }
 table.data_table th div              { height: 19px; padding: 3px 0; }
 table.toggle_table th div            { padding: 0; }
 
-.toggleTable_wrapper { margin: 1.5em 0 0.5em 1.5em; clear: none; }
-.dataTables_wrapper  { margin: 1em 0; clear: both; }
+.dataTables_wrapper, .toggleTable_wrapper { margin: 1em 0; clear: both; }
 
 .dataTables_top,
 .dataTables_bottom { height: 22px; padding: 7px 10px 5px; border: 1px solid [[PAGE_TEXT]]; background: #8E97AF; color: [[PANEL_BG]]; }
