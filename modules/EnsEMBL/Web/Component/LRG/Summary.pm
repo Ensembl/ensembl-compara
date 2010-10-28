@@ -142,7 +142,7 @@ sub content {
     ';
   }
   
-  return $html;
+  return qq{<div class="summary_panel">$html</div>};
 }
 
 1;
