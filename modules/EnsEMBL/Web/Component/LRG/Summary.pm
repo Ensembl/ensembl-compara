@@ -108,7 +108,6 @@ sub content {
             <tr>
               <th>Name</th>
               <th>Transcript ID</th>
-              <th>Protein ID</th>
               <th>Description</th> 
             </tr>
           </thead>
@@ -120,13 +119,12 @@ sub content {
     );
  
     foreach (map $_->[2], sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map [$_->external_name, $_->stable_id, $_], @$transcripts) {
-      my $transcript = encode_entities($_->stable_id); 
+      my $transcript = encode_entities($_->stable_id);
       my $protein    = $_->translation ? 'LRG Protein' : 'No protein product';
       
       $html .= sprintf('
         <tr%s>      
           <th>%s</th>
-          <td>%s</td>
           <td>%s</td>
           <td>Fixed transcript for reporting purposes</td>
         </tr>',
