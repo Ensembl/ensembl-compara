@@ -581,7 +581,7 @@ sub freqs {
   my $variation_feature = shift || $self->vari->get_VariationFeature_by_dbID($self->param('vf'));
   my $allele_list = $variation_feature->get_all_Alleles;
   return {} unless $allele_list;
-
+  
   my (%data, $allele_missing);
   foreach my $allele_obj ( sort { $a->subsnp cmp $b->subsnp }@{ $allele_list } ) {  
     my $pop_obj = $allele_obj->population;  
@@ -589,15 +589,14 @@ sub freqs {
     my $pop_id  = $self->pop_id($pop_obj);
     my $ssid = $allele_obj->subsnp;   
    
-    push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency || "");
+    push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);# || "");
     push (@{ $data{$pop_id}{$ssid}{Alleles} },   $allele_obj->allele);    
     next if $data{$pop_id}{$ssid}{pop_info};
     $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
     $data{$pop_id}{$ssid}{ssid} = $allele_obj->subsnp();
     $data{$pop_id}{$ssid}{submitter} = $allele_obj->subsnp_handle();
-
   }
-
+  
   # Add genotype data;
   foreach my $pop_gt_obj ( sort { $a->subsnp cmp $b->subsnp} @{ $self->pop_genotype_obj } ) {
     my $pop_obj = $pop_gt_obj->population; 
