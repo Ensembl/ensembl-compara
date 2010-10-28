@@ -4,17 +4,19 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw( EnsEMBL::Web::DOM::Node::Element::Input::Submit EnsEMBL::Web::Form::Element);
+use HTML::Entities qw(encode_entities);
 
-sub configure {
-  ## @overrides
-  my ($self, $params) = @_;
-  
-  $self->set_attribute('id',        $params->{'id'} || $self->unique_id);
-  $self->set_attribute('name',      $params->{'name'})            if exists $params->{'name'};
-  $self->set_attribute('value',     $params->{'value'})           if exists $params->{'value'};
-  $self->set_attribute('class',     $params->{'class'})           if exists $params->{'class'};
-  $self->disabled(1) if exists $params->{'disabled'} && $params->{'disabled'} == 1;
+use base qw(EnsEMBL::Web::Form::Element);
+
+sub new { my $class = shift; return $class->SUPER::new( @_ ); }
+
+sub render { 
+  my $self = shift; 
+  return  sprintf( '<input type="submit" name="%s" value="%s" class="%s" %s/>', 
+    encode_entities($self->name) || 'submit', 
+    encode_entities($self->value), 
+    encode_entities(join(' ', @{$self->classes})) || 'submit', 
+  );
 }
 
 1;

@@ -1,18 +1,11 @@
 package EnsEMBL::Web::Form::Element::Password;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+use base qw( EnsEMBL::Web::Form::Element::String );
 
-use base qw( EnsEMBL::Web::DOM::Node::Element::Input::Password EnsEMBL::Web::Form::Element::Text);
+sub new { my $class = shift; return $class->SUPER::new( @_, 'widget_type' => 'password', 'style' => 'short' ); }
 
-sub configure {
-  ## @overrides the one in EnsEMBL::Web::Form::Element::Text
-  my ($self, $params) = @_;
+sub _is_valid { return $_[0]->value =~ /^\S{6,16}$/; }
 
-  $self->SUPER::configure($params);
-  $self->set_attribute('class', $self->validation_types->{'password'})
-    if exists $params->{'required'} && $params->{'required'} == 1;
-}
-
+sub _class { return '_password'; }
 1;

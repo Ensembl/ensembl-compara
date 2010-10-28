@@ -1,20 +1,12 @@
 package EnsEMBL::Web::Form::Element::File;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+use base qw( EnsEMBL::Web::Form::Element::String );
 
-use base qw( EnsEMBL::Web::DOM::Node::Element::Input::File EnsEMBL::Web::Form::Element);
+sub new { my $class = shift; return $class->SUPER::new( @_, 'widget_type' => 'file' ); }
 
-sub configure {
-  ## @overrides
-  my ($self, $params) = @_;
-  
-  $self->set_attribute('id',        $params->{'id'} || $self->unique_id);
-  $self->set_attribute('name',      $params->{'name'})            if exists $params->{'name'};
-  $self->set_attribute('class',     $params->{'class'})           if exists $params->{'class'};
-  $self->set_attribute('class',     $self->CSS_CLASS_REQUIRED)    if exists $params->{'required'} && $params->{'required'} == 1;
-  $self->disabled(1) if exists $params->{'disabled'} && $params->{'disabled'} == 1;
-}
+sub validate { return 1; }
+
+sub _extra { return qq(class="input-file @{[$_[0]->style]}" ); }
 
 1;
