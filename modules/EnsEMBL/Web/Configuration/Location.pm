@@ -208,13 +208,13 @@ sub add_vega_link {
       eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]); };
       
       if ($vega_projection) {
-	      if (scalar @$vega_projection == 1) {
-	        my $vega_slice = $vega_projection->[0]->to_Slice;
-	        $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
-	        $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
-	      } elsif (scalar @$vega_projection > 1) {
-	        $vega_link  = $self>hub->url({ type => 'Help', action => 'ListVegaMappings' });
-  	      $link_class = 'modal_link';
+	if (scalar @$vega_projection == 1) {
+	  my $vega_slice = $vega_projection->[0]->to_Slice;
+	  $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+	  $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
+	} elsif (scalar @$vega_projection > 1) {
+	  $vega_link  = $self->hub->url({ type => 'Help', action => 'ListVegaMappings' });
+	  $link_class = 'modal_link';
         }
       }
     }
