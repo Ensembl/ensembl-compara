@@ -1,3 +1,5 @@
+# $Id$
+
 package EnsEMBL::Web::Form::FieldSet;
 
 use strict;
