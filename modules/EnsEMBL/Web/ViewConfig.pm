@@ -149,7 +149,7 @@ sub add_form_layout {
   ;
   $layout->set_heading($params->{'heading'}) if $params->{'heading'};
   $layout->set_attribute('class', $div_class) if $params->{'heading'};
-  $layout->inner_div->set_attribute('class', $params->{'class'}) if $params->{'class'};
+  $layout->set_attribute('class', $params->{'class'}) if $params->{'class'};
   $layout->set_attribute('class', 'vc_div');
 
   $self->{'_form_layouts'}{ $params->{'heading'} } = $layout if $params->{'heading'};
