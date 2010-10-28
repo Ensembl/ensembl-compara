@@ -22,19 +22,84 @@ sub content {
   my $freq_data = $object->freqs;
   
   return $self->_info('Variation: ' . $object->name, '<p>No genotypes for this variation</p>') unless %$freq_data;
-  return $self->format_frequencies($freq_data)->render;
+  
+  my $html;
+  my $table_array = $self->format_frequencies($freq_data);
+  
+  # count how many tables there are
+  my $count = scalar @{$table_array};
+  
+  # only one table to render (non-human or if no 1KG data)
+  if($count == 1) {
+    $html .= $table_array->[0]->[1]->render;
+  }
+  
+  # more than one table
+  else { 
+    foreach my $sub_array(@{$table_array}) {
+      
+      my ($title, $table) = @{$sub_array};
+      
+      # hide "other" table
+      if ($title =~ /other/i) {
+        $table->add_option('data_table', 'toggle_table hide');
+        $table->add_option('id', 'other_table');
+        
+        $html .= sprintf('
+          <div class="toggle_button" id="other">
+            <em class="closed"></em>
+            <h2>%s</h2>
+          </div>
+          %s
+        ', $title, $table->render);
+      }
+      
+      else {     
+        $html .= "<h2>$title</h2>" . $table->render;
+      }
+    }
+  }
+  
+  return $html;
 }
 
 sub format_frequencies {
-  my ($self, $freq_data) = @_;
+  my ($self, $freq_data, $tg_flag) = @_;
   my $hub        = $self->hub;
   my $is_somatic = $self->object->Obj->is_somatic;
   my %columns;
   my @rows;
+  
+  my $table_array;
+  
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
+  #my $table = new EnsEMBL::Web::Document::SpreadSheet([], []);
+  
+  # split off 1000 genomes if present
+  if(!defined($tg_flag)) {
+    my $tg_data;
+    my $hm_data;
+    
+    foreach my $pop_id(keys %$freq_data) {
+      foreach my $ssid(keys %{$freq_data->{$pop_id}}) {
+        if($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000GENOMES/i) {
+          $tg_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
+          delete $freq_data->{$pop_id}{$ssid};
+        }
+        elsif($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /hapmap/i) {
+          $hm_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
+          delete $freq_data->{$pop_id}{$ssid};
+        }
+      }
+    }
+    
+    # recurse this method with just the tg_data and a flag to indicate it
+    push @{$table_array},  @{$self->format_frequencies($tg_data, '1000 genomes')} if $tg_data;
+    push @{$table_array},  @{$self->format_frequencies($hm_data, 'HapMap')} if $hm_data;
+  }
 
-  foreach my $pop_id (keys %$freq_data) { 
-    foreach my $ssid (keys %{$freq_data->{$pop_id}}) { 
+  foreach my $pop_id (keys %$freq_data) {
+    foreach my $ssid (keys %{$freq_data->{$pop_id}}) {
       my %pop_row;
       
       # SSID + Submitter  -----------------------------------------
@@ -48,7 +113,7 @@ sub format_frequencies {
       my @allele_freq = @{$freq_data->{$pop_id}{$ssid}{'AlleleFrequency'}};
       
       foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Alleles'}}) {
-        next unless $gt =~ /\w+/;
+        next unless $gt =~ /(\w|\-)+/;
         my $freq = $self->format_number(shift @allele_freq);
         $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
       }
@@ -63,7 +128,7 @@ sub format_frequencies {
       
       # Add a name, size and description if it exists ---------------------------
       $pop_row{'pop'}         = $self->pop_url($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'}, $freq_data->{$pop_id}{$ssid}{'pop_info'}{'PopLink'}) . '&nbsp;';
-      $pop_row{'Size'}        = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Size'};
+      #$pop_row{'Size'}        = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Size'};
       $pop_row{'Description'} = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Description'} if $is_somatic;
       
       # Super and sub populations ----------------------------------------------
@@ -99,8 +164,11 @@ sub format_frequencies {
   
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
+  
+  
+  push @{$table_array}, [($tg_flag ? $tg_flag : 'Other data ('.(scalar @rows).')'), $table];
 
-  return $table;
+  return $table_array;
 }
 
 sub format_number {
