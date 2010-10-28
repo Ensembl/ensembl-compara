@@ -15,7 +15,6 @@ use constant {
   MATRIX                  => 'matrixlayout',
   FLOW                    => 'flowlayout',
 
-  CSS_CLASS_DEFAULT       => 'std',
   CSS_CLASS_HIDDEN        => 'hidden',
   CSS_CLASS_VALIDATION    => 'check',
   CSS_CLASS_FILE_UPLOAD   => 'upload',
@@ -42,7 +41,6 @@ sub new {
   $self->set_attribute('id',      $name);
   $self->set_attribute('action',  $action);
   $self->set_attribute('method',  $method);
-  $self->set_attribute('class',   $self->CSS_CLASS_DEFAULT);
   $self->set_attribute('class',   $_) for @$style;                       
   $self->set_attribute('class',   $self->CSS_CLASS_VALIDATION)  unless defined $needs_js_validation && $needs_js_validation eq '0'; #on by default
   
@@ -204,7 +202,7 @@ my $do_warn = 0;
 sub add_element {
   my ($self, %params) = @_;
     
-  my $validations = { map {$_ => 1} qw(age email float html int nonnegfloat nonnegint password posfloat posint string url) };
+  my $validations = { map {$_ => 1} qw(age email float html int nonnegfloat nonnegint password posfloat posint string url) };
   my $old_type    = lc $params{'type'} || '';
   my $validate_as = exists $validations->{ $old_type } ? $old_type : undef;
   my $new_type    = $old_type;
