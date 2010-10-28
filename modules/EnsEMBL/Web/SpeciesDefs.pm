@@ -1092,15 +1092,14 @@ sub species_path {
   
   my ($self, $species) = @_;
   $species ||= $ENV{'ENSEMBL_SPECIES'};
-  
+
   return unless $species;
   
   my $url = $self->{'_species_paths'}->{$species};
-  
   return $url if $url;
   
   my $local       = grep $species, $self->valid_species; ## Is this species found on this site?
-  my $is_bacteria = $self->ENSEMBL_TYPE =~ /acteria/ ? 1 : 0;
+  my $is_bacteria = $self->ENSEMBL_SITETYPE =~ /acteria/ ? 1 : 0;
   
   if ($local && !$is_bacteria) {
     $url = "/$species";
@@ -1122,7 +1121,7 @@ sub species_path {
     # To deal with clades in bacteria
     # If we had to do the substitution let's check the species are not on the same site
     # as the current species - in that case we don't need the host name bit
-    $url =~ s/^http\:\/\/[^\/]+\//\// if $url =~ /\#\#\#SPECIES\#\#\#/ && substr($spsite, 0, 5) eq substr($cssite, 0, 5);
+    $url =~ s/^http\:\/\/[^\/]+\//\// if $url_hash->{$spsite} =~ /\#\#\#SPECIES\#\#\#/ && substr($spsite, 0, 5) eq substr($cssite, 0, 5);
     $url =~ s/\/$//;
     $url ||= "/$species"; # in case species have not made to the SPECIES_SITE there is a good chance the species name as it is will do  
   }
