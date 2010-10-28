@@ -58,18 +58,13 @@ sub form {
   my $form_action         = $hub->url({ action => 'Form', function => $function }, 1);
   my %gene_markup_options = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   
-#  $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
-#  $view_config->get_form->{'_attributes'}{'id'}     = 'export_configuration';
-#  $view_config->get_form->{'_attributes'}{'class'} .= ' export';
-#  $view_config->get_form->{'_attributes'}{'method'} = 'get';
-
-  $view_config->get_form->set_attribute('action',  $form_action->[0]);
-  $view_config->get_form->set_attribute('id',      'export_configuration');
-  $view_config->get_form->set_attribute('class',   'export');
-  $view_config->get_form->set_attribute('method',  'get');
+  $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
+  $view_config->get_form->{'_attributes'}{'id'}     = 'export_configuration';
+  $view_config->get_form->{'_attributes'}{'class'} .= ' export';
+  $view_config->get_form->{'_attributes'}{'method'} = 'get';
     
   $view_config->add_fieldset;
-    
+  
   $view_config->add_form_element({
     type    => 'Hidden',
     name    => 'panel_type',
@@ -140,67 +135,16 @@ sub form {
     my $s = $slice->strand;
     my @strand = map $s == $_ ? 'selected="selected"' : '', (1, -1);
     
-#    $view_config->add_form_element({
-#      type  => 'Raw',
-#      label => 'Select location',
-#      raw   => sprintf qq{
-#        <input type="text" size="1" value="%s" name="new_region" class="input-text required" />
-#        <input type="text" size="8" value="%s" name="new_start" class="input-text _posint required" />
-#        <input type="text" size="8" value="%s" name="new_end" class="input-text _posint required" />
-#        <select size="1" name="strand"><option value="1" %s>1</option><option value="-1" %s>-1</option></select>
-#      }, $slice->seq_region_name, $slice->start, $slice->end, @strand
-#    });
-
-
-    $view_config->get_form->add_field({
-      'label'     => 'Select Location',
-      'inline'    => 1,
-      'elements'  => [
-        {
-          'type'        => 'text',
-          'name'        => 'new_region',
-          'size'        => 1,
-          'value'       => sprintf("%s", $slice->seq_region_name),
-          'class'       => 'input-text',
-          'required'    => 1,
-        },
-        {
-          'type'        => 'text',
-          'name'        => 'new_start',
-          'size'        => 8,
-          'value'       => sprintf("%s", $slice->start),
-          'class'       => 'input-text',
-          'required'    => 1,
-          'validate_as' => 'posint',
-        },
-        {
-          'type'        => 'text',
-          'name'        => 'new_end',
-          'size'        => 8,
-          'value'       => sprintf("%s", $slice->end),
-          'class'       => 'input-text',
-          'required'    => 1,
-          'validate_as' => 'posint',
-        },
-        {
-          'type'        => 'dropdown',
-          'name'        => 'strand',
-          'size'        => 1,
-          'value'       => $slice->strand,
-          'options'     => [
-            {
-              'value'       => '-1',
-              'caption'     => '-1',
-            },
-            {
-              'value'       => '1',
-              'caption'     => '1',
-            },
-          ],
-        },
-      ],
-    });    
-    
+    $view_config->add_form_element({
+      type  => 'Raw',
+      label => 'Select location',
+      raw   => sprintf qq{
+        <input type="text" size="1" value="%s" name="new_region" class="input-text required" />
+        <input type="text" size="8" value="%s" name="new_start" class="input-text _posint required" />
+        <input type="text" size="8" value="%s" name="new_end" class="input-text _posint required" />
+        <select size="1" name="strand"><option value="1" %s>1</option><option value="-1" %s>-1</option></select>
+      }, $slice->seq_region_name, $slice->start, $slice->end, @strand
+    });
   } else {
     $view_config->add_form_element({
       type     => 'DropDown', 
@@ -215,13 +159,9 @@ sub form {
       ]
     });
   }
-
-  $gene_markup_options{'flank5_display'}->{'shortnote'} = " * (Maximum of 1000000) ";
-  $gene_markup_options{'flank3_display'}->{'shortnote'} = " * (Maximum of 1000000) ";
-
+  
   $view_config->add_form_element($gene_markup_options{'flank5_display'});
   $view_config->add_form_element($gene_markup_options{'flank3_display'});
-
   
   $view_config->add_form_element({
     type  => 'Submit',

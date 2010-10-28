@@ -20,29 +20,17 @@ sub init {
 sub form {
   my ($view_config, $object) = @_;
   
-  $view_config->add_form_layout({
-    'type'    => 'onecolumn',
-    'heading' => 'DAS sources',
-  });
-  
-  #$view_config->add_fieldset('DAS sources');
+  $view_config->add_fieldset('DAS sources');
   
   my $view    = $object->__objecttype . '/ExternalData';
   my @all_das = sort { lc $a->label cmp lc $b->label } grep $_->is_on($view), values %{$view_config->hub->get_all_das};
   
   foreach my $das (@all_das) {
-#    $view_config->add_form_element({
-#      type  => 'DASCheckBox',
-#      das   => $das,
-#      name  => $das->logic_name,
-#      value => 'yes'
-#    });
-    
-    $view_config->get_form->layout->add_element({
-      'type'    => 'dascheckbox',
-      'das'     => $das,
-      'name'    => $das->logic_name,
-      'value'   => 'yes',
+    $view_config->add_form_element({
+      type  => 'DASCheckBox',
+      das   => $das,
+      name  => $das->logic_name,
+      value => 'yes'
     });
   }
 }
