@@ -14,7 +14,11 @@ sub node_name {
 }
 
 #sub validate_attribute {}
-#sub allowed_attributes {}
+
+sub allowed_attributes {
+  ## @overrides
+  return [ @{ shift->SUPER::allowed_attributes }, qw(abbr align axis char charoff colspan headers rowspan scope valign) ];
+}
 #sub mandatory_attributes {}
 #sub can_have_child {}
 #sub allowed_child_nodes {}
@@ -29,7 +33,7 @@ sub _appendable {
     ||
     $child->node_type == $self->ELEMENT_NODE
       &&
-      $child->node_name !~ /^(body|caption|col|colgroup|head|html|legend|li|optgroup|option|tbody|tfoot|th|thead|title|tr)$/;
+      $child->node_name !~ /^(body|caption|col|colgroup|head|html|legend|li|optgroup|option|tbody|tfoot|th|thead|title|tr)$/
     ? 1
     : 0
   ;

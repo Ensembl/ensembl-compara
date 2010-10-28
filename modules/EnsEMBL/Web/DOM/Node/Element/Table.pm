@@ -14,7 +14,12 @@ sub node_name {
 }
 
 #sub validate_attribute {}
-#sub allowed_attributes {}
+
+sub allowed_attributes {
+  ## @overrides
+  return [ @{ shift->SUPER::allowed_attributes }, qw(border cellpadding cellspacing frame rules summary width) ];
+}
+
 #sub mandatory_attributes {}
 #sub can_have_child {}
 #sub allowed_child_nodes {}

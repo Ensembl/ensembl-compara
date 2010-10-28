@@ -25,7 +25,7 @@ sub _appendable {
   return
     $child->node_type == $self->ELEMENT_NODE
     &&
-    $child->node_name =~ /^(td|th)$/;
+    $child->node_name =~ /^(td|th)$/
     ? 1
     : 0  
   ;
