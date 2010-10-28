@@ -47,8 +47,9 @@ sub content {
         
         $html .= sprintf('
           <div class="toggle_button" id="other">
-            <em class="closed"></em>
-            <h2>%s</h2>
+            <h2 style="float:left">%s</h2>
+            <em class="closed" style="margin:3px"></em>
+            <p class="invisible">.</p>
           </div>
           %s
         ', $title, $table->render);
@@ -73,7 +74,6 @@ sub format_frequencies {
   my $table_array;
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
-  #my $table = new EnsEMBL::Web::Document::SpreadSheet([], []);
   
   # split off 1000 genomes if present
   if(!defined($tg_flag)) {
