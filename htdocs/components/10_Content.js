@@ -35,6 +35,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('updatePanel',  this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
+    Ensembl.EventManager.register('ajaxLoaded',   this, function (id) {
+      if (id) {
+        // Jump to the newly added content
+        window.location.hash = id;
+      }
+    });
     
     if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
       Ensembl.EventManager.register('hashChange', this, this.hashChange);
@@ -56,18 +62,23 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       
       if (url) {
         if (panel.elLk[url]) {
-          panel.elLk[url].show();
+          panel.elLk[url].show().children().show();
+          window.location.hash = panel.elLk[url][0].id;
         } else {
           panel.elLk[url] = panel.addContent(url, this.rel);
         }
-        
-        // Jump to the newly added content
-        window.location.hash = '#' + panel.elLk[url][0].id;
       }
+      
+      return false;
     });
     
     $('a.toggle[rel]', this.el).bind('click', function () {
-      $('.' + this.rel, panel.el).toggle();
+      if (panel.id == this.rel) {
+        $(panel.el).children().not($(this).parentsUntil(panel.id)).toggle();
+      } else {
+        $('.' + this.rel, panel.el).toggle();
+      }
+      
       $(this).toggleClass('open closed');
       
       return false;
@@ -127,7 +138,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     });
   },
   
-  getContent: function (url, el, params) {    
+  getContent: function (url, el, params, newContent) {
     var node;
     
     params = params || this.params;
@@ -152,7 +163,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       success: function (html) {
         if (html) {
           Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class=".*?panel_type.*?".*?>/)||[])[0]).val() || 'Content', html, el, params);
-          Ensembl.EventManager.trigger('ajaxLoaded');
+          Ensembl.EventManager.trigger('ajaxLoaded', newContent === true ? '#' + el[0].id : '');
         } else {
           el.html('');
         }
@@ -184,7 +195,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     newContent.attr('id', rel);
     
-    this.getContent(url, newContent);
+    this.getContent(url, newContent, this.params, true);
     
     return newContent;
   },
