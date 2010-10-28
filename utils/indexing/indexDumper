@@ -215,10 +215,11 @@ sub dumpVariation {
 
       if ( $somatic_mutation == 1){
         print S join "\t",
-                $name,
-        "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
-        "$name @K",
-        sprintf( "A %s Somatic Mutation %s%s\n",
+	 "$snp_source Somatic Mutation",
+	  $name,
+         "/$conf->{'species'}/Variation/Summary?source=$snp_source;v=$name",
+         "$name @K",
+         sprintf( "A %s Somatic Mutation %s%s\n",
             $snp_source,
             $syn_c > 1 ? "with $syn_c synonyms: $synonym_text"
           : $syn_c     ? "with one synonym: $synonym_text"
