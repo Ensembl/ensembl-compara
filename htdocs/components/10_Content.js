@@ -74,7 +74,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     $('a.toggle[rel]', this.el).bind('click', function () {
       if (panel.id == this.rel) {
-        $(panel.el).children().not($(this).parentsUntil(panel.id)).toggle();
+        $(panel.el).children().not($(this).parentsUntil(panel.id)).not(this).toggle();
       } else {
         $('.' + this.rel, panel.el).toggle();
       }
