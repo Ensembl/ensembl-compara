@@ -16,8 +16,6 @@ our $VERSION = sprintf "%d.%d", q$Revision$ =~ /: (\d+)\.(\d+)/;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-srand();
-
 my $conf_file;
 my %hive_params ;
 my $verbose;
@@ -286,15 +284,11 @@ sub prepareChainSystem
       $linear_gap = "medium";
   }
 
-  my $group_type = $chainConf->{'output_group_type'};
-  $group_type = "chain" unless (defined $group_type);
-
 	my @parameters_array = (
 		'input_method_link', $input_method_link_type,
 		'output_method_link', $output_method_link_type,
 		'max_gap', $max_gap,
 		'linear_gap', $linear_gap,
-		'output_group_type', $group_type
 	);
 	push(@parameters_array, ('bin_dir', $chainConf->{'bin_dir'})) if defined $chainConf->{'bin_dir'};
 	$parameters = generate_paramaters_string(@parameters_array);
@@ -414,17 +408,11 @@ sub prepareNetSystem {
   # AlignmentNets Analysis
   #
   my $max_gap = $netConf->{'max_gap'};
-  my $input_group_type = $netConf->{'input_group_type'};
-  $input_group_type = "chain" unless (defined $input_group_type);
-  my $output_group_type = $netConf->{'output_group_type'};
-  $output_group_type = "default" unless (defined $output_group_type);
 
 	my @parameters_array = (
 		'input_method_link', $input_method_link_type,
 		'output_method_link', $output_method_link_type,
 		'max_gap', $max_gap,
-		'input_group_type', $input_group_type,
-		'output_group_type', $output_group_type
 	);
 	push(@parameters_array, ('bin_dir', $netConf->{'bin_dir'})) if defined $netConf->{'bin_dir'};
 	my $parameters = generate_paramaters_string(@parameters_array);
@@ -753,9 +741,6 @@ sub prepCreateAlignmentNetsJobs {
 
   return unless($netConf);
 
-  my $input_group_type = $netConf->{'input_group_type'};
-  $input_group_type = "chain" unless (defined $input_group_type);
-
   my $query_collection_name = $netConf->{'query_collection_name'};
   my $target_collection_name = $netConf->{'target_collection_name'};
   my $gdb_id1 = $self->{'chunkCollectionHash'}->{$query_collection_name}->{'genome_db_id'};
@@ -765,8 +750,7 @@ sub prepCreateAlignmentNetsJobs {
   my $input_id = "{\'method_link\'=>\'$input_method_link_type\'";
   $input_id .= ",\'query_genome_db_id\'=>\'$gdb_id1\',\'target_genome_db_id\'=>\'$gdb_id2\',";
   $input_id .= "\'collection_name\'=>\'$query_collection_name\'";
-  $input_id .= ",\'logic_name\'=>\'$logic_name\'";
-  $input_id .= ",\'group_type\'=>\'$input_group_type\'}";
+  $input_id .= ",\'logic_name\'=>\'$logic_name\'}";
 
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,

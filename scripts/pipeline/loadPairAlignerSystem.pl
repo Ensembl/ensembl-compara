@@ -10,8 +10,6 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
 
-srand();
-
 my $conf_file;
 my $verbose;
 my $help;
@@ -101,7 +99,14 @@ foreach my $dnaCollectionConf (values %{$self->{'dna_collection_conf_selected_ha
   my $dna_collection_name = $dnaCollectionConf->{'collection_name'};
   print("creating ChunkAndGroup jobs for '$dna_collection_name'\n");
   $self->storeMaskingOptions($dnaCollectionConf);
-  $self->createChunkAndGroupDnaJobs($dnaCollectionConf);
+
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+      -input_id       => $dnaCollectionConf,
+      -analysis       => $self->{'chunkAndGroupDnaAnalysis'},
+  );
+
+      #Create dataflow rule to create sequence storing jobs on branch 1
+  $self->{'dataflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},1);
 }
 
 foreach my $pairAlignerConf (@{$self->{'pair_aligner_conf_list'}}) {
@@ -141,7 +146,6 @@ sub parse_conf {
 
   $self->{'genomic_align_conf_list'}  = [];
   $self->{'dna_collection_conf_full_hash'} = {};
-  $self->{'chunkCollectionHash'} = {};
   
   if($conf_file and (-e $conf_file)) {
     #read configuration file from disk
@@ -189,7 +193,6 @@ sub preparePairAlignerSystem {
   my $submit_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'SubmitGenome',
-      -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'
     );
   $self->{'analysis_adaptor'}->store($submit_analysis);
@@ -205,7 +208,7 @@ sub preparePairAlignerSystem {
       -db_version      => '1',
       -logic_name      => 'ChunkAndGroupDna',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::ChunkAndGroupDna',
-      -parameters      => ""
+      -parameters      => '{}',
     );
   $self->{'analysis_adaptor'}->store($chunkAndGroupDnaAnalysis);
   $stats = $chunkAndGroupDnaAnalysis->stats;
@@ -223,7 +226,7 @@ sub preparePairAlignerSystem {
       -db_version      => '1',
       -logic_name      => 'StoreSequence',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::StoreSequence',
-      -parameters      => ""
+      -parameters      => '{}',
     );
   $self->{'analysis_adaptor'}->store($storeSequenceAnalysis);
   $stats = $storeSequenceAnalysis->stats;
@@ -239,7 +242,7 @@ sub preparePairAlignerSystem {
       -db_version      => '1',
       -logic_name      => 'CreatePairAlignerJobs',
       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreatePairAlignerJobs',
-      -parameters      => ""
+      -parameters      => '{}',
     );
   $self->{'analysis_adaptor'}->store($createPairAlignerJobsAnalysis);
   $stats = $createPairAlignerJobsAnalysis->stats;
@@ -250,11 +253,10 @@ sub preparePairAlignerSystem {
 
   $self->{'ctrlflow_adaptor'}->create_rule($chunkAndGroupDnaAnalysis, $createPairAlignerJobsAnalysis);
   $self->{'ctrlflow_adaptor'}->create_rule($storeSequenceAnalysis, $createPairAlignerJobsAnalysis);
-
 }
 
-sub createPairAlignerAnalysis
-{
+
+sub createPairAlignerAnalysis {
   my $self              = shift;
   my $pair_aligner_conf = shift;  #hash reference
   my $gdb_suffix        = shift;
@@ -266,14 +268,14 @@ sub createPairAlignerAnalysis
       $pair_aligner_conf->{'query_collection_name'} = $pair_aligner_conf->{'non_reference_collection_name'};
   }
 
-  my $query_dnaCollectionConf = $self->{'chunkCollectionHash'}->{$pair_aligner_conf->{'query_collection_name'}};
+  my $query_dnaCollectionConf = $self->{'dna_collection_conf_selected_hash'}{$pair_aligner_conf->{'query_collection_name'}};
 
   #allow 'target_collection_name' or 'reference_collection_name'
   if ($pair_aligner_conf->{'reference_collection_name'} && !$pair_aligner_conf->{'target_collection_name'}) {
       $pair_aligner_conf->{'target_collection_name'} = $pair_aligner_conf->{'reference_collection_name'};
   }
 
-  my $target_dnaCollectionConf = $self->{'chunkCollectionHash'}->{$pair_aligner_conf->{'target_collection_name'}};
+  my $target_dnaCollectionConf = $self->{'dna_collection_conf_selected_hash'}{$pair_aligner_conf->{'target_collection_name'}};
 
   if($pair_aligner_conf->{'method_link'}) {
     my ($method_link_id, $method_link_type) = @{$pair_aligner_conf->{'method_link'}};
@@ -327,9 +329,9 @@ sub createPairAlignerAnalysis
       $pairAlignerAnalysis->parameters($parameters);
   }
 
-  my $logic_name = "PairAligner-".$gdb_suffix;
-  $logic_name = $pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix
-    if (defined $pair_aligner_conf->{'logic_name_prefix'});
+  $pair_aligner_conf->{'logic_name_prefix'} ||= 'PairAligner';
+
+  my $logic_name = $pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix;
 
   print "logic_name $logic_name\n";
   $pairAlignerAnalysis->logic_name($logic_name);
@@ -363,13 +365,11 @@ sub createPairAlignerAnalysis
      
       ## We want to dump the target collection for Blat. Set dump_min_size to 1 to ensure that all the toplevel seq_regions are dumped. 
       # The use of group_set_size in the target collection ensures that short seq_regions are grouped together. 
-      my $dumpDnaAnalysis = new Bio::EnsEMBL::Analysis(
-						       -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
-						       -parameters => $analysis_parameters, 
-						      );
-      my $dump_dna_logic_name = "DumpDnaForPairAligner-".$gdb_suffix;
-      $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix
-	if (defined $pair_aligner_conf->{'logic_name_prefix'});
+      my $dumpDnaAnalysis = Bio::EnsEMBL::Analysis->new(
+           -module => "Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::DumpDnaCollection",
+           -parameters => $analysis_parameters, 
+      );
+      my $dump_dna_logic_name = "DumpDnaFor".$pair_aligner_conf->{'logic_name_prefix'}."-".$gdb_suffix;
 
       $dumpDnaAnalysis->logic_name($dump_dna_logic_name);
 
@@ -382,9 +382,10 @@ sub createPairAlignerAnalysis
       $self->{'dump_dna_analysis'} = $dumpDnaAnalysis;
 
       if ($target_dnaCollectionConf->{'dump_loc'}) {
-	  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-	      (-input_id       => "{'dna_collection_name'=>'".$pair_aligner_conf->{'target_collection_name'}."'}",
-	       -analysis       => $self->{'dump_dna_analysis'});
+          Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+              -input_id       => { 'dna_collection_name' => $pair_aligner_conf->{'target_collection_name'} },
+              -analysis       => $self->{'dump_dna_analysis'},
+          );
       }
 
       ## Create new rule: DumpDna before running Blat!!
@@ -398,11 +399,12 @@ sub createPairAlignerAnalysis
     # creating UpdateMaxAlignmentLengthBeforeFD analysis
     #
 
-    my $updateMaxAlignmentLengthBeforeFDAnalysis = Bio::EnsEMBL::Analysis->new
-      (-db_version      => '1',
-       -logic_name      => 'UpdateMaxAlignmentLengthBeforeFD',
-       -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-       -parameters      => "");
+    my $updateMaxAlignmentLengthBeforeFDAnalysis = Bio::EnsEMBL::Analysis->new(
+        -db_version      => '1',
+        -logic_name      => 'UpdateMaxAlignmentLengthBeforeFD',
+        -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+        -parameters      => '{}',
+    );
     
     $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthBeforeFDAnalysis);
     my $stats = $updateMaxAlignmentLengthBeforeFDAnalysis->stats;
@@ -414,10 +416,10 @@ sub createPairAlignerAnalysis
     #
     # create UpdateMaxAlignmentLengthBeforeFD job
     #
-    my $input_id = 1;
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-        (-input_id       => $input_id,
-         -analysis       => $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'});
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+        -input_id       => '{}',
+        -analysis       => $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'},
+    );
   }
 
   $self->{'ctrlflow_adaptor'}->create_rule($pairAlignerAnalysis, $self->{'updateMaxAlignmentLengthBeforeFDAnalysis'});
@@ -425,22 +427,20 @@ sub createPairAlignerAnalysis
   #
   # create CreatePairAlignerJobs job
   #
-  my $input_id = "{'pair_aligner'=>'" . $pairAlignerAnalysis->logic_name . "'";
-  $input_id .= ",'query_collection_name'=>'" .
-    $pair_aligner_conf->{'query_collection_name'}  . "'";
-  $input_id .= ",'target_collection_name'=>'" .
-    $pair_aligner_conf->{'target_collection_name'} . "'";
-  $input_id .= ",'method_link_species_set_id'=>" .
-    $pair_aligner_conf->{'method_link_species_set_id'}
-    if(defined($pair_aligner_conf->{'method_link_species_set_id'}));
-  $input_id .= "}";
+  my $input_id = {
+    'pair_aligner'               => $pairAlignerAnalysis->logic_name,
+    'query_collection_name'      => $pair_aligner_conf->{'query_collection_name'},
+    'target_collection_name'     => $pair_aligner_conf->{'target_collection_name'},
+  };
+  if($pair_aligner_conf->{'method_link_species_set_id'}) {
+    $input_id->{'method_link_species_set_id'} = $pair_aligner_conf->{'method_link_species_set_id'};
+  }
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-      (-input_id       => $input_id,
-       -analysis       => $self->{'createPairAlignerJobsAnalysis'});
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+      -input_id       => $input_id,
+      -analysis       => $self->{'createPairAlignerJobsAnalysis'},
+  );
 
-
-  
   #
   # Creating FilterDuplicates analysis
   #
@@ -448,10 +448,9 @@ sub createPairAlignerAnalysis
   # remove identical matches from each query dnafrag. If there is chunking
   # on the query, then it will remove both identical matches and edge
   # artefacts.
-  my $queryFilterDuplicatesAnalysis;
 
   #
-  # creating QueryFilterDuplicates analysis
+  # creating NonrefFilterDuplicates analysis
   #
   $parameters = "{'method_link_species_set_id'=>".$pair_aligner_conf->{'method_link_species_set_id'};
   
@@ -465,21 +464,22 @@ sub createPairAlignerAnalysis
   } 
   $parameters .= "}";
 
-  $queryFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
-    (-db_version      => '1',
-     -logic_name      => 'QueryFilterDuplicates-'.$gdb_suffix,
-     -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
-     -parameters      => $parameters);
-  $self->{'analysis_adaptor'}->store($queryFilterDuplicatesAnalysis);
+  my $nonrefFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'NonrefFilterDuplicates-'.$gdb_suffix,
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+      -parameters      => $parameters,
+  );
+  $self->{'analysis_adaptor'}->store($nonrefFilterDuplicatesAnalysis);
 
-  $stats = $queryFilterDuplicatesAnalysis->stats;
+  $stats = $nonrefFilterDuplicatesAnalysis->stats;
   $stats->batch_size(5);
   $stats->hive_capacity(50); 
   $stats->status('BLOCKED');
   $stats->update();
-  $self->{'queryFilterDuplicatesAnalysis'} = $queryFilterDuplicatesAnalysis;
+  $self->{'nonrefFilterDuplicatesAnalysis'} = $nonrefFilterDuplicatesAnalysis;
 
-  $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}, $queryFilterDuplicatesAnalysis);
+  $self->{'ctrlflow_adaptor'}->create_rule($self->{'updateMaxAlignmentLengthBeforeFDAnalysis'}, $nonrefFilterDuplicatesAnalysis);
 
   unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
         
@@ -487,11 +487,12 @@ sub createPairAlignerAnalysis
       # creating UpdateMaxAlignmentLengthAfterFD analysis
       #
       
-      my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new
-	(-db_version      => '1',
-	 -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-	 -parameters      => "");
+      my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new(
+          -db_version      => '1',
+          -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
+          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+          -parameters      => '{}',
+      );
       
       $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterFDAnalysis);
       my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
@@ -503,23 +504,24 @@ sub createPairAlignerAnalysis
       #
       # create UpdateMaxAlignmentLengthAfterFD job
       #
-      my $input_id = 1;
-      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-	  (-input_id       => $input_id,
-	   -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+          -input_id       => '{}',
+          -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'},
+      );
   }
   
-  $self->{'ctrlflow_adaptor'}->create_rule($queryFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  $self->{'ctrlflow_adaptor'}->create_rule($nonrefFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
   
   #
   # create CreateFilterDuplicatesJobs analysis
   #
   unless (defined $self->{'createFilterDuplicatesJobsAnalysis'}) {
-      my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new
-	(-db_version      => '1',
-	 -logic_name      => 'CreateFilterDuplicatesJobs',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
-	 -parameters      => "");
+      my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new(
+          -db_version      => '1',
+          -logic_name      => 'CreateFilterDuplicatesJobs',
+          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
+          -parameters      => '{}',
+      );
       $self->{'analysis_adaptor'}->store($createFilterDuplicatesJobsAnalysis);
       $stats = $createFilterDuplicatesJobsAnalysis->stats;
       $stats->batch_size(1);
@@ -533,22 +535,23 @@ sub createPairAlignerAnalysis
   }
   
   #
-  # create QueryCreateFilterDuplicatesJobs job
+  # create nonrefCreateFilterDuplicatesJobs job
   #
-  $input_id = "";
-  $input_id .= "{'logic_name'=>'".$queryFilterDuplicatesAnalysis->logic_name ."'";
-  $input_id .= ",'collection_name'=>'".$pair_aligner_conf->{'query_collection_name'} ."'";
+  $input_id = {
+        'logic_name'        => $nonrefFilterDuplicatesAnalysis->logic_name,
+        'collection_name'   => $pair_aligner_conf->{'query_collection_name'},
+  };
   if ($query_dnaCollectionConf->{'region'}) {
-      $input_id .= ",'region'=>'".$query_dnaCollectionConf->{'region'}."'"
+      $input_id->{'region'} = $query_dnaCollectionConf->{'region'};
   }
-  $input_id .= "}";
   
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-      (-input_id       => $input_id,
-       -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'});
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+      -input_id       => $input_id,
+      -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'},
+  );
 
   #
-  # creating TargetFilterDuplicates analysis
+  # creating RefFilterDuplicates analysis
   #
   $parameters = "{'method_link_species_set_id'=>".$pair_aligner_conf->{'method_link_species_set_id'};
   
@@ -562,23 +565,24 @@ sub createPairAlignerAnalysis
   } 
   $parameters .= "}";
   
-  my $targetFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new
-    (-db_version      => '1',
-     -logic_name      => 'TargetFilterDuplicates-'.$gdb_suffix,
-     -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
-     -parameters      => $parameters);
-  $self->{'analysis_adaptor'}->store($targetFilterDuplicatesAnalysis);
-  $stats = $targetFilterDuplicatesAnalysis->stats;
+  my $refFilterDuplicatesAnalysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'RefFilterDuplicates-'.$gdb_suffix,
+      -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::FilterDuplicates',
+      -parameters      => $parameters,
+  );
+  $self->{'analysis_adaptor'}->store($refFilterDuplicatesAnalysis);
+  $stats = $refFilterDuplicatesAnalysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(200);
   $stats->status('BLOCKED');
   $stats->update();
-  $self->{'targetFilterDuplicatesAnalysis'} = $targetFilterDuplicatesAnalysis;
+  $self->{'refFilterDuplicatesAnalysis'} = $refFilterDuplicatesAnalysis;
   
-  if (defined $queryFilterDuplicatesAnalysis) {
-      $self->{'ctrlflow_adaptor'}->create_rule($queryFilterDuplicatesAnalysis, $targetFilterDuplicatesAnalysis);
+  if (defined $nonrefFilterDuplicatesAnalysis) {
+      $self->{'ctrlflow_adaptor'}->create_rule($nonrefFilterDuplicatesAnalysis, $refFilterDuplicatesAnalysis);
   } else {
-      $self->{'ctrlflow_adaptor'}->create_rule($pairAlignerAnalysis, $targetFilterDuplicatesAnalysis);
+      $self->{'ctrlflow_adaptor'}->create_rule($pairAlignerAnalysis, $refFilterDuplicatesAnalysis);
   }
   
   unless (defined $self->{'updateMaxAlignmentLengthAfterFDAnalysis'}) {
@@ -587,11 +591,12 @@ sub createPairAlignerAnalysis
       # creating UpdateMaxAlignmentLengthAfterFD analysis
       #
       
-      my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new
-	(-db_version      => '1',
-	 -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
-	 -parameters      => "");
+      my $updateMaxAlignmentLengthAfterFDAnalysis = Bio::EnsEMBL::Analysis->new(
+          -db_version      => '1',
+          -logic_name      => 'UpdateMaxAlignmentLengthAfterFD',
+          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::UpdateMaxAlignmentLength',
+          -parameters      => '{}',
+      );
       
       $self->{'analysis_adaptor'}->store($updateMaxAlignmentLengthAfterFDAnalysis);
       my $stats = $updateMaxAlignmentLengthAfterFDAnalysis->stats;
@@ -603,28 +608,29 @@ sub createPairAlignerAnalysis
       #
       # create UpdateMaxAlignmentLengthAfterFD job
       #
-      my $input_id = 1;
-      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-	  (-input_id       => $input_id,
-	   -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+      Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+          -input_id       => '{}',
+	      -analysis       => $self->{'updateMaxAlignmentLengthAfterFDAnalysis'},
+      );
   }
   
-$self->{'ctrlflow_adaptor'}->create_rule($targetFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
+  $self->{'ctrlflow_adaptor'}->create_rule($refFilterDuplicatesAnalysis,$self->{'updateMaxAlignmentLengthAfterFDAnalysis'});
   
   #
   # create CreateFilterDuplicatesJobs analysis
   #
   unless (defined $self->{'createFilterDuplicatesJobsAnalysis'}) {
-      my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new
-	(-db_version      => '1',
-	 -logic_name      => 'CreateFilterDuplicatesJobs',
-	 -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
-	 -parameters      => "");
+      my $createFilterDuplicatesJobsAnalysis = Bio::EnsEMBL::Analysis->new(
+          -db_version      => '1',
+          -logic_name      => 'CreateFilterDuplicatesJobs',
+          -module          => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::CreateFilterDuplicatesJobs',
+          -parameters      => '{}',
+      );
       $self->{'analysis_adaptor'}->store($createFilterDuplicatesJobsAnalysis);
       $stats = $createFilterDuplicatesJobsAnalysis->stats;
       $stats->batch_size(1);
       if($pair_aligner_conf->{'max_parallel_workers'}) {
-	  $stats->hive_capacity($pair_aligner_conf->{'max_parallel_workers'});
+          $stats->hive_capacity($pair_aligner_conf->{'max_parallel_workers'});
       }
       $stats->update();
       $self->{'createFilterDuplicatesJobsAnalysis'} = $createFilterDuplicatesJobsAnalysis;
@@ -633,24 +639,24 @@ $self->{'ctrlflow_adaptor'}->create_rule($targetFilterDuplicatesAnalysis,$self->
   }
 
   #
-  # create TargetCreateFilterDuplicatesJobs job
+  # create refCreateFilterDuplicatesJobs job
   #
-  $input_id = "";
-  $input_id .= "{'logic_name'=>'".$targetFilterDuplicatesAnalysis->logic_name ."'";
-  $input_id .= ",'collection_name'=>'".$pair_aligner_conf->{'target_collection_name'}."'";
+  $input_id = {
+        'logic_name'        => $refFilterDuplicatesAnalysis->logic_name,
+        'collection_name'   => $pair_aligner_conf->{'target_collection_name'},
+  };
   if ($target_dnaCollectionConf->{'region'}) {
-      $input_id .= ",'region'=>'".$target_dnaCollectionConf->{'region'}."'"
+      $input_id->{'region'} = $target_dnaCollectionConf->{'region'};
   }
-  $input_id .= "}";
   
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-      (-input_id       => $input_id,
-       -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'});
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+      -input_id       => $input_id,
+      -analysis       => $self->{'createFilterDuplicatesJobsAnalysis'},
+  );
 }
 
 
-sub storeMaskingOptions
-{
+sub storeMaskingOptions {
   my $self = shift;
   my $dnaCollectionConf = shift;
 
@@ -686,36 +692,6 @@ sub storeMaskingOptions
 
   $dnaCollectionConf->{'masking_options'} = undef;
   $dnaCollectionConf->{'masking_options_file'} = undef;
-}
-
-
-sub createChunkAndGroupDnaJobs
-{
-  my $self = shift;
-  my $dnaCollectionConf = shift;
-
-  if($dnaCollectionConf->{'collection_name'}) {
-    my $collection_name = $dnaCollectionConf->{'collection_name'};
-    $self->{'chunkCollectionHash'}->{$collection_name} = $dnaCollectionConf;
-  }
-
-  my $input_id = "{";
-  my @keys = keys %{$dnaCollectionConf};
-  foreach my $key (@keys) {
-      next unless(defined($dnaCollectionConf->{$key}));
-      print("    ",$key," : ", $dnaCollectionConf->{$key}, "\n");
-      $input_id .= "'$key'=>'" . $dnaCollectionConf->{$key} . "',";
-      }
-  $input_id .= "}";
-  
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-      (-input_id       => $input_id,
-       -analysis       => $self->{'chunkAndGroupDnaAnalysis'},
-       -input_job_id   => 0);
-
-      #Create dataflow rule to create sequence storing jobs on branch 1
-  $self->{'dataflow_adaptor'}->create_rule($self->{'chunkAndGroupDnaAnalysis'}, $self->{'storeSequenceAnalysis'},1);
-
 }
 
 1;
