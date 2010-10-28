@@ -21,7 +21,7 @@ sub new {
     _options    => $o,
     _spanning   => $s,
     _format     => 'HTML',
-    _exportable => $o->{'exportable'} || undef
+    _exportable => defined $o->{'exportable'} ? $o->{'exportable'} : undef
   };
   
   bless $self, $class;
