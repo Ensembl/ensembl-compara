@@ -11,18 +11,15 @@ sub _init {
   return unless defined $type; 
   return unless $self->strand == -1;
   
-  my $offset      = $self->{'container'}->start - 1;
   my $config      = $self->{'config'};  
-  my @transcripts = $config->{'transcripts'};  
-  my $y           = 0;
   my $h           = 8; # Single transcript mode - set height to 30 - width to 8
     
   my %highlights;
   @highlights{$self->highlights} = ();  # build hashkeys of highlight list
   
   my $length     = $config->container_width;
-  my $trans_ref  = $config->{'transcript'};
-  my $transcript = $trans_ref->{'transcript'};
+  my $trans_ref  = $config->{'transcript'};   
+  my $transcript = $trans_ref->{'transcript'}; 
   my $gene       = $self->{'config'}->core_objects->{'gene'};
   my @exons      = sort { $a->[0] <=> $b->[0] } @{$trans_ref->{'exons'}};
   
