@@ -1836,7 +1836,7 @@ sub add_variation_feature {
   
   my $structural_variation = $self->create_submenu('structural_variation', 'Structural variants', { submenu => 1 });
   
-  $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants (all sources)', {   
+  $structural_variation->append($self->create_track('variation_feature_structural', 'Structural variants and CNVs (all sources)', {   
     db          => $key,
     glyphset    => 'structural_variation',
     caption     => 'All Structural variants',
