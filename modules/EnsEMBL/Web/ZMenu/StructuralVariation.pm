@@ -52,7 +52,16 @@ sub content {
   }    
 
   $self->caption('Structural variation: ' . $variation->variation_name);
-  
+
+  $self->add_entry({
+    label_html => 'Structural Variation Properties',
+    link       => $hub->url({
+      type     => 'StructuralVariation',
+      action   => 'Summary',
+      sv       => $variation->variation_name,
+    })
+  });
+
   $self->add_entry({
     type  => 'Source',
     label => $variation->source,
