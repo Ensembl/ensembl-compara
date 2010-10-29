@@ -49,6 +49,7 @@ sub init {
     misc_feature     => 'Misc. regions',
     repeat           => 'Repeats',
     variation        => 'Variations',
+    somatic          => 'Somatic Mutations',
     functional       => 'Functional genomics',
     multiple_align   => 'Multiple alignments',
     pairwise_blastz  => 'BLASTZ alignments',

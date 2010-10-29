@@ -25,6 +25,7 @@ sub init {
     lrg    => 'LRG transcripts',
     transcript => 'Other Genes',
     variation  => 'Variations',
+    somatic    => 'Somatic Mutations',
     other      => 'Other Stuff'
   );
   

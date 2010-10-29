@@ -30,6 +30,7 @@ sub init {
     misc_feature  => 'Misc. regions',
     synteny       => 'Synteny',
     variation     => 'Variations', 
+    somatic       => 'Somatic Mutations',
     external_data => 'External data',
     user_data     => 'User attached data',
     decorations   => 'Additional decorations',

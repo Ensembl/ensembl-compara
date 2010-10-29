@@ -22,6 +22,7 @@ sub init {
     feature       => 'Protein features',
     alignment     => 'Protein alignments',
     p_variation   => 'Variation',
+    somatic       => 'Somatic Mutations',
     p_decorations => 'Decorations',
     legends       => 'Legends'
   );

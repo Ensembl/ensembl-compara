@@ -28,6 +28,7 @@ sub init {
     prediction => 'Prediction transcripts',
     other      => 'Other',
     variation  => 'Variations',
+    somatic    => 'Somatic Mutations',
     legends    => 'Legends'
   );
 

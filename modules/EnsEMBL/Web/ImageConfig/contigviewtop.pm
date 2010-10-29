@@ -33,6 +33,7 @@ sub init {
     misc_feature  => 'Misc. regions',
     synteny     => 'Synteny',
     variation   =>  'Variation',
+    somatic     =>  'Somatic mutations',
     decorations => 'Additional features',
     information => 'Information'
   );

@@ -26,6 +26,7 @@ sub init {
     sequence   => 'Sequence',
     transcript => 'Genes',
     variation  => 'Variations', 
+    somatic          => 'Somatic Mutations',
     other      => 'Other'
   );
   
