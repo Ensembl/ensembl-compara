@@ -53,7 +53,7 @@ sub content {
       
       my $gene_url = $hub->url({
         type   => 'Gene',
-        action => 'Variation_Gene',
+        action => 'Variation_Gene/Table',
         db     => 'core',
         r      => undef,
         g      => $gene_name,
