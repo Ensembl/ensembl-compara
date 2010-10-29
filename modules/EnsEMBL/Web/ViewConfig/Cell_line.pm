@@ -95,7 +95,16 @@ sub form {
     raw    => 1,
     layout => "$focus_row:0",
   });
-  
+ 
+  $view_config->add_form_element({
+    type   => 'CheckBox',
+    label  => 'Select features:',
+    name   => 'opt_ft_select',
+    value  => 'on',
+    raw    => 1,
+    layout => "1:1",
+  });
+ 
   $view_config->add_form_element({
     type   => 'CheckBox',
     label  => '&nbsp',
@@ -141,13 +150,10 @@ sub form {
       
       if (exists $feature_type_ids{$cell_line}{$feature_id}) { 
         $disabled = 0; 
-        $classes = [ "opt_cft_$cell_line", "opt_cft_$feature_name" ];
-      } elsif ($cell_line eq 'MultiCell') {
-        if (exists $feature_type_ids{'core'}{$feature_id}) {
-          $disabled = 0;
-          $classes  = [ "opt_cft_$cell_line", "opt_cft_$feature_name" ];
-        }
-      }
+        my $set = 'other';
+        if (exists $focus_feature_type_ids{$feature_id}){ $set = 'core'; } 
+        $classes = [ "opt_cft_$cell_line", "opt_cft_$feature_name", $set ];
+      } 
       
       $view_config->add_form_element({   
         type     => 'CheckBox', 
@@ -188,17 +194,21 @@ sub form {
       raw    => 1,
       layout => "0:$column",
     });
-    
+
     $view_config->add_form_element({
-      type    => 'CheckBox',
-      label   => 'Select all',
+      type    => 'DropDown',
+      label   => 'Select',
       name    => $name,
-      value   => 'select_all',
-      classes => [ 'select_all_column' ],
       raw     => 1,
       layout  => "1:$column",
-    });
-    
+      values  =>[
+        { value => 'custom', name => ''      },
+        { value => 'all',    name => 'All'   },
+        { value => 'core',   name => 'Core'  },
+        { value => 'other',  name => 'Other' },
+        { value => 'none',   name => 'None'  }    
+      ]
+    });    
     $column++;
   }
 
