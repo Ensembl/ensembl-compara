@@ -24,13 +24,14 @@ sub new {
   my $input = new CGI;
   
   my $object_params = [
-    [ 'Location',   'r'   ],
-    [ 'Gene',       'g'   ],
-    [ 'Transcript', 't'   ],
-    [ 'Variation',  'v'   ],
-    [ 'Regulation', 'rf'  ],
-    [ 'Marker',     'm'   ],
-    [ 'LRG',        'lrg' ],
+    [ 'Location',             'r'   ],
+    [ 'Gene',                 'g'   ],
+    [ 'Transcript',           't'   ],
+    [ 'Variation',            'v'   ],
+    [ 'Regulation',           'rf'  ],
+    [ 'Marker',               'm'   ],
+    [ 'LRG',                  'lrg' ],
+    [ 'StructuralVariation',  'sv'  ],
   ];
   
   my $object_types    = { map { $_->[0] => $_->[1] } @$object_params };
