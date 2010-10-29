@@ -19,7 +19,6 @@ sub init {
 
   $view_config->_set_defaults('opt_pop_' . $_ => 'off') for @{$variations->{'DISPLAY_STRAINS'}};
   $view_config->_set_defaults('opt_pop_' . $_ => 'on')  for @{$variations->{'DEFAULT_STRAINS'}};
-  $view_config->_set_defaults('opt_pop_' . $variations->{'REFERENCE_STRAIN'} => 'on');
 
   # Add source information if we have a variation database
   if ($variations) {
@@ -56,7 +55,7 @@ sub form {
   # Add Individual selection
   $view_config->add_fieldset('Selected individuals');
 
-  my @strains = (@{$variations->{'DEFAULT_STRAINS'}}, @{$variations->{'DISPLAY_STRAINS'}}, $variations->{'REFERENCE_STRAIN'});
+  my @strains = (@{$variations->{'DEFAULT_STRAINS'}}, @{$variations->{'DISPLAY_STRAINS'}}); #, $variations->{'REFERENCE_STRAIN'});
   my %seen;
 
   foreach (sort @strains) {
