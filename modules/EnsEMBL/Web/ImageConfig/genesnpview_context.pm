@@ -26,7 +26,7 @@ sub init {
     sequence   => 'Sequence',
     transcript => 'Genes',
     variation  => 'Variations', 
-    somatic          => 'Somatic Mutations',
+    somatic    => 'Somatic Mutations',
     other      => 'Other'
   );
   
@@ -49,7 +49,5 @@ sub init {
     [ 'variation_feature_variation' ],
     { display => 'normal', caption => 'Variations' }
   );
-
-
 }
 1;
