@@ -27,7 +27,7 @@ sub convert_to_drawing_parameters {
   my $vaa          = $vardb->get_adaptor('VariationAnnotation');
   my @results;
   
-  my (%associated_phenotypes, %associated_genes, %p_value_logs);
+  my (%associated_phenotypes, %associated_genes, %p_value_logs, %p_values);
   
   # getting associated phenotypes and associated genes
   foreach my $va (@{$vaa->fetch_all_by_VariationFeature_list($data) || []}) {
@@ -38,6 +38,8 @@ sub convert_to_drawing_parameters {
     if ($va->{'_phenotype_id'} eq $phenotype_id) {      
       # only get the p value log 10 for the pointer matching phenotype id and variation id
       $p_value_logs{$variation_id} = -(log($va->{'p_value'}) / log(10)) unless $va->{'p_value'} == 0;
+      
+      $p_values{$variation_id} = $va->{'p_value'};
       
       # if there is more than one associated gene (comma separated), split them to generate the URL for each of them
       foreach my $gene (grep $_, split /,/, $va->{'associated_gene'}) {
@@ -83,13 +85,23 @@ sub convert_to_drawing_parameters {
       $end   += 5000;
     }
     
+    # make zmenu link
+    my $zmenu_url = $hub->url({
+      type => 'ZMenu',
+      action => 'Variation',
+      v => $name,
+      vf => $dbID,
+      vdb => 'variation',
+      p_value => $p_values{$variation_id}
+    });
+    
     push @results, {
       region         => $seq_region,
       start          => $start,
       end            => $end,
       strand         => $vf->strand,
       label          => $name,
-      href           => $hub->url({ type => 'ZMenu', action => 'Variation', v => $name, vf => $dbID, vdb => 'variation' }),
+      href           => $zmenu_url,
       p_value        => $p_value_logs{$variation_id},
       colour_scaling => 1,
       somatic        => $vf->is_somatic,
