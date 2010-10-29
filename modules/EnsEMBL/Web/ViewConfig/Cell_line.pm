@@ -201,6 +201,7 @@ sub form {
       name    => $name,
       raw     => 1,
       layout  => "1:$column",
+      classes => [ 'select_all_row' ],
       values  =>[
         { value => 'custom', name => ''      },
         { value => 'all',    name => 'All'   },
