@@ -46,7 +46,7 @@ sub init {
   my $species_defs = $self->species_defs;
   
   $self->add_sheet('all', sprintf '/%s/%s.css', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_CSS_NAME);  
-  $self->add_sheet('all', '/components/ie.css', 'IE'); # IE only stylesheet
+  $self->add_sheet('all', '/components/ie.css', 'lte IE 7'); # IE 7/6 only stylesheet
   
   if ($controller->request eq 'ssi') {
     my $head = $controller->content =~ /<head>(.*?)<\/head>/sm ? $1 : '';
