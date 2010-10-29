@@ -380,35 +380,46 @@ sub dumpVariation {
   my $conf = shift;
   my $VariationDB = $conf->{'dbs'}->{'DATABASE_VARIATION'};
   return unless $VariationDB;
+
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
   $file .= ".gz" unless $nogzip;
-  my $file2 = $conf->{'directory'}."/${VariationDB}_SomaticMutation.xml";
-  $file2 .= ".gz" unless $nogzip;
   my $start_time = time;
   my $db = 'variation';
-  my ($fh,$fh2);
+  my $fh;
   unless ($nogzip) {
     $fh = new IO::Zlib;
     $fh->open( "$file", "wb9" )
       or die("Can't open compressed stream to $file: $!");
-    $fh2 = new IO::Zlib;
-    $fh2->open( "$file", "wb9" )
-      or die("Can't open compressed stream to $file2: $!");
   }
   else {
     open( $fh,  ">$file"  ) or die "Can't open $file: $!";
-    open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
   }
   print LOG "  Dumping $VariationDB Variations to $file ... ", format_datetime($start_time), "\n";
   header( $VariationDB, $dbspecies, 'variation',        $nogzip, $fh,  $release );
-  header( $VariationDB, $dbspecies, 'somatic mutation', $nogzip, $fh2, $release );
 
-
-  #Variations
-  my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
+  my ($counter2,$file2,$fh2);
   my $somatic = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, somatic from $VariationDB.source" )} };
+  my $somatic_present = ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
+  if ($somatic_present) {
+    $counter2 = make_counter(0);
+    $file2 = $conf->{'directory'}."/${VariationDB}_SomaticMutation.xml";
+    $file2 .= ".gz" unless $nogzip;
+    unless ($nogzip) {
+      $fh2 = new IO::Zlib;
+      $fh2->open( "$file", "wb9" )
+	or die("Can't open compressed stream to $file2: $!");
+    }
+    else {
+      open( $fh2, ">$file2" ) or die "Can't open $file2: $!";
+    }
+    print LOG "  Dumping $VariationDB SomaticMutations to $file2 ... ", format_datetime($start_time), "\n";
+    header( $VariationDB, $dbspecies, 'somatic mutation', $nogzip, $fh2, $release );
+  }
+
+  my $sources = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select source_id, name from $VariationDB.source" )} };
+
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'dbh'}->selectall_arrayref(
       "SELECT va.variation_id,
@@ -475,14 +486,14 @@ sub dumpVariation {
         $synonym_text .= $synonyms{$syn}.':'.$syn.' ';
       }
 
-      my $somatic_mutation = $sources->{$source_id};
+      my $somatic_mutation = $somatic->{$source_id};
       my $snp_source = $sources->{ $source_id };
       my $extra      = '';
       my $x = $snp_extra{$variation_id};
       if( $x ) {
         push @syns,$x->[1],$x->[4];
         push @gene_syns,$x->[3];
-        
+
         $extra = ' It is associated with following phenotypes:'. $x->[4].','.$x->[5];
         if( $x->[1] ) {
           $extra .= sprintf ', through %s', $x->[1];
@@ -493,7 +504,7 @@ sub dumpVariation {
       }
       $extra .= '.' if $extra;
       $extra .= ' '.$failed_description if $failed_description;
-      if ($somatic_mutation == 1){
+      if ($somatic_mutation){
         my $desc = sprintf( "A %s Somatic Mutation %s%s",
                             $snp_source,
                             $syn_c > 1 ? "with $syn_c synonyms: $synonym_text."
@@ -501,7 +512,7 @@ sub dumpVariation {
                           : 'with no synonyms.',
                             $extra
                           );
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter ), $nogzip, $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@gene_syns, $snp_source, $desc, $counter2 ), $nogzip, $fh2);
       } else {
         my $desc = sprintf( "A %s Variation %s%s",
                             $snp_source,
@@ -515,8 +526,10 @@ sub dumpVariation {
     }
   }
 
-  my $c = footer( $counter->(),$nogzip,$fh);
-  $c += footer( $counter->(),$nogzip,$fh2);
+  my $c = footer( $counter->(),$nogzip,$fh,'Variation');
+  if ($somatic_present) {
+    $c += footer( $counter2->(),$nogzip,$fh2,'Somatic Mutation');
+  }
   return $c;
 }
 
@@ -1917,11 +1930,12 @@ sub header {
 }
 
 sub footer {
-  my ($ecount,$nogzip, $fh, $release) = @_;
+  my ($ecount,$nogzip,$fh,$type) = @_;
   p("</entries>",$nogzip,$fh);
   p("<entry_count>$ecount</entry_count>",$nogzip,$fh);
   p("</database>",$nogzip,$fh);
-  print LOG "  ...Dumped $ecount entries\n";
+  my $text = $type ? "  ...Dumped $ecount $type entries\n" : "  ...Dumped $ecount entries\n";
+  print LOG $text;
   if ($nogzip) {
     close($fh) or die $!;
   }
