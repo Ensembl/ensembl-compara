@@ -1562,10 +1562,10 @@ sub add_regulation_feature {
       $render = \@temp;
     }
     
-    $legend_flag = 1 if $k =~/fg_reg/;
     $cisred_flag = 1 if $fg_data->{$key_2}{'description'} =~ /cisRED/;
   
-    if ($key_2 =~/reg_feats/){
+    if ($key_2 =~/reg_feats/){ 
+      $legend_flag = 1;
       my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
       # Add MultiCell first
       unshift @cell_lines, 'AAAMultiCell';   
@@ -1601,13 +1601,12 @@ sub add_regulation_feature {
         ### Add tracks for cell_line peaks and wiggles only if we have data to display!
         my %focus_set_ids     = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'focus_feature_set_ids'} || {}};
         my %feature_type_ids  = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'meta'}{'feature_type_ids'} || {}};
-        my @ftypes = keys %{$feature_type_ids{$cell_line}};  
-        my @focus_sets = keys %{$focus_set_ids{$cell_line}};  
-        my $config_link = ', use the "Configure Cell/Tissue" tab to select features sets to display.';
+        my @ftypes = keys %{$feature_type_ids{$cell_line} || {}};  
+        my @focus_sets = keys %{$focus_set_ids{$cell_line} || {}};  
         
-        if ( scalar @focus_sets <= scalar @ftypes) { 
+        if ( scalar @focus_sets && scalar @focus_sets <= scalar @ftypes ) { 
           # Add Core evidence tracks 
-          $cell_line_menu->append($self->create_track($key_2."_core_".$cell_line, "Core evidence " .$cell_line . $config_link, {
+          $cell_line_menu->append($self->create_track($key_2."_core_".$cell_line, "Core evidence " .$cell_line, {
             db          => $key,
             glyphset    => 'fg_multi_wiggle',
             strand      => 'r',
@@ -1624,7 +1623,7 @@ sub add_regulation_feature {
  
         if (scalar @ftypes != scalar @focus_sets  && $cell_line ne 'MultiCell'){ 
           # Add 'Other' evidence tracks
-          $cell_line_menu->append($self->create_track($key_2."_other_".$cell_line, "Other evidence " .$cell_line . $config_link, {
+          $cell_line_menu->append($self->create_track($key_2."_other_".$cell_line, "Other evidence " .$cell_line, {
             db          => $key,
             glyphset    => 'fg_multi_wiggle',    
             strand      => 'r',
@@ -1654,22 +1653,7 @@ sub add_regulation_feature {
         renderers   => $render, 
       }));
     } 
-=cut    
-    if ($wiggle_flag) {
-      $menu->append($self->create_track($k . '_' . $key .  '_blocks_' . $key_2, ($fg_data->{$key_2}{'name'} || $fg_data->{$key_2}{'logic_names'}) . ' peaks', {
-        db          => $key,
-        glyphset    => $k,
-        sources     => 'undef',
-        strand      => 'r',
-        labels      => 'on',
-        depth       => $fg_data->{$key_2}{'depth'} || 0.5,
-        colourset   => $fg_data->{$key_2}{'colourset'} || $k,
-        description => $fg_data->{$key_2}{'description'},
-        display     => $fg_data->{$key_2}{'display'} || 'off',
-        renderers   => [ 'off' => 'Off', 'compact' => 'Normal' ],
-      }));
-    }
-=cut    
+
     $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $legend_flag;
     
     if ($cisred_flag) {
@@ -1742,7 +1726,7 @@ sub add_decorations {
 sub add_variation_feature {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
-  
+    
   return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
   my ($somatic_flag, $somatic_mutations);    
 
@@ -1762,63 +1746,24 @@ sub add_variation_feature {
   
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'}||{}}) {
    next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
+   next if $hashref->{'source'}{'somatic'}{$key_2} == 1; 
     my $description = $hashref->{'source'}{'descriptions'}{$key_2}; 
     (my $k = $key_2) =~ s/\W/_/g;
 
-    # Submenu for somatic mutations
-    if ( $key_2 eq 'COSMIC'){
-      $somatic_mutations = $self->create_submenu('somatic_mutations', 'Somatic mutations', { submenu => 1 });
-      $somatic_mutations->append($self->create_track('somatic_mutation_' . $k, "$key_2 somatic mutations (all)", {
-        db          => $key,
-        glyphset    => '_variation',
-        caption     => $key_2,
-        strand      => 'r',
-        depth       => 0.5,
-        bump_width  => 0,
-        colourset   => 'variation',
-        description => $description,
-        display     => 'off'
-      }));
-      $somatic_flag = 1;
-      
-      ## Add tracks for each tumour site
-      my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}}; 
-      foreach my $description (sort  keys %tumour_sites){
-        my $phenotype_id = $tumour_sites{$description}; 
-        my ($source, $type, $site ) = split(/\:/, $description);
-        my $formatted_site = $site;
-        $formatted_site   =~s/\_/ /g;      
-        $somatic_mutations->append($self->create_track('somatic_mutation_' . $k .'_'. $site, "$key_2 somatic mutations in $formatted_site", {
-          db          => $key,
-          glyphset    => '_variation',
-          caption     => $key_2 .' '. $site .' tumours',
-          filter      => $phenotype_id,
-          strand      => 'r',
-          depth       => 0.5,
-          bump_width  => 0,
-          colourset   => 'variation',
-          description => $description,
-          display     => 'off',
-          class       => 'level2'
-        }));
-         
-      }
-    } else {     
-      $sequence_variation->append($self->create_track('variation_feature_' . $key . '_' . $k, "$key_2 variations", {
-        db          => $key,
-        glyphset    => '_variation',
-        caption     => $key_2,
-        sources     => [ $key_2 ],
-        strand      => 'r',
-        depth       => 0.5,
-        bump_width  => 0,
-        colourset   => 'variation',
-        description => $description,
-        display     => 'off'
-      }));
-    }
+    $sequence_variation->append($self->create_track('variation_feature_' . $key . '_' . $k, "$key_2 variations", {
+      db          => $key,
+      glyphset    => '_variation',
+      caption     => $key_2,
+      sources     => [ $key_2 ],
+      strand      => 'r',
+      depth       => 0.5,
+      bump_width  => 0,
+      colourset   => 'variation',
+      description => $description,
+      display     => 'off'
+    }));
   }
- 
+
   # add in read coverage wiggle plots  
   foreach my $strain_info (split /,/, $hashref->{'read_coverage_collection_strains'}) {
     my ($strain_name, $sample_id) =  split /_/, $strain_info;
@@ -1836,7 +1781,6 @@ sub add_variation_feature {
   }
   
   $menu->append($sequence_variation);
-  if ($somatic_flag) {$menu->append($somatic_mutations)} 
 
   $self->add_track('information', 'variation_legend', 'Variation Legend', 'variation_legend', { strand => 'r' });
 
@@ -1923,6 +1867,54 @@ sub add_variation_feature {
   }
   
   $menu->append($structural_variation);
+
+  ## Add somatic mutations
+  my $somatic_menu = $self->get_node('somatic');
+  my @somatic_sources = grep { $hashref->{'source'}{'somatic'}{$_} eq 1 } keys %{$hashref->{'source'}{'somatic'}};
+  return unless $somatic_menu && scalar @somatic_sources << 1;
+
+  $somatic_mutations = $self->create_submenu('somatic_mutations', 'Somatic mutations', { submenu => 1 });
+  foreach my $key_2 (sort @somatic_sources){
+    next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
+    my $description = $hashref->{'source'}{'descriptions'}{$key_2};
+    (my $k = $key_2) =~ s/\W/_/g;
+
+    $somatic_mutations->append($self->create_track('somatic_mutation_' . $k, "$key_2 somatic mutations (all)", {
+      db          => $key,
+      glyphset    => '_variation',
+      caption     => $key_2,
+      strand      => 'r',
+      depth       => 0.5,
+      bump_width  => 0,
+      colourset   => 'variation',
+      description => $description,
+      display     => 'off'
+    }));
+
+    ## Add tracks for each tumour site
+    my %tumour_sites = %{$self->species_defs->databases->{'DATABASE_VARIATION'}{'SOMATIC_MUTATIONS'}{$key_2} || {}};
+    foreach my $description (sort  keys %tumour_sites){
+      my $phenotype_id = $tumour_sites{$description};
+      my ($source, $type, $site ) = split(/\:/, $description);
+      my $formatted_site = $site;
+      $formatted_site   =~s/\_/ /g;
+
+      $somatic_mutations->append($self->create_track('somatic_mutation_' . $k .'_'. $site, "$key_2 somatic mutations in $formatted_site", {
+        db          => $key,
+        glyphset    => '_variation',
+        caption     => $key_2 .' '. $site .' tumours',
+        filter      => $phenotype_id,
+        strand      => 'r',
+        depth       => 0.5,
+        bump_width  => 0,
+        colourset   => 'variation',
+        description => $description,
+        display     => 'off',
+        class       => 'level2'
+      }));    
+    }
+  }
+  $somatic_menu->append($somatic_mutations);
 }
 
 # return a list of glyphsets
