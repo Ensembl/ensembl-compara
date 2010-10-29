@@ -24,7 +24,7 @@ sub init {
   $self->create_menus(      
     transcript => 'Other Genes',
     variation  => 'Variations',
-    somatic          => 'Somatic Mutations',
+    somatic    => 'Somatic Mutations',
     other      => 'Other'
   );
   
@@ -54,6 +54,10 @@ sub init {
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'normal', caption => 'Variations', strand => 'f' }
+  );
+  $self->modify_configs(
+    [ 'somatic_mutation_COSMIC' ],
+    { display => 'normal', caption => 'COSMIC', strand => 'f' }
   );
 }
 
