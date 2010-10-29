@@ -26,6 +26,7 @@ sub init {
     prediction  => 'Prediction transcripts',
     sequence    => 'Sequence',
     variation   => 'Variation',
+    somatic     => 'Somatic Mutation',
     functional  => 'Functional Genomics',
     information => 'Information', 
     other       => 'Decorations'
@@ -71,7 +72,7 @@ sub init {
   );
     $self->modify_configs(
     ['somatic_mutation_COSMIC'],
-    { display => 'normal' }
+    { display => 'normal', style => 'box', depth => 100000 }
   );
 
   
