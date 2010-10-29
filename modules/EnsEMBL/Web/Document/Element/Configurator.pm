@@ -94,7 +94,7 @@ sub init_viewconfig {
           <div class ="error-pad">
           <p>
             Any cell lines that you configure here must also be turned on in the 
-            <a href="$configuration_link#functional" class="modal_link" title="Configure this page">functional genomics</a> 
+            <a href="$configuration_link#functional" class="modal_link" rel="modal_config_contigviewbottom" title="Configure this page">functional genomics</a> 
             section of the "Main Panel" tab before any data will be displayed.
           </p>
           </div>
@@ -184,7 +184,7 @@ sub imageconfig_content {
       my @states  = @{$track_node->get('renderers') || [ qw(off Off normal Normal) ]};
       my $desc    = $track_node->get('description');
       my $class   = $track_node->get('_class');
-      my $name    = encode_entities($track_node->get('name'));
+      my $name    = encode_entities($track_node->get('name')); 
       my ($dd, $selected, $menu, $external_menu, $pre_config_group);
       
       if ($track_node->get('submenu')) {
@@ -212,6 +212,8 @@ sub imageconfig_content {
         $select_all_menu ||= $menu;
         $class = (lc $class || 'internal') .' '. $track_node->get('class');
         $pre_config_group = '</dl><dl class="config_menu submenu"><dt class="external">External data sources</dt>' if $ext_count == 1;
+
+
         
         if ($desc) {
           $desc =~ s/&(?!\w+;)/&amp;/g;
@@ -222,7 +224,7 @@ sub imageconfig_content {
           $selected = qq{<span class="menu_help">Show info</span>$selected};
           $dd       = "<dd>$desc</dd>";
         }
-        
+
         if ($submenu && $submenu != 1) {
           $pre_config_group = $self->build_enable_all_menu($submenu, $key, $select_all_menu, $controller, %renderers);
           $submenu          = 1;
@@ -230,15 +232,23 @@ sub imageconfig_content {
       }
       
       $config_group .= $pre_config_group;
-      
+              
       if ($name) {
-        $config_group .= qq{
+        my $config_link = $hub->url({
+          type     => 'Config',
+          action   => 'Location',
+          function => 'Cell_line',
+          config   => 'cell_page'
+        });
+
+        $config_group .= sprintf qq{
           <dt class="$class">
             <ul class="popup_menu">$menu$external_menu</ul>
             $selected <span class="menu_option">$name</span>
+            %s
           </dt>
           $dd
-        };
+        }, $track_node->get('glyphset') eq 'fg_multi_wiggle' ? qq{<a href="$config_link" class="modal_link" rel="modal_config_cell_page" title="Configure this page">Configure Cell/Tissue</a>} : '';        
       }
     }
     
