@@ -91,7 +91,7 @@ sub new {
   $self->{'_filename'} = $conffile;
 
   # TODO - these need to be pulled in dynamically from appropriate modules
-  my @params = qw/g h r t v m db pt rf vf fdb lrg vdb gt/;
+  my @params = qw/g h r t v sv m db pt rf vf fdb lrg vdb gt/;
   $self->{'_core_params'} = \@params;
   
   $self->parse unless $CONF;
