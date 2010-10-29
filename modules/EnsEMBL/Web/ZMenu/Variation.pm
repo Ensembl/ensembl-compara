@@ -21,6 +21,8 @@ sub content {
   my $trans_variation  = $tvar_adaptor->fetch_by_dbID($hub->param('vf'));
   my $type;
   my $feature;
+  
+  my $p_value = $hub->param('p_value');
 
   if (scalar @$vf == 1) {
     $feature = $vf->[0];
@@ -146,6 +148,13 @@ sub content {
       type     => 'status:',
       label    => $status || '-',
       position => 3
+    });
+  }
+  
+  if(defined($p_value)) {
+    $self->add_entry({
+      type   => 'p-value',
+      label  => $p_value,
     });
   }
 }
