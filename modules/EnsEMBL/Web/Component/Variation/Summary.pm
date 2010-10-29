@@ -26,27 +26,30 @@ sub content {
   my $is_somatic         = $variation->is_somatic;
   my $vaa                = $variation->adaptor->db->get_VariationAnnotationAdaptor;
   my $variation_features = $variation->get_all_VariationFeatures;
+  my $display_name       = $object->name; 
   
   if ($source eq 'dbSNP') {
     my $version = $object->source_version; 
-    $name       = $hub->get_ExtURL_link("$source $version", 'DBSNP', $name); 
-    $name       = "$class (source $name - $source_description)"; 
+    $display_name = $hub->get_ExtURL_link($name, 'DBSNP', $name);
+    $name       = $hub->get_ExtURL_link("$source $version", 'DBSNP_HOME', $name); 
+    $name       = "$class ($display_name source $name - $source_description)"; 
   } elsif ($source =~ /SGRP/) {
     $name = $hub->get_ExtURL_link($source, 'SGRP', $name);
-    $name = "$class (source $name - $source_description)";
+    $name = "$class ($display_name source $name - $source_description)";
   } elsif ($source =~ /COSMIC/) {
     $name = $hub->get_ExtURL_link($source, 'COSMIC', $name);
-    $name = "$class (source $name - $source_description)";
+    $display_name = $hub->get_ExtURL_link($display_name, 'COSMIC_ID', $display_name);
+    $name = "$class ($display_name source $name - $source_description)";
   } elsif ($source =~ /HGMD/) { # HACK - should get its link properly somehow
     foreach my $va (@{$vaa->fetch_all_by_Variation($variation)}) {
       next unless $va->source_name =~ /HGMD/;
       
       my $source_link = $hub->get_ExtURL_link($va->source_name, 'HGMD', { ID => $va->associated_gene, ACC => $name });
-      $name = "$class (source $source_link $source_description)";
+      $name = "$class ($display_name source $source_link $source_description)";
     }
   } else {
     $name = defined $source_url ? qq{<a href="$source_url">$source</a>} : $source;
-    $name = "$class (source $name - $source_description)";
+    $name = "$class ($display_name source $name - $source_description)";
   }
 
   my $html = qq{
