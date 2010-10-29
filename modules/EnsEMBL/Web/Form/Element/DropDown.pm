@@ -114,4 +114,24 @@ sub render {
   }
 }
 
+sub render_raw {
+  my $self = shift;
+  my $options = '';
+  foreach my $V ( @{$self->values} ) {
+    $options .= sprintf( qq(<option value="%s">%s</option>\n),
+      $V->{'value'},  $V->{'name'}
+    );
+  }
+   
+  return sprintf(
+    qq(<select name="%s" id="%s" %s%s>\n%s</select>),
+    encode_entities( $self->name ),
+    encode_entities( $self->id ),
+    $self->class_attrib,
+    $self->style_attrib,
+    $options,
+  );
+}
+
+
 1;
