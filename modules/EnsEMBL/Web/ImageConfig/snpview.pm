@@ -68,7 +68,7 @@ sub init {
   );
   $self->modify_configs(
     ['variation_feature_structural'],
-    { display => 'normal' }
+    { display => 'normal', depth => 10 }
   );
     $self->modify_configs(
     ['somatic_mutation_COSMIC'],
