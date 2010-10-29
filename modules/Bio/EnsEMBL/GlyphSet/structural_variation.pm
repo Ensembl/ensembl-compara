@@ -67,4 +67,23 @@ sub title {
   return "Structural variation: $id; Source: $source; Location: $pos" ;
 }
 
+sub highlight {
+  my ($self, $f, $composite,$pix_per_bp, $h) = @_;
+  my $id = $f->variation_name;
+  ## Get highlights...
+  my %highlights;
+  @highlights{$self->highlights()} = (1);
+
+  my $length = ($f->end - $f->start) +1; 
+  return unless $highlights{$id};
+  $self->unshift( $self->Rect({  # First a black box!
+    'x'         => $f->start - 2/$pix_per_bp,
+    'y'         => $composite->y() -2, ## + makes it go down
+    'width'     => $length + 4/$pix_per_bp,
+    'height'    => $h + 4,
+    'colour'    => 'highlight2',
+    'absolutey' => 1,
+  }));
+}
+
 1;
