@@ -318,6 +318,8 @@ sub render_matrix {
         my $checkbox .= $self->_render_raw_element($element);
         if ($element->label =~/all/){
           $checkbox .= 'Select all ' 
+        } elsif ($element->name =~/opt_ft_select/){
+          $checkbox = '<strong>Select features:</strong>';
         } 
         $row->{$column_pos} = $checkbox; 
       } else {
