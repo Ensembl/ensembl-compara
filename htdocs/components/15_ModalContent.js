@@ -16,6 +16,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     this.elLk.content = $('.modal_wrapper', this.el);
     
+    this.setSelectAll();
+    
     $('a', this.elLk.links).bind('click', function () {
       if (!$(this).hasClass('disabled')) {
         var link = $(this).parent();
@@ -37,14 +39,24 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     
     $('form td.select_all input', this.elLk.content).live('click', function () {
       $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
-    }).each(function () {
-      $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
     });
     
     $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).live('click', function () {
       $(this).parents('fieldset').find('input.' + $(this).attr('name')).attr('checked', this.checked);
-    }).each(function () {
-      $(this).attr('checked', !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length);
+    });
+    
+    $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).live('change', function () {
+      var cls    = $(this).val();
+      var inputs = $(this).parents('fieldset').find('input.' + $(this).attr('name'));
+      
+      switch (cls) {
+        case 'custom' : break;
+        case 'none'   : inputs.attr('checked', false); break;
+        case 'all'    : inputs.attr('checked', 'checked'); break;
+        default       : inputs.filter('.' + cls).attr('checked', 'checked').end().not('.' + cls).attr('checked', false);
+      }
+      
+      inputs = null;
     });
     
     $('form.wizard input.back', this.elLk.content).live('click', function () {
@@ -133,6 +145,16 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       this.elLk.content.removeClass('panel');
     }
     
+    this.setSelectAll();
+    
+    Ensembl.EventManager.trigger('validateForms', this.el);
+       
+    if ($('.modal_reload', this.el).length) {
+      Ensembl.EventManager.trigger('queuePageReload');
+    }
+  },
+  
+  setSelectAll: function () {    
     $('form td.select_all input', this.elLk.content).each(function () {
       $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
     });
@@ -141,10 +163,35 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       $(this).attr('checked', !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length);
     });
     
-    Ensembl.EventManager.trigger('validateForms', this.el);
-       
-    if ($('.modal_reload', this.el).length) {
-      Ensembl.EventManager.trigger('queuePageReload');
-    }
+    $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).each(function () {
+      var inputs  = $(this).parents('fieldset').find('input.' + $(this).attr('name'));
+      var checked = inputs.filter(':checked');
+      var val, i, filtered;
+      
+      if (!checked.length) {
+        $(this).val('none');
+      } else if (inputs.length == checked.length) {
+        $(this).val('all');
+      } else {
+        i = this.options.length;
+        
+        while (i--) {
+          val = this.options[i].value;
+          
+          if (!val.match(/^(all|none|custom)$/)) {
+            filtered = inputs.filter('.' + val);
+            
+            if (filtered.length && !filtered.not(':checked').length) {
+              $(this).val(val);
+              break;
+            }
+          }
+        }
+      }
+      
+      inputs   = null;
+      checked  = null;
+      filtered = null;
+    });
   }
 });
