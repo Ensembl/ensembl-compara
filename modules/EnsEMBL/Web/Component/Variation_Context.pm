@@ -85,7 +85,11 @@ sub content {
   # structural variation table
   $html .= '<h3>Structural variants</h3>';
   $html .= $self->structural_variation_table($var_slice);
-  
+
+  # sequence variation table
+  $html .= '<h3>Sequence variants</h3>';
+  $html .= $self->sequence_variation_table($var_slice);
+
   # regulatory region table
   $html .= '<h3>Regulatory features</h3>';
   $html .= $self->regulatory_feature_table($var_slice);
@@ -156,6 +160,66 @@ sub structural_variation_table{
     }
   }
    
+  return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
+}
+
+sub sequence_variation_table {
+ my $self   = shift;
+  my $slice  = shift;
+  my $hub    = $self->hub;
+  my $v      = $self->object->name;
+  my $vfs    = $slice->get_all_VariationFeatures;
+
+  my $columns = [
+     { key => 'id',          sort => 'string',        title => 'Name'       },
+     { key => 'location',    sort => 'position_html', title => 'Chr:bp'     },
+     { key => 'alleles',     sort => 'string',        title => 'Alleles'    }, 
+     { key => 'ambiguity',   sort => 'string',        title => 'Ambiguity'  },
+     { key => 'class',       sort => 'string',        title => 'Class'      },
+     { key => 'source',      sort => 'string',        title => 'Source'     },
+     { key => 'valid',       sort => 'string',        title => 'Validation' },
+  ];
+
+  my $rows;
+  
+  if (defined $vfs){
+    foreach my $vf (@$vfs){
+      next if $vf->variation_name eq $v;
+      
+      my $name = $vf->variation_name;
+      my $vf_dbid = $vf->dbID;
+      my $vf_link = $hub->url({
+        type    => 'Variation',
+        action  =>  'Summary',
+        v       => $name,
+        vf      => $vf_dbid
+      });
+
+      my $loc_string = $vf->slice->seq_region_name . ':' . $vf->slice->start . '-' . $vf->slice->end;
+
+      my $loc_link = $hub->url({
+        type   => 'Location',
+        action => 'View',
+        r      => $loc_string,
+      });
+
+     my $validation        = $vf->get_all_validation_states || [];
+    
+        
+     my %row = (
+        id          => qq{<a href="$vf_link">$name</a>},
+        location    => qq{<a href="$loc_link">$loc_string</a>},
+        alleles     => $vf->allele_string,
+        ambiguity   => $vf->ambiguity_code,
+        class       => $vf->var_class,
+        source      => $vf->source,
+        valid       =>  join(', ',  @$validation) || '-',
+      );
+
+      push @$rows, \%row;
+    }
+  }
+
   return $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
 }
 
