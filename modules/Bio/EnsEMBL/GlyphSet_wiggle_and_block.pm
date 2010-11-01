@@ -88,7 +88,7 @@ sub draw_block_features {
   ### Arg2: colour of the track
   ### Returns 1
 
-  my ( $self, $features, $colour, $score, $display_summit) = @_;
+  my ( $self, $features, $colour, $score, $display_summit, $display_pwm) = @_;
   my $length = $self->{'container'}->length;
 
   my $h = 10;
@@ -108,11 +108,28 @@ sub draw_block_features {
       'colour'    => $colour,
       'href'     => $self->block_features_zmenu($f, $score),
     }));
-    if ($midpoint && $display_summit){ 
+    if ($display_pwm) { 
+      my @loci = @{$f->get_underlying_structure}; 
+      my $end  = pop @loci;
+      my ($start, @mf_loci) = @loci;
+
+      while ( my ($mf_start, $mf_end) = splice (@mf_loci, 0, 2) ){  
+        my $mf_length = ($mf_end - $mf_start) +1;
+        $self->push($self->Rect({
+          'x'         => $mf_start,
+          'y'         => $y,
+          'height'    => $h,
+          'width'     => $mf_length,
+          'absolutey' => 1,          # in pix rather than bp
+          'colour'    => 'black',
+        }));
+      }        
+    }
+    if ($midpoint && $display_summit){
       $midpoint -= $self->{'container'}->start;
-      my $m_colour = $self->{'config'}->colourmap->mix($colour, 'black', '0.5');
+      my $m_colour = $self->{'config'}->colourmap->mix('white', $colour, '0.25');
       $self->push($self->Rect({
-        'x'         => $midpoint -1,
+        'x'         => $midpoint-0.5,
         'y'         => $y,
         'height'    => $h,
         'width'     => 1,
@@ -121,6 +138,7 @@ sub draw_block_features {
       }));
     }
   }
+
   $self->_offset( $h+3 );
   return 1;
 }
