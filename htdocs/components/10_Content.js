@@ -57,29 +57,22 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
     
-    $('a.ajax_add', this.el).bind('click', function () {
-      var url = $('input.url', this).val();
-      
-      if (url) {
-        if (panel.elLk[url]) {
-          panel.elLk[url].show().children().show();
-          window.location.hash = panel.elLk[url][0].id;
-        } else {
-          panel.elLk[url] = panel.addContent(url, this.rel);
+    $('a.toggle[rel], .ajax_add', this.el).bind('click', function (e) {
+      if ($(this).hasClass('ajax_add')) {
+        var url = $('input.url', this).val();
+        
+        if (url) {
+          if (panel.elLk[this.rel]) {
+            panel.toggleContent(this.rel);
+            window.location.hash = panel.elLk[this.rel][0].id;
+          } else {
+            $(this).toggleClass('open closed');
+            panel.elLk[this.rel] = panel.addContent(url, this.rel);
+          }
         }
-      }
-      
-      return false;
-    });
-    
-    $('a.toggle[rel]', this.el).bind('click', function () {
-      if (panel.id == this.rel) {
-        $(panel.el).children().not($(this).parentsUntil(panel.id)).not(this).toggle();
       } else {
-        $('.' + this.rel, panel.el).toggle();
+        panel.toggleContent(this.rel);
       }
-      
-      $(this).toggleClass('open closed');
       
       return false;
     });
@@ -156,6 +149,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
     
+    if (newContent) {
+      window.location.hash = el[0].id;
+    }
+    
     this.xhr = $.ajax({
       url: url,
       dataType: 'html',
@@ -198,6 +195,16 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.getContent(url, newContent, this.params, true);
     
     return newContent;
+  },
+  
+  toggleContent: function (rel) {
+    if (this.id == rel) {
+      $('.toggleable', this.el).toggle();
+    } else {
+      $('.toggleable', this.elLk[rel]).toggle();
+    }
+    
+    Ensembl.EventManager.trigger('toggleContent', rel);
   },
   
   hashChange: function () {
