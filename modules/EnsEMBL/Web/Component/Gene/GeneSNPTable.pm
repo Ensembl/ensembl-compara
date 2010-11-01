@@ -66,15 +66,17 @@ sub render_content {
   my $sub_table = $hub->param('sub_table');
   
   if(!defined($sub_table)) {
-    $html .= qq{<a name="top" /><h2>Summary of variations in $stable_id by consequence type</h2>};
+    $html .= qq{<a name="top"></a><h2>Summary of variations in $stable_id by consequence type</h2>};
   }
   
   else {
+    my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
+    
     $html .= qq{
       <table style="width:100%;margin:0px;padding:0px;">
         <tr>
           <td>
-            <h2><a href="#" class="toggle" rel="$sub_table">$sub_table variations</a></h2>
+            <h2><a href="#" class="toggle" rel="$sub_table">$labels{$sub_table} variants</a></h2>
           </td>
           <td style="vertical-align:middle;">
             <span style="float:right;"><a href="#top">[back to top]</a></span>
@@ -86,11 +88,11 @@ sub render_content {
   
   $html .= $tables->render;
   
-  $html .= $self->_info(
-    'Configuring the display',
-    q{<p>The <strong>'Configure this page'</strong> link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables above and the variation image.
-    <br /> Please note the default 'Context' settings will probably filter out some intronic SNPs.</p><br />}
-  ) unless $sub_table;
+  #$html .= $self->_info(
+  #  'Configuring the display',
+  #  q{<p>The <strong>'Configure this page'</strong> link in the menu on the left hand side of this page can be used to customise the exon context and types of SNPs displayed in both the tables above and the variation image.
+  #  <br /> Please note the default 'Context' settings will probably filter out some intronic SNPs.</p><br />}
+  #) unless $sub_table;
   
   return $html;
 }
@@ -141,8 +143,8 @@ sub stats_table {
     if(defined($counts{$con})) {
       my $url = $self->ajax_url . ";sub_table=$con;update_panel=1";
       
-      my $onclick_a = qq{document.getElementById("$con\_hide").style.display="";document.getElementById("$con\_show").style.display="none";};
-      my $onclick_b = qq{document.getElementById("$con\_hide").style.display="none";document.getElementById("$con\_show").style.display="";};
+      my $onclick_a = qq{document.getElementById("$con\_hide").style.display="";document.getElementById("$con\_show").style.display="none"};
+      my $onclick_b = qq{document.getElementById("$con\_hide").style.display="none";document.getElementById("$con\_show").style.display=""};
       
       my $view_html = qq{
         <span id="$con\_show">
@@ -241,6 +243,8 @@ sub variation_table {
     t => $selected_transcript,
   });
   
+  my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
+  
   foreach my $transcript(@$transcripts) {
     my $transcript_stable_id = $transcript->stable_id;
     
@@ -298,10 +302,7 @@ sub variation_table {
         
         # sort out consequence type string
         my $type;
-        foreach my $sub_type(@{$transcript_variation->consequence_type || []}) {
-          #next if $sub_type eq $selected_type and $selected_type ne 'ALL';
-          $type .= qq{<a href="#top">$sub_type</a>, };
-        }
+        $type .= "$labels{$_}, " foreach @{$transcript_variation->consequence_type || []};
         $type =~ s/\, $//g;
         $type ||= '-';
         
