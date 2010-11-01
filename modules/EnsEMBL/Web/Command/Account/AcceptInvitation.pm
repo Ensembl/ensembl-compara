@@ -22,7 +22,7 @@ sub process {
     
     if ($existing_user) {
       ## Is the user already logged in?
-      if ($ENV{'ENSEMBL_USER_ID'}) {
+      if ($hub->user) {
         my $group_id = $invitation->webgroup_id; ## Grab this *before* we destroy the invitation!
         $existing_user->update_invitations;
         $url = $self->url('/Account/MemberGroups', { id => $group_id, popup => 'no' });
