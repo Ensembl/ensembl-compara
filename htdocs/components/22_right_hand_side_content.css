@@ -50,3 +50,7 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 hr.end-of-doc { height: 1px; color:[[PANEL_BORDER]]; background-color:[[PANEL_BORDER]]; border:0; margin: 2em 1em 0 1em; padding: 0; clear:both; }
 hr.with-nav { margin-left: 15em; }
 body.static hr.with-nav { margin-left: 21em; }
+
+.ajax_add span               { display: none;   }
+.ajax_add.closed span.closed { display: inline; }
+.ajax_add.open span.open     { display: inline; }
