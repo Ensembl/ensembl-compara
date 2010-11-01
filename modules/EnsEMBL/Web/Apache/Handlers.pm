@@ -250,6 +250,8 @@ sub handler {
     })
   };
   
+  $_->retrieve($r) for values %$cookies;
+  
   my @raw_path = split m|/|, $file;
   shift @raw_path; # Always empty
 
@@ -419,7 +421,7 @@ sub handler {
     $r->content_type('text/html');
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "OK"', undef, 'Apache');
     
-    EnsEMBL::Web::Apache::SSI::handler($r);
+    EnsEMBL::Web::Apache::SSI::handler($r, $cookies);
     
     return OK;
   }
