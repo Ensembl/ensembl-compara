@@ -208,7 +208,7 @@ sub content {
         my %tag_data  = %{$object->tagged_snp || {}};
         my %ld        = (%pop_names, %tag_data);
         if  (keys %ld) {
-          $ld_html = $self->link_to_ldview($object, \%ld); 
+          $ld_html = $self->link_to_ldview(\%ld); 
         } else {
           $ld_html = '<h5>No linkage data for this variant</h5>';
         }  
