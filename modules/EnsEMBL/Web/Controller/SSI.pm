@@ -108,10 +108,10 @@ sub get_cached_content {
   $ENV{'CACHE_TAGS'}{$ENV{'REQUEST_URI'}} = 1;
   
   $ENV{'CACHE_KEY'}  = $ENV{'REQUEST_URI'};
-  $ENV{'CACHE_KEY'} .= "::USER[$ENV{'ENSEMBL_USER_ID'}]" if $ENV{'ENSEMBL_USER_ID'}; ## User logged in, some content depends on user
-  $ENV{'CACHE_KEY'} .= '::NO_AJAX' unless $self->hub->check_ajax;                    ## Ajax disabled
+  $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'}; ## User logged in, some content depends on user
+  $ENV{'CACHE_KEY'} .= '::NO_AJAX' unless $self->hub->check_ajax;          ## Ajax disabled
   
-  my $content = $self->content = $cache->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}});
+  my $content = $cache->get($ENV{'CACHE_KEY'}, keys %{$ENV{'CACHE_TAGS'}});
   
   if ($content) {
     $r->headers_out->set('X-MEMCACHED' => 'yes');     
@@ -136,9 +136,9 @@ sub clear_cached_content {
   my $r     = $self->r;
   
   if ($cache && ($r->headers_in->{'Cache-Control'} eq 'max-age=0' || $r->headers_in->{'Pragma'} eq 'no-cache')) {
-    $cache->delete_by_tags($ENV{'REQUEST_URI'}, $ENV{'ENSEMBL_USER_ID'} ? "user[$ENV{'ENSEMBL_USER_ID'}]" : ());
+    $cache->delete_by_tags($ENV{'REQUEST_URI'}, $self->{'user_id'} ? "user[$self->{'user_id'}]" : ());
     
-    warn "STATIC CONTENT CACHE CLEAR: $ENV{'REQUEST_URI'}, $ENV{'ENSEMBL_USER_ID'}" if $self->{'cache_debug'};
+    warn "STATIC CONTENT CACHE CLEAR: $ENV{'REQUEST_URI'}, $self->{'user_id'}" if $self->{'cache_debug'};
   }
 }
 
