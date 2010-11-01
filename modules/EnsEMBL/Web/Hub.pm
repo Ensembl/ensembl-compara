@@ -568,12 +568,8 @@ sub get_data_from_session {
 
 sub initialize_user {
   my ($self, $cookie) = @_;
-  my $r = $self->apache_handle;
-  
-  $cookie->retrieve($r);
-
   my $id = $cookie->get_value;
-
+  
   if ($id) {
     my $user;
     
@@ -585,7 +581,7 @@ sub initialize_user {
     if ($@) {
       # login failed (because the connection to the used db has gone away)
       # so log the user out by clearing the cookie
-      $cookie->clear($r);
+      $cookie->clear($self->apache_handle);
       $self->user = undef;
     }
   }

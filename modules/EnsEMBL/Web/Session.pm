@@ -48,20 +48,13 @@ use EnsEMBL::Web::ViewConfig;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
-  my ($class, $hub, $cookie, $args) = @_;
-  my $session_id;
-  
+  my ($class, $hub, $cookie, $args) = @_;  
   $args ||= {};
-  
-  if ($cookie) {
-    $cookie->retrieve($hub->apache_handle);
-    $session_id = $cookie->get_value;
-  }
   
   my $self = {
     hub                => $hub,
     cookie             => $cookie,
-    session_id         => $session_id,
+    session_id         => $cookie ? $cookie->get_value : undef,
     species            => $hub->species,
     das_parser         => $args->{'das_parser'},
     das_sources        => $args->{'das_sources'},
