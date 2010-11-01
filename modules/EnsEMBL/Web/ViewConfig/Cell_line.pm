@@ -15,10 +15,11 @@ sub init {
     das_sources), []
   );
   
-  $view_config->add_image_configs({ regulation_view => 'das' });
   if ($view_config->type eq 'Regulation') {
+    $view_config->add_image_configs({ regulation_view => 'das' });
     $view_config->add_image_configs({reg_detail_by_cell_line => 'das'}); 
   }
+
   $view_config->_set_defaults('opt_highlight' => 'yes');
   $view_config->_set_defaults('opt_empty_tracks' => 'yes');
   
