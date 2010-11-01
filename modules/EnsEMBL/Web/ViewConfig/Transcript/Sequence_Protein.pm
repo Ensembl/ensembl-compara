@@ -37,7 +37,9 @@ sub form {
   if ($object->species_defs->databases->{'DATABASE_VARIATION'}) {
     $view_config->add_form_element({ type => 'YesNo', name => 'variation', select => 'select', label => 'Show variation features' });
     
-    my $populations = $object->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_LD_Populations;
+    my $pa = $object->get_adaptor('get_PopulationAdaptor', 'variation');
+    my $populations = $pa->fetch_all_HapMap_Populations;
+    push @$populations, @{$pa->fetch_all_1KG_Populations};
     
     if (scalar @$populations) {
       my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS;
