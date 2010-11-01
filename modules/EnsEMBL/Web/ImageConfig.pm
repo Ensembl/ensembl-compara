@@ -1547,7 +1547,6 @@ sub add_regulation_feature {
     next if $k eq 'other' || $k eq 'ctcf' || $k =~/histone/;
     
     my $render      = [ 'off' => 'Off', 'normal' => 'Normal' ];
-    my $legend_flag = 0; 
     my $cisred_flag = 0;
 
     if ($fg_data->{$key_2}{'renderers'}) {
@@ -1565,7 +1564,6 @@ sub add_regulation_feature {
     $cisred_flag = 1 if $fg_data->{$key_2}{'description'} =~ /cisRED/;
   
     if ($key_2 =~/reg_feats/){ 
-      $legend_flag = 1;
       my @cell_lines = sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
       # Add MultiCell first
       unshift @cell_lines, 'AAAMultiCell';   
@@ -1654,8 +1652,6 @@ sub add_regulation_feature {
       }));
     } 
 
-    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $legend_flag;
-    
     if ($cisred_flag) {
       $menu->append($self->create_track($k . '_' . $key . '_search', 'cisRED Search Regions', {
         db          => $key,
@@ -1669,6 +1665,8 @@ sub add_regulation_feature {
         display     => 'off',
       }));
     }
+
+    $self->add_track('information', 'fg_regulatory_features_legend', 'Reg. Features Legend', 'fg_regulatory_features_legend', { colourset => 'fg_regulatory_features', strand => 'r' }) if $self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}; 
   }
 }
 
