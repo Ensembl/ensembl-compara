@@ -417,11 +417,20 @@ sub get_configured_tracks {
 
 sub get_data {
   my ($self, $data) = @_;
-  my $hub         = $self->hub;
-  my $page_object = $self->hub->type;
-  my $view_config = $hub->get_viewconfig($page_object, 'Cell_line');
-  my $dset_a      = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
-  
+  my $hub           = $self->hub;
+  my $page_object   = $self->hub->type;
+  my $view_config   = $hub->get_viewconfig($page_object, 'Cell_line');
+  my $dset_a        = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
+  my @result_sets;
+
+  # If on regulation page do we show all data or just used to build reg feature?
+  my $associated_data_only  = $view_config->get('opt_associated_data_only') eq 'yes' ? 1 : undef; 
+  my $reg_object;
+  if ($associated_data_only ){
+    $reg_object = $self->hub->{'_core_objects'}->{'regulation'};
+  }
+
+
   foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_type('regulatory')}) { 
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
     my $cell_line     = $regf_data_set->cell_type->name;
@@ -438,6 +447,13 @@ sub get_data {
         
         if ($display_style  eq 'compact' || $display_style eq 'tiling_feature') {
           my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
+          if ($reg_object && scalar @block_features >> 0){
+            my @temp_block_features;
+            foreach my $annotated_feature( @block_features ){ 
+             push (@temp_block_features, $annotated_feature) if $reg_object->Obj->has_attribute($annotated_feature->dbID, 'annotated');   
+            }
+            @block_features = @temp_block_features;
+          }  
           $data->{$cell_line}{$type}{'block_features'}{$unique_feature_set_id} = \@block_features if scalar @block_features;
         } if ($display_style eq 'tiling' || $display_style eq 'tiling_feature') {
           my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset); 
@@ -445,13 +461,27 @@ sub get_data {
 
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
-          
-          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = $sset->[0] if scalar @$sset;
+
+          push (@result_sets, $sset->[0]) if scalar @$sset;
+          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = 1 if scalar @$sset;
         }
       }
     }  
   }
-  
+
+  # retrieve all the data to draw wiggle plots
+  if (scalar @result_sets >> 0) {  
+    my $resultfeature_adaptor        = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
+    my $max_bins =  $ENV{'ENSEMBL_IMAGE_WIDTH'} - 228; 
+    my $wiggle_data = $resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins);
+    foreach my $rset_id ( keys %{$wiggle_data} ){ 
+      my $rs = $hub->get_adaptor('get_ResultSetAdaptor', 'funcgen')->fetch_by_dbID($rset_id); 
+      my $unique_feature_set_id = $rs->cell_type->name . ':' .$rs->feature_type->name;        
+      my $features = $wiggle_data->{$rset_id};   
+      $data->{'wiggle_data'}{$unique_feature_set_id} = $features;
+    }
+  }      
+
   return $data;
 }
 
