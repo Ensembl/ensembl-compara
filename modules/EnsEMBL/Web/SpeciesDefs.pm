@@ -553,7 +553,7 @@ sub _created_merged_table_hash {
                   }
 		  else {
 		    #all non-webdata analysis_description entries
-		    warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $sp eq 'Ornithorhynchus_anatinus' && $tb eq 'gene';
+#		    warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $sp eq 'Ornithorhynchus_anatinus' && $tb eq 'gene';
                     $databases->{$db}{'tables'}{$tb}{$k1}{$k2}{$k3} ||= $x2->{$k3};
                   }
 #		  warn sprintf "A:  %30s %20s %20s %20s %20s %20s %s\n", $sp, $db, $tb, $k1, $k2, $k3, $x2->{$k3} if $tb eq 'gene';
