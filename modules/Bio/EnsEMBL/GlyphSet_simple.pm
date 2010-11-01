@@ -372,12 +372,14 @@ sub _init {
         next if $tag->{'end'}   < 0;
         my $s = $tag->{'start'} < 1 ? 1 : $tag->{'start'};
         my $e = $tag->{'end'}   > $slice_length ? $slice_length : $tag->{'end'}; 
+        my $class = $tag->{'class'} ? $tag->{'class'} : undef;
         $composite->push($self->Rect({
           'x'          => $s-1,
           'y'          => 0,
           'width'      => $e-$s+1,
           'height'     => $h,
           "colour"     => $tag->{'colour'},
+          'class'      => $class,
           'absolutey'  => 1
         }));
       } elsif($tag->{'style'} eq 'box') {
