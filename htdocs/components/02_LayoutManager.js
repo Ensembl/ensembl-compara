@@ -16,6 +16,7 @@ Ensembl.LayoutManager.extend({
     Ensembl.EventManager.register('makeZMenu',     this, this.makeZMenu);
     Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
     Ensembl.EventManager.register('hashChange',    this, this.hashChange);
+    Ensembl.EventManager.register('toggleContent', this, this.toggleContent);
         
     $('#local-tools > p').show();
     
@@ -157,6 +158,10 @@ Ensembl.LayoutManager.extend({
     $('h2.caption').html(function (i, html) {
       return html.replace(/^(Chromosome ).+/, '$1' + text);
     });
+  },
+  
+  toggleContent: function (rel) {
+    $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
   }
 });
 
