@@ -12,6 +12,90 @@ sub _init {
   $self->ajaxable(1);
 }
 
+
+sub get_table_headings
+{
+    my $self = shift;
+
+    return (
+        { key => 'Individual', title => 'Individual<br />(gender)', 
+          sort => 'html' },
+        { key => 'Genotype', title => 'Genotype<br />(forward strand)', 
+          sort => 'html' },
+        { key => 'Description', title => 'Description',                    
+          sort => 'html' },
+        { key => 'Populations', title => 'Populations', width => 250,      
+          sort => 'html' },
+        { key => 'Father', title => 'Father',                         
+          sort => 'none' },
+        { key => 'Mother', title => 'Mother',                         
+          sort => 'none' });
+}
+
+sub get_row_data
+{
+    my $self = shift;
+    my $ind_name = shift;
+    my $ind_gender = shift;
+    my $genotype = shift;
+    my $description = shift;
+    my $pop_string = shift;
+    my $father = shift;
+    my $mother = shift;
+    
+    return({
+      Individual  => "<small>$ind_name<br />($ind_gender)</small>",
+      Genotype    => "<small>$genotype</small>",
+      Description => "<small>$description</small>",
+      Populations => "<small>$pop_string</small>",
+      Father      => "<small>$father</small>",
+      Mother      => "<small>$mother</small>",
+      Children    => '-'
+    });
+}
+
+
+sub get_table_headings
+{
+    my $self = shift;
+
+    return (
+        { key => 'Individual', title => 'Individual<br />(gender)', 
+          sort => 'html' },
+        { key => 'Genotype', title => 'Genotype<br />(forward strand)', 
+          sort => 'html' },
+        { key => 'Description', title => 'Description',                    
+          sort => 'html' },
+        { key => 'Populations', title => 'Populations', width => 250,      
+          sort => 'html' },
+        { key => 'Father', title => 'Father',                         
+          sort => 'none' },
+        { key => 'Mother', title => 'Mother',                         
+          sort => 'none' });
+}
+
+sub get_row_data
+{
+    my $self = shift;
+    my $ind_name = shift;
+    my $ind_gender = shift;
+    my $genotype = shift;
+    my $description = shift;
+    my $pop_string = shift;
+    my $father = shift;
+    my $mother = shift;
+    
+    return({
+      Individual  => "<small>$ind_name<br />($ind_gender)</small>",
+      Genotype    => "<small>$genotype</small>",
+      Description => "<small>$description</small>",
+      Populations => "<small>$pop_string</small>",
+      Father      => "<small>$father</small>",
+      Mother      => "<small>$mother</small>",
+      Children    => '-'
+    });
+}
+
 sub content {
   my $self   = shift;
   my $object = $self->object;
@@ -44,15 +128,9 @@ sub content {
     my @populations = map $self->pop_url($_->{'Name'}, $_->{'Link'}), @{$ind_data{$ind_id}{'Population'}};
 
     my $pop_string = join(', ', @populations) || '-';
-    my $tmp_row = {
-      Individual  => "<small>$ind_data{$ind_id}{'Name'}<br />($ind_data{$ind_id}{'Gender'})</small>",
-      Genotype    => "<small>$genotype</small>",
-      Description => "<small>$description</small>",
-      Populations => "<small>$pop_string</small>",
-      Father      => "<small>$father</small>",
-      Mother      => "<small>$mother</small>",
-      Children    => '-'
-    };
+    my $tmp_row = $self->get_row_data(
+      $ind_data{$ind_id}{'Name'}, $ind_data{$ind_id}{'Gender'},
+      $genotype, $description, $pop_string, $father, $mother);
 
     # Children
     my $children = $ind_data{$ind_id}{'Children'};
@@ -68,14 +146,7 @@ sub content {
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'Individual asc' ] });
   
-  $table->add_columns(
-    { key => 'Individual',  title => 'Individual<br />(gender)',       sort => 'html' },
-    { key => 'Genotype',    title => 'Genotype<br />(forward strand)', sort => 'html' },
-    { key => 'Description', title => 'Description',                    sort => 'html' },
-    { key => 'Populations', title => 'Populations', width => 250,      sort => 'html' },
-    { key => 'Father',      title => 'Father',                         sort => 'none' },
-    { key => 'Mother',      title => 'Mother',                         sort => 'none' }
-  );
+  $table->add_columns($self->get_table_headings());
 
   $table->add_columns({ key => 'Children', title => 'Children', sort => 'none' }) if $flag_children;
   $table->add_rows(@rows);
