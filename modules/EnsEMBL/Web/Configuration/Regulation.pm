@@ -23,7 +23,7 @@ sub populate_tree {
     { 'availability' => 'regulation', 'concise' => 'Features by cell line' }
   );
 
-  $self->create_node('Context', 'Context',
+  $self->create_node('Context', 'Feature Context',
     [qw( summary EnsEMBL::Web::Component::Regulation::FeatureSummary )],
     { 'availability' => 'regulation', 'concise' => 'Feature context' }
   );
