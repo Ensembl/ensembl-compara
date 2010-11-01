@@ -13,7 +13,7 @@ use EnsEMBL::Web::Cookie;
 # Mod_perl request handler all /htdocs pages
 #############################################################
 sub handler {
-  my $r = shift;
+  my ($r, $cookies) = @_;
   my $i = 0;
   ## First of all check that we should be doing something with the page...
 
@@ -56,38 +56,6 @@ sub handler {
   return DECLINED                if $r->method_number == M_OPTIONS;
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
   return DECLINED                if -d $r->filename;
-  
-  my $cookies = {
-    session_cookie => new EnsEMBL::Web::Cookie({
-      host    => $ENSEMBL_COOKIEHOST,
-      name    => $ENSEMBL_SESSION_COOKIE,
-      value   => '',
-      env     => 'ENSEMBL_SESSION_ID',
-      hash    => {
-        offset  => $ENSEMBL_ENCRYPT_0,
-        key1    => $ENSEMBL_ENCRYPT_1,
-        key2    => $ENSEMBL_ENCRYPT_2,
-        key3    => $ENSEMBL_ENCRYPT_3,
-        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
-        refresh => $ENSEMBL_ENCRYPT_REFRESH
-      }
-    }),
-    user_cookie => new EnsEMBL::Web::Cookie({
-      host    => $ENSEMBL_COOKIEHOST,
-      name    => $ENSEMBL_USER_COOKIE,
-      value   => '',
-      env     => 'ENSEMBL_USER_ID',
-      hash    => {
-        offset  => $ENSEMBL_ENCRYPT_0,
-        key1    => $ENSEMBL_ENCRYPT_1,
-        key2    => $ENSEMBL_ENCRYPT_2,
-        key3    => $ENSEMBL_ENCRYPT_3,
-        expiry  => $ENSEMBL_ENCRYPT_EXPIRY,
-        refresh => $ENSEMBL_ENCRYPT_REFRESH
-      }
-    })
-  };
-  
   return new EnsEMBL::Web::Controller::SSI($r, $cookies)->status;
 }
 
