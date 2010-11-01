@@ -63,18 +63,6 @@ sub convert_to_drawing_parameters {
     my $name         = $vf->variation_name;
     my $dbID         = $vf->dbID;
     my $variation_id = $vf->{'_variation_id'};
-    my $slice        = $hub->database('core')->get_SliceAdaptor->fetch_by_region('chromosome', $seq_region, $start, $end);
-    my $genes        = $slice->get_all_Genes;
-    my @gene_links;
-
-    foreach (@$genes) {
-      push @gene_links, sprintf(
-        '<a href="%s">%s</a>%s',
-        $hub->url({ type => 'Gene', action => 'Summary', g => $_->{'stable_id'} }),
-        $_->{'stable_id'},
-        $_->{'stable_id'} ? sprintf ' (%s)', $_->display_xref->display_id : ''
-      );
-    }
     
     # preparing the URL for all the associated genes and ignoring duplicate one
     $_ = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $_, v => $name, vf => $dbID }), $_ for grep !/intergenic|psuedogene/i, values %{$associated_genes{$variation_id} || {}};
@@ -106,7 +94,6 @@ sub convert_to_drawing_parameters {
       colour_scaling => 1,
       somatic        => $vf->is_somatic,
       extra          => [
-        join(', ', @gene_links), 
         join(', ', map $associated_genes{$variation_id}{$_}, sort keys %{$associated_genes{$variation_id} || {}}),
         join(', ', @{$associated_phenotypes{$variation_id} || []}), 
         sprintf('%.1f', $p_value_logs{$variation_id})
@@ -114,7 +101,7 @@ sub convert_to_drawing_parameters {
     };
   }
 
-  return [ \@results, ['Located in gene(s)','Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], 'Variation' ];
+  return [ \@results, ['Associated Gene(s)','Associated Phenotype(s)','P value (negative log)'], 'Variation' ];
 }
 
 
