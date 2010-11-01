@@ -283,6 +283,11 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var panel = this;
     
     this.elLk.dataTable.each(function (i) {
+      // Because dataTables is written to create alert messages if you try to reinitialise a table, block any attempts here.
+      if ($.fn.dataTableSettings[i] && $.fn.dataTableSettings[i].nTable == this) {
+        return;
+      }
+      
       var table    = $(this);
       var length   = $('tbody tr', this).length;
       var width    = table.hasClass('fixed_width') ? table.outerWidth() : '100%';
