@@ -128,7 +128,7 @@ $.extend($.validator, {
       this.timeout = setTimeout(function () {
         inputs.each(function () {
           var el    = $(this);
-          var input = el.data();
+          var input = $.extend({}, el.data());
           
           var state = (flag == 'initial' || !input.required) && !this.value ? null :                                        // Not required and no value - do nothing. On initial run, ignore empty fields
                       input.rule && validator.rules[input.rule] ? validator.rules[input.rule].call(validator, this.value) : // Validate against rule
