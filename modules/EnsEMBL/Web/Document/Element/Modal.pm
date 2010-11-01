@@ -108,7 +108,7 @@ sub init {
     }
     
     # FIXME: Hack to add Cell/Tissue config for Region in Detail
-    if ($action eq 'Location/View' && keys %{$hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}) {      
+    if ($action =~ /^Location\/(View|Cell_line)$/ && keys %{$hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}}) {      
       $self->add_entry({
         type    => 'Config',
         id      => 'config_cell_page',
