@@ -54,7 +54,7 @@ sub draw_features {
       my %wiggle_data = %{$Config->{'data_by_cell_line'}{$cell_line}{$type}{'wiggle_features'}}; 
       my $label = $type .' Support ' .$cell_line; 
       my @labels = (ucfirst($label));
-      $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line, $type);
+      $self->process_wiggle_data(\%wiggle_data, $colours, \@labels, $cell_line, $type, $object_type);
       $drawn_data =1;
     } else {
       $self->display_error_message($cell_line, $type, 'wiggle'); 
@@ -94,7 +94,7 @@ sub draw_blocks {
     my $label = $f_set; 
     unless ($display_label =~/MultiCell/){ $label =~s/\w*\://; } 
     $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
-    $self->draw_block_features ($features, $colour, $f_set, 1);
+    $self->draw_block_features ($features, $colour, $f_set, 1, 1);
   }
 
   $self->draw_space_glyph();
@@ -112,7 +112,7 @@ sub draw_wiggle {
 }
 
 sub process_wiggle_data {
-  my ($self, $wiggle_data, $colour_keys, $labels, $cell_line, $type) = @_; 
+  my ($self, $wiggle_data, $colour_keys, $labels, $cell_line, $type, $object_type) = @_; 
   my $slice = $self->{'container'}; 
 
   my $max_bins = $self->image_width(); 
@@ -121,13 +121,12 @@ sub process_wiggle_data {
   my @colours;
   my $data_flag = 0;
 
-  foreach my $evidence_type (keys %{$wiggle_data}){  
+  foreach my $evidence_type (keys %{$wiggle_data}){ 
     my $result_set =  $wiggle_data->{$evidence_type}; 
-    my @features = @{$result_set->get_ResultFeatures_by_Slice($slice, undef, undef, $max_bins)};
-     
+    my @features = @{$self->{'config'}{'data_by_cell_line'}{'wiggle_data'}{$evidence_type}};    
     next unless scalar @features >> 0;
     $data_flag = 1;
-    my $wsize = $features[0]->window_size;
+    my $wsize = $features[0]->window_size; 
     my $start = 1 - $wsize;#Do this here so we minimize the number of calcs done in the loop
     my $end   = 0;
     my $score;
@@ -161,9 +160,10 @@ sub process_wiggle_data {
     push @$labels, $feature_name;
     push @all_features, \@features;
     push @colours, $colour; 
- }
+  }
 
   if ($data_flag == 1) {
+    if ($object_type eq 'Regulation' && $max_score <= 1) {$max_score = 1;}
     $self->draw_wiggle( \@all_features, $min_score, $max_score, \@colours, $labels );
   } else {
     $self->display_error_message($cell_line, $type, 'wiggle');
