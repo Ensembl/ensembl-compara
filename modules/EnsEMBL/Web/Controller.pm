@@ -76,6 +76,7 @@ sub new {
     $self = {
       %$self,
       session_id  => $hub->session->session_id,
+      user_id     => $hub->user,
       url_tag     => $species_defs->ENSEMBL_BASE_URL . $ENV{'REQUEST_URI'},
       cache_debug => $species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_MEMCACHED
     }
@@ -272,7 +273,7 @@ sub get_cached_content {
   
   if ($type eq 'page') {
     $ENV{'CACHE_TAGS'}{$self->{'url_tag'}} = 1;
-    $ENV{'CACHE_KEY'} .= "::USER[$ENV{ENSEMBL_USER_ID}]" if $ENV{'ENSEMBL_USER_ID'}; # If user logged in, some content depends on user
+    $ENV{'CACHE_KEY'} .= "::USER[$self->{'user_id'}]" if $self->{'user_id'}; # If user logged in, some content depends on user
   } else {
     $ENV{'CACHE_TAGS'}{$ENV{'HTTP_REFERER'}} = 1;
     $ENV{'CACHE_KEY'} .= "::WIDTH[$ENV{ENSEMBL_IMAGE_WIDTH}]" if $ENV{'ENSEMBL_IMAGE_WIDTH'};
