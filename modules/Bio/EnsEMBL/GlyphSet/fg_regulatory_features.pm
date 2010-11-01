@@ -8,7 +8,7 @@ sub my_label { return sprintf 'Reg. Features from cell line %s', $_[0]->my_confi
 
 sub features {
   my ($self) = @_;
-  my $slice = $self->{'container'};
+  my $slice = $self->{'container'}; 
   my $Config = $self->{'config'};
   my $type = $self->check();
  
@@ -23,6 +23,7 @@ sub features {
   }
   
   my $reg_features = $self->fetch_features($fg_db, $slice, $Config);
+
   return $reg_features;
 }
 
@@ -38,7 +39,6 @@ sub fetch_features {
   }
 
   my @reg_feature_sets = @{$fsa->fetch_all_displayable_by_type('regulatory')}; 
-
   foreach my $set (@reg_feature_sets) {  
     next unless $set->cell_type->name =~/$cell_line/;
     my @rf_ref = @{$set->get_Features_by_Slice($slice)}; 
@@ -77,14 +77,30 @@ sub tag {
   if ($type =~/Non/){$type = 'Non-genic';} 
   $type = lc($type);
   my $colour = $self->my_colour( $type );
-  my ($b_start, $b_end) = $self->slice2sr($f->bound_start, $f->bound_end);
+
+  my @loci = @{$f->get_underlying_structure};
+  my $bound_end = pop @loci;
+  my $end               = pop @loci;
+  my ($bound_start, $start, @mf_loci) = @loci;
+
   my @result = ();
+  # Draw bound start/ends
   push @result, { 
   'style' => 'fg_ends',
   'colour' => $colour,
   'start' => $f->bound_start,
   'end' => $f->bound_end
   };
+  # Draw motif features
+  while ( my ($mf_start, $mf_end) = splice (@mf_loci, 0, 2) ){ 
+    push @result, {
+      'style'  => 'rect',
+      'colour' => 'black',
+      'start'  => $mf_start,
+      'end'    => $mf_end,
+      'class'  => 'group'
+    };
+  }
 
   return @result;
 
