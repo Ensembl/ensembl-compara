@@ -234,13 +234,16 @@ sub imageconfig_content {
       $config_group .= $pre_config_group;
               
       if ($name) {
+        my $action = $image_config->{'type'} eq 'reg_detail_by_cell_line' ? 'Regulation' : 'Location';
+        my $config = $action eq 'Location' ? 'cell_page' : '_page';
         my $config_link = $hub->url({
           type     => 'Config',
-          action   => 'Location',
+          action   => $action,
           function => 'Cell_line',
-          config   => 'cell_page'
+          config   => $config
         });
 
+        $config =~s/^_//;
         $config_group .= sprintf qq{
           <dt class="$class">
             <ul class="popup_menu">$menu$external_menu</ul>
@@ -248,7 +251,7 @@ sub imageconfig_content {
             %s
           </dt>
           $dd
-        }, $track_node->get('glyphset') eq 'fg_multi_wiggle' ? qq{<a href="$config_link" class="modal_link" rel="modal_config_cell_page" title="Configure this page">Configure Cell/Tissue</a>} : '';        
+        }, $track_node->get('glyphset') eq 'fg_multi_wiggle' ? qq{<a href="$config_link" class="modal_link" rel="modal_config_$config" title="Configure this page">Configure Cell/Tissue</a>} : '';        
       }
     }
     
