@@ -94,9 +94,8 @@ sub fetch_all_objs_by_slice {
 }
 
 sub get_attribute_list {
-  my $self         = shift;
-  my @attrib_feats = @{$self->attributes};
-  
+  my $self = shift;
+  my @attrib_feats = @{$self->Obj->regulatory_attributes('annotated')};
   return '-' unless @attrib_feats; 
   
   my @temp = map $_->feature_type->name, @attrib_feats;
@@ -123,6 +122,32 @@ sub get_attribute_list {
   $attrib_list =~ s/\,\s$//;
 
   return $attrib_list;
+}
+
+sub get_motif_features {
+  my $self = shift;
+  my @motif_features = @{$self->Obj->regulatory_attributes('motif')};
+  my %motifs;
+  foreach my $mf (@motif_features){
+
+    my %assoc_ftype_names;
+    map {$assoc_ftype_names{$_->feature_type->name} = undef} @{$mf->associated_annotated_features};
+    my $bm_ftname = $mf->binding_matrix->feature_type->name;
+    my @other_ftnames;
+    foreach my $af_ftname(keys(%assoc_ftype_names)){
+      push @other_ftnames, $af_ftname if $af_ftname ne $bm_ftname;
+    }
+
+    my $other_names_txt = '';
+
+    if(@other_ftnames){
+      $other_names_txt = ' ('.join(' ', @other_ftnames).')';
+    }
+    
+    $motifs{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score, $mf->binding_matrix->name];
+  }
+
+  return \%motifs;
 }
 
 sub get_fg_db {
@@ -208,8 +233,19 @@ sub get_bound_context_slice {
   my $self           = shift;
   my $padding        = shift || 1000; 
   my $slice          = $self->Obj->feature_Slice;
-  my $offset_start   = $self->bound_start -$padding;
-  my $offset_end     = $self->bound_end + $padding;
+
+  # Need to take into account bounds on feature in all cell_lines
+  my $bound_start = $self->bound_start;
+  my $bound_end = $self->bound_end;
+  my $reg_feature_adaptor = $self->get_fg_db->get_RegulatoryFeatureAdaptor;
+  my $reg_objs            = $reg_feature_adaptor->fetch_all_by_stable_ID($self->stable_id);
+  foreach my $rf (@$reg_objs) { 
+    if ($bound_start >= $rf->bound_start){ $bound_start = $rf->bound_start; } 
+    if ($bound_end <= $rf->bound_end){ $bound_end = $rf->bound_end; }
+  }
+
+  my $offset_start   = $bound_start -$padding;
+  my $offset_end     = $bound_end + $padding;
   my $padding_start  = $slice->start - $offset_start;
   my $padding_end    = $offset_end - $slice->end;
   my $expanded_slice = $slice->expand($padding_start, $padding_end); 
