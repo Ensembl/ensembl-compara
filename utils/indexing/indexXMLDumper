@@ -52,6 +52,7 @@ our %cross_references;  #get a set of external_dbs so we can make sure we link t
 #redirect STDOUT and maybe STDERR to a file
 $log ||= $debug ? '>-' : "dumping_${release}.log";
 open (LOG,    ">$log") or die "Can't open $log: $!";
+LOG->autoflush(1); #normally file output is buffered but better to see output after every print
 unless ($debug) {
   open (STDERR, ">&LOG") or die "Can't open $log: $!";
 }
@@ -110,14 +111,20 @@ foreach my $index (@indexes) {
       };
       if ($@) {
         unless ($debug) {
-          if ($c < 6) {
-            print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
-            sleep (5*60);}
-          else {
-            print LOG "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
-            $no_success = 0;
-          }
-        }
+	  if ( $conf->{'dbh'}->errstr()) {
+	    if ($c < 6) {
+	      print LOG "WARNING: Error when dumping, will retry in 5 minutes (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
+	      sleep (5*60);}
+	    else {
+	      print LOG "WARNING: Error when dumping. I've retried five times and am moving on, you need to retry this later (error is ".$conf->{'dbh'}->errstr().")\n";
+	      $no_success = 0;
+	    }
+	  }
+	  else {
+	    print LOG "WARNING: Error when dumping, probably due to a syntax error, you need to retry this later (error is $@)\n";
+	    $no_success = 0;
+	  }
+	}
         else {
            print LOG "WARNING: Error when dumping. Exiting since in debug mode (mysql error is ".$conf->{'dbh'}->errstr().", other errors are $@)\n";
            exit;
@@ -2000,7 +2007,8 @@ usage:
 
 'ALL' can be used for both 'species' and 'index'
 
-The script will retry five times if it loses database connections, unless --debug is specified in which case it will exit on the first failure.
+The script will retry five times if it encounters MySQL errors (for example loses database connections)
+unless --debug is specified in which case it will exit on the first failure.
 
 In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dumping_log.log by default). If you run with --debug then output is sent to STDOUT
 
