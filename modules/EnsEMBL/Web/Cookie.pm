@@ -82,6 +82,7 @@ sub retrieve {
   } else {                        ## OK just set value
     $self->set_value( $ID );
     $r->subprocess_env->{ $self->get_env } = $ID;
+    $ENV{ $self->get_env }                 = $ID;
   }
 }
 
