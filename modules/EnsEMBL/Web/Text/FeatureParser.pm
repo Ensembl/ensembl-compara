@@ -32,8 +32,8 @@ sub new {
     $self->{'valid_coords'}{$chr} = $all_chrs->{$chr};  
   }
   bless $self, $class;
-  $self->{'colourlist'} = $species_defs->TRACK_COLOUR_ARRAY;
-  my %colourmap         = map { $_ => 0} @{$species_defs->TRACK_COLOUR_ARRAY}; 
+  $self->{'colourlist'} = $species_defs->TRACK_COLOUR_ARRAY || [qw(black red blue green)];
+  my %colourmap         = map { $_ => 0} @{$self->{'colourlist'}}; 
   $self->{'colourmap'}  = \%colourmap; 
   return $self;
 }
