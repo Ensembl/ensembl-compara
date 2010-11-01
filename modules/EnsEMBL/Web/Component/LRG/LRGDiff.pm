@@ -50,7 +50,12 @@ sub content {
   if (@rows) {
     $html .= $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
   } else {
-    $html .= '<h3>No differences found - LRG sequence matches reference</h3>';
+	# find the name of the reference assembly
+	my $csa = $self->object->get_adaptor('get_CoordSystemAdaptor', 'core');
+	my ($highest_cs) = @{$csa->fetch_all()};
+    my $assembly = $highest_cs->version();
+	
+    $html .= qq{<h3>No differences found - the LRG reference sequence is identical to the $assembly reference assembly sequence</h3>};
   }
   
   return $html;
