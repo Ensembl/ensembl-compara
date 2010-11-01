@@ -203,11 +203,11 @@ sub form {
       layout  => "1:$column",
       classes => [ 'select_all_column' ],
       values  =>[
-        { value => 'custom', name => ''      },
-        { value => 'all',    name => 'All'   },
-        { value => 'core',   name => 'Core'  },
-        { value => 'other',  name => 'Other' },
-        { value => 'none',   name => 'None'  }    
+        { value => '',      name => ''      },
+        { value => 'all',   name => 'All'   },
+        { value => 'core',  name => 'Core'  },
+        { value => 'other', name => 'Other' },
+        { value => 'none',  name => 'None'  }    
       ]
     });    
     $column++;

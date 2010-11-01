@@ -50,10 +50,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       var inputs = $(this).parents('fieldset').find('input.' + $(this).attr('name'));
       
       switch (cls) {
-        case 'custom' : break;
-        case 'none'   : inputs.attr('checked', false); break;
-        case 'all'    : inputs.attr('checked', 'checked'); break;
-        default       : inputs.filter('.' + cls).attr('checked', 'checked').end().not('.' + cls).attr('checked', false);
+        case ''     : break;
+        case 'none' : inputs.attr('checked', false); break;
+        case 'all'  : inputs.attr('checked', 'checked'); break;
+        default     : inputs.filter('.' + cls).attr('checked', 'checked').end().not('.' + cls).attr('checked', false);
       }
       
       inputs = null;
@@ -178,7 +178,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         while (i--) {
           val = this.options[i].value;
           
-          if (!val.match(/^(all|none|custom)$/)) {
+          if (val && !val.match(/^(all|none)$/)) {
             filtered = inputs.filter('.' + val);
             
             if (filtered.length && !filtered.not(':checked').length) {
