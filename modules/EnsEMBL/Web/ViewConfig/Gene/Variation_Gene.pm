@@ -10,7 +10,7 @@ sub init {
   
   $view_config->_set_defaults(qw(
     panel_image          on 
-    context              5000
+    context              100
     hgvs                 transcript
     panel_transcript     on
     image_width          800
