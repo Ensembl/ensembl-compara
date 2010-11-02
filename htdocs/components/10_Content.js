@@ -35,12 +35,6 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     Ensembl.EventManager.register('updatePanel',  this, this.getContent);
     Ensembl.EventManager.register('ajaxComplete', this, this.getSequenceKey);
-    Ensembl.EventManager.register('ajaxLoaded',   this, function (id) {
-      if (id) {
-        // Jump to the newly added content
-        window.location.hash = id;
-      }
-    });
     
     if ($(this.el).parent('.initial_panel')[0] == Ensembl.initialPanels.get(-1)) {
       Ensembl.EventManager.register('hashChange', this, this.hashChange);
@@ -150,7 +144,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     Ensembl.EventManager.trigger('hideZMenu', this.id); // Hide ZMenus based on this panel
     
     if (newContent) {
-      window.location.hash = el[0].id;
+      window.location.hash = el[0].id; // Jump to the newly added div
     }
     
     this.xhr = $.ajax({
@@ -160,7 +154,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       success: function (html) {
         if (html) {
           Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val() || 'Content', html, el, params);
-          Ensembl.EventManager.trigger('ajaxLoaded', newContent === true ? '#' + el[0].id : '');
+          
+          if (newContent) {
+            // Jump to the newly added content. Set the hash to a dummy value first so the browser is forced to jump again
+            window.location.hash = '_';
+            window.location.hash = el[0].id;
+          }
         } else {
           el.html('');
         }
