@@ -55,8 +55,10 @@ sub content {
           'cell'      => $cell_line
         };
         push @rows, $row;
+        my $motif_rows = $self->get_motif_rows($f, $cell_line);
+        @rows = (@rows, @{$motif_rows});
       }
-    }
+    } 
     # then process other features
     my $other_features =  $evidence_by_cell_line->{$cell_line}{'non_focus'}{'block_features'};
     foreach my $f_set ( sort { $other_features->{$a}->[0]->start <=> $other_features->{$b}->[0]->start} keys %$other_features){ 
@@ -84,5 +86,27 @@ sub content {
   return $table->render;
 }
 
+sub get_motif_rows {
+  my ($self, $f, $cell_line) = (@_);
+
+  my @motif_rows; 
+
+  foreach my $mf (@{$f->get_associated_MotifFeatures}){
+    my ($name, $binding_matrix_name)   = split(/:/, $mf->display_label);
+    my $link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
+    my $feature_name = sprintf '%s (%s)', $name, $link;
+    my $location = $mf->seq_region_name .':' . $mf->seq_region_start .'-'. $mf->seq_region_end;   
+ 
+    my $row = {
+      'type'      => 'Core PWM',
+      'location'  => $location,
+      'feature'   => $feature_name,
+      'cell'      => $cell_line
+    };
+
+    push @motif_rows, $row;
+  }
+  return \@motif_rows;
+}
 
 1;
