@@ -74,17 +74,20 @@ sub DEPRECATED {
   warn $warn;
 }
 
-sub _filename {
+sub filename {
   my $self = shift;
+  
   my $name = sprintf('%s-%s-%d-%s-%s',
     $self->species,
     lc $self->__objecttype,
     $self->species_defs->ENSEMBL_VERSION,
     $self->get_db,
-    $self->Obj->stable_id
+    $self->can('stable_id') ? $self->stable_id : undef
   );
 
+  $name =~ s/-$//;
   $name =~ s/[^-\w\.]/_/g;
+  
   return $name;
 }
 

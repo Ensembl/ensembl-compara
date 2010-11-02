@@ -325,12 +325,11 @@ sub new_table {
   my $hub      = $self->hub;
   my $table    = new EnsEMBL::Web::Document::SpreadSheet(@_);
   (my $comp    = ref $self) =~ s/[^\w\.]+/_/g;
-  my $filename = $self->object ? $self->object->_filename : $hub->filename;
   
   $table->format     = $hub->param('_format') || 'HTML';
   $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
   
-  $self->renderer->{'filename'} = join '-', $comp, $filename;
+  $self->renderer->{'filename'} = join '-', $comp, $self->object->filename;
   
   return $table;
 }
@@ -349,8 +348,7 @@ sub _export_image {
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
-    my $obj_filename = $self->object ? $self->object->_filename : $hub->filename;
-    my $filename = sprintf '%s-%s-%s.%s', $comp, $obj_filename, $scale, $formats{$format}{'extn'};
+    my $filename = sprintf '%s-%s-%s.%s', $comp, $self->object->filename, $scale, $formats{$format}{'extn'};
     
     if ($hub->param('download')) {
       $hub->input->header(-type => $formats{$format}{'mime'}, -attachment => $filename);
