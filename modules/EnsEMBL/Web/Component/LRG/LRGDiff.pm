@@ -14,8 +14,6 @@ package EnsEMBL::Web::Component::LRG::LRGDiff;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
-
 use base qw(EnsEMBL::Web::Component::LRG);
 
 sub _init {
@@ -50,12 +48,11 @@ sub content {
   if (@rows) {
     $html .= $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'location asc' ] })->render;
   } else {
-	# find the name of the reference assembly
-	my $csa = $self->object->get_adaptor('get_CoordSystemAdaptor', 'core');
-	my ($highest_cs) = @{$csa->fetch_all()};
-    my $assembly = $highest_cs->version();
-	
-    $html .= qq{<h3>No differences found - the LRG reference sequence is identical to the $assembly reference assembly sequence</h3>};
+    # find the name of the reference assembly
+    my $csa = $self->hub->get_adaptor('get_CoordSystemAdaptor');
+    my $assembly = $csa->fetch_all->[0]->version;
+      
+    $html .= "<h3>No differences found - the LRG reference sequence is identical to the $assembly reference assembly sequence</h3>";
   }
   
   return $html;
