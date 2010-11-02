@@ -280,7 +280,6 @@ sub variation_table {
 sub configure {
   my ($self, $consequence_type, $context, $master_config) = @_;
   my $object = $self->object;
-  warn $context;
   my $extent = $context eq 'FULL' ? 1000 : $context;
   
   $master_config->set_parameters({
