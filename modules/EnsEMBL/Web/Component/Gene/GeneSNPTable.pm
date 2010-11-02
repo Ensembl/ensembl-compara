@@ -190,6 +190,7 @@ sub variation_table {
   });
   
   my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
+  $labels{'ALL'} = 'All';
   
   foreach my $transcript (@$transcripts) {
     my $transcript_stable_id = $transcript->stable_id;
