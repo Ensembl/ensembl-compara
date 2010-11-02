@@ -149,8 +149,7 @@ foreach my $spp (@valid_spp) {
 
   my $sp_id = $SD->get_config($spp, 'SPECIES_META_ID') || '';
   $sp_id || warn "[ERROR] $spp missing SpeciesDefs->SPECIES_META_ID!";
-  print 'sp_id is ' .  $sp_id;
-
+ 
 
   if ($NOSUMMARY) {
     
@@ -511,7 +510,6 @@ foreach my $spp (@valid_spp) {
   }
 
   my $key_exist;
-  print  "\n----------------------\n" . $db->{'_dbc'}->{'_dbname'} . "\n\n";
   my $useres = $db2->do("use ".$db->{'_dbc'}->{'_dbname'});
   
 
@@ -529,15 +527,6 @@ foreach my $spp (@valid_spp) {
                                            PRIMARY KEY (id)                                                                                                                                                      
                                          )                                                                                                                                                                       
                       ");
-
-                print "CREATE TABLE stats(   
-                                           id INT NOT NULL AUTO_INCREMENT,                                                                                                                                       
-                                           meta_key VARCHAR(255) NOT NULL,                                                                                                                                       
-                                           meta_value VARCHAR(255),                                                                                                                                              
-                                           species_id int(10) unsigned default 1,                                                                                                                                
-                                           PRIMARY KEY (id)                                                                                                                                                      
-                                         ) 
-                      \n";
   }
 
 
@@ -545,15 +534,12 @@ foreach my $spp (@valid_spp) {
       ($key_exist)= &query( $db,
        "select count(*) from stats where meta_key = '". $meta_keys[$j] ."' and species_id = '".$sp_id."'");
 
-      print "$spp  key_exist: $key_exist\n";
       if($key_exist == 0) {
 	  my $insert_q = "insert into stats (species_id, meta_key, meta_value) values ('".$sp_id."', '".$meta_keys[$j]."', '".$meta_vals[$j]."')";
          $db2->do($insert_q);    
-         print $insert_q. "\n";
       } elsif ($update_meta) {
          my $update_q = "update stats set meta_value = '".$meta_vals[$j]."' where meta_key = '". $meta_keys[$j] ."'";
          $db2->do($update_q);  
-         print $update_q . "\n";
       }
   }
 
@@ -580,7 +566,6 @@ foreach my $spp (@valid_spp) {
 
     my $sp_id = $SD->get_config($spp, 'SPECIES_META_ID') || '';
     $sp_id || warn "[ERROR] $spp missing SpeciesDefs->SPECIES_META_ID!";
-    print 'sp_id is ' .  $sp_id;
 
     if ($NOSUMMARY) {
        do_interpro($db, $spp, undef, undef, $sp_id, '0');
@@ -594,17 +579,11 @@ foreach my $spp (@valid_spp) {
 
        ## PREPARE TO WRITE TO OUTPUT FILE                                                                                                                                                                     
        my $fq_path_dir = sprintf( STATS_PATH, $PLUGIN_ROOT);
-       #print $fq_path_dir, "\n";                                                                                                                                                                             
        &check_dir($fq_path_dir);
        my $fq_path_html = $fq_path_dir."stats_$spp.html";
        open (STATS, ">$fq_path_html") or die "Cannot write $fq_path_html: $!";
-       print 'file ' . $fq_path_html . "\n";
-
        my $useres = $db2->do("use ".$db->{'_dbc'}->{'_dbname'});
-       print 'current db ' . $db->{'_dbc'}->{'_dbname'}  . "\n";
-
        my $SQL1 = "select meta_key, meta_value from stats where meta_key like 'stat.%' and species_id='".$sp_id."' order by id";
-       print $SQL1  . "\n";
 
        my $sth1 = $db->dbc->prepare($SQL1);
        $sth1->execute();
@@ -766,12 +745,8 @@ sub do_interpro {
 sub hits2html {
   my ($ENS_ROOT, $domain, $number, $file, $isbig, $species, $db, $db2, $update_meta, $sp_id, $insert) = @_;
 
-  print ' number is ' . $number . ' insert is ' . $insert . "\n";
-
   if($insert == 1)  {
-      
-      print ' number is 1! ' ;
-
+ 
       $| = 1;
 
       my $numhits = scalar(keys %$domain);
@@ -800,8 +775,7 @@ sub hits2html {
         push @meta_vals,    "$gene1";
       }
 
-      my $key_exist;
-      print  "\n----------------------\n" . $db->{'_dbc'}->{'_dbname'} . "\n\n";
+      my $key_exist;     
       my $useres = $db2->do("use ".$db->{'_dbc'}->{'_dbname'});                                                                                     
   
       my $table_exist = '';
@@ -818,15 +792,6 @@ sub hits2html {
                                            PRIMARY KEY (id)                                                                                                                                                      
                                          )                                                                                                                                                                       
                       ");
-
-
-                    print    "CREATE TABLE stats(                                                                                                                                                                                                         id INT NOT NULL AUTO_INCREMENT,                                                                           
-                                         meta_key VARCHAR(255) NOT NULL,                                                                                
-                                         meta_value VARCHAR(255),                                              
-                                         species_id int(10) unsigned default 1,                                       
-                                         PRIMARY KEY (id)                         
-                                     )                                                                
-                     \n";
       }
 
       for (my $j = 0; $j <= $#meta_queries; $j++){
@@ -837,11 +802,9 @@ sub hits2html {
          if($key_exist == 0) {
            my $insert_q = "insert into stats (species_id, meta_key, meta_value) values ('".$sp_id."', '".$meta_keys[$j]."', '".$meta_vals[$j]."')";
            $db2->do($insert_q);                                                                     
-           print $insert_q. "\n";
          }  elsif ($update_meta) {
            my $update_q = "update stats set meta_value = '".$meta_vals[$j]."' where meta_key = '". $meta_keys[$j] ."'";
            $db2->do($update_q);                                                                                                     
-           print $update_q . "\n";
          }
       }
 
