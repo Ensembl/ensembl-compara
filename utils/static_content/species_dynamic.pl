@@ -77,7 +77,7 @@ my $pre = $PLUGIN_ROOT =~ m#sanger-plugins/pre# ? 1 : 0;
 $NOINTERPRO = 1 if $pre;
 
 # get a list of valid species for this release
-my $release_id = $SD->ENSEMBL_VERSION;
+my $release_id =  $SD->ENSEMBL_VERSION;
 my @release_spp = $SD->valid_species;
 my %species_check;
 foreach my $sp (@release_spp) {
@@ -102,10 +102,10 @@ else {
 
 @valid_spp || pod2usage("$0: Need a species" );
 
-$host ||= 'mysql-eg-staging-2.ebi.ac.uk';
-$port ||= '4275';
-$user ||= 'ensrw';
-$pass ||= 'writ3rs2';
+$host || die( "No HOST param" );
+$port || die( "No PORT param" );
+$user || die( "No USER param (DATABASE WRITE USER needed)" );
+$pass || die( "No PASS param (DATABASE WRITE PASS needed)" );
 $generate_pages ||= 0;
 
 ##---------------------------- CREATE STATS ---------------------------------
