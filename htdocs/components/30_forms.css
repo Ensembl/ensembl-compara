@@ -2,6 +2,8 @@
 
 form fieldset { border:none; }
 
+form table { table-layout:fixed; }
+
 form.std fieldset td div { margin-top:0px; }
 
 form.std div.notes {
