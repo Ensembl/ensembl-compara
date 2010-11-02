@@ -56,7 +56,7 @@ sub init {
     $self->init_viewconfig($controller, $view_config, $url);
   }
   
-  $self->add_reset_panel($controller, $image_config ? $image_config->get_parameter('title') : $view_config->title, $action, $image_config ? $config_key : undef);
+  $self->add_reset_panel($controller, $image_config ? $image_config->get_parameter('title') : $view_config->title, $action, $config_key);
   
   $page->navigation->tree($self->tree);
   $page->navigation->active($self->active);
@@ -236,6 +236,7 @@ sub imageconfig_content {
       if ($name) {
         my $action = $image_config->{'type'} eq 'reg_detail_by_cell_line' ? 'Regulation' : 'Location';
         my $config = $action eq 'Location' ? 'cell_page' : '_page';
+        
         my $config_link = $hub->url({
           type     => 'Config',
           action   => $action,
@@ -243,7 +244,8 @@ sub imageconfig_content {
           config   => $config
         });
 
-        $config =~s/^_//;
+        $config = 'page' if $config eq '_page'; # FIXME: make it config=page normally!
+        
         $config_group .= sprintf qq{
           <dt class="$class">
             <ul class="popup_menu">$menu$external_menu</ul>
@@ -306,6 +308,8 @@ sub add_reset_panel {
     config => $config,
     reset  => 1
   });
+  
+  $config = 'page' if $config eq '_page'; # FIXME: make it config=page normally!
   
   my $html = sprintf('
     <p>
