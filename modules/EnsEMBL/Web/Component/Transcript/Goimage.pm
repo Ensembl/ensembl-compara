@@ -22,7 +22,7 @@ sub content {
   my $ontology_term_adaptor       = $hub->get_databases('go')->{'go'}->get_GOTermAdaptor;
   my $go_sub_dir                  = '/GO/';  
   my $go_dir                      = $species_defs->ENSEMBL_TMP_DIR_IMG . $go_sub_dir;
-  my $go_url                      = '../../../' . $species_defs->ENSEMBL_TMP_URL_IMG . $go_sub_dir;
+  my $go_url                      =  $species_defs->ENSEMBL_TMP_URL_IMG . $go_sub_dir;
   my $go_id_url                   = $species_defs->ENSEMBL_EXTERNAL_URLS->{'GO'};
   my $get_relation_type_colour    = sub { return $species_defs->colour('goimage', shift); };
   my $image_background_colour     = $species_defs->colour('goimage', 'image_background');
