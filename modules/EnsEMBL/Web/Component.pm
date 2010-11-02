@@ -329,7 +329,7 @@ sub new_table {
   $table->format     = $hub->param('_format') || 'HTML';
   $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
   
-  $self->renderer->{'filename'} = join '-', $comp, $self->object->filename;
+  $self->renderer->{'filename'} = join '-', $comp, $hub->filename($self->object);
   
   return $table;
 }
@@ -348,7 +348,7 @@ sub _export_image {
   if ($formats{$format}) {
     $image->drawable_container->{'config'}->set_parameter('sf',$scale);
     (my $comp = ref $self) =~ s/[^\w\.]+/_/g;
-    my $filename = sprintf '%s-%s-%s.%s', $comp, $self->object->filename, $scale, $formats{$format}{'extn'};
+    my $filename = sprintf '%s-%s-%s.%s', $comp, $hub->filename($self->object), $scale, $formats{$format}{'extn'};
     
     if ($hub->param('download')) {
       $hub->input->header(-type => $formats{$format}{'mime'}, -attachment => $filename);
