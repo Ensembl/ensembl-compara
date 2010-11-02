@@ -26,8 +26,7 @@ sub _content {
   my $lrg_slice;
   
   if ($lrg) {
-    my $core_adaptor = $hub->database('core')->get_SliceAdaptor;
-    eval { $lrg_slice = $core_adaptor->fetch_by_region('LRG', $lrg); };
+    eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
   }
   
   for (0..$#v) {
@@ -39,24 +38,22 @@ sub _content {
 sub variation_content {
   my ($self, $object, $lrg, $v, $vf) = @_;
   
-  my $hub         = $self->hub;
-  my $variation   = $object->Obj;
-  my $genes       = $variation->get_all_Genes;  
-  my $feature     = $variation->get_VariationFeature_by_dbID($vf);
-  my $allele      = $feature->allele_string;
-  my $seq_region  = $feature->seq_region_name;
-  my $chr_start   = $feature->start;
-  my $chr_end     = $feature->end;
-  my $position    = "$seq_region:$chr_start";
-  my $link        = '<a href="%s">%s</a>';
-
+  my $hub        = $self->hub;
+  my $variation  = $object->Obj;
+  my $genes      = $variation->get_all_Genes;  
+  my $feature    = $variation->get_VariationFeature_by_dbID($vf);
+  my $seq_region = $feature->seq_region_name . ':';
+  
   if ($lrg) {
-    my $fSlice    = $lrg->feature_Slice;
-    my $lrg_start = $fSlice->start - 1;
-    $chr_start   -= $lrg_start;
-    $chr_end     -= $lrg_start;
-    $position     = $chr_start;
+    $feature    = $feature->transfer($lrg);
+    $seq_region = '';
   }
+  
+  my $chr_start = $feature->start;
+  my $chr_end   = $feature->end;
+  my $allele    = $feature->allele_string;
+  my $position  = "$seq_region$chr_start";
+  my $link      = '<a href="%s">%s</a>';
   
   my %url_params  = (
     type   => 'Variation',
@@ -68,9 +65,9 @@ sub variation_content {
   my %population_data;
   
   if ($chr_end < $chr_start) {
-    $position = "between $seq_region:$chr_end &amp; $seq_region:$chr_start";
+    $position = "between $seq_region$chr_end &amp; $seq_region$chr_start";
   } elsif ($chr_end > $chr_start) {
-    $position = "$seq_region:$chr_start-$chr_end";
+    $position = "$seq_region$chr_start-$chr_end";
   }
   
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
