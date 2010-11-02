@@ -359,16 +359,11 @@ sub get_cell_line_data {
   my @types = ('core', 'other');  
   my %data;
 
-  foreach my $cell_line (keys %cell_lines){
+  foreach my $cell_line (keys %cell_lines){ 
     $cell_line =~s/\:\d*//;    
     foreach my $type (@types){
-      my $display;
       next unless $image_config->get_node('functional')->get_node('reg_feats_'.$type.'_'.$cell_line);
-      if ( $image_config->isa('EnsEMBL::Web::ImageConfig::reg_detail_by_cell_line') ){
-        $display = 'tiling_feature';
-      } else {
-        $display = $image_config->get_node('functional')->get_node('reg_feats_'.$type.'_'.$cell_line)->get('display'); 
-      }        
+      my $display = $image_config->get_node('functional')->get_node('reg_feats_'.$type.'_'.$cell_line)->get('display');
       if( $display ne 'off') { $data{$cell_line}{$type}{'renderer'} = $display; }
     }
   }
@@ -391,20 +386,20 @@ sub get_configured_tracks {
   my $view_config       = $hub->get_viewconfig($page_object, 'Cell_line');
   
   foreach my $cell_line (keys %cell_lines) { 
-    $cell_line =~ s/\:\d*//;
-    
+    $cell_line =~ s/\:\d*//; 
+    next if !exists $data->{$cell_line};    
+
     foreach my $evidence_feature (keys %evidence_features) { 
-      my ($feature_name, $feature_id ) = split /\:/, $evidence_feature;
+      my ($feature_name, $feature_id ) = split /\:/, $evidence_feature; 
       
-      if (exists $feature_type_ids{$cell_line}{$feature_id}) { 
-        if (!exists $data->{$cell_line}{'core'}{'available'}) {
-           $data->{$cell_line}{'core'}{'available'}   = [];
-           $data->{$cell_line}{'other'}{'available'}  = [];
-           $data->{$cell_line}{'core'}{'configured'}  = [];
-           $data->{$cell_line}{'other'}{'configured'} = [];
-        }
-        
+      if (exists $feature_type_ids{$cell_line}{$feature_id}) {  
         my $focus_flag = $cell_line eq 'MultiCell' || exists $focus_set_ids{$cell_line}{$feature_id} ? 'core' : 'other';
+        next if ! exists $data->{$cell_line}->{$focus_flag};
+        
+        if (!exists $data->{$cell_line}{$focus_flag}{'available'}) {
+           $data->{$cell_line}{$focus_flag}{'available'}   = [];
+           $data->{$cell_line}{$focus_flag}{'configured'}  = [];
+        }
         
         push @{$data->{$cell_line}{$focus_flag}{'available'}},  $feature_name; 
         push @{$data->{$cell_line}{$focus_flag}{'configured'}}, $feature_name if $view_config->get("opt_cft_$cell_line:$feature_name") eq 'on'; # add to configured features if turned on
@@ -434,17 +429,20 @@ sub get_data {
   foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_type('regulatory')}) { 
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
     my $cell_line     = $regf_data_set->cell_type->name;
-    
+
     next unless exists $data->{$cell_line};
 
     foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {   
       my $unique_feature_set_id = $reg_attr_fset->cell_type->name . ':' . $reg_attr_fset->feature_type->name; 
       my $name = "opt_cft_$unique_feature_set_id";
       my $type = $reg_attr_fset->is_focus_set ? 'core' : 'other';
-      
+
+      if ( $cell_line eq 'MultiCell'){
+        $name = 'opt_cft_' . $cell_line . ':' . $reg_attr_fset->feature_type->name;
+      }
+
       if ($view_config->get($name) eq 'on') { 
         my $display_style = $data->{$cell_line}{$type}{'renderer'};
-        
         if ($display_style  eq 'compact' || $display_style eq 'tiling_feature') {
           my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
           if ($reg_object && scalar @block_features >> 0){
@@ -461,17 +459,17 @@ sub get_data {
 
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
-
           push (@result_sets, $sset->[0]) if scalar @$sset;
-          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = 1 if scalar @$sset;
+          $name =~s/opt_cft_//;
+          $data->{$cell_line}{$type}{'wiggle_features'}{$name} = 1 if scalar @$sset;
         }
       }
     }  
   }
 
   # retrieve all the data to draw wiggle plots
-  if (scalar @result_sets >> 0) {  
-    my $resultfeature_adaptor        = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
+  if (scalar @result_sets >> 0) {   
+    my $resultfeature_adaptor = $hub->get_adaptor('get_ResultFeatureAdaptor', 'funcgen');
     my $max_bins =  $ENV{'ENSEMBL_IMAGE_WIDTH'} - 228; 
     my $wiggle_data = $resultfeature_adaptor->fetch_all_by_Slice_ResultSets($self->Obj, \@result_sets, $max_bins);
     foreach my $rset_id ( keys %{$wiggle_data} ){ 
