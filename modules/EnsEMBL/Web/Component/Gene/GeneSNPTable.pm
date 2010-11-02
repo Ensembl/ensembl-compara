@@ -18,7 +18,7 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-  my $gene             = $self->configure($consequence_type, $hub->param('context') || 5000, $hub->get_imageconfig('genesnpview_transcript'));
+  my $gene             = $self->configure($consequence_type, $hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
   if ($consequence_type) {
@@ -108,7 +108,7 @@ sub stats_table {
   my @rows;
   
   # ignore REGULATORY_REGION and INTERGENIC
-  delete $descriptions{$_} for qw(REGULATORY_REGION INTERGENIC WITHIN_MATURE_miRNA);
+  delete $descriptions{$_} for qw(REGULATORY_REGION INTERGENIC WITHIN_MATURE_miRNA UPSTREAM DOWNSTREAM);
   
   foreach my $con (keys %descriptions) {
     if (defined $counts{$con}) {
@@ -124,7 +124,7 @@ sub stats_table {
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => $descriptions{$con},
-        count => scalar(keys %{$counts{$con}}),
+        count => scalar keys %{$counts{$con}},
         view  => $view_html
       };
     } else {
