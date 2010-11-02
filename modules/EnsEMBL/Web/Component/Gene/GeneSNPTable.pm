@@ -15,23 +15,24 @@ sub _init {
 }
 
 sub content {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $gene        = $self->configure($hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
-  my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
+  my $self             = shift;
+  my $hub              = $self->hub;
+  my $consequence_type = $hub->param('sub_table');
+  my $gene             = $self->configure($consequence_type, $hub->param('context') || 5000, $hub->get_imageconfig('genesnpview_transcript'));
+  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
-  if ($hub->param('sub_table')) {
-    my $table_rows = $self->variation_table(\@transcripts);
-    my $table      = $table_rows ? $self->make_table($table_rows) : undef;
-    return $self->render_content($table);
+  if ($consequence_type) {
+    my $table_rows = $self->variation_table($consequence_type, \@transcripts);
+    my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
+    return $self->render_content($table, $consequence_type);
   } else {
     my $table = $self->stats_table(\@transcripts); # no sub-table selected, just show stats
-    return $self->render_content($table)
+    return $self->render_content($table);
   }
 }
 
 sub make_table {
-  my ($self, $table_rows) = @_;
+  my ($self, $table_rows, $consequence_type) = @_;
   
   my $columns = [
     { key => 'ID',         sort => 'html'                                                   },
@@ -47,25 +48,24 @@ sub make_table {
     { key => 'Transcript', sort => 'string'                                                 },
   ];
   
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0 });
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
 }
 
 sub render_content {
-  my ($self, $table) = @_;
+  my ($self, $table, $consequence_type) = @_;
   my $stable_id = $self->object->stable_id;
-  my $sub_table = $self->hub->param('sub_table');
   my $html;
   
-  if ($sub_table) {
-    my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
+  if ($consequence_type) {
+    my $label = $Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS{$consequence_type} || 'All';
     
     $html = qq{
-      <h2 style="float:left"><a href="#" class="toggle open" rel="$sub_table">$labels{$sub_table} variants</a></h2>
-      <span style="float:right;"><a href="#top">[back to top]</a></span>
+      <h2 style="float:left"><a href="#" class="toggle open" rel="$consequence_type">$label variants</a></h2>
+      <span style="float:right;"><a href="#$self->{'id'}_top">[back to top]</a></span>
       <p class="invisible">.</p>
     };
   } else {
-    $html = qq{<a id="top"></a><h2>Summary of variations in $stable_id by consequence type</h2>};
+    $html = qq{<a id="$self->{'id'}_top"></a><h2>Summary of variations in $stable_id by consequence type</h2>};
   }
   
   $html .= sprintf '<div class="toggleable">%s</div>', $table->render;
@@ -73,15 +73,14 @@ sub render_content {
   return $html;
 }
 
-
 sub stats_table {
   my ($self, $transcripts) = @_;
   
   my $columns = [
-    { key => 'count', title => 'Number of variants', sort => 'position',      width => '20%', align => 'right' },
-    { key => 'view',  title => '',                   sort => 'none',          width => '5%', align => 'center' },
-    { key => 'type',  title => 'Type',               sort => 'position_html', width => '20%'                   },
-    { key => 'desc',  title => 'Description',        sort => 'none',          width => '55%'                   },
+    { key => 'count', title => 'Number of variants', sort => 'position',      width => '20%', align => 'right'  },
+    { key => 'view',  title => '',                   sort => 'none',          width => '5%',  align => 'center' },
+    { key => 'type',  title => 'Type',               sort => 'position_html', width => '20%'                    },
+    { key => 'desc',  title => 'Description',        sort => 'none',          width => '55%'                    },
   ];
   
   my %counts;
@@ -161,14 +160,12 @@ sub stats_table {
     count => $hidden_span . $total,
   };
   
-  return $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'type asc' ], exportable => 0 });
+  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', sorting => [ 'type asc' ], exportable => 0 });
 }
 
-
 sub variation_table {
-  my ($self, $transcripts, $slice) = @_;
+  my ($self, $consequence_type, $transcripts, $slice) = @_;
   my $hub                 = $self->hub;
-  my $selected_type       = $hub->param('sub_table');
   my $selected_transcript = $hub->param('t');
   my @rows;
   
@@ -181,7 +178,6 @@ sub variation_table {
     source => undef,
   });
   
-    
   my $base_trans_url = $hub->url({
     type   => 'Transcript',
     action => 'Summary',
@@ -218,11 +214,11 @@ sub variation_table {
       
       my $skip = 1;
       
-      if ($selected_type eq 'ALL') {
+      if ($consequence_type eq 'ALL') {
         $skip = 0;
       } elsif ($transcript_variation) {
         foreach my $con (@{$transcript_variation->consequence_type}) {
-          if ($con eq $selected_type) {
+          if ($con eq $consequence_type) {
             $skip = 0;
             last;
           }
@@ -282,8 +278,9 @@ sub variation_table {
 }
 
 sub configure {
-  my ($self, $context, $master_config) = @_;
+  my ($self, $consequence_type, $context, $master_config) = @_;
   my $object = $self->object;
+  warn $context;
   my $extent = $context eq 'FULL' ? 1000 : $context;
   
   $master_config->set_parameters({
@@ -303,7 +300,7 @@ sub configure {
   $object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
   $object->store_TransformedSNPS;        ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   
-  if ($self->hub->param('sub_table')) {
+  if ($consequence_type) {
     my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
     my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
     
@@ -323,7 +320,6 @@ sub configure {
 
   return $object;
 }
-
 
 sub get_hgvs {
   my ($self, $vf, $trans, $slice) = @_;
