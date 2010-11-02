@@ -184,7 +184,7 @@ sub source_link {
 sub study_link {
   my ($self, $study) = @_;
   
-  if($study =~ /pudbmed/) {
+  if($study =~ /pubmed/) {
     return qq{<a href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
   }
   
