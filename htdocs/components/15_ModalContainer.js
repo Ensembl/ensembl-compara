@@ -98,7 +98,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.activePanel = id;
         
     if (reload) {
-      this.elLk.content.empty();
+      contentEl.empty();
     } else if (id.match(/config/) && contentEl.children(':not(.spinner, .ajax_error)').length) {
       Ensembl.EventManager.triggerSpecific('showConfiguration', id, hash);
       this.changeTab(this.elLk.tabs.children('[rel=' + id + ']').parent());
