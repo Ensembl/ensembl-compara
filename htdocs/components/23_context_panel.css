@@ -8,7 +8,8 @@
 
 div.summary_panel .toggle_table         { border-collapse: collapse; margin: 0.5em 0 0.5em 9em; cursor: pointer; }
 div.summary_panel .toggle_table td,
-div.summary_panel .toggle_table th      { padding: 2px 4px; border: 1px solid black; margin: 0; text-align: center; white-space: nowrap; }
+div.summary_panel .toggle_table th      { border: 1px solid black; margin: 0; text-align: center; white-space: nowrap; }
+div.summary_panel .toggle_table td      { padding: 2px 4px; }
 div.summary_panel .toggle_table .active { background-color: [[TINT_BG]]; }
 div.summary_panel .toggle_table td.bold { font-weight: bold; text-align: center; }
 div.summary_panel .toggleTable_wrapper  { margin: 1.5em 0 0.5em 1.5em; clear: none; }
