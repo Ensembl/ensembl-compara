@@ -26,7 +26,7 @@ sub content {
 
   $form->add_element('type'  => 'Information',
                     'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));
-  $form->add_element('type'  => 'String', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
+  $form->add_element('type'  => 'Email', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
   $form->add_element('type'  => 'Hidden', 'name'  => 'lost', 'value' => 'yes');
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send', 'class'=>'modal_link');
 
