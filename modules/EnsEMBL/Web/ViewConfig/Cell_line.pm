@@ -42,9 +42,9 @@ sub init {
       # Turn on core data sets for MultiCell and CD4 by default on regulation page only     
       if ($view_config->type eq 'Regulation'){ 
         if ( $cell_line eq 'CD4' && exists $focus_set_ids{$cell_line}{$evidence_id}) {
-          $value = 'on'; warn "$cell_line $evidence_name $value";
+          $value = 'on'; 
         } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'MultiCell'}{$evidence_id}) {
-          $value = 'on'; warn "$cell_line $evidence_name $value";
+          $value = 'on'; 
         }
       }
       $view_config->_set_defaults("opt_cft_$cell_line:$evidence_name" => $value);
