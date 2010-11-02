@@ -39,12 +39,12 @@ sub init {
       my ($evidence_name, $evidence_id) = split /\:/, $evidence_type;  
       my $value = 'off';
 
-      # Turn on core data sets by default on regulation page only     
+      # Turn on core data sets for MultiCell and CD4 by default on regulation page only     
       if ($view_config->type eq 'Regulation'){ 
         if ( $cell_line eq 'CD4' && exists $focus_set_ids{$cell_line}{$evidence_id}) {
-          $value = 'on';
-        } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'core'}{$evidence_id}) {
-          $value = 'on';
+          $value = 'on'; warn "$cell_line $evidence_name $value";
+        } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'MultiCell'}{$evidence_id}) {
+          $value = 'on'; warn "$cell_line $evidence_name $value";
         }
       }
       $view_config->_set_defaults("opt_cft_$cell_line:$evidence_name" => $value);
@@ -74,10 +74,9 @@ sub form {
   my %focus_feature_type_ids;
   my $focus_row = 3;
   my $row = 3;
-  
+
   # Allow focus sets to appear first
-  # All MultiCell feature types are focus sets so add these in ($feature_type_ids{'core'})
-  foreach my $feature_sets (values(%focus_set_ids), $feature_type_ids{'core'}) {
+  foreach my $feature_sets (values %focus_set_ids ) {
     $focus_feature_type_ids{$_} ||= $focus_row++ for keys %$feature_sets;
   }
   
