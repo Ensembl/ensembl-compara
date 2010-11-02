@@ -159,14 +159,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       context: this,
       success: function (html) {
         if (html) {
-          Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class=".*?panel_type.*?".*?>/)||[])[0]).val() || 'Content', html, el, params);
+          Ensembl.EventManager.trigger('addPanel', undefined, $((html.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val() || 'Content', html, el, params);
           Ensembl.EventManager.trigger('ajaxLoaded', newContent === true ? '#' + el[0].id : '');
         } else {
           el.html('');
         }
       },
       error: function (e) {
-        el.html('<p class="ajax_error">Sorry, the page request "' + url + '" timed out. Please try selecting less data.</p>');
+        el.html('<p class="ajax_error">Sorry, the page request "' + url + '" failed to load.</p>');
       },
       complete: function () {
         el = null;

@@ -147,7 +147,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           this.setPageReload((url.match(/\bconfig=(\w+)\b/) || [])[1], false, forceReload);
         }
         
-        Ensembl.EventManager.trigger('createPanel', id, $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/)||[])[0]).val() || json.panelType, params);
+        Ensembl.EventManager.trigger('createPanel', id, $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val() || json.panelType, params);
       },
       error: function (e) {
         failures = failures || 1;
@@ -156,7 +156,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           var panel = this;
           setTimeout(function () { panel.getContent(url, id, ++failures); }, 2000);
         } else {
-          contentEl.html('<p class="ajax_error">Sorry, the page request timed out.</p>');
+          contentEl.html('<p class="ajax_error">Sorry, the page request falied to load.</p>');
         }
       }
     });

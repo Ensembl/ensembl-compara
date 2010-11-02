@@ -94,7 +94,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           var panel = this;
           setTimeout(function () { panel.getContent(link, url, ++failures); }, 2000);
         } else {
-          this.elLk.content.html('<p class="ajax_errorSorry, the page request timed out.</p>');
+          this.elLk.content.html('<p class="ajax_error>Sorry, the page request failed to load.</p>');
         }
       }
     });
@@ -131,7 +131,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         }
       },
       error: function (e) {
-        this.elLk.content.html('<p class="ajax_error">Sorry, the page request timed out.</p>');
+        this.elLk.content.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
       }
     });
     
