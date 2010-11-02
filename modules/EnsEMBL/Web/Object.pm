@@ -53,6 +53,7 @@ sub timer_push        { return shift->hub->timer_push(@_);        }
 sub table_info        { return shift->hub->table_info(@_);        }
 sub data_species      { return shift->hub->data_species(@_);      }
 sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }
+sub get_db            { return shift->hub->get_db(@_);            }
 
 sub viewconfig        { DEPRECATED();           return shift->hub->viewconfig;            }
 sub get_viewconfig    { DEPRECATED();           return shift->hub->get_viewconfig(@_);    }
@@ -72,23 +73,6 @@ sub DEPRECATED {
   my $func   = shift || [split '::', $caller[3]]->[-1];
   $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
   warn $warn;
-}
-
-sub filename {
-  my $self = shift;
-  
-  my $name = sprintf('%s-%s-%d-%s-%s',
-    $self->species,
-    lc $self->__objecttype,
-    $self->species_defs->ENSEMBL_VERSION,
-    $self->get_db,
-    $self->can('stable_id') ? $self->stable_id : undef
-  );
-
-  $name =~ s/-$//;
-  $name =~ s/[^-\w\.]/_/g;
-  
-  return $name;
 }
 
 sub count_alignments {
@@ -117,13 +101,6 @@ sub _availability {
   $hash->{'logged_in'} = 1 if $self->user;
   
   return $hash;
-}
-
-# Gets the database name used to create the object
-sub get_db {
-  my $self = shift;
-  my $db = $self->param('db') || 'core';
-  return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
 # Data interface attached to object
