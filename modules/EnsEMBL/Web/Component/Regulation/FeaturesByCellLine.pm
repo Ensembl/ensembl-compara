@@ -47,45 +47,8 @@ sub content {
   my $cell_line_data = $web_slice_obj->get_cell_line_data($image_config_cell_line);
   my @all_reg_objects = @{$object->fetch_all_objs_by_slice($object_slice)};
 
-  my @cell_lines =  sort keys %{$object->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
-  unshift @cell_lines, 'MultiCell';
-  my $number_of_cell_lines = scalar @cell_lines;
-  my $count =1;
 
-
-  foreach my $cell_line (@cell_lines) { 
-    $cell_line =~s/\:\d*//;
-
-    # Turn on reg features track
-    $image_config_cell_line->modify_configs(
-      [ 'reg_feats_' .$cell_line ],
-      {qw(display on )}
-    );
-    # Turn on core evidence track
-    $image_config_cell_line->modify_configs(
-      [ 'reg_feats_core_' .$cell_line ],
-      {qw(display tiling_feature)}
-    );
-    # Turn on supporting evidence track
-    $image_config_cell_line->modify_configs(
-      [ 'reg_feats_other_' .$cell_line ],
-      {qw(display tiling_feature)}
-    );
-
-
-    foreach my $reg_obj (@all_reg_objects){
-      if ( $reg_obj->feature_set->cell_type->name =~/$cell_line/){
-        $cell_line_data->{$cell_line}{'reg_feature'} = 1;
-      }
-    }
-
-    if ($count == $number_of_cell_lines){
-      $cell_line_data->{$cell_line}{'last_cell_line'} =1;
-    }    
-    $count++;
-  }
- 
-  $image_config_cell_line->{'data_by_cell_line'} = $cell_line_data;
+  $image_config_cell_line->{'data_by_cell_line'} = $cell_line_data; 
   push @containers_and_configs, $object_slice, $image_config_cell_line;
 
   # Add config to draw legends and bottom ruler

@@ -460,8 +460,7 @@ sub get_data {
           # There should only be one
           throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @$sset > 1;
           push (@result_sets, $sset->[0]) if scalar @$sset;
-          $name =~s/opt_cft_//;
-          $data->{$cell_line}{$type}{'wiggle_features'}{$name} = 1 if scalar @$sset;
+          $data->{$cell_line}{$type}{'wiggle_features'}{$unique_feature_set_id} = 1 if scalar @$sset;
         }
       }
     }  
