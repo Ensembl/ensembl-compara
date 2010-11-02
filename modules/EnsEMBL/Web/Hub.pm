@@ -64,7 +64,7 @@ sub new {
     _apache_handle => $args->{'apache_handle'} || undef,
     _user          => $args->{'user'}          || undef,
     _timer         => $args->{'timer'}         || undef,
-    _databases     => $species ne 'common'      ? new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs) : undef,
+    _databases     => new EnsEMBL::Web::DBSQL::DBConnection($species, $species_defs),
     _cookies       => $cookies,
     _core_objects  => {},
     _core_params   => {},
