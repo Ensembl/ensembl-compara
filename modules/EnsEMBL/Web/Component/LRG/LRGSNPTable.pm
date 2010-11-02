@@ -12,31 +12,26 @@ sub _init {
   $self->ajaxable(1);
 }
 
-
 sub content {
-  my $self        = shift;
-  my $hub         = $self->hub;
-  my $lrg         = $self->configure($hub->param('context') || 'FULL', $hub->get_imageconfig('lrgsnpview_transcript'));
-  my @transcripts = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
+  my $self             = shift;
+  my $hub              = $self->hub;
+  my $consequence_type = $hub->param('sub_table');
+  my $lrg              = $self->configure($consequence_type, $hub->param('context') || 'FULL', $hub->get_imageconfig('lrgsnpview_transcript'));
+  my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
   
   # no sub-table selected, just show stats
-  if(!defined($hub->param('sub_table'))) {
+  if ($consequence_type) {
+    my $table_rows = $self->variation_table($consequence_type, \@transcripts, $lrg->Obj->feature_Slice);
+    my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
+    return $self->render_content($table, $consequence_type);
+  } else {
     my $table = $self->stats_table(\@transcripts);
     return $self->render_content($table)
   }
-  
-  else {
-    my $table_rows = $self->variation_table(\@transcripts, $lrg->Obj->feature_Slice);
-    my $table      = $table_rows ? $self->make_table($table_rows) : undef;
-    
-    return $self->render_content($table);
-  }
 }
 
-
-
 sub make_table {
-  my ($self, $table_rows) = @_;
+  my ($self, $table_rows, $consequence_type) = @_;
   
   my $columns = [
     { key => 'ID',         sort => 'html'                                                   },
@@ -53,7 +48,7 @@ sub make_table {
     { key => 'Transcript', sort => 'string'                                                 },
   ];
   
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ] });
+  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 0, id => "${consequence_type}_table" });
 }
 
 1;
