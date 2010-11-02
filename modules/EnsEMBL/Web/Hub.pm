@@ -166,6 +166,13 @@ sub database {
   }
 }
 
+# Gets the database name used to create the object
+sub get_db {
+  my $self = shift;
+  my $db = $self->param('db') || 'core';
+  return $db eq 'est' ? 'otherfeatures' : $db;
+}
+
 sub core_objects {
   my $self = shift;
   my $core_objects = shift;
@@ -319,6 +326,22 @@ sub multi_params {
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
+}
+
+sub filename {
+  my ($self, $object) = @_;
+  
+  my $name = sprintf('%s-%s-%d-%s',
+    $self->species,
+    lc $self->type,
+    $self->species_defs->ENSEMBL_VERSION,
+    $self->get_db
+  );
+  
+  $name .= '-' . $object->stable_id if $object && $object->can('stable_id');
+  $name  =~ s/[^-\w\.]/_/g;
+  
+  return $name;
 }
 
 sub _sanitize {
