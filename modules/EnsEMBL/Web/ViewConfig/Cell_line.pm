@@ -38,13 +38,15 @@ sub init {
     foreach my $evidence_type (keys %evidence_features) {
       my ($evidence_name, $evidence_id) = split /\:/, $evidence_type;  
       my $value = 'off';
-      
-      if (exists $focus_set_ids{$cell_line}{$evidence_id}) {
-        $value = 'on';
-      } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'core'}{$evidence_id}) {
-        $value = 'on';
+
+      # Turn on core data sets by default on regulation page only     
+      if ($view_config->type eq 'Regulation'){ 
+        if ( $cell_line eq 'CD4' && exists $focus_set_ids{$cell_line}{$evidence_id}) {
+          $value = 'on';
+        } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'core'}{$evidence_id}) {
+          $value = 'on';
+        }
       }
-      
       $view_config->_set_defaults("opt_cft_$cell_line:$evidence_name" => $value);
     }
   }
