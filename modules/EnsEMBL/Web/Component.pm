@@ -278,7 +278,7 @@ sub new_image {
   my ($image_config, $id);
   
   if (ref $_[0] eq 'ARRAY') {
-    my %image_config_types = map $_->{'type'}, grep $_->isa('EnsEMBL::Web::ImageConfig'), @{$_[0]};
+    my %image_config_types = map { $_->{'type'} => 1 } grep $_->isa('EnsEMBL::Web::ImageConfig'), @{$_[0]};
     $image_config = $_[0][1];
     $id = join '--', keys %image_config_types;
   } else {
