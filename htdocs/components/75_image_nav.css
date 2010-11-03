@@ -9,6 +9,8 @@
 .zmenu td          { background-color: [[PANEL_BG]]; border: 1px solid [[NEUTRAL_BG]]; margin: 0; padding: 2px; font-size: 0.8em; padding: 2px; width: 18em; }
 .zmenu.coloured td { border: none; border-top: 1px solid [[NEUTRAL_BG]]; }
 .zmenu a           { text-decoration: none; font-weight: bold }
+.zmenu table td, 
+.zmenu table th    { border: 0 none; font-size: 1em; text-align: left }     
 
 /**
  redbox      - red box around slice to indicate where in upper slice this slice is!
