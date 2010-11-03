@@ -27,7 +27,7 @@ sub init {
     transcript => 'Other Genes',
     prediction => 'Prediction transcripts',
     other      => 'Other',
-    variation  => 'Variations',
+    variation  => 'Germline variation',
     somatic    => 'Somatic Mutations',
     legends    => 'Legends'
   );

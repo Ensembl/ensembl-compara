@@ -21,7 +21,7 @@ sub init {
     domain        => 'Protein domains',
     feature       => 'Protein features',
     alignment     => 'Protein alignments',
-    p_variation   => 'Variation',
+    p_variation   => 'Germline Variation',
     somatic       => 'Somatic Mutations',
     p_decorations => 'Decorations',
     legends       => 'Legends'

@@ -23,7 +23,7 @@ sub init {
   
   $self->create_menus(      
     transcript => 'Other Genes',
-    variation  => 'Variations',
+    variation  => 'Germline variation',
     somatic    => 'Somatic Mutations',
     other      => 'Other'
   );

@@ -32,7 +32,7 @@ sub init {
     transcript  => 'Genes', 
     misc_feature  => 'Misc. regions',
     synteny     => 'Synteny',
-    variation   =>  'Variation',
+    variation   =>  'Germline variation',
     somatic     =>  'Somatic mutations',
     decorations => 'Additional features',
     information => 'Information'

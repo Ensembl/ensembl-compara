@@ -25,7 +25,7 @@ sub init {
 
   $self->create_menus(
     transcript => 'Genes',
-    variation  => 'Variations',
+    variation  => 'Germline variation',
     somatic    => 'Somatic Mutations',
     prediction => 'Prediction transcripts',
     other      => 'Decorations'

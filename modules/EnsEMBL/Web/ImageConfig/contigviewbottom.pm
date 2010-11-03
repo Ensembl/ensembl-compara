@@ -48,7 +48,7 @@ sub init {
     simple           => 'Simple features',
     misc_feature     => 'Misc. regions',
     repeat           => 'Repeats',
-    variation        => 'Variations',
+    variation        => 'Germline variation',
     somatic          => 'Somatic Mutations',
     functional       => 'Functional genomics',
     multiple_align   => 'Multiple alignments',

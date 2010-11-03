@@ -31,7 +31,7 @@ sub init {
     repeat         => 'Repeats',
     functional     => 'Functional Genomics', 
     multiple_align => 'Multiple alignments',
-    variation      => 'Variation',
+    variation      => 'Germline variation',
     other          => 'Decorations',
   );
 

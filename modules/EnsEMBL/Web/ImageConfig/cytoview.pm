@@ -29,7 +29,7 @@ sub init {
     transcript    => 'Genes',
     misc_feature  => 'Misc. regions',
     synteny       => 'Synteny',
-    variation     => 'Variations', 
+    variation     => 'Germline variation', 
     somatic       => 'Somatic Mutations',
     external_data => 'External data',
     user_data     => 'User attached data',

@@ -29,7 +29,7 @@ sub init {
     misc_feature  => 'Misc. regions',
     repeat        => 'Repeats',
     functional    => 'Functional Genomics', 
-    variation     => 'Variation',
+    variation     => 'Germline variation',
     other         => 'Decorations',
     information   => 'Information'
   );
