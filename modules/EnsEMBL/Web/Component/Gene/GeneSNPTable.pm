@@ -174,7 +174,6 @@ sub stats_table {
 sub variation_table {
   my ($self, $consequence_type, $transcripts, $slice) = @_;
   my $hub                 = $self->hub;
-  my $selected_transcript = $hub->param('t');
   my @rows;
   
   # create some URLs - quicker than calling the url method for every variation
@@ -192,18 +191,11 @@ sub variation_table {
     t      => undef,
   });
   
-  my $base_type_url = $hub->url({
-    sub_table => undef,
-    t         => $selected_transcript,
-  });
-  
   my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
   $labels{'ALL'} = 'All';
   
   foreach my $transcript (@$transcripts) {
     my $transcript_stable_id = $transcript->stable_id;
-    
-    next if $selected_transcript && $transcript_stable_id ne $selected_transcript;
     
     my %snps = %{$transcript->__data->{'transformed'}{'snps'} || {}};
    
