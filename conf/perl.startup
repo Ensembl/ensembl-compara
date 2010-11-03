@@ -81,7 +81,7 @@ sub load_plugins {
   }
 }
 
-if ($conf->ENSEMBL_MART_ENABLED) {
+if ($conf->ENSEMBL_MART_ENABLED > 0) {
   require 'BioMart/Initializer.pm';
   BioMart::Initialize->import;
   require 'BioMart/AttributeTable.pm';
