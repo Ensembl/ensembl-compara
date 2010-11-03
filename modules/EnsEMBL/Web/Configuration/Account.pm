@@ -196,6 +196,10 @@ sub populate_tree {
       { 'no_menu_entry' => 1, 'command' => 'EnsEMBL::Web::Command::Account::SavePassword',
         'filters' => [qw(PasswordValid)]}
     );
+    $self->create_node( 'Message', '',
+      [qw(message EnsEMBL::Web::Component::Account::Message)], 
+      { 'no_menu_entry' => 1 }
+    );
   } else {
     $self->create_node( 'Login', "Log in",
       [qw(account EnsEMBL::Web::Component::Account::Login)],
