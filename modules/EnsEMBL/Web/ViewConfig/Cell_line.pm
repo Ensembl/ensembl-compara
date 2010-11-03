@@ -41,7 +41,7 @@ sub init {
 
       # Turn on core data sets for MultiCell and CD4 by default on regulation page only     
       if ($view_config->type eq 'Regulation'){ 
-        if ( $cell_line eq 'CD4' && exists $focus_set_ids{$cell_line}{$evidence_id}) {
+        if ( exists $focus_set_ids{$cell_line}{$evidence_id}) {
           $value = 'on'; 
         } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'MultiCell'}{$evidence_id}) {
           $value = 'on'; 
