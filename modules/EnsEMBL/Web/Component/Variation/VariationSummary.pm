@@ -132,7 +132,12 @@ sub content {
       }
       
       # now get normal ones
-      foreach my $transcript(@{$vf->feature_Slice->get_all_Transcripts}) {
+      # go via transcript variations (should be faster than slice)
+      foreach my $tv (@{$vf->get_all_TranscriptVariations}) {
+        next unless defined $tv->{'_transcript_stable_id'};
+        next if $tv->{'_transcript_stable_id'} eq $prev_trans;
+        $prev_trans = $tv->{'_transcript_stable_id'};
+        my $transcript = $tv->transcript;
         
         # get HGVS notations
         %cdna_hgvs = %{$vf->get_all_hgvs_notations($transcript, 'c')};
