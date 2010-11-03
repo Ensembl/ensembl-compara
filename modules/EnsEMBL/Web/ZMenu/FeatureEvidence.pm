@@ -38,7 +38,7 @@ sub content {
       $other_names_txt = ' ('.join(' ', @other_ftnames).')';
     }
 
-    $motif_features{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score];
+    $motif_features{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score, $mf->binding_matrix->name];
   }
   
 
@@ -61,13 +61,31 @@ sub content {
       label => $summit
     });
   }
-  foreach my $motif (sort keys %motif_features){
-    my ($name, $score) = @{$motif_features{$motif}};
-    $self->add_entry({
-      type  => $name,
-      label => $score
+
+  if (scalar (keys %motif_features) >> 0  ){
+    $self->add_entry ({
+    label_html => undef,
     });
-  }
+    $self->add_subheader('<span align="center">PWM Information</span>');
+
+    my $pwm_table = '<table cellpadding="0" cellspacing="0" style="border:0; padding:0px; margin:0px;">
+                     <tr><th>Name</th><th>ID</th><th>Score</th></tr>';
+
+    foreach my $motif (sort keys %motif_features){
+      my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
+      my $bm_link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
+      $pwm_table .= sprintf( '<tr><td>%s</td><td>%s</td><td>%s</td></tr>',
+        $name,
+        $bm_link,
+        $score
+      );
+    }
+
+    $pwm_table .= "</table>";
+    $self->add_entry({
+      label_html => $pwm_table
+    });
+  }    
 }
 
 1;
