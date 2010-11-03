@@ -68,7 +68,7 @@ sub init {
     [ 'blast',     'BLAT/BLAST hits',     '_blast',          { display => 'normal', strand => 'b', sub_type => 'blast', colourset => 'feature', menu => 'no' }]
   );
   
-  $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows %age of Gs & Cs in region' });
+  $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'normal',  strand => 'r', description => 'Shows percentage of Gs & Cs in region' });
   
   if ($self->species_defs->ALTERNATIVE_ASSEMBLIES) {
     foreach my $alt_assembly (@{$self->species_defs->ALTERNATIVE_ASSEMBLIES}) {
