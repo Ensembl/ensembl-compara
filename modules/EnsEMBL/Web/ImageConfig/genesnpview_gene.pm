@@ -50,7 +50,11 @@ sub init {
     [ 'variation' ],
     { menu => 'no' }
   );
-  
+  $self->modify_configs(
+    [ 'somatic'],
+    { menu => 'no' }
+  );  
+
   $self->modify_configs(
     [ 'variation_feature_variation' ],
     { display => 'normal', caption => 'Variations', strand => 'f' }
