@@ -12,6 +12,7 @@ sub content {
   my $v_id             = $hub->param('v');
   my $snp_fake         = $hub->param('snp_fake');
   my $var_box          = $hub->param('var_box');
+  my $lrg              = $hub->param('lrg');
   my $db_adaptor       = $hub->database('variation');
   my $var_adaptor      = $db_adaptor->get_VariationAdaptor;
   my $var_feat_adaptor = $db_adaptor->get_VariationFeatureAdaptor;
@@ -55,15 +56,36 @@ sub content {
   } else {
     $type = $feature->display_consequence;
   }
-
+  
   my $chr_start = $feature->start;
   my $chr_end   = $feature->end;
-  my $bp        = $chr_start;
+  my $chr       = $feature->seq_region_name;
+  my $bp        = "$chr:$chr_start";
   
   if ($chr_end < $chr_start) {
-    $bp = "between $chr_end & $chr_start";
+    $bp = "$chr: between $chr_end &amp; $chr_start";
   } elsif ($chr_end > $chr_start) {
-    $bp = "$chr_start - $chr_end";
+    $bp = "$chr:$chr_start-$chr_end";
+  }
+  
+  my $lrg_bp;
+  
+  if($snp_fake && $feature && $lrg) {
+    my $lrg_slice;
+    eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
+    if($lrg_slice) {
+      my $lrg_feature = $feature->transfer($lrg_slice);
+      
+      $chr_start = $lrg_feature->start;
+      $chr_end   = $lrg_feature->end;
+      $lrg_bp    = $chr_start;
+      
+      if ($chr_end < $chr_start) {
+        $lrg_bp = "between $chr_end &amp; $chr_start";
+      } elsif ($chr_end > $chr_start) {
+        $lrg_bp = "$chr_start-$chr_end";
+      }
+    }
   }
   
   my $source  = join ', ', @{$feature->get_all_sources||[]};
@@ -78,6 +100,8 @@ sub content {
     [ 'Source',         $source              ],
     [ 'Type',           $type                ],
   );
+  
+  unshift @entries, [ 'LRG bp', $lrg_bp ] if $lrg_bp;
 
 
  
@@ -125,7 +149,7 @@ sub content {
     $self->add_entry({
       type     =>  'Status',
       label    => $status || '-',
-      position => 3
+      position => ($lrg_bp ? 4 : 3)
     });
     
     $self->add_entry({
