@@ -134,10 +134,11 @@ sub createObjects {
     # 2) Parsing a c/w or centrepoint/width parameter combination
     # 3) Reading the paramters listed in the else block below
     if ($identifier = $self->param('r') || $self->param('l')) {
-      ($seq_region, $start, $end, $strand) = $identifier =~ /^([^:]+):(-?\w+\.?\w*)-(-?\w+\.?\w*)(?::(-?\d))?$/;
+      $identifier =~ s/\s|,//g;
+      ($seq_region, $start, $end, $strand) = $identifier =~ /^([^:]+):(-?\w+\.?\w*)-?(-?\w+\.?\w*)?(?::(-?\d))?$/;
       
       $start = $self->evaluate_bp($start);
-      $end   = $self->evaluate_bp($end);
+      $end   = $self->evaluate_bp($end) || $start;
       $slice = $self->get_slice($seq_region || $identifier, $start, $end); 
       
       if ($slice) {
