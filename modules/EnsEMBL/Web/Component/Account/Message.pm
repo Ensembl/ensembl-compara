@@ -23,7 +23,7 @@ sub content {
   my $messages = {
     'password_not_confirmed'  => 'New password could not be confirmed. Please try again.',
     'invalid_password'        => 'New password is not valid. Password can be 6 to 32 characters long with no spaces.',
-    'password_saved'          => 'You new password has been saved successfully.',
+    'password_saved'          => 'Your new password has been saved successfully.',
   };
   
   my $message;
