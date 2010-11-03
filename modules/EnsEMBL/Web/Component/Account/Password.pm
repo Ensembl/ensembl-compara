@@ -57,10 +57,11 @@ sub content {
       'value' => $object->param('record_id')
     );
   }
-
+  
   $form->add_element('type' => 'Password', 'name' => 'new_password_1', 'label' => 'New password', 'required' => 'yes');
   $form->add_element('type' => 'Password', 'name' => 'new_password_2', 'label' => 'Confirm new password', 'required' => 'yes');
   $form->add_element('type' => 'Submit',   'name' => 'submit',   'value' => 'Save', 'class' => 'modal_link');
+  $form->add_element('type' => 'Hidden',   'name' => 'backlink', 'value' => $self->hub->action);
 
   return $form->render;
 }
