@@ -9,6 +9,9 @@
 .modal_content .panel { margin-left: 17.75em; }
 .modal_content .no_local_context { margin-left: 0.25em; }
 .modal_content .panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; }
+.modal_content p.modal_error { color: #c33 }
+.modal_content p.modal_a { margin: 10px 0; }
+.modal_content p.modal_a a { background-color:[[MH_BG]]; color:#fff; border:outset [[MH_BG]] 2px; text-decoration:none; padding: 2px 8px; }
 
 .modal_title ul { margin: 0; padding: 0 }
 .modal_title li { list-style: none; padding: 0 0.5em 0.5em; background-color: #999; margin: 0 0.5em; float: left; }
