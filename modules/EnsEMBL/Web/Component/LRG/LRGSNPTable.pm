@@ -16,7 +16,7 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-  my $lrg              = $self->configure($consequence_type, $hub->param('context') || 'FULL', $hub->get_imageconfig('lrgsnpview_transcript'));
+  my $lrg              = $self->configure($hub->param('context') || 'FULL', $hub->get_imageconfig('lrgsnpview_transcript'));
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$lrg->get_all_transcripts};
   
   # no sub-table selected, just show stats
