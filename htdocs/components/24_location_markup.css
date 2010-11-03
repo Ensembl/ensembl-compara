@@ -9,15 +9,15 @@
 .navbar .homology_move { position: relative; top: 3px; }
 
 .relocate             { float: left; }
-.relocate input       { border: 1px solid [[TINT_BORDER]]; height: 18px; padding: 2px 4px 1px; }
+.relocate input       { border: 1px solid [[TINT_BORDER]]; height: 18px; padding: 2px 4px 1px; width: 250px; }
 .relocate input:hover { background-color: [[CONTRAST_BG]]; }
-.relocate form        { float: left; padding: 2px 0; }
+.relocate form        { float: left; padding: 2px 0; width: 370px; }
 .relocate form label  { float: left; display: block; width: 5em; margin-top: 5px; padding-right: 5px; }
 
 input.go-button       { padding: 0; height: 24px; width: 34px; color: [[MH_BORDER]]; background-color: [[TINT_BORDER]]; border: 1px outset [[TINT_BORDER]]; font-weight: bold; }
 input.go-button:hover { background-color: [[TINT_BORDER]]; }
 
-.image_nav { position: relative; top: 5px; float: right; }
+.image_nav { position: relative; top: 5px; float: right; width: 304px; }
 
 a.move, a.zoom_in, a.zoom_out { float: left; top: 0; margin: 0; }
 a.zoom_in                     { margin-left:  4px; }
@@ -42,3 +42,8 @@ ul.autocomplete li                { font-weight: normal; list-style-image: none;
 ul.autocomplete li.focused        { background-color: [[CONTRAST_BG]]; }
 ul.autocomplete li span.name      { float: left; }
 ul.autocomplete li span.stable_id { float: right; }
+
+.navbar.narrow1 .relocate,
+.navbar.narrow2 .relocate  { width: 370px; }
+.navbar.narrow1 .image_nav { top: 20px; }
+.navbar.narrow2 .image_nav { float: left; left: 5em; padding: 5px 2px; }

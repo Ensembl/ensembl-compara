@@ -31,28 +31,6 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     var sliderLabel  = $('.slider_label', this.el);
     var hash, boundaries, r, l, i;
     
-    this.elLk.updateURL     = $('.update_url', this.el);
-    this.elLk.locationInput = $('.location_selector', this.el);
-    this.elLk.navLinks      = $('a', this.el).addClass('constant').bind('click', function (e) {
-      var newR;
-      
-      if (panel.enabled === true) {
-        if ($(this).hasClass('move')) {
-          panel.reload = true;
-        }
-        
-        newR = this.href.match(panel.matchRegex)[1];
-        
-        if (newR != Ensembl.coreParams.r) {
-          window.location.hash = 'r=' + newR; 
-        }
-        
-        return false;
-      }
-    });
-    
-    
-    
     if (match) {
       r = match[1].split(/\W/);
       l = r[2] - r[1] + 1;
@@ -81,6 +59,30 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     }
     
     $('.slider_wrapper', this.el).children().css('display', 'inline-block');
+    
+    this.elLk.updateURL     = $('.update_url', this.el);
+    this.elLk.locationInput = $('.location_selector', this.el);
+    this.elLk.navbar        = $('.navbar', this.el);
+    this.elLk.imageNav      = $('.image_nav', this.elLk.navbar);
+    this.elLk.forms         = $('form', this.elLk.navbar);
+    
+    this.elLk.navLinks = $('a', this.el).addClass('constant').bind('click', function (e) {
+      var newR;
+      
+      if (panel.enabled === true) {
+        if ($(this).hasClass('move')) {
+          panel.reload = true;
+        }
+        
+        newR = this.href.match(panel.matchRegex)[1];
+        
+        if (newR != Ensembl.coreParams.r) {
+          window.location.hash = 'r=' + newR; 
+        }
+        
+        return false;
+      }
+    });
     
     this.elLk.slider = $('.slider', this.el).slider({
       value: sliderConfig.filter('.selected').index(),
@@ -118,6 +120,8 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         $('.ui-slider-handle', panel.elLk.slider).trigger('blur'); // Force the blur event to remove the highlighting for the handle
       }
     });
+    
+    this.resize();
   },
   
   getContent: function () {
@@ -152,6 +156,22 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
           });
         }
       });
+    }
+  },
+  
+  resize: function () {
+    var widths = {
+      navbar: this.elLk.navbar.width(),
+      slider: this.elLk.imageNav.width(),
+      forms:  this.elLk.forms.width()
+    };
+    
+    if (widths.navbar < widths.forms + widths.slider) {
+      this.elLk.navbar.removeClass('narrow1').addClass('narrow2');
+    } else if (widths.navbar < (widths.forms * this.elLk.forms.length) + widths.slider) {
+      this.elLk.navbar.removeClass('narrow2').addClass('narrow1');
+    } else {
+      this.elLk.navbar.removeClass('narrow1 narrow2');
     }
   }
 });
