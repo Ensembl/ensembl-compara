@@ -78,24 +78,30 @@ sub init_viewconfig {
     $view_config->add_form_element({ type => 'Hidden', name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
     
     # hack to display help message for Cell line configuration on region in detail
-    if ($view_config->type eq 'Location' && $view_config->action eq 'Cell_line') {
+    if ($view_config->action eq 'Cell_line') {
       my $info_panel = $self->new_panel('Configurator', $controller, code => 'configurator_info');
-      
+      my $function = $view_config->type eq 'Location' ? 'View' : 'Cell_line';
+      my $conf = $view_config->type eq 'Location' ? 'contigviewbottom' : 'reg_detail_by_cell_line';
+      my $label = $view_config->type eq 'Location' ? 'Main Panel' : 'Cell line tracks';
+
       my $configuration_link = $hub->url({
         type     => 'Config',
-        action   => 'Location',
-        function => 'View',
-        config   => 'contigviewbottom'
+        action   => $view_config->type,
+        function => $function,
+        config   => $conf
        });
        
       $info_panel->set_content(qq{
         <div class="info">
           <h3>Note:</h3>
           <div class ="error-pad">
+          <p> These are data intensive tracks. For best performance it is advised that you limit the 
+              number of feature types you try to display at any one time.
+          </p>
           <p>
             Any cell lines that you configure here must also be turned on in the 
-            <a href="$configuration_link#functional" class="modal_link" rel="modal_config_contigviewbottom" title="Configure this page">functional genomics</a> 
-            section of the "Main Panel" tab before any data will be displayed.
+            <a href="$configuration_link#functional" class="modal_link" rel="modal_config_$conf" title="Configure this page">functional genomics</a> 
+            section of the "$label" tab before any data will be displayed.
           </p>
           </div>
         </div>
