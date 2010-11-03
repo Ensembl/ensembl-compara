@@ -68,6 +68,10 @@ sub init {
     [qw(transcript prediction variation)],
     {qw(display off)} 
   );
+  $self->modify_configs(
+    [ 'variation_feature_variation' ],
+    { display => 'normal' }
+  );
 
   $self->modify_configs(
     [qw(transcript_core_ensembl)],
