@@ -248,7 +248,7 @@ sub update_user_history {
       $history->save;
       
       ## Limit to 5 entries per object type
-      $type_history[0]->delete if scalar @type_history == 5;
+      shift(@type_history)->delete while scalar @type_history >= 5; 
     }
   }
 }
