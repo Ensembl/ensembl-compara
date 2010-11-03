@@ -35,6 +35,12 @@ sub init {
   my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   foreach my $cell_line (@cell_lines){
     $cell_line =~s/\:\d*//;
+    my $display;
+    if ($cell_line eq 'MultiCell' || $cell_line eq 'CD4'){
+      $display = 'tiling_feature';
+    } else {
+      $display = 'compact';
+    }
 
     # Turn on reg_feats track
     $self->modify_configs(
@@ -44,13 +50,14 @@ sub init {
     # Turn on core evidence track
     $self->modify_configs(
       [ 'reg_feats_core_' .$cell_line ],
-      { qw(display tiling_feature menu yes)}
+      { 'display' => $display,  'menu' => 'yes'}
     );
     # Turn on supporting evidence track
     $self->modify_configs(
       [ 'reg_feats_other_' .$cell_line ],
-      {qw(display tiling_feature menu yes)}
+      {qw(display compact menu yes)}
     );
   }
 }
+
 1;
