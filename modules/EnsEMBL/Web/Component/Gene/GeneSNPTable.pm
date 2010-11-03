@@ -18,7 +18,7 @@ sub content {
   my $self             = shift;
   my $hub              = $self->hub;
   my $consequence_type = $hub->param('sub_table');
-  my $gene             = $self->configure($consequence_type, $hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
+  my $gene             = $self->configure($hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
   if ($consequence_type) {
@@ -88,16 +88,24 @@ sub stats_table {
   
   foreach my $tr (@$transcripts) {
     my $tr_stable_id = $tr->stable_id;
-    my %tvs          = %{$tr->__data->{'transformed'}{'snps'} || {}};
+    my $tvs          = $tr->__data->{'transformed'}{'snps'} || {};
+    my $gene_snps    = $tr->__data->{'transformed'}{'gene_snps'};
+    my $tr_start     = $tr->__data->{'transformed'}{'start'};
+    my $tr_end       = $tr->__data->{'transformed'}{'end'};
+    my $extent       = $tr->__data->{'transformed'}{'extent'};
     
-    foreach my $vf_id (keys %tvs) {
-      my $tv = $tvs{$vf_id};
+    foreach (@$gene_snps) {
+      my ($snp, $chr, $start, $end) = @$_;
+      my $vf_id = $snp->dbID;
+      my $tv = $tvs->{$vf_id};
       
-      foreach my $con (@{$tv->consequence_type}) {
-        my $key = "${tr_stable_id}_$vf_id";
-        
-        $counts{$con}{$key} = 1 if $con;
-        $total_counts{$key} = 1;
+      if(defined($tv) && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
+        foreach my $con (@{$tv->consequence_type}) {
+          my $key = "${tr_stable_id}_$vf_id";
+          
+          $counts{$con}{$key} = 1 if $con;
+          $total_counts{$key} = 1;
+        }
       }
     }
   }
@@ -107,12 +115,12 @@ sub stats_table {
   my %labels       = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
   my @rows;
   
-  # ignore REGULATORY_REGION and INTERGENIC
-  delete $descriptions{$_} for qw(REGULATORY_REGION INTERGENIC WITHIN_MATURE_miRNA UPSTREAM DOWNSTREAM);
+  my $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)</span>};
   
   foreach my $con (keys %descriptions) {
     if (defined $counts{$con}) {
       my $url = $self->ajax_url . ";sub_table=$con;update_panel=1";
+      my $warning = scalar keys %{$counts{$con}} > 10000 ? $warning_text : '';
       
       my $view_html = qq{
         <a href="$url" class="ajax_add toggle closed" rel="$con">
@@ -123,7 +131,7 @@ sub stats_table {
       
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
-        desc  => $descriptions{$con},
+        desc  => $descriptions{$con}.' '.$warning,
         count => scalar keys %{$counts{$con}},
         view  => $view_html
       };
@@ -151,7 +159,7 @@ sub stats_table {
   };
   
   my $total   = scalar keys %total_counts;
-  my $warning = $total > 10000 ? qq{<span style="color:red;">(WARNING: page may not load for large genes!)</span>} : '';
+  my $warning = $total > 10000 ? $warning_text : '';
   
   push @rows, {
     type  => $hidden_span . 'ALL',
@@ -279,7 +287,7 @@ sub variation_table {
 }
 
 sub configure {
-  my ($self, $consequence_type, $context, $master_config) = @_;
+  my ($self, $context, $master_config) = @_;
   my $object = $self->object;
   my $extent = $context eq 'FULL' ? 1000 : $context;
   
@@ -300,22 +308,20 @@ sub configure {
   $object->store_TransformedTranscripts; ## Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
   $object->store_TransformedSNPS;        ## Stores in $transcript_object->__data->{'transformed'}{'snps'}
   
-  if ($consequence_type) {
-    my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
-    my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
-    
-    ## Map SNPs for the last SNP display  
-    my @snps2 = map {[ 
-      $_->[2], $transcript_slice->seq_region_name,
-      $transcript_slice->strand > 0 ?
-        ( $transcript_slice->start + $_->[2]->start - 1, $transcript_slice->start + $_->[2]->end   - 1 ) :
-        ( $transcript_slice->end   - $_->[2]->end   + 1, $transcript_slice->end   - $_->[2]->start + 1 )
-    ]} @$snps;
+  my $transcript_slice = $object->__data->{'slices'}{'transcripts'}[1];
+  my ($count_snps, $snps, $context_count) = $object->getVariationsOnSlice($transcript_slice, $object->__data->{'slices'}{'transcripts'}[2]);
   
-    foreach (@{$object->get_all_transcripts}) {
-      $_->__data->{'transformed'}{'extent'}    = $extent;
-      $_->__data->{'transformed'}{'gene_snps'} = \@snps2;
-    }
+  ## Map SNPs for the last SNP display  
+  my @snps2 = map {[ 
+    $_->[2], $transcript_slice->seq_region_name,
+    $transcript_slice->strand > 0 ?
+      ( $transcript_slice->start + $_->[2]->start - 1, $transcript_slice->start + $_->[2]->end   - 1 ) :
+      ( $transcript_slice->end   - $_->[2]->end   + 1, $transcript_slice->end   - $_->[2]->start + 1 )
+  ]} @$snps;
+
+  foreach (@{$object->get_all_transcripts}) {
+    $_->__data->{'transformed'}{'extent'}    = $extent;
+    $_->__data->{'transformed'}{'gene_snps'} = \@snps2;
   }
 
   return $object;
