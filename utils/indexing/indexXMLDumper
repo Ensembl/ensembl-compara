@@ -17,6 +17,7 @@ BEGIN {
 }
 
 use EnsEMBL::Web::SpeciesDefs;
+use XML::Parser;
 use Data::Dumper;
 use Getopt::Long;
 use POSIX qw(strftime);
@@ -48,6 +49,7 @@ our $SD = EnsEMBL::Web::SpeciesDefs->new();
 our $release = $SD->ENSEMBL_VERSION;
 our $nogzip = 1;    #try setting to 0 for on the fly gzipping (not tested)?
 our %cross_references;  #get a set of external_dbs so we can make sure we link to them all correctly if we ever need to
+our $parser =  new XML::Parser( 'ErrorContext' => 3 );
 
 #redirect STDOUT and maybe STDERR to a file
 $log ||= $debug ? '>-' : "dumping_${release}.log";
@@ -1926,21 +1928,21 @@ sub make_counter {
 sub header {
   my ( $dbname, $dbspecies, $dbtype, $nogzip, $fh, $release ) = @_;
   $dbspecies =~ s/_/ /;
-  p("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>",$nogzip,$fh);
-  p("<!DOCTYPE database [ <!ENTITY auml \"&#228;\">]>",$nogzip,$fh);
-  p("<database>",$nogzip,$fh);
-  p("<name>$dbname</name>",$nogzip,$fh);
-  p("<description>Ensembl $dbspecies $dbtype database</description>",$nogzip,$fh);
-  p("<release>$release</release>",$nogzip,$fh);
-  p("",$nogzip,$fh);
-  p("<entries>",$nogzip,$fh);
+  p("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>",$nogzip,$fh,1);
+  p("<!DOCTYPE database [ <!ENTITY auml \"&#228;\">]>",$nogzip,$fh,1);
+  p("<database>",$nogzip,$fh,1);
+  p("<name>$dbname</name>",$nogzip,$fh,1);
+  p("<description>Ensembl $dbspecies $dbtype database</description>",$nogzip,$fh,1);
+  p("<release>$release</release>",$nogzip,$fh,1);
+  p("",$nogzip,$fh,1);
+  p("<entries>",$nogzip,$fh,1);
 }
 
 sub footer {
   my ($ecount,$nogzip,$fh,$type) = @_;
-  p("</entries>",$nogzip,$fh);
-  p("<entry_count>$ecount</entry_count>",$nogzip,$fh);
-  p("</database>",$nogzip,$fh);
+  p("</entries>",$nogzip,$fh,1);
+  p("<entry_count>$ecount</entry_count>",$nogzip,$fh,1);
+  p("</database>",$nogzip,$fh,1);
   my $text = $type ? "  ...Dumped $ecount $type entries\n" : "  ...Dumped $ecount entries\n";
   print LOG $text;
   if ($nogzip) {
@@ -1953,8 +1955,16 @@ sub footer {
 }
 
 sub p {
-  my ($str,$nogzip,$fh) = @_;
+  my ($str,$nogzip,$fh,$no_parse) = @_;
   return unless $str;
+  unless ($no_parse) {
+    eval { $parser->parse($str); };
+    if ($@) {
+      print LOG "\n\nWARNING XML - Error in record, ignoring (although the record count is correct):\nError is $@\nRecord is:\n$str";
+      return;
+    }
+  }
+
   # TODO - encoding
   $str .= "\n";
   if ($nogzip) {
@@ -2014,7 +2024,11 @@ In the abscence of --debug option, STDOUT and STDERR are sent to a log file (dum
 
 The locations of the actual xml files can be specified with the dir option. If not specified then it is dumped locally with debug, or in the correct location for indexing without (/nfs/eureka/data - you have to be a member of the www-search UNIX group to write here)
 
- --dry_run|n does everything apart from actually write the xml [note that this option will delete any preexisting file]
+Examine the log file for 'WARNING XML' - this will identify any entries identified by XML::Parser as not being well formed and which would crash index production. These are not added to the xml file but the record count in the footer *will* include them. Either manaully fix and add the entry(ies) to the xml file, or else fix the database / script to account for it and rerun.
+
+Also look for other 'WARNING' messages in the log file
+
+--dry_run|n does everything apart from actually write the xml [note that this option will delete any preexisting file]
 
 Examples:
 
