@@ -245,15 +245,17 @@ sub imageconfig_content {
         });
 
         $config = 'page' if $config eq '_page'; # FIXME: make it config=page normally!
-        
-        $config_group .= sprintf qq{
+
+	#though you might be tempted, do not revert this as a sprintf (one of the track names is '%GC')
+	my $multiwiggle_multi_link =  $track_node->get('glyphset') eq 'fg_multi_wiggle' ? qq{<a href="$config_link" class="modal_link" rel="modal_config_$config" title="Configure this page">Configure Cell/Tissue</a>} : '';
+        $config_group .= qq{
           <dt class="$class">
             <ul class="popup_menu">$menu$external_menu</ul>
             $selected <span class="menu_option">$name</span>
-            %s
+            $multiwiggle_multi_link
           </dt>
           $dd
-        }, $track_node->get('glyphset') eq 'fg_multi_wiggle' ? qq{<a href="$config_link" class="modal_link" rel="modal_config_$config" title="Configure this page">Configure Cell/Tissue</a>} : '';        
+        };
       }
     }
     
