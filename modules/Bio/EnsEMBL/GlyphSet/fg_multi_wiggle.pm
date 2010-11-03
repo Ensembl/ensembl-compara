@@ -121,7 +121,7 @@ sub process_wiggle_data {
   my @colours;
   my $data_flag = 0;
 
-  foreach my $evidence_type (keys %{$wiggle_data}){ 
+  foreach my $evidence_type (keys %{$wiggle_data}){  
     my $result_set =  $wiggle_data->{$evidence_type}; 
     my @features = @{$self->{'config'}{'data_by_cell_line'}{'wiggle_data'}{$evidence_type}};    
     next unless scalar @features >> 0;
@@ -210,13 +210,17 @@ sub get_colours {
 
   # Assign each feature set a colour, and set the intensity based on methalation state
   my %ratio = ('1' => '0.6', '2' => '0.4', '3' => '0.2', '4' => '0');
-  my %feature_types = %{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
+#  my %feature_types = %{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'feature_type'}{'ids'}};
+  my %feature_types = %{$self->{'config'}->{'data_by_cell_line'}->{'colours'}};
 
+  my $count = 0;
   foreach my $name (sort keys %feature_types){ 
-    $name =~s/\:\d*//;
+    #$name =~s/\:\d*//;
     my $histone_pattern = $name;
-    unless ( exists $feature_colours{$name}) { 
-      my $c = shift @{$self->{'config'}{'pool'}}; 
+    unless ( exists $feature_colours{$name}) {  
+      my $c =  $self->{'config'}{'pool'}->[$count];  
+      $count ++;
+      if ($count >= 55){$count = 0}; 
       if ($histone_pattern =~/^H\d+/){
         # First assign a colour for most basic pattern - i.e. no methyalation state information
         my $histone_number = substr($name,0,2);
