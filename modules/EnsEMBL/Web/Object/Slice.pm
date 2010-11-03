@@ -417,6 +417,7 @@ sub get_data {
   my $view_config   = $hub->get_viewconfig($page_object, 'Cell_line');
   my $dset_a        = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
   my @result_sets;
+  my %feature_sets_on;
 
   # If on regulation page do we show all data or just used to build reg feature?
   my $associated_data_only  = $view_config->get('opt_associated_data_only') eq 'yes' ? 1 : undef; 
@@ -441,7 +442,8 @@ sub get_data {
         $name = 'opt_cft_' . $cell_line . ':' . $reg_attr_fset->feature_type->name;
       }
 
-      if ($view_config->get($name) eq 'on') { 
+      if ($view_config->get($name) eq 'on') {
+        $feature_sets_on{$reg_attr_fset->feature_type->name} = 1; 
         my $display_style = $data->{$cell_line}{$type}{'renderer'};
         if ($display_style  eq 'compact' || $display_style eq 'tiling_feature') {
           my @block_features = @{$reg_attr_fset->get_Features_by_Slice($self->Obj)};
@@ -479,6 +481,7 @@ sub get_data {
     }
   }      
 
+  $data->{'colours'} = \%feature_sets_on;
   return $data;
 }
 
