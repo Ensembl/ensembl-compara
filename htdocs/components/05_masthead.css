@@ -1,7 +1,9 @@
 #masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 74px; }
 #masthead div                             { background-color: [[MH_BG]]; }
-#masthead a                               { color: [[MH_LINK]]; text-decoration: none; }
-#masthead a:hover                         { color: [[MH_HOVER]] !important; }
+#masthead a,
+#masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; }
+#masthead a:hover,
+#masthead span.disabled.toggle:hover      { color: [[MH_HOVER]] !important; }
 #masthead ul                              { list-style: none; margin: 0; padding: 0 }
 #masthead li                              { list-style-image: none; float: left; text-align: center; white-space: nowrap; }
 #masthead .content                        { background-color: [[MH_BG]]; clear: both; }
@@ -21,13 +23,15 @@
 #masthead ul.tabs li.active span.dropdown { background-image: url(/i/tab_on_l.gif); color: [[PAGE_TEXT]]; font-weight: bold; }
 #masthead ul.tabs span.dropdown a         { display: inline; }
 #masthead ul.tabs span.dropdown a.toggle  { background-image: none; cursor: pointer; padding: 0; font-size: 85%; }
+#masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
+#masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
 #masthead div.dropdown                    { position: absolute; top: 73px; display: none; background: #EAEEFF; border: 1px solid #67718D; padding-bottom: 5px; }
 #masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; }
 #masthead div.dropdown ul                 { padding-top: 4px; border-top: 1px solid #67718D; }
 #masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
 #masthead div.dropdown ul li a            { color: [[PAGE_LINK]]; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
-#masthead div.dropdown.species            { width: 500px; }
+#masthead div.dropdown.species            { width: 505px; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
 #masthead .search_holder                  { position: absolute; top: 17px; right: 5px; z-index: 150; margin-left: 10px; display: inline; }
 #masthead .tools_holder                   { display: inline; }
