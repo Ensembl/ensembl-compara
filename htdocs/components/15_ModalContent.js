@@ -145,6 +145,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       this.elLk.content.removeClass('panel');
     }
     
+    if ($('.ajax', this.elLk.content).length) {
+      Ensembl.EventManager.trigger('createPanel', $('.ajax', this.elLk.content).parents('.js_panel')[0].id, 'Content');
+    }
+    
     this.setSelectAll();
     
     Ensembl.EventManager.trigger('validateForms', this.el);
