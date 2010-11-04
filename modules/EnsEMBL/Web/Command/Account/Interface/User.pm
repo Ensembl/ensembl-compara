@@ -21,11 +21,16 @@ sub process {
     display => 'Your details',
     edit    => 'Update your account'
   });
-  
+        
   ## Form elements
   $interface->modify_element('name',  { label => 'Your name',          required => 'yes' });
   $interface->modify_element('email', { label => 'Your email address', required => 'yes', notes => "You'll use this to log in to Ensembl", type => 'Email' });
-  $interface->element('subscription', { label => 'Ensembl Newsletters Subscription', name => 'subscription', value => 'Yes', notes => 'Tick the box if you wish to receive emails from Ensembl.', type => 'CheckBox' });
+  if ($object->function =~ /add/i) {
+    $interface->element('subscription', { label => 'Ensembl Newsletters Subscription', name => 'subscription', value => 'Yes', notes => 'Tick the box if you wish to receive emails from Ensembl.', type => 'CheckBox' });
+  }
+  else {
+    $interface->remove_element('subscription');
+  }
   $interface->extra_data('record_id');
   ## Honeypot fields, hidden from user
   $interface->element('surname', { type => 'Honeypot'});
