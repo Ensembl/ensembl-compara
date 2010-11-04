@@ -29,24 +29,6 @@ sub caption {
   return $caption;
 }
 
-sub availability {
-  my $self = shift;
-  my $hash = $self->get_availability;
-  
-  $hash->{'lrg'} = $self->object ? 1 : 0;
-
-  my $lrg = $self->object;
-  
-  if ($lrg) {
-    my $rows = $lrg->table_info($lrg->get_db, 'stable_id_event')->{'rows'};
-    $hash->{'either'}     = 1;
-    $hash->{'core'}       = $lrg->get_db eq 'core' ? 1 : 0;
-    $hash->{'regulation'} = $lrg->get_db('funcgen') ? $lrg->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
-  }
-  
-  return $hash;
-}
-
 sub counts {
   my $self = shift;
   my $hub = $self->hub;
@@ -69,13 +51,9 @@ sub counts {
   return $counts;
 }
 
-
 sub populate_tree {
   my $self = shift;
-
-  ## HACK THE AVAILABILITY, BECAUSE WE ARE MIXING OBJECT TYPES
-  my $has_lrg = $self->object ? 1 : 0;
-
+  
   $self->create_node('Genome', 'All LRGs',
     [qw(
       karyotype EnsEMBL::Web::Component::LRG::Genome 
@@ -88,31 +66,30 @@ sub populate_tree {
       summary     EnsEMBL::Web::Component::LRG::LRGSummary
       transcripts EnsEMBL::Web::Component::LRG::TranscriptsImage  
     )],
-    { 'availability' => $has_lrg }
+    { 'availability' => 'lrg' }
   );
 
   $self->create_node('Sequence', 'Sequence',
     [qw( exons EnsEMBL::Web::Component::LRG::LRGSeq )],
-    { 'availability' => $has_lrg}
+    { 'availability' => 'lrg' }
   );
 
   $self->create_node('Differences', 'Reference comparison',
     [qw( exons EnsEMBL::Web::Component::LRG::LRGDiff )],
-    { 'availability' => $has_lrg}
+    { 'availability' => 'lrg' }
   );
  
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
   $var_menu->append($self->create_node('Variation_LRG/Table', 'Variation Table',
     [qw( snptable EnsEMBL::Web::Component::LRG::LRGSNPTable )],
-    { 'availability' => $has_lrg }
+    { 'availability' => 'lrg' }
   ));
 
-  $var_menu->append($self->create_node('Variation_LRG/Image',  'Variation Image',
-    [qw( image EnsEMBL::Web::Component::LRG::LRGSNPImage )],
-    #{ 'availability' => $has_lrg }
-    { 'availability' => 0 }
-  ));
+#  $var_menu->append($self->create_node('Variation_LRG/Image',  'Variation Image',
+#    [qw( image EnsEMBL::Web::Component::LRG::LRGSNPImage )],
+#    { 'availability' => 'lrg' }
+#  ));
 
   # External Data tree, including non-positional DAS sources
   #my $external = $self->create_node('ExternalData', 'External Data',
@@ -124,7 +101,6 @@ sub populate_tree {
   #  [qw( manual_annotation EnsEMBL::Web::Component::Gene::UserAnnotation )],
   #  { 'availability' => 'gene' }
   #));
-  
   
   $self->create_subnode('Export', 'Export Gene Data',
     [qw( export EnsEMBL::Web::Component::Export::Gene )],

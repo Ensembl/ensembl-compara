@@ -162,18 +162,24 @@ sub _filename {
 
 sub availability {
   my $self = shift;
-  my $hash = $self->_availability;
-
-  if ($self->Obj->isa('Bio::EnsEMBL::LRGSlice')) {
-    my $rows = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
-    my $funcgen_db = $self->database('funcgen');
+  
+  if (!$self->{'_availability'}) {
+    my $availability = $self->_availability;
+    my $obj = $self->Obj;
     
-    $hash->{'lrg'}        = 1;
-    $hash->{'core'}       = $self->get_db eq 'core';
-    $hash->{'regulation'} = $funcgen_db && $self->table_info('funcgen', 'feature_set')->{'rows'}; 
+    if ($self->Obj->isa('Bio::EnsEMBL::LRGSlice')) {
+      my $rows = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
+      my $funcgen_db = $self->database('funcgen');
+      
+      $availability->{'lrg'}        = 1;
+      $availability->{'core'}       = $self->get_db eq 'core';
+      $availability->{'regulation'} = $funcgen_db && $self->table_info('funcgen', 'feature_set')->{'rows'}; 
+    }
+    
+    $self->{'_availability'} = $availability;
   }
   
-  return $hash;
+  return $self->{'_availability'};
 }
 
 sub analysis {
