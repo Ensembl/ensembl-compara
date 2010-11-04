@@ -33,31 +33,43 @@ sub init {
   my $configuration = $controller->configuration;
   my $hub           = $controller->hub;
   my $type          = $hub->type;
-  my $species_defs  = $hub->species_defs;
-  my @data          = ([ 'Info', 'Index', sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_NAME), 1 ]);
+  my $species_defs  = $hub->species_defs;  
+  my @data          = ($species_defs->valid_species($hub->species) ? {
+    class    => 'species',
+    type     => 'Info',
+    action   => 'Index',
+    caption  => sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_NAME),
+    dropdown => 1
+  } : {
+    class    => 'species',
+    caption  => 'Species',
+    disabled => 1,
+    dropdown => 1
+  });
   
   $self->init_history($hub, $builder) if $hub->user;
   $self->init_species_list($hub);
   
   foreach (@{$builder->ordered_objects}) {
     my $o = $builder->object($_);
-    push @data, [ $_, $o->default_action, $o->short_caption('global'), !!($self->{'history'}{lc $_} || $self->{'bookmarks'}{lc $_} || $_ eq 'Location') ] if $o;
+    push @data, { type => $_, action => $o->default_action, caption => $o->short_caption('global'), dropdown => !!($self->{'history'}{lc $_} || $self->{'bookmarks'}{lc $_} || $_ eq 'Location') } if $o;
   }
  
-  push @data, [ $object->type, $object->default_action, $object->short_caption('global')                     ] if $object && !@data;
-  push @data, [ $configuration->type, $configuration->default_action, $configuration->{'_data'}->{'default'} ] if $type eq 'Location' && !@data;
+  push @data, { type => $object->type,        action => $object->default_action,        caption => $object->short_caption('global')       } if $object && !@data;
+  push @data, { type => $configuration->type, action => $configuration->default_action, caption => $configuration->{'_data'}->{'default'} } if $type eq 'Location' && !@data;
   
   foreach my $row (@data) {
-    next if $row->[0] eq 'Location' && $type eq 'LRG';
+    next if $row->{'type'} eq 'Location' && $type eq 'LRG';
     
-    my $class = $row->[0] eq 'Info' ? 'species' : lc $row->[0];
+    my $class = $row->{'class'} || lc $row->{'type'};
     
     $self->add_entry({
-      type     => $row->[0], 
-      caption  => $row->[2],
-      url      => $hub->url({ type => $row->[0], action => $row->[1] }),
-      class    => $class . ($row->[0] eq $type ? ' active' : ''),
-      dropdown => $row->[3] ? $class : ''
+      type     => $row->{'type'}, 
+      caption  => $row->{'caption'},
+      url      => $hub->url({ type => $row->{'type'}, action => $row->{'action'} }),
+      class    => $class . ($row->{'type'} eq $type ? ' active' : ''),
+      dropdown => $row->{'dropdown'} ? $class : '',
+      disabled => $row->{'disabled'}
     });
   }
 }
@@ -132,12 +144,17 @@ sub content {
     my $short_link   = qq{<a href="$entry->{'url'}" title="$name"$constant>$short_name</a>};
     my $long_link    = qq{<a href="$entry->{'url'}"$constant>$name</a>};
     
+    if ($entry->{'disabled'}) {
+      my $span = $entry->{'dropdown'} ? qq{<span class="disabled toggle" title="$entry->{'dropdown'}">} : '<span class="disabled">';
+      $_ = qq{$span$name</span>} for $short_link, $long_link;
+    }
+    
     if ($entry->{'dropdown'}) {
       # Location tab always has a dropdown because its history can be changed dynamically by the slider navigation.
       # Hide the toggle arrow if there are no bookmarks or history items for it.
       my @hide = $entry->{'type'} eq 'Location' && !($self->{'history'}{'location'} || $self->{'bookmarks'}{'location'}) ? (' empty', ' style="display:none"') : ();
-      $_       = qq{<span class="dropdown$hide[0]">$_<a class="toggle" href="#" rel="$entry->{'dropdown'}"$hide[1]>&#9660;</a></span>} for $short_link, $long_link;
       $history = 1;
+      $_       = qq{<span class="dropdown$hide[0]">$_<a class="toggle" href="#" rel="$entry->{'dropdown'}"$hide[1]>&#9660;</a></span>} for $short_link, $long_link;
     }
     
     $short_tabs .= qq{<li class="$entry->{'class'} short_tab"$style[0]>$short_link</li>};
