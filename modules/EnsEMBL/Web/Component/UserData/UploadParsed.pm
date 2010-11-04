@@ -18,7 +18,7 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub  = $self->hub;
-  my $url  = $self->ajax_url('ajax', 1) . ';r=' . $hub->referer->{'params'}->{'r'}[0] . ';code=' .  $hub->param('code');
+  my $url  = $self->ajax_url('ajax', 1) . ';r=' . $hub->referer->{'params'}->{'r'}[0] . ';code=' .  $hub->param('code') . ';update_panel=1';
 
   return qq{<div class="ajax"><input type="hidden" class="ajax_load" value="$url" /></div><div class="modal_reload"></div>};
 }
