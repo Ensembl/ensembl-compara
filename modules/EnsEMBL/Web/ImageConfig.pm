@@ -1840,7 +1840,7 @@ sub add_variation_feature {
     caption     => 'All Structural variants',
     sources     => undef,
     strand      => 'r', 
-    depth       => 0.5,
+    depth       => 5,
     bump_width  => 0,
     colourset   => 'structural_variant',
     description => 'Structural variants from all sources',
