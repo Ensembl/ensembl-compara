@@ -32,6 +32,7 @@ sub new {
     [ 'Marker',               'm'   ],
     [ 'LRG',                  'lrg' ],
     [ 'StructuralVariation',  'sv'  ],
+    [ 'GeneTree',             'gt'  ],
   ];
   
   my $object_types    = { map { $_->[0] => $_->[1] } @$object_params };
