@@ -29,6 +29,8 @@ sub content {
   my $width         = $hub->param('context') || 30000;
   my %mappings      = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my $v;
+  my $var_slice;
+  my $html;
   
   if (keys %mappings == 1) {
     ($v) = values %mappings;
@@ -46,8 +48,29 @@ sub content {
   my $seq_region = $v->{'Chr'};
   my $start = $v->{'start'} <= $v->{'end'} ? $v->{'start'} : $v->{'end'};
   my $end = $v->{'start'} << $v->{'end'} ? $v->{'end'} : $v->{'start'};   
-  $start -= ($width/2); 
-  $end += ($width/2);
+  my $length =  ($end - $start) +1;
+
+  if ($length>= 30000 ){
+    my $location = $seq_region.':'.$start.'-'.$end;
+    $end = $start + 30000 -1; 
+    $var_slice = 1;
+    my $overview_link = $hub->url({
+      type   => 'Location',
+      action => 'Overview',
+      r      => $location,
+      sv     => $object->name
+    });
+    $overview_link .=';cytoview=variation_feature_structural=normal';
+    my $warning_text = '<p>This '.$object->type.' is too large to display in full, this image and tables below contain only the information relating to the first 30 Kb of the feature. To see the full length structural variation please use the <a href="'.$overview_link.'">region overview</a> display.</p>';
+ 
+   $html .= $self->_info(
+      $object->type . ' has been truncated',
+      $warning_text
+    );
+  } else {
+    $start -= ($width/2); 
+    $end += ($width/2);
+  }
   my $seq_type = $v->{'type'};
   my $slice      = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $start, $end, 1);
   my $sliceObj   = $self->new_object('Slice', $slice, $object->__data);
@@ -76,9 +99,9 @@ sub content {
   $image->{'panel_number'} = 'transcript';
   $image->set_button('drag', 'title' => 'Drag to select region');
  
-  my $html = $image->render;
+  $html .= $image->render;
  
-  my $var_slice = $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
+  $var_slice = 1 ? $slice  : $slice_adaptor->fetch_by_region($seq_type, $seq_region, $v->{'start'}, $v->{'end'}, 1);
   
   $html .= '<h2>Overlapping features</h2>';
   
