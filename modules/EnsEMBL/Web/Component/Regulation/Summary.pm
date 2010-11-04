@@ -24,12 +24,11 @@ sub content {
     'r'      => $object->seq_region_name.':'.$object->bound_start.'-'.$object->bound_end
   });
 
-  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a> %s.',
+  my $location_html = sprintf( '<a href="%s">%s: %s-%s</a>',
     $url,
     $object->neat_sr_name( $object->seq_region_type, $object->seq_region_name ),
     $object->thousandify( $object->seq_region_start ),
     $object->thousandify( $object->seq_region_end ),
-    $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );  
   $html .= qq(
     <dl class="summary">
