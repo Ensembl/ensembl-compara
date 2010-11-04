@@ -252,6 +252,12 @@ sub content {
         value        => $selected_vf, # default to selected_vf
       );
       
+      # add submit
+      $form->add_element(
+        type         => 'Submit',
+        value        => 'Go',
+      );
+      
       # add hidden values for all other params
       my %params = %{$self->hub->core_params};
       foreach my $param(keys %params) {
@@ -271,9 +277,6 @@ sub content {
       
       # strip off unwanted HTML layout tags from form
       $loc_html =~ s/\<\/?(div|tr|th|td|table|tbody|fieldset)+.*?\>\n?//g;
-      
-      # add onchange event to select
-      $loc_html =~ s/\<select/$&.' onchange="this.form.submit()"'/e;
       
       # insert text
       $loc_html =~ s/\<form.*?\>/$&.'<span style="font-weight: bold;">Selected location: <\/span>'/e;
