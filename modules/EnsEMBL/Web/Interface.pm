@@ -243,6 +243,10 @@ sub modify_element {
   }
 }
 
+sub remove_element {
+  my ($self, $name) = @_;
+  delete $self->elements->{ $name } if $name && exists $self->elements->{ $name };
+}
 
 
 ## Other functions
