@@ -46,15 +46,15 @@ sub content {
   $self->caption($hub->param('label'));
   
   foreach (keys %{$features->{$logic_name}->{'features'}}) {
-    my $hubs = $features->{$logic_name}->{'features'}->{$_}->{'objects'};
+    my $objects = $features->{$logic_name}->{'features'}->{$_}->{'objects'};
     
-    next unless scalar @$hubs;
+    next unless scalar @$objects;
     
     my $nearest_feature = 1;    # Initialise so it exists
     my $nearest         = 1e12; # Arbitrary large number
     my ($left, $right, $min, @feat);
     
-    foreach (@$hubs) {
+    foreach (@$objects) {
       $left  = $_->seq_region_start - $click_start;
       $right = $click_end - $_->seq_region_end;
       
