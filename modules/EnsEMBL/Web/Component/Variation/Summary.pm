@@ -240,7 +240,7 @@ sub content {
       }
       
       # create form
-      my $url = $object->_url({ vf => undef, v => $id, source => $source, });
+      my $url = $hub->url({ vf => undef, v => $id, source => $source, });
       my $form  = new EnsEMBL::Web::Form('select_loc', $url, 'get', 'nonstd check');
       
       # add dropdown
