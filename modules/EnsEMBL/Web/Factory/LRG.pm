@@ -1,8 +1,8 @@
+# $Id$
+
 package EnsEMBL::Web::Factory::LRG;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
@@ -23,7 +23,11 @@ sub createObjects {
     
     eval { $slice = $adaptor->fetch_by_region('LRG', $identifier); }; ## Get the slice
     
-    $self->DataObjects($self->new_object('LRG', $slice, $self->__data)) if $slice;
+    if ($slice) {
+      $self->DataObjects($self->new_object('LRG', $slice, $self->__data));
+    } else {
+      $self->delete_param('lrg');
+    }
   }
 }
 
