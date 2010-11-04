@@ -65,13 +65,16 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     }
     
     // Show the relevant dropdown when a toggle link is clicked
-    $('.toggle', tabs).bind('click', function () {
-      var dropdown = panel.elLk.dropdowns.filter('.' + this.rel);
+    $('.toggle', tabs).each(function () {
+      $(this).data('cls', '.' + (this.rel || this.title)).removeAttr('title');
+    }).bind('click', function () {
+      var cls      = $(this).data('cls');
+      var dropdown = panel.elLk.dropdowns.filter(cls);
       
       panel.dropdownPosition(dropdown, $(this).parents('li'));
       dropdown.not(':visible').css('zIndex', panel.zIndex++).end().toggle(); 
-      panel.elLk.allTabs.filter('.' + this.rel).find('a.toggle').html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
-      dropdown.data('type', '.' + this.rel); // Cache the selector to find the tab for use later
+      panel.elLk.allTabs.filter(cls).find('a.toggle').html(dropdown.is(':visible') ? '&#9650;' : '&#9660;'); // Change the toggle arrow from up to down or vice versa
+      dropdown.data('type', cls); // Cache the selector to find the tab for use later
       
       dropdown = null;
       
