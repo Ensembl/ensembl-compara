@@ -233,7 +233,7 @@ sub update_user_history {
       
       $name .= ': ' . ($display_xref ? $display_xref->display_id : $value);
     } else {
-      $name .= ": $value";
+      $name .= $name ? ": $value" : $value;
     }
     
     my $name_check = grep { $_->{'name'} eq $name } @type_history;
