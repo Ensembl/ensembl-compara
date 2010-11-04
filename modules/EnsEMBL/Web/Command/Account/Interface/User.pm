@@ -26,10 +26,10 @@ sub process {
   $interface->modify_element('name',  { label => 'Your name',          required => 'yes' });
   $interface->modify_element('email', { label => 'Your email address', required => 'yes', notes => "You'll use this to log in to Ensembl", type => 'Email' });
   if ($object->function =~ /add/i) {
-    $interface->element('subscription', { label => 'Ensembl Newsletters Subscription', name => 'subscription', value => 'Yes', notes => 'Tick the box if you wish to receive emails from Ensembl.', type => 'CheckBox' });
+    $interface->modify_element('subscription', { label => 'Ensembl Newsletters Subscription', name => 'subscription', value => 'Yes', notes => 'Tick the box if you wish to receive emails from Ensembl.', type => 'CheckBox' });
   }
   else {
-    $interface->remove_element('subscription');
+    $interface->modify_element('subscription', { name => 'subscription', value => 'Yes', type => 'Hidden' });
   }
   $interface->extra_data('record_id');
   ## Honeypot fields, hidden from user
