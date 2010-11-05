@@ -475,6 +475,12 @@ sub _summarise_funcgen_db {
     my $T = eval($A);
 
     $T = {} unless ref($T) eq 'HASH';
+    # hack to split cisRED/miRanda tracks until db is patched
+    if ($T->{'key'} eq 'feature_set'){  
+      $T->{'key'} = undef; 
+      $T->{'name'} = undef;
+    }
+
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
