@@ -38,7 +38,8 @@ sub content {
   $image_config_cell_line->set_parameters({
     'container_width'   => $object_slice->length,
     'image_width',      => $self->image_width || 800,
-    'opt_highlight'    => $object->param('opt_highlight'),
+    'slice_number',     => '2|1',
+    'opt_highlight'     => $object->param('opt_highlight'),
     'opt_empty_tracks'  => $object->param('opt_empty_tracks')
   });
 
@@ -56,7 +57,8 @@ sub content {
   $wuc_regulation_bottom->set_parameters({
       'container_width'   => $object_slice->length,
       'image_width',      => $self->image_width || 800,
-      'opt_highlight'    => $object->param('opt_highlight')
+      'slice_number'      => '3|1',
+      'opt_highlight'     => $object->param('opt_highlight')
     });
   $wuc_regulation_bottom->{'fg_regulatory_features_legend_features'}->{'fg_regulatory_features'} = {'priority' =>1020, 'legend' => [] };
   push @containers_and_configs, $object_slice, $wuc_regulation_bottom; 

@@ -24,6 +24,10 @@ sub init {
     other          => 'Decorations',
   );
 
+  $self->add_tracks('other',
+    [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }]
+  );
+
   $self->load_tracks;
 
   $self->modify_configs(
