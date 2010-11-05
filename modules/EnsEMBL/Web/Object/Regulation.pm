@@ -426,6 +426,7 @@ sub get_focus_set_block_features {
   my %data;
   
   foreach (@{$self->Obj->get_focus_attributes}) { 
+    next if $_->isa('Bio::EnsEMBL::Funcgen::MotifFeature');
     my $unique_feature_set_id      = $_->feature_set->cell_type->name . ':' . $_->feature_set->feature_type->name;
     $data{$unique_feature_set_id} = $_->feature_set->get_Features_by_Slice($slice); 
   }
