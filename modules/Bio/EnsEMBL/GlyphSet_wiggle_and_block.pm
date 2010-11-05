@@ -98,7 +98,7 @@ sub draw_block_features {
     my $midpoint =  $f->summit;
     $start = 1 if $start < 1; 
     $end   = $length if $end > $length;  
-    my $y = $self->_offset; 
+    my $y = $self->_offset;
     $self->push($self->Rect({
       'x'         => $start -1,
       'y'         => $y,
@@ -106,7 +106,8 @@ sub draw_block_features {
       'width'     => $end - $start,
       'absolutey' => 1,          # in pix rather than bp
       'colour'    => $colour,
-      'href'     => $self->block_features_zmenu($f, $score),
+      'href'      => $self->block_features_zmenu($f, $score),
+      'class'     => 'group',
     }));
     if ($display_pwm) { 
       my @loci = @{$f->get_underlying_structure}; 
@@ -127,6 +128,18 @@ sub draw_block_features {
     }
     if ($midpoint && $display_summit){
       $midpoint -= $self->{'container'}->start;
+=cut
+      my $triangle_end   =  $midpoint-1 - 2;
+      my $triangle_start =  $midpoint-1 + 2;
+      $self->push($self->Poly({
+        'points'    => [ $triangle_start, $h+2,
+                         $midpoint-1, $h-1,
+                         $triangle_end, $h+2  ],
+        'colour'    => $colour,
+        'absolutex' => 1,
+        'absolutey' => 1,
+      }));
+=cut
       my $m_colour = $self->{'config'}->colourmap->mix('white', $colour, '0.25');
       $self->push($self->Rect({
         'x'         => $midpoint-0.5,
@@ -135,6 +148,7 @@ sub draw_block_features {
         'width'     => 1,
         'absolutey' => 1,          # in pix rather than bp
         'colour'    => $m_colour,
+        'class'     => 'group',
       }));
     }
   }
