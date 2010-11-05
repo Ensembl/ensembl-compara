@@ -30,8 +30,8 @@ sub content {
   my $html;
   my $form = $self->modal_form('select', $action_url,);
   $form->add_notes({ 
-    'heading'=>'Variant and SNP Effect Predictor:',
-    'text'=>qq(<p class="space-below">This tool takes a list of variant positions and alleles, and predicts the effects of each
+    'heading'=>'Variant Effect Predictor:',
+    'text'=>qq(<p class="space-below">(Formerly SNP Effect Predictor). This tool takes a list of variant positions and alleles, and predicts the effects of each
               of these on any overlapping features (transcripts, regulatory features) annotated in Ensembl.</p>
               <p class="space-below">The tool will accept substitutions, insertions and deletions as input,
               uploaded as a list of tab separated values - for more information 
