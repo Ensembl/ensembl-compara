@@ -1103,15 +1103,15 @@ sub species_path {
   my $url = $self->{'_species_paths'}->{$species};
   return $url if $url;
   
-  my $local       = grep $species, $self->valid_species; ## Is this species found on this site?
+  my $local       = grep { $_ eq $species} $self->valid_species; ## Is this species found on this site?
   my $is_bacteria = $self->ENSEMBL_SITETYPE =~ /acteria/ ? 1 : 0;
-  
+
   if ($local && !$is_bacteria) {
     $url = "/$species";
   } else { 
     ## At the moment the mapping between species name and its source (full url) is stored in DEFAULTs.ini
     ## But it really should come from somewhere else ( compara db ? another registry service ? )
-
+      
     my $current_species = $self->production_name;
     $current_species    = $self->ENSEMBL_PRIMARY_SPECIES if $current_species eq 'common';
     my $site_hash       = $self->ENSEMBL_SPECIES_SITE($current_species)  || $self->ENSEMBL_SPECIES_SITE;
@@ -1189,8 +1189,7 @@ sub production_name {
       my %sdrhash = map { $sdhash->{$_} => $_ } keys %{$sdhash || {}};
 
       (my $with_spaces  = $species) =~ s/_/ /g;
-      my $sname = $self->SPECIES_PRODUCTION_NAME($sdrhash{$species} || $sdrhash{$with_spaces} || $nospaces);
-      $sname ||= $self->SYSTEM_NAME($sdrhash{$species} || $sdrhash{$with_spaces} || $nospaces);
+      my $sname = $sdrhash{$species} || $sdrhash{$with_spaces};
       return $sname if $sname;
     }
 
