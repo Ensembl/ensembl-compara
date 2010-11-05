@@ -5,7 +5,6 @@ use base qw(Bio::EnsEMBL::GlyphSet);
 
 use Sanger::Graphics::Bump;
 
-
 sub features {
   return [];
 } 
@@ -25,7 +24,12 @@ sub title {
 sub href {
   return;
 }
+
 sub tag {
+  return;
+}
+
+sub class {
   return;
 }
 
@@ -246,7 +250,7 @@ sub _init {
         'width'      => $end - $start + 1,
         'height'     => 0,
         "colour"     => $colours->{'feature'},
-        'absolutey'  => 1
+        'absolutey'  => 1,
       }));
     } elsif( $colours->{'part'} eq 'invisible' ) {
       $composite->push( $self->Space({
@@ -267,14 +271,14 @@ sub _init {
           'absolutey'  => 1,
           'absolutez'  => 1,
       }) );
-    } else {
+    } else { 
       $composite->push( $self->Rect({
         'x'          => $start-1,
         'y'          => 0,
         'width'      => $end - $start + 1,
         'height'     => $h,
         $colours->{'part'}."colour" => $colours->{'feature'},
-        'absolutey'  => 1
+        'absolutey'  => 1,
       }) );
     }
     my $rowheight = int($h * 1.5);
@@ -372,14 +376,12 @@ sub _init {
         next if $tag->{'end'}   < 0;
         my $s = $tag->{'start'} < 1 ? 1 : $tag->{'start'};
         my $e = $tag->{'end'}   > $slice_length ? $slice_length : $tag->{'end'}; 
-        my $class = $tag->{'class'} ? $tag->{'class'} : undef;
         $composite->push($self->Rect({
           'x'          => $s-1,
           'y'          => 0,
           'width'      => $e-$s+1,
           'height'     => $h,
           "colour"     => $tag->{'colour'},
-          'class'      => $class,
           'absolutey'  => 1
         }));
       } elsif($tag->{'style'} eq 'box') {
@@ -683,6 +685,7 @@ sub _init {
     if($navigation) {
       $composite->{'title'} = $self->title( $f ) if $self->can('title');
       $composite->{'href'}  = $self->href(  $f ) if $self->can('href');
+      $composite->{'class'} = $self->class(  $f ) if $self->can('class');
     }
     
     ## Are we going to bump ?
