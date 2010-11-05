@@ -28,17 +28,6 @@ use base qw(EnsEMBL::Web::Object);
 
 our $MEMD = new EnsEMBL::Web::Cache;
 
-sub _filename {
-  my $self = shift;
-  my $name = sprintf '%s-variation-%d-%s-%s',
-    $self->species,
-    $self->species_defs->ENSEMBL_VERSION,
-    'variation',
-    $self->name;
-  $name =~ s/[^-\w\.]/_/g;
-  return $name;
-}     
-
 sub availability {
   my $self = shift;
   
@@ -68,13 +57,14 @@ sub availability {
 
 sub counts {
   my $self = shift;
-  my $obj = $self->Obj;
+  my $obj  = $self->Obj;
+  my $hub  = $self->hub;
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
-  my $key = '::Counts::Variation::'.
-            $self->species                         .'::'.
-            $self->hub->core_param('vdb') .'::'.
-            $self->hub->core_param('v')   .'::';
+
+  my $vf  = $hub->param('vf');
+  my $key = sprintf '::Counts::Variation::%s::%s::%s::', $self->species, $hub->param('vdb'), $hub->param('v');
+  $key   .= $vf . '::' if $vf;
 
   my $counts = $self->{'_counts'};
   $counts ||= $MEMD->get($key) if $MEMD;
