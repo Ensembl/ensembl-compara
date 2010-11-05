@@ -64,10 +64,14 @@ sub init {
     [qw(gene_legend)],
     {qw(display off)}
   );
-  $self->modify_configs(
-    [qw(regulatory_regions_funcgen_feature_set)],
-    {qw(depth 25 height 6)}
-  );
+
+  my @feature_sets = ( 'cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
+  foreach my $f_set (@feature_sets){
+    $self->modify_configs(
+      ['regulatory_regions_funcgen_'. $f_set],
+      {qw(depth 25 height 6)}
+    );
+  }
 
   # Turn off cell line wiggle tracks
   my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};

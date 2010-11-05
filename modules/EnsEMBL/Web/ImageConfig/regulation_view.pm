@@ -52,10 +52,15 @@ sub init {
     [ 'functional' ],
     { display => 'off', menu => 'no' }
   );
-  $self->modify_configs(
-    [qw(regulatory_regions_funcgen_feature_set)],
-    {qw(menu yes)}
-  );
+
+  my @feature_sets = ( 'cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
+  foreach my $f_set (@feature_sets){
+    $self->modify_configs(
+      ['regulatory_regions_funcgen_'. $f_set],
+      {qw(menu yes)}
+    );
+  }
+
   $self->modify_configs(
     [qw(regulatory_regions_funcgen_search)],
     {qw(menu yes)}
