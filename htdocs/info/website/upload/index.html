@@ -300,10 +300,10 @@ file with
 Alternatively, data sets could be directly pasted into the box provided.
 </p>
 
-<h2 id="Consequence">SNP effect Data</h2>
+<h2 id="Consequence">Variant effect Data</h2>
 
 <p>
-The 'SNP Effect Predictor' tool which appears as an option when you
+The 'Variant Effect Predictor' tool which appears as an option when you
 click on <strong>Manage your Data</strong> allows you to upload a set of 
 variation data and predict the effect of the variants. This requires the 
 data to be uploaded in a very simple <strong>tab-separated</strong> format, 
@@ -343,6 +343,15 @@ example, a three base pair deletion of nucleotides 12600, 12601, and
 
 <pre>
 8   12600     12602     CGT/- -
+</pre>
+
+<p>An unbalanced substitution (such as replacing 3 nucleotides with 5) is
+indicated in a similar manner, with the coordinates denoting the bases covered
+by the reference allele. For example, substituting the the 3 nucleotides 12600,
+12601, and 12602 of the forward strand of chromosome 8 with CTGTC:</p>
+
+<pre>
+8   12600     12602     CGT/CTGTC +
 </pre>
 
 <!-- 5,140532,140532,T/C,+
