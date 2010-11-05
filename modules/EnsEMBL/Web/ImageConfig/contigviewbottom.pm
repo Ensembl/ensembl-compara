@@ -138,10 +138,14 @@ sub init {
     [ 'alignment_compara_436_constrained' ],
     { qw(display compact) }
   );
-  $self->modify_configs(
-    [qw(regulatory_regions_funcgen_feature_set)],
-    {qw(depth 25 height 6)}
-  );
+
+  my @feature_sets = ( 'cisRED', 'VISTA', 'miRanda', 'NestedMICA', 'REDfly CRM', 'REDfly TFBS');
+  foreach my $f_set (@feature_sets){
+    $self->modify_configs(
+      ['regulatory_regions_funcgen_'. $f_set],
+      {qw(depth 25 height 6)}
+    );
+  }
 
   # Enable cell line displays 
   my @cell_lines =  sort keys %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
