@@ -1,5 +1,6 @@
 #wide-footer { clear: both; text-align: center; font-size: 0.9em; padding: 2px 0; margin: 0.5em 0 0 0; }
 #footer { clear: both; text-align: center; font-size: 0.9em; padding: 2px 0; margin: 0.5em 0 0 16em; }
+body.static #footer { margin-left: 22em; }
 @media print {
   #footer { clear: both; text-align: center; font-size: 0.9em; padding: 2px 0; margin: 0.5em 0 0 0; }
 }
