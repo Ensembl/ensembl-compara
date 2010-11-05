@@ -10,11 +10,15 @@ sub get_feature_sets {
   my ($self, $fg_db) = @_;
   my @fsets;
   my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
+  my $logic_name = $self->my_config('logic_name') || $self->my_config('description'); 
 
+  if ($logic_name =~/Nested/){$logic_name = 'BioTIFFIN';} 
   my @sources = @{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'}};
   foreach my $name ( @sources){ 
     next if  $name =~ /cisRED\s+search\s+regions/;
-    push @fsets, $feature_set_adaptor->fetch_by_name($name);
+    if ($name =~/$logic_name/ || $logic_name =~/$name/ ) {
+      push @fsets, $feature_set_adaptor->fetch_by_name($name);
+    }
   }
   
   return \@fsets;
