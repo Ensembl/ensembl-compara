@@ -65,7 +65,7 @@ sub process {
     my @skip = qw(_type source feature_type score frame);
     my $skip = join('|', map {'^'.$_.'$'} @skip);
     
-    my $exporter = new EnsEMBL::Web::Component::Export;
+    my $exporter = new EnsEMBL::Web::Component::Export($self->hub);
     $exporter->{'config'} = {
       format => 'gff',
       delim  => "\t"

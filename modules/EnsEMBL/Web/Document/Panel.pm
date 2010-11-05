@@ -372,7 +372,7 @@ sub component_content {
     ### Attempt to require the Component module
     if ($self->dynamic_use($module_name)) {
       eval {
-        $component = $module_name->new($builder, $self->renderer);
+        $component = $module_name->new($hub, $builder, $self->renderer);
       };
       
       if ($@) {
@@ -450,7 +450,7 @@ sub das_content {
     
     if ($self->dynamic_use($module_name)) {
       eval {
-        $xml = $module_name->new($builder)->$func;
+        $xml = $module_name->new($self->{'hub'}, $builder)->$func;
       };
       
       $self->component_failure($@, 'das_features', $function_name) if $@;
