@@ -525,8 +525,8 @@ sub _sort_similarity_links {
       
       my $url = $self->hub->url({
         type     => 'Transcript',
-        action   => 'Similarity',
-        fucntion => 'Align',
+        action   => 'Similarity/Align',
+        #fucntion => 'Align',
         sequence => $seq_arg,
         extdb    => lc $externalDB
       });
