@@ -30,6 +30,7 @@ sub new {
   my $class = shift;
   
   my $self = {
+    hub      => shift,
     builder  => shift,
     renderer => shift,
     id       => [split /::/, $class]->[-1] . 'Panel'
@@ -47,9 +48,9 @@ sub id {
   return $self->{'id'};
 }
 
-sub builder  { return $_[0]->{'builder'};      }
-sub hub      { return $_[0]->{'builder'}->hub; }
-sub renderer { return $_[0]->{'renderer'};     }
+sub builder  { return $_[0]->{'builder'};  }
+sub hub      { return $_[0]->{'hub'};      }
+sub renderer { return $_[0]->{'renderer'}; }
 
 sub content_pan_compara {
   my $self = shift;
