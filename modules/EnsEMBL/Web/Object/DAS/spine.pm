@@ -51,7 +51,7 @@ sub Features {
   $self->{'templates'}{'sequence_URL'}  = sprintf( '%s%s/Gene/Sequence?g=%%s;db=%%s',   $base_url,       $self->species_defs->species_path($self->real_species ));
 
 
-  my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen');
+  my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen', 'compara_pan_ensembl');
 
   my $sversion = $self->species_defs->SITE_RELEASE_VERSION ||  $self->species_defs->ENSEMBL_VERSION;
   my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME;
@@ -60,7 +60,7 @@ sub Features {
   my $enote1 = $self->species_defs->SITE_MISSION || qq{ The Ensembl project produces genome databases for vertebrates and other eukaryotic species, and makes this information freely available online.}; 
 
   my $enote2 = sprintf qq{
-      Current release %s ( %s ) of %s provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, $sdate, $slabel, scalar($self->species_defs->valid_species);
+      The current release %s ( %s ) of the %s provides access to the genomic, comparative, functional and variation data from %d species.}, $sversion, $sdate, $slabel, scalar($self->species_defs->valid_species);
 
   my $ef = {
               'ID'          => "ensembl",
@@ -121,7 +121,8 @@ sub Features {
 	  };
 
 	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $f;
-
+if (0) {
+# Dont send the gene summary image - it will be replaced by karyotype image
 	  my $fi = {
 	      'ID'          => "image:".$gene->stable_id,
 	      'LABEL'       => "Image ".$gene_name,
@@ -134,8 +135,8 @@ sub Features {
 	      
 	  };
 
-# Dont send the gene summary image - it will be replaced by karyotype image
-#	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $fi;
+	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $fi;
+}
 
 
 	  $mcimage = {
@@ -150,14 +151,14 @@ sub Features {
 	      
 	  };
 
-
 	  my $notes;
 
+	  push @$notes, sprintf ("%s spans %d bps of %s %s from %d to %d.", $gene_name, ($gene->seq_region_end - $gene->seq_region_start), $gene->slice->coord_system()->name, $gene->slice->seq_region_name, $gene->seq_region_start, $gene->seq_region_end);
 
+	  my $tnum =  scalar(@{ $gene->get_all_Transcripts });
+	  my $enum = scalar(@{ $gene->get_all_Exons });
 
-	  push @$notes, sprintf ("%s spans %d bp of %s %s from %d to %d.", $gene_name, ($gene->seq_region_end - $gene->seq_region_start), $gene->slice->coord_system()->name, $gene->slice->seq_region_name, $gene->seq_region_start, $gene->seq_region_end);
-
-	  push @$notes, sprintf ("%s has %d transcripts containing a total of %d exons on the %s strand.", $gene_name, scalar(@{ $gene->get_all_Transcripts }),  scalar(@{ $gene->get_all_Exons }), $gene->strand > 0 ? 'forward' : 'reverse' );
+	  push @$notes, sprintf ("%s has %d transcript%s containing a total of %d exon%s on the %s strand.", $gene_name, $tnum, $tnum > 1 ? 's' : '',  $enum, $enum > 1 ? 's' : '', $gene->strand > 0 ? 'forward' : 'reverse' );
 
 	  if ($gene->can('analysis') && $gene->analysis && $gene->analysis->description) {
 	      push @$notes, $gene->analysis->description;
@@ -185,24 +186,28 @@ sub Features {
 	      my $fs = $gene->feature_Slice();
 	      my $snps = $fs->get_all_VariationFeatures;
 	      my $notes1;
-	      push @$notes1, sprintf ("%s has %d SNPs.", $gene_name, scalar(@{ $snps }));
+	      my $snum = scalar (@{ $snps });
+
+	      push @$notes1, sprintf ("%s has %s SNP%s.", $gene_name, $snum || 'no', $snum == 1 ? '' : 's');
 	  
 	      my $s2 = {
 		  'ID'          => "var_summary:".$gene->stable_id,
 		  'LABEL'       => "Variations",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes1,
-		  'LINK' => [
+		  'LINK' => $snum > 0 ? [
 			     { 'text' => "View sequence variations such as polymorphisms, along with genotypes and disease associations in $slabel.",
 			       'href' => sprintf( $self->{'templates'}{'varview_URL'}, $gene->stable_id, 'core' ),
 			   }
-			     ],
+			     ] : [],
 	      
 	      };
+	      
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s2;
 	  }
 
-	  if (my $cmpdb = $h->{'compara'}) {
+
+	  if (my $cmpdb = $h->{'compara_pan_ensembl'} || $h->{'compara'}) {
 	      my %homologues;
 	      my $member_adaptor = $cmpdb->get_adaptor('Member');
 	      my $query_member = $member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
@@ -222,8 +227,9 @@ sub Features {
 	      }
 
 	      my $notes2;
+	      my $onum = $hHash->{ortholog} || 0;
 
-	      push @$notes2, sprintf ("%s has %s orthologues.", $gene_name, $hHash->{ortholog} ?  $hHash->{ortholog} : 'no' );
+	      push @$notes2, sprintf ("%s has %s orthologue%s.", $gene_name, $onum || 'no', $onum == 1 ? '' : 's' );
 
 	  
 	      my $s3 = {
@@ -231,7 +237,7 @@ sub Features {
 		  'LABEL'       => "Orthologues",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes2,
-		  'LINK' =>  $hHash->{ortholog} ? [
+		  'LINK' =>  $onum ? [
 			     { 'text' => "View homology between species determined by a gene tree in $slabel.",
 			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Ortholog', $gene->stable_id, 'core' ),
 			   }
@@ -239,16 +245,16 @@ sub Features {
 	      };
 	      push @{$self->{_features}{$gene_id}{'FEATURES'}}, $s3;
 
+	      my $pnum = $hHash->{paralog};
 	      my $notes3;
-	      push @$notes3, sprintf ("%s has %s paralogues.", $gene_name, $hHash->{paralog} ? $hHash->{paralog} : 'no');
-
+	      push @$notes3, sprintf ("%s has %s paralogue%s.", $gene_name, $pnum || 'no', $pnum == 1 ? '' : 's' );
 	  
 	      my $s4 = {
 		  'ID'          => "paralogue_summary:".$gene->stable_id,
 		  'LABEL'       => "Paralogues",
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes3,
-		  'LINK' => $hHash->{paralog} ? [
+		  'LINK' => $pnum ? [
 			     { 'text' => "View homology arising from a duplication event, determined by a gene tree in $slabel.",
 			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Paralog', $gene->stable_id, 'core' ),
 			   }
@@ -268,7 +274,7 @@ sub Features {
 	      my $reg_feats = scalar(@{$feats || []});
 	      my $notes1;
 	      
-	      push @$notes1, sprintf ("There are %s regulatory elements located in the region of %s.", $reg_feats ? $reg_feats : 'no', $gene_name);
+	      push @$notes1, sprintf ("There %s %s regulatory element%s located in the region of %s.", $reg_feats == 1 ? 'is' : 'are', $reg_feats || 'no', $reg_feats == 1 ? '' : 's', $gene_name);
 	  
 	      my $s2 = {
 		  'ID'          => "fg_summary:".$gene->stable_id,
@@ -286,7 +292,6 @@ sub Features {
 	  }
 
 	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $mcimage if $mcimage;
-
       }
   }
 
