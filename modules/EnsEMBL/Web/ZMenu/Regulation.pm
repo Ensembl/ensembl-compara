@@ -63,6 +63,13 @@ sub content {
     label => $cell_line_specific_reg_object->get_attribute_list
   });
 
+  if ($cell_line_specific_reg_object->Obj->is_projected){
+    my $projected_html = "NOTE: This feature has been projected by the <a href='/info/docs/funcgen/index.html'>RegulatoryBuild</a>";
+    $self->add_entry({
+    label_html => $projected_html
+    });
+  }
+
   if (scalar (keys %motif_features) >> 0  ){
     # get region clicked on
     my $nearest_feature =1;
@@ -73,7 +80,7 @@ sub content {
 
     foreach my $motif (keys %motif_features ){
       my $motif_id = $motif;
-      ($left, $right) = split /\:/, $motif; warn $click_start;
+      ($left, $right) = split /\:/, $motif; 
       $left  -= $click_start;
       $right  = $click_end - $right;
 
