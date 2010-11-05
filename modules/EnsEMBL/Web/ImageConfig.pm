@@ -1542,8 +1542,8 @@ sub add_regulation_feature {
   my %all_data          = (%$data, %$data_a);
   my $fg_data           = \%all_data;
   
-  foreach my $key_2 (sort @all_keys) { 
-    my $k = $fg_data->{$key_2}{'type'} || 'other';    
+  foreach my $key_2 (sort @all_keys) {  
+    my $k = $fg_data->{$key_2}{'type'} || 'other';  
     next if $k eq 'other' || $k eq 'ctcf' || $k =~/histone/;
     
     my $render      = [ 'off' => 'Off', 'normal' => 'Normal' ];
@@ -1638,6 +1638,7 @@ sub add_regulation_feature {
         $menu->append($cell_line_menu);
       } 
     } else {
+      my $logic_name = $fg_data->{$key_2}{'logic_names'}->[0]; 
       $menu->append($self->create_track($k . '_' . $key . '_' . $key_2, $fg_data->{$key_2}{'name'} || $fg_data->{$key_2}{'logic_names'}, { 
         db          => $key,
         glyphset    => $k,
@@ -1649,6 +1650,7 @@ sub add_regulation_feature {
         description => $fg_data->{$key_2}{'description'},
         display     => $fg_data->{$key_2}{'display'} || 'off', 
         renderers   => $render, 
+        logic_name  => $logic_name,
       }));
     } 
 
