@@ -6,6 +6,10 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { return sprintf 'Reg. Features from cell line %s', $_[0]->my_config('cell_line'); }
 
+sub class {
+  return 'group';
+}
+
 sub features {
   my ($self) = @_;
   my $slice = $self->{'container'}; 
