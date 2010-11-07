@@ -39,8 +39,9 @@ sub content {
       [ 'reg_feats_core_MultiCell'],
       {qw(display compact)}
     );
-    my $focus_set_blocks = $object->get_focus_set_block_features($object_slice);
+    my ($focus_set_blocks, $colours) = $object->get_focus_set_block_features($object_slice);
     $wuc->{'data_by_cell_line'}{'MultiCell'}{'core'}{'block_features'} = $focus_set_blocks;
+    $wuc->{'data_by_cell_line'}{'colours'} = $colours; 
   }
 
   my $image    = $self->new_image( $object_slice, $wuc,[$object->stable_id] );
