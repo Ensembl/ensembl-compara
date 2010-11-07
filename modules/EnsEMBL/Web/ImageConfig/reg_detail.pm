@@ -36,6 +36,7 @@ sub init {
   );
 
   $self->add_tracks('other',
+    [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'fg_background_regulation', '', 'fg_background_regulation', { display => 'normal', tag => 0, strand => 'b', menu => 'no', colours => 'bisque' }],
     [ 'scalebar',                 '', 'scalebar',                 { display => 'normal', strand => 'b', name => 'Scale bar', description => 'Shows the scalebar' }],
     [ 'ruler',                    '', 'ruler',                    { display => 'normal', strand => 'b', name => 'Ruler',     description => 'Shows the length of the region being displayed' }]
