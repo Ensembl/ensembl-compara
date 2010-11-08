@@ -22,6 +22,20 @@ my $dbh = new EnsEMBL::Web::DBSQL::WebsiteAdaptor($hub)->db;
 my $sd  = $hub->species_defs;
 my $sth;
 
+$dbh->prepare(
+  'create table if not exists gene_autocomplete (
+    species       varchar(255) DEFAULT NULL,
+    stable_id     varchar(128) NOT NULL DEFAULT "",
+    display_label varchar(128) DEFAULT NULL,
+    db            varchar(32)  NOT NULL DEFAULT "core",
+    KEY i  (species, display_label),
+    KEY i2 (species, stable_id),
+    KEY i3 (species, display_label, stable_id)
+  )'
+)->execute;
+
+$dbh->prepare('truncate table gene_autocomplete')->execute;
+
 foreach my $species (@ARGV ? @ARGV : $sd->valid_species) {
   warn $species;
   
@@ -76,13 +90,8 @@ foreach my $species (@ARGV ? @ARGV : $sd->valid_species) {
   
   $insert =~ s/,$//;
   
-  $sth = $dbh->prepare("delete from gene_autocomplete where species = '$species'");
-  $sth->execute;
-  
-  if ($insert) {
-    $sth = $dbh->prepare("insert into gene_autocomplete (species, stable_id, display_label, db) values $insert");
-    $sth->execute;
-  }
+  $dbh->prepare("delete from gene_autocomplete where species = '$species'")->execute;
+  $dbh->prepare("insert into gene_autocomplete (species, stable_id, display_label, db) values $insert")->execute if $insert;
 }
 
 $dbh->disconnect;
