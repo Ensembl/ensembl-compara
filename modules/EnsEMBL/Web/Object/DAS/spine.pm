@@ -96,7 +96,8 @@ sub Features {
 
 	  push @{$self->{_features}{$gene_id}{'FEATURES'}}, $ef;
 
-	  my $description =  encode_entities( $gene->description() );
+	  my $description =  $gene->description() ;
+
 	  $description =~ s/\[.+// if ($description);
 
 	  if (length($description) > $MAX_LEN) {
