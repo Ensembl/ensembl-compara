@@ -33,6 +33,7 @@ sub init {
     multiple_align => 'Multiple alignments',
     variation      => 'Germline variation',
     other          => 'Decorations',
+    information    => 'Information'
   );
 
   $self->add_tracks('other',
