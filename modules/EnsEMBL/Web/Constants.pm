@@ -254,12 +254,14 @@ sub OTHER_MARKUP_OPTIONS {
 sub VARIATION_OPTIONS {
   return (
     'variation' =>  {
-      'opt_freq'      =>  [ 'on', 'By frequency' ],
-      'opt_cluster'   =>  [ 'on', 'By Cluster' ],
-      'opt_doublehit' =>  [ 'on', 'By doublehit' ],
-      'opt_submitter' =>  [ 'on', 'By submitter' ],
-      'opt_hapmap'    =>  [ 'on', 'Hapmap' ],
-      'opt_noinfo'    =>  [ 'on', 'No information' ],
+      'opt_freq'       =>  [ 'on', 'By frequency' ],
+      'opt_cluster'    =>  [ 'on', 'By Cluster' ],
+      'opt_doublehit'  =>  [ 'on', 'By doublehit' ],
+      'opt_submitter'  =>  [ 'on', 'By submitter' ],
+      'opt_hapmap'     =>  [ 'on', 'Hapmap' ],
+      'opt_1000Genome' =>  [ 'on', '1000 genomes' ],
+      'opt_precious'   =>  [ 'on', 'Precious variants' ],
+      'opt_noinfo'     =>  [ 'on', 'No information' ],
     }, 
     'class' =>  {
       'opt_class_in-del'                =>  [ 'on', 'In-dels' ],
