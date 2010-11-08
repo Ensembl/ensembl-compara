@@ -422,8 +422,7 @@ sub html_template {
   
   $html_tag = qq{<?xml version="1.0" encoding="utf-8"?>\n$html_tag} if $self->{'doc_type'} eq 'XHTML';
   
-  return qq{
-$html_tag
+  return qq{$html_tag
 <head>
   $head
 </head>
