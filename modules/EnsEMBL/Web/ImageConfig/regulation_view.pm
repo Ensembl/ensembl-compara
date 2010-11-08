@@ -70,6 +70,13 @@ sub init {
     [ 'transcript_core_ensembl' ],
     { display => 'collapsed_nolabel' }
   );
-
+  $self->modify_configs(
+    ['information'],
+    {qw(menu no display off)}
+  );
+  $self->modify_configs(
+    ['opt_empty_tracks'],
+    {qw(menu yes display off)}
+  );
 }
 1;
