@@ -148,18 +148,6 @@ sub draw_block_features {
         'colour'    => $colour,
         'absolutey' => 1,
       }));
-=cut
-      my $m_colour = $self->{'config'}->colourmap->mix('white', $colour, '0.25');
-      $self->push($self->Rect({
-        'x'         => $midpoint-0.5,
-        'y'         => $y,
-        'height'    => $h,
-        'width'     => 1,
-        'absolutey' => 1,          # in pix rather than bp
-        'colour'    => $m_colour,
-        'class'     => 'group',
-      })); 
-=cut
     }
   }
 
