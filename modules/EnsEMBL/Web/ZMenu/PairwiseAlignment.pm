@@ -166,7 +166,7 @@ sub content {
   }
   
   $sp1         =~ s/_/ /g;
-  $disp_method =~ s/BLASTZ_NET/BLASTz net/g;
+  $disp_method =~ s/(B?)LASTZ_NET/$1LASTz net/g;
   $disp_method =~ s/TRANSLATED_BLAT_NET/Trans. BLAT net/g;
   
   $self->caption("$sp1 - $disp_method");

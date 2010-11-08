@@ -64,7 +64,7 @@ sub init {
   );
   
   $self->add_options( 
-    [ 'opt_pairwise_blastz', 'BLASTz net pairwise alignments',          {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
+    [ 'opt_pairwise_blastz', 'BLASTz/LASTz net pairwise alignments',    {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
     [ 'opt_pairwise_tblat',  'Translated BLAT net pairwise alignments', {qw(off 0 normal normal compact compact)}, [qw(off Off normal Normal compact Compact)] ],
     [ 'opt_join_genes',      'Join genes', undef, undef, 'off' ]
   );

@@ -1352,9 +1352,9 @@ sub add_alignments {
       my $menu_key;
       my $description;
       
-      if ($row->{'type'} =~ /BLASTZ/) {
+      if ($row->{'type'} =~ /(B?)LASTZ/) {
         $menu_key    = 'pairwise_blastz';
-        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">BLASTz net pairwise alignments</a> between $self_label and $other_label};
+        $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">$1LASTz net pairwise alignments</a> between $self_label and $other_label};
       } elsif ($row->{'type'} =~ /TRANSLATED_BLAT/) {
         $menu_key    = 'pairwise_tblat';
         $description = qq{<a href="/info/docs/compara/analyses.html" class="cp-external">Trans. BLAT net pairwise alignments</a> between $self_label and $other_label};

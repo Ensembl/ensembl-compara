@@ -52,7 +52,7 @@ sub init {
     somatic          => 'Somatic Mutations',
     functional       => 'Functional genomics',
     multiple_align   => 'Multiple alignments',
-    pairwise_blastz  => 'BLASTZ alignments',
+    pairwise_blastz  => 'BLASTz/LASTz alignments',
     pairwise_tblat   => 'Translated blat alignments',
     pairwise_other   => 'Pairwise alignment',
     decorations      => 'Additional decorations',

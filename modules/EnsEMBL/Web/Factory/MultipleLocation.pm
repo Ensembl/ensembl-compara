@@ -243,7 +243,7 @@ sub best_guess {
   my $width = $slice->end - $slice->start + 1;
   my $production_species = $self->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   
-  foreach my $method (qw( BLASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
+  foreach my $method (qw( BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW BLASTZ_CHAIN )) {
     my ($seq_region, $cp, $strand);
     
     eval {

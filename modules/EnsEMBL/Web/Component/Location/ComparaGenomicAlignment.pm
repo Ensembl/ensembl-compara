@@ -25,7 +25,7 @@ sub content {
   my $dafa                     = $compara_db->get_DnaAlignFeatureAdaptor;
   my $disp_method              = $method;
   
-  $disp_method =~ s/BLASTZ_NET/BLASTz net/g;
+  $disp_method =~ s/(B?)LASTZ_NET/$1LASTz net/g;
   $disp_method =~ s/TRANSLATED_BLAT_NET/Trans. BLAT net/g;
   
   my $html;
