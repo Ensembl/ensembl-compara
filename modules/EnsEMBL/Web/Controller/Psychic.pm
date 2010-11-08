@@ -15,16 +15,15 @@ use EnsEMBL::Web::Hub;
 use base qw(EnsEMBL::Web::Controller);
 
 sub new {
-  my $class          = shift;
-  my $r              = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $session_cookie = ref $_[0] eq 'HASH' ? undef : shift;
-  my $args           = shift || {};
-  my $input          = new CGI;
+  my $class = shift;
+  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
+  my $args  = shift || {};
+  my $input = new CGI;
   
   my $hub = new EnsEMBL::Web::Hub({
     apache_handle  => $r,
     input          => $input,
-    session_cookie => $session_cookie
+    session_cookie => $args->{'session_cookie'}
   });
   
   my $self = {
