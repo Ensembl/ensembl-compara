@@ -3,6 +3,7 @@ package EnsEMBL::Web::Apache::SSI;
 use strict;
 
 use Apache2::Const qw(:common :methods :http);
+use Compress::Zlib;
 
 use SiteDefs qw(:APACHE);
 
