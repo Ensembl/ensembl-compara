@@ -136,7 +136,7 @@ sub draw_block_features {
         'points'    => [ $triangle_start, $h+4+$y,
                          $midpoint, $h+$y,
                          $triangle_end, $h+4+$y  ],
-        'colour'    => $colour,
+        'colour'    => 'black',
         'absolutey' => 1,
       }));
       # Downward pointing triangle
@@ -145,7 +145,7 @@ sub draw_block_features {
                          $midpoint,  $h-9+$y,
                          $triangle_end, $h-12+$y ], 
 
-        'colour'    => $colour,
+        'colour'    => 'black',
         'absolutey' => 1,
       }));
     }
