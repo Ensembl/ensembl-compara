@@ -36,6 +36,10 @@ sub render {
     if ($sp_dir =~ /homo_sapiens/) {
       $ncrna = qq(<a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/ncrna/">FASTA</a> (ncRNA));
     }
+    my $variation = '-'; 
+    if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
+      $variation = qq(<a rel="external" title="Variation data in GVF Format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/variation/$sp_dir/">Variation</a>);
+    }
     my $emf = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
       $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/$sp_var/">EMF</a>);
@@ -60,6 +64,7 @@ sub render {
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/gtf/">GTF</a></td>
 <td>$emf</td>
+<td>$variation</td>
 <td>$funcgen</td>
 <td>$bed</td>
 <td>$tarball</td>
@@ -81,6 +86,7 @@ sub render {
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">mySQL</a></td>
 <td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
+<td>-</td>
 <td>-</td>
 <td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
 <td>-</td>
