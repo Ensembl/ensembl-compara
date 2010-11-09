@@ -312,81 +312,25 @@ sub pep_snps {
   return $rtn unless $self->species_defs->databases->{'DATABASE_VARIATION'};
   
   if (!$self->{'pep_snps'}) {
-    my $trans           = $self->transcript;
-    my $cd_start        = $trans->cdna_coding_start;
-    my $cd_end          = $trans->cdna_coding_end ;
-    my $trans_strand    = $trans->get_all_Exons->[0]->strand;
-    my $coding_sequence = substr $trans->seq->seq, $cd_start-1, $cd_end-$cd_start+1;
-    my $j               = 0;
+    my $trans = $self->transcript;
+    my $tva   = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+    my $tvs   = $tva->fetch_all_by_Transcripts([$trans]);
     my @aas;
-
-    # add triplicate NTs into array into AA hash
-    while ($coding_sequence =~ /(...)/g) {    
-      $aas[$j]{'nt'} = [ split //, $1 ];
-      $j++;  
-    }
     
-    my $protein_features = $trans->get_all_peptide_variations('variation');
-    my $coding_snps      = $trans->get_all_cdna_SNPs('variation')->{'coding'}; # coding SNP only
-    
-    return $rtn unless @$coding_snps;
-
-    foreach my $snp (@$coding_snps) {
-      my $variation        = $snp->variation;
-      my $variation_name   = $snp->variation_name;
-      my $id               = $snp->dbID;
-      my $var_class        = $snp->var_class;
-      my $allele_string    = $snp->allele_string;
-      my $start            = $snp->start;
-      my $end              = $snp->end;
-      my $ambig_code       = $snp->ambig_code || $snp->{'_ambiguity_code'};
-      my $variation_source = $variation->source;
+    foreach my $tv(@$tvs) {
+      next unless defined($tv->cds_start);
+      my $vf = $tv->variation_feature;
       
-      # gets residues for snps longer than 1...indels
-      for my $residue ($start..$end) {
-        my $aa      = int(($residue-$cd_start+3) / 3); # aminoacid residue number
-        my $aa_bp   = ($residue-$cd_start+3) % 3;      # NT in codon for that amino acid (0,1,2)
-        my $alleles = $allele_string;
-        
-        $aas[$aa-1]{'vdbid'} = $id;
-        $aas[$aa-1]{'snp_id'} = $variation_name;
-        
-        if ($variation) {
-         $aas[$aa-1]{'snp_source'} = $variation_source;
-        } else {
-          warn "we have a dodgy SNP -> '$variation_name' $residue!";
-        }
-
-        if ($var_class eq 'snp' || $var_class eq 'SNP - substitution') {
-          # gets all changes to pep by snp
-          my @non_syn_snp = @{$protein_features->{$aa}||[]};
-          $aas[$aa-1]{'allele'} = $alleles;
-          $aas[$aa-1]{'ambigcode'}[($residue-$cd_start)%3] = $ambig_code;
-
-          if ($snp->strand ne "$trans_strand"){
-            $aas[$aa-1]{'ambigcode'}[($residue-$cd_start)%3] =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-            $aas[$aa-1]{'allele'} =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;
-          } 
-          
-          $aas[$aa-1]{'type'} = 'syn';
-
-          if (@non_syn_snp > 1) { 
-            my $alt_residues = join ', ', @non_syn_snp;
-            $aas[$aa-1]{'pep_snp'} = $alt_residues; # alt AAs
-            $aas[$aa-1]{'type'}    = 'snp';
-          }
-        } elsif ($var_class eq 'in-del') {
-          $aas[$aa-1]{'type'} = $start > $end ? 'insert' : 'delete';   
-          $aas[$aa-1]{'type'} = 'frameshift' if length($alleles) % 3; 
-          
-          $alleles =~ s/-\///;
-          
-          $aas[$aa-1]{'indel'}  = $id;
-          $aas[$aa-1]{'allele'} = $alleles;
-          $aas[$aa-1]{'allele'} =~ tr/ACGTN/TGCAN/d if $snp->strand ne $trans_strand;
-          $aas[$aa-1]{'length'} = abs($end - $start) + 1;
-        }
-      }
+      $aas[$tv->translation_start-1] = {
+        snp_source => $vf->source,
+        vdbid      => $vf->dbID,
+        snp_id     => $vf->variation_name,
+        ambigcode  => $vf->ambig_code,
+        codons     => (join ", ", split "\/", $tv->codons),
+        allele     => $vf->allele_string,
+        pep_snp    => (join ", ", split "\/", $tv->pep_allele_string),
+        type       => $tv->display_consequence,
+      };
     }
     
     $self->{'pep_snps'} = \@aas;
