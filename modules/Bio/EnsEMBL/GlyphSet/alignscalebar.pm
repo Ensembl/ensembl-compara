@@ -232,25 +232,15 @@ sub render_align_bar {
       
       my $base = $self->strand == 1 ? $h - 3 : $h + 9;
       
-      $self->push($self->Poly({
+      $self->push($self->Triangle({
         colour    => $colour,
         absolutey => 1,
-        points    => [ 
-          $xc - 2/$pix_per_bp, $base,
-          $xc, $h + 3,
-          $xc + 2/$pix_per_bp, $base
-        ]
-      }));
-      
-      # use a rectangle for the zmenu hit box because the triangles are hard to click on
-      $self->push($self->Rect({
-        x         => $xc - 2/$pix_per_bp,
-        y         => $self->strand == 1 ? $h-3 : $h+3,
-        width     => 4/$pix_per_bp,
-        height    => 6,
-        absolutey => 1,
         title     => $title,
-        href      => $href
+        href      => $href,
+        mid_point => [ $xc, $h + 3 ],
+        width     => 4 / $pix_per_bp,
+        height    => 6,
+        direction => $self->strand == 1 ? 'down' : 'up'
       }));
       
       $config->{'alignslice_legend'}{$colour} = {
