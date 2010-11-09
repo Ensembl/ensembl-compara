@@ -127,7 +127,7 @@ if ($rmconfig) {
 
 ## Check memcached servers version
   warn " Checking memcached compatibility...\n";
-  my $res = system("perl $serverroot/utils/memd.pl version");
+  my $res = system("$serverroot/ctrl_scripts/memcached version");
   if ($res >> 8 > 0) {
     die " failed\nPlease check www.ensembl.org/info/docs/webcode/memcached\n";
   }
@@ -135,7 +135,7 @@ if ($rmconfig) {
 
 if( $flush || $rmconfig ) {
   # Flush memcached
-  my $cmd = "perl $serverroot/utils/memd.pl flush";
+  my $cmd = "$serverroot/ctrl_scripts/memcached flush_all";
   my @res = `$cmd`; chomp @res;
   warn " Flushed memcached entries for this server (@res)\n";
 }
