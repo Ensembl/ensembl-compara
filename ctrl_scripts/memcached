@@ -16,8 +16,15 @@ BEGIN{
 
   unshift @INC, "$Bin/../public-plugins/memcached/modules";
 
-  eval{ require EnsEMBL::Web::Cache };
-  if ($@){ die "Can't use EnsEMBL::Web::Cache - $@\n"; }
+  eval { require EnsEMBL::Web::Cache };
+  if ($@) {
+    if ($@ =~ /Base class package "Cache::Memcached" is empty/) {
+      $@ = undef;
+      exit;
+    } else {
+      die "Can't use EnsEMBL::Web::Cache - $@\n";
+    }
+  }
 }
 
 pod2usage if !@ARGV || $ARGV[0] =~ /help/i;
