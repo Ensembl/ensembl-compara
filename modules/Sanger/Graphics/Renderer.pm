@@ -249,13 +249,9 @@ sub render_Composite {
 }
 
 # empty stub for Blank spacer objects with no rendering at all
-sub render_Space {}
+sub render_Space      {}
 sub render_Diagnostic {}
-
-# placeholder for renderers which can't import sprites
-sub render_Sprite {
-  my $self = shift;
-  return $self->render_Rect(@_);
-}
+sub render_Sprite     { return shift->render_Rect(@_); } # placeholder for renderers which can't import sprites
+sub render_Triangle   { return shift->render_Poly(@_); }
 
 1;
