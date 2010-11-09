@@ -68,7 +68,9 @@ foreach my $species (@ARGV ? @ARGV : $sd->valid_species) {
       next if $analysis_ids{$row->[0]};
       
       my $web_data = eval($row->[1]);
-      $analysis_ids{$row->[0]} = 1 unless $web_data->{'gene'}->{'do_not_display'};
+      
+      $analysis_ids{$row->[0]} = 1 
+        unless ref $web_data eq 'HASH' and $web_data->{'gene'}->{'do_not_display'};
     }
     
     my $ids = join ',', keys %analysis_ids;
