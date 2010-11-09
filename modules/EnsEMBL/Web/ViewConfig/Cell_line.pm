@@ -14,7 +14,18 @@ sub init {
     context       200
     das_sources), []
   );
-  
+ 
+  my %default_evidence_types = (
+    'CTCF'      => 1,
+    'DNase1'    => 1,
+    'H3K4me3'   => 1,
+    'H3K36me3'  => 1,
+    'H3K27me3'  => 1,
+    'H3K9me3'   => 1,
+    'PolII'     => 1,
+    'PolIII'    => 1,
+  );  
+ 
   if ($view_config->type eq 'Regulation') {
     $view_config->add_image_configs({ regulation_view => 'das' });
     $view_config->add_image_configs({reg_detail_by_cell_line => 'das'}); 
@@ -36,16 +47,10 @@ sub init {
     $view_config->_set_defaults("opt_cft_$cell_line:all" => 'off');
     
     foreach my $evidence_type (keys %evidence_features) {
-      my ($evidence_name, $evidence_id) = split /\:/, $evidence_type;  
+      my ($evidence_name, $evidence_id) = split /\:/, $evidence_type; 
       my $value = 'off';
-
-      # Turn on core data sets for MultiCell and CD4 by default on regulation page only     
-      if ($view_config->type eq 'Regulation'){ 
-        if ( exists $focus_set_ids{$cell_line}{$evidence_id}) {
-          $value = 'on'; 
-        } elsif ($cell_line eq 'MultiCell' && exists $feature_type_ids{'MultiCell'}{$evidence_id}) {
-          $value = 'on'; 
-        }
+      if ( exists $default_evidence_types{$evidence_name}) {
+        $value = 'on'; 
       }
       $view_config->_set_defaults("opt_cft_$cell_line:$evidence_name" => $value);
     }
