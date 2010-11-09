@@ -41,7 +41,7 @@ sub content {
               line will be ignored. If your file contains more than $variation_limit variations you can split 
               your file into smaller chunks and process them one at a time, or you may wish to use the 
               <a href="/info/docs/api/variation/variation_tutorial.html#Consequence" target="_blank">variation API</a> or a standalone 
-              <a href="ftp://ftp.ensembl.org/pub/misc-scripts/SNP_effect_predictor_1.0/" target="_blank">perl script</a> which you 
+              <a href="ftp://ftp.ensembl.org/pub/misc-scripts/Variant_effect_predictor_1.0/" target="_blank">perl script</a> which you 
               can run on your own machine to generate the same results as this web tool. </p>
   )});
   my $subheader = 'Upload file';
