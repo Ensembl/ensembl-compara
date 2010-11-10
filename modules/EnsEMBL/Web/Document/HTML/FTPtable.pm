@@ -105,6 +105,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
+<td>-</td>
 </tr>
 <tr class="$class">
 <td><strong>Ensembl API</strong></td>
