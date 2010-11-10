@@ -412,17 +412,15 @@ sub get_all_das {
     }
   }
   
-  my %by_name;
-  my %by_url;
+  my @das_sources = values %{$self->{'das_sources'}};
+     @das_sources = grep $_->matches_species($species), @das_sources unless $species eq 'ANY';
+  my %by_name     = map { $_->logic_name => $_ } @das_sources;
   
-  foreach my $das (values %{$self->{'das_sources'}}) {
-    next unless $species eq 'ANY' && $das->matches_species($species);
-    
-    $by_name{$das->logic_name} = $das;
-    $by_url {$das->full_url}   = $das;
-  }
+  return \%by_name unless wantarray;
   
-  return wantarray ? (\%by_name, \%by_url) : \%by_name;
+  my %by_url = map { $_->full_url => $_ } @das_sources;
+  
+  return (\%by_name, \%by_url); 
 }
 
 # Save all session-specific DAS sources back to the database
