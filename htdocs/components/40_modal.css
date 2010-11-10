@@ -44,3 +44,6 @@ div.multi_selector_list ul.excluded li span.switch { background-image: url(/i/ad
 div.multi_selector_hint { width: 16em; margin: 0.25em 0.5em; position: absolute; left: 0; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
 div.multi_selector_hint h4 { background-image: url(/i/infoicon.gif); background-repeat: no-repeat; background-position: top left;  margin: 0 0 5px 10px; padding-left: 16px; }
 div.multi_selector_hint p { padding-left: 10px; }
+
+body.mac .modal_title li a,
+body.mac .modal_caption { position: relative; top: 2px; }
