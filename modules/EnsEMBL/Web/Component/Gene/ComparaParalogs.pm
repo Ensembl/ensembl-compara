@@ -77,7 +77,7 @@ sub content {
           '<br /><a href="%s">Alignment</a>', 
           $hub->url({
             action   => 'Compara_Paralog', 
-            function => 'Alignment', 
+            function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
             g1       => $stable_id
           })
         );

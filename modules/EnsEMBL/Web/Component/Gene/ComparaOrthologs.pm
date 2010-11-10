@@ -20,7 +20,6 @@ sub content {
   my $object        = $self->object;
   my $species_defs  = $hub->species_defs;
   my $cdb           = shift || $hub->param('cdb') || 'compara';
-  (my $ckey = $cdb) =~ s/compara//;  
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
@@ -33,7 +32,7 @@ sub content {
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
-      my $label    = $species_defs->species_label($species);
+      my $label    = $species_defs->species_display_label($species);
       $orthologue_list{$label} = {%{$orthologue_list{$label}||{}}, %{$homology_type->{$_}}};
       $skipped{$label}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
     }
@@ -115,7 +114,7 @@ sub content {
           '<br /><a href="%s">Alignment</a>',
           $hub->url({
             action   => 'Compara_Ortholog', 
-            function => "Alignment$ckey",
+            function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),
             g1       => $stable_id,
           })
         );
@@ -127,7 +126,7 @@ sub content {
         '<br /><a href="%s">Gene Tree (image)</a>',
         $hub->url({
           type   => 'Gene',
-          action => "Compara_Tree$ckey",
+          action => "Compara_Tree". ($cdb=~/pan/ ? '/pan_compara' : ''),
           g1     => $stable_id,
           anc    => $orthologue->{'ancestor_node_id'},
           r      => undef
@@ -165,7 +164,7 @@ sub content {
   if ($alignview && keys %orthologue_list) {
     $html .= sprintf(
       '<p><a href="%s">View sequence alignments of these homologues</a>.</p>', 
-      $hub->url({ action => "Compara_Ortholog$ckey", function => 'Alignment' })
+      $hub->url({ action => "Compara_Ortholog", function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''), })
     );
   }
   
