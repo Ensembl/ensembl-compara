@@ -390,7 +390,10 @@ sub draw_wiggle_points {
   my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour, $red_line_offset) = @_;
   my $hrefs = $parameters->{'hrefs'};
   foreach my $f (@$features) { 
-    my $href = $hrefs->{$f->id} || '';
+    my $href = '';
+    if ($f->can('id')){
+      $href = $hrefs->{$f->id};
+    }
     my ($START, $END, $score, $min_score);
 
     if (ref($f) eq 'HASH'){ # Data is from a Funcgen result set collection, windowsize > 0
@@ -428,7 +431,7 @@ sub draw_wiggle_points {
     my $this_colour = $colour;
 
     # alter colour if the intron supporting feature has a name of non_canonical
-    if ($f->display_id =~ /non canonical$/ && $f->analysis->logic_name =~ /_intron$/) {
+    if ($f->can('display_id') && $f->display_id =~ /non canonical$/ && $f->analysis->logic_name =~ /_intron$/) {
       $this_colour = $parameters->{'non_can_score_colour'} ||  $colour;
     }
  
