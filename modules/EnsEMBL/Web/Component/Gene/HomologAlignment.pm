@@ -20,6 +20,7 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
+
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
   my $gene_id      = $self->object->stable_id;
@@ -79,7 +80,7 @@ sub content {
           ]; 
         } else {
           push @$data, [
-            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
+            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_display_label($member_species),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
               $member->stable_id
