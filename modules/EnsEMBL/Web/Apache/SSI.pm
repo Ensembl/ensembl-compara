@@ -9,7 +9,7 @@ use SiteDefs qw(:APACHE);
 
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Cookie;
-
+use Compress::Zlib;
 #############################################################
 # Mod_perl request handler all /htdocs pages
 #############################################################
