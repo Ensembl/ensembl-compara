@@ -1,4 +1,4 @@
-#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 74px; }
+#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 74px; position: relative; }
 #masthead div                             { background-color: [[MH_BG]]; }
 #masthead a,
 #masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; }
@@ -25,7 +25,7 @@
 #masthead ul.tabs span.dropdown a.toggle  { background-image: none; cursor: pointer; padding: 0; font-size: 85%; }
 #masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
-#masthead div.dropdown                    { position: absolute; top: 73px; display: none; background: #EAEEFF; border: 1px solid #67718D; padding-bottom: 5px; }
+#masthead div.dropdown                    { position: absolute; top: 28px; display: none; background: #EAEEFF; border: 1px solid #67718D; padding-bottom: 5px; }
 #masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; }
 #masthead div.dropdown ul                 { padding-top: 4px; border-top: 1px solid #67718D; }
 #masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
@@ -35,7 +35,7 @@
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
 #masthead .search_holder                  { position: absolute; top: 17px; right: 5px; z-index: 150; margin-left: 10px; display: inline; }
 #masthead .tools_holder                   { display: inline; }
-#masthead .tabs_holder                    { height: 29px; background-color: [[MH_BG]]; clear: both; }
+#masthead .tabs_holder                    { position: absolute; bottom: 0; background-color: [[MH_BG]]; clear: both; }
 #masthead .logo_holder                    { float: left; }
 #masthead .breadcrumbs                    { clear: both; padding: 5px 0 8px 8px; margin-top: -5px; font-weight: bold; }
 #masthead .breadcrumbs a                  { color: [[MH_TEXT]]; }
@@ -45,10 +45,11 @@
 #masthead ul.more_tools li                { color: [[CONTRAST_TEXT]]; border: 1px solid [[MH_BORDER]]; border-top: 0; background-color: [[PANEL_BG]]; float: none; text-align: left; margin: 0; padding: 2px; }
 #masthead ul.more_tools li a              { color: [[CONTRAST_TEXT]]; }
 
-body.no_tabs #masthead .tabs_holder { display: none; }
-body.mac #masthead ul.tabs li       { height: 21px; }
-body.mac #masthead ul.tabs li a     { height: 15px; padding-top: 4px; }
-body.mac #masthead .search_holder   { margin-left: 20px; }
+body.no_tabs #masthead .tabs_holder      { display: none; }
+body.mac #masthead ul.tabs li            { height: 21px; }
+body.mac #masthead ul.tabs a,
+body.mac #masthead ul.tabs span.dropdown { padding-top: 4px; }
+body.mac #masthead .search_holder        { margin-left: 20px; }
 
 @media print {
   #masthead   { background: #ffffff; }
