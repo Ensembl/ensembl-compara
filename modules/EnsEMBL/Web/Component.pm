@@ -67,6 +67,11 @@ sub content_align_pan_compara {
   return $self->content_align('compara_pan_ensembl');
 }
 
+sub content_alignment_pan_compara {
+  my $self = shift;
+  return $self->content('compara_pan_ensembl');
+}
+
 sub content_ensembl_pan_compara {
   my $self = shift;
   return $self->content_ensembl('compara_pan_ensembl');
