@@ -22,6 +22,11 @@ sub _init {
   $self->{'timeout_multiplier'} = 3;
 }
 
+sub _das_query_object {
+  my $self = shift;
+  return $self->object->Obj;
+}
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -42,7 +47,8 @@ sub content {
   $table->add_row('Homepage', qq(<a href="$homepage">$homepage</a>), 1) if $homepage;
   
   my $html = $table->render;
-  
+  my $query_object = $self->_das_query_object; 
+ 
   my $engine = new Bio::EnsEMBL::ExternalData::DAS::Coordinator(
     -sources => [ $source ],
     -proxy   => $species_defs->ENSEMBL_WWW_PROXY,
@@ -51,7 +57,7 @@ sub content {
   );
   
   # Perform DAS requests
-  my $data = $engine->fetch_Features($self->object->Obj)->{$logic_name};
+  my $data = $engine->fetch_Features($query_object)->{$logic_name};
   
   # Check for source errors (bad configs)
   my $source_err = $data->{'source'}->{'error'};
