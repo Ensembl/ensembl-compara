@@ -113,8 +113,13 @@ sub render_area {
   my ($self, $shape, $points, $attrs) = @_;
   
   my $coords = join ',', map int, @$points;
-  
-  $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};
+
+#  Time: 11.303
+#  $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};
+#  Time: 11.040 - slightly faster with '.'s
+#  $self->{canvas} = '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n" . $self->{canvas};
+#  push @{$self->{data}}, '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
+  $self->{canvas} .= '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
 }
 
 sub get_attributes {

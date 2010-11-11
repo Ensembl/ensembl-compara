@@ -909,9 +909,56 @@ sub bump_row {
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
+sub bump_sorted_row {
+  my ($self, $start, $end, $truncate_if_outside, $key) = @_;
+
+  $key ||= '_bump';
+
+  ($end, $start) = ($start, $end) if $end < $start;
+
+  $start = 1 if $start < 1;
+
+  my $row_length = $self->{$key}{'length'};
+
+  return -1 if $end > $row_length && $truncate_if_outside; # used to not display partial text labels
+
+  $end = $row_length if $end > $row_length;
+
+  $start = floor($start);
+  $end   = ceil($end);
+
+  # SMJS Extra check
+  $end = $start if $start > $end;
+
+  my $row     = 0;
+
+  my $max_rows = $self->{$key}{'rows'};
+
+  my $array_ref =  $self->{$key}{'array'} ;
+
+  while ($row < $max_rows) {
+
+    unless ($array_ref->[$row]) { # We have no entries in this row - so create a new row
+      $array_ref->[$row] = $end;
+      return $row;
+    }
+
+    if ($array_ref->[$row] < $start) {
+      $array_ref->[$row] = $end;
+
+      return $row;
+    }
+    $row++; # Can't fit in on this row go to the next row..
+  }
+
+  return 1e9; # If we get to this point we can't draw the feature so return a very large number!
+}
+
 #==============================================================================================================
 # Return the das URL for the feature type....
 #==============================================================================================================
+
+
 
 sub de_camel { 
   my ($self, $string) = @_;

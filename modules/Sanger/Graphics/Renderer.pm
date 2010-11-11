@@ -192,8 +192,15 @@ sub render {
 
   my %M;
   my $Ta;
+
+  my @keys = sort { $a <=> $b } keys %layers;
+  if (ref($self) =~ /imagemap/) {
+    @keys = reverse @keys;
+  }
+
   
-  for my $layer (sort { $a <=> $b } keys %layers) {
+#  for my $layer (sort { $a <=> $b } keys %layers) {
+  for my $layer (@keys) {
     # loop through everything and draw it
     for (@{$layers{$layer}}) {
       my $method = $M{$_} ||= $self->method($_);
