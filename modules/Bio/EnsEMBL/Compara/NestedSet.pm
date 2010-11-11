@@ -1174,6 +1174,21 @@ sub _internal_newick_format {
     }
     $newick .= sprintf(":%1.4f", $self->distance_to_parent);
   }
+  if($format_mode eq "gene_stable_id_composite") { 
+    #display_label: external name and distance on all nodes
+    my $display_label;
+    if($self->is_leaf) {
+      $display_label = $self->gene_member->stable_id;
+    }
+    if (defined($display_label)) {
+      $newick .= $display_label . "_";
+    }
+    $newick .= $self->name;
+    if ($self->is_leaf) {
+      $newick .= "_" . $self->genome_db->short_name;
+    }
+    $newick .= sprintf(":%1.4f", $self->distance_to_parent);
+  }
   if($format_mode eq "full_web") { 
     #display_label: external name and distance on all nodes
     my $display_label = $self->name;
