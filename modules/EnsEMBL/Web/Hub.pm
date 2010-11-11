@@ -233,7 +233,7 @@ sub url {
   my %pars;
   
   if ($all_params) {
-    %pars = map { /^time=/ ? () : split /=/ } split /;|&/, uri_unescape($self->input->query_string);
+    %pars = map { /^time=/ || /=$/ ? () : split /=/ } split /;|&/, uri_unescape($self->input->query_string);
   } else {
     %pars = %{$self->core_params};
 
