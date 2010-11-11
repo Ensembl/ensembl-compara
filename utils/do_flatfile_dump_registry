@@ -106,10 +106,15 @@ if ( $0 =~ /^\// ) {
 }
 $exe .= $0;
 
-my $dump_directory = $ENV{PWD} . $dumpdir;
+my $dump_directory;
 if ( $dumpdir =~ /^\// ) {
   $dump_directory = $dumpdir;
 }
+else{
+  $dumpdir =~ s/^.\///g;
+  $dump_directory = $ENV{PWD} ."/". $dumpdir;
+}
+
 
 if ( defined($farm) ) {
   if ( !defined($batch_total) ) {
@@ -423,14 +428,23 @@ foreach my $spp (@species) {
 
         local $^W = 0;
 
+	@slices = @{
+          $slice_adaptor->fetch_all( 'toplevel', undef,
+            $inc_nonref, $inc_dupes )
+            || [] };
+
+	foreach my $slice (@slices){ # add the haps etc or newer chr at end
+	  if(!defined($chr_sorter{$slice->seq_region_name})){
+	    $chr_sorter{$slice->seq_region_name} = $i++;
+	  }
+	}	
+
         @slices = sort {
           $chr_sorter{ $b->seq_region_name() } <=>
             $chr_sorter{ $a->seq_region_name() }
             || $a->seq_region_name() cmp $b->seq_region_name()
-          } @{
-          $slice_adaptor->fetch_all( 'toplevel', undef,
-            $inc_nonref, $inc_dupes )
-            || [] };
+          } @slices;
+
 
       } else {
         info( 1, "Unsorted results" );
@@ -442,6 +456,10 @@ foreach my $spp (@species) {
     }
 
     @seq_region_ids = map { $_->get_seq_region_id() } reverse(@slices);
+
+    if( !keys %chr_sorter ) { #order by seq_region as checkpoint need slices in the same order.
+      @seq_region_ids = sort @seq_region_ids;
+    }
   }
 
   my $slice_adaptor = $reg->get_adaptor( $spp, 'Core', 'Slice' );
@@ -449,6 +467,14 @@ foreach my $spp (@species) {
   print("There are "
       . scalar(@seq_region_ids)
       . " seq_regions to be processed for $spp\n" );
+
+  my $chk_start = 0;
+  if(-e "$dump_directory/$spp.chkpt"){
+    open(CHKPT,"<$dump_directory/$spp.chkpt");
+    $chk_start = <CHKPT>;
+    chomp $chk_start;
+    print "Using checkpoint of $chk_start\n";
+  }
 
   while ( my $seq_region_id = shift(@seq_region_ids) ) {
     my $slice = $slice_adaptor->fetch_by_seq_region_id($seq_region_id);
@@ -466,22 +492,29 @@ foreach my $spp (@species) {
     while ( my $chunked_slice = shift @{$chunked_slices} ) {
       my $seq = $chunked_slice->seq();
 
-      foreach my $format ( sort keys %$formats_dir ) {
-        dump_format( $chunked_slice, $format, $formats_dir->{$format},
-          $seq );
-      }
+
+      if($batch >= $chk_start){
+	foreach my $format ( sort keys %$formats_dir ) {
+	  dump_format( $chunked_slice, $format, $formats_dir->{$format},
+		       $seq );
+	}
+      }	
 
       if ( ++$count >= $CHUNK ) {
 
-        if ( !defined($nobundle) ) {
+        if ( !defined($nobundle) and $batch >= $chk_start) {
           foreach my $format ( sort keys %$formats_dir ) {
             ftp_bundle( $format, $formats_dir->{$format},
               $batch, $spp, \%chr_sorter );
           }
         }
+	
 
         $batch++;
         $count = 0;
+	open(CHKPT,">$dump_directory/$spp.chkpt");
+	print CHKPT "$batch\n";
+	close CHKPT;
 
       }
     } ## end while ( my $chunked_slice...
@@ -560,7 +593,7 @@ sub setup_directories_reg {
     my $spp_dumpdir = "$dumpdir/$format/$spp_dir";
     if ( -d "$spp_dumpdir" ) {
       info( 1, "Purging dump directory: $spp_dumpdir" );
-      system("rm -f $spp_dumpdir/*");
+      system("rm -f $spp_dumpdir/*.$format"); # remove the .embl or .genbank files NOT the .gz as we have chkpts now.
     } else {
       info( 1, "Made dump directory: $spp_dumpdir" );
       system("mkdir -p $spp_dumpdir") == 0 or die "Can't create dir $!";
@@ -892,7 +925,8 @@ sub ftp_bundle {
   if ( keys %$chr_sorter ) {
     # utils::Tool::info(1, "Using chr sorter");
     @files =
-      sort { $chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b }
+#      sort { $chr_sorter->{$b} <=> $chr_sorter->{$a} || $a cmp $b }
+      sort { $a cmp $b }  # filenames not chr names so why the above?
       @files;
   }
 
