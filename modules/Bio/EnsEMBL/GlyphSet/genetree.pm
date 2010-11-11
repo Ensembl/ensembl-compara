@@ -115,6 +115,7 @@ sub _init {
   my @node_glyphs;
   my @bg_glyphs;
   my @labels;
+#  use Data::Dumper;
   foreach my $f (@nodes) {
      # Ensure connector enters at base of node glyph
     my $parent_node = $Nodes{$f->{_parent}} || {x=>0};
@@ -561,16 +562,21 @@ sub features {
   # Process alignment
   if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     if ($tree->genome_db) {
+
+# This will be used in URLs
+      $f->{'_species'} = $tree->genome_db->name; 
+
+# This will be used for display
       # FIXME: ucfirst tree->genome_db->name is a hack to get species names right.
       # There should be a way of retrieving this name correctly instead.
-      $f->{'_species'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME') || $tree->genome_db->name;
+      $f->{'_species_label'} = $self->species_defs->get_config(ucfirst $tree->genome_db->name, 'SPECIES_SCIENTIFIC_NAME') || $tree->genome_db->name; 
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
     
     if ($tree->stable_id) {
       $f->{'_protein'} = $tree->stable_id;
-      $f->{'label'}    = "$f->{'_stable_id'} $f->{'_species'}";
+      $f->{'label'}    = "$f->{'_stable_id'} $f->{'_species_label'}";
     }
     
     if (my $member = $tree->gene_member) {
@@ -585,7 +591,7 @@ sub features {
       
       my $treefam_link = "http://www.treefam.org/cgi-bin/TFseq.pl?id=$stable_id";
       
-      $f->{'label'} = "$stable_id, $f->{'_species'}";
+      $f->{'label'} = "$stable_id, $f->{'_species_label'}";
       
       push @{$f->{'_link'}}, { text => 'View in TreeFam', href => $treefam_link };
       
@@ -604,7 +610,7 @@ sub features {
       }
       
       if (my $display_label = $member->display_label) {
-        $f->{'label'} = $f->{'_display_id'} = "$display_label, $f->{'_species'}";
+        $f->{'label'} = $f->{'_display_id'} = "$display_label, $f->{'_species_label'}";
       }
     }
   } elsif ($f->{'_collapsed'}) { # Collapsed node
@@ -644,7 +650,7 @@ sub image_label {
 #  $zmenu->{"30:Taxonomy name: $f->{'_name'}"} = '' if ($f->{_name});
 #  $zmenu->{"40:Taxonomy ID: $f->{'_taxon_id'}"} = '' if ($f->{_taxon_id});
 #  $zmenu->{"45:Dupl. Confidence: $f->{'_dupconf'}"} = '' if ($f->{_dupconf});
-#  $zmenu->{"50:Species: $f->{_species}"} = '' if ($f->{_species});
+#  $zmenu->{"50:Species: $f->{_species_label}"} = '' if ($f->{_species_label});
 #
 #  (my $ensembl_species = $f->{_species}) =~ s/ /\_/g;
 #
