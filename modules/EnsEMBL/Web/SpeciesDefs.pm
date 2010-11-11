@@ -157,7 +157,7 @@ sub valid_species {
   
   if (!@valid_species) {
     @valid_species = map @{$self->get_config($_, 'DB_SPECIES')}, @$ENSEMBL_DATASETS;
-    $self->{'_valid_species'} = \@valid_species; # cache the result
+    $self->{'_valid_species'} = [ @valid_species ]; # cache the result
   }
   
   @valid_species = grep $test_species{$_}, @valid_species if %test_species; # Test arg list if required
@@ -1103,10 +1103,8 @@ sub species_path {
   my $url = $self->{'_species_paths'}->{$species};
   return $url if $url;
   
-  my $local       = grep { $_ eq $species} $self->valid_species; ## Is this species found on this site?
-  my $is_bacteria = $self->ENSEMBL_SITETYPE =~ /acteria/ ? 1 : 0;
-
-  if ($local && !$is_bacteria) {
+  ## Is this species found on this site?
+  if ($self->ENSEMBL_SITETYPE !~ /bacteria/i && $self->valid_species($species)) {
     $url = "/$species";
   } else { 
     ## At the moment the mapping between species name and its source (full url) is stored in DEFAULTs.ini
@@ -1135,7 +1133,6 @@ sub species_path {
 
   return $url;
 }
-
 
 sub species_display_label {
   ### This function will return the display name of all known (by Compara) species.
