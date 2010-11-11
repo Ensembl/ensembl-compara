@@ -28,10 +28,10 @@ sub new {
     [ 'Gene',                 'g'   ],
     [ 'Transcript',           't'   ],
     [ 'Variation',            'v'   ],
+    [ 'StructuralVariation',  'sv'  ],
     [ 'Regulation',           'rf'  ],
     [ 'Marker',               'm'   ],
     [ 'LRG',                  'lrg' ],
-    [ 'StructuralVariation',  'sv'  ],
     [ 'GeneTree',             'gt'  ],
   ];
   
