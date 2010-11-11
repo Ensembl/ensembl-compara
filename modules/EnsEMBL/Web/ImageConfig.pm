@@ -406,8 +406,88 @@ sub load_user_tracks {
       $menu->append($self->create_track(@$_));
     }
   }
+
+   my %bam_sources;
+ 
+   # session bam sources
+   foreach my $entry ($session->get_data( type => 'bam' )) {
+     next unless $entry->{'species'} eq $self->{'species'};
+     $bam_sources{$entry->{'name'} . '_' . $entry->{'url'}} = {
+       source_name => $entry->{'name'},
+       source_url => $entry->{'url'},
+       source_type => 'session'
+     };
+   }
+ 
+   # user bam sources
+   if ($user) {
+     foreach my $entry ($user->bams) {
+       next unless  $entry->species eq $self->{'species'};
+       $bam_sources{$entry->name . '_' . $entry->url} = {
+         source_name => $entry->name,
+         source_url => $entry->url,
+         source_type => 'user'
+       };
+     }
+   }
+ 
+   # create bam tracks
+   foreach (sort { $bam_sources{$a}{'source_name'} cmp $bam_sources{$b}{'source_name'} } keys %bam_sources) {
+     my $source = $bam_sources{$_};
+     my $key = 'bam_' . $source->{'source_name'} . '_' . md5_hex($self->{'species'} . ':' . $source->{'source_url'});  
+     $self->_add_bam_track($menu, $key, $source->{'source_name'},
+       caption => $source->{'source_name'},
+       url => $source->{'source_url'},
+       description => sprintf('
+         Data retrieved from a BAM file on an external webserver. This data is attached to the %s, and comes from URL: %s',
+         encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
+       ),
+     );
+   }
+ 
+
   
   return;
+}
+
+sub load_configured_bam {
+  my $self = shift;
+  
+  # get the internal sources from config
+  my $internal_bam_sources = $self->sd_call('ENSEMBL_INTERNAL_BAM_SOURCES') || {};
+  
+  foreach my $source_name (sort keys %$internal_bam_sources) {
+    # get the target menu 
+    my $menu_name = $internal_bam_sources->{$source_name};
+    if (my $menu = $self->get_node($menu_name)) {
+      # get bam source config
+      if (my $source  = $self->sd_call($source_name)) {
+	# add the track
+	my $key = 'bam_' . $source_name . '_' . md5_hex($self->{'species'} . ':' . $source->{url});
+	$self->_add_bam_track($menu, $key, $source_name, %{$source});
+      }
+    }
+  }
+}
+ 
+sub _add_bam_track {
+  my ($self, $menu, $key, $name, %options) = @_;
+ 
+  $menu ||= $self->get_node('user_data');
+  return unless $menu;
+ 
+  my $track = $self->create_track($key, $name, {
+						display     => 'normal',
+						strand      => 'f',
+						_class      => 'bam',
+						glyphset    => 'bam',
+						colourset   => 'bam',
+						sub_type    => 'bam',
+						renderers   => [off => 'Off', normal => 'Normal', unlimited => 'Unlimited', histogram => 'Coverage only'],
+						%options
+					       });
+ 
+  $menu->append($track) if $track;
 }
 
 sub _user_track_settings {

@@ -349,6 +349,7 @@ sub add_reset_panel {
         Certain tracks displayed come from user-supplied or external data sources, these are clearly
         marked as <strong><img src="/i/track-das.gif" alt="DAS" style="vertical-align:top; width:40px;height:16px" title="DAS" /></strong> (Distributed Annotation Sources), 
         <strong><img src="/i/track-url.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /></strong> (UCSC style web resources) or 
+        <strong><img src="/i/track-bam.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /></strong> (Binary Alignment/Map) or 
         <strong><img src="/i/track-user.gif" alt="User" style="vertical-align:top; width:40px;height:16px" title="User" /></strong> data uploaded by
         yourself or another user.
         </p>

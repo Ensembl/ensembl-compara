@@ -17,9 +17,10 @@ sub _init {
 sub content {
   my $self = shift;
   my $hub  = $self->hub;
+
   my $form = EnsEMBL::Web::Form->new('rename_tempdata', $hub->species_path($hub->data_species).'/UserData/SaveTempData', 'post');
 
-  my $tempdata = $hub->session->get_data('code' => $hub->param('code'));
+  my $tempdata = $hub->session->get_data('type' => $hub->param('type'), 'code' => $hub->param('code'));
 
   return unless $tempdata;
 
@@ -34,7 +35,11 @@ sub content {
     'name'  =>  'code',
     'value' => $hub->param('code'),
   );
-
+  $form->add_element(
+    'type'  => 'Hidden',
+    'name'  =>  'type',
+    'value' => $hub->param('type'),
+  );
   ## navigation elements
   $form->add_element('type' => 'Submit', 'value' => 'Save');
 

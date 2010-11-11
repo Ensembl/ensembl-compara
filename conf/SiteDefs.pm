@@ -16,7 +16,7 @@ $Text::Wrap::columns = 75;
 use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $APACHE_DIR
   $APACHE_BIN
-	$BIOPERL_DIR
+  $BIOPERL_DIR
   $CGI_POST_MAX
   $ENSEMBL_RELEASE_DATE $ENSEMBL_MIN_SPARE_SERVERS $ENSEMBL_MAX_SPARE_SERVERS $ENSEMBL_START_SERVERS
   $ENSEMBL_HELPDESK_EMAIL
@@ -106,6 +106,9 @@ use vars qw ( @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION
   $ENSEMBL_MART_ENABLED
   $ENSEMBL_BLAST_ENABLED
   $ENSEMBL_FLAG_NAMES
+  $SAMTOOLS_DIR
+  $SAMTOOLS_HTTP_PROXY
+  $MINI_BIOPERL_161_DIR
 );
 
 use Sys::Hostname::Long;
@@ -155,7 +158,11 @@ $ENSEMBL_SERVERROOT = File::Spec->catpath( $volume, File::Spec->catdir( @clean_d
 $ENSEMBL_SERVERROOT = '.' unless $ENSEMBL_SERVERROOT;
 $APACHE_DIR         = "$ENSEMBL_SERVERROOT/apache2";
 
+$SAMTOOLS_DIR        = "$ENSEMBL_SERVERROOT/samtools";
+$SAMTOOLS_HTTP_PROXY = '';
+
 $BIOPERL_DIR        ||= "$ENSEMBL_SERVERROOT/bioperl-live";
+$MINI_BIOPERL_161_DIR        ||= "$ENSEMBL_SERVERROOT/mini-bioperl-161";
 #warn "$ENSEMBL_SERVERROOT";
 ## Define Plugin directories....
 eval qq(require '$ENSEMBL_SERVERROOT/$CONF_DIR/Plugins.pm');
@@ -256,6 +263,7 @@ $ENSEMBL_TMP_URL_CACHE  = '/img-cache';
 $ENSEMBL_BLASTSCRIPT    = undef;
 $ENSEMBL_REGISTRY       = undef;
 $ENSEMBL_PRIVATE_AUTH   = undef;
+
 ####################
 # Environment variables to set using the SetEnv directive
 %ENSEMBL_SETENV =
@@ -500,6 +508,7 @@ $APACHE_BIN ||= "$APACHE_DIR/bin/httpd";
   $ENSEMBL_SERVERROOT.'/ensembl-external/modules',
   $ENSEMBL_SERVERROOT.'/biomart-perl/lib',
   $BIOPERL_DIR,
+  $MINI_BIOPERL_161_DIR,
   $ENSEMBL_SERVERROOT.'/modules',
 );
 
@@ -630,6 +639,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $ENSEMBL_MAIL_SERVER
   $ENSEMBL_SHORTEST_ALIAS
   $MART_ENSEMBL_LINKS
+  $SAMTOOLS_HTTP_PROXY
 );
 
 ############################
@@ -640,7 +650,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
   $APACHE_BIN
   $APACHE_DIR
   $CGI_POST_MAX
-	$BIOPERL_DIR
+  $BIOPERL_DIR
   $ENSEMBL_HELPDESK_EMAIL
   $ENSEMBL_MAIL_SERVER
   $OBJECT_TO_SCRIPT
@@ -927,6 +937,7 @@ $ENSEMBL_TEMPLATE_ROOT = $ENSEMBL_SERVERROOT.'/biomart-perl/conf';
     $ENSEMBL_USER
     $ENSEMBL_USER_COOKIE
     $OBJECT_TO_SCRIPT
+    $SAMTOOLS_HTTP_PROXY
   )],
 );
 

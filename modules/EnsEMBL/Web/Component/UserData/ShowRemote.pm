@@ -51,6 +51,16 @@ sub content {
       $form->add_element('type'=>'CheckBox', 'name' => 'code', 'value' => $url->{'code'}, 'label' => $url->{'name'}, 'notes' => $url->{'url'});
     }
   }
+
+  my @bams = $session->get_data(type => 'bam');
+  if (@bams) {
+    $has_data = 1;
+    $form->add_element('type'=>'Information', 'value' => "You have the following BAM sources attached:", 'style' => 'spaced');
+    foreach my $bam (@bams) {
+      $form->add_element('type'=>'CheckBox', 'name' => 'code', 'value' => $bam->{'code'}, 'label' => $bam->{'name'}, 'notes' => $bam->{'url'});
+    }
+  }
+
   
   unless ($has_data) {
     $form->add_element('type'=>'Information', 'value' => "You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.");

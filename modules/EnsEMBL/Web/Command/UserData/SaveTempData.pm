@@ -11,10 +11,10 @@ sub process {
   my $hub  = $self->hub;
 
   if ($hub->param('name')) {
-    $hub->session->set_data('code' => $hub->param('code'), 'name' => $hub->param('name'));
+    $hub->session->set_data('type' => $hub->param('type'), 'code' => $hub->param('code'), 'name' => $hub->param('name'));
   }
  
-  $self->ajax_redirect($hub->species_path($hub->data_species '/UserData/ManageData'); 
+  $self->ajax_redirect($hub->species_path($hub->data_species). '/UserData/ManageData'); 
 }
 
 1;

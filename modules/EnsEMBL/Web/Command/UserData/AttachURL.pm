@@ -73,6 +73,8 @@ sub process {
       );
       
       $self->object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+      $param->{'code'} = $data->{'code'};
+      $param->{'type'} = 'url';
       
       $redirect .= 'UrlFeedback';
     }

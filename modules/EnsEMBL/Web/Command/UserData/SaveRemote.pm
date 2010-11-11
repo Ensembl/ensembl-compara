@@ -42,12 +42,21 @@ sub process {
     foreach my $code (@codes) {
       next unless $code;
       
-      my $url = $session->get_data(type => 'url', code => $code);
-      
-      if ($url && $user->add_to_urls($url)) {
-        $session->purge_data(type => 'url', code => $code);
-      } else {
-        $error = 1;
+      if (my $url = $session->get_data(type => 'url', code => $code)){
+        if ($user->add_to_urls($url)) {
+          $session->purge_data(type => 'url', code => $code);
+        } else {
+          warn "failed to save url: $code";
+          $error = 1;
+        }
+      } elsif (my $bam = $session->get_data(type => 'bam', code => $code)) {
+        my $added = $user->add_to_bams($bam);
+        if ($added) {
+          $session->purge_data(type => 'bam', code => $code);
+        } else {
+          warn "failed to save bam: $code";
+          $error = 1;
+        }
       }
     }
     

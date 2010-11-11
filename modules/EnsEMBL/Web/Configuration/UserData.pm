@@ -122,6 +122,22 @@ sub populate_tree {
     { 'availability' => 1, 'no_menu_entry' => 1 }
   );
 
+
+  ## BAM file attachment
+  $self->create_node( 'SelectBAM', "Attach BAM File",
+   [qw(select_bam EnsEMBL::Web::Component::UserData::SelectBAM)],
+    { 'availability' => 1 }
+  );
+  $self->create_node( 'AttachBAM', '',
+    [], { 'command' => 'EnsEMBL::Web::Command::UserData::AttachBAM',
+    'availability' => 1, 'no_menu_entry' => 1 }
+  );
+  $self->create_node( 'BAMFeedback', '',
+   [qw(bam_feedback EnsEMBL::Web::Component::UserData::BAMFeedback)],
+    { 'availability' => 1, 'no_menu_entry' => 1 }
+  );
+
+
   ## Saving remote data
   $self->create_node( 'ShowRemote', '',
    [qw(show_remote EnsEMBL::Web::Component::UserData::ShowRemote)], 

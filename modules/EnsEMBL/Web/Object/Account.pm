@@ -43,6 +43,7 @@ sub counts {
     my @userdata = (
       $session->get_data('type' => 'upload'),
       $session->get_data('type' => 'url'), 
+      $session->get_data('type' => 'bam'), 
       $session->get_all_das,
       $user->uploads,
       $user->dases, 

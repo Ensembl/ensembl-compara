@@ -270,7 +270,7 @@ sub delete_remote {
   my $user    = $hub->user;
   my $session = $hub->session;
   
-  if ($type eq 'url') { 
+  if ($code && $type =~ /^(url|bam)$/) {
     $session->purge_data(type => $type, code => $code);
   }
   elsif ($self->param('logic_name')) {
@@ -288,10 +288,16 @@ sub delete_remote {
         $das->delete;
       }
     }
-    else { 
+    elsif ($type eq 'url') {
       my ($url) = $user->urls($id);
       if ($url) {
         $url->delete;
+      }
+    }
+    elsif ($type eq 'bam') {
+      my ($bam) = $user->bams($id);
+      if ($bam) {
+        $bam->delete;
       }
     }
   }

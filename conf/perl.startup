@@ -14,7 +14,7 @@ use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
 
-$Apache2::SizeLimit::MAX_PROCESS_SIZE = 400000; # Kill httpd over 400Mb
+$Apache2::SizeLimit::MAX_PROCESS_SIZE = 800000; # Kill httpd over 800Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
 use DBI;
