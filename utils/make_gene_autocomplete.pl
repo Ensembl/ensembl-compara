@@ -35,9 +35,6 @@ $dbh->prepare(
   )'
 )->execute;
 
-$dbh->prepare('truncate table gene_autocomplete')->execute;
-
-
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
   warn $dataset;
   
