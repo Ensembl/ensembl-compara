@@ -60,7 +60,7 @@ sub _search_all {
   }
   
   if ($exalead->__error || $exalead->__status eq 'failure') {
-    $self->problem( 'Fatal',
+    $self->problem( 'fatal',
         'Search Engine Error',
         $self->_help("Sorry, the search engine failed, or found too many results. Please try another search.") );
     warn '!!! EXALEAD FAILURE: '.$exalead->__error;

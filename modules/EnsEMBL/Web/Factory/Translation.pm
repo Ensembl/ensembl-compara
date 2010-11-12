@@ -13,7 +13,7 @@ sub createObjects {
      $db          = 'otherfeatures' if $db eq 'est';
   my $db_adaptor  = $self->database($db) ;	
   unless ($db_adaptor){
-    $self->problem('Fatal', 
+    $self->problem('fatal', 
 		   'Database Error', 
 		   "Could not connect to the $db database."  ); 
     return ;

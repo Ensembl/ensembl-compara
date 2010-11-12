@@ -16,19 +16,19 @@ sub createObjects {
   # Get databases
   my $db  = $self->database('core');
   unless ($db){
-    $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." ); 
+    $self->problem( 'fatal', 'Database Error', "Could not connect to the core database." ); 
     return ;
   }      
 
   my $ga  = $self->database('go');
   unless ($ga){
-    $self->problem( 'Fatal', 'Database Error', "Could not connect to the GO database." ); 
+    $self->problem( 'fatal', 'Database Error', "Could not connect to the GO database." ); 
     return ;
   }      
 
   my $ca  = $self->database('compara');
   unless ($ca){
-    $self->problem( 'Fatal', 'Database Error', "Could not connect to the compara database." );
+    $self->problem( 'fatal', 'Database Error', "Could not connect to the compara database." );
     return ;
   }      
   my $fa = $ca->get_FamilyAdaptor;

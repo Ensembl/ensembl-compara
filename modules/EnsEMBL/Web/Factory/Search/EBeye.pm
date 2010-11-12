@@ -26,7 +26,7 @@ sub _search_all {
  	$q->param('species',@$species);
      }
 
-    eval {$ebeye->parse( $q );}; if ($@){ $self->problem( 'Fatal', 'Search Engine Error', "There is a problem with the Search engine." )  ; return undef;};
+    eval {$ebeye->parse( $q );}; if ($@){ $self->problem( 'fatal', 'Search Engine Error', "There is a problem with the Search engine." )  ; return undef;};
 
 
     return $self->new_object( 'Search', $ebeye, $self->__data );
