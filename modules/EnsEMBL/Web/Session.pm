@@ -35,6 +35,7 @@ use strict;
 
 use Apache2::RequestUtil;
 use Time::HiRes qw(time);
+use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
 
@@ -495,6 +496,38 @@ sub add_das {
   
   # Otherwise skip it
   return 0;
+}
+
+
+sub configure_bam_views {
+  my ($self, $bam, $track_options) = @_;
+  my $hub         = $self->hub;
+  my $referer     = $hub->referer;
+  my $this_type   = $referer->{'ENSEMBL_TYPE'}   || $ENV{'ENSEMBL_TYPE'};
+  my $this_action = $referer->{'ENSEMBL_ACTION'} || $ENV{'ENSEMBL_ACTION'};
+  my $this_image  = $referer->{'ENSEMBL_IMAGE'};
+  my $this_vc     = $hub->get_viewconfig($this_type, $this_action, $hub);
+  my %this_ics    = $this_vc->image_configs;
+
+  $track_options->{'display'} ||= 'normal';
+
+  my @this_images = grep {
+    (!$this_image || $this_image eq $_)  # optional override
+  } keys %this_ics;
+
+  foreach my $image (@this_images) {
+    my $ic = $hub->get_imageconfig($image, $image);
+    if ($bam->{species} eq $ic->{species}) {
+      my $n  = $ic->get_node('bam_' . $bam->{name} . '_' . md5_hex($bam->{species} . ':' . $bam->{url}));
+
+      if ($n) {
+        $n->set_user(%$track_options);
+        $ic->altered = 1;
+      }
+    }
+  }
+
+  return;
 }
 
 # Switch on a DAS source for the current view/image (if it is suitable)

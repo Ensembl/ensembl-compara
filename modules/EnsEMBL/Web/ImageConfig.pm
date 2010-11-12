@@ -477,15 +477,15 @@ sub _add_bam_track {
   return unless $menu;
  
   my $track = $self->create_track($key, $name, {
-						display     => 'normal',
-						strand      => 'f',
-						_class      => 'bam',
-						glyphset    => 'bam',
-						colourset   => 'bam',
-						sub_type    => 'bam',
-						renderers   => [off => 'Off', normal => 'Normal', unlimited => 'Unlimited', histogram => 'Coverage only'],
-						%options
-					       });
+    display     => 'off',
+    strand      => 'f',
+    _class      => 'bam',
+    glyphset    => 'bam',
+    colourset   => 'bam',
+    sub_type    => 'bam',
+    renderers   => [off => 'Off', normal => 'Normal', unlimited => 'Unlimited', histogram => 'Coverage only'],
+    %options
+  });
  
   $menu->append($track) if $track;
 }
