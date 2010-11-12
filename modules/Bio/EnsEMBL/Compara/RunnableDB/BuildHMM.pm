@@ -283,7 +283,7 @@ sub run_buildhmm
   return unless($stk_file);
   return if(defined($self->{done}));
 
-  $self->{'hmm_file'} = $stk_file . "_hmmbuild.hmm ";
+  $self->{'hmm_file'} = $stk_file . "_hmmbuild.hmm";
 
   my $hmmer_dir = "/software/ensembl/compara/hmmer3/hmmer-3.0/src/";
   my $buildhmm_executable = $self->analysis()->program_file();
