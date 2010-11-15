@@ -51,7 +51,7 @@ sub _generic_create {
 # Get the 'central' database (core, est, vega)
     my $db_adaptor  = $self->database(lc($db));
     unless( $db_adaptor ){
-      $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+      $self->problem( 'fatal', 'Database Error', "Could not connect to the $db database." );
       return undef;
     }
     my $adaptor_name = "get_${object_type}Adaptor";

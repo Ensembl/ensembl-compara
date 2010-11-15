@@ -331,7 +331,7 @@ sub _get_funcgen_db_adaptor {
    if ($self->param('fdb')) { $db = $self->param('fdb');}
    my $db_adaptor  = $self->database(lc($db));
    unless( $db_adaptor ){
-     $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+     $self->problem( 'fatal', 'Database Error', "Could not connect to the $db database." );
      return undef;
    }
   return $db_adaptor;
@@ -341,7 +341,7 @@ sub _get_core_adaptor {
    my $self = shift;
    my $db_adaptor  = $self->database('core');
    unless( $db_adaptor ){
-     $self->problem( 'Fatal', 'Database Error', "Could not connect to the core database." );
+     $self->problem( 'fatal', 'Database Error', "Could not connect to the core database." );
      return undef;
    }
   return $db_adaptor;
@@ -522,7 +522,7 @@ sub _generic_create {
 # Get the 'central' database (core, est, vega)
     my $db_adaptor  = $self->database(lc($db));
     unless( $db_adaptor ){
-      $self->problem( 'Fatal', 'Database Error', "Could not connect to the $db database." );
+      $self->problem( 'fatal', 'Database Error', "Could not connect to the $db database." );
       return undef;
     }
     my $adaptor_name = "get_${object_type}Adaptor";
