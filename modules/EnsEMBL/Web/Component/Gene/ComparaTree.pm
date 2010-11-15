@@ -51,7 +51,7 @@ sub content {
     ($member, $tree, $node) = $self->get_details($cdb);
   }
 
-  return $tree . $self->genomic_alignment_links($cdb) if $hub->param('g') && !defined $member;
+  return $tree . $self->genomic_alignment_links($cdb) if $hub->param('g') && !$is_genetree && !defined $member;
 
   my $leaves               = $tree->get_all_leaves;
   my $highlight_gene       = $hub->param('g1');
