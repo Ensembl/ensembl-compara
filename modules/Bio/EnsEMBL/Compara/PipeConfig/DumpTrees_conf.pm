@@ -39,10 +39,12 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',                 # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'rel'         => 59,                                                  # current release number
-        'tree_type'   => 'gene_trees',                                        # currently this is the only option, but it may become a proper parameter once 'ncrna_trees' are also supported
+        'rel'               => 60,                                                  # current release number
+        'rel_suffix'        => '',                                                  # empty string by default
+        'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
+        'tree_type'         => 'gene_trees',                                        # either 'gene_trees' or 'ncrna_trees'
 
-        'pipeline_name' => $self->o('tree_type').'_'.$self->o('rel').'_dumps', # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara2',
@@ -62,7 +64,7 @@ sub default_options {
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
-        'name_root'   => 'Compara.'.$self->o('rel').'.'.$self->o('tree_type'),      # dump file name root
+        'name_root'   => 'Compara.'.$self->o('rel_with_suffix').'.'.$self->o('tree_type'),      # dump file name root
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',
         'target_dir'  => '/lustre/scratch101/ensembl/'.$ENV{'USER'}.'/'.$self->o('pipeline_name'),   # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                       # where directory hash is created and maintained
