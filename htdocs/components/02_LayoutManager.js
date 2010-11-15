@@ -153,7 +153,7 @@ Ensembl.LayoutManager.extend({
       var r;
       
       if (this.title == 'UCSC') {
-        this.href = this.href.replace(/(&?position=)[^&]+(.?)/, '$1' + Ensembl.urlFromHash(this.href, true) + '$2');
+        this.href = this.href.replace(/(&?position=)[^&]+(.?)/, '$1chr' + Ensembl.urlFromHash(this.href, true) + '$2');
       } else if (this.title == 'NCBI') {
         r = Ensembl.urlFromHash(this.href, true).split(/[:-]/);
         this.href = this.href.replace(/(&?CHR=).+&BEG=.+&END=[^&]+(.?)/, '$1' + r[0] + '&BEG=' + r[1] + '&END=' + r[2] + '$2');
