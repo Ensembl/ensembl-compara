@@ -30,6 +30,7 @@ $self->{'multifurcation_deletes_node'} = undef;
 $self->{'multifurcation_deletes_all_subnodes'} = undef;
 $self->{'njtree_output_filename'} = undef;
 $self->{'no_other_files'} = undef;
+$self->{'no_print_tree'}  = undef;
 my $state = 4;
 
 my $conf_file;
@@ -56,6 +57,7 @@ GetOptions('help'        => \$help,
            'multifurcation_deletes_all_subnodes=s' => \$self->{'multifurcation_deletes_all_subnodes'},
            'njtree_output_filename=s'   => \$self->{'njtree_output_filename'},  # we need to be able to feed the filename from outside to make some automation possible
            'no_other_files'             => \$self->{'no_other_files'},          # and shut up the rest of it :)
+           'no_print_tree'              => \$self->{'no_print_tree'},           # so all output goes to STDERR
            'scale=f'     => \$self->{'scale'},
            'mini'        => \$self->{'minimize_tree'},
            'count'       => \$self->{'stats'},
@@ -100,7 +102,7 @@ if ($url) {
   }
 }
 unless(defined($self->{'comparaDBA'})) {
-  print("no url URL\n\n");
+  warn "Could not create compara_dba from url '$url'\n\n";
   usage();
 } 
 
@@ -111,7 +113,7 @@ if($self->{'tree_id'}) {
 
 if($self->{'stats'}) {
   $state=0;
-  printf("%d proteins\n", scalar(@{$self->{'root'}->get_all_leaves}));
+  warn ''.scalar(@{$self->{'root'}->get_all_leaves})." proteins\n";
 }
 
 
@@ -131,10 +133,10 @@ switch($state) {
 
 #cleanup memory
 if($self->{'root'}) {
-  print("ABOUT TO MANUALLY release tree\n") if ($self->{'debug'});
+  warn("ABOUT TO MANUALLY release tree\n") if ($self->{'debug'});
   $self->{'root'}->release_tree;
   $self->{'root'} = undef;
-  print("DONE\n") if ($self->{'debug'});
+  warn("DONE\n") if ($self->{'debug'});
 }
 
 exit(0);
@@ -147,15 +149,15 @@ exit(0);
 #######################
 
 sub usage {
-  print "testTaxonTree.pl [options]\n";
-  print "  -help                  : print this help\n";
-  print "  -url <url>             : connect to compara at url\n";
-  print "  -tree_id <id>          : print tree with node_id\n";
-  print "  -name <string>         : search for <name> and print tree from that node\n";
-  print "  -align                 : print multiple alignment\n";
-  print "  -scale <num>           : scale factor for printing tree (def: 100)\n";
-  print "  -mini                  : minimize tree\n";
-  print "testTaxonTree.pl v1.1\n";
+  warn "testTaxonTree.pl [options]\n";
+  warn "  -help                  : print this help\n";
+  warn "  -url <url>             : connect to compara at url\n";
+  warn "  -tree_id <id>          : print tree with node_id\n";
+  warn "  -name <string>         : search for <name> and print tree from that node\n";
+  warn "  -align                 : print multiple alignment\n";
+  warn "  -scale <num>           : scale factor for printing tree (def: 100)\n";
+  warn "  -mini                  : minimize tree\n";
+  warn "testTaxonTree.pl v1.1\n";
   
   exit(1);  
 }
@@ -188,7 +190,7 @@ sub fetch_primate_ncbi_taxa {
 sub fetch_compara_ncbi_taxa {
   my $self = shift;
   
-  printf("fetch_compara_ncbi_taxa\n");
+  warn("fetch_compara_ncbi_taxa\n");
   
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $root = $self->{'root'};
@@ -211,7 +213,7 @@ sub fetch_compara_ncbi_taxa {
 sub create_species_tree {
   my $self = shift;
 
-  printf("create_species_tree\n");
+  warn("create_species_tree\n");
 
   my @extrataxon_sequenced;
   if($self->{'extrataxon_sequenced'}) { 
@@ -239,38 +241,38 @@ sub create_species_tree {
 
   my $gdb_list = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_all;
   unless (defined($self->{no_previous})) {
-    print STDERR "Loading taxa from gdbs in $url...\n";
+    warn "Loading taxa from gdbs in $url...\n";
     foreach my $gdb (@$gdb_list) {
       my $taxon_name = $gdb->name;
       next if ($taxon_name =~ /ncestral/);
       my $taxon_id = $gdb->taxon_id;
       my $taxon = $taxonDBA->fetch_node_by_taxon_id($taxon_id);
-      print STDERR "  $taxon_name [$taxon_id]\n";
+      warn "  $taxon_name [$taxon_id]\n";
       $taxon->release_children;
 
       $root = $taxon->root unless($root);
       $root->merge_node_via_shared_ancestor($taxon);
     }
   }
-  print STDERR "Loading taxa from extrataxon_sequenced...\n" if (0 != scalar(@extrataxon_sequenced));
+  warn "Loading taxa from extrataxon_sequenced...\n" if (0 != scalar(@extrataxon_sequenced));
   foreach my $extra_taxon (@extrataxon_sequenced) {
     $DB::single=1;1;
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
     next unless defined($taxon);
     my $taxon_name = $taxon->name;
     my $taxon_id = $taxon->taxon_id;
-    print STDERR "  $taxon_name [$taxon_id]\n";
+    warn "  $taxon_name [$taxon_id]\n";
     $taxon->release_children;
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
   }
-  print STDERR "Loading taxa from extrataxon_incomplete...\n" if (0 != scalar(@extrataxon_incomplete));
+  warn "Loading taxa from extrataxon_incomplete...\n" if (0 != scalar(@extrataxon_incomplete));
   foreach my $extra_taxon (@extrataxon_incomplete) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
     my $taxon_name = $taxon->name;
     my $taxon_id = $taxon->taxon_id;
-    print STDERR "  $taxon_name [$taxon_id]\n";
+    warn "  $taxon_name [$taxon_id]\n";
     $taxon->release_children;
 
     $root = $taxon->root unless($root);
@@ -281,17 +283,17 @@ sub create_species_tree {
   #$root = $root->minimize_tree if($self->{'minimize_tree'});
   $root = $root->minimize_tree if (defined($root));
 
-#   print STDERR "# Before multifurcation_deletes_node\n\n";
+#   warn "# Before multifurcation_deletes_node\n\n";
 #   $root->print_tree($self->{'scale'});
 
   # Deleting nodes to further multifurcate
   my @subnodes = $root->get_all_subnodes;
-  print STDERR "Multifurcating nodes...\n" if (0 != scalar(@multifurcation_deletes_node));
+  warn "Multifurcating nodes...\n" if (0 != scalar(@multifurcation_deletes_node));
   foreach my $extra_taxon (@multifurcation_deletes_node) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
     my $taxon_name = $taxon->name;
     my $taxon_id = $taxon->taxon_id;
-    print STDERR "* $taxon_name [$taxon_id]\n";
+    warn "* $taxon_name [$taxon_id]\n";
     foreach my $node (@subnodes) {
       next unless ($node->node_id == $extra_taxon);
       my $node_children = $node->children;
@@ -304,12 +306,12 @@ sub create_species_tree {
 
   # Deleting subnodes down to a given node
   @subnodes = $root->get_all_subnodes;
-  print STDERR "Multifurcating subnodes...\n" if (0 != scalar(@multifurcation_deletes_all_subnodes));
+  warn "Multifurcating subnodes...\n" if (0 != scalar(@multifurcation_deletes_all_subnodes));
   foreach my $extra_taxon (@multifurcation_deletes_all_subnodes) {
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
     my $taxon_name = $taxon->name;
     my $taxon_id = $taxon->taxon_id;
-    print STDERR "* $taxon_name [$taxon_id]\n";
+    warn "* $taxon_name [$taxon_id]\n";
     $DB::single=1;1;
     my $node_in_root = $root->find_node_by_node_id($taxon_id);
     foreach my $node ($node_in_root->get_all_subnodes) {
@@ -323,8 +325,11 @@ sub create_species_tree {
   }
 
 
-#   print STDERR "#\n After multifurcation_deletes_node\n\n";
+#   warn "#\n After multifurcation_deletes_node\n\n";
+
+unless($self->{'no_print_tree'}) {
   $root->print_tree($self->{'scale'});
+}
 
   my $outname = $self->{'comparaDBA'}->dbc->dbname;
   $outname .= ".".$self->{'tag'} if (defined($self->{'tag'}));
@@ -333,7 +338,7 @@ sub create_species_tree {
   my $newick_common;
   eval {$newick_common = $root->newick_format("full_common");};
   unless ($@) {
-    print("\n\n$newick_common\n\n");
+    warn("\n\n$newick_common\n\n");
     $newick_common =~ s/\ /\_/g;
 
     unless($self->{'no_other_files'}) {
@@ -343,7 +348,7 @@ sub create_species_tree {
     }
   }
   my $newick = $root->newick_format;
-  print("\n\n$newick\n\n");
+  warn("\n\n$newick\n\n");
 
     unless($self->{'no_other_files'}) {
         open T,">newick.$outname.nh" or die "$!";
@@ -355,7 +360,7 @@ sub create_species_tree {
   $newick_simple =~ s/\:\d\.\d+//g;
   $newick_simple =~ s/\ /\_/g;
 
-  print "$newick_simple\n\n";
+  warn "$newick_simple\n\n";
 
     unless($self->{'no_other_files'}) {
         open T,">newick_simple.$outname.nh" or die "$!";
@@ -364,7 +369,7 @@ sub create_species_tree {
     }
 
   my $species_short_name = $root->newick_format('species_short_name');
-  print("$species_short_name\n\n");
+  warn("$species_short_name\n\n");
 
     unless($self->{'no_other_files'}) {
         open T,">species_short_name.$outname.nh" or die "$!";
@@ -373,8 +378,8 @@ sub create_species_tree {
     }
 
   my $njtree_tree = $root->newick_format('njtree');
-  print STDERR "==== Your njtree file njtree.$outname.nh ====\n";
-  print("$njtree_tree\n\n");
+  warn "==== Your njtree file njtree.$outname.nh ====\n";
+  warn "$njtree_tree\n\n";
 
     unless($self->{'no_other_files'}) {
         open T,">njtree.$outname.nh" or die "$!";
@@ -390,7 +395,7 @@ sub create_species_tree {
 
   my $s = join (":", map {$_->name} (@{$root->get_all_leaves}));
   $s =~ s/\ /\_/g;
-  print "$s\n";
+  warn "$s\n";
 
   $self->{'root'} = $root;
   drawPStree($self) if ($self->{'drawtree'});
@@ -413,7 +418,7 @@ sub fetch_protein_tree {
     case 2 {
       my $member = $self->{'comparaDBA'}->get_MemberAdaptor->fetch_by_source_stable_id('ENSEMBLPEP', 'ENSP00000264731');
       my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->member_id, 68537);
-      print $aligned_member, "\n";
+      warn ''.$aligned_member."\n";
       $aligned_member->print_member;
       $aligned_member->gene_member->print_member;
       $tree = $aligned_member->subroot;
@@ -422,10 +427,10 @@ sub fetch_protein_tree {
   }
 
   $tree->print_tree($self->{'scale'});
-  printf("%d proteins\n", scalar(@{$tree->get_all_leaves}));
+  warn("%d proteins\n", scalar(@{$tree->get_all_leaves}));
   
   my $newick = $tree->newick_simple_format;
-  print("$newick\n");
+  warn("$newick\n");
 
   $tree->release;
   return;
@@ -446,11 +451,11 @@ sub query_ncbi_name {
 
   my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
   my $taxon = $taxonDBA->fetch_node_by_name($name);
-  print "taxon_name -- ", $taxon->name, "\n";
-  print "taxon_id -- ", $taxon->taxon_id, "\n\n";
+  warn "taxon_name -- ".$taxon->name."\n";
+  warn "taxon_id -- ".$taxon->taxon_id."\n\n";
   foreach my $tag ($taxon->get_all_tags) {
     my $value = $taxon->get_tagvalue($tag);
-    print "$tag -- $value\n";
+    warn "$tag -- $value\n";
   }
 }
 
@@ -465,7 +470,7 @@ sub fetch_protein_tree_with_gene {
   $member->print_member;
   $member->get_canonical_peptide_Member->print_member;
   my $aligned_member = $treeDBA->fetch_AlignedMember_by_member_id_root_id($member->get_canonical_peptide_Member->member_id);
-  print $aligned_member, "\n";
+  warn ''.$aligned_member."\n";
   $aligned_member->print_member;
   $aligned_member->gene_member->print_member;
   $tree = $aligned_member->root;
@@ -499,7 +504,7 @@ sub create_taxon_tree {
     my $taxon = $taxonDBA->fetch_by_dbID($gdb->taxon_id);
     my @levels = reverse($taxon->classification);
     my $taxon_info = join(":", @levels);
-    print("$taxon_info\n");
+    warn("$taxon_info\n");
 
     my $prev_level = '';
     my $parent = undef;
@@ -533,16 +538,16 @@ sub create_taxon_tree {
 #   $fetchTree->print_tree($self->{'scale'});
 
   #cleanup memory
-  print("ABOUT TO MANUALLY release tree\n");
+  warn("ABOUT TO MANUALLY release tree\n");
   $root->release;
-  print("DONE\n");
+  warn("DONE\n");
 }
 
 sub parse_newick {
   my $self = shift;
   
   my $newick = '';
-  print("load from file ", $self->{'newick_file'}, "\n");
+  warn "load from file ". $self->{'newick_file'}. "\n";
   open (FH, $self->{'newick_file'}) or throw("Could not open newick file [$self->{'newick_file'}]");
   while(<FH>) {
     $newick .= $_;
@@ -560,7 +565,7 @@ sub reroot {
 
   my $treeDBA = $self->{'comparaDBA'}->get_ProteinTreeAdaptor;
   my $node = $treeDBA->fetch_node_by_node_id($node_id);  
-  printf("tree at %d\n", $node->subroot->node_id);
+  warn "tree at ". $node->subroot->node_id ."\n";
   my $tree = $treeDBA->fetch_node_by_node_id($node->subroot->node_id);  
   $tree->print_tree($self->{'scale'});
   
@@ -601,8 +606,8 @@ sub dumpTreeMultipleAlignment
 
   if($self->{'debug'}) {
     my $leafcount = scalar(@{$tree->get_all_leaves});  
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
-    print("clw_file = '$clw_file'\n");
+    warn "dumpTreeMultipleAlignmentToWorkdir : $leafcount members\n";
+    warn "clw_file = '$clw_file'\n";
   }
 
   open(OUTSEQ, ">$clw_file")
@@ -698,7 +703,7 @@ sub drawPStree
 
   my $cmd = sprintf("drawtree -auto -charht 0.1 -intree %s -fontfile /usr/local/ensembl/bin/font5 -plotfile %s", 
                     $self->{'newick_file'}, $ps_file);
-  print("$cmd\n");
+  warn("$cmd\n");
   system($cmd);
   system("open $ps_file");
 }
