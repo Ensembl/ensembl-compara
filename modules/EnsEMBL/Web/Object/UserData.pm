@@ -146,6 +146,9 @@ sub move_to_user {
   $record = $user->add_to_urls($data)
     if $args{'type'} eq 'url';
 
+  $record = $user->add_to_bams($data)
+    if $args{'type'} eq 'bam';
+
   if ($record) {
     $session->purge_data(%args);
     return $record;
