@@ -9,15 +9,17 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects {
-  my $self      = shift;
-  my $variation = shift;
-  my $identifier;
+  my $self       = shift;
+  my $variation  = shift;
+  my $identifier = $self->param('v') || $self->param('snp');
   
   my $db = $self->species_defs->databases->{'DATABASE_VARIATION'};
   
-  return $self->problem ('fatal', 'Database Error', 'There is no variation database for this species.') unless $db;
-   
+  return $self->problem('fatal', 'Database Error', 'There is no variation database for this species.') unless $db;
+  
   if (!$variation) {
+    return $self->problem('fatal', 'Variation ID required', $self->_help('A variation ID is required to build this page.')) unless $identifier;
+    
     my $dbs = $self->hub->get_databases(qw(core variation));
     
     return $self->problem('fatal', 'Database Error', 'Could not connect to the core database.') unless $dbs;
@@ -27,16 +29,11 @@ sub createObjects {
     return $self->problem('fatal', 'Database Error', 'Could not connect to the variation database.') unless $variation_db;
     
     $variation_db->dnadb($dbs->{'core'});
-  
-    my $source  = $self->param('source');
-    $identifier = $self->param('v') || $self->param('snp');
     
-    return $self->problem('fatal', 'Variation ID required', $self->_help('A variation ID is required to build this page.')) unless $identifier;
-    
-    $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier, $source);
+    $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier, $self->param('source'));
   }
   
-  if ($variation) { 
+  if ($variation) {
     $self->DataObjects($self->new_object('Variation', $variation, $self->__data));
     
     my $vf                  = $self->param('vf');
@@ -55,13 +52,10 @@ sub createObjects {
     }
     
     $self->param('vdb', 'variation');
-    $self->param('v', $variation->name);
+    $self->param('v', $variation->name) unless $identifier eq $variation->name; # For same reason as vf check above
   } else { 
-    my $dbsnp_version = "";
-    if ( $self->species_defs->databases->{'DATABASE_VARIATION'}->{'dbSNP_VERSION'}){
-      $dbsnp_version = "which includes data from dbSNP ". $self->species_defs->databases->{'DATABASE_VARIATION'}->{'dbSNP_VERSION'} .',';
-    }
-    my $help_message = "Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";
+    my $dbsnp_version = $db->{'dbSNP_VERSION'} ? "which includes data from dbSNP $db->{'dbSNP_VERSION'}," : '';
+    my $help_message  = "Either $identifier does not exist in the current Ensembl database, $dbsnp_version or there was a problem retrieving it.";
     return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message));
   }
 }
