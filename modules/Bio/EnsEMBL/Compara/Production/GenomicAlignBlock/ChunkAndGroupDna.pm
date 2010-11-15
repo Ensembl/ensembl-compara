@@ -165,21 +165,22 @@ sub write_output
   if (defined $self->{'chunk_size'}) {
       my $dna_objects = $self->{'dna_collection'}->get_all_dna_objects;
       foreach my $dna_object (@$dna_objects) {
-	  if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
-	      my $store_seq_id = "{'chunkSetID' => '" . $dna_object->dbID . "'}";
-	      #Use branch1 to send data to StoreSequence
-	      $self->dataflow_output_id($store_seq_id,1);
-	  } else {
-	      my $store_seq_id = "{'chunkID' => '" . $dna_object->dbID .  "'}";
-	      #Use branch1 to send data to StoreSequence
-	      $self->dataflow_output_id($store_seq_id,1);
-	  }
+          if($dna_object->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunkSet')) {
+              my $store_seq_id = "{'chunkSetID' => '" . $dna_object->dbID . "'}";
+              #Use branch1 to send data to StoreSequence
+              $self->dataflow_output_id($store_seq_id,1);
+          } else {
+              my $store_seq_id = "{'chunkID' => '" . $dna_object->dbID .  "'}";
+              #Use branch1 to send data to StoreSequence
+              $self->dataflow_output_id($store_seq_id,1);
+          }
       }
   } else {
       #Do not produce any StoreSequence jobs
       $self->input_job->autoflow(0);
       #$self->autoflow_inputjob(0);
   }
+
   return 1;
 }
 
@@ -290,26 +291,26 @@ sub create_chunks
     my @regions = split(/,/, $self->{'region'});  
 
     foreach my $region (@regions) {
-	my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $region);
-	if (defined $seq_region_name && $seq_region_name ne "") {
-	    print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
-	    my $slice;
-	    if (defined $seq_region_start && defined $seq_region_end) {
-		$slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
-		push @{$chromosomes}, $slice;
-	    } else {
-		if ($self->{'include_non_reference'}) {
-		    $slice = $SliceAdaptor->fetch_by_region_unique($coord_system_name, $seq_region_name);
-		    push @{$chromosomes}, @$slice;
-		} else {
-		    $slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
-		    push @{$chromosomes}, $slice;
-		}
-	    }
-	} else {
-	    print("fetch by region coord:$coord_system_name\n");
-	    push @{$chromosomes}, $SliceAdaptor->fetch_all($coord_system_name);
-	}
+        my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $region);
+        if (defined $seq_region_name && $seq_region_name ne "") {
+            print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
+            my $slice;
+            if (defined $seq_region_start && defined $seq_region_end) {
+                $slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
+                push @{$chromosomes}, $slice;
+            } else {
+                if ($self->{'include_non_reference'}) {
+                    $slice = $SliceAdaptor->fetch_by_region_unique($coord_system_name, $seq_region_name);
+                    push @{$chromosomes}, @$slice;
+                } else {
+                    $slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
+                    push @{$chromosomes}, $slice;
+                }
+            }
+        } else {
+            print("fetch by region coord:$coord_system_name\n");
+            push @{$chromosomes}, $SliceAdaptor->fetch_all($coord_system_name);
+        }
     }
   } else {
       #default for $include_non_reference = 0, $include_duplicates = 0
@@ -340,7 +341,9 @@ sub create_chunks
   foreach my $chr (@{$chromosomes}) {
     #print "fetching dnafrag\n";
     if (defined $self->{'region'}) {
-      next unless (scalar @{$chr->get_all_Attributes('toplevel')});
+      unless(scalar @{$chr->get_all_Attributes('toplevel')}) {
+        warn "No toplevel attributes, skipping this region";
+      }
     }
 
     my ($dnafrag) = @{$dnafragDBA->fetch_all_by_GenomeDB_region(
@@ -378,6 +381,8 @@ sub create_chunks
     $self->{'comparaDBA'}->get_DnaFragChunkSetAdaptor->store($self->{'current_chunkset'});
     #$self->submit_job($self->{'current_chunkset'});
     $self->{'dna_collection'}->add_dna_object($self->{'current_chunkset'});
+  } else {
+    warn "current_chunkset->count is zero => not adding it to the collection";
   }
 
   #
