@@ -11,7 +11,7 @@ sub init {
   $view_config->storable = 1;
   $view_config->nav_tree = 1;
   
-  my %defaults = map { default_on($_) ? ($_->{'name'} => 'yes') : ($_->{'name'} => 0) } get_xref_types($view_config->hub);
+  my %defaults = map { default_on($_) ? ($_->{'name'} => 'yes') : ($_->{'name'} => 'off') } get_xref_types($view_config->hub);
   
   $view_config->_set_defaults(%defaults);
 }
