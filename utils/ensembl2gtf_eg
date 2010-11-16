@@ -8,26 +8,9 @@ use FileHandle;
 use FindBin qw($Bin);
 use File::Basename qw( dirname );
 use Time::localtime;
-
-# Load libraries needed for reading config -----------------------------------
-use vars qw( $SERVERROOT );
-BEGIN{
-    $SERVERROOT = `pwd`;
-    chomp $SERVERROOT;
-    warn $SERVERROOT;
-#    $SERVERROOT = dirname($Bin);
-#  warn $SERVERROOT;
-#    die;
-  unshift @INC, "$SERVERROOT/conf";
-  eval{ require SiteDefs };
-  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
-  warn  @SiteDefs::ENSEMBL_LIB_DIRS;
-  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
-}
-
+use File::Path;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::SeqFeature;
-use utils::Tool;
 
 my $host;#   = 'mysql-eg-live-1.ebi.ac.uk';
 my $user;#   = 'ensro';
@@ -92,8 +75,8 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
     -user => $user,
     -pass => $pass,
     -port => $port,
-					      -release => $release
-					      );
+    -release => $release
+    );
 for my $db (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP=>'core')})  {
     if($db->dbc()->dbname() eq $dbname) {
 	print "SPECIES=".$db->species()."\n";
@@ -107,7 +90,8 @@ for my $db (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP=>'core')})  {
 	    $assembly     = $highest_cs->version();
 	}
 
-  utils::Tool::info(2, "$sp: gtf dump $assembly");
+  print "sp: gtf dump $assembly\n";
+#  utils::Tool::info(2, "$sp: gtf dump $assembly");
 
   # Get slices ---------------------------------------------
   my $sa  = $db->get_SliceAdaptor();
@@ -141,7 +125,12 @@ for my $db (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP=>'core')})  {
   $dumpdir   ||= "/dumps/release-$release";
 	
   my $sp_folder = "$dumpdir/gtf/". $sp;
-  utils::Tool::check_dir($sp_folder);
+
+	unless(-d $sp_folder) {
+	    mkpath($sp_folder);
+	}
+	
+#  utils::Tool::check_dir($sp_folder);
 
   my $outfile = $gtf_file || "$sp_folder/$sp.$assembly.$release.gtf";
   my $gtffp = new FileHandle;
@@ -156,7 +145,8 @@ for my $db (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP=>'core')})  {
       }
     }
   }
-  utils::Tool::info(1, "Dumped $sp");
+	print "Dumped $sp\n";
+ # utils::Tool::info(1, "Dumped $sp");
 
   # Compress (gzip files)
   compress( $outfile ) unless $no_compress;
@@ -168,12 +158,12 @@ for my $db (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP=>'core')})  {
 # Work out timings -----------------------------------------------------------
 my $time_taken = time - $script_start_time;
 my $hours      = localtime($time_taken)->hour -1;
-utils::Tool::info (2, "Used $logfile.") if $logfile;
-utils::Tool::info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
+#utils::Tool::info (2, "Used $logfile.") if $logfile;
+#utils::Tool::info (2, " Time taken: $hours:". localtime($time_taken)->min."mins");
 close STDERR;
 
 $email ||= '';
-utils::Tool::mail_log( $logfile, $email ) if $logfile;
+#utils::Tool::mail_log( $logfile, $email ) if $logfile;
 exit;
 
 
@@ -486,11 +476,13 @@ sub compress {
   my $file = shift;
   return  unless (-e "$file");
 
-  utils::Tool::info( 1, "Gzipping files");
+  #utils::Tool::info( 1, "Gzipping files");
+  print "Gzipping files\n";
   #my $size = -s $file;
   if (my $size = -s $file > 3500000000 ){
     #split_data($file);
-    utils::Tool::warning(1, "Large file generated $file $size");
+    print "WARNING: Large file generated $file $size";
+    #utils::Tool::warning(1, "Large file generated $file $size");
   }
   else {
     system("gzip -9 $file") ==0 or utils::Tool::warning(1, "Can't gzip file $! $file");
