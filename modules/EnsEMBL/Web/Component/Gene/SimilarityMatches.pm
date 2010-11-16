@@ -72,7 +72,8 @@ sub matches_to_html {
     push @rows, $row;
   }
   
-  @columns = sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'title'} cmp $b->{'title'} || $a->{'link_text'} cmp $b->{'link_text'} } @columns;
+  #@columns = sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'title'} cmp $b->{'title'} || $a->{'link_text'} cmp $b->{'link_text'} } @columns;
+  @columns = sort { default_on($a) <=> default_on($b) } @columns;
   @rows    = sort { keys %{$b} <=> keys %{$a} } @rows; # show rows with the most information first
   
   $table->add_columns(@columns);   
@@ -199,5 +200,41 @@ sub get_similarity_links_hash {
     $similarity_links{'all_locations_url'} = $all_locations_url;
     
     return %similarity_links;
+}
+
+sub default_on {
+  my $value = shift;
+  
+  my %default_on = (
+    'TranscriptID' => 0,   
+    'EnsemblHumanTranscript' => 1, 
+    'HGNC(curated)'           => 2, 
+    'HGNC(automatic)'         => 3, 
+    'EntrezGene'               => 4, 
+    'CCDS'                     => 5, 
+    'RefSeqRNA'               => 6, 
+    'UniProtKB/Swiss-Prot'    => 7, 
+    'RefSeqpeptide'           => 8, 
+    'RefSeqDNA'               => 9, 
+    'RFAM'                     => 10, 
+    'miRBase'                  => 11, 
+    'Vegatranscript'          => 12, 
+    'MIMdisease'              => 13, 
+    'MGI'                      => 14, 
+    'MGI_curated_gene'         => 15, 
+    'MGI_automatic_gene'       => 16, 
+    'MGI_curated_transcript'   => 17, 
+    'MGI_automatic_transcript' => 18, 
+    'ZFIN_ID'                  => 19,
+    'ProjectedHGNC'           => 20
+  );
+  my $title=$value->{'title'};
+  $title=~ s/- <br\/>//g;
+  $title=~ s/\s*//g;
+  if (defined($default_on{$title})){
+    return $default_on{$title};
+  }else{
+    return 100;
+  }
 }
 1;

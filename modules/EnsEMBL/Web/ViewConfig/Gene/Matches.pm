@@ -19,7 +19,7 @@ sub init {
 sub form {
   my ($view_config, $object) = @_;
   
-  foreach (sort { default_on($b) <=> default_on($a) } get_xref_types($view_config->hub)) {
+  foreach (sort { default_on($a) <=> default_on($b) } get_xref_types($view_config->hub)) {
     $view_config->add_form_element({
       type   => 'CheckBox',
       select => 'select',
@@ -51,28 +51,32 @@ sub default_on {
   
   my %default_on = (
     'Ensembl Human Transcript' => 1, 
-    'HGNC (curated)'           => 1, 
-    'HGNC (automatic)'         => 1, 
-    'EntrezGene'               => 1, 
-    'CCDS'                     => 1, 
-    'RefSeq RNA'               => 1, 
-    'UniProtKB/ Swiss-Prot'    => 1, 
-    'RefSeq peptide'           => 1, 
-    'RefSeq DNA'               => 1, 
-    'RFAM'                     => 1, 
-    'miRBase'                  => 1, 
-    'Vega transcript'          => 1, 
-    'MIM disease'              => 1, 
-    'MGI'                      => 1, 
-    'MGI_curated_gene'         => 1, 
-    'MGI_automatic_gene'       => 1, 
-    'MGI_curated_transcript'   => 1, 
-    'MGI_automatic_transcript' => 1, 
-    'ZFIN_ID'                  => 1,
-    'Projected HGNC'           => 1
+    'HGNC (curated)'           => 2, 
+    'HGNC (automatic)'         => 3, 
+    'EntrezGene'               => 4, 
+    'CCDS'                     => 5, 
+    'RefSeq RNA'               => 6, 
+    'UniProtKB/ Swiss-Prot'    => 7, 
+    'RefSeq peptide'           => 8, 
+    'RefSeq DNA'               => 9, 
+    'RFAM'                     => 10, 
+    'miRBase'                  => 11, 
+    'Vega transcript'          => 12, 
+    'MIM disease'              => 13, 
+    'MGI'                      => 14, 
+    'MGI_curated_gene'         => 15, 
+    'MGI_automatic_gene'       => 16, 
+    'MGI_curated_transcript'   => 17, 
+    'MGI_automatic_transcript' => 18, 
+    'ZFIN_ID'                  => 19,
+    'Projected HGNC'           => 20
   );
-  
-  return $default_on{$value->{'name'}};
+  if (defined($default_on{$value->{'name'}})){
+    return $default_on{$value->{'name'}};
+  }else{
+    return 100;
+  }  
+  return ;
 }
 
 1;
