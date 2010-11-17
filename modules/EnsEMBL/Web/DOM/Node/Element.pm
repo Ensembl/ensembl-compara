@@ -1,11 +1,6 @@
 package EnsEMBL::Web::DOM::Node::Element;
 
-## Status - Under Development
-## TODO - appendable()
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node);
 
@@ -22,54 +17,27 @@ sub render {
 
   my $tag = $self->node_name;
   
-  #attribute W3C validation - generate warning only
-  for (@{ $self->mandatory_attributes }) {
-    #warn "Attribute $_ missing for tag $tag - will cause error in W3C validation." unless exists $self->{'_attributes'}{ $_ };
-  }
-
   my $attributes = [];
-  foreach my $attrib (keys %{ $self->{'_attributes'} }) {
+  foreach my $attrib (keys %{$self->{'_attributes'}}) {
     my $glue = {'class' => ' ', 'style' => ';'};
     push @$attributes, sprintf(
       '%s="%s"',
       $attrib,
-      $attrib =~ /^(class|style)$/ ? join($glue->{ $attrib }, keys(%{ $self->{'_attributes'}{ $attrib } })) : $self->{'_attributes'}{ $attrib }
+      $attrib =~ /^(class|style)$/ ? join($glue->{$attrib}, keys(%{$self->{'_attributes'}{$attrib}})) : $self->{'_attributes'}{$attrib}
     );
   }
   $attributes = join ' ', @$attributes;
-  return qq(<$tag $attributes />) unless $self->can_have_child;
+  $attributes = ' '.$attributes if $attributes ne '';
+  return qq(<$tag$attributes />) unless $self->can_have_child;
   
   my $children = '';
   if ($self->inner_HTML ne '') {
     $children = $self->inner_HTML;
   }
   else {
-    $children .= $_->render for (@{ $self->child_nodes });
+    $children .= $_->render for (@{$self->child_nodes});
   }
-  return qq(<$tag $attributes>$children</$tag>);
-}
-
-sub validate_attribute {
-  ## Validates attribute value
-  ## Override this in child class
-  ## @params ScalarRef to attrib name
-  ## @params ScalarRef to attrib value
-  ## @return 0 only if a value could not be validated, 1 always otherwise
-  return 1;
-}
-
-sub allowed_attributes {
-  ## Gives an arrayref of all allowed attributes
-  ## Override this in child class to append more attributes to the list
-  ## @return arrayref of all allowed attributes (strings)
-  return ['id', 'class', 'title', 'style', 'dir', 'lang', 'xml:lang'];
-}
-
-sub mandatory_attributes  {
-  ## Returns an array of attributes declared mandatory by W3C for this given node name
-  ## Override in child class
-  ## @return ArrayRef of strings (attributes)
-  return [];
+  return qq(<$tag$attributes>$children</$tag>);
 }
 
 sub attributes {
@@ -83,7 +51,12 @@ sub get_attribute {
   ## @params Attribute name
   ## @return Attribute value if attribute exists, blank string otherwise
   my ($self, $attrib) = @_;
-  return $self->{'_attributes'}{ $attrib } || '';
+  my $glue = {'class' => ' ', 'style' => ';'};
+  return $attrib =~ /^(class|style)$/
+    ? join($glue->{$attrib}, keys(%{$self->{'_attributes'}{$attrib}}))
+    : $self->{'_attributes'}{$attrib}
+      if $self->has_attribute($attrib);
+  return '';
 }
 
 sub has_attribute {
@@ -91,7 +64,7 @@ sub has_attribute {
   ## @params Attribute name
   ## @return 1 if attribute exists, 0 otherwise
   my ($self, $attrib) = @_;
-  return exists $self->{'_attribiutes'}{ $attrib } ? 1 : 0;
+  return exists $self->{'_attribiutes'}{$attrib} ? 1 : 0;
 }
 
 sub remove_attribute {
@@ -102,13 +75,13 @@ sub remove_attribute {
   ## @return No return value
   my ($self, $attrib, $value) = @_;
   
-  return unless exists $self->{'_attributes'}{ $attrib };
+  return unless $self->has_attribute($attrib);
   
-  if (defined $value && ref($self->{'_attributes'}{ $attrib }) eq 'HASH') {
-    delete $self->{'_attributes'}{ $attrib }{ $value } if exists $self->{'_attributes'}{ $attrib }{ $value };
-    return if scalar keys %{ $self->{'_attributes'}{ $attrib } }; #don't remove attribute completely if some keys present
+  if (defined $value && ref($self->{'_attributes'}{$attrib}) eq 'HASH') {
+    delete $self->{'_attributes'}{$attrib}{$value} if exists $self->{'_attributes'}{$attrib}{$value};
+    return if scalar keys %{$self->{'_attributes'}{$attrib}}; #don't remove attribute completely if some keys present
   }
-  delete $self->{'_attributes'}{ $attrib };
+  delete $self->{'_attributes'}{$attrib};
 }
 
 sub set_attribute {
@@ -118,39 +91,33 @@ sub set_attribute {
   ## @return No return value
   my ($self, $attrib, $value) = @_;
 
+  return unless defined $value;
   $attrib = lc $attrib;
-  my $allowed_attributes = { map { $_ => 1 } @{ $self->allowed_attributes } };
-  
-  unless (
-    exists $allowed_attributes->{ $attrib } &&      #allowed as an attribute  - if no problem with attribute name
-    $self->validate_attribute(\$attrib, \$value)    #validated                - if no problem with attribute value
-  ) {
-    warn "Could not set attribute $attrib with value $value for tag <".$self->node_name.">.";
-    return;
-  }
 
   if ($attrib =~ /^(class|style)$/) {
-    return unless $value;
-    $self->{'_attributes'}{ $attrib } = {} unless defined $self->{'_attributes'}{ $attrib };
-    $self->{'_attributes'}{ $attrib }{ $_ } = 1 for split(' ', $value);  #does not allow any duplicates
+    my $delimiter = {'class' => ' ', 'style' => ';'};
+    $self->{'_attributes'}{$attrib} = {} unless defined $self->{'_attributes'}{$attrib};
+    $self->{'_attributes'}{$attrib}{$_} = 1 for split($delimiter->{$attrib}, $value);  #hash keys will not allow any duplicates
   }
   else {
-    $self->{'_attributes'}{ $attrib } = $value if defined $value;
+    $self->{'_attributes'}{$attrib} = $value;
   }
 }
 
 sub _access_attribute {
-  ## Accessor for attribute which have same value and name (eg disabled="disabled")
+  ## Accessor for attributes that have same value and name (eg disabled="disabled", checked="checked")
+  ## @params Attribute name
+  ## @params Flag to set or remove attribute
   ## Use in required child classes
   my $self    = shift;
   my $attrib  = shift;
 
   if (@_) {
-    if (shift == 0) {
-      $self->remove_attribute($attrib);
+    if (shift == 1) {
+      $self->set_attribute($attrib, $attrib);
     }
     else {
-      $self->set_attribute($attrib, $attrib);
+      $self->remove_attribute($attrib);
     }
   }
   return $self->has_attribute($attrib) ? 1 : 0;
@@ -161,10 +128,7 @@ sub id {
   ## @params Id
   ## @return Id
   my ($self, $id) = @_;
-  if ($id) {
-    my $old_id = $self->id || '';
-    $self->set_attribute('id', $id);
-  }
+  $self->set_attribute('id', $id) if $id;
   return $self->get_attribute('id');
 }
 
@@ -173,23 +137,20 @@ sub name {
   ## @params Name
   ## @return Name
   my ($self, $name) = @_;
-  if ($name) {
-    my $old_name = $self->name || '';
-    $self->set_attribute('name', $name);
-  }
+  $self->set_attribute('name', $name) if $name;
   return $self->get_attribute('name');
 }
 
 sub inner_HTML {
   ## Sets/Gets inner HTML of an element
-  ## This will remove all the child elements - use document->create_text_node to avoid that.
-  ## Any elements added by this methods will not be accessible from DOM (nor be validated)
+  ## This intends to remove all the child elements before setting inner HTML - use document->create_text_node in other case.
+  ## Any elements added by this methods will not be accessible with selector methods
   ## @params innerHTML
   ## @return innerHTML
   my $self = shift;
   if (@_) {
-    $self->{'_text'} = shift;
     $self->{'_child_nodes'} = [];
+    $self->{'_text'} = shift;
   }
   return $self->{'_text'};
 }
@@ -210,4 +171,3 @@ sub add_attribute {
 }
 
 1;
-
