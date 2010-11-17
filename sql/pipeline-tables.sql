@@ -230,6 +230,15 @@ CREATE TABLE peptide_align_feature_prod (
   PRIMARY KEY (peptide_align_feature_id)
 ) MAX_ROWS = 300000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci PARTITION BY LINEAR HASH(peptide_align_feature_id) PARTITIONS 50;
 
+-- ----------------------------------------------------------------------------------------------
+--
+-- This is a temporary table used by ConstrainedElementAdaptor to create unique constrained_element_ids
+--
+
+CREATE TABLE constrained_element_production (
+       constrained_element_id bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id,
+       PRIMARY KEY constrained_element_id (constrained_element_id)
+) ENGINE=InnoDB;
 
 ## These are non-coding RNA pipeline specific tables:
 
