@@ -48,7 +48,6 @@ sub matches_to_html {
       
       my %similarity_links = $self->get_similarity_links_hash($_);
       my $ext_db_entry     = $similarity_links{'link'} ? qq{<a href="$similarity_links{'link'}">$similarity_links{'link_text'}</a>}  : $similarity_links{'link_text'};
-
       $row->{$_->db_display_name} .= ' ' if defined $row->{$_->db_display_name};
       $row->{$_->db_display_name} .= $ext_db_entry;
       
@@ -68,12 +67,11 @@ sub matches_to_html {
         $existing_display_names{$_->db_display_name} = 1;
       }
     }
-    
     push @rows, $row;
   }
   
   #@columns = sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'title'} cmp $b->{'title'} || $a->{'link_text'} cmp $b->{'link_text'} } @columns;
-  @columns = sort { default_on($a) <=> default_on($b) } @columns;
+  @columns = sort { default_on($a) <=> default_on($b) || $a->{'title'} cmp $b->{'title'}} @columns;
   @rows    = sort { keys %{$b} <=> keys %{$a} } @rows; # show rows with the most information first
   
   $table->add_columns(@columns);   
@@ -94,16 +92,16 @@ sub format_column_header {
   my $column_header   = shift;
   my $value           = shift;
   $column_header      =~ s/\//\/ /; # add a space after a /, which enables the table haeader to split the name into multiple lines if needed.
-  my @header_segments = split / /, $column_header;
+  # my @header_segments = split / /, $column_header;
   
-  foreach (@header_segments) {
-    if (length $value < length $_) {
-      $_= substr($_, 0, length($value) - 1) . '- <br/>' . $self->format_column_header(substr($_, length($value) - 1, length $_), $value);
-    }
-  }
+  # foreach (@header_segments) {
+    # if (length $value < length $_) {
+      # $_= substr($_, 0, length($value) - 1) . '- <br/>' . $self->format_column_header(substr($_, length($value) - 1, length $_), $value);
+    # }
+  # }
   
-  $column_header  = '';
-  $column_header .= "$_ " for @header_segments;
+  # $column_header  = '';
+  # $column_header .= "$_ " for @header_segments;
   
   return $column_header;
 }
@@ -206,31 +204,30 @@ sub default_on {
   my $value = shift;
   
   my %default_on = (
-    'TranscriptID' => 0,   
-    'EnsemblHumanTranscript' => 1, 
-    'HGNC(curated)'           => 2, 
-    'HGNC(automatic)'         => 3, 
+    'Transcript ID' => 0,   
+    'Ensembl Human Transcript' => 1, 
+    'HGNC (curated)'           => 2, 
+    'HGNC (automatic)'         => 3, 
     'EntrezGene'               => 4, 
     'CCDS'                     => 5, 
-    'RefSeqRNA'               => 6, 
-    'UniProtKB/Swiss-Prot'    => 7, 
-    'RefSeqpeptide'           => 8, 
-    'RefSeqDNA'               => 9, 
+    'RefSeq RNA'               => 6, 
+    'UniProtKB/ Swiss-Prot'    => 7, 
+    'RefSeq peptide'           => 8, 
+    'RefSeq DNA'               => 9, 
     'RFAM'                     => 10, 
     'miRBase'                  => 11, 
-    'Vegatranscript'          => 12, 
-    'MIMdisease'              => 13, 
+    'Vega transcript'          => 12, 
+    'MIM disease'              => 13, 
     'MGI'                      => 14, 
     'MGI_curated_gene'         => 15, 
     'MGI_automatic_gene'       => 16, 
     'MGI_curated_transcript'   => 17, 
     'MGI_automatic_transcript' => 18, 
     'ZFIN_ID'                  => 19,
-    'ProjectedHGNC'           => 20
+    'Projected HGNC'           => 20
   );
   my $title=$value->{'title'};
-  $title=~ s/- <br\/>//g;
-  $title=~ s/\s*//g;
+
   if (defined($default_on{$title})){
     return $default_on{$title};
   }else{

@@ -11,7 +11,7 @@ sub init {
   $view_config->storable = 1;
   $view_config->nav_tree = 1;
   
-  my %defaults = map { default_on($_) ? ($_->{'name'} => 'yes') : ($_->{'name'} => 'off') } get_xref_types($view_config->hub);
+  my %defaults = map { (default_on($_) <100) ? ($_->{'name'} => 'yes') : ($_->{'name'} => 'off') } get_xref_types($view_config->hub);
   
   $view_config->_set_defaults(%defaults);
 }
@@ -19,7 +19,7 @@ sub init {
 sub form {
   my ($view_config, $object) = @_;
   
-  foreach (sort { default_on($a) <=> default_on($b) } get_xref_types($view_config->hub)) {
+  foreach (sort { default_on($a) <=> default_on($b) || $a->{'name'} cmp $b->{'name'}} get_xref_types($view_config->hub)) {
     $view_config->add_form_element({
       type   => 'CheckBox',
       select => 'select',
@@ -56,7 +56,7 @@ sub default_on {
     'EntrezGene'               => 4, 
     'CCDS'                     => 5, 
     'RefSeq RNA'               => 6, 
-    'UniProtKB/ Swiss-Prot'    => 7, 
+    'UniProtKB/Swiss-Prot'    => 7, 
     'RefSeq peptide'           => 8, 
     'RefSeq DNA'               => 9, 
     'RFAM'                     => 10, 
@@ -71,6 +71,7 @@ sub default_on {
     'ZFIN_ID'                  => 19,
     'Projected HGNC'           => 20
   );
+  
   if (defined($default_on{$value->{'name'}})){
     return $default_on{$value->{'name'}};
   }else{
