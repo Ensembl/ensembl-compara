@@ -1,14 +1,12 @@
 package EnsEMBL::Web::DOM;
 
-### Serves as an accessor of the DOM tree
-### Status - Under Development - hr5
+### Serves as a factory for creating Nodes in the DOM tree
+### Status - Under Development
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Root);
-use EnsEMBL::Web::DOM::Node::Text;
+
 sub new {
   ## @constructor
   return bless {
@@ -21,7 +19,7 @@ sub map_element_class {
   ## When create_element is called with a given element type, the mapped class is instantiated.
   my ($self, $map) = @_;
   for (keys %$map) {
-    $self->{'_classes'}{ $_ } = $map->{ $_ };
+    $self->{'_classes'}{ lc $_ } = $map->{$_};
   }
 }
 
@@ -54,9 +52,8 @@ sub create_text_node {
   ## Creates a text node
   ## @return Text node object
   my $self = shift;
-  #my $node_class = 'EnsEMBL::Web::DOM::Node::Text';
-  #$self->dynamic_use($node_class);
-  return EnsEMBL::Web::DOM::Node::Text->new($self);
+  my $node_class = 'EnsEMBL::Web::DOM::Node::Text';
+  $self->dynamic_use($node_class);
 }
 
 sub create_comment {
@@ -70,7 +67,7 @@ sub create_comment {
 
 sub _get_mapped_element_class {
   my ($self, $element_type) = @_;
-  return $self->{'_classes'}{ $element_type } if exists $self->{'_classes'}{ $element_type };
+  return $self->{'_classes'}{$element_type} if exists $self->{'_classes'}{$element_type};
   return 'EnsEMBL::Web::DOM::Node::Element::Input::'.ucfirst $1 if $element_type =~ /^input([a-z]+)$/;
   return 'EnsEMBL::Web::DOM::Node::Element::'.ucfirst $element_type;
 }
