@@ -11,7 +11,7 @@ sub _init {
   
   my $config   = $self->{'config'};
   my $features = $config->{'P_variation_legend'};
-  $features->{'Insert'} = { colour => 'blue', shape => 'Poly' };
+  
   return unless $features;
   
   my $im_width = $config->image_width;
@@ -24,6 +24,7 @@ sub _init {
   my ($fontname, $fontsize) = $self->get_font_details('legend');
   my @res = $self->get_text_width(0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize);
   my $th  = $res[3] - ($h / 2);
+  my $y   = $th;
   
   # Set up a separating line
   $self->push($self->Rect({
@@ -39,25 +40,25 @@ sub _init {
   
   foreach (sort keys %$features) {
     my $colour = $features->{$_}->{'colour'};
+    my $text   = $features->{$_}->{'text'};
     
-    if ($features->{$_}->{'shape'} eq 'Poly') {
-      my $dir = $_ eq 'Insert' ? 1 : -1;
-      my $y   = $th + $h - ($dir * $h / 2);
+    if ($features->{$_}->{'shape'} eq 'Triangle') {
+      my $dir = $text eq 'Insert' ? 1 : -1;
       
-      $self->push($self->Poly({
-        colour    => $colour,
-        absolutey => 1,
-        absolutex => 1,
-        points    => [ 
-          $im_width * $x/$columns - ($dir * 3), $y,
-          $im_width * $x/$columns,              $y + ($dir * 4),
-          $im_width * $x/$columns + ($dir * 3), $y
-        ]
+      $self->push($self->Triangle({
+        width        => 6,
+        height       => 4,
+        mid_point    => [ $im_width * $x/$columns, $y + $h + $dir * (4 - $h / 2) ],
+        direction    => $text eq 'Insert'? 'down' : 'up',
+        bordercolour => 'black',
+        absolutey    => 1,
+        absolutex    => 1,
+        no_rectangle => 1
       }));
     } else {
       $self->push($self->Rect({
         x             => $im_width * $x/$columns,
-        y             => $th + ($h / 2),
+        y             => $y + ($h / 2),
         width         => $h,
         height        => $h,
         colour        => $colour,
@@ -69,20 +70,25 @@ sub _init {
     
     $self->push($self->Text({
       x             => $im_width * $x/$columns + $width,
-      y             => $th,
+      y             => $y,
       height        => $th,
       valign        => 'center',
       halign        => 'left',
       ptsize        => $fontsize,
       font          => $fontname,
       colour        => 'black',
-      text          => $_,
+      text          => $text,
       absolutey     => 1,
       absolutex     => 1,
       absolutewidth => 1
     }));
     
     $x++;
+    
+    if ($x == $columns) {
+      $x = 0;
+      $y += $th + 5;
+    };
   }
 }
 
