@@ -15,21 +15,37 @@ sub _init {
 }
 
 sub content {
-  my $self        = shift;
-  my $translation = $self->object->translation_object;
+  my $self   = shift;
+  my $object = $self->object;
   
-  return $self->non_coding_error unless $translation;
+  return $self->non_coding_error unless $object->translation_object;
 
-  my $snps = $translation->pep_snps;
+  my $hub    = $self->hub;
+  my %labels = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
+  my @data;
   
-  return unless @$snps;
+  foreach my $snp (@{$object->variation_data}) {
+    next unless $snp->{'allele'};
+    
+    my $codons = $snp->{'codons'} || '-';
+    
+    if ($codons ne '-') {
+      $codons =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
+      $codons =~ tr/acgt/ACGT/;
+    }
+    
+    push @data, {
+      res    => $snp->{'position'},
+      id     => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Variation', action => 'Summary', v => $snp->{'snp_id'}, vf => $snp->{'vdbid'}, vdb => 'variation' }), $snp->{'snp_id'}),
+      type   => $labels{$snp->{'type'}},
+      allele => $snp->{'allele'},
+      ambig  => $snp->{'ambigcode'} || '-',
+      alt    => $snp->{'pep_snp'} || '-',
+      codons => $codons
+    };
+  }
   
-  my $hub     = $self->hub;
-  my $counter = 0;
-  my $table   = $self->new_table([], [], { data_table => 1, sorting => [ 'res asc' ] });
-  my %labels  = %Bio::EnsEMBL::Variation::ConsequenceType::CONSEQUENCE_LABELS;
-  
-  $table->add_columns(
+  return $self->new_table([
     { key => 'res',    title => 'Residue',            width => '10%', align => 'center', sort => 'numeric' },
     { key => 'id',     title => 'Variation ID',       width => '10%', align => 'center', sort => 'html'    }, 
     { key => 'type',   title => 'Variation type',     width => '20%', align => 'center', sort => 'string'  },
@@ -37,37 +53,7 @@ sub content {
     { key => 'ambig',  title => 'Ambiguity code',     width => '15%', align => 'center', sort => 'string'  },
     { key => 'alt',    title => 'Alternate residues', width => '15%', align => 'center', sort => 'string'  },
     { key => 'codons', title => 'Alternate codons',   width => '15%', align => 'center', sort => 'string'  }
-  );
-  
-  foreach my $residue (@$snps) {
-    $counter++;
-    
-    next if !$residue->{'allele'};
-    
-    my $type   = $labels{$residue->{'type'}};
-    my $snp_id = $residue->{'snp_id'};
-    my $source = $residue->{'snp_source'} ? ";source=$residue->{'snp_source'}" : '';
-    my $vf     = $residue->{'vdbid'}; 
-    my $url    = $hub->url({ type => 'Variation', action => 'Summary', v => $snp_id, vf => $vf, vdb => 'variation' });
-    my $codons = $residue->{'codons'} || '-';
-    
-    if ($codons ne '-') {
-      $codons =~ s/[ACGT]/'<b>'.$&.'<\/b>'/eg;
-      $codons =~ tr/acgt/ACGT/;
-    }
-    
-    $table->add_row({
-      res    => $counter,
-      id     => qq{<a href="$url">$snp_id</a>},
-      type   => $type,
-      allele => $residue->{'allele'},
-      ambig  => $residue->{'ambigcode'} || '-',
-      alt    => $residue->{'pep_snp'} || '-',
-      codons => $codons
-    });
-  }
-  
-  return $table->render;
+  ], \@data, { data_table => 1, sorting => [ 'res asc' ] })->render;
 }
 
 1;

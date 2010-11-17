@@ -142,24 +142,25 @@ sub get_sequence_data {
         )};
     }
     
-    foreach my $transcript_variation (@{$object->get_transcript_variations}) {
-      my ($start, $end) = ($transcript_variation->cdna_start, $transcript_variation->cdna_end);
+    foreach my $snp (@{$object->variation_data($config->{'utr'})}) {
+      my $tv = $snp->{'tv'};
+      my ($start, $end) = ($tv->cdna_start, $tv->cdna_end);
       
       next unless $start && $end;
       
-      my $var  = $transcript_variation->variation_feature->transfer($slice);
-      my $dbID = $var->dbID;
+      my $var  = $snp->{'vf'}->transfer($slice);
+      my $dbID = $snp->{'vdbid'};
       
       next if keys %population_filter && !$population_filter{$dbID};
       
-      my $variation_name    = $var->variation_name;
-      my $alleles           = $var->allele_string;
-      my $ambigcode         = $var->ambig_code || '*';
-      my $pep_allele_string = $transcript_variation->pep_allele_string;
-      my $amino_acid_pos    = $transcript_variation->translation_start * 3 + $cd_start - 4 - $start_pad;
-      my $consequence_type  = join ' ', @{$transcript_variation->consequence_type};
+      my $variation_name    = $snp->{'snp_id'};
+      my $alleles           = $snp->{'allele'};
+      my $ambigcode         = $snp->{'ambigcode'} || '*';
+      my $pep_allele_string = $tv->pep_allele_string;
+      my $amino_acid_pos    = $snp->{'position'} * 3 + $cd_start - 4 - $start_pad;
+      my $consequence_type  = join ' ', @{$tv->consequence_type};
       my $aa_change         = $consequence_type =~ /\b(NON_SYNONYMOUS_CODING|FRAMESHIFT_CODING|STOP_LOST|STOP_GAINED)\b/;
-      my $type              = lc $transcript_variation->display_consequence;
+      my $type              = lc $snp->{'type'};
       
       if ($var->strand == -1 && $trans_strand == -1) {
         $ambigcode =~ tr/acgthvmrdbkynwsACGTDBKYHVMRNWS\//tgcadbkyhvmrnwsTGCAHVMRDBKYNWS\//;

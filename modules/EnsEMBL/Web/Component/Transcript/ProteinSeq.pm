@@ -11,11 +11,9 @@ sub _init {
 }
 
 sub get_sequence_data {
-  my $self = shift;
-  my ($translation, $config) = @_;
-  
-  my $peptide  = $translation->Obj;
-  my $pep_seq  = $peptide->seq;
+  my ($self, $translation, $config) = @_;
+  my $object   = $self->object;
+  my $pep_seq  = $translation->Obj->seq;
   my @sequence = [ map {{ letter => $_ }} split //, uc $pep_seq ];
   my $markup;
   
@@ -23,7 +21,7 @@ sub get_sequence_data {
   $config->{'length'} = length $pep_seq;
   
   if ($config->{'exons'}) {
-    my $exons = $translation->pep_splice_site($peptide);
+    my $exons = $object->peptide_splice_sites;
     my $flip  = 0;
     
     foreach (sort {$a <=> $b} keys %$exons) {
@@ -43,9 +41,8 @@ sub get_sequence_data {
   if ($config->{'variation'}) {
     my $hub    = $self->hub;
     my $filter = $hub->param('population_filter');
-    my %population_filter;
-    
     my $slice  = $translation->get_Slice;
+    my %population_filter;
     
     if ($filter && $filter ne 'off') {
       %population_filter = map { $_->dbID => $_ }
@@ -55,28 +52,21 @@ sub get_sequence_data {
         )};
     }
     
-    foreach my $transcript_variation (@{$self->object->get_transcript_variations}) {
-      my $pos = $transcript_variation->translation_start;
-      
-      next unless $pos;
-      
-      $pos--;
-      
-      my $var  = $transcript_variation->variation_feature->transfer($slice);
-      my $dbID = $var->dbID;
+    foreach my $snp (@{$object->variation_data}) {
+      my $pos  = $snp->{'position'} - 1;
+      my $dbID = $snp->{'vdbid'};
       
       next if keys %population_filter && !$population_filter{$dbID};
       
-      $markup->{'variations'}->{$pos}->{'type'}      = lc $transcript_variation->display_consequence;
-      $markup->{'variations'}->{$pos}->{'alleles'}   = $var->allele_string;
-      $markup->{'variations'}->{$pos}->{'ambigcode'} = $var->ambig_code || '*';
+      $markup->{'variations'}->{$pos}->{'type'}    = lc $snp->{'type'};
+      $markup->{'variations'}->{$pos}->{'alleles'} = $snp->{'allele'};
       $markup->{'variations'}->{$pos}->{'href'} ||= {
         type        => 'ZMenu',
         action      => 'TextSequence',
         factorytype => 'Location'
       };
       
-      push @{$markup->{'variations'}->{$pos}->{'href'}->{'v'}},  $var->variation_name;
+      push @{$markup->{'variations'}->{$pos}->{'href'}->{'v'}},  $snp->{'snp_id'};
       push @{$markup->{'variations'}->{$pos}->{'href'}->{'vf'}}, $dbID;
     }
   }
