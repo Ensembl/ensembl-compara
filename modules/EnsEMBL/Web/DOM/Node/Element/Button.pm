@@ -18,11 +18,4 @@ sub disabled {
   return shift->_access_attribute('disabled', @_);
 }
 
-#sub validate_attribute {}
-#sub allowed_attributes {}
-#sub mandatory_attributes {}
-#sub can_have_child {}
-#sub allowed_child_nodes {}
-#sub appendable {}
-
 1;

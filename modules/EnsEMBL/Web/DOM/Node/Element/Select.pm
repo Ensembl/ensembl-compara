@@ -1,21 +1,12 @@
 package EnsEMBL::Web::DOM::Node::Element::Select;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
 sub node_name {
   ## @overrides
   return 'select';
-}
-
-sub allowed_attributes {
-  ## @overrides
-  return [ @{ shift->SUPER::allowed_attributes }, qw(name value type accesskey tabindex multiple disabled size) ];
 }
 
 sub form {
@@ -38,7 +29,7 @@ sub selected_index {
   my $self = shift;
   my $index = @_ ? shift : -1;
   my $i = 0;
-  for (@{ $self->options }) {
+  for (@{$self->options}) {
     if ($index == -1) {
       return $i++ if $_->selected == $i;
     }
@@ -57,9 +48,9 @@ sub options {
   (my $optgroup = $option) =~ s/Option$/Optgroup/;
   
   my $options = [];
-  for (@{ $self->{'_child_nodes'} }) {
-    push @{ $options }, $_ if ($_->isa($option));
-    push @{ $options }, @{ $_->{'_child_nodes'} } if ($_->isa($optgroup));
+  for (@{$self->{'_child_nodes'}}) {
+    push @{$options}, $_ if $_->isa($option);
+    push @{$options}, @{$_->{'_child_nodes'}} if $_->isa($optgroup);
   }
   return $options;
 }
@@ -73,8 +64,8 @@ sub add {
   return $self->append_child($option);
 }
 
-sub remove {
-  ## Removes a option object from select object
+sub remove_option {
+  ## Removes an option object from select object
   my ($self, $option) = shift;
   return $option->parent_node->remove_child($option);
 }
@@ -87,19 +78,6 @@ sub disabled {
 sub multiple {
   ## Accessor for multiple attribute
   return shift->_access_attribute('multiple', @_);
-}
-
-sub validate_attribute {
-  ## @overrides
-  my ($self, $attrib_ref, $value_ref) = @_;
-  
-  if ($$attrib_ref eq 'disabled') {
-    $$value_ref = 'disabled';
-  }
-  elsif ($$attrib_ref eq 'multiple') {
-    $$value_ref = 'multiple';
-  }
-  return $self->SUPER::validate_attribute($attrib_ref, $value_ref);
 }
 
 sub _appendable {

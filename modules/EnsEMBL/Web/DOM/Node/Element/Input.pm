@@ -1,10 +1,6 @@
 package EnsEMBL::Web::DOM::Node::Element::Input;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
@@ -16,21 +12,6 @@ sub node_name {
 sub can_have_child {
   ## @overrides
   return 0;
-}
-
-sub allowed_attributes {
-  ## @overrides
-  return [ @{ shift->SUPER::allowed_attributes }, qw(name value type accesskey tabindex disabled) ];
-}
-
-sub validate_attribute {
-  ## @overrides
-  my ($self, $attrib_ref, $value_ref) = @_;
-  
-  if ($$attrib_ref eq 'disabled') {
-    $$value_ref = 'disabled';
-  }
-  return $self->SUPER::validate_attribute($attrib_ref, $value_ref);
 }
 
 sub form {

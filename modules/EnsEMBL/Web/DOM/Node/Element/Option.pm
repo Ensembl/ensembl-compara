@@ -1,10 +1,6 @@
 package EnsEMBL::Web::DOM::Node::Element::Option;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
@@ -21,11 +17,6 @@ sub disabled {
 sub selected {
   ## Accessor for selected attribute
   return shift->_access_attribute('selected', @_);
-}
-
-sub allowed_attributes {
-  ## @overrides
-  return [ @{ shift->SUPER::allowed_attributes }, qw(selected value label disabled) ];
 }
 
 1;

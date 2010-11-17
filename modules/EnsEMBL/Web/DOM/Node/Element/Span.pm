@@ -13,12 +13,6 @@ sub node_name {
   return 'span';
 }
 
-#sub validate_attribute {}
-#sub allowed_attributes {}
-#sub mandatory_attributes {}
-#sub can_have_child {}
-#sub allowed_child_nodes {}
-
 sub _appendable {
   ## @overrides
   my ($self, $child) = @_;

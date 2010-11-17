@@ -1,10 +1,6 @@
 package EnsEMBL::Web::DOM::Node::Element::H5;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::H1);
 

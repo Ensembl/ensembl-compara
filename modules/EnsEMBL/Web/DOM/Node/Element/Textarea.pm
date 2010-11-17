@@ -1,26 +1,12 @@
 package EnsEMBL::Web::DOM::Node::Element::Textarea;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
 sub node_name {
   ## @overrides
   return 'textarea';
-}
-
-sub mandatory_attributes {
-  ## @overrides
-  return ['cols', 'rows'];
-}
-
-sub allowed_attributes {
-  ## @overrides
-  return [ @{ shift->SUPER::allowed_attributes }, qw(name value type accesskey tabindex cols rows readonly) ];
 }
 
 sub form {
