@@ -17,7 +17,6 @@ sub content {
   my $var              = $var_adaptor->fetch_by_name($v_id);
   my $vf               = $var_feat_adaptor->fetch_all_by_Variation($var);
   my $feature;
-  my @entries;
 
   if (scalar @$vf == 1) {
     $feature = $vf->[0];
@@ -27,18 +26,18 @@ sub content {
     }
   }
   
+  my @entries = ([ 'Variation type', $feature->display_consequence ]);
+  
   if ($vtype) {
     my $type = lc $vtype;
     $type =~ s/e$//;
-    $type .= 'ion'; 
+    $type .= 'ion';
     
-    @entries = (
+    push @entries, (
       [ ucfirst $type, $hub->param('indel') ],
       [ 'Position',    $hub->param('pos')   ],
       [ 'Length',      $hub->param('len')   ]
     );
-  } else {
-    @entries = ([ 'Variation type', $feature->display_consequence ]);  
   }
   
   push @entries, (
