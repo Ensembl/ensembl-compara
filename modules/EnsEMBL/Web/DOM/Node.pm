@@ -1,10 +1,7 @@
 package EnsEMBL::Web::DOM::Node;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
+
 use HTML::Entities qw(encode_entities decode_entities);
 use Clone qw(clone);
 
@@ -21,7 +18,7 @@ use constant {
 sub new {
   ## @constructor
   ## @params DOM object 
-  my ($class, $dom) = @_; #TODO - remove the argument and get dom from hub/object(?) etc if possible -
+  my ($class, $dom) = @_; #TODO - remove the argument and get dom from hub (?) if possible -
   return bless {
     '_attributes'           => {},
     '_child_nodes'          => [],
@@ -67,29 +64,32 @@ sub get_element_by_id {
   ## @returns Element object
   my ($self, $id) = @_;
 
-  #works for document or element only
+  #works for document and element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
-    for (@{ $self->child_nodes }) {
+    for (@{$self->child_nodes}) {
       return $_ if $_->id eq $id;
-      return $_->get_element_by_id($id);
+      my $child_with_this_id = $_->get_element_by_id($id);
+      return $child_with_this_id if defined $child_with_this_id;
     }
   }
   return undef;
 }
 
 sub get_elements_by_name {
-  ## Typical getElementsByName
-  ## @params name
+  ## A slight extension of typical getElementsByName
+  ## @params name or ArrayRef od multiple names
   ## @returns ArrayRef of Element objects
   my ($self, $name) = @_;
   
-  my $result = [];
+  $name         = [ $name ] unless ref($name) eq 'ARRAY';
+  my $name_hash = { map {$_ => 1} @{$name} };
+  my $result    = [];
 
   #works for document or element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
-    for (@{ $self->child_nodes }) {
-      push @$result, $_ if $_->name eq $name;
-      push @$result, @{ $_->get_elements_by_name($name) };
+    for (@{$self->child_nodes}) {
+      push @$result, $_ if exists $name_hash->{$_->name} eq $name;
+      push @$result, @{$_->get_elements_by_name($name)};
     }
   }
   return $result;
@@ -102,32 +102,35 @@ sub get_elements_by_tag_name {
   my ($self, $tag_name) = @_;
   
   $tag_name     = [ $tag_name ] unless ref($tag_name) eq 'ARRAY';
-  my $tag_hash  = { map {$_ => 1} @{ $tag_name } };
+  my $tag_hash  = { map {$_ => 1} @{$tag_name} };
   my $result    = [];
 
   #works for document or element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
-    for (@{ $self->child_nodes }) {
-      push @$result, $_ if exists $tag_hash->{ $_->node_name };
-      push @$result, @{ $_->get_elements_by_tag_name($tag_name) };
+    for (@{$self->child_nodes}) {
+      push @$result, $_ if exists $tag_hash->{$_->node_name};
+      push @$result, @{$_->get_elements_by_tag_name($tag_name)};
     }
   }
   return $result;
 }
 
 sub get_elements_by_class_name {
-  ## Typical getElementsByClassName
+  ## A slight extension of typical getElementsByClassName
   ## @params Class name
   ## @returns ArrayRef of Element objects
   my ($self, $class_name) = @_;
   
-  my $result = [];
+  $class_name     = [ $class_name ] unless ref($class_name) eq 'ARRAY';
+  my $result      = [];
 
   #works for document or element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
-    for (@{ $self->child_nodes }) {
-      push @$result, $_ if $_->has_attribute('class') && exists $_->get_attribute('class')->{ $class_name };
-      push @$result, @{ $_->get_elements_by_class_name($class_name) };
+    foreach my $child_node (@{$self->child_nodes}) {
+      for (@{$class_name}) {
+        push @$result, $child_node if $child_node->has_attribute('class') && exists $child_node->{'_attributes'}{'class'}{$_};
+      }
+      push @$result, @{$child_node->get_elements_by_class_name($class_name)};
     }
   }
   return $result;
@@ -136,7 +139,7 @@ sub get_elements_by_class_name {
 sub has_child_nodes {
   ## Checks if the element has any child nodes
   ## @return 1 or 0 accordingly
-  return scalar @{ shift->{'_child_nodes'} } ? 1 : 0;
+  return scalar @{shift->{'_child_nodes'}} ? 1 : 0;
 }
 
 sub child_nodes {
@@ -176,7 +179,7 @@ sub parent_node {
 }
 
 sub appendable {
-  ## Checks if a given node can be appended in this node (needs to check the allowed_child_nodes function first)
+  ## Checks if a given node can be appended in this node
   ## @params Node to be appended
   ## @return 1 if appendable, 0 otherwise
   my ($self, $node) = @_;
@@ -193,14 +196,13 @@ sub appendable {
     return 0 if $ancestor->is_same_as($node);
     $ancestor = $ancestor->parent_node;
   }
-  
   return $self->_appendable($node);
 }
 
 sub _appendable {
   ## Adds another filter to appendable method
-  ## Override in child classes
-  return 1;
+  ## Override in child classes - only if validation required
+  return 1; #no validations by default
 }
 
 sub append_child {
@@ -215,7 +217,7 @@ sub append_child {
       $element->{'_previous_sibling'} = $self->last_child;
       $self->last_child->{'_next_sibling'} = $element;
     }
-    push @{ $self->{'_child_nodes'} }, $element;
+    push @{$self->{'_child_nodes'}}, $element;
     return 1;
   }
   else {
@@ -259,7 +261,7 @@ sub insert_after {
     : $self->append_child($new_element);
 }
 
-sub insert_at_beginning {
+sub prepend_child {
   ## Appends a child element at the beginning
   ## @params Element to be appended
   ## @return 1 if success, 0 otherwise
@@ -289,13 +291,13 @@ sub clone_node {
   return $clone unless defined $deep_clone && $deep_clone == 1;
   
   my $previous_sibling = 0;
-  for (@{ $self->child_nodes }) {
+  for (@{$self->child_nodes}) {
     my $child_clone = $_->clone_node(1);
     $child_clone->{'_parent_node'} = $clone;
     $child_clone->{'_previous_sibling'} = $previous_sibling;
     $previous_sibling->{'_next_sibling'} = $child_clone if $previous_sibling;
-    $previous_sibling = $child_clone;
-    push @{ $clone->{'_child_nodes'} }, $child_clone;
+    $previous_sibling = $child_clone; #for next loop
+    push @{$clone->{'_child_nodes'}}, $child_clone;
   }
   return $clone;  
 }
@@ -353,7 +355,7 @@ sub is_same_as {
 }
 
 sub _adjust_child_nodes {
-  # private function used to adjust the array referenced at _child_nodes key after some change in the child nodes
+  # private function used to adjust the array referrenced at _child_nodes key after some change in the child nodes
   # removes the 'just-removed' nodes from the array
   # re-arranges the array on the bases of linked list
   my $self = shift;
@@ -363,8 +365,8 @@ sub _adjust_child_nodes {
   
   #avoid pointing initially to any removed node
   my $node = undef;
-  for (@{ $self->{'_child_nodes'} }) {
-    if (defined $_->parent_node) {
+  for (@{$self->{'_child_nodes'}}) {
+    if (defined $_->parent_node && $self->is_same_as($_->parent_node)) {
       $node = $_;
       last;
     }
