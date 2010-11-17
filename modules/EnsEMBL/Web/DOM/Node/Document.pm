@@ -1,16 +1,12 @@
 package EnsEMBL::Web::DOM::Node::Document;
 
-## Status - Under Development - hr5
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::DOM::Node);
 
 sub node_type {
   ## @overrides
-  return shift-DOCUMENT_NODE;
+  return shift->DOCUMENT_NODE;
 }
 
 sub render {
@@ -19,9 +15,16 @@ sub render {
   return '';
 }
 
-sub allowed_child_nodes {
+sub _appendable {
   ## @overrides
-  return [ qw(html head title body) ];
+  my ($self, $child) = @_;
+  return
+    $child->node_type == $self->ELEMENT_NODE
+      &&
+      $child->node_name =~ /^(html|head|title|body)$/
+    ? 1
+    : 0
+  ;
 }
 
 1;

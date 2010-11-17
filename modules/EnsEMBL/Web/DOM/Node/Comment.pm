@@ -1,31 +1,17 @@
 package EnsEMBL::Web::DOM::Node::Comment;
 
-## Status - Under Development
-
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
-use base qw(EnsEMBL::Web::DOM::Node);
+use base qw(EnsEMBL::Web::DOM::Node::Text);
 
 sub node_type {
   ## @overrides
-  return shift-COMMENT_NODE;
-}
-
-sub can_have_child {
-  ## @overrides
-  return 0;
-}
-
-sub render {
-  ## @overrides
-  return $self->text; 
+  return shift->COMMENT_NODE;
 }
 
 sub text {
+  ## @overrides
   ## Getter only of text
-  ## Can not set text as in parent class
   ## @return Text
   my $self = shift;
   warn 'Do not call Comment->text to add comment, call Comment->comment instead.' if @_;
@@ -38,7 +24,6 @@ sub comment {
   ## @return Text
   my $self = shift;
   $self->{'_text'} = shift if @_;
-  }
   return $self->{'_text'};
 }
 
