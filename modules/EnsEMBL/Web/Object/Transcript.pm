@@ -1599,6 +1599,85 @@ sub get_transcript_variations {
   return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts([ $self->Obj ]) || [];
 }
 
+sub variation_data {
+  my ($self, $include_utr) = @_;
+  
+  return [] unless $self->species_defs->databases->{'DATABASE_VARIATION'};
+  
+  my @data;
+  
+  my $transcript      = $self->Obj;
+  my $cd_start        = $transcript->cdna_coding_start;
+  my $cd_end          = $transcript->cdna_coding_end;
+  my $trans_strand    = $transcript->strand;
+  my @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
+  my $i               = 0;
+ 
+  foreach my $tv (@{$self->get_transcript_variations}) {
+    my $pos = $tv->translation_start;
+    
+    next if !$include_utr && !$pos;
+    
+    my $vf    = $tv->variation_feature;
+    my $start = $vf->start;
+    my $end   = $vf->end;
+    
+    push @data, {
+      tv            => $tv,
+      vf            => $vf,
+      position      => $pos,
+      snp_source    => $vf->source,
+      vdbid         => $vf->dbID,
+      snp_id        => $vf->variation_name,
+      ambigcode     => $vf->ambig_code,
+      codons        => join(', ', split '/', $tv->codons),
+      allele        => $vf->allele_string,
+      pep_snp       => join(', ', split '/', $tv->pep_allele_string),
+      type          => $tv->display_consequence,
+      length        => $end - $start,
+      indel         => $vf->var_class eq 'in-del' ? ($start > $end ? 'insert' : 'delete') : '',
+      codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
+      codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
+    };
+  }
+  
+  return \@data;
+}
+
+=head2 peptide_splice_sites
+ Example    : $splice_sites = $transcript->peptide_splice_sites
+ Description: Calculates any overlapping exon boundries for a peptide sequence
+              it then builds a hash and stores it on the object. The hash contains
+              the exon Ids, phase of the exon and if it has an overlapping slice site
+              overlapping slice site = exon ends in the middle of a codon and therfore 
+              in the middle of a amino-acid residue of the protein
+ Return type: hashref
+=cut
+sub peptide_splice_sites {
+  my $self = shift;
+  
+  return $self->{'splice_sites'} if $self->{'splice_sites'};
+  
+  my $splice_site = {};
+  my $i           = 0;
+  my $cdna_len    = 0;
+  my $pep_len     = 0;
+  
+  foreach my $e (@{$self->Obj->get_all_translateable_Exons}) {
+    $i++;
+    $cdna_len += $e->length;
+    
+    my $overlap_len = $cdna_len % 3;
+    my $pep_len     = $overlap_len ? 1 + ($cdna_len - $overlap_len) / 3 : $cdna_len / 3;
+    
+    $splice_site->{$pep_len-1}{'overlap'} = $pep_len-1 if $overlap_len;
+    $splice_site->{$pep_len}{'exon'}      = $e->stable_id || $i;
+    $splice_site->{$pep_len}{'phase'}     = $overlap_len;
+  }
+  
+  return $self->{'splice_sites'} = $splice_site;
+}
+
 sub can_export {
   my $self = shift;
   
