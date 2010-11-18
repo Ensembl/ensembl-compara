@@ -1,37 +1,42 @@
 #!/usr/local/bin/perl
 
 use strict;
-use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::Data::Species;
-use EnsEMBL::Web::Data::NewsItem;
 
-use strict;
+use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::Root;
+use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 
-my $SD           = $ENSEMBL_WEB_REGISTRY->species_defs;
-my $release_id   = $SiteDefs::VERSION;
-my $helpdesk     = $SiteDefs::ENSEMBL_HELPDESK_EMAIL;
-my $webmaster    = $SiteDefs::ENSEMBL_SERVERADMIN;
-my $url          = $SiteDefs::ENSEMBL_BASEURL;
-my $species_hash = EnsEMBL::Web::Data::Species->search({order_by => 'name'});
+my $hub          = new EnsEMBL::Web::Hub;
+my $SD           = $hub->species_defs;
+my $release_id   = $SD->ENSEMBL_VERSION;
+my $species_name = $ENV{'ENSEMBL_SPECIES'};
+my $helpdesk     = $SD->ENSEMBL_HELPDESK_EMAIL;
+my $webmaster    = $SD->ENSEMBL_SERVERADMIN;
+my $url          = $SD->ENSEMBL_BASEURL;
+
+my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+
+my @all_species = $adaptor->fetch_all_species;
+my $species_hash;
+
+foreach my $sp (@all_species) {
+  $species_hash->{$sp->{'name'}} = $sp->{'id'};
+}
+
 my $species      = { reverse %$species_hash };
-my $pars         = { 'release' => $SiteDefs::VERSION };
-my $species_id   = $species->{$ENV{'ENSEMBL_SPECIES'}};
+my $pars         = { 'release' => $release_id };
+my $species_id   = $species->{$species_name};
 
 $pars->{ 'species' } = $species_id if $species_id;
 
-my $this_species = $ENV{'ENSEMBL_SPECIES'} || 'common';
+my $this_species = $species_name || 'common';
 
-my @news = EnsEMBL::Web::Data::NewsItem->search(
-  {
-    release_id  => $SiteDefs::VERSION,
-    $species_id
-      ? ( 'species.species_id' => $species_id )
-      : (),
-  },
-  {
-    'order_by' => 'priority',
-  }
-);
+my $criteria = {'release' => $release_id};
+if ($species_id) {
+  $criteria->{'species'} = $this_species;
+}
+
+my @news = @{$adaptor->fetch_news($criteria)};
 
 print "Content-type: xml/rss\n\n";
 
@@ -66,18 +71,14 @@ print qq(
 );
 
 foreach my $item ( @news ) {
-  my $C = $item->content;
-  if( $C =~ /^\s*<p>(.*)<\/p>/ ) {
-    $C = $1;
-  }
-  $C =~ s/<.*//sm;
+  my $C = EnsEMBL::Web::Root::strip_HTML($item->{'content'});
   printf '
     <item>
-      <title>%s'. $item->title .'</title>
+      <title>%s</title>
       <description>%s</description>
-      <link>%s/%s/newsview?rel=%s#%s</link>
+      <link>%s/info/website/news/index.html#news_%s</link>
     </item>',
-    $item->title, $url, $C, $this_species, $release_id, $item->id; 
+    $item->{'title'}, $C, $url, $item->{'id'}; 
 }
 print qq(
   </channel>
