@@ -36,24 +36,12 @@ sub default_otherspecies {
   my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
   my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
   my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
-  my @has_synteny  = sort keys %synteny;
-  my $sp;
 
-  # Set default as primary species, if available
-  unless ($species eq $primary_sp) {
-    foreach my $sp (@has_synteny) {
-      return $sp if $sp eq $primary_sp;
-    }
-  }
+  return $primary_sp if  ($synteny{$species}->{$primary_sp});
 
-  # Set default as secondary species, if primary not available
-  unless ($species eq $secondary_sp) {
-    foreach $sp (@has_synteny) {
-      return $sp if $sp eq $secondary_sp;
-    }
-  }
+  return $secondary_sp if  ($synteny{$species}->{$secondary_sp});
 
-  # otherwise choose first in list
+  my @has_synteny  = sort keys %{$synteny{$species}};
   return $has_synteny[0];
 }
 
