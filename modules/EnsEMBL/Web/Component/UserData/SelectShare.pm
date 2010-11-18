@@ -23,7 +23,7 @@ sub content {
   my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
   my $form     = $self->modal_form('share', $hub->species_path($hub->data_species).'/UserData/CheckShare', {'wizard' => 1, 'back_button' => 0});
   my $user     = $hub->user;
-  my ($html $has_groups, @groups);
+  my ($html, $has_groups, @groups);
   
   if ($user && !$hub->param('code')) { ## Can't share temp data with group
     @groups = $user->find_administratable_groups;
