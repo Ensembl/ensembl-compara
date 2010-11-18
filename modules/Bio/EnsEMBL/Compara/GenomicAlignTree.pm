@@ -393,25 +393,27 @@ sub name {
       $self->{_name} = $self->SUPER::name();
     } elsif ($self->is_leaf) {
     	my $gdb_name;
-      if($genomic_align_group->genome_db->name =~ /(.)[^ ]+ (.{3})/) {
+      if($genomic_align_group->genome_db->name =~ /(.)[^ ]+_(.{3})/) {
       	$gdb_name = "${1}${2}";
       }
       else {
       	$gdb_name = $genomic_align_group->genome_db->name();
       	$gdb_name =~ tr/_//;
       }
+      $gdb_name = ucfirst($gdb_name);
       $self->{_name} = $gdb_name.'_'.$genomic_align_group->dnafrag->name."_".
           $genomic_align_group->dnafrag_start."_".$genomic_align_group->dnafrag_end."[".
           (($genomic_align_group->dnafrag_strand eq "-1")?"-":"+")."]";
     } else {
       $self->{_name} = join("-", map {
       	my $name = $_->genomic_align_group->genome_db->name;
-      	if($name =~ /(.)[^ ]+ (.{3})/) {
+      	if($name =~ /(.)[^ ]+_(.{3})/) {
       		$name = "$1$2";
       	}
       	else {
       		$name =~ tr/_//; 	
       	} 
+	$name = ucfirst($name);
       	$name;
       } @{$self->get_all_leaves})."[".scalar(@{$self->get_all_leaves})."]";
     }
