@@ -242,7 +242,7 @@ sub render_coverage {
     if ($ppbp < 1 or !$options{show_consensus}) {
       $colour =  $self->my_colour('consensus');
     } else {
-      $colour = $cons ? $self->my_colour(lc($cons->seqname)) : 'background1'
+      $colour = $cons ? $self->my_colour(lc($cons->seqname)) : $self->my_colour('consensus');
     }
     
     # coverage rectangle          
@@ -483,35 +483,14 @@ sub render_sequence_reads {
   unless (defined $options{max_depth}) {
     $options{max_depth} = $self->my_config('max_depth') || 50;
   }
-  
-#  foreach my $f (@{$self->{_cache}->{paired_features}}) {
-#      my @ends = $f->get_SeqFeatures;
-#      print STDERR " Original: s " . $f->start . " e " . $f->end . " l " . ($f->end-$f->start+1) . " ne " . scalar(@ends) . "\n";
-#      if (scalar(@ends) == 2) {
-#        print STDERR " Pair:     " . $ends[0]->query->name . " " . ($ends[0]->start) . " " . ($ends[0]->end) . "       " . 
-#                                     $ends[1]->query->name . " " . ($ends[1]->start) . " " . ($ends[1]->end) . "\n";
-#
-#      }
-#  }
 
-#  print STDERR "Started sort\n";
-  my $fs =   [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [(defined($_->start) ? $_->start : 0), $_] } @{$self->features} ];
-#  print STDERR "Finished sort\n";
+  my $fs =   [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
 
   my $ppbp = $self->scalex; # pixels per base pair
   my $slice = $self->{'container'};
 
-  #print STDERR "Type = " . ref($fs->[0]) . " start = " . $fs->[0]->start . "\n";
   my $features = pre_filter_depth($fs, $options{max_depth},$ppbp,$slice->start,$slice->end);
-#  print STDERR "Finished filter (have " . scalar(@$features) . ")\n";
 
-
-#  my $features = $self->pre_filter_depth($self->features, $options{max_depth});
-#  my $features = $self->features;
-
-  
-
-  
   # text stuff
   my($font, $fontsize) = $self->get_font_details( $self->can('fixed') ? 'fixed' : 'innertext' );
   my($tmp1, $tmp2, $font_w, $font_h) = $self->get_text_width(0, 'X', '', 'font' => $font, 'ptsize' => $fontsize);
@@ -557,7 +536,6 @@ sub render_sequence_reads {
     # bump it to the next row with enough free space
     my $bump_start = int($start * $ppbp);
     my $bump_end = $bump_start + int($width * $ppbp) + 1;
-    #my $row = $self->bump_row( $bump_start, $bump_end );
     my $row = $self->bump_sorted_row( $bump_start, $bump_end );
     
     if ($row > $options{max_depth}) {
@@ -628,7 +606,6 @@ sub render_sequence_reads {
             'absolutey' => 1,
             'zindex' => 10,
           }));
-          #warn "insert for " . $f->qname;
         }
       }
       
@@ -652,17 +629,6 @@ sub render_sequence_reads {
       }
     }
         
-#    # bump it to the next row with enough free space
-#    my $bump_start = int($composite->x * $ppbp);
-#    my $bump_end = $bump_start + int($composite->width * $ppbp) + 1;
-#    #my $row = $self->bump_row( $bump_start, $bump_end );
-#    my $row = $self->bump_sorted_row( $bump_start, $bump_end );
-#    
-#    if ($row > $options{max_depth}) {
-#      # not interested in this row as beyond our display limit
-#      next; # not very efficient - must be better way?
-#    }
-    
     $composite->y($self->{_yoffset} + $row_height * $row);
     $max_y = $composite->y if $composite->y > $max_y; # record max y extent
     
@@ -670,11 +636,7 @@ sub render_sequence_reads {
     $self->push($composite);
     $self->highlight($f, $composite, $ppbp, $h, 'highlight1');
     $nrendered++;
-#    if (($nrendered % 100) == 0) {
-#      print STDERR ".";
-#    }
   }
-#  print STDERR "\n";
     
   $self->{_yoffset} += $max_y + $h;
 
