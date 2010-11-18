@@ -96,6 +96,24 @@ sub content {
     }
   }
 
+  my @session_bams = $session->get_data(type => 'bam');
+  foreach my $bam (@session_bams) {
+    push @values, {
+      name  => 'Temporary BAM: ' . $bam->{name},
+      value => $bam->{code},
+    };
+  }
+
+  if ($user) {
+    foreach my $record ($user->bams) {
+      push @values, {
+        name  => 'Saved BAM: '. $record->name,
+        value => $record->id,
+      };
+    }
+  }
+
+
   ## If only one record, have the checkbox automatically checked
   my @autoselect = $hub->param('id');
   push @autoselect, $hub->param('code'); 
