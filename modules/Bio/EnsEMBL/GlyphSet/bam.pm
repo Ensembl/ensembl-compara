@@ -87,7 +87,6 @@ sub features {
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{features})) {
     $self->{_cache}->{features} = $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end);
-    $self->{_cache}->{paired_features} = $self->bam_adaptor->fetch_paired_alignments($slice->seq_region_name, $slice->start, $slice->end);
   }
 
   # $self->{_cache}->{features} ||= $self->bam_adaptor->fetch_alignments_filtered($slice->seq_region_name, $slice->start, $slice->end);
@@ -496,7 +495,7 @@ sub render_sequence_reads {
 #  }
 
 #  print STDERR "Started sort\n";
-  my $fs =   [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [$_->start, $_] } @{$self->features} ];
+  my $fs =   [ map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [(defined($_->start) ? $_->start : 0), $_] } @{$self->features} ];
 #  print STDERR "Finished sort\n";
 
   my $ppbp = $self->scalex; # pixels per base pair
