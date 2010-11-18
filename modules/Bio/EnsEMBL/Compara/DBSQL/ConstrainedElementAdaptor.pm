@@ -33,24 +33,23 @@ sub new {
 =cut
 
 sub store {
-	my ( $self, $mlss_obj, $constrained_elements ) = @_;
-	if (defined($mlss_obj)) {
-		throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
-		unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
-	} else {
-		throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
-	}
+    my ( $self, $mlss_obj, $constrained_elements ) = @_;
+    if (defined($mlss_obj)) {
+	throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
+	  unless ($mlss_obj->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+    } else {
+	throw("undefined Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object");
+    }
+    
+    my $mlssid = $mlss_obj->dbID;
+    
+    #
+    #Find unique constrained_element_id by using a temporary table with an auto_increment column
+    #
+    my $ce_id_sql = "INSERT INTO constrained_element_production (constrained_element_id) VALUES (\"NULL\")";
+    my $ce_id_sth = $self->prepare($ce_id_sql);
 
-	my $mlssid = $mlss_obj->dbID;
-	my $mlssid_sql =
-	"SELECT MAX(constrained_element_id) FROM constrained_element WHERE" .
-	" constrained_element_id > " . $mlssid .
-	"0000000000 AND constrained_element_id < " .
-	($mlssid + 1) . "0000000000";
-
-	my $mlssid_sth = $self->prepare($mlssid_sql);
-
-	my $constrained_element_sql = qq{INSERT INTO constrained_element (
+    my $constrained_element_sql = qq{INSERT INTO constrained_element (
 		constrained_element_id,
 		dnafrag_id,
 		dnafrag_start, 
@@ -61,34 +60,33 @@ sub store {
 		p_value,
 		taxonomic_level
 	) VALUES (?,?,?,?,?,?,?,?,?)};
-
-	my $constrained_element_sth = $self->prepare($constrained_element_sql) or die;
-
-	##lock table 
-	$self->dbc->do(qq{ LOCK TABLES constrained_element WRITE });
-
-	foreach my $constrained_element_group (@$constrained_elements) {
-		$mlssid_sth->execute();
-		my $constrained_element_id = ($mlssid_sth->fetchrow_array() or
-		($mlssid * 10000000000)) + 1;
-		foreach my $constrained_element (@{$constrained_element_group}) {
-			throw("$constrained_element is not a Bio::EnsEMBL::Compara::ConstrainedElement object")
-			unless ($constrained_element->isa("Bio::EnsEMBL::Compara::ConstrainedElement"));
-			$constrained_element_sth->execute(
-				$constrained_element_id,
-				$constrained_element->reference_dnafrag_id,
-				$constrained_element->start,
-				$constrained_element->end,
-				$constrained_element->strand,
-				$constrained_element->score,
-				$mlssid,
-				($constrained_element->p_value or undef),
-				($constrained_element->taxonomic_level or undef)
-			);
-		}
+    
+    my $constrained_element_sth = $self->prepare($constrained_element_sql) or die;
+    
+    foreach my $constrained_element_group (@$constrained_elements) {
+	$ce_id_sth->execute();
+	my $constrained_element_id = $ce_id_sth->{'mysql_insertid'};
+	if ($constrained_element_id < $mlssid * 10000000000 || 
+	    $constrained_element_id > ($mlssid+1) * 10000000000) {
+	    $constrained_element_id = $mlssid * 10000000000 + $constrained_element_id;
 	}
-	## Unlock tables
-	$self->dbc->do("UNLOCK TABLES");
+
+	foreach my $constrained_element (@{$constrained_element_group}) {
+	    throw("$constrained_element is not a Bio::EnsEMBL::Compara::ConstrainedElement object")
+	      unless ($constrained_element->isa("Bio::EnsEMBL::Compara::ConstrainedElement"));
+	    $constrained_element_sth->execute(
+					      $constrained_element_id,
+					      $constrained_element->reference_dnafrag_id,
+					      $constrained_element->start,
+					      $constrained_element->end,
+					      $constrained_element->strand,
+					      $constrained_element->score,
+					      $mlssid,
+					      ($constrained_element->p_value or undef),
+					      ($constrained_element->taxonomic_level or undef)
+					     );
+	}
+    }
 }
 
 =head2 delete_by_MethodLinkSpeciesSet
