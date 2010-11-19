@@ -72,6 +72,10 @@ use vars qw(@ISA);
 
 my $g_BlastComparaPep_workdir;
 
+sub strict_hash_format {
+    return 0;
+}
+
 =head2 fetch_input
 
     Title   :   fetch_input
