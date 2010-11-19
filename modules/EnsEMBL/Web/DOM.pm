@@ -54,6 +54,7 @@ sub create_text_node {
   my $self = shift;
   my $node_class = 'EnsEMBL::Web::DOM::Node::Text';
   $self->dynamic_use($node_class);
+  return $node_class->new($self);
 }
 
 sub create_comment {
