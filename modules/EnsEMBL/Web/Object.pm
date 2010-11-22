@@ -37,6 +37,9 @@ sub __objecttype      { return $_[0]{'data'}{'_objecttype'};   }
 sub Obj               { return $_[0]{'data'}{'_object'};       } # Gets the underlying Ensembl object wrapped by the web object
 sub hub               { return $_[0]{'data'}{'_hub'};          }
 
+sub caption           { return ''; }
+sub short_caption     { return ''; }
+
 sub species           { return $_[0]->hub->species;               }
 sub type              { return $_[0]->hub->type;                  }
 sub action            { return $_[0]->hub->action;                }
