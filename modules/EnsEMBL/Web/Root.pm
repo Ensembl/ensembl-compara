@@ -200,6 +200,30 @@ sub dynamic_use_failure {
   return $failed_modules->{$classname};
 }
 
+sub get_module_names {
+  my ($self, $type, $arg1, $arg2) = @_;
+  my @packages = $self->can('species_defs') ? (grep(/::/, @{$self->species_defs->ENSEMBL_PLUGINS}), 'EnsEMBL::Web') : ('EnsEMBL::Web');
+  my @return;
+  
+  ### Check for all possible module permutations
+  my @modules = ("::${type}::$arg1");
+  push @modules, "::${type}::$arg2", "::${type}::${arg1}::$arg2", "::${type}::${arg2}::$arg1" if $arg2;
+  
+  foreach my $module_root (@packages) {
+    my $module_name = [ map { $self->dynamic_use("$module_root$_") ? "$module_root$_" : () } @modules ]->[-1];
+    
+    if ($module_name) {      
+      push @return, $module_name;
+      last unless wantarray;
+    } else {
+      my $error = $self->dynamic_use_failure("$module_root$modules[-1]");
+      warn $error unless $error =~ /^Can't locate/;
+    }
+  }
+  
+  return wantarray ? @return : $return[0];
+}
+
 # Loops through array of filters and returns the first one that fails
 sub not_allowed {
   my ($self, $hub, $caller) = @_;
