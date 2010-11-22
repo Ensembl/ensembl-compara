@@ -649,7 +649,7 @@ sub apply_to_view_config {
     code       => $key
   );  
   
-  $view_config->add_class("${_}::ViewConfig::$key") for @{$self->path};
+  $view_config->init;
   
   my $image_config_data = {};
   

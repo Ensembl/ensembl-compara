@@ -439,7 +439,8 @@ sub get_viewconfig {
   return undef unless $session;
   return $session->view_configs->{$key}{'config'} if $session->view_configs->{$key};
   
-  my $view_config = new EnsEMBL::Web::ViewConfig($type, $action, $self);
+  my $module_name = $self->get_module_names('ViewConfig', $type, $action) || 'EnsEMBL::Web::ViewConfig';
+  my $view_config = $module_name->new($type, $action, $self);
   
   $session->apply_to_view_config($view_config, $type, $key);
   
