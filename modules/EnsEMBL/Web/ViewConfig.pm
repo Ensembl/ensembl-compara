@@ -19,10 +19,9 @@ sub new {
     hub                 => $hub,
     species             => $hub->species,
     species_defs        => $hub->species_defs,
-    real                => 0,
+    real                => 1,
     nav_tree            => 0,
     title               => undef,
-    _classes            => [],
     _options            => {},
     _image_config_names => {},
     default_config      => '_page',
@@ -58,6 +57,7 @@ sub is_custom     { return $ENV{'ENSEMBL_CUSTOM_PAGE'}; }
 sub type          { return $_[0]->{'type'};             }
 sub action        { return $_[0]->{'action'};           }
 sub tree          { return $_[0]->{'tree'};             }
+sub init          { return $_[0]->real = 0;             }
 
 # Value indidates that the track can be configured for DAS (das) or not (nodas)
 sub add_image_configs {
@@ -114,7 +114,7 @@ sub options {
 
 sub has_form {
   my $self = shift;
-  return $self->{'_form'} || $self->has_images || grep $_->can('form'), @{$self->{'_classes'}};
+  return $self->{'_form'} || $self->has_images || $self->can('form');
 }
 
 sub get_form {
@@ -385,42 +385,10 @@ sub reset {
   }
 }
 
-sub add_class {
-  my ($self, $class) = @_;
-  
-  if ($self->dynamic_use($class)) {
-    my $method_name = "${class}::init";
-    
-    eval { no strict 'refs'; &$method_name($self); };
-    
-    if ($@) {
-      my $message = "Undefined subroutine &$method_name called";
-      
-      if ($@ =~ /$message/) {
-        warn "ViewConfig: init not defined in $class\n";
-      } else {
-        warn "ViewConfig: init call on $class failed:\n$@";
-      }
-    } else {
-      push @{$self->{'_classes'}}, $class;
-      $self->real = 1;
-      return 1;
-    }
-  } else {
-    my $error = $self->dynamic_use_failure($class);
-    warn "ViewConfig: failed to require $class:\n  $error" unless $error =~ /^Can't locate/;
-  }
-}
-
-sub form {
+sub build_form {
   my ($self, $object, $no_extra_bits) = @_;
   
-  foreach my $classname (@{$self->{'_classes'}}) {
-    my $method = $classname . '::form';
-    
-    eval { no strict 'refs'; &$method($self, $object); };
-    warn $@ if $@; # TODO: proper error exception
-  }
+  $self->form($object) if $self->can('form'); # can't use an empty form stub in the parent because has_form checks $self->can('form'). TODO: change has_form
   
   foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
     next if $fieldset->{'select_all'};
