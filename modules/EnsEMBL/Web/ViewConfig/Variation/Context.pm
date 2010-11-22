@@ -1,7 +1,3 @@
 package EnsEMBL::Web::ViewConfig::Variation::Context;
-
-use EnsEMBL::Web::ViewConfig::Variation_Context qw(form init);
-
-use strict;
-
+use base qw(EnsEMBL::Web::ViewConfig::Variation_Context);
 1;

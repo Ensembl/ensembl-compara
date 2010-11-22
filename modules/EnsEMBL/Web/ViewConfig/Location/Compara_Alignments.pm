@@ -2,12 +2,12 @@ package EnsEMBL::Web::ViewConfig::Location::Compara_Alignments;
 
 use strict;
 
-use EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments;
+use base qw(EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments);
 
 sub init { 
   my $view_config = shift;
   
-  EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments::init($view_config);
+  $view_config->SUPER::init;
   
   $view_config->{'no_flanking'} = 1;
   $view_config->{'strand_option'} = 1;
@@ -37,8 +37,7 @@ sub form {
     $view_config->has_images = 0;
   }
   
-  EnsEMBL::Web::ViewConfig::Gene::Compara_Alignments::form($view_config, $object);
+  $view_config->SUPER::form($object);
 }
 
 1;
-

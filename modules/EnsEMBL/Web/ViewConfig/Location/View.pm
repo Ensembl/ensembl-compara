@@ -1,8 +1,8 @@
 package EnsEMBL::Web::ViewConfig::Location::View;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
 ### Used by Constructor

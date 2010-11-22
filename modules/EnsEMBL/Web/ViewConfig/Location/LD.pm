@@ -1,9 +1,10 @@
 package EnsEMBL::Web::ViewConfig::Location::LD;
 
 use strict;
-use warnings;
+
 use EnsEMBL::Web::Constants;
-no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my ($view_config ) = @_;
@@ -31,6 +32,4 @@ sub init {
   $view_config->storable = 1;
 }
 
-
-sub form {}
 1;

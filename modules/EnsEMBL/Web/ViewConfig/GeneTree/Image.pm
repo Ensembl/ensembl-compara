@@ -1,16 +1,12 @@
 package EnsEMBL::Web::ViewConfig::GeneTree::Image;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
-use EnsEMBL::Web::ViewConfig::Gene::Compara_Tree;
-
-sub init { return EnsEMBL::Web::ViewConfig::Gene::Compara_Tree::init(@_); }
+use base qw(EnsEMBL::Web::ViewConfig::Gene::Compara_Tree);
 
 sub form { 
-  my( $view_config, $object ) = @_;
-  EnsEMBL::Web::ViewConfig::Gene::Compara_Tree::form($view_config, $object);
+  my ($view_config, $object) = @_;
+  $view_config->SUPER::form($object);
   my $fieldset = $view_config->get_fieldset(0);
   $fieldset->delete_element('collapsability');
 }

@@ -1,10 +1,10 @@
 package EnsEMBL::Web::ViewConfig::Gene::Compara_Ortholog;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
 
 use EnsEMBL::Web::Constants;
+
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $view_config = shift;

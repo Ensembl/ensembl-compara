@@ -2,6 +2,8 @@ package EnsEMBL::Web::ViewConfig::Variation::Summary;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   my ($view_config) = @_;
   
@@ -43,4 +45,5 @@ sub form {
     raw   => 1,
   });
 }
+
 1;

@@ -3,11 +3,8 @@ package EnsEMBL::Web::ViewConfig::Variation_Context;
 use strict;
 
 use EnsEMBL::Web::Constants;
-use base qw(Exporter);
 
-our @EXPORT_OK = qw(init form);
-our @EXPORT    = @EXPORT_OK;
-
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my ($view_config) = @_;

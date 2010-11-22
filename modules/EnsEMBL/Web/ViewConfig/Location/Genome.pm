@@ -4,6 +4,8 @@ package EnsEMBL::Web::ViewConfig::Location::Genome;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   ### Used by Constructor
   ### init function called to set defaults for the passed

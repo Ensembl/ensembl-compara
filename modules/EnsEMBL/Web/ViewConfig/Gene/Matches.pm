@@ -4,6 +4,8 @@ package EnsEMBL::Web::ViewConfig::Gene::Matches;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   my $view_config = shift;
   my $help        = shift;

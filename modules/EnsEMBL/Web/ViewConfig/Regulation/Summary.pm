@@ -2,6 +2,8 @@ package EnsEMBL::Web::ViewConfig::Regulation::Summary;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   my ($view_config) = @_;
 
@@ -48,5 +50,5 @@ sub form {
   $view_config->add_form_element({ type => 'YesNo', name => 'opt_focus', select => 'select', label => 'Show Core Evidence track' }) if $reg_object->get_focus_attributes;
 
 }
-1;
 
+1;

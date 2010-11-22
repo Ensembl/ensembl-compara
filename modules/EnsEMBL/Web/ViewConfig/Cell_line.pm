@@ -1,10 +1,8 @@
 package EnsEMBL::Web::ViewConfig::Cell_line;
 
 use strict;
-use base qw(Exporter);
 
-our @EXPORT_OK = qw(init form);
-our @EXPORT    = @EXPORT_OK;
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my ($view_config) = @_;

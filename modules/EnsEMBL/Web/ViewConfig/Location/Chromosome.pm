@@ -1,8 +1,8 @@
 package EnsEMBL::Web::ViewConfig::Location::Chromosome;
 
 use strict;
-use warnings;
-no warnings 'uninitialized';
+
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
 ### Used by Constructor
@@ -23,10 +23,6 @@ sub init {
   $view_config->default_config = 'Vmapview';
   $view_config->storable       = 1;
   $view_config->can_upload = 1;
-}
-
-sub form {
-
 }
 
 1;

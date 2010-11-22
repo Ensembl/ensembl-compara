@@ -4,10 +4,9 @@ package EnsEMBL::Web::ViewConfig::Export;
 
 use strict;
 
-use base qw(Exporter);
-our @EXPORT = our @EXPORT_OK = qw(init form);
-
 use EnsEMBL::Web::Constants;
+
+use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
   my $view_config = shift;

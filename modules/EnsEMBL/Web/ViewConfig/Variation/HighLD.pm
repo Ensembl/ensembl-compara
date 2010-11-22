@@ -2,6 +2,8 @@ package EnsEMBL::Web::ViewConfig::Variation::HighLD;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   my ($view_config) = @_;
   my $variations = $view_config->species_defs->databases->{'DATABASE_VARIATION'}||{};

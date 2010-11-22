@@ -2,6 +2,8 @@ package EnsEMBL::Web::ViewConfig::Transcript::SupportingEvidence;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   my ($view_config) = @_;
   $view_config->_set_defaults(qw(context 100));

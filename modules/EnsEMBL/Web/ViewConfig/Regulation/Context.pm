@@ -2,6 +2,8 @@ package EnsEMBL::Web::ViewConfig::Regulation::Context;
 
 use strict;
 
+use base qw(EnsEMBL::Web::ViewConfig);
+
 sub init {
   my ($view_config) = @_;
 
@@ -16,6 +18,4 @@ sub init {
   $view_config->storable = 1;
 }
 
-sub form {}
 1;
-
