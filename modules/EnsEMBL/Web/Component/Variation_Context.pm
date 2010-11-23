@@ -218,7 +218,7 @@ sub sequence_variation_table {
         vf      => $vf_dbid
       });
 
-      my $loc_string = $vf->slice->seq_region_name . ':' . $vf->slice->start . '-' . $vf->slice->end;
+      my $loc_string = $vf->seq_region_name . ':' . $vf->seq_region_start . ($vf->seq_region_start == $vf->seq_region_end ? '' : '-' . $vf->seq_region_end);
 
       my $loc_link = $hub->url({
         type   => 'Location',
