@@ -208,7 +208,7 @@ sub _appendable {
 sub append_child {
   ## Appends a child element
   ## @params New element
-  ## @return 1 if success, 0 otherwise
+  ## @return New element if success, undef otherwise
   my ($self, $element) = @_;
   if ($self->appendable($element)) {
     $element->parent_node->remove_child($element) if defined $element->parent_node; #remove from present parent node, if any
@@ -222,7 +222,7 @@ sub append_child {
   }
   else {
     warn 'Node cannot be inserted at the specified point in the hierarchy.';
-    return 0;
+    return undef;
   }
 }
 
@@ -230,13 +230,13 @@ sub insert_before {
   ## Appends a child element before a given reference element
   ## @params New element
   ## @params Reference element
-  ## @return 1 if successfully added, 0 otherwise
+  ## @return New element if successfully added, undef otherwise
 
   my ($self, $new_element, $reference_element) = @_;
   
   if (defined $reference_element && $self->is_same_as($reference_element->parent_node) && !$reference_element->is_same_as($new_element)) {
   
-    return 0 unless $self->append_child($new_element);
+    return undef unless $self->append_child($new_element);
     $new_element->previous_sibling->{'_next_sibling'} = 0;
     $new_element->{'_next_sibling'} = $reference_element;
     $new_element->{'_previous_sibling'} = $reference_element->previous_sibling || 0;
@@ -246,7 +246,7 @@ sub insert_before {
     return $new_element;
   }
   warn 'Reference element is missing or is same as new element or does not belong to the same parent node.';
-  return 0;
+  return undef;
 }
 
 sub insert_after {
