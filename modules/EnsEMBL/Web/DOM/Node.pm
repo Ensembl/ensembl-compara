@@ -31,7 +31,7 @@ sub new {
 }
 
 sub can_have_child {
-  ## Tell whether this node can have child elements
+  ## Tells whether this node can have child elements
   ## Override in child class
   ## @return 1 or 0 accordingly
   return 1;
@@ -77,7 +77,7 @@ sub get_element_by_id {
 
 sub get_elements_by_name {
   ## A slight extension of typical getElementsByName
-  ## @params name or ArrayRef od multiple names
+  ## @params name or ArrayRef of multiple names
   ## @returns ArrayRef of Element objects
   my ($self, $name) = @_;
   
@@ -218,7 +218,7 @@ sub append_child {
       $self->last_child->{'_next_sibling'} = $element;
     }
     push @{$self->{'_child_nodes'}}, $element;
-    return 1;
+    return $element;
   }
   else {
     warn 'Node cannot be inserted at the specified point in the hierarchy.';
@@ -243,7 +243,7 @@ sub insert_before {
     $reference_element->previous_sibling->{'_next_sibling'} = $new_element if $reference_element->previous_sibling;
     $reference_element->{'_previous_sibling'} = $new_element;
     $self->_adjust_child_nodes;
-    return 1;
+    return $new_element;
   }
   warn 'Reference element is missing or is same as new element or does not belong to the same parent node.';
   return 0;
@@ -328,6 +328,13 @@ sub replace_child {
   return $self->remove_child($old_element) if $self->insert_before($new_element, $old_element);
 }
 
+sub remove {
+  ## Removes the child from it's parent node. An extra to DOM function to make it easy to remove elements
+  my $self = shift;
+  $self->parent_node->remove_child($self) if defined $self->parent_node;
+  return $self;
+}
+
 sub dom {
   ## Getter for owner DOM
   ## @return DOM object
@@ -355,7 +362,7 @@ sub is_same_as {
 }
 
 sub _adjust_child_nodes {
-  # private function used to adjust the array referrenced at _child_nodes key after some change in the child nodes
+  # private function used to adjust the array referenced at _child_nodes key after some change in the child nodes
   # removes the 'just-removed' nodes from the array
   # re-arranges the array on the bases of linked list
   my $self = shift;
