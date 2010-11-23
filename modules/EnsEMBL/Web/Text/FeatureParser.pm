@@ -349,7 +349,7 @@ sub check_format {
       next unless $row;
       next if $row =~ /^#/;
       next if $row =~ /^browser/; 
-      last if $format; warn $row;
+      last if $format; 
       if ($row =~ /^reference/i) {
         $format = 'GBROWSE';
         last;
