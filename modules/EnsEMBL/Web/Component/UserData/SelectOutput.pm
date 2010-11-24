@@ -28,7 +28,7 @@ sub content {
     $text_target = 'MapIDs';       
     $data_format = 'id';
   } elsif ($object->param('consequence_mapper')) {
-    $title = 'SNP Effect Predictor';  
+    $title = 'Variant Effect Predictor';  
     $html_target = 'ConsequenceCalculator';
     $text_target = 'PreviewConvertIDs';
     $data_format = 'snp';

@@ -18,7 +18,7 @@ sub caption {
 sub content {
   my $self = shift;
   my $object = $self->object;
-  my $html = '<h2>SNP Effect Predictor  Results:</h2>';
+  my $html = '<h2>Variant Effect Predictor  Results:</h2>';
 
   my @files = ($object->param('code'));
   my $size_limit =  $object->param('variation_limit');
