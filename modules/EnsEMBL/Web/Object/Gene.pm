@@ -99,8 +99,8 @@ sub counts {
         $counts = {%$counts, %{$self->count_homologues($compara_dbh)}};
       
         my ($res) = $compara_dbh->selectrow_array(
-          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
-          {}, $obj->stable_id
+          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?',
+          {}, $obj->stable_id, 'ENSEMBLGENE'
         );
         
         $counts->{'families'} = $res;
@@ -117,8 +117,8 @@ sub counts {
         $pan_counts = $self->count_homologues($compara_dbh);
       
         my ($res) = $compara_dbh->selectrow_array(
-          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=?',
-          {}, $obj->stable_id
+          'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?',
+          {}, $obj->stable_id, 'ENSEMBLGENE'
         );
         
         $pan_counts->{'families'} = $res;
