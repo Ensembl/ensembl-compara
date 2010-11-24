@@ -294,26 +294,9 @@ sub content {
   
   my ($sequence, $config, $raw_seq) = $self->initialize;
   
-  my $html = sprintf('
-    <div class="other-tool">
-      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
-    </div>
-    <div class="other-tool">
-      <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
-      <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-        <fieldset>
-          <input type="hidden" name="_query_sequence" value="%s" />
-          <input type="hidden" name="species" value="%s" />
-        </fieldset>
-      </form>
-    </div>', 
-    $self->ajax_url('rtf'),
-    $raw_seq,
-    $config->{'species'}
-  );
-  
-  $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
-  $html .= $self->build_sequence($sequence, $config);
+  my $html = $self->tool_buttons($raw_seq, $config->{'species'});
+  $html   .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
+  $html   .= $self->build_sequence($sequence, $config);
 
   return $html;
 }

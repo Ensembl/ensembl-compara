@@ -58,24 +58,7 @@ sub content {
   my $species   = $hub->species;
   my $type      = $hub->type;
   my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  
-  my $html = sprintf('
-    <div class="other-tool">
-      <p><a class="seq_export export" href="%s;export=rtf">Download view as RTF</a></p>
-    </div>
-    <div class="other-tool">
-      <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
-      <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-        <fieldset>
-          <input type="hidden" name="_query_sequence" value="%s" />
-          <input type="hidden" name="species" value="%s" />
-        </fieldset>
-      </form>
-    </div>',
-    $self->ajax_url('rtf'),
-    uc $slice->seq(1),
-    $species
-  );
+  my $html      = $self->tool_buttons(uc $slice->seq(1), $species);
   
   if ($length >= $self->{'subslice_length'}) {
     my $base_url = $self->ajax_url('sub_slice') . ";length=$length;name=" . $slice->name;

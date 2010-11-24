@@ -113,13 +113,6 @@ sub content {
 
   my ($data, $config) = $self->initialize;
   
-  my $html = sprintf('
-    <div class="other-tool">
-      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
-    </div>', 
-    $self->ajax_url('rtf')
-  );
-  
   my $table = $self->new_table([
       { key => 'Number',     title => 'No.',           width => '6%',  align => 'left' },
       { key => 'exint',      title => 'Exon / Intron', width => '15%', align => 'left' },
@@ -134,8 +127,8 @@ sub content {
     { data_table => 'no_sort' }
   );
   
-  $html .= $table->render;
-  $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'variation'} ne 'off';
+  my $html = $self->tool_buttons . $table->render;
+     $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html if $config->{'variation'} ne 'off';
   
   return $html;
 }
