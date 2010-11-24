@@ -64,13 +64,13 @@ sub content_other {
         
         next unless @table_data == 6;
         
-        $pep_table->add_row(\@table_data);
+        $pep_table->add_row([@table_data]);
         $row_count++;
         @table_data = ();
       }
 
       if (@table_data) {
-        $pep_table->add_row(\@table_data);
+        $pep_table->add_row([@table_data]);
         $row_count++;
       }
 
