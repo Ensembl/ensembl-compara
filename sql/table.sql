@@ -813,9 +813,10 @@ CREATE TABLE protein_tree_member (
   cigar_start                 int(10),
   cigar_end                   int(10),
 
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
   FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   UNIQUE (node_id),
   KEY (member_id)
