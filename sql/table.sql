@@ -178,7 +178,7 @@ CREATE TABLE species_set_tag (
   tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
-  # NB: species_set_id is not unique so cannot be used as a foreign key
+  ## NB: species_set_id is not unique so cannot be used as a foreign key
   # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   UNIQUE KEY tag_species_set_id (species_set_id,tag)
@@ -215,7 +215,7 @@ CREATE TABLE method_link_species_set (
   url                         varchar(255) NOT NULL default '',
 
   FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
-  # NB: species_set_id is not unique so cannot be used as a foreign key
+  ## NB: species_set_id is not unique so cannot be used as a foreign key
   # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   PRIMARY KEY (method_link_species_set_id),
@@ -862,6 +862,7 @@ CREATE TABLE protein_tree_member_score (
 
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
   FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   UNIQUE (node_id),
   KEY (member_id)
@@ -931,6 +932,9 @@ CREATE TABLE protein_tree_stable_id (
     node_id   INT(10) UNSIGNED NOT NULL,
     stable_id VARCHAR(40)  NOT NULL, # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version   INT UNSIGNED NOT NULL, # version of the stable_id (changes only when members move to/from existing trees)
+
+    FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
+
     PRIMARY KEY ( node_id ),
     UNIQUE KEY ( stable_id )
 );
