@@ -549,7 +549,7 @@ sub composite_histogram {
     $e = $l if $e >$l;
     
     my $v = ($f->score - $min)/$range;
-    my $c = $self->{'config'}{'_colourmap'}->hex_by_rgb($self->_colour($v, $cp));
+    my $c = $self->{'config'}->colourmap->hex_by_rgb($self->_colour($v, $cp));
     
     my($o, $h) = $f->score < $min ? (0, -$min)
                : $f->score > $max ? (-$min, $max)
@@ -597,8 +597,8 @@ sub _colour_points {
 
   my @colour_points;
   
-  for (1..9) {
-    my @c = $self->{'config'}{'_colourmap'}->rgb_by_name($st->{"color$_"}, 1) if $st->{"color$_"};
+  for (1..9) { 
+    my @c = $self->{'config'}->colourmap->rgb_by_name($st->{"color$_"}, 1) if $st->{"color$_"};
     push @colour_points, \@c if @c;
   }
   
@@ -652,7 +652,7 @@ sub composite_gradient {
     $s = 1 if $s < 1;
     $e = $l if $e >$l;
     
-    my $c = $self->{'config'}{'_colourmap'}->hex_by_rgb($self->_colour(($f->score - $min)/$range, $cp));
+    my $c = $self->{'config'}->colourmap->hex_by_rgb($self->_colour(($f->score - $min)/$range, $cp));
     
     $self->push($self->Rect({
       'height'    => $st->{'height'},
@@ -727,7 +727,7 @@ sub composite_lineplot {
     next if $end_x < 0;
     last if $start_x >= $l;
     
-    my $co = $self->{'config'}{'_colourmap'}->hex_by_rgb($self->_colour(($end_y + $start_y)/2, $cp));
+    my $co = $self->{'config'}->colourmap->hex_by_rgb($self->_colour(($end_y + $start_y)/2, $cp));
     my ($a, $b, $c, $d) = ($start_x, $start_y, $end_x, $end_y);
     
     if ($a < 0) {
