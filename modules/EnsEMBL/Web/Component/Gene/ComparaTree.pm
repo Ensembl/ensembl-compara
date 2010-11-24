@@ -66,7 +66,29 @@ sub content {
   my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
   my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id, $html);
-  
+
+  $html .= sprintf (qq(
+    <h3>GeneTree %s</h3>
+      <dl class="summary">
+        <dt style="width:15em">Number of genes</dt>
+        <dd>%s</dd>
+      </dl>
+      <dl class="summary">
+        <dt style="width:15em">Number of duplication nodes</dt>
+        <dd>%s</dd>
+      </dl>
+      <dl class="summary">
+        <dt style="width:15em">Number of ambiguous nodes</dt>
+        <dd>%s</dd>
+      </dl>
+      <p>&nbsp;</p>
+    ), 
+    $tree->root->stable_id, 
+    scalar(@$leaves),
+    $self->get_num_nodes_with_tag($tree, 'Duplication', undef, ['dubious_duplication']),
+    $self->get_num_nodes_with_tag($tree, "dubious_duplication", 1),
+  );
+
   if ($highlight_gene) {
     my $highlight_gene_display_label;
     
@@ -277,6 +299,32 @@ sub collapsed_nodes {
   }
   
   return join ',', grep !$expanded_nodes{$_}, keys %collapsed_nodes;
+}
+
+sub get_num_nodes_with_tag {
+  my ($self, $tree, $tag, $test_value, $exclusion_tag_array) = @_;
+  my $count = 0;
+
+  OUTER: foreach my $tnode(@{$tree->get_all_nodes}) {
+    my $tag_value = $tnode->get_tagvalue($tag);
+    #Accept if the test value was not defined but got a value from the node
+    #or if we had a tag value and it was equal to the test
+    if( (! $test_value && $tag_value) || ($test_value && $tag_value eq $test_value) ) {
+      
+      #If we had an exclusion array then check & skip if it found anything
+      if($exclusion_tag_array) {
+        foreach my $exclusion (@{$exclusion_tag_array}) {
+          my $exclusion_value = $tnode->get_tagvalue($exclusion);
+          if($exclusion_value) {
+            next OUTER;
+          }
+        }
+      }
+      $count++;
+    }
+  }
+
+  return $count;
 }
 
 sub find_nodes_by_genome_db_ids {
