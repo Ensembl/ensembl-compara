@@ -5,7 +5,7 @@ package EnsEMBL::Web::Document::Page;
 use strict;
 
 use Apache2::Const;
-use HTML::Entities qw(encode_entities);
+use HTML::Entities qw(encode_entities decode_entities);
 
 use EnsEMBL::Web::Document::Panel;
 use EnsEMBL::Web::Document::Renderer::GzFile;
@@ -290,8 +290,9 @@ sub clean_HTML {
   my ($self, $content) = @_;
   $content =~ s/<(div|p|h\d|br).*?>/\n/g;   # Replace the start of block elements with a new line
   $content =~ s/<(\/(div|p|h\d).*)>/\n\n/g; # Replace the end of block elements with two new lines
+  $content =~ s/&nbsp;/ /g;                 # decode_entities replaces &nbsp; with chr(160), rather than chr(32), so do this regex first
   $content =~ s/^\n+//;                     # Strip leading new lines
-  return $self->strip_HTML($content);
+  return decode_entities($self->strip_HTML($content));
 }
 
 sub render {
