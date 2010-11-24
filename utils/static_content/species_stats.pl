@@ -692,7 +692,7 @@ sub hits2html {
   my @domids = sort { ($domain->{$b}{genes} || 0) <=> ($domain->{$a}{genes} || 0)} keys %$domain;
 
   print qq(<table class="ss tint">\n);
-  print qq(<tr
+  print qq(<tr>
             <th>No.</th>
             <th>InterPro name</th>
             <th>Number of genes</th>
