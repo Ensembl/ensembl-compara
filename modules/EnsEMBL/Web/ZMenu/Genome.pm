@@ -13,7 +13,7 @@ sub content {
 
   my $hub          = $self->hub;
   my $id           = $hub->param('id');
-  my $db           = $hub->param('fdb') || $hub->param('db') || 'core'; 
+  my $db           = $hub->param('db') || 'core'; 
   my $object_type  = $hub->param('ftype');
   my $db_adaptor   = $hub->database(lc($db));
   my $adaptor_name = "get_${object_type}Adaptor";
