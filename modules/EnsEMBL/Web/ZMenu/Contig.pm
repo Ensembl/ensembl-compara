@@ -16,7 +16,6 @@ sub content {
   my $slice_type      = $slice->coord_system_name;
   my $top_level_slice = $slice->project('toplevel')->[0]->to_Slice;
   my $action          = $slice->length > $threshold ? 'Overview' : 'View';
-  my $embl_link       = 0;
   
   $self->caption($slice_name);
   
@@ -96,27 +95,7 @@ sub content {
         link  => $hub->get_ExtURL('EMBL', $short_name),
         extra => { external => 1 }
       });
-      
-      $embl_link = 1;
     }
-  }
-  
-  if (!$embl_link) {
-    (my $short_name = $slice_name) =~ s/\.\d+$//;
-    
-    $self->add_entry({
-      type  => 'EMBL',
-      label => $slice_name,
-      link  => $hub->get_ExtURL('EMBL', $slice_name),
-      extra => { external => 1 }
-    });
-    
-    $self->add_entry({
-      type  => 'EMBL (latest version)',
-      label => $short_name,
-      link  => $hub->get_ExtURL('EMBL', $slice_name),
-      extra => { external => 1 }
-    });
   }
 }
 
