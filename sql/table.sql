@@ -3,6 +3,71 @@
 # internal ids are integers named tablename_id
 # same name is given in foreign key relations
 
+
+# --------------------------------- common part of the schema ------------------------------------
+
+#
+# Table structure for table 'analysis'
+#
+# semantics:
+# analysis_id - internal id
+# created   - date to distinguish newer and older versions off the
+#             same analysis. Not well maintained so far.
+# logic_name  string to identify the analysis. Used mainly inside pipeline.
+# db, db_version, db_file
+#  - db should be a database name, db version the version of that db
+#    db_file the file system location of that database,
+#    probably wiser to generate from just db and configurations
+# program, program_version,program_file
+#  - The binary used to create a feature. Similar semantic to above
+# module, module_version
+#  - Perl module names (RunnableDBS usually) executing this analysis.
+# parameters a paramter string which is processed by the perl module
+# gff_source, gff_feature
+#  - how to make a gff dump from features with this analysis
+
+CREATE TABLE IF NOT EXISTS analysis (
+
+  analysis_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  logic_name                  varchar(40) not null,
+  db                          varchar(120),
+  db_version                  varchar(40),
+  db_file                     varchar(255),
+  program                     varchar(255),
+  program_version             varchar(40),
+  program_file                varchar(255),
+  parameters                  TEXT,
+  module                      varchar(80),
+  module_version              varchar(40),
+  gff_source                  varchar(40),
+  gff_feature                 varchar(40),
+
+  PRIMARY KEY (analysis_id),
+  KEY logic_name_idx( logic_name ),
+  UNIQUE (logic_name)
+
+) COLLATE=latin1_swedish_ci;
+
+
+#
+# Table structure for table 'analysis_description'
+#
+
+CREATE TABLE IF NOT EXISTS analysis_description (
+  analysis_id                int(10) unsigned NOT NULL,
+  description                text,
+  display_label              varchar(255),
+  displayable                boolean not null default 1,
+  web_data                   text,
+
+  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
+
+  UNIQUE KEY analysis_idx( analysis_id )
+
+) COLLATE=latin1_swedish_ci;
+
+
 #
 # Table structure for table 'meta'
 #
@@ -55,10 +120,13 @@ CREATE TABLE ncbi_taxa_name (
   name                        varchar(255),
   name_class                  varchar(50),
 
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+
   KEY (taxon_id),
   KEY (name),
   KEY (name_class)
 ) COLLATE=latin1_swedish_ci;
+
 
 #
 # Table structure for table 'genome_db'
@@ -83,32 +151,17 @@ CREATE TABLE genome_db (
 
 
 #
-# Table structure for table 'method_link'
-#
-# Specifies which kind of link can exist between species
-# (dna/dna alignment, synteny regions, homologous gene pairs,...)
-#
-
-CREATE TABLE method_link (
-  method_link_id              int(10) unsigned NOT NULL auto_increment, # unique internal id
-  type                        varchar(50) DEFAULT '' NOT NULL,
-  class                       varchar(50) DEFAULT '' NOT NULL,
-
-  PRIMARY KEY (method_link_id),
-  KEY type (type)
-) COLLATE=latin1_swedish_ci;
-
-
-
-
-#
 # Table structure for table 'species_set'
 #
--- KEY species_set_id is a multiple key. It defines a set of species
---   (genome_db_ids).
+# Each species_set is a set of genome_db objects
+#
+
 CREATE TABLE species_set (
   species_set_id              int(10) unsigned NOT NULL auto_increment,
   genome_db_id                int(10) unsigned NOT NULL default '0',
+
+  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+
   PRIMARY KEY  (species_set_id,genome_db_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -125,10 +178,28 @@ CREATE TABLE species_set_tag (
   tag                         varchar(50) NOT NULL,
   value                       mediumtext,
 
+  # NB: species_set_id is not unique so cannot be used as a foreign key
   # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   UNIQUE KEY tag_species_set_id (species_set_id,tag)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+
+#
+# Table structure for table 'method_link'
+#
+# Specifies which kind of link can exist between species
+# (dna/dna alignment, synteny regions, homologous gene pairs,...)
+#
+
+CREATE TABLE method_link (
+  method_link_id              int(10) unsigned NOT NULL auto_increment, # unique internal id
+  type                        varchar(50) DEFAULT '' NOT NULL,
+  class                       varchar(50) DEFAULT '' NOT NULL,
+
+  PRIMARY KEY (method_link_id),
+  KEY type (type)
+) COLLATE=latin1_swedish_ci;
 
 
 #
@@ -144,12 +215,35 @@ CREATE TABLE method_link_species_set (
   url                         varchar(255) NOT NULL default '',
 
   FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
-  # species_set(species_set_id) is not a unique key. Some RDBMS may complain
+  # NB: species_set_id is not unique so cannot be used as a foreign key
   # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   PRIMARY KEY (method_link_species_set_id),
   UNIQUE KEY method_link_id (method_link_id,species_set_id)
 ) COLLATE=latin1_swedish_ci;
+
+
+# --------------------------------- DNA part of the schema ------------------------------------
+
+#
+# Table structure for table 'synteny_region'
+#
+# We have now decided that Synteny is inherently pairwise
+# these tables hold the pairwise information for the synteny
+# regions. We reuse the dnafrag table as a link out for identifiers
+# (eg, '2' on mouse).
+#
+
+CREATE TABLE synteny_region (
+  synteny_region_id           int(10) unsigned NOT NULL auto_increment, # unique internal id
+  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+
+  PRIMARY KEY (synteny_region_id),
+  KEY (method_link_species_set_id)
+) COLLATE=latin1_swedish_ci;
+
 
 #
 # Table structure for table 'dnafrag'
@@ -177,6 +271,25 @@ CREATE TABLE dnafrag (
 
 
 #
+# Table structure for table 'dnafrag_region'
+#
+
+CREATE TABLE dnafrag_region (
+  synteny_region_id           int(10) unsigned DEFAULT '0' NOT NULL, # unique internal id
+  dnafrag_id                  bigint unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned DEFAULT '0' NOT NULL,
+  dnafrag_end                 int(10) unsigned DEFAULT '0' NOT NULL,
+  dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
+
+  FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+
+  KEY synteny (synteny_region_id,dnafrag_id),
+  KEY synteny_reversed (dnafrag_id,synteny_region_id)
+) COLLATE=latin1_swedish_ci;
+
+
+#
 # Table structure for table 'genomic_align_block'
 #
 #    This table indexes the genomic alignments
@@ -194,8 +307,7 @@ CREATE TABLE genomic_align_block (
   length                      int(10),
   group_id                    bigint unsigned DEFAULT NULL,
 
-  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY genomic_align_block_id (genomic_align_block_id),
   KEY method_link_species_set_id (method_link_species_set_id)
@@ -223,8 +335,7 @@ CREATE TABLE genomic_align (
   level_id                    tinyint(2) unsigned DEFAULT '0' NOT NULL,
 
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
-  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY genomic_align_id (genomic_align_id),
@@ -271,8 +382,7 @@ CREATE TABLE genomic_align_tree (
   right_node_id               bigint(10) NOT NULL default '0',
   distance_to_parent          double NOT NULL default '1',
 
-  # genomic_align_group(node_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (node_id) REFERENCES genomic_align_group(node_id),
+  FOREIGN KEY (node_id) REFERENCES genomic_align_group(node_id),
 
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
@@ -283,44 +393,48 @@ CREATE TABLE genomic_align_tree (
 
 
 #
-# Table structure for table 'synteny_region'
-#
-# We have now decided that Synteny is inherently pairwise
-# these tables hold the pairwise information for the synteny
-# regions. We reuse the dnafrag table as a link out for identifiers
-# (eg, '2' on mouse).
+# Table structure for table 'conservation_score'
 #
 
-CREATE TABLE synteny_region (
-  synteny_region_id           int(10) unsigned NOT NULL auto_increment, # unique internal id
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+CREATE TABLE conservation_score (
+  genomic_align_block_id bigint unsigned not null,
+  window_size            smallint unsigned not null,
+  position	         int unsigned not null,
+  expected_score         blob,
+  diff_score             blob,
 
-  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
 
-  PRIMARY KEY (synteny_region_id),
-  KEY (method_link_species_set_id)
-) COLLATE=latin1_swedish_ci;
+  KEY (genomic_align_block_id, window_size)
+) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci;
 
 
 #
-# Table structure for table 'dnafrag_region'
+# Table structure for table 'constrained_element'
 #
 
-CREATE TABLE dnafrag_region (
-  synteny_region_id           int(10) unsigned DEFAULT '0' NOT NULL, # unique internal id
-  dnafrag_id                  bigint unsigned DEFAULT '0' NOT NULL, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned DEFAULT '0' NOT NULL,
-  dnafrag_end                 int(10) unsigned DEFAULT '0' NOT NULL,
-  dnafrag_strand              tinyint(4) DEFAULT '0' NOT NULL,
+CREATE TABLE constrained_element (
+  constrained_element_id bigint(20) unsigned NOT NULL,
+  dnafrag_id bigint unsigned NOT NULL,
+  dnafrag_start int(12) unsigned NOT NULL,
+  dnafrag_end int(12) unsigned NOT NULL,
+  dnafrag_strand int(2),
+  method_link_species_set_id int(10) unsigned NOT NULL,
+  p_value mediumtext,
+  taxonomic_level mediumtext,
+  score double NOT NULL default '0',
 
-  FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
-  KEY synteny (synteny_region_id,dnafrag_id),
-  KEY synteny_reversed (dnafrag_id,synteny_region_id)
+  KEY constrained_element_id_idx (constrained_element_id),
+  KEY mlssid_idx (method_link_species_set_id),
+  KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end),
+  KEY mlssid_dfId_idx (method_link_species_set_id,dnafrag_id)
 ) COLLATE=latin1_swedish_ci;
 
+
+# --------------------------------- Protein part of the schema ------------------------------------
 
 #
 # Table structure for table 'sequence'
@@ -335,35 +449,6 @@ CREATE TABLE sequence (
   KEY sequence (sequence(18))
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
 
--- overview:
---   This table holds the sequence exon boundaries information
-CREATE TABLE sequence_exon_bounded (
-  sequence_exon_bounded_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
-  member_id                   int(10) unsigned NOT NULL, # unique internal id
-  length                      int(10) NOT NULL,
-  sequence_exon_bounded       longtext NOT NULL,
-
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-
-  PRIMARY KEY (sequence_exon_bounded_id),
-  KEY (member_id),
-  KEY sequence_exon_bounded (sequence_exon_bounded(18))
-) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
-
--- overview:
---   This table holds the sequence cds information
-CREATE TABLE sequence_cds (
-  sequence_cds_id             int(10) unsigned NOT NULL auto_increment, # unique internal id
-  member_id                   int(10) unsigned NOT NULL, # unique internal id
-  length                      int(10) NOT NULL,
-  sequence_cds                longtext NOT NULL,
-
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-
-  PRIMARY KEY (sequence_cds_id),
-  KEY (member_id),
-  KEY sequence_cds (sequence_cds(64))
-) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci;
 
 #
 # Table structure for table 'member'
@@ -413,101 +498,83 @@ CREATE TABLE subset (
  UNIQUE (description)
 );
 
+
 #
 # Table structure for table 'subset_member'
 #
 
 CREATE TABLE subset_member (
- subset_id   int(10) NOT NULL,
- member_id   int(10) NOT NULL,
+  subset_id   int(10) NOT NULL,
+  member_id   int(10) NOT NULL,
 
- KEY (member_id),
- UNIQUE subset_member_id (subset_id, member_id)
+  FOREIGN KEY (subset_id) REFERENCES subset(subset_id),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
+
+  KEY (member_id),
+  UNIQUE subset_member_id (subset_id, member_id)
 );
 
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'analysis'
---
--- semantics:
--- analysis_id - internal id
--- created   - date to distinguish newer and older versions off the
---             same analysis. Not well maintained so far.
--- logic_name  string to identify the analysis. Used mainly inside pipeline.
--- db, db_version, db_file
---  - db should be a database name, db version the version of that db
---    db_file the file system location of that database,
---    probably wiser to generate from just db and configurations
--- program, program_version,program_file
---  - The binary used to create a feature. Similar semantic to above
--- module, module_version
---  - Perl module names (RunnableDBS usually) executing this analysis.
--- parameters a paramter string which is processed by the perl module
--- gff_source, gff_feature
---  - how to make a gff dump from features with this analysis
+#
+# Table structure for table 'sequence_exon_bounded' (holds the sequence exon boundaries information)
+#
 
-CREATE TABLE IF NOT EXISTS analysis (
+CREATE TABLE sequence_exon_bounded (
+  sequence_exon_bounded_id    int(10) unsigned NOT NULL auto_increment, # unique internal id
+  member_id                   int(10) unsigned NOT NULL, # unique internal id
+  length                      int(10) NOT NULL,
+  sequence_exon_bounded       longtext NOT NULL,
 
-  analysis_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
-  created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  logic_name                  varchar(40) not null,
-  db                          varchar(120),
-  db_version                  varchar(40),
-  db_file                     varchar(255),
-  program                     varchar(255),
-  program_version             varchar(40),
-  program_file                varchar(255),
-  parameters                  TEXT,
-  module                      varchar(80),
-  module_version              varchar(40),
-  gff_source                  varchar(40),
-  gff_feature                 varchar(40),
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-  PRIMARY KEY (analysis_id),
-  KEY logic_name_idx( logic_name ),
-  UNIQUE (logic_name)
+  PRIMARY KEY (sequence_exon_bounded_id),
+  KEY (member_id),
+  KEY sequence_exon_bounded (sequence_exon_bounded(18))
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci;
 
-) COLLATE=latin1_swedish_ci;
 
-CREATE TABLE IF NOT EXISTS analysis_description (
-  analysis_id                int(10) unsigned NOT NULL,
-  description                text,
-  display_label              varchar(255),
-  displayable                boolean not null default 1,
-  web_data                   text,
+#
+# Table structure for table 'sequence_cds' ( holds the sequence cds information )
+#
 
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
+CREATE TABLE sequence_cds (
+  sequence_cds_id             int(10) unsigned NOT NULL auto_increment, # unique internal id
+  member_id                   int(10) unsigned NOT NULL, # unique internal id
+  length                      int(10) NOT NULL,
+  sequence_cds                longtext NOT NULL,
 
-  UNIQUE KEY analysis_idx( analysis_id )
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
 
-) COLLATE=latin1_swedish_ci;
+  PRIMARY KEY (sequence_cds_id),
+  KEY (member_id),
+  KEY sequence_cds (sequence_cds(64))
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci;
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'peptide_align_feature'
---
--- overview: This tables stores the raw HSP local alignment results
---           of peptide to peptide alignments returned by a BLAST run
---           it is translated from a FeaturePair object
--- semantics:
--- peptide_align_feature_id  - internal id
--- qmember_id                - member.member_id of query peptide
--- hmember_id                - member.member_id of hit peptide
--- qgenome_db_id             - genome_db_id of query peptide (for query optimization)
--- hgenome_db_id             - genome_db_id of hit peptide (for query optimization)
--- qstart                    - start pos in query peptide sequence
--- qend                      - end  pos in query peptide sequence
--- hstart                    - start pos in hit peptide sequence
--- hend                      - end  pos in hit peptide sequence
--- score                     - blast score for this HSP
--- evalue                    - blast evalue for this HSP
--- align_length              - alignment length of HSP
--- identical_matches         - blast HSP match score
--- positive_matches          - blast HSP positive score
--- perc_ident                - percent identical matches in the HSP length
--- perc_pos                  - percent positive matches in the HSP length
--- cigar_line                - cigar string coding the actual alignment
+
+#
+# Table structure for table 'peptide_align_feature'
+#
+# overview: This tables stores the raw HSP local alignment results
+#           of peptide to peptide alignments returned by a BLAST run
+#           it is translated from a FeaturePair object
+# semantics:
+# peptide_align_feature_id  - internal id
+# qmember_id                - member.member_id of query peptide
+# hmember_id                - member.member_id of hit peptide
+# qgenome_db_id             - genome_db_id of query peptide (for query optimization)
+# hgenome_db_id             - genome_db_id of hit peptide (for query optimization)
+# qstart                    - start pos in query peptide sequence
+# qend                      - end  pos in query peptide sequence
+# hstart                    - start pos in hit peptide sequence
+# hend                      - end  pos in hit peptide sequence
+# score                     - blast score for this HSP
+# evalue                    - blast evalue for this HSP
+# align_length              - alignment length of HSP
+# identical_matches         - blast HSP match score
+# positive_matches          - blast HSP positive score
+# perc_ident                - percent identical matches in the HSP length
+# perc_pos                  - percent positive matches in the HSP length
+# cigar_line                - cigar string coding the actual alignment
 
 CREATE TABLE peptide_align_feature (
 
@@ -566,8 +633,7 @@ CREATE TABLE homology (
   ancestor_node_id            int(10) unsigned NOT NULL,
   tree_node_id                int(10) unsigned NOT NULL,
 
-  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (homology_id),
   KEY (method_link_species_set_id),
@@ -616,8 +682,7 @@ CREATE TABLE family (
   description                 varchar(255),
   description_score           double,
 
-  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (family_id),
   UNIQUE (stable_id),
@@ -655,8 +720,7 @@ CREATE TABLE domain (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 varchar(255),
 
-  # method_link_species_set(method_link_species_set_id) is not a unique key. Some RDBMS may complain
-  # FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (domain_id),
   UNIQUE (stable_id, method_link_species_set_id)
@@ -680,60 +744,22 @@ CREATE TABLE domain_member (
   UNIQUE (member_id,domain_id,member_start,member_end)
 ) COLLATE=latin1_swedish_ci;
 
-#
-# Table structure for table 'conservation_score'
-#
-
-CREATE TABLE conservation_score (
-  genomic_align_block_id bigint unsigned not null,
-  window_size            smallint unsigned not null,
-  position	         int unsigned not null,
-  expected_score         blob,
-  diff_score             blob,
-
-  FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
-
-  KEY (genomic_align_block_id, window_size)
-) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci;
 
 #
-# Table structure for table 'constrained_element'
-CREATE TABLE constrained_element (
-  constrained_element_id bigint(20) unsigned NOT NULL,
-  dnafrag_id bigint unsigned NOT NULL,
-  dnafrag_start int(12) unsigned NOT NULL,
-  dnafrag_end int(12) unsigned NOT NULL,
-  dnafrag_strand int(2),
-  method_link_species_set_id int(10) unsigned NOT NULL,
-  p_value mediumtext,
-  taxonomic_level mediumtext,
-  score double NOT NULL default '0',
-
-  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-
-  KEY constrained_element_id_idx (constrained_element_id),
-  KEY mlssid_idx (method_link_species_set_id),
-  KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end),
-  KEY mlssid_dfId_idx (method_link_species_set_id,dnafrag_id)
-) COLLATE=latin1_swedish_ci;
-
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_node'
---
--- overview:
---   This table holds the protein tree data structure, such as root, relation between
---   parent and child, leaves
---
--- semantics:
---      node_id               -- PRIMARY node id
---      parent_id             -- parent node id
---      root_id               -- to quickly isolated nodes of the different rooted tree sets
---      clusterset_id         -- node id of the set of clusters
---      left_index            -- for fast nested set searching
---      right_index           -- for fast nested set searching
---      distance_to_parent    -- distance between node_id and its parent_id
+# Table structure for table 'protein_tree_node'
+#
+# overview:
+#   This table holds the protein tree data structure, such as root, relation between
+#   parent and child, leaves
+#
+# semantics:
+#      node_id               -- PRIMARY node id
+#      parent_id             -- parent node id
+#      root_id               -- to quickly isolated nodes of the different rooted tree sets
+#      clusterset_id         -- node id of the set of clusters
+#      left_index            -- for fast nested set searching
+#      right_index           -- for fast nested set searching
+#      distance_to_parent    -- distance between node_id and its parent_id
 
 CREATE TABLE protein_tree_node (
   node_id                         int(10) unsigned NOT NULL auto_increment, # unique internal id
@@ -751,28 +777,32 @@ CREATE TABLE protein_tree_node (
   KEY (right_index)
 ) COLLATE=latin1_swedish_ci;
 
--- overview:
---   This table holds the member information for the nc trees
-CREATE TABLE nc_tree_node LIKE protein_tree_node;
 
--- overview:
---   This table holds the few big super protein tree alignments that are then broken down.
+#
+#   This table holds the few big super protein tree alignments that are then broken down.
+#
+
 CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_member'
---
--- overview:
---   to allow certain nodes (leaves) to have aligned protein members attached to them
--- semantics:
---    node_id                  -- the id of node associated with this name
---    root_id                  -- the id of tree root node
---    member_id                -- link to member.member_id in many-1 relation (single member per node)
---    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- compressed alignment information
---    cigar_start              -- protein start (0 if the whole protein is in the alignment)
---    cigar_end                -- protein end (0 if the whole protein is in the alignment)
+#
+#   This table holds the member information for the nc trees
+#
+
+CREATE TABLE nc_tree_node LIKE protein_tree_node;
+
+#
+# Table structure for table 'protein_tree_member'
+#
+# overview:
+#   to allow certain nodes (leaves) to have aligned protein members attached to them
+# semantics:
+#    node_id                  -- the id of node associated with this name
+#    root_id                  -- the id of tree root node
+#    member_id                -- link to member.member_id in many-1 relation (single member per node)
+#    method_link_species_set_id -- foreign key from method_link_species_set table
+#    cigar_line               -- compressed alignment information
+#    cigar_start              -- protein start (0 if the whole protein is in the alignment)
+#    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
 CREATE TABLE protein_tree_member (
   node_id                     int(10) unsigned NOT NULL,
@@ -783,6 +813,7 @@ CREATE TABLE protein_tree_member (
   cigar_start                 int(10),
   cigar_end                   int(10),
 
+  FOREIGN KEY (member_id) REFERENCES member(member_id),
   FOREIGN KEY (node_id) REFERENCES protein_tree_node(node_id),
   FOREIGN KEY (root_id) REFERENCES protein_tree_node(root_id),
 
@@ -790,28 +821,34 @@ CREATE TABLE protein_tree_member (
   KEY (member_id)
 ) COLLATE=latin1_swedish_ci;
 
--- overview:
---   This table holds the member information for the nc trees
-CREATE TABLE nc_tree_member LIKE protein_tree_member;
 
--- overview:
---   This table holds the few big super protein tree alignments that are then broken down.
+#
+#   This table holds the few big super protein tree alignments that are then broken down.
+#
+
 CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_member_score'
---
--- overview:
---   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
--- semantics:
---    node_id                  -- the id of node associated with this name
---    root_id                  -- the id of the tree root
---    member_id                -- link to member.member_id in many-1 relation (single member per node)
---    method_link_species_set_id -- foreign key from method_link_species_set table
---    cigar_line               -- string with the alignment score values 
---    cigar_start              -- protein start (0 if the whole protein is in the alignment)
---    cigar_end                -- protein end (0 if the whole protein is in the alignment)
+
+#
+#   This table holds the member information for the nc trees
+#
+
+CREATE TABLE nc_tree_member LIKE protein_tree_member;
+
+
+#
+# Table structure for table 'protein_tree_member_score'
+#
+# overview:
+#   to allow certain nodes (leaves) to have aligned protein member_scores attached to them
+# semantics:
+#    node_id                  -- the id of node associated with this name
+#    root_id                  -- the id of the tree root
+#    member_id                -- link to member.member_id in many-1 relation (single member per node)
+#    method_link_species_set_id -- foreign key from method_link_species_set table
+#    cigar_line               -- string with the alignment score values 
+#    cigar_start              -- protein start (0 if the whole protein is in the alignment)
+#    cigar_end                -- protein end (0 if the whole protein is in the alignment)
 
 CREATE TABLE protein_tree_member_score (
   node_id                     int(10) unsigned NOT NULL,
@@ -830,17 +867,16 @@ CREATE TABLE protein_tree_member_score (
 ) COLLATE=latin1_swedish_ci;
 
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_tag'
---
--- overview:
---    to allow for tagging nodes.
---
--- semantics:
---    node_id             -- node_id foreign key from protein_tree_node table
---    tag                 -- tag used to fecth/store a value associated to it
---    value               -- value associated with a particular tag
+#
+# Table structure for table 'protein_tree_tag'
+#
+# overview:
+#    to allow for tagging nodes.
+#
+# semantics:
+#    node_id             -- node_id foreign key from protein_tree_node table
+#    tag                 -- tag used to fecth/store a value associated to it
+#    value               -- value associated with a particular tag
 
 CREATE TABLE protein_tree_tag (
   node_id                int(10) unsigned NOT NULL,
@@ -854,9 +890,20 @@ CREATE TABLE protein_tree_tag (
   KEY (tag)
 ) COLLATE=latin1_swedish_ci;
 
--- overview:
---   This table holds the tag information for the nc trees
+
+#
+#   This table holds the few big super protein tree alignments that are then broken down.
+#
+
+CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
+
+
+#
+#   This table holds the tag information for the nc trees
+#
+
 CREATE TABLE nc_tree_tag LIKE protein_tree_tag;
+
 
 CREATE TABLE nc_profile (
   model_id                    varchar(10) NOT NULL,
@@ -868,21 +915,16 @@ CREATE TABLE nc_profile (
 ) COLLATE=latin1_swedish_ci;
 
 
--- overview:
---   This table holds the few big super protein tree alignments that are then broken down.
-CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
-
--- ------------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_stable_id'
---
--- overview:
---     to allow protein trees have trackable stable_ids.
---
--- semantics:
---    node_id           - node_id of the root of the tree
---    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
---    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
+#
+# Table structure for table 'protein_tree_stable_id'
+#
+# overview:
+#     to allow protein trees have trackable stable_ids.
+#
+# semantics:
+#    node_id           - node_id of the root of the tree
+#    stable_id         - the main part of the stable_id ( follows the pattern: label(5).release_introduced(4).unique_id(10) )
+#    version           - numeric version of the stable_id (changes only when members move to/from existing trees)
 
 CREATE TABLE protein_tree_stable_id (
     node_id   INT(10) UNSIGNED NOT NULL,
@@ -893,14 +935,13 @@ CREATE TABLE protein_tree_stable_id (
 );
 
 
--- ------------------------------------------------------------------------------------
---
--- Table structure for table 'mapping_session'
---
--- overview:
---      A single mapping_session is the event when mapping between two given releases
---      for a particular class type ('family' or 'tree') is loaded.
---      The whole event is thought to happen momentarily at 'when_mapped' (used for sorting in historical order).
+#
+# Table structure for table 'mapping_session'
+#
+# overview:
+#      A single mapping_session is the event when mapping between two given releases
+#      for a particular class type ('family' or 'tree') is loaded.
+#      The whole event is thought to happen momentarily at 'when_mapped' (used for sorting in historical order).
 
 CREATE TABLE mapping_session (
     mapping_session_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -908,27 +949,27 @@ CREATE TABLE mapping_session (
     when_mapped        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     rel_from           INT UNSIGNED,
     rel_to             INT UNSIGNED,
+
     PRIMARY KEY ( mapping_session_id ),
     UNIQUE KEY  ( type, rel_from, rel_to )
 );
 
 
--- ------------------------------------------------------------------------------------
---
--- Table structure for table 'stable_id_history'
---
--- overview:
---      'stable_id_history' table keeps the history of stable_id changes from one release to another.
---
---      The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to.
---      Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field.
---
---      Since both stable_ids are listed in the primary key,
---      they are not allowed to be NULLs. We shall treat empty strings as NULLs.
---
---      If stable_id_from is empty, it means these members are newcomers into the new release.
---      If stable_id_to is empty, it means these previously known members are disappearing in the new release.
---      If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
+#
+# Table structure for table 'stable_id_history'
+#
+# overview:
+#      'stable_id_history' table keeps the history of stable_id changes from one release to another.
+#
+#      The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to.
+#      Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field.
+#
+#      Since both stable_ids are listed in the primary key,
+#      they are not allowed to be NULLs. We shall treat empty strings as NULLs.
+#
+#      If stable_id_from is empty, it means these members are newcomers into the new release.
+#      If stable_id_to is empty, it means these previously known members are disappearing in the new release.
+#      If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
 
 CREATE TABLE stable_id_history (
     mapping_session_id INT UNSIGNED NOT NULL,
@@ -937,6 +978,9 @@ CREATE TABLE stable_id_history (
     stable_id_to       VARCHAR(40) NOT NULL DEFAULT '',
     version_to         INT UNSIGNED NULL DEFAULT NULL,
     contribution       FLOAT,
+
+    FOREIGN KEY (mapping_session_id) REFERENCES mapping_session(mapping_session_id),
+
     PRIMARY KEY ( mapping_session_id, stable_id_from, stable_id_to )
 );
 
@@ -985,17 +1029,16 @@ CREATE TABLE sitewise_aln (
 ) COLLATE=latin1_swedish_ci;
 
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'lr_index_offset'
---
--- overview:
---   Used to store the current maximum left right index for a given table. Table
---   name is unique and lr_index should be equal to the SQL statement
---   select max(right_index) from table_name
--- semantics:
---   table_name      -- name of the table this lr_index corresponds to
---   lr_index        -- max right index for the given table
+#
+# Table structure for table 'lr_index_offset'
+#
+# overview:
+#   Used to store the current maximum left right index for a given table. Table
+#   name is unique and lr_index should be equal to the SQL statement
+#   select max(right_index) from table_name
+# semantics:
+#   table_name      -- name of the table this lr_index corresponds to
+#   lr_index        -- max right index for the given table
 
 CREATE TABLE lr_index_offset (
 	table_name  varchar(64) NOT NULL,
@@ -1004,16 +1047,16 @@ CREATE TABLE lr_index_offset (
 	PRIMARY KEY (table_name)
 ) COLLATE=latin1_swedish_ci;
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_hmmprofile'
---
--- overview:
---   to allow nodes to have hmm profiles attached to them
--- semantics:
---    node_id                  -- the id of the root node associated with this hmm profile
---    type                     -- type of hmm profile (eg: 'hmmls','hmmfs','hmms','hmmsw')
---    hmmprofile               -- foreign key from method_link_species_set table
+
+#
+# Table structure for table 'protein_tree_hmmprofile'
+#
+# overview:
+#   to allow nodes to have hmm profiles attached to them
+# semantics:
+#    node_id                  -- the id of the root node associated with this hmm profile
+#    type                     -- type of hmm profile (eg: 'hmmls','hmmfs','hmms','hmmsw')
+#    hmmprofile               -- foreign key from method_link_species_set table
 
 CREATE TABLE protein_tree_hmmprofile (
   node_id                     int(10) unsigned NOT NULL,
@@ -1026,7 +1069,8 @@ CREATE TABLE protein_tree_hmmprofile (
 
 
 # Auto add schema version to database (this will override whatever hive puts there)
-REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "60");
+REPLACE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "61");
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_type", "compara");
+
