@@ -32,9 +32,10 @@ sub content {
     label => "Export $slice_type sequence/features",
     class => 'modal_link',
     link  => $hub->url({ 
-      type   => 'Export',
-      action => "Location/$action",
-      r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
+      type     => 'Export',
+      action   => 'Configure',
+      function => 'Location',
+      r        => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
     })
   });
   
@@ -71,9 +72,10 @@ sub content {
       label => "Export $new_slice_type sequence/features",
       class => 'modal_link',
       link  => $hub->url({
-        type   => 'Export',
-        action => "Location/$action",
-        r      => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
+        type     => 'Export',
+        action   => 'Configure',
+        function => 'Location',
+        r        => sprintf '%s:%s-%s', map $top_level_slice->$_, qw(seq_region_name start end)
       })
     });
     
