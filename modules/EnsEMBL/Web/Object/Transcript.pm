@@ -108,8 +108,10 @@ sub counts {
 sub count_prot_domains {
   my $self = shift;
   return 0 unless $self->translation_object;
-  my $c = scalar @{$self->translation_object->get_protein_domains};
-  $c += map { @{$self->translation_object->get_all_ProteinFeatures($_)} } qw(tmhmm SignalP ncoils Seg);
+  my $c = 0;
+  my $analyses = $self->table_info($self->get_db, 'protein_feature')->{'analyses'} || {};
+  my @domain_keys = grep { $analyses->{$_}{'web'}{'type'} eq 'domain' } keys %$analyses;
+  $c += map { @{$self->translation_object->get_all_ProteinFeatures($_)} } @domain_keys;
   return $c;
 }
 
@@ -1098,12 +1100,13 @@ sub get_go_list {
   foreach my $goxref (sort { $a->display_id cmp $b->display_id } @goxrefs) {
     my $go = $goxref->display_id;
     my $info_text;
+
     if ($goxref->info_type eq 'PROJECTION') {
       $info_text= $goxref->info_text; 
     }
-    
+
     my $evidence = '';
-    if ($goxref->isa('Bio::EnsEMBL::GoXref')) {
+    if ($goxref->isa('Bio::EnsEMBL::OntologyXref')) {
       $evidence = join ', ', @{$goxref->get_all_linkage_types}; 
     }
     
