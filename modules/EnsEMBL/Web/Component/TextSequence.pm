@@ -707,7 +707,7 @@ sub markup_line_numbers {
       $label         = $data->{'old_label'} if $post_label;
       
       push @{$config->{'line_numbers'}->{$n}}, { start => $start, end => $end, label => $label, post_label => $post_label };
-
+      
       # Increase padding amount if required
       $config->{'padding'}->{'number'} = length $start if length $start > $config->{'padding'}->{'number'};
       
@@ -860,7 +860,7 @@ sub build_sequence {
         my $n    = $num->{'post_label'} || $num->{'label'};
         my $pad1 = ' ' x ($config->{'padding'}->{'pre_number'} - length $n);
         my $pad2 = ' ' x ($config->{'padding'}->{'number'}     - length $num->{'end'});
-
+        
         $line .= $config->{'h_space'} . sprintf ' %6s', "$pad1$n$pad2$num->{'end'}";
       }
       
@@ -1193,6 +1193,37 @@ sub export_sequence {
   $self->hub->input->header( -type => 'application/rtf', -attachment => "$filename.rtf" );
   
   return $file->content;
+}
+
+sub tool_buttons {
+  my ($self, $blast_seq, $species, $peptide) = @_;
+  
+  return if $self->hub->param('_format') || 'HTML' ne 'HTML';
+  
+  my $html = sprintf('
+    <div class="other-tool">
+      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
+    </div>', 
+    $self->ajax_url('rtf')
+  );
+  
+  if ($blast_seq) {
+    $html .= sprintf('
+      <div class="other-tool">
+        <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
+        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+          <fieldset>
+            <input type="hidden" name="_query_sequence" value="%s" />
+            <input type="hidden" name="species" value="%s" />
+            %s
+          </fieldset>
+        </form>
+      </div>',
+      $blast_seq, $species, $peptide ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
+    );
+  }
+  
+  return $html;
 }
 
 1;
