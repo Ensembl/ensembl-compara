@@ -335,6 +335,12 @@ sub remove {
   return $self;
 }
 
+sub is_empty {
+  ## @return 1 or 0 if node is empty or not resp.
+  my $self = shift;
+  return $self->{'_text'} ne '' || $self->has_child_nodes ? 0 : 1;
+}
+
 sub dom {
   ## Getter for owner DOM
   ## @return DOM object
