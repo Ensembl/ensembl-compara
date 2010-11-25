@@ -192,6 +192,25 @@ sub set_storage_engine {
     my ($self) = @_;
 
     if (%engine_params) {
+	#Convert all the tables to InnoDB or MyISAM
+	if (defined ($engine_params{'all_tables'}) && $engine_params{'all_tables'} ne "") {
+	    #Change tables to ENGINE
+	    my $engine = $engine_params{'all_tables'};
+	    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
+		print "engine2 $engine\n";
+		die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
+	    }
+	    my $sql_all_tables = "SELECT table_name FROM information_schema.tables where table_schema='" . $compara_conf{'-dbname'} . "'";
+	    my $sth = $self->{'hiveDBA'}->dbc->prepare($sql_all_tables);
+	    $sth->execute();
+	    my $table_name;
+	    $sth->bind_columns(\$table_name );
+	    while( $sth->fetch() ) {
+		my $sql = "ALTER TABLE $table_name ENGINE=$engine";
+		$self->{'hiveDBA'}->dbc->do($sql);
+	    }
+	    $sth->finish();
+	}
 	if (defined ($engine_params{'dna_pipeline'}) && $engine_params{'dna_pipeline'} ne "") {
 	    #Change tables to ENGINE
 	    my $engine = $engine_params{'dna_pipeline'};
@@ -206,7 +225,7 @@ sub set_storage_engine {
 	}
 	#defined individual tables
 	foreach my $table (keys %engine_params) {
-	    next if ($table eq 'dna_pipeline' || $table eq "" || $table eq "TYPE");
+	    next if ($table eq 'all_tables' || $table eq 'dna_pipeline' || $table eq "" || $table eq "TYPE");
 	    my $engine = $engine_params{$table};
 	    if (lc($engine) ne "innodb" && lc($engine) ne "myisam") {
 		die ("\nERROR!! $engine is not supported. ENGINE type must be either InnoDB or MyISAM\n");
