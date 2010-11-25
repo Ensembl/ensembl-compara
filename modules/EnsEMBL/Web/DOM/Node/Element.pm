@@ -64,7 +64,7 @@ sub has_attribute {
   ## @params Attribute name
   ## @return 1 if attribute exists, 0 otherwise
   my ($self, $attrib) = @_;
-  return exists $self->{'_attribiutes'}{$attrib} ? 1 : 0;
+  return exists $self->{'_attributes'}{$attrib} ? 1 : 0;
 }
 
 sub remove_attribute {
