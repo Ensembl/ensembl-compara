@@ -6,7 +6,9 @@ use HTML::Entities qw(encode_entities decode_entities);
 use Clone qw(clone);
 
 use base qw(EnsEMBL::Web::Root);
+
 use EnsEMBL::Web::DOM;
+use EnsEMBL::Web::Tools::RandomString;
 
 use constant {
   ELEMENT_NODE                 => 1,
@@ -357,6 +359,13 @@ sub decode_htmlentities {
   #use this to avoid using HTML::entities in every child
   my $self = shift;
   return decode_entities(shift);
+}
+
+sub unique_id {
+  ## Gives a random unique string
+  ## @return Unique string
+  shift;
+  return EnsEMBL::Web::Tools::RandomString::random_string(@_);
 }
 
 sub is_same_as {
