@@ -126,6 +126,7 @@ sub new {
   my @array=();
   $self->{_normal_term_accessions}=\@array;
   $self->{_highlighted_term_accessions}=\@array;
+  $self->{_highlighted_subsets}=\@array;
   $self->{_clusters}={};
   $self->{_idurl_per_cluster}= {};
   
@@ -252,8 +253,15 @@ sub image_background_colour{
 sub node_fill_colour{
   my $self=shift;
   my $colour = shift;
-  $self->{_node_fill_colour}= $colour if defined($colour);
-  return $self->{_node_fill_colour};
+  my $term=shift;
+  if ($self->_in_highlighted_subsets($term)){
+    return $self->highlighted_fill_colour;
+  }else{
+    if (defined($colour) && $colour ne ''){
+      $self->{_node_fill_colour}= $colour ;
+    }
+    return $self->{_node_fill_colour};
+  }
 }
 
 =head2 getter/setter for the font colour for normal (non highlighted and non generated) nodes (optional)
@@ -264,8 +272,15 @@ sub node_fill_colour{
 sub node_font_colour{
   my $self=shift;
   my $colour = shift;
-  $self->{_node_font_colour}= $colour if defined($colour);
-  return $self->{_node_font_colour};
+  my $term=shift;
+  if ($self->_in_highlighted_subsets($term)){
+    return $self->highlighted_font_colour;
+  }else{
+    if (defined($colour) && $colour ne ''){
+      $self->{_node_font_colour}= $colour ;
+    }
+    return $self->{_node_font_colour};
+  }  
 }
 
 =head2 getter/setter for the border colour for normal (non highlighted and non generated) nodes (optional)
@@ -276,8 +291,15 @@ sub node_font_colour{
 sub node_border_colour{
   my $self=shift;
   my $colour = shift;
-  $self->{_node_border_colour}= $colour if defined($colour);
-  return $self->{_node_border_colour};
+  my $term=shift;
+  if ($self->_in_highlighted_subsets($term)){
+    return $self->highlighted_border_colour;
+  }else{
+    if (defined($colour) && $colour ne ''){
+      $self->{_node_border_colour}= $colour ;
+    }
+    return $self->{_node_border_colour};
+  }
 }
 
 =head2 getter/setter for the fill colour for non highlighted nodes (optional)
@@ -288,8 +310,15 @@ sub node_border_colour{
 sub non_highlight_fill_colour{
   my $self=shift;
   my $colour = shift;
-  $self->{_non_highlight_fill_colour}= $colour if defined($colour);
-  return $self->{_non_highlight_fill_colour};
+  my $term=shift;
+  if ($self->_in_highlighted_subsets($term)){
+    return $self->highlighted_fill_colour;
+  }else{
+    if (defined($colour) && $colour ne ''){
+      $self->{_non_highlight_fill_colour}= $colour ;
+    }
+    return $self->{_non_highlight_fill_colour};
+  }
 }
 
 =head2 getter/setter for the font colour for non highlighted nodes (optional)
@@ -300,8 +329,15 @@ sub non_highlight_fill_colour{
 sub non_highlight_font_colour{
   my $self=shift;
   my $colour = shift;
-  $self->{_non_highlight_font_colour}= $colour if defined($colour);
-  return $self->{_non_highlight_font_colour};
+  my $term=shift;
+  if ($self->_in_highlighted_subsets($term)){
+    return $self->highlighted_font_colour;
+  }else{
+    if (defined($colour) && $colour ne ''){
+      $self->{_non_highlight_font_colour}= $colour ;
+    }
+    return $self->{_non_highlight_font_colour};
+  }    
 }
 
 =head2 getter/setter for the border colour for non highlighted nodes (optional)
@@ -312,8 +348,15 @@ sub non_highlight_font_colour{
 sub non_highlight_border_colour{
   my $self=shift;
   my $colour = shift;
-  $self->{_non_highlight_border_colour}= $colour if defined($colour);
-  return $self->{_non_highlight_border_colour};
+  my $term=shift;
+  if ($self->_in_highlighted_subsets($term)){
+    return $self->highlighted_border_colour;
+  }else{
+    if (defined($colour) && $colour ne ''){
+      $self->{_non_highlight_border_colour}= $colour ;
+    }
+    return $self->{_non_highlight_border_colour};
+  }
 }
 
 =head2 getter/setter for the fill colour for highlighted nodes (optional)
@@ -372,8 +415,20 @@ sub normal_term_accessions{
 sub highlighted_term_accessions{
   my $self=shift;
   my @highlighted_term_accessions = @_;
-  $self->{_highlighted_term_accessions}=\@highlighted_term_accessions if (scalar(@highlighted_term_accessions)>0);
+  $self->{_highlighted_term_accessions}=\@highlighted_term_accessions if (@highlighted_term_accessions);
   return $self->{_highlighted_term_accessions};
+}
+
+=head2 getter/setter for an arrayref of highlighted term accessions
+ Arg[1]      : An arrayref
+ Description : getter/setter for an arrayref of highlighted term accessions
+ Return type : arrayref
+=cut
+sub highlighted_subsets{
+  my $self=shift;
+  my @highlighted_subsets = @_;
+  $self->{_highlighted_subsets}=\@highlighted_subsets if (@highlighted_subsets);
+  return $self->{_highlighted_subsets};
 }
 
 =head2 getter/setter for the Bio::EnsEMBL::DBSQL::OntologyTermAdaptor used to access the ontology API
@@ -416,13 +471,13 @@ sub render{
   my $ontology_term_adaptor = $self->ontology_term_adaptor;
   if (!defined($ontology_term_adaptor)){ die 'Bio::EnsEMBL::DBSQL::OntologyTermAdaptor ontology_term_adaptor not defined'};
 
-  my $term = shift;
   for my $key ( @{$self->highlighted_term_accessions} ) {#add the nodes we retreived, and highlight them
     $self->_add_node($key, $self->highlighted_border_colour,$self->highlighted_fill_colour, $self->highlighted_font_colour);
   }
 
-  for my $key ( @{$self->normal_term_accessions} ) {#add the nodes we retreived, and highlight them
-    $self->_add_node($key, $self->node_border_colour,$self->node_fill_colour, $self->node_font_colour);
+  for my $key ( @{$self->normal_term_accessions} ) {#add the nodes we retreived
+    my $term = $ontology_term_adaptor->fetch_by_accession($key);
+    $self->_add_node($key, $self->node_border_colour,$self->node_fill_colour('',$term), $self->node_font_colour('',$term));
   }
 
   my @all_terms =  @{$self->normal_term_accessions} ;
@@ -510,8 +565,8 @@ sub _add_parents{
               if(! $self->existing_terms->{$trm->accession}){
                 $self->existing_terms->{$trm->accession}=1;
                 my $node_name = $self->_format_node_name($trm);
-                $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->non_highlight_border_colour,
-                fillcolor=>$self->non_highlight_fill_colour, fontcolor=>$self->non_highlight_font_colour);
+                $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->non_highlight_border_colour('',$term),
+                fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
               }
               if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
                 $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
@@ -612,5 +667,21 @@ sub _format_colour_code{
   }
   $colour_code =~ s/_/ /g;
   return $colour_code;
+}
+
+sub _in_highlighted_subsets{
+  my $self=shift;
+  my $term=shift;
+  my $found =0;
+  if(defined($term)){
+   my @subsets = @{$term->subsets};
+   my @highlighted_subsets = @{$self->highlighted_subsets};
+   for (my $i=0; $i< scalar @subsets && !$found; $i++){
+     for (my $j=0; $j< scalar @highlighted_subsets && !$found; $j++){
+       $found = $subsets[$i] eq $highlighted_subsets[$j];
+     }
+    }
+  }
+  return $found;
 }
 1;
