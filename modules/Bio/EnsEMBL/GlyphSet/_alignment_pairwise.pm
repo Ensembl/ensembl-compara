@@ -186,6 +186,7 @@ sub render_normal {
       type    => 'Location',
       action  => 'PairwiseAlignment',
       species => $url_species,
+      r       => undef,
       n0      => $n0,
       n1      => $n1,
       s1      => $other_species,
