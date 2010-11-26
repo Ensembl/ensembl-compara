@@ -9,9 +9,10 @@ sub node_name {
   return 'legend';
 }
 
-sub can_have_child {
+sub _appendable {
   ## @overrides
-  return 0;
+  my ($self, $child) = @_;
+  return $child->node_type == $self->TEXT_NODE ? 1 : 0;
 }
 
 1;
