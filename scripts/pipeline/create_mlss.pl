@@ -373,7 +373,7 @@ sub ask_for_method_link_type {
       $method_link_type = $method_link_types->{$answer};
       return $method_link_type;
     } else {
-      print "\nERROR, try again\n";
+      print "\nERROR selecting method_link type, try again\n";
     }
   } while (1);
 }
@@ -406,17 +406,18 @@ sub ask_for_genome_dbs {
     print "Current species = ",
         join(" - ", map {$_->dbID.". ".$_->name." (".$_->assembly.")"} values %$genome_dbs_in),
         "\n";
-    $answer = prompt("Add a GenomeDB", "Pres enter to finish");
+    $answer = prompt("Add/Remove a GenomeDB", "Press enter to finish");
     if ($answer =~ /^\d+$/ and defined($genome_dbs_in->{$answer})) {
       delete($genome_dbs_in->{$answer});
     } elsif ($answer =~ /^\d+$/ and defined($genome_dbs_out->{$answer})) {
       $genome_dbs_in->{$answer} = $genome_dbs_out->{$answer};
-    } elsif ($answer eq "Pres enter to finish" and keys %$genome_dbs_in) {
+    } elsif ($answer eq "Press enter to finish" and keys %$genome_dbs_in) {
       @genome_dbs = values %$genome_dbs_in;
       return @genome_dbs;
     } else {
-      print "\nERROR, try again\n";
+      print "\nERROR selecting genome_dbs, try again\n";
     }
-  } while (1);}
+  } while (1);
+}
 
 
