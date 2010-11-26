@@ -13,7 +13,9 @@
 
 =head1 DESCRIPTION  
 
-    A pipeline to dump either gene_trees or ncrna_trees
+    A pipeline to dump either gene_trees or ncrna_trees.
+
+    In rel.60 gene_trees took 2h20m to dump.
 
 =head1 CONTACT
 
