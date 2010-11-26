@@ -23,7 +23,7 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $objcet = $self->object;
+  my $object = $self->object;
   my $form = EnsEMBL::Web::Form->new( 'select_group', "/Account/ShareRecord", 'post' );
   my $user = $object->user;
   my @admin_groups = $user->find_administratable_groups;
