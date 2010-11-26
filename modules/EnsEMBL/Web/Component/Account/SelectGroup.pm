@@ -29,19 +29,22 @@ sub content {
   my @admin_groups = $user->find_administratable_groups;
 
   my $count = scalar(@admin_groups);
+
   if ($count > 1) {
     my @ids;
+
     foreach my $group (@admin_groups) {
       push @ids, {'value'=>$group->id, 'name'=>$group->name};
     }
-    $form->add_element('type'  => 'RadioGroup', 'name'  => 'webgroup_id',
-                        'label' => '', 'values' => \@ids);
-  }
-  else {
+
+    $form->add_element('type'  => 'RadioGroup', 'name'  => 'webgroup_id', 'label' => '', 'values' => \@ids);
+  } elsif ($count == 1) {
     my $group = $admin_groups[0];
-    $form->add_element('type'  => 'RadioButton', 'name'  => 'webgroup_id', 
-                      'label' => $group->name, 'value' => $group->id, 'checked' => 'checked');
+    $form->add_element('type'  => 'RadioButton', 'name'  => 'webgroup_id', 'label' => $group->name, 'value' => $group->id, 'checked' => 'checked');
+  } else {
+    return '<p>No groups found</p>';
   }
+
   $form->add_element('type'  => 'Hidden', 'name'  => 'id', 'value' => $object->param('id'));
   $form->add_element('type'  => 'Hidden', 'name'  => 'type', 'value' => $object->param('type'));
   $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Share', 'class' => 'modal_link');
