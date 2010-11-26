@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::Transcript::Goimage;
 use strict;
 
 use EnsEMBL::Web::Tools::OntologyVisualisation;
+use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -76,16 +77,18 @@ sub content {
   # First process GO terms
   my $html;
   my $go_hash      = $object->get_go_list;
-  my $go_slim_hash = $object->get_go_list('goslim_goa');
+  #my $go_slim_hash = $object->get_go_list('goslim_goa');
+  my @goslim_subset = ("goslim_goa");
   if (%$go_hash) {
     $html .= sprintf(
-      '<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq. The Maped Terms are highlighted in <span style="color:%s" >%s</span><br/>',
+      '<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq. The Mapped Terms are highlighted in <span style="color:%s" >%s</span><br/>',
       $ontovis->node_fill_colour, $node_fill_text
     );
     
-    if (%$go_slim_hash) {
+    #if (%$go_slim_hash) {
+    if (@goslim_subset){
       $html .= sprintf(
-        'Terms from the GOSlim and GOA subset of GO, closest to the matched terms have been highlighted in <span style="color:%s" >%s</span> The nodes are clickable links to GO',
+        'Terms from the GOSlim GOA subset of GO, have been highlighted in <span style="color:%s" >%s</span> The nodes are clickable links to GO',
         $ontovis->highlighted_fill_colour, $goslim_goa_fill_text
       )
     }
@@ -94,7 +97,8 @@ sub content {
   }
   
   $ontovis->normal_term_accessions(keys %$go_hash);
-  $ontovis->highlighted_term_accessions(keys %$go_slim_hash);
+  #$ontovis->highlighted_term_accessions(keys %$go_slim_hash);
+  $ontovis->highlighted_subsets(@goslim_subset);
   
   $html .= $ontovis->render;  
   

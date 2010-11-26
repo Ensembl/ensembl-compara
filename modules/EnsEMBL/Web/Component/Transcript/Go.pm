@@ -43,9 +43,8 @@ sub content {
     { key => 'description',     title => 'GO Term',           width => '30%', align => 'left'   },
     { key => 'evidence',        title => 'Evidence',          width => '3%',  align => 'center' },
     { key => 'desc',            title => 'Annotation Source', width => '24%', align => 'centre' },
-    { key => 'goslim_goa_acc',  title => 'Closest GOSlim and GOA Accessions', width => '5%', align => 'centre' },
-    { key => 'goslim_goa_title',title => 'Closest GOSlim and GOA Terms', width => '30%', align => 'centre' },
-    { key => 'distance',title => 'Distance', width => '3%', align => 'centre' }    
+    { key => 'goslim_goa_acc',  title => 'GOSlim GOA Accessions', width => '5%', align => 'centre' },
+    { key => 'goslim_goa_title',title => 'GOSlim GOA Terms', width => '30%', align => 'centre' }
   ];
   
   
@@ -58,21 +57,25 @@ sub content {
       #add closest goslim_goa
       my $go_database=$self->hub->get_databases('go')->{'go'};    
       foreach (keys %$go_hash){
+        # my $query = qq(        
+          # SELECT t.accession, t.name,c.distance
+          # FROM closure c join term t on c.parent_term_id= t.term_id
+          # where child_term_id = (SELECT term_id FROM term where accession='$_')
+          # and parent_term_id in (SELECT term_id FROM term t where subsets like '%goslim_goa%')
+          # order by distance         
+        # );
         my $query = qq(        
-          SELECT t.accession, t.name,c.distance
+          SELECT t.accession, t.name
           FROM closure c join term t on c.parent_term_id= t.term_id
           where child_term_id = (SELECT term_id FROM term where accession='$_')
           and parent_term_id in (SELECT term_id FROM term t where subsets like '%goslim_goa%')
-          order by distance         
         );
         my $result = $go_database->dbc->db_handle->selectall_arrayref($query);
-        my $distance = undef;
-        for (my $i=0; (($i< scalar(@$result)) && (@{@$result[$i]}[2] <= $distance ))|| not defined $distance; $i++){
+        for (my $i=0; ($i< scalar(@$result)) ; $i++){
           my $accession=@{@$result[$i]}[0];
           my $name=@{@$result[$i]}[1];
-          $distance=@{@$result[$i]}[2];
           $go_hash->{$_}[3]->{$accession}->{'name'} = $name;
-          $go_hash->{$_}[3]->{$accession}->{'distance'} = $distance;
+          # $go_hash->{$_}[3]->{$accession}->{'distance'} = $distance;
         }
       }
       
@@ -127,9 +130,9 @@ sub process_data {
 
     my $goslim_goa_acc='';
     my $goslim_goa_desc='';
-    my $distance;
+    # my $distance;
     foreach (keys %$goslim_goa_hash){
-      $distance = $goslim_goa_hash->{$_}->{'distance'};   
+      # $distance = $goslim_goa_hash->{$_}->{'distance'};   
       $goslim_goa_acc.=$hub->get_ExtURL_link($_, 'GOSLIM_GOA', $_)."<br/>";
       $goslim_goa_desc.=$hub->get_ExtURL_link($goslim_goa_hash->{$_}->{'name'}, 'GOSLIM_GOA', $_)."<br/>";
     }
@@ -139,7 +142,7 @@ sub process_data {
     $row->{'desc'}        = $info_text_html;
     $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
     $row->{'goslim_goa_title'} = $goslim_goa_desc;
-    $row->{'distance'} = $distance;    
+    # $row->{'distance'} = $distance;    
     
     
     $table->add_row($row);
