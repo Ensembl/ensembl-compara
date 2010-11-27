@@ -764,7 +764,7 @@ sub build_GeneTreeSystem
   my $threshold_on_dS_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Threshold_on_dS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS'
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS',
       -parameters      => '{species_sets=>' . ($dnds_params{'species_sets'} || '[]') . '}',
   );
   $analysisDBA->store($threshold_on_dS_analysis);
@@ -854,7 +854,7 @@ sub build_GeneTreeSystem
   my $create_Hdups_qc_jobs_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateHDupsQCJobs',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory'
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
       -parameters      => "{ 'input_id' => { 'type' => '#short_type#', 'mlss' => '#_range_start#' }, 'fan_branch_code' => 2 }",
   );
   $analysisDBA->store($create_Hdups_qc_jobs_analysis);
