@@ -60,6 +60,7 @@ sub fetch_input {
   $self->{'species_sets_aref'} = undef;
   $self->throw("No input_id") unless defined($self->input_id);
 
+  $self->get_params($self->parameters);
   $self->get_params($self->input_id);
   return 1;
 }

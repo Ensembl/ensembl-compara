@@ -47,8 +47,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::HclusterPrepare;
 
 use strict;
-use Switch;
-use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
@@ -57,89 +55,38 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
-    return 0;
-}
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'species_set'} = undef;
-  $self->throw("No input_id") unless defined($self->input_id);
+    my $gdb_id = $self->param('gdb_id') or die "'gdb_id' is an obligatory parameter";
 
-  $self->{gdba} = $self->compara_dba->get_GenomeDBAdaptor;
+    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id) or die "no genome_db for id='$gdb_id'";
+    $self->param('gdb', $gdb);
 
-  $self->get_params($self->parameters);
-
-  my $input_gdb_id = $self->input_id;
-  my $gdb = $self->{gdba}->fetch_by_dbID($input_gdb_id);
-  $self->throw("no genome_db for $input_gdb_id") unless(defined($gdb));
-  $self->{gdb} = $gdb;
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return if ($param_string eq "1");
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
-  }
-
-  if (defined $params->{'species_set'}) {
-    $self->{'species_set'} = $params->{'species_set'};
-  }
-  if (defined $params->{'cluster_dir'}) {
-    $self->{'cluster_dir'} = $params->{'cluster_dir'};
-  }
-  if (defined $params->{'outgroups'}) {
-    foreach my $outgroup (@{$params->{'outgroups'}}) {
-      $self->{outgroups}{$outgroup} = 1;
+    my $gdb_in_outgroups = 0;
+    foreach my $og_id (@{ $self->param('outgroups') || [] }) {
+        if($og_id == $gdb_id) {
+            $gdb_in_outgroups = 1;
+        }
     }
-  }
-
-  print("parameters...\n");
-  printf("  cluster_dir    : %d\n", $self->{'cluster_dir'});
-  printf("  species_set  : (%s)\n", join(',', @{$self->{'species_set'}}));
-  printf("  outgroups    : (%s)\n", join(',', keys %{$self->{'outgroups'}}));
-
-  return;
+    $self->param('gdb_in_outgroups', $gdb_in_outgroups);
 }
 
-sub run
-{
-  my $self = shift;
 
-  $self->analyze_table();
-  $self->fetch_categories();
-  $self->fetch_distances();
-  return 1;
+sub run {
+    my $self = shift;
+
+    $self->analyze_table();
+    $self->fetch_categories();
+    $self->fetch_distances();
 }
+
 
 sub write_output {
-  my $self = shift;
+    my $self = shift;
 
-#   $self->store_clusters;
-#   $self->dataflow_clusters;
-
-#   # modify input_job so that it now contains the clusterset_id
-#   my $outputHash = {};
-#   $outputHash = eval($self->input_id) if(defined($self->input_id) && $self->input_id =~ /^\s*\{.*\}\s*$/);
-#   $outputHash->{'clusterset_id'} = $self->{'clusterset_id'};
-#   my $output_id = $self->encode_hash($outputHash);
-#   $self->input_job->input_id($output_id);
-
-  return 1;
+    return 1;
 }
 
 ##########################################
@@ -154,7 +101,7 @@ sub analyze_table {
 
   my $starttime = time();
 
-  my $gdb = $self->{gdb};
+  my $gdb = $self->param('gdb');
   my $gdb_id = $gdb->dbID;
   my $species_name = lc($gdb->name);
   $species_name =~ s/\ /\_/g;
@@ -178,9 +125,7 @@ sub analyze_table {
 sub fetch_distances {
   my $self = shift;
 
-  return unless($self->{'gdb'});
-  my $gdb = $self->{'gdb'};
-  return unless $gdb;
+  my $gdb = $self->param('gdb') or die "No genome_db object";
 
   my $starttime = time();
 
@@ -188,7 +133,7 @@ sub fetch_distances {
   my $species_name = lc($gdb->name);
   $species_name =~ s/\ /\_/g;
   my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-  my $species_set_string = join (",",@{$self->{species_set}});
+  my $species_set_string = join (",",@{$self->param('species_set')});
   my $sql = "SELECT ".
             "concat(qmember_id,'_',qgenome_db_id), ".
             "concat(hmember_id,'_',hgenome_db_id), ".
@@ -199,7 +144,7 @@ sub fetch_distances {
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
-  my $filename = $self->{cluster_dir} . "/" . "$tbl_name.hcluster.txt";
+  my $filename = $self->param('cluster_dir') . "/" . "$tbl_name.hcluster.txt";
   open FILE, ">$filename" or die "Cannot open $filename: $!";
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($query_id, $hit_id, $score) = @$ref;
@@ -213,12 +158,9 @@ sub fetch_distances {
 sub fetch_categories {
   my $self = shift;
 
-  return unless($self->{'gdb'});
-  my $gdb = $self->{'gdb'};
-  return unless $gdb;
+  my $gdb = $self->param('gdb') or die "No genome_db object";
 
   my $starttime = time();
-
 
   my $gdb_id = $gdb->dbID;
   my $species_name = lc($gdb->name);
@@ -233,10 +175,9 @@ sub fetch_categories {
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
 
-  my $filename = $self->{cluster_dir} . "/" . "$tbl_name.hcluster.cat";
+  my $filename = $self->param('cluster_dir') . "/" . "$tbl_name.hcluster.cat";
 
-  my $outgroup = 1;
-  $outgroup = 2 if (defined($self->{outgroups}{$gdb_id}));
+  my $outgroup = $self->param('gdb_in_outgroups') ? 2 : 1;
 
   my $member_id_hash;
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
