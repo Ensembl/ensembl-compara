@@ -51,7 +51,7 @@ sub param_defaults {
 
 
 sub fetch_input {
-    my $self = @_;
+    my $self = shift @_;
 
     my $species_set = $self->param('species_set');
 
