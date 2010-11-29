@@ -120,7 +120,7 @@ dd { margin-bottom: 1em; }
 .warning              { border-color: #ffb90f;          }
 .info, .hint          { border-color: #90ee90;          }
 
-.error h3, .error h4, .warning h3, .info h3, .hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: top left; background-repeat: no-repeat; }
+.error h3, .error h4, .warning h3, .info h3, .hint h3 { padding: 2px 0.5em 2px 20px; margin: 0; background-position: 2px 2px; background-repeat: no-repeat; }
 .error h3, .error h4 { background-image: url(/i/warning.gif); background-color: [[ALERT_BORDER]]; color: [[ALERT_BG]]; }
 .warning h3          { background-image: url(/i/warning.gif); background-color: #ffb90f; }
 .info h3, .hint h3   { background-image: url(/i/info.gif); background-color: #90ee90;    }
