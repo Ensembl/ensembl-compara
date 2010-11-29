@@ -87,7 +87,8 @@ sub counts {
     $counts = {
       transcripts        => scalar @{$obj->get_all_Transcripts},
       exons              => scalar @{$obj->get_all_Exons},
-      similarity_matches => $self->count_xrefs
+#      similarity_matches => $self->count_xrefs
+      similarity_matches => $self->get_xref_available
     };
     
     my $compara_db = $self->database('compara');
@@ -139,6 +140,24 @@ sub counts {
   }
   
   return $counts;
+}
+
+sub get_xref_available{
+  my $self=shift;
+  my $available = ($self->count_xrefs > 0);
+  if(!$available){
+    my @my_transcripts= @{$self->Obj->get_all_Transcripts};
+    my @db_links;
+    for (my $i=0; !$available && ($i< scalar @my_transcripts); $i++) {
+      eval { 
+        @db_links = @{$my_transcripts[$i]->get_all_DBLinks};
+      };
+      for (my $j=0;  !$available && ($i< scalar @db_links); $j++) {
+        $available = $available || ($db_links[$j]->type eq 'MISC') || ($db_links[$j]->type eq 'LIT');
+      }      
+    }
+  }
+  return $available;
 }
 
 sub count_homologues {

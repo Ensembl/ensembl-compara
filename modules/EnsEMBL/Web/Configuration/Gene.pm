@@ -39,7 +39,7 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
   );
 
-  $self->create_node('Matches', 'External references ([[counts::similarity_matches]])',
+  $self->create_node('Matches', 'External references',
     [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],
     { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
   );

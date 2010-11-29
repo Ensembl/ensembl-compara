@@ -14,7 +14,7 @@ sub _init {
 sub content {
   my $self       = shift;
   my $matches    = $self->_matches('similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC', 'LIT','RenderAsTables');
-  my $no_matches = qq(No external references assigned to this gene. Please see the transcript pages for references attached to this gene's transcript(s) and protein(s));  
+  my $no_matches = qq(No external references assigned to this gene.);  
   my $html       = $matches ? $matches : $no_matches;   
   $html         .= $self->matches_to_html('MISC', 'LIT');
   return $html;
