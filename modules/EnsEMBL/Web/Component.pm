@@ -340,6 +340,14 @@ sub new_table {
   return $table;
 }
 
+sub new_form {
+  ## Creates and returns a new Form object.
+  ## Params   HashRef as accepted by Form->new
+  ## Return   EnsEMBL::Web::Form object
+  shift;
+  return new EnsEMBL::Web::Form(@_);
+}
+
 sub _export_image {
   my ($self, $image, $flag) = @_;
   my $hub = $self->hub;
