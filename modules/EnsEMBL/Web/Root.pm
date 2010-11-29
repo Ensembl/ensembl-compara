@@ -212,7 +212,7 @@ sub get_module_names {
   foreach my $module_root (@packages) {
     my $module_name = [ map { $self->dynamic_use("$module_root$_") ? "$module_root$_" : () } @modules ]->[-1];
     
-    if ($module_name) {      
+    if ($module_name && $module_name->can('new')) {      
       push @return, $module_name;
       last unless wantarray;
     } else {
