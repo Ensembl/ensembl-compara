@@ -1,4 +1,4 @@
-.navbar     { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin-top: 3px; margin-bottom: 1em; padding: 5px 0 8px; font-weight: bold; border: 1px solid #67718D; position: relative; }
+.navbar     { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; text-align: right; margin-top: 3px; margin-bottom: 1em; padding: 5px 0 8px; font-weight: bold; border: 1px solid [[TINT_BORDER_DARK]]; position: relative; }
 .navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
 .navbar div { margin: 0 5px; }
 
