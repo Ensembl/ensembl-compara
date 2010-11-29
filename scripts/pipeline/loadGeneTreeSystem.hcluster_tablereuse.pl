@@ -418,7 +418,6 @@ sub build_GeneTreeSystem
   $stats = $hcluster_prepare_analysis->stats;
   $stats->batch_size(1);
   $stats->hive_capacity(4);
-  $stats->status('BLOCKED');
   $stats->update();
 
   #
@@ -754,7 +753,6 @@ sub build_GeneTreeSystem
   $homology_dnds_hive_capacity = 200 unless defined $homology_dnds_hive_capacity;
   $stats->hive_capacity($homology_dnds_hive_capacity);
   $stats->failed_job_tolerance(2);
-  $stats->status('BLOCKED');
   $stats->update();
 
   #
