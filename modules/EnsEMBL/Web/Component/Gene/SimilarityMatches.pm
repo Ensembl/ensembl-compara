@@ -1,5 +1,4 @@
 # $Id$
-
 package EnsEMBL::Web::Component::Gene::SimilarityMatches;
 
 use strict;
@@ -56,7 +55,7 @@ sub matches_to_html {
       if (!defined $existing_display_names{$_->db_display_name}) {
         push @columns, {
           key        => $_->db_display_name, 
-          title      => $self->format_column_header($_->db_display_name, $similarity_links{'link_text'}), 
+          title      => $self->format_column_header($_->db_display_name), 
           align      => 'left', 
           sort       => 'string', 
           priority   => $_->priority, 
@@ -70,8 +69,8 @@ sub matches_to_html {
     push @rows, $row;
   }
   
-  #@columns = sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'title'} cmp $b->{'title'} || $a->{'link_text'} cmp $b->{'link_text'} } @columns;
-  @columns = sort { default_on($a) <=> default_on($b) || $a->{'title'} cmp $b->{'title'}} @columns;
+  @columns = sort { $b->{'priority'} <=> $a->{'priority'} || $a->{'title'} cmp $b->{'title'} || $a->{'link_text'} cmp $b->{'link_text'} } @columns;
+  #@columns = sort { default_on($a) <=> default_on($b) || $a->{'title'} cmp $b->{'title'}} @columns;
   @rows    = sort { keys %{$b} <=> keys %{$a} } @rows; # show rows with the most information first
   
   $table->add_columns(@columns);   
@@ -90,19 +89,7 @@ sub matches_to_html {
 sub format_column_header {
   my $self            = shift;
   my $column_header   = shift;
-  my $value           = shift;
   $column_header      =~ s/\//\/ /; # add a space after a /, which enables the table haeader to split the name into multiple lines if needed.
-  # my @header_segments = split / /, $column_header;
-  
-  # foreach (@header_segments) {
-    # if (length $value < length $_) {
-      # $_= substr($_, 0, length($value) - 1) . '- <br/>' . $self->format_column_header(substr($_, length($value) - 1, length $_), $value);
-    # }
-  # }
-  
-  # $column_header  = '';
-  # $column_header .= "$_ " for @header_segments;
-  
   return $column_header;
 }
 
@@ -200,38 +187,4 @@ sub get_similarity_links_hash {
     return %similarity_links;
 }
 
-sub default_on {
-  my $value = shift;
-  
-  my %default_on = (
-    'Transcript ID' => 0,   
-    'Ensembl Human Transcript' => 1, 
-    'HGNC (curated)'           => 2, 
-    'HGNC (automatic)'         => 3, 
-    'EntrezGene'               => 4, 
-    'CCDS'                     => 5, 
-    'RefSeq RNA'               => 6, 
-    'UniProtKB/ Swiss-Prot'    => 7, 
-    'RefSeq peptide'           => 8, 
-    'RefSeq DNA'               => 9, 
-    'RFAM'                     => 10, 
-    'miRBase'                  => 11, 
-    'Vega transcript'          => 12, 
-    'MIM disease'              => 13, 
-    'MGI'                      => 14, 
-    'MGI_curated_gene'         => 15, 
-    'MGI_automatic_gene'       => 16, 
-    'MGI_curated_transcript'   => 17, 
-    'MGI_automatic_transcript' => 18, 
-    'ZFIN_ID'                  => 19,
-    'Projected HGNC'           => 20
-  );
-  my $title=$value->{'title'};
-
-  if (defined($default_on{$title})){
-    return $default_on{$title};
-  }else{
-    return 100;
-  }
-}
 1;
