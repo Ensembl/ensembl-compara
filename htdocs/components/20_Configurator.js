@@ -5,7 +5,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.base(id, params);
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
-    Ensembl.EventManager.register('showConfiguration', this, this.show);
+    Ensembl.EventManager.register('showConfiguration',   this, this.show);
+    Ensembl.EventManager.register('changeConfiguration', this, this.externalChange);
   },
   
   init: function () {
@@ -343,5 +344,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       dd   = null;
       span = null;
     }
+  },
+  
+  // Called when track configuration is changed on the image, rather that in the configuration panel
+  externalChange: function (trackName, renderer) {
+    $('input[name=' + trackName + ']', this.elLk.form).siblings('.popup_menu').children('.' + renderer).trigger('click');
+    this.initialConfig[trackName] = renderer;
   }
 });
