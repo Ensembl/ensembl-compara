@@ -157,7 +157,9 @@ sub render {
     } else {
       $link = encode_entities($entry->{'label'}) . $entry->{'label_html'};
     }
-    
+
+    #quick bug fix:
+    $link =~ s/&amp;amp;/&amp;/g if ($link =~ /&amp;amp;/);
     push @entries, { link => $link, type => $type };
   }
   
