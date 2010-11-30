@@ -1448,7 +1448,7 @@ sub add_alignments {
       $alignments->{$menu_key}{$row->{'id'}} = {
         db                         => $key,
         glyphset                   => '_alignment_pairwise',
-        name                       => $other_label,
+        name                       => $row->{'name'},
         caption                    => $row->{'name'},
         type                       => $row->{'type'},
         species                    => $other_species,
@@ -1515,7 +1515,7 @@ sub add_alignments {
         species_set_id             => $row->{'species_set_id'},
         method_link_species_set_id => $row->{'id'},
         class                      => $row->{'class'},
-        description                => qq{<a href="/info/docs/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>. } . 
+        description                => qq{<a href="/info/docs/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
                                       join('; ', sort map { $self->species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
         colourset                  => 'multiple',
         order                      => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
