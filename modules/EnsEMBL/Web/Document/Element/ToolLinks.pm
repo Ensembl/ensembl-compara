@@ -12,6 +12,15 @@ sub logins  :lvalue { $_[0]{'logins'};  }
 sub blast   :lvalue { $_[0]{'blast'};   }
 sub biomart :lvalue { $_[0]{'biomart'}; }
 
+sub init {
+  my $self         = shift;
+  my $species_defs = $self->species_defs;
+  
+  $self->logins  = $species_defs->ENSEMBL_LOGINS;
+  $self->blast   = $species_defs->ENSEMBL_BLAST_ENABLED;
+  $self->biomart = $species_defs->ENSEMBL_MART_ENABLED;
+}
+
 sub content {
   my $self    = shift;
   my $hub     = $self->hub;
@@ -21,11 +30,11 @@ sub content {
   
   if ($self->logins) {
     if ($hub->user) {
-      push @links, sprintf '<a class="constant modal_link" style="display:none" href="%s">Account</a>',  $hub->url({ __clear => 1, species => $species, type => 'Account', action => 'Links'  });
-      push @links, sprintf '<a class="constant" href="%s">Logout</a>',                                   $hub->url({ __clear => 1, species => $species, type => 'Account', action => 'Logout' });
+      push @links, '<a class="constant modal_link" style="display:none" href="/Account/Links">Account</a>';
+      push @links, '<a class="constant" href="/Account/Logout">Logout</a>';
     } else {
-      push @links, sprintf '<a class="constant modal_link" style="display:none" href="%s">Login</a>',    $hub->url({ __clear => 1, species => $species, type => 'Account', action => 'Login' });
-      push @links, sprintf '<a class="constant modal_link" style="display:none" href="%s">Register</a>', $hub->url({ __clear => 1, species => $species, type => 'Account', action => 'User', function => 'Add' });
+      push @links, '<a class="constant modal_link" style="display:none" href="/Account/Login">Login</a>';
+      push @links, '<a class="constant modal_link" style="display:none" href="/Account/User/Add">Register</a>';
     }
   }
   
@@ -35,25 +44,17 @@ sub content {
   push @links,   '<a class="constant" href="/downloads.html">Downloads</a>';
   push @links,   '<a class="constant" href="/help.html">Help</a>';
   push @links,   '<a class="constant" href="/info/docs/">Documentation</a>';
-  push @links,   '<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>' if keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}};
-
+  push @links,   '<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>' if keys %{$self->species_defs->ENSEMBL_MIRRORS || {}};
+  
   my $last  = pop @links;
   my $tools = join '', map "<li>$_</li>", @links;
   
   return qq{
     <ul class="tools">$tools<li class="last">$last</li></ul>
     <div class="more">
-      <a href="#">More...</a>
+      <a href="#">More <span class="arrow">&#9660;</span></a>
     </div>
   };
-}
-
-sub init {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  $self->logins    = $species_defs->ENSEMBL_LOGINS;
-  $self->blast     = $species_defs->ENSEMBL_BLAST_ENABLED;
-  $self->biomart   = $species_defs->ENSEMBL_MART_ENABLED;
 }
 
 1;
