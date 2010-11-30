@@ -139,7 +139,7 @@ sub get_attributes {
     }
   }
   
-  return unless $actions{'title'} || $actions{'href'};
+  return unless $actions{'title'} || $actions{'href'} || $actions{'class'} =~ /label /;
   
   $actions{'alt'} ||= '';
   
