@@ -80,6 +80,10 @@ sub table_data {
     my $source       = $self->source_link($va, $code);
     my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
     
+    if ($source =~ /<a href="">(.*)<\/a>/) {
+      $source = $1; 
+    }
+
     if ($is_somatic) { 
       my @tumour_info      = split /\:/, $disorder;
       my $tissue           = $tumour_info[1];
