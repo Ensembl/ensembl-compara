@@ -125,27 +125,31 @@ sub multi {
   # Double up for non primary species in the middle of the image
   $alignments{2} = $alignments{1} if $pos != 1 && scalar @strands == 2 && scalar keys %alignments == 1;
   
+  my %renderers = (
+    BLASTZ_NET          => $self->get_node('opt_pairwise_blastz')->get('renderers'),
+    TRANSLATED_BLAT_NET => $self->get_node('opt_pairwise_tblat')->get('renderers')
+  );
+  
   foreach (sort keys %alignments) {
     my $strand = shift @strands;
 
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
       
-      my $other_label = $self->species_defs->species_label($other_species, 'no_formatting');
-      
       $self->get_node('decorations')->add_before(
         $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
-          glyphset   => '_alignment_pairwise',
-          colourset  => 'pairwise',
-          name       => $other_label,
-          species    => $other_species,
-          strand     => $strand,
-          display    => $methods->{$align->{'type'}},
-          db         => $align->{'db'},
-          type       => $align->{'type'},
-          ori        => $align->{'other_ori'},
+          glyphset                   => '_alignment_pairwise',
+          colourset                  => 'pairwise',
+          name                       => $align->{'name'},
+          species                    => $other_species,
+          strand                     => $strand,
+          display                    => $methods->{$align->{'type'}},
+          db                         => $align->{'db'},
+          type                       => $align->{'type'},
+          ori                        => $align->{'other_ori'},
           method_link_species_set_id => $align->{'id'},
-          join       => 1
+          join                       => 1,
+          renderers                  => $renderers{$align->{'type'}}
         })
       );
     }
