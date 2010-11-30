@@ -134,20 +134,7 @@ sub init {
        __clear => 1
      })
   });
-  
-  if ($hub->species_defs->ENSEMBL_LOGINS) {
-    $self->add_entry({
-      type    => 'Account',
-      id      => 'account',
-      caption => 'Your account',
-      url     => $hub->url({
-        type     => 'Account',
-        action   => $hub->user ? 'Links' : 'Login',
-         time    => time,
-         __clear => 1
-      })
-    });
-  }
+ 
 }
 
 1;
