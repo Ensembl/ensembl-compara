@@ -37,7 +37,7 @@ sub process {
 
   if ($hub->param($method)) {
     $param = upload($method, $hub);
-    if ($param->{'format'} eq 'none') {
+    if (!$param->{'format'}) {
       $url .= '/UserData/MoreInput';
     }
     else {
@@ -71,22 +71,26 @@ sub upload {
   my $param = {};
   my ($error, $format, $filename, $full_ext, %args);
 
-  ## Try to guess the format from the extension
-  unless ($method eq 'text') {
-    my @orig_path = split('/', $hub->param($method));
-    $filename = $orig_path[-1];
-    my @parts = split('\.', $filename);
-    my $ext = $parts[-1];
-    #$full_ext = $ext;
-    if ($ext =~ /gz/i) {
-      $ext = $parts[-2];
-      #$full_ext = $ext.'.'.$full_ext;
-    }
-    
-    $format = uc $ext if $ext =~ /(bed|psl|gff|gtf|wig)/i;
+  ## Has the user specified a format?
+  my $f_param = $hub->param('format');
+  if ($f_param) {
+    $format = $f_param;
   }
-  
-  $format = uc $hub->param('upload_format') if $hub->param('upload_format');
+  else {
+
+    ## Try to guess the format from the extension
+    unless ($method eq 'text') {
+      my @orig_path = split('/', $hub->param($method));
+      $filename = $orig_path[-1];
+      my @parts = split('\.', $filename);
+      my $ext = $parts[-1];
+      if ($ext =~ /gz/i) {
+        $ext = $parts[-2];
+      }
+    
+      $format = uc $ext if $ext =~ /(bed|psl|gff|gtf|wig)/i;
+    }
+  }
 
   ## Get original path, so can save file name as default name for upload
   my $name = $hub->param('name');
