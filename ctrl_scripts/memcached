@@ -1,22 +1,28 @@
 #!/usr/local/bin/perl
 
 use strict;
+use File::Basename qw(dirname);
 use FindBin qw($Bin);
 use Pod::Usage;
 use Data::Dumper;
 
-BEGIN{
-  unshift @INC, "$Bin/../conf";
-  unshift @INC, "$Bin/../modules";
+my $serverroot;
 
-  eval{ require SiteDefs };
-  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+BEGIN {
+  $serverroot = dirname($Bin);
+  
+  unshift @INC, "$serverroot/conf";
+  unshift @INC, "$serverroot/modules";
 
-  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
-
-  unshift @INC, "$Bin/../public-plugins/memcached/modules";
-
-  eval { require EnsEMBL::Web::Cache };
+  eval { require SiteDefs; };
+  
+  die "Can't use SiteDefs.pm - $@\n" if $@;
+  
+  require LoadPlugins;
+  LoadPlugins::plugin(sub { /^Cache\.pm$/; });
+  
+  eval { require EnsEMBL::Web::Cache; };
+  
   if ($@) {
     if ($@ =~ /Base class package "Cache::Memcached" is empty/) {
       $@ = undef;

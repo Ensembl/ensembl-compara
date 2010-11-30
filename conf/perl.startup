@@ -18,7 +18,6 @@ $Apache2::SizeLimit::MAX_PROCESS_SIZE = 800000; # Kill httpd over 800Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
 use DBI;
-use File::Find;
 use GD; # for making gifs
 use Storable qw(nfreeze freeze thaw);
 
@@ -34,52 +33,11 @@ use EnsEMBL::Web::Registry;
 
 my $conf = new EnsEMBL::Web::SpeciesDefs;
 
-my ($i, @plugins, @plugin_dirs);
-my @lib_dirs = @{$conf->ENSEMBL_LIB_DIRS};
-
-for (reverse @{$conf->ENSEMBL_PLUGINS||[]}) {
-  if (++$i % 2) {
-    push @plugin_dirs, "$_/modules" if -e "$_/modules";
-  } else {
-    unshift @plugins, $_;
-  }
-}
-
-unshift @INC, reverse @plugin_dirs; # Add plugin directories to INC so that EnsEMBL::PLUGIN modules can be used
-
-find(\&load_plugins, @plugin_dirs);
-
-# Loop through the plugin directories, requiring .pm files
+# Plugin in .pm files
 # The effect of this is that any plugin with an EnsEMBL::Web:: namespace is used to extend that module in the core directory
 # Functions that exist in both the core and the plugin will be overwritten, functions that exist only in the plugin will be added
-sub load_plugins {
-  if (/\.pm$/ && !/(SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/) {
-    my $dir  = $File::Find::topdir;
-    my $file = $File::Find::name;
-    
-    (my $relative_file = $file) =~ s/^$dir\///;    
-    (my $package = $relative_file) =~ s/\//::/g;
-    $package =~ s/\.pm$//g;
-    
-    # Regex matches all namespaces which are EnsEMBL:: but not EnsEMBL::Web
-    # Therefore the if statement is true for EnsEMBL::Web:: and Bio:: packages, which are the ones we need to overload
-    if ($package !~ /^EnsEMBL::(?!Web)/) {      
-      no strict 'refs';
-      
-      # Require the base module first, unless it already exists
-      if (!exists ${"$package\::"}{'ISA'}) {
-        foreach (@lib_dirs) {
-          eval "require '$_/$relative_file'";
-          warn $@ if $@ && $@ !~ /^Can't locate/;
-          last if exists ${"$package\::"}{'ISA'};
-        }
-      }
-      
-      eval "require '$file'"; # Require the plugin module
-      warn $@ if $@;
-    }
-  }
-}
+require LoadPlugins;
+LoadPlugins::plugin(sub { /\.pm$/ && !/(SpeciesDefs|ConfigPacker|DHTMLmerge|Cache)\.pm/; });
 
 if ($conf->ENSEMBL_MART_ENABLED > 0) {
   require 'BioMart/Initializer.pm';
@@ -191,15 +149,17 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   my $extra = '';
   
-  if ($conf->ENSEMBL_MEMCACHED && $conf->ENSEMBL_MEMCACHED->{'servers'} && @{$conf->ENSEMBL_MEMCACHED->{'servers'}||[]}) {
-    $extra .= '
- Memcached enabled:  ' .
-    join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'servers'}||[]};
+  if ($conf->ENSEMBL_MEMCACHED && $conf->ENSEMBL_MEMCACHED->{'servers'} && @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []}) {
+    eval { require EnsEMBL::Web::Cache; };
     
-    $extra .= '
+    if (!$@ && new EnsEMBL::Web::Cache) {
+      $extra .= '
+ Memcached enabled:  ' . join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'servers'} || []};
+    
+      $extra .= '
 
- Memcached flags:    '.
-    join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'flags'}||[]};
+ Memcached flags:    '. join "\n                     ", sort @{$conf->ENSEMBL_MEMCACHED->{'flags'} || []};
+    }
   }
 
   if ($conf->ENSEMBL_DEBUG_FLAGS & $conf->ENSEMBL_DEBUG_VERBOSE_STARTUP) {
@@ -207,8 +167,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     my $T = $conf->ENSEMBL_DEBUG_FLAGS;
     $extra .= '
 
- Debug flags:        ' .
-    join "\n                     ", grep { $T & (($i <<= 1) >> 1) } @{$conf->ENSEMBL_FLAG_NAMES_HR};
+ Debug flags:        ' . join "\n                     ", grep { $T & (($i <<= 1) >> 1) } @{$conf->ENSEMBL_FLAG_NAMES_HR};
 
     $i = 0;
     $extra .= '
@@ -262,7 +221,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_CSS_NAME,
   $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_JS_NAME,
-  join("\n                     ", @plugins, $extra);
+  join("\n                     ", grep(/::/, @{$conf->ENSEMBL_PLUGINS || []}), $extra);
   
   require EnsEMBL::Web::BlastView::MetaDataBlast;
 }
