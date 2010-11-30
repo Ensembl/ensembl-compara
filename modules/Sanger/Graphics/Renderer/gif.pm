@@ -261,8 +261,8 @@ sub render_Line {
   my $x2     = $x1 + $self->{sf} * $glyph->{'pixelwidth'};
   my $y2     = $y1 + $self->{sf} * $glyph->{'pixelheight'};
 
-  if(defined $glyph->dotted() && $glyph->dotted ) {
-    $self->{'canvas'}->setStyle(gdTransparent,gdTransparent,gdTransparent,$colour,$colour,$colour);
+  if (defined $glyph->dotted && $glyph->dotted) {
+    $self->{'canvas'}->setStyle($glyph->dotted eq 'small' ? (gdTransparent, $colour, $colour) : (gdTransparent, gdTransparent, gdTransparent, $colour, $colour, $colour));
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
   } else {
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
