@@ -141,7 +141,7 @@ sub init_imageconfig {
   my $search_panel = $self->new_panel('Configurator', $controller, code => 'configurator_search');
   my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
   
-  $search_panel->set_content('<div class="configuration_search">Search display: <input class="configuration_search_text" /></div>');
+  $search_panel->set_content('<div class="configuration_search">Find a track: <input class="configuration_search_text" /></div>');
   
   $panel->set_content(sprintf(qq{
     <form class="configuration" action="$url->[0]" method="post">
