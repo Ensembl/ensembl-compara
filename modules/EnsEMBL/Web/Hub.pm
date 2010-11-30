@@ -467,7 +467,11 @@ sub get_imageconfig {
   my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species) : undef;
   
   if ($image_config) {
-    $session->apply_to_image_config($image_config, $type, $key);
+    if ($self->get_viewconfig->has_image_config($type)) {
+      $session->apply_to_image_config($image_config, $type, $key);
+    } else {
+      $image_config->storable = 0;
+    }
     
     return $image_config;
   } else {
