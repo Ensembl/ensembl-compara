@@ -646,28 +646,6 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # GeneTreesetQC
-  print STDERR "GeneTreesetQC...\n";
-  #
-  $parameters = $blast_template_analysis->parameters;
-  $parameters =~ s/\A{//;
-  $parameters =~ s/}\Z//;
-  $parameters = $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'";
-  $parameters = '{' . $parameters . ",groupset_tag=>'" . 'GeneTreesetQC' . "'}";
-  my $gene_treeset_qc_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'GeneTreesetQC',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GroupsetQC',
-      -parameters      => $parameters
-    );
-
-  $analysisDBA->store($gene_treeset_qc_analysis);
-  $stats = $gene_treeset_qc_analysis->stats;
-  $stats->batch_size(1);
-  $stats->hive_capacity(3);
-  $stats->status('BLOCKED');
-  $stats->update();
-
-  #
   # BuildHMMaa
   print STDERR "BuildHMMaa...\n";
   #
@@ -710,6 +688,28 @@ sub build_GeneTreeSystem
   $stats->batch_size($buildhmm_batch_size);
   $stats->hive_capacity($buildhmm_hive_capacity);
   $stats->status('READY');
+  $stats->update();
+
+  #
+  # GeneTreesetQC
+  print STDERR "GeneTreesetQC...\n";
+  #
+  $parameters = $blast_template_analysis->parameters;
+  $parameters =~ s/\A{//;
+  $parameters =~ s/}\Z//;
+  $parameters = $parameters . ",cluster_dir=>'" . $analysis_template{cluster_dir} . "'";
+  $parameters = '{' . $parameters . ",groupset_tag=>'" . 'GeneTreesetQC' . "'}";
+  my $gene_treeset_qc_analysis = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'GeneTreesetQC',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GroupsetQC',
+      -parameters      => $parameters
+    );
+
+  $analysisDBA->store($gene_treeset_qc_analysis);
+  $stats = $gene_treeset_qc_analysis->stats;
+  $stats->batch_size(1);
+  $stats->hive_capacity(3);
+  $stats->status('BLOCKED');
   $stats->update();
 
 
