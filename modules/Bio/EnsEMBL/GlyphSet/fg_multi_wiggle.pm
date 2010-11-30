@@ -86,13 +86,13 @@ sub draw_blocks {
   }
 
   foreach my $f_set (sort { $a cmp $b  } keys %$fs_data){ 
-    my $feature_name = $f_set;  
-    my @temp = split (/:/, $feature_name);
+    my $feature_name = $f_set; 
+    my @temp = split (/:/g, $feature_name);
     $feature_name = $temp[1];  
     my $colour   = $colours->{$feature_name};  
     my $features = $fs_data->{$f_set}; 
-    my $label = $f_set; 
-    unless ($display_label =~/MultiCell/){ $label =~s/\w*\://; } 
+    my $label  = $temp[1];
+    if  ($display_label =~/MultiCell/){ $label = $temp[0].':' .$temp[1];} 
     $self->draw_track_name($label, $colour, -108, 0, 'no_offset');
     $self->draw_block_features ($features, $colour, $f_set, 1, 1);
   }
