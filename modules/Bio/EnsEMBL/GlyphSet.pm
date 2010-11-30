@@ -163,78 +163,7 @@ sub core {
   return $self->{'config'}->core_objects->{'parameters'}{$k};
 }
 
-sub _url {
-  my $self   = shift;
-  my $params = shift || {};
-
-  Carp::croak("Not a hashref while calling _url ($params @_)") unless ref $params eq 'HASH';
-
-  my $species  = exists $params->{'species'}  ? $params->{'species'}  : $self->{'container'}{'web_species'};
-  my $type     = exists $params->{'type'}     ? $params->{'type'}     : $ENV{'ENSEMBL_TYPE'};
-  my $action   = exists $params->{'action'}   ? $params->{'action'}   : $ENV{'ENSEMBL_ACTION'};
-  my $fn       = exists $params->{'function'} ? $params->{'function'} : $ENV{'ENSEMBL_FUNCTION'};
-  $fn          = '' if $action ne $ENV{'ENSEMBL_ACTION'};
-  
-  my %pars = %{$self->{'config'}->core_objects->{'parameters'} || {}};
-
-  # Remove any unused params
-  foreach (keys %pars) {
-    delete $pars{$_} unless $pars{$_};
-  }
-
-  if ($params->{'__clear'}) {
-    %pars = ();
-    delete $params->{'__clear'};
-  }
-
-  delete $pars{'t'}  if $params->{'pt'};
-  delete $pars{'pt'} if $params->{'t'};
-  delete $pars{'t'}  if $params->{'g'} && $params->{'g'} ne $pars{'g'};
-  delete $pars{'time'};
-
-  foreach (keys %$params) {
-    next if $_ =~ /^(species|type|action|function)$/;
-
-    if (defined $params->{$_}) {
-      $pars{$_} = $params->{$_};
-    } else {
-      delete $pars{$_};
-    }
-  }
-  
-  my $url;
-
-  my $species_path = $self->{'config'}->species_defs->species_path($species);
-  if ($species_path !~ /^\//) {
-## if the species path does not start with / it means the requested species are
-## external to this site.
-
-## if the species path contains the species name we assume the external site is "powered by ensembl"
-## in this case the link should go to the gene summary
-      if ($species_path =~ /$species/) {
-          $action = 'Summary';
-      } else {
-# Otherwise just use the link
-          $url = $species_path;
-      }
-  }
-
-  $url  ||= join '/', map $_ || (), $species, 'ZMenu', $type, $action, $fn;
-  $url    .= '?' if scalar keys %pars;
-
-  # Sort the keys so that the url is the same for a given set of parameters
-  foreach my $p (sort keys %pars) {
-    next unless defined $pars{$p};
-
-    # Don't escape :
-    $url .= sprintf '%s=%s;', uri_escape($p), uri_escape($_, "^A-Za-z0-9\-_.!~*'():") for ref $pars{$p} ? @{$pars{$p}} : $pars{$p};
-  }
-
-  $url =~ s/;$//;
-
-  return "/$url";
-}
-
+sub _url { return shift->{'config'}->hub->url('ZMenu', @_); }
 
 sub get_font_details {
   my( $self, $type ) = @_;
@@ -247,31 +176,60 @@ sub get_font_details {
 
 sub init_label {
   my $self = shift;
+  
   return $self->label(undef) if defined $self->{'config'}->{'_no_label'};
   
   my $text = $self->my_config('caption');
   
   return $self->label(undef) unless $text;
   
-  my $name = $self->my_config('name');
-  my $desc = $self->my_config('description');
-  my $title = "$name; $desc" if $desc;
+  my $name   = $self->my_config('name');
+  my $desc   = $self->my_config('description');
+  my $style  = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my $font   = $style->{'GRAPHIC_FONT'};
+  my $fsze   = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
+  my @res    = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
+  my $track  = $self->_type;
+  (my $class = $self->species . "_$track") =~ s/\W/_/g;
   
-  my $ST = $self->{'config'}->species_defs->ENSEMBL_STYLE;
-  my $font = $ST->{'GRAPHIC_FONT'};
-  my $fsze = $ST->{'GRAPHIC_FONTSIZE'} * $ST->{'GRAPHIC_LABEL'};
-
-  my @res = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
-
+  if ($self->{'config'}->storable) {
+    my $config    = [split 'ImageConfig::', ref $self->{'config'}]->[-1];
+    my @renderers = @{$self->{'config'}->get_node($track)->get('renderers') || []};
+    my $url       = $self->{'config'}->hub->url('Config', { config => $config, submit => 1, __clear => 1 });
+    my @r;
+    
+    if (scalar @renderers > 4) {
+      while (my ($val, $text) = splice @renderers, 0, 2) {
+        if ($val eq $self->{'display'}) {
+          push @r, { current => $val, text => $text };
+        } else {
+          push @r, { url => "$url;$track=$val", val => $val, text => $text };
+        }
+      }
+    }
+    
+    $self->{'config'}->{'hover_labels'}->{$class} = {
+      header    => $name,
+      desc      => $desc,
+      class     => $class,
+      config    => $config,
+      renderers => \@r,
+      off       => "$url;$track=off"
+    };
+  }
+  
   $self->label($self->Text({
-    'text'      => $text,
-    'font'      => $font,
-    'ptsize'    => $fsze,
-    'title'     => $title,
-    'colour'    => $self->{'label_colour'} || 'black',
-    'absolutey' => 1,
-    'height'    => $res[3]
+    text      => $text,
+    font      => $font,
+    ptsize    => $fsze,
+    colour    => $self->{'label_colour'} || 'black',
+    absolutey => 1,
+    height    => $res[3],
+    class     => "label $class",
+    alt       => $name,
+    hover     => $self->{'config'}->storable
   }));
+  
 }
 
 sub species_defs {
@@ -764,7 +722,6 @@ sub errorTrack {
   my ($fontname, $fontsize) = $self->get_font_details('text');
   
   my $length = $self->{'config'}->image_width;
-  my $style  = $self->{'config'}->species_defs->ENSEMBL_STYLE;
   my @res    = $self->get_text_width(0, $message, '', 'ptsize' => $fontsize, 'font' => $fontname);
   
   $self->push($self->Text({
