@@ -127,7 +127,6 @@ sub new {
        $w = $container->length if !$w && $container->can('length');
        
     my $x_scale = $w ? $panel_width /$w : 1; 
-
     
     $config->{'transform'}->{'scalex'}         = $x_scale; ## set scaling factor for base-pairs -> pixels
     $config->{'transform'}->{'absolutescalex'} = 1;
@@ -136,6 +135,8 @@ sub new {
     ## set the X-locations for each of the bump buttons/labels
     for my $glyphset (@glyphsets) {
       next unless defined $glyphset->label;
+      my @res = $glyphset->get_text_width($label_width, $glyphset->label->{'text'}, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
+      
       $glyphset->label->{'font'}        ||= $config->{'_font_face'} || 'arial';
       $glyphset->label->{'ptsize'}      ||= $config->{'_font_size'} || 100;
       $glyphset->label->{'halign'}      ||= 'left';
@@ -143,20 +144,16 @@ sub new {
       $glyphset->label->{'absolutewidth'} = 1;
       $glyphset->label->{'pixperbp'}      = $x_scale;
       $glyphset->label->{'colour'}        = $colours->{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black';
-      
-      $glyphset->label->x(-$label_width - $margin) if defined $glyphset->label;
-      $glyphset->label->width($label_width);
       $glyphset->label->{'ellipsis'}      = 1;
-      
-      my @res = $glyphset->get_text_width($label_width, $glyphset->label->{'text'}, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
-      
-      $glyphset->label->{'text'} = $res[0];
+      $glyphset->label->{'text'}          = $res[0];
+      $glyphset->label->{'width'}         = $res[2];
+      $glyphset->label->x(-$label_width - $margin) if defined $glyphset->label;
     }
-
+    
     ## pull out alternating background colours for this script
     my $bgcolours = [
-      $config->get_parameter( 'bgcolour1') || 'background1',
-      $config->get_parameter( 'bgcolour2') || 'background2'
+      $config->get_parameter('bgcolour1') || 'background1',
+      $config->get_parameter('bgcolour2') || 'background2'
     ];
 
     my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
@@ -202,7 +199,7 @@ sub new {
 	      $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [ ] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
         next;
-      };
+      }
       
       ## remove any whitespace at the top of this row
       my $gminy = $glyphset->miny;
@@ -235,8 +232,20 @@ sub new {
         
         $glyphset->label->y($gminy);
         $glyphset->label->height($gh);
-        $glyphset->label->pixelwidth($label_width);
         $glyphset->push($glyphset->label);
+        
+        if ($glyphset->label->{'hover'}) {
+          $glyphset->push($glyphset->Line({
+            absolutex     => 1,
+            absolutey     => 1,
+            absolutewidth => 1,
+            width         => $glyphset->label->width,
+            x             => $glyphset->label->x,
+            y             => $gminy + $gh + 1,
+            colour        => '#336699',
+            dotted        => 'small'
+          }));
+        }
       }
       
       $glyphset->transform;
@@ -291,7 +300,7 @@ sub _init {
   };
   
   $self->{'strandedness'} = 1 if $self->{'config'}->get_parameter('text_export');
-   
+  
   bless( $self, $class );
   return $self;
 }
