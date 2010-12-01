@@ -78,7 +78,7 @@ sub fetch_input {
                 foreach my $mlt (@$method_link_types) {
                     if(my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($mlt,[$genome_db_id1,$genome_db_id2])) {
                         $sth->execute($mlss->dbID);
-                        while( my ($homology_id) = @{$sth->fetchrow()} ) {
+                        while( my ($homology_id) = $sth->fetchrow() ) {
                             push @homology_ids, $homology_id;
                         }
                     }
