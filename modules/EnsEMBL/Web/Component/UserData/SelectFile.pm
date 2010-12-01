@@ -31,11 +31,11 @@ sub content {
   my $form = $self->modal_form('select', $object->species_path($current_species) . "/UserData/UploadFile", {'label'=>'Upload'});
 
   if (!$object->param('filter_module')) { ## No errors
-    $html .= $self->_hint('upload_notes', 'IMPORTANT NOTE', qq{
+    $form->add_notes({'id' => 'upload_notes', 'heading' => 'IMPORTANT NOTE', 'text' => qq{
       We are only able to store single-species datasets, containing data on $sitename coordinate systems. There is also a $max_upload_size limit on data uploads. 
       If your data does not conform to these guidelines, you can still <a href="/$current_species/UserData/AttachURL" class="modal_link">attach it to $sitename</a> without uploading.<br />
       <a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>
-    });
+    }});
   }
 
   $form->add_element( type => 'String', name => 'name', label => 'Name for this upload (optional)' );
