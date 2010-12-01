@@ -277,9 +277,8 @@ sub modal_form {
 }
 
 sub new_image {
-  my $self = shift;
-  my $hub  = $self->hub;
-  
+  my $self    = shift;
+  my $hub     = $self->hub;
   my %formats = EnsEMBL::Web::Constants::FORMATS;
   my (@image_configs, $image_config, $id);
   
@@ -305,7 +304,7 @@ sub new_image {
   $image_config->set_parameter('text_export', $hub->param('export')) if $formats{$hub->param('export')}{'extn'} eq 'txt';
   
   my $image = new EnsEMBL::Web::Document::Image($hub->species_defs, \@image_configs);
-  $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_);
+  $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_) if $self->html_format;
   $image->{'no_panel_type'} = $image_config->{'no_panel_type'};
   
   return $image;
@@ -317,7 +316,7 @@ sub new_vimage {
   $self->id($_[1]->{'type'}); # $_[1] is image config
   
   my $image = new EnsEMBL::Web::Document::Image($self->hub->species_defs);
-  $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_);
+  $image->drawable_container = new Bio::EnsEMBL::VDrawableContainer(@_) if $self->html_format;
   
   return $image;
 }
@@ -339,7 +338,7 @@ sub new_table {
   my $table    = new EnsEMBL::Web::Document::SpreadSheet(@_);
   (my $comp    = ref $self) =~ s/[^\w\.]+/_/g;
   
-  $table->format     = $hub->param('_format') || 'HTML';
+  $table->format     = $self->format;
   $table->exportable = $hub->url unless defined $table->exportable || $self->{'_table_count'}++;
   
   $self->renderer->{'filename'} = join '-', $comp, $hub->filename($self->object);
