@@ -55,7 +55,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::MCoffee;
 
 use strict;
-use Getopt::Long;
 use IO::File;
 use File::Basename;
 use File::Path;
@@ -64,10 +63,20 @@ use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use Bio::EnsEMBL::Compara::Member;
 use Time::HiRes qw(time gettimeofday tv_interval);
-# use POSIX qw(ceil floor);
-use Bio::EnsEMBL::Hive;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    return {
+        'use_exon_boundaries'   => 0,                       # careful: 0 and undef have different meanings here
+        'method'                => 'fmcoffee',              # the style of MCoffee to be run for this alignment
+        'output_table'          => 'protein_tree_member',   # self-explanatory
+        'max_gene_count'        => 1500,
+        'options'               => '',
+        'cutoff'                => 2,                       # for filtering
+    };
+}
 
 
 =head2 fetch_input
@@ -83,88 +92,66 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-  ### DEFAULT PARAMETERS ###
-  my $p = '';
-
-  $p = 'use_exon_boundaries';
-  $self->{$p} = 0;
-  $p = 'method';
-  $self->{$p} = 'fmcoffee';
-  $p = 'output_table';
-  $self->{$p} = 'protein_tree_member';
-  $p = 'max_gene_count';
-  $self->{$p} = 1500;
-  $p = 'options';
-  $self->{$p} = '';
-
-  #########################
-
-  # Fetch parameters from the two possible locations. Input_id takes precedence!
-  # and parameters can point to an entry in analysis_data
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
   $self->check_if_exit_cleanly;
 
-  $self->{treeDBA} = $self->compara_dba->get_ProteinTreeAdaptor;
-  my $id = $self->{'protein_tree_id'};
+    $self->param('tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
+    my $protein_tree_id = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
 
-  $self->{'protein_tree'} = $self->{treeDBA}->fetch_node_by_node_id($id);
+    $self->param('protein_tree', $self->param('tree_adaptor')->fetch_node_by_node_id($protein_tree_id) );
 
   # Auto-switch to fmcoffee on two failures.
   if ($self->input_job->retry_count >= 2) {
-    $self->{'method'} = 'fmcoffee';
+    $self->param('method', 'fmcoffee');
   }
   # Auto-switch to mafft on a third failure.
   if ($self->input_job->retry_count >= 3) {
-    $self->{'method'} = 'mafft';
+    $self->param('method', 'mafft');
     # actually, we are going to run mafft directly here, not through mcoffee
     # maybe in the future we want to use this option in tcoffee:
     #       t_coffee ..... -dp_mode myers_miller_pair_wise
   }
-  # Auto-switch to fmcoffee if gene count is too big.
-  if ($self->{'method'} eq 'cmcoffee') {
-    if (200 < @{$self->{'protein_tree'}->get_all_leaves}) {
-      $self->{'method'} = 'mafft';
-      #       $self->{'method'} = 'fmcoffee';
+  # Auto-switch to mafft if gene count is too big.
+  if ($self->param('method') eq 'cmcoffee') {
+    if (200 < @{$self->param('protein_tree')->get_all_leaves}) {
+      $self->param('method', 'mafft');
       print "MCoffee, auto-switch method to mafft because gene count >= 200 \n";
     }
   }
 
   # We check if it took more than two hours in the previous release. If
   # it did, then we go mafft
-  my $reuse_aln_runtime = $self->{'protein_tree'}->get_tagvalue('reuse_aln_runtime');
+  my $reuse_aln_runtime = $self->param('protein_tree')->get_tagvalue('reuse_aln_runtime');
   if ($reuse_aln_runtime ne '') {
     my $hours = $reuse_aln_runtime / 3600000;
     if ($hours > 2) { 
-      $self->{'method'} = 'mafft';
+      $self->param('method', 'mafft');
     }
   }
 
-  if ( 'mafft' == $self->{'method'}) { $self->{'use_exon_boundaries'} = undef; }
+  if ($self->param('method') eq 'mafft') { $self->param('use_exon_boundaries', undef); }
 
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
-  print "MCoffee alignment method: ".$self->{'method'}."\n";
+  print "MCoffee alignment method: ".$self->param('method')."\n";
 
   #
   # A little logic, depending on the input params.
   #
   # Protein Tree input.
-  if (defined $self->{'protein_tree_id'}) {
-    $self->{'protein_tree'}->flatten_tree; # This makes retries safer
+  if (defined $self->param('protein_tree_id')) {
+    $self->param('protein_tree')->flatten_tree; # This makes retries safer
     # The extra option at the end adds the exon markers
-    $self->{'input_fasta'} = $self->dumpProteinTreeToWorkdir($self->{'protein_tree'},$self->{'use_exon_boundaries'});
+    $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree'), $self->param('use_exon_boundaries')) );
   }
 
-  if (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
+  if (defined($self->param('redo')) && $self->param('method') eq 'unalign') {
     # Redo - take previously existing alignment - post-process it
-    $self->{redo_sa} = $self->{'protein_tree'}->get_SimpleAlign(-id_type => 'MEMBER');
-    $self->{redo_sa}->set_displayname_flat(1);
-    $self->{redo_alnname} = $self->worker_temp_directory . $self->{protein_tree}->node_id . ".fasta";
-    my $alignout = Bio::AlignIO->new(-file => ">".$self->{redo_alnname},
+    my $redo_sa = $self->param('protein_tree')->get_SimpleAlign(-id_type => 'MEMBER');
+    $redo_sa->set_displayname_flat(1);
+    $self->param('redo_alnname', $self->worker_temp_directory . $self->param('protein_tree')->node_id.'.fasta' );
+    my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'),
                                      -format => "fasta");
-    $alignout->write_aln($self->{redo_sa});
+    $alignout->write_aln( $redo_sa );
   }
 
   #
@@ -172,12 +159,12 @@ sub fetch_input {
   #
 
   # No input specified.
-  if (!defined($self->{'protein_tree'})) {
+  if (!defined($self->param('protein_tree'))) {
     $self->DESTROY;
     $self->throw("MCoffee job no input protein_tree");
   }
   # Error writing input Fasta file.
-  if (!$self->{'input_fasta'}) {
+  if (!$self->param('input_fasta')) {
     $self->DESTROY;
     $self->throw("MCoffee: error writing input Fasta");
   }
@@ -196,12 +183,11 @@ sub fetch_input {
 
 =cut
 
-sub run
-{
+sub run {
   my $self = shift;
 
   $self->check_if_exit_cleanly;
-  $self->{'mcoffee_starttime'} = time()*1000;
+  $self->param('mcoffee_starttime', time()*1000);
   $self->run_mcoffee;
 }
 
@@ -225,24 +211,16 @@ sub write_output {
   #
   # Store various alignment tags.
   #
-  $self->_store_aln_tags unless ($self->{redo});
+  $self->_store_aln_tags unless ($self->param('redo'));
 }
 
 sub DESTROY {
     my $self = shift;
 
-    if($self->{'protein_tree'}) {
-        $self->{'protein_tree'}->release_tree;
-        $self->{'protein_tree'} = undef;
+    if($self->param('protein_tree')) {
+        $self->param('protein_tree')->release_tree;
+        $self->param('protein_tree', undef);
     }
-
-    # Cleanup temp files and stuff.
-    # unlink ($self->{'input_params'}) if($self->{'input_params'});
-    # unlink ($self->{'input_fasta'}) if($self->{'input_fasta'});
-    # if($self->{'mcoffee_output'}) {
-	#    unlink ($self->{'mcoffee_output'});
-	#    unlink ($self->{'mcoffee_output'} . ".log");
-    # }
 
     $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
@@ -253,93 +231,23 @@ sub DESTROY {
 #
 ##########################################
 
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
 
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key\t=>\t", $params->{$key}, "\n");
-    }
-  }
-
-  my $p;
-
-  #First if this was an analysis data id then we rerun get params for it
-  $p = 'analysis_data_id';
-  if(defined $params->{$p}) {
-  	my $adid = $params->{$p};
-  	my $ad_a = $self->db()->get_AnalysisDataAdaptor();
-  	my $next_param_string = $ad_a->fetch_by_dbID($adid);
-  	$self->get_params($next_param_string);
-  }
-  #The continue onto other params
-
-  # METHOD: The style of MCoffee to be run for this alignment.
-  # Could be: fmcoffee or cmcoffee
-  $p = 'method';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # cutoff: for filtering
-  $p = 'cutoff';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # OUTPUT_TABLE: self-explanatory.
-  $p = 'output_table';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # Loads the protein tree if we have a protein_tree_id
-  $p = 'protein_tree_id';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # clusterset_id
-  $p = 'clusterset_id';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # Extra command-line options.
-  $p = 'options';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # Set a limit on the number of members to align.
-  $p = 'max_gene_count';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  $p = 'use_exon_boundaries';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # This is analysis, not production: 'redo' e.g. '1:1000000' from clusterset_id 1 to a different clusterset_id 10000000
-  $p = 'redo';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  # This is looking for a mafft binary which overides other binary settings
-  $p = 'mafft';
-  $self->{$p} = $params->{$p} if (defined($params->{$p}));
-
-  return;
-}
-
-
-sub run_mcoffee
-{
+sub run_mcoffee {
   my $self = shift;
-  return if (1 == $self->{single_peptide_tree});
-  my $input_fasta = $self->{'input_fasta'};
+  return if ($self->param('single_peptide_tree'));
+  my $input_fasta = $self->param('input_fasta');
 
   my $mcoffee_output = $self->worker_temp_directory . "output.mfa";
-  $mcoffee_output =~ s/\/\//\//g; $self->{'mcoffee_output'} = $mcoffee_output;
+  $mcoffee_output =~ s/\/\//\//g;
+  $self->param('mcoffee_output', $mcoffee_output);
 
   # (Note: t_coffee automatically uses the .mfa output as the basename for the score output)
   my $mcoffee_scores = $mcoffee_output . ".score_ascii";
-  $mcoffee_scores =~ s/\/\//\//g; $self->{'mcoffee_scores'} = $mcoffee_scores;
+  $mcoffee_scores =~ s/\/\//\//g;
+  $self->param('mcoffee_scores', $mcoffee_scores);
 
   my $tree_temp = $self->worker_temp_directory . "tree_temp.dnd";
-  $tree_temp =~ s/\/\//\//g; $self->{'mcoffee_tree'} = $tree_temp;
+  $tree_temp =~ s/\/\//\//g;
 
   my $mcoffee_executable = $self->analysis->program_file;
     unless (-e $mcoffee_executable) {
@@ -359,41 +267,40 @@ sub run_mcoffee
   #
   # Output the params file.
   #
-  $self->{'input_params'} = $self->worker_temp_directory. "temp.params";
-  my $paramsfile = $self->{'input_params'};
+  my $paramsfile = $self->worker_temp_directory. "temp.params";
   $paramsfile =~ s/\/\//\//g;  # converts any // in path to /
   open(OUTPARAMS, ">$paramsfile")
     or $self->throw("Error opening $paramsfile for write");
 
   my $method_string = '-method=';
-  if ($self->{'method'} && $self->{'method'} eq 'cmcoffee') {
+  if ($self->param('method') and ($self->param('method') eq 'cmcoffee') ) {
       # CMCoffee, slow, comprehensive multiple alignments.
       $method_string .= "mafftgins_msa, muscle_msa, kalign_msa, t_coffee_msa "; #, probcons_msa";
-  } elsif ($self->{'method'} eq 'fmcoffee') {
+  } elsif ($self->param('method') eq 'fmcoffee') {
       # FMCoffee, fast but accurate alignments.
       $method_string .= "mafft_msa, muscle_msa, clustalw_msa, kalign_msa";
-  } elsif ($self->{'method'} eq 'mafft') {
+  } elsif ($self->param('method') eq 'mafft') {
       # MAFFT FAST: very quick alignments.
       $method_string .= "mafft_msa";
-  } elsif ($self->{'method'} eq 'prank') {
+  } elsif ($self->param('method') eq 'prank') {
       # PRANK: phylogeny-aware alignment.
       $method_string .= "prank_msa";
-  } elsif (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
-    my $cutoff = $self->{'cutoff'} || 2;
+  } elsif (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
+    my $cutoff = $self->param('cutoff') || 2;
       # Unalign module
-    $method_string = " -other_pg seq_reformat -in " . $self->{redo_alnname} ." -action +aln2overaln unalign 2 30 5 15 0 1>$mcoffee_output";
+    $method_string = " -other_pg seq_reformat -in " . $self->param('redo_alnname') ." -action +aln2overaln unalign 2 30 5 15 0 1>$mcoffee_output";
   } else {
-      throw ("Improper method parameter: ".$self->{'method'});
+      throw ("Improper method parameter: ".$self->param('method'));
   }
 
   my $extra_output = '';
-  if ($self->{'use_exon_boundaries'}) {
-    my $exon_file = $self->{'input_fasta_exons'};
-    if (1 == $self->{use_exon_boundaries}) {
+  if ($self->param('use_exon_boundaries')) {
+    if (1 == $self->param('use_exon_boundaries')) {
+      my $exon_file = $self->param('input_fasta_exons');
       $method_string .= ", exon_pair";
       print OUTPARAMS "-template_file=$exon_file\n";
-    } elsif (2 == $self->{use_exon_boundaries}) {
-      $self->{'mcoffee_scores'} = undef;
+    } elsif (2 == $self->param('use_exon_boundaries')) {
+      $self->param('mcoffee_scores', undef);
       $extra_output .= ',overaln  -overaln_param unalign -overaln_P1 99999 -overaln_P2 1'; # overaln_P1 150 and overaln_P2 30 was dealigning too aggressively
     }
   }
@@ -415,10 +322,10 @@ sub run_mcoffee
 
   # Commandline
   my $cmd = $mcoffee_executable;
-  $cmd .= " ".$input_fasta unless ($self->{redo});
-  $cmd .= " ". $self->{'options'};
-  if (defined($self->{'redo'}) && $self->{'method'} eq 'unalign') {
-    $self->{'mcoffee_scores'} = undef; #these wont have scores
+  $cmd .= " ".$input_fasta unless ($self->param('redo'));
+  $cmd .= " ". $self->param('options');
+  if (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {
+    $self->param('mcoffee_scores', undef); #these wont have scores
     $cmd .= " ". $method_string;
   } else {
     $cmd .= " -parameters=$paramsfile";
@@ -436,8 +343,8 @@ sub run_mcoffee
   $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
   $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
 
-  if(defined $self->{mafft}) {
-  	print "Using defined mafft location $self->{mafft}. Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
+  if(defined $self->param('mafft')) {
+  	print "Using defined mafft location ".$self->param('mafft').". Make sure MAFFT_BINARIES is setup correctly\n" if $self->debug();
   }
   else {
   	print "Using default mafft location\n" if $self->debug();
@@ -452,10 +359,10 @@ sub run_mcoffee
   #
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   my $rc;
-  if ($self->{'method'} eq 'mafft') {
+  if ($self->param('method') eq 'mafft') {
   	my ($mafft_env, $mafft_executable);
-  	if(defined $self->{mafft}) {
-  		$mafft_executable = $self->{mafft};
+  	if(defined $self->param('mafft')) {
+  		$mafft_executable = $self->param('mafft');
   	}
   	else {
     	$mafft_executable = "/software/ensembl/compara/mafft-6.707/bin/mafft";
@@ -465,14 +372,14 @@ sub run_mcoffee
   	$ENV{MAFFT_BINARIES} = $mafft_env if $mafft_env;
     print STDERR "### $mafft_executable --auto $input_fasta > $mcoffee_output\n";
     $rc = system("$mafft_executable --auto $input_fasta > $mcoffee_output");
-    $self->{'mcoffee_scores'} = undef; #these wont have scores
+    $self->param('mcoffee_scores', undef); #these wont have scores
   } else {
     $DB::single=1;
     $rc = system($prefix.$cmd);
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-  unless($rc == 0) {
+  if($rc) {
       $self->DESTROY;
       $self->throw("MCoffee job, error running executable: $!\n");
   }
@@ -484,8 +391,7 @@ sub run_mcoffee
 #
 ########################################################
 
-sub update_single_peptide_tree
-{
+sub update_single_peptide_tree {
   my $self   = shift;
   my $tree   = shift;
 
@@ -522,7 +428,7 @@ sub dumpProteinTreeToWorkdir {
   my $residues = 0;
   my $member_list = $tree->get_all_leaves;
 
-  $self->{'tag_gene_count'} = scalar(@{$member_list});
+  $self->param('tag_gene_count', scalar(@{$member_list}) );
   my $has_canonical_issues = 0;
   foreach my $member (@{$member_list}) {
 
@@ -541,7 +447,7 @@ sub dumpProteinTreeToWorkdir {
       $tree->store_tag('canon.'.$clustered_stable_id."_".$canonical_stable_id,1);
       $has_canonical_issues++;
 #       $member->disavow_parent;
-#       $self->{treeDBA}->delete_flattened_leaf($member);
+#       $self->param('tree_adaptor')->delete_flattened_leaf($member);
 #       my $updated_gene_count = scalar(@{$tree->get_all_leaves});
 #       $tree->adaptor->delete_tag($tree->node_id,'gene_count');
 #       $tree->store_tag('gene_count', $updated_gene_count);
@@ -571,26 +477,24 @@ sub dumpProteinTreeToWorkdir {
 
   if(scalar keys (%{$seq_id_hash}) <= 1) {
     $self->update_single_peptide_tree($tree);
-    $self->{single_peptide_tree} = 1;
+    $self->param('single_peptide_tree', 1);
   }
 
-  $self->{'tag_residue_count'} = $residues;
+  $self->param('tag_residue_count', $residues);
   return $fastafile;
 }
 
-sub parse_and_store_alignment_into_proteintree
-{
+sub parse_and_store_alignment_into_proteintree {
   my $self = shift;
 
-  return if (1 == $self->{single_peptide_tree});
-  my $mcoffee_output =  $self->{'mcoffee_output'};
-  my $mcoffee_scores = $self->{'mcoffee_scores'};
+  return if ($self->param('single_peptide_tree'));
+  my $mcoffee_output =  $self->param('mcoffee_output');
+  my $mcoffee_scores = $self->param('mcoffee_scores');
   my $format = 'fasta';
-  my $tree = $self->{'protein_tree'};
+  my $tree = $self->param('protein_tree');
 
-  if (2 == $self->{use_exon_boundaries}) {
+  if (2 == $self->param('use_exon_boundaries')) {
     $mcoffee_output .= ".overaln";
-    # $format = 'clustalw';
   }
   return unless($mcoffee_output and -e $mcoffee_output);
 
@@ -662,18 +566,18 @@ sub parse_and_store_alignment_into_proteintree
     $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
   }
 
-  if (defined($self->{redo}) && $self->{'output_table'} eq 'protein_tree_member') {
+  if (defined($self->param('redo')) and ($self->param('output_table') eq 'protein_tree_member') ) {
     # We clone the tree, attach it to the new clusterset_id, then store it.
     # protein_tree_member is now linked to the new one
-    my ($from_clusterset_id, $to_clusterset_id) = split(":",$self->{'redo'});
-    $self->throw("malformed redo option: ". $self->{'redo'}." should be like 1:1000000")
+    my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
+    $self->throw("malformed redo option: ". $self->param('redo')." should be like 1:1000000")
       unless (defined($from_clusterset_id) && defined($to_clusterset_id));
-    my $clone_tree = $self->{protein_tree}->copy;
-    my $clusterset = $self->{treeDBA}->fetch_node_by_node_id($to_clusterset_id);
+    my $clone_tree = $self->param('protein_tree')->copy;
+    my $clusterset = $self->param('tree_adaptor')->fetch_node_by_node_id($to_clusterset_id);
     $clusterset->add_child($clone_tree);
-    $self->{treeDBA}->store($clone_tree);
+    $self->param('tree_adaptor')->store($clone_tree);
     # Maybe rerun indexes - restore
-    # $self->{treeDBA}->sync_tree_leftright_index($clone_tree);
+    # $self->param('tree_adaptor')->sync_tree_leftright_index($clone_tree);
     $self->_store_aln_tags($clone_tree);
     # Point $tree object to the new tree from now on
     $tree->release_tree; $tree = $clone_tree;
@@ -701,7 +605,7 @@ sub parse_and_store_alignment_into_proteintree
 	  $self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
       }
 
-      if ($self->{'output_table'} eq 'protein_tree_member') {
+      if ($self->param('output_table') eq 'protein_tree_member') {
 	  #
 	  # We can use the default store method for the $member.
           $self->compara_dba->get_ProteinTreeAdaptor->store($member);
@@ -709,19 +613,19 @@ sub parse_and_store_alignment_into_proteintree
 	  #
 	  # Do a manual insert into the correct output table.
 	  #
-	  my $table_name = $self->{'output_table'};
+	  my $table_name = $self->param('output_table');
 	  printf("Updating $table_name %s : %s\n",$member->stable_id,$member->cigar_line) if ($self->debug);
-	  my $sth = $self->{treeDBA}->prepare("INSERT ignore INTO $table_name
+	  my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
                                (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
 	  $sth->execute($member->node_id,$member->member_id,$member->method_link_species_set_id,$member->cigar_line);
 	  $sth->finish;
       }
-      if (defined $self->{'mcoffee_scores'}) {
+      if (defined $self->param('mcoffee_scores')) {
         #
         # Do a manual insert of the *scores* into the correct score output table.
         #
-        my $table_name = $self->{'output_table'} . "_score";
-        my $sth = $self->{treeDBA}->prepare("INSERT ignore INTO $table_name
+        my $table_name = $self->param('output_table') . "_score";
+        my $sth = $self->param('tree_adaptor')->prepare("INSERT ignore INTO $table_name
                                (node_id,member_id,method_link_species_set_id,cigar_line)  VALUES (?,?,?,?)");
         my $score_string = $score_hash{$member->sequence_id} || '';
         $score_string =~ s/[^\d-]/9/g;   # Convert non-digits and non-dashes into 9s. This is necessary because t_coffee leaves some leftover letters.
@@ -756,8 +660,8 @@ sub _to_cigar_line {
 
 sub _store_aln_tags {
     my $self = shift;
-    my $tree = shift || $self->{'protein_tree'};
-    my $output_table = $self->{'output_table'};
+    my $tree = shift || $self->param('protein_tree');
+    my $output_table = $self->param('output_table');
     my $pta = $self->compara_dba->get_ProteinTreeAdaptor;
 
     print "Storing Alignment tags...\n";
@@ -766,7 +670,7 @@ sub _store_aln_tags {
     # Retrieve a tree with the "correct" cigar lines.
     #
     if ($output_table ne "protein_tree_member") {
-	$tree = $self->_get_alternate_alignment_tree($pta,$tree->node_id,$output_table);
+        $tree = $self->_get_alternate_alignment_tree($pta,$tree->node_id,$output_table);
     }
 
     my $sa = $tree->get_SimpleAlign;
@@ -780,11 +684,11 @@ sub _store_aln_tags {
     $tree->store_tag("aln_length",$aln_length);
 
     # Alignment runtime.
-    my $aln_runtime = int(time()*1000-$self->{'mcoffee_starttime'});
+    my $aln_runtime = int(time()*1000-$self->param('mcoffee_starttime'));
     $tree->store_tag("aln_runtime",$aln_runtime);
 
     # Alignment method.
-    my $aln_method = $self->{'method'};
+    my $aln_method = $self->param('method');
     $tree->store_tag("aln_method",$aln_method);
 
     # Alignment residue count.
@@ -792,9 +696,9 @@ sub _store_aln_tags {
     $tree->store_tag("aln_num_residues",$aln_num_residues);
 
     # Alignment redo mapping.
-    my ($from_clusterset_id, $to_clusterset_id) = split(":",$self->{'redo'});
+    my ($from_clusterset_id, $to_clusterset_id) = split(':', $self->param('redo'));
     my $redo_tag = "MCoffee_redo_".$from_clusterset_id."_".$to_clusterset_id;
-    $tree->store_tag("$redo_tag",$self->{'protein_tree_id'}) if ($self->{'redo'});
+    $tree->store_tag("$redo_tag",$self->param('protein_tree_id')) if ($self->param('redo'));
 }
 
 sub _get_alternate_alignment_tree {
