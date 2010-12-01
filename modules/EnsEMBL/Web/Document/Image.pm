@@ -11,11 +11,11 @@ use Bio::EnsEMBL::VDrawableContainer;
 use EnsEMBL::Web::TmpFile::Image;
 
 sub new {
-  my ($class, $species_defs, $panel_name) = @_;
+  my ($class, $species_defs, $image_configs) = @_;
 
   my $self = {
-    panel              => $panel_name,
     species_defs       => $species_defs,
+    image_configs      => $image_configs || [],
     drawable_container => undef,
     imagemap           => 'no',
     image_type         => 'image',
@@ -33,20 +33,19 @@ sub new {
   return $self;
 }
 
-sub object             : lvalue { $_[0]->{'object'}; }
-sub drawable_container : lvalue { $_[0]->{'drawable_container'}; }
-sub imagemap           : lvalue { $_[0]->{'imagemap'}; }
-sub button             : lvalue { $_[0]->{'button'}; }
-sub button_id          : lvalue { $_[0]->{'button_id'}; }
-sub button_name        : lvalue { $_[0]->{'button_name'}; }
-sub button_title       : lvalue { $_[0]->{'button_title'}; }
-sub image_type         : lvalue { $_[0]->{'image_type'}; }
-sub image_name         : lvalue { $_[0]->{'image_name'}; }
-sub introduction       : lvalue { $_[0]->{'introduction'}; }
-sub tailnote           : lvalue { $_[0]->{'tailnote'}; }
-sub caption            : lvalue { $_[0]->{'caption'}; }
-sub format             : lvalue { $_[0]->{'format'}; }
-sub panel              : lvalue { $_[0]->{'panel'}; }
+sub object             :lvalue { $_[0]->{'object'};             }
+sub drawable_container :lvalue { $_[0]->{'drawable_container'}; }
+sub imagemap           :lvalue { $_[0]->{'imagemap'};           }
+sub button             :lvalue { $_[0]->{'button'};             }
+sub button_id          :lvalue { $_[0]->{'button_id'};          }
+sub button_name        :lvalue { $_[0]->{'button_name'};        }
+sub button_title       :lvalue { $_[0]->{'button_title'};       }
+sub image_type         :lvalue { $_[0]->{'image_type'};         }
+sub image_name         :lvalue { $_[0]->{'image_name'};         }
+sub introduction       :lvalue { $_[0]->{'introduction'};       }
+sub tailnote           :lvalue { $_[0]->{'tailnote'};           }
+sub caption            :lvalue { $_[0]->{'caption'};            }
+sub format             :lvalue { $_[0]->{'format'};             }
 
 sub image_width { $_[0]->drawable_container->{'config'}->get_parameter('image_width'); }
 
@@ -78,9 +77,9 @@ sub karyotype {
       $rows = $view_config->get('rows');
 
       $image_config->set_parameters({
-          image_height => $chr_length,
-          image_width  => $total_length,
-        });
+        image_height => $chr_length,
+        image_width  => $total_length,
+      });
     }
 
     $rows = ceil($total_chrs / 18) unless $rows;
@@ -263,7 +262,7 @@ sub render_image_map {
 
   my $imagemap = $self->drawable_container->render('imagemap');
   my $map_name = $image->token;
-
+  
   my $map = qq{
     <map name="$map_name">
       $imagemap
@@ -271,8 +270,52 @@ sub render_image_map {
   };
   
   $map .= '<input type="hidden" class="panel_type" value="ImageMap" />' unless $self->{'no_panel_type'};
+  $map .= $self->hover_labels;
   
   return $map;
+}
+
+sub hover_labels {
+  my $self = shift;
+  my ($html, %done);
+  
+  foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
+    next if $done{$label->{'class'}};
+    
+    my $desc = join '', map "<p>$_</p>", split /; /, $label->{'desc'};
+    my $renderers;
+    
+    foreach (@{$label->{'renderers'}}) {
+      my $text = $_->{'text'};
+      
+      if ($_->{'current'}) {
+        $renderers .= qq{<li class="current"><img src="/i/render/$_->{'current'}.gif" alt="$text" title="$text" /><img src="/i/tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
+      } else {
+        $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'config'}"><img src="/i/render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
+      }
+    }
+    
+    $html .= sprintf(
+      '<div class="hover_label floating_popup %s">
+        <p class="header">%s</p>
+        %s
+        %s
+        %s
+        <div class="desc">%s</div>
+        <div class="config">%s</div>
+        <div class="spinner"></div>
+      </div>',
+      $label->{'class'},
+      $label->{'header'},
+      $label->{'desc'}   ? '<img class="desc" src="/i/info.gif" alt="Info" title="Info" />' : '',
+      $renderers         ? '<img class="config" src="/i/config_small.png" alt="Change track renderer" title="Change track renderer" />' : '',
+      $label->{'config'} ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="/i/cross.png" alt="Turn track off" title="Turn track off" /></a>} : '',
+      $desc,
+      $renderers         ? "<p>Change track renderer:</p><ul>$renderers</ul>" : ''
+    );
+  }
+  
+  return $html;
 }
 
 sub render {
@@ -417,7 +460,7 @@ sub render {
     
   $self->{'width'} = $image->width;
   $self->{'species_defs'}->timer_push('Image->render ending', undef, 'draw');
-
+  
   return $html
 }
 
