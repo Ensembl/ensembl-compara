@@ -730,7 +730,6 @@ sub build_GeneTreeSystem
   $stats = $analysisStatsDBA->fetch_by_analysis_id($create_homology_dNdS_job_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(-1);
-  $stats->status('BLOCKED');
   $stats->update();
 
   #
