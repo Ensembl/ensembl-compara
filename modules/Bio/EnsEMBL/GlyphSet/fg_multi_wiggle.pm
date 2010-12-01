@@ -87,7 +87,7 @@ sub draw_blocks {
 
   foreach my $f_set (sort { $a cmp $b  } keys %$fs_data){ 
     my $feature_name = $f_set; 
-    my @temp = split (/:/g, $feature_name);
+    my @temp = split (/:/, $feature_name);
     $feature_name = $temp[1];  
     my $colour   = $colours->{$feature_name};  
     my $features = $fs_data->{$f_set}; 
