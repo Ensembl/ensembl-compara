@@ -82,6 +82,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
     });
     
     this.elLk.toolMore.children('a').bind('click', function () {
+      $(this).toggleClass('open');
       panel.elLk.toolMoreUl.html(panel.elLk.toolsOverflow.clone()).toggle();
       panel.moreShown = true;
       return false;
