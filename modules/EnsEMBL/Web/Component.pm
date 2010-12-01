@@ -281,15 +281,22 @@ sub new_image {
   my $hub  = $self->hub;
   
   my %formats = EnsEMBL::Web::Constants::FORMATS;
-  my ($image_config, $id);
+  my (@image_configs, $image_config, $id);
   
   if (ref $_[0] eq 'ARRAY') {
-    my %image_config_types = map { $_->{'type'} => 1 } grep $_->isa('EnsEMBL::Web::ImageConfig'), @{$_[0]};
-    $image_config = $_[0][1];
-    $id = join '--', keys %image_config_types;
+    my %image_config_types;
+    
+    for (grep $_->isa('EnsEMBL::Web::ImageConfig'), @{$_[0]}) {
+      $image_config_types{$_->{'type'}} = 1;
+      push @image_configs, $_;
+    }
+    
+    $image_config  = $_[0][1];
+    $id            = join '--', keys %image_config_types;
   } else {
-    $image_config = $_[1];
-    $id = $image_config->{'type'}
+    @image_configs = ($_[1]);
+    $image_config  = $_[1];
+    $id            = $image_config->{'type'}
   }
   
   $self->id($id) unless $image_config->{'no_panel_type'};
@@ -297,7 +304,7 @@ sub new_image {
   # Set text export on image config
   $image_config->set_parameter('text_export', $hub->param('export')) if $formats{$hub->param('export')}{'extn'} eq 'txt';
   
-  my $image = new EnsEMBL::Web::Document::Image($hub->species_defs);
+  my $image = new EnsEMBL::Web::Document::Image($hub->species_defs, \@image_configs);
   $image->drawable_container = new Bio::EnsEMBL::DrawableContainer(@_);
   $image->{'no_panel_type'} = $image_config->{'no_panel_type'};
   
