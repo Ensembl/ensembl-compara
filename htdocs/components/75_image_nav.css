@@ -32,18 +32,19 @@
 
 .drag_select { cursor: pointer; }
 
-.hover_label                     { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
-.hover_label img                 { margin: 0 4px; }
-.hover_label img.config, 
-.hover_label img.desc            { cursor: pointer; }
-.hover_label a.config            { text-decoration: none; }
-.hover_label p.header            { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; border-bottom: 1px solid #000; }
-.hover_label div                 { display: none; padding: 0 5px; }
-.hover_label p                   { padding: 3px 0; margin: 0; }
-.hover_label div.spinner         { width: 75px; height: 75px; }
-.hover_label div.config ul, 
-.hover_label div.config li       { margin: 0; padding: 0; list-style: none; list-style-image: none; }
-.hover_label div.config li       { line-height: 22px; }
-.hover_label div.config a        { font-size: 11px; color: #000; }
-.hover_label div.config img      { vertical-align: top; padding: 2px 0; margin-left: 0; }
-.hover_label div.config img.tick { margin: 9px 0 0 -11px; }
+.hover_label                       { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
+.hover_label img                   { margin: 0 4px; }
+.hover_label img.config,
+.hover_label img.desc              { cursor: pointer; }
+.hover_label a.config              { text-decoration: none; }
+.hover_label p.header              { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; border-bottom: 1px solid #000; }
+.hover_label div                   { display: none; padding: 0 5px; }
+.hover_label p                     { padding: 3px 0; margin: 0; }
+.hover_label div.spinner           { width: 75px; height: 75px; }
+.hover_label div.config ul,
+.hover_label div.config li         { margin: 0; padding: 0; list-style: none; list-style-image: none; }
+.hover_label div.config li         { line-height: 22px; }
+.hover_label div.config li.current { font-weight: normal; }
+.hover_label div.config a          { font-size: 11px; color: #000; }
+.hover_label div.config img        { vertical-align: top; padding: 2px 0; margin-left: 0; }
+.hover_label div.config img.tick   { margin: 9px 0 0 -11px; }
