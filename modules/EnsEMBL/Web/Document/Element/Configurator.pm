@@ -191,7 +191,7 @@ sub imageconfig_content {
       my $desc    = $track_node->get('description');
       my $class   = $track_node->get('_class');
       my $name    = encode_entities($track_node->get('name')); 
-      my ($dd, $selected, $menu, $external_menu, $pre_config_group);
+      my ($dd, $menu, $selected, $external_menu, $pre_config_group);
       
       if ($track_node->get('submenu')) {
         $submenu          = $track_node->get('caption');
@@ -227,8 +227,11 @@ sub imageconfig_content {
           $desc =~ s/<a>/<\/a>/g;
           $desc =~ s/"[ "]*>/">/g;
           
-          $selected = qq{<span class="menu_help">Show info</span>$selected};
+          $selected .= qq{<span class="menu_help"><img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" style="vertical-align:middle" /></span>};
           $dd       = "<dd>$desc</dd>";
+        }
+        else {
+          $selected .= '<span class="menu_nohelp"><img src="/i/blank.gif" alt="" /></span>';
         }
 
         if ($submenu && $submenu != 1) {
@@ -269,7 +272,7 @@ sub imageconfig_content {
     
     $content .= sprintf('
       <div class="config %s">
-        <h2>%s</h2>
+        <h2 class="config_header">%s</h2>
         <dl class="config_menu">
           %s
         </dl>
