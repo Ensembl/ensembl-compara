@@ -400,10 +400,11 @@ sub html_template {
   my $species_path        = $self->species_defs->species_path;
   my $species_common_name = $self->species_defs->SPECIES_COMMON_NAME;
   my $core_params         = $self->hub ? $self->hub->core_params : {};
-  my $core_params_html    = join '', map qq{<input type="hidden" name="$_" value="$core_params->{$_}" />}, keys %$core_params;
-  my $html_tag            = join '', $self->doc_type, $self->html_tag;
+  my $core_params_html    = join '',   map qq{<input type="hidden" name="$_" value="$core_params->{$_}" />}, keys %$core_params;
+  my $html_tag            = join '',   $self->doc_type, $self->html_tag;
   my $head                = join "\n", map $elements->{$_->[0]} || (), @{$self->head_order};  
-  my $body_attrs          = join ' ', map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
+  my $body_attrs          = join ' ',  map { sprintf '%s="%s"', $_, $self->{'body_attr'}{$_} } grep $self->{'body_attr'}{$_}, keys %{$self->{'body_attr'}};
+  my $tabs                = $elements->{'tabs'} ? qq{<div class="tabs_holder print_hide">$elements->{'tabs'}</div>} : '';
   my $footer_id           = 'wide-footer';
   my $panel_type          = $self->can('panel_type') ? $self->panel_type : '';
   my $main_holder         = $panel_type ? qq{<div id="main_holder" class="js_panel">$panel_type} : '<div id="main_holder">';
@@ -438,14 +439,14 @@ sub html_template {
             <div class="tools_holder">$elements->{'tools'}</div>
             <div class="search_holder print_hide">$elements->{'search_box'}</div>
           </div>
-          $elements->{'breadcrumbs'}
-          <div class="tabs_holder print_hide">$elements->{'tabs'}</div>
+          $tabs
         </div>
       </div>
       <div class="invisible"></div>
       $main_holder
         $nav
         <div id="main">
+          $elements->{'breadcrumbs'}
           $elements->{'message'}
           $elements->{'content'}
         </div>
