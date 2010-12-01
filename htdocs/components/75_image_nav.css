@@ -1,16 +1,16 @@
 /**
  zmenu styling... keeping it nice and simple!!
 **/
-.zmenu             { position: absolute; width: 18em; background-color: [[NEUTRAL_BG]]; margin: 0; border-collapse: collapse; border: 1px solid [[NEUTRAL_BG]]; z-index: 200 }
-.zmenu th          { font-weight: bold; padding: 2px; margin:0; text-align: right; width: 8em; font-size: 0.8em ; background-color: [[NEUTRAL_BG]] }
+.zmenu             { position: absolute; width: 18em; background-color: [[NEUTRAL_BG]]; margin: 0; border-collapse: collapse; border: 1px solid [[NEUTRAL_BG]]; z-index: 200; display: none; }
+.zmenu th          { font-weight: bold; padding: 2px; margin: 0; text-align: right; width: 8em; font-size: 0.8em; background-color: [[NEUTRAL_BG]]; }
 .zmenu .caption    { width: 18em; text-align: left; font-size: 1em }
 .zmenu .subheader  { width: 18em; text-align: left; font-size: 0.85em }
-.zmenu .close      { float: right; background-color: [[NEUTRAL_BORDER]]; color: [[CONTRAST_TEXT]]; height: 1em; width: 1em; cursor: pointer; text-align: center }
+.zmenu .close      { float: right; background-color: [[NEUTRAL_BORDER]]; color: [[CONTRAST_TEXT]]; height: 1em; width: 1em; cursor: pointer; text-align: center; }
 .zmenu td          { background-color: [[PANEL_BG]]; border: 1px solid [[NEUTRAL_BG]]; margin: 0; padding: 2px; font-size: 0.8em; padding: 2px; width: 18em; }
 .zmenu.coloured td { border: none; border-top: 1px solid [[NEUTRAL_BG]]; }
 .zmenu a           { text-decoration: none; font-weight: bold }
 .zmenu table td, 
-.zmenu table th    { border: 0 none; font-size: 1em; text-align: left }     
+.zmenu table th    { border: 0 none; font-size: 1em; text-align: left; }
 
 /**
  redbox      - red box around slice to indicate where in upper slice this slice is!
@@ -20,7 +20,7 @@
 **/
 
 .redbox2, .rubberband, .rubberband2, .redbox { position:absolute; z-index: 99; }
-.redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px }
+.redbox2 img, .rubberband2 img, .rubberband img, .redbox img { height: 1px; width: 1px; }
 .rubberband  { background-image: url(/i/redants.gif); }
 .rubberband2 { background-image: url(/i/redants2.gif); }
 .redbox      { background-image: url(/i/red.gif); }
@@ -30,4 +30,20 @@
  as we have to remove the href tags to get IE to work - make the whole of the slice "clickable"...
 **/
 
-.drag_select { cursor: pointer }
+.drag_select { cursor: pointer; }
+
+.hover_label                     { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
+.hover_label img                 { margin: 0 4px; }
+.hover_label img.config, 
+.hover_label img.desc            { cursor: pointer; }
+.hover_label a.config            { text-decoration: none; }
+.hover_label p.header            { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; border-bottom: 1px solid #000; }
+.hover_label div                 { display: none; padding: 0 5px; }
+.hover_label p                   { padding: 3px 0; margin: 0; }
+.hover_label div.spinner         { width: 75px; height: 75px; }
+.hover_label div.config ul, 
+.hover_label div.config li       { margin: 0; padding: 0; list-style: none; list-style-image: none; }
+.hover_label div.config li       { line-height: 22px; }
+.hover_label div.config a        { font-size: 11px; color: #000; }
+.hover_label div.config img      { vertical-align: top; padding: 2px 0; margin-left: 0; }
+.hover_label div.config img.tick { position: absolute; margin: 9px 0 0 -11px; }
