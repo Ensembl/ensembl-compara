@@ -1,0 +1,136 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Custom Tracks - WIG File Format</title>
+</head>
+
+<body>
+
+<h1>WIG File Format - Definition and supported options</h1>
+
+<p>The WIG (wiggle) format is designed for display of dense continuous data such as probability scores.
+Wiggle data elements must be equally sized; if you need to display continuous data that is sparse or
+contains elements of varying size, use the <a href="bed.html#bedGraph">BedGraph format</a> instead.</p> 
+
+<p>Please note that Ensembl does not currently support the bigWig format.</p>
+
+<p>A WIG file consists of one of more blocks, each containing a declaration line followed by lines 
+defining data elements. There are two main formatting options: fixedStep and variableStep.</p>
+
+
+<ul>
+<li><a href="#varstep">variableStep</a></li>
+<li><a href="#fixedstep">fixedStep</a></li>
+<li><a href="#datavalues">Data values</a></li>
+<li><a href="#tracklines">Track lines</a></li>
+</ul>
+
+
+<h2 id="varstep">variableStep</h2>
+
+<p>variableStep format is designed for data with irregular intervals between data points, and is the more
+commonly used format. It begins with a declaration line, followed by two columns containing 
+<strong>chromosome positions</strong> and <strong><a href="#datavalues">data values</a></strong>.
+
+<p>The declaration line begins with the word <strong>variableStep</strong> and is followed by space-separated key-value
+pairs:</p>
+
+<ul>
+<li><strong>chrom</strong> (required) - name of chromosome</li>
+<li><strong>span</strong> (optional, defaults to 1) - the number of bases that each data value should cover</li>
+</ul>
+
+<p>The span allows data to be compressed as follows:</p>
+
+<p><em>Without span:</em></p>
+
+<pre class="code">
+variableStep chrom=chr2
+300701  12.5
+300702  12.5
+300703  12.5
+300704  12.5
+300705  12.5
+</pre>
+
+<p><em>With span:</em></p>
+
+<pre class="code">
+variableStep chrom=chr2 span=5
+300701  12.5
+</pre>
+
+<p>Both of these examples will display a value of 12.5 at position 300701-300705 on chromosome 2.</p>
+
+<h2 id="fixedstep">fixedStep</h2>
+
+<p>fixedStep format is designed for data with regular intervals between data points, and is the more
+compact of the two wiggle formats. It begins with a declaration line, followed by a single column 
+of <strong><a href="#datavalues">data values</a></strong>.
+
+<p>The declaration line begins with the word <strong>fixedStep</strong> and is followed by space-separated key-value
+pairs:</p>
+
+<ul>
+<li><strong>chrom</strong> (required) - name of chromosome</li>
+<li><strong>start</strong> (required) - start point for the data values</li>
+<li><strong>step</strong> (required) - distance between data values</li>
+<li><strong>span</strong> (optional, defaults to 1) - the number of bases that each data value should cover</li>
+</ul>
+
+<p><em>Without span</em></p>
+
+<pre class="code">
+fixedStep chrom=chr3 start=400601 step=100
+11
+22
+33
+</pre>
+
+<p>Displays the values 11, 22, 33 as single-base features, on chromosome 3 at positions 400601,
+400701 and 400801 respectively.</p>
+
+<p><em>With span</em></p>
+
+<pre class="code">
+fixedStep chrom=chr3 start=400601 step=100 span=5
+11
+22
+33
+</pre>
+
+<p>Displays the values 11, 22, 33 as 5-base features, on chromosome 3 at positions 400601-400605,
+400701-400705 and 400801-400805 respectively.</p>
+
+<h2 id="datavalues">Data values</h2>
+
+<p>Wiggle element data values can be integer or real, positive or negative. Chromosome positions
+are 1-relative, i.e. the first base is 1. Only positions specified have data; unspecified
+positions will be empty.</p>
+
+<h2 id="tracklines">Track definition lines</h2>
+
+<p>Track definition lines can be used to configure the display further. They should be placed at 
+the beginning of the list of data values they are to affect.</p>
+
+<p>The track line consists of the word 'track' followed by space-separated key=value pairs - see 
+the example below. One element is required:</p>
+
+<ul>
+<li><strong>type</strong> - must be wiggle_0</li>
+</ul> 
+
+
+<p>Valid optional parameters used by Ensembl are:</p>
+
+<ul>
+<li><strong>name</strong> - unique name to identify this track when parsing the file</li>
+<li><strong>description</strong> - Label to be displayed under the track in Region in Detail</li>
+<li><strong>priority</strong> - integer defining the order in which to display tracks, if multiple tracks are defined.</
+li>
+<li><strong>color</strong> - as RGB, hex or X11 named color</li>
+<li><strong>graphType</strong> - either 'bar' or 'points'.</li>
+</ul>
+
+</body>
+</html>

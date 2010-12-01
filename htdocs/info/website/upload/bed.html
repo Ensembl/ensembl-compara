@@ -1,0 +1,131 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Custom Tracks - BED File Format</title>
+</head>
+
+<body>
+
+<h1>BED File Format - Definition and supported options</h1>
+
+<p>The BED format consists of one line per feature, each containing 3-12 columns of data,  plus optional track definition lines.</p>
+
+<ul>
+<li><a href="#required">Required fields</a></li>
+<li><a href="#optional">Optional fields</a></li>
+<li><a href="#tracklines">Track lines</a></li>
+<li><a href="#bedGraph">BedGraph format</a></li>
+</ul>
+
+
+<h2 id="required">Required fields</h2>
+
+<p>The first three fields in each feature line are required:</p>
+
+<ol>
+<li><strong>chrom</strong> - name of the chromosome or scaffold. Any valid seq_region_name can be used, and chromosome names can be given with or without the 'chr' prefix.</li>
+<li><strong>chromStart</strong> - Start position of the feature in standard chromosomal coordinates (i.e. first base is 0).</li>
+<li><strong>chromEnd</strong> - End position of the feature in standard chromosomal coordinates</li>
+</ol>
+
+<pre class="code">
+chr1  213941196  213942363
+chr1  213942363  213943530
+chr1  213943530  213944697
+chr2  158364697  158365864
+chr2  158365864  158367031
+chr3  127477031  127478198
+chr3  127478198  127479365
+chr3  127479365  127480532
+chr3  127480532  127481699
+</pre>
+
+<h2 id="optional">Optional fields</h2>
+
+<p>Nine additional fields are optional. Note that columns cannot be empty - lower-numbered fields must always be populated if higher-numbered ones are used.</p>
+
+<ol start="4">
+<li><strong>name</strong> - Label to be displayed under the feature, if turned on in "Configure this page".</li>
+<li><strong>score</strong> - A score between 0 and 1000. See <a href="#tracklines">track lines</a>, below, for ways to configure the display style of scored data.</li>
+<li><strong>strand</strong> - defined as + (forward) or - (reverse).</li>
+<li><strong>thickStart</strong> - field used by UCSC drawing code, not needed in Ensembl (set as 0 if using itemRgb field).</li>
+<li><strong>thickEnd</strong> - as thickEnd</li>
+<li><strong>itemRgb</strong> - an RGB colour value (e.g. 0,0,255). Only used if there is a track line with the value of itemRgb set to "on" (case-insensitive).</li>
+</ol>
+
+<p>The remaining three fields - <strong>blockCount</strong>, <strong>blockSizes</strong>, and <strong>blockStarts</strong> - are used by the UCSC drawing code but not by Ensembl, and will therefore be ignored.</p>
+
+<pre class="code">
+chr7  127471196  127472363  Pos1  0  +  127471196  127472363  255,0,0
+chr7  127472363  127473530  Pos2  0  +  127472363  127473530  255,0,0
+chr7  127473530  127474697  Pos3  0  +  127473530  127474697  255,0,0
+chr7  127474697  127475864  Pos4  0  +  127474697  127475864  255,0,0
+chr7  127475864  127477031  Neg1  0  -  127475864  127477031  0,0,255
+chr7  127477031  127478198  Neg2  0  -  127477031  127478198  0,0,255
+chr7  127478198  127479365  Neg3  0  -  127478198  127479365  0,0,255
+chr7  127479365  127480532  Pos5  0  +  127479365  127480532  255,0,0
+chr7  127480532  127481699  Neg4  0  -  127480532  127481699  0,0,255
+</pre>
+
+<h2 id="tracklines">Track lines</h2>
+
+<p>Track definition lines can be used to configure the display further, e.g. by grouping features into separate tracks. Track lines should be placed at the beginning of the list of features they are to affect.</p>
+
+<p>The track line consists of the word 'track' followed by space-separated key=value pairs - see the example below. Valid parameters used by Ensembl are:</p>
+
+<ul>
+<li><strong>name</strong> - unique name to identify this track when parsing the file</li>
+<li><strong>description</strong> - Label to be displayed under the track in Region in Detail</li>
+<li><strong>priority</strong> - integer defining the order in which to display tracks, if multiple tracks are defined.</li>
+<li><strong>useScore</strong> - a value from 1 to 4, which determines how scored data will be displayed. Additional parameters may be needed, as described below.
+  <ol>
+  <li>tiling array (<a href="sample_files/wiggle_ta.bed">example file</a>)</li>
+  <li>colour gradient - defaults to Yellow-Green-Blue, with 20 colour grades. Optionally you can specify the colours for the gradient (cgColour1, cgColour2, cgColour3) as either RGB, hex or <a href="ihttp://en.wikipedia.org/wiki/X11_color_names">X11 colour names</a>, and the number of colour grades (cgGrades). (<a href="sample_files/wiggle_cg.bed">example file</a>)</li>
+  <li>histogram (<a href="sample_files/wiggle_hg.bed">example file</a>)</li>
+  <li>wiggle plot (<a href="sample_files/wiggle_plot.bed">example file</a>)</li>
+  </ol>
+</li>
+<li><strong>itemRgb</strong> - if set to 'on' (case-insensitive), the individual RGB values defined in tracks will be used.</li>
+</ul> 
+
+<pre class="code">
+track name="ItemRGBDemo" description="Item RGB demonstration" itemRgb="On" 
+chr7  127471196  127472363  Pos1  0  +  127471196  127472363  255,0,0
+chr7  127472363  127473530  Pos2  0  +  127472363  127473530  255,0,0
+chr7  127473530  127474697  Pos3  0  +  127473530  127474697  255,0,0
+chr7  127474697  127475864  Pos4  0  +  127474697  127475864  255,0,0
+chr7  127475864  127477031  Neg1  0  -  127475864  127477031  0,0,255
+chr7  127477031  127478198  Neg2  0  -  127477031  127478198  0,0,255
+chr7  127478198  127479365  Neg3  0  -  127478198  127479365  0,0,255
+chr7  127479365  127480532  Pos5  0  +  127479365  127480532  255,0,0
+chr7  127480532  127481699  Neg4  0  -  127480532  127481699  0,0,255
+</pre>
+
+<h2 id="bedGraph">BedGraph format</h2>
+
+<p>BedGraph is a suitable format for moderate amounts of scored data. It is based on the BED format (see above) with the following differences:</p>
+
+<ol>
+<li>The score is placed in column 4, not column 5</li>
+<li>Track lines are compulsory, and must include type=bedGraph. Currently the only optional parameters supported by Ensembl are:
+  <ul>
+  <li><strong>name</strong> - see above</li>
+  <li><strong>description</strong> - see above</li>
+  <li><strong>priority</strong> - see above</li>
+  <li><strong>graphType</strong> - either 'bar' or 'points'.</li>
+</ol>
+
+<pre class="code">
+track type=bedGraph name="BedGraph Format" description="BedGraph format" priority=20
+chr19 59302000 59302300 -1.0
+chr19 59302300 59302600 -0.75
+chr19 59302600 59302900 -0.50
+chr19 59302900 59303200 -0.25
+chr19 59303200 59303500 0.0
+chr19 59303500 59303800 0.25
+chr19 59303800 59304100 0.50
+chr19 59304100 59304400 0.75
+</pre>
+
+</body>
+</html>

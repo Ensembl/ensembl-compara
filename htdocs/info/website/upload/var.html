@@ -1,0 +1,106 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Custom Tracks - Variation File Format</title>
+</head>
+
+<body>
+
+<h1>Variation File Format - Definition and supported options</h1>
+
+<ul>
+<li><a href="#input">Input format</a></li>
+<li><a href="#output">Output format</a></li>
+</ul>
+
+<p>
+The 'Variant Effect Predictor' tool which appears as an option when you
+click on <strong>Manage your Data</strong> allows you to upload a set of
+variation data and predict the effect of the variants.</p>
+
+<p>Note that the input and output formats are completely different.</p>
+
+<h2 id="input">Input format</h2>
+
+<p>Data must be supplied in a simple <strong>tab-separated</strong> format,
+containing five columns, all required:
+</p>
+
+<ol>
+<li><strong>chromosome</strong> - just the name or number, with no 'chr' prefix</li>
+<li><strong>start</strong></li>
+<li><strong>end</strong></li>
+<li><strong>allele</strong> - pair of alleles separated by a '/', with the reference allele first</li>
+<li><strong>strand</strong> - defined as + (forward) or - (reverse).</li>
+</ol>
+
+<pre class="code">
+1   881907    881906    -/C   +
+5   140532    140532    T/C   +
+12  1017956   1017956   T/A   +
+2   946507    946507    G/C   +
+14  19584687  19584687  C/T   -
+19  66520     66520     G/A   +
+8   150029    150029    A/T   +
+</pre>
+
+<p>An insertion is indicated by start coordinate = end coordinate +
+1. For example, an insertion of 'C' between nucleotides 12600 and
+12601 on the forward strand of chromosome 8 is indicated as
+follows:</p>
+
+<pre>
+8   12601     12600     -/C   +
+</pre>
+<p>A deletion is indicated by the exact nucleotide coordinates. For
+example, a three base pair deletion of nucleotides 12600, 12601, and
+12602 of the reverse strand of chromosome 8 will be:</p>
+
+<pre>
+8   12600     12602     CGT/- -
+</pre>
+
+<!-- 5,140532,140532,T/C,+
+12,1017956,1017956,T/A,+
+2,946507,946507,G/C,+
+14,19584687,19584687,C/T,-
+19,66520,66520,G/A,+
+8,150029,150029,A/T,+ -->
+
+<h2 id="output">Output format</h2>
+
+<p>The tool predicts the consequence of this variation, the amino acid
+position and change (if the variation falls within a protein) and the SNP
+identifier of  known SNPs that occur at this position. The output
+columns are:</p>
+
+<ol>
+<li><strong>uploaded variation</strong> - as chromosome_start_alleles</li>
+<li><strong>location</strong> - in standard coordinate format (chr:start or chr:start-end)</li>
+<li><strong>gene</strong> - Ensembl stable ID of affected gene</li>
+<li><strong>transcript</strong> - Ensembl stable ID of affected transcript</li>
+<li><strong>consequence</strong> - consequence type of this variation</li>
+<li><strong>relative position in cDNA</strong> - base pair position in coding sequence</li>
+<li><strong>relative position in protein</strong> - amino acid position in protein</li>
+<li><strong>amino acid change</strong> - only given if the variation affects the protein-coding sequence</li>
+<li><strong>corresponding variation</strong> - stable ID of SNP, if known</li>
+</ol>
+
+<p>Empty values are denoted by '-'.</p>
+
+<pre class="code">
+12_1017956_T/A  12:1017956  ENSG00000060237 ENST00000315939 NON_SYNONYMOUS_CODING 7790  2383  /K  rs55650617
+12_1017956_T/A  12:1017956  ENSG00000060237 ENST00000252477 NON_SYNONYMOUS_CODING 6916  2137  /K  rs55650617
+12_1017956_T/A  12:1017956  ENSG00000060237 ENST00000340908 NON_SYNONYMOUS_CODING 5926  1976  /K  rs55650617
+12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000358495 DOWNSTREAM  - - - rs55650617
+12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000228345 DOWNSTREAM  - - - rs55650617
+12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000430095 DOWNSTREAM  - - - rs55650617
+12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000468231 DOWNSTREAM  - - - rs55650617
+12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000481052 DOWNSTREAM  - - - rs55650617
+12_1017956_T/A  12:1017956  ENSG00000002016 ENST00000488642 DOWNSTREAM  - - - rs55650617
+14_19584687_C/T 14:19584687 ENSG00000222036 ENST00000409832 3PRIME_UTR  1671  - - rs2818537
+19_66520_G/A  19:66520  ENSG00000225373 ENST00000391654 INTRONIC  - - - -
+</pre>
+
+</body>
+</html>

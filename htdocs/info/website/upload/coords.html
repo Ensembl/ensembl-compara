@@ -1,0 +1,74 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Custom Tracks - Coordinate Systems</title>
+</head>
+
+<body>
+
+<h1>Custom Tracks - Coordinate Systems</h1>
+
+<h2>Chromosome Coordinate-based Data</h2>
+
+<p>
+Chromosome coordinates are the easiest to work with since features may
+be annotated across clone boundaries. However, this coordinate system
+is unstable and will change with each new genome sequence assembly
+build. Therefore, if you use chromosome coordinates for uploaded data
+you will have to delete the data source and re-upload it in the new
+coordinate system every time the genome sequence assembly is updated.
+</p>
+
+<h2 id="bacclone">BAC Clone Coordinate-based Data</h2>
+
+<p>
+BAC clone coordinates are more stable across genome sequence assembly
+builds, <strong>provided the clone version number has not
+changed</strong>. However you cannot annotate features that span the
+boundary of two clones, although you can create "split-features" that
+annotate portions on two or more clones.
+</p>
+
+<p>
+Please provide coordinates on finished clones only, for which a single
+contig sequence spanning the full clone length is available. If you
+provide data on unfinished clones, which contain more than one contig
+sequence, they will be <strong>ignored</strong>.
+</p>
+
+<p>
+First enter any chromosomal and/or clone coordinate data you wish to
+display in the same <strong>tab-separated</strong> column format, as
+explained in the section above.
+</p>
+
+<p>
+Next you must provide a list of clones you have annotated without
+version suffixes, their type, usually just "Clone" and their total
+lengths in base pairs. This information needs to appear below the
+feature data and separated from it using the special heading
+"[references]" on a line of its own.
+</p>
+
+<p>
+eg:
+</p>
+
+<pre>
+Similarity  AL137655.1.1  homology  wutblastn AP000869.2  4260  4340  + . 373.0000
+Similarity  Hs.326048.2 homology  wutblastn AP000869.2  5406  5534  + . 373.0000
+
+[references]
+AP000869  Clone 159840
+
+AP001267  Clone 239314
+</pre>
+
+<p>
+<strong>Note: The [references] section must appear last in the file,
+after all features.</strong>
+</p>
+
+
+</body>
+</html>

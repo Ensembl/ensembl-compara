@@ -1,0 +1,67 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Custom Tracks - GFF/GTF File Format</title>
+</head>
+
+<body>
+
+<h1>GFF/GTF File Format - Definition and supported options</h1>
+
+<p>The GFF (General Feature Format) format consists of one line per feature, each containing 9 columns of data, plus optional track definition lines. The following documentation is based on the 
+<a href="http://www.sanger.ac.uk/resources/software/gff/spec.html">Version 2 specifications</a>.</p>
+
+<p>The GTF (General Transfer Format) is identical to GFF version 2.</p>
+
+<ul>
+<li><a href="#fields">Fields</a></li>
+<li><a href="#tracklines">Track lines</a></li>
+<li><a href="#moreinfo">More information</a></li>
+</ul>
+
+
+<h2 id="fields">Fields</h2>
+
+<p>Fields <strong>must</strong> be tab-separated. Also, all but the final field in each feature line must contain a value; "empty" columns should be denoted with a '.'</p>
+
+<ol>
+<li><strong>seqname</strong> - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix.</li>
+<li><strong>source</strong> - name of the program that generated this feature, or the data source (database or project name)</li>
+<li><strong>feature</strong> - feature type name, e.g. Gene, Variation, Similarity</li>
+<li><strong>start</strong> - Start position of the feature, with sequence numbering starting at 1.</li>
+<li><strong>end</strong> - End position of the feature, with sequence numbering starting at 1.</li>
+<li><strong>score</strong> - A floating point value.</li>
+<li><strong>strand</strong> - defined as + (forward) or - (reverse).</li>
+<li><strong>frame</strong> - One of '0', '1' or '2'. '0' indicates that the first base of the feature is the first base of a codon, '1' that the second base is the first base of a codon, and so on..</li>
+<li><strong>attribute</strong> - A semicolon-separated list of tag-value pairs, providing additional information about each feature.</li>
+</ol>
+
+<p>Sample GFF output from Ensembl export:</p>
+
+<pre class="code">
+X Ensembl Repeat  2419108 2419128 42  . . hid=trf; hstart=1; hend=21
+X Ensembl Repeat  2419108 2419410 2502  - . hid=AluSx; hstart=1; hend=303
+X Ensembl Repeat  2419108 2419128 0 . . hid=dust; hstart=2419108; hend=2419128
+X Ensembl Pred.trans. 2416676 2418760 450.19  - 2 genscan=GENSCAN00000019335
+X Ensembl Variation 2413425 2413425 . + . 
+X Ensembl Variation 2413805 2413805 . + .
+</pre>
+
+<h2 id="tracklines">Track lines</h2>
+
+<p>Although not part of the formal GFF specification, Ensembl will use track lines to further configure sets of features.</p>
+
+<p>The track line consists of the word 'track' followed by space-separated key=value pairs - see the example below. Valid parameters used by Ensembl are:</p>
+
+<ul>
+<li><strong>name</strong> - unique name to identify this track when parsing the file</li>
+<li><strong>description</strong> - Label to be displayed under the track in Region in Detail</li>
+<li><strong>priority</strong> - integer defining the order in which to display tracks, if multiple tracks are defined.</li>
+</ul> 
+
+<h2 id="moreinfo">More information</h2>
+
+<p>For more information about this file format, see the <a href="http://www.sanger.ac.uk/resources/software/gff/">documentation</a> on the Sanger Institute website.</p>
+
+</body>
+</html>
