@@ -199,7 +199,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     $('img.desc, img.config', this.elLk.hoverLabels).hoverIntent(
       function () {
-        var width = $(this).parent().width();
+        var width = $(this).parent().outerWidth();
         
         $(this).siblings('div').hide().filter('.' + this.className).show().width(function (i, value) {
           return value > width && value > 300 ? 300 : value;
