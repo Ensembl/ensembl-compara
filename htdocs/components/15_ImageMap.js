@@ -32,20 +32,22 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.lastImage = $(this.el).parents('.image_panel')[0] == Ensembl.images.last;
     this.params.highlight = (Ensembl.images.total == 1 || !this.lastImage);
     
-    this.elLk.map        = $('map', this.el);
-    this.elLk.img        = $('img.imagemap', this.el);
-    this.elLk.areas      = $('area', this.elLk.map);
-    this.elLk.exportMenu = $('.iexport_menu', this.el);
+    this.elLk.drag        = $('.drag_select', this.el);
+    this.elLk.map         = $('map', this.el);
+    this.elLk.areas       = $('area', this.elLk.map);
+    this.elLk.exportMenu  = $('.iexport_menu', this.el);
+    this.elLk.img         = $('img.imagemap', this.el);
+    this.elLk.hoverLabels = $('.hover_label', this.el);
     
     this.vdrag = this.elLk.areas.hasClass('vdrag');
     this.multi = this.elLk.areas.hasClass('multi');
     this.align = this.elLk.areas.hasClass('align');
     
     this.makeImageMap(); 
+    this.makeHoverLabels(); 
     
     $('.iexport a', this.el).click(function () {
       panel.elLk.exportMenu.css({ left: parseInt($(this).offset().left, 10) - 1, top: $(this).parent().position().top + $(this).height() + 2 }).toggle();
-      
       return false;
     });
   },
@@ -125,7 +127,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.highlightAllImages();
     }
     
-    this.elLk.img.bind({
+    this.elLk.drag.bind({
       mousedown: function (e) {
         // Only draw the drag box for left clicks.
         // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
@@ -142,15 +144,97 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           panel.clicking = true;
         }
       }
-    }).parent().bind('mousemove', function (e) {
-      var area = panel.getArea(panel.getMapCoords(e));
-      
-      if (area && area.a) {
-        panel.elLk.img.attr({ title: area.a.alt });
+    });
+  },
+  
+  makeHoverLabels: function () {
+    var panel = this;
+    
+    this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
+    
+    this.elLk.img.bind('mousemove', function (e) {
+      if (panel.dragging !== false) {
+        return;
       }
       
-      area = null;
+      var area  = panel.getArea(panel.getMapCoords(e));
+      var hover = false;
+      
+      if (area && area.a) {
+        if ($(area.a).hasClass('label')) {
+          var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
+          
+          if (!label.hasClass('active')) {
+            panel.elLk.hoverLabels.removeClass('active');
+            label.addClass('active');
+            
+            clearTimeout(panel.hoverTimeout);
+            
+            panel.hoverTimeout = setTimeout(function () {
+              var offset = panel.elLk.img.offset();
+              
+              panel.elLk.hoverLabels.hide().filter('.active').css({
+                left:     area.l + offset.left,
+                top:      area.t + offset.top,
+                display: 'block'
+              });
+            }, 100);
+          }
+          
+          hover = true;
+        } else if ($(area.a).hasClass('nav')) { // Used to title tags on navigation controls in multi species view
+          panel.elLk.img.attr('title', area.a.alt);
+        }
+      }
+      
+      if (hover === false) {
+        clearTimeout(panel.hoverTimeout);
+        panel.elLk.hoverLabels.removeClass('active');
+      }
     });
+    
+    this.elLk.hoverLabels.bind('mouseleave', function () {
+      $(this).hide().children('div').hide();
+    });
+    
+    $('img.desc, img.config', this.elLk.hoverLabels).hoverIntent(
+      function () {
+        var width = $(this).parent().width();
+        
+        $(this).siblings('div').hide().filter('.' + this.className).show().width(function (i, value) {
+          return value > width && value > 300 ? 300 : value;
+        });
+      },
+      $.noop
+    );
+    
+    $('a.config', this.elLk.hoverLabels).bind('click', function () {
+      $(this).parents('.hover_label').width(function (i, value) {
+        return value > 100 ? value : 100;
+      }).find('.spinner').show().siblings('div').hide();
+      
+      var config = this.rel;
+      var update = this.href.split(';').reverse()[0].split('='); // update = [ trackName, renderer ]
+      
+      $.ajax({
+        url: this.href,
+        dataType: 'json',
+        method: 'post',
+        success: function (json) {
+          if (json.updated) {
+            panel.elLk.hoverLabels.remove(); // Deletes elements moved to body
+            Ensembl.EventManager.trigger('hideHoverLabels'); // Hide labels and z menus on other ImageMap panels
+            Ensembl.EventManager.trigger('hideZMenu');
+            Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
+            Ensembl.EventManager.trigger('reloadPage', config);
+          }
+        }
+      });
+      
+      return false;
+    });
+    
+    Ensembl.EventManager.register('hideHoverLabels', this, function () { this.elLk.hoverLabels.hide(); });
   },
   
   dragStart: function (e) {
@@ -163,8 +247,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.dragRegion = this.getArea(this.dragCoords.map, true);
     
     if (this.dragRegion) {
-      this.elLk.img.mousemove(function (e2) {
-        panel.dragging = e; // store mousedown event
+      this.elLk.drag.bind('mousemove', function (e2) {
+        panel.dragging = e; // store mousedown even
         panel.drag(e2);
         return false;
       });
@@ -174,7 +258,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   dragStop: function (e) {
     var diff, range;
     
-    this.elLk.img.unbind('mousemove');
+    this.elLk.drag.unbind('mousemove');
     
     if (this.dragging !== false) {
       diff = { 
@@ -185,7 +269,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       // Set a limit below which we consider the event to be a click rather than a drag
       if (Math.abs(diff.x) < 3 && Math.abs(diff.y) < 3) {
         this.clicking = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
-        this.makeZMenu(this.dragging, this.dragCoords.map); // use the original mousedown (stored in this.dragging) to create the zmenu
       } else {
         range = this.vdrag ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
         
@@ -198,9 +281,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   drag: function (e) {
-    var coords = {};
     var x = e.pageX - this.dragCoords.offset.x;
     var y = e.pageY - this.dragCoords.offset.y;
+    var coords = {};
     
     switch (x < this.dragCoords.map.x) {
       case true:  coords.l = x; coords.r = this.dragCoords.map.x; break;
@@ -230,7 +313,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   makeZMenu: function (e, coords) {
     var area = coords.r ? this.dragRegion : this.getArea(coords);
     
-    if (!area) {
+    if (!area || $(area.a).hasClass('label')) {
       return;
     }
     
@@ -402,8 +485,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   getMapCoords: function (e) {
     return {
-      x: e.originalEvent.layerX || e.originalEvent.offsetX || 0, 
-      y: e.originalEvent.layerY || e.originalEvent.offsetY || 0
+      x: e.layerX || e.originalEvent.x || 0, 
+      y: e.layerY || e.originalEvent.y || 0
     };
   },
   
