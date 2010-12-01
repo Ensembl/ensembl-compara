@@ -34,8 +34,8 @@ sub content {
     'text'=>qq(<p class="space-below">(Formerly SNP Effect Predictor). This tool takes a list of variant positions and alleles, and predicts the effects of each
               of these on any overlapping features (transcripts, regulatory features) annotated in Ensembl.</p>
               <p class="space-below">The tool will accept substitutions, insertions and deletions as input,
-              uploaded as a list of tab separated values - for more information 
-              on the expected format see <a href="/info/website/upload/index.html#Consequence" target="_blank">here.</a></p>
+              uploaded as a list of tab separated values - 
+              <a href="/info/website/upload/var.html" target="_blank">more about required format</a>.</p>
               <p>There is a limit of $variation_limit variations that can be processed at any one time. 
               You can upload a file that contains more entries, however anything after the $variation_limit 
               line will be ignored. If your file contains more than $variation_limit variations you can split 
