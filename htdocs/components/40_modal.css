@@ -6,7 +6,7 @@
 
 .modal_caption { float: left }
 .modal_content { overflow: scroll; height: 100%; width: 100%; position: absolute; }
-.modal_content .panel { margin-left: 17.75em; }
+.modal_content .panel { margin-left: 17.25em; }
 .modal_content .no_local_context { margin-left: 0.25em; }
 .modal_content .panel h2 { border-bottom: 1px solid [[PANEL_BORDER]]; }
 .modal_content p.modal_error { color: #c33 }
@@ -20,7 +20,7 @@
 .modal_title li.active { color: [[PAGE_TEXT]]; background-color: [[PANEL_BG]] }
 .modal_title li.active a { color:[[PAGE_TEXT]]; }
 
-.local_modal { width: 17em; margin: 0.25em 0.25em 0; position: absolute; left: 0; border: 1px solid #ccc; padding: 0; background-color: [[PANEL_BG]]; overflow: hidden }
+.local_modal { margin: 0.25em 0.25em 0; position: absolute; left: 0; border: 1px solid #ccc; padding: 0; background-color: [[PANEL_BG]]; overflow: hidden }
 .local_modal dt { font-weight: bold }
 .local_modal dd { margin-left: 0; margin-bottom: 0; white-space: nowrap }
 .local_modal dd dl { border: 0; padding: 0 0 0 14px }
