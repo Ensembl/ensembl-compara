@@ -16,24 +16,25 @@ sub title {
 }
 
 sub content {
-  my $self = shift;
-  my $path = $ENV{'SCRIPT_NAME'};
-  my $html = $path eq '/index.html' ? 'Home' : '<a href="/">Home</a>';
+  my $self        = shift;
+  my $path        = $ENV{'SCRIPT_NAME'};
+  my @breadcrumbs = $path eq '/index.html' ? () : '<a class="home" href="/">Home</a>';
 
   if ($path =~ /^\/info\//) {
-    $html .= ' &gt; ';
-    
     # Level 2 link
     if ($path eq '/info/' || $path eq '/info/index.html') {
-      $html .= 'Docs &amp; FAQs';
+      push @breadcrumbs, 'Docs &amp; FAQs';
     } else {
-      $html .= '<a href="/info/">Docs &amp; FAQs</a>';
+      push @breadcrumbs, '<a href="/info/">Docs &amp; FAQs</a>';
+      push @breadcrumbs, $self->title if $self->title;
     }
     
-    $html .= ' &gt; ' . $self->title if $self->title;
+    return unless @breadcrumbs;
+    
+    my $last = pop @breadcrumbs;
+    
+    return sprintf qq{<ul class="breadcrumbs print_hide">%s<li class="last">$last</li></ul>}, join '', map "<li>$_</li>", @breadcrumbs;
   }
-  
-  return qq{<div class="breadcrumbs print_hide">$html</div>};
 }
 
 sub init {
