@@ -1198,7 +1198,7 @@ sub export_sequence {
 sub tool_buttons {
   my ($self, $blast_seq, $species, $peptide) = @_;
   
-  return if $self->hub->param('_format') || 'HTML' ne 'HTML';
+  return unless $self->html_format;
   
   my $html = sprintf('
     <div class="other-tool">
