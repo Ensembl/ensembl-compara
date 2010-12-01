@@ -18,9 +18,9 @@ sub features {
   my $slice_length = $self->{'container'}->length;
   
   if ($slice_length > $max_length * 1010 ) {
-    $self->errorTrack("Variation features not displayed for regions larger than ${max_length}Kb");
+    $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
   } elsif ($self->{'my_config'}->key =~/set/ && $slice_length >= 51000){
-    $self->errorTrack("Variation sets not displayed for regions larger than 50 Kb");
+    $self->errorTrack("Variation sets are not displayed for regions larger than 50 Kb");
   } else {
     return $self->fetch_features;
   }
