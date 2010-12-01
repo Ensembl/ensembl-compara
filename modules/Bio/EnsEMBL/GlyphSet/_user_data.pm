@@ -99,7 +99,7 @@ sub features {
     my $slice = $slice_adaptor->fetch_by_seq_region_id($f->slice->get_seq_region_id);
     $f->slice($slice);
   }
-  my %results  = ( $logic_name => [ $features||[] ] );
+  my %results  = ( $logic_name => [ $features||[],  $self->my_config('style')] );
   return %results;
 }
 

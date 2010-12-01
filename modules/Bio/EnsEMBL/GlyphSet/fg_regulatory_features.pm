@@ -65,9 +65,9 @@ sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name(); 
   if ($type =~/Promoter/){$type = 'Promoter_associated';}
+  elsif ($type =~/Non/){$type = 'Non-genic';}
   elsif ($type =~/Gene/){$type = 'Genic';}
-  elsif ($type =~/Unclassified/){$type = 'Unclassified';}
-  if ($type =~/Non/){$type = 'Non-genic';}
+  else  {$type = 'Unclassified';}
   return lc($type);
 }
 
@@ -75,10 +75,11 @@ sub colour_key {
 sub tag {
   my ($self, $f) = @_;
   my $type =$f->feature_type->name();
-  if ($type =~/Promoter/){$type = 'Promoter_associated';}
+  if    ($type =~/Promoter/){$type = 'Promoter_associated';}
+  elsif ($type =~/Non/){$type = 'Non-genic';}
   elsif ($type =~/Gene/){$type = 'Genic';}
-  elsif ($type =~/Unclassified/){$type = 'Unclassified';}
-  if ($type =~/Non/){$type = 'Non-genic';} 
+  else {$type = 'Unclassified';}
+
   $type = lc($type);
   my $colour = $self->my_colour( $type );
 

@@ -250,6 +250,7 @@ sub render_normal {
     my $y_pos;
     my $colour_key     = $self->colour_key( $feature_key );
     my $feature_colour = $self->my_colour( $colour_key, undef  );
+    my $label_colour   = $feature_colour;
     my $join_colour    = $self->my_colour( $colour_key, 'join' );
     my $max_score      = $config->{'max_score'} || 1000;
     my $min_score      = $config->{'min_score'} || 0;
@@ -319,7 +320,7 @@ sub render_normal {
         'width' => 0,
         'y'     => 0,
         'title' => $self->feature_title($F[0][2],$db_name),
-	'class' => 'group',
+	      'class' => 'group',
       });
       my $X = -1e8;
       foreach my $f ( @F ){ ## Loop through each feature for this ID!
@@ -348,6 +349,7 @@ sub render_normal {
             feature        => $feat, 
             height         => $h, 
             feature_colour => $feature_colour, 
+            label_colour   => $label_colour,
             delete_colour  => 'black', 
             scalex         => $pix_per_bp
           });
@@ -361,6 +363,7 @@ sub render_normal {
             'width'      => $END-$START+1,
             'height'     => $h,
             'colour'     => $feature_colour,
+            'label_colour' => $label_colour,
             'absolutey'  => 1,
           }));
         }
@@ -371,10 +374,10 @@ sub render_normal {
         $Composite->unshift( $self->Rect({
           'x'         => $Composite->{'x'},
           'y'         => $Composite->{'y'},
-	  'width'     => $Composite->{'width'},
-	  'height'    => $h,
-	  'colour'    => $join_colour,
-	  'absolutey' => 1
+	        'width'     => $Composite->{'width'},
+	        'height'    => $h,
+	        'colour'    => $join_colour,
+	        'absolutey' => 1
         }));
       }
       $Composite->y( $Composite->y + $y_pos );
@@ -382,7 +385,7 @@ sub render_normal {
       if( $self->{'show_labels'} ) {
         $self->push( $self->Text({
           'font'      => $fontname,
-          'colour'    => $feature_colour,
+          'colour'    => $label_colour,
           'height'    => $fontsize,
           'ptsize'    => $fontsize,
           'text'      => $self->feature_label($F[0][2],$db_name),
