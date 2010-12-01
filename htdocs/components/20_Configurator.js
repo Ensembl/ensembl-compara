@@ -216,7 +216,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.search();
     } else if (typeof active != 'undefined') {
       $('div:not(.' + active + '), dd', this.elLk.form).hide();
-      this.elLk.help.html('Show info');
+      this.elLk.help.html('<img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" />');
       
       if (active == 'active_tracks') {
         $('dl.config_menu input', this.elLk.form).each(function () {
@@ -339,7 +339,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         default    : dd.toggle();
       }
       
-      span.html(dd.is(':visible') ? 'Hide info': 'Show info');
+      span.html(dd.is(':visible') ? '<img src="/i/info_grey_17.png" alt="(i)" title="Hide information" />' : '<img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" />');
       
       dd   = null;
       span = null;
