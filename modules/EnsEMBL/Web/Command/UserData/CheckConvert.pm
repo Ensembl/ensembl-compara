@@ -41,7 +41,7 @@ sub process {
 
   my $files_to_convert = [];
   if ($method) {
-    my $upload_response = EnsEMBL::Web::Command::UserData::UploadFile::upload($method, $object);    
+    my $upload_response = EnsEMBL::Web::Command::UserData::UploadFile::upload($method, $self->hub);    
     foreach my $p (keys %$upload_response) {
       if ($p eq 'code') {
         push @$files_to_convert, 'temp-upload-'.$upload_response->{'code'}.':'.$upload_response->{'name'};

@@ -266,7 +266,7 @@ sub fetch_releases {
   }
   else {
     $sql .= qq(
-      ORDER BY number ASC
+      ORDER BY release_id ASC
     );
   }
 
@@ -280,6 +280,50 @@ sub fetch_releases {
       'date'    => $data[1],
       'archive' => $data[2],
       'online'  => $data[3],
+    };
+  }
+  return $records;
+}
+
+sub fetch_archives {
+  my ($self, $first_archive) = @_;
+  return unless $self->db;
+  
+  my @args;
+  my $sql = qq(
+    SELECT
+      r.number, r.date, r.archive, s.species_id, s.name, rs.assembly_name
+    FROM
+      ens_release as r,
+      species as s,
+      release_species as rs
+    WHERE
+      r.release_id = rs.release_id
+    AND
+      s.species_id = rs.species_id
+  );
+  if ($first_archive) {
+    $sql .= qq(AND
+      rs.release_id >= ?
+    );
+    @args = ($first_archive);
+  }
+  $sql .= qq(
+    ORDER BY r.release_id DESC
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute(@args);
+
+  my $records = [];
+  while (my @data = $sth->fetchrow_array()) {
+    push @$records, {
+      'id'            => $data[0],
+      'date'          => $data[1],
+      'archive'       => $data[2],
+      'species_id'    => $data[3],
+      'species_name'  => $data[4],
+      'assembly'      => $data[5],
     };
   }
   return $records;

@@ -20,6 +20,7 @@ __PACKAGE__->add_fields(
   browser_switches => 'text',
   style     => 'text',
   nearest   => 'text',
+  timestamp => 'datetime',
 );
 
 1;

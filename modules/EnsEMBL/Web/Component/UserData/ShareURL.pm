@@ -28,7 +28,7 @@ sub content {
     map { ($_ =~ /^\d+$/) ? "share_ref=000000$_-". checksum($_) : "share_ref=$_" } @shares
   );
 
-  my $url = $self->object->species_defs->ENSEMBL_BASE_URL;
+  my $url = $self->hub->referer->{'absolute_url'};
   $url .= $url =~ /\?/ ? ';' : '?' unless $url =~ /;$/;
   $url .= $share_ref;
 
