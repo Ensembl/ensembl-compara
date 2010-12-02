@@ -295,22 +295,22 @@ sub content {
   }
 
   # URL
-  if ($temp_data && $user && $user->find_administratable_groups) {
-    $html .= $self->_hint(
-      'manage_user_data', 'Sharing with groups',
-      qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>),
-      '100%',
-    );
-  }
-  else {
-    $html .= $self->_hint('user_data_formats', 'Help',
-      qq(<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>),
-      '100%',
-    );
-  }
+  my $dummy_form = $self->new_form({'action' => '#'});
+  $dummy_form->add_notes($temp_data && $user && $user->find_administratable_groups
+    ? {
+      'id'      => 'manage_user_data',
+      'heading' => 'Sharing with groups',
+      'text'    => qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>)
+    }
+    : {
+      'id'      => 'user_data_formats',
+      'heading' => 'Help',
+      'text'    => qq(<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>),
+    }
+  );
+  $html .= $dummy_form->render;
 
   return $html;
 }
-
 
 1;
