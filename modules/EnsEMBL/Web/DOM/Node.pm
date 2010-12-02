@@ -20,12 +20,12 @@ use constant {
 sub new {
   ## @constructor
   ## @params DOM object 
-  my ($class, $dom) = @_; #TODO - remove the argument and get dom from hub (?) if possible -
+  my ($class, $dom) = @_;
   return bless {
     '_attributes'           => {},
     '_child_nodes'          => [],
     '_text'                 => '',
-    '_dom'                  => $dom || new EnsEMBL::Web::DOM, #TODO
+    '_dom'                  => $dom || new EnsEMBL::Web::DOM, #creates new DOM object if not provided as arg
     '_parent_node'          => 0,
     '_next_sibling'         => 0,
     '_previous_sibling'     => 0,
@@ -63,7 +63,7 @@ sub render {
 sub get_element_by_id {
   ## Typical getElementById
   ## @params Element id
-  ## @returns Element object
+  ## @return Element object
   my ($self, $id) = @_;
 
   #works for document and element only
@@ -80,7 +80,7 @@ sub get_element_by_id {
 sub get_elements_by_name {
   ## A slight extension of typical getElementsByName
   ## @params name or ArrayRef of multiple names
-  ## @returns ArrayRef of Element objects
+  ## @return ArrayRef of Element objects
   my ($self, $name) = @_;
   
   $name         = [ $name ] unless ref($name) eq 'ARRAY';
@@ -100,7 +100,7 @@ sub get_elements_by_name {
 sub get_elements_by_tag_name {
   ## A slight extension of typical getElementsByTagName
   ## @params Tag name (string) or ArrayRef of multiple tag names
-  ## @returns ArrayRef of Element objects
+  ## @return ArrayRef of Element objects
   my ($self, $tag_name) = @_;
   
   $tag_name     = [ $tag_name ] unless ref($tag_name) eq 'ARRAY';
@@ -120,7 +120,7 @@ sub get_elements_by_tag_name {
 sub get_elements_by_class_name {
   ## A slight extension of typical getElementsByClassName
   ## @params Class name
-  ## @returns ArrayRef of Element objects
+  ## @return ArrayRef of Element objects
   my ($self, $class_name) = @_;
   
   $class_name     = [ $class_name ] unless ref($class_name) eq 'ARRAY';
@@ -192,19 +192,21 @@ sub appendable {
   #second filter - if invalid node
   return 0 if not defined $node || not defined $node->node_name || $node->node_name eq '';
 
-  #third filter - if the node to put in is one of this node's ancestors
+  #third filter - if the node being appended as child is one of this node's ancestors
   my $ancestor = $self->parent_node;
   while (defined $ancestor) {
     return 0 if $ancestor->is_same_as($node);
     $ancestor = $ancestor->parent_node;
   }
+  
+  ##finally run some individual filters before giving any result
   return $self->_appendable($node);
 }
 
 sub _appendable {
   ## Adds another filter to appendable method
   ## Override in child classes - only if validation required
-  return 1; #no validations by default
+  return 1; #no extra filter by default
 }
 
 sub append_child {
@@ -213,7 +215,7 @@ sub append_child {
   ## @return New element if success, undef otherwise
   my ($self, $element) = @_;
   if ($self->appendable($element)) {
-    $element->parent_node->remove_child($element) if defined $element->parent_node; #remove from present parent node, if any
+    $element->remove; #remove from present parent node, if any
     $element->{'_parent_node'} = $self;
     if ($self->has_child_nodes) {
       $element->{'_previous_sibling'} = $self->last_child;
@@ -233,7 +235,6 @@ sub insert_before {
   ## @params New element
   ## @params Reference element
   ## @return New element if successfully added, undef otherwise
-
   my ($self, $new_element, $reference_element) = @_;
   
   if (defined $reference_element && $self->is_same_as($reference_element->parent_node) && !$reference_element->is_same_as($new_element)) {
@@ -276,7 +277,7 @@ sub prepend_child {
 sub clone_node {
   ## Clones an element
   ## Only properties defined in this class will be cloned
-  ## @param 1/0 depending upon if child elements also need to be cloned (deep cloning)
+  ## @params 1/0 depending upon if child elements also need to be cloned (deep cloning)
   ## @return New element
   my ($self, $deep_clone) = @_;
   
@@ -301,12 +302,12 @@ sub clone_node {
     $previous_sibling = $child_clone; #for next loop
     push @{$clone->{'_child_nodes'}}, $child_clone;
   }
-  return $clone;  
+  return $clone;
 }
 
 sub remove_child {
   ## Removes a child element
-  ## @param Element to be removed
+  ## @params Element to be removed
   ## @return Removed element
   my ($self, $element) = @_;
   if ($self->is_same_as($element->parent_node)) {
@@ -323,8 +324,8 @@ sub remove_child {
 
 sub replace_child {
   ## Replaces a child element with another
-  ## @param New Element
-  ## @param Old Element
+  ## @params New Element
+  ## @params Old Element
   ## @return Removed element
   my ($self, $new_element, $old_element) = @_;
   return $self->remove_child($old_element) if $self->insert_before($new_element, $old_element);
