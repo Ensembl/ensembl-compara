@@ -93,7 +93,7 @@ sub content {
     );
   }
 
-  my @formats = sort @{$object->species_defs->USERDATA_FILE_FORMATS};
+  my @formats = sort @{$object->species_defs->USERDATA_FILE_FORMATS || []};
   my $format_values = [{'name' => '-- Choose --', 'value' => ''}];
   foreach my $f (@formats) {
     push @$format_values, {'name' => $f, 'value' => uc($f)};
