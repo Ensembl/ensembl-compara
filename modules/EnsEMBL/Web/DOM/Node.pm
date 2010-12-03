@@ -5,8 +5,6 @@ use strict;
 use HTML::Entities qw(encode_entities decode_entities);
 use Clone qw(clone);
 
-use base qw(EnsEMBL::Web::Root);
-
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Tools::RandomString;
 
@@ -56,7 +54,7 @@ sub node_name {
 sub render {
   ## Outputs the node html
   ## Override in child class
-  ## @return HTML
+  ## @return output HTML
   return '';
 }
 
@@ -69,6 +67,7 @@ sub get_element_by_id {
   #works for document and element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
+      next unless $_->node_type == $self->ELEMENT_NODE;
       return $_ if $_->id eq $id;
       my $child_with_this_id = $_->get_element_by_id($id);
       return $child_with_this_id if defined $child_with_this_id;
@@ -90,6 +89,7 @@ sub get_elements_by_name {
   #works for document or element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
+      next unless $_->node_type == $self->ELEMENT_NODE;
       push @$result, $_ if exists $name_hash->{$_->name} eq $name;
       push @$result, @{$_->get_elements_by_name($name)};
     }
@@ -110,6 +110,7 @@ sub get_elements_by_tag_name {
   #works for document or element only
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
+      next unless $_->node_type == $self->ELEMENT_NODE;
       push @$result, $_ if exists $tag_hash->{$_->node_name};
       push @$result, @{$_->get_elements_by_tag_name($tag_name)};
     }
@@ -119,23 +120,115 @@ sub get_elements_by_tag_name {
 
 sub get_elements_by_class_name {
   ## A slight extension of typical getElementsByClassName
-  ## @params Class name
+  ## @params Class name OR ArrayRef of multiple class names
   ## @return ArrayRef of Element objects
   my ($self, $class_name) = @_;
   
-  $class_name     = [ $class_name ] unless ref($class_name) eq 'ARRAY';
-  my $result      = [];
+  $class_name = [ $class_name ] unless ref($class_name) eq 'ARRAY';
+
+  my $attrib_set = [];
+  push @$attrib_set, ['class', $_] for @$class_name;
+
+  return $self->get_elements_by_attribute($attrib_set);
+}
+
+sub get_elements_by_attribute {
+  ## Gets all the elements inside a node with the given attribute and value
+  ## @params Attribute name OR ArrayRef of [[attrib1, value1], [attrib2, value2], [attrib3, value3]] for multiple attributes
+  ## @params Attribute value
+  ## @return ArrayRef of Element objects
+  my $self = shift;
 
   #works for document or element only
-  if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
-    foreach my $child_node (@{$self->child_nodes}) {
-      for (@{$class_name}) {
-        push @$result, $child_node if $child_node->has_attribute('class') && exists $child_node->{'_attributes'}{'class'}{$_};
+  return [] unless $self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE;
+
+  my $attrib_set = shift;
+  if (ref($attrib_set) ne 'ARRAY') {
+    $attrib_set = [[ $attrib_set, shift ]];
+  }
+  elsif (scalar @$attrib_set && ref($attrib_set->[0]) ne 'ARRAY') {
+    $attrib_set = [ $attrib_set ];
+  }
+
+  my $result = [];
+  
+  foreach my $child_node (@{$self->child_nodes}) {
+    next unless $child_node->node_type == $self->ELEMENT_NODE;
+    for (@{$attrib_set}) {
+      if ($_->[0] =~ /^(class|style)$/) {
+        push @$result, $child_node if $child_node->has_attribute($_->[0]) && exists $child_node->{'_attributes'}{$_->[0]}{$_->[1]};
       }
-      push @$result, @{$child_node->get_elements_by_class_name($class_name)};
+      else {
+        push @$result, $child_node if $child_node->get_attribute($_->[0]) eq $_->[1];
+      }
     }
+    push @$result, @{$child_node->get_elements_by_attribute($attrib_set)};
   }
   return $result;
+}
+
+sub get_ancestor_by_id {
+  ## Gets the most recent ancestor with the given id
+  ## @params id of the ancestor
+  ## @return Element object or undef
+  my ($self, $id) = @_;
+  return $self->get_ancestor_by_attribute('id', $id);
+}
+
+sub get_ancestor_by_name {
+  ## Gets the most recent ancestor with the given name
+  ## @params name
+  ## @return Element object or undef
+  my ($self, $name) = @_;
+  return $self->get_ancestor_by_attribute('name', $name);
+}
+
+sub get_ancestor_by_tag_name {
+  ## Gets the most recent ancestor with the given tag name
+  ## @params Tag name
+  ## @return Element object or undef
+  my ($self, $tag_name) = @_;
+  
+  ## works for element and text node only
+  if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->TEXT_NODE || $self->node_type == $self->COMMENT_NODE) {
+    my $ancestor = $self->parent_node;
+    while ($ancestor && $ancestor->node_type == $self->ELEMENT_NODE) {
+      $ancestor = $ancestor->parent_node;
+      return $ancestor if $ancestor->node_name eq $tag_name;
+    }
+  }
+  return undef;
+}
+
+sub get_ancestor_by_class_name {
+  ## Gets the most recent ancestor with the given class name
+  ## @params Class name
+  ## @return Element object or undef
+  my ($self, $class_name) = @_;
+  return $self->get_ancestor_by_attribute('class', $class_name);
+}
+
+sub get_ancestor_by_attribute {
+  ## Gets the most recent ancestor with the given attribute and value
+  ## @params Attribute name
+  ## @params Attribute value
+  ## @return Element object or undef
+  my ($self, $attrib, $value) = @_;
+
+  ## works for element and text node only
+  if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->TEXT_NODE || $self->node_type == $self->COMMENT_NODE) {
+    my $ancestor = $self->parent_node;
+    while ($ancestor && $ancestor->node_type == $self->ELEMENT_NODE) {
+      $ancestor = $ancestor->parent_node;
+      if ($attrib =~ /^(class|style)$/) {
+        return $ancestor if $ancestor->has_attribute($attrib) && exists $ancestor->{'_attributes'}{$attrib}{$value};
+      }
+      else {
+        return $ancestor if $ancestor->get_attribute($attrib) eq $value;
+      }
+    }
+  }
+  return undef;
 }
 
 sub has_child_nodes {
@@ -320,6 +413,7 @@ sub remove_child {
     return $element;
   }
   warn 'Element was not found in the parent node.';
+    return undef;
 }
 
 sub replace_child {
