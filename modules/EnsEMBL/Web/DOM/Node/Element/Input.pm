@@ -15,6 +15,11 @@ sub new {
   return $self;
 }
 
+sub type {
+  ## Gets the type attribute of the input
+  return shift->TYPE_ATTRIB;
+}
+
 sub node_name {
   ## @overrides
   return 'input';
