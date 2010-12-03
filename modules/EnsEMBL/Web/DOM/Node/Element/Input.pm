@@ -17,7 +17,7 @@ sub new {
 
 sub type {
   ## Gets the type attribute of the input
-  return shift->TYPE_ATTRIB;
+  return shift->get_attribute('type');
 }
 
 sub node_name {
