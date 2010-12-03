@@ -193,8 +193,8 @@ sub get_ancestor_by_tag_name {
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->TEXT_NODE || $self->node_type == $self->COMMENT_NODE) {
     my $ancestor = $self->parent_node;
     while ($ancestor && $ancestor->node_type == $self->ELEMENT_NODE) {
-      $ancestor = $ancestor->parent_node;
       return $ancestor if $ancestor->node_name eq $tag_name;
+      $ancestor = $ancestor->parent_node;
     }
   }
   return undef;
@@ -219,13 +219,13 @@ sub get_ancestor_by_attribute {
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->TEXT_NODE || $self->node_type == $self->COMMENT_NODE) {
     my $ancestor = $self->parent_node;
     while ($ancestor && $ancestor->node_type == $self->ELEMENT_NODE) {
-      $ancestor = $ancestor->parent_node;
       if ($attrib =~ /^(class|style)$/) {
         return $ancestor if $ancestor->has_attribute($attrib) && exists $ancestor->{'_attributes'}{$attrib}{$value};
       }
       else {
         return $ancestor if $ancestor->get_attribute($attrib) eq $value;
       }
+      $ancestor = $ancestor->parent_node;
     }
   }
   return undef;
