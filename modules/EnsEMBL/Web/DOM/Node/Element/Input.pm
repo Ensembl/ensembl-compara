@@ -4,6 +4,17 @@ use strict;
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
+use constant {
+  TYPE_ATTRIB => '',#override in child classes
+};
+
+sub new {
+  ## @overrides
+  my $self = shift->SUPER::new(@_);
+  $self->set_attribute('type', $self->TYPE_ATTRIB);
+  return $self;
+}
+
 sub node_name {
   ## @overrides
   return 'input';
@@ -16,13 +27,7 @@ sub can_have_child {
 
 sub form {
   ## Returns a reference to the form object that contains the input
-  my $self = shift;
-  my $node = $self;
-  while ($node) {
-    $node = $node->parent_node;
-    return $node if defined $node && $node->node_name eq 'form';
-  }
-  return undef;
+  return shift->get_ancestor_by_tag_name('form');
 }
 
 sub disabled {
