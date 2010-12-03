@@ -10,14 +10,8 @@ sub node_name {
 }
 
 sub form {
-  ## Returns a reference to the form object that contains the select
-  my $self = shift;
-  my $node = $self;
-  while ($node) {
-    $node = $node->parent_node;
-    return $node if defined $node && $node->node_name eq 'form';
-  }
-  return undef;
+  ## Returns a reference to the form object that contains the input
+  return shift->get_ancestor_by_tag_name('form');
 }
 
 sub selected_index {
