@@ -20,7 +20,7 @@ sub _appendable {
     ||
     $child->node_type eq $self->ELEMENT_NODE
       &&
-      $child->node_name !~ /^(body|caption|col|colgroup|head|html|li|optgroup|option|tbody|td|tfoot|th|thead|title|tr)$/
+      $child->node_name !~ /^(area|body|caption|col|colgroup|dd|dt|head|html|li|legend|optgroup|option|tbody|td|tfoot|th|thead|title|tr)$/
     ? 1
     : 0
   ;

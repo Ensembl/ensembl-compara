@@ -15,7 +15,7 @@ sub _appendable {
   return
     $child->node_type == $self->ELEMENT_NODE
     &&
-    $child->node_name =~ /^tr$/
+    $child->node_name eq 'tr'
     ? 1
     : 0  
   ;
