@@ -105,6 +105,7 @@ sub content {
       'label'   => "Data format",
       'values'  => $format_values,
       'select'  => 'select',
+      'disabled'=> scalar @formats ? 0 : 1,
   );
 
   $form->add_element( type => 'Text', name => 'text', label => 'Paste file' );
