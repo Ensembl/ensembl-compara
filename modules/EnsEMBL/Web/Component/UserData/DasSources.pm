@@ -56,8 +56,8 @@ sub content {
     my $noun    = $count_added > 1 ? 'sources' : 'source';
     my $verb    = $count_added > 1 ? 'are' : 'is';
     my $subject = $count_added > 1 ? 'they' : 'it';
-    my $note = sprintf '%d DAS %s %s cannot be selected here because %s %3$s already configured within %s.',
-                       $count_added, $noun, $verb, $subject,
+    my $note = sprintf '%d DAS %s cannot be selected here because %s %s already configured within %s.',
+                       $count_added, $noun, $subject, $verb,
                        $self->object->species_defs->ENSEMBL_SITETYPE;
     $form->add_notes( {'heading'=>'Note', 'text'=> $note } );
   }
