@@ -4,11 +4,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Input::Checkbox);
 
-sub new {
-  ## @overrides
-  my $self = shift->SUPER::new(@_);
-  $self->set_attribute('type', 'radio');
-  return $self;
-}
+use constant {
+  TYPE_ATTRIB => 'radio',
+};
 
 1;
