@@ -15,7 +15,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        release         => '60',
+        release         => '61',
         rel_suffix      => '',    # an empty string by default, a letter otherwise
         rel_with_suffix => $self->o('release').$self->o('rel_suffix'),
 
@@ -35,7 +35,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_59',
+            -dbname => 'ensembl_compara_60',
         },
 
         master_db => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
