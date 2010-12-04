@@ -192,7 +192,7 @@ sub mfetch_uniprot_ids {
             my @ids = split(/\s/, $output_text);
             push @all_ids, @ids;
         } else {
-            die "mfetch returned nothing, mole server probably down";
+            die "[$cmd] returned nothing, mole server probably down";
         }
     }
     printf("fetched %d ids from %s\n", scalar(@all_ids), $source) if($self->debug);
