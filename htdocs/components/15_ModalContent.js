@@ -37,7 +37,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       Ensembl.EventManager.trigger('deleteBookmark', this.href.match(/id=(\d+)\b/)[1]);
     });
     
-    $('form td.select_all input', this.elLk.content).live('click', function () {
+    $('form div.select_all input', this.elLk.content).live('click', function () {
       $(this).parents('fieldset').find('input[type=checkbox]').attr('checked', this.checked);
     });
     
@@ -159,7 +159,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   setSelectAll: function () {    
-    $('form td.select_all input', this.elLk.content).each(function () {
+    $('form div.select_all input', this.elLk.content).each(function () {
       $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
     });
     
