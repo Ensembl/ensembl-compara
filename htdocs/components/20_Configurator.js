@@ -215,7 +215,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.elLk.search.val(this.query);
       this.search();
     } else if (typeof active != 'undefined') {
-      $('div:not(.' + active + '), dd', this.elLk.form).hide();
+      $('> div:not(.' + active + '), dd', this.elLk.form).hide();
       this.elLk.help.html('<img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" />');
       
       if (active == 'active_tracks') {
