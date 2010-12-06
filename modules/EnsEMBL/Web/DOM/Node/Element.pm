@@ -106,9 +106,9 @@ sub set_attribute {
 
 sub set_attributes {
   ## Sets multiple attributes to the element
-  ## @params ArrayRef of HashRefs {name => ?, value => ?}
+  ## @params HashRef {attrib1 => ?, attrib2 => ? ...}
   my ($self, $attribs) = @_;
-  $self->set_attribute($_->{'name'}, $_->{'value'}) for (@$attribs);
+  $self->set_attribute($_, $attribs->{$_}) for (keys %$attribs);
 }
 
 sub _access_attribute {
