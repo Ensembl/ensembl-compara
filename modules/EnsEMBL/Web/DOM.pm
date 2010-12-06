@@ -35,8 +35,11 @@ sub create_document {
 sub create_element {
   ## Creates an element of a given tag name by instantiating the corresponding class
   ## @params Element type
+  ## @params HashRef of {attrib1 => value1, attrib2 => value2} for attributes
   ## @return Element subclass object
-  my ($self, $element_type)  = @_;
+  my ($self, $element_type, $attributes)  = @_;
+
+  $attributes ||= {};
 
   my $node_class = $self->_get_mapped_element_class(lc $element_type);
   my $valid_element = $self->dynamic_use($node_class);
@@ -45,7 +48,9 @@ sub create_element {
     warn qq(Could not create an element $element_type. Unable to load $node_class dynamically.);
     return;
   }
-  return $node_class->new($self);
+  my $element = $node_class->new($self);
+  $element->set_attributes($attributes);
+  return $element;
 }
 
 sub create_text_node {
