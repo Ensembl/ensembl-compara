@@ -12,6 +12,10 @@ use EnsEMBL::Web::OrderedTree;
 
 use base qw(EnsEMBL::Web::Root);
 
+use constant {
+  SELECT_ALL_FLAG => '__select_all', ##TODO  .. not an ideal solution to flag the fieldsets.
+};
+
 sub new {
   my ($class, $type, $action, $hub) = @_;
 
@@ -119,34 +123,37 @@ sub has_form {
 
 sub get_form {
   my $self = shift;
-  $self->{'_form'} ||= EnsEMBL::Web::Form->new($self->{'_form_id'}, $self->url, 'post', 'configuration std check');
+  $self->{'_form'} ||= EnsEMBL::Web::Form->new({'id' => $self->{'_form_id'}, 'action' => $self->url, 'class' => 'configuration std'});
   return $self->{'_form'};
 }
 
 sub add_fieldset {
   my ($self, $legend, $class) = @_;
   
+  $class = 'generic' if !$class && $legend eq 'Display options';
   (my $div_class = $legend) =~ s/ /_/g;
-  my $fieldset = $self->get_form->add_fieldset('form' => $self->{'_form_id'});
-  $fieldset->legend($legend);
-  $fieldset->class($div_class);
-  $fieldset->extra(qq{ class="$class"}) if $class;
+  
+  my $fieldset = $self->get_form->add_fieldset($legend);
+  $fieldset->set_attribute('class', $class) if $class;
   
   $self->tree->create_node(undef, { url => '#', availability => 1, caption => $legend, class => $div_class }) if $self->nav_tree;
-  
+    
   return $fieldset;
 }
 
 sub get_fieldset {
   my ($self, $i) = @_;
-  
-  my $fieldsets = $self->get_form->{'_fieldsets'};
+
+  my $fieldsets = $self->get_form->fieldsets;
   my $fieldset;
   
   if (int $i eq $i) {
-    $fieldset = $fieldsets->[$i]; # $i is an array index
-  } else {
-    ($fieldset) = grep $_->legend eq $i, @$fieldsets; # $i is a legend
+    $fieldset = $fieldsets->[$i];
+  }
+  else {
+    for (@$fieldsets) {
+      $fieldset = $_ and last if $_->get_legend && $_->get_legend->inner_HTML eq $i
+    }
   }
   
   return $fieldset;
@@ -154,22 +161,24 @@ sub get_fieldset {
 
 sub add_form_element {
   my ($self, $element) = @_;
-  
-  my @extra;
-  my $value = $self->get($element->{'name'});
-  
-  if ($element->{'type'} =~ /CheckBox/) {
-    push @extra, 'checked' => $value eq $element->{'value'} ? 1 : 0;
-  } elsif (!exists $element->{'value'}) {
-    push @extra, 'value' => $value;
+
+  if ($element->{'type'} eq 'CheckBox') {
+    $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
   }
-  
-  my $new_fieldset = $self->get_form->add_element(%$element, @extra);
-  
-  if ($new_fieldset) {
-    $new_fieldset->legend('Display options');
+  elsif (not exists $element->{'value'}) {
+    $element->{'value'} = $self->get($element->{'name'});
+  }
+
+  my $fieldset;
+  if ($self->get_form->has_fieldset) {
+    $fieldset = $self->get_form->fieldset;
+  }
+  else {
+    $fieldset = $self->add_fieldset('Display options');
     $self->tree->create_node(undef, { url => '#', availability => 1, caption => 'Display options', class => 'generic' }) if $self->nav_tree;
   }
+
+  $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
 }
 
 # Loop through the parameters and update the config based on the parameters passed
@@ -363,7 +372,7 @@ sub update_from_config_strings {
   $self->altered = 1 if $updated;
   $session->store;
 
-  return $params_removed ? join '?', $r->uri, $input->query_string : undef;
+  return $params_removed ? join '?', $r->uri, $input->query_string : undef;#'
 }
 
 # Delete a key from the user settings
@@ -390,57 +399,71 @@ sub build_form {
   
   $self->form($object) if $self->can('form'); # can't use an empty form stub in the parent because has_form checks $self->can('form'). TODO: change has_form
   
-  foreach my $fieldset (@{$self->get_form->{'_fieldsets'}}) {
-    next if $fieldset->{'select_all'};
+  foreach my $fieldset (@{$self->get_form->fieldsets}) {
+
+    ## Add select all checkboxes
+    next if $fieldset->{$self->SELECT_ALL_FLAG};
        
     my %element_types;
+    my $elements = $fieldset->inputs;# returns all input, select and textarea nodes 
     
-    foreach my $element (@{$fieldset->elements}) {
-      $element_types{lc $_->type}++ for @$element;
+    for (@{$elements}) {
+      $element_types{$_->node_name . $_->get_attribute('type')}++;
     }
     
-    delete $element_types{$_} for qw(hidden submit noedit);
+    delete $element_types{$_} for qw(inputhidden inputsubmit);
     
     # If the fieldset is mostly checkboxes, provide a select/deselect all option
-    if ($element_types{'checkbox'} > 1 && [ sort { $element_types{$b} <=> $element_types{$a} } keys %element_types ]->[0] eq 'checkbox') {
-      my $position = 0;
+    if ($element_types{'inputcheckbox'} > 1 && [ sort { $element_types{$b} <=> $element_types{$a} } keys %element_types ]->[0] eq 'inputcheckbox') {
+      my $reference_element = undef;
       
-      foreach my $element (@{$fieldset->elements}) {
-        last if grep $_->type eq 'CheckBox', @$element;
-        $position++;
+      for (@{$elements}) {
+        $reference_element = $_ and last if $_->get_attribute('type') eq 'checkbox';
       }
       
-      $fieldset->add_element(
-        type    => 'CheckBox',
-        name    => 'select_all',
-        label   => 'Select/deselect all',
-        value   => 'select_all',
-        classes => [ 'select_all' ]
-      );
+      $reference_element = $reference_element->parent_node while ref($reference_element) !~ /::Form::Field$/; #get the wrapper of the element before using it as reference
       
-      splice @{$fieldset->{'_element_order'}}, $position, 0, pop @{$fieldset->{'_element_order'}}; # Make it the first checkbox
+      my $select_all = $fieldset->add_field({
+        type      => 'checkbox',
+        name      => 'select_all',
+        label     => '<u>Select/deselect all</u>',
+        value     => 'select_all',
+        class     => 'select_all',
+        selected  => 1
+      });
       
-      $fieldset->{'select_all'} = 1;
+      $fieldset->insert_before($select_all, $reference_element);
+      $fieldset->{$self->SELECT_ALL_FLAG} = 1;
     }
+  }
+  
+  if (!$no_extra_bits && $self->has_images) {
+    my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
+    
+    $fieldset->add_field({
+      type    => 'DropDown',
+      name    => 'cookie_width',
+      value   => $ENV{'ENSEMBL_IMAGE_WIDTH'},
+      label   => 'Width of image',
+      values  => [
+        { value => 'bestfit', caption => 'best fit' },
+        map {{ value => $_, caption => "$_ pixels" }} map $_*100, 5..20
+      ]
+    });
+  }
+  
+  for (@{$self->get_form->fieldsets}) {
+    
+    ## wrap the fieldset inside the div for JS to work properly
+    my $wrapper_div = $_->dom->create_element('div');
+    if (my $legend = $_->get_legend) {
+      (my $div_class = $legend->inner_HTML) =~ s/ /_/g;
+      $wrapper_div->set_attribute('class', $div_class);
+    }
+    $wrapper_div->append_child($_->parent_node->replace_child($wrapper_div, $_));
   }
   
   return if $no_extra_bits;
-  
-  if ($self->has_images) {
-    my $fieldset = $self->get_fieldset('Display options') || $self->add_fieldset('Display options');
-    
-    $fieldset->add_element(
-      type   => 'DropDown',
-      select => 'select',
-      name   => 'cookie_width',
-      value  => $ENV{'ENSEMBL_IMAGE_WIDTH'},
-      label  => 'Width of image',
-      values => [
-        { value => 'bestfit', name => 'best fit' },
-        map {{ value => $_, name => "$_ pixels" }} map $_*100, 5..20
-      ]
-    );
-  }
   
   $self->tree->create_node('form_conf', { availability => 0, caption => 'Configure' }) unless $self->nav_tree;
 }

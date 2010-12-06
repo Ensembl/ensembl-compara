@@ -83,142 +83,41 @@ sub form {
     $focus_feature_type_ids{$_} ||= $focus_row++ for keys %$feature_sets;
   }
   
-  $view_config->add_fieldset('Evidence types', 'matrix');
+  my $fieldset = $view_config->add_fieldset('Evidence types', 'matrix');
+  $fieldset->{$view_config->SELECT_ALL_FLAG} = 1;
+  my $matrix = $fieldset->add_matrix;
   
-  # Add row headers
-  $view_config->add_form_element({
-    type   => 'CheckBox',
-    label  => '<span style="color: #880000">Core features:</span>',
-    name   => 'opt_ft_core',
-    value  => 'on',
-    raw    => 1,
-    layout => '2:0',
-  });
-  
-  $view_config->add_form_element({
-    type   => 'CheckBox',
-    label  => '<span style="color: #880000">Other features:</span>',
-    name   => 'opt_ft_other',
-    value  => 'on',
-    raw    => 1,
-    layout => "$focus_row:0",
-  });
- 
-  $view_config->add_form_element({
-    type   => 'CheckBox',
-    label  => 'Select features:',
-    name   => 'opt_ft_select',
-    value  => 'on',
-    raw    => 1,
-    layout => "1:1",
-  });
- 
-  $view_config->add_form_element({
-    type   => 'CheckBox',
-    label  => '&nbsp',
-    name   => 'opt_ft_no_data',
-    value  => 'on',
-    raw    => 1,
-    layout => '1:0',
-  });
-  
-  foreach my $feature (sort keys %evidence_features) {
-    my ($feature_name, $feature_id) = split /\:/, $feature; 
-    my $column    = 2;
-    my $name      = "opt_cft_$feature_name";
-    my $row_value = $focus_feature_type_ids{$feature_id} ? $row++ : ++$focus_row;
-    
-    # Add row headers
-    $view_config->add_form_element({
-      type   => 'CheckBox',
-      label  =>  $feature_name,
-      name   =>  "$name:header",
-      value  => 'on',
-      raw    => 1,
-      layout => "$row_value:0",
-    });
-    
-    # Add select all for row 
-    $view_config->add_form_element({
-      type    => 'CheckBox',
-      label   => 'Select all',
-      name    => $name,
-      value   => 'select_all',
-      classes => [ 'select_all_row' ],
-      raw     => 1,
-      layout  => "$row_value:1",
-    });
-
-    foreach my $cell_line (sort keys %cell_lines) { 
-      $cell_line =~ s/\:\w*//;
-      
-      my $name     = "opt_cft_$cell_line:$feature_name";
-      my $disabled = 1;
-      my $classes  = [];
-      
-      if (exists $feature_type_ids{$cell_line}{$feature_id}) { 
-        $disabled = 0; 
-        my $set = 'other';
-        if (exists $focus_feature_type_ids{$feature_id}){ $set = 'core'; } 
-        $classes = [ "opt_cft_$cell_line", "opt_cft_$feature_name", $set ];
-      } 
-      
-      $view_config->add_form_element({   
-        type     => 'CheckBox', 
-        name     => $name,
-        value    => 'on',
-        raw      => 1, 
-        disabled => $disabled,
-        layout   => "$row_value:$column",
-        classes  => $classes,
-      });
-      
-      $column++;
-    }
-  }
-
-  # Add column to contain select all from row checkbox
-  $view_config->add_form_element({
-    type   => 'CheckBox',
-    name   => 'cell_line:all',
-    label  => '&nbsp;',
-    value  => 'on',
-    raw    => 1,
-    layout => '0:1',
-  });
-  
-  my $column = 2;
+  $matrix->set_input_prefix('opt_cft_');
   
   foreach my $cell_line (sort keys %cell_lines) {
     $cell_line =~ s/\:\w*//;
-    
-    my $name = "opt_cft_$cell_line";
-    
-    $view_config->add_form_element({
-      type   => 'CheckBox',
-      label  => $cell_line,
-      name   => "$name:header",
-      value  => 'on',
-      raw    => 1,
-      layout => "0:$column",
-    });
+    $matrix->add_column({'name' => $cell_line, 'caption' => $cell_line});
+  }
+  
+  my $groups = {'core' => [], 'other' => []};
 
-    $view_config->add_form_element({
-      type    => 'DropDown',
-      label   => 'Select',
-      name    => $name,
-      raw     => 1,
-      layout  => "1:$column",
-      classes => [ 'select_all_column' ],
-      values  =>[
-        { value => '',      name => ''      },
-        { value => 'all',   name => 'All'   },
-        { value => 'core',  name => 'Core'  },
-        { value => 'other', name => 'Other' },
-        { value => 'none',  name => 'None'  }    
-      ]
-    });    
-    $column++;
+  foreach my $feature (sort keys %evidence_features) {
+    my ($feature_name, $feature_id) = split /\:/, $feature;
+    
+    my $row = {};
+    $row->{'name'} = $feature_name;
+    $row->{'row'}  = {};
+    
+    foreach my $cell_line (sort keys %cell_lines) { 
+      $cell_line =~ s/\:\w*//;
+
+      $row->{'row'}->{$cell_line}  = '';
+      $row->{'row'}->{$cell_line} .= 'c' if $view_config->get("opt_cft_$cell_line:$feature_name") eq 'on';
+      $row->{'row'}->{$cell_line} .= 'e' if exists $feature_type_ids{$cell_line}{$feature_id};
+
+    }
+    my $set = exists $focus_feature_type_ids{$feature_id} ? 'core' : 'other';      
+    push @{$groups->{$set}}, $row;
+  }
+  
+  foreach my $subheading (keys %$groups) {
+    $matrix->add_subheading(ucfirst $subheading.' features:', $subheading);
+    $matrix->add_row($_->{'name'}, $_->{'row'}) for @{$groups->{$subheading}};
   }
 
   # Add context selection

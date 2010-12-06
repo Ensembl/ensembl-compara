@@ -57,10 +57,10 @@ sub form {
   my $form_action         = $hub->url({ action => 'Form', function => $function }, 1);
   my %gene_markup_options = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;
   
-  $view_config->get_form->{'_attributes'}{'action'} = $form_action->[0];
-  $view_config->get_form->{'_attributes'}{'id'}     = 'export_configuration';
-  $view_config->get_form->{'_attributes'}{'class'} .= ' export';
-  $view_config->get_form->{'_attributes'}{'method'} = 'get';
+  $view_config->get_form->set_attribute('action', $form_action->[0]);
+  $view_config->get_form->set_attribute('id', 'export_configuration');
+  $view_config->get_form->set_attribute('class', ' export');
+  $view_config->get_form->set_attribute('method', 'get');
     
   $view_config->add_fieldset;
   
@@ -134,15 +134,15 @@ sub form {
     my $s = $slice->strand;
     my @strand = map $s == $_ ? 'selected="selected"' : '', (1, -1);
     
-    $view_config->add_form_element({
-      type  => 'Raw',
-      label => 'Select location',
-      raw   => sprintf qq{
-        <input type="text" size="1" value="%s" name="new_region" class="input-text required" />
-        <input type="text" size="8" value="%s" name="new_start" class="input-text _posint required" />
-        <input type="text" size="8" value="%s" name="new_end" class="input-text _posint required" />
-        <select size="1" name="strand"><option value="1" %s>1</option><option value="-1" %s>-1</option></select>
-      }, $slice->seq_region_name, $slice->start, $slice->end, @strand
+    $view_config->get_form->add_field({
+      label     => 'Select location',
+      inline    => 1,
+      elements  => [
+        {'type' => 'string',    'size' => '1', 'value' => $slice->seq_region_name, 'name' => 'new_region', 'required' => 1},
+        {'type' => 'posint',    'size' => '8', 'value' => $slice->start,           'name' => 'new_start',  'required' => 1},
+        {'type' => 'posint',    'size' => '8', 'value' => $slice->end,             'name' => 'new_end',    'required' => 1},
+        {'type' => 'dropdown',  'size' => '1', 'value' => $slice->strand,          'name' => 'strand', 'options' => [{'value' => '1', 'caption' => '1'}, {'value' => '-1', 'caption' => '-1'}]},
+      ],
     });
   } else {
     $view_config->add_form_element({
@@ -166,7 +166,7 @@ sub form {
     type  => 'Submit',
     class => 'submit',
     name  => 'next',
-    value => 'Next >'
+    value => 'Next >',
   });
   
   foreach my $c (sort keys %$config) {
