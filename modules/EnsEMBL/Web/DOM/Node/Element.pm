@@ -104,6 +104,13 @@ sub set_attribute {
   }
 }
 
+sub set_attributes {
+  ## Sets multiple attributes to the element
+  ## @params ArrayRef of HashRefs {name => ?, value => ?}
+  my ($self, $attribs) = @_;
+  $self->set_attribute($_->{'name'}, $_->{'value'}) for (@$attribs);
+}
+
 sub _access_attribute {
   ## Accessor for attributes that have same value and name (eg disabled="disabled", checked="checked")
   ## @params Attribute name
