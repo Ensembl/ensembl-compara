@@ -130,7 +130,6 @@ sub get_form {
 sub add_fieldset {
   my ($self, $legend, $class) = @_;
   
-  $class = 'generic' if !$class && $legend eq 'Display options';
   (my $div_class = $legend) =~ s/ /_/g;
   
   my $fieldset = $self->get_form->add_fieldset($legend);
@@ -169,14 +168,7 @@ sub add_form_element {
     $element->{'value'} = $self->get($element->{'name'});
   }
 
-  my $fieldset;
-  if ($self->get_form->has_fieldset) {
-    $fieldset = $self->get_form->fieldset;
-  }
-  else {
-    $fieldset = $self->add_fieldset('Display options');
-    $self->tree->create_node(undef, { url => '#', availability => 1, caption => 'Display options', class => 'generic' }) if $self->nav_tree;
-  }
+  my $fieldset = $self->get_form->has_fieldset ? $self->get_form->fieldset : $self->add_fieldset('Display options');
 
   $self->get_form->add_element(%$element); ## TODO- modify it for the newer version of Form once all child classes are modified
 }
