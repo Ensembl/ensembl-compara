@@ -23,6 +23,7 @@ use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::TmpFile::Text;
 
@@ -235,45 +236,37 @@ sub _attach_das {
   );
 }
 
-# Creates a modal-friendly form with hidden elements to automatically pass to handle wizard buttons
 sub modal_form {
+  ## Creates a modal-friendly form with hidden elements to automatically pass to handle wizard buttons
+  ## Params Name (Id attribute) for form
+  ## Params Action attribute
+  ## Params HashRef with following keys
+  ## - class        Class attribute for form 
+  ## - method       method attribute
+  ## - wizard       Flag on if form is a part of wizard
+  ## - label        Label for the submit button if wizard
+  ## - back_button  Flag if 0, back button is not displayed
+  ## - no_button    No buttons displayed automatically if flag is on
+
   my ($self, $name, $action, $options) = @_;
   
-  my $hub         = $self->hub;
-  my $form_action = $action;
-  my $form_class  = 'std check';
+  my $hub     = $self->hub;
+  my $params  = {};
   
+  $params->{'action'}   = $params->{'next'} = $action;
+  $params->{$_}         = $options->{$_} for qw(class method wizard label back_button no_button);
+  $params->{'current'}  = $hub->action;
+
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
     
-    $form_action  = $hub->species_path($species) if $species;
-    $form_action .= sprintf '/%s/Wizard', $hub->type;
-    
-    $form_class .= ' wizard';
-  }
-  
-  my $form  = new EnsEMBL::Web::Form($name, $form_action, $options->{'method'} || 'post', $form_class);
-  my $label = $options->{'label'} || 'Next >';
-  
-  if ($options->{'wizard'}) {
-    $form->add_button('type' => 'Button', 'name' => 'wizard_back', 'value' => '< Back', 'classes' => [ 'back', 'submit' ]) unless defined $options->{'back_button'} && $options->{'back_button'} == 0;
-    
-    # Include current and former nodes in _backtrack
-    if (my @tracks = $hub->param('_backtrack')) {
-      foreach my $step (@tracks) {
-        next unless $step;
-        $form->add_element('type' => 'Hidden', 'name' => '_backtrack', 'value' => $step);
-      }
-    }
-    
-    $form->add_button('type'  => 'Submit', 'name' => 'wizard_submit', 'value' => $label);
-    $form->add_element('type' => 'Hidden', 'name' => '_backtrack',    'value' => $hub->action);
-    $form->add_element('type' => 'Hidden', 'name' => 'wizard_next',   'value' => $action);
-  } elsif (!$options->{'no_button'}) {
-    $form->add_button('type' => 'Submit', 'name' => 'submit', 'value' => $label);
+    $params->{'action'}  = $hub->species_path($species) if $species;
+    $params->{'action'} .= sprintf '/%s/Wizard', $hub->type;
+    my @tracks = $hub->param('_backtrack');
+    $params->{'backtrack'} = \@tracks if scalar @tracks; 
   }
 
-  return $form;
+  return new EnsEMBL::Web::Form::ModalForm($params);
 }
 
 sub new_image {
