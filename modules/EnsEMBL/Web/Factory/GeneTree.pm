@@ -13,13 +13,15 @@ use base qw(EnsEMBL::Web::Factory);
 
 sub createObjects { 
   my $self     = shift;    
-  my $database = $self->database('compara');
-  
-  return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
   my $gt = $self->param('gt');
      
   return $self->problem('fatal', 'Valid Gene Tree ID required', 'Please enter a valid gene tree ID in the URL.') unless $gt;
+
+  my $cdb = ($gt =~ /^EGGT/) ? 'compara_pan_ensembl' : 'compara';
+  my $database = $self->database($cdb);
+  
+  return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
   my $tree = $database->get_ProteinTreeAdaptor->fetch_by_stable_id($gt);
  
