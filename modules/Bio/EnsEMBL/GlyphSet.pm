@@ -315,12 +315,11 @@ sub get_gd_simple {
 ### Returns the GD::Text object appropriate for the given fontname
 ### and fontsize. GD::Text objects are cached against fontname and fontsize.
   my $self   = shift;
-  my $font   = shift || 'arial';
+  my $font   = shift || 'Arial';
   my $ptsize = shift || 10;
 
   my $FONT_KEY = "${font}--${ptsize}"; 
   return $cache{"2:".$FONT_KEY} if exists( $cache{"2:".$FONT_KEY} );
-  
   my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}."/$font.ttf";
   my $gd = GD::Simple->new( 400,400 );
   eval {
@@ -544,7 +543,7 @@ sub draw_cigar_feature {
   my ($composite, $f, $h) = map $params->{$_}, qw(composite feature height);
   
   my $ref = ref $f;
-  
+ 
   if (!$ref) {
     warn sprintf 'DRAWINGCODE_CIGAR < %s > %s not a feature', $f, $self->label->text;
   } elsif ($ref eq 'SCALAR') {
@@ -554,7 +553,19 @@ sub draw_cigar_feature {
   } elsif ($ref eq 'ARRAY') { 
     warn sprintf 'DRAWINGCODE_CIGAR [ %s ] %s not a feature', join('; ', @$f), $self->label->text;
   }
-  
+
+  if ($ref eq 'Bio::EnsEMBL::Funcgen::ProbeFeature' ){
+    $f = Bio::EnsEMBL::DnaDnaAlignFeature->new(
+      -slice  => $f->slice,
+      -start  => $f->start,
+      -end    => $f->end,
+      -strand => $self->strand,
+      -hstart => $f->start,
+      -hend   => $f->end,
+      -cigar_string => $f->cigar_string
+    );
+  }
+
   my $length  = $self->{'container'}->length;
   my $cigar;
   
@@ -583,16 +594,9 @@ sub draw_cigar_feature {
   my ($start, $hstart, $hend);
   my @delete;
   
-  if ($self->isa('Bio::EnsEMBL::GlyphSet::_oligo')) {
-    my $o   = $params->{'do_not_flip'} ? 1 : $strand;
-    $start  = $o == 1 ? $f->start : $f->end;
-    $hstart = $o == 1 ? $f->hstart : $f->hend; 
-    $hend   = $o == 1 ? $f->hend : $f->hstart; 
-  } else {
-    $start  = $f->start;
-    $hstart = $f->hstart;
-    $hend   = $f->hend;
-  }
+  $start  = $f->start;
+  $hstart = $f->hstart;
+  $hend   = $f->hend;
   
   my ($slice_start, $slice_end, $tag1, $tag2);
   
@@ -606,18 +610,18 @@ sub draw_cigar_feature {
     $slice_end   = $f->seq_region_end;
     $tag1        = $f->seqname;
   }
-  
+
   # Parse the cigar string, splitting up into an array
   # like ('10M','2I','30M','I','M','20M','2D','2020M');
   # original string - "10M2I30MIM20M2D2020M"
-  my @cigar = $f->cigar_string =~ /(\d*[MDImU])/g;
+  my @cigar = $f->cigar_string =~ /(\d*[MDImUXS=])/g;
   @cigar = reverse @cigar if $fstrand == -1;
   
   foreach (@cigar) {
     # Split each of the {number}{Letter} entries into a pair of [ {number}, {letter} ] 
     # representing length and feature type ( 'M' -> 'Match/mismatch', 'I' -> Insert, 'D' -> Deletion )
     # If there is no number convert it to [ 1, {letter} ] as no-number implies a single base pair...
-    my ($l, $type) = /^(\d+)([MDImU])/ ? ($1, $2) : (1, $_);
+    my ($l, $type) = /^(\d+)([MDImUXS=])/ ? ($1, $2) : (1, $_);
     
     # If it is a D (this is a deletion) and so we note it as a feature between the end
     # of the current and the start of the next feature (current start, current start - ORIENTATION)
@@ -641,7 +645,7 @@ sub draw_cigar_feature {
     }
     
     # If a match/mismatch - draw box
-    if ($type =~ /^[MmU]$/) {
+    if ($type =~ /^[MmU=X]$/) {
       ($s, $e) = ($e, $s) if $s > $e; # Sort out flipped features
       
       next if $e < 1 || $s > $length; # Skip if all outside the box
