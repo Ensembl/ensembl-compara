@@ -1,11 +1,11 @@
 package EnsEMBL::Web::Form::Element::PosInt;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element::String );
 
-sub new { my $class = shift; return $class->SUPER::new( @_, 'style' => 'short' ); }
+use base qw(EnsEMBL::Web::Form::Element::String);
 
-sub _is_valid { return $_[0]->value =~ /^[+]?\d+$/; }
+use constant {
+  VALIDATION_CLASS =>  '_posint',
+};
 
-sub _class { return '_posint'; }
 1;

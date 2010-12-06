@@ -1,9 +1,11 @@
 package EnsEMBL::Web::Form::Element::Email;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element::String );
 
-sub _is_valid { return $_[0]->value =~ /^[^@]+@[^@.:]+[:.][^@]+$/; }
+use base qw(EnsEMBL::Web::Form::Element::String);
 
-sub _class { return '_email'; }
+use constant {
+  VALIDATION_CLASS =>  '_email',
+};
+
 1;

@@ -1,11 +1,11 @@
 package EnsEMBL::Web::Form::Element::Float;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element::String );
 
-sub new { my $class = shift; return $class->SUPER::new( @_, 'style' => 'short' ); }
+use base qw(EnsEMBL::Web::Form::Element::String);
 
-sub _is_valid { return $_[0]->value =~ /^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/; }
+use constant {
+  VALIDATION_CLASS =>  '_float',
+};
 
-sub _class { return '_float'; }
 1;

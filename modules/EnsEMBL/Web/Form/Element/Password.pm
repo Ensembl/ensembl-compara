@@ -1,11 +1,22 @@
 package EnsEMBL::Web::Form::Element::Password;
 
 use strict;
-use base qw( EnsEMBL::Web::Form::Element::String );
 
-sub new { my $class = shift; return $class->SUPER::new( @_, 'widget_type' => 'password', 'style' => 'short' ); }
+use base qw(
+  EnsEMBL::Web::DOM::Node::Element::Input::Password
+  EnsEMBL::Web::Form::Element::String
+);
 
-sub _is_valid { return $_[0]->value =~ /^\S{6,16}$/; }
+use constant {
+  VALIDATION_CLASS =>  '_password',
+};
 
-sub _class { return '_password'; }
+sub render {
+  ## @overrides
+  my $self = shift;
+  $self->parent_node->insert_after($self->dom->create_element('span'), $self)->inner_HTML($self->{'__shortnote'})
+    if exists $self->{'__shortnote'};
+  return $self->SUPER::render;
+};
+
 1;
