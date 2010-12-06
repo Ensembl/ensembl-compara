@@ -77,10 +77,10 @@ sub stats_table {
   my ($self, $transcripts) = @_;
   
   my $columns = [
-    { key => 'count', title => 'Number of variants', sort => 'position',      width => '20%', align => 'right'  },
-    { key => 'view',  title => '',                   sort => 'none',          width => '5%',  align => 'center' },
-    { key => 'type',  title => 'Type',               sort => 'position_html', width => '20%'                    },
-    { key => 'desc',  title => 'Description',        sort => 'none',          width => '55%'                    },
+    { key => 'count', title => 'Number of variants', sort => 'numeric_hidden', width => '20%', align => 'right'  },   
+    { key => 'view',  title => '',                   sort => 'none',           width => '5%',  align => 'center' },
+    { key => 'type',  title => 'Type',               sort => 'string_hidden',  width => '20%'                    },   
+    { key => 'desc',  title => 'Description',        sort => 'none',           width => '55%'                    },
   ];
   
   my %counts;

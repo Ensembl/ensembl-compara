@@ -78,6 +78,18 @@ $.extend($.fn.dataTableExt.oSort, {
     var y = b === ' ' || b == '-' || b.toLowerCase() == 'n/a' ? '' : b.toLowerCase();
     return ((x < y) ? 1 : ((x > y) ? -1 : 0));
   },
+  'string_hidden-asc': function (a, b) {
+    return this['string-asc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+  },
+  'string_hidden-desc': function (a, b) {
+    return this['string-desc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+  },
+  'numeric_hidden-asc': function (a, b) {
+    return this['numeric-asc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+  },
+  'numeric_hidden-desc': function (a, b) {
+    return this['numeric-desc'](a.replace(/<.*?>.*?<\/.*?>/g, ''), b.replace(/<.*?>.*?<\/.*?>/g, ''));
+  },
   'html-asc': function (a, b) {
     return this['string-asc'](a.replace(/<.*?>/g, ''), b.replace(/<.*?>/g, ''));
   },
