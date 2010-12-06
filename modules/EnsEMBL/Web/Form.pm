@@ -1,198 +1,270 @@
-# $Id$
-
 package EnsEMBL::Web::Form;
 
 use strict;
 
-use HTML::Entities qw(encode_entities);
+## TODO - remove backward compatibility patches when ok to remove
 
-use EnsEMBL::Web::Form::FieldSet;
+################## Structure of form ###################
+##  <form>                                            ##
+##  <h2>HEADING</h2><!--single-->                     ##
+##  <div>HEAD NOTES</div><!--multiple-->              ##
+##  <fieldset>ALL ELEMENTS</fieldset><!--multiple-->  ##
+##  <div>FOOT NOTES</div><!--multiple-->              ##
+##  </form>                                           ##
+########################################################
 
-use base qw(EnsEMBL::Web::Root);
+use base qw(EnsEMBL::Web::DOM::Node::Element::Form);
+
+use EnsEMBL::Web::Form::Element;
+
+use constant {
+
+  CSS_CLASS_DEFAULT       => 'std',
+  CSS_CLASS_VALIDATION    => 'check',
+  CSS_CLASS_FILE_UPLOAD   => 'upload',
+  TARGET_FILE_UPLOAD      => 'uploadframe',
+
+  HEADING_TAG             => 'h2',
+  CSS_CLASS_HEADING       => '',
+  NOTES_HEADING_TAG       => 'h4',
+  CSS_CLASS_NOTES         => 'notes',
+};
 
 sub new {
-  my ($class, $name, $action, $method, $style) = @_;
+  ## @overrides
+  ## Creates a new DOM::Node::Element::Form and adds the required attributes before returning it
+  ## @params HashRef with following keys
+  ##  - id        id attribute of the form
+  ##  - action    action attribute
+  ##  - method    method attribute (post as default)
+  ##  - class     Space seperatred class names for class attribute
+  ##  - validate  Flag set 0 if no validation is required on JS end
+  my $class = shift;
+  my $params = shift;
   
-  my $self = {
-    '_attributes' => {
-        'action'   => $action,
-        'method'   => lc($method) || 'get' ,  
-        'id'       => $name,
-        'class'    => $style || 'std check',
-    },
-    '_buttons'        => [],
-    '_extra_buttons'  => '',
-    '_fieldsets'      => [],
-    '_form_id'        => 1
-  };
+  ##compatibility patch
+  if (ref($params) ne 'HASH') {
+    return $class->_new($params, @_);
+  }
+  ##compatibility patch ends
   
-  bless $self, $class;
+  my $self = $class->SUPER::new;
   
+  $self->set_attribute('id',      $params->{'id'}) if exists $params->{'id'};
+  $self->set_attribute('action',  $params->{'action'}) if exists $params->{'action'};
+  $self->set_attribute('method',  $params->{'method'} || 'post');
+  $self->set_attribute('class',   exists $params->{'class'} ? $params->{'class'} : $self->CSS_CLASS_DEFAULT);
+  $self->set_attribute('class',   $self->CSS_CLASS_VALIDATION) unless exists $params->{'validate'} && $params->{'validate'} eq '0'; #on by default
+
+  $self->dom->map_element_class ({                            #map all form components to classes for DOM
+    'form-fieldset'    => 'EnsEMBL::Web::Form::Fieldset',
+    'form-field'       => 'EnsEMBL::Web::Form::Field',
+    'form-matrix'      => 'EnsEMBL::Web::Form::Matrix',
+  });
+
+  EnsEMBL::Web::Form::Element->map_element_class($self->dom); #map all elements to classes for DOM
+
   return $self;
 }
 
-# Add a button element to the form - used particularly for adding multiple buttons, e.g. on wizards
-sub add_button {
-  my ($self, %options) = @_;
+sub render {
+  ## @overrides
+  ## Modifies the form before calling the inherited render method
+  my $self = shift;
   
-  my $type = $options{'type'};
-  
-  if ($type eq 'Submit' || $type eq 'Button') {
-    my $module = "EnsEMBL::Web::Form::Element::$type";
-    
-    if ($self->dynamic_use($module)) {
-      my $button = $module->new('form' => $self->{'_attributes'}{'id'}, %options);
-      push @{$self->{'_buttons'}}, $button;
-    } else {
-      warn "Button module $module appears to be missing!";
+  ## change form attributes for uploading a file
+  for (@{$self->get_elements_by_tag_name('input')}) {
+    if ($_->get_attribute('type') eq 'file') {
+      $self->set_attribute('target', $self->TARGET_FILE_UPLOAD) unless $self->TARGET_FILE_UPLOAD eq '';
+      $self->set_attribute('enctype', 'multipart/form-data');
+      $self->add_hidden({'name' => 'uploadto', 'value' => 'iframe'});
+      last;
     }
-  } else {
-    warn 'Not a button module!';
   }
-} 
-
-sub extra_buttons {
-  my ($self, $buttons) = @_;
-  $self->{'_extra_buttons'} = $buttons if $buttons;
-  return $self->{'_extra_buttons'};
+  return $self->SUPER::render();
 }
 
-# Add an attribute to the FORM tag
-sub add_attribute {
-  my ($self, $type, $value) = @_;
-  
-  if ($type eq 'class' && $self->{'_attributes'}{'class'}) {
-    $self->{'_attributes'}{$type} .= " $value";
-  } else {
-    $self->{'_attributes'}{$type} = $value;
+sub fieldsets {
+  ## @return all fieldset elements added to the form
+  my $self = shift;
+  my $fieldsets = [];
+  for (@{$self->child_nodes}) {
+    push @$fieldsets, $_ if $_->node_name eq 'fieldset';
   }
+  return $fieldsets;
 }
 
-# Add a fieldset object to the form
+sub fieldset {
+  ## Gets last fieldset added to the form OR if none added yet, adds a new one and returns it
+  ## @return Form::Fieldset object
+  my $self = shift;
+  my $fieldsets = $self->fieldsets;
+  return scalar @$fieldsets ? $fieldsets->[-1] : $self->add_fieldset;
+}
+
 sub add_fieldset {
-  my ($self, %options) = @_;
-  
-  my $fieldset = EnsEMBL::Web::Form::FieldSet->new('form' => $self->{'_attributes'}{'id'}, %options);
-  $fieldset->{'_name'} =  $self->_next_id unless $fieldset->{'_name'};
-  push @{$self->{'_fieldsets'}}, $fieldset;
-  
-  return $fieldset;
-}
-
-# Returns an autoincremented ID for fieldset (used if not defined manually in the component) 
-sub _next_id {
+  ## Adds a fieldset to the form
+  ## @params String with Legend text or HashRef with following keys
+  ##  - legend
+  ##  - stripes
+  ##  - name
+  ## @return Form::Fieldset object
   my $self = shift;
-  return $self->{'_attributes'}{'id'} . '_' . ($self->{'_form_id'}++);
+  my $fieldset = $self->dom->create_element('form-fieldset');
+  if (@_) {
+    my $params = ref($_[0]) eq 'HASH' ? $_[0] : {'legend' => $_[0]};
+    $params->{'form_name'} = $self->id;
+    $fieldset->configure($params);
+  }
+
+  my $reference_element = $self->_first_foot_note;
+  return $self->insert_before($fieldset, $reference_element) if $reference_element;
+  return $self->append_child($fieldset);
 }
 
-sub _render_buttons {
+sub has_fieldset {
+  ## Check if the form has any fieldset added
   my $self = shift;
-  
-  return unless  @{$self->{'_buttons'}};
-  
-  my $class = $self->{'_attributes'}{'class'};
-  $class =~ s/check//;
-  
-  my $output = qq{
-  <table style="width:100%" class="$class">
-  <tbody>
-    <tr>
-    <th>&nbsp;</th><td>
-  };
-  
-  $output .= $_->render for @{$self->{'_buttons'}};
-  
-  $output .= qq{
-    </td>
-  </tr>
-  </tbody>
-  </table>};
-
-  return $output;
+  return scalar @{$self->get_elements_by_tag_name('fieldset')} ? 1 : 0;
 }
 
-sub add_hidden {
-  my ($self, $hidden) = @_;
-  
-  $self->add_element('type' => 'Hidden', 'name' => $_, 'value' => $hidden->{$_}) for keys %{$hidden||{}};
+sub heading {
+  ## Gets existing or modifies existing or adds new heading at the top of the form
+  ## @params Heading text (is not escaped before adding)
+  ## @return DOM::Node::Element::H? object
+  my $self = shift;
+  my $heading = undef;
+  if ($self->first_child && $self->first_child->node_name eq $self->HEADING_TAG) {
+    $heading = $self->first_child;
+  }
+  else {
+    $heading = $self->dom->create_element($self->HEADING_TAG);
+    $self->prepend_child($heading); #always in the beginning
+  }
+  $heading->inner_HTML(shift) if @_;
+  return $heading;
 }
 
 sub add_notes {
-  my ($self, $notes) = @_;
-   
-  my $fieldset = $self->{'_fieldsets'}->[0] || $self->add_fieldset;
-  
-  $fieldset->notes($notes) if $fieldset && $notes;
-} 
+  ## Adds notes to the form (or fieldset)
+  ## If 'location' and 'heading' key is missing, appends the notes to the last fieldset - all other keys are invalid then (see fieldset->add_notes)
+  ## @params HashRef with the following keys
+  ##  - id        Id if any for the notes div
+  ##  - location  (head|foot) or head by default
+  ##  - class     css class name to override the default class
+  ##  - heading   heading text, goes inside the <$self->NOTES_HEADING_TAG>
+  ##  - text      Text displayed inside <div>
+  ##  - list      Text to be displayed in list (<ul> or <ol>)
+  ##  - serialise In case of list, <ol> is used if this flag is on, otherwise <ul>
+  ## @return DOM::Node::Element::Div object
+  my ($self, $params) = @_;
 
-# Render the FORM tag and its contents
-sub render {
+  ## if no location or heading, add notes to fieldset
+  $params->{'location'} = 'head' if exists $params->{'heading'};
+  return $self->fieldset->add_notes($params) unless exists $params->{'location'};
+
+  my $location = $params->{'location'} eq 'foot' ? 'foot' : 'head';
+  
+  my $notes = $self->dom->create_element('div');
+  
+  if (exists $params->{'heading'}) {
+    my $heading = $self->dom->create_element($self->NOTES_HEADING_TAG);
+    $heading->inner_HTML($params->{'heading'});
+    $notes->append_child($heading);
+  }
+  
+  if (exists $params->{'text'}) {
+    my $text = $self->dom->create_element('div');
+    $text->inner_HTML($params->{'text'});
+    $notes->append_child($text);
+  }
+  
+  if (exists $params->{'list'}) {
+    my $list = $self->dom->create_element($params->{'serialise'} ? 'ol' : 'ul');
+    for (@{$params->{'list'}}) {
+      my $li = $self->dom->create_element('li');
+      $li->inner_HTML($_);
+      $list->append_child($li);
+    }
+    $notes->append_child($list);
+  }
+  
+  if ($location eq 'foot') {        # foot notes
+    $self->append_child($notes);
+    $self->_has_foot_notes($notes);
+  }
+  else {                            # head notes
+    my $fieldsets = $self->fieldsets;
+    if (scalar @$fieldsets) {
+      $self->insert_before($notes, $fieldsets->[0]);
+    }
+    elsif (my $reference_element = $self->_first_foot_note) {
+      $self->insert_before($notes, $reference_element);
+    }
+    else {
+      $self->append_child($notes);
+    }
+  }
+  $notes->set_attribute('id',     $params->{'id'}) if exists $params->{'id'};
+  $notes->set_attribute('class',  $params->{'class'} || $self->CSS_CLASS_NOTES);
+  return $notes;
+}
+
+sub force_reload_on_submit {
+  ## Adds an empty element in the form which directs JS to refresh the page once modal popup is closed
+  ## Works only with the popup modal form
   my $self = shift;
-  
-  if (grep $_->{'_file'}, @{$self->{'_fieldsets'}}) {
-    #  File types must always be multipart Posts
-    $self->add_attribute('method',  'post');
-    $self->add_attribute('class',   'upload');
-    $self->add_attribute('enctype', 'multipart/form-data');
-    $self->add_attribute('target',  'uploadframe');
-    
-    $self->add_element(
-      'type'  => 'Hidden',
-      'name'  => 'uploadto',
-      'value' => 'iframe'
-    );
-  }
-  
-  my $output = '<form';
-  
-  while (my ($k, $v) = each (%{$self->{'_attributes'}})) {
-    $output .= sprintf ' %s="%s"', encode_entities($k), encode_entities($v);
-  }
-  
-  $output .= '>';
-  $output .= $self->_render_buttons if $self->{'_extra_buttons'} eq 'top';
-  $output .= $_->render for @{$self->{'_fieldsets'}};
-  $output .= $self->_render_buttons;
-  $output .= "\n</form>\n";
-  $output .= '<div style="height:1px; overflow:hidden; clear:both; font-size:1pt">&nbsp;</div>';
-  
-  return $output;
+  $self->fieldset->append_child($self->dom->create_element('div'))->set_attribute('class', 'modal_reload hidden');
+  return 1;
 }
 
-sub add_element {
-### Wrapper around fieldset->add_element, to make form-building easier!
-### Tries to add the element to the last fieldset, or creates a new one if none exist
-  my ($self, %options) = @_;
+## Addition of new form elements is always done to last fieldset.
+sub add_field {           shift->fieldset->add_field(@_);           }
+sub add_honeypot_field {  shift->fieldset->add_honeypot_field(@_);  }
+sub add_hidden {          shift->fieldset->add_hidden(@_);          }
+sub add_matrix {          shift->fieldset->add_matrix(@_);          }
+sub add_button {          shift->fieldset->add_button(@_);          }
+sub add_element {         shift->fieldset->add_element(@_);         }
 
-  my $fieldset = $self->{'_fieldsets'}->[-1];
-  my $new_fieldset;
-  
-  if (!$fieldset) {
-    $new_fieldset = 1;
-    $fieldset = EnsEMBL::Web::Form::FieldSet->new('form' => $self->{'_attributes'}{'id'});
-    $fieldset->class('generic');
-    push @{$self->{'_fieldsets'}}, $fieldset;
-  }
-  
-  $fieldset->add_element(%options);
-  
-  return $fieldset if $new_fieldset;
-}
-
-sub delete_element {
-### Wrapper around fieldset->delete_element, to make form-building easier!
-### Tries to delete the element from the last fieldset
-  my ($self, $name) = @_;
-  my $fieldset = $self->{'_fieldsets'}->[-1];
-  $fieldset->delete_element($name);
-}
-
-sub modify_element {
-### Wrapper around fieldset->modify_element, to make form-building easier!
-### Tries to modify an element in the last fieldset
+## other private helper methods
+sub _first_foot_note {
   my $self = shift;
-  my $fieldset = $self->{'_fieldsets'}->[-1];
-  $fieldset->modify_element(@_);
+  my $first_foot_note = undef;
+  if ($self->_has_foot_notes) {
+    for (reverse @{$self->child_nodes}) {
+      last unless $_->{'__is_foot_note'};
+      $first_foot_note = $_;
+    }
+  }
+  return $first_foot_note;
+}
+sub _has_foot_notes {
+  my $self = shift;
+  if (@_) {
+    shift->{'__is_foot_note'} = 1;
+    $self->{'__has_foot_notes'} = 1;
+  }
+  return $self->{'__has_foot_notes'} || 0;
+}
+
+##################################
+##                              ##
+## BACKWARD COMPATIBILITY PATCH ##
+##                              ##
+##################################
+my $do_warn = 0;
+sub _new {
+  my ($class, $name, $action, $method, $style) = @_;
+
+  warn "Constructor for form is modified. Use Component->new_form if in components or pass arguments as hash." if $do_warn;
+  
+  return $class->new({
+    'id'        => $name,
+    'action'    => $action,
+    'method'    => $method,
+    'class'     => $style,
+    'validate'  => 1,
+  });
 }
 
 1;
