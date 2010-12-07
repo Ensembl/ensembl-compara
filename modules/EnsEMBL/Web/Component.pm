@@ -240,13 +240,7 @@ sub modal_form {
   ## Creates a modal-friendly form with hidden elements to automatically pass to handle wizard buttons
   ## Params Name (Id attribute) for form
   ## Params Action attribute
-  ## Params HashRef with following keys
-  ## - class        Class attribute for form 
-  ## - method       method attribute
-  ## - wizard       Flag on if form is a part of wizard
-  ## - label        Label for the submit button if wizard
-  ## - back_button  Flag if 0, back button is not displayed
-  ## - no_button    No buttons displayed automatically if flag is on
+  ## Params HashRef with keys as accepted by Web::Form::ModalForm constructor
 
   my ($self, $name, $action, $options) = @_;
   
@@ -254,8 +248,8 @@ sub modal_form {
   my $params  = {};
   
   $params->{'action'}   = $params->{'next'} = $action;
-  $params->{$_}         = $options->{$_} for qw(class method wizard label back_button no_button);
   $params->{'current'}  = $hub->action;
+  $params->{$_}         = $options->{$_} for qw(class method wizard label back_button no_button buttons_on_top buttons_align);
 
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
