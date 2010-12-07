@@ -28,9 +28,8 @@ sub content {
   my $url = $object->species_path($object->data_species).'/UserData/ValidateDAS';
   my $elements = [];
 
-  $form = $self->modal_form('select_das', $url, {'wizard' => 1});
-  $form->extra_buttons('top'); ## Repeat buttons at top, as this is often a long form
-  my $fieldset = $form->add_fieldset('name' => 'sources', 'stripes' => 1);
+  $form = $self->modal_form('select_das', $url, {'wizard' => 1, 'buttons_on_top' => 1, 'buttons_align' => 'centre'});
+  my $fieldset = $form->add_fieldset({'name' => 'sources', 'stripes' => 1});
 
   my $count_added;
   my @all_das = $self->hub->get_all_das;
