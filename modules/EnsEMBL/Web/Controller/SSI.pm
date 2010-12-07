@@ -42,7 +42,7 @@ sub _init {
   
   my $page = $self->page;
   
-  $page->include_navigation($ENV{'SCRIPT_NAME'} =~ /^\/info/);
+  $page->include_navigation(0); 
   $page->initialize;
   $self->render_page;
   
