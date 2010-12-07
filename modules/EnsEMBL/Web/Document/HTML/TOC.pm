@@ -1,75 +1,90 @@
 package EnsEMBL::Web::Document::HTML::TOC;
 
-### Generates full table of contents for documentation (/info/)
+### Generates table of contents for documentation (/info/)
 
 use strict;
 
 use EnsEMBL::Web::RegObj;
-
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my $self = shift;
 
   my $tree = $ENSEMBL_WEB_REGISTRY->species_defs->STATIC_INFO;
-  my @page_list;
-  
-  $self->_traverse_tree(\@page_list, $tree);
-
-  ## Create A-Z listing
-  my @AtoZ = sort { $a->{'title'} cmp $b->{'title'} } @page_list;
-  my $previous = '-';
+  (my $location         = $ENV{'SCRIPT_NAME'}) =~ s/index\.html$//;
+  my @toplevel_sections = map { ref $tree->{$_} eq 'HASH' ? $_ : () } keys %$tree;
   my $html;
+  my $first_header = 1;
+  
+  my @section_order = sort {
+    $tree->{$a}{'_order'} <=> $tree->{$b}{'_order'} ||
+    $tree->{$a}{'_title'} cmp $tree->{$b}{'_title'} ||
+    $tree->{$a} cmp $tree->{$b}
+  } @toplevel_sections;
+  
+  foreach my $dir (grep { !/^_/ && keys %{$tree->{$_}} } @section_order) {
+    my $section   = $tree->{$dir};
+    my $title     = $section->{'_title'} || ucfirst $dir;
+    my $class     = $first_header ? ' class="first"' : '';
+    $html .= qq{<h2$class>$title</h2>};
+    $first_header = 0;
 
-  foreach my $page (@AtoZ) {
-    my $title   = $page->{'title'};
-    my $url     = $page->{'url'};
-    my $initial = substr $title, 0, 1;
+    my @second_level = @{$self->_create_links($section, ' style="font-weight:bold"')};
+    if (scalar @second_level) {
+      $html .= '<ul>';
+  
+      foreach my $entry (@second_level) {
+      
+        my $link  = $entry->{'link'};
+        $html .= '<li>'.$link;
+
+        ## One more level!
+        my $subsection = $entry->{'key'};
+        my @third_level = @{$self->_create_links($subsection)};
+        if (scalar @third_level) {
+          $html .= '<ul>';
+          foreach my $subentry (@third_level) {
+            my $sublink  = $subentry->{'link'};
+            $html .= qq{<li>$sublink</li>};
+          }
+          $html .= '</ul>';
+        }
+
+        $html .= '</li>';
+      }      
+      
+      $html .= '</ul>';
+    }
     
-    $html .= "<h3>$initial</h3>\n" if $initial ne $previous;
-    $html .= qq(<p><a href="$url">$title</a></p>\n);
-    
-    $previous = $initial;
   }
-
+  
   return $html;
 }
 
-sub _traverse_tree {
-  my ($self, $page_list, $node, $path) = @_;
+sub _create_links {
+  my ($self, $level, $style) = @_;
+  my $links = [];
+    
+  ## Do we have subpages/dirs, or just metadata?
+  my @sublevel = map { ref $level->{$_} eq 'HASH' ? $_ : () } keys %$level;
+    
+  if (scalar @sublevel) {
+    my @sub_order = sort { 
+        $level->{$a}{'_order'} <=> $level->{$b}{'_order'} ||
+        $level->{$a}{'_title'} cmp $level->{$b}{'_title'} ||
+        $level->{$a} cmp $level->{$b}
+      } @sublevel;
 
-  my (@sections, $section);
-  
-  foreach $section (keys %$node) {
-    push @sections, $section if ref $node->{$section} eq 'HASH';
+    foreach my $sub (grep { !/^_/ && keys %{$level->{$_}} } @sub_order) {
+      my $pages = $level->{$sub};
+      my $path  = $pages->{'_path'} || "$level->{'_path'}$sub";
+      my $title = $pages->{'_title'} || ucfirst $sub;
+        
+      push @$links, {'key' => $pages, 'link' => qq(<a href="$path" title="$title"$style>$title</a>)};
+    }
   }
 
-  foreach $section (@sections) {
-    next if $section =~ /^_/;
-    
-    my $subsection = $node->{$section};
-    
-    next unless keys %$subsection;
-    next if ($subsection->{_index} eq 'NO FOLLOW');
-
-    my $title = $subsection->{'_title'} || ucfirst $section;
-    
-    ## Remove articles from beginning of page titles, for better ordering
-    $title =~ s/^The (.)/$1/;
-    $title =~ s/^A (.)/$1/;
-    
-    ## Compensate for article removal and random whitespace
-    $title =~ s/^\s+//;
-    $title =~ s/\s+$//;
-    
-    $title = ucfirst $title;
-    
-    my $url = $subsection->{'_path'} || $path . $section;
-    
-    push @$page_list, { title => $title, url => $url } unless $subsection->{'_nolink'};
-    
-    $self->_traverse_tree($page_list, $subsection, $subsection->{'_path'});
-  }
+  return $links;
 }
 
 1;
