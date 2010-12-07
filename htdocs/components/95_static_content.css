@@ -73,7 +73,7 @@ table.img-table td { vertical-align: top }
 table.img-table .img-1 td { background-color: [[IMAGE_BG1]] }
 table.img-table .img-2 td { background-color: [[IMAGE_BG2]] }
 
-ul.breadcrumbs                   { position: relative; left: 20em; margin: 3px 20em 0 0; padding-left: 1em; height: 20px; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; font-weight: bold; overflow: hidden; }
+ul.breadcrumbs                   { position: relative; left: 0; margin-top: 3px; padding-left: 1em; height: 20px; border: 1px solid [[PANEL_BORDER]]; border-width: 1px 0; font-weight: bold; overflow: hidden; }
 ul.breadcrumbs li                { float: left; list-style: none; margin-right: 8px; padding-right: 16px; font-size: 0.9em; line-height: 1.8em; height: 100%; background: url(/i/chevron.gif) no-repeat right 50%; }
 ul.breadcrumbs li.last           { background-image: none; }
 ul.breadcrumbs li a              { text-decoration: none; }
