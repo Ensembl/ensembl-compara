@@ -141,7 +141,7 @@ sub form {
         {'type' => 'string',    'size' => '1', 'value' => $slice->seq_region_name, 'name' => 'new_region', 'required' => 1},
         {'type' => 'posint',    'size' => '8', 'value' => $slice->start,           'name' => 'new_start',  'required' => 1},
         {'type' => 'posint',    'size' => '8', 'value' => $slice->end,             'name' => 'new_end',    'required' => 1},
-        {'type' => 'dropdown',  'size' => '1', 'value' => $slice->strand,          'name' => 'strand', 'options' => [{'value' => '1', 'caption' => '1'}, {'value' => '-1', 'caption' => '-1'}]},
+        {'type' => 'dropdown',  'size' => '1', 'value' => $slice->strand,          'name' => 'strand',     'values' => [{'value' => '1', 'caption' => '1'}, {'value' => '-1', 'caption' => '-1'}]},
       ],
     });
   } else {
