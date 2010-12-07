@@ -68,6 +68,7 @@ sub map_element_class {
   my ($self, $dom) = @_;
   $dom->map_element_class({
     'form-element-age'          => 'EnsEMBL::Web::Form::Element::Age',
+    'form-element-button'       => 'EnsEMBL::Web::Form::Element::Button',
     'form-element-checkbox'     => 'EnsEMBL::Web::Form::Element::Checkbox',
     'form-element-checklist'    => 'EnsEMBL::Web::Form::Element::Checklist',
     'form-element-dascheckbox'  => 'EnsEMBL::Web::Form::Element::DASCheckBox',
