@@ -33,11 +33,12 @@
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 #masthead div.dropdown.species            { width: 505px; }
 #masthead div.dropdown.species ul li      { width: 130px; float: left; }
-#masthead .search_holder                  { position: absolute; top: 17px; right: 5px; z-index: 150; margin-left: 10px; display: inline; }
+#masthead .search_holder                  { position: absolute; top: 20px; right: 5px; z-index: 150; margin-left: 10px; display: inline; }
 #masthead .tools_holder                   { display: inline; }
 #masthead .tools_holder .arrow            { font-size: 8px; position: relative; top: -1px; padding-left: 1px; }
 #masthead .tabs_holder                    { position: absolute; bottom: 0; background-color: [[MH_BG]]; clear: both; }
 #masthead .logo_holder                    { float: left; }
+#masthead .account_holder                 { float: right; margin-right:10px; }
 #masthead div.more                        { display: none; float: left; margin: -16px 10px 0; position: relative; z-index: 250; }
 #masthead div.more a                      { outline: 0; padding: 2px 4px; }
 #masthead div.more a.open                 { border: 1px solid [[MH_BORDER]]; color: [[CONTRAST_TEXT]]; background-color: [[PANEL_BG]]; height: 16px; position: relative; }
