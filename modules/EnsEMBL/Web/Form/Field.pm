@@ -95,6 +95,12 @@ sub add_element {
   my $div = undef;
 
   my $element = $self->dom->create_element('form-element-'.$params->{'type'});
+  
+  #error handling
+  if (!$element) {
+    warn qq(DOM Could not create element "$params->{'type'}". Perhaps there's no corresponding class in Form::Element, or has not been mapped in Form::Element::map_element_class);
+    return undef;
+  }
   $element->configure($params);
   
   if ($inline && $element->node_name =~ /^(input|textarea|select)$/) { #if possible to fulfil the request for inline
@@ -128,6 +134,13 @@ sub is_honeypot {
   my $self = shift;
   $self->{'__is_honeypot'} = shift  if @_;
   return $self->{'__is_honeypot'};
+}
+
+sub is_button_field {
+  ## Sets/Gets the flag
+  my $self = shift;
+  $self->{'__is_button_field'} = shift if @_;
+  return $self->{'__is_button_field'};
 }
 
 sub _notes {
