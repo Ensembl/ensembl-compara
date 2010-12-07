@@ -4,7 +4,10 @@ use strict;
 
 ## TODO - remove backward compatibility patches when ok to remove
 
-## Structure of fieldset: Every child node is appended at the end of the fieldset except legend which is always added at the top
+## Structure of fieldset:
+## Every child node is appended at the end of the fieldset as they are added except legend & hidden inputs
+## Legend is always added at the top
+## Hidden inputs always come after the legend
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Fieldset);
 
@@ -45,9 +48,9 @@ sub render {
   my $i = 0;
   if ($self->_striped) {
     for (@{$self->child_nodes}) {
-      next if $_->node_name eq 'legend';
+      next if $_->node_name =~ /^(input|legend)$/ || $self->_child_isa_field($_) && ($_->is_honeypot || $_->is_button_field);#ignore hidden inputs, legend, honeypot and buttons
       $_->set_attribute('class', $i % 2 == 0 ? $self->CSS_EVEN_ROW : $self->CSS_ODD_ROW);
-      $i++ if $self->_child_isa_field($_) && !$_->is_honeypot;
+      $i++ if $self->_child_isa_field($_) || $self->_child_isa_element($_);
     }
   }
 
@@ -61,12 +64,23 @@ sub configure {
   $self->{'__id'}   = $params->{'form_name'}  if $params->{'form_name'};
   $self->{'__name'} = $params->{'name'}       if $params->{'name'};
   $self->legend($params->{'legend'})          if $params->{'legend'};
-  $self->_striped($params->{'striped'} || 0);
+  $self->_striped($params->{'stripes'} || 0);
   return $self;
 }
 
+sub elements {
+  ## Gets all the element child nodes (immediate only) in the fieldset
+  ## @return ArrayRef of Form::Fields
+  my $self = shift;
+  my $elements = [];
+  for (@{$self->child_nodes}) {
+    push @$elements, $_ if $self->_child_isa_element($_);
+  }
+  return $elements;
+}
+
 sub fields {
-  ## Gets all the fields present in the fieldset
+  ## Gets all the field child nodes (immediate only) in the fieldset
   ## @return ArrayRef of Form::Fields
   my $self = shift;
   my $fields = [];
@@ -179,6 +193,13 @@ sub _add_element {## TODO - remove prefixed underscore once compatibile
   }
   
   my $element = $self->dom->create_element('form-element-'.$params->{'type'});
+
+  #error handling
+  if (!$element) {
+    warn qq(DOM Could not create element "$params->{'type'}". Perhaps there's no corresponding class in Form::Element, or has not been mapped in Form::Element::map_element_class);
+    return undef;
+  }
+
   $params->{'id'} ||= $self->_next_id;
   $element->configure($params);
   if ($element->node_name ne 'div') {
@@ -194,6 +215,7 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   ## This is only an alias to add_field but 'elements' key is replaced with 'buttons' key along with addition of a new 'inline' key
   ## @params HashRef with following keys
   ##  - label             innerHTML for <label> if any needed for left column to the bottons (optional)
+  ##  - align             [cetre(or center)|left|right|default]
   ##  - head_notes        innerHTML for head notes
   ##  - foot_notes        innerHTML for foor notes
   ##  - buttons           HashRef with keys as accepted by Form::Element::Button::configure() OR ArrayRef of similar HashRefs if multiple buttons
@@ -202,8 +224,11 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   my ($self, $params) = @_;
   $params->{'elements'} = $params->{'buttons'} if $params->{'buttons'};
   $params->{'inline'} = 1;
+  $params->{'fieldclass'} = $self->CSS_CLASS_BUTTON.'-'.$params->{'align'} if $params->{'align'} =~ /^(centre|center|left|right)$/;
   delete $params->{'buttons'};
-  return $self->add_field($params);
+  my $field = $self->add_field($params);
+  $field->is_button_field(1);
+  return $field;
 }
 
 sub add_hidden {
@@ -275,6 +300,13 @@ sub _striped {
   my $self = shift;
   $self->{'__striped'} = 1 if @_ && shift;
   return $self->{'__striped'} || 0;
+}
+
+sub _child_isa_element {
+  ## checkes whether a child is a Field object
+  my ($self, $child) = @_;
+  (my $elementclass = __PACKAGE__) =~ s/Fieldset/Element/;
+  return $child->isa($elementclass) ? 1 : 0;
 }
 
 sub _child_isa_field {
@@ -349,6 +381,11 @@ sub add_element {
       'inline'      => 1,
       'elements'    => [\%params, {'type' => 'submit', 'value' => $params{'button_value'}}]
     });
+  }
+  
+  ## DASCheckBox
+  if ($params{'type'} eq 'DASCheckBox') {
+    return $self->add_element(\%params);
   }
   
   ## Element is now Field.
