@@ -21,6 +21,7 @@ sub initialize_HTML {
   
   $self->add_body_elements(qw(
     logo             EnsEMBL::Web::Document::Element::Logo
+    account          EnsEMBL::Web::Document::Element::AccountLinks
     search_box       EnsEMBL::Web::Document::Element::SearchBox
     tools            EnsEMBL::Web::Document::Element::ToolLinks
     tabs             EnsEMBL::Web::Document::Element::Tabs
