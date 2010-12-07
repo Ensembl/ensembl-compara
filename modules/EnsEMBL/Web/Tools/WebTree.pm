@@ -38,6 +38,7 @@ sub read_tree {
   ## Get the list of files for directory of the current path.
   opendir(DIR, $doc_root . $path) || die "Can't open $doc_root$path";
   my @files = grep { /^[^\.]/ && $_ ne 'CVS' } readdir(DIR);
+  my $has_indexpage = grep { /^index/ } @files;
   closedir(DIR);
   unless (@files) {
     delete $parent->{$branch->{'_name'}};
@@ -49,7 +50,7 @@ sub read_tree {
   my ($title, $nav, $index);
 
   ## Check if we want to do this directory at all
-  my $include = 1;
+  my $include = $has_indexpage ? 1 : 0;
   foreach my $filename (@$html_files) {
     $branch->{'_show'} = 1;
     if( $filename eq 'index.html' || $filename eq 'index.none' ) {
