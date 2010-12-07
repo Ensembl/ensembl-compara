@@ -92,6 +92,7 @@ sub set_attribute {
   my ($self, $attrib, $value) = @_;
 
   return unless defined $value;
+  $value =~ s/^\s+|\s+$//g; #trim
   $attrib = lc $attrib;
 
   if ($attrib =~ /^(class|style)$/) {
