@@ -413,7 +413,9 @@ sub build_form {
         $reference_element = $_ and last if $_->get_attribute('type') eq 'checkbox';
       }
       
-      $reference_element = $reference_element->parent_node while ref($reference_element) !~ /::Form::Field$/; #get the wrapper of the element before using it as reference
+      $reference_element = $reference_element->parent_node while defined $reference_element && ref($reference_element) !~ /::Form::Field$/; #get the wrapper of the element before using it as reference
+      
+      next unless defined $reference_element;
       
       my $select_all = $fieldset->add_field({
         type      => 'checkbox',
