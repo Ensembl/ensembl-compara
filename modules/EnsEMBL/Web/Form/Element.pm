@@ -42,7 +42,7 @@ sub configure {
   ##    - caption       InnerHTML of the option OR label for checkboxes and radio buttons
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - is_plain_text Flag kept on if html encoding needs to be done to the caption
-  ##  - class           Class attribute
+  ##  - class           Class attribute (space seperated string for multiple classes)
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
   ##  - required        Flag to tell whether this field is required to be filled before submitting form (for JS)
