@@ -436,6 +436,7 @@ sub html_template {
         <div class="content">
           <div class="mh print_hide">
             <span class="logo_holder">$elements->{'logo'}</span>
+            <div class="account_holder">$elements->{'account'}</div>
             <div class="tools_holder">$elements->{'tools'}</div>
             <div class="search_holder print_hide">$elements->{'search_box'}</div>
           </div>
