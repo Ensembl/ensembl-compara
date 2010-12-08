@@ -21,50 +21,32 @@ sub content {
   my $hub      = $self->hub;
   my $session  = $hub->session;
   my $form     = $self->modal_form('show_remote', $hub->species_path($hub->data_species). '/UserData/SaveRemote', { wizard => 1 });
+  my $fieldset = $form->add_fieldset;
   my $has_data = 0;
   my $das      = $session->get_all_das;
   
   if ($das && keys %$das) {
     $has_data = 1;
-    my $fieldset = { 'elements' => [ { 'type'=>'Information',
-                                       'value' => 'Choose the DAS sources you wish to save to your account',
-                                       'style' => 'spaced' } ] };
-    $form->add_fieldset($fieldset);
-
-    $fieldset = { 'layout' => 'table', 'elements' => [] };
-    my @values;
-    
-    foreach my $source (sort { lc $a->label cmp lc $b->label } values %$das) {
-      push @{ $fieldset->{'elements'} }, { 'type' => 'DASCheckBox', 'das'  => $source };
-    }
-
-    $form->add_fieldset($fieldset);
+    $fieldset->add_notes('Choose the DAS sources you wish to save to your account')->set_attribute('class', 'spaced');
+    $fieldset->add_element({'type' => 'DASCheckBox', 'das'  => $_}) for sort { lc $a->label cmp lc $b->label } values %$das;
   }
 
   my @urls = $session->get_data(type => 'url');
   
   if (@urls) {
     $has_data = 1;
-    $form->add_element('type'=>'Information', 'value' => "You have the following URL data attached:", 'style' => 'spaced');
-    
-    foreach my $url (@urls) {
-      $form->add_element('type'=>'CheckBox', 'name' => 'code', 'value' => $url->{'code'}, 'label' => $url->{'name'}, 'notes' => $url->{'url'});
-    }
+    $fieldset->add_notes("You have the following URL data attached:")->set_attribute('class', 'spaced');
+    $fieldset->add_field({'type'=>'checkbox', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @urls;
   }
 
   my @bams = $session->get_data(type => 'bam');
   if (@bams) {
     $has_data = 1;
-    $form->add_element('type'=>'Information', 'value' => "You have the following BAM sources attached:", 'style' => 'spaced');
-    foreach my $bam (@bams) {
-      $form->add_element('type'=>'CheckBox', 'name' => 'code', 'value' => $bam->{'code'}, 'label' => $bam->{'name'}, 'notes' => $bam->{'url'});
-    }
+    $fieldset->add_notes("You have the following BAM sources attached:")->set_attribute('class', 'spaced');
+    $fieldset->add_field({'type'=>'checkBbx', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @bams;
   }
 
-  
-  unless ($has_data) {
-    $form->add_element('type'=>'Information', 'value' => "You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.");
-  }
+  $fielset->add_notes("You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.") unless $has_data;
 
   return $form->render;
 }

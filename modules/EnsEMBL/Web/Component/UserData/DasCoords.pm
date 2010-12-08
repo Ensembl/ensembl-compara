@@ -52,9 +52,7 @@ sub content {
         $self->output_das_text($form, $source); 
 
         foreach my $species (@species) {
-          my $fieldset = {'name' => $species.'_cs1', 'legend' => "Genomic ($species)"};
-          my $f_elements = [];
-
+          my $fieldset = $form->add_fieldset({'name' => $species.'_cs1', 'legend' => "Genomic ($species)"});
           my $csa =  Bio::EnsEMBL::Registry->get_adaptor($species, "core", "CoordSystem");
           my @coords = sort {
             $a->rank <=> $b->rank
@@ -68,84 +66,60 @@ sub content {
               'species' => $species,
             };
             my $das_cs = Bio::EnsEMBL::ExternalData::DAS::CoordSystem->new_from_hashref($cs_hashref);
-            push @$f_elements, {
-              'type'    => 'CheckBox',
+            $fieldset->add_field({
+              'type'    => 'checkbox',
               'name'    => $source->logic_name.'_coords',
               'value'   => $das_cs->to_string,
               'label'   => $das_cs->label 
-            };
+            });
           }
-          $fieldset->{'elements'} = $f_elements;
-          $form->add_fieldset(%$fieldset);
         }
 
         if (scalar(@GENE_COORDS)) {
-          my $gene_fieldset = {'name' => $source->logic_name.'_gene', 'legend' => 'Gene'};
-          my $g_elements = [];
+          my $gene_fieldset = $form->add_fieldset({'name' => $source->logic_name.'_gene', 'legend' => 'Gene'});
           for my $cs (@GENE_COORDS) {
             $cs->matches_species($species) || next;
-            push @$g_elements, { 
-              'type'    => 'CheckBox',
+            $gene_fieldset->add_field({ 
+              'type'    => 'checkbox',
               'name'    => $source->logic_name.'_coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
-            };
+            });
           }
-          $gene_fieldset->{'elements'} = $g_elements;
-          $form->add_fieldset(%$gene_fieldset);
         }
 
         if (scalar(@PROT_COORDS)) {
-          my $prot_fieldset = {'name' => $source->logic_name.'_prot', 'legend' => 'Protein'};
-          my $p_elements = [];
+          my $prot_fieldset = $form->add_fieldset({'name' => $source->logic_name.'_prot', 'legend' => 'Protein'});
           for my $cs (@PROT_COORDS) {
             $cs->matches_species($species) || next;
-            push @$p_elements, { 
-              'type'    => 'CheckBox',
+            $prot_fieldset->add_field({ 
+              'type'    => 'checkbox',
               'name'    => $source->logic_name.'_coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
-            };
+            });
           }
-          $prot_fieldset->{'elements'} = $p_elements;
-          $form->add_fieldset(%$prot_fieldset);
         }
 
         if (scalar(@SNP_COORDS)) {
-          my $gene_fieldset = {'name' => $source->logic_name.'_snp', 'legend' => 'Variation'};
-          my $g_elements = [];
+          my $snp_fieldset = $form->add_fieldset({'name' => $source->logic_name.'_snp', 'legend' => 'Variation'});
           for my $cs (@SNP_COORDS) {
             $cs->matches_species($species) || next;
-            push @$g_elements, { 
-              'type'    => 'CheckBox',
+            $snp_fieldset->add_field({ 
+              'type'    => 'checkbox',
               'name'    => $source->logic_name.'_coords',
               'value'   => $cs->to_string,
               'label'   => $cs->label 
-            };
+            });
           }
-          $gene_fieldset->{'elements'} = $g_elements;
-          $form->add_fieldset(%$gene_fieldset);
         }
-
       }
-
-      $form->add_element(
-        'type' => 'Hidden',
-        'name' => 'das_server',
-        'value' => $object->param('das_server'),
-      );
-      $form->add_element(
-        'type' => 'Hidden',
-        'name' => 'species',
-        'value' => $object->param('species'),
-      );
-      for my $v ($object->param('logic_name')) {
-        $form->add_element(
-          'type' => 'Hidden',
-          'name' => 'logic_name',
-          'value' => $v,
-        );
-      }
+      
+      $form->add_hidden([
+        {'name' => 'das_server',  'value' => $object->param('das_server')},
+        {'name' => 'species',     'value' => $object->param('species')},
+      ]);
+      $form->add_hidden({'name' => 'logic_name', 'value' => $_}) for $object->param('logic_name');
     }
   }
   else {
