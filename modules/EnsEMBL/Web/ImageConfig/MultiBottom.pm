@@ -130,13 +130,15 @@ sub multi {
     TRANSLATED_BLAT_NET => $self->get_node('opt_pairwise_tblat')->get('renderers')
   );
   
+  my $decorations = $self->get_node('decorations');
+  
   foreach (sort keys %alignments) {
     my $strand = shift @strands;
 
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
       
-      $self->get_node('decorations')->add_before(
+      $decorations->add_before(
         $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
           glyphset                   => '_alignment_pairwise',
           colourset                  => 'pairwise',
