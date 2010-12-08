@@ -5,8 +5,8 @@ package EnsEMBL::Web::Component::Account::ActivationSent;
 use strict;
 use warnings;
 no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
 
 sub _init {
   my $self = shift;
