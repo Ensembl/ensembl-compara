@@ -159,10 +159,10 @@ sub run_bootstrap_raxml {
     eval {
       $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
     };
-  }
-  if (defined($raxml_tree_string->{value}) and !$@ and !$self->debug) {
-    # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
-    return;
+    if (defined($eval_tree) and !$@ and !$self->debug) {
+      # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
+      return;
+    }
   }
 #  return 0 unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
@@ -234,10 +234,10 @@ sub run_ncsecstructtree {
       eval {
         $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($raxml_tree_string->{value});
       };
-    }
-    if (defined($raxml_tree_string->{value}) and !$@ and !$self->debug) {
-      # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
-      return;
+      if (defined($eval_tree) and !$@ and !$self->debug) {
+        # The secondary structure RAxML tree for this model has been obtained already and the tree can be parsed successfully.
+        next; # Go to next model
+      }
     }
 #    next unless(!defined($raxml_tree_string->{value}) || $@ || $self->debug);
 
