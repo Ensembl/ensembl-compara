@@ -10,8 +10,9 @@ sub render {
 
   my ($class, $request) = @_;
 
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $sitename = $species_defs->ENSEMBL_SITETYPE;
+  my $species_defs  = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $tree          = $species_defs->SPECIES_INFO;
+  my $sitename      = $species_defs->ENSEMBL_SITETYPE;
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
@@ -51,6 +52,7 @@ sub render {
   <tr>
   );
   my @species = sort keys %species;
+  use Data::Dumper;
   foreach my $common (@species) {
     my $info = $species{$common};
     my $dir = $info->{'dir'};
@@ -81,6 +83,34 @@ sub render {
     else {
       $html .= '&nbsp;';
     }
+
+    ## Add links to static content, if any
+    my $static = $tree->{$dir};
+    #use Data::Dumper;
+    #warn ">>> $dir ".Dumper($static);
+
+    if (keys %$static) {
+      my @page_order = sort {
+        $static->{$a}{'_order'} <=> $static->{$b}{'_order'} ||
+        $static->{$a}{'_title'} cmp $static->{$b}{'_title'} ||
+        $static->{$a} cmp $static->{$b}
+      } keys %$static;
+
+      $html .= '<ul>';
+
+      foreach my $filename (@page_order) {
+        if ($static->{$filename}{'_title'}) {
+          $html .= sprintf '<li><a href="/%s/Info/Content?file=%s">%s</a></li>', 
+                    $dir, $filename, $static->{$filename}{'_title'};
+        }
+      }
+  
+      $html .= '</ul>';
+    }
+
+
+
+
     $html .= '</td></tr>';
   }
   $html .= qq(
