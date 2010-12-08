@@ -3,10 +3,8 @@ package EnsEMBL::Web::Component::Account::LostPassword;
 ### Module to create user login form 
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Account);
-use EnsEMBL::Web::Form;
 
 sub _init {
   my $self = shift;
@@ -22,13 +20,20 @@ sub caption {
 sub content {
   my $self = shift;
 
-  my $form = EnsEMBL::Web::Form->new( 'lost_password', "/Account/SendActivation", 'post' );
+  my $form = $self->new_form({
+    'id'      =>  'lost_password',
+    'action'  =>  '/Account/SendActivation'
+  });
+  
+  my $fieldset = $form->add_fieldset;
 
-  $form->add_element('type'  => 'Information',
-                    'value' => qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));
-  $form->add_element('type'  => 'Email', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes');
-  $form->add_element('type'  => 'Hidden', 'name'  => 'lost', 'value' => 'yes');
-  $form->add_element('type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send', 'class'=>'modal_link');
+  $fieldset->add_hidden({'name'  => 'lost', 'value' => 'yes'});
+  $fieldset->add_notes(qq(<p>If you have lost your password or activation email, enter your email address and we will send you a new activation code.</p>));
+
+  $fieldset->add_field([
+    {'type'  => 'Email', 'name'  => 'email', 'label' => 'Email', 'required' => 'yes'},
+    {'type'  => 'Submit', 'name'  => 'submit', 'value' => 'Send', 'class'=>'modal_link'}
+  ]);
 
   return $form->render;
 }

@@ -6,7 +6,6 @@ package EnsEMBL::Web::Component::Account::ManageGroup;
 
 use strict;
 
-use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Data::Group;
 
 use base qw(EnsEMBL::Web::Component::Account);
@@ -138,13 +137,19 @@ sub content {
     $html .= qq(<h3>Invite new members</h3>
 <p>To invite new members into this group, enter one email address per person. Users not already registered with this website will be asked to do so before accepting your invitation.</p>);
 
-    my $form = EnsEMBL::Web::Form->new('invitations', "/Account/Invite", 'post', 'std check narrow-labels');
+    my $form = $self->new_form({
+      'id'      => 'invitations',
+      'action'  => '/Account/Invite',
+      'class'   => 'std narrow-labels'});
 
-    $form->add_element(type => 'Text', name=>'emails', label => 'Email addresses', 
-                      'notes' => 'Multiple email addresses should be separated by commas');
+    my $fieldset = $form->add_fieldset;
 
-    $form->add_element(type => 'Hidden', name => 'id', value => $group->id);
-    $form->add_element(type => 'Submit', name => 'submit', value => 'Send');
+    $fieldset->add_hidden({'type' => 'Hidden', 'name' => 'id', 'value' => $group->id});
+    
+    $fieldset->add_field([
+      {'type' => 'Text',   'name' => 'emails', 'label' => 'Email addresses', 'notes' => 'Multiple email addresses should be separated by commas'},
+      {'type' => 'Submit', 'name' => 'submit', 'value' => 'Send'}
+    ]);
 
     $html .= $form->render;
   }
