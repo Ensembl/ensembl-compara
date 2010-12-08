@@ -53,7 +53,7 @@ form.check input.invalid  { background-color: #FFCCCC; }
 form.check input.valid    { background-color: #CCFFCC; }
 form.check input.disabled { background-color: #999999; }
 
-form.check label.invalid { color: #FF0000; font-weight: normal; font-style: italic; margin-top: 6px; display: block; }
+form.check label.invalid { color: #FF0000; font-weight: normal; font-style: italic; margin-top: 6px; display: inline; white-space: nowrap; }
 
 .hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
 
