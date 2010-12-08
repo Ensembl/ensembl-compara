@@ -256,8 +256,20 @@ sub run_ncsecstructtree {
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     print("$cmd\n") if($self->debug);
 
+    my $error_file = $worker_temp_directory."/RAxML_bestTree..$raxml_tag.$model.err";
+    $cmd .= ">& $error_file";
+
     my $starttime = time()*1000;
     unless(system("cd $worker_temp_directory; $cmd") == 0) {
+      # Try to catch some known errors
+      if (-e $error_file and qx"grep 'freqa > 0.0 && freqc > 0.0 && freqg > 0.0 && freqt > 0.0' $error_file") {
+        # This can happen when there is not one of the nucleotides in one of the DNA data partition (RAxML-7.2.2)
+        # RAxML will refuse to run this, we can safely skip all other models as well.
+        last;
+      } elsif (-e $error_file and qx"grep 'Empirical base frequency for state number [0-9] is equal to zero in DNA data partition' $error_file") {
+        # Same as before, but for RAxML-7.2.8
+        last;
+      }
       $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n $!\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0);
