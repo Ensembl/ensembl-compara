@@ -5,9 +5,9 @@ use strict;
 ## TODO - remove backward compatibility patches when ok to remove
 
 ## Structure of fieldset:
-## Every child node is appended at the end of the fieldset as they are added except legend & hidden inputs
-## Legend is always added at the top
-## Hidden inputs always come after the legend
+##  - Every child node is appended at the end of the fieldset as they are added except legend & hidden inputs
+##  - Legend is always added at the top
+##  - Hidden inputs always come after the legend
 
 use base qw(EnsEMBL::Web::DOM::Node::Element::Fieldset);
 
@@ -123,8 +123,8 @@ sub add_field {
   ## @params HashRef with following keys. (or ArrayRef of similar HashRefs in case of multiple fields)
   ##  - fieldclass        Extra CSS className for the field div
   ##  - label             innerHTML for <label>
+  ##  - notes             innerHTML for foot notes
   ##  - head_notes        innerHTML for head notes
-  ##  - foot_notes        innerHTML for foot notes
   ##  - elements          HashRef with keys as accepted by Form::Element::configure() OR ArrayRef of similar HashRefs in case of multiple elements
   ##                      In case of only one element, 'elements' key can be missed giving all child keys of 'elements' hashref to parent hashref.
   ##  - inline            Flag to tell whether all elements are to be displayed in a horizontal line
@@ -143,7 +143,7 @@ sub add_field {
 
   # add notes
   $field->head_notes($params->{'head_notes'}) if (exists $params->{'head_notes'});
-  $field->foot_notes($params->{'foot_notes'}) if (exists $params->{'foot_notes'});
+  $field->foot_notes($params->{'notes'})      if (exists $params->{'notes'});
   
   # add elements
   if (exists $params->{'elements'}) {
@@ -153,7 +153,7 @@ sub add_field {
     $self->_contains_required_field(1) if exists $_->{'required'};
   }
   else {
-    my $extra_keys = [ qw(fieldclass label head_notes foot_notes inline) ];
+    my $extra_keys = [ qw(fieldclass label head_notes notes inline) ];
     exists $params->{$_} and delete $params->{$_} for @$extra_keys;
     $params->{'id'} ||= $self->_next_id;
     $field->add_element($params);
@@ -216,8 +216,8 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   ## @params HashRef with following keys
   ##  - label             innerHTML for <label> if any needed for left column to the bottons (optional)
   ##  - align             [cetre(or center)|left|right|default]
+  ##  - notes             innerHTML for foor notes
   ##  - head_notes        innerHTML for head notes
-  ##  - foot_notes        innerHTML for foor notes
   ##  - buttons           HashRef with keys as accepted by Form::Element::Button::configure() OR ArrayRef of similar HashRefs if multiple buttons
   ##                      In case of only one button, 'buttons' key can be missed giving all child keys of 'buttons' hashref to parent hashref.
   ## @return Form::Field object with embedded buttons
@@ -336,7 +336,6 @@ sub add_element {
 
   $params{'class'} ||= '';
   $params{'class'} .= ref($params{'classes'}) eq 'ARRAY' ? join(' ', @{$params{'classes'}}) : $params{'classes'};
-  $params{'foot_notes'} = $params{'notes'} if exists $params{'notes'};
 
   ## Hidden
   if ($params{'type'} eq 'Hidden') {
