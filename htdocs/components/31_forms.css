@@ -22,6 +22,21 @@ label.ff-label {
 div.ff-right {
   padding-left: 50%;
 }
+div.fbutton-centre div.ff-right {
+  padding-left: 0%;
+  margin: 5px;
+  text-align: center;
+}
+div.fbutton-left div.ff-right {
+  padding-left: 0%;
+  margin: 5px;
+  text-align: left;
+}
+div.fbutton-right div.ff-right {
+  padding-left: 0%;
+  margin: 5px;
+  text-align: right;
+}
 div.ff-notes {
   padding: 6px 0 6px 50%;
 }
@@ -79,7 +94,7 @@ p.matrixhead {
 }
 div.ele-das {
   overflow: hidden;
-  margin-top: 9px;
+  padding: 5px;
 }
 .ele-das-left {
   float: left;
