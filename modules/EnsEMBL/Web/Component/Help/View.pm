@@ -7,7 +7,6 @@ use HTML::Entities qw(encode_entities);
 use base qw(EnsEMBL::Web::Component::Help);
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Component::Help::Movie;
 
 sub _init {
   my $self = shift;
@@ -33,7 +32,7 @@ sub content {
     foreach my $line (split('\n', $content)) {
       if ($line =~ /\[\[movie=(\d+)/i) {
         my $movies = $adaptor->fetch_help_by_ids([$1]) || [];
-        $line = EnsEMBL::Web::Component::Help::Movie::embed_movie($movies->[0]);
+        $line = $self->embed_movie($movies->[0]);
       }
       
       $html .= $line;
