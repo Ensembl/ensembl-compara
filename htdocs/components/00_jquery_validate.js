@@ -178,7 +178,7 @@ $.extend($.validator, {
             }
             
             if (flag == 'showError') {
-              input.error.el.show();
+              input.error.el.css('display', 'inline');
             }
           } else if (input.error) {
             input.error.el.remove();
