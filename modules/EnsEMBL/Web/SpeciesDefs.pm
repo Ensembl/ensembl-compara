@@ -356,6 +356,23 @@ sub _load_in_webtree {
   return $web_tree;
 }
 
+sub _load_in_species_pages {
+  ### Load in the static pages for each species 
+  ### Check for cached value first
+  my $self = shift;
+  my $spp_tree_packed = File::Spec->catfile($SiteDefs::ENSEMBL_CONF_DIRS[0], 'packed', 'spp_tree.packed');
+  my $spp_tree        = { _path => '/' };
+  
+  if (-e $spp_tree_packed) {
+    $spp_tree = lock_retrieve($spp_tree_packed);
+  } else {
+    EnsEMBL::Web::Tools::WebTree::read_species_dirs($spp_tree, $_, $ENSEMBL_DATASETS) for reverse @ENSEMBL_HTDOCS_DIRS;
+    lock_nstore($spp_tree, $spp_tree_packed);
+  }
+  
+  return $spp_tree;
+}
+
 sub _merge_in_dhtml {
   my ($self, $tree) = @_;
   my $inifile = $SiteDefs::ENSEMBL_CONF_DIRS[0] . '/packed/dhtml.ini';
@@ -662,7 +679,9 @@ sub _parse {
   $self->_info_line('Parser', 'Child objects attached');
 
   # Parse the web tree to create the static content site map
-  $tree->{'STATIC_INFO'} = $self->_load_in_webtree;
+  $tree->{'STATIC_INFO'}  = $self->_load_in_webtree;
+  ## Parse species directories for static content
+  $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $self->_info_line('Filesystem', 'Trawled web tree');
   
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');

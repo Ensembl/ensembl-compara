@@ -1,5 +1,8 @@
 package EnsEMBL::Web::Tools::WebTree;
 
+### Reads the static content directory tree(s) and creates a data structure
+### used to provide automated navigation
+
 use strict;
 
 sub read_tree {
@@ -31,7 +34,6 @@ sub read_tree {
   ) = @_;
 
   my $path = $branch->{_path};
-  #warn "processing $path ...";
 
   return unless -r "$doc_root$path";
 
@@ -111,6 +113,38 @@ sub read_tree {
     $branch->{$dirname}->{_name} = $dirname;
     read_tree( $branch->{$dirname}, $doc_root, $branch );
   }
+}
+
+sub read_species_dirs {
+### A simpler version of read_tree, which only looks in species home directories
+### for HTML files
+  my ($branch, $docroot, $species_list, $parent) = @_;
+
+  ## Look for species directories only
+  foreach my $species (@$species_list) {
+    opendir(DIR, $docroot . '/' . $species) or next;
+    my @files = grep { /^[^\.]/ && $_ ne 'CVS' } readdir(DIR);
+    closedir(DIR);
+
+    ## separate directories from other files
+    my ($html_files, $sub_dirs) = sortnames(\@files, $docroot.'/'.$species);
+    my ($title, $nav, $index);
+
+    ## Read files and populate the branch
+    foreach my $filename (@$html_files) {
+      my $full_path = "$docroot/$species/$filename";
+      my ($title, $nav, $order, $index) = get_info( $full_path );
+
+      unless ($index =~ /NO INDEX/) {
+        $branch->{$species}{$filename}->{_title} = $title;
+        $branch->{$species}{$filename}->{_nav}   = $nav;
+        $branch->{$species}{$filename}->{_order} = $order;
+        $branch->{$species}{$filename}->{_index} = $index;
+      }
+    }
+  }
+
+
 }
 
 sub sortnames {
