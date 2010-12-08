@@ -41,7 +41,7 @@ sub content {
   
   $self->add_entry({
     type  => 'Type',
-    label => $object->feature_type->name
+    label => $cell_line_specific_reg_object->feature_type->name
   });
   
   $self->add_entry({
