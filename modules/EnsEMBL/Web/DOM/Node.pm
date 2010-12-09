@@ -27,7 +27,31 @@ sub new {
     '_parent_node'          => 0,
     '_next_sibling'         => 0,
     '_previous_sibling'     => 0,
+    '_flags'                => {},
   }, $class;
+}
+
+sub set_flag {
+  ## Sets/modifies a flag
+  ## @params flag name
+  ## @params flag value (optional - takes 1 as default)
+  ## @return flag value
+  my $self = shift;
+  my $flag = shift;
+  return $self->{'_flags'}{$flag} = scalar @_ ? shift : 1;
+}
+
+sub get_flag {
+  ##ÊGets previously set flag
+  ## @params flag name
+  ## @return flag value if set or undef if not
+  my ($self, $flag) = @_;
+  return exists $self->{'_flags'}{$flag} ? $self->{'_flags'}{$flag} : undef;
+}
+
+sub reset_flags {
+  ## Removes all the flags set
+  shift->{'_flags'} = {};
 }
 
 sub can_have_child {
@@ -231,6 +255,41 @@ sub get_ancestor_by_attribute {
   return undef;
 }
 
+sub get_nodes_by_flag {
+  ## Gets all the child nodes (recursively) of the node with the given flag
+  ## Independent of node type
+  ## @params Either of the following
+  ##  - String flag name                                - single flag with default value (ie. 1)
+  ##  - ArrayRef of flag Strings [flag1, flag2, ... ]   - to accomodate multiple flags with default value
+  ##  - HashRef {flag1 => value1, flag2 => value2 ...}  - to accomodate multiple flags with custom values
+  ##  - HashRef {flag1 => [a, b ... ], flag2 => c ...}  - to accomodate multiple flag values
+  my $self  = shift;
+  my $flag  = shift;
+  my $recur = scalar @_ ? shift : 1;
+
+  $flag = [ $flag ]                 if ref($flag) !~ /^(ARRAY|HASH)$/;
+  $flag = { map {$_ => 1} @$flag }  if ref($flag) eq 'ARRAY';
+  ref($flag->{$_}) ne 'ARRAY' and $flag->{$_} = [$flag->{$_}] for keys %$flag;
+
+  my $nodes = [];
+  foreach my $child_node (@{$self->child_nodes}) {
+    FLAG: foreach my $flag_name (keys %$flag) {
+      foreach my $flag_value (@{$flag->{$flag_name}}) {
+        push @$nodes, $child_node and last FLAG if exists $child_node->{'_flags'}{$flag_name} && $child_node->{'_flags'}{$flag_name} eq $flag_value;
+      }
+    }
+    push @$nodes, $child_node->get_nodes_by_flag($flag) if $recur;
+  }
+  return $nodes;
+}
+
+sub get_child_nodes_by_flag {
+  ## Gets all the child nodes (immediate children only) of the node with the given flag
+  ## Independent of node type
+  ## @params As accepted by get_nodes_by_flag
+  return shift->get_nodes_by_flag(shift, 0);
+}
+
 sub has_child_nodes {
   ## Checks if the element has any child nodes
   ## @return 1 or 0 accordingly
@@ -369,13 +428,14 @@ sub prepend_child {
 
 sub clone_node {
   ## Clones an element
-  ## Only properties defined in this class will be cloned
+  ## Only properties defined in this class will be cloned - including flags (If flags not required, do reset_flags() after cloning)
   ## @params 1/0 depending upon if child elements also need to be cloned (deep cloning)
   ## @return New element
   my ($self, $deep_clone) = @_;
   
   my $clone = bless {
     '_attributes'       => clone($self->{'_attributes'}),
+    '_flags'            => clone($self->{'_flags'}),
     '_child_nodes'      => [],
     '_text'             => defined $deep_clone && $deep_clone == 1 ? $self->{'_text'} : '',
     '_dom'              => $self->dom,
@@ -472,7 +532,7 @@ sub is_same_as {
 }
 
 sub _adjust_child_nodes {
-  # private function used to adjust the array referenced at _child_nodes key after some change in the child nodes
+  # private function used to adjust the array referenced at _child_nodes key after some changes in the child nodes
   # removes the 'just-removed' nodes from the array
   # re-arranges the array on the bases of linked list
   my $self = shift;
