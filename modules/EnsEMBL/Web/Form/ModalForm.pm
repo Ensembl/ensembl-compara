@@ -72,7 +72,6 @@ sub render {
   
   if ($params->{'buttons_on_top'}) {
     $buttons_field = $buttons_field->clone_node(1);
-    $buttons_field->is_button_field(1);
     my $fieldset = $self->fieldsets->[0] || $self->add_fieldset;
     $fieldset->prepend_child($buttons_field);
   }
