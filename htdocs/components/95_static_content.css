@@ -81,3 +81,5 @@ ul.breadcrumbs li a:hover        { color: [[MH_HOVER]]; }
 ul.breadcrumbs li a.home         { background: url(/i/home.png) no-repeat left 0; width: 10px; height: 10px; display: block; text-indent: -20em; position:relative; top: 5px; }
 ul.breadcrumbs li a.home:visited { background-position: left -15px; }
 ul.breadcrumbs li a.home:hover   { background-position: left -30px; }
+
+#pdoc_iframe { border: #ccc 1px solid; }
