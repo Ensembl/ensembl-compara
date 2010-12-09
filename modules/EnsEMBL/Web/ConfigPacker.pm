@@ -1097,7 +1097,7 @@ sub _summarise_go_db {
   #$self->_summarise_generic( $db_name, $dbh );
   # get the list of the available ontologies
   my $t_aref = $dbh->selectall_arrayref(
-					'select ontology.name,namespace,accession,term.name from ontology join term using (ontology_id)
+					'select ontology.name,accession,term.name from ontology join term using (ontology_id)
 left join relation on (term_id=child_term_id) where relation_id is null'
 					);
   foreach my $row (@$t_aref) {
