@@ -34,8 +34,9 @@ sub create_document {
 
 sub create_element {
   ## Creates an element of a given tag name by instantiating the corresponding class
+  ## Also adds attributes and inner_HTML/inner_text
   ## @params Element type
-  ## @params HashRef of {attrib1 => value1, attrib2 => value2} for attributes
+  ## @params HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text
   ## @return Element subclass object
   my ($self, $element_type, $attributes)  = @_;
 
@@ -49,6 +50,8 @@ sub create_element {
     return;
   }
   my $element = $node_class->new($self);
+  $element->inner_text($attributes->{'inner_text'}) and delete $attributes->{'inner_text'} if exists $attributes->{'inner_text'};
+  $element->inner_HTML($attributes->{'inner_HTML'}) and delete $attributes->{'inner_HTML'} if exists $attributes->{'inner_HTML'}; #overrides inner_text  
   $element->set_attributes($attributes);
   return $element;
 }
