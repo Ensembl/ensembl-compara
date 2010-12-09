@@ -22,9 +22,11 @@ sub new {
   $self->{'__rows_name'}  = {};
   $self->{'__prefix'}     = '';
   $self->{'__row_keys'}   = [];
-  $self->set_attribute('cellspacing', '0');
-  $self->set_attribute('cellpadding', '0');
-  $self->set_attribute('class', $self->CSS_CLASS);
+  $self->set_attributes({
+    'cellspacing' => '0',
+    'cellpadding' => '0',
+    'class'       => $self->CSS_CLASS
+  });
   return $self;
 }
 
@@ -34,19 +36,12 @@ sub render {
   my $self = shift;
   if (scalar @{$self->{'__row_keys'}}) {
     my $select_all_columns = $self->get_elements_by_class_name($self->CSS_CLASS_SELECTALL_COLUMN);
-    my $dropdown = $self->dom->create_element('select');
-    my $values = ["", "all", @{$self->{'__row_keys'}}, "none"];
-    for (@$values) {
-      my $option = $self->dom->create_element('option');
-      $option->inner_HTML(ucfirst $_);
-      $option->set_attribute('value', $_);
-      $dropdown->append_child($option);
-      $dropdown->set_attribute('class', $self->CSS_CLASS_SELECTALL_COLUMN);
-    }
+    my $dropdown = $self->dom->create_element('select', {'class', $self->CSS_CLASS_SELECTALL_COLUMN});
+    my @values = ("", "all", @{$self->{'__row_keys'}}, "none");
+    $dropdown->append_child($self->dom->create_element('option', {'inner_HTML' => ucfirst $_, 'value' => $_})) for @values;
     for (@$select_all_columns) {
       my $dd = $dropdown->clone_node(1);
-      $dd->set_attribute('id', $_->id);
-      $dd->set_attribute('name', $_->name);
+      $dd->set_attributes({'id' => $_->id, 'name', $_->name});
       my $labels = $_->parent_node->get_elements_by_tag_name('label');
       $labels->[0]->remove if scalar @$labels;
       $_->parent_node->replace_child($dd, $_);
@@ -232,32 +227,26 @@ sub _add_columns {
   my $tr2   = $self->dom->create_element('tr');
   
   #add two empty columns for row caption and selectall button of every row
-  my $th = $self->dom->create_element('th');
-  $th->set_attribute('colspan', '2');
-  $tr1->append_child($th);
-  $th = $self->dom->create_element('td');
-  $th->set_attribute('colspan', '2');
-  $tr2->append_child($th);
+  $tr1->append_child($self->dom->create_element('th', {'colspan', '2'}));
+  $tr2->append_child($self->dom->create_element('td', {'colspan', '2'}));
   
   #add columns
   foreach my $column (@{$self->{'__columns'}}) {
 
     #column heading
-    my $th = $self->dom->create_element('th');
-    $th->inner_text($column->{'caption'});
-    $tr1->append_child($th);
+    $tr1->append_child($self->dom->create_element('th', {'inner_HTML', $column->{'caption'}}));
 
     #selectall checkbox
     my $td = $self->dom->create_element('td');
     if ($column->{'selectall'}) {
-      my $selectall = $self->dom->create_element('inputcheckbox');
-      my $label     = $self->dom->create_element('label');
-      $selectall->set_attribute('class',  $self->CSS_CLASS_SELECTALL_COLUMN);
-      $selectall->set_attribute('id',     $self->{'__prefix'}.$column->{'name'}.'_c');    
-      $selectall->set_attribute('name',   $self->{'__prefix'}.$column->{'name'});
-      $selectall->set_attribute('value',  'select_all');
+      my $selectall = $self->dom->create_element('inputcheckbox', {
+        'class' => $self->CSS_CLASS_SELECTALL_COLUMN,
+        'id'    => $self->{'__prefix'}.$column->{'name'}.'_c',
+        'name'  => $self->{'__prefix'}.$column->{'name'},
+        'value' => 'select_all'
+      });
+      my $label = $self->dom->create_element('label', {'for', $selectall->id});
       $label->inner_HTML('Select all');
-      $label->set_attribute('for', $selectall->id);
       $td->append_child($selectall);
       $td->append_child($label);
     }
