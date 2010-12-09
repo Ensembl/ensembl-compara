@@ -9,28 +9,18 @@
 
 
 use strict;
-use FindBin qw($Bin);
-use File::Basename qw( dirname );
-use Data::Dumper;
 use Getopt::Long qw(:config no_ignore_case);
 
 ######################### cmdline options #####################################
-my ($dir);
+my $dir;
 &GetOptions(
       'dir=s' => \$dir,
 );
 
-use vars qw( $SERVERROOT );
-BEGIN{
-  $SERVERROOT = dirname( $Bin );
-  $SERVERROOT =~ s#/utils##;
-  unshift @INC, "$SERVERROOT/conf";
-}
-
-my $path = "$SERVERROOT/$dir";
-
 ########################## Process files #######################################
 
+## Remove trailing slash, just to be on safe side! (add it back in manually)
+(my $path = $dir) =~ s#/$##;
 my @files;
 
 ## Get all INPUT files from this directory
@@ -45,7 +35,7 @@ my $title;
 
 ## Process each one
 foreach my $file (@files) {
-  open (INPUT, "<", $path.$file) or die "Couldn't open html page $file: $!";
+  open (INPUT, "<", $path.'/'.$file) or die "Couldn't open html page $path/$file: $!";
   my $content = qq(<!--#set var="decor" value="none"-->\n);
   my $title_start = 0;
   while (<INPUT>) {
@@ -55,8 +45,9 @@ foreach my $file (@files) {
     if ($file eq 'index.html') {
       ## remove borders from framesets
       if ($line =~ /<frameset/i) {
+        chomp($line);
         $line =~ s/>//;
-        $line .= ' border="0" frameborder="0" framespacing="0">';
+        $line .= qq( border="0" frameborder="0" framespacing="0">\n);
       }
       ## grab page title
       if ($line =~ /<title>/i) {
@@ -65,6 +56,7 @@ foreach my $file (@files) {
         }
         else {
           $title_start = 1;
+          $content .= $line;
           next;
         }
       }
@@ -80,7 +72,7 @@ foreach my $file (@files) {
   close INPUT;
   ## Copy original index page to iframe page
   my $output = $file eq 'index.html' ? 'iframe.html' : $file;
-  open (OUTPUT, ">", $path.$output) or die "Couldn't open html page $output: $!";
+  open (OUTPUT, ">", $path.'/'.$output) or die "Couldn't open html page $output: $!";
   print OUTPUT $content;
   close OUTPUT;
 }
@@ -93,12 +85,12 @@ my $index = qq(
 <title>$title</title>
 </head>
 <body>
-<iframe src="iframe.html  id="pdoc_iframe" width="100%" height="1000px"></iframe>
+<iframe src="iframe.html" id="pdoc_iframe" width="100%" height="1000px"></iframe>
 </body>
 </html>
 );
 
-open (INDEX, ">", $path.'index.html') or die "Couldn't open index.html: $!";
+open (INDEX, ">", $path.'/index.html') or die "Couldn't open index.html: $!";
 print INDEX $index;
 close INDEX;
 
