@@ -88,7 +88,7 @@ my $index = qq(
 <title>$title</title>
 </head>
 <body>
-<iframe src="iframe.html" width="100%" height="1000px"></iframe>
+<iframe src="iframe.html  id="pdoc_iframe" width="100%" height="1000px"></iframe>
 </body>
 </html>
 );
