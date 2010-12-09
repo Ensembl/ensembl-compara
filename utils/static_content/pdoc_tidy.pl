@@ -52,8 +52,13 @@ foreach my $file (@files) {
     my $line = $_;
     ## remove body tags to make frameset work!
     next if $line =~ /body>/;
-    ## grab page title
     if ($file eq 'index.html') {
+      ## remove borders from framesets
+      if ($line =~ /<frameset/i) {
+        $line =~ s/>//;
+        $line .= ' border="0" frameborder="0" framespacing="0">';
+      }
+      ## grab page title
       if ($line =~ /<title>/i) {
         if ($line =~ /<title>(\s?)(\w+)/i) {
           ($title = $line) =~ s#</title>##i;
