@@ -23,12 +23,19 @@ use constant {
   
   CSS_ODD_ROW               => 'bg1',
   CSS_EVEN_ROW              => 'bg2',
+  
+  _FLAG_FIELD               => '_is_field',
+  _FLAG_ELEMENT             => '_is_element',
+  _FLAG_HONEYPOT            => '_is_honeypot',
+  _FLAG_BUTTON              => '_is_button',
+  _FLAG_STRIPED             => '_is_striped',
+  _FLAG_REQUIRED            => '_is_required',
 };
 
 sub render {
   ## @overrides
   my $self = shift;
-  $self->add_notes($self->FOOT_NOTE_REQUIRED) if $self->_contains_required_field;
+  $self->add_notes($self->FOOT_NOTE_REQUIRED) if $self->get_flag($self->_FLAG_REQUIRED);
 
   #css stuff
   my $css_class = {
@@ -46,11 +53,11 @@ sub render {
   }
 
   my $i = 0;
-  if ($self->_striped) {
+  if ($self->get_flag($self->_FLAG_STRIPED)) {
     for (@{$self->child_nodes}) {
-      next if $_->node_name =~ /^(input|legend)$/ || $self->_child_isa_field($_) && ($_->is_honeypot || $_->is_button_field);#ignore hidden inputs, legend, honeypot and buttons
+      next if $_->node_name =~ /^(input|legend)$/ || $_->get_flag($self->_FLAG_HONEYPOT) || $_->get_flag($self->_FLAG_BUTTON);#ignore hidden inputs, legend, honeypot and buttons
       $_->set_attribute('class', $i % 2 == 0 ? $self->CSS_EVEN_ROW : $self->CSS_ODD_ROW);
-      $i++ if $self->_child_isa_field($_) || $self->_child_isa_element($_);
+      $i++ if $_->get_flag($self->_FLAG_FIELD) || $_->get_flag($self->_FLAG_ELEMENT);
     }
   }
 
@@ -64,7 +71,7 @@ sub configure {
   $self->{'__id'}   = $params->{'form_name'}  if $params->{'form_name'};
   $self->{'__name'} = $params->{'name'}       if $params->{'name'};
   $self->legend($params->{'legend'})          if $params->{'legend'};
-  $self->_striped($params->{'stripes'} || 0);
+  $self->set_flag($self->_FLAG_STRIPED)       if $params->{'stripes'};
   return $self;
 }
 
@@ -72,22 +79,14 @@ sub elements {
   ## Gets all the element child nodes (immediate only) in the fieldset
   ## @return ArrayRef of Form::Fields
   my $self = shift;
-  my $elements = [];
-  for (@{$self->child_nodes}) {
-    push @$elements, $_ if $self->_child_isa_element($_);
-  }
-  return $elements;
+  return $self->get_child_nodes_by_flag($self->_FLAG_ELEMENT);
 }
 
 sub fields {
   ## Gets all the field child nodes (immediate only) in the fieldset
   ## @return ArrayRef of Form::Fields
   my $self = shift;
-  my $fields = [];
-  for (@{$self->child_nodes}) {
-    push @$fields, $_ if $self->_child_isa_field($_);
-  }
-  return $fields;
+  return $self->get_child_nodes_by_flag($self->_FLAG_FIELD);
 }
 
 sub inputs {
@@ -150,15 +149,16 @@ sub add_field {
     $params->{'elements'} = [ $params->{'elements'} ] if ref($params->{'elements'}) eq 'HASH';
     $_->{'id'} ||= $self->_next_id;
     $field->add_element($_, $params->{'inline'} || 0) for @{$params->{'elements'}};
-    $self->_contains_required_field(1) if exists $_->{'required'};
+    $self->set_flag($self->_FLAG_REQUIRED) if exists $_->{'required'};
   }
   else {
     my $extra_keys = [ qw(fieldclass label head_notes notes inline) ];
     exists $params->{$_} and delete $params->{$_} for @$extra_keys;
     $params->{'id'} ||= $self->_next_id;
     $field->add_element($params);
-    $self->_contains_required_field(1) if exists $params->{'required'};
+    $self->set_flag($self->_FLAG_REQUIRED) if exists $params->{'required'};
   }
+  $field->set_flag($self->_FLAG_FIELD);
   return $self->append_child($field);
 }
 
@@ -168,7 +168,7 @@ sub add_honeypot_field {
   $params->{'type'} = 'text';
   $params->{'fieldclass'} = 'hidden';
   my $field = $self->add_field($params);
-  $field->is_honeypot(1);
+  $field->set_flag($self->_FLAG_HONEYPOT);
   return $field;
 }
 
@@ -207,6 +207,7 @@ sub _add_element {## TODO - remove prefixed underscore once compatibile
     $div->append_child($element);
     return $self->append_child($div);
   }
+  $element->set_flag($self->_FLAG_ELEMENT);
   return $self->append_child($element);
 }
 
@@ -227,7 +228,7 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   $params->{'fieldclass'} = $self->CSS_CLASS_BUTTON.'-'.$params->{'align'} if $params->{'align'} =~ /^(centre|center|left|right)$/;
   delete $params->{'buttons'};
   my $field = $self->add_field($params);
-  $field->is_button_field(1);
+  $field->set_flag($self->_FLAG_BUTTON);
   return $field;
 }
 
@@ -286,34 +287,6 @@ sub _next_id {
   $self->{'__id'} ||= $self->form->id;
   $self->{'__name'} ||= $self->unique_id;
   return $self->{'__id'}.'_'.$self->{'__name'}.'_'.($self->{'__set_id'}++);
-}
-
-sub _contains_required_field {
-  ## Getter/Setter of required flag
-  my $self = shift;
-  $self->{'__contains_required_field'} = 1 if @_ && shift == 1;
-  return $self->{'__contains_required_field'} || 0;
-}
-
-sub _striped {
-  ## Gets/Sets the stripes flag
-  my $self = shift;
-  $self->{'__striped'} = 1 if @_ && shift;
-  return $self->{'__striped'} || 0;
-}
-
-sub _child_isa_element {
-  ## checkes whether a child is a Field object
-  my ($self, $child) = @_;
-  (my $elementclass = __PACKAGE__) =~ s/Fieldset/Element/;
-  return $child->isa($elementclass) ? 1 : 0;
-}
-
-sub _child_isa_field {
-  ## checkes whether a child is a Field object
-  my ($self, $child) = @_;
-  (my $fieldclass = __PACKAGE__) =~ s/Fieldset/Field/;
-  return $child->isa($fieldclass) ? 1 : 0;
 }
 
 

@@ -20,9 +20,9 @@ use constant {
   CSS_CLASS_ELEMENT_DIV     => 'ff-right',
   CSS_CLASS_INLINE_WRAPPER  => 'inline',
   
-  _IS_FOOT_NOTE             => '__is_foot_note',
-  _IS_HEAD_NOTE             => '__is_head_note',
-  _CAN_BE_INLINE            => '__can_be_inline',
+  _FLAG_FOOT_NOTES          => '_is_foot_note',
+  _FLAG_HEAD_NOTES          => '_is_head_note',
+  _FLAG_INLINE              => '_can_be_inline',
 };
 
 sub render {
@@ -74,16 +74,6 @@ sub foot_notes {
   return shift->_notes('foot', @_);
 }
 
-sub elements {
-  ## Returns all the elements added in this field
-  ## @return ArrayRef of Form::Element::* objects or Element object inside a DOM::Node::Element::Div
-  my $self = shift;
-  my $elements = [];
-  for (@{$self->child_nodes}) {
-    push @$elements, $_ unless exists $_->{$self->_IS_FOOT_NOTE}
-  }
-}
-
 sub add_element {
   ## Adds a new element under existing label
   ## @params HashRef of standard parameters required for Form::Element->configure
@@ -105,8 +95,8 @@ sub add_element {
   
   if ($inline && $element->node_name =~ /^(input|textarea|select)$/) { #if possible to fulfil the request for inline
     for (reverse @{$children}) {
-      next if exists $_->{$self->_IS_FOOT_NOTE};
-      last unless exists $_->{$self->_CAN_BE_INLINE};
+      next if $_->get_flag($self->_FLAG_FOOT_NOTES);
+      last unless $_->get_flag($self->_FLAG_INLINE);
       $div = $_;
       $div->set_attribute('class', $self->CSS_CLASS_INLINE_WRAPPER);
       last;
@@ -114,8 +104,8 @@ sub add_element {
   }
   unless ($div) {
     $div = $self->dom->create_element('div');
-    $div->{$self->_CAN_BE_INLINE} = 1;
-    scalar @$children && exists $children->[-1]->{$self->_IS_FOOT_NOTE} ? $self->insert_before($div, $children->[-1]) : $self->append_child($div);
+    $div->set_flag($self->_FLAG_INLINE);
+    scalar @$children && $children->[-1]->get_flag($self->_FLAG_FOOT_NOTES) ? $self->insert_before($div, $children->[-1]) : $self->append_child($div);
   }
 
   if ($div->is_empty && $element->node_name eq 'div') { #to avoid nesting of divs
@@ -129,40 +119,31 @@ sub add_element {
   return $div;
 }
 
-sub is_honeypot {
-  ## Sets/Gets the flag
-  my $self = shift;
-  $self->{'__is_honeypot'} = shift  if @_;
-  return $self->{'__is_honeypot'};
-}
-
-sub is_button_field {
-  ## Sets/Gets the flag
-  my $self = shift;
-  $self->{'__is_button_field'} = shift if @_;
-  return $self->{'__is_button_field'};
+sub inputs {
+  ## Gets all input, select or textarea nodes present in the field
+  ## @return ArrayRef of DOM::Node::Element::Select|TextArea and DOM::Node::Element::Input::*
+  return shift->get_elements_by_tag_name([qw(input select textarea)]);
 }
 
 sub _notes {
   my $self = shift;
   my $location = shift eq 'head' ? 'head' : 'foot';
-  my $children = $self->child_nodes || [];
-  my $notes = undef;
-  my $identity_key = $location eq 'head' ? $self->_IS_HEAD_NOTE : $self->_IS_FOOT_NOTE;
-  exists $_->{$identity_key} and $notes = $_ and last for (@$children);
-
-  unless ($notes) {
+  my $identity_flag = $location eq 'head' ? $self->_FLAG_HEAD_NOTES : $self->_FLAG_FOOT_NOTES;
+  my $notes = $self->get_child_nodes_by_flag($identity_flag);
+  if (scalar @$notes) {
+    $notes = shift @$notes;
+  }
+  else {
     $notes = $self->dom->create_element('div');
-    $notes->{$identity_key} = 1;
+    $notes->set_flag($identity_flag);
     $notes->set_attribute('class', $self->CSS_CLASS_NOTES);
     if ($location eq 'head') {
-      scalar @$children && $children->[0]->node_name eq 'label' ? $self->insert_after($notes, $children->[0]) : $self->prepend_child($notes);
+      $self->first_child && $self->first_child->node_name eq 'label' ? $self->insert_after($notes, $self->first_child) : $self->prepend_child($notes);
     }
     else {
       $self->append_child($notes);
     }
   }
-  
   $notes->inner_HTML(shift) if @_;
   return $notes;
 }
