@@ -158,7 +158,9 @@ sub render {
       $link = encode_entities($entry->{'label'}) . $entry->{'label_html'};
     }
 
+
     #quick bug fix:
+    $link =~ s/(\?|;)ac=(.+?)"(.*?)>InterPro</$1ac=$2"$3>$2</g if ($type =~ /View InterPro/);    
     $link =~ s/&amp;amp;/&amp;/g if ($link =~ /&amp;amp;/);
     push @entries, { link => $link, type => $type };
   }
