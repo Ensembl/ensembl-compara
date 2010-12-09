@@ -258,6 +258,20 @@ sub _summarise_core_tables {
     }
     $self->db_tree->{'MAX_CHR_NAME'  } = $max_name;
     $self->db_tree->{'MAX_CHR_LENGTH'} = $max_length;
+
+#
+# * Ontologies
+#
+    my $oref =  $dbh->selectall_arrayref(
+     'select distinct(db_name) from ontology_xref 
+       left join object_xref using(object_xref_id) 
+        left join xref using(xref_id) 
+         left join external_db using(external_db_id)'
+					 );
+    foreach my $row (@$oref) {
+	push @{$self->db_tree->{'SPECIES_ONTOLOGIES'}}, $row->[0];
+    }
+
   }
 
 #---------------
@@ -1081,6 +1095,17 @@ sub _summarise_go_db {
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
   #$self->_summarise_generic( $db_name, $dbh );
+  # get the list of the available ontologies
+  my $t_aref = $dbh->selectall_arrayref(
+					'select ontology.name,namespace,accession,term.name from ontology join term using (ontology_id)
+left join relation on (term_id=child_term_id) where relation_id is null'
+					);
+  foreach my $row (@$t_aref) {
+      my ($ontology, $root_term, $description) = @$row;
+      $self->db_tree->{'ONTOLOGIES'}{$ontology}->{root} = $root_term;
+      $self->db_tree->{'ONTOLOGIES'}{$ontology}->{description} = $description;
+  }
+
   $dbh->disconnect();
 }
 
