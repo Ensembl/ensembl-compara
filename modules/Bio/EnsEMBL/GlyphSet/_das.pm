@@ -125,8 +125,6 @@ sub features {
                 'features' => { $style_key => [$f] },
                 'start'    => $f->start,
                 'end'      => $f->end,
-                'fnotes'   => $f->{'note'},
-                'flinks'   => $f->{'link'},
                 'class'    => "das group $logic_name"
               };
             }
