@@ -120,12 +120,7 @@ sub run {
 
     my $genebuild       = $meta_container->get_genebuild || '';
 
-    my $ncbi_biname     = $self->compara_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
-    $ncbi_biname      &&= $ncbi_biname->binomial();
-    my $meta_biname     = $meta_container->get_Species();
-    $meta_biname      &&= $meta_biname->binomial();
-    my $genome_name     = ( ($species_name ne $ncbi_biname) and $self->param('ensembl_genomes') and $species_name ) || $ncbi_biname || $species_name || $meta_biname
-        || die "Could not figure out the genome_name, please investigate";
+    my $genome_name = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
     $genome_db->dbID( $genome_db_id );
