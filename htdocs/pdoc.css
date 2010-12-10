@@ -1,0 +1,813 @@
+/* CSS definitions associated to the Perl modules 
+ * auto-generated documentation pages by perlmod2www.pl script.
+ */
+
+/* ------------------------------------------------------------------
+ * -------------- Styles for the Perl levels index page -------------
+ * ------------------------------------------------------------------ */
+
+/*
+    background: #E1D9FF;
+    border-style: solid;
+    color: #453D5C;
+    border-width: 1px;
+    background: #ECFFE2;
+*/
+
+/* Main area with the levels */
+#pdoc_packages {
+  background: #E1D9FF;
+}
+
+
+#levelsArea {
+    color: #5E5B6F;
+}
+
+/* Style for level title */
+#levelsTitle {
+    font-weight: bold;
+    padding: 2px;
+}
+
+/* Level title link */
+#levelsTitle a:link {
+    text-decoration: none;
+    color: #453D5C;
+    padding: 2px 4px;
+}
+
+#levelsTitle a:visited {
+    color: #453D5C;
+    text-decoration: none;
+}
+
+#levelsTitle a:hover {
+    text-decoration: none;
+    background-color:#669;
+    color:#fff;
+}
+
+/* Style for each level */
+#levelsEntry {
+    color: #5E5B6F;
+    font-weight: bold;
+    padding: 1px;
+}
+
+/* Level link */
+#levelsEntry a:link {
+    text-decoration: none;
+    color: #333;
+    padding: 1px;
+    border: #fff solid 1px;
+}
+
+#levelsEntry a:visited {
+    color: #666;
+    text-decoration: none;
+    border-color: #fff;
+}
+
+#levelsEntry a:hover {
+    text-decoration: none;
+    border-color: #669;
+}
+
+/* ------------------------------------------------------------------
+ * ---------------- Styles for the modules list pages ---------------
+ * ------------------------------------------------------------------ */
+
+/* Main area with the modules */
+#modulesArea {
+    color: #336;
+}
+
+/* Module entry */
+#modulesEntry {
+    color: #546652;
+    font-weight: bold;
+    padding: 1px;
+}
+
+/* Module link */
+#modulesEntry a:link {
+    text-decoration: none;
+    color: #336;
+}
+
+#modulesEntry a:visited {
+    text-decoration: none;
+    color: #669;
+}
+
+#modulesEntry a:hover {
+    text-decoration: none;
+    border-style: solid; 
+    border-width: 0px;
+    border-bottom-width: 2px;
+}
+
+/* ------------------------------------------------------------------
+ * --------------------- Styles for the TOC pages -------------------
+ * ------------------------------------------------------------------ */
+
+/* Main area with TOC */
+#tocArea {
+    background: #FFFFFF;
+    color: #000000;
+}
+
+/* TOC index, element placed on top the page to index the levels in a TOC */
+#tocIndex {
+    padding: 2px;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #767676;
+}
+
+#tocIndex a:link {
+    text-decoration: none;
+    color: #000000;
+}
+
+#tocIndex a:visited {
+    text-decoration: none;
+    color: #000000;
+}
+
+#tocIndex a:hover {
+    text-decoration: none;
+    border-style: solid; 
+    border-width: 0px;
+    border-bottom-width: 1px;
+    border-color: #767676;
+}
+
+/* TOC header, placed on top of a list of modules */
+#tocHead {
+    background: #C1C1C1;
+    font-weight: bold;
+    padding: 2px;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #767676;
+}
+
+#tocHead a:link {
+    text-decoration: none;
+    color: #000000;
+}
+
+#tocHead a:visited {
+    text-decoration: none;
+    color: #000000;
+}
+
+#tocHead a:hover {
+    text-decoration: none;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #767676;
+    background: #E6E6E6;
+}
+
+
+/* TOC title */
+#tocTitle {
+    background: #C1C1C1;
+    font-weight: bold;
+    font-size: larger;
+    padding: 2px;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #767676;
+}
+
+/* Index area */
+#tocIndexArea {
+    padding: 2px;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #415A7F;
+}
+
+/* Module entry in TOC */
+#tocMod {
+    background: #D9E6C8;
+    border-style: solid; 
+    border-width: 0px;
+    border-bottom-width: 1px;
+    border-color: #415A7F;
+    width: 20%;
+    padding: 2px;
+}
+
+#tocMod a:link {
+    text-decoration: none;    
+}
+
+#tocMod a:visited {
+    text-decoration: none;    
+}
+
+/* Module description in TOC */
+#tocDesc {
+    border-style: solid; 
+    border-width: 0px;
+    border-bottom-width: 1px;
+    border-color: #415A7F;
+    width: 80%;
+    padding: 2px;
+}
+
+/* ------------------------------------------------------------------
+ * ---------- Styles for the documentation page components ----------
+ * ------------------------------------------------------------------ */
+
+/* Perl module root path on top of the page */
+#modRootPath {
+    font-weight: bold;
+    color: #414141;
+    border-style: dotted;
+    border-width: 1px;
+}
+
+/* Perl module name on top of the page */
+#modName {
+    font-weight: bold;
+    font-size: larger;
+}
+
+/* Direct access area: table containing links to different locations of the page */
+#daArea {
+    border-style: solid; 
+    border-width: 2px;
+}
+
+/* Entries (table cells) in the direct access area */
+#daEntry {
+    color: #BF0000;
+    text-align: center;
+}
+
+/* Remove text decoration for hyperlinks in these cells */
+#daEntry a:link {
+    text-decoration: none;
+}
+
+#daEntry a:visited {
+    text-decoration: none;
+}
+
+#daEntry a:hover {
+    background: #FFB47F;
+}
+
+/* Main components of the module description */
+
+/* Titles */
+#descTitle {
+    background: #DCDCDC;
+    color: #000000;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #727272;
+    font-weight: bold;
+    border-spacing: 2px;
+    padding: 2px;
+}
+
+#descTitle a:link {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #727272;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#descTitle a:visited {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #727272;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#descTitle a:hover {
+    background: #FAFAF8;
+}
+
+/* Titles */
+#descSubTitle {
+    background: #FAFAF8;
+    color: #454545;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #9A9A9A;
+    font-weight: bold;
+    border-spacing: 2px;
+    padding: 2px;
+}
+
+#descSubTitle a:link {
+    text-decoration: none;
+    color: #454545;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #9A9A9A;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#descSubTitle a:visited {
+    text-decoration: none;
+    color: #454545;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #9A9A9A;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#descSubTitle a:hover {
+    background: #FFFFFF;
+}
+
+/* Description text area */
+#descArea {
+    background: #FAFAF8;
+    color: #000000;
+    padding: 2px;
+}
+
+/* Toolbar entries */
+#tbEntry {
+    color: #E28C31;
+    font-weight: bold;
+}
+
+/* Links in the toolbar have no decoration */
+#tbEntry a:link {
+    text-decoration: none;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#tbEntry a:hover {
+    background: #EFF0BE;
+}
+
+#tbEntry a:visited {
+    text-decoration: none;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+/* Included lib entries */
+#libEntry {
+    color: #722388;
+    font-weight: bold;
+}
+
+/* When being hyperlinked */
+#libEntry a:link {
+    text-decoration: none;
+}
+
+#libEntry a:hover {
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #722388;
+}
+
+#libEntry a:visited {
+    text-decoration: none;
+    color: #722388;
+}
+
+/* Table with methods index */
+#methIndArea {
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #727272;
+}
+
+/* Links in the table have no decorations */
+#methIndArea a:link {
+    text-decoration: none;
+}
+#methIndArea a:visited {
+    color: #535378;
+    text-decoration: none;
+}
+
+/* Entry in the index table */
+#methIndEntry {
+    font-weight: bold;
+    border-style: solid; 
+    border-width: 0px;
+    border-bottom-width: 2px;
+    border-color: #727272;
+}
+
+/* Format for "No description" */
+#methNoDesc {
+    color: #FF0000;
+    font-weight: bold;
+}
+
+/* Major titles (Meth description, code and general info) */
+#mainTitle {
+    color: #000000;
+    font-weight: bold;
+    font-size: larger;    
+    border-style: solid; 
+    border-width: 0px;
+    border-bottom-width: 2px;
+    border-color: #646464;
+}
+
+/* Method description title */
+#methDescTitle {
+    background: #289A52;
+    color: #000000;
+    font-weight: bold;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #1E733D;
+}
+
+#methDescTitle a:link {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #30BD64;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#methDescTitle a:visited {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #30BD64;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#methDescTitle a:hover {
+    background: #30BD64;
+}
+
+/* Method description area */
+#methDescArea {
+    background: #FAFAF8;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #1E733D;
+}
+
+/* Method code title */
+#methCodeTitle {
+    background: #CB8F5E;
+    color: #000000;
+    font-weight: bold;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #A1614F;
+}
+
+#methCodeTitle a:link {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #A1614F;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#methCodeTitle a:visited {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #A1614F;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#methCodeTitle a:hover {
+    background: #FBC477;
+}
+
+/* Method code area */
+#methCodeArea {
+    background: #FAFAF8;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #A1614F;
+}
+
+/* General info title */
+#genInfoTitle {
+    background: #4492DF;
+    color: #000000;
+    font-weight: bold;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #2B5C8D;
+}
+
+#genInfoTitle a:link {
+    text-decoration: none;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #2B5C8D;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+#genInfoTitle a:visited {
+    text-decoration: none;
+    background: #4492DF;
+    color: #000000;
+    font-weight: bold;
+    border-style: solid; 
+    border-width: 2px;
+    border-color: #2B5C8D;
+}
+
+#genInfoTitle a:hover {
+    background: #4DA4FB;
+}
+
+/* General info area */
+#genInfoArea {
+    background: #FAFAF8;
+    color: #000000;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #2B5C8D;
+    padding: 2px;
+}
+
+/* Separator */
+#sep {
+    height: 5px;
+}
+
+/* ------------------------------------------------------------------
+ * -------------------- Styles for the perl code --------------------
+ * ------------------------------------------------------------------ */
+
+/* sub call */
+#sub {
+    color: #0000ff;
+    font-weight: bold;    
+}
+
+/* sub-routine name */
+#subName {
+    color: #ff0000;
+    font-weight: bold;    
+}
+
+/* private sub-routine name (starting with _) */
+#privSubName {
+    color: #9B01CE;
+/*	color: #ff00ff;*/
+    font-weight: bold;    
+}
+
+/* Perl keywords (my, if, then, else, ...) */
+#perlKey {
+    color: #0000ff;
+    font-weight: bold;    
+}
+
+/* Perl functions (chdir, getppid, split, splice, ...) */
+#perlFunc {
+    color: #4169e1;
+    font-weight: bold;    
+}
+
+/* All types of braces ([],(),{}) */
+
+#braces {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+/* Perl variables (scalars, hashes and arrays) */
+#var {
+    color: #1f32ff;
+    font-weight: normal;
+}
+
+/* Comments */
+#comment {
+    color: #ff0000;
+    font-weight: italic;
+}
+
+/* single quoted strings */
+#sqStr {
+    color: #007400;
+    font-weight: normal;
+}
+
+/* double quoted strings */
+#dqStr {
+    color: #567F56;
+    font-weight: normal;
+}
+
+/* Regular expressions */
+#regExp {
+    color: #006400;
+    font-weight: bold;
+}
+
+/* Modules called in the code */
+#module {
+    color: #8000ff;
+    font-weight: bold;
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #5900B2;
+}
+
+/* ??? this seems not working within the <span> tag ??? */
+#module a:link {
+    text-decoration: none;
+}
+
+#module a:visited {
+    text-decoration: none;
+}
+
+/* Methods call from an object */
+#method {
+    color: #ff8204;
+    font-weight: normal;
+}
+
+/* Numbers */
+#number {
+    font-weight: bold;
+}
+
+/* The 'use' calls */
+#use {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+/* Package definitions */
+#packageDef {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+/* ISA definitions */
+#isa {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+#isa a:link {
+    text-decoration: none;
+    color: #0000ff;
+    font-weight: bold;
+}
+
+#isa a:visited {
+    color: #0000ff;
+    text-decoration: none;
+}
+
+#isa a:hover {
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #0000ff;
+}
+
+/* BEGIN tag */
+#begin {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+/* Errors in the code */
+#error {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+/* ------------------------------------------------------------------
+ * ----------------------- Styles for the POD -----------------------
+ * ------------------------------------------------------------------ */
+
+/* Styles for pod head from 1 to 4 */
+#podHead1 {
+    font-weight: bold;
+    font-size: 16pt;
+}
+
+#podHead2 {
+    font-weight: bold;
+    font-size: 14pt;
+}
+
+#podHead3 {
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+#podHead4 {
+    font-weight: bold;
+    font-size: 10pt;
+}
+
+#podHead5 {
+    font-weight: bold,italic;
+    font-size: 10pt;
+}
+
+/* URLs */
+#podUrl {
+    text-decoration: none;
+    color: #D4571D;
+}
+
+#podUrl a:hover {
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #D4571D;
+}
+
+#podUrl a:visited {
+    color: #D4571D;
+}
+
+/* Email */
+#podEmail {
+    text-decoration: none;
+    color: #198F13;
+}
+
+#podEmail a:hover {
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #198F13;
+}
+
+#podEmail a:visited {
+    color: #198F13;
+}
+
+/* Email */
+#podLink {
+    text-decoration: none;
+    color: #3E198F;
+}
+
+#podLink a:hover {
+    border-style: solid; 
+    border-width: 1px;
+    border-color: #3E198F;
+}
+
+#podLink a:visited {
+    color: #3E198F;
+}
+
+#podParagraph {
+    border-style: dotted;
+    border-width: 1px;
+    font-family: courier;
+    white-space: pre;
+}
+
+#podItem {
+    padding-top: 1ex;
+    padding-bottom: 1ex;
+}
+
+#podItemEntry {
+    font-family: courier;
+    white-space: pre;
+    padding-top: 4ex;
+    padding-bottom: 4ex;
+}
