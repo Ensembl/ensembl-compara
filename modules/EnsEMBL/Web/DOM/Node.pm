@@ -55,7 +55,7 @@ sub reset_flags {
 }
 
 sub can_have_child {
-  ## Tells whether this node can have child elements
+  ## Tells whether this node can have child nodes
   ## Override in child class
   ## @return 1 or 0 accordingly
   return 1;
@@ -192,15 +192,15 @@ sub get_elements_by_attribute {
 }
 
 sub get_ancestor_by_id {
-  ## Gets the most recent ancestor with the given id
-  ## @params id of the ancestor
+  ## Gets the most recent ancestor element with the given id
+  ## @params id of the ancestor node
   ## @return Element object or undef
   my ($self, $id) = @_;
   return $self->get_ancestor_by_attribute('id', $id);
 }
 
 sub get_ancestor_by_name {
-  ## Gets the most recent ancestor with the given name
+  ## Gets the most recent ancestor element with the given name
   ## @params name
   ## @return Element object or undef
   my ($self, $name) = @_;
@@ -208,7 +208,7 @@ sub get_ancestor_by_name {
 }
 
 sub get_ancestor_by_tag_name {
-  ## Gets the most recent ancestor with the given tag name
+  ## Gets the most recent ancestor element with the given tag name
   ## @params Tag name
   ## @return Element object or undef
   my ($self, $tag_name) = @_;
@@ -225,15 +225,15 @@ sub get_ancestor_by_tag_name {
 }
 
 sub get_ancestor_by_class_name {
-  ## Gets the most recent ancestor with the given class name
+  ## Gets the most recent ancestor element with the given class name
   ## @params Class name
-  ## @return Element object or undef
+  ## @return Node object or undef
   my ($self, $class_name) = @_;
   return $self->get_ancestor_by_attribute('class', $class_name);
 }
 
 sub get_ancestor_by_attribute {
-  ## Gets the most recent ancestor with the given attribute and value
+  ## Gets the most recent ancestor element with the given attribute and value
   ## @params Attribute name
   ## @params Attribute value
   ## @return Element object or undef
@@ -291,44 +291,44 @@ sub get_child_nodes_by_flag {
 }
 
 sub has_child_nodes {
-  ## Checks if the element has any child nodes
+  ## Checks if the node has any child nodes
   ## @return 1 or 0 accordingly
   return scalar @{shift->{'_child_nodes'}} ? 1 : 0;
 }
 
 sub child_nodes {
   ## Getter for child elements
-  ## @return ArrayRef of all child elements
+  ## @return ArrayRef of Node objects
   return shift->{'_child_nodes'};
 }
 
 sub first_child {
-  ## Getter for first child element
-  ## @return First child element
+  ## Getter for first child node
+  ## @return Node object
   return shift->{'_child_nodes'}->[0] || undef;
 }
 
 sub last_child {
-  ## Getter for last child element
-  ## @return Last child element
+  ## Getter for last child node
+  ## @return Node object
   return shift->{'_child_nodes'}->[-1] || undef;
 }
 
 sub next_sibling {
-  ## Getter for next element
-  ## @return Next element
+  ## Getter for next node
+  ## @return Node object
   return shift->{'_next_sibling'} || undef;
 }
 
 sub previous_sibling {
-  ## Getter for previous element
-  ## @return Previous element
+  ## Getter for previous node
+  ## @return Previous Node object
   return shift->{'_previous_sibling'} || undef;
 }
 
 sub parent_node {
-  ## Getter for parent Element
-  ## @return Parent element
+  ## Getter for parent Node
+  ## @return Parent Node object
   return shift->{'_parent_node'} || undef;
 }
 
@@ -362,19 +362,19 @@ sub _appendable {
 }
 
 sub append_child {
-  ## Appends a child element
-  ## @params New element
-  ## @return New element if success, undef otherwise
-  my ($self, $element) = @_;
-  if ($self->appendable($element)) {
-    $element->remove; #remove from present parent node, if any
-    $element->{'_parent_node'} = $self;
+  ## Appends a child node
+  ## @params New node
+  ## @return New node if success, undef otherwise
+  my ($self, $child) = @_;
+  if ($self->appendable($child)) {
+    $child->remove; #remove from present parent node, if any
+    $child->{'_parent_node'} = $self;
     if ($self->has_child_nodes) {
-      $element->{'_previous_sibling'} = $self->last_child;
-      $self->last_child->{'_next_sibling'} = $element;
+      $child->{'_previous_sibling'} = $self->last_child;
+      $self->last_child->{'_next_sibling'} = $child;
     }
-    push @{$self->{'_child_nodes'}}, $element;
-    return $element;
+    push @{$self->{'_child_nodes'}}, $child;
+    return $child;
   }
   else {
     warn 'Node cannot be inserted at the specified point in the hierarchy.';
@@ -383,76 +383,75 @@ sub append_child {
 }
 
 sub prepend_child {
-  ## Appends a child element at the beginning
-  ## @params Element to be appended
-  ## @return new child if success, undef otherwise
-  my ($self, $element) = @_;
+  ## Appends a child node at the beginning
+  ## @params Node to be appended
+  ## @return new child Node object if success, undef otherwise
+  my ($self, $child) = @_;
   return $self->has_child_nodes
-    ? $self->insert_before($element, $self->first_child)
-    : $self->append_child($element);
+    ? $self->insert_before($child, $self->first_child)
+    : $self->append_child($child);
 }
 
 sub insert_before {
-  ## Appends a child element before a given reference element
-  ## @params New element
-  ## @params Reference element
-  ## @return New element if successfully added, undef otherwise
-  my ($self, $new_element, $reference_element) = @_;
+  ## Appends a child node before a given reference node
+  ## @params New node
+  ## @params Reference node
+  ## @return New Node object if successfully added, undef otherwise
+  my ($self, $new_node, $reference_node) = @_;
   
-  if (defined $reference_element && $self->is_same_as($reference_element->parent_node) && !$reference_element->is_same_as($new_element)) {
+  if (defined $reference_node && $self->is_same_as($reference_node->parent_node) && !$reference_node->is_same_as($new_node)) {
   
-    return undef unless $self->append_child($new_element);
-    $new_element->previous_sibling->{'_next_sibling'} = 0;
-    $new_element->{'_next_sibling'} = $reference_element;
-    $new_element->{'_previous_sibling'} = $reference_element->previous_sibling || 0;
-    $reference_element->previous_sibling->{'_next_sibling'} = $new_element if $reference_element->previous_sibling;
-    $reference_element->{'_previous_sibling'} = $new_element;
+    return undef unless $self->append_child($new_node);
+    $new_node->previous_sibling->{'_next_sibling'} = 0;
+    $new_node->{'_next_sibling'} = $reference_node;
+    $new_node->{'_previous_sibling'} = $reference_node->previous_sibling || 0;
+    $reference_node->previous_sibling->{'_next_sibling'} = $new_node if $reference_node->previous_sibling;
+    $reference_node->{'_previous_sibling'} = $new_node;
     $self->_adjust_child_nodes;
-    return $new_element;
+    return $new_node;
   }
-  warn 'Reference element is missing or is same as new element or does not belong to the same parent node.';
+  warn 'Reference node is missing or is same as new node or does not belong to the same parent node.';
   return undef;
 }
 
 sub insert_after {
-  ## Appends a child element after a given reference element
-  ## If reference element is missing, new element is appended in the end
-  ## @params New element
-  ## @params Reference element
+  ## Appends a child node after a given reference node
+  ## @params New node
+  ## @params Reference node
   ## @return New node if success, undef otherwise
-  my ($self, $new_element, $reference_element) = @_;
-  return defined $reference_element->next_sibling
-    ? $self->insert_before($new_element, $reference_element->next_sibling)
-    : $self->append_child($new_element);
+  my ($self, $new_node, $reference_node) = @_;
+  return defined $reference_node->next_sibling
+    ? $self->insert_before($new_node, $reference_node->next_sibling)
+    : $self->append_child($new_node);
 }
 
 sub before {
   ## Places a new node before the node. An extra to DOM function to make it easy to insert nodes.
   ## @params New Node if success, undef otherwise
-  my ($self, $new_element) = @_;
+  my ($self, $new_node) = @_;
   unless ($self->parent_node) {
     warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
     return undef;
   }
-  return $self->parent_node->insert_before($new_element, $self);
+  return $self->parent_node->insert_before($new_node, $self);
 }
 
 sub after {
   ## Places a new node after the node. An extra to DOM function to make it easy to insert nodes.
   ## @params New Node if success, undef otherwise
-  my ($self, $new_element) = @_;
+  my ($self, $new_node) = @_;
   unless ($self->parent_node) {
     warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
     return undef;
   }
-  return $self->parent_node->insert_after($new_element, $self);
+  return $self->parent_node->insert_after($new_node, $self);
 }
 
 sub clone_node {
-  ## Clones an element
+  ## Clones an node
   ## Only properties defined in this class will be cloned - including flags (If flags not required, do reset_flags() after cloning)
-  ## @params 1/0 depending upon if child elements also need to be cloned (deep cloning)
-  ## @return New element
+  ## @params 1/0 depending upon if child nodes also need to be cloned (deep cloning)
+  ## @return New node
   my ($self, $deep_clone) = @_;
   
   my $clone = bless {
@@ -481,34 +480,34 @@ sub clone_node {
 }
 
 sub remove_child {
-  ## Removes a child element
-  ## @params Element to be removed
-  ## @return Removed element
-  my ($self, $element) = @_;
-  if ($self->is_same_as($element->parent_node)) {
-    $element->previous_sibling->{'_next_sibling'} = $element->next_sibling || 0 if defined $element->previous_sibling;
-    $element->next_sibling->{'_previous_sibling'} = $element->previous_sibling || 0 if defined $element->next_sibling;
-    $element->{'_next_sibling'} = 0;
-    $element->{'_previous_sibling'} = 0;
-    $element->{'_parent_node'} = 0;
+  ## Removes a child node
+  ## @params Node to be removed
+  ## @return Removed node
+  my ($self, $child) = @_;
+  if ($self->is_same_as($child->parent_node)) {
+    $child->previous_sibling->{'_next_sibling'} = $child->next_sibling || 0 if defined $child->previous_sibling;
+    $child->next_sibling->{'_previous_sibling'} = $child->previous_sibling || 0 if defined $child->next_sibling;
+    $child->{'_next_sibling'} = 0;
+    $child->{'_previous_sibling'} = 0;
+    $child->{'_parent_node'} = 0;
     $self->_adjust_child_nodes;
-    return $element;
+    return $child;
   }
-  warn 'Element was not found in the parent node.';
+  warn 'Node was not found in the parent node.';
     return undef;
 }
 
 sub replace_child {
-  ## Replaces a child element with another
-  ## @params New Element
-  ## @params Old Element
-  ## @return Removed element
-  my ($self, $new_element, $old_element) = @_;
-  return $self->remove_child($old_element) if $self->insert_before($new_element, $old_element);
+  ## Replaces a child node with another
+  ## @params New Node
+  ## @params Old Node
+  ## @return Removed node
+  my ($self, $new_node, $old_node) = @_;
+  return $self->remove_child($old_node) if $self->insert_before($new_node, $old_node);
 }
 
 sub remove {
-  ## Removes the child from it's parent node. An extra to DOM function to make it easy to remove elements
+  ## Removes the child from it's parent node. An extra to DOM function to make it easy to remove nodes
   my $self = shift;
   $self->parent_node->remove_child($self) if defined $self->parent_node;
   return $self;
