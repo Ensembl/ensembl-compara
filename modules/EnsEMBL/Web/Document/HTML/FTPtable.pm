@@ -15,12 +15,31 @@ sub render {
 
   my $rel = ($species_defs->ENSEMBL_SERVERNAME =~ 'archive') ? 'release-'.$species_defs->ENSEMBL_VERSION : 'current';
 
+  my %title = (
+    'dna'     => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
+    'cdna'    => 'cDNA sequences for Ensembl or "ab initio" predicted genes',
+    'prot'    => 'Protein sequences for Ensembl or "ab initio" predicted genes',
+    'rna'     => 'Non-coding RNA gene predictions',
+    'embl'    => 'Ensembl database dumps in EMBL nucleotide sequence database format',
+    'genbank' => 'Ensembl database dumps in GenBank nucleotide sequence database format',
+    'gtf'     => 'Gene sets for each species. These files include annotations of both coding and non-coding genes',
+    'emf'     => 'Alignments of resequencing data from the ensembl_compara database',
+    'gvf'     => 'Variation data in GVF format',
+    'funcgen' => 'Functional genomics data in GFF format',
+    'bed'     => 'Constrained elements calculated using GERP',
+  );
+
   my $html = qq(
 <table class="ss tint" cellpadding="4">
 
 <tr>
 <th>Species</th>
-<th colspan="12" style="text-align:center">Files</th>
+<th colspan="3" style="text-align:center">DNA sequence only</th>
+<th colspan="1" style="text-align:center">Protein sequence</th>
+<th colspan="2" style="text-align:center">Annotated sequence</th>
+<th colspan="1" style="text-align:center">Gene sets</th>
+<th colspan="2" style="text-align:center">Resequencing data</th>
+<th colspan="4" style="text-align:center">Other</th>
 </tr>
 
 );
@@ -34,46 +53,54 @@ sub render {
     my $common = $species_defs->get_config($spp, 'DISPLAY_NAME');
     my $ncrna = '-';
     if ($sp_dir =~ /homo_sapiens/) {
-      $ncrna = qq(<a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(_fasta/$sp_dir/ncrna/">FASTA</a> (ncRNA));
+      $ncrna = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s_fasta/%s/ncrna/">FASTA</a> (ncRNA)', $title{'rna'}, $rel, $sp_dir;
     }
     my $variation = '-'; 
     if ($sp_dir =~ /bos_taurus|canis_familiaris|danio_rerio|drosophila_melanogaster|equus_caballus|gallus_gallus|homo_sapiens|saccharomyces_cerevisiae|mus_musculus|ornithorhynchus_anatinus|pan_troglodytes|pongo_pygmaeus|rattus_norvegicus|sus_scrofa|taeniopygia_guttata|tetraodon_nigroviridis/) {
-      $variation = qq(<a rel="external" title="Variation data in GVF Format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/variation/$sp_dir/">Variation</a>);
+      $variation = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/%s/">Variation</a>', $title{'gvf'}, $rel, $sp_dir;
     }
     my $emf = '-';
     if ($sp_dir =~ /homo_sapiens|mus_musculus|rattus_norvegicus/) {
-      $emf = qq(<a rel="external" title="Variation and comparative data" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/$sp_var/">EMF</a>);
+      $emf = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/emf/%s/">EMF</a>', $title{'emf'}, $rel, $sp_var;
     }
     my $funcgen = '-';
     if ($sp_dir =~ /homo_sapiens/ || $sp_dir =~/mus_musculus/) {
-      $funcgen = qq(<a rel="external" title="Functional genomics data in GFF format" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/functional_genomics/$sp_dir/">FUNCGEN</a>);
+      $funcgen = sprintf '<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/functional_genomics/%s/">FUNCGEN</a>', $title{'funcgen'}, $rel, $sp_dir;
     }
-    my $bed = '-';
-    my $tarball = '-';
     $class = $row % 2 == 0 ? 'bg1' : 'bg2';
 
-    $html .= qq(
-<tr class="$class">
-<td><strong><i>$sp_name</i></strong> ($common)</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/$sp_dir/dna/">FASTA</a> (DNA)</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/$sp_dir/cdna/">FASTA</a> (cDNA)</td>
-<td>$ncrna</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/fasta/$sp_dir/pep/">FASTA</a> (protein)</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/embl/$sp_dir/">EMBL</a></td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/genbank/$sp_dir/">GenBank</a></td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">MySQL</a></td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/gtf/">GTF</a></td>
-<td>$emf</td>
-<td>$variation</td>
-<td>$funcgen</td>
-<td>$bed</td>
-<td>$tarball</td>
+    $html .= sprintf qq(
+<tr class="%s">
+<td><strong><i>%s</i></strong> (%s)</td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a> (DNA)</td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a> (cDNA)</td>
+<td>%s</td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a> (protein)</td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a></td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a></td>
+<td><a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/">GTF</a></td>
+<td>%s</td>
+<td>%s</td>
+<td>%s</td>
+<td>-</td>
+<td>-</td>
 </tr>
-      );
+      ), $class, $sp_name, $common,
+         $title{'dna'}, $rel, $sp_dir, 
+         $title{'cdna'}, $rel, $sp_dir, 
+         $ncrna,
+         $title{'prot'}, $rel, $sp_dir, 
+         $title{'embl'}, $rel, $sp_dir,
+         $title{'genbank'}, $rel, $sp_dir,
+         $title{'gtf'}, $rel,
+         $emf, $variation, $funcgen, 
+    ;
     $row++;
   }
   my $rev = $class eq 'bg2' ? 'bg2' : 'bg1';
   $class = $class eq 'bg2' ? 'bg1' : 'bg2';
+  my $EMF = $title{'emf'};
+  my $BED = $title{'bed'};
   $html .= qq(
 <tr class="$class">
 <td><strong>Multi-species</strong></td>
@@ -83,12 +110,11 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">mySQL</a></td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
+<td><a rel="external" title="$EMF" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/emf/">EMF</a></td>
 <td>-</td>
 <td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
+<td><a rel="external" title="$BED" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/bed/">BED</a></td>
 <td>-</td>
 </tr>
 <tr class="$rev">
@@ -98,8 +124,6 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
-<td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/).$rel.qq(/mysql/">mySQL</a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
@@ -120,8 +144,7 @@ sub render {
 <td>-</td>
 <td>-</td>
 <td>-</td>
-<td>-</td>
-<td><a rel="external" href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz ">Tarball</td>
+<td><a rel="external" title="Entire Ensembl API, concatenated into a single TAR file and gzipped - updated daily" href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz ">Tarball</td>
 </tr>
 </table>
   );
