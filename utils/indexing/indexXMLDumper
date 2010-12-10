@@ -1784,7 +1784,7 @@ sub dumpRegulatoryFeature {
             sr.name, rf.bound_seq_region_start, rf.bound_seq_region_end, ft.name
        from $dbname.regulatory_feature rf, $dbname.seq_region sr, $dbname.coord_system cs,
             $dbname.feature_type ft, $dbname.feature_set fs
-      where fs.name='RegulatoryFeatures' and fs.feature_set_id=rf.feature_set_id and
+      where fs.name='RegulatoryFeatures:MultiCell' and fs.feature_set_id=rf.feature_set_id and
             rf.feature_type_id=ft.feature_type_id and rf.seq_region_id=sr.seq_region_id and
             sr.coord_system_id=cs.coord_system_id and cs.is_current=1
    group by rf.regulatory_feature_id"
