@@ -54,7 +54,7 @@ sub Features {
   my $h =  $self->{data}->{_databases}->get_databases('core', 'variation', 'compara', 'funcgen', 'compara_pan_ensembl');
 
   my $sversion = $self->species_defs->SITE_RELEASE_VERSION ||  $self->species_defs->ENSEMBL_VERSION;
-  my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME;
+  my $slabel = $self->species_defs->SITE_NAME ||  $self->species_defs->ENSEMBL_SITE_NAME_SHORT;
   my $sdate =  $self->species_defs->SITE_RELEASE_DATE || $self->species_defs->ENSEMBL_RELEASE_DATE;
 
   my $enote1 = $self->species_defs->SITE_MISSION || qq{ The Ensembl project produces genome databases for vertebrates and other eukaryotic species, and makes this information freely available online.}; 
@@ -239,7 +239,7 @@ if (0) {
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes2,
 		  'LINK' =>  $onum ? [
-			     { 'text' => "View homology between species determined by a gene tree in $slabel.",
+			     { 'text' => "View homology between species inferred from a gene tree in $slabel.",
 			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Ortholog', $gene->stable_id, 'core' ),
 			   }
 			     ] : [ ],
@@ -256,7 +256,7 @@ if (0) {
 		  'TYPE'        => 'summary',
 		  'NOTE' => $notes3,
 		  'LINK' => $pnum ? [
-			     { 'text' => "View homology arising from a duplication event, determined by a gene tree in $slabel.",
+			     { 'text' => "View homology arising from a duplication event, inferred from a gene tree in $slabel.",
 			       'href' => sprintf( $self->{'templates'}{'compara_URL'}, 'Paralog', $gene->stable_id, 'core' ),
 			   }
 			     ] : [ ],
