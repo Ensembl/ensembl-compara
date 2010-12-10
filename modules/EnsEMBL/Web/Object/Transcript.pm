@@ -19,7 +19,7 @@ use Bio::EnsEMBL::Utils::TranscriptAlleles qw(get_all_ConsequenceType);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 use EnsEMBL::Web::Cache;
-
+use Data::Dumper;
 use base qw(EnsEMBL::Web::Object);
 
 our $MEMD = new EnsEMBL::Web::Cache;
@@ -273,20 +273,34 @@ sub count_go {
   my $type = $self->get_db;
   my $dbc = $self->database($type)->dbc;
   my $tl_dbID = $self->Obj->translation->dbID; 
-  my $sql = qq{
-    SELECT count(distinct(x.display_label))
-      FROM object_xref ox, xref x, external_db edb
-     WHERE ox.xref_id = x.xref_id
-       AND x.external_db_id = edb.external_db_id
-       AND ( edb.db_name = 'GO' OR edb.db_name = 'goslim_goa')
-       AND ox.ensembl_object_type = 'Translation'
-       AND ox.ensembl_id = ?};
-       
-  my $sth = $dbc->prepare($sql);
-  $sth->execute($self->transcript->translation->dbID);
-  my $c = $sth->fetchall_arrayref->[0][0];
-  return $c;
+
+  # First get the available ontologies
+  if (my @ontologies = @{$self->species_defs->SPECIES_ONTOLOGIES || []}) {
+      my $ontologies_list = scalar(@ontologies) > 1 ? qq{ in ('}.(join "\', \'", @ontologies).qq{' ) } : qq{ ='$ontologies[0]' };
+
+      my $sql = qq{
+	  SELECT count(distinct(x.display_label))
+	      FROM object_xref ox, xref x, external_db edb
+	      WHERE ox.xref_id = x.xref_id
+	      AND x.external_db_id = edb.external_db_id
+	      AND edb.db_name $ontologies_list 
+	      AND ox.ensembl_object_type = ?
+	      AND ox.ensembl_id = ?};
+
+      # Count the ontology terms mapped to the translation
+      my $sth = $dbc->prepare($sql);
+      $sth->execute('Translation', $self->transcript->translation->dbID);
+      my $c = $sth->fetchall_arrayref->[0][0];
+
+      # Add those mapped to the transcript
+      $sth->execute('Transcript', $self->transcript->dbID);
+      $c += $sth->fetchall_arrayref->[0][0];
+
+      return $c;
+  }
+  return;
 }
+
 
 sub default_track_by_gene {
   my $self = shift;
@@ -1087,20 +1101,25 @@ sub get_similarity_hash {
 
 sub get_go_list {
   my $self = shift ;
-  my $dbname_to_match = shift || 'GO';  
+
+  # The array will have the list of ontologies mapped 
+  my $ontologies = $self->species_defs->SPECIES_ONTOLOGIES || return {};
+
+  my $dbname_to_match = shift || join '|', @$ontologies;
   my $ancestor=shift;
   my $trans = $self->transcript;
   my $goadaptor = $self->hub->get_databases('go')->{'go'};
-  my @dblinks = @{$trans->get_all_DBLinks};
-  my @goxrefs = grep { $_->dbname eq $dbname_to_match } @dblinks;
+
+  my @goxrefs = @{$trans->get_all_DBLinks};
 
   my %go_hash;
   my %hash;
-  
+
   foreach my $goxref (sort { $a->display_id cmp $b->display_id } @goxrefs) {
     my $go = $goxref->display_id;
+    next unless ($goxref->dbname =~ /^($dbname_to_match)$/);
     my $info_text;
-
+#   warn "Adding $go : ", $goxref->dbname , "\n";
     if ($goxref->info_type eq 'PROJECTION') {
       $info_text= $goxref->info_text; 
     }
@@ -1109,8 +1128,8 @@ sub get_go_list {
     if ($goxref->isa('Bio::EnsEMBL::OntologyXref')) {
       $evidence = join ', ', @{$goxref->get_all_linkage_types}; 
     }
-    
-    my ($go2) = $go =~ /GO:0*(\d+)/;
+
+    my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
     my $term;
     
     next if exists $hash{$go2};
@@ -1118,22 +1137,22 @@ sub get_go_list {
     $hash{$go2} = 1;
     my $term_name;
     
-    foreach($goadaptor->get_GOTermAdaptor(), $goadaptor->get_SOTermAdaptor()){
-      if($_){
+    if (my $goa = $goadaptor->get_GOTermAdaptor) {
         my $term;
         eval { 
-          $term = $_->fetch_by_accession($go2); 
+          $term = $goa->fetch_by_accession($go2); 
         };
 
         warn $@ if $@;
         
-        $term_name = $term ? $term->name : '';
-
+        $term_name = $term ? $term->name : 
         $term_name ||= $goxref->description || '';
+
         my $has_ancestor = (!defined ($ancestor));
         if (!$has_ancestor){
           $has_ancestor=($go eq $ancestor);
-          my $ancestors = $_->fetch_all_by_descendant_term($_->fetch_by_accession($go));
+
+          my $ancestors = $goa->fetch_all_by_descendant_term($goa->fetch_by_accession($go));
           for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
             $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
           }
@@ -1142,10 +1161,10 @@ sub get_go_list {
         if($has_ancestor){
           $go_hash{$go} = [ $evidence, $term_name, $info_text ];
         }
-      }
     }
-  }
-  
+
+}
+
   return \%go_hash;
 }
 

@@ -59,12 +59,16 @@ sub content {
     $get_relation_type_colour
   );
   
-  $ontovis->add_cluster_by_parent_accession('GO:0005575');
-  $ontovis->add_cluster_by_parent_accession('GO:0008150');
-  $ontovis->add_cluster_by_parent_accession('GO:0003674');
-  
+  my %clusters = $self->hub->species_defs->multiX('ONTOLOGIES');
+
+  foreach my $oid (sort keys %clusters) {
+      my $root = $clusters{$oid}->{root};
+      my $url =  $species_defs->ENSEMBL_EXTERNAL_URLS->{$clusters{$oid}->{db}};
+      $ontovis->add_cluster_by_parent_accession($root, $url);
+  }
+
   return $self->non_coding_error unless $object->translation_object;
-  my $label = 'GO';
+  my $label = 'Ontology';
   
   unless ($object->__data->{'links'}) {
     my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
@@ -73,7 +77,7 @@ sub content {
     
     $self->_sort_similarity_links(@similarity_links);
   }
-  return "<p>No GO terms have been mapped to this entry via UniProt and/or RefSeq.</p>"  unless $object->__data->{'links'}{'go'}; 
+  return "<p>No ontology terms have been mapped to this entry.</p>"  unless $object->__data->{'links'}{'go'}; 
   # First process GO terms
   my $html;
   my $go_hash      = $object->get_go_list;
@@ -81,14 +85,14 @@ sub content {
   my @goslim_subset = ("goslim_goa");
   if (%$go_hash) {
     $html .= sprintf(
-      '<p><strong>Below are the minimal graphs of the GO terms that have been mapped to this entry via UniProt and/or RefSeq. The Mapped Terms are highlighted in <span style="color:%s" >%s</span><br/>',
+      '<p><strong>The chart shows the ancestry of the ontology terms that have been mapped to this entity. The mapped terms are highlighted in <span style="color:%s" >%s</span>.<br/>',
       $ontovis->node_fill_colour, $node_fill_text
     );
     
     #if (%$go_slim_hash) {
     if (@goslim_subset){
       $html .= sprintf(
-        'Terms from the GOSlim GOA subset of GO, have been highlighted in <span style="color:%s" >%s</span> The nodes are clickable links to GO',
+        'The terms from the GOSlim GOA subset of GO have been highlighted in <span style="color:%s" >%s</span>. The nodes are clickable links to the ontology websites.',
         $ontovis->highlighted_fill_colour, $goslim_goa_fill_text
       )
     }

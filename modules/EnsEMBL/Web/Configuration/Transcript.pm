@@ -72,17 +72,17 @@ sub populate_tree {
     { 'availability' => 'transcript database:funcgen has_oligos', 'concise' => 'Oligo probes' }
   ));
   
-  my $go_menu = $self->create_submenu('GO', 'Gene ontology ([[counts::go]])');
-  $go_menu->append($self->create_node('Ontology/Image', 'Ontology image ([[counts::go]])',
+  my $go_menu = $self->create_submenu('GO', 'Ontology ([[counts::go]])');
+  $go_menu->append($self->create_node('Ontology/Image', 'Ontology chart ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Goimage )],
-    { 'availability' => 'transcript has_go', 'concise' => 'Gene ontology image' }
+    { 'availability' => 'transcript has_go', 'concise' => 'Ontology chart' }
   ));
 
   $go_menu->append($self->create_node('Ontology/Table', 'Ontology table ([[counts::go]])',
     [qw( go EnsEMBL::Web::Component::Transcript::Go )],
-    { 'availability' => 'transcript has_go', 'concise' => 'Gene ontology table' }
+    { 'availability' => 'transcript has_go', 'concise' => 'Ontology table' }
   ));
-  
+
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
     
   $var_menu->append($self->create_node('Population', 'Population comparison',

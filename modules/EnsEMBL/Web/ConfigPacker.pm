@@ -1097,13 +1097,20 @@ sub _summarise_go_db {
   #$self->_summarise_generic( $db_name, $dbh );
   # get the list of the available ontologies
   my $t_aref = $dbh->selectall_arrayref(
-					'select ontology.name,accession,term.name from ontology join term using (ontology_id)
-left join relation on (term_id=child_term_id) where relation_id is null'
-					);
+     'select ontology.ontology_id, ontology.name, accession, term.name 
+      from ontology 
+        join term using (ontology_id)
+        left join relation on (term_id=child_term_id) 
+      where relation_id is null
+      order by ontology.ontology_id
+        ');
   foreach my $row (@$t_aref) {
-      my ($ontology, $root_term, $description) = @$row;
-      $self->db_tree->{'ONTOLOGIES'}{$ontology}->{root} = $root_term;
-      $self->db_tree->{'ONTOLOGIES'}{$ontology}->{description} = $description;
+      my ($oid, $ontology, $root_term, $description) = @$row;
+      $self->db_tree->{'ONTOLOGIES'}->{$oid} = {
+	  db => $ontology,
+	  root => $root_term,
+	  description => $description
+	  };
   }
 
   $dbh->disconnect();
