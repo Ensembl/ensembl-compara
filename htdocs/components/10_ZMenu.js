@@ -140,7 +140,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var start  = this.title.match(/Start: (\d+)/)[1];
     var end    = this.title.match(/End: (\d+)/)[1];
     var strand = this.title.match(/Strand: ([\-+])/)[1];
-    var id     = this.title.match(/Id: ([^;]+)/)[1];
+    var id     = this.title.match(/; Id: ([^;]+)$/)[1];
     
     var url = [
       window.location.pathname.replace(/\/(\w+)\/\w+$/, '/ZMenu/$1/Das'),
@@ -158,6 +158,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       }
     }
     
+    this.populateNoAjax(true); // Always parse the title tag
     this.populateAjax(url);
   },
   
@@ -199,7 +200,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
                 expand.replaceWith(body);
                 expand = null;
               } else {
-                this.elLk.tbody.html(body);
+                this.elLk.tbody.html(function (i, html) { return html + body; });
                 this.elLk.caption.html(json.caption);
                 
                 this.show();
@@ -218,7 +219,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
   },
   
-  populateNoAjax: function () {
+  populateNoAjax: function (force) {
+    if (this.das && force !== true) {
+      return;
+    }
+    
     var extra = '';
     var loc = this.title.match(/Location: (\S+)/);
     var r;
