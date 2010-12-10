@@ -9,18 +9,12 @@
 <h1>Installing the Ensembl Data</h1>
 
 <p>
-  The Ensembl data is provided on the Ensembl FTP site in the form of tab-delimited text files for
-  importing into MySQL. ftp://ftp.ensembl.org/pub contains a directory for each release for each species.
-  From Version 47 onwards the data per release is sub-divided into sub-directories of different data:
+  The Ensembl data is provided on the <a href="ftp://ftp.ensembl.org/pub/">Ensembl FTP site</a> 
+in the form of tab-delimited text files for importing into MySQL. Go to the appropriate release
+directory and then to  'mysql'.
 </p>
-<ul>
-  <li>mysql - MySQL dumps of databases for release</li>
-  <li>fasta - cDNA, DNA (masked/unmasked chromosome sequence dumps), RNA and peptide dumps</li>
-  <li>embl - EMBL format dumps</li>
-  <li>genbank - GenBank format dumps</li>
-  <li>emf - Ensembl Meta Format - dumps of variation and comparative data</li>
-  <li>gtf - GTF dumps of transcripts</li>
-</ul>
+
+<p>E.g. <a href="ftp://ftp.ensembl.org/pub/current/mysql/">ftp://ftp.ensembl.org/pub/current/mysql/</a></p>
 
 <h2>The MySQL data</h2>
 <p>Each database directory contains a data file for each table in that database an SQL file that contains the SQL commands necessary to build that database's table structure and a checksum file (using a UNIX "sum" utility) so you can verify that the data has downloaded correctly.</p>
@@ -32,22 +26,11 @@ the multi-species databases as well. i.e. compara, ensembl_website and ensembl_w
 maintainability, files are not located as described then check the ftp site for README files which should
 explain where the data can be found.</p>
 
-<div class="info-box">
-<p>Owing to the nature of some of the data in Ensembl it has been necessary to escape
-the table fields when dumping the MySQL text files.  Hence to import successfully,
-a field escape parameter needs to be specified when using mysqlimport, e.g.</p>
-
-<p><kbd>mysqlimport -h your_host -u write_user -p write_pass -P 3306 --fields_escaped_by=\\ database_name /full/path/to/table_name.txt</kbd></p>
-
-</div>
-
 <h3>To install the Ensembl Data:</h3>
 <ol>
 <li>
-Download the directories in ftp.ensembl.org/pub/current_mysql for
-whatever organism you want to install. Note that the ensembl directory contains several files for the
-DNA and feature tables - these are very large tables, so the dump file is split into smaller chunks for
-easier downloading.
+Download the directory in ftp.ensembl.org/pub/current/mysql for
+whatever organism you want to install. 
 </li>
 <li>Each table file is gzipped so unpack the data into working directories, keeping separate directories for
 each database.
@@ -71,7 +54,10 @@ on creating/administering users.</p>
 <pre>/data/mysql/bin/mysql -u mysqldba homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] &lt; homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]].sql</pre>
 </li>
 <li>Load the data into the database structure you have just built with the following command.
-<pre>/data/mysql/bin/mysqlimport -u mysqldba homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] -L *.txt</pre>
+<pre>/data/mysql/bin/mysqlimport -u mysqldba --fields_escaped_by=\\ homo_sapiens_core_[[SPECIESDEFS::ENSEMBL_VERSION]]_[[SPECIESINFO::Homo_sapiens:SPECIES_RELEASE_VERSION]] -L *.txt</pre>
+Note that owing to the nature of some of the data in Ensembl it has been necessary to escape
+the table fields when dumping the MySQL text files.  Hence to import successfully,
+a field escape parameter needs to be specified when using mysqlimport
 </li>
 </ol>
 
