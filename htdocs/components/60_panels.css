@@ -5,6 +5,7 @@
 }
 
 .panel h2                 { padding: 2px; margin: 0; }
+.panel h2.legend          { padding: 2px; margin: 5px 0; }
 .panel h2.normal          { border:none; padding: 2px; margin: 10px 0 0 0; }
 .panel h2 a.toggle        { color: [[CONTRAST_HEADER]]; text-decoration: none; padding-right: 20px; background: url(/i/open2.gif) 100% 2px no-repeat; outline: 0 none; }
 .panel h2 a.toggle.closed { background-image: url(/i/closed2.gif); }
