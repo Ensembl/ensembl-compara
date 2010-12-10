@@ -382,6 +382,16 @@ sub append_child {
   }
 }
 
+sub prepend_child {
+  ## Appends a child element at the beginning
+  ## @params Element to be appended
+  ## @return new child if success, undef otherwise
+  my ($self, $element) = @_;
+  return $self->has_child_nodes
+    ? $self->insert_before($element, $self->first_child)
+    : $self->append_child($element);
+}
+
 sub insert_before {
   ## Appends a child element before a given reference element
   ## @params New element
@@ -409,21 +419,33 @@ sub insert_after {
   ## If reference element is missing, new element is appended in the end
   ## @params New element
   ## @params Reference element
-  ## @return 1 if success, 0 otherwise
+  ## @return New node if success, undef otherwise
   my ($self, $new_element, $reference_element) = @_;
   return defined $reference_element->next_sibling
     ? $self->insert_before($new_element, $reference_element->next_sibling)
     : $self->append_child($new_element);
 }
 
-sub prepend_child {
-  ## Appends a child element at the beginning
-  ## @params Element to be appended
-  ## @return 1 if success, 0 otherwise
-  my ($self, $element) = @_;
-  return $self->has_child_nodes
-    ? $self->insert_before($element, $self->first_child)
-    : $self->append_child($element);
+sub before {
+  ## Places a new node before the node. An extra to DOM function to make it easy to insert nodes.
+  ## @params New Node if success, undef otherwise
+  my ($self, $new_element) = @_;
+  unless ($self->parent_node) {
+    warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
+    return undef;
+  }
+  return $self->parent_node->insert_before($new_element, $self);
+}
+
+sub after {
+  ## Places a new node after the node. An extra to DOM function to make it easy to insert nodes.
+  ## @params New Node if success, undef otherwise
+  my ($self, $new_element) = @_;
+  unless ($self->parent_node) {
+    warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
+    return undef;
+  }
+  return $self->parent_node->insert_after($new_element, $self);
 }
 
 sub clone_node {
