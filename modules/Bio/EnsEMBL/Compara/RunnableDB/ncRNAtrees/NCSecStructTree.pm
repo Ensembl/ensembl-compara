@@ -1,15 +1,26 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2010 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCSecStructTree
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -25,25 +36,16 @@ $ncsecstructtree->run();
 $ncsecstructtree->output();
 $ncsecstructtree->write_output(); #writes to DB
 
-=cut
-
-
 =head1 DESCRIPTION
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
+This RunnableDB build phylogenetic trees using RAxML. RAxML can use several secondary
+structure substitution models. This Runnable can run several of them in a row, but it
+is recommended to run them in parallel.
 
-=cut
+=head1 INHERITANCE TREE
 
-
-=head1 CONTACT
-
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
-
+  Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
+  +- Bio::EnsEMBL::Hive::Process
 
 =head1 APPENDIX
 
@@ -61,6 +63,12 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub param_defaults {
+    return {
+        'models'      => 'S16B S16A S7B S7C S6A S6B S6C S6D S6E S7A S7D S7E S7F S16',
+    };
+}
 
 =head2 fetch_input
 
@@ -104,7 +112,9 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
+    # Run RAxML without ay structure info first
     $self->run_bootstrap_raxml;
+    # Run RAxML with all selected secondary structure substitution models
     $self->run_ncsecstructtree;
 }
 
@@ -221,7 +231,9 @@ sub run_ncsecstructtree {
   $self->throw("can't find a raxml executable to run\n") unless(-e $raxml_executable);
 
   my $root_id = $self->param('nc_tree')->node_id;
-  foreach my $model ( qw(S16B S16A S7B S7C S6A S6B S6C S6D S6E S7A S7D S7E S7F S16) ) {
+  my $models = $self->param('models');
+  $models = [split(/\W+/, $models)];
+  foreach my $model (@$models) {
     my $tag = 'ss_IT_' . $model;
     my $sql1 = "select value from nc_tree_tag where node_id=$root_id and tag='$tag'";
     my $sth1 = $self->dbc->prepare($sql1);
