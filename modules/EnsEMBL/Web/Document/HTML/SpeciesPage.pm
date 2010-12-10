@@ -12,6 +12,7 @@ sub render {
 
   my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $sitename = $species_defs->ENSEMBL_SITETYPE;
+  my $tree          = $species_defs->SPECIES_INFO;
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
@@ -51,42 +52,39 @@ sub render {
   my $link_style = 'font-size:1.1em;font-weight:bold;text-decoration:none;';
 
   my $html = qq(
+<div>
 <h2>$sitename Species</h2>
-<table>
-  <tr>
+<div class="threecol-left">
   );
-  my ($row, $col);
   my @species = sort keys %species;
   for (my $i=0; $i < $total; $i++) {
-    $row = int($i/3);
-    $col = $i % 3;
-    if ($col == 0 && $i < ($total - 1)) {
-     $html .= qq(</tr>\n<tr>);
+    if ($i == int($total/3)) {
+     $html .= qq(</div>\n<div class="threecol-middle">);
     }
-    my $j = $row + $break * $col;
-    my $common = $species[$j];
+    elsif ($i == int(($total/3)*2)) {
+     $html .= qq(</div>\n<div class="threecol-right">);
+    }
+    $html .= '<div class="species-entry">';
+    my $common = $species[$i];
     next unless $common;
     my $info = $species{$common};
     my $dir = $info->{'dir'};
     (my $name = $dir) =~ s/_/ /;
     my $link_text = $common =~ /\./ ? $name : $common;
-    $html .= qq(<td style="width:8%;text-align:right;padding-bottom:1em">);
     if ($dir) {
-      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name" />);
+      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name" class="species-entry">);
     }
     else {
-      $html .= '&nbsp;';
     }
-    $html .= qq(</td><td style="width:25%;padding:2px;padding-bottom:1em">);
     if ($dir) {
       if ($info->{'status'} eq 'pre') {
-        $html .= qq(<span style = "$link_style">$link_text</span> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview - assembly only</a>));
+        $html .= qq(<span style="$link_style">$link_text</span> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview - assembly only</a>));
       }
       elsif ($info->{'status'} eq 'both') {
-        $html .= qq#<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview new assembly</a>)#;
+        $html .= qq#<span><a href="/$dir/Info/Index/" style="$link_style">$link_text</a></span> (<a href="http://pre.ensembl.org/$dir/" rel="external">preview new assembly</a>)#;
       }
       else {
-        $html .= qq(<a href="/$dir/Info/Index/"  style="$link_style">$link_text</a>);
+        $html .= qq(<span><a href="/$dir/Info/Index/"  style="$link_style">$link_text</a></span>);
       }
       unless ($common =~ /\./) {
         $html .= "<br /><i>$name</i>";
@@ -95,11 +93,31 @@ sub render {
     else {
       $html .= '&nbsp;';
     }
-    $html .= '</td>';
+    ## Add links to static content, if any
+    my $static = $tree->{$dir};
+
+    if (keys %$static) {
+      my @page_order = sort {
+        $static->{$a}{'_order'} <=> $static->{$b}{'_order'} ||
+        $static->{$a}{'_title'} cmp $static->{$b}{'_title'} ||
+        $static->{$a} cmp $static->{$b}
+      } keys %$static;
+
+      $html .= '<ul>';
+
+      foreach my $filename (@page_order) {
+        if ($static->{$filename}{'_title'}) {
+          $html .= sprintf '<li style="margin-left:25px"><a href="/%s/Info/Content?file=%s">%s</a></li>',
+                    $dir, $filename, $static->{$filename}{'_title'};
+        }
+      }
+      $html .= '</ul>';
+    }
+    $html .= '<p class="invisible">.</p></div>';
   }
   $html .= qq(
-  </tr>
-</table>);
+  </div>
+  <p class="invisible">.</p></div>);
   return $html;
 }
 
