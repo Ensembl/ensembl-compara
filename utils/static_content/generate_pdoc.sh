@@ -32,10 +32,12 @@
 # fc1 2005-10-21 edits
 #
 # dr2 2009-5-26 added -skip option in core documentation
+#
+# ap5 2010-12-09 added helper script for more comprehensive HTML munging 
 
 #. /etc/profile
 
-PERLMOD_LOC="/ensemblweb/www/www_59"   # current server root
+PERLMOD_LOC="/ensemblweb/www/www_61"   # current server root
 #PERLMOD_LOC="/ensemblweb/www/server"   # current server root
 
 PDOC_LOC="$PERLMOD_LOC/htdocs/info/docs/Pdoc"    # where you want Pdocs created
@@ -43,6 +45,7 @@ HTTP="/info/docs/Pdoc"
 P2WDOC_LOC="/localsw/ensembl_web/pdoc-live"  # Pdoc code location
 P2WDOCER="/localsw/ensembl_web/pdoc-live/scripts/perlmod2www.pl"
 BIOPERL="/localsw/ensembl_web/bioperl-live"
+CSS_URL="/pdoc.css"
 
 #F1=bioperl-live
 F2=ensembl
@@ -74,7 +77,7 @@ for i in ensembl ensembl-analysis ensembl-compara ensembl-functgenomics ensembl-
 do
   mkdir $PDOC_LOC/$i
   echo "CURRENT MODULE: $i"
-  cp $P2WDOC_LOC/Pdoc/Html/Data/perl.css $PDOC_LOC/$i 
+  #cp $P2WDOC_LOC/Pdoc/Html/Data/perl.css $PDOC_LOC/$i 
  	echo "#CURRENT MODULE: $i" >> $P2WDOC_LOC/make_html_docs.sh 
 #  if [$i == 'bioperl-live']
 #   then $SOURCE = $BIOPERL.'/'.$i
@@ -82,11 +85,11 @@ do
     SOURCE="$PERLMOD_LOC/$i"
 #  fi
   if test $i = "ensembl"
-   then	echo "$P2WDOCER -skip Collection,chimp,Lite,misc-scripts,docs,t -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+   then	echo "$P2WDOCER -skip Collection,chimp,Lite,misc-scripts,docs,t -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -css_url $CSS_URL -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
  elif test $i = "ensembl-variation"
-   then	echo "$P2WDOCER -skip scripts -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+   then	echo "$P2WDOCER -skip scripts -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks -css_url $CSS_URL" >> $P2WDOC_LOC/make_html_docs.sh
  else
- 	echo "$P2WDOCER -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks " >> $P2WDOC_LOC/make_html_docs.sh
+ 	echo "$P2WDOCER -source $SOURCE -target $PDOC_LOC/$i -raw -webcvs http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/$i/?root=ensembl -xltable $P2WDOC_LOC/$i.xlinks -css_url $CSS_URL" >> $P2WDOC_LOC/make_html_docs.sh
  fi
 
   echo "$PERLMOD_LOC/$F1 $HTTP/$F1
@@ -104,17 +107,9 @@ $PERLMOD_LOC/$F12 $HTTP/$F12
 " > $P2WDOC_LOC/xlinks.pre
 	perl -n -e "print unless m#$PERLMOD_LOC/$i $HTTP/$i#;" < $P2WDOC_LOC/xlinks.pre >$P2WDOC_LOC/$i.xlinks
 
+	echo "echo \"About to tidy-up the html files in $i\"" >> $P2WDOC_LOC/make_html_docs.sh
+  echo "perl $PERLMOD_LOC/utils/static_content/pdoc_tidy.pl --dir=$PDOC_LOC/$i" >> $P2WDOC_LOC/make_html_docs.sh
 done
-
-(
-	echo "echo \"About to tidy-up the html files\""
-	echo "cd $PDOC_LOC"
-	echo "for i in \`/usr/bin/find . -name \"*.html\" -type f\`"
-	echo "do"
-	echo "perl -i -p -e 'print \"<!--#set var=\\\"decor\\\" value=\\\"none\\\"-->\" if $.==1;s#http://www.ensembl.org##g;s#<head>##g;s#</body>##g;s#</html>##g;' \$i"
-	echo "done"
-	echo "echo \"done\""
-) >> $P2WDOC_LOC/make_html_docs.sh
 
 chmod 755 $P2WDOC_LOC/make_html_docs.sh
 rm $P2WDOC_LOC/xlinks.pre
@@ -135,7 +130,7 @@ cd $PERLMOD_LOC
 
 # generate e! docs:
 echo "Generating e! docs:";
-#rm -Rf $PERLMOD_LOC/htdocs/info/docs/webcode/edoc
+rm -Rf $PERLMOD_LOC/htdocs/info/docs/webcode/edoc
 perl $PERLMOD_LOC/utils/edoc/update_docs.pl
 echo "Copying temp files to live directory"
 cp -r $PERLMOD_LOC/utils/edoc/temp htdocs/info/docs/webcode/edoc
