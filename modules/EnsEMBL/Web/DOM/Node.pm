@@ -448,7 +448,7 @@ sub after {
 }
 
 sub clone_node {
-  ## Clones an node
+  ## Clones the node
   ## Only properties defined in this class will be cloned - including flags (If flags not required, do reset_flags() after cloning)
   ## @params 1/0 depending upon if child nodes also need to be cloned (deep cloning)
   ## @return New node
