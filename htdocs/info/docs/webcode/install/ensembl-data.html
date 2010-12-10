@@ -32,6 +32,15 @@ the multi-species databases as well. i.e. compara, ensembl_website and ensembl_w
 maintainability, files are not located as described then check the ftp site for README files which should
 explain where the data can be found.</p>
 
+<div class="info-box">
+<p>Owing to the nature of some of the data in Ensembl it has been necessary to escape
+the table fields when dumping the MySQL text files.  Hence to import successfully,
+a field escape parameter needs to be specified when using mysqlimport, e.g.</p>
+
+<p><kbd>mysqlimport -h your_host -u write_user -p write_pass -P 3306 --fields_escaped_by=\\ database_name /full/path/to/table_name.txt</kbd></p>
+
+</div>
+
 <h3>To install the Ensembl Data:</h3>
 <ol>
 <li>
