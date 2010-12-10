@@ -22,11 +22,12 @@ sub render {
     $tree->{$a} cmp $tree->{$b}
   } @toplevel_sections;
   
+  my $count = 0;
   foreach my $dir (grep { !/^_/ && keys %{$tree->{$_}} } @section_order) {
     my $section   = $tree->{$dir};
+    my $side      = $dir eq 'docs' ? 'right' : 'left';
     my $title     = $section->{'_title'} || ucfirst $dir;
-    my $class     = $first_header ? ' class="first"' : '';
-    $html .= qq{<h2$class>$title</h2>};
+    $html .= qq{<div class="twocol-$side plain-box"><h2 class="first">$title</h2>};
     $first_header = 0;
 
     my @second_level = @{$self->_create_links($section, ' style="font-weight:bold"')};
@@ -55,9 +56,10 @@ sub render {
       
       $html .= '</ul>';
     }
-    
+    $html .= '</div>';
+    $count++;  
   }
-  
+   
   return $html;
 }
 
