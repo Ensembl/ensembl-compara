@@ -333,9 +333,12 @@ sub add_element {
   return $self->form->force_reload_on_submit if $params{'type'} eq 'ForceReload';
 
   ## 'name' key for options is changed to 'caption' key - name key corresponds to name attribute only
-  for (@{$params{'values'}}) { 
-    $_->{'caption'} = $_->{'name'};
-    delete $_->{'name'};
+  foreach my $option (@{$params{'values'}}) { 
+    $option = {'value' => $option, 'caption' => $option} if ref($option) ne 'HASH'; #FIX for DBFrontEnd!!!
+    if (exists $option->{'name'}) {
+      $option->{'caption'} = $option->{'name'};
+      delete $option->{'name'};
+    }
   }
 
   # DropDown, RadioGroup, RadioButton, CheckBox, MultiSelect
