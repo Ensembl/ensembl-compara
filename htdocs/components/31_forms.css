@@ -1,9 +1,13 @@
-legend {
+form div, form > fieldset {
+  -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
+}
+legend { /*intentionally made similar to panel h2 */
   border-bottom: 1px solid [[PANEL_BORDER]];
   display: block;
   width: 100%;
   font-weight:bold;
-  margin:10px -2px;
+  margin: 5px -2px;
+  padding: 2px;
   color: [[CONTRAST_HEADER]];
   font-size: 1.2em;
 }
