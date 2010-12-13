@@ -57,20 +57,20 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       var li    = $(this);
       var img   = li.children('img');
       var menu  = li.parents('.popup_menu');
-      var dt    = menu.parent();
+      var track = menu.parent();
       var val   = li.attr('className');
       var link  = panel.elLk.links.children('a.' + img.attr('className'));
       var label = link.html().split(/\b/);
       
-      if (dt.hasClass('select_all')) {
-        dt = dt.siblings('dt.internal');
+      if (track.hasClass('select_all')) {
+        track = track.next().find('li');
         
         if (val == 'all_on') {
           // First li is off, so use the second (index 1) as default on setting.
-          dt.find('li:eq(1)').each(function () {
+          track.find('li:eq(1)').each(function () {
             var text = $(this).text();
             
-            $(this).parent().siblings('img.menu_option').attr({ 
+            $(this).parent().siblings('img.menu_option:not(.select_all)').attr({ 
               src:   '/i/render/' + this.className + '.gif', 
               alt:   text,
               title: text
@@ -79,7 +79,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
       
-      dt.children('input').each(function () {
+      track.children('input').each(function () {
         var input = $(this);
         
         if (input.val() == 'off' ^ val == 'off') {
@@ -91,7 +91,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       });
       
       if (val != 'all_on') {
-        dt.children('img.menu_option').attr({ 
+        track.children('img.menu_option').attr({ 
           src:   '/i/render/' + val + '.gif', 
           alt:   li.text(),
           title: li.text()
@@ -102,11 +102,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       link.attr('title', label).html(label);
       menu.hide();
       
-      menu = null;
-      dt   = null;
-      link = null;
-      img  = null;
-      li   = null;
+      menu  = null;
+      track = null;
+      link  = null;
+      img   = null;
+      li    = null;
     });
     
     this.elLk.search.bind({
@@ -136,7 +136,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     // Header on search results and active tracks sections will act like the links on the left
-    $('div.config > h2', this.elLk.form).css('cursor', 'pointer').bind('click', function () {
+    $('div.config .config_header', this.elLk.form).bind('click', function () {
       var link = $(this).parent().attr('className').replace(/\s*config\s*/, '');
       $('a.' + link, panel.elLk.links).trigger('click');
     });
@@ -215,66 +215,51 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       this.elLk.search.val(this.query);
       this.search();
     } else if (typeof active != 'undefined') {
-      $('> div:not(.' + active + '), dd', this.elLk.form).hide();
-      this.elLk.help.html('<img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" />');
+      $('> div:not(.' + active + '), div.desc', this.elLk.form).hide();
+      
+      this.elLk.help.removeClass('open').attr('title', 'Click for more information');
       
       if (active == 'active_tracks') {
-        $('dl.config_menu input', this.elLk.form).each(function () {
+        $('ul.config_menu input', this.elLk.form).each(function () {
           if (this.value == 'off') {
-            $(this).parent().hide().next('dd').hide(); // Hide the dt and the dd corresponding to it
+            $(this).parent().hide().children('div.desc').hide(); // Hide the li and the description. Can't do $(this).siblings() in a chain in case there is no div.desc
           } else {
-            $(this).parents('dt, div.config').show();
+            $(this).parents('li, div.config').show();
           }
         });
       } else {
-        $('div.' + active, this.elLk.form).show().find('dl.config_menu dt').show();
+        $('div.' + active, this.elLk.form).show().find('ul.config_menu li').show();
       }
       
       this.lastQuery = false;
-      this.styleTracks(active == 'active_tracks');
+      this.styleTracks();
     }
+    
+    this.elLk.form[active == 'active_tracks' || active == 'search_results' ? 'addClass' : 'removeClass']('multi');
   },
   
-  styleTracks: function (special) {
-    var col    = { 1: 'col1', '-1': 'col2', f: 1 };
-    var margin = 0;
+  styleTracks: function () {
+    var col = { 1: 'col1', '-1': 'col2', f: 1 };
     
-    if (special === true) {
-      $('.select_all, .external', this.elLk.form).hide();
-      $('.submenu', this.elLk.form).css('marginTop', 0);
-    } else {
-      margin = 10;
-      $('.submenu', this.elLk.form).removeAttr('style');
-    }
-    
-    $('dl.config_menu:visible', this.elLk.form).each(function () {
-      var internal = $('dt:visible', this).each(function () {
-        if ($(this).hasClass('external')) {
-          col.f = 1; // Force colour reset for the start of the external section
-        } else {
-          $(this).removeClass('col1 col2').addClass(col[col.f*=-1])
-            .next('dd').removeClass('col1 col2').addClass(col[col.f]);
+    $('ul.config_menu:visible', this.elLk.form).each(function () {
+      $('li.leaf:visible', this).removeClass('col1 col2').addClass(function () {
+        if (!$(this).prev().length) {
+          col.f = 1;
         }
-      }).filter('.internal');
+        
+        return col[col.f*=-1];
+      });
       
-      if (internal.siblings('.select_all').length) {
-        internal.each(function () {
-          var level = this.className.match(/level(\d+)/);
-          $(this).css('marginLeft', margin * (level ? parseInt(level[1], 10) : 1));
-        });
-      }
-      
-      col.f    = 1;
-      internal = null;
+      col.f = 1;
     });
   },
   
   // Filtering from the search box
   search: function () {
     var panel = this;
-    var dts    = [];
+    var lis    = [];
     
-    $('dl.config_menu', this.elLk.form).each(function () {
+    $('ul.config_menu', this.elLk.form).each(function () {
       var menu = $(this);
       var div  = menu.parent();
       
@@ -282,22 +267,23 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         div[0].show = false;
       }
       
-      menu.children('dt:not(.select_all, .external)').each(function () {
-        var dt    = $(this);
-        var match = dt.children('span:not(.menu_help)').html().match(panel.regex);
+      menu.children('li').each(function () {
+        var li    = $(this);
+        var html  = li.children('span:not(.menu_help)').html() || '';
+        var match = html.match(panel.regex);
         
-        if (match || dt.next('dd').text().match(panel.regex)) {
-          dt.show();
+        if (match || li.children('div.desc').text().match(panel.regex)) {
+          li.show();
           div[0].show = true;
           
           if (!match) {
-            dts.push(dt[0]);
+            lis.push(li[0]);
           }
         } else {
-          dt.hide().next('dd').hide();
+          li.hide().children('div.desc').hide();
         }
         
-        dt = null;
+        li = null;
       });
       
       if (div[0].show === true) {
@@ -311,10 +297,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     });
     
     this.lastQuery = this.query;
-    this.styleTracks(true);
-    this.toggleDescription(dts, 'show');
+    this.styleTracks();
+    this.toggleDescription(lis, 'show');
     
-    dts = null;
+    lis = null;
   },
   
   toggleDescription: function (els, action) {
@@ -328,8 +314,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     while (i--) {
       switch (els[i].nodeName) {
-        case 'DT'  : dd = $(els[i]).next('dd'); span = $('.menu_help', els[i]); break;
-        case 'SPAN': dd = $(els[i]).parent().next('dd'); span = $(els[i]); break;
+        case 'LI'  : dd = $(els[i]).children('div.desc'); span = $('.menu_help', els[i]); break;
+        case 'SPAN': dd = $(els[i]).siblings('div.desc'); span = $(els[i]); break;
         default    : return;
       }
       
@@ -339,7 +325,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         default    : dd.toggle();
       }
       
-      span.html(dd.is(':visible') ? '<img src="/i/info_grey_17.png" alt="(i)" title="Hide information" />' : '<img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" />');
+      span.toggleClass('open').attr('title', function () { return dd.is(':visible') ? 'Hide information' : 'Click for more information' });
       
       dd   = null;
       span = null;
