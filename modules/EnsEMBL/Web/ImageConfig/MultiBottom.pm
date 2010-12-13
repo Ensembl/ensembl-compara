@@ -69,7 +69,7 @@ sub init {
     [ 'opt_join_genes',      'Join genes', undef, undef, 'off' ]
   );
   
-  $_->set('display', 'off') for grep $_->key =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
+  $_->set('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
 }
 
 sub multi {
@@ -138,7 +138,7 @@ sub multi {
     foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
       my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
       
-      $decorations->add_before(
+      $decorations->before(
         $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
           glyphset                   => '_alignment_pairwise',
           colourset                  => 'pairwise',

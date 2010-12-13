@@ -47,7 +47,7 @@ sub init {
       { display => 'no_labels', 
 	name => 'LRG transcripts', 
 	description => 'Shows LRG transcripts', 
-	logicnames=>['LRG_import'], 
+	logic_names=>['LRG_import'], 
 	logic_name=>'LRG_import',
         'colours'     => $self->species_defs->colour( 'gene' ),
         'label_key'   => '[display_label]',

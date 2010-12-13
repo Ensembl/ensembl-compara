@@ -38,7 +38,7 @@ sub init {
       { display => 'normal',
   name => 'LRG transcripts', 
   description => 'Shows LRG transcripts',
-  logicnames=>['LRG_download'],
+  logic_names=>['LRG_download'],
   logic_name=>'LRG_download',
         'colours'     => $self->species_defs->colour( 'gene' ),
         'label_key'   => '[display_label]',
