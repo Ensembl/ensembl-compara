@@ -96,11 +96,11 @@ sub create_user_set {
 
   my $i = 0;
 
-  foreach my $key (keys %{$image_config->{'_tree'}{'_user_data'}}) {
+  foreach my $key (keys %{$image_config->tree->user_data}) {
     
     my ($status, $type, $id) = split '-', $key;
     my $details = $image_config->get_node($key);
-    my $display = $details->{'_user_data'}{$key}{'display'};
+    my $display = $details->user_data->{$key}->{'display'};
     next if (!$display || $display eq 'off');
     my ($render, $style) = split '_', $display;
     
