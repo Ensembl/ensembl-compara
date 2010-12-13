@@ -134,12 +134,73 @@ sub init_imageconfig {
   my $image_config  = shift;
   my $url           = shift;
   my $configuration = $controller->configuration;
+  my $search_panel  = $self->new_panel('Configurator', $controller, code => 'configurator_search');
+  my $panel         = $self->new_panel('Configurator', $controller, code => 'configurator');
+  my @nodes         = @{$image_config->tree->child_nodes};
   
   $configuration->create_node('active_tracks',  'Active tracks',  [], { availability => 1, url => '#', class => 'active_tracks'           });
   $configuration->create_node('search_results', 'Search Results', [], { availability => 1, url => '#', class => 'search_results disabled' });
+  
+  for my $n (grep $_->has_child_nodes, @nodes) {
+    my @children = grep { !$_->has_child_nodes } @{$n->child_nodes};
     
-  my $search_panel = $self->new_panel('Configurator', $controller, code => 'configurator_search');
-  my $panel        = $self->new_panel('Configurator', $controller, code => 'configurator');
+    if (scalar @children) {
+      my $internal = $image_config->tree->create_node($n->id . '_internal');
+      $internal->append($_) for @children;
+      $n->prepend($internal);
+    }
+  }
+  
+  $self->imageconfig_content($image_config, $_, $_->id, 0) for @nodes;
+  
+  foreach my $node (grep $_->has_child_nodes, @nodes) {
+    my $id      = $node->id;
+    my $caption = $node->get('caption');
+    my $first   = ' first';
+    
+    $node->data->{'content'} .= sprintf '<div class="config %s">', $id;
+    $node->data->{'content'} .= sprintf '<h2 class="config_header">%s</h2>', $caption;
+    
+    for my $n (@{$node->child_nodes}) {
+      my $menu   = $self->{'select_all_menu'}->{$n->id};
+      my $header = $n->get('caption');
+      my $class  = 'config_menu';
+      
+      if ($menu && scalar @{$n->child_nodes} > 1) {
+        $header ||= 'tracks';
+        $class   .= ' selectable';
+        
+        my %counts = reverse %{$self->{'track_renderers'}->{$n->id}};
+        
+        if (scalar keys %counts != 1) {
+          $menu  = '';
+          $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+        }
+        
+        $node->data->{'content'} .= qq{
+          <div class="select_all$first">
+            <ul class="popup_menu">$menu</ul>
+            <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
+          </div>
+        };
+      } elsif ($header) {
+        $node->data->{'content'} .= "<h4>$header</h4>";
+      }
+      
+      $node->data->{'content'} .= qq{<ul class="$class">};
+      $node->data->{'content'} .= $_->render for @{$n->child_nodes};
+      $node->data->{'content'} .= '</ul>';
+      
+      $first = '';
+    }
+    
+    $node->data->{'content'} .= '</div>';
+    
+    my $on    = $self->{'enabled_tracks'}->{$id} || 0;
+    my $count = $self->{'total_tracks'}->{$id}   || 0;
+    
+    $configuration->create_node($id, ($count ? "($on/$count) " : '') . $caption, [], { url => '#', availability => ($count > 0), class => $id });
+  }
   
   $search_panel->set_content('<div class="configuration_search">Find a track: <input class="configuration_search_text" /></div>');
   
@@ -153,7 +214,7 @@ sub init_imageconfig {
     </form>},
     join('', map { sprintf '<input type="hidden" name="%s" value="%s" />', $_, encode_entities($url->[1]->{$_}) } keys %{$url->[1]}),
     $controller->hub->param('config'),
-    $self->imageconfig_content($controller, $image_config)
+    join('', map $_->data->{'content'}, @nodes)
   ));
   
   $self->add_panel($search_panel);
@@ -165,147 +226,116 @@ sub init_imageconfig {
 }
 
 sub imageconfig_content {
-  my $self          = shift;
-  my $controller    = shift;
-  my $image_config  = shift;
-  my $hub           = $controller->hub;
-  my $configuration = $controller->configuration;
-  my $content;
+  my ($self, $image_config, $node, $menu_class, $i) = @_;
+  my $id       = $node->id;
+  my $children = $node->child_nodes;
   
-  foreach my $node ($image_config->tree->top_level) {
-    next unless $node->get('caption');
-    next if $node->is_leaf;
+  $node->node_name = 'li';
+  
+  if (scalar @$children) {
+    my $ul = $i > 1 && scalar @$children > 1 ? $node->dom->create_element('ul', { class => 'config_menu' }) : undef;
+    my ($j, $menu);
     
-    my $count     = 0;
-    my $ext_count = 0;
-    my $available = 0;
-    my $on        = 0;
-    my $key       = $node->key;
-    my (%renderers, $select_all_menu, $config_group, $submenu);
+    foreach (@$children) {
+      my $m = $self->imageconfig_content($image_config, $_, $menu_class, $i + 1);
+      $menu = $m if $m && ++$j;
+      $ul->append_child($_) if $ul;
+    }
     
-    foreach my $track_node ($node->descendants) {
-      next if $track_node->get('menu') eq 'no';
+    if ($ul) {
+      $node->append_child($ul);
       
-      my $display = $track_node->get('display') || 'off';
-      my @states  = @{$track_node->get('renderers') || [ qw(off Off normal Normal) ]};
-      my $desc    = $track_node->get('description');
-      my $class   = $track_node->get('_class');
-      my $name    = encode_entities($track_node->get('name')); 
-      my ($dd, $menu, $selected, $external_menu, $pre_config_group);
-      
-      if ($track_node->get('submenu')) {
-        $submenu          = $track_node->get('caption');
-        $pre_config_group = '</dl><dl class="config_menu submenu">' if $config_group;
-      } else {
-        $name = sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" /> %s', lc $class, $class, $class, $name if $class;   
+      if ($menu) {
+        my $caption   = $node->get('caption');
+        my %renderers = reverse %{$self->{'track_renderers'}->{$id}};
         
-        while (my ($val, $text) = splice @states, 0, 2) {
-          $text     = encode_entities($text);
-          $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="menu_option" />', $track_node->key, $val, $text, $text, $val if $val eq $display;
-          $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$key" />$text</li>};
-          
-          if ($class) {
-            $external_menu .= $text;
-          } else {
-            $menu .= $text;
-            $renderers{$val}++;
+        if (scalar keys %renderers != 1) {
+          $menu  = '';
+          $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$menu_class" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+        }
+        
+        $ul->before($node->dom->create_element('div', {
+          class      => 'select_all',
+          inner_HTML => qq{
+            <ul class="popup_menu">$menu</ul>
+            <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $caption</strong>
           }
-        }
-        
-        $count++;
-        $on++ if $display ne 'off';
-        $ext_count++ if $class;
-        $select_all_menu ||= $menu;
-        $class = (lc $class || 'internal') .' '. $track_node->get('class');
-        $pre_config_group = '</dl><dl class="config_menu submenu"><dt class="external">External data sources</dt>' if $ext_count == 1;
-
-
-        
-        if ($desc) {
-          $desc =~ s/&(?!\w+;)/&amp;/g;
-          $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
-          $desc =~ s/<a>/<\/a>/g;
-          $desc =~ s/"[ "]*>/">/g;
-          
-          $selected .= qq{<span class="menu_help"><img src="/i/info_blue_17.png" alt="(i)" title="Click for more information" style="vertical-align:middle" /></span>};
-          $dd       = "<dd>$desc</dd>";
-        }
-        else {
-          $selected .= '<span class="menu_nohelp"><img src="/i/blank.gif" alt="" /></span>';
-        }
-
-        if ($submenu && $submenu != 1) {
-          $pre_config_group = $self->build_enable_all_menu($submenu, $key, $select_all_menu, $controller, %renderers);
-          $submenu          = 1;
-        }
+        }));
       }
+    }
+  } elsif ($node->get('menu') ne 'no') {
+    my @states    = @{$node->get('renderers') || [ qw(off Off normal Normal) ]};
+    my $display   = $node->get('display')     || 'off';
+    my $external  = $node->get('_class');
+    my $desc      = $node->get('description');
+    my $name      = encode_entities($node->get('name'));
+    my $icons     = $external ? sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', lc $external, $external, $external : ''; # DAS icons, etc
+    my $fg_link   = $name && $node->get('glyphset') eq 'fg_multi_wiggle' ? $self->multiwiggle_multi_link($image_config) : ''; # FIXME: HACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACK
+    my ($selected, $menu, $help);
+    
+    while (my ($val, $text) = splice @states, 0, 2) {
+      $text     = encode_entities($text);
+      $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="menu_option" />', $id, $val, $text, $text, $val if $val eq $display;
+      $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$menu_class" />$text</li>};
       
-      $config_group .= $pre_config_group;
-              
-      if ($name) {
-        my $action = $image_config->{'type'} eq 'reg_detail_by_cell_line' ? 'Regulation' : 'Location';
-        my $config = $action eq 'Location' ? 'cell_page' : '_page';
+      $menu .= $text;
+      
+      if (!$external) {
+        my $n = $node;
         
-        my $config_link = $hub->url({
-          type     => 'Config',
-          action   => $action,
-          function => 'Cell_line',
-          config   => $config
-        });
-
-        $config = 'page' if $config eq '_page'; # FIXME: make it config=page normally!
-
-	#though you might be tempted, do not revert this as a sprintf (one of the track names is '%GC')
-	my $multiwiggle_multi_link =  $track_node->get('glyphset') eq 'fg_multi_wiggle' ? qq{<a href="$config_link" class="modal_link" rel="modal_config_$config" title="Configure this page">Configure Cell/Tissue</a>} : '';
-        $config_group .= qq{
-          <dt class="$class">
-            <ul class="popup_menu">$menu$external_menu</ul>
-            $selected <span class="menu_option">$name</span>
-            $multiwiggle_multi_link
-          </dt>
-          $dd
-        };
+        while ($n = $n->parent_node) {
+          $self->{'track_renderers'}->{$n->id}->{$val}++;
+        }
       }
     }
     
-    $config_group = $self->build_enable_all_menu('tracks', $key, $select_all_menu, $controller, %renderers) . $config_group if !$submenu && $count - $ext_count > 1;
+    $self->{'enabled_tracks'}->{$menu_class}++ if $display ne 'off';
+    $self->{'total_tracks'}->{$menu_class}++;
     
-    $content .= sprintf('
-      <div class="config %s">
-        <h2 class="config_header">%s</h2>
-        <dl class="config_menu">
-          %s
-        </dl>
-      </div>', 
-      $key, encode_entities($node->get('caption')), $config_group
-    );
+    if ($desc) {
+      $desc =~ s/&(?!\w+;)/&amp;/g;
+      $desc =~ s/href="?([^"]+?)"?([ >])/href="$1"$2/g;
+      $desc =~ s/<a>/<\/a>/g;
+      $desc =~ s/"[ "]*>/">/g;
+      $desc = qq{<div class="desc">$desc</div>};
+      
+      $help = qq{<span class="menu_help"></span>};
+    }
     
-    $configuration->create_node($key,
-      ( $count ? "($on/$count) " : '' ) . $node->get('caption'),
-      [],
-      { url => '#', availability => ($count > 0), class => $node->key } 
-    );
+    $node->set_attribute('class', "leaf $external");
+    $node->inner_HTML(qq{
+      <ul class="popup_menu">$menu</ul>
+      $selected<span class="menu_option">$icons$name</span>
+      $fg_link
+      $help
+      $desc
+    });
+    
+    $self->{'select_all_menu'}->{$node->parent_node->id} = $menu unless $external;
+    
+    return $menu unless $external;
   }
   
-  return $content;
+  return undef;
 }
 
-sub build_enable_all_menu {
-  my ($self, $label, $key, $menu, $controller, %renderers) = @_;
+# FIXME: HACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACK
+sub multiwiggle_multi_link {
+  my ($self, $image_config) = @_;
   
-  my %counts = reverse %renderers;
+  my $action = $image_config->{'type'} eq 'reg_detail_by_cell_line' ? 'Regulation' : 'Location';
+  my $config = $action eq 'Location' ? 'cell_page' : '_page';
   
-  if (scalar keys %counts != 1) {
-    $menu  = '';
-    $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$key" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
-  }
+  my $config_link = $image_config->hub->url({
+    type     => 'Config',
+    action   => $action,
+    function => 'Cell_line',
+    config   => $config
+  });
+
+  $config = 'page' if $config eq '_page'; # FIXME: make it config=page normally!
   
-  return qq{
-    <dt class="select_all">
-      <ul class="popup_menu">$menu</ul>
-      <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option" /> <strong class="menu_option">Enable/disable all $label</strong>
-    </dt>
-  };
+  return qq{<a href="$config_link" class="modal_link" rel="modal_config_$config" title="Configure this page">Configure Cell/Tissue</a>};
 }
 
 sub add_reset_panel {
