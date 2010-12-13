@@ -263,19 +263,30 @@ sub add_notes {
   ## Appends a div to the fieldset with notes HTML inside
   ## @params String text or HashRef {'text' =>? , 'class' => ?} or ArrayRef of either of these for multiple addition
   ## @return DOM::Node::Element::Div object
-  my ($self, $text) = @_;
+  my ($self, $params) = @_;
   
-  if (ref($text) eq 'ARRAY') { #call recursively for multiple addition
+  if (ref $params eq 'ARRAY') { # call recursively for multiple addition
     my $return = [];
-    push @$return, $self->add_notes($_) for @$text;
+    push @$return, $self->add_notes($_) for @$params;
     return $return;
   }
   
   my $notes = $self->dom->create_element('div');
-  $text = { 'text' => $text, 'class' => $self->CSS_CLASS_NOTES } if ref($text) ne 'HASH';
-  $notes->inner_HTML($text->{'text'}) if exists $text->{'text'};
-  $notes->set_attribute('class', exists $text->{'class'} ? $text->{'class'} : $self->CSS_CLASS_NOTES);
+  $params = { 'text' => $params, 'class' => $self->CSS_CLASS_NOTES } if ref $params ne 'HASH';
+  
+  if (exists $params->{'text'}) {
+    $notes->inner_HTML($params->{'text'});
+  }
+  
+  if (exists $params->{'list'}) {
+    my $list = $self->dom->create_element($params->{'serialise'} ? 'ol' : 'ul');
+    $list->append_child($self->dom->create_element('li', { inner_HTML => $_ })) for @{$params->{'list'}};
+    $notes->append_child($list);
+  }
+  
+  $notes->set_attribute('class', exists $params->{'class'} ? $params->{'class'} : $self->CSS_CLASS_NOTES);
   $self->append_child($notes);
+  
   return $notes;
 }
 
