@@ -21,7 +21,7 @@ sub features {
   my $self = shift;
   my $slice = $self->{'container'};
   my $db_alias = $self->my_config('db');
-  my $analyses = $self->my_config('logicnames');
+  my $analyses = $self->my_config('logic_names');
 
   my @genes = map { $self->_make_gene($_) }
               map { @{$slice->get_all_PredictionTranscripts( $_, $db_alias )||[]} }

@@ -25,7 +25,7 @@ sub _init {
   my $font_details  = $self->get_text_simple( undef, 'innertext' );
   my $pix_per_bp    = $self->scalex;
 
-  foreach my $logic_name ( @{$self->my_config( 'logicnames' )||[]} ) {
+  foreach my $logic_name ( @{$self->my_config( 'logic_names' )||[]} ) {
     my %hash;
     my @ps_feat = @{$protein->get_all_ProteinFeatures( $logic_name )};
     push @{$hash{$_->hseqname}},$_ foreach @ps_feat;
@@ -102,7 +102,7 @@ sub render_text {
   my $label = $self->my_config('caption');
   my $export;
   
-  foreach my $logic_name (@{$self->my_config('logicnames')||[]}) {
+  foreach my $logic_name (@{$self->my_config('logic_names')||[]}) {
     my @features = map { $_->[1] } sort { $a->[0] cmp $b->[0] } map { [ $_->hseqname, $_ ] } @{$container->get_all_ProteinFeatures($logic_name)};
     
     foreach (@features) {

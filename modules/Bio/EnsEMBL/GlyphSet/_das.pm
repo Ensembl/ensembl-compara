@@ -26,7 +26,7 @@ sub features {
   $self->timer_push('Raw fetch of DAS features', undef, 'fetch');  
   
   my $data = $self->cache('das_features');
-  my @logic_names = @{$self->my_config('logicnames')};
+  my @logic_names = @{$self->my_config('logic_names')};
   my $res = {};
 
   my %feature_styles = ();

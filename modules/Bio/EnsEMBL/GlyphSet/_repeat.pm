@@ -8,12 +8,12 @@ sub features {
   my $self = shift;
 ## Need to add code to restrict by logic_name and by db!
 
-  my $types      = $self->my_config( 'types'      );
-  my $logicnames = $self->my_config( 'logicnames' );
+  my $types       = $self->my_config('types');
+  my $logic_names = $self->my_config('logic_names');
 
   my @repeats = sort { $a->seq_region_start <=> $b->seq_region_end }
                  map { my $t = $_; map { @{ $self->{'container'}->get_all_RepeatFeatures( $t, $_ ) } } @$types }
-                @$logicnames;
+                @$logic_names;
 
   $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless scalar @repeats >=1 || $self->{'config'}->get_option('opt_empty_tracks') == 0; 
   return \@repeats;

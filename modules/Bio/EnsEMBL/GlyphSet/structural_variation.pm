@@ -10,7 +10,7 @@ sub features {
   my $slice = $self->{'container'};
   my $Config = $self->{'config'};
   my $type = $self->check();
-  my $source = $self->{'my_config'}->key;
+  my $source = $self->{'my_config'}->id;
   $source =~s/variation_feature_structural//;
   $source =~s/^_//;
 

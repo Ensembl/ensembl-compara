@@ -41,7 +41,7 @@ sub features {
   my ($self) = @_;
   my $method      = 'get_all_'.( $self->my_config('object_type') || 'DnaAlignFeature' ).'s';
   my $db          = $self->my_config('db');
-  my @logic_names = @{ $self->my_config( 'logicnames' )||[] };
+  my @logic_names = @{ $self->my_config( 'logic_names' )||[] };
   $self->timer_push( 'Initializing don', undef, 'fetch' );
   my @results = map { $self->{'container'}->$method($_,undef,$db)||() } @logic_names;
   #force all features to be on one strand if the config requests it

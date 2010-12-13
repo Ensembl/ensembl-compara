@@ -9,7 +9,7 @@ sub my_helplink { return "read_coverage_collection"; }
 sub _init {
   my ($self) = @_; 
   my $Config = $self->{'config'};
-  my $key = $self->{'my_config'}->key; 
+  my $key = $self->{'my_config'}->id; 
   my @key_info = split (/_/, $key);
   my $sample = pop @key_info; 
   my $slice = $self->{'container'};
@@ -112,7 +112,7 @@ sub draw_features {
 
 sub rcc_features {
   my $self = shift;
-  my $key = $self->{'my_config'}->key;
+  my $key = $self->{'my_config'}->id;
   my @key_info = split (/_/, $key);
   my $sample_id = pop @key_info;
   my $vdb =  $self->dbadaptor( $self->species, 'VARIATION' );

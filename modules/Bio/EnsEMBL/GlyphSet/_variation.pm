@@ -8,7 +8,7 @@ use base qw(Bio::EnsEMBL::GlyphSet_simple);
 
 sub my_label { 
   my $self = shift;  
-  my $label = $self->{'my_config'}->key =~/somatic/ ?'Somatic Mutations' : 'Variations'; 
+  my $label = $self->{'my_config'}->id =~/somatic/ ?'Somatic Mutations' : 'Variations'; 
   return $label; 
 }
 
@@ -19,7 +19,7 @@ sub features {
   
   if ($slice_length > $max_length * 1010 ) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
-  } elsif ($self->{'my_config'}->key =~/set/ && $slice_length >= 51000){
+  } elsif ($self->{'my_config'}->id =~/set/ && $slice_length >= 51000){
     $self->errorTrack("Variation sets are not displayed for regions larger than 50 Kb");
   } else {
     return $self->fetch_features;
@@ -49,9 +49,9 @@ sub check_source {
 sub fetch_features {
   my ($self) = @_;
 
-  if (!$self->cache($self->{'my_config'}->key)) {
+  if (!$self->cache($self->{'my_config'}->id)) {
     # different retrieval method for somatic mutations
-    if( $self->{'my_config'}->key =~/somatic/){
+    if( $self->{'my_config'}->id =~/somatic/){
       my @somatic_mutations;
       if ($self->my_config('filter')){ 
         @somatic_mutations = 
@@ -61,7 +61,7 @@ sub fetch_features {
       } else { 
         @somatic_mutations = @{$self->{'container'}->get_all_somatic_VariationFeatures || []};
       }
-      $self->cache($self->{'my_config'}->key, \@somatic_mutations);   
+      $self->cache($self->{'my_config'}->id, \@somatic_mutations);   
     } else { # get standard variations
       my $sources = $self->my_config('sources'); 
          $sources = { map { $_ => 1 } @$sources } if $sources; 
@@ -79,11 +79,11 @@ sub fetch_features {
         grep { $_->map_weight < 4 }
         @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};
       
-      $self->cache($self->{'my_config'}->key, \@vari_features);
+      $self->cache($self->{'my_config'}->id, \@vari_features);
     }
   }
 
-  my $snps = $self->cache($self->{'my_config'}->key) || [];
+  my $snps = $self->cache($self->{'my_config'}->id) || [];
 
   foreach my $f (@$snps) {
     my $config  = $self->{'config'};

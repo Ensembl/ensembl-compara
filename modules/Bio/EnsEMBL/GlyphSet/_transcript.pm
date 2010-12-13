@@ -13,7 +13,7 @@ sub features {
   my ($self) = @_;
   my $slice = $self->{'container'};
   my $db_alias = $self->my_config('db');
-  my $analyses = $self->my_config('logicnames');
+  my $analyses = $self->my_config('logic_names');
   my @T;
   ## FIXME - this is an ugly hack!
   if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {

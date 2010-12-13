@@ -11,7 +11,7 @@ sub features {
   my $slice = $self->{'container'};
 
   my $db_alias = $self->my_config('db');
-  my $analyses = $self->my_config('logicnames');
+  my $analyses = $self->my_config('logic_names');
   my @T =@{$slice->get_all_Genes( $_, $db_alias )||[]};
 
 
