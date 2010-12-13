@@ -106,7 +106,7 @@ sub new {
     else {
       for my $strand (@strands_to_show) {
 	my $tmp_gs_store = {};
-	for my $row ($Config->subsections( 1 )) {
+	for my $row ($Config->subsections) {
 	  next unless (($Config->get($row, 'on')||"") eq "on");  ## Skip if this is turned off
           next unless $Config->is_available_artefact($row);      ## Skip if not available for this species!
 	  my $str_tmp = $Config->get($row, 'str');
@@ -336,7 +336,7 @@ sub storage {
 
 =head1 RELATED MODULES
 
-See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph WebUserConfig
+See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph
 
 =head1 AUTHOR - Roger Pettett
 
