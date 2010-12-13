@@ -1464,7 +1464,7 @@ sub add_regulation_builds {
         $multi_flag = 1;
       }
       
-      my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks", { submenu => 1 });
+      my $cell_line_menu = $self->create_submenu("regulatory_features $cell_line", "$cell_line tracks");
       
       $cell_line_menu->append($self->create_track($track_key, $name || $fg_data{$key_2}{'logic_names'}, {
         db          => $key,
@@ -1567,7 +1567,7 @@ sub add_sequence_variations {
     display    => 'off'
   );
   
-  my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants', { submenu => 1 });
+  my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants');
   
   $sequence_variation->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
     %options,
@@ -1595,13 +1595,13 @@ sub add_sequence_variations {
   
   # add in variation sets
   if ($hashref->{'variation_set'}{'rows'} > 0) {
-    my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets', { submenu => 1 });
+    my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets');
     
     $menu->append($variation_sets);
   
     foreach my $toplevel_set (sort { (scalar @{$a->{'subsets'}} ? 1 : 0) <=> (scalar @{$b->{'subsets'}} ? 1 : 0) } values %{$hashref->{'variation_set'}{'supersets'}}) {
       my $name          = $toplevel_set->{'name'};
-      my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$name", $name, { submenu => 1 }) : $variation_sets;
+      my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$name", $name) : $variation_sets;
       
       $set_variation->append($self->create_track("variation_set_$name", $name, {
         %options,
@@ -1638,7 +1638,7 @@ sub add_structural_variations {
   
   return unless $menu && $hashref->{'structural_variation'}{'rows'} > 0;
   
-  my $structural_variation = $self->create_submenu('structural_variation', 'Structural variants', { submenu => 1 });
+  my $structural_variation = $self->create_submenu('structural_variation', 'Structural variants');
   
   my %options = (
     db         => $key,
