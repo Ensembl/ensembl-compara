@@ -194,7 +194,7 @@ sub glyphsets {
 
 =head1 RELATED MODULES
 
-See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph WebUserConfig
+See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph
 
 =head1 AUTHOR - Roger Pettett
 
