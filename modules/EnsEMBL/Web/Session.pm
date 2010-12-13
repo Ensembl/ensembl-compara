@@ -688,7 +688,7 @@ sub apply_to_image_config {
   foreach my $script (keys %{$self->{'view_configs'} || {}}) {
     my $ic = $self->{'view_configs'}{$script}{'image_config_data'}{$type} || {};
     
-    $image_config->tree->{'_user_data'}{$_} = $self->deepcopy($ic->{$_}) for keys %$ic;
+    $image_config->tree->user_data->{$_} = $self->deepcopy($ic->{$_}) for keys %$ic;
   }
   
   ## Store if $key is set
