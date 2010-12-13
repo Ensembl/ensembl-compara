@@ -1,4 +1,4 @@
-form div, form > fieldset {
+form div, form > fieldset, form h2 {
   -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
 }
 legend { /*intentionally made similar to panel h2 */
