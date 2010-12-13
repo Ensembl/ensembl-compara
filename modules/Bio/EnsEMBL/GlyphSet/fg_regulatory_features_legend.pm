@@ -2,81 +2,89 @@ package Bio::EnsEMBL::GlyphSet::fg_regulatory_features_legend;
 
 use strict;
 
-use base qw( Bio::EnsEMBL::GlyphSet);
+use base qw(Bio::EnsEMBL::GlyphSet);
 
 sub _init {
-  my ($self) = @_ ; 
-  return unless ($self->strand() == -1);
-
-  my $BOX_WIDTH     = 20;
-  my $NO_OF_COLUMNS = 2;
-
-  my $vc            = $self->{'container'};
-  my $Config        = $self->{'config'};
-  my $im_width      = $Config->image_width();
-   
-  my @colours;
-  return unless $Config->{'fg_regulatory_features_legend_features'};
-  my %features = %{$self->my_config('colours')}; 
-  return unless %features;
- 
-  my ($x,$y) = (0,0);
-  my( $fontname, $fontsize ) = $self->get_font_details( 'legend' );
-  my @res = $self->get_text_width( 0, 'X', '', 'font'=>$fontname, 'ptsize' => $fontsize );
-  my $th = $res[3];
-  my $pix_per_bp = $self->{'config'}->transform()->{'scalex'};
+  my $self = shift;
   
-  my $FLAG = 0;
-  foreach (sort {$a <=> $b } keys %features){
-    my $colour = $self->my_colour($_); 
-    my $legend = $self->my_colour($_, 'text');  
-    next if $legend =~/unknown/i; 
+  return unless $self->strand == -1;
+  
+  my $config = $self->{'config'};
+  
+  return unless $config->{'fg_regulatory_features_legend_features'};
+  
+  my %features = %{$self->my_config('colours')};
+  
+  return unless %features;
+  
+  my $box_width             = 20;
+  my $no_of_columns         = 2;
+  my $im_width              = $config->image_width;
+  my ($x, $y)               = (0, 0);
+  my ($fontname, $fontsize) = $self->get_font_details('legend');
+  my @res                   = $self->get_text_width(0, 'X', '', 'font' => $fontname, 'ptsize' => $fontsize);
+  my $th                    = $res[3];
+  my $flag                  = 0;
+  
+  foreach (sort keys %features) {
+    my $legend = $self->my_colour($_, 'text'); 
     
-    $FLAG = 1;
-    my $tocolour='';
-    ($tocolour,$colour) = ($1,$2) if $colour =~ /(.*):(.*)/;
+    next if $legend =~ /unknown/i; 
+    
+    my $colour = $self->my_colour($_);
+    my $tocolour;
+    
+    $flag = 1;
+    ($tocolour, $colour) = ($1, $2) if $colour =~ /(.*):(.*)/;
+    $tocolour .= 'colour';
+    
     $self->push($self->Rect({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS,
-        'y'         => $y * ( $th + 3 ) + 2,
-        'width'     => $BOX_WIDTH,
-        'height'    => $th-2,
-        $tocolour.'colour'    => $colour,
-        'absolutey' => 1,
-        'absolutex' => 1,'absolutewidth'=>1,
+        x             => $im_width * $x/$no_of_columns,
+        y             => $y * ($th + 3) + 2,
+        width         => $box_width,
+        height        => $th-2,
+        $tocolour     => $colour,
+        absolutey     => 1,
+        absolutex     => 1,
+        absolutewidth => 1,
     }));
     $self->push($self->Text({
-        'x'         => $im_width * $x/$NO_OF_COLUMNS + $BOX_WIDTH,
-        'y'         => $y * ( $th + 3 ),
-        'height'    => $th,
-        'valign'    => 'center',
-        'halign'    => 'left',
-        'ptsize'    => $fontsize,
-        'font'      => $fontname,
-        'colour'    => 'black',
-        'text'      => " $legend",
-        'absolutey' => 1,
-        'absolutex' => 1,'absolutewidth'=>1
+        x             => $im_width * $x/$no_of_columns + $box_width,
+        y             => $y * ($th + 3),
+        height        => $th,
+        valign        => 'center',
+        halign        => 'left',
+        ptsize        => $fontsize,
+        font          => $fontname,
+        colour        => 'black',
+        text          => " $legend",
+        absolutey     => 1,
+        absolutex     => 1,
+        absolutewidth => 1
     }));
+    
     $x++;
-    if($x==$NO_OF_COLUMNS) {
-      $x=0;
+    
+    if ($x == $no_of_columns) {
+      $x = 0;
       $y++;
     }
   }
-# Set up a separating line...
+  
+  # Set up a separating line
   my $rect = $self->Rect({
-    'x'         => 0,
-    'y'         => 0,
-    'width'     => $im_width,
-    'height'    => 0,
-    'colour'    => 'grey50',
-    'absolutey' => 1,
-    'absolutex' => 1,'absolutewidth'=>1,
+    x             => 0,
+    y             => 0,
+    width         => $im_width,
+    height        => 0,
+    colour        => 'grey50',
+    absolutey     => 1,
+    absolutex     => 1,
+    absolutewidth => 1,
   });
+  
   $self->push($rect);
-  unless( $FLAG ) {
-    $self->errorTrack( "No Regulatory Features in this panel" );
-  }
+  $self->errorTrack('No Regulatory Features in this panel') unless $flag;
 }
 
 1;
