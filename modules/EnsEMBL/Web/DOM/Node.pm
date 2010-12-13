@@ -42,7 +42,7 @@ sub set_flag {
 }
 
 sub get_flag {
-  ##ÊGets previously set flag
+  ## Gets previously set flag
   ## @params flag name
   ## @return flag value if set or undef if not
   my ($self, $flag) = @_;
