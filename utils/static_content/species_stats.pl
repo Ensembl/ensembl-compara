@@ -169,8 +169,8 @@ foreach my $spp (@valid_spp) {
     ## logicnames for valid genes
     my $genetypes = "'ensembl', 'ensembl_havana_gene', 'havana', 'ensembl_projection',
       'ensembl_ncRNA', 'ncRNA', 'tRNA', 'pseudogene', 'retrotransposed', 'human_ensembl_proteins',
-      'ncRNA_pseudogene', 'havana_IG_gene',
-      'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN', 'ensembl_IG_gene', 'MT_genbank_import'";
+      'ncRNA_pseudogene', 'havana_IG_gene','ensembl_IG_gene', 'ensembl_lincrna', 'ensembl_havana_lincrna',
+      'flybase', 'wormbase', 'vectorbase', 'sgd', 'HOX', 'CYT', 'GSTEN', 'MT_genbank_import'";
 
     my $authority = $SD->get_config($spp, 'AUTHORITY');
     if( $authority ){
@@ -178,63 +178,6 @@ foreach my $spp (@valid_spp) {
     }
 
     my ($known, $novel, $proj, $pseudo, $rna, $ig_segments, $exons, $transcripts, $snps);  
-
-=pod
-    ## HACK TO ALLOW US TO DO DIFFERENT TOTALS FOR HUMAN
-    if ($spp eq 'Homo_sapiens' && $FUDGE) { ## get gene counts from attrib table
-    
-      ## GET ALL SEQUENCE REGION IDS FOR CHROMOSOMES
-      my @chr_list = @{$SD->ENSEMBL_CHROMOSOMES};
-      my @seqreg_ids;
-      foreach my $chr (@chr_list) {
-        my ($seqreg_id) = &query( $db,
-          "SELECT seq_region_id
-          FROM seq_region
-          WHERE name = '$chr'");
-        push @seqreg_ids, $seqreg_id;
-      }
-      print "Sequence region ids: @seqreg_ids\n" if $DEBUG;
-
-      foreach my $id (@seqreg_ids) {
-        my ($count) = &query( $db,
-          "SELECT value
-          FROM seq_region_attrib as s, attrib_type as a
-          WHERE s.attrib_type_id = a.attrib_type_id
-          AND seq_region_id = '$id' AND a.code = 'GeneNo_knwCod'");
-        $known += $count;
-      }
-      print "Known Genes: $known\n" if $DEBUG;
-                                                                                
-      foreach my $id (@seqreg_ids) {
-        my ($count) = &query( $db,
-          "SELECT s.value
-          FROM seq_region_attrib as s, attrib_type as a
-          WHERE s.attrib_type_id = a.attrib_type_id
-          AND seq_region_id = '$id' AND a.code = 'GeneNo_novCod'");
-        $novel += $count;
-      }
-
-      foreach my $id (@seqreg_ids) {
-        my ($count) = &query( $db,
-          "SELECT s.value
-          FROM seq_region_attrib as s, attrib_type as a
-          WHERE s.attrib_type_id = a.attrib_type_id
-          AND seq_region_id = '$id' AND a.code = 'GeneNo_pseudo'");
-        $pseudo += $count;
-      }
-      print "Pseudogenes: $known" if $DEBUG;
-                                                                                
-      foreach my $id (@seqreg_ids) {
-        my ($count) = &query( $db,
-          "SELECT value
-          FROM seq_region_attrib as s, attrib_type as a
-          WHERE s.attrib_type_id = a.attrib_type_id
-          AND seq_region_id = '$id' AND a.code REGEXP 'GeneNo_[a-z]*RNA'");
-        $rna += $count;
-      }
-
-    }
-=cut
 
     unless ($pre) { 
       ($known) = &query( $db,
@@ -280,7 +223,7 @@ foreach my $spp (@valid_spp) {
         "select count(distinct g.gene_id)
         from gene g, analysis a
         where g.analysis_id = a.analysis_id
-        and a.logic_name = 'ensembl_IG_gene'
+        and a.logic_name in ('ensembl_IG_gene','havana_IG_gene')
         ");
       print "Segments:$ig_segments\n" if $DEBUG;
 
