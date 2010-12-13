@@ -211,7 +211,7 @@ sub _attach_das {
   my ($self, $image_config) = @_;
 
   # Look for all das sources which are configured and turned on
-  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logicnames')||[]} : () } $image_config->tree->nodes;
+  my @das_nodes = map { $_->get('glyphset') eq '_das' && $_->get('display') ne 'off' ? @{$_->get('logic_names')||[]} : () } $image_config->tree->nodes;
   
   return unless @das_nodes; # Return if no sources to be drawn
   
