@@ -429,9 +429,33 @@ Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs() call on both servers.
 12.2 Run the command
 
 bsub -o populate_member_display_labels.out -e populate_member_display_labels.err -R "select[mem>5000] rusage[mem=5000]" -M5000000 perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/populate_member_display_labels.pl --registry reg_conf59 --compara compara_59 --verbose
+e59 real    9m44.754s
+e60 real    10m23.002s
 
 This will iterate over all GenomeDBs and update any label which is empty. Should
 you wish to replace existing labels then rerun with the -replace switch. 
+
+Ran a few tests:
+
+mysql -hcompara1 -uensro kb3_ensembl_compara_60 -e "select count(*) from
+member_orig mo, member m where m.member_id=mo.member_id and
+m.display_label IS NOT NULL and mo.display_label IS NULL"
++----------+
+| count(*) |
++----------+
+|  1278014 |
++----------+
+
+mysql -hens-livemirror -uensro ensembl_compara_59 -e "select stable_id, display_label from member m where m.display_label IS NOT NULL" | sort > 59.display_label.tsv 
+mysql -hcompara1 -uensro kb3_ensembl_compara_60 -e "select stable_id,display_label from member m where m.display_label IS NOT NULL" | sort > 60.display_label.tsv 
+join 59.display_label.tsv 60.display_label.tsv | wc -l
+3017840
+join -v 1 59.display_label.tsv 60.display_label.tsv | wc -l
+42957
+join -v 2 59.display_label.tsv 60.display_label.tsv | wc -l
+126040
+
+These look fine.
 
 Remember to DROP TABLE member_orig if made a backup.
 
@@ -607,9 +631,9 @@ Or you can use the order of species given in the species tree:
     --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link TRANSLATED_BLAT_NET \
     --trim --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > tblat_net.inc
 
-# for blastz_net produce a simple list, because the table is getting too big:
+# for blastz_net/lastz_net produce a simple list, because the table is getting too big:
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
-    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link BLASTZ_NET \
+    --reg_conf ~/release_58/reg_conf.pl --dbname compara_58 --method_link BLASTZ_NET --method_link LASTZ_NET \
     --blastz_list --species_tree ~lg4/work/ensembl-compara/scripts/pipeline/species_tree_blength.nh > blastz_net.inc
 
   ~lg4/work/ensembl-compara/docs/create_mlss_table.pl \
