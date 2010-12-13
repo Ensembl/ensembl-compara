@@ -11,10 +11,11 @@ form.configuration div.config ul.config_menu                    { margin: 0; pad
 form.configuration div.config ul.config_menu li                 { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: both; }
 form.configuration div.config ul.config_menu li div.desc        { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; }
 form.configuration div.config ul.config_menu li .menu_help      { position: absolute; right: 10px; height: 17px; width: 17px; background: url(/i/info_toggle.png) no-repeat top left; cursor: pointer; }
-
 form.configuration div.config ul.config_menu li .menu_help.open { background-position: bottom left; }
 form.configuration div.config ul.selectable,
 form.configuration div.config ul.config_menu li ul.config_menu  { margin-left: 10px; }
+form.configuration div.config ul.config_menu li.col1            { background-color: [[IMAGE_BG1]]; }
+form.configuration div.config ul.config_menu li.col2            { background-color: [[IMAGE_BG2]]; }
 
 form.configuration.multi div.config h4,
 form.configuration.multi div.config div.select_all              { display: none !important; }
