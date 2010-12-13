@@ -499,12 +499,12 @@ sub _c {
 
 sub _type {
   my $self = shift;
-  return $self->{'my_config'}->key;
+  return $self->{'my_config'}->id;
 }
 
 sub _pos {
   my $self = shift;
-  return $self->{'my_config'}->left; ## Return left hand value... [ means legends will get rendered in order!! ]
+  return $self->{'config'}->{'_pos'}++;
 }
 
 sub set_my_config {
@@ -517,7 +517,7 @@ sub set_my_config {
 
 sub check {
   my( $self ) = @_;
-  return $self->{'my_config'}{'_key'};
+  return $self->{'my_config'}{'id'};
 }
 
 # Stuff copied out of scalebar.pm so that contig.pm can use it!
@@ -974,7 +974,7 @@ sub das_link {
     $slice->seq_region_name,
     $slice->species,
     $self->species_defs->get_config($species, 'ENSEMBL_GOLDEN_PATH'),
-    join('-', $das_type,$self->my_config('db'), @{$self->my_config('logicnames')||[]}),
+    join('-', $das_type,$self->my_config('db'), @{$self->my_config('logic_names')||[]}),
     $slice->start,
     $slice->end
   );

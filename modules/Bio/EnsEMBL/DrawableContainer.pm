@@ -165,7 +165,7 @@ sub new {
     
     for my $glyphset (@glyphsets) {
       ## load everything from the database
-      my $name         = $glyphset->{'my_config'}->key;
+      my $name         = $glyphset->{'my_config'}->id;
       my $ref_glyphset = ref $glyphset;
       
       eval {
@@ -349,7 +349,7 @@ sub storage {
 
 =head1 RELATED MODULES
 
-See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph WebUserConfig
+See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph
 
 =head1 AUTHOR - Roger Pettett
 

@@ -188,7 +188,7 @@ sub new {
       my $feature_type_2 = $glyphset->my_config('feature_type_2') || ( $glyphset->my_config('keys') ? $glyphset->my_config('keys')->[1] : undef );
       my $label_1 = $glyphset->my_config('label')   || ( $feature_type_1 ? $glyphset->my_colour( $feature_type_1, 'text' ) : undef );
       my $label_2 = $glyphset->my_config('label_2') || ( $feature_type_2 ? $glyphset->my_colour( $feature_type_2, 'text' ) : undef );
-      if( $glyphset->{'my_config'}->key eq 'Videogram' && $flag ) {
+      if( $glyphset->{'my_config'}->id eq 'Videogram' && $flag ) {
         $label_1 = $glyphset->{'chr'};
       }
       my $gw  = length( length($label_2) > length($label_1) ? $label_2 : $label_1 );
@@ -284,7 +284,7 @@ sub dynamic_use {
 
 =head1 RELATED MODULES
 
-See also: Bio::EnsEMBL::GlyphSet Bio::EnsEMBL::Glyph WebUserConfig
+See also: Bio::EnsEMBL::GlyphSet Bio::EnsEMBL::Glyph
 
 =head1 AUTHOR - Roger Pettett
 

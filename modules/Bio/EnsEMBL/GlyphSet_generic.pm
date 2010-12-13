@@ -436,8 +436,8 @@ sub _render {
   $self->{'y_offset'} = 0;
 
   # Grab and cache features as we need to find out which strands to draw them on
-  my $features = $self->cache('generic:'.$self->{'my_config'}->key);
-  $features = $self->cache('generic:'.$self->{'my_config'}->key, $self->features) unless $features;
+  my $features = $self->cache('generic:'.$self->{'my_config'}->id);
+  $features = $self->cache('generic:'.$self->{'my_config'}->id, $self->features) unless $features;
   
   $self->timer_push('Fetched DAS features', undef, 'fetch');
   
