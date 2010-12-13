@@ -121,6 +121,12 @@ sub fetch_input {
       }
   }
 
+  #flag as to whether to write out conservation scores to the conservation_score
+  #table. Default is to write them out.
+  unless (defined $self->no_conservation_scores) {
+      $self->no_conservation_scores(0);
+  }
+
   my $gaba = $self->{'comparaDBA'}->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->genomic_align_block_id);
 
@@ -129,6 +135,9 @@ sub fetch_input {
   #only run gerp if there are more than 2 genomic aligns. Gerp requires more
   #than 2 sequences to be represented at a position
   if (scalar(@$gas) > 2) {
+
+      #if skipping species, need to make sure I enough final species 
+      my $num_spp = 0; 
 
       #decide whether to use GenomicAlignTree object or species tree.
       my $mlss = $gab->method_link_species_set;
@@ -142,11 +151,27 @@ sub fetch_input {
 
 	  foreach my $leaf (@{$gat->get_all_leaves}) {
 	      my $genomic_align = (sort {$a->dbID <=> $b->dbID} @{$leaf->genomic_align_group->get_all_GenomicAligns})[0];
+
+	      #skip species in species_to_skip array
+	      if (defined $self->species_to_skip && @{$self->species_to_skip}) {
+		  if (grep {$_ eq $genomic_align->genome_db->dbID} @{$self->species_to_skip}) {
+		      $leaf->disavow_parent;
+		      $gat = $gat->minimize_tree;
+		      next;
+		  }
+	      }
+	      $num_spp++;
 	      my $name = "_" . $genomic_align->genome_db->dbID . "_" .
 		$genomic_align->dnafrag_id . "_" . $genomic_align->dnafrag_start . "_" . $genomic_align->dnafrag_end . "_";
 	      $leaf->name($name);
 	  }
 
+	  #check still have enough species
+	  #print "NUM SPP $num_spp\n";
+	  if ($num_spp < 3) {
+	      $self->{'run_gerp'} = 0;
+	      return 1;
+	  }
 	  $tree_string = $gat->newick_simple_format();
 
 	  $self->{'modified_tree_file'} = $self->worker_temp_directory . $TREE_FILE;
@@ -255,6 +280,12 @@ sub write_output {
 
     print STDERR "Write Output\n";
 
+    #
+    #Start transaction
+    #
+    my $dbh = $self->{'comparaDBA'}->dbc->db_handle;
+    my $rc = $dbh->begin_work or die $dbh->errstr;
+
     #parse results and store constraints and conserved elements in database
     if ($self->program_version == 1) {
 	$self->_parse_results;
@@ -263,7 +294,12 @@ sub write_output {
     } else {
 	throw("Invalid version number. Valid values are 1 or 2.1\n");
     }
-    
+
+    #
+    #Commit transaction
+    #
+    $dbh->commit;
+
     return 1;
 }
 
@@ -284,6 +320,20 @@ sub species_set {
   my $self = shift;
   $self->{'_species_set'} = shift if(@_);
   return $self->{'_species_set'};
+}
+
+#read species_to_skip from analysis_job table
+sub species_to_skip {
+  my $self = shift;
+  $self->{'_species_to_skip'} = shift if(@_);
+  return $self->{'_species_to_skip'};
+}
+
+#read no_conservation_scores from analysis_job table
+sub no_conservation_scores {
+  my $self = shift;
+  $self->{'_no_conservation_scores'} = shift if(@_);
+  return $self->{'_no_conservation_scores'};
 }
 
 #read method_link_type from analysis table
@@ -401,6 +451,13 @@ sub get_params {
     if(defined($params->{'species_set'})) {
         $self->species_set($params->{'species_set'});
     }
+    if(defined($params->{'species_to_skip'})) {
+        $self->species_to_skip($params->{'species_to_skip'});
+    }
+    if (defined($params->{'no_conservation_scores'})) {
+        $self->no_conservation_scores($params->{'no_conservation_scores'});
+    }
+
     return 1;
 }
 
@@ -594,14 +651,15 @@ sub _parse_results_v2 {
   my ($self,) = @_;
 
   #generate rates and constraints file names
-  $self->_parse_rates_file($self->{'mfa_file'}.$RATES_FILE_SUFFIX, 2);
-
+  if (!$self->no_conservation_scores) {
+      $self->_parse_rates_file($self->{'mfa_file'}.$RATES_FILE_SUFFIX, 2);
+  }
   $self->_parse_cons_file($self->{'mfa_file'}.$RATES_FILE_SUFFIX.$CONS_FILE_SUFFIX, 2);
 }
 
 
 #This method parses the gerp constraints file and stores the values as 
-#genomic_align_blocks
+#constrained_elements
 #cons_file : full filename of constraints file
 #example : $self->_parse_cons_file(/tmp/worker.2580193/gerp_alignment.mfa.rates_RS8.5_md6_cons.txt);
 sub _parse_cons_file {
@@ -915,9 +973,9 @@ sub _build_tree_string {
     foreach my $leaf (@{$tree->get_all_leaves}) {
 	#check have names rather than genome_db_ids
 	if ($leaf->name =~ /\D+/) {
-	    $leaf->name($leaf_name{$leaf->name});
+	    $leaf->name($leaf_name{lc($leaf->name)});
 	} 
-	$leaf_check{$leaf->name}++;
+	$leaf_check{lc($leaf->name)}++;
     }
 
     #Check have one instance in the tree of each genome_db in the database
