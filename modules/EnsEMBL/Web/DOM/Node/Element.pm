@@ -40,11 +40,6 @@ sub render {
   return qq(<$tag$attributes>$children</$tag>);
 }
 
-sub configure {
-  ## Override this methods in child classes to make it easier to configure the element - setting properties, flags, inner_HTML, manipulating tree etc.
-  ## This method is called by DOM->create_element before returning the newly created element
-}
-
 sub attributes {
   ## Getter for attributes
   ## @return HashRef of all attributes - {'name1' => 'value1', 'name1' => 'value1'}
