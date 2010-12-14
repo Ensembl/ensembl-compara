@@ -129,14 +129,14 @@ fresh new database with the tables already created. The script will
 copy relevant data from the master and the old database into the new
 one. 
 
-mysql --defaults-group-suffix=_compara1 -e "CREATE DATABASE lg4_ensembl_compara_58"
-mysql --defaults-group-suffix=_compara1 lg4_ensembl_compara_58 < ~lg4/work/ensembl-compara/sql/table.sql
+mysql --defaults-group-suffix=_compara1 -e "CREATE DATABASE sf5_ensembl_compara_61"
+mysql --defaults-group-suffix=_compara1 sf5_ensembl_compara_61 < ~lg4/work/ensembl-compara/sql/table.sql
 
 # NB: before you start copying, review the list of mlss_ids that are NOT going to be copied
 # and synchronize it with the 'skip_mlss' meta entries in the master database.
 
 time ~/work/ensembl-compara/scripts/pipeline/populate_new_database.pl \
-    --reg-conf reg_conf.pl --master compara_master --old compara_57 --new compara_58
+    --reg-conf reg_conf.pl --master compara_master --old compara_60 --new compara_61
 
 # took 3 hours for rel. 60 (copied from rel.59)
 # took 2:09 hours for rel.59 (copied from rel.58)
@@ -212,7 +212,7 @@ bsub -Is ant
 
 Now you can run the compara-compara_external_foreign_keys healthchecks:
 
-time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58_.+ compara_external_foreign_keys
+time ./run-healthcheck.sh -d sf5_ensembl_compara_61 -type compara -d2 .+_core_61_.+ compara_external_foreign_keys
 
 ...and correct mismatches if any!
 
@@ -304,11 +304,11 @@ time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58
 This is now done using the script copy_ancestral_core.pl. You will need to add any ancestral sequences from the previous release if these have not changed, in addition to adding any new ones. 
 
     1) Create a new core database:
-        mysql --defaults-group-suffix=_compara4 -e 'CREATE DATABASE lg4_ensembl_ancestral_58'
-        mysql --defaults-group-suffix=_compara4 lg4_ensembl_ancestral_58 <~lg4/work/ensembl/sql/table.sql
+        mysql --defaults-group-suffix=_compara4 -e 'CREATE DATABASE sf5_ensembl_ancestral_61'
+        mysql --defaults-group-suffix=_compara4 sf5_ensembl_ancestral_61 <~lg4/work/ensembl/sql/table.sql
 
     2) Copy over the ancestralsegment coord_system:
-        INSERT INTO lg4_ensembl_ancestral_58.coord_system SELECT * FROM lg4_ensembl_ancestral_57.coord_system;
+        INSERT INTO sf5_ensembl_ancestral_61.coord_system SELECT * FROM lg4_ensembl_ancestral_60.coord_system;
 
     3) Add data using copy_ancestral_core.pl script
 
@@ -329,21 +329,21 @@ Merge several ancestral core databases together, starting with the ancestors tha
 Merging each source into target is done in two steps (3) and (4) (assuming the target and the sources are living on the same MySQL instance) :
 
     1) Create a new core database:
-        mysql --defaults-group-suffix=_compara4 -e 'CREATE DATABASE lg4_ensembl_ancestral_58'
-        mysql --defaults-group-suffix=_compara4 lg4_ensembl_ancestral_58 <~lg4/work/ensembl/sql/table.sql
+        mysql --defaults-group-suffix=_compara4 -e 'CREATE DATABASE sf5_ensembl_ancestral_61'
+        mysql --defaults-group-suffix=_compara4 sf5_ensembl_ancestral_61 <~lg4/work/ensembl/sql/table.sql
 
     2) Copy over the ancestralsegment coord_system:
-        INSERT INTO lg4_ensembl_ancestral_58.coord_system SELECT * FROM lg4_ensembl_ancestral_57.coord_system;
+        INSERT INTO sf5_ensembl_ancestral_61.coord_system SELECT * FROM lg4_ensembl_ancestral_60.coord_system;
 
     3) Insert names and generate new seq_region_ids on the way (in this case we inherit a set from the previous release, but the syntax is the same for other sources):
-        INSERT INTO lg4_ensembl_ancestral_58.seq_region (name, length, coord_system_id)
-            SELECT ss.name, ss.length, ss.coord_system_id FROM lg4_ensembl_ancestral_57.seq_region ss WHERE ss.name like 'Ancestor_450_%';
+        INSERT INTO sf5_ensembl_ancestral_61.seq_region (name, length, coord_system_id)
+            SELECT ss.name, ss.length, ss.coord_system_id FROM lg4_ensembl_ancestral_60.seq_region ss WHERE ss.name like 'Ancestor_450_%';
 
     4) Use the seq_region_ids generated on previous step and insert them with the dna sequences:
-            INSERT INTO lg4_ensembl_ancestral_58.dna (seq_region_id, sequence)
-                SELECT ts.seq_region_id, sd.sequence FROM lg4_ensembl_ancestral_57.dna sd
-                                                    JOIN lg4_ensembl_ancestral_57.seq_region ss ON sd.seq_region_id=ss.seq_region_id
-                                                    JOIN lg4_ensembl_ancestral_58.seq_region ts ON ss.name=ts.name;c
+            INSERT INTO sf5_ensembl_ancestral_61.dna (seq_region_id, sequence)
+                SELECT ts.seq_region_id, sd.sequence FROM lg4_ensembl_ancestral_60.dna sd
+                                                    JOIN lg4_ensembl_ancestral_60.seq_region ss ON sd.seq_region_id=ss.seq_region_id
+                                                    JOIN sf5_ensembl_ancestral_61.seq_region ts ON ss.name=ts.name;c
 # 2min, 26min, 25min in rel.58
 
     5) Repeat steps (3) & (4) for all other sources
@@ -463,24 +463,29 @@ Remember to DROP TABLE member_orig if made a backup.
 
 13.1 Run the healthchecks for ancestral database:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_ancestral_58 compara-ancestral
+    time ./run-healthcheck.sh -d sf5_ensembl_ancestral_61 compara-ancestral
+# rel.61: 22s, all successful
 
 13.2 Update the max_alignment_length. You can use the corresponding healthcheck with the -repair option:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -repair Meta
+    time ./run-healthcheck.sh -d sf5_ensembl_compara_61 -type compara -repair Meta
+# rel.61: 6m30, "no repair needed" (probably after Stephen has already done it)
 
 13.3 Now run the remaining healthchecks:
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara -d2 .+_core_58_.+ compara_external_foreign_keys
+    time ./run-healthcheck.sh -d sf5_ensembl_compara_61 -type compara -d2 .+_core_61_.+ compara_external_foreign_keys
+# rel.61:   32m, 1 failure
 # rel.58:   22m
 # in rel.57 it took ?? minutes ('genbank common name' for 4 species had to be copied from their 'ensembl common name' in ncbi_taxa_name table)
 # in rel.pre57 it took 20 minutes (all passed).
 # in rel.56 everything passed apart from CheckTaxon - according to Javier in this particular case it was not a problem
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara compara_genomic
+    time ./run-healthcheck.sh -d sf5_ensembl_compara_61 -type compara compara_genomic
+# rel.61:   51m, 3 failures
 # rel.58:   47m, 7 failures
 
-    time ./run-healthcheck.sh -d lg4_ensembl_compara_58 -type compara compara_homology
+    time ./run-healthcheck.sh -d sf5_ensembl_compara_61 -type compara compara_homology
+# rel.61:   30m, 3 failures
 # rel.58:   14m, 5 failures
 
 ...and correct mismatches if any!
@@ -499,21 +504,21 @@ and check their data.
 # So if you (suspect that you) have changed anything in the database, do run these two commands just in case -
 # a dry run of each doesn't even take a minute.
 
-time mysqlcheck --analyze --verbose --host=compara4 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_58
+time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_compara_61
 # rel.58    3min
 # rel.57    9+4+5min
 # rel.pre57 30+105min
 # rel.56    12min
 
-time mysqlcheck --optimize --verbose --host=compara4 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_compara_58
+time mysqlcheck --optimize --verbose --host=compara4 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_compara_61
 # rel.57    2+1.6 hours
 # rel.pre57 : took several iterations (not all tables were MyISAM initially), last one 132min.
 # rel.56    2.5 hours
 
-time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_ancestral_58
+time mysqlcheck --analyze --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_ancestral_61
 # rel.57    took seconds to complete
 
-time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases lg4_ensembl_ancestral_58
+time mysqlcheck --optimize --verbose --host=compara1 --port=3306 --user=ensadmin --password=ensembl --databases sf5_ensembl_ancestral_61
 # rel.57    took seconds to complete
 
 
@@ -530,18 +535,18 @@ bash
 
 16.2. Create a file that will contain one line with the source/destination parameters, like this:
 
-cat <<EOF >/tmp/lg4_ensembl_compara_58.copy_options
+cat <<EOF >/tmp/sf5_ensembl_compara_61.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara1        3306        lg4_ensembl_compara_58      ens-staging     3306        ensembl_compara_58
-compara1        3306        lg4_ensembl_ancestral_58    ens-staging     3306        ensembl_ancestral_58
+compara1        3306        sf5_ensembl_compara_61      ens-staging     3306        ensembl_compara_61
+compara1        3306        sf5_ensembl_ancestral_61    ens-staging     3306        ensembl_ancestral_61
 EOF
 
 
 16.3. Run the script to actually copy the data:
 
 time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
-        -noflush /tmp/lg4_ensembl_compara_58.copy_options > /tmp/lg4_ensembl_compara_58.copy.err 2>&1
+        -noflush /tmp/sf5_ensembl_compara_61.copy_options > /tmp/sf5_ensembl_compara_61.copy.err 2>&1
 
 # copying of rel_56 took 2 hours (SUCCESSFUL for both databases - you should check the output file)
 # copying of ensembl_compara_pre57 took 2 hours (SUCCESSFUL)
@@ -557,14 +562,14 @@ bash
 
 # NB: the ancestral database doesn't need to be copied to the second staging server
 
-cat <<EOF >/tmp/lg4_ensembl_compara_58.copy_options
+cat <<EOF >/tmp/sf5_ensembl_compara_61.copy_options
 #from_host      from_port   from_dbname                 to_host         to_port     to_dbname
 #
-compara1        3306        lg4_ensembl_compara_58      ens-staging2     3306        ensembl_compara_58
+compara1        3306        sf5_ensembl_compara_61      ens-staging2     3306        ensembl_compara_61
 EOF
 
 time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
-        -noflush /tmp/lg4_ensembl_compara_58.copy_options > /tmp/lg4_ensembl_compara_58.copy.err 2>&1
+        -noflush /tmp/sf5_ensembl_compara_61.copy_options > /tmp/sf5_ensembl_compara_61.copy.err 2>&1
 # copying of ensembl_compara_58 took 1:15h (SUCCESSFUL)
 
 
@@ -579,18 +584,18 @@ time perl ~lg4/work/ensembl/misc-scripts/CopyDBoverServer.pl -pass ensembl \
 
 # The patch should include at least an update of the schema_version in the meta table!
 #
-mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_57 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
-mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_58 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_ensembl_compara_60 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >old_schema.sql
+mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table sf5_ensembl_compara_61 | sed 's/AUTO_INCREMENT=[0-9]*\b//' >new_schema.sql
 #
 sdiff -b old_schema.sql new_schema.sql | less
 #
-# (create the patch_57_58.sql file by hand)
+# (create the patch_60_61.sql file by hand)
 
 17.2 Generate an empty database from the old schema, apply the patch, dump it, and check that you get the new schema.
 
 mysql --defaults-group-suffix=_compara4 -e 'create database lg4_schema_patch_test'
 mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < old_schema.sql
-mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < patch_57_58.sql
+mysql --defaults-group-suffix=_compara4 lg4_schema_patch_test < patch_60_61.sql
 mysqldump --defaults-group-suffix=_compara4 --no-data --skip-add-drop-table lg4_schema_patch_test | sed 's/AUTO_INCREMENT=[0-9]*\b//' >patched_old_schema.sql
 #
 sdiff -bs patched_old_schema.sql new_schema.sql | less
@@ -602,8 +607,8 @@ sdiff -bs patched_old_schema.sql new_schema.sql | less
 
 cd PATH_TO/ensembl-compara/sql/
 
-mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM genome_db order by genome_db_id asc" lg4_ensembl_compara_58 > genome_db.txt
-mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM method_link order by method_link_id asc" lg4_ensembl_compara_58 > method_link.txt
+mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM genome_db order by genome_db_id asc" sf5_ensembl_compara_61 > genome_db.txt
+mysql --defaults-group-suffix=_compara1 -N -e "SELECT * FROM method_link order by method_link_id asc" sf5_ensembl_compara_61 > method_link.txt
 
 # You will have to change the default schema_version in the table.sql file (last line of the file)
 
