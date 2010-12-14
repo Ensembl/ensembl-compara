@@ -9,6 +9,7 @@ use constant {
   CSS_CLASS_HEADING           => 'fm-heading',
   CSS_CLASS_ODD_ROW           => 'bg1',
   CSS_CLASS_EVEN_ROW          => 'bg2',
+  CSS_CLASS_CELLS             => 'ff-mcell',
   CSS_CLASS_SELECTALL_ROW     => 'select_all_row',    #JS purposes
   CSS_CLASS_SELECTALL_COLUMN  => 'select_all_column', #JS purposes
   SUB_HEADING_TAG             => 'p',
@@ -18,10 +19,12 @@ use constant {
 sub new {
   ## @overrides
   my $self = shift->SUPER::new(@_);
-  $self->{'__columns'}    = [];
-  $self->{'__rows_name'}  = {};
-  $self->{'__prefix'}     = '';
-  $self->{'__row_keys'}   = [];
+  $self->{'__columns'}          = [];
+  $self->{'__rows_name'}        = {};
+  $self->{'__name_prefix'}      = '';
+  $self->{'__selectall_label'}  = '';
+  $self->{'__selectall'}        = 1;
+  $self->{'__row_keys'}         = [];
   $self->set_attributes({
     'cellspacing' => '0',
     'cellpadding' => '0',
@@ -53,23 +56,30 @@ sub render {
     $_->set_attribute('class', $i % 2 == 0 ? $self->CSS_CLASS_EVEN_ROW : $self->CSS_CLASS_ODD_ROW) unless $i == 0;
     $i++;
   }
+  
+  #set columns' width
+  $_->set_attribute('style', 'width:'.($_->get_attribute('colspan') || 1) * 100/(2 + scalar @{$self->{'__columns'}}).'%') for @{$self->get_elements_by_tag_name(['th', 'td'])};
+
   return $self->SUPER::render;
 }
 
-sub set_input_prefix {
-  ## Sets a prefix for all the checkboxes that are appended inside this Matrix box
-  ## @params prefix string
-  my ($self, $prefix) = @_;
-  $self->{'__prefix'} = $prefix || '';
+sub configure {
+  ## Configures the matrix with some extra info
+  ## @params HashRef with following keys
+  ##  - name_prefix     prefix that goes to all checkboxes' name attribute
+  ##  - selectall       flag if off, does not add selectall checkboxes
+  ##  - selectall_label Label for the cell that is an intersection of row and column containint selectall checkboxes
+  my ($self, $params) = @_;
+  my @keys = qw(name_prefix selectall selectall_label);
+  exists $params->{$_} and $self->{'__'.$_} = $params->{$_} for @keys;
 }
 
 sub add_columns {
   ## Adds columns to the matrix
   ## Works only before adding rows
   ## @params ArrayRef of HashRef with keys
-  ##    - caption     Column heading
-  ##    - name        prefix for name attrib of all the checkbox in this column
-  ##    - selectall   flag telling whether or not to display selectall checkbox on the top - ON by default
+  ##    - caption         Column heading
+  ##    - name            prefix for name attrib of all the checkbox in this column
   my ($self, $columns) = @_;
   if ($self->has_child_nodes) {
     warn 'Columns can be added only before adding any row or subheading.';
@@ -94,7 +104,6 @@ sub add_columns {
     push @{$self->{'__columns'}}, {
       'name'      => $_->{'name'},
       'caption'   => $_->{'caption'} || '',
-      'selectall' => exists $_->{'selectall'} && $_->{'selectall'} == 0 ? 0 : 1, #1 by default
     };
   }
 }
@@ -122,11 +131,9 @@ sub add_subheading {
 
   my $tbody = $self->get_elements_by_tag_name('tbody')->[0];
   my $tr    = $self->dom->create_element('tr');
-  my $td    = $self->dom->create_element('td');
-  my $h     = $self->dom->create_element($self->SUB_HEADING_TAG);
+  my $td    = $self->dom->create_element('td', {'colspan' => scalar @{$self->{'__columns'}} + 2});
+  my $h     = $self->dom->create_element($self->SUB_HEADING_TAG, {'class' => $self->CSS_CLASS_SUB_HEADING});
   $h->inner_text($heading) if defined $heading;
-  $h->set_attribute('class', $self->CSS_CLASS_SUB_HEADING);
-  $td->set_attribute('colspan', scalar @{$self->{'__columns'}} + 2);
   $td->append_child($h);
   $tr->append_child($td);
   return $tbody->append_child($tr);
@@ -141,12 +148,10 @@ sub add_row {
   ##    - if checkbox needs to be disabled, but checked for a column, column_name => 'c'
   ##    - if neither checked nor enabled, column_name => ''
   ## @params Caption string
-  ## @params Flag to state whether or not display selectall checkbox
   ## @return DOM::Node::Element::Tr object
-  my ($self, $name, $row, $caption, $selectall) = @_;
+  my ($self, $name, $row, $caption) = @_;
   
   $caption = ucfirst $name unless defined $caption;
-  $selectall = defined $selectall && $selectall == 0 ? 0 : 1;
   
   #VALIDATION 1 - add columns HTML if not already there - or refuse to add rows if no columns were added
   unless ($self->has_child_nodes || $self->_add_columns) {
@@ -170,21 +175,22 @@ sub add_row {
   
   #now add row <tr> to <tbody>
   my $tr = $self->dom->create_element('tr');
-  my $td = $self->dom->create_element('td');
-  $td->inner_HTML("<b>$caption</b>");
+  my $td = $self->dom->create_element('td', {'inner_HTML' => "<b>$caption</b>"});
   $tr->append_child($td);
 
   #selectall checkbox
-  if ($selectall) {
+  if ($self->{'__selectall'}) {
     my $td = $self->dom->create_element('td');
-    my $selectall = $self->dom->create_element('inputcheckbox');
-    my $label     = $self->dom->create_element('label');
-    $selectall->set_attribute('class',  $self->CSS_CLASS_SELECTALL_ROW);
-    $selectall->set_attribute('id',     $self->{'__prefix'}.$name.'_r');
-    $selectall->set_attribute('name',   $self->{'__prefix'}.$name);
-    $selectall->set_attribute('value',  'select_all');
-    $label->inner_HTML('Select all');
-    $label->set_attribute('for', $selectall->id);
+    my $selectall = $self->dom->create_element('inputcheckbox', {
+      'class' =>  $self->CSS_CLASS_SELECTALL_ROW,
+      'id'    =>  $self->{'__name_prefix'}.$name.'_r',
+      'name'  =>  $self->{'__name_prefix'}.$name,
+      'value' =>  'select_all',
+    });
+    my $label = $self->dom->create_element('label', {
+      'inner_HTML'  => 'Select all',
+      'for'         => $selectall->id,
+    });
     $td->append_child($selectall);
     $td->append_child($label);
     $tr->append_child($td);
@@ -196,14 +202,10 @@ sub add_row {
   #other row checkboxes
   foreach my $column (@{$self->{'__columns'}}) {
     $row->{$column->{'name'}} ||= '';
-    my $td = $self->dom->create_element('td');
-    my $checkbox = $self->dom->create_element('inputcheckbox');
-    $checkbox->set_attribute('name', $self->{'__prefix'}.$column->{'name'}.':'.$name);
-    $checkbox->set_attribute('value', 'on');
+    my $td = $self->dom->create_element('td', {'class' => $self->CSS_CLASS_CELLS});
+    my $checkbox = $self->dom->create_element('inputcheckbox', {'name' => $self->{'__name_prefix'}.$column->{'name'}.':'.$name, 'value' => 'on'});
     if ($row->{$column->{'name'}} =~ /e/) {
-      $checkbox->set_attribute('class', $self->{'__prefix'}.$column->{'name'}); #For JS
-      $checkbox->set_attribute('class', $self->{'__prefix'}.$name);             #For JS
-      $checkbox->set_attribute('class', $self->_row_key);                       #For JS
+      $checkbox->set_attribute('class' => $self->{'__name_prefix'}.$column->{'name'}.' '.$self->{'__name_prefix'}.$name.' '.$self->_row_key);
     }
     else {
       $checkbox->disabled(1);
@@ -227,22 +229,23 @@ sub _add_columns {
   my $tr2   = $self->dom->create_element('tr');
   
   #add two empty columns for row caption and selectall button of every row
-  $tr1->append_child($self->dom->create_element('th', {'colspan', '2'}));
-  $tr2->append_child($self->dom->create_element('td', {'colspan', '2'}));
+  $tr1->append_child($self->dom->create_element('th', {'colspan' => 2}));
+  $tr2->append_child($self->dom->create_element('td'));
+  $tr2->append_child($self->dom->create_element('td', {'inner_HTML' => $self->{'__selectall_label'}}));
   
   #add columns
   foreach my $column (@{$self->{'__columns'}}) {
 
     #column heading
-    $tr1->append_child($self->dom->create_element('th', {'inner_HTML', $column->{'caption'}}));
+    $tr1->append_child($self->dom->create_element('th', {'inner_HTML', $column->{'caption'}, 'class' => $self->CSS_CLASS_CELLS}));
 
     #selectall checkbox
-    my $td = $self->dom->create_element('td');
-    if ($column->{'selectall'}) {
+    my $td = $self->dom->create_element('td', {'class' => $self->CSS_CLASS_CELLS});
+    if ($self->{'__selectall'}) {
       my $selectall = $self->dom->create_element('inputcheckbox', {
         'class' => $self->CSS_CLASS_SELECTALL_COLUMN,
-        'id'    => $self->{'__prefix'}.$column->{'name'}.'_c',
-        'name'  => $self->{'__prefix'}.$column->{'name'},
+        'id'    => $self->{'__name_prefix'}.$column->{'name'}.'_c',
+        'name'  => $self->{'__name_prefix'}.$column->{'name'},
         'value' => 'select_all'
       });
       my $label = $self->dom->create_element('label', {'for', $selectall->id});
