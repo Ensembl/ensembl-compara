@@ -4,6 +4,8 @@ use warnings;
 use URI::Escape;
 use GraphViz;
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
+use EnsEMBL::Web::TmpFile::Image;
+
 no warnings "uninitialized";
 
 =head1 NAME
@@ -492,15 +494,24 @@ sub render{
   mkdir($self->img_base_dir);
   foreach(keys %{$self->{_clusters}}){
     my $cluster=$self->{_clusters}->{$_};
-    my $file =  _get_image_file_name();
-	  open (MYFILE, '>>'.$self->img_base_dir.$file);
-	  print MYFILE $cluster->as_png;
-	  close (MYFILE);
+    
+    my $image = new EnsEMBL::Web::TmpFile::Image( $self->{'species_defs'} );
+  
+  
+    
+    #my $file =  _get_image_file_name();
+	  #open (MYFILE, '>>'.$self->img_base_dir.$file);
+	  #print MYFILE $cluster->as_png;
+	  #close (MYFILE);
+    $image->content($cluster->as_png);
+    $image->save;    
+  
     my $image_map = $cluster->as_cmapx;
     $image_map =~ s/title="([^"]*)" alt=""/ title="$self->{_node_descriptions}->{$1}" alt="$self->{_node_descriptions}->{$1}"/g;
 	  $image_map =~ s/id="test" name="test"/id="$_" name="$_"/g;
 	  $return_html.=$image_map;
-    $images_html.=qq(<img style="float:none;" usemap="#).$_.qq(" src=").$self->img_base_url.$file.qq(" border="0">);
+    #$images_html.=qq(<img style="float:none;" usemap="#).$_.qq(" src=").$self->img_base_url.$file.qq(" border="0">);
+    $images_html.=qq(<img style="float:none;" usemap="#).$_.qq(" src=").$image->URL.qq(" border="0">);
   }
   return $return_html.$images_html;
 }
