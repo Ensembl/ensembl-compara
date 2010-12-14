@@ -92,11 +92,21 @@ table.matrix thead tr {
 table.matrix thead tr td {
   border: #fff solid 1px;
 }
-table.matrix bg1 {
+table.matrix .bg1 {
   background-color: [[PANEL_BG]];
 }
-table.matrix bg2 {
+table.matrix .bg2 {
   background-color: [[NEUTRAL_BG]];
+}
+table.matrix .ff-mcell {
+  text-align: center;
+}
+table.matrix td.ff-mcell {
+  border-left: [[PANEL_BG]] solid 1px;
+}
+table.matrix label {
+  white-space: nowrap;
+  cursor: pointer;
 }
 p.matrixhead {
   font-weight:bold;
