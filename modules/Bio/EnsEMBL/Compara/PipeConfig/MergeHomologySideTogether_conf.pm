@@ -43,10 +43,10 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'compara_homology_merged_60',    # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_homology_merged_61',    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara2',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
@@ -67,7 +67,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_59',
+            -dbname => 'ensembl_compara_60',
         },
         'prevrel_merge_tables' => [ 'stable_id_history' ],
         
@@ -76,27 +76,27 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_homology_60',
+            -dbname => 'lg4_compara_homology_61',
         },
         'genetrees_copy_tables'  => [ 'lr_index_offset', 'sequence_cds', 'sequence_exon_bounded', 'subset', 'subset_member' ],
         'genetrees_merge_tables' => [ 'stable_id_history', 'homology', 'homology_member' ],
 
         'families_db' => {
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_families_60',
+            -dbname => 'lg4_compara_families_61',
         },
         'families_copy_tables'  => [ 'family', 'family_member' ],
         'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => {
-            -host   => 'compara2',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'lg4_compara_nctrees_60',
+            -dbname => 'jh7_compara_nctrees_61',
         },
         'nctrees_copy_tables'  => [ 'nc_profile', 'nc_tree_member', 'nc_tree_node', 'nc_tree_tag' ],
         'nctrees_merge_tables' => [ 'member', 'sequence', 'homology', 'homology_member' ],
