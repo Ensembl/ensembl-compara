@@ -58,11 +58,6 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
-    return 0;
-}
-
-
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -73,71 +68,39 @@ sub strict_hash_format { # allow this Runnable to parse parameters in its own wa
 
 =cut
 
+
 sub fetch_input {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
-  print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /{/);
-  my $input_hash = eval($self->input_id);
-  
-  #create a Compara::DBAdaptor which shares the same DBI handle
-  #with the Pipeline::DBAdaptor that is based into this runnable
+    my $subset_id   = $self->param('ss') or die "'ss' is an obligatory parameter";
+    my $subset      = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) or die "cannot fetch Subset with id '$subset_id'";
+    $self->param('subset', $subset);
 
-  my $genome_db_id = $input_hash->{'gdb'};
-  my $subset_id    = $input_hash->{'ss'};
-  $self->{'logic_name'} = undef;
+    my $genome_db_id = $self->param('gdb') or die "'gdb' is an obligatory parameter";
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
+    $self->param('genome_db', $genome_db);
 
-  if(defined($genome_db_id)) {
-    print("gdb = $genome_db_id\n");
+    my $logic_name = $self->param('logic_name') || 'blast_'.$genome_db_id.'_'.$genome_db->assembly();
+    $self->param('logic_name', $logic_name);
+}
 
-    #get the Compara::GenomeDB object for the genome_db_id
-    $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 
-    $self->{'logic_name'} = "blast_" . $self->{'genome_db'}->dbID(). "_". $self->{'genome_db'}->assembly();
+sub write_output {
+    my $self = shift @_;
 
-    unless($subset_id) {
-      # get the subset of 'longest transcripts' for this genome_db_id
-      $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
+      # dump longest peptide subset for this genome_db_id to a fasta file
+      # and configure it to be used as a blast database
+    my $blastdb = $self->dumpPeptidesToFasta();
+
+    my $blast_analysis = $self->createBlastAnalysis($blastdb);
+
+    if(my $afterblast_logic_name = $self->param('afterblast_logic_name')) {
+        my $afterblast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($afterblast_logic_name);
+        $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blast_analysis, $afterblast_analysis);
     }
-  }
-  
-  $self->throw("no subset defined, can't figure out which peptides to use\n") 
-    unless(defined($subset_id));
-  
-  $self->{'pepSubset'} = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || $self->throw("Cannot SubsetAdaptor->fetch_by_dbID($subset_id)");  
-  
-  unless($self->{'logic_name'}) {
-    $self->{'logic_name'} = "blast_" . $self->{'pepSubset'}->description;
-    $self->{'logic_name'} =~ s/\s+/_/g;
-  }  
-  
-  return 1;
+
+    $self->dataflow_output_id( { 'gdb' => $self->param('gdb'), 'ss' => $self->param('ss'), 'logic_name' => $self->param('logic_name') }, 1);
 }
-
-
-sub run
-{
-  my $self = shift;
-  return 1;
-}
-
-
-sub write_output
-{
-  my $self = shift;
-
-  # dump longest peptide subset for this genome_db_id to a fasta file
-  # and configure it to be used as a blast database
-  my $blastdb = $self->dumpPeptidesToFasta();
-
-  # update the blast analysis setting the blast database
-  #my $blast_analysis = $self->updateBlastAnalysis($blastdb);
-  my $blast_analysis = $self->createBlastAnalysis($blastdb);
-
-  return 1;
-}
-
 
 
 ##################################
@@ -146,66 +109,28 @@ sub write_output
 #
 ##################################
 
-sub getSubsetIdForGenomeDBId {
-  my $self         = shift;
-  my $genome_db_id = shift;
 
-  my @subsetIds = ();
-  my $subset_id;
-
-  my $sql = "SELECT distinct subset.subset_id " .
-            "FROM member, subset, subset_member " .
-            "WHERE subset.subset_id=subset_member.subset_id ".
-            "AND subset.description like '%longest%' ".
-            "AND member.member_id=subset_member.member_id ".
-            "AND member.genome_db_id=$genome_db_id;";
-  my $sth = $self->compara_dba->prepare( $sql );
-  $sth->execute();
-
-  $sth->bind_columns( undef, \$subset_id );
-  while( $sth->fetch() ) {
-    print("found subset_id = $subset_id for genome_db_id = $genome_db_id\n");
-    push @subsetIds, $subset_id;
-  }
-  $sth->finish();
-
-  if($#subsetIds > 0) {
-    warn ("Compara DB: more than 1 subset of longest peptides defined for genome_db_id = $genome_db_id\n");
-  }
-  if($#subsetIds < 0) {
-    warn ("Compara DB: no subset of longest peptides defined for genome_db_id = $genome_db_id\n");
-  }
-
-  return $subsetIds[0];
-}
-
-# using the genome_db and longest peptides subset, create a fasta
-# file which can be used as a blast database
-sub dumpPeptidesToFasta
-{
+    # using the genome_db and longest peptides subset, create a fasta
+    # file which can be used as a blast database
+sub dumpPeptidesToFasta {
   my $self = shift;
 
-  # fasta_dir in parameter_hash
-  my %parameters = $self->parameter_hash($self->analysis->parameters());
-  printf("fasta_dir = %s\n", $parameters{'fasta_dir'});
-
-  # create logical path name for fastafile
-  my $fastafile = $parameters{'fasta_dir'} . "/";
-  if($self->{'genome_db'}) {
-    $fastafile .= $self->{'genome_db'}->name() . "_" . 
-                  $self->{'genome_db'}->assembly() . ".fasta";
+  my $fastafile = $self->param('fasta_dir') . "/";
+  if($self->param('genome_db')) {
+    $fastafile .= $self->param('genome_db')->name() . "_" . 
+                  $self->param('genome_db')->assembly() . ".fasta";
   } else {
-    $fastafile .= $self->{'logic_name'} . ".fasta";
+    $fastafile .= $self->param('logic_name') . ".fasta";
   }
   $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   print("fastafile = '$fastafile'\n");
 
   # write fasta file
-  $self->compara_dba->get_SubsetAdaptor->dumpFastaForSubset($self->{'pepSubset'}, $fastafile);
+  $self->compara_dba->get_SubsetAdaptor->dumpFastaForSubset($self->param('subset'), $fastafile);
 
   # configure the fasta file for use as a blast database file
-  my $blastdb        = new Bio::EnsEMBL::Analysis::Tools::BlastDB (
+  my $blastdb        = Bio::EnsEMBL::Analysis::Tools::BlastDB->new(
       -sequence_file => $fastafile,
       -mol_type => "PROTEIN");
   $blastdb->create_blastdb;
@@ -218,41 +143,15 @@ sub dumpPeptidesToFasta
 }
 
 
-sub updateBlastAnalysis
-{
-  my $self    = shift;
-  my $blastdb = shift;
-
-  
-  my $logic_name = $self->{'logic_name'};
-  print("UPDATE the blastDB for analysis $logic_name\n");
-  my $blast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
-
-  $self->throw("$logic_name analysis has not been created") unless($blast_analysis);
-
-  $blast_analysis->db($blastdb->dbname);
-  $blast_analysis->db_file($blastdb->dbfile);
-  $blast_analysis->db_version(1);
-  
-  $self->db->get_AnalysisAdaptor()->update($blast_analysis);
-
-  return $blast_analysis;
-}
-
-
-# create an analysis of type MemberPep for this fasta/blastdb
-# that will run module BlastComparaPep
-sub createBlastAnalysis
-{
+    # create an analysis of type MemberPep for this fasta/blastdb
+    # that will run module BlastComparaPep
+sub createBlastAnalysis {
   my $self    = shift;
   my $blastdb = shift;
 
   my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
 
-  my %fasta_dump_parameters = $self->parameter_hash($self->analysis->parameters());
-
-  my $params = "{subset_id=>" . $self->{'pepSubset'}->dbID;
-  $params .= ",genome_db_id=>" . $self->{'genome_db'}->dbID if($self->{'genome_db'});
+  my $params = "{subset_id=>" . $self->param('ss') . ",genome_db_id=>" . $self->param('gdb');
 
   if($blast_template->parameters()) {
     my $parmhash = eval($blast_template->parameters);
@@ -287,7 +186,7 @@ sub createBlastAnalysis
       -db              => $dbname,
       -db_file         => $blastdb->sequence_file,
       -db_version      => '1',
-      -logic_name      => $self->{'logic_name'},
+      -logic_name      => $self->param('logic_name'),
       -program         => $blast_template->program(),
       -program_file    => $blast_template->program_file(),
       -program_version => $blast_template->program_version(),
@@ -303,13 +202,11 @@ sub createBlastAnalysis
   }
 
   $self->db->get_AnalysisAdaptor()->store($analysis);
-  $self->db->get_AnalysisAdaptor()->update($analysis);
+  # $self->db->get_AnalysisAdaptor()->update($analysis);
 
   my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
-  $stats->batch_size(40);
-  my $hive_capacity = $fasta_dump_parameters{'blast_hive_capacity'};
-  $hive_capacity = 450 unless defined $hive_capacity; #Set it to the default 450 unless something was given
-  $stats->hive_capacity($hive_capacity);
+  $stats->batch_size(    $self->param('blast_hive_batch_size') ||  40 );
+  $stats->hive_capacity( $self->param('blast_hive_capacity')   || 450 );
   
   #If we support resources copy the ID from the blast_template
   if($self->_hive_supports_resources()) {
@@ -322,32 +219,6 @@ sub createBlastAnalysis
   return $analysis;
 }
 
-
-sub parameter_hash{
-  my $self = shift;
-  my $parameter_string = shift;
-
-  my %parameters;
-
-  if ($parameter_string) {
-
-    my @pairs = split (/,/, $parameter_string);
-    foreach my $pair (@pairs) {
-      my ($key, $value) = split (/=>/, $pair);
-      if ($key && $value) {
-        $key   =~ s/^\s+//g;
-        $key   =~ s/\s+$//g;
-        $value =~ s/^\s+//g;
-        $value =~ s/\s+$//g;
-
-        $parameters{$key} = $value;
-      } else {
-        $parameters{$key} = "__NONE__";
-      }
-    }
-  }
-  return %parameters;
-}
 
 #If we can get the resource adaptor then we assume that we have 
 #AnalysisStats::rc_id available.

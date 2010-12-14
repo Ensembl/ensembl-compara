@@ -8,6 +8,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 my $conf_file;
 my %analysis_template;
@@ -203,6 +204,22 @@ sub build_GeneTreeSystem
   $stats->hive_capacity(-1); #unlimited
   $stats->update();
 
+  #
+  # BlastTableReuse
+  print STDERR "BlastTableReuse...\n";
+  #
+  my $blast_table_reuse_analysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'BlastTableReuse',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BlastTableReuse',
+      -parameters      => $blast_template_analysis->parameters
+    );
+  $analysisDBA->store($blast_table_reuse_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($blast_table_reuse_analysis->dbID);
+  $stats->batch_size(1);
+  $stats->hive_capacity(4);
+  $stats->update();
+
 
   #
   # GenomeLoadMembers
@@ -246,7 +263,8 @@ sub build_GeneTreeSystem
       -db_version      => '1',
       -logic_name      => 'GenomeSubmitPep',
 #      -input_id_type   => 'genome_db_id',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep'
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep',
+      -parameters      => '{}',
     );
   $analysisDBA->store($genome_submit_pep_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($genome_submit_pep_analysis->dbID);
@@ -255,12 +273,9 @@ sub build_GeneTreeSystem
   $stats->update();
 
 
-  # GenomeDumpFasta does not use the normal eval method of parameter loading so this is why
-  # our hash lookie-like structure is not a real evallable hash
-  my @dump_fasta_params = ("fasta_dir => $analysis_template{fasta_dir}");
+  my $dump_fasta_params = { 'fasta_dir' => $analysis_template{fasta_dir} };
   my $blast_hive_capacity = $hive_params{'blast_hive_capacity'};
-  push(@dump_fasta_params, "blast_hive_capacity => ${blast_hive_capacity}") if defined $blast_hive_capacity;
-  my $dump_fasta_params_str = join(',', @dump_fasta_params);
+  $dump_fasta_params->{'blast_hive_capacity'} = $blast_hive_capacity if defined $blast_hive_capacity;
 
   #
   # GenomeDumpFasta
@@ -271,8 +286,8 @@ sub build_GeneTreeSystem
       -logic_name      => 'GenomeDumpFasta',
 #      -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
-      -parameters      => $dump_fasta_params_str,
-    );
+      -parameters      => stringify($dump_fasta_params),
+  );
   $analysisDBA->store($genome_dump_fasta_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($genome_dump_fasta_analysis->dbID);
   $stats->batch_size(1);
@@ -285,7 +300,7 @@ sub build_GeneTreeSystem
   print STDERR "CreateBlastRules...\n";
   #
   # Only run the next analysis, CreateHclusterPrepareJobs, when all blasts are finished
-  $parameters = "{phylumBlast=>0, selfBlast=>1,cr_analysis_logic_name=>'CreateHclusterPrepareJobs'}";
+  $parameters = "{selfBlast=>1,cr_analysis_logic_name=>'CreateHclusterPrepareJobs'}";
   my $create_blast_rules_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'CreateBlastRules',
@@ -300,22 +315,6 @@ sub build_GeneTreeSystem
   $stats->status('BLOCKED');
   $stats->update();
 
-
-  #
-  # BlastTableReuse
-  print STDERR "BlastTableReuse...\n";
-  #
-  my $blast_table_reuse_analysis = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'BlastTableReuse',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BlastTableReuse',
-      -parameters      => $blast_template_analysis->parameters
-    );
-  $analysisDBA->store($blast_table_reuse_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($blast_table_reuse_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(4);
-  $stats->update();
 
   #
   # Create peptide_align_feature per-species tables
@@ -353,33 +352,17 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # StoreSeqExonBounded
-  print STDERR "StoreSeqExonBounded...\n";
+  # StoreSeq
+  print STDERR "StoreSeq...\n";
   #
-  my $store_seq_exon_bounded_analysis = Bio::EnsEMBL::Analysis->new(
+  my $store_seq_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
-      -logic_name      => 'StoreSeqExonBounded',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::StoreSeqExonBounded',
-      -parameters      => $blast_template_analysis->parameters
+      -logic_name      => 'StoreSeq',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::FlowMemberSeq',
+      -parameters      => '{}',
     );
-  $analysisDBA->store($store_seq_exon_bounded_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($store_seq_exon_bounded_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(200);
-  $stats->update();
-
-  #
-  # StoreSeqCDS
-  print STDERR "StoreSeqCDS...\n";
-  #
-  my $store_seq_cds_analysis = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'StoreSeqCDS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::StoreSeqCDS',
-      -parameters      => $blast_template_analysis->parameters
-    );
-  $analysisDBA->store($store_seq_cds_analysis);
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($store_seq_cds_analysis->dbID);
+  $analysisDBA->store($store_seq_analysis);
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($store_seq_analysis->dbID);
   $stats->batch_size(1);
   $stats->hive_capacity(200);
   $stats->update();
@@ -480,9 +463,9 @@ sub build_GeneTreeSystem
   if (defined $genetree_params{'max_gene_count'}) {
     $parameters .= ",'max_gene_count'=>".$genetree_params{'max_gene_count'};
   }
-  if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
-  }
+  #if (defined $genetree_params{'honeycomb_dir'}) {
+  #  $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+  #}
   if(defined $genetree_params{mafft}) {
   	$parameters .= qq|, 'mafft' => '$genetree_params{mafft}'|;
   }
@@ -529,9 +512,9 @@ sub build_GeneTreeSystem
          ."This parameter can not be set for njtree. EXIT 3\n");
     exit(3);
   }
-  if (defined $genetree_params{'honeycomb_dir'}) {
-    $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
-  }
+  #if (defined $genetree_params{'honeycomb_dir'}) {
+  #  $parameters .= ",'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
+  #}
   if (defined $genetree_params{'gs_mirror'}) {
     $parameters .= ",'gs_mirror'=>'".$genetree_params{'gs_mirror'}."'";
   }
@@ -539,10 +522,7 @@ sub build_GeneTreeSystem
   $parameters .= ", 'use_genomedb_id'=>1" if defined $genetree_params{use_genomedb_id};
 
   $parameters .= "}";
-  my $njtree_phyml_analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
-  if (defined $njtree_phyml_analysis_data_id) {
-    $parameters = "{'njtree_phyml_analysis_data_id'=>'$njtree_phyml_analysis_data_id'}";
-  }
+
   my $tree_best_program = $genetree_params{'treebest'} || '/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest';
   my $njtree_phyml_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'NJTREE_PHYML',
@@ -560,58 +540,41 @@ sub build_GeneTreeSystem
   $stats->update();
 
   #
-  # Change $dnds_params{'method_link_type'} to {'method_link_types'}
-  #
-  if( defined( $dnds_params{'method_link_type'} ) ){
-    warn('[WARN] dNdS => method_link_type is deprecated. '
-         .'Use method_link_types instead');
-    $dnds_params{'method_link_types'}
-      ||= '['. $dnds_params{'method_link_type'} . ']';
-  }
-
-  #
   # OrthoTree
   print STDERR "OrthoTree...\n";
   #
-  my $with_options_orthotree = 0;
-  my $ortho_params = '';
-  if (defined $genetree_params{'honeycomb_dir'}) {
-    $ortho_params = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."'";
-    $with_options_orthotree = 1;
-  }
+  $parameters = '{';
+
+  # There seems to be a bug that actually prevented this parameter from being recognized (which affected the results of many releases in a row),
+  # so I am temporarily removing it from sight in order to check this hypothesis -- lg4 after release 61.
+  #
+  #if (defined $genetree_params{'max_gene_count'}) {
+  #  $parameters .= "max_gene_count=>".$genetree_params{'max_gene_count'} .',';
+  #}
+
+  #if (defined $genetree_params{'honeycomb_dir'}) {
+  #  $parameters .= "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."',";
+  #}
   if (defined $dnds_params{'species_sets'}) {
-    $ortho_params .= ',species_sets=>' . $dnds_params{'species_sets'};
+    $parameters .= 'species_sets=>' . $dnds_params{'species_sets'} .',';
     if( defined $dnds_params{'method_link_types'} ){
-      $ortho_params .= ',method_link_types=>'
-          . $dnds_params{'method_link_types'};
+      $parameters .= 'method_link_types=>' . $dnds_params{'method_link_types'} .',';
     }
-    $with_options_orthotree = 1;
   }
   if(defined $genetree_params{'species_tree_file'}) {
     my $tree_file = $genetree_params{'species_tree_file'};
-    $ortho_params .= ",'species_tree_file'=>'${tree_file}'";
-    $with_options_orthotree = 1;
+    $parameters .= "'species_tree_file'=>'${tree_file}',";
   }
 
-  $ortho_params .= ", 'use_genomedb_id'=>1" if defined $genetree_params{use_genomedb_id};
+  $parameters .= "'use_genomedb_id'=>1," if defined $genetree_params{use_genomedb_id};
 
-  #EDIT Originally created a anon hash which caused problems with OrthoTree when using eval
-  if($with_options_orthotree) {
-    $parameters =~ s/\A{//;
-    $parameters =~ s/}\Z//;
-    $parameters = '{' . $parameters . ',' .  $ortho_params . '}'
-  }
-
-  my $analysis_data_id = $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($parameters);
-  if (defined $analysis_data_id) {
-    $parameters = "{'analysis_data_id'=>'$analysis_data_id'}";
-  }
+  $parameters .= '}';
 
   my $ortho_tree_analysis = Bio::EnsEMBL::Analysis->new(
       -logic_name      => 'OrthoTree',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree',
       -parameters      => $parameters
-      );
+  );
   $analysisDBA->store($ortho_tree_analysis);
   $stats = $ortho_tree_analysis->stats;
   $stats->batch_size(1);
@@ -673,15 +636,13 @@ sub build_GeneTreeSystem
   # BuildHMMcds
   print STDERR "BuildHMMcds...\n";
   #
-  $parameters = '';
-  $parameters = "{cdna=>1, sreformat => '${sreformat_program}'}";
   my $build_HMM_cds_analysis = Bio::EnsEMBL::Analysis->new
     (
      -db_version      => '1',
      -logic_name      => 'BuildHMMcds',
      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMM',
      -program_file    => $buildhmm_program,
-     -parameters      => $parameters,
+     -parameters      => "{cdna=>1, sreformat => '${sreformat_program}'}",
     );
   $analysisDBA->store($build_HMM_cds_analysis);
   $stats = $build_HMM_cds_analysis->stats;
@@ -689,6 +650,23 @@ sub build_GeneTreeSystem
   $stats->hive_capacity($buildhmm_hive_capacity);
   $stats->status('READY');
   $stats->update();
+
+  #
+  # OtherParalogs
+  print STDERR "OtherParalogs...\n";
+  #
+  my $other_paralogs_analysis = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'OtherParalogs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OtherParalogs',
+      -parameters      => '{}',
+  );
+  $analysisDBA->store($other_paralogs_analysis);
+  $stats = $other_paralogs_analysis->stats;
+  $stats->batch_size(1);
+  my $otherparalogs_hive_capacity = 50;
+  $stats->hive_capacity($otherparalogs_hive_capacity);
+  $stats->update();
+
 
   #
   # GeneTreesetQC
@@ -739,12 +717,9 @@ sub build_GeneTreeSystem
   my $homology_dNdS_analysis = Bio::EnsEMBL::Analysis->new(
       -db_version      => '1',
       -logic_name      => 'Homology_dNdS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS'
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS',
+      -parameters      => "{'codeml_parameters'=>" . stringify($dnds_params{'codeml_parameters'}) . '}',
   );
-  $self->store_codeml_parameters(\%dnds_params);
-  if (defined $dnds_params{'dNdS_analysis_data_id'}) {
-    $homology_dNdS_analysis->parameters('{dNdS_analysis_data_id=>' . $dnds_params{'dNdS_analysis_data_id'} . '}');
-  }
   $analysisDBA->store($homology_dNdS_analysis);
   $stats = $analysisStatsDBA->fetch_by_analysis_id($homology_dNdS_analysis->dbID);
   $stats->batch_size(1);
@@ -771,21 +746,42 @@ sub build_GeneTreeSystem
   $stats->status('BLOCKED');
   $stats->update();
 
+
   #
-  # OtherParalogs
-  print STDERR "OtherParalogs...\n";
+  # CreateHDupsQCJobs
+  print STDERR "CreateHDupsQCJobs...\n";
   #
-  my $other_paralogs_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'OtherParalogs',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::OtherParalogs',
-      # -parameters      => $parameters
-      );
-  $analysisDBA->store($other_paralogs_analysis);
-  $stats = $other_paralogs_analysis->stats;
+  my $create_Hdups_qc_jobs_analysis = Bio::EnsEMBL::Analysis->new(
+      -db_version      => '1',
+      -logic_name      => 'CreateHDupsQCJobs',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
+      -parameters      => "{ 'input_id' => { 'type' => '#short_type#', 'mlss_id' => '#_range_start#' }, 'fan_branch_code' => 2 }",
+  );
+  $analysisDBA->store($create_Hdups_qc_jobs_analysis);
+
+  $stats = $analysisStatsDBA->fetch_by_analysis_id($create_Hdups_qc_jobs_analysis->dbID);
   $stats->batch_size(1);
-  my $otherparalogs_hive_capacity = 50;
-  $stats->hive_capacity($otherparalogs_hive_capacity);
+  $stats->hive_capacity(-1);
+  $stats->status('READY');
   $stats->update();
+
+  #
+  # HDupsQC
+  #
+  print STDERR "HDupsQC...\n";
+  #
+  my $hdups_qc_analysis = Bio::EnsEMBL::Analysis->new(
+      -logic_name      => 'HDupsQC',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HDupsQC',
+      -parameters      => '{}',
+  );
+  $analysisDBA->store($hdups_qc_analysis);
+  $stats = $hdups_qc_analysis->stats;
+  $stats->batch_size(1);
+  my $hdupsqc_hive_capacity = 10;
+  $stats->hive_capacity($hdupsqc_hive_capacity);
+  $stats->update();
+
 
   #
   # Sitewise_dNdS
@@ -795,10 +791,10 @@ sub build_GeneTreeSystem
   if (defined $sitewise_dnds_params{'saturated'}) {
     $parameters = '';
     my $with_options_sitewise_dnds = 0;
-    if (defined $genetree_params{'honeycomb_dir'}) {
-      $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."',";
-      $with_options_sitewise_dnds = 1;
-    }
+    #if (defined $genetree_params{'honeycomb_dir'}) {
+    #  $parameters = "'honeycomb_dir'=>'".$genetree_params{'honeycomb_dir'}."',";
+    #  $with_options_sitewise_dnds = 1;
+    #}
     if (defined $sitewise_dnds_params{'saturated'}) {
       $parameters .= "'saturated'=>" . $sitewise_dnds_params{'saturated'};
       $with_options_sitewise_dnds = 1;
@@ -843,40 +839,6 @@ sub build_GeneTreeSystem
     # Saturated jobs create new jobs of the same kind
     $dataflowRuleDBA->create_rule($sitewise_dNdS_analysis, $sitewise_dNdS_analysis, 2);
   }
-  #$DB::single=1;1;
-  #
-  # CreateHDupsQCJobs
-  print STDERR "CreateHDupsQCJobs...\n";
-  #
-  my $create_Hdups_qc_jobs_analysis = Bio::EnsEMBL::Analysis->new(
-      -db_version      => '1',
-      -logic_name      => 'CreateHDupsQCJobs',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSfactory',
-      -parameters      => "{ 'input_id' => { 'type' => '#short_type#', 'mlss' => '#_range_start#' }, 'fan_branch_code' => 2 }",
-  );
-  $analysisDBA->store($create_Hdups_qc_jobs_analysis);
-
-  $stats = $analysisStatsDBA->fetch_by_analysis_id($create_Hdups_qc_jobs_analysis->dbID);
-  $stats->batch_size(1);
-  $stats->hive_capacity(-1);
-  $stats->status('READY');
-  $stats->update();
-
-  #
-  # HDupsQC
-  #
-  print STDERR "HDupsQC...\n";
-  #
-  my $hdups_qc_analysis = Bio::EnsEMBL::Analysis->new(
-      -logic_name      => 'HDupsQC',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HDupsQC',
-      );
-  $analysisDBA->store($hdups_qc_analysis);
-  $stats = $hdups_qc_analysis->stats;
-  $stats->batch_size(1);
-  my $hdupsqc_hive_capacity = 10;
-  $stats->hive_capacity($hdupsqc_hive_capacity);
-  $stats->update();
 
 
   #
@@ -885,26 +847,30 @@ sub build_GeneTreeSystem
 
     # there is a heavy bundle concerned with loading and reusing blast data:
   $dataflowRuleDBA->create_rule($submit_genome_analysis, $genome_load_reuse_members_analysis);
-  $dataflowRuleDBA->create_rule($submit_genome_analysis, $genome_load_members_analysis);
-  $dataflowRuleDBA->create_rule($genome_load_members_analysis, $blast_subset_staging_analysis);
+  $dataflowRuleDBA->create_rule($genome_load_reuse_members_analysis, $blast_table_reuse_analysis);
+
+  $dataflowRuleDBA->create_rule($submit_genome_analysis,        $genome_load_members_analysis);
+  $ctrlRuleDBA->create_rule($genome_load_reuse_members_analysis,$genome_load_members_analysis);
+  $dataflowRuleDBA->create_rule($genome_load_members_analysis,  $blast_subset_staging_analysis);
   $dataflowRuleDBA->create_rule($blast_subset_staging_analysis, $genome_submit_pep_analysis);
   $dataflowRuleDBA->create_rule($blast_subset_staging_analysis, $genome_dump_fasta_analysis);
-  $ctrlRuleDBA->create_rule($genome_load_reuse_members_analysis, $create_blast_rules_analysis);
-  $ctrlRuleDBA->create_rule($genome_load_reuse_members_analysis, $genome_load_members_analysis);
-  $ctrlRuleDBA->create_rule($genome_load_members_analysis, $create_blast_rules_analysis);
-  $ctrlRuleDBA->create_rule($blast_subset_staging_analysis, $create_blast_rules_analysis);
-  $ctrlRuleDBA->create_rule($genome_submit_pep_analysis, $create_blast_rules_analysis);
-  $ctrlRuleDBA->create_rule($genome_dump_fasta_analysis, $create_blast_rules_analysis);
-  $dataflowRuleDBA->create_rule($genome_dump_fasta_analysis, $create_blast_rules_analysis);
-  $dataflowRuleDBA->create_rule($genome_load_reuse_members_analysis, $blast_table_reuse_analysis);
-  $ctrlRuleDBA->create_rule($blast_table_reuse_analysis, $create_blast_rules_analysis); # new
+  $dataflowRuleDBA->create_rule($genome_dump_fasta_analysis,    $create_blast_rules_analysis);
+
+  $ctrlRuleDBA->create_rule($blast_table_reuse_analysis,        $create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($genome_load_reuse_members_analysis,$create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($genome_load_members_analysis,      $create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($blast_subset_staging_analysis,     $create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($genome_submit_pep_analysis,        $create_blast_rules_analysis);
+  $ctrlRuleDBA->create_rule($genome_dump_fasta_analysis,        $create_blast_rules_analysis);
 
     # do not start sequence storing before blast data is done:
   $ctrlRuleDBA->create_rule($create_blast_rules_analysis, $create_store_seq_jobs_analysis);
 
     # sequence storing fan:
-  $dataflowRuleDBA->create_rule($create_store_seq_jobs_analysis, $store_seq_exon_bounded_analysis, 2); # a fan of jobs
-  $dataflowRuleDBA->create_rule($create_store_seq_jobs_analysis, $store_seq_cds_analysis, 2);          # another fan of jobs
+  $dataflowRuleDBA->create_rule($create_store_seq_jobs_analysis, $store_seq_analysis, 2); # a fan of jobs
+
+  $dataflowRuleDBA->create_rule($store_seq_analysis, 'mysql:////sequence_cds', 2);          # dataflow-into-table
+  $dataflowRuleDBA->create_rule($store_seq_analysis, 'mysql:////sequence_exon_bounded', 3); # another dataflow-into-table
 
     # do not start clustering before blast data is done:
   $ctrlRuleDBA->create_rule($create_blast_rules_analysis, $create_hcluster_prepare_jobs_analysis);
@@ -967,8 +933,8 @@ sub build_GeneTreeSystem
   $ctrlRuleDBA->create_rule($threshold_on_dS_analysis,$create_Hdups_qc_jobs_analysis);
   $dataflowRuleDBA->create_rule($create_Hdups_qc_jobs_analysis, $hdups_qc_analysis, 2); # a fan of jobs
 
-      # OtherParalogs are calculated for every QuickTreeBreak, but only
-      # after all clusters are analysed, to avoid descriptions clashing
+      # OtherParalogs are calculated for every QuickTreeBreak (FIXME: should it be dataflown to from QTB then?),
+      # but only after all clusters are analysed, to avoid descriptions clashing
       # between OrthoTree and OtherParalogs:
   $ctrlRuleDBA->create_rule($mcoffee_analysis,          $other_paralogs_analysis);
   $ctrlRuleDBA->create_rule($njtree_phyml_analysis,     $other_paralogs_analysis);
@@ -1023,26 +989,6 @@ sub build_GeneTreeSystem
 
     print STDERR "Done.\n";
     return 1;
-}
-
-sub store_codeml_parameters {
-  my $self = shift;
-  my $dNdS_Conf = shift;
-
-  my $options_hash_ref = $dNdS_Conf->{'codeml_parameters'};
-  return unless($options_hash_ref);
-
-  my @keys = keys %{$options_hash_ref};
-  my $options_string = "{\n";
-  foreach my $key (@keys) {
-    $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
-  }
-  $options_string .= "}";
-
-  $dNdS_Conf->{'dNdS_analysis_data_id'} =
-         $self->{'hiveDBA'}->get_AnalysisDataAdaptor->store_if_needed($options_string);
-
-  $dNdS_Conf->{'codeml_parameters'} = undef;
 }
 
 

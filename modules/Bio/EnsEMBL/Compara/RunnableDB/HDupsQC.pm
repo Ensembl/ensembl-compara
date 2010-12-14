@@ -57,9 +57,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::HDupsQC;
 
 use strict;
-use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Hive;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -75,43 +73,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'clusterset_id'} = 1;
-
-  # Get the needed adaptors here
-  $self->{treeDBA}  = $self->compara_dba->get_ProteinTreeAdaptor;
-  $self->{streeDBA} = $self->compara_dba->get_SuperProteinTreeAdaptor;
-
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[mlss type param1 param2 param3 analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  return;
+    $self->param('protein_tree_adaptor',        $self->compara_dba->get_ProteinTreeAdaptor);
+    $self->param('super_protein_tree_adaptor',  $self->compara_dba->get_SuperProteinTreeAdaptor);
 }
 
 
@@ -130,8 +95,9 @@ sub run {
 
   my $sql = "select h.tree_node_id, h.homology_id, hm1.member_id,hm2.member_id,h.method_link_species_set_id from homology_member hm1, homology_member hm2, homology h where h.homology_id=hm1.homology_id and hm1.homology_id=hm2.homology_id and h.method_link_species_set_id=?";
   $self->run_dupsqc($sql);
+
   my $sql = "select h.tree_node_id, h.method_link_species_set_id,hm.member_id from homology h, homology_member hm where h.method_link_species_set_id=? and h.homology_id=hm.homology_id group by hm.member_id having count(*)>1 and group_concat(h.description) ='ortholog_one2one'";
-  $self->run_dupsorthologyqc($sql) if ($self->{type} =~ /ortho/);
+  $self->run_dupsorthologyqc($sql) if ($self->param('type') =~ /ortho/);
 }
 
 
@@ -168,10 +134,11 @@ sub run_dupsqc {
 
   my $starttime=time();
   my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute($self->{mlss});
+  $sth->execute($self->param('mlss_id'));
   printf("%1.3f secs to query\n", time()-$starttime) if($self->debug);
-  my $same_tree_duplicates;
-  my $diff_tree_duplicates;
+  my %same_tree_duplicates = ();
+  my %diff_tree_duplicates = ();
+  my %mp = ();
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($tree_node_id, $homology_id, $member_id1, $member_id2,$mlss_id) = @$aref;
     next if ($member_id1 == $member_id2);
@@ -179,32 +146,30 @@ sub run_dupsqc {
       {$tmp = $member_id1; $member_id1 = $member_id2; $member_id2 = $tmp;}
 
     my $member_pair = $member_id1 . "_" . $member_id2;
-    if (defined ($self->{$member_pair}{$mlss_id})) {
+    if (defined ($mp{$member_pair}{$mlss_id})) {
       # There is a duplicate
-      if (defined($self->{$member_pair}{$mlss_id}{$tree_node_id})) {
+      if (defined($mp{$member_pair}{$mlss_id}{$tree_node_id})) {
         # (a) is it in the same tree?
-        if ($homology_id == $self->{$member_pair}{$mlss_id}{$tree_node_id}) {
+        if ($homology_id == $mp{$member_pair}{$mlss_id}{$tree_node_id}) {
           next;
         }
-        $same_tree_duplicates->{$tree_node_id} = $member_pair;
+        $same_tree_duplicates{$tree_node_id} = $member_pair;
       } else {
-        $diff_tree_duplicates->{$tree_node_id} = $member_pair;
+        $diff_tree_duplicates{$tree_node_id} = $member_pair;
       }
     }
-    $self->{$member_pair}{$mlss_id}{$tree_node_id} = $homology_id;
+    $mp{$member_pair}{$mlss_id}{$tree_node_id} = $homology_id;
   }
-  if (defined($same_tree_duplicates)) {
+  if (keys %same_tree_duplicates) {
 
-    $self->store_duportho_tags($same_tree_duplicates);
+    $self->store_duportho_tags(\%same_tree_duplicates);
   }
-  if (defined($diff_tree_duplicates)) {
+  if (keys %diff_tree_duplicates) {
 
-    $self->store_duportho_tags($diff_tree_duplicates);
+    $self->store_duportho_tags(\%diff_tree_duplicates);
   }
 
   $sth->finish;
-
-  return 1;
 }
 
 # This is the fast query, where we do the grouping on the Perl side
@@ -213,25 +178,24 @@ sub store_duportho_tags {
   my $self = shift;
   my $hash = shift;
 
-  my $mlss_id = $self->{mlss};
+  my $mlss_id = $self->param('mlss_id');
   foreach my $tree_node_id (keys %{$hash}) {
     my $member_pair = $hash->{$tree_node_id};
     print STDERR "ERROR: some homology duplicates in method_link_species_set_id=$mlss_id , [$member_pair]\n";
-    my $tree = $self->{treeDBA}->fetch_node_by_node_id($tree_node_id);
+    my $tree = $self->param('protein_tree_adaptor')->fetch_node_by_node_id($tree_node_id);
     if (defined($tree)) {
-      my $tag = $self->{mlss}.":".'HDupsQC';
+      my $tag = $mlss_id.':HDupsQC';
       my $value= $member_pair;
       $tree->store_tag($tag,$value);
     } else {
-      my $supertree = $self->{streeDBA}->fetch_node_by_node_id($tree_node_id);
+      my $supertree = $self->param('super_protein_tree_adaptor')->fetch_node_by_node_id($tree_node_id);
       if (defined($supertree)) {
-        my $tag = $self->{mlss}.":".'HDupsQC';
+        my $tag = $mlss_id.':HDupsQC';
         my $value= $member_pair;
         $supertree->store_tag($tag,$value);
       }
     }
   }
-  return 1;
 }
 
 # This is the long query, where we don't do anything clever on the
@@ -247,28 +211,26 @@ sub run_dupsorthologyqc {
 
   my $starttime=time();
   my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->execute($self->{mlss});
+  $sth->execute($self->param('mlss_id'));
   printf("%1.3f secs to query\n", time()-$starttime) if($self->debug);
   while (my $aref = $sth->fetchrow_arrayref) {
     my ($tree_node_id, $member_id1, $member_id2,$mlss_id) = @$aref;
     print STDERR "ERROR: some homology duplicates in method_link_species_set_id=$mlss_id tree_node_id=$tree_node_id [$member_id1 $member_id2]\n";
-    my $tree = $self->{treeDBA}->fetch_node_by_node_id($tree_node_id);
+    my $tree = $self->param('protein_tree_adaptor')->fetch_node_by_node_id($tree_node_id);
     if (defined($tree)) {
-      my $tag = $self->{mlss}.":".'HDupsQC';
+      my $tag = $self->param('mlss_id').':HDupsQC';
       my $value= $member_id1."_".$member_id2;
       $tree->store_tag($tag,$value);
     } else {
-      my $supertree = $self->{streeDBA}->fetch_node_by_node_id($tree_node_id);
+      my $supertree = $self->param('super_protein_tree_adaptor')->fetch_node_by_node_id($tree_node_id);
       if (defined($supertree)) {
-        my $tag = $self->{mlss}.":".'HDupsQC';
+        my $tag = $self->param('mlss_id').':HDupsQC';
         my $value= $member_id1."_".$member_id2;
         $supertree->store_tag($tag,$value);
       }
     }
   }
   $sth->finish;
-
-  return 1;
 }
 
 1;

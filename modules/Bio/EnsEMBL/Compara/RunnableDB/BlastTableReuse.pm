@@ -76,7 +76,6 @@ sub fetch_input {
     }
   }
   $self->{p} = $p;
-  $self->{null_cigar} = $p->{null_cigar} if (defined($p->{null_cigar}));
 
   my $input_hash = eval($self->input_id);
   $self->{gdb} = $self->{gdba}->fetch_by_dbID($input_hash->{'gdb'});
@@ -111,10 +110,6 @@ sub run
 
 sub write_output {
   my $self = shift;
-
-#   if (1 == $self->{reuse_this}) {
-#     $self->update_paf_table;
-#   }
 
   return 1;
 }
@@ -166,13 +161,5 @@ sub import_paf_table {
   }
 }
 
-# sub update_paf_table {
-#   my $self = shift;
-#   my $starttime = time();
-
-#   return unless($self->{'gdb'});
-#   my $gdb = $self->{'gdb'};
-#   return unless $gdb;
-# }
 
 1;

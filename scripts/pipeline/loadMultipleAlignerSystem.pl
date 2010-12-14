@@ -417,7 +417,7 @@ sub create_genome_dumpfasta_analysis {
       -logic_name      => 'GenomeDumpFasta',
       -input_id_type   => 'genome_db_id',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
-      -parameters      => 'fasta_dir=>'.$analysis_template{fasta_dir}.',',
+      -parameters      => "{ 'fasta_dir'=>'".$analysis_template{fasta_dir}."'}",
     );
   $self->{'comparaDBA'}->get_AnalysisAdaptor()->store($genome_dumpfasta_analysis);
   my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($genome_dumpfasta_analysis->dbID);

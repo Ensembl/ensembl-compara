@@ -50,90 +50,50 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS;
 
 use strict;
-
-use Bio::EnsEMBL::Compara::Member;
 use Bio::Tools::Run::Phylo::PAML::Codeml;
-use Bio::EnsEMBL::Hive;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'codeml_parameters_href'} = undef;
-  $self->throw("No input_id") unless defined($self->input_id);
+    my $homology_ids      = $self->param('ids') || die "'ids' is an obligatory parameter";
+    my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";  # let it break immediately if no codeml_parameters
 
-  $self->{ha} = $self->compara_dba->get_HomologyAdaptor;
+    my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
+    my @homologies = ();
 
-  $self->get_params($self->parameters);
-  my $homology_id = $self->input_id;
-  if ($homology_id =~ /ids/) { # it's the job_array-based input_id
-    my $ids = eval($homology_id);
-    my @homologies;
-    foreach my $id (@{$ids->{ids}}) {
-      my $homology = $self->{ha}->fetch_by_dbID($id);
-      push @homologies, $homology;
+    foreach my $homology_id (@$homology_ids) {
+        push @homologies, $homology_adaptor->fetch_by_dbID($homology_id);
     }
-    $self->{'homology'} = \@homologies;
-  } else {
-    my @homologies;
-    push @homologies, $self->{ha}->fetch_by_dbID($homology_id);
-    $self->{'homology'} = \@homologies;
-  }
 
-  return 1 if($self->{'homology'});
-  return 0;
-}
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-  
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  if (defined $params->{'dNdS_analysis_data_id'}) {
-    my $analysis_data_id = $params->{'dNdS_analysis_data_id'};
-    my $ada = $self->db->get_AnalysisDataAdaptor;
-    my $codeml_parameters_hashref = eval($ada->fetch_by_dbID($analysis_data_id));
-    if (defined $codeml_parameters_hashref) {
-      $self->{'codeml_parameters_href'} = $codeml_parameters_hashref;
-    }
-  }
-  
-  return;
-
+    $self->param('homologies', \@homologies);
 }
 
 
-sub run
-{
-  my $self = shift;
+sub run {
+    my $self = shift @_;
 
-  foreach my $homology (@{$self->{'homology'}}) {
-    $self->calc_genetic_distance($homology);
-  }
-  return 1;
+    my $homologies        = $self->param('homologies');
+    my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
+
+    foreach my $homology (@$homologies) {
+        $self->calc_genetic_distance($homology, $codeml_parameters);
+    }
 }
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  my $homologyDBA = $self->compara_dba->get_HomologyAdaptor;
-  foreach my $homology (@{$self->{'homology'}}) {
-    $homologyDBA->update_genetic_distance($homology);
-  }
-  return 1;
+    my $homologies        = $self->param('homologies');
+
+    my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
+
+    foreach my $homology (@$homologies) {
+        $homology_adaptor->update_genetic_distance($homology);
+    }
 }
 
 
@@ -143,10 +103,8 @@ sub write_output {
 #
 ##########################################
 
-sub calc_genetic_distance
-{
-  my $self = shift;
-  my $homology = shift;
+sub calc_genetic_distance {
+  my ($self, $homology, $codeml_parameters) = @_;
 
   #print("use codeml to get genetic distance of homology\n");
   $homology->print_homology if ($self->debug);
@@ -163,11 +121,8 @@ sub calc_genetic_distance
     $codeml->executable($possible_exe);
   }
   #$codeml->save_tempfiles(1);
-  if (defined $self->{'codeml_parameters_href'}) {
-    my %params = %{$self->{'codeml_parameters_href'}};
-    foreach my $key (keys %params) {
-      $codeml->set_parameter($key,$params{$key});
-    }
+  while(my ($key, $value) = each %$codeml_parameters) {
+     $codeml->set_parameter($key, $value);
   }
   $codeml->alignment($aln);
   if (0 != $aln->{_special_codeml_icode}) {
@@ -291,3 +246,4 @@ sub print_simple_align
 }
 
 1;
+

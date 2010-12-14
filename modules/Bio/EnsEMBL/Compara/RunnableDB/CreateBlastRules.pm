@@ -66,11 +66,9 @@ sub fetch_input {
   $self->throw("Improper formated input_id") unless ($self->input_id =~ /\s*\{/);
 
   $self->{'selfBlast'} = 1;
-  $self->{'phylumBlast'} = 0;
   if($self->analysis->parameters =~ /\s*\{/) {
     my $paramHash = eval($self->analysis->parameters);
     if($paramHash) {
-      $self->{'phylumBlast'}=1 if($paramHash->{'phylumBlast'}==1);
       $self->{'selfBlast'}=0 if($paramHash->{'selfBlast'}==0);
       $self->{'cr_analysis_logic_name'} = $paramHash->{'cr_analysis_logic_name'} if(defined $paramHash->{'cr_analysis_logic_name'});
     }
@@ -134,8 +132,10 @@ sub createAllBlastRules
 
   my $analysisList = $self->db->get_AnalysisAdaptor->fetch_all();
 
-  my @submitList;
-  my @blastList;
+  my @submitList = ();
+  my @blastList  = ();
+
+    # populate the two lists and inhibit cr_analysis by every one of them:
   foreach my $submitAnalysis (@{$analysisList}) {
     next unless($submitAnalysis->logic_name =~ /SubmitPep_(.*)/);
     my $blast_name = "blast_".$1;
@@ -157,6 +157,7 @@ sub createAllBlastRules
         my ($blast_id) = $blastAnalysis->logic_name =~ /blast_(.*)/;
         next if ($submit_id eq $blast_id);
       }
+
       # If it uses BlastcomparaPepAcross, we only create one Blast job 1
       # job only across all the sps in 'species_set' in PAFCluster
       # instead of a job per sp. This is to avoid creating an
@@ -166,7 +167,7 @@ sub createAllBlastRules
        || $blastAnalysis->module eq 'Bio::EnsEMBL::Compara::RunnableDB::BlastComparaPepAcrossReuse') {
         my ($submit_id) = $submitAnalysis->logic_name =~ /SubmitPep_(.*)/;
         my ($blast_id) = $blastAnalysis->logic_name =~ /blast_(.*)/;
-        next unless ($submit_id eq $blast_id);
+        next if ($submit_id ne $blast_id);
       }
       $self->linkSubmitBlastPair($submitAnalysis, $blastAnalysis);
     }

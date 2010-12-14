@@ -50,11 +50,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep;
 
 use strict;
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -68,77 +67,49 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =cut
 
+
 sub fetch_input {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->throw("No input_id") unless defined($self->input_id);
-  print("input_id = ".$self->input_id."\n");
-  $self->throw("Improper formated input_id") unless ($self->input_id =~ /\{/);
-  my $input_hash = eval($self->input_id);
-  
-  #create a Compara::DBAdaptor which shares the same DBConnection as $self->db
-  $self->{'analysisStatsDBA'} = $self->db->get_AnalysisStatsAdaptor;
+    my $subset_id   = $self->param('ss') or die "'ss' is an obligatory parameter";
+    my $subset      = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) or die "cannot fetch Subset with id '$subset_id'";
+    $self->param('subset', $subset);
 
-  $self->db->dbc->disconnect_when_inactive(0);
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-    
-  my $genome_db_id = $input_hash->{'gdb'};
-  my $subset_id    = $input_hash->{'ss'};
-  $self->{'reference_name'} = undef;
+    my $genome_db_id = $self->param('gdb') or die "'gdb' is an obligatory parameter";
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
+    $self->param('genome_db', $genome_db);
 
-  if(defined($genome_db_id)) {
-    print("gdb = $genome_db_id\n");
-
-    #get the Compara::GenomeDB object for the genome_db_id
-    $self->{'genome_db'} = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-
-    $self->{'reference_name'} = $self->{'genome_db'}->dbID()."_".$self->{'genome_db'}->assembly();
-
-    unless($subset_id) {
-      # get the subset of 'longest transcripts' for this genome_db_id
-      $subset_id = $self->getSubsetIdForGenomeDBId($genome_db_id);
-    }
-  }
-  
-  $self->throw("no subset defined, can't figure out which peptides to use\n") 
-    unless(defined($subset_id));
-  
-  $self->{'pepSubset'} = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) || $self->throw( "Cannot SubsetAdaptor->fetch_by_dbID($subset_id))" ); 
-
-  unless($self->{'reference_name'}) {
-    $self->{'reference_name'} = $self->{'pepSubset'}->description;
-    $self->{'reference_name'} =~ s/\s+/_/g;
-  }
-
-  
-  return 1;
+    my $logic_name = $self->param('logic_name') || 'SubmitPep_'.$genome_db_id.'_'.$genome_db->assembly();
+    $self->param('logic_name', $logic_name);
 }
 
 
-sub run
-{
-  my $self = shift;
-  $self->create_peptide_align_feature_table($self->{'genome_db'});
-  return 1;
+sub run {
+    my $self = shift @_;
+
+    $self->create_peptide_align_feature_table($self->param('genome_db'));
 }
 
 
-sub write_output
-{
-  my $self = shift;
+sub write_output {
+    my $self = shift @_;
 
-  # working from the longest peptide subset, create an analysis of
-  # with logic_name 'SubmitPep_<taxon_id>_<assembly>'
-  # with type MemberPep and fill the input_id_analysis table where
-  # input_id is the member_id of a peptide and the analysis_id
-  # is the above mentioned analysis
-  #
-  # This creates the starting point for the blasts (members against database)
-  $self->createSubmitPepAnalysis($self->{'pepSubset'});
-  
-  return 1;
+          # working from the longest peptide subset, create an analysis of
+          # with logic_name 'SubmitPep_<taxon_id>_<assembly>'
+          # with type MemberPep and fill the input_id_analysis table where
+          # input_id is the member_id of a peptide and the analysis_id
+          # is the above mentioned analysis
+          #
+          # This creates the starting point for the blasts (members against database)
+
+    my $logic_name = $self->param('logic_name');
+    my $subset     = $self->param('subset');
+
+    my $analysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name) ||
+                        $self->createSubmitPepAnalysis($logic_name, $subset);
+
+    $self->createJobsInAnalysis($analysis, $subset);
 }
-
 
 
 ##################################
@@ -147,140 +118,6 @@ sub write_output
 #
 ##################################
 
-sub getSubsetIdForGenomeDBId {
-  my $self         = shift;
-  my $genome_db_id = shift;
-
-  my @subsetIds = ();
-  my $subset_id;
-
-  my $sql = "SELECT distinct subset.subset_id " .
-            "FROM member, subset, subset_member " .
-            "WHERE subset.subset_id=subset_member.subset_id ".
-            "AND subset.description like '%longest%' ".
-            "AND member.member_id=subset_member.member_id ".
-            "AND member.genome_db_id=$genome_db_id;";
-  my $sth = $self->compara_dba->prepare( $sql );
-  $sth->execute();
-
-  $sth->bind_columns( undef, \$subset_id );
-  while( $sth->fetch() ) {
-    print("found subset_id = $subset_id for genome_db_id = $genome_db_id\n");
-    push @subsetIds, $subset_id;
-  }
-  $sth->finish();
-
-  if($#subsetIds > 0) {
-    warn ("Compara DB: more than 1 subset of longest peptides defined for genome_db_id = $genome_db_id\n");
-  }
-  if($#subsetIds < 0) {
-    warn ("Compara DB: no subset of longest peptides defined for genome_db_id = $genome_db_id\n");
-  }
-
-  return $subsetIds[0];
-}
-
-
-# working from the longest peptide subset, create an analysis of
-# with logic_name 'SubmitPep_<taxon_id>_<assembly>'
-# with type MemberPep and fill the input_id_analysis table where
-# input_id is the member_id of a peptide and the analysis_id
-# is the above mentioned analysis
-#
-# This creates the starting point for the blasts (members against database)
-sub createSubmitPepAnalysis {
-  my $self    = shift;
-  my $subset  = shift;
-
-  if (!UNIVERSAL::isa($subset, "Bio::EnsEMBL::Compara::Subset")) {
-    $self->throw("Calling createSubmitPepAnalysis without a proper subset [$subset]");
-  }
-  
-  print("\ncreateSubmitPepAnalysis\n");
-  
-  my $logic_name = "SubmitPep_" . $self->{'reference_name'};
-
-  print("  see if analysis '$logic_name' is in database\n");
-  my $analysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name);
-  if($analysis) { print("  YES in database with analysis_id=".$analysis->dbID()); }
-
-  unless($analysis) {
-    print("  NOPE: go ahead and insert\n");
-    $analysis = Bio::EnsEMBL::Analysis->new(
-        -db              => '',
-        -db_file         => $subset->dump_loc(),
-        -db_version      => '1',
-        -parameters      => "{subset_id=>" . $subset->dbID()."}",
-        -logic_name      => $logic_name,
-        -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-      );
-    $self->db->get_AnalysisAdaptor()->store($analysis);
-
-    my $stats = $self->{'analysisStatsDBA'}->fetch_by_analysis_id($analysis->dbID);
-    $stats->batch_size(500);
-    $stats->hive_capacity(10);
-    $stats->status('BLOCKED');
-    
-    if($self->_hive_supports_resources()) {
-      my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
-      my $rc_id = $blast_template->rc_id();
-      $stats->rc_id($rc_id);
-    }
-    
-    $stats->update();   
-  }
-
-  # create unblocking rules from CreateBlastRules to this new analysis
-  my $createRules = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('CreateBlastRules');
-  $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($createRules, $analysis);
-
-  
-  #my $host = hostname();
-  print("store member_id into analysis_job table\n");
-  my $errorCount=0;
-  my $tryCount=0;
-  my @member_id_list = @{$subset->member_id_list()};
-  print($#member_id_list+1 . " members in subset\n");
-
-  foreach my $member_id (@member_id_list) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => $member_id,
-        -analysis       => $analysis,
-        -input_job_id   => 0,
-        );
-  }
-
-  print("CREATED all analysis_jobs\n");
-
-
-=head3
-      eval {
-        $tryCount++;
-        $sicDBA->store_input_id_analysis($member_id, #input_id
-                                         $analysis,
-                                         'gaia', #execution_host
-                                         0 #save runtime NO (ie do insert)
-                                        );
-      };
-      if($@) {
-        $errorCount++;
-        if($errorCount>42 && ($errorCount/$tryCount > 0.95)) {
-          die("too many repeated failed insert attempts, assume will continue for durration. ACK!!\n");
-        }
-      } # should handle the error, but ignore for now
-    }
-  };
-=cut
-
-
-  return $logic_name;
-}
-
-#####################################################################
-##
-## create_peptide_align_feature_table
-##
-#####################################################################
 
 sub create_peptide_align_feature_table {
   my ($self, $genome_db) = @_;
@@ -301,6 +138,63 @@ sub create_peptide_align_feature_table {
   $sth->execute();
   $sth->finish();
 }
+
+
+        # working from the longest peptide subset, create an analysis of
+        # with logic_name 'SubmitPep_<taxon_id>_<assembly>'
+        # with type MemberPep and fill the input_id_analysis table where
+        # input_id is the member_id of a peptide and the analysis_id
+        # is the above mentioned analysis
+        #
+        # This creates the starting point for the blasts (members against database)
+sub createSubmitPepAnalysis {
+    my ($self, $logic_name, $subset) = @_;
+
+    my $analysis = Bio::EnsEMBL::Analysis->new(
+        -db              => '',
+        -db_file         => $subset->dump_loc(),
+        -db_version      => '1',
+        -parameters      => "{subset_id=>" . $subset->dbID()."}",
+        -logic_name      => $logic_name,
+        -module          => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+    );
+    $self->db->get_AnalysisAdaptor()->store($analysis);
+
+    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
+    $stats->batch_size(500);
+    $stats->hive_capacity(10);
+    $stats->status('BLOCKED');
+
+    if($self->_hive_supports_resources()) {
+        my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
+        my $rc_id = $blast_template->rc_id();
+        $stats->rc_id($rc_id);
+    }
+
+    $stats->update();   
+
+    # create unblocking rules from CreateBlastRules to this new analysis
+    my $createRules = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('CreateBlastRules');
+    $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($createRules, $analysis);
+
+    return $analysis;
+}
+
+
+sub createJobsInAnalysis {
+    my ($self, $analysis, $subset) = @_;
+
+    my @member_id_list = @{$subset->member_id_list()};
+
+    foreach my $member_id (@member_id_list) {
+        Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+            -input_id       => $member_id,
+            -analysis       => $analysis,
+            -input_job_id   => $self->input_job->dbID,
+        );
+    }
+}
+
 
 sub _hive_supports_resources {
   my ($self) = @_;

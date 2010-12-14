@@ -53,122 +53,129 @@ package Bio::EnsEMBL::Compara::RunnableDB::HclusterRun;
 
 use strict;
 use Switch;
-use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
-    return 0;
+
+sub param_defaults {
+    return {
+        'clusterset_id'         => 1,
+    };
 }
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'species_set'} = undef;
-  $self->{'clusterset_id'} = 1;
-  $self->throw("No input_id") unless defined($self->input_id);
+    my $species_set = $self->param('species_set') or die "'species_set' is an obligatory list parameter";
 
-  $self->get_params($self->parameters);
-
-  my @species_set = @{$self->{'species_set'}};
-  $self->{'cluster_mlss'} = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-  $self->{'cluster_mlss'}->method_link_type('PROTEIN_TREES');
-  my @genomeDB_set;
-  foreach my $gdb_id (@species_set) {
-    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-    $self->throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
-    push @genomeDB_set, $gdb;
-  }
-  $self->{'cluster_mlss'}->species_set(\@genomeDB_set);
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return if ($param_string eq "1");
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  foreach my $key (keys %$params) {
-    print("  $key : ", $params->{$key}, "\n");
-  }
-
-  if (defined $params->{'species_set'}) {
-    $self->{'species_set'} = $params->{'species_set'};
-  }
-  if (defined $params->{'cluster_dir'}) {
-    $self->{'cluster_dir'} = $params->{'cluster_dir'};
-  }
-  if (defined $params->{'outgroups'}) {
-    foreach my $outgroup (@{$params->{'outgroups'}}) {
-      $self->{outgroups}{$outgroup} = 1;
+    my $cluster_mlss = $self->param('cluster_mlss', Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new() );
+    $cluster_mlss->method_link_type('PROTEIN_TREES');
+    my @genomedb_array = ();
+    foreach my $gdb_id (@$species_set) {
+        my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+        $self->throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
+        push @genomedb_array, $gdb;
     }
-  }
-  if (defined $params->{'max_gene_count'}) {
-    $self->{'max_gene_count'} = $params->{'max_gene_count'};
-  }
-
-  print("parameters...\n");
-  printf("  cluster_dir    : %d\n", $self->{'cluster_dir'});
-  printf("  species_set    : (%s)\n", join(',', @{$self->{'species_set'}}));
-  printf("  outgroups      : (%s)\n", join(',', keys %{$self->{'outgroups'}}));
-  printf("  max_gene_count : %d\n", $self->{'max_gene_count'});
-
-  return;
+    $cluster_mlss->species_set(\@genomedb_array);
 }
 
-sub run
-{
-  my $self = shift;
 
-  $self->gather_input();
-  $self->run_hcluster();
-  return 1;
+sub run {
+    my $self = shift @_;
+
+    $self->gather_input();
+    $self->run_hcluster();
 }
 
 sub write_output {
+    my $self = shift @_;
+
+    $self->store_clusters();
+    $self->dataflow_clusters;
+}
+
+##########################################
+#
+# internal methods
+#
+##########################################
+
+sub gather_input {
   my $self = shift;
 
-  $self->store_clusters();
-  $self->dataflow_clusters;
+  my $starttime = time();
+  return if ($self->input_job->retry_count > 10);
 
-  # modify input_job so that it now contains the clusterset_id
-  my $outputHash = {};
-  $outputHash = eval($self->input_id) if(defined($self->input_id) && $self->input_id =~ /^\s*\{.*\}\s*$/);
-  $outputHash->{'clusterset_id'} = $self->{'clusterset_id'};
-  my $output_id = $self->encode_hash($outputHash);
+  my $cluster_dir = $self->param('cluster_dir');
+  my $output_dir = $self->worker_temp_directory;
+  my $cmd;
+  print "gathering input in $output_dir\n" if ($self->debug);
+
+  $cmd ="cat $cluster_dir/*.hcluster.cat > $output_dir/hcluster.cat";
+  unless(system($cmd) == 0) {
+    $self->throw("error gathering category files for Hcluster, $!\n");
+  }
+  printf("%1.3f secs to gather category entries\n", (time()-$starttime));
+  $cmd ="cat $cluster_dir/*.hcluster.txt > $output_dir/hcluster.txt";
+  unless(system($cmd) == 0) {
+    $self->throw("error gathering distance files for Hcluster, $!\n");
+  }
+  printf("%1.3f secs to gather distance entries\n", (time()-$starttime));
+}
+
+sub run_hcluster {
+  my $self = shift;
+
+  my $starttime = time();
+  return if ($self->input_job->retry_count > 10);
+
+  my $hcluster_executable = $self->analysis->program_file;
+  unless (-e $hcluster_executable) {
+    if (`uname -m` =~ /ia64/) {
+      $hcluster_executable
+        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg";
+    } else {
+      $hcluster_executable
+        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/hcluster/hcluster_sg";
+    }
+  }
+
+  $self->compara_dba->dbc->disconnect_when_inactive(1);
+
+  my $cmd = $hcluster_executable;
+  my $max_count = int($self->param('max_gene_count')/2); # hcluster can joint up to (max_count+(max_count-1))
+  $cmd .= " ". "-m $max_count -w 0 -s 0.34 -O ";
+  $cmd .= "-C " . $self->worker_temp_directory . "hcluster.cat ";
+  $cmd .= "-o " . $self->worker_temp_directory . "hcluster.out ";
+  $cmd .= " " . $self->worker_temp_directory . "hcluster.txt";
+  print("Ready to execute:\n") if($self->debug);
+  print("$cmd\n") if($self->debug);
+  unless(system($cmd) == 0) {
+    $self->throw("error running hcluster command ' $cmd ': $!\n");
+  }
+  $self->compara_dba->dbc->disconnect_when_inactive(0);
+  printf("%1.3f secs to execute\n", (time()-$starttime));
 
   return 1;
-
 }
 
 sub store_clusters {
   my $self = shift;
 
-  $self->{retry} = $self->input_job->retry_count if ($self->input_job->retry_count > 10);
+  my $retry = $self->param('retry', ($self->input_job->retry_count > 10) ? $self->input_job->retry_count : undef );
 
-  my $mlssDBA = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my $pafDBA = $self->compara_dba->get_PeptideAlignFeatureAdaptor;
-  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
+  my $mlss_adaptor          = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+  my $protein_tree_adaptor  = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
   my $filename;
-  my $cluster_dir = $self->{cluster_dir};
-  if (defined($self->{retry})) {
+  my $cluster_dir = $self->param('cluster_dir');
+  if (defined($retry)) {
     $filename = $cluster_dir . "/" . "hcluster.out";
   } else {
     $filename = $self->worker_temp_directory . "/" . "hcluster.out";
@@ -184,25 +191,30 @@ sub store_clusters {
   # alignment process, which makes sense since they are going to take
   # longer to process anyway
   my $clusterset;
-  $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
   if (!defined($clusterset)) {
-    $self->{'ccEngine'} = new Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
-    $clusterset = $self->{'ccEngine'}->clusterset;
+    $self->param('ccEngine', Bio::EnsEMBL::Compara::Graph::ConnectedComponents->new() );
+    $clusterset = $self->param('ccEngine')->clusterset;
     $self->throw("no clusters generated") unless($clusterset);
 
     $clusterset->name("PROTEIN_TREES");
-    $treeDBA->store_node($clusterset);
+    $protein_tree_adaptor->store_node($clusterset);
     printf("clusterset_id %d\n", $clusterset->node_id);
-    $self->{'clusterset_id'} = $clusterset->node_id;
-    $mlssDBA->store($self->{'cluster_mlss'});
-    printf("MLSS %d\n", $self->{'cluster_mlss'}->dbID);
+    $self->param('clusterset_id', $clusterset->node_id);
+    $mlss_adaptor->store($self->param('cluster_mlss'));
+    printf("MLSS %d\n", $self->param('cluster_mlss')->dbID);
   }
 
-  my $mlss_id = $self->{'cluster_mlss'}->dbID;
-  $mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($self->{cluster_mlss}->method_link_type,$self->{cluster_mlss}->species_set)->dbID unless (defined($mlss_id));
+    my $mlss_id = $self->param('cluster_mlss')->dbID;
+    unless(defined($mlss_id)) {
+        $mlss_id = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs(
+            $self->param('cluster_mlss')->method_link_type,
+            $self->param('cluster_mlss')->species_set
+        )->dbID;
+    }
 
-  $self->{memberDBA} = $self->compara_dba->get_MemberAdaptor;
-  $self->{treeDBA} = $self->compara_dba->get_ProteinTreeAdaptor;
+  my $member_adaptor       = $self->compara_dba->get_MemberAdaptor;
+  my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor;
 
   open FILE, "$filename" or die $!;
   my $counter=1;
@@ -231,10 +243,10 @@ sub store_clusters {
     my $already_present;
     my $number_raw_cluster = scalar(@cluster_list);
     my $number_filtered_cluster = 0;
-    if (defined($self->{retry}) && $self->{retry} >= 20) {
+    if (defined($retry) && $retry >= 20) {
       foreach my $member_hcluster_id (@cluster_list) {
         my ($pmember_id,$genome_db_id) = split("_",$member_hcluster_id);
-        my $aligned_member = $self->{treeDBA}->fetch_AlignedMember_by_member_id_root_id($pmember_id, 1);
+        my $aligned_member = $protein_tree_adaptor->fetch_AlignedMember_by_member_id_root_id($pmember_id, 1);
         if (defined($aligned_member)) {
           $already_present->{$aligned_member->member_id} = 1;
         }
@@ -244,8 +256,8 @@ sub store_clusters {
 
     foreach my $member_hcluster_id (@cluster_list) {
       my ($pmember_id,$genome_db_id) = split("_",$member_hcluster_id);
-      if (defined($self->{retry}) && $self->{retry} >= 20) {
-        my $member = $self->{memberDBA}->fetch_by_dbID($pmember_id);
+      if (defined($retry) && $retry >= 20) {
+        my $member = $member_adaptor->fetch_by_dbID($pmember_id);
         my $longest_member = $member->gene_member->get_canonical_peptide_Member;
         next unless ($longest_member->member_id eq $member->member_id);
         next if (defined($already_present->{$member->member_id}));
@@ -253,7 +265,7 @@ sub store_clusters {
       my $node = new Bio::EnsEMBL::Compara::NestedSet;
       $node->node_id($pmember_id);
       $cluster->add_child($node);
-      $cluster->clusterset_id($self->{'clusterset_id'});
+      $cluster->clusterset_id($self->param('clusterset_id'));
       #leaves are NestedSet objects, bless to make into AlignedMember objects
       bless $node, "Bio::EnsEMBL::Compara::AlignedMember";
 
@@ -264,122 +276,42 @@ sub store_clusters {
     }
 
     # Store the cluster
-    $treeDBA->store($cluster);
+    $protein_tree_adaptor->store($cluster);
     #calc residue count total
     my $leafcount = scalar(@{$cluster->get_all_leaves});
     $cluster->store_tag('gene_count', $leafcount);
-    if (defined($self->{retry}) && $self->{retry} >= 20) {
+    if (defined($retry) && $retry >= 20) {
       $cluster->store_tag('readded_cluster', 1);
       print STDERR "Re-adding cluster ", $cluster->node_id, "with $leafcount members\n";
     }
-    # $cluster->store_tag('include_brh', $self->{'include_brh'});
-    # $cluster->store_tag('bsr_threshold', $self->{'bsr_threshold'});
   }
   close FILE;
-  return 1;
-}
-
-##########################################
-#
-# internal methods
-#
-##########################################
-
-sub gather_input {
-  my $self = shift;
-
-  my $starttime = time();
-  return undef if ($self->input_job->retry_count > 10);
-
-  my $cluster_dir = $self->{cluster_dir};
-  my $output_dir = $self->worker_temp_directory;
-  my $cmd;
-  print "gathering input in $output_dir\n" if ($self->debug);
-
-  $cmd ="cat $cluster_dir/*.hcluster.cat > $output_dir/hcluster.cat";
-  unless(system($cmd) == 0) {
-    $self->check_job_fail_options;
-    $self->throw("error gathering category files for Hcluster, $!\n");
-  }
-  printf("%1.3f secs to gather category entries\n", (time()-$starttime));
-  $cmd ="cat $cluster_dir/*.hcluster.txt > $output_dir/hcluster.txt";
-  unless(system($cmd) == 0) {
-    $self->check_job_fail_options;
-    $self->throw("error gathering distance files for Hcluster, $!\n");
-  }
-  printf("%1.3f secs to gather distance entries\n", (time()-$starttime));
-}
-
-sub run_hcluster {
-  my $self = shift;
-
-  my $starttime = time();
-  return undef if ($self->input_job->retry_count > 10);
-
-  my $hcluster_executable = $self->analysis->program_file;
-  unless (-e $hcluster_executable) {
-    if (`uname -m` =~ /ia64/) {
-      $hcluster_executable
-        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg";
-    } else {
-      $hcluster_executable
-        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/hcluster/hcluster_sg";
-    }
-  }
-
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-  my $cmd = $hcluster_executable;
-  my $max_count = int($self->{'max_gene_count'}/2); # hcluster can joint up to (max_count+(max_count-1))
-  $cmd .= " ". "-m $max_count -w 0 -s 0.34 -O ";
-  $cmd .= "-C " . $self->worker_temp_directory . "hcluster.cat ";
-  $cmd .= "-o " . $self->worker_temp_directory . "hcluster.out ";
-  $cmd .= " " . $self->worker_temp_directory . "hcluster.txt";
-  print("Ready to execute:\n") if($self->debug);
-  print("$cmd\n") if($self->debug);
-  unless(system($cmd) == 0) {
-    $self->check_job_fail_options;
-    $self->throw("error running hcluster command ' $cmd ': $!\n");
-  }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-  printf("%1.3f secs to execute\n", (time()-$starttime));
-
   return 1;
 }
 
 sub dataflow_clusters {
   my $self = shift;
 
-  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
+  my $retry = $self->param('retry');
+  my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
   my $clusterset;
-  $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
   if (!defined($clusterset)) {
-    $clusterset = $self->{'ccEngine'}->clusterset;
+    $clusterset = $self->param('ccEngine')->clusterset;
   }
   my $clusters = $clusterset->children;
   my $counter = 0;
   foreach my $cluster (@{$clusters}) {
     my $output_id = sprintf("{'protein_tree_id'=>%d, 'clusterset_id'=>%d}", 
                             $cluster->node_id, $clusterset->node_id);
-    if (defined($self->{retry}) and $self->{retry}==11 and $cluster->get_tagvalue("readded_cluster")!=1 ) {
+    if (defined($retry) and $retry==11 and $cluster->get_tagvalue("readded_cluster")!=1 ) {
       next; # Will skip flow unless is one of the readded
     }
     $self->dataflow_output_id($output_id, 2);
     printf("%10d clusters flowed\n", $counter) if($counter % 20 == 0);
     $counter++;
-  }
-}
-
-sub check_job_fail_options
-{
-  my $self = shift;
-
-  if($self->input_job->retry_count >= 5) {
-    $self->input_job->transient_error(0);
-
-    $self->throw("HclusterRun job failed >=5 times: try something else and FAIL it");
   }
 }
 

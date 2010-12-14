@@ -65,7 +65,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::QuickTreeBreak;
 
 use strict;
-use Getopt::Long;
 use IO::File;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -74,9 +73,15 @@ use Bio::EnsEMBL::Compara::Member;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::SimpleAlign;
 use Bio::AlignIO;
-use Bio::EnsEMBL::Hive;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    return {
+        'sreformat_exe'         => '/usr/local/ensembl/bin/sreformat',
+    };
+}
 
 
 =head2 fetch_input
@@ -91,27 +96,21 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'max_gene_count'} = 1500; # Can be overriden later
+    $self->check_if_exit_cleanly;
 
-  $self->throw("No input_id") unless defined($self->input_id);
+    my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+    my $protein_tree        = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
+                                        or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
+    $self->param('protein_tree', $protein_tree);
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-  $self->print_params if($self->debug);
-  $self->check_if_exit_cleanly;
 
-  unless($self->{'protein_tree'}) {
-    $self->throw("undefined ProteinTree as input\n");
-  }
-
-  # We fetch the mlssID that is later needed for the newly stored leaves
-  $self->{mlssDBA} = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my @protein_trees_mlsses = @{$self->{mlssDBA}->fetch_all_by_method_link_type('PROTEIN_TREES')};
-  $self->{mlssID} = $protein_trees_mlsses[0]->dbID || 0;
-
-  return 1;
+    # FIXME: This can be quite dangerous, as there may be more than one in the DB by accident:
+      #
+      # We fetch the mlssID that is later needed for the newly stored leaves
+    my @protein_trees_mlsses = @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('PROTEIN_TREES')};
+    $self->param('mlss_id', $protein_trees_mlsses[0]->dbID || 0 );
 }
 
 
@@ -127,9 +126,10 @@ sub fetch_input {
 
 
 sub run {
-  my $self = shift;
-  $self->check_if_exit_cleanly;
-  $self->run_quicktreebreak;
+    my $self = shift @_;
+
+    $self->check_if_exit_cleanly;
+    $self->run_quicktreebreak;
 }
 
 
@@ -145,29 +145,29 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->check_if_exit_cleanly;
-  $self->store_proteintrees;
+    $self->check_if_exit_cleanly;
+    $self->store_proteintrees;
 }
 
 
 sub DESTROY {
   my $self = shift;
 
-  if($self->{'protein_tree'}) {
+  if($self->param('protein_tree')) {
     printf("QuickTreeBreak::DESTROY releasing tree\n") if($self->debug);
 
-    $self->{'protein_tree'}->release_tree;
-    $self->{'protein_tree'} = undef;
+    $self->param('protein_tree')->release_tree;
+    $self->param('protein_tree', undef);
 
-    $self->{'max_subtree'}->release_tree;
-    $self->{'new_subtree'}->release_tree;
-    $self->{'remaining_subtree'}->release_tree;
+    $self->param('max_subtree')->release_tree;
+    $self->param('new_subtree')->release_tree;
+    $self->param('remaining_subtree')->release_tree;
 
-    $self->{'max_subtree'} = undef;
-    $self->{'new_subtree'} = undef;
-    $self->{'remaining_subtree'} = undef;
+    $self->param('max_subtree', undef);
+    $self->param('new_subtree', undef);
+    $self->param('remaining_subtree', undef);
   }
 
   $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
@@ -180,55 +180,13 @@ sub DESTROY {
 #
 ##########################################
 
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  if(defined($params->{'protein_tree_id'})) {
-    $self->{'protein_tree'} = $self->compara_dba->get_ProteinTreeAdaptor->fetch_node_by_node_id($params->{'protein_tree_id'});
-  }
-  
-  foreach my $key (qw[max_gene_count use_genomedb_id clusterset_id sreformat_exe]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  return;
-}
-
-
-sub print_params {
-  my $self = shift;
-
-  print("params:\n");
-  print("  tree_id   : ", $self->{'protein_tree'}->node_id,"\n") if($self->{'protein_tree'});
-}
-
 
 sub run_quicktreebreak {
   my $self = shift;
 
   my $starttime = time()*1000;
 
-  $self->{'input_aln'} = $self->dumpTreeMultipleAlignmentToWorkdir
-    (
-     $self->{'protein_tree'}
-    );
-  return unless($self->{'input_aln'});
-
-  $self->{'newick_file'} = $self->{'input_aln'} . "_quicktreebreak_tree.txt ";
+  my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree') ) or return;
 
   my $quicktreebreak_executable = $self->analysis->program_file || '';
 
@@ -241,7 +199,7 @@ sub run_quicktreebreak {
 
   my $cmd = $quicktreebreak_executable;
   $cmd .= " -out t -in a";
-  $cmd .= " ". $self->{'input_aln'};
+  $cmd .= " ". $input_aln;
 
   #/nfs/users/nfs_a/avilella/src/quicktree/quicktree_1.1/bin/quicktree -out t
   # -in a /tmp/worker.12270/proteintree_517373.stk
@@ -256,16 +214,17 @@ sub run_quicktreebreak {
   }
   $self->compara_dba->dbc->disconnect_when_inactive(0);
 
+  my $quicktree_newick_string = '';
   foreach my $line (@output) {
     $line =~ s/\n//;
-    $self->{quicktree_newick_string} .= $line;
+    $quicktree_newick_string .= $line;
   }
 
   #parse the tree into the datastucture
-  $self->generate_subtrees;
+  $self->generate_subtrees( $quicktree_newick_string );
 
   my $runtime = time()*1000-$starttime;
-  $self->{'protein_tree'}->store_tag('QuickTreeBreak_runtime_msec', $runtime);
+  $self->param('protein_tree')->store_tag('QuickTreeBreak_runtime_msec', $runtime);
 }
 
 
@@ -277,54 +236,41 @@ sub run_quicktreebreak {
 
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
-  my $tree = shift;
+  my $protein_tree = shift;
 
-  $self->{original_leafcount} = scalar(@{$tree->get_all_leaves});
-  if($self->{original_leafcount}<3) {
-    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", 
-           $tree->node_id);
+  $self->param('original_leafcount', scalar(@{$protein_tree->get_all_leaves}) );
+  if($self->param('original_leafcount')<3) {
+    printf(STDERR "tree cluster %d has <3 proteins - can not build a tree\n", $protein_tree->node_id);
     return undef;
   }
 
-  $self->{'file_root'} = 
-    $self->worker_temp_directory. "proteintree_". $tree->node_id;
-  $self->{'file_root'} =~ s/\/\//\//g;  # converts any // in path to /
+  my $file_root = $self->worker_temp_directory. "proteintree_". $protein_tree->node_id;
+  $file_root =~ s/\/\//\//g;  # converts any // in path to /
 
-  my $aln_file = $self->{'file_root'} . ".aln";
+  my $aln_file = $file_root . '.aln';
   return $aln_file if(-e $aln_file);
   if($self->debug) {
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $self->{original_leafcount});
+    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $self->param('original_leafcount') );
     print("aln_file = '$aln_file'\n");
   }
 
-  open(OUTSEQ, ">$aln_file")
-    or $self->throw("Error opening $aln_file for write");
+  open(OUTSEQ, ">$aln_file") or $self->throw("Error opening $aln_file for write");
 
   # Using append_taxon_id will give nice seqnames_taxonids needed for
   # njtree species_tree matching
-  my %sa_params = ($self->{use_genomedb_id}) ?	('-APPEND_GENOMEDB_ID', 1) :
-    ('-APPEND_TAXON_ID', 1);
+  my %sa_params = ($self->param('use_genomedb_id')) ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
 
-  my $sa = $tree->get_SimpleAlign
-    (
-     -id_type => 'MEMBER',
-     %sa_params
-    );
+  my $sa = $protein_tree->get_SimpleAlign ( -id_type => 'MEMBER', %sa_params );
   $sa->set_displayname_flat(1);
-  my $alignIO = Bio::AlignIO->newFh
-    (
-     -fh => \*OUTSEQ,
-     -format => "fasta"
-    );
+  my $alignIO = Bio::AlignIO->newFh ( -fh => \*OUTSEQ, -format => "fasta" );
   print $alignIO $sa;
 
   close OUTSEQ;
 
   print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
-  my $stk_file = $self->{'file_root'} . ".stk";
+  my $stk_file = $file_root . '.stk';
   
-  my $sreformat_exe = $self->{sreformat_exe};
-  $sreformat_exe = '/usr/local/ensembl/bin/sreformat' unless -e $sreformat_exe;
+  my $sreformat_exe = $self->param('sreformat_exe');
   
   my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
 
@@ -333,7 +279,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     $self->throw("error running sreformat with cmd $cmd: $!\n");
   }
 
-  $self->{'input_aln'} = $stk_file;
   return $stk_file;
 }
 
@@ -354,28 +299,26 @@ sub store_proteintrees {
 sub store_clusters {
   my $self = shift;
 
-  my $mlssDBA = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my $pafDBA = $self->compara_dba->get_PeptideAlignFeatureAdaptor;
-  my $treeDBA = $self->compara_dba->get_ProteinTreeAdaptor;
+  my $protein_tree_adaptor = $self->compara_dba->get_ProteinTreeAdaptor;
   my $starttime = time();
 
-  my $clusterset = $treeDBA->fetch_node_by_node_id($self->{'clusterset_id'});
+  my $clusterset = $protein_tree_adaptor->fetch_node_by_node_id($self->param('clusterset_id'));
   $self->throw("no clusterset found: $!\n") unless($clusterset);
 
   $clusterset->no_autoload_children; # Important so that only the two below are used
-  $clusterset->add_child($self->{new_subtree});
-  $clusterset->add_child($self->{remaining_subtree});
+  $clusterset->add_child($self->param('new_subtree'));
+  $clusterset->add_child($self->param('remaining_subtree'));
 
   my $clusters = $clusterset->children;
   foreach my $cluster (@{$clusters}) {
-    my $node_id = $treeDBA->store($cluster);
+    my $node_id = $protein_tree_adaptor->store($cluster);
     # Although the leaves wont have the right root_id pointing to the $cluster->node_id,
     # this will be solved when we store back the results after the new MSA job.
 
     #calc residue count total
     my $leafcount = scalar(@{$cluster->get_all_leaves});
     $cluster->store_tag('gene_count', $leafcount);
-    $cluster->store_tag('original_cluster', $self->{'original_cluster'}->node_id);
+    $cluster->store_tag('original_cluster', $self->param('original_cluster')->node_id);
     print STDERR "Stored $node_id with $leafcount leaves\n" if ($self->debug);
 
     next if($leafcount<2);
@@ -394,20 +337,19 @@ sub delete_original_cluster {
   my $self = shift;
 
   my $delete_time = time();
-  my $original_cluster = $self->{'original_cluster'}->node_id;
- #   $original_cluster->store_tag('cluster_had_to_be_broken_down',1);
+  my $original_cluster_node_id = $self->param('original_cluster')->node_id;
   $self->delete_old_orthotree_tags;
 
-  my $tree_node_id = $original_cluster;
+  my $tree_node_id = $original_cluster_node_id;
   my $sql1 = "delete h.*, hm.* from homology h, homology_member hm where h.homology_id=hm.homology_id and h.tree_node_id=$tree_node_id";
   my $sth1 = $self->dbc->prepare($sql1);
   $sth1->execute;
   $sth1->finish;
 
-  $self->{original_cluster}->adaptor->store_supertree_node_and_under($self->{original_cluster});
-  printf("%1.3f secs to copy old cluster $original_cluster into supertree tables\n", time()-$delete_time);
-  $self->{original_cluster}->adaptor->delete_node_and_under($self->{original_cluster});
-  printf("%1.3f secs to delete old cluster $original_cluster\n", time()-$delete_time);
+  $self->param('original_cluster')->adaptor->store_supertree_node_and_under( $self->param('original_cluster') );
+  printf("%1.3f secs to copy old cluster $original_cluster_node_id into supertree tables\n", time()-$delete_time);
+  $self->param('original_cluster')->adaptor->delete_node_and_under($self->param('original_cluster'));
+  printf("%1.3f secs to delete old cluster $original_cluster_node_id\n", time()-$delete_time);
 
   return 1;
 
@@ -418,9 +360,9 @@ sub delete_old_orthotree_tags {
 
   print "deleting old orthotree tags\n" if ($self->debug);
   my @node_ids;
-  my $left_index  = $self->{'protein_tree'}->left_index;
-  my $right_index = $self->{'protein_tree'}->right_index;
-  my $tree_root_node_id = $self->{'protein_tree'}->node_id;
+  my $left_index  = $self->param('protein_tree')->left_index;
+  my $right_index = $self->param('protein_tree')->right_index;
+  my $tree_root_node_id = $self->param('protein_tree')->node_id;
   # Include the root_id as well as the rest of the nodes within the tree
   push @node_ids, $tree_root_node_id;
   my $sql = "select ptn.node_id from protein_tree_node ptn where ptn.left_index>$left_index and ptn.right_index<$right_index";
@@ -455,22 +397,23 @@ sub delete_old_orthotree_tags {
 }
 
 sub generate_subtrees {
-  my $self = shift;
-  my $newick =  $self->{'quicktree_newick_string'};
-  my $tree = $self->{'protein_tree'};
+    my $self                    = shift @_;
+    my $quicktree_newick_string = shift @_;
+
+    my $mlss_id = $self->param('mlss_id');
+    my $protein_tree = $self->param('protein_tree');
 
   #cleanup old tree structure- 
   #  flatten and reduce to only AlignedMember leaves
-  $tree->flatten_tree;
-  $tree->print_tree(20) if($self->debug);
-  foreach my $node (@{$tree->get_all_leaves}) {
+  $protein_tree->flatten_tree;
+  $protein_tree->print_tree(20) if($self->debug);
+  foreach my $node (@{$protein_tree->get_all_leaves}) {
     next if($node->isa('Bio::EnsEMBL::Compara::AlignedMember'));
     $node->disavow_parent;
   }
 
   #parse newick into a new tree object structure
-  my $newtree = 
-    Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
+  my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
   $newtree->print_tree(20) if($self->debug > 1);
   # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newtree->get_all_leaves}) {
@@ -484,63 +427,63 @@ sub generate_subtrees {
 
   # Break the tree by immediate children recursively
   my @children;
-  my $keep_braking = 1;
-  $self->{max_subtree} = $newtree;
-  while ($keep_braking) {
-    @children = @{$self->{max_subtree}->children};
+  my $keep_breaking = 1;
+  $self->param('max_subtree', $newtree);
+  while ($keep_breaking) {
+    @children = @{$self->param('max_subtree')->children};
     my $max_num_leaves = 0;
     foreach my $child (@children) {
       my $num_leaves = scalar(@{$child->get_all_leaves});
       if ($num_leaves > $max_num_leaves) {
         $max_num_leaves = $num_leaves;
-        $self->{max_subtree} = $child;
+        $self->param('max_subtree', $child);
       }
     }
     # Broke down to half, happy with it
-    my $proportion = ($max_num_leaves*100/$self->{original_leafcount});
+    my $proportion = ($max_num_leaves*100/$self->param('original_leafcount') );
     print STDERR "QuickTreeBreak iterate -- $max_num_leaves ($proportion)\n" if ($self->debug);
     if ($proportion <= 50) {
-      $keep_braking = 0;
+      $keep_breaking = 0;
     }
   }
 
   # Create a copy of what is not max_subtree
-  $self->{remaining_subtree} = $self->{protein_tree}->copy;
-  $self->{new_subtree}       = $self->{protein_tree}->copy;
-  $self->{new_subtree}->flatten_tree;
-  $self->{remaining_subtree}->flatten_tree;
+  $self->param('remaining_subtree', $self->param('protein_tree')->copy);
+  $self->param('new_subtree',       $self->param('protein_tree')->copy);
+  $self->param('new_subtree')->flatten_tree;
+  $self->param('remaining_subtree')->flatten_tree;
   my $subtree_leaves;
-  foreach my $leaf (@{$self->{max_subtree}->get_all_leaves}) {
+  foreach my $leaf (@{$self->param('max_subtree')->get_all_leaves}) {
     $subtree_leaves->{$leaf->member_id} = 1;
   }
-  foreach my $leaf (@{$self->{new_subtree}->get_all_leaves}) {
+  foreach my $leaf (@{$self->param('new_subtree')->get_all_leaves}) {
     unless (defined $subtree_leaves->{$leaf->member_id}) {
       print $leaf->name," leaf disavowing parent\n" if $self->debug;
       $leaf->disavow_parent;
     }
-    $leaf->method_link_species_set_id($self->{mlssID});
+    $leaf->method_link_species_set_id($self->param('mlss_id'));
   }
-  foreach my $leaf (@{$self->{remaining_subtree}->get_all_leaves}) {
+  foreach my $leaf (@{$self->param('remaining_subtree')->get_all_leaves}) {
     if (defined $subtree_leaves->{$leaf->member_id}) {
       print $leaf->name," leaf disavowing parent\n" if $self->debug;
       $leaf->disavow_parent;
     }
-    $leaf->method_link_species_set_id($self->{mlssID});
+    $leaf->method_link_species_set_id($self->param('mlss_id'));
   }
-  $self->{remaining_subtree} = $self->{remaining_subtree}->minimize_tree;
-  $self->{new_subtree} = $self->{new_subtree}->minimize_tree;
+  $self->param('remaining_subtree', $self->param('remaining_subtree')->minimize_tree);
+  $self->param('new_subtree',       $self->param('new_subtree')->minimize_tree);
 
   # Some checks
-  $self->throw("QuickTreeBreak: Failed to generate subtrees: $!\n")  unless(defined($self->{'new_subtree'}) && defined($self->{'remaining_subtree'}));
-  my  $final_original_num = scalar @{$self->{protein_tree}->get_all_leaves};
-  my       $final_max_num = scalar @{$self->{new_subtree}->get_all_leaves};
-  my $final_remaining_num = scalar @{$self->{remaining_subtree}->get_all_leaves};
+  $self->throw("QuickTreeBreak: Failed to generate subtrees: $!\n")  unless(defined($self->param('new_subtree')) && defined($self->param('remaining_subtree')));
+  my  $final_original_num = scalar @{$self->param('protein_tree')->get_all_leaves};
+  my       $final_max_num = scalar @{$self->param('new_subtree')->get_all_leaves};
+  my $final_remaining_num = scalar @{$self->param('remaining_subtree')->get_all_leaves};
 
   if(($final_max_num + $final_remaining_num) != $final_original_num) {
     $self->throw("QuickTreeBreak: Incorrect sum of leaves [$final_max_num + $final_remaining_num != $final_original_num]: $!\n");
   }
 
-  $self->{'original_cluster'} = $self->{protein_tree};
+  $self->param('original_cluster', $self->param('protein_tree'));
   return undef;
 }
 

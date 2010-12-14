@@ -55,7 +55,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::OtherParalogs;
 
 use strict;
-use Getopt::Long;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Member;
@@ -63,9 +62,16 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Hive;
+
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    return {
+            'store_homologies'      => 1,
+    };
+}
 
 
 =head2 fetch_input
@@ -80,71 +86,16 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
-  my( $self) = @_;
+    my $self = shift @_;
 
-  $self->{'tree_scale'} = 1;
-  $self->{'store_homologies'} = 1;
+    $self->print_params if($self->debug);
 
-  $self->throw("No input_id") unless defined($self->input_id);
+    my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
+    my $protein_tree        = $self->compara_dba->get_SuperProteinTreeAdaptor->fetch_node_by_node_id( $protein_tree_id )
+                                        or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
+    $self->param('protein_tree', $protein_tree);
 
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
-
-  if($self->{analysis_data_id}) {
-    my $analysis_data_id = $self->{analysis_data_id};
-    my $analysis_data_params = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id);
-    $self->get_params($analysis_data_params);
-  }
-
-  $self->print_params if($self->debug);
-
-  my $starttime = time();
-
-  $self->{'streeDBA'} = $self->compara_dba->get_SuperProteinTreeAdaptor;
-  $self->{homologyDBA} = $self->compara_dba->get_HomologyAdaptor;
-  $self->{'protein_tree'} =  $self->{'streeDBA'}->fetch_node_by_node_id($self->{'protein_tree_id'});
-
-  if($self->debug) {
-    $self->{'protein_tree'}->print_tree($self->{'tree_scale'});
-    printf("time to fetch tree : %1.3f secs\n" , time()-$starttime);
-  }
-  unless($self->{'protein_tree'}) {
-    $self->throw("undefined ProteinTree as input\n");
-  }
-
-  return 1;
-}
-
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n") if($self->debug);
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if($self->debug) {
-    foreach my $key (keys %$params) {
-      print("  $key : ", $params->{$key}, "\n");
-    }
-  }
-
-  foreach my $key (qw[protein_tree_id analysis_data_id]) {
-    my $value = $params->{$key};
-    $self->{$key} = $value if defined $value;
-  }
-
-  return;
-}
-
-sub print_params {
-  my $self = shift;
-
-  print("params:\n");
-  printf("  tree_id   : %d\n", $self->{'protein_tree_id'});
+    $self->param('homology_adaptor', $self->compara_dba->get_HomologyAdaptor);
 }
 
 
@@ -159,9 +110,9 @@ sub print_params {
 =cut
 
 sub run {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->run_otherparalogs;
+    $self->run_otherparalogs;
 }
 
 
@@ -177,9 +128,9 @@ sub run {
 
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->store_other_paralogs;
+    $self->store_other_paralogs;
 }
 
 
@@ -193,7 +144,7 @@ sub write_output {
 
 sub run_otherparalogs {
   my $self = shift;
-  my $tree = $self->{'protein_tree'};
+  my $tree = $self->param('protein_tree');
 
   my $tmp_time = time();
 
@@ -210,10 +161,7 @@ sub run_otherparalogs {
   while (my $protein1 = shift @all_protein_leaves) {
     foreach my $protein2 (@all_protein_leaves) {
       next unless ($protein1->genome_db_id == $protein2->genome_db_id);
-      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link
-        (
-         $protein1, $protein2, 0
-        );
+      my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link ( $protein1, $protein2, 0 );
       $genepairlink->add_tag("tree_node_id", $tree_node_id);
       push @genepairlinks, $genepairlink;
       print STDERR "build graph $graphcount\n" if ($graphcount++ % 10 == 0);
@@ -229,7 +177,7 @@ sub run_otherparalogs {
     printf("%d pairings\n", scalar(@genepairlinks));
   }
 
-  $self->{'other_paralog_links'} = \@genepairlinks;
+  $self->param('other_paralog_links', \@genepairlinks);
 
   return 1;
 }
@@ -247,18 +195,20 @@ sub other_paralog {
   return 1;
 }
 
+
 sub store_other_paralogs {
   my $self = shift;
 
-  my $linkscount = 0;
-  foreach my $genepairlink (@{$self->{'other_paralog_links'}}) {
-    my $homology = $self->store_gene_link_as_homology($genepairlink);
-    print STDERR "homology links $linkscount\n" if ($linkscount++ % 500 == 0);
-  }
+    $self->param('mlss_hash', {});
+
+    my $linkscount = 0;
+    foreach my $genepairlink (@{$self->param('other_paralog_links')}) {
+        my $homology = $self->store_gene_link_as_homology($genepairlink);
+        print STDERR "homology links $linkscount\n" if ($linkscount++ % 500 == 0);
+    }
 }
 
-sub store_gene_link_as_homology
-{
+sub store_gene_link_as_homology {
   my $self = shift;
   my $genepairlink  = shift;
 
@@ -273,18 +223,18 @@ sub store_gene_link_as_homology
   my $member_id1 = $protein1->gene_member->member_id;
   my $member_id2 = $protein2->gene_member->member_id;
 
-  my $stored_paralog = $self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2,1);
+  my $stored_paralog = $self->param('homology_adaptor')->fetch_by_Member_id_Member_id($member_id1,$member_id2,1);
 
   return if ($stored_paralog);
 
   # Get or create method_link_species_set
-  my $mlss = $self->{_mlss}{$protein1->genome_db->dbID};
+  my $mlss = $self->param('mlss_hash')->{$protein1->genome_db->dbID};
   if (!$mlss) {
     $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
     $mlss->method_link_type("ENSEMBL_PARALOGUES");
     $mlss->species_set([$protein1->genome_db]);
     $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-    $self->{_mlss}{$protein1->genome_db->dbID} = $mlss;
+    $self->param('mlss_hash')->{$protein1->genome_db->dbID} = $mlss;
   }
 
   # create an Homology object
@@ -297,8 +247,8 @@ sub store_gene_link_as_homology
   $homology->method_link_type($mlss->method_link_type);
   $homology->method_link_species_set($mlss);
 
-  my $key = $mlss->dbID . "_" . $protein1->dbID;
-  $self->{_homology_consistency}{$key}{$type} = 1;
+  #my $key = $mlss->dbID . "_" . $protein1->dbID;
+  #$self->param('_homology_consistency')->{$key}{$type} = 1;
   #$homology->dbID(-1);
 
   # NEED TO BUILD THE Attributes (ie homology_members)
@@ -334,43 +284,51 @@ sub store_gene_link_as_homology
 
   ## Check if it has already been stored, in which case we dont need to store again
   my $matching_homology = 0;
-  if ($self->input_job->retry_count > 0 && !defined($self->{old_homologies_deleted})) {
+  if ($self->input_job->retry_count > 0) {
     my $member_id1 = $protein1->gene_member->member_id;
     my $member_id2 = $protein2->gene_member->member_id;
     if ($member_id1 == $member_id2) {
-      my $tree_id = $self->{protein_tree}->node_id;
+      my $tree_id = $self->param('protein_tree')->node_id;
       my $pmember_id1 = $protein1->member_id; my $pstable_id1 = $protein1->stable_id;
       my $pmember_id2 = $protein2->member_id; my $pstable_id2 = $protein2->stable_id;
       $self->throw("$member_id1 ($pmember_id1 - $pstable_id1) and $member_id2 ($pmember_id2 - $pstable_id2) shouldn't be the same");
     }
-    my $stored_homology = @{$self->{homologyDBA}->fetch_by_Member_id_Member_id($member_id1,$member_id2)}[0];
-    if (defined($stored_homology)) {
-      $matching_homology = 1;
-      $matching_homology = 0 if ($stored_homology->description ne $homology->description);
-      $matching_homology = 0 if ($stored_homology->subtype ne $homology->subtype);
-      $matching_homology = 0 if ($stored_homology->ancestor_node_id ne $homology->ancestor_node_id);
-      $matching_homology = 0 if ($stored_homology->tree_node_id ne $homology->tree_node_id);
-      $matching_homology = 0 if ($stored_homology->method_link_type ne $homology->method_link_type);
-      $matching_homology = 0 if ($stored_homology->method_link_species_set->dbID ne $homology->method_link_species_set->dbID);
+
+    my $stored_homology_list = $self->param('homology_adaptor')->fetch_by_Member_id_Member_id($member_id1,$member_id2);
+
+    if(my $stored_homology = $stored_homology_list && $stored_homology_list->[0]) {
+
+        if( ($stored_homology->description ne $homology->description)
+        or ($stored_homology->subtype ne $homology->subtype)
+        or ($stored_homology->ancestor_node_id ne $homology->ancestor_node_id)
+        or ($stored_homology->tree_node_id ne $homology->tree_node_id)
+        or ($stored_homology->method_link_type ne $homology->method_link_type)
+        or ($stored_homology->method_link_species_set->dbID ne $homology->method_link_species_set->dbID)
+        ) {
+            $matching_homology = 0;
+
+                # Delete old one, then proceed to store new one:
+            my $homology_id = $stored_homology->dbID;
+            my $sql1 = "delete from homology where homology_id=$homology_id";
+            my $sql2 = "delete from homology_member where homology_id=$homology_id";
+            my $sth1 = $self->dbc->prepare($sql1);
+            my $sth2 = $self->dbc->prepare($sql2);
+            $sth1->execute;
+            $sth2->execute;
+            $sth1->finish;
+            $sth2->finish;
+
+        } else {
+            $matching_homology = 1;
+        }
+
     }
 
-    # Delete old one, then proceed to store new one
-    if (defined($stored_homology) && (0 == $matching_homology)) {
-      my $homology_id = $stored_homology->dbID;
-      my $sql1 = "delete from homology where homology_id=$homology_id";
-      my $sql2 = "delete from homology_member where homology_id=$homology_id";
-      my $sth1 = $self->dbc->prepare($sql1);
-      my $sth2 = $self->dbc->prepare($sql2);
-      $sth1->execute;
-      $sth2->execute;
-      $sth1->finish;
-      $sth2->finish;
-    }
   }
 
-  if($self->{'store_homologies'} && 0 == $matching_homology) {
+  if($self->param('store_homologies') && 0 == $matching_homology) {
     print STDERR "Storing new paralogy\n" if ($self->debug);
-    $self->{'homologyDBA'}->store($homology);
+    $self->param('homology_adaptor')->store($homology);
   }
 
   return $homology;
@@ -478,7 +436,7 @@ sub generate_attribute_arguments {
 sub get_matrix_hash {
   my $self = shift;
 
-  return $self->{'matrix_hash'} if (defined $self->{'matrix_hash'});
+  return $self->param('matrix_hash') if ($self->param('matrix_hash'));
 
   my $BLOSUM62 = "#  Matrix made by matblas from blosum62.iij
 #  * column uses minimum score
@@ -546,9 +504,7 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
     }
   }
 
-  $self->{'matrix_hash'} = \%matrix_hash;
-
-  return $self->{'matrix_hash'};
+  return $self->param('matrix_hash', \%matrix_hash);
 }
 
 1;
