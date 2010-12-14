@@ -37,10 +37,12 @@ sub create_element {
   ## Also adds attributes and inner_HTML/inner_text
   ## @params Element type
   ## @params HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text
+  ## @params HashRef as accepted by element object's configure() method
   ## @return Element subclass object
-  my ($self, $element_type, $attributes)  = @_;
+  my ($self, $element_type, $attributes, $configs)  = @_;
 
   $attributes ||= {};
+  $configs    ||= {};
 
   my $node_class = $self->_get_mapped_element_class(lc $element_type);
   my $valid_element = $self->dynamic_use($node_class);
@@ -52,7 +54,8 @@ sub create_element {
   my $element = $node_class->new($self);
   $element->inner_text($attributes->{'inner_text'}) and delete $attributes->{'inner_text'} if exists $attributes->{'inner_text'};
   $element->inner_HTML($attributes->{'inner_HTML'}) and delete $attributes->{'inner_HTML'} if exists $attributes->{'inner_HTML'}; #overrides inner_text  
-  $element->set_attributes($attributes);
+  $element->set_attributes($attributes) if scalar keys %$attributes;
+  $element->configure($configs) if scalar keys %$configs;
   return $element;
 }
 
