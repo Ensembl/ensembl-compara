@@ -31,8 +31,6 @@ sub content {
   $dir = '' if $dir !~ /_/;
   
   my $html;
-  $html .= '<div class="modal_reload"></div>' if $hub->param('reload');
-  $html .= '<h3>Your data</h3>'; # Uploads
  
   my ($saved_data, $temp_data);
   if ($user) { 
@@ -70,6 +68,25 @@ sub content {
     push @data, @tmp;
     $temp_data = 1;
   }
+
+  # URL
+  my $dummy_form = $self->new_form({'action' => '#', 'method' => 'get'});
+  $dummy_form->add_notes($temp_data && $user && $user->find_administratable_groups
+    ? {
+      'id'      => 'manage_user_data',
+      'heading' => 'Sharing with groups',
+      'text'    => qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>)
+    }
+    : {
+      'id'      => 'user_data_formats',
+      'heading' => 'Help',
+      'text'    => qq(<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>),
+    }
+  );
+  $dummy_form->force_reload_on_submit if $hub->param('reload');
+  $html .= $dummy_form->render;
+
+  $html .= '<h2 class="legend">Your data</h2>'; # Uploads
 
   if (@data) {
     my $table = $self->new_table;
@@ -293,22 +310,6 @@ sub content {
   } else {
     $html .= qq(<p class="space-below">You have no custom data.</p>);
   }
-
-  # URL
-  my $dummy_form = $self->new_form({'action' => '#'});
-  $dummy_form->add_notes($temp_data && $user && $user->find_administratable_groups
-    ? {
-      'id'      => 'manage_user_data',
-      'heading' => 'Sharing with groups',
-      'text'    => qq(<p>Please note that you cannot share temporary data with a group until you save it to your account.</p>)
-    }
-    : {
-      'id'      => 'user_data_formats',
-      'heading' => 'Help',
-      'text'    => qq(<p class="space-below"><a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a></p>),
-    }
-  );
-  $html .= $dummy_form->render;
 
   return $html;
 }
