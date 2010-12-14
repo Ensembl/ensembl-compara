@@ -27,8 +27,9 @@ sub render_normal {
   # show everything by default
   $options{show_reads} = 1 unless defined $options{show_reads}; # show reads by default 
   $options{show_coverage} = 1 unless defined $options{show_coverage}; # show coverage by default 
-  $options{show_consensus} = $options{show_reads} unless defined $options{show_consensus}; # show consensus if showing reads
-  
+  #$options{show_consensus} = $options{show_reads} unless defined $options{show_consensus}; # show consensus if showing reads
+  $options{show_consensus} = 1 unless defined $options{show_consensus}; # show consensus by default  
+
   # check threshold
   my $slice = $self->{'container'};
   if (my $threshold = $self->my_config('threshold')) {
