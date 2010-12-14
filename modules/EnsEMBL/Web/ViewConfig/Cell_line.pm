@@ -87,7 +87,7 @@ sub form {
   $fieldset->{$view_config->SELECT_ALL_FLAG} = 1;
   my $matrix = $fieldset->add_matrix;
   
-  $matrix->set_input_prefix('opt_cft_');
+  $matrix->configure({'name_prefix' => 'opt_cft_', 'selectall_label' => '<b>Select features:</b>'});
   
   foreach my $cell_line (sort keys %cell_lines) {
     $cell_line =~ s/\:\w*//;
