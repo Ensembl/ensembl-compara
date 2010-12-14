@@ -1,0 +1,10 @@
+#!/usr/local/bin/perl
+
+use CGI;
+
+my $cgi = new CGI;
+my $url = $cgi->unescape($cgi->param('url'));
+
+$cgi->redirect($url);
+
+1;
