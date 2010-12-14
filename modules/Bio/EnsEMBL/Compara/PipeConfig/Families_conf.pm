@@ -7,6 +7,7 @@
 # rel.58b:  init_pipeline.pl execution took 6m30, pipeline execution [with some debugging in between] took 5*24h. Should be 4*24h at most.
 # rel.59:   init_pipeline.pl execution took 6m45, pipeline execution took 13.5 days [prob. because of MyISAM engine left there by mistake]
 # rel.60:   init_pipeline.pl execution took 16m, pipeline execution took 6 full days (lost about one day on debugging an unusual case, code fixed)
+# rel.61:   init_pipeline.pl doesn't take considerable time anymore, since table copying has moved into the pipeline proper.
 
 #
 ## Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
@@ -33,7 +34,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        release         => '60',
+        release         => '61',
         rel_suffix      => '',    # an empty string by default, a letter otherwise
         rel_with_suffix => $self->o('release').$self->o('rel_suffix'),
 
@@ -42,7 +43,7 @@ sub default_options {
             # code directories:
         sec_root_dir    => '/software/ensembl/compara',
         blast_bin_dir   => $self->o('sec_root_dir') . '/ncbi-blast-2.2.23+/bin',
-        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-10-201/bin',    # the newest and never tested with Families, OMG...
+        mcl_bin_dir     => $self->o('sec_root_dir') . '/mcl-10-201/bin',
         mafft_root_dir  => $self->o('sec_root_dir') . '/mafft-6.522',
             
             # data directories:
@@ -67,7 +68,7 @@ sub default_options {
 
             # family database connection parameters (our main database):
         pipeline_db => {
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -88,7 +89,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'ensembl_compara_59',
+            -dbname => 'ensembl_compara_60',
         },
 
         master_db => {     # used by the StableIdMapper as the location of the master 'mapping_session' table
@@ -107,20 +108,8 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        'mysqldump '.$self->dbconn_2_mysql('homology_db', 0).' '.$self->o('homology_db','-dbname')
-                    .' -t ncbi_taxa_name ncbi_taxa_node method_link genome_db species_set method_link_species_set '
-                    .'| mysql '.$self->dbconn_2_mysql('pipeline_db', 1),
-
-        'mysqldump '.$self->dbconn_2_mysql('homology_db', 0).' '.$self->o('homology_db','-dbname')
-                   .' member sequence family family_member | sed "s/ENGINE=MyISAM/ENGINE=InnoDB/" ' # make sure we dump the schema as well - this allows us to fix the ENGINE!
-                   .'| mysql '.$self->dbconn_2_mysql('pipeline_db', 1),
-
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'ALTER TABLE member   AUTO_INCREMENT=100000001'",
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'ALTER TABLE sequence AUTO_INCREMENT=100000001'",
-
         'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('work_dir'),
-
     ];
 }
 
@@ -160,6 +149,45 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
+
+        {   -logic_name => 'copy_table_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'   => $self->o('homology_db'),
+                'inputlist' => [ 'genome_db', 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'member', 'sequence' ],
+                'input_id'  => { 'src_db_conn' => '#db_conn#', 'table' => '#_range_start#' },
+                'fan_branch_code' => 2,
+            },
+            -input_ids => [
+                {},
+            ],
+            -flow_into => {
+                2 => [ 'copy_table'  ],
+                1 => [ 'offset_and_innodbise_tables' ],  # backbone
+            },
+        },
+
+        {   -logic_name    => 'copy_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'mode'          => 'overwrite',
+            },
+            -hive_capacity => 10,
+        },
+
+        {   -logic_name => 'offset_and_innodbise_tables',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql'   => [
+                    'ALTER TABLE member         AUTO_INCREMENT=100000001',
+                    'ALTER TABLE sequence       AUTO_INCREMENT=100000001',
+                    'ALTER TABLE family         ENGINE=InnoDB',
+                    'ALTER TABLE family_member  ENGINE=InnoDB',
+                ],
+            },
+            -wait_for => [ 'copy_table_factory', 'copy_table' ],    # have to wait until the tables have been copied
+        },
+
         {   -logic_name => 'load_uniprot_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -172,6 +200,7 @@ sub pipeline_analyses {
                 { 'input_id' => { 'srs' => 'SWISSPROT', 'tax_div' => '#_range_start#' } },
                 { 'input_id' => { 'srs' => 'SPTREMBL',  'tax_div' => '#_range_start#' } },
             ],
+            -wait_for => [ 'offset_and_innodbise_tables' ],
             -flow_into => {
                 2 => [ 'load_uniprot' ],
                 1 => { 'remove_members_with_unknown_taxa' => { 'fasta_name' => '#work_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#', 'blastdb_dir' => '#blastdb_dir#' } },
