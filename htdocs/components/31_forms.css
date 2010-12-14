@@ -101,9 +101,6 @@ table.matrix .bg2 {
 table.matrix .ff-mcell {
   text-align: center;
 }
-table.matrix td.ff-mcell {
-  border-left: [[PANEL_BG]] solid 1px;
-}
 table.matrix label {
   white-space: nowrap;
   cursor: pointer;
