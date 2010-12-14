@@ -261,7 +261,10 @@ sub add_hidden {
 
 sub add_notes {
   ## Appends a div to the fieldset with notes HTML inside
-  ## @params String text or HashRef {'text' =>? , 'class' => ?} or ArrayRef of either of these for multiple addition
+  ## @params String text or HashRef {'text' =>? , 'class' => ?, 'list' => ?, 'serialise' => 1/0} or ArrayRef of either of these for multiple addition
+  ##  - text      Text to go inside the notes
+  ##  - list      ArrayRef of Strings that need to go inside the notes as a list
+  ##  - serialise Flag if on, uses <ol> for the list, otherwise <ul>.
   ## @return DOM::Node::Element::Div object
   my ($self, $params) = @_;
   
