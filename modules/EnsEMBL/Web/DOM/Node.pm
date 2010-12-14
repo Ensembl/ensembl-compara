@@ -4,6 +4,7 @@ use strict;
 
 use HTML::Entities qw(encode_entities decode_entities);
 use Clone qw(clone);
+use Data::Dumper;
 
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Tools::RandomString;
@@ -550,6 +551,33 @@ sub is_same_as {
   my ($self, $other) = @_;
   return 0 unless defined $other;
   return $self eq $other ? 1 : 0;
+}
+
+sub dump {
+  # Dumps the tree considering the node to be the top level
+  # Can be helpful in debuging the tree
+  my ($self, $indent, $output) = @_;
+  my $do_warn = 0;
+  $output = [] and $do_warn = 1 and $indent = '- ' unless ($indent);
+  
+  (my $string = "$self") =~ s/EnsEMBL\:\:Web\:\://;
+  my $extras = [], my %attr, my $val, my $i = 0;
+  foreach my $attrib_name (keys %{$self->{'_attributes'}}) {
+    if ($attrib_name =~ /^(style|class)$/) {
+      $1 eq 'style' and $attr{$i++.$1} = $_.':'.$self->{'_attributes'}{$1}{$_}
+      or $1 eq 'class' and $attr{$i++.$1} = $_ for keys %{$self->{'_attributes'}{$1}};
+    }
+    else {
+      $attr{$i++.$attrib_name} = $self->{'_attributes'}{$attrib_name};
+    }
+  }
+  $val = substr $_, 1 and push @$extras, qq($val = $attr{$_}) for keys %attr;
+  push @$extras, qq(html = $self->{'_text'}) unless $self->has_child_nodes || $self->is_empty;
+  push @$extras, qq(flag: $_ = $self->{'_flags'}{$_}) for keys %{$self->{'_flags'}};
+  $string .= ' {'.join(', ', @$extras).'}';
+  push @$output, $indent.$string;
+  $_->dump($indent.'- ', $output) for @{$self->child_nodes};
+  warn Data::Dumper->Dump([$output], ['________TREE________']) if $do_warn;
 }
 
 sub _adjust_child_nodes {
