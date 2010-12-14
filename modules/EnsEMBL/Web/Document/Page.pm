@@ -433,17 +433,14 @@ sub html_template {
     <div id="min_width_holder">
       <div id="masthead" class="js_panel">
         <input type="hidden" class="panel_type" value="Masthead" />
-        <div class="content">
-          <div class="mh print_hide">
-            <span class="logo_holder">$elements->{'logo'}</span>
-            <div class="account_holder">$elements->{'account'}</div>
-            <div class="tools_holder">$elements->{'tools'}</div>
-            <div class="search_holder print_hide">$elements->{'search_box'}</div>
-          </div>
-          $tabs
+        $elements->{'logo'}
+        <div class="mh print_hide">
+          <div class="account_holder">$elements->{'account'}</div>
+          <div class="tools_holder">$elements->{'tools'}</div>
+          <div class="search_holder print_hide">$elements->{'search_box'}</div>
         </div>
+        $tabs
       </div>
-      <div class="invisible"></div>
       $main_holder
         $nav
         <div id="main">
