@@ -42,7 +42,10 @@ sub configure {
   ##    - caption       InnerHTML of the option OR label for checkboxes and radio buttons
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - is_plain_text Flag kept on if html encoding needs to be done to the caption
-  ##  - class           Class attribute (space seperated string for multiple classes)
+  ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
+  ##  - class           Class attribute (space seperated string for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
+  ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
+  ##  - option_class    Class attribute for all the options (in case of a dropdown)
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
   ##  - required        Flag to tell whether this field is required to be filled before submitting form (for JS)
