@@ -512,19 +512,19 @@ sub caption {
   
   return $caption;
 }
-sub type_name         { return 'LRG'; }
-sub stable_id         { my $self = shift; return $self->Obj->stable_id;  }
-sub feature_type      { my $self = shift; return $self->Obj->type;       }
-sub source            { my $self = shift; return $self->Obj->source;     }
-sub version           { my $self = shift; return $self->Obj->version;    }
-sub logic_name        { my $self = shift; return $self->Obj->analysis->logic_name; }
-sub coord_system      { my $self = shift; return $self->Obj->{_chrom_slice}->coord_system->name; }
-sub seq_region_type   { my $self = shift; return $self->coord_system;    }
-sub seq_region_name   { my $self = shift; return $self->Obj->{_chrom_slice}->seq_region_name; }
-sub seq_region_start  { my $self = shift; return $self->Obj->{_chrom_slice}->start;      }
-sub seq_region_end    { my $self = shift; return $self->Obj->{_chrom_slice}->end;        }
-sub seq_region_strand { my $self = shift; return $self->Obj->{_chrom_slice}->strand;     }
-sub feature_length    { my $self = shift; return $self->Obj->feature_Slice->length; }
+sub type_name         { return 'LRG';                                         }
+sub stable_id         { return $_[0]->Obj->stable_id;                         }
+sub feature_type      { return $_[0]->Obj->type;                              }
+sub source            { return $_[0]->Obj->source;                            }
+sub version           { return $_[0]->Obj->version;                           }
+sub logic_name        { return $_[0]->Obj->analysis->logic_name;              }
+sub coord_system      { return $_[0]->Obj->feature_Slice->coord_system->name; }
+sub seq_region_type   { return $_[0]->coord_system;                           }
+sub seq_region_name   { return $_[0]->Obj->feature_Slice->seq_region_name;    }
+sub seq_region_start  { return $_[0]->Obj->feature_Slice->start;              }
+sub seq_region_end    { return $_[0]->Obj->feature_Slice->end;                }
+sub seq_region_strand { return $_[0]->Obj->feature_Slice->strand;             }
+sub feature_length    { return $_[0]->Obj->feature_Slice->length;             }
 
 sub gene {
   my $self = shift;
