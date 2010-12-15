@@ -14,7 +14,7 @@ use constant {
 sub render {
   ## @overrides
   my $self = shift;
-  $self->parent_node->insert_after($self->dom->create_element('span'), $self)->inner_HTML($self->{'__shortnote'})
+  $self->parent_node->insert_after($self->dom->create_element('span', {'inner_HTML' => ' '.$self->{'__shortnote'}}), $self);
     if exists $self->{'__shortnote'};
   return $self->SUPER::render;
 };
@@ -37,7 +37,7 @@ sub configure {
   if (exists $params->{'required'}) {
     $self->set_attribute('class', $self->CSS_CLASS_REQUIRED);
     $params->{'shortnote'} ||= '';
-    $params->{'shortnote'} = ' <strong title="Required field">*</strong> '.$params->{'shortnote'};
+    $params->{'shortnote'} = '<strong title="Required field">*</strong> '.$params->{'shortnote'};
   }
   else {
     $self->set_attribute('class', $self->CSS_CLASS_OPTIONAL);
