@@ -1599,13 +1599,14 @@ sub add_sequence_variations {
     
     $menu->append($variation_sets);
   
-    foreach my $toplevel_set (sort { (scalar @{$a->{'subsets'}} ? 1 : 0) <=> (scalar @{$b->{'subsets'}} ? 1 : 0) } values %{$hashref->{'variation_set'}{'supersets'}}) {
+    foreach my $toplevel_set (sort { $a->{'name'} cmp $b->{'name'} && (scalar @{$a->{'subsets'}} ? 1 : 0) <=> (scalar @{$b->{'subsets'}} ? 1 : 0) } values %{$hashref->{'variation_set'}{'supersets'}}) {
       my $name          = $toplevel_set->{'name'};
+      my $caption       = $name . (scalar @{$toplevel_set->{'subsets'}} ? ' (all data)' : '');
       my $set_variation = scalar @{$toplevel_set->{'subsets'}} ? $self->create_submenu("set_variation_$name", $name) : $variation_sets;
       
-      $set_variation->append($self->create_track("variation_set_$name", $name, {
+      $set_variation->append($self->create_track("variation_set_$name", $caption, {
         %options,
-        caption     => $name,
+        caption     => $caption,
         sources     => undef,
         sets        => [ $name ],
         description => $toplevel_set->{'description'},
