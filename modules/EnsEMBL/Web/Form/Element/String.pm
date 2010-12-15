@@ -22,25 +22,12 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
 
-  $self->set_attribute('id',        $params->{'id'})              if exists $params->{'id'};
-  $self->set_attribute('name',      $params->{'name'})            if exists $params->{'name'};
-  $self->set_attribute('value',     $params->{'value'})           if exists $params->{'value'};
-  $self->set_attribute('size',      $params->{'size'})            if exists $params->{'size'};
-  $self->set_attribute('class',     $params->{'class'})           if exists $params->{'class'};
-  $self->set_attribute('class',     $self->VALIDATION_CLASS)      if $self->VALIDATION_CLASS ne '';
-  $self->set_attribute('maxlength', $params->{'maxlength'})       if exists $params->{'maxlength'} && $params->{'maxlength'} != 0;
+  $params->{'class'} = join ' ', $params->{'class'} || '', $self->VALIDATION_CLASS || '', $params->{'required'} ? $self->CSS_CLASS_REQUIRED : $self->CSS_CLASS_OPTIONAL;
 
-  $self->disabled(1) if exists $params->{'disabled'} && $params->{'disabled'} == 1;
-  $self->readonly(1) if exists $params->{'readonly'} && $params->{'readonly'} == 1;
-  
-  if (exists $params->{'required'}) {
-    $self->set_attribute('class', $self->CSS_CLASS_REQUIRED);
-    $params->{'shortnote'} ||= '';
-    $params->{'shortnote'} = '<strong title="Required field">*</strong> '.$params->{'shortnote'};
-  }
-  else {
-    $self->set_attribute('class', $self->CSS_CLASS_OPTIONAL);
-  }
+  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value size class maxlength);
+  $params->{$_} and $self->$_(1) for qw(disabled readonly);
+
+  $params->{'shortnote'} = '<strong title="Required field">*</strong> '.($params->{'shortnote'} || '') if $params->{'required'};
   $self->{'__shortnote'} = $params->{'shortnote'} if exists $params->{'shortnote'};
 }
 
