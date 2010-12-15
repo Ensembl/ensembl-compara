@@ -17,6 +17,7 @@ sub modify_page_elements {
   
   $page->remove_body_element('tabs');
   $page->remove_body_element('tool_buttons');
+  $page->remove_body_element('summary');
 }
 
 sub populate_tree {
