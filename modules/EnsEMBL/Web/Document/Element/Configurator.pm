@@ -136,13 +136,16 @@ sub init_imageconfig {
   my $configuration = $controller->configuration;
   my $search_panel  = $self->new_panel('Configurator', $controller, code => 'configurator_search');
   my $panel         = $self->new_panel('Configurator', $controller, code => 'configurator');
-  my @nodes         = @{$image_config->tree->child_nodes};
+  
+  $image_config->remove_disabled_menus; # Delete all tracks where menu = no, and parent nodes if they are now empty
   
   $configuration->create_node('active_tracks',  'Active tracks',  [], { availability => 1, url => '#', class => 'active_tracks'           });
   $configuration->create_node('search_results', 'Search Results', [], { availability => 1, url => '#', class => 'search_results disabled' });
   
+  my @nodes = @{$image_config->tree->child_nodes};
+  
   for my $n (grep $_->has_child_nodes, @nodes) {
-    my @children = grep { !$_->has_child_nodes } @{$n->child_nodes};
+    my @children = grep !$_->has_child_nodes, @{$n->child_nodes};
     
     if (scalar @children) {
       my $internal = $image_config->tree->create_node($n->id . '_internal');
@@ -158,38 +161,51 @@ sub init_imageconfig {
     my $caption = $node->get('caption');
     my $first   = ' first';
     
-    $node->data->{'content'} .= sprintf '<div class="config %s">', $id;
-    $node->data->{'content'} .= sprintf '<h2 class="config_header">%s</h2>', $caption;
+    $node->data->{'content'} .= qq{
+      <div class="config $id">
+        <h2 class="config_header">$caption</h2>
+    };
     
-    for my $n (@{$node->child_nodes}) {
-      my $menu   = $self->{'select_all_menu'}->{$n->id};
-      my $header = $n->get('caption');
-      my $class  = 'config_menu';
+    foreach my $n (@{$node->child_nodes}) {
+      my $children = 0;
+      my $content; 
       
-      if ($menu && scalar @{$n->child_nodes} > 1) {
-        $header ||= 'tracks';
-        $class   .= ' selectable';
-        
-        my %counts = reverse %{$self->{'track_renderers'}->{$n->id}};
-        
-        if (scalar keys %counts != 1) {
-          $menu  = '';
-          $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
-        }
-        
-        $node->data->{'content'} .= qq{
-          <div class="select_all$first">
-            <ul class="popup_menu">$menu</ul>
-            <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
-          </div>
-        };
-      } elsif ($header) {
-        $node->data->{'content'} .= "<h4>$header</h4>";
+      foreach (map { $_->render || () } @{$n->child_nodes}) {
+        $content .= $_;
+        $children++;
       }
       
-      $node->data->{'content'} .= qq{<ul class="$class">};
-      $node->data->{'content'} .= $_->render for @{$n->child_nodes};
-      $node->data->{'content'} .= '</ul>';
+      next unless $content;
+      
+      my $class = 'config_menu';
+      
+      if ($children > 1) {
+        my $menu   = $self->{'select_all_menu'}->{$n->id};
+        my $header = $children ? $n->get('caption') : '';
+      
+        if ($menu) {
+          $header ||= 'tracks';
+          $class   .= ' selectable';
+          
+          my %counts = reverse %{$self->{'track_renderers'}->{$n->id}};
+          
+          if (scalar keys %counts != 1) {
+            $menu  = '';
+            $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+          }
+          
+          $node->data->{'content'} .= qq{
+            <div class="select_all$first">
+              <ul class="popup_menu">$menu</ul>
+              <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
+            </div>
+          };
+        } elsif ($header) {
+          $node->data->{'content'} .= "<h4>$header</h4>";
+        }
+      }
+      
+      $node->data->{'content'} .= qq{<ul class="$class">$content</ul>};
       
       $first = '';
     }
@@ -264,7 +280,7 @@ sub imageconfig_content {
       }
     }
   } elsif ($node->get('menu') ne 'no') {
-    my @states    = @{$node->get('renderers') || [ qw(off Off normal Normal) ]};
+    my @states    = @{$node->get('renderers') || [ 'off', 'Off', 'normal', 'Normal' ]};
     my $display   = $node->get('display')     || 'off';
     my $external  = $node->get('_class');
     my $desc      = $node->get('description');
