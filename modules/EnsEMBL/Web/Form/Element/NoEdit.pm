@@ -11,18 +11,13 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   
-  my $value = exists $params->{'value'} && defined $params->{'value'} ? $params->{'value'} : ''; 
-  my $text = $self->dom->create_text_node;
+  $self->append_child($self->dom->create_text_node($params->{'value'}));
+  $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
 
-  $text->text($value);
-  my $input = $self->dom->create_element('inputhidden');
-  $input->set_attribute('id',     $params->{'id'})     if exists $params->{'id'};
-  $input->set_attribute('name',   $params->{'name'})   if exists $params->{'name'};
-  $input->set_attribute('class',  $params->{'class'})  if exists $params->{'class'};
-  $input->set_attribute('value',  $value);
+  return if $params->{'no_input'};
   
-  $self->append_child($text);
-  $self->append_child($input);
+  my $input = $self->append_child($self->dom->create_element('inputhidden'));
+  exists $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id name class value); 
 }
 
 1;
