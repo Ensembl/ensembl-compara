@@ -58,11 +58,14 @@ sub create_element {
 
 sub create_text_node {
   ## Creates a text node
+  ## @params Text string
   ## @return Text node object
   my $self = shift;
   my $node_class = 'EnsEMBL::Web::DOM::Node::Text';
   $self->dynamic_use($node_class);
-  return $node_class->new($self);
+  my $text_node = $node_class->new($self);
+  $text_node->text(shift) if @_;
+  return $text_node;
 }
 
 sub create_comment {
