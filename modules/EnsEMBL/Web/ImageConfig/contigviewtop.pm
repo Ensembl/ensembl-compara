@@ -66,6 +66,12 @@ sub init {
     [ 'variation' ],
     { qw(display off menu no) }  
   );
+  
+  $self->modify_configs(
+    [ 'somatic' ],
+    { qw(display off menu no) }  
+  );
+  
   $self->modify_configs(
     [ 'variation_feature_structural' ],
     { qw(display off menu yes) }
