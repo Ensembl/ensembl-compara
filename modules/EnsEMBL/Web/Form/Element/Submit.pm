@@ -11,11 +11,8 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   
-  $self->set_attribute('id',    $params->{'id'})    if exists $params->{'id'};
-  $self->set_attribute('name',  $params->{'name'})  if exists $params->{'name'};
-  $self->set_attribute('value', $params->{'value'}) if exists $params->{'value'};
-  $self->set_attribute('class', $params->{'class'}) if exists $params->{'class'};
-  $self->disabled(1) if exists $params->{'disabled'} && $params->{'disabled'} == 1;
+  exists $params->{$_} and $self->set_attribute($_, $params->{$_}) for qw(id name value class);
+  $self->disabled(1) if $params->{'disabled'};
 }
 
 1;
