@@ -21,8 +21,8 @@ sub features {
   warn join ' * ', 'SLICE', $slice->seq_region_name, $slice->start, $slice->end;
   foreach my $lrg_name (@{$self->species_defs->LRG_REGIONS || []}) {
       my $lrg =$slice->adaptor->fetch_by_region( undef, $lrg_name) || next;
-     warn join ' * ', 'LRG', $lrg->{_chrom_slice}->seq_region_name, $lrg->{_chrom_slice}->start, $lrg->{_chrom_slice}->end, "\n";
-      my $chr_slice = $lrg->{_chrom_slice} || next;
+     warn join ' * ', 'LRG', $lrg->feature_Slice->seq_region_name, $lrg->feature_Slice->start, $lrg->feature_Slice->end, "\n";
+      my $chr_slice = $lrg->feature_Slice || next;
       if ( $slice->seq_region_name eq $chr_slice->seq_region_name) {
 	  if (($slice->start < $chr_slice->end) && ($chr_slice->start < $slice->end)) {
 	      push @T2, $lrg;
@@ -89,7 +89,7 @@ sub _init {
     my $label      = $g->seq_region_name;
     my $high = $g->seq_region_name eq $self->{'config'}->core_objects->{'parameters'}{'lrg'};
 
-    my $gslice = $g->{_chrom_slice};
+    my $gslice = $g->feature_Slice;
 
     my $start = $gslice->start - $vc->start;
     my $end   = $gslice->end - $vc->start;
