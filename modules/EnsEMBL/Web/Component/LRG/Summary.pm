@@ -61,7 +61,6 @@ sub content {
     $description .= qq{<span class="small">$link</span>} unless $acc eq 'content';
     $html        .= "<p>$description</p>";
     
-    
     my $url = $hub->url({
       type   => 'Location',
       action => 'View',
@@ -69,7 +68,8 @@ sub content {
     });
     
     my $location_html = sprintf(
-      '%s: %s-%s %s.',
+      '<a href="%s">%s: %s-%s</a> %s.',
+      $url,
       $self->neat_sr_name($slice->coord_system->name, $slice->seq_region_name),
       $self->thousandify($slice->start),
       $self->thousandify($slice->end),
