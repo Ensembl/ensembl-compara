@@ -50,11 +50,11 @@ div.ff-notes {
   margin-bottom: 3px;
 }
 .ffile {
-  border: [[PANEL_BORDER]] solid 1px;
   margin-bottom: 3px;
 }
 .ftextarea {
   height: 100px;
+  width: auto;
 }
 .fbutton {
   background-color:[[MH_BG]];
