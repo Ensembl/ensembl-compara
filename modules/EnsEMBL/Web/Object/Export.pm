@@ -1,4 +1,5 @@
-#$Id$
+# $Id$
+
 package EnsEMBL::Web::Object::Export;
 
 ### NAME: EnsEMBL::Web::Object::Export
@@ -16,33 +17,27 @@ use strict;
 
 use base qw(EnsEMBL::Web::Object);
 
-sub caption { return 'Export Data'; }
-sub slice { return shift->get_location_object->slice };
+sub caption             { return 'Export Data';                                                      }
+sub get_location_object { return $_[0]->{'_location'} ||= $_[0]->hub->core_objects->{'location'};    }
+sub get_all_transcripts { return $_[0]->hub->core_objects->{'gene'}->Obj->get_all_Transcripts || []; }
+sub check_slice         { return shift->get_location_object->check_slice(@_);                        }
+sub get_ld_values       { return shift->get_location_object->get_ld_values(@_);                      }
 
-sub get_location_object {
-  my $self = shift;
-
-  $self->{'_location'} ||= $self->hub->core_objects->{'location'};
+sub slice {
+  my $self     = shift;
+  my $location = $self->get_location_object;
   
-  return $self->{'_location'};
-}
-
-sub get_all_transcripts {
-  my $self = shift;
-
-  return $self->hub->core_objects->{'gene'}->Obj->get_all_Transcripts || [];
-}
-
-sub check_slice {
-  my $self = shift;
+  return $location->slice if $location;
   
-  return $self->get_location_object->check_slice(@_);
-}
-
-sub get_ld_values {
-  my $self = shift;
+  my $hub = $self->hub;
+  my $lrg = $hub->param('lrg');
+  my $lrg_slice;
   
-  return $self->get_location_object->get_ld_values(@_);
+  if ($lrg) {
+    eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
+  }
+  
+  return $lrg_slice;
 }
 
 sub config {

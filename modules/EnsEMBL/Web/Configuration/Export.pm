@@ -10,7 +10,7 @@ sub populate_tree {
   my $self = shift; 
   my %config = ( availability => 1, no_menu_entry => 1 );
   
-  foreach ('Location', 'Gene', 'Transcript') {
+  foreach ('Location', 'Gene', 'Transcript', 'LRG') {
     $self->create_node("Configure/$_",  '', [ 'configure',   'EnsEMBL::Web::Component::Export::Configure' ], \%config);
     $self->create_node("Form/$_",       '', [], { command => 'EnsEMBL::Web::Command::Export::Form',           %config});
     $self->create_node("Formats/$_",    '', [ 'formats',     'EnsEMBL::Web::Component::Export::Formats' ],   \%config);

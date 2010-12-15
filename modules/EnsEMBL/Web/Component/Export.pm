@@ -20,7 +20,7 @@ sub export {
   my $hub            = $self->hub;
   my $o              = $hub->param('output');
   my $strand         = $hub->param('strand');
-  my $slice          = $self->object->slice('expand');
+  my $slice          = $self->object->isa('EnsEMBL::Web::Object::LRG') ? $self->object->Obj : $self->object->slice('expand');
   my $feature_strand = $slice->strand;
   $strand            = undef unless $strand == 1 || $strand == -1; # Feature strand will be correct automatically
   $slice             = $slice->invert if $strand && $strand != $feature_strand;
