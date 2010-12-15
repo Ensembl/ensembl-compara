@@ -171,6 +171,23 @@ sub cache {
   return $self->{'_cache'}{$key}
 }
 
+# Delete all tracks where menu = no, and parent nodes if they are now empty
+sub remove_disabled_menus {
+  my ($self, $node) = @_;
+  
+  if (!$node) {
+    $_->remove for grep $_->get('menu') eq 'no', $self->tree->leaves;
+    $self->remove_disabled_menus($_) for $self->tree->nodes;
+    return;
+  }
+  
+  if ($node->get('node_type') ne 'track' && !$node->has_child_nodes) {
+    my $parent = $node->parent_node;
+    $self->remove_disabled_menus($parent) if $parent && scalar @{$parent->child_nodes} == 1;
+    $node->remove;
+  }
+}
+
 # create_menus - takes an "associate array" i.e. ordered key value pairs
 # to configure the menus to be seen on the display..
 # key and value pairs are the code and the text of the menu...
@@ -588,7 +605,7 @@ sub modify_configs {
   my ($self, $nodes, $config) = @_;
   
   foreach my $node (map { $self->get_node($_) || () } @$nodes) {
-    foreach my $n (grep { $_->get('node_type') eq 'track'} $node, $node->nodes) {
+    foreach my $n (grep $_->get('node_type') eq 'track', $node, $node->nodes) {
       $n->set($_, $config->{$_}) for keys %$config;
     }
   }
