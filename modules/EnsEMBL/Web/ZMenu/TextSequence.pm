@@ -102,7 +102,7 @@ sub variation_content {
   foreach my $pop (
     sort { $a->{'pop_info'}->{'Name'} cmp $b->{'pop_info'}->{'Name'} }
     sort { $a->{'submitter'} cmp $b->{'submitter'} }
-    grep { $_->{'pop_info'}->{'Name'} =~ /HapMap/ }
+    grep { $_->{'pop_info'}->{'Name'} =~ /^1000GENOMES/i }
     map  { values %$_ }
     values %{$object->freqs($feature)}
   ) {
