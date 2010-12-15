@@ -396,7 +396,7 @@ foreach my $spp (@species) {
   my @too_long;
 
   # loop through every non-redundant region in the DB
-  my $inc_dupes  = 1;   # include duplicate regions like PARs?
+  my $inc_dupes  = 0;   # include duplicate regions like PARs?
   my $inc_nonref = 1;   # include non-reference regions like haplotypes?
 
   my @seq_region_ids;
