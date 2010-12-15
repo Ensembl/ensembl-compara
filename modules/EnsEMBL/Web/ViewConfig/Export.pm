@@ -49,7 +49,7 @@ sub form {
   my $hub      = $view_config->hub;
   my $function = $hub->function;
   
-  return if $function !~ /Location|Gene|Transcript/;
+  return if $function !~ /Location|Gene|Transcript|LRG/;
   
   my $action              = $hub->action;
   my $config              = $object->config;
