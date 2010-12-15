@@ -24,7 +24,7 @@ Ensembl.Panel.Exporter = Ensembl.Panel.ModalContent.extend({
   formSubmit: function (form) {
     var data = form.serialize();
     
-    $('input.input-checkbox', form).each(function () {
+    $('input[type=checkbox]', form).each(function () {
       // Give the value of "no" for deselected checkboxes
       if (this.checked === false) {
         data += '&' + this.name + '=no';
