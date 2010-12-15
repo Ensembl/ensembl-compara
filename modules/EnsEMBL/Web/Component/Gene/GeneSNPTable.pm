@@ -144,30 +144,32 @@ sub stats_table {
       };
     }
   }
+
   
-  # add the row for ALL variations
-  my $url = $self->ajax_url . ';sub_table=ALL;update_panel=1';
+  # add the row for ALL variations if there are any
+  if (my $total   = scalar keys %total_counts) {
+      my $url = $self->ajax_url . ';sub_table=ALL;update_panel=1';
   
   # create a hidden span to add so that ALL is always last in the table
-  my $hidden_span = qq{<span class="hidden">-</span>};
+      my $hidden_span = qq{<span class="hidden">-</span>};
   
-  my $view_html = qq{
-    <a href="$url" class="ajax_add toggle closed" rel="ALL">
-      <span class="closed">Show</span><span class="open">Hide</span>
-      <input type="hidden" class="url" value="$url" />
-    </a>
-  };
+      my $view_html = qq{
+	  <a href="$url" class="ajax_add toggle closed" rel="ALL">
+	      <span class="closed">Show</span><span class="open">Hide</span>
+	      <input type="hidden" class="url" value="$url" />
+	      </a>
+	  };
   
-  my $total   = scalar keys %total_counts;
-  my $warning = $total > 10000 ? $warning_text : '';
+
+      my $warning = $total > 10000 ? $warning_text : '';
   
-  push @rows, {
-    type  => $hidden_span . 'ALL',
-    view  => $view_html,
-    desc  => "All variations $warning",
-    count => $hidden_span . $total,
-  };
-  
+      push @rows, {
+	  type  => $hidden_span . 'ALL',
+	  view  => $view_html,
+	  desc  => "All variations $warning",
+	  count => $hidden_span . $total,
+      };
+  }
   return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', sorting => [ 'type asc' ], exportable => 0 });
 }
 
