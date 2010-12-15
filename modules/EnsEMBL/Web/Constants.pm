@@ -163,7 +163,7 @@ sub GENERAL_MARKUP_OPTIONS {
       'name'   => 'population_filter',
       'label'  => 'Filter variations by population',
       'notes'  => 'Warning: This could cause the page to take a long time to load',
-      'values' => [{ 'value' => 'off', 'name' => 'All' }]
+      'values' => [{ 'value' => 'off', 'name' => 'None' }]
     },
     'pop_min_freq' => {
       'type'  => 'NonNegFloat', 
