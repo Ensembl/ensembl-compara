@@ -278,14 +278,17 @@ sub createObjects {
 }
 
 sub get_slice {
-  my $self = shift;
-  my ($r, $s, $e) = @_;
-  my $db_adaptor  = $self->database('core');
-  
-  return unless $db_adaptor;
-  
-  my $slice_adaptor = $db_adaptor->get_SliceAdaptor;
+  my ($self, $r, $s, $e) = @_;
+  my $slice_adaptor = $self->_slice_adaptor;
   my $slice;
+  
+  if ($r =~ /^LRG/) {
+    eval {
+      $slice = $slice_adaptor->fetch_by_region('LRG', $r)->feature_Slice->sub_Slice($s, $e);
+    };
+    
+    return $slice;
+  }
   
   eval {
     $slice = $slice_adaptor->fetch_by_region('toplevel', $r, $s, $e);
