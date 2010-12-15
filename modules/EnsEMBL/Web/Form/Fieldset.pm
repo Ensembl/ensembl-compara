@@ -333,6 +333,9 @@ sub add_element {
       'id'    => $params{'id'},
     });
   }
+  
+  ## Remove extra hidden input for NoEdit fields
+  $params{'no_input'} = 1;
 
   ## SubHeader is now new fieldset's legend
   return $self->form->add_fieldset($params{'value'}) if $params{'type'} eq 'SubHeader';
@@ -348,7 +351,7 @@ sub add_element {
 
   ## 'name' key for options is changed to 'caption' key - name key corresponds to name attribute only
   foreach my $option (@{$params{'values'}}) { 
-    $option = {'value' => $option, 'caption' => $option} if ref($option) ne 'HASH'; #FIX for DBFrontEnd!!!
+    $option = {'value' => $option, 'caption' => $option} if ref($option) ne 'HASH';
     if (exists $option->{'name'}) {
       $option->{'caption'} = $option->{'name'};
       delete $option->{'name'};
@@ -379,9 +382,6 @@ sub add_element {
   
   ## Element is now Field.
   my $field = $self->add_field(\%params);
-
-  ## Remove extra hidden input for NoEdit fields
-  $field->get_elements_by_tag_name('input')->[0]->remove if $params{'type'} eq 'NoEdit';
 
   return $field;
 }
