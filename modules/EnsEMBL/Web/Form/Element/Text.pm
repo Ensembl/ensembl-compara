@@ -8,7 +8,10 @@ use base qw(
 );
 
 use constant {
-  VALIDATION_CLASS =>  '_text',
+  VALIDATION_CLASS => '_text',
+
+  DEFAULT_COLS     => 50;
+  DEFAULT_ROWS     => 10;
 };
 
 sub configure {
@@ -17,8 +20,8 @@ sub configure {
   
   $self->SUPER::configure($params);
   
-  $self->set_attribute('rows', $params->{'rows'}) if exists $params->{'rows'};
-  $self->set_attribute('cols', $params->{'cols'}) if exists $params->{'cols'};
+  $self->set_attribute('rows', $params->{'rows'} || $self->DEFAULT_ROWS);
+  $self->set_attribute('cols', $params->{'cols'} || $self->DEFAULT_COLS);
   $self->remove_attribute('value');
   $self->remove_attribute('size');
   $self->remove_attribute('maxlength');
