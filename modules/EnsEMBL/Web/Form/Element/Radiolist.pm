@@ -4,14 +4,9 @@ use strict;
 
 use base qw(EnsEMBL::Web::Form::Element::Checklist);
 
-sub __multiple {
-  ## @override
-  return 0;
-}
-
-sub __input {
-  ## @overrides
-  return 'inputradio';
-}
+use constant {
+  _IS_MULTIPLE  => 0,
+  _ELEMENT_TYPE => 'inputradio'
+};
 
 1;
