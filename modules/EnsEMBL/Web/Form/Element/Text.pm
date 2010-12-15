@@ -10,8 +10,8 @@ use base qw(
 use constant {
   VALIDATION_CLASS => '_text',
 
-  DEFAULT_COLS     => 50;
-  DEFAULT_ROWS     => 10;
+  DEFAULT_COLS     => 40,
+  DEFAULT_ROWS     => 10,
 };
 
 sub configure {
