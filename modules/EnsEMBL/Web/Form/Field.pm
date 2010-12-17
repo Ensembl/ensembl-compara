@@ -34,13 +34,14 @@ sub render {
 
   my $label = $self->first_child && $self->first_child->node_name eq 'label' ? $self->first_child : undef;
   if ($label) {
-    my $inputs = $self->get_elements_by_tag_name(['input', 'select', 'textarea']);
-    if (scalar @$inputs && $inputs->[0]->id 
+    my $inputs = $self->inputs;
+    if (scalar @$inputs
       && ($inputs->[0]->node_name =~ /^(select|textarea)$/
         || $inputs->[0]->node_name eq 'input' && $inputs->[0]->get_attribute('type') =~ /^(text|password|file)$/
         || $inputs->[0]->node_name eq 'input' && $inputs->[0]->get_attribute('type') =~ /^(checkbox|radio)$/ && scalar @$inputs == 1
       )
     ) {
+      $inputs->[0]->id($self->unique_id) unless $inputs->[0]->id;
       $label->set_attribute('for', $inputs->[0]->id);
     }
   }
