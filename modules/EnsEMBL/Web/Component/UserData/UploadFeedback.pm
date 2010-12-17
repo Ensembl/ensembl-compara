@@ -23,14 +23,24 @@ sub content {
   my $html;
 
   if ($upload) {
-    $html = '<p class="space-below">Thank you. Your file uploaded successfully</p><p class="space-below"><strong>File uploaded</strong>: '.$upload->{'name'}.' (';
-    if ($upload->{'format'}) {
-      $html .= $upload->{'format'}.' file';
-    }
-    elsif ($hub->param('format')) {
-      $upload->{'format'} = $hub->param('format');
+
+    ## Set format from CGI if necessary
+    my $format;
+    if ($hub->param('format')) {
+      $format = $hub->param('format');
+      if ($format =~ /bedgraph/i) {
+        $format = 'BED';
+      }
+      $upload->{'format'} = $format;
       $hub->session->set_data(%$upload); 
-      $html .= $hub->param('format').' file';
+    } 
+    else {
+      $format = $upload->{'format'};
+    }
+
+    $html = '<p class="space-below">Thank you. Your file uploaded successfully</p><p class="space-below"><strong>File uploaded</strong>: '.$upload->{'name'}.' (';
+    if ($format) {
+      $html .= "$format file";
     }
     else {
       $html .= 'Unknown format';
