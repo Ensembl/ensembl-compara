@@ -13,7 +13,7 @@ use EnsEMBL::Web::OrderedTree;
 use base qw(EnsEMBL::Web::Root);
 
 use constant {
-  SELECT_ALL_FLAG => '__select_all', ##TODO  .. not an ideal solution to flag the fieldsets.
+  SELECT_ALL_FLAG => '_has_select_all',
 };
 
 sub new {
@@ -394,7 +394,7 @@ sub build_form {
   foreach my $fieldset (@{$self->get_form->fieldsets}) {
 
     ## Add select all checkboxes
-    next if $fieldset->{$self->SELECT_ALL_FLAG};
+    next if $fieldset->get_flag($self->SELECT_ALL_FLAG);
        
     my %element_types;
     my $elements = $fieldset->inputs;# returns all input, select and textarea nodes 
@@ -418,16 +418,16 @@ sub build_form {
       next unless defined $reference_element;
       
       my $select_all = $fieldset->add_field({
-        type      => 'checkbox',
-        name      => 'select_all',
-        label     => '<u>Select/deselect all</u>',
-        value     => 'select_all',
-        class     => 'select_all',
-        selected  => 1
+        type          => 'checkbox',
+        name          => 'select_all',
+        label         => '<u>Select/deselect all</u>',
+        value         => 'select_all',
+        wrapper_class => 'select_all',
+        selected      => 1
       });
       
       $fieldset->insert_before($select_all, $reference_element);
-      $fieldset->{$self->SELECT_ALL_FLAG} = 1;
+      $fieldset->set_flag($self->SELECT_ALL_FLAG);
     }
   }
   
