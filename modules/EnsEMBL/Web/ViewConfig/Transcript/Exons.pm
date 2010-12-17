@@ -88,7 +88,7 @@ sub form {
       $view_config->add_form_element($general_markup_options{'pop_min_freq'});
     }
   }
-  $_->{$view_config->SELECT_ALL_FLAG} = 1 for @{$view_config->get_form->fieldsets};
+  $_->set_flag($view_config->SELECT_ALL_FLAG) for @{$view_config->get_form->fieldsets};
 }
 
 1;

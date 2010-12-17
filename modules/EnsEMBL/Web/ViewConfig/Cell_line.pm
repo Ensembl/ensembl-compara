@@ -84,7 +84,7 @@ sub form {
   }
   
   my $fieldset = $view_config->add_fieldset('Evidence types', 'matrix');
-  $fieldset->{$view_config->SELECT_ALL_FLAG} = 1;
+  $fieldset->set_flag($view_config->SELECT_ALL_FLAG);
   my $matrix = $fieldset->add_matrix;
   
   $matrix->configure({'name_prefix' => 'opt_cft_', 'selectall_label' => '<b>Select features:</b>'});
