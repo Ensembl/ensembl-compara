@@ -32,6 +32,14 @@ BEGIN{
   import Bio::EnsEMBL::ExternalData::DAS::SourceParser qw(is_genomic %COORD_MAPPINGS %TYPE_MAPPINGS %AUTHORITY_MAPPINGS %NON_GENOMIC_COORDS);
 }
 
+my $permalink_base;
+if ($SiteDefs::ARCHIVE_VERSION) {
+  ($permalink_base = $SiteDefs::ENSEMBL_BASE_URL) =~ s/www/$SiteDefs::ARCHIVE_VERSION.'.archive'/;
+}
+else {
+  $permalink_base = $SiteDefs::ENSEMBL_BASE_URL;
+}
+
 my ($force_update,$check_registry) = (0,0);
 GetOptions(
   "force", \$force_update,
@@ -251,12 +259,12 @@ foreach my $sp (@$species) {
   }
 
   $shash->{$mapmaster}->{coords} = \%coords;
-  $shash->{$mapmaster}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
+  $shash->{$mapmaster}->{mapmaster} = "$permalink_base/das/$mapmaster";
   $shash->{$mapmaster}->{description} = sprintf("%s Reference server based on %s assembly. Contains %d top level entries.", $sp, $type, 0 + @$toplevel_slices );
 # my $sl = $thash{$search_info->{'MAPVIEW1_TEXT'} || $search_info->{'DEFAULT1_TEXT'}} || $toplevel_slices[0];
     #warn Data::Dumper::Dumper(\%thash);
 
-  entry_points( $toplevel_slices, "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster/entry_points", "$docroot/htdocs/das/$mapmaster" );
+  entry_points( $toplevel_slices, "$permalink_base/das/$mapmaster/entry_points", "$docroot/htdocs/das/$mapmaster" );
   foreach my $feature (@feature_types) {
     my $dbn = $source_types->{$feature}->{master_db} || 'DATABASE_CORE';
     my $table = $featuresMasterTable{$feature};
@@ -278,7 +286,7 @@ foreach my $sp (@$species) {
 
     my $dsn = sprintf("%s.%s.%s", $sp, $type, $feature);
     $shash->{$dsn}->{coords} = \%coords;
-    $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
+    $shash->{$dsn}->{mapmaster} = "$permalink_base/das/$mapmaster";
     $shash->{$dsn}->{description} = sprintf("Annotation source for %s %s", $sp, $feature);
     if (   ($sitetype eq 'Vega')
 	&& ($feature =~ /^trans/) ) {
@@ -286,7 +294,7 @@ foreach my $sp (@$species) {
       $vega_type .= '-clone';
       $dsn = sprintf("%s.%s.%s", $sp, $vega_type, $feature);
 #      print STDERR  "--adding another Vega source for feature $feature - $dsn";
-      $shash->{$dsn}->{mapmaster} = "$SiteDefs::ENSEMBL_BASE_URL/das/$mapmaster";
+      $shash->{$dsn}->{mapmaster} = "$permalink_base/das/$mapmaster";
       $shash->{$dsn}->{description} = sprintf("Annotation source (returns clones) for %s %s", $sp, $feature);
       $shash->{$dsn}->{coords} = \%coords;
     }
@@ -338,7 +346,7 @@ sub dsn {
   for my $dsn (sort keys %$sources) {
     my $source = $sources->{$dsn};
     print FH qq(
-  <DSN href="$SiteDefs::ENSEMBL_BASE_URL/das/dsn">
+  <DSN href="$permalink_base/das/dsn">
     <SOURCE id="$dsn">$dsn</SOURCE>
     <MAPMASTER>$source->{'mapmaster'}</MAPMASTER>
     <DESCRIPTION>$source->{'description'}</DESCRIPTION>
@@ -385,14 +393,14 @@ sub sources {
       $id = sprintf("%s_%s_%s", uc $sitetype, $source_type_id, $assembly);
     }
     my $capability = $sourcetype eq 'reference' ?  qq(      <CAPABILITY  type="das1:entry_points"
-                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/entry_points" />
+                   query_uri="$permalink_base/das/$dsn/entry_points" />
       <CAPABILITY  type="das1:sequence"
-                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/sequence"     />
+                   query_uri="$permalink_base/das/$dsn/sequence"     />
 ): qq(      <CAPABILITY  type="das1:stylesheet"  
-                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/stylesheet"   />
+                   query_uri="$permalink_base/das/$dsn/stylesheet"   />
 );
     $capability .= qq(      <CAPABILITY  type="das1:features"
-                   query_uri="$SiteDefs::ENSEMBL_BASE_URL/das/$dsn/features"     />);
+                   query_uri="$permalink_base/das/$dsn/features"     />);
     my $description = $sources->{$dsn}{'description'};
     
     print FH qq( 
