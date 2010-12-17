@@ -120,7 +120,7 @@ sub add_field {
   ## Adds a field to the form
   ## Each field is a combination of one label on the left column of the layout and one (or more) elements (input, select, textarea) on the right column. 
   ## @params HashRef with following keys. (or ArrayRef of similar HashRefs in case of multiple fields)
-  ##  - fieldclass        Extra CSS className for the field div
+  ##  - field_class       Extra CSS className for the field div
   ##  - label             innerHTML for <label>
   ##  - notes             innerHTML for foot notes
   ##  - head_notes        innerHTML for head notes
@@ -137,7 +137,7 @@ sub add_field {
   }
 
   my $field = $self->dom->create_element('form-field');
-  $field->set_attribute('class', $params->{'fieldclass'}) if exists $params->{'fieldclass'};
+  $field->set_attribute('class', $params->{'field_class'}) if exists $params->{'field_class'};
   $field->label($params->{'label'}) if exists $params->{'label'};
 
   # add notes
@@ -152,7 +152,7 @@ sub add_field {
     $self->set_flag($self->_FLAG_REQUIRED) if exists $_->{'required'};
   }
   else {
-    my $extra_keys = [ qw(fieldclass label head_notes notes inline) ];
+    my $extra_keys = [ qw(field_class label head_notes notes inline) ];
     exists $params->{$_} and delete $params->{$_} for @$extra_keys;
     $params->{'id'} ||= $self->_next_id;
     $field->add_element($params);
@@ -166,7 +166,7 @@ sub add_honeypot_field {
   ## Adds a honeypot field
   my ($self, $params) = @_;
   $params->{'type'} = 'text';
-  $params->{'fieldclass'} = 'hidden';
+  $params->{'field_class'} = 'hidden';
   my $field = $self->add_field($params);
   $field->set_flag($self->_FLAG_HONEYPOT);
   return $field;
@@ -188,7 +188,7 @@ sub _add_element {## TODO - remove prefixed underscore once compatibile
   
   if (ref($params) eq 'ARRAY') { #call recursively for multiple addition
     my $elements = [];
-    push @$elements, $self->_add_element($_) for @$params;## TODO - remove prefixed underscore once compatibile
+    push @$elements, $self->add_element($_) for @$params;
     return $elements;
   }
   
@@ -225,7 +225,7 @@ sub _add_button {## TODO - remove prefixed underscore once compatibile
   my ($self, $params) = @_;
   $params->{'elements'} = $params->{'buttons'} if $params->{'buttons'};
   $params->{'inline'} = 1;
-  $params->{'fieldclass'} = $self->CSS_CLASS_BUTTON.'-'.$params->{'align'} if $params->{'align'} =~ /^(centre|center|left|right)$/;
+  $params->{'field_class'} = $self->CSS_CLASS_BUTTON.'-'.$params->{'align'} if $params->{'align'} =~ /^(centre|center|left|right)$/;
   delete $params->{'buttons'};
   my $field = $self->add_field($params);
   $field->set_flag($self->_FLAG_BUTTON);
@@ -360,7 +360,7 @@ sub add_element {
 
   # DropDown, RadioGroup, RadioButton, CheckBox, MultiSelect
   $params{'type'}     = exists $params{'select'} && $params{'select'} ? 'dropdown' : 'radiolist' if $params{'type'} eq 'DropDown';
-  $params{'type'}     = 'radiolist' if $params{'type'} =~ '/^(radiogroup|radiobutton)$/';
+  $params{'type'}     = 'radiolist' if $params{'type'} =~ /^(radiogroup|radiobutton)$/i;
   $params{'type'}     = 'dropdown' and $params{'multiple'} = 1 if $params{'type'} eq 'MultiSelect';
   $params{'checked'}  = $params{'selected'} if $params{'type'} =~ /checkbox/i;
 
@@ -369,7 +369,7 @@ sub add_element {
     $params{'type'} = exists $params{'select'} && $params{'select'} ? 'dropdown' : 'radiolist';
     return $self->add_field({
       'label'       => $params{'label'},
-      'fieldclass'  => $params{'style'},
+      'field_class'  => $params{'style'},
       'inline'      => 1,
       'elements'    => [\%params, {'type' => 'submit', 'value' => $params{'button_value'}}]
     });
