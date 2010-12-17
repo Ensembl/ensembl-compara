@@ -29,6 +29,7 @@ sub configure {
   ## @params HashRef of params required for configuring the element
   ##  - type            Type of element - should match with one of keys in &map_element_class leaving the prefix
   ##  - id              Id attribute - if not options, this also goes in 'for' attribute of label.
+  ##  - wrapper_id      Id attribute for the wrapper div if present (eg. in Checklist)
   ##  - name            Name attribute
   ##  - value           Value attribute for text type field, selected/checked value for checkbox/radio/select -  can be an ArrayRef for multiple values
   ##  - shortnote       A short text to go just right the text/password/file or select.
