@@ -27,7 +27,7 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
   
-  $self->set_attribute('id',    $params->{'id'})            if exists $params->{'id'};
+  $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
 
   # default attributes for the checkboxs/radiobuttons
@@ -71,25 +71,24 @@ sub add_option {
   ##  - is_plain_text Flag to be on if caption is NOT HTML
   ## @return newly added Node::Element::P/Span object containg an input and a label
   my ($self, $params) = @_;
-  
+
   $params->{'value'}    = '' unless exists $params->{'value'};
   $params->{'caption'}  = '' unless exists $params->{'caption'};
   $params->{'class'}  ||= $self->{'__option_class'} if $self->{'__option_class'};
+  $params->{'id'}     ||= $self->unique_id          if $params->{'caption'} ne '';
   
   my $wrapper = $self->dom->create_element($self->{'__inline'} ? 'span' : 'p', {'class' => $self->CSS_CLASS_INNER_WRAPPER});
   my $input   = $self->dom->create_element($self->_ELEMENT_TYPE, {'value' => $params->{'value'}, 'name' => $params->{'name'} || $self->{'__option_name'}});
 
-  $input->set_attribute('id', $params->{'id'})        if $params->{'id'};
-  $input->set_attribute('class', $params->{'class'})  if $params->{'class'};
+  $params->{$_} and $input->set_attribute($_, $params->{$_}) for qw(id class);
   $input->disabled(exists $params->{'disabled'} ? ($params->{'disabled'} ? 1 : 0) : $self->{'__option_disabled'});
   $input->checked(1) if exists $params->{'checked'} && $params->{'checked'} == 1;
-  
+
   $wrapper->append_child($input);
-  $wrapper->append_child($self->dom->create_element('label', {($params->{'is_plain_text'} ? 'inner_text' : 'inner_HTML') => $params->{'caption'}})) if $params->{'caption'} ne '';
-  
+  $wrapper->append_child($self->dom->create_element('label', {'id' => $input->id, ($params->{'is_plain_text'} ? 'inner_text' : 'inner_HTML') => $params->{'caption'}})) if $params->{'caption'} ne '';
+
   my $next_heading = undef;
   if (exists $params->{'group'} && defined $params->{'group'}) {
-  
     my $match = 0;
     for (@{$self->get_elements_by_class_name($self->CSS_CLASS_SUBHEADING)}) {
       $match and $next_heading = $_ and last;
