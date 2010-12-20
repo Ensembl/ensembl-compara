@@ -15,35 +15,22 @@ sub render {
   ## @return HTML
   my $self = shift;
 
-  my $tag = $self->node_name;
-  
-  my $attributes = [];
-  foreach my $attrib (keys %{$self->{'_attributes'}}) {
-    my $glue = {'class' => ' ', 'style' => ';'};
-    push @$attributes, sprintf(
-      '%s="%s"',
-      $attrib,
-      $attrib =~ /^(class|style)$/ ? join($glue->{$attrib}, keys(%{$self->{'_attributes'}{$attrib}})) : $self->{'_attributes'}{$attrib}
-    );
-  }
-  $attributes = join ' ', @$attributes;
-  $attributes = ' '.$attributes if $attributes ne '';
+  my $tag         = $self->node_name;
+  my $attributes  = '';
+  $attributes    .= sprintf(' %s="%s"', $_, $self->get_attribute($_)) for keys %{$self->{'_attributes'}};
   return qq(<$tag$attributes />) unless $self->can_have_child;
-  
-  my $children = '';
-  if ($self->inner_HTML ne '') {
-    $children = $self->inner_HTML;
-  }
-  else {
-    $children .= $_->render for (@{$self->child_nodes});
+
+  my $children = $self->inner_HTML;
+  if ($children eq '') { #inner html has priority over child nodes
+    $children .= $_->render for @{$self->child_nodes};
   }
   return qq(<$tag$attributes>$children</$tag>);
 }
 
 sub attributes {
-  ## Getter for attributes
-  ## @return HashRef of all attributes - {'name1' => 'value1', 'name1' => 'value1'}
-  return shift->{'_attributes'};
+  ## Getter for all attribute names
+  ## @return ArrayRef of all attribute names
+  return [keys %{shift->{'_attributes'}}];
 }
 
 sub get_attribute {
@@ -51,12 +38,22 @@ sub get_attribute {
   ## @params Attribute name
   ## @return Attribute value if attribute exists, blank string otherwise
   my ($self, $attrib) = @_;
-  my $glue = {'class' => ' ', 'style' => ';'};
-  return $attrib =~ /^(class|style)$/
-    ? join($glue->{$attrib}, keys(%{$self->{'_attributes'}{$attrib}}))
-    : $self->{'_attributes'}{$attrib}
-      if $self->has_attribute($attrib);
-  return '';
+
+  return '' unless $self->has_attribute($attrib);
+
+  my @values;
+  if ($attrib eq 'style') {
+    while (my ($style_name, $style_value) = each %{$self->{'_attributes'}{$attrib}}) {
+      push @values, qq($style_name:$style_value;);
+    }
+  }
+  elsif ($attrib eq 'class') {
+    @values = keys %{$self->{'_attributes'}{$attrib}};
+  }
+  else {
+    push @values, $self->{'_attributes'}{$attrib};
+  }
+  return join ' ', @values;
 }
 
 sub has_attribute {
@@ -92,13 +89,16 @@ sub set_attribute {
   my ($self, $attrib, $value) = @_;
 
   return unless defined $value;
-  $value =~ s/^\s+|\s+$//g; #trim
+  $value  =~ s/^\s+|\s+$//g; #trim
   $attrib = lc $attrib;
 
   if ($attrib =~ /^(class|style)$/) {
-    my $delimiter = {'class' => ' ', 'style' => ';'};
+    my $delimiter = {'class' => qr/\s+/, 'style' => qr/\s*;\s*/};
     $self->{'_attributes'}{$attrib} = {} unless defined $self->{'_attributes'}{$attrib};
-    $self->{'_attributes'}{$attrib}{$_} = 1 for split($delimiter->{$attrib}, $value);  #hash keys will not allow any duplicates
+    for (split $delimiter->{$attrib}, $value) {
+      my ($key, $val) = $attrib eq 'style' ? split /\s*:\s*/, $_ : ($_, 1);
+      $self->{'_attributes'}{$attrib}{$key} = $val if $key;
+    }
   }
   else {
     $self->{'_attributes'}{$attrib} = $value;
