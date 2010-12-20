@@ -115,7 +115,7 @@ sub get_elements_by_name {
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
       next unless $_->node_type == $self->ELEMENT_NODE;
-      push @$result, $_ if exists $name_hash->{$_->name} eq $name;
+      push @$result, $_ if exists $name_hash->{$_->name};
       push @$result, @{$_->get_elements_by_name($name)};
     }
   }
@@ -152,14 +152,22 @@ sub get_elements_by_class_name {
   $class_name = [ $class_name ] unless ref($class_name) eq 'ARRAY';
 
   my $attrib_set = [];
-  push @$attrib_set, ['class', $_] for @$class_name;
+  push @$attrib_set, {'class'=> $_} for @$class_name;
 
   return $self->get_elements_by_attribute($attrib_set);
 }
 
 sub get_elements_by_attribute {
   ## Gets all the elements inside a node with the given attribute and value
-  ## @params Attribute name OR ArrayRef of [[attrib1, value1], [attrib2, value2], [attrib3, value3]] for multiple attributes
+  ## @params Attribute name OR ref of hash with keys as attributes in case of multiple attributes or ref of array of such hashes
+  ##  - A Hash with multiple keys will give the intersection of selections of individual key attribute and value
+  ##  - An Array with multiples hashes, will return the union of selections of individual hash
+  ##  - examples:
+  ##  - - - [{'type' => 'text'}, {'class' => 'string'}] will return all the elements with EITHER type=text OR class=string
+  ##  - - - {'type' => 'text', 'class' => 'string'} will return all elements with BOTH type=text AND class=string
+  ##  - - - {'type' => ['password', 'text']} will return all elements with type=password OR type=text
+  ##  - - - {'type' => ['password', 'text'], 'class' => 'string'} will return elements with type=password or type=text, but class=string always 
+  ##  - - - [{'type' => 'password', 'class' => 'string'}, {'type' => 'text', 'class' => 'string'}] will give same results as above 
   ## @params Attribute value
   ## @return ArrayRef of Element objects
   my $self = shift;
@@ -168,28 +176,41 @@ sub get_elements_by_attribute {
   return [] unless $self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE;
 
   my $attrib_set = shift;
-  if (ref($attrib_set) ne 'ARRAY') {
-    $attrib_set = [[ $attrib_set, shift ]];
-  }
-  elsif (scalar @$attrib_set && ref($attrib_set->[0]) ne 'ARRAY') {
-    $attrib_set = [ $attrib_set ];
-  }
+  $attrib_set = { $attrib_set => shift }  if ref $attrib_set !~ /^(ARRAY|HASH)$/;
+  $attrib_set = [ $attrib_set ]           if ref $attrib_set ne 'ARRAY';
 
   my $result = [];
   
   foreach my $child_node (@{$self->child_nodes}) {
     next unless $child_node->node_type == $self->ELEMENT_NODE;
-    for (@{$attrib_set}) {
-      if ($_->[0] =~ /^(class|style)$/) {
-        push @$result, $child_node if $child_node->has_attribute($_->[0]) && exists $child_node->{'_attributes'}{$_->[0]}{$_->[1]};
+    foreach my $attrib_pairs_hash (@{$attrib_set}) { #at least one needs to be matching (ie. match found ? break the loop : try next)
+      my $match_found     = 0;
+      my $match_required  = 0;
+      foreach my $attrib_name (keys %$attrib_pairs_hash) { #all need to be matching (ie. match found ? try next : break the loop)
+        $match_required++;
+        last unless $child_node->has_attribute($attrib_name); #break the loop if no match found
+        my $attrib_val = $attrib_pairs_hash->{$attrib_name};
+        $attrib_val = [ $attrib_val ] if ref($attrib_val) ne 'ARRAY';
+        if ($attrib_name =~ /^(class|style)$/) {
+          exists $child_node->{'_attributes'}{$attrib_name}{$_} and ++$match_found and last for @$attrib_val; #at least one needs to be matching
+        }
+        else {
+          $child_node->{'_attributes'}{$attrib_name} eq $_ and ++$match_found and last for @$attrib_val; #at least one needs to be matching
+        }
+        last unless $match_found == $match_required; #break the loop if no match found
       }
-      else {
-        push @$result, $child_node if $child_node->get_attribute($_->[0]) eq $_->[1];
-      }
+      push @$result, $child_node and last if $match_found && $match_found == $match_required; #match found, break the loop
     }
     push @$result, @{$child_node->get_elements_by_attribute($attrib_set)};
   }
   return $result;
+}
+
+sub ancestors {
+  ## Returns all the ancestors of the node, immediate parent node being at index [0]
+  ## @return ArrayRef of Element objects or empty array if no parent
+  my $parent = shift->parent_node;
+  return $parent ? [$parent, @{$parent->ancestors}] : [];
 }
 
 sub get_ancestor_by_id {
@@ -348,7 +369,7 @@ sub appendable {
   #third filter - if the node being appended as child is one of this node's ancestors
   my $ancestor = $self->parent_node;
   while (defined $ancestor) {
-    return 0 if $ancestor->is_same_as($node);
+    return 0 if $ancestor->is_same_node($node);
     $ancestor = $ancestor->parent_node;
   }
   
@@ -400,7 +421,7 @@ sub insert_before {
   ## @return New Node object if successfully added, undef otherwise
   my ($self, $new_node, $reference_node) = @_;
   
-  if (defined $reference_node && $self->is_same_as($reference_node->parent_node) && !$reference_node->is_same_as($new_node)) {
+  if (defined $reference_node && $self->is_same_node($reference_node->parent_node) && !$reference_node->is_same_node($new_node)) {
   
     return undef unless $self->append_child($new_node);
     $new_node->previous_sibling->{'_next_sibling'} = 0;
@@ -485,7 +506,7 @@ sub remove_child {
   ## @params Node to be removed
   ## @return Removed node
   my ($self, $child) = @_;
-  if ($self->is_same_as($child->parent_node)) {
+  if ($self->is_same_node($child->parent_node)) {
     $child->previous_sibling->{'_next_sibling'} = $child->next_sibling || 0 if defined $child->previous_sibling;
     $child->next_sibling->{'_previous_sibling'} = $child->previous_sibling || 0 if defined $child->next_sibling;
     $child->{'_next_sibling'} = 0;
@@ -545,7 +566,7 @@ sub unique_id {
   return EnsEMBL::Web::Tools::RandomString::random_string(@_);
 }
 
-sub is_same_as {
+sub is_same_node {
   # Compares memory location of two Node obects
   # @return 1 if same object, 0 otherwise
   my ($self, $other) = @_;
@@ -592,7 +613,7 @@ sub _adjust_child_nodes {
   #avoid pointing initially to any removed node
   my $node = undef;
   for (@{$self->{'_child_nodes'}}) {
-    if (defined $_->parent_node && $self->is_same_as($_->parent_node)) {
+    if (defined $_->parent_node && $self->is_same_node($_->parent_node)) {
       $node = $_;
       last;
     }
@@ -612,5 +633,6 @@ sub _adjust_child_nodes {
 
   $self->{'_child_nodes'} = $adjusted;
 }
+
 1;
 
