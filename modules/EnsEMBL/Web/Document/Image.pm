@@ -307,9 +307,9 @@ sub hover_labels {
       </div>',
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}   ? '<img class="desc" src="/i/info.gif" alt="Info" title="Info" />' : '',
-      $renderers         ? '<img class="config" src="/i/config_small.png" alt="Change track renderer" title="Change track renderer" />' : '',
-      $label->{'config'} ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="/i/cross.png" alt="Turn track off" title="Turn track off" /></a>} : '',
+      $label->{'desc'}   ? '<img class="desc" src="/i/info_blue_13.png" alt="Info" title="Info" />' : '',
+      $renderers         ? '<img class="config" src="/i/config_13.png" alt="Change track renderer" title="Change track renderer" />' : '',
+      $label->{'config'} ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="/i/cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>} : '',
       $desc,
       $renderers         ? "<p>Change track renderer:</p><ul>$renderers</ul>" : ''
     );
