@@ -28,7 +28,7 @@ sub data_form {
   $url         .= '/' . $self->script_name . "/$next";
   
   my $form = new EnsEMBL::Web::Form($name, $url, 'post');
-  $form->add_attribute('class', 'narrow-labels');
+  $form->set_attribute('class', 'narrow-labels');
 
   ## form widgets
   my ($key) = $interface->data->primary_columns;
@@ -55,7 +55,7 @@ sub record_select {
   my $select    = $interface->dropdown ? 'select' : '';
   my $form      = new EnsEMBL::Web::Form('interface_select', "/$script/$action", 'post');
   
-  $form->add_attribute('class', 'narrow-labels');
+  $form->set_attribute('class', 'narrow-labels');
   
   my @options;
   push @options, { name => '--- Choose ---', value => '' } if $select;

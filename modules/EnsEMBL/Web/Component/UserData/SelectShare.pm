@@ -58,7 +58,7 @@ sub content {
     $form->add_element('type' => 'Hidden', 'name' => 'type', 'value' => $hub->param('type'));
   }
 
-  $form->add_attribute('class', 'narrow-labels');
+  $form->set_attribute('class', 'narrow-labels');
   $form->add_element('type' => 'SubHeader', 'value' => 'Data to share');
 
   my @values = ();
