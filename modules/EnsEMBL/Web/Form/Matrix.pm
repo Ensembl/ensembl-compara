@@ -58,7 +58,7 @@ sub render {
   }
   
   #set columns' width
-  $_->set_attribute('style', 'width:'.($_->get_attribute('colspan') || 1) * 100/(2 + scalar @{$self->{'__columns'}}).'%') for @{$self->get_elements_by_tag_name(['th', 'td'])};
+  $_->set_attribute('style', 'width:'.substr(($_->get_attribute('colspan') || 1) * 100/(2 + scalar @{$self->{'__columns'}}), 0, 5).'%') for @{$self->get_elements_by_tag_name(['th', 'td'])};
 
   return $self->SUPER::render;
 }
