@@ -170,7 +170,7 @@ sub inner_text {
   ## @return text
   my $self = shift;
   $self->{'_text'} = $self->encode_htmlentities(shift) if @_;
-  return $self->decode_htmlentities($self->inner_HTML);
+  return $self->{'_text'};
 }
 
 sub add_attribute {
