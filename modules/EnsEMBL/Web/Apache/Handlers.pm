@@ -132,7 +132,7 @@ sub redirect_to_nearest_mirror {
       warn $@ if $@;
     
       ## Ok, so which country you from
-      if ($geo || $user_agent !~ /Googlebot/) {
+      if ($geo && $user_agent !~ /Googlebot/) {
         my $ip       = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
         my $country  = $geo->country_code_by_addr($ip);
         my $location = $species_defs->ENSEMBL_MIRRORS->{$country} || $species_defs->ENSEMBL_MIRRORS->{'MAIN'};
