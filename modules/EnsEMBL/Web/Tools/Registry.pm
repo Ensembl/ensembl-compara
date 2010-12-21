@@ -21,6 +21,7 @@ sub configure {
     VARIATION           => 'Bio::EnsEMBL::Variation::DBSQL::DBAdaptor',
     FUNCGEN             => 'Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor',
     OTHERFEATURES       => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    RNASEQ              => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     CDNA                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     VEGA                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     VEGA_ENSEMBL        => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
