@@ -141,7 +141,10 @@ sub get_similarity_links_hash {
 
    (my $A = $externalDB) =~ s/_predicted//;
    
-   $similarity_links{'link'}      = $urls->get_url($A, $primary_id) if $urls && $urls->is_linked($A);
+#   $similarity_links{'link'}      = $urls->get_url($A, $primary_id) if $urls && $urls->is_linked($A);
+   $type->{ID} = $primary_id;
+   $similarity_links{'link'} = $urls->get_url($A, $type) if $urls && $urls->is_linked($A);
+   
    $similarity_links{'link_text'} = $A eq 'MARKERSYMBOL' ? " ($primary_id)" : $display_id;
 
    if ($hub->species_defs->ENSEMBL_PFETCH_SERVER && $externalDB =~ /^(SWISS|SPTREMBL|LocusLink|protein_id|RefSeq|EMBL|Gene-name|Uniprot)/i) {

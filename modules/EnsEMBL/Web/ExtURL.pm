@@ -28,8 +28,13 @@ sub set_species {
 
 sub get_url {
   my ($self, $db, $data )=@_;
-  if( defined($data) and ref($data) ne 'HASH' ){
-    $data = { 'ID' => $data }
+  eval{
+    if((defined($data)) && (not defined($data->{ID})) ){
+      $data->{ID} = $data->{primary_id};
+    }
+  };
+  if ($@){
+    $data = { 'ID' => $data };
   }
   my $species        = $self->{'species'};
   $data->{'SPECIES'} ||= $species;
