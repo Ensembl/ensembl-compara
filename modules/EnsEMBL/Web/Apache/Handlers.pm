@@ -69,10 +69,11 @@ sub childInitHandler {
 }
 
 sub redirect_to_nearest_mirror {
-  my $r = shift;
+  my $r = shift;  
   
   if ($species_defs->ENSEMBL_MIRRORS) {
     my $unparsed_uri = $r->unparsed_uri;
+    my $user_agent = $r->headers_in->{'User-Agent'};
 
     ## Check url
     if ($unparsed_uri =~ /redirect=mirror/) {
@@ -131,11 +132,11 @@ sub redirect_to_nearest_mirror {
       warn $@ if $@;
     
       ## Ok, so which country you from
-      if ($geo) {
+      if ($geo || $user_agent !~ /Googlebot/) {
         my $ip       = $r->headers_in->{'X-Forwarded-For'} || $r->connection->remote_ip;
         my $country  = $geo->country_code_by_addr($ip);
         my $location = $species_defs->ENSEMBL_MIRRORS->{$country} || $species_defs->ENSEMBL_MIRRORS->{'MAIN'};
-        
+
         if ($location) {
           return DECLINED if $location eq $species_defs->ENSEMBL_SERVERNAME;
     
