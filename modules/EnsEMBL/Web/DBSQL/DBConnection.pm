@@ -217,7 +217,7 @@ sub _get_databases_common {
 
   ## Other DBs
   # cdna
-  foreach (qw(cdna vega otherfeatures)) {
+  foreach (qw(cdna vega otherfeatures rnaseq)) {
     if($databases{$_}) {
       $self->_get_db_with_dnadb( $_, $species);
       delete $databases{ $_ };
