@@ -19,8 +19,6 @@ sub features {
   
   if ($slice_length > $max_length * 1010 ) {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
-  } elsif ($self->{'my_config'}->id =~/set/ && $slice_length >= 51000){
-    $self->errorTrack("Variation sets are not displayed for regions larger than 50 Kb");
   } else {
     return $self->fetch_features;
   }
@@ -55,7 +53,7 @@ sub fetch_features {
       my @somatic_mutations;
       if ($self->my_config('filter')){ 
         @somatic_mutations = 
-        grep { $_->map_weight < 4 }
+        #grep { $_->map_weight < 4 }
         @{$self->{'container'}->get_all_somatic_VariationFeatures_with_annotation(undef, undef, $self->my_config('filter')) || []};
 
       } else { 
@@ -69,16 +67,25 @@ sub fetch_features {
          $sets    = { map { $_ => 1 } @$sets } if $sets;
       my %ct      = %Bio::EnsEMBL::Variation::VariationFeature::CONSEQUENCE_TYPES;
      
-      ## Add a filtering step here
-      my @vari_features =
-        map  { $_->[1] }                                                ## Quick indexing schwartzian transform
-        sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
-        map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
-        grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
-        grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
-        grep { $_->map_weight < 4 }
-        @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};
-      
+      my @vari_features;  
+      if ($self->{'my_config'}->id =~/set/){
+        my $track_set = $self->{'my_config'}->id; 
+        $track_set =~s/variation_set_//;
+        my $set_object = $self->{'container'}->adaptor->db->get_db_adaptor('variation')->get_VariationSetAdaptor->fetch_by_name($track_set); 
+        @vari_features =  @{$self->{'container'}->get_all_VariationFeatures_by_VariationSet($set_object) || []}; 
+      } else {
+        my @temp_variations =  @{$self->{'container'}->get_all_VariationFeatures($self->my_config('filter')) || []};  
+        ## Add a filtering step here
+        @vari_features =
+          map  { $_->[1] }                                                ## Quick indexing schwartzian transform
+          sort { $a->[0] <=> $b->[0] }                                    ## to make sure that "most functional" snps appear first
+          map  { [ $ct{$_->display_consequence} * 1e9 + $_->start, $_ ] }
+          grep { $sources ? $self->check_source($_, $sources) : 1 }       ## If sources filter by source
+          grep { $sets ? $self->check_set($_, $sets) : 1 }                ## If sets filter by set
+          #grep { $_->map_weight < 4 }
+          @temp_variations;
+      }
+
       $self->cache($self->{'my_config'}->id, \@vari_features);
     }
   }
@@ -88,7 +95,7 @@ sub fetch_features {
   foreach my $f (@$snps) {
     my $config  = $self->{'config'};
     my $colours = $self->my_config('colours');
-    my $type    = lc $f->display_consequence;
+    my $type    = lc $f->display_consequence; 
 
     if (!$config->{'variation_types'}{$type}) {
       push @{$config->{'variation_legend_features'}->{'variations'}->{'legend'}}, $colours->{$type}->{'text'}, $colours->{$type}->{'default'};
