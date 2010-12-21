@@ -23,7 +23,7 @@ sub munge {
 
 sub munge_databases {
   my $self   = shift;
-  my @tables = qw(core cdna vega otherfeatures);
+  my @tables = qw(core cdna vega otherfeatures rnaseq);
   
   $self->_summarise_core_tables($_, 'DATABASE_' . uc $_) for @tables;
   $self->_summarise_xref_types('DATABASE_' . uc $_) for @tables;
@@ -113,6 +113,8 @@ sub _summarise_core_tables {
   my $db_name = shift; 
   my $dbh    = $self->db_connect( $db_name ); 
   return unless $dbh; 
+
+# warn "connected to $db_name";
   
   push @{ $self->db_tree->{'core_like_databases'} }, $db_name;
 
