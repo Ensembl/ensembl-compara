@@ -669,10 +669,10 @@ CVS commit the changes.
     If not happy, edit the changes, save the config file and exit the editor.
 
     Run init_pipeline.pl with this file:
-        init_pipeline.pl DumpTrees_conf.pm -tree_type gene_trees -password <our_most_secret_password>
+        init_pipeline.pl DumpTrees_conf.pm -tree_type protein_trees -password <our_most_secret_password>
 
     Then run both -sync and -loop variations of the beekeeper.pl command suggested by init_pipeline.pl .
-    This pipeline will produce gene_tree dumps in the directory pointed at by 'target_dir' parameter.
+    This pipeline will produce protein_tree dumps in the directory pointed at by 'target_dir' parameter.
 
 # rel_60: took 5 hours on a "bad lustre" day. On one of such days you're better off pointing at your home directory!
     

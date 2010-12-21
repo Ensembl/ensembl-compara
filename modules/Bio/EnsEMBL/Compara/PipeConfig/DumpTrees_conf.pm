@@ -7,15 +7,15 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type gene_trees
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type protein_trees
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -password <your_password> -tree_type ncrna_trees
 
 =head1 DESCRIPTION  
 
-    A pipeline to dump either gene_trees or ncrna_trees.
+    A pipeline to dump either protein_trees or ncrna_trees.
 
-    In rel.60 gene_trees took 2h20m to dump.
+    In rel.60 protein_trees took 2h20m to dump.
 
 =head1 CONTACT
 
@@ -44,7 +44,7 @@ sub default_options {
         'rel'               => 60,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
-        'tree_type'         => 'gene_trees',                                        # either 'gene_trees' or 'ncrna_trees'
+        'tree_type'         => 'protein_trees',                                     # either 'protein_trees' or 'ncrna_trees'
 
         'pipeline_name' => $self->o('tree_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
@@ -118,9 +118,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'gene_trees_query'      => "SELECT DISTINCT ptm.root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
+                'protein_trees_query'      => "SELECT DISTINCT ptm.root_id FROM protein_tree_member ptm, protein_tree_tag ptt WHERE ptt.node_id=ptm.root_id AND ptt.tag='gene_count' AND ptt.value>1",
                 'ncrna_trees_query'     => "SELECT root_id FROM nc_tree_member ntm, nc_tree_tag ntt WHERE ntm.root_id=ntt.node_id AND ntt.tag='gene_count' AND ntt.value GROUP BY root_id HAVING sum(length(cigar_line))",
-                'inputquery'            => '#expr(($tree_type eq "gene_trees") ? $gene_trees_query : $ncrna_trees_query)expr#',
+                'inputquery'            => '#expr(($tree_type eq "protein_trees") ? $protein_trees_query : $ncrna_trees_query)expr#',
                 'hashed_column_number'  => 0,
                 'input_id'              => { 'tree_type' => '#tree_type#', 'tree_id' => '#_start_0#', 'hash_dir' => '#_start_1#' },
                 'fan_branch_code'       => 2,
@@ -137,12 +137,12 @@ sub pipeline_analyses {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'db_url'            => $self->dbconn_2_url('rel_db'),
-                'dump_script'       => $self->o('dump_script'),
-                'work_dir'          => $self->o('work_dir'),
-                'gene_trees_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -nc 0',
-                'ncrna_trees_args'  => '-nh 1 -a 1 -nhx 1 -f 1 -nc 1',
-                'cmd'         => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #expr(($tree_type eq "gene_trees") ? $gene_trees_args : $ncrna_trees_args)expr#',
+                'db_url'             => $self->dbconn_2_url('rel_db'),
+                'dump_script'        => $self->o('dump_script'),
+                'work_dir'           => $self->o('work_dir'),
+                'protein_trees_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -nc 0',
+                'ncrna_trees_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -nc 1',
+                'cmd'         => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #expr(($tree_type eq "protein_trees") ? $protein_trees_args : $ncrna_trees_args)expr#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
@@ -151,12 +151,12 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_collations',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'name_root'        => $self->o('name_root'),
-                'gene_trees_list'  => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
-                'ncrna_trees_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
-                'inputlist'        => '#expr(($tree_type eq "gene_trees") ? $gene_trees_list : $ncrna_trees_list)expr#',
-                'input_id'         => { 'tree_type' => '#tree_type#', 'extension' => '#_range_start#', 'dump_file_name' => '#name_root#.#_range_start#'},
-                'fan_branch_code'  => 2,
+                'name_root'          => $self->o('name_root'),
+                'protein_trees_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
+                'ncrna_trees_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
+                'inputlist'          => '#expr(($tree_type eq "protein_trees") ? $protein_trees_list : $ncrna_trees_list)expr#',
+                'input_id'           => { 'tree_type' => '#tree_type#', 'extension' => '#_range_start#', 'dump_file_name' => '#name_root#.#_range_start#'},
+                'fan_branch_code'    => 2,
             },
             -wait_for => [ 'dump_a_tree' ],
             -flow_into => {
@@ -203,7 +203,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'target_dir'  => $self->o('target_dir'),
-                'cmd'         => 'cd #target_dir# ; md5sum *.gz >MD5SUM',
+                'cmd'         => 'cd #target_dir# ; md5sum *.gz >MD5SUM.#tree_type#',
             },
             -wait_for => [ 'archive_long_files' ],
             -hive_capacity => 10,
