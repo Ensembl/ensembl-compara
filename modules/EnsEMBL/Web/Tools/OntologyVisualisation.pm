@@ -1,4 +1,3 @@
-<<<<<<< OntologyVisualisation.pm
 package EnsEMBL::Web::Tools::OntologyVisualisation;
 use strict;
 use warnings;
@@ -497,13 +496,6 @@ sub render{
     my $cluster=$self->{_clusters}->{$_};
     
     my $image = new EnsEMBL::Web::TmpFile::Image( $self->{'species_defs'} );
-  
-  
-    
-    #my $file =  _get_image_file_name();
-	  #open (MYFILE, '>>'.$self->img_base_dir.$file);
-	  #print MYFILE $cluster->as_png;
-	  #close (MYFILE);
     $image->content($cluster->as_png);
     $image->save;    
   
@@ -1173,13 +1165,7 @@ sub render{
     my $cluster=$self->{_clusters}->{$_};
     
     my $image = new EnsEMBL::Web::TmpFile::Image( $self->{'species_defs'} );
-  
-  
-    
-    #my $file =  _get_image_file_name();
-	  #open (MYFILE, '>>'.$self->img_base_dir.$file);
-	  #print MYFILE $cluster->as_png;
-	  #close (MYFILE);
+
     $image->content($cluster->as_png);
     $image->save;    
   
@@ -1372,5 +1358,4 @@ sub _in_highlighted_subsets{
   }
   return $found;
 }
->>>>>>> 1.16
 1;
