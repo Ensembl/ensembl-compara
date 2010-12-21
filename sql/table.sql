@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS analysis (
   KEY logic_name_idx( logic_name ),
   UNIQUE (logic_name)
 
-) COLLATE=latin1_swedish_ci;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 #
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
   UNIQUE KEY analysis_idx( analysis_id )
 
-) COLLATE=latin1_swedish_ci;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 #
@@ -179,7 +179,7 @@ CREATE TABLE species_set_tag (
   value                       mediumtext,
 
   ## NB: species_set_id is not unique so cannot be used as a foreign key
-  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+  FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   UNIQUE KEY tag_species_set_id (species_set_id,tag)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -216,7 +216,7 @@ CREATE TABLE method_link_species_set (
 
   FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
   ## NB: species_set_id is not unique so cannot be used as a foreign key
-  # FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
+  FOREIGN KEY (species_set_id) REFERENCES species_set(species_set_id),
 
   PRIMARY KEY (method_link_species_set_id),
   UNIQUE KEY method_link_id (method_link_id,species_set_id)
