@@ -22,6 +22,7 @@ use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::SpreadSheet;
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
@@ -52,6 +53,7 @@ sub id {
 sub builder  { return $_[0]->{'builder'};  }
 sub hub      { return $_[0]->{'hub'};      }
 sub renderer { return $_[0]->{'renderer'}; }
+sub dom      { return $_[0]->{'dom'} ||= new EnsEMBL::Web::DOM; }
 
 sub content_pan_compara {
   my $self = shift;
@@ -335,10 +337,11 @@ sub new_table {
 
 sub new_form {
   ## Creates and returns a new Form object.
-  ## Params   HashRef as accepted by Form->new
-  ## Return   EnsEMBL::Web::Form object
-  shift;
-  return new EnsEMBL::Web::Form(@_);
+  ## @param   HashRef as accepted by Form->new
+  ## @return  EnsEMBL::Web::Form object
+  my ($self, $params) = @_;
+  $params->{'dom'} = $self->dom;
+  return new EnsEMBL::Web::Form($params);
 }
 
 sub _export_image {
