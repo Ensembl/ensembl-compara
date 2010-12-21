@@ -33,12 +33,13 @@ use constant {
 sub new {
   ## @overrides
   ## Creates a new DOM::Node::Element::Form and adds the required attributes before returning it
-  ## @params HashRef with following keys
+  ## @param HashRef with following keys
   ##  - id        id attribute of the form
   ##  - action    action attribute
   ##  - method    method attribute (post as default)
   ##  - class     Space seperatred class names for class attribute
   ##  - validate  Flag set 0 if no validation is required on JS end
+  ##  - dom       DOM object (optional)
   my $class = shift;
   my $params = shift;
   
@@ -48,7 +49,7 @@ sub new {
   }
   ##compatibility patch ends
   
-  my $self = $class->SUPER::new;
+  my $self = $class->SUPER::new($params->{'dom'} || undef);
   
   $self->set_attribute('id',      $params->{'id'}) if exists $params->{'id'};
   $self->set_attribute('action',  $params->{'action'}) if exists $params->{'action'};
