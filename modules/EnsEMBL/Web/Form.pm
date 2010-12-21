@@ -28,6 +28,9 @@ use constant {
   CSS_CLASS_HEADING       => '',
   NOTES_HEADING_TAG       => 'h4',
   CSS_CLASS_NOTES         => 'notes',
+  
+  _FLAG_HEAD_NOTE         => 'is_head_note',
+  _FLAG_FOOT_NOTE         => 'is_foot_note',
 };
 
 sub new {
@@ -95,6 +98,18 @@ sub fieldsets {
   return $fieldsets;
 }
 
+sub foot_notes {
+  ## @return Gets all the footnotes (Element::Div objects) added to the form
+  my $self = shift;
+  return $self->get_child_nodes_by_flag($self->_FLAG_FOOT_NOTE);
+}
+
+sub head_notes {
+  ## @return Gets all the headnotes (Element::Div objects) added to the form
+  my $self = shift;
+  return $self->get_child_nodes_by_flag($self->_FLAG_HEAD_NOTE);
+}
+
 sub fieldset {
   ## Gets last fieldset added to the form OR if none added yet, adds a new one and returns it
   ## @return Form::Fieldset object
@@ -118,9 +133,8 @@ sub add_fieldset {
     $fieldset->configure($params);
   }
 
-  my $reference_element = $self->_first_foot_note;
-  return $self->insert_before($fieldset, $reference_element) if $reference_element;
-  return $self->append_child($fieldset);
+  my $foot_notes = $self->foot_notes;
+  return scalar @$foot_notes ? $self->insert_before($fieldset, $foot_notes->[0]) : $self->append_child($fieldset);
 }
 
 sub has_fieldset {
@@ -166,7 +180,8 @@ sub add_notes {
 
   my $location = $params->{'location'} eq 'foot' ? 'foot' : 'head';
   
-  my $notes = $self->dom->create_element('div');
+  my $notes = $self->dom->create_element('div', {'class' => $params->{'class'} || $self->CSS_CLASS_NOTES});
+  $notes->set_attribute('id', $params->{'id'}) if exists $params->{'id'};
   
   if (exists $params->{'heading'}) {
     my $heading = $self->dom->create_element($self->NOTES_HEADING_TAG);
@@ -190,25 +205,22 @@ sub add_notes {
     $notes->append_child($list);
   }
   
-  if ($location eq 'foot') {        # foot notes
-    $self->append_child($notes);
-    $self->_has_foot_notes($notes);
+  # if foot notes
+  if ($location eq 'foot') {
+    $notes->set_flag($self->_FLAG_FOOT_NOTE);
+    return $self->append_child($notes);
   }
-  else {                            # head notes
-    my $fieldsets = $self->fieldsets;
-    if (scalar @$fieldsets) {
-      $self->insert_before($notes, $fieldsets->[0]);
-    }
-    elsif (my $reference_element = $self->_first_foot_note) {
-      $self->insert_before($notes, $reference_element);
-    }
-    else {
-      $self->append_child($notes);
-    }
-  }
-  $notes->set_attribute('id',     $params->{'id'}) if exists $params->{'id'};
-  $notes->set_attribute('class',  $params->{'class'} || $self->CSS_CLASS_NOTES);
-  return $notes;
+  
+  # else if head notes
+  $notes->set_flag($self->_FLAG_HEAD_NOTE);
+  
+  my $fieldsets = $self->fieldsets;
+  return $self->insert_before($notes, $fieldsets->[0]) if scalar @$fieldsets;   # insert head note before fieldset
+
+  my $foot_notes = $self->foot_notes;
+  return $self->insert_before($notes, $foot_notes->[0]) if scalar @$foot_notes; # insert head note before foot note if no fieldset found
+
+  return $self->append_child($notes);                                           # just append to the form if nothing found
 }
 
 sub force_reload_on_submit {
@@ -227,26 +239,6 @@ sub add_matrix {          shift->fieldset->add_matrix(@_);          }
 sub add_button {          shift->fieldset->add_button(@_);          }
 sub add_element {         shift->fieldset->add_element(@_);         }
 
-## other private helper methods
-sub _first_foot_note {
-  my $self = shift;
-  my $first_foot_note = undef;
-  if ($self->_has_foot_notes) {
-    for (reverse @{$self->child_nodes}) {
-      last unless $_->{'__is_foot_note'};
-      $first_foot_note = $_;
-    }
-  }
-  return $first_foot_note;
-}
-sub _has_foot_notes {
-  my $self = shift;
-  if (@_) {
-    shift->{'__is_foot_note'} = 1;
-    $self->{'__has_foot_notes'} = 1;
-  }
-  return $self->{'__has_foot_notes'} || 0;
-}
 
 ##################################
 ##                              ##
