@@ -154,9 +154,9 @@ sub createObjects {
                     $self->param('clone')     || $self->param('seqregion')  ||
                     $self->param('chr')       || $self->param('seq_region_name');
                     
-      $start      = $self->param('chr_start') || $self->param('start');
+      $start      = $self->param('chr_start') || $self->param('vc_start') || $self->param('start');
                     
-      $end        = $self->param('chr_end')   || $self->param('end');
+      $end        = $self->param('chr_end')   || $self->param('vc_end') || $self->param('end');
       
       $strand     = $self->param('strand')    || $self->param('seq_region_strand') || 1;
       
