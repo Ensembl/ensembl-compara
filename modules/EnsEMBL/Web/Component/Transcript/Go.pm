@@ -23,16 +23,6 @@ sub content {
   return $self->non_coding_error unless $object->translation_object;
 
   my $label = 'Ontology';
-  
-  unless ($object->__data->{'links'}) {
-    my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
-    
-    return unless @similarity_links;
-    
-    $self->_sort_similarity_links(@similarity_links);
-  }
-
-  return '<p>No ontology terms have been mapped to this entity.</p>' unless $object->__data->{'links'}{'go'}; 
 
   my $html          =  '<p><h3>The following ontology terms have been mapped to this entry:</h3></p>';
   my $columns       = [   
@@ -49,11 +39,12 @@ sub content {
 # ontology website.
    
   my %clusters = $self->hub->species_defs->multiX('ONTOLOGIES');
-
+  my $terms_found = 0;
   foreach my $oid (sort {$a <=> $b} keys %clusters) {
     my $go_hash  = $object->get_go_list($clusters{$oid}->{db}, $clusters{$oid}->{root});
 
     if (%$go_hash) {
+	$terms_found = 1;
 	$html .= "<p><h3>The following terms are descendants of $clusters{$oid}->{description}</h3>";
       #add closest goslim_goa
       my $go_database=$self->hub->get_databases('go')->{'go'};    
@@ -77,6 +68,9 @@ sub content {
       $html .= $table->render;
     }
   }
+
+  return '<p>No ontology terms have been mapped to this entity.</p>' unless $terms_found; 
+
   return "</p>$html";
 }
 

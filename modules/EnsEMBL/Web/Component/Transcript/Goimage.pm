@@ -59,29 +59,28 @@ sub content {
     $get_relation_type_colour
   );
   
-  my %clusters = $self->hub->species_defs->multiX('ONTOLOGIES');
+  my %clusters = $species_defs->multiX('ONTOLOGIES');
+  return "<p>Ontology database not found.</p>" unless %clusters;
+
+  my @ontologies;
 
   foreach my $oid (sort keys %clusters) {
       my $root = $clusters{$oid}->{root};
+      push @ontologies, $clusters{$oid}->{db};
       my $url =  $species_defs->ENSEMBL_EXTERNAL_URLS->{$clusters{$oid}->{db}};
       $ontovis->add_cluster_by_parent_accession($root, $url);
   }
 
   return $self->non_coding_error unless $object->translation_object;
   my $label = 'Ontology';
-  
-  unless ($object->__data->{'links'}) {
-    my @similarity_links = @{$object->get_similarity_hash($object->Obj)};
-    
-    return unless @similarity_links;
-    
-    $self->_sort_similarity_links(@similarity_links);
-  }
-  return "<p>No ontology terms have been mapped to this entry.</p>"  unless $object->__data->{'links'}{'go'}; 
+
   # First process GO terms
   my $html;
-  my $go_hash      = $object->get_go_list;
-  #my $go_slim_hash = $object->get_go_list('goslim_goa');
+  my $olist = join '|', @ontologies;
+
+  my $go_hash      = $object->get_go_list($olist);
+  my $terms_found = 0;
+
   my @goslim_subset = ("goslim_goa");
   if (%$go_hash) {
     $html .= sprintf(
@@ -98,8 +97,11 @@ sub content {
     }
     
     $html.=  '</strong></p>';
+    $terms_found = 1;
   }
-  
+
+  return "<p>No ontology terms have been mapped to this entry.</p>"  unless $terms_found;   
+
   $ontovis->normal_term_accessions(keys %$go_hash);
   #$ontovis->highlighted_term_accessions(keys %$go_slim_hash);
   $ontovis->highlighted_subsets(@goslim_subset);

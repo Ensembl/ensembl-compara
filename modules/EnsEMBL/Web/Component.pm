@@ -476,7 +476,11 @@ sub _sort_similarity_links {
   my $urls             = $hub->ExtURL;
   my $fv_type          = $hub->action eq 'Oligos' ? 'OligoFeature' : 'Xref'; # default link to featureview is to retrieve an Xref
   my (%affy, %exdb);
-  
+
+  # Get the list of the mapped ontologies 
+  my @mapped_ontologies = @{$hub->species_defs->SPECIES_ONTOLOGIES || ['GO']};
+  my $ontologies = join '|', @mapped_ontologies, 'goslim_goa';
+
   foreach my $type (sort {
     $b->priority        <=> $a->priority        ||
     $a->db_display_name cmp $b->db_display_name ||
@@ -499,7 +503,7 @@ sub _sort_similarity_links {
     next if $externalDB eq 'Vega_translation';
     next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
     
-    if ($externalDB eq 'GO' || $externalDB eq 'goslim_goa') {
+    if ($externalDB =~ /^$ontologies$/) {
       push @{$object->__data->{'links'}{'go'}}, $display_id;
       next;
     } elsif ($externalDB eq 'GKB') {
