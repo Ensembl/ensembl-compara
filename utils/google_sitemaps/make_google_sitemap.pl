@@ -59,12 +59,12 @@ my %lookup = (
 );
 
 my $sample_sp_path = $SPECIES_DEFS->species_path( @{$species_list}->[0] );
-$sample_sp_path =~ /$RE{URI}{HTTP}{-keep}/; my $toplevel = 'http://www.ensembl.org' . $3 . '/index.html';
+$sample_sp_path =~ /$RE{URI}{HTTP}{-keep}/; my $toplevel = 'http://www.ensembl.org' . $3 . '/';
 
 my $map = Search::Sitemap->new();
 $map->add(
    Search::Sitemap::URL->new(
-       loc        => $toplevel,
+       loc        => qq{$toplevel/index.html},
        changefreq => 'monthly',
        priority   => 1.0,
        lastmod    => 'now'
