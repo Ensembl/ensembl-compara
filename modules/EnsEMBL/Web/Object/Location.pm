@@ -1663,7 +1663,8 @@ sub chr_short_name {
   
   my %short = (
     chromosome  => 'Chr.',
-    supercontig => "S'ctg"
+    supercontig => "S'ctg",
+    plasmid => 'Pla.',
   );
   
   if ($chr_name !~ /^$type/i) {
@@ -1674,7 +1675,8 @@ sub chr_short_name {
   $chr_name = $chr_raw if CORE::length($chr_name) > 9;
   
   (my $abbrev = $species) =~ s/^(\w)\w+_(\w{3})\w+$/$1$2/g;
-  
+  $abbrev ||= $species;
+
   return "$abbrev $chr_name";
 }
 
