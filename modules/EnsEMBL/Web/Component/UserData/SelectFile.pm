@@ -43,7 +43,7 @@ sub content {
   ## Species is set automatically for the page you are on
   my @species;
   foreach my $sp ($object->species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $object->species_defs->species_display_label($sp, 1)};
+    push @species, {'value' => $sp, 'name' => $object->species_defs->species_label($sp, 1)};
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
   $form->add_element(

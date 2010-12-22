@@ -80,7 +80,7 @@ sub content {
           ]; 
         } else {
           push @$data, [
-            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_display_label($member_species),
+            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_label($member_species),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $member->stable_id, r => undef }),
               $member->stable_id

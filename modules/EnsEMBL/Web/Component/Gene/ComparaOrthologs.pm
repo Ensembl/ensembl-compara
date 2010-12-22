@@ -32,7 +32,7 @@ sub content {
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
-      my $label    = $species_defs->species_display_label($species);
+      my $label    = $species_defs->species_label($species);
       $orthologue_list{$label} = {%{$orthologue_list{$label}||{}}, %{$homology_type->{$_}}};
       $skipped{$label}        += keys %{$homology_type->{$_}} if $hub->param('species_' . lc $species) eq 'off';
     }
