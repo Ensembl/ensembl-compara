@@ -1072,7 +1072,12 @@ sub table_info_other {
 
 sub species_label {
   my ($self, $key, $no_formatting) = @_;
-  
+
+  if( my $sdhash          = $self->SPECIES_DISPLAY_NAME) {
+      (my $lcspecies = lc $key) =~ s/ /_/g;
+      return $sdhash->{$lcspecies} if $sdhash->{$lcspecies};
+  }
+
   $key = ucfirst $key;
   
   return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_BIO_NAME');
@@ -1166,6 +1171,7 @@ sub species_display_label {
       (my $ss = lc $species) =~ s/ /_/g;
       return $sdhash->{$ss} if $sdhash->{$ss};
   }
+
   return $self->species_label($species);
 }
 
