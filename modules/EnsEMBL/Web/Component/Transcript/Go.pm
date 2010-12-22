@@ -49,7 +49,6 @@ sub content {
 # ontology website.
    
   my %clusters = $self->hub->species_defs->multiX('ONTOLOGIES');
-  warn Data::Dumper::Dumper \%clusters;
 
   foreach my $oid (sort {$a <=> $b} keys %clusters) {
     my $go_hash  = $object->get_go_list($clusters{$oid}->{db}, $clusters{$oid}->{root});
