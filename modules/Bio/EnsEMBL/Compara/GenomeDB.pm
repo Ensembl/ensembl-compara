@@ -126,12 +126,16 @@ sub new {
 sub db_adaptor {
   my ( $self, $dba ) = @_;
 
-  if($dba) {
-    unless($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
-      throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
-    }
-    $self->{'_db_adaptor'} = $dba;
-  }
+  eval {
+      if($dba) {
+	  unless($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor')) {
+	      throw("dba arg must be a Bio::EnsEMBL::DBSQL::DBAdaptor not a [$dba]\n");
+	  }
+	  $self->{'_db_adaptor'} = $dba;
+      }
+  };
+
+  $self->{'_db_adaptor'} = undef if $@; # if there was an error force a new db adaptor to be made
   
   unless (defined $self->{'_db_adaptor'}) {
     $self->{'_db_adaptor'} = $self->connect_to_genome_locator;
