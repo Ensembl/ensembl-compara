@@ -513,7 +513,9 @@ sub _sort_similarity_links {
     (my $A = $externalDB) =~ s/_predicted//;
     
     if ($urls && $urls->is_linked($A)) {
-      my $link = $urls->get_url($A, $primary_id);
+#      my $link = $urls->get_url($A, $primary_id);
+      $type->{ID} = $primary_id;
+      my $link = $urls->get_url($A, $type);
       my $word = $display_id;
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
       
