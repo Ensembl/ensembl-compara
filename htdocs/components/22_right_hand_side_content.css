@@ -56,3 +56,5 @@ body.static hr.with-nav { margin-left: 21em; }
 .ajax_add span               { display: none;   }
 .ajax_add.closed span.closed { display: inline; }
 .ajax_add.open span.open     { display: inline; }
+
+ul.no-bullet, ul.no-bullet li {list-style-image:none; list-style:none;}
