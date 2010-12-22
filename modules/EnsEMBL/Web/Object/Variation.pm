@@ -604,6 +604,8 @@ sub freqs {
     $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
     push (@{ $data{$pop_id}{$ssid}{GenotypeFrequency} }, $pop_gt_obj->frequency);
     push (@{ $data{$pop_id}{$ssid}{Genotypes} }, $self->pop_genotypes($pop_gt_obj)); 
+
+    $data{$pop_id}{$ssid}{count} = $pop_gt_obj->count();
   }
 
   if ($allele_missing == 1){
