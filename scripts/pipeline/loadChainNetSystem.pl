@@ -688,10 +688,10 @@ sub createChunkAndGroupDnaJobs
   }
   $input_id .= "}";
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob
-      (-input_id       => $input_id,
-       -analysis       => $self->{'noChunkAndGroupDnaAnalysis'},
-       -input_job_id   => 0);
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+        -input_id       => $input_id,
+        -analysis       => $self->{'noChunkAndGroupDnaAnalysis'},
+  );
 }
 
 sub create_dump_nib_job
@@ -701,11 +701,10 @@ sub create_dump_nib_job
   
   my $input_id = "{\'dna_collection_name\'=>\'$collection_name\'}";
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
         -input_id       => $input_id,
         -analysis       => $self->{'dumpLargeNibForChainsAnalysis'},
-        -input_job_id   => 0
-        );
+  );
   
 }
 
@@ -725,11 +724,10 @@ sub prepCreateAlignmentChainsJobs {
   $input_id .= "\'query_collection_name\'=>\'$query_collection_name\',\'target_collection_name\'=>\'$target_collection_name\',";
   $input_id .= ",\'logic_name\'=>\'$logic_name\'}";
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
         -input_id       => $input_id,
         -analysis       => $self->{'createAlignmentChainsJobsAnalysis'},
-        -input_job_id   => 0
-        );
+  );
 }
 
 sub prepCreateAlignmentNetsJobs {
@@ -750,11 +748,10 @@ sub prepCreateAlignmentNetsJobs {
   $input_id .= "\'collection_name\'=>\'$query_collection_name\'";
   $input_id .= ",\'logic_name\'=>\'$logic_name\'}";
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
         -input_id       => $input_id,
         -analysis       => $self->{'createAlignmentNetsJobsAnalysis'},
-        -input_job_id   => 0
-        );
+  );
 }
 
 sub createFilterStackJob {
@@ -762,11 +759,10 @@ sub createFilterStackJob {
     my $collection_name = shift;
 
     my $input_id = "{\'collection_name\'=>\'$collection_name\'}";
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
         -input_id       => $input_id,
         -analysis       => $self->{'filterStackAnalysis'},
-        -input_job_id   => 0
-        );
+    );
 }
 
 sub createUpdateMaxAlignmentLengthAfterStackJob {
@@ -775,11 +771,10 @@ sub createUpdateMaxAlignmentLengthAfterStackJob {
     my $target_genome_db_id = shift;
 
     my $input_id = "{\'query_genome_db_id\' => \'" . $query_genome_db_id . "\',\'target_genome_db_id\' => \'" . $target_genome_db_id . "\'}";
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
         -input_id       => $input_id,
         -analysis       => $self->{'updateMaxAlignmentLengthAfterStackAnalysis'},
-        -input_job_id   => 0
-        );
+    );
 }
 
 sub generate_paramaters_string {

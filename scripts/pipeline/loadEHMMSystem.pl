@@ -256,8 +256,7 @@ sub loadClustersets
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $submitGenome,
-        -input_job_id   => 0
-        );
+  );
 }
 
 

@@ -269,8 +269,7 @@ sub submitGenome
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $submitGenome,
-        -input_job_id   => 0
-        );
+  );
 }
 
 
@@ -302,8 +301,7 @@ sub submitUniprot
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $loadUniProt,
-        -input_job_id   => 0
-        );
+  );
 
 }
 

@@ -287,8 +287,7 @@ sub prepareChainSystem {
                                             query_collection_name => $query_collection_name,
                                             target_collection_name => $target_collection_name),
        -analysis       => $createAlignmentChainsJobsAnalysis,
-       -input_job_id   => 0
-       );
+      );
 
 
   return $updateMaxAlignmentLengthAfterChainAnalysis;
@@ -418,7 +417,6 @@ sub prepareNetSystem {
       (-input_id => &make_parameters_string(query_genome_db_id => $qy_gdb_id,
                                             target_genome_db_id => $tg_gdb_id),
        -analysis       => $createAlignmentNetsJobsAnalysis,
-       -input_job_id   => 0
        );
 }
 
