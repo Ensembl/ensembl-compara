@@ -229,8 +229,8 @@ sub createPairAlignerJobs
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $self->{'pair_aligner'},
-        -input_job_id   => 0,
-        );
+        -input_job_id   => $self->input_job->dbID,
+      );
       $count++;
     }
   }

@@ -49,8 +49,8 @@ use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Compara::Production::DBSQL::DBAdaptor;
 
 use Bio::EnsEMBL::Analysis::RunnableDB;
-use Bio::EnsEMBL::Hive::Process
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+use base ('Bio::EnsEMBL::Hive::Process');
+
 
 sub fetch_input {
   my $self = shift;
@@ -157,8 +157,8 @@ sub createSetNeighbourNodesJobs
       Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $input_id,
         -analysis       => $analysis,
-        -input_job_id   => 0,
-        );
+        -input_job_id   => $self->input_job->dbID,
+      );
       $count++;
   }
   printf("created %d jobs for SetNeighbourNodes\n", $count);
