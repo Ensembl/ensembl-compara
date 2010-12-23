@@ -26,7 +26,7 @@ BEGIN {
 use EnsEMBL::Web::BlastView::BlastDefs;
 our $DEFS = EnsEMBL::Web::BlastView::BlastDefs->new;
 
-my ( $host, $user, $pass, $port, $inifile, $chromosome, $start, $end, $transcript );
+my ( $host, $user, $pass, $port, $inifile, $chromosome, $start, $end, $transcript, $gene );
 
 #removing the sitemaps from the previous release first
 `rm sitemaps/*`;
@@ -91,14 +91,14 @@ foreach my $species (@$species_list) {
     my $type_id = $type.qq{_id}; 
     my $query = qq{select stable_id,$type_id from $type} . qq{_stable_id}; 
     my $stable_ids = $dbh->selectall_arrayref($query);
-    
+
     foreach my $stable_id (@$stable_ids) {
       $entry->{stable_id} = $stable_id->[0];
       my $url = eval { $lookup{$type}($entry) };
 
       #generating full URL with gene,location and transcript
       my $id = $stable_id->[1];
-      my $sql_query = qq{select ts.stable_id,seq_region_start,seq_region_end,sr.name from seq_region sr, transcript t, transcript_stable_id ts where sr.seq_region_id=t.seq_region_id and t.transcript_id=ts.transcript_id and t.$type_id=$id};
+      my $sql_query = qq{select ts.stable_id,seq_region_start,seq_region_end,sr.name,gs.stable_id from seq_region sr, transcript t, transcript_stable_id ts,gene_stable_id gs where gs.gene_id=t.gene_id and sr.seq_region_id=t.seq_region_id and t.transcript_id=ts.transcript_id and t.$type_id=$id};
       my $details = $dbh->selectall_arrayref($sql_query);
       my $count = @$details;
       
@@ -108,12 +108,14 @@ foreach my $species (@$species_list) {
         $start = $region->[1];
         $end = $region->[2];
         $transcript = $region->[0];
+        $gene = $region->[4];
       }
       $url = qq{http://www.ensembl.org$url;r=$chromosome:$start-$end};
-      $url .= qq{;t=$transcript}    if ($count == 1);     #only if there is one transcript add it to the url
-
-#      print $url,"\n";
-#      exit;
+      $url .= qq{;t=$transcript}    if ($count == 1 && $type eq 'gene');     #only if there is one transcript add it to the url
+      $url .= qq{;g=$gene} if($type eq 'transcript');
+      
+# print $url,"\n";
+# next;
       $map->add(
         loc        => $url,
         priority   => 1.0,
