@@ -179,8 +179,6 @@ sub parse_conf {
 # this is a generic analysis of type 'genome_db_id'
 # the input_id for this analysis will be a genome_db_id
 # the full information to access the genome will be in the compara database
-# also creates 'GenomeLoadMembers' analysis and
-# 'GenomeDumpFasta' analysis in the 'genome_db_id' chain
 
 sub preparePairAlignerSystem {
   my $self = shift;
