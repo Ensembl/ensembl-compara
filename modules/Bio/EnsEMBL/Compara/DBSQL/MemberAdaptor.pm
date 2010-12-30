@@ -171,8 +171,6 @@ sub fetch_by_source_stable_id {
     throw("fetch_by_source_stable_id must have an stable_id");
   }
 
-#  my $source_id = $self->get_source_id_from_name($source_name);
-  
   #construct a constraint like 't1.table1_id = 1'
   my $constraint = "";
   $constraint = "m.source_name = '$source_name' AND " if ($source_name);
@@ -244,7 +242,6 @@ sub fetch_all_by_source {
   throw("source_name arg is required\n")
     unless ($source_name);
 
-#  my $source_id = $self->get_source_id_from_name($source_name);
   my $constraint = "m.source_name = '$source_name'";
 
   return $self->_generic_fetch($constraint);
@@ -281,7 +278,6 @@ sub fetch_all_by_source_taxon {
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
-#  my $source_id = $self->get_source_id_from_name($source_name);    
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id";
 
   return $self->_generic_fetch($constraint);
@@ -292,7 +288,7 @@ sub fetch_all_by_source_taxon {
   Arg [1]    : string $source_name
   Arg [2]    : int $genome_db_id
   Example    : my $members = $ma->fetch_all_by_source_genome_db_id(
-                   "Uniprot/SWISSPROT", 9606);
+                   "Uniprot/SWISSPROT", 90);
   Description: Fetches the member corresponding to a source_name and a genome_db_id.
   Returntype : listref of Bio::EnsEMBL::Compara::Member objects
   Exceptions : throws if $source_name or $genome_db_id is undef
@@ -306,7 +302,6 @@ sub fetch_all_by_source_genome_db_id {
   throw("source_name and genome_db_id args are required") 
     unless($source_name && $genome_db_id);
 
-#  my $source_id = $self->get_source_id_from_name($source_name);    
   my $constraint = "m.source_name = '$source_name' and m.genome_db_id = $genome_db_id";
 
   return $self->_generic_fetch($constraint);
@@ -319,7 +314,6 @@ sub _fetch_all_by_source_taxon_chr_name_start_end_strand_limit {
   $self->throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand && $limit);
 
-#  my $source_id = $self->get_source_id_from_name($source_name);
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
                     and m.chr_name = \"$chr_name\" 
                     and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
@@ -334,7 +328,6 @@ sub _fetch_all_by_source_taxon_chr_name_start_end_strand {
   $self->throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id && $chr_name && $chr_start && $chr_end && $chr_strand);
 
-#  my $source_id = $self->get_source_id_from_name($source_name);
   my $constraint = "m.source_name = '$source_name' and m.taxon_id = $taxon_id 
                     and m.chr_name = \"$chr_name\" 
                     and m.chr_start >= $chr_start and m.chr_end <= $chr_end 
@@ -474,7 +467,6 @@ sub fetch_all_by_relation_source {
     unless ($source_name);
 
   my $join;
-#  my $source_id = $self->get_source_id_from_name($source_name);
   my $constraint = "m.source_name = '$source_name'";
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
@@ -548,7 +540,6 @@ sub fetch_all_by_relation_source_taxon {
     unless($source_name && $taxon_id);
 
   my $join;
-#  my $source_id = $self->get_source_id_from_name($source_name);
   my $constraint = "m.source_name = '$source_name' AND m.taxon_id = $taxon_id";
 
   if ($relation->isa('Bio::EnsEMBL::Compara::Family')) {
@@ -986,8 +977,6 @@ sub store {
     . "not a $member");
   }
 
-#  $member->source_id($self->store_source($member->source_name));
-  
   my $sth = $self->prepare("INSERT ignore INTO member (stable_id,version, source_name,
                               taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand,display_label)
@@ -1010,7 +999,7 @@ sub store {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
+    #UNIQUE(source_name,stable_id) prevented insert since member was already inserted
     #so get member_id with select
     my $sth2 = $self->prepare("SELECT member_id, sequence_id FROM member WHERE source_name=? and stable_id=?");
     $sth2->execute($member->source_name, $member->stable_id);
@@ -1045,8 +1034,6 @@ sub store_reused {
     . "not a $member");
   }
 
-#  $member->source_id($self->store_source($member->source_name));
-
   my $sth = $self->prepare("INSERT ignore INTO member (member_id, stable_id, version, source_name,
                               taxon_id, genome_db_id, description,
                               chr_name, chr_start, chr_end, chr_strand,display_label)
@@ -1071,7 +1058,7 @@ sub store_reused {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(source_id,stable_id) prevented insert since member was already inserted
+    #UNIQUE(source_name,stable_id) prevented insert since member was already inserted
     #so get member_id with select
     my $sth2 = $self->prepare("SELECT member_id, sequence_id FROM member WHERE source_name=? and stable_id=?");
     $sth2->execute($member->source_name, $member->stable_id);
@@ -1143,8 +1130,4 @@ sub fetch_longest_peptide_member_for_gene_member_id {
 }
 
 1;
-
-
-
-
 
