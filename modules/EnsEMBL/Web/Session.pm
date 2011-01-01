@@ -521,7 +521,10 @@ sub configure_bam_views {
       my $n  = $ic->get_node('bam_' . $bam->{name} . '_' . md5_hex($bam->{species} . ':' . $bam->{url}));
 
       if ($n) {
-        $n->set_user(%$track_options);
+	foreach (keys %$track_options) {
+	    $n->set_user($_, $track_options->{$_});
+	}
+
         $ic->altered = 1;
       }
     }
@@ -579,7 +582,10 @@ sub configure_das_views {
       $n = $ic->tree->create_node('das_' . $das->logic_name, \%tmp);
     }
     
-    $n->set_user(%$track_options);
+    foreach (keys %$track_options) {
+      $n->set_user($_, $track_options->{$_});
+    }
+
     $ic->altered = 1;
   }
   
