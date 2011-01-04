@@ -293,39 +293,12 @@ sub content {
   my $status     = $hub ? $hub->param($self->{'status'}) : undef;
   my $content    = sprintf '%s<p class="invisible">.</p>', $status ne 'off' ? sprintf('<div class="content">%s</div>', $self->component_content) : '';
   my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
-  my $counts     = {};
   
   if (!$self->{'omit_header'}) {
     my $caption = exists $self->{'caption'} ? $self->_caption_with_helplink : '';
-    my $button_html;
-    
-    if ((exists $self->{'previous'} || exists $self->{'next'}) && $hub && $hub->type !~ /^Search|Lucene$/) {
-      my @buttons = (
-        [ 'previous', 'left',  '&laquo;&nbsp;%s' ],
-        [ 'next',     'right', '%s&nbsp;&raquo;' ]
-      );
-      
-      foreach (@buttons) {
-        my $label       = $_->[0];
-        my $button_text = exists $self->{$label} && !$self->{$label}->{'external'} ? $self->{$label}->{'concise'} || $self->{$label}->{'caption'} : undef;
-        
-        $button_html .= qq{<div class="$_->[1]-button print_hide">};
-        
-        if ($button_text) {
-          my $url = $self->{$label}->{'url'} || $hub->url({ action => $self->{$label}->{'code'}, function => undef });
-          
-          $button_html .= sprintf qq{<a href="%s">$_->[2]</a>}, encode_entities($url), encode_entities($button_text);
-        } else {
-          $button_html .= '<span>&nbsp;</span>'; # Do not remove this span it breaks IE7 if only a &nbsp;
-        }
-        
-        $button_html .= '</div>';
-      }
-    }
     
     $content = qq{
       <div class="nav-heading">
-        $button_html
         $caption
         <p class="invisible">.</p>
       </div>
