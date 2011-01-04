@@ -29,8 +29,6 @@ p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
 /* Columns for static content */
 #static { margin: 3px 1% 0 1%; }
-#static ul li { list-style-image: url(/i/bullet_1.gif); }
-#static ul li ul li, ul.level2 li { list-style-image: url(/i/bullet_2.gif); }
 .onecol { margin:0 0 1% 0; padding:1% }
 .twocol-left { float:left; width:47%; margin:0 0 1% 0; padding:1%; clear:left; }
 .twocol-right { float:right; width:47%; margin:0 0 1% 0; padding:1%; }
