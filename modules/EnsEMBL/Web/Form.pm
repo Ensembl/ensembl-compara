@@ -79,8 +79,11 @@ sub render {
   ## change form attributes for uploading a file
   for (@{$self->get_elements_by_tag_name('input')}) {
     if ($_->get_attribute('type') eq 'file') {
-      $self->set_attribute('target', $self->TARGET_FILE_UPLOAD) unless $self->TARGET_FILE_UPLOAD eq '';
-      $self->set_attribute('enctype', 'multipart/form-data');
+      $self->set_attributes({
+        'target'  => $self->TARGET_FILE_UPLOAD,
+        'class'   => $self->CSS_CLASS_FILE_UPLOAD,
+        'enctype' => 'multipart/form-data'
+      });
       $self->add_hidden({'name' => 'uploadto', 'value' => 'iframe'});
       last;
     }
@@ -120,7 +123,7 @@ sub fieldset {
 
 sub add_fieldset {
   ## Adds a fieldset to the form
-  ## @params String with Legend text or HashRef with following keys
+  ## @param String with Legend text or HashRef with following keys
   ##  - legend  Legend string
   ##  - stripes Shows the fieldset child nodes in alternative bg colour
   ##  - name    name part to go in the sub element ids
@@ -145,7 +148,7 @@ sub has_fieldset {
 
 sub heading {
   ## Gets existing or modifies existing or adds new heading at the top of the form
-  ## @params Heading text (is not escaped before adding)
+  ## @param Heading text (is not escaped before adding)
   ## @return DOM::Node::Element::H? object
   my $self = shift;
   my $heading = undef;
@@ -163,7 +166,7 @@ sub heading {
 sub add_notes {
   ## Adds notes to the form (or fieldset)
   ## If 'location' and 'heading' key is missing, appends the notes to the last fieldset - all other keys are invalid then (see fieldset->add_notes)
-  ## @params HashRef with the following keys
+  ## @param HashRef with the following keys
   ##  - id        Id if any for the notes div
   ##  - location  (head|foot) or head by default
   ##  - class     css class name to override the default class
