@@ -48,6 +48,7 @@ sub content {
       (my $spp = $paralogue->{'spp'}) =~ tr/ /_/;
       
       my $link = $hub->url({
+        action => 'Summary',
         g => $stable_id,
         r => undef
       });
