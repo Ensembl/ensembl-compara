@@ -58,21 +58,9 @@ sub data_species      { return shift->hub->data_species(@_);      }
 sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }
 sub get_db            { return shift->hub->get_db(@_);            }
 
-sub viewconfig        { DEPRECATED();           return shift->hub->viewconfig;            }
-sub get_viewconfig    { DEPRECATED();           return shift->hub->get_viewconfig(@_);    }
-sub _url              { DEPRECATED('url');      return shift->hub->url(@_);               }
-sub session           { DEPRECATED();           return shift->hub->session(@_);           }
-sub get_session       { DEPRECATED('session');  return shift->hub->session(@_);           }
-sub multi_params      { DEPRECATED();           return shift->hub->multi_params(@_);      }
-sub referer           { DEPRECATED();           return $_[0]->hub->referer;               }
-sub redirect          { DEPRECATED();           return shift->hub->redirect(@_);          }
-sub DBConnection      { DEPRECATED('database'); return shift->hub->database(@_);          }
-sub get_databases     { DEPRECATED();           return shift->hub->get_databases(@_);     }
-sub databases_species { DEPRECATED();           return shift->hub->databases_species(@_); }
-
 sub DEPRECATED {
   my @caller = caller(1);
-  my $warn   = "$caller[3] is deprecated and will be removed in release 61. ";
+  my $warn   = "$caller[3] is deprecated and will be removed in release 62. ";
   my $func   = shift || [split '::', $caller[3]]->[-1];
   $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
   warn $warn;

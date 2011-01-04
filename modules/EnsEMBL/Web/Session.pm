@@ -79,17 +79,6 @@ sub cookie        :lvalue { $_[0]{'cookie'};        }
 sub view_configs  :lvalue { $_[0]{'view_configs'};  }
 sub image_configs :lvalue { $_[0]{'image_configs'}; }
 
-sub DEPRECATED {
-  my @caller = caller(1);
-  my $warn   = "$caller[3] is deprecated and will be removed in release 61. ";
-  my $func   = shift || [split '::', $caller[3]]->[-1];
-  $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
-  warn $warn;
-}
-
-sub getImageConfig { DEPRECATED('get_imageconfig'); return shift->hub->get_imageconfig(@_); }
-sub getViewConfig  { DEPRECATED('get_viewconfig');  return shift->hub->get_viewconfig(@_);  }
-
 sub create_session_id {
   ### Gets session ID if the session ID doesn't exist
   ### a new one is grabbed and added to the users cookies
