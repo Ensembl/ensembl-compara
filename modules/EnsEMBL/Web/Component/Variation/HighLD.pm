@@ -202,7 +202,7 @@ sub content {
         });
         
         $table->add_row({
-          variation   => qq{<a href="var_url">$variation_name</a>},
+          variation   => qq{<a href="$var_url">$variation_name</a>},
           location    => sprintf('<a href="%s">%s:%s</a>', $loc_url, $ld_vf->seq_region_name, $start == $end ? $start : "$start-$end"),
           distance    => abs($start - ($vf_start > $vf_end ? $vf_end : $vf_start)),
           r2          => $ld->{'r2'},
