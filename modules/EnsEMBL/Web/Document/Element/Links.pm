@@ -41,7 +41,7 @@ sub init {
   $self->add_link({ 
     rel  => 'icon',
     type => 'image/png',
-    href => $species_defs->ENSEMBL_IMAGE_ROOT . $species_defs->ENSEMBL_STYLE->{'SITE_ICON'}
+    href => $species_defs->img_url . $species_defs->ENSEMBL_STYLE->{'SITE_ICON'}
   });
   
   $self->add_link({

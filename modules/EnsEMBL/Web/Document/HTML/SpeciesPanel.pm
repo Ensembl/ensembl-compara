@@ -13,7 +13,7 @@ sub render {
   my $species_defs  = $ENSEMBL_WEB_REGISTRY->species_defs;
   my $tree          = $species_defs->SPECIES_INFO;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
-
+  my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
   my $species_check;
@@ -52,7 +52,7 @@ sub render {
   <tr>
   );
   my @species = sort keys %species;
-  use Data::Dumper;
+
   foreach my $common (@species) {
     my $info = $species{$common};
     my $dir = $info->{'dir'};
@@ -60,7 +60,7 @@ sub render {
     my $link_text = $common =~ /\./ ? $name : $common;
     $html .= qq(<tr><td style="width:8%;text-align:right;padding-bottom:1em">);
     if ($dir) {
-      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name" />);
+      $html .= qq(<img src="$static_server/img/species/thumb_$dir.png" alt="$name" />);
     }
     else {
       $html .= '&nbsp;';

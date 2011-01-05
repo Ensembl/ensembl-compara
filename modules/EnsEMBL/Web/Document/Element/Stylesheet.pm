@@ -24,15 +24,18 @@ sub add_sheet {
 }
 
 sub content {
-  my $self = shift;
+  my $self          = shift;
+  my $static_server = $self->static_server;
   my $content;
   
   foreach my $media (@{$self->{'media_order'}}) {
     foreach (@{$self->{'media'}{$media}}) {
+      my $href = "$static_server$_";
+      
       if ($self->{'conditional'}->{$_}) {
-        $content .= qq{  <!--[if $self->{'conditional'}->{$_}]><link rel="stylesheet" type="text/css" media="$media" href="$_" /><![endif]-->\n};
+        $content .= qq{  <!--[if $self->{'conditional'}->{$_}]><link rel="stylesheet" type="text/css" media="$media" href="$href" /><![endif]-->\n};
       } else {
-        $content .= qq{  <link rel="stylesheet" type="text/css" media="$media" href="$_" />\n};
+        $content .= qq{  <link rel="stylesheet" type="text/css" media="$media" href="$href" />\n};
       }
     }
   }

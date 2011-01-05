@@ -28,7 +28,7 @@ sub add_source {
   return if $self->{'sources'}->{$src};
   
   $self->{'sources'}->{$src} = 1;
-  $self->{'scripts'} .= qq{  <script type="text/javascript" src="$src"></script>\n};
+  $self->{'scripts'} .= sprintf qq{  <script type="text/javascript" src="%s%s"></script>\n}, $self->static_server, $src;
 }
 
 sub add_script {

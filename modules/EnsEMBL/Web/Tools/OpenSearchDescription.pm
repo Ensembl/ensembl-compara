@@ -24,7 +24,7 @@ sub create {
   $sd->ENSEMBL_SITE_NAME_SHORT,
   $sd->ENSEMBL_SITE_NAME,
   $sd->ENSEMBL_SITE_NAME,
-  $sd->ENSEMBL_BASE_URL.$sd->ENSEMBL_IMAGE_ROOT,
+  $sd->img_url,
   $sd->ENSEMBL_BASE_URL;
 
   unless( -e "$root/opensearch" ) {

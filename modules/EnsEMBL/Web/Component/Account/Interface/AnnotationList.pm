@@ -131,7 +131,7 @@ sub content {
   }
 
   if (!$has_notes) {
-    $html .= qq(<p class="center"><img src="/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>);
+    $html .= sprintf '<p class="center"><img src="%s/img/help/note_example.gif" alt="Sample screenshot" title="SAMPLE" /></p>', $self->static_server;
   }
 
   if ($no_species) {

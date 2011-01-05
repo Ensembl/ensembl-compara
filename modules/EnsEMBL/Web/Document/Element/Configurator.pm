@@ -133,6 +133,7 @@ sub init_imageconfig {
   my $controller    = shift;
   my $image_config  = shift;
   my $url           = shift;
+  my $img_url       = $controller->img_url;
   my $configuration = $controller->configuration;
   my $search_panel  = $self->new_panel('Configurator', $controller, code => 'configurator_search');
   my $panel         = $self->new_panel('Configurator', $controller, code => 'configurator');
@@ -154,7 +155,7 @@ sub init_imageconfig {
     }
   }
   
-  $self->imageconfig_content($image_config, $_, $_->id, 0) for @nodes;
+  $self->imageconfig_content($image_config, $img_url, $_, $_->id, 0) for @nodes;
   
   foreach my $node (grep $_->has_child_nodes, @nodes) {
     my $id      = $node->id;
@@ -191,13 +192,13 @@ sub init_imageconfig {
           
           if (scalar keys %counts != 1) {
             $menu  = '';
-            $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+            $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$id" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
           }
           
           $node->data->{'content'} .= qq{
             <div class="select_all$first">
               <ul class="popup_menu">$menu</ul>
-              <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
+              <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $header</strong>
             </div>
           };
         } elsif ($header) {
@@ -242,7 +243,7 @@ sub init_imageconfig {
 }
 
 sub imageconfig_content {
-  my ($self, $image_config, $node, $menu_class, $i) = @_;
+  my ($self, $image_config, $img_url, $node, $menu_class, $i) = @_;
   my $id       = $node->id;
   my $children = $node->child_nodes;
   
@@ -253,7 +254,7 @@ sub imageconfig_content {
     my ($j, $menu);
     
     foreach (@$children) {
-      my $m = $self->imageconfig_content($image_config, $_, $menu_class, $i + 1);
+      my $m = $self->imageconfig_content($image_config, $img_url, $_, $menu_class, $i + 1);
       $menu = $m if $m && ++$j;
       $ul->append_child($_) if $ul;
     }
@@ -267,14 +268,14 @@ sub imageconfig_content {
         
         if (scalar keys %renderers != 1) {
           $menu  = '';
-          $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="/i/render/$_->[0].gif" class="$menu_class" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
+          $menu .= qq{<li class="$_->[2]"><img title="$_->[1]" alt="$_->[1]" src="${img_url}render/$_->[0].gif" class="$menu_class" />$_->[1]</li>} for [ 'off', 'Off', 'off' ], [ 'normal', 'On', 'all_on' ];
         }
         
         $ul->before($node->dom->create_element('div', {
           class      => 'select_all',
           inner_HTML => qq{
             <ul class="popup_menu">$menu</ul>
-            <img title="Enable/disable all" alt="Enable/disable all" src="/i/render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $caption</strong>
+            <img title="Enable/disable all" alt="Enable/disable all" src="${img_url}render/off.gif" class="menu_option select_all" /><strong class="menu_option">Enable/disable all $caption</strong>
           }
         }));
       }
@@ -285,14 +286,14 @@ sub imageconfig_content {
     my $external  = $node->get('_class');
     my $desc      = $node->get('description');
     my $name      = encode_entities($node->get('name'));
-    my $icons     = $external ? sprintf '<img src="/i/track-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', lc $external, $external, $external : ''; # DAS icons, etc
+    my $icons     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
     my $fg_link   = $name && $node->get('glyphset') eq 'fg_multi_wiggle' ? $self->multiwiggle_multi_link($image_config) : ''; # FIXME: HACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACK
     my ($selected, $menu, $help);
     
     while (my ($val, $text) = splice @states, 0, 2) {
       $text     = encode_entities($text);
-      $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="/i/render/%s.gif" class="menu_option" />', $id, $val, $text, $text, $val if $val eq $display;
-      $text     = qq{<li class="$val"><img title="$text" alt="$text" src="/i/render/$val.gif" class="$menu_class" />$text</li>};
+      $selected = sprintf '<input type="hidden" name="%s" value="%s" /><img title="%s" alt="%s" src="%srender/%s.gif" class="menu_option" />', $id, $val, $text, $text, $img_url, $val if $val eq $display;
+      $text     = qq{<li class="$val"><img title="$text" alt="$text" src="${img_url}render/$val.gif" class="$menu_class" />$text</li>};
       
       $menu .= $text;
       
@@ -380,7 +381,9 @@ sub add_reset_panel {
   );
 
   if ($title) {
-    $html .= '
+    my $img_url = $controller->img_url;
+    
+    $html .= qq{
     <p>
       Notes:
     </p>
@@ -395,12 +398,11 @@ sub add_reset_panel {
       </li>
       <li>
         <p>
-        Certain tracks displayed come from user-supplied or external data sources, these are clearly
-        marked as <strong><img src="/i/track-das.gif" alt="DAS" style="vertical-align:top; width:40px;height:16px" title="DAS" /></strong> (Distributed Annotation Sources), 
-        <strong><img src="/i/track-url.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /></strong> (UCSC style web resources) or 
-        <strong><img src="/i/track-bam.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /></strong> (Binary Alignment/Map) or 
-        <strong><img src="/i/track-user.gif" alt="User" style="vertical-align:top; width:40px;height:16px" title="User" /></strong> data uploaded by
-        yourself or another user.
+        Certain tracks displayed come from user-supplied or external data sources, these are clearly marked as 
+        <img src="${img_url}track-das.gif" alt="DAS" style="vertical-align:top; width:40px;height:16px" title="DAS" /> (Distributed Annotation Sources), 
+        <img src="${img_url}track-url.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /> (UCSC style web resources) or 
+        <img src="${img_url}track-bam.gif" alt="URL" style="vertical-align:top; width:40px;height:16px" title="URL" /> (Binary Alignment/Map) or 
+        <img src="${img_url}track-user.gif" alt="User" style="vertical-align:top; width:40px;height:16px" title="User" /> data uploaded by yourself or another user.
         </p>
         <p>
         Please note that the content of these tracks is not the responsibility of the Ensembl project.
@@ -408,7 +410,7 @@ sub add_reset_panel {
         <p>In the case of URL based or DAS tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.
         </p>
       </li>
-    </ul>';
+    </ul>};
   }
   
   $panel->set_content($html);

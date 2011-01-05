@@ -10,10 +10,10 @@ sub render {
 
   my ($class, $request) = @_;
 
-  my $species_defs = $ENSEMBL_WEB_REGISTRY->species_defs;
-  my $sitename = $species_defs->ENSEMBL_SITETYPE;
+  my $species_defs  = $ENSEMBL_WEB_REGISTRY->species_defs;
+  my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my $tree          = $species_defs->SPECIES_INFO;
-
+  my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
   my $species_check;
@@ -72,7 +72,7 @@ sub render {
     (my $name = $dir) =~ s/_/ /;
     my $link_text = $common =~ /\./ ? $name : $common;
     if ($dir) {
-      $html .= qq(<img src="/img/species/thumb_$dir.png" alt="$name" class="species-entry">);
+      $html .= qq(<img src="$static_server/img/species/thumb_$dir.png" alt="$name" class="species-entry">);
     }
     else {
     }

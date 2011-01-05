@@ -122,7 +122,7 @@ sub content {
 
 
   if (!$has_configs) {
-    $html .= qq(<p class="center"><img src="/img/help/config_example.gif" /></p>);
+    $html .= sprintf '<p class="center"><img src="%s/img/help/config_example.gif" /></p>', $self->static_server;
   }
 
   return $html;

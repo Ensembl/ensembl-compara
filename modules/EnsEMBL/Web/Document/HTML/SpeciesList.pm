@@ -258,8 +258,9 @@ sub get_favourites {
 
 sub render_with_images {
   my ($self, $species_list) = @_;
-  my $species_defs = $self->species_defs;
-  my $species_info = $self->species_info;
+  my $species_defs  = $self->species_defs;
+  my $species_info  = $self->species_info;
+  my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
   my $html;
   
   foreach (@$species_list) {
@@ -269,12 +270,12 @@ sub render_with_images {
     $html .= sprintf('
       <dt>
         <a href="%s/Info/Index">
-          <img src="/img/species/thumb_%s%s" alt="%s" title="Browse %s" class="sp-thumb" height="40" width="40" />
+          <img src="%s/img/species/thumb_%s%s" alt="%s" title="Browse %s" class="sp-thumb" height="40" width="40" />
           %s
         </a>
       </dt>
       <dd><span class="small normal">%s</span></dd>', 
-      $_, $_, $self->image_type, $species_name, $species_name, $common_name, $species_info->{$_}{'assembly'}
+      $_, $static_server, $_, $self->image_type, $species_name, $species_name, $common_name, $species_info->{$_}{'assembly'}
     );
   }
   

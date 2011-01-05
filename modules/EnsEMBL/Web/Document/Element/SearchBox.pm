@@ -26,7 +26,7 @@ sub content {
   );
   
   my $search_options;
-  $search_options .= qq{<dt id="se_$_->[0]"><img src="/i/search/$_->[0].gif" alt="$_->[1]"/>$_->[1]</dt>\n} for @options;
+  $search_options .= qq{<dt id="se_$_->[0]"><img src="${img_url}search/$_->[0].gif" alt="$_->[1]"/>$_->[1]</dt>\n} for @options;
   
   return sprintf('
       <div id="searchPanel" class="js_panel">

@@ -17,7 +17,7 @@ sub add_entry {
 
 sub entries {
   my $self = shift;
-  return $self->{'_entries'}||[];
+  return $self->{'_entries'} || [];
 }
 
 sub active {
@@ -27,8 +27,8 @@ sub active {
 }
 
 sub content {
-  my $self = shift; 
-  
+  my $self    = shift; 
+  my $img_url = $self->img_url;
   my ($panels, $content);
   
   foreach my $entry (@{$self->entries}) {
@@ -56,7 +56,7 @@ sub content {
         $content
       </ul>
       <div class="modal_caption"></div>
-      <img class="modal_close" src="/i/cp_close.png" alt="Save and close" title="Save and close" />
+      <img class="modal_close" src="${img_url}cp_close.png" alt="Save and close" title="Save and close" />
     </div>
     $panels
     <div id="modal_default" class="modal_content js_panel" style="display:none"></div>
@@ -134,7 +134,6 @@ sub init {
        __clear => 1
      })
   });
- 
 }
 
 1;

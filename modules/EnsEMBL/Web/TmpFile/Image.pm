@@ -20,7 +20,7 @@ sub new {
     species_defs => $species_defs,
     extension    => 'png',
     tmp_dir      => $species_defs->ENSEMBL_TMP_DIR_IMG,
-    URL_root     => $species_defs->ENSEMBL_TMP_URL_IMG,
+    URL_root     => $species_defs->ENSEMBL_STATIC_SERVER . $species_defs->ENSEMBL_TMP_URL_IMG,
     %args,
   );
 
