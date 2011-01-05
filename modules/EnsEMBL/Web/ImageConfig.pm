@@ -735,29 +735,21 @@ sub _merge {
     
     if ($sub_tree->{'web'}{'key'}) {
       if ($sub_tree->{'desc'}) {
-        $data->{$key}{'html_desc'}   ||= "<dl>\n";
         $data->{$key}{'description'} ||= '';
         $data->{$key}{'description'}  .= ($data->{$key}{'description'} ? '; ' : '') . $sub_tree->{'desc'};
-        $data->{$key}{'html_desc'}    .= sprintf(
-          "  <dt>%s</dt>\n  <dd>%s</dd>\n",
-          encode_entities($sub_tree->{'web'}{'name'}),  # Description for pop-help - merger of all descriptions
-          encode_entities($sub_tree->{'desc'})
-        );
       }
     } else {
       $data->{$key}{'description'} = $sub_tree->{'desc'};
-      $data->{$key}{'html_desc'}  .= sprintf '<p>%s</p>', encode_entities($sub_tree->{'desc'});
     }
     
     push @{$data->{$key}{'logic_names'}}, $analysis;
   }
   
   foreach my $key (keys %$data) {
-    $data->{$key}{'name'}       ||= $tree->{$key}{'name'};
-    $data->{$key}{'caption'}    ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
-    $data->{$key}{'display'}    ||= 'off';
-    $data->{$key}{'strand'}     ||= 'r';
-    $data->{$key}{'description'} .= '</dl>' if $data->{$key}{'description'} =~ /<dl>/;
+    $data->{$key}{'name'}    ||= $tree->{$key}{'name'};
+    $data->{$key}{'caption'} ||= $data->{$key}{'name'} || $tree->{$key}{'name'};
+    $data->{$key}{'display'} ||= 'off';
+    $data->{$key}{'strand'}  ||= 'r';
   }
   
   return ([ sort { $data->{$a}{'name'} cmp $data->{$b}{'name'} } keys %$data ], $data);
