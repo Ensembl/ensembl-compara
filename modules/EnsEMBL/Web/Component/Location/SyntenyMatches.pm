@@ -30,7 +30,7 @@ sub content {
   my $html;
 
   if (scalar @$data) {
-    my $table = $self->new_table; 
+    my $table = $self->new_table([], [], { width => $self->image_width . 'px', margin => '0 auto' }); 
 
     $table->add_spanning_headers(
       { title => "<i>$sp_tidy</i> Genes",         colspan => 2, width => '45%' },
