@@ -37,13 +37,11 @@ sub _content {
 
 sub variation_content {
   my ($self, $object, $lrg, $v, $vf) = @_;
-  
   my $hub        = $self->hub;
   my $variation  = $object->Obj;
   my $genes      = $variation->get_all_Genes;  
   my $feature    = $variation->get_VariationFeature_by_dbID($vf);
   my $seq_region = $feature->seq_region_name . ':';
-  
   my $lrg_position;
   
   if ($lrg) {
@@ -63,6 +61,7 @@ sub variation_content {
   my $chr_start = $feature->start;
   my $chr_end   = $feature->end;
   my $position  = "$seq_region$chr_start";
+  
   if ($chr_end < $chr_start) {
     $position = "between $seq_region$chr_end &amp; $seq_region$chr_start";
   } elsif ($chr_end > $chr_start) {
@@ -121,8 +120,7 @@ sub variation_content {
     foreach my $submitter (keys %display) {
       my @freqs = map { split /: /, $_ } split /, /, $display{$submitter};
       my $img;
-      
-      $img .= sprintf '<img class="freq %s" width="%s" src="/i/blank.gif" />', shift @freqs, 100 * shift @freqs while @freqs;
+      $img .= sprintf '<span class="freq %s" style="width:%spx"></span>', shift @freqs, 100 * shift @freqs while @freqs;
       
       push @entries, { childOf => 'population', entry => [ $i++ ? '' : $name, $submitter ]};
       push @entries, { childOf => 'population', entry => [ '', $img, "<div>$display{$submitter}</div>" ]};
