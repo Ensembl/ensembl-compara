@@ -851,10 +851,9 @@ sub consequence_data_from_file {
 
 sub consequence_table {
   my ($self, $consequence_data) = @_;
-  my $hub   = $self->hub;
-  my $table = new EnsEMBL::Web::Document::SpreadSheet([], [], { margin => '1em 0px' });
-  
-  $table->add_columns(
+  my $hub     = $self->hub;
+  my $species = $self->param('species');
+  my $columns = [
     { key => 'var',      title =>'Uploaded Variation',      align => 'center' },
     { key => 'location', title =>'Location',                align => 'center' },
     { key => 'gene',     title =>'Gene',                    align => 'center' },
@@ -864,17 +863,13 @@ sub consequence_table {
     { key => 'prot_pos', title =>'Position in protein',     align => 'center' },
     { key => 'aa',       title =>'Amino acid change',       align => 'center' },
     { key => 'snp',      title =>'Corresponding Variation', align => 'center' }
-  );
+  ];
 
-  my @table_rows;
-  my %data = %$consequence_data;
+  my @rows;
 
-  foreach my $feature_set (keys %data) {
-    my $features = $data{$feature_set};
-    
-    foreach my $f (@$features) { 
-      my $row = {};
-
+  foreach my $feature_set (keys %$consequence_data) {
+    foreach my $f (@{$consequence_data->{$feature_set}}) { 
+      my $row               = {};
       my $location          = $f->location;
       my $url_location      = $f->seqname . ':' . ($f->rawstart - 500) . '-' . ($f->rawend + 500);
       my $uploaded_loc      = $f->id;
@@ -890,6 +885,7 @@ sub consequence_table {
       my $snp_string        = $snp_id;
       
       my $location_url = $hub->url({
+        species          => $species,
         type             => 'Location',
         action           => 'View',
         r                =>  $url_location,
@@ -898,9 +894,10 @@ sub consequence_table {
       
       if ($transcript_id ne 'N/A') { 
         my $transcript_url = $hub->url({
-          type   => 'Transcript',
-          action => 'Summary',
-          t      =>  $transcript_id,
+          species => $species,
+          type    => 'Transcript',
+          action  => 'Summary',
+          t       =>  $transcript_id,
         });
         
         $transcript_string = qq{<a href="$transcript_url">$transcript_id</a>};
@@ -908,9 +905,10 @@ sub consequence_table {
 
       if ($gene_id ne 'N/A') { 
         my $gene_url = $hub->url({
-          type   => 'Gene',
-          action => 'Summary',
-          g      =>  $gene_id,
+          species => $species,
+          type    => 'Gene',
+          action  => 'Summary',
+          g       =>  $gene_id,
         });
         
         $gene_string = qq{<a href="$gene_url">$gene_id</a>};
@@ -918,9 +916,10 @@ sub consequence_table {
       
       if ($snp_id =~ /^\w/){
         my $snp_url =  $hub->url({
-          type   => 'Variation',
-          action => 'Summary',
-          v      =>  $snp_id,
+          species => $species,
+          type    => 'Variation',
+          action  => 'Summary',
+          v       =>  $snp_id,
         });
         
         $snp_string = qq{<a href="$snp_url">$snp_id</a>};
@@ -936,15 +935,12 @@ sub consequence_table {
       $row->{'aa'}       = $aa;
       $row->{'snp'}      = $snp_string;
 
-      push @table_rows, $row;
+      push @rows, $row;
     }
   }
-
-  $table->add_row($_) for sort { $a->{'var'} cmp $b->{'var'} } @table_rows;
-
-  return $table;
+  
+  return new EnsEMBL::Web::Document::SpreadSheet($columns, [ sort { $a->{'var'} cmp $b->{'var'} } @rows ], { margin => '1em 0px' });
 }
-
 
 #---------------------------------- DAS functionality ----------------------------------
 
