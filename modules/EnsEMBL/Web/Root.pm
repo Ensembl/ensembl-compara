@@ -91,6 +91,10 @@ sub _parse_referer {
   };
 }
 
+# NOTE: The static_server and img_url functions assume $self->hub exists. If it doesn't, don't use these functions.
+sub static_server { return $_[0]->hub->species_defs->ENSEMBL_STATIC_SERVER; }
+sub img_url       { return $_[0]->hub->species_defs->img_url; }
+
 sub url {
 ### Assembles a valid URL, adding the site's base URL and CGI-escaping any parameters
 ### returns a URL string
