@@ -54,6 +54,7 @@ sub navbar {
   my ($self, $ramp, $wd, $values) = @_;
   
   my $hub          = $self->hub;
+  my $img_url      = $self->img_url;
   my $image_width  = $self->image_width . 'px';
   my $url          = $hub->url({ %{$hub->multi_params(0)}, r => undef, g => undef }, 1);
   my $psychic      = $hub->url({ type => 'psychic', action => 'Location', __clear => 1 });
@@ -86,18 +87,18 @@ sub navbar {
           </div>
         </div>
         <div class="image_nav">
-          <a href="%s" class="move"><img src="/i/nav-l2.gif" class="zoom" alt="1Mb left" /></a>
-          <a href="%s" class="move"><img src="/i/nav-l1.gif" class="zoom" alt="window left" /></a>
-          <a href="%s" class="zoom_in"><img src="/i/zoom-plus.gif" class="zoom" alt="zoom in" /></a>
+          <a href="%s" class="move left_2"></a>
+          <a href="%s" class="move left_1"></a>
+          <a href="%s" class="zoom_in"></a>
           <span class="ramp">$ramp</span>
           <span class="slider_wrapper">
             <span class="slider_left"></span>
             <span class="slider"><span class="slider_label floating_popup">$wd</span></span>
             <span class="slider_right"></span>
           </span>
-          <a href="%s" class="zoom_out"><img src="/i/zoom-minus.gif" class="zoom" alt="zoom out" /></a>
-          <a href="%s" class="move"><img src="/i/nav-r1.gif" class="zoom" alt="window left" /></a>
-          <a href="%s" class="move"><img src="/i/nav-r2.gif" class="zoom" alt="1Mb left" /></a>
+          <a href="%s" class="zoom_out"></a>
+          <a href="%s" class="move right_1"></a>
+          <a href="%s" class="move right_2"></a>
         </div>
         <div class="invisible"></div>
       </div>
@@ -137,18 +138,20 @@ sub ramp {
       $l = $r;
     }
   } else {
+    my $img_url = $self->img_url;
+    
     foreach (@$ramp_entries) {
       my $r = shift @mp; 
       
       $ramp .= sprintf(
-        '<a href="%s" name="%d" class="ramp%s"><img title="%d bp" alt="%s bp" src="/i/blank.gif" style="height:%dpx" /></a>',
+        '<a href="%s" name="%d" class="ramp%s" title="%d bp" style="height:%dpx"></a>',
         $self->ramp_url($_->[1], @url_params),
         $_->[1], 
         $wd > $l && $wd <= $r ? ' selected' : '',
-        $_->[1], 
         $_->[1],
         $_->[0]
       );
+      
       
       $l = $r;
     }

@@ -57,14 +57,12 @@ sub content {
     my $up_end    = @up_sample ? $start - $up_sample[0]->start : 0;
     
     $up_link = sprintf('
-      <a href="%s"><img src="/i/nav-l2-old.gif" class="homology_move" alt="<<"/> %s upstream %s</a>',
+      <a href="%s"><span style="margin-right: 2px; word-spacing: -7px;">&lt; &lt;</span> %s upstream %s</a>',
       $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$up_start-$up_end" }), $up_count, $gene_text
     );
   } else {
     $up_link = 'No upstream homologues';
   }
-
-  
   
   if ($down_count) {
     my @down_sample;
@@ -82,7 +80,7 @@ sub content {
     my $down_end   = @down_sample ? $down_sample[-1]->end + $seq_region_end : 0;
     
     $down_link = sprintf('
-      <a href="%s">%s downstream %s <img src="/i/nav-r2-old.gif" class="homology_move" alt="<<"/></a>',
+      <a href="%s">%s downstream %s <span style="margin-left: 2px; word-spacing: -7px;">&gt; &gt;</span></a>',
       $hub->url({ type => 'Location', action => 'Synteny', otherspecies => $other_species, r => "$chr:$down_start-$down_end" }), $down_count, $gene_text
     );
   } else {

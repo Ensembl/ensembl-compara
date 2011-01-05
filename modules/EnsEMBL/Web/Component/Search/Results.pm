@@ -67,7 +67,7 @@ sub content {
 <td>);
 
         if ($child->children) {
-          $html .= qq(<a href="$c_url" class="collapsible"><img src="/i/list_shut.gif" alt="&gt;" style="padding-right:4px" />$c_name</a>
+          $html .= qq(<a href="$c_url" class="collapsible">$c_name</a>
 <ul class="shut">\n);
 
           foreach my $grandchild ( sort {$a->name cmp $b->name} $child->children ) {
