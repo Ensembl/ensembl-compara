@@ -133,7 +133,7 @@ sub create_user_set {
         if ($key eq 'default') {
           $label = $track->{'config'}{'name'};
         }
-        my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
+        
         if ($colour =~ /,/) {
           ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
           my @rgb = split ',', $colour;
@@ -142,7 +142,9 @@ sub create_user_set {
         elsif ($colour =~ /^[0-9a-f]{6}$/i) { ## Hex with no initial hash symbol
           $colour = '#'.$colour;
         }
-        $swatch .= $colour.'" title="'.$colour.'" />';
+        
+        my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$colour" title="$colour"></span>};
+        
         $table->add_row({'colour' => $swatch, 'track' => $label});
       }
     }
@@ -168,8 +170,7 @@ sub create_user_set {
           'style'         => $style,
         });        
                 
-        my $swatch = '<img src="/i/blank.gif" style="width:30px;height:15px;background-color:';
-        $swatch .= $hash->{$label}.'" title="'.$hash->{$label}.'" />';
+        my $swatch = qq{<span style="width:30px;height:15px;display:inline-block;background-color:$hash->{$label}" title="$hash->{$label}"></span>};
         $table->add_row({'colour' => $swatch, 'track' => $label});
       }      
    }            
