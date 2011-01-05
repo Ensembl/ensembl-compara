@@ -789,6 +789,8 @@ sub timer_push {
   return $self->timer->push(@_);
 }
 
+sub img_url { return $_[0]->ENSEMBL_STATIC_SERVER . ($_[0]->ENSEMBL_IMAGE_ROOT || '/i/'); }
+
 sub marts {
   my $self = shift;
   return exists( $CONF->{'_storage'}{'MULTI'}{'marts'} ) ? $CONF->{'_storage'}{'MULTI'}{'marts'} : undef;
