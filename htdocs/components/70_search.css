@@ -27,4 +27,6 @@ ul.open li, ul.shut li {
   list-style:none;
 }
 
-a.no_arrow    { margin-left:18px; }
+table.search_results a.no_arrow         { margin-left: 18px; }
+table.search_results a.collapsible      { background: url(/i/list_shut.gif) no-repeat; padding-left: 18px; }
+table.search_results a.collapsible.open { background-image: url(/i/list_open.gif); }
