@@ -27,6 +27,7 @@ sub new {
 }
 
 sub renderer :lvalue  { $_[0]->{'_renderer'}; }
+sub hub               { return $_[0]->{'hub'}; }
 sub clear_components  { $_[0]{'components'} = {}; $_[0]->{'component_order'} = []; }
 sub components        { return @{$_[0]{'component_order'}}; }
 sub component         { return $_[0]->{'components'}->{$_[1]}; } # Given a component code, returns the component itself
@@ -273,15 +274,16 @@ sub content_Text {
 }
 
 sub _caption_with_helplink {
-  my $self = shift;
-  my $id   = $self->{'help'};
-  my $html = '<h2 class="caption">';
-  $html   .= sprintf ' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for Help">', encode_entities($id) if $id;
-  $html   .= $self->{'caption'};
-  $html   .= ' <img src="/i/help-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" class="print_hide" /></a>' if $id;
-  $html   .= '</h2>';
+  my $self    = shift;
+  my $img_url = $self->hub ? $self->img_url : undef;
+  my $id      = $self->{'help'};
+  my $html    = '<h2 class="caption">';
+  $html      .= sprintf ' <a href="/Help/View?id=%s" class="popup help-header constant" title="Click for Help">', encode_entities($id) if $id;
+  $html      .= $self->{'caption'};
+  $html      .= sprintf ' <img src="%shelp-button.png" style="width:40px;height:20px;padding-left:4px;vertical-align:middle" alt="(e?)" class="print_hide" /></a>', $img_url if $id && $img_url;
+  $html      .= '</h2>';
   
-  return $html; 
+  return $html;
 }
 
 sub content {
@@ -289,7 +291,7 @@ sub content {
   
   return $self->{'raw'} if exists $self->{'raw'};
   
-  my $hub        = $self->{'hub'};
+  my $hub        = $self->hub;
   my $status     = $hub ? $hub->param($self->{'status'}) : undef;
   my $content    = sprintf '%s<p class="invisible">.</p>', $status ne 'off' ? sprintf('<div class="content">%s</div>', $self->component_content) : '';
   my $panel_type = $self->renderer->{'_modal_dialog_'} ? 'ModalContent' : 'Content';
@@ -318,7 +320,7 @@ sub component_content {
   my $self    = shift;
   my $html    = $self->{'content'};
   my $builder = $self->{'builder'};
-  my $hub     = $self->{'hub'};
+  my $hub     = $self->hub;
   
   return $html unless $builder;
   return $self->das_content if $self->{'components'}->{'das_features'};
@@ -423,7 +425,7 @@ sub das_content {
     
     if ($self->dynamic_use($module_name)) {
       eval {
-        $xml = $module_name->new($self->{'hub'}, $builder)->$func;
+        $xml = $module_name->new($self->hub, $builder)->$func;
       };
       
       $self->component_failure($@, 'das_features', $function_name) if $@;
