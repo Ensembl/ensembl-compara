@@ -36,7 +36,7 @@ sub export {
       fasta     => sub { return $self->fasta(@inputs);  },
       csv       => sub { return $self->features('csv'); },
       tab       => sub { return $self->features('tab'); },
-      bed       => sub { return $self->bed_features;    },
+      bed       => sub { return $self->bed;    },
       gtf       => sub { return $self->features('gtf'); },
       psl       => sub { return $self->psl_features;    },
       gff       => sub { return $self->features('gff'); },
@@ -316,7 +316,7 @@ sub features {
   $self->misc_sets(keys %{$params->{'misc_set'}}) if $params->{'misc_set'};
 }
 
-sub bed_features {
+sub bed {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object;
@@ -360,42 +360,8 @@ sub bed_features {
   
   #get data from files user uploaded if any and display   
   if($params->{'userdata'}){
-    my $user = $hub->user;
-    my @user_file = $hub->session->get_data('type' => 'upload');
-    $self->string(join "\t");
-    foreach my $row (@user_file) {
-       next unless ($row->{'code'} && $row->{'format'} eq 'BED');
-       my $file = 'temp-upload-'.$row->{'code'};
-       my $name = $row->{'name'};
-       my $data = $object->fetch_userdata_by_id($file);
-       my (@fs, $class, $start, $end, $seqname);
-    
-       if (my $parser = $data->{'parser'}) {
-         foreach my $type (keys %{$parser->{'tracks'}}) {
-           my $features = $parser->fetch_features_by_tracktype($type);
-           ## Convert each feature into a proper API object
-           foreach (@$features) {
-             my $ddaf = Bio::EnsEMBL::DnaDnaAlignFeature->new($_->cigar_string);
-             $ddaf->species($hub->species);
-             $ddaf->start($_->rawstart);
-             $ddaf->end($_->rawend);
-             $ddaf->strand($_->strand);
-             $ddaf->seqname($_->seqname);
-             $ddaf->score($_->score);
-             $ddaf->extra_data($_->external_data);
-             $ddaf->{'bedname'} = $_->id;
-             $ddaf->{'trackname'} = $type;
-             $ddaf->{'description'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'name'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'name'} : '';
-             $ddaf->{'usescore'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'useScore'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'useScore'} : '';
-             $ddaf->{'color'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'color'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'color'} : '';
-             push @fs, $ddaf;
-           }
-         }
-       }
-       elsif ($data->{'features'}) {
-         @fs = @{$data->{'features'}};
-       }
-       
+       my @fs = $self->get_user_data('BED');
+
        #displaying Uploaded data
        foreach my $f (@fs)
        {        
@@ -415,8 +381,53 @@ sub bed_features {
          my $string = qq{chr$f->{seqname}   $f->{start}   $f->{end}   $f->{bedname}   $f->{score}   $f->{strand}    $f->{extra_data}->{thick_start}[0]   $f->{extra_data}->{thick_end}[0]   $f->{extra_data}->{item_color}[0]    $f->{extra_data}->{BlockCount}[0]    $f->{extra_data}->{BlockSizes}[0]    $f->{extra_data}->{BlockStart}[0]};
          $self->string(join $self->{'config'}->{'delim'}, $string);
        }
+   }
+}
+
+sub get_user_data {
+  my $self = shift; 
+  my $format = shift;
+  
+  my $hub    = $self->hub;
+  my $object = $self->object;
+  my $user = $hub->user;
+  my (@fs, $class, $start, $end, $seqname);
+  
+  my @user_file = $hub->session->get_data('type' => 'upload');
+  $self->string(join "\t");
+  foreach my $row (@user_file) {
+     next unless ($row->{'code'} && $row->{'format'} eq $format);
+     my $file = 'temp-upload-'.$row->{'code'};
+     my $name = $row->{'name'};
+     my $data = $object->fetch_userdata_by_id($file);     
+  
+     if (my $parser = $data->{'parser'}) {
+       foreach my $type (keys %{$parser->{'tracks'}}) {
+         my $features = $parser->fetch_features_by_tracktype($type);
+         ## Convert each feature into a proper API object
+         foreach (@$features) {
+           my $ddaf = Bio::EnsEMBL::DnaDnaAlignFeature->new($_->cigar_string);
+           $ddaf->species($hub->species);
+           $ddaf->start($_->rawstart);
+           $ddaf->end($_->rawend);
+           $ddaf->strand($_->strand);
+           $ddaf->seqname($_->seqname);
+           $ddaf->score($_->score);
+           $ddaf->extra_data($_->external_data);
+           $ddaf->{'bedname'} = $_->id;
+           $ddaf->{'trackname'} = $type;
+           $ddaf->{'description'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'name'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'name'} : '';
+           $ddaf->{'usescore'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'useScore'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'useScore'} : '';
+           $ddaf->{'color'} = exists($parser->{'tracks'}->{$type}->{'config'}->{'color'}) ? $parser->{'tracks'}->{$type}->{'config'}->{'color'} : '';
+           push @fs, $ddaf;
+         }
+       }
+     }
+     elsif ($data->{'features'}) {
+       push @fs, @{$data->{'features'}};
      }
    }
+   return @fs;
 }
 
 sub psl_features {
