@@ -2,9 +2,9 @@
 .navbar a   { font-size: 1.2em; color: [[MH_BORDER]]; text-decoration: none; margin: 1px; position: relative; top: 2px; }
 .navbar div { margin: 0 5px; }
 
-.navbar span.ramp                { position: relative; float: left; bottom: 3px; text-align: center; width: 80px; }
-.navbar span.ramp img            { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; }
-.navbar span.ramp a.selected img { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
+.navbar span.ramp            { position: relative; float: left; bottom: 3px; text-align: center; width: 80px; }
+.navbar span.ramp a          { background-color: [[MH_BORDER]]; height: 4px; vertical-align: bottom; width: 4px; border: outset 1px [[MH_BORDER]]; display: inline-block; }
+.navbar span.ramp a.selected { background-color: [[CONTRAST_HEADER]]; border: outset 1px [[CONTRAST_HEADER]]; }
 
 .navbar .homology_move { position: relative; top: 3px; }
 
@@ -19,10 +19,14 @@ input.go-button:hover { background-color: [[TINT_BORDER]]; }
 
 .image_nav { position: relative; top: 5px; float: right; width: 304px; }
 
-a.move, a.zoom_in, a.zoom_out { float: left; top: 0; margin: 0; }
-a.zoom_in                     { margin-left:  4px; }
-a.zoom_out                    { margin-right: 4px; }
+a.move, a.zoom_in, a.zoom_out { float: left; top: 0; margin: 0; width: 20px; height: 20px; background-repeat: no-repeat; }
+a.zoom_in                     { margin-left:  4px; background: url(/i/zoom-plus.gif);  }
+a.zoom_out                    { margin-right: 4px; background: url(/i/zoom-minus.gif); }
 a.move                        { margin: 0 2px; }
+a.move.left_1                 { background: url(/i/nav-l1.gif); }
+a.move.left_2                 { background: url(/i/nav-l2.gif); }
+a.move.right_1                { background: url(/i/nav-r1.gif); }
+a.move.right_2                { background: url(/i/nav-r2.gif); }
 
 .slider, .slider_left, .slider_right { display: none; position: relative; height: 20px; float: left; background: url(/i/slider.gif) no-repeat 0 center; }
 .slider { width: 150px; }
