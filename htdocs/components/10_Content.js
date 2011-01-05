@@ -249,19 +249,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   toggleList: function () {
-    var attrs = {
-      open: { src: '/i/list_open.gif', alt: 'V' },
-      shut: { src: '/i/list_shut.gif', alt: '>' }
-    };
-    
     this.elLk.toggleList.bind('click', function () {
-      var img = $('img', this);
-      
-      img.attr(attrs[img.hasClass('open') ? 'shut' : 'open']).toggleClass('open');
-      img = null;
-      
-      $(this).siblings('ul.shut').toggle();
-      
+      $(this).toggleClass('open').siblings('ul.shut').toggle();
       return false;
     });
   },
