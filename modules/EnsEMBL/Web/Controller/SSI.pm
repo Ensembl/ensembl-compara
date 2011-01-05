@@ -178,6 +178,7 @@ sub template_INCLUDE {
         local($/) = undef;
         $content = <FH>;
         close FH;
+        $content =~ s/src="(\/i(mg)?\/)/src="$ENSEMBL_STATIC_SERVER$1/g;
         return $content;
       }
     }
