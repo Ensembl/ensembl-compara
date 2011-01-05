@@ -5,6 +5,7 @@ package EnsEMBL::Web::Component::Help::Movie;
 use strict;
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::Document::HTML::MovieList;
 
 use base qw(EnsEMBL::Web::Component::Help);
 
