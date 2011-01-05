@@ -276,7 +276,8 @@ sub render_image_map {
 }
 
 sub hover_labels {
-  my $self = shift;
+  my $self    = shift;
+  my $img_url = $self->{'species_defs'}->img_url;
   my ($html, %done);
   
   foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
@@ -289,9 +290,9 @@ sub hover_labels {
       my $text = $_->{'text'};
       
       if ($_->{'current'}) {
-        $renderers .= qq{<li class="current"><img src="/i/render/$_->{'current'}.gif" alt="$text" title="$text" /><img src="/i/tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
+        $renderers .= qq{<li class="current"><img src="${img_url}render/$_->{'current'}.gif" alt="$text" title="$text" /><img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" /> $text</li>};
       } else {
-        $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'config'}"><img src="/i/render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
+        $renderers .= qq{<li><a href="$_->{'url'}" class="config" rel="$label->{'config'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>};
       }
     }
     
@@ -307,9 +308,9 @@ sub hover_labels {
       </div>',
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}   ? '<img class="desc" src="/i/info_blue_13.png" alt="Info" title="Info" />' : '',
-      $renderers         ? '<img class="config" src="/i/config_13.png" alt="Change track renderer" title="Change track renderer" />' : '',
-      $label->{'config'} ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="/i/cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>} : '',
+      $label->{'desc'}   ? qq{<img class="desc" src="${img_url}info_blue_13.png" alt="Info" title="Info" />} : '',
+      $renderers         ? qq{<img class="config" src="${img_url}config_13.png" alt="Change track renderer" title="Change track renderer" />} : '',
+      $label->{'config'} ? qq{<a href="$label->{'off'}" class="config" rel="$label->{'config'}"><img src="${img_url}cross_red_13.png" alt="Turn track off" title="Turn track off" /></a>} : '',
       $desc,
       $renderers         ? "<p>Change track renderer:</p><ul>$renderers</ul>" : ''
     );
@@ -463,20 +464,5 @@ sub render {
   
   return $html
 }
-
-sub static_karyotype {
-    my( $self, $object, $highs, $config ) = @_;
-    my $image = new EnsEMBL::Web::File::Image( $self->{'species_defs'} );
-    $image->{'border'} = 1;
-    my $type = 'png';
-    my $filename = $self->image_name;
-    $image->{'token'}      = "$type:$filename";
-    $image->{'filename'}   = $self->image_name;
-    $image->{'format'}   = 'imagemap';
-    $image->{'file_root' } = $self->{'species_defs'}->ENSEMBL_TMP_DIR_CACHE .'/../htdocs/img/species/';
-    $image->{'URL_root'}   = '/img/species/';
-    return;
-}
-
 
 1;
