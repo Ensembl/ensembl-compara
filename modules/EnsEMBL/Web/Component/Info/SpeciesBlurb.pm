@@ -42,6 +42,7 @@ sub content {
   foreach my $release (reverse sort keys %archive) {
     next if $release == $hub->species_defs->ENSEMBL_VERSION;
     next if $assemblies{$release} eq $previous;
+    next unless($assemblies{$release});
     push @old_archives, {
         'url' => 'http://'.lc($archive{$release}).".archive.ensembl.org/$species/", 
         'text' => $assemblies{$release}.' ('.$archive{$release}.')',
