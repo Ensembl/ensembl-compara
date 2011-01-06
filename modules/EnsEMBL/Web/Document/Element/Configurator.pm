@@ -70,7 +70,6 @@ sub init_viewconfig {
   my $view_config = shift;
   my $url         = shift;
   my $hub         = $controller->hub;
-  my $image_config;
   
   if ($view_config && $view_config->has_form) {
     $view_config->build_form($controller->object);
@@ -121,11 +120,7 @@ sub init_viewconfig {
     $self->tree    = $view_config->tree;
     $self->active  = 'form_conf';
     $self->caption = 'Configure view';
-  } else {
-    ($image_config) = sort keys %{$view_config->image_configs || {}};
   }
-  
-  return $image_config ? $hub->get_imageconfig($image_config) : undef;
 }
 
 sub init_imageconfig {
@@ -363,7 +358,7 @@ sub add_reset_panel {
   my $url = $controller->hub->url({ 
     type   => 'Config',
     action => $action,
-    config => $config,
+    config => $config =~ /(cell)?_page/ ? '' : $config,
     reset  => 1
   });
   
