@@ -209,7 +209,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'load_uniprot',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadUniProt',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProt',
             -hive_capacity => 20,
             -rc_id => 0,
         },
@@ -277,7 +277,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'family_blast',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances',
             -parameters    => {
                 'blast_params' => $self->o('blast_params'),
             },
@@ -312,7 +312,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'parse_mcl',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyParseMCL',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ParseMCLintoFamilies',
             -parameters => {
                 'family_prefix' => 'fam'.$self->o('rel_with_suffix'),
             },
@@ -358,14 +358,14 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'family_mafft_big',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => 20,
             -batch_size    => 1,
             -rc_id => 5,
         },
 
         {   -logic_name    => 'family_mafft_main',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyMafft',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => $self->o('mafft_capacity'),
             -batch_size    =>  10,
             -rc_id => 6,
@@ -431,7 +431,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'consensifier',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::FamilyConsensifier',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
             -hive_capacity => $self->o('cons_capacity'),
             -rc_id => 0,
         },
