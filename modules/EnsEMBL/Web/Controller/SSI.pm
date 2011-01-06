@@ -167,7 +167,7 @@ sub template_RELEASE {
 sub template_INCLUDE {
   my ($self, $include) = @_;
   my $static_server = $self->static_server;
-     $static_server = '' if $static_server eq $self->species_defs->ENSEMBL_BASE_URL;
+     $static_server = '' if $static_server eq $self->hub->species_defs->ENSEMBL_BASE_URL; # must use $self->hub->species_defs rather than $self->species_defs because this function is called directly by Components
   my $content;
   
   $include =~ s/\{\{([A-Z]+)::([^\}]+)\}\}/my $m = "template_$1"; $self->$m($2);/ge;
