@@ -190,11 +190,13 @@ sub init_label {
   my $fsze   = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
   my @res    = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
   my $track  = $self->_type;
+  my $node   = $self->{'config'}->get_node($track);
+  my $hover  = $self->{'config'}->storable && $node->get('menu') ne 'no';
   (my $class = $self->species . "_$track") =~ s/\W/_/g;
   
-  if ($self->{'config'}->storable) {
+  if ($hover) {
     my $config    = [split 'ImageConfig::', ref $self->{'config'}]->[-1];
-    my @renderers = @{$self->{'config'}->get_node($track)->get('renderers') || []};
+    my @renderers = @{$node->get('renderers') || []};
     my $url       = $self->{'config'}->hub->url('Config', { config => $config, submit => 1, __clear => 1 });
     my @r;
     
@@ -227,7 +229,7 @@ sub init_label {
     height    => $res[3],
     class     => "label $class",
     alt       => $name,
-    hover     => $self->{'config'}->storable
+    hover     => $hover
   }));
   
 }
