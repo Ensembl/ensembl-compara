@@ -166,6 +166,8 @@ sub template_RELEASE {
 
 sub template_INCLUDE {
   my ($self, $include) = @_;
+  my $static_server = $self->static_server;
+     $static_server = '' if $static_server eq $self->species_defs->ENSEMBL_BASE_URL;
   my $content;
   
   $include =~ s/\{\{([A-Z]+)::([^\}]+)\}\}/my $m = "template_$1"; $self->$m($2);/ge;
@@ -178,7 +180,7 @@ sub template_INCLUDE {
         local($/) = undef;
         $content = <FH>;
         close FH;
-        $content =~ s/src="(\/i(mg)?\/)/src="$ENSEMBL_STATIC_SERVER$1/g;
+        $content =~ s/src="(\/i(mg)?\/)/src="$static_server$1/g if $static_server;
         return $content;
       }
     }
