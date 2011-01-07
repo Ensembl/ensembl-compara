@@ -78,7 +78,7 @@ sub table_data {
     my $source_name  = $va->source_name;
     my $disease_url  = $hub->url({ type => 'Location', action => 'Genome', id => $id, ftype => 'Phenotype', somatic => $is_somatic, phenotype_name => $disorder }); 
     my $source       = $self->source_link($va, $code);
-    my $study        = $self->study_link($va->study) || $va->study; # use raw value if can't be made into a link
+    my $study        = $self->study_link($va->study, $va->associated_variant_risk_allele) || $va->study; # use raw value if can't be made into a link
     
     if ($source =~ /<a href="">(.*)<\/a>/) {
       $source = $1; 
@@ -186,7 +186,7 @@ sub source_link {
 }
 
 sub study_link {
-  my ($self, $study) = @_;
+  my ($self, $study, $allele) = @_;
   
   if($study =~ /pubmed/) {
     return qq{<a href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
@@ -197,7 +197,11 @@ sub study_link {
     
     foreach my $mim(split /\,\s*/, $study) {
       my $id = (split /\:/, $mim)[-1];
-      $link .= ', '.$self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+      my $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', $id);
+      my @parts = split /\"/, $sub_link;
+      $parts[1] .= '#'.$id.'Variants'.$allele if defined($allele);
+      $sub_link = join '"', @parts;
+      $link .= ', '.$sub_link;
       $link =~ s/^\, //g;
     }
     
