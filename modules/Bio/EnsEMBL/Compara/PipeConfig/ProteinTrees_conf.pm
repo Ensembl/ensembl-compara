@@ -7,11 +7,11 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
 =head1 DESCRIPTION  
 
-    This is an experimental PipeConfig file for ProteinTrees pipeline (work in progress)
+    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks (including blast reuse and finding out entry data for dNdS).
 
 =head1 CONTACT
 
@@ -31,10 +31,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'mlss_id'           => 40069,   # it is very important to check that this value is current!
+#       'mlss_id'           => 40069,   # it is very important to check that this value is current!
 
     # template parameters:
-        # 'reuse_gdb_list'            => [3,4,16,18,27,31,33,36,37,38,39,42,43,46,48,49,51,52,53,55,58,60,61,64,65,66,67,69,78,79,80,82,83,84,85,86,87,91,93,98,101,104,105,106,108,109],
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
 
     # clustering parameters:
@@ -47,7 +46,6 @@ sub default_options {
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
-        # 'dnds_species_sets'         => [[3,31,38,39,46,57,60,61,64,69,90,93,98,104,108,109],[42,87,111,112],[4,65]],    # used by 'homology_dNdS_factory' and 'threshold_on_dS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
 
         'release'           => '61',
@@ -584,9 +582,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'homology_dNdS_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyGroupingFactory',
-            -parameters => {
-                'species_sets'              => $self->o('dnds_species_sets'),
-            },
+            -parameters => { },
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'threshold_on_dS' ],
@@ -605,9 +601,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
-            -parameters => {
-                'species_sets'              => $self->o('dnds_species_sets'),
-            },
+            -parameters => { },
             -wait_for => [ 'homology_dNdS' ],
             -hive_capacity => -1,
         },
