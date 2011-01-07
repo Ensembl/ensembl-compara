@@ -662,7 +662,10 @@ sub transcript_table {
       $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
     }
     
-    $description = "<p>$description</p>";
+    $description = qq(<dl class="summary">
+      <dt>Description</dt>
+      <dd>$description</dd>
+    </dl>);
   }
   
   my $seq_region_name  = $object->seq_region_name;
