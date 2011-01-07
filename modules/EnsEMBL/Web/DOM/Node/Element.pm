@@ -4,6 +4,14 @@ use strict;
 
 use base qw(EnsEMBL::Web::DOM::Node);
 
+use constant {
+  ELEMENT_TYPE_BLOCK_LEVEL => 1,
+  ELEMENT_TYPE_INLINE      => 2,
+  ELEMENT_TYPE_TOP_LEVEL   => 3,
+  ELEMENT_TYPE_HEAD_ONLY   => 4,
+  ELEMENT_TYPE_SCRIPT      => 5,
+};
+
 sub node_type {
   ## @overrides
   return shift->ELEMENT_NODE;
@@ -18,13 +26,48 @@ sub render {
   my $tag         = $self->node_name;
   my $attributes  = '';
   $attributes    .= sprintf(' %s="%s"', $_, $self->get_attribute($_)) for keys %{$self->{'_attributes'}};
-  return qq(<$tag$attributes />) unless $self->can_have_child;
+  return $self->can_have_child ? "<$tag$attributes>".$self->inner_HTML."</$tag>" : "<$tag$attributes />";
+}
 
-  my $children = $self->inner_HTML;
-  if ($children eq '') { #inner html has priority over child nodes
-    $children .= $_->render for @{$self->child_nodes};
-  }
-  return qq(<$tag$attributes>$children</$tag>);
+sub can_have_child {
+  ## Checks if the element can have child nodes or not - depending upon node_name
+  ## @return 1/0 accordingly
+  my $self = shift;
+  return (grep {$self->node_name =~ /^$_$/i} qw(area base br col frame hr img input link meta param)) ? 0 : 1;
+}
+
+sub element_type {
+  ## Tells us the element type
+  ## @return Constant corresponding to the element type
+  my $self = shift;
+  return $self->ELEMENT_TYPE_BLOCK_LEVEL if grep {$self->node_name =~ /^$_$/i} qw(address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr noscript ol p pre table ul dd dt li tbody td tfoot th thead tr);
+  return $self->ELEMENT_TYPE_TOP_LEVEL   if grep {$self->node_name =~ /^$_$/i} qw(html head body);
+  return $self->ELEMENT_TYPE_HEAD_ONLY   if grep {$self->node_name =~ /^$_$/i} qw(title meta style base link);
+  return $self->ELEMENT_TYPE_SCRIPT      if $self->node_name =~ /^script$/i;
+  return $self->ELEMENT_TYPE_INLINE;
+}
+
+sub _appendable {
+  ## Checks if the given node can be appended to the element
+  ## @overrides
+  my ($self, $child) = @_;
+  my $se = $self->element_type;
+  my $e  = $self->ELEMENT_NODE;
+  my $t  = $self->TEXT_NODE;
+  my $et = $self->ELEMENT_TYPE_TOP_LEVEL;
+  my $eb = $self->ELEMENT_TYPE_BLOCK_LEVEL;
+  my $ei = $self->ELEMENT_TYPE_INLINE;
+  my $eh = $self->ELEMENT_TYPE_HEAD_ONLY;
+  my $es = $self->ELEMENT_TYPE_SCRIPT;
+  my $cn = $child->node_type;
+  my $ce = $cn == $e ? $child->element_type : undef;
+
+  return
+    $se == $ei && ($cn == $e && $ce == $ei || $cn == $t) ||
+    $se == $eb && ($cn == $e && ($ce == $eb || $ce == $ei || $ce == $es) || $cn == $t) ||
+    $se == $et && ($cn == $e && $ce != $ei) ||
+    $se == $eh && ($cn == $t)
+  ? 1 : 0;
 }
 
 sub attributes {
@@ -35,7 +78,7 @@ sub attributes {
 
 sub get_attribute {
   ## Gets attribute of the element
-  ## @params Attribute name
+  ## @param Attribute name
   ## @return Attribute value if attribute exists, blank string otherwise
   my ($self, $attrib) = @_;
 
@@ -58,7 +101,7 @@ sub get_attribute {
 
 sub has_attribute {
   ## Checks if an attribute exists
-  ## @params Attribute name
+  ## @param Attribute name
   ## @return 1 if attribute exists, 0 otherwise
   my ($self, $attrib) = @_;
   return exists $self->{'_attributes'}{$attrib} ? 1 : 0;
@@ -67,8 +110,8 @@ sub has_attribute {
 sub remove_attribute {
   ## Removes attribute of the element
   ## If attribute can contain multiple values, and value agrument is provided, removes given value only
-  ## @params Attribute name
-  ## @params Attribute value
+  ## @param Attribute name
+  ## @param Attribute value
   ## @return No return value
   my ($self, $attrib, $value) = @_;
   
@@ -83,8 +126,8 @@ sub remove_attribute {
 
 sub set_attribute {
   ## Sets attribute of the element
-  ## @params Attribute name
-  ## @params Attribute value
+  ## @param Attribute name
+  ## @param Attribute value
   ## @return No return value
   my ($self, $attrib, $value) = @_;
 
@@ -107,15 +150,15 @@ sub set_attribute {
 
 sub set_attributes {
   ## Sets multiple attributes to the element
-  ## @params HashRef {attrib1 => ?, attrib2 => ? ...}
+  ## @param HashRef {attrib1 => ?, attrib2 => ? ...}
   my ($self, $attribs) = @_;
   $self->set_attribute($_, $attribs->{$_}) for (keys %$attribs);
 }
 
 sub _access_attribute {
   ## Accessor for attributes that have same value and name (eg disabled="disabled", checked="checked")
-  ## @params Attribute name
-  ## @params Flag to set or remove attribute
+  ## @param Attribute name
+  ## @param Flag to set or remove attribute
   ## Use in required child classes
   my $self    = shift;
   my $attrib  = shift;
@@ -133,7 +176,7 @@ sub _access_attribute {
 
 sub id {
   ## Getter/Setter of id attribute
-  ## @params Id
+  ## @param Id
   ## @return Id
   my ($self, $id) = @_;
   $self->set_attribute('id', $id) if $id;
@@ -142,7 +185,7 @@ sub id {
 
 sub name {
   ## Getter/Setter of name attribute
-  ## @params Name
+  ## @param Name
   ## @return Name
   my ($self, $name) = @_;
   $self->set_attribute('name', $name) if $name;
@@ -151,31 +194,99 @@ sub name {
 
 sub inner_HTML {
   ## Sets/Gets inner HTML of an element
-  ## This intends to remove all the child elements before setting inner HTML - use document->create_text_node in other case.
-  ## Any elements added by this methods will not be accessible with selector methods
-  ## @params innerHTML
-  ## @return innerHTML
-  my $self = shift;
-  if (@_) {
-    $self->{'_child_nodes'} = [];
-    $self->{'_text'} = shift;
+  ## If intended to set HTML, string is parsed for HTML, converted to tree format and appended to the node after removing the existing child nodes.
+  ## @param innerHTML string
+  ## @return final HTML string
+  my ($self, $html) = @_;
+  if (defined $html) {
+    $self->remove_children;
+    $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html)};
   }
-  return $self->{'_text'};
+  $html = '';
+  $html .= $_->render for @{$self->{'_child_nodes'}};
+  return $html;
 }
 
 sub inner_text {
   ## Sets/Gets inner text (after encoding any HTML entities if found)
-  ## Use this instead of inner_HTML if HTML encoding is required
-  ## @params text
-  ## @return text
-  my $self = shift;
-  $self->{'_text'} = $self->encode_htmlentities(shift) if @_;
-  return $self->{'_text'};
+  ## If intended to set text, a new text node is added with the given text, and any existing child nodes are removed
+  ## @param text
+  ## @return Inner Text for all the text nodes found inside.
+  my ($self, $text) = @_;
+  if (defined $text) {
+    $self->remove_children;
+    $self->append_child($self->dom->create_text_node($text));
+  }
+  my $text = '';
+  $text .= $_->render for @{$self->get_nodes_by_node_type($self->TEXT_NODE)};
+  return $text;
 }
 
 sub add_attribute {
   #warn "Use set_attribute(), not add_attribute()!";
   return shift->set_attribute(@_);
+}
+
+sub _parse_HTML_to_nodes {
+  ## private method used in &inner_HTML
+  ## function to parse HTML from a string to tree structure
+  my ($self, $html) = @_;
+
+  my $nodes = [];
+  my @raw_nodes;
+  my @tags;
+  my @lifo;
+
+  my $current_node;
+
+  while ($html =~ /(<(\/?)(\w+)((\s+\w+(\s*=\s*(?:".*?"|'.*?'|[^'">\s]+))?)+\s*|\s*)(\/?)>)/g) {
+    my $tag = {
+      'string'  => $1,
+      'start'   => $-[1],
+      'end'     => $+[1],
+      'name'    => $3,
+      'type'    => $2 eq '' ? $7 eq '' ? 'start_tag' : 'selfclosing_tag' : 'end_tag',
+      'attr'    => {}
+    };
+    my $atts = $4;
+    $tag->{'attr'}{$1} = $2 while $atts =~ /(\w+)\s*=\s*"([^"]*)"/g;
+    push @tags, $tag;
+  }
+
+  # construct raw nodes
+  my $text_length = scalar @tags ? $tags[0]->{'start'} : length $html;
+  push @raw_nodes, {'type' => 'text', 'text' => substr($html, 0, $text_length)} if $text_length;
+  for (0..$#tags) {
+    push @raw_nodes, $tags[$_];
+    $text_length = ($_ < $#tags ? $tags[$_ + 1]->{'start'} : length $html) - $tags[$_]->{'end'};
+    push @raw_nodes, {'type' => 'text', 'text' => substr($html, $tags[$_]->{'end'}, $text_length)} if $text_length;
+    delete $tags[$_];
+  }
+
+  # convert raw nodes to Node objects
+  for (@raw_nodes) {
+    if ($_->{'type'} eq 'text') {
+      my $node = $self->dom->create_text_node($_->{'text'});
+      $current_node ? $current_node->append_child($node) : push @$nodes, $node;
+    }
+    elsif ($_->{'type'} eq 'end_tag') {
+      my $expected = pop @lifo;
+      $current_node = $current_node->parent_node, next if ($_->{'name'} eq $expected);
+      warn "HTML parsing error: Unexpected closing tag found - ".$_->{'name'}." as in ".$_->{'string'}.", expected ".($expected || 'no')." tag.";
+      return [];
+    }
+    else {
+      my $node = $self->dom->create_element($_->{'name'}, $_->{'attr'}, 1);
+      if (!$node) {
+        warn "HTML parsing error: Could not create HTML element '".$_->{'name'}."' from ".$_->{'string'};
+        return [];
+      }
+      $current_node ? $current_node->append_child($node) : push @$nodes, $node;
+      push @lifo, $_->{'name'} and $current_node = $node if $_->{'type'} eq 'start_tag';
+    }
+  }
+  
+  return $nodes;
 }
 
 1;
