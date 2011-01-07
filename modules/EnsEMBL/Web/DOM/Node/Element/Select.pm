@@ -16,35 +16,34 @@ sub form {
 
 sub selected_index {
   ## Sets or returns the index of the selected option in a dropdown list
-  ## If the dropdown list allows multiple selections it will only return the index of the first option selected
-  ## If invalid index, unselects all and returns -1
-  ## If not selected any and argument missing, returns -1
-  ## Useless for multiple select (so don't use there)
-  my $self = shift;
-  my $index = @_ ? shift : -1;
-  my $i = 0;
-  for (@{$self->options}) {
-    if ($index == -1) {
-      return $i++ if $_->selected == $i;
-    }
-    else {
-      $_->selected($i++ == $index ? '1' : '0');
+  ## If intended to set index in a dropdown that allows multiple selections, all previous selections will be unselected before selecting the given index
+  ## @param index or ArrayRef of indices to be set if intended to set selection. -1 (or any invalid index will deselect all)
+  ## @return index or ArrayRef of indices of new selections
+  my $self    = shift;
+  my @options = $self->options;
+  my $multi   = $self->multiple;
+
+  if (@_) {
+    my $indices = shift;
+    $indices    = [ $indices ] if ref($indices) ne 'ARRAY';
+    $indices    = [ shift @$indices ] unless $multi;
+    foreach my $i (0..$#options) {
+      $options[$i]->selected((grep {$_ == $i} @{$indices}) ? 1 : 0);
     }
   }
-  return $index;
+  my $indices = [];
+  $options[$_]->selected and push @$indices, $_ for 0..$#options;
+  return $multi ? $indices : shift @$indices;
 }
 
 sub options {
   ## Getter of all the option element objects of the select
   my $self = shift;
-  my $option = __PACKAGE__;
-  $option =~ s/Select$/Option/;
-  (my $optgroup = $option) =~ s/Option$/Optgroup/;
   
   my $options = [];
   for (@{$self->{'_child_nodes'}}) {
-    push @{$options}, $_ if $_->isa($option);
-    push @{$options}, @{$_->{'_child_nodes'}} if $_->isa($optgroup);
+    push @{$options}, $_ if $_->node_name eq 'option';
+    push @{$options}, @{$_->{'_child_nodes'}} if $_->node_name eq 'optgroup';
   }
   return $options;
 }
@@ -59,9 +58,12 @@ sub add {
 }
 
 sub remove_option {
-  ## Removes an option object from select object
-  my ($self, $option) = shift;
-  return $option->parent_node->remove_child($option);
+  ## Removes the option object(s) with given value
+  ## @return Option (or ArrayRef of Option objects) removed
+  my ($self, $value) = shift;
+  my $return = [];
+  grep {$_->get_attribute('value') eq $value and push @$return, $_->remove} @{$self->options};
+  return scalar @$return ? $return : shift @$return;
 }
 
 sub disabled {
