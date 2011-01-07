@@ -38,7 +38,7 @@ sub process {
   
   foreach my $script_name (@scripts) {
     warn "SETTING CONFIG ", $hub->param('id'), " FOR SCRIPT: ", $script_name;
-    $session->set_view_config_from_string($script_name, $string);
+  #  $session->set_view_config_from_string($script_name, $string); # function has been deleted from Session
   }
   
   my $new_param = { id => $hub->param('id') };
