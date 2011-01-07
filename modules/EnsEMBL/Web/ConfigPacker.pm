@@ -681,18 +681,19 @@ sub _summarise_website_db {
   $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id, rs.assembly_code, rs.last_genebuild
        from species as s, ens_release as r, release_species as rs
-      where s.species_id =rs.species_id and r.release_id =rs.release_id and rs.assembly_code !=""'
+      where s.species_id =rs.species_id and r.release_id =rs.release_id
+       and rs.assembly_code != ""'
   );
   foreach my $row ( @$t_aref ) {
     my @R = @$row;
-#    warn ">>> ROW @R";
     $self->db_tree->{'ASSEMBLIES'}->{$row->[0]}{$row->[1]}=$row->[2];
     $self->db_tree->{'GENEBUILDS'}->{$row->[0]}{$row->[1]}=$row->[3];
   }
   $t_aref = $dbh->selectall_arrayref(
     'select s.name, r.release_id, r.archive
        from ens_release as r, species as s, release_species as rs
-      where s.species_id = rs.species_id and r.release_id = rs.release_id and r.online = "Y"'
+      where s.species_id = rs.species_id and r.release_id = rs.release_id 
+       and rs.assembly_code != "" and r.online = "Y"'
   );
   foreach my $row ( @$t_aref ) {
     $self->db_tree->{'ENSEMBL_ARCHIVES'}->{$row->[0]}{$row->[1]}=$row->[2];
