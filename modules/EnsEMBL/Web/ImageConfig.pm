@@ -979,7 +979,7 @@ sub add_genes {
     next unless $menu;
     
     foreach (@$keys) {
-      $self->generic_add($menu, $key, "transcript_${key}_$_", $data->{$_}, {
+      $self->generic_add($menu, $key, "${type}_${key}_$_", $data->{$_}, {
         glyphset    => ($type =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours     => $colours,
         strand      => $type eq 'gene' ? 'r' : 'b',
