@@ -12,13 +12,7 @@ sub node_name {
 sub _appendable {
   ## @overrides
   my ($self, $child) = @_;
-  return
-    $child->node_type == $self->ELEMENT_NODE
-    &&
-    $child->node_name =~ /^(caption|colgroup|col|tbody|tfoot|thead|tr)$/
-    ? 1
-    : 0  
-  ;
+  return $child->node_type == $self->ELEMENT_NODE && $child->node_name =~ /^(caption|colgroup|col|tbody|tfoot|thead|tr)$/ ? 1 : 0;
 }
 
 1;
