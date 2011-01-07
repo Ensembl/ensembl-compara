@@ -10,7 +10,6 @@ sub init {
   my $view_config = shift;
 
   $view_config->storable   = 1;
-  $view_config->can_upload = 1; # allows configuration of DAS etc
   $view_config->_set_defaults(map { $_->logic_name => undef } values %{$view_config->hub->get_all_das});
 }
 

@@ -32,7 +32,6 @@ sub init {
   
   $view_config->default_config = 'Vkaryotype';
   $view_config->storable       = 1;
-  $view_config->can_upload     = 1;
 }
 
 sub form {
