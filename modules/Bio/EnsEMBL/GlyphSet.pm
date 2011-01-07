@@ -183,21 +183,22 @@ sub init_label {
   
   return $self->label(undef) unless $text;
   
+  my $config = $self->{'config'};
+  my $hub    = $config->hub;
   my $name   = $self->my_config('name');
   my $desc   = $self->my_config('description');
-  my $style  = $self->{'config'}->species_defs->ENSEMBL_STYLE;
+  my $style  = $config->species_defs->ENSEMBL_STYLE;
   my $font   = $style->{'GRAPHIC_FONT'};
   my $fsze   = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
   my @res    = $self->get_text_width(0, $text, '', 'font' => $font, 'ptsize' => $fsze);
   my $track  = $self->_type;
-  my $node   = $self->{'config'}->get_node($track);
-  my $hover  = $self->{'config'}->storable && $node->get('menu') ne 'no';
+  my $node   = $config->get_node($track);
+  my $hover  = $node->get('menu') ne 'no' && $hub->get_viewconfig->has_image_config($config->{'type'});
   (my $class = $self->species . "_$track") =~ s/\W/_/g;
   
   if ($hover) {
-    my $config    = [split 'ImageConfig::', ref $self->{'config'}]->[-1];
     my @renderers = @{$node->get('renderers') || []};
-    my $url       = $self->{'config'}->hub->url('Config', { config => $config, submit => 1, __clear => 1 });
+    my $url       = $hub->url('Config', { config => $config->{'type'}, submit => 1, __clear => 1 });
     my @r;
     
     if (scalar @renderers > 4) {
@@ -210,11 +211,11 @@ sub init_label {
       }
     }
     
-    $self->{'config'}->{'hover_labels'}->{$class} = {
+    $config->{'hover_labels'}->{$class} = {
       header    => $name,
       desc      => $desc,
       class     => $class,
-      config    => $config,
+      config    => $config->{'type'},
       renderers => \@r,
       off       => "$url;$track=off"
     };
