@@ -24,7 +24,7 @@ sub text {
   ## @params Text (string, can contain HTML that will not be escaped) to be set
   ## @return Text
   my $self = shift;
-  $self->{'_text'} = shift if @_;
+  $self->{'_text'} = $self->encode_htmlentities(shift) if @_;
   return $self->{'_text'};
 }
 
