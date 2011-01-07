@@ -2,7 +2,7 @@
 
 package EnsEMBL::Web::NewTree;
 
-use base qw(EnsEMBL::Web::DOM::Node::Element::Dynamic);
+use base qw(EnsEMBL::Web::DOM::Node::Element::Generic);
 
 use strict;
 
@@ -80,33 +80,16 @@ sub create_node {
 
 sub nodes {
   my $self = shift;
-  my @nodes;
-  $self->recursive_get_nodes($self, \@nodes);
-  return @nodes;
-}
-
-sub recursive_get_nodes {
-  my ($self, $node, $return) = @_;
-  push @$return, $self->recursive_get_nodes($_, $return) for @{$node->child_nodes};
-  return $node;
+  return @{$self->get_all_nodes};
 }
 
 sub leaves {
   my $self = shift;
   my @nodes;
-  $self->recursive_get_leaves($self, \@nodes);
-  return @nodes;
-}
-
-sub recursive_get_leaves {
-  my ($self, $node, $return) = @_;
   
-  if ($node->has_child_nodes) {
-    push @$return, $self->recursive_get_leaves($_, $return) for @{$node->child_nodes};
-    return ();
-  } else {
-    return $node;
-  }
+  push @nodes, $self if !$self->has_child_nodes && @_ && shift;
+  push @nodes, $_->leaves(1) for @{$self->child_nodes};
+  return @nodes;
 }
 
 sub get {
