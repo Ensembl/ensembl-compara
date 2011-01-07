@@ -27,6 +27,7 @@ sub user_data      { return $_[0]->{'user_data'};                        }
 sub tree_ids       { return $_[0]->{'tree_ids'};                         }
 sub parent_key     { return $_[0]->parent_node->id;                      }
 sub get_node       { return $_[0]->get_element_by_id($_[1]);             }
+sub nodes          { return @{$_[0]->get_all_nodes};                     }
 sub descendants    { return $_[0]->nodes;                                }
 sub is_leaf        { return !$_[0]->has_child_nodes;                     }
 sub previous       { return $_[0]->previous_sibling;                     }
@@ -44,9 +45,9 @@ sub flush_user {
   my $self   = shift;
   my $return = 0;
   
-  foreach (keys %{$self->{'user_data'}}) {
-    $return = 1;
-    delete $self->{'user_data'}->{$_};
+  foreach ($self, $self->nodes) {
+    $return ||= scalar keys %{$_->{'user_data'}} ? 1 : 0;
+    $_->{'user_data'} = {};
   }
   
   return $return;
@@ -78,15 +79,9 @@ sub create_node {
   });
 }
 
-sub nodes {
-  my $self = shift;
-  return @{$self->get_all_nodes};
-}
-
 sub leaves {
   my $self = shift;
   my @nodes;
-  
   push @nodes, $self if !$self->has_child_nodes && @_ && shift;
   push @nodes, $_->leaves(1) for @{$self->child_nodes};
   return @nodes;
