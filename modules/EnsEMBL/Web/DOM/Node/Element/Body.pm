@@ -9,4 +9,14 @@ sub node_name {
   return 'body';
 }
 
+sub _appendable {
+  ## @overrides
+  my ($self, $child) = @_;
+  return 
+       $child->node_type == $self->ELEMENT_NODE && ($child->element_type == $self->ELEMENT_TYPE_BLOCK_LEVEL || $child->element_type == $self->ELEMENT_TYPE_SCRIPT)
+    || $child->node_type == $self->COMMENT_NODE
+    ? 1 : 0
+  ;
+}
+
 1;
