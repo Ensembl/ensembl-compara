@@ -10,6 +10,7 @@ use constant {
   ELEMENT_TYPE_TOP_LEVEL   => 3,
   ELEMENT_TYPE_HEAD_ONLY   => 4,
   ELEMENT_TYPE_SCRIPT      => 5,
+  SELF_CLOSING_TAGS        => { area => 1, base => 1, br => 1, col => 1, frame => 1, hr => 1, img => 1, input => 1, link => 1, meta => 1, param => 1 }
 };
 
 sub node_type {
@@ -32,18 +33,17 @@ sub render {
 sub can_have_child {
   ## Checks if the element can have child nodes or not - depending upon node_name
   ## @return 1/0 accordingly
-  my $self = shift;
-  return (grep {$self->node_name =~ /^$_$/i} qw(area base br col frame hr img input link meta param)) ? 0 : 1;
+  return !$_[0]->SELF_CLOSING_TAGS->{$_[0]->node_name};
 }
 
 sub element_type {
   ## Tells us the element type
   ## @return Constant corresponding to the element type
   my $self = shift;
-  return $self->ELEMENT_TYPE_BLOCK_LEVEL if grep {$self->node_name =~ /^$_$/i} qw(address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr noscript ol p pre table ul dd dt li tbody td tfoot th thead tr);
-  return $self->ELEMENT_TYPE_TOP_LEVEL   if grep {$self->node_name =~ /^$_$/i} qw(html head body);
-  return $self->ELEMENT_TYPE_HEAD_ONLY   if grep {$self->node_name =~ /^$_$/i} qw(title meta style base link);
-  return $self->ELEMENT_TYPE_SCRIPT      if $self->node_name =~ /^script$/i;
+  return $self->ELEMENT_TYPE_BLOCK_LEVEL if grep { $self->node_name eq $_ } qw(address blockquote div dl fieldset form h1 h2 h3 h4 h5 h6 hr noscript ol p pre table ul dd dt li tbody td tfoot th thead tr);
+  return $self->ELEMENT_TYPE_TOP_LEVEL   if grep { $self->node_name eq $_ } qw(html head body);
+  return $self->ELEMENT_TYPE_HEAD_ONLY   if grep { $self->node_name eq $_ } qw(title meta style base link);
+  return $self->ELEMENT_TYPE_SCRIPT      if $self->node_name eq 'script';
   return $self->ELEMENT_TYPE_INLINE;
 }
 
