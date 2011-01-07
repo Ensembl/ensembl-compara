@@ -5,7 +5,7 @@ use strict;
 use CGI::Cookie;
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
-use URI::Escape qw(uri_escape uri_unescape);
+use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::OrderedTree;
@@ -29,7 +29,6 @@ sub new {
     _options            => {},
     _image_config_names => {},
     default_config      => '_page',
-    can_upload          => 0,
     has_images          => 0,
     _form               => undef,
     _form_id            => sprintf('%s_%s_configuration', lc $type, lc $action),
@@ -41,6 +40,9 @@ sub new {
   };
   
   bless $self, $class;
+  
+  $self->init;
+  
   return $self;
 }
 
@@ -50,7 +52,6 @@ sub real           :lvalue { $_[0]->{'real'};           }
 sub nav_tree       :lvalue { $_[0]->{'nav_tree'};       }
 sub url            :lvalue { $_[0]->{'url'};            }
 sub title          :lvalue { $_[0]->{'title'};          }
-sub can_upload     :lvalue { $_[0]->{'can_upload'}      }
 sub has_images     :lvalue { $_[0]->{'has_images'};     }
 sub altered        :lvalue { $_[0]->{'altered'};        } # Set to one if the configuration has been updated
 sub storable       :lvalue { $_[0]->{'storable'};       } # Set whether this ViewConfig is changeable by the User, and hence needs to access the database to set storable do $view_config->storable = 1; in SC code
@@ -69,7 +70,6 @@ sub add_image_configs {
   
   foreach (keys %$image_config) {
     $self->{'_image_config_names'}->{$_} = $image_config->{$_};
-    $self->can_upload = 1 if $image_config->{$_} eq 'das';
     $self->has_images = 1 if $image_config->{$_} !~ /^V/
   }
 }
@@ -79,14 +79,14 @@ sub has_image_config {
   my $config = shift;
   return exists $self->{'_image_config_names'}{$config};
 }
-sub has_image_configs {
+sub image_config_names {
   my $self = shift;
-  return keys %{$self->{'_image_config_names'}||{}};
+  return keys %{$self->{'_image_config_names'} || {}};
 }
 
 sub image_configs {
   my $self = shift;
-  return %{$self->{'_image_config_names'}||{}};
+  return %{$self->{'_image_config_names'} || {}};
 }
 
 sub _set_defaults {
@@ -203,14 +203,12 @@ sub update_from_input {
 }
 
 # Loop through the parameters and update the config based on the parameters passed
-sub update_from_config_strings {
+sub update_from_url {
   my ($self, $r) = @_;
-  
   my $hub     = $self->hub;
   my $session = $hub->session;
   my $input   = $hub->input;
   my $species = $hub->species;
-  my $updated = 0;
   my $params_removed;
   
   if ($input->param('config')) {
@@ -252,7 +250,7 @@ sub update_from_config_strings {
     $input->delete('config');
   }
   
-  foreach my $name ($self->image_configs) {
+  foreach my $name ($self->image_config_names) {
     my @values = split /,/, $input->param($name);
     
     if (@values) {
@@ -279,92 +277,12 @@ sub update_from_config_strings {
       $input->delete('add_das_source');
     }
     
-    if (@values) {
-      my $image_config = $hub->get_imageconfig($name, $name);
-      
-      next unless $image_config;
-      
-      foreach my $v (@values) {
-        my ($key, $renderer) = split /=/, $v, 2;
-        
-        if ($key =~ /^(\w+)[\.:](.*)$/) {
-          my ($type, $p) = ($1, $2);
-          
-          if ($type eq 'url') {
-            $p = uri_unescape($p);
-            my @path = split(/\./, $p);
-            my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
-            my $format = uc($ext);
-            
-            # We have to create a URL upload entry in the session
-            my $code = md5_hex("$species:$p");
-            my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
-            
-            $session->set_data(
-              type    => 'url',
-              url     => $p,
-              species => $species,
-              code    => $code, 
-              name    => $n,
-              format  => $format,
-              style   => $format,
-            );
-            
-            $session->add_data(
-              type     => 'message',
-              function => '_info',
-              code     => 'url_data:' . md5_hex($p),
-              message  => sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p))
-            );
-            
-            # We then have to create a node in the user_config
-            $image_config->_add_flat_file_track(undef, 'url', "url_$code", $n, 
-              sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
-              'url' => $p
-            );
-            
-            $updated += $image_config->update_track_renderer("url_$code", $renderer);
-          } elsif ($type eq 'das') {
-            $p = uri_unescape($p);
-            
-            if (my $error = $session->add_das_from_string($p, { ENSEMBL_IMAGE => $name }, { display => $renderer })) {
-              $session->add_data(
-                type     => 'message',
-                function => '_warning',
-                code     => 'das:' . md5_hex($p),
-                message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', encode_entities($p), encode_entities($error))
-              );
-            } else {
-             $session->add_data(
-                type     => 'message',
-                function => '_info',
-                code     => 'das:' . md5_hex($p),
-                message  => sprintf('You have attached a DAS source with DSN: %s to this display', encode_entities($p))
-              );
-              
-              $updated++;
-            }
-          }
-        } else {
-          $updated += $image_config->update_track_renderer($key, $renderer, 1);
-        }
-      }
-    }
+    $hub->get_imageconfig($name)->update_from_url(@values) if @values;
   }
   
-  if ($updated) {
-    $session->add_data(
-      type     => 'message',
-      function => '_info',
-      code     => 'image_config',
-      message  => 'The link you followed has made changes to the tracks displayed on this page',
-    );
-  }
-  
-  $self->altered = 1 if $updated;
   $session->store;
 
-  return $params_removed ? join '?', $r->uri, $input->query_string : undef;#'
+  return $params_removed ? join '?', $r->uri, $input->query_string : undef;
 }
 
 # Delete a key from the user settings

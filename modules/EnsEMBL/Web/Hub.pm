@@ -437,7 +437,7 @@ sub get_viewconfig {
   my $key     = "${type}::$action";
   
   return undef unless $session;
-  return $session->view_configs->{$key}{'config'} if $session->view_configs->{$key};
+  return $session->view_configs->{$key} if $session->view_configs->{$key};
   
   my $module_name = $self->get_module_names('ViewConfig', $type, $action) || 'EnsEMBL::Web::ViewConfig';
   my $view_config = $module_name->new($type, $action, $self);
@@ -461,18 +461,13 @@ sub get_imageconfig {
   
   return undef if $type eq '_page' || $type eq 'cell_page';
   return undef unless $session;
-  return $session->image_configs->{$key} if $key && $session->image_configs->{$key};
+  return $session->image_configs->{$type} if $session->image_configs->{$type};
   
   my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
   my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species) : undef;
   
   if ($image_config) {
-    if ($self->get_viewconfig->has_image_config($type)) {
-      $session->apply_to_image_config($image_config, $type, $key);
-    } else {
-      $image_config->storable = 0;
-    }
-    
+    $session->apply_to_image_config($image_config, $type, $key);
     return $image_config;
   } else {
     $self->dynamic_use_failure($module_name);

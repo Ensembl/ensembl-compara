@@ -6,6 +6,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
+use URI::Escape qw(uri_unescape);
 
 use Sanger::Graphics::TextHelper;
 
@@ -123,6 +124,18 @@ sub container_width   { return shift->parameter('container_width', @_);         
 sub title             { return shift->parameter('title',           @_);                        }
 sub slice_number      { return shift->parameter('slice_number',    @_);                        } # TODO: delete?
 sub glyphset_configs  { return grep { $_->data->{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of glyphsets
+
+sub set_user_settings {
+  my ($self, $data) = @_;
+  
+  foreach my $key (keys %$data) {
+    my $node = $self->get_node($key);
+    
+    if ($node) {
+      $node->set_user($_, $data->{$key}->{$_}) for keys %{$data->{$key}};
+    }
+  }
+}
 
 sub set_parameters {
   my ($self, $params) = @_;
@@ -563,18 +576,92 @@ sub update_from_input {
   my $self  = shift;
   my $input = $self->hub->input;
   
-  return $self->tree->flush_user if $input->param('reset');
-  
-  my $flag = 0;
+  return $self->altered = $self->tree->flush_user if $input->param('reset');
   
   foreach my $param ($input->param) {
     my $renderer = $input->param($param);
-    $flag += $self->update_track_renderer($param, $renderer);
+    $self->update_track_renderer($param, $renderer);
+  }
+}
+
+sub update_from_url {
+  my ($self, @values) = @_;
+  my $hub     = $self->hub;
+  my $session = $hub->session;
+  my $species = $hub->species;
+  
+  foreach my $v (@values) {
+    my ($key, $renderer) = split /=/, $v, 2;
+    
+    if ($key =~ /^(\w+)[\.:](.*)$/) {
+      my ($type, $p) = ($1, $2);
+      
+      if ($type eq 'url') {
+        $p = uri_unescape($p);
+        my @path = split(/\./, $p);
+        my $ext = $path[-1] eq 'gz' ? $path[-2] : $path[-1];
+        my $format = uc($ext);
+        
+        # We have to create a URL upload entry in the session
+        my $code = md5_hex("$species:$p");
+        my $n    =  $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
+        
+        $session->set_data(
+          type    => 'url',
+          url     => $p,
+          species => $species,
+          code    => $code, 
+          name    => $n,
+          format  => $format,
+          style   => $format,
+        );
+        
+        $session->add_data(
+          type     => 'message',
+          function => '_info',
+          code     => 'url_data:' . md5_hex($p),
+          message  => sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p))
+        );
+        
+        # We then have to create a node in the user_config
+        $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
+          sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
+          'url' => $p
+        );
+        
+        $self->update_track_renderer("url_$code", $renderer);
+      } elsif ($type eq 'das') {
+        $p = uri_unescape($p);
+        
+        if (my $error = $session->add_das_from_string($p, $self->{'type'}, { display => $renderer })) {
+          $session->add_data(
+            type     => 'message',
+            function => '_warning',
+            code     => 'das:' . md5_hex($p),
+            message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s)', encode_entities($p), encode_entities($error))
+          );
+        } else {
+          $session->add_data(
+            type     => 'message',
+            function => '_info',
+            code     => 'das:' . md5_hex($p),
+            message  => sprintf('You have attached a DAS source with DSN: %s %s', encode_entities($p), $self->get_node('user_data') ? ' to this display' : ' but it cannot be displayed on the specified image')
+          );
+        }
+      }
+    } else {
+      $self->update_track_renderer($key, $renderer, 1);
+    }
   }
   
-  $self->altered = 1 if $flag;
-  
-  return $flag;
+  if ($self->altered) {
+    $session->add_data(
+      type     => 'message',
+      function => '_info',
+      code     => 'image_config',
+      message  => 'The link you followed has made changes to the tracks displayed on this page',
+    );
+  }
 }
 
 sub update_track_renderer {
@@ -588,6 +675,8 @@ sub update_track_renderer {
 
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if $valid_renderers{$renderer} && (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
+  
+  $self->altered = 1 if $flag;
   
   return $flag;
 }
