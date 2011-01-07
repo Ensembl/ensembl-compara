@@ -39,7 +39,7 @@ sub content {
   
   if (!$is_somatic) {
     $table->add_columns(
-      { key => 'allele',  title => 'Strongest risk allele', align => 'left', sort => 'none'    },
+      { key => 'allele',  title => 'Most associated allele', align => 'left', sort => 'none'    },
       { key => 'pvalue',  title => 'P value',               align => 'left', sort => 'numeric' }
     );
   }
