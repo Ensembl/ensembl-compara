@@ -25,11 +25,6 @@ sub node_name {
   return 'input';
 }
 
-sub can_have_child {
-  ## @overrides
-  return 0;
-}
-
 sub form {
   ## Returns a reference to the form object that contains the input
   return shift->get_ancestor_by_tag_name('form');
