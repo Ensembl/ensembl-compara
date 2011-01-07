@@ -35,21 +35,31 @@ sub create_document {
 sub create_element {
   ## Creates an element of a given tag name by instantiating the corresponding class
   ## Also adds attributes and inner_HTML/inner_text
-  ## @params Element type
-  ## @params HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text
+  ## @param Element type
+  ## @param HashRef of {attrib1 => value1, attrib2 => value2} for attributes, inner_HTML/inner_text
   ## @return Element subclass object
   my ($self, $element_type, $attributes)  = @_;
 
+  $element_type = lc $element_type;
   $attributes ||= {};
 
-  my $node_class = $self->_get_mapped_element_class(lc $element_type);
-  my $valid_element = $self->dynamic_use($node_class);
+  my $node_class  = $self->_get_mapped_element_class($element_type);
+  my $class_found = $self->dynamic_use($node_class);
+  my $is_generic  = 0;
   
-  unless ($valid_element) {
-    warn qq(Could not create an element $element_type. Unable to load $node_class dynamically.);
-    return;
+  unless ($class_found) {
+    return unless grep {$element_type =~ /^$_$/i} qw(
+      a abbr acronym address area b base bdo big blockquote body br button
+      caption cite code col colgroup dd del dfn div dl dt em fieldset form
+      frame frameset head h1 h2 h3 h4 h5 h6 hr html i iframe img input ins
+      kbd label legend li link map meta noframes noscript object ol optgroup
+      option p param pre q samp script select small span strong style sub
+      sup table tbody td textarea tfoot th thead title tr tt ul var);
+    $node_class = 'EnsEMBL::Web::DOM::Node::Element::Generic';
+    $is_generic = 1;
   }
   my $element = $node_class->new($self);
+  $element->node_name = $element_type if $is_generic;
   $element->inner_text($attributes->{'inner_text'}) and delete $attributes->{'inner_text'} if exists $attributes->{'inner_text'};
   $element->inner_HTML($attributes->{'inner_HTML'}) and delete $attributes->{'inner_HTML'} if exists $attributes->{'inner_HTML'}; #overrides inner_text  
   $element->set_attributes($attributes) if scalar keys %$attributes;
@@ -58,7 +68,7 @@ sub create_element {
 
 sub create_text_node {
   ## Creates a text node
-  ## @params Text string
+  ## @param Text string
   ## @return Text node object
   my $self = shift;
   my $node_class = 'EnsEMBL::Web::DOM::Node::Text';
