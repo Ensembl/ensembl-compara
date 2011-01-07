@@ -386,7 +386,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'store_sequences',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FlowMemberSeq',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FlowMemberSeq',
             -parameters => { },
             -hive_capacity => 200,
             -flow_into => {
@@ -398,7 +398,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
         {   -logic_name => 'hcluster_prepare',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterPrepare',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
                 'mlss_id'       => $self->o('mlss_id'),
                 'outgroups'     => $self->o('outgroups'),
@@ -412,7 +412,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'hcluster_run',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HclusterRun',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterRun',
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
                 'outgroups'                 => $self->o('outgroups'),
@@ -434,7 +434,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[a QC step before main loop]----------------------------------------------------------
 
         {   -logic_name => 'clusterset_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GroupsetQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
                 'cluster_dir'               => $self->o('cluster_dir'),
@@ -450,7 +450,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
         {   -logic_name => 'mcoffee',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -program_file => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
@@ -465,7 +465,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'mcoffee_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MCoffee',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -program_file => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
@@ -479,7 +479,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'njtree_phyml',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NJTREE_PHYML',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
             -program_file => '/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest',
             -parameters => {
                 'cdna'                      => 1,
@@ -498,7 +498,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'ortho_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthoTree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree',
             -parameters => {
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
 #                'species_tree_file'         => $self->o('work_dir').'/spec_tax.nh', # FIXME: theoretically, the module is capable of getting the tree from protein_tree_tag table
@@ -513,7 +513,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'build_HMM_aa',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMM',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -program_file => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
             -parameters => {
                 'sreformat'                 => '/usr/local/ensembl/bin/sreformat',
@@ -523,7 +523,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'build_HMM_cds',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMM',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -program_file => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
             -parameters => {
                 'cdna'                      => 1,
@@ -534,7 +534,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'quick_tree_break',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::QuickTreeBreak',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
             -parameters => {
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
             },
@@ -547,7 +547,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'other_paralogs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OtherParalogs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OtherParalogs',
             -parameters => { },
             -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'build_HMM_aa', 'build_HMM_cds', 'quick_tree_break' ],
             -hive_capacity        => 50,
@@ -557,7 +557,7 @@ sub pipeline_analyses {
 # ---------------------------------------------[a QC step after main loop]----------------------------------------------------------
 
         {   -logic_name => 'gene_treeset_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GroupsetQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
                 'cluster_dir'               => $self->o('cluster_dir'),
@@ -595,7 +595,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'homology_dNdS',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Homology_dNdS',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS',
             -parameters => {
                 'codeml_parameters_file'    => $self->o('codeml_parameters_file'),
             },
@@ -604,7 +604,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'threshold_on_dS',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Threshold_on_dS',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -parameters => {
                 'species_sets'              => $self->o('dnds_species_sets'),
             },
@@ -632,7 +632,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'homology_duplications',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HDupsQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HDupsQC',
             -parameters => { },
             -hive_capacity => 10,
         },
