@@ -121,13 +121,13 @@ sub content {
   $self->caption($type .': ' . $feature->variation_name);
   
   $self->add_entry({
-    label_html => $type .' Properties',
-    link       => $hub->url({
-      type   => 'Variation', 
-      action => 'Summary',
-      v      => $feature->variation_name,
-      vf     => $feature->dbID,
-      source => $feature->source
+    	label_html => $feature->variation_name .' properties',
+    	link       => $hub->url({
+      	type   => 'Variation', 
+      	action => 'Summary',
+      	v      => $feature->variation_name,
+      	vf     => $feature->dbID,
+      	source => $feature->source
     })
   });
   
