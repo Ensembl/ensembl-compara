@@ -338,9 +338,9 @@ sub build_form {
       my $select_all = $fieldset->add_field({
         type          => 'checkbox',
         name          => 'select_all',
-        label         => '<u>Select/deselect all</u>',
+        label         => 'Select/deselect all',
         value         => 'select_all',
-        wrapper_class => 'select_all',
+        field_class   => 'select_all',
         selected      => 1
       });
       
