@@ -9,21 +9,4 @@ sub node_name {
   return 'div';
 }
 
-sub _appendable {
-  ## @overrides
-  my ($self, $child) = @_;
-  
-  return
-    $child->node_type eq $self->TEXT_NODE
-    ||
-    $child->node_type eq $self->COMMENT_NODE
-    ||
-    $child->node_type eq $self->ELEMENT_NODE
-      &&
-      $child->node_name !~ /^(area|body|caption|col|colgroup|dd|dt|head|html|li|legend|optgroup|option|tbody|td|tfoot|th|thead|title|tr)$/
-    ? 1
-    : 0
-  ;
-}
-
 1;
