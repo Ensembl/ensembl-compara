@@ -18,7 +18,7 @@ use constant {
 
 sub new {
   ## @constructor
-  ## @params DOM object 
+  ## @param DOM object 
   my ($class, $dom) = @_;
   return bless {
     '_attributes'           => {},
@@ -34,8 +34,8 @@ sub new {
 
 sub set_flag {
   ## Sets/modifies a flag
-  ## @params flag name
-  ## @params flag value (optional - takes 1 as default)
+  ## @param flag name
+  ## @param flag value (optional - takes 1 as default)
   ## @return flag value
   my $self = shift;
   my $flag = shift;
@@ -44,7 +44,7 @@ sub set_flag {
 
 sub get_flag {
   ## Gets previously set flag
-  ## @params flag name
+  ## @param flag name
   ## @return flag value if set or undef if not
   my ($self, $flag) = @_;
   return exists $self->{'_flags'}{$flag} ? $self->{'_flags'}{$flag} : undef;
@@ -83,9 +83,33 @@ sub render {
   return '';
 }
 
+sub get_all_nodes {
+  ## Gets all the child nodes recursively from a node
+  ## @return ArrayRef of Node objects
+  my $self  = shift;
+  my $nodes = [];
+  
+  push @$nodes, $self if @_ && shift;
+  push @$nodes, @{$_->get_all_nodes(1)} for @{$self->child_nodes};
+  return $nodes;
+}
+
+sub get_nodes_by_node_type {
+  ## Gets all the child nodes (recursively) with a particular node type
+  ## @param Node type (as in constants)
+  ## @return ArrayRef of Node objects
+  my $self      = shift;
+  my $node_type = shift;
+  my $nodes     = [];
+
+  push @$nodes, $self if $self->node_type == $node_type && @_ && shift;
+  push @$nodes, @{$_->get_nodes_by_node_type($node_type, 1)} for @{$self->child_nodes};
+  return $nodes;
+}
+
 sub get_element_by_id {
   ## Typical getElementById
-  ## @params Element id
+  ## @param Element id
   ## @return Element object
   my ($self, $id) = @_;
 
@@ -103,7 +127,7 @@ sub get_element_by_id {
 
 sub get_elements_by_name {
   ## A slight extension of typical getElementsByName
-  ## @params name or ArrayRef of multiple names
+  ## @param name or ArrayRef of multiple names
   ## @return ArrayRef of Element objects
   my ($self, $name) = @_;
   
@@ -124,7 +148,7 @@ sub get_elements_by_name {
 
 sub get_elements_by_tag_name {
   ## A slight extension of typical getElementsByTagName
-  ## @params Tag name (string) or ArrayRef of multiple tag names
+  ## @param Tag name (string) or ArrayRef of multiple tag names
   ## @return ArrayRef of Element objects
   my ($self, $tag_name) = @_;
   
@@ -145,7 +169,7 @@ sub get_elements_by_tag_name {
 
 sub get_elements_by_class_name {
   ## A slight extension of typical getElementsByClassName
-  ## @params Class name OR ArrayRef of multiple class names
+  ## @param Class name OR ArrayRef of multiple class names
   ## @return ArrayRef of Element objects
   my ($self, $class_name) = @_;
   
@@ -159,7 +183,7 @@ sub get_elements_by_class_name {
 
 sub get_elements_by_attribute {
   ## Gets all the elements inside a node with the given attribute and value
-  ## @params Attribute name OR ref of hash with keys as attributes in case of multiple attributes or ref of array of such hashes
+  ## @param Attribute name OR ref of hash with keys as attributes in case of multiple attributes or ref of array of such hashes
   ##  - A Hash with multiple keys will give the intersection of selections of individual key attribute and value
   ##  - An Array with multiples hashes, will return the union of selections of individual hash
   ##  - examples:
@@ -168,7 +192,7 @@ sub get_elements_by_attribute {
   ##  - - - {'type' => ['password', 'text']} will return all elements with type=password OR type=text
   ##  - - - {'type' => ['password', 'text'], 'class' => 'string'} will return elements with type=password or type=text, but class=string always 
   ##  - - - [{'type' => 'password', 'class' => 'string'}, {'type' => 'text', 'class' => 'string'}] will give same results as above 
-  ## @params Attribute value
+  ## @param Attribute value, if first argument 1 if attribute name
   ## @return ArrayRef of Element objects
   my $self = shift;
 
@@ -176,8 +200,8 @@ sub get_elements_by_attribute {
   return [] unless $self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE;
 
   my $attrib_set = shift;
-  $attrib_set = { $attrib_set => shift }  if ref $attrib_set !~ /^(ARRAY|HASH)$/;
-  $attrib_set = [ $attrib_set ]           if ref $attrib_set ne 'ARRAY';
+  $attrib_set = { $attrib_set => shift }  if ref($attrib_set) !~ /^(ARRAY|HASH)$/;
+  $attrib_set = [ $attrib_set ]           if ref($attrib_set) ne 'ARRAY';
 
   my $result = [];
   
@@ -215,7 +239,7 @@ sub ancestors {
 
 sub get_ancestor_by_id {
   ## Gets the most recent ancestor element with the given id
-  ## @params id of the ancestor node
+  ## @param id of the ancestor node
   ## @return Element object or undef
   my ($self, $id) = @_;
   return $self->get_ancestor_by_attribute('id', $id);
@@ -223,7 +247,7 @@ sub get_ancestor_by_id {
 
 sub get_ancestor_by_name {
   ## Gets the most recent ancestor element with the given name
-  ## @params name
+  ## @param name
   ## @return Element object or undef
   my ($self, $name) = @_;
   return $self->get_ancestor_by_attribute('name', $name);
@@ -231,7 +255,7 @@ sub get_ancestor_by_name {
 
 sub get_ancestor_by_tag_name {
   ## Gets the most recent ancestor element with the given tag name
-  ## @params Tag name
+  ## @param Tag name
   ## @return Element object or undef
   my ($self, $tag_name) = @_;
   
@@ -248,7 +272,7 @@ sub get_ancestor_by_tag_name {
 
 sub get_ancestor_by_class_name {
   ## Gets the most recent ancestor element with the given class name
-  ## @params Class name
+  ## @param Class name
   ## @return Node object or undef
   my ($self, $class_name) = @_;
   return $self->get_ancestor_by_attribute('class', $class_name);
@@ -256,8 +280,8 @@ sub get_ancestor_by_class_name {
 
 sub get_ancestor_by_attribute {
   ## Gets the most recent ancestor element with the given attribute and value
-  ## @params Attribute name
-  ## @params Attribute value
+  ## @param Attribute name
+  ## @param Attribute value
   ## @return Element object or undef
   my ($self, $attrib, $value) = @_;
 
@@ -280,7 +304,7 @@ sub get_ancestor_by_attribute {
 sub get_nodes_by_flag {
   ## Gets all the child nodes (recursively) of the node with the given flag
   ## Independent of node type
-  ## @params Either of the following
+  ## @param Either of the following
   ##  - String flag name                                - single flag with default value (ie. 1)
   ##  - ArrayRef of flag Strings [flag1, flag2, ... ]   - to accomodate multiple flags with default value
   ##  - HashRef {flag1 => value1, flag2 => value2 ...}  - to accomodate multiple flags with custom values
@@ -308,7 +332,7 @@ sub get_nodes_by_flag {
 sub get_child_nodes_by_flag {
   ## Gets all the child nodes (immediate children only) of the node with the given flag
   ## Independent of node type
-  ## @params As accepted by get_nodes_by_flag
+  ## @param As accepted by get_nodes_by_flag
   return shift->get_nodes_by_flag(shift, 0);
 }
 
@@ -356,25 +380,29 @@ sub parent_node {
 
 sub appendable {
   ## Checks if a given node can be appended in this node
-  ## @params Node to be appended
+  ## @param Node to be appended
+  ## @param (Optional) Reference to a SCALAR string to which error will be saved if any
   ## @return 1 if appendable, 0 otherwise
-  my ($self, $node) = @_;
+  my ($self, $node, $error_ref) = @_;
+    
+  my $no_error = $error_ref && ref($error_ref) eq 'SCALAR' ? 0 : 1;
 
   #first filter - if the node can not have any child by default
-  return 0 unless $self->can_have_child;
+  ($no_error or $$error_ref = "Node can not have any child node.") and return 0 unless $self->can_have_child;
 
   #second filter - if invalid node
-  return 0 if not defined $node || not defined $node->node_name || $node->node_name eq '';
+  ($no_error or $$error_ref = "Node tried to append is invalid.") and return 0 unless defined $node && $node->isa(__PACKAGE__);
 
   #third filter - if the node being appended as child is one of this node's ancestors
   my $ancestor = $self->parent_node;
   while (defined $ancestor) {
-    return 0 if $ancestor->is_same_node($node);
+    ($no_error or $$error_ref = "Node tried to append is one of node's ancestors.") and return 0 if $ancestor->is_same_node($node);
     $ancestor = $ancestor->parent_node;
   }
   
   ##finally run some individual filters before giving any result
-  return $self->_appendable($node);
+  ($no_error or $$error_ref = "Given node may not be appended to this node as per the w3c rules." and warn "$self\n$node") and return 0 unless $self->_appendable($node);
+  return 1;
 }
 
 sub _appendable {
@@ -385,10 +413,11 @@ sub _appendable {
 
 sub append_child {
   ## Appends a child node
-  ## @params New node
+  ## @param New node
   ## @return New node if success, undef otherwise
   my ($self, $child) = @_;
-  if ($self->appendable($child)) {
+  my $error = "";
+  if ($self->appendable($child, \$error)) {
     $child->remove; #remove from present parent node, if any
     $child->{'_parent_node'} = $self;
     if ($self->has_child_nodes) {
@@ -398,15 +427,13 @@ sub append_child {
     push @{$self->{'_child_nodes'}}, $child;
     return $child;
   }
-  else {
-    warn 'Node cannot be inserted at the specified point in the hierarchy.';
-    return undef;
-  }
+  warn 'Node cannot be inserted at the specified point in the hierarchy. '.$error;
+  return undef;
 }
 
 sub prepend_child {
   ## Appends a child node at the beginning
-  ## @params Node to be appended
+  ## @param Node to be appended
   ## @return new child Node object if success, undef otherwise
   my ($self, $child) = @_;
   return $self->has_child_nodes
@@ -416,8 +443,8 @@ sub prepend_child {
 
 sub insert_before {
   ## Appends a child node before a given reference node
-  ## @params New node
-  ## @params Reference node
+  ## @param New node
+  ## @param Reference node
   ## @return New Node object if successfully added, undef otherwise
   my ($self, $new_node, $reference_node) = @_;
   
@@ -438,8 +465,8 @@ sub insert_before {
 
 sub insert_after {
   ## Appends a child node after a given reference node
-  ## @params New node
-  ## @params Reference node
+  ## @param New node
+  ## @param Reference node
   ## @return New node if success, undef otherwise
   my ($self, $new_node, $reference_node) = @_;
   return defined $reference_node->next_sibling
@@ -449,7 +476,7 @@ sub insert_after {
 
 sub before {
   ## Places a new node before the node. An extra to DOM function to make it easy to insert nodes.
-  ## @params New Node if success, undef otherwise
+  ## @param New Node if success, undef otherwise
   my ($self, $new_node) = @_;
   unless ($self->parent_node) {
     warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
@@ -460,7 +487,7 @@ sub before {
 
 sub after {
   ## Places a new node after the node. An extra to DOM function to make it easy to insert nodes.
-  ## @params New Node if success, undef otherwise
+  ## @param New Node if success, undef otherwise
   my ($self, $new_node) = @_;
   unless ($self->parent_node) {
     warn "New node could not be inserted. Either the reference node is top level or has not been added to the DOM tree yet.";
@@ -472,7 +499,7 @@ sub after {
 sub clone_node {
   ## Clones the node
   ## Only properties defined in this class will be cloned - including flags (If flags not required, do reset_flags() after cloning)
-  ## @params 1/0 depending upon if child nodes also need to be cloned (deep cloning)
+  ## @param 1/0 depending upon if child nodes also need to be cloned (deep cloning)
   ## @return New node
   my ($self, $deep_clone) = @_;
   
@@ -503,7 +530,7 @@ sub clone_node {
 
 sub remove_child {
   ## Removes a child node
-  ## @params Node to be removed
+  ## @param Node to be removed
   ## @return Removed node
   my ($self, $child) = @_;
   if ($self->is_same_node($child->parent_node)) {
@@ -519,10 +546,20 @@ sub remove_child {
     return undef;
 }
 
+sub remove_children {
+  ## Removes all the child nodes
+  ## @return ArrayRef of all removed nodes
+  my $self = shift;
+  my $children = $self->{'_child_nodes'};
+  $_->{'_next_sibling'} = $_->{'_previous_sibling'} = $_->{'_parent_node'} = 0 for @{$children};
+  $self->{'_child_nodes'} = [];
+  return $children;
+}
+
 sub replace_child {
   ## Replaces a child node with another
-  ## @params New Node
-  ## @params Old Node
+  ## @param New Node
+  ## @param Old Node
   ## @return Removed node
   my ($self, $new_node, $old_node) = @_;
   return $self->remove_child($old_node) if $self->insert_before($new_node, $old_node);
@@ -583,6 +620,9 @@ sub dump {
   
   (my $string = "$self") =~ s/EnsEMBL\:\:Web\:\://;
   my $extras = [], my %attr, my $val, my $i = 0;
+  push @$extras, '<'.$self->node_name.'>' if $self->node_type == $self->ELEMENT_NODE;
+  push @$extras, '"'.$self->{'_text'}.'"' if $self->node_type == $self->TEXT_NODE;
+  push @$extras, '[document node]'        if $self->node_type == $self->DOCUMENT_NODE;
   foreach my $attrib_name (keys %{$self->{'_attributes'}}) {
     if ($attrib_name =~ /^(style|class)$/) {
       $1 eq 'style' and $attr{$i++.$1} = $_.':'.$self->{'_attributes'}{$1}{$_}
@@ -592,9 +632,9 @@ sub dump {
       $attr{$i++.$attrib_name} = $self->{'_attributes'}{$attrib_name};
     }
   }
-  $val = substr $_, 1 and push @$extras, qq($val = $attr{$_}) for keys %attr;
-  push @$extras, qq(html = $self->{'_text'}) unless $self->has_child_nodes || $self->is_empty;
-  push @$extras, qq(flag: $_ = $self->{'_flags'}{$_}) for keys %{$self->{'_flags'}};
+  $val = substr $_, 1 and push @$extras, qq($val = "$attr{$_}") for keys %attr;
+  push @$extras, qq(flag:$_ = "$self->{'_flags'}{$_}") for keys %{$self->{'_flags'}};
+  push @$extras, qq(element_type = ).$self->element_type if $self->node_type == $self->ELEMENT_NODE;
   $string .= ' {'.join(', ', @$extras).'}';
   push @$output, $indent.$string;
   $_->dump($indent.'- ', $output) for @{$self->child_nodes};
