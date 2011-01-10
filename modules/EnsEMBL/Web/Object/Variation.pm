@@ -1159,10 +1159,11 @@ sub ld_pops_for_snp {
   my $self = shift; 
   my @vari_mappings = @{ $self->unique_variation_feature }; 
   return [] unless @vari_mappings;
+  return [] unless $self->counts->{'individuals'}
 
   my @pops;
   foreach ( @vari_mappings ) {    
-    push @pops, map {$_->dbID} @{$_->get_all_LD_pops};
+    push @pops, map {$_->dbID} @{$_->get_all_LD_Populations};
   }
   return \@pops;
 }
