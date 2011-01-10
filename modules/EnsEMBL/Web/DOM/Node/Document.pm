@@ -15,17 +15,5 @@ sub render {
   return '';
 }
 
-sub _appendable {
-  ## @overrides
-  my ($self, $child) = @_;
-  return
-    $child->node_type == $self->ELEMENT_NODE
-      &&
-      $child->node_name =~ /^(html|head|title|body)$/
-    ? 1
-    : 0
-  ;
-}
-
 1;
 

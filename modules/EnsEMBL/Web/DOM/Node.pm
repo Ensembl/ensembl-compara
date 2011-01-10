@@ -139,7 +139,7 @@ sub get_elements_by_name {
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
       next unless $_->node_type == $self->ELEMENT_NODE;
-      push @$result, $_ if exists $name_hash->{$_->name};
+      push @$result, $_ if $name_hash->{$_->name};
       push @$result, @{$_->get_elements_by_name($name)};
     }
   }
@@ -160,7 +160,7 @@ sub get_elements_by_tag_name {
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
       next unless $_->node_type == $self->ELEMENT_NODE;
-      push @$result, $_ if exists $tag_hash->{$_->node_name};
+      push @$result, $_ if $tag_hash->{$_->node_name};
       push @$result, @{$_->get_elements_by_tag_name($tag_name)};
     }
   }
@@ -399,16 +399,7 @@ sub appendable {
     ($no_error or $$error_ref = "Node tried to append is one of node's ancestors.") and return 0 if $ancestor->is_same_node($node);
     $ancestor = $ancestor->parent_node;
   }
-  
-  ##finally run some individual filters before giving any result
-  ($no_error or $$error_ref = "Given node may not be appended to this node as per the w3c rules." and warn "$self\n$node") and return 0 unless $self->_appendable($node);
   return 1;
-}
-
-sub _appendable {
-  ## Adds another filter to appendable method
-  ## Override in child classes - only if validation required
-  return 1; #no extra filter by default
 }
 
 sub append_child {
@@ -546,6 +537,13 @@ sub remove_child {
     return undef;
 }
 
+sub remove {
+  ## Removes the child from it's parent node. An extra to DOM function to make it easy to remove nodes
+  my $self = shift;
+  $self->parent_node->remove_child($self) if defined $self->parent_node;
+  return $self;
+}
+
 sub remove_children {
   ## Removes all the child nodes
   ## @return ArrayRef of all removed nodes
@@ -563,13 +561,6 @@ sub replace_child {
   ## @return Removed node
   my ($self, $new_node, $old_node) = @_;
   return $self->remove_child($old_node) if $self->insert_before($new_node, $old_node);
-}
-
-sub remove {
-  ## Removes the child from it's parent node. An extra to DOM function to make it easy to remove nodes
-  my $self = shift;
-  $self->parent_node->remove_child($self) if defined $self->parent_node;
-  return $self;
 }
 
 sub is_empty {
