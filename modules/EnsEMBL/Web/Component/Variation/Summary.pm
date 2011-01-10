@@ -146,7 +146,7 @@ sub content {
   $allele_html .= "<br /><em>Ancestral allele</em>: $ancestor" if $ancestor;
 
   # Check somatic mutation base matches reference
-  if ($is_somatic) {
+  if ($is_somatic && $feature_slice) {
     my $ref_base = $feature_slice->seq;
     my ($a1, $a2) = split //, $alleles;
     
