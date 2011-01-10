@@ -244,19 +244,19 @@ sub add_hidden {
     return $return;
   }
 
-  my $hidden = $self->dom->create_element('inputhidden');
-  unless (exists $params->{'name'}) {
-    warn 'Hidden element needs to have a name.';
-    return undef;
-  }
-
+  warn 'Hidden element needs to have a name.' and return undef unless exists $params->{'name'};
   $params->{'value'} = '' unless exists $params->{'value'};
-  $hidden->set_attribute('name',  $params->{'name'});
-  $hidden->set_attribute('value', $params->{'value'});
+
+  my $hidden = $self->dom->create_element('inputhidden', {
+    'name'  => $params->{'name'},
+    'value' => $params->{'value'}
+  });
+
   $hidden->set_attribute('id',    $params->{'id'})    if $params->{'id'};
   $hidden->set_attribute('class', $params->{'class'}) if $params->{'class'};
-  my $legend = $self->get_legend;
-  return $legend ? $self->insert_after($hidden, $legend) : $self->prepend_child($hidden);
+  my $reference = $self->first_child;
+  $reference = $reference->next_sibling while $reference && $reference->node_name =~ /^(input|legend)$/;
+  return $reference ? $self->insert_before($hidden, $reference) : $self->append_child($hidden);
 }
 
 sub add_notes {
