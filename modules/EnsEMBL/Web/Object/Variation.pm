@@ -38,12 +38,8 @@ sub availability {
     if ($obj->isa('Bio::EnsEMBL::Variation::Variation')) {
       my $counts = $self->counts;
       
-      if ($obj->failed_description) { 
-        $availability->{'unmapped'} = 1; 
-      } else { 
-        $availability->{'variation'} = 1;
-      }
-
+      $availability->{'variation'} = 1;
+      
       $availability->{"has_$_"}  = $counts->{$_} for qw(transcripts populations individuals ega alignments ldpops);
       $availability->{'is_somatic'}  = $obj->is_somatic;
       $availability->{'not_somatic'} = !$obj->is_somatic;
@@ -577,9 +573,10 @@ sub freqs {
     my $pop_obj = $allele_obj->population;  
     next unless $pop_obj;
     my $pop_id  = $self->pop_id($pop_obj);
-    my $ssid = $allele_obj->subsnp;   
+    my $ssid = $allele_obj->subsnp;
    
-    push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);# || "");
+    push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);
+    push (@{ $data{$pop_id}{$ssid}{AlleleCount} }, $allele_obj->count);
     push (@{ $data{$pop_id}{$ssid}{Alleles} },   $allele_obj->allele);    
     next if $data{$pop_id}{$ssid}{pop_info};
     $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
@@ -596,6 +593,7 @@ sub freqs {
     unless (exists $data{$pop_id}{$ssid}{AlleleFrequency}){
       $allele_missing = 1;
       push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, "");
+      push (@{ $data{$pop_id}{$ssid}{AlleleCount} }, "");
       push (@{ $data{$pop_id}{$ssid}{Alleles} }, "");
       $data{$pop_id}{$ssid}{ssid} = $pop_gt_obj->subsnp();
       $data{$pop_id}{$ssid}{submitter} = $pop_gt_obj->subsnp_handle();
@@ -603,6 +601,7 @@ sub freqs {
 
     $data{$pop_id}{$ssid}{pop_info} = $self->pop_info($pop_obj);
     push (@{ $data{$pop_id}{$ssid}{GenotypeFrequency} }, $pop_gt_obj->frequency);
+    push (@{ $data{$pop_id}{$ssid}{GenotypeCount} }, $pop_gt_obj->count);
     push (@{ $data{$pop_id}{$ssid}{Genotypes} }, $self->pop_genotypes($pop_gt_obj)); 
 
     $data{$pop_id}{$ssid}{count} = $pop_gt_obj->count();
@@ -832,8 +831,9 @@ sub individual_table {
   ### Returns hashref with all the data
 
   my $self = shift;
-  my $individual_genotypes = $self->individual_genotypes_obj;
-  return {} unless @$individual_genotypes; 
+  my $selected_pop = shift;
+  my $individual_genotypes = $self->individual_genotypes_obj($selected_pop);
+  return {} unless defined $individual_genotypes && @$individual_genotypes; 
   my %data;
   foreach my $ind_gt_obj ( @$individual_genotypes ) { 
     my $ind_obj   = $ind_gt_obj->individual;
@@ -862,12 +862,13 @@ sub individual_genotypes_obj {
   ### Returns listref of IndividualGenotypes
 
   my $self = shift;
+  my $selected_pop = shift;
   my $individuals;
   eval {
-    $individuals = $self->vari->get_all_IndividualGenotypes;
+    $individuals = $self->vari->get_all_IndividualGenotypes($selected_pop);
   };
   if ($@) {
-    warn "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails.";
+    warn "\n\n************ERROR************:  Bio::EnsEMBL::Variation::Variation::get_all_IndividualGenotypes fails. $@";
   }
   return $individuals;
 }
