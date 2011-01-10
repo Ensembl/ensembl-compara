@@ -18,7 +18,7 @@ sub new {
   
   $self->{'tree_ids'}{$self->{'id'}} = 1;
   
-  $self->add_attribute($self->{'id'});
+  $self->set_attribute('id', $self->{'id'});
   
   return $self;
 }
