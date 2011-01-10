@@ -96,8 +96,9 @@ sub _content {
   foreach my $trans_obj (@sorted_trans ) {  
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
-    my $CONFIG = $object->get_imageconfig( "genesnpview_transcript" );
+    my $CONFIG = $object->get_imageconfig( "genesnpview_transcript", $trans_obj->stable_id );
     $CONFIG->{'geneid'}     = $object->stable_id;
+
     $CONFIG->{'snps'}       = $snps unless $no_snps;
     $CONFIG->{'subslices'}  = $sub_slices;
     $CONFIG->{'extent'}     = $extent;
