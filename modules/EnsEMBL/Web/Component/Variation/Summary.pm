@@ -52,17 +52,18 @@ sub content {
     $name = "$class ($display_name source $name - $source_description)";
   }
 
-  my $html = qq{
+  my $html;
+  
+  ## First warn if variation has been failed
+  if ($variation->failed_description) {
+    $html .= $self->_warning('This variation has been flagged as failed', '<p>' . $variation->failed_description . '</p>');
+  }
+  
+  $html .= qq{
     <dl class="summary">
       <dt> Variation class </dt> 
       <dd>$name</dd>
   };
-
-  ## First check that the variation status is not failed
-  if ($variation->failed_description) {
-    $html .= '<br />' . $self->_info('This variation was not mapped', '<p>' . $variation->failed_description . '</p>');
-    return $html; 
-  }
  
   ## Add synonyms
   my %synonyms = %{$object->dblinks};
