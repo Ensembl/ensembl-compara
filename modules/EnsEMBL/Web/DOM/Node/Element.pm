@@ -195,15 +195,22 @@ sub name {
 
 sub inner_HTML {
   ## Sets/Gets inner HTML of an element
-  ## If intended to set HTML, string is parsed for HTML, converted to tree format and appended to the node after removing the existing child nodes.
+  ## If intended to set parsed HTML, string is converted to tree format and appended to the node after removing the existing child nodes.
   ## @param innerHTML string
+  ## @param flag to tell whether or not to parse the HTML - off (no parsing) by default.
   ## @return final HTML string
-  my ($self, $html) = @_;
+  my ($self, $html, $do_parse) = @_;
   if (defined $html) {
     $self->remove_children;
-    $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html)};
+    if ($do_parse) {
+      $self->append_child($_) for @{$self->_parse_HTML_to_nodes($html)};
+    }
+    else {
+      $self->{'_text'} = $html;
+    }
   }
-  $html = '';
+  return $self->{'_text'} if $self->{'_text'} ne '';
+  $html  = '';
   $html .= $_->render for @{$self->{'_child_nodes'}};
   return $html;
 }
