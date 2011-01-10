@@ -21,7 +21,11 @@ sub content {
   my $gene             = $self->configure($hub->param('context') || 100, $hub->get_imageconfig('genesnpview_transcript'));
   my @transcripts      = sort { $a->stable_id cmp $b->stable_id } @{$gene->get_all_transcripts};
   
-  if ($consequence_type) {
+  my $count;
+  $count += scalar @{$_->__data->{'transformed'}{'gene_snps'}} foreach @transcripts;
+  
+  if ($consequence_type || $count < 25) {
+    $consequence_type ||= 'ALL';
     my $table_rows = $self->variation_table($consequence_type, \@transcripts);
     my $table      = $table_rows ? $self->make_table($table_rows, $consequence_type) : undef;
     return $self->render_content($table, $consequence_type);
