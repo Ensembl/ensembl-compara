@@ -168,7 +168,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     
     $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).each(function () {
-      var inputs  = $(this).parents('fieldset').find('input.' + $(this).attr('name'));
+      var inputs  = $(this).parents('fieldset').find('input.' + this.name);
       var checked = inputs.filter(':checked');
       var val, i, filtered;
       
@@ -185,7 +185,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           if (val && !val.match(/^(all|none)$/)) {
             filtered = inputs.filter('.' + val);
             
-            if (filtered.length && !filtered.not(':checked').length) {
+            if (filtered.length == checked.length) {
               $(this).val(val);
               break;
             }
