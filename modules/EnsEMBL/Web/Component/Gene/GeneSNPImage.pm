@@ -172,7 +172,7 @@ sub _content {
   $Configs->{'gene'}->set_parameters({ 'container_width' => $object->__data->{'slices'}{'gene'}[1]->length() }); 
   $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
     [$Configs->{'gene'}->get_track_key( 'transcript', $object )],
-    {'display'=> 'transcript_nolabel'}  
+    {'display'=> 'transcript_nolabel', 'menu' => 'no'}  
   );
   $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
     ['variation_feature_variation'],
