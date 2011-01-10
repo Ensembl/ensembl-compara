@@ -48,6 +48,7 @@ sub default_options {
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
 
+
         'release'           => '61',
         'rel_suffix'        => 'e',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
@@ -67,21 +68,21 @@ sub default_options {
             -dbname => $ENV{'USER'}.'_compara_homology_'.$self->o('rel_with_suffix'),
         },
 
-        'staging_dbs1' => {                     # general location of half of the current release core databases
+        'staging_loc1' => {                     # general location of half of the current release core databases
             -host   => 'ens-staging',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
 
-        'staging_dbs2' => {                     # general location of the other half of the current release core databases
+        'staging_loc2' => {                     # general location of the other half of the current release core databases
             -host   => 'ens-staging2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
         },
 
-        'livemirror_dbs' => {                     # general location of the previous release core databases (for reuse)
+        'livemirror_loc' => {                     # general location of the previous release core databases (for checking their reusability)
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
@@ -96,13 +97,22 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        'reuse_db' => {   # usually previous release database
+        'reuse_db' => {   # usually previous release database on compara1
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
             -dbname => 'kb3_ensembl_compara_60',
         },
+
+        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+
+        ## for testing the non-Blast part of the pipeline: reuse all Blasts
+        # 'reuse_core_sources_locs' => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        # 'curr_core_sources_locs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        # 'prev_release'            => $self->o('release'),
     };
 }
 
@@ -256,7 +266,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_dbs'  => [ $self->o('staging_dbs1'), $self->o('staging_dbs2'), ],
+                'registry_dbs'  => $self->o('curr_core_sources_locs'),
             },
             -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
             -flow_into => {
@@ -298,8 +308,9 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-                'registry_dbs'  => [ $self->o('livemirror_dbs') ],
+                'registry_dbs'  => $self->o('reuse_core_sources_locs'),
                 'release'       => $self->o('release'),
+                'prev_release'  => $self->o('prev_release'),
             },
             -hive_capacity => 10,    # allow for parallel execution
             -flow_into => {
