@@ -117,7 +117,7 @@ sub get_element_by_id {
   if ($self->node_type == $self->ELEMENT_NODE || $self->node_type == $self->DOCUMENT_NODE) {
     for (@{$self->child_nodes}) {
       next unless $_->node_type == $self->ELEMENT_NODE;
-      return $_ if $_->id eq $id;
+      return $_ if $_->get_attribute('id') eq $id;
       my $child_with_this_id = $_->get_element_by_id($id);
       return $child_with_this_id if defined $child_with_this_id;
     }
@@ -409,6 +409,7 @@ sub append_child {
   my ($self, $child) = @_;
   my $error = "";
   if ($self->appendable($child, \$error)) {
+    $self->{'_text'} = ''; #remove text if any
     $child->remove; #remove from present parent node, if any
     $child->{'_parent_node'} = $self;
     if ($self->has_child_nodes) {
@@ -612,7 +613,7 @@ sub dump {
   (my $string = "$self") =~ s/EnsEMBL\:\:Web\:\://;
   my $extras = [], my %attr, my $val, my $i = 0;
   push @$extras, '<'.$self->node_name.'>' if $self->node_type == $self->ELEMENT_NODE;
-  push @$extras, '"'.$self->{'_text'}.'"' if $self->node_type == $self->TEXT_NODE;
+  push @$extras, 'html="'.$self->{'_text'}.'"' if $self->{'_text'} ne '';
   push @$extras, '[document node]'        if $self->node_type == $self->DOCUMENT_NODE;
   foreach my $attrib_name (keys %{$self->{'_attributes'}}) {
     if ($attrib_name =~ /^(style|class)$/) {
@@ -623,9 +624,9 @@ sub dump {
       $attr{$i++.$attrib_name} = $self->{'_attributes'}{$attrib_name};
     }
   }
-  $val = substr $_, 1 and push @$extras, qq($val = "$attr{$_}") for keys %attr;
-  push @$extras, qq(flag:$_ = "$self->{'_flags'}{$_}") for keys %{$self->{'_flags'}};
-  push @$extras, qq(element_type = ).$self->element_type if $self->node_type == $self->ELEMENT_NODE;
+  $val = substr $_, 1 and push @$extras, qq($val="$attr{$_}") for keys %attr;
+  push @$extras, qq(flag:$_="$self->{'_flags'}{$_}") for keys %{$self->{'_flags'}};
+  push @$extras, qq(element_type=).$self->element_type if $self->node_type == $self->ELEMENT_NODE;
   $string .= ' {'.join(', ', @$extras).'}';
   push @$output, $indent.$string;
   $_->dump($indent.'- ', $output) for @{$self->child_nodes};
