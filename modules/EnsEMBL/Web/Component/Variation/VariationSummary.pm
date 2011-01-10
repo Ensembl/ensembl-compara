@@ -50,7 +50,6 @@ sub content {
         $hapmap_html = "<b>HapMap variant</b>", $hub->get_ExtURL_link($snp_name, 'HAPMAP', $snp_name);
       } elsif ($status eq 'failed') {
         my $description = $variation->failed_description;
-        return $status;
       } else {
         $status = "frequency" if $status eq 'freq';
         push @status_list, $status;
