@@ -1,14 +1,15 @@
+# $Id$
+
 package EnsEMBL::Web::Component::Gene::GeneSNPImage;
 
 use strict;
-use warnings;
-no warnings "uninitialized";
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  1 );
+  $self->cacheable(0);
+  $self->ajaxable(1);
 }
 
 sub caption {
@@ -17,13 +18,14 @@ sub caption {
 
 sub _content {
   my $self    = shift;
-  my $no_snps = shift; 
+  my $no_snps = shift;
+  my $ic_type = shift || 'genesnpview';
   my $object  = $self->object;
   my $image_width  = $self->image_width || 800;  
   my $context      = $object->param( 'context' ) || 100; 
   my $extent       = $context eq 'FULL' ? 1000 : $context;
 
-  my $master_config = $object->get_imageconfig( "genesnpview_transcript" );
+  my $master_config = $object->get_imageconfig( "${ic_type}_transcript" );
      $master_config->set_parameters( {
        'image_width' =>  $self->image_width || 800,
        'container_width' => 100,
@@ -41,7 +43,7 @@ sub _content {
   push @confs, 'snps' unless $no_snps;  
 
   foreach( @confs ){ 
-    $Configs->{$_} = $object->get_imageconfig( "genesnpview_$_" );
+    $Configs->{$_} = $object->get_imageconfig(($_ eq 'gene' ? $ic_type : 'genesnpview') . "_$_");
     $Configs->{$_}->set_parameters({ 'image_width' => $image_width, 'context' => $context });
   }
   
@@ -96,7 +98,7 @@ sub _content {
   foreach my $trans_obj (@sorted_trans ) {  
 ## create config and store information on it...
     $trans_obj->__data->{'transformed'}{'extent'} = $extent;
-    my $CONFIG = $object->get_imageconfig( "genesnpview_transcript", $trans_obj->stable_id );
+    my $CONFIG = $object->get_imageconfig( "${ic_type}_transcript", $trans_obj->stable_id );
     $CONFIG->{'geneid'}     = $object->stable_id;
 
     $CONFIG->{'snps'}       = $snps unless $no_snps;
@@ -174,15 +176,9 @@ sub _content {
     [$Configs->{'gene'}->get_track_key( 'transcript', $object )],
     {'display'=> 'transcript_nolabel', 'menu' => 'no'}  
   );
-  $Configs->{'gene'}->modify_configs( ## Turn on track associated with this db/logic name
-    ['variation_feature_variation'],
-    {'display'=> 'off'}
-  ) if $no_snps;
  
-  $Configs->{'gene'}->get_node('snp_join')->set('display','off') if $no_snps;
 ## Intronless transcript top and bottom (to draw snps, ruler and exon backgrounds)
   foreach(qw(transcripts_top transcripts_bottom)) {
-    $Configs->{$_}->get_node('snp_join')->set('display','off') if $no_snps;
     $Configs->{$_}->{'extent'}      = $extent;
     $Configs->{$_}->{'geneid'}      = $gene_stable_id;
     $Configs->{$_}->{'transcripts'} = \@transcripts;
