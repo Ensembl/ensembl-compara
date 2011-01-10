@@ -21,7 +21,7 @@ every single table.
 </p>
 
 <p>
-This document refers to version <strong>60</strong> of the Ensembl
+This document refers to version <strong>61</strong> of the Ensembl
 variation schema. 
 </p>
 
@@ -41,17 +41,20 @@ A PDF document of the schema is available <a href="variation-database-schema.pdf
 <p style="margin-bottom: 0cm"><br /></p>
 <p><b>Simple variations</b></p>
 <ul>
-  <li><p style="margin-bottom: 0cm"><a href="#source">source </a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
+
   <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#variation_synonym">variation_synonym</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#flanking_sequence">flanking_sequence</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#failed_variation">failed_variation</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#failed_description">failed_description</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#allele">allele</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#source">subsnp_handle</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#variation_feature">variation_feature</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#transcript_variation">transcript_variation</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#tagged_variation_feature">tagged_variation_feature</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#structural_variation">structural_variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_class">variation_class</a></p></li>
 </ul>
 <p style="margin-bottom: 0cm"><br /></p>
 <p><b>Multi-marker variations</b></p>
@@ -62,6 +65,9 @@ A PDF document of the schema is available <a href="variation-database-schema.pdf
   <li><p style="margin-bottom: 0cm"><a href="#variation_group_feature">variation_group_feature</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#variation_group_variation">variation_group_variation</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#httag">httag</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_set">variation_set</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_set_structure">variation_set_structure</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_set_variation">variation_set_variation</a></p></li>
 </ul>
 <p style="margin-bottom: 0cm"><br /></p>
 <p><b>Genotypes, read coverage and annotations</b></p>
@@ -207,6 +213,7 @@ given by multiple sources.</p>
 <ul>
   <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#subsnp_handle">subsnp_handle</a></p></li>
 </ul>
 <h3 id="flanking_sequence">flanking_sequence</h3>
 <p>This table contains the upstream and downstream sequence
@@ -245,12 +252,20 @@ along with population frequencies.</p>
 <ul>
   <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#subsnp_handle">subsnp_handle</a></p></li>
+</ul>
+<h3 id="subsnp_handle">subsnp_handle</h3>
+This table contains the SubSNP(ss) ID and the name of the submitter handle of dbSNP.
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+  <li><p style="margin-bottom: 0cm"><a href="#subsnp_handle">subsnp_handle</a></p></li>
 </ul>
 <h3 id="variation_feature">variation_feature</h3>
 <p>This table represents mappings of variations to genomic locations.
 It stores an allele string representing the different possible
-alleles that are found at that locus e.g. “A/T” for a SNP, as
-well as a “worst case” consequence of the mutation. It also acts
+alleles that are found at that locus e.g. &quot;A/T&quot; for a SNP, as
+well as a &quot;worst case&quot; consequence of the mutation. It also acts
 as part of the relationship between variations and transcripts.</p>
 <p><b>See also:</b></p>
 <p>Tables:</p>
@@ -285,6 +300,14 @@ variation feature. Tag pairs are defined as having an r&sup2;
 <p>Tables:</p>
 <ul>
   <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
+</ul>
+<h3 id="variation_class">variation_class</h3>
+<p>This table contains the different classes of variation, based on the <a
+href='http://www.sequenceontology.org/' target='_blank'>Sequence Ontology</a> project.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_class">variation_class</a></p></li>
 </ul>
 <hr />
 <h2>Multi-marker variations</h2>
@@ -353,6 +376,31 @@ haplotype is tagged by or tags another marker.</p>
   <li><p style="margin-bottom: 0cm"><a href="#variation_group">variation_group</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#source">source</a></p></li>
 </ul>
+<h3 id="variation_set">variation_set</h3>
+<p>This table containts the name of sets and subsets of variations stored in the database. 
+It usually represents the name of the project or subproject where a group of variations has been identified.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_set">variation_set</a></p></li>
+</ul>
+<h3 id="variation_set_structure">variation_set_structure</h3>
+<p>This table stores hierarchical relationships between variation sets by relating them as variation sets and
+variation subsets.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_set">variation_set</a></p></li>
+</ul>
+<h3 id="variation_set_variation">variation_set_variation</h3>
+<p>This table links a variation to one or more variation sets.</p>
+<p><b>See also:</b></p>
+<p>Tables:</p>
+<ul>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation_set">variation_set</a></p></li>
+</ul>
+
 <hr />
 <h2>Genotypes, read coverage and annotations</h2>
 <h3 id="compressed_genotype_single_bp">compressed_genotype_single_bp</h3>
@@ -372,7 +420,8 @@ size and increase the speed of the web code.</p>
 <p>Tables:</p>
 <ul>
   <li><p style="margin-bottom: 0cm"><a href="#individual">individual</a></p></li>
-	<li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#subsnp_handle">subsnp_handle</a></p></li>
 </ul>
 <h3 id="population_genotype">population_genotype</h3>
 <p>This table stores alleles and frequencies for variations in
@@ -382,6 +431,7 @@ given populations.</p>
 <ul>
   <li><p style="margin-bottom: 0cm"><a href="#population">population</a></p></li>
   <li><p style="margin-bottom: 0cm"><a href="#variation">variation</a></p></li>
+  <li><p style="margin-bottom: 0cm"><a href="#subsnp_handle">subsnp_handle</a></p></li>
 </ul>
 <h3 id="read_coverage">read_coverage</h3>
 <p>This table stores the read coverage in the resequencing of
@@ -436,3 +486,4 @@ the database.</p>
 
 </body>
 </html>
+
