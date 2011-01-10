@@ -1,15 +1,15 @@
+# $Id$
+
 package EnsEMBL::Web::ViewConfig::Gene::Splice;
 
 use strict;
 
-use EnsEMBL::Web::Constants;
-
 use base qw(EnsEMBL::Web::ViewConfig);
 
 sub init {
-  my ($view_config) = @_;
+  my $self = shift;
 
-  $view_config->_set_defaults(qw(
+  $self->_set_defaults(qw(
     panel_image          on 
     context              100
     panel_transcript     on
@@ -17,14 +17,13 @@ sub init {
     reference            ),'',qw(
   ));
 
-
-  $view_config->add_image_configs({qw(
-    genesnpview_gene            nodas  
-    genesnpview_transcript      nodas
+  $self->add_image_configs({qw(
+    genespliceview_gene            nodas  
+    genespliceview_transcript      nodas
   )});
 
-  $view_config->default_config = 'genesnpview_transcript';
-  $view_config->storable = 1;
+  $self->default_config = 'genespliceview_transcript';
+  $self->storable = 1;
 }
 
 1;

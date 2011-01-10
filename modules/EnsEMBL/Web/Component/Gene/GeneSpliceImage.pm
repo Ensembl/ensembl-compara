@@ -16,7 +16,7 @@ sub caption {
 }
 
 sub content {
-  return $_[0]->_content(1);
+  return $_[0]->_content(1, 'genespliceview');
 }
 
 1;
