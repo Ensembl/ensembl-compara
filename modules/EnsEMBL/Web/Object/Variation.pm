@@ -1162,9 +1162,7 @@ sub ld_pops_for_snp {
 
   my @pops;
   foreach ( @vari_mappings ) {    
-    my $ldcontainer = $_->get_all_LD_values; #warn scalar @{$ldcontainer->get_all_populations};
-    push @pops, @{$ldcontainer->get_all_populations};
-
+    push @pops, map {$_->dbID} @{$_->get_all_LD_pops};
   }
   return \@pops;
 }
