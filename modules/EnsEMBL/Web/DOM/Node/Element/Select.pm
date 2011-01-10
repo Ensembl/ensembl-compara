@@ -17,7 +17,7 @@ sub form {
 sub selected_index {
   ## Sets or returns the index of the selected option in a dropdown list
   ## If intended to set index in a dropdown that allows multiple selections, all previous selections will be unselected before selecting the given index
-  ## @param index or ArrayRef of indices to be set if intended to set selection. -1 (or any invalid index will deselect all)
+  ## @param index or ArrayRef of indices to be set if intended to set selection. -1 (or any invalid index) will deselect all
   ## @return index or ArrayRef of indices of new selections
   my $self    = shift;
   my @options = $self->options;
@@ -59,11 +59,11 @@ sub add {
 
 sub remove_option {
   ## Removes the option object(s) with given value
-  ## @return Option (or ArrayRef of Option objects) removed
+  ## @return ArrayRef of Option objects removed
   my ($self, $value) = shift;
   my $return = [];
-  grep {$_->get_attribute('value') eq $value and push @$return, $_->remove} @{$self->options};
-  return scalar @$return ? $return : shift @$return;
+  $_->get_attribute('value') eq $value and push @$return, $_->remove for @{$self->options};
+  return $return;
 }
 
 sub disabled {
@@ -76,7 +76,7 @@ sub multiple {
   return shift->_access_attribute('multiple', @_);
 }
 
-sub _appendable {
+sub w3c_appendable {
   ## @overrides
   my ($self, $child) = @_;
   return $child->node_name =~ /^(option|optgroup)$/ ? 1 : 0;

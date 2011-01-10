@@ -9,7 +9,7 @@ sub node_name {
   return 'p';
 }
 
-sub _appendable {
+sub w3c_appendable {
   ## @overrides
   my ($self, $child) = @_;
   return 

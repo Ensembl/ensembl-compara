@@ -9,7 +9,7 @@ sub node_name {
   return 'table';
 }
 
-sub _appendable {
+sub w3c_appendable {
   ## @overrides
   my ($self, $child) = @_;
   return $child->node_type == $self->ELEMENT_NODE && $child->node_name =~ /^(caption|colgroup|col|tbody|tfoot|thead|tr)$/ ? 1 : 0;

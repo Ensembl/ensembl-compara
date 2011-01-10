@@ -47,9 +47,10 @@ sub element_type {
   return $self->ELEMENT_TYPE_INLINE;
 }
 
-sub _appendable {
-  ## Checks if the given node can be appended to the element
-  ## @overrides
+sub w3c_appendable {
+  ## Checks if the given node can be appended to the element according to the w3c rules
+  ## Override this in child class if there are any specific rules for a specific node name
+  ## @param Node object to be appended
   my ($self, $child) = @_;
   my $se = $self->element_type;
   my $e  = $self->ELEMENT_NODE;
@@ -82,7 +83,7 @@ sub get_attribute {
   ## @return Attribute value if attribute exists, blank string otherwise
   my ($self, $attrib) = @_;
 
-  return '' unless $self->has_attribute($attrib);
+  return '' unless exists $self->{'_attributes'}{$attrib};
 
   my @values;
   if ($attrib eq 'style') {
@@ -94,7 +95,7 @@ sub get_attribute {
     @values = keys %{$self->{'_attributes'}{$attrib}};
   }
   else {
-    push @values, $self->{'_attributes'}{$attrib};
+    return $self->{'_attributes'}{$attrib};
   }
   return join ' ', @values;
 }
@@ -115,7 +116,7 @@ sub remove_attribute {
   ## @return No return value
   my ($self, $attrib, $value) = @_;
   
-  return unless $self->has_attribute($attrib);
+  return unless exists $self->{'_attributes'}{$attrib};
   
   if (defined $value && ref($self->{'_attributes'}{$attrib}) eq 'HASH') {
     delete $self->{'_attributes'}{$attrib}{$value} if exists $self->{'_attributes'}{$attrib}{$value};
