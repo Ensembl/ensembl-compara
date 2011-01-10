@@ -552,40 +552,32 @@ sub _add_parents{
   my $term = shift;
   my $ontology_term_adaptor = shift;
   my $edge_colour_function = $self->{_get_relation_type_colour};
-
-  my $parents = $ontology_term_adaptor->fetch_all_by_child_term($term);
+  
   my $ancestors = $ontology_term_adaptor->_fetch_ancestor_chart($term);
   my $cluster_name= $self->_get_cluster_name($term, $ontology_term_adaptor);
   my $cluster = $self->_get_cluster($cluster_name);
   
-  foreach (keys %$ancestors)  {
-    my $ancestor_terms=$ancestors->{$_};
-    foreach my $relation (keys %$ancestor_terms ){
-      if(ref $ancestor_terms->{$relation} eq "ARRAY" ){#all parents are in 'name' =>[term,term] form
-        foreach my $trm (@{$ancestor_terms->{$relation}}){
-          foreach (@$parents){
-            if($trm->accession eq $_->accession){#check that the parent is a direct parent
-              if(! $self->existing_terms->{$trm->accession}){
-                $self->existing_terms->{$trm->accession}=1;
-                my $node_name = $self->_format_node_name($trm);
-                $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->non_highlight_border_colour('',$term),
-                fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
-              }
-              if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
-                $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
-                my $edge_colour;
-                if(ref $edge_colour_function eq 'CODE'){
-                  $edge_colour = _format_colour_code(&$edge_colour_function($relation),'000000');
-                }else{
-                  $edge_colour = _format_colour_code($edge_colour_function,'000000');
-                }
-                $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
-                $edge_colour, dir=>'back', fontsize => '8pt'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
-              }
-              $self->_add_parents($trm,$ontology_term_adaptor, $edge_colour_function);
-            }
-          }
+  foreach my $relation(keys %{$ancestors->{$term->accession}})  {
+    if(ref $ancestors->{$term->accession}->{$relation} eq "ARRAY" ){#all parents are in 'name' =>[term,term] form
+      foreach my $trm (@{$ancestors->{$term->accession}->{$relation}}){
+        if(! $self->existing_terms->{$trm->accession}){
+        $self->existing_terms->{$trm->accession}=1;
+        my $node_name = $self->_format_node_name($trm);
+        $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->non_highlight_border_colour('',$term),
+        fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
         }
+        if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
+          $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
+          my $edge_colour;
+          if(ref $edge_colour_function eq 'CODE'){
+            $edge_colour = _format_colour_code(&$edge_colour_function($relation),'000000');
+          }else{
+            $edge_colour = _format_colour_code($edge_colour_function,'000000');
+          }
+          $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
+          $edge_colour, dir=>'back', fontsize => '8pt'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
+        }
+        $self->_add_parents($trm,$ontology_term_adaptor, $edge_colour_function);
       }
     }
   }
