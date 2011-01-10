@@ -316,7 +316,7 @@ sub get_nodes_by_flag {
   $flag = [ $flag ]                 if ref($flag) !~ /^(ARRAY|HASH)$/;
   $flag = { map {$_ => 1} @$flag }  if ref($flag) eq 'ARRAY';
   ref($flag->{$_}) ne 'ARRAY' and $flag->{$_} = [$flag->{$_}] for keys %$flag;
-
+  
   my $nodes = [];
   foreach my $child_node (@{$self->child_nodes}) {
     FLAG: foreach my $flag_name (keys %$flag) {
@@ -324,7 +324,7 @@ sub get_nodes_by_flag {
         push @$nodes, $child_node and last FLAG if exists $child_node->{'_flags'}{$flag_name} && $child_node->{'_flags'}{$flag_name} eq $flag_value;
       }
     }
-    push @$nodes, $child_node->get_nodes_by_flag($flag) if $recur;
+    push @$nodes, @{$child_node->get_nodes_by_flag($flag)} if $recur;
   }
   return $nodes;
 }
