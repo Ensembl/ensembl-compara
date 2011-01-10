@@ -125,6 +125,7 @@ sub storable_data {
   
   my $self = shift;
   my $hub  = $self->hub;
+  my $url  = join '/', map $hub->$_ || (), qw(type action);
   my $data = [];
   
   foreach my $type (qw(view_config image_config)) {
@@ -133,7 +134,7 @@ sub storable_data {
       ## Only store if config is storable and has changed
       if ($config->storable && $config->altered) {
         push @$data, {
-          code => $code,
+          code => $type eq 'view_config' ? $code : "$code $url",
           type => $type,
           data => $config->get_user_settings
         };
@@ -151,7 +152,9 @@ sub apply_to_view_config {
 
 sub apply_to_image_config {
   my ($self, $image_config, $type, $code) = @_;
-  $self->apply_to_config('image_config', $image_config, $type, $code || $type, $type); # $code is optional - used when an image has multiple configs
+  my $hub = $self->hub;
+  my $url = join '/', map $hub->$_ || (), qw(type action);
+  $self->apply_to_config('image_config', $image_config, $type, $code, "$type $url"); # $code is optional - used when an image has multiple configs. Defaults to $type.
 }
 
 sub apply_to_config {
