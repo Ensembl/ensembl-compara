@@ -434,15 +434,15 @@ sub get_viewconfig {
   my $type    = shift || $self->type;
   my $action  = shift || $self->action;
   my $session = $self->session;
-  my $key     = "${type}::$action";
+  my $code    = "${type}::$action";
   
   return undef unless $session;
-  return $session->view_configs->{$key} if $session->view_configs->{$key};
+  return $session->view_configs->{$code} if $session->view_configs->{$code};
   
   my $module_name = $self->get_module_names('ViewConfig', $type, $action) || 'EnsEMBL::Web::ViewConfig';
   my $view_config = $module_name->new($type, $action, $self);
   
-  $session->apply_to_view_config($view_config, $type, $key);
+  $session->apply_to_view_config($view_config, $type, $code);
   
   return $view_config;
 }
@@ -455,19 +455,19 @@ sub get_imageconfig {
   
   my $self    = shift;
   my $type    = shift;
-  my $key     = shift;
+  my $code    = shift || $type;
   my $species = shift;
   my $session = $self->session;
   
-  return undef if $type eq '_page' || $type eq 'cell_page';
+  return undef if $type eq '_page' || $type eq 'cell_page'; # FIXME: hack
   return undef unless $session;
-  return $session->image_configs->{$type} if $session->image_configs->{$type};
+  return $session->image_configs->{$code} if $session->image_configs->{$code};
   
   my $module_name  = "EnsEMBL::Web::ImageConfig::$type";
   my $image_config = $self->dynamic_use($module_name) ? $module_name->new($self, $species) : undef;
   
   if ($image_config) {
-    $session->apply_to_image_config($image_config, $type, $key);
+    $session->apply_to_image_config($image_config, $type, $code);
     return $image_config;
   } else {
     $self->dynamic_use_failure($module_name);
