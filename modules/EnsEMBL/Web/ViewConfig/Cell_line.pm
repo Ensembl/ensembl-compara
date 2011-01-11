@@ -152,6 +152,20 @@ sub update_from_input {
   my %cell_lines;
   my %evidence_types;
   
+  foreach (keys %{$self->{'evidence_features'}}) {
+    my ($name, $id) = split /:/;
+    my $type = 'other';
+    
+    foreach my $focus_set (values %{$self->{'focus_set_ids'}}) {
+      if (exists $focus_set->{$id}) {
+        $type = 'core';
+        last;
+      }
+    }
+    
+    $evidence_types{$name} = $type;
+  }
+  
   foreach my $key (@options) {
     my @values = $input->param($key);
     
@@ -173,34 +187,23 @@ sub update_from_input {
     }
   }
   
-  $self->altered = $altered || 1 if $flag;
-
-  foreach my $ef (keys %{$self->{'evidence_features'}}) {
-    my ($name, $id) = split /:/, $ef;
-    my $type = 'other';
-    foreach my $focus_set (values %{$self->{'focus_set_ids'}}) {
-     if (exists $focus_set->{$id}) { $type = 'core';}  
-    } 
-    $evidence_types{$name} = $type;
-  }
- 
   foreach my $cell_line (keys %cell_lines) {
-    $cell_lines{$cell_line} = 0;
-    
     foreach my $key (grep /^opt_cft_$cell_line/, @options) {
       my (undef, $feature) = split /:/, $key;
-      $cell_lines{$cell_line}++ if $self->get($key) !~ /^(off|no)$/;
+      $cell_lines{$evidence_types{$feature}}{$cell_line} = 1 if $self->get($key) !~ /^(off|no)$/;
     }
     
-    my $type    = 'core' || 'other';
-    my $node    = $image_config->get_node("reg_feats_${type}_$cell_line");
-    my $display = $cell_lines{$cell_line} ? 'compact' : 'off';
-    
-    if ($node->get('display') ne $display) {
-      $node->set_user('display', $display);
-      $image_config->altered = 1;
+    for ('core', 'other') {
+      my $node = $image_config->get_node("reg_feats_${_}_$cell_line");
+      
+      if ($cell_lines{$_}{$cell_line} && $node->get('display') eq 'off') {
+        $node->set_user('display', 'compact');
+        $image_config->altered = 1;
+      }
     }
   }
+  
+  $self->altered = $altered || 1 if $flag;
 }
 
 1;
