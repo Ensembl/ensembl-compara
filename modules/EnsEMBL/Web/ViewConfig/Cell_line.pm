@@ -150,6 +150,7 @@ sub update_from_input {
   my $flag         = 0;
   my $altered;
   my %cell_lines;
+  my %evidence_types;
   
   foreach my $key (@options) {
     my @values = $input->param($key);
@@ -173,7 +174,16 @@ sub update_from_input {
   }
   
   $self->altered = $altered || 1 if $flag;
-  
+
+  foreach my $ef (keys %{$self->{'evidence_features'}}) {
+    my ($name, $id) = split /:/, $ef;
+    my $type = 'other';
+    foreach my $focus_set (values %{$self->{'focus_set_ids'}}) {
+     if (exists $focus_set->{$id}) { $type = 'core';}  
+    } 
+    $evidence_types{$name} = $type;
+  }
+ 
   foreach my $cell_line (keys %cell_lines) {
     $cell_lines{$cell_line} = 0;
     
