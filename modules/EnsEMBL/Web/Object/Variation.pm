@@ -497,9 +497,12 @@ sub vari_class{
   ### Example    : my $vari_class = $object->vari_class
   ### Description: returns the variation class (indel, snp, het) for a varation
   ### Returns String
-
-  return $_[0]->vari->var_class;
- }
+  
+  # /!\ The following block  needs to be changed for the e!62 by "return $_[0]->vari->var_class;" /!\
+  my $var = $_[0]->vari->var_class; # only for e!61
+  $var =~ tr/_/ /;
+  return $var;
+}
 
 
 
