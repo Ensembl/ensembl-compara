@@ -402,7 +402,21 @@ sub analyse_row {
   elsif (scalar(@$columns) == 21 && $columns->[8] =~/^[-+][-+]?$/) {
     $format = 'PSL';   
   }
-  elsif ($columns->[3] =~ /^[ACTG-]\/[ACTG-]$/) {
+  elsif (
+    $columns->[3] =~ /^[ACTG-]\/[ACTG-]$/ ||
+    (
+      $columns->[0] =~ /(chr)?\w+/ &&
+      $columns->[1] =~ /\d+/ &&
+      $columns->[2] =~ /^[ACGTN-]+$/ &&
+      $columns->[3] =~ /^[ACGTNRYSWKM*+\/-]+$/
+    ) ||
+    (
+      $columns->[0] =~ /(chr)?\w+/ &&
+      $columns->[1] =~ /\d+/ &&
+      $columns->[3] =~ /^[ACGTN-]+$/ &&
+      $columns->[4] =~ /^([\.ACGTN-]+\,?)+$/
+    )
+  ) {
     $format = 'SNP';   
   }
   elsif ($tabbed && _is_strand($columns->[7])) {
@@ -421,7 +435,7 @@ sub analyse_row {
   } 
   elsif (scalar(@$columns) > 2 && scalar(@$columns) < 13 && $columns->[1] =~ /\d+/ && $columns->[2] =~ /\d+/) { 
     $format = 'BED';   
-  } 
+  }
   return $format;
 }
 
