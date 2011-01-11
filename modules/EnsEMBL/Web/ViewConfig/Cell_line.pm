@@ -48,7 +48,7 @@ sub init {
     
     foreach my $evidence_type (keys %{$self->{'evidence_features'}}) {
       my ($evidence_name, $evidence_id) = split /\:/, $evidence_type; 
-      my $value = exists $default_evidence_types{$evidence_name} ? 'on' : 'off';
+      my $value = ( exists $default_evidence_types{$evidence_name} && exists $self->{'feature_type_ids'}{$cell_line}{$evidence_id} ) ? 'on' : 'off';
       $self->_set_defaults("opt_cft_$cell_line:$evidence_name" => $value);
     }
   }
