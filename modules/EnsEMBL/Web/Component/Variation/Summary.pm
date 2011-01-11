@@ -130,16 +130,14 @@ sub content {
     $feature_slice = $vf->feature_Slice if $vf->dbID == $hub->core_param('vf');
   }  
   
-  my $label      = 'Alleles';
-  my $alleles    = $object->alleles;
-  my $vari_class = $object->vari_class || 'Unknown';
-  my $allele_html;
+  my $label       = 'Alleles';
+  my $alleles     = $object->alleles;
+  my $vari_class  = $object->vari_class || 'Unknown';
+  my $allele_html = "<b>$alleles</b>";
 
-  if ($vari_class ne 'snp') {
-    $allele_html = "<b>$alleles</b> (Type: <strong>$vari_class</strong>)";
-  } else {
+  if ($vari_class eq 'snp' or $vari_class eq 'SNP') {
     my $ambig_code = $variation->ambig_code;
-    $allele_html = "<b>$alleles</b> (Ambiguity code: <strong>$ambig_code</strong>)";
+    $allele_html .= " (Ambiguity code: <strong>$ambig_code</strong>)";
   }
   
   my $ancestor  = $object->ancestor;
