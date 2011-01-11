@@ -10,20 +10,20 @@ use base qw(EnsEMBL::Web::Text::Feature);
 
 sub seqname {
   my $self = shift;
-  my @A = split('_', $self->{'__raw__'}[0]); 
+  my @A = split(':', $self->{'__raw__'}[1]); 
   return $A[0];
 }
 
 sub rawstart {
   my $self = shift;
-  my @A = split('_', $self->{'__raw__'}[0]); 
+  my @A = split(':', $self->{'__raw__'}[1]); 
   my @B = split('-', $A[1]);
   return $B[0];
 }
 
 sub rawend {
   my $self = shift;
-  my @A = split('_', $self->{'__raw__'}[0]); 
+  my @A = split(':', $self->{'__raw__'}[1]); 
   my @B = split('-', $A[1]);
   return $B[-1];
 }
