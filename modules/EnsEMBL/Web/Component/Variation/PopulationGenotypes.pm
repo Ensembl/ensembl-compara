@@ -26,6 +26,8 @@ sub content {
   my $html;
   my $table_array = $self->format_frequencies($freq_data);
   
+  $html .= qq{<a id="IndividualGenotypesPanel_top"></a>};
+  
   # count how many tables there are
   my $count = scalar @{$table_array};
   
@@ -82,11 +84,11 @@ sub format_frequencies {
     
     foreach my $pop_id(keys %$freq_data) {
       foreach my $ssid(keys %{$freq_data->{$pop_id}}) {
-        if($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000GENOMES/i) {
+        if($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000genomes\:(low_coverage|exon|trio)/i) {
           $tg_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
           delete $freq_data->{$pop_id}{$ssid};
         }
-        elsif($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /hapmap/i) {
+        elsif($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^cshl\-hapmap/i) {
           $hm_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
           delete $freq_data->{$pop_id}{$ssid};
         }
@@ -103,9 +105,9 @@ sub format_frequencies {
       my %pop_row;
       
       # SSID + Submitter  -----------------------------------------
-      if ($freq_data->{$pop_id}{$ssid}{'ssid'}) {
+      if (defined($freq_data->{$pop_id}{$ssid}{'ssid'})) {
         my $submitter         = $freq_data->{$pop_id}{$ssid}{'submitter'};
-        $pop_row{'ssid'}      = $hub->get_ExtURL_link($freq_data->{$pop_id}{$ssid}{'ssid'}, 'DBSNPSS', $freq_data->{$pop_id}{$ssid}{'ssid'});
+        $pop_row{'ssid'}      = $hub->get_ExtURL_link($freq_data->{$pop_id}{$ssid}{'ssid'}, 'DBSNPSS', $freq_data->{$pop_id}{$ssid}{'ssid'}) unless $ssid eq 'ss0';
         $pop_row{'submitter'} = $hub->get_ExtURL_link($submitter, 'DBSNPSSID', $submitter);
       }  
       
@@ -114,9 +116,15 @@ sub format_frequencies {
       
       foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Alleles'}}) {
         next unless $gt =~ /(\w|\-)+/;
+        
+        my $allele_count = shift @{$freq_data->{$pop_id}{$ssid}{'AlleleCount'}} || undef;
+        $pop_row{"Allele count"}{$gt} = $allele_count.' <strong>('.$gt.')</strong>' if defined $allele_count;
+        
         my $freq = $self->format_number(shift @allele_freq);
         $pop_row{"Alleles&nbsp;<br />$gt"} = $freq;
       }
+      
+      $pop_row{"Allele count"} = join " / ", sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{"Allele count"}} if $pop_row{"Allele count"};
       
       # Freqs genotypes ---------------------------------------------
       my @genotype_freq = @{$freq_data->{$pop_id}{$ssid}{'GenotypeFrequency'} || []};
@@ -124,11 +132,22 @@ sub format_frequencies {
       foreach my $gt (@{$freq_data->{$pop_id}{$ssid}{'Genotypes'}}) {
         my $freq = $self->format_number(shift @genotype_freq);
         $pop_row{"Genotypes&nbsp;<br />$gt"} = $freq;
+        
+        my $allele_count = shift @{$freq_data->{$pop_id}{$ssid}{'GenotypeCount'}} || undef;
+        $pop_row{"Genotype count"}{$gt} = $allele_count.' <strong>('.$gt.')</strong>' if defined $allele_count;
       }
       
+      $pop_row{"Genotype count"} = join " / ", sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{"Genotype count"}} if $pop_row{"Genotype count"};
+      
+      
       # Add a name, size and description if it exists ---------------------------
-      $pop_row{'pop'}         = $self->pop_url($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'}, $freq_data->{$pop_id}{$ssid}{'pop_info'}{'PopLink'}) . '&nbsp;';
-      #$pop_row{'Size'}        = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Size'};
+      $pop_row{'pop'} =
+        $self->pop_url(
+          $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'},
+          $freq_data->{$pop_id}{$ssid}{'pop_info'}{'PopLink'}
+        );
+        #' ('.($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Size'} || '-').')';
+        
       $pop_row{'Description'} = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Description'} if $is_somatic;
       
       # Super and sub populations ----------------------------------------------
@@ -137,6 +156,22 @@ sub format_frequencies {
 
       my $sub_string = $self->sort_extra_pops($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Sub-Population'});
       $pop_row{'Sub-Population'} = $sub_string;
+      
+      my $url = $hub->url('Component', {
+        action       => 'Web',
+        function     => 'IndividualGenotypes',
+        pop          => $pop_id,
+        update_panel => 1
+      });
+      
+      my $view_html = qq{
+        <a href="$url" class="ajax_add toggle closed" rel="$pop_id">
+          <span class="closed">Show</span><span class="open">Hide</span>
+          <input type="hidden" class="url" value="$url" />
+        </a>
+      };
+      
+      $pop_row{'detail'} = $view_html;
 
       push @rows, \%pop_row;
       map { $columns{$_} = 1 } grep $pop_row{$_}, keys %pop_row;
@@ -147,8 +182,8 @@ sub format_frequencies {
   my @header_row;
   
   foreach my $col (sort { $b cmp $a } keys %columns) {
-    next if $col =~ /pop|ssid|submitter|Description/;
-    unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numeric' };
+    next if $col =~ /pop|ssid|submitter|Description|detail|count/;
+    unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numerical' };
   }
   
   if (exists $columns{'ssid'}) {
@@ -161,6 +196,18 @@ sub format_frequencies {
   }
   
   unshift @header_row, { key => 'pop', align =>'left', title => ($is_somatic ? 'Sample' : 'Population'), sort => 'html' };
+  
+  if (exists $columns{'Allele count'}) {
+    push @header_row, { key => 'Allele count', align => 'left', title => 'Allele count', sort => 'none' };
+  }
+  
+  if (exists $columns{'Genotype count'}) {
+    push @header_row, { key => 'Genotype count', align => 'left', title => 'Genotype count', sort => 'none' };
+  }
+  
+  if($self->object->counts->{'individuals'}) {
+    push @header_row, { key => 'detail', align => 'left', title => 'Genotype detail', sort => 'none'};
+  }
   
   $table->add_columns(@header_row);
   $table->add_rows(@rows);

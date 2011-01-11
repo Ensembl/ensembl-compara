@@ -156,7 +156,9 @@ sub content {
   my %descriptions;
   $descriptions{$_->dbID} = $_->description foreach @{$pop_adaptor->fetch_all_by_dbID_list([keys %all_pops])};
   
-  if(defined($selected_pop)) {
+  if(defined($selected_pop) || (scalar keys %rows == 1)) {
+    $selected_pop = (keys %rows)[0] if !defined($selected_pop);
+    
     my $table = $self->new_table([], [], {  data_table => 1, sorting => [ 'Individual asc' ], exportable => 0, id => "${selected_pop}_table"  });
     
     $table->add_columns($self->get_table_headings());
