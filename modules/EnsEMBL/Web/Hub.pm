@@ -559,6 +559,7 @@ sub get_data_from_session {
   my ($self, $status, $type, $id) = @_;
   my ($content, $format, $name);
   my $tempdata = {};
+  my $species  = $self->param('species') || $self->species;
 
   if ($status eq 'temp') {
     $tempdata = $self->session->get_data('type' => $type, 'code' => $id);
@@ -572,7 +573,7 @@ sub get_data_from_session {
 
   # NB this used to be new EnsEMBL::Web... etc but this does not work with the
   # FeatureParser module for some reason, so have to use FeatureParser->new()
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
 
   if ($type eq 'url') {
     my $response = get_url_content($tempdata->{'url'});
