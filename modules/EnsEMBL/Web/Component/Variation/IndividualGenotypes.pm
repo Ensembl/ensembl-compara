@@ -118,10 +118,10 @@ sub content {
       $pop_names{$pop_id} = $pop->{'Name'};
     }
     
-    $genotype =~ s/A/'<span style="color:red">'.$&.'<\/span>'/ge;
+    $genotype =~ s/A/'<span style="color:green">'.$&.'<\/span>'/ge;
     $genotype =~ s/C/'<span style="color:blue">'.$&.'<\/span>'/ge;
     $genotype =~ s/G/'<span style="color:orange">'.$&.'<\/span>'/ge;
-    $genotype =~ s/T/'<span style="color:green">'.$&.'<\/span>'/ge;
+    $genotype =~ s/T/'<span style="color:red">'.$&.'<\/span>'/ge;
     
     #my @alleles = split /\|/, $genotype;
     #for my $i(0..$#alleles) {
