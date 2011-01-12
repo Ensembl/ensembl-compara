@@ -89,6 +89,10 @@ foreach my $index (@indexes) {
   my $start = time;
   $conf->{'directory'} = "$dir/ensembl_$index";
   mkdir $conf->{'directory'}, 0777 unless -e  $conf->{'directory'};
+  if ($index eq 'Variation') {
+    $conf->{'directory_somatic_mutations'} = "$dir/ensembl_SomaticMutation";
+    mkdir $conf->{'directory_somatic_mutations'}, 0777 unless -e $conf->{'directory_somatic_mutations'};
+  }
   foreach my $species ( @species ) {
     $conf->{'species'}   = $species;
     $conf->{'authority'} = $SD->get_config($species,'AUTHORITY');
@@ -413,7 +417,7 @@ sub dumpVariation {
   my $somatic_present = ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
   if ($somatic_present) {
     $counter2 = make_counter(0);
-    $file2 = $conf->{'directory'}."/${VariationDB}_SomaticMutation.xml";
+    $file2 = $conf->{'directory_somatic_mutations'}."/${VariationDB}_SomaticMutation.xml";
     $file2 .= ".gz" unless $nogzip;
     unless ($nogzip) {
       $fh2 = new IO::Zlib;
@@ -651,15 +655,20 @@ sub dumpGenomicAlignment {
   my $COREDB  = $conf->{'dbs'}->{'DATABASE_CORE'};
   my $ESTDB   = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   my $CDNADB  = $conf->{'dbs'}->{'DATABASE_CDNA'};
+  my $RNASEQDB = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs      = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTDB  if $ESTDB;
   $dbs{'cdna'}          = $CDNADB if $CDNADB;
+  $dbs{'rnaseq'}        = $RNASEQDB if $RNASEQDB;
   my %tables = (
     'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
     'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
   );
   my $total_af_c;
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
+
+#    next unless ($db eq 'rnaseq');
+
     my $counter    = make_counter(0);
     my $dbname     = $dbs{$db};
     my $file       = $conf->{'directory'}."/${dbname}_GenomicAlignment.xml";
@@ -1139,12 +1148,16 @@ sub dumpSequence {
 
     #get all seq_regions
     $sth = $conf->{'dbh'}->prepare(qq(
-       SELECT sr.name, sr.length, cs.name, cs.coord_system_id
-         FROM seq_region as sr, coord_system as cs
+       SELECT sr.name, sr.length, cs.name, cs.coord_system_id, srs.synonym
+         FROM coord_system as cs, seq_region as sr
+         LEFT JOIN seq_region_synonym as srs on sr.seq_region_id = srs.seq_region_id
         WHERE sr.coord_system_id = cs.coord_system_id));
     $sth->execute();
-    while( my($name,$length,$type,$cs_id) = $sth->fetchrow_array() ) {
+    my ($old_name,$old_type,$old_length);
+    my $synonyms = [];
+    while( my($name,$length,$type,$cs_id,$syn) = $sth->fetchrow_array() ) {
       my ($prev_name,$prev_length,$mapping_text);
+      next if $type eq 'lrg';
       if ($type eq 'chromosome' && $cs_id != $current_cs_id) {
         # if this is an old seq_region mapped to a new one of the same name then skip it
         if ($mapped_ids->{$cs_id}{$name}) {
@@ -1159,10 +1172,21 @@ sub dumpSequence {
           next;
         }
       }
-      unless ($type eq 'lrg') {
-        &p( SeqLine($dbspecies,$name,$type,1,$length,$length,$name,[],$type,$sanger,$counter), $nogzip, $fh);
+      if ($old_name eq $name) {
+	push @$synonyms, $syn if $syn;
+      }
+      else {
+	if ($old_name) {
+	  &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$old_type,$sanger,$counter), $nogzip, $fh);
+	}
+	$old_name = $name;
+	$old_type = $type;
+	$old_length = $length;
+	$synonyms = [];
+	push @$synonyms, $syn if $syn;
       }
     }
+    &p( SeqLine($dbspecies,$old_name,$old_type,1,$old_length,$old_length,$old_name,$synonyms,$old_type,$sanger,$counter), $nogzip, $fh);
 
     $total_c += footer( $counter->(),$nogzip,$fh);
   }
@@ -1192,7 +1216,7 @@ sub SeqLine {
   print LOG "WARNING: no type set for $name" unless $type;
   my $action = $len > 0.5e6 ? 'Overview' : 'View';
   my $r = "$sr:$start-$end";
-  my $desc = ($name eq $sr) ? "$type $name has a length of $len bp" : "$type $name (length $len bp) is mapped to $sr_type $sr.";
+  my $desc = ($name eq $sr) ? "$type $name has a length of $len bp." : "$type $name (length $len bp) is mapped to $sr_type $sr.";
   my $extra_desc = '';
 
   #deal with any synonyms
@@ -1273,11 +1297,11 @@ sub dumpGene {
   my $conf      = shift;
   my $dbspecies = $conf->{'species'};
   my $COREDB    = $conf->{'dbs'}->{'DATABASE_CORE'};
-  my $SANGDB    = $conf->{'dbs'}->{'DATABASE_VEGA'};
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
+  my $RNASEQDB = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
-#  $dbs{'vega'}          = $SANGDB    if $SANGDB;   #commented out since we don't need these in e60!
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
+#  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
 
   my $total_c;
  DB:
@@ -1372,7 +1396,7 @@ sub dumpGene {
     $sql = qq(
       SELECT gsi.gene_id, tsi.transcript_id, trsi.translation_id,
              gsi.stable_id as gsid, tsi.stable_id as tsid, trsi.stable_id as trsid,
-             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype
+             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype, a.logic_name
         FROM ((( $dbname.gene_stable_id as gsi, $dbname.gene as g,
              $dbname.transcript_stable_id as tsi,
              $dbname.analysis_description as ad,
@@ -1392,11 +1416,12 @@ sub dumpGene {
     $sth->execute();
 
     my $old;
-    my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype);
+    my ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype) = @$r;
+      ($gid,$tid,$tlid,$gsid,$tsid,$tlsid,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
+      next if ($ln =~ /rnaseq/);
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
