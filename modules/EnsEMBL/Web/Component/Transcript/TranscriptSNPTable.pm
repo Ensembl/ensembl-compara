@@ -59,6 +59,7 @@ sub content {
     }
   }
   
+  $html .= "<h2>Variations in $_:</h2>$tables{$_}" for keys %tables;
   $html .= $self->_info('Configuring the display', sprintf('
     <p>These %ss are displayed by default: <b>%s.</b><br />
     Select the "Configure this page" link in the left hand menu to customise which %ss and types of variation are displayed in the tables above.</p>',
