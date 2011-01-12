@@ -37,24 +37,32 @@ sub content {
   }
   
   # more than one table
-  else { 
-    foreach my $sub_array(@{$table_array}) {
+  else {
+    my %table_order = (
+      '1000'   => 1,
+      'HapMap' => 2,
+      'Other'  => 3,
+      'Failed' => 4,
+    );
+    
+    foreach my $sub_array(sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @{$table_array}) {
       
       my ($title, $table) = @{$sub_array};
       
-      # hide "other" table
-      if ($title =~ /other/i) {
+      # hide "other" and "failed" table
+      if ($title =~ /other|failed/i) {
+        my $id = ($title =~ /other/i ? 'other_table' : 'failed_table');
         $table->add_option('data_table', 'toggle_table hide');
-        $table->add_option('id', 'other_table');
+        $table->add_option('id', $id.'_table');
         
         $html .= sprintf('
-          <div class="toggle_button" id="other">
+          <div class="toggle_button" id="%s">
             <h2 style="float:left">%s</h2>
             <em class="closed" style="margin:3px"></em>
             <p class="invisible">.</p>
           </div>
           %s
-        ', $title, $table->render);
+        ', $id, $title, $table->render);
       }
       
       else {     
@@ -77,10 +85,9 @@ sub format_frequencies {
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
   
-  # split off 1000 genomes if present
+  # split off 1000 genomes, HapMap and failed if present
   if(!defined($tg_flag)) {
-    my $tg_data;
-    my $hm_data;
+    my ($tg_data, $hm_data, $fv_data);
     
     foreach my $pop_id(keys %$freq_data) {
       foreach my $ssid(keys %{$freq_data->{$pop_id}}) {
@@ -92,12 +99,19 @@ sub format_frequencies {
           $hm_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
           delete $freq_data->{$pop_id}{$ssid};
         }
+        elsif($freq_data->{$pop_id}{$ssid}{failed_desc} || $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000genomes/i) {
+          $fv_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
+          $fv_data->{$pop_id}{$ssid}{failed_desc} ||= '1000 genomes data replaced by direct import';
+          $fv_data->{$pop_id}{$ssid}{failed_desc} =~ s/Variation/'Variation '.$ssid/e;
+          delete $freq_data->{$pop_id}{$ssid};
+        }
       }
     }
     
     # recurse this method with just the tg_data and a flag to indicate it
     push @{$table_array},  @{$self->format_frequencies($tg_data, '1000 genomes')} if $tg_data;
     push @{$table_array},  @{$self->format_frequencies($hm_data, 'HapMap')} if $hm_data;
+    push @{$table_array},  @{$self->format_frequencies($fv_data, 'Failed data')} if $fv_data;
   }
 
   foreach my $pop_id (keys %$freq_data) {
@@ -150,6 +164,8 @@ sub format_frequencies {
         
       $pop_row{'Description'} = $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Description'} if $is_somatic;
       
+      $pop_row{'failed'} = $freq_data->{$pop_id}{$ssid}{failed_desc} if $tg_flag =~ /failed/i;
+      
       # Super and sub populations ----------------------------------------------
       my $super_string = $self->sort_extra_pops($freq_data->{$pop_id}{$ssid}{'pop_info'}{'Super-Population'});
       $pop_row{'Super-Population'} = $super_string;
@@ -182,7 +198,7 @@ sub format_frequencies {
   my @header_row;
   
   foreach my $col (sort { $b cmp $a } keys %columns) {
-    next if $col =~ /pop|ssid|submitter|Description|detail|count/;
+    next if $col =~ /pop|ssid|submitter|Description|detail|count|failed/;
     unshift @header_row, { key => $col, align => 'left', title => $col, sort => 'numerical' };
   }
   
@@ -209,11 +225,15 @@ sub format_frequencies {
     push @header_row, { key => 'detail', align => 'left', title => 'Genotype detail', sort => 'none'};
   }
   
+  if($columns{'failed'}) {
+    push @header_row, { key => 'failed', align => 'left', title => 'Failed description', sort => 'string'};
+  }
+  
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
   
   
-  push @{$table_array}, [($tg_flag ? $tg_flag : 'Other data ('.(scalar @rows).')'), $table];
+  push @{$table_array}, [($tg_flag ? $tg_flag : 'Other data').' ('.(scalar @rows).')', $table];
 
   return $table_array;
 }
