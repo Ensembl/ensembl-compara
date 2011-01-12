@@ -59,7 +59,6 @@ sub content {
     }
   }
   
-  $html .= "<h2>Variations in $_:</h2>$tables{$_}" for keys %tables;
   $html .= $self->_info('Configuring the display', sprintf('
     <p>These %ss are displayed by default: <b>%s.</b><br />
     Select the "Configure this page" link in the left hand menu to customise which %ss and types of variation are displayed in the tables above.</p>',
@@ -75,6 +74,14 @@ sub get_page_data {
   my $object     = $self->object;
   my $transcript = $object->Obj;
   my %snp_data;
+  
+  my $base_url = $hub->url({
+    'type' => 'Variation',
+    'action' => 'Summary',
+    'v' => undef ,
+    'vf' => undef,
+    'source' => undef
+  });
 
   foreach my $sample (@$samples) {
     my $munged_transcript = $object->get_munged_slice('tsv_transcript',  $hub->param('context') eq 'FULL' ? 1000 : $hub->param('context'), 1) || warn "Couldn't get munged transcript";
@@ -105,8 +112,6 @@ sub get_page_data {
       my $chr_start  = $allele->start + $offset;
       my $chr_end    = $allele->end   + $offset;
       my $class      = $object->var_class($allele);
-      $class         = $chr_start > $chr_end ? 'Insertion' : 'Deletion' if $class eq 'in-del';
-      $class         =~ s/snp/SNP/;
       my $codon      = $conseq_type->codon;
       my $chr        = $sample_slice->seq_region_name;
       my $aa_alleles = $conseq_type->aa_alleles || [];
@@ -114,14 +119,9 @@ sub get_page_data {
       $aa_coord     .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
       my $cds_coord  = $conseq_type->cds_start;
       $cds_coord    .= '-' . $conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
-      my $sources    = join ', ' , @{$allele->get_all_sources || []};
-      my $vid        = $allele->variation_name;
-      my $source     = $allele->source;
-      my $vf         = $allele->variation->dbID; 
-      my $url        = $hub->url({ type => 'Variation', action => 'Summary', v => $vid , vf => $vf, source => $source });
-      my $hgvs       = join ', ', values %{$allele->variation_feature->get_all_hgvs_notations($transcript, 'c')}; 
-      my ($pos, $status);
       
+      
+      my ($pos, $status);
       if ($chr_end < $chr_start) {
         $pos = "between&nbsp;$chr_end&nbsp;&amp;&nbsp;$chr_start";
       } elsif ($chr_end > $chr_start) {
@@ -136,6 +136,7 @@ sub get_page_data {
         $codon =~ s/(\w{$position})(\w)(.*)/$1<b>$2<\/b>$3/;
       }
       
+      # read coverage in mouse?
       if (grep $_ eq 'Sanger', @{$allele->get_all_sources || []}) {
         my $allele_start = $allele->start;
         my $coverage;
@@ -154,23 +155,21 @@ sub get_page_data {
         $status        = join ', ',  @validation;
         $status        =~ s/freq/frequency/;
       }
-
-      # Other
-      my $chr = $sample_slice->seq_region_name;
-      my $aa_alleles = $conseq_type->aa_alleles || [];
-      my $aa_coord = $conseq_type->aa_start;
-      $aa_coord .= $aa_coord == $conseq_type->aa_end ? "": $conseq_type->aa_end;
-      my $cds_coord = $conseq_type->cds_start;
-      $cds_coord .= "-".$conseq_type->cds_end unless $conseq_type->cds_start == $conseq_type->cds_end;
-      my $sources = join ", " , @{$allele->get_all_sources || [] };
+      
+      # url
       my $vid = $allele->variation_name;
       my $source = $allele->source;
       my $vf = $allele->variation->dbID; 
-      my $url = $hub->url({'type' => 'Variation', 'action' => 'Summary',  'v' => $vid , 'vf' => $vf, 'source' => $source });
+      my $url = $base_url.qq{;v=$vid;vf=$vf;source=$source};
+      
+      # source
+      #my $sources = join ", " , @{$allele->get_all_sources || [] };
+      my $sources = $source;
+      
+      # hgvs
       my @hgvs = values %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
       s/ENS(...)?[TG]\d+(\.\d+)?\://g for @hgvs;
       my $hgvs = join ", ", @hgvs;
-      my %hgvs = %{$allele->variation_feature->get_all_hgvs_notations($object->transcript, 'c')};
       
       my $row = {
         ID          => sprintf('<a href="%s">%s</a>', $url, $allele->variation_name),

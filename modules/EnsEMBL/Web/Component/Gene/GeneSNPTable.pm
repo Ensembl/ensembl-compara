@@ -261,7 +261,7 @@ sub variation_table {
         
         my $row = {
           ID         => qq{<a href="$url">$variation_name</a>},
-          class      => $var_class eq 'in-del' ? ($start > $end ? 'insertion' : 'deletion') : $var_class,
+          class      => $var_class,
           Alleles    => qq{<span style="font-family:Courier New,Courier,monospace;">$as</span>},
           Ambiguity  => $snp->ambig_code,
           status     => (join(', ',  @$validation) || '-'),

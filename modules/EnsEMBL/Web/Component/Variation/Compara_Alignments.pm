@@ -72,7 +72,7 @@ sub get_sequence_data {
         my $start          = $_->start;
         my $end            = $_->end;
         my $alleles        = $_->allele_string;
-        my $ambigcode      = $var_class eq 'in-del' ? '*' : $_->ambig_code;
+        my $ambigcode      = $var_class =~ /in\-del|insertion|deletion/ ? '*' : $_->ambig_code;
         my $url            = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
         my $var            = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
         
@@ -99,7 +99,7 @@ sub get_sequence_data {
         my $seq_region_start = $snp->seq_region_start;
         my $seq_region_end   = $snp->seq_region_end;
         
-        if ($var_class eq 'in-del') {
+        if ($var_class =~ /in\-del|insertion|deletion/) {
           ($s, $e)  = ($e, $s) if $s > $e;
         }
         

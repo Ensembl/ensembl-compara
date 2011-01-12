@@ -125,7 +125,7 @@ sub count_prot_variations {
   my %count;
   
   # coding SNP only
-  foreach my $snp (grep $_->var_class =~ /^(snp|SNP - substitution|in-del)$/, @{$transcript->get_all_cdna_SNPs('variation')->{'coding'}}) {
+  foreach my $snp (grep $_->var_class =~ /^(snp|SNP - substitution|in-del|insertion|deletion)$/, @{$transcript->get_all_cdna_SNPs('variation')->{'coding'}}) {
     $count{int(($_ - $cd_start) / 3)}++ for $snp->start..$snp->end;
   }
   
@@ -656,7 +656,7 @@ sub getAllelesConsequencesOnSlice {
 
   my @filtered_af =
     sort { $a->[2]->start <=> $b->[2]->start }
-    grep { $valids->{'opt_class_' . $self->var_class($_->[2])} }                           # [ fake_s, fake_e, AF ] Filter our unwanted classes
+    grep { $valids->{'opt_class_' . lc($self->var_class($_->[2]))} }                           # [ fake_s, fake_e, AF ] Filter our unwanted classes
     grep { scalar map { $valids->{'opt_' . lc $_} ? 1 : () } @{$_->[2]->get_all_sources} } # [ fake_s, fake_e, AF ] Filter our unwanted sources
     map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () }  # [ fake_s, fake_e, AlleleFeature ] Filter out AFs not on munged slice
     map  {[ $_, $self->munge_gaps($key, $_->start, $_->end) ]}                             # [ AF, offset ] Map to fake coords. Create a munged version AF
@@ -1657,7 +1657,7 @@ sub variation_data {
       pep_snp       => join(', ', split '/', $tv->pep_allele_string),
       type          => $tv->display_consequence,
       length        => $end - $start,
-      indel         => $vf->var_class eq 'in-del' ? ($start > $end ? 'insert' : 'delete') : '',
+      indel         => $vf->var_class =~ /in\-del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
       codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
       codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
     };
