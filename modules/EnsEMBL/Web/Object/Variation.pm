@@ -577,6 +577,9 @@ sub freqs {
     next unless $pop_obj;
     my $pop_id  = $self->pop_id($pop_obj);
     my $ssid = $allele_obj->subsnp;
+    
+    # failed status
+    $data{$pop_id}{$ssid}{failed_desc} = $allele_obj->failed_description if $allele_obj->is_failed;
    
     push (@{ $data{$pop_id}{$ssid}{AlleleFrequency} }, $allele_obj->frequency);
     push (@{ $data{$pop_id}{$ssid}{AlleleCount} }, $allele_obj->count);
