@@ -1,22 +1,22 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf320
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
 {\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Monaco;}
 {\colortbl;\red255\green255\blue255;\red8\green58\blue165;}
 \paperw11900\paperh16840\margl1440\margr1440\vieww21120\viewh13560\viewkind0
 \deftab720
 \pard\pardeftab720\ql\qnatural
 
-\f0\b\fs48 \cf0 Functional Genomics (Funcgen) API Tutorial
+\f0\b\fs48 \cf0 Ensembl Functional Genomics (funcgen) API Tutorial
 \fs36 \
 \
 Introduction\
 \
 \pard\pardeftab720\sa240\ql\qnatural
 
-\b0\fs24 \cf0 This tutorial is an introduction to the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/funcgen/index.html"}}{\fldrslt \cf2 \ul \ulc2 Funcgen API}}. Knowledge of the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/core/index.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API}}\'a0and of the concepts and conventions in the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/core/core_tutorial.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API tutorial}}\cf2 \ul \ulc2  \cf0 \ulnone is assumed. Please note that the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/api_installation.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API}}\'a0must also be installed to use the Functional Genomics API.\
+\b0\fs24 \cf0 This tutorial is an introduction to the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/funcgen/index.html"}}{\fldrslt \cf2 \ul \ulc2 Funcgen API}}. Knowledge of the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/core/index.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API}}\'a0and of the concepts and conventions in the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/core/core_tutorial.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API tutorial}}\cf2 \ul \ulc2  \cf0 \ulnone is assumed. Please note that the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/api_installation.html"}}{\fldrslt \cf2 \ul Ensembl Core API}}\'a0must also be installed to use the Functional Genomics API.\
 \
 \pard\pardeftab720\sa280\ql\qnatural
 
-\b\fs36 \cf0 Connecting an Ensembl funcgen database\
+\b\fs36 \cf0 Connecting to an Ensembl funcgen database\
 \pard\pardeftab720\sa240\ql\qnatural
 
 \b0\fs24 \cf0 Connecting to any Ensembl database is made simple by using the Bio::EnsEMBL::Registry module:\
@@ -33,9 +33,6 @@ $registry->load_registry_from_db(\
     -user => 'anonymous'\
 );\
 \
-#Grab the eFG adaptor\
-my $efg_db           = $registry->get_DBAdaptor('Human', 'funcgen');\
-\
 \pard\pardeftab720\sa240\ql\qnatural
 
 \f0\fs24 \cf0 The use of the registry ensures you will load the correct versions of the Ensembl databases for the software release it can find on a database instance. Using the registry object, you can then create any of number of database adaptors. Each of these adaptors is responsible for generating an object of one type. The above code will be omitted from the following examples for brevity.\
@@ -46,11 +43,11 @@ my $efg_db           = $registry->get_DBAdaptor('Human', 'funcgen');\
 \cf0 RegulatoryFeatures \
 \pard\pardeftab720\sa240\ql\qnatural
 
-\b0\fs24 \cf0 The Ensembl '{\field{\*\fldinst{HYPERLINK "/info/docs/funcgen/index.html"}}{\fldrslt \cf2 \ul \ulc2 RegulatoryBuild}}\cf2 \ul \ulc2 '\cf0 \ulnone  combines annotations across all available cell line data to generate multiple FeatureSets. The examples show how to fetch these sets, there underlying data the features for a given Slice or stable ID.\
+\b0\fs24 \cf0 The Ensembl '{\field{\*\fldinst{HYPERLINK "/info/docs/funcgen/index.html"}}{\fldrslt \cf2 \ul RegulatoryBuild}}\cf2 \ul '\cf0 \ulnone  combines annotations across all available cell line data to generate multiple FeatureSets. The examples show how to fetch these sets, there underlying data the features for a given Slice or stable ID.\
 \pard\pardeftab720\sl280\ql\qnatural
 
-\f1\fs20 \cf0 my $fset_adaptor = $efgdb->get_FeatureSetAdaptor();\
-my $dset_adaptor = $efgdb->get_DataSetAdaptor();\
+\f1\fs20 \cf0 my $fset_adaptor = $registry->get_adaptor('Human','funcgen','featureset');\
+my $dset_adaptor = $registry->get_adaptor('Human','funcgen','dataset');\
 \
 #List all regulatory FeatureSets\
 my @rf_fsets = @\{$fset_adaptor->fetch_all_by_feature_class('regulatory')\};\
@@ -81,13 +78,13 @@ foreach my $sset(@ssets)\{\
 \
 \
 #How about some features from a slice?\
-my $slice = $efgdb->dnadb->get_SliceAdaptor->fetch_by_region('chromosome', 1, 54960000, 54980000);\
+my $slice_adaptor = $registry->get_adaptor('Human', 'core', 'slice');\
+my $slice = $slice_adaptor->fetch_by_region('chromosome', 1, 54960000, 54980000);\
 \
 #Using the easy access wrapper method\
 my @regfeats = @\{$rf_fset->get_Features_by_Slice($slice)\};\
 \
-print "\\n\\nFound ".scalar(@regfeats)." ".$rf_fset->cell_type->name.\
-  " RegulatoryFeature on ".$slice->name."\\n";\
+print "\\n\\nFound ".scalar(@regfeats)." ".$rf_fset->cell_type->name." RegulatoryFeature on ".$slice->name."\\n";\
 \
 #Now let's see exactly what they are\
 foreach my $regf(@regfeats)\{\
@@ -96,18 +93,13 @@ foreach my $regf(@regfeats)\{\
   #Local coords\
   print "Bound/Core start/ends\\t".$regf->bound_start."\\t".$regf->start."\\t".$regf->end."\\t".$regf->bound_end."\\n";\
 \
-  #Now print exactly what consitutes the RegualtoryFeatures\
-  foreach my $attrib_feat(@\{$regf->regulatory_attributes\})\{\
-	print "\\t".$attrib_feat->feature_type->name."\\n";\
-  \}\
 \}\
 \
-\
 #Now let's use the RegulatoryFeatureAdaptor to pull back the default MultiCell feature for a given stable ID\
-my $regfeat_adaptor = $efgdb->get_RegulatoryFeatureAdaptor;\
-my $regf            = $regfeat_adaptor->fetch_by_stable_id('ENSR00000131372');\
+my $regfeat_adaptor = $registry->get_adaptor('Human','funcgen','regulatoryfeature'); \
+my $regf            = $regfeat_adaptor->fetch_by_stable_id('ENSR00000165384');\
 \
-#This will have the no have any annotation as it only consists of core/focus features\
+#This will have no annotation as it only consists of core/focus features\
 print $regf->stable_id.':'.$regf->feature_type->name."\\n";
 \f0\fs24 \
 \
@@ -121,10 +113,8 @@ print $regf->stable_id.':'.$regf->feature_type->name."\\n";
 \b0\fs24 \cf0 This code demonstrates the retrieval of peak calls generated by the eFG analysis pipeline.  In this particular case, the CTCF binding sites determined from a ChIP-Chip analysis. For more information about the CTCF binding sites, see this\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/funcgen/index.html"}}{\fldrslt \cf2 \ul article}}\'a0(especially reference number 2).\
 \pard\pardeftab720\ql\qnatural
 
-\f1\fs20 \cf0 my $dataset_adaptor  = $efg_db->get_DataSetAdaptor;\
-\
-#Grab the CTCF data set\
-my $data_set         = $dataset_adaptor->fetch_by_name('Nessie_NG_STD_2_ctcf_ren_BR1');\
+\f1\fs20 \cf0 #Grab a CTCF data set\
+my $data_set         = $dset_adaptor->fetch_by_name('Nessie_NG_STD_2_ctcf_ren_BR1');\
 \
 #Grab underlying supporting sets\
 my @supporting_sets  = @\{$data_set->get_supporting_sets\};\
@@ -147,9 +137,8 @@ print 'Produced by analysis '.$pfset->analysis->logic_name."\\n";\
 \pard\pardeftab720\ql\qnatural
 \cf0 \
 #Grab the adaptors\
-my $rset_adaptor  = $efg_db->get_ResultSetAdaptor;\
-my $exp_adaptor   = $efg_db->get_ExperimentAdaptor;\
-my $slice_adaptor = $efg_db->get_SliceAdaptor;\
+my $rset_adaptor  = $registry->get_adaptor('Human','funcgen','resultset'); \
+my $exp_adaptor   = $registry->get_adaptor('Human','funcgen','experiment');\
 \
 #Grab a the CTCF experiment\
 my $exp           = $exp_adaptor->fetch_by_name('ctcf_ren');\
@@ -163,14 +152,14 @@ my @rsets = @\{$rset_adaptor->fetch_all_by_Experiment($exp)\};\
 \
 foreach my $rset(@rsets)\{\
   print "\\tResultSet:\\t".$rset->name."\\n";\
-  #IMPORT is the top level import ser\
+  #IMPORT is the top level import set\
   #BR = Biological Replicate\
-  #TR = Techinical Replicate\
+  #TR = Technical Replicate\
 \}\
 \
 \
 #Grab a slice to retrieve some ResultFeatures\
-my $slice = $slice_adaptor->fetch_by_region('chromosome', 'X', 1, 100000);\
+$slice = $slice_adaptor->fetch_by_region('chromosome', 'X', 1, 100000);\
 \
 #We can also grab the ResultSet directly\
 #Assign array to one var as we know there is only one entry in the DB for this name\
@@ -208,8 +197,7 @@ Externally curated FeatureSets
 \pard\pardeftab720\ql\qnatural
 \cf0 \
 #Grab and list all the external feature sets\
-my $featureset_adaptor = $efg_db->get_FeatureSetAdaptor;\
-my @ext_fsets = @\{$featureset_adaptor->fetch_all_by_type('external')\};\
+my @ext_fsets = @\{$fset_adaptor->fetch_all_by_type('external')\};\
 \
 foreach my $ext_fset(@ext_fsets)\{\
   print "External FeatureSet:\\t".$ext_fset->name."\\n";\
@@ -227,8 +215,7 @@ foreach my $ext_fset(@ext_fsets)\{\
 \f1\fs20 \
 \pard\pardeftab720\ql\qnatural
 \cf0 #Grab the adaptors\
-my $efg_db        = $registry->get_DBAdaptor('Human', 'funcgen');\
-my $array_adaptor = $efg_db->get_ArrayAdaptor;\
+my $array_adaptor = $registry->get_adaptor('Human','funcgen','array');\
 \
 #Grab all the arrays\
 my @array         = @\{$array_adaptor->fetch_all\};\
@@ -256,25 +243,12 @@ foreach my $array ( @array )\{\
 \b0\fs24 \cf0 In this example, probesets from the NIMBLEGEN HG17 tiling array are obtained.\
 \pard\pardeftab720\ql\qnatural
 
-\f1\fs20 \cf0 use strict;\
-use warnings;\
-use Bio::EnsEMBL::Registry;\
-\
-my $registry = 'Bio::EnsEMBL::Registry';\
-\
-$registry->load_registry_from_db(\
-    -host => 'ensembldb.ensembl.org',\
-    -user => 'anonymous'\
-);\
-\
-#Grab the adaptors\
-my $efg_db           = $registry->get_DBAdaptor('Human', 'funcgen');\
-my $probe_adaptor    = $efg_db->get_ProbeAdaptor;\
-my $pfeature_adaptor = $efg_db->get_ProbeFeatureAdaptor;\
+\f1\fs20 \cf0 #Grab the adaptors\
+my $probe_adaptor    = $registry->get_adaptor('Human','funcgen','probe');\
+my $pfeature_adaptor = $registry->get_adaptor('Human','funcgen','probefeature'); \
 \
 #Grab a probe from the HG17 array\
-my $probe            = $probe_adaptor->fetch_by_array_probe_probeset_name\
-  ('2005-05-10_HG17Tiling_Set', 'chr22P38797630');\
+my $probe            = $probe_adaptor->fetch_by_array_probe_probeset_name('2005-05-10_HG17Tiling_Set', 'chr22P38797630');\
 print "Got ".$probe->class." probe ".$probe->get_probename."\\n";\
 \
 #Grab the feature associated with this probe\
