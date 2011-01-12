@@ -166,8 +166,14 @@ sub template_RELEASE {
 
 sub template_INCLUDE {
   my ($self, $include) = @_;
-  my $static_server = $self->static_server;
-     $static_server = '' if $static_server eq $self->hub->species_defs->ENSEMBL_BASE_URL; # must use $self->hub->species_defs rather than $self->species_defs because this function is called directly by Components
+  my $hub = $self && $self->can('hub') ? $self->hub : undef;
+  my $static_server;
+
+  if ($hub) {
+    $static_server = $self->static_server;
+    $static_server = '' if $static_server eq $hub->species_defs->ENSEMBL_BASE_URL; # must use $hub->species_defs rather than $self->species_defs because this function is called directly by Components
+  }
+
   my $content;
   
   $include =~ s/\{\{([A-Z]+)::([^\}]+)\}\}/my $m = "template_$1"; $self->$m($2);/ge;
@@ -186,8 +192,8 @@ sub template_INCLUDE {
     }
   }
   
-  # using $self->hub->apache_handle instead of $self->r because this function is also called by Component modules, providing THEIR $self as this $self
-  $self->hub->apache_handle->log->error('Cannot include virtual file: does not exist or permission denied ', $include);
+  # using $hub->apache_handle instead of $self->r because this function is also called by Component modules, providing THEIR $self as this $self
+  $hub->apache_handle->log->error('Cannot include virtual file: does not exist or permission denied ', $include);
   
   return $content;
 }
