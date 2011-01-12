@@ -152,44 +152,51 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
     
-    this.elLk.img.bind('mousemove', function (e) {
-      if (panel.dragging !== false) {
-        return;
-      }
-      
-      var area  = panel.getArea(panel.getMapCoords(e));
-      var hover = false;
-      
-      if (area && area.a) {
-        if ($(area.a).hasClass('label')) {
-          var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
-          
-          if (!label.hasClass('active')) {
-            panel.elLk.hoverLabels.removeClass('active');
-            label.addClass('active');
-            
-            clearTimeout(panel.hoverTimeout);
-            
-            panel.hoverTimeout = setTimeout(function () {
-              var offset = panel.elLk.img.offset();
-              
-              panel.elLk.hoverLabels.hide().filter('.active').css({
-                left:     area.l + offset.left,
-                top:      area.t + offset.top,
-                display: 'block'
-              });
-            }, 100);
-          }
-          
-          hover = true;
-        } else if ($(area.a).hasClass('nav')) { // Used to title tags on navigation controls in multi species view
-          panel.elLk.img.attr('title', area.a.alt);
+    this.elLk.img.bind({
+      mousemove: function (e) {
+        if (panel.dragging !== false) {
+          return;
         }
-      }
-      
-      if (hover === false) {
-        clearTimeout(panel.hoverTimeout);
-        panel.elLk.hoverLabels.removeClass('active');
+        
+        var area  = panel.getArea(panel.getMapCoords(e));
+        var hover = false;
+        
+        if (area && area.a) {
+          if ($(area.a).hasClass('label')) {
+            var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
+            
+            if (!label.hasClass('active')) {
+              panel.elLk.hoverLabels.removeClass('active');
+              label.addClass('active');
+              
+              clearTimeout(panel.hoverTimeout);
+              
+              panel.hoverTimeout = setTimeout(function () {
+                var offset = panel.elLk.img.offset();
+                
+                panel.elLk.hoverLabels.hide().filter('.active').css({
+                  left:     area.l + offset.left,
+                  top:      area.t + offset.top,
+                  display: 'block'
+                });
+              }, 100);
+            }
+            
+            hover = true;
+          } else if ($(area.a).hasClass('nav')) { // Used to title tags on navigation controls in multi species view
+            panel.elLk.img.attr('title', area.a.alt);
+          }
+        }
+        
+        if (hover === false) {
+          clearTimeout(panel.hoverTimeout);
+          panel.elLk.hoverLabels.removeClass('active');
+        }
+      },
+      mouseleave: function (e) {
+        if (e.relatedTarget && !$(e.relatedTarget).parents('.hover_label').length) {
+          panel.elLk.hoverLabels.removeClass('active').hide();
+        }
       }
     });
     
