@@ -47,7 +47,8 @@ The Ensembl Funcgen (eFG) DB can be thought of as containing three distinct type
 		  <li><a href="../core/core_schema.html#analysis_description">analysis_description</a></li>
 		  <li><a href="../core/core_schema.html#xref">xref</a></li>
 		  <li><a href="../core/core_schema.html#object_xref">object_xref</a></li>
-		  <li><a href="../core/core_schema.html#identity_xref"></a></li>
+		  <li><a href="../core/core_schema.html#identity_xref">indentity_xref</a></li>
+          <li><a href="../core/core_schema.html#ontology_xref">ontology_xref</a></li>
 		  <li><a href="../core/core_schema.html#external_db">external_db</a></li>
 		  <li><a href="../core/core_schema.html#external_synonym">external_synonym</a></li>
 		</ul>
@@ -77,8 +78,8 @@ The Ensembl Funcgen (eFG) DB can be thought of as containing three distinct type
 	  <li><a href="#result">result</a></li>
 	  <li><a href="#result_feature">result_feature</a></li>	 	  
 	  <li><a href="#result_set">result_set</a></li>
-      <li><a href="#experimental_set">experimental_set</a></li>
-	  <li><a href="#experimental_subset">experimental_subset</a></li>
+      <li><a href="#input_set">input_set</a></li>
+	  <li><a href="#input_subset">input_subset</a></li>
 	</ul>
   </li>
 
@@ -100,11 +101,15 @@ The Ensembl Funcgen (eFG) DB can be thought of as containing three distinct type
 		  <li><a href="#external_feature">external_feature</a></li>
 		  <li><a href="#regulatory_feature">regulatory_feature</a></li>
 		  <li><a href="#regulatory_attribute">regulatory_attribute</a></li>
+		  <li><a href="#motif_feature">motif_feature</a></li>
+		  <li><a href="#associated_motif_feature">associated_motif_feature</a></li>
+		  <li><a href="#binding_matrix">binding_matrix</a></li>
+
      </ul>
   </li>
 
   <li><p><strong>Association Data Tables</strong></p>
-    <ul>
+    <ul> 
       <li><a href="#data_set">data_set</a></li>
       <li><a href="#supporting_set">supporting_set</a></li>
     </ul>
@@ -1065,33 +1070,34 @@ mysql> select rs.* from result_set rs, analysis a where a.logic_name='SangerPCR'
 <!--
 #####################################################################
 #####################################################################
-TABLE experimental_set
+TABLE input_set
 #####################################################################
 #####################################################################
 -->
-<h4 id="experimental_set">experimental_set</h4>
+<h4 id="input_set">input_set</h4>
 
-<p>The experimental_set and experimental_subset tables provides a generic import for pre-processed functional genomics data which does follow the micro-array technology paradigm. As technology moves fast in the field of functional genoics, this provides a convenient way to incorporate new data which would otherwise be outside the eFG DB and the analyses it supports. This has been very useful with the rapid adoption of the various 2nd generation sequencing platforms.</p>
+<p>The input_set and input_subset tables provides a generic import for pre-processed functional genomics data which does follow the micro-array technology paradigm. As technology moves fast in the field of functional genomics, this provides a convenient way to incorporate new data which would otherwise be outside the eFG DB and the analyses it supports. This has been very useful with the rapid adoption of the various 2nd generation sequencing platforms.</p>
 
 
 <p>
-The experimental_set table can be thought of as analagous to the result_set table, defining technical and biological replicate sets within a given experiment.</p>
+The input_set table can be thought of as analagous to the result_set table, defining technical and biological replicate sets within a given experiment. The destination of the input_set data is defined by the type field, annotated for peak calls and result for signal intesity data i.e. wiggle tracks</p>
 <table class="spreadsheet">
 <thead><tr><th>Table description</th><th>Field Information</th></tr></thead>
   <tbody>
     <tr>
       <td><pre>
-+---------------------+------------------+------+-----+---------+----------------+
-| Field               | Type             | Null | Key | Default | Extra          |
-+---------------------+------------------+------+-----+---------+----------------+
-| experimental_set_id | int(10) unsigned | NO   | PRI | NULL    | auto_increment |
-| experiment_id       | int(10) unsigned | YES  | MUL | NULL    |                |
-| feature_type_id     | int(10) unsigned | YES  | MUL | NULL    |                |
-| cell_type_id        | int(10) unsigned | YES  | MUL | NULL    |                |
-| format              | varchar(20)      | YES  |     | NULL    |                |
-| vendor              | varchar(40)      | YES  |     | NULL    |                |
-| name                | varchar(40)      | NO   | UNI | 0       |                |
-+---------------------+------------------+------+-----+---------+----------------+
++-----------------+----------------------------+------+-----+---------+----------------+
+| Field           | Type                       | Null | Key | Default | Extra          |
++-----------------+----------------------------+------+-----+---------+----------------+
+| input_set_id    | int(10) unsigned           | NO   | PRI | NULL    | auto_increment | 
+| experiment_id   | int(10) unsigned           | YES  | MUL | NULL    |                | 
+| feature_type_id | int(10) unsigned           | YES  | MUL | NULL    |                | 
+| cell_type_id    | int(10) unsigned           | YES  | MUL | NULL    |                | 
+| format          | varchar(20)                | YES  |     | NULL    |                | 
+| vendor          | varchar(40)                | YES  |     | NULL    |                | 
+| name            | varchar(100)               | NO   | UNI | NULL    |                | 
+| type            | enum('annotated','result') | YES  |     | NULL    |                | 
++-----------------+----------------------------+------+-----+---------+----------------+
 </pre></td>
 	<td><pre>
 
@@ -1109,23 +1115,9 @@ Vendor of experimental platform technology
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here are a few example showing experimental_set records for ChIP-Seq experiments:</p>
+<p>Here are a few example showing input_set records for ChIP-Seq experiments:</p>
 <pre>
-mysql> select * from experimental_set limit 10;
-+---------------------+---------------+-----------------+--------------+------------+--------+---------------+
-| experimental_set_id | experiment_id | feature_type_id | cell_type_id | format     | vendor | name          |
-+---------------------+---------------+-----------------+--------------+------------+--------+---------------+
-|                   1 |            13 |               8 |            4 | SEQUENCING | SOLEXA | CD4_DNASE     |
-|                   2 |            14 |               8 |            2 | SEQUENCING | SOLEXA | GM06990_DNASE |
-|                   3 |            19 |               9 |            4 | SEQUENCING | SOLEXA | CD4_CTCF      |
-|                   4 |            16 |              23 |            4 | SEQUENCING | SOLEXA | CD4_H2AZ      |
-|                   5 |            17 |              24 |            4 | SEQUENCING | SOLEXA | CD4_H2BK5me1  |
-|                   6 |            18 |              25 |            4 | SEQUENCING | SOLEXA | CD4_H3K27me1  |
-|                   7 |            20 |              26 |            4 | SEQUENCING | SOLEXA | CD4_H3K27me2  |
-|                   8 |            21 |              11 |            4 | SEQUENCING | SOLEXA | CD4_H3K27me3  |
-|                   9 |            22 |              27 |            4 | SEQUENCING | SOLEXA | CD4_H3K36me1  |
-|                  10 |            23 |              12 |            4 | SEQUENCING | SOLEXA | CD4_H3K36me3  |
-+---------------------+---------------+-----------------+--------------+------------+--------+---------------+
+mysql> 
 </pre>
 
 
@@ -1137,10 +1129,10 @@ TABLE experimental_subset
 #####################################################################
 -->
 
-<h4 id="experimental_subset">experimental_subset</h4>
+<h4 id="input_subset">input_subset</h4>
 
 <p>
-The experimental_subset table simply records the members of the experimental_set. The name field is generic to allow different types subset to be accomodated. Currently the filenames of contributory files are used to keep some form of import tracking. This allows for incremental import to an experimental_set</p>
+The input_subset table simply records the members of the input_set. The name field is generic to allow different types subset to be accomodated. Currently the filenames of contributory files are used to keep some form of import tracking. This allows for incremental import to an input_set</p>
 <table class="spreadsheet">
 <thead><tr><th>Table description</th><th>Field Information</th></tr></thead>
   <tbody>
@@ -1165,7 +1157,7 @@ e.g. file name
 </pre></td></tr>
 </tbody>
 </table>
-<p>Here we see the filenames for each experimental_set have been recorded:</p>
+<p>Here we see the filenames for each input_set have been recorded:</p>
 <pre>
 mysql> select * from experimental_subset limit 10;
 +------------------------+---------------------+--------------------------------+
