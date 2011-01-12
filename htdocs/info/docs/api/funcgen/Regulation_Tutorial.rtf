@@ -1,0 +1,311 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Monaco;}
+{\colortbl;\red255\green255\blue255;\red8\green58\blue165;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww21120\viewh13560\viewkind0
+\deftab720
+\pard\pardeftab720\ql\qnatural
+
+\f0\b\fs48 \cf0 Ensembl Functional Genomics (funcgen) API Tutorial
+\fs36 \
+\
+Introduction\
+\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 This tutorial is an introduction to the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/funcgen/index.html"}}{\fldrslt \cf2 \ul \ulc2 Funcgen API}}. Knowledge of the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/core/index.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API}}\'a0and of the concepts and conventions in the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/core/core_tutorial.html"}}{\fldrslt \cf2 \ul \ulc2 Ensembl Core API tutorial}}\cf2 \ul \ulc2  \cf0 \ulnone is assumed. Please note that the\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/api/api_installation.html"}}{\fldrslt \cf2 \ul Ensembl Core API}}\'a0must also be installed to use the Functional Genomics API.\
+\
+\pard\pardeftab720\sa280\ql\qnatural
+
+\b\fs36 \cf0 Connecting to an Ensembl funcgen database\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 Connecting to any Ensembl database is made simple by using the Bio::EnsEMBL::Registry module:\
+\pard\pardeftab720\ql\qnatural
+
+\f1\fs20 \cf0 use strict;\
+use warnings;\
+use Bio::EnsEMBL::Registry;\
+\
+my $registry = 'Bio::EnsEMBL::Registry';\
+\
+$registry->load_registry_from_db(\
+    -host => 'ensembldb.ensembl.org',\
+    -user => 'anonymous'\
+);\
+\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\f0\fs24 \cf0 The use of the registry ensures you will load the correct versions of the Ensembl databases for the software release it can find on a database instance. Using the registry object, you can then create any of number of database adaptors. Each of these adaptors is responsible for generating an object of one type. The above code will be omitted from the following examples for brevity.\
+\pard\pardeftab720\sa280\ql\qnatural
+
+\b\fs36 \cf0 \
+\pard\pardeftab720\sa240\ql\qnatural
+\cf0 RegulatoryFeatures \
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 The Ensembl '{\field{\*\fldinst{HYPERLINK "/info/docs/funcgen/index.html"}}{\fldrslt \cf2 \ul RegulatoryBuild}}\cf2 \ul '\cf0 \ulnone  combines annotations across all available cell line data to generate multiple FeatureSets. The examples show how to fetch these sets, there underlying data the features for a given Slice or stable ID.\
+\pard\pardeftab720\sl280\ql\qnatural
+
+\f1\fs20 \cf0 my $fset_adaptor = $registry->get_adaptor('Human','funcgen','featureset');\
+my $dset_adaptor = $registry->get_adaptor('Human','funcgen','dataset');\
+\
+#List all regulatory FeatureSets\
+my @rf_fsets = @\{$fset_adaptor->fetch_all_by_feature_class('regulatory')\};\
+\
+foreach my $rf_fset(@rf_fsets)\{\
+  print $rf_fset->name."\\n";\
+\}\
+\
+#Let's investigate the first one\
+my $rf_fset = $rf_fsets[0];\
+my $rf_dset = $dset_adaptor->fetch_by_product_FeatureSet($rf_fset);\
+my @rf_ssets   = @\{$rf_dset->get_supporting_sets\};\
+print "\\n\\n".$rf_fsets[0]->name." has supporting sets:\\n";\
+\
+foreach my $sset(@rf_ssets)\{\
+  print "\\t".ucfirst($sset->feature_class)."Feature Set\\t".$sset->name."\\n";\
+\}\
+\
+\
+#Let's go even further an investigate the raw data for a supporting set\
+my $ss_dset = $dset_adaptor->fetch_by_product_FeatureSet($rf_ssets[0]);\
+my @ssets   = @\{$ss_dset->get_supporting_sets\};\
+print $ssets[0]->name." has supporting sets:\\n";\
+\
+foreach my $sset(@ssets)\{\
+  print "\\t".ucfirst($sset->feature_class)."Feature Set\\t".$sset->name."\\n";\
+\}\
+\
+\
+#How about some features from a slice?\
+my $slice_adaptor = $registry->get_adaptor('Human', 'core', 'slice');\
+my $slice = $slice_adaptor->fetch_by_region('chromosome', 1, 54960000, 54980000);\
+\
+#Using the easy access wrapper method\
+my @regfeats = @\{$rf_fset->get_Features_by_Slice($slice)\};\
+\
+print "\\n\\nFound ".scalar(@regfeats)." ".$rf_fset->cell_type->name." RegulatoryFeature on ".$slice->name."\\n";\
+\
+#Now let's see exactly what they are\
+foreach my $regf(@regfeats)\{\
+  #Print stable ID and feature annotation\
+  print "\\n".$regf->stable_id.":".$regf->feature_type->name."\\n";\
+  #Local coords\
+  print "Bound/Core start/ends\\t".$regf->bound_start."\\t".$regf->start."\\t".$regf->end."\\t".$regf->bound_end."\\n";\
+\
+\}\
+\
+#Now let's use the RegulatoryFeatureAdaptor to pull back the default MultiCell feature for a given stable ID\
+my $regfeat_adaptor = $registry->get_adaptor('Human','funcgen','regulatoryfeature'); \
+my $regf            = $regfeat_adaptor->fetch_by_stable_id('ENSR00000165384');\
+\
+#This will have no annotation as it only consists of core/focus features\
+print $regf->stable_id.':'.$regf->feature_type->name."\\n";
+\f0\fs24 \
+\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b\fs36 \cf0 \
+\pard\pardeftab720\sa280\ql\qnatural
+\cf0 CTCF binding sites\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 This code demonstrates the retrieval of peak calls generated by the eFG analysis pipeline.  In this particular case, the CTCF binding sites determined from a ChIP-Chip analysis. For more information about the CTCF binding sites, see this\'a0{\field{\*\fldinst{HYPERLINK "/info/docs/funcgen/index.html"}}{\fldrslt \cf2 \ul article}}\'a0(especially reference number 2).\
+\pard\pardeftab720\ql\qnatural
+
+\f1\fs20 \cf0 #Grab a CTCF data set\
+my $data_set         = $dset_adaptor->fetch_by_name('Nessie_NG_STD_2_ctcf_ren_BR1');\
+\
+#Grab underlying supporting sets\
+my @supporting_sets  = @\{$data_set->get_supporting_sets\};\
+\
+#Print some info about the supporting sets and feature set\
+foreach my $sset ( @supporting_sets )\{\
+  print "Supporting set:\\t".$sset->name."\\n";\
+  print 'Produced by analysis '.$sset->analysis->logic_name."\\n";\
+\}\
+\
+my $pfset = $data_set->product_FeatureSet;\
+\
+print 'Product FeatureSet is '.$pfset->name."\\n";\
+print 'Produced by analysis '.$pfset->analysis->logic_name."\\n";\
+\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\f0\fs24 \cf0 AnnotatedFeatures representing peak calls could retrieved via the generic 'get_Features_by_Slice' method as detailed in the RegulatoryFeatures example. However, as the supporting set here represent raw data contained in a ResultSet it is necessary to use a different method.  The following code also show how it is possible to acquire the same ResultSet using the Experiment as an entry point, printing some meta information along the way:
+\f1\fs20 \
+\pard\pardeftab720\ql\qnatural
+\cf0 \
+#Grab the adaptors\
+my $rset_adaptor  = $registry->get_adaptor('Human','funcgen','resultset'); \
+my $exp_adaptor   = $registry->get_adaptor('Human','funcgen','experiment');\
+\
+#Grab a the CTCF experiment\
+my $exp           = $exp_adaptor->fetch_by_name('ctcf_ren');\
+\
+#Print some info\
+my $num_chips     = scalar(@\{$exp->get_ExperimentalChips\});\
+print "\\n".$exp->name.' '.$exp->primary_design_type." experiment contains $num_chips ExperimentalChips\\n";\
+\
+#Grab all associated ResultSets and print there names.\
+my @rsets = @\{$rset_adaptor->fetch_all_by_Experiment($exp)\};\
+\
+foreach my $rset(@rsets)\{\
+  print "\\tResultSet:\\t".$rset->name."\\n";\
+  #IMPORT is the top level import set\
+  #BR = Biological Replicate\
+  #TR = Technical Replicate\
+\}\
+\
+\
+#Grab a slice to retrieve some ResultFeatures\
+$slice = $slice_adaptor->fetch_by_region('chromosome', 'X', 1, 100000);\
+\
+#We can also grab the ResultSet directly\
+#Assign array to one var as we know there is only one entry in the DB for this name\
+my ($result_set) = @\{$rset_adaptor->fetch_all_by_name('ctcf_ren_BR1_TR1')\};\
+\
+#ResultFeatures can be stored in compressed Collections, so we need to specify \
+#the window_size as 0 to get the natural resolution/uncompressed data.\
+\
+my @result_features = @\{$result_set->get_ResultFeatures_by_Slice($slice, undef, undef, undef, 0)\};\
+print "\\n".$slice->name." has ".scalar(@result_features)." results for ResultSet."\
+  .$result_set->name." The first 10 are...\\n";\
+\
+\
+#Print some Probe loci and scores associated with this ResultSet\
+my $count = 0;\
+\
+foreach my $rf(@result_features)\{\
+  #ResultFeature Collections can have > 1 score if compressed\
+  #Simply use the first for uncompressed ResultFeature collections\
+\
+  print "\\tLocus:\\t".$rf->start.'-'.$rf->end."\\tScore:".$rf->scores->[0]."\\n";\
+  $count ++;\
+  last if $count == 10;\
+\}\
+\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\f0\b\fs36 \cf0 \
+Externally curated FeatureSets
+\f1\b0\fs20 \
+\pard\pardeftab720\sa240\ql\qnatural
+
+\f0\fs24 \cf0 There are some FeatureSets which are either entirely or partially curated by external groups. These are stored as ExternalFeatures and can be accessed as follows:
+\f1\fs20 \
+\pard\pardeftab720\ql\qnatural
+\cf0 \
+#Grab and list all the external feature sets\
+my @ext_fsets = @\{$fset_adaptor->fetch_all_by_type('external')\};\
+\
+foreach my $ext_fset(@ext_fsets)\{\
+  print "External FeatureSet:\\t".$ext_fset->name."\\n";\
+\}\
+\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\f0\fs24 \cf0 \
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b\fs36 \cf0 Microarrays and associated Information\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 This code demonstrates the use of adaptors, specifically the ArrayAdaptor. In this example, we export all microarray platforms and associated information.
+\f1\fs20 \
+\pard\pardeftab720\ql\qnatural
+\cf0 #Grab the adaptors\
+my $array_adaptor = $registry->get_adaptor('Human','funcgen','array');\
+\
+#Grab all the arrays\
+my @array         = @\{$array_adaptor->fetch_all\};\
+\
+#Print some array info\
+foreach my $array ( @array )\{\
+  print "\\nArray:\\t".$array->name."\\n";\
+  print "Type:\\t".$array->type."\\n";\
+  print "Vendor:\\t".$array->vendor."\\n";\
+  #Grab the ArrayChips from the array design\
+  my @array_chips   = @\{$array->get_ArrayChips\};\
+\
+  #Print some ArrayChip info\
+  foreach my $ac ( @array_chips )\{\
+    print "ArrayChip:".$ac->name."\\tDesignID:".$ac->design_id."\\n";\
+  \}\
+\}\
+\
+\
+\pard\pardeftab720\sa280\ql\qnatural
+
+\f0\b\fs36 \cf0 Fetch all ProbeSets from a specific Array\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 In this example, probesets from the NIMBLEGEN HG17 tiling array are obtained.\
+\pard\pardeftab720\ql\qnatural
+
+\f1\fs20 \cf0 #Grab the adaptors\
+my $probe_adaptor    = $registry->get_adaptor('Human','funcgen','probe');\
+my $pfeature_adaptor = $registry->get_adaptor('Human','funcgen','probefeature'); \
+\
+#Grab a probe from the HG17 array\
+my $probe            = $probe_adaptor->fetch_by_array_probe_probeset_name('2005-05-10_HG17Tiling_Set', 'chr22P38797630');\
+print "Got ".$probe->class." probe ".$probe->get_probename."\\n";\
+\
+#Grab the feature associated with this probe\
+my @pfeatures        = @\{$pfeature_adaptor->fetch_all_by_Probe($probe)\};\
+print "\\nFound ".scalar(@pfeatures)." ProbeFeatures\\n";\
+\
+#Print some info about the features\
+foreach my $pfeature ( @pfeatures )\{\
+  print "\\nProbeFeature found at:\\t".$pfeature->feature_Slice->name."\\n";\
+\}\
+\
+\
+\pard\pardeftab720\sa280\ql\qnatural
+
+\f0\b\fs36 \cf0 Microarray Annotations\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 In this example, the a FOXP2 transcript is specified and all available ProbeSet annotations are printed.\
+\pard\pardeftab720\ql\qnatural
+
+\f1\fs20 \cf0 #Grab the relevant adaptors\
+my $tx_adaptor = $registry->get_adaptor("human","core","Transcript");\
+my $ps_adaptor = $registry->get_adaptor("mus musculus","funcgen","ProbeSet");\
+\
+#Fetch the transcript and associated ProbeSets\
+my $transcript = $tx_adaptor->fetch_by_stable_id('ENST00000393489');#Foxp2\
+my @probesets  = @\{$ps_adaptor->fetch_all_by_external_name($transcript->stable_id)\};\
+\
+foreach my $probeset (@probesets)\{\
+\
+  my $arrays_string = join(', ', (map $_->name, @\{$probeset->get_all_Arrays\}));\
+  my $dbe_info;\
+\
+  #Now get linkage_annotation\
+  foreach my $dbe(@\{$probeset->get_all_Transcript_DBEntries($transcript)\})\{\
+	#This will return all ProbeSet DBEntries for this transcript\
+	#There should really be one max per transcript per probeset/probe\
+	$dbe_info = $dbe->linkage_annotation;\
+  \}\
+  \
+\
+  print "\\t".$probeset->name." on arrays ".$arrays_string." with Probe hits $dbe_info\\n";\
+\}\
+\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f0\fs24 \cf0 Documentation on the current array mapping strategy can be found {\field{\*\fldinst{HYPERLINK "/info/docs/microarray_probe_set_mapping.html"}}{\fldrslt \cf2 \ul here}}\'a0.  More examples for accessing microarray data can be found in the funcgen API package here:\
+\
+	ensembl-functgenomics/script/examples/microarray_annotation_example.pl\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1\fs20 \cf0 \
+\pard\pardeftab720\sa280\ql\qnatural
+
+\f0\b\fs36 \cf0 Further help\
+\pard\pardeftab720\sa240\ql\qnatural
+
+\b0\fs24 \cf0 For additional information or help mail the\'a0{\field{\*\fldinst{HYPERLINK "mailto:ensemb-dev@ebi.ac.uk"}}{\fldrslt \cf2 \ul ensembl-dev}}\'a0mailing list. You will need to subscribe to this mailing list to use it. More information on subscribing to any Ensembl mailing list is available from the\'a0{\field{\*\fldinst{HYPERLINK "http://www.ensembl.org/info/about/contact/"}}{\fldrslt \cf2 \ul Ensembl Contacts}}\'a0page.}
