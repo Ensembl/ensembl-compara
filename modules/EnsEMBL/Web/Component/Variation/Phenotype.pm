@@ -70,7 +70,6 @@ sub table_data {
         
     if (exists $rows{lc $disorder}) { 
       @data_row = @{$rows{lc $disorder}};
-      $disorder = '';
     }
     
     my $id           = $va->{'_phenotype_id'};
