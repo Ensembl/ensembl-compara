@@ -124,6 +124,8 @@ sub count_prot_variations {
   my $cd_start   = $transcript->cdna_coding_start;
   my %count;
   
+  warn "USING ME!!!";
+  
   # coding SNP only
   foreach my $snp (grep $_->var_class =~ /^(snp|SNP - substitution|in-del|insertion|deletion)$/, @{$transcript->get_all_cdna_SNPs('variation')->{'coding'}}) {
     $count{int(($_ - $cd_start) / 3)}++ for $snp->start..$snp->end;
@@ -1657,7 +1659,7 @@ sub variation_data {
       pep_snp       => join(', ', split '/', $tv->pep_allele_string),
       type          => $tv->display_consequence,
       length        => $end - $start,
-      indel         => $vf->var_class =~ /in\-del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
+      indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
       codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
       codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
     };

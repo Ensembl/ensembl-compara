@@ -192,7 +192,7 @@ sub get_sequence_data {
           $snp_end   = $end;
         }
         
-        if ($var_class =~ /in\-del|insertion|deletion/ && $snp_type eq 'snp') {
+        if ($var_class =~ /in\-?del|insertion|deletion/ && $snp_type eq 'snp') {
           if ($seq_region_start > $seq_region_end) {
             $snp_type = 'insert';
             
