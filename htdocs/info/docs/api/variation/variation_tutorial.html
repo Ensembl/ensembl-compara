@@ -128,6 +128,132 @@ foreach my $vf (@{$vfs}){
 }
 </pre>
 
+<h2 id="failed_variations">
+	Failed variations
+</h2>
+
+<p>
+	In the Variation pipeline, quality checks are performed in order to remove variations that contain errors or inconsistencies.
+	Prior to Ensembl release 61, much of the data related to these variations that failed the quality checks were deleted from the
+	database and no longer accessible. Starting from release 61, these variations are flagged as being failed but all related data
+	is kept in the database and can be retrieved via the API or the web interface.
+</p>
+<p>
+	The default API behaviour when fetching multiple objects is not to return data for variations that have been flagged as failed but
+	this can be modified in the Bio::EnsEMBL::Variation::DBSQL::DBAdaptor module by setting the include_failed_variations flag. This
+	will affect all adaptors that have been created	(and will be created) using the connection until the behaviour is explicitly changed
+	again (or the connection to the database is closed).
+</p>
+<p>
+	Below it is a simple commented perl script to illustrate how to get data related to variations that have been flagged as failed.
+</p>
+
+<pre class="code">
+	
+use strict;
+use warnings;
+use Bio::EnsEMBL::Registry;
+
+my $registry = 'Bio::EnsEMBL::Registry';
+
+$registry-&gt;load_registry_from_db(
+    -host =&gt; 'ensembldb.ensembl.org',
+    -user =&gt; 'anonymous'
+);
+
+# Get the database adaptor for Slice objects for human
+my $slice_adaptor = $registry-&gt;get_adaptor('human', 'core', 'slice');
+# Get a slice from chromosome 6
+my $slice = $slice_adaptor-&gt;fetch_by_region('chromosome','6',133017695,133161157); 
+
+# Get adaptor to VariationFeature object
+my $vf_adaptor = $registry-&gt;get_adaptor('human', 'variation', 'variationfeature');
+
+# First, get all variations on the slice. The default behaviour is to exclude variations that have been flagged as failed
+my $vfs = $vf_adaptor-&gt;fetch_all_by_Slice($slice); 
+
+# Count the number of variations returned
+print "There are " . scalar(@{$vfs}) . " variations in the " . $slice->display_id() . " region\n";
+
+# Now, tell the DBAdaptor that we want the failed variations as well. We get the DBAdaptor via the db() subroutine in our adaptor
+$vf_adaptor->db->include_failed_variations(1);
+
+# Again, fetch all variations on the slice but this time include the failed variations
+my $vfs = $vf_adaptor-&gt;fetch_all_by_Slice($slice); 
+
+# Count the number of variations returned, this number is likely to be higher than when failed variations were omitted
+print "There are " . scalar(@{$vfs}) . " variations in the " . $slice->display_id() . " region\n";
+
+</pre>
+
+<p>
+	There are a few subroutines to query the failed status of a variation. In the code snippet below we loop over the
+	variations we got and find out how many are flagged as failed and why.
+</p>
+
+<pre class="code">
+	
+my $failed = 0;
+my %descriptions;
+foreach my $vf (@{$vfs}) {
+	
+	# Check whether the variation for this variation feature is failed
+	if ($vf->variation->is_failed()) {
+		$failed++;
+		
+		# Get the reason why the variation failed and count the number of variations failed for the same reason.
+		$descriptions{$vf->variation->failed_description()}++;
+	}
+}
+
+# Print the results
+print "There are $failed variations on slice " . $slice->display_id() . " that have been flagged as failed:\n";
+map { print "\t" . $descriptions{$_} . " variations failed because " . $_ . "\n"; } keys(%descriptions);
+	
+</pre>
+
+<p>
+	Note that some fetch methods are unaffected by the include_failed_variations flag in DBAdaptor. These are methods that
+	return data related to specific variations, rather than a general batch fetch. For example, the fetch_by_dbID and
+	fetch_all_by_VariationFeatures methods in TranscriptVariationAdaptor will not be affected by the flag whereas the
+	fetch_all_by_Transcripts method will be.
+</p>
+<p>
+	Even though a variation has not been failed in the Variation pipeline, some of the data related to it may have been. This
+	can be data from a particular submission on that variation, identified by a submission id assigned by dbSNP. These variations
+	are not flagged as failed but we can still query them to see if any individual submissions (referred to as 'subsnp') have been
+	flagged as failed.
+</p>
+
+<pre class="code">
+	
+foreach my $vf (@{$vfs}) {
+	
+	# Check whether the variation for this variation feature has failed subsnps
+	if ($vf->variation->has_failed_subsnps()) {
+		
+		# Get all the alleles belonging to the variation and check which ones have failed and why
+		my %failed_subsnps;
+		foreach my $allele ($vf->variation->get_all_Alleles()) {
+		
+			# Each subsnp can have multiple allele, so skip this one if we've already seen it
+			next if (exists($failed_subsnps{$allele->subsnp()}));
+			
+			# Check if the subsnp (and the allele) is flagged as failed
+			if ($allele->is_failed()) {
+				
+				# Get the reason why
+				$failed_subsnps{$allele->subsnp()} = $allele->failed_description();
+			}
+		}
+		
+		#ÊPrint the result
+		print "Variation " . $vf->variation_name() . " has the following failed subsnps:\n";
+		map { print "\t" . $_ . " has been flagged as failed because " $failed_subsnps{$_} . "\n"; } keys(%failed_subsnps);
+	}
+}
+	
+</pre>
 
 <h2 id="Consequence">Consequence type of variations</h2>
 
