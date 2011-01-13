@@ -17,15 +17,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.elLk.form          = $('form.configuration', this.el);
     this.elLk.search        = $('.configuration_search_text', this.el);
     this.elLk.help          = $('.menu_help', this.elLk.form);
+    this.elLk.favourite     = $('.favourite', this.elLk.form);
     this.elLk.menus         = $('.popup_menu', this.elLk.form);
     this.elLk.searchResults = $('a.search_results', this.elLk.links);
     
+    this.imageConfig   = $('input[name=config]', this.elLk.form).val();
     this.initialConfig = {};
     this.lastQuery     = false;
     
-    $.each(this.elLk.form.serializeArray(), function () {
-      panel.initialConfig[this.name] = this.value;
-    });
+    if (this.imageConfig) {
+      $.each(this.elLk.form.serializeArray(), function () { panel.initialConfig[this.name] = { renderer: this.value }; });
+    } else {
+      $.each(this.elLk.form.serializeArray(), function () { panel.initialConfig[this.name] = this.value; });
+    }
     
     if (this.params.hash) {
       this.elLk.links.removeClass('active').has('.' + this.params.hash).addClass('active');
@@ -37,6 +41,22 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     $('input.submit', this.elLk.form).hide();
     
     this.elLk.help.bind('click', function () { panel.toggleDescription(this); });
+    
+    this.elLk.favourite.bind('click', function () {
+      var li = $(this).toggleClass('selected').parents('li:first').toggleClass('fav');
+      
+      if (panel.elLk.links.filter('.active').children('a').attr('className') == 'favourite_tracks') {
+        li.hide(); // Always hide, since the only way a click can come here is from a selected track
+        
+        if (!li.siblings(':visible').length) {
+          li.parents('div.config').hide();
+        }
+      }
+      
+      li = null;
+    }).filter('.selected').each(function () {
+      panel.initialConfig[$(this).parents('li:first').toggleClass('fav')[0].id].favourite = 1;
+    });
     
     // Popup menus - displaying
     $('.menu_option', this.elLk.form).bind('click', function () {
@@ -158,29 +178,54 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return;
     }
     
-    var panel   = this;
-    var d       = false;
-    var diff    = { config: this.initialConfig.config };
-    var checked = $.extend({}, this.initialConfig);
+    var panel = this;
+    var d     = false;
+    var diff  = {};
+    var checked, favourites, f;
     
-    $.each(this.elLk.form.serializeArray(), function () {
-      if (this.value != panel.initialConfig[this.name]) {
-        diff[this.name] = this.value;
+    if (this.imageConfig) {
+      favourites = {};
+      
+      $('li.fav', this.elLk.form).each(function () { favourites[this.id] = 1; });
+      
+      $.each(this.elLk.form.serializeArray(), function () {
+        if (panel.initialConfig[this.name].renderer != this.value) {
+          diff[this.name] = { renderer: this.value };
+          d = true;
+        }
+        
+        f = !panel.initialConfig[this.name].favourite &&  favourites[this.name] ? 1 : // Making a track a favourite
+             panel.initialConfig[this.name].favourite && !favourites[this.name] ? 0 : // Making a track not a favourite
+             false;
+           
+        if (f !== false) {
+          diff[this.name] = diff[this.name] || {};
+          diff[this.name].favourite = f;
+          
+          d = true;
+        }
+      });
+    } else {
+      checked = $.extend({}, this.initialConfig);
+      
+      $.each(this.elLk.form.serializeArray(), function () {
+        if (panel.initialConfig[this.name] != this.value) {
+          diff[this.name] = this.value;
+          d = true;
+        }
+        
+        delete checked[this.name];
+      });
+      
+      // Add unchecked checkboxes to the diff
+      for (var i in checked) {
+        diff[i] = 'off';
         d = true;
       }
-      
-      delete checked[this.name];
-    });
-    
-    // Add unchecked checkboxes to the diff
-    for (var i in checked) {
-      diff[i] = 'off';
-      d = true;
     }
     
     if (d === true) {
-      $.extend(this.initialConfig, diff);
-      diff.submit = 1;
+      $.extend(true, this.initialConfig, diff);
       
       this.updatePage(diff, delayReload);
       
@@ -188,15 +233,19 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
   },
   
-  updatePage: function (diff, delayReload) {    
+  updatePage: function (diff, delayReload) {
+    var data = this.imageConfig ? { config: this.imageConfig, diff: JSON.stringify(diff) } : diff;
+    data.submit = 1;
+    
     $.ajax({
       url:  this.elLk.form.attr('action'),
       type: this.elLk.form.attr('method'),
-      data: diff,
+      data: data, 
       dataType: 'json',
+      context: this,
       success: function (json) {
         if (json.updated) {
-          Ensembl.EventManager.trigger('queuePageReload', diff.config, !delayReload);
+          Ensembl.EventManager.trigger('queuePageReload', this.imageConfig, !delayReload);
         } else if (json.redirect) {
           Ensembl.redirect(json.redirect);
         }
@@ -207,7 +256,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var active = this.elLk.links.filter('.active').children('a').attr('className');
     
-    this.elLk.form[active == 'active_tracks' || active == 'search_results' ? 'addClass' : 'removeClass']('multi');
+    this.elLk.form[active == 'active_tracks' || active == 'search_results' || active == 'favourite_tracks' ? 'addClass' : 'removeClass']('multi');
     
     if (typeof active == 'undefined') {
       active = this.elLk.links.first().addClass('active').children('a').attr('className');
@@ -229,6 +278,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             $(this).parents('li, div.config').show();
           }
         });
+      } else if (active == 'favourite_tracks') {
+        $('li.fav', this.elLk.form).each(function () {
+          $(this).show().parents('li, div.config').show();
+        });
+        
+        $('li.leaf:visible:not(.fav)', this.elLk.form).hide();
       } else {
         $('div.' + active, this.elLk.form).show().find('ul.config_menu li').show();
       }
@@ -276,7 +331,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       
       menu.children('li').each(function () {
         var li    = $(this);
-        var html  = li.children('span:not(.menu_help)').html() || '';
+        var html  = li.children('span:not(.controls)').html() || '';
         var match = html.match(panel.regex);
         
         if (match || li.children('div.desc').text().match(panel.regex)) {
@@ -311,7 +366,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   toggleDescription: function (els, action) {
-    var dd, span, i;
+    var desc, button, i;
     
     if (typeof els.length == 'undefined') {
       els = [ els ];
@@ -321,27 +376,27 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     while (i--) {
       switch (els[i].nodeName) {
-        case 'LI'  : dd = $(els[i]).children('div.desc'); span = $('.menu_help', els[i]); break;
-        case 'SPAN': dd = $(els[i]).siblings('div.desc'); span = $(els[i]); break;
-        default    : return;
+        case 'LI' : desc = $(els[i]).children('div.desc'); button = $('.menu_help', els[i]); break;
+        case 'DIV': desc = $(els[i]).parent().siblings('div.desc'); button = $(els[i]); break;
+        default   : return;
       }
       
       switch (action) {
-        case 'hide': dd.hide(); break;
-        case 'show': dd.show(); break;
-        default    : dd.toggle();
+        case 'hide': desc.hide(); break;
+        case 'show': desc.show(); break;
+        default    : desc.toggle();
       }
       
-      span.toggleClass('open').attr('title', function () { return dd.is(':visible') ? 'Hide information' : 'Click for more information' });
+      button.toggleClass('open').attr('title', function () { return desc.is(':visible') ? 'Hide information' : 'Click for more information' });
       
-      dd   = null;
-      span = null;
+      desc   = null;
+      button = null;
     }
-  },
+  }, 
   
   // Called when track configuration is changed on the image, rather that in the configuration panel
   externalChange: function (trackName, renderer) {
     $('input[name=' + trackName + ']', this.elLk.form).siblings('.popup_menu').children('.' + renderer).trigger('click');
-    this.initialConfig[trackName] = renderer;
+    this.initialConfig[trackName].renderer = renderer;
   }
 });
