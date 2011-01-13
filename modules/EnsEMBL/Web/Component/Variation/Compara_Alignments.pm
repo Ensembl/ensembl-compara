@@ -72,7 +72,7 @@ sub get_sequence_data {
         my $start          = $_->start;
         my $end            = $_->end;
         my $alleles        = $_->allele_string;
-        my $ambigcode      = $var_class =~ /in\-del|insertion|deletion/ ? '*' : $_->ambig_code;
+        my $ambigcode      = $var_class =~ /in\-?del|insertion|deletion/ ? '*' : $_->ambig_code;
         my $url            = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
         my $var            = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>};
         

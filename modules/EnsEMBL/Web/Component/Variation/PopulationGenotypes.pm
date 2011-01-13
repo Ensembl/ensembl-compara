@@ -226,7 +226,7 @@ sub format_frequencies {
   }
   
   if($columns{'failed'}) {
-    push @header_row, { key => 'failed', align => 'left', title => 'Failed description', sort => 'string'};
+    push @header_row, { key => 'failed', align => 'left', title => 'Comment', sort => 'string'};
   }
   
   $table->add_columns(@header_row);
