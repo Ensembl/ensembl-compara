@@ -101,7 +101,7 @@ sub format_frequencies {
         }
         elsif($freq_data->{$pop_id}{$ssid}{failed_desc} || $freq_data->{$pop_id}{$ssid}{'pop_info'}{'Name'} =~ /^1000genomes/i) {
           $fv_data->{$pop_id}{$ssid} = $freq_data->{$pop_id}{$ssid};
-          $fv_data->{$pop_id}{$ssid}{failed_desc} ||= '1000 genomes data replaced by direct import';
+          $fv_data->{$pop_id}{$ssid}{failed_desc} ||= '1000 genomes data replaced by import from VCF';
           $fv_data->{$pop_id}{$ssid}{failed_desc} =~ s/Variation/'Variation '.$ssid/e;
           delete $freq_data->{$pop_id}{$ssid};
         }
@@ -111,7 +111,7 @@ sub format_frequencies {
     # recurse this method with just the tg_data and a flag to indicate it
     push @{$table_array},  @{$self->format_frequencies($tg_data, '1000 genomes')} if $tg_data;
     push @{$table_array},  @{$self->format_frequencies($hm_data, 'HapMap')} if $hm_data;
-    push @{$table_array},  @{$self->format_frequencies($fv_data, 'Failed data')} if $fv_data;
+    push @{$table_array},  @{$self->format_frequencies($fv_data, 'Failed and redundant data')} if $fv_data;
   }
 
   foreach my $pop_id (keys %$freq_data) {
