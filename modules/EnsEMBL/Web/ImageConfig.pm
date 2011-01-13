@@ -6,6 +6,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
+use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
 use Sanger::Graphics::TextHelper;
@@ -576,12 +577,24 @@ sub update_from_input {
   my $self  = shift;
   my $input = $self->hub->input;
   
-  return $self->altered = $self->tree->flush_user if $input->param('reset');
+  return $self->reset if $input->param('reset');
   
-  foreach my $param ($input->param) {
-    my $renderer = $input->param($param);
-    $self->update_track_renderer($param, $renderer);
+  my $diff   = $input->param('diff');
+  my $reload = 0;
+  
+  if ($diff) {
+    $diff = from_json($diff);
+    
+    $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
+    $reload = $self->altered;
+    
+    $self->update_favourite_tracks($diff);
+  } else {
+    $self->update_track_renderer($_, $input->param($_)) for $input->param;
+    $reload = $self->altered;
   }
+  
+  return $reload;
 }
 
 sub update_from_url {
@@ -677,8 +690,34 @@ sub update_track_renderer {
   $flag += $node->set_user('display', $renderer) if $valid_renderers{$renderer} && (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   
   $self->altered = 1 if $flag;
+}
+
+sub update_favourite_tracks {
+  my ($self, $diff) = @_;
   
-  return $flag;
+  foreach (grep exists $diff->{$_}->{'favourite'}, keys %$diff) {
+    my $node = $self->get_node($_);
+    
+    next unless $node;
+    
+    $node->data->{'favourite'} = 0; # Causes favourite to be deleted if favourite is 0    
+    $self->altered = 1 if $node->set_user('favourite', $diff->{$_}->{'favourite'});
+  }
+}
+
+sub reset {
+  my $self = shift;
+  my $tree = $self->tree;
+  
+  foreach my $node ($tree, $tree->nodes) {
+    my $user_data = $node->{'user_data'};
+    
+    foreach (keys %$user_data) {
+      $self->altered = 1 if $user_data->{$_}->{'display'};
+      delete $user_data->{$_}->{'display'};
+      delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
+    }
+  }
 }
 
 sub get_track_key {
