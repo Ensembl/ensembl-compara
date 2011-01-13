@@ -25,11 +25,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     for (var fn in fnEls) {
       if (fnEls[fn].length) {
-        if (fn == 'dataTable' && !window.JSON) {
-          Ensembl.loadScript('/components/json2.js', fn, this);
-        } else {
-          this[fn]();
-        }
+        this[fn]();
       }
     }
     
@@ -450,11 +446,10 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   },
   
   getSequenceKey: function () {
-    var panel  = this;
     var params = {};
     var urlParams;
     
-    function getKey() {
+    if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
       $('.sequence_key_json', this.el).each(function () {
         $.extend(true, params, JSON.parse(this.innerHTML));
       });
@@ -467,15 +462,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
         }
       });
       
-      panel.getContent(panel.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', panel.el));
-    }
-    
-    if ($('> .ajax > .js_panel > input.panel_type[value=TextSequence]', this.el).length) {
-      if (!window.JSON) {
-        Ensembl.loadScript('/components/json2.js', getKey);
-      } else {
-        getKey();
-      }
+      this.getContent(this.params.updateURL.replace(/\?/, '/key?') + ';' + $.param(urlParams, true), $('.sequence_key', this.el));
     }
   }
 });
