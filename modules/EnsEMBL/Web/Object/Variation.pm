@@ -1166,7 +1166,7 @@ sub ld_pops_for_snp {
   my @vari_mappings = @{ $self->unique_variation_feature }; 
   return [] unless @vari_mappings;                    # must have mapping
   return [] unless $self->counts->{'individuals'};    # must have genotypes
-  return [] unless $self->vari_class =~ /snp|mixed/;  # must be a SNP or mixed
+  return [] unless $self->vari_class =~ /snp/i;  # must be a SNP or mixed
 
   my @pops;
   foreach ( @vari_mappings ) {    
