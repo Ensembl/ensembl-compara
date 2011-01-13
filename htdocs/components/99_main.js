@@ -23,5 +23,9 @@ window.addLoadEvent = function (func) {
 };
 
 $(function () {
-  Ensembl.initialize();
+  if (!window.JSON) {
+    Ensembl.loadScript('/components/json2.js', 'initialize', Ensembl);
+  } else {
+    Ensembl.initialize();
+  }
 });
