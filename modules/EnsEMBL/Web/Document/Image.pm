@@ -434,26 +434,10 @@ sub render {
       $self->caption ? sprintf '<div style="text-align:center; font-weight:bold">%s</div>', $self->caption : ''
     );
   } else {
-    my $img = $self->render_image_tag($image);
-    
-    # continue with tag html
-    # This has to have a vertical padding of 0px as it is used in a number of places
-    # butted up to another container - if you need a vertical padding of 10px add it
-    # outside this module
-    
-    $html .= sprintf('
-      <div class="center" style="border:0px; margin:0px; padding:0px">
-        <div style="text-align: center">
-          %s
-        </div>
-        %s
-        %s
-        %s
-      </div>',
-      $img,
+    $html .= join('',
+      $self->render_image_tag($image),
       $self->imagemap eq 'yes' ? $self->render_image_map($image) : '',
-      $self->{'export'} ? '<div style="text-align:right; background-color; red;">EXPORT</div>' : '',
-      $self->caption ? sprintf '<div style="text-align:center; font-weight:bold">%s</div>', $self->caption : ''
+      $self->caption ? sprintf('<div style="text-align:center; font-weight:bold">%s</div>', $self->caption) : ''
     );
   }
 
