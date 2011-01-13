@@ -120,18 +120,7 @@ sub count_prot_variations {
   
   return 0 unless $self->species_defs->databases->{'DATABASE_VARIATION'};
   
-  my $transcript = $self->Obj;
-  my $cd_start   = $transcript->cdna_coding_start;
-  my %count;
-  
-  warn "USING ME!!!";
-  
-  # coding SNP only
-  foreach my $snp (grep $_->var_class =~ /^(snp|SNP - substitution|in-del|insertion|deletion)$/, @{$transcript->get_all_cdna_SNPs('variation')->{'coding'}}) {
-    $count{int(($_ - $cd_start) / 3)}++ for $snp->start..$snp->end;
-  }
-  
-  return scalar keys %count;
+  return scalar grep {$_->translation_start} @{$self->get_transcript_variations};
 }
 
 sub count_supporting_evidence {
