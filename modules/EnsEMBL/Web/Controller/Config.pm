@@ -31,13 +31,14 @@ sub update_configuration {
     my $type        = $hub->type;
     my $config      = $hub->param('config');
     my $view_config = $hub->viewconfig;
+    my $updated     = 0;
     
     # Updating an image config
     if ($config && $view_config->has_image_config($config)) {
       # If we have multiple species in the view (e.g. Align Slice View) then we would
       # need to make sure that the image config we have is a merged image config, with
       # each of the trees for each species combined      
-      $hub->get_imageconfig($config, $config, 'merged')->update_from_input;
+      $updated = $hub->get_imageconfig($config, $config, 'merged')->update_from_input;
     } else { # Updating a view config
       $view_config->update_from_input;
       
@@ -72,6 +73,8 @@ sub update_configuration {
         $r->headers_out->add('Set-cookie' => $cookie);
         $r->err_headers_out->add('Set-cookie' => $cookie);
       }
+      
+      $updated = 1;
     }
     
     $session->store;
@@ -90,13 +93,13 @@ sub update_configuration {
               %{$hub->referer->{'params'}}
             })
           };
-        } else {
+        } elsif ($updated) {
           $json = { updated => 1 };
         }
         
         $r->content_type('text/plain');
         
-        print $self->jsonify($json);
+        print $self->jsonify($json || {});
       } else {
         $hub->redirect; # refreshes the page
       }
