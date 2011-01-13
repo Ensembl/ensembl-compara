@@ -180,8 +180,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     var panel = this;
     var d     = false;
+    var f     = false;
     var diff  = {};
-    var checked, favourites, f;
+    var checked, favourites;
     
     if (this.imageConfig) {
       favourites = {};
@@ -189,20 +190,20 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $('li.fav', this.elLk.form).each(function () { favourites[this.id] = 1; });
       
       $.each(this.elLk.form.serializeArray(), function () {
+        var fav = !panel.initialConfig[this.name].favourite &&  favourites[this.name] ? 1 : // Making a track a favourite
+                   panel.initialConfig[this.name].favourite && !favourites[this.name] ? 0 : // Making a track not a favourite
+                   false;
+        
         if (panel.initialConfig[this.name].renderer != this.value) {
           diff[this.name] = { renderer: this.value };
           d = true;
         }
         
-        f = !panel.initialConfig[this.name].favourite &&  favourites[this.name] ? 1 : // Making a track a favourite
-             panel.initialConfig[this.name].favourite && !favourites[this.name] ? 0 : // Making a track not a favourite
-             false;
-           
-        if (f !== false) {
+        if (fav !== false) {
           diff[this.name] = diff[this.name] || {};
-          diff[this.name].favourite = f;
+          diff[this.name].favourite = fav;
           
-          d = true;
+          f = true;
         }
       });
     } else {
@@ -224,12 +225,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     }
     
-    if (d === true) {
+    if (d === true || f === true) {
       $.extend(true, this.initialConfig, diff);
       
       this.updatePage(diff, delayReload);
       
-      return true;
+      return d;
     }
   },
   
