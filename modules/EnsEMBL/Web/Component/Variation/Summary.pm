@@ -56,7 +56,7 @@ sub content {
   
   ## First warn if variation has been failed
   if ($variation->failed_description) {
-    $html .= $self->_warning('This variation has been flagged as failed', '<p>' . $variation->failed_description . '</p>');
+    $html .= $self->_warning('This variation has been flagged as failed', $variation->failed_description, '50%');
   }
   
   $html .= qq{
