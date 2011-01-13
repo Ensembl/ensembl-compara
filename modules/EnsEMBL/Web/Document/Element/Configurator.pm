@@ -135,8 +135,9 @@ sub init_imageconfig {
   
   $image_config->remove_disabled_menus; # Delete all tracks where menu = no, and parent nodes if they are now empty
   
-  $configuration->create_node('active_tracks',  'Active tracks',  [], { availability => 1, url => '#', class => 'active_tracks'           });
-  $configuration->create_node('search_results', 'Search Results', [], { availability => 1, url => '#', class => 'search_results disabled' });
+  $configuration->create_node('active_tracks',    'Active tracks',     [], { availability => 1, url => '#', class => 'active_tracks'           });
+  $configuration->create_node('favourite_tracks', 'Favourite tracks',  [], { availability => 1, url => '#', class => 'favourite_tracks'        });
+  $configuration->create_node('search_results',   'Search Results',    [], { availability => 1, url => '#', class => 'search_results disabled' });
   
   my @nodes = @{$image_config->tree->child_nodes};
   
@@ -283,6 +284,7 @@ sub imageconfig_content {
     my $name      = encode_entities($node->get('name'));
     my $icons     = $external ? sprintf '<img src="%strack-%s.gif" style="width:40px;height:16px" title="%s" alt="[%s]" />', $img_url, lc $external, $external, $external : ''; # DAS icons, etc
     my $fg_link   = $name && $node->get('glyphset') eq 'fg_multi_wiggle' ? $self->multiwiggle_multi_link($image_config) : ''; # FIXME: HACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACKHACK
+    my $favourite = sprintf '<div class="favourite%s"></div>', $node->get('favourite') ? ' selected' : '';
     my ($selected, $menu, $help);
     
     while (my ($val, $text) = splice @states, 0, 2) {
@@ -311,7 +313,9 @@ sub imageconfig_content {
       $desc =~ s/"[ "]*>/">/g;
       $desc = qq{<div class="desc">$desc</div>};
       
-      $help = qq{<span class="menu_help"></span>};
+      $help = qq{<div class="menu_help"></div>};
+    } else {
+      $help = qq{<div class="empty"></div>};
     }
     
     $node->set_attribute('class', "leaf $external");
@@ -319,7 +323,10 @@ sub imageconfig_content {
       <ul class="popup_menu">$menu</ul>
       $selected<span class="menu_option">$icons$name</span>
       $fg_link
-      $help
+      <span class="controls">
+        $favourite
+        $help
+      </span>
       $desc
     });
     

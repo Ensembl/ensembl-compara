@@ -1,25 +1,30 @@
 div.configuration_search { text-align: right; }
 
-form.configuration div.config img                               { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
-form.configuration div.config div.select_all                    { margin-top: 10px; }
-form.configuration div.config div.select_all.first              { margin-top: 0; }
-form.configuration div.config .menu_option                      { cursor: pointer; vertical-align: middle; }
-form.configuration div.config h4                                { margin: 10px 0 5px; }   
-form.configuration div.config h2.config_header                  { margin: 4px 0; cursor: pointer; border: 0; }
-form.configuration div.config ul.config_menu                    { margin: 0; padding: 0; list-style: none; }
-form.configuration div.config ul.config_menu li                 { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: both; }
-form.configuration div.config ul.config_menu li div.desc        { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; }
-form.configuration div.config ul.config_menu li .menu_help      { position: absolute; right: 10px; height: 17px; width: 17px; margin-top: 2px; background: url(/i/info_toggle.png) no-repeat top left; cursor: pointer; }
-form.configuration div.config ul.config_menu li .menu_help.open { background-position: bottom left; }
-form.configuration div.config ul.selectable,
-form.configuration div.config ul.config_menu li ul.config_menu  { margin-left: 10px; }
-form.configuration div.config ul.config_menu li.col1            { background-color: [[IMAGE_BG1]]; }
-form.configuration div.config ul.config_menu li.col2            { background-color: [[IMAGE_BG2]]; }
-
-form.configuration.multi div.config                             { margin-bottom: 10px }
-form.configuration.multi div.config h4,
-form.configuration.multi div.config div.select_all              { display: none !important; }
-form.configuration.multi div.config ul.config_menu              { margin-left: 0 !important; }
+form.configuration div.config img                                   { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
+form.configuration div.config div.select_all                        { margin-top: 10px; }
+form.configuration div.config div.select_all.first                  { margin-top: 0; }
+form.configuration div.config .menu_option                          { cursor: pointer; vertical-align: middle; }
+form.configuration div.config h4                                    { margin: 10px 0 5px; }   
+form.configuration div.config h2.config_header                      { margin: 4px 0; cursor: pointer; border: 0; }
+form.configuration div.config ul.config_menu                        { margin: 0; padding: 0; list-style: none; }
+form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: both; }
+form.configuration div.config ul.config_menu li div.desc            { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; }
+form.configuration div.config ul.config_menu li .controls           { float: right; margin: 2px -5px 0; height: 17px; }
+form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; cursor: pointer; }
+form.configuration div.config ul.config_menu li .controls .empty    { cursor: default; }
+form.configuration div.config ul.config_menu li .menu_help          { background: url(/i/info_toggle.png) no-repeat top left; }
+form.configuration div.config ul.config_menu li .menu_help.open     { background-position: bottom left; }
+form.configuration div.config ul.config_menu li .favourite          { background: url(/i/star.png) no-repeat top left; }
+form.configuration div.config ul.config_menu li .favourite.selected { background-position: bottom left; }
+form.configuration div.config ul.selectable,                     
+form.configuration div.config ul.config_menu li ul.config_menu      { margin-left: 10px; }
+form.configuration div.config ul.config_menu li.col1                { background-color: [[IMAGE_BG1]]; }
+form.configuration div.config ul.config_menu li.col2                { background-color: [[IMAGE_BG2]]; }
+                                                                    
+form.configuration.multi div.config                                 { margin-bottom: 10px }
+form.configuration.multi div.config h4,                             
+form.configuration.multi div.config div.select_all                  { display: none !important; }
+form.configuration.multi div.config ul.config_menu                  { margin-left: 0 !important; }
 
 ul.popup_menu    { border: 1px solid #666; background-color: #EEE; margin: 13px 0 0 11px; padding: 0; border-bottom: 0; color: black; position: absolute; z-index: 1000000; display: none; cursor: pointer; }
 ul.popup_menu li { padding: 0 0.5em 0 0 !important; border-bottom: 1px solid #666; font-weight: bold !important; list-style: none; list-style-image: none; margin-bottom: 0 !important; }
