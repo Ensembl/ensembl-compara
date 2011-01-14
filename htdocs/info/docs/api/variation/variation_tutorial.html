@@ -247,7 +247,7 @@ foreach my $vf (@{$vfs}) {
 			}
 		}
 		
-		#ÊPrint the result
+		# Print the result
 		print "Variation " . $vf->variation_name() . " has the following failed subsnps:\n";
 		map { print "\t" . $_ . " has been flagged as failed because " . $failed_subsnps{$_} . "\n"; } keys(%failed_subsnps);
 	}
