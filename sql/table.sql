@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS analysis (
   program_version             varchar(40),
   program_file                varchar(255),
   parameters                  TEXT,
-  module                      varchar(80),
+  module                      varchar(255),
   module_version              varchar(40),
   gff_source                  varchar(40),
   gff_feature                 varchar(40),
