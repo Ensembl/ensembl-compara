@@ -140,6 +140,8 @@ sub run {
 
     my $fasta_dir         = $self->param('fasta_dir');
 
+    my $blast_executable  = $self->analysis->program_file || 'wublastp';
+
     my %cross_pafs = ();
 
   foreach my $genome_db (@{$self->param('genome_db_list')}) {
@@ -181,7 +183,7 @@ sub run {
       my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blast->new(
          -query     => $query,
          -database  => $cross_genome_dbfile,
-         -program   => $self->analysis->program_file,
+         -program   => $blast_executable,
          -analysis  => $self->analysis,
          -options   => $blast_options,
          -parser    => $parser,

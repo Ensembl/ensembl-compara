@@ -248,10 +248,10 @@ sub run_mcoffee {
   my $tree_temp = $self->worker_temp_directory . "tree_temp.dnd";
   $tree_temp =~ s/\/\//\//g;
 
-  my $mcoffee_executable = $self->analysis->program_file;
-    unless (-e $mcoffee_executable) {
+  my $mcoffee_executable = $self->analysis->program_file || '';
+  unless (-e $mcoffee_executable) {
       print "Using default T-Coffee executable!\n";
-      $mcoffee_executable = "/software/ensembl/compara/tcoffee-7.86b/t_coffee";
+      $mcoffee_executable = '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
         # path to t_coffee components:
       $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
   }

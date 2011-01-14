@@ -191,7 +191,7 @@ sub run_quicktreebreak {
   my $quicktreebreak_executable = $self->analysis->program_file || '';
 
   unless (-e $quicktreebreak_executable) {
-    $quicktreebreak_executable = "/nfs/users/nfs_a/avilella/src/quicktree/quicktree_1.1/bin/quicktree";
+    $quicktreebreak_executable = '/software/ensembl/compara/quicktree_1.1/bin/quicktree';
   }
 
   $self->throw("can't find a quicktree executable to run. Tried $quicktreebreak_executable \n") 
@@ -200,9 +200,6 @@ sub run_quicktreebreak {
   my $cmd = $quicktreebreak_executable;
   $cmd .= " -out t -in a";
   $cmd .= " ". $input_aln;
-
-  #/nfs/users/nfs_a/avilella/src/quicktree/quicktree_1.1/bin/quicktree -out t
-  # -in a /tmp/worker.12270/proteintree_517373.stk
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   print("$cmd\n") if($self->debug);

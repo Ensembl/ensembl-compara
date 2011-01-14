@@ -131,15 +131,9 @@ sub run_hcluster {      # FIXME: this subroutine should also be moved into a sep
 
   my $starttime = time();
 
-  my $hcluster_executable = $self->analysis->program_file;
+  my $hcluster_executable = $self->analysis->program_file || '';
   unless (-e $hcluster_executable) {
-    if (`uname -m` =~ /ia64/) {
-      $hcluster_executable
-        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/ia64/hcluster/hcluster_sg";
-    } else {
-      $hcluster_executable
-        = "/nfs/users/nfs_a/avilella/src/treesoft/trunk/hcluster/hcluster_sg";
-    }
+      $hcluster_executable = '/software/ensembl/compara/hcluster/hcluster_sg';
   }
 
   my $big_files_dir = $self->param('big_files_dir');

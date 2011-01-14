@@ -489,7 +489,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
-            -program_file => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => 2,
@@ -504,7 +503,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
-            -program_file => '/software/ensembl/compara/tcoffee-7.86b/t_coffee',
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => 2,
@@ -518,7 +516,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'njtree_phyml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
-            -program_file => '/nfs/users/nfs_a/avilella/src/treesoft/trunk/treebest/treebest',
             -parameters => {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
@@ -552,7 +549,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'build_HMM_aa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -program_file => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
             -parameters => {
                 'sreformat'                 => '/usr/local/ensembl/bin/sreformat',
             },
@@ -562,7 +558,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'build_HMM_cds',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -program_file => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
             -parameters => {
                 'cdna'                      => 1,
                 'sreformat'                 => '/usr/local/ensembl/bin/sreformat',
