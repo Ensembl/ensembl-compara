@@ -85,10 +85,11 @@ sub form {
     $matrix->add_column({ name => $cell_line, caption => $cell_line });
   }
   
-  my $groups = { core => [], other => []};
+  my $groups = { core => [], other => [] };
 
   foreach my $feature (sort keys %{$self->{'evidence_features'}}) {
     my ($feature_name, $feature_id) = split /\:/, $feature;
+    my $set = exists $focus_feature_type_ids{$feature_id} ? 'core' : 'other';
     
     my $row = {
       name => $feature_name,
@@ -97,13 +98,12 @@ sub form {
     
     foreach my $cell_line (sort keys %{$self->{'cell_lines'}}) { 
       $cell_line =~ s/\:\w*//;
-
-      $row->{'row'}->{$cell_line}  = '';
-      $row->{'row'}->{$cell_line} .= 'c' if $self->get("opt_cft_$cell_line:$feature_name") eq 'on';
-      $row->{'row'}->{$cell_line} .= 'e' if exists $self->{'feature_type_ids'}{$cell_line}{$feature_id};
+      
+      $row->{'row'}->{$cell_line}->{'enabled'} = 1 if exists $self->{'feature_type_ids'}{$cell_line}{$feature_id};
+      $row->{'row'}->{$cell_line}->{'default'} = 1 if $self->{'_options'}{"opt_cft_$cell_line:$feature_name"}{'default'} eq 'on';
+      $row->{'row'}->{$cell_line}->{'checked'} = 1 if $self->get("opt_cft_$cell_line:$feature_name") eq 'on';
     }
     
-    my $set = exists $focus_feature_type_ids{$feature_id} ? 'core' : 'other';      
     push @{$groups->{$set}}, $row;
   }
   
@@ -183,14 +183,24 @@ sub update_from_input {
       
       $altered ||= $key if $values[0] !~ /^(off|no)$/;
       
-      $cell_lines{$cell_line}++;
+      $cell_lines{$cell_line}{$key} = $values[0];
     }
   }
   
   foreach my $cell_line (keys %cell_lines) {
-    foreach my $key (grep /^opt_cft_$cell_line/, @options) {
+    foreach my $key (keys %{$cell_lines{$cell_line}}) {
       my (undef, $feature) = split /:/, $key;
-      $cell_lines{$evidence_types{$feature}}{$cell_line} = 1 if $self->get($key) !~ /^(off|no)$/;
+      
+      if ($cell_lines{$cell_line}{$key} =~ /^(off|no)$/) {
+        foreach (grep /^opt_cft_$cell_line/, @options) {
+          if ($self->get($_) !~ /^(off|no)$/) {
+            $cell_lines{$evidence_types{$feature}}{$cell_line} = 1;
+            last;
+          }
+        }
+      } else {
+        $cell_lines{$evidence_types{$feature}}{$cell_line} = 1;
+      }
     }
     
     for ('core', 'other') {
