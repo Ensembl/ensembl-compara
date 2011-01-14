@@ -13,7 +13,8 @@ sub new {
   
   my $self = $class->SUPER::new(
     species_defs => $hub->species_defs,
-    user         => $hub->user
+    user         => $hub->user,
+    favourites   => $hub->get_favourite_species
   );
   
   bless $self, $class;
@@ -25,6 +26,7 @@ sub new {
 
 sub user         { return $_[0]{'user'};         }
 sub species_info { return $_[0]{'species_info'}; }
+sub favourites   { return $_[0]{'favourites'};   }
 sub image_type   { return '.png';                }
 
 sub set_species_info {
@@ -84,7 +86,7 @@ sub render_species_list {
   
   my (%check_faves, @ok_faves);
   
-  foreach (@{$self->get_favourites}) {
+  foreach (@{$self->favourites}) {
     push @ok_faves, $species_info->{$_} unless $check_faves{$_}++;
   }
   
@@ -155,7 +157,7 @@ sub render_species_dropdown {
   my $sitename     = $species_defs->ENSEMBL_SITETYPE;
   my $species_info = $self->species_info;
   my $labels       = $species_defs->TAXON_LABEL; ## sort out labels
-  my $favourites   = $self->get_favourites;
+  my $favourites   = $self->favourites;
   my (@group_order, %label_check);
   
   my $html = '
@@ -226,7 +228,7 @@ sub render_species_dropdown {
 sub render_ajax_reorder_list {
   my $self         = shift;
   my $species_defs = $self->species_defs;
-  my $favourites   = $self->get_favourites;
+  my $favourites   = $self->favourites;
   my %species_info = %{$self->species_info};
   my @fav_list     = map qq{<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>}, map $species_info{$_}, @$favourites;
   
@@ -249,20 +251,6 @@ sub render_ajax_reorder_list {
     </ul>
     <span class="link toggle_link">Save selection</span> &middot; <a href="/Account/ResetFavourites">Restore default list</a>
   ', join("\n", @fav_list), join("\n", @species_list));
-}
-
-sub get_favourites {
-  ## Returns a list of species as Genus_species strings
-  my $self = shift;
-  
-  return $self->{'favourites'} if $self->{'favourites'};
-  
-  my $user         = $self->user;
-  my $species_defs = $self->species_defs;
-  my @favourites   = $user ? @{$user->favourite_species} : @{$species_defs->DEFAULT_FAVOURITES || []};
-  @favourites      = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
-  
-  return $self->{'favourites'} = \@favourites;
 }
 
 sub render_with_images {
