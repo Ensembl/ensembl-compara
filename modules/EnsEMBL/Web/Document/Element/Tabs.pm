@@ -84,6 +84,10 @@ sub init_species_list {
     map  { $_ eq $species ? () : [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]}
     $species_defs->valid_species
   ];
+  
+  my $favourites = $hub->get_favourite_species;
+  
+  $self->{'favourite_species'} = [ map {[ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]} @$favourites ] if scalar @$favourites;
 }
 
 sub init_history {
@@ -176,7 +180,12 @@ sub species_list {
   my $total     = scalar @{$self->{'species_list'}};
   my $remainder = $total % 3;
   my $third     = int($total / 3) - 1;
-  my $html;
+  my ($all_species, $fav_species);
+  
+  if ($self->{'favourite_species'}) {
+    $fav_species .= qq{<li><a class="constant" href="$_->[0]">$_->[1]</a></li>} for @{$self->{'favourite_species'}};
+    $fav_species  = qq{<h4>Favourite species</h4><ul>$fav_species</ul><div style="clear: both;padding:1px 0"></div>};
+  }
   
   # Ok, this is slightly mental. Basically, we're building a 3 column structure with floated <li>'s.
   # Because they are floated, if they were printed alphabetically, this would result in a menu with was alphabetised left to right, i.e.
@@ -198,11 +207,11 @@ sub species_list {
   
   for my $i (0..$#{$output_order[0]}) {
     for my $j (0..2) {
-      $html .= sprintf '<li>%s</li>', $output_order[$j][$i] ? qq{<a class="constant" href="$output_order[$j][$i][0]">$output_order[$j][$i][1]</a>} : '&nbsp;';
+      $all_species .= sprintf '<li>%s</li>', $output_order[$j][$i] ? qq{<a class="constant" href="$output_order[$j][$i][0]">$output_order[$j][$i][1]</a>} : '&nbsp;';
     }
   }
   
-  return qq{<div class="dropdown species"><h4>Select a species</h4><ul>$html</ul></div>};
+  return qq{<div class="dropdown species">$fav_species<h4>All species</h4><ul>$all_species</ul></div>};
 }
 
 sub history {
