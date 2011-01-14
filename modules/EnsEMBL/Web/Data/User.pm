@@ -128,6 +128,14 @@ sub add_das {
   return;
 }
 
+sub favourite_species {
+  my $self          = shift;
+  my $species_defs  = $self->species_defs;
+  my %valid_species = map { $_ => 1 } $species_defs->valid_species;
+  my @species_lists = $self->specieslists;
+  my @favourites    = @species_lists ? map { $valid_species{$_} ? $_ : () } split /,/, $species_lists[0]->favourites : ();
+  return \@favourites;
+}
 
 ###################################################################################################
 ##
