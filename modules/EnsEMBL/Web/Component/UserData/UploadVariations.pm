@@ -36,6 +36,8 @@ sub content {
               <p class="space-below">The tool will accept substitutions, insertions and deletions as input,
               uploaded as a list of tab separated values - 
               <a href="/info/website/upload/var.html" target="_blank">more about required format</a>.</p>
+              <p class="space-below">The tool will also accept VCF format input -
+              <a href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40" target="_blank">more about VCF</a>.</p>
               <p>There is a limit of $variation_limit variations that can be processed at any one time. 
               You can upload a file that contains more entries, however anything after the $variation_limit 
               line will be ignored. If your file contains more than $variation_limit variations you can split 
