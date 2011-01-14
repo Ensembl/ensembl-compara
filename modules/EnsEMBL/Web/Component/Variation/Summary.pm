@@ -165,7 +165,7 @@ sub content {
     my @germline_variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
     my @somatic_mutations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
     my @variations = (@germline_variations, @somatic_mutations);
-warn $feature_slice->end;
+
     if (@variations) {
       $variation_string = 'with '; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
       
