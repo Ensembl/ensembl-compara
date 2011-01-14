@@ -54,12 +54,12 @@ sub populate_tree {
   
   my $compara_menu = $self->create_submenu('Compara', 'Comparative Genomics');
   
-  $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments ([[counts::alignments]])',
+  $compara_menu->append($self->create_node('Compara_Alignments', 'Genomic alignments',
     [qw(
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignments EnsEMBL::Web::Component::Gene::Compara_Alignments
     )],
-    { 'availability' => 'gene database:compara core has_alignments', 'concise' => 'Genomic alignments' }
+    { 'availability' => 'gene database:compara core has_alignments' }
   ));
   
   my $tree_node = $self->create_node('Compara_Tree', 'Gene Tree (image)',
