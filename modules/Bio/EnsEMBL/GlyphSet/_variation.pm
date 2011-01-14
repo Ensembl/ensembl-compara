@@ -72,7 +72,6 @@ sub fetch_features {
         my $track_set = $self->{'my_config'}->id; 
         $track_set =~s/variation_set_//;
         
-        warn($track_set);
         my $variation_db_adaptor = $self->{'container'}->adaptor->db->get_db_adaptor('variation');
         my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
       
