@@ -179,7 +179,7 @@ print "There are " . scalar(@{$vfs}) . " variations in the " . $slice->display_i
 $vf_adaptor->db->include_failed_variations(1);
 
 # Again, fetch all variations on the slice but this time include the failed variations
-my $vfs = $vf_adaptor-&gt;fetch_all_by_Slice($slice); 
+$vfs = $vf_adaptor-&gt;fetch_all_by_Slice($slice); 
 
 # Count the number of variations returned, this number is likely to be higher than when failed variations were omitted
 print "There are " . scalar(@{$vfs}) . " variations in the " . $slice->display_id() . " region\n";
@@ -234,7 +234,7 @@ foreach my $vf (@{$vfs}) {
 		
 		# Get all the alleles belonging to the variation and check which ones have failed and why
 		my %failed_subsnps;
-		foreach my $allele ($vf->variation->get_all_Alleles()) {
+		foreach my $allele (@{$vf->variation->get_all_Alleles()}) {
 		
 			# Each subsnp can have multiple allele, so skip this one if we've already seen it
 			next if (exists($failed_subsnps{$allele->subsnp()}));
@@ -249,7 +249,7 @@ foreach my $vf (@{$vfs}) {
 		
 		#ÊPrint the result
 		print "Variation " . $vf->variation_name() . " has the following failed subsnps:\n";
-		map { print "\t" . $_ . " has been flagged as failed because " $failed_subsnps{$_} . "\n"; } keys(%failed_subsnps);
+		map { print "\t" . $_ . " has been flagged as failed because " . $failed_subsnps{$_} . "\n"; } keys(%failed_subsnps);
 	}
 }
 	
