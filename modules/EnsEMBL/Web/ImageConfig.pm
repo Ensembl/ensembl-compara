@@ -1,4 +1,4 @@
-# $Id$
+#Id$
 
 package EnsEMBL::Web::ImageConfig;
 
@@ -195,7 +195,7 @@ sub remove_disabled_menus {
     return;
   }
   
-  if ($node->get('node_type') !~ /^(track|option)$/ && !$node->has_child_nodes) {
+ if ($node->get('node_type') !~ /^(track|option)$/ && !$node->has_child_nodes) {
     my $parent = $node->parent_node;
     $self->remove_disabled_menus($parent) if $parent && scalar @{$parent->child_nodes} == 1;
     $node->remove;
@@ -952,7 +952,7 @@ sub add_dna_align_features {
   
   foreach my $key_2 (@$keys) {
     my $k    = $data->{$key_2}{'type'} || 'other';
-    my $menu = $self->tree->get_node("dna_align_$k");
+    my $menu = ($k eq 'rnaseq') ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     
     if ($menu) {
       my $alignment_renderers = [ @{$self->{'alignment_renderers'}} ];
@@ -1014,15 +1014,22 @@ sub add_genes {
   
   foreach my $type (@{$self->{'transcript_types'}}) {
     my $menu = $self->get_node($type);
-
     next unless $menu;
-    
-    foreach (@$keys) {
-      $self->generic_add($menu, $key, "${type}_${key}_$_", $data->{$_}, {
-        glyphset    => ($type =~ /_/ ? '' : '_') . $type, # QUICK HACK
+    foreach my $key2 (@$keys) {
+      my $t = $type;
+      #hack just for human rnaseq genes to force them into the rna-seq menu
+      if (my $wd_type = $data->{$key2}{'type'}) {
+	if ($wd_type eq 'rnaseq') {
+	  $t = $wd_type;
+	}
+      }
+      my $menu = $self->get_node($t);
+      next unless $menu;
+      $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
+        glyphset    => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours     => $colours,
-        strand      => $type eq 'gene' ? 'r' : 'b',
-        renderers   => $type eq 'transcript' ? [
+        strand      => $t eq 'gene' ? 'r' : 'b',
+        renderers   => $t eq 'transcript' ? [
           'off',                'Off',
           'gene_nolabel',       'No exon structure without labels',
           'gene_label',         'No exon structure with labels',
@@ -1030,10 +1037,16 @@ sub add_genes {
           'transcript_label',   'Expanded with labels',
           'collapsed_nolabel',  'Collapsed without labels',
           'collapsed_label',    'Collapsed with labels',
-        ] : [ 
-          'off',          'Off', 
-          'gene_nolabel', 'No labels', 
-          'gene_label',   'With labels'
+        ]
+          : $t eq 'rnaseq' ? [
+	 'off',                'Off',
+	 'transcript_nolabel', 'Expanded without labels',
+	 'transcript_label',   'Expanded with labels',
+	]
+	  : [
+	 'off',          'Off',
+	 'gene_nolabel', 'No labels', 
+	 'gene_label',   'With labels'
         ]
       });
       
