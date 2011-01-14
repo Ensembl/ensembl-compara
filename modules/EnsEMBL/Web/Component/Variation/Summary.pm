@@ -173,18 +173,23 @@ sub content {
       
       foreach my $v (@variations) {
         my $name           = $v->variation_name; 
+        my $v_start = $v->start + $feature_slice->start -1;
+        my $v_end = $v->end + $feature_slice->end -1;
+        next unless (( $v_start == $feature_slice->start) && ($v_end == $feature_slice->end)); 
         my $link           = $hub->url({ v => $name, vf => $v->dbID });
         my $variation      = qq{<a href="$link">$name</a>};
         $variation_string .= ", $variation";
       }
-      
-      $variation_string =~ s/,\s+//;  
 
-      $html .= "
-      <dl class='summary'>
-        <dt>Co-located </dt>
-        <dd>$variation_string</dd>
-      </dl>";    
+      if ($variation_string =~/,/) {      
+        $variation_string =~ s/,\s+//;  
+
+        $html .= "
+        <dl class='summary'>
+          <dt>Co-located </dt>
+          <dd>$variation_string</dd>
+        </dl>";    
+      }
     }
   }
   
