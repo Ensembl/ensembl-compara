@@ -1755,7 +1755,7 @@ sub add_sequence_variations {
           my $sub_set_name        = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'name'}; 
           my $sub_set_description = $hashref->{'variation_set'}{'subsets'}{$subset_id}{'description'};
           
-          $set_variation->append($self->create_track("variation_set_${name}_$sub_set_name", $sub_set_name, {
+          $set_variation->append($self->create_track("variation_set_$sub_set_name", $sub_set_name, {
             %options,
             caption     => $sub_set_name,
             sources     => undef,
