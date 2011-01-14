@@ -40,7 +40,7 @@ sub render {
   if (scalar @{$self->{'__row_keys'}}) {
     my $select_all_columns = $self->get_elements_by_class_name($self->CSS_CLASS_SELECTALL_COLUMN);
     my $dropdown = $self->dom->create_element('select', {'class', $self->CSS_CLASS_SELECTALL_COLUMN});
-    my @values = ("custom", "all", @{$self->{'__row_keys'}}, "none");
+    my @values = ('custom', 'default', 'all', @{$self->{'__row_keys'}}, 'none');
     $dropdown->append_child($self->dom->create_element('option', {'inner_HTML' => ucfirst $_, 'value' => $_})) for @values;
     for (@$select_all_columns) {
       my $dd = $dropdown->clone_node(1);
@@ -204,13 +204,16 @@ sub add_row {
     $row->{$column->{'name'}} ||= '';
     my $td = $self->dom->create_element('td', {'class' => $self->CSS_CLASS_CELLS});
     my $checkbox = $self->dom->create_element('inputcheckbox', {'name' => $self->{'__name_prefix'}.$column->{'name'}.':'.$name, 'value' => 'on'});
-    if ($row->{$column->{'name'}} =~ /e/) {
-      $checkbox->set_attribute('class' => $self->{'__name_prefix'}.$column->{'name'}.' '.$self->{'__name_prefix'}.$name.' '.$self->_row_key);
-    }
-    else {
+    
+    if ($row->{$column->{'name'}}->{'enabled'}) {
+      $checkbox->set_attribute('class' => "$self->{'__name_prefix'}$column->{'name'} $self->{'__name_prefix'}$name " . $self->_row_key);
+    } else {
       $checkbox->disabled(1);
     }
-    $checkbox->checked(1) if $row->{$column->{'name'}} =~ /c/;
+    
+    $checkbox->checked(1) if $row->{$column->{'name'}}->{'checked'};
+    $checkbox->set_attribute('class', 'default') if $row->{$column->{'name'}}->{'default'};
+    $checkbox->set_attribute('class', $row->{$column->{'name'}}->{'class'}) if $row->{$column->{'name'}}->{'class'};
 
     $td->append_child($checkbox);
     $tr->append_child($td);
