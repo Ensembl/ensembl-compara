@@ -47,9 +47,6 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare;
 
 use strict;
-use Bio::EnsEMBL::Compara::NestedSet;
-use Bio::EnsEMBL::Compara::Homology;
-use Bio::EnsEMBL::Compara::Graph::ConnectedComponents;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
@@ -59,22 +56,21 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
+    my $mlss_id      = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+
     my $genome_db_id = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
+    my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
 
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
-    $self->param('genome_db', $genome_db);
+    my $name_and_id = $self->param('name_and_id') || ($genome_db->name . '_' . $genome_db_id);
+    my $table_name  = 'peptide_align_feature_' . $name_and_id;
+    $self->param('table_name', $table_name);
 
-    my $outgroups = $self->param('outgroups') || [];
-    my $gdb_in_outgroups = { map { ($_ => 1) } @$outgroups }->{ $genome_db_id } || 0;
-    $self->param('gdb_in_outgroups', $gdb_in_outgroups);
-
-    my $mlss_id          = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
-    my $mlss             = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
-    my $species_set      = $mlss->species_set;
-    my $genome_db_list   = (ref($species_set) eq 'ARRAY') ? $species_set : $species_set->genome_dbs();
-    my $genome_db_id_csv = join(',', map { $_->dbID() } @$genome_db_list );
-
-    $self->param('genome_db_id_csv', $genome_db_id_csv);
+    unless(defined($self->param('outgroup_category'))) {    # it can either be passed in or computed
+        my $outgroups = $self->param('outgroups') || [];
+        my $gdb_in_outgroups  = { map { ($_ => 1) } @$outgroups }->{ $genome_db_id } || 0;
+        my $outgroup_category = $gdb_in_outgroups ? 2 : 1;
+        $self->param('outgroup_category', $outgroup_category);
+    }
 }
 
 
@@ -98,29 +94,26 @@ sub write_output {
 #
 ##########################################
 
+
 # This will make sure that the indexes for paf are fine
 sub analyze_table {
   my $self = shift;
 
+  my $table_name = $self->param('table_name');
+
   my $starttime = time();
 
-  my $genome_db = $self->param('genome_db');
-  my $genome_db_id = $genome_db->dbID;
-  my $species_name = lc($genome_db->name);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$genome_db_id";
-  # Re-enable the keys before starting the queries
-  my $sql = "ALTER TABLE $tbl_name ENABLE KEYS";
-
+      # Re-enable the keys before starting the queries
+  my $sql = "ALTER TABLE $table_name ENABLE KEYS";
   print("$sql\n") if ($self->debug);
   my $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
 
-  $sql = "ANALYZE TABLE $tbl_name";
-
-  #print("$sql\n");
+  $sql = "ANALYZE TABLE $table_name";
+  print("$sql\n") if ($self->debug);
   $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
+
   printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));
 }
 
@@ -128,26 +121,29 @@ sub analyze_table {
 sub fetch_distances {
   my $self = shift;
 
-  my $genome_db = $self->param('genome_db') or die "No genome_db object";
+  my $table_name        = $self->param('table_name');
+  my $genome_db_id      = $self->param('genome_db_id');
+  my $mlss_id           = $self->param('mlss_id');
 
   my $starttime = time();
 
-  my $genome_db_id = $genome_db->dbID;
-  my $species_name = lc($genome_db->name);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$genome_db_id";
-  my $genome_db_id_csv = $self->param('genome_db_id_csv');
-  my $sql = "SELECT ".
-            "concat(qmember_id,'_',qgenome_db_id), ".
-            "concat(hmember_id,'_',hgenome_db_id), ".
-            "IF(evalue<1e-199,100,ROUND(-log10(evalue)/2)) ".
-             "FROM $tbl_name WHERE qgenome_db_id=$genome_db_id and hgenome_db_id in ($genome_db_id_csv);";
-  print("$sql\n");
+  my $sql = qq{
+    SELECT concat(qmember_id,'_',qgenome_db_id),
+           concat(hmember_id,'_',hgenome_db_id),
+           IF(evalue<1e-199,100,ROUND(-log10(evalue)/2))
+      FROM $table_name paf, species_set ss, method_link_species_set mlss
+     WHERE mlss.method_link_species_set_id=$mlss_id
+       AND mlss.species_set_id=ss.species_set_id
+       AND ss.genome_db_id=paf.hgenome_db_id
+       AND paf.qgenome_db_id=$genome_db_id
+  };
+  print("$sql\n") if ($self->debug);
   my $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
-  my $filename = $self->param('cluster_dir') . "/" . "$tbl_name.hcluster.txt";
+
+  my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.txt";
   open FILE, ">$filename" or die "Cannot open $filename: $!";
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($query_id, $hit_id, $score) = @$ref;
@@ -158,30 +154,26 @@ sub fetch_distances {
   printf("%1.3f secs to process\n", (time()-$starttime));
 }
 
+
 sub fetch_categories {
   my $self = shift;
 
-  my $genome_db = $self->param('genome_db') or die "No genome_db object";
+  my $table_name        = $self->param('table_name');
+  my $genome_db_id      = $self->param('genome_db_id');
+  my $outgroup_category = $self->param('outgroup_category');
 
   my $starttime = time();
 
-  my $genome_db_id = $genome_db->dbID;
-  my $species_name = lc($genome_db->name);
-  $species_name =~ s/\ /\_/g;
-  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$genome_db_id";
   my $sql = "SELECT DISTINCT ".
             "qmember_id ".
-             "FROM $tbl_name WHERE qgenome_db_id=$genome_db_id;";
+             "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
   print("$sql\n");
   my $sth = $self->compara_dba->prepare($sql);
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
   print("  done with fetch\n");
 
-  my $filename = $self->param('cluster_dir') . "/" . "$tbl_name.hcluster.cat";
-
-  my $outgroup_index = $self->param('gdb_in_outgroups') ? 2 : 1;
-
+  my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.cat";
   my $member_id_hash;
   while ( my $ref  = $sth->fetchrow_arrayref() ) {
     my ($member_id) = @$ref;
@@ -191,7 +183,7 @@ sub fetch_categories {
   printf("%1.3f secs to gather distinct\n", (time()-$starttime));
   open FILE, ">$filename" or die "Cannot open $filename: $!";
   foreach my $member_id (keys %$member_id_hash) {
-    print FILE "$member_id"."_","$genome_db_id\t$outgroup_index\n";
+    print FILE "${member_id}_${genome_db_id}\t${outgroup_category}\n";
   }
   close FILE;
   printf("%1.3f secs to process\n", (time()-$starttime));

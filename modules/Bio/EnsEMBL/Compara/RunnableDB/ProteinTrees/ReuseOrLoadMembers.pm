@@ -58,6 +58,11 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    if($self->param('bypass_all')) {
+        $self->input_job()->autoflow(0);
+        return;
+    }
+
         # not sure if this can be done directly in param_defaults because of the order things get initialized:
     unless(defined($self->param('verbose'))) {
         $self->param('verbose', $self->debug == 2);
@@ -73,14 +78,14 @@ sub fetch_input {
     my $compara_dba = $self->compara_dba();
 
         #get the Compara::GenomeDB object for the genome_db_id:
-    $self->param('genome_db_obj', $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) )
-        or $self->throw("Can't fetch the genome_db object (gdb_id=$genome_db_id) from Compara");
+    my $genome_db = $self->param('genome_db', $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) )
+        or die "Can't fetch the genome_db object (gdb_id=$genome_db_id) from Compara";
   
         #using genome_db_id, connect to external core database:
-    $self->param('core_dba', $self->param('genome_db_obj')->db_adaptor() )
-        or $self->throw("Can't connect to external core database for gdb=$genome_db_id");
+    $self->param('core_dba', $genome_db->db_adaptor() )
+        or die "Can't connect to external core database for gdb=$genome_db_id";
 
-    my $genome_db_name = $self->param('genome_db_obj')->name;
+    my $genome_db_name = $genome_db->name;
 
         # this one will be used later for dataflow:
     $self->param('name_and_id', $genome_db_name.'_'.$genome_db_id );
@@ -101,9 +106,13 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
+    if($self->param('bypass_all')) {
+        $self->input_job()->autoflow(0);
+        return;
+    }
+
     my $compara_dba    = $self->compara_dba();
     my $genome_db_id   = $self->param('genome_db_id');
-    my $genome_db_name = $self->param('genome_db_name');
 
     my $reuse_this      = $self->param('reuse_this');
 
@@ -134,6 +143,11 @@ sub run {
 
 sub write_output {
     my $self = shift @_;
+
+    if($self->param('bypass_all')) {
+        $self->input_job()->autoflow(0);
+        return;
+    }
 
     my $genome_db_id    = $self->param('genome_db_id');
     my $reuse_this      = $self->param('reuse_this');
@@ -333,7 +347,7 @@ sub store_gene_and_all_transcripts {
 
     my $pep_member = Bio::EnsEMBL::Compara::Member->new_from_transcript(
          -transcript=>$transcript,
-         -genome_db=>$self->param('genome_db_obj'),
+         -genome_db=>$self->param('genome_db'),
          -translate=>'yes',
          -description=>$description);
 
@@ -351,7 +365,7 @@ sub store_gene_and_all_transcripts {
       print("     gene       " . $gene->stable_id ) if($self->param('verbose'));
       $gene_member = Bio::EnsEMBL::Compara::Member->new_from_gene(
                                                                   -gene=>$gene,
-                                                                  -genome_db=>$self->param('genome_db_obj'));
+                                                                  -genome_db=>$self->param('genome_db'));
       print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
 
       eval {

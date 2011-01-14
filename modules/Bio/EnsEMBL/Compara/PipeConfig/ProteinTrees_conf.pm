@@ -97,22 +97,30 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        'reuse_db' => {   # usually previous release database on compara1
+        # # "production mode"
+        # 'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        # 'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        # 'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+        #'reuse_db' => {   # usually previous release database on compara1
+        #    -host   => 'compara1',
+        #    -port   => 3306,
+        #    -user   => 'ensro',
+        #    -pass   => '',
+        #    -dbname => 'kb3_ensembl_compara_60',
+        #},
+
+        # mode for testing the non-Blast part of the pipeline: reuse all Blasts
+        'reuse_core_sources_locs' => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        'curr_core_sources_locs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        'prev_release'            => $self->o('release'),
+        'reuse_db' => {   # current release if we are testing after production
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => 'kb3_ensembl_compara_60',
+            -dbname => 'sf5_ensembl_compara_61',
         },
 
-        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-
-        ## for testing the non-Blast part of the pipeline: reuse all Blasts
-        # 'reuse_core_sources_locs' => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        # 'curr_core_sources_locs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        # 'prev_release'            => $self->o('release'),
     };
 }
 
@@ -259,7 +267,11 @@ sub pipeline_analyses {
             -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
             -flow_into => {
                 2 => [ 'load_genomedb' ],
-                1 => [ 'create_species_tree' ],
+                1 => { 'create_species_tree' => undef,
+                       'accumulate_reuse_ss' => undef,  # backbone
+                       'load_reuse_members' => { 'bypass_all' => 1 },   # fight the "empty analysis is always blocked" restriction (should be fixed on Hive level)
+                       'load_fresh_members' => { 'bypass_all' => 1 },   # fight the "empty analysis is always blocked" restriction (should be fixed on Hive level)
+                },
             },
         },
 
@@ -322,6 +334,20 @@ sub pipeline_analyses {
             },
         },
 
+        {   -logic_name    => 'accumulate_reuse_ss',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',     # a non-standard use of JobFactory for iterative insertion
+            -parameters => {
+                'inputquery'      => 'SELECT GROUP_CONCAT(genome_db_id) FROM species_set WHERE species_set_id=#reuse_ss_id#',
+                'input_id'        => { 'meta_key' => 'reuse_ss_csv', 'meta_value' => '#_range_start#' },
+                'fan_branch_code' => 3,
+            },
+            -wait_for => [ 'load_genomedb', 'check_reusability' ],
+            -hive_capacity => -1,   # to allow for parallelization
+            -flow_into => {
+                3 => [ 'mysql:////meta' ],
+            },
+        },
+
 # ---------------------------------------------[reuse members and pafs]--------------------------------------------------------------
 
         {   -logic_name => 'load_reuse_members',
@@ -329,6 +355,7 @@ sub pipeline_analyses {
             -parameters => {
                 'reuse_db'      => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
             },
+            -wait_for => [ 'accumulate_reuse_ss' ],   # fight the "empty analysis is always blocked" restriction (should be fixed on Hive level)
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'dump_fasta_create_blast_analyses', 'store_sequences_factory' ],
@@ -336,11 +363,13 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'paf_table_reuse',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PAFtableReuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'reuse_db'      => $self->dbconn_2_url('reuse_db'),
+                'src_db_conn'   => $self->o('reuse_db'),
+                'table'         => 'peptide_align_feature_#name_and_id#',
+                'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
-            -wait_for   => [ 'check_reusability' ],     # have to wait until reuse_ss is fully populated
+            -wait_for   => [ 'accumulate_reuse_ss' ],     # have to wait until reuse_ss is fully populated
             -hive_capacity => 4,
         },
 

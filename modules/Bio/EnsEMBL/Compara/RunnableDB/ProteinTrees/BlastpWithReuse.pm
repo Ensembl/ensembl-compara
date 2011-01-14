@@ -86,8 +86,8 @@ sub fetch_input {
     my $reuse_ss = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($reuse_ss_id)
                     or die "Could not fetch reuse species_set with dbID=$reuse_ss_id";
 
-    my $reuse_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
-    $self->param('reuse_hash', $reuse_hash );
+    my $reuse_ss_hash = { map { $_->dbID() => 1 } @{ $reuse_ss->genome_dbs() } };
+    $self->param('reuse_ss_hash', $reuse_ss_hash );
 
 
     my $member_id = $self->param('member_id')
@@ -135,23 +135,23 @@ sub run {
     my $query       = $self->param('query');
 
     my $reuse_at_all      = $self->param('reuse_db');
-    my $reuse_hash        = $self->param('reuse_hash');
-    my $reuse_this_member = $reuse_hash->{$member->genome_db_id};
+    my $reuse_ss_hash     = $self->param('reuse_ss_hash');
+    my $reuse_this_member = $reuse_ss_hash->{$member->genome_db_id};
 
     my $fasta_dir         = $self->param('fasta_dir');
 
     my %cross_pafs = ();
 
   foreach my $genome_db (@{$self->param('genome_db_list')}) {
-    my $fastafile .= $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+    my $fastafile = $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
     $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-    my $cross_genome_dbfile = $fasta_dir . '/' . $fastafile;   # we are always intestested in the 'foreign' genome's fasta file, not the member's
+    my $cross_genome_dbfile = $fasta_dir . '/' . $fastafile;   # we are always interested in the 'foreign' genome's fasta file, not the member's
 
         # Here we can look at a previous build and try to reuse the blast
         # results for this query peptide against this hit genome.
         # Only run if the blasts are not being reused:
-    unless($reuse_at_all and $reuse_hash->{$genome_db->dbID} and $reuse_this_member) {
+    unless($reuse_at_all and $reuse_ss_hash->{$genome_db->dbID} and $reuse_this_member) {
 
           ## Define the filter from the parameters:
       my $thr_type = $self->param('-threshold_type');

@@ -72,17 +72,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-#    my $species_set = $self->param('species_set') or die "'species_set' is an obligatory list parameter";
-#    my $cluster_mlss = $self->param('cluster_mlss', Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new() );
-#    $cluster_mlss->method_link_type('PROTEIN_TREES');
-#    my @genomedb_array = ();
-#    foreach my $gdb_id (@$species_set) {
-#        my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
-#        $self->throw("print gdb not defined for gdb_id = $gdb_id\n") unless (defined $gdb);
-#        push @genomedb_array, $gdb;
-#    }
-#    $cluster_mlss->species_set(\@genomedb_array);
-
     my $mlss_id          = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 
     my $big_files_dir = $self->param('big_files_dir')

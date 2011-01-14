@@ -52,8 +52,12 @@ sub fetch_input {
     my $curr_release = $self->param('release');
     my $prev_release = $self->param('prev_release') || ($curr_release - 1);
 
-    my $genome_db_obj = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
-    my $species_name  = $self->param('species_name', $genome_db_obj->name());
+    my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
+    my $species_name = $self->param('species_name', $genome_db->name());
+
+    unless($self->param('name_and_id')) {
+        $self->param('name_and_id', ($genome_db->name . '_' . $genome_db_id));
+    }
 
     Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -63,7 +67,7 @@ sub fetch_input {
     }
 
     if( my $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core')) ) {
-        my $curr_core_dba = $self->param('curr_core_dba', $genome_db_obj->db_adaptor);
+        my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
         my $curr_assembly = $curr_core_dba->extract_assembly_name;
         my $prev_assembly = $prev_core_dba->extract_assembly_name;
@@ -113,13 +117,15 @@ sub run {
 sub write_output {      # store the genome_db and dataflow
     my $self = shift;
 
-    my $reuse_this     = $self->param('reuse_this');
+    my $reuse_this   = $self->param('reuse_this');
     my $genome_db_id = $self->param('genome_db_id');
+    my $name_and_id  = $self->param('name_and_id');
 
         # same composition of the output, independent of the branch:
     my $output_hash = {
         'genome_db_id' => $genome_db_id,
         'reuse_this'   => $reuse_this,
+        'name_and_id'  => $name_and_id,
     };
 
         # all jobs dataflow into branch 1:
