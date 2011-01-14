@@ -201,7 +201,6 @@ sub add_row {
   
   #other row checkboxes
   foreach my $column (@{$self->{'__columns'}}) {
-    $row->{$column->{'name'}} ||= '';
     my $td = $self->dom->create_element('td', {'class' => $self->CSS_CLASS_CELLS});
     my $checkbox = $self->dom->create_element('inputcheckbox', {'name' => $self->{'__name_prefix'}.$column->{'name'}.':'.$name, 'value' => 'on'});
     
