@@ -2,7 +2,7 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss                { width: 100%; border: 1px [[PAGE_TEXT]] solid }
+table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid }
 table.ss   th, 
 table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; }
 table.ss   th           { padding: 0 2px; }
