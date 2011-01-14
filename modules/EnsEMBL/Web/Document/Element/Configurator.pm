@@ -365,7 +365,7 @@ sub add_reset_panel {
   my $url = $controller->hub->url({ 
     type   => 'Config',
     action => $action,
-    config => $config =~ /(cell)?_page/ ? '' : $config,
+    config => $config  eq '_page' ? '' : $config,
     reset  => 1
   });
   
