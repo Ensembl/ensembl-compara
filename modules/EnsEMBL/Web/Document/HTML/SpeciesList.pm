@@ -40,7 +40,8 @@ sub set_species_info {
         name       => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
         common     => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
         scientific => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
-        group      => $species_defs->get_config($_, 'SPECIES_GROUP')
+        group      => $species_defs->get_config($_, 'SPECIES_GROUP'),
+        assembly   => $species_defs->get_config($_, 'ASSEMBLY_NAME')
       };
     }
 
@@ -77,13 +78,14 @@ sub render {
 
 sub render_species_list {
   my ($self, $fragment) = @_;
-  my $logins = $self->species_defs->ENSEMBL_LOGINS;
-  my $user   = $self->user;
+  my $logins       = $self->species_defs->ENSEMBL_LOGINS;
+  my $user         = $self->user;
+  my $species_info = $self->species_info;
   
   my (%check_faves, @ok_faves);
   
   foreach (@{$self->get_favourites}) {
-    push @ok_faves, $_ unless $check_faves{$_->{'key'}}++;
+    push @ok_faves, $species_info->{$_} unless $check_faves{$_}++;
   }
   
   my $count    = @ok_faves;
@@ -151,7 +153,7 @@ sub render_species_dropdown {
   my $self         = shift; 
   my $species_defs = $self->species_defs;
   my $sitename     = $species_defs->ENSEMBL_SITETYPE;
-  my @all_species  = values %{$self->species_info};
+  my $species_info = $self->species_info;
   my $labels       = $species_defs->TAXON_LABEL; ## sort out labels
   my $favourites   = $self->get_favourites;
   my (@group_order, %label_check);
@@ -166,7 +168,7 @@ sub render_species_dropdown {
   
   if (scalar @$favourites) {
     $html .= qq{<optgroup label="Favourite species">\n};
-    $html .= sprintf qq{<option value="%s/Info/Index">%s</option>\n}, encode_entities($_->{'key'}), encode_entities($_->{'common'}) for @$favourites;
+    $html .= sprintf qq{<option value="%s/Info/Index">%s</option>\n}, encode_entities($_->{'key'}), encode_entities($_->{'common'}) for map $species_info->{$_}, @$favourites;
     $html .= "</optgroup>\n";
   }
   
@@ -178,7 +180,7 @@ sub render_species_dropdown {
   ## Sort species into desired groups
   my %phylo_tree;
   
-  foreach (@all_species) {
+  foreach (values %$species_info) {
     my $group = $_->{'group'} ? $labels->{$_->{'group'}} || $_->{'group'} : 'no_group';
     push @{$phylo_tree{$group}}, $_;
   }  
@@ -225,13 +227,12 @@ sub render_ajax_reorder_list {
   my $self         = shift;
   my $species_defs = $self->species_defs;
   my $favourites   = $self->get_favourites;
-  my @fav_list     = map qq{<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>}, @$favourites;
-  my %sp_to_sort   = %{$self->species_info};
+  my %species_info = %{$self->species_info};
+  my @fav_list     = map qq{<li id="favourite-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>}, map $species_info{$_}, @$favourites;
   
+  delete $species_info{$_} for @$favourites;
   
-  delete $sp_to_sort{$_} for map $_->{'key'}, @$favourites;
-  
-  my @sorted       = sort { $a->{'common'} cmp $b->{'common'} } values %sp_to_sort;
+  my @sorted       = sort { $a->{'common'} cmp $b->{'common'} } values %species_info;
   my @species_list = map qq{<li id="species-$_->{'key'}">$_->{'common'} (<em>$_->{'scientific'}</em>)</li>}, @sorted;
   
   return sprintf('
@@ -260,13 +261,6 @@ sub get_favourites {
   my $species_defs = $self->species_defs;
   my @favourites   = $user ? @{$user->favourite_species} : @{$species_defs->DEFAULT_FAVOURITES || []};
   @favourites      = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
-  @favourites      = map {
-    key        => $_,
-    name       => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
-    common     => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
-    scientific => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
-    assembly   => $species_defs->get_config($_, 'ASSEMBLY_NAME')
-  }, @favourites;
   
   return $self->{'favourites'} = \@favourites;
 }
