@@ -145,10 +145,11 @@ sub content {
 
   # Check somatic mutation base matches reference
   if ($is_somatic && $feature_slice) {
-    my $ref_base = $feature_slice->seq;
-    my ($a1, $a2) = split //, $alleles;
-    
-    $allele_html .= "<br /><em>Note</em>: The reference base for this mutation ($a1) does not match the Ensembl reference base ($ref_base)." if $ref_base ne $a1;
+    my $ref_base = $feature_slice->seq; 
+    my ($a1, $a2) = split /\//, $alleles;
+
+    my $ref_seq = length $ref_base == 1 ? 'base': 'sequence';
+    $allele_html .= "<br /><em>Note</em>: The reference $ref_seq for this mutation ($a1) does not match the Ensembl reference $ref_seq ($ref_base)." if $ref_base ne $a1;
   }
   
   $html .= "
