@@ -25,8 +25,8 @@
 #masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
 #masthead div.dropdown                    { position: absolute; top: 21px; display: none; background: #EAEEFF; border: 1px solid [[TINT_BORDER_DARK]]; padding-bottom: 5px; }
-#masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; }
-#masthead div.dropdown ul                 { padding-top: 4px; border-top: 1px solid [[TINT_BORDER_DARK]]; }
+#masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; border-bottom: 1px solid [[TINT_BORDER_DARK]]; }
+#masthead div.dropdown ul                 { padding-top: 4px; }
 #masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
 #masthead div.dropdown ul li a            { color: [[PAGE_LINK]]; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
@@ -57,3 +57,4 @@ body.mac #masthead .account_holder        { top: 5px; }
   #masthead   { background: #ffffff; }
   #masthead a { color: #000000; }
 }
+
