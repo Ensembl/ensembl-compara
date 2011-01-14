@@ -184,7 +184,7 @@ sub species_list {
   
   if ($self->{'favourite_species'}) {
     $fav_species .= qq{<li><a class="constant" href="$_->[0]">$_->[1]</a></li>} for @{$self->{'favourite_species'}};
-    $fav_species  = qq{<h4>Favourite species</h4><ul>$fav_species</ul><div style="clear: both;padding:1px 0"></div>};
+    $fav_species  = qq{<h4>Favourite species</h4><ul>$fav_species</ul><div style="clear: both;padding:1px 0;background:none"></div>};
   }
   
   # Ok, this is slightly mental. Basically, we're building a 3 column structure with floated <li>'s.
