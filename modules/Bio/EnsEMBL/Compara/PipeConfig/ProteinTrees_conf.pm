@@ -37,8 +37,8 @@ sub default_options {
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
 
     # clustering parameters:
-        'outgroups'                 => [106],   # affects 'hcluster_prepare' and 'hcluster_run'
-        'clustering_max_gene_count' => 1500,    # affects 'hcluster_run'
+        'outgroups'                     => [106],   # affects 'hcluster_dump_input_per_genome'
+        'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
         'tree_max_gene_count'       => 400,     # affects 'njtree_phyml', 'ortho_tree' and 'quick_tree_break'
@@ -394,13 +394,13 @@ sub pipeline_analyses {
             -parameters => {
                 'fasta_dir'                 => $self->o('fasta_dir'),
                 'beforeblast_logic_name'    => 'load_fresh_members',
-                'afterblast_logic_name'     => 'hcluster_prepare',
+                'afterblast_logic_name'     => 'hcluster_dump_input_per_genome',
             },
             -wait_for => [ 'load_fresh_members', 'paf_table_reuse' ],   # actually it is Blast_* analyses that have to wait for 'paf_table_reuse', but it is tricky to achieve
             -hive_capacity => 1,
             -flow_into => {
                 2 => [ 'populate_blast_analyses' ],
-                1 => [ 'hcluster_prepare' ],
+                1 => [ 'hcluster_dump_input_per_genome' ],
             },
         },
 
@@ -435,7 +435,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
-        {   -logic_name => 'hcluster_prepare',
+        {   -logic_name => 'hcluster_dump_input_per_genome',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
                 'mlss_id'       => $self->o('mlss_id'),
@@ -449,18 +449,43 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'hcluster_run',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterRun',
+        {   -logic_name    => 'hcluster_merge_inputs',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'cluster_dir'               => $self->o('cluster_dir'),
+            },
+            -input_ids => [
+                { 'cmd' => 'cat #cluster_dir#/*.hcluster.txt > #cluster_dir#/hcluster.txt' },
+                { 'cmd' => 'cat #cluster_dir#/*.hcluster.cat > #cluster_dir#/hcluster.cat' },
+            ],
+            -wait_for => [ 'hcluster_dump_input_per_genome' ],
+            -hive_capacity => -1,   # to allow for parallelization
+        },
+
+        {   -logic_name    => 'hcluster_run',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'clustering_max_gene_halfcount' => $self->o('clustering_max_gene_halfcount'),
+                'cluster_dir'                   => $self->o('cluster_dir'),
+                'hcluster_exec'                 => '/software/ensembl/compara/hcluster/hcluster_sg',
+                'cmd'                           => '#hcluster_exec# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
+            },
+            -input_ids => [
+                { },    # backbone
+            ],
+            -wait_for => [ 'hcluster_merge_inputs' ],
+            -hive_capacity => -1,   # to allow for parallelization
+            -flow_into => {
+                1 => [ 'hcluster_parse_output' ],
+            },
+        },
+
+        {   -logic_name => 'hcluster_parse_output',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
             -parameters => {
                 'mlss_id'                   => $self->o('mlss_id'),
-                'outgroups'                 => $self->o('outgroups'),
                 'cluster_dir'               => $self->o('cluster_dir'),
-                'max_gene_count'            => $self->o('clustering_max_gene_count'),
             },
-            -wait_for => [ 'hcluster_prepare' ],
-            -input_ids => [
-                { },   # backbone
-            ],
             -hive_capacity => -1,
             -flow_into => {
                 1 => [ 'clusterset_qc', 'group_genomes_under_taxa' ],  # backbone 
@@ -478,7 +503,7 @@ sub pipeline_analyses {
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'ClustersetQC',
             },
-            -wait_for => [ 'hcluster_run' ],
+            -wait_for => [ 'hcluster_parse_output' ],
             -hive_capacity => 3,
             -flow_into => {
                 1 => [ 'gene_treeset_qc' ],
