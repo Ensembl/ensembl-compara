@@ -40,7 +40,7 @@ sub render {
   if (scalar @{$self->{'__row_keys'}}) {
     my $select_all_columns = $self->get_elements_by_class_name($self->CSS_CLASS_SELECTALL_COLUMN);
     my $dropdown = $self->dom->create_element('select', {'class', $self->CSS_CLASS_SELECTALL_COLUMN});
-    my @values = ("", "all", @{$self->{'__row_keys'}}, "none");
+    my @values = ("custom", "all", @{$self->{'__row_keys'}}, "none");
     $dropdown->append_child($self->dom->create_element('option', {'inner_HTML' => ucfirst $_, 'value' => $_})) for @values;
     for (@$select_all_columns) {
       my $dd = $dropdown->clone_node(1);
