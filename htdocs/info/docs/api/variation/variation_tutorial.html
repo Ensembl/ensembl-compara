@@ -479,6 +479,18 @@ foreach my $r_square (@{$ldFeatureContainer-&gt;get_all_r_square_values}){
 }
 </pre>
 
+<p>
+Please note the following warning <code> MSG: variation features have no pairwise ld information </code> is returned when there is no data in the LDFeatureContainer structure for the specified pair of VariationFeature objects. Here are some reasons why this may happen:
+</p>
+<ul>
+<li>the LDFeatureContainer does not span the region contained by one or both VariationFeature objects specified</li>
+<li>there are no genotypes for one or both variations, meaning no LD can be calculated</li>
+<li>one or both variations is non-variant in the specified population (i.e. has a minor allele frequency of 0)</li>
+<li>the estimated r<sup>2</sup> value is lower than the cut-off threshold in the calculation software (the threshold is 0.05)</li>
+</ul>
+<p> Looking at other associated data will help to narrow down the reason. If there are variants in the region spanned by the LDFeatureContainer 
+with genotypes with a minor allele frequency greater than zero, then assume the r<sup>2</sup> is < 0.05, which essentially means no correlation. </p>
+
 <h2>Specific strain information</h2>
 
 <p>
