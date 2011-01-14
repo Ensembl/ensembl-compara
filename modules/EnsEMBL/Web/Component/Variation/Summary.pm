@@ -165,7 +165,7 @@ sub content {
     my @germline_variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
     my @somatic_mutations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
     my @variations = (@germline_variations, @somatic_mutations);
-
+warn $feature_slice->end;
     if (@variations) {
       $variation_string = 'with '; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
       
@@ -173,7 +173,7 @@ sub content {
         my $v_name           = $v->variation_name; 
         next if $v_name eq $object->name;
         my $v_start = $v->start + $feature_slice->start -1;
-        my $v_end = $v->end + $feature_slice->end -1;
+        my $v_end = $v->end + $feature_slice->start -1;
         next unless (( $v_start == $feature_slice->start) && ($v_end == $feature_slice->end)); 
         my $link           = $hub->url({ v => $v_name, vf => $v->dbID });
         my $variation      = qq{<a href="$link">$v_name</a>};
