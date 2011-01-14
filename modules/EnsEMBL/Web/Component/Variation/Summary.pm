@@ -160,39 +160,36 @@ sub content {
   # First add co-located variation info if count == 1
   if ($feature_slice) {
     my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-    my @variations;
-    
-    if ($is_somatic) { 
-      @variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
-    } else {
-      @variations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
-    }
-    
+    my $variation_string;
+    my @germline_variations = @{$vfa->fetch_all_by_Slice($feature_slice)};  
+    my @somatic_mutations = @{$vfa->fetch_all_somatic_by_Slice($feature_slice)};
+    my @variations = (@germline_variations, @somatic_mutations);
+
     if (@variations) {
-      my $variation_string = $is_somatic ? 'with variation ' : 'with somatic mutation ';
+      $variation_string = 'with '; #$is_somatic ? 'with variation ' : 'with somatic mutation ';
       
       foreach my $v (@variations) {
-        my $name           = $v->variation_name; 
+        my $v_name           = $v->variation_name; 
+        next if $v_name eq $object->name;
         my $v_start = $v->start + $feature_slice->start -1;
         my $v_end = $v->end + $feature_slice->end -1;
         next unless (( $v_start == $feature_slice->start) && ($v_end == $feature_slice->end)); 
-        my $link           = $hub->url({ v => $name, vf => $v->dbID });
-        my $variation      = qq{<a href="$link">$name</a>};
+        my $link           = $hub->url({ v => $v_name, vf => $v->dbID });
+        my $variation      = qq{<a href="$link">$v_name</a>};
         $variation_string .= ", $variation";
       }
-
-      if ($variation_string =~/,/) {      
-        $variation_string =~ s/,\s+//;  
-
+    }
+ 
+    if ($variation_string =~/,/) {      
+      $variation_string =~ s/,\s+//;  
         $html .= "
         <dl class='summary'>
           <dt>Co-located </dt>
           <dd>$variation_string</dd>
         </dl>";    
-      }
     }
   }
-  
+
   ## Add location information
   my $location; 
   my $strand   = '(forward strand)';
