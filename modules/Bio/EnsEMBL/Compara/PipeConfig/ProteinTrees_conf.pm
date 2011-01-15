@@ -50,7 +50,7 @@ sub default_options {
 
 
         'release'           => '61',
-        'rel_suffix'        => 'e',    # an empty string by default, a letter otherwise
+        'rel_suffix'        => 'f',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
@@ -478,6 +478,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
             },
+            -rc_id => 1,
         },
 
         {   -logic_name => 'hcluster_parse_output',
@@ -491,7 +492,6 @@ sub pipeline_analyses {
                 1 => [ 'clusterset_qc', 'group_genomes_under_taxa' ],  # backbone 
                 2 => [ 'mcoffee' ],
             },
-            -rc_id => 1,
         },
 
 # ---------------------------------------------[a QC step before main loop]----------------------------------------------------------
