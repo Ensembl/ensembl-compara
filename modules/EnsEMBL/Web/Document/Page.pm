@@ -434,7 +434,7 @@ sub html_template {
     <div id="min_width_holder">
       <div id="masthead" class="js_panel">
         <input type="hidden" class="panel_type" value="Masthead" />
-        $elements->{'logo'}
+        <div class="logo_holder">$elements->{'logo'}</div>
         <div class="mh print_hide">
           <div class="account_holder">$elements->{'account'}</div>
           <div class="tools_holder">$elements->{'tools'}</div>

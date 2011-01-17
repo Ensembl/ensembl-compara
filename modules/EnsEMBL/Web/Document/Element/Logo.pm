@@ -37,7 +37,7 @@ sub content {
   my $self = shift;
   my $url  = $self->href || $self->home_url;
   
-  return sprintf '<a class="logo_holder" href="%s">%s</a>%s', $url, $self->logo_img, $self->logo_print;
+  return sprintf '<a href="%s">%s</a>%s', $url, $self->logo_img, $self->logo_print;
 }
 
 sub init {
