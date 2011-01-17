@@ -698,6 +698,9 @@ sub dump_data_for_gene {
       # Question whether the ncRNA_pseudogene should be stored in the ncrna biotype
       # or in the pseudogene biotype ?
        $subtype = 'ncrna';
+     } elsif ($logic_name =~/ensembl_havana_lincrna/i ) {
+       # we don't care about the transcript's biotypes
+       $subtype = 'ncrna';
     } elsif ( $logic_name =~/ncrna/ && $transcript->biotype !~ /RNA/i) {
       # this combination should not happen, so we need to know when it does
       throw("Transcript with logic_name $logic_name has biotype ".$transcript->biotype);
