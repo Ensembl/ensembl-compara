@@ -10,11 +10,12 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
     this.dimensions = { minWidth: 800, minHeight: 600, padding: 200, minPad: 50 }; // padding goes half on either side (ie 100/100);
     this.background = $('#modal_bg');
 
-    this.background.css({ display: 'none', opacity: 0.25 }).click(function(){
+    this.background.css({ display: 'none', opacity: 0.25 }).click(function () {
       panel.hide();
     });
     
     this.isOldIE = $(document.body).hasClass('ie67');
+    
     if (this.isOldIE) {
       $(window).bind('scroll', function () {
         if (panel.visible) {
@@ -98,8 +99,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
         width:  [ this.scrollWidth,  this.windowWidth  ].sort(function (a, b) { return b - a; })[0], 
         height: [ this.scrollHeight, this.windowHeight ].sort(function (a, b) { return b - a; })[0]
       }).show();
-    }
-    else {
+    } else {
       this.background.css({position: 'fixed'}).show();
     }
   },
@@ -131,7 +131,6 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   },
   
   pageResize: function () {
-    console.log('resized');
     this.storeWindowDimensions();
     
     var dims = this.getDimensions();
