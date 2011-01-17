@@ -20,6 +20,7 @@ form.configuration div.config ul.selectable,
 form.configuration div.config ul.config_menu li ul.config_menu      { margin-left: 10px; }
 form.configuration div.config ul.config_menu li.col1                { background-color: [[IMAGE_BG1]]; }
 form.configuration div.config ul.config_menu li.col2                { background-color: [[IMAGE_BG2]]; }
+form.configuration div.favourite_tracks img                         { vertical-align: top; }
                                                                     
 form.configuration.multi div.config                                 { margin-bottom: 10px }
 form.configuration.multi div.config h4,                             
