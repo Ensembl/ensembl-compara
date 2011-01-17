@@ -46,7 +46,7 @@ sub content {
     $fieldset->add_field({'type'=>'checkBbx', 'name' => 'code', 'value' => $_->{'code'}, 'label' => $_->{'name'}, 'notes' => $_->{'url'}}) for @bams;
   }
 
-  $fielset->add_notes("You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.") unless $has_data;
+  $fieldset->add_notes("You have no temporary data sources to save. Click on 'Attach DAS' or 'Attach URL' in the left-hand menu to add sources.") unless $has_data;
 
   return $form->render;
 }
