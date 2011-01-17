@@ -262,7 +262,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var active = this.elLk.links.filter('.active').children('a').attr('className');
     
-    this.elLk.form[active.match(/^(active_tracks|search_results|favourite_tracks)$/) ? 'addClass' : 'removeClass']('multi');
+    this.elLk.form[active && active.match(/^(active_tracks|search_results|favourite_tracks)$/) ? 'addClass' : 'removeClass']('multi');
     
     if (typeof active == 'undefined') {
       active = this.elLk.links.first().addClass('active').children('a').attr('className');
