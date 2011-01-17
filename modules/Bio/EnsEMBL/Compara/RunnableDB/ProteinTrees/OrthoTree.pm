@@ -162,14 +162,13 @@ sub check_job_fail_options {
 
   if ($protein_tree->get_tagvalue('gene_count') > $self->param('max_gene_count')) {
     $self->dataflow_output_id($self->input_id, 2);
-    $protein_tree->release_tree;
-    $self->param('protein_tree', undef);
+
+    $self->DESTROY;
     $self->input_job->incomplete(0);
     die $self->analysis->logic_name().": cluster size over threshold; dataflowing to QuickTreeBreak\n";
   }
 
   if($self->input_job->retry_count >= 2) {
-    # Send to QuickTreeBreak
     $self->dataflow_output_id($self->input_id, 2);
 
     $self->DESTROY;
