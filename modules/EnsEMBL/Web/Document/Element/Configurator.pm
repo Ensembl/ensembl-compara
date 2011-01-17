@@ -224,6 +224,9 @@ sub init_imageconfig {
         <input type="hidden" name="config" value="%s" />
       </div>
       %s
+      <div class="favourite_tracks hidden">
+        You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites.
+      </div>
     </form>},
     join('', map { sprintf '<input type="hidden" name="%s" value="%s" />', $_, encode_entities($url->[1]->{$_}) } keys %{$url->[1]}),
     $controller->hub->param('config'),
