@@ -48,8 +48,7 @@ sub init {
   my $controller   = shift;
   my $species_defs = $self->species_defs;
   
-  $self->add_sheet('all', sprintf '/%s/%s.css', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_CSS_NAME);  
-  $self->add_sheet('all', '/components/ie.css', 'lte IE 7'); # IE 7/6 only stylesheet
+  $self->add_sheet('all', sprintf '/%s/%s.css', $species_defs->ENSEMBL_JSCSS_TYPE, $species_defs->ENSEMBL_CSS_NAME);
   
   if ($controller->request eq 'ssi') {
     my $head = $controller->content =~ /<head>(.*?)<\/head>/sm ? $1 : '';
