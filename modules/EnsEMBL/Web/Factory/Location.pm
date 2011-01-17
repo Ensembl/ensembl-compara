@@ -654,7 +654,7 @@ sub _create_from_sub_align_slice {
     'restrict'
   );
   
-  my ($align_start, $align_end, $species) = ($self->param('align_start'), $self->param('align_end'), $self->__species);
+  my ($align_start, $align_end, $species) = ($self->param('align_start'), $self->param('align_end'), $self->species_defs->get_config($self->__species, 'SPECIES_PRODUCTION_NAME'));
   my ($chr, $start, $end);
   
   my $align_slice_length = $align_end - $align_start;
