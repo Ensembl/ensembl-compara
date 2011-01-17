@@ -403,7 +403,7 @@ sub analyse_row {
     $format = 'PSL';   
   }
   elsif (
-    $columns->[3] =~ /^[ACTG-]\/[ACTG-]$/ ||
+    $columns->[3] =~ /^[ACTG-]+\/[ACTG-]+$/ ||
     (
       $columns->[0] =~ /(chr)?\w+/ &&
       $columns->[1] =~ /\d+/ &&
@@ -417,7 +417,7 @@ sub analyse_row {
       $columns->[4] =~ /^([\.ACGTN-]+\,?)+$/
     )
   ) {
-    $format = 'SNP';   
+    $format = 'SNP';
   }
   elsif ($tabbed && _is_strand($columns->[7])) {
     if ($columns->[8] =~ /(; )+/ && $columns->[8] =~ /^[gene_id|transcript_id]/) {
