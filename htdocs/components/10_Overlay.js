@@ -14,11 +14,14 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       panel.hide();
     });
     
-    $(window).bind('scroll', function () {
-      if (panel.visible) {
-        panel.setPosition();
-      }
-    });
+    this.scrollFollow = /msie|MSIE 6|7/.test(navigator.userAgent);
+    if (this.scrollFollow) {
+      $(window).bind('scroll', function () {
+        if (panel.visible) {
+          panel.setPosition();
+        }
+      });
+    }
     
     Ensembl.EventManager.register('windowResize', this, this.pageResize);
   },
@@ -77,7 +80,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       left = this.scrollWidth - this.elementWidth - (this.dimensions.minPad / 2);
     }
     
-    $(this.el).css({ position: 'absolute', top: top, left: left, zIndex: 999999999 });
+    $(this.el).css({position: this.scrollFollow ? 'absolute' : 'fixed', top: top, left: left, zIndex: 999999999 });
   },
   
   /**
