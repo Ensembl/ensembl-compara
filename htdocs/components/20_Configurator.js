@@ -16,8 +16,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.elLk.form          = $('form.configuration', this.el);
     this.elLk.search        = $('.configuration_search_text', this.el);
-    this.elLk.help          = $('.menu_help', this.elLk.form);
+    this.elLk.favouritesMsg = $('.favourite_tracks', this.elLk.form);
     this.elLk.favourite     = $('.favourite', this.elLk.form);
+    this.elLk.help          = $('.menu_help', this.elLk.form);
     this.elLk.menus         = $('.popup_menu', this.elLk.form);
     this.elLk.searchResults = $('a.search_results', this.elLk.links);
     
@@ -50,6 +51,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         if (!li.siblings(':visible').length) {
           li.parents('div.config').hide();
+        }
+        
+        if (!$('li.fav', panel.elLk.form).length) {
+          panel.elLk.favouritesMsg.show();
         }
       }
       
@@ -257,7 +262,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   getContent: function () {
     var active = this.elLk.links.filter('.active').children('a').attr('className');
     
-    this.elLk.form[active == 'active_tracks' || active == 'search_results' || active == 'favourite_tracks' ? 'addClass' : 'removeClass']('multi');
+    this.elLk.form[active.match(/^(active_tracks|search_results|favourite_tracks)$/) ? 'addClass' : 'removeClass']('multi');
     
     if (typeof active == 'undefined') {
       active = this.elLk.links.first().addClass('active').children('a').attr('className');
@@ -280,13 +285,22 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
           }
         });
       } else if (active == 'favourite_tracks') {
-        $('li.fav', this.elLk.form).each(function () {
+        var i = $('li.fav', this.elLk.form).each(function () {
           $(this).show().parents('li, div.config').show();
-        });
+        }).length;
         
-        $('li.leaf:visible:not(.fav)', this.elLk.form).hide();
+        if (i) {
+          $('li.leaf:visible:not(.fav)', this.elLk.form).hide();
+          this.elLk.favouritesMsg.hide();
+        } else {
+          this.elLk.favouritesMsg.show();
+        }
       } else {
         $('div.' + active, this.elLk.form).show().find('ul.config_menu li').show();
+      }
+      
+      if (active != 'favourite_tracks') {
+        this.elLk.favouritesMsg.hide();
       }
       
       this.lastQuery = false;
