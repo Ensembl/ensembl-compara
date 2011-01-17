@@ -111,6 +111,9 @@ sub count_individuals {
   my $dbh  = $self->database('variation')->get_VariationAdaptor->dbc->db_handle;
   my $var  = $self->Obj;
   
+  # somatic variations don't have genotypes currently
+  return 0 if $var->is_somatic;
+  
   my ($multibp_samples) = $dbh->selectrow_array('
     select count(distinct sample_id)
     from individual_genotype_multiple_bp
