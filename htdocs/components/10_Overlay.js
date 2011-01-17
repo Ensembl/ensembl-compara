@@ -14,8 +14,8 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       panel.hide();
     });
     
-    this.scrollFollow = /msie|MSIE 6|7/.test(navigator.userAgent);
-    if (this.scrollFollow) {
+    this.isOldIE = $(document.body).hasClass('ie67');
+    if (this.isOldIE) {
       $(window).bind('scroll', function () {
         if (panel.visible) {
           panel.setPosition();
@@ -80,7 +80,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
       left = this.scrollWidth - this.elementWidth - (this.dimensions.minPad / 2);
     }
     
-    $(this.el).css({position: this.scrollFollow ? 'absolute' : 'fixed', top: top, left: left, zIndex: 999999999 });
+    $(this.el).css({position: this.isOldIE ? 'absolute' : 'fixed', top: top, left: left, zIndex: 999999999 });
   },
   
   /**
@@ -89,16 +89,19 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
    */
   setBackground: function () {    
     // hide all selects if we are IE and can not handle selects properly
-    if ($.browser.msie) {
+    if (this.isOldIE) {
       $('select').hide();
       $('select', this.el).show();
+
+      // show overlay on screen
+      this.background.css({
+        width:  [ this.scrollWidth,  this.windowWidth  ].sort(function (a, b) { return b - a; })[0], 
+        height: [ this.scrollHeight, this.windowHeight ].sort(function (a, b) { return b - a; })[0]
+      }).show();
     }
-    
-    // show overlay on screen
-    this.background.css({
-      width:  [ this.scrollWidth,  this.windowWidth  ].sort(function (a, b) { return b - a; })[0], 
-      height: [ this.scrollHeight, this.windowHeight ].sort(function (a, b) { return b - a; })[0]
-    }).show();
+    else {
+      this.background.css({position: 'fixed'}).show();
+    }
   },
   
   /**
@@ -107,7 +110,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
    */
   removeBackground: function () {
     // hide all selects if we are IE and can not handle selects properly
-    if ($.browser.msie) {
+    if (this.isOldIE) {
       $('select').show();
     }
     
@@ -128,6 +131,7 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   },
   
   pageResize: function () {
+    console.log('resized');
     this.storeWindowDimensions();
     
     var dims = this.getDimensions();
