@@ -22,6 +22,9 @@ form { border: none; margin-top: 0; margin-bottom: 0; padding: 0; }
 #min_width_container { position: relative; width: 100%; min-width: 775px; }
 #min_width_holder    { display: block; }
 
+body.ie6 #min_width_container { border-right: 775px solid [[PAGE_BG]]; }
+body.ie6 #min_width_holder    { display: inline-block; position: relative; margin-right: -775px; }
+
 /*----------------------------------------------------------------------
   General settings
 ----------------------------------------------------------------------*/
@@ -30,6 +33,7 @@ form { border: none; margin-top: 0; margin-bottom: 0; padding: 0; }
 .hide    { display: none; } /* need to remove this if we can */
 .page    { text-align: center; padding: 0.25em; }
 .spinner { height: 100px; width: 100%; border: 0; margin: 0 auto; padding: 2px; vertical-align: bottom; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
+.pointer { cursor: pointer; }
 
 /*----------------------------------------------------------------------
   Headings

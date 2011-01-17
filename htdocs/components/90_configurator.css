@@ -27,5 +27,11 @@ form.configuration.multi div.config h4,
 form.configuration.multi div.config div.select_all                  { display: none !important; }
 form.configuration.multi div.config ul.config_menu                  { margin-left: 0 !important; }
 
+body.ie6  form.configuration div.config ul.config_menu li           { margin-bottom: 4px; }
+body.ie6  form.configuration div.config div.select_all              { margin-bottom: 4px; }
+body.ie67 form.configuration div.config ul.config_menu li .controls { margin-top: -18px; }
+
 ul.popup_menu    { border: 1px solid #666; background-color: #EEE; margin: 13px 0 0 11px; padding: 0; border-bottom: 0; color: black; position: absolute; z-index: 1000000; display: none; cursor: pointer; }
 ul.popup_menu li { padding: 0 0.5em 0 0 !important; border-bottom: 1px solid #666; font-weight: bold !important; list-style: none; list-style-image: none; margin-bottom: 0 !important; }
+
+body.ie6 ul.popup_menu li img { margin: 2px; }

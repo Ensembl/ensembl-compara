@@ -24,7 +24,7 @@
 #masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 85%; }
 #masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
-#masthead div.dropdown                    { position: absolute; top: 21px; display: none; background: [[TINT_BG]]; border: 1px solid [[TINT_BORDER_DARK]]; padding-bottom: 5px; }
+#masthead div.dropdown                    { position: absolute; top: 21px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[TINT_BORDER_DARK]]; padding-bottom: 5px; }
 #masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; border-bottom: 1px solid [[TINT_BORDER_DARK]]; }
 #masthead div.dropdown ul                 { padding-top: 4px; }
 #masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
@@ -60,6 +60,17 @@ body.ie #masthead ul.tabs li.active               { background-image: url(/i/tab
 body.ie #masthead ul.tabs li.active a,
 body.ie #masthead ul.tabs li.active span.dropdown { background-image: url(/i/tab_on_l.gif); color: [[PAGE_TEXT]]; font-weight: bold; }
 body.ie #masthead ul.tabs span.dropdown a.toggle  { background-image: none; }
+
+body.ie67 #masthead                               { z-index: 9999; }
+body.ie67 #masthead .tabs_holder                  { z-index: -1; }
+body.ie67 #masthead div.more a.open               { margin-top: -2px; }
+
+body.ie6 #masthead div.more                       { margin-left: 3px; }
+body.ie6 #masthead div.dropdown.species           { width: 610px; }
+body.ie6 #masthead div.dropdown.species ul li     { width: 180px; }
+body.ie6 #masthead div.toggle                     { width: 0; }
+body.ie6 #masthead div.toggle div                 { left: 155px; }
+body.ie6 #masthead div.toggle h4                  { width: 100%; }
 
 @media print {
   #masthead   { background: #ffffff; }

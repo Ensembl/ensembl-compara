@@ -48,3 +48,5 @@
 .hover_label div.config a          { font-size: 11px; color: #000; }
 .hover_label div.config img        { vertical-align: top; padding: 2px 0; margin-left: 0; }
 .hover_label div.config img.tick   { margin: 9px 0 0 -11px; }
+
+body.ie6 .hover_label div.config li { margin: 5px 0 0; }

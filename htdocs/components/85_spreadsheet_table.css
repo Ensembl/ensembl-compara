@@ -47,6 +47,9 @@ table.toggle_table th div            { padding: 0; }
 .col_toggle ul li span   { position: relative; top: -2px; }
 .col_toggle ul li input  { margin-right: 6px; }
 
+body.ie6 .col_toggle .toggle { width: 135px; }
+body.ie67 .col_toggle ul     { margin: 18px 0 0 -125px; }
+
 .sorting      { background: url(/i/sort_both_light.png) no-repeat right center; }
 .sorting_asc  { background: url(/i/sort_asc.png) no-repeat right center; }
 .sorting_desc { background: url(/i/sort_desc.png) no-repeat right center; }

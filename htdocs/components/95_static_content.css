@@ -42,7 +42,7 @@ kbd.line { display:block; margin-left:20px; }
   Ensembl homepage
 ----------------------------------------------------------------------*/
 
-/* Species thumbnail images*/
+/* Species thumbnail images */
 
 .sp-thumb { float:left; margin-right:4px; clear:left; }
 
@@ -50,6 +50,8 @@ kbd.line { display:block; margin-left:20px; }
 dl.species-list dt { margin:0; padding:0; min-height:15px;   font-size:120%; font-style:italic; font-weight:bold; }
 dl.species-list dd { margin:-2px 0 2px 0; padding:0; min-height:40px; }
 dl.species-list dt a, dl.species-list dd a { text-decoration:none; }
+
+body.ie7 dl.species-list dd { margin: -28px 0 2px 44px; }
 
 div.species-news p.headline { margin:0; padding:4px 0; font-size:110%; min-height:40px; }
 
@@ -66,9 +68,6 @@ table.species-stats td.value { text-align:left;padding:4px; }
 
 img.species-entry { float:left; margin-right:4px; clear:left; }
 
-/**
-*/
-
 table.img-table { width: 80%;margin: auto; border-collapse: collapse }
 table.img-table th { background-color: [[NEUTRAL_BORDER]]; color: [[NEUTRAL_BG]] }
 table.img-table td { vertical-align: top }
@@ -83,5 +82,7 @@ ul.breadcrumbs li a:hover        { color: [[MH_HOVER]]; }
 ul.breadcrumbs li a.home         { background: url(/i/home.png) no-repeat left 0; width: 10px; height: 10px; display: block; text-indent: -20em; position:relative; top: 5px; }
 ul.breadcrumbs li a.home:visited { background-position: left -15px; }
 ul.breadcrumbs li a.home:hover   { background-position: left -30px; }
+
+body.ie6 ul.breadcrumbs          { height: 22px; }
 
 #pdoc_iframe { border: #ccc 1px solid; }
