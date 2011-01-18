@@ -151,9 +151,9 @@ sub write_output {
 
     my $genome_db_id    = $self->param('genome_db_id');
     my $reuse_this      = $self->param('reuse_this');
-    my $ss              = $self->param('pepSubset')->dbID;
+    my $subset_id       = $self->param('pepSubset')->dbID;
 
-    $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'reuse_this' => $reuse_this, 'ss' => $ss } , 1);
+    $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'reuse_this' => $reuse_this, 'subset_id' => $subset_id } , 1);
 }
 
 
