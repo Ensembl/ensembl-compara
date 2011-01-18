@@ -24,7 +24,7 @@ $rdb->run;
 =head1 DESCRIPTION
 
 Given a list of genomedb_ids dataflows a fan of jobs with ENSEMBLPEP member_ids.
-One job will contain 20 or less member_ids belonging to the same taxon_id.
+One job will contain 20 or less member_ids belonging to the same genome_db_id.
 
 =cut
 
@@ -53,16 +53,16 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_set = $self->param('species_set');
+    my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'));
+    my $species_set = ($genome_db_id ? [ $genome_db_id ] : $self->param('species_set'))
+        or die "Either 'species_set' list or 'genome_db_id' parameter has to be defined";
 
     my $genomedb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
     my $member_adaptor   = $self->compara_dba->get_MemberAdaptor;
 
     my @member_ids = ();
     foreach my $gdb_id (@$species_set) {
-        my $taxon_id = $genomedb_adaptor->fetch_by_dbID($gdb_id)->taxon_id;
-
-        foreach my $member (@{$member_adaptor->fetch_all_by_source_taxon('ENSEMBLPEP', $taxon_id)}) {
+        foreach my $member (@{$member_adaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
             push @member_ids, $member->member_id;
         }
     }
@@ -82,5 +82,6 @@ sub write_output {
         $self->dataflow_output_id( { 'ids' => [@job_array] }, 2);
     }
 }
+
 
 1;
