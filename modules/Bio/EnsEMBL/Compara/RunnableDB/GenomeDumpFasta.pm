@@ -76,7 +76,9 @@ sub fetch_input {
     my $subset      = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) or die "cannot fetch Subset with id '$subset_id'";
     $self->param('subset', $subset);
 
-    my $genome_db_id = $self->param('gdb') or die "'gdb' is an obligatory parameter";
+    my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'))        # for compatibility
+        or die "'genome_db_id' is an obligatory parameter";
+
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
     $self->param('genome_db', $genome_db);
 
@@ -94,12 +96,16 @@ sub write_output {
 
     my $blast_analysis = $self->createBlastAnalysis($blastdb);
 
+    if(my $beforeblast_logic_name = $self->param('beforeblast_logic_name')) {
+        my $beforeblast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($beforeblast_logic_name);
+        $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($beforeblast_analysis, $blast_analysis);
+    }
     if(my $afterblast_logic_name = $self->param('afterblast_logic_name')) {
         my $afterblast_analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($afterblast_logic_name);
         $self->db->get_AnalysisCtrlRuleAdaptor->create_rule($blast_analysis, $afterblast_analysis);
     }
 
-    $self->dataflow_output_id( { 'gdb' => $self->param('gdb'), 'ss' => $self->param('ss'), 'logic_name' => $self->param('logic_name') }, 1);
+    $self->dataflow_output_id( { 'genome_db_id' => $self->param('genome_db_id'), 'ss' => $self->param('ss'), 'logic_name' => $self->param('logic_name') }, 2);
 }
 
 
@@ -115,7 +121,7 @@ sub write_output {
 sub dumpPeptidesToFasta {
   my $self = shift;
 
-  my $fastafile = $self->param('fasta_dir') . "/";
+  my $fastafile = $self->param('fasta_dir') . '/';
   if($self->param('genome_db')) {
     $fastafile .= $self->param('genome_db')->name() . "_" . 
                   $self->param('genome_db')->assembly() . ".fasta";
@@ -132,7 +138,7 @@ sub dumpPeptidesToFasta {
   # configure the fasta file for use as a blast database file
   my $blastdb        = Bio::EnsEMBL::Analysis::Tools::BlastDB->new(
       -sequence_file => $fastafile,
-      -mol_type => "PROTEIN");
+      -mol_type => 'PROTEIN');
   $blastdb->create_blastdb;
 
   my $seq_name = $blastdb->sequence_file;
@@ -151,7 +157,10 @@ sub createBlastAnalysis {
 
   my $blast_template = $self->db->get_AnalysisAdaptor->fetch_by_logic_name('blast_template');
 
-  my $params = "{subset_id=>" . $self->param('ss') . ",genome_db_id=>" . $self->param('gdb');
+  my $params = '{'.
+    "subset_id=>" . $self->param('ss') .
+    ",genome_db_id=>" . $self->param('genome_db_id') .
+    ",fasta_dir=>'" . $self->param('fasta_dir') . "'";
 
   if($blast_template->parameters()) {
     my $parmhash = eval($blast_template->parameters);
@@ -165,6 +174,9 @@ sub createBlastAnalysis {
     }
     if($parmhash->{'null_cigar'}) {
       $params .= ",null_cigar=>'" . $parmhash->{'null_cigar'} . "'";
+    }
+    if($parmhash->{'mlss_id'}) {
+      $params .= ",mlss_id=>'" . $parmhash->{'mlss_id'} . "'";
     }
     if($parmhash->{'reuse_db'}) {
       $params .= ",reuse_db=>'" . $parmhash->{'reuse_db'} . "'";
@@ -192,17 +204,9 @@ sub createBlastAnalysis {
       -program_version => $blast_template->program_version(),
       -module          => $blast_template->module(),
       -parameters      => $params,
-    );
-
-  my $blast_analysis_data_id = 
-    $self->db->get_AnalysisDataAdaptor->store_if_needed($params);
-  if (defined $blast_analysis_data_id) {
-    my $parameters = "{'analysis_data_id'=>'$blast_analysis_data_id'}";
-    $analysis->parameters($parameters);
-  }
+  );
 
   $self->db->get_AnalysisAdaptor()->store($analysis);
-  # $self->db->get_AnalysisAdaptor()->update($analysis);
 
   my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($analysis->dbID);
   $stats->batch_size(    $self->param('blast_hive_batch_size') ||  40 );

@@ -75,7 +75,9 @@ sub fetch_input {
     my $subset      = $self->compara_dba->get_SubsetAdaptor()->fetch_by_dbID($subset_id) or die "cannot fetch Subset with id '$subset_id'";
     $self->param('subset', $subset);
 
-    my $genome_db_id = $self->param('gdb') or die "'gdb' is an obligatory parameter";
+    my $genome_db_id = $self->param('genome_db_id') || $self->param('genome_db_id', $self->param('gdb'))        # for compatibility
+            or die "'genome_db_id' is an obligatory parameter";
+
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
     $self->param('genome_db', $genome_db);
 
@@ -108,7 +110,9 @@ sub write_output {
     my $analysis =  $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name) ||
                         $self->createSubmitPepAnalysis($logic_name, $subset);
 
-    $self->createJobsInAnalysis($analysis, $subset);
+    my $new_format = $self->param('new_format');
+
+    $self->createJobsInAnalysis($analysis, $subset, $new_format);
 }
 
 
@@ -182,13 +186,13 @@ sub createSubmitPepAnalysis {
 
 
 sub createJobsInAnalysis {
-    my ($self, $analysis, $subset) = @_;
+    my ($self, $analysis, $subset, $new_format) = @_;
 
     my @member_id_list = @{$subset->member_id_list()};
 
     foreach my $member_id (@member_id_list) {
         Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-            -input_id       => $member_id,
+            -input_id       => ($new_format ? "{'member_id'=>$member_id}" : $member_id),
             -analysis       => $analysis,
             -input_job_id   => $self->input_job->dbID,
         );
