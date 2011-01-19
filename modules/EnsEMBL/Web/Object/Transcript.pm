@@ -193,7 +193,8 @@ sub count_similarity_matches {
   $sth->execute($self->Obj->dbID);
   
   while (my ($label, $db_name, $type, $status) = $sth->fetchrow_array) {
-    $all_xrefs{'transcript'}{$label} = { 'db_name' => $db_name, 'type' => $type, 'status' => $status };
+    my $key = $db_name.$label;
+    $all_xrefs{'transcript'}{$key} = { 'id' => $label, 'db_name' => $db_name, 'type' => $type, 'status' => $status };
   }
 
   # xrefs on the translation
@@ -209,28 +210,28 @@ sub count_similarity_matches {
   $sth->execute($self->Obj->dbID);
   
   while (my ($label, $db_name, $type, $status) = $sth->fetchrow_array) {
-    $all_xrefs{'translation'}{$label} = { 'db_name' => $db_name, 'type' => $type, 'status' => $status, 'display_label' => $label };
+    my $key = $db_name.$label;
+    $all_xrefs{'translation'}{$key} = { 'id' => $label, 'db_name' => $db_name, 'type' => $type, 'status' => $status };
   }
 
   # filter out what isn't shown on the 'External References' page
   my @counted_xrefs;
   foreach my $t (qw(transcript translation)) {
     my $xrefs = $all_xrefs{$t};
-    while (my ($id,$det) = each %$xrefs) { 
+    while (my ($key,$det) = each %$xrefs) { 
       next unless (grep {$det->{'type'} eq $_} qw(MISC PRIMARY_DB_SYNONYM)); 
-
       # these filters are taken directly from Component::_sort_similarity_links
       # code duplication needs removing, and some of these may well not be needed any more
       next if $det->{'status'} eq 'ORTH';                        # remove all orthologs
       next if lc $det->{'db_name'} eq 'medline';                 # ditch medline entries - redundant as we also have pubmed
-      next if $det->{'db_name'} =~ /^flybase/i && $id =~ /^CG/;  # Ditch celera genes from FlyBase
+      next if $det->{'db_name'} =~ /^flybase/i && $det->{'id'} =~ /^CG/;  # Ditch celera genes from FlyBase
       next if $det->{'db_name'} eq 'Vega_gene';                  # remove internal links to self and transcripts
       next if $det->{'db_name'} eq 'Vega_transcript';
       next if $det->{'db_name'} eq 'Vega_translation';
       next if $det->{'db_name'} eq 'GO';
       next if $det->{'db_name'} eq 'goslim_goa';
       next if $det->{'db_name'} eq 'OTTP' && $det->{'display_label'} =~ /^\d+$/; #ignore xrefs to vega translation_ids
-      push @counted_xrefs, $id;
+      push @counted_xrefs, $key;
     }
   }
   
@@ -1078,6 +1079,7 @@ sub get_similarity_hash {
   };
   
   warn "SIMILARITY_MATCHES Error on retrieving gene DB links $@" if $@;
+
   return $DBLINKS  || [];
 }
 
