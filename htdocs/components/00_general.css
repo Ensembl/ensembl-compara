@@ -32,7 +32,7 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
 .hidden  { display: none; }
 .hide    { display: none; } /* need to remove this if we can */
 .page    { text-align: center; padding: 0.25em; }
-.spinner { height: 100px; width: 100%; border: 0; margin: 0 auto; padding: 2px; vertical-align: bottom; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
+.spinner { height: 100px; display: block; border: 0; margin: 0 auto; padding: 2px; vertical-align: bottom; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
 .pointer { cursor: pointer; }
 
 /*----------------------------------------------------------------------
