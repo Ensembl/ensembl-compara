@@ -63,7 +63,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.base(width, height);
     
     if (this.elLk.content) {
-      this.elLk.content.height(this.elementHeight - this.constant.titleHeight);
+      this.elLk.content.height(this.elementHeight - 18);
     }
   },
   

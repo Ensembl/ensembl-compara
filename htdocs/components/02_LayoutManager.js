@@ -36,12 +36,6 @@ Ensembl.LayoutManager.extend({
       }
     });
     
-    $('.account_link').show().live('click', function() {
-      if (Ensembl.EventManager.trigger('accountPopupToggle', this)) {
-        return false;
-      }
-    });
-    
     $('.popup').live('click', function () {
       if (window.name.match(/^popup_/)) {
         return true;
