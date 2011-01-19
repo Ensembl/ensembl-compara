@@ -23,8 +23,8 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $url          = $hub->url({ otherspecies => undef }, 1);
   my $form         = new EnsEMBL::Web::Form('change_sp', $url->[0], 'get', 'nonstd check');
-  
-  $form->add_hidden($url->[1]);
+    
+  $form->add_hidden({ name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
 
   my %synteny_hash     = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
   my %synteny          = %{$synteny_hash{$hub->species} || {}};
