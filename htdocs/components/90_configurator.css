@@ -7,7 +7,7 @@ form.configuration div.config .menu_option                          { cursor: po
 form.configuration div.config h4                                    { margin: 10px 0 5px; }   
 form.configuration div.config h2.config_header                      { margin: 4px 0; cursor: pointer; border: 0; }
 form.configuration div.config ul.config_menu                        { margin: 0; padding: 0; list-style: none; }
-form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; clear: both; }
+form.configuration div.config ul.config_menu li                     { margin: 0; padding: 0; list-style-image: none; font-weight: normal; }
 form.configuration div.config ul.config_menu li div.desc            { margin: 5px 0 5px 25px; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid #CCC; }
 form.configuration div.config ul.config_menu li .controls           { float: right; margin: 2px -5px 0; height: 17px; }
 form.configuration div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; cursor: pointer; }
