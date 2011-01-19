@@ -144,7 +144,10 @@ sub content {
       
       my @external = qq{<span class="small">$description</span>};
       unshift @external, $orthologue->{'display_id'} if $orthologue->{'display_id'};
-      
+
+      # Bug fix:  In othologues list, all orthologues with no description used to appear to be described as "novel ensembl predictions":
+      @external = qq{<span class="small">-</span>} if (($description eq 'No description') && ($orthologue->{'display_id'} eq 'Novel Ensembl prediction'));  
+
       push @rows, {
         'Species'            => join('<br />(', split /\s*\(/, $species),
         'Type'               => ucfirst $orthologue_desc,
