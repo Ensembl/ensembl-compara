@@ -147,18 +147,6 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 div.select_all label {
   text-decoration: underline;
 }
-table.matrix thead tr {
-  background-color: [[NEUTRAL_BORDER]];
-}
-table.matrix thead tr td {
-  border: #fff solid 1px;
-}
-table.matrix .bg1 {
-  background-color: [[PANEL_BG]];
-}
-table.matrix .bg2 {
-  background-color: [[NEUTRAL_BG]];
-}
 table.matrix .ff-mcell {
   text-align: center;
 }
