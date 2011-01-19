@@ -11,6 +11,7 @@
 .panel h2 a.toggle.closed { background-image: url(/i/closed2.gif); }
 .panel p                  { margin: 0; padding: 0; }
 .panel p.space-below      { margin-bottom:0.5em; }
+.panel p.padded           { padding: 10px 0; }
 .panel div.content        { padding: 5px; margin: 0; }
 .panel dl.summary         { margin: 0; position: relative; clear: left; }
 .panel dl.summary dt      { margin-bottom:0.5em; clear: left; float: left; width: 11em; }
