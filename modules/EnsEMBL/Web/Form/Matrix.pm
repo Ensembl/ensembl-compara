@@ -5,7 +5,7 @@ use strict;
 use base qw(EnsEMBL::Web::DOM::Node::Element::Table);
 
 use constant {
-  CSS_CLASS                   => 'matrix',
+  CSS_CLASS                   => 'matrix ss',
   CSS_CLASS_HEADING           => 'fm-heading',
   CSS_CLASS_ODD_ROW           => 'bg1',
   CSS_CLASS_EVEN_ROW          => 'bg2',
