@@ -4,8 +4,6 @@ package EnsEMBL::Web::Component::Help::ListVegaMappings;
 
 use strict;
 
-use Bio::EnsEMBL::Registry;
-
 use base qw(EnsEMBL::Web::Component::Help);
 
 sub _init {
@@ -35,12 +33,14 @@ sub content {
       { key => 'targetcoordinates',  title => "$alt_assemblies->[0] coordinates",  align => 'left', sort => 'position_html' }
     );
     
-    Bio::EnsEMBL::Registry->add_DNAAdaptor($species, 'vega', $species, 'vega');
+    my $reg        = 'Bio::EnsEMBL::Registry';
+    my $orig_group = $reg->get_DNAAdaptor($species, 'vega')->group;
     
-    my $adaptor     = Bio::EnsEMBL::Registry->get_adaptor($species, 'vega', 'Slice');
+    $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
+    
     my $start       = $location->seq_region_start;
     my $end         = $location->seq_region_end;         
-    my $vega_slices = $adaptor->fetch_by_region('chromosome', $chromosome, $start, $end, 1, 'GRCh37')->project('chromosome', $alt_assemblies->[0]);
+    my $vega_slices = $hub->get_adaptor('get_SliceAdaptor', 'vega')->fetch_by_region('chromosome', $chromosome, $start, $end, 1, 'GRCh37')->project('chromosome', $alt_assemblies->[0]);
     my $base_url    = $hub->ExtURL->get_url('VEGA') . "$species/$referer->{'ENSEMBL_TYPE'}/$referer->{'ENSEMBL_ACTION'}";
     
     foreach my $segment (@$vega_slices) {
@@ -55,6 +55,8 @@ sub content {
 		    targetcoordinates  => qq{<a href="$mapped_url" rel="external">$match_txt</a>}
       });
     }
+    
+    $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
     
     return sprintf '<input type="hidden" class="panel_type" value="Content" /><h2>Vega mappings</h2>%s', $table->render;  	
   }

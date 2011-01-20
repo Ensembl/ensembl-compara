@@ -194,29 +194,33 @@ sub add_vega_link {
     my $object = $self->object;
     
     if ($object) {
-      Bio::EnsEMBL::Registry->add_DNAAdaptor($species, 'vega', $species, 'vega');
+      my $reg        = 'Bio::EnsEMBL::Registry';
+      my $orig_group = $reg->get_DNAAdaptor($species, 'vega')->group;
       
-      my $vega_adaptor    = Bio::EnsEMBL::Registry->get_adaptor($species, 'vega', 'Slice');
-      my $chromosome      = $object->name;
-      my $start           = $object->seq_region_start;
-      my $end             = $object->seq_region_end;
-      my $strand          = $object->seq_region_strand;
-      my $coord_system    = $object->slice->coord_system;
-      my $start_slice     = $vega_adaptor->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
+      $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
+         
+      my $chromosome   = $object->name;
+      my $start        = $object->seq_region_start;
+      my $end          = $object->seq_region_end;
+      my $strand       = $object->seq_region_strand;
+      my $coord_system = $object->slice->coord_system;
+      my $start_slice  = $hub->get_adaptor('get_SliceAdaptor', 'vega')->fetch_by_region($coord_system->name, $chromosome, $start, $end, $strand, $coord_system->version);
       my $vega_projection;
       
       eval { $vega_projection = $start_slice->project($coord_system->name, $alt_assemblies[0]); };
       
       if ($vega_projection) {
-	if (scalar @$vega_projection == 1) {
-	  my $vega_slice = $vega_projection->[0]->to_Slice;
-	  $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
-	  $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
-	} elsif (scalar @$vega_projection > 1) {
-	  $vega_link  = $self->hub->url({ type => 'Help', action => 'ListVegaMappings' });
-	  $link_class = 'modal_link';
+        if (scalar @$vega_projection == 1) {
+          my $vega_slice = $vega_projection->[0]->to_Slice;
+          $vega_link  = $urls->get_url('VEGA', '') . "$species/$type/$action";
+          $vega_link .= sprintf '?r=%s:%s-%s', map $vega_slice->$_, qw(seq_region_name start end);
+        } elsif (scalar @$vega_projection > 1) {
+          $vega_link  = $self->hub->url({ type => 'Help', action => 'ListVegaMappings' });
+          $link_class = 'modal_link';
         }
       }
+      
+      $reg->add_DNAAdaptor($species, 'vega', $species, $orig_group); # set dnadb back to the original group
     }
     
     $self->get_other_browsers_menu->append($self->create_node('Vega', 'Vega', [], { availability => defined($vega_link), url => $vega_link, raw => 1, external => !defined($link_class), class => $link_class }));
