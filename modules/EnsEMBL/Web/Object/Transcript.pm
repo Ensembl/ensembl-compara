@@ -1107,12 +1107,18 @@ sub get_go_list {
 
   my %go_hash;
   my %hash;
-
+  
   foreach my $goxref (sort { $a->display_id cmp $b->display_id } @goxrefs) {
     my $go = $goxref->display_id;
     next unless ($goxref->dbname =~ /^($dbname_to_match)$/);
+
+    my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
+    my $term;
+    next if exists $hash{$go2};
+    
     my $info_text;
-#   warn "Adding $go : ", $goxref->dbname , "\n";
+    my $sources;
+
     if ($goxref->info_type eq 'PROJECTION') {
       $info_text= $goxref->info_text; 
     }
@@ -1120,15 +1126,17 @@ sub get_go_list {
     my $evidence = '';
     if ($goxref->isa('Bio::EnsEMBL::OntologyXref')) {
       $evidence = join ', ', @{$goxref->get_all_linkage_types}; 
+
+      foreach my $e (@{$goxref->get_all_linkage_info}) {
+	my ($linkage, $xref) = @{$e || []};
+ 	next unless $xref;	
+	my ($id, $db) =  ($xref->display_id, $xref->dbname);
+	push @$sources, $self->hub->get_ExtURL_link($id, $db, $id);
+      }
     }
 
-    my ($otype, $go2) = $go =~ /([\w|\_]+):0*(\d+)/;
-    my $term;
-    
-    next if exists $hash{$go2};
     
     $hash{$go2} = 1;
-    my $term_name;
     
     if (my $goa = $goadaptor->get_GOTermAdaptor) {
         my $term;
@@ -1138,7 +1146,7 @@ sub get_go_list {
 
         warn $@ if $@;
         
-        $term_name = $term ? $term->name : 
+        my $term_name = $term ? $term->name : '';
         $term_name ||= $goxref->description || '';
 
         my $has_ancestor = (!defined ($ancestor));
@@ -1152,11 +1160,16 @@ sub get_go_list {
         }
         
         if($has_ancestor){
-          $go_hash{$go} = [ $evidence, $term_name, $info_text ];
+          $go_hash{$go} = {
+	      'evidence' => $evidence,
+	      'term' => $term_name,
+	      'info' => $info_text,
+	      'source' => join ' ,', @{$sources || []},
+	      };
         }
     }
 
-}
+  }
 
   return \%go_hash;
 }

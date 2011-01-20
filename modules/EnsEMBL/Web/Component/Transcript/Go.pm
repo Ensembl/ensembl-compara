@@ -59,8 +59,8 @@ sub content {
         my $result = $go_database->dbc->db_handle->selectall_arrayref($query);
 	foreach my $r (@$result) {
 	    my ($accession, $name, $distance) =@{$r};
-	    $go_hash->{$_}[3]->{$accession}->{'name'} = $name;
-	    $go_hash->{$_}[3]->{$accession}->{'distance'} = $distance;
+	    $go_hash->{$_}->{goslim}->{$accession}->{'name'} = $name;
+	    $go_hash->{$_}->{goslim}->{$accession}->{'distance'} = $distance;
         }
       }
       my $table = $self->new_table($columns, [], { margin => '1em 0px', cellpadding => '2px' });
@@ -83,11 +83,10 @@ sub process_data {
 
   foreach my $go (sort keys %$data_hash) {
     my $row     = {};
-    my @go_data = @{$data_hash->{$go} || []};
-    my ($evidence, $description, $info_text,$goslim_goa_hash) = @go_data;
-
+    my $ghash = $data_hash->{$go} || {};
 
     my $go_link    = $hub->get_ExtURL_link($go, $extdb, $go);
+    
     
     my $info_text_html;
     my $info_text_url;
@@ -96,7 +95,7 @@ sub process_data {
     my $info_text_common_name;
     my $info_text_type;
     
-    if ($info_text) {
+    if (my $info_text = $ghash->{'info'}) {
      # create URL
      if ($info_text =~ /from ([a-z]+[ _][a-z]+) (gene|translation) (\w+)/i) {
         $info_text_gene        = $3;
@@ -117,16 +116,17 @@ sub process_data {
 
     my $goslim_goa_acc='';
     my $goslim_goa_desc='';
-    # my $distance;
+
+    my $goslim_goa_hash = $ghash->{goslim} || {};
     foreach (keys %$goslim_goa_hash){
-      # $distance = $goslim_goa_hash->{$_}->{'distance'};   
       $goslim_goa_acc.=$hub->get_ExtURL_link($_, 'GOSLIM_GOA', $_)."<br/>";
       $goslim_goa_desc.=$goslim_goa_hash->{$_}->{'name'}."<br/>";
     }
+
     $row->{'go'}          = $go_link;
-    $row->{'description'} = $description;
-    $row->{'evidence'}    = $evidence;
-    $row->{'desc'}        = $info_text_html;
+    $row->{'description'} = $ghash->{'term'};
+    $row->{'evidence'}    = $ghash->{'evidence'};
+    $row->{'desc'}        = join ', ', grep {$_} ($info_text_html, $ghash->{source});
     $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
     $row->{'goslim_goa_title'} = $goslim_goa_desc;
     
