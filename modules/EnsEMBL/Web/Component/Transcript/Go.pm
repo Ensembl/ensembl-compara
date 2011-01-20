@@ -121,7 +121,7 @@ sub process_data {
     foreach (keys %$goslim_goa_hash){
       # $distance = $goslim_goa_hash->{$_}->{'distance'};   
       $goslim_goa_acc.=$hub->get_ExtURL_link($_, 'GOSLIM_GOA', $_)."<br/>";
-      $goslim_goa_desc.=$hub->get_ExtURL_link($goslim_goa_hash->{$_}->{'name'}, 'GOSLIM_GOA', $_)."<br/>";
+      $goslim_goa_desc.=$goslim_goa_hash->{$_}->{'name'}."<br/>";
     }
     $row->{'go'}          = $go_link;
     $row->{'description'} = $description;
