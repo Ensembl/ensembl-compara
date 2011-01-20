@@ -166,12 +166,12 @@ sub run_njtree_phyml {
 
   my $newick_file = $input_aln . "_njtree_phyml_tree.txt ";
 
-  my $njtree_phyml_executable = $self->analysis->program_file || '';
-  unless (-e $njtree_phyml_executable) {
-      $njtree_phyml_executable = '/software/ensembl/compara/treebest/treebest';
+  my $treebest_exe = $self->analysis->program_file || '';
+  unless (-e $treebest_exe) {
+      $treebest_exe = '/software/ensembl/compara/treebest/treebest';
   }
 
-  $self->throw("can't find a njtree executable to run\n") unless(-e $njtree_phyml_executable);
+  $self->throw("can't find a njtree executable to run\n") unless(-e $treebest_exe);
 
   # Defining a species_tree
   # Option 1 is species_tree_string in protein_tree_tag, which then doesn't require tracking files around
@@ -203,7 +203,7 @@ sub run_njtree_phyml {
   # ./njtree best -f spec-v4.1.nh -p tree -o $BASENAME.best.nhx \
   # $BASENAME.nucl.mfa -b 100 2>&1/dev/null
 
-  my $cmd = $njtree_phyml_executable;
+  my $cmd = $treebest_exe;
   if (1 == $self->param('bootstrap')) {
     $cmd .= " best ";
     if ($self->param('species_tree_file')) {
@@ -250,7 +250,7 @@ sub run_njtree_phyml {
   } elsif (0 == $self->param('bootstrap')) {
     # first part
     # ./njtree phyml -nS -f species_tree.nh -p 0.01 -o $BASENAME.cons.nh $BASENAME.nucl.mfa
-    $cmd = $njtree_phyml_executable;
+    $cmd = $treebest_exe;
     $cmd .= " phyml -nS";
     if($self->param('species_tree_file')) {
       $cmd .= " -f ". $self->param('species_tree_file');
@@ -271,7 +271,7 @@ sub run_njtree_phyml {
     }
     # second part
     # nice -n 19 ./njtree sdi -s species_tree.nh $BASENAME.cons.nh > $BASENAME.cons.nhx
-    $cmd = $njtree_phyml_executable;
+    $cmd = $treebest_exe;
     $cmd .= " sdi ";
     if ($self->param('species_tree_file')) {
       $cmd .= " -s ". $self->param('species_tree_file');

@@ -105,12 +105,7 @@ sub fetch_input {
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
-
-    # FIXME: This can be quite dangerous, as there may be more than one in the DB by accident:
-      #
-      # We fetch the mlssID that is later needed for the newly stored leaves
-    my @protein_trees_mlsses = @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('PROTEIN_TREES')};
-    $self->param('mlss_id', $protein_trees_mlsses[0]->dbID || 0 );
+    $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
 }
 
 
@@ -188,16 +183,16 @@ sub run_quicktreebreak {
 
   my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir ( $self->param('protein_tree') ) or return;
 
-  my $quicktreebreak_executable = $self->analysis->program_file || '';
+  my $quicktree_exe = $self->analysis->program_file || '';
 
-  unless (-e $quicktreebreak_executable) {
-    $quicktreebreak_executable = '/software/ensembl/compara/quicktree_1.1/bin/quicktree';
+  unless (-e $quicktree_exe) {
+    $quicktree_exe = '/software/ensembl/compara/quicktree_1.1/bin/quicktree';
   }
 
-  $self->throw("can't find a quicktree executable to run. Tried $quicktreebreak_executable \n") 
-    unless(-e $quicktreebreak_executable);
+  $self->throw("can't find a quicktree executable to run. Tried $quicktree_exe \n") 
+    unless(-e $quicktree_exe);
 
-  my $cmd = $quicktreebreak_executable;
+  my $cmd = $quicktree_exe;
   $cmd .= " -out t -in a";
   $cmd .= " ". $input_aln;
 

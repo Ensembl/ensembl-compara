@@ -248,14 +248,14 @@ sub run_mcoffee {
   my $tree_temp = $self->worker_temp_directory . "tree_temp.dnd";
   $tree_temp =~ s/\/\//\//g;
 
-  my $mcoffee_executable = $self->analysis->program_file || '';
-  unless (-e $mcoffee_executable) {
+  my $mcoffee_exe = $self->analysis->program_file || '';
+  unless (-e $mcoffee_exe) {
       print "Using default T-Coffee executable!\n";
-      $mcoffee_executable = '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
+      $mcoffee_exe = '/software/ensembl/compara/tcoffee-7.86b/t_coffee';
         # path to t_coffee components:
       $ENV{'PATH'}=$ENV{'PATH'}.':/software/ensembl/compara/tcoffee-7.86b/install4tcoffee/bin/linux';
   }
-  $self->throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_executable);
+  $self->throw("can't find a M-Coffee executable to run\n") unless(-e $mcoffee_exe);
 
   #
   # Make the t_coffee temp dir.
@@ -320,7 +320,7 @@ sub run_mcoffee {
   close TCOFFEE_ENV;
 
   # Commandline
-  my $cmd = $mcoffee_executable;
+  my $cmd = $mcoffee_exe;
   $cmd .= " ".$input_fasta unless ($self->param('redo'));
   $cmd .= " ". $self->param('options');
   if (defined($self->param('redo')) and ($self->param('method') eq 'unalign') ) {

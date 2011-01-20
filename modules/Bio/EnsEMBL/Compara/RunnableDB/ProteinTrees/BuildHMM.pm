@@ -235,16 +235,16 @@ sub run_buildhmm {
 
   my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
 
-  my $buildhmm_executable = $self->analysis->program_file || '';
-  unless (-e $buildhmm_executable) {
-      $buildhmm_executable = '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
+  my $buildhmm_exe = $self->analysis->program_file || '';
+  unless (-e $buildhmm_exe) {
+      $buildhmm_exe = '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild';
   }
-  $self->throw("can't find a hmmbuild executable to run\n") unless(-e $buildhmm_executable);
+  $self->throw("can't find a hmmbuild executable to run\n") unless(-e $buildhmm_exe);
 
   ## as in treefam
   # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
 
-  my $cmd = $buildhmm_executable;
+  my $cmd = $buildhmm_exe;
   $cmd .= ($self->param('cdna') ? ' --dna ' : ' --amino ');
 
   $cmd .= $hmm_file;
