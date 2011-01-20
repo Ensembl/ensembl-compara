@@ -477,7 +477,7 @@ sub render{
 
   for my $key ( @{$self->normal_term_accessions} ) {#add the nodes we retreived
     my $term = $ontology_term_adaptor->fetch_by_accession($key);
-    $self->_add_node($key, $self->node_border_colour,$self->node_fill_colour('',$term), $self->node_font_colour('',$term));
+    $self->_add_node($key, $self->node_border_colour('', $term), $self->{_node_fill_colour}, $self->{_node_font_colour});
   }
 
   my @all_terms =  @{$self->normal_term_accessions} ;
@@ -487,6 +487,7 @@ sub render{
     my $term = $ontology_term_adaptor->fetch_by_accession($key);
     $self->_add_parents($term,$ontology_term_adaptor);
   }
+
   my $return_html='';
   my $images_html='';
   mkdir($self->img_base_dir);
@@ -563,7 +564,7 @@ sub _add_parents{
         if(! $self->existing_terms->{$trm->accession}){
         $self->existing_terms->{$trm->accession}=1;
         my $node_name = $self->_format_node_name($trm);
-        $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->non_highlight_border_colour('',$term),
+        $cluster->add_node($node_name, URL=>$self->get_url($trm->accession,$cluster_name), style=>'filled', color=>$self->node_border_colour('',$trm),
         fillcolor=>$self->non_highlight_fill_colour('',$trm), fontcolor=>$self->non_highlight_font_colour('',$trm));
         }
         if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){

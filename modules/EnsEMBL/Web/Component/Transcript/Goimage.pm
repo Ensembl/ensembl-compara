@@ -84,30 +84,30 @@ sub content {
   my @goslim_subset = ("goslim_goa");
   if (%$go_hash) {
     $html .= sprintf(
-      '<p><strong>The chart shows the ancestry of the ontology terms that have been mapped to this entity. The mapped terms are highlighted in <span style="color:%s" >%s</span>.<br/>',
-      $ontovis->node_fill_colour, $node_fill_text
+      '<p><strong>The chart shows the ancestry of the ontology terms that have been mapped to this entity. <br/>
+The nodes are clickable links to the ontology websites. </strong>
+<br/><strong>Terms:</strong> <span style="width:20px"> &nbsp; </span> <span style="color:#ffffff;background:%s"> Mapped terms </span> &nbsp;<span style="width:20px">&nbsp;</span>',
+      $ontovis->node_fill_colour
     );
     
     #if (%$go_slim_hash) {
     if (@goslim_subset){
       $html .= sprintf(
-        'The terms from the GOSlim GOA subset of GO have been highlighted in <span style="color:%s" >%s</span>. The nodes are clickable links to the ontology websites.',
-        $ontovis->highlighted_fill_colour, $goslim_goa_fill_text
+        ' &nbsp;<span style="border:2px solid orange"> GOSlim GOA terms </span>',
+        $ontovis->highlighted_fill_colour
       )
     }
     
-    $html.=  '</strong></p>';
+    $html.=  '<br/></p><br/>';
     $terms_found = 1;
   }
 
   return "<p>No ontology terms have been mapped to this entry.</p>"  unless $terms_found;   
 
   $ontovis->normal_term_accessions(keys %$go_hash);
-  #$ontovis->highlighted_term_accessions(keys %$go_slim_hash);
   $ontovis->highlighted_subsets(@goslim_subset);
   
   $html .= $ontovis->render;  
-  
   return $html;
 }
 
