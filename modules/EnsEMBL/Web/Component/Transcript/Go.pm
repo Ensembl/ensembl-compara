@@ -88,7 +88,6 @@ sub process_data {
 
 
     my $go_link    = $hub->get_ExtURL_link($go, $extdb, $go);
-    my $query_link = $hub->get_ExtURL_link($description, $extdb, $go);
     
     my $info_text_html;
     my $info_text_url;
@@ -125,7 +124,7 @@ sub process_data {
       $goslim_goa_desc.=$hub->get_ExtURL_link($goslim_goa_hash->{$_}->{'name'}, 'GOSLIM_GOA', $_)."<br/>";
     }
     $row->{'go'}          = $go_link;
-    $row->{'description'} = $query_link;
+    $row->{'description'} = $$description;
     $row->{'evidence'}    = $evidence;
     $row->{'desc'}        = $info_text_html;
     $row->{'goslim_goa_acc'}   = $goslim_goa_acc;
