@@ -223,6 +223,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 ## Get the adaptor from the Registry
 my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'MethodLinkSpeciesSet');
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 
 my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'GenomeDB');
 
@@ -319,6 +320,7 @@ my $ref_species;
 sub print_blastz_net_list {
     my ($all_method_link_species_sets) = @_;
 
+    my $mlss_ids;
     #find reference species by parsing name field of mlss table
     foreach my $this_method_link_species_set (@$all_method_link_species_sets) {
 	
@@ -337,6 +339,7 @@ sub print_blastz_net_list {
             foreach my $this_species (@{$this_method_link_species_set->species_set}) {
                 if ($this_species->dbID != $ref_genome_db->dbID) {
                     push @{$ref_species->{$ref_genome_db->dbID}}, $this_species->dbID;
+                    $mlss_ids->{$ref_genome_db->dbID}->{$this_species->dbID} = $this_method_link_species_set->dbID;
                 }
             }
         } else {
@@ -350,7 +353,7 @@ sub print_blastz_net_list {
     foreach my $ref_id (sort order_count_tree keys(%$ref_species)) {
 	print "<h4>" . getNameString($ref_id) . "</h4>" . "\r\n";
         foreach my $other_id (sort order_tree @{$ref_species->{$ref_id}}) {
-            print getNameString($other_id) . "<br />" . "\r\n";
+            print "<a href=\"mlss/mlss_".$mlss_ids->{$ref_id}->{$other_id}.".html\">" . getNameString($other_id) . "</a><br/>" . "\r\n";
         }
     }
 }
@@ -639,7 +642,8 @@ sub print_half_html_table {
   }
 
   print qq{<table class="spreadsheet" style="width:auto">\r\n\r\n};
-  
+
+ 
   for (my $i=0; $i<@$species; $i++) {
     if ($i % 2) {
       print qq{<tr>\r\n<td class="bg1 left"><b><i>}, $species->[$i]->{long_name}, qq{</i></b></td>\r\n};
@@ -672,7 +676,7 @@ sub print_half_html_table {
           my $on_species = $_->name;
           $on_species =~ s/.*(\(.*\))/ $1/;
           $on_species = "" unless ($on_species =~ /^\s\(/);
-          "<font color=\"blue\">YES$on_species</font>";
+          "<font color=\"blue\"><a href=\"mlss/mlss_".$_->dbID.".html\">YES$on_species</a></font>";
         } @$these_method_link_species_sets;
       } else {
         @$these_method_link_species_sets = sort {$all_methods->{$a->method_link_type}->{order}
