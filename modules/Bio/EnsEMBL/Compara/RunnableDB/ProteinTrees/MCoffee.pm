@@ -74,6 +74,7 @@ sub param_defaults {
         'output_table'          => 'protein_tree_member',   # self-explanatory
         'options'               => '',
         'cutoff'                => 2,                       # for filtering
+        'max_gene_count'        => 400,                     # if the resulting cluster is bigger, it is dataflown to QuickTreeBreak
     };
 }
 
@@ -202,15 +203,26 @@ sub run {
 =cut
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  $self->check_if_exit_cleanly;
-  $self->parse_and_store_alignment_into_proteintree;
+    $self->check_if_exit_cleanly;
+    $self->parse_and_store_alignment_into_proteintree;
 
-  #
-  # Store various alignment tags.
-  #
-  $self->_store_aln_tags unless ($self->param('redo'));
+        # Store various alignment tags:
+    $self->_store_aln_tags unless ($self->param('redo'));
+
+
+    my $protein_tree   = $self->param('protein_tree');
+    my $gene_count     = $protein_tree && $protein_tree->get_tagvalue('gene_count');
+    my $max_gene_count = $self->param('max_gene_count');
+
+    if($gene_count > $max_gene_count) {
+        $self->dataflow_output_id($self->input_id, 3);
+        $protein_tree->release_tree;
+        $self->param('protein_tree', undef);
+        $self->input_job->incomplete(0);
+        die "Cluster size ($gene_count) over threshold ($max_gene_count), dataflowing to QuickTreeBreak\n";
+    }
 }
 
 sub DESTROY {

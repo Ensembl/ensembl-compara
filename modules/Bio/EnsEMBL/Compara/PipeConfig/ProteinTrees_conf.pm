@@ -41,7 +41,7 @@ sub default_options {
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
-        'tree_max_gene_count'       => 400,     # affects 'njtree_phyml', 'ortho_tree' and 'quick_tree_break'
+        'tree_max_gene_count'       => 400,     # affects 'mcoffee'
         'use_genomedb_id'           => 0,       # affects 'njtree_phyml' and 'ortho_tree'
 
     # homology_dnds parameters:
@@ -97,29 +97,29 @@ sub default_options {
             -dbname => 'sf5_ensembl_compara_master',
         },
 
-        # # "production mode"
-        # 'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        # 'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        # 'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        #'reuse_db' => {   # usually previous release database on compara1
+        # "production mode"
+        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
+        'reuse_db' => {   # usually previous release database on compara1
+           -host   => 'compara1',
+           -port   => 3306,
+           -user   => 'ensro',
+           -pass   => '',
+           -dbname => 'kb3_ensembl_compara_60',
+        },
+
+        ## mode for testing the non-Blast part of the pipeline: reuse all Blasts
+        #'reuse_core_sources_locs' => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        #'curr_core_sources_locs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        #'prev_release'            => $self->o('release'),
+        #'reuse_db' => {   # current release if we are testing after production
         #    -host   => 'compara1',
         #    -port   => 3306,
         #    -user   => 'ensro',
         #    -pass   => '',
-        #    -dbname => 'kb3_ensembl_compara_60',
+        #    -dbname => 'sf5_ensembl_compara_61',
         #},
-
-        # mode for testing the non-Blast part of the pipeline: reuse all Blasts
-        'reuse_core_sources_locs' => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        'curr_core_sources_locs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        'prev_release'            => $self->o('release'),
-        'reuse_db' => {   # current release if we are testing after production
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'sf5_ensembl_compara_61',
-        },
 
     };
 }
@@ -542,8 +542,9 @@ sub pipeline_analyses {
             -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => 600,
             -flow_into => {
-                1 => [ 'njtree_phyml' ],
                -1 => [ 'mcoffee_himem' ],
+                1 => [ 'njtree_phyml' ],
+                3 => [ 'quick_tree_break' ],
             },
         },
 
@@ -552,10 +553,12 @@ sub pipeline_analyses {
             -parameters => {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => 2,
+                'max_gene_count'            => $self->o('tree_max_gene_count'),
             },
             -hive_capacity        => 600,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
+                3 => [ 'quick_tree_break' ],
             },
             -rc_id => 2,
         },
@@ -565,7 +568,6 @@ sub pipeline_analyses {
             -parameters => {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
-                'max_gene_count'            => $self->o('tree_max_gene_count'),
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
             },
             -hive_capacity        => 400,
@@ -580,14 +582,13 @@ sub pipeline_analyses {
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree',
             -parameters => {
-                'max_gene_count'            => $self->o('tree_max_gene_count'),
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
             },
             -hive_capacity        => 200,
             -failed_job_tolerance => 5,
             -flow_into => {
                 1 => [ 'build_HMM_aa', 'build_HMM_cds' ],
-                2 => [ 'quick_tree_break' ],
+                3 => [ 'quick_tree_break' ],
             },
         },
 
@@ -613,7 +614,6 @@ sub pipeline_analyses {
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
             -parameters => {
-                'max_gene_count'    => $self->o('tree_max_gene_count'),
                 'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?

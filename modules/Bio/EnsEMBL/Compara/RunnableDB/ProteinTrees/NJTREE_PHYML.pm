@@ -77,7 +77,6 @@ sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'bootstrap'         => 1,
-            'max_gene_count'    => 410,
     };
 }
 
@@ -94,15 +93,6 @@ sub fetch_input {
     my $protein_tree_id     = $self->param('protein_tree_id') or die "'protein_tree_id' is an obligatory parameter";
     my $protein_tree        = $self->param('protein_tree_adaptor')->fetch_node_by_node_id( $protein_tree_id )
                                         or die "Could not fetch protein_tree with protein_tree_id='$protein_tree_id'";
-
-    if ($protein_tree->get_tagvalue('gene_count') > $self->param('max_gene_count')) {
-            # 3 is QuickTreeBreak -- 2 is NJTREE_PHYML jackknife
-        $self->dataflow_output_id($self->input_id, 3);
-        $protein_tree->release_tree;
-        $self->param('protein_tree', undef);
-        $self->input_job->incomplete(0);
-        die "Cluster size over threshold, dataflowing to QuickTreeBreak\n";
-    }
 
     $self->param('protein_tree', $protein_tree);
 }

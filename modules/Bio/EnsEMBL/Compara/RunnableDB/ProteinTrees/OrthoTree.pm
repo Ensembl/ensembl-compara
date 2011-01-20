@@ -82,7 +82,6 @@ sub param_defaults {
     return {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
-            'max_gene_count'        => 999999,
             'no_between'            => 0.25, # dont store all possible_orthologs
     };
 }
@@ -160,16 +159,8 @@ sub check_job_fail_options {
 
   my $protein_tree = $self->param('protein_tree');
 
-  if ($protein_tree->get_tagvalue('gene_count') > $self->param('max_gene_count')) {
-    $self->dataflow_output_id($self->input_id, 2);
-
-    $self->DESTROY;
-    $self->input_job->incomplete(0);
-    die $self->analysis->logic_name().": cluster size over threshold; dataflowing to QuickTreeBreak\n";
-  }
-
   if($self->input_job->retry_count >= 2) {
-    $self->dataflow_output_id($self->input_id, 2);
+    $self->dataflow_output_id($self->input_id, 3);
 
     $self->DESTROY;
     $self->input_job->incomplete(0);
