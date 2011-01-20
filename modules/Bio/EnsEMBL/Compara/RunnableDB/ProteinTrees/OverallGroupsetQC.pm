@@ -7,14 +7,14 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC
 
 =cut
 
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC->new
+my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -53,7 +53,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC;
+package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
@@ -86,12 +86,6 @@ sub fetch_input {
     $self->param('protein_tree_adaptor', $self->compara_dba->get_ProteinTreeAdaptor);
     $self->param('member_adaptor', $self->compara_dba->get_MemberAdaptor);
 
-    if(my $genome_db_id = $self->param('genome_db_id')) {
-        unless( defined($self->param('reuse_this')) ) {
-            die "'reuse_this' is an obligatory parameter in per-genome mode";
-        }
-    }
-
     $self->param('groupset_node', $self->param('protein_tree_adaptor')->fetch_all_roots->[0]) or die "Could not fetch groupset node";
 
 }
@@ -110,14 +104,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    if(my $genome_db_id = $self->param('genome_db_id')) {
-
-        $self->per_genome_mapping_stats( $genome_db_id );
-
-    } else {
-
-        $self->overall_groupset_qc;
-    }
+    $self->overall_groupset_qc;
 }
 
 
@@ -181,6 +168,7 @@ sub overall_groupset_qc {
     $self->quantify_mapping($map_filename, $reuse_compara_dba);
 }
 
+
 sub fetch_groupset {
   my $self = shift;
   my $given_compara_dba = shift;
@@ -220,6 +208,7 @@ sub fetch_groupset {
 
   return $dataset;
 }
+
 
 sub join_one_pair {
   my ($self, $from_dba, $to_dba) = @_;
@@ -298,6 +287,7 @@ sub join_one_pair {
 
   return $xtb_filename;
 }
+
 
 sub cluster_mapping {
   my ($self, $link_filename, $from_dba, $to_dba) = @_;
@@ -430,6 +420,7 @@ sub cluster_mapping {
   return $map_filename;
 }
 
+
 sub quantify_mapping {
   my ($self, $map_filename, $reuse_compara_dba) = @_;
 
@@ -470,7 +461,6 @@ sub quantify_mapping {
     $this_node->release_tree;
   }
 
-
   my $num_novel_clusters = scalar keys %{$mapping_stats{novel}};
   my $num_mapped_clusters = scalar keys %{$mapping_stats{mapped}};
 
@@ -504,71 +494,5 @@ sub quantify_mapping {
   return;
 }
 
-
-sub per_genome_mapping_stats {
-  my $self = shift;
-
-  my $genome_db_id = shift;
-
-  print STDERR "per_genome_mapping_stats\n" if ($self->debug);
-
-  my $this_orphans              = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
-  my $total_orphans_num         = scalar keys (%$this_orphans);
-  my $total_num_genes           = scalar @{ $self->param('member_adaptor')->fetch_all_by_source_genome_db_id('ENSEMBLGENE',$genome_db_id) };
-  my $proportion_orphan_genes   = $total_orphans_num/$total_num_genes;
-
-  my $groupset_node = $self->param('groupset_node');
-  my $groupset_tag  = $self->param('groupset_tag');
-
-  $groupset_node->store_tag("$genome_db_id".'_total_orphans_num' . '_' . $groupset_tag, $total_orphans_num);
-  $groupset_node->store_tag("$genome_db_id".'_prop_orphans' . '_' . $groupset_tag, $proportion_orphan_genes);
-
-  return unless $self->param('reuse_this');
-
-  my $reuse_db_url = $self->param('reuse_db') or die "'reuse_db' is an obligatory parameter";
-  my $reuse_compara_dba = Bio::EnsEMBL::Hive::URLFactory->fetch($reuse_db_url . ';type=compara')
-    or die "Cannot connect to reuse compara_dba '$reuse_db_url'";
-
-  my $reuse_orphans             = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);
-  my %common_orphans = ();
-  my %new_orphans = ();
-  foreach my $this_orphan_id (keys %$this_orphans) {
-    $common_orphans{$this_orphan_id} = 1  if ($reuse_orphans->{$this_orphan_id});
-    $new_orphans{$this_orphan_id} = 1 unless ($reuse_orphans->{$this_orphan_id});
-  }
-  my $common_orphans_num = scalar keys (%common_orphans);
-  my $new_orphans_num    = scalar keys (%new_orphans);
-
-  $groupset_node->store_tag("$genome_db_id".'_common_orphans_num' . '_' . $groupset_tag, $common_orphans_num);
-  $groupset_node->store_tag("$genome_db_id".'_new_orphans_num' . '_' . $groupset_tag, $new_orphans_num);
-}
-
-
-sub fetch_gdb_orphan_genes {
-  my ($self, $given_compara_dba, $genome_db_id) = @_;
-
-  my $dbname  = $self->generate_dbname( $given_compara_dba );
-
-  my $starttime = time();
-  my $dataset;
-
-  print STDERR "fetching orphan genes [$dbname $genome_db_id]\n" if ($self->debug);
-  my $sql = "SELECT m3.stable_id from member m2, member m3, subset_member sm where m3.member_id=m2.gene_member_id and m2.source_name='ENSEMBLPEP' and sm.member_id=m2.member_id and sm.member_id in (SELECT m1.member_id from member m1 left join protein_tree_member ptm on m1.member_id=ptm.member_id where ptm.member_id IS NULL and m1.genome_db_id=$genome_db_id)";
-
-  my $sth = $given_compara_dba->dbc->prepare($sql);
-  $sth->execute();
-
-  printf("%1.3f secs to fetch orphan genes [$dbname $genome_db_id]\n", (time()-$starttime)) if ($self->debug);
-
-  my $counter = 0;
-
-  while(my ($member) = $sth->fetchrow()) {
-    # print STDERR "ID=$cluster_id NAME=$cluster_name MEM=$member\n" if ($self->debug);
-    $dataset->{$member} = 1;
-    if ($self->debug && ($counter++ % 100 == 0)) { printf("%10d orphan genes [$genome_db_id]\n", $counter); }
-  }
-
-  return $dataset;
-}
 
 1;

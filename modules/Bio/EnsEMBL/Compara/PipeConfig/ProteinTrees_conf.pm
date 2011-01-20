@@ -33,7 +33,7 @@ sub default_options {
 
 #       'mlss_id'           => 40069,   # it is very important to check that this value is current!
 
-    # template parameters:
+    # blast parameters:
         'blast_options'             => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1',
 
     # clustering parameters:
@@ -50,7 +50,7 @@ sub default_options {
 
 
         'release'           => '61',
-        'rel_suffix'        => 'f',    # an empty string by default, a letter otherwise
+        'rel_suffix'        => 'h',    # an empty string by default, a letter otherwise
         'rel_with_suffix'   => $self->o('release').$self->o('rel_suffix'),
 
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
@@ -160,20 +160,6 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-# ---------------------------------------------[Blast template]--------------------------------------------------------------------------
-
-        {   -logic_name         => 'blast_template',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
-            -program            => 'wublastp',
-            -program_version    => '1',
-            -program_file       => 'wublastp',
-            -parameters         => {
-                'mlss_id'       => $self->o('mlss_id'),
-                'reuse_db'      => $self->dbconn_2_url('reuse_db'),
-                'blast_options' => $self->o('blast_options'),
-            },
-        },
-
 # ---------------------------------------------[rename PAF tables]-----------------------------------------------------------------------
 
         {   -logic_name    => 'rename_paf_tables',
@@ -201,7 +187,6 @@ sub pipeline_analyses {
                 'input_id'  => { 'src_db_conn' => '#db_conn#', 'table' => '#_range_start#' },
                 'fan_branch_code' => 2,
             },
-            -wait_for  => [ 'rename_paf_tables' ],
             -flow_into => {
                 2 => [ 'copy_table'  ],
                 1 => [ 'innodbise_table_factory' ],     # backbone
@@ -238,6 +223,7 @@ sub pipeline_analyses {
                 'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
             },
             -hive_capacity => 10,
+            -can_be_empty  => 1,
         },
 
 # ---------------------------------------------[generate an empty species_set for reuse (to be filled in at a later stage) ]---------
@@ -249,7 +235,7 @@ sub pipeline_analyses {
                             "DELETE FROM species_set WHERE species_set_id=#_insert_id_0#", # will delete the row previously inserted, but keep the auto_increment
                 ],
             },
-            -wait_for  => [ 'innodbise_table' ],
+            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ], # have to wait for both, because subfan can be empty
             -flow_into => {
                 2 => { 'mysql:////meta' => { 'meta_key' => 'reuse_ss_id', 'meta_value' => '#_insert_id_0#' } },     # dynamically record it as a pipeline-wide parameter
                 1 => [ 'load_genomedb_factory' ],       # backbone
@@ -264,13 +250,10 @@ sub pipeline_analyses {
                 'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
                 'mlss_id'       => $self->o('mlss_id'),
             },
-            -wait_for  => [ 'innodbise_table_factory', 'innodbise_table' ],
             -flow_into => {
                 2 => [ 'load_genomedb' ],
                 1 => { 'create_species_tree' => undef,
                        'accumulate_reuse_ss' => undef,  # backbone
-                       'load_reuse_members' => { 'bypass_all' => 1 },   # fight the "empty analysis is always blocked" restriction (should be fixed on Hive level)
-                       'load_fresh_members' => { 'bypass_all' => 1 },   # fight the "empty analysis is always blocked" restriction (should be fixed on Hive level)
                 },
             },
         },
@@ -295,7 +278,7 @@ sub pipeline_analyses {
                 'species_tree_file' => $self->o('work_dir').'/spec_tax.nh',
                 'cmd'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/tree/testTaxonTree.pl -url #db_url# -create_species_tree -njtree_output_filename #species_tree_file# -no_other_files 2>/dev/null',
             },
-            -wait_for => [ 'load_genomedb_factory', 'load_genomedb' ],  # have to wait for both to complete (so is a funnel)
+            -wait_for => [ 'load_genomedb' ],  # a funnel
             -hive_capacity => -1,   # to allow for parallelization
             -flow_into => {
                 1 => { 'store_species_tree' => { 'species_tree_file' => '#species_tree_file#' } },
@@ -330,7 +313,7 @@ sub pipeline_analyses {
                        'paf_table_reuse'        => undef,
                        'mysql:////species_set'  => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
                 },
-                3 => [ 'load_fresh_members' ],
+                3 => [ 'load_fresh_members', 'paf_create_empty_table' ],
             },
         },
 
@@ -355,10 +338,11 @@ sub pipeline_analyses {
             -parameters => {
                 'reuse_db'      => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
             },
-            -wait_for => [ 'accumulate_reuse_ss' ],   # fight the "empty analysis is always blocked" restriction (should be fixed on Hive level)
+            -wait_for => [ 'accumulate_reuse_ss' ], # to make sure some fresh members won't start because they were dataflown first (as this analysis can_be_empty)
             -hive_capacity => -1,
+            -can_be_empty  => 1,
             -flow_into => {
-                1 => [ 'dump_fasta_create_blast_analyses', 'store_sequences_factory' ],
+                1 => [ 'dump_subset_create_blastdb', 'store_sequences_factory' ],
             },
         },
 
@@ -366,11 +350,12 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'peptide_align_feature_#name_and_id#',
+                'table'         => 'peptide_align_feature_#per_genome_suffix#',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
-            -wait_for   => [ 'accumulate_reuse_ss' ],     # have to wait until reuse_ss is fully populated
+            -wait_for   => [ 'accumulate_reuse_ss' ],     # have to wait until reuse_ss_csv is computed
             -hive_capacity => 4,
+            -can_be_empty  => 1,
         },
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
@@ -383,33 +368,57 @@ sub pipeline_analyses {
             -wait_for => [ 'load_reuse_members' ],
             -hive_capacity => -1,
             -flow_into => {
-                1 => [ 'dump_fasta_create_blast_analyses', 'store_sequences_factory' ],
+                1 => [ 'dump_subset_create_blastdb', 'store_sequences_factory' ],
             },
         },
 
+        {   -logic_name => 'paf_create_empty_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#per_genome_suffix# like peptide_align_feature',
+                            'ALTER TABLE peptide_align_feature_#per_genome_suffix# DISABLE KEYS',
+                ],
+            },
+        },
+
+
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
-        {   -logic_name => 'dump_fasta_create_blast_analyses',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDumpFasta',
+        {   -logic_name => 'dump_subset_create_blastdb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::DumpSubsetCreateBlastDB',
             -parameters => {
                 'fasta_dir'                 => $self->o('fasta_dir'),
-                'beforeblast_logic_name'    => 'load_fresh_members',
-                'afterblast_logic_name'     => 'hcluster_dump_input_per_genome',
             },
-            -wait_for => [ 'load_fresh_members', 'paf_table_reuse' ],   # actually it is Blast_* analyses that have to wait for 'paf_table_reuse', but it is tricky to achieve
-            -hive_capacity => 1,
+            -batch_size    =>  20,  # they can be really, really short
             -flow_into => {
-                2 => [ 'populate_blast_analyses' ],
+                1 => [ 'blast_factory' ],
+            },
+        },
+
+        {   -logic_name => 'blast_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::SubsetMemberFactory',
+            -parameters => {
+                'input_id' => { 'member_id' => '#_range_start#' },
+                'fan_branch_code' => 2,
+            },
+            -hive_capacity => 10,
+            -flow_into => {
+                2 => [ 'blastp_with_reuse' ],
                 1 => [ 'hcluster_dump_input_per_genome' ],
             },
         },
 
-        {   -logic_name => 'populate_blast_analyses',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeSubmitPep',
-            -parameters => {
-                'new_format'    => 1,
+        {   -logic_name         => 'blastp_with_reuse',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
+            -program_file       => 'wublastp',
+            -parameters         => {
+                'mlss_id'       => $self->o('mlss_id'),
+                'reuse_db'      => $self->dbconn_2_url('reuse_db'),
+                'blast_options' => $self->o('blast_options'),
             },
-            -hive_capacity => 1,
+            -wait_for => [ 'load_fresh_members', 'paf_table_reuse', 'paf_create_empty_table' ],
+            -batch_size    =>  40,
+            -hive_capacity => 450,
         },
 
 # ---------------------------------------------[sequence caching step]---------------------------------------------------------------
@@ -442,10 +451,10 @@ sub pipeline_analyses {
                 'outgroups'     => $self->o('outgroups'),
                 'cluster_dir'   => $self->o('cluster_dir'),
             },
-            -wait_for => [ 'dump_fasta_create_blast_analyses' ],    # more control rules are created by 'dump_fasta_create_blast_analyses'
+            -wait_for => [ 'blastp_with_reuse' ],
             -hive_capacity => 4,
             -flow_into => {
-                1 => [ 'clusterset_qc' ],
+                1 => [ 'per_genome_clusterset_qc' ],
             },
         },
 
@@ -489,24 +498,36 @@ sub pipeline_analyses {
             },
             -hive_capacity => -1,
             -flow_into => {
-                1 => [ 'clusterset_qc', 'group_genomes_under_taxa' ],  # backbone 
-                2 => [ 'mcoffee' ],
+                1 => [ 'overall_clusterset_qc' ],   # backbone 
+                2 => [ 'mcoffee' ],                 # per-cluster
             },
         },
 
 # ---------------------------------------------[a QC step before main loop]----------------------------------------------------------
 
-        {   -logic_name => 'clusterset_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC',
+        {   -logic_name => 'overall_clusterset_qc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
                 'cluster_dir'               => $self->o('cluster_dir'),
                 'groupset_tag'              => 'ClustersetQC',
             },
+            -hive_capacity => 3,
+            -flow_into => {
+                1 => [ 'overall_genetreeset_qc' ],
+            },
+        },
+
+        {   -logic_name => 'per_genome_clusterset_qc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
+            -parameters => {
+                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
+                'groupset_tag'              => 'ClustersetQC',
+            },
             -wait_for => [ 'hcluster_parse_output' ],
             -hive_capacity => 3,
             -flow_into => {
-                1 => [ 'gene_treeset_qc' ],
+                1 => [ 'per_genome_genetreeset_qc' ],
             },
         },
 
@@ -518,7 +539,7 @@ sub pipeline_analyses {
                 'method'                    => 'cmcoffee',      # presumably, at the moment it refers to the 'initial' method
                 'use_exon_boundaries'       => 2,
             },
-            -wait_for => [ 'store_sequences', 'clusterset_qc' ],
+            -wait_for => [ 'store_sequences', 'overall_clusterset_qc', 'per_genome_clusterset_qc' ],    # funnel
             -hive_capacity        => 600,
             -flow_into => {
                 1 => [ 'njtree_phyml' ],
@@ -545,7 +566,6 @@ sub pipeline_analyses {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
-#                'species_tree_file'         => $self->o('work_dir').'/spec_tax.nh', # FIXME: theoretically, the module is capable of getting the tree from protein_tree_tag table
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
             },
             -hive_capacity        => 400,
@@ -561,7 +581,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthoTree',
             -parameters => {
                 'max_gene_count'            => $self->o('tree_max_gene_count'),
-#                'species_tree_file'         => $self->o('work_dir').'/spec_tax.nh', # FIXME: theoretically, the module is capable of getting the tree from protein_tree_tag table
                 'use_genomedb_id'           => $self->o('use_genomedb_id'),
             },
             -hive_capacity        => 200,
@@ -594,9 +613,11 @@ sub pipeline_analyses {
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::QuickTreeBreak',
             -parameters => {
-                'max_gene_count'            => $self->o('tree_max_gene_count'),
+                'max_gene_count'    => $self->o('tree_max_gene_count'),
+                'mlss_id'           => $self->o('mlss_id'),
             },
             -hive_capacity        => 1, # this one seems to slow the whole loop down; why can't we have any more of these?
+            -can_be_empty         => 1,
             -failed_job_tolerance => 5,
             -flow_into => {
                 1 => [ 'other_paralogs' ],
@@ -614,11 +635,24 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[a QC step after main loop]----------------------------------------------------------
 
-        {   -logic_name => 'gene_treeset_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupsetQC',
+        {   -logic_name => 'overall_genetreeset_qc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
             -parameters => {
                 'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
                 'cluster_dir'               => $self->o('cluster_dir'),
+                'groupset_tag'              => 'GeneTreesetQC',
+            },
+            -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],
+            -hive_capacity => 3,
+            -flow_into => {
+                1 => [ 'group_genomes_under_taxa' ],    # backbone
+            },
+        },
+
+        {   -logic_name => 'per_genome_genetreeset_qc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
+            -parameters => {
+                'reuse_db'                  => $self->dbconn_2_url('reuse_db'),     # FIXME: remove the first-hash-to-url-then-hash-from-url code redundancy
                 'groupset_tag'              => 'GeneTreesetQC',
             },
             -wait_for => [ 'mcoffee', 'mcoffee_himem', 'njtree_phyml', 'ortho_tree', 'quick_tree_break' ],
@@ -633,7 +667,7 @@ sub pipeline_analyses {
                 'mlss_id'   => $self->o('mlss_id'),
                 'taxlevels' => $self->o('taxlevels'),
             },
-            -wait_for => [ 'gene_treeset_qc' ],
+            -wait_for => [ 'per_genome_genetreeset_qc' ],   # funnel
             -hive_capacity => -1,
             -flow_into => {
                 2 => [ 'homology_dNdS_factory' ],
