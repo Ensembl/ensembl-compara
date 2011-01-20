@@ -61,8 +61,8 @@ sub fetch_input {
     my $genome_db_id = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
 
-    my $name_and_id = $self->param('name_and_id') || ($genome_db->name . '_' . $genome_db_id);
-    my $table_name  = 'peptide_align_feature_' . $name_and_id;
+    my $per_genome_suffix = $self->param('per_genome_suffix') || ($genome_db->name . '_' . $genome_db_id);
+    my $table_name  = 'peptide_align_feature_' . $per_genome_suffix;
     $self->param('table_name', $table_name);
 
     unless(defined($self->param('outgroup_category'))) {    # it can either be passed in or computed

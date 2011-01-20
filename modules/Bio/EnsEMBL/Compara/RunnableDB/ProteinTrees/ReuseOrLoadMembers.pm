@@ -58,11 +58,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    if($self->param('bypass_all')) {
-        $self->input_job()->autoflow(0);
-        return;
-    }
-
         # not sure if this can be done directly in param_defaults because of the order things get initialized:
     unless(defined($self->param('verbose'))) {
         $self->param('verbose', $self->debug == 2);
@@ -88,7 +83,7 @@ sub fetch_input {
     my $genome_db_name = $genome_db->name;
 
         # this one will be used later for dataflow:
-    $self->param('name_and_id', $genome_db_name.'_'.$genome_db_id );
+    $self->param('per_genome_suffix', $genome_db_name.'_'.$genome_db_id );
 
         #create subsets for the gene members, and the longest peptide members:
     $self->param('pepSubset', Bio::EnsEMBL::Compara::Subset->new(
@@ -106,17 +101,12 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    if($self->param('bypass_all')) {
-        $self->input_job()->autoflow(0);
-        return;
-    }
-
     my $compara_dba    = $self->compara_dba();
     my $genome_db_id   = $self->param('genome_db_id');
 
     my $reuse_this      = $self->param('reuse_this');
 
-    my $reuse_table_name = 'reuse_member_'.$self->param('name_and_id');
+    my $reuse_table_name = 'reuse_member_'.$self->param('per_genome_suffix');
 
     $self->param('reuse_member_hash', {});
 
@@ -144,16 +134,12 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    if($self->param('bypass_all')) {
-        $self->input_job()->autoflow(0);
-        return;
-    }
+    my $genome_db_id      = $self->param('genome_db_id');
+    my $reuse_this        = $self->param('reuse_this');
+    my $subset_id         = $self->param('pepSubset')->dbID;
+    my $per_genome_suffix = $self->param('per_genome_suffix');
 
-    my $genome_db_id    = $self->param('genome_db_id');
-    my $reuse_this      = $self->param('reuse_this');
-    my $subset_id       = $self->param('pepSubset')->dbID;
-
-    $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'reuse_this' => $reuse_this, 'subset_id' => $subset_id } , 1);
+    $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'reuse_this' => $reuse_this, 'subset_id' => $subset_id, 'per_genome_suffix' => $per_genome_suffix } , 1);
 }
 
 

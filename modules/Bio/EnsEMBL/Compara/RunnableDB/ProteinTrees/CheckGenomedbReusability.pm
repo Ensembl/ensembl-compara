@@ -55,8 +55,8 @@ sub fetch_input {
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
 
-    unless($self->param('name_and_id')) {
-        $self->param('name_and_id', ($genome_db->name . '_' . $genome_db_id));
+    unless($self->param('per_genome_suffix')) {
+        $self->param('per_genome_suffix', ($genome_db->name . '_' . $genome_db_id));
     }
 
     Bio::EnsEMBL::Registry->no_version_check(1);
@@ -117,15 +117,15 @@ sub run {
 sub write_output {      # store the genome_db and dataflow
     my $self = shift;
 
-    my $reuse_this   = $self->param('reuse_this');
-    my $genome_db_id = $self->param('genome_db_id');
-    my $name_and_id  = $self->param('name_and_id');
+    my $genome_db_id        = $self->param('genome_db_id');
+    my $reuse_this          = $self->param('reuse_this');
+    my $per_genome_suffix   = $self->param('per_genome_suffix');
 
         # same composition of the output, independent of the branch:
     my $output_hash = {
-        'genome_db_id' => $genome_db_id,
-        'reuse_this'   => $reuse_this,
-        'name_and_id'  => $name_and_id,
+        'genome_db_id'       => $genome_db_id,
+        'reuse_this'         => $reuse_this,
+        'per_genome_suffix'  => $per_genome_suffix,
     };
 
         # all jobs dataflow into branch 1:
