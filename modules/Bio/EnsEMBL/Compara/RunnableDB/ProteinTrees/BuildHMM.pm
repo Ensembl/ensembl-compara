@@ -72,7 +72,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'max_gene_count'        => 1000000,
             'cdna'                  => 0,
             'sreformat'             => '/usr/local/ensembl/bin/sreformat',
     };
@@ -119,14 +118,6 @@ sub fetch_input {
     if (defined($result)) { # Has been done already
         $self->param('done', 1);
         return;
-    }
-
-    if ($self->param('protein_tree')->get_tagvalue('gene_count') > $self->param('max_gene_count')) {
-        $self->dataflow_output_id($self->input_id, 2);      # this does not seem to be wired to anything at the moment?
-        $self->param('protein_tree')->release_tree;
-        $self->param('protein_tree', undef);
-        $self->input_job->transient_error(0);
-        $self->throw("BuildHMM : cluster size over threshold");    # maybe we should make the success/failure dependent on the success of the dataflow?
     }
 
   my @to_delete;
