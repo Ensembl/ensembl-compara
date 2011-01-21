@@ -90,10 +90,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       error: function (e) {
         failures = failures || 1;
         
-        if (e.status != 500 && failures < 3) {
+        if (e.status !== 500 && failures < 3) {
           var panel = this;
           setTimeout(function () { panel.getContent(link, url, ++failures); }, 2000);
-        } else {
+        } else if (e.status !== 0) {
           this.elLk.content.html('<p class="ajax_error>Sorry, the page request failed to load.</p>');
         }
       }
@@ -131,7 +131,9 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         }
       },
       error: function (e) {
-        this.elLk.content.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
+        if (e.status !== 0) {
+          this.elLk.content.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
+        }
       }
     });
     
