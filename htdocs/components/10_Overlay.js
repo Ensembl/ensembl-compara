@@ -2,122 +2,160 @@
 
 Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   constructor: function (id) {
-    var panel = this;
-    
     this.base(id);
     this.window = $(window);
     this.storeWindowDimensions();
     
-    this.constant   = { isOldIE: $(document.body).hasClass('ie67'), minWidth: 800, minHeight: 600, padding: 100, minPad: 25, borderWidth: 7, zIndex: 999999999, titleHeight: 20, closeIconHeight: 22, minCustomWidth: 700, minCustomHeight: 400, keepAspect: false };
+    this.constant = {
+      isIE6: $('body').hasClass('ie6'),
+      minWidth: 800,
+      minHeight: 600,
+      padding: 100,
+      minPad: 25,
+      borderWidth: 7,
+      titleHeight: 20,
+      closeIconHeight: 22
+    };
+    
     this.customized = false;
     this.dragProps  = {};
-    this.background = $('#modal_bg').css({ opacity: 0.2 })
-    .click(function () {
-      panel.hide();
-    });
-    this.border = $('#modal_border').css({ opacity: 0.5 })
-    .mousemove(function (event) {
-      if (panel.isResizable) return;
-      var pos = $(this).offset();
-      var direction = '';
-      if (event.pageY <= pos.top + panel.constant.borderWidth) {
-        direction += 'n';
-      } else if (event.pageY >= pos.top + panel.elementHeight + panel.constant.borderWidth) {
-        direction += 's';
-      }
-      if (event.pageX <= pos.left + panel.constant.borderWidth) {
-        direction += 'w';
-      } else if (event.pageX >= pos.left + panel.elementWidth + panel.constant.borderWidth) {
-        direction += 'e';
-      }
-      this.style.cursor = direction + '-resize';
-      panel.dragProps.direction = direction;
-    })
-    .mousedown(function (event) {
-      panel.isResizable = true;
-      panel.dragProps = {x: event.pageX, y: event.pageY, height: panel.elementHeight, width: panel.elementWidth, aspectRatio: panel.aspectRatio, direction: panel.dragProps.direction};
-      return false;
-    });
     
-    var eventTarget = this.constant.isOldIE ? $(document.body) : this.window;
-    
-    eventTarget.bind('mousemove', function (event) {
-      if (panel.isResizable) {
-        panel.resize(event);
-        return false;
-      }
-    });
-    eventTarget.bind('mouseup', function () {
-      if (panel.visible) {
-        panel.isResizable = false;
-        panel.dragProps = {};
-      }
-    });
-    if (this.constant.isOldIE) {
-      this.window.bind('scroll', function () {
-        if (panel.visible) panel.setDimensions();
-      });
-    }
-
-    if (!this.constant.isOldIE) $('.modal_close', this.el).css({top: this.constant.closeIconHeight / -2 - this.constant.borderWidth, right: this.constant.closeIconHeight / -2 - this.constant.borderWidth});
     Ensembl.EventManager.register('windowResize', this, this.pageResize);
+    Ensembl.EventManager.register('mouseUp', this, this.mouseup);
   },
   
   init: function (width, height) {
+    var panel = this;
+    
     this.base();
+    
+    this.elLk.background = $('#modal_bg').css('opacity', 0.2).bind('click', function () { panel.hide(); });
+    
+    if ($('body').hasClass('ie')) {
+      this.elLk.background.bind('mouseout', function (e) { 
+        if (!e.relatedTarget) {
+          panel.mouseup();
+        }
+      });
+    }
+    
+    this.elLk.border = $('#modal_border').css('opacity', 0.5).bind({
+      mousemove: function (e) {
+        if (panel.isResizable) {
+          return;
+        }
+        
+        var pos = $(this).offset();
+        var direction = '';
+        
+        if (e.pageY <= pos.top + panel.constant.borderWidth) {
+          direction += 'n';
+        } else if (e.pageY >= pos.top + panel.elementHeight + panel.constant.borderWidth) {
+          direction += 's';
+        }
+        
+        if (e.pageX <= pos.left + panel.constant.borderWidth) {
+          direction += 'w';
+        } else if (e.pageX >= pos.left + panel.elementWidth + panel.constant.borderWidth) {
+          direction += 'e';
+        }
+        
+        this.style.cursor = direction + '-resize';
+        panel.dragProps.direction = direction;
+      },
+      mousedown: function (e) {
+        var pad = panel.constant.borderWidth + panel.constant.minPad * 2;
+        
+        panel.isResizable = panel.constant.minWidth + pad < panel.window.width() && panel.constant.minHeight + pad < panel.window.height();
+        
+        if (panel.isResizable) {
+          panel.mousemove = function (e) {
+            panel.resize(e);
+            return false;
+          };
+          
+          $(document).bind('mousemove', panel.mousemove);        
+          
+          panel.dragProps = {
+            x: e.pageX, 
+            y: e.pageY, 
+            height: panel.elementHeight, 
+            width: panel.elementWidth, 
+            aspectRatio: panel.aspectRatio, 
+            direction: panel.dragProps.direction
+          };
+        }
+        
+        return false;
+      }
+    });
+    
     this.setDimensions(width, height);
+    
+    if (this.constant.isIE6) {
+      this.window.bind('scroll', function () {
+        if (panel.visible) {
+          panel.setDimensions();
+        }
+      });
+    }
   },
   
   show: function (width, height) {
     this.storeWindowDimensions();
     this.base();
     this.setDimensions(width, height);
-    this.background .show().css({zIndex: this.constant.zIndex - 2});
-    this.border     .show().css({zIndex: this.constant.zIndex - 1});
-    $(this.el)      .show().css({zIndex: this.constant.zIndex});
+    this.elLk.background.show();
+    this.elLk.border.show();
     
-    if (this.constant.isOldIE) {
+    if (this.constant.isIE6) {
       $('select').hide();
       $('select', this.el).show();
     }
+    
     this.visible = true;
   },
   
   hide: function () {
     this.base();
-    this.background.hide();
-    this.border.hide();
-    $(this.el).hide();
+    this.elLk.background.hide();
+    this.elLk.border.hide();
 
-    if (this.constant.isOldIE) {
+    if (this.constant.isIE6) {
       $('select').show();
     }
+    
     this.visible = false;
   },
   
-  resize: function (event) {
-    var d = this.dragProps.direction || '';
-    var drag = {
-      x: d.match(/e|w/) ? (-1 * !!d.match('w') || 1) * (event.pageX - this.dragProps.x) : 0,
-      y: d.match(/n|s/) ? (-1 * !!d.match('n') || 1) * (event.pageY - this.dragProps.y) : 0
-    };
-    if (this.keepAspect) {
-      if (drag.x > this.dragProps.aspectRatio * drag.y) {
-        drag.x = drag.y * this.dragProps.aspectRatio;
-      } else {
-        drag.y = drag.x / this.dragProps.aspectRatio;
-      }
-    }
-    var maxDims = this.getMaxDimensions();
-    this.customized = {
-      w: Math.max(Math.min(this.dragProps.width + drag.x * 2, maxDims.w), this.constant.minCustomWidth),
-      h: Math.max(Math.min(this.dragProps.height + drag.y * 2, maxDims.h), this.constant.minCustomHeight)
-    };
+  mouseup: function () {
+    $(document).unbind('mousemove', this.mousemove);
+    
+    this.isResizable = false;
+    this.dragProps = {};
+    
     this.setDimensions(this.customized.w, this.customized.h);
+    
     Ensembl.EventManager.trigger('modalPanelResize');
   },
   
-  getMaxDimensions: function() {
+  resize: function (e) {
+    var maxDims = this.getMaxDimensions();
+    var d = this.dragProps.direction || '';
+    var drag = {
+      x: d.match(/e|w/) ? (-1 * !!d.match('w') || 1) * (e.pageX - this.dragProps.x) : 0,
+      y: d.match(/n|s/) ? (-1 * !!d.match('n') || 1) * (e.pageY - this.dragProps.y) : 0
+    };
+    
+    this.customized = {
+      w: Math.max(Math.min(this.dragProps.width + drag.x * 2, maxDims.w), this.constant.minWidth),
+      h: Math.max(Math.min(this.dragProps.height + drag.y * 2, maxDims.h), this.constant.minHeight)
+    };
+    
+    this.setDimensions(this.customized.w, this.customized.h);
+  },
+  
+  getMaxDimensions: function () {
     return {
       w: this.windowWidth  - this.constant.borderWidth * 2 - this.constant.closeIconHeight,
       h: this.windowHeight - this.constant.borderWidth * 2 - this.constant.closeIconHeight
@@ -141,30 +179,34 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   },
   
   setDimensions: function (width, height) {
+    var fix = this.constant.isIE6 ? { top: this.window.scrollTop(), left: this.window.scrollLeft() } : { top: 0, left: 0 };
+    
     this.elementWidth  = width  || this.elementWidth  || $(this.el).width();
     this.elementHeight = height || this.elementHeight || $(this.el).height();
     
-    var fix = this.constant.isOldIE ? {top: this.window.scrollTop(), left: this.window.scrollLeft()} : {top: 0, left: 0};
     $(this.el).css({
       height:     this.elementHeight,
       width:      this.elementWidth,
       marginTop:  this.elementHeight / -2 + fix.top,
       marginLeft: this.elementWidth  / -2 + fix.left
     });
-    this.border.css({
+    
+    this.elLk.border.css({
       height:     this.elementHeight + this.constant.borderWidth * 2,
       width:      this.elementWidth  + this.constant.borderWidth * 2,
       marginTop:  this.elementHeight / -2 - this.constant.borderWidth + fix.top,
       marginLeft: this.elementWidth  / -2 - this.constant.borderWidth + fix.left
     });
-    if (this.constant.isOldIE) {
-      this.background.css({
+    
+    if (this.constant.isIE6) {
+      this.elLk.background.css({
         marginTop:  fix.top,
         marginLeft: fix.left,
         height:     this.windowHeight,
         width:      this.windowWidth
       });
     }
+    
     this.aspectRatio = this.elementWidth / this.elementHeight;
   },
 
@@ -175,8 +217,11 @@ Ensembl.Panel.Overlay = Ensembl.Panel.extend({
   
   pageResize: function () {
     this.storeWindowDimensions();
+    
     var dims = this.getDimensions();
+    
     this.setDimensions(dims.w, dims.h);
+    
     if (this.visible) {
       Ensembl.EventManager.trigger('modalPanelResize');
     }
