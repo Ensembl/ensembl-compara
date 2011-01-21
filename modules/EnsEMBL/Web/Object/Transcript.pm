@@ -110,7 +110,8 @@ sub count_prot_domains {
   return 0 unless $self->translation_object;
   my $c = 0;
   my $analyses = $self->table_info($self->get_db, 'protein_feature')->{'analyses'} || {};
-  my @domain_keys = grep { $analyses->{$_}{'web'}{'type'} eq 'domain' } keys %$analyses;
+  #my @domain_keys = grep { $analyses->{$_}{'web'}{'type'} eq 'domain' } keys %$analyses;
+  my @domain_keys = keys %$analyses;
   $c += map { @{$self->translation_object->get_all_ProteinFeatures($_)} } @domain_keys;
   return $c;
 }
