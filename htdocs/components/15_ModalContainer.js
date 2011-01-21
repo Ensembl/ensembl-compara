@@ -156,7 +156,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           var panel = this;
           setTimeout(function () { panel.getContent(url, id, ++failures); }, 2000);
         } else if (e.status !== 0) {
-          contentEl.html('<p class="ajax_error">Sorry, the page request falied to load.</p>');
+          contentEl.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
         }
       }
     });
