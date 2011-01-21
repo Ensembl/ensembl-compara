@@ -28,8 +28,8 @@ sub render_normal {
   $options{show_reads} = 1 unless defined $options{show_reads}; # show reads by default 
   $options{show_coverage} = 1 unless defined $options{show_coverage}; # show coverage by default 
   #$options{show_consensus} = $options{show_reads} unless defined $options{show_consensus}; # show consensus if showing reads
-  $options{show_consensus} = 1 unless defined $options{show_consensus}; # show consensus by default  
-
+  $options{show_consensus} = 1 unless defined $options{show_consensus};
+  
   # check threshold
   my $slice = $self->{'container'};
   if (my $threshold = $self->my_config('threshold')) {
@@ -76,13 +76,10 @@ sub bam_adaptor {
   my $self = shift;
   
   my $url = $self->my_config('url');
-
-# If there is ###CHR### in the url this is a multi file BAM, e.g 1000 Genomes files, where data is split into several files - one for each chromosome
   if ($url =~ /\#\#\#CHR\#\#\#/) {
       my $region = $self->{'container'}->seq_region_name;
       $url =~ s/\#\#\#CHR\#\#\#/$region/g;
   }
-
   $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor->new($url);
   
   return $self->{_cache}->{_bam_adaptor};
@@ -265,7 +262,6 @@ sub render_coverage {
     }));
     
     # consensus text
-    # TODO: nickl - don't calculate the consensus if we aren't showing it! 
     if ($options{show_consensus} and $text_fits and $cons) {
       $self->push($self->Text({
         'x'         => $i,
@@ -460,29 +456,6 @@ AV * pre_filter_depth (SV* features_ref, int depth, double ppbp, int slicestart,
 END_OF_C_CODE
 
 
-sub get_atype {
-  my ($self,$a) = @_;
-
-  my $atype = '';
-  if ($a->proper_pair) {
-    $atype = 'regular';
-    if ($a->reversed == $a->mreversed) {
-      $atype = 'misoriented';    ### Mis-oriented : mates should be on different strands
-    }
-  } elsif ($a->paired) {
-    if ($a->unmapped || $a->munmapped) {
-      $atype = 'singleton';      ### Singleton
-    } elsif ($a->isize) {
-      $atype = 'gap';            ### Anomalous gap ???
-    } else {
-      $atype = 'chimera';        ### Chimera
-    }
-  } else {
-    $atype = 'singleton';        ### Singleton
-  }
-  return $atype;
-}
-
 # render reads with sequence overlaid and variations from consensus highlighted
 sub render_sequence_reads {
   my ($self, %options) = @_;
@@ -519,7 +492,7 @@ sub render_sequence_reads {
   my $sliceend = $slice->end;
   my $slicelength = $slice->length;
 
-  my $readarrow_colour = $self->my_colour('read_arrow'),
+
   my $read_colour      = $self->my_colour('read'),
 
   # init bump
@@ -529,7 +502,6 @@ sub render_sequence_reads {
   foreach my $f (@$features) {
     my $fstart = $f->start;
     my $fend = $f->end;
-
 
     next unless $fstart and $fend;
     
@@ -573,14 +545,17 @@ sub render_sequence_reads {
       my $line_length_pix = 2;
       $line_length_pix = $width * $ppbp if $width * $ppbp < $line_length_pix;
       my $stroke_width_pix = 1;
-
+      
+      # colour the arrow based on read type
+      my $arrow_colour = $self->my_colour('type_' . $self->_read_type($f));
+      
       # horizontal
       $composite->push($self->Rect({
         'x' => $f->reversed ? $start : $end + 1 - ($line_length_pix / $ppbp),
         'y' => 0,
         'width' => ($line_length_pix / $ppbp),
         'height' => $stroke_width_pix,
-        'colour'=> $readarrow_colour,
+        'colour'=> $arrow_colour,
         'absolutey' => 1,
       }));  
 
@@ -591,7 +566,7 @@ sub render_sequence_reads {
           'y' => 0,
           'width' => ($stroke_width_pix / $ppbp),
           'height' => $h,
-          'colour'=> $readarrow_colour,
+          'colour'=> $arrow_colour,
           'absolutey' => 1,
         }));  
       }
@@ -659,6 +634,25 @@ sub render_sequence_reads {
   }
   
   return;
+}
+
+sub _read_type {
+  my ($self, $f) = @_;
+  my $type = '';
+  
+  if ($f->proper_pair) {
+    $type = 'regular';
+  } elsif ($f->paired) {
+    if ($f->get_tag_values('UNMAPPED') or $f->get_tag_values('M_UNMAPPED')) {
+      $type = 'singleton';
+    } else {
+      $type = 'chimera';
+    }
+  } else {
+    $type = 'singleton'
+  }
+  
+  return $type;
 }
 
 # highlight a composite if its in the list of highlights
