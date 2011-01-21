@@ -25,7 +25,7 @@ sub content {
   my $extra = ($object->species_defs->ENSEMBL_SITETYPE eq 'Vega') ? ' and manually curated alternative alleles' : ',paralogues, regulatory regions and splice variants';
 
   $html .= $self->_hint('gene', 'Transcript and Gene level displays', sprintf('
-    <p>In %s a gene is made up of one or more transcripts. We provide displays at two levels:</p>
+    <p>In %s we provide displays at two levels:</p>
     <ul>
       <li>Transcript views which provide information specific to an individual transcript such as the cDNA and CDS sequences and protein domain annotation.</li>
       <li>Gene views which provide displays for data associated at the gene level such as orthologues%s.</li>
