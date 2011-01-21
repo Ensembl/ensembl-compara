@@ -472,7 +472,9 @@ sub load_user_tracks {
       caption     => $source->{'source_name'},
       url         => $source->{'source_url'},
       description => sprintf('
-        Data retrieved from a BAM file on an external webserver. This data is attached to the %s, and comes from URL: %s',
+        Data retrieved from a BAM file on an external webserver.  
+        The read end bars indicate the direction of the read and the colour indicates the type of read pair: Green = both mates mapped to the same chromosome, Blue = second mate was not mapped, Red = second mate mapped to a different chromosome.
+        This data is attached to the %s, and comes from URL: %s',
         encode_entities($source->{'source_type'}), encode_entities($source->{'source_url'})
       ),
     );
