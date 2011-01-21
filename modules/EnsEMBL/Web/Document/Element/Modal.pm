@@ -49,6 +49,7 @@ sub content {
   
   $content = qq{
   <div id="modal_bg"></div>
+  <div id="modal_border"></div>
   <div id="modal_panel" class="js_panel">
     <input type="hidden" class="panel_type" value="ModalContainer" />
     <div class="modal_title">
