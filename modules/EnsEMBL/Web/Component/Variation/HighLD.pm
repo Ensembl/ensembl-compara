@@ -69,6 +69,8 @@ sub content {
   my $vf_end     = $vf->seq_region_end;
   my $temp_slice = $vf->feature_Slice->expand($max_distance, $max_distance);
   
+  my $tables_with_no_rows;
+  
   foreach my $pop (sort { $a->name cmp $b->name } @pops) {
     my $pop_id = $pop->dbID;
     my $table  = $self->new_table([], [], { data_table => 1 });
@@ -215,7 +217,19 @@ sub content {
     }
     
     $html .= sprintf '<h2>%s</h2>%s', $pop->name, ($table->has_rows ? $table->render : 'No variations found<br /><br />');
+    
+    $tables_with_no_rows = 1 unless $table->has_rows;
   }
+  
+  $html = $self->_hint("HighLD", "Linked variation information", qq{
+    A variation may have no linked variations for the following reasons:
+    <ul>
+      <li>Linked variations are being filtered out by page configuration</li>
+      <li>Variation $v has a minor allele frequency close or equal to 0</li>
+      <li>Variation $v does not have enough genotypes to calculate LD values</li>
+      <li>Estimated r<sup>2</sup> values are below 0.05 and have been filtered out</li>
+    </ul>
+  }, '80%').$html if $tables_with_no_rows;
   
   return $html;
 }
