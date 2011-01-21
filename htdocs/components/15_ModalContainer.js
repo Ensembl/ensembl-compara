@@ -63,7 +63,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.base(width, height);
     
     if (this.elLk.content) {
-      this.elLk.content.height(this.elementHeight - this.constant.titleHeight);
+      this.elLk.content.height(this.elementHeight - 18);
     }
   },
   
@@ -152,10 +152,10 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       error: function (e) {
         failures = failures || 1;
         
-        if (e.status != 500 && failures < 3) {
+        if (e.status !== 500 && failures < 3) {
           var panel = this;
           setTimeout(function () { panel.getContent(url, id, ++failures); }, 2000);
-        } else {
+        } else if (e.status !== 0) {
           contentEl.html('<p class="ajax_error">Sorry, the page request falied to load.</p>');
         }
       }
