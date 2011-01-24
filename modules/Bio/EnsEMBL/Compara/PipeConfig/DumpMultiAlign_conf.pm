@@ -11,18 +11,22 @@ sub default_options {
     my ($self) = @_;
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
+	'release'       => 61,
+        'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
-        'pipeline_name' => 'dumpMultiAlign',                     # name used by the beekeeper to prefix job names on the farm
+        'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
 
-        'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara1',
+        'pipeline_db' => {                               # connection parameters
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
-            -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
+            -pass   => $self->o('password'),
+            -dbname => $ENV{USER}.'_'.$self->o('dbname'),
         },
 	'core_url' => "",
 	'species'  => "human",
+        'coord_system_name1' => "chromosome",
+        'coord_system_name2' => "supercontig",
 	'split_size' => 200,
 	'masked_seq' => 1,
         'format' => 'emf',
@@ -49,6 +53,15 @@ sub pipeline_create_commands {
     ];
 }
 
+sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+    my ($self) = @_;
+
+    return {
+	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
+    };
+}
+
+
 sub resource_classes {
     my ($self) = @_;
     return {
@@ -67,18 +80,15 @@ sub pipeline_analyses {
 			    'format' => $self->o('format'),
 			    'dump_mlss_id' => $self->o('dump_mlss_id'),
 			    'output_dir' => $self->o('output_dir'),
-#			    'core_url' => $self->o('core_url'),
 			    'compara_dbname' => $self->o('compara_dbname'),
 			    'reg_conf' => $self->o('reg_conf'),
 			    'split_size' => $self->o('split_size'),
 			    'masked_seq' => $self->o('masked_seq'),
 			    'dump_program' => $self->o('dump_program'),
 			    'emf2maf_program' => $self->o('emf2maf_program'),
+			    'maf_output_dir' => $self->o('maf_output_dir'), #define if want to run emf2maf 
 			   },
-            -input_ids => [
-                { 'maf_output_dir' => $self->o('maf_output_dir'), #define if want to run emf2maf 
-                },
-            ],
+            -input_ids => [ {} ],
             -flow_into => {
                 2 => [ 'createChrJobs' ],   
                 3 => [ 'createSuperJobs'  ],  
@@ -89,17 +99,12 @@ sub pipeline_analyses {
         },
 	 {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
-            -parameters    => {'species' => $self->o('species'),
+            -parameters    => {'coord_system_name' => $self->o('coord_system_name1'),
 			       'format' => $self->o('format'),
-			       'dump_mlss_id' => $self->o('dump_mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
-#			       'core_url' => $self->o('core_url'),
 			       'compara_dbname' => $self->o('compara_dbname'),
 			       'reg_conf' => $self->o('reg_conf'),
 			       'split_size' => $self->o('split_size'),
-			       'masked_seq' => $self->o('masked_seq'),
-			       'dump_program' => $self->o('dump_program'),
- 			       'emf2maf_program' => $self->o('emf2maf_program'),
 			      },
             -input_ids     => [
 			      ],
@@ -109,17 +114,11 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
-            -parameters    => {'species' => $self->o('species'),
+            -parameters    => {'coord_system_name' => $self->o('coord_system_name2'),
                                'format' => $self->o('format'),
-			       'dump_mlss_id' => $self->o('dump_mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
-#			       'core_url' => $self->o('core_url'),
 			       'compara_dbname' => $self->o('compara_dbname'),
 			       'reg_conf' => $self->o('reg_conf'),
-			       'split_size' => $self->o('split_size'),
-			       'masked_seq' => $self->o('masked_seq'),
-			       'dump_program' => $self->o('dump_program'),
- 			       'emf2maf_program' => $self->o('emf2maf_program'),
 			      },
             -input_ids     => [
             ],
@@ -131,15 +130,10 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
             -parameters    => {'species' => $self->o('species'),
 			       'format' => $self->o('format'),
-			       'dump_mlss_id' => $self->o('dump_mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
-#			       'core_url' => $self->o('core_url'),
 			       'compara_dbname' => $self->o('compara_dbname'),
 			       'reg_conf' => $self->o('reg_conf'),
 			       'split_size' => $self->o('split_size'),
-			       'masked_seq' => $self->o('masked_seq'),
-			       'dump_program' => $self->o('dump_program'),
- 			       'emf2maf_program' => $self->o('emf2maf_program'),
 			      },
             -input_ids     => [
             ],
@@ -150,7 +144,15 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -parameters    => {},
+            -parameters    => {"cmd"=>"perl " . $self->o('dump_program') . " --reg_conf " .  $self->o('reg_conf') .  " --dbname " . $self->o('compara_dbname') . " --species " . $self->o('species') . " --mlss_id " . $self->o('dump_mlss_id') ." --coord_system " . "#coord_system# --masked_seq " . $self->o('masked_seq') . " --split_size " . $self->o('split_size') . " --output_format " . $self->o('format') . "  #extra_args#", 
+			       "num_blocks"=> "#num_blocks#",
+			       "output_dir"=> $self->o('output_dir'),
+			       "output_file"=>"#output_file#" , 
+			       "dumped_output_file"=>"#dumped_output_file#" , 
+			       "format" => $self->o('format'), 
+			       #"emf2maf_program" => $self->o('emf2maf_program'), 
+			       "maf_output_dir" => $self->o('maf_output_dir'),
+			      },
             -input_ids     => [
             ],
 	   -hive_capacity => 15,
@@ -162,7 +164,7 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'emf2maf',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
-            -parameters    => {},
+            -parameters    => {"output_dir"=> $self->o('output_dir'), "emf2maf_program" => $self->o('emf2maf_program'), "maf_output_dir" => $self->o('maf_output_dir')},
             -input_ids     => [
             ],
 	   -hive_capacity => 200,
@@ -172,7 +174,7 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'compress',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Compress',
-            -parameters    => {},
+            -parameters    => {"output_dir"=> $self->o('output_dir')},
             -input_ids     => [
             ],
 	   -hive_capacity => 200,
@@ -189,7 +191,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {'format' => $self->o('format'),
 			       'reg_conf' => $self->o('reg_conf'),
-#			       'core_url' => $self->o('core_url'),
 			       'compara_dbname' => $self->o('compara_dbname'),
 			       'mlss_id' => $self->o('dump_mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
