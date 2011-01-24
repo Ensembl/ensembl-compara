@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -14,13 +29,6 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 This RunnableDB module generates DumpMultiAlign jobs from genomic_align_blocks
 on the chromosomes which do not contain species. The jobs are split into 
 $split_size chunks
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =cut
 
@@ -87,21 +95,18 @@ sub write_output {
 
     my $tag = "other";
 
-    my $output_file = $self->param('output_dir') ."/" . $self->param('filename') . "." . $tag . "." . $self->param('format');
+    my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
 
-    #Convert human to Homo sapiens
-    #my $species_name = $reg->get_adaptor($self->param('species'), "core", "MetaContainer")->get_Species->binomial;
+    #Convert eg human to Homo sapiens
     my $species_name = $reg->get_adaptor($self->param('species'), "core", "MetaContainer")->get_production_name;
 
     my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-    my $dump_mlss_id = $self->param('dump_mlss_id');
 
     #
     #Find genomic_align_blocks which do not contain $self->param('species')
-    #(usually human)
     #
     my $skip_genomic_align_blocks = $gab_adaptor->
       fetch_all_by_MethodLinkSpeciesSet($mlss);
@@ -109,7 +114,7 @@ sub write_output {
 	my $has_skip = 0;
 	foreach my $this_genomic_align (@{$skip_genomic_align_blocks->[$i]->get_all_GenomicAligns()}) {
 	    if (($this_genomic_align->genome_db->name eq $species_name) or
-		($this_genomic_align->genome_db->name eq "Ancestral sequences")) {
+		($this_genomic_align->genome_db->name eq "ancestral_sequences")) {
 		$has_skip = 1;
 		last;
 	    }
@@ -120,16 +125,9 @@ sub write_output {
 	    $this_genomic_align_block = undef;
 	}
     }
-    my $dump_program = $self->param('dump_program');
-    my $dump_mlss_id = $self->param('dump_mlss_id');
-    my $reg_conf = $self->param('reg_conf');
-    my $compara_dbname = $self->param('compara_dbname');
-    my $masked_seq = $self->param('masked_seq');
     my $split_size = $self->param('split_size');
     my $format = $self->param('format');
     my $species = $self->param('species');
-    my $emf2maf_program = $self->param('emf2maf_program');
-    my $maf_output_dir = $self->param('maf_output_dir');
 
     my $gab_num = 1;
     my $start_gab_id ;
@@ -166,7 +164,7 @@ sub write_output {
 	    $dump_output_file =~ s/\.$format/$this_suffix/;
 
 	    #Write out cmd from DumpMultiAlign
-	    my $dump_cmd = "\"cmd\"=>\"perl $dump_program --reg_conf $reg_conf --dbname $compara_dbname --mlss_id $dump_mlss_id --skip_species $species --masked_seq $masked_seq --split_size $split_size --output_format $format --output_file $output_file --chunk_num $chunk\", \"num_blocks\"=>\"$this_num_blocks\", \"output_file\"=>\"$dump_output_file\", \"format\"=> \"$format\", \"emf2maf_program\"=>\"$emf2maf_program\", \"maf_output_dir\"=>\"$maf_output_dir\"";
+	    my $dump_cmd = "\"output_file\"=> \"$output_file\", \"extra_args\" => \" --skip_species $species --chunk_num $chunk\", \"num_blocks\"=>\"$this_num_blocks\", \"dumped_output_file\"=>\"$dump_output_file\"";
 
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
