@@ -148,7 +148,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
           wrapper.addClass('no_local_context');
         }
         
-        contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
+        contentEl.html(json.content).wrapInner(wrapper).prepend(json.nav);
         
         this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
