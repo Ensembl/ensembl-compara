@@ -1,7 +1,7 @@
 #masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
 #masthead div                             { background-color: [[MH_BG]]; }
 #masthead a,
-#masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; }
+#masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }
 #masthead a:hover,
 #masthead span.disabled.toggle:hover      { color: [[MH_HOVER]] !important; }
 #masthead ul                              { list-style: none; margin: 0; padding: 0 }
