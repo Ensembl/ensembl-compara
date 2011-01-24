@@ -73,7 +73,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
 
     var caption = /modal_title_([^\s]+)/.exec(el.className + ' ');
 
-    this.elLk.caption.html(caption && caption.length > 1 ? caption[1].replace('_', ' ') : this.elLk.caption.html() || el.title || el.innerHTML).show();
+    this.elLk.caption.html(caption ? caption[1].replace('_', ' ') : this.elLk.caption.html() || el.title || el.innerHTML).show();
     this.elLk.menu.hide();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
     this.show();
@@ -91,7 +91,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       this.setPageReload(false, true);
     }
   },
-  
+   
   getContent: function (url, id) {
     if (this.xhr) {
       this.xhr.abort();
@@ -124,7 +124,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
       context: this,
       success: function (json) {
         var params = hash ? $.extend(json.params || {}, { hash: hash }) : json.params;
-        var buttonText, forceReload;
+        var wrapper, buttonText, forceReload;
         
         if (json.redirectURL) {
           return this.getContent(json.redirectURL, id);
@@ -141,12 +141,14 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, 'empty'); // clean up handlers, save memory
-                
-        contentEl.html(json.content).prepend(json.nav);
+        
+        wrapper = $(json.wrapper);
         
         if (!json.nav) {
-          contentEl.children(':first').addClass('no_local_context');
+          wrapper.addClass('no_local_context');
         }
+        
+        contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
         
         this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
