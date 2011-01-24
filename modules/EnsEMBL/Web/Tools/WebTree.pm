@@ -14,7 +14,7 @@ sub read_tree {
 ###    _nav   => 'navigation info',   # from meta tags
 ###    _title => 'title',             # from title tag
 ###    _index => '0',                 # order index, from meta tag
-###    _show  => '0',                 # does it have a real index.html or a placeholder?
+###    _show  => '',                  # does it have a real index.html or a placeholder?
 ###    file1  => {nav => '...', title => '...', index => '...'},
 ###    file2  => {nav => '...', title => '...', index => '...'},
 ###    ...,
@@ -57,11 +57,11 @@ sub read_tree {
   my ($title, $nav, $index);
   ## Check if we want to do this directory at all
   my $include = 1; 
+  $branch->{'_show'} = 'y' unless $branch->{'_show'} eq 'n';
   foreach my $filename (@$html_files) {
-    $branch->{'_show'} = 1;
     if( $filename eq 'index.html' || $filename eq 'index.none' ) {
       my ($title, $nav, $order, $index) = get_info( $doc_root . $path . $filename );
-      $branch->{'_show'} = 0 if $filename eq 'index.none';
+      $branch->{'_show'} = 'n' if $filename eq 'index.none';
       if ($index =~ /NO FOLLOW/) {
         $branch->{_title} = $title;
         $branch->{_nav}   = $nav;

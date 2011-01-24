@@ -39,6 +39,7 @@ sub content {
 
     for (my $i = 1; $i < scalar(@path); $i++ ) {
       $current_path .= $path[$i];
+      warn ">>> CURRENT PATH $current_path";
       if ($path[$i] !~ /html$/) {
         $current_path .= '/';
       }
@@ -60,7 +61,9 @@ sub content {
 
 sub init {
   my ($self, $controller) = @_;
-  $self->title($controller->content =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: ' . $controller->r->uri) if $controller->request eq 'ssi';
+  if ($controller->request eq 'ssi') {
+    $self->title($controller->content =~ /<title>(.*?)<\/title>/sm ? $1 : 'Untitled: ' . $controller->r->uri);
+  }
 }
 
 sub _create_link {
@@ -70,7 +73,7 @@ sub _create_link {
   my $title = $subtree->{'_title'};
   my $url   = $subtree->{'_path'};
   if ($child) {
-    if ($subtree->{'_show'}) {
+    if ($subtree->{'_show'} eq 'y') {
       if ($path =~ /\.html/) {
         $link = $title;
       }
