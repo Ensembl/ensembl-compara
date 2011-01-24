@@ -132,12 +132,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, 'empty'); // clean up handlers, save memory
+                
+        contentEl.html(json.content).prepend(json.nav);
         
         if (!json.nav) {
-          json.wrapper = $(json.wrapper).addClass('no_local_context');
+          contentEl.children(':first').addClass('no_local_context');
         }
-        
-        contentEl.html(json.content).wrapInner(json.wrapper).prepend(json.nav);
         
         this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
