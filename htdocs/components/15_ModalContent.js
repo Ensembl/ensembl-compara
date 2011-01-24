@@ -42,12 +42,12 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     
     $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).live('click', function () {
-      $(this).parents('fieldset').find('input.' + $(this).attr('name')).attr('checked', this.checked);
+      $(this).parents('fieldset').find('input.' + this.name).attr('checked', this.checked);
     });
     
     $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).live('change', function () {
-      var cls    = $(this).val();
-      var inputs = $(this).parents('fieldset').find('input.' + $(this).attr('name'));
+      var cls    = this.value;
+      var inputs = $(this).parents('fieldset').find('input.' + this.name);
       
       switch (cls) {
         case ''     : break;
@@ -83,7 +83,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         }
         
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
-        if (typeof link == 'undefined' || link.hasClass('active')) {
+        if (typeof link === 'undefined' || link.hasClass('active')) {
           this.updateContent(json);
         }
       },
@@ -141,7 +141,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   updateContent: function (json) {    
-    this.elLk.content.html(json.content);
+    this.elLk.content.replaceWith(json.content);
+    this.elLk.content = $('.modal_wrapper', this.el);
     
     if ($('.panel', this.elLk.content).length > 1) {
       this.elLk.content.removeClass('panel');
@@ -160,13 +161,13 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     }
   },
   
-  setSelectAll: function () {    
-    $('form div.select_all input', this.elLk.content).each(function () {
-      $(this).attr('checked', !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length);
+  setSelectAll: function () {
+    $('form div.select_all input', this.elLk.content).attr('checked', function () {
+      return !$(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').not(this).length;
     });
     
-    $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).each(function () {
-      $(this).attr('checked', !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length);
+    $('fieldset.matrix input.select_all_column, fieldset.matrix input.select_all_row', this.elLk.content).attr('checked', function () {
+      return !$(this).parents('fieldset').find('input.' + this.name + ':not(:checked)').length;
     });
     
     $('fieldset.matrix select.select_all_column, fieldset.matrix select.select_all_row', this.elLk.content).each(function () {
@@ -175,9 +176,9 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       var val, i, filtered;
       
       if (!checked.length) {
-        $(this).val('none');
-      } else if (inputs.length == checked.length) {
-        $(this).val('all');
+        this.value = 'none';
+      } else if (inputs.length === checked.length) {
+        this.value = 'all';
       } else {
         i = this.options.length;
         
@@ -187,8 +188,8 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           if (val && !val.match(/^(all|none)$/)) {
             filtered = inputs.filter('.' + val);
             
-            if (filtered.length == checked.length) {
-              $(this).val(val);
+            if (filtered.length === checked.length) {
+              this.value = val;
               break;
             }
           }
