@@ -69,9 +69,11 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   
   open: function (el) {
     var rel = $(this.el).is(':visible') ? el.rel : this.activePanel.match(/config/) && el.rel.match(/config/) ? this.activePanel : el.rel;
-    
+
+    var caption = /modal_title_([^\s]+)/.exec(el.className + ' ');
+
+    this.elLk.caption.html(caption && caption.length > 1 ? caption[1].replace('_', ' ') : this.elLk.caption.html() || el.title || el.innerHTML).show();
     this.elLk.menu.hide();
-    this.elLk.caption.html(el.title || el.innerHTML).show();
     this.elLk.closeButton.attr({ title: 'Close', alt: 'Close' });
     this.show();
     this.getContent(el.href, rel);
@@ -81,6 +83,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
   
   hide: function (escape) {
     this.base();
+    
+    this.elLk.caption.html('');
     
     if ((escape !== true && !Ensembl.EventManager.trigger('updateConfiguration') && (this.pageReload || this.sectionReload.count)) || this.pageReload == 'force') {
       this.setPageReload(false, true);
