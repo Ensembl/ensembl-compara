@@ -30,8 +30,7 @@ sub get_json {
   my $wrapper = 'modal_wrapper' . ($single ? ' panel' : '');
   
   return {
-    content   => $self->content,
-    wrapper   => qq{<div class="$wrapper"></div>},
+    content   => sprintf('<div class="%s">%s</div>', $wrapper, $self->content),
     panelType => 'Configurator'
   };
 }

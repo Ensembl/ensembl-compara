@@ -153,8 +153,7 @@ sub get_json {
   $content  = "$self->{'form'}$content</form>" if $self->{'form'};
   
   return {
-    content   => $content,
-    wrapper   => qq{<div class="$wrapper"></div>},
+    content   => qq{<div class="$wrapper">$content</div>},
     panelType => 'ModalContent'
   };
 }
