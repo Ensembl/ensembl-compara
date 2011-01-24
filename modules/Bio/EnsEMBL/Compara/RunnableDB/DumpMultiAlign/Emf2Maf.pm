@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -12,13 +27,6 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 =head1 DESCRIPTION
 
 The RunnableDB module runs emf2maf jobs. It creates compression jobs
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =cut
 
@@ -58,7 +66,8 @@ sub run {
     #
     #Rum emf2maf
     #
-    my $cmd = $self->param('emf2maf_program') . " " . $self->param('output_file');
+    my $full_path = $self->param('output_dir') . "/" . $self->param('output_file');
+    my $cmd = $self->param('emf2maf_program') . " " . $full_path;
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
@@ -93,12 +102,6 @@ sub write_output {
     $output_ids .= "}";
 
     $self->dataflow_output_id($output_ids, 2);
-
-
-    #md5sum
-    #my $md5sum_output_ids = "{\"output_dir\"=>\"" . $self->param('maf_output_dir') . "\"}";
-    #$self->dataflow_output_id($md5sum_output_ids, 3);
-
 }
 
 #
@@ -107,8 +110,7 @@ sub write_output {
 sub _healthcheck {
     my ($self) = @_;
 
-    $DB::single = 1;
-    my $output_file = $self->param('output_file');
+    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
     $output_file =~ s/\.emf$/.maf/;
     my $cmd = "grep -c ^a " . $output_file;
 
