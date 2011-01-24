@@ -22,6 +22,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     this.elLk.caption     = $('.modal_caption', this.el);
     this.elLk.closeButton = $('.modal_close', this.el);
     
+    this.xhr           = false;
     this.pageReload    = false;
     this.sectionReload = {};
     this.activePanel   = '';
@@ -91,7 +92,11 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     }
   },
   
-  getContent: function (url, id, failures) {
+  getContent: function (url, id) {
+    if (this.xhr) {
+      this.xhr.abort();
+    }
+    
     id = id || 'modal_default';
     
     var contentEl = this.elLk.content.filter('#' + id);
@@ -113,7 +118,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     
     contentEl.html('<div class="spinner">Loading Content</div>').show();
     
-    $.ajax({
+    this.xhr = $.ajax({
       url: Ensembl.replaceTimestamp(url),
       dataType: 'json',
       context: this,
@@ -132,7 +137,7 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         }
         
         if (json.activeTab) {
-          this.changeTab(this.elLk.tabs.filter('[innerHTML*=' + json.activeTab + ']'));
+          this.changeTab(this.elLk.tabs.filter(function () { return $(this).text().match(json.activeTab) }));
         }
         
         Ensembl.EventManager.trigger('destroyPanel', id, 'empty'); // clean up handlers, save memory
@@ -154,14 +159,12 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         Ensembl.EventManager.trigger('createPanel', id, $((json.content.match(/<input[^<]*class=".*?panel_type.*?".*?>/) || [])[0]).val() || json.panelType, params);
       },
       error: function (e) {
-        failures = failures || 1;
-        
-        if (e.status !== 500 && failures < 3) {
-          var panel = this;
-          setTimeout(function () { panel.getContent(url, id, ++failures); }, 2000);
-        } else if (e.status !== 0) {
+         if (e.status !== 0) {
           contentEl.html('<p class="ajax_error">Sorry, the page request failed to load.</p>');
         }
+      },
+      complete: function () {
+        this.xhr = false;
       }
     });
   },
