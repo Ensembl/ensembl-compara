@@ -48,7 +48,6 @@
 body.mac #masthead                        { font-size: 13px; }
 body.mac #masthead ul.tabs li             { height: 21px; }
 body.mac #masthead ul.tabs span.dropdown  { padding-top: 4px; }
-body.mac #masthead ul.tabs a,
 body.mac #masthead div.more a             { padding: 4px; }
 body.mac #masthead .tools_holder          { top: 13px; }
 body.mac #masthead .account_holder        { top: 5px; }
