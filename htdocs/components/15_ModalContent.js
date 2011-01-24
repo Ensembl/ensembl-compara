@@ -136,8 +136,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   },
   
   updateContent: function (json) {    
-    this.elLk.content.replaceWith(json.content);
-    this.elLk.content = $('.modal_wrapper', this.el);
+    this.elLk.content.html(json.content);
     
     if ($('.panel', this.elLk.content).length > 1) {
       this.elLk.content.removeClass('panel');
