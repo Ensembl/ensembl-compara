@@ -72,9 +72,8 @@ sub content_ajax {
   
   
   return $self->jsonify({
-    content   => $content,
+    content   => qq{<div class="panel modal_wrapper">$content</div>},
     panelType => $self->{'panel_type'},
-    wrapper   => '<div class="panel modal_wrapper"></div>',
     nav       => $hint,
     params    => { urlParam => $self->{'url_param'} }
   });
