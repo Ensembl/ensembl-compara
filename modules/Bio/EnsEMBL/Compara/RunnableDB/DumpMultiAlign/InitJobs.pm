@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -13,13 +28,6 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 This RunnableDB module creates 3 jobs: 1) gabs on chromosomes 2) gabs on 
 supercontigs 3) gabs without $species (others)
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =cut
 
@@ -113,18 +121,15 @@ sub write_output {
     #Pass on input_id and add on new parameters: multi-align mlss_id, filename,
     #emf2maf
     #
-    my $output_ids = $self->input_id;
-    my $extra_args = ",\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
+    #my $output_ids = $self->input_id;
+    my $output_ids;
+    #my $extra_args = ",\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
+    my $extra_args = "\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
     $extra_args .= ",\"genome_db_id\" => \"". $self->param('genome_db_id') . "\"";
     $extra_args .= ",\"filename\" => \"". $self->param('filename') ."\"";
 
-    #Check if defined maf_output_dir to see if need to pass these parameters
-    if ($self->param('maf_output_dir') ne "") {
-	$extra_args .= ",\"emf2maf_program\" => \"". $self->param('emf2maf_program') ."\"";
-	$extra_args .= ",\"maf_output_dir\" => \"". $self->param('maf_output_dir') ."\"";
-    }
-
-    $output_ids =~ s/}$/$extra_args}/;
+    #$output_ids =~ s/}$/$extra_args}/;
+    $output_ids = "{$extra_args}";
 
     #Set up chromosome job
     $self->dataflow_output_id($output_ids, 2);
@@ -140,7 +145,6 @@ sub write_output {
     #directory NOT per file
 
     #Set up md5sum for emf2maf if necessary
-
     if ($self->param('maf_output_dir') ne "") {
 	my $md5sum_output_ids = "{\"output_dir\"=>\"" . $self->param('maf_output_dir') . "\"}";
 	$self->dataflow_output_id($md5sum_output_ids, 5);
