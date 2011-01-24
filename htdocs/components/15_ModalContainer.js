@@ -150,6 +150,8 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
         
         contentEl.html(json.content).wrapInner(wrapper).prepend(json.nav);
         
+        wrapper = null;
+        
         this.elLk.closeButton.attr({ title: buttonText, alt: buttonText });
         
         forceReload = !!$('.modal_reload', contentEl).length;
