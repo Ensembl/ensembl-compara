@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -13,13 +28,6 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 This RunnableDB module generates DumpMultiAlign jobs from genomic_align_blocks
 on the species chromosomes. The jobs are split into $split_size chunks
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
 
 =cut
 
@@ -85,8 +93,6 @@ sub write_output {
 	$compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('compara_dbname'), "compara");    
     }
     
-
-
     #
     #Find chromosome names and numbers of genomic_align_blocks
     #
@@ -102,30 +108,28 @@ sub write_output {
     AND 
        genome_db_id = ? 
     AND 
-       coord_system_name = \"chromosome\" 
+       coord_system_name = ? 
     AND 
        method_link_species_set_id = ? 
     GROUP BY name};
 
     my $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('genome_db_id'), $self->param('mlss_id'));
+    $sth->execute($self->param('genome_db_id'), 
+		  $self->param('coord_system_name'),
+		  $self->param('mlss_id'));
     my ($name, $total_blocks);
     $sth->bind_columns(\$name,\$total_blocks);
 
     my $chr_blocks; 
-    my $tag = "chr";
+    my $tag;
+    if ($self->param('coord_system_name') eq "chromosome") {
+	$tag = "chr";
+    }
 
-    my $dump_program = $self->param('dump_program');
-    my $dump_mlss_id = $self->param('dump_mlss_id');
-    my $reg_conf = $self->param('reg_conf');
-    my $compara_dbname = $self->param('compara_dbname');
     my $compara_url = $self->param('compara_url');
-    my $masked_seq = $self->param('masked_seq');
     my $split_size = $self->param('split_size');
     my $format = $self->param('format');
-    my $emf2maf_program = $self->param('emf2maf_program');
-    my $maf_output_dir = $self->param('maf_output_dir');
-    my $species = $self->param('species');
+    my $coord_system_name = $self->param('coord_system_name');
 
     if (defined($compara_url)) {
 	#need to protect the @
@@ -133,12 +137,9 @@ sub write_output {
     }
 
     while (my $row = $sth->fetchrow_arrayref) {
-	my $output_file = $self->param('output_dir') ."/" . $self->param('filename') . "." . $tag . $name . "." . $self->param('format');
-	
-	#print "output_file $output_file\n";
+	my $output_file = $self->param('filename') . "." . $tag . $name . "." . $self->param('format');
 
 	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
-	#print "$name $total_blocks $num_chunks\n";
 
 	#store chromosome name and number of chunks
 	$chr_blocks->{$name} = $num_chunks;
@@ -149,20 +150,15 @@ sub write_output {
 	    if ($chunk == $num_chunks) {
 		$this_num_blocks = ($total_blocks - (($chunk-1)*$split_size));
 	    }
-	    #print "this_num_chunks $this_num_blocks\n";
 
 	    my $this_suffix = "_" . $chunk . "." . $format;
 	    my $dump_output_file = $output_file;
 	    $dump_output_file =~ s/\.$format$/$this_suffix/;
 
-	    #Write out cmd from DumpMultiAlign and a few other parameters 
+	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
-	    my $output_ids;
-	    if ($reg_conf) {
-		$output_ids = "{\"cmd\"=>\"perl $dump_program --reg_conf $reg_conf --dbname $compara_dbname --species $species --mlss_id $dump_mlss_id --seq_region $name --masked_seq $masked_seq --split_size $split_size --output_format $format --output_file $output_file --chunk_num $chunk\", \"num_blocks\"=>\"$this_num_blocks\", \"output_file\"=>\"$dump_output_file\", \"format\"=> \"$format\", \"emf2maf_program\"=>\"$emf2maf_program\", \"maf_output_dir\"=>\"$maf_output_dir\"}";
-	    } else {
-		$output_ids = "{\"cmd\"=>\"perl $dump_program --db $compara_url --species $species --mlss_id $dump_mlss_id --seq_region $name --masked_seq $masked_seq --split_size $split_size --output_format $format --output_file $output_file --chunk_num $chunk\", \"num_blocks\"=>\"$this_num_blocks\", \"output_file\"=>\"$dump_output_file\", \"format\"=> \"$format\", \"emf2maf_program\"=>\"$emf2maf_program\", \"maf_output_dir\"=>\"$maf_output_dir\"}";
-	    }
+	    my $output_ids = "{\"coord_system\"=> \"$coord_system_name\", \"output_file\"=> \"$output_file\", \"extra_args\"=> \"--seq_region $name --chunk_num $chunk\", \"num_blocks\"=> $this_num_blocks, \"dumped_output_file\"=> \"$dump_output_file\", \"format\"=> \"$format\"}";
+
 	    #print "$output_ids\n";
 	    
 	    $self->dataflow_output_id($output_ids, 2);
