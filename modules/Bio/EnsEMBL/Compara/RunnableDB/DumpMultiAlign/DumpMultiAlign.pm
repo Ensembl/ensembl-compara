@@ -1,5 +1,20 @@
+=head1 LICENSE
 
-=pod 
+  Copyright (c) 1999-2011 The European Bioinformatics Institute and
+  Genome Research Limited.  All rights reserved.
+
+  This software is distributed under a modified Apache license.
+  For license details, please see
+
+    http://www.ensembl.org/info/about/code_licence.html
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
 
 =head1 NAME
 
@@ -14,15 +29,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 This RunnableDB module runs DumpMultiAlign jobs. It creates emf2maf jobs if
 necessary and compression jobs
 
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-ensembl-dev@ebi.ac.uk
-
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 
@@ -50,12 +57,20 @@ sub run {
 
     my $cmd = $self->param('cmd');
 
+    #append full path to output_file
+    my $full_output_file = $self->param('output_dir') . "/" . $self->param('output_file');
+    $cmd .= " --output_file $full_output_file";
+
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {
 	$self->_write_gab_file();
 	$cmd .= " --file_of_genomic_align_block_ids " . $self->param('tmp_file');
     }
+
+    #substitute any hashes in analysis parameters with the correct values from analysis_job
+    $cmd = $self->param_substitute($cmd);
     #print "cmd $cmd \n";
+
     #
     #Run DumpMultiAlign cmd
     #
@@ -63,7 +78,6 @@ sub run {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
-
     #
     #Check number of genomic_align_blocks written is correct
     # 
@@ -80,7 +94,7 @@ sub write_output {
     #Create emf2maf job if necesary
     #
     if ($self->param('maf_output_dir')) {
-	my $output_ids = "{\"emf2maf_program\" => \"" .$self->param('emf2maf_program') . "\", \"output_file\"=>\"" . $self->param('output_file') . "\", \"maf_output_dir\" => \"" . $self->param('maf_output_dir') . "\", \"num_blocks\" => \"" . $self->param('num_blocks') . "\"}";
+	my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\", \"num_blocks\" => \"" . $self->param('num_blocks') . "\"}";
 
 	$self->dataflow_output_id($output_ids, 2);
 
@@ -92,7 +106,7 @@ sub write_output {
     #
     #Create Compress jobs
     #
-    my $output_ids = "{\"output_file\"=>\"" . $self->param('output_file') . "\"}";
+    my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\"}";
     $self->dataflow_output_id($output_ids, 1);
 }
 
@@ -101,14 +115,29 @@ sub write_output {
 #
 sub _healthcheck {
     my ($self) = @_;
+    
+    #Find out if split into several files
+    my $dump_cmd = $self->param('extra_args');
+    my $chunk_num = $dump_cmd =~ /chunk_num/;
+    my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
+
+    #not split by chunk eg supercontigs so need to check all supercontig* files
+    if (!$chunk_num) {
+	if ($output_file =~ /\.[^\.]+$/) {
+	    $output_file =~ s/(\.[^\.]+)$/_*$1/;
+	}
+    } else {
+	#Have chunk number in filename
+	$output_file = $self->param('output_dir') . "/" . $self->param('dumped_output_file');
+    }
 
     my $cmd;
     if ($self->param('format') eq "emf") {
-	$cmd = "grep -c DATA " . $self->param('output_file');
-    } elsif ($self->param('format') eq "maf") {
-	$cmd = "grep -c ^a " . $self->param('output_file');
-    }
+	$cmd = "grep DATA " . $output_file . " | wc -l";
 
+    } elsif ($self->param('format') eq "maf") {
+	$cmd = "grep ^a " . $output_file . " | wc -l";
+    }
     my $num_blocks = `$cmd`;
     chomp $num_blocks;
     if ($num_blocks != $self->param('num_blocks')) {
